@@ -1,0 +1,25 @@
+Dependencies
+------------
+
+Listed in setup.py, will install automatically if you use easy_install or pip:
+
+ * html5lib
+ * lxml
+ * cssutils
+ * Attest
+
+Not listed in setup.py since they are either not on PyPI or tricky to compile.
+You need to install these manually:
+
+ * PyCairo
+ * PyGTK
+ * python-rsvg
+
+About the PyGTK dependency
+--------------------------
+
+WeasyPrint does not use GTK+, but it uses Pango for text rendering. Pango can
+work without GTK+, but its Python bindings are part of PyGTK.
+
+When GObject introspection becomes usable for both Pango and cairo, we can
+switch to those and drop the PyGTK dependency.
