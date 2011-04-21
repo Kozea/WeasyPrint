@@ -18,8 +18,20 @@ You need to install these manually:
 About the PyGTK dependency
 --------------------------
 
-WeasyPrint does not use GTK+, but it uses Pango for text rendering. Pango can
-work without GTK+, but its Python bindings are part of PyGTK.
+WeasyPrint does not use GTK+, but it uses Pango for text rendering and rsvg for
+SVG rendering. Both of them can work work without GTK+, but their Python
+bindings either are part of PyGTK (for Pango) or depend on PyGTK (for rsvg).
 
-When GObject introspection becomes usable for both Pango and cairo, we can
-switch to those and drop the PyGTK dependency.
+If someday we have GObject introspection for all of Pango, rsvg and cairo
+we can switch to those and drop the PyGTK dependency.
+
+HTML parsing
+------------
+
+We use lxml to parse HTML into an object tree. lmxl’s own parser is very fast,
+but it can optionnaly use the html5lib parser. html5lib implements the HTML5
+parsing algorithm so it should give better results on broken HTML, though
+“they all parse pretty-good HTML the same.” [1]
+
+[1] http://stackoverflow.com/questions/2676872/how-to-parse-malformed-html-in-python-using-standard-libraries/2680724#2680724
+
