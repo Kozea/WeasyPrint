@@ -1,2 +1,3 @@
 test:
-	python2 -m unittest weasy.tests
+	python2 -m attest weasy.tests.tests
+
