@@ -25,6 +25,30 @@ bindings either are part of PyGTK (for Pango) or depend on PyGTK (for rsvg).
 If someday we have GObject introspection for all of Pango, rsvg and cairo
 we can switch to those and drop the PyGTK dependency.
 
+Standards conformance
+---------------------
+
+WeasyPrint strives for web standards conformance. For some standards however,
+conformance is just that of the libraries we use:
+
+ * HTML parsing: (turning bytes into a DOM tree), we currently use lxml.html
+   (see below.)
+ * CSS parsing: cssutils
+ * CSS selectors: lxml.cssselect (conforms to CSS3 with some exceptions,
+   see http://lxml.de/cssselect.html#limitations)
+ * SVG: rsvg
+
+The biggest part where WeasyPrint only has itself to blame about conformance is
+the graphical rendering and layout of documents. (That is: all of CSS but syntax
+and selectors.)
+
+Inline SVG
+----------
+
+SVG, even when inlined in the HTML document, is rendered by the rsvg library
+independently of the rest of the document. In CSS speak, we consider it to be
+a “replaced element”.
+
 HTML parsing
 ------------
 
@@ -34,4 +58,10 @@ parsing algorithm so it should give better results on broken HTML, though
 “they all parse pretty-good HTML the same.” [1]
 
 [1] http://stackoverflow.com/questions/2676872/how-to-parse-malformed-html-in-python-using-standard-libraries/2680724#2680724
+
+lxml vs ElementTree
+-------------------
+
+lxml uses the same API as ElementTree so that some programs can use any of them.
+However we need lxml.cssselect, which does not exist in ElementTree.
 
