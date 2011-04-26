@@ -1,0 +1,10 @@
+@import url(sheet2.css);
+p {
+    margin: 0;
+}
+
+@media print {
+    p {
+        margin: 2em 0;
+    }
+}

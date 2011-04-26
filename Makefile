@@ -1,3 +1,3 @@
 test:
-	python2 -m attest weasy.tests.tests
+	python2 -m weasy.tests
 
