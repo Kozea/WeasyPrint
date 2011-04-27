@@ -18,6 +18,12 @@ def is_not_css(element):
     mimetype = element.get('type')
     return mimetype and strip_mimetype_parameters(mimetype) != 'text/css'
 
+def media_attr(element):
+    """Returns the `media` attribute if it is not just whitespace."""
+    media = element.get('media')
+    if media and media.strip():
+        return media
+    # cssutils translates None to 'all'.
 
 def find_style_elements(document):
     for style in document.iter('style'):
@@ -32,8 +38,8 @@ def find_style_elements(document):
             continue
         # lxml should give us either unicode or ASCII-only bytestrings, so
         # we don't need `encoding` here.
-        yield parseString(content, media=style.get('media'), 
-                          title=style.get('title'), href=style.base_url)
+        yield parseString(content, href=style.base_url, media=media_attr(style),
+                          title=style.get('title'))
 
 def find_link_stylesheet_elements(document):
     for link in document.iter('link'):
@@ -44,7 +50,7 @@ def find_link_stylesheet_elements(document):
         ):
             continue
         # URLs should have been made absolute earlier
-        yield parseUrl(link.get('href'), media=link.get('media'),
+        yield parseUrl(link.get('href'), media=media_attr(link),
                        title=link.get('title'))
 
 def find_stylesheets(document):
