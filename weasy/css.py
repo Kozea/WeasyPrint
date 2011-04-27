@@ -1,6 +1,8 @@
 from cssutils import parseString, parseUrl
 from cssutils.stylesheets import StyleSheetList, MediaList
 
+from . import properties
+
 
 __all__ = ['find_stylesheets']
 
@@ -98,3 +100,25 @@ def resolve_import_media(sheets, medium):
             for subrule in resolve_import_media([subsheet], medium):
                 yield subrule
 
+
+def expand_shorthands(sheet):
+    """
+    Changes IN-PLACE the given stylesheet and its imported stylesheets
+    (recursively) to expand shorthand properties.
+    eg. margin becomes margin-top, margin-right, margin-bottom and margin-left.
+    """
+    for rule in sheet.cssRules:
+        if rule.type == rule.IMPORT_RULE:
+            expand_shorthands(rule.styleSheet)
+        elif rule.type == rule.MEDIA_RULE:
+            # CSSMediaRule is kinda like a CSSStyleSheet: it has media and
+            # cssRules attributes.
+            expand_shorthands(rule)
+        elif rule.type in (rule.STYLE_RULE, rule.PAGE_RULE):
+            for name, expander in properties.SHORTHANDS.iteritems():
+                property = rule.style.getProperty(name)
+                if not property:
+                    continue
+                for new_property in expander(property):
+                    rule.style.setProperty(new_property)
+                rule.style.removeProperty(property.name)

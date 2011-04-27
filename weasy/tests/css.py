@@ -3,6 +3,7 @@
 from attest import Tests, assert_hook
 from lxml import html
 #from lxml.html import html5parser as html  # API is the same as lxml.html
+import cssutils
 from cssutils.helper import path2url
 
 from .. import css
@@ -50,3 +51,18 @@ def test_find_stylesheets():
     assert set(rule.selectorText for rule in rules) == set(
         ['p', 'ul', 'li', 'a', ':first'])
 
+
+@suite.test
+def test_expand_shorthands():
+    sheet = cssutils.parseFile(resource_filename('sheet2.css'))
+    assert sheet.cssRules[0].selectorText == 'li'
+    style = sheet.cssRules[0].style
+    assert style.getPropertyValue('margin') == '2em 0'
+    assert not style.getPropertyValue('margin-top')
+    css.expand_shorthands(sheet)
+    assert not style.getPropertyValue('margin')
+    assert style.getPropertyValue('margin-top') == '2em'
+    assert style.getPropertyValue('margin-right') == '0'
+    assert style.getPropertyValue('margin-bottom') == '2em'
+    assert style.getPropertyValue('margin-left') == '0'
+    
