@@ -5,7 +5,7 @@ from lxml import html
 #from lxml.html import html5parser as html  # API is the same as lxml.html
 from cssutils.helper import path2url
 
-from ..css import find_stylesheets
+from .. import css
 
 from . import resource_filename
 
@@ -40,9 +40,13 @@ def test_find_stylesheets():
     assert link.tag == 'link'
     p, = root[1]
     
-    sheets = find_stylesheets(document)
+    sheets = css.find_stylesheets(document)
     assert len(sheets) == 2
     assert set(s.href.rsplit('/', 1)[-1] for s in sheets) == set(
         ['doc1.html', 'sheet1.css'])
 
+    rules = list(css.resolve_import_media(sheets, 'print'))
+    assert len(rules) == 5
+    assert set(rule.selectorText for rule in rules) == set(
+        ['p', 'ul', 'li', 'a', ':first'])
 

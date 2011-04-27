@@ -1,10 +1,10 @@
-@import url(sheet2.css);
+@import url(sheet2.css) all;
 p {
     margin: 0;
 }
 
 @media print {
-    p {
+    ul {
         margin: 2em 0;
     }
 }
