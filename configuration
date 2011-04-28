@@ -1,0 +1,10 @@
+{
+  "name": "WeasyPrint",
+  "description": "Convert HTML + CSS to PDF",
+  "menu": [
+    {"name": "News", "link": "/news"},
+    {"name": "Documentation", "link": "/documentation"},
+    {"name": "Contribute", "link": "/contribute"},
+    {"name": "Download", "link": "/download"}
+  ]
+}
