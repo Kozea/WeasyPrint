@@ -182,6 +182,7 @@ nav li a {
   display: inline-block;
   font-family: "menu";
   margin-left: 0;
+  min-height: 30px;
   padding: 0 12px 0 14px;
   text-align: left;
   text-transform: uppercase;
