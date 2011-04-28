@@ -1,3 +1,9 @@
+
+WeasyPrint converts web documents (HTML, CSS, ...) to PDF.
+
+See the documentation at http://weasyprint.org/
+
+
 Dependencies
 ------------
 
