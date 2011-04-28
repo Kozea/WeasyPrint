@@ -12,26 +12,18 @@ def four_sides_lengths(property):
     """
     Expand properties that set a dimension for each of the four sides of a box.
     """
-    value = property.propertyValue
-    if len(value) == 1:
-        top = right = bottom = left = value[0]
-    elif len(value) == 2:
-        top = bottom = value[0]
-        right = left = value[1]
-    elif len(value) == 3:
-        top = value[0]
-        right = left = value[1]
-        bottom = value[2]
-    elif len(value) == 4:
-        top = value[0]
-        right = value[1]
-        bottom = value[2]
-        left = value[3]
-    else:
+    values = list(property.propertyValue)
+    # Make sure we have 4 values
+    if len(values) == 1:
+        values *= 4
+    elif len(values) == 2:
+        values *= 2 # (bottom, left) defaults to (top, right) 
+    elif len(values) == 3:
+        values.append(values[1]) # left defaults to right
+    elif len(values) != 4:
         raise ValueError('Invalid number of value components for %s: %s'
-            % (property.name, value.cssText))
-    for suffix, value in (('-top', top), ('-right', right),
-                          ('-bottom', bottom), ('-left', left)):
+            % (property.name, property.value))
+    for suffix, value in zip(('-top', '-right', '-bottom', '-left'), values):
         yield Property(name=property.name + suffix, value=value.cssText,
                        priority=property.priority)
 

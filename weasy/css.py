@@ -1,5 +1,4 @@
 from cssutils import parseString, parseUrl
-from cssutils.stylesheets import StyleSheetList, MediaList
 
 from . import properties
 
@@ -57,12 +56,12 @@ def find_link_stylesheet_elements(document):
 
 def find_stylesheets(html_document):
     """
-    Return a `StyleSheetList` from a DOM document.
+    Yield stylesheets from a DOM document.
     """
-    sheets = StyleSheetList()
-    sheets.extend(find_style_elements(html_document))
-    sheets.extend(find_link_stylesheet_elements(html_document))
-    return sheets
+    for sheet in find_style_elements(html_document):
+        yield sheet
+    for sheet in find_link_stylesheet_elements(html_document):
+        yield sheet
 
 
 def evaluate_media_query(query_list, medium):
@@ -77,28 +76,27 @@ def evaluate_media_query(query_list, medium):
     return any(query.mediaText in (medium, 'all') for query in query_list)
 
 
-def resolve_import_media(sheets, medium):
+def resolve_import_media(sheet, medium):
     """
-    Resolves @import and @media rules in the given StlyleSheetList, and yields
+    Resolves @import and @media rules in the given CSSStlyleSheet, and yields
     applicable rules for `medium`.
     """
-    for sheet in sheets:
-        if not evaluate_media_query(sheet.media, medium):
-            continue
-        for rule in sheet.cssRules:
-            if rule.type in (rule.CHARSET_RULE, rule.COMMENT):
-                pass # ignored
-            elif rule.type == rule.IMPORT_RULE:
-                subsheet = rule.styleSheet
-            elif rule.type == rule.MEDIA_RULE:
-                # CSSMediaRule is kinda like a CSSStyleSheet: it has media and
-                # cssRules attributes.
-                subsheet = rule
-            else:
-                yield rule # pass other rules through
-                continue # no sub-stylesheet here.
-            for subrule in resolve_import_media([subsheet], medium):
-                yield subrule
+    if not evaluate_media_query(sheet.media, medium):
+        return
+    for rule in sheet.cssRules:
+        if rule.type in (rule.CHARSET_RULE, rule.COMMENT):
+            pass # ignored
+        elif rule.type == rule.IMPORT_RULE:
+            subsheet = rule.styleSheet
+        elif rule.type == rule.MEDIA_RULE:
+            # CSSMediaRule is kinda like a CSSStyleSheet: it has media and
+            # cssRules attributes.
+            subsheet = rule
+        else:
+            yield rule # pass other rules through
+            continue # no sub-stylesheet here.
+        for subrule in resolve_import_media(subsheet, medium):
+            yield subrule
 
 
 def expand_shorthands(sheet):

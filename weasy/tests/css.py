@@ -41,12 +41,13 @@ def test_find_stylesheets():
     assert link.tag == 'link'
     p, = root[1]
     
-    sheets = css.find_stylesheets(document)
+    sheets = list(css.find_stylesheets(document))
     assert len(sheets) == 2
     assert set(s.href.rsplit('/', 1)[-1] for s in sheets) == set(
         ['doc1.html', 'sheet1.css'])
 
-    rules = list(css.resolve_import_media(sheets, 'print'))
+    rules = list(rule for sheet in sheets
+                      for rule in css.resolve_import_media(sheet, 'print'))
     assert len(rules) == 5
     assert set(rule.selectorText for rule in rules) == set(
         ['p', 'ul', 'li', 'a', ':first'])
@@ -57,12 +58,12 @@ def test_expand_shorthands():
     sheet = cssutils.parseFile(resource_filename('sheet2.css'))
     assert sheet.cssRules[0].selectorText == 'li'
     style = sheet.cssRules[0].style
-    assert style.getPropertyValue('margin') == '2em 0'
-    assert not style.getPropertyValue('margin-top')
+    assert style['margin'] == '2em 0'
+    assert not style['margin-top']
     css.expand_shorthands(sheet)
-    assert not style.getPropertyValue('margin')
-    assert style.getPropertyValue('margin-top') == '2em'
-    assert style.getPropertyValue('margin-right') == '0'
-    assert style.getPropertyValue('margin-bottom') == '2em'
-    assert style.getPropertyValue('margin-left') == '0'
+    assert not style['margin']
+    assert style['margin-top'] == '2em'
+    assert style['margin-right'] == '0'
+    assert style['margin-bottom'] == '2em'
+    assert style['margin-left'] == '0'
     
