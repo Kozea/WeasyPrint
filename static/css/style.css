@@ -185,7 +185,7 @@ nav li a {
 	padding: 0 12px 0 14px;
 	text-align: left;
 	text-transform: uppercase;
-	-moz-transition: background 0.7s ease;
+	transition: background 0.7s ease;
 }
 
 nav li a:hover,
