@@ -1,4 +1,5 @@
 from cssutils import parseString, parseUrl
+from cssutils.css import CSSStyleDeclaration
 
 from . import properties
 
@@ -113,10 +114,13 @@ def expand_shorthands(sheet):
             # cssRules attributes.
             expand_shorthands(rule)
         elif rule.type in (rule.STYLE_RULE, rule.PAGE_RULE):
-            for name, expander in properties.SHORTHANDS.iteritems():
-                property = rule.style.getProperty(name)
-                if not property:
-                    continue
-                for new_property in expander(property):
-                    rule.style.setProperty(new_property)
-                rule.style.removeProperty(property.name)
+            # Build a new CSSStyleDeclaration to preserve ordering.
+            new_style = CSSStyleDeclaration()
+            for property in rule.style:
+                if property.name in properties.SHORTHANDS:
+                    expander = properties.SHORTHANDS[property.name]
+                    for new_property in expander(property):
+                        new_style.setProperty(new_property)
+                else:
+                    new_style.setProperty(property)
+            rule.style = new_style

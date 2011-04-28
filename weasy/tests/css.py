@@ -59,11 +59,17 @@ def test_expand_shorthands():
     assert sheet.cssRules[0].selectorText == 'li'
     style = sheet.cssRules[0].style
     assert style['margin'] == '2em 0'
+    assert style['margin-bottom'] == '3em'
+    assert style['margin-left'] == '4em'
     assert not style['margin-top']
     css.expand_shorthands(sheet)
+    # expand_shorthands() builds new style object
+    style = sheet.cssRules[0].style
     assert not style['margin']
     assert style['margin-top'] == '2em'
     assert style['margin-right'] == '0'
-    assert style['margin-bottom'] == '2em'
-    assert style['margin-left'] == '0'
+    assert style['margin-bottom'] == '2em', \
+        "3em was before the shorthand, should be masked"
+    assert style['margin-left'] == '4em', \
+        "4em was after the shorthand, should not be masked"
     

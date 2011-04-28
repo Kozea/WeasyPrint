@@ -11,6 +11,7 @@ suite = Tests()
 
 
 def expand_shorthand(expander, name, value):
+    """Helper to test shorthand properties expander functions."""
     return dict((property.name, property.value)
                 for property in expander(Property(name, value)))
 
