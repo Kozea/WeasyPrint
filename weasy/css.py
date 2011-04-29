@@ -22,7 +22,8 @@ from cssutils.css import CSSStyleDeclaration
 from . import properties
 
 
-__all__ = ['find_stylesheets']
+HTML4_DEFAULT_STYLESHEET = parseFile(os.path.join(os.path.dirname(__file__),
+    'html4_default.css'))
 
 
 def strip_mimetype_parameters(mimetype):
@@ -77,6 +78,7 @@ def find_stylesheets(html_document):
     """
     Yield stylesheets from a DOM document.
     """
+    # TODO: merge these to give them in tree order
     for sheet in find_style_elements(html_document):
         yield sheet
     for sheet in find_link_stylesheet_elements(html_document):
@@ -112,7 +114,9 @@ def resolve_import_media(sheet, medium):
             # cssRules attributes.
             subsheet = rule
         else:
-            yield rule # pass other rules through
+            # pass other rules through: "normal" rulesets, @font-face,
+            # @namespace, @page, and @variables
+            yield rule
             continue # no sub-stylesheet here.
         for subrule in resolve_import_media(subsheet, medium):
             yield subrule

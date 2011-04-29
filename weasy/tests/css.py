@@ -36,18 +36,6 @@ def parse_html(filename):
     return document
 
 
-#@suite.test
-#def foo():
-#    source = u"<P id=greetings>今日は <em>html5lib</em>!"
-#    doc = html.document_fromstring(source)
-#    p = doc.cssselect('p')[0]
-#    p.foo = 42
-#    assert doc[0][0].foo == 42
-#    assert doc[0][0] is p
-#    assert p.tag == 'p'
-#    assert p.get('id') == 'greetings'
-#    assert 2+2 == 5
-
 @suite.test
 def test_find_stylesheets():
     document = parse_html('doc1.html')
