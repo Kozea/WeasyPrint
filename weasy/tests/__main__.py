@@ -16,7 +16,21 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys
 from weasy.tests import all
 
 if __name__ == '__main__':
-    all.main()
+    if '--cover' in sys.argv:
+        sys.argv.remove('--cover') # Attest complains on unknown options
+        from coverage import coverage
+        cover = coverage()
+        cover.start()
+        all.main()
+        cover.stop()
+        cover.report([module for name, module in sys.modules.iteritems()
+                             # Imported modules end up in sys.modules as None
+                             # eg. sys.modules['weasy.css.cssutils'] == None
+                             # Is it because of the Attest import hook?
+                             if module and name.startswith('weasy')])
+    else:
+        all.main()
