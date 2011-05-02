@@ -18,9 +18,9 @@
 
 import attest
 from attest import Tests, assert_hook
-from cssutils.css import Property
+from cssutils.css import PropertyValue, CSSStyleDeclaration
 
-from ..properties import four_sides_lengths
+from ..properties import four_sides, expand_shorthands_in_declaration
 
 
 suite = Tests()
@@ -28,36 +28,44 @@ suite = Tests()
 
 def expand_shorthand(expander, name, value):
     """Helper to test shorthand properties expander functions."""
-    return dict((property.name, property.value)
-                for property in expander(Property(name, value)))
+    return dict((name, value.cssText)
+                for name, value in expander(name, list(PropertyValue(value))))
+
+
+def expand_to_dict(css):
+    """Helper to test shorthand properties expander functions."""
+    return dict((prop.name, prop.value)
+                for prop in expand_shorthands_in_declaration(
+                    CSSStyleDeclaration(css)))
 
 
 @suite.test
-def test_four_sides_lengths():
-    assert expand_shorthand(four_sides_lengths, 'margin', '1em') == {
+def test_four_sides():
+    assert expand_to_dict('margin: 1em') == {
         'margin-top': '1em',
         'margin-right': '1em',
         'margin-bottom': '1em',
         'margin-left': '1em',
     }
-    assert expand_shorthand(four_sides_lengths, 'padding', '1em 0') == {
+    assert expand_to_dict('padding: 1em 0') == {
         'padding-top': '1em',
         'padding-right': '0',
         'padding-bottom': '1em',
         'padding-left': '0',
     }
-    assert expand_shorthand(four_sides_lengths, 'padding', '1em 0 2em') == {
+    assert expand_to_dict('padding: 1em 0 2em') == {
         'padding-top': '1em',
         'padding-right': '0',
         'padding-bottom': '2em',
         'padding-left': '0',
     }
-    assert expand_shorthand(four_sides_lengths, 'padding', '1em 0 2em 5px') == {
+    assert expand_to_dict('padding: 1em 0 2em 5px') == {
         'padding-top': '1em',
         'padding-right': '0',
         'padding-bottom': '2em',
         'padding-left': '5px',
     }
     with attest.raises(ValueError):
-        expand_shorthand(four_sides_lengths, 'padding', '1 2 3 4 5')
+        list(four_sides('padding', PropertyValue('1 2 3 4 5')))
+
 

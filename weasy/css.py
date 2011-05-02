@@ -136,13 +136,6 @@ def expand_shorthands(sheet):
             # cssRules attributes.
             expand_shorthands(rule)
         elif rule.type in (rule.STYLE_RULE, rule.PAGE_RULE):
-            # Build a new CSSStyleDeclaration to preserve ordering.
-            new_style = CSSStyleDeclaration()
-            for property in rule.style:
-                if property.name in properties.SHORTHANDS:
-                    expander = properties.SHORTHANDS[property.name]
-                    for new_property in expander(property):
-                        new_style.setProperty(new_property)
-                else:
-                    new_style.setProperty(property)
-            rule.style = new_style
+            rule.style = properties.expand_shorthands_in_declaration(rule.style)
+        # TODO: @font-face
+

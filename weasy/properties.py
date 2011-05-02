@@ -28,21 +28,15 @@ Expander functions take a Property and yield expanded Property objects.
 properties. The initial value is the specified value when no other values was
 found in the stylesheets for an element.
 
-A few values have a sepcial meaning here:
- * ``-weasy-DIRECTION-ORIGIN`` (for text-align): 'left' if `direction` is
-   'ltr', 'right' if `direction` is 'rtl' 
- * ``-weasy-SAME-AS-COLOR`` (for border-color): use the value of the `color`
-   property
 """
 
-from cssutils.css import Property, CSSStyleDeclaration
+from cssutils.css import CSSStyleDeclaration
 
 
-def four_sides_lengths(property):
+def four_sides(name, values):
     """
-    Expand properties that set a dimension for each of the four sides of a box.
+    Expand properties that set a value for each of the four sides of a box.
     """
-    values = list(property.propertyValue)
     # Make sure we have 4 values
     if len(values) == 1:
         values *= 4
@@ -51,16 +45,85 @@ def four_sides_lengths(property):
     elif len(values) == 3:
         values.append(values[1]) # left defaults to right
     elif len(values) != 4:
-        raise ValueError('Invalid number of value components for %s: %s'
-            % (property.name, property.value))
+        raise ValueError('Expected 1 to 4 value components for %s, got "%s"'
+            % (name, values))
     for suffix, value in zip(('-top', '-right', '-bottom', '-left'), values):
-        yield Property(name=property.name + suffix, value=value.cssText,
-                       priority=property.priority)
+        i = name.rfind('-')
+        if i == -1:
+            new_name = name + suffix
+        else:
+            # eg. border-color becomes border-*-color, not border-color-*
+            new_name = name[:i] + suffix + name[i:]
+        yield (new_name, value)
+
+
+def expand_border_side(name, values):
+    # TODO
+    # http://www.w3.org/TR/CSS21/box.html#border-shorthand-properties
+    # Defined as:
+    # 	[ <border-width> || <border-style> || <'border-top-color'> ] | inherit
+    # With || meaning 'one or more of them, in any order' so we need to actuylly
+    # look at the values to decide which is which
+    # http://www.w3.org/TR/CSS21/about.html#value-defs
+    raise NotImplementedError
+
+
+def expand_border(name, values):
+    for suffix in ('-top', '-right', '-bottom', '-left'):
+        for new_prop in expand_border_side(name + suffix, values):
+            yield new_prop
+
+
+def expand_outline(name, values):
+    # TODO. See expand_border_side
+    # 	[ <'outline-color'> || <'outline-style'> || <'outline-width'> ] | inherit
+    raise NotImplementedError
+
+
+def expand_before_after(name, values):
+    if len(values) == 1:
+        values *= 2
+    elif len(values) != 2:
+        raise ValueError('Expected 2 values for %s, got %r.' % (name, values))
+    for suffix, value in zip(('-before', '-after'), values):
+        yield (name + suffix, value)
+
+
+def expand_background(name, values):
+    # TODO
+    # 	[<'background-color'> || <'background-image'> || <'background-repeat'> || <'background-attachment'> || <'background-position'>] | inherit
+    raise NotImplementedError
+
+
+def expand_font(name, values):
+    # TODO
+    # [ [ <'font-style'> || <'font-variant'> || <'font-weight'> ]? <'font-size'> [ / <'line-height'> ]? <'font-family'> ] | caption | icon | menu | message-box | small-caption | status-bar | inherit 
+    raise NotImplementedError
+
+
+def expand_list_style(name, values):
+    # TODO
+    # 	[ <'list-style-type'> || <'list-style-position'> || <'list-style-image'> ] | inherit
+    raise NotImplementedError
+
 
 SHORTHANDS = {
-    'margin': four_sides_lengths,
-    'padding': four_sides_lengths,
-    'border-width': four_sides_lengths,
+    'margin': four_sides,
+    'padding': four_sides,
+    'border-color': four_sides,
+    'border-width': four_sides,
+    'border-style': four_sides,
+    'border-top': expand_border_side,
+    'border-right': expand_border_side,
+    'border-bottom': expand_border_side,
+    'border-left': expand_border_side,
+    'border': expand_border,
+    'outline': expand_outline,
+    'cue': expand_before_after,
+    'pause': expand_before_after,
+    'background': expand_background,
+    'font': expand_font,
+    'list-style': expand_list_style,
 }
 
 # Should be in the weasy.css module but that would cause a circular import
@@ -74,8 +137,11 @@ def expand_shorthands_in_declaration(style):
     for prop in style:
         if prop.name in SHORTHANDS:
             expander = SHORTHANDS[prop.name]
-            for new_prop in expander(prop):
-                new_style.setProperty(new_prop)
+            for new_name, new_value in expander(prop.name, 
+                                                list(prop.propertyValue)):
+                if not isinstance(new_value, basestring):
+                    new_value = new_value.cssText
+                new_style.setProperty(new_name, new_value, prop.priority)
         else:
             new_style.setProperty(prop)
     return new_style
@@ -153,7 +219,9 @@ r"""
 """
 INITIAL_VALUES = dict(
     (prop.name, prop.propertyValue)
-    for prop in expand_shorthands_in_declaration(CSSStyleDeclaration("""
+    # XXX: Special cases that can not be expressed as CSS:
+    #   border-color, text-align
+    for prop in expand_shorthands_in_declaration(CSSStyleDeclaration(u"""
         azimuth: center;
         background-attachment: scroll;
         background-color: transparent;
@@ -161,8 +229,7 @@ INITIAL_VALUES = dict(
         background-position: 0% 0%;
         background-repeat: repeat;
         border-collapse: separate;
-        border-color: -weasy-SAME-AS-COLOR;  /* the value of the 'color'
-                                                property */
+    /*  border-color: the value of the 'color' property */
         border-spacing: 0;
         border-style: none;
         border-width: medium;
@@ -224,9 +291,8 @@ INITIAL_VALUES = dict(
         speech-rate: medium;
         stress: 50;
         table-layout: auto;
-        text-align: -weasy-DIRECTION-ORIGIN; /* acts as 'left' if 'direction'
-                                                is 'ltr', 'right' if
-                                                'direction' is 'rtl'  */
+    /*  text-align: acts as 'left' if 'direction' is 'ltr', 'right' if
+                    'direction' is 'rtl'  */
         text-decoration: none;
         text-indent: 0;
         text-transform: none;
