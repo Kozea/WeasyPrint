@@ -73,6 +73,12 @@ def test_expand_shorthands():
         "4em was after the shorthand, should not be masked"
 
 
+def get_value(property_or_list):
+    if hasattr(property_or_list, 'value'):
+        return property_or_list.value
+    else:
+        return ' '.join(p.cssText for p in property_or_list)
+
 @suite.test
 def test_annotate_document():
     user_stylesheet = cssutils.parseFile(resource_filename('user.css'))
@@ -88,17 +94,21 @@ def test_annotate_document():
     a, = li[0]
     
     sides = ('-top', '-right', '-bottom', '-left')
-    for side, expected_value in zip(sides, ('1em', '0', '1em', '0')):
-        assert p.style['margin' + side].value == expected_value
+    # 32px = 1em * font-size: 2em * initial 16px
+    for side, expected_value in zip(sides, ('32px', '0', '32px', '0')):
+        assert get_value(p.style['margin' + side]) == expected_value
     
-    for side, expected_value in zip(sides, ('2em', '2em', '2em', '2em')):
-        assert ul.style['margin' + side].value == expected_value
+    # 32px = 2em * initial 16px
+    for side, expected_value in zip(sides, ('32px', '32px', '32px', '32px')):
+        assert get_value(ul.style['margin' + side]) == expected_value
     
-    for side, expected_value in zip(sides, ('2em', '0', '2em', '4em')):
-        assert li[0].style['margin' + side].value == expected_value
+    # 32px = 2em * initial 16px
+    # 64px = 4em * initial 16px
+    for side, expected_value in zip(sides, ('32px', '0', '32px', '64px')):
+        assert get_value(li[0].style['margin' + side]) == expected_value
     
-    assert a.style['text-decoration'].value == 'underline'
-    assert a.style['color'].value == 'red'
+    assert get_value(a.style['text-decoration']) == 'underline'
+    assert get_value(a.style['color']) == 'red'
     # TODO much more tests here: test that origin and selector precedence
     # and inheritance are correct, ...
 

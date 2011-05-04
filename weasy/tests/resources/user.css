@@ -1,3 +1,5 @@
 html {
-    font-size: 120%; /* I hate tiny text */
+    /* Reversed contrast */
+    color: white;
+    background-color: black;
 }

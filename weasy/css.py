@@ -40,7 +40,7 @@
 """
 import os.path
 from cssutils import parseString, parseUrl, parseStyle, parseFile
-from cssutils.css import Value
+from cssutils.css import PropertyValue, DimensionValue, CSSStyleDeclaration
 
 from . import properties
 
@@ -109,13 +109,51 @@ def find_stylesheets(html_document):
 
 
 def make_urls_absolute(sheet):
-    # TODO
+    # TODO: make urls absolute
     pass
 
 
-def remove_ignored_declarations(sheet):
-    # TODO
-    pass
+def invalid_declaration_reason(prop):
+    """
+    Take a Property object and return a string describing the reason if it’s
+    invalid, or None if it’s valid.
+    """
+    # TODO: validation
+
+
+def find_rulesets(stylesheet):
+    """
+    Recursively walk a stylesheet and its @media and @import rules to yield
+    all rulesets (CSSStyleRule or CSSPageRule objects).
+    """
+    for rule in stylesheet.cssRules:
+        if rule.type in (rule.STYLE_RULE, rule.PAGE_RULE):
+            yield rule
+        elif rule.type == rule.IMPORT_RULE:
+            for subrule in find_rulesets(rule.styleSheet):
+                yield subrule
+        elif rule.type == rule.MEDIA_RULE:
+            # CSSMediaRule is kinda like a CSSStyleSheet: it has media and
+            # cssRules attributes.
+            for subrule in find_rulesets(rule):
+                yield subrule
+        # ignore everything else
+
+
+def remove_ignored_declarations(stylesheet):
+    """
+    Changes IN-PLACE the given stylesheet and its imported stylesheets
+    (recursively) to remove illegal or unsupported declarations.
+    """
+    # TODO: @font-face
+    for rule in find_rulesets(stylesheet):
+        new_style = CSSStyleDeclaration()
+        for prop in rule.style:
+            reason = invalid_declaration_reason(prop)
+            if reason is None:
+                new_style.setProperty(prop)
+            # TODO: log ignored declarations, with reasons
+        rule.style = new_style
     
 
 def evaluate_media_query(query_list, medium):
@@ -156,21 +194,14 @@ def resolve_import_media(sheet, medium):
             yield subrule
 
 
-def expand_shorthands(sheet):
+def expand_shorthands(stylesheet):
     """
     Changes IN-PLACE the given stylesheet and its imported stylesheets
     (recursively) to expand shorthand properties.
     eg. margin becomes margin-top, margin-right, margin-bottom and margin-left.
     """
-    for rule in sheet.cssRules:
-        if rule.type == rule.IMPORT_RULE:
-            expand_shorthands(rule.styleSheet)
-        elif rule.type == rule.MEDIA_RULE:
-            # CSSMediaRule is kinda like a CSSStyleSheet: it has media and
-            # cssRules attributes.
-            expand_shorthands(rule)
-        elif rule.type in (rule.STYLE_RULE, rule.PAGE_RULE):
-            rule.style = properties.expand_shorthands_in_declaration(rule.style)
+    for rule in find_rulesets(stylesheet):
+        rule.style = properties.expand_shorthands_in_declaration(rule.style)
         # TODO: @font-face
 
 
@@ -275,7 +306,7 @@ def handle_inheritance(element):
             if value.value == 'inherit':
                 # The root element can not inherit from anything:
                 # use the initial value.
-                style[name] = Value('initial')
+                style[name] = PropertyValue('initial')
     else:
         # The parent appears before in tree order, so we should already have
         # finished with its computed values.
@@ -287,6 +318,17 @@ def handle_inheritance(element):
                 style[name] = parent.style[name]
 
 
+def is_initial(style, name):
+    """
+    Return whether the property `name` is missing in the given `style` dict
+    or if its value is the 'initial' keyword.
+    """
+    if name not in style:
+        return True
+    values = style[name]
+    return len(values) == 1 and values[0].value == 'initial'
+
+
 def handle_initial_values(element):
     """
     Properties that do not have a value after inheritance or whose value is the
@@ -296,7 +338,7 @@ def handle_initial_values(element):
     for name, initial in properties.INITIAL_VALUES.iteritems():
         # Explicit 'initial' values are new in CSS3
         # http://www.w3.org/TR/css3-values/#computed0
-        if style.get(name, Value('initial')).value == 'initial':
+        if is_initial(style, name):
             style[name] = initial
 
     # Special cases for initial values that can not be expressed as CSS
@@ -304,24 +346,117 @@ def handle_initial_values(element):
     # border-color: same as color
     for name in ('border-top-color', 'border-right-color',
                  'border-bottom-color', 'border-left-color'):
-        if style.get(name, Value('initial')).value == 'initial':
+        if is_initial(style, name):
             style[name] = style['color']
 
     # text-align: left in left-to-right text, right in right-to-left
-    if style.get('text-align', Value('initial')).value == 'initial':
+    if is_initial(style, 'text-align'):
         if style['direction'].value == 'rtl':
-            style['text-align'] = Value('right')
+            style['text-align'] = PropertyValue('right')
         else:
-            style['text-align'] = Value('left')
+            style['text-align'] = PropertyValue('left')
+
+
+def handle_computed_colors(element):
+    """
+    Set the computed values for colors.
+    """
+    style = element.style
+    for name in ('color', 'border-color', 'outline-color', 'background-color'):
+        # TODO
+        pass
+
+
+def handle_computed_font_size(element):
+    """
+    Set the computed value for font-size, and return this value in pixels.
+    """
+    parent = element.getparent()
+    if parent is not None:
+        assert len(parent.style['font-size']) == 1
+        assert parent.style['font-size'][0].dimension == 'px'
+        parent_font_size = parent.style['font-size'][0].value
+    else:
+        # root element, no parent
+        parent_value_text = properties.INITIAL_VALUES['font-size'].value
+        # Initial is medium
+        parent_font_size = properties.FONT_SIZE_KEYWORDS[parent_value_text]
+
+    assert len(element.style['font-size']) == 1
+    value = element.style['font-size'][0]
+    value_text = value.value
+    
+    # TODO: once we ignore invalid declarations, turn these ValueError’s into
+    # assert False, 'Declaration should have been ignored'
+    if value_text in properties.FONT_SIZE_KEYWORDS:
+        font_size = properties.FONT_SIZE_KEYWORDS[value_text]
+    elif value_text in ('smaller', 'larger'):
+        # TODO: support 'smaller' and 'larger' font-size
+        raise ValueError('font-size: smaller | larger are not supported yet.')
+    elif value.type == 'PERCENTAGE':
+        font_size = parent_font_size * value.value / 100.
+    elif value.type == 'DIMENSION':
+        if value.dimension == 'px':
+            font_size = value.value
+        elif value.dimension == 'em':
+            font_size = parent_font_size * value.value
+        elif value.dimension == 'ex':
+            # TODO: support ex unit
+            raise ValueError('The ex unit is not supported yet.')
+        elif value.dimension in properties.LENGTHS_TO_PIXELS:
+            factor = properties.LENGTHS_TO_PIXELS[value.dimension]
+            font_size = value.value * factor
+        else:
+            raise ValueError('Unknown length unit for font-size:', values_text)
+    else:
+        raise ValueError('Invalid value for font-size:', values_text)
+
+    element.style['font-size'] = PropertyValue(str(font_size) + 'px')
+    return font_size
+
+
+def compute_length(value, font_size):
+    """
+    Convert a single length value to pixels.
+    """
+    # TODO: once we ignore invalid declarations, turn these ValueError’s into
+    # assert False, 'Declaration should have been ignored'
+    if value.type == 'DIMENSION':
+        if value.dimension in properties.LENGTHS_TO_PIXELS:
+            # Convert absolute lengths to pixels
+            factor = properties.LENGTHS_TO_PIXELS[value.dimension]
+            return DimensionValue(str(value.value * factor) + 'px')
+        elif value.dimension == 'em':
+            return DimensionValue(str(value.value * font_size) + 'px')
+        elif value.dimension == 'ex':
+            # TODO: support ex
+            raise ValueError('The ex unit is not supported yet.', name,
+                values.value)
+        elif value.dimension is not None:
+            raise ValueError('Unknown length unit', value.value, repr(value.type))
+    # No conversion needed.
+    return value
+    
+
+def handle_computed_lengths(element, font_size):
+    """
+    Convert other length units to pixels.
+    """
+    element.style = dict(
+        # PropertyValue objects are not mutable, build a new list
+        (name, [compute_length(value, font_size) for value in values])
+        for name, values in element.style.iteritems()
+    )
 
 
 def handle_computed_values(element):
     """
     Normalize values as much as possible without rendering the document.
     """
-    style = element.style
-    parent = element.getparent()
-    # TODO: http://www.w3.org/TR/css3-values/#computed0
+    handle_computed_colors(element)
+    # em lengths depend on font-size, compute font-size first
+    font_size = handle_computed_font_size(element)
+    handle_computed_lengths(element, font_size)
 
 
 def assign_properties(document):
@@ -366,7 +501,6 @@ def annotate_document(document, user_stylesheets=None, ua_stylesheets=None,
             make_urls_absolute(sheet)
             expand_shorthands(sheet)
             for rule in resolve_import_media(sheet, medium):
-                print sheet.href.split('/')[-1], origin, rule
                 if rule.type == rule.STYLE_RULE:
                     apply_style_rule(rule, document, origin)
                 # TODO: handle @font-face, @namespace, @page, and @variables

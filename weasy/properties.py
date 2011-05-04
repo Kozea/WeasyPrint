@@ -30,6 +30,7 @@ found in the stylesheets for an element.
 
 """
 
+import collections
 from cssutils.css import CSSStyleDeclaration
 
 
@@ -309,4 +310,35 @@ INITIAL_VALUES = dict(
         z-index: auto;
     """))
 )
+
+
+# How many CSS pixels is one <unit> ?
+# http://www.w3.org/TR/CSS21/syndata.html#length-units
+LENGTHS_TO_PIXELS = {
+    'px': 1,
+    'pt': 1. / 0.75,
+    'pc': 16., # LENGTHS_TO_PIXELS['pt'] * 12
+    'in': 96., # LENGTHS_TO_PIXELS['pt'] * 72
+    'cm': 96. / 2.54, # LENGTHS_TO_PIXELS['in'] / 2.54
+    'mm': 96. / 25.4, # LENGTHS_TO_PIXELS['in'] / 25.4
+}
+
+
+# Value in pixels of font-size for <absolute-size> keywords: 12pt (16px) for
+# medium, and scaling factors given in CSS3 for others:
+# http://www.w3.org/TR/css3-fonts/#font-size-prop
+# This dict has to be ordered to implement 'smaller' and 'larger'
+FONT_SIZE_MEDIUM = 16.
+FONT_SIZE_KEYWORDS = collections.OrderedDict([
+    ('xx-small', FONT_SIZE_MEDIUM * 3/5),
+    ('x-small', FONT_SIZE_MEDIUM * 3/4),
+    ('small', FONT_SIZE_MEDIUM * 8/9),
+    ('medium', FONT_SIZE_MEDIUM),
+    ('large', FONT_SIZE_MEDIUM * 6/5),
+    ('x-large', FONT_SIZE_MEDIUM * 3/2),
+    ('xx-large', FONT_SIZE_MEDIUM * 2),
+])
+del FONT_SIZE_MEDIUM
+
+
 
