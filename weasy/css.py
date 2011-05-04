@@ -1,4 +1,3 @@
-from cssutils import parseString, parseUrl
 # coding: utf8
 
 #  WeasyPrint converts web documents (HTML, CSS, ...) to PDF.
@@ -17,7 +16,31 @@ from cssutils import parseString, parseUrl
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cssutils.css import CSSStyleDeclaration
+"""
+    weasy.css
+    ---------
+    
+    This module takes care of steps 3 and 4 of “CSS 2.1 processing model”:
+    Retrieve stylesheets associated with a document and annotate every element
+    with a value for every CSS property.
+    http://www.w3.org/TR/CSS21/intro.html#processing-model
+    
+    This module does this in more than two steps. The `annotate_document`
+    function does everything, butthere is also a function for each step:
+    
+     * ``find_stylesheets``: Find and parse all author stylesheets in a document
+     * ``remove_ignored_declarations``: Remove illegal and unsupported
+       declarations
+     * ``make_urls_absolute``
+     * ``expand_shorthand``: Replace shorthand properties
+     * ``resolve_import_media``: Resolve @media and @import rules
+     * ``apply_style_rule``: Apply a CSSStyleRule to a document
+     * ``assign_properties``: Assign on computed value for each property to
+       every DOM element.
+"""
+import os.path
+from cssutils import parseString, parseUrl, parseStyle, parseFile
+from cssutils.css import Value
 
 from . import properties
 
@@ -85,6 +108,16 @@ def find_stylesheets(html_document):
         yield sheet
 
 
+def make_urls_absolute(sheet):
+    # TODO
+    pass
+
+
+def remove_ignored_declarations(sheet):
+    # TODO
+    pass
+    
+
 def evaluate_media_query(query_list, medium):
     """
     Return the boolean evaluation of `query_list` for the given `medium`
@@ -92,9 +125,10 @@ def evaluate_media_query(query_list, medium):
     :attr query_list: a cssutilts.stlysheets.MediaList
     :attr medium: a media type string (for now)
     
-    TODO: actual support for media queries, not just media types
     """
-    return any(query.mediaText in (medium, 'all') for query in query_list)
+    # TODO: actual support for media queries, not just media types
+    return query_list.mediaText == 'all' \
+        or any(query.mediaText == medium for query in query_list)
 
 
 def resolve_import_media(sheet, medium):
@@ -106,7 +140,7 @@ def resolve_import_media(sheet, medium):
         return
     for rule in sheet.cssRules:
         if rule.type in (rule.CHARSET_RULE, rule.COMMENT):
-            pass # ignored
+            continue # ignored
         elif rule.type == rule.IMPORT_RULE:
             subsheet = rule.styleSheet
         elif rule.type == rule.MEDIA_RULE:
@@ -138,4 +172,168 @@ def expand_shorthands(sheet):
         elif rule.type in (rule.STYLE_RULE, rule.PAGE_RULE):
             rule.style = properties.expand_shorthands_in_declaration(rule.style)
         # TODO: @font-face
+
+
+def build_lxml_proxy_cache(document):
+    """
+    Build as needed a proxy cache for an lxml document.
+    
+    ``Element`` python objects in lxml are only proxies to C space memory
+    (libxml2 data structures.) These objects may be created and destroyed at
+    any time, so we can generally not keep state in them.
+
+    The lxml documentation[1] only gives one guarantee: if a reference to a
+    proxy object is kept, this same object will always be used and we can keep
+    data there. A proxy cache is a list of these proxy objects for all elements,
+    just to make sure that they are kept alive.
+
+    [1] http://lxml.de/element_classes.html#element-initialization
+    """
+    if not hasattr(document, 'proxy_cache'):
+        document.proxy_cache = list(document.iter())
+    
+
+def declaration_precedence(origin, priority):
+    """
+    Return the precedence for a rule. Precedence values have no meaning unless
+    compared to each other.
+
+    Acceptable values for `origin` are the strings 'author', 'user' and
+    'user agent'.
+    """
+    # See http://www.w3.org/TR/CSS21/cascade.html#cascading-order
+    if origin == 'user agent':
+        return 1
+    elif origin == 'user' and not priority:
+        return 2
+    elif origin == 'author' and not priority:
+        return 3
+    elif origin == 'author': # and priority
+        return 4
+    elif origin == 'user': # and priority
+        return 5
+    else:
+        assert ValueError('Unkown origin: %r' % origin)
+        
+
+def apply_style_rule(rule, document, origin):
+    """
+    Apply a CSSStyleRule to a document according to its selectors, attaching
+    Property objects with their precedence to DOM elements.
+    
+    Acceptable values for `origin` are the strings 'author', 'user' and
+    'user agent'.
+    """
+    build_lxml_proxy_cache(document)
+    for selector in rule.selectorList:
+        for element in document.cssselect(selector.selectorText):
+            if not hasattr(element, 'applicable_properties'):
+                element.applicable_properties = []
+            for prop in rule.style:
+                # TODO: ignore properties that do not apply to the current 
+                # medium? http://www.w3.org/TR/CSS21/intro.html#processing-model
+                precedence = (
+                    declaration_precedence(origin, prop.priority),
+                    selector.specificity
+                )
+                element.applicable_properties.append((precedence, prop))
+
+
+def assign_properties(document):
+    """
+    For every element of the document, take the properties left by
+    ``apply_style_rule`` and assign computed values with respect to the cascade,
+    declaration priority (ie. ``!important``) and selector specificity.
+    """
+    build_lxml_proxy_cache(document)
+    for element in document.iter():
+        declarations = getattr(element, 'applicable_properties', [])
+        style_attribute = element.get('style')
+        if style_attribute:
+            # TODO: no href for parseStyle. What about relative URLs?
+            # CSS3 says we should resolve relative to the attribute:
+            # http://www.w3.org/TR/css-style-attr/#interpret
+            for prop in parseStyle(style_attribute):
+                precedence = (
+                    declaration_precedence('author', prop.priority),
+                    # 1 for being a style attribute, 0 as there is no selector.
+                    (1, 0, 0, 0)
+                )
+                declarations.append((precedence, prop))
+        # If apply_style_rule() was called in appearance order, the stability
+        # of Python's sort fulfills rule 4 of the cascade.
+        # This lambda has one parameter deconstructed as a tuple
+        declarations.sort(key=lambda (precedence, prop): precedence)
+        element.style = style = {}
+        for precedence, prop in declarations:
+            style[prop.name] = prop.propertyValue
+            
+        ### Inheritance
+        
+        parent = element.getparent()
+        if parent is None: # root element
+            for name, value in style.iteritems():
+                # The PropertyValue object has value attribute
+                if value.value == 'inherit':
+                    # So root element can not inherit from anything:
+                    # use the initial value.
+                    style[name] = Value('initial')
+        else:
+            # The parent appears before in tree order, so we should already have
+            # finished with its computed values.
+            for name, value in style.iteritems():
+                if value.value == 'inherit':
+                    style[name] = parent.style[name]
+            for name in properties.INHERITED:
+                if name not in style:
+                    style[name] = parent.style[name]
+        
+        ### Properties that do not have a value yet get the initial value
+
+        for name, initial in properties.INITIAL_VALUES.iteritems():
+            # Explicit 'initial' values are new in CSS3
+            # http://www.w3.org/TR/css3-values/#computed0
+            if style.get(name, Value('initial')).value == 'initial':
+                style[name] = initial
+
+        # Special cases for initial values that can not be expressed as CSS
+        for name in ('border-top-color', 'border-right-color',
+                     'border-bottom-color', 'border-left-color'):
+            if style.get(name, Value('initial')).value == 'initial':
+                style[name] = style['color']
+        
+        if style.get('text-align', Value('initial')).value == 'initial':
+            if style['direction'].value == 'rtl':
+                style['text-align'] = Value('right')
+            else:
+                style['text-align'] = Value('left')
+
+        # TODO: computed values
+        # http://www.w3.org/TR/css3-values/#computed0
+
+
+def annotate_document(document, user_stylesheets=None, ua_stylesheets=None,
+                      medium='print'):
+    """
+    Do everything from finding author stylesheets in the given HTML document
+    to parsing and applying them, to finish with a `style` attribute on
+    every DOM element: a dictionary with values for all CSS 2.1 properties.
+    """
+    document.make_links_absolute()
+    author_stylesheets = find_stylesheets(document)
+    for sheets, origin in ((author_stylesheets, 'author'),
+                           (user_stylesheets, 'user'),
+                           (ua_stylesheets, 'user agent')):
+        for sheet in sheets:
+            # TODO: UA and maybe user stylesheets might only need to be expanded
+            # once, not for every document.
+            remove_ignored_declarations(sheet)
+            make_urls_absolute(sheet)
+            expand_shorthands(sheet)
+            for rule in resolve_import_media(sheet, medium):
+                print sheet.href.split('/')[-1], origin, rule
+                if rule.type == rule.STYLE_RULE:
+                    apply_style_rule(rule, document, origin)
+                # TODO: handle @font-face, @namespace, @page, and @variables
+    assign_properties(document)
 

@@ -31,19 +31,14 @@ suite = Tests()
 
 def parse_html(filename):
     """Parse an HTML file from the test resources and resolve relative URL."""
-    document = html.parse(path2url(resource_filename(filename)))
-    document.getroot().make_links_absolute()
+    document = html.parse(path2url(resource_filename(filename))).getroot()
+    document.make_links_absolute()
     return document
 
 
 @suite.test
 def test_find_stylesheets():
     document = parse_html('doc1.html')
-    root = document.getroot()
-    style, link = root[0]
-    assert style.tag == 'style'
-    assert link.tag == 'link'
-    p, = root[1]
     
     sheets = list(css.find_stylesheets(document))
     assert len(sheets) == 2
@@ -76,4 +71,34 @@ def test_expand_shorthands():
         "3em was before the shorthand, should be masked"
     assert style['margin-left'] == '4em', \
         "4em was after the shorthand, should not be masked"
+
+
+@suite.test
+def test_annotate_document():
+    user_stylesheet = cssutils.parseFile(resource_filename('user.css'))
+    ua_stylesheet = cssutils.parseFile(resource_filename('mini_ua.css'))
+    document = parse_html('doc1.html')
     
+    css.annotate_document(document, [user_stylesheet], [ua_stylesheet])
+    
+    # Element objects behave a lists of their children
+    head, body = document
+    p, ul = body
+    li = list(ul)
+    a, = li[0]
+    
+    sides = ('-top', '-right', '-bottom', '-left')
+    for side, expected_value in zip(sides, ('1em', '0', '1em', '0')):
+        assert p.style['margin' + side].value == expected_value
+    
+    for side, expected_value in zip(sides, ('2em', '2em', '2em', '2em')):
+        assert ul.style['margin' + side].value == expected_value
+    
+    for side, expected_value in zip(sides, ('2em', '0', '2em', '4em')):
+        assert li[0].style['margin' + side].value == expected_value
+    
+    assert a.style['text-decoration'].value == 'underline'
+    assert a.style['color'].value == 'red'
+    # TODO much more tests here: test that origin and selector precedence
+    # and inheritance are correct, ...
+

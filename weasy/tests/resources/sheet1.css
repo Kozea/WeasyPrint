@@ -1,6 +1,6 @@
 @import url(sheet2.css) all;
 p {
-    background: blue;
+    background-color: blue;
 }
 
 @media print {

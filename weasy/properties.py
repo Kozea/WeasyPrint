@@ -155,8 +155,10 @@ r"""
         .xpath('//table//td[5][contains(text(), "yes")]/../td[1]/a/span/text()')
     ).replace("'", '')
   
-  and adding some line breaks.
+  adding some line breaks and removing shorthand properties.
 """
+# Do not list shorthand properties here as we handle them before inheritance:
+# font, list-style
 INHERITED = set("""
     azimuth
     border-collapse
@@ -172,13 +174,11 @@ INHERITED = set("""
     font-style
     font-variant
     font-weight
-    font
     letter-spacing
     line-height
     list-style-image
     list-style-position
     list-style-type
-    list-style
     orphans
     pitch-range
     pitch
