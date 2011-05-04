@@ -362,9 +362,15 @@ def handle_computed_colors(element):
     Set the computed values for colors.
     """
     style = element.style
-    for name in ('color', 'border-color', 'outline-color', 'background-color'):
-        # TODO
-        pass
+    for name in ('color', 'outline-color', 'background-color', 
+                 'border-top-color', 'border-right-color',
+                 'border-bottom-color', 'border-left-color'):
+        values = style[name]
+        assert len(values) == 1
+        value = values[0].value
+        if value in properties.CSS21_COLORS:
+            print name, value, properties.CSS21_COLORS[value].value
+            style[name] = [properties.CSS21_COLORS[value]]
 
 
 def handle_computed_font_size(element):

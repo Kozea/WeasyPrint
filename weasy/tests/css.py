@@ -108,7 +108,10 @@ def test_annotate_document():
         assert get_value(li[0].style['margin' + side]) == expected_value
     
     assert get_value(a.style['text-decoration']) == 'underline'
-    assert get_value(a.style['color']) == 'red'
+    
+    color = a.style['color'][0]
+    assert (color.red, color.green, color.blue, color.alpha) == (255, 0, 0, 1)
+
     # TODO much more tests here: test that origin and selector precedence
     # and inheritance are correct, ...
 
