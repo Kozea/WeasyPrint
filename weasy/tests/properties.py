@@ -28,8 +28,9 @@ suite = Tests()
 
 def expand_shorthand(expander, name, value):
     """Helper to test shorthand properties expander functions."""
-    return dict((name, value.cssText)
-                for name, value in expander(name, list(PropertyValue(value))))
+    value = list(PropertyValue(value))
+    return dict((new_name, new_value.cssText)
+                for new_name, new_value in expander(name, value))
 
 
 def expand_to_dict(css):
