@@ -239,6 +239,91 @@ def apply_style_rule(rule, document, origin):
                 element.applicable_properties.append((precedence, prop))
 
 
+def handle_style_attribute(element):
+    """
+    Return the element’s ``applicable_properties`` list after adding properties
+    from the `style` attribute.
+    """
+    declarations = getattr(element, 'applicable_properties', [])
+    style_attribute = element.get('style')
+    if style_attribute:
+        # TODO: no href for parseStyle. What about relative URLs?
+        # CSS3 says we should resolve relative to the attribute:
+        # http://www.w3.org/TR/css-style-attr/#interpret
+        for prop in parseStyle(style_attribute):
+            precedence = (
+                declaration_precedence('author', prop.priority),
+                # 1 for being a style attribute, 0 as there is no selector.
+                (1, 0, 0, 0)
+            )
+            declarations.append((precedence, prop))
+    return declarations
+
+
+def handle_inheritance(element):
+    """
+    The specified value is the parent element’s computed value iif one of the
+    following is true:
+     * The cascade did not result in a value, and the the property is inherited
+     * The the value is the keyword 'inherit'.
+    """
+    style = element.style
+    parent = element.getparent()
+    if parent is None: # root element
+        for name, value in style.iteritems():
+            # The PropertyValue object has value attribute
+            if value.value == 'inherit':
+                # The root element can not inherit from anything:
+                # use the initial value.
+                style[name] = Value('initial')
+    else:
+        # The parent appears before in tree order, so we should already have
+        # finished with its computed values.
+        for name, value in style.iteritems():
+            if value.value == 'inherit':
+                style[name] = parent.style[name]
+        for name in properties.INHERITED:
+            if name not in style:
+                style[name] = parent.style[name]
+
+
+def handle_initial_values(element):
+    """
+    Properties that do not have a value after inheritance or whose value is the
+    'initial' keyword (CSS3) get their initial value.
+    """
+    style = element.style
+    for name, initial in properties.INITIAL_VALUES.iteritems():
+        # Explicit 'initial' values are new in CSS3
+        # http://www.w3.org/TR/css3-values/#computed0
+        if style.get(name, Value('initial')).value == 'initial':
+            style[name] = initial
+
+    # Special cases for initial values that can not be expressed as CSS
+    
+    # border-color: same as color
+    for name in ('border-top-color', 'border-right-color',
+                 'border-bottom-color', 'border-left-color'):
+        if style.get(name, Value('initial')).value == 'initial':
+            style[name] = style['color']
+
+    # text-align: left in left-to-right text, right in right-to-left
+    if style.get('text-align', Value('initial')).value == 'initial':
+        if style['direction'].value == 'rtl':
+            style['text-align'] = Value('right')
+        else:
+            style['text-align'] = Value('left')
+
+
+def handle_computed_values(element):
+    """
+    Normalize values as much as possible without rendering the document.
+    """
+    style = element.style
+    parent = element.getparent()
+    # TODO: http://www.w3.org/TR/css3-values/#computed0
+
+
 def assign_properties(document):
     """
     For every element of the document, take the properties left by
@@ -247,19 +332,8 @@ def assign_properties(document):
     """
     build_lxml_proxy_cache(document)
     for element in document.iter():
-        declarations = getattr(element, 'applicable_properties', [])
-        style_attribute = element.get('style')
-        if style_attribute:
-            # TODO: no href for parseStyle. What about relative URLs?
-            # CSS3 says we should resolve relative to the attribute:
-            # http://www.w3.org/TR/css-style-attr/#interpret
-            for prop in parseStyle(style_attribute):
-                precedence = (
-                    declaration_precedence('author', prop.priority),
-                    # 1 for being a style attribute, 0 as there is no selector.
-                    (1, 0, 0, 0)
-                )
-                declarations.append((precedence, prop))
+        declarations = handle_style_attribute(element)
+        
         # If apply_style_rule() was called in appearance order, the stability
         # of Python's sort fulfills rule 4 of the cascade.
         # This lambda has one parameter deconstructed as a tuple
@@ -267,50 +341,11 @@ def assign_properties(document):
         element.style = style = {}
         for precedence, prop in declarations:
             style[prop.name] = prop.propertyValue
-            
-        ### Inheritance
         
-        parent = element.getparent()
-        if parent is None: # root element
-            for name, value in style.iteritems():
-                # The PropertyValue object has value attribute
-                if value.value == 'inherit':
-                    # So root element can not inherit from anything:
-                    # use the initial value.
-                    style[name] = Value('initial')
-        else:
-            # The parent appears before in tree order, so we should already have
-            # finished with its computed values.
-            for name, value in style.iteritems():
-                if value.value == 'inherit':
-                    style[name] = parent.style[name]
-            for name in properties.INHERITED:
-                if name not in style:
-                    style[name] = parent.style[name]
+        handle_inheritance(element)    
+        handle_initial_values(element)
+        handle_computed_values(element)
         
-        ### Properties that do not have a value yet get the initial value
-
-        for name, initial in properties.INITIAL_VALUES.iteritems():
-            # Explicit 'initial' values are new in CSS3
-            # http://www.w3.org/TR/css3-values/#computed0
-            if style.get(name, Value('initial')).value == 'initial':
-                style[name] = initial
-
-        # Special cases for initial values that can not be expressed as CSS
-        for name in ('border-top-color', 'border-right-color',
-                     'border-bottom-color', 'border-left-color'):
-            if style.get(name, Value('initial')).value == 'initial':
-                style[name] = style['color']
-        
-        if style.get('text-align', Value('initial')).value == 'initial':
-            if style['direction'].value == 'rtl':
-                style['text-align'] = Value('right')
-            else:
-                style['text-align'] = Value('left')
-
-        # TODO: computed values
-        # http://www.w3.org/TR/css3-values/#computed0
-
 
 def annotate_document(document, user_stylesheets=None, ua_stylesheets=None,
                       medium='print'):
