@@ -26,16 +26,16 @@
   ---------------
 */
 html {
-  background:  url(img/logo.png) no-repeat center 65px,
-url(img/top.png) no-repeat top left,
-url(img/footer.jpg) no-repeat bottom left,
-url(img/background.png) repeat top left;
+  background: url(img/logo.png) no-repeat center 65px,
+              url(img/top.png) no-repeat top left,
+              url(img/footer.jpg) no-repeat bottom left,
+              url(img/background.png) repeat top left;
 }
 
 body{
-	background: none;
-	border: none;
-	margin-top: 400px;
+  background: none;
+  border: none;
+  margin-top: 400px;
 }
 
 
@@ -46,100 +46,100 @@ body{
 */
 h2, h3, h4, h5, h6
 {
-	font-family: "menu";
-	letter-spacing: 0.2em;
-	text-shadow: none;
+  font-family: "menu";
+  letter-spacing: 0.2em;
+  text-shadow: none;
 }
 
 h2 a, h3 a, h4 a, h5 a, h6 a
 {
-	font-family: "kimberley";
-	letter-spacing: 0.2em;
-	text-shadow: none;
+  font-family: "kimberley";
+  letter-spacing: 0.2em;
+  text-shadow: none;
 }
 
 
 h2{
-	background: url(img/rond.png) no-repeat 6px 8px;
-	color:black;
-	height: 60px;
-	margin-top: 35px;
-	padding: 15px 0 0 25px;
-	text-transform: uppercase;
+  background: url(img/rond.png) no-repeat 6px 8px;
+  color:black;
+  height: 60px;
+  margin-top: 35px;
+  padding: 15px 0 0 25px;
+  text-transform: uppercase;
 }
 
 h2:first-letter{
-	color: white;
+  color: white;
 }
 
 h3 a{
-	border-bottom: 3px solid;
-	border-radius: 0;
-	color: #35c6c7 ;
-	font-weight: bolder;
-	padding: 5px 0 0 15px;
-	text-transform: uppercase;
-	width: 100%;
+  border-bottom: 3px solid;
+  border-radius: 0;
+  color: #35c6c7 ;
+  font-weight: bolder;
+  padding: 5px 0 0 15px;
+  text-transform: uppercase;
+  width: 100%;
 }
 
 h3 a:hover,
 h3 a:visited{
-	color: #35c6c7 ;
+  color: #35c6c7 ;
 }
 
 h4 a:first-letter,
 h4 a:before{
-	color: white;
+  color: white;
 }
 
 h4 a:hover{
-	background : url(img/rond-orange.png) no-repeat -1px -3px;
-	color: #f47900;
+  background : url(img/rond-orange.png) no-repeat -1px -3px;
+  color: #f47900;
 }
 
 h4{
-	border-bottom: 1px solid #f47900;
+  border-bottom: 1px solid #f47900;
 }
 
 h4 a{
-	background : url(img/rond-orange.png) no-repeat -1px -3px;
-	border-radius: 0;
-	color: #f47900;
-	font-weight: bold;
-	padding: 0 0 0 9px;
+  background : url(img/rond-orange.png) no-repeat -1px -3px;
+  border-radius: 0;
+  color: #f47900;
+  font-weight: bold;
+  padding: 0 0 0 9px;
 }
 
 h4 a:visited{
-	color:#f47900;
+  color:#f47900;
 }
 
 h5 {
-	border-bottom: 1px solid #f1d400;
+  border-bottom: 1px solid #f1d400;
 }
 
 h5 a:hover,
 h5 a:visited{
-	color:black;
+  color:black;
 }
 
 a{
-	color: #b3af00;
+  color: #b3af00;
 }
 
 a:hover,a:focus {
-	background: none;
-	color: #258089;
+  background: none;
+  color: #258089;
 }
 
 a:visited {
-	background: none;
-	box-shadow: 0px;
+  background: none;
+  box-shadow: 0px;
 }
 
 pre{
   box-shadow: 0px 0px 2px #ddd;
-	border-radius: 0.2em;
-	white-space : pre-line;
+  border-radius: 0.2em;
+  white-space : pre-line;
 }
 
 
@@ -149,7 +149,7 @@ pre{
   ----------
 */
 h1{
-	margin-top: -57px;
+  margin-top: -57px;
   visibility: hidden;
 }
 
@@ -160,53 +160,54 @@ h1{
   --------------
 */
 nav {
-	display: inline-block;
-	font-family: "menu";
-	font-size: 1.3em;
-	font-weight: bold;
-	height: 100px;
-	margin: -39px 0 29px -43px;
-	width: 700px;
+  display: inline-block;
+  font-family: "menu";
+  font-size: 1.3em;
+  font-weight: bold;
+  height: 100px;
+  margin: -39px 0 29px -43px;
+  width: 700px;
 }
 
 nav ul {
-	background: none;
+  background: none;
   box-shadow: none;
-	padding-left: 0;
+  padding-left: 0;
 }
 
 
 nav li a {
-	background: url(img/rond_03.png) no-repeat 0px -4px;
-	color: black;
-	display: inline-block;
-	font-family: "menu";
-	margin-left: 0;
-	padding: 0 12px 0 14px;
-	text-align: left;
-	text-transform: uppercase;
-	-moz-transition: background 0.7s ease;
+  background: url(img/rond_03.png) no-repeat 0px -4px;
+  color: black;
+  display: inline-block;
+  font-family: "menu";
+  margin-left: 0;
+  min-height: 30px;
+  padding: 0 12px 0 14px;
+  text-align: left;
+  text-transform: uppercase;
+  transition: background 0.7s ease;
 }
 
 nav li a:hover,
 nav li a:focus{
-	background: url(img/rond_03.png) no-repeat right -4px;
-	color: black;
-	box-shadow: none;
+  background: url(img/rond_03.png) no-repeat right -4px;
+  color: black;
+  box-shadow: none;
 }
 
 nav li a:visited{
-	color: black;
-	background: url(img/rond_03.png) no-repeat 0px -4px;
-	box-shadow: none;
+  color: black;
+  background: url(img/rond_03.png) no-repeat 0px -4px;
+  box-shadow: none;
 }
 
 nav li a:first-letter{
-	color: white;
+  color: white;
 }
 
 nav li a:hover:first-letter{
-	color: black;
+  color: black;
 }
 
 
@@ -216,8 +217,8 @@ nav li a:hover:first-letter{
   -----------
 */
 section {
-	background-color: rgba(255, 255, 255, 0.8);
-	border: none;
+  background-color: rgba(255, 255, 255, 0.8);
+  border: none;
   border-radius: 0.2em;
   box-shadow: 0 0 2px #b7b7b7 ;
   padding: 1px 20px 32px 20px;
@@ -226,54 +227,54 @@ section {
 
 section article > section  {
   background: none;
-	border-radius: none;
-	box-shadow: none;
-	padding: 0 15px;
+  border-radius: none;
+  box-shadow: none;
+  padding: 0 15px;
 
 }
 
 section .section{
   background: none;
-	border-radius: none;
-	box-shadow: none;
-	padding: 0 25px;
+  border-radius: none;
+  box-shadow: none;
+  padding: 0 25px;
 }
 
 .note{
-	background: none;
-	box-shadow: none;
-	border-radius: none;
-	margin: 20px 0 20px 0;
+  background: none;
+  box-shadow: none;
+  border-radius: none;
+  margin: 20px 0 20px 0;
 
 }
 
 .note p{
-	color: red;
+  color: red;
 
 }
 .contents {
-	background: url(img/content_haut.png) no-repeat top left,
-url(img/bas.png) no-repeat bottom right;
-	background-color: rgba(255, 255, 255, 0.1);
-	border: 1px solid red;
-	border-radius: 0.2em;
-	box-shadow: none;
-	padding: 30px 32px 74px 104px;
+  background: url(img/content_haut.png) no-repeat top left,
+              url(img/bas.png) no-repeat bottom right;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid red;
+  border-radius: 0.2em;
+  box-shadow: none;
+  padding: 30px 32px 74px 104px;
 }
 
 .contents a:hover{
-	background: none;
+  background: none;
 }
 
 .contents a:visited{
-	color: #b7bd00;
+  color: #b7bd00;
 }
 
 .contents p{
-	color:red;
-	font-family: "kimberley";
-	padding-left: 13px;
-	text-transform: uppercase;
+  color:red;
+  font-family: "kimberley";
+  padding-left: 13px;
+  text-transform: uppercase;
 }
 
 
@@ -283,22 +284,22 @@ url(img/bas.png) no-repeat bottom right;
   ----------
 */
 footer ul{
-	margin: 100px 0  -110px 0;
+  margin: 100px 0  -110px 0;
 }
 
 footer li a{
-	color: white;
-	font-size: 1em;
+  color: white;
+  font-size: 1em;
 }
 
 footer li a:hover,
 footer li a:focus{
-	background: none;
-	box-shadow:none;
-	color: red;
+  background: none;
+  box-shadow:none;
+  color: red;
 }
 
 footer li a:visited{
-	background: none;
-	box-shadow:none;
+  background: none;
+  box-shadow:none;
 }
