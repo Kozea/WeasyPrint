@@ -27,7 +27,7 @@
 */
 html {
   background: url(img/logo.png) no-repeat center 65px,
-              url(img/top.png) no-repeat top left,
+              url(img/top.png) repeat-x top left,
               url(img/footer.jpg) no-repeat bottom left,
               url(img/background.png) repeat top left;
 }
