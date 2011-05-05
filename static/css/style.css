@@ -30,6 +30,11 @@ html {
               url(img/top.png) no-repeat top left,
               url(img/footer.jpg) no-repeat bottom left,
               url(img/background.png) repeat top left;
+  margin: -2em 0 0 0;
+  min-height: 100%;
+  padding: 0 0 2em 0;
+  position: absolute;
+  width: 100%;
 }
 
 body{
@@ -283,8 +288,16 @@ section .section{
   - Footer -
   ----------
 */
-footer ul{
-  margin: 100px 0  -110px 0;
+footer {
+  bottom: 0;
+  height: 2em;
+  left: 0;
+  position: absolute;
+  right: 0;
+}
+
+footer ul {
+  margin: 0;
 }
 
 footer li a{
