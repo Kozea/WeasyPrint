@@ -226,9 +226,11 @@ section {
   border: none;
   border-radius: 0.2em;
   box-shadow: 0 0 2px #b7b7b7 ;
-  margin: 0 20%;
   padding: 1px 20px 32px 20px;
+}
 
+body > section {
+  margin: 0 20%;
 }
 
 section article > section  {
