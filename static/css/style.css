@@ -290,6 +290,7 @@ section .section{
   ----------
 */
 footer {
+  background: black;
   bottom: 0;
   height: 2em;
   left: 0;
