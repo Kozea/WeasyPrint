@@ -341,24 +341,3 @@ FONT_SIZE_KEYWORDS = collections.OrderedDict([
 del FONT_SIZE_MEDIUM
 
 
-# http://www.w3.org/TR/CSS21/syndata.html#value-def-color
-CSS21_COLORS = dict((name, ColorValue(value)) for name, value in dict(
-    maroon='#800000',
-#    red='#ff0000', # TODO: cssutils parsing bug?
-    red='rgb(255, 0, 0)',
-    orange='#ffA500',
-    yellow='#ffff00',
-    olive='#808000',
-    purple='#800080',
-    fuchsia='#ff00ff',
-    white='#ffffff',
-    lime='#00ff00',
-    green='#008000',
-    navy='#000080',
-    blue='#0000ff',
-    aqua='#00ffff',
-    teal='#008080',
-    
-    transparent='rgba(0, 0, 0, 0)',
-).iteritems())
-

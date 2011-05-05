@@ -357,22 +357,6 @@ def handle_initial_values(element):
             style['text-align'] = PropertyValue('left')
 
 
-def handle_computed_colors(element):
-    """
-    Set the computed values for colors.
-    """
-    style = element.style
-    for name in ('color', 'outline-color', 'background-color', 
-                 'border-top-color', 'border-right-color',
-                 'border-bottom-color', 'border-left-color'):
-        values = style[name]
-        assert len(values) == 1
-        value = values[0].value
-        if value in properties.CSS21_COLORS:
-            print name, value, properties.CSS21_COLORS[value].value
-            style[name] = [properties.CSS21_COLORS[value]]
-
-
 def handle_computed_font_size(element):
     """
     Set the computed value for font-size, and return this value in pixels.
@@ -459,7 +443,6 @@ def handle_computed_values(element):
     """
     Normalize values as much as possible without rendering the document.
     """
-    handle_computed_colors(element)
     # em lengths depend on font-size, compute font-size first
     font_size = handle_computed_font_size(element)
     handle_computed_lengths(element, font_size)
