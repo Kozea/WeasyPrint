@@ -221,31 +221,13 @@ nav li a:hover:first-letter{
   - Section -
   -----------
 */
-section {
+body > section {
   background-color: rgba(255, 255, 255, 0.8);
   border: none;
   border-radius: 0.2em;
   box-shadow: 0 0 2px #b7b7b7 ;
-  padding: 1px 20px 32px 20px;
-}
-
-body > section {
+  padding: 1px 30px 32px;
   margin: 0 20%;
-}
-
-section article > section  {
-  background: none;
-  border-radius: none;
-  box-shadow: none;
-  padding: 0 15px;
-
-}
-
-section .section{
-  background: none;
-  border-radius: none;
-  box-shadow: none;
-  padding: 0 25px;
 }
 
 .note{
