@@ -449,6 +449,24 @@ def handle_computed_lengths(element, font_size):
     )
 
 
+def handle_computed_line_height(element, font_size):
+    """
+    Relative values of line-height are relative to font-size.
+    """
+    style = element.style
+    assert len(element.style['line-height']) == 1
+    value = element.style['line-height'][0]
+    
+    # TODO: negative values are illegal
+    if value.type == 'NUMBER':
+        height = font_size * value.value
+    elif value.type == 'PERCENTAGE':
+        height = font_size * value.value / 100.
+    else:
+        return # as specified
+    style['line-height'] = PropertyValue(str(height) + 'px')
+
+
 def handle_computed_border_width(element):
     """
     Set border-*-width to zero if border-*-style is none or hidden.
@@ -501,6 +519,7 @@ def handle_computed_values(element):
     # em lengths depend on font-size, compute font-size first
     font_size = handle_computed_font_size(element)
     handle_computed_lengths(element, font_size)
+    handle_computed_line_height(element, font_size)
     handle_computed_border_width(element)
     handle_computed_display_float(element)
 
