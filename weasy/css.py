@@ -465,6 +465,35 @@ def handle_computed_border_width(element):
                     str(width) + 'px')
 
 
+def handle_computed_display_float(element):
+    """
+    Computed values of the display and float properties according to
+    http://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
+    """
+    # TODO: test this
+    style = element.style
+    if get_value(style, 'display') == 'none':
+        # Case 1
+        return # position and float do not apply, but leave them
+    elif get_value(style, 'position') in ('absolute', 'fixed'):
+        # Case 2
+        style['float'] = PropertyValue('none')
+    elif get_value(style, 'float') == 'none' and element.getparent() is not None:
+        # Case 5
+        return
+    
+    # Cases 2, 3, 4
+    display = get_value(style, 'display')
+    if display == 'inline-table':
+        style['display'] = PropertyValue('table')
+    elif display in ('inline', 'table-row-group', 'table-column',
+                     'table-column-group', 'table-header-group',
+                     'table-footer-group', 'table-row', 'table-cell',
+                     'table-caption', 'inline-block'):
+        style['display'] = PropertyValue('block')
+    # else: unchanged
+
+
 def handle_computed_values(element):
     """
     Normalize values as much as possible without rendering the document.
@@ -473,6 +502,7 @@ def handle_computed_values(element):
     font_size = handle_computed_font_size(element)
     handle_computed_lengths(element, font_size)
     handle_computed_border_width(element)
+    handle_computed_display_float(element)
 
 
 def assign_properties(document):
