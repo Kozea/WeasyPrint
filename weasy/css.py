@@ -483,6 +483,20 @@ def handle_computed_border_width(element):
                     str(width) + 'px')
 
 
+def handle_computed_outline_width(element):
+    """
+    Set outline-width to zero if outline-style is none.
+    """
+    style = element.style
+    if get_value(style, 'outline-style') == 'none':
+        style['outline-width'] = PropertyValue('0')
+    else:
+        value = get_value(style, 'outline-width')
+        if value in properties.BORDER_WIDTH_KEYWORDS:
+            width = properties.BORDER_WIDTH_KEYWORDS[value]
+            style['outline-width'] = PropertyValue(str(width) + 'px')
+
+
 def handle_computed_display_float(element):
     """
     Computed values of the display and float properties according to
@@ -528,6 +542,7 @@ def handle_computed_values(element):
     handle_computed_lengths(element, font_size)
     handle_computed_line_height(element, font_size)
     handle_computed_border_width(element)
+    handle_computed_outline_width(element)
     handle_computed_display_float(element)
     handle_computed_word_spacing(element)
 
