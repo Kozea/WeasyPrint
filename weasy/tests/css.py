@@ -16,6 +16,7 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os.path
 from attest import Tests, assert_hook
 from lxml import html
 #from lxml.html import html5parser as html  # API is the same as lxml.html
@@ -47,9 +48,9 @@ def test_find_stylesheets():
 
     rules = list(rule for sheet in sheets
                       for rule in css.resolve_import_media(sheet, 'print'))
-    assert len(rules) == 6
+    assert len(rules) == 7
     assert set(rule.selectorText for rule in rules) == set(
-        ['p', 'ul', 'li', 'a', ':first'])
+        ['body > h1:first-child', 'p', 'ul', 'li', 'a', ':first'])
 
 
 @suite.test
@@ -83,9 +84,12 @@ def test_annotate_document():
     
     # Element objects behave a lists of their children
     head, body = document
-    p, ul = body
+    h1, p, ul = body
     li = list(ul)
     a, = li[0]
+    
+    assert h1.style['background-image'][0].uri == 'file://' \
+        + os.path.abspath(resource_filename('logo_small.png'))
     
     sides = ('-top', '-right', '-bottom', '-left')
     # 32px = 1em * font-size: 2em * initial 16px

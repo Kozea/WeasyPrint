@@ -31,7 +31,6 @@
      * ``find_stylesheets``: Find and parse all author stylesheets in a document
      * ``remove_ignored_declarations``: Remove illegal and unsupported
        declarations
-     * ``make_urls_absolute``
      * ``expand_shorthand``: Replace shorthand properties
      * ``resolve_import_media``: Resolve @media and @import rules
      * ``apply_style_rule``: Apply a CSSStyleRule to a document
@@ -106,11 +105,6 @@ def find_stylesheets(html_document):
         yield sheet
     for sheet in find_link_stylesheet_elements(html_document):
         yield sheet
-
-
-def make_urls_absolute(sheet):
-    # TODO: make urls absolute
-    pass
 
 
 def invalid_declaration_reason(prop):
@@ -590,7 +584,6 @@ def annotate_document(document, user_stylesheets=None, ua_stylesheets=None,
             # TODO: UA and maybe user stylesheets might only need to be expanded
             # once, not for every document.
             remove_ignored_declarations(sheet)
-            make_urls_absolute(sheet)
             expand_shorthands(sheet)
             for rule in resolve_import_media(sheet, medium):
                 if rule.type == rule.STYLE_RULE:
