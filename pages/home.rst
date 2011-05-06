@@ -15,3 +15,15 @@ The project is still in a very eary devlopment stage, but any `contribution
  * Contact us by email at weasyprint@kozea.fr
  * … or on the Jabber chat-room: community@room.jabber.kozea.fr
 
+Are you crazy?
+--------------
+
+Yes. But not that much. Each modern web browser did take many developers’ many
+years of work to get where they are now, but WeasyPrint’s scope is much smaller:
+there is no user-interaction, no JavaScript, no live rendering (the document
+doesn’t changed after it was first parsed) and no quirks mode (we don’t need
+to support every broken page of the web.)
+
+We still need however to implement the whole CSS box model and visual rendering.
+This is a lot of work, but we feel we can get something useful much quicker
+than `“Let’s build a rendering engine!”` may seem.
