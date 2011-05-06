@@ -1,10 +1,10 @@
 {
   "name": "WeasyPrint",
-  "description": "Convert HTML + CSS to PDF",
+  "description": "Converts HTML + CSS to PDF",
   "menu": [
-    {"name": "News", "link": "/news"},
-    {"name": "Documentation", "link": "/documentation"},
-    {"name": "Contribute", "link": "/contribute"},
-    {"name": "Download", "link": "/download"}
+    {"name": "Overview", "link": "/"},
+    {"name": "Download", "link": "/download"},
+    {"name": "Issues", "link": "http://redmine.kozea.fr/projects/weasyprint/issues"},
+    {"name": "Contribute", "link": "/contribute"}
   ]
 }
