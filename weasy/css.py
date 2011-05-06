@@ -545,6 +545,10 @@ def handle_computed_values(element):
     handle_computed_outline_width(element)
     handle_computed_display_float(element)
     handle_computed_word_spacing(element)
+    # TODO: percentages for height?
+    #       http://www.w3.org/TR/CSS21/visudet.html#propdef-height
+    # TODO: percentages for vertical-align. What about line-height: normal?
+    # TODO: clip, content, font-weight
 
 
 def assign_properties(document):
