@@ -28,7 +28,7 @@ There are many existing libraries that we can use:
 Current status
 --------------
 
-Once HTML is parsed into DOM, much of it’s visual appearance can be
+Once HTML is parsed into DOM, much of its visual appearance can be
 `expressed as CSS <http://www.w3.org/TR/CSS21/sample.html>`_ so there is not
 much to do there.
 

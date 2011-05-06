@@ -22,7 +22,7 @@ Yes. But not that much. Each modern web browser did take many years and many
 developers’ work to get where they are now, but WeasyPrint’s scope is much smaller:
 there is no user-interaction, no JavaScript, no live rendering (the document
 doesn’t changed after it was first parsed) and no quirks mode (we don’t need
-to support every broken page of the web.)
+to support every broken page of the web).
 
 We still need however to implement the whole CSS box model and visual rendering.
 This is a lot of work, but we feel we can get something useful much quicker
