@@ -1,7 +1,7 @@
 Contribute
 ==========
 
-WeasyPrint is still in a very eary devlopment stage. In other words, it doesn’t
+WeasyPrint is still in a very early development stage. In other words, it doesn’t
 work yet.
 
 Still, you can have a look at `the code </download>`_, report

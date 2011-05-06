@@ -18,8 +18,8 @@ The project is still in a very eary devlopment stage, but any `contribution
 Are you crazy?
 --------------
 
-Yes. But not that much. Each modern web browser did take many developers’ many
-years of work to get where they are now, but WeasyPrint’s scope is much smaller:
+Yes. But not that much. Each modern web browser did take many years and many
+developers’ work to get where they are now, but WeasyPrint’s scope is much smaller:
 there is no user-interaction, no JavaScript, no live rendering (the document
 doesn’t changed after it was first parsed) and no quirks mode (we don’t need
 to support every broken page of the web.)
