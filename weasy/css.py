@@ -318,15 +318,25 @@ def handle_inheritance(element):
                 style[name] = parent.style[name]
 
 
+def get_value(style, name):
+    """
+    Return the value of a property as a string, defaulting to 'initial'.
+    """
+    if name not in style:
+        return 'initial'
+    values = style[name]
+    if hasattr(values, 'value'):
+        return values.value
+    else:
+        return ' '.join(value.cssText for value in values)
+
+
 def is_initial(style, name):
     """
     Return whether the property `name` is missing in the given `style` dict
     or if its value is the 'initial' keyword.
     """
-    if name not in style:
-        return True
-    values = style[name]
-    return len(values) == 1 and values[0].value == 'initial'
+    return get_value(style, name) == 'initial'
 
 
 def handle_initial_values(element):
@@ -411,21 +421,21 @@ def compute_length(value, font_size):
     """
     # TODO: once we ignore invalid declarations, turn these ValueError’s into
     # assert False, 'Declaration should have been ignored'
-    if value.type == 'DIMENSION':
-        if value.dimension in properties.LENGTHS_TO_PIXELS:
-            # Convert absolute lengths to pixels
-            factor = properties.LENGTHS_TO_PIXELS[value.dimension]
-            return DimensionValue(str(value.value * factor) + 'px')
-        elif value.dimension == 'em':
-            return DimensionValue(str(value.value * font_size) + 'px')
-        elif value.dimension == 'ex':
-            # TODO: support ex
-            raise ValueError('The ex unit is not supported yet.', name,
-                values.value)
-        elif value.dimension is not None:
-            raise ValueError('Unknown length unit', value.value, repr(value.type))
-    # No conversion needed.
-    return value
+    if value.type != 'DIMENSION' or value.value == 0:
+        # No conversion needed.
+        return value
+    if value.dimension in properties.LENGTHS_TO_PIXELS:
+        # Convert absolute lengths to pixels
+        factor = properties.LENGTHS_TO_PIXELS[value.dimension]
+        return DimensionValue(str(value.value * factor) + 'px')
+    elif value.dimension == 'em':
+        return DimensionValue(str(value.value * font_size) + 'px')
+    elif value.dimension == 'ex':
+        # TODO: support ex
+        raise ValueError('The ex unit is not supported yet.', name,
+            values.value)
+    elif value.dimension is not None:
+        raise ValueError('Unknown length unit', value.value, repr(value.type))
     
 
 def handle_computed_lengths(element, font_size):
@@ -439,6 +449,22 @@ def handle_computed_lengths(element, font_size):
     )
 
 
+def handle_computed_border_width(element):
+    """
+    Set border-*-width to zero if border-*-style is none or hidden.
+    """
+    style = element.style
+    for side in ('top', 'right', 'bottom', 'left'):
+        if get_value(style, 'border-%s-style' % side) in ('none', 'hidden'):
+            style['border-%s-width' % side] = PropertyValue('0')
+        else:
+            value = get_value(style, 'border-%s-width' % side)
+            if value in properties.BORDER_WIDTH_KEYWORDS:
+                width = properties.BORDER_WIDTH_KEYWORDS[value]
+                style['border-%s-width' % side] = PropertyValue(
+                    str(width) + 'px')
+
+
 def handle_computed_values(element):
     """
     Normalize values as much as possible without rendering the document.
@@ -446,6 +472,7 @@ def handle_computed_values(element):
     # em lengths depend on font-size, compute font-size first
     font_size = handle_computed_font_size(element)
     handle_computed_lengths(element, font_size)
+    handle_computed_border_width(element)
 
 
 def assign_properties(document):

@@ -47,7 +47,7 @@ def test_find_stylesheets():
 
     rules = list(rule for sheet in sheets
                       for rule in css.resolve_import_media(sheet, 'print'))
-    assert len(rules) == 5
+    assert len(rules) == 6
     assert set(rule.selectorText for rule in rules) == set(
         ['p', 'ul', 'li', 'a', ':first'])
 
@@ -73,12 +73,6 @@ def test_expand_shorthands():
         "4em was after the shorthand, should not be masked"
 
 
-def get_value(property_or_list):
-    if hasattr(property_or_list, 'value'):
-        return property_or_list.value
-    else:
-        return ' '.join(p.cssText for p in property_or_list)
-
 @suite.test
 def test_annotate_document():
     user_stylesheet = cssutils.parseFile(resource_filename('user.css'))
@@ -96,18 +90,23 @@ def test_annotate_document():
     sides = ('-top', '-right', '-bottom', '-left')
     # 32px = 1em * font-size: 2em * initial 16px
     for side, expected_value in zip(sides, ('32px', '0', '32px', '0')):
-        assert get_value(p.style['margin' + side]) == expected_value
+        assert css.get_value(p.style, 'margin' + side) == expected_value
     
     # 32px = 2em * initial 16px
     for side, expected_value in zip(sides, ('32px', '32px', '32px', '32px')):
-        assert get_value(ul.style['margin' + side]) == expected_value
+        assert css.get_value(ul.style, 'margin' + side) == expected_value
+    
+    # thick = 5px, 0.25 inches = 96*.25 = 24px
+    for side, expected_value in zip(sides, ('0', '5px', '0', '24px')):
+        assert css.get_value(ul.style, 'border' + side + '-width') \
+            == expected_value
     
     # 32px = 2em * initial 16px
     # 64px = 4em * initial 16px
     for side, expected_value in zip(sides, ('32px', '0', '32px', '64px')):
-        assert get_value(li[0].style['margin' + side]) == expected_value
+        assert css.get_value(li[0].style, 'margin' + side) == expected_value
     
-    assert get_value(a.style['text-decoration']) == 'underline'
+    assert css.get_value(a.style, 'text-decoration') == 'underline'
     
     color = a.style['color'][0]
     assert (color.red, color.green, color.blue, color.alpha) == (255, 0, 0, 1)

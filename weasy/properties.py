@@ -341,3 +341,11 @@ FONT_SIZE_KEYWORDS = collections.OrderedDict([
 del FONT_SIZE_MEDIUM
 
 
+# These are unspecified, other than 'thin' <='medium' <= 'thick'.
+# Values are in pixels.
+BORDER_WIDTH_KEYWORDS = {
+    'thin': 1,
+    'medium': 3,
+    'thick': 5,
+}
+
