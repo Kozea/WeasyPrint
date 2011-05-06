@@ -512,6 +512,13 @@ def handle_computed_display_float(element):
     # else: unchanged
 
 
+def handle_computed_word_spacing(element):
+    style = element.style
+    # CSS 2.1 says this for word-spacing but not letter-spacing. Why?
+    if get_value(style, 'word-spacing') == 'normal':
+        style['word-spacing'] = PropertyValue('0')
+
+
 def handle_computed_values(element):
     """
     Normalize values as much as possible without rendering the document.
@@ -522,6 +529,7 @@ def handle_computed_values(element):
     handle_computed_line_height(element, font_size)
     handle_computed_border_width(element)
     handle_computed_display_float(element)
+    handle_computed_word_spacing(element)
 
 
 def assign_properties(document):
