@@ -53,6 +53,7 @@ body{
 h2, h3, h4, h5, h6
 {
   font-family: "menu";
+  font-weight: normal;
   letter-spacing: 0.2em;
   text-shadow: none;
 }
@@ -60,29 +61,32 @@ h2, h3, h4, h5, h6
 h2 a, h3 a, h4 a, h5 a, h6 a
 {
   font-family: "kimberley";
-  letter-spacing: 0.2em;
+  letter-spacing: 0.1em;
   text-shadow: none;
 }
 
 
 h2{
-  background: url(img/rond.png) no-repeat 6px 8px;
+  background: url(img/rond.png) no-repeat 6px 12px;
   color:black;
   height: 60px;
   margin-top: 35px;
-  padding: 15px 0 0 25px;
-  text-transform: uppercase;
+  padding: 15px 0 0 20px;
+/*  text-transform: uppercase;*/
 }
 
 h2:first-letter{
   color: white;
 }
 
+h3{
+  margin-top: 1.5em;
+}
+
 h3 a{
   border-bottom: 3px solid;
   border-radius: 0;
   color: #35c6c7 ;
-  font-weight: bolder;
   padding: 5px 0 0 15px;
   text-transform: uppercase;
   width: 100%;
@@ -178,6 +182,8 @@ nav ul {
   background: none;
   box-shadow: none;
   padding-left: 0;
+  color: black;
+  text-transform: uppercase;
 }
 
 
@@ -190,7 +196,6 @@ nav li a {
   min-height: 30px;
   padding: 0 12px 0 14px;
   text-align: left;
-  text-transform: uppercase;
   transition: background 0.7s ease;
 }
 
@@ -227,7 +232,9 @@ body > section {
   border-radius: 0.2em;
   box-shadow: 0 0 2px #b7b7b7 ;
   padding: 1px 30px 32px;
-  margin: 0 20%;
+  margin: 0 20% 2em;
+  font-size: 1.2em;
+  line-height: 1.3;
 }
 
 .note{
@@ -240,7 +247,6 @@ body > section {
 
 .note p{
   color: red;
-
 }
 .contents {
   background: url(img/content_haut.png) no-repeat top left,
@@ -289,7 +295,6 @@ footer ul {
 
 footer li a{
   color: white;
-  font-size: 1em;
 }
 
 footer li a:hover,
