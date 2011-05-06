@@ -1,3 +1,4 @@
 /* Minimal user-agent stylesheet */
 p { margin: 1em 0px } /* 0px should be translated to 0*/
 a { text-decoration: underline }
+h1 { font-weight: bolder }

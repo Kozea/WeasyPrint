@@ -91,6 +91,8 @@ def test_annotate_document():
     assert h1.style['background-image'][0].uri == 'file://' \
         + os.path.abspath(resource_filename('logo_small.png'))
     
+    assert h1.style['font-weight'][0].value == 700
+    
     sides = ('-top', '-right', '-bottom', '-left')
     # 32px = 1em * font-size: 2em * initial 16px
     for side, expected_value in zip(sides, ('32px', '0', '32px', '0')):

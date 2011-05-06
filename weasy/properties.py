@@ -349,3 +349,29 @@ BORDER_WIDTH_KEYWORDS = {
     'thick': 5,
 }
 
+
+# http://www.w3.org/TR/CSS21/fonts.html#propdef-font-weight
+FONT_WEIGHT_RELATIVE = dict(
+    bolder={
+        100: 400,
+        200: 400,
+        300: 400,
+        400: 700,
+        500: 700,
+        600: 900,
+        700: 900,
+        800: 900,
+        900: 900,
+    },
+    lighter={
+        100: 100,
+        200: 100,
+        300: 100,
+        400: 100,
+        500: 100,
+        600: 400,
+        700: 400,
+        800: 700,
+        900: 700,
+    },
+)

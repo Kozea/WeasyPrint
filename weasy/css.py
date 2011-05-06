@@ -447,6 +447,7 @@ def handle_computed_line_height(element, font_size):
     """
     Relative values of line-height are relative to font-size.
     """
+    # TODO: test this
     style = element.style
     assert len(element.style['line-height']) == 1
     value = element.style['line-height'][0]
@@ -481,6 +482,7 @@ def handle_computed_outline_width(element):
     """
     Set outline-width to zero if outline-style is none.
     """
+    # TODO: test this
     style = element.style
     if get_value(style, 'outline-style') == 'none':
         style['outline-width'] = PropertyValue('0')
@@ -521,10 +523,34 @@ def handle_computed_display_float(element):
 
 
 def handle_computed_word_spacing(element):
+    """
+    word-spacing: normal means zero.
+    """
+    # TODO: test this
     style = element.style
     # CSS 2.1 says this for word-spacing but not letter-spacing. Why?
     if get_value(style, 'word-spacing') == 'normal':
         style['word-spacing'] = PropertyValue('0')
+
+
+def handle_computed_font_weight(element):
+    """
+    Handle keyword values for font-weight.
+    """
+    # TODO: test this
+    style = element.style
+    value = get_value(style, 'font-weight')
+    if value == 'normal':
+        style['font-weight'] = PropertyValue('400')
+    elif value == 'bold':
+        style['font-weight'] = PropertyValue('700')
+    elif value in ('bolder', 'lighter'):
+        parent_values = element.getparent().style['font-weight']
+        assert len(parent_values) == 1
+        assert parent_values[0].type == 'NUMBER'
+        parent_value = parent_values[0].value
+        style['font-weight'] = PropertyValue(str(
+            properties.FONT_WEIGHT_RELATIVE[value] [parent_value]))
 
 
 def handle_computed_values(element):
@@ -539,10 +565,11 @@ def handle_computed_values(element):
     handle_computed_outline_width(element)
     handle_computed_display_float(element)
     handle_computed_word_spacing(element)
+    handle_computed_font_weight(element)
     # TODO: percentages for height?
     #       http://www.w3.org/TR/CSS21/visudet.html#propdef-height
     # TODO: percentages for vertical-align. What about line-height: normal?
-    # TODO: clip, content, font-weight
+    # TODO: clip, content
 
 
 def assign_properties(document):
