@@ -20,7 +20,6 @@ setup(
     packages=['weasy'],
     zip_safe=False,
     install_requires=[
-        'html5lib',
         'lxml',
         'cssutils',
         'Attest',

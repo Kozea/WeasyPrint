@@ -26,7 +26,7 @@
     http://www.w3.org/TR/CSS21/intro.html#processing-model
     
     This module does this in more than two steps. The `annotate_document`
-    function does everything, butthere is also a function for each step:
+    function does everything, but there is also a function for each step:
     
      * ``find_stylesheets``: Find and parse all author stylesheets in a document
      * ``remove_ignored_declarations``: Remove illegal and unsupported
