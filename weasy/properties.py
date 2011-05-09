@@ -34,7 +34,7 @@ import collections
 from cssutils.css import CSSStyleDeclaration, ColorValue
 
 
-def four_sides(name, values):
+def expand_four_sides(name, values):
     """
     Expand properties that set a value for each of the four sides of a box.
     """
@@ -109,11 +109,11 @@ def expand_list_style(name, values):
 
 
 SHORTHANDS = {
-    'margin': four_sides,
-    'padding': four_sides,
-    'border-color': four_sides,
-    'border-width': four_sides,
-    'border-style': four_sides,
+    'margin': expand_four_sides,
+    'padding': expand_four_sides,
+    'border-color': expand_four_sides,
+    'border-width': expand_four_sides,
+    'border-style': expand_four_sides,
     'border-top': expand_border_side,
     'border-right': expand_border_side,
     'border-bottom': expand_border_side,

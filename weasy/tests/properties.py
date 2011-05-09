@@ -20,7 +20,7 @@ import attest
 from attest import Tests, assert_hook
 from cssutils.css import PropertyValue, CSSStyleDeclaration
 
-from ..properties import four_sides, expand_shorthands_in_declaration
+from ..properties import expand_four_sides, expand_shorthands_in_declaration
 
 
 suite = Tests()
@@ -41,7 +41,7 @@ def expand_to_dict(css):
 
 
 @suite.test
-def test_four_sides():
+def test_expand_four_sides():
     assert expand_to_dict('margin: 1em') == {
         'margin-top': '1em',
         'margin-right': '1em',
@@ -67,6 +67,6 @@ def test_four_sides():
         'padding-left': '5px',
     }
     with attest.raises(ValueError):
-        list(four_sides('padding', PropertyValue('1 2 3 4 5')))
+        list(expand_four_sides('padding', PropertyValue('1 2 3 4 5')))
 
 
