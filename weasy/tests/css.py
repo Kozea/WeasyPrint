@@ -24,6 +24,7 @@ import cssutils
 from cssutils.helper import path2url
 
 from .. import css
+from ..css.computed_values import get_value
 
 from . import resource_filename
 
@@ -96,23 +97,22 @@ def test_annotate_document():
     sides = ('-top', '-right', '-bottom', '-left')
     # 32px = 1em * font-size: 2em * initial 16px
     for side, expected_value in zip(sides, ('32px', '0', '32px', '0')):
-        assert css.get_value(p.style, 'margin' + side) == expected_value
+        assert get_value(p.style, 'margin' + side) == expected_value
     
     # 32px = 2em * initial 16px
     for side, expected_value in zip(sides, ('32px', '32px', '32px', '32px')):
-        assert css.get_value(ul.style, 'margin' + side) == expected_value
+        assert get_value(ul.style, 'margin' + side) == expected_value
     
     # thick = 5px, 0.25 inches = 96*.25 = 24px
     for side, expected_value in zip(sides, ('0', '5px', '0', '24px')):
-        assert css.get_value(ul.style, 'border' + side + '-width') \
-            == expected_value
+        assert get_value(ul.style, 'border' + side + '-width') == expected_value
     
     # 32px = 2em * initial 16px
     # 64px = 4em * initial 16px
     for side, expected_value in zip(sides, ('32px', '0', '32px', '64px')):
-        assert css.get_value(li[0].style, 'margin' + side) == expected_value
+        assert get_value(li[0].style, 'margin' + side) == expected_value
     
-    assert css.get_value(a.style, 'text-decoration') == 'underline'
+    assert get_value(a.style, 'text-decoration') == 'underline'
     
     color = a.style['color'][0]
     assert (color.red, color.green, color.blue, color.alpha) == (255, 0, 0, 1)
