@@ -33,8 +33,11 @@ def get_value(style, name):
         return 'initial'
     values = style[name]
     if hasattr(values, 'value'):
+        # This looks like a PropertyValue object
         return values.value
     else:
+        # One of the functions below may have replace a PropertyValue by a list
+        # of Value objects.
         return ' '.join(value.cssText for value in values)
 
 

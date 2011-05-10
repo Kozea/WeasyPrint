@@ -352,12 +352,15 @@ def assign_properties(document):
         computed_values.handle_computed_values(element)
         
 
-def annotate_document(document, user_stylesheets=None, ua_stylesheets=None,
+def annotate_document(document, user_stylesheets=None,
+                      ua_stylesheets=(HTML4_DEFAULT_STYLESHEET,),
                       medium='print'):
     """
     Do everything from finding author stylesheets in the given HTML document
-    to parsing and applying them, to finish with a `style` attribute on
+    to parsing and applying them, to end up with a `style` attribute on
     every DOM element: a dictionary with values for all CSS 2.1 properties.
+    
+    Given stylesheet will be modified in place.
     """
     document.make_links_absolute()
     author_stylesheets = find_stylesheets(document)
