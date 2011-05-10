@@ -51,19 +51,14 @@ HTML4_DEFAULT_STYLESHEET = parseFile(os.path.join(os.path.dirname(__file__),
     'html4_default.css'))
 
 
-def strip_mimetype_parameters(mimetype):
-    """Only keep 'type/subtype' from 'type/subtype ; param1; param2'."""
-    if mimetype:
-        return mimetype.split(';', 1)[0].strip()
-
-
 def find_stylesheets(html_document):
     """
     Yield stylesheets from a DOM document.
     """
     for element in html_document.iter():
         mimetype = element.get('type')
-        if mimetype and strip_mimetype_parameters(mimetype) != 'text/css':
+        # Only keep 'type/subtype' from 'type/subtype ; param1; param2'.
+        if mimetype and mimetype.split(';', 1)[0].strip() != 'text/css':
             continue
         # cssutils translates '' to 'all'.
         media_attr = element.get('media', '').strip()
