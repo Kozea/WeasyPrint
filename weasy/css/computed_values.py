@@ -21,9 +21,75 @@
 """
 
 
+import collections
+
 from cssutils.css import PropertyValue, DimensionValue
-from . import properties
 from .initial_values import get_value, INITIAL_VALUES
+
+
+# How many CSS pixels is one <unit> ?
+# http://www.w3.org/TR/CSS21/syndata.html#length-units
+LENGTHS_TO_PIXELS = {
+    'px': 1,
+    'pt': 1. / 0.75,
+    'pc': 16., # LENGTHS_TO_PIXELS['pt'] * 12
+    'in': 96., # LENGTHS_TO_PIXELS['pt'] * 72
+    'cm': 96. / 2.54, # LENGTHS_TO_PIXELS['in'] / 2.54
+    'mm': 96. / 25.4, # LENGTHS_TO_PIXELS['in'] / 25.4
+}
+
+
+# Value in pixels of font-size for <absolute-size> keywords: 12pt (16px) for
+# medium, and scaling factors given in CSS3 for others:
+# http://www.w3.org/TR/css3-fonts/#font-size-prop
+# This dict has to be ordered to implement 'smaller' and 'larger'
+FONT_SIZE_MEDIUM = 16.
+FONT_SIZE_KEYWORDS = collections.OrderedDict([
+    ('xx-small', FONT_SIZE_MEDIUM * 3/5),
+    ('x-small', FONT_SIZE_MEDIUM * 3/4),
+    ('small', FONT_SIZE_MEDIUM * 8/9),
+    ('medium', FONT_SIZE_MEDIUM),
+    ('large', FONT_SIZE_MEDIUM * 6/5),
+    ('x-large', FONT_SIZE_MEDIUM * 3/2),
+    ('xx-large', FONT_SIZE_MEDIUM * 2),
+])
+del FONT_SIZE_MEDIUM
+
+
+# These are unspecified, other than 'thin' <='medium' <= 'thick'.
+# Values are in pixels.
+BORDER_WIDTH_KEYWORDS = {
+    'thin': 1,
+    'medium': 3,
+    'thick': 5,
+}
+
+
+# http://www.w3.org/TR/CSS21/fonts.html#propdef-font-weight
+FONT_WEIGHT_RELATIVE = dict(
+    bolder={
+        100: 400,
+        200: 400,
+        300: 400,
+        400: 700,
+        500: 700,
+        600: 900,
+        700: 900,
+        800: 900,
+        900: 900,
+    },
+    lighter={
+        100: 100,
+        200: 100,
+        300: 100,
+        400: 100,
+        500: 100,
+        600: 400,
+        700: 400,
+        800: 700,
+        900: 700,
+    },
+)
 
 
 def handle_computed_font_size(element):
@@ -39,7 +105,7 @@ def handle_computed_font_size(element):
         # root element, no parent
         parent_value_text = INITIAL_VALUES['font-size'].value
         # Initial is medium
-        parent_font_size = properties.FONT_SIZE_KEYWORDS[parent_value_text]
+        parent_font_size = FONT_SIZE_KEYWORDS[parent_value_text]
 
     assert len(element.style['font-size']) == 1
     value = element.style['font-size'][0]
@@ -47,8 +113,8 @@ def handle_computed_font_size(element):
     
     # TODO: once we ignore invalid declarations, turn these ValueError’s into
     # assert False, 'Declaration should have been ignored'
-    if value_text in properties.FONT_SIZE_KEYWORDS:
-        font_size = properties.FONT_SIZE_KEYWORDS[value_text]
+    if value_text in FONT_SIZE_KEYWORDS:
+        font_size = FONT_SIZE_KEYWORDS[value_text]
     elif value_text in ('smaller', 'larger'):
         # TODO: support 'smaller' and 'larger' font-size
         raise ValueError('font-size: smaller | larger are not supported yet.')
@@ -62,8 +128,8 @@ def handle_computed_font_size(element):
         elif value.dimension == 'ex':
             # TODO: support ex unit
             raise ValueError('The ex unit is not supported yet.')
-        elif value.dimension in properties.LENGTHS_TO_PIXELS:
-            factor = properties.LENGTHS_TO_PIXELS[value.dimension]
+        elif value.dimension in LENGTHS_TO_PIXELS:
+            factor = LENGTHS_TO_PIXELS[value.dimension]
             font_size = value.value * factor
         else:
             raise ValueError('Unknown length unit for font-size:', value_text)
@@ -83,9 +149,9 @@ def compute_length(value, font_size):
     if value.type != 'DIMENSION' or value.value == 0:
         # No conversion needed.
         return value
-    if value.dimension in properties.LENGTHS_TO_PIXELS:
+    if value.dimension in LENGTHS_TO_PIXELS:
         # Convert absolute lengths to pixels
-        factor = properties.LENGTHS_TO_PIXELS[value.dimension]
+        factor = LENGTHS_TO_PIXELS[value.dimension]
         return DimensionValue(str(value.value * factor) + 'px')
     elif value.dimension == 'em':
         return DimensionValue(str(value.value * font_size) + 'px')
@@ -136,8 +202,8 @@ def handle_computed_border_width(element):
             style['border-%s-width' % side] = PropertyValue('0')
         else:
             value = get_value(style, 'border-%s-width' % side)
-            if value in properties.BORDER_WIDTH_KEYWORDS:
-                width = properties.BORDER_WIDTH_KEYWORDS[value]
+            if value in BORDER_WIDTH_KEYWORDS:
+                width = BORDER_WIDTH_KEYWORDS[value]
                 style['border-%s-width' % side] = PropertyValue(
                     str(width) + 'px')
 
@@ -152,8 +218,8 @@ def handle_computed_outline_width(element):
         style['outline-width'] = PropertyValue('0')
     else:
         value = get_value(style, 'outline-width')
-        if value in properties.BORDER_WIDTH_KEYWORDS:
-            width = properties.BORDER_WIDTH_KEYWORDS[value]
+        if value in BORDER_WIDTH_KEYWORDS:
+            width = BORDER_WIDTH_KEYWORDS[value]
             style['outline-width'] = PropertyValue(str(width) + 'px')
 
 
@@ -214,7 +280,7 @@ def handle_computed_font_weight(element):
         assert parent_values[0].type == 'NUMBER'
         parent_value = parent_values[0].value
         style['font-weight'] = PropertyValue(str(
-            properties.FONT_WEIGHT_RELATIVE[value] [parent_value]))
+            FONT_WEIGHT_RELATIVE[value] [parent_value]))
 
 
 def handle_computed_values(element):
