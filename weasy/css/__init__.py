@@ -42,6 +42,7 @@ from cssutils import parseString, parseUrl, parseStyle, parseFile
 from cssutils.css import PropertyValue, CSSStyleDeclaration
 
 from . import shorthands
+from . import inheritance
 from . import computed_values
 
 
@@ -265,35 +266,6 @@ def handle_style_attribute(element):
     return declarations
 
 
-def handle_inheritance(element):
-    """
-    The specified value is the parent element’s computed value iif one of the
-    following is true:
-     * The cascade did not result in a value, and the the property is inherited
-     * The the value is the keyword 'inherit'.
-    """
-    style = element.style
-    parent = element.getparent()
-    if parent is None: # root element
-        for name, value in style.iteritems():
-            # The PropertyValue object has value attribute
-            if value.value == 'inherit':
-                # The root element can not inherit from anything:
-                # use the initial value.
-                style[name] = PropertyValue('initial')
-    else:
-        # The parent appears before in tree order, so we should already have
-        # finished with its computed values.
-        for name, value in style.iteritems():
-            if value.value == 'inherit':
-                style[name] = parent.style[name]
-        for name in properties.INHERITED:
-            # Do not use is_initial() here: only inherit if the property is
-            # actually missing.
-            if name not in style:
-                style[name] = parent.style[name]
-
-
 def is_initial(style, name):
     """
     Return whether the property `name` is missing in the given `style` dict
@@ -348,7 +320,7 @@ def assign_properties(document):
         for precedence, prop in declarations:
             style[prop.name] = prop.propertyValue
         
-        handle_inheritance(element)    
+        inheritance.handle_inheritance(element)    
         handle_initial_values(element)
         computed_values.handle_computed_values(element)
         

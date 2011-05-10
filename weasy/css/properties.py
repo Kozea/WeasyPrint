@@ -37,61 +37,6 @@ from .shorthands import expand_shorthands_in_declaration
 
 
 r"""
-  Built with:
-  
-    print '\n'.join(
-        lxml.html.parse('http://www.w3.org/TR/CSS21/propidx.html')
-        .xpath('//table//td[5][contains(text(), "yes")]/../td[1]/a/span/text()')
-    ).replace("'", '')
-  
-  adding some line breaks and removing shorthand properties.
-"""
-# Do not list shorthand properties here as we handle them before inheritance:
-# font, list-style
-INHERITED = set("""
-    azimuth
-    border-collapse
-    border-spacing
-    caption-side
-    color
-    cursor
-    direction
-    elevation
-    empty-cells
-    font-family
-    font-size
-    font-style
-    font-variant
-    font-weight
-    letter-spacing
-    line-height
-    list-style-image
-    list-style-position
-    list-style-type
-    orphans
-    pitch-range
-    pitch
-    quotes
-    richness
-    speak-header
-    speak-numeral
-    speak-punctuation
-    speak
-    speech-rate
-    stress
-    text-align
-    text-indent
-    text-transform
-    visibility
-    voice-family
-    volume
-    white-space
-    widows
-    word-spacing
-""".split())
-
-
-r"""
     Built with:
     
     print '\n'.join(
