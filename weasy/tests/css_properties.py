@@ -20,7 +20,7 @@ import attest
 from attest import Tests, assert_hook
 from cssutils.css import PropertyValue, CSSStyleDeclaration
 
-from ..properties import expand_four_sides, expand_shorthands_in_declaration
+from ..css.properties import expand_four_sides, expand_shorthands_in_declaration
 
 
 suite = Tests()

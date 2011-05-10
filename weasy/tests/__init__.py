@@ -25,4 +25,4 @@ def resource_filename(basename):
 
 all = Tests('.'.join((__name__, mod, 'suite'))
             for mod in ('css',
-                        'properties'))
+                        'css_properties'))
