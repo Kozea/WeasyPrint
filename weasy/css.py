@@ -308,6 +308,8 @@ def handle_inheritance(element):
             if value.value == 'inherit':
                 style[name] = parent.style[name]
         for name in properties.INHERITED:
+            # Do not use is_initial() here: only inherit if the property is
+            # actually missing.
             if name not in style:
                 style[name] = parent.style[name]
 
