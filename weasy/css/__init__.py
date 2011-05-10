@@ -41,6 +41,7 @@ import os.path
 from cssutils import parseString, parseUrl, parseStyle, parseFile
 from cssutils.css import PropertyValue, CSSStyleDeclaration
 
+from . import shorthands
 from . import computed_values
 
 
@@ -174,7 +175,7 @@ def expand_shorthands(stylesheet):
     eg. margin becomes margin-top, margin-right, margin-bottom and margin-left.
     """
     for rule in find_rulesets(stylesheet):
-        rule.style = properties.expand_shorthands_in_declaration(rule.style)
+        rule.style = shorthands.expand_shorthands_in_declaration(rule.style)
         # TODO: @font-face
 
 
