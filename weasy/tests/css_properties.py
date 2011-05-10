@@ -26,13 +26,6 @@ from ..css.properties import expand_four_sides, expand_shorthands_in_declaration
 suite = Tests()
 
 
-def expand_shorthand(expander, name, value):
-    """Helper to test shorthand properties expander functions."""
-    value = list(PropertyValue(value))
-    return dict((new_name, new_value.cssText)
-                for new_name, new_value in expander(name, value))
-
-
 def expand_to_dict(css):
     """Helper to test shorthand properties expander functions."""
     return dict((prop.name, prop.value)
