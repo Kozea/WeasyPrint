@@ -44,8 +44,9 @@ def test_find_stylesheets():
     
     sheets = list(css.find_stylesheets(document))
     assert len(sheets) == 2
-    assert set(s.href.rsplit('/', 1)[-1] for s in sheets) == set(
-        ['doc1.html', 'sheet1.css'])
+    # Also test that stylesheets are in tree order
+    assert [s.href.rsplit('/', 1)[-1] for s in sheets] \
+        == ['sheet1.css', 'doc1.html']
 
     rules = list(rule for sheet in sheets
                       for rule in css.resolve_import_media(sheet, 'print'))
