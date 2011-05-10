@@ -39,10 +39,11 @@
 """
 import os.path
 from cssutils import parseString, parseUrl, parseStyle, parseFile
-from cssutils.css import PropertyValue, CSSStyleDeclaration
+from cssutils.css import CSSStyleDeclaration
 
 from . import shorthands
 from . import inheritance
+from . import initial_values
 from . import computed_values
 
 
@@ -266,42 +267,6 @@ def handle_style_attribute(element):
     return declarations
 
 
-def is_initial(style, name):
-    """
-    Return whether the property `name` is missing in the given `style` dict
-    or if its value is the 'initial' keyword.
-    """
-    return computed_values.get_value(style, name) == 'initial'
-
-
-def handle_initial_values(element):
-    """
-    Properties that do not have a value after inheritance or whose value is the
-    'initial' keyword (CSS3) get their initial value.
-    """
-    style = element.style
-    for name, initial in properties.INITIAL_VALUES.iteritems():
-        # Explicit 'initial' values are new in CSS3
-        # http://www.w3.org/TR/css3-values/#computed0
-        if is_initial(style, name):
-            style[name] = initial
-
-    # Special cases for initial values that can not be expressed as CSS
-    
-    # border-color: same as color
-    for name in ('border-top-color', 'border-right-color',
-                 'border-bottom-color', 'border-left-color'):
-        if is_initial(style, name):
-            style[name] = style['color']
-
-    # text-align: left in left-to-right text, right in right-to-left
-    if is_initial(style, 'text-align'):
-        if style['direction'].value == 'rtl':
-            style['text-align'] = PropertyValue('right')
-        else:
-            style['text-align'] = PropertyValue('left')
-
-
 def assign_properties(document):
     """
     For every element of the document, take the properties left by
@@ -321,7 +286,7 @@ def assign_properties(document):
             style[prop.name] = prop.propertyValue
         
         inheritance.handle_inheritance(element)    
-        handle_initial_values(element)
+        initial_values.handle_initial_values(element)
         computed_values.handle_computed_values(element)
         
 

@@ -23,22 +23,7 @@
 
 from cssutils.css import PropertyValue, DimensionValue
 from . import properties
-
-
-def get_value(style, name):
-    """
-    Return the value of a property as a string, defaulting to 'initial'.
-    """
-    if name not in style:
-        return 'initial'
-    values = style[name]
-    if hasattr(values, 'value'):
-        # This looks like a PropertyValue object
-        return values.value
-    else:
-        # One of the functions below may have replace a PropertyValue by a list
-        # of Value objects.
-        return ' '.join(value.cssText for value in values)
+from .initial_values import get_value, INITIAL_VALUES
 
 
 def handle_computed_font_size(element):
@@ -52,7 +37,7 @@ def handle_computed_font_size(element):
         parent_font_size = parent.style['font-size'][0].value
     else:
         # root element, no parent
-        parent_value_text = properties.INITIAL_VALUES['font-size'].value
+        parent_value_text = INITIAL_VALUES['font-size'].value
         # Initial is medium
         parent_font_size = properties.FONT_SIZE_KEYWORDS[parent_value_text]
 
@@ -81,9 +66,9 @@ def handle_computed_font_size(element):
             factor = properties.LENGTHS_TO_PIXELS[value.dimension]
             font_size = value.value * factor
         else:
-            raise ValueError('Unknown length unit for font-size:', values_text)
+            raise ValueError('Unknown length unit for font-size:', value_text)
     else:
-        raise ValueError('Invalid value for font-size:', values_text)
+        raise ValueError('Invalid value for font-size:', value_text)
 
     element.style['font-size'] = PropertyValue(str(font_size) + 'px')
     return font_size
@@ -106,8 +91,7 @@ def compute_length(value, font_size):
         return DimensionValue(str(value.value * font_size) + 'px')
     elif value.dimension == 'ex':
         # TODO: support ex
-        raise ValueError('The ex unit is not supported yet.', name,
-            values.value)
+        raise ValueError('The ex unit is not supported yet.', value.cssText)
     elif value.dimension is not None:
         raise ValueError('Unknown length unit', value.value, repr(value.type))
     
