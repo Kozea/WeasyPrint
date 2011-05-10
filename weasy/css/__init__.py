@@ -74,14 +74,11 @@ def find_stylesheets(html_document):
             # we don't need `encoding` here.
             yield parseString(content, href=element.base_url,
                               media=media_attr, title=element.get('title'))
-        elif element.tag == 'link':
-            if (
-                ' stylesheet ' in ' %s ' % element.get('rel', '')
-                and element.get('href')
-            ):
-                # URLs should have been made absolute earlier
-                yield parseUrl(element.get('href'), media=media_attr,
-                               title=element.get('title'))
+        elif element.tag == 'link' and element.get('href') \
+                and ' stylesheet ' in ' %s ' % element.get('rel', ''):
+            # URLs should have been made absolute earlier
+            yield parseUrl(element.get('href'), media=media_attr,
+                           title=element.get('title'))
 
 
 def invalid_declaration_reason(prop):
