@@ -121,8 +121,10 @@ def test_annotate_document():
     color = a.style['color'][0]
     assert (color.red, color.green, color.blue, color.alpha) == (255, 0, 0, 1)
 
-    assert [v.value for v in after.style['content']] \
-        == [' [', 'attr(href)', ']']
+    assert after.style['content'][0].value == ' ['
+    assert '/'.join(after.style['content'][1].value.split('/')[-4:]) \
+        == 'weasy/tests/resources/home.html'
+    assert after.style['content'][2].value == ']'
 
     # TODO much more tests here: test that origin and selector precedence
     # and inheritance are correct, ...

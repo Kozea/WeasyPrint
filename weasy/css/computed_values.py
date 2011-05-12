@@ -24,7 +24,7 @@
 import collections
 
 import cssutils.helper
-from cssutils.css import PropertyValue, DimensionValue
+from cssutils.css import PropertyValue, DimensionValue, Value
 from .initial_values import get_value, INITIAL_VALUES
 
 
@@ -284,14 +284,24 @@ def handle_computed_font_weight(element):
             FONT_WEIGHT_RELATIVE[value] [parent_value]))
 
 
-def compute_content_value(element, value):
+def compute_content_value(parent, value):
     if value.type == 'FUNCTION':
-        # TODO: handle attr(). We need to patch cssutils to give access to
-        # arguments in CSSFunction objects.
-        pass
-        #attr_name = value. ...
-        #content = element.get(attr_name, '')
-        #return PropertyValue(cssutils.helper.string(content))
+        # value.seq is *NOT* part of the public API
+        # TODO: patch cssutils to provide a public API for arguments
+        # in CSSFunction objects
+        assert value.value.startswith('attr(')
+        args = [v.value for v in value.seq if isinstance(v.value, Value)]
+        assert len(args) == 1
+        attr_name = args[0].value
+        # The 'content' property can only be something else than 'normal'
+        # on :before or :after, so attr() applies to the parent, the actual
+        # element.
+        content = parent.get(attr_name, '')
+        # TODO: find a way to build a string Value without serializing
+        # and re-parsing.
+        value = PropertyValue(cssutils.helper.string(content))[0]
+        assert value.type == 'STRING'
+        assert value.value == content
     return value
 
 
@@ -302,7 +312,8 @@ def handle_computed_content(element):
         if get_value(style, 'content') == 'normal':
             style['content'] = PropertyValue('none')
         else:
-            style['content'] = [compute_content_value(element, value)
+            parent = element.getparent()
+            style['content'] = [compute_content_value(parent, value)
                                 for value in style['content']]
     else:
         # CSS 2.1 says it computes to 'normal' for elements, but does not say
@@ -326,6 +337,7 @@ def handle_computed_values(element):
     handle_computed_word_spacing(element)
     handle_computed_font_weight(element)
     handle_computed_content(element)
+    # All URLs are already made absolute by cssutils.
     # TODO: percentages for height?
     #       http://www.w3.org/TR/CSS21/visudet.html#propdef-height
     # TODO: percentages for vertical-align. What about line-height: normal?
