@@ -39,7 +39,6 @@
 """
 
 import os.path
-import collections
 
 from cssutils import parseString, parseUrl, parseStyle, parseFile
 from cssutils.css import CSSStyleDeclaration
@@ -330,8 +329,9 @@ class PseudoElement(object):
     Objects that behaves somewhat like lxml Element objects and hold styles
     for pseudo-elements.
     """
-    def __init__(self, parent):
+    def __init__(self, parent, pseudo_type):
         self.parent = parent
+        self.pseudo_element_type = pseudo_type
         self.applicable_properties = []
     
     def getparent(self):
@@ -339,11 +339,17 @@ class PseudoElement(object):
         return self.parent
 
 
-def EnterprisePseudoElementFactoryFactory(element):
-    # This closure holds a particular value of `element`
-    def EnterprisePseudoElementFactory():
-        return PseudoElement(element)
-    return EnterprisePseudoElementFactory
+class PseudoElementDict(dict):
+    """
+    Like a defaultdict, creates PseudoElement objects as needed.
+    """
+    def __init__(self, element):
+        self[''] = element
+    
+    def __missing__(self, key):
+        pseudo_element = PseudoElement(self[''], key)
+        self[key] = pseudo_element
+        return pseudo_element
 
         
 def annotate_document(document, user_stylesheets=None,
@@ -359,9 +365,7 @@ def annotate_document(document, user_stylesheets=None,
     build_lxml_proxy_cache(document)
     for element in document.iter():
         element.applicable_properties = []
-        element.pseudo_elements = collections.defaultdict(
-            EnterprisePseudoElementFactoryFactory(element))
-        element.pseudo_elements[''] = element
+        element.pseudo_elements = PseudoElementDict(element)
     document.make_links_absolute()
     author_stylesheets = find_stylesheets(document)
     for sheets, origin in ((author_stylesheets, 'author'),
