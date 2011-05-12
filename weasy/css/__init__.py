@@ -226,8 +226,6 @@ def apply_style_rule(rule, document, origin):
     build_lxml_proxy_cache(document)
     for selector in rule.selectorList:
         for element in document.cssselect(selector.selectorText):
-            if not hasattr(element, 'applicable_properties'):
-                element.applicable_properties = []
             for prop in rule.style:
                 # TODO: ignore properties that do not apply to the current 
                 # medium? http://www.w3.org/TR/CSS21/intro.html#processing-model
@@ -243,7 +241,6 @@ def handle_style_attribute(element):
     Return the element’s ``applicable_properties`` list after adding properties
     from the `style` attribute.
     """
-    declarations = getattr(element, 'applicable_properties', [])
     style_attribute = element.get('style')
     if style_attribute:
         # TODO: no href for parseStyle. What about relative URLs?
@@ -255,8 +252,7 @@ def handle_style_attribute(element):
                 # 1 for being a style attribute, 0 as there is no selector.
                 (1, 0, 0, 0)
             )
-            declarations.append((precedence, prop))
-    return declarations
+            element.applicable_properties.append((precedence, prop))
 
 
 def assign_properties(document):
@@ -267,14 +263,15 @@ def assign_properties(document):
     """
     build_lxml_proxy_cache(document)
     for element in document.iter():
-        declarations = handle_style_attribute(element)
+        handle_style_attribute(element)
         
         # If apply_style_rule() was called in appearance order, the stability
         # of Python's sort fulfills rule 4 of the cascade.
         # This lambda has one parameter deconstructed as a tuple
-        declarations.sort(key=lambda (precedence, prop): precedence)
+        element.applicable_properties.sort(
+            key=lambda (precedence, prop): precedence)
         element.style = style = {}
-        for precedence, prop in declarations:
+        for precedence, prop in element.applicable_properties:
             style[prop.name] = prop.propertyValue
         
         inheritance.handle_inheritance(element)    
@@ -292,6 +289,9 @@ def annotate_document(document, user_stylesheets=None,
     
     Given stylesheet will be modified in place.
     """
+    build_lxml_proxy_cache(document)
+    for element in document.iter():
+        element.applicable_properties = []
     document.make_links_absolute()
     author_stylesheets = find_stylesheets(document)
     for sheets, origin in ((author_stylesheets, 'author'),
