@@ -50,9 +50,11 @@ def test_find_stylesheets():
 
     rules = list(rule for sheet in sheets
                       for rule in css.resolve_import_media(sheet, 'print'))
-    assert len(rules) == 7
-    assert set(rule.selectorText for rule in rules) == set(
-        ['body > h1:first-child', 'p', 'ul', 'li', 'a', ':first'])
+    assert len(rules) == 8
+    # Also test appearance order
+    assert [rule.selectorText for rule in rules] \
+        == ['li', 'p', 'ul', 'a', 'a:after', ':first', 'ul', 
+            'body > h1:first-child']
 
 
 @suite.test
@@ -89,6 +91,7 @@ def test_annotate_document():
     h1, p, ul = body
     li = list(ul)
     a, = li[0]
+    after = a.pseudo_elements['after']
     
     assert h1.style['background-image'][0].uri == 'file://' \
         + os.path.abspath(resource_filename('logo_small.png'))
@@ -117,6 +120,9 @@ def test_annotate_document():
     
     color = a.style['color'][0]
     assert (color.red, color.green, color.blue, color.alpha) == (255, 0, 0, 1)
+
+    assert [v.value for v in after.style['content']] \
+        == [' [', 'attr(href)', ']']
 
     # TODO much more tests here: test that origin and selector precedence
     # and inheritance are correct, ...

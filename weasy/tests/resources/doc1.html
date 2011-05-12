@@ -4,6 +4,9 @@
     <style media=print>
         @import url(sheet1.css);
         a { color: red; }
+        a:after {
+            content: " [" attr(href) "]"
+        }
         @page :first { margin: 5em }
         ul {
             border-style: none solid hidden;

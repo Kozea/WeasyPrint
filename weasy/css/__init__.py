@@ -37,9 +37,13 @@
      * ``assign_properties``: Assign on computed value for each property to
        every DOM element.
 """
+
 import os.path
+import collections
+
 from cssutils import parseString, parseUrl, parseStyle, parseFile
 from cssutils.css import CSSStyleDeclaration
+from lxml import cssselect
 
 from . import shorthands
 from . import inheritance
@@ -49,6 +53,11 @@ from . import computed_values
 
 HTML4_DEFAULT_STYLESHEET = parseFile(os.path.join(os.path.dirname(__file__),
     'html4_default.css'))
+
+
+# Pseudo-classes and pseudo-elements are the same to lxml.cssselect.parse().
+# List the identifiers for all CSS3 pseudo elements here to distinguish them.
+PSEUDO_ELEMENTS = ('before', 'after', 'first-line', 'first-letter')
 
 
 def find_stylesheets(html_document):
@@ -213,7 +222,7 @@ def declaration_precedence(origin, priority):
         return 5
     else:
         assert ValueError('Unkown origin: %r' % origin)
-        
+
 
 def apply_style_rule(rule, document, origin):
     """
@@ -224,14 +233,50 @@ def apply_style_rule(rule, document, origin):
     'user agent'.
     """
     build_lxml_proxy_cache(document)
+    selectors = []
     for selector in rule.selectorList:
-        for element in document.cssselect(selector.selectorText):
+        parsed_selector = cssselect.parse(selector.selectorText)
+        # cssutils made sure that `selector` is not a "group of selectors"
+        # in CSS3 terms (`rule.selectorList` is) so `parsed_selector` cannot be
+        # of type `cssselect.Or`.
+        # This leaves only three cases:
+        #  * The selector ends with a pseudo-element. As `cssselect.parse()`
+        #    parses left-to-right, `parsed_selector` is a `cssselect.Pseudo`
+        #    instance that we can unwrap. This is the only place where CSS
+        #    allows pseudo-element selectors.
+        #  * The selector has a pseudo-element not at the end. This is invalid
+        #    and the whole ruleset should be ignored.
+        #  * The selector has no pseudo-element and is supported by
+        #    `cssselect.CSSSelector`.
+        if isinstance(parsed_selector, cssselect.Pseudo) \
+                and parsed_selector.ident in PSEUDO_ELEMENTS:
+            pseudo_type = parsed_selector.ident
+            # Remove the pseudo-element from the selector
+            parsed_selector = parsed_selector.element
+        else:
+            # No pseudo-element or invalid selector.
+            pseudo_type = ''
+        
+        try:
+            selector_callable = cssselect.CSSSelector(parsed_selector)
+        except cssselect.ExpressionError:
+            # Invalid selector, ignore the whole ruleset.
+            # TODO: log this error.
+            return
+        selectors.append((selector_callable, pseudo_type, selector.specificity))
+    
+    # Only apply to elements after seeing all selectors, as we want to
+    # ignore he whole ruleset if just one selector is invalid.
+    # TODO: test that ignoring actually happens.
+    for selector, pseudo_type, specificity in selectors:
+        for element in selector(document):
+            element = element.pseudo_elements[pseudo_type]
             for prop in rule.style:
                 # TODO: ignore properties that do not apply to the current 
                 # medium? http://www.w3.org/TR/CSS21/intro.html#processing-model
                 precedence = (
                     declaration_precedence(origin, prop.priority),
-                    selector.specificity
+                    specificity
                 )
                 element.applicable_properties.append((precedence, prop))
 
@@ -265,20 +310,42 @@ def assign_properties(document):
     for element in document.iter():
         handle_style_attribute(element)
         
-        # If apply_style_rule() was called in appearance order, the stability
-        # of Python's sort fulfills rule 4 of the cascade.
-        # This lambda has one parameter deconstructed as a tuple
-        element.applicable_properties.sort(
-            key=lambda (precedence, prop): precedence)
-        element.style = style = {}
-        for precedence, prop in element.applicable_properties:
-            style[prop.name] = prop.propertyValue
-        
-        inheritance.handle_inheritance(element)    
-        initial_values.handle_initial_values(element)
-        computed_values.handle_computed_values(element)
+        for element in element.pseudo_elements.itervalues():
+            # If apply_style_rule() was called in appearance order, the 
+            # stability of Python's sort fulfills rule 4 of the cascade.
+            # This lambda has one parameter deconstructed as a tuple
+            element.applicable_properties.sort(
+                key=lambda (precedence, prop): precedence)
+            element.style = style = {}
+            for precedence, prop in element.applicable_properties:
+                style[prop.name] = prop.propertyValue
+            
+            inheritance.handle_inheritance(element)    
+            initial_values.handle_initial_values(element)
+            computed_values.handle_computed_values(element)
         
 
+class PseudoElement(object):
+    """
+    Objects that behaves somewhat like lxml Element objects and hold styles
+    for pseudo-elements.
+    """
+    def __init__(self, parent):
+        self.parent = parent
+        self.applicable_properties = []
+    
+    def getparent(self):
+        """Pseudo-elements inherit from the associated element."""
+        return self.parent
+
+
+def EnterprisePseudoElementFactoryFactory(element):
+    # This closure holds a particular value of `element`
+    def EnterprisePseudoElementFactory():
+        return PseudoElement(element)
+    return EnterprisePseudoElementFactory
+
+        
 def annotate_document(document, user_stylesheets=None,
                       ua_stylesheets=(HTML4_DEFAULT_STYLESHEET,),
                       medium='print'):
@@ -292,6 +359,9 @@ def annotate_document(document, user_stylesheets=None,
     build_lxml_proxy_cache(document)
     for element in document.iter():
         element.applicable_properties = []
+        element.pseudo_elements = collections.defaultdict(
+            EnterprisePseudoElementFactoryFactory(element))
+        element.pseudo_elements[''] = element
     document.make_links_absolute()
     author_stylesheets = find_stylesheets(document)
     for sheets, origin in ((author_stylesheets, 'author'),
