@@ -23,6 +23,7 @@
 
 import collections
 
+import cssutils.helper
 from cssutils.css import PropertyValue, DimensionValue
 from .initial_values import get_value, INITIAL_VALUES
 
@@ -283,6 +284,34 @@ def handle_computed_font_weight(element):
             FONT_WEIGHT_RELATIVE[value] [parent_value]))
 
 
+def compute_content_value(element, value):
+    if value.type == 'FUNCTION':
+        # TODO: handle attr(). We need to patch cssutils to give access to
+        # arguments in CSSFunction objects.
+        pass
+        #attr_name = value. ...
+        #content = element.get(attr_name, '')
+        #return PropertyValue(cssutils.helper.string(content))
+    return value
+
+
+def handle_computed_content(element):
+    # TODO: properly test this
+    style = element.style
+    if getattr(element, 'pseudo_element_type', '') in ('before', 'after'):
+        if get_value(style, 'content') == 'normal':
+            style['content'] = PropertyValue('none')
+        else:
+            style['content'] = [compute_content_value(element, value)
+                                for value in style['content']]
+    else:
+        # CSS 2.1 says it computes to 'normal' for elements, but does not say
+        # anything for pseudo-elements other than :before and :after
+        # (ie. :first-line and :first-letter)
+        # Assume the same as elements.
+        style['content'] = PropertyValue('normal')
+            
+
 def handle_computed_values(element):
     """
     Normalize values as much as possible without rendering the document.
@@ -296,8 +325,9 @@ def handle_computed_values(element):
     handle_computed_display_float(element)
     handle_computed_word_spacing(element)
     handle_computed_font_weight(element)
+    handle_computed_content(element)
     # TODO: percentages for height?
     #       http://www.w3.org/TR/CSS21/visudet.html#propdef-height
     # TODO: percentages for vertical-align. What about line-height: normal?
-    # TODO: clip, content
+    # TODO: clip
 
