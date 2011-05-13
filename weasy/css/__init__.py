@@ -39,6 +39,11 @@
 """
 
 import os.path
+try:
+    from urlparse import urljoin
+except ImportError:
+    # Python 3
+    from urllib.parse import urljoin
 
 from cssutils import parseString, parseUrl, parseStyle, parseFile
 from cssutils.css import CSSStyleDeclaration
@@ -84,9 +89,11 @@ def find_stylesheets(html_document):
                               media=media_attr, title=element.get('title'))
         elif element.tag == 'link' and element.get('href') \
                 and ' stylesheet ' in ' %s ' % element.get('rel', ''):
-            # URLs should have been made absolute earlier
-            yield parseUrl(element.get('href'), media=media_attr,
-                           title=element.get('title'))
+            # URLs should NOT have been made absolute earlier
+            # TODO: support the <base> HTML element, but do not use
+            # lxml.html.HtmlElement.make_links_absolute() that changes the tree
+            href = urljoin(element.base_url, element.get('href'))
+            yield parseUrl(href, media=media_attr, title=element.get('title'))
 
 
 def invalid_declaration_reason(prop):
@@ -363,10 +370,11 @@ def annotate_document(document, user_stylesheets=None,
     Given stylesheet will be modified in place.
     """
     build_lxml_proxy_cache(document)
+    # Do NOT use document.make_links_absolute() as it changes the tree,
+    # and `content: attr(href)` should get the original attribute value.
     for element in document.iter():
         element.applicable_properties = []
         element.pseudo_elements = PseudoElementDict(element)
-    document.make_links_absolute()
     author_stylesheets = find_stylesheets(document)
     for sheets, origin in ((author_stylesheets, 'author'),
                            (user_stylesheets, 'user'),

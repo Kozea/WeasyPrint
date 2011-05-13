@@ -34,7 +34,6 @@ suite = Tests()
 def parse_html(filename):
     """Parse an HTML file from the test resources and resolve relative URL."""
     document = html.parse(path2url(resource_filename(filename))).getroot()
-    document.make_links_absolute()
     return document
 
 
@@ -93,7 +92,7 @@ def test_annotate_document():
     a, = li[0]
     after = a.pseudo_elements['after']
     
-    assert h1.style['background-image'][0].uri == 'file://' \
+    assert h1.style['background-image'][0].absolute_uri == 'file://' \
         + os.path.abspath(resource_filename('logo_small.png'))
     
     assert h1.style['font-weight'][0].value == 700
@@ -121,10 +120,8 @@ def test_annotate_document():
     color = a.style['color'][0]
     assert (color.red, color.green, color.blue, color.alpha) == (255, 0, 0, 1)
 
-    assert after.style['content'][0].value == ' ['
-    assert '/'.join(after.style['content'][1].value.split('/')[-4:]) \
-        == 'weasy/tests/resources/home.html'
-    assert after.style['content'][2].value == ']'
+    # The href attr should be as in the source, not made absolute.
+    assert ''.join(v.value for v in after.style['content']) == ' [home.html]'
 
     # TODO much more tests here: test that origin and selector precedence
     # and inheritance are correct, ...

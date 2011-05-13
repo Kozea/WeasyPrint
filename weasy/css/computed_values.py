@@ -337,7 +337,7 @@ def handle_computed_values(element):
     handle_computed_word_spacing(element)
     handle_computed_font_weight(element)
     handle_computed_content(element)
-    # All URLs are already made absolute by cssutils.
+    # Recent enough cssutils have a .absolute_uri on URIValue objects.
     # TODO: percentages for height?
     #       http://www.w3.org/TR/CSS21/visudet.html#propdef-height
     # TODO: percentages for vertical-align. What about line-height: normal?
