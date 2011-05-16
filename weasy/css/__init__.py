@@ -377,8 +377,8 @@ def annotate_document(document, user_stylesheets=None,
         element.pseudo_elements = PseudoElementDict(element)
     author_stylesheets = find_stylesheets(document)
     for sheets, origin in ((author_stylesheets, 'author'),
-                           (user_stylesheets, 'user'),
-                           (ua_stylesheets, 'user agent')):
+                           (user_stylesheets or [], 'user'),
+                           (ua_stylesheets or [], 'user agent')):
         for sheet in sheets:
             # TODO: UA and maybe user stylesheets might only need to be expanded
             # once, not for every document.
