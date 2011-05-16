@@ -166,7 +166,7 @@ def handle_initial_values(element):
 
     # text-align: left in left-to-right text, right in right-to-left
     if is_initial(style, 'text-align'):
-        if style['direction'].value == 'rtl':
+        if style.direction == 'rtl':
             style['text-align'] = PropertyValue('right')
         else:
             style['text-align'] = PropertyValue('left')

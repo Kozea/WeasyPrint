@@ -177,12 +177,11 @@ def handle_computed_lengths(element, font_size):
     """
     Convert other length units to pixels.
     """
-    element.style = dict(
-        # PropertyValue objects are not mutable, build a new list
-        (name, DummyPropertyValue(compute_length(value, font_size)
-                                  for value in values))
-        for name, values in element.style.iteritems()
-    )
+    style = element.style
+    for name in element.style:
+        # PropertyValue objects are not mutable, build a new DummyPropertyValue
+        style[name] = DummyPropertyValue(
+            compute_length(value, font_size) for value in style[name])
 
 
 def handle_computed_line_height(element, font_size):
@@ -226,10 +225,10 @@ def handle_computed_outline_width(element):
     """
     # TODO: test this
     style = element.style
-    if style['outline-style'].value == 'none':
+    if style.outline_style == 'none':
         style['outline-width'] = PropertyValue('0')
     else:
-        value = style['outline-width'].value
+        value = style.outline_width
         if value in BORDER_WIDTH_KEYWORDS:
             width = BORDER_WIDTH_KEYWORDS[value]
             style['outline-width'] = PropertyValue(str(width) + 'px')
@@ -242,18 +241,18 @@ def handle_computed_display_float(element):
     """
     # TODO: test this
     style = element.style
-    if style['display'].value == 'none':
+    if style.display == 'none':
         # Case 1
         return # position and float do not apply, but leave them
-    elif style['position'].value in ('absolute', 'fixed'):
+    elif style.position in ('absolute', 'fixed'):
         # Case 2
         style['float'] = PropertyValue('none')
-    elif style['float'].value == 'none' and element.getparent() is not None:
+    elif style.float == 'none' and element.getparent() is not None:
         # Case 5
         return
     
     # Cases 2, 3, 4
-    display = style['display'].value
+    display = style.display
     if display == 'inline-table':
         style['display'] = PropertyValue('table')
     elif display in ('inline', 'table-row-group', 'table-column',
@@ -271,7 +270,7 @@ def handle_computed_word_spacing(element):
     # TODO: test this
     style = element.style
     # CSS 2.1 says this for word-spacing but not letter-spacing. Why?
-    if style['word-spacing'].value == 'normal':
+    if style.word_spacing == 'normal':
         style['word-spacing'] = PropertyValue('0')
 
 
@@ -281,7 +280,7 @@ def handle_computed_font_weight(element):
     """
     # TODO: test this
     style = element.style
-    value = style['font-weight'].value
+    value = style.font_weight
     if value == 'normal':
         style['font-weight'] = PropertyValue('400')
     elif value == 'bold':
@@ -320,7 +319,7 @@ def handle_computed_content(element):
     # TODO: properly test this
     style = element.style
     if getattr(element, 'pseudo_element_type', '') in ('before', 'after'):
-        if style['content'].value == 'normal':
+        if style.content == 'normal':
             style['content'] = PropertyValue('none')
         else:
             parent = element.getparent()

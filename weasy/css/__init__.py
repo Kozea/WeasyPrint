@@ -306,6 +306,17 @@ def handle_style_attribute(element):
             element.applicable_properties.append((precedence, prop))
 
 
+class StyleDict(dict):
+    """
+    style.font_size == style['font-size'].value
+    """
+    def __getattr__(self, key):
+        try:
+            return self[key.replace('_', '-')].value
+        except KeyError:
+            raise AttributeError(key)
+
+        
 def assign_properties(document):
     """
     For every element of the document, take the properties left by
@@ -322,7 +333,7 @@ def assign_properties(document):
             # This lambda has one parameter deconstructed as a tuple
             element.applicable_properties.sort(
                 key=lambda (precedence, prop): precedence)
-            element.style = style = {}
+            element.style = style = StyleDict()
             for precedence, prop in element.applicable_properties:
                 style[prop.name] = prop.propertyValue
             
@@ -358,7 +369,7 @@ class PseudoElementDict(dict):
         self[key] = pseudo_element
         return pseudo_element
 
-        
+
 def annotate_document(document, user_stylesheets=None,
                       ua_stylesheets=(HTML4_DEFAULT_STYLESHEET,),
                       medium='print'):
@@ -367,7 +378,7 @@ def annotate_document(document, user_stylesheets=None,
     to parsing and applying them, to end up with a `style` attribute on
     every DOM element: a dictionary with values for all CSS 2.1 properties.
     
-    Given stylesheet will be modified in place.
+    Given stylesheets will be modified in place.
     """
     build_lxml_proxy_cache(document)
     # Do NOT use document.make_links_absolute() as it changes the tree,
