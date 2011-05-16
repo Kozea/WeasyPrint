@@ -25,7 +25,7 @@ import collections
 
 import cssutils.helper
 from cssutils.css import PropertyValue, DimensionValue, Value
-from .initial_values import get_value, INITIAL_VALUES
+from .initial_values import INITIAL_VALUES
 
 
 # How many CSS pixels is one <unit> ?
@@ -91,6 +91,16 @@ FONT_WEIGHT_RELATIVE = dict(
         900: 700,
     },
 )
+
+
+class DummyPropertyValue(list):
+    """
+    A list that quacks like a PropertyValue.
+    """
+    
+    @property
+    def value(self):
+        return ' '.join(value.cssText for value in self)
 
 
 def handle_computed_font_size(element):
@@ -169,7 +179,8 @@ def handle_computed_lengths(element, font_size):
     """
     element.style = dict(
         # PropertyValue objects are not mutable, build a new list
-        (name, [compute_length(value, font_size) for value in values])
+        (name, DummyPropertyValue(compute_length(value, font_size)
+                                  for value in values))
         for name, values in element.style.iteritems()
     )
 
@@ -199,10 +210,10 @@ def handle_computed_border_width(element):
     """
     style = element.style
     for side in ('top', 'right', 'bottom', 'left'):
-        if get_value(style, 'border-%s-style' % side) in ('none', 'hidden'):
+        if style['border-%s-style' % side].value in ('none', 'hidden'):
             style['border-%s-width' % side] = PropertyValue('0')
         else:
-            value = get_value(style, 'border-%s-width' % side)
+            value = style['border-%s-width' % side].value
             if value in BORDER_WIDTH_KEYWORDS:
                 width = BORDER_WIDTH_KEYWORDS[value]
                 style['border-%s-width' % side] = PropertyValue(
@@ -215,10 +226,10 @@ def handle_computed_outline_width(element):
     """
     # TODO: test this
     style = element.style
-    if get_value(style, 'outline-style') == 'none':
+    if style['outline-style'].value == 'none':
         style['outline-width'] = PropertyValue('0')
     else:
-        value = get_value(style, 'outline-width')
+        value = style['outline-width'].value
         if value in BORDER_WIDTH_KEYWORDS:
             width = BORDER_WIDTH_KEYWORDS[value]
             style['outline-width'] = PropertyValue(str(width) + 'px')
@@ -231,18 +242,18 @@ def handle_computed_display_float(element):
     """
     # TODO: test this
     style = element.style
-    if get_value(style, 'display') == 'none':
+    if style['display'].value == 'none':
         # Case 1
         return # position and float do not apply, but leave them
-    elif get_value(style, 'position') in ('absolute', 'fixed'):
+    elif style['position'].value in ('absolute', 'fixed'):
         # Case 2
         style['float'] = PropertyValue('none')
-    elif get_value(style, 'float') == 'none' and element.getparent() is not None:
+    elif style['float'].value == 'none' and element.getparent() is not None:
         # Case 5
         return
     
     # Cases 2, 3, 4
-    display = get_value(style, 'display')
+    display = style['display'].value
     if display == 'inline-table':
         style['display'] = PropertyValue('table')
     elif display in ('inline', 'table-row-group', 'table-column',
@@ -260,7 +271,7 @@ def handle_computed_word_spacing(element):
     # TODO: test this
     style = element.style
     # CSS 2.1 says this for word-spacing but not letter-spacing. Why?
-    if get_value(style, 'word-spacing') == 'normal':
+    if style['word-spacing'].value == 'normal':
         style['word-spacing'] = PropertyValue('0')
 
 
@@ -270,7 +281,7 @@ def handle_computed_font_weight(element):
     """
     # TODO: test this
     style = element.style
-    value = get_value(style, 'font-weight')
+    value = style['font-weight'].value
     if value == 'normal':
         style['font-weight'] = PropertyValue('400')
     elif value == 'bold':
@@ -309,12 +320,13 @@ def handle_computed_content(element):
     # TODO: properly test this
     style = element.style
     if getattr(element, 'pseudo_element_type', '') in ('before', 'after'):
-        if get_value(style, 'content') == 'normal':
+        if style['content'].value == 'normal':
             style['content'] = PropertyValue('none')
         else:
             parent = element.getparent()
-            style['content'] = [compute_content_value(parent, value)
-                                for value in style['content']]
+            style['content'] = DummyPropertyValue(
+                compute_content_value(parent, value)
+                for value in style['content'])
     else:
         # CSS 2.1 says it computes to 'normal' for elements, but does not say
         # anything for pseudo-elements other than :before and :after

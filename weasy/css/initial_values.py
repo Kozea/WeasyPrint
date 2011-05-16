@@ -135,28 +135,15 @@ INITIAL_VALUES = dict(
 )
 
 
-def get_value(style, name):
-    """
-    Return the value of a property as a string, defaulting to 'initial'.
-    """
-    if name not in style:
-        return 'initial'
-    values = style[name]
-    if hasattr(values, 'value'):
-        # This looks like a PropertyValue object
-        return values.value
-    else:
-        # One of the functions below may have replace a PropertyValue by a list
-        # of Value objects.
-        return ' '.join(value.cssText for value in values)
-
 
 def is_initial(style, name):
     """
     Return whether the property `name` is missing in the given `style` dict
     or if its value is the 'initial' keyword.
     """
-    return get_value(style, name) == 'initial'
+    # Explicit 'initial' values are new in CSS3
+    # http://www.w3.org/TR/css3-values/#computed0
+    return name not in style or style[name].value == 'initial'
 
 
 def handle_initial_values(element):
@@ -166,8 +153,6 @@ def handle_initial_values(element):
     """
     style = element.style
     for name, initial in INITIAL_VALUES.iteritems():
-        # Explicit 'initial' values are new in CSS3
-        # http://www.w3.org/TR/css3-values/#computed0
         if is_initial(style, name):
             style[name] = initial
 
