@@ -16,23 +16,27 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os.path
-from lxml import html
-from cssutils.helper import path2url
-from attest import Tests
+
+from attest import Tests, assert_hook
+from cssutils.css import PropertyValue
+
+from . import parse_html
+from .. import boxes
+from .. import css
 
 
-def resource_filename(basename):
-    return os.path.join(os.path.dirname(__file__), 'resources', basename)
+
+suite = Tests()
 
 
-def parse_html(filename):
-    """Parse an HTML file from the test resources and resolve relative URL."""
-    document = html.parse(path2url(resource_filename(filename))).getroot()
-    return document
-
-
-all = Tests('.'.join((__name__, mod, 'suite'))
-            for mod in ('test_css',
-                        'test_css_properties',
-                        'test_boxes'))
+@suite.test
+def test_box_tree():
+    document = parse_html('doc1.html')
+    css.annotate_document(document)
+    # Make sure the HTML4 stylesheet is applied.
+    # TODO: this should be in test_css*
+    assert document.head.style.display == 'none'
+    
+    box_tree = boxes.dom_to_box(document)
+    
+    # TODO

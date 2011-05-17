@@ -18,22 +18,24 @@
 
 import os.path
 from attest import Tests, assert_hook
-from lxml import html
-#from lxml.html import html5parser as html  # API is the same as lxml.html
 import cssutils
-from cssutils.helper import path2url
 
 from .. import css
 
-from . import resource_filename
+from . import resource_filename, parse_html
 
 
 suite = Tests()
 
-def parse_html(filename):
-    """Parse an HTML file from the test resources and resolve relative URL."""
-    document = html.parse(path2url(resource_filename(filename))).getroot()
-    return document
+
+@suite.test
+def test_style_dict():
+    style = css.StyleDict({
+        'margin-left': cssutils.css.PropertyValue('12px'),
+        'display': cssutils.css.PropertyValue('block')
+    })
+    assert style.display == 'block'
+    assert style.margin_left == 12
 
 
 @suite.test
