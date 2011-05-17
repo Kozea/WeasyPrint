@@ -308,13 +308,28 @@ def handle_style_attribute(element):
 
 class StyleDict(dict):
     """
-    style.font_size == style['font-size'].value
+    Allow attribute access to values, eg. style.font_size instead of
+    style['font-size']
+
+    This returns the numeric value for pixel lengths and the string
+    representation for any other value.
+    
+        >>> style = StyleDict({'margin-left': PropertyValue('12px'),
+        ...                    'display': PropertyValue('block')}
+        >>> assert style.display == 'block'
+        >>> assert style.margin_left == 12
+        
     """
     def __getattr__(self, key):
         try:
-            return self[key.replace('_', '-')].value
+            value = self[key.replace('_', '-')]
         except KeyError:
             raise AttributeError(key)
+        if len(value) == 1 and value[0].type == 'DIMENSION' \
+                and value[0].dimension == 'px':
+            return value[0].value # CSSValue.value: numeric value
+        else:
+            return value.value # PropertyValue.value: string representation
 
         
 def assign_properties(document):

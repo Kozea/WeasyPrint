@@ -109,9 +109,9 @@ def handle_computed_font_size(element):
     """
     parent = element.getparent()
     if parent is not None:
-        assert len(parent.style['font-size']) == 1
-        assert parent.style['font-size'][0].dimension == 'px'
-        parent_font_size = parent.style['font-size'][0].value
+        parent_font_size = parent.style.font_size
+        assert parent_font_size + 0 == parent_font_size, \
+            'Got a non-pixel value for the parent font-size.'
     else:
         # root element, no parent
         parent_value_text = INITIAL_VALUES['font-size'].value
