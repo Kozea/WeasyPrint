@@ -79,6 +79,22 @@ def parse(html_content):
     return boxes.dom_to_box(document)
 
 
+#def diff(tree_1, tree_2):
+#    """Print a diff of to_lists() results. For debugging only."""
+#    tag_1, type_1, content_1 = tree_1
+#    tag_2, type_2, content_2 = tree_2
+#    if (tag_1, type_1, len(content_1)) == (tag_2, type_2, len(content_2)):
+#        if type_1 == 'text':
+#            if content_1 == content_2:
+#                return
+#            else:
+#                for child_1, child_2 in zip(content_1, content_2):
+#                    diff(child_1, child_2)
+#    print 'Different:'
+#    print '  ', tree_1
+#    print '  ', tree_2
+
+
 @suite.test
 def test_box_tree():
     assert to_lists(parse('<p>')) == [('p', 'block', [])]
@@ -91,10 +107,9 @@ def test_box_tree():
 
 
 @suite.test
-def test_inline_to_block():
-    box = parse('<div>Hello, <em>World</em>!\n<p>Lipsum.</p></div>')
-    boxes.inline_in_block(box)
-    assert to_lists(box) == [
+def test_inline_in_block():
+    source = '<div>Hello, <em>World</em>!\n<p>Lipsum.</p></div>'
+    expected = [
         ('div', 'block', [
             ('div', 'anon_block', [
                 ('div', 'line', [
@@ -105,5 +120,16 @@ def test_inline_to_block():
             ('p', 'block', [
                 ('p', 'line', [
                     ('p', 'text', 'Lipsum.')])])])]
+    
+    box = parse(source)
+    boxes.inline_in_block(box)
+    assert to_lists(box) == expected
+
+    box = parse(source)
+    # This should be idempotent: doing more than once does not change anything.
+    boxes.inline_in_block(box)
+    boxes.inline_in_block(box)
+    assert to_lists(box) == expected
+
 
 

@@ -153,10 +153,16 @@ def inline_in_block(box):
 
     if not isinstance(box, BlockLevelBox):
         return
+    
+    if len(box.children) == 1 and isinstance(box.children[0], LineBox):
+        # It seems that this work was already done on this box.
+        return
+        
     line_box = LineBox(box.element)
     children = box.children
     box.children = []
     for child_box in children:
+        assert not isinstance(child_box, LineBox)
         if isinstance(child_box, BlockLevelBox):
             if line_box.children:
                 # Inlines are consecutive no more: add this line box
