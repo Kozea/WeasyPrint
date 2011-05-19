@@ -19,6 +19,7 @@
 
 from attest import Tests, assert_hook
 from cssutils.css import PropertyValue
+from lxml import html
 
 from . import parse_html
 from .. import boxes
@@ -29,14 +30,56 @@ from .. import css
 suite = Tests()
 
 
+def serialize(box):
+    """
+    Transform a box tree into a structure easier to compare for testing.
+    """
+    if isinstance(box, boxes.TextBox):
+        content = box.text
+    else:
+        content = [serialize(child) for child in box.children]
+    type_ = {
+        boxes.BlockLevelBox: 'block',
+        boxes.InlineLevelBox: 'inline',
+        boxes.TextBox: 'text',
+    }[box.__class__]
+    return box.element.tag, type_, content
+
+
+def unwrap_html_body(box):
+    """
+    Test that the box tree starts with an <html> block and a <body> block
+    and remove them to simplify further tests. These are always at the root
+    of HTML documents.
+    """
+    tag, type_, content = box
+    assert tag == 'html'
+    assert type_ == 'block'
+    assert len(content) == 1
+    
+    tag, type_, content = content[0]
+    assert tag == 'body'
+    assert type_ == 'block'
+    return content
+
+
+def parse(html_content):
+    """
+    Parse some HTML, apply stylesheets, transform to boxes, serialize.
+    """
+    document = html.document_fromstring(html_content)
+    css.annotate_document(document)
+    box_tree = boxes.dom_to_box(document)
+    return unwrap_html_body(serialize(box_tree))
+
+
 @suite.test
 def test_box_tree():
-    document = parse_html('doc1.html')
-    css.annotate_document(document)
-    # Make sure the HTML4 stylesheet is applied.
-    # TODO: this should be in test_css*
-    assert document.head.style.display == 'none'
-    
-    box_tree = boxes.dom_to_box(document)
-    
-    # TODO
+    assert parse('<p>') == [('p', 'block', [])]
+    assert parse('<p>Hello <em>World</em>!</p>') == [
+        ('p', 'block', [
+            ('p', 'text', 'Hello '),
+            ('em', 'inline', [
+                ('em', 'text', 'World')]),
+            ('p', 'text', '!')])]
+
