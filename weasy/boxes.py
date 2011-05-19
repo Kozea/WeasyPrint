@@ -45,6 +45,11 @@ class BlockLevelBox(Box):
     pass
 
 
+class AnonymousBlockLevelBox(BlockLevelBox):
+    pass
+    # self.style['display'] = PropertyValue('block')
+
+
 class LineBox(Box):
     pass
 
@@ -105,5 +110,73 @@ def dom_to_box(element):
     
     return box
     
+
+def inline_in_block(box):
+    """
+    Consecutive inline-level boxes in a block-level box are wrapped into a
+    line box, itself wrapped into an anonymous block-level box.
+    (This line box will be broken into multiple lines later.)
+    
+    The box tree is changed *in place*.
+    
+    This is the first case in
+    http://www.w3.org/TR/CSS21/visuren.html#anonymous-block-level
+    
+    Eg.
+    
+        BlockLevelBox[
+            TextBox('Some '),
+            InlineLevelBox[TextBox('text')],
+            BlockLevelBox[
+                TextBox('More text'),
+            ]
+        ]
+    
+    is turned into
+    
+        BlockLevelBox[
+            AnonymousBlockLevelBox[
+                LineBox[
+                    TextBox('Some '),
+                    InlineLevelBox[TextBox('text')],
+                ]
+            ]
+            BlockLevelBox[
+                LineBox[
+                    TextBox('More text'),
+                ]
+            ]
+        ]
+    """
+    for child_box in box.children or []:
+        inline_in_block(child_box)
+
+    if not isinstance(box, BlockLevelBox):
+        return
+    line_box = LineBox(box.element)
+    children = box.children
+    box.children = []
+    for child_box in children:
+        if isinstance(child_box, BlockLevelBox):
+            if line_box.children:
+                # Inlines are consecutive no more: add this line box
+                # and create a new one.
+                anonymous = AnonymousBlockLevelBox(box.element)
+                anonymous.add_child(line_box)
+                box.add_child(anonymous)
+                line_box = LineBox(box.element)
+            box.add_child(child_box)
+        else:
+            line_box.add_child(child_box)
+    if line_box.children:
+        # There were inlines at the end
+        if box.children:
+            anonymous = AnonymousBlockLevelBox(box.element)
+            anonymous.add_child(line_box)
+            box.add_child(anonymous)
+        else:
+            # Only inline-level children: one line box
+            box.add_child(line_box)
+
 
 

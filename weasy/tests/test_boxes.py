@@ -42,6 +42,8 @@ def serialize(box):
         boxes.BlockLevelBox: 'block',
         boxes.InlineLevelBox: 'inline',
         boxes.TextBox: 'text',
+        boxes.AnonymousBlockLevelBox: 'anon_block',
+        boxes.LineBox: 'line',
     }[box.__class__]
     return box.element.tag, type_, content
 
@@ -63,23 +65,45 @@ def unwrap_html_body(box):
     return content
 
 
+def to_lists(box_tree):
+    """Serialize and unwrap <html> and <body>."""
+    return unwrap_html_body(serialize(box_tree))
+    
+
 def parse(html_content):
     """
     Parse some HTML, apply stylesheets, transform to boxes, serialize.
     """
     document = html.document_fromstring(html_content)
     css.annotate_document(document)
-    box_tree = boxes.dom_to_box(document)
-    return unwrap_html_body(serialize(box_tree))
+    return boxes.dom_to_box(document)
 
 
 @suite.test
 def test_box_tree():
-    assert parse('<p>') == [('p', 'block', [])]
-    assert parse('<p>Hello <em>World</em>!</p>') == [
+    assert to_lists(parse('<p>')) == [('p', 'block', [])]
+    assert to_lists(parse('<p>Hello <em>World</em>!</p>')) == [
         ('p', 'block', [
             ('p', 'text', 'Hello '),
             ('em', 'inline', [
                 ('em', 'text', 'World')]),
             ('p', 'text', '!')])]
+
+
+@suite.test
+def test_inline_to_block():
+    box = parse('<div>Hello, <em>World</em>!\n<p>Lipsum.</p></div>')
+    boxes.inline_in_block(box)
+    assert to_lists(box) == [
+        ('div', 'block', [
+            ('div', 'anon_block', [
+                ('div', 'line', [
+                    ('div', 'text', 'Hello, '),
+                    ('em', 'inline', [
+                        ('em', 'text', 'World')]),
+                    ('div', 'text', '!\n')])]),
+            ('p', 'block', [
+                ('p', 'line', [
+                    ('p', 'text', 'Lipsum.')])])])]
+
 
