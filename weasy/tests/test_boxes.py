@@ -139,6 +139,10 @@ def test_inline_in_block():
 def test_block_in_inline():
     box = parse('''<style>
             span { display: block; }
+            em { display: inline; }
+            strong { display: inline; }
+            p { display: block; }
+            html { display: block; }
         </style>
         <p>Lorem <em>ipsum <strong>dolor <span>sit</span>
             <span>amet,</span></strong><span>consectetur</span></em></p>''')

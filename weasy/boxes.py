@@ -32,13 +32,30 @@ class Box(object):
         # Computed values
         #self.style = ...
     
-    def add_child(self, child):
+    def add_child(self, child, index=None):
         """
         Add the new child to this box’s children list and set this box as the
         child’s parent.
         """
         child.parent = self
-        self.children.append(child)
+        if index == None:
+            self.children.append(child)
+        else:
+            self.children.insert(index, child)
+
+    @property
+    def parents(self):
+        """Yield parent and recursively yield parent's parents."""
+        parent = self
+        while parent.parent:
+            parent = parent.parent
+            yield parent
+
+    @property
+    def index(self):
+        """Index of the box in its parent's children."""
+        if self.parent:
+            return self.parent.children.index(self)
 
 
 class BlockLevelBox(Box):
@@ -246,9 +263,52 @@ def block_in_inline(box):
     """
     # TODO: when splitting inline boxes, mark which are starting, ending, or
     # in the middle of the orginial box (for drawing borders).
+    if isinstance(box, BlockLevelBox):
+        if box.parent and isinstance(box.parent, InlineLevelBox):
+            inline_parents = []
+            parent_line_box = None
+            for parent in box.parents:
+                if isinstance(parent, InlineLevelBox):
+                    inline_parents.append(parent)
+                else:
+                    parent_line_box = parent
+                    break
+
+            # Add an anonymous block level box before the block box
+            previous_anonymous_box = AnonymousBlockLevelBox(
+                parent_line_box.element)
+            parent_line_box.parent.add_child(
+                previous_anonymous_box, parent_line_box.index)
+            parent_line_box.parent.children.remove(parent_line_box)
+            previous_anonymous_box.add_child(parent_line_box)
+
+            # Add an anonymous block level box after the block box
+            next_anonymous_box = AnonymousBlockLevelBox(parent_line_box.element)
+            previous_anonymous_box.parent.add_child(
+                next_anonymous_box, previous_anonymous_box.index + 1)
+
+            # Recreate anonymous inline boxes clones from the split inline boxes
+            while inline_parents:
+                parent = inline_parents.pop()
+                clone_inline_box = InlineLevelBox(parent.element)
+                next_anonymous_box.add_child(clone_inline_box)
+                next_anonymous_box = clone_inline_box
+
+            splitter_box = box
+            for parent in box.parents:
+                if parent == parent_line_box:
+                    break
+
+                next_children = parent.children[splitter_box.index + 1:]
+                parent.children = parent.children[:splitter_box.index]
+                for child in next_children:
+                    next_anonymous_box.add_child(child)
+                splitter_box = parent
+                next_anonymous_box = next_anonymous_box.parent
+
+            # Put the block element before the next_anonymous_box
+            previous_anonymous_box.parent.add_child(
+                box, previous_anonymous_box.index + 1)
+
     for child_box in box.children or []:
         block_in_inline(child_box)
-    
-    # TODO
-
-
