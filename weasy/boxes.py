@@ -185,4 +185,70 @@ def inline_in_block(box):
             box.add_child(line_box)
 
 
+def block_in_inline(box):
+    """
+    Inline-level boxes containing block-level boxes will be broken in two
+    boxes on each side on consecutive block-level boxes, each side wrapped
+    in an anonymous block-level box.
+
+    This is the second case in
+    http://www.w3.org/TR/CSS21/visuren.html#anonymous-block-level
+    
+    Eg.
+    
+        BlockLevelBox[
+            LineBox[
+                InlineLevelBox[
+                    TextBox('Hello.'),
+                ],
+                InlineLevelBox[
+                    TextBox('Some '),
+                    InlineLevelBox[
+                        TextBox('text')
+                        BlockLevelBox[LineBox[TextBox('More text')]],
+                        BlockLevelBox[LineBox[TextBox('More text again')]],
+                    ],
+                    BlockLevelBox[LineBox[TextBox('And again.')]],
+                ]
+            ]
+        ]
+    
+    is turned into
+
+        BlockLevelBox[
+            AnonymousBlockLevelBox[
+                LineBox[
+                    InlineLevelBox[
+                        TextBox('Hello.'),
+                    ],
+                    InlineLevelBox[
+                        TextBox('Some '),
+                        InlineLevelBox[TextBox('text')],
+                    ]
+                ]
+            ],
+            BlockLevelBox[LineBox[TextBox('More text')]],
+            BlockLevelBox[LineBox[TextBox('More text again')]],
+            AnonymousBlockLevelBox[
+                LineBox[
+                    InlineLevelBox[
+                    ]
+                ]
+            ],
+            BlockLevelBox[LineBox[TextBox('And again.')]],
+            AnonymousBlockLevelBox[
+                LineBox[
+                    InlineLevelBox[
+                    ]
+                ]
+            ],
+        ]
+    """
+    # TODO: when splitting inline boxes, mark which are starting, ending, or
+    # in the middle of the orginial box (for drawing borders).
+    for child_box in box.children or []:
+        block_in_inline(child_box)
+    
+    # TODO
+
 

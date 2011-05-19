@@ -17,6 +17,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+import itertools
 from attest import Tests, assert_hook
 from cssutils.css import PropertyValue
 from lxml import html
@@ -79,20 +80,22 @@ def parse(html_content):
     return boxes.dom_to_box(document)
 
 
-#def diff(tree_1, tree_2):
-#    """Print a diff of to_lists() results. For debugging only."""
-#    tag_1, type_1, content_1 = tree_1
-#    tag_2, type_2, content_2 = tree_2
-#    if (tag_1, type_1, len(content_1)) == (tag_2, type_2, len(content_2)):
-#        if type_1 == 'text':
-#            if content_1 == content_2:
-#                return
-#            else:
-#                for child_1, child_2 in zip(content_1, content_2):
-#                    diff(child_1, child_2)
-#    print 'Different:'
-#    print '  ', tree_1
-#    print '  ', tree_2
+def diff(tree_1, tree_2):
+    """Print a diff of to_lists() results. For debugging only."""
+    tag_1, type_1, content_1 = tree_1
+    tag_2, type_2, content_2 = tree_2
+    if (tag_1, type_1) == (tag_2, type_2):
+        if type_1 == 'text':
+            if content_1 == content_2:
+                return
+        else:
+            for child_1, child_2 in itertools.izip_longest(
+                    content_1, content_2, fillvalue=(None, None, [])):
+                diff(child_1, child_2)
+            return
+    print 'Different:'
+    print '  ', tree_1
+    print '  ', tree_2
 
 
 @suite.test
@@ -132,4 +135,60 @@ def test_inline_in_block():
     assert to_lists(box) == expected
 
 
+@suite.test
+def test_block_in_inline():
+    box = parse('''<style>
+            span { display: block; }
+        </style>
+        <p>Lorem <em>ipsum <strong>dolor <span>sit</span>
+            <span>amet,</span></strong><span>consectetur</span></em></p>''')
+    boxes.inline_in_block(box)
+    assert to_lists(box) == [
+        ('p', 'block', [
+            ('p', 'line', [
+                ('p', 'text', 'Lorem '),
+                ('em', 'inline', [
+                    ('em', 'text', 'ipsum '),
+                    ('strong', 'inline', [
+                        ('strong', 'text', 'dolor '),
+                        ('span', 'block', [ # This block is "pulled up"
+                            ('span', 'line', [
+                                ('span', 'text', 'sit')])]),
+                        ('strong', 'text', '\n            '),
+                        ('span', 'block', [ # This block is "pulled up"
+                            ('span', 'line', [
+                                ('span', 'text', 'amet,')])])]),
+                    ('span', 'block', [ # This block is "pulled up"
+                        ('span', 'line', [
+                            ('span', 'text', 'consectetur')])])])])])]
+
+    boxes.block_in_inline(box)
+    expected = [
+        ('p', 'block', [
+            ('p', 'anon_block', [
+                ('p', 'line', [
+                    ('p', 'text', 'Lorem '),
+                    ('em', 'inline', [
+                        ('em', 'text', 'ipsum '),
+                        ('strong', 'inline', [
+                            ('strong', 'text', 'dolor ')])])])]),
+            ('span', 'block', [
+                ('span', 'line', [
+                    ('span', 'text', 'sit')])]),
+            # TODO: this should disapear
+            ('p', 'anon_block', [
+                ('p', 'line', [
+                    ('strong', 'text', '\n            ')])]),
+            ('span', 'block', [
+                ('span', 'line', [
+                    ('span', 'text', 'amet,')])]),
+                                    
+            ('p', 'anon_block', [
+                ('p', 'line', [])]),
+            ('span', 'block', [
+                ('span', 'line', [
+                    ('span', 'text', 'consectetur')])])])]
+    
+    diff(to_lists(box)[0], expected[0])
+    assert to_lists(box) == expected
 
