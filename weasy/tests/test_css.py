@@ -127,3 +127,11 @@ def test_annotate_document():
     # TODO much more tests here: test that origin and selector precedence
     # and inheritance are correct, ...
 
+
+@suite.test
+def test_default_stylesheet():
+    document = parse_html('doc1.html')
+    css.annotate_document(document)
+    assert document.head.style.display == 'none', \
+        'The HTML4 user-agent stylesheet was not applied'
+
