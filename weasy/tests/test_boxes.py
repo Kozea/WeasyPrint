@@ -17,12 +17,9 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import itertools
 from attest import Tests, assert_hook
-from cssutils.css import PropertyValue
 from lxml import html
 
-from . import parse_html
 from .. import boxes
 from .. import css
 
@@ -80,22 +77,18 @@ def parse(html_content):
     return boxes.dom_to_box(document)
 
 
-def diff(tree_1, tree_2):
-    """Print a diff of to_lists() results. For debugging only."""
-    tag_1, type_1, content_1 = tree_1
-    tag_2, type_2, content_2 = tree_2
-    if (tag_1, type_1) == (tag_2, type_2):
-        if type_1 == 'text':
-            if content_1 == content_2:
-                return
-        else:
-            for child_1, child_2 in itertools.izip_longest(
-                    content_1, content_2, fillvalue=(None, None, [])):
-                diff(child_1, child_2)
-            return
-    print 'Different:'
-    print '  ', tree_1
-    print '  ', tree_2
+def prettify(tree, indent=0):
+    """Special formatting for printing serialized box trees."""
+    prefix = '    ' * indent
+    tag, type_, content = tree
+    if type_ == 'text':
+        return prefix + repr(tree)
+    else:
+        return '%s(%r, %r, [%s%s])' % (
+            prefix, tag, type_,
+            ('\n' if content else ''),
+            ',\n'.join(prettify(child, indent + 1) for child in content)
+        )
 
 
 @suite.test
@@ -200,6 +193,6 @@ def test_block_in_inline():
                 ('p', 'line', [
                     ('em', 'inline', [])])])])]
     
-    diff(to_lists(box)[0], expected[0])
+#    print prettify(to_lists(box)[0])
     assert to_lists(box) == expected
 
