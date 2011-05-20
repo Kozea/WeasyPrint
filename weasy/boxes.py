@@ -266,8 +266,11 @@ def block_in_inline(box):
     for child_box in box.children or []:
         block_in_inline(child_box)
 
-    if not (isinstance(box, BlockLevelBox) and box.parent and isinstance(box.parent, InlineLevelBox)):
+    if not (isinstance(box, BlockLevelBox) and box.parent
+            and isinstance(box.parent, InlineLevelBox)):
         return
+    
+    # Find all ancestry until a line box.
     inline_parents = []
     for parent in box.parents:
         inline_parents.append(parent)
@@ -306,18 +309,16 @@ def block_in_inline(box):
             break
             
         next_children = parent.children[splitter_box.index + 1:]
-
-        if splitter_box == box:
-            parent.children = parent.children[:splitter_box.index]
-        else:
-            parent.children = parent.children[:splitter_box.index + 1]
+        parent.children = parent.children[:splitter_box.index + 1]
 
         for child in next_children:
             clone_box.add_child(child)
+
         splitter_box = parent
         clone_box = clone_box.parent
-
+        
     # Put the block element before the next_anonymous_box
+    box.parent.children.remove(box)
     previous_anonymous_box.parent.add_child(
         box, previous_anonymous_box.index + 1)
 
