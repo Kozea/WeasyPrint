@@ -352,9 +352,9 @@ def assign_properties(document):
             for precedence, prop in element.applicable_properties:
                 style[prop.name] = prop.propertyValue
             
-            inheritance.handle_inheritance(element)    
+            inheritance.handle_inheritance(element)
             initial_values.handle_initial_values(element)
-            computed_values.handle_computed_values(element)
+            computed_values.compute_values(element)
         
 
 class PseudoElement(object):

@@ -103,10 +103,11 @@ class DummyPropertyValue(list):
         return ' '.join(value.cssText for value in self)
 
 
-def handle_computed_font_size(element):
+def compute_font_size(element):
     """
     Set the computed value for font-size, and return this value in pixels.
     """
+    style = element.style
     parent = element.getparent()
     if parent is not None:
         parent_font_size = parent.style.font_size
@@ -118,8 +119,8 @@ def handle_computed_font_size(element):
         # Initial is medium
         parent_font_size = FONT_SIZE_KEYWORDS[parent_value_text]
 
-    assert len(element.style['font-size']) == 1
-    value = element.style['font-size'][0]
+    assert len(style['font-size']) == 1
+    value = style['font-size'][0]
     value_text = value.value
     
     # TODO: once we ignore invalid declarations, turn these ValueError’s into
@@ -147,8 +148,7 @@ def handle_computed_font_size(element):
     else:
         raise ValueError('Invalid value for font-size:', value_text)
 
-    element.style['font-size'] = PropertyValue(str(font_size) + 'px')
-    return font_size
+    style['font-size'] = PropertyValue(str(font_size) + 'px')
 
 
 def compute_length(value, font_size):
@@ -173,37 +173,37 @@ def compute_length(value, font_size):
         raise ValueError('Unknown length unit', value.value, repr(value.type))
     
 
-def handle_computed_lengths(element, font_size):
+def compute_lengths(element):
     """
     Convert other length units to pixels.
     """
     style = element.style
-    for name in element.style:
+    for name in style:
         # PropertyValue objects are not mutable, build a new DummyPropertyValue
         style[name] = DummyPropertyValue(
-            compute_length(value, font_size) for value in style[name])
+            compute_length(value, style.font_size) for value in style[name])
 
 
-def handle_computed_line_height(element, font_size):
+def compute_line_height(element):
     """
     Relative values of line-height are relative to font-size.
     """
     # TODO: test this
     style = element.style
-    assert len(element.style['line-height']) == 1
-    value = element.style['line-height'][0]
+    assert len(style['line-height']) == 1
+    value = style['line-height'][0]
     
     # TODO: negative values are illegal
     if value.type == 'NUMBER':
-        height = font_size * value.value
+        height = style.font_size * value.value
     elif value.type == 'PERCENTAGE':
-        height = font_size * value.value / 100.
+        height = style.font_size * value.value / 100.
     else:
         return # as specified
     style['line-height'] = PropertyValue(str(height) + 'px')
 
 
-def handle_computed_border_width(element):
+def compute_border_width(element):
     """
     Set border-*-width to zero if border-*-style is none or hidden.
     """
@@ -219,7 +219,7 @@ def handle_computed_border_width(element):
                     str(width) + 'px')
 
 
-def handle_computed_outline_width(element):
+def compute_outline_width(element):
     """
     Set outline-width to zero if outline-style is none.
     """
@@ -234,7 +234,7 @@ def handle_computed_outline_width(element):
             style['outline-width'] = PropertyValue(str(width) + 'px')
 
 
-def handle_computed_display_float(element):
+def compute_display_float(element):
     """
     Computed values of the display and float properties according to
     http://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
@@ -263,7 +263,7 @@ def handle_computed_display_float(element):
     # else: unchanged
 
 
-def handle_computed_word_spacing(element):
+def compute_word_spacing(element):
     """
     word-spacing: normal means zero.
     """
@@ -274,7 +274,7 @@ def handle_computed_word_spacing(element):
         style['word-spacing'] = PropertyValue('0')
 
 
-def handle_computed_font_weight(element):
+def compute_font_weight(element):
     """
     Handle keyword values for font-weight.
     """
@@ -315,7 +315,7 @@ def compute_content_value(parent, value):
     return value
 
 
-def handle_computed_content(element):
+def compute_content(element):
     # TODO: properly test this
     style = element.style
     if getattr(element, 'pseudo_element_type', '') in ('before', 'after'):
@@ -334,20 +334,20 @@ def handle_computed_content(element):
         style['content'] = PropertyValue('normal')
             
 
-def handle_computed_values(element):
+def compute_values(element):
     """
     Normalize values as much as possible without rendering the document.
     """
     # em lengths depend on font-size, compute font-size first
-    font_size = handle_computed_font_size(element)
-    handle_computed_lengths(element, font_size)
-    handle_computed_line_height(element, font_size)
-    handle_computed_border_width(element)
-    handle_computed_outline_width(element)
-    handle_computed_display_float(element)
-    handle_computed_word_spacing(element)
-    handle_computed_font_weight(element)
-    handle_computed_content(element)
+    compute_font_size(element)
+    compute_lengths(element)
+    compute_line_height(element)
+    compute_border_width(element)
+    compute_outline_width(element)
+    compute_display_float(element)
+    compute_word_spacing(element)
+    compute_font_weight(element)
+    compute_content(element)
     # Recent enough cssutils have a .absolute_uri on URIValue objects.
     # TODO: percentages for height?
     #       http://www.w3.org/TR/CSS21/visudet.html#propdef-height
