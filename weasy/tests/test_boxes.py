@@ -182,16 +182,23 @@ def test_block_in_inline():
             # TODO: this should disapear
             ('p', 'anon_block', [
                 ('p', 'line', [
-                    ('strong', 'text', '\n            ')])]),
+                    ('em', 'inline', [
+                        ('strong', 'inline', [
+                            ('strong', 'text', '\n            ')])])])]),
             ('span', 'block', [
                 ('span', 'line', [
                     ('span', 'text', 'amet,')])]),
                                     
             ('p', 'anon_block', [
-                ('p', 'line', [])]),
+                ('p', 'line', [
+                    ('em', 'inline', [
+                        ('strong', 'inline', [])])])]),
             ('span', 'block', [
                 ('span', 'line', [
-                    ('span', 'text', 'consectetur')])])])]
+                    ('span', 'text', 'consectetur')])]),
+            ('p', 'anon_block', [
+                ('p', 'line', [
+                    ('em', 'inline', [])])])])]
     
     diff(to_lists(box)[0], expected[0])
     assert to_lists(box) == expected
