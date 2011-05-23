@@ -160,15 +160,49 @@ def dom_to_box(element):
         raise NotImplementedError('Unsupported display: ' + display)
     
     if element.text:
-        box.add_child(TextBox(element, element.text))
+        text = process_whitespace(element.style, element.text)
+        box.add_child(TextBox(element, text))
     for child_element in element:
         if child_element.style.display != 'none':
             box.add_child(dom_to_box(child_element))
         if child_element.tail:
-            box.add_child(TextBox(element, child_element.tail))
+            text = process_whitespace(element.style, child_element.tail)
+            box.add_child(TextBox(element, text))
     
     return box
-    
+
+
+def process_whitespace(style, text):
+    """
+    First part of "The 'white-space' processing model"
+    http://www.w3.org/TR/CSS21/text.html#white-space-model
+    """
+    if not text:
+        return ''
+    text = re.sub('[\t\r ]*\n[\t\r ]*', '\n', text)
+    handling = style.white_space
+    if handling in ('pre', 'pre-wrap'):
+        # \N{NO-BREAK SPACE} is just one unicode character.
+        text = text.replace(' ', u'\N{NO-BREAK SPACE}')
+        if handling == 'pre-wrap':
+            # "a line break opportunity at the end of the sequence"
+            # TODO: Is having a space at the end of the nbsp sequence a line
+            # break opportunity?
+            text = re.sub(u'\N{NO-BREAK SPACE}([^\N{NO-BREAK SPACE}]|$)',
+                          u' \\1', text)
+    elif handling in ('normal', 'nowrap'):
+        # TODO: this should be language-specific
+        # Could also replace with a zero width space character (U+200B),
+        # or no character
+        # CSS3: http://www.w3.org/TR/css3-text/#line-break-transform
+        text = text.replace('\n', ' ')
+    if handling in ('normal', 'nowrap', 'pre-line'):
+        text = text.replace('\t', ' ')
+        text = re.sub(' +', ' ', text)
+        #if text.startswith(' '):
+        #   TODO: also remove spaces before this inline
+    return text
+
 
 def inline_in_block(box):
     """

@@ -77,18 +77,31 @@ def parse(html_content):
     return boxes.dom_to_box(document)
 
 
-def prettify(tree, indent=0):
+def prettify(tree_list):
     """Special formatting for printing serialized box trees."""
-    prefix = '    ' * indent
-    tag, type_, content = tree
-    if type_ == 'text':
-        return prefix + repr(tree)
-    else:
-        return '%s(%r, %r, [%s%s])' % (
-            prefix, tag, type_,
-            ('\n' if content else ''),
-            ',\n'.join(prettify(child, indent + 1) for child in content)
-        )
+    def lines(tree, indent=0):
+        tag, type_, content = tree
+        if type_ == 'text':
+            yield '%s%s %s %r' % ('    ' * indent, tag, type_, content)
+        else:
+            yield '%s%s %s' % ('    ' * indent, tag, type_)
+            for child in content:
+                for line in lines(child, indent + 1):
+                    yield line
+
+    return '\n'.join(line for tree in tree_list for line in lines(tree))
+
+
+def assert_tree(box, expected):
+    """
+    Test box tree equality with the prettified obtained result in the message
+    in case of failure.
+    
+    box: a Box object, starting with <html> and <body> blocks.
+    expected: a list of serialized <body> children as returned by to_lists().
+    """
+    result = to_lists(box)
+    assert result == expected, 'Got\n' + prettify(result)
 
 
 @suite.test
@@ -104,7 +117,9 @@ def test_box_tree():
 
 @suite.test
 def test_inline_in_block():
-    source = '<div>Hello, <em>World</em>!\n<p>Lipsum.</p></div>'
+    source = '''
+        <div>Hello, <em>World</em>!
+            <p>Lipsum.</p></div>'''
     expected = [
         ('div', 'block', [
             ('div', 'anon_block', [
@@ -112,20 +127,20 @@ def test_inline_in_block():
                     ('div', 'text', 'Hello, '),
                     ('em', 'inline', [
                         ('em', 'text', 'World')]),
-                    ('div', 'text', '!\n')])]),
+                    ('div', 'text', '! ')])]),
             ('p', 'block', [
                 ('p', 'line', [
                     ('p', 'text', 'Lipsum.')])])])]
     
     box = parse(source)
     boxes.inline_in_block(box)
-    assert to_lists(box) == expected
+    assert_tree(box, expected)
 
     box = parse(source)
     # This should be idempotent: doing more than once does not change anything.
     boxes.inline_in_block(box)
     boxes.inline_in_block(box)
-    assert to_lists(box) == expected
+    assert_tree(box, expected)
 
 
 @suite.test
@@ -137,7 +152,7 @@ def test_block_in_inline():
         <p>Lorem <em>ipsum <strong>dolor <span>sit</span>
             <span>amet,</span></strong><span>consectetur</span></em></p>''')
     boxes.inline_in_block(box)
-    expected = [
+    assert_tree(box, [
         ('p', 'block', [
             ('p', 'line', [
                 ('p', 'text', 'Lorem '),
@@ -148,18 +163,16 @@ def test_block_in_inline():
                         ('span', 'block', [ # This block is "pulled up"
                             ('span', 'line', [
                                 ('span', 'text', 'sit')])]),
-                        ('strong', 'text', '\n            '),
+                        ('strong', 'text', ' '),
                         ('span', 'block', [ # This block is "pulled up"
                             ('span', 'line', [
                                 ('span', 'text', 'amet,')])])]),
                     ('span', 'block', [ # This block is "pulled up"
                         ('span', 'line', [
-                            ('span', 'text', 'consectetur')])])])])])]
-#    print prettify(to_lists(box)[0])
-    assert to_lists(box) == expected
+                            ('span', 'text', 'consectetur')])])])])])])
 
     boxes.block_in_inline(box)
-    expected = [
+    assert_tree(box, [
         ('p', 'block', [
             ('p', 'anon_block', [
                 ('p', 'line', [
@@ -176,7 +189,7 @@ def test_block_in_inline():
                 ('p', 'line', [
                     ('em', 'inline', [
                         ('strong', 'inline', [
-                            ('strong', 'text', '\n            ')])])])]),
+                            ('strong', 'text', ' ')])])])]),
             ('span', 'block', [
                 ('span', 'line', [
                     ('span', 'text', 'amet,')])]),
@@ -190,10 +203,7 @@ def test_block_in_inline():
                     ('span', 'text', 'consectetur')])]),
             ('p', 'anon_block', [
                 ('p', 'line', [
-                    ('em', 'inline', [])])])])]
-    
-#    print prettify(to_lists(box)[0])
-    assert to_lists(box) == expected
+                    ('em', 'inline', [])])])])])
 
 
 def descendant_boxes(box):
