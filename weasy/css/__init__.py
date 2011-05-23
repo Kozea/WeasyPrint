@@ -312,8 +312,8 @@ class StyleDict(dict):
     Allow attribute access to values, eg. style.font_size instead of
     style['font-size']
 
-    This returns the numeric value for pixel lengths and the string
-    representation for any other value.
+    This returns the numeric value for pixel lengths or zero lengths;
+    and the string representation for any other value.
     
         >>> style = StyleDict({'margin-left': PropertyValue('12px'),
         ...                    'display': PropertyValue('block')}
@@ -335,6 +335,8 @@ class StyleDict(dict):
         if len(value) == 1 and value[0].type == 'DIMENSION' \
                 and value[0].dimension == 'px':
             return value[0].value # CSSValue.value: numeric value
+        elif len(value) == 1 and value[0].value == 0:
+            return 0
         else:
             return value.value # PropertyValue.value: string representation
 
