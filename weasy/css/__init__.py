@@ -39,6 +39,7 @@
 """
 
 import os.path
+import numbers
 try:
     from urlparse import urljoin
 except ImportError:
@@ -46,7 +47,7 @@ except ImportError:
     from urllib.parse import urljoin
 
 from cssutils import parseString, parseUrl, parseStyle, parseFile
-from cssutils.css import CSSStyleDeclaration
+from cssutils.css import CSSStyleDeclaration, PropertyValue
 from lxml import cssselect
 
 from . import shorthands
@@ -318,7 +319,13 @@ class StyleDict(dict):
         ...                    'display': PropertyValue('block')}
         >>> assert style.display == 'block'
         >>> assert style.margin_left == 12
-        
+    
+    Attributes can be set in the same way: numeric values become pixels lengths
+    and strings are parsed as CSS values.
+    
+    CSS numbers without units (eg. font-weight: 700) are returned as strings
+    to distinguish them from pixel lengths. Pixel lengths were favored as they
+    are much more common. (Pixels are the unit for all computed lengths.)
     """
     def __getattr__(self, key):
         try:
@@ -331,6 +338,13 @@ class StyleDict(dict):
         else:
             return value.value # PropertyValue.value: string representation
 
+    def __setattr__(self, key, value):
+        if isinstance(value, numbers.Number):
+            value = PropertyValue(str(value) + 'px')
+        elif isinstance(value, basestring):
+            value = PropertyValue(value)
+        #else: assume a PropertyValue-like
+        self[key.replace('_', '-')] = value
         
 def assign_properties(document):
     """

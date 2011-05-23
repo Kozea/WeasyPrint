@@ -148,7 +148,7 @@ def compute_font_size(element):
     else:
         raise ValueError('Invalid value for font-size:', value_text)
 
-    style['font-size'] = PropertyValue(str(font_size) + 'px')
+    style.font_size = font_size
 
 
 def compute_length(value, font_size):
@@ -200,7 +200,7 @@ def compute_line_height(element):
         height = style.font_size * value.value / 100.
     else:
         return # as specified
-    style['line-height'] = PropertyValue(str(height) + 'px')
+    style.line_height = height
 
 
 def compute_border_width(element):
@@ -226,12 +226,11 @@ def compute_outline_width(element):
     # TODO: test this
     style = element.style
     if style.outline_style == 'none':
-        style['outline-width'] = PropertyValue('0')
+        style.outline_width = 0
     else:
         value = style.outline_width
         if value in BORDER_WIDTH_KEYWORDS:
-            width = BORDER_WIDTH_KEYWORDS[value]
-            style['outline-width'] = PropertyValue(str(width) + 'px')
+            style.outline_width = BORDER_WIDTH_KEYWORDS[value]
 
 
 def compute_display_float(element):
@@ -246,7 +245,7 @@ def compute_display_float(element):
         return # position and float do not apply, but leave them
     elif style.position in ('absolute', 'fixed'):
         # Case 2
-        style['float'] = PropertyValue('none')
+        style.float = 'none'
     elif style.float == 'none' and element.getparent() is not None:
         # Case 5
         return
@@ -254,12 +253,12 @@ def compute_display_float(element):
     # Cases 2, 3, 4
     display = style.display
     if display == 'inline-table':
-        style['display'] = PropertyValue('table')
+        style.display = 'table'
     elif display in ('inline', 'table-row-group', 'table-column',
                      'table-column-group', 'table-header-group',
                      'table-footer-group', 'table-row', 'table-cell',
                      'table-caption', 'inline-block'):
-        style['display'] = PropertyValue('block')
+        style.display = 'block'
     # else: unchanged
 
 
@@ -271,7 +270,7 @@ def compute_word_spacing(element):
     style = element.style
     # CSS 2.1 says this for word-spacing but not letter-spacing. Why?
     if style.word_spacing == 'normal':
-        style['word-spacing'] = PropertyValue('0')
+        style.word_spacing = 0
 
 
 def compute_font_weight(element):
@@ -282,16 +281,21 @@ def compute_font_weight(element):
     style = element.style
     value = style.font_weight
     if value == 'normal':
-        style['font-weight'] = PropertyValue('400')
+        # Use a string here as StyleDict.__setattr__ turns integers into pixel
+        # lengths. This is a number without unit.
+        style.font_weight = '400'
     elif value == 'bold':
-        style['font-weight'] = PropertyValue('700')
+        # Use a string here as StyleDict.__setattr__ turns integers into pixel
+        # lengths. This is a number without unit.
+        style.font_weight = '700'
     elif value in ('bolder', 'lighter'):
         parent_values = element.getparent().style['font-weight']
         assert len(parent_values) == 1
         assert parent_values[0].type == 'NUMBER'
         parent_value = parent_values[0].value
-        style['font-weight'] = PropertyValue(str(
-            FONT_WEIGHT_RELATIVE[value] [parent_value]))
+        # Use a string here as StyleDict.__setattr__ turns integers into pixel
+        # lengths. This is a number without unit.
+        style.font_weight = str(FONT_WEIGHT_RELATIVE[value][parent_value])
 
 
 def compute_content_value(parent, value):
@@ -320,10 +324,10 @@ def compute_content(element):
     style = element.style
     if getattr(element, 'pseudo_element_type', '') in ('before', 'after'):
         if style.content == 'normal':
-            style['content'] = PropertyValue('none')
+            style.content = 'none'
         else:
             parent = element.getparent()
-            style['content'] = DummyPropertyValue(
+            style.content = DummyPropertyValue(
                 compute_content_value(parent, value)
                 for value in style['content'])
     else:
@@ -331,7 +335,7 @@ def compute_content(element):
         # anything for pseudo-elements other than :before and :after
         # (ie. :first-line and :first-letter)
         # Assume the same as elements.
-        style['content'] = PropertyValue('normal')
+        style.content = 'normal'
             
 
 def compute_values(element):
