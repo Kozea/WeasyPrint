@@ -132,15 +132,11 @@ def test_inline_in_block():
 def test_block_in_inline():
     box = parse('''<style>
             span { display: block; }
-            em { display: inline; }
-            strong { display: inline; }
-            p { display: block; }
-            html { display: block; }
         </style>
         <p>Lorem <em>ipsum <strong>dolor <span>sit</span>
             <span>amet,</span></strong><span>consectetur</span></em></p>''')
     boxes.inline_in_block(box)
-    assert to_lists(box) == [
+    expected = [
         ('p', 'block', [
             ('p', 'line', [
                 ('p', 'text', 'Lorem '),
@@ -158,6 +154,8 @@ def test_block_in_inline():
                     ('span', 'block', [ # This block is "pulled up"
                         ('span', 'line', [
                             ('span', 'text', 'consectetur')])])])])])]
+#    print prettify(to_lists(box)[0])
+    assert to_lists(box) == expected
 
     boxes.block_in_inline(box)
     expected = [
