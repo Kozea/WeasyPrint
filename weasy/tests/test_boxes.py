@@ -24,26 +24,26 @@ from .. import boxes
 from .. import css
 
 
-
 suite = Tests()
 
 
-def serialize(box):
+def serialize(box_list):
     """
-    Transform a box tree into a structure easier to compare for testing.
+    Transform a box list into a structure easier to compare for testing.
     """
-    if isinstance(box, boxes.TextBox):
-        content = box.text
-    else:
-        content = [serialize(child) for child in box.children]
-    type_ = {
+    types = {
         boxes.BlockLevelBox: 'block',
         boxes.InlineLevelBox: 'inline',
         boxes.TextBox: 'text',
         boxes.AnonymousBlockLevelBox: 'anon_block',
         boxes.LineBox: 'line',
-    }[box.__class__]
-    return box.element.tag, type_, content
+    }
+    return [
+        (box.element.tag, types[box.__class__], (
+            box.text if isinstance(box, boxes.TextBox)
+            else serialize(box.children)))
+        for box in box_list
+    ]
 
 
 def unwrap_html_body(box):
@@ -52,20 +52,20 @@ def unwrap_html_body(box):
     and remove them to simplify further tests. These are always at the root
     of HTML documents.
     """
-    tag, type_, content = box
-    assert tag == 'html'
-    assert type_ == 'block'
-    assert len(content) == 1
+    assert isinstance(box, boxes.BlockLevelBox)
+    assert box.element.tag == 'html'
+    assert len(box.children) == 1
+
+    box = box.children[0]
+    assert isinstance(box, boxes.BlockLevelBox)
+    assert box.element.tag == 'body'
     
-    tag, type_, content = content[0]
-    assert tag == 'body'
-    assert type_ == 'block'
-    return content
+    return box.children
 
 
 def to_lists(box_tree):
     """Serialize and unwrap <html> and <body>."""
-    return unwrap_html_body(serialize(box_tree))
+    return serialize(unwrap_html_body(box_tree))
     
 
 def parse(html_content):
@@ -130,7 +130,8 @@ def test_inline_in_block():
 
 @suite.test
 def test_block_in_inline():
-    box = parse('''<style>
+    box = parse('''
+        <style>
             span { display: block; }
         </style>
         <p>Lorem <em>ipsum <strong>dolor <span>sit</span>
@@ -193,4 +194,36 @@ def test_block_in_inline():
     
 #    print prettify(to_lists(box)[0])
     assert to_lists(box) == expected
+
+
+def descendant_boxes(box):
+    """A flat generator for a box, its children and descendants."""
+    yield box
+    for child in box.children or []:
+        for grand_child in descendant_boxes(child):
+            yield grand_child
+
+
+@suite.test
+def test_styles():
+    box = parse('''
+        <style>
+            span { display: block; }
+            * { margin: 42px }
+            html { color: blue }
+        </style>
+        <p>Lorem <em>ipsum <strong>dolor <span>sit</span>
+            <span>amet,</span></strong><span>consectetur</span></em></p>''')
+    boxes.inline_in_block(box)
+    boxes.block_in_inline(box)
+    
+    for child in descendant_boxes(box):
+        # All boxes inherit the color
+        assert child.style.color == 'blue'
+        # Only non-anonymous boxes have margins
+        if isinstance(child, boxes.AnonymousBox):
+            assert child.style.margin_top == 0
+        else:
+            assert child.style.margin_top == 42
+
 

@@ -348,30 +348,35 @@ class StyleDict(dict):
         #else: assume a PropertyValue-like
         self[key.replace('_', '-')] = value
         
-def assign_properties(document):
+    def copy(self):
+        """
+        Same as dict.copy, but return an object of the same class.
+        (dict.copy() always return a dict.)
+        """
+        return self.__class__(self)
+
+
+def assign_properties(element):
     """
-    For every element of the document, take the properties left by
-    ``apply_style_rule`` and assign computed values with respect to the cascade,
+    Take the properties left by ``apply_style_rule`` on an element or
+    pseudo-element and assign computed values with respect to the cascade,
     declaration priority (ie. ``!important``) and selector specificity.
     """
-    build_lxml_proxy_cache(document)
-    for element in document.iter():
-        handle_style_attribute(element)
-        
-        for element in element.pseudo_elements.itervalues():
-            # If apply_style_rule() was called in appearance order, the 
-            # stability of Python's sort fulfills rule 4 of the cascade.
-            # This lambda has one parameter deconstructed as a tuple
-            element.applicable_properties.sort(
-                key=lambda (precedence, prop): precedence)
-            element.style = style = StyleDict()
-            for precedence, prop in element.applicable_properties:
-                style[prop.name] = prop.propertyValue
-            
-            inheritance.handle_inheritance(element)
-            initial_values.handle_initial_values(element)
-            computed_values.compute_values(element)
-        
+    # If apply_style_rule() was called in appearance order, the 
+    # stability of Python's sort fulfills rule 4 of the cascade: everything
+    # else being equal, the latter specified value wins
+    # http://www.w3.org/TR/CSS21/cascade.html#cascading-order
+    element.applicable_properties.sort(
+        # This lambda has one parameter deconstructed as a tuple
+        key=lambda (precedence, prop): precedence)
+    element.style = style = StyleDict()
+    for precedence, prop in element.applicable_properties:
+        style[prop.name] = prop.propertyValue
+    
+    inheritance.handle_inheritance(element)
+    initial_values.handle_initial_values(element)
+    computed_values.compute_values(element)
+
 
 class PseudoElement(object):
     """
@@ -430,5 +435,11 @@ def annotate_document(document, user_stylesheets=None,
                 if rule.type == rule.STYLE_RULE:
                     apply_style_rule(rule, document, origin)
                 # TODO: handle @font-face, @namespace, @page, and @variables
-    assign_properties(document)
+
+    build_lxml_proxy_cache(document)
+    for element in document.iter():
+        handle_style_attribute(element)
+        
+        for element_or_pseudo_element in element.pseudo_elements.itervalues():
+            assign_properties(element_or_pseudo_element)
 

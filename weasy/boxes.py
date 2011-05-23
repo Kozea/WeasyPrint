@@ -29,8 +29,13 @@ class Box(object):
         # children. Only the root box should stay without a parent.
         self.parent = None
         self.children = []
+        self._init_style()
+    
+    def _init_style(self):
         # Computed values
-        #self.style = ...
+        # Copying might not be needed, but let’s be careful with mutable
+        # objects.
+        self.style = self.element.style.copy()
     
     def add_child(self, child, index=None):
         """
@@ -62,12 +67,24 @@ class BlockLevelBox(Box):
     pass
 
 
-class AnonymousBlockLevelBox(BlockLevelBox):
-    pass
-    # self.style['display'] = PropertyValue('block')
+class AnonymousBox(Box):
+    def _init_style(self):
+        pseudo = css.PseudoElement(self.element, 'anonymous_box')
+        # New PseudoElement has an empty .applicable_properties list:
+        # no cascaded value, only inherited and initial values.
+        # TODO: Maybe pre-compute initial values and remove the compute_values
+        # step here.
+        css.assign_properties(pseudo)
+        self.style = pseudo.style
 
 
-class LineBox(Box):
+class AnonymousBlockLevelBox(AnonymousBox, BlockLevelBox):
+    def _init_style(self):
+        super(AnonymousBlockLevelBox, self)._init_style()
+        self.style.display = 'block'
+
+
+class LineBox(AnonymousBox):
     pass
 
 
@@ -75,7 +92,7 @@ class InlineLevelBox(Box):
     pass
 
 
-class TextBox(Box):
+class TextBox(AnonymousBox):
     def __init__(self, element, text):
         super(TextBox, self).__init__(element)
         self.children = None
