@@ -229,3 +229,46 @@ def test_styles():
             assert child.style.margin_top == 42
 
 
+@suite.test
+def test_whitespace():
+    # TODO: test more cases
+    # http://www.w3.org/TR/CSS21/text.html#white-space-model
+    box = parse('''
+        <p>Lorem \t\r\n  ipsum\t<strong>  dolor </strong>.</p>
+        <pre>\t  foo\n</pre>
+        <pre style="white-space: pre-wrap">\t  foo\n</pre>
+        <pre style="white-space: pre-line">\t  foo\n</pre>
+        ''')
+    boxes.inline_in_block(box)
+    boxes.block_in_inline(box)
+    boxes.process_whitespace(box)
+    assert_tree(box, [
+        ('p', 'block', [
+            ('p', 'line', [
+                ('p', 'text', 'Lorem ipsum '),
+                ('strong', 'inline', [
+                    ('strong', 'text', 'dolor ')]),
+                ('p', 'text', '.')])]),
+        ('body', 'anon_block', [
+            ('body', 'line', [
+                ('body', 'text', ' ')])]),
+        ('pre', 'block', [
+            ('pre', 'line', [
+                # pre
+                ('pre', 'text', u'\t\xA0\xA0foo\n')])]),
+        ('body', 'anon_block', [
+            ('body', 'line', [
+                ('body', 'text', ' ')])]),
+        ('pre', 'block', [
+            ('pre', 'line', [
+                # pre-wrap
+                ('pre', 'text', u'\t\xA0\xA0\u200Bfoo\n')])]),
+        ('body', 'anon_block', [
+            ('body', 'line', [
+                ('body', 'text', ' ')])]),
+        ('pre', 'block', [
+            ('pre', 'line', [
+                # pre-line
+                ('pre', 'text', u'foo\n')])])])
+
+
