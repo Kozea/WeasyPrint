@@ -106,20 +106,18 @@ def assert_tree(box, expected):
 
 @suite.test
 def test_box_tree():
-    assert to_lists(parse('<p>')) == [('p', 'block', [])]
-    assert to_lists(parse('<p>Hello <em>World</em>!</p>')) == [
+    assert_tree(parse('<p>'), [('p', 'block', [])])
+    assert_tree(parse('<p>Hello <em>World</em>!</p>'), [
         ('p', 'block', [
             ('p', 'text', 'Hello '),
             ('em', 'inline', [
                 ('em', 'text', 'World')]),
-            ('p', 'text', '!')])]
+            ('p', 'text', '!')])])
 
 
 @suite.test
 def test_inline_in_block():
-    source = '''
-        <div>Hello, <em>World</em>!
-            <p>Lipsum.</p></div>'''
+    source = '<div>Hello, <em>World</em>!\n<p>Lipsum.</p></div>'
     expected = [
         ('div', 'block', [
             ('div', 'anon_block', [
@@ -127,7 +125,7 @@ def test_inline_in_block():
                     ('div', 'text', 'Hello, '),
                     ('em', 'inline', [
                         ('em', 'text', 'World')]),
-                    ('div', 'text', '! ')])]),
+                    ('div', 'text', '!\n')])]),
             ('p', 'block', [
                 ('p', 'line', [
                     ('p', 'text', 'Lipsum.')])])])]
@@ -163,7 +161,8 @@ def test_block_in_inline():
                         ('span', 'block', [ # This block is "pulled up"
                             ('span', 'line', [
                                 ('span', 'text', 'sit')])]),
-                        ('strong', 'text', ' '),
+                        # No whitespace processing here.
+                        ('strong', 'text', '\n            '),
                         ('span', 'block', [ # This block is "pulled up"
                             ('span', 'line', [
                                 ('span', 'text', 'amet,')])])]),
@@ -189,7 +188,8 @@ def test_block_in_inline():
                 ('p', 'line', [
                     ('em', 'inline', [
                         ('strong', 'inline', [
-                            ('strong', 'text', ' ')])])])]),
+                            # No whitespace processing here.
+                            ('strong', 'text', '\n            ')])])])]),
             ('span', 'block', [
                 ('span', 'line', [
                     ('span', 'text', 'amet,')])]),
@@ -206,14 +206,6 @@ def test_block_in_inline():
                     ('em', 'inline', [])])])])])
 
 
-def descendant_boxes(box):
-    """A flat generator for a box, its children and descendants."""
-    yield box
-    for child in box.children or []:
-        for grand_child in descendant_boxes(child):
-            yield grand_child
-
-
 @suite.test
 def test_styles():
     box = parse('''
@@ -227,7 +219,7 @@ def test_styles():
     boxes.inline_in_block(box)
     boxes.block_in_inline(box)
     
-    for child in descendant_boxes(box):
+    for child in box.descendants():
         # All boxes inherit the color
         assert child.style.color == 'blue'
         # Only non-anonymous boxes have margins
