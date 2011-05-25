@@ -68,6 +68,7 @@ See respective docstrings for details.
 
 import re
 from . import css
+from . import replaced
 
 
 class Box(object):
@@ -235,6 +236,9 @@ class ReplacedBox(Box):
     A box that is replaced, ie. its content is rendered externally and is opaque
     from CSS’s point of view. Example: <img> elements are replaced.
     """
+    def __init__(self, element, replacement):
+        super(ReplacedBox, self).__init__(element)
+        self.replacement = replacement
 
 
 class BlockLevelReplacedBox(ReplacedBox, BlockLevelBox):
@@ -279,6 +283,18 @@ def dom_to_box(element):
     display = element.style.display # TODO: should be the used value
     assert display != 'none'
     
+    replacement = replaced.get_replaced_element(element)
+    if replacement:
+        if display in ('block', 'list-item', 'table'):
+            box = BlockLevelReplacedBox(element, replacement)
+        elif display in ('inline', 'inline-table', 'inline-block'):
+            box = InlineLevelReplacedBox(element, replacement)
+        else:
+            raise NotImplementedError('Unsupported display: ' + display)
+        # The content is replaced, do not generate boxes for the element’s
+        # text and children.
+        return box
+
     if display in ('block', 'list-item'):
         box = BlockBox(element)
         #if display == 'list-item':

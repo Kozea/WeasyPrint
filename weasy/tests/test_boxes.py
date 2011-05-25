@@ -32,12 +32,13 @@ def serialize(box_list):
     Transform a box list into a structure easier to compare for testing.
     """
     types = {
+        boxes.TextBox: 'text',
+        boxes.LineBox: 'line',
         boxes.BlockBox: 'block',
         boxes.InlineBox: 'inline',
         boxes.InlineBlockBox: 'inline_block',
-        boxes.TextBox: 'text',
         boxes.AnonymousBlockBox: 'anon_block',
-        boxes.LineBox: 'line',
+        boxes.InlineLevelReplacedBox: 'inline_replaced',
     }
     return [
         (box.element.tag, types[box.__class__], (
@@ -112,12 +113,13 @@ def test_box_tree():
         <style>
             span { display: inline-block }
         </style>
-        <p>Hello <em>World <span>Lipsum</span></em>!</p>
+        <p>Hello <em>World <img src="foo.png"><span>Lipsum</span></em>!</p>
     '''), [
         ('p', 'block', [
             ('p', 'text', 'Hello '),
             ('em', 'inline', [
                 ('em', 'text', 'World '),
+                ('img', 'inline_replaced', []),
                 ('span', 'inline_block', [
                     ('span', 'text', 'Lipsum')])]),
             ('p', 'text', '!')])])
