@@ -32,10 +32,10 @@ def serialize(box_list):
     Transform a box list into a structure easier to compare for testing.
     """
     types = {
-        boxes.BlockLevelBox: 'block',
-        boxes.InlineLevelBox: 'inline',
+        boxes.BlockBox: 'block',
+        boxes.InlineBox: 'inline',
         boxes.TextBox: 'text',
-        boxes.AnonymousBlockLevelBox: 'anon_block',
+        boxes.AnonymousBlockBox: 'anon_block',
         boxes.LineBox: 'line',
     }
     return [
@@ -52,12 +52,12 @@ def unwrap_html_body(box):
     and remove them to simplify further tests. These are always at the root
     of HTML documents.
     """
-    assert isinstance(box, boxes.BlockLevelBox)
+    assert isinstance(box, boxes.BlockBox)
     assert box.element.tag == 'html'
     assert len(box.children) == 1
 
     box = box.children[0]
-    assert isinstance(box, boxes.BlockLevelBox)
+    assert isinstance(box, boxes.BlockBox)
     assert box.element.tag == 'body'
     
     return box.children
