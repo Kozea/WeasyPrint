@@ -279,13 +279,14 @@ def dom_to_box(element):
     display = element.style.display # TODO: should be the used value
     assert display != 'none'
     
-    if display in ('block', 'list-item', 'table') \
-            or display.startswith('table-'):
-        # The element generates a block-level box
+    if display in ('block', 'list-item'):
         box = BlockBox(element)
-    elif display in ('inline', 'inline-block', 'inline-table', 'ruby'):
-        # inline-level box
+        #if display == 'list-item':
+        #    TODO: add a box for the marker
+    elif display == 'inline':
         box = InlineBox(element)
+    elif display == 'inline-block':
+        box = InlineBlockBox(element)
     else:
         raise NotImplementedError('Unsupported display: ' + display)
     

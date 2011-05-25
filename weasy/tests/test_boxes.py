@@ -34,6 +34,7 @@ def serialize(box_list):
     types = {
         boxes.BlockBox: 'block',
         boxes.InlineBox: 'inline',
+        boxes.InlineBlockBox: 'inline_block',
         boxes.TextBox: 'text',
         boxes.AnonymousBlockBox: 'anon_block',
         boxes.LineBox: 'line',
@@ -107,11 +108,18 @@ def assert_tree(box, expected):
 @suite.test
 def test_box_tree():
     assert_tree(parse('<p>'), [('p', 'block', [])])
-    assert_tree(parse('<p>Hello <em>World</em>!</p>'), [
+    assert_tree(parse('''
+        <style>
+            span { display: inline-block }
+        </style>
+        <p>Hello <em>World <span>Lipsum</span></em>!</p>
+    '''), [
         ('p', 'block', [
             ('p', 'text', 'Hello '),
             ('em', 'inline', [
-                ('em', 'text', 'World')]),
+                ('em', 'text', 'World '),
+                ('span', 'inline_block', [
+                    ('span', 'text', 'Lipsum')])]),
             ('p', 'text', '!')])])
 
 
