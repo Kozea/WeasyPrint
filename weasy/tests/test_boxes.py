@@ -155,65 +155,68 @@ def test_inline_in_block():
 def test_block_in_inline():
     box = parse('''
         <style>
+            p { display: inline-block; }
             span { display: block; }
         </style>
         <p>Lorem <em>ipsum <strong>dolor <span>sit</span>
             <span>amet,</span></strong><span>consectetur</span></em></p>''')
     boxes.inline_in_block(box)
     assert_tree(box, [
-        ('p', 'block', [
-            ('p', 'line', [
-                ('p', 'text', 'Lorem '),
-                ('em', 'inline', [
-                    ('em', 'text', 'ipsum '),
-                    ('strong', 'inline', [
-                        ('strong', 'text', 'dolor '),
-                        ('span', 'block', [ # This block is "pulled up"
-                            ('span', 'line', [
-                                ('span', 'text', 'sit')])]),
-                        # No whitespace processing here.
-                        ('strong', 'text', '\n            '),
-                        ('span', 'block', [ # This block is "pulled up"
-                            ('span', 'line', [
-                                ('span', 'text', 'amet,')])])]),
-                    ('span', 'block', [ # This block is "pulled up"
-                        ('span', 'line', [
-                            ('span', 'text', 'consectetur')])])])])])])
-
-    boxes.block_in_inline(box)
-    assert_tree(box, [
-        ('p', 'block', [
-            ('p', 'anon_block', [
+        ('body', 'line', [
+            ('p', 'inline_block', [
                 ('p', 'line', [
                     ('p', 'text', 'Lorem '),
                     ('em', 'inline', [
                         ('em', 'text', 'ipsum '),
                         ('strong', 'inline', [
-                            ('strong', 'text', 'dolor ')])])])]),
-            ('span', 'block', [
-                ('span', 'line', [
-                    ('span', 'text', 'sit')])]),
-            # TODO: this should disapear
-            ('p', 'anon_block', [
-                ('p', 'line', [
-                    ('em', 'inline', [
-                        ('strong', 'inline', [
+                            ('strong', 'text', 'dolor '),
+                            ('span', 'block', [ # This block is "pulled up"
+                                ('span', 'line', [
+                                    ('span', 'text', 'sit')])]),
                             # No whitespace processing here.
-                            ('strong', 'text', '\n            ')])])])]),
-            ('span', 'block', [
-                ('span', 'line', [
-                    ('span', 'text', 'amet,')])]),
-                                    
-            ('p', 'anon_block', [
-                ('p', 'line', [
-                    ('em', 'inline', [
-                        ('strong', 'inline', [])])])]),
-            ('span', 'block', [
-                ('span', 'line', [
-                    ('span', 'text', 'consectetur')])]),
-            ('p', 'anon_block', [
-                ('p', 'line', [
-                    ('em', 'inline', [])])])])])
+                            ('strong', 'text', '\n            '),
+                            ('span', 'block', [ # This block is "pulled up"
+                                ('span', 'line', [
+                                    ('span', 'text', 'amet,')])])]),
+                        ('span', 'block', [ # This block is "pulled up"
+                            ('span', 'line', [
+                                ('span', 'text', 'consectetur')])])])])])])])
+
+    boxes.block_in_inline(box)
+    assert_tree(box, [
+        ('body', 'line', [
+            ('p', 'inline_block', [
+                ('p', 'anon_block', [
+                    ('p', 'line', [
+                        ('p', 'text', 'Lorem '),
+                        ('em', 'inline', [
+                            ('em', 'text', 'ipsum '),
+                            ('strong', 'inline', [
+                                ('strong', 'text', 'dolor ')])])])]),
+                ('span', 'block', [
+                    ('span', 'line', [
+                        ('span', 'text', 'sit')])]),
+                # TODO: this should disapear
+                ('p', 'anon_block', [
+                    ('p', 'line', [
+                        ('em', 'inline', [
+                            ('strong', 'inline', [
+                                # No whitespace processing here.
+                                ('strong', 'text', '\n            ')])])])]),
+                ('span', 'block', [
+                    ('span', 'line', [
+                        ('span', 'text', 'amet,')])]),
+                                        
+                ('p', 'anon_block', [
+                    ('p', 'line', [
+                        ('em', 'inline', [
+                            ('strong', 'inline', [])])])]),
+                ('span', 'block', [
+                    ('span', 'line', [
+                        ('span', 'text', 'consectetur')])]),
+                ('p', 'anon_block', [
+                    ('p', 'line', [
+                        ('em', 'inline', [])])])])])])
 
 
 @suite.test
