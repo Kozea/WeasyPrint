@@ -24,7 +24,7 @@ structure / box model.
 http://www.w3.org/TR/CSS21/visuren.html
 
 Names are the same as in CSS 2.1 with the exception of TextBox. In WeasyPrint,
-any text is in a TextBox.What CSS calls anonymous inline boxes are text boxes
+any text is in a TextBox. What CSS calls anonymous inline boxes are text boxes
 but not all text boxes are anonymous inline boxes.
 
 http://www.w3.org/TR/CSS21/visuren.html#anonymous
@@ -67,8 +67,8 @@ See respective docstrings for details.
 
 
 import re
-from . import css
-from . import replaced
+from .. import css
+from .. import replaced
 
 
 class Box(object):

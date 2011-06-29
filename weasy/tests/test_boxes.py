@@ -20,7 +20,7 @@
 from attest import Tests, assert_hook
 from lxml import html
 
-from .. import boxes
+from ..formatting_structure import boxes
 from .. import css
 
 
@@ -283,5 +283,3 @@ def test_whitespace():
             ('pre', 'line', [
                 # pre-line
                 ('pre', 'text', u'foo\n')])])])
-
-

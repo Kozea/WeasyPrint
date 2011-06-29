@@ -18,6 +18,7 @@
 
 import os.path
 from attest import Tests, assert_hook
+import attest
 import cssutils
 
 from .. import css
@@ -36,6 +37,8 @@ def test_style_dict():
     })
     assert style.display == 'block'
     assert style.margin_left == 12
+    with attest.raises(AttributeError):
+        style.position
 
 
 @suite.test
@@ -134,4 +137,3 @@ def test_default_stylesheet():
     css.annotate_document(document)
     assert document.head.style.display == 'none', \
         'The HTML4 user-agent stylesheet was not applied'
-
