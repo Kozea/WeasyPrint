@@ -21,6 +21,7 @@ from attest import Tests, assert_hook
 from lxml import html
 
 from ..formatting_structure import boxes
+from ..formatting_structure import build
 from .. import css
 
 
@@ -70,13 +71,21 @@ def to_lists(box_tree):
     return serialize(unwrap_html_body(box_tree))
 
 
-def parse(html_content):
+def get_dom(html_content):
     """
-    Parse some HTML, apply stylesheets, transform to boxes, serialize.
+    Parse some HTML and apply stylesheets.
     """
     document = html.document_fromstring(html_content)
     css.annotate_document(document)
-    return boxes.dom_to_box(document)
+    return document
+
+
+def parse(html_content):
+    """
+    Parse some HTML, apply stylesheets and transform to boxes.
+    """
+    document = get_dom(html_content)
+    return build.dom_to_box(document)
 
 
 def prettify(tree_list):
@@ -141,13 +150,13 @@ def test_inline_in_block():
                     ('p', 'text', 'Lipsum.')])])])]
 
     box = parse(source)
-    boxes.inline_in_block(box)
+    build.inline_in_block(box)
     assert_tree(box, expected)
 
     box = parse(source)
     # This should be idempotent: doing more than once does not change anything.
-    boxes.inline_in_block(box)
-    boxes.inline_in_block(box)
+    build.inline_in_block(box)
+    build.inline_in_block(box)
     assert_tree(box, expected)
 
 
@@ -160,7 +169,7 @@ def test_block_in_inline():
         </style>
         <p>Lorem <em>ipsum <strong>dolor <span>sit</span>
             <span>amet,</span></strong><span>consectetur</span></em></p>''')
-    boxes.inline_in_block(box)
+    build.inline_in_block(box)
     assert_tree(box, [
         ('body', 'line', [
             ('p', 'inline_block', [
@@ -182,7 +191,7 @@ def test_block_in_inline():
                             ('span', 'line', [
                                 ('span', 'text', 'consectetur')])])])])])])])
 
-    boxes.block_in_inline(box)
+    build.block_in_inline(box)
     assert_tree(box, [
         ('body', 'line', [
             ('p', 'inline_block', [
@@ -229,8 +238,8 @@ def test_styles():
         </style>
         <p>Lorem <em>ipsum <strong>dolor <span>sit</span>
             <span>amet,</span></strong><span>consectetur</span></em></p>''')
-    boxes.inline_in_block(box)
-    boxes.block_in_inline(box)
+    build.inline_in_block(box)
+    build.block_in_inline(box)
 
     for child in box.descendants():
         # All boxes inherit the color
@@ -246,15 +255,14 @@ def test_styles():
 def test_whitespace():
     # TODO: test more cases
     # http://www.w3.org/TR/CSS21/text.html#white-space-model
-    box = parse('''
+    document = get_dom('''
         <p>Lorem \t\r\n  ipsum\t<strong>  dolor </strong>.</p>
         <pre>\t  foo\n</pre>
         <pre style="white-space: pre-wrap">\t  foo\n</pre>
         <pre style="white-space: pre-line">\t  foo\n</pre>
         ''')
-    boxes.inline_in_block(box)
-    boxes.block_in_inline(box)
-    boxes.process_whitespace(box)
+    box = build.build_formatting_structure(document)
+
     assert_tree(box, [
         ('p', 'block', [
             ('p', 'line', [
