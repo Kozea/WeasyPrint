@@ -178,10 +178,11 @@ def compute_lengths(element):
     Convert other length units to pixels.
     """
     style = element.style
+    font_size = style.font_size
     for name in style:
         # PropertyValue objects are not mutable, build a new DummyPropertyValue
         style[name] = DummyPropertyValue(
-            compute_length(value, style.font_size) for value in style[name])
+            compute_length(value, font_size) for value in style[name])
 
 
 def compute_line_height(element):
