@@ -16,25 +16,30 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os.path
-from lxml import html
-from cssutils.helper import path2url
-from attest import Tests
+
+import attest
+from attest import Tests, assert_hook
+import lxml.html
+
+from .. import css
+from ..formatting_structure import build
+from .. import layout
 
 
-def resource_filename(basename):
-    return os.path.join(os.path.dirname(__file__), 'resources', basename)
+suite = Tests()
 
 
-def parse_html(filename):
-    """Parse an HTML file from the test resources and resolve relative URL."""
-    document = html.parse(path2url(resource_filename(filename))).getroot()
-    return document
+def parse(html_content):
+    """
+    Parse some HTML, apply stylesheets and transform to boxes.
+    """
+    document = lxml.html.document_fromstring(html_content)
+    css.annotate_document(document)
+    return build.build_formatting_structure(document)
 
 
-all = Tests('.'.join((__name__, mod, 'suite'))
-            for mod in ('test_css',
-                        'test_css_properties',
-                        'test_boxes',
-                        'test_utils',
-                        'test_layout'))
+@suite.test
+def test_compute_dimensions():
+    box = parse('<p>Hello, <em>layout</em>!</p>')
+
+    assert layout.compute_dimensions(box) is box

@@ -16,25 +16,18 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os.path
-from lxml import html
-from cssutils.helper import path2url
-from attest import Tests
+
+from .formatting_structure import boxes
+from .utils import MultiFunction
 
 
-def resource_filename(basename):
-    return os.path.join(os.path.dirname(__file__), 'resources', basename)
+@MultiFunction
+def compute_dimensions(box):
+    """
+    Computes width, height and absolute position for all boxes in a box tree.
+    """
 
 
-def parse_html(filename):
-    """Parse an HTML file from the test resources and resolve relative URL."""
-    document = html.parse(path2url(resource_filename(filename))).getroot()
-    return document
-
-
-all = Tests('.'.join((__name__, mod, 'suite'))
-            for mod in ('test_css',
-                        'test_css_properties',
-                        'test_boxes',
-                        'test_utils',
-                        'test_layout'))
+@compute_dimensions.register(boxes.BlockLevelBox)
+def block_level_box_dimensions(box):
+    return box
