@@ -19,15 +19,15 @@
 """
     weasy.css
     ---------
-    
+
     This module takes care of steps 3 and 4 of “CSS 2.1 processing model”:
     Retrieve stylesheets associated with a document and annotate every element
     with a value for every CSS property.
     http://www.w3.org/TR/CSS21/intro.html#processing-model
-    
+
     This module does this in more than two steps. The `annotate_document`
     function does everything, but there is also a function for each step:
-    
+
      * ``find_stylesheets``: Find and parse all author stylesheets in a document
      * ``remove_ignored_declarations``: Remove illegal and unsupported
        declarations
@@ -138,15 +138,15 @@ def remove_ignored_declarations(stylesheet):
                 new_style.setProperty(prop)
             # TODO: log ignored declarations, with reasons
         rule.style = new_style
-    
+
 
 def evaluate_media_query(query_list, medium):
     """
     Return the boolean evaluation of `query_list` for the given `medium`
-    
+
     :attr query_list: a cssutilts.stlysheets.MediaList
     :attr medium: a media type string (for now)
-    
+
     """
     # TODO: actual support for media queries, not just media types
     return query_list.mediaText == 'all' \
@@ -192,7 +192,7 @@ def expand_shorthands(stylesheet):
 def build_lxml_proxy_cache(document):
     """
     Build as needed a proxy cache for an lxml document.
-    
+
     ``Element`` python objects in lxml are only proxies to C space memory
     (libxml2 data structures.) These objects may be created and destroyed at
     any time, so we can generally not keep state in them.
@@ -206,7 +206,7 @@ def build_lxml_proxy_cache(document):
     """
     if not hasattr(document, 'proxy_cache'):
         document.proxy_cache = list(document.iter())
-    
+
 
 def declaration_precedence(origin, priority):
     """
@@ -235,7 +235,7 @@ def apply_style_rule(rule, document, origin):
     """
     Apply a CSSStyleRule to a document according to its selectors, attaching
     Property objects with their precedence to DOM elements.
-    
+
     Acceptable values for `origin` are the strings 'author', 'user' and
     'user agent'.
     """
@@ -263,7 +263,7 @@ def apply_style_rule(rule, document, origin):
         else:
             # No pseudo-element or invalid selector.
             pseudo_type = ''
-        
+
         try:
             selector_callable = cssselect.CSSSelector(parsed_selector)
         except cssselect.ExpressionError:
@@ -271,7 +271,7 @@ def apply_style_rule(rule, document, origin):
             # TODO: log this error.
             return
         selectors.append((selector_callable, pseudo_type, selector.specificity))
-    
+
     # Only apply to elements after seeing all selectors, as we want to
     # ignore he whole ruleset if just one selector is invalid.
     # TODO: test that ignoring actually happens.
@@ -279,7 +279,7 @@ def apply_style_rule(rule, document, origin):
         for element in selector(document):
             element = element.pseudo_elements[pseudo_type]
             for prop in rule.style:
-                # TODO: ignore properties that do not apply to the current 
+                # TODO: ignore properties that do not apply to the current
                 # medium? http://www.w3.org/TR/CSS21/intro.html#processing-model
                 precedence = (
                     declaration_precedence(origin, prop.priority),
@@ -314,15 +314,15 @@ class StyleDict(dict):
 
     This returns the numeric value for pixel lengths or zero lengths;
     and the string representation for any other value.
-    
+
         >>> style = StyleDict({'margin-left': PropertyValue('12px'),
         ...                    'display': PropertyValue('block')}
         >>> assert style.display == 'block'
         >>> assert style.margin_left == 12
-    
+
     Attributes can be set in the same way: numeric values become pixels lengths
     and strings are parsed as CSS values.
-    
+
     CSS numbers without units (eg. font-weight: 700) are returned as strings
     to distinguish them from pixel lengths. Pixel lengths were favored as they
     are much more common. (Pixels are the unit for all computed lengths.)
@@ -334,20 +334,22 @@ class StyleDict(dict):
             raise AttributeError(key)
         if len(value) == 1 and value[0].type == 'DIMENSION' \
                 and value[0].dimension == 'px':
-            return value[0].value # CSSValue.value: numeric value
+            # cssutils promises that `DimensionValue.value` is an int or float
+            assert isinstance(value[0].value, numbers.Real)
+            return value[0].value
         elif len(value) == 1 and value[0].value == 0:
             return 0
         else:
             return value.value # PropertyValue.value: string representation
 
     def __setattr__(self, key, value):
-        if isinstance(value, numbers.Number):
+        if isinstance(value, numbers.Real):
             value = PropertyValue(str(value) + 'px')
         elif isinstance(value, basestring):
             value = PropertyValue(value)
         #else: assume a PropertyValue-like
         self[key.replace('_', '-')] = value
-        
+
     def copy(self):
         """
         Same as dict.copy, but return an object of the same class.
@@ -362,7 +364,7 @@ def assign_properties(element):
     pseudo-element and assign computed values with respect to the cascade,
     declaration priority (ie. ``!important``) and selector specificity.
     """
-    # If apply_style_rule() was called in appearance order, the 
+    # If apply_style_rule() was called in appearance order, the
     # stability of Python's sort fulfills rule 4 of the cascade: everything
     # else being equal, the latter specified value wins
     # http://www.w3.org/TR/CSS21/cascade.html#cascading-order
@@ -372,7 +374,7 @@ def assign_properties(element):
     element.style = style = StyleDict()
     for precedence, prop in element.applicable_properties:
         style[prop.name] = prop.propertyValue
-    
+
     inheritance.handle_inheritance(element)
     initial_values.handle_initial_values(element)
     computed_values.compute_values(element)
@@ -387,7 +389,7 @@ class PseudoElement(object):
         self.parent = parent
         self.pseudo_element_type = pseudo_type
         self.applicable_properties = []
-    
+
     def getparent(self):
         """Pseudo-elements inherit from the associated element."""
         return self.parent
@@ -399,7 +401,7 @@ class PseudoElementDict(dict):
     """
     def __init__(self, element):
         self[''] = element
-    
+
     def __missing__(self, key):
         pseudo_element = PseudoElement(self[''], key)
         self[key] = pseudo_element
@@ -413,7 +415,7 @@ def annotate_document(document, user_stylesheets=None,
     Do everything from finding author stylesheets in the given HTML document
     to parsing and applying them, to end up with a `style` attribute on
     every DOM element: a dictionary with values for all CSS 2.1 properties.
-    
+
     Given stylesheets will be modified in place.
     """
     build_lxml_proxy_cache(document)
@@ -439,7 +441,6 @@ def annotate_document(document, user_stylesheets=None,
     build_lxml_proxy_cache(document)
     for element in document.iter():
         handle_style_attribute(element)
-        
+
         for element_or_pseudo_element in element.pseudo_elements.itervalues():
             assign_properties(element_or_pseudo_element)
-
