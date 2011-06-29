@@ -61,14 +61,14 @@ def unwrap_html_body(box):
     box = box.children[0]
     assert isinstance(box, boxes.BlockBox)
     assert box.element.tag == 'body'
-    
+
     return box.children
 
 
 def to_lists(box_tree):
     """Serialize and unwrap <html> and <body>."""
     return serialize(unwrap_html_body(box_tree))
-    
+
 
 def parse(html_content):
     """
@@ -98,7 +98,7 @@ def assert_tree(box, expected):
     """
     Test box tree equality with the prettified obtained result in the message
     in case of failure.
-    
+
     box: a Box object, starting with <html> and <body> blocks.
     expected: a list of serialized <body> children as returned by to_lists().
     """
@@ -139,7 +139,7 @@ def test_inline_in_block():
             ('p', 'block', [
                 ('p', 'line', [
                     ('p', 'text', 'Lipsum.')])])])]
-    
+
     box = parse(source)
     boxes.inline_in_block(box)
     assert_tree(box, expected)
@@ -206,7 +206,7 @@ def test_block_in_inline():
                 ('span', 'block', [
                     ('span', 'line', [
                         ('span', 'text', 'amet,')])]),
-                                        
+
                 ('p', 'anon_block', [
                     ('p', 'line', [
                         ('em', 'inline', [
@@ -231,7 +231,7 @@ def test_styles():
             <span>amet,</span></strong><span>consectetur</span></em></p>''')
     boxes.inline_in_block(box)
     boxes.block_in_inline(box)
-    
+
     for child in box.descendants():
         # All boxes inherit the color
         assert child.style.color == 'blue'

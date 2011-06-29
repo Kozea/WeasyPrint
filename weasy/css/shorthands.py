@@ -32,7 +32,7 @@ def expand_four_sides(name, values):
     if len(values) == 1:
         values *= 4
     elif len(values) == 2:
-        values *= 2 # (bottom, left) defaults to (top, right) 
+        values *= 2 # (bottom, left) defaults to (top, right)
     elif len(values) == 3:
         values.append(values[1]) # left defaults to right
     elif len(values) != 4:
@@ -88,7 +88,7 @@ def expand_background(name, values):
 
 def expand_font(name, values):
     # TODO
-    # [ [ <'font-style'> || <'font-variant'> || <'font-weight'> ]? <'font-size'> [ / <'line-height'> ]? <'font-family'> ] | caption | icon | menu | message-box | small-caption | status-bar | inherit 
+    # [ [ <'font-style'> || <'font-variant'> || <'font-weight'> ]? <'font-size'> [ / <'line-height'> ]? <'font-family'> ] | caption | icon | menu | message-box | small-caption | status-bar | inherit
     raise NotImplementedError
 
 
@@ -129,7 +129,7 @@ def expand_shorthands_in_declaration(style):
     for prop in style:
         if prop.name in SHORTHANDS:
             expander = SHORTHANDS[prop.name]
-            for new_name, new_value in expander(prop.name, 
+            for new_name, new_value in expander(prop.name,
                                                 list(prop.propertyValue)):
                 if not isinstance(new_value, basestring):
                     new_value = new_value.cssText

@@ -41,7 +41,7 @@ def test_style_dict():
 @suite.test
 def test_find_stylesheets():
     document = parse_html('doc1.html')
-    
+
     sheets = list(css.find_stylesheets(document))
     assert len(sheets) == 2
     # Also test that stylesheets are in tree order
@@ -53,7 +53,7 @@ def test_find_stylesheets():
     assert len(rules) == 8
     # Also test appearance order
     assert [rule.selectorText for rule in rules] \
-        == ['li', 'p', 'ul', 'a', 'a:after', ':first', 'ul', 
+        == ['li', 'p', 'ul', 'a', 'a:after', ':first', 'ul',
             'body > h1:first-child']
 
 
@@ -83,41 +83,41 @@ def test_annotate_document():
     user_stylesheet = cssutils.parseFile(resource_filename('user.css'))
     ua_stylesheet = cssutils.parseFile(resource_filename('mini_ua.css'))
     document = parse_html('doc1.html')
-    
+
     css.annotate_document(document, [user_stylesheet], [ua_stylesheet])
-    
+
     # Element objects behave a lists of their children
     head, body = document
     h1, p, ul = body
     li = list(ul)
     a, = li[0]
     after = a.pseudo_elements['after']
-    
+
     assert h1.style['background-image'][0].absolute_uri == 'file://' \
         + os.path.abspath(resource_filename('logo_small.png'))
-    
+
     assert h1.style.font_weight == '700'
-    
+
     sides = ('-top', '-right', '-bottom', '-left')
     # 32px = 1em * font-size: 2em * initial 16px
     for side, expected_value in zip(sides, ('32px', '0', '32px', '0')):
         assert p.style['margin' + side].value == expected_value
-    
+
     # 32px = 2em * initial 16px
     for side, expected_value in zip(sides, ('32px', '32px', '32px', '32px')):
         assert ul.style['margin' + side].value == expected_value
-    
+
     # thick = 5px, 0.25 inches = 96*.25 = 24px
     for side, expected_value in zip(sides, ('0', '5px', '0', '24px')):
         assert ul.style['border' + side + '-width'].value == expected_value
-    
+
     # 32px = 2em * initial 16px
     # 64px = 4em * initial 16px
     for side, expected_value in zip(sides, ('32px', '0', '32px', '64px')):
         assert li[0].style['margin' + side].value == expected_value
-    
+
     assert a.style.text_decoration == 'underline'
-    
+
     color = a.style['color'][0]
     assert (color.red, color.green, color.blue, color.alpha) == (255, 0, 0, 1)
 

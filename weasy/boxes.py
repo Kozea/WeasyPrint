@@ -83,13 +83,13 @@ class Box(object):
         self.parent = None
         self.children = []
         self._init_style()
-    
+
     def _init_style(self):
         # Computed values
         # Copying might not be needed, but let’s be careful with mutable
         # objects.
         self.style = self.element.style.copy()
-    
+
     def add_child(self, child, index=None):
         """
         Add the new child to this box’s children list and set this box as the
@@ -100,7 +100,7 @@ class Box(object):
             self.children.append(child)
         else:
             self.children.insert(index, child)
-    
+
     def descendants(self):
         """A flat generator for a box, its children and descendants."""
         yield self
@@ -144,7 +144,7 @@ class BlockContainerBox(Box):
 class BlockBox(BlockContainerBox, BlockLevelBox):
     """
     A block-level box that is also a block container.
-    
+
     A non-replaced element with a 'display' value of 'block', 'list-item'
     generates a block box.
     """
@@ -168,10 +168,10 @@ class AnonymousBox(Box):
 class AnonymousBlockBox(AnonymousBox, BlockBox):
     """
     Wraps inline-level boxes where block-level boxes are needed.
-    
+
     Block containers (eventually) contain either only block-level boxes or only
     inline-level boxes. When they initially contain both, consecutive
-    inline-level boxes are wrapped in an anonymous block box by 
+    inline-level boxes are wrapped in an anonymous block box by
     ``boxes.inline_in_block()``.
     """
 
@@ -180,7 +180,7 @@ class LineBox(AnonymousBox):
     """
     Eventually a line in an inline formatting context. Can only contain
     inline-level boxes.
-    
+
     In early stages of building the box tree a single line box contains many
     consecutive inline boxes and will be split later when wrapping lines.
     """
@@ -189,7 +189,7 @@ class LineBox(AnonymousBox):
 class InlineLevelBox(Box):
     """
     A box that participates in an inline formatting context.
-    
+
     An inline-level box that is not an inline box (see below) is said to be
     "atomic". Such boxes are inline-blocks, replaced elements and inline tables.
 
@@ -202,7 +202,7 @@ class InlineBox(InlineLevelBox):
     """
     A box who participates in an inline formatting context and whose content
     also participates in that inline formatting context.
-    
+
     A non-replaced element with a 'display' value of 'inline' generates an
     inline box.
     """
@@ -211,7 +211,7 @@ class InlineBox(InlineLevelBox):
 class TextBox(AnonymousBox, InlineBox):
     """
     A box that contains only text and has no box children.
-    
+
     Any text in the document ends up in a text box. What CSS calls "anonymous
     inline boxes" are also text boxes.
     """
@@ -262,13 +262,13 @@ class InlineLevelReplacedBox(ReplacedBox, InlineLevelBox):
 def dom_to_box(element):
     """
     Converts a DOM element (and its children) into a box (with children).
-    
+
     Eg.
-    
+
         <p>Some <em>emphasised</em> text.<p>
-    
+
     gives (not actual syntax)
-    
+
         BlockBox[
             TextBox('Some '),
             InlineBox[
@@ -276,13 +276,13 @@ def dom_to_box(element):
             ],
             TextBox(' text.'),
         ]
-    
+
     TextBox`es are anonymous inline boxes:
     http://www.w3.org/TR/CSS21/visuren.html#anonymous
     """
     display = element.style.display # TODO: should be the used value
     assert display != 'none'
-    
+
     replacement = replaced.get_replaced_element(element)
     if replacement:
         if display in ('block', 'list-item', 'table'):
@@ -305,7 +305,7 @@ def dom_to_box(element):
         box = InlineBlockBox(element)
     else:
         raise NotImplementedError('Unsupported display: ' + display)
-    
+
     if element.text:
         box.add_child(TextBox(element, element.text))
     for child_element in element:
@@ -313,7 +313,7 @@ def dom_to_box(element):
             box.add_child(dom_to_box(child_element))
         if child_element.tail:
             box.add_child(TextBox(element, child_element.tail))
-    
+
     return box
 
 
@@ -326,10 +326,10 @@ def process_whitespace(box):
     for box in box.descendants():
         if not (hasattr(box, 'text') and box.text):
             continue
-        
+
         text = box.text
         handling = box.style.white_space
-            
+
         text = re.sub('[\t\r ]*\n[\t\r ]*', '\n', text)
         if handling in ('pre', 'pre-wrap'):
             # \xA0 is the non-breaking space
@@ -344,7 +344,7 @@ def process_whitespace(box):
             # or no character
             # CSS3: http://www.w3.org/TR/css3-text/#line-break-transform
             text = text.replace('\n', ' ')
-    
+
         if handling in ('normal', 'nowrap', 'pre-line'):
             text = text.replace('\t', ' ')
             text = re.sub(' +', ' ', text)
@@ -353,7 +353,7 @@ def process_whitespace(box):
             following_collapsible_space = text.endswith(' ')
         else:
             following_collapsible_space = False
-        
+
         box.text = text
 
 
@@ -362,14 +362,14 @@ def inline_in_block(box):
     Consecutive inline-level boxes in a block container box are wrapped into a
     line box, itself wrapped into an anonymous block box.
     (This line box will be broken into multiple lines later.)
-    
+
     The box tree is changed *in place*.
-    
+
     This is the first case in
     http://www.w3.org/TR/CSS21/visuren.html#anonymous-block-level
-    
+
     Eg.
-    
+
         BlockBox[
             TextBox('Some '),
             InlineBox[TextBox('text')],
@@ -377,9 +377,9 @@ def inline_in_block(box):
                 TextBox('More text'),
             ]
         ]
-    
+
     is turned into
-    
+
         BlockBox[
             AnonymousBlockBox[
                 LineBox[
@@ -399,7 +399,7 @@ def inline_in_block(box):
 
     if not isinstance(box, BlockContainerBox):
         return
-    
+
     line_box = LineBox(box.element)
     children = box.children
     box.children = []
@@ -438,9 +438,9 @@ def block_in_inline(box):
 
     This is the second case in
     http://www.w3.org/TR/CSS21/visuren.html#anonymous-block-level
-    
+
     Eg.
-    
+
         BlockBox[
             LineBox[
                 InlineBox[
@@ -457,7 +457,7 @@ def block_in_inline(box):
                 ]
             ]
         ]
-    
+
     is turned into
 
         BlockBox[
@@ -497,7 +497,7 @@ def block_in_inline(box):
     if not (isinstance(box, BlockLevelBox) and box.parent
             and isinstance(box.parent, InlineBox)):
         return
-    
+
     # Find all ancestry until a line box.
     inline_parents = []
     for parent in box.ancestors():
@@ -506,7 +506,7 @@ def block_in_inline(box):
             assert isinstance(parent, LineBox)
             parent_line_box = parent
             break
-            
+
     # Add an anonymous block level box before the block box
     if isinstance(parent_line_box.parent, AnonymousBlockBox):
         previous_anonymous_box = parent_line_box.parent
@@ -535,7 +535,7 @@ def block_in_inline(box):
     for parent in box.ancestors():
         if parent == parent_line_box:
             break
-            
+
         next_children = parent.children[splitter_box.index + 1:]
         parent.children = parent.children[:splitter_box.index + 1]
 
@@ -544,10 +544,8 @@ def block_in_inline(box):
 
         splitter_box = parent
         clone_box = clone_box.parent
-        
+
     # Put the block element before the next_anonymous_box
     box.parent.children.remove(box)
     previous_anonymous_box.parent.add_child(
         box, previous_anonymous_box.index + 1)
-
-

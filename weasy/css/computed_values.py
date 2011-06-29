@@ -97,7 +97,7 @@ class DummyPropertyValue(list):
     """
     A list that quacks like a PropertyValue.
     """
-    
+
     @property
     def value(self):
         return ' '.join(value.cssText for value in self)
@@ -122,7 +122,7 @@ def compute_font_size(element):
     assert len(style['font-size']) == 1
     value = style['font-size'][0]
     value_text = value.value
-    
+
     # TODO: once we ignore invalid declarations, turn these ValueError’s into
     # assert False, 'Declaration should have been ignored'
     if value_text in FONT_SIZE_KEYWORDS:
@@ -171,7 +171,7 @@ def compute_length(value, font_size):
         raise ValueError('The ex unit is not supported yet.', value.cssText)
     elif value.dimension is not None:
         raise ValueError('Unknown length unit', value.value, repr(value.type))
-    
+
 
 def compute_lengths(element):
     """
@@ -192,7 +192,7 @@ def compute_line_height(element):
     style = element.style
     assert len(style['line-height']) == 1
     value = style['line-height'][0]
-    
+
     # TODO: negative values are illegal
     if value.type == 'NUMBER':
         height = style.font_size * value.value
@@ -249,7 +249,7 @@ def compute_display_float(element):
     elif style.float == 'none' and element.getparent() is not None:
         # Case 5
         return
-    
+
     # Cases 2, 3, 4
     display = style.display
     if display == 'inline-table':
@@ -336,7 +336,7 @@ def compute_content(element):
         # (ie. :first-line and :first-letter)
         # Assume the same as elements.
         style.content = 'normal'
-            
+
 
 def compute_values(element):
     """
@@ -357,4 +357,3 @@ def compute_values(element):
     #       http://www.w3.org/TR/CSS21/visudet.html#propdef-height
     # TODO: percentages for vertical-align. What about line-height: normal?
     # TODO: clip
-

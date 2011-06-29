@@ -71,7 +71,7 @@ center          { text-align: center }
 /*:focus          { outline: thin dotted invert }
     'border' shorthand is not implemented yet
     TODO: revert when it is */
-:focus          { outline-width: thin; outline-style: dotted; 
+:focus          { outline-width: thin; outline-style: dotted;
                   outline-color: invert }
 
 /* Begin bidirectionality settings (do not change) */

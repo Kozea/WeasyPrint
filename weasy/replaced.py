@@ -38,7 +38,7 @@ class Replacement(object):
     """
     Abstract base class for replaced elements
     """
-    
+
     def __init__(self, element):
         self.element = element
 

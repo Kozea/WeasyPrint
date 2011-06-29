@@ -28,10 +28,10 @@ from .shorthands import expand_shorthands_in_declaration
 
 r"""
     Built with:
-    
+
     print '\n'.join(
         '    %s: %s;' % (
-            prop.strip("'"), 
+            prop.strip("'"),
             tr.xpath('td[3]/text()')[0].strip()
         )
         for tr in lxml.html.parse('http://www.w3.org/TR/CSS21/propidx.html')
@@ -157,7 +157,7 @@ def handle_initial_values(element):
             style[name] = initial
 
     # Special cases for initial values that can not be expressed as CSS
-    
+
     # border-color: same as color
     for name in ('border-top-color', 'border-right-color',
                  'border-bottom-color', 'border-left-color'):

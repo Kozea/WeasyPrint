@@ -25,12 +25,12 @@ from cssutils.css import PropertyValue
 
 r"""
   Built with:
-  
+
     print '\n'.join(
         lxml.html.parse('http://www.w3.org/TR/CSS21/propidx.html')
         .xpath('//table//td[5][contains(text(), "yes")]/../td[1]/a/span/text()')
     ).replace("'", '')
-  
+
   adding some line breaks and removing shorthand properties.
 """
 # Do not list shorthand properties here as we handle them before inheritance:
