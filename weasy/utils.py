@@ -25,7 +25,7 @@ class MultiFunction(object):
     A callable with different implementations depending on the type of the
     first argument.
     
-    This objects takes __name__, __module__ and __doc__ from base_function
+    This object takes __name__, __module__ and __doc__ from base_function
     if it is given, but does not use it’s body.
     """
     

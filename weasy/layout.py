@@ -28,6 +28,6 @@ def compute_dimensions(box):
     """
 
 
-@compute_dimensions.register(boxes.BlockLevelBox)
+@compute_dimensions.register(boxes.PageBox)
 def block_level_box_dimensions(box):
     return box

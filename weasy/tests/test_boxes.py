@@ -55,6 +55,10 @@ def unwrap_html_body(box):
     and remove them to simplify further tests. These are always at the root
     of HTML documents.
     """
+    if isinstance(box, boxes.PageBox):
+        assert len(box.children) == 1
+        box = box.children[0]
+
     assert isinstance(box, boxes.BlockBox)
     assert box.element.tag == 'html'
     assert len(box.children) == 1

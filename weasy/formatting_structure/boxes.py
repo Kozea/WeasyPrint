@@ -40,6 +40,7 @@ Abstract classes, should not be instanciated:
 
 Concrete classes:
 
+ * PageBox
  * BlockBox
  * AnonymousBlockBox
  * InlineBox
@@ -49,8 +50,8 @@ Concrete classes:
  * TextBox
  * LineBox
 
-Apart from LineBox, all concrete box classes have one of the following "outside"
-behavior:
+Apart from PageBox and LineBox, all concrete box classes have one of the
+following "outside" behavior:
 
  * Block-level (inherits from BlockLevelBox)
  * Inline-level (inherits from InlineLevelBox)
@@ -139,6 +140,32 @@ class BlockContainerBox(Box):
     """
 
 
+class PageBox(BlockContainerBox):
+    """
+    Initially the whole document will be in a single page box. During layout
+    a new page box is created after every page break.
+    """
+    def __init__(self, document, page_number):
+        self.document = document
+        # starting at 1 for the first page.
+        self.page_number = page_number
+        # Page boxes are not linked to any element.
+        super(PageBox, self).__init__(element=None)
+
+    def _init_style(self):
+        # First page is a right page. TODO: this "should depend on the major
+        # writing direction of the document".
+        first_is_right = True
+        is_right = (self.page_number % 2) == (1 if first_is_right else 0)
+        page_type = 'right' if is_right else 'left'
+        if self.page_number == 1:
+            page_type = 'first_' + page_type
+        style = self.document.page_pseudo_elements[page_type].style
+        # Copying might not be needed, but let’s be careful with mutable
+        # objects.
+        self.style = style.copy()
+
+
 class BlockBox(BlockContainerBox, BlockLevelBox):
     """
     A block-level box that is also a block container.
@@ -180,7 +207,8 @@ class LineBox(AnonymousBox):
     inline-level boxes.
 
     In early stages of building the box tree a single line box contains many
-    consecutive inline boxes and will be split later when wrapping lines.
+    consecutive inline boxes. Later, during layout phase, each line boxes will
+    be split into multiple line boxes, one for each actual line.
     """
 
 

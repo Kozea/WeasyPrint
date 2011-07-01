@@ -32,11 +32,14 @@ def build_formatting_structure(document):
     """
     Build a formatting structure (box tree) from a DOM document.
     """
-    box_tree = dom_to_box(document)
-    inline_in_block(box_tree)
-    block_in_inline(box_tree)
-    process_whitespace(box_tree)
-    return box_tree
+    box = dom_to_box(document)
+    inline_in_block(box)
+    block_in_inline(box)
+    process_whitespace(box)
+
+    page = PageBox(document, 1)
+    page.add_child(box)
+    return page
 
 
 def dom_to_box(element):
