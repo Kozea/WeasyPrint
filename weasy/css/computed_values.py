@@ -151,7 +151,7 @@ def compute_font_size(element):
     style.font_size = font_size
 
 
-def compute_length(value, font_size):
+def compute_length(value, font_size, page_context):
     """
     Convert a single length value to pixels.
     """
@@ -165,7 +165,10 @@ def compute_length(value, font_size):
         factor = LENGTHS_TO_PIXELS[value.dimension]
         return DimensionValue(str(value.value * factor) + 'px')
     elif value.dimension == 'em':
-        return DimensionValue(str(value.value * font_size) + 'px')
+        if page_context:
+            raise ValueError('The em unit is not allowed in a page context.')
+        else:
+            return DimensionValue(str(value.value * font_size) + 'px')
     elif value.dimension == 'ex':
         # TODO: support ex
         raise ValueError('The ex unit is not supported yet.', value.cssText)
@@ -173,16 +176,20 @@ def compute_length(value, font_size):
         raise ValueError('Unknown length unit', value.value, repr(value.type))
 
 
-def compute_lengths(element):
+def compute_lengths(element, page_context):
     """
     Convert other length units to pixels.
     """
     style = element.style
-    font_size = style.font_size
+    if page_context:
+        font_size = None
+    else:
+        font_size = style.font_size
     for name in style:
         # PropertyValue objects are not mutable, build a new DummyPropertyValue
         style[name] = DummyPropertyValue(
-            compute_length(value, font_size) for value in style[name])
+            compute_length(value, font_size, page_context)
+            for value in style[name])
 
 
 def compute_line_height(element):
@@ -339,20 +346,22 @@ def compute_content(element):
         style.content = 'normal'
 
 
-def compute_values(element):
+def compute_values(element, page_context):
     """
     Normalize values as much as possible without rendering the document.
     """
-    # em lengths depend on font-size, compute font-size first
-    compute_font_size(element)
-    compute_lengths(element)
-    compute_line_height(element)
-    compute_border_width(element)
-    compute_outline_width(element)
-    compute_display_float(element)
-    compute_word_spacing(element)
-    compute_font_weight(element)
-    compute_content(element)
+    if not page_context:
+        # em lengths depend on font-size, compute font-size first
+        compute_font_size(element)
+    compute_lengths(element, page_context)
+    if not page_context:
+        compute_line_height(element)
+        compute_display_float(element)
+        compute_word_spacing(element)
+        compute_font_weight(element)
+        compute_content(element)
+        compute_border_width(element)
+        compute_outline_width(element)
     # Recent enough cssutils have a .absolute_uri on URIValue objects.
     # TODO: percentages for height?
     #       http://www.w3.org/TR/CSS21/visudet.html#propdef-height

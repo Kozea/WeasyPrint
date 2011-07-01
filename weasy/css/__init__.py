@@ -54,6 +54,7 @@ from . import shorthands
 from . import inheritance
 from . import initial_values
 from . import computed_values
+from . import page
 
 
 HTML4_DEFAULT_STYLESHEET = parseFile(os.path.join(os.path.dirname(__file__),
@@ -288,6 +289,33 @@ def apply_style_rule(rule, document, origin):
                 element.applicable_properties.append((precedence, prop))
 
 
+def apply_page_rule(rule, page_pseudo_elements, origin):
+    # TODO: support "page names" in page selectors (see CSS3 Paged Media)
+    pseudo_class = rule.selectorText
+    page_types = page.PAGE_PSEUDOCLASS_TARGETS.get(pseudo_class, None)
+    if page_types is not None:
+        for prop in rule.style:
+            # In CSS 2.1, only the margin properties apply within
+            # the page context.
+            # TODO: add support 
+            if prop.name in page.PAGE_CONTEXT_PROPERTIES:
+                precedence = (
+                    declaration_precedence(origin, prop.priority),
+                    page.PAGE_PSEUDOCLASS_SPECIFICITY[pseudo_class]
+                )
+                for page_type in page_types:
+                    element = page_pseudo_elements[page_type]
+                    element.applicable_properties.append((precedence, prop))
+            else:
+                # invalid property here.
+                # TODO: log/warn that something was ignored
+                pass
+    else:
+        # Invalid/unsupported selector, ignore the whole rule
+        # TODO: log/warn that something was ignored
+        pass
+
+
 def handle_style_attribute(element):
     """
     Return the element’s ``applicable_properties`` list after adding properties
@@ -358,7 +386,7 @@ class StyleDict(dict):
         return self.__class__(self)
 
 
-def assign_properties(element):
+def assign_properties(element, page_context=False):
     """
     Take the properties left by ``apply_style_rule`` on an element or
     pseudo-element and assign computed values with respect to the cascade,
@@ -368,16 +396,20 @@ def assign_properties(element):
     # stability of Python's sort fulfills rule 4 of the cascade: everything
     # else being equal, the latter specified value wins
     # http://www.w3.org/TR/CSS21/cascade.html#cascading-order
-    element.applicable_properties.sort(
-        # This lambda has one parameter deconstructed as a tuple
-        key=lambda (precedence, prop): precedence)
+    def sort_key(applicable_property):
+        # The list contain (precedence, property) pairs. Sort by precedence
+        # only, not by property in case of equal precedence.
+        precedence, _property = applicable_property
+        return precedence
+    element.applicable_properties.sort(key=sort_key)
     element.style = style = StyleDict()
     for precedence, prop in element.applicable_properties:
         style[prop.name] = prop.propertyValue
 
-    inheritance.handle_inheritance(element)
-    initial_values.handle_initial_values(element)
-    computed_values.compute_values(element)
+    if not page_context:
+        inheritance.handle_inheritance(element)
+    initial_values.handle_initial_values(element, page_context=page_context)
+    computed_values.compute_values(element, page_context=page_context)
 
 
 class PseudoElement(object):
@@ -400,6 +432,9 @@ class PseudoElementDict(dict):
     Like a defaultdict, creates PseudoElement objects as needed.
     """
     def __init__(self, element):
+        # Add the element itself in the list of its pseudo-elements
+        # so that iterating on this dict gives both the element and it
+        # pseudo-element.
         self[''] = element
 
     def __missing__(self, key):
@@ -424,7 +459,13 @@ def annotate_document(document, user_stylesheets=None,
     for element in document.iter():
         element.applicable_properties = []
         element.pseudo_elements = PseudoElementDict(element)
+
     author_stylesheets = find_stylesheets(document)
+    page_pseudo_elements = dict(
+        (page_type, PseudoElement(None, page_type))
+        for page_type in page.PAGE_PSEUDOCLASS_TARGETS[''])
+    document.page_pseudo_elements = page_pseudo_elements
+    
     for sheets, origin in ((author_stylesheets, 'author'),
                            (user_stylesheets or [], 'user'),
                            (ua_stylesheets or [], 'user agent')):
@@ -436,6 +477,8 @@ def annotate_document(document, user_stylesheets=None,
             for rule in resolve_import_media(sheet, medium):
                 if rule.type == rule.STYLE_RULE:
                     apply_style_rule(rule, document, origin)
+                elif rule.type == rule.PAGE_RULE:
+                    apply_page_rule(rule, page_pseudo_elements, origin)
                 # TODO: handle @font-face, @namespace, @page, and @variables
 
     build_lxml_proxy_cache(document)
@@ -444,3 +487,6 @@ def annotate_document(document, user_stylesheets=None,
 
         for element_or_pseudo_element in element.pseudo_elements.itervalues():
             assign_properties(element_or_pseudo_element)
+    
+    for pseudo_element in page_pseudo_elements.itervalues():
+        assign_properties(pseudo_element, page_context=True)

@@ -137,3 +137,47 @@ def test_default_stylesheet():
     css.annotate_document(document)
     assert document.head.style.display == 'none', \
         'The HTML4 user-agent stylesheet was not applied'
+
+
+@suite.test
+def test_page():
+    document = parse_html('doc1.html')
+    user_sheet = cssutils.parseString(u"""
+        @page {
+            margin: 10px;
+        }
+        @page :right {
+            margin-bottom: 12pt;
+        }
+    """)
+    css.annotate_document(document, user_stylesheets=[user_sheet])
+
+    style = document.page_pseudo_elements['first_left'].style
+    assert style.margin_top == 5
+    assert style.margin_left == 10
+    assert style.margin_bottom == 10
+
+    style = document.page_pseudo_elements['first_right'].style
+    assert style.margin_top == 5
+    assert style.margin_left == 10
+    assert style.margin_bottom == 16
+
+    style = document.page_pseudo_elements['left'].style
+    assert style.margin_top == 10
+    assert style.margin_left == 10
+    assert style.margin_bottom == 10
+
+    style = document.page_pseudo_elements['right'].style
+    assert style.margin_top == 10
+    assert style.margin_left == 10
+    assert style.margin_bottom == 16
+
+    user_sheet_with_em = cssutils.parseString(u"""
+        @page {
+            margin: 3em;
+        }
+    """)
+    with attest.raises(ValueError) as exc:
+        css.annotate_document(document, user_stylesheets=[user_sheet_with_em])
+    assert exc.args[0] == 'The em unit is not allowed in a page context.'
+    
