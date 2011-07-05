@@ -43,15 +43,15 @@ def test_compute_dimensions():
     box = parse('<p>')
     assert isinstance(box, boxes.PageBox)
     layout.compute_dimensions(box)
-    assert int(box.width) == 793  # A4: 210 mm in pixels
-    assert int(box.height) == 1122  # A4: 297 mm in pixels
+    assert int(box.outer_width) == 793  # A4: 210 mm in pixels
+    assert int(box.outer_height) == 1122  # A4: 297 mm in pixels
 
     box = parse('<style>@page { margin: 10px 10% 20% 1in }</style>')
     assert isinstance(box, boxes.PageBox)
     layout.compute_dimensions(box, width=200, height=300)
-    assert box.width == 200
-    assert box.height == 300
-    assert box.page_area.x == 96 # 1 inch
-    assert box.page_area.y == 10 # 10px
-    assert box.page_area.width == 84 # 200px - 10% - 1 inch
-    assert box.page_area.height == 230 # 300px - 10px - 20%
+    assert box.outer_width == 200
+    assert box.outer_height == 300
+    assert box.position_x == 96 # 1 inch
+    assert box.position_y == 10 # 10px
+    assert box.width == 84 # 200px - 10% - 1 inch
+    assert box.height == 230 # 300px - 10px - 20%

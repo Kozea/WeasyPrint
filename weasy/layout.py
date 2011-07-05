@@ -22,25 +22,6 @@ from .utils import MultiFunction
 from .css import computed_values
 
 
-class Rectangle(object):
-    """
-    width: horizontal size
-
-    height: vertical size
-
-    x: horizontal position of the left border.
-       Larger values are further on the right.
-
-    y: vertical position of the top border.
-       Larger values are below.
-    """
-    def __init__(self, x, y, width, height):
-        self.x = x
-        self.y = y
-        self.width = width
-        self.height = height
-
-
 def pixel_value(value):
     """
     Return the numeric value of a pixel length or None.
@@ -82,17 +63,17 @@ def compute_dimensions(box):
 def page_dimensions(box, width=None, height=None):
     # Page size is fixed to A4 for now. TODO: implement the size property.
     if width is None:
-        box.width = 210 * computed_values.LENGTHS_TO_PIXELS['mm']
+        box.outer_width = 210 * computed_values.LENGTHS_TO_PIXELS['mm']
     else:
-        box.width = width
+        box.outer_width = width
 
     if height is None:
-        box.height = 297 * computed_values.LENGTHS_TO_PIXELS['mm']
+        box.outer_height = 297 * computed_values.LENGTHS_TO_PIXELS['mm']
     else:
-        box.height = height
+        box.outer_height = height
 
-    for sides, hundred_percent in [(['top', 'bottom'], box.height),
-                                   (['left', 'right'], box.width)]:
+    for sides, hundred_percent in [(['top', 'bottom'], box.outer_height),
+                                   (['left', 'right'], box.outer_width)]:
         for side in sides:
             value = box.style['margin-' + side]
             pixels = pixel_value(value)
@@ -105,10 +86,10 @@ def page_dimensions(box, width=None, height=None):
                     pixels = percentage * hundred_percent / 100.
             setattr(box, 'margin_' + side, pixels)
 
-    box.page_area = Rectangle(
-        x=box.margin_left, y=box.margin_top,
-        width=box.width - box.margin_left - box.margin_right,
-        height=box.height - box.margin_top - box.margin_bottom)
+    box.position_x = box.margin_left
+    box.position_y = box.margin_top
+    box.width = box.outer_width - box.margin_left - box.margin_right
+    box.height = box.outer_height - box.margin_top - box.margin_bottom
 
     for child in box.children:
         compute_dimensions(child)
