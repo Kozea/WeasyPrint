@@ -295,3 +295,29 @@ def test_whitespace():
             ('pre', 'line', [
                 # pre-line
                 ('pre', 'text', u'foo\n')])])])
+
+
+@suite.test
+def test_page_style():
+    document = get_dom('''
+        <style>
+            @page { margin: 3px }
+            @page :first { margin-top: 20px }
+            @page :right { margin-right: 10px; margin-top: 10px }
+            @page :left { margin-left: 10px; margin-top: 10px }
+        </style>
+    ''')
+    def assert_page_margins(page_number, top, right, bottom, left):
+        page = boxes.PageBox(document, page_number)
+        assert page.style.margin_top == top
+        assert page.style.margin_right == right
+        assert page.style.margin_bottom == bottom
+        assert page.style.margin_left == left
+
+    # odd numbers are :right pages, even are :left. 1 has :first as well
+    assert_page_margins(1, top=20, right=10, bottom=3, left=3)
+    assert_page_margins(2, top=10, right=3, bottom=3, left=10)
+    assert_page_margins(3, top=10, right=10, bottom=3, left=3)
+    assert_page_margins(4, top=10, right=3, bottom=3, left=10)
+    assert_page_margins(45, top=10, right=10, bottom=3, left=3)
+    assert_page_margins(122, top=10, right=3, bottom=3, left=10)
