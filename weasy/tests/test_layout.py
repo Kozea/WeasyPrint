@@ -22,7 +22,7 @@ from attest import Tests, assert_hook
 import lxml.html
 
 from .. import css
-from ..formatting_structure import build
+from ..formatting_structure import boxes, build
 from .. import layout
 
 
@@ -40,6 +40,18 @@ def parse(html_content):
 
 @suite.test
 def test_compute_dimensions():
-    box = parse('<p>Hello, <em>layout</em>!</p>')
+    box = parse('<p>')
+    assert isinstance(box, boxes.PageBox)
+    layout.compute_dimensions(box)
+    assert int(box.width) == 793  # A4: 210 mm in pixels
+    assert int(box.height) == 1122  # A4: 297 mm in pixels
 
-    assert layout.compute_dimensions(box) is box
+    box = parse('<style>@page { margin: 10px 10% 20% 1in }</style>')
+    assert isinstance(box, boxes.PageBox)
+    layout.compute_dimensions(box, width=200, height=300)
+    assert box.width == 200
+    assert box.height == 300
+    assert box.page_area.x == 96 # 1 inch
+    assert box.page_area.y == 10 # 10px
+    assert box.page_area.width == 84 # 200px - 10% - 1 inch
+    assert box.page_area.height == 230 # 300px - 10px - 20%

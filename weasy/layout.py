@@ -19,6 +19,56 @@
 
 from .formatting_structure import boxes
 from .utils import MultiFunction
+from .css import computed_values
+
+
+class Rectangle(object):
+    """
+    width: horizontal size
+
+    height: vertical size
+
+    x: horizontal position of the left border.
+       Larger values are further on the right.
+
+    y: vertical position of the top border.
+       Larger values are below.
+    """
+    def __init__(self, x, y, width, height):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+
+
+def pixel_value(value):
+    """
+    Return the numeric value of a pixel length or None.
+    """
+    if len(value) == 1 and value[0].type == 'DIMENSION' \
+            and value[0].dimension == 'px':
+        # cssutils promises that `DimensionValue.value` is an int or float
+        assert isinstance(value[0].value, (int, float))
+        return value[0].value
+    # 0 may not have a units
+    elif len(value) == 1 and value[0].value == 0:
+        return 0
+    else:
+        # Not a pixel length
+        return None
+
+
+def percentage_value(value):
+    """
+    Return the numeric value of a percentage or None.
+    """
+    if len(value) == 1 and value[0].type == 'PERCENTAGE': \
+        # cssutils promises that `DimensionValue.value` is an int or float
+        assert isinstance(value[0].value, (int, float))
+        return value[0].value
+    else:
+        # Not a percentage
+        return None
 
 
 @MultiFunction
@@ -29,5 +79,41 @@ def compute_dimensions(box):
 
 
 @compute_dimensions.register(boxes.PageBox)
-def block_level_box_dimensions(box):
-    return box
+def page_dimensions(box, width=None, height=None):
+    # Page size is fixed to A4 for now. TODO: implement the size property.
+    if width is None:
+        box.width = 210 * computed_values.LENGTHS_TO_PIXELS['mm']
+    else:
+        box.width = width
+
+    if height is None:
+        box.height = 297 * computed_values.LENGTHS_TO_PIXELS['mm']
+    else:
+        box.height = height
+
+    for sides, hundred_percent in [(['top', 'bottom'], box.height),
+                                   (['left', 'right'], box.width)]:
+        for side in sides:
+            value = box.style['margin-' + side]
+            pixels = pixel_value(value)
+            if pixels is None:
+                percentage = percentage_value(value)
+                if percentage is None:
+                    assert value.value == 'auto'
+                    pixels = 0
+                else:
+                    pixels = percentage * hundred_percent / 100.
+            setattr(box, 'margin_' + side, pixels)
+
+    box.page_area = Rectangle(
+        x=box.margin_left, y=box.margin_top,
+        width=box.width - box.margin_left - box.margin_right,
+        height=box.height - box.margin_top - box.margin_bottom)
+
+    for child in box.children:
+        compute_dimensions(child)
+
+
+@compute_dimensions.register(boxes.BlockBox)
+def block_dimensions(box):
+    pass

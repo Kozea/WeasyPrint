@@ -297,7 +297,7 @@ def apply_page_rule(rule, page_pseudo_elements, origin):
         for prop in rule.style:
             # In CSS 2.1, only the margin properties apply within
             # the page context.
-            # TODO: add support 
+            # TODO: add support
             if prop.name in page.PAGE_CONTEXT_PROPERTIES:
                 precedence = (
                     declaration_precedence(origin, prop.priority),
@@ -465,7 +465,7 @@ def annotate_document(document, user_stylesheets=None,
         (page_type, PseudoElement(None, page_type))
         for page_type in page.PAGE_PSEUDOCLASS_TARGETS[''])
     document.page_pseudo_elements = page_pseudo_elements
-    
+
     for sheets, origin in ((author_stylesheets, 'author'),
                            (user_stylesheets or [], 'user'),
                            (ua_stylesheets or [], 'user agent')):
@@ -487,6 +487,6 @@ def annotate_document(document, user_stylesheets=None,
 
         for element_or_pseudo_element in element.pseudo_elements.itervalues():
             assign_properties(element_or_pseudo_element)
-    
+
     for pseudo_element in page_pseudo_elements.itervalues():
         assign_properties(pseudo_element, page_context=True)
