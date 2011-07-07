@@ -31,15 +31,22 @@ VARIANT_PROPERTIES = {'normal':pango.VARIANT_NORMAL,
                      'small-caps':pango.VARIANT_SMALL_CAPS}
 
 
-class WeasyText(object):
+class TextFragment(object):
     def __init__(self, text, width):
-        self.layout = gtk.DrawingArea().create_pango_layout(text)
+        self.context = gtk.DrawingArea().create_pango_context()
+        self.layout = pango.Layout(self.context)
+        self.layout.set_text(text.encode("utf-8"))
         self.width = width
         # Other properties
         self.layout.set_wrap(pango.WRAP_WORD)
     
-    def update_font(self):
+    def _update_font(self):
         self.layout.set_font_description(self._font)
+    
+    @property
+    def availables_font(self):
+        for font in gtk.DrawingArea().create_pango_context().list_families():
+            yield font.get_name()
     
     @property
     def text(self):
@@ -104,7 +111,8 @@ class WeasyText(object):
     def font(self):
         self._font = self.layout.get_font_description()
         if self._font is None:
-            self._font = pango.FontDescription()
+            self._font = self.layout.get_context().get_font_description()
+            self.layout.set_font_description(self._font)
         return self._font
     
     @property
@@ -114,7 +122,7 @@ class WeasyText(object):
     @font_family.setter
     def font_family(self, value):
         self.font.set_family(value.encode("utf-8"))
-        self.update_font()
+        self._update_font()
     
     @property
     def font_style(self):
@@ -137,22 +145,20 @@ class WeasyText(object):
         """
         if value in STYLE_PROPERTIES.keys():
             self.font.set_style(value)
-            self.update_font()
+            self._update_font()
         else:
             raise ValueError('The style property must be in %s' \
                 % STYLE_PROPERTIES.keys())
-    
     
     @property
     def font_size(self):
         return self.font.get_size() / pango.SCALE
     
-    
     @font_size.setter
     def font_size(self, value):
         """The value of size is specified in px units."""
         self.font.set_size(pango.SCALE * value)
-        self.update_font()
+        self._update_font()
     
     @property
     def font_variant(self):
@@ -169,19 +175,18 @@ class WeasyText(object):
         description to the value specified by variant. The value of variant
         must be either
         pango.VARIANT_NORMAL
-        pango.VARIANT_SMALL_CAPS.
+        pango.VARIANT_SMALL_CAPS
         """
         if value in VARIANT_PROPERTIES.keys():
             self.font.set_variant(value)
-            self.update_font()
+            self._update_font()
         else:
             raise ValueError('The style property must be in %s' \
                 % VARIANT_PROPERTIES.keys())
     
-    
     @property
     def font_weight(self):
-        return self.font.get_weight()
+        return int(float(self.font.get_weight()))
     
     @font_weight.setter
     def font_weight(self, value):
@@ -197,27 +202,25 @@ class WeasyText(object):
         pango.WEIGHT_ULTRABOLD the ultrabold weight (= 800)
         """
         self.font.set_weight(value)
-        self.update_font()
+        self._update_font()
 
 
-class WeasyInlineText(WeasyText):
+class LineTextFragment(TextFragment):
     def __init__(self, text, width):
-        super(WeasyInlineText, self).__init__(text, width)
+        super(LineTextFragment, self).__init__(text, width)
     
     @property
     def remaining_text(self):
         first_line = self.layout.get_line(0)
-        return super(WeasyInlineText, self).text[first_line.length:]
+        return super(LineTextFragment, self).text[first_line.length:]
     
     @property
     def text(self):
         first_line = self.layout.get_line(0)
-        return super(WeasyInlineText, self).text[:first_line.length]
+        return super(LineTextFragment, self).text[:first_line.length]
     
     @property
     def size(self):
         """ Return the real text area dimension for this line in px unit """
         extents = self.layout.get_line(0).get_pixel_extents()[1]
         return (extents[2]-extents[0], extents[3]-extents[1])
-
-

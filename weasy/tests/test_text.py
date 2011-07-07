@@ -30,7 +30,7 @@ suite = Tests()
 def test_line_content():
     string = u"This is a text for test"
     width = 120
-    line = text.WeasyInlineText(string, width)
+    line = text.LineTextFragment(string, width)
     assert line.remaining_text == u'test'
     assert u"%s%s" % (line.text, line.remaining_text)  == string
     line.width = 80
@@ -39,101 +39,85 @@ def test_line_content():
 
 
 @suite.test
-def test_line_dimension():
+def test_line_breaking():
     string = u"This is a text for test"
     width = 120
-    line = text.WeasyInlineText(string, width)
+    line = text.LineTextFragment(string, width)
     
     line.font_size = 12
     line.font_weight = 200
-    assert line.size == (114, 34)
     assert line.remaining_text == u"test"
     
     line.font_weight = 800
-    assert line.size == (98, 34)
     assert line.remaining_text == u"for test"
     
     line.font_size = 14
-    assert line.size == (109, 40)
     assert line.remaining_text == u"for test"
 
 @suite.test
 def test_text_dimension():
     string = u"This is a text for test. This is a test for text.py"
     width = 200
-    weasytext = text.WeasyText(string, width)
-    weasytext.font_size = 12
-    assert weasytext.size == (183, 38)
+    fragment = text.TextFragment(string, width)
+    fragment.font_size = 12
     
-    weasytext.font_size = 14
-    assert weasytext.size == (198, 44)
+    dimension = list(fragment.size)
+    print dimension
+    fragment.font_size = 20
+    new_dimension = list(fragment.size)
+    print new_dimension
+    assert dimension[0]*dimension[1] < new_dimension[0]*new_dimension[1]
     
-    weasytext.spacing = 20
-    assert weasytext.size == (198, 64)
-    
-    assert weasytext.text == string
+    dimension = list(fragment.size)
+    fragment.spacing = 20
+    new_dimension = list(fragment.size)
+    assert dimension[0]*dimension[1] < new_dimension[0]*new_dimension[1]
 
 
 @suite.test
 def test_text_font():
     string = u"This is a text for test. This is a test for text.py"
     width = 200
-    weasytext = text.WeasyText(string, width)
-    weasytext.font_family = u"Comic Sans MS"
-    assert weasytext.font_family == u"Comic Sans MS"
-    assert weasytext.size == (187, 44)
+    fragment = text.TextFragment(string, width)
+    fragment.font_family = u"Comic Sans MS"
+    assert fragment.font_family == u"Comic Sans MS"
+    assert fragment.size == (187, 44)
     
-    weasytext.font_family = u"Courier 10 Pitch"
-    assert weasytext.font_family == u"Courier 10 Pitch"
-    assert weasytext.size == (180, 54)
+    fragment.font_family = u"inexistante font, Comic Sans MS"
+    dimension = list(fragment.size)
+    fragment.font_family = u"Comic Sans MS"
+    new_dimension = list(fragment.size)
+    assert new_dimension == dimension
     
-    weasytext.font_family = u"Nimbus Roman No9 L"
-    assert weasytext.font_family == u"Nimbus Roman No9 L"
-    assert weasytext.size == (182, 38)
-    
-#    weasytext.font_family = u"inexistante font"
-#    assert weasytext.font_family != u"inexistante font"
-    weasytext.font_family = u"Nimbus Roman No9 L"
-    
-    weasytext.font_size = 12
-    assert weasytext.font_size == 12
+    fragment.font_size = 12
+    assert fragment.font_size == 12
     
     for value in text.STYLE_PROPERTIES.keys():
-        weasytext.font_style = value
-        assert weasytext.font_style == value
+        fragment.font_style = value
+        assert fragment.font_style == value
     
     with attest.raises(ValueError):
-        weasytext.font_style = "inexistante property"
+        fragment.font_style = "inexistante property"
 
     for value in text.VARIANT_PROPERTIES.keys():
-        weasytext.font_variant = value
-        assert weasytext.font_variant == value
-
-#    weasytext.font_variant
-#    assert 
-#    weasytext.font_weight
-#    assert 
+        fragment.font_variant = value
+        assert fragment.font_variant == value
 
 
 @suite.test
 def test_text_other():
-    """ Test all properties """
+    """ Test other properties """
     width = 200
-    weasytext = text.WeasyText(u"", 40)
-    weasytext.text = u"some text"
-    assert weasytext.text == u"some text"
-    weasytext.width = 20
-    assert weasytext.width == 20
-    weasytext.spacing = 20
-    assert weasytext.spacing == 20
+    fragment = text.TextFragment(u"", 40)
+    fragment.text = u"some text"
     
     #The default value of alignement property is ``left`` for western script
-    assert weasytext.alignment == u"left"
+    assert fragment.alignment == u"left"
     for value in text.ALIGN_PROPERTIES.keys():
-        weasytext.alignment = value
-        assert weasytext.alignment == value
+        fragment.alignment = value
+        assert fragment.alignment == value
     
     
-    weasytext.justify = True
-    assert weasytext.justify != False
+    fragment.justify = True
+    assert fragment.justify != False
 
