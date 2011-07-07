@@ -43,11 +43,11 @@ class WeasyText(object):
     
     @property
     def text(self):
-        return self.layout.get_text()
+        return self.layout.get_text().decode('utf-8')
 
     @text.setter
     def text(self, value):
-        self.layout.set_text(text.encode("utf-8"))
+        self.layout.set_text(value.encode("utf-8"))
 
     @property
     def size(self):
@@ -66,19 +66,31 @@ class WeasyText(object):
     
     @property
     def spacing(self):
-        """ Return the width. It's different to real width of text area """
+        """ Return the spacing. """
         return self.layout.get_spacing() / pango.SCALE
     
     @spacing.setter
     def spacing(self, value):
         self.layout.set_spacing(pango.SCALE * value)
-
+    
     def set_font(self, font_desc):
         self.layout.set_font_description(pango.FontDescription(font_desc))
     
-    def set_align(self, alignment):
+    @property
+    def alignment(self):
+        alignment = self.layout.get_alignment()
+        for key in ALIGN_PROPERTIES:
+            if ALIGN_PROPERTIES[key] == alignment:
+                return key
+    
+    @alignment.setter
+    def alignment(self, alignment):
         if alignment in ("left", "center", "right"):
             self.layout.set_alignment(ALIGN_PROPERTIES[alignment])
+        else:
+            raise ValueError('The alignment property must be in %s' \
+                % ALIGN_PROPERTIES.keys())
+
     
     @property
     def justify(self):
@@ -97,16 +109,19 @@ class WeasyText(object):
     
     @property
     def font_family(self):
-        return self.font.get_family()
+        return self.font.get_family().decode('utf-8')
     
     @font_family.setter
     def font_family(self, value):
-        self.font.set_family(value)
+        self.font.set_family(value.encode("utf-8"))
         self.update_font()
     
     @property
     def font_style(self):
-        return self.font.get_family()
+        style = self.font.get_style()
+        for key in STYLE_PROPERTIES:
+            if STYLE_PROPERTIES[key] == style:
+                return key
     
     @font_style.setter
     def font_style(self, value):
@@ -114,7 +129,7 @@ class WeasyText(object):
         The value of style must be either
         pango.STYLE_NORMAL
         pango.STYLE_ITALIC
-        pango.STYLE_OBLIQUE. 
+        pango.STYLE_OBLIQUE
         but not both >> like cs
         
         ...and font matching in Pango will match italic specifications
@@ -141,7 +156,10 @@ class WeasyText(object):
     
     @property
     def font_variant(self):
-        return self.font.get_variant()
+        variant = self.font.get_variant()
+        for key in VARIANT_PROPERTIES:
+            if VARIANT_PROPERTIES[key] == variant:
+                return key
     
     @font_variant.setter
     def font_variant(self, value):
@@ -189,15 +207,17 @@ class WeasyInlineText(WeasyText):
     @property
     def remaining_text(self):
         first_line = self.layout.get_line(0)
-        return self.get_text()[first_line.length:]
+        return super(WeasyInlineText, self).text[first_line.length:]
     
     @property
     def text(self):
         first_line = self.layout.get_line(0)
-        return self.get_text()[:first_line.length]
+        return super(WeasyInlineText, self).text[:first_line.length]
     
     @property
     def size(self):
-        """ Return the real text area size for this line in px unit """
+        """ Return the real text area dimension for this line in px unit """
         extents = self.layout.get_line(0).get_pixel_extents()[1]
         return (extents[2]-extents[0], extents[3]-extents[1])
+
+

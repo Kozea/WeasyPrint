@@ -37,4 +37,5 @@ all = Tests('.'.join((__name__, mod, 'suite'))
                         'test_css_properties',
                         'test_boxes',
                         'test_utils',
-                        'test_layout'))
+                        'test_layout',
+                        'test_text'))
