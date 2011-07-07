@@ -52,6 +52,77 @@ def percentage_value(value):
         return None
 
 
+def resolve_one_percentage(box, property_name, refer_to):
+    """
+    Set a used length value from a computed length value.
+    `refer_to` is the length for 100%.
+    """
+    # box.style has computed values
+    value = box.style[property_name]
+    pixels = pixel_value(value)
+    if pixels is not None:
+        # Absolute length (was converted to pixels in "computed values")
+        result = pixels
+    else:
+        percentage = percentage_value(value)
+        if percentage is not None:
+            # A percentage
+            result = percentage * refer_to / 100.
+        else:
+            result = value.value
+            # Other than that, only 'auto' is allowed
+            # TODO: it is only allowed on some proprties. Check this here?
+            assert result == 'auto'
+    # box attributes are used values
+    setattr(box, property_name.replace('-', '_'), result)
+
+
+def resolve_percentages(box):
+    """
+    Set used values as attributes of the box object.
+    """
+    # cb = containing block
+    cb_width, cb_height = box.containing_block_size()
+    # TODO: background-position?
+    for prop in ['margin-left', 'margin-right',
+                 'padding-left', 'padding-right',
+                 'text-indent', 'width', 'min-width']:
+        resolve_one_percentage(box, prop, cb_width)
+    # XXX later: top, bottom, left and right on positioned elements
+
+    for prop in ['margin-top', 'margin-bottom',
+                 'padding-top', 'padding-bottom']:
+        if isinstance(box, boxes.PageBox):
+            resolve_one_percentage(box, prop, cb_height)
+        else:
+            resolve_one_percentage(box, prop, cb_width)
+
+    if box.style.max_width == 'none':
+        box.max_width = None
+    else:
+        resolve_one_percentage(box, 'max-width', cb_width)
+
+    if cb_height is None:
+        # Special handling when the height of the containing block is not
+        # known yet.
+        box.min_height = 0
+        box.max_height = None
+        box.height = 'auto'
+    else:
+        if box.style.max_height == 'none':
+            box.max_height = None
+        else:
+            resolve_one_percentage(box, 'max-height', cb_height)
+        resolve_one_percentage(box, 'min-height', cb_height)
+        resolve_one_percentage(box, 'height', cb_height)
+
+    # Used value == computed value
+    box.border_top_width = box.style.border_top_width
+    box.border_right_width = box.style.border_right_width
+    box.border_bottom_width = box.style.border_bottom_width
+    box.border_left_width = box.style.border_left_width
+
+
 @MultiFunction
 def compute_dimensions(box):
     """
@@ -72,19 +143,7 @@ def page_dimensions(box, width=None, height=None):
     else:
         box.outer_height = height
 
-    for sides, hundred_percent in [(['top', 'bottom'], box.outer_height),
-                                   (['left', 'right'], box.outer_width)]:
-        for side in sides:
-            value = box.style['margin-' + side]
-            pixels = pixel_value(value)
-            if pixels is None:
-                percentage = percentage_value(value)
-                if percentage is None:
-                    assert value.value == 'auto'
-                    pixels = 0
-                else:
-                    pixels = percentage * hundred_percent / 100.
-            setattr(box, 'margin_' + side, pixels)
+    resolve_percentages(box)
 
     box.position_x = box.margin_left
     box.position_y = box.margin_top

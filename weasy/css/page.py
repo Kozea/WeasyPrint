@@ -21,9 +21,6 @@ Everything specific to paged media and @page rules.
 """
 
 
-from . import shorthands
-
-
 # Selectors for @page rules can have a pseudo-class, one of :first, :left
 # or :right. This maps pseudo-classes to lists of "page types" selected.
 PAGE_PSEUDOCLASS_TARGETS = {
@@ -41,43 +38,3 @@ PAGE_PSEUDOCLASS_SPECIFICITY = {
     ':right': 1,
     ':first': 10,
 }
-
-
-# Only some properties are allowed in the page context:
-# http://www.w3.org/TR/css3-page/#page-properties
-# These do not include shorthand properties.
-PAGE_CONTEXT_PROPERTIES = set("""
-    background-attachment
-    background-color
-    background-image
-    background-position
-    background-repeat
-
-    border-bottom-color
-    border-bottom-style
-    border-bottom-width
-    border-left-color
-    border-left-style
-    border-left-width
-    border-right-color
-    border-right-style
-    border-right-width
-    border-top-color
-    border-top-style
-    border-top-width
-
-    counter-increment
-    counter-reset
-
-    margin-bottom
-    margin-left
-    margin-right
-    margin-top
-
-    padding-bottom
-    padding-left
-    padding-right
-    padding-top
-
-    size
-""".split())

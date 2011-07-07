@@ -82,6 +82,9 @@ class Box(object):
         self.parent = None
         self.children = []
         self._init_style()
+        # When the size is not calculated yet, use None as default value
+        self.width = None
+        self.height = None
 
     def _init_style(self):
         # Computed values
@@ -119,6 +122,28 @@ class Box(object):
         """Index of the box in its parent's children."""
         if self.parent:
             return self.parent.children.index(self)
+
+    @property
+    def containing_block_size(self):
+        """``(width, height)`` size of the box's containing block."""
+        if isinstance(self.parent, PageBox):
+            return self.parent.width, self.parent.height
+        elif self.style.position in ('relative', 'static'):
+            return self.parent.width, self.parent.height
+        elif self.style.position == 'fixed':
+            for ancestor in self.ancestors():
+                if isinstance(ancestor, PageBox):
+                    return ancestor.width, ancestor.height
+            assert False, 'Page not found'
+        elif self.style.position == 'absolute':
+            for ancestor in self.ancestors():
+                if ancestor.style.position in ('absolute', 'relative', 'fixed'):
+                    if ancestor.style.display == 'inline':
+                        # TODO: fix this bad behaviour, see CSS 10.1
+                        return ancestor.width, ancestor.height
+                    else:
+                        return ancestor.width, ancestor.height
+        assert False, 'Containing block not found'
 
 
 class BlockLevelBox(Box):
