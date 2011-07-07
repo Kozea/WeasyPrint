@@ -24,11 +24,11 @@ class MultiFunction(object):
     """
     A callable with different implementations depending on the type of the
     first argument.
-    
+
     This object takes __name__, __module__ and __doc__ from base_function
     if it is given, but does not use it’s body.
     """
-    
+
     def __init__(self, base_function=None):
         self.implementations = {}
         if base_function:
@@ -45,4 +45,4 @@ class MultiFunction(object):
             implementation = self.implementations.get(class_)
             if implementation:
                 return implementation(obj, *args, **kwargs)
-        raise NotImplementedError
+        raise NotImplementedError('No implementation for %r' % type(obj))

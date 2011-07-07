@@ -123,7 +123,6 @@ class Box(object):
         if self.parent:
             return self.parent.children.index(self)
 
-    @property
     def containing_block_size(self):
         """``(width, height)`` size of the box's containing block."""
         if isinstance(self.parent, PageBox):
@@ -189,6 +188,9 @@ class PageBox(BlockContainerBox):
         # Copying might not be needed, but let’s be careful with mutable
         # objects.
         self.style = style.copy()
+
+    def containing_block_size(self):
+        return self.outer_width, self.outer_height
 
 
 class BlockBox(BlockContainerBox, BlockLevelBox):

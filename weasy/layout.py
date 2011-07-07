@@ -150,10 +150,88 @@ def page_dimensions(box, width=None, height=None):
     box.width = box.outer_width - box.margin_left - box.margin_right
     box.height = box.outer_height - box.margin_top - box.margin_bottom
 
+    block_container_dimensions(box)
+
+
+@compute_dimensions.register(boxes.BlockContainerBox)
+def block_container_dimensions(box):
     for child in box.children:
         compute_dimensions(child)
 
 
+@compute_dimensions.register(boxes.BlockLevelBox)
+def block_level_dimensions(box):
+    resolve_percentages(box)
+    # cb = containing block
+    cb_width, cb_height = box.containing_block_size()
+
+    # http://www.w3.org/TR/CSS21/visudet.html#blockwidth
+
+    # These names are waaay too long
+    margin_l = box.margin_left
+    margin_r = box.margin_right
+    padding_l = box.padding_left
+    padding_r = box.padding_right
+    border_l = box.border_left_width
+    border_r = box.border_right_width
+    width = box.width
+
+    # Only margin-left, margin-right and width can be 'auto'.
+    # We want:  width of containing block ==
+    #               margin-left + border-left-width + padding-left + width
+    #               + padding-right + border-right-width + margin-right
+
+    paddings_plus_borders = padding_l + padding_r + border_l + border_r
+    if box.width != 'auto':
+        total = paddings_plus_borders + width
+        if margin_l != 'auto':
+            total += margin_l
+        if margin_r != 'auto':
+            total += margin_r
+        if total > cb_width:
+            if margin_l == 'auto':
+                margin_l = box.margin_left = 0
+            if margin_r == 'auto':
+                margin_r = box.margin_right = 0
+    if width != 'auto' and margin_l != 'auto' and margin_r != 'auto':
+        # The equation is over-constrained
+        margin_sum = cb_width - paddings_plus_borders - width
+        # This is the direction of the containing block, but the containing
+        # block for block-level boxes in normal flow is always the parent.
+        # TODO: is it?
+        if box.parent.style.direction == 'ltr':
+            margin_r = box.margin_right = margin_sum - margin_l
+        else:
+            margin_l = box.margin_left = margin_sum - margin_r
+    if width == 'auto':
+        if margin_l == 'auto':
+            margin_l = box.margin_left = 0
+        if margin_r == 'auto':
+            margin_r = box.margin_right = 0
+        width = box.width = cb_width - (
+            paddings_plus_borders + margin_l + margin_r)
+    margin_sum = cb_width - paddings_plus_borders - width
+    if margin_l == 'auto' and margin_r == 'auto':
+        box.margin_left = margin_sum / 2.
+        box.margin_right = margin_sum / 2.
+    elif margin_l == 'auto' and margin_r != 'auto':
+        box.margin_left = margin_sum - margin_r
+    elif margin_l != 'auto' and margin_r == 'auto':
+        box.margin_right = margin_sum - margin_l
+
+    # Sanity check
+    total = (box.margin_left + box.margin_right + box.padding_left +
+             box.padding_right + box.border_left_width +
+             box.border_right_width + box.width)
+    assert total == cb_width
+
+
 @compute_dimensions.register(boxes.BlockBox)
 def block_dimensions(box):
+    block_level_dimensions(box)
+    block_container_dimensions(box)
+
+
+@compute_dimensions.register(boxes.LineBox)
+def line_dimensions(box):
     pass
