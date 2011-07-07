@@ -350,18 +350,16 @@ def compute_values(element, page_context):
     """
     Normalize values as much as possible without rendering the document.
     """
-    if not page_context:
-        # em lengths depend on font-size, compute font-size first
-        compute_font_size(element)
+    # em lengths depend on font-size, compute font-size first
+    compute_font_size(element)
     compute_lengths(element, page_context)
-    if not page_context:
-        compute_line_height(element)
-        compute_display_float(element)
-        compute_word_spacing(element)
-        compute_font_weight(element)
-        compute_content(element)
-        compute_border_width(element)
-        compute_outline_width(element)
+    compute_line_height(element)
+    compute_display_float(element)
+    compute_word_spacing(element)
+    compute_font_weight(element)
+    compute_content(element)
+    compute_border_width(element)
+    compute_outline_width(element)
     # Recent enough cssutils have a .absolute_uri on URIValue objects.
     # TODO: percentages for height?
     #       http://www.w3.org/TR/CSS21/visudet.html#propdef-height

@@ -295,21 +295,13 @@ def apply_page_rule(rule, page_pseudo_elements, origin):
     page_types = page.PAGE_PSEUDOCLASS_TARGETS.get(pseudo_class, None)
     if page_types is not None:
         for prop in rule.style:
-            # In CSS 2.1, only the margin properties apply within
-            # the page context.
-            # TODO: add support
-            if prop.name in page.PAGE_CONTEXT_PROPERTIES:
-                precedence = (
-                    declaration_precedence(origin, prop.priority),
-                    page.PAGE_PSEUDOCLASS_SPECIFICITY[pseudo_class]
-                )
-                for page_type in page_types:
-                    element = page_pseudo_elements[page_type]
-                    element.applicable_properties.append((precedence, prop))
-            else:
-                # invalid property here.
-                # TODO: log/warn that something was ignored
-                pass
+            precedence = (
+                declaration_precedence(origin, prop.priority),
+                page.PAGE_PSEUDOCLASS_SPECIFICITY[pseudo_class]
+            )
+            for page_type in page_types:
+                element = page_pseudo_elements[page_type]
+                element.applicable_properties.append((precedence, prop))
     else:
         # Invalid/unsupported selector, ignore the whole rule
         # TODO: log/warn that something was ignored
@@ -406,9 +398,8 @@ def assign_properties(element, page_context=False):
     for precedence, prop in element.applicable_properties:
         style[prop.name] = prop.propertyValue
 
-    if not page_context:
-        inheritance.handle_inheritance(element)
-    initial_values.handle_initial_values(element, page_context=page_context)
+    inheritance.handle_inheritance(element)
+    initial_values.handle_initial_values(element)
     computed_values.compute_values(element, page_context=page_context)
 
 

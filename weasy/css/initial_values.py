@@ -24,7 +24,6 @@
 from cssutils.css import PropertyValue, CSSStyleDeclaration
 
 from .shorthands import expand_shorthands_in_declaration
-from .page import PAGE_CONTEXT_PROPERTIES
 
 
 r"""
@@ -147,15 +146,13 @@ def is_initial(style, name):
     return name not in style or style[name].value == 'initial'
 
 
-def handle_initial_values(element, page_context):
+def handle_initial_values(element):
     """
     Properties that do not have a value after inheritance or whose value is the
     'initial' keyword (CSS3) get their initial value.
     """
     style = element.style
     for name, initial in INITIAL_VALUES.iteritems():
-        if page_context and name not in PAGE_CONTEXT_PROPERTIES:
-            continue
         if is_initial(style, name):
             style[name] = initial
 
@@ -165,17 +162,11 @@ def handle_initial_values(element, page_context):
     for name in ('border-top-color', 'border-right-color',
                  'border-bottom-color', 'border-left-color'):
         if is_initial(style, name):
-            if page_context:
-                style[name] = INITIAL_VALUES['color']
-            else:
-                style[name] = style['color']
+            style[name] = style['color']
 
     # text-align: left in left-to-right text, right in right-to-left
-    if not page_context and is_initial(style, 'text-align'):
+    if is_initial(style, 'text-align'):
         if style.direction == 'rtl':
             style['text-align'] = PropertyValue('right')
         else:
             style['text-align'] = PropertyValue('left')
-
-
-
