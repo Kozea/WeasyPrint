@@ -321,3 +321,31 @@ def test_page_style():
     assert_page_margins(4, top=10, right=3, bottom=3, left=10)
     assert_page_margins(45, top=10, right=10, bottom=3, left=3)
     assert_page_margins(122, top=10, right=3, bottom=3, left=10)
+
+
+@suite.test
+def test_containing_block():
+    """Test the boxes containing block."""
+    box = parse('''
+        <html>
+          <style>
+            body { height: 297mm; width: 210mm }
+            p { width: 100mm; height: 200mm }
+            p span { position: absolute }
+            p em { position: relative }
+            li { position: fixed }
+            li span { position: fixed }
+          </style>
+          <body>
+            <p>
+              Lorem <em>ipsum <strong>dolor <span>sit</span>
+              <span>amet,</span></strong><span>consectetur</span></em>
+            </p>
+            <ul>
+              <li>Lorem ipsum dolor sit amet</li>
+              <li>Lorem ipsum <spam>dolor sit amet</span></li>
+            </ul>
+          </body>
+        </html>
+    ''')
+    tree = to_lists(box)
