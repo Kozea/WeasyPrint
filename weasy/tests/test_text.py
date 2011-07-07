@@ -46,15 +46,15 @@ def test_line_dimension():
     
     line.font_size = 12
     line.font_weight = 200
-    assert line.size == (114, 38)
+    assert line.size == (114, 34)
     assert line.remaining_text == u"test"
     
     line.font_weight = 800
-    assert line.size == (98, 38)
+    assert line.size == (98, 34)
     assert line.remaining_text == u"for test"
     
     line.font_size = 14
-    assert line.size == (109, 44)
+    assert line.size == (109, 40)
     assert line.remaining_text == u"for test"
 
 @suite.test
