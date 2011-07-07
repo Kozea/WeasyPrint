@@ -123,6 +123,10 @@ def test_annotate_document():
 
     color = a.style['color'][0]
     assert (color.red, color.green, color.blue, color.alpha) == (255, 0, 0, 1)
+    assert a.style.padding_top == 1
+    assert a.style.padding_right == 2
+    assert a.style.padding_bottom == 3
+    assert a.style.padding_left == 4
 
     # The href attr should be as in the source, not made absolute.
     assert ''.join(v.value for v in after.style['content']) == ' [home.html]'
@@ -180,4 +184,3 @@ def test_page():
     with attest.raises(ValueError) as exc:
         css.annotate_document(document, user_stylesheets=[user_sheet_with_em])
     assert exc.args[0] == 'The em unit is not allowed in a page context.'
-    

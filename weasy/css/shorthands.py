@@ -137,5 +137,3 @@ def expand_shorthands_in_declaration(style):
         else:
             new_style.setProperty(prop)
     return new_style
-
-

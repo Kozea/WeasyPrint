@@ -318,7 +318,9 @@ def handle_style_attribute(element):
         # TODO: no href for parseStyle. What about relative URLs?
         # CSS3 says we should resolve relative to the attribute:
         # http://www.w3.org/TR/css-style-attr/#interpret
-        for prop in parseStyle(style_attribute):
+        declaration = parseStyle(style_attribute)
+        declaration = shorthands.expand_shorthands_in_declaration(declaration)
+        for prop in declaration:
             precedence = (
                 declaration_precedence('author', prop.priority),
                 # 1 for being a style attribute, 0 as there is no selector.
