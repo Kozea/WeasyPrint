@@ -78,6 +78,7 @@ def test_block_auto():
         <style>
             @page { margin: 0 }
             body { margin: 0 }
+            div { margin: 10px }
             p { padding: 2px; border-width: 1px; border-style: solid }
         </style>
         <div>
@@ -100,13 +101,13 @@ def test_block_auto():
           <p style="width: 200px; margin: auto"></p>
         </div>
     ''')
-    layout.compute_dimensions(page, width=100)
+    layout.compute_dimensions(page, width=120)
     assert isinstance(page, boxes.PageBox)
     html = page.children[0]
     assert html.element.tag == 'html'
     body = html.children[0]
     assert body.element.tag == 'body'
-    assert body.width == 100
+    assert body.width == 120
 
     divs = body.children
     # TODO: remove this when we have proper whitespace handling that
