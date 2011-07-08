@@ -235,3 +235,14 @@ def block_dimensions(box):
 @compute_dimensions.register(boxes.LineBox)
 def line_dimensions(box):
     pass
+    
+
+
+@compute_dimensions.register(boxes.InlineBlockBox)
+def inline_block_box_breaking(box):
+    pass
+    
+    
+    
+    
+    

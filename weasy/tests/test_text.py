@@ -31,11 +31,10 @@ def test_line_content():
     string = u"This is a text for test"
     width = 120
     line = text.LineTextFragment(string, width)
-    assert line.remaining_text == u'test'
-    assert u"%s%s" % (line.text, line.remaining_text)  == string
-    line.width = 80
-    assert line.remaining_text == u'text for test'
-    assert u"%s%s" % (line.text, line.remaining_text)  == string
+    assert line.get_remaining_text() == u'test'
+    line.set_width(80)
+    assert line.get_remaining_text() == u'text for test'
+    assert u"%s%s" % (line.get_text(), line.get_remaining_text())  == string
 
 
 @suite.test
@@ -44,33 +43,33 @@ def test_line_breaking():
     width = 120
     line = text.LineTextFragment(string, width)
     
-    line.font_size = 12
-    line.font_weight = 200
-    assert line.remaining_text == u"test"
+    line.set_font_size(12)
+    line.set_font_weight(200)
+    assert line.get_remaining_text() == u"test"
     
-    line.font_weight = 800
-    assert line.remaining_text == u"for test"
+    line.set_font_weight(800)
+    assert line.get_remaining_text() == u"for test"
     
-    line.font_size = 14
-    assert line.remaining_text == u"for test"
+    line.set_font_size(14)
+    assert line.get_remaining_text() == u"for test"
 
 @suite.test
 def test_text_dimension():
     string = u"This is a text for test. This is a test for text.py"
     width = 200
     fragment = text.TextFragment(string, width)
-    fragment.font_size = 12
+    fragment.set_font_size(12)
     
-    dimension = list(fragment.size)
+    dimension = list(fragment.get_size())
     print dimension
-    fragment.font_size = 20
-    new_dimension = list(fragment.size)
+    fragment.set_font_size(20)
+    new_dimension = list(fragment.get_size())
     print new_dimension
     assert dimension[0]*dimension[1] < new_dimension[0]*new_dimension[1]
     
-    dimension = list(fragment.size)
-    fragment.spacing = 20
-    new_dimension = list(fragment.size)
+    dimension = list(fragment.get_size())
+    fragment.set_spacing(20)
+    new_dimension = list(fragment.get_size())
     assert dimension[0]*dimension[1] < new_dimension[0]*new_dimension[1]
 
 
@@ -79,43 +78,44 @@ def test_text_font():
     string = u"This is a text for test. This is a test for text.py"
     width = 200
     fragment = text.TextFragment(string, width)
-    fragment.font_family = u"Comic Sans MS"
-    assert fragment.font_family == u"Comic Sans MS"
-    assert fragment.size == (187, 44)
+    fragment.set_font_family(u"Comic Sans MS")
+    assert fragment.get_font_family() == u"Comic Sans MS"
+    assert fragment.get_size() == (187, 44)
     
-    fragment.font_family = u"inexistante font, Comic Sans MS"
-    dimension = list(fragment.size)
-    fragment.font_family = u"Comic Sans MS"
-    new_dimension = list(fragment.size)
+    fragment.set_font_family(u"inexistante font, Comic Sans MS")
+    dimension = list(fragment.get_size())
+    fragment.set_font_family(u"Comic Sans MS")
+    new_dimension = list(fragment.get_size())
     assert new_dimension == dimension
     
-    fragment.font_size = 12
-    assert fragment.font_size == 12
+    fragment.set_font_size(12)
+    assert fragment.get_font_size() == 12
     
     for value in text.STYLE_PROPERTIES.keys():
-        fragment.font_style = value
-        assert fragment.font_style == value
+        fragment.set_font_style(value)
+        assert fragment.get_font_style() == value
     
     with attest.raises(ValueError):
-        fragment.font_style = "inexistante property"
+        fragment.set_font_style("inexistante property")
 
     for value in text.VARIANT_PROPERTIES.keys():
-        fragment.font_variant = value
-        assert fragment.font_variant == value
-
+        fragment.set_font_variant(value)
+        assert fragment.get_font_variant() == value
+    with attest.raises(ValueError):
+        fragment.set_font_style("inexistante property")
 
 @suite.test
 def test_text_other():
     """ Test other properties """
     width = 200
     fragment = text.TextFragment(u"", 40)
-    fragment.text = u"some text"
+    fragment.set_text(u"some text")
     
     #The default value of alignement property is ``left`` for western script
-    assert fragment.alignment == u"left"
+    assert fragment.get_alignment() == u"left"
     for value in text.ALIGN_PROPERTIES.keys():
-        fragment.alignment = value
-        assert fragment.alignment == value
+        fragment.set_alignment(value)
+        assert fragment.get_alignment() == value
     
     
     fragment.justify = True

@@ -31,81 +31,47 @@ VARIANT_PROPERTIES = {'normal':pango.VARIANT_NORMAL,
                      'small-caps':pango.VARIANT_SMALL_CAPS}
 
 
+def get_default_attributes():
+    attr = pango.AttrList()
+    scale = pango.SCALE
+    bg_color = pango.AttrBackground(255*scale, 255*scale, 255*scale, 0, -1)
+    attr.insert(fg_color)
+    attr.insert(bg_color)
+    
+    return attr
+
 class TextFragment(object):
     def __init__(self, text, width):
         self.context = gtk.DrawingArea().create_pango_context()
         self.layout = pango.Layout(self.context)
-        self.layout.set_text(text.encode("utf-8"))
-        self.width = width
+        self.set_text(text)
+        self.set_width(width)
+#        self._set_attribute(pango.AttrFallback(True, 0, -1))
+        
         # Other properties
         self.layout.set_wrap(pango.WRAP_WORD)
     
     def _update_font(self):
         self.layout.set_font_description(self._font)
     
-    @property
-    def availables_font(self):
-        for font in gtk.DrawingArea().create_pango_context().list_families():
-            yield font.get_name()
-    
-    @property
-    def text(self):
-        return self.layout.get_text().decode('utf-8')
-
-    @text.setter
-    def text(self, value):
-        self.layout.set_text(value.encode("utf-8"))
-
-    @property
-    def size(self):
-        """ Return the real text area size in px unit """
-        return self.layout.get_pixel_size()
-    
-    @property
-    def width(self):
-        """ Return the width. It's different to real width of text area """
-        return self._width
-    
-    @width.setter
-    def width(self, value):
-        self._width = value
-        self.layout.set_width(pango.SCALE * value)
-    
-    @property
-    def spacing(self):
-        """ Return the spacing. """
-        return self.layout.get_spacing() / pango.SCALE
-    
-    @spacing.setter
-    def spacing(self, value):
-        self.layout.set_spacing(pango.SCALE * value)
-    
-    def set_font(self, font_desc):
-        self.layout.set_font_description(pango.FontDescription(font_desc))
-    
-    @property
-    def alignment(self):
-        alignment = self.layout.get_alignment()
-        for key in ALIGN_PROPERTIES:
-            if ALIGN_PROPERTIES[key] == alignment:
-                return key
-    
-    @alignment.setter
-    def alignment(self, alignment):
-        if alignment in ("left", "center", "right"):
-            self.layout.set_alignment(ALIGN_PROPERTIES[alignment])
+    def _get_attributes(self):
+        attributes = self.layout.get_attributes()
+        if attributes:
+            return attributes
         else:
-            raise ValueError('The alignment property must be in %s' \
-                % ALIGN_PROPERTIES.keys())
-
+            return pango.AttrList()
     
-    @property
-    def justify(self):
-        self.layout.get_justify()
-    
-    @justify.setter
-    def justify(self, value):
-        self.layout.set_justify(value)
+    def _set_attribute(self, value):
+        attributes = self.layout.get_attributes()
+        if attributes:
+            try:
+                attributes.change(value)
+            except:
+                attributes.insert(value)
+        else:
+            attributes = pango.AttrList()
+            attributes.insert(value)
+        self.layout.set_attributes(attributes)
     
     @property
     def font(self):
@@ -115,30 +81,82 @@ class TextFragment(object):
             self.layout.set_font_description(self._font)
         return self._font
     
-    @property
-    def font_family(self):
+    @font.setter
+    def font(self, font_desc):
+        self.layout.set_font_description(pango.FontDescription(font_desc))
+    
+    def get_availables_font(self):
+        for font in gtk.DrawingArea().create_pango_context().list_families():
+            yield font.get_name()
+    
+    def get_text(self):
+        return self.layout.get_text().decode('utf-8')
+    
+    def set_text(self, value):
+        self.layout.set_text(value.encode("utf-8"))
+    
+    def get_size(self):
+        """ Return the real text area size in px unit """
+        return self.layout.get_pixel_size()
+    
+    def get_width(self):
+        """ Return the width. It's different to real width of text area """
+        return self._width
+    
+    def set_width(self, value):
+        self._width = value
+        self.layout.set_width(pango.SCALE * value)
+    
+    def get_spacing(self):
+        """ Return the spacing. """
+        return self.layout.get_spacing() / pango.SCALE
+    
+    def set_spacing(self, value):
+        self.layout.set_spacing(pango.SCALE * value)
+    
+    def get_alignment(self):
+        alignment = self.layout.get_alignment()
+        for key in ALIGN_PROPERTIES:
+            if ALIGN_PROPERTIES[key] == alignment:
+                return key
+    
+    def set_alignment(self, alignment):
+        if alignment in ("left", "center", "right"):
+            self.layout.set_alignment(ALIGN_PROPERTIES[alignment])
+        else:
+            raise ValueError('The alignment property must be in %s' \
+                % ALIGN_PROPERTIES.keys())
+    
+    def get_justify(self):
+        self.layout.get_justify()
+    
+    def set_justify(self, value):
+        self.layout.set_justify(value)
+    
+    def get_font_family(self):
         return self.font.get_family().decode('utf-8')
     
-    @font_family.setter
-    def font_family(self, value):
+    def set_font_family(self, value):
+        """ 
+        value is list of font like this :
+        set_font_family("Al Mawash Bold, Comic sans MS")
+        """
         self.font.set_family(value.encode("utf-8"))
         self._update_font()
     
-    @property
-    def font_style(self):
+    def get_font_style(self):
         style = self.font.get_style()
         for key in STYLE_PROPERTIES:
             if STYLE_PROPERTIES[key] == style:
                 return key
     
-    @font_style.setter
-    def font_style(self, value):
+    def set_font_style(self, value):
         """
         The value of style must be either
         pango.STYLE_NORMAL
         pango.STYLE_ITALIC
         pango.STYLE_OBLIQUE
-        but not both >> like cs
+        but not both >> like css
         
         ...and font matching in Pango will match italic specifications
         with oblique fonts and vice-versa if an exact match is not found.
@@ -150,25 +168,21 @@ class TextFragment(object):
             raise ValueError('The style property must be in %s' \
                 % STYLE_PROPERTIES.keys())
     
-    @property
-    def font_size(self):
+    def get_font_size(self):
         return self.font.get_size() / pango.SCALE
     
-    @font_size.setter
-    def font_size(self, value):
+    def set_font_size(self, value):
         """The value of size is specified in px units."""
         self.font.set_size(pango.SCALE * value)
         self._update_font()
     
-    @property
-    def font_variant(self):
+    def get_font_variant(self):
         variant = self.font.get_variant()
         for key in VARIANT_PROPERTIES:
             if VARIANT_PROPERTIES[key] == variant:
                 return key
     
-    @font_variant.setter
-    def font_variant(self, value):
+    def set_font_variant(self, value):
         """
         variant : the variant type for the font description.
         The set_variant() method sets the variant attribute field of a font
@@ -184,12 +198,10 @@ class TextFragment(object):
             raise ValueError('The style property must be in %s' \
                 % VARIANT_PROPERTIES.keys())
     
-    @property
-    def font_weight(self):
+    def get_font_weight(self):
         return int(float(self.font.get_weight()))
     
-    @font_weight.setter
-    def font_weight(self, value):
+    def set_font_weight(self, value):
         """
         The value of weight specifies how bold or light the font should be
         in a range from 100 to 900. The predefined values of weight are :
@@ -203,24 +215,74 @@ class TextFragment(object):
         """
         self.font.set_weight(value)
         self._update_font()
-
-
+    
+    def set_foreground(self, spec):
+        """ 
+        The string in spec can either one of a large set of standard names.
+        (Taken from the X11 rgb.txt file), or it can be a hex value in the
+        form 'rgb' 'rrggbb' 'rrrgggbbb' or 'rrrrggggbbbb' where 'r', 'g' and
+        'b' are hex digits of the red, green, and blue components of the 
+        color, respectively. (White in the four forms is 'fff' 'ffffff' 
+        'fffffffff' and 'ffffffffffff')
+        """
+        color = pango.Color(spec)
+        fg_color = pango.AttrForeground(color.red, color.blue, color.green, 
+                                            0, -1)
+        self._set_attribute(fg_color)
+    
+    def set_background(self, spec):
+        color = pango.Color(spec)
+        bg_color = pango.AttrBackground(color.red, color.blue, color.green, 
+                                            0, -1)
+        self._set_attribute(bg_color)
+    
+    def set_underline(self, boolean):
+        if boolean:
+            underline = pango.AttrUnderline(pango.UNDERLINE_SINGLE, 0, -1)
+        else:
+            underline = pango.AttrUnderline(pango.UNDERLINE_NONE, 0, -1)
+        self._set_attribute(underline)
+    
+    def set_overline(self, boolean):
+        raise NotImplemented("Overline is not implemented in pango ?")
+    
+    def set_line_through(self, boolean):
+        self._set_attribute(pango.AttrStrikethrough(boolean, 0, -1))
+    
+    def set_underline_color(self, spec):
+        color = pango.Color(spec)
+        color = pango.AttrUnderlineColor(color.red, color.blue, color.green, 
+                                            0, -1)
+        self._set_attribute(color)
+    
+    def set_line_through_color(self, spec):
+        color = pango.Color(spec)
+        color = pango.AttrStrikethroughColor(color.red, color.blue, color.green, 
+                                            0, -1)
+        self._set_attribute(color)
+    
+    @property
+    def set_letter_spacing(self, value):
+        ls = pango.AttrLetterSpacing(value * pango.SCALE, 0, -1)
+        self._set_attribute(ls)
+    
+    def set_rise(self, value):
+        rise = pango.AttrRise(value * pango.SCALE, 0,1)
+        self._set_attribute(rise)
+    
 class LineTextFragment(TextFragment):
     def __init__(self, text, width):
         super(LineTextFragment, self).__init__(text, width)
-    
-    @property
-    def remaining_text(self):
+
+    def get_remaining_text(self):
         first_line = self.layout.get_line(0)
-        return super(LineTextFragment, self).text[first_line.length:]
+        return super(LineTextFragment, self).get_text()[first_line.length:]
     
-    @property
-    def text(self):
+    def get_text(self):
         first_line = self.layout.get_line(0)
-        return super(LineTextFragment, self).text[:first_line.length]
+        return super(LineTextFragment, self).get_text()[:first_line.length]
     
-    @property
-    def size(self):
+    def get_size(self):
         """ Return the real text area dimension for this line in px unit """
         extents = self.layout.get_line(0).get_pixel_extents()[1]
         return (extents[2]-extents[0], extents[3]-extents[1])
