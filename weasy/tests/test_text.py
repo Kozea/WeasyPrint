@@ -30,7 +30,7 @@ suite = Tests()
 def test_line_content():
     string = u"This is a text for test"
     width = 120
-    line = text.LineTextFragment(string, width)
+    line = text.TextLineFragment(string, width)
     assert line.get_remaining_text() == u'test'
     line.set_width(80)
     assert line.get_remaining_text() == u'text for test'
@@ -41,7 +41,7 @@ def test_line_content():
 def test_line_breaking():
     string = u"This is a text for test"
     width = 120
-    line = text.LineTextFragment(string, width)
+    line = text.TextLineFragment(string, width)
     
     line.set_font_size(12)
     line.set_font_weight(200)

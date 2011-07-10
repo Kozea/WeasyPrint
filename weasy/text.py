@@ -31,15 +31,6 @@ VARIANT_PROPERTIES = {'normal':pango.VARIANT_NORMAL,
                      'small-caps':pango.VARIANT_SMALL_CAPS}
 
 
-def get_default_attributes():
-    attr = pango.AttrList()
-    scale = pango.SCALE
-    bg_color = pango.AttrBackground(255*scale, 255*scale, 255*scale, 0, -1)
-    attr.insert(fg_color)
-    attr.insert(bg_color)
-    
-    return attr
-
 class TextFragment(object):
     def __init__(self, text, width):
         self.context = gtk.DrawingArea().create_pango_context()
@@ -72,6 +63,9 @@ class TextFragment(object):
             attributes = pango.AttrList()
             attributes.insert(value)
         self.layout.set_attributes(attributes)
+    
+    def get_layout(self):
+        return self.layout.copy()
     
     @property
     def font(self):
@@ -221,18 +215,18 @@ class TextFragment(object):
         The string in spec can either one of a large set of standard names.
         (Taken from the X11 rgb.txt file), or it can be a hex value in the
         form 'rgb' 'rrggbb' 'rrrgggbbb' or 'rrrrggggbbbb' where 'r', 'g' and
-        'b' are hex digits of the red, green, and blue components of the 
-        color, respectively. (White in the four forms is 'fff' 'ffffff' 
+        'b' are hex digits of the red, green, and blue components of the
+        color, respectively. (White in the four forms is 'fff' 'ffffff'
         'fffffffff' and 'ffffffffffff')
         """
         color = pango.Color(spec)
-        fg_color = pango.AttrForeground(color.red, color.blue, color.green, 
+        fg_color = pango.AttrForeground(color.red, color.blue, color.green,
                                             0, -1)
         self._set_attribute(fg_color)
     
     def set_background(self, spec):
         color = pango.Color(spec)
-        bg_color = pango.AttrBackground(color.red, color.blue, color.green, 
+        bg_color = pango.AttrBackground(color.red, color.blue, color.green,
                                             0, -1)
         self._set_attribute(bg_color)
     
@@ -251,17 +245,16 @@ class TextFragment(object):
     
     def set_underline_color(self, spec):
         color = pango.Color(spec)
-        color = pango.AttrUnderlineColor(color.red, color.blue, color.green, 
+        color = pango.AttrUnderlineColor(color.red, color.blue, color.green,
                                             0, -1)
         self._set_attribute(color)
     
     def set_line_through_color(self, spec):
         color = pango.Color(spec)
-        color = pango.AttrStrikethroughColor(color.red, color.blue, color.green, 
+        color = pango.AttrStrikethroughColor(color.red,color.blue,color.green,
                                             0, -1)
         self._set_attribute(color)
     
-    @property
     def set_letter_spacing(self, value):
         ls = pango.AttrLetterSpacing(value * pango.SCALE, 0, -1)
         self._set_attribute(ls)
@@ -270,19 +263,32 @@ class TextFragment(object):
         rise = pango.AttrRise(value * pango.SCALE, 0,1)
         self._set_attribute(rise)
     
-class LineTextFragment(TextFragment):
+class TextLineFragment(TextFragment):
     def __init__(self, text, width):
-        super(LineTextFragment, self).__init__(text, width)
+        super(TextLineFragment, self).__init__(text, width)
+
+    def get_layout(self):
+        layout = super(TextLineFragment, self).get_layout()
+        layout.set_text(self.get_text())
+        return layout
+    
+    def get_parent_layout(self):
+        return super(TextLineFragment, self).get_layout()
 
     def get_remaining_text(self):
         first_line = self.layout.get_line(0)
-        return super(LineTextFragment, self).get_text()[first_line.length:]
+        return super(TextLineFragment, self).get_text()[first_line.length:]
     
     def get_text(self):
         first_line = self.layout.get_line(0)
-        return super(LineTextFragment, self).get_text()[:first_line.length]
+        return super(TextLineFragment, self).get_text()[:first_line.length]
     
     def get_size(self):
         """ Return the real text area dimension for this line in px unit """
-        extents = self.layout.get_line(0).get_pixel_extents()[1]
-        return (extents[2]-extents[0], extents[3]-extents[1])
+#        extents = self.layout.get_line(0).get_pixel_extents()[1]
+#        return (extents[2]-extents[0], extents[3]-extents[1])
+        # What's the size ? the size of the line, or the size of a layoutLine ?
+        return self.get_layout().get_pixel_size()
+    
+    def get_logical_extents(self):
+        return self.layout.get_line(0).get_pixel_extents()[1]
