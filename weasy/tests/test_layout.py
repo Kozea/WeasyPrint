@@ -47,10 +47,38 @@ def test_page():
     assert int(page.outer_width) == 793  # A4: 210 mm in pixels
     assert int(page.outer_height) == 1122  # A4: 297 mm in pixels
 
+    page, = parse('''<style>@page { size: 2in 10in; }</style>''')
+    assert page.outer_width == 192
+    assert page.outer_height == 960
+
+    page, = parse('''<style>@page { size: 242px; }</style>''')
+    assert page.outer_width == 242
+    assert page.outer_height == 242
+
+    page, = parse('''<style>@page { size: letter; }</style>''')
+    assert page.outer_width == 816  # 8.5in
+    assert page.outer_height == 1056  # 11in
+
+    page, = parse('''<style>@page { size: letter portrait; }</style>''')
+    assert page.outer_width == 816  # 8.5in
+    assert page.outer_height == 1056  # 11in
+
+    page, = parse('''<style>@page { size: letter landscape; }</style>''')
+    assert page.outer_width == 1056  # 11in
+    assert page.outer_height == 816  # 8.5in
+
+    page, = parse('''<style>@page { size: portrait; }</style>''')
+    assert int(page.outer_width) == 793  # A4: 210 mm
+    assert int(page.outer_height) == 1122  # A4: 297 mm
+
+    page, = parse('''<style>@page { size: landscape; }</style>''')
+    assert int(page.outer_width) == 1122  # A4: 297 mm
+    assert int(page.outer_height) == 793  # A4: 210 mm
+
     page, = parse('''
-        <style>@page { margin: 10px 10% 20% 1in }</style>
+        <style>@page { size: 200px 300px; margin: 10px 10% 20% 1in }</style>
         <p>
-    ''', page_width=200, page_height=300)
+    ''')
     assert page.outer_width == 200
     assert page.outer_height == 300
     assert page.position_x == 96 # 1 inch
@@ -75,7 +103,7 @@ def test_page():
 def test_block_auto():
     pages = parse('''
         <style>
-            @page { margin: 0 }
+            @page { margin: 0; size: 120px }
             body { margin: 0 }
             div { margin: 10px }
             p { padding: 2px; border-width: 1px; border-style: solid }
@@ -99,7 +127,7 @@ def test_block_auto():
 
           <p style="width: 200px; margin: auto"></p>
         </div>
-    ''', page_width=120)
+    ''')
     html = pages[0].root_box
     assert html.element.tag == 'html'
     body = html.children[0]

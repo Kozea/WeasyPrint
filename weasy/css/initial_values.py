@@ -131,6 +131,9 @@ INITIAL_VALUES = dict(
         width: auto;
         word-spacing: normal;
         z-index: auto;
+
+        /* CSS3 Paged Media: http://www.w3.org/TR/css3-page/#page-size */
+        size: auto;
     """))
 )
 

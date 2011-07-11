@@ -131,19 +131,9 @@ def compute_dimensions(box):
     """
 
 
-# TODO: remove page_width and page_height when @page { size: ... }
-# is implemented
-def page_dimensions(box, width=None, height=None):
-    # Page size is fixed to A4 for now. TODO: implement the size property.
-    if width is None:
-        box.outer_width = 210 * computed_values.LENGTHS_TO_PIXELS['mm']
-    else:
-        box.outer_width = width
-
-    if height is None:
-        box.outer_height = 297 * computed_values.LENGTHS_TO_PIXELS['mm']
-    else:
-        box.outer_height = height
+def page_dimensions(box):
+    box.outer_height = box.style._weasy_page_height
+    box.outer_width = box.style._weasy_page_width
 
     resolve_percentages(box)
 
@@ -245,15 +235,13 @@ def inline_block_box_breaking(box):
     pass
 
 
-# TODO: remove page_width and page_height when @page { size: ... }
-# is implemented
-def layout(root_box, page_width=None, page_height=None):
+def layout(root_box):
     """
     Take the block box for the root element, return a list of page boxes.
     """
     pages = []
     page = boxes.PageBox(root_box, 1)
-    page_dimensions(page, page_width, page_height)
+    page_dimensions(page)
     pages.append(page)
     # TODO: do page breaks, split boxes into multiple pages
     return pages
