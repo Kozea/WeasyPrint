@@ -25,15 +25,18 @@ from .. import text
 
 suite = Tests()
 
+FONTS = u"Nimbus Mono L, Liberation Mono, FreeMono, DejaVu Sans Mono, Monospace"
 
 @suite.test
 def test_line_content():
     string = u"This is a text for test"
     width = 120
     line = text.TextLineFragment(string, width)
-    assert line.get_remaining_text() == u'test'
-    line.set_width(80)
+    line.set_font_size(12)
+    line.set_font_family(FONTS)
     assert line.get_remaining_text() == u'text for test'
+    line.set_width(60)
+    assert line.get_remaining_text() == u'is a text for test'
     assert u"%s%s" % (line.get_text(), line.get_remaining_text())  == string
 
 
@@ -42,16 +45,17 @@ def test_line_breaking():
     string = u"This is a text for test"
     width = 120
     line = text.TextLineFragment(string, width)
-    
+    line.set_font_family(FONTS)
+
     line.set_font_size(12)
     line.set_font_weight(200)
-    assert line.get_remaining_text() == u"test"
+    assert line.get_remaining_text() == u"text for test"
     
     line.set_font_weight(800)
-    assert line.get_remaining_text() == u"for test"
+    assert line.get_remaining_text() == u"text for test"
     
     line.set_font_size(14)
-    assert line.get_remaining_text() == u"for test"
+    assert line.get_remaining_text() == u"text for test"
 
 @suite.test
 def test_text_dimension():
@@ -80,7 +84,6 @@ def test_text_font():
     fragment = text.TextFragment(string, width)
     fragment.set_font_family(u"Comic Sans MS")
     assert fragment.get_font_family() == u"Comic Sans MS"
-    assert fragment.get_size() == (187, 44)
     
     fragment.set_font_family(u"inexistante font, Comic Sans MS")
     dimension = list(fragment.get_size())

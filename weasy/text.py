@@ -72,7 +72,6 @@ class TextFragment(object):
         self._font = self.layout.get_font_description()
         if self._font is None:
             self._font = self.layout.get_context().get_font_description()
-            self.layout.set_font_description(self._font)
         return self._font
     
     @font.setter
