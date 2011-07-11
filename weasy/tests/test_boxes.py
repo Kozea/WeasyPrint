@@ -43,7 +43,9 @@ def serialize(box_list):
     }
     return [
         (box.element.tag, types[box.__class__], (
+            # All concrete boxes are either text, replaced or parent.
             box.text if isinstance(box, boxes.TextBox)
+            else '<replaced>' if isinstance(box, boxes.ReplacedBox)
             else serialize(box.children)))
         for box in box_list
     ]
@@ -55,10 +57,6 @@ def unwrap_html_body(box):
     and remove them to simplify further tests. These are always at the root
     of HTML documents.
     """
-    if isinstance(box, boxes.PageBox):
-        assert len(box.children) == 1
-        box = box.children[0]
-
     assert isinstance(box, boxes.BlockBox)
     assert box.element.tag == 'html'
     assert len(box.children) == 1
@@ -96,7 +94,7 @@ def prettify(tree_list):
     """Special formatting for printing serialized box trees."""
     def lines(tree, indent=0):
         tag, type_, content = tree
-        if type_ == 'text':
+        if type_ in ('text', 'inline_replaced'):
             yield '%s%s %s %r' % ('    ' * indent, tag, type_, content)
         else:
             yield '%s%s %s' % ('    ' * indent, tag, type_)
@@ -132,7 +130,7 @@ def test_box_tree():
             ('p', 'text', 'Hello '),
             ('em', 'inline', [
                 ('em', 'text', 'World '),
-                ('img', 'inline_replaced', []),
+                ('img', 'inline_replaced', '<replaced>'),
                 ('span', 'inline_block', [
                     ('span', 'text', 'Lipsum')])]),
             ('p', 'text', '!')])])
@@ -308,7 +306,7 @@ def test_page_style():
         </style>
     ''')
     def assert_page_margins(page_number, top, right, bottom, left):
-        page = boxes.PageBox(document, page_number)
+        page = boxes.PageBox(boxes.BlockBox(document), page_number)
         assert page.style.margin_top == top
         assert page.style.margin_right == right
         assert page.style.margin_bottom == bottom

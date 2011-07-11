@@ -123,6 +123,7 @@ def resolve_percentages(box):
     box.border_left_width = box.style.border_left_width
 
 
+# TODO: remove this if it is not needed?
 @MultiFunction
 def compute_dimensions(box):
     """
@@ -130,7 +131,8 @@ def compute_dimensions(box):
     """
 
 
-@compute_dimensions.register(boxes.PageBox)
+# TODO: remove page_width and page_height when @page { size: ... }
+# is implemented
 def page_dimensions(box, width=None, height=None):
     # Page size is fixed to A4 for now. TODO: implement the size property.
     if width is None:
@@ -150,7 +152,7 @@ def page_dimensions(box, width=None, height=None):
     box.width = box.outer_width - box.margin_left - box.margin_right
     box.height = box.outer_height - box.margin_top - box.margin_bottom
 
-    block_container_dimensions(box)
+    compute_dimensions(box.root_box)
 
 
 @compute_dimensions.register(boxes.BlockContainerBox)
@@ -235,14 +237,23 @@ def block_dimensions(box):
 @compute_dimensions.register(boxes.LineBox)
 def line_dimensions(box):
     pass
-    
+
 
 
 @compute_dimensions.register(boxes.InlineBlockBox)
 def inline_block_box_breaking(box):
     pass
-    
-    
-    
-    
-    
+
+
+# TODO: remove page_width and page_height when @page { size: ... }
+# is implemented
+def layout(root_box, page_width=None, page_height=None):
+    """
+    Take the block box for the root element, return a list of page boxes.
+    """
+    pages = []
+    page = boxes.PageBox(root_box, 1)
+    page_dimensions(page, page_width, page_height)
+    pages.append(page)
+    # TODO: do page breaks, split boxes into multiple pages
+    return pages

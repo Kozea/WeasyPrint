@@ -29,29 +29,28 @@ from .. import layout
 suite = Tests()
 
 
-def parse(html_content):
+def parse(html_content, *args, **kwargs):
     """
     Parse some HTML, apply stylesheets and transform to boxes.
     """
     document = lxml.html.document_fromstring(html_content)
     css.annotate_document(document)
-    return build.build_formatting_structure(document)
+    box = build.build_formatting_structure(document)
+    return layout.layout(box, *args, **kwargs)
 
 
 @suite.test
 def test_page():
-    page = parse('<p>')
+    pages = parse('<p>')
+    page = pages[0]
     assert isinstance(page, boxes.PageBox)
-    layout.compute_dimensions(page)
     assert int(page.outer_width) == 793  # A4: 210 mm in pixels
     assert int(page.outer_height) == 1122  # A4: 297 mm in pixels
 
-    page = parse('''
+    page, = parse('''
         <style>@page { margin: 10px 10% 20% 1in }</style>
         <p>
-    ''')
-    assert isinstance(page, boxes.PageBox)
-    layout.compute_dimensions(page, width=200, height=300)
+    ''', page_width=200, page_height=300)
     assert page.outer_width == 200
     assert page.outer_height == 300
     assert page.position_x == 96 # 1 inch
@@ -59,7 +58,7 @@ def test_page():
     assert page.width == 84 # 200px - 10% - 1 inch
     assert page.height == 230 # 300px - 10px - 20%
 
-    html = page.children[0]
+    html = page.root_box
     assert html.element.tag == 'html'
     assert html.width == 84
 
@@ -74,7 +73,7 @@ def test_page():
 
 @suite.test
 def test_block_auto():
-    page = parse('''
+    pages = parse('''
         <style>
             @page { margin: 0 }
             body { margin: 0 }
@@ -100,10 +99,8 @@ def test_block_auto():
 
           <p style="width: 200px; margin: auto"></p>
         </div>
-    ''')
-    layout.compute_dimensions(page, width=120)
-    assert isinstance(page, boxes.PageBox)
-    html = page.children[0]
+    ''', page_width=120)
+    html = pages[0].root_box
     assert html.element.tag == 'html'
     body = html.children[0]
     assert body.element.tag == 'body'

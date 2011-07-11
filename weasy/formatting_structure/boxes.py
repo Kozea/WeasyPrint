@@ -29,7 +29,7 @@ but not all text boxes are anonymous inline boxes.
 
 http://www.w3.org/TR/CSS21/visuren.html#anonymous
 
-Abstract classes, should not be instanciated:
+Abstract classes, should not be instantiated:
 
  * Box
  * BlockLevelBox
@@ -37,6 +37,7 @@ Abstract classes, should not be instanciated:
  * BlockContainerBox
  * AnonymousBox
  * ReplacedBox
+ * ParentBox
 
 Concrete classes:
 
@@ -59,7 +60,7 @@ following "outside" behavior:
 and one of the following "inside" behavior:
 
  * Block container (inherits from BlockContainerBox)
- * Inline content (is or inherits from InlineBox)
+ * Inline content (InlineBox and TextBox)
  * Replaced content (inherits from ReplacedBox)
 
 See respective docstrings for details.
@@ -80,7 +81,6 @@ class Box(object):
         # No parent yet. Will be set when this box is added to another box’s
         # children. Only the root box should stay without a parent.
         self.parent = None
-        self.children = []
         self._init_style()
         # When the size is not calculated yet, use None as default value
         self.width = None
@@ -91,24 +91,6 @@ class Box(object):
         # Copying might not be needed, but let’s be careful with mutable
         # objects.
         self.style = self.element.style.copy()
-
-    def add_child(self, child, index=None):
-        """
-        Add the new child to this box’s children list and set this box as the
-        child’s parent.
-        """
-        child.parent = self
-        if index == None:
-            self.children.append(child)
-        else:
-            self.children.insert(index, child)
-
-    def descendants(self):
-        """A flat generator for a box, its children and descendants."""
-        yield self
-        for child in self.children or []:
-            for grand_child in child.descendants():
-                yield grand_child
 
     def ancestors(self):
         """Yield parent and recursively yield parent's parents."""
@@ -145,32 +127,14 @@ class Box(object):
         assert False, 'Containing block not found'
 
 
-class BlockLevelBox(Box):
-    """
-    A box that participates in an block formatting context.
-
-    An element with a 'display' value of 'block', 'liste-item' or 'table'
-    generates a block-level box.
-    """
-
-
-class BlockContainerBox(Box):
-    """
-    A box that either contains only block-level boxes or establishes an inline
-    formatting context and thus contains only line boxes.
-
-    A non-replaced element with a 'display' value of 'block', 'list-item',
-    'inline-block' or 'table-cell' generates a block container box.
-    """
-
-
-class PageBox(BlockContainerBox):
+class PageBox(Box):
     """
     Initially the whole document will be in a single page box. During layout
     a new page box is created after every page break.
     """
-    def __init__(self, document, page_number):
-        self.document = document
+    def __init__(self, root_box, page_number):
+        self.root_box = root_box
+        self.root_box.parent = self
         # starting at 1 for the first page.
         self.page_number = page_number
         # Page boxes are not linked to any element.
@@ -184,13 +148,62 @@ class PageBox(BlockContainerBox):
         page_type = 'right' if is_right else 'left'
         if self.page_number == 1:
             page_type = 'first_' + page_type
-        style = self.document.page_pseudo_elements[page_type].style
+        style = self.root_box.element.page_pseudo_elements[page_type].style
         # Copying might not be needed, but let’s be careful with mutable
         # objects.
         self.style = style.copy()
 
     def containing_block_size(self):
         return self.outer_width, self.outer_height
+
+
+class ParentBox(Box):
+    """
+    A box that has children.
+    """
+    def __init__(self, element):
+        super(ParentBox, self).__init__(element)
+        self.children = []
+
+    def add_child(self, child, index=None):
+        """
+        Add the new child to this box’s children list and set this box as the
+        child’s parent.
+        """
+        child.parent = self
+        if index == None:
+            self.children.append(child)
+        else:
+            self.children.insert(index, child)
+
+    def descendants(self):
+        """A flat generator for a box, its children and descendants."""
+        yield self
+        for child in self.children or []:
+            if hasattr(child, 'descendants'):
+                for grand_child in child.descendants():
+                    yield grand_child
+            else:
+                yield child
+
+
+class BlockLevelBox(Box):
+    """
+    A box that participates in an block formatting context.
+
+    An element with a 'display' value of 'block', 'liste-item' or 'table'
+    generates a block-level box.
+    """
+
+
+class BlockContainerBox(ParentBox):
+    """
+    A box that either contains only block-level boxes or establishes an inline
+    formatting context and thus contains only line boxes.
+
+    A non-replaced element with a 'display' value of 'block', 'list-item',
+    'inline-block' or 'table-cell' generates a block container box.
+    """
 
 
 class BlockBox(BlockContainerBox, BlockLevelBox):
@@ -228,7 +241,7 @@ class AnonymousBlockBox(AnonymousBox, BlockBox):
     """
 
 
-class LineBox(AnonymousBox):
+class LineBox(AnonymousBox, ParentBox):
     """
     Eventually a line in an inline formatting context. Can only contain
     inline-level boxes.
@@ -251,7 +264,7 @@ class InlineLevelBox(Box):
     """
 
 
-class InlineBox(InlineLevelBox):
+class InlineBox(InlineLevelBox, ParentBox):
     """
     A box who participates in an inline formatting context and whose content
     also participates in that inline formatting context.
@@ -261,7 +274,7 @@ class InlineBox(InlineLevelBox):
     """
 
 
-class TextBox(AnonymousBox, InlineBox):
+class TextBox(AnonymousBox, InlineLevelBox):
     """
     A box that contains only text and has no box children.
 
@@ -270,7 +283,6 @@ class TextBox(AnonymousBox, InlineBox):
     """
     def __init__(self, element, text):
         super(TextBox, self).__init__(element)
-        self.children = None
         self.text = text
 
 
