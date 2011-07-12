@@ -249,6 +249,17 @@ class InlineLevelBox(Box):
     An element with a 'display' value of 'inline', 'inline-table', or
     'inline-block' generates an inline-level box.
     """
+    @property
+    def h_content_spacing(self):
+        return self.margin_left + self.margin_right + \
+               self.padding_left + self.padding_right + \
+               self.border_left_width + self.border_right_width
+    
+    @property
+    def v_content_spacing(self):
+        return self.margin_top + self.margin_bottom + \
+               self.padding_top + self.padding_bottom + \
+               self.border_top_width + self.border_bottom_width
 
 
 class InlineBox(InlineLevelBox):
