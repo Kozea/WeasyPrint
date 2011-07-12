@@ -31,38 +31,44 @@ from .. import draw
 suite = Tests()
 
 
-def get_pixels(name, html):
+def make_filename(dirname, basename):
+    return os.path.join(os.path.dirname(__file__), dirname, basename + '.png')
+
+
+def test_pixels(name, html):
+    reader = png.Reader(filename=make_filename('expected_results', name))
+    expected_width, expected_height, expected_lines, expected_meta = \
+        reader.read()
+    expected_lines = list(expected_lines)
+
     pages = parse(html)
     assert len(pages) == 1
-    filename = os.path.join(os.path.dirname(__file__), 'test_results',
-                            name + '.png')
+    filename = make_filename('test_results', name)
     draw.draw_page_to_png(pages[0], filename)
     reader = png.Reader(filename=filename)
-    width, height, pixels, meta = reader.read()
-    assert meta['greyscale'] == False
-    assert meta['alpha'] == True
-    assert meta['bitdepth'] == 8
-    return width, height, pixels
+    width, height, lines, meta = reader.read()
+    lines = list(lines)
+
+    for meta_ in [meta, expected_meta]:
+        assert meta_['greyscale'] == False
+        assert meta_['alpha'] == True
+        assert meta_['bitdepth'] == 8
+
+    assert width == expected_width
+    assert height == height
+    assert width > 0
+    assert height > 0
+    assert len(lines) == height
+    assert len(lines[0]) == width * 4
+    assert lines == expected_lines
 
 
 @suite.test
 def test_png():
-    width, height, lines = get_pixels('blocks', '''
+    test_pixels('blocks', '''
         <style>
             @page { size: 10px }
             body { margin: 2px; background-color: #00f; height: 5px }
         </style>
         <body>
     ''')
-    assert width == 10
-    assert height == 10
-    # RGBA
-    transparent = array('B', [0, 0, 0, 0])
-    blue = array('B', [0, 0, 255, 255])
-    for i, line in enumerate(lines):
-        print i
-        if 2 <= i < 7:
-            assert line == transparent * 2 + blue * 6 + transparent * 2
-        else:
-            assert line == transparent * 10
-    assert i == 9 # There are 10 lines for i 0..9
