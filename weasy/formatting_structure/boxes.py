@@ -126,6 +126,24 @@ class Box(object):
                         return ancestor.width, ancestor.height
         assert False, 'Containing block not found'
 
+    @property
+    def padding_width(self):
+        return self.width + self.padding_left + self.padding_right
+
+    @property
+    def padding_height(self):
+        return self.height + self.padding_top + self.padding_bottom
+
+    @property
+    def border_width(self):
+        return self.padding_width + self.border_left_width + \
+            self.border_right_width
+
+    @property
+    def border_height(self):
+        return self.padding_height + self.border_top_width + \
+            self.border_bottom_width
+
 
 class PageBox(Box):
     """
