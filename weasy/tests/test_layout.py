@@ -29,14 +29,14 @@ from .. import layout
 suite = Tests()
 
 
-def parse(html_content, *args, **kwargs):
+def parse(html_content):
     """
     Parse some HTML, apply stylesheets and transform to boxes.
     """
     document = lxml.html.document_fromstring(html_content)
     css.annotate_document(document)
     box = build.build_formatting_structure(document)
-    return layout.layout(box, *args, **kwargs)
+    return layout.layout(box)
 
 
 @suite.test
