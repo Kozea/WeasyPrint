@@ -32,15 +32,24 @@ VARIANT_PROPERTIES = {'normal':pango.VARIANT_NORMAL,
 
 
 class TextFragment(object):
-    def __init__(self, text, width):
+    def __init__(self, text="", width=None):
         self.context = gtk.DrawingArea().create_pango_context()
         self.layout = pango.Layout(self.context)
         self.set_text(text)
-        self.set_width(width)
+        if width is not None:
+            self.set_width(width)
 #        self._set_attribute(pango.AttrFallback(True, 0, -1))
         
         # Other properties
         self.layout.set_wrap(pango.WRAP_WORD)
+    
+    def set_textbox(self, textbox):
+        self.set_text(textbox.text)
+#        self.set_font_family(textbox.style.property['font_family'])
+#        self.set_font_variant(textbox.style.property['font_family'])
+#        self.set_font_weight(textbox.style.property['font_family'])
+#        self.set_font_style(textbox.style.property['font_family'])
+#        self.set_letter_spacing(textbox.style.property['font_family'])
     
     def _update_font(self):
         self.layout.set_font_description(self._font)
@@ -263,7 +272,7 @@ class TextFragment(object):
         self._set_attribute(rise)
     
 class TextLineFragment(TextFragment):
-    def __init__(self, text, width):
+    def __init__(self, text=None, width=None):
         super(TextLineFragment, self).__init__(text, width)
 
     def get_layout(self):
