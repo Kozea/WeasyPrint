@@ -250,6 +250,11 @@ class LineBox(AnonymousBox, ParentBox):
     consecutive inline boxes. Later, during layout phase, each line boxes will
     be split into multiple line boxes, one for each actual line.
     """
+    def __init__(self, *args, **kwargs):
+        super(LineBox, self).__init__(*args, **kwargs)
+        for prop in ['margin_%s', 'padding_%s', 'border_%s_width']:
+            for side in ['top', 'bottom', 'left', 'right']:
+                setattr(self, prop % side, 0)
 
 
 class InlineLevelBox(Box):

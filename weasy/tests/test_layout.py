@@ -100,7 +100,7 @@ def test_page():
 
 
 @suite.test
-def test_block_auto():
+def test_block_widths():
     pages = parse('''
         <style>
             @page { margin: 0; size: 120px }
@@ -214,3 +214,32 @@ def test_block_auto():
     assert paragraphs[10].width == 200
     assert paragraphs[10].margin_left == 0
     assert paragraphs[10].margin_right == -106
+
+
+@suite.test
+def test_block_heights():
+    page, = parse('''
+        <style>
+            @page { margin: 0; size: 100px\t2000px }
+            html, body { margin: 0 }
+            div { margin: 4px; border-width: 2px; border-style: solid;
+                  padding: 4px }
+            p { margin: 8px; border-width: 4px; border-style: solid;
+                padding: 8px; height: 50px }
+        </style>
+        <div>
+          <p></p>
+        </div><div>
+          <p></p>
+          <p></p>
+          <p></p>
+        </div>
+    ''')
+    html = page.root_box
+    assert html.element.tag == 'html'
+    body = html.children[0]
+    assert body.element.tag == 'body'
+    divs = body.children
+
+    assert divs[0].height == 90
+    assert divs[1].height == 90 * 3

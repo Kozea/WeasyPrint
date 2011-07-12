@@ -71,7 +71,7 @@ def resolve_one_percentage(box, property_name, refer_to):
         else:
             result = value.value
             # Other than that, only 'auto' is allowed
-            # TODO: it is only allowed on some proprties. Check this here?
+            # TODO: it is only allowed on some properties. Check this here?
             assert result == 'auto'
     # box attributes are used values
     setattr(box, property_name.replace('-', '_'), result)
@@ -145,15 +145,18 @@ def page_dimensions(box):
     compute_dimensions(box.root_box)
 
 
-@compute_dimensions.register(boxes.BlockContainerBox)
-def block_container_dimensions(box):
+@compute_dimensions.register(boxes.BlockBox)
+def block_dimensions(box):
+    resolve_percentages(box)
+    block_level_width(box)
+
     for child in box.children:
         compute_dimensions(child)
 
+    block_level_height(box)
 
-@compute_dimensions.register(boxes.BlockLevelBox)
-def block_level_dimensions(box):
-    resolve_percentages(box)
+
+def block_level_width(box):
     # cb = containing block
     cb_width, cb_height = box.containing_block_size()
 
@@ -218,16 +221,34 @@ def block_level_dimensions(box):
     assert total == cb_width
 
 
-@compute_dimensions.register(boxes.BlockBox)
-def block_dimensions(box):
-    block_level_dimensions(box)
-    block_container_dimensions(box)
+def block_level_height(box):
+    if box.style.overflow != 'visible':
+        raise NotImplementedError
+
+    if isinstance(box, boxes.ReplacedBox):
+        raise NotImplementedError
+
+    assert isinstance(box, boxes.BlockBox)
+
+    if box.margin_top == 'auto':
+        box.margin_top = 0
+    if box.margin_bottom == 'auto':
+        box.margin_bottom = 0
+    if box.height == 'auto':
+        # TODO: collapse margins:
+        # http://www.w3.org/TR/CSS21/visudet.html#normal-block
+        box.height = sum(
+            child.height + child.margin_top + child.margin_bottom +
+                child.border_top_width + child.border_bottom_width +
+                child.padding_top + child.padding_bottom
+            for child in box.children)
 
 
 @compute_dimensions.register(boxes.LineBox)
 def line_dimensions(box):
-    pass
-
+    # TODO: real line box height
+#    box.height = box.style.line_height
+    box.height = 0
 
 
 @compute_dimensions.register(boxes.InlineBlockBox)
