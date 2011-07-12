@@ -270,6 +270,17 @@ def inline_block_box_breaking(box):
     pass
 
 
+def layout(root_box):
+    """
+    Take the block box for the root element, return a list of page boxes.
+    """
+    pages = []
+    page = boxes.PageBox(root_box, 1)
+    page_dimensions(page)
+    pages.append(page)
+    # TODO: do page breaks, split boxes into multiple pages
+    return pages
+
 def flatten_inline_box_tree(inlinebox):
     """ Return all children TextBox in a flatten tree (list)
     Eg.
