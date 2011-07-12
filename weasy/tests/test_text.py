@@ -41,6 +41,19 @@ def test_line_content():
 
 
 @suite.test
+def test_line_with_any_width():
+    """
+    we don't specify width in order to get the maximum width of the text
+    """
+    line = text.TextLineFragment(u"some text")
+    line.set_font_family(FONTS)
+    width = line.get_size()[0]
+    line.set_text("some some some text some some some text")
+    new_width = line.get_size()[0]
+    
+    assert width < new_width
+
+@suite.test
 def test_line_breaking():
     string = u"This is a text for test"
     width = 120
