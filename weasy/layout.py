@@ -137,10 +137,12 @@ def page_dimensions(box):
 
     resolve_percentages(box)
 
-    box.position_x = box.margin_left
-    box.position_y = box.margin_top
+    box.position_x = 0
+    box.position_y = 0
     box.width = box.outer_width - box.margin_left - box.margin_right
     box.height = box.outer_height - box.margin_top - box.margin_bottom
+    box.root_box.position_x = box.margin_left
+    box.root_box.position_y = box.margin_top
 
     compute_dimensions(box.root_box)
 
@@ -149,10 +151,6 @@ def page_dimensions(box):
 def block_dimensions(box):
     resolve_percentages(box)
     block_level_width(box)
-
-    for child in box.children:
-        compute_dimensions(child)
-
     block_level_height(box)
 
 
@@ -234,14 +232,28 @@ def block_level_height(box):
         box.margin_top = 0
     if box.margin_bottom == 'auto':
         box.margin_bottom = 0
-    if box.height == 'auto':
+
+    position_x = box.position_x + box.margin_left + box.padding_left + \
+        box.border_left_width
+    position_y = box.position_y + box.margin_top + box.padding_top + \
+        box.border_top_width
+    initial_position_y = position_y
+    for child in box.children:
         # TODO: collapse margins:
         # http://www.w3.org/TR/CSS21/visudet.html#normal-block
-        box.height = sum(
+        child.position_x = position_x
+        child.position_y = position_y
+
+        compute_dimensions(child)
+
+        child_outer_height = (
             child.height + child.margin_top + child.margin_bottom +
-                child.border_top_width + child.border_bottom_width +
-                child.padding_top + child.padding_bottom
-            for child in box.children)
+            child.border_top_width + child.border_bottom_width +
+            child.padding_top + child.padding_bottom)
+        position_y += child_outer_height
+
+    if box.height == 'auto':
+        box.height = position_y - initial_position_y
 
 
 @compute_dimensions.register(boxes.LineBox)

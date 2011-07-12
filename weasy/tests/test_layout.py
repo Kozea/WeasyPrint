@@ -31,7 +31,7 @@ suite = Tests()
 
 def parse(html_content):
     """
-    Parse some HTML, apply stylesheets and transform to boxes.
+    Parse some HTML, apply stylesheets, transform to boxes and do layout.
     """
     document = lxml.html.document_fromstring(html_content)
     css.annotate_document(document)
@@ -77,26 +77,37 @@ def test_page():
 
     page, = parse('''
         <style>@page { size: 200px 300px; margin: 10px 10% 20% 1in }</style>
-        <p>
+        <p style="margin: 0">
     ''')
     assert page.outer_width == 200
     assert page.outer_height == 300
-    assert page.position_x == 96 # 1 inch
-    assert page.position_y == 10 # 10px
+    assert page.position_x == 0
+    assert page.position_y == 0
     assert page.width == 84 # 200px - 10% - 1 inch
     assert page.height == 230 # 300px - 10px - 20%
 
     html = page.root_box
     assert html.element.tag == 'html'
+    assert html.position_x == 96 # 1in
+    assert html.position_y == 10
     assert html.width == 84
 
     body = html.children[0]
     assert body.element.tag == 'body'
+    assert body.position_x == 96 # 1in
+    assert body.position_y == 10
     # body has margins in the UA stylesheet
     assert body.margin_left == 8
     assert body.margin_right == 8
+    assert body.margin_top == 8
+    assert body.margin_bottom == 8
     assert body.width == 68
 
+    paragraph = body.children[0]
+    assert paragraph.element.tag == 'p'
+    assert paragraph.position_x == 104 # 1in + 8px
+    assert paragraph.position_y == 18 # 10px + 8px
+    assert paragraph.width == 68
 
 
 @suite.test
@@ -162,6 +173,7 @@ def test_block_widths():
     assert paragraphs[0].width == 94
     assert paragraphs[0].margin_left == 0
     assert paragraphs[0].margin_right == 0
+#    assert paragraphs[0].position_x == 0
 
     # No 'auto', over-constrained equation with ltr, the initial
     # 'margin-right: 0' was ignored.
