@@ -20,6 +20,8 @@
 from .formatting_structure import boxes
 from .utils import MultiFunction
 from .css import computed_values
+import copy
+import text
 
 
 def pixel_value(value):
@@ -241,8 +243,218 @@ def line_dimensions(box):
 @compute_dimensions.register(boxes.InlineBlockBox)
 def inline_block_box_breaking(box):
     pass
+
+def flatten_inline_box_tree(inlinebox):
+    """ Return all children TextBox in a flatten tree (list)
+    Eg.
+        InlineBox[
+            TextBox('first'),
+            InlineBox[
+                TextBox('second')
+            ]
+            TextBox('third')
+        ]
     
+    is turned into
     
+        [
+            TextBox('first'), # with inherits properties
+            TextBox('second'),# with inherits properties
+            TextBox('third') # with inherits properties
+        ]
+        
+    """
+    for decendent in inlinebox.descendants():
+        if isinstance(inlinebox, boxes.TextBox):
+            yield decendent
+
+def get_line_box_element_width(box):
+    """ Return the sum of children's width """
+    sum_width = 0
+    if isinstance(box, boxes.InlineBox):
+        for child in flatten_inline_box_tree(inlinebox):
+            sum_width += text.TextFragment(child.text).get_size()[0]
+        return sum_width
+    elif isinstance(box, boxes.TextBox):
+        return text.TextFragment(child.text).get_size()[0]
+    elif isinstance(box, boxes.InlineBlockBox):
+        pass
+    elif isinstance(box, boxes.InlineLevelReplacedBox):
+        pass
+
+def breaking_line_box_element(box, allocate_width):
+    """ Cut the Box that sticks out the LineBox"""
+    if isinstance(box, boxes.InlineBox):
+        return breaking_inline_box(box, allocate_width)
+    elif isinstance(box, boxes.TextBox):
+        return breaking_text_box(box, allocate_width)
+    elif isinstance(box, boxes.InlineBlockBox):
+        pass
+    elif isinstance(box, boxes.InlineLevelReplacedBox):
+        pass
+
+def breaking_inline_box(inlinebox, allocate_width):
+    """
+    Cut the InlineBox that sticks out the LineBox
     
+    Eg.
+        InlineBox[
+            InlineBox[TextBox('Hello ')],
+            TextBox('This is a long long long long text'),
+            InlineBox[TextBox('Word !!')],
+        ]
     
+    is turned into
     
+        [
+            InlineBox[
+                InlineBox[TextBox('Hello :D')],
+                TextBox('This is a long')
+            ], InlineBox[
+                TextBox('long long long text'),
+                InlineBox[TextBox('Word !!')],
+            ]
+        ]
+    """
+    allocate_width -= textbox.h_spacing_content
+    if allocate_width < 0:
+        text_fragment = text.TextLineFragment()
+        text_fragment.set_text_box(textbox)
+        textbox_width, textbox_height = text_fragment.get_size()
+        return (textbox, None)
+    else:
+        text_fragment.set_text_box(textbox)
+        
+        textbox.width =  textbox.height = text_fragment.get_size()
+        text_fragment = text.TextFragment(child.text)
+#    text_fragment
+    return ()
+
+def breaking_textbox(textbox, allocate_width):
+    """
+    Cut the long TextBox that sticks out the LineBox only if the TextBox
+    can be cut with the line break
+    
+    >>> breaking_inline_box(inlinebox, allocate_width)
+    (first_element, second_element)
+    
+    Eg.
+        TextBox('This is a long long long long text')
+    
+    is turned into
+    
+        (
+            TextBox('This is a long long'),
+            TextBox(' long long text')
+        )
+    
+    but
+        TextBox('Thisisalonglonglonglongtext')
+        
+    is turned into
+        
+        (
+            TextBox('Thisisalonglonglonglongtext'),
+            None
+        )
+    
+    and 
+    
+        TextBox('Thisisalonglonglonglong Thisisalonglonglonglong')
+        
+    is turned into
+        
+        (
+            TextBox('Thisisalonglonglonglong'),
+            TextBox(' Thisisalonglonglonglong')
+        )
+    """
+    text_fragment = text.TextLineFragment(allocate_width)
+    text_fragment.set_textbox(textbox)
+    textbox.width, textbox.height = text_fragment.get_size()
+    textbox.text = text_fragment.get_text()
+    if text_fragment.get_remaining_text() == "":
+        return (textbox, None)
+    else:
+        second_textbox = copy.copy(textbox)
+        second_textbox.text = text_fragment.get_remaining_text()
+        #This text_fragment have no limited width, we check the width later
+        text_fragment = text.TextFragment()
+        text_fragment.set_textbox(second_textbox)
+        second_textbox.width, second_textbox.height = text_fragment.get_size()
+        return (textbox, second_textbox)
+
+
+def breaking_line_box(linebox, width):
+    """
+    Eg.
+    
+    LineBox[
+        InlineBox[
+            TextBox('Hello.'),
+        ],
+        InlineBox[
+            InlineBox[TextBox('Word :D')],
+            TextBox('This is a long long long text'),
+        ]
+    ]
+    
+    is turned into
+    
+    [
+        LineBox[
+            InlineBox[
+                TextBox('Hello.'),
+            ],
+            InlineBox[
+                InlineBox[TextBox('Word :D')],
+                TextBox('This is a long'),
+            ]
+        ], LineBox[
+            InlineBox[
+                TextBox(' long long text'),
+            ]
+        ]
+    ]
+    """
+    cb_width, cb_height = linebox.containing_block_size()
+    children = list(linebox.children)
+    lines = []
+    while len(children) == 0:
+        line = boxes.LineBox()
+        insert_in_the_line(line, width, children)
+        lines.append(line)
+    return lines
+
+def insert_in_the_line(line, width, elements):
+    """ Insert the maximum elements in the line before the line break """
+    if width == 0 or len(elements) == 0:
+        return line, elements
+    child = elements.pop(0)
+    #If first element is None, then it means we force the line break
+    if child is None:
+        return line, elements
+    child_width = get_line_box_element_width(child)
+    if child_width <= width:
+        width -= child_width
+        line.add_child(child)
+        return insert_in_the_line(line, width, elements)
+    else:
+        allocate_width = width - child_width
+        first_child, second_child = breaking_line_box_element(child,
+                                        allocate_width)
+        #If second element is None, it means we can't cut the child element
+        if second_child is None:
+            # We check if it will be the only element in the line
+            if len(line.children) == 0:
+                #Then we add the element in the line and force the line break
+                line.add_child(first_child)
+                return line, elements
+            else:
+                #Else we try to insert the element in the next line
+                elements.insert(0, first_child)
+                return line, elements
+        else:
+            elements.insert(0, second_child)
+            elements.insert(0, first_child)
+        return insert_in_the_line(line, width, elements)
