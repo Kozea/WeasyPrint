@@ -93,6 +93,44 @@ FONT_WEIGHT_RELATIVE = dict(
 )
 
 
+# http://www.w3.org/TR/css3-page/#size
+# name=(width in pixels, height in pixels)
+PAGE_SIZES = dict(
+    A5=(
+        148 * LENGTHS_TO_PIXELS['mm'],
+        210 * LENGTHS_TO_PIXELS['mm'],
+    ),
+    A4=(
+        210 * LENGTHS_TO_PIXELS['mm'],
+        297 * LENGTHS_TO_PIXELS['mm'],
+    ),
+    A3=(
+        297 * LENGTHS_TO_PIXELS['mm'],
+        420 * LENGTHS_TO_PIXELS['mm'],
+    ),
+    B5=(
+        176 * LENGTHS_TO_PIXELS['mm'],
+        250 * LENGTHS_TO_PIXELS['mm'],
+    ),
+    B4=(
+        250 * LENGTHS_TO_PIXELS['mm'],
+        353 * LENGTHS_TO_PIXELS['mm'],
+    ),
+    letter=(
+        8.5 * LENGTHS_TO_PIXELS['in'],
+        11 * LENGTHS_TO_PIXELS['in'],
+    ),
+    legal=(
+        8.5 * LENGTHS_TO_PIXELS['in'],
+        14 * LENGTHS_TO_PIXELS['in'],
+    ),
+    ledger=(
+        11 * LENGTHS_TO_PIXELS['in'],
+        17 * LENGTHS_TO_PIXELS['in'],
+    ),
+)
+
+
 class DummyPropertyValue(list):
     """
     A list that quacks like a PropertyValue.
@@ -198,6 +236,12 @@ def compute_line_height(element):
     """
     # TODO: test this
     style = element.style
+    if style.line_height == 'normal':
+        # a "reasonable" value
+        # http://www.w3.org/TR/CSS21/visudet.html#line-height
+        # TODO: use font metadata?
+        style['line-height'] = PropertyValue('1.2')
+
     assert len(style['line-height']) == 1
     value = style['line-height'][0]
 
@@ -346,6 +390,48 @@ def compute_content(element):
         style.content = 'normal'
 
 
+def compute_size(element, page_context):
+    if not page_context:
+        return
+    style = element.style
+    if style.size == 'auto':
+        style.size = 'A4' # Chosen by the UA. (That’s me!)
+    values = style['size'] # PropertyValue object
+    if len(values) == 0 or len(values) > 2:
+        raise ValueError('size takes one or two values, got %r' % values)
+    if values[0].type == 'DIMENSION' and values[0].dimension == 'px':
+        if len(values) == 2:
+            assert values[1].type == 'DIMENSION'
+            assert values[1].dimension == 'px'
+            width = values[0].value
+            height = values[1].value
+            assert isinstance(width, (int, float))
+            assert isinstance(height, (int, float))
+        else:
+            # square page
+            width = height = values[0].value
+            assert isinstance(width, (int, float))
+    else:
+        orientation = None
+        size = None
+        for value in values:
+            value = value.cssText
+            if value in ('portrait', 'landscape'):
+                orientation = value
+            elif value in PAGE_SIZES:
+                size = value
+            else:
+                raise ValueError("Illegal value for 'size': %r", value)
+        if size is None:
+            size = 'A4'
+        width, height = PAGE_SIZES[size]
+        if (orientation == 'portrait' and width > height) or \
+               (orientation == 'landscape' and height > width):
+            width, height = height, width
+    style._weasy_page_width = width
+    style._weasy_page_height = height
+
+
 def compute_values(element, page_context):
     """
     Normalize values as much as possible without rendering the document.
@@ -360,6 +446,7 @@ def compute_values(element, page_context):
     compute_content(element)
     compute_border_width(element)
     compute_outline_width(element)
+    compute_size(element, page_context)
     # Recent enough cssutils have a .absolute_uri on URIValue objects.
     # TODO: percentages for height?
     #       http://www.w3.org/TR/CSS21/visudet.html#propdef-height

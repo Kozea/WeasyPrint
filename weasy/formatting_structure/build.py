@@ -36,10 +36,7 @@ def build_formatting_structure(document):
     inline_in_block(box)
     block_in_inline(box)
     process_whitespace(box)
-
-    page = PageBox(document, 1)
-    page.add_child(box)
-    return page
+    return box
 
 
 def dom_to_box(element):
@@ -177,7 +174,7 @@ def inline_in_block(box):
             ]
         ]
     """
-    for child_box in box.children or []:
+    for child_box in getattr(box, 'children', []):
         inline_in_block(child_box)
 
     if not isinstance(box, BlockContainerBox):
@@ -274,7 +271,7 @@ def block_in_inline(box):
     """
     # TODO: when splitting inline boxes, mark which are starting, ending, or
     # in the middle of the orginial box (for drawing borders).
-    for child_box in box.children or []:
+    for child_box in getattr(box, 'children', []):
         block_in_inline(child_box)
 
     if not (isinstance(box, BlockLevelBox) and box.parent

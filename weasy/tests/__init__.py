@@ -19,7 +19,6 @@
 import os.path
 from lxml import html
 from cssutils.helper import path2url
-from attest import Tests
 
 
 def resource_filename(basename):
@@ -30,12 +29,3 @@ def parse_html(filename):
     """Parse an HTML file from the test resources and resolve relative URL."""
     document = html.parse(path2url(resource_filename(filename))).getroot()
     return document
-
-
-all = Tests('.'.join((__name__, mod, 'suite'))
-            for mod in ('test_css',
-                        'test_css_properties',
-                        'test_boxes',
-                        'test_utils',
-                        'test_layout',
-                        'test_text'))

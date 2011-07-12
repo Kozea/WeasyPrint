@@ -73,7 +73,7 @@ def resolve_one_percentage(box, property_name, refer_to):
         else:
             result = value.value
             # Other than that, only 'auto' is allowed
-            # TODO: it is only allowed on some proprties. Check this here?
+            # TODO: it is only allowed on some properties. Check this here?
             assert result == 'auto'
     # box attributes are used values
     setattr(box, property_name.replace('-', '_'), result)
@@ -125,6 +125,7 @@ def resolve_percentages(box):
     box.border_left_width = box.style.border_left_width
 
 
+# TODO: remove this if it is not needed?
 @MultiFunction
 def compute_dimensions(box):
     """
@@ -132,38 +133,30 @@ def compute_dimensions(box):
     """
 
 
-@compute_dimensions.register(boxes.PageBox)
-def page_dimensions(box, width=None, height=None):
-    # Page size is fixed to A4 for now. TODO: implement the size property.
-    if width is None:
-        box.outer_width = 210 * computed_values.LENGTHS_TO_PIXELS['mm']
-    else:
-        box.outer_width = width
-
-    if height is None:
-        box.outer_height = 297 * computed_values.LENGTHS_TO_PIXELS['mm']
-    else:
-        box.outer_height = height
+def page_dimensions(box):
+    box.outer_height = box.style._weasy_page_height
+    box.outer_width = box.style._weasy_page_width
 
     resolve_percentages(box)
 
-    box.position_x = box.margin_left
-    box.position_y = box.margin_top
+    box.position_x = 0
+    box.position_y = 0
     box.width = box.outer_width - box.margin_left - box.margin_right
     box.height = box.outer_height - box.margin_top - box.margin_bottom
+    box.root_box.position_x = box.margin_left
+    box.root_box.position_y = box.margin_top
 
-    block_container_dimensions(box)
-
-
-@compute_dimensions.register(boxes.BlockContainerBox)
-def block_container_dimensions(box):
-    for child in box.children:
-        compute_dimensions(child)
+    compute_dimensions(box.root_box)
 
 
-@compute_dimensions.register(boxes.BlockLevelBox)
-def block_level_dimensions(box):
+@compute_dimensions.register(boxes.BlockBox)
+def block_dimensions(box):
     resolve_percentages(box)
+    block_level_width(box)
+    block_level_height(box)
+
+
+def block_level_width(box):
     # cb = containing block
     cb_width, cb_height = box.containing_block_size()
 
@@ -228,21 +221,54 @@ def block_level_dimensions(box):
     assert total == cb_width
 
 
-@compute_dimensions.register(boxes.BlockBox)
-def block_dimensions(box):
-    block_level_dimensions(box)
-    block_container_dimensions(box)
+def block_level_height(box):
+    if box.style.overflow != 'visible':
+        raise NotImplementedError
+
+    if isinstance(box, boxes.ReplacedBox):
+        raise NotImplementedError
+
+    assert isinstance(box, boxes.BlockBox)
+
+    if box.margin_top == 'auto':
+        box.margin_top = 0
+    if box.margin_bottom == 'auto':
+        box.margin_bottom = 0
+
+    position_x = box.position_x + box.margin_left + box.padding_left + \
+        box.border_left_width
+    position_y = box.position_y + box.margin_top + box.padding_top + \
+        box.border_top_width
+    initial_position_y = position_y
+    for child in box.children:
+        # TODO: collapse margins:
+        # http://www.w3.org/TR/CSS21/visudet.html#normal-block
+        child.position_x = position_x
+        child.position_y = position_y
+
+        compute_dimensions(child)
+
+        child_outer_height = (
+            child.height + child.margin_top + child.margin_bottom +
+            child.border_top_width + child.border_bottom_width +
+            child.padding_top + child.padding_bottom)
+        position_y += child_outer_height
+
+    if box.height == 'auto':
+        box.height = position_y - initial_position_y
 
 
 @compute_dimensions.register(boxes.LineBox)
 def line_dimensions(box):
-    pass
-    
+    # TODO: real line box height
+#    box.height = box.style.line_height
+    box.height = 0
 
 
 @compute_dimensions.register(boxes.InlineBlockBox)
 def inline_block_box_breaking(box):
     pass
+
 
 def flatten_inline_box_tree(inlinebox):
     """ Return all children TextBox in a flatten tree (list)

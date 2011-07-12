@@ -31,52 +31,90 @@ suite = Tests()
 
 def parse(html_content):
     """
-    Parse some HTML, apply stylesheets and transform to boxes.
+    Parse some HTML, apply stylesheets, transform to boxes and do layout.
     """
     document = lxml.html.document_fromstring(html_content)
     css.annotate_document(document)
-    return build.build_formatting_structure(document)
+    box = build.build_formatting_structure(document)
+    return layout.layout(box)
 
 
 @suite.test
 def test_page():
-    page = parse('<p>')
+    pages = parse('<p>')
+    page = pages[0]
     assert isinstance(page, boxes.PageBox)
-    layout.compute_dimensions(page)
     assert int(page.outer_width) == 793  # A4: 210 mm in pixels
     assert int(page.outer_height) == 1122  # A4: 297 mm in pixels
 
-    page = parse('''
-        <style>@page { margin: 10px 10% 20% 1in }</style>
-        <p>
+    page, = parse('''<style>@page { size: 2in 10in; }</style>''')
+    assert page.outer_width == 192
+    assert page.outer_height == 960
+
+    page, = parse('''<style>@page { size: 242px; }</style>''')
+    assert page.outer_width == 242
+    assert page.outer_height == 242
+
+    page, = parse('''<style>@page { size: letter; }</style>''')
+    assert page.outer_width == 816  # 8.5in
+    assert page.outer_height == 1056  # 11in
+
+    page, = parse('''<style>@page { size: letter portrait; }</style>''')
+    assert page.outer_width == 816  # 8.5in
+    assert page.outer_height == 1056  # 11in
+
+    page, = parse('''<style>@page { size: letter landscape; }</style>''')
+    assert page.outer_width == 1056  # 11in
+    assert page.outer_height == 816  # 8.5in
+
+    page, = parse('''<style>@page { size: portrait; }</style>''')
+    assert int(page.outer_width) == 793  # A4: 210 mm
+    assert int(page.outer_height) == 1122  # A4: 297 mm
+
+    page, = parse('''<style>@page { size: landscape; }</style>''')
+    assert int(page.outer_width) == 1122  # A4: 297 mm
+    assert int(page.outer_height) == 793  # A4: 210 mm
+
+    page, = parse('''
+        <style>@page { size: 200px 300px; margin: 10px 10% 20% 1in }</style>
+        <p style="margin: 0">
     ''')
-    assert isinstance(page, boxes.PageBox)
-    layout.compute_dimensions(page, width=200, height=300)
     assert page.outer_width == 200
     assert page.outer_height == 300
-    assert page.position_x == 96 # 1 inch
-    assert page.position_y == 10 # 10px
+    assert page.position_x == 0
+    assert page.position_y == 0
     assert page.width == 84 # 200px - 10% - 1 inch
     assert page.height == 230 # 300px - 10px - 20%
 
-    html = page.children[0]
+    html = page.root_box
     assert html.element.tag == 'html'
+    assert html.position_x == 96 # 1in
+    assert html.position_y == 10
     assert html.width == 84
 
     body = html.children[0]
     assert body.element.tag == 'body'
+    assert body.position_x == 96 # 1in
+    assert body.position_y == 10
     # body has margins in the UA stylesheet
     assert body.margin_left == 8
     assert body.margin_right == 8
+    assert body.margin_top == 8
+    assert body.margin_bottom == 8
     assert body.width == 68
 
+    paragraph = body.children[0]
+    assert paragraph.element.tag == 'p'
+    assert paragraph.position_x == 104 # 1in + 8px
+    assert paragraph.position_y == 18 # 10px + 8px
+    assert paragraph.width == 68
 
 
 @suite.test
-def test_block_auto():
-    page = parse('''
+def test_block_widths():
+    pages = parse('''
         <style>
-            @page { margin: 0 }
+            @page { margin: 0; size: 120px }
             body { margin: 0 }
             div { margin: 10px }
             p { padding: 2px; border-width: 1px; border-style: solid }
@@ -101,9 +139,7 @@ def test_block_auto():
           <p style="width: 200px; margin: auto"></p>
         </div>
     ''')
-    layout.compute_dimensions(page, width=120)
-    assert isinstance(page, boxes.PageBox)
-    html = page.children[0]
+    html = pages[0].root_box
     assert html.element.tag == 'html'
     body = html.children[0]
     assert body.element.tag == 'body'
@@ -137,6 +173,7 @@ def test_block_auto():
     assert paragraphs[0].width == 94
     assert paragraphs[0].margin_left == 0
     assert paragraphs[0].margin_right == 0
+#    assert paragraphs[0].position_x == 0
 
     # No 'auto', over-constrained equation with ltr, the initial
     # 'margin-right: 0' was ignored.
@@ -189,3 +226,32 @@ def test_block_auto():
     assert paragraphs[10].width == 200
     assert paragraphs[10].margin_left == 0
     assert paragraphs[10].margin_right == -106
+
+
+@suite.test
+def test_block_heights():
+    page, = parse('''
+        <style>
+            @page { margin: 0; size: 100px\t2000px }
+            html, body { margin: 0 }
+            div { margin: 4px; border-width: 2px; border-style: solid;
+                  padding: 4px }
+            p { margin: 8px; border-width: 4px; border-style: solid;
+                padding: 8px; height: 50px }
+        </style>
+        <div>
+          <p></p>
+        </div><div>
+          <p></p>
+          <p></p>
+          <p></p>
+        </div>
+    ''')
+    html = page.root_box
+    assert html.element.tag == 'html'
+    body = html.children[0]
+    assert body.element.tag == 'body'
+    divs = body.children
+
+    assert divs[0].height == 90
+    assert divs[1].height == 90 * 3
