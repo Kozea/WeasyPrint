@@ -236,6 +236,12 @@ def compute_line_height(element):
     """
     # TODO: test this
     style = element.style
+    if style.line_height == 'normal':
+        # a "reasonable" value
+        # http://www.w3.org/TR/CSS21/visudet.html#line-height
+        # TODO: use font metadata?
+        style['line-height'] = PropertyValue('1.2')
+
     assert len(style['line-height']) == 1
     value = style['line-height'][0]
 
