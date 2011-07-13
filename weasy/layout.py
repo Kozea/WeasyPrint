@@ -308,12 +308,21 @@ def flatten_inline_box_tree(inlinebox):
 def get_line_box_element_width(box):
     """ Return the sum of children's width """
     sum_width = 0
+    #This text_fragment have no limited width, we check the width later
+    #text_fragment = text.TextFragment()
+    #text_fragment.set_textbox(second_textbox)
+    #second_textbox.width, second_textbox.height = text_fragment.get_size()
     if isinstance(box, boxes.InlineBox):
         for child in flatten_inline_box_tree(inlinebox):
-            sum_width += text.TextFragment(child.text).get_size()[0]
+            #set css style in TextLineFragment
+            text_fragment = text.TextLineFragment()
+            text_fragment.set_textbox(child)
+            sum_width += text_fragment.get_size()[0]
         return sum_width
     elif isinstance(box, boxes.TextBox):
-        return text.TextFragment(child.text).get_size()[0]
+        text_fragment = text.TextLineFragment()
+        text_fragment.set_textbox(child)
+        return text_fragment.get_size()[0]
     elif isinstance(box, boxes.InlineBlockBox):
         pass
     elif isinstance(box, boxes.InlineLevelReplacedBox):
@@ -361,7 +370,6 @@ def breaking_inline_box(inlinebox, allocate_width):
         return (textbox, None)
     else:
         text_fragment.set_text_box(textbox)
-        
         textbox.width =  textbox.height = text_fragment.get_size()
         text_fragment = text.TextFragment(child.text)
 #    text_fragment
@@ -370,7 +378,7 @@ def breaking_inline_box(inlinebox, allocate_width):
 def breaking_textbox(textbox, allocate_width):
     """
     Cut the long TextBox that sticks out the LineBox only if the TextBox
-    can be cut with the line break
+    can be cut by a line break
     
     >>> breaking_inline_box(inlinebox, allocate_width)
     (first_element, second_element)
@@ -407,18 +415,15 @@ def breaking_textbox(textbox, allocate_width):
         )
     """
     text_fragment = text.TextLineFragment(allocate_width)
+    #set css style in TextLineFragment
     text_fragment.set_textbox(textbox)
-    textbox.width, textbox.height = text_fragment.get_size()
     textbox.text = text_fragment.get_text()
     if text_fragment.get_remaining_text() == "":
         return (textbox, None)
     else:
-        second_textbox = copy.copy(textbox)
+        # TODO: we need find a way to copy the TextBox less ressource comsuming
+        second_textbox = boxes.TextBox(textbox.element)
         second_textbox.text = text_fragment.get_remaining_text()
-        #This text_fragment have no limited width, we check the width later
-        text_fragment = text.TextFragment()
-        text_fragment.set_textbox(second_textbox)
-        second_textbox.width, second_textbox.height = text_fragment.get_size()
         return (textbox, second_textbox)
 
 
@@ -458,7 +463,8 @@ def breaking_line_box(linebox, width):
     children = list(linebox.children)
     lines = []
     while len(children) == 0:
-        line = boxes.LineBox()
+        # TODO: we need find a way to copy the LineBox less ressource comsuming
+        line = boxes.LineBox(linebox.element)
         insert_in_the_line(line, width, children)
         lines.append(line)
     return lines
@@ -477,9 +483,7 @@ def insert_in_the_line(line, width, elements):
         line.add_child(child)
         return insert_in_the_line(line, width, elements)
     else:
-        allocate_width = width - child_width
-        first_child, second_child = breaking_line_box_element(child,
-                                        allocate_width)
+        first_child, second_child = breaking_line_box_element(child, width)
         #If second element is None, it means we can't cut the child element
         if second_child is None:
             # We check if it will be the only element in the line
@@ -490,7 +494,8 @@ def insert_in_the_line(line, width, elements):
             else:
                 #Else we try to insert the element in the next line
                 elements.insert(0, first_child)
-                return line, elements
+                elements.insert(0, second_child)
+                return insert_in_the_line(line, width, elements)
         else:
             elements.insert(0, second_child)
             elements.insert(0, first_child)
