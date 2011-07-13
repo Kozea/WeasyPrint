@@ -22,6 +22,18 @@ import cairo
 from .css.computed_values import LENGTHS_TO_PIXELS
 
 
+class CairoContext(cairo.Context):
+    """
+    A cairo.Context with a few more helper methods.
+    """
+
+    def set_source_colorvalue(self, color):
+        """Set the source pattern from a cssutils ColorValue object."""
+        self.set_source_rgba(
+            color.red / 255., color.green / 255., color.blue / 255.,
+            color.alpha)
+
+
 def draw_background(context, box):
     bg_color = box.style['background-color'][0]
     if bg_color.alpha > 0:
@@ -30,8 +42,7 @@ def draw_background(context, box):
             box.position_y + box.margin_top,
             box.border_width,
             box.border_height)
-        context.set_source_rgba(
-            bg_color.red, bg_color.green, bg_color.blue, bg_color.alpha)
+        context.set_source_colorvalue(bg_color)
         context.fill()
 
 
@@ -55,7 +66,7 @@ def draw_page_to_png(page, file_like):
     """
     surface = cairo.ImageSurface(cairo.FORMAT_ARGB32,
         page.outer_width, page.outer_height)
-    context = cairo.Context(surface)
+    context = CairoContext(surface)
     draw_page(page, context)
     surface.write_to_png(file_like)
     surface.finish()
@@ -73,7 +84,7 @@ def draw_to_pdf(pages, file_like):
         surface.set_size(
             page.outer_width * px_to_pt,
             page.outer_height * px_to_pt)
-        context = cairo.Context(surface)
+        context = CairoContext(surface)
         context.scale(px_to_pt, px_to_pt)
         draw_page(page, context)
         surface.show_page()
