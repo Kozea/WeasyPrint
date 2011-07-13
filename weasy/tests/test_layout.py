@@ -232,7 +232,7 @@ def test_block_widths():
 def test_block_heights():
     page, = parse('''
         <style>
-            @page { margin: 0; size: 100px\t2000px }
+            @page { margin: 0; size: 100px 2000px }
             html, body { margin: 0 }
             div { margin: 4px; border-width: 2px; border-style: solid;
                   padding: 4px }

@@ -447,7 +447,7 @@ def compute_values(element, page_context):
     compute_border_width(element)
     compute_outline_width(element)
     compute_size(element, page_context)
-    # Recent enough cssutils have a .absolute_uri on URIValue objects.
+    # Recent enough cssutils have a .absoluteUri on URIValue objects.
     # TODO: percentages for height?
     #       http://www.w3.org/TR/CSS21/visudet.html#propdef-height
     # TODO: percentages for vertical-align. What about line-height: normal?

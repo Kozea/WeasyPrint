@@ -96,7 +96,7 @@ def test_annotate_document():
     a, = li[0]
     after = a.pseudo_elements['after']
 
-    assert h1.style['background-image'][0].absolute_uri == 'file://' \
+    assert h1.style['background-image'][0].absoluteUri == 'file://' \
         + os.path.abspath(resource_filename('logo_small.png'))
 
     assert h1.style.font_weight == '700'
