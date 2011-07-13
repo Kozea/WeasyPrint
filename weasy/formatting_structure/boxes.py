@@ -143,6 +143,18 @@ class Box(object):
     def border_height(self):
         return self.padding_height + self.border_top_width + \
             self.border_bottom_width
+    
+    @property
+    def h_content_spacing(self):
+        return self.margin_left + self.margin_right + \
+               self.padding_left + self.padding_right + \
+               self.border_left_width + self.border_right_width
+    
+    @property
+    def v_content_spacing(self):
+        return self.margin_top + self.margin_bottom + \
+               self.padding_top + self.padding_bottom + \
+               self.border_top_width + self.border_bottom_width
 
 
 class PageBox(Box):
@@ -246,6 +258,21 @@ class AnonymousBox(Box):
         # step here.
         css.assign_properties(pseudo)
         self.style = pseudo.style
+        # These properties are not inherited, that is why they are initialized
+        # to zero
+        self.margin_left = 0
+        self.margin_right = 0
+        self.padding_left = 0
+        self.padding_right = 0
+        self.border_left_width = 0
+        self.border_right_width = 0
+        
+        self.margin_top = 0
+        self.margin_bottom = 0
+        self.padding_top = 0
+        self.padding_bottom = 0
+        self.border_top_width = 0
+        self.border_bottom_width = 0
 
 
 class AnonymousBlockBox(AnonymousBox, BlockBox):
@@ -285,17 +312,6 @@ class InlineLevelBox(Box):
     An element with a 'display' value of 'inline', 'inline-table', or
     'inline-block' generates an inline-level box.
     """
-    @property
-    def h_content_spacing(self):
-        return self.margin_left + self.margin_right + \
-               self.padding_left + self.padding_right + \
-               self.border_left_width + self.border_right_width
-    
-    @property
-    def v_content_spacing(self):
-        return self.margin_top + self.margin_bottom + \
-               self.padding_top + self.padding_bottom + \
-               self.border_top_width + self.border_bottom_width
 
 
 class InlineBox(InlineLevelBox, ParentBox):

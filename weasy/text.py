@@ -45,11 +45,11 @@ class TextFragment(object):
     
     def set_textbox(self, textbox):
         self.set_text(textbox.text)
-#        self.set_font_family(textbox.style.property['font_family'])
-#        self.set_font_variant(textbox.style.property['font_family'])
-#        self.set_font_weight(textbox.style.property['font_family'])
-#        self.set_font_style(textbox.style.property['font_family'])
-#        self.set_letter_spacing(textbox.style.property['font_family'])
+        self.set_font_family(textbox.style.font_family)
+        #self.set_font_variant(textbox.style.font_variant)
+        #self.set_font_weight(textbox.style.font_weight)
+        #self.set_font_style(textbox.style.font_style)
+        #self.set_letter_spacing(textbox.style.letter_spacing)
     
     def _update_font(self):
         self.layout.set_font_description(self._font)
@@ -272,7 +272,7 @@ class TextFragment(object):
         self._set_attribute(rise)
     
 class TextLineFragment(TextFragment):
-    def __init__(self, text=None, width=None):
+    def __init__(self, text="", width=None):
         super(TextLineFragment, self).__init__(text, width)
 
     def get_layout(self):
@@ -285,11 +285,11 @@ class TextLineFragment(TextFragment):
 
     def get_remaining_text(self):
         first_line = self.layout.get_line(0)
-        return super(TextLineFragment, self).get_text()[first_line.length:]
+        return self.layout.get_text()[first_line.length:].decode('utf-8')
     
     def get_text(self):
         first_line = self.layout.get_line(0)
-        return super(TextLineFragment, self).get_text()[:first_line.length]
+        return self.layout.get_text()[:first_line.length].decode('utf-8')
     
     def get_size(self):
         """ Return the real text area dimension for this line in px unit """

@@ -255,3 +255,68 @@ def test_block_heights():
 
     assert divs[0].height == 90
     assert divs[1].height == 90 * 3
+
+@suite.test
+def test_breaking_textbox():
+    page, = parse('''
+        <style>
+            p { font-size:16px }
+        </style>
+        <p>Thisisthetextforthetest. This is the text for the test.</p>
+    ''')
+    html = page.root_box
+    body = html.children[0]
+    p = body.children[0]
+    linebox = p.children[0]
+    assert len(linebox.children) == 1
+    root_tb = linebox.children[0]
+
+    first_tb, second_tb = layout.breaking_textbox(root_tb,40)
+    merge_string = "%s%s" % (first_tb.text, second_tb.text)
+    assert first_tb.text == "Thisisthetextforthetest. "
+    assert second_tb.text == "This is the text for the test."
+    assert root_tb.text == merge_string
+
+    new_first_tb, new_second_tb = layout.breaking_textbox(first_tb,40)
+    assert new_second_tb is None
+    assert new_first_tb.text == first_tb.text
+    assert new_first_tb.style.font_size == first_tb.style.font_size
+
+@suite.test
+def test_breaking_linebox_with_just_textbox():
+    page, = parse('''
+        <style>
+            p { font-size:20px }
+        </style>
+        <p>Lorem Ipsum is simply dummy text of the printing and.</p>''')
+    html = page.root_box
+    body = html.children[0]
+    p = body.children[0]
+    linebox = p.children[0]
+    breaking_lines = layout.breaking_linebox(linebox,150)
+    assert len(breaking_lines) == 3
+    for line in breaking_lines:
+        assert line.width < 150
+        assert line.style.font_size == 20
+        assert line.element.tag == 'p'
+        print line.children
+        # TODO: check the content of the line ...
+#        assert len(line.children) == 1
+        assert line.children[0].element.tag == 'p'
+
+@suite.test
+def test_breaking_linebox():
+    page, = parse('''
+        <style>
+            p { font-size:20px }
+        </style>
+        <p>Lorem<strong> Ipsum <span style="font-family:Courier New, Courier, Prestige, monospace;">is</span> simply</strong><em>dummy</em> text of the printing and.</p>''')
+    html = page.root_box
+    body = html.children[0]
+    p = body.children[0]
+    linebox = p.children[0]
+
+    assert len(linebox.children) == 4
+#    breaking_lines = layout.breaking_linebox(linebox,150)
+#    for line in breaking_lines:
+#        assert line.element.tag == 'p'
