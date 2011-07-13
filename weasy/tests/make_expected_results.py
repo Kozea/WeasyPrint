@@ -38,12 +38,12 @@ def make_all():
     transparent = array('B', [0, 0, 0, 0])
     blue = array('B', [0, 0, 255, 255])
 
-    width = 10
     transparent_line = transparent * 10
-    blue_line = transparent * 2 + blue * (width - 4) + transparent * 2
 
-    make('blocks', [transparent_line] * 2 + [blue_line] * 5 +
-                   [transparent_line] * 3)
+    make('blocks',
+        2 * [transparent_line] +
+        5 * [2 * transparent + 6 * blue + 2 * transparent] +
+        3 * [transparent_line])
 
 
 if __name__ == '__main__':

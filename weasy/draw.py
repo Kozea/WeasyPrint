@@ -22,28 +22,31 @@ import cairo
 from .css.computed_values import LENGTHS_TO_PIXELS
 
 
-def draw_box(box, context):
+def draw_background(context, box):
     bg_color = box.style['background-color'][0]
-    print box.element, bg_color
     if bg_color.alpha > 0:
         context.rectangle(
             box.position_x + box.margin_left,
             box.position_y + box.margin_top,
             box.border_width,
             box.border_height)
-        context.set_source_rgba(bg_color.red, bg_color.green, bg_color.blue,
-                                bg_color.alpha)
+        context.set_source_rgba(
+            bg_color.red, bg_color.green, bg_color.blue, bg_color.alpha)
         context.fill()
 
+
+def draw_box(context, box):
+    draw_background(context, box)
+
     for child in box.children:
-        draw_box(child, context)
+        draw_box(context, child)
 
 
 def draw_page(page, context):
     """
     Draw the given PageBox to a Cairo context.
     """
-    draw_box(page.root_box, context)
+    draw_box(context, page.root_box)
 
 
 def draw_page_to_png(page, file_like):
@@ -68,10 +71,10 @@ def draw_to_pdf(pages, file_like):
     for page in pages:
         # Actual page size is here. May be different between pages.
         surface.set_size(
-            page.outer_width / LENGTHS_TO_PIXELS['pt'],
-            page.outer_height / LENGTHS_TO_PIXELS['pt'])
+            page.outer_width * px_to_pt,
+            page.outer_height * px_to_pt)
         context = cairo.Context(surface)
         context.scale(px_to_pt, px_to_pt)
         draw_page(page, context)
         surface.show_page()
-        surface.finish()
+    surface.finish()
