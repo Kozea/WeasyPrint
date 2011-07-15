@@ -286,17 +286,17 @@ def test_breaking_textbox():
 def test_breaking_linebox_with_just_textbox():
     page, = parse('''
         <style>
-            p { font-size:20px }
+            p { font-size:20px; width:150px; }
         </style>
         <p>Lorem Ipsum is simply dummy text of the printing and.</p>''')
     html = page.root_box
     body = html.children[0]
     p = body.children[0]
     linebox = p.children[0]
-    breaking_lines = layout.breaking_linebox(linebox,150)
-    assert len(breaking_lines) == 3
+
+    breaking_lines = layout.breaking_linebox(linebox)
     for line in breaking_lines:
-        assert line.width < 150
+        assert line.width <= 150
         assert line.style.font_size == 20
         assert line.element.tag == 'p'
         print line.children

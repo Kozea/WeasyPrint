@@ -126,6 +126,11 @@ class Box(object):
                         return ancestor.width, ancestor.height
         assert False, 'Containing block not found'
 
+    def copy(self):
+        """ Return copy of the box """
+        # TODO: we need find a way to copy the box less ressource comsuming
+        return Box(self.element)
+
     @property
     def padding_width(self):
         return self.width + self.padding_left + self.padding_right
@@ -143,15 +148,15 @@ class Box(object):
     def border_height(self):
         return self.padding_height + self.border_top_width + \
             self.border_bottom_width
-    
+
     @property
-    def h_content_spacing(self):
+    def horizontal_spacing(self):
         return self.margin_left + self.margin_right + \
                self.padding_left + self.padding_right + \
                self.border_left_width + self.border_right_width
-    
+
     @property
-    def v_content_spacing(self):
+    def vertical_spacing(self):
         return self.margin_top + self.margin_bottom + \
                self.padding_top + self.padding_bottom + \
                self.border_top_width + self.border_bottom_width
@@ -216,6 +221,11 @@ class ParentBox(Box):
             else:
                 yield child
 
+    def copy(self):
+        """ Return copy of the box without children """
+        # TODO: we need find a way to copy the box less ressource comsuming
+        return ParentBox(self.element)
+
 
 class BlockLevelBox(Box):
     """
@@ -266,7 +276,7 @@ class AnonymousBox(Box):
         self.padding_right = 0
         self.border_left_width = 0
         self.border_right_width = 0
-        
+
         self.margin_top = 0
         self.margin_bottom = 0
         self.padding_top = 0
@@ -334,6 +344,12 @@ class TextBox(AnonymousBox, InlineLevelBox):
     def __init__(self, element, text):
         super(TextBox, self).__init__(element)
         self.text = text
+
+    def copy(self, new_text=None):
+        if new_text is None:
+            return TextBox(self.element, self.text)
+        else:
+            return TextBox(self.element, new_text)
 
 
 class InlineBlockBox(InlineLevelBox, BlockContainerBox):

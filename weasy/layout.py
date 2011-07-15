@@ -20,7 +20,6 @@
 from .formatting_structure import boxes
 from .utils import MultiFunction
 from .css import computed_values
-import copy
 import text
 
 
@@ -261,13 +260,8 @@ def block_level_height(box):
 @compute_dimensions.register(boxes.LineBox)
 def line_dimensions(box):
     # TODO: real line box height
-#    box.height = box.style.line_height
+    # box.height = box.style.line_height
     box.height = 0
-
-
-@compute_dimensions.register(boxes.InlineBlockBox)
-def inline_block_box_breaking(box):
-    pass
 
 
 def layout(root_box):
@@ -281,42 +275,93 @@ def layout(root_box):
     # TODO: do page breaks, split boxes into multiple pages
     return pages
 
-def flatten_inline_box_tree(inlinebox):
+def breaking_linebox(linebox):
     """
-    Return all children TextBox in a flatten tree (list)
     Eg.
+
+    LineBox[
         InlineBox[
-            TextBox('first'),
-            InlineBox[
-                TextBox('second')
-            ]
-            TextBox('third')
+            TextBox('Hello.'),
+        ],
+        InlineBox[
+            InlineBox[TextBox('Word :D')],
+            TextBox('This is a long long long text'),
         ]
+    ]
 
     is turned into
 
-        [
-            TextBox('first'), # with inherits properties
-            TextBox('second'),# with inherits properties
-            TextBox('third') # with inherits properties
+    [
+        LineBox[
+            InlineBox[
+                TextBox('Hello.'),
+            ],
+            InlineBox[
+                InlineBox[TextBox('Word :D')],
+                TextBox('This is a long'),
+            ]
+        ], LineBox[
+            InlineBox[
+                TextBox(' long long text'),
+            ]
         ]
-
+    ]
     """
-    for decendent in inlinebox.descendants():
-        if isinstance(inlinebox, boxes.TextBox):
-            yield decendent
+    cb_width = linebox.containing_block_size()[0]
+    children = list(linebox.children)
+    lines = []
+    while len(children) != 0:
+        # We copy the linebox without children
+        line = linebox.copy()
+        insert_in_the_linebox(line, cb_width, children)
+        widths, heights = ([], [])
+        for child in line.children:
+            widths.append(child.width + child.horizontal_spacing)
+            heights.append(child.height + child.vertical_spacing)
+        # TODO:We need manage the collapse of margin
+        line.width, line.height = sum(widths), max(heights)
+        lines.append(line)
+    return lines
+
+def insert_in_the_linebox(linebox, width, children):
+    """ Insert the maximum children in the line before the line break """
+    if width == 0 or len(children) == 0:
+        return linebox, children
+    child = children.pop(0)
+    #If first element is None, then it means we force the line break
+    if child is None:
+        return linebox, children
+    child_width = compute_linebox_width_element(child)
+    if child_width <= width:
+        width -= child_width
+        linebox.add_child(child)
+        return insert_in_the_linebox(linebox, width, children)
+    else:
+        first_child, second_child = breaking_linebox_child(child, width)
+        #If second element is None, it means we can't cut the child element
+        if second_child is None:
+            # We check if it will be the only element in the line
+            if len(linebox.children) == 0:
+                #Then we add the element in the line and force the line break
+                linebox.add_child(first_child)
+                return linebox, children
+            else:
+                #Else we try to insert the element in the next line
+                children.insert(0, first_child)
+                children.insert(0, second_child)
+                return insert_in_the_linebox(linebox, width, children)
+        else:
+            children.insert(0, second_child)
+            children.insert(0, first_child)
+        return insert_in_the_linebox(linebox, width, children)
 
 def compute_linebox_width_element(box):
     """Add the width and height in the box attributes and return total width."""
     sum_width = 0
     max_height = 0
-    #This text_fragment have no limited width, we check the width later
-    #text_fragment = text.TextFragment()
-    #text_fragment.set_textbox(second_textbox)
-    #second_textbox.width, second_textbox.height = text_fragment.get_size()
     if isinstance(box, boxes.InlineBox):
         children_heights = []
-        for child in flatten_inline_box_tree(inlinebox):
+        for child in inline_box_children(inlinebox):
             #set css style in TextLineFragment
             text_fragment = text.TextLineFragment()
             text_fragment.set_textbox(child)
@@ -335,16 +380,70 @@ def compute_linebox_width_element(box):
     elif isinstance(box, boxes.InlineLevelReplacedBox):
         pass
 
-def breaking_linebox_element(box, allocate_width):
+def inlinebox_children_size(inlinebox):
+    """ Return something :(
+    the horizontal_spacing and the vertical_spacing of all its ancestors
+    """
+    for child in flatten_inlinebox_tree(inlinebox):
+        if isinstance(child, boxes.TextBox):
+            horizontal_spacing = 0
+            vertical_spacing = 0
+            # return the branch between a decendent and an ancestor
+            for ancestor in child.ancestors():
+                if ancestor != inlinebox:
+                    horizontal_spacing += ancestor.horizontal_spacing
+                    vertical_spacing += ancestor.vertical_spacing
+            text_fragment = text.TextLineFragment()
+            text_fragment.set_textbox(child)
+            child.width, child.height = text_fragment.get_size()
+            yield child.width, child.height
+        elif isinstance(child, boxes.InlineBlockBox):
+            raise NotImplementedError
+        elif isinstance(child, boxes.InlineLevelReplacedBox):
+            raise NotImplementedError
+
+
+def flatten_inlinebox_tree(inlinebox):
+    """
+    Return all children TextBox in a flatten tree (list)
+    Eg.
+        InlineBox[
+            TextBox('first'),
+            InlineBox[
+                TextBox('second')
+            ]
+            TextBox('third')
+        ]
+
+    is turned into
+
+        [
+            TextBox('first'),
+            TextBox('second'),
+            TextBox('third')
+        ]
+    """
+    for child in inlinebox.children:
+        if isinstance(child, boxes.InlineBox):
+            yield flatten_inlinebox_tree(child)
+        elif isinstance(child, boxes.TextBox):
+            yield child
+        elif isinstance(child, boxes.InlineBlockBox):
+            raise NotImplementedError
+        elif isinstance(child, boxes.InlineLevelReplacedBox):
+            raise NotImplementedError
+
+
+def breaking_linebox_child(box, allocate_width):
     """ Cut the Box that sticks out the LineBox"""
     if isinstance(box, boxes.InlineBox):
         return breaking_inlinebox(box, allocate_width)
     elif isinstance(box, boxes.TextBox):
         return breaking_textbox(box, allocate_width)
     elif isinstance(box, boxes.InlineBlockBox):
-        pass
+        raise NotImplementedError
     elif isinstance(box, boxes.InlineLevelReplacedBox):
-        pass
+        raise NotImplementedError
 
 def breaking_inlinebox(inlinebox, allocate_width):
     """
@@ -369,6 +468,8 @@ def breaking_inlinebox(inlinebox, allocate_width):
             ]
         ]
     """
+    # TODO: finish this function...:'(
+    raise NotImplementedError
     allocate_width -= textbox.h_spacing_content
     if allocate_width < 0:
         text_fragment = text.TextLineFragment()
@@ -379,26 +480,14 @@ def breaking_inlinebox(inlinebox, allocate_width):
         text_fragment.set_text_box(textbox)
         textbox.width =  textbox.height = text_fragment.get_size()
         text_fragment = text.TextFragment(child.text)
-#    text_fragment
     return ()
-
-
-def copy_textbox(textbox, new_text):
-    """ Return copy of the textbox with the new text """
-    # TODO: we need find a way to copy the TextBox less ressource comsuming
-    return boxes.TextBox(textbox.element, new_text)
-
-def copy_linebox(linebox):
-    """ Return copy of the linebox without children """
-    # TODO: we need find a way to copy the LineBox less ressource comsuming
-    return boxes.LineBox(linebox.element)
 
 def breaking_textbox(textbox, allocate_width):
     """
     Cut the long TextBox that sticks out the LineBox only if the TextBox
     can be cut by a line break
 
-    >>> breaking_inline_box(textbox, allocate_width)
+    >>> breaking_textbox(textbox, allocate_width)
     (first_element, second_element)
 
     Eg.
@@ -436,91 +525,11 @@ def breaking_textbox(textbox, allocate_width):
     #set css style in TextLineFragment
     text_fragment.set_textbox(textbox)
     # We create a new TextBox with the first part of the cutting text
-    first_textbox = copy_textbox(textbox, text_fragment.get_text())
+    first_textbox = textbox.copy(text_fragment.get_text())
     # And we check the remaining text
     if text_fragment.get_remaining_text() == "":
         return (first_textbox, None)
     else:
         text_second_tb = text_fragment.get_remaining_text()
-        second_textbox = copy_textbox(textbox, text_second_tb)
+        second_textbox = textbox.copy(text_second_tb)
         return (first_textbox, second_textbox)
-
-
-def breaking_linebox(linebox, width):
-    """
-    Eg.
-
-    LineBox[
-        InlineBox[
-            TextBox('Hello.'),
-        ],
-        InlineBox[
-            InlineBox[TextBox('Word :D')],
-            TextBox('This is a long long long text'),
-        ]
-    ]
-
-    is turned into
-
-    [
-        LineBox[
-            InlineBox[
-                TextBox('Hello.'),
-            ],
-            InlineBox[
-                InlineBox[TextBox('Word :D')],
-                TextBox('This is a long'),
-            ]
-        ], LineBox[
-            InlineBox[
-                TextBox(' long long text'),
-            ]
-        ]
-    ]
-    """
-    cb_width, cb_height = linebox.containing_block_size()
-    children = list(linebox.children)
-    lines = []
-    while len(children) != 0:
-        # TODO: we need find a way to copy the LineBox less ressource comsuming
-        line = copy_linebox(linebox)
-        insert_in_the_linebox(line, width, children)
-        widths, height = ([], [])
-        for child in line.children:
-            widths.append(child.width + child.h_content_spacing)
-            height.append(child.height + child.v_content_spacing)
-        line.width, line.height = sum(widths), max(height)
-        lines.append(line)
-    return lines
-
-def insert_in_the_linebox(linebox, width, children):
-    """ Insert the maximum children in the line before the line break """
-    if width == 0 or len(children) == 0:
-        return linebox, children
-    child = children.pop(0)
-    #If first element is None, then it means we force the line break
-    if child is None:
-        return linebox, children
-    child_width = compute_linebox_width_element(child)
-    if child_width <= width:
-        width -= child_width
-        linebox.add_child(child)
-        return insert_in_the_linebox(linebox, width, children)
-    else:
-        first_child, second_child = breaking_linebox_element(child, width)
-        #If second element is None, it means we can't cut the child element
-        if second_child is None:
-            # We check if it will be the only element in the line
-            if len(linebox.children) == 0:
-                #Then we add the element in the line and force the line break
-                linebox.add_child(first_child)
-                return linebox, children
-            else:
-                #Else we try to insert the element in the next line
-                children.insert(0, first_child)
-                children.insert(0, second_child)
-                return insert_in_the_linebox(linebox, width, children)
-        else:
-            children.insert(0, second_child)
-            children.insert(0, first_child)
-        return insert_in_the_linebox(linebox, width, children)
