@@ -395,6 +395,11 @@ def assign_properties(element, page_context=False):
         # only, not by property in case of equal precedence.
         precedence, _property = applicable_property
         return precedence
+    # Note: sorting is the easy way, but requires O(n*log(n)) time.
+    # We only need to keep value with the highest score for each property.
+    # Since we don’t care about sorting the other values, this could be done
+    # in O(n) time.
+    # TODO: re-implement this if it is a bottleneck, but profile both methods.
     element.applicable_properties.sort(key=sort_key)
     element.style = style = StyleDict()
     for precedence, prop in element.applicable_properties:
