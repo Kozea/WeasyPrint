@@ -35,6 +35,9 @@ r"""
 """
 # Do not list shorthand properties here as we handle them before inheritance:
 # font, list-style
+#
+# text-decoration is not a realy inherited property
+# See : http://www.w3.org/TR/CSS2/text.html#propdef-text-decoration
 INHERITED = set("""
     azimuth
     border-collapse
@@ -67,6 +70,7 @@ INHERITED = set("""
     speech-rate
     stress
     text-align
+    text-decoration
     text-indent
     text-transform
     visibility
@@ -105,4 +109,3 @@ def handle_inheritance(element):
             # actually missing.
             if name not in style:
                 style[name] = parent.style[name]
-
