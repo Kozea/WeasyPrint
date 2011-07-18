@@ -33,26 +33,50 @@ VARIANT_PROPERTIES = {'normal':pango.VARIANT_NORMAL,
 
 
 class TextFragment(object):
-    def __init__(self, text="", width=None):
+    def __init__(self, text="", width=-1):
         # TODO: find a way to use surface object since the beginning..
         surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, 400, 400)
         cr = pangocairo.CairoContext(cairo.Context(surface))
         self.layout = cr.create_layout()
         self.set_text(text)
-        if width is not None:
-            self.set_width(width)
-#        self._set_attribute(pango.AttrFallback(True, 0, -1))
+        # If fallback is True other fonts on the system can be used to provide
+        # characters missing from the current font. Otherwise, only characters
+        # from the closest matching font can be used.
+        #
+        # See : http://www.pygtk.org/docs/pygtk/class-pangoattribute.html
+        self._set_attribute(pango.AttrFallback(True, 0, -1))
+        self.set_width(width)
 
         # Other properties
         self.layout.set_wrap(pango.WRAP_WORD)
 
     def set_textbox(self, textbox):
         self.set_text(textbox.text)
-        self.set_font_family(textbox.style.font_family)
-        #self.set_font_variant(textbox.style.font_variant)
-        #self.set_font_weight(textbox.style.font_weight)
-        #self.set_font_style(textbox.style.font_style)
-        #self.set_letter_spacing(textbox.style.letter_spacing)
+        font = ', '.join(v.cssText for v in textbox.style['font-family'])
+        self.set_font_family(font)
+        self.set_alignment(textbox.style.text_align)
+        self.set_font_variant(textbox.style.font_variant)
+        self.set_font_weight(int(textbox.style.font_weight))
+        self.set_font_style(textbox.style.font_style)
+        if isinstance(textbox.style.letter_spacing, int):
+            self.set_letter_spacing(textbox.style.letter_spacing)
+        if textbox.style.text_decoration == "none":
+            self.set_underline(False)
+            self.set_line_through(False)
+            # TODO: Implement overline in TextFragment
+            #set_overline(False)
+        else:
+            if 'overline' in textbox.style.text_decoration:
+                # TODO: Implement overline in TextFragment
+                #set_overline(False)
+                pass
+            if 'underline' in textbox.style.text_decoration:
+                self.set_underline(True)
+            if 'line-through' in textbox.style.text_decoration:
+                self.set_line_through(True)
+        self.set_foreground(textbox.style.color)
+        if textbox.style.background_color != 'transparent':
+            self.set_background(textbox.style.color)
 
     def _update_font(self):
         self.layout.set_font_description(self._font)
@@ -105,23 +129,34 @@ class TextFragment(object):
         return self._width
 
     def set_width(self, value):
-        self._width = value
-        self.layout.set_width(pango.SCALE * value)
+        """
+        Set the desired width, or -1 to indicate that no wrapping should be
+        performed.
+        """
+        if value != -1:
+            value = pango.SCALE * value
+        self.layout.set_width(value)
 
     def get_spacing(self):
-        """ Return the spacing. """
+        """Return the horizontal spacing (between the lines). """
         return self.layout.get_spacing() / pango.SCALE
 
     def set_spacing(self, value):
+        """ sets the spacing between the lines of the layout. """
         self.layout.set_spacing(pango.SCALE * value)
 
     def get_alignment(self):
+        """Return the default alignment of text in layout."""
         alignment = self.layout.get_alignment()
         for key in ALIGN_PROPERTIES:
             if ALIGN_PROPERTIES[key] == alignment:
                 return key
 
     def set_alignment(self, alignment):
+        """Sets the default alignment of text in layout.
+        The value of alignment must be one of:
+        ["left", "center", "right"]
+        """
         if alignment in ("left", "center", "right"):
             self.layout.set_alignment(ALIGN_PROPERTIES[alignment])
         else:
@@ -140,7 +175,7 @@ class TextFragment(object):
     def set_font_family(self, value):
         """
         value is list of font like this :
-        set_font_family("Al Mawash Bold, Comic sans MS")
+        >> set_font_family("Al Mawash Bold, Comic sans MS")
         """
         self.font.set_family(value.encode("utf-8"))
         self._update_font()
@@ -163,7 +198,7 @@ class TextFragment(object):
         with oblique fonts and vice-versa if an exact match is not found.
         """
         if value in STYLE_PROPERTIES.keys():
-            self.font.set_style(value)
+            self.font.set_style(STYLE_PROPERTIES[value])
             self._update_font()
         else:
             raise ValueError('The style property must be in %s' \
@@ -193,7 +228,7 @@ class TextFragment(object):
         pango.VARIANT_SMALL_CAPS
         """
         if value in VARIANT_PROPERTIES.keys():
-            self.font.set_variant(value)
+            self.font.set_variant(VARIANT_PROPERTIES[value])
             self._update_font()
         else:
             raise ValueError('The style property must be in %s' \
@@ -271,7 +306,7 @@ class TextFragment(object):
         self._set_attribute(rise)
 
 class TextLineFragment(TextFragment):
-    def __init__(self, text="", width=None):
+    def __init__(self, text="", width=-1):
         super(TextLineFragment, self).__init__(text, width)
 
     def get_layout(self):
@@ -292,10 +327,10 @@ class TextLineFragment(TextFragment):
 
     def get_size(self):
         """ Return the real text area dimension for this line in px unit """
-#        extents = self.layout.get_line(0).get_pixel_extents()[1]
-#        return (extents[2]-extents[0], extents[3]-extents[1])
+        extents = self.layout.get_line(0).get_pixel_extents()[1]
+        return (extents[2]-extents[0], extents[3]-extents[1])
         # What's the size ? the size of the line, or the size of a layoutLine ?
-        return self.get_layout().get_pixel_size()
+#        return self.get_layout().get_pixel_size()
 
     def get_logical_extents(self):
         return self.layout.get_line(0).get_pixel_extents()[1]

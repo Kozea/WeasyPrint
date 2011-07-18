@@ -346,7 +346,7 @@ def insert_in_the_linebox(linebox, width, children):
                 linebox.add_child(first_child)
                 return linebox, children
             else:
-                #Else we try to insert the element in the next line
+                # Else we try to insert the element in the next line
                 children.insert(0, first_child)
                 children.insert(0, second_child)
                 return insert_in_the_linebox(linebox, width, children)
@@ -361,7 +361,7 @@ def compute_linebox_width_element(box):
     max_height = 0
     if isinstance(box, boxes.InlineBox):
         children_heights = []
-        for child in inline_box_children(inlinebox):
+        for child in inlinebox_children_size(inlinebox):
             #set css style in TextLineFragment
             text_fragment = text.TextLineFragment()
             text_fragment.set_textbox(child)
@@ -522,7 +522,7 @@ def breaking_textbox(textbox, allocate_width):
         )
     """
     text_fragment = text.TextLineFragment(width=allocate_width)
-    #set css style in TextLineFragment
+    # Set css style in TextLineFragment
     text_fragment.set_textbox(textbox)
     # We create a new TextBox with the first part of the cutting text
     first_textbox = textbox.copy(text_fragment.get_text())

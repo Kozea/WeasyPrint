@@ -260,7 +260,7 @@ def test_block_heights():
 def test_breaking_textbox():
     page, = parse('''
         <style>
-            p { font-size:16px }
+            p { font-size:16px; text-decoration : underline;}
         </style>
         <p>Thisisthetextforthetest. This is the text for the test.</p>
     ''')
@@ -284,11 +284,23 @@ def test_breaking_textbox():
 
 @suite.test
 def test_breaking_linebox_with_only_textbox():
-    page, = parse('''
+    width = 150
+    font_size = 20
+    page = u'''
         <style>
-            p { font-size:20px; width:150px; }
+        p { font-size:%(font_size)spx;
+            width:%(width)spx;
+            background-color:#393939;
+            color:#FFFFFF;
+            font-family: Arial, Helvetica, sans-serif;
+            text-align:center;
+            line-height:1;
+            text-decoration : underline overline line-through;
+        }
         </style>
-        <p>Lorem Ipsum is simply dummy text of the printing and.</p>''')
+        <p>Lorem Ipsum is simply dummy text of the printing and.</p>
+    '''
+    page, = parse(page % locals())
     html = page.root_box
     body = html.children[0]
     p = body.children[0]
@@ -301,31 +313,39 @@ def test_breaking_linebox_with_only_textbox():
     def linebox_children_properties(line):
         for l in line.children:
             yield l.element.tag, l.style.font_size
-
     breaking_lines = layout.breaking_linebox(linebox)
-
+    # TODO: Check why there is more than one child in the lines
     for i, line in enumerate(breaking_lines):
-        assert line.width <= 150
-        assert line.style.font_size == 20
+        assert line.width <= width
+        assert line.style.font_size == font_size
         assert line.element.tag == 'p'
         assert sum(linebox_children_width(line)) <= line.width
         for child_tag, child_font_size in linebox_children_properties(line):
              assert child_tag == 'p'
-             assert child_font_size == 20
+             assert child_font_size == font_size
 
 @suite.test
 def test_breaking_linebox():
     page, = parse('''
         <style>
-            p { font-size:20px }
+            p { font-size:20px;
+                text-decoration : underline;
+            }
+            span {
+                font-family:Courier New, Courier, Prestige, monospace;
+            }
         </style>
-        <p>Lorem<strong> Ipsum <span style="font-family:Courier New, Courier, Prestige, monospace;">is</span> simply</strong><em>dummy</em> text of the printing and.</p>''')
+        <p>Lorem<strong> Ipsum <span>is</span> simply</strong><em>dummy</em>
+        text of the printing and.</p>''')
     html = page.root_box
     body = html.children[0]
     p = body.children[0]
     linebox = p.children[0]
 
     assert len(linebox.children) == 4
+#    breaking_lines = layout.breaking_linebox(linebox)
+
+#    1/0
 #    breaking_lines = layout.breaking_linebox(linebox,150)
 #    for line in breaking_lines:
 #        assert line.element.tag == 'p'
