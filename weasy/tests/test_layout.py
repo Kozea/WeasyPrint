@@ -283,7 +283,7 @@ def test_breaking_textbox():
     assert new_first_tb.style.font_size == first_tb.style.font_size
 
 @suite.test
-def test_breaking_linebox_with_just_textbox():
+def test_breaking_linebox_with_only_textbox():
     page, = parse('''
         <style>
             p { font-size:20px; width:150px; }
@@ -294,15 +294,24 @@ def test_breaking_linebox_with_just_textbox():
     p = body.children[0]
     linebox = p.children[0]
 
+    def linebox_children_width(line):
+        for l in line.children:
+            yield l.width
+
+    def linebox_children_properties(line):
+        for l in line.children:
+            yield l.element.tag, l.style.font_size
+
     breaking_lines = layout.breaking_linebox(linebox)
-    for line in breaking_lines:
+
+    for i, line in enumerate(breaking_lines):
         assert line.width <= 150
         assert line.style.font_size == 20
         assert line.element.tag == 'p'
-        print line.children
-        # TODO: check the content of the line ...
-#        assert len(line.children) == 1
-        assert line.children[0].element.tag == 'p'
+        assert sum(linebox_children_width(line)) <= line.width
+        for child_tag, child_font_size in linebox_children_properties(line):
+             assert child_tag == 'p'
+             assert child_font_size == 20
 
 @suite.test
 def test_breaking_linebox():
