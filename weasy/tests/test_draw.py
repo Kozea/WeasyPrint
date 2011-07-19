@@ -18,8 +18,6 @@
 
 
 import os.path
-from io import BytesIO
-from array import array
 
 import png
 from attest import Tests, assert_hook

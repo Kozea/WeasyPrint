@@ -17,7 +17,6 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import attest
 from attest import Tests, assert_hook
 import lxml.html
 

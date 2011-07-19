@@ -280,7 +280,7 @@ class TextFragment(object):
         self._set_attribute(underline)
 
     def set_overline(self, boolean):
-        raise NotImplemented("Overline is not implemented in pango ?")
+        raise NotImplementedError("Overline is not implemented in pango ?")
 
     def set_line_through(self, boolean):
         self._set_attribute(pango.AttrStrikethrough(boolean, 0, -1))

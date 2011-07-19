@@ -19,7 +19,6 @@
 
 from .formatting_structure import boxes
 from .utils import MultiFunction
-from .css import computed_values
 import text
 
 
