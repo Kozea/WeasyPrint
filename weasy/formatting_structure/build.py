@@ -25,7 +25,7 @@ including handling of anonymous boxes and whitespace processing.
 
 import re
 from .. import replaced
-from .boxes import *
+from . import boxes
 
 
 def build_formatting_structure(document):
@@ -66,9 +66,9 @@ def dom_to_box(element):
     replacement = replaced.get_replaced_element(element)
     if replacement:
         if display in ('block', 'list-item', 'table'):
-            box = BlockLevelReplacedBox(element, replacement)
+            box = boxes.BlockLevelReplacedBox(element, replacement)
         elif display in ('inline', 'inline-table', 'inline-block'):
-            box = InlineLevelReplacedBox(element, replacement)
+            box = boxes.InlineLevelReplacedBox(element, replacement)
         else:
             raise NotImplementedError('Unsupported display: ' + display)
         # The content is replaced, do not generate boxes for the element’s
@@ -76,23 +76,23 @@ def dom_to_box(element):
         return box
 
     if display in ('block', 'list-item'):
-        box = BlockBox(element)
+        box = boxes.BlockBox(element)
         #if display == 'list-item':
         #    TODO: add a box for the marker
     elif display == 'inline':
-        box = InlineBox(element)
+        box = boxes.InlineBox(element)
     elif display == 'inline-block':
-        box = InlineBlockBox(element)
+        box = boxes.InlineBlockBox(element)
     else:
         raise NotImplementedError('Unsupported display: ' + display)
 
     if element.text:
-        box.add_child(TextBox(element, element.text))
+        box.add_child(boxes.TextBox(element, element.text))
     for child_element in element:
         if child_element.style.display != 'none':
             box.add_child(dom_to_box(child_element))
         if child_element.tail:
-            box.add_child(TextBox(element, child_element.tail))
+            box.add_child(boxes.TextBox(element, child_element.tail))
 
     return box
 
@@ -177,23 +177,23 @@ def inline_in_block(box):
     for child_box in getattr(box, 'children', []):
         inline_in_block(child_box)
 
-    if not isinstance(box, BlockContainerBox):
+    if not isinstance(box, boxes.BlockContainerBox):
         return
 
-    line_box = LineBox(box.element)
+    line_box = boxes.LineBox(box.element)
     children = box.children
     box.children = []
     for child_box in children:
-        if isinstance(child_box, BlockLevelBox):
+        if isinstance(child_box, boxes.BlockLevelBox):
             if line_box.children:
                 # Inlines are consecutive no more: add this line box
                 # and create a new one.
-                anonymous = AnonymousBlockBox(box.element)
+                anonymous = boxes.AnonymousBlockBox(box.element)
                 anonymous.add_child(line_box)
                 box.add_child(anonymous)
-                line_box = LineBox(box.element)
+                line_box = boxes.LineBox(box.element)
             box.add_child(child_box)
-        elif isinstance(child_box, LineBox):
+        elif isinstance(child_box, boxes.LineBox):
             # Merge the line box we just found with the new one we are making
             for child in child_box.children:
                 line_box.add_child(child)
@@ -202,7 +202,7 @@ def inline_in_block(box):
     if line_box.children:
         # There were inlines at the end
         if box.children:
-            anonymous = AnonymousBlockBox(box.element)
+            anonymous = boxes.AnonymousBlockBox(box.element)
             anonymous.add_child(line_box)
             box.add_child(anonymous)
         else:
@@ -274,24 +274,24 @@ def block_in_inline(box):
     for child_box in getattr(box, 'children', []):
         block_in_inline(child_box)
 
-    if not (isinstance(box, BlockLevelBox) and box.parent
-            and isinstance(box.parent, InlineBox)):
+    if not (isinstance(box, boxes.BlockLevelBox) and box.parent
+            and isinstance(box.parent, boxes.InlineBox)):
         return
 
     # Find all ancestry until a line box.
     inline_parents = []
     for parent in box.ancestors():
         inline_parents.append(parent)
-        if not isinstance(parent, InlineBox):
-            assert isinstance(parent, LineBox)
+        if not isinstance(parent, boxes.InlineBox):
+            assert isinstance(parent, boxes.LineBox)
             parent_line_box = parent
             break
 
     # Add an anonymous block level box before the block box
-    if isinstance(parent_line_box.parent, AnonymousBlockBox):
+    if isinstance(parent_line_box.parent, boxes.AnonymousBlockBox):
         previous_anonymous_box = parent_line_box.parent
     else:
-        previous_anonymous_box = AnonymousBlockBox(
+        previous_anonymous_box = boxes.AnonymousBlockBox(
             parent_line_box.element)
         parent_line_box.parent.add_child(
             previous_anonymous_box, parent_line_box.index)
@@ -299,7 +299,7 @@ def block_in_inline(box):
         previous_anonymous_box.add_child(parent_line_box)
 
     # Add an anonymous block level box after the block box
-    next_anonymous_box = AnonymousBlockBox(parent_line_box.element)
+    next_anonymous_box = boxes.AnonymousBlockBox(parent_line_box.element)
     previous_anonymous_box.parent.add_child(
         next_anonymous_box, previous_anonymous_box.index + 1)
 
