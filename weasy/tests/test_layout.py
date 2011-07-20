@@ -20,6 +20,7 @@
 from attest import Tests, assert_hook
 import lxml.html
 
+from ..document import Document
 from .. import css
 from ..formatting_structure import boxes, build
 from .. import layout
@@ -32,10 +33,10 @@ def parse(html_content):
     """
     Parse some HTML, apply stylesheets, transform to boxes and do layout.
     """
-    document = lxml.html.document_fromstring(html_content)
+    document = Document.from_string(html_content)
     css.annotate_document(document)
-    box = build.build_formatting_structure(document)
-    return layout.layout(box)
+    build.build_formatting_structure(document)
+    return layout.layout(document)
 
 
 @suite.test

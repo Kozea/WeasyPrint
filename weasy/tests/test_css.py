@@ -17,16 +17,24 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os.path
+from cssutils.helper import path2url
+
 from attest import Tests, assert_hook
 import attest
 import cssutils
 
 from .. import css
+from ..document import Document
 
-from . import resource_filename, parse_html
+from . import resource_filename
 
 
 suite = Tests()
+
+
+def parse_html(filename):
+    """Parse an HTML file from the test resources and resolve relative URL."""
+    return Document.from_file(path2url(resource_filename(filename)))
 
 
 @suite.test
@@ -90,7 +98,7 @@ def test_annotate_document():
     css.annotate_document(document, [user_stylesheet], [ua_stylesheet])
 
     # Element objects behave a lists of their children
-    head, body = document
+    head, body = document.dom
     h1, p, ul = body
     li = list(ul)
     a, = li[0]
@@ -139,7 +147,7 @@ def test_annotate_document():
 def test_default_stylesheet():
     document = parse_html('doc1.html')
     css.annotate_document(document)
-    assert document.head.style.display == 'none', \
+    assert document.dom.head.style.display == 'none', \
         'The HTML4 user-agent stylesheet was not applied'
 
 

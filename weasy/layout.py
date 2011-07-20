@@ -263,16 +263,16 @@ def line_dimensions(box):
     box.height = 0
 
 
-def layout(root_box):
+def layout(document):
     """
     Take the block box for the root element, return a list of page boxes.
     """
-    pages = []
-    page = boxes.PageBox(root_box, 1)
+    document.pages = []
+    page = boxes.PageBox(document, document.formatting_structure, 1)
     page_dimensions(page)
-    pages.append(page)
+    document.pages.append(page)
     # TODO: do page breaks, split boxes into multiple pages
-    return pages
+    return document.pages
 
 def breaking_linebox(linebox):
     """

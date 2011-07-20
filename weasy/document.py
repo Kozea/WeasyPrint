@@ -16,8 +16,26 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os.path
+
+import lxml.html
 
 
-def resource_filename(basename):
-    return os.path.join(os.path.dirname(__file__), 'resources', basename)
+class Document(object):
+    def __init__(self, dom):
+        assert getattr(dom, 'tag') == 'html', (
+            'HTML document expected, got %r.' % (dom,))
+        self.dom = dom
+
+    @classmethod
+    def from_string(cls, source):
+        """
+        Make a document from an HTML string.
+        """
+        return cls(lxml.html.document_fromstring(source))
+
+    @classmethod
+    def from_file(cls, file_or_filename):
+        """
+        Make a document from a filename or open file object.
+        """
+        return cls(lxml.html.parse(file_or_filename).getroot())

@@ -30,12 +30,13 @@ from . import boxes
 
 def build_formatting_structure(document):
     """
-    Build a formatting structure (box tree) from a DOM document.
+    Build a formatting structure (box tree) from a Document.
     """
-    box = dom_to_box(document)
+    box = dom_to_box(document.dom)
     box = inline_in_block(box)
     box = block_in_inline(box)
     box = process_whitespace(box)
+    document.formatting_structure = box
     return box
 
 

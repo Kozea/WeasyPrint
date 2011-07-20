@@ -66,11 +66,11 @@ HTML4_DEFAULT_STYLESHEET = parseFile(os.path.join(os.path.dirname(__file__),
 PSEUDO_ELEMENTS = ('before', 'after', 'first-line', 'first-letter')
 
 
-def find_stylesheets(html_document):
+def find_stylesheets(document):
     """
-    Yield stylesheets from a DOM document.
+    Yield stylesheets from a Document object.
     """
-    for element in html_document.iter():
+    for element in document.dom.iter():
         mimetype = element.get('type')
         # Only keep 'type/subtype' from 'type/subtype ; param1; param2'.
         if mimetype and mimetype.split(';', 1)[0].strip() != 'text/css':
@@ -190,7 +190,7 @@ def expand_shorthands(stylesheet):
         # TODO: @font-face
 
 
-def build_lxml_proxy_cache(document):
+def build_lxml_proxy_cache(dom):
     """
     Build as needed a proxy cache for an lxml document.
 
@@ -205,8 +205,8 @@ def build_lxml_proxy_cache(document):
 
     [1] http://lxml.de/element_classes.html#element-initialization
     """
-    if not hasattr(document, 'proxy_cache'):
-        document.proxy_cache = list(document.iter())
+    if not hasattr(dom, 'proxy_cache'):
+        dom.proxy_cache = list(dom.iter())
 
 
 def declaration_precedence(origin, priority):
@@ -240,7 +240,7 @@ def apply_style_rule(rule, document, origin):
     Acceptable values for `origin` are the strings 'author', 'user' and
     'user agent'.
     """
-    build_lxml_proxy_cache(document)
+    build_lxml_proxy_cache(document.dom)
     selectors = []
     for selector in rule.selectorList:
         parsed_selector = cssselect.parse(selector.selectorText)
@@ -277,7 +277,7 @@ def apply_style_rule(rule, document, origin):
     # ignore he whole ruleset if just one selector is invalid.
     # TODO: test that ignoring actually happens.
     for selector, pseudo_type, specificity in selectors:
-        for element in selector(document):
+        for element in selector(document.dom):
             element = element.pseudo_elements[pseudo_type]
             for prop in rule.style:
                 # TODO: ignore properties that do not apply to the current
@@ -451,10 +451,10 @@ def annotate_document(document, user_stylesheets=None,
 
     Given stylesheets will be modified in place.
     """
-    build_lxml_proxy_cache(document)
+    build_lxml_proxy_cache(document.dom)
     # Do NOT use document.make_links_absolute() as it changes the tree,
     # and `content: attr(href)` should get the original attribute value.
-    for element in document.iter():
+    for element in document.dom.iter():
         element.applicable_properties = []
         element.pseudo_elements = PseudoElementDict(element)
 
@@ -479,8 +479,7 @@ def annotate_document(document, user_stylesheets=None,
                     apply_page_rule(rule, page_pseudo_elements, origin)
                 # TODO: handle @font-face, @namespace, @page, and @variables
 
-    build_lxml_proxy_cache(document)
-    for element in document.iter():
+    for element in document.dom.iter():
         handle_style_attribute(element)
 
         for element_or_pseudo_element in element.pseudo_elements.itervalues():

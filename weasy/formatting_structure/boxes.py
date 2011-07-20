@@ -172,7 +172,8 @@ class PageBox(Box):
     Initially the whole document will be in a single page box. During layout
     a new page box is created after every page break.
     """
-    def __init__(self, root_box, page_number):
+    def __init__(self, document, root_box, page_number):
+        self.document = document
         self.root_box = root_box
         self.root_box.parent = self
         # starting at 1 for the first page.
@@ -188,7 +189,7 @@ class PageBox(Box):
         page_type = 'right' if is_right else 'left'
         if self.page_number == 1:
             page_type = 'first_' + page_type
-        style = self.root_box.element.page_pseudo_elements[page_type].style
+        style = self.document.page_pseudo_elements[page_type].style
         # Copying might not be needed, but let’s be careful with mutable
         # objects.
         self.style = style.copy()
