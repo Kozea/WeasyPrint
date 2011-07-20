@@ -50,11 +50,11 @@ def dom_to_box(element):
     gives (not actual syntax)
 
         BlockBox[
-            TextBox('Some '),
+            TextBox['Some '],
             InlineBox[
-                TextBox('emphasised'),
+                TextBox['emphasised'],
             ],
-            TextBox(' text.'),
+            TextBox[' text.'],
         ]
 
     TextBox`es are anonymous inline boxes:
@@ -152,10 +152,10 @@ def inline_in_block(box):
     Eg.
 
         BlockBox[
-            TextBox('Some '),
-            InlineBox[TextBox('text')],
+            TextBox['Some '],
+            InlineBox[TextBox['text']],
             BlockBox[
-                TextBox('More text'),
+                TextBox['More text'],
             ]
         ]
 
@@ -164,13 +164,13 @@ def inline_in_block(box):
         BlockBox[
             AnonymousBlockBox[
                 LineBox[
-                    TextBox('Some '),
-                    InlineBox[TextBox('text')],
+                    TextBox['Some '],
+                    InlineBox[TextBox['text']],
                 ]
             ]
             BlockBox[
                 LineBox[
-                    TextBox('More text'),
+                    TextBox['More text'],
                 ]
             ]
         ]
@@ -226,16 +226,16 @@ def block_in_inline(box):
         BlockBox[
             LineBox[
                 InlineBox[
-                    TextBox('Hello.'),
+                    TextBox['Hello.'],
                 ],
                 InlineBox[
-                    TextBox('Some '),
+                    TextBox['Some '],
                     InlineBox[
-                        TextBox('text')
-                        BlockBox[LineBox[TextBox('More text')]],
-                        BlockBox[LineBox[TextBox('More text again')]],
+                        TextBox['text']
+                        BlockBox[LineBox[TextBox['More text']]],
+                        BlockBox[LineBox[TextBox['More text again']]],
                     ],
-                    BlockBox[LineBox[TextBox('And again.')]],
+                    BlockBox[LineBox[TextBox['And again.']]],
                 ]
             ]
         ]
@@ -246,23 +246,23 @@ def block_in_inline(box):
             AnonymousBlockBox[
                 LineBox[
                     InlineBox[
-                        TextBox('Hello.'),
+                        TextBox['Hello.'],
                     ],
                     InlineBox[
-                        TextBox('Some '),
-                        InlineBox[TextBox('text')],
+                        TextBox['Some '],
+                        InlineBox[TextBox['text']],
                     ]
                 ]
             ],
-            BlockBox[LineBox[TextBox('More text')]],
-            BlockBox[LineBox[TextBox('More text again')]],
+            BlockBox[LineBox[TextBox['More text']]],
+            BlockBox[LineBox[TextBox['More text again']]],
             AnonymousBlockBox[
                 LineBox[
                     InlineBox[
                     ]
                 ]
             ],
-            BlockBox[LineBox[TextBox('And again.')]],
+            BlockBox[LineBox[TextBox['And again.']]],
             AnonymousBlockBox[
                 LineBox[
                     InlineBox[

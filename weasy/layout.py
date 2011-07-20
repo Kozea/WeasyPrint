@@ -280,11 +280,11 @@ def breaking_linebox(linebox):
 
     LineBox[
         InlineBox[
-            TextBox('Hello.'),
+            TextBox['Hello.'],
         ],
         InlineBox[
-            InlineBox[TextBox('Word :D')],
-            TextBox('This is a long long long text'),
+            InlineBox[TextBox['Word :D']],
+            TextBox['This is a long long long text'],
         ]
     ]
 
@@ -293,15 +293,15 @@ def breaking_linebox(linebox):
     [
         LineBox[
             InlineBox[
-                TextBox('Hello.'),
+                TextBox['Hello.'],
             ],
             InlineBox[
-                InlineBox[TextBox('Word :D')],
-                TextBox('This is a long'),
+                InlineBox[TextBox['Word :D']],
+                TextBox['This is a long'],
             ]
         ], LineBox[
             InlineBox[
-                TextBox(' long long text'),
+                TextBox[' long long text'],
             ]
         ]
     ]
@@ -408,19 +408,19 @@ def flatten_inlinebox_tree(inlinebox):
     Return all children TextBox in a flatten tree (list)
     Eg.
         InlineBox[
-            TextBox('first'),
+            TextBox['first'],
             InlineBox[
-                TextBox('second')
+                TextBox['second']
             ]
-            TextBox('third')
+            TextBox['third']
         ]
 
     is turned into
 
         [
-            TextBox('first'),
-            TextBox('second'),
-            TextBox('third')
+            TextBox['first'],
+            TextBox['second'],
+            TextBox['third']
         ]
     """
     for child in inlinebox.children:
@@ -451,20 +451,20 @@ def breaking_inlinebox(inlinebox, allocate_width):
 
     Eg.
         InlineBox[
-            InlineBox[TextBox('Hello ')],
-            TextBox('This is a long long long long text'),
-            InlineBox[TextBox('Word !!')],
+            InlineBox[TextBox['Hello ']],
+            TextBox['This is a long long long long text'],
+            InlineBox[TextBox['Word !!']],
         ]
 
     is turned into
 
         [
             InlineBox[
-                InlineBox[TextBox('Hello :D')],
-                TextBox('This is a long')
+                InlineBox[TextBox['Hello :D']],
+                TextBox['This is a long']
             ], InlineBox[
-                TextBox('long long long text'),
-                InlineBox[TextBox('Word !!')],
+                TextBox['long long long text'],
+                InlineBox[TextBox['Word !!']],
             ]
         ]
     """
@@ -491,34 +491,34 @@ def breaking_textbox(textbox, allocate_width):
     (first_element, second_element)
 
     Eg.
-        TextBox('This is a long long long long text')
+        TextBox['This is a long long long long text']
 
     is turned into
 
         (
-            TextBox('This is a long long'),
-            TextBox(' long long text')
+            TextBox['This is a long long'],
+            TextBox[' long long text']
         )
 
     but
-        TextBox('Thisisalonglonglonglongtext')
+        TextBox['Thisisalonglonglonglongtext']
 
     is turned into
 
         (
-            TextBox('Thisisalonglonglonglongtext'),
+            TextBox['Thisisalonglonglonglongtext'],
             None
         )
 
     and
 
-        TextBox('Thisisalonglonglonglong Thisisalonglonglonglong')
+        TextBox['Thisisalonglonglonglong Thisisalonglonglonglong']
 
     is turned into
 
         (
-            TextBox('Thisisalonglonglonglong'),
-            TextBox(' Thisisalonglonglonglong')
+            TextBox['Thisisalonglonglonglong'],
+            TextBox[' Thisisalonglonglonglong']
         )
     """
     text_fragment = text.TextLineFragment(width=allocate_width)
