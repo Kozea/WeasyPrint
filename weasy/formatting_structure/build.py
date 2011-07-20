@@ -311,6 +311,7 @@ def _add_anonymous_block(box, child):
     anon_block.add_child(child)
     box.add_child(anon_block)
 
+
 def _inner_block_in_inline(box):
     """
     Return (new_box, block_level_box)

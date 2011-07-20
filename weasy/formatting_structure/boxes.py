@@ -38,6 +38,7 @@ Abstract classes, should not be instantiated:
  * AnonymousBox
  * ReplacedBox
  * ParentBox
+ * AtomicInlineLevelBox
 
 Concrete classes:
 
@@ -341,13 +342,20 @@ class TextBox(AnonymousBox, InlineLevelBox):
         self.text = text
 
 
-class InlineBlockBox(InlineLevelBox, BlockContainerBox):
+class AtomicInlineLevelBox(InlineLevelBox):
+    """
+    A box that participates in an inline formatting context (it is
+    inline-level) but can not be split for line breaks.
+    """
+
+
+class InlineBlockBox(AtomicInlineLevelBox, BlockContainerBox):
     """
     A box that is both inline-level and a block container: it behaves as
     inline on the outside and as a block on the inside.
 
-    A non-replaced element with a 'display' value of 'inline-block' generates an
-    inline-block box.
+    A non-replaced element with a 'display' value of 'inline-block' generates
+    an inline-block box.
     """
 
 
@@ -370,7 +378,7 @@ class BlockLevelReplacedBox(ReplacedBox, BlockLevelBox):
     """
 
 
-class InlineLevelReplacedBox(ReplacedBox, InlineLevelBox):
+class InlineLevelReplacedBox(ReplacedBox, AtomicInlineLevelBox):
     """
     A box that is both replaced and inline-level.
 
