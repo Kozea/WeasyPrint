@@ -24,7 +24,15 @@ class Document(object):
     def __init__(self, dom):
         assert getattr(dom, 'tag') == 'html', (
             'HTML document expected, got %r.' % (dom,))
+        #: lxml HtmlElement object
         self.dom = dom
+        #: dict of (element, pseudo_element_type) -> style_dict
+        #: style_dict: a dict of property_name -> (PropertyValue, precedence)
+        self.specified_styles = None
+        #: dict of (element, pseudo_element_type) -> StyleDict
+        #: StyleDict: a dict of property_name -> PropertyValue,
+        #:    also with attribute access
+        self.computed_styles = None
 
     @classmethod
     def from_string(cls, source):
@@ -39,3 +47,9 @@ class Document(object):
         Make a document from a filename or open file object.
         """
         return cls(lxml.html.parse(file_or_filename).getroot())
+
+    def style_for(self, element, pseudo_type=None):
+        """
+        Convenience method to get the computed styles for an element.
+        """
+        return self.computed_styles[(element, pseudo_type)]

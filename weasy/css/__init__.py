@@ -190,25 +190,6 @@ def expand_shorthands(stylesheet):
         # TODO: @font-face
 
 
-def build_lxml_proxy_cache(dom):
-    """
-    Build as needed a proxy cache for an lxml document.
-
-    ``Element`` python objects in lxml are only proxies to C space memory
-    (libxml2 data structures.) These objects may be created and destroyed at
-    any time, so we can generally not keep state in them.
-
-    The lxml documentation[1] only gives one guarantee: if a reference to a
-    proxy object is kept, this same object will always be used and we can keep
-    data there. A proxy cache is a list of these proxy objects for all elements,
-    just to make sure that they are kept alive.
-
-    [1] http://lxml.de/element_classes.html#element-initialization
-    """
-    if not hasattr(dom, 'proxy_cache'):
-        dom.proxy_cache = list(dom.iter())
-
-
 def declaration_precedence(origin, priority):
     """
     Return the precedence for a rule. Precedence values have no meaning unless
@@ -232,6 +213,19 @@ def declaration_precedence(origin, priority):
         assert ValueError('Unkown origin: %r' % origin)
 
 
+def add_property(document, prop, precedence, element, pseudo_type=None):
+    """
+    Set the value for a property on a given element unless there already
+    is a value of greater precedence.
+    """
+    style = document.cascaded_styles.setdefault((element, pseudo_type), {})
+    if prop.name in style:
+        _value, previous_precedence = style[prop.name]
+        if previous_precedence > precedence:
+            return
+    style[prop.name] = prop.propertyValue, precedence
+
+
 def apply_style_rule(rule, document, origin):
     """
     Apply a CSSStyleRule to a document according to its selectors, attaching
@@ -240,7 +234,6 @@ def apply_style_rule(rule, document, origin):
     Acceptable values for `origin` are the strings 'author', 'user' and
     'user agent'.
     """
-    build_lxml_proxy_cache(document.dom)
     selectors = []
     for selector in rule.selectorList:
         parsed_selector = cssselect.parse(selector.selectorText)
@@ -263,7 +256,7 @@ def apply_style_rule(rule, document, origin):
             parsed_selector = parsed_selector.element
         else:
             # No pseudo-element or invalid selector.
-            pseudo_type = ''
+            pseudo_type = None
 
         try:
             selector_callable = cssselect.CSSSelector(parsed_selector)
@@ -278,7 +271,6 @@ def apply_style_rule(rule, document, origin):
     # TODO: test that ignoring actually happens.
     for selector, pseudo_type, specificity in selectors:
         for element in selector(document.dom):
-            element = element.pseudo_elements[pseudo_type]
             for prop in rule.style:
                 # TODO: ignore properties that do not apply to the current
                 # medium? http://www.w3.org/TR/CSS21/intro.html#processing-model
@@ -286,12 +278,12 @@ def apply_style_rule(rule, document, origin):
                     declaration_precedence(origin, prop.priority),
                     specificity
                 )
-                element.applicable_properties.append((precedence, prop))
+                add_property(document, prop, precedence, element, pseudo_type)
 
 
-def apply_page_rule(rule, page_pseudo_elements, origin):
+def apply_page_rule(document, rule, origin):
     # TODO: support "page names" in page selectors (see CSS3 Paged Media)
-    pseudo_class = rule.selectorText
+    pseudo_class = rule.selectorText or None
     page_types = page.PAGE_PSEUDOCLASS_TARGETS.get(pseudo_class, None)
     if page_types is not None:
         for prop in rule.style:
@@ -300,15 +292,14 @@ def apply_page_rule(rule, page_pseudo_elements, origin):
                 page.PAGE_PSEUDOCLASS_SPECIFICITY[pseudo_class]
             )
             for page_type in page_types:
-                element = page_pseudo_elements[page_type]
-                element.applicable_properties.append((precedence, prop))
+                add_property(document, prop, precedence, '@page', page_type)
     else:
         # Invalid/unsupported selector, ignore the whole rule
         # TODO: log/warn that something was ignored
         pass
 
 
-def handle_style_attribute(element):
+def handle_style_attribute(document, element):
     """
     Return the element’s ``applicable_properties`` list after adding properties
     from the `style` attribute.
@@ -326,7 +317,7 @@ def handle_style_attribute(element):
                 # 1 for being a style attribute, 0 as there is no selector.
                 (1, 0, 0, 0)
             )
-            element.applicable_properties.append((precedence, prop))
+            add_property(document, prop, precedence, element)
 
 
 class StyleDict(dict):
@@ -380,65 +371,42 @@ class StyleDict(dict):
         return self.__class__(self)
 
 
-def assign_properties(element, page_context=False):
+def assign_properties(document, element, pseudo_type=None):
     """
     Take the properties left by ``apply_style_rule`` on an element or
     pseudo-element and assign computed values with respect to the cascade,
     declaration priority (ie. ``!important``) and selector specificity.
     """
-    # If apply_style_rule() was called in appearance order, the
-    # stability of Python's sort fulfills rule 4 of the cascade: everything
-    # else being equal, the latter specified value wins
-    # http://www.w3.org/TR/CSS21/cascade.html#cascading-order
-    def sort_key(applicable_property):
-        # The list contain (precedence, property) pairs. Sort by precedence
-        # only, not by property in case of equal precedence.
-        precedence, _property = applicable_property
-        return precedence
-    # Note: sorting is the easy way, but requires O(n*log(n)) time.
-    # We only need to keep value with the highest score for each property.
-    # Since we don’t care about sorting the other values, this could be done
-    # in O(n) time.
-    # TODO: re-implement this if it is a bottleneck, but profile both methods.
-    element.applicable_properties.sort(key=sort_key)
-    element.style = style = StyleDict()
-    for precedence, prop in element.applicable_properties:
-        style[prop.name] = prop.propertyValue
+    if element == '@page':
+        parent = None
+    elif pseudo_type:
+        parent = element
+    else:
+        parent = element.getparent()
 
-    inheritance.handle_inheritance(element)
-    initial_values.handle_initial_values(element)
-    computed_values.compute_values(element, page_context=page_context)
+    if parent is None:
+        parent_style = None
+    else:
+        parent_style = document.computed_styles.get((parent, None), {})
+
+    cascaded = document.cascaded_styles.get((element, pseudo_type), {})
+    style = computed_from_cascaded(element, cascaded, parent_style, pseudo_type)
+    document.computed_styles[element, pseudo_type] = style
 
 
-class PseudoElement(object):
+def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None):
     """
-    Objects that behaves somewhat like lxml Element objects and hold styles
-    for pseudo-elements.
+    Return a dict of computed styles from cascaded styles and the computed
+    styles for the parent element.
     """
-    def __init__(self, parent, pseudo_type):
-        self.parent = parent
-        self.pseudo_element_type = pseudo_type
-        self.applicable_properties = []
+    style = StyleDict(
+        (name, value)
+        for name, (value, _precedence) in cascaded.iteritems())
+    inheritance.handle_inheritance(style, parent_style)
+    initial_values.handle_initial_values(style)
+    computed_values.compute_values(element, pseudo_type, style, parent_style)
+    return style
 
-    def getparent(self):
-        """Pseudo-elements inherit from the associated element."""
-        return self.parent
-
-
-class PseudoElementDict(dict):
-    """
-    Like a defaultdict, creates PseudoElement objects as needed.
-    """
-    def __init__(self, element):
-        # Add the element itself in the list of its pseudo-elements
-        # so that iterating on this dict gives both the element and it
-        # pseudo-element.
-        self[''] = element
-
-    def __missing__(self, key):
-        pseudo_element = PseudoElement(self[''], key)
-        self[key] = pseudo_element
-        return pseudo_element
 
 
 def annotate_document(document, user_stylesheets=None,
@@ -451,18 +419,8 @@ def annotate_document(document, user_stylesheets=None,
 
     Given stylesheets will be modified in place.
     """
-    build_lxml_proxy_cache(document.dom)
-    # Do NOT use document.make_links_absolute() as it changes the tree,
-    # and `content: attr(href)` should get the original attribute value.
-    for element in document.dom.iter():
-        element.applicable_properties = []
-        element.pseudo_elements = PseudoElementDict(element)
-
+    document.cascaded_styles = {}
     author_stylesheets = find_stylesheets(document)
-    page_pseudo_elements = dict(
-        (page_type, PseudoElement(None, page_type))
-        for page_type in page.PAGE_PSEUDOCLASS_TARGETS[''])
-    document.page_pseudo_elements = page_pseudo_elements
 
     for sheets, origin in ((author_stylesheets, 'author'),
                            (user_stylesheets or [], 'user'),
@@ -476,14 +434,23 @@ def annotate_document(document, user_stylesheets=None,
                 if rule.type == rule.STYLE_RULE:
                     apply_style_rule(rule, document, origin)
                 elif rule.type == rule.PAGE_RULE:
-                    apply_page_rule(rule, page_pseudo_elements, origin)
+                    apply_page_rule(document, rule, origin)
                 # TODO: handle @font-face, @namespace, @page, and @variables
 
     for element in document.dom.iter():
-        handle_style_attribute(element)
+        handle_style_attribute(document, element)
 
-        for element_or_pseudo_element in element.pseudo_elements.itervalues():
-            assign_properties(element_or_pseudo_element)
+    document.computed_styles = {}
 
-    for pseudo_element in page_pseudo_elements.itervalues():
-        assign_properties(pseudo_element, page_context=True)
+    # First, computed styles for "real" elements *in tree order*
+    for element in document.dom.iter():
+        assign_properties(document, element)
+
+    # Then computed styles for pseudo elements in any order
+    for element, pseudo_type in document.cascaded_styles:
+        if pseudo_type and element != '@page':
+            assign_properties(document, element, pseudo_type)
+
+    # Then computed styles for @page
+    for page_type in page.PAGE_PSEUDOCLASS_TARGETS[None]:
+        assign_properties(document, '@page', page_type)

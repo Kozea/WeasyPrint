@@ -88,7 +88,7 @@ def parse(html_content):
     Parse some HTML, apply stylesheets and transform to boxes.
     """
     document = get_document(html_content)
-    return build.dom_to_box(document.dom)
+    return build.dom_to_box(document, document.dom)
 
 
 def prettify(tree_list):
@@ -306,8 +306,8 @@ def test_page_style():
         </style>
     ''')
     def assert_page_margins(page_number, top, right, bottom, left):
-        page = boxes.PageBox(document, boxes.BlockBox(document.dom),
-                             page_number)
+        page = boxes.PageBox(
+            document, boxes.BlockBox(document, document.dom), page_number)
         assert page.style.margin_top == top
         assert page.style.margin_right == right
         assert page.style.margin_bottom == bottom

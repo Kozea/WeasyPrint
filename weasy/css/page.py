@@ -24,7 +24,7 @@ Everything specific to paged media and @page rules.
 # Selectors for @page rules can have a pseudo-class, one of :first, :left
 # or :right. This maps pseudo-classes to lists of "page types" selected.
 PAGE_PSEUDOCLASS_TARGETS = {
-    '': ['left', 'right', 'first_left', 'first_right'], # No pseudo-class
+    None: ['left', 'right', 'first_left', 'first_right'], # No pseudo-class
     ':left': ['left', 'first_left'],
     ':right': ['right', 'first_right'],
     ':first': ['first_left', 'first_right'],
@@ -33,7 +33,7 @@ PAGE_PSEUDOCLASS_TARGETS = {
 
 # Specificity of @page pseudo-classes for the cascade.
 PAGE_PSEUDOCLASS_SPECIFICITY = {
-    '': 0,
+    None: 0,
     ':left': 1,
     ':right': 1,
     ':first': 10,

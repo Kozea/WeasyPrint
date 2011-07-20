@@ -149,12 +149,11 @@ def is_initial(style, name):
     return name not in style or style[name].value == 'initial'
 
 
-def handle_initial_values(element):
+def handle_initial_values(style):
     """
     Properties that do not have a value after inheritance or whose value is the
     'initial' keyword (CSS3) get their initial value.
     """
-    style = element.style
     for name, initial in INITIAL_VALUES.iteritems():
         if is_initial(style, name):
             style[name] = initial

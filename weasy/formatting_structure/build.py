@@ -32,7 +32,7 @@ def build_formatting_structure(document):
     """
     Build a formatting structure (box tree) from a Document.
     """
-    box = dom_to_box(document.dom)
+    box = dom_to_box(document, document.dom)
     box = inline_in_block(box)
     box = block_in_inline(box)
     box = process_whitespace(box)
@@ -40,7 +40,7 @@ def build_formatting_structure(document):
     return box
 
 
-def dom_to_box(element):
+def dom_to_box(document, element):
     """
     Converts a DOM element (and its children) into a box (with children).
 
@@ -61,39 +61,41 @@ def dom_to_box(element):
     TextBox`es are anonymous inline boxes:
     http://www.w3.org/TR/CSS21/visuren.html#anonymous
     """
-    display = element.style.display # TODO: should be the used value
+    # TODO: should be the used value
+    display = document.style_for(element).display
     assert display != 'none'
 
     replacement = replaced.get_replaced_element(element)
     if replacement:
         if display in ('block', 'list-item', 'table'):
-            box = boxes.BlockLevelReplacedBox(element, replacement)
+            type_ = boxes.BlockLevelReplacedBox
         elif display in ('inline', 'inline-table', 'inline-block'):
-            box = boxes.InlineLevelReplacedBox(element, replacement)
+            type_ = boxes.InlineLevelReplacedBox
         else:
             raise NotImplementedError('Unsupported display: ' + display)
+        box = type_(document, element, replacement)
         # The content is replaced, do not generate boxes for the element’s
         # text and children.
         return box
 
     if display in ('block', 'list-item'):
-        box = boxes.BlockBox(element)
+        box = boxes.BlockBox(document, element)
         #if display == 'list-item':
         #    TODO: add a box for the marker
     elif display == 'inline':
-        box = boxes.InlineBox(element)
+        box = boxes.InlineBox(document, element)
     elif display == 'inline-block':
-        box = boxes.InlineBlockBox(element)
+        box = boxes.InlineBlockBox(document, element)
     else:
         raise NotImplementedError('Unsupported display: ' + display)
 
     if element.text:
-        box.add_child(boxes.TextBox(element, element.text))
+        box.add_child(boxes.TextBox(document, element, element.text))
     for child_element in element:
-        if child_element.style.display != 'none':
-            box.add_child(dom_to_box(child_element))
+        if document.style_for(child_element).display != 'none':
+            box.add_child(dom_to_box(document, child_element))
         if child_element.tail:
-            box.add_child(boxes.TextBox(element, child_element.tail))
+            box.add_child(boxes.TextBox(document, element, child_element.tail))
 
     return box
 
@@ -182,7 +184,7 @@ def inline_in_block(box):
     if not isinstance(box, boxes.BlockContainerBox):
         return
 
-    line_box = boxes.LineBox(box.element)
+    line_box = boxes.LineBox(box.document, box.element)
     children = box.children
     box.empty()
     for child_box in children:
@@ -190,10 +192,10 @@ def inline_in_block(box):
             if line_box.children:
                 # Inlines are consecutive no more: add this line box
                 # and create a new one.
-                anonymous = boxes.AnonymousBlockBox(box.element)
+                anonymous = boxes.AnonymousBlockBox(box.document, box.element)
                 anonymous.add_child(line_box)
                 box.add_child(anonymous)
-                line_box = boxes.LineBox(box.element)
+                line_box = boxes.LineBox(box.document, box.element)
             box.add_child(child_box)
         elif isinstance(child_box, boxes.LineBox):
             # Merge the line box we just found with the new one we are making
@@ -204,7 +206,7 @@ def inline_in_block(box):
     if line_box.children:
         # There were inlines at the end
         if box.children:
-            anonymous = boxes.AnonymousBlockBox(box.element)
+            anonymous = boxes.AnonymousBlockBox(box.document, box.element)
             anonymous.add_child(line_box)
             box.add_child(anonymous)
         else:
@@ -308,7 +310,7 @@ def _add_anonymous_block(box, child):
     """
     Wrap the child in an AnonymousBlockBox and add it to box.
     """
-    anon_block = boxes.AnonymousBlockBox(box.element)
+    anon_block = boxes.AnonymousBlockBox(box.document, box.element)
     anon_block.add_child(child)
     box.add_child(anon_block)
 
