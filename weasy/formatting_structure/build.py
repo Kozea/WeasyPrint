@@ -33,9 +33,9 @@ def build_formatting_structure(document):
     Build a formatting structure (box tree) from a DOM document.
     """
     box = dom_to_box(document)
-    inline_in_block(box)
-    block_in_inline(box)
-    process_whitespace(box)
+    box = inline_in_block(box)
+    box = block_in_inline(box)
+    box = process_whitespace(box)
     return box
 
 
@@ -103,12 +103,12 @@ def process_whitespace(box):
     http://www.w3.org/TR/CSS21/text.html#white-space-model
     """
     following_collapsible_space = False
-    for box in box.descendants():
-        if not (hasattr(box, 'text') and box.text):
+    for child in box.descendants():
+        if not (hasattr(child, 'text') and child.text):
             continue
 
-        text = box.text
-        handling = box.style.white_space
+        text = child.text
+        handling = child.style.white_space
 
         text = re.sub('[\t\r ]*\n[\t\r ]*', '\n', text)
         if handling in ('pre', 'pre-wrap'):
@@ -134,7 +134,8 @@ def process_whitespace(box):
         else:
             following_collapsible_space = False
 
-        box.text = text
+        child.text = text
+    return box
 
 
 def inline_in_block(box):
@@ -182,7 +183,7 @@ def inline_in_block(box):
 
     line_box = boxes.LineBox(box.element)
     children = box.children
-    box.children = []
+    box.empty()
     for child_box in children:
         if isinstance(child_box, boxes.BlockLevelBox):
             if line_box.children:
@@ -208,6 +209,7 @@ def inline_in_block(box):
         else:
             # Only inline-level children: one line box
             box.add_child(line_box)
+    return box
 
 
 def block_in_inline(box):
@@ -270,62 +272,70 @@ def block_in_inline(box):
         ]
     """
     # TODO: when splitting inline boxes, mark which are starting, ending, or
-    # in the middle of the orginial box (for drawing borders).
-    for child_box in getattr(box, 'children', []):
-        block_in_inline(child_box)
+    # in the middle of the original box (for drawing borders).
 
-    if not (isinstance(box, boxes.BlockLevelBox) and box.parent
-            and isinstance(box.parent, boxes.InlineBox)):
-        return
+    if not isinstance(box, boxes.ParentBox):
+        return box
 
-    # Find all ancestry until a line box.
-    inline_parents = []
-    for parent in box.ancestors():
-        inline_parents.append(parent)
-        if not isinstance(parent, boxes.InlineBox):
-            assert isinstance(parent, boxes.LineBox)
-            parent_line_box = parent
+    new_box = box.copy()
+    new_box.empty()
+    for child in box.children:
+        if isinstance(child, boxes.LineBox):
+            assert len(box.children) == 1, ('Line boxes should have no '
+                'siblings at this stage, got %r.' % box.children)
+            while 1:
+                new_line, block_level_box = _inner_block_in_inline(child)
+                if block_level_box is None:
+                    break
+                _add_anonymous_block(new_box, new_line)
+                new_box.add_child(block_level_box)
+                # Loop with the same child
+            if new_box.children:
+                # Some children were already added, this became a block
+                # context.
+                _add_anonymous_block(new_box, new_line)
+            else:
+                # Keep the single line box as-is, without anonymous blocks.
+                new_box.add_child(new_line)
+        else:
+            # Not in an inline formatting context.
+            new_box.add_child(block_in_inline(child))
+    return new_box
+
+
+def _add_anonymous_block(box, child):
+    """
+    Wrap the child in an AnonymousBlockBox and add it to box.
+    """
+    anon_block = boxes.AnonymousBlockBox(box.element)
+    anon_block.add_child(child)
+    box.add_child(anon_block)
+
+def _inner_block_in_inline(box):
+    """
+    Return (new_box, block_level_box)
+    block_level_box is a box when breaking, None otherwise.
+    """
+    if not isinstance(box, boxes.ParentBox):
+        return box, None
+
+    new_box = box.copy()
+    new_box.empty()
+    block_level_box = None
+    while box.children:
+        # Empty the children list from the left so that we can continue
+        # at the same point when we get here again after a break.
+        child = box.children.popleft()
+        if isinstance(child, boxes.BlockLevelBox):
+            return new_box, child
+        elif isinstance(child, (boxes.InlineBox, boxes.TextBox)):
+            new_child, block_level_box = _inner_block_in_inline(child)
+        else:
+            # other inline-level: inline-block, inline-table, replaced
+            new_child = block_in_inline(child)
+        new_box.add_child(new_child)
+        if block_level_box is not None:
+            # Not finished with this child yet.
+            box.children.appendleft(child)
             break
-
-    # Add an anonymous block level box before the block box
-    if isinstance(parent_line_box.parent, boxes.AnonymousBlockBox):
-        previous_anonymous_box = parent_line_box.parent
-    else:
-        previous_anonymous_box = boxes.AnonymousBlockBox(
-            parent_line_box.element)
-        parent_line_box.parent.add_child(
-            previous_anonymous_box, parent_line_box.index)
-        parent_line_box.parent.children.remove(parent_line_box)
-        previous_anonymous_box.add_child(parent_line_box)
-
-    # Add an anonymous block level box after the block box
-    next_anonymous_box = boxes.AnonymousBlockBox(parent_line_box.element)
-    previous_anonymous_box.parent.add_child(
-        next_anonymous_box, previous_anonymous_box.index + 1)
-
-    # Recreate anonymous inline boxes clones from the split inline boxes
-    clone_box = next_anonymous_box
-    while inline_parents:
-        parent = inline_parents.pop()
-        next_clone_box = type(parent)(parent.element)
-        clone_box.add_child(next_clone_box)
-        clone_box = next_clone_box
-
-    splitter_box = box
-    for parent in box.ancestors():
-        if parent == parent_line_box:
-            break
-
-        next_children = parent.children[splitter_box.index + 1:]
-        parent.children = parent.children[:splitter_box.index + 1]
-
-        for child in next_children:
-            clone_box.add_child(child)
-
-        splitter_box = parent
-        clone_box = clone_box.parent
-
-    # Put the block element before the next_anonymous_box
-    box.parent.children.remove(box)
-    previous_anonymous_box.parent.add_child(
-        box, previous_anonymous_box.index + 1)
+    return new_box, block_level_box

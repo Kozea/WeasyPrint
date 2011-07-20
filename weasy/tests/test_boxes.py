@@ -57,8 +57,8 @@ def unwrap_html_body(box):
     and remove them to simplify further tests. These are always at the root
     of HTML documents.
     """
-    assert isinstance(box, boxes.BlockBox)
     assert box.element.tag == 'html'
+    assert isinstance(box, boxes.BlockBox)
     assert len(box.children) == 1
 
     box = box.children[0]
@@ -152,13 +152,13 @@ def test_inline_in_block():
                     ('p', 'text', 'Lipsum.')])])])]
 
     box = parse(source)
-    build.inline_in_block(box)
+    box = build.inline_in_block(box)
     assert_tree(box, expected)
 
     box = parse(source)
     # This should be idempotent: doing more than once does not change anything.
-    build.inline_in_block(box)
-    build.inline_in_block(box)
+    box = build.inline_in_block(box)
+    box = build.inline_in_block(box)
     assert_tree(box, expected)
 
 
@@ -171,7 +171,7 @@ def test_block_in_inline():
         </style>
         <p>Lorem <em>ipsum <strong>dolor <span>sit</span>
             <span>amet,</span></strong><span>consectetur</span></em></p>''')
-    build.inline_in_block(box)
+    box = build.inline_in_block(box)
     assert_tree(box, [
         ('body', 'line', [
             ('p', 'inline_block', [
@@ -193,7 +193,7 @@ def test_block_in_inline():
                             ('span', 'line', [
                                 ('span', 'text', 'consectetur')])])])])])])])
 
-    build.block_in_inline(box)
+    box = build.block_in_inline(box)
     assert_tree(box, [
         ('body', 'line', [
             ('p', 'inline_block', [
@@ -207,12 +207,11 @@ def test_block_in_inline():
                 ('span', 'block', [
                     ('span', 'line', [
                         ('span', 'text', 'sit')])]),
-                # TODO: this should disapear
                 ('p', 'anon_block', [
                     ('p', 'line', [
                         ('em', 'inline', [
                             ('strong', 'inline', [
-                                # No whitespace processing here.
+                                # Whitespace processing not done yet.
                                 ('strong', 'text', '\n            ')])])])]),
                 ('span', 'block', [
                     ('span', 'line', [
@@ -240,8 +239,8 @@ def test_styles():
         </style>
         <p>Lorem <em>ipsum <strong>dolor <span>sit</span>
             <span>amet,</span></strong><span>consectetur</span></em></p>''')
-    build.inline_in_block(box)
-    build.block_in_inline(box)
+    box = build.inline_in_block(box)
+    box = build.block_in_inline(box)
 
     for child in box.descendants():
         # All boxes inherit the color

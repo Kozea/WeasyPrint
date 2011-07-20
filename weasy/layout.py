@@ -312,6 +312,7 @@ def breaking_linebox(linebox):
     while len(children) != 0:
         # We copy the linebox without children
         line = linebox.copy()
+        line.empty()
         insert_in_the_linebox(line, cb_width, children)
         widths, heights = ([], [])
         for child in line.children:
@@ -524,11 +525,12 @@ def breaking_textbox(textbox, allocate_width):
     # Set css style in TextLineFragment
     text_fragment.set_textbox(textbox)
     # We create a new TextBox with the first part of the cutting text
-    first_textbox = textbox.copy(text_fragment.get_text())
+    first_textbox = textbox.copy()
+    first_textbox.text = text_fragment.get_text()
     # And we check the remaining text
     if text_fragment.get_remaining_text() == "":
         return (first_textbox, None)
     else:
-        text_second_tb = text_fragment.get_remaining_text()
-        second_textbox = textbox.copy(text_second_tb)
+        second_textbox = textbox.copy()
+        second_textbox.text = text_fragment.get_remaining_text()
         return (first_textbox, second_textbox)

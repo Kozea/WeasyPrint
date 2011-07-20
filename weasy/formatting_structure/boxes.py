@@ -68,6 +68,8 @@ See respective docstrings for details.
 """
 
 
+import collections
+
 from .. import css
 
 
@@ -92,18 +94,15 @@ class Box(object):
         # objects.
         self.style = self.element.style.copy()
 
+    def __repr__(self):
+        return '<%s %s>' % (type(self).__name__, self.element.tag)
+
     def ancestors(self):
         """Yield parent and recursively yield parent's parents."""
         parent = self
         while parent.parent:
             parent = parent.parent
             yield parent
-
-    @property
-    def index(self):
-        """Index of the box in its parent's children."""
-        if self.parent:
-            return self.parent.children.index(self)
 
     def containing_block_size(self):
         """``(width, height)`` size of the box's containing block."""
@@ -127,9 +126,14 @@ class Box(object):
         assert False, 'Containing block not found'
 
     def copy(self):
-        """ Return copy of the box """
-        # TODO: we need find a way to copy the box less ressource comsuming
-        return Box(self.element)
+        """Return shallow copy of the box."""
+        cls = type(self)
+        # Create a new instance without calling __init__: initializing
+        # styles may be kinda expensive, no need to do it again.
+        new_box = cls.__new__(cls)
+        # Copy attributes
+        new_box.__dict__.update(self.__dict__)
+        return new_box
 
     @property
     def padding_width(self):
@@ -198,18 +202,19 @@ class ParentBox(Box):
     """
     def __init__(self, element):
         super(ParentBox, self).__init__(element)
-        self.children = []
+        self.empty()
 
-    def add_child(self, child, index=None):
+    def empty(self):
+        """Initialize or empty the children list."""
+        self.children = collections.deque()
+
+    def add_child(self, child):
         """
         Add the new child to this box’s children list and set this box as the
         child’s parent.
         """
         child.parent = self
-        if index == None:
-            self.children.append(child)
-        else:
-            self.children.insert(index, child)
+        self.children.append(child)
 
     def descendants(self):
         """A flat generator for a box, its children and descendants."""
@@ -220,11 +225,6 @@ class ParentBox(Box):
                     yield grand_child
             else:
                 yield child
-
-    def copy(self):
-        """ Return copy of the box without children """
-        # TODO: we need find a way to copy the box less ressource comsuming
-        return ParentBox(self.element)
 
 
 class BlockLevelBox(Box):
@@ -305,11 +305,6 @@ class LineBox(AnonymousBox, ParentBox):
     consecutive inline boxes. Later, during layout phase, each line boxes will
     be split into multiple line boxes, one for each actual line.
     """
-    def __init__(self, *args, **kwargs):
-        super(LineBox, self).__init__(*args, **kwargs)
-        for prop in ['margin_%s', 'padding_%s', 'border_%s_width']:
-            for side in ['top', 'bottom', 'left', 'right']:
-                setattr(self, prop % side, 0)
 
 
 class InlineLevelBox(Box):
@@ -344,12 +339,6 @@ class TextBox(AnonymousBox, InlineLevelBox):
     def __init__(self, element, text):
         super(TextBox, self).__init__(element)
         self.text = text
-
-    def copy(self, new_text=None):
-        if new_text is None:
-            return TextBox(self.element, self.text)
-        else:
-            return TextBox(self.element, new_text)
 
 
 class InlineBlockBox(InlineLevelBox, BlockContainerBox):
