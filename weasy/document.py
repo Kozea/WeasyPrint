@@ -56,11 +56,11 @@ class Document(object):
         return cls(lxml.html.document_fromstring(source))
 
     @classmethod
-    def from_file(cls, file_or_filename):
+    def from_file(cls, file_or_filename_or_url):
         """
         Make a document from a filename or open file object.
         """
-        return cls(lxml.html.parse(file_or_filename).getroot())
+        return cls(lxml.html.parse(file_or_filename_or_url).getroot())
 
     def style_for(self, element, pseudo_type=None):
         """
@@ -69,6 +69,10 @@ class Document(object):
         return self.computed_styles[(element, pseudo_type)]
 
     def do_css(self):
+        """
+        Do the "CSS" step if it is not done yet: get computed styles for
+        every element.
+        """
         if self.computed_styles is None:
             self.computed_styles = get_all_computed_styles(
                 self,
@@ -77,11 +81,19 @@ class Document(object):
                 medium='print')
 
     def do_boxes(self):
+        """
+        Do the "boxes" step if it is not done yet: build the formatting
+        structure for the document a tree of boxes.
+        """
         self.do_css()
         if self.formatting_structure is None:
             self.formatting_structure = build_formatting_structure(self)
 
     def do_layout(self):
+        """
+        Do the "layout" step if it is not done yet: build a list of layed-out
+        pages with an absolute size and postition for every box.
+        """
         self.do_boxes()
         if self.pages is None:
             self.pages = layout(self)
