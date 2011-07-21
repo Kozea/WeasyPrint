@@ -206,13 +206,13 @@ def declaration_precedence(origin, importance):
         assert ValueError('Unkown origin: %r' % origin)
 
 
-def add_declaration(document, prop_name, prop_values, weight, element,
+def add_declaration(cascaded_styles, prop_name, prop_values, weight, element,
                     pseudo_type=None):
     """
     Set the value for a property on a given element unless there already
     is a value of greater weight.
     """
-    style = document.cascaded_styles.setdefault((element, pseudo_type), {})
+    style = cascaded_styles.setdefault((element, pseudo_type), {})
     _values, previous_weight = style.get(prop_name, (None, None))
     if previous_weight is None or previous_weight <= weight:
         style[prop_name] = prop_values, weight
@@ -343,7 +343,8 @@ class StyleDict(dict):
         return self.__class__(self)
 
 
-def set_computed_styles(document, element, pseudo_type=None):
+def set_computed_styles(cascaded_styles, computed_styles,
+                        element, pseudo_type=None):
     """
     Take the properties left by ``apply_style_rule`` on an element or
     pseudo-element and assign computed values with respect to the cascade,
@@ -359,11 +360,11 @@ def set_computed_styles(document, element, pseudo_type=None):
     if parent is None:
         parent_style = None
     else:
-        parent_style = document.computed_styles[parent, None]
+        parent_style = computed_styles[parent, None]
 
-    cascaded = document.cascaded_styles.get((element, pseudo_type), {})
+    cascaded = cascaded_styles.get((element, pseudo_type), {})
     style = computed_from_cascaded(element, cascaded, parent_style, pseudo_type)
-    document.computed_styles[element, pseudo_type] = style
+    computed_styles[element, pseudo_type] = style
 
 
 def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None):
@@ -390,7 +391,7 @@ def annotate_document(document, user_stylesheets=None,
 
     Given stylesheets will be modified in place.
     """
-    document.cascaded_styles = {}
+    cascaded_styles = {}
     author_stylesheets = find_stylesheets(document)
 
     for sheets, origin in ((author_stylesheets, 'author'),
@@ -414,7 +415,7 @@ def annotate_document(document, user_stylesheets=None,
                     for name, values, importance in declarations:
                         precedence = declaration_precedence(origin, importance)
                         weight = (precedence, specificity)
-                        add_declaration(document, name, values, weight,
+                        add_declaration(cascaded_styles, name, values, weight,
                                         element, pseudo_type)
 
     for element, declarations in find_style_attributes(document):
@@ -422,10 +423,10 @@ def annotate_document(document, user_stylesheets=None,
             precedence = declaration_precedence('author', importance)
             # 1 for being a style attribute, 0 as there is no selector.
             weight = (precedence, (1, 0, 0, 0))
-            add_declaration(document, name, values, weight,
+            add_declaration(cascaded_styles, name, values, weight,
                             element, pseudo_type)
 
-    document.computed_styles = {}
+    computed_styles = {}
 
     # First, computed styles for "real" elements *in tree order*
     # Tree order is important so that parents have computed styles before
@@ -433,23 +434,27 @@ def annotate_document(document, user_stylesheets=None,
 
     # Iterate on all elements, even if there is no cascaded style for them.
     for element in document.dom.iter():
-        set_computed_styles(document, element)
+        set_computed_styles(cascaded_styles, computed_styles, element)
 
     # Then computed styles for pseudo elements, in any order.
     # Pseudo-elements inherit from their associated element so they come
     # after. Do them in a second pass as there is no easy way to iterate
     # on the pseudo-elements for a given element with the current structure
-    # of document.cascaded_styles. (Keys are (element, pseudo_type) tuples.)
+    # of cascaded_styles. (Keys are (element, pseudo_type) tuples.)
 
     # Only iterate on pseudo-elements that have cascaded styles. (Others
     # might as well not exist.)
-    for element, pseudo_type in document.cascaded_styles:
+    for element, pseudo_type in cascaded_styles:
         if pseudo_type and element != '@page':
-            set_computed_styles(document, element, pseudo_type)
+            set_computed_styles(cascaded_styles, computed_styles,
+                                element, pseudo_type)
 
     # Then computed styles for @page. (They could be done at any time.)
 
     # Iterate on all possible page types, even if there is no cascaded style
     # for them.
     for page_type in page.PAGE_PSEUDOCLASS_TARGETS[None]:
-        set_computed_styles(document, '@page', page_type)
+        set_computed_styles(cascaded_styles, computed_styles,
+                            '@page', page_type)
+
+    return computed_styles

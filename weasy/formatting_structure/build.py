@@ -36,7 +36,6 @@ def build_formatting_structure(document):
     box = inline_in_block(box)
     box = block_in_inline(box)
     box = process_whitespace(box)
-    document.formatting_structure = box
     return box
 
 

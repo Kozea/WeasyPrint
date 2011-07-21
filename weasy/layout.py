@@ -530,9 +530,9 @@ def layout(document):
     Do the layout for the whole document: line breaks, page breaks,
     absolute size and position for all boxes.
     """
-    document.pages = []
+    pages = []
     page = boxes.PageBox(document, document.formatting_structure, 1)
     page_dimensions(page)
-    document.pages.append(page)
+    pages.append(page)
     # TODO: do page breaks, split boxes into multiple pages
-    return document.pages
+    return pages

@@ -20,8 +20,7 @@
 from attest import Tests, assert_hook
 
 from ..document import Document
-from .. import css
-from ..formatting_structure import boxes, build
+from ..formatting_structure import boxes
 from .. import layout
 
 
@@ -33,9 +32,8 @@ def parse(html_content):
     Parse some HTML, apply stylesheets, transform to boxes and do layout.
     """
     document = Document.from_string(html_content)
-    css.annotate_document(document)
-    build.build_formatting_structure(document)
-    return layout.layout(document)
+    document.do_layout()
+    return document.pages
 
 
 @suite.test

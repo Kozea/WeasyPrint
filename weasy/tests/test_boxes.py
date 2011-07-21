@@ -22,7 +22,6 @@ from attest import Tests, assert_hook
 from ..document import Document
 from ..formatting_structure import boxes
 from ..formatting_structure import build
-from .. import css
 
 
 suite = Tests()
@@ -78,7 +77,7 @@ def get_document(html_content):
     Parse some HTML and apply stylesheets.
     """
     document = Document.from_string(html_content)
-    css.annotate_document(document)
+    document.do_css()
     return document
 
 

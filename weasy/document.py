@@ -19,6 +19,10 @@
 
 import lxml.html
 
+from .css import annotate_document
+from .formatting_structure.build import build_formatting_structure
+from .layout import layout
+
 
 class Document(object):
     def __init__(self, dom):
@@ -57,3 +61,17 @@ class Document(object):
         Convenience method to get the computed styles for an element.
         """
         return self.computed_styles[(element, pseudo_type)]
+
+    def do_css(self, **kwargs):
+        if self.computed_styles is None:
+            self.computed_styles = annotate_document(self, **kwargs)
+
+    def do_boxes(self):
+        self.do_css()
+        if self.formatting_structure is None:
+            self.formatting_structure = build_formatting_structure(self)
+
+    def do_layout(self):
+        self.do_boxes()
+        if self.pages is None:
+            self.pages = layout(self)
