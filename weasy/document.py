@@ -26,7 +26,7 @@ from .layout import layout
 
 class Document(object):
     def __init__(self, dom):
-        assert getattr(dom, 'tag') == 'html', (
+        assert getattr(dom, 'tag', None) == 'html', (
             'HTML document expected, got %r.' % (dom,))
 
         self.user_stylesheets = []
