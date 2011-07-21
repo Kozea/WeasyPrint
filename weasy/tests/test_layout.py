@@ -18,7 +18,6 @@
 
 
 from attest import Tests, assert_hook
-import lxml.html
 
 from ..document import Document
 from .. import css

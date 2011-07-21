@@ -18,7 +18,6 @@
 
 
 from attest import Tests, assert_hook
-from lxml import html
 
 from ..document import Document
 from ..formatting_structure import boxes

@@ -47,7 +47,7 @@ except ImportError:
     from urllib.parse import urljoin
 
 from cssutils import parseString, parseUrl, parseStyle, parseFile
-from cssutils.css import CSSStyleDeclaration, PropertyValue
+from cssutils.css import PropertyValue
 from lxml import cssselect
 
 from . import shorthands

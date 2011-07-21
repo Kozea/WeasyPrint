@@ -22,9 +22,6 @@
 """
 
 
-from cssutils.css import CSSStyleDeclaration
-
-
 class DummyPropertyValue(list):
     """
     A list that quacks like a PropertyValue.
