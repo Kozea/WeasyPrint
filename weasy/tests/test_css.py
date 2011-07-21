@@ -70,7 +70,7 @@ def test_find_stylesheets():
 
 
 def expand_shorthands(declaration_block):
-    return dict(
+    return css.StyleDict(
         expanded
         for declaration in declaration_block
         for expanded in shorthands.expand_shorthand(declaration))
@@ -89,11 +89,11 @@ def test_expand_shorthands():
 
     style = expand_shorthands(style)
     assert 'margin' not in style
-    assert style['margin-top'].value == '2em'
-    assert style['margin-right'].value == '0'
-    assert style['margin-bottom'].value == '2em', \
+    assert style.margin_top == '2em'
+    assert style.margin_right == 0
+    assert style.margin_bottom == '2em', \
         "3em was before the shorthand, should be masked"
-    assert style['margin-left'].value == '4em', \
+    assert style.margin_left == '4em', \
         "4em was after the shorthand, should not be masked"
 
 
@@ -125,23 +125,31 @@ def test_annotate_document():
 
     assert h1.font_weight == '700'
 
-    sides = ('-top', '-right', '-bottom', '-left')
+    sides = ('_top', '_right', '_bottom', '_left')
     # 32px = 1em * font-size: 2em * initial 16px
-    for side, expected_value in zip(sides, ('32px', '0', '32px', '0')):
-        assert p['margin' + side].value == expected_value
+    assert p.margin_top == 32
+    assert p.margin_right == 0
+    assert p.margin_bottom == 32
+    assert p.margin_left == 0
 
     # 32px = 2em * initial 16px
-    for side, expected_value in zip(sides, ('32px', '32px', '32px', '32px')):
-        assert ul['margin' + side].value == expected_value
+    assert ul.margin_top == 32
+    assert ul.margin_right == 32
+    assert ul.margin_bottom == 32
+    assert ul.margin_left == 32
 
     # thick = 5px, 0.25 inches = 96*.25 = 24px
-    for side, expected_value in zip(sides, ('0', '5px', '0', '24px')):
-        assert ul['border' + side + '-width'].value == expected_value
+    assert ul.border_top_width == 0
+    assert ul.border_right_width == 5
+    assert ul.border_bottom_width == 0
+    assert ul.border_left_width == 24
 
     # 32px = 2em * initial 16px
     # 64px = 4em * initial 16px
-    for side, expected_value in zip(sides, ('32px', '0', '32px', '64px')):
-        assert li_0['margin' + side].value == expected_value
+    assert li_0.margin_top == 32
+    assert li_0.margin_right == 0
+    assert li_0.margin_bottom == 32
+    assert li_0.margin_left == 64
 
     assert a.text_decoration == 'underline'
 

@@ -147,7 +147,10 @@ def is_initial(style, name):
     """
     # Explicit 'initial' values are new in CSS3
     # http://www.w3.org/TR/css3-values/#computed0
-    return name not in style or style[name].value == 'initial'
+    if name not in style:
+        return True
+    values = style[name]
+    return len(values) == 1 and values[0].cssText == 'initial'
 
 
 def handle_initial_values(style):

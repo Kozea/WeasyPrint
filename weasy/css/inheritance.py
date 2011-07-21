@@ -82,6 +82,10 @@ INHERITED = set("""
 """.split())
 
 
+def is_inherit(values):
+    return len(values) == 1 and values[0].cssText == 'inherit'
+
+
 def handle_inheritance(style, parent_style):
     """
     The specified value is the parent element’s computed value iif one of the
@@ -90,17 +94,17 @@ def handle_inheritance(style, parent_style):
      * The the value is the keyword 'inherit'.
     """
     if parent_style is None: # root element
-        for name, value in style.iteritems():
+        for name, values in style.iteritems():
             # The PropertyValue object has value attribute
-            if value.value == 'inherit':
+            if is_inherit(values):
                 # The root element can not inherit from anything:
                 # use the initial value.
                 style[name] = PropertyValue('initial')
     else:
         # The parent appears before in tree order, so we should already have
         # finished with its computed values.
-        for name, value in style.iteritems():
-            if value.value == 'inherit':
+        for name, values in style.iteritems():
+            if is_inherit(values):
                 style[name] = parent_style[name]
         for name in INHERITED:
             # Do not use is_initial() here: only inherit if the property is

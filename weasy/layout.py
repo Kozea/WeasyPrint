@@ -58,18 +58,18 @@ def resolve_one_percentage(box, property_name, refer_to):
     `refer_to` is the length for 100%.
     """
     # box.style has computed values
-    value = box.style[property_name]
-    pixels = pixel_value(value)
+    values = box.style[property_name]
+    pixels = pixel_value(values)
     if pixels is not None:
         # Absolute length (was converted to pixels in "computed values")
         result = pixels
     else:
-        percentage = percentage_value(value)
+        percentage = percentage_value(values)
         if percentage is not None:
             # A percentage
             result = percentage * refer_to / 100.
         else:
-            result = value.value
+            result = ' '.join(value.cssText for value in values)
             # Other than that, only 'auto' is allowed
             # TODO: it is only allowed on some properties. Check this here?
             assert result == 'auto'

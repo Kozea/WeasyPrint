@@ -22,16 +22,6 @@
 """
 
 
-class DummyPropertyValue(list):
-    """
-    A list that quacks like a PropertyValue.
-    """
-
-    @property
-    def value(self):
-        return ' '.join(value.cssText for value in self)
-
-
 def expand_four_sides(name, values):
     """
     Expand properties that set a value for each of the four sides of a box.
@@ -140,4 +130,4 @@ def expand_shorthand(prop):
     """
     expander = SHORTHANDS.get(prop.name, expand_noop)
     for name, value_list in expander(prop.name, list(prop.propertyValue)):
-        yield name, DummyPropertyValue(value_list)
+        yield name, value_list

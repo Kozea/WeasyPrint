@@ -28,9 +28,9 @@ suite = Tests()
 
 def expand_to_dict(css):
     """Helper to test shorthand properties expander functions."""
-    return dict((name, value.value)
+    return dict((name, ' '.join(value.cssText for value in values))
                 for prop in CSSStyleDeclaration(css)
-                for name, value in expand_shorthand(prop))
+                for name, values in expand_shorthand(prop))
 
 
 @suite.test

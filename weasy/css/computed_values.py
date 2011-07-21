@@ -27,7 +27,6 @@ import cssutils.helper
 from cssutils.css import PropertyValue, DimensionValue, Value
 
 from .initial_values import INITIAL_VALUES
-from .shorthands import DummyPropertyValue
 
 
 # How many CSS pixels is one <unit> ?
@@ -143,7 +142,7 @@ def compute_font_size(style, parent_style):
             'Got a non-pixel value for the parent font-size.'
     else:
         # root element, no parent
-        parent_value_text = INITIAL_VALUES['font-size'].value
+        parent_value_text = INITIAL_VALUES['font-size'][0].cssText
         # Initial is medium
         parent_font_size = FONT_SIZE_KEYWORDS[parent_value_text]
 
@@ -207,10 +206,8 @@ def compute_lengths(style):
     """
     font_size = style.font_size
     for name in style:
-        # PropertyValue objects are not mutable, build a new DummyPropertyValue
-        style[name] = DummyPropertyValue(
-            compute_length(value, font_size)
-            for value in style[name])
+        style[name] = [compute_length(value, font_size)
+                       for value in style[name]]
 
 
 def compute_line_height(style):
@@ -242,10 +239,14 @@ def compute_border_width(style):
     Set border-*-width to zero if border-*-style is none or hidden.
     """
     for side in ('top', 'right', 'bottom', 'left'):
-        if style['border-%s-style' % side].value in ('none', 'hidden'):
+        values = style['border-%s-style' % side]
+        if len(values) == 1 and values[0].cssText in ('none', 'hidden'):
             style['border-%s-width' % side] = PropertyValue('0')
         else:
-            value = style['border-%s-width' % side].value
+            values = style['border-%s-width' % side]
+            if len(values) != 1:
+                return
+            value = values[0].cssText
             if value in BORDER_WIDTH_KEYWORDS:
                 width = BORDER_WIDTH_KEYWORDS[value]
                 style['border-%s-width' % side] = PropertyValue(
@@ -351,9 +352,8 @@ def compute_content(element, pseudo_type, style):
         if style.content == 'normal':
             style.content = 'none'
         else:
-            style.content = DummyPropertyValue(
-                compute_content_value(element, value)
-                for value in style['content'])
+            style.content = [compute_content_value(element, value)
+                             for value in style['content']]
     else:
         # CSS 2.1 says it computes to 'normal' for elements, but does not say
         # anything for pseudo-elements other than :before and :after
