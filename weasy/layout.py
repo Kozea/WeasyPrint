@@ -263,17 +263,6 @@ def line_dimensions(box):
     box.height = 0
 
 
-def layout(document):
-    """
-    Take the block box for the root element, return a list of page boxes.
-    """
-    document.pages = []
-    page = boxes.PageBox(document, document.formatting_structure, 1)
-    page_dimensions(page)
-    document.pages.append(page)
-    # TODO: do page breaks, split boxes into multiple pages
-    return document.pages
-
 def breaking_linebox(linebox):
     """
     Eg.
@@ -534,3 +523,16 @@ def breaking_textbox(textbox, allocate_width):
         second_textbox = textbox.copy()
         second_textbox.text = text_fragment.get_remaining_text()
         return (first_textbox, second_textbox)
+
+
+def layout(document):
+    """
+    Do the layout for the whole document: line breaks, page breaks,
+    absolute size and position for all boxes.
+    """
+    document.pages = []
+    page = boxes.PageBox(document, document.formatting_structure, 1)
+    page_dimensions(page)
+    document.pages.append(page)
+    # TODO: do page breaks, split boxes into multiple pages
+    return document.pages

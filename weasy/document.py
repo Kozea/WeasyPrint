@@ -26,13 +26,17 @@ class Document(object):
             'HTML document expected, got %r.' % (dom,))
         #: lxml HtmlElement object
         self.dom = dom
-        #: dict of (element, pseudo_element_type) -> style_dict
-        #: style_dict: a dict of property_name -> (PropertyValue, precedence)
-        self.specified_styles = None
+
         #: dict of (element, pseudo_element_type) -> StyleDict
         #: StyleDict: a dict of property_name -> PropertyValue,
         #:    also with attribute access
         self.computed_styles = None
+
+        #: The Box object for the root element.
+        self.formatting_structure = None
+
+        #: Layed-out pages and boxes
+        self.pages = None
 
     @classmethod
     def from_string(cls, source):
