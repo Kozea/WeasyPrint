@@ -19,7 +19,7 @@
 
 import lxml.html
 
-from .css import annotate_document
+from .css import annotate_document, HTML4_DEFAULT_STYLESHEET
 from .formatting_structure.build import build_formatting_structure
 from .layout import layout
 
@@ -28,6 +28,10 @@ class Document(object):
     def __init__(self, dom):
         assert getattr(dom, 'tag') == 'html', (
             'HTML document expected, got %r.' % (dom,))
+
+        self.user_stylesheets = []
+        self.user_agent_stylesheets = [HTML4_DEFAULT_STYLESHEET]
+
         #: lxml HtmlElement object
         self.dom = dom
 
@@ -62,9 +66,12 @@ class Document(object):
         """
         return self.computed_styles[(element, pseudo_type)]
 
-    def do_css(self, **kwargs):
+    def do_css(self):
         if self.computed_styles is None:
-            self.computed_styles = annotate_document(self, **kwargs)
+            self.computed_styles = annotate_document(self,
+                user_stylesheets=self.user_stylesheets,
+                ua_stylesheets=self.user_agent_stylesheets,
+                medium='print')
 
     def do_boxes(self):
         self.do_css()

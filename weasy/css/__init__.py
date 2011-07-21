@@ -381,9 +381,8 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None):
     return style
 
 
-def annotate_document(document, user_stylesheets=None,
-                      ua_stylesheets=(HTML4_DEFAULT_STYLESHEET,),
-                      medium='print'):
+def annotate_document(document, medium,
+                      user_stylesheets=None, ua_stylesheets=None):
     """
     Do everything from finding author stylesheets in the given HTML document
     to parsing and applying them, to end up with a `style` attribute on

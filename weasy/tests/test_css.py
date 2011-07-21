@@ -103,8 +103,9 @@ def test_annotate_document():
     ua_stylesheet = cssutils.parseFile(resource_filename('mini_ua.css'))
     document = parse_html('doc1.html')
 
-    document.do_css(user_stylesheets=[user_stylesheet],
-                    ua_stylesheets=[ua_stylesheet])
+    document.user_agent_stylesheets = [ua_stylesheet]
+    document.user_stylesheets = [user_stylesheet]
+    document.do_css()
 
     # Element objects behave a lists of their children
     _head, body = document.dom
@@ -178,7 +179,8 @@ def test_page():
             margin-bottom: 12pt;
         }
     """)
-    document.do_css(user_stylesheets=[user_sheet])
+    document.user_stylesheets.append(user_sheet)
+    document.do_css()
 
     style = document.style_for('@page', 'first_left')
     assert style.margin_top == 5
