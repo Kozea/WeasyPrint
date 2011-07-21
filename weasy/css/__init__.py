@@ -389,8 +389,19 @@ def get_all_computed_styles(document, medium,
 
     Return a dict of (DOM element, pseudo element type) -> StyleDict instance.
     """
-    cascaded_styles = {}
     author_stylesheets = find_stylesheets(document)
+
+    # keys: (element, pseudo_element_type)
+    #    element: a lxml element object or the '@page' string for @page styles
+    #    pseudo_element_type: a string such as 'first' (for @page) or 'after',
+    #        or None for normal elements
+    # values: dicts of
+    #     keys: property name as a string
+    #     values: (values, weight)
+    #         values: a PropertyValue-like object
+    #         weight: values with a greater weight take precedence, see
+    #             http://www.w3.org/TR/CSS21/cascade.html#cascading-order
+    cascaded_styles = {}
 
     for sheets, origin in ((author_stylesheets, 'author'),
                            (user_stylesheets or [], 'user'),
@@ -424,6 +435,10 @@ def get_all_computed_styles(document, medium,
             add_declaration(cascaded_styles, name, values, weight,
                             element, pseudo_type)
 
+    # keys: (element, pseudo_element_type), like cascaded_styles
+    # values: StyleDict objects:
+    #     keys: property name as a string
+    #     values: a PropertyValue-like object
     computed_styles = {}
 
     # First, computed styles for "real" elements *in tree order*
