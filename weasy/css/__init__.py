@@ -354,12 +354,12 @@ def set_computed_styles(document, element, pseudo_type=None):
     elif pseudo_type:
         parent = element
     else:
-        parent = element.getparent()
+        parent = element.getparent() # None for the root element
 
     if parent is None:
         parent_style = None
     else:
-        parent_style = document.computed_styles.get((parent, None), {})
+        parent_style = document.computed_styles[parent, None]
 
     cascaded = document.cascaded_styles.get((element, pseudo_type), {})
     style = computed_from_cascaded(element, cascaded, parent_style, pseudo_type)
