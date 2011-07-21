@@ -19,7 +19,7 @@
 
 import lxml.html
 
-from .css import annotate_document, HTML4_DEFAULT_STYLESHEET
+from .css import get_all_computed_styles, HTML4_DEFAULT_STYLESHEET
 from .formatting_structure.build import build_formatting_structure
 from .layout import layout
 
@@ -34,6 +34,8 @@ class Document(object):
 
         #: lxml HtmlElement object
         self.dom = dom
+
+        # These are None for the steps that were not done yet.
 
         #: dict of (element, pseudo_element_type) -> StyleDict
         #: StyleDict: a dict of property_name -> PropertyValue,
@@ -68,7 +70,8 @@ class Document(object):
 
     def do_css(self):
         if self.computed_styles is None:
-            self.computed_styles = annotate_document(self,
+            self.computed_styles = get_all_computed_styles(
+                self,
                 user_stylesheets=self.user_stylesheets,
                 ua_stylesheets=self.user_agent_stylesheets,
                 medium='print')

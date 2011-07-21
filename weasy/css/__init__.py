@@ -25,7 +25,7 @@ Retrieve stylesheets associated with a document and annotate every element
 with a value for every CSS property.
 http://www.w3.org/TR/CSS21/intro.html#processing-model
 
-This module does this in more than two steps. The `annotate_document`
+This module does this in more than two steps. The `get_all_computed_styles`
 function does everything, but there is also a function for each step:
 
  * ``find_stylesheets``: Find and parse all author stylesheets in a document
@@ -36,7 +36,7 @@ function does everything, but there is also a function for each step:
  * ``add_property``: Take applicable properties and only keep those with
    highest weight.
  * ``set_computed_styles``: Handle initial values, inheritance and computed
-   values.
+   values for one element.
 """
 
 import os.path
@@ -381,14 +381,13 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None):
     return style
 
 
-def annotate_document(document, medium,
-                      user_stylesheets=None, ua_stylesheets=None):
+def get_all_computed_styles(document, medium,
+                            user_stylesheets=None, ua_stylesheets=None):
     """
     Do everything from finding author stylesheets in the given HTML document
-    to parsing and applying them, to end up with a `style` attribute on
-    every DOM element: a dictionary with values for all CSS 2.1 properties.
+    to parsing and applying them.
 
-    Given stylesheets will be modified in place.
+    Return a dict of (DOM element, pseudo element type) -> StyleDict instance.
     """
     cascaded_styles = {}
     author_stylesheets = find_stylesheets(document)
