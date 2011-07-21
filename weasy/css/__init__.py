@@ -40,7 +40,6 @@ function does everything, but there is also a function for each step:
 """
 
 import os.path
-import numbers
 try:
     from urlparse import urljoin
 except ImportError:
@@ -321,7 +320,7 @@ class StyleDict(dict):
         if len(value) == 1 and value[0].type == 'DIMENSION' \
                 and value[0].dimension == 'px':
             # cssutils promises that `DimensionValue.value` is an int or float
-            assert isinstance(value[0].value, numbers.Real)
+            assert isinstance(value[0].value, (float, int, long))
             return value[0].value
         elif len(value) == 1 and value[0].value == 0:
             return 0
@@ -329,7 +328,7 @@ class StyleDict(dict):
             return value.value # PropertyValue.value: string representation
 
     def __setattr__(self, key, value):
-        if isinstance(value, numbers.Real):
+        if isinstance(value, (float, int, long)):
             value = PropertyValue(str(value) + 'px')
         elif isinstance(value, basestring):
             value = PropertyValue(value)
