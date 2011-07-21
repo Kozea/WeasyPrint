@@ -25,7 +25,9 @@ import collections
 
 import cssutils.helper
 from cssutils.css import PropertyValue, DimensionValue, Value
+
 from .initial_values import INITIAL_VALUES
+from .shorthands import DummyPropertyValue
 
 
 # How many CSS pixels is one <unit> ?
@@ -129,16 +131,6 @@ PAGE_SIZES = dict(
         17 * LENGTHS_TO_PIXELS['in'],
     ),
 )
-
-
-class DummyPropertyValue(list):
-    """
-    A list that quacks like a PropertyValue.
-    """
-
-    @property
-    def value(self):
-        return ' '.join(value.cssText for value in self)
 
 
 def compute_font_size(style, parent_style):

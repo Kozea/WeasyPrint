@@ -24,6 +24,7 @@ import attest
 import cssutils
 
 from .. import css
+from ..css import shorthands
 from ..document import Document
 
 from . import resource_filename
@@ -60,7 +61,7 @@ def test_find_stylesheets():
         == ['sheet1.css', 'doc1.html']
 
     rules = list(rule for sheet in sheets
-                      for rule in css.resolve_import_media(sheet, 'print'))
+                      for rule in css.effective_rules(sheet, 'print'))
     assert len(rules) == 8
     # Also test appearance order
     assert [rule.selectorText for rule in rules] \
@@ -68,24 +69,31 @@ def test_find_stylesheets():
             'body > h1:first-child']
 
 
+def expand_shorthands(declaration_block):
+    return dict(
+        expanded
+        for declaration in declaration_block
+        for expanded in shorthands.expand_shorthand(declaration))
+
+
 @suite.test
 def test_expand_shorthands():
     sheet = cssutils.parseFile(resource_filename('sheet2.css'))
     assert sheet.cssRules[0].selectorText == 'li'
+
     style = sheet.cssRules[0].style
     assert style['margin'] == '2em 0'
     assert style['margin-bottom'] == '3em'
     assert style['margin-left'] == '4em'
     assert not style['margin-top']
-    css.expand_shorthands(sheet)
-    # expand_shorthands() builds new style object
-    style = sheet.cssRules[0].style
-    assert not style['margin']
-    assert style['margin-top'] == '2em'
-    assert style['margin-right'] == '0'
-    assert style['margin-bottom'] == '2em', \
+
+    style = expand_shorthands(style)
+    assert 'margin' not in style
+    assert style['margin-top'].value == '2em'
+    assert style['margin-right'].value == '0'
+    assert style['margin-bottom'].value == '2em', \
         "3em was before the shorthand, should be masked"
-    assert style['margin-left'] == '4em', \
+    assert style['margin-left'].value == '4em', \
         "4em was after the shorthand, should not be masked"
 
 

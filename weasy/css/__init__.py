@@ -17,25 +17,26 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
-    weasy.css
-    ---------
+weasy.css
+---------
 
-    This module takes care of steps 3 and 4 of “CSS 2.1 processing model”:
-    Retrieve stylesheets associated with a document and annotate every element
-    with a value for every CSS property.
-    http://www.w3.org/TR/CSS21/intro.html#processing-model
+This module takes care of steps 3 and 4 of “CSS 2.1 processing model”:
+Retrieve stylesheets associated with a document and annotate every element
+with a value for every CSS property.
+http://www.w3.org/TR/CSS21/intro.html#processing-model
 
-    This module does this in more than two steps. The `annotate_document`
-    function does everything, but there is also a function for each step:
+This module does this in more than two steps. The `annotate_document`
+function does everything, but there is also a function for each step:
 
-     * ``find_stylesheets``: Find and parse all author stylesheets in a document
-     * ``remove_ignored_declarations``: Remove illegal and unsupported
-       declarations
-     * ``expand_shorthand``: Replace shorthand properties
-     * ``resolve_import_media``: Resolve @media and @import rules
-     * ``apply_style_rule``: Apply a CSSStyleRule to a document
-     * ``assign_properties``: Assign on computed value for each property to
-       every DOM element.
+ * ``find_stylesheets``: Find and parse all author stylesheets in a document
+ * ``effective_rules``: Resolve @media and @import rules
+ * ``match_selectors``: Find elements in a document that match a selector list
+ * ``find_style_attributes``: Find and parse all `style` HTML attributes
+ * ``effective_declarations``: Remove ignored properties and expand shorthands
+ * ``add_property``: Take applicable properties and only keep those with
+   highest weight.
+ * ``set_computed_styles``: Handle initial values, inheritance and computed
+   values.
 """
 
 import os.path
@@ -68,7 +69,8 @@ PSEUDO_ELEMENTS = ('before', 'after', 'first-line', 'first-letter')
 
 def find_stylesheets(document):
     """
-    Yield stylesheets from a Document object.
+    Find and parse stylesheets in a Document object. Return an iterable of
+    stylesheets, in tree order.
     """
     for element in document.dom.iter():
         mimetype = element.get('type')
@@ -98,47 +100,18 @@ def find_stylesheets(document):
             yield parseUrl(href, media=media_attr, title=element.get('title'))
 
 
-def invalid_declaration_reason(prop):
+def find_style_attributes(document):
     """
-    Take a Property object and return a string describing the reason if it’s
-    invalid, or None if it’s valid.
+    Find and parse style HTML attributes in the given document. Return an
+    iterable of (element, declaration_block).
     """
-    # TODO: validation
-
-
-def find_rulesets(stylesheet):
-    """
-    Recursively walk a stylesheet and its @media and @import rules to yield
-    all rulesets (CSSStyleRule or CSSPageRule objects).
-    """
-    for rule in stylesheet.cssRules:
-        if rule.type in (rule.STYLE_RULE, rule.PAGE_RULE):
-            yield rule
-        elif rule.type == rule.IMPORT_RULE:
-            for subrule in find_rulesets(rule.styleSheet):
-                yield subrule
-        elif rule.type == rule.MEDIA_RULE:
-            # CSSMediaRule is kinda like a CSSStyleSheet: it has media and
-            # cssRules attributes.
-            for subrule in find_rulesets(rule):
-                yield subrule
-        # ignore everything else
-
-
-def remove_ignored_declarations(stylesheet):
-    """
-    Changes IN-PLACE the given stylesheet and its imported stylesheets
-    (recursively) to remove illegal or unsupported declarations.
-    """
-    # TODO: @font-face
-    for rule in find_rulesets(stylesheet):
-        new_style = CSSStyleDeclaration()
-        for prop in rule.style:
-            reason = invalid_declaration_reason(prop)
-            if reason is None:
-                new_style.setProperty(prop)
-            # TODO: log ignored declarations, with reasons
-        rule.style = new_style
+    for element in document.dom.iter():
+        style_attribute = element.get('style')
+        if style_attribute:
+            # TODO: no href for parseStyle. What about relative URLs?
+            # CSS3 says we should resolve relative to the attribute:
+            # http://www.w3.org/TR/css-style-attr/#interpret
+            yield element, parseStyle(style_attribute)
 
 
 def evaluate_media_query(query_list, medium):
@@ -154,11 +127,13 @@ def evaluate_media_query(query_list, medium):
         or any(query.mediaText == medium for query in query_list)
 
 
-def resolve_import_media(sheet, medium):
+def effective_rules(sheet, medium):
     """
     Resolves @import and @media rules in the given CSSStlyleSheet, and yields
     applicable rules for `medium`.
     """
+    # sheet.media is not intrinsic but comes from where the stylesheet was
+    # found: media HTML attribute, @import or @media rule.
     if not evaluate_media_query(sheet.media, medium):
         return
     for rule in sheet.cssRules:
@@ -175,25 +150,44 @@ def resolve_import_media(sheet, medium):
             # @namespace, @page, and @variables
             yield rule
             continue # no sub-stylesheet here.
-        for subrule in resolve_import_media(subsheet, medium):
+        # subsheet has the .media attribute from the @import or @media rule.
+        for subrule in effective_rules(subsheet, medium):
             yield subrule
 
 
-def expand_shorthands(stylesheet):
+def declaration_is_valid(prop):
     """
-    Changes IN-PLACE the given stylesheet and its imported stylesheets
-    (recursively) to expand shorthand properties.
-    eg. margin becomes margin-top, margin-right, margin-bottom and margin-left.
+    Return whether the given Property object is invalid or unsupported,
+    and thus should be ignored.
+
+    ***Not implemented yet.***
     """
-    for rule in find_rulesets(stylesheet):
-        rule.style = shorthands.expand_shorthands_in_declaration(rule.style)
-        # TODO: @font-face
+    # TODO implement validation
+
+    # TODO: ignore properties that do not apply to the current
+    # medium? http://www.w3.org/TR/CSS21/intro.html#processing-model
+    return True
 
 
-def declaration_precedence(origin, priority):
+def effective_declarations(declaration_block):
     """
-    Return the precedence for a rule. Precedence values have no meaning unless
-    compared to each other.
+    In the given declaration block, ignore invalid or unsupported declarations
+    and expand shorthand properties. Return a iterable of
+    (property_name, property_value_list, importance) tuples.
+    """
+    for declaration in declaration_block:
+        if declaration_is_valid(declaration):
+            for name, values in shorthands.expand_shorthand(declaration):
+                yield name, values, declaration.priority
+        else:
+            # TODO: log that something was ignored
+            pass
+
+
+def declaration_precedence(origin, importance):
+    """
+    Return the precedence for a declaration. Precedence values have no meaning
+    unless compared to each other.
 
     Acceptable values for `origin` are the strings 'author', 'user' and
     'user agent'.
@@ -201,41 +195,42 @@ def declaration_precedence(origin, priority):
     # See http://www.w3.org/TR/CSS21/cascade.html#cascading-order
     if origin == 'user agent':
         return 1
-    elif origin == 'user' and not priority:
+    elif origin == 'user' and not importance:
         return 2
-    elif origin == 'author' and not priority:
+    elif origin == 'author' and not importance:
         return 3
-    elif origin == 'author': # and priority
+    elif origin == 'author': # and importance
         return 4
-    elif origin == 'user': # and priority
+    elif origin == 'user': # and importance
         return 5
     else:
         assert ValueError('Unkown origin: %r' % origin)
 
 
-def add_property(document, prop, precedence, element, pseudo_type=None):
+def add_declaration(document, prop_name, prop_values, weight, element,
+                    pseudo_type=None):
     """
     Set the value for a property on a given element unless there already
-    is a value of greater precedence.
+    is a value of greater weight.
     """
     style = document.cascaded_styles.setdefault((element, pseudo_type), {})
-    if prop.name in style:
-        _value, previous_precedence = style[prop.name]
-        if previous_precedence > precedence:
-            return
-    style[prop.name] = prop.propertyValue, precedence
+    _values, previous_weight = style.get(prop_name, (None, None))
+    if previous_weight is None or previous_weight <= weight:
+        style[prop_name] = prop_values, weight
 
 
-def apply_style_rule(rule, document, origin):
+def match_selectors(document, selector_list):
     """
-    Apply a CSSStyleRule to a document according to its selectors, attaching
-    Property objects with their precedence to DOM elements.
+    Match a list of selectors against a document and return an iterable of
+    (element, pseudo_element_type, selector_specificity) tuples.
 
-    Acceptable values for `origin` are the strings 'author', 'user' and
-    'user agent'.
+    selector_list should be an iterable of cssutils’ Selector objects.
+
+    If any of the selectors is invalid, an empty iterable is returned as the
+    whole rule should be ignored.
     """
     selectors = []
-    for selector in rule.selectorList:
+    for selector in selector_list:
         parsed_selector = cssselect.parse(selector.selectorText)
         # cssutils made sure that `selector` is not a "group of selectors"
         # in CSS3 terms (`rule.selectorList` is) so `parsed_selector` cannot be
@@ -264,60 +259,38 @@ def apply_style_rule(rule, document, origin):
             # Invalid selector, ignore the whole ruleset.
             # TODO: log this error.
             return
-        selectors.append((selector_callable, pseudo_type, selector.specificity))
+        selectors.append((selector_callable, pseudo_type,
+                          selector.specificity))
 
     # Only apply to elements after seeing all selectors, as we want to
     # ignore he whole ruleset if just one selector is invalid.
     # TODO: test that ignoring actually happens.
     for selector, pseudo_type, specificity in selectors:
         for element in selector(document.dom):
-            for prop in rule.style:
-                # TODO: ignore properties that do not apply to the current
-                # medium? http://www.w3.org/TR/CSS21/intro.html#processing-model
-                precedence = (
-                    declaration_precedence(origin, prop.priority),
-                    specificity
-                )
-                add_property(document, prop, precedence, element, pseudo_type)
+            yield element, pseudo_type, specificity
 
 
-def apply_page_rule(document, rule, origin):
+def match_page_selector(selector):
+    """
+    Return an iterable of ('@page', page_type, selector_specificity)
+    for the given page selector text.
+
+    '@page' is the marker for page pseudo-elements. It is added so that this
+    function has the same return type as `match_selectors()`.
+
+    Return an empty iterable if the selector is invalid or unsupported.
+    """
     # TODO: support "page names" in page selectors (see CSS3 Paged Media)
-    pseudo_class = rule.selectorText or None
+    pseudo_class = selector or None
     page_types = page.PAGE_PSEUDOCLASS_TARGETS.get(pseudo_class, None)
+    specificity = page.PAGE_PSEUDOCLASS_SPECIFICITY[pseudo_class]
     if page_types is not None:
-        for prop in rule.style:
-            precedence = (
-                declaration_precedence(origin, prop.priority),
-                page.PAGE_PSEUDOCLASS_SPECIFICITY[pseudo_class]
-            )
-            for page_type in page_types:
-                add_property(document, prop, precedence, '@page', page_type)
+        for page_type in page_types:
+            yield '@page', page_type, specificity
     else:
         # Invalid/unsupported selector, ignore the whole rule
         # TODO: log/warn that something was ignored
         pass
-
-
-def handle_style_attribute(document, element):
-    """
-    Return the element’s ``applicable_properties`` list after adding properties
-    from the `style` attribute.
-    """
-    style_attribute = element.get('style')
-    if style_attribute:
-        # TODO: no href for parseStyle. What about relative URLs?
-        # CSS3 says we should resolve relative to the attribute:
-        # http://www.w3.org/TR/css-style-attr/#interpret
-        declaration = parseStyle(style_attribute)
-        declaration = shorthands.expand_shorthands_in_declaration(declaration)
-        for prop in declaration:
-            precedence = (
-                declaration_precedence('author', prop.priority),
-                # 1 for being a style attribute, 0 as there is no selector.
-                (1, 0, 0, 0)
-            )
-            add_property(document, prop, precedence, element)
 
 
 class StyleDict(dict):
@@ -371,7 +344,7 @@ class StyleDict(dict):
         return self.__class__(self)
 
 
-def assign_properties(document, element, pseudo_type=None):
+def set_computed_styles(document, element, pseudo_type=None):
     """
     Take the properties left by ``apply_style_rule`` on an element or
     pseudo-element and assign computed values with respect to the cascade,
@@ -408,7 +381,6 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None):
     return style
 
 
-
 def annotate_document(document, user_stylesheets=None,
                       ua_stylesheets=(HTML4_DEFAULT_STYLESHEET,),
                       medium='print'):
@@ -426,31 +398,59 @@ def annotate_document(document, user_stylesheets=None,
                            (user_stylesheets or [], 'user'),
                            (ua_stylesheets or [], 'user agent')):
         for sheet in sheets:
-            # TODO: UA and maybe user stylesheets might only need to be expanded
-            # once, not for every document.
-            remove_ignored_declarations(sheet)
-            expand_shorthands(sheet)
-            for rule in resolve_import_media(sheet, medium):
+            # TODO: UA and maybe user stylesheets might only need to be
+            # expanded once, not for every document.
+            for rule in effective_rules(sheet, medium):
                 if rule.type == rule.STYLE_RULE:
-                    apply_style_rule(rule, document, origin)
+                    matched = match_selectors(document, rule.selectorList)
                 elif rule.type == rule.PAGE_RULE:
-                    apply_page_rule(document, rule, origin)
-                # TODO: handle @font-face, @namespace, @page, and @variables
+                    matched = match_page_selector(rule.selectorText)
+                else:
+                    # TODO: handle @font-face, @namespace, and @variables
+                    continue
 
-    for element in document.dom.iter():
-        handle_style_attribute(document, element)
+                declarations = list(effective_declarations(rule.style))
+
+                for element, pseudo_type, specificity in matched:
+                    for name, values, importance in declarations:
+                        precedence = declaration_precedence(origin, importance)
+                        weight = (precedence, specificity)
+                        add_declaration(document, name, values, weight,
+                                        element, pseudo_type)
+
+    for element, declarations in find_style_attributes(document):
+        for name, values, importance in effective_declarations(declarations):
+            precedence = declaration_precedence('author', importance)
+            # 1 for being a style attribute, 0 as there is no selector.
+            weight = (precedence, (1, 0, 0, 0))
+            add_declaration(document, name, values, weight,
+                            element, pseudo_type)
 
     document.computed_styles = {}
 
     # First, computed styles for "real" elements *in tree order*
-    for element in document.dom.iter():
-        assign_properties(document, element)
+    # Tree order is important so that parents have computed styles before
+    # their children, for inheritance.
 
-    # Then computed styles for pseudo elements in any order
+    # Iterate on all elements, even if there is no cascaded style for them.
+    for element in document.dom.iter():
+        set_computed_styles(document, element)
+
+    # Then computed styles for pseudo elements, in any order.
+    # Pseudo-elements inherit from their associated element so they come
+    # after. Do them in a second pass as there is no easy way to iterate
+    # on the pseudo-elements for a given element with the current structure
+    # of document.cascaded_styles. (Keys are (element, pseudo_type) tuples.)
+
+    # Only iterate on pseudo-elements that have cascaded styles. (Others
+    # might as well not exist.)
     for element, pseudo_type in document.cascaded_styles:
         if pseudo_type and element != '@page':
-            assign_properties(document, element, pseudo_type)
+            set_computed_styles(document, element, pseudo_type)
 
-    # Then computed styles for @page
+    # Then computed styles for @page. (They could be done at any time.)
+
+    # Iterate on all possible page types, even if there is no cascaded style
+    # for them.
     for page_type in page.PAGE_PSEUDOCLASS_TARGETS[None]:
-        assign_properties(document, '@page', page_type)
+        set_computed_styles(document, '@page', page_type)

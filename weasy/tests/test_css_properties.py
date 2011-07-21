@@ -20,7 +20,7 @@ import attest
 from attest import Tests, assert_hook
 from cssutils.css import PropertyValue, CSSStyleDeclaration
 
-from ..css.shorthands import expand_four_sides, expand_shorthands_in_declaration
+from ..css.shorthands import expand_four_sides, expand_shorthand
 
 
 suite = Tests()
@@ -28,9 +28,9 @@ suite = Tests()
 
 def expand_to_dict(css):
     """Helper to test shorthand properties expander functions."""
-    return dict((prop.name, prop.value)
-                for prop in expand_shorthands_in_declaration(
-                    CSSStyleDeclaration(css)))
+    return dict((name, value.value)
+                for prop in CSSStyleDeclaration(css)
+                for name, value in expand_shorthand(prop))
 
 
 @suite.test
@@ -61,5 +61,3 @@ def test_expand_four_sides():
     }
     with attest.raises(ValueError):
         list(expand_four_sides('padding', PropertyValue('1 2 3 4 5')))
-
-

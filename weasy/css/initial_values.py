@@ -23,7 +23,7 @@
 
 from cssutils.css import PropertyValue, CSSStyleDeclaration
 
-from .shorthands import expand_shorthands_in_declaration
+from .shorthands import expand_shorthand
 
 
 r"""
@@ -42,10 +42,10 @@ r"""
     and some manual post-processing.
 """
 INITIAL_VALUES = dict(
-    (prop.name, prop.propertyValue)
+    expanded_prop
     # XXX: Special cases that can not be expressed as CSS:
     #   border-color, text-align
-    for prop in expand_shorthands_in_declaration(CSSStyleDeclaration(u"""
+    for prop in CSSStyleDeclaration(u"""
         azimuth: center;
         background-attachment: scroll;
         background-color: transparent;
@@ -134,7 +134,8 @@ INITIAL_VALUES = dict(
 
         /* CSS3 Paged Media: http://www.w3.org/TR/css3-page/#page-size */
         size: auto;
-    """))
+    """)
+    for expanded_prop in expand_shorthand(prop)
 )
 
 
