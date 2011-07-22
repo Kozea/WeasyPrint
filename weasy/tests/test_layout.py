@@ -106,6 +106,20 @@ def test_page():
     assert paragraph.position_y == 18 # 10px + 8px
     assert paragraph.width == 68
 
+    page, = parse('''
+        <style>
+            @page { size: 100px; margin: 1px 2px; padding: 4px 8px;
+                    border-width: 16px 32px; border-style: solid }
+        </style>
+        <body>
+    ''')
+    assert page.width == 16 # 100 - 2 * 42
+    assert page.height == 58 # 100 - 2 * 21
+    html = page.root_box
+    assert html.element.tag == 'html'
+    assert html.position_x == 42 # 2 + 8 + 32
+    assert html.position_y == 21 # 1 + 4 + 16
+
 
 @suite.test
 def test_block_widths():

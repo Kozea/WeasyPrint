@@ -140,10 +140,11 @@ def page_dimensions(box):
 
     box.position_x = 0
     box.position_y = 0
-    box.width = box.outer_width - box.margin_left - box.margin_right
-    box.height = box.outer_height - box.margin_top - box.margin_bottom
-    box.root_box.position_x = box.margin_left
-    box.root_box.position_y = box.margin_top
+    box.width = box.outer_width - box.horizontal_surroundings()
+    box.height = box.outer_height - box.vertical_surroundings()
+
+    box.root_box.position_x = box.content_box_x()
+    box.root_box.position_y = box.content_box_y()
 
     compute_dimensions(box.root_box)
 
