@@ -21,9 +21,9 @@
     inherited.
 """
 
-from cssutils.css import PropertyValue, CSSStyleDeclaration
+from cssutils.css import PropertyValue
 
-from .shorthands import expand_shorthand
+from .shorthands import expand_name_values
 
 
 r"""
@@ -41,101 +41,101 @@ r"""
 
     and some manual post-processing.
 """
+# XXX: Special cases that can not be expressed as CSS:
+#   border-color, text-align
 INITIAL_VALUES = dict(
     expanded_prop
-    # XXX: Special cases that can not be expressed as CSS:
-    #   border-color, text-align
-    for prop in CSSStyleDeclaration(u"""
-        azimuth: center;
-        background-attachment: scroll;
-        background-color: transparent;
-        background-image: none;
-        background-position: 0% 0%;
-        background-repeat: repeat;
-        border-collapse: separate;
-    /*  border-color: the value of the 'color' property */
-        border-spacing: 0;
-        border-style: none;
-        border-width: medium;
-        bottom: auto;
-        caption-side: top;
-        clear: none;
-        clip: auto;
-        color: #000;     /* depends on user agent */
-        content: normal;
-        counter-increment: none;
-        counter-reset: none;
-        cue-after: none;
-        cue-before: none;
-        cursor: auto;
-        direction: ltr;
-        display: inline;
-        elevation: level;
-        empty-cells: show;
-        float: none;
-        font-family: serif; /* depends on user agent */
-        font-size: medium;
-        font-style: normal;
-        font-variant: normal;
-        font-weight: normal;
-        height: auto;
-        left: auto;
-        letter-spacing: normal;
-        line-height: normal;
-        list-style-image: none;
-        list-style-position: outside;
-        list-style-type: disc;
-        margin: 0;
-        max-height: none;
-        max-width: none;
-        min-height: 0;
-        min-width: 0;
-        orphans: 2;
-        outline-color: invert;
-        outline-style: none;
-        outline-width: medium;
-        overflow: visible;
-        padding: 0;
-        page-break-after: auto;
-        page-break-before: auto;
-        page-break-inside: auto;
-        pause-after: 0;
-        pause-before: 0;
-        pitch-range: 50;
-        pitch: medium;
-        play-during: auto;
-        quotes: "“" "”" "‘" "’";  /* depends on user agent */
-        position: static;
-        richness: 50;
-        right: auto;
-        speak-header: once;
-        speak-numeral: continuous;
-        speak-punctuation: none;
-        speak: normal;
-        speech-rate: medium;
-        stress: 50;
-        table-layout: auto;
-    /*  text-align: acts as 'left' if 'direction' is 'ltr', 'right' if
-                    'direction' is 'rtl'  */
-        text-decoration: none;
-        text-indent: 0;
-        text-transform: none;
-        top: auto;
-        unicode-bidi: normal;
-        vertical-align: baseline;
-        visibility: visible;
-        voice-family: child;     /* depends on user agent */
-        volume: medium;
-        white-space: normal;
-        widows: 2;
-        width: auto;
-        word-spacing: normal;
-        z-index: auto;
+    for name, values in [
+        ('azimuth', 'center'),
+        ('background-attachment', 'scroll'),
+        ('background-color', 'transparent'),
+        ('background-image', 'none'),
+        ('background-position', '0% 0%'),
+        ('background-repeat', 'repeat'),
+        ('border-collapse', 'separate'),
+     #  'border-color': the value of the 'color' property
+        ('border-spacing', '0'),
+        ('border-style', 'none'),
+        ('border-width', 'medium'),
+        ('bottom', 'auto'),
+        ('caption-side', 'top'),
+        ('clear', 'none'),
+        ('clip', 'auto'),
+        ('color', '#000'),     # depends on user agent
+        ('content', 'normal'),
+        ('counter-increment', 'none'),
+        ('counter-reset', 'none'),
+        ('cue-after', 'none'),
+        ('cue-before', 'none'),
+        ('cursor', 'auto'),
+        ('direction', 'ltr'),
+        ('display', 'inline'),
+        ('elevation', 'level'),
+        ('empty-cells', 'show'),
+        ('float', 'none'),
+        ('font-family', 'serif'), # depends on user agent
+        ('font-size', 'medium'),
+        ('font-style', 'normal'),
+        ('font-variant', 'normal'),
+        ('font-weight', 'normal'),
+        ('height', 'auto'),
+        ('left', 'auto'),
+        ('letter-spacing', 'normal'),
+        ('line-height', 'normal'),
+        ('list-style-image', 'none'),
+        ('list-style-position', 'outside'),
+        ('list-style-type', 'disc'),
+        ('margin', '0'),
+        ('max-height', 'none'),
+        ('max-width', 'none'),
+        ('min-height', '0'),
+        ('min-width', '0'),
+        ('orphans', '2'),
+        ('outline-color', 'invert'),
+        ('outline-style', 'none'),
+        ('outline-width', 'medium'),
+        ('overflow', 'visible'),
+        ('padding', '0'),
+        ('page-break-after', 'auto'),
+        ('page-break-before', 'auto'),
+        ('page-break-inside', 'auto'),
+        ('pause-after', '0'),
+        ('pause-before', '0'),
+        ('pitch-range', '50'),
+        ('pitch', 'medium'),
+        ('play-during', 'auto'),
+        ('quotes', u'"“" "”" "‘" "’"'),  # depends on user agent
+        ('position', 'static'),
+        ('richness', '50'),
+        ('right', 'auto'),
+        ('speak-header', 'once'),
+        ('speak-numeral', 'continuous'),
+        ('speak-punctuation', 'none'),
+        ('speak', 'normal'),
+        ('speech-rate', 'medium'),
+        ('stress', '50'),
+        ('table-layout', 'auto'),
+    #   'text-align': acts as 'left' if 'direction' is 'ltr', 'right' if
+    #                 ('direction' is 'rtl'
+        ('text-decoration', 'none'),
+        ('text-indent', '0'),
+        ('text-transform', 'none'),
+        ('top', 'auto'),
+        ('unicode-bidi', 'normal'),
+        ('vertical-align', 'baseline'),
+        ('visibility', 'visible'),
+        ('voice-family', 'child'),     # depends on user agent */
+        ('volume', 'medium'),
+        ('white-space', 'normal'),
+        ('widows', '2'),
+        ('width', 'auto'),
+        ('word-spacing', 'normal'),
+        ('z-index', 'auto'),
 
-        /* CSS3 Paged Media: http://www.w3.org/TR/css3-page/#page-size */
-        size: auto;
-    """)
-    for expanded_prop in expand_shorthand(prop)
+        # CSS3 Paged Media: http://www.w3.org/TR/css3-page/#page-size
+        ('size', 'auto'),
+    ]
+    for expanded_prop in expand_name_values(name, PropertyValue(values))
 )
 
 

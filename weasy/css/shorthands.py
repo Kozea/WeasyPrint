@@ -123,11 +123,15 @@ def expand_noop(name, values):
     yield name, values
 
 
+def expand_name_values(name, values):
+    expander = SHORTHANDS.get(name, expand_noop)
+    for new_name, new_values in expander(name, list(values)):
+        yield new_name, new_values
+
+
 def expand_shorthand(prop):
     """
     Take a Property object and return an iterable of expanded
     (property_name, property_value) tuples.
     """
-    expander = SHORTHANDS.get(prop.name, expand_noop)
-    for name, value_list in expander(prop.name, list(prop.propertyValue)):
-        yield name, value_list
+    return expand_name_values(prop.name, prop.propertyValue)
