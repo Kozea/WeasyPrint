@@ -40,8 +40,8 @@ def draw_background(context, box):
         context.rectangle(
             box.position_x + box.margin_left,
             box.position_y + box.margin_top,
-            box.border_width,
-            box.border_height)
+            box.border_width(),
+            box.border_height())
         context.set_source_colorvalue(bg_color)
         context.fill()
 

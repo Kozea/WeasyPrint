@@ -137,35 +137,53 @@ class Box(object):
         new_box.__dict__.update(self.__dict__)
         return new_box
 
-    @property
     def padding_width(self):
+        """Width of the padding box."""
         return self.width + self.padding_left + self.padding_right
 
-    @property
     def padding_height(self):
+        """Height of the padding box."""
         return self.height + self.padding_top + self.padding_bottom
 
-    @property
     def border_width(self):
-        return self.padding_width + self.border_left_width + \
+        """Width of the border box."""
+        return self.padding_width() + self.border_left_width + \
             self.border_right_width
 
-    @property
     def border_height(self):
-        return self.padding_height + self.border_top_width + \
+        """Height of the border box."""
+        return self.padding_height() + self.border_top_width + \
             self.border_bottom_width
 
-    @property
+    def margin_width(self):
+        """Width of the margin box (aka. outer box)."""
+        return self.border_width() + self.margin_left + self.margin_right
+
+    def margin_height(self):
+        """Height of the margin box (aka. outer box)."""
+        return self.border_height() + self.margin_top + self.margin_bottom
+
     def horizontal_spacing(self):
+        """Sum of all horizontal margins, paddings and borders."""
         return self.margin_left + self.margin_right + \
                self.padding_left + self.padding_right + \
                self.border_left_width + self.border_right_width
 
-    @property
     def vertical_spacing(self):
+        """Sum of all vertical margins, paddings and borders."""
         return self.margin_top + self.margin_bottom + \
                self.padding_top + self.padding_bottom + \
                self.border_top_width + self.border_bottom_width
+
+    def content_box_x(self):
+        """Absolute horizontal position of the content box."""
+        return self.position_x + self.margin_left + self.padding_left + \
+            self.border_left_width
+
+    def content_box_y(self):
+        """Absolute vertical position of the content box."""
+        return self.position_y + self.margin_top + self.padding_top + \
+            self.border_top_width
 
 
 class PageBox(Box):

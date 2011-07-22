@@ -17,6 +17,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+from .css.utils import get_single_keyword
 from .formatting_structure import boxes
 from .utils import MultiFunction
 import text
@@ -69,7 +70,7 @@ def resolve_one_percentage(box, property_name, refer_to):
             # A percentage
             result = percentage * refer_to / 100.
         else:
-            result = ' '.join(value.cssText for value in values)
+            result = get_single_keyword(values)
             # Other than that, only 'auto' is allowed
             # TODO: it is only allowed on some properties. Check this here?
             assert result == 'auto'
@@ -213,10 +214,7 @@ def block_level_width(box):
         box.margin_right = margin_sum - margin_l
 
     # Sanity check
-    total = (box.margin_left + box.margin_right + box.padding_left +
-             box.padding_right + box.border_left_width +
-             box.border_right_width + box.width)
-    assert total == cb_width
+    assert box.margin_width() == cb_width
 
 
 def block_level_height(box):
@@ -233,10 +231,8 @@ def block_level_height(box):
     if box.margin_bottom == 'auto':
         box.margin_bottom = 0
 
-    position_x = box.position_x + box.margin_left + box.padding_left + \
-        box.border_left_width
-    position_y = box.position_y + box.margin_top + box.padding_top + \
-        box.border_top_width
+    position_x = box.content_box_x()
+    position_y = box.content_box_y()
     initial_position_y = position_y
     for child in box.children:
         # TODO: collapse margins:
@@ -246,11 +242,7 @@ def block_level_height(box):
 
         compute_dimensions(child)
 
-        child_outer_height = (
-            child.height + child.margin_top + child.margin_bottom +
-            child.border_top_width + child.border_bottom_width +
-            child.padding_top + child.padding_bottom)
-        position_y += child_outer_height
+        position_y += child.margin_height()
 
     if box.height == 'auto':
         box.height = position_y - initial_position_y
