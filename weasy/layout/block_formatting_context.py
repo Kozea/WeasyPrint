@@ -107,6 +107,9 @@ def block_level_height(box):
     position_y = box.content_box_y()
     initial_position_y = position_y
     for child in box.children:
+        if not child.is_in_normal_flow():
+            continue
+
         # TODO: collapse margins:
         # http://www.w3.org/TR/CSS21/visudet.html#normal-block
         child.position_x = position_x

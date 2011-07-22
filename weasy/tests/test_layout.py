@@ -252,6 +252,10 @@ def test_block_heights():
         </style>
         <div>
           <p></p>
+          <!-- These two are not in normal flow: the do not contribute to
+               the parent’s height. -->
+          <p style="position: absolute"></p>
+          <p style="float: left"></p>
         </div><div>
           <p></p>
           <p></p>

@@ -67,7 +67,7 @@ def find_stylesheets(document):
         if mimetype and mimetype.split(';', 1)[0].strip() != 'text/css':
             continue
         # cssutils translates '' to 'all'.
-        media_attr = element.get('media', '').strip()
+        media_attr = (element.get('media') or '').strip()
         if element.tag == 'style':
             # TODO: handle the `scoped` attribute
             # Content is text that is directly in the <style> element, not its

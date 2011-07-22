@@ -125,6 +125,8 @@ class Box(object):
                         return ancestor.width, ancestor.height
                     else:
                         return ancestor.width, ancestor.height
+                elif isinstance(ancestor, PageBox):
+                    return ancestor.width, ancestor.height
         assert False, 'Containing block not found'
 
     def copy(self):
@@ -136,6 +138,8 @@ class Box(object):
         # Copy attributes
         new_box.__dict__.update(self.__dict__)
         return new_box
+
+    ###
 
     def padding_width(self):
         """Width of the padding box."""
@@ -184,6 +188,20 @@ class Box(object):
         """Absolute vertical position of the content box."""
         return self.position_y + self.margin_top + self.padding_top + \
             self.border_top_width
+
+    ###  Positioning schemes
+
+    def is_floated(self):
+        """Return whether this box is floated."""
+        return self.style.float != 'none'
+
+    def is_absolutely_positioned(self):
+        """Return whether this box is in the absolute positioning scheme."""
+        return self.style.position in ('absolute', 'fixed')
+
+    def is_in_normal_flow(self):
+        """Return whether this box is in normal flow."""
+        return not (self.is_floated() or self.is_absolutely_positioned())
 
 
 class PageBox(Box):
