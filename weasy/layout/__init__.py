@@ -17,10 +17,10 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from .css.utils import get_single_keyword
-from .formatting_structure import boxes
-from .utils import MultiFunction
-import text
+from ..css.utils import get_single_keyword
+from ..formatting_structure import boxes
+from ..utils import MultiFunction
+from .. import text
 
 
 def pixel_value(value):
