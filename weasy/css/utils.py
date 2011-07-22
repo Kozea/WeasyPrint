@@ -17,8 +17,22 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
-Everything specific to paged media and @page rules.
+Utility functions and methods used by various modules in the css package.
 """
+
+
+import os.path
+
+from cssutils import parseFile
+
+
+HTML4_DEFAULT_STYLESHEET = parseFile(os.path.join(os.path.dirname(__file__),
+    'html4_default.css'))
+
+
+# Pseudo-classes and pseudo-elements are the same to lxml.cssselect.parse().
+# List the identifiers for all CSS3 pseudo elements here to distinguish them.
+PSEUDO_ELEMENTS = ('before', 'after', 'first-line', 'first-letter')
 
 
 # Selectors for @page rules can have a pseudo-class, one of :first, :left
@@ -38,3 +52,21 @@ PAGE_PSEUDOCLASS_SPECIFICITY = {
     ':right': 1,
     ':first': 10,
 }
+
+
+def get_keyword(value):
+    """
+    If the given Value object is a keyword (identifier in cssutils), return its
+    name. Otherwise return None.
+    """
+    if value.type == 'IDENT':
+        return value.value
+
+
+def get_single_keyword(values):
+    """
+    If the given list of Value object is a single keyword (identifier in
+    cssutils), return its name. Otherwise return None.
+    """
+    if len(values) == 1:
+        return get_keyword(values[0])

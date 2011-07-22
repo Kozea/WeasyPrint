@@ -24,6 +24,7 @@
 from cssutils.css import PropertyValue
 
 from .shorthands import expand_name_values
+from .utils import get_single_keyword
 
 
 r"""
@@ -138,6 +139,12 @@ INITIAL_VALUES = dict(
     for expanded_prop in expand_name_values(name, PropertyValue(values))
 )
 
+# Not the same when computed: border-*-color, text-align, outline-width, line-height, font-size, word-spacing, font-weight, display, size
+
+# Computed initial varies: border-*-color, text-align, line-height
+# depend on -style (0 if -style is none): border-*-width, outline-width
+# display: on root element
+
 
 
 def is_initial(style, name):
@@ -147,10 +154,7 @@ def is_initial(style, name):
     """
     # Explicit 'initial' values are new in CSS3
     # http://www.w3.org/TR/css3-values/#computed0
-    if name not in style:
-        return True
-    values = style[name]
-    return len(values) == 1 and values[0].cssText == 'initial'
+    return name not in style or get_single_keyword(style[name]) == 'initial'
 
 
 def handle_initial_values(style):

@@ -19,7 +19,8 @@
 
 import lxml.html
 
-from .css import get_all_computed_styles, HTML4_DEFAULT_STYLESHEET
+from .css import get_all_computed_styles
+from .css.utils import HTML4_DEFAULT_STYLESHEET
 from .formatting_structure.build import build_formatting_structure
 from .layout import layout
 

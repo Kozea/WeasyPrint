@@ -22,6 +22,8 @@
 
 from cssutils.css import PropertyValue
 
+from .utils import get_single_keyword
+
 
 r"""
   Built with:
@@ -83,7 +85,7 @@ INHERITED = set("""
 
 
 def is_inherit(values):
-    return len(values) == 1 and values[0].cssText == 'inherit'
+    return get_single_keyword(values) == 'inherit'
 
 
 def handle_inheritance(style, parent_style):

@@ -27,6 +27,7 @@ import cssutils.helper
 from cssutils.css import PropertyValue, DimensionValue, Value
 
 from .initial_values import INITIAL_VALUES
+from .utils import get_single_keyword
 
 
 # How many CSS pixels is one <unit> ?
@@ -240,13 +241,13 @@ def compute_border_width(style):
     """
     for side in ('top', 'right', 'bottom', 'left'):
         values = style['border-%s-style' % side]
-        if len(values) == 1 and values[0].cssText in ('none', 'hidden'):
+        if get_single_keyword(values) in ('none', 'hidden'):
             style['border-%s-width' % side] = PropertyValue('0')
         else:
             values = style['border-%s-width' % side]
             if len(values) != 1:
                 return
-            value = values[0].cssText
+            value = get_single_keyword(values)
             if value in BORDER_WIDTH_KEYWORDS:
                 width = BORDER_WIDTH_KEYWORDS[value]
                 style['border-%s-width' % side] = PropertyValue(

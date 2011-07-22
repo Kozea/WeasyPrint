@@ -39,14 +39,13 @@ function does everything, but there is also a function for each step:
    values for one element.
 """
 
-import os.path
 try:
     from urlparse import urljoin
 except ImportError:
     # Python 3
     from urllib.parse import urljoin
 
-from cssutils import parseString, parseUrl, parseStyle, parseFile
+from cssutils import parseString, parseUrl, parseStyle
 from cssutils.css import PropertyValue
 from lxml import cssselect
 
@@ -54,16 +53,7 @@ from . import shorthands
 from . import inheritance
 from . import initial_values
 from . import computed_values
-from . import page
-
-
-HTML4_DEFAULT_STYLESHEET = parseFile(os.path.join(os.path.dirname(__file__),
-    'html4_default.css'))
-
-
-# Pseudo-classes and pseudo-elements are the same to lxml.cssselect.parse().
-# List the identifiers for all CSS3 pseudo elements here to distinguish them.
-PSEUDO_ELEMENTS = ('before', 'after', 'first-line', 'first-letter')
+from . import utils
 
 
 def find_stylesheets(document):
@@ -244,7 +234,7 @@ def match_selectors(document, selector_list):
         #  * The selector has no pseudo-element and is supported by
         #    `cssselect.CSSSelector`.
         if isinstance(parsed_selector, cssselect.Pseudo) \
-                and parsed_selector.ident in PSEUDO_ELEMENTS:
+                and parsed_selector.ident in utils.PSEUDO_ELEMENTS:
             pseudo_type = parsed_selector.ident
             # Remove the pseudo-element from the selector
             parsed_selector = parsed_selector.element
@@ -281,8 +271,8 @@ def match_page_selector(selector):
     """
     # TODO: support "page names" in page selectors (see CSS3 Paged Media)
     pseudo_class = selector or None
-    page_types = page.PAGE_PSEUDOCLASS_TARGETS.get(pseudo_class, None)
-    specificity = page.PAGE_PSEUDOCLASS_SPECIFICITY[pseudo_class]
+    page_types = utils.PAGE_PSEUDOCLASS_TARGETS.get(pseudo_class, None)
+    specificity = utils.PAGE_PSEUDOCLASS_SPECIFICITY[pseudo_class]
     if page_types is not None:
         for page_type in page_types:
             yield '@page', page_type, specificity
@@ -466,7 +456,7 @@ def get_all_computed_styles(document, medium,
 
     # Iterate on all possible page types, even if there is no cascaded style
     # for them.
-    for page_type in page.PAGE_PSEUDOCLASS_TARGETS[None]:
+    for page_type in utils.PAGE_PSEUDOCLASS_TARGETS[None]:
         set_computed_styles(cascaded_styles, computed_styles,
                             '@page', page_type)
 
