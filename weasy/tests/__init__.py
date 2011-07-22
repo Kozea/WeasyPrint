@@ -17,15 +17,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os.path
-from lxml import html
-from cssutils.helper import path2url
 
 
 def resource_filename(basename):
     return os.path.join(os.path.dirname(__file__), 'resources', basename)
-
-
-def parse_html(filename):
-    """Parse an HTML file from the test resources and resolve relative URL."""
-    document = html.parse(path2url(resource_filename(filename))).getroot()
-    return document

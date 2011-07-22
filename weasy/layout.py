@@ -263,73 +263,17 @@ def line_dimensions(box):
     box.height = 0
 
 
-def layout(root_box):
-    """
-    Take the block box for the root element, return a list of page boxes.
-    """
-    pages = []
-    page = boxes.PageBox(root_box, 1)
-    page_dimensions(page)
-    pages.append(page)
-    # TODO: do page breaks, split boxes into multiple pages
-    return pages
-
-
-#def compute_linebox_width_element(box):
-#    """Add the width and height in the box attributes and return total width."""
-#    sum_width = 0
-#    max_height = 0
-#    if isinstance(box, boxes.InlineBox):
-#        children_heights = []
-#        for child in inlinebox_children_size(inlinebox):
-#            #set css style in TextLineFragment
-#            text_fragment = text.TextLineFragment()
-#            text_fragment.set_textbox(child)
-#            child.width, child.height = text_fragment.get_size()
-#            children_heights.append(child.height)
-#            sum_width += child.width
-#        box.width, box.height = sum_width, max(children_heights)
-#        return sum_width
-#    elif isinstance(box, boxes.TextBox):
-#        text_fragment = text.TextLineFragment()
-#        text_fragment.set_textbox(box)
-#        box.width, box.height = text_fragment.get_size()
-#        return box.width
-#    elif isinstance(box, boxes.InlineBlockBox):
-#        pass
-#    elif isinstance(box, boxes.InlineLevelReplacedBox):
-#        pass
-
-#def inlinebox_children_size(inlinebox):
-#    """ Return something :(
-#    the horizontal_spacing and the vertical_spacing of all its ancestors
-#    """
-#    for child in flatten_inlinebox_tree(inlinebox):
-#        if isinstance(child, boxes.TextBox):
-#            horizontal_spacing = 0
-#            vertical_spacing = 0
-#            # return the branch between a decendent and an ancestor
-#            for ancestor in child.ancestors():
-#                if ancestor != inlinebox:
-#                    horizontal_spacing += ancestor.horizontal_spacing
-#                    vertical_spacing += ancestor.vertical_spacing
-#            text_fragment = text.TextLineFragment()
-#            text_fragment.set_textbox(child)
-#            child.width, child.height = text_fragment.get_size()
-#            yield child.width, child.height
-#        elif isinstance(child, boxes.InlineBlockBox):
-#            raise NotImplementedError
-#        elif isinstance(child, boxes.InlineLevelReplacedBox):
-#            raise NotImplementedError
-
-
 class LineBoxFormatting(object):
     def __init__(self, linebox):
         self.width = linebox.containing_block_size()[0]
-        self.flat_tree = list(self.flatten_tree(linebox))
+        self.flat_tree = []
+        for box in self.flatten_tree(linebox):
+            new_box = box.copy()
+            if isinstance(box, boxes.ParentBox):
+                new_box.empty()
+            self.flat_tree.append(new_box)
         self.text_fragment = text.TextLineFragment()
         self.execute_formatting()
-
 
     @property
     def parents(self):
@@ -535,28 +479,30 @@ class LineBoxFormatting(object):
         def build_tree(flat_tree):
             while flat_tree:
                 box = flat_tree.pop(0)
-                children = list(get_children(box, flat_tree))
+                children = list(get_children(box.depth, flat_tree))
                 if children:
                     box.children = list(build_tree(children))
                     yield box
                 else:
                     yield box
 
-        def get_children(parent, flat_tree):
-                level = parent.depth
+        def get_children(level, flat_tree):
                 while flat_tree:
-                    item = flat_tree.pop(0)
-                    if item.depth > level:
-                        yield item
+                    box = flat_tree.pop(0).copy()
+                    if box.depth > level:
+                        yield box
                     else:
-                        flat_tree.insert(0, item)
+                        flat_tree.insert(0, box)
                         break
+
         tree = list(self.flat_tree)
         while tree:
             line = tree.pop(0)
-            children = list(get_children(line, tree))
+            level = line.depth
+            children = list(get_children(level, tree))
             line.children = list(build_tree(children))
-            yield line
+            lines.append(line)
+        1/0
 
     def flatten_tree(self, box, depth=0):
         """
@@ -594,16 +540,29 @@ class LineBoxFormatting(object):
          ]
         """
         box.depth = depth
-        yield box.copy()
+        yield box
         depth+=1
         for child in box.children:
             if isinstance(child, boxes.InlineBox):
                 for child in self.flatten_tree(child, depth):
-                    yield child.copy()
+                    yield child
             elif isinstance(child, boxes.TextBox):
                 child.depth = depth
-                yield child.copy()
+                yield child
             elif isinstance(child, boxes.InlineBlockBox):
                 raise NotImplementedError
             elif isinstance(child, boxes.InlineLevelReplacedBox):
                 raise NotImplementedError
+
+
+def layout(document):
+    """
+    Do the layout for the whole document: line breaks, page breaks,
+    absolute size and position for all boxes.
+    """
+    pages = []
+    page = boxes.PageBox(document, document.formatting_structure, 1)
+    page_dimensions(page)
+    pages.append(page)
+    # TODO: do page breaks, split boxes into multiple pages
+    return pages

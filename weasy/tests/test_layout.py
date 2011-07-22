@@ -18,10 +18,9 @@
 
 
 from attest import Tests, assert_hook
-import lxml.html
 
-from .. import css
-from ..formatting_structure import boxes, build
+from ..document import Document
+from ..formatting_structure import boxes
 from .. import layout
 
 
@@ -32,10 +31,9 @@ def parse(html_content):
     """
     Parse some HTML, apply stylesheets, transform to boxes and do layout.
     """
-    document = lxml.html.document_fromstring(html_content)
-    css.annotate_document(document)
-    box = build.build_formatting_structure(document)
-    return layout.layout(box)
+    document = Document.from_string(html_content)
+    document.do_layout()
+    return document.pages
 
 
 @suite.test
@@ -335,25 +333,31 @@ def test_flatten_inlinebox_tree():
                 font-family:Courier New, Courier, Prestige, monospace;
             }
         </style>
-        <p><em>Lorem<strong> Ipsum <span>is very very very very very very veryvery very very very very very very</span>
-         simply</strong><em>dummy</em>
-        text of the printing and. naaaa </em></p>''')
+        <p><em>Lorem<strong> Ipsum <span>is very</span>simply</strong><em>
+        dummy</em>text of the printing and. naaaa </em> naaaa naaaa naaaa
+        naaaa naaaa naaaa naaaa naaaa</p>''')
     html = page.root_box
     body = html.children[0]
     p = body.children[0]
     linebox = p.children[0]
 
-    assert len(linebox.children) == 1
-    linebox_formatting = layout.LineBoxFormatting(linebox)
-    for box in linebox_formatting.flat_tree:
-        if isinstance(box, boxes.TextBox):
-            print box, box.depth, box.text
-        else:
-            print box, box.depth
-    print "\n"
-    print list(linebox_formatting.lineboxes)
+    assert len(linebox.children) == 2
+#    linebox_formatting = layout.LineBoxFormatting(linebox)
+#    for box in linebox_formatting.flat_tree:
+#        if isinstance(box, boxes.TextBox):
+#            print box, box.depth, box.text
+#        else:
+#            print box, box.depth
+#    print "\n"
+#    lines = list(linebox_formatting.lineboxes)
+#    for i, line in enumerate(lines):
 
-##    1/0
+#        content = ""
+#        for child in line.descendants():
+#            if isinstance(child, boxes.TextBox):
+#                content += child.text
+#        print content
+
 ##    for line in linebox_formatting.lineboxes:
 ##        print line
 

@@ -38,6 +38,7 @@ Abstract classes, should not be instantiated:
  * AnonymousBox
  * ReplacedBox
  * ParentBox
+ * AtomicInlineLevelBox
 
 Concrete classes:
 
@@ -77,7 +78,8 @@ class Box(object):
     """
     Abstract base class for all boxes.
     """
-    def __init__(self, element):
+    def __init__(self, document, element):
+        self.document = document
         # Should never be None
         self.element = element
         # No parent yet. Will be set when this box is added to another box’s
@@ -92,7 +94,7 @@ class Box(object):
         # Computed values
         # Copying might not be needed, but let’s be careful with mutable
         # objects.
-        self.style = self.element.style.copy()
+        self.style = self.document.style_for(self.element).copy()
 
     def __repr__(self):
         return '<%s %s>' % (type(self).__name__, self.element.tag)
@@ -171,13 +173,13 @@ class PageBox(Box):
     Initially the whole document will be in a single page box. During layout
     a new page box is created after every page break.
     """
-    def __init__(self, root_box, page_number):
+    def __init__(self, document, root_box, page_number):
         self.root_box = root_box
         self.root_box.parent = self
         # starting at 1 for the first page.
         self.page_number = page_number
         # Page boxes are not linked to any element.
-        super(PageBox, self).__init__(element=None)
+        super(PageBox, self).__init__(document, element=None)
 
     def _init_style(self):
         # First page is a right page. TODO: this "should depend on the major
@@ -187,7 +189,7 @@ class PageBox(Box):
         page_type = 'right' if is_right else 'left'
         if self.page_number == 1:
             page_type = 'first_' + page_type
-        style = self.root_box.element.page_pseudo_elements[page_type].style
+        style = self.document.computed_styles['@page', page_type]
         # Copying might not be needed, but let’s be careful with mutable
         # objects.
         self.style = style.copy()
@@ -200,8 +202,8 @@ class ParentBox(Box):
     """
     A box that has children.
     """
-    def __init__(self, element):
-        super(ParentBox, self).__init__(element)
+    def __init__(self, document, element):
+        super(ParentBox, self).__init__(document, element)
         self.empty()
 
     def empty(self):
@@ -261,28 +263,25 @@ class AnonymousBox(Box):
     of copying them.
     """
     def _init_style(self):
-        pseudo = css.PseudoElement(self.element, 'anonymous_box')
-        # New PseudoElement has an empty .applicable_properties list:
-        # no cascaded value, only inherited and initial values.
-        # TODO: Maybe pre-compute initial values and remove the compute_values
-        # step here.
-        css.assign_properties(pseudo)
-        self.style = pseudo.style
-        # These properties are not inherited, that is why they are initialized
-        # to zero
-        self.margin_left = 0
-        self.margin_right = 0
-        self.padding_left = 0
-        self.padding_right = 0
-        self.border_left_width = 0
-        self.border_right_width = 0
+        parent_style = self.document.style_for(self.element)
+        self.style = css.computed_from_cascaded(self.element, {}, parent_style)
 
+        # These properties are not inherited so they always have their initial
+        # value, zero. The used value is zero too.
         self.margin_top = 0
         self.margin_bottom = 0
+        self.margin_left = 0
+        self.margin_right = 0
+
         self.padding_top = 0
         self.padding_bottom = 0
+        self.padding_left = 0
+        self.padding_right = 0
+
         self.border_top_width = 0
         self.border_bottom_width = 0
+        self.border_left_width = 0
+        self.border_right_width = 0
 
 
 class AnonymousBlockBox(AnonymousBox, BlockBox):
@@ -336,18 +335,25 @@ class TextBox(AnonymousBox, InlineLevelBox):
     Any text in the document ends up in a text box. What CSS calls "anonymous
     inline boxes" are also text boxes.
     """
-    def __init__(self, element, text):
-        super(TextBox, self).__init__(element)
+    def __init__(self, document, element, text):
+        super(TextBox, self).__init__(document, element)
         self.text = text
 
 
-class InlineBlockBox(InlineLevelBox, BlockContainerBox):
+class AtomicInlineLevelBox(InlineLevelBox):
+    """
+    A box that participates in an inline formatting context (it is
+    inline-level) but can not be split for line breaks.
+    """
+
+
+class InlineBlockBox(AtomicInlineLevelBox, BlockContainerBox):
     """
     A box that is both inline-level and a block container: it behaves as
     inline on the outside and as a block on the inside.
 
-    A non-replaced element with a 'display' value of 'inline-block' generates an
-    inline-block box.
+    A non-replaced element with a 'display' value of 'inline-block' generates
+    an inline-block box.
     """
 
 
@@ -356,8 +362,8 @@ class ReplacedBox(Box):
     A box that is replaced, ie. its content is rendered externally and is opaque
     from CSS’s point of view. Example: <img> elements are replaced.
     """
-    def __init__(self, element, replacement):
-        super(ReplacedBox, self).__init__(element)
+    def __init__(self, document, element, replacement):
+        super(ReplacedBox, self).__init__(document, element)
         self.replacement = replacement
 
 
@@ -370,7 +376,7 @@ class BlockLevelReplacedBox(ReplacedBox, BlockLevelBox):
     """
 
 
-class InlineLevelReplacedBox(ReplacedBox, InlineLevelBox):
+class InlineLevelReplacedBox(ReplacedBox, AtomicInlineLevelBox):
     """
     A box that is both replaced and inline-level.
 

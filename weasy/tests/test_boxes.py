@@ -18,11 +18,10 @@
 
 
 from attest import Tests, assert_hook
-from lxml import html
 
+from ..document import Document
 from ..formatting_structure import boxes
 from ..formatting_structure import build
-from .. import css
 
 
 suite = Tests()
@@ -73,12 +72,12 @@ def to_lists(box_tree):
     return serialize(unwrap_html_body(box_tree))
 
 
-def get_dom(html_content):
+def get_document(html_content):
     """
     Parse some HTML and apply stylesheets.
     """
-    document = html.document_fromstring(html_content)
-    css.annotate_document(document)
+    document = Document.from_string(html_content)
+    document.do_css()
     return document
 
 
@@ -86,8 +85,8 @@ def parse(html_content):
     """
     Parse some HTML, apply stylesheets and transform to boxes.
     """
-    document = get_dom(html_content)
-    return build.dom_to_box(document)
+    document = get_document(html_content)
+    return build.dom_to_box(document, document.dom)
 
 
 def prettify(tree_list):
@@ -256,7 +255,7 @@ def test_styles():
 def test_whitespace():
     # TODO: test more cases
     # http://www.w3.org/TR/CSS21/text.html#white-space-model
-    document = get_dom('''
+    document = get_document('''
         <p>Lorem \t\r\n  ipsum\t<strong>  dolor </strong>.</p>
         <pre>\t  foo\n</pre>
         <pre style="white-space: pre-wrap">\t  foo\n</pre>
@@ -296,7 +295,7 @@ def test_whitespace():
 
 @suite.test
 def test_page_style():
-    document = get_dom('''
+    document = get_document('''
         <style>
             @page { margin: 3px }
             @page :first { margin-top: 20px }
@@ -305,7 +304,8 @@ def test_page_style():
         </style>
     ''')
     def assert_page_margins(page_number, top, right, bottom, left):
-        page = boxes.PageBox(boxes.BlockBox(document), page_number)
+        page = boxes.PageBox(
+            document, boxes.BlockBox(document, document.dom), page_number)
         assert page.style.margin_top == top
         assert page.style.margin_right == right
         assert page.style.margin_bottom == bottom

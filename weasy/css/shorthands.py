@@ -21,7 +21,15 @@
     eg. margin becomes margin-top, margin-right, margin-bottom and margin-left.
 """
 
-from cssutils.css import CSSStyleDeclaration
+
+class DummyPropertyValue(list):
+    """
+    A list that quacks like a PropertyValue.
+    """
+
+    @property
+    def value(self):
+        return ' '.join(value.cssText for value in self)
 
 
 def expand_four_sides(name, values):
@@ -45,7 +53,7 @@ def expand_four_sides(name, values):
         else:
             # eg. border-color becomes border-*-color, not border-color-*
             new_name = name[:i] + suffix + name[i:]
-        yield (new_name, value)
+        yield (new_name, [value])
 
 
 def expand_border_side(name, values):
@@ -118,22 +126,18 @@ SHORTHANDS = {
 }
 
 
-# Should be in the weasy.css module but that would cause a circular import
-def expand_shorthands_in_declaration(style):
+def expand_noop(name, values):
     """
-    Expand shorthand properties in a CSSStyleDeclaration and return a new
-    CSSStyleDeclaration.
+    The expander for non-shorthand properties: returns the input unmodified.
     """
-    # Build a new CSSStyleDeclaration to preserve ordering.
-    new_style = CSSStyleDeclaration()
-    for prop in style:
-        if prop.name in SHORTHANDS:
-            expander = SHORTHANDS[prop.name]
-            for new_name, new_value in expander(prop.name,
-                                                list(prop.propertyValue)):
-                if not isinstance(new_value, basestring):
-                    new_value = new_value.cssText
-                new_style.setProperty(new_name, new_value, prop.priority)
-        else:
-            new_style.setProperty(prop)
-    return new_style
+    yield name, values
+
+
+def expand_shorthand(prop):
+    """
+    Take a Property object and return an iterable of expanded
+    (property_name, property_value) tuples.
+    """
+    expander = SHORTHANDS.get(prop.name, expand_noop)
+    for name, value_list in expander(prop.name, list(prop.propertyValue)):
+        yield name, DummyPropertyValue(value_list)

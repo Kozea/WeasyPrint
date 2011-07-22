@@ -17,7 +17,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
-    Normalize values as much as possible without rendering the document.
+Normalize values as much as possible without rendering the document.
 """
 
 
@@ -25,7 +25,9 @@ import collections
 
 import cssutils.helper
 from cssutils.css import PropertyValue, DimensionValue, Value
+
 from .initial_values import INITIAL_VALUES
+from .shorthands import DummyPropertyValue
 
 
 # How many CSS pixels is one <unit> ?
@@ -131,24 +133,12 @@ PAGE_SIZES = dict(
 )
 
 
-class DummyPropertyValue(list):
-    """
-    A list that quacks like a PropertyValue.
-    """
-
-    @property
-    def value(self):
-        return ' '.join(value.cssText for value in self)
-
-
-def compute_font_size(element):
+def compute_font_size(style, parent_style):
     """
     Set the computed value for font-size, and return this value in pixels.
     """
-    style = element.style
-    parent = element.getparent()
-    if parent is not None:
-        parent_font_size = parent.style.font_size
+    if parent_style is not None:
+        parent_font_size = parent_style.font_size
         assert parent_font_size + 0 == parent_font_size, \
             'Got a non-pixel value for the parent font-size.'
     else:
@@ -189,7 +179,7 @@ def compute_font_size(element):
     style.font_size = font_size
 
 
-def compute_length(value, font_size, page_context):
+def compute_length(value, font_size):
     """
     Convert a single length value to pixels.
     """
@@ -203,10 +193,7 @@ def compute_length(value, font_size, page_context):
         factor = LENGTHS_TO_PIXELS[value.dimension]
         return DimensionValue(str(value.value * factor) + 'px')
     elif value.dimension == 'em':
-        if page_context:
-            raise ValueError('The em unit is not allowed in a page context.')
-        else:
-            return DimensionValue(str(value.value * font_size) + 'px')
+        return DimensionValue(str(value.value * font_size) + 'px')
     elif value.dimension == 'ex':
         # TODO: support ex
         raise ValueError('The ex unit is not supported yet.', value.cssText)
@@ -214,28 +201,23 @@ def compute_length(value, font_size, page_context):
         raise ValueError('Unknown length unit', value.value, repr(value.type))
 
 
-def compute_lengths(element, page_context):
+def compute_lengths(style):
     """
     Convert other length units to pixels.
     """
-    style = element.style
-    if page_context:
-        font_size = None
-    else:
-        font_size = style.font_size
+    font_size = style.font_size
     for name in style:
         # PropertyValue objects are not mutable, build a new DummyPropertyValue
         style[name] = DummyPropertyValue(
-            compute_length(value, font_size, page_context)
+            compute_length(value, font_size)
             for value in style[name])
 
 
-def compute_line_height(element):
+def compute_line_height(style):
     """
     Relative values of line-height are relative to font-size.
     """
     # TODO: test this
-    style = element.style
     if style.line_height == 'normal':
         # a "reasonable" value
         # http://www.w3.org/TR/CSS21/visudet.html#line-height
@@ -255,11 +237,10 @@ def compute_line_height(element):
     style.line_height = height
 
 
-def compute_border_width(element):
+def compute_border_width(style):
     """
     Set border-*-width to zero if border-*-style is none or hidden.
     """
-    style = element.style
     for side in ('top', 'right', 'bottom', 'left'):
         if style['border-%s-style' % side].value in ('none', 'hidden'):
             style['border-%s-width' % side] = PropertyValue('0')
@@ -271,12 +252,11 @@ def compute_border_width(element):
                     str(width) + 'px')
 
 
-def compute_outline_width(element):
+def compute_outline_width(style):
     """
     Set outline-width to zero if outline-style is none.
     """
     # TODO: test this
-    style = element.style
     if style.outline_style == 'none':
         style.outline_width = 0
     else:
@@ -285,20 +265,19 @@ def compute_outline_width(element):
             style.outline_width = BORDER_WIDTH_KEYWORDS[value]
 
 
-def compute_display_float(element):
+def compute_display_float(style, parent_style):
     """
     Computed values of the display and float properties according to
     http://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
     """
     # TODO: test this
-    style = element.style
     if style.display == 'none':
         # Case 1
         return # position and float do not apply, but leave them
     elif style.position in ('absolute', 'fixed'):
         # Case 2
         style.float = 'none'
-    elif style.float == 'none' and element.getparent() is not None:
+    elif style.float == 'none' and parent_style is not None:
         # Case 5
         return
 
@@ -314,23 +293,21 @@ def compute_display_float(element):
     # else: unchanged
 
 
-def compute_word_spacing(element):
+def compute_word_spacing(style):
     """
     word-spacing: normal means zero.
     """
     # TODO: test this
-    style = element.style
     # CSS 2.1 says this for word-spacing but not letter-spacing. Why?
     if style.word_spacing == 'normal':
         style.word_spacing = 0
 
 
-def compute_font_weight(element):
+def compute_font_weight(style, parent_style):
     """
     Handle keyword values for font-weight.
     """
     # TODO: test this
-    style = element.style
     value = style.font_weight
     if value == 'normal':
         # Use a string here as StyleDict.__setattr__ turns integers into pixel
@@ -341,7 +318,7 @@ def compute_font_weight(element):
         # lengths. This is a number without unit.
         style.font_weight = '700'
     elif value in ('bolder', 'lighter'):
-        parent_values = element.getparent().style['font-weight']
+        parent_values = parent_style['font-weight']
         assert len(parent_values) == 1
         assert parent_values[0].type == 'NUMBER'
         parent_value = parent_values[0].value
@@ -350,7 +327,7 @@ def compute_font_weight(element):
         style.font_weight = str(FONT_WEIGHT_RELATIVE[value][parent_value])
 
 
-def compute_content_value(parent, value):
+def compute_content_value(element, value):
     if value.type == 'FUNCTION':
         # value.seq is *NOT* part of the public API
         # TODO: patch cssutils to provide a public API for arguments
@@ -359,10 +336,7 @@ def compute_content_value(parent, value):
         args = [v.value for v in value.seq if isinstance(v.value, Value)]
         assert len(args) == 1
         attr_name = args[0].value
-        # The 'content' property can only be something else than 'normal'
-        # on :before or :after, so attr() applies to the parent, the actual
-        # element.
-        content = parent.get(attr_name, '')
+        content = element.get(attr_name, '')
         # TODO: find a way to build a string Value without serializing
         # and re-parsing.
         value = PropertyValue(cssutils.helper.string(content))[0]
@@ -371,16 +345,14 @@ def compute_content_value(parent, value):
     return value
 
 
-def compute_content(element):
+def compute_content(element, pseudo_type, style):
     # TODO: properly test this
-    style = element.style
-    if getattr(element, 'pseudo_element_type', '') in ('before', 'after'):
+    if pseudo_type in ('before', 'after'):
         if style.content == 'normal':
             style.content = 'none'
         else:
-            parent = element.getparent()
             style.content = DummyPropertyValue(
-                compute_content_value(parent, value)
+                compute_content_value(element, value)
                 for value in style['content'])
     else:
         # CSS 2.1 says it computes to 'normal' for elements, but does not say
@@ -390,10 +362,9 @@ def compute_content(element):
         style.content = 'normal'
 
 
-def compute_size(element, page_context):
-    if not page_context:
+def compute_size(element, style):
+    if element != '@page':
         return
-    style = element.style
     if style.size == 'auto':
         style.size = 'A4' # Chosen by the UA. (That’s me!)
     values = style['size'] # PropertyValue object
@@ -432,21 +403,21 @@ def compute_size(element, page_context):
     style._weasy_page_height = height
 
 
-def compute_values(element, page_context):
+def compute_values(element, pseudo_type, style, parent_style):
     """
     Normalize values as much as possible without rendering the document.
     """
     # em lengths depend on font-size, compute font-size first
-    compute_font_size(element)
-    compute_lengths(element, page_context)
-    compute_line_height(element)
-    compute_display_float(element)
-    compute_word_spacing(element)
-    compute_font_weight(element)
-    compute_content(element)
-    compute_border_width(element)
-    compute_outline_width(element)
-    compute_size(element, page_context)
+    compute_font_size(style, parent_style)
+    compute_lengths(style)
+    compute_line_height(style)
+    compute_display_float(style, parent_style)
+    compute_word_spacing(style)
+    compute_font_weight(style, parent_style)
+    compute_content(element, pseudo_type, style)
+    compute_border_width(style)
+    compute_outline_width(style)
+    compute_size(element, style)
     # Recent enough cssutils have a .absoluteUri on URIValue objects.
     # TODO: percentages for height?
     #       http://www.w3.org/TR/CSS21/visudet.html#propdef-height

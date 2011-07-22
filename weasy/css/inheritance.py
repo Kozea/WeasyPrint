@@ -82,16 +82,14 @@ INHERITED = set("""
 """.split())
 
 
-def handle_inheritance(element):
+def handle_inheritance(style, parent_style):
     """
     The specified value is the parent element’s computed value iif one of the
     following is true:
      * The cascade did not result in a value, and the the property is inherited
      * The the value is the keyword 'inherit'.
     """
-    style = element.style
-    parent = element.getparent()
-    if parent is None: # root element
+    if parent_style is None: # root element
         for name, value in style.iteritems():
             # The PropertyValue object has value attribute
             if value.value == 'inherit':
@@ -103,9 +101,9 @@ def handle_inheritance(element):
         # finished with its computed values.
         for name, value in style.iteritems():
             if value.value == 'inherit':
-                style[name] = parent.style[name]
+                style[name] = parent_style[name]
         for name in INHERITED:
             # Do not use is_initial() here: only inherit if the property is
             # actually missing.
             if name not in style:
-                style[name] = parent.style[name]
+                style[name] = parent_style[name]
