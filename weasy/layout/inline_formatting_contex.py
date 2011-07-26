@@ -21,6 +21,10 @@ from ..formatting_structure import boxes
 from .. import text
 
 
+def breaking_linebox(linebox):
+    return LineBoxFormatting(linebox).get_lineboxes()
+
+
 class LineBoxFormatting(object):
     def __init__(self, linebox):
         self.width = linebox.containing_block_size()[0]
@@ -103,6 +107,7 @@ class LineBoxFormatting(object):
                 TextBox(' Thisisalonglonglonglong')
             )
         """
+        self.white_space_processing(textbox)
         self.text_fragment.set_width(allocate_width)
         # Set css style in TextLineFragment
         self.text_fragment.set_textbox(textbox)
@@ -117,6 +122,45 @@ class LineBoxFormatting(object):
             second_tb.text = self.text_fragment.get_remaining_text()
             return (first_tb, second_tb)
 
+    def white_space_processing(self, textbox, beginning=False):
+        # If a space (U+0020) at the beginning or the end of a line has
+        # 'white-space' set to 'normal', 'nowrap', or 'pre-line', it is removed.
+        if textbox.style.white_space in ('normal', 'nowrap', 'pre-line'):
+            if textbox.style.direction == "rtl":
+                if beginning:
+                    textbox.text = textbox.text.rstrip(' ')
+                    textbox.text = textbox.text.rstrip('	')
+                else:
+                    textbox.text = textbox.text.lstrip(' ')
+                    textbox.text = textbox.text.lstrip('	')
+            else:
+                if beginning:
+                    textbox.text = textbox.text.lstrip(' ')
+                    textbox.text = textbox.text.lstrip('	')
+                else:
+                    textbox.text = textbox.text.rstrip(' ')
+                    textbox.text = textbox.text.rstrip('	')
+        # TODO: All tabs (U+0009) are rendered as a horizontal shift that
+        # lines up the start edge of the next glyph with the next tab stop.
+        # Tab stops occur at points that are multiples of 8 times the width
+        # of a space (U+0020) rendered in the block's font from the block's
+        # starting content edge.
+
+        # TODO: If spaces (U+0020) or tabs (U+0009) at the end of a line have
+        # 'white-space' set to 'pre-wrap', UAs may visually collapse them.
+        if textbox.text == u"":
+            return None
+        else:
+            return textbox
+
+
+    def is_empty_line(self, linebox):
+        #TODO: complete this function
+        text = ""
+        for child in linebox.children:
+            if isinstance(child, boxes.TextBox):
+                text += child.text.strip(" ")
+        return (len(linebox.children) == 0 or text == "")
 
     def compute_textbox_width(self, textbox):
         """Add the width and height in the textbox attributes and width."""
@@ -125,6 +169,10 @@ class LineBoxFormatting(object):
         textbox.width, textbox.height = self.text_fragment.get_size()
         return textbox.width
 
+    def compute_linebox_dimensions(self, linebox):
+        """Add the width and height in the linebox."""
+        # TODO: compute the real height and width
+        linebox.height = linebox.style.line_height
 
     def execute_formatting(self):
         """
@@ -164,8 +212,21 @@ class LineBoxFormatting(object):
             #- self.compute_parent_width(child)
             child_width = self.compute_textbox_width(child)
             if child_width <= width:
-                width -= child_width
-                any_element_in_line = False
+                if any_element_in_line:
+                    # The begening in the line
+                    if isinstance(child, boxes.TextBox):
+                        child = self.white_space_processing(child, True)
+                        if child is None:
+                            any_element_in_line = True
+                            self.flat_tree.pop(index)
+                        else:
+                            self.flat_tree[index] = child
+                            child_width = self.compute_textbox_width(child)
+                            width -= child_width
+                            any_element_in_line = False
+                else:
+                    width -= child_width
+                    any_element_in_line = False
             else:
                 parents = list(self.get_parents_box(child))
                 self.flat_tree.pop(index)
@@ -196,8 +257,8 @@ class LineBoxFormatting(object):
                 any_element_in_line = True
                 width = self.width
 
-    @property
-    def lineboxes(self):
+
+    def get_lineboxes(self):
         """
         Build real tree from flat tree
         Eg.
@@ -234,12 +295,14 @@ class LineBoxFormatting(object):
             ]
         ]
         """
+        import pdb
         def build_tree(flat_tree):
             while flat_tree:
                 box = flat_tree.pop(0)
                 children = list(get_children(box.depth, flat_tree))
                 if children:
-                    box.children = list(build_tree(children))
+                    for child in build_tree(children):
+                        box.add_child(child)
                     yield box
                 else:
                     yield box
@@ -254,13 +317,17 @@ class LineBoxFormatting(object):
                         break
 
         tree = list(self.flat_tree)
+        lines = []
         while tree:
             line = tree.pop(0)
             level = line.depth
             children = list(get_children(level, tree))
-            line.children = list(build_tree(children))
-            lines.append(line)
-        1/0
+            for child in build_tree(children):
+                line.add_child(child)
+            self.compute_linebox_dimensions(line)
+            if not self.is_empty_line(line):
+                lines.append(line)
+        return lines
 
     def flatten_tree(self, box, depth=0):
         """

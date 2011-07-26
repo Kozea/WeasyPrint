@@ -21,7 +21,7 @@ from attest import Tests, assert_hook
 
 from ..document import Document
 from ..formatting_structure import boxes
-from .. import layout
+from ..layout import inline_formatting_contex
 
 
 suite = Tests()
@@ -253,7 +253,7 @@ def test_block_heights():
         <div>
           <p></p>
           <!-- These two are not in normal flow: the do not contribute to
-               the parent’s height. -->
+            the parent’s height. -->
           <p style="position: absolute"></p>
           <p style="float: left"></p>
         </div><div>
@@ -271,138 +271,69 @@ def test_block_heights():
     assert divs[0].height == 90
     assert divs[1].height == 90 * 3
 
-#@suite.test
-#def test_breaking_textbox():
-#    page, = parse('''
-#        <style>
-#            p { font-size:16px; text-decoration : underline;}
-#        </style>
-#        <p>Thisisthetextforthetest. This is the text for the test.</p>
-#    ''')
-#    html = page.root_box
-#    body = html.children[0]
-#    p = body.children[0]
-#    linebox = p.children[0]
-#    assert len(linebox.children) == 1
-#    root_tb = linebox.children[0]
-
-#    first_tb, second_tb = layout.breaking_textbox(root_tb,40)
-#    merge_string = "%s%s" % (first_tb.text, second_tb.text)
-#    assert first_tb.text == "Thisisthetextforthetest. "
-#    assert second_tb.text == "This is the text for the test."
-#    assert root_tb.text == merge_string
-
-#    new_first_tb, new_second_tb = layout.breaking_textbox(first_tb,40)
-#    assert new_second_tb is None
-#    assert new_first_tb.text == first_tb.text
-#    assert new_first_tb.style.font_size == first_tb.style.font_size
-
-#@suite.test
-#def test_breaking_linebox_with_only_textbox():
-#    width = 150
-#    font_size = 20
-#    page = u'''
-#        <style>
-#        p { font-size:%(font_size)spx;
-#            width:%(width)spx;
-#            background-color:#393939;
-#            color:#FFFFFF;
-#            font-family: Arial, Helvetica, sans-serif;
-#            text-align:center;
-#            line-height:1;
-#            text-decoration : underline overline line-through;
-#        }
-#        </style>
-#        <p>Lorem Ipsum is simply dummy text of the printing and.</p>
-#    '''
-#    page, = parse(page % locals())
-#    html = page.root_box
-#    body = html.children[0]
-#    p = body.children[0]
-#    linebox = p.children[0]
-
-#    def linebox_children_width(line):
-#        for l in line.children:
-#            yield l.width
-
-#    def linebox_children_properties(line):
-#        for l in line.children:
-#            yield l.element.tag, l.style.font_size
-#    breaking_lines = layout.breaking_linebox(linebox)
-#    # TODO: Check why there is more than one child in the lines
-#    for i, line in enumerate(breaking_lines):
-#        assert line.width <= width
-#        assert line.style.font_size == font_size
-#        assert line.element.tag == 'p'
-#        assert sum(linebox_children_width(line)) <= line.width
-#        for child_tag, child_font_size in linebox_children_properties(line):
-#             assert child_tag == 'p'
-#             assert child_font_size == font_size
 
 @suite.test
-def test_flatten_inlinebox_tree():
-    page, = parse('''
-        <style>
-            p { font-size:20px;
-                text-decoration : underline;
-                width:500px
+def test_breaking_empty_linebox():
+    def get_paragraph_linebox(width, font_size):
+        page = u'''
+            <style>
+            p { font-size:%(font_size)spx; width:%(width)spx; }
+            </style>
+            <p> </p>'''
+        page, = parse(page % locals())
+        html = page.root_box
+        body = html.children[0]
+        p = body.children[0]
+        return p
+
+    font_size = 12
+    width = 500
+    p = get_paragraph_linebox(width, font_size)
+    assert len(p.children) == 0
+
+
+import pdb
+
+@suite.test
+def test_breaking_linebox():
+    def get_paragraph_linebox(width, font_size):
+        page = u'''
+            <style>
+            p { font-size:%(font_size)spx;
+                width:%(width)spx;
+                background-color:#393939;
+                color:#FFFFFF;
+                font-family: Arial, Helvetica, sans-serif;
+                text-align:center;
+                line-height:1;
+                text-decoration : underline overline line-through;
             }
-            span {
-                font-family:Courier New, Courier, Prestige, monospace;
-            }
-        </style>
-        <p><em>Lorem<strong> Ipsum <span>is very</span>simply</strong><em>
-        dummy</em>text of the printing and. naaaa </em> naaaa naaaa naaaa
-        naaaa naaaa naaaa naaaa naaaa</p>''')
-    html = page.root_box
-    body = html.children[0]
-    p = body.children[0]
-    linebox = p.children[0]
+            </style>
+            <p><em>Lorem<strong> Ipsum <span>is very</span>simply</strong><em>
+            dummy</em>text of the printing and. naaaa </em> naaaa naaaa naaaa
+            naaaa naaaa naaaa naaaa naaaa</p>'''
+        page, = parse(page % locals())
+        html = page.root_box
+        body = html.children[0]
+        paragraph = body.children[0]
+        return paragraph
+    font_size = 12
+    width = 150
+    paragraph = get_paragraph_linebox(width, font_size)
+    assert len(list(paragraph.children)) == 4
+    lines = paragraph.children
+    for line in lines:
+#        assert line.width <= width
+        assert line.style.font_size == font_size
+        assert line.element.tag == 'p'
+#        assert sum(linebox_children_width(line)) <= line.width
+        for child in line.children:
+             assert child.element.tag in ('em', 'p')
+             assert child.style.font_size == font_size
+             if isinstance(child, boxes.ParentBox):
+                 for child_child in child.children:
+                    assert child.element.tag in ('em', 'strong', 'span')
+                    assert child.style.font_size == font_size
 
-    assert len(linebox.children) == 2
-#    linebox_formatting = layout.LineBoxFormatting(linebox)
-#    for box in linebox_formatting.flat_tree:
-#        if isinstance(box, boxes.TextBox):
-#            print box, box.depth, box.text
-#        else:
-#            print box, box.depth
-#    print "\n"
-#    lines = list(linebox_formatting.lineboxes)
-#    for i, line in enumerate(lines):
-
-#        content = ""
-#        for child in line.descendants():
-#            if isinstance(child, boxes.TextBox):
-#                content += child.text
-#        print content
-
-##    for line in linebox_formatting.lineboxes:
-##        print line
-
-##    1/0
-
-#    flat_tree = list(inlinebox_formatting.flat_inlinebox)
-#    for e in flat_tree:
-#        print e, e.depth
-#    print "\n"
-#    parents = list(inlinebox_formatting.parents)
-#    for i, box in parents:
-#        print box, i, box.depth
-#    print "\n"
-#    box = flat_tree[11]
-#    print box, box.depth
-#    print "\n"
-#    for box in inlinebox_formatting.get_parents_box(box):
-#        print box, box.depth
-
-##    for box in  list(inlinebox_formatting.get_parents_box(flat_tree[3])):
-##         print box, box.depth
-
-
-#    1/0
-##    breaking_lines = layout.breaking_linebox(linebox)
-
-##    1/0
-##    breaking_lines = layout.breaking_linebox(linebox,150)
-##    for line in breaking_lines:
-##        assert line.element.tag == 'p'
+    paragraph = get_paragraph_linebox(width=300,  font_size=font_size)
+    assert len(list(paragraph.children)) == 2

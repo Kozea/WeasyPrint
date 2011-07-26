@@ -19,7 +19,7 @@
 
 from ..formatting_structure import boxes
 from .percentages import resolve_percentages
-
+from .inline_formatting_contex import breaking_linebox
 
 def block_dimensions(box):
     resolve_percentages(box)
@@ -103,22 +103,32 @@ def block_level_height(box):
     if box.margin_bottom == 'auto':
         box.margin_bottom = 0
 
+    from . import compute_dimensions  # Avoid circular import
+
     position_x = box.content_box_x()
     position_y = box.content_box_y()
     initial_position_y = position_y
-    for child in box.children:
+
+    children = list(box.children)
+    box.empty()
+    for child in children:
         if not child.is_in_normal_flow():
             continue
-
         # TODO: collapse margins:
         # http://www.w3.org/TR/CSS21/visudet.html#normal-block
         child.position_x = position_x
         child.position_y = position_y
-
-        from . import compute_dimensions  # Avoid circular import
         compute_dimensions(child)
-
-        position_y += child.margin_height()
+        if isinstance(child, boxes.LineBox):
+            lines = breaking_linebox(child)
+            for line in lines:
+                line.position_x = position_x
+                line.position_y = position_y
+                box.add_child(line)
+                position_y += line.height
+        else:
+            position_y += child.margin_height()
+            box.add_child(child)
 
     if box.height == 'auto':
         box.height = position_y - initial_position_y
