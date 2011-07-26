@@ -92,7 +92,10 @@ def dom_to_box(document, element):
         box.add_child(boxes.TextBox(document, element, element.text))
     for child_element in element:
         if document.style_for(child_element).display != 'none':
-            box.add_child(dom_to_box(document, child_element))
+            # TODO: We ignore html comments but also HTML/XML entities
+            # we need find another way to ignore html comments
+            if isinstance(child_element.tag, basestring):
+                box.add_child(dom_to_box(document, child_element))
         if child_element.tail:
             box.add_child(boxes.TextBox(document, element, child_element.tail))
 
