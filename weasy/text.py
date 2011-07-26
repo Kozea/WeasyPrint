@@ -54,6 +54,7 @@ class TextFragment(object):
         self.set_text(textbox.text)
         font = ', '.join(v.cssText for v in textbox.style['font-family'])
         self.set_font_family(font)
+        self.set_font_size(textbox.style.font_size)
         self.set_alignment(textbox.style.text_align)
         self.set_font_variant(textbox.style.font_variant)
         self.set_font_weight(int(textbox.style.font_weight))
@@ -209,7 +210,7 @@ class TextFragment(object):
 
     def set_font_size(self, value):
         """The value of size is specified in px units."""
-        self.font.set_size(pango.SCALE * value)
+        self.font.set_size(pango.SCALE * int(value))
         self._update_font()
 
     def get_font_variant(self):
