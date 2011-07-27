@@ -20,6 +20,7 @@
 import cairo
 
 from .css.computed_values import LENGTHS_TO_PIXELS
+from .formatting_structure import boxes
 
 
 class CairoContext(cairo.Context):
@@ -32,7 +33,6 @@ class CairoContext(cairo.Context):
         self.set_source_rgba(
             color.red / 255., color.green / 255., color.blue / 255.,
             color.alpha)
-
 
 def draw_background(context, box):
     bg_color = box.style['background-color'][0]
@@ -49,6 +49,8 @@ def draw_background(context, box):
 def draw_box(context, box):
     draw_background(context, box)
 
+    if isinstance(box, boxes.TextBox):
+        return
     for child in box.children:
         draw_box(context, child)
 
@@ -64,8 +66,9 @@ def draw_page_to_png(page, file_like):
     """
     Draw the given PageBox to a PNG file.
     """
-    surface = cairo.ImageSurface(cairo.FORMAT_ARGB32,
-        page.outer_width, page.outer_height)
+    width = int(page.outer_width)
+    height = int(page.outer_height)
+    surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
     context = CairoContext(surface)
     draw_page(page, context)
     surface.write_to_png(file_like)

@@ -217,6 +217,9 @@ class PageBox(Box):
         # Page boxes are not linked to any element.
         super(PageBox, self).__init__(document, element=None)
 
+    def __repr__(self):
+        return '<%s %s>' % (type(self).__name__, self.page_number)
+
     def _init_style(self):
         # First page is a right page. TODO: this "should depend on the major
         # writing direction of the document".

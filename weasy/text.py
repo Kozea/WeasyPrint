@@ -45,7 +45,7 @@ class TextFragment(object):
         #
         # See : http://www.pygtk.org/docs/pygtk/class-pangoattribute.html
         self._set_attribute(pango.AttrFallback(True, 0, -1))
-        self.set_width(width)
+        self.set_width(int(width))
 
         # Other properties
         self.layout.set_wrap(pango.WRAP_WORD)
