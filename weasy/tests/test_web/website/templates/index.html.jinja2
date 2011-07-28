@@ -1,0 +1,27 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="fr" lang="fr">
+<head>
+<title>Interface de test de weasyprint</title>
+<meta http-equiv="Content-Language" content="fr" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="description" content="Interface de test de weasyprint" />
+<link class="hydra-css" rel="stylesheet" type="text/css" title="style" href="http://static.pharminfo.fr/css/themes/common.css" media="screen" />
+<style>
+img {
+  -webkit-box-shadow: 0px 0px 12px #aaa;
+}
+</style>
+</head>
+<body>
+<div>
+  <form action="/" method="post">
+    <label for="content">HTML</label>
+    <textarea name="content" id="content" rows="30">{{ content }}</textarea>
+    <input type="submit" name="submit" value="Envoyer">
+  </form>
+</div>
+{% if image %}
+<img src="data:image/png;base64,{{image}}" alt="Draw" />
+{% endif %}
+</body>
+</html>
