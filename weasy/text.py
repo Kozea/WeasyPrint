@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # coding: utf8
 #  WeasyPrint converts web documents (HTML, CSS, ...) to PDF.
 #  Copyright (C) 2011  Simon Sapin
@@ -45,7 +44,7 @@ class TextFragment(object):
         #
         # See : http://www.pygtk.org/docs/pygtk/class-pangoattribute.html
         self._set_attribute(pango.AttrFallback(True, 0, -1))
-        self.set_width(int(width))
+        self.set_width(width)
 
         # Other properties
         self.layout.set_wrap(pango.WRAP_WORD)
@@ -136,7 +135,7 @@ class TextFragment(object):
         """
         if value != -1:
             value = pango.SCALE * value
-        self.layout.set_width(value)
+        self.layout.set_width(int(value))
 
     def get_spacing(self):
         """Return the horizontal spacing (between the lines). """
@@ -263,7 +262,7 @@ class TextFragment(object):
         'fffffffff' and 'ffffffffffff')
         """
         color = pango.Color(spec)
-        fg_color = pango.AttrForeground(color.red, color.blue, color.green,
+        fg_color = pango.AttrForeground(color.red, color.green, color.blue,
                                             0, -1)
         self._set_attribute(fg_color)
 

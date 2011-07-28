@@ -18,10 +18,11 @@
 
 
 import cairo
+import pangocairo
 
 from .css.computed_values import LENGTHS_TO_PIXELS
 from .formatting_structure import boxes
-
+from . import text
 
 class CairoContext(cairo.Context):
     """
@@ -45,12 +46,26 @@ def draw_background(context, box):
         context.set_source_colorvalue(bg_color)
         context.fill()
 
+def draw_text(context, textbox):
+    """
+    Draw the given TextBox to a Cairo context from Pangocairo Context
+    """
+    fragment = text.TextLineFragment()
+    fragment.set_textbox(textbox)
+    layout = fragment.get_layout()
+    context.move_to(textbox.position_x, textbox.position_y)
+    pangocairo_context = pangocairo.CairoContext(context)
+#    pangocairo_context.set_antialias(cairo.ANTIALIAS_SUBPIXEL)
+    pangocairo_context.show_layout(layout)
+
 
 def draw_box(context, box):
     draw_background(context, box)
 
     if isinstance(box, boxes.TextBox):
+        draw_text(context, box)
         return
+
     for child in box.children:
         draw_box(context, child)
 

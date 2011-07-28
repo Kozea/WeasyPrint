@@ -292,8 +292,6 @@ def test_breaking_empty_linebox():
     assert len(p.children) == 0
 
 
-import pdb
-
 @suite.test
 def test_breaking_linebox():
     def get_paragraph_linebox(width, font_size):
@@ -337,3 +335,31 @@ def test_breaking_linebox():
 
     paragraph = get_paragraph_linebox(width=300,  font_size=font_size)
     assert len(list(paragraph.children)) == 2
+
+#import pdb
+
+#@suite.test
+#def test_linebox_positions():
+#    def get_paragraph_linebox():
+#        page = u'''
+#            <style>
+#                p { width:200px; }
+#            </style>
+#            <p>Lorem ipsum dolor sit amet</p>'''
+#        page, = parse(page)
+#        html = page.root_box
+#        body = html.children[0]
+#        paragraph = body.children[0]
+#        return paragraph
+
+#    paragraph = get_paragraph_linebox()
+#    assert len(list(paragraph.children)) == 2
+
+#    def get_text(lines):
+#        text = ""
+#        for line in lines:
+#            for box in line.descendants:
+#                if isinstance(box, boxes.TextBox):
+#                    text = "%s%s" % box.text
+#    assert
+#    pdb.set_trace()

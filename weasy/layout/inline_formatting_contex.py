@@ -28,6 +28,8 @@ def breaking_linebox(linebox):
 class LineBoxFormatting(object):
     def __init__(self, linebox):
         self.width = linebox.containing_block_size()[0]
+        self.position_y = linebox.position_y
+        self.position_x = linebox.position_x
         self.flat_tree = []
         for box in self.flatten_tree(linebox):
             new_box = box.copy()
@@ -168,11 +170,6 @@ class LineBoxFormatting(object):
         self.text_fragment.set_textbox(textbox)
         textbox.width, textbox.height = self.text_fragment.get_size()
         return textbox.width
-
-    def compute_linebox_dimensions(self, linebox):
-        """Add the width and height in the linebox."""
-        # TODO: compute the real height and width
-        linebox.height = linebox.style.line_height
 
     def execute_formatting(self):
         """
@@ -324,10 +321,51 @@ class LineBoxFormatting(object):
             children = list(get_children(level, tree))
             for child in build_tree(children):
                 line.add_child(child)
-            self.compute_linebox_dimensions(line)
             if not self.is_empty_line(line):
+                self.compute_dimensions(line)
+                line.position_y = self.position_y
+                line.position_x = self.position_x
+                self.position_y += line.height
+                self.compute_positions(line)
                 lines.append(line)
+#        1/0
         return lines
+
+
+    def compute_dimensions(self, box):
+        """Add the width and height in the linebox."""
+        if isinstance(box, boxes.ParentBox):
+            widths = [0,]
+            heights = [0,]
+            for child in box.children:
+                self.compute_dimensions(child)
+                widths.append(child.width)
+                heights.append(child.height)
+            box.width = sum(widths)
+            box.height = max(heights)
+        elif isinstance(box, boxes.InlineBlockBox):
+            raise NotImplementedError
+        elif isinstance(box, boxes.InlineLevelReplacedBox):
+            raise NotImplementedError
+
+
+    def compute_positions(self, parentbox):
+        position_x = parentbox.position_x
+        position_y = parentbox.position_y
+        for box in parentbox.children:
+            box.position_y = position_y
+            if isinstance(box, boxes.InlineBox):
+                box.position_x = position_x
+                self.compute_positions(box)
+            elif isinstance(box, boxes.TextBox):
+                box.position_x = position_x
+                position_x += box.width
+            elif isinstance(box, boxes.InlineBlockBox):
+                raise NotImplementedError
+            elif isinstance(box, boxes.InlineLevelReplacedBox):
+                raise NotImplementedError
+
+
 
     def flatten_tree(self, box, depth=0):
         """
