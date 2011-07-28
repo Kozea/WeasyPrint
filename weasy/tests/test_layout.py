@@ -19,7 +19,7 @@
 
 from attest import Tests, assert_hook
 
-from ..document import Document
+from ..document import PNGDocument
 from ..formatting_structure import boxes
 from ..layout import inline_formatting_contex
 
@@ -31,7 +31,7 @@ def parse(html_content):
     """
     Parse some HTML, apply stylesheets, transform to boxes and do layout.
     """
-    document = Document.from_string(html_content)
+    document = PNGDocument.from_string(html_content)
     document.do_layout()
     return document.pages
 
@@ -318,7 +318,8 @@ def test_breaking_linebox():
     font_size = 12
     width = 150
     paragraph = get_paragraph_linebox(width, font_size)
-    assert len(list(paragraph.children)) == 4
+    assert len(list(paragraph.children)) == 3
+
     lines = paragraph.children
     for line in lines:
 #        assert line.width <= width
@@ -363,3 +364,4 @@ def test_breaking_linebox():
 #                    text = "%s%s" % box.text
 #    assert
 #    pdb.set_trace()
+

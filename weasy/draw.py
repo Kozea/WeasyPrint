@@ -28,6 +28,10 @@ class CairoContext(cairo.Context):
     """
     A cairo.Context with a few more helper methods.
     """
+    def show_layout(self, layout):
+        pangocairo_context = pangocairo.CairoContext(self)
+        pangocairo_context.set_antialias(cairo.ANTIALIAS_SUBPIXEL)
+        pangocairo_context.show_layout(layout)
 
     def set_source_colorvalue(self, color):
         """Set the source pattern from a cssutils ColorValue object."""
@@ -50,14 +54,9 @@ def draw_text(context, textbox):
     """
     Draw the given TextBox to a Cairo context from Pangocairo Context
     """
-    fragment = text.TextLineFragment()
-    fragment.set_textbox(textbox)
-    layout = fragment.get_layout()
+    fragment = text.TextLineFragment.from_textbox(textbox)
     context.move_to(textbox.position_x, textbox.position_y)
-    pangocairo_context = pangocairo.CairoContext(context)
-#    pangocairo_context.set_antialias(cairo.ANTIALIAS_SUBPIXEL)
-    pangocairo_context.show_layout(layout)
-
+    context.show_layout(fragment.get_layout())
 
 def draw_box(context, box):
     draw_background(context, box)
@@ -69,33 +68,21 @@ def draw_box(context, box):
     for child in box.children:
         draw_box(context, child)
 
-
 def draw_page(page, context):
     """
     Draw the given PageBox to a Cairo context.
     """
     draw_box(context, page.root_box)
 
-
-def draw_page_to_png(page, file_like):
+def draw_page_to_png(page, surface):
     """
     Draw the given PageBox to a PNG file.
     """
-    width = int(page.outer_width)
-    height = int(page.outer_height)
-    surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
     context = CairoContext(surface)
     draw_page(page, context)
-    surface.write_to_png(file_like)
-    surface.finish()
 
-
-def draw_to_pdf(pages, file_like):
-    """
-    Draw the given PageBox’es to a PDF file.
-    """
-    # Use a dummy page size initially
-    surface = cairo.PDFSurface(file_like, 1, 1)
+def draw_to_pdf(pages, surface):
+    """Draw the the document """
     px_to_pt = 1 / LENGTHS_TO_PIXELS['pt']
     for page in pages:
         # Actual page size is here. May be different between pages.
@@ -106,4 +93,4 @@ def draw_to_pdf(pages, file_like):
         context.scale(px_to_pt, px_to_pt)
         draw_page(page, context)
         surface.show_page()
-    surface.finish()
+

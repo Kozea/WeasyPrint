@@ -18,11 +18,27 @@
 
 
 import lxml.html
+import StringIO
+import cairo
 
 from .css import get_all_computed_styles
 from .css.utils import HTML4_DEFAULT_STYLESHEET
 from .formatting_structure.build import build_formatting_structure
 from .layout import layout
+from .draw import draw_page_to_png
+
+#class PDFDocument(Document):
+#    def __init__(self, dom):
+#        super(PDFDocument, self).__init__(dom)
+#        # Use a dummy page size initially
+#        self.surface = cairo.PDFSurface(self.output, 1, 1)
+
+#    def do_draw(self):
+#        """ Do the draw """
+#        self.do_layout()
+#        draw(self.pages, self.surface)
+#        self.surface.write_to_png(self.output)
+#        self.surface.finish()
 
 
 class Document(object):
@@ -48,6 +64,8 @@ class Document(object):
 
         #: Layed-out pages and boxes
         self.pages = None
+
+        self.output = StringIO.StringIO()
 
     @classmethod
     def from_string(cls, source):
@@ -98,3 +116,31 @@ class Document(object):
         self.do_boxes()
         if self.pages is None:
             self.pages = layout(self)
+
+class PNGDocument(Document):
+    def __init__(self, dom):
+        super(PNGDocument, self).__init__(dom)
+        self.surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, 1, 1)
+
+    def draw_page(self, index):
+        """ Do the draw """
+        page = self.pages[index]
+        width = int(page.outer_width)
+        height = int(page.outer_height)
+        self.surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
+        draw_page_to_png(page, self.surface)
+        self.surface.write_to_png(self.output)
+        self.surface.finish()
+
+#    def draw_all_pages(self):
+#        for index enumerate(pages):
+#            self.draw_page(index)
+
+    def write(self, filename):
+        fd = open(filename, 'wr')
+        fd.write(self.output.getvalue())
+        fd.close()
+
+    def get_png_data(self):
+        return self.output.getvalue().encode('base64')
+

@@ -17,57 +17,61 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-#import os.path
+import os.path
 
-#import png
-#from attest import Tests, assert_hook
+import png
+from attest import Tests, assert_hook
 
-#from .test_layout import parse
-#from .. import draw
-
-
-#suite = Tests()
+from .test_layout import parse
+from ..document import PNGDocument
 
 
-#def make_filename(dirname, basename):
-#    return os.path.join(os.path.dirname(__file__), dirname, basename + '.png')
+suite = Tests()
 
 
-#def test_pixels(name, expected_width, expected_height, html):
-#    reader = png.Reader(filename=make_filename('expected_results', name))
-#    width, height, expected_lines, meta = reader.read()
-#    assert width == expected_width
-#    assert height == height
-#    assert meta['greyscale'] == False
-#    assert meta['alpha'] == True
-#    assert meta['bitdepth'] == 8
-#    expected_lines = list(expected_lines)
-
-#    pages = parse(html)
-#    assert len(pages) == 1
-#    filename = make_filename('test_results', name)
-#    draw.draw_page_to_png(pages[0], filename)
-
-#    reader = png.Reader(filename=filename)
-#    width, height, lines, meta = reader.read()
-#    lines = list(lines)
-
-#    assert width == expected_width
-#    assert height == height
-#    assert meta['greyscale'] == False
-#    assert meta['alpha'] == True
-#    assert meta['bitdepth'] == 8
-#    assert len(lines) == height
-#    assert len(lines[0]) == width * 4
-#    assert lines == expected_lines
+def make_filename(dirname, basename):
+    return os.path.join(os.path.dirname(__file__), dirname, basename + '.png')
 
 
-#@suite.test
-#def test_png():
-#    test_pixels('blocks', 10, 10, '''
-#        <style>
-#            @page { size: 10px }
-#            body { margin: 2px; background-color: #00f; height: 5px }
-#        </style>
-#        <body>
-#    ''')
+def test_pixels(name, expected_width, expected_height, html):
+    reader = png.Reader(filename=make_filename('expected_results', name))
+    width, height, expected_lines, meta = reader.read()
+    assert width == expected_width
+    assert height == height
+    assert meta['greyscale'] == False
+    assert meta['alpha'] == True
+    assert meta['bitdepth'] == 8
+    expected_lines = list(expected_lines)
+
+    document = PNGDocument.from_string(html)
+    document.do_layout()
+    assert len(document.pages) == 1
+    filename = make_filename('test_results', name)
+    document.draw_page(0)
+    document.write(filename)
+
+
+    reader = png.Reader(filename=filename)
+    width, height, lines, meta = reader.read()
+    lines = list(lines)
+
+    assert width == expected_width
+    assert height == height
+    assert meta['greyscale'] == False
+    assert meta['alpha'] == True
+    assert meta['bitdepth'] == 8
+    assert len(lines) == height
+    assert len(lines[0]) == width * 4
+    assert lines == expected_lines
+
+
+@suite.test
+def test_png():
+    test_pixels('blocks', 10, 10, '''
+        <style>
+            @page { size: 10px }
+            body { margin: 2px; background-color: #00f; height: 5px }
+        </style>
+        <body>
+    ''')
+
