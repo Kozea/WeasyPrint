@@ -36,7 +36,6 @@ class LineBoxFormatting(object):
             if isinstance(box, boxes.ParentBox):
                 new_box.empty()
             self.flat_tree.append(new_box)
-        self.text_fragment = text.TextLineFragment()
         self.execute_formatting()
 
     @property
@@ -109,19 +108,17 @@ class LineBoxFormatting(object):
                 TextBox(' Thisisalonglonglonglong')
             )
         """
-        self.white_space_processing(textbox)
-        self.text_fragment.set_width(allocate_width)
-        # Set css style in TextLineFragment
-        self.text_fragment.set_textbox(textbox)
+        text_fragment = text.TextLineFragment.from_textbox(textbox)
+        text_fragment.set_width(allocate_width)
         # We create a new TextBox with the first part of the cutting text
         first_tb = textbox.copy()
-        first_tb.text = self.text_fragment.get_text()
+        first_tb.text = text_fragment.get_text()
         # And we check the remaining text
-        if self.text_fragment.get_remaining_text() == "":
+        if text_fragment.get_remaining_text() == "":
             return (first_tb, None)
         else:
             second_tb = textbox.copy()
-            second_tb.text = self.text_fragment.get_remaining_text()
+            second_tb.text = text_fragment.get_remaining_text()
             return (first_tb, second_tb)
 
     def white_space_processing(self, textbox, beginning=False):
@@ -166,9 +163,8 @@ class LineBoxFormatting(object):
 
     def compute_textbox_width(self, textbox):
         """Add the width and height in the textbox attributes and width."""
-        self.text_fragment.set_width(-1)
-        self.text_fragment.set_textbox(textbox)
-        textbox.width, textbox.height = self.text_fragment.get_size()
+        text_fragment = text.TextLineFragment.from_textbox(textbox)
+        textbox.width, textbox.height = text_fragment.get_size()
         return textbox.width
 
     def execute_formatting(self):
@@ -292,7 +288,6 @@ class LineBoxFormatting(object):
             ]
         ]
         """
-        import pdb
         def build_tree(flat_tree):
             while flat_tree:
                 box = flat_tree.pop(0)
@@ -328,7 +323,6 @@ class LineBoxFormatting(object):
                 self.position_y += line.height
                 self.compute_positions(line)
                 lines.append(line)
-#        1/0
         return lines
 
 
@@ -416,3 +410,4 @@ class LineBoxFormatting(object):
                 raise NotImplementedError
             elif isinstance(child, boxes.InlineLevelReplacedBox):
                 raise NotImplementedError
+

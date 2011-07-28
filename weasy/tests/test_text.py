@@ -24,7 +24,7 @@ from .. import text
 
 suite = Tests()
 
-FONTS = u"Nimbus Mono L, Liberation Mono, FreeMono, DejaVu Sans Mono, Monospace"
+FONTS = u"Nimbus Mono L, Liberation Mono, FreeMono, Monospace"
 
 @suite.test
 def test_line_content():
