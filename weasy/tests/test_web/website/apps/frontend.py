@@ -17,7 +17,6 @@ def post():
     content = request.values.get("content", "").strip("\r\n").strip(" ")
     document = PNGDocument.from_string(content)
     document.do_layout()
-    page, = document.pages
 
     document.draw_page(0)
     image = document.get_png_data()

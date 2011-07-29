@@ -38,6 +38,10 @@ class LineBoxFormatting(object):
             self.flat_tree.append(new_box)
         self.execute_formatting()
 
+        # Ref positions
+        self.ref_x = self.position_x
+        self.ref_y = self.position_y
+
     @property
     def parents(self):
         for i, box in enumerate(self.flat_tree[:-1]):
@@ -152,7 +156,6 @@ class LineBoxFormatting(object):
         else:
             return textbox
 
-
     def is_empty_line(self, linebox):
         #TODO: complete this function
         text = ""
@@ -202,7 +205,6 @@ class LineBoxFormatting(object):
         width = self.width
         any_element_in_line = True
         for index, child in self.child_iterator():
-            #- self.compute_parent_width(child)
             child_width = self.compute_textbox_width(child)
             if child_width <= width:
                 if any_element_in_line:
@@ -221,7 +223,7 @@ class LineBoxFormatting(object):
                     width -= child_width
                     any_element_in_line = False
             else:
-                parents = list(self.get_parents_box(child))
+                parents = [box.copy() for box in self.get_parents_box(child)]
                 self.flat_tree.pop(index)
                 first_child, second_child = self.breaking_textbox(child, width)
                 if second_child is None:
@@ -290,38 +292,46 @@ class LineBoxFormatting(object):
         """
         def build_tree(flat_tree):
             while flat_tree:
-                box = flat_tree.pop(0)
+                box = flat_tree.pop(0).copy()
                 children = list(get_children(box.depth, flat_tree))
                 if children:
+                    box.empty()
                     for child in build_tree(children):
                         box.add_child(child)
                     yield box
                 else:
                     yield box
 
-        def get_children(level, flat_tree):
-                while flat_tree:
-                    box = flat_tree.pop(0).copy()
+        def get_children(level, tree):
+                while tree:
+                    box = tree.pop(0)
                     if box.depth > level:
+                        box = box.copy()
                         yield box
                     else:
-                        flat_tree.insert(0, box)
+                        tree.insert(0, box)
                         break
 
         tree = list(self.flat_tree)
         lines = []
         while tree:
-            line = tree.pop(0)
+            line = tree.pop(0).copy()
+            line.empty()
             level = line.depth
             children = list(get_children(level, tree))
-            for child in build_tree(children):
+            tree_children = list(build_tree(children))
+            for child in tree_children:
                 line.add_child(child)
+
+            # Compute all dimensions
             if not self.is_empty_line(line):
                 self.compute_dimensions(line)
                 line.position_y = self.position_y
                 line.position_x = self.position_x
-                self.position_y += line.height
+                self.ref_x = line.position_x
+                self.ref_y = line.position_y
                 self.compute_positions(line)
+                self.position_y += line.height
                 lines.append(line)
         return lines
 
@@ -344,16 +354,14 @@ class LineBoxFormatting(object):
 
 
     def compute_positions(self, parentbox):
-        position_x = parentbox.position_x
-        position_y = parentbox.position_y
         for box in parentbox.children:
-            box.position_y = position_y
+            box.position_y = self.ref_y
             if isinstance(box, boxes.InlineBox):
-                box.position_x = position_x
+                box.position_x = self.ref_x
                 self.compute_positions(box)
             elif isinstance(box, boxes.TextBox):
-                box.position_x = position_x
-                position_x += box.width
+                box.position_x = self.ref_x
+                self.ref_x += box.width
             elif isinstance(box, boxes.InlineBlockBox):
                 raise NotImplementedError
             elif isinstance(box, boxes.InlineLevelReplacedBox):

@@ -322,7 +322,7 @@ def test_breaking_linebox():
 
     lines = paragraph.children
     for line in lines:
-#        assert line.width <= width
+        assert line.width <= width
         assert line.style.font_size == font_size
         assert line.element.tag == 'p'
 #        assert sum(linebox_children_width(line)) <= line.width
@@ -337,31 +337,68 @@ def test_breaking_linebox():
     paragraph = get_paragraph_linebox(width=300,  font_size=font_size)
     assert len(list(paragraph.children)) == 2
 
-#import pdb
+import pdb
 
-#@suite.test
-#def test_linebox_positions():
-#    def get_paragraph_linebox():
-#        page = u'''
-#            <style>
-#                p { width:200px; }
-#            </style>
-#            <p>Lorem ipsum dolor sit amet</p>'''
-#        page, = parse(page)
-#        html = page.root_box
-#        body = html.children[0]
-#        paragraph = body.children[0]
-#        return paragraph
+@suite.test
+def test_linebox_text():
+    def get_paragraph_linebox():
+        page = u'''
+            <style>
+                p { width:200px; }
+            </style>
+            <p><em>Lorem Ipsum</em>is very <strong>coool</strong></p>'''
+        page, = parse(page)
+        html = page.root_box
+        body = html.children[0]
+        paragraph = body.children[0]
+        return paragraph
 
-#    paragraph = get_paragraph_linebox()
-#    assert len(list(paragraph.children)) == 2
+    paragraph = get_paragraph_linebox()
+    lines = list(paragraph.children)
+    assert len(lines) == 2
 
-#    def get_text(lines):
-#        text = ""
-#        for line in lines:
-#            for box in line.descendants:
-#                if isinstance(box, boxes.TextBox):
-#                    text = "%s%s" % box.text
-#    assert
+    def get_text(lines):
+        text = ""
+        for line in lines:
+            for box in line.descendants():
+                if isinstance(box, boxes.TextBox):
+                    text = "%s%s" % (text, box.text)
+        return text
+    assert get_text(lines) == u"Lorem Ipsumis very coool"
+
+
+@suite.test
+def test_linebox_positions():
+    def get_paragraph_linebox():
+        page = u'''
+            <style>
+                p { width:200px; }
+            </style>
+            <p><em>Lorem Ipsum</em>is very <strong>coool</strong></p>'''
+        page, = parse(page)
+        html = page.root_box
+        body = html.children[0]
+        paragraph = body.children[0]
+        return paragraph
+
+    paragraph = get_paragraph_linebox()
+    lines = list(paragraph.children)
+    assert len(lines) == 2
+
+    ref_position_y = lines[0].position_y
+    ref_position_x = lines[0].position_x
+    for line in lines:
+        assert ref_position_y == line.position_y
+        assert ref_position_x == line.position_x
+        for box in line.children:
+            assert ref_position_x <= box.position_x
+            ref_position_x += box.width
+            assert ref_position_y == box.position_y
+        assert ref_position_x < line.width
+        ref_position_x = line.position_x
+        ref_position_y += line.height
+
+
+
 #    pdb.set_trace()
 

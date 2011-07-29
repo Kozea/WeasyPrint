@@ -134,3 +134,4 @@ def block_level_height(box):
 
     if box.height == 'auto':
         box.height = position_y - initial_position_y
+
