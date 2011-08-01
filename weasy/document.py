@@ -25,20 +25,7 @@ from .css import get_all_computed_styles
 from .css.utils import HTML4_DEFAULT_STYLESHEET
 from .formatting_structure.build import build_formatting_structure
 from .layout import layout
-from .draw import draw_page_to_png
-
-#class PDFDocument(Document):
-#    def __init__(self, dom):
-#        super(PDFDocument, self).__init__(dom)
-#        # Use a dummy page size initially
-#        self.surface = cairo.PDFSurface(self.output, 1, 1)
-
-#    def do_draw(self):
-#        """ Do the draw """
-#        self.do_layout()
-#        draw(self.pages, self.surface)
-#        self.surface.write_to_png(self.output)
-#        self.surface.finish()
+from .draw import draw_page_to_png, draw_to_pdf
 
 
 class Document(object):
@@ -143,4 +130,29 @@ class PNGDocument(Document):
 
     def get_png_data(self):
         return self.output.getvalue().encode('base64')
+
+
+class PDFDocument(Document):
+    def __init__(self, dom):
+        super(PDFDocument, self).__init__(dom)
+        # Use a dummy page size initially
+        self.surface = cairo.PDFSurface(self.output, 1, 1)
+
+    def draw(self):
+        """ Do the draw """
+        self.surface = cairo.PDFSurface(self.output, 1, 1)
+        draw_to_pdf(self.pages, self.surface)
+        self.surface.finish()
+
+    def draw_page(self, index):
+        """ Do the draw """
+        self.surface = cairo.PDFSurface(self.output, 1, 1)
+        page = [self.pages[index]]
+        draw_to_pdf(page, self.surface)
+        self.surface.finish()
+
+    def write(self, filename):
+        fd = open(filename, 'wr')
+        fd.write(self.output.getvalue())
+        fd.close()
 

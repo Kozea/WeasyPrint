@@ -11,15 +11,13 @@ from flask import g, Flask
 from apps import frontend
 from kalamar.access_point.filesystem import FileSystem, FileSystemProperty
 
-
 def make_kalamar(config):
     """ Init kalamar and access points """
     kalamar_site = kalamar.site.Site()
     prefix = os.path.dirname(os.path.abspath(__file__))
     files = FileSystem(os.path.join(prefix, 'static'),
-        '(.*?)\.(.*?)',
-        [("name", FileSystemProperty(unicode)),
-        ("ext", FileSystemProperty(unicode))],
+        '(.*?)',
+        [("name", FileSystemProperty(unicode))],
         content_property = "data")
     kalamar_site.register("files", files)
     return kalamar_site

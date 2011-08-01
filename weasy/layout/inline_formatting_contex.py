@@ -18,6 +18,7 @@
 
 
 from ..formatting_structure import boxes
+from .percentages import resolve_percentages
 from .. import text
 
 
@@ -159,7 +160,7 @@ class LineBoxFormatting(object):
     def is_empty_line(self, linebox):
         #TODO: complete this function
         text = ""
-        for child in linebox.children:
+        for child in linebox.descendants():
             if isinstance(child, boxes.TextBox):
                 text += child.text.strip(" ")
         return (len(linebox.children) == 0 or text == "")
@@ -297,6 +298,7 @@ class LineBoxFormatting(object):
                 if children:
                     box.empty()
                     for child in build_tree(children):
+                        child = child.copy()
                         box.add_child(child)
                     yield box
                 else:
@@ -306,7 +308,6 @@ class LineBoxFormatting(object):
                 while tree:
                     box = tree.pop(0)
                     if box.depth > level:
-                        box = box.copy()
                         yield box
                     else:
                         tree.insert(0, box)
@@ -338,9 +339,9 @@ class LineBoxFormatting(object):
 
     def compute_dimensions(self, box):
         """Add the width and height in the linebox."""
-        if isinstance(box, boxes.ParentBox):
-            widths = [0,]
-            heights = [0,]
+        if isinstance(box, boxes.InlineBox) or isinstance(box, boxes.LineBox):
+            widths = []
+            heights = []
             for child in box.children:
                 self.compute_dimensions(child)
                 widths.append(child.width)
@@ -410,9 +411,11 @@ class LineBoxFormatting(object):
         for child in box.children:
             if isinstance(child, boxes.InlineBox):
                 for child in self.flatten_tree(child, depth):
+                    resolve_percentages(child)
                     yield child
             elif isinstance(child, boxes.TextBox):
                 child.depth = depth
+                resolve_percentages(child)
                 yield child
             elif isinstance(child, boxes.InlineBlockBox):
                 raise NotImplementedError

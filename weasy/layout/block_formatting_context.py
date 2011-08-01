@@ -126,6 +126,7 @@ def block_level_height(box):
         if isinstance(child, boxes.LineBox):
             lines = breaking_linebox(child)
             for line in lines:
+                compute_dimensions(child)
                 box.add_child(line)
                 position_y += line.height
         else:

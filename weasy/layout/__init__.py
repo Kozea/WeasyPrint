@@ -38,8 +38,15 @@ compute_dimensions.register(boxes.BlockBox)(
 def line_dimensions(box):
     # TODO: real line box height
     # box.height = box.style.line_height
-    box.height = 0
+#    box.height = 0
+    resolve_percentages(box)
 
+@compute_dimensions.register(boxes.InlineBox)
+def inlinebox_dimensions(box):
+    # TODO: real line box height
+    # box.height = box.style.line_height
+#    box.height = 0
+    resolve_percentages(box)
 
 def page_dimensions(box):
     box.outer_height = box.style._weasy_page_height
@@ -51,6 +58,11 @@ def page_dimensions(box):
     box.position_y = 0
     box.width = box.outer_width - box.horizontal_surroundings()
     box.height = box.outer_height - box.vertical_surroundings()
+
+    box.root_box.width = box.width
+    box.root_box.height = box.height
+    box.root_box.outer_height = box.outer_height
+    box.root_box.outer_width = box.outer_width
 
     box.root_box.position_x = box.content_box_x()
     box.root_box.position_y = box.content_box_y()
@@ -65,7 +77,11 @@ def layout(document):
     """
     pages = []
     page = boxes.PageBox(document, document.formatting_structure, 1)
+
+#    page.root_box
+#    1/0
     page_dimensions(page)
     pages.append(page)
     # TODO: do page breaks, split boxes into multiple pages
     return pages
+

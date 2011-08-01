@@ -354,10 +354,10 @@ class TextLineFragment(TextFragment):
 
     def get_size(self):
         """Gets the real text area dimensions for this line in px unit"""
-        extents = self.layout.get_line(0).get_pixel_extents()[1]
-        return (extents[2]-extents[0], extents[3]-extents[1])
-        #TODO: What's the size ? the line's size, or the size of a layoutLine ?
-        # return self.get_layout().get_pixel_size()
+#        extents = self.layout.get_line(0).get_pixel_extents()[1]
+#        return (extents[2]-extents[0], extents[3]-extents[1])
+#        TODO: What's the size ? the line's size, or the size of a layoutLine ?
+        return self.get_layout().get_pixel_size()
 
     def get_logical_extents(self):
         """Returns the size of the logical area that occupied by the text"""

@@ -301,7 +301,7 @@ def test_breaking_linebox():
                 width:%(width)spx;
                 background-color:#393939;
                 color:#FFFFFF;
-                font-family: Arial, Helvetica, sans-serif;
+                font-family: Monospace;
                 text-align:center;
                 line-height:1;
                 text-decoration : underline overline line-through;
@@ -316,9 +316,9 @@ def test_breaking_linebox():
         paragraph = body.children[0]
         return paragraph
     font_size = 12
-    width = 150
+    width = 350
     paragraph = get_paragraph_linebox(width, font_size)
-    assert len(list(paragraph.children)) == 3
+    assert len(list(paragraph.children)) == 4
 
     lines = paragraph.children
     for line in lines:
@@ -334,8 +334,8 @@ def test_breaking_linebox():
                     assert child.element.tag in ('em', 'strong', 'span')
                     assert child.style.font_size == font_size
 
-    paragraph = get_paragraph_linebox(width=300,  font_size=font_size)
-    assert len(list(paragraph.children)) == 2
+    paragraph = get_paragraph_linebox(width=200,  font_size=font_size)
+    assert len(list(paragraph.children)) == 6
 
 import pdb
 
@@ -374,7 +374,9 @@ def test_linebox_positions():
             <style>
                 p { width:200px; }
             </style>
-            <p><em>Lorem Ipsum</em>is very <strong>coool</strong></p>'''
+            <p>Salem : Bon je teste avec une seule page, et de "weasyprinter"
+            en png.La page est générée par weasyprint. <strong>Trop cool non?
+            </strong></p>'''
         page, = parse(page)
         html = page.root_box
         body = html.children[0]
@@ -383,7 +385,7 @@ def test_linebox_positions():
 
     paragraph = get_paragraph_linebox()
     lines = list(paragraph.children)
-    assert len(lines) == 2
+    assert len(lines) == 7
 
     ref_position_y = lines[0].position_y
     ref_position_x = lines[0].position_x
@@ -391,14 +393,10 @@ def test_linebox_positions():
         assert ref_position_y == line.position_y
         assert ref_position_x == line.position_x
         for box in line.children:
-            assert ref_position_x <= box.position_x
+            assert ref_position_x == box.position_x
             ref_position_x += box.width
             assert ref_position_y == box.position_y
-        assert ref_position_x < line.width
+        assert ref_position_x - line.position_x <= line.width
         ref_position_x = line.position_x
         ref_position_y += line.height
-
-
-
-#    pdb.set_trace()
 
