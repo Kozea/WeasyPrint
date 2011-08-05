@@ -31,43 +31,39 @@ from .layout import layout
 from . import draw
 
 
+DEFAULT_USER_AGENT_STYLESHEETS = (HTML4_DEFAULT_STYLESHEET,)
+
+
 class Document(object):
-    def __init__(self, dom):
+    def __init__(self, dom, user_stylesheets=None,
+                 user_agent_stylesheets=DEFAULT_USER_AGENT_STYLESHEETS):
         assert getattr(dom, 'tag', None) == 'html', (
             'HTML document expected, got %r.' % (dom,))
 
-        self.user_stylesheets = []
-        self.user_agent_stylesheets = [HTML4_DEFAULT_STYLESHEET]
+        self.user_stylesheets = user_stylesheets or []
+        self.user_agent_stylesheets = user_agent_stylesheets or []
 
         #: lxml HtmlElement object
         self.dom = dom
 
-        # These are None for the steps that were not done yet.
-
-        #: dict of (element, pseudo_element_type) -> StyleDict
-        #: StyleDict: a dict of property_name -> PropertyValue,
-        #:    also with attribute access
-        self.computed_styles = None
-
-        #: The Box object for the root element.
-        self.formatting_structure = None
-
-        #: Layed-out pages and boxes
-        self.pages = None
+        self._computed_styles = None
+        self._formatting_structure = None
+        self._pages = None
 
     @classmethod
-    def from_string(cls, source):
+    def from_string(cls, source, **kwargs):
         """
         Make a document from an HTML string.
         """
-        return cls(lxml.html.document_fromstring(source))
+        return cls(lxml.html.document_fromstring(source), **kwargs)
 
     @classmethod
-    def from_file(cls, file_or_filename_or_url):
+    def from_file(cls, file_or_filename_or_url, **kwargs):
         """
         Make a document from a filename or open file object.
         """
-        return cls(lxml.html.parse(file_or_filename_or_url).getroot())
+        root_element = lxml.html.parse(file_or_filename_or_url).getroot()
+        return cls(root_element, **kwargs)
 
     def style_for(self, element, pseudo_type=None):
         """
@@ -75,35 +71,40 @@ class Document(object):
         """
         return self.computed_styles[(element, pseudo_type)]
 
-    def do_css(self):
+    @property
+    def computed_styles(self):
         """
-        Do the "CSS" step if it is not done yet: get computed styles for
-        every element.
+        dict of (element, pseudo_element_type) -> StyleDict
+        StyleDict: a dict of property_name -> PropertyValue,
+                   also with attribute access
         """
-        if self.computed_styles is None:
-            self.computed_styles = get_all_computed_styles(
+        if self._computed_styles is None:
+            self._computed_styles = get_all_computed_styles(
                 self,
                 user_stylesheets=self.user_stylesheets,
                 ua_stylesheets=self.user_agent_stylesheets,
                 medium='print')
+        return self._computed_styles
 
-    def do_boxes(self):
+    @property
+    def formatting_structure(self):
         """
-        Do the "boxes" step if it is not done yet: build the formatting
-        structure for the document a tree of boxes.
+        The Box object for the root element. Represents the tree of all boxes.
         """
-        self.do_css()
-        if self.formatting_structure is None:
-            self.formatting_structure = build_formatting_structure(self)
+        if self._formatting_structure is None:
+            self._formatting_structure = build_formatting_structure(self)
+        return self._formatting_structure
 
-    def do_layout(self):
+    @property
+    def pages(self):
         """
-        Do the "layout" step if it is not done yet: build a list of layed-out
-        pages with an absolute size and postition for every box.
+        List of layed-out pages with an absolute size and postition
+        for every box.
         """
-        self.do_boxes()
-        if self.pages is None:
-            self.pages = layout(self)
+        if self._pages is None:
+            self._pages = layout(self)
+        return self._pages
+
 
 class PNGDocument(Document):
     def __init__(self, dom):
@@ -126,7 +127,6 @@ class PNGDocument(Document):
         Pages are layed out vertically each above the next and centered
         horizontally.
         """
-        self.do_layout()
         pages = [self.draw_page(page) for page in self.pages]
         height = sum(height for width, height, surface in pages)
         max_width = max(width for width, height, surface in pages)
@@ -152,7 +152,6 @@ class PDFDocument(Document):
 
     def write_to(self, target):
         """Write the whole document as PDF into a file-like `target`."""
-        self.do_layout()
         # The actual page size is set for each page.
         surface = cairo.PDFSurface(target, 1, 1)
 

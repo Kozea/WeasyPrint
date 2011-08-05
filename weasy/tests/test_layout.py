@@ -31,9 +31,7 @@ def parse(html_content):
     """
     Parse some HTML, apply stylesheets, transform to boxes and do layout.
     """
-    document = PNGDocument.from_string(html_content)
-    document.do_layout()
-    return document.pages
+    return PNGDocument.from_string(html_content).pages
 
 
 @suite.test
@@ -399,4 +397,3 @@ def test_linebox_positions():
         assert ref_position_x - line.position_x <= line.width
         ref_position_x = line.position_x
         ref_position_y += line.height
-
