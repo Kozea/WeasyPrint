@@ -121,8 +121,13 @@ class PNGDocument(Document):
         self.surface.finish()
         return width, height, surface
 
+    def write_page_to(self, page_index, target):
+        """Write a single page as PNG into a file-like or filename `target`."""
+        width, height, surface = self.draw_page(self.pages[page_index])
+        surface.write_to_png(target)
+
     def write_to(self, target):
-        """Write all pages as PNG into a file-like `target`.
+        """Write all pages as PNG into a file-like or filename `target`.
 
         Pages are layed out vertically each above the next and centered
         horizontally.
@@ -151,7 +156,9 @@ class PDFDocument(Document):
         self.surface = cairo.PDFSurface(None, 1, 1)
 
     def write_to(self, target):
-        """Write the whole document as PDF into a file-like `target`."""
+        """
+        Write the whole document as PDF into a file-like or filename `target`.
+        """
         # The actual page size is set for each page.
         surface = cairo.PDFSurface(target, 1, 1)
 
