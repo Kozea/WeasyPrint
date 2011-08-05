@@ -44,11 +44,8 @@ def test_pixels(name, expected_width, expected_height, html):
     expected_lines = list(expected_lines)
 
     document = PNGDocument.from_string(html)
-    document.do_layout()
-    assert len(document.pages) == 1
     filename = make_filename('test_results', name)
-    document.draw_page(0)
-    document.write(filename)
+    document.write_to(filename)
 
 
     reader = png.Reader(filename=filename)
@@ -74,4 +71,3 @@ def test_png():
         </style>
         <body>
     ''')
-

@@ -241,27 +241,6 @@ def draw_box(context, box):
 def draw_page(page, context):
     """
     Draw the given PageBox to a Cairo context.
+    The context should be scaled so that lengths are in CSS pixels.
     """
     draw_box(context, page.root_box)
-
-
-def draw_page_to_png(page, surface):
-    """
-    Draw the given PageBox to a PNG file.
-    """
-    context = CairoContext(surface)
-    draw_page(page, context)
-
-def draw_to_pdf(pages, surface):
-    """Draw the the document """
-    px_to_pt = 1 / LENGTHS_TO_PIXELS['pt']
-    for page in pages:
-        # Actual page size is here. May be different between pages.
-        surface.set_size(
-            page.outer_width * px_to_pt,
-            page.outer_height * px_to_pt)
-        context = CairoContext(surface)
-        context.scale(px_to_pt, px_to_pt)
-        draw_page(page, context)
-        surface.show_page()
-
