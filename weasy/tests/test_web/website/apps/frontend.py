@@ -15,6 +15,13 @@ def index():
 @app.route('/', methods=("POST",))
 def post():
     content = request.values.get("content", "").strip("\r\n").strip(" ")
+
+    # Save the input HTML
+    item = g.kalamar.open('files',{"name":"input.html"})
+    item['data'].write(content)
+    item.save()
+
+
     pdf_document = PDFDocument.from_string(content)
     pdf_document.do_layout()
     pdf_document.draw()
@@ -33,12 +40,7 @@ def post():
     item['data'].write(pdf_document.output.getvalue())
     item.save()
 
-    # Save the input HTML
-    item = g.kalamar.open('files',{"name":"input.html"})
-    item['data'].write(content)
-    item.save()
 
     image = png_document.get_png_data()
 
     return render_template('index.html.jinja2', content=content, image=image)
-

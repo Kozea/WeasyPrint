@@ -36,16 +36,10 @@ compute_dimensions.register(boxes.BlockBox)(
 
 @compute_dimensions.register(boxes.LineBox)
 def line_dimensions(box):
-    # TODO: real line box height
-    # box.height = box.style.line_height
-#    box.height = 0
     resolve_percentages(box)
 
 @compute_dimensions.register(boxes.InlineBox)
 def inlinebox_dimensions(box):
-    # TODO: real line box height
-    # box.height = box.style.line_height
-#    box.height = 0
     resolve_percentages(box)
 
 def page_dimensions(box):
