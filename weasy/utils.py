@@ -16,9 +16,13 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+try:
+    from urlparse import urljoin
+except ImportError:
+    # Python 3
+    from urllib.parse import urljoin
 
 import functools
-
 
 class MultiFunction(object):
     """
@@ -46,3 +50,7 @@ class MultiFunction(object):
             if implementation:
                 return implementation(obj, *args, **kwargs)
         raise NotImplementedError('No implementation for %r' % type(obj))
+
+def get_url_attribute(element, key):
+    return urljoin(element.base_url, element.get(key))
+

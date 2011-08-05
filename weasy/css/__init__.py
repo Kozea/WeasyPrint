@@ -39,12 +39,6 @@ function does everything, but there is also a function for each step:
    values for one element.
 """
 
-try:
-    from urlparse import urljoin
-except ImportError:
-    # Python 3
-    from urllib.parse import urljoin
-
 from cssutils import parseString, parseUrl, parseStyle
 from cssutils.css import PropertyValue
 from lxml import cssselect
@@ -54,6 +48,7 @@ from . import inheritance
 from . import initial_values
 from . import computed_values
 from . import utils
+from ..utils import get_url_attribute
 
 
 def find_stylesheets(document):
@@ -85,7 +80,7 @@ def find_stylesheets(document):
             # URLs should NOT have been made absolute earlier
             # TODO: support the <base> HTML element, but do not use
             # lxml.html.HtmlElement.make_links_absolute() that changes the tree
-            href = urljoin(element.base_url, element.get('href'))
+            href = get_url_attribute(element, 'href')
             yield parseUrl(href, media=media_attr, title=element.get('title'))
 
 
@@ -461,3 +456,4 @@ def get_all_computed_styles(document, medium,
                             '@page', page_type)
 
     return computed_styles
+
