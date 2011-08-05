@@ -128,9 +128,6 @@ class PNGDocument(Document):
         fd.write(self.output.getvalue())
         fd.close()
 
-    def get_png_data(self):
-        return self.output.getvalue().encode('base64')
-
 
 class PDFDocument(Document):
     def __init__(self, dom):
@@ -155,4 +152,3 @@ class PDFDocument(Document):
         fd = open(filename, 'wr')
         fd.write(self.output.getvalue())
         fd.close()
-

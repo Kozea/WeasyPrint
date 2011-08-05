@@ -1,5 +1,3 @@
 *.pyc
 *.egg-info
 .coverage
-weasy/tests/test_web/website/static/*result*
-
