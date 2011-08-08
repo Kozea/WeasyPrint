@@ -22,6 +22,10 @@
 """
 
 
+from .utils import get_keyword
+from .inheritance import is_inherit
+
+
 def expand_four_sides(name, values):
     """
     Expand properties that set a value for each of the four sides of a box.
@@ -47,26 +51,40 @@ def expand_four_sides(name, values):
 
 
 def expand_border_side(name, values):
-    # TODO
-    # http://www.w3.org/TR/CSS21/box.html#border-shorthand-properties
-    # Defined as:
-    # 	[ <border-width> || <border-style> || <'border-top-color'> ] | inherit
-    # With || meaning 'one or more of them, in any order' so we need to actuylly
-    # look at the values to decide which is which
-    # http://www.w3.org/TR/CSS21/about.html#value-defs
-    raise NotImplementedError
+    """
+    Expand to one or more of *-width, *-style and *-color.
+    """
+    if is_inherit(values):
+        for suffix in ['-width', '-color', '-style']:
+            yield name + suffix, values
+        return
+
+    results = {}
+    for value in values:
+        keyword = get_keyword(value)
+        if value.type == 'COLOR_VALUE' or (name == 'outline' and
+                                           keyword == 'invert'):
+            results['-color'] = value
+        elif value.type == 'DIMENSION' or keyword in ('thin', 'medium',
+                                                      'thick'):
+            results['-width'] = value
+        elif keyword in ('none', 'hidden', 'dotted', 'dashed', 'solid',
+                         'double', 'groove', 'ridge', 'inset', 'outset'):
+            results['-style'] = value
+        else:
+            raise ValueError('Invalid value for %s: %s' % (name, value.value))
+    assert results, 'Expected at least one of color, width, style.'
+    for suffix, value in results.iteritems():
+        yield name + suffix, [value]
 
 
 def expand_border(name, values):
+    """
+    Expand the 'border' shorthand.
+    """
     for suffix in ('-top', '-right', '-bottom', '-left'):
         for new_prop in expand_border_side(name + suffix, values):
             yield new_prop
-
-
-def expand_outline(name, values):
-    # TODO. See expand_border_side
-    # 	[ <'outline-color'> || <'outline-style'> || <'outline-width'> ] | inherit
-    raise NotImplementedError
 
 
 def expand_before_after(name, values):
@@ -107,7 +125,7 @@ SHORTHANDS = {
     'border-bottom': expand_border_side,
     'border-left': expand_border_side,
     'border': expand_border,
-    'outline': expand_outline,
+    'outline': expand_border_side,
     'cue': expand_before_after,
     'pause': expand_before_after,
     'background': expand_background,
