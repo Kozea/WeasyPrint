@@ -121,6 +121,7 @@ def test_expand_borders():
     with attest.raises(ValueError):
         list(expand_name_values('border', PropertyValue('6px dashed left')))
 
+
 @suite.test
 def test_expand_list_style():
     assert expand_to_dict('list-style: inherit') == {
@@ -145,3 +146,79 @@ def test_expand_list_style():
     }
     with attest.raises(ValueError):
         list(expand_name_values('list-style', PropertyValue('red')))
+
+
+def assert_background(css, **kwargs):
+    expanded = expand_to_dict('background: ' + css).items()
+    expected = [('background-' + key, value)
+                for key, value in kwargs.iteritems()]
+    assert sorted(expanded) == sorted(expected)
+
+
+@suite.test
+def test_expand_background():
+    assert_background(
+        'red',
+        color='red', ##
+        image='none',
+        repeat='repeat',
+        attachment='scroll',
+        position='0% 0%'
+
+    )
+    assert_background(
+        'url(foo.png)',
+        color='transparent',
+        image='url(foo.png)', ##
+        repeat='repeat',
+        attachment='scroll',
+        position='0% 0%'
+    )
+    assert_background(
+        'no-repeat',
+        color='transparent',
+        image='none',
+        repeat='no-repeat', ##
+        attachment='scroll',
+        position='0% 0%'
+    )
+    assert_background(
+        'fixed',
+        color='transparent',
+        image='none',
+        repeat='repeat',
+        attachment='fixed', ##
+        position='0% 0%'
+    )
+    assert_background(
+        'top right',
+        color='transparent',
+        image='none',
+        repeat='repeat',
+        attachment='scroll',
+        position='top right' ##
+    )
+    assert_background(
+        'url(bar) #f00 repeat-y center left fixed',
+        color='#f00', ##
+        image='url(bar)', ##
+        repeat='repeat-y', ##
+        attachment='fixed', ##
+        position='center left' ##
+    )
+    assert_background(
+        '#00f 10% 200px',
+        color='#00f', ##
+        image='none',
+        repeat='repeat',
+        attachment='scroll',
+        position='10% 200px' ##
+    )
+    assert_background(
+        '78px right fixed',
+        color='transparent',
+        image='none',
+        repeat='repeat',
+        attachment='fixed', ##
+        position='78px right' ##
+    )

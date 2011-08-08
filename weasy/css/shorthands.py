@@ -54,6 +54,10 @@ def expand_four_sides(name, values):
 
 
 def generic_expander(*suffixes):
+    """
+    Wrap an expander so that it does not have to handle the 'inherit' case,
+    can just yield name suffixes, and missing suffixes get the initial value.
+    """
     def decorator(wrapped):
         @functools.wraps(wrapped)
         def wrapper(name, values):
@@ -67,6 +71,7 @@ def generic_expander(*suffixes):
                 if suffix is None:
                     raise ValueError('Invalid value for %s: %s' %
                                      (name, values))
+                assert suffix in suffixes
                 assert suffix not in results
                 results[suffix] = values
 
@@ -110,11 +115,11 @@ def expand_border_side(name, values):
     """
     for value in values:
         keyword = get_keyword(value)
-        if value.type == 'COLOR_VALUE' or (name == 'outline' and
-                                           keyword == 'invert'):
+        if value.type == 'COLOR_VALUE' or \
+                (name == 'outline' and keyword == 'invert'):
             suffix = '-color'
-        elif value.type == 'DIMENSION' or keyword in ('thin', 'medium',
-                                                      'thick'):
+        elif value.type == 'DIMENSION' or \
+                keyword in ('thin', 'medium', 'thick'):
             suffix = '-width'
         elif keyword in ('none', 'hidden', 'dotted', 'dashed', 'solid',
                          'double', 'groove', 'ridge', 'inset', 'outset'):
@@ -135,6 +140,55 @@ def expand_border(name, values):
             yield new_prop
 
 
+def is_valid_background_positition(value):
+    """
+    Tell whether the value a valid background-position.
+    """
+    return (
+        value.type in ('DIMENSION', 'PERCENTAGE') or
+        (value.type == 'NUMBER' and value.value == 0) or
+        get_keyword(value) in ('left', 'right', 'top', 'bottom', 'center')
+    )
+
+
+@generic_expander('-color', '-image', '-repeat', '-attachment', '-position')
+def expand_background(name, values):
+    """
+    Expand the 'background' shorthand.
+
+    http://www.w3.org/TR/CSS21/colors.html#propdef-background
+    """
+    # Make `values` a stack
+    values = list(reversed(values))
+    while values:
+        value = values.pop()
+        keyword = get_keyword(value)
+        if value.type == 'COLOR_VALUE':
+            suffix = '-color'
+        elif keyword == 'none' or value.type == 'URI':
+            suffix = '-image'
+        elif keyword in ('repeat', 'repeat-x', 'repeat-y', 'no-repeat'):
+            suffix = '-repeat'
+        elif keyword in ('scroll', 'fixed'):
+            suffix = '-attachment'
+        elif is_valid_background_positition(value):
+            if values:
+                next_value = values.pop()
+                if is_valid_background_positition(next_value):
+                    # Two consecutive '-position' values, yield them together
+                    yield '-position', [value, next_value]
+                    continue
+                else:
+                    # The next value is not a '-position', put it back
+                    # for the next loop iteration
+                    values.append(next_value)
+            # A single '-position' value
+            suffix = '-position'
+        else:
+            suffix = None
+        yield suffix, [value]
+
+
 def expand_before_after(name, values):
     if len(values) == 1:
         values *= 2
@@ -142,12 +196,6 @@ def expand_before_after(name, values):
         raise ValueError('Expected 2 values for %s, got %r.' % (name, values))
     for suffix, value in zip(('-before', '-after'), values):
         yield (name + suffix, value)
-
-
-def expand_background(name, values):
-    # TODO
-    # 	[<'background-color'> || <'background-image'> || <'background-repeat'> || <'background-attachment'> || <'background-position'>] | inherit
-    raise NotImplementedError
 
 
 def expand_font(name, values):
