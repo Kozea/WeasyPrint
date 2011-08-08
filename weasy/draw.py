@@ -17,13 +17,15 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+import math
+import contextlib
+
 import cairo
 import pangocairo
 
 from .css.computed_values import LENGTHS_TO_PIXELS
 from .formatting_structure import boxes
 from . import text
-import math
 
 class CairoContext(cairo.Context):
     """
@@ -39,6 +41,15 @@ class CairoContext(cairo.Context):
         self.set_source_rgba(
             color.red / 255., color.green / 255., color.blue / 255.,
             color.alpha)
+
+    @contextlib.contextmanager
+    def stacked(self):
+        self.save()
+        try:
+            yield
+        finally:
+            self.restore()
+
 
 class Point(object):
     def __init__(self, x, y):

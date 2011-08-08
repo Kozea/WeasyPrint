@@ -133,17 +133,19 @@ class PNGDocument(Document):
         horizontally.
         """
         pages = [self.draw_page(page) for page in self.pages]
-        height = sum(height for width, height, surface in pages)
+        total_height = sum(height for width, height, surface in pages)
         max_width = max(width for width, height, surface in pages)
-        surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, max_width, height)
+        surface = cairo.ImageSurface(cairo.FORMAT_ARGB32,
+            max_width, total_height)
         context = draw.CairoContext(surface)
 
         position_y = 0
-        for width, height, surface in pages:
+        for width, height, page_surface in pages:
             position_x = (max_width - width) // 2
-            context.move_to(position_x, position_y)
-            context.set_source(cairo.SurfacePattern(surface))
-            context.paint()
+            with context.stacked():
+                context.translate(position_x, position_y)
+                context.set_source(cairo.SurfacePattern(page_surface))
+                context.paint()
             position_y += height
 
         surface.write_to_png(target)

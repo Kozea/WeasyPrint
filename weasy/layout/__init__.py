@@ -70,12 +70,10 @@ def layout(document):
     absolute size and position for all boxes.
     """
     pages = []
-    page = boxes.PageBox(document, document.formatting_structure, 1)
 
-#    page.root_box
-#    1/0
+    page = boxes.PageBox(document, document.formatting_structure, 1)
     page_dimensions(page)
     pages.append(page)
+
     # TODO: do page breaks, split boxes into multiple pages
     return pages
-
