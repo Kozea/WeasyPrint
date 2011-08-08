@@ -42,8 +42,7 @@ r"""
 
     and some manual post-processing.
 """
-# XXX: Special cases that can not be expressed as CSS:
-#   border-color, text-align
+# XXX: text-align can not be expressed as CSS and must be special-cased
 INITIAL_VALUES = dict(
     expanded_prop
     for name, values in [
@@ -54,7 +53,8 @@ INITIAL_VALUES = dict(
         ('background-position', '0% 0%'),
         ('background-repeat', 'repeat'),
         ('border-collapse', 'separate'),
-     #  'border-color': the value of the 'color' property
+        # http://www.w3.org/TR/css3-color/#currentcolor
+        ('border-color', 'currentColor'),
         ('border-spacing', '0'),
         ('border-style', 'none'),
         ('border-width', 'medium'),
@@ -167,12 +167,6 @@ def handle_initial_values(style):
             style[name] = initial
 
     # Special cases for initial values that can not be expressed as CSS
-
-    # border-color: same as color
-    for name in ('border-top-color', 'border-right-color',
-                 'border-bottom-color', 'border-left-color'):
-        if is_initial(style, name):
-            style[name] = style['color']
 
     # text-align: left in left-to-right text, right in right-to-left
     if is_initial(style, 'text-align'):

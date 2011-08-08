@@ -64,10 +64,10 @@ def test_find_stylesheets():
 
     rules = list(rule for sheet in sheets
                       for rule in css.effective_rules(sheet, 'print'))
-    assert len(rules) == 8
+    assert len(rules) == 9
     # Also test appearance order
     assert [rule.selectorText for rule in rules] \
-        == ['li', 'p', 'ul', 'a', 'a:after', ':first', 'ul',
+        == ['li', 'p', 'ul', 'li', 'a', 'a:after', ':first', 'ul',
             'body > h1:first-child']
 
 
@@ -156,12 +156,16 @@ def test_annotate_document():
 
     assert a.text_decoration == 'underline'
 
-    color = a['color'][0]
-    assert (color.red, color.green, color.blue, color.alpha) == (255, 0, 0, 1)
     assert a.padding_top == 1
     assert a.padding_right == 2
     assert a.padding_bottom == 3
     assert a.padding_left == 4
+
+    color = a['color'][0]
+    assert (color.red, color.green, color.blue, color.alpha) == (255, 0, 0, 1)
+    # Test the initial border-color: currentColor
+    color = a['border-top-color'][0]
+    assert (color.red, color.green, color.blue, color.alpha) == (255, 0, 0, 1)
 
     # The href attr should be as in the source, not made absolute.
     assert ''.join(v.value for v in after['content']) == ' [home.html]'

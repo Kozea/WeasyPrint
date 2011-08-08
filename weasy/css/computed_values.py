@@ -409,6 +409,24 @@ def compute_size(element, style):
     style._weasy_page_height = height
 
 
+def compute_current_color(style, parent_style):
+    """
+    Replace occurences of currentColor by the current color.
+
+    http://www.w3.org/TR/css3-color/#currentcolor
+    """
+    for name, values in style.iteritems():
+        if get_single_keyword(values) == 'currentColor':
+            if name == 'color':
+                if parent_style is None:
+                    values = INITIAL_VALUES['color']
+                else:
+                    values = parent_style['color']
+            else:
+                values = style['color']
+            style[name] = values
+
+
 def compute_values(element, pseudo_type, style, parent_style):
     """
     Normalize values as much as possible without rendering the document.
@@ -424,6 +442,7 @@ def compute_values(element, pseudo_type, style, parent_style):
     compute_border_width(style)
     compute_outline_width(style)
     compute_size(element, style)
+    compute_current_color(style, parent_style)
     # Recent enough cssutils have a .absoluteUri on URIValue objects.
     # TODO: percentages for height?
     #       http://www.w3.org/TR/CSS21/visudet.html#propdef-height
