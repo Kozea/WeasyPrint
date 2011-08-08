@@ -24,6 +24,7 @@ import cairo
 import pangocairo
 
 from .css.computed_values import LENGTHS_TO_PIXELS
+from .css.utils import get_single_keyword
 from .formatting_structure import boxes
 from . import text
 
@@ -156,16 +157,37 @@ class Trapezoid(object):
         self.second_point.translate(x, y)
 
 
-def draw_background(context, box):
-    bg_color = box.style['background-color'][0]
-    if bg_color.alpha > 0:
-        context.rectangle(
+def has_background(box):
+    """
+    Return the given box has any background.
+    """
+    return box.style['background-color'][0].alpha > 0 or \
+        get_single_keyword(box.style['background-image']) != 'none'
+
+
+def draw_background_on_entire_canvas(context, box):
+    draw_background(context, box, on_entire_canvas=True)
+    # Do not draw it again.
+    box.skip_background = True
+
+
+def draw_background(context, box, on_entire_canvas=False):
+    if getattr(box, 'skip_background', False):
+        return
+
+    with context.stacked():
+        # Change coordinates to make the rest easier.
+        context.translate(
             box.position_x + box.margin_left,
-            box.position_y + box.margin_top,
-            box.border_width(),
-            box.border_height())
-        context.set_source_colorvalue(bg_color)
-        context.fill()
+            box.position_y + box.margin_top)
+        if not on_entire_canvas:
+            context.rectangle(0, 0, box.border_width(), box.border_height())
+            context.clip()
+        bg_color = box.style['background-color'][0]
+        if bg_color.alpha > 0:
+            context.set_source_colorvalue(bg_color)
+            context.paint()
+        # TODO: draw bg_image
 
 
 def draw_border(context, box):
@@ -237,8 +259,10 @@ def draw_text(context, textbox):
     context.move_to(textbox.position_x, textbox.position_y)
     context.show_layout(fragment.get_layout())
 
+
 def draw_box(context, box):
-    draw_background(context, box)
+    if has_background(box):
+        draw_background(context, box)
 
     if isinstance(box, boxes.TextBox):
         draw_text(context, box)
@@ -254,4 +278,18 @@ def draw_page(page, context):
     Draw the given PageBox to a Cairo context.
     The context should be scaled so that lengths are in CSS pixels.
     """
+    # http://www.w3.org/TR/CSS21/colors.html#background
+    # Background for the root element is drawn on the entire canvas.
+    # If the root is "html" and has no background, the background
+    # for its "body" child is drawn on the entire canvas.
+    # However backgrounds positions stay the same.
+    if has_background(page.root_box):
+        draw_background_on_entire_canvas(context, page.root_box)
+    elif page.root_box.element.tag.lower() == 'html':
+        for child in page.root_box.children:
+            if child.element.tag.lower() == 'body' and has_background(child):
+                # This must be drawn now, before anything on the root element.
+                draw_background_on_entire_canvas(context, child)
+                break
+
     draw_box(context, page.root_box)
