@@ -320,10 +320,15 @@ def compute_font_weight(style, parent_style):
         # lengths. This is a number without unit.
         style.font_weight = '700'
     elif value in ('bolder', 'lighter'):
-        parent_values = parent_style['font-weight']
-        assert len(parent_values) == 1
-        assert parent_values[0].type == 'NUMBER'
-        parent_value = parent_values[0].value
+        if parent_style is not None:
+            parent_values = parent_style['font-weight']
+            assert len(parent_values) == 1
+            assert parent_values[0].type == 'NUMBER'
+            parent_value = parent_values[0].value
+        else:
+            initial = get_single_keyword(INITIAL_VALUES['font-weight'])
+            assert initial == 'normal'
+            parent_value = 400
         # Use a string here as StyleDict.__setattr__ turns integers into pixel
         # lengths. This is a number without unit.
         style.font_weight = str(FONT_WEIGHT_RELATIVE[value][parent_value])
