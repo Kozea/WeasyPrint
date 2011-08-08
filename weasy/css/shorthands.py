@@ -22,8 +22,11 @@
 """
 
 
+import functools
+
 from .utils import get_keyword
 from .inheritance import is_inherit
+from .initial_values import INITIAL_VALUES
 
 
 def expand_four_sides(name, values):
@@ -50,18 +53,37 @@ def expand_four_sides(name, values):
         yield (new_name, [value])
 
 
+def generic_expander(*suffixes):
+    def decorator(wrapped):
+        @functools.wraps(wrapped)
+        def wrapper(name, values):
+            if is_inherit(values):
+                for suffix in suffixes:
+                    yield name + suffix, values
+                return
+
+            results = {}
+            for suffix, values in wrapped(name, values):
+                if suffix is None:
+                    raise ValueError('Invalid value for %s: %s' %
+                                     (name, values))
+                assert suffix not in results
+                results[suffix] = values
+
+            for suffix in suffixes:
+                yield name + suffix, results.get(suffix,
+                    INITIAL_VALUES[name + suffix])
+        return wrapper
+    return decorator
+
+
+@generic_expander('-type', '-position', '-image')
 def expand_list_style(name, values):
     """
     Expand the 'list-style' shorthand property.
 
     http://www.w3.org/TR/CSS21/generate.html#propdef-list-style
     """
-    if is_inherit(values):
-        for suffix in ['-type', '-position', '-image']:
-            yield name + suffix, values
-        return
-
-    results = {}
     for value in values:
         keyword = get_keyword(value)
         # TODO: how do we disambiguate -style: none and -image: none?
@@ -69,48 +91,37 @@ def expand_list_style(name, values):
                        'decimal-leading-zero', 'lower-roman', 'upper-roman',
                        'lower-greek', 'lower-latin', 'upper-latin', 'armenian',
                        'georgian', 'lower-alpha', 'upper-alpha', 'none'):
-            results['-type'] = value
+            suffix = '-type'
         elif keyword in ('inside', 'outside'):
-            results['-position'] = value
+            suffix = '-position'
         elif keyword == 'none' or value.type == 'URI':
-            results['-image'] = value
+            suffix = '-image'
         else:
-            raise ValueError('Invalid value for %s: %s' % (name, value.value))
-
-    assert results, 'Expected at least one of type, position, image.'
-    for suffix, value in results.iteritems():
-        yield name + suffix, [value]
+            suffix = None
+        yield suffix, [value]
 
 
+@generic_expander('-width', '-color', '-style')
 def expand_border_side(name, values):
     """
-    Expand to one or more of *-width, *-style and *-color.
+    Expand 'border-top' and such.
 
     http://www.w3.org/TR/CSS21/box.html#propdef-border-top
     """
-    if is_inherit(values):
-        for suffix in ['-width', '-color', '-style']:
-            yield name + suffix, values
-        return
-
-    results = {}
     for value in values:
         keyword = get_keyword(value)
         if value.type == 'COLOR_VALUE' or (name == 'outline' and
                                            keyword == 'invert'):
-            results['-color'] = value
+            suffix = '-color'
         elif value.type == 'DIMENSION' or keyword in ('thin', 'medium',
                                                       'thick'):
-            results['-width'] = value
+            suffix = '-width'
         elif keyword in ('none', 'hidden', 'dotted', 'dashed', 'solid',
                          'double', 'groove', 'ridge', 'inset', 'outset'):
-            results['-style'] = value
+            suffix = '-style'
         else:
-            raise ValueError('Invalid value for %s: %s' % (name, value.value))
-
-    assert results, 'Expected at least one of color, width, style.'
-    for suffix, value in results.iteritems():
-        yield name + suffix, [value]
+            suffix = None
+        yield suffix, [value]
 
 
 def expand_border(name, values):

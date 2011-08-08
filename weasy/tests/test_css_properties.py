@@ -89,13 +89,17 @@ def test_expand_borders():
     assert expand_to_dict('border-top: 3px dotted') == {
         'border-top-width': '3px',
         'border-top-style': 'dotted',
+        'border-top-color': 'currentColor',
     }
     assert expand_to_dict('border-top: 3px red') == {
         'border-top-width': '3px',
+        'border-top-style': 'none',
         'border-top-color': 'red',
     }
     assert expand_to_dict('border-top: inset') == {
+        'border-top-width': 'medium',
         'border-top-style': 'inset',
+        'border-top-color': 'currentColor',
     }
     assert expand_to_dict('border: 6px dashed green') == {
         'border-top-width': '6px',
@@ -125,14 +129,19 @@ def test_expand_list_style():
         'list-style-type': 'inherit',
     }
     assert expand_to_dict('list-style: url(foo.png)') == {
+        'list-style-position': 'outside',
         'list-style-image': 'url(foo.png)',
+        'list-style-type': 'disc',
     }
     assert expand_to_dict('list-style: decimal') == {
+        'list-style-position': 'outside',
+        'list-style-image': 'none',
         'list-style-type': 'decimal',
     }
-    assert expand_to_dict('list-style: disc outside') == {
-        'list-style-position': 'outside',
-        'list-style-type': 'disc',
+    assert expand_to_dict('list-style: circle inside') == {
+        'list-style-position': 'inside',
+        'list-style-image': 'none',
+        'list-style-type': 'circle',
     }
     with attest.raises(ValueError):
         list(expand_name_values('list-style', PropertyValue('red')))

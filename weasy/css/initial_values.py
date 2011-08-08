@@ -23,7 +23,6 @@
 
 from cssutils.css import PropertyValue
 
-from .shorthands import expand_name_values
 from .utils import get_single_keyword
 
 
@@ -42,10 +41,12 @@ r"""
 
     and some manual post-processing.
 """
+# Do not use shorthand properties here since some shorthand expanders need
+# this dict of initial values.
 # XXX: text-align can not be expressed as CSS and must be special-cased
 INITIAL_VALUES = dict(
-    expanded_prop
-    for name, values in [
+    (name, PropertyValue(value))
+    for name, value in [
         ('azimuth', 'center'),
         ('background-attachment', 'scroll'),
         ('background-color', 'transparent'),
@@ -54,10 +55,19 @@ INITIAL_VALUES = dict(
         ('background-repeat', 'repeat'),
         ('border-collapse', 'separate'),
         # http://www.w3.org/TR/css3-color/#currentcolor
-        ('border-color', 'currentColor'),
+        ('border-top-color', 'currentColor'),
+        ('border-right-color', 'currentColor'),
+        ('border-bottom-color', 'currentColor'),
+        ('border-left-color', 'currentColor'),
         ('border-spacing', '0'),
-        ('border-style', 'none'),
-        ('border-width', 'medium'),
+        ('border-top-style', 'none'),
+        ('border-right-style', 'none'),
+        ('border-bottom-style', 'none'),
+        ('border-left-style', 'none'),
+        ('border-top-width', 'medium'),
+        ('border-right-width', 'medium'),
+        ('border-bottom-width', 'medium'),
+        ('border-left-width', 'medium'),
         ('bottom', 'auto'),
         ('caption-side', 'top'),
         ('clear', 'none'),
@@ -86,7 +96,10 @@ INITIAL_VALUES = dict(
         ('list-style-image', 'none'),
         ('list-style-position', 'outside'),
         ('list-style-type', 'disc'),
-        ('margin', '0'),
+        ('margin-top', '0'),
+        ('margin-right', '0'),
+        ('margin-bottom', '0'),
+        ('margin-left', '0'),
         ('max-height', 'none'),
         ('max-width', 'none'),
         ('min-height', '0'),
@@ -96,7 +109,10 @@ INITIAL_VALUES = dict(
         ('outline-style', 'none'),
         ('outline-width', 'medium'),
         ('overflow', 'visible'),
-        ('padding', '0'),
+        ('padding-top', '0'),
+        ('padding-right', '0'),
+        ('padding-bottom', '0'),
+        ('padding-left', '0'),
         ('page-break-after', 'auto'),
         ('page-break-before', 'auto'),
         ('page-break-inside', 'auto'),
@@ -117,7 +133,7 @@ INITIAL_VALUES = dict(
         ('stress', '50'),
         ('table-layout', 'auto'),
     #   'text-align': acts as 'left' if 'direction' is 'ltr', 'right' if
-    #                 ('direction' is 'rtl'
+    #                 'direction' is 'rtl'
         ('text-decoration', 'none'),
         ('text-indent', '0'),
         ('text-transform', 'none'),
@@ -125,7 +141,7 @@ INITIAL_VALUES = dict(
         ('unicode-bidi', 'normal'),
         ('vertical-align', 'baseline'),
         ('visibility', 'visible'),
-        ('voice-family', 'child'),     # depends on user agent */
+        ('voice-family', 'child'),     # depends on user agent
         ('volume', 'medium'),
         ('white-space', 'normal'),
         ('widows', '2'),
@@ -136,7 +152,6 @@ INITIAL_VALUES = dict(
         # CSS3 Paged Media: http://www.w3.org/TR/css3-page/#page-size
         ('size', 'auto'),
     ]
-    for expanded_prop in expand_name_values(name, PropertyValue(values))
 )
 
 # Not the same when computed: border-*-color, text-align, outline-width, line-height, font-size, word-spacing, font-weight, display, size
