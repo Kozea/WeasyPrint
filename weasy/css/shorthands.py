@@ -233,8 +233,7 @@ def expand_noop(name, values):
 
 def expand_name_values(name, values):
     expander = SHORTHANDS.get(name, expand_noop)
-    for new_name, new_values in expander(name, list(values)):
-        yield new_name, new_values
+    return expander(name, list(values))
 
 
 def expand_shorthand(prop):
