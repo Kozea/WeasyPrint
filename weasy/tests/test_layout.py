@@ -271,6 +271,41 @@ def test_block_heights():
 
 
 @suite.test
+def test_block_heights():
+    page, = parse('''
+        <style>
+            html, body { margin: 0 }
+            body { height: 50% }
+        </style>
+        <body>
+    ''')
+    html = page.root_box
+    assert html.element.tag == 'html'
+    body = html.children[0]
+    assert body.element.tag == 'body'
+
+    # Since html’s height depend on body’s, body’s 50% means 'auto'
+    assert body.height == 0
+
+    page, = parse('''
+        <style>
+            html, body { margin: 0 }
+            html { height: 300px }
+            body { height: 50% }
+        </style>
+        <body>
+    ''')
+    html = page.root_box
+    assert html.element.tag == 'html'
+    body = html.children[0]
+    assert body.element.tag == 'body'
+
+    # This time the percentage makes sense
+    assert body.height == 150
+
+
+
+@suite.test
 def test_breaking_empty_linebox():
     def get_paragraph_linebox(width, font_size):
         page = u'''
