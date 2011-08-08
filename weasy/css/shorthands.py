@@ -50,9 +50,43 @@ def expand_four_sides(name, values):
         yield (new_name, [value])
 
 
+def expand_list_style(name, values):
+    """
+    Expand the 'list-style' shorthand property.
+
+    http://www.w3.org/TR/CSS21/generate.html#propdef-list-style
+    """
+    if is_inherit(values):
+        for suffix in ['-type', '-position', '-image']:
+            yield name + suffix, values
+        return
+
+    results = {}
+    for value in values:
+        keyword = get_keyword(value)
+        # TODO: how do we disambiguate -style: none and -image: none?
+        if keyword in ('disc', 'circle', 'square', 'decimal',
+                       'decimal-leading-zero', 'lower-roman', 'upper-roman',
+                       'lower-greek', 'lower-latin', 'upper-latin', 'armenian',
+                       'georgian', 'lower-alpha', 'upper-alpha', 'none'):
+            results['-type'] = value
+        elif keyword in ('inside', 'outside'):
+            results['-position'] = value
+        elif keyword == 'none' or value.type == 'URI':
+            results['-image'] = value
+        else:
+            raise ValueError('Invalid value for %s: %s' % (name, value.value))
+
+    assert results, 'Expected at least one of type, position, image.'
+    for suffix, value in results.iteritems():
+        yield name + suffix, [value]
+
+
 def expand_border_side(name, values):
     """
     Expand to one or more of *-width, *-style and *-color.
+
+    http://www.w3.org/TR/CSS21/box.html#propdef-border-top
     """
     if is_inherit(values):
         for suffix in ['-width', '-color', '-style']:
@@ -73,6 +107,7 @@ def expand_border_side(name, values):
             results['-style'] = value
         else:
             raise ValueError('Invalid value for %s: %s' % (name, value.value))
+
     assert results, 'Expected at least one of color, width, style.'
     for suffix, value in results.iteritems():
         yield name + suffix, [value]
@@ -81,6 +116,8 @@ def expand_border_side(name, values):
 def expand_border(name, values):
     """
     Expand the 'border' shorthand.
+
+    http://www.w3.org/TR/CSS21/box.html#propdef-border
     """
     for suffix in ('-top', '-right', '-bottom', '-left'):
         for new_prop in expand_border_side(name + suffix, values):
@@ -105,12 +142,6 @@ def expand_background(name, values):
 def expand_font(name, values):
     # TODO
     # [ [ <'font-style'> || <'font-variant'> || <'font-weight'> ]? <'font-size'> [ / <'line-height'> ]? <'font-family'> ] | caption | icon | menu | message-box | small-caption | status-bar | inherit
-    raise NotImplementedError
-
-
-def expand_list_style(name, values):
-    # TODO
-    # 	[ <'list-style-type'> || <'list-style-position'> || <'list-style-image'> ] | inherit
     raise NotImplementedError
 
 
