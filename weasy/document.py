@@ -29,6 +29,7 @@ from .css.computed_values import LENGTHS_TO_PIXELS
 from .formatting_structure.build import build_formatting_structure
 from .layout import layout
 from . import draw
+from . import utils
 
 
 DEFAULT_USER_AGENT_STYLESHEETS = (HTML4_DEFAULT_STYLESHEET,)
@@ -62,6 +63,9 @@ class Document(object):
         """
         Make a document from a filename or open file object.
         """
+        if isinstance(file_or_filename_or_url, basestring):
+            # Convert filenames to file:// URLs.
+            file_or_filename_or_url = utils.ensure_url(file_or_filename_or_url)
         root_element = lxml.html.parse(file_or_filename_or_url).getroot()
         return cls(root_element, **kwargs)
 
