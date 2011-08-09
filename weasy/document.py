@@ -41,12 +41,11 @@ class Document(object):
         assert getattr(dom, 'tag', None) == 'html', (
             'HTML document expected, got %r.' % (dom,))
 
-        docinfo = dom.getroottree().docinfo
-        if docinfo.URL:
-            docinfo.URL = utils.ensure_url(docinfo.URL)
-
         #: lxml HtmlElement object
         self.dom = dom
+
+        # Go through the property setter which calls ensure_url()
+        self.base_url = self.base_url
 
         self.user_stylesheets = user_stylesheets or []
         self.user_agent_stylesheets = user_agent_stylesheets or []
@@ -55,6 +54,24 @@ class Document(object):
         self._computed_styles = None
         self._formatting_structure = None
         self._pages = None
+
+    @property
+    def base_url(self):
+        """
+        The URL of the document, used for relative URLs it contains.
+
+        If set to something that does not look like a URL, the value is
+        assumed to be a filename and is converted to a file:// URL.
+        If that filename is relative, it is interpreted from the current
+        directory.
+        """
+        return self.dom.getroottree().docinfo.URL
+
+    @base_url.setter
+    def base_url(self, value):
+        if value:
+            value = utils.ensure_url(value)
+        self.dom.getroottree().docinfo.URL = value
 
     @classmethod
     def from_string(cls, source, **kwargs):
