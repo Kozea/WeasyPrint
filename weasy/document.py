@@ -41,11 +41,16 @@ class Document(object):
         assert getattr(dom, 'tag', None) == 'html', (
             'HTML document expected, got %r.' % (dom,))
 
-        self.user_stylesheets = user_stylesheets or []
-        self.user_agent_stylesheets = user_agent_stylesheets or []
+        docinfo = dom.getroottree().docinfo
+        if docinfo.URL:
+            docinfo.URL = utils.ensure_url(docinfo.URL)
 
         #: lxml HtmlElement object
         self.dom = dom
+
+        self.user_stylesheets = user_stylesheets or []
+        self.user_agent_stylesheets = user_agent_stylesheets or []
+
 
         self._computed_styles = None
         self._formatting_structure = None
@@ -63,9 +68,6 @@ class Document(object):
         """
         Make a document from a filename or open file object.
         """
-        if isinstance(file_or_filename_or_url, basestring):
-            # Convert filenames to file:// URLs.
-            file_or_filename_or_url = utils.ensure_url(file_or_filename_or_url)
         root_element = lxml.html.parse(file_or_filename_or_url).getroot()
         return cls(root_element, **kwargs)
 
