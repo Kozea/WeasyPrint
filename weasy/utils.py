@@ -17,12 +17,15 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 try:
-    from urlparse import urljoin
+    from urlparse import urljoin, urlparse
 except ImportError:
     # Python 3
-    from urllib.parse import urljoin
+    from urllib.parse import urljoin, urlparse
 
 import functools
+
+from cssutils.helper import path2url
+
 
 class MultiFunction(object):
     """
@@ -51,6 +54,21 @@ class MultiFunction(object):
                 return implementation(obj, *args, **kwargs)
         raise NotImplementedError('No implementation for %r' % type(obj))
 
-def get_url_attribute(element, key):
-    return urljoin(element.base_url, element.get(key))
 
+def get_url_attribute(element, key):
+    """
+    Get a (possibly relative) URL from an element attribute and return
+    the absolute URL.
+    """
+    return urljoin(element.base_url, element.get(key).strip())
+
+
+def ensure_url(filename_or_url):
+    """
+    If the argument looks like an URL, return it unchanged. Otherwise assume
+    a filename and convert it to a file:// URL.
+    """
+    if urlparse(filename_or_url).scheme:
+        return filename_or_url
+    else:
+        return path2url(filename_or_url)

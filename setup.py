@@ -27,4 +27,9 @@ setup(
     ],
     test_loader='attest:FancyReporter.test_loader',
     test_suite='weasy.tests.tests',
+    entry_points = {
+        'console_scripts': [
+            'weasyprint = weasy:main',
+        ],
+    }
 )

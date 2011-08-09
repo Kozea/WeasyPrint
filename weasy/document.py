@@ -29,6 +29,7 @@ from .css.computed_values import LENGTHS_TO_PIXELS
 from .formatting_structure.build import build_formatting_structure
 from .layout import layout
 from . import draw
+from . import utils
 
 
 DEFAULT_USER_AGENT_STYLESHEETS = (HTML4_DEFAULT_STYLESHEET,)
@@ -40,11 +41,16 @@ class Document(object):
         assert getattr(dom, 'tag', None) == 'html', (
             'HTML document expected, got %r.' % (dom,))
 
-        self.user_stylesheets = user_stylesheets or []
-        self.user_agent_stylesheets = user_agent_stylesheets or []
+        docinfo = dom.getroottree().docinfo
+        if docinfo.URL:
+            docinfo.URL = utils.ensure_url(docinfo.URL)
 
         #: lxml HtmlElement object
         self.dom = dom
+
+        self.user_stylesheets = user_stylesheets or []
+        self.user_agent_stylesheets = user_agent_stylesheets or []
+
 
         self._computed_styles = None
         self._formatting_structure = None

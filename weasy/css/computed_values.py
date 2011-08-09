@@ -415,16 +415,17 @@ def compute_current_color(style, parent_style):
 
     http://www.w3.org/TR/css3-color/#currentcolor
     """
+    # Handle 'color' first
+    if get_single_keyword(style['color']) == 'currentColor':
+        if parent_style is None:
+            values = INITIAL_VALUES['color']
+        else:
+            values = parent_style['color']
+        style['color'] = values
+
     for name, values in style.iteritems():
-        if get_single_keyword(values) == 'currentColor':
-            if name == 'color':
-                if parent_style is None:
-                    values = INITIAL_VALUES['color']
-                else:
-                    values = parent_style['color']
-            else:
-                values = style['color']
-            style[name] = values
+        if get_single_keyword(values) == 'currentColor' and name != 'color':
+            style[name] = style['color']
 
 
 def compute_values(element, pseudo_type, style, parent_style):
