@@ -17,6 +17,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+from __future__ import division
 from ..formatting_structure import boxes
 from ..utils import MultiFunction
 from .percentages import resolve_percentages
@@ -33,10 +34,51 @@ def compute_dimensions(box):
 compute_dimensions.register(boxes.BlockBox)(
     block_formatting_context.block_dimensions)
 
-
-@compute_dimensions.register(boxes.LineBox)
-def line_dimensions(box):
+@compute_dimensions.register(boxes.ReplacedBox)
+def replacedbox_dimensions(box):
+    assert isinstance(box, boxes.ReplacedBox)
     resolve_percentages(box)
+    # width
+    if box.margin_left == 'auto':
+        box.margin_left = 0
+    if box.margin_right == 'auto':
+        box.margin_right = 0
+
+    intrinsic_ratio = box.replacement.intrinsic_ratio()
+    intrinsic_height = box.replacement.intrinsic_height()
+    intrinsic_width = box.replacement.intrinsic_width()
+
+    if box.width == 'auto':
+        if not intrinsic_width is None:
+            box.width = intrinsic_width
+        elif not intrinsic_height is None and not intrinsic_ratio is None:
+            box.width = intrinsic_ratio * intrinsic_height
+        elif not intrinsic_ratio is None:
+            block_level_width(box)
+        else:
+            raise NotImplementedError
+            # then the used value of 'width' becomes 300px. If 300px is too
+            # wide to fit the device, UAs should use the width of the largest
+            # rectangle that has a 2:1 ratio and fits the device instead.
+
+    # height
+    if box.margin_top == 'auto':
+        box.margin_top = 0
+    if box.margin_bottom == 'auto':
+        box.margin_bottom = 0
+
+    if box.height == 'auto' and box.width == 'auto':
+        if not intrinsic_height is None:
+            box.height = intrinsic_height
+    elif intrinsic_ratio is not None and box.height == 'auto':
+        box.height = box.width / intrinsic_ratio
+    else:
+        raise NotImplementedError
+        # then the used value of 'height' must be set to the height of
+        # the largest rectangle that has a 2:1 ratio, has a height not
+        # greater than 150px, and has a width not greater than the
+        # device width
+
 
 @compute_dimensions.register(boxes.InlineBox)
 def inlinebox_dimensions(box):
@@ -71,9 +113,6 @@ def layout(document):
     """
     pages = []
     page = boxes.PageBox(document, document.formatting_structure, 1)
-
-#    page.root_box
-#    1/0
     page_dimensions(page)
     pages.append(page)
     # TODO: do page breaks, split boxes into multiple pages

@@ -422,3 +422,4 @@ class InlineLevelReplacedBox(ReplacedBox, AtomicInlineLevelBox):
     A replaced element with a 'display' value of 'inline', 'inline-table', or
     'inline-block' generates an inline-level replaced box.
     """
+

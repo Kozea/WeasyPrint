@@ -21,6 +21,10 @@ Replaced elements (eg. <img> elements) are rendered externally and behave
 as an atomic opaque box in CSS. They may or may not have intrinsic dimensions.
 """
 
+from __future__ import division
+import cairo
+from .utils import get_url_attribute
+import urllib
 
 def get_replaced_element(element):
     """
@@ -42,9 +46,43 @@ class Replacement(object):
     def __init__(self, element):
         self.element = element
 
+    def intrinsic_width(self):
+        return None
+
+    def intrinsic_height(self):
+        return None
+
+    def intrinsic_ratio(self):
+        if (self.intrinsic_width() is not None and
+           self.intrinsic_width() != 0 and
+           self.intrinsic_height() is not None and
+           self.intrinsic_height() != 0):
+            return self.intrinsic_width() / self.intrinsic_height()
 
 class ImageReplacement(Replacement):
     """
     A replaced <img> element.
     """
+    def __init__(self, element):
+        self.element = element
+        self.src = get_url_attribute(element, 'src')
+        self.alt_text = element.get('alt')
+        try:
+            fileimage = urllib.urlopen(self.src)
+            if fileimage.info().gettype() != 'image/png':
+                raise NotImplementedError("Only png images are implemented")
+            self.surface = cairo.ImageSurface.create_from_png(fileimage)
+        except IOError:
+            self.surface = None
+
+    def intrinsic_width(self):
+        return self.surface.get_width()
+
+    def intrinsic_height(self):
+        return self.surface.get_height()
+
+    def draw(self, context):
+        pattern = cairo.SurfacePattern(self.surface)
+        context.set_source(pattern)
+        context.paint()
 

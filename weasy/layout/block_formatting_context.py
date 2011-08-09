@@ -19,7 +19,7 @@
 
 from ..formatting_structure import boxes
 from .percentages import resolve_percentages
-from .inline_formatting_contex import breaking_linebox
+from .inline_formatting_context import breaking_linebox
 
 def block_dimensions(box):
     resolve_percentages(box)
@@ -85,19 +85,9 @@ def block_level_width(box):
     elif margin_l != 'auto' and margin_r == 'auto':
         box.margin_right = margin_sum - margin_l
 
-    # Sanity check
-    #TODO: Why we have this error ?
-    # AssertionError
-    # (777.7007874020001 == 793.700787402)
-#    assert round(box.margin_width()*1000000000) == round(cb_width * 1000000000)
-#    assert box.margin_width() == cb_width
-
 
 def block_level_height(box):
     if box.style.overflow != 'visible':
-        raise NotImplementedError
-
-    if isinstance(box, boxes.ReplacedBox):
         raise NotImplementedError
 
     assert isinstance(box, boxes.BlockBox)
@@ -122,14 +112,15 @@ def block_level_height(box):
         # http://www.w3.org/TR/CSS21/visudet.html#normal-block
         child.position_x = position_x
         child.position_y = position_y
-        compute_dimensions(child)
         if isinstance(child, boxes.LineBox):
+            resolve_percentages
             lines = breaking_linebox(child)
             for line in lines:
-                compute_dimensions(child)
+                resolve_percentages(child)
                 box.add_child(line)
                 position_y += line.height
         else:
+            compute_dimensions(child)
             position_y += child.margin_height()
             box.add_child(child)
 

@@ -21,7 +21,6 @@ from ..formatting_structure import boxes
 from .percentages import resolve_percentages
 from .. import text
 
-
 def breaking_linebox(linebox):
     return LineBoxFormatting(linebox).get_lineboxes()
 
@@ -336,9 +335,9 @@ class LineBoxFormatting(object):
                 lines.append(line)
         return lines
 
-
     def compute_dimensions(self, box):
         """Add the width and height in the linebox."""
+        from . import compute_dimensions
         if isinstance(box, boxes.LineBox):
             widths = []
             heights = []
@@ -357,11 +356,13 @@ class LineBoxFormatting(object):
                 heights.append(child.height)
             box.width = sum(widths)
             box.height = max(heights)
+        elif isinstance(box, boxes.ReplacedBox):
+            1/0
+            compute_dimensions(box)
         elif isinstance(box, boxes.InlineBlockBox):
-            raise NotImplementedError
+            compute_dimensions(box)
         elif isinstance(box, boxes.InlineLevelReplacedBox):
             raise NotImplementedError
-
 
     def compute_positions(self, parentbox):
         for box in parentbox.children:
@@ -376,8 +377,6 @@ class LineBoxFormatting(object):
                 raise NotImplementedError
             elif isinstance(box, boxes.InlineLevelReplacedBox):
                 raise NotImplementedError
-
-
 
     def flatten_tree(self, box, depth=0):
         """

@@ -21,11 +21,10 @@ from attest import Tests, assert_hook
 
 from ..document import PNGDocument
 from ..formatting_structure import boxes
-from ..layout import inline_formatting_contex
-
 
 suite = Tests()
 
+FONTS = u"Nimbus Mono L, Liberation Mono, FreeMono, Monospace"
 
 def parse(html_content):
     """
@@ -275,9 +274,11 @@ def test_block_heights():
 @suite.test
 def test_breaking_empty_linebox():
     def get_paragraph_linebox(width, font_size):
+        fonts = FONTS
         page = u'''
             <style>
-            p { font-size:%(font_size)spx; width:%(width)spx; }
+            p { font-size:%(font_size)spx; width:%(width)spx;
+                font-family:%(fonts)s;}
             </style>
             <p> </p>'''
         page, = parse(page % locals())
@@ -295,10 +296,12 @@ def test_breaking_empty_linebox():
 @suite.test
 def test_breaking_linebox():
     def get_paragraph_linebox(width, font_size):
+        fonts = FONTS
         page = u'''
             <style>
             p { font-size:%(font_size)spx;
                 width:%(width)spx;
+                font-family:%(fonts)s;
                 background-color:#393939;
                 color:#FFFFFF;
                 font-family: Monospace;
@@ -342,12 +345,15 @@ import pdb
 @suite.test
 def test_linebox_text():
     def get_paragraph_linebox():
+        width = 200
+        fonts = FONTS
         page = u'''
             <style>
-                p { width:200px; }
+                p { width:%(width)spx; font-family:%(fonts)s;}
             </style>
             <p><em>Lorem Ipsum</em>is very <strong>coool</strong></p>'''
-        page, = parse(page)
+
+        page, = parse(page % locals())
         html = page.root_box
         body = html.children[0]
         paragraph = body.children[0]
@@ -370,14 +376,14 @@ def test_linebox_text():
 @suite.test
 def test_linebox_positions():
     def get_paragraph_linebox():
+        width = 200
+        fonts = FONTS
         page = u'''
             <style>
-                p { width:200px; }
+                p { width:%(width)spx; font-family:%(fonts)s;}
             </style>
-            <p>Salem : Bon je teste avec une seule page, et de "weasyprinter"
-            en png.La page est générée par weasyprint. <strong>Trop cool non?
-            </strong></p>'''
-        page, = parse(page)
+            <p>this is test for <strong>Weasyprint</strong></p>'''
+        page, = parse(page % locals())
         html = page.root_box
         body = html.children[0]
         paragraph = body.children[0]
@@ -385,7 +391,7 @@ def test_linebox_positions():
 
     paragraph = get_paragraph_linebox()
     lines = list(paragraph.children)
-    assert len(lines) == 7
+    assert len(lines) == 1
 
     ref_position_y = lines[0].position_y
     ref_position_x = lines[0].position_x

@@ -55,12 +55,12 @@ def index():
         with open(INPUT, 'w') as fd:
             fd.write(content)
 
-    pdf_document = PDFDocument.from_string(content)
+    pdf_document = PDFDocument.from_file(INPUT)
     pdf_document.output = PDF_OUTPUT
     pdf_document.do_layout()
     pdf_document.draw()
 
-    png_document = PNGDocument.from_string(content)
+    png_document = PNGDocument.from_file(INPUT)
     png_document.output = PNG_OUTPUT
     png_document.do_layout()
     png_document.draw_page(0)
@@ -73,3 +73,4 @@ def index():
 
 if __name__ == '__main__':
     app.run(port=12290, debug=True)
+

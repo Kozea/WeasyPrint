@@ -17,13 +17,17 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+from __future__ import division
+import math
+
 import cairo
 import pangocairo
 
 from .css.computed_values import LENGTHS_TO_PIXELS
 from .formatting_structure import boxes
 from . import text
-import math
+
+
 
 class CairoContext(cairo.Context):
     """
@@ -39,6 +43,9 @@ class CairoContext(cairo.Context):
         self.set_source_rgba(
             color.red / 255., color.green / 255., color.blue / 255.,
             color.alpha)
+    def set_source_image(self, image):
+        pass
+
 
 class Point(object):
     def __init__(self, x, y):
@@ -66,10 +73,6 @@ class Line(object):
     def __repr__(self):
         return '<%s (%s, %s)>' % (type(self).__name__, self.first_point,
                                  self.second_point)
-
-    def translate(self, x, y):
-        self.first_point.move(x, y)
-        self.second_point.move(x, y)
 
     @property
     def length(self):
@@ -139,10 +142,6 @@ class Trapezoid(object):
             if i == 0:
                 context.move_to(line.first_point.x, line.first_point.y)
             context.line_to(line.second_point.x, line.second_point.y)
-
-    def translate(self, x, y):
-        self.first_point.translate(x, y)
-        self.second_point.translate(x, y)
 
 
 def draw_background(context, box):
@@ -226,17 +225,37 @@ def draw_text(context, textbox):
     context.move_to(textbox.position_x, textbox.position_y)
     context.show_layout(fragment.get_layout())
 
+
+def draw_replacedbox(context, box):
+    """
+    Draw the given ReplacedBox to a Cairo context
+    """
+    x, y = box.position_x, box.position_y
+    width, height = box.width, box.height
+    context.save()
+    context.translate(x, y)
+    context.rectangle(0, 0, width, height)
+    context.clip()
+    context.scale(width/box.replacement.intrinsic_width(), height/box.replacement.intrinsic_height())
+    box.replacement.draw(context)
+    context.restore()
+
+
 def draw_box(context, box):
     draw_background(context, box)
 
     if isinstance(box, boxes.TextBox):
         draw_text(context, box)
         return
+    if isinstance(box, boxes.ReplacedBox):
+        draw_replacedbox(context, box)
+        return
 
-    for child in box.children:
-        draw_box(context, child)
-    if box.border_left_width > 0:
-        draw_border(context, box)
+    if isinstance(box, boxes.ParentBox):
+        for child in box.children:
+            draw_box(context, child)
+
+    draw_border(context, box)
 
 def draw_page(page, context):
     """
