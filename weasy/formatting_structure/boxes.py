@@ -178,6 +178,8 @@ class Box(object):
                self.padding_top + self.padding_bottom + \
                self.border_top_width + self.border_bottom_width
 
+    ###  Corners positions
+
     def content_box_x(self):
         """Absolute horizontal position of the content box."""
         return self.position_x + self.margin_left + self.padding_left + \
@@ -187,6 +189,23 @@ class Box(object):
         """Absolute vertical position of the content box."""
         return self.position_y + self.margin_top + self.padding_top + \
             self.border_top_width
+
+    def padding_box_x(self):
+        """Absolute horizontal position of the padding box."""
+        return self.position_x + self.margin_left + self.border_left_width
+
+    def padding_box_y(self):
+        """Absolute vertical position of the padding box."""
+        return self.position_y + self.margin_top + self.border_top_width
+
+    def border_box_x(self):
+        """Absolute horizontal position of the border box."""
+        return self.position_x + self.margin_left
+
+    def border_box_y(self):
+        """Absolute vertical position of the border box."""
+        return self.position_y + self.margin_top
+
 
     ###  Positioning schemes
 

@@ -53,8 +53,8 @@ def index():
         with open(INPUT, 'w') as fd:
             fd.write(content)
 
-    PDFDocument.from_string(content).write_to(PDF_OUTPUT)
-    PNGDocument.from_string(content).write_to(PNG_OUTPUT)
+    PDFDocument.from_file(INPUT).write_to(PDF_OUTPUT)
+    PNGDocument.from_file(INPUT).write_to(PNG_OUTPUT)
 
     with open(PNG_OUTPUT, 'rb') as fd:
         image = fd.read()
