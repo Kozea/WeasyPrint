@@ -41,16 +41,20 @@ def _join(sequence, key=lambda x: x):
 def main():
     parser = argparse.ArgumentParser(
         description='Renders web pages into ' + _join(FORMATS, str.upper))
+    parser.add_argument('-e', '--encoding',
+                        help='Character encoding of the input')
     parser.add_argument('-f', '--format', choices=FORMATS,
                         help='Output format')
-    parser.add_argument('infile', help='HTML file to read')
-    parser.add_argument('outfile', help='Where to write the output')
+    parser.add_argument('input',
+        help='URL or filename of the HTML input, or - for stdin')
+    parser.add_argument('output',
+        help='Filename where output is written, or - for stdout')
 
     args = parser.parse_args()
 
     if args.format is None:
         for format in FORMATS:
-            if args.outfile.endswith('.' + format):
+            if args.output.endswith('.' + format):
                 args.format = format
                 break
         else:
@@ -59,10 +63,12 @@ def main():
                 'output filename that ends in ' +
                 _join(FORMATS, lambda x: '.' + x))
 
-    if args.infile == '-':
-        args.infile = sys.stdin
+    if args.input == '-':
+        args.input = sys.stdin
 
-    if args.outfile == '-':
-        args.outfile = sys.stdout
+    if args.output == '-':
+        args.output = sys.stdout
 
-    FORMATS[args.format].from_file(args.infile).write_to(args.outfile)
+    document_class = FORMATS[args.format]
+    document = document_class.from_file(args.input, encoding=args.encoding)
+    document.write_to(args.output)

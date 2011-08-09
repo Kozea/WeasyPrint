@@ -74,19 +74,22 @@ class Document(object):
         self.dom.getroottree().docinfo.URL = value
 
     @classmethod
-    def from_string(cls, source, **kwargs):
+    def from_string(cls, source, encoding=None, **kwargs):
         """
         Make a document from an HTML string.
         """
-        return cls(lxml.html.document_fromstring(source), **kwargs)
+        parser = lxml.html.HTMLParser(encoding=encoding)
+        dom = lxml.html.document_fromstring(source, parser=parser)
+        return cls(dom, **kwargs)
 
     @classmethod
-    def from_file(cls, file_or_filename_or_url, **kwargs):
+    def from_file(cls, file_or_filename_or_url, encoding=None, **kwargs):
         """
         Make a document from a filename or open file object.
         """
-        root_element = lxml.html.parse(file_or_filename_or_url).getroot()
-        return cls(root_element, **kwargs)
+        parser = lxml.html.HTMLParser(encoding=encoding)
+        dom = lxml.html.parse(file_or_filename_or_url, parser=parser).getroot()
+        return cls(dom, **kwargs)
 
     def style_for(self, element, pseudo_type=None):
         """
