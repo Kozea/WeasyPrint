@@ -39,12 +39,15 @@ def _join(sequence, key=lambda x: x):
 
 
 def main():
+    extensions = _join(FORMATS, lambda x: '.' + x)
+
     parser = argparse.ArgumentParser(
         description='Renders web pages into ' + _join(FORMATS, str.upper))
     parser.add_argument('-e', '--encoding',
                         help='Character encoding of the input')
     parser.add_argument('-f', '--format', choices=FORMATS,
-                        help='Output format')
+                        help='Output format. Can be ommited if `output` '
+                             'ends with ' + extensions)
     parser.add_argument('input',
         help='URL or filename of the HTML input, or - for stdin')
     parser.add_argument('output',
@@ -60,8 +63,8 @@ def main():
         else:
             parser.error(
                 'Either sepecify a format with -f or choose an '
-                'output filename that ends in ' +
-                _join(FORMATS, lambda x: '.' + x))
+                'output filename that ends in ' + extensions)
+
 
     if args.input == '-':
         args.input = sys.stdin
