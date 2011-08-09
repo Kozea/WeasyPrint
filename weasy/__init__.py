@@ -41,15 +41,14 @@ def _join(sequence, key=lambda x: x):
 def main():
     parser = argparse.ArgumentParser(
         description='Renders web pages into ' + _join(FORMATS, str.upper))
-    parser.add_argument(
-        '-f', '--format', default='auto', choices=FORMATS,
-        help='Output format')
+    parser.add_argument('-f', '--format', choices=FORMATS,
+                        help='Output format')
     parser.add_argument('infile', help='HTML file to read')
     parser.add_argument('outfile', help='Where to write the output')
 
     args = parser.parse_args()
 
-    if args.format == 'auto':
+    if args.format is None:
         for format in FORMATS:
             if args.outfile.endswith('.' + format):
                 args.format = format
