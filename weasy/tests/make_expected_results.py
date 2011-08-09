@@ -29,21 +29,21 @@ def filename(basename):
 
 
 def make(basename, lines):
-    writer = png.Writer(width=len(lines[0]) / 4, height=len(lines), alpha=True)
+    writer = png.Writer(width=len(lines[0]) / 3, height=len(lines), alpha=False)
     with open(filename(basename), 'wb') as fd:
         writer.write(fd, lines)
 
 
 def make_all():
-    transparent = array('B', [0, 0, 0, 0])
-    blue = array('B', [0, 0, 255, 255])
-
-    transparent_line = transparent * 10
+    red = array('B', [255, 0, 0])
+    blue = array('B', [0, 0, 255])
 
     make('blocks',
-        2 * [transparent_line] +
-        5 * [2 * transparent + 6 * blue + 2 * transparent] +
-        3 * [transparent_line])
+        2 * [10 * red] +
+        5 * [2 * red + 6 * blue + 2 * red] +
+        3 * [10 * red])
+
+    make('all_blue', 10 * [10 * blue])
 
 
 if __name__ == '__main__':

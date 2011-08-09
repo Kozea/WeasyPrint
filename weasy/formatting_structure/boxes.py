@@ -86,7 +86,6 @@ class Box(object):
         # children. Only the root box should stay without a parent.
         self.parent = None
         self._init_style()
-        # When the size is not calculated yet, use None as default value
         self.width = None
         self.height = None
 

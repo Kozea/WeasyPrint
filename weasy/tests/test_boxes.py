@@ -72,20 +72,11 @@ def to_lists(box_tree):
     return serialize(unwrap_html_body(box_tree))
 
 
-def get_document(html_content):
-    """
-    Parse some HTML and apply stylesheets.
-    """
-    document = Document.from_string(html_content)
-    document.do_css()
-    return document
-
-
 def parse(html_content):
     """
     Parse some HTML, apply stylesheets and transform to boxes.
     """
-    document = get_document(html_content)
+    document = Document.from_string(html_content)
     return build.dom_to_box(document, document.dom)
 
 
@@ -255,7 +246,7 @@ def test_styles():
 def test_whitespace():
     # TODO: test more cases
     # http://www.w3.org/TR/CSS21/text.html#white-space-model
-    document = get_document('''
+    document = Document.from_string('''
         <p>Lorem \t\r\n  ipsum\t<strong>  dolor </strong>.</p>
         <pre>\t  foo\n</pre>
         <pre style="white-space: pre-wrap">\t  foo\n</pre>
@@ -295,7 +286,7 @@ def test_whitespace():
 
 @suite.test
 def test_page_style():
-    document = get_document('''
+    document = Document.from_string('''
         <style>
             @page { margin: 3px }
             @page :first { margin-top: 20px }

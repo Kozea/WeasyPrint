@@ -1,9 +1,11 @@
 <html>
 <head>
+    <meta charset=utf8>
     <link rel=stylesheet href="sheet1.css" media=screen>
     <style media=print>
         @import url(sheet1.css);
-        a { color: red; }
+        li { color: red; }
+        a { color: currentColor; /* means 'inherit' on color itself. */ }
         a:after {
             content: " [" attr(href) "]"
         }

@@ -30,9 +30,7 @@ def parse(html_content):
     """
     Parse some HTML, apply stylesheets, transform to boxes and do layout.
     """
-    document = PNGDocument.from_string(html_content)
-    document.do_layout()
-    return document.pages
+    return PNGDocument.from_string(html_content).pages
 
 
 @suite.test
@@ -272,6 +270,41 @@ def test_block_heights():
 
 
 @suite.test
+def test_block_heights():
+    page, = parse('''
+        <style>
+            html, body { margin: 0 }
+            body { height: 50% }
+        </style>
+        <body>
+    ''')
+    html = page.root_box
+    assert html.element.tag == 'html'
+    body = html.children[0]
+    assert body.element.tag == 'body'
+
+    # Since html’s height depend on body’s, body’s 50% means 'auto'
+    assert body.height == 0
+
+    page, = parse('''
+        <style>
+            html, body { margin: 0 }
+            html { height: 300px }
+            body { height: 50% }
+        </style>
+        <body>
+    ''')
+    html = page.root_box
+    assert html.element.tag == 'html'
+    body = html.children[0]
+    assert body.element.tag == 'body'
+
+    # This time the percentage makes sense
+    assert body.height == 150
+
+
+
+@suite.test
 def test_breaking_empty_linebox():
     def get_paragraph_linebox(width, font_size):
         fonts = FONTS
@@ -405,4 +438,3 @@ def test_linebox_positions():
         assert ref_position_x - line.position_x <= line.width
         ref_position_x = line.position_x
         ref_position_y += line.height
-

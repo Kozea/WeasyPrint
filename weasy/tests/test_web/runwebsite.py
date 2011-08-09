@@ -3,8 +3,6 @@
 import os.path
 from flask import Flask, request, render_template
 from weasy.document import PNGDocument, PDFDocument
-from weasy.draw import draw_page_to_png
-#import StringIO
 
 app = Flask(__name__)
 
@@ -55,15 +53,8 @@ def index():
         with open(INPUT, 'w') as fd:
             fd.write(content)
 
-    pdf_document = PDFDocument.from_file(INPUT)
-    pdf_document.output = PDF_OUTPUT
-    pdf_document.do_layout()
-    pdf_document.draw()
-
-    png_document = PNGDocument.from_file(INPUT)
-    png_document.output = PNG_OUTPUT
-    png_document.do_layout()
-    png_document.draw_page(0)
+    PDFDocument.from_string(content).write_to(PDF_OUTPUT)
+    PNGDocument.from_string(content).write_to(PNG_OUTPUT)
 
     with open(PNG_OUTPUT, 'rb') as fd:
         image = fd.read()

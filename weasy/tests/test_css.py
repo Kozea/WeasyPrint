@@ -33,9 +33,11 @@ from . import resource_filename
 suite = Tests()
 
 
-def parse_html(filename):
+def parse_html(filename, **kwargs):
     """Parse an HTML file from the test resources and resolve relative URL."""
-    return Document.from_file(path2url(resource_filename(filename)))
+    # Make a file:// URL
+    url = path2url(resource_filename(filename))
+    return Document.from_file(url, **kwargs)
 
 
 @suite.test
@@ -62,10 +64,10 @@ def test_find_stylesheets():
 
     rules = list(rule for sheet in sheets
                       for rule in css.effective_rules(sheet, 'print'))
-    assert len(rules) == 8
+    assert len(rules) == 9
     # Also test appearance order
     assert [rule.selectorText for rule in rules] \
-        == ['li', 'p', 'ul', 'a', 'a:after', ':first', 'ul',
+        == ['li', 'p', 'ul', 'li', 'a', 'a:after', ':first', 'ul',
             'body > h1:first-child']
 
 
@@ -97,15 +99,16 @@ def test_expand_shorthands():
         "4em was after the shorthand, should not be masked"
 
 
+def parse_css(filename):
+    return cssutils.parseFile(resource_filename(filename))
+
 @suite.test
 def test_annotate_document():
-    user_stylesheet = cssutils.parseFile(resource_filename('user.css'))
-    ua_stylesheet = cssutils.parseFile(resource_filename('mini_ua.css'))
-    document = parse_html('doc1.html')
-
-    document.user_agent_stylesheets = [ua_stylesheet]
-    document.user_stylesheets = [user_stylesheet]
-    document.do_css()
+    document = parse_html(
+        'doc1.html',
+        user_stylesheets=[parse_css('user.css')],
+        user_agent_stylesheets=[parse_css('mini_ua.css')],
+    )
 
     # Element objects behave a lists of their children
     _head, body = document.dom
@@ -153,12 +156,16 @@ def test_annotate_document():
 
     assert a.text_decoration == 'underline'
 
-    color = a['color'][0]
-    assert (color.red, color.green, color.blue, color.alpha) == (255, 0, 0, 1)
     assert a.padding_top == 1
     assert a.padding_right == 2
     assert a.padding_bottom == 3
     assert a.padding_left == 4
+
+    color = a['color'][0]
+    assert (color.red, color.green, color.blue, color.alpha) == (255, 0, 0, 1)
+    # Test the initial border-color: currentColor
+    color = a['border-top-color'][0]
+    assert (color.red, color.green, color.blue, color.alpha) == (255, 0, 0, 1)
 
     # The href attr should be as in the source, not made absolute.
     assert ''.join(v.value for v in after['content']) == ' [home.html]'
@@ -170,7 +177,6 @@ def test_annotate_document():
 @suite.test
 def test_default_stylesheet():
     document = parse_html('doc1.html')
-    document.do_css()
     head_style = document.style_for(document.dom.head)
     assert head_style.display == 'none', \
         'The HTML4 user-agent stylesheet was not applied'
@@ -188,7 +194,6 @@ def test_page():
         }
     """)
     document.user_stylesheets.append(user_sheet)
-    document.do_css()
 
     style = document.style_for('@page', 'first_left')
     assert style.margin_top == 5

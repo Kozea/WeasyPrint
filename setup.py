@@ -22,8 +22,6 @@ setup(
     install_requires=[
         'lxml',
         'cssutils',
-        'Attest',
-        'PyPNG',
         # Tricky to compile: 'pycairo', 'PyGTK',
         # Not on PyPI: 'rsvg',
     ],

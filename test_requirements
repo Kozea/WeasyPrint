@@ -1,0 +1,3 @@
+git+git://github.com/dag/attest.git
+PyPNG
+-e .

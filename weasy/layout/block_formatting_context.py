@@ -113,10 +113,9 @@ def block_level_height(box):
         child.position_x = position_x
         child.position_y = position_y
         if isinstance(child, boxes.LineBox):
-            resolve_percentages
             lines = breaking_linebox(child)
             for line in lines:
-                resolve_percentages(child)
+#                resolve_percentages(line)
                 box.add_child(line)
                 position_y += line.height
         else:

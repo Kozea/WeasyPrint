@@ -39,16 +39,13 @@ def test_pixels(name, expected_width, expected_height, html):
     assert width == expected_width
     assert height == height
     assert meta['greyscale'] == False
-    assert meta['alpha'] == True
+    assert meta['alpha'] == False
     assert meta['bitdepth'] == 8
     expected_lines = list(expected_lines)
 
     document = PNGDocument.from_string(html)
-    document.do_layout()
-    assert len(document.pages) == 1
     filename = make_filename('test_results', name)
-    document.draw_page(0)
-    document.write(filename)
+    document.write_to(filename)
 
 
     reader = png.Reader(filename=filename)
@@ -58,20 +55,34 @@ def test_pixels(name, expected_width, expected_height, html):
     assert width == expected_width
     assert height == height
     assert meta['greyscale'] == False
-    assert meta['alpha'] == True
+    assert meta['alpha'] == False
     assert meta['bitdepth'] == 8
     assert len(lines) == height
-    assert len(lines[0]) == width * 4
-    assert lines == expected_lines
-
+    assert len(lines[0]) == width * 3
+    if lines != expected_lines:
+        for y in xrange(height):
+            for x in xrange(width):
+                assert lines[y][3 * x:3 * (x + 1)] == \
+                    expected_lines[y][3 * x:3 * (x + 1)], \
+                    'Pixel (%i, %i) does not match' % (x, y)
 
 @suite.test
 def test_png():
-    test_pixels('blocks', 10, 10, '''
+    test_pixels('all_blue', 10, 10, '''
         <style>
             @page { size: 10px }
-            body { margin: 2px; background-color: #00f; height: 5px }
+            /* body’s background propagates to the whole canvas */
+            body { margin: 2px; background: #00f; height: 5px }
         </style>
         <body>
     ''')
-
+    test_pixels('blocks', 10, 10, '''
+        <style>
+            @page { size: 10px }
+            /* html’s background propagates to the whole canvas */
+            html { margin: 1px; background: #f00 }
+            /* html has a background, so body’s does not propagate */
+            body { margin: 1px; background: #00f; height: 5px }
+        </style>
+        <body>
+    ''')

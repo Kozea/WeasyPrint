@@ -28,6 +28,7 @@ def breaking_linebox(linebox):
 class LineBoxFormatting(object):
     def __init__(self, linebox):
         self.width = linebox.containing_block_size()[0]
+        linebox.width = self.width
         self.position_y = linebox.position_y
         self.position_x = linebox.position_x
         self.flat_tree = []
@@ -356,13 +357,13 @@ class LineBoxFormatting(object):
                 heights.append(child.height)
             box.width = sum(widths)
             box.height = max(heights)
-        elif isinstance(box, boxes.ReplacedBox):
-            1/0
-            compute_dimensions(box)
-        elif isinstance(box, boxes.InlineBlockBox):
-            compute_dimensions(box)
-        elif isinstance(box, boxes.InlineLevelReplacedBox):
-            raise NotImplementedError
+#        elif isinstance(box, boxes.ReplacedBox):
+#            1/0
+#            compute_dimensions(box)
+#        elif isinstance(box, boxes.InlineBlockBox):
+#            compute_dimensions(box)
+#        elif isinstance(box, boxes.InlineLevelReplacedBox):
+#            raise NotImplementedError
 
     def compute_positions(self, parentbox):
         for box in parentbox.children:

@@ -51,10 +51,13 @@ def percentage_value(value):
         return None
 
 
-def resolve_one_percentage(box, property_name, refer_to):
+def resolve_one_percentage(box, property_name, refer_to,
+                           allowed_keywords=None):
     """
     Set a used length value from a computed length value.
     `refer_to` is the length for 100%.
+
+    If `refer_to` is not a number, it just replaces percentages.
     """
     # box.style has computed values
     values = box.style[property_name]
@@ -65,13 +68,17 @@ def resolve_one_percentage(box, property_name, refer_to):
     else:
         percentage = percentage_value(values)
         if percentage is not None:
-            # A percentage
-            result = percentage * refer_to / 100.
+            if isinstance(refer_to, (int, float)):
+                # A percentage
+                result = percentage * refer_to / 100.
+            else:
+                # Replace percentages when we have no refer_to that
+                # makes sense.
+                result = refer_to
         else:
+            # Some other values such as 'auto' may be allowed
             result = get_single_keyword(values)
-            # Other than that, only 'auto' is allowed
-            # TODO: it is only allowed on some properties. Check this here?
-            assert result == 'auto'
+            assert allowed_keywords and result in allowed_keywords
     # box attributes are used values
     setattr(box, property_name.replace('-', '_'), result)
 
@@ -82,38 +89,36 @@ def resolve_percentages(box):
     """
     # cb = containing block
     cb_width, cb_height = box.containing_block_size()
+    if isinstance(box, boxes.PageBox):
+        maybe_height = cb_height
+    else:
+        maybe_height = cb_width
+    resolve_one_percentage(box, 'margin-left', cb_width, ['auto'])
+    resolve_one_percentage(box, 'margin-right', cb_width, ['auto'])
+    resolve_one_percentage(box, 'margin-top', maybe_height, ['auto'])
+    resolve_one_percentage(box, 'margin-bottom', maybe_height, ['auto'])
+    resolve_one_percentage(box, 'padding-left', cb_width)
+    resolve_one_percentage(box, 'padding-right', cb_width)
+    resolve_one_percentage(box, 'padding-top', maybe_height)
+    resolve_one_percentage(box, 'padding-bottom', maybe_height)
+    resolve_one_percentage(box, 'text-indent', cb_width)
+    resolve_one_percentage(box, 'min-width', cb_width)
+    resolve_one_percentage(box, 'max-width', cb_width, ['none'])
+    resolve_one_percentage(box, 'width', cb_width, ['auto'])
+
     # TODO: background-position?
-    for prop in ['margin-left', 'margin-right',
-                 'padding-left', 'padding-right',
-                 'text-indent', 'width', 'min-width']:
-        resolve_one_percentage(box, prop, cb_width)
     # XXX later: top, bottom, left and right on positioned elements
 
-    for prop in ['margin-top', 'margin-bottom',
-                 'padding-top', 'padding-bottom']:
-        if isinstance(box, boxes.PageBox):
-            resolve_one_percentage(box, prop, cb_height)
-        else:
-            resolve_one_percentage(box, prop, cb_width)
-
-    if box.style.max_width == 'none':
-        box.max_width = None
+    if cb_height == 'auto':
+        # Special handling when the height of the containing block
+        # depends on its content.
+        resolve_one_percentage(box, 'min-height', 0)
+        resolve_one_percentage(box, 'max-height', None, ['none'])
+        resolve_one_percentage(box, 'height', 'auto', ['auto'])
     else:
-        resolve_one_percentage(box, 'max-width', cb_width)
-
-    if cb_height is None:
-        # Special handling when the height of the containing block is not
-        # known yet.
-        box.min_height = 0
-        box.max_height = None
-        box.height = 'auto'
-    else:
-        if box.style.max_height == 'none':
-            box.max_height = None
-        else:
-            resolve_one_percentage(box, 'max-height', cb_height)
         resolve_one_percentage(box, 'min-height', cb_height)
-        resolve_one_percentage(box, 'height', cb_height)
+        resolve_one_percentage(box, 'max-height', cb_height, ['none'])
+        resolve_one_percentage(box, 'height', cb_height, ['auto'])
 
     # Used value == computed value
     box.border_top_width = box.style.border_top_width

@@ -22,6 +22,13 @@
 """
 
 
+import functools
+
+from .utils import get_keyword
+from .inheritance import is_inherit
+from .initial_values import INITIAL_VALUES
+
+
 def expand_four_sides(name, values):
     """
     Expand properties that set a value for each of the four sides of a box.
@@ -46,27 +53,140 @@ def expand_four_sides(name, values):
         yield (new_name, [value])
 
 
+def generic_expander(*suffixes):
+    """
+    Wrap an expander so that it does not have to handle the 'inherit' case,
+    can just yield name suffixes, and missing suffixes get the initial value.
+    """
+    def decorator(wrapped):
+        @functools.wraps(wrapped)
+        def wrapper(name, values):
+            if is_inherit(values):
+                for suffix in suffixes:
+                    yield name + suffix, values
+                return
+
+            results = {}
+            for suffix, values in wrapped(name, values):
+                if suffix is None:
+                    raise ValueError('Invalid value for %s: %s' %
+                                     (name, values))
+                assert suffix in suffixes
+                assert suffix not in results
+                results[suffix] = values
+
+            for suffix in suffixes:
+                yield name + suffix, results.get(suffix,
+                    INITIAL_VALUES[name + suffix])
+        return wrapper
+    return decorator
+
+
+@generic_expander('-type', '-position', '-image')
+def expand_list_style(name, values):
+    """
+    Expand the 'list-style' shorthand property.
+
+    http://www.w3.org/TR/CSS21/generate.html#propdef-list-style
+    """
+    for value in values:
+        keyword = get_keyword(value)
+        # TODO: how do we disambiguate -style: none and -image: none?
+        if keyword in ('disc', 'circle', 'square', 'decimal',
+                       'decimal-leading-zero', 'lower-roman', 'upper-roman',
+                       'lower-greek', 'lower-latin', 'upper-latin', 'armenian',
+                       'georgian', 'lower-alpha', 'upper-alpha', 'none'):
+            suffix = '-type'
+        elif keyword in ('inside', 'outside'):
+            suffix = '-position'
+        elif keyword == 'none' or value.type == 'URI':
+            suffix = '-image'
+        else:
+            suffix = None
+        yield suffix, [value]
+
+
+@generic_expander('-width', '-color', '-style')
 def expand_border_side(name, values):
-    # TODO
-    # http://www.w3.org/TR/CSS21/box.html#border-shorthand-properties
-    # Defined as:
-    # 	[ <border-width> || <border-style> || <'border-top-color'> ] | inherit
-    # With || meaning 'one or more of them, in any order' so we need to actuylly
-    # look at the values to decide which is which
-    # http://www.w3.org/TR/CSS21/about.html#value-defs
-    raise NotImplementedError
+    """
+    Expand 'border-top' and such.
+
+    http://www.w3.org/TR/CSS21/box.html#propdef-border-top
+    """
+    for value in values:
+        keyword = get_keyword(value)
+        if value.type == 'COLOR_VALUE' or \
+                (name == 'outline' and keyword == 'invert'):
+            suffix = '-color'
+        elif value.type == 'DIMENSION' or \
+                keyword in ('thin', 'medium', 'thick'):
+            suffix = '-width'
+        elif keyword in ('none', 'hidden', 'dotted', 'dashed', 'solid',
+                         'double', 'groove', 'ridge', 'inset', 'outset'):
+            suffix = '-style'
+        else:
+            suffix = None
+        yield suffix, [value]
 
 
 def expand_border(name, values):
+    """
+    Expand the 'border' shorthand.
+
+    http://www.w3.org/TR/CSS21/box.html#propdef-border
+    """
     for suffix in ('-top', '-right', '-bottom', '-left'):
         for new_prop in expand_border_side(name + suffix, values):
             yield new_prop
 
 
-def expand_outline(name, values):
-    # TODO. See expand_border_side
-    # 	[ <'outline-color'> || <'outline-style'> || <'outline-width'> ] | inherit
-    raise NotImplementedError
+def is_valid_background_positition(value):
+    """
+    Tell whether the value a valid background-position.
+    """
+    return (
+        value.type in ('DIMENSION', 'PERCENTAGE') or
+        (value.type == 'NUMBER' and value.value == 0) or
+        get_keyword(value) in ('left', 'right', 'top', 'bottom', 'center')
+    )
+
+
+@generic_expander('-color', '-image', '-repeat', '-attachment', '-position')
+def expand_background(name, values):
+    """
+    Expand the 'background' shorthand.
+
+    http://www.w3.org/TR/CSS21/colors.html#propdef-background
+    """
+    # Make `values` a stack
+    values = list(reversed(values))
+    while values:
+        value = values.pop()
+        keyword = get_keyword(value)
+        if value.type == 'COLOR_VALUE':
+            suffix = '-color'
+        elif keyword == 'none' or value.type == 'URI':
+            suffix = '-image'
+        elif keyword in ('repeat', 'repeat-x', 'repeat-y', 'no-repeat'):
+            suffix = '-repeat'
+        elif keyword in ('scroll', 'fixed'):
+            suffix = '-attachment'
+        elif is_valid_background_positition(value):
+            if values:
+                next_value = values.pop()
+                if is_valid_background_positition(next_value):
+                    # Two consecutive '-position' values, yield them together
+                    yield '-position', [value, next_value]
+                    continue
+                else:
+                    # The next value is not a '-position', put it back
+                    # for the next loop iteration
+                    values.append(next_value)
+            # A single '-position' value
+            suffix = '-position'
+        else:
+            suffix = None
+        yield suffix, [value]
 
 
 def expand_before_after(name, values):
@@ -78,21 +198,9 @@ def expand_before_after(name, values):
         yield (name + suffix, value)
 
 
-def expand_background(name, values):
-    # TODO
-    # 	[<'background-color'> || <'background-image'> || <'background-repeat'> || <'background-attachment'> || <'background-position'>] | inherit
-    raise NotImplementedError
-
-
 def expand_font(name, values):
     # TODO
     # [ [ <'font-style'> || <'font-variant'> || <'font-weight'> ]? <'font-size'> [ / <'line-height'> ]? <'font-family'> ] | caption | icon | menu | message-box | small-caption | status-bar | inherit
-    raise NotImplementedError
-
-
-def expand_list_style(name, values):
-    # TODO
-    # 	[ <'list-style-type'> || <'list-style-position'> || <'list-style-image'> ] | inherit
     raise NotImplementedError
 
 
@@ -107,7 +215,7 @@ SHORTHANDS = {
     'border-bottom': expand_border_side,
     'border-left': expand_border_side,
     'border': expand_border,
-    'outline': expand_outline,
+    'outline': expand_border_side,
     'cue': expand_before_after,
     'pause': expand_before_after,
     'background': expand_background,
@@ -125,8 +233,7 @@ def expand_noop(name, values):
 
 def expand_name_values(name, values):
     expander = SHORTHANDS.get(name, expand_noop)
-    for new_name, new_values in expander(name, list(values)):
-        yield new_name, new_values
+    return expander(name, list(values))
 
 
 def expand_shorthand(prop):

@@ -115,6 +115,7 @@ def layout(document):
     page = boxes.PageBox(document, document.formatting_structure, 1)
     page_dimensions(page)
     pages.append(page)
+
     # TODO: do page breaks, split boxes into multiple pages
     return pages
 

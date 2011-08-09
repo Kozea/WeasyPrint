@@ -77,10 +77,8 @@ def test_text_dimension():
     fragment.set_font_size(12)
 
     dimension = list(fragment.get_size())
-    print dimension
     fragment.set_font_size(20)
     new_dimension = list(fragment.get_size())
-    print new_dimension
     assert dimension[0]*dimension[1] < new_dimension[0]*new_dimension[1]
 
     dimension = list(fragment.get_size())

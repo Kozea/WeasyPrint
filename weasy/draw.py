@@ -17,16 +17,18 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+
 from __future__ import division
 import math
+import contextlib
 
 import cairo
 import pangocairo
 
 from .css.computed_values import LENGTHS_TO_PIXELS
+from .css.utils import get_single_keyword
 from .formatting_structure import boxes
 from . import text
-
 
 
 class CairoContext(cairo.Context):
@@ -45,6 +47,15 @@ class CairoContext(cairo.Context):
             color.alpha)
     def set_source_image(self, image):
         pass
+
+
+    @contextlib.contextmanager
+    def stacked(self):
+        self.save()
+        try:
+            yield
+        finally:
+            self.restore()
 
 
 class Point(object):
@@ -144,16 +155,37 @@ class Trapezoid(object):
             context.line_to(line.second_point.x, line.second_point.y)
 
 
-def draw_background(context, box):
-    bg_color = box.style['background-color'][0]
-    if bg_color.alpha > 0:
-        context.rectangle(
+def has_background(box):
+    """
+    Return the given box has any background.
+    """
+    return box.style['background-color'][0].alpha > 0 or \
+        get_single_keyword(box.style['background-image']) != 'none'
+
+
+def draw_background_on_entire_canvas(context, box):
+    draw_background(context, box, on_entire_canvas=True)
+    # Do not draw it again.
+    box.skip_background = True
+
+
+def draw_background(context, box, on_entire_canvas=False):
+    if getattr(box, 'skip_background', False):
+        return
+
+    with context.stacked():
+        # Change coordinates to make the rest easier.
+        context.translate(
             box.position_x + box.margin_left,
-            box.position_y + box.margin_top,
-            box.border_width(),
-            box.border_height())
-        context.set_source_colorvalue(bg_color)
-        context.fill()
+            box.position_y + box.margin_top)
+        if not on_entire_canvas:
+            context.rectangle(0, 0, box.border_width(), box.border_height())
+            context.clip()
+        bg_color = box.style['background-color'][0]
+        if bg_color.alpha > 0:
+            context.set_source_colorvalue(bg_color)
+            context.paint()
+        # TODO: draw bg_image
 
 
 def draw_border(context, box):
@@ -236,13 +268,16 @@ def draw_replacedbox(context, box):
     context.translate(x, y)
     context.rectangle(0, 0, width, height)
     context.clip()
-    context.scale(width/box.replacement.intrinsic_width(), height/box.replacement.intrinsic_height())
+    scale_width = width/box.replacement.intrinsic_width()
+    scale_height = height/box.replacement.intrinsic_height()
+    context.scale(scale_width, scale_height)
     box.replacement.draw(context)
     context.restore()
 
 
 def draw_box(context, box):
-    draw_background(context, box)
+    if has_background(box):
+        draw_background(context, box)
 
     if isinstance(box, boxes.TextBox):
         draw_text(context, box)
@@ -257,30 +292,25 @@ def draw_box(context, box):
 
     draw_border(context, box)
 
+
 def draw_page(page, context):
     """
     Draw the given PageBox to a Cairo context.
+    The context should be scaled so that lengths are in CSS pixels.
     """
+    # http://www.w3.org/TR/CSS21/colors.html#background
+    # Background for the root element is drawn on the entire canvas.
+    # If the root is "html" and has no background, the background
+    # for its "body" child is drawn on the entire canvas.
+    # However backgrounds positions stay the same.
+    if has_background(page.root_box):
+        draw_background_on_entire_canvas(context, page.root_box)
+    elif page.root_box.element.tag.lower() == 'html':
+        for child in page.root_box.children:
+            if child.element.tag.lower() == 'body' and has_background(child):
+                # This must be drawn now, before anything on the root element.
+                draw_background_on_entire_canvas(context, child)
+                break
+
     draw_box(context, page.root_box)
-
-
-def draw_page_to_png(page, surface):
-    """
-    Draw the given PageBox to a PNG file.
-    """
-    context = CairoContext(surface)
-    draw_page(page, context)
-
-def draw_to_pdf(pages, surface):
-    """Draw the the document """
-    px_to_pt = 1 / LENGTHS_TO_PIXELS['pt']
-    for page in pages:
-        # Actual page size is here. May be different between pages.
-        surface.set_size(
-            page.outer_width * px_to_pt,
-            page.outer_height * px_to_pt)
-        context = CairoContext(surface)
-        context.scale(px_to_pt, px_to_pt)
-        draw_page(page, context)
-        surface.show_page()
 
