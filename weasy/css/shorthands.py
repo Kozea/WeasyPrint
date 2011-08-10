@@ -119,6 +119,7 @@ def expand_border_side(name, values):
                 (name == 'outline' and keyword == 'invert'):
             suffix = '-color'
         elif value.type == 'DIMENSION' or \
+                value.type == 'NUMBER' and value.value == 0 or \
                 keyword in ('thin', 'medium', 'thick'):
             suffix = '-width'
         elif keyword in ('none', 'hidden', 'dotted', 'dashed', 'solid',
