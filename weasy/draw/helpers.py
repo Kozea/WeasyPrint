@@ -35,14 +35,14 @@ from .. import text
 from .figures import Point, Line, Trapezoid
 
 
-def get_surface_from_uri(uri):
+def get_image_surface_from_uri(uri):
     try:
         fileimage = urllib.urlopen(uri)
         if fileimage.info().gettype() != 'image/png':
             raise NotImplementedError("Only png images are implemented")
         return cairo.ImageSurface.create_from_png(fileimage)
     except IOError:
-        return
+        return None
 
 
 def draw_box(context, box):
@@ -120,9 +120,9 @@ def draw_background(context, box, on_entire_canvas=False):
             context.paint()
 
         # Background image
-        bg_image = box.style.get("background-image")[0]
+        bg_image = box.style['background-image'][0]
         if bg_image.type == 'URI':
-            surface = get_surface_from_uri(bg_image.absoluteUri)
+            surface = get_image_surface_from_uri(bg_image.absoluteUri)
             if surface:
                 x, y = box.border_box_x(), box.border_box_y()
                 width, height = box.border_width(), box.border_height()
