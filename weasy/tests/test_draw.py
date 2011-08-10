@@ -125,6 +125,10 @@ def test_background_image():
         ('no_repeat', 'no-repeat left top'),
         ('no_repeat', 'no-repeat 0% 0%'),
         ('no_repeat', 'no-repeat 0px 0px'),
+
+        ('center_right', 'no-repeat right center'),
+        ('center_right', 'no-repeat 100% 50%'),
+        ('center_right', 'no-repeat 6px 3px'),
     ])
     for name, css in tests:
         test_pixels('background_' + name, 14, 16, '''
