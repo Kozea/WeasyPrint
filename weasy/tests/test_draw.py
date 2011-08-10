@@ -37,6 +37,11 @@ def make_filename(dirname, basename):
     return os.path.join(os.path.dirname(__file__), dirname, basename + '.png')
 
 
+def format_pixel(lines, x, y):
+    pixel = lines[y][3 * x:3 * (x + 1)]
+    return ('#' + 3 * '%02x') % tuple(pixel)
+
+
 def test_pixels(name, expected_width, expected_height, html):
     reader = png.Reader(filename=make_filename('expected_results', name))
     width, height, expected_lines, meta = reader.read()
@@ -68,9 +73,10 @@ def test_pixels(name, expected_width, expected_height, html):
     if lines != expected_lines:
         for y in xrange(height):
             for x in xrange(width):
-                assert lines[y][3 * x:3 * (x + 1)] == \
-                    expected_lines[y][3 * x:3 * (x + 1)], \
-                    'Pixel (%i, %i) does not match' % (x, y)
+                pixel = format_pixel(lines, x, y)
+                expected_pixel = format_pixel(expected_lines, x, y)
+                assert pixel == expected_pixel, \
+                    'Pixel (%i, %i) does not match in %s' % (x, y, name)
 
 @suite.test
 def test_canvas_background():
@@ -94,21 +100,39 @@ def test_canvas_background():
     ''')
 
 
-def test_background_repeat(repeat):
-    test_pixels('background_' + repeat, 14, 16, '''
-        <style>
-            @page { size: 14px 16px }
-            html { background: #fff }
-            body { margin: 2px; height: 10px;
-                   background: url(pattern.png) %s }
-        </style>
-        <body>
-    ''' % (repeat,))
-
-
 @suite.test
 def test_background_image():
-    test_background_repeat('repeat')
-    test_background_repeat('no-repeat')
-    test_background_repeat('repeat-y')
-    test_background_repeat('repeat-x')
+    tests = [
+        ('repeat', ''),
+        ('no_repeat', 'no-repeat'),
+        ('repeat_x', 'repeat-x'),
+        ('repeat_y', 'repeat-y'),
+    ]
+    # Order for non-keywords: horizontal, then vertical
+    tests.extend([
+        ('bottom_left', 'no-repeat left bottom'),
+        ('bottom_left', 'no-repeat 0% 100%'),
+        ('bottom_left', 'no-repeat 0 6px'),
+
+        ('bottom_right', 'no-repeat right bottom'),
+        ('bottom_right', 'no-repeat 100% 100%'),
+        ('bottom_right', 'no-repeat 6px 6px'),
+
+        ('top_right', 'no-repeat right top'),
+        ('top_right', 'no-repeat 100% 0%'),
+        ('top_right', 'no-repeat 6px 0px'),
+
+        ('no_repeat', 'no-repeat left top'),
+        ('no_repeat', 'no-repeat 0% 0%'),
+        ('no_repeat', 'no-repeat 0px 0px'),
+    ])
+    for name, css in tests:
+        test_pixels('background_' + name, 14, 16, '''
+            <style>
+                @page { size: 14px 16px }
+                html { background: #fff }
+                body { margin: 2px; height: 10px;
+                       background: url(pattern.png) %s }
+            </style>
+            <body>
+        ''' % (css,))

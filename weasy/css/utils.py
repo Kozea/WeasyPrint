@@ -70,3 +70,48 @@ def get_single_keyword(values):
     """
     if len(values) == 1:
         return get_keyword(values[0])
+
+
+def get_pixel_value(value):
+    """
+    Return the numeric value of a pixel length or None.
+    """
+    if (
+        (value.type == 'DIMENSION' and value.dimension == 'px') or
+        # Units may be ommited on 0
+        (value.type == 'NUMBER' and value.value == 0)
+    ):
+        # cssutils promises that `DimensionValue.value` is an int or float
+        assert isinstance(value.value, (int, float))
+        return value.value
+    else:
+        # Not a pixel length
+        return None
+
+
+def get_single_pixel_value(values):
+    """
+    Return the numeric value of a single pixel length or None.
+    """
+    if len(values) == 1:
+        return get_pixel_value(values[0])
+
+
+def get_percentage_value(value):
+    """
+    Return the numeric value of a percentage or None.
+    """
+    if value.type == 'PERCENTAGE':
+        # cssutils promises that `DimensionValue.value` is an int or float
+        assert isinstance(value.value, (int, float))
+        return value.value
+    else:
+        # Not a percentage
+        return None
+
+def get_single_percentage_value(values):
+    """
+    Return the numeric value of a single percentage or None.
+    """
+    if len(values) == 1:
+        return get_percentage_value(values[0])

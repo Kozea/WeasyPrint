@@ -28,8 +28,10 @@ except ImportError:
 
 
 import cairo
+import cssutils.css.value
 
-from ..css.utils import get_single_keyword
+from ..css.utils import (get_single_keyword, get_keyword,
+                         get_pixel_value, get_percentage_value)
 from ..formatting_structure import boxes
 from .. import text
 from .figures import Point, Line, Trapezoid
@@ -129,6 +131,13 @@ def draw_background(context, box, on_entire_canvas=False):
         if not surface:
             return
 
+        image_width = surface.get_width()
+        image_height = surface.get_height()
+
+        context.translate(*absolute_background_position(
+            box.style['background-position'], bg_width, bg_height,
+            image_width, image_height))
+
         bg_repeat = get_single_keyword(box.style['background-repeat'])
         if bg_repeat != 'repeat':
             # Get the current clip rectangle
@@ -139,12 +148,12 @@ def draw_background(context, box, on_entire_canvas=False):
             if bg_repeat in ('no-repeat', 'repeat-x'):
                 # Limit the drawn area vertically
                 clip_y1 = 0
-                clip_height = surface.get_height()
+                clip_height = image_height
 
             if bg_repeat in ('no-repeat', 'repeat-y'):
                 # Limit the drawn area horizontally
                 clip_x1 = 0
-                clip_width = surface.get_width()
+                clip_width = image_width
 
             # Second clip for the background image
             context.rectangle(clip_x1, clip_y1, clip_width, clip_height)
@@ -154,6 +163,76 @@ def draw_background(context, box, on_entire_canvas=False):
         pattern.set_extend(cairo.EXTEND_REPEAT)
         context.set_source(pattern)
         context.paint()
+
+
+def make_css_value(value):
+    return cssutils.css.value.PropertyValue(value)[0]
+
+
+def absolute_background_position(css_values, bg_width, bg_height,
+                                 image_width, image_height):
+    """
+    Parse cssutils Value objects for background-position and return
+    (position_x, position_y) relative to the background’s top left corner,
+    in pixels.
+
+    http://www.w3.org/TR/CSS21/colors.html#propdef-background-position
+    """
+    if len(css_values) == 1:
+        css_values = [css_values[0], make_css_value('center')]
+    else:
+        assert len(css_values) == 2
+
+    horizontal = None
+    vertical = None
+    non_keywords = []
+    for value in css_values:
+        keyword = get_keyword(value)
+        if keyword == 'top':
+            assert vertical is None
+            vertical = make_css_value('0%')
+        elif keyword == 'bottom':
+            assert vertical is None
+            vertical = make_css_value('100%')
+        elif keyword == 'left':
+            assert horizontal is None
+            horizontal = make_css_value('0%')
+        elif keyword == 'right':
+            assert horizontal is None
+            horizontal = make_css_value('100%')
+        elif keyword == 'center':
+            if horizontal is None:
+                horizontal = make_css_value('50%')
+            else:
+                vertical = make_css_value('50%')
+        else:
+            assert keyword is None
+            non_keywords.append(value)
+
+    # In that order. If both value are non-keyword, the first one
+    # is horizontal and the second one vertical. list.pop() gives
+    # the last value.
+    if vertical is None:
+        vertical = non_keywords.pop()
+    if horizontal is None:
+        horizontal = non_keywords.pop()
+
+    vertical_pixels = background_position_value(
+        vertical, bg_height, image_height)
+    horizontal_pixels = background_position_value(
+        horizontal, bg_width, image_width)
+    return horizontal_pixels, vertical_pixels
+
+
+def background_position_value(value, bg_size, image_size):
+    pixels = get_pixel_value(value)
+    if pixels is not None:
+        return pixels
+
+    percentage = get_percentage_value(value)
+    assert percentage is not None
+    return (bg_size - image_size) * percentage / 100.
+
 
 
 def draw_border(context, box):
