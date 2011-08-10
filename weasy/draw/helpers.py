@@ -44,6 +44,7 @@ def get_surface_from_uri(uri):
     except IOError:
         return
 
+
 def draw_box(context, box):
     if has_background(box):
         draw_background(context, box)
@@ -61,6 +62,7 @@ def draw_box(context, box):
 
     draw_border(context, box)
 
+
 def has_background(box):
     """
     Return the given box has any background.
@@ -69,19 +71,38 @@ def has_background(box):
         get_single_keyword(box.style['background-image']) != 'none'
 
 
-def draw_background_on_entire_canvas(context, box):
-    draw_background(context, box, on_entire_canvas=True)
-    # Do not draw it again.
-    box.skip_background = True
+def draw_canvas_background(context, page):
+    """
+    Draw the canvas’s background, taken from the root element.
+
+    If the root element is "html" and has no background, the canvas’s
+    background is taken from its "body" child.
+
+    In both cases the background position is the same as if it was drawn on
+    the element.
+
+    See http://www.w3.org/TR/CSS21/colors.html#background
+    """
+    if has_background(page.root_box):
+        draw_background(context, page.root_box, on_entire_canvas=True)
+    elif page.root_box.element.tag.lower() == 'html':
+        for child in page.root_box.children:
+            if child.element.tag.lower() == 'body':
+                # This must be drawn now, before anything on the root element.
+                draw_background(context, child, on_entire_canvas=True)
 
 
 def draw_background(context, box, on_entire_canvas=False):
     """
     Draw the box background color and image to a Cairo context.
     """
-    if getattr(box, 'skip_background', False):
+    if getattr(box, 'background_drawn', False):
         return
 
+    box.background_drawn = True
+
+    if not has_background(box):
+        return
 
     with context.stacked():
         # Change coordinates to make the rest easier.
@@ -91,16 +112,17 @@ def draw_background(context, box, on_entire_canvas=False):
         if not on_entire_canvas:
             context.rectangle(0, 0, box.border_width(), box.border_height())
             context.clip()
+
         # Background color
         bg_color = box.style['background-color'][0]
         if bg_color.alpha > 0:
             context.set_source_colorvalue(bg_color)
             context.paint()
+
         # Background image
-        uri = box.style.get("background-image")[0].value
-        if uri != 'none':
-            absolute_uri = urljoin(box.element.base_url, uri)
-            surface = get_surface_from_uri(absolute_uri)
+        bg_image = box.style.get("background-image")[0]
+        if bg_image.type == 'URI':
+            surface = get_surface_from_uri(bg_image.absoluteUri)
             if surface:
                 x, y = box.border_box_x(), box.border_box_y()
                 width, height = box.border_width(), box.border_height()
