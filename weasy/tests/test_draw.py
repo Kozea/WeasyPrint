@@ -22,7 +22,6 @@ import os.path
 import png
 from attest import Tests, assert_hook
 
-from .test_layout import parse
 from ..document import PNGDocument
 
 

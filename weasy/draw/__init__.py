@@ -19,17 +19,11 @@
 
 
 from __future__ import division
-import math
 import contextlib
-import urllib
 
 import cairo
 import pangocairo
 
-from ..css.computed_values import LENGTHS_TO_PIXELS
-from ..css.utils import get_single_keyword
-from ..formatting_structure import boxes
-from .. import text
 from .helpers import has_background, draw_box, draw_background_on_entire_canvas
 
 
@@ -77,4 +71,3 @@ def draw_page(page, context):
                 break
 
     draw_box(context, page.root_box)
-

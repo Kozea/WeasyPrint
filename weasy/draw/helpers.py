@@ -20,8 +20,6 @@
 
 from __future__ import division
 import urllib
-import math
-import contextlib
 try:
     from urlparse import urljoin
 except ImportError:
@@ -30,11 +28,9 @@ except ImportError:
 
 
 import cairo
-import pangocairo
 
 from ..css.utils import get_single_keyword
 from ..formatting_structure import boxes
-from ..utils import get_url_attribute
 from .. import text
 from .figures import Point, Line, Trapezoid
 
@@ -199,4 +195,3 @@ def draw_replacedbox(context, box):
     context.scale(scale_width, scale_height)
     box.replacement.draw(context)
     context.restore()
-

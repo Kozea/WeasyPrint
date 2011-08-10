@@ -120,7 +120,6 @@ def test_text_font():
 @suite.test
 def test_text_other():
     """ Test other properties """
-    width = 200
     fragment = text.TextFragment(u"", 40)
     fragment.set_text(u"some text")
 

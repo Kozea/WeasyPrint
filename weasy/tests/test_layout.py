@@ -270,7 +270,7 @@ def test_block_heights():
 
 
 @suite.test
-def test_block_heights():
+def test_block_percentage_heights():
     page, = parse('''
         <style>
             html, body { margin: 0 }
@@ -307,14 +307,14 @@ def test_block_heights():
 @suite.test
 def test_breaking_empty_linebox():
     def get_paragraph_linebox(width, font_size):
-        fonts = FONTS
         page = u'''
             <style>
             p { font-size:%(font_size)spx; width:%(width)spx;
                 font-family:%(fonts)s;}
             </style>
             <p> </p>'''
-        page, = parse(page % locals())
+        page, = parse(page % {'fonts': FONTS, 'font_size': font_size,
+                              'width': width})
         html = page.root_box
         body = html.children[0]
         p = body.children[0]
@@ -329,7 +329,6 @@ def test_breaking_empty_linebox():
 @suite.test
 def test_breaking_linebox():
     def get_paragraph_linebox(width, font_size):
-        fonts = FONTS
         page = u'''
             <style>
             p { font-size:%(font_size)spx;
@@ -346,7 +345,8 @@ def test_breaking_linebox():
             <p><em>Lorem<strong> Ipsum <span>is very</span>simply</strong><em>
             dummy</em>text of the printing and. naaaa </em> naaaa naaaa naaaa
             naaaa naaaa naaaa naaaa naaaa</p>'''
-        page, = parse(page % locals())
+        page, = parse(page % {'fonts': FONTS, 'font_size': font_size,
+                              'width': width})
         html = page.root_box
         body = html.children[0]
         paragraph = body.children[0]
@@ -373,20 +373,17 @@ def test_breaking_linebox():
     paragraph = get_paragraph_linebox(width=200,  font_size=font_size)
     assert len(list(paragraph.children)) == 6
 
-import pdb
 
 @suite.test
 def test_linebox_text():
     def get_paragraph_linebox():
-        width = 200
-        fonts = FONTS
         page = u'''
             <style>
                 p { width:%(width)spx; font-family:%(fonts)s;}
             </style>
             <p><em>Lorem Ipsum</em>is very <strong>coool</strong></p>'''
 
-        page, = parse(page % locals())
+        page, = parse(page % {'fonts': FONTS, 'width': 200})
         html = page.root_box
         body = html.children[0]
         paragraph = body.children[0]
@@ -409,14 +406,12 @@ def test_linebox_text():
 @suite.test
 def test_linebox_positions():
     def get_paragraph_linebox():
-        width = 200
-        fonts = FONTS
         page = u'''
             <style>
                 p { width:%(width)spx; font-family:%(fonts)s;}
             </style>
             <p>this is test for <strong>Weasyprint</strong></p>'''
-        page, = parse(page % locals())
+        page, = parse(page % {'fonts': FONTS, 'width': 200})
         html = page.root_box
         body = html.children[0]
         paragraph = body.children[0]

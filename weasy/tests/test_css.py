@@ -128,7 +128,6 @@ def test_annotate_document():
 
     assert h1.font_weight == '700'
 
-    sides = ('_top', '_right', '_bottom', '_left')
     # 32px = 1em * font-size: 2em * initial 16px
     assert p.margin_top == 32
     assert p.margin_right == 0
