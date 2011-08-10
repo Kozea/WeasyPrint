@@ -170,22 +170,21 @@ def draw_border(context, box):
         color = box.style['border-%s-color'%side][0]
         style = box.style['border-%s-style'%side][0].value
         if color.alpha > 0:
-            context.save()
-            if not style in ["dotted", "dashed"]:
-                trapezoid.draw_path(context)
-                context.clip()
-            elif style == "dotted":
-                #TODO:Find a way to make a real dotted border
-                context.set_dash([width], 0)
-            elif style == "dashed":
-                #TODO:Find a way to make a real dashed border
-                context.set_dash([4*width], 0)
-            line = trapezoid.get_middle_line()
-            line.draw_path(context)
-            context.set_source_colorvalue(color)
-            context.set_line_width(width)
-            context.stroke()
-            context.restore()
+            with context.stacked():
+                if not style in ["dotted", "dashed"]:
+                    trapezoid.draw_path(context)
+                    context.clip()
+                elif style == "dotted":
+                    #TODO:Find a way to make a real dotted border
+                    context.set_dash([width], 0)
+                elif style == "dashed":
+                    #TODO:Find a way to make a real dashed border
+                    context.set_dash([4*width], 0)
+                line = trapezoid.get_middle_line()
+                line.draw_path(context)
+                context.set_source_colorvalue(color)
+                context.set_line_width(width)
+                context.stroke()
 
     trapezoids_side = zip(["top", "right", "bottom", "left"], get_trapezoids())
 
@@ -208,12 +207,11 @@ def draw_replacedbox(context, box):
     """
     x, y = box.padding_box_x(), box.padding_box_y()
     width, height = box.width, box.height
-    context.save()
-    context.translate(x, y)
-    context.rectangle(0, 0, width, height)
-    context.clip()
-    scale_width = width/box.replacement.intrinsic_width()
-    scale_height = height/box.replacement.intrinsic_height()
-    context.scale(scale_width, scale_height)
-    box.replacement.draw(context)
-    context.restore()
+    with context.stacked():
+        context.translate(x, y)
+        context.rectangle(0, 0, width, height)
+        context.clip()
+        scale_width = width/box.replacement.intrinsic_width()
+        scale_height = height/box.replacement.intrinsic_height()
+        context.scale(scale_width, scale_height)
+        box.replacement.draw(context)
