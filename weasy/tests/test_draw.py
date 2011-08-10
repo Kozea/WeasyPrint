@@ -24,6 +24,10 @@ from attest import Tests, assert_hook
 
 from . import resource_filename
 from ..document import PNGDocument
+from . import make_expected_results
+
+
+make_expected_results.make_all()
 
 
 suite = Tests()
