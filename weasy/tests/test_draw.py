@@ -90,23 +90,21 @@ def test_canvas_background():
     ''')
 
 
+def test_background_repeat(repeat):
+    test_pixels('background_' + repeat, 14, 16, '''
+        <style>
+            @page { size: 14px 16px }
+            html { background: #fff }
+            body { margin: 2px; height: 10px;
+                   background: url(pattern.png) %s }
+        </style>
+        <body>
+    ''' % (repeat,))
+
+
 @suite.test
 def test_background_image():
-    test_pixels('background_repeat', 14, 16, '''
-        <style>
-            @page { size: 14px 16px }
-            html { background: #fff }
-            body { margin: 2px; height: 10px;
-                   background: url(pattern.png) }
-        </style>
-        <body>
-    ''')
-    test_pixels('background_no_repeat', 14, 16, '''
-        <style>
-            @page { size: 14px 16px }
-            html { background: #fff }
-            body { margin: 2px; height: 10px;
-                   background: url(pattern.png) no-repeat }
-        </style>
-        <body>
-    ''')
+    test_background_repeat('repeat')
+    test_background_repeat('no-repeat')
+    test_background_repeat('repeat-y')
+    test_background_repeat('repeat-x')

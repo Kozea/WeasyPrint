@@ -106,11 +106,12 @@ def draw_background(context, box, on_entire_canvas=False):
 
     with context.stacked():
         # Change coordinates to make the rest easier.
-        context.translate(
-            box.position_x + box.margin_left,
-            box.position_y + box.margin_top)
+        context.translate(box.border_box_x(), box.border_box_y())
+        bg_width = box.border_width()
+        bg_height = box.border_height()
+
         if not on_entire_canvas:
-            context.rectangle(0, 0, box.border_width(), box.border_height())
+            context.rectangle(0, 0, bg_width, bg_height)
             context.clip()
 
         # Background color
@@ -121,17 +122,38 @@ def draw_background(context, box, on_entire_canvas=False):
 
         # Background image
         bg_image = box.style['background-image'][0]
-        if bg_image.type == 'URI':
-            surface = get_image_surface_from_uri(bg_image.absoluteUri)
-            if surface:
-                x, y = box.border_box_x(), box.border_box_y()
-                width, height = box.border_width(), box.border_height()
-                pattern = cairo.SurfacePattern(surface)
-                bg_repeat = get_single_keyword(box.style['background-repeat'])
-                if bg_repeat == 'repeat':
-                    pattern.set_extend(cairo.EXTEND_REPEAT)
-                context.set_source(pattern)
-                context.paint()
+        if bg_image.type != 'URI':
+            return
+
+        surface = get_image_surface_from_uri(bg_image.absoluteUri)
+        if not surface:
+            return
+
+        bg_repeat = get_single_keyword(box.style['background-repeat'])
+        if bg_repeat != 'repeat':
+            # Get the current clip rectangle
+            clip_x1, clip_y1, clip_x2, clip_y2 = context.clip_extents()
+            clip_width = clip_x2 - clip_x1
+            clip_height = clip_y2 - clip_y1
+
+            if bg_repeat in ('no-repeat', 'repeat-x'):
+                # Limit the drawn area vertically
+                clip_y1 = 0
+                clip_height = surface.get_height()
+
+            if bg_repeat in ('no-repeat', 'repeat-y'):
+                # Limit the drawn area horizontally
+                clip_x1 = 0
+                clip_width = surface.get_width()
+
+            # Second clip for the background image
+            context.rectangle(clip_x1, clip_y1, clip_width, clip_height)
+            context.clip()
+
+        pattern = cairo.SurfacePattern(surface)
+        pattern.set_extend(cairo.EXTEND_REPEAT)
+        context.set_source(pattern)
+        context.paint()
 
 
 def draw_border(context, box):
