@@ -22,6 +22,7 @@ import os.path
 import png
 from attest import Tests, assert_hook
 
+from . import resource_filename
 from ..document import PNGDocument
 
 
@@ -43,6 +44,8 @@ def test_pixels(name, expected_width, expected_height, html):
     expected_lines = list(expected_lines)
 
     document = PNGDocument.from_string(html)
+    # Dummy filename, but in the right directory.
+    document.base_url = resource_filename('<test>')
     filename = make_filename('test_results', name)
     document.write_to(filename)
 
@@ -66,7 +69,7 @@ def test_pixels(name, expected_width, expected_height, html):
                     'Pixel (%i, %i) does not match' % (x, y)
 
 @suite.test
-def test_png():
+def test_canvas_background():
     test_pixels('all_blue', 10, 10, '''
         <style>
             @page { size: 10px }
@@ -82,6 +85,28 @@ def test_png():
             html { margin: 1px; background: #f00 }
             /* html has a background, so body’s does not propagate */
             body { margin: 1px; background: #00f; height: 5px }
+        </style>
+        <body>
+    ''')
+
+
+@suite.test
+def test_background_image():
+    test_pixels('background_repeat', 14, 16, '''
+        <style>
+            @page { size: 14px 16px }
+            html { background: #fff }
+            body { margin: 2px; height: 10px;
+                   background: url(pattern.png) }
+        </style>
+        <body>
+    ''')
+    test_pixels('background_no_repeat', 14, 16, '''
+        <style>
+            @page { size: 14px 16px }
+            html { background: #fff }
+            body { margin: 2px; height: 10px;
+                   background: url(pattern.png) no-repeat }
         </style>
         <body>
     ''')

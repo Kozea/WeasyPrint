@@ -23,27 +23,81 @@ from array import array
 import png
 
 
-def filename(basename):
-    return os.path.join(os.path.dirname(__file__), 'expected_results',
+def filename(directory, basename):
+    return os.path.join(os.path.dirname(__file__), directory,
                         basename + '.png')
 
 
-def make(basename, lines):
+def make(basename, lines, directory='expected_results'):
     writer = png.Writer(width=len(lines[0]) / 3, height=len(lines), alpha=False)
-    with open(filename(basename), 'wb') as fd:
+    with open(filename(directory, basename), 'wb') as fd:
         writer.write(fd, lines)
 
 
 def make_all():
-    red = array('B', [255, 0, 0])
-    blue = array('B', [0, 0, 255])
+    _ = white = array('B', [255, 255, 255])
+    r = red = array('B', [255, 0, 0])
+    B = blue = array('B', [0, 0, 255])
 
-    make('blocks',
-        2 * [10 * red] +
-        5 * [2 * red + 6 * blue + 2 * red] +
-        3 * [10 * red])
+    make('blocks', [
+        r+r+r+r+r+r+r+r+r+r,
+        r+r+r+r+r+r+r+r+r+r,
+        r+r+B+B+B+B+B+B+r+r,
+        r+r+B+B+B+B+B+B+r+r,
+        r+r+B+B+B+B+B+B+r+r,
+        r+r+B+B+B+B+B+B+r+r,
+        r+r+B+B+B+B+B+B+r+r,
+        r+r+r+r+r+r+r+r+r+r,
+        r+r+r+r+r+r+r+r+r+r,
+        r+r+r+r+r+r+r+r+r+r,
+    ])
 
     make('all_blue', 10 * [10 * blue])
+
+    make('pattern', [
+        r+B+B+B,
+        B+B+B+B,
+        B+B+B+B,
+        B+B+B+B,
+    ], 'resources')
+
+    make('background_repeat', [
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+r+B+B+B+r+B+B+B+r+B+_+_,
+        _+_+B+B+B+B+B+B+B+B+B+B+_+_,
+        _+_+B+B+B+B+B+B+B+B+B+B+_+_,
+        _+_+B+B+B+B+B+B+B+B+B+B+_+_,
+        _+_+r+B+B+B+r+B+B+B+r+B+_+_,
+        _+_+B+B+B+B+B+B+B+B+B+B+_+_,
+        _+_+B+B+B+B+B+B+B+B+B+B+_+_,
+        _+_+B+B+B+B+B+B+B+B+B+B+_+_,
+        _+_+r+B+B+B+r+B+B+B+r+B+_+_,
+        _+_+B+B+B+B+B+B+B+B+B+B+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+   ])
+
+    make('background_no_repeat', [
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+r+B+B+B+_+_+_+_+_+_+_+_,
+        _+_+B+B+B+B+_+_+_+_+_+_+_+_,
+        _+_+B+B+B+B+_+_+_+_+_+_+_+_,
+        _+_+B+B+B+B+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+   ])
 
 
 if __name__ == '__main__':
