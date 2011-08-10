@@ -19,9 +19,15 @@
 
 
 from __future__ import division
+import urllib
 import math
 import contextlib
-import urllib
+try:
+    from urlparse import urljoin
+except ImportError:
+    # Python 3
+    from urllib.parse import urljoin
+
 
 import cairo
 import pangocairo
@@ -80,7 +86,7 @@ def draw_background(context, box, on_entire_canvas=False):
     if getattr(box, 'skip_background', False):
         return
 
-    # Background color
+
     with context.stacked():
         # Change coordinates to make the rest easier.
         context.translate(
@@ -89,23 +95,19 @@ def draw_background(context, box, on_entire_canvas=False):
         if not on_entire_canvas:
             context.rectangle(0, 0, box.border_width(), box.border_height())
             context.clip()
+        # Background color
         bg_color = box.style['background-color'][0]
         if bg_color.alpha > 0:
             context.set_source_colorvalue(bg_color)
             context.paint()
-
-    # Background image
-    uri = box.style.get("background-image")[0].absoluteUri
-    if uri != 'none':
-        surface = get_surface_from_uri(uri)
-        if surface:
-            x, y = box.border_box_x(), box.border_box_y()
-            width, height = box.border_width(), box.border_height()
-            with context.stacked():
-                context.translate(x, y)
-                if not on_entire_canvas:
-                    context.rectangle(0, 0, width, height)
-                    context.clip()
+        # Background image
+        uri = box.style.get("background-image")[0].value
+        if uri != 'none':
+            absolute_uri = urljoin(box.element.base_url, uri)
+            surface = get_surface_from_uri(absolute_uri)
+            if surface:
+                x, y = box.border_box_x(), box.border_box_y()
+                width, height = box.border_width(), box.border_height()
                 pattern = cairo.SurfacePattern(surface)
                 pattern.set_extend(cairo.EXTEND_REPEAT)
                 context.set_source(pattern)
