@@ -127,7 +127,9 @@ def draw_background(context, box, on_entire_canvas=False):
                 x, y = box.border_box_x(), box.border_box_y()
                 width, height = box.border_width(), box.border_height()
                 pattern = cairo.SurfacePattern(surface)
-                pattern.set_extend(cairo.EXTEND_REPEAT)
+                bg_repeat = get_single_keyword(box.style['background-repeat'])
+                if bg_repeat == 'repeat':
+                    pattern.set_extend(cairo.EXTEND_REPEAT)
                 context.set_source(pattern)
                 context.paint()
 
