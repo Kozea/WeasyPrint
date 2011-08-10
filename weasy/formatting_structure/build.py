@@ -88,16 +88,19 @@ def dom_to_box(document, element):
     else:
         raise NotImplementedError('Unsupported display: ' + display)
 
-    if element.text:
-        box.add_child(boxes.TextBox(document, element, element.text))
-    for child_element in element:
-        if document.style_for(child_element).display != 'none':
-            # TODO: We ignore html comments but also HTML/XML entities
-            # we need find another way to ignore html comments
-            if isinstance(child_element.tag, basestring):
-                box.add_child(dom_to_box(document, child_element))
-        if child_element.tail:
-            box.add_child(boxes.TextBox(document, element, child_element.tail))
+    # Ignore children on replaced elements.
+    if isinstance(box, boxes.ParentBox):
+        if element.text:
+            box.add_child(boxes.TextBox(document, element, element.text))
+        for child_element in element:
+            if document.style_for(child_element).display != 'none':
+                # TODO: We ignore html comments but also HTML/XML entities
+                # we need find another way to ignore html comments
+                if isinstance(child_element.tag, basestring):
+                    box.add_child(dom_to_box(document, child_element))
+            if child_element.tail:
+                box.add_child(boxes.TextBox(
+                    document, element, child_element.tail))
 
     return box
 
@@ -121,7 +124,8 @@ def process_whitespace(box):
             text = text.replace(' ', u'\xA0')
             if handling == 'pre-wrap':
                 # "a line break opportunity at the end of the sequence"
-                # \u200B is the zero-width space, marks a line break opportunity.
+                # \u200B is the zero-width space, marks a line break
+                # opportunity.
                 text = re.sub(u'\xA0([^\xA0]|$)', u'\xA0\u200B\\1', text)
         elif handling in ('normal', 'nowrap'):
             # TODO: this should be language-specific

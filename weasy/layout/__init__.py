@@ -97,8 +97,6 @@ def page_dimensions(box):
 
     box.root_box.width = box.width
     box.root_box.height = box.height
-    box.root_box.outer_height = box.outer_height
-    box.root_box.outer_width = box.outer_width
 
     box.root_box.position_x = box.content_box_x()
     box.root_box.position_y = box.content_box_y()
