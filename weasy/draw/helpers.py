@@ -107,13 +107,13 @@ def draw_background(context, box, on_entire_canvas=False):
         return
 
     with context.stacked():
-        # Change coordinates to make the rest easier.
-        context.translate(box.border_box_x(), box.border_box_y())
+        bg_x = box.border_box_x()
+        bg_y = box.border_box_y()
         bg_width = box.border_width()
         bg_height = box.border_height()
 
         if not on_entire_canvas:
-            context.rectangle(0, 0, bg_width, bg_height)
+            context.rectangle(bg_x, bg_y, bg_width, bg_height)
             context.clip()
 
         # Background color
@@ -121,6 +121,17 @@ def draw_background(context, box, on_entire_canvas=False):
         if bg_color.alpha > 0:
             context.set_source_colorvalue(bg_color)
             context.paint()
+
+        bg_attachement = get_single_keyword(box.style['background-attachment'])
+        if bg_attachement == 'scroll':
+            # Change coordinates to make the rest easier.
+            context.translate(bg_x, bg_y)
+        else:
+            assert bg_attachement == 'fixed'
+            # Percantages in background-position refer to the canvas size.
+            canvas = context.get_target()
+            bg_width, bg_height = context.device_to_user_distance(
+                canvas.get_width(), canvas.get_height())
 
         # Background image
         bg_image = box.style['background-image'][0]
@@ -148,12 +159,12 @@ def draw_background(context, box, on_entire_canvas=False):
 
             if bg_repeat in ('no-repeat', 'repeat-x'):
                 # Limit the drawn area vertically
-                clip_y1 = 0
+                clip_y1 = 0  # because of the last context.translate()
                 clip_height = image_height
 
             if bg_repeat in ('no-repeat', 'repeat-y'):
                 # Limit the drawn area horizontally
-                clip_x1 = 0
+                clip_x1 = 0  # because of the last context.translate()
                 clip_width = image_width
 
             # Second clip for the background image

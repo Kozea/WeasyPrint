@@ -206,9 +206,8 @@ def compute_lengths(style):
     Convert other length units to pixels.
     """
     font_size = style.font_size
-    for name in style:
-        style[name] = [compute_length(value, font_size)
-                       for value in style[name]]
+    for name, values in style.iteritems():
+        style[name] = [compute_length(value, font_size) for value in values]
 
 
 def compute_line_height(style):

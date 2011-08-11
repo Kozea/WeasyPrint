@@ -118,6 +118,12 @@ def test_background_image():
         ('left_bottom', 'no-repeat 0% bottom'),
         ('center_bottom', 'no-repeat center 6px'),
         ('right_bottom', 'no-repeat 6px 100%'),
+
+        ('repeat_x_1px_2px', 'repeat-x 1px 2px'),
+        ('repeat_y_2px_1px', 'repeat-y 2px 1px'),
+
+        ('fixed', 'no-repeat fixed'),
+        ('fixed_right', 'no-repeat fixed right 3px'),
     ]:
         test_pixels('background_' + name, 14, 16, '''
             <style>

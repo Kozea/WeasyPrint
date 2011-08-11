@@ -456,4 +456,3 @@ def get_all_computed_styles(document, medium,
                             '@page', page_type)
 
     return computed_styles
-
