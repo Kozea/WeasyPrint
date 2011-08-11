@@ -102,43 +102,23 @@ def test_canvas_background():
 
 @suite.test
 def test_background_image():
-    tests = [
+    for name, css in [
         ('repeat', ''),
-        ('top_left', 'no-repeat'),
         ('repeat_x', 'repeat-x'),
         ('repeat_y', 'repeat-y'),
-    ]
 
-    for name1, vertical in [
-            ('top', 'top'),
-            ('top', '0%'),
-            ('top', '0px'),
-            ('top', '0'),
-            ('center', 'center'),
-            ('center', '50%'),
-            ('center', '3px'),
-            ('bottom', 'bottom'),
-            ('bottom', '100%'),
-            ('bottom', '6px'),
-        ]:
-        for name2, horizontal in [
-                ('left', 'left'),
-                ('left', '0%'),
-                ('left', '0px'),
-                ('left', '0'),
-                ('center', 'center'),
-                ('center', '50%'),
-                ('center', '3px'),
-                ('right', 'right'),
-                ('right', '100%'),
-                ('right', '6px'),
-            ]:
-            tests.append((
-                '%s_%s' % (name1, name2),
-                'no-repeat %s %s' % (horizontal, vertical),  # CSS order
-            ))
+        ('left_top', 'no-repeat 0 0%'),
+        ('center_top', 'no-repeat 50% 0px'),
+        ('right_top', 'no-repeat 6px top'),
 
-    for name, css in tests:
+        ('left_center', 'no-repeat left center'),
+        ('center_center', 'no-repeat 3px 3px'),
+        ('right_center', 'no-repeat 100% 50%'),
+
+        ('left_bottom', 'no-repeat 0% bottom'),
+        ('center_bottom', 'no-repeat center 6px'),
+        ('right_bottom', 'no-repeat 6px 100%'),
+    ]:
         test_pixels('background_' + name, 14, 16, '''
             <style>
                 @page { size: 14px 16px }
