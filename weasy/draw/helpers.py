@@ -134,9 +134,10 @@ def draw_background(context, box, on_entire_canvas=False):
         image_width = surface.get_width()
         image_height = surface.get_height()
 
-        context.translate(*absolute_background_position(
-            box.style['background-position'], bg_width, bg_height,
-            image_width, image_height))
+        bg_position = box.style['background-position']
+        bg_position_x, bg_position_y = absolute_background_position(
+            bg_position, (bg_width, bg_height), (image_width, image_height))
+        context.translate(bg_position_x, bg_position_y)
 
         bg_repeat = get_single_keyword(box.style['background-repeat'])
         if bg_repeat != 'repeat':
@@ -165,74 +166,47 @@ def draw_background(context, box, on_entire_canvas=False):
         context.paint()
 
 
-def make_css_value(value):
-    return cssutils.css.value.PropertyValue(value)[0]
-
-
-def absolute_background_position(css_values, bg_width, bg_height,
-                                 image_width, image_height):
+def absolute_background_position(css_values, bg_dimensions, image_dimensions):
     """
-    Parse cssutils Value objects for background-position and return
-    (position_x, position_y) relative to the background’s top left corner,
+    Parse values for background-position and return (position_x, position_y)
     in pixels.
 
     http://www.w3.org/TR/CSS21/colors.html#propdef-background-position
+
+    :param css_values: a list of one or two cssutils Value objects.
+    :param bg_dimensions: (width, height) of the background positionning area
+    :param image_dimensions: (width, height) of the background image
     """
+    values = list(css_values)
+    keywords = [get_keyword(value) for value in values]
+
     if len(css_values) == 1:
-        css_values = [css_values[0], make_css_value('center')]
+        values.append(None)  # dummy value for zip()
+        keywords.append('center')
     else:
         assert len(css_values) == 2
 
-    horizontal = None
-    vertical = None
-    non_keywords = []
-    for value in css_values:
-        keyword = get_keyword(value)
-        if keyword == 'top':
-            assert vertical is None
-            vertical = make_css_value('0%')
-        elif keyword == 'bottom':
-            assert vertical is None
-            vertical = make_css_value('100%')
-        elif keyword == 'left':
-            assert horizontal is None
-            horizontal = make_css_value('0%')
-        elif keyword == 'right':
-            assert horizontal is None
-            horizontal = make_css_value('100%')
-        elif keyword == 'center':
-            if horizontal is None:
-                horizontal = make_css_value('50%')
-            else:
-                vertical = make_css_value('50%')
+    if not (
+        None in keywords or
+        keywords[0] in ('left', 'right') or
+        keywords[1] in ('top', 'bottom')
+    ):
+        values.reverse()
+        keywords.reverse()
+    # Order is now [horizontal, vertical]
+
+    kw_to_percentage = dict(top=0, left=0, center=50, bottom=100, right=100)
+
+    for value, keyword, bg_dimension, image_dimension in zip(
+            values, keywords, bg_dimensions, image_dimensions):
+        if keyword is not None:
+            percentage = kw_to_percentage[keyword]
         else:
-            assert keyword is None
-            non_keywords.append(value)
-
-    # In that order. If both value are non-keyword, the first one
-    # is horizontal and the second one vertical. list.pop() gives
-    # the last value.
-    if vertical is None:
-        vertical = non_keywords.pop()
-    if horizontal is None:
-        horizontal = non_keywords.pop()
-
-    vertical_pixels = background_position_value(
-        vertical, bg_height, image_height)
-    horizontal_pixels = background_position_value(
-        horizontal, bg_width, image_width)
-    return horizontal_pixels, vertical_pixels
-
-
-def background_position_value(value, bg_size, image_size):
-    pixels = get_pixel_value(value)
-    if pixels is not None:
-        return pixels
-
-    percentage = get_percentage_value(value)
-    assert percentage is not None
-    return (bg_size - image_size) * percentage / 100.
-
+            percentage = get_percentage_value(value)
+        if percentage is not None:
+            yield (bg_dimension - image_dimension) * percentage / 100.
+        else:
+            yield get_pixel_value(value)
 
 
 def draw_border(context, box):
