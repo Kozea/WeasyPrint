@@ -19,18 +19,12 @@
 
 
 from __future__ import division
-import math
 import contextlib
-import urllib
 
 import cairo
 import pangocairo
 
-from ..css.computed_values import LENGTHS_TO_PIXELS
-from ..css.utils import get_single_keyword
-from ..formatting_structure import boxes
-from .. import text
-from .helpers import has_background, draw_box, draw_background_on_entire_canvas
+from . import helpers
 
 
 class CairoContext(cairo.Context):
@@ -62,19 +56,5 @@ def draw_page(page, context):
     Draw the given PageBox to a Cairo context.
     The context should be scaled so that lengths are in CSS pixels.
     """
-    # http://www.w3.org/TR/CSS21/colors.html#background
-    # Background for the root element is drawn on the entire canvas.
-    # If the root is "html" and has no background, the background
-    # for its "body" child is drawn on the entire canvas.
-    # However backgrounds positions stay the same.
-    if has_background(page.root_box):
-        draw_background_on_entire_canvas(context, page.root_box)
-    elif page.root_box.element.tag.lower() == 'html':
-        for child in page.root_box.children:
-            if child.element.tag.lower() == 'body' and has_background(child):
-                # This must be drawn now, before anything on the root element.
-                draw_background_on_entire_canvas(context, child)
-                break
-
-    draw_box(context, page.root_box)
-
+    helpers.draw_canvas_background(context, page)
+    helpers.draw_box(context, page.root_box)

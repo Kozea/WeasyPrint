@@ -17,38 +17,9 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from ..css.utils import get_single_keyword
+from ..css.utils import (get_single_keyword, get_single_pixel_value,
+                         get_single_percentage_value)
 from ..formatting_structure import boxes
-
-
-def pixel_value(value):
-    """
-    Return the numeric value of a pixel length or None.
-    """
-    if len(value) == 1 and value[0].type == 'DIMENSION' \
-            and value[0].dimension == 'px':
-        # cssutils promises that `DimensionValue.value` is an int or float
-        assert isinstance(value[0].value, (int, float))
-        return value[0].value
-    # 0 may not have a units
-    elif len(value) == 1 and value[0].value == 0:
-        return 0
-    else:
-        # Not a pixel length
-        return None
-
-
-def percentage_value(value):
-    """
-    Return the numeric value of a percentage or None.
-    """
-    if len(value) == 1 and value[0].type == 'PERCENTAGE': \
-        # cssutils promises that `DimensionValue.value` is an int or float
-        assert isinstance(value[0].value, (int, float))
-        return value[0].value
-    else:
-        # Not a percentage
-        return None
 
 
 def resolve_one_percentage(box, property_name, refer_to,
@@ -61,12 +32,12 @@ def resolve_one_percentage(box, property_name, refer_to,
     """
     # box.style has computed values
     values = box.style[property_name]
-    pixels = pixel_value(values)
+    pixels = get_single_pixel_value(values)
     if pixels is not None:
         # Absolute length (was converted to pixels in "computed values")
         result = pixels
     else:
-        percentage = percentage_value(values)
+        percentage = get_single_percentage_value(values)
         if percentage is not None:
             if isinstance(refer_to, (int, float)):
                 # A percentage

@@ -54,7 +54,7 @@ def replacedbox_dimensions(box):
         elif not intrinsic_height is None and not intrinsic_ratio is None:
             box.width = intrinsic_ratio * intrinsic_height
         elif not intrinsic_ratio is None:
-            block_level_width(box)
+            block_formatting_context.block_level_width(box)
         else:
             raise NotImplementedError
             # then the used value of 'width' becomes 300px. If 300px is too
@@ -103,8 +103,6 @@ def page_dimensions(box):
 
     box.root_box.width = box.width
     box.root_box.height = box.height
-    box.root_box.outer_height = box.outer_height
-    box.root_box.outer_width = box.outer_width
 
     box.root_box.position_x = box.content_box_x()
     box.root_box.position_y = box.content_box_y()
@@ -124,4 +122,3 @@ def layout(document):
 
     # TODO: do page breaks, split boxes into multiple pages
     return pages
-

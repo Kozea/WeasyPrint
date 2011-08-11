@@ -22,8 +22,12 @@ import os.path
 import png
 from attest import Tests, assert_hook
 
-from .test_layout import parse
+from . import resource_filename
 from ..document import PNGDocument
+from . import make_expected_results
+
+
+make_expected_results.make_all()
 
 
 suite = Tests()
@@ -31,6 +35,11 @@ suite = Tests()
 
 def make_filename(dirname, basename):
     return os.path.join(os.path.dirname(__file__), dirname, basename + '.png')
+
+
+def format_pixel(lines, x, y):
+    pixel = lines[y][3 * x:3 * (x + 1)]
+    return ('#' + 3 * '%02x') % tuple(pixel)
 
 
 def test_pixels(name, expected_width, expected_height, html):
@@ -44,6 +53,8 @@ def test_pixels(name, expected_width, expected_height, html):
     expected_lines = list(expected_lines)
 
     document = PNGDocument.from_string(html)
+    # Dummy filename, but in the right directory.
+    document.base_url = resource_filename('<test>')
     filename = make_filename('test_results', name)
     document.write_to(filename)
 
@@ -62,12 +73,13 @@ def test_pixels(name, expected_width, expected_height, html):
     if lines != expected_lines:
         for y in xrange(height):
             for x in xrange(width):
-                assert lines[y][3 * x:3 * (x + 1)] == \
-                    expected_lines[y][3 * x:3 * (x + 1)], \
-                    'Pixel (%i, %i) does not match' % (x, y)
+                pixel = format_pixel(lines, x, y)
+                expected_pixel = format_pixel(expected_lines, x, y)
+                assert pixel == expected_pixel, \
+                    'Pixel (%i, %i) does not match in %s' % (x, y, name)
 
 @suite.test
-def test_png():
+def test_canvas_background():
     test_pixels('all_blue', 10, 10, '''
         <style>
             @page { size: 10px }
@@ -86,3 +98,53 @@ def test_png():
         </style>
         <body>
     ''')
+
+
+@suite.test
+def test_background_image():
+    tests = [
+        ('repeat', ''),
+        ('top_left', 'no-repeat'),
+        ('repeat_x', 'repeat-x'),
+        ('repeat_y', 'repeat-y'),
+    ]
+
+    for name1, vertical in [
+            ('top', 'top'),
+            ('top', '0%'),
+            ('top', '0px'),
+            ('top', '0'),
+            ('center', 'center'),
+            ('center', '50%'),
+            ('center', '3px'),
+            ('bottom', 'bottom'),
+            ('bottom', '100%'),
+            ('bottom', '6px'),
+        ]:
+        for name2, horizontal in [
+                ('left', 'left'),
+                ('left', '0%'),
+                ('left', '0px'),
+                ('left', '0'),
+                ('center', 'center'),
+                ('center', '50%'),
+                ('center', '3px'),
+                ('right', 'right'),
+                ('right', '100%'),
+                ('right', '6px'),
+            ]:
+            tests.append((
+                '%s_%s' % (name1, name2),
+                'no-repeat %s %s' % (horizontal, vertical),  # CSS order
+            ))
+
+    for name, css in tests:
+        test_pixels('background_' + name, 14, 16, '''
+            <style>
+                @page { size: 14px 16px }
+                html { background: #fff }
+                body { margin: 2px; height: 10px;
+                       background: url(pattern.png) %s }
+            </style>
+            <body>
+        ''' % (css,))

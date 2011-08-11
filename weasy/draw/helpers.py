@@ -20,8 +20,6 @@
 
 from __future__ import division
 import urllib
-import math
-import contextlib
 try:
     from urlparse import urljoin
 except ImportError:
@@ -30,23 +28,24 @@ except ImportError:
 
 
 import cairo
-import pangocairo
+import cssutils.css.value
 
-from ..css.utils import get_single_keyword
+from ..css.utils import (get_single_keyword, get_keyword,
+                         get_pixel_value, get_percentage_value)
 from ..formatting_structure import boxes
-from ..utils import get_url_attribute
 from .. import text
 from .figures import Point, Line, Trapezoid
 
 
-def get_surface_from_uri(uri):
+def get_image_surface_from_uri(uri):
     try:
         fileimage = urllib.urlopen(uri)
         if fileimage.info().gettype() != 'image/png':
             raise NotImplementedError("Only png images are implemented")
         return cairo.ImageSurface.create_from_png(fileimage)
     except IOError:
-        return
+        return None
+
 
 def draw_box(context, box):
     if has_background(box):
@@ -65,6 +64,7 @@ def draw_box(context, box):
 
     draw_border(context, box)
 
+
 def has_background(box):
     """
     Return the given box has any background.
@@ -73,45 +73,140 @@ def has_background(box):
         get_single_keyword(box.style['background-image']) != 'none'
 
 
-def draw_background_on_entire_canvas(context, box):
-    draw_background(context, box, on_entire_canvas=True)
-    # Do not draw it again.
-    box.skip_background = True
+def draw_canvas_background(context, page):
+    """
+    Draw the canvas’s background, taken from the root element.
+
+    If the root element is "html" and has no background, the canvas’s
+    background is taken from its "body" child.
+
+    In both cases the background position is the same as if it was drawn on
+    the element.
+
+    See http://www.w3.org/TR/CSS21/colors.html#background
+    """
+    if has_background(page.root_box):
+        draw_background(context, page.root_box, on_entire_canvas=True)
+    elif page.root_box.element.tag.lower() == 'html':
+        for child in page.root_box.children:
+            if child.element.tag.lower() == 'body':
+                # This must be drawn now, before anything on the root element.
+                draw_background(context, child, on_entire_canvas=True)
 
 
 def draw_background(context, box, on_entire_canvas=False):
     """
     Draw the box background color and image to a Cairo context.
     """
-    if getattr(box, 'skip_background', False):
+    if getattr(box, 'background_drawn', False):
         return
 
+    box.background_drawn = True
+
+    if not has_background(box):
+        return
 
     with context.stacked():
         # Change coordinates to make the rest easier.
-        context.translate(
-            box.position_x + box.margin_left,
-            box.position_y + box.margin_top)
+        context.translate(box.border_box_x(), box.border_box_y())
+        bg_width = box.border_width()
+        bg_height = box.border_height()
+
         if not on_entire_canvas:
-            context.rectangle(0, 0, box.border_width(), box.border_height())
+            context.rectangle(0, 0, bg_width, bg_height)
             context.clip()
+
         # Background color
         bg_color = box.style['background-color'][0]
         if bg_color.alpha > 0:
             context.set_source_colorvalue(bg_color)
             context.paint()
+
         # Background image
-        uri = box.style.get("background-image")[0].value
-        if uri != 'none':
-            absolute_uri = urljoin(box.element.base_url, uri)
-            surface = get_surface_from_uri(absolute_uri)
-            if surface:
-                x, y = box.border_box_x(), box.border_box_y()
-                width, height = box.border_width(), box.border_height()
-                pattern = cairo.SurfacePattern(surface)
-                pattern.set_extend(cairo.EXTEND_REPEAT)
-                context.set_source(pattern)
-                context.paint()
+        bg_image = box.style['background-image'][0]
+        if bg_image.type != 'URI':
+            return
+
+        surface = get_image_surface_from_uri(bg_image.absoluteUri)
+        if not surface:
+            return
+
+        image_width = surface.get_width()
+        image_height = surface.get_height()
+
+        bg_position = box.style['background-position']
+        bg_position_x, bg_position_y = absolute_background_position(
+            bg_position, (bg_width, bg_height), (image_width, image_height))
+        context.translate(bg_position_x, bg_position_y)
+
+        bg_repeat = get_single_keyword(box.style['background-repeat'])
+        if bg_repeat != 'repeat':
+            # Get the current clip rectangle
+            clip_x1, clip_y1, clip_x2, clip_y2 = context.clip_extents()
+            clip_width = clip_x2 - clip_x1
+            clip_height = clip_y2 - clip_y1
+
+            if bg_repeat in ('no-repeat', 'repeat-x'):
+                # Limit the drawn area vertically
+                clip_y1 = 0
+                clip_height = image_height
+
+            if bg_repeat in ('no-repeat', 'repeat-y'):
+                # Limit the drawn area horizontally
+                clip_x1 = 0
+                clip_width = image_width
+
+            # Second clip for the background image
+            context.rectangle(clip_x1, clip_y1, clip_width, clip_height)
+            context.clip()
+
+        pattern = cairo.SurfacePattern(surface)
+        pattern.set_extend(cairo.EXTEND_REPEAT)
+        context.set_source(pattern)
+        context.paint()
+
+
+def absolute_background_position(css_values, bg_dimensions, image_dimensions):
+    """
+    Parse values for background-position and return (position_x, position_y)
+    in pixels.
+
+    http://www.w3.org/TR/CSS21/colors.html#propdef-background-position
+
+    :param css_values: a list of one or two cssutils Value objects.
+    :param bg_dimensions: (width, height) of the background positionning area
+    :param image_dimensions: (width, height) of the background image
+    """
+    values = list(css_values)
+    keywords = [get_keyword(value) for value in values]
+
+    if len(css_values) == 1:
+        values.append(None)  # dummy value for zip()
+        keywords.append('center')
+    else:
+        assert len(css_values) == 2
+
+    if not (
+        None in keywords or
+        keywords[0] in ('left', 'right') or
+        keywords[1] in ('top', 'bottom')
+    ):
+        values.reverse()
+        keywords.reverse()
+    # Order is now [horizontal, vertical]
+
+    kw_to_percentage = dict(top=0, left=0, center=50, bottom=100, right=100)
+
+    for value, keyword, bg_dimension, image_dimension in zip(
+            values, keywords, bg_dimensions, image_dimensions):
+        if keyword is not None:
+            percentage = kw_to_percentage[keyword]
+        else:
+            percentage = get_percentage_value(value)
+        if percentage is not None:
+            yield (bg_dimension - image_dimension) * percentage / 100.
+        else:
+            yield get_pixel_value(value)
 
 
 def draw_border(context, box):
@@ -152,22 +247,21 @@ def draw_border(context, box):
         color = box.style['border-%s-color'%side][0]
         style = box.style['border-%s-style'%side][0].value
         if color.alpha > 0:
-            context.save()
-            if not style in ["dotted", "dashed"]:
-                trapezoid.draw_path(context)
-                context.clip()
-            elif style == "dotted":
-                #TODO:Find a way to make a real dotted border
-                context.set_dash([width], 0)
-            elif style == "dashed":
-                #TODO:Find a way to make a real dashed border
-                context.set_dash([4*width], 0)
-            line = trapezoid.get_middle_line()
-            line.draw_path(context)
-            context.set_source_colorvalue(color)
-            context.set_line_width(width)
-            context.stroke()
-            context.restore()
+            with context.stacked():
+                if not style in ["dotted", "dashed"]:
+                    trapezoid.draw_path(context)
+                    context.clip()
+                elif style == "dotted":
+                    #TODO:Find a way to make a real dotted border
+                    context.set_dash([width], 0)
+                elif style == "dashed":
+                    #TODO:Find a way to make a real dashed border
+                    context.set_dash([4*width], 0)
+                line = trapezoid.get_middle_line()
+                line.draw_path(context)
+                context.set_source_colorvalue(color)
+                context.set_line_width(width)
+                context.stroke()
 
     trapezoids_side = zip(["top", "right", "bottom", "left"], get_trapezoids())
 
@@ -190,13 +284,11 @@ def draw_replacedbox(context, box):
     """
     x, y = box.padding_box_x(), box.padding_box_y()
     width, height = box.width, box.height
-    context.save()
-    context.translate(x, y)
-    context.rectangle(0, 0, width, height)
-    context.clip()
-    scale_width = width/box.replacement.intrinsic_width()
-    scale_height = height/box.replacement.intrinsic_height()
-    context.scale(scale_width, scale_height)
-    box.replacement.draw(context)
-    context.restore()
-
+    with context.stacked():
+        context.translate(x, y)
+        context.rectangle(0, 0, width, height)
+        context.clip()
+        scale_width = width/box.replacement.intrinsic_width()
+        scale_height = height/box.replacement.intrinsic_height()
+        context.scale(scale_width, scale_height)
+        box.replacement.draw(context)

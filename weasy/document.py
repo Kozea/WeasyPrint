@@ -18,7 +18,6 @@
 
 
 import math
-import StringIO
 
 import lxml.html
 import cairo
