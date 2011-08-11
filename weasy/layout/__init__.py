@@ -22,7 +22,7 @@ from ..formatting_structure import boxes
 from ..utils import MultiFunction
 from .percentages import resolve_percentages
 from . import block_formatting_context
-
+from .. import text
 
 # TODO: remove this if it is not needed?
 @MultiFunction
@@ -79,6 +79,12 @@ def replacedbox_dimensions(box):
         # greater than 150px, and has a width not greater than the
         # device width
 
+
+@compute_dimensions.register(boxes.TextBox)
+def textbox_dimensions(box):
+    """Compute the width and height for the textbox."""
+    text_fragment = text.TextLineFragment.from_textbox(box)
+    box.width, box.height = text_fragment.get_size()
 
 @compute_dimensions.register(boxes.InlineBox)
 def inlinebox_dimensions(box):
