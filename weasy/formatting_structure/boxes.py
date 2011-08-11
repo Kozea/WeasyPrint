@@ -72,6 +72,7 @@ See respective docstrings for details.
 import collections
 
 from .. import css
+from ..css.utils import get_single_keyword
 
 
 class Box(object):
@@ -109,17 +110,21 @@ class Box(object):
         """``(width, height)`` size of the box's containing block."""
         if isinstance(self.parent, PageBox):
             return self.parent.width, self.parent.height
-        elif self.style.position in ('relative', 'static'):
+
+        position = get_single_keyword(self.style.position)
+        if position in ('relative', 'static'):
             return self.parent.width, self.parent.height
-        elif self.style.position == 'fixed':
+        elif position == 'fixed':
             for ancestor in self.ancestors():
                 if isinstance(ancestor, PageBox):
                     return ancestor.width, ancestor.height
             assert False, 'Page not found'
-        elif self.style.position == 'absolute':
+        elif position == 'absolute':
             for ancestor in self.ancestors():
-                if ancestor.style.position in ('absolute', 'relative', 'fixed'):
-                    if ancestor.style.display == 'inline':
+                position = get_single_keyword(ancestor.style.position)
+                if position in ('absolute', 'relative', 'fixed'):
+                    display = get_single_keyword(ancestor.style.display)
+                    if display == 'inline':
                         # TODO: fix this bad behaviour, see CSS 10.1
                         return ancestor.width, ancestor.height
                     else:
@@ -219,11 +224,11 @@ class Box(object):
 
     def is_floated(self):
         """Return whether this box is floated."""
-        return self.style.float != 'none'
+        return get_single_keyword(self.style.float) != 'none'
 
     def is_absolutely_positioned(self):
         """Return whether this box is in the absolute positioning scheme."""
-        return self.style.position in ('absolute', 'fixed')
+        return get_single_keyword(self.style.position) in ('absolute', 'fixed')
 
     def is_in_normal_flow(self):
         """Return whether this box is in normal flow."""

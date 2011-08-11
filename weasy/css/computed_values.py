@@ -27,7 +27,8 @@ import cssutils.helper
 from cssutils.css import PropertyValue, DimensionValue, Value
 
 from .initial_values import INITIAL_VALUES
-from .utils import get_single_keyword
+from .utils import (get_single_keyword, get_keyword, get_single_pixel_value,
+                    make_pixel_values)
 
 
 # How many CSS pixels is one <unit> ?
@@ -46,51 +47,52 @@ LENGTHS_TO_PIXELS = {
 # medium, and scaling factors given in CSS3 for others:
 # http://www.w3.org/TR/css3-fonts/#font-size-prop
 # This dict has to be ordered to implement 'smaller' and 'larger'
-FONT_SIZE_MEDIUM = 16.
-FONT_SIZE_KEYWORDS = collections.OrderedDict([
-    ('xx-small', FONT_SIZE_MEDIUM * 3/5),
-    ('x-small', FONT_SIZE_MEDIUM * 3/4),
-    ('small', FONT_SIZE_MEDIUM * 8/9),
-    ('medium', FONT_SIZE_MEDIUM),
-    ('large', FONT_SIZE_MEDIUM * 6/5),
-    ('x-large', FONT_SIZE_MEDIUM * 3/2),
-    ('xx-large', FONT_SIZE_MEDIUM * 2),
-])
-del FONT_SIZE_MEDIUM
+FONT_SIZE_KEYWORDS = collections.OrderedDict(
+    (name, make_pixel_values(16. * a / b))
+    for name, a, b in [
+        ('xx-small', 3, 5),
+        ('x-small', 3, 4),
+        ('small', 8, 9),
+        ('medium', 1, 1),
+        ('large', 6, 5),
+        ('x-large', 3, 2),
+        ('xx-large', 2, 1),
+    ]
+)
 
 
 # These are unspecified, other than 'thin' <='medium' <= 'thick'.
 # Values are in pixels.
 BORDER_WIDTH_KEYWORDS = {
-    'thin': 1,
-    'medium': 3,
-    'thick': 5,
+    'thin': make_pixel_values(1),
+    'medium': make_pixel_values(3),
+    'thick': make_pixel_values(5),
 }
 
 
 # http://www.w3.org/TR/CSS21/fonts.html#propdef-font-weight
 FONT_WEIGHT_RELATIVE = dict(
     bolder={
-        100: 400,
-        200: 400,
-        300: 400,
-        400: 700,
-        500: 700,
-        600: 900,
-        700: 900,
-        800: 900,
-        900: 900,
+        100: PropertyValue('400'),
+        200: PropertyValue('400'),
+        300: PropertyValue('400'),
+        400: PropertyValue('700'),
+        500: PropertyValue('700'),
+        600: PropertyValue('900'),
+        700: PropertyValue('900'),
+        800: PropertyValue('900'),
+        900: PropertyValue('900'),
     },
     lighter={
-        100: 100,
-        200: 100,
-        300: 100,
-        400: 100,
-        500: 100,
-        600: 400,
-        700: 400,
-        800: 700,
-        900: 700,
+        100: PropertyValue('100'),
+        200: PropertyValue('100'),
+        300: PropertyValue('100'),
+        400: PropertyValue('100'),
+        500: PropertyValue('100'),
+        600: PropertyValue('400'),
+        700: PropertyValue('400'),
+        800: PropertyValue('700'),
+        900: PropertyValue('700'),
     },
 )
 
@@ -138,7 +140,7 @@ def compute_font_size(style, parent_style):
     Set the computed value for font-size, and return this value in pixels.
     """
     if parent_style is not None:
-        parent_font_size = parent_style.font_size
+        parent_font_size = get_single_pixel_value(parent_style.font_size)
         assert parent_font_size + 0 == parent_font_size, \
             'Got a non-pixel value for the parent font-size.'
     else:
@@ -155,6 +157,8 @@ def compute_font_size(style, parent_style):
     # assert False, 'Declaration should have been ignored'
     if value_text in FONT_SIZE_KEYWORDS:
         font_size = FONT_SIZE_KEYWORDS[value_text]
+        style.font_size = font_size
+        return font_size[0].value
     elif value_text in ('smaller', 'larger'):
         # TODO: support 'smaller' and 'larger' font-size
         raise ValueError('font-size: smaller | larger are not supported yet.')
@@ -162,7 +166,7 @@ def compute_font_size(style, parent_style):
         font_size = parent_font_size * value.value / 100.
     elif value.type == 'DIMENSION':
         if value.dimension == 'px':
-            font_size = value.value
+            return value.value  # unchanged
         elif value.dimension == 'em':
             font_size = parent_font_size * value.value
         elif value.dimension == 'ex':
@@ -176,7 +180,8 @@ def compute_font_size(style, parent_style):
     else:
         raise ValueError('Invalid value for font-size:', value_text)
 
-    style.font_size = font_size
+    style.font_size = make_pixel_values(font_size)
+    return font_size
 
 
 def compute_length(value, font_size):
@@ -201,37 +206,38 @@ def compute_length(value, font_size):
         raise ValueError('Unknown length unit', value.value, repr(value.type))
 
 
-def compute_lengths(style):
+def compute_lengths(style, font_size):
     """
     Convert other length units to pixels.
     """
-    font_size = style.font_size
     for name, values in style.iteritems():
         style[name] = [compute_length(value, font_size) for value in values]
 
 
-def compute_line_height(style):
+def compute_line_height(style, font_size):
     """
     Relative values of line-height are relative to font-size.
     """
     # TODO: test this
-    if style.line_height == 'normal':
+    line_height = style['line-height']
+    if get_single_keyword(line_height) == 'normal':
         # a "reasonable" value
         # http://www.w3.org/TR/CSS21/visudet.html#line-height
         # TODO: use font metadata?
-        style['line-height'] = PropertyValue('1.2')
+        style['line-height'] = make_pixel_values(1.2 * font_size)
+        return
 
-    assert len(style['line-height']) == 1
-    value = style['line-height'][0]
+    assert len(line_height) == 1
+    value = line_height[0]
 
     # TODO: negative values are illegal
     if value.type == 'NUMBER':
-        height = style.font_size * value.value
+        height = font_size * value.value
     elif value.type == 'PERCENTAGE':
-        height = style.font_size * value.value / 100.
+        height = font_size * value.value / 100.
     else:
         return # as specified
-    style.line_height = height
+    style['line-height'] = make_pixel_values(height)
 
 
 def compute_border_width(style):
@@ -249,8 +255,7 @@ def compute_border_width(style):
             value = get_single_keyword(values)
             if value in BORDER_WIDTH_KEYWORDS:
                 width = BORDER_WIDTH_KEYWORDS[value]
-                style['border-%s-width' % side] = PropertyValue(
-                    str(width) + 'px')
+                style['border-%s-width' % side] = width
 
 
 def compute_outline_width(style):
@@ -258,11 +263,11 @@ def compute_outline_width(style):
     Set outline-width to zero if outline-style is none.
     """
     # TODO: test this
-    if style.outline_style == 'none':
-        style.outline_width = 0
+    keyword = get_single_keyword(style.outline_style)
+    if keyword == 'none':
+        style.outline_width = PropertyValue('0')
     else:
-        value = style.outline_width
-        if value in BORDER_WIDTH_KEYWORDS:
+        if keyword in BORDER_WIDTH_KEYWORDS:
             style.outline_width = BORDER_WIDTH_KEYWORDS[value]
 
 
@@ -272,25 +277,27 @@ def compute_display_float(style, parent_style):
     http://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
     """
     # TODO: test this
-    if style.display == 'none':
+    display = get_single_keyword(style.display)
+    position = get_single_keyword(style.position)
+    float_ = get_single_keyword(style.float)
+    if display == 'none':
         # Case 1
         return # position and float do not apply, but leave them
-    elif style.position in ('absolute', 'fixed'):
+    elif position in ('absolute', 'fixed'):
         # Case 2
-        style.float = 'none'
-    elif style.float == 'none' and parent_style is not None:
+        style.float = PropertyValue('none')
+    elif float_ == 'none' and parent_style is not None:
         # Case 5
         return
 
     # Cases 2, 3, 4
-    display = style.display
     if display == 'inline-table':
-        style.display = 'table'
+        style.display = PropertyValue('table')
     elif display in ('inline', 'table-row-group', 'table-column',
                      'table-column-group', 'table-header-group',
                      'table-footer-group', 'table-row', 'table-cell',
                      'table-caption', 'inline-block'):
-        style.display = 'block'
+        style.display = PropertyValue('block')
     # else: unchanged
 
 
@@ -300,8 +307,8 @@ def compute_word_spacing(style):
     """
     # TODO: test this
     # CSS 2.1 says this for word-spacing but not letter-spacing. Why?
-    if style.word_spacing == 'normal':
-        style.word_spacing = 0
+    if get_single_keyword(style.word_spacing) == 'normal':
+        style.word_spacing = make_pixel_values(0)
 
 
 def compute_font_weight(style, parent_style):
@@ -309,16 +316,12 @@ def compute_font_weight(style, parent_style):
     Handle keyword values for font-weight.
     """
     # TODO: test this
-    value = style.font_weight
-    if value == 'normal':
-        # Use a string here as StyleDict.__setattr__ turns integers into pixel
-        # lengths. This is a number without unit.
-        style.font_weight = '400'
-    elif value == 'bold':
-        # Use a string here as StyleDict.__setattr__ turns integers into pixel
-        # lengths. This is a number without unit.
-        style.font_weight = '700'
-    elif value in ('bolder', 'lighter'):
+    keyword = get_single_keyword(style.font_weight)
+    if keyword == 'normal':
+        style.font_weight = PropertyValue('400')
+    elif keyword == 'bold':
+        style.font_weight = PropertyValue('700')
+    elif keyword in ('bolder', 'lighter'):
         if parent_style is not None:
             parent_values = parent_style['font-weight']
             assert len(parent_values) == 1
@@ -330,7 +333,7 @@ def compute_font_weight(style, parent_style):
             parent_value = 400
         # Use a string here as StyleDict.__setattr__ turns integers into pixel
         # lengths. This is a number without unit.
-        style.font_weight = str(FONT_WEIGHT_RELATIVE[value][parent_value])
+        style.font_weight = FONT_WEIGHT_RELATIVE[keyword][parent_value]
 
 
 def compute_content_value(element, value):
@@ -353,28 +356,34 @@ def compute_content_value(element, value):
 
 def compute_content(element, pseudo_type, style):
     # TODO: properly test this
+    values = style.content
+    keyword = get_single_keyword(values)
     if pseudo_type in ('before', 'after'):
-        if style.content == 'normal':
-            style.content = 'none'
+        if keyword == 'normal':
+            style.content = PropertyValue('none')
         else:
             style.content = [compute_content_value(element, value)
-                             for value in style['content']]
+                             for value in values]
     else:
         # CSS 2.1 says it computes to 'normal' for elements, but does not say
         # anything for pseudo-elements other than :before and :after
         # (ie. :first-line and :first-letter)
         # Assume the same as elements.
-        style.content = 'normal'
+        style.content = PropertyValue('normal')
 
 
 def compute_size(element, style):
     if element != '@page':
         return
-    if style.size == 'auto':
-        style.size = 'A4' # Chosen by the UA. (That’s me!)
+
     values = style['size'] # PropertyValue object
     if len(values) == 0 or len(values) > 2:
         raise ValueError('size takes one or two values, got %r' % values)
+
+    keywords = map(get_keyword, values)
+    if keywords == ['auto']:
+        keywords = ['A4'] # Chosen by the UA. (That’s me!)
+
     if values[0].type == 'DIMENSION' and values[0].dimension == 'px':
         if len(values) == 2:
             assert values[1].type == 'DIMENSION'
@@ -390,12 +399,11 @@ def compute_size(element, style):
     else:
         orientation = None
         size = None
-        for value in values:
-            value = value.cssText
-            if value in ('portrait', 'landscape'):
-                orientation = value
-            elif value in PAGE_SIZES:
-                size = value
+        for keyword in keywords:
+            if keyword in ('portrait', 'landscape'):
+                orientation = keyword
+            elif keyword in PAGE_SIZES:
+                size = keyword
             else:
                 raise ValueError("Illegal value for 'size': %r", value)
         if size is None:
@@ -432,17 +440,17 @@ def compute_values(element, pseudo_type, style, parent_style):
     Normalize values as much as possible without rendering the document.
     """
     # em lengths depend on font-size, compute font-size first
-    compute_font_size(style, parent_style)
-    compute_lengths(style)
-    compute_line_height(style)
+    font_size = compute_font_size(style, parent_style)
+    compute_lengths(style, font_size)
+    compute_line_height(style, font_size)
     compute_display_float(style, parent_style)
     compute_word_spacing(style)
     compute_font_weight(style, parent_style)
     compute_content(element, pseudo_type, style)
     compute_border_width(style)
     compute_outline_width(style)
-    compute_size(element, style)
     compute_current_color(style, parent_style)
+    compute_size(element, style)
     # Recent enough cssutils have a .absoluteUri on URIValue objects.
     # TODO: percentages for height?
     #       http://www.w3.org/TR/CSS21/visudet.html#propdef-height

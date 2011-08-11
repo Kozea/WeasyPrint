@@ -234,12 +234,12 @@ def test_styles():
 
     for child in box.descendants():
         # All boxes inherit the color
-        assert child.style.color == 'blue'
+        assert child.style.color[0].value == 'blue'
         # Only non-anonymous boxes have margins
         if isinstance(child, boxes.AnonymousBox):
-            assert child.style.margin_top == 0
+            assert child.style.margin_top[0].value == 0
         else:
-            assert child.style.margin_top == 42
+            assert child.style.margin_top[0].value == 42
 
 
 @suite.test
@@ -297,10 +297,10 @@ def test_page_style():
     def assert_page_margins(page_number, top, right, bottom, left):
         page = boxes.PageBox(
             document, boxes.BlockBox(document, document.dom), page_number)
-        assert page.style.margin_top == top
-        assert page.style.margin_right == right
-        assert page.style.margin_bottom == bottom
-        assert page.style.margin_left == left
+        assert page.style.margin_top[0].value == top
+        assert page.style.margin_right[0].value == right
+        assert page.style.margin_bottom[0].value == bottom
+        assert page.style.margin_left[0].value == left
 
     # odd numbers are :right pages, even are :left. 1 has :first as well
     assert_page_margins(1, top=20, right=10, bottom=3, left=3)

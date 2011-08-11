@@ -17,6 +17,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+from ..css.utils import get_single_keyword
 from ..formatting_structure import boxes
 from .percentages import resolve_percentages
 from .inline_formatting_context import breaking_linebox
@@ -65,7 +66,7 @@ def block_level_width(box):
         # This is the direction of the containing block, but the containing
         # block for block-level boxes in normal flow is always the parent.
         # TODO: is it?
-        if box.parent.style.direction == 'ltr':
+        if get_single_keyword(box.parent.style.direction) == 'ltr':
             margin_r = box.margin_right = margin_sum - margin_l
         else:
             margin_l = box.margin_left = margin_sum - margin_r
@@ -87,7 +88,7 @@ def block_level_width(box):
 
 
 def block_level_height(box):
-    if box.style.overflow != 'visible':
+    if get_single_keyword(box.style.overflow) != 'visible':
         raise NotImplementedError
 
     assert isinstance(box, boxes.BlockBox)
@@ -125,4 +126,3 @@ def block_level_height(box):
 
     if box.height == 'auto':
         box.height = position_y - initial_position_y
-

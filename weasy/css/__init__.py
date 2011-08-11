@@ -299,25 +299,11 @@ class StyleDict(dict):
     """
     def __getattr__(self, key):
         try:
-            values = self[key.replace('_', '-')]
+            return self[key.replace('_', '-')]
         except KeyError:
             raise AttributeError(key)
-        if len(values) == 1 and values[0].type == 'DIMENSION' \
-                and values[0].dimension == 'px':
-            # cssutils promises that `DimensionValue.value` is an int or float
-            assert isinstance(values[0].value, (float, int, long))
-            return values[0].value
-        elif len(values) == 1 and values[0].value == 0:
-            return 0
-        else:
-            return ' '.join(value.cssText for value in values)
 
     def __setattr__(self, key, value):
-        if isinstance(value, (float, int, long)):
-            value = PropertyValue(str(value) + 'px')
-        elif isinstance(value, basestring):
-            value = PropertyValue(value)
-        #else: assume a PropertyValue-like
         self[key.replace('_', '-')] = value
 
     def copy(self):

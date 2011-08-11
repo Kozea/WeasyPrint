@@ -46,8 +46,8 @@ def test_style_dict():
         'margin-left': cssutils.css.PropertyValue('12px'),
         'display': cssutils.css.PropertyValue('block')
     })
-    assert style.display == 'block'
-    assert style.margin_left == 12
+    assert style.display[0].value == 'block'
+    assert style.margin_left[0].value == 12
     with attest.raises(AttributeError):
         style.position
 
@@ -91,11 +91,11 @@ def test_expand_shorthands():
 
     style = expand_shorthands(style)
     assert 'margin' not in style
-    assert style.margin_top == '2em'
-    assert style.margin_right == 0
-    assert style.margin_bottom == '2em', \
+    assert style.margin_top[0].value == 2
+    assert style.margin_right [0].value== 0
+    assert style.margin_bottom[0].value == 2, \
         "3em was before the shorthand, should be masked"
-    assert style.margin_left == '4em', \
+    assert style.margin_left[0].value == 4, \
         "4em was after the shorthand, should not be masked"
 
 
@@ -126,39 +126,39 @@ def test_annotate_document():
     assert h1['background-image'][0].absoluteUri == 'file://' \
         + os.path.abspath(resource_filename('logo_small.png'))
 
-    assert h1.font_weight == '700'
+    assert h1.font_weight[0].value == 700
 
     # 32px = 1em * font-size: 2em * initial 16px
-    assert p.margin_top == 32
-    assert p.margin_right == 0
-    assert p.margin_bottom == 32
-    assert p.margin_left == 0
+    assert p.margin_top[0].value == 32
+    assert p.margin_right[0].value == 0
+    assert p.margin_bottom[0].value == 32
+    assert p.margin_left[0].value == 0
 
     # 32px = 2em * initial 16px
-    assert ul.margin_top == 32
-    assert ul.margin_right == 32
-    assert ul.margin_bottom == 32
-    assert ul.margin_left == 32
+    assert ul.margin_top[0].value == 32
+    assert ul.margin_right[0].value == 32
+    assert ul.margin_bottom[0].value == 32
+    assert ul.margin_left[0].value == 32
 
     # thick = 5px, 0.25 inches = 96*.25 = 24px
-    assert ul.border_top_width == 0
-    assert ul.border_right_width == 5
-    assert ul.border_bottom_width == 0
-    assert ul.border_left_width == 24
+    assert ul.border_top_width[0].value == 0
+    assert ul.border_right_width[0].value == 5
+    assert ul.border_bottom_width[0].value == 0
+    assert ul.border_left_width[0].value == 24
 
     # 32px = 2em * initial 16px
     # 64px = 4em * initial 16px
-    assert li_0.margin_top == 32
-    assert li_0.margin_right == 0
-    assert li_0.margin_bottom == 32
-    assert li_0.margin_left == 64
+    assert li_0.margin_top[0].value == 32
+    assert li_0.margin_right[0].value == 0
+    assert li_0.margin_bottom[0].value == 32
+    assert li_0.margin_left[0].value == 64
 
-    assert a.text_decoration == 'underline'
+    assert a.text_decoration[0].value == 'underline'
 
-    assert a.padding_top == 1
-    assert a.padding_right == 2
-    assert a.padding_bottom == 3
-    assert a.padding_left == 4
+    assert a.padding_top[0].value == 1
+    assert a.padding_right[0].value == 2
+    assert a.padding_bottom[0].value == 3
+    assert a.padding_left[0].value == 4
 
     color = a['color'][0]
     assert (color.red, color.green, color.blue, color.alpha) == (255, 0, 0, 1)
@@ -177,7 +177,7 @@ def test_annotate_document():
 def test_default_stylesheet():
     document = parse_html('doc1.html')
     head_style = document.style_for(document.dom.head)
-    assert head_style.display == 'none', \
+    assert head_style.display[0].value == 'none', \
         'The HTML4 user-agent stylesheet was not applied'
 
 
@@ -195,21 +195,21 @@ def test_page():
     document.user_stylesheets.append(user_sheet)
 
     style = document.style_for('@page', 'first_left')
-    assert style.margin_top == 5
-    assert style.margin_left == 10
-    assert style.margin_bottom == 10
+    assert style.margin_top[0].value == 5
+    assert style.margin_left[0].value == 10
+    assert style.margin_bottom[0].value == 10
 
     style = document.style_for('@page', 'first_right')
-    assert style.margin_top == 5
-    assert style.margin_left == 10
-    assert style.margin_bottom == 16
+    assert style.margin_top[0].value == 5
+    assert style.margin_left[0].value == 10
+    assert style.margin_bottom[0].value == 16
 
     style = document.style_for('@page', 'left')
-    assert style.margin_top == 10
-    assert style.margin_left == 10
-    assert style.margin_bottom == 10
+    assert style.margin_top[0].value == 10
+    assert style.margin_left[0].value == 10
+    assert style.margin_bottom[0].value == 10
 
     style = document.style_for('@page', 'right')
-    assert style.margin_top == 10
-    assert style.margin_left == 10
-    assert style.margin_bottom == 16
+    assert style.margin_top[0].value == 10
+    assert style.margin_left[0].value == 10
+    assert style.margin_bottom[0].value == 16

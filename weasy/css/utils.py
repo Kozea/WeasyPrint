@@ -24,6 +24,7 @@ Utility functions and methods used by various modules in the css package.
 import os.path
 
 from cssutils import parseFile
+from cssutils.css import PropertyValue
 
 
 HTML4_DEFAULT_STYLESHEET = parseFile(os.path.join(os.path.dirname(__file__),
@@ -115,3 +116,12 @@ def get_single_percentage_value(values):
     """
     if len(values) == 1:
         return get_percentage_value(values[0])
+
+
+def make_pixel_values(pixels):
+    """
+    Return a PropertyValue with one pixel length from the numeric value.
+
+    This is the inverse of get_single_pixel_value.
+    """
+    return PropertyValue('{}px'.format(pixels))
