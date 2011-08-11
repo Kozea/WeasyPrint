@@ -24,7 +24,7 @@ Normalize values as much as possible without rendering the document.
 import collections
 
 import cssutils.helper
-from cssutils.css import PropertyValue, DimensionValue, Value
+from cssutils.css import PropertyValue, Value
 
 from .initial_values import INITIAL_VALUES
 from .utils import (get_single_keyword, get_keyword, get_single_pixel_value,
@@ -196,9 +196,9 @@ def compute_length(value, font_size):
     if value.dimension in LENGTHS_TO_PIXELS:
         # Convert absolute lengths to pixels
         factor = LENGTHS_TO_PIXELS[value.dimension]
-        return DimensionValue(str(value.value * factor) + 'px')
+        return make_pixel_value(value.value * factor)
     elif value.dimension == 'em':
-        return DimensionValue(str(value.value * font_size) + 'px')
+        return make_pixel_value(value.value * font_size)
     elif value.dimension == 'ex':
         # TODO: support ex
         raise ValueError('The ex unit is not supported yet.', value.cssText)
