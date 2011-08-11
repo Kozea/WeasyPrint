@@ -104,32 +104,40 @@ def test_canvas_background():
 def test_background_image():
     tests = [
         ('repeat', ''),
-        ('no_repeat', 'no-repeat'),
+        ('top_left', 'no-repeat'),
         ('repeat_x', 'repeat-x'),
         ('repeat_y', 'repeat-y'),
     ]
-    # Order for non-keywords: horizontal, then vertical
-    tests.extend([
-        ('bottom_left', 'no-repeat left bottom'),
-        ('bottom_left', 'no-repeat 0% 100%'),
-        ('bottom_left', 'no-repeat 0 6px'),
 
-        ('bottom_right', 'no-repeat right bottom'),
-        ('bottom_right', 'no-repeat 100% 100%'),
-        ('bottom_right', 'no-repeat 6px 6px'),
+    for name1, vertical in [
+            ('top', 'top'),
+            ('top', '0%'),
+            ('top', '0px'),
+            ('top', '0'),
+            ('center', 'center'),
+            ('center', '50%'),
+            ('center', '3px'),
+            ('bottom', 'bottom'),
+            ('bottom', '100%'),
+            ('bottom', '6px'),
+        ]:
+        for name2, horizontal in [
+                ('left', 'left'),
+                ('left', '0%'),
+                ('left', '0px'),
+                ('left', '0'),
+                ('center', 'center'),
+                ('center', '50%'),
+                ('center', '3px'),
+                ('right', 'right'),
+                ('right', '100%'),
+                ('right', '6px'),
+            ]:
+            tests.append((
+                '%s_%s' % (name1, name2),
+                'no-repeat %s %s' % (horizontal, vertical),  # CSS order
+            ))
 
-        ('top_right', 'no-repeat right top'),
-        ('top_right', 'no-repeat 100% 0%'),
-        ('top_right', 'no-repeat 6px 0px'),
-
-        ('no_repeat', 'no-repeat left top'),
-        ('no_repeat', 'no-repeat 0% 0%'),
-        ('no_repeat', 'no-repeat 0px 0px'),
-
-        ('center_right', 'no-repeat right center'),
-        ('center_right', 'no-repeat 100% 50%'),
-        ('center_right', 'no-repeat 6px 3px'),
-    ])
     for name, css in tests:
         test_pixels('background_' + name, 14, 16, '''
             <style>
