@@ -23,7 +23,7 @@
 
 from cssutils.css import PropertyValue
 
-from .utils import get_single_keyword
+from .utils import get_single_keyword, make_keyword
 
 
 r"""
@@ -186,6 +186,6 @@ def handle_initial_values(style):
     # text-align: left in left-to-right text, right in right-to-left
     if is_initial(style, 'text-align'):
         if get_single_keyword(style['direction']) == 'rtl':
-            style['text-align'] = PropertyValue('right')
+            style['text-align'] = [make_keyword('right')]
         else:
-            style['text-align'] = PropertyValue('left')
+            style['text-align'] = [make_keyword('left')]

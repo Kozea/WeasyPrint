@@ -20,9 +20,7 @@
     Some CSS properties inherit from the parent element’s value.
 """
 
-from cssutils.css import PropertyValue
-
-from .utils import get_single_keyword
+from .utils import get_single_keyword, make_keyword
 
 
 r"""
@@ -101,7 +99,7 @@ def handle_inheritance(style, parent_style):
             if is_inherit(values):
                 # The root element can not inherit from anything:
                 # use the initial value.
-                style[name] = PropertyValue('initial')
+                style[name] = [make_keyword('initial')]
     else:
         # The parent appears before in tree order, so we should already have
         # finished with its computed values.
