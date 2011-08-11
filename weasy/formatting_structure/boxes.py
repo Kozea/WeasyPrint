@@ -138,6 +138,14 @@ class Box(object):
         new_box.__dict__.update(self.__dict__)
         return new_box
 
+    def translate(self, dx, dy):
+        """
+        Change this box’s position. Also update the children’s positions
+        accordingly.
+        """
+        self.position_x += dx
+        self.position_y += dy
+
     ###
 
     def padding_width(self):
@@ -284,6 +292,15 @@ class ParentBox(Box):
                     yield grand_child
             else:
                 yield child
+
+    def translate(self, dx, dy):
+        """
+        Change this box’s position. Also update the children’s positions
+        accordingly.
+        """
+        super(ParentBox, self).translate(dx, dy)
+        for child in self.children:
+            child.translate(dx, dy)
 
 
 class BlockLevelBox(Box):
@@ -440,4 +457,3 @@ class InlineLevelReplacedBox(ReplacedBox, AtomicInlineLevelBox):
     A replaced element with a 'display' value of 'inline', 'inline-table', or
     'inline-block' generates an inline-level replaced box.
     """
-
