@@ -222,3 +222,32 @@ def test_expand_background():
         attachment='fixed', ##
         position='78px right' ##
     )
+
+
+@suite.test
+def test_font():
+    assert expand_to_dict('font: 12px sans-serif') == {
+        'font-style': 'normal',
+        'font-variant': 'normal',
+        'font-weight': 'normal',
+        'font-size': '12px', ##
+        'line-height': 'normal',
+        'font-family': 'sans-serif', ##
+    }
+    assert expand_to_dict('font: smaller/1.2 "Some Font", serif') == {
+        'font-style': 'normal',
+        'font-variant': 'normal',
+        'font-weight': 'normal',
+        'font-size': 'smaller', ##
+        'line-height': '1.2', ##
+        # The comma was lost in expand_to_dict()
+        'font-family': '"Some Font" serif', ##
+    }
+    assert expand_to_dict('font: small-caps italic 700 large serif') == {
+        'font-style': 'italic', ##
+        'font-variant': 'small-caps', ##
+        'font-weight': '700', ##
+        'font-size': 'large', ##
+        'line-height': 'normal',
+        'font-family': 'serif', ##
+    }

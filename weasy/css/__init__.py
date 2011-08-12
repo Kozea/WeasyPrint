@@ -162,6 +162,7 @@ def effective_declarations(declaration_block):
     for declaration in declaration_block:
         if declaration_is_valid(declaration):
             for name, values in shorthands.expand_shorthand(declaration):
+                assert isinstance(values, list)
                 yield name, values, declaration.priority
         else:
             # TODO: log that something was ignored
