@@ -45,8 +45,9 @@ class LineBoxFormatting(object):
 
     @property
     def parents(self):
-        for i, box in enumerate(self.flat_tree[:-1]):
-            if box.depth < self.flat_tree[i+1].depth:
+        for box in self.flat_tree:
+            if isinstance(box, boxes.ParentBox) and not \
+               isinstance(box, boxes.AtomicInlineLevelBox):
                 yield box
 
     @property
@@ -72,7 +73,8 @@ class LineBoxFormatting(object):
     def child_iterator(self):
         for i, box in enumerate(self.flat_tree):
             if not self.is_a_parent(box):
-                yield i, box
+                if isinstance(box, boxes.TextBox):
+                    yield i, box
 
     def breaking_textbox(self, textbox, allocate_width):
         """
