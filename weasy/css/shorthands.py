@@ -25,7 +25,6 @@
 import functools
 
 from .utils import get_keyword, get_single_keyword
-from .inheritance import is_inherit
 from .initial_values import INITIAL_VALUES
 from .computed_values import FONT_SIZE_KEYWORDS
 
@@ -62,7 +61,7 @@ def generic_expander(*expanded_names):
     def decorator(wrapped):
         @functools.wraps(wrapped)
         def wrapper(name, values):
-            if is_inherit(values):
+            if get_single_keyword(values) == 'inherit':
                 results = dict.fromkeys(expanded_names, values)
             else:
                 results = {}

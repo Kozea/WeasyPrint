@@ -115,8 +115,8 @@ INITIAL_VALUES = dict(
         ('position', 'static'),
         ('right', 'auto'),
         ('table-layout', 'auto'),
-    #   'text-align': acts as 'left' if 'direction' is 'ltr', 'right' if
-    #                 'direction' is 'rtl'
+        ('text-align', 'start'),  # Taken from CSS3 Text
+                                 # Other CSS3 values are not supported.
         ('text-decoration', 'none'),
         ('text-indent', '0'),
         ('text-transform', 'none'),
@@ -162,33 +162,3 @@ INITIAL_VALUES = dict(
 # Computed initial varies: border-*-color, text-align, line-height
 # depend on -style (0 if -style is none): border-*-width, outline-width
 # display: on root element
-
-
-
-def is_initial(style, name):
-    """
-    Return whether the property `name` is missing in the given `style` dict
-    or if its value is the 'initial' keyword.
-    """
-    # Explicit 'initial' values are new in CSS3
-    # http://www.w3.org/TR/css3-values/#computed0
-    return name not in style or get_single_keyword(style[name]) == 'initial'
-
-
-def handle_initial_values(style):
-    """
-    Properties that do not have a value after inheritance or whose value is the
-    'initial' keyword (CSS3) get their initial value.
-    """
-    for name, initial in INITIAL_VALUES.iteritems():
-        if is_initial(style, name):
-            style[name] = initial
-
-    # Special cases for initial values that can not be expressed as CSS
-
-    # text-align: left in left-to-right text, right in right-to-left
-    if is_initial(style, 'text-align'):
-        if get_single_keyword(style['direction']) == 'rtl':
-            style['text-align'] = [make_keyword('right')]
-        else:
-            style['text-align'] = [make_keyword('left')]

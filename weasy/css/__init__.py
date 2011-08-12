@@ -362,8 +362,7 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None):
     style = StyleDict(
         (name, value)
         for name, (value, _precedence) in cascaded.iteritems())
-    inheritance.handle_inheritance(style, parent_style)
-    initial_values.handle_initial_values(style)
+    inheritance.handle_inheritance_and_initial(style, parent_style)
     computed_values.compute_values(element, pseudo_type, style, parent_style)
     return style
 

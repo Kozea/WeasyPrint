@@ -21,6 +21,7 @@
 """
 
 from .utils import get_single_keyword, make_keyword
+from .initial_values import INITIAL_VALUES
 
 
 r"""
@@ -84,33 +85,25 @@ INHERITED = set("""
 #    volume
 
 
-
-def is_inherit(values):
-    return get_single_keyword(values) == 'inherit'
-
-
-def handle_inheritance(style, parent_style):
+def handle_inheritance_and_initial(style, parent_style):
     """
-    The specified value is the parent element’s computed value iif one of the
-    following is true:
-     * The cascade did not result in a value, and the the property is inherited
-     * The the value is the keyword 'inherit'.
+    Handle inheritance and initial values.
     """
-    if parent_style is None: # root element
-        for name, values in style.iteritems():
-            # The PropertyValue object has value attribute
-            if is_inherit(values):
-                # The root element can not inherit from anything:
-                # use the initial value.
-                style[name] = [make_keyword('initial')]
-    else:
-        # The parent appears before in tree order, so we should already have
-        # finished with its computed values.
-        for name, values in style.iteritems():
-            if is_inherit(values):
-                style[name] = parent_style[name]
-        for name in INHERITED:
-            # Do not use is_initial() here: only inherit if the property is
-            # actually missing.
-            if name not in style:
-                style[name] = parent_style[name]
+    if parent_style is None:
+        # Root element, 'inherit' from initial values
+        parent_style = INITIAL_VALUES
+
+    for name, initial in INITIAL_VALUES.iteritems():
+        values = style.get(name, None)
+        if values is None:
+            if name in INHERITED:
+                keyword = 'inherit'
+            else:
+                keyword = 'initial'
+        else:
+            keyword = get_single_keyword(values)
+
+        if keyword == 'initial':
+            style[name] = initial
+        elif keyword == 'inherit':
+            style[name] = parent_style[name]

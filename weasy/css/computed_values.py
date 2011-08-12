@@ -436,6 +436,18 @@ def compute_current_color(style, parent_style):
             style[name] = style['color']
 
 
+def compute_text_align(style):
+    """
+    Replace the 'start' keyword for text-align that we borrowed from CSS3
+    to implement the initial value.
+    """
+    if get_single_keyword(style['text-align']) == 'start':
+        if get_single_keyword(style['direction']) == 'rtl':
+            style['text-align'] = [make_keyword('right')]
+        else:
+            style['text-align'] = [make_keyword('left')]
+
+
 def compute_values(element, pseudo_type, style, parent_style):
     """
     Normalize values as much as possible without rendering the document.
@@ -451,6 +463,7 @@ def compute_values(element, pseudo_type, style, parent_style):
     compute_border_width(style)
     compute_outline_width(style)
     compute_current_color(style, parent_style)
+    compute_text_align(style)
     compute_size(element, style)
     # Recent enough cssutils have a .absoluteUri on URIValue objects.
     # TODO: percentages for height?
