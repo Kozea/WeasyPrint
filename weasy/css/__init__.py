@@ -203,6 +203,44 @@ def add_declaration(cascaded_styles, prop_name, prop_values, weight, element,
         style[prop_name] = prop_values, weight
 
 
+def selector_to_xpath(selector):
+    """
+    Get a cssutils Selector object and return (pseudo_type, selector_callable)
+    a string and a lxml.cssselect XPath callable.
+    """
+    try:
+        return selector._x_weasyprint_parsed_cssselect
+    except AttributeError:
+        parsed_selector = cssselect.parse(selector.selectorText)
+        # cssutils made sure that `selector` is not a "group of selectors"
+        # in CSS3 terms (`rule.selectorList` is) so `parsed_selector` cannot be
+        # of type `cssselect.Or`.
+        # This leaves only three cases:
+        #  * The selector ends with a pseudo-element. As `cssselect.parse()`
+        #    parses left-to-right, `parsed_selector` is a `cssselect.Pseudo`
+        #    instance that we can unwrap. This is the only place where CSS
+        #    allows pseudo-element selectors.
+        #  * The selector has a pseudo-element not at the end. This is invalid
+        #    and the whole ruleset should be ignored.
+        #    cssselect.CSSSelector() will raise a cssselect.ExpressionError.
+        #  * The selector has no pseudo-element and is supported by
+        #    `cssselect.CSSSelector`.
+        if isinstance(parsed_selector, cssselect.Pseudo) \
+                and parsed_selector.ident in utils.PSEUDO_ELEMENTS:
+            pseudo_type = parsed_selector.ident
+            # Remove the pseudo-element from the selector
+            parsed_selector = parsed_selector.element
+        else:
+            # No pseudo-element or invalid selector.
+            pseudo_type = None
+        selector_callable = cssselect.CSSSelector(parsed_selector)
+        result = (pseudo_type, selector_callable)
+
+        # Cache for next time we use the same stylesheet
+        selector._x_weasyprint_parsed_cssselect = result
+        return result
+
+
 def match_selectors(document, selector_list):
     """
     Match a list of selectors against a document and return an iterable of
@@ -215,30 +253,8 @@ def match_selectors(document, selector_list):
     """
     selectors = []
     for selector in selector_list:
-        parsed_selector = cssselect.parse(selector.selectorText)
-        # cssutils made sure that `selector` is not a "group of selectors"
-        # in CSS3 terms (`rule.selectorList` is) so `parsed_selector` cannot be
-        # of type `cssselect.Or`.
-        # This leaves only three cases:
-        #  * The selector ends with a pseudo-element. As `cssselect.parse()`
-        #    parses left-to-right, `parsed_selector` is a `cssselect.Pseudo`
-        #    instance that we can unwrap. This is the only place where CSS
-        #    allows pseudo-element selectors.
-        #  * The selector has a pseudo-element not at the end. This is invalid
-        #    and the whole ruleset should be ignored.
-        #  * The selector has no pseudo-element and is supported by
-        #    `cssselect.CSSSelector`.
-        if isinstance(parsed_selector, cssselect.Pseudo) \
-                and parsed_selector.ident in utils.PSEUDO_ELEMENTS:
-            pseudo_type = parsed_selector.ident
-            # Remove the pseudo-element from the selector
-            parsed_selector = parsed_selector.element
-        else:
-            # No pseudo-element or invalid selector.
-            pseudo_type = None
-
         try:
-            selector_callable = cssselect.CSSSelector(parsed_selector)
+            pseudo_type, selector_callable = selector_to_xpath(selector)
         except cssselect.ExpressionError:
             # Invalid selector, ignore the whole ruleset.
             # TODO: log this error.
