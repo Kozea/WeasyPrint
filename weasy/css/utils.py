@@ -69,22 +69,29 @@ def get_single_keyword(values):
     If the given list of Value object is a single keyword (identifier in
     cssutils), return its name. Otherwise return None.
     """
+    # Unsafe, fast way:
     if len(values) == 1:
-        return get_keyword(values[0])
+        value = values[0]
+        if value._type == 'IDENT':
+            return value._value
+#    if len(values) == 1:
+#        return get_keyword(values[0])
 
 
 def get_pixel_value(value):
     """
     Return the numeric value of a pixel length or None.
     """
+    value_type = value.type
+    value_value = value.value
     if (
-        (value.type == 'DIMENSION' and value.dimension == 'px') or
+        (value_type == 'DIMENSION' and value.dimension == 'px') or
         # Units may be ommited on 0
-        (value.type == 'NUMBER' and value.value == 0)
+        (value_type == 'NUMBER' and value_value == 0)
     ):
         # cssutils promises that `DimensionValue.value` is an int or float
-        assert isinstance(value.value, (int, float))
-        return value.value
+        assert isinstance(value_value, (int, float))
+        return value_value
     else:
         # Not a pixel length
         return None
@@ -120,7 +127,7 @@ def get_single_percentage_value(values):
 
 def make_pixel_value(pixels):
     """
-    Reverse of get_single_pixel_value.
+    Make a pixel DimensionValue. Reverse of get_single_pixel_value.
     """
     value = DimensionValue()
     value._value = pixels
@@ -131,7 +138,7 @@ def make_pixel_value(pixels):
 
 def make_number(number):
     """
-    Reverse of get_single_pixel_value.
+    Make a number DimensionValue.
     """
     value = DimensionValue()
     value._value = number
@@ -141,7 +148,7 @@ def make_number(number):
 
 def make_keyword(keyword):
     """
-    Reverse of get_keyword.
+    Make a keyword Value. Reverse of get_keyword.
     """
     value = Value()
     value._value = keyword

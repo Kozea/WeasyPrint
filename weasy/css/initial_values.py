@@ -45,9 +45,8 @@ r"""
 # this dict of initial values.
 # XXX: text-align can not be expressed as CSS and must be special-cased
 INITIAL_VALUES = dict(
-    (name, PropertyValue(value))
+    (name, list(PropertyValue(value)))
     for name, value in [
-        ('azimuth', 'center'),
         ('background-attachment', 'scroll'),
         ('background-color', 'transparent'),
         ('background-image', 'none'),
@@ -76,12 +75,8 @@ INITIAL_VALUES = dict(
         ('content', 'normal'),
         ('counter-increment', 'none'),
         ('counter-reset', 'none'),
-        ('cue-after', 'none'),
-        ('cue-before', 'none'),
-        ('cursor', 'auto'),
         ('direction', 'ltr'),
         ('display', 'inline'),
-        ('elevation', 'level'),
         ('empty-cells', 'show'),
         ('float', 'none'),
         ('font-family', 'serif'), # depends on user agent
@@ -116,21 +111,9 @@ INITIAL_VALUES = dict(
         ('page-break-after', 'auto'),
         ('page-break-before', 'auto'),
         ('page-break-inside', 'auto'),
-        ('pause-after', '0'),
-        ('pause-before', '0'),
-        ('pitch-range', '50'),
-        ('pitch', 'medium'),
-        ('play-during', 'auto'),
         ('quotes', u'"“" "”" "‘" "’"'),  # depends on user agent
         ('position', 'static'),
-        ('richness', '50'),
         ('right', 'auto'),
-        ('speak-header', 'once'),
-        ('speak-numeral', 'continuous'),
-        ('speak-punctuation', 'none'),
-        ('speak', 'normal'),
-        ('speech-rate', 'medium'),
-        ('stress', '50'),
         ('table-layout', 'auto'),
     #   'text-align': acts as 'left' if 'direction' is 'ltr', 'right' if
     #                 'direction' is 'rtl'
@@ -141,8 +124,6 @@ INITIAL_VALUES = dict(
         ('unicode-bidi', 'normal'),
         ('vertical-align', 'baseline'),
         ('visibility', 'visible'),
-        ('voice-family', 'child'),     # depends on user agent
-        ('volume', 'medium'),
         ('white-space', 'normal'),
         ('widows', '2'),
         ('width', 'auto'),
@@ -151,6 +132,28 @@ INITIAL_VALUES = dict(
 
         # CSS3 Paged Media: http://www.w3.org/TR/css3-page/#page-size
         ('size', 'auto'),
+
+        # Disabled since not applicable to the print media:
+#        ('azimuth', 'center'),
+#        ('cue-after', 'none'),
+#        ('cue-before', 'none'),
+#        ('cursor', 'auto'),
+#        ('elevation', 'level'),
+#        ('pause-after', '0'),
+#        ('pause-before', '0'),
+#        ('pitch-range', '50'),
+#        ('pitch', 'medium'),
+#        ('play-during', 'auto'),
+#        ('richness', '50'),
+#        ('speak-header', 'once'),
+#        ('speak-numeral', 'continuous'),
+#        ('speak-punctuation', 'none'),
+#        ('speak', 'normal'),
+#        ('speech-rate', 'medium'),
+#        ('stress', '50'),
+#        ('voice-family', 'child'),     # depends on user agent
+#        ('volume', 'medium'),
+
     ]
 )
 

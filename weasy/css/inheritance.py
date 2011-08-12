@@ -39,14 +39,11 @@ r"""
 # text-decoration is not a realy inherited property
 # See : http://www.w3.org/TR/CSS2/text.html#propdef-text-decoration
 INHERITED = set("""
-    azimuth
     border-collapse
     border-spacing
     caption-side
     color
-    cursor
     direction
-    elevation
     empty-cells
     font-family
     font-size
@@ -59,27 +56,33 @@ INHERITED = set("""
     list-style-position
     list-style-type
     orphans
-    pitch-range
-    pitch
     quotes
-    richness
-    speak-header
-    speak-numeral
-    speak-punctuation
-    speak
-    speech-rate
-    stress
     text-align
     text-decoration
     text-indent
     text-transform
     visibility
-    voice-family
-    volume
     white-space
     widows
     word-spacing
 """.split())
+
+# Disabled since not applicable to the print media:
+#    azimuth
+#    cursor
+#    elevation
+#    pitch-range
+#    pitch
+#    richness
+#    speak-header
+#    speak-numeral
+#    speak-punctuation
+#    speak
+#    speech-rate
+#    stress
+#    voice-family
+#    volume
+
 
 
 def is_inherit(values):

@@ -190,7 +190,8 @@ def compute_length(value, font_size):
     """
     # TODO: once we ignore invalid declarations, turn these ValueError’s into
     # assert False, 'Declaration should have been ignored'
-    if value.type != 'DIMENSION' or value.value == 0:
+    if value.type != 'DIMENSION' or value.value == 0 or \
+            value.dimension == 'px':
         # No conversion needed.
         return value
     if value.dimension in LENGTHS_TO_PIXELS:
