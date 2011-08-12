@@ -40,7 +40,6 @@ function does everything, but there is also a function for each step:
 """
 
 from cssutils import parseString, parseUrl, parseStyle
-from cssutils.css import PropertyValue
 from lxml import cssselect
 
 from . import shorthands

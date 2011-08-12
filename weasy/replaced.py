@@ -23,8 +23,6 @@ as an atomic opaque box in CSS. They may or may not have intrinsic dimensions.
 
 from __future__ import division
 
-import urllib
-
 import cairo
 
 from .utils import get_url_attribute

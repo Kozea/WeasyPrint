@@ -17,18 +17,10 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-
 from __future__ import division
 import urllib
-try:
-    from urlparse import urljoin
-except ImportError:
-    # Python 3
-    from urllib.parse import urljoin
-
 
 import cairo
-import cssutils.css.value
 
 from ..css.utils import (get_single_keyword, get_keyword,
                          get_pixel_value, get_percentage_value)

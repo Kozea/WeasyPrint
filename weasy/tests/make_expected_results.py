@@ -36,9 +36,9 @@ def make(basename, lines, directory='expected_results'):
 
 
 def make_all():
-    _ = white = array('B', [255, 255, 255])
-    r = red = array('B', [255, 0, 0])
-    B = blue = array('B', [0, 0, 255])
+    _ = array('B', [255, 255, 255])  # white
+    r = array('B', [255, 0, 0])  # red
+    B = array('B', [0, 0, 255])  # blue
 
     make('blocks', [
         r+r+r+r+r+r+r+r+r+r,
@@ -53,7 +53,7 @@ def make_all():
         r+r+r+r+r+r+r+r+r+r,
      ])
 
-    make('all_blue', 10 * [10 * blue])
+    make('all_blue', 10 * [10 * B])
 
     make('pattern', [
         r+B+B+B,

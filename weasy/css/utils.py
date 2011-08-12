@@ -24,7 +24,7 @@ Utility functions and methods used by various modules in the css package.
 import os.path
 
 from cssutils import parseFile
-from cssutils.css import PropertyValue, Value, DimensionValue
+from cssutils.css import Value, DimensionValue
 
 
 HTML4_DEFAULT_STYLESHEET = parseFile(os.path.join(os.path.dirname(__file__),

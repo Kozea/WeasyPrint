@@ -269,7 +269,7 @@ def compute_outline_width(style):
         style.outline_width = [make_number(0)]
     else:
         if keyword in BORDER_WIDTH_KEYWORDS:
-            style.outline_width = [BORDER_WIDTH_KEYWORDS[value]]
+            style.outline_width = [BORDER_WIDTH_KEYWORDS[keyword]]
 
 
 def compute_display_float(style, parent_style):
@@ -406,7 +406,7 @@ def compute_size(element, style):
             elif keyword in PAGE_SIZES:
                 size = keyword
             else:
-                raise ValueError("Illegal value for 'size': %r", value)
+                raise ValueError("Illegal value for 'size': %r", keyword)
         if size is None:
             size = 'A4'
         width, height = PAGE_SIZES[size]
