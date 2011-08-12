@@ -19,6 +19,9 @@ import cairo
 import pangocairo
 import pango
 
+from .css.utils import get_single_keyword, get_keyword, get_single_pixel_value
+
+
 ALIGN_PROPERTIES = {'left':pango.ALIGN_LEFT,
                     'center':pango.ALIGN_RIGHT,
                     'right':pango.ALIGN_CENTER}
@@ -57,30 +60,37 @@ class TextFragment(object):
         self.set_text(textbox.text)
         font = ', '.join(v.cssText for v in textbox.style['font-family'])
         self.set_font_family(font)
-        self.set_font_size(textbox.style.font_size)
-        self.set_alignment(textbox.style.text_align)
-        self.set_font_variant(textbox.style.font_variant)
-        self.set_font_weight(int(textbox.style.font_weight))
-        self.set_font_style(textbox.style.font_style)
-        if isinstance(textbox.style.letter_spacing, int):
-            self.set_letter_spacing(textbox.style.letter_spacing)
-        if textbox.style.text_decoration == "none":
+        self.set_font_size(get_single_pixel_value(textbox.style.font_size))
+        self.set_alignment(get_single_keyword(textbox.style.text_align))
+        self.set_font_variant(get_single_keyword(textbox.style.font_variant))
+        self.set_font_weight(int(textbox.style.font_weight[0].value))
+        self.set_font_style(get_single_keyword(textbox.style.font_style))
+        letter_spacing = get_single_pixel_value(textbox.style.letter_spacing)
+        if letter_spacing is not None:
+            self.set_letter_spacing(letter_spacing)
+        if get_single_keyword(textbox.style.text_decoration) == "none":
             self.set_underline(False)
             self.set_line_through(False)
             # TODO: Implement overline in TextFragment
             #set_overline(False)
         else:
-            if 'overline' in textbox.style.text_decoration:
-                # TODO: Implement overline in TextFragment
-                #set_overline(False)
-                pass
-            if 'underline' in textbox.style.text_decoration:
-                self.set_underline(True)
-            if 'line-through' in textbox.style.text_decoration:
-                self.set_line_through(True)
-        self.set_foreground(textbox.style.color)
-        if textbox.style.background_color != 'transparent':
-            self.set_background(textbox.style.color)
+            values = textbox.style.text_decoration
+            for value in values:
+                keyword = get_keyword(value)
+                if keyword == 'overline':
+                    # TODO: Implement overline in TextFragment
+                    #set_overline(False)
+                    pass
+                elif keyword == 'underline':
+                    self.set_underline(True)
+                elif keyword == 'line-through':
+                    self.set_line_through(True)
+                else:
+                    raise ValueError('text-decoration: %r' % values)
+        self.set_foreground(textbox.style.color[0].cssText)
+        background = textbox.style.background_color[0]
+        if background.alpha > 0:
+            self.set_background(background.cssText)
 
 
     @classmethod
@@ -324,7 +334,7 @@ class TextFragment(object):
 
     def set_letter_spacing(self, value):
         """Sets the value of letter spacing"""
-        ls = pango.AttrLetterSpacing(value * pango.SCALE, 0, -1)
+        ls = pango.AttrLetterSpacing(int(value * pango.SCALE), 0, -1)
         self._set_attribute(ls)
 
     def set_rise(self, value):
@@ -362,4 +372,3 @@ class TextLineFragment(TextFragment):
     def get_logical_extents(self):
         """Returns the size of the logical area that occupied by the text"""
         return self.layout.get_line(0).get_pixel_extents()[1]
-

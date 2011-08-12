@@ -359,16 +359,16 @@ def test_breaking_linebox():
     lines = paragraph.children
     for line in lines:
         assert line.width <= width
-        assert line.style.font_size == font_size
+        assert line.style.font_size[0].value == font_size
         assert line.element.tag == 'p'
 #        assert sum(linebox_children_width(line)) <= line.width
         for child in line.children:
              assert child.element.tag in ('em', 'p')
-             assert child.style.font_size == font_size
+             assert child.style.font_size[0].value == font_size
              if isinstance(child, boxes.ParentBox):
                  for child_child in child.children:
                     assert child.element.tag in ('em', 'strong', 'span')
-                    assert child.style.font_size == font_size
+                    assert child.style.font_size[0].value == font_size
 
     paragraph = get_paragraph_linebox(width=200,  font_size=font_size)
     assert len(list(paragraph.children)) == 6

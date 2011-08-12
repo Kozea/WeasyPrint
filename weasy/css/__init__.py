@@ -40,7 +40,6 @@ function does everything, but there is also a function for each step:
 """
 
 from cssutils import parseString, parseUrl, parseStyle
-from cssutils.css import PropertyValue
 from lxml import cssselect
 
 from . import shorthands
@@ -159,9 +158,10 @@ def effective_declarations(declaration_block):
     and expand shorthand properties. Return a iterable of
     (property_name, property_value_list, importance) tuples.
     """
-    for declaration in declaration_block:
+    for declaration in declaration_block.getProperties(all=True):
         if declaration_is_valid(declaration):
             for name, values in shorthands.expand_shorthand(declaration):
+                assert isinstance(values, list)
                 yield name, values, declaration.priority
         else:
             # TODO: log that something was ignored
@@ -203,6 +203,44 @@ def add_declaration(cascaded_styles, prop_name, prop_values, weight, element,
         style[prop_name] = prop_values, weight
 
 
+def selector_to_xpath(selector):
+    """
+    Get a cssutils Selector object and return (pseudo_type, selector_callable)
+    a string and a lxml.cssselect XPath callable.
+    """
+    try:
+        return selector._x_weasyprint_parsed_cssselect
+    except AttributeError:
+        parsed_selector = cssselect.parse(selector.selectorText)
+        # cssutils made sure that `selector` is not a "group of selectors"
+        # in CSS3 terms (`rule.selectorList` is) so `parsed_selector` cannot be
+        # of type `cssselect.Or`.
+        # This leaves only three cases:
+        #  * The selector ends with a pseudo-element. As `cssselect.parse()`
+        #    parses left-to-right, `parsed_selector` is a `cssselect.Pseudo`
+        #    instance that we can unwrap. This is the only place where CSS
+        #    allows pseudo-element selectors.
+        #  * The selector has a pseudo-element not at the end. This is invalid
+        #    and the whole ruleset should be ignored.
+        #    cssselect.CSSSelector() will raise a cssselect.ExpressionError.
+        #  * The selector has no pseudo-element and is supported by
+        #    `cssselect.CSSSelector`.
+        if isinstance(parsed_selector, cssselect.Pseudo) \
+                and parsed_selector.ident in utils.PSEUDO_ELEMENTS:
+            pseudo_type = parsed_selector.ident
+            # Remove the pseudo-element from the selector
+            parsed_selector = parsed_selector.element
+        else:
+            # No pseudo-element or invalid selector.
+            pseudo_type = None
+        selector_callable = cssselect.CSSSelector(parsed_selector)
+        result = (pseudo_type, selector_callable)
+
+        # Cache for next time we use the same stylesheet
+        selector._x_weasyprint_parsed_cssselect = result
+        return result
+
+
 def match_selectors(document, selector_list):
     """
     Match a list of selectors against a document and return an iterable of
@@ -215,30 +253,8 @@ def match_selectors(document, selector_list):
     """
     selectors = []
     for selector in selector_list:
-        parsed_selector = cssselect.parse(selector.selectorText)
-        # cssutils made sure that `selector` is not a "group of selectors"
-        # in CSS3 terms (`rule.selectorList` is) so `parsed_selector` cannot be
-        # of type `cssselect.Or`.
-        # This leaves only three cases:
-        #  * The selector ends with a pseudo-element. As `cssselect.parse()`
-        #    parses left-to-right, `parsed_selector` is a `cssselect.Pseudo`
-        #    instance that we can unwrap. This is the only place where CSS
-        #    allows pseudo-element selectors.
-        #  * The selector has a pseudo-element not at the end. This is invalid
-        #    and the whole ruleset should be ignored.
-        #  * The selector has no pseudo-element and is supported by
-        #    `cssselect.CSSSelector`.
-        if isinstance(parsed_selector, cssselect.Pseudo) \
-                and parsed_selector.ident in utils.PSEUDO_ELEMENTS:
-            pseudo_type = parsed_selector.ident
-            # Remove the pseudo-element from the selector
-            parsed_selector = parsed_selector.element
-        else:
-            # No pseudo-element or invalid selector.
-            pseudo_type = None
-
         try:
-            selector_callable = cssselect.CSSSelector(parsed_selector)
+            pseudo_type, selector_callable = selector_to_xpath(selector)
         except cssselect.ExpressionError:
             # Invalid selector, ignore the whole ruleset.
             # TODO: log this error.
@@ -299,25 +315,11 @@ class StyleDict(dict):
     """
     def __getattr__(self, key):
         try:
-            values = self[key.replace('_', '-')]
+            return self[key.replace('_', '-')]
         except KeyError:
             raise AttributeError(key)
-        if len(values) == 1 and values[0].type == 'DIMENSION' \
-                and values[0].dimension == 'px':
-            # cssutils promises that `DimensionValue.value` is an int or float
-            assert isinstance(values[0].value, (float, int, long))
-            return values[0].value
-        elif len(values) == 1 and values[0].value == 0:
-            return 0
-        else:
-            return ' '.join(value.cssText for value in values)
 
     def __setattr__(self, key, value):
-        if isinstance(value, (float, int, long)):
-            value = PropertyValue(str(value) + 'px')
-        elif isinstance(value, basestring):
-            value = PropertyValue(value)
-        #else: assume a PropertyValue-like
         self[key.replace('_', '-')] = value
 
     def copy(self):
@@ -360,8 +362,7 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None):
     style = StyleDict(
         (name, value)
         for name, (value, _precedence) in cascaded.iteritems())
-    inheritance.handle_inheritance(style, parent_style)
-    initial_values.handle_initial_values(style)
+    inheritance.handle_inheritance_and_initial(style, parent_style)
     computed_values.compute_values(element, pseudo_type, style, parent_style)
     return style
 
@@ -456,4 +457,3 @@ def get_all_computed_styles(document, medium,
                             '@page', page_type)
 
     return computed_styles
-

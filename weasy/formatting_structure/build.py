@@ -24,6 +24,7 @@ including handling of anonymous boxes and whitespace processing.
 
 
 import re
+from ..css.utils import get_single_keyword
 from .. import replaced
 from . import boxes
 
@@ -61,7 +62,7 @@ def dom_to_box(document, element):
     http://www.w3.org/TR/CSS21/visuren.html#anonymous
     """
     # TODO: should be the used value
-    display = document.style_for(element).display
+    display = get_single_keyword(document.style_for(element).display)
     assert display != 'none'
 
     replacement = replaced.get_replaced_element(element)
@@ -93,7 +94,8 @@ def dom_to_box(document, element):
         if element.text:
             box.add_child(boxes.TextBox(document, element, element.text))
         for child_element in element:
-            if document.style_for(child_element).display != 'none':
+            if get_single_keyword(
+                    document.style_for(child_element).display) != 'none':
                 # TODO: We ignore html comments but also HTML/XML entities
                 # we need find another way to ignore html comments
                 if isinstance(child_element.tag, basestring):
@@ -116,7 +118,7 @@ def process_whitespace(box):
             continue
 
         text = child.text
-        handling = child.style.white_space
+        handling = get_single_keyword(child.style.white_space)
 
         text = re.sub('[\t\r ]*\n[\t\r ]*', '\n', text)
         if handling in ('pre', 'pre-wrap'):

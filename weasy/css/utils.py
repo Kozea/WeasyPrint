@@ -24,6 +24,7 @@ Utility functions and methods used by various modules in the css package.
 import os.path
 
 from cssutils import parseFile
+from cssutils.css import Value, DimensionValue
 
 
 HTML4_DEFAULT_STYLESHEET = parseFile(os.path.join(os.path.dirname(__file__),
@@ -68,22 +69,29 @@ def get_single_keyword(values):
     If the given list of Value object is a single keyword (identifier in
     cssutils), return its name. Otherwise return None.
     """
+    # Unsafe, fast way:
     if len(values) == 1:
-        return get_keyword(values[0])
+        value = values[0]
+        if value._type == 'IDENT':
+            return value._value
+#    if len(values) == 1:
+#        return get_keyword(values[0])
 
 
 def get_pixel_value(value):
     """
     Return the numeric value of a pixel length or None.
     """
+    value_type = value.type
+    value_value = value.value
     if (
-        (value.type == 'DIMENSION' and value.dimension == 'px') or
+        (value_type == 'DIMENSION' and value.dimension == 'px') or
         # Units may be ommited on 0
-        (value.type == 'NUMBER' and value.value == 0)
+        (value_type == 'NUMBER' and value_value == 0)
     ):
         # cssutils promises that `DimensionValue.value` is an int or float
-        assert isinstance(value.value, (int, float))
-        return value.value
+        assert isinstance(value_value, (int, float))
+        return value_value
     else:
         # Not a pixel length
         return None
@@ -115,3 +123,34 @@ def get_single_percentage_value(values):
     """
     if len(values) == 1:
         return get_percentage_value(values[0])
+
+
+def make_pixel_value(pixels):
+    """
+    Make a pixel DimensionValue. Reverse of get_single_pixel_value.
+    """
+    value = DimensionValue()
+    value._value = pixels
+    value._dimension = 'px'
+    value._type = 'DIMENSION'
+    return value
+
+
+def make_number(number):
+    """
+    Make a number DimensionValue.
+    """
+    value = DimensionValue()
+    value._value = number
+    value._type = 'NUMBER'
+    return value
+
+
+def make_keyword(keyword):
+    """
+    Make a keyword Value. Reverse of get_keyword.
+    """
+    value = Value()
+    value._value = keyword
+    value._type = 'IDENT'
+    return value

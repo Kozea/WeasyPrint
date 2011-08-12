@@ -24,9 +24,9 @@
 
 import functools
 
-from .utils import get_keyword
-from .inheritance import is_inherit
+from .utils import get_keyword, get_single_keyword
 from .initial_values import INITIAL_VALUES
+from .computed_values import FONT_SIZE_KEYWORDS
 
 
 def expand_four_sides(name, values):
@@ -53,7 +53,7 @@ def expand_four_sides(name, values):
         yield (new_name, [value])
 
 
-def generic_expander(*suffixes):
+def generic_expander(*expanded_names):
     """
     Wrap an expander so that it does not have to handle the 'inherit' case,
     can just yield name suffixes, and missing suffixes get the initial value.
@@ -61,23 +61,30 @@ def generic_expander(*suffixes):
     def decorator(wrapped):
         @functools.wraps(wrapped)
         def wrapper(name, values):
-            if is_inherit(values):
-                for suffix in suffixes:
-                    yield name + suffix, values
-                return
+            if get_single_keyword(values) == 'inherit':
+                results = dict.fromkeys(expanded_names, values)
+            else:
+                results = {}
+                for new_name, new_values in wrapped(name, values):
+                    if new_name is None:
+                        raise ValueError('Invalid value for %s: %s' %
+                                         (name, values))
+                    assert new_name in expanded_names
+                    assert new_name not in results
+                    results[new_name] = new_values
 
-            results = {}
-            for suffix, values in wrapped(name, values):
-                if suffix is None:
-                    raise ValueError('Invalid value for %s: %s' %
-                                     (name, values))
-                assert suffix in suffixes
-                assert suffix not in results
-                results[suffix] = values
+            for new_name in expanded_names:
+                if new_name.startswith('-'):
+                    # new_name is a suffix
+                    actual_new_name = name + new_name
+                else:
+                    actual_new_name = new_name
 
-            for suffix in suffixes:
-                yield name + suffix, results.get(suffix,
-                    INITIAL_VALUES[name + suffix])
+                if new_name in results:
+                    value = results[new_name]
+                else:
+                    value = INITIAL_VALUES[actual_new_name]
+                yield actual_new_name, value
         return wrapper
     return decorator
 
@@ -199,10 +206,69 @@ def expand_before_after(name, values):
         yield (name + suffix, value)
 
 
+@generic_expander('-style', '-variant', '-weight', '-size',
+                  'line-height', '-family')  # line-height is not a suffix
 def expand_font(name, values):
-    # TODO
-    # [ [ <'font-style'> || <'font-variant'> || <'font-weight'> ]? <'font-size'> [ / <'line-height'> ]? <'font-family'> ] | caption | icon | menu | message-box | small-caption | status-bar | inherit
-    raise NotImplementedError
+    """
+    Expand the 'font' shorthand.
+
+    http://www.w3.org/TR/CSS21/fonts.html#font-shorthand
+    """
+    keyword = get_single_keyword(values)
+    if keyword in ('caption', 'icon', 'menu', 'message-box',
+                   'small-caption', 'status-bar'):
+        # System fonts are not supported, use initial values
+        # TODO: warn?
+        return
+
+    # Make `values` a stack
+    values = list(reversed(values))
+    # Values for font-style font-variant and font-weight can come in any
+    # order and are all optional.
+    while values:
+        value = values.pop()
+        keyword = get_keyword(value)
+        # TODO: how do we decide which suffix is 'normal'?
+        if keyword in ('normal', 'italic', 'oblique'):
+            suffix = '-style'
+        elif keyword in ('normal', 'small-caps'):
+            suffix = '-variant'
+        elif keyword in ('normal', 'bold', 'bolder', 'lighter') or \
+                value.type == 'NUMBER':
+            suffix = '-weight'
+        else:
+            break
+        yield suffix, [value]
+
+    # Then font-size is mandatory
+
+    # Latest `value` and `keyword` from the loop.
+    assert (
+        value.type in ('DIMENSION', 'PERCENTAGE') or
+        keyword in FONT_SIZE_KEYWORDS or
+        keyword in ('smaller', 'larger')
+    )
+    yield '-size', [value]
+
+    # Then line-height is optional, but font-family is not so the list
+    # must not be empty yet
+
+    value = values.pop()
+    if get_keyword(value) == 'normal' or value.type in (
+            'DIMENSION', 'NUMBER', 'PERCENTAGE'):
+        yield 'line-height', [value]
+    else:
+        # We pop()ed a font-family, add it back
+        values.append(value)
+
+    # Just assume that everything else is a valid font-family.
+    # TODO: we should split on commas only. Eg. a sequence of
+    # space-separated keywords is only one family-name.
+    # See http://www.w3.org/TR/CSS21/fonts.html#propdef-font-family
+
+    # Reverse the stack to get normal list
+    values.reverse()
+    yield '-family', values
 
 
 SHORTHANDS = {
@@ -234,7 +300,7 @@ def expand_noop(name, values):
 
 def expand_name_values(name, values):
     expander = SHORTHANDS.get(name, expand_noop)
-    return expander(name, list(values))
+    return expander(name, list(iter(values)))
 
 
 def expand_shorthand(prop):

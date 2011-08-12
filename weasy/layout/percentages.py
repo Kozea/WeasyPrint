@@ -92,7 +92,6 @@ def resolve_percentages(box):
         resolve_one_percentage(box, 'height', cb_height, ['auto'])
 
     # Used value == computed value
-    box.border_top_width = box.style.border_top_width
-    box.border_right_width = box.style.border_right_width
-    box.border_bottom_width = box.style.border_bottom_width
-    box.border_left_width = box.style.border_left_width
+    for side in ['top', 'right', 'bottom', 'left']:
+        prop = 'border_{}_width'.format(side)
+        setattr(box, prop, get_single_pixel_value(getattr(box.style, prop)))
