@@ -341,6 +341,7 @@ class LineBoxFormatting(object):
     def compute_dimensions(self, box):
         """Add the width and height in the linebox."""
         from . import compute_dimensions
+        compute_dimensions(box)
         if isinstance(box, boxes.LineBox):
             widths = []
             heights = []
@@ -351,8 +352,8 @@ class LineBoxFormatting(object):
             box.width = sum(widths)
             box.height = max(heights)
         elif isinstance(box, boxes.InlineBox):
-            widths = []
-            heights = []
+            widths = [0]
+            heights = [0]
             for child in box.children:
                 self.compute_dimensions(child)
                 widths.append(child.width)
@@ -377,9 +378,10 @@ class LineBoxFormatting(object):
                 box.position_x = self.ref_x
                 self.ref_x += box.width
             elif isinstance(box, boxes.InlineBlockBox):
-                raise NotImplementedError
+                print "compute_positions for %s is not implemented" % box
             elif isinstance(box, boxes.InlineLevelReplacedBox):
-                raise NotImplementedError
+                box.position_x = self.ref_x
+                print "compute_positions for %s is not implemented" % box
 
     def flatten_tree(self, box, depth=0):
         """

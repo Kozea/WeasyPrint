@@ -24,7 +24,8 @@ from .css.utils import get_single_keyword, get_keyword, get_single_pixel_value
 
 ALIGN_PROPERTIES = {'left':pango.ALIGN_LEFT,
                     'center':pango.ALIGN_RIGHT,
-                    'right':pango.ALIGN_CENTER}
+                    'right':pango.ALIGN_CENTER,
+                    'justifiy':None}
 
 STYLE_PROPERTIES = {'normal':pango.STYLE_NORMAL,
                     'italic':pango.STYLE_ITALIC,
@@ -179,11 +180,15 @@ class TextFragment(object):
         """Sets the default alignment of text in layout.
         The value of alignment must be one of : ("left", "center", "right")
         """
-        if alignment in ("left", "center", "right"):
-            self.layout.set_alignment(ALIGN_PROPERTIES[alignment])
+        if alignment in ALIGN_PROPERTIES.keys():
+            align = ALIGN_PROPERTIES[alignment]
+            if align:
+                self.layout.set_alignment(ALIGN_PROPERTIES[alignment])
+            else:
+                self.set_justify(True)
         else:
-            raise ValueError('The alignment property must be in %s' \
-                % ALIGN_PROPERTIES.keys())
+            print 'ValueError : The alignment property must be in %s' \
+                % ALIGN_PROPERTIES.keys()
 
     def get_justify(self):
         """Returns True if the text is justified """
@@ -372,3 +377,4 @@ class TextLineFragment(TextFragment):
     def get_logical_extents(self):
         """Returns the size of the logical area that occupied by the text"""
         return self.layout.get_line(0).get_pixel_extents()[1]
+

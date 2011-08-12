@@ -90,6 +90,10 @@ def textbox_dimensions(box):
 def inlinebox_dimensions(box):
     resolve_percentages(box)
 
+@compute_dimensions.register(boxes.LineBox)
+def linebox_dimensions(box):
+    resolve_percentages(box)
+
 def page_dimensions(box):
     box.outer_height = box.style._weasy_page_height
     box.outer_width = box.style._weasy_page_width
@@ -122,3 +126,4 @@ def layout(document):
 
     # TODO: do page breaks, split boxes into multiple pages
     return pages
+
