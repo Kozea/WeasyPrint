@@ -334,7 +334,7 @@ class TextFragment(object):
 
     def set_letter_spacing(self, value):
         """Sets the value of letter spacing"""
-        ls = pango.AttrLetterSpacing(value * pango.SCALE, 0, -1)
+        ls = pango.AttrLetterSpacing(int(value * pango.SCALE), 0, -1)
         self._set_attribute(ls)
 
     def set_rise(self, value):
