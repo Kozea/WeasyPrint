@@ -158,7 +158,7 @@ def effective_declarations(declaration_block):
     and expand shorthand properties. Return a iterable of
     (property_name, property_value_list, importance) tuples.
     """
-    for declaration in declaration_block:
+    for declaration in declaration_block.getProperties(all=True):
         if declaration_is_valid(declaration):
             for name, values in shorthands.expand_shorthand(declaration):
                 assert isinstance(values, list)
