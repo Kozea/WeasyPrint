@@ -122,8 +122,7 @@ def expand_border_side(name, values):
     """
     for value in values:
         keyword = get_keyword(value)
-        if value.type == 'COLOR_VALUE' or \
-                (name == 'outline' and keyword == 'invert'):
+        if value.type == 'COLOR_VALUE':
             suffix = '-color'
         elif value.type == 'DIMENSION' or \
                 value.type == 'NUMBER' and value.value == 0 or \
@@ -195,15 +194,6 @@ def expand_background(name, values):
         else:
             suffix = None
         yield suffix, [value]
-
-
-def expand_before_after(name, values):
-    if len(values) == 1:
-        values *= 2
-    elif len(values) != 2:
-        raise ValueError('Expected 2 values for %s, got %r.' % (name, values))
-    for suffix, value in zip(('-before', '-after'), values):
-        yield (name + suffix, value)
 
 
 @generic_expander('-style', '-variant', '-weight', '-size',
@@ -282,12 +272,14 @@ SHORTHANDS = {
     'border-bottom': expand_border_side,
     'border-left': expand_border_side,
     'border': expand_border,
-    'outline': expand_border_side,
-    'cue': expand_before_after,
-    'pause': expand_before_after,
     'background': expand_background,
     'font': expand_font,
     'list-style': expand_list_style,
+
+    # Do not apply in the print media:
+#    'outline': expand_border_side,
+#    'cue': expand_before_after,
+#    'pause': expand_before_after,
 }
 
 
