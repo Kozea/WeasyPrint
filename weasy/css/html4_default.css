@@ -67,11 +67,12 @@ ul ul, ol ol    { margin-top: 0; margin-bottom: 0 }
 u, ins          { text-decoration: underline }
 br:before       { content: "\A"; white-space: pre-line }
 center          { text-align: center }
-:link, :visited { text-decoration: underline }
 /*
  Not applicable to print:
  :focus          { outline: thin dotted invert }
+ :link, :visited { text-decoration: underline }
 */
+a[href] { text-decoration: underline }
 
 /* Begin bidirectionality settings (do not change) */
 BDO[DIR="ltr"]  { direction: ltr; unicode-bidi: bidi-override }

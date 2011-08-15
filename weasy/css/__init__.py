@@ -39,6 +39,8 @@ function does everything, but there is also a function for each step:
    values for one element.
 """
 
+import logging
+
 from cssutils import parseString, parseUrl, parseStyle
 from lxml import cssselect
 
@@ -46,6 +48,9 @@ from . import properties
 from . import computed_values
 from .values import get_single_keyword
 from ..utils import get_url_attribute
+
+
+LOGGER = logging.getLogger('WEASYPRINT')
 
 
 # Pseudo-classes and pseudo-elements are the same to lxml.cssselect.parse().
@@ -78,6 +83,8 @@ def find_stylesheets(document):
     stylesheets, in tree order.
     """
     for element in document.dom.iter():
+        if element.tag not in ('style', 'link'):
+            continue
         mimetype = element.get('type')
         # Only keep 'type/subtype' from 'type/subtype ; param1; param2'.
         if mimetype and mimetype.split(';', 1)[0].strip() != 'text/css':
@@ -160,20 +167,6 @@ def effective_rules(sheet, medium):
             yield subrule
 
 
-def declaration_is_valid(prop):
-    """
-    Return whether the given Property object is invalid or unsupported,
-    and thus should be ignored.
-
-    ***Not implemented yet.***
-    """
-    # TODO implement validation
-
-    # TODO: ignore properties that do not apply to the current
-    # medium? http://www.w3.org/TR/CSS21/intro.html#processing-model
-    return True
-
-
 def effective_declarations(declaration_block):
     """
     In the given declaration block, ignore invalid or unsupported declarations
@@ -181,13 +174,9 @@ def effective_declarations(declaration_block):
     (property_name, property_value_list, importance) tuples.
     """
     for declaration in declaration_block.getProperties(all=True):
-        if declaration_is_valid(declaration):
-            for name, values in properties.expand_shorthand(declaration):
-                assert isinstance(values, list)
-                yield name, values, declaration.priority
-        else:
-            # TODO: log that something was ignored
-            pass
+        for name, values in properties.expand_shorthand(declaration):
+            assert isinstance(values, list)
+            yield name, values, declaration.priority
 
 
 def declaration_precedence(origin, importance):
@@ -278,8 +267,8 @@ def match_selectors(document, selector_list):
         try:
             pseudo_type, selector_callable = selector_to_xpath(selector)
         except cssselect.ExpressionError:
-            # Invalid selector, ignore the whole ruleset.
-            # TODO: log this error.
+            LOGGER.warn('Invalid selector %r, the whole rule-set was ignored.',
+                selector.selectorText)
             return
         selectors.append((selector_callable, pseudo_type,
                           selector.specificity))
@@ -310,9 +299,8 @@ def match_page_selector(selector):
         for page_type in page_types:
             yield '@page', page_type, specificity
     else:
-        # Invalid/unsupported selector, ignore the whole rule
-        # TODO: log/warn that something was ignored
-        pass
+        LOGGER.warn('Invalid @page selector %r, the whole rule-set '
+                    'was ignored.', selector)
 
 
 class StyleDict(dict):

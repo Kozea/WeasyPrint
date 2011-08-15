@@ -19,6 +19,7 @@
 
 import sys
 import argparse
+import logging
 
 from . import document
 
@@ -27,6 +28,11 @@ FORMATS = {
     'pdf': document.PDFDocument,
     'png': document.PNGDocument,
 }
+
+
+# cssutils defaults to logging to stderr, but we want to hide its validation
+# warnings as we’re doing our own validation.
+#logging.getLogger('CSSUTILS').handlers[:] = []
 
 
 def _join(sequence, key=lambda x: x):
@@ -71,6 +77,12 @@ def main():
 
     if args.output == '-':
         args.output = sys.stdout
+
+    if hasattr(logging, 'NullHandler'):
+        # New in 2.7
+        logging.getLogger('CSSUTILS').addHandler(logging.NullHandler())
+
+    logging.getLogger('WEASYPRINT').addHandler(logging.StreamHandler())
 
     document_class = FORMATS[args.format]
     document = document_class.from_file(args.input, encoding=args.encoding)

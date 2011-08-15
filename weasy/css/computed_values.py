@@ -141,8 +141,6 @@ def compute_font_size(style, parent_style):
     """
     if parent_style is not None:
         parent_font_size = get_single_pixel_value(parent_style.font_size)
-        assert parent_font_size + 0 == parent_font_size, \
-            'Got a non-pixel value for the parent font-size.'
     else:
         # root element, no parent
         parent_value_text = INITIAL_VALUES['font-size'][0].cssText
