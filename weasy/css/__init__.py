@@ -42,10 +42,9 @@ function does everything, but there is also a function for each step:
 from cssutils import parseString, parseUrl, parseStyle
 from lxml import cssselect
 
-from . import shorthands
-from . import inheritance
-from . import initial_values
+from . import properties
 from . import computed_values
+from .values import get_single_keyword
 from ..utils import get_url_attribute
 
 
@@ -183,7 +182,7 @@ def effective_declarations(declaration_block):
     """
     for declaration in declaration_block.getProperties(all=True):
         if declaration_is_valid(declaration):
-            for name, values in shorthands.expand_shorthand(declaration):
+            for name, values in properties.expand_shorthand(declaration):
                 assert isinstance(values, list)
                 yield name, values, declaration.priority
         else:
@@ -319,22 +318,7 @@ def match_page_selector(selector):
 class StyleDict(dict):
     """
     Allow attribute access to values, eg. style.font_size instead of
-    style['font-size']
-
-    This returns the numeric value for pixel lengths or zero lengths;
-    and the string representation for any other value.
-
-        >>> style = StyleDict({'margin-left': PropertyValue('12px'),
-        ...                    'display': PropertyValue('block')}
-        >>> assert style.display == 'block'
-        >>> assert style.margin_left == 12
-
-    Attributes can be set in the same way: numeric values become pixels lengths
-    and strings are parsed as CSS values.
-
-    CSS numbers without units (eg. font-weight: 700) are returned as strings
-    to distinguish them from pixel lengths. Pixel lengths were favored as they
-    are much more common. (Pixels are the unit for all computed lengths.)
+    style['font-size'].
     """
     def __getattr__(self, key):
         try:
@@ -385,8 +369,38 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None):
     style = StyleDict(
         (name, value)
         for name, (value, _precedence) in cascaded.iteritems())
-    inheritance.handle_inheritance_and_initial(style, parent_style)
+
+    # `style` has cascaded values
+
+    # Handle inhertance and initial values
+    for name, initial in properties.INITIAL_VALUES.iteritems():
+        values = style.get(name, None)
+        if values is None:
+            if name in properties.INHERITED:
+                keyword = 'inherit'
+            else:
+                keyword = 'initial'
+        else:
+            keyword = get_single_keyword(values)
+
+        if keyword == 'inherit' and parent_style is None:
+            # On the root element, 'inherit' from initial values
+            keyword = 'initial'
+
+        if keyword == 'initial':
+            style[name] = initial
+        elif keyword == 'inherit':
+            style[name] = parent_style[name]
+            # Values for `parent_style` are already computed.
+            # TODO: mark the `name` property as already computed and use
+            # that to make compute_values() faster.
+
+    # `style` has specified values
+
     computed_values.compute_values(element, pseudo_type, style, parent_style)
+
+    # `style` has computed values
+
     return style
 
 

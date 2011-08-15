@@ -24,7 +24,6 @@ import attest
 import cssutils
 
 from .. import css
-from ..css import shorthands
 from ..document import Document
 
 from . import resource_filename
@@ -71,13 +70,6 @@ def test_find_stylesheets():
             'body > h1:first-child']
 
 
-def expand_shorthands(declaration_block):
-    return css.StyleDict(
-        expanded
-        for declaration in declaration_block
-        for expanded in shorthands.expand_shorthand(declaration))
-
-
 @suite.test
 def test_expand_shorthands():
     sheet = cssutils.parseFile(resource_filename('sheet2.css'))
@@ -89,14 +81,18 @@ def test_expand_shorthands():
     assert style['margin-left'] == '4em'
     assert not style['margin-top']
 
-    style = expand_shorthands(style)
+    style = dict(
+        (name, ' '.join(value.cssText for value in values))
+        for name, values, _priority in css.effective_declarations(style))
+
     assert 'margin' not in style
-    assert style.margin_top[0].value == 2
-    assert style.margin_right [0].value== 0
-    assert style.margin_bottom[0].value == 2, \
+    assert style['margin-top'] == '2em'
+    assert style['margin-right'] == '0'
+    assert style['margin-bottom'] == '2em', \
         "3em was before the shorthand, should be masked"
-    assert style.margin_left[0].value == 4, \
+    assert style['margin-left'] == '4em', \
         "4em was after the shorthand, should not be masked"
+
 
 
 def parse_css(filename):

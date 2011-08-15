@@ -26,7 +26,7 @@ import collections
 import cssutils.helper
 from cssutils.css import PropertyValue, Value
 
-from .initial_values import INITIAL_VALUES
+from .properties import INITIAL_VALUES
 from .values import (get_single_keyword, get_keyword, get_single_pixel_value,
                      make_pixel_value, make_number, make_keyword)
 
