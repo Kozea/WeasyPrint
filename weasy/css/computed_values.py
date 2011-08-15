@@ -259,19 +259,6 @@ def compute_border_width(style):
                 style['border-%s-width' % side] = [width]
 
 
-def compute_outline_width(style):
-    """
-    Set outline-width to zero if outline-style is none.
-    """
-    # TODO: test this
-    keyword = get_single_keyword(style.outline_style)
-    if keyword == 'none':
-        style.outline_width = [make_number(0)]
-    else:
-        if keyword in BORDER_WIDTH_KEYWORDS:
-            style.outline_width = [BORDER_WIDTH_KEYWORDS[keyword]]
-
-
 def compute_display_float(style, parent_style):
     """
     Computed values of the display and float properties according to
@@ -461,7 +448,6 @@ def compute_values(element, pseudo_type, style, parent_style):
     compute_font_weight(style, parent_style)
     compute_content(element, pseudo_type, style)
     compute_border_width(style)
-    compute_outline_width(style)
     compute_current_color(style, parent_style)
     compute_text_align(style)
     compute_size(element, style)

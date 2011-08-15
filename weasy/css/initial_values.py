@@ -100,9 +100,6 @@ INITIAL_VALUES = dict(
         ('min-height', '0'),
         ('min-width', '0'),
         ('orphans', '2'),
-        ('outline-color', 'invert'),
-        ('outline-style', 'none'),
-        ('outline-width', 'medium'),
         ('overflow', 'visible'),
         ('padding-top', '0'),
         ('padding-right', '0'),
@@ -134,6 +131,9 @@ INITIAL_VALUES = dict(
         ('size', 'auto'),
 
         # Disabled since not applicable to the print media:
+
+        # Aural media:
+
 #        ('azimuth', 'center'),
 #        ('cue-after', 'none'),
 #        ('cue-before', 'none'),
@@ -154,6 +154,11 @@ INITIAL_VALUES = dict(
 #        ('voice-family', 'child'),     # depends on user agent
 #        ('volume', 'medium'),
 
+        # Outlines only apply to interactive media, just like cursor.
+
+#        ('outline-color', 'invert'),
+#        ('outline-style', 'none'),
+#        ('outline-width', 'medium'),
     ]
 )
 

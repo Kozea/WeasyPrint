@@ -71,16 +71,6 @@ def test_expand_four_sides():
 
 @suite.test
 def test_expand_borders():
-    assert expand_to_dict('outline: inherit') == {
-        'outline-width': 'inherit',
-        'outline-style': 'inherit',
-        'outline-color': 'inherit',
-    }
-    assert expand_to_dict('outline: 2in solid invert') == {
-        'outline-width': '2in',
-        'outline-style': 'solid',
-        'outline-color': 'invert',
-    }
     assert expand_to_dict('border-top: 3px dotted red') == {
         'border-top-width': '3px',
         'border-top-style': 'dotted',
