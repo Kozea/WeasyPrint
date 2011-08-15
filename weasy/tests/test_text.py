@@ -124,10 +124,15 @@ def test_text_other():
     fragment.set_text(u"some text")
 
     #The default value of alignement property is ``left`` for western script
-    assert fragment.get_alignment() == u"left"
-    for value in text.ALIGN_PROPERTIES.keys():
-        fragment.set_alignment(value)
-        assert fragment.get_alignment() == value
+    assert fragment.layout.get_alignment() == text.ALIGN_PROPERTIES["left"]
+    assert not fragment.layout.get_justify()
+
+    for key, value in text.ALIGN_PROPERTIES.iteritems():
+        fragment.set_alignment(key)
+        assert fragment.layout.get_alignment() == value
+
+    fragment.set_alignment('justify')
+    assert fragment.layout.get_justify()
 
 
     fragment.justify = True

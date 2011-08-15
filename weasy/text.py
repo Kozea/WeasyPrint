@@ -23,9 +23,8 @@ from .css.values import get_single_keyword, get_keyword, get_single_pixel_value
 
 
 ALIGN_PROPERTIES = {'left':pango.ALIGN_LEFT,
-                    'center':pango.ALIGN_RIGHT,
-                    'right':pango.ALIGN_CENTER,
-                    'justifiy':None}
+                    'right':pango.ALIGN_RIGHT,
+                    'center':pango.ALIGN_CENTER}
 
 STYLE_PROPERTIES = {'normal':pango.STYLE_NORMAL,
                     'italic':pango.STYLE_ITALIC,
@@ -169,34 +168,15 @@ class TextFragment(object):
         """ sets the spacing between the lines of the layout. """
         self.layout.set_spacing(pango.SCALE * value)
 
-    def get_alignment(self):
-        """Return the default alignment of text in layout."""
-        alignment = self.layout.get_alignment()
-        for key in ALIGN_PROPERTIES:
-            if ALIGN_PROPERTIES[key] == alignment:
-                return key
-
     def set_alignment(self, alignment):
         """Sets the default alignment of text in layout.
         The value of alignment must be one of : ("left", "center", "right")
         """
-        if alignment in ALIGN_PROPERTIES.keys():
-            align = ALIGN_PROPERTIES[alignment]
-            if align:
-                self.layout.set_alignment(ALIGN_PROPERTIES[alignment])
-            else:
-                self.set_justify(True)
+        if alignment == 'justify':
+            self.layout.set_alignment(ALIGN_PROPERTIES['left'])
+            self.layout.set_justify(True)
         else:
-            print 'ValueError : The alignment property must be in %s' \
-                % ALIGN_PROPERTIES.keys()
-
-    def get_justify(self):
-        """Returns True if the text is justified """
-        self.layout.get_justify()
-
-    def set_justify(self, value):
-        """Lets make the text justified or not, depending on the value"""
-        self.layout.set_justify(value)
+            self.layout.set_alignment(ALIGN_PROPERTIES[alignment])
 
     def get_font_family(self):
         """Returns the font family name that used by the pango layout"""
