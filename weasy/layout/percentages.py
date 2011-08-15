@@ -17,8 +17,8 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from ..css.utils import (get_single_keyword, get_single_pixel_value,
-                         get_single_percentage_value)
+from ..css.values import (get_single_keyword, get_single_pixel_value,
+                          get_single_percentage_value)
 from ..formatting_structure import boxes
 
 

@@ -24,7 +24,7 @@ including handling of anonymous boxes and whitespace processing.
 
 
 import re
-from ..css.utils import get_single_keyword
+from ..css.values import get_single_keyword
 from .. import replaced
 from . import boxes
 

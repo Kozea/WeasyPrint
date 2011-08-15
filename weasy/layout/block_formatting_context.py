@@ -17,7 +17,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from ..css.utils import get_single_keyword
+from ..css.values import get_single_keyword
 from ..formatting_structure import boxes
 from .percentages import resolve_percentages
 from .inline_formatting_context import breaking_linebox

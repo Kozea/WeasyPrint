@@ -24,7 +24,7 @@
 
 import functools
 
-from .utils import get_keyword, get_single_keyword
+from .values import get_keyword, get_single_keyword
 from .initial_values import INITIAL_VALUES
 from .computed_values import FONT_SIZE_KEYWORDS
 

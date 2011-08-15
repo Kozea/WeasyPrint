@@ -20,7 +20,7 @@
     Some CSS properties inherit from the parent element’s value.
 """
 
-from .utils import get_single_keyword, make_keyword
+from .values import get_single_keyword
 from .initial_values import INITIAL_VALUES
 
 

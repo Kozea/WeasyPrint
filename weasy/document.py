@@ -17,13 +17,15 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+import os.path
 import math
 
+from cssutils import parseFile
 import lxml.html
 import cairo
 
+
 from .css import get_all_computed_styles
-from .css.utils import HTML4_DEFAULT_STYLESHEET
 from .css.computed_values import LENGTHS_TO_PIXELS
 from .formatting_structure.build import build_formatting_structure
 from .layout import layout
@@ -31,7 +33,12 @@ from . import draw
 from . import utils
 
 
-DEFAULT_USER_AGENT_STYLESHEETS = (HTML4_DEFAULT_STYLESHEET,)
+# This is a one-element tuple.
+DEFAULT_USER_AGENT_STYLESHEETS = (
+    parseFile(
+        os.path.join(os.path.dirname(__file__), 'css', 'html4_default.css')
+    ),
+)
 
 
 class Document(object):

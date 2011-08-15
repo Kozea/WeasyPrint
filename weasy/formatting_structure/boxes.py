@@ -72,7 +72,7 @@ See respective docstrings for details.
 import collections
 
 from .. import css
-from ..css.utils import get_single_keyword
+from ..css.values import get_single_keyword
 
 
 class Box(object):

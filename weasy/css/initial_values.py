@@ -23,7 +23,7 @@
 
 from cssutils.css import PropertyValue
 
-from .utils import get_single_keyword, make_keyword
+from .values import get_single_keyword, make_keyword
 
 
 r"""

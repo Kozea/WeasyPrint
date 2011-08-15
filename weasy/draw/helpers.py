@@ -22,8 +22,8 @@ import urllib
 
 import cairo
 
-from ..css.utils import (get_single_keyword, get_keyword,
-                         get_pixel_value, get_percentage_value)
+from ..css.values import (get_single_keyword, get_keyword,
+                          get_pixel_value, get_percentage_value)
 from ..formatting_structure import boxes
 from .. import text
 from .figures import Point, Line, Trapezoid

@@ -27,8 +27,8 @@ import cssutils.helper
 from cssutils.css import PropertyValue, Value
 
 from .initial_values import INITIAL_VALUES
-from .utils import (get_single_keyword, get_keyword, get_single_pixel_value,
-                    make_pixel_value, make_number, make_keyword)
+from .values import (get_single_keyword, get_keyword, get_single_pixel_value,
+                     make_pixel_value, make_number, make_keyword)
 
 
 # How many CSS pixels is one <unit> ?

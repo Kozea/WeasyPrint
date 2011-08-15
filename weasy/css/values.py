@@ -21,38 +21,7 @@ Utility functions and methods used by various modules in the css package.
 """
 
 
-import os.path
-
-from cssutils import parseFile
 from cssutils.css import Value, DimensionValue
-
-
-HTML4_DEFAULT_STYLESHEET = parseFile(os.path.join(os.path.dirname(__file__),
-    'html4_default.css'))
-
-
-# Pseudo-classes and pseudo-elements are the same to lxml.cssselect.parse().
-# List the identifiers for all CSS3 pseudo elements here to distinguish them.
-PSEUDO_ELEMENTS = ('before', 'after', 'first-line', 'first-letter')
-
-
-# Selectors for @page rules can have a pseudo-class, one of :first, :left
-# or :right. This maps pseudo-classes to lists of "page types" selected.
-PAGE_PSEUDOCLASS_TARGETS = {
-    None: ['left', 'right', 'first_left', 'first_right'], # No pseudo-class
-    ':left': ['left', 'first_left'],
-    ':right': ['right', 'first_right'],
-    ':first': ['first_left', 'first_right'],
-}
-
-
-# Specificity of @page pseudo-classes for the cascade.
-PAGE_PSEUDOCLASS_SPECIFICITY = {
-    None: 0,
-    ':left': 1,
-    ':right': 1,
-    ':first': 10,
-}
 
 
 def get_keyword(value):
