@@ -1,0 +1,42 @@
+name: WeasyPrint
+description: Converts HTML + CSS to PDF
+license: AGPL
+public: true
+url: http://www.weasyprint.org/
+
+menu:
+  - Overview:
+      link: /
+  - Download:
+      link: /download/
+  - Issues:
+      link: http://redmine.kozea.fr/projects/weasyprint/issues
+  - Contribute:
+      link: /contribute/
+
+vcs:
+  git:
+    url: git://github.com/Kozea/WeasyPrint.git
+    path: /home/lize/Informatique/weasyprint
+
+code browser:
+  gitorious:
+    project name: weasyprint
+    repository name: weasyprint
+  redmine:
+    base url: http://redmine.kozea.fr/
+    project name: weasyprint
+
+bug tracker:
+  redmine:
+    base url: http://redmine.kozea.fr/
+    project name: weasyprint
+    database: /var/
+
+mailing list:
+  mbox:
+    folder: /var/local/
+
+room:
+  jabber:
+    address: weasyprint@room.jabber.kozea.fr
