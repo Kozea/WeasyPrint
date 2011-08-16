@@ -127,6 +127,14 @@ def test_box_tree():
 
 
 @suite.test
+def test_html_entities():
+    for quote in ['"', '&quot;', '&#x22;', '&#34;']:
+        assert_tree(parse('<p>{}abc{}'.format(quote, quote)), [
+            ('p', 'block', [
+                ('p', 'text', '"abc"')])])
+
+
+@suite.test
 def test_inline_in_block():
     source = '<div>Hello, <em>World</em>!\n<p>Lipsum.</p></div>'
     expected = [
