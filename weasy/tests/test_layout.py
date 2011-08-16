@@ -19,18 +19,36 @@
 
 from attest import Tests, assert_hook
 
+from ..css.values import get_single_keyword
 from ..document import PNGDocument
 from ..formatting_structure import boxes
+from .test_boxes import monkeypatch_validation
 
 suite = Tests()
 
 FONTS = u"Nimbus Mono L, Liberation Mono, FreeMono, Monospace"
 
+
+def validate_absolute_and_float(real_non_shorthand,
+        name, values, required=False):
+    if (
+        name == 'position' and
+        get_single_keyword(values) == 'absolute'
+    ) or (
+        name == 'float' and
+        get_single_keyword(values) == 'left'
+    ):
+        return [(name, values)]
+    return real_non_shorthand(name, values, required)
+
+
 def parse(html_content):
     """
     Parse some HTML, apply stylesheets, transform to boxes and do layout.
     """
-    return PNGDocument.from_string(html_content).pages
+    # TODO: remove this patching when asbolute and floats are validated
+    with monkeypatch_validation(validate_absolute_and_float):
+        return PNGDocument.from_string(html_content).pages
 
 
 @suite.test
@@ -238,7 +256,6 @@ def test_block_widths():
 
 @suite.test
 def test_block_heights():
-    # XXX TODO uncomment back when absolute or float pass validation.
     page, = parse('''
         <style>
             @page { margin: 0; size: 100px 2000px }
@@ -251,11 +268,9 @@ def test_block_heights():
         <div>
           <p></p>
           <!-- These two are not in normal flow: the do not contribute to
-            the parent’s height.
+            the parent’s height. -->
           <p style="position: absolute"></p>
           <p style="float: left"></p>
-    XXX TODO enable this back when one of them pass validation.
-    -->
         </div><div>
           <p></p>
           <p></p>

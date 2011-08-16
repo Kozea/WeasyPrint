@@ -240,13 +240,13 @@ def direction():
 def display(values):
     keyword = get_single_keyword(values)
     if keyword in (
-        'list-item', 'table', 'inline-table',
+        'list-item', 'inline-block', 'table', 'inline-table',
         'table-row-group', 'table-header-group', 'table-footer-group',
         'table-row', 'table-column-group', 'table-column', 'table-cell',
         'table-caption'
     ):
         raise InvalidValues
-    return keyword in ('inline', 'block', 'inline-block', 'none')
+    return keyword in ('inline', 'block', 'none')
 
 
 @validator()

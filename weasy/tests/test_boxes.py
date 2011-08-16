@@ -16,9 +16,12 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 
 from attest import Tests, assert_hook
 
+from ..css.values import get_single_keyword
+from ..css import validation
 from ..document import Document
 from ..formatting_structure import boxes
 from ..formatting_structure import build
@@ -72,12 +75,34 @@ def to_lists(box_tree):
     return serialize(unwrap_html_body(box_tree))
 
 
+@contextlib.contextmanager
+def monkeypatch_validation(replacement):
+    real_non_shorthand = validation.validate_non_shorthand
+
+    def patched_non_shorthand(*args, **kwargs):
+        return replacement(real_non_shorthand, *args, **kwargs)
+
+    validation.validate_non_shorthand = patched_non_shorthand
+    try:
+        yield
+    finally:
+        validation.validate_non_shorthand = real_non_shorthand
+
+
+def validate_inline_block(real_non_shorthand, name, values, required=False):
+    if name == 'display' and get_single_keyword(values) == 'inline-block':
+        return [(name, values)]
+    return real_non_shorthand(name, values, required)
+
+
 def parse(html_content):
     """
     Parse some HTML, apply stylesheets and transform to boxes.
     """
-    document = Document.from_string(html_content)
-    return build.dom_to_box(document, document.dom)
+    # TODO: remove this patching when inline-block is validated.
+    with monkeypatch_validation(validate_inline_block):
+        document = Document.from_string(html_content)
+        return build.dom_to_box(document, document.dom)
 
 
 def prettify(tree_list):
