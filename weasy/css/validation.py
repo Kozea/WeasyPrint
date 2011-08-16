@@ -74,13 +74,9 @@ def validator(property_name=None):
 
 def keyword(function):
     valid_keywords = function()
-
     @functools.wraps(function)
     def validator(values):
-        if get_single_keyword(values) in valid_keywords:
-            yield name, values
-        else:
-            raise InvalidValues
+        return get_single_keyword(values) in valid_keywords
     return validator
 
 
@@ -146,8 +142,7 @@ def image(value):
 
 @validator()
 def background_position(values):
-    """
-    http://www.w3.org/TR/CSS21/colors.html#propdef-background-position
+    """://www.w3.org/TR/CSS21/colors.html#propdef-background-position
     """
     if len(values) == 1:
         value = values[0]
@@ -448,11 +443,8 @@ def generic_expander(*expanded_names):
             else:
                 results = {}
                 for new_name, new_values in wrapped(name, values):
-                    if new_name is None:
-                        raise ValueError('Invalid value for %s: %s' %
-                                         (name, values))
-                    assert new_name in expanded_names
-                    assert new_name not in results
+                    assert new_name in expanded_names, new_name
+                    assert new_name not in results, new_name
                     results[new_name] = new_values
 
             for new_name in expanded_names:
@@ -480,21 +472,39 @@ def expand_list_style(name, values):
 
     http://www.w3.org/TR/CSS21/generate.html#propdef-list-style
     """
+    type_specified = image_specified = False
+    none_count = 0
     for value in values:
-        keyword = get_keyword(value)
-        # TODO: how do we disambiguate -style: none and -image: none?
-        if keyword in ('disc', 'circle', 'square', 'decimal',
-                       'decimal-leading-zero', 'lower-roman', 'upper-roman',
-                       'lower-greek', 'lower-latin', 'upper-latin', 'armenian',
-                       'georgian', 'lower-alpha', 'upper-alpha', 'none'):
+        if get_keyword(value) == 'none':
+            # Can be either -style or -image, see at the end which is not
+            # otherwise specified.
+            none_count += 1
+            none_value = value
+            continue
+
+        if list_style_type([value]):
             suffix = '-type'
-        elif keyword in ('inside', 'outside'):
+            type_specified = True
+        elif list_style_position([value]):
             suffix = '-position'
-        elif keyword == 'none' or value.type == 'URI':
+        elif image([value]):
             suffix = '-image'
+            image_specified = True
         else:
-            suffix = None
+            raise InvalidValues
         yield suffix, [value]
+
+    if not type_specified and none_count:
+        yield '-type', [none_value]
+        none_count -= 1
+
+    if not image_specified and none_count:
+        yield '-image', [none_value]
+        none_count -= 1
+
+    if none_count:
+        # Too many none values.
+        raise InvalidValues
 
 
 @expander('border')
@@ -521,18 +531,14 @@ def expand_border_side(name, values):
     http://www.w3.org/TR/CSS21/box.html#propdef-border-top
     """
     for value in values:
-        keyword = get_keyword(value)
-        if value.type == 'COLOR_VALUE':
+        if color([value]):
             suffix = '-color'
-        elif value.type == 'DIMENSION' or \
-                value.type == 'NUMBER' and value.value == 0 or \
-                keyword in ('thin', 'medium', 'thick'):
+        elif border_width([value]):
             suffix = '-width'
-        elif keyword in ('none', 'hidden', 'dotted', 'dashed', 'solid',
-                         'double', 'groove', 'ridge', 'inset', 'outset'):
+        elif border_style([value]):
             suffix = '-style'
         else:
-            suffix = None
+            raise InvalidValues
         yield suffix, [value]
 
 
@@ -559,19 +565,18 @@ def expand_background(name, values):
     values = list(reversed(values))
     while values:
         value = values.pop()
-        keyword = get_keyword(value)
-        if value.type == 'COLOR_VALUE':
+        if color([value]):
             suffix = '-color'
-        elif keyword == 'none' or value.type == 'URI':
+        elif image([value]):
             suffix = '-image'
-        elif keyword in ('repeat', 'repeat-x', 'repeat-y', 'no-repeat'):
+        elif background_repeat([value]):
             suffix = '-repeat'
-        elif keyword in ('scroll', 'fixed'):
+        elif background_attachment([value]):
             suffix = '-attachment'
-        elif is_valid_background_positition(value):
+        elif background_position([value]):
             if values:
                 next_value = values.pop()
-                if is_valid_background_positition(next_value):
+                if background_position([value, next_value]):
                     # Two consecutive '-position' values, yield them together
                     yield '-position', [value, next_value]
                     continue
@@ -582,7 +587,7 @@ def expand_background(name, values):
             # A single '-position' value
             suffix = '-position'
         else:
-            suffix = None
+            raise InvalidValues
         yield suffix, [value]
 
 
@@ -598,8 +603,8 @@ def expand_font(name, values):
     keyword = get_single_keyword(values)
     if keyword in ('caption', 'icon', 'menu', 'message-box',
                    'small-caption', 'status-bar'):
-        # System fonts are not supported, use initial values
-        # TODO: warn?
+        LOGGER.warn(
+            'System fonts are not supported, `font: %s` ignored.', keyword)
         return
 
     # Make `values` a stack
@@ -608,50 +613,40 @@ def expand_font(name, values):
     # order and are all optional.
     while values:
         value = values.pop()
-        keyword = get_keyword(value)
-        # TODO: how do we decide which suffix is 'normal'?
-        if keyword in ('normal', 'italic', 'oblique'):
+        if get_keyword(value) == 'normal':
+            # Just ignore 'normal' keywords. Unspecified properties will get
+            # their initial value, which is 'normal' for all three here.
+            continue
+
+        if font_style([value]):
             suffix = '-style'
-        elif keyword in ('normal', 'small-caps'):
+        elif font_variant([value]):
             suffix = '-variant'
-        elif keyword in ('normal', 'bold', 'bolder', 'lighter') or \
-                value.type == 'NUMBER':
+        elif font_weight([value]):
             suffix = '-weight'
         else:
+            # We’re done with these three, continue with font-size
             break
         yield suffix, [value]
 
     # Then font-size is mandatory
-
-    # Import here to avoid a circular dependency
-    from .computed_values import FONT_SIZE_KEYWORDS
-
-    # Latest `value` and `keyword` from the loop.
-    assert (
-        value.type in ('DIMENSION', 'PERCENTAGE') or
-        keyword in FONT_SIZE_KEYWORDS or
-        keyword in ('smaller', 'larger')
-    )
+    # Latest `value` from the loop.
+    assert font_size([value])
     yield '-size', [value]
 
     # Then line-height is optional, but font-family is not so the list
     # must not be empty yet
 
     value = values.pop()
-    if get_keyword(value) == 'normal' or value.type in (
-            'DIMENSION', 'NUMBER', 'PERCENTAGE'):
+    if line_height([value]):
         yield 'line-height', [value]
     else:
         # We pop()ed a font-family, add it back
         values.append(value)
 
-    # Just assume that everything else is a valid font-family.
-    # TODO: we should split on commas only. Eg. a sequence of
-    # space-separated keywords is only one family-name.
-    # See http://www.w3.org/TR/CSS21/fonts.html#propdef-font-family
-
     # Reverse the stack to get normal list
     values.reverse()
+    assert font_family(values)
     yield '-family', values
 
 
