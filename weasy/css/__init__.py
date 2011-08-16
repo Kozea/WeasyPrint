@@ -45,6 +45,7 @@ from cssutils import parseString, parseUrl, parseStyle
 from lxml import cssselect
 
 from . import properties
+from . import validation
 from . import computed_values
 from .values import get_single_keyword
 from ..utils import get_url_attribute
@@ -174,7 +175,12 @@ def effective_declarations(declaration_block):
     (property_name, property_value_list, importance) tuples.
     """
     for declaration in declaration_block.getProperties(all=True):
-        for name, values in properties.expand_shorthand(declaration):
+        for name, values in validation.validate_and_expand(
+            declaration.name,
+            # list() may call len(), which is slow on PropertyValue
+            # Use iter() to avoid this.
+            list(iter(declaration.propertyValue))
+        ):
             assert isinstance(values, list)
             yield name, values, declaration.priority
 
@@ -429,7 +435,15 @@ def get_all_computed_styles(document, medium,
                     # TODO: handle @font-face, @namespace, and @variables
                     continue
 
+                if origin == 'user agent':
+                    # XXX temporarily disable logging for user-agent stylesheet
+                    level = LOGGER.level
+                    LOGGER.setLevel('ERROR')
+
                 declarations = list(effective_declarations(rule.style))
+
+                if origin == 'user agent':
+                    LOGGER.setLevel(level)
 
                 for element, pseudo_type, specificity in matched:
                     for name, values, importance in declarations:

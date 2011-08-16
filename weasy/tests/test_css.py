@@ -82,7 +82,7 @@ def test_expand_shorthands():
     assert not style['margin-top']
 
     style = dict(
-        (name, ' '.join(value.cssText for value in values))
+        (name, css.values.as_css(values))
         for name, values, _priority in css.effective_declarations(style))
 
     assert 'margin' not in style

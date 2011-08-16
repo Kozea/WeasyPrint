@@ -17,6 +17,10 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os.path
+import logging
+
+
+logging.getLogger('WEASYPRINT').addHandler(logging.StreamHandler())
 
 
 def resource_filename(basename):

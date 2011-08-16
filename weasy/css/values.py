@@ -123,3 +123,10 @@ def make_keyword(keyword):
     value._value = keyword
     value._type = 'IDENT'
     return value
+
+
+def as_css(values):
+    """
+    Retur a string reperesentation for a value list.
+    """
+    return ' '.join(value.cssText for value in values)

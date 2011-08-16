@@ -20,78 +20,79 @@ import attest
 from attest import Tests, assert_hook
 from cssutils.css import PropertyValue, CSSStyleDeclaration
 
-from ..css.properties import expand_shorthand, expand_name_values
+from ..css import validation
+from ..css.values import as_css
 
 
 suite = Tests()
 
 
-def expand_to_dict(css):
+def expand_to_dict(short_name, short_values):
     """Helper to test shorthand properties expander functions."""
-    return dict((name, ' '.join(value.cssText for value in values))
-                for prop in CSSStyleDeclaration(css)
-                for name, values in expand_shorthand(prop))
+    return dict((name, as_css(values))
+                for name, values in validation.EXPANDERS[short_name](
+                    short_name, list(PropertyValue(short_values))))
 
 
 @suite.test
 def test_expand_four_sides():
-    assert expand_to_dict('margin: inherit') == {
+    assert expand_to_dict('margin', 'inherit') == {
         'margin-top': 'inherit',
         'margin-right': 'inherit',
         'margin-bottom': 'inherit',
         'margin-left': 'inherit',
     }
-    assert expand_to_dict('margin: 1em') == {
+    assert expand_to_dict('margin', '1em') == {
         'margin-top': '1em',
         'margin-right': '1em',
         'margin-bottom': '1em',
         'margin-left': '1em',
     }
-    assert expand_to_dict('padding: 1em 0') == {
+    assert expand_to_dict('padding', '1em 0') == {
         'padding-top': '1em',
         'padding-right': '0',
         'padding-bottom': '1em',
         'padding-left': '0',
     }
-    assert expand_to_dict('padding: 1em 0 2em') == {
+    assert expand_to_dict('padding', '1em 0 2em') == {
         'padding-top': '1em',
         'padding-right': '0',
         'padding-bottom': '2em',
         'padding-left': '0',
     }
-    assert expand_to_dict('padding: 1em 0 2em 5px') == {
+    assert expand_to_dict('padding', '1em 0 2em 5px') == {
         'padding-top': '1em',
         'padding-right': '0',
         'padding-bottom': '2em',
         'padding-left': '5px',
     }
     with attest.raises(ValueError):
-        list(expand_name_values('padding', PropertyValue('1 2 3 4 5')))
+        expand_to_dict('padding', '1 2 3 4 5')
 
 
 @suite.test
 def test_expand_borders():
-    assert expand_to_dict('border-top: 3px dotted red') == {
+    assert expand_to_dict('border-top', '3px dotted red') == {
         'border-top-width': '3px',
         'border-top-style': 'dotted',
         'border-top-color': 'red',
     }
-    assert expand_to_dict('border-top: 3px dotted') == {
+    assert expand_to_dict('border-top', '3px dotted') == {
         'border-top-width': '3px',
         'border-top-style': 'dotted',
         'border-top-color': 'currentColor',
     }
-    assert expand_to_dict('border-top: 3px red') == {
+    assert expand_to_dict('border-top', '3px red') == {
         'border-top-width': '3px',
         'border-top-style': 'none',
         'border-top-color': 'red',
     }
-    assert expand_to_dict('border-top: inset') == {
+    assert expand_to_dict('border-top', 'inset') == {
         'border-top-width': 'medium',
         'border-top-style': 'inset',
         'border-top-color': 'currentColor',
     }
-    assert expand_to_dict('border: 6px dashed green') == {
+    assert expand_to_dict('border', '6px dashed green') == {
         'border-top-width': '6px',
         'border-top-style': 'dashed',
         'border-top-color': 'green',
@@ -109,37 +110,37 @@ def test_expand_borders():
         'border-right-color': 'green',
     }
     with attest.raises(ValueError):
-        list(expand_name_values('border', PropertyValue('6px dashed left')))
+        expand_to_dict('border', '6px dashed left')
 
 
 @suite.test
 def test_expand_list_style():
-    assert expand_to_dict('list-style: inherit') == {
+    assert expand_to_dict('list-style', 'inherit') == {
         'list-style-position': 'inherit',
         'list-style-image': 'inherit',
         'list-style-type': 'inherit',
     }
-    assert expand_to_dict('list-style: url(foo.png)') == {
+    assert expand_to_dict('list-style', 'url(foo.png)') == {
         'list-style-position': 'outside',
         'list-style-image': 'url(foo.png)',
         'list-style-type': 'disc',
     }
-    assert expand_to_dict('list-style: decimal') == {
+    assert expand_to_dict('list-style', 'decimal') == {
         'list-style-position': 'outside',
         'list-style-image': 'none',
         'list-style-type': 'decimal',
     }
-    assert expand_to_dict('list-style: circle inside') == {
+    assert expand_to_dict('list-style', 'circle inside') == {
         'list-style-position': 'inside',
         'list-style-image': 'none',
         'list-style-type': 'circle',
     }
     with attest.raises(ValueError):
-        list(expand_name_values('list-style', PropertyValue('red')))
+        expand_to_dict('list-style', 'red')
 
 
 def assert_background(css, **kwargs):
-    expanded = expand_to_dict('background: ' + css).items()
+    expanded = expand_to_dict('background', css).items()
     expected = [('background-' + key, value)
                 for key, value in kwargs.iteritems()]
     assert sorted(expanded) == sorted(expected)
@@ -205,18 +206,18 @@ def test_expand_background():
         position='10% 200px' ##
     )
     assert_background(
-        '78px right fixed',
+        'right 78px fixed',
         color='transparent',
         image='none',
         repeat='repeat',
         attachment='fixed', ##
-        position='78px right' ##
+        position='right 78px' ##
     )
 
 
 @suite.test
 def test_font():
-    assert expand_to_dict('font: 12px sans-serif') == {
+    assert expand_to_dict('font', '12px sans-serif') == {
         'font-style': 'normal',
         'font-variant': 'normal',
         'font-weight': 'normal',
@@ -224,7 +225,7 @@ def test_font():
         'line-height': 'normal',
         'font-family': 'sans-serif', ##
     }
-    assert expand_to_dict('font: smaller/1.2 "Some Font", serif') == {
+    assert expand_to_dict('font', 'smaller/1.2 "Some Font", serif') == {
         'font-style': 'normal',
         'font-variant': 'normal',
         'font-weight': 'normal',
@@ -233,7 +234,7 @@ def test_font():
         # The comma was lost in expand_to_dict()
         'font-family': '"Some Font" serif', ##
     }
-    assert expand_to_dict('font: small-caps italic 700 large serif') == {
+    assert expand_to_dict('font', 'small-caps italic 700 large serif') == {
         'font-style': 'italic', ##
         'font-variant': 'small-caps', ##
         'font-weight': '700', ##
