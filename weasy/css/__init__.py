@@ -41,7 +41,7 @@ function does everything, but there is also a function for each step:
 
 import logging
 
-from cssutils import parseString, parseUrl, parseStyle
+from cssutils import parseStyle
 from lxml import cssselect
 
 from . import properties

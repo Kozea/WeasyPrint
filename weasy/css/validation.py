@@ -223,7 +223,7 @@ def lenght_precentage_or_auto(value):
 @validator('height')
 @validator('width')
 @single_value
-def lenght_precentage_or_auto(value):
+def positive_lenght_precentage_or_auto(value):
     return (
         is_dimension_or_percentage(value, negative=False) or
         get_keyword(value) == 'auto'

@@ -22,11 +22,7 @@
 """
 
 
-import functools
-
 from cssutils.css import PropertyValue
-
-from .values import get_keyword, get_single_keyword
 
 
 # See http://www.w3.org/TR/CSS21/propidx.html
