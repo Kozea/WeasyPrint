@@ -355,7 +355,7 @@ def test_breaking_linebox():
                 background-color:#393939;
                 color:#FFFFFF;
                 font-family: Monospace;
-                text-align:center;
+             /* text-align:center; */
                 line-height:1;
                 text-decoration : underline overline line-through;
             }
