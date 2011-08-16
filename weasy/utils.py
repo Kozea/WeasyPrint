@@ -16,6 +16,8 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+
+import urllib
 try:
     from urlparse import urljoin, urlparse
 except ImportError:
@@ -72,3 +74,17 @@ def ensure_url(filename_or_url):
         return filename_or_url
     else:
         return path2url(filename_or_url)
+
+
+def urllib_fetcher(url):
+    """
+    A "fetcher" for cssutils, based on urllib instead of urllib2, since
+    urllib has support for the "data" URL scheme.
+    """
+    result = urllib.urlopen(url)
+    info = result.info()
+    if info.gettype() != 'text/css':
+        # TODO: warn
+        return None
+    charset = info.getparam('charset')
+    return charset, result.read()

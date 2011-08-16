@@ -83,6 +83,7 @@ def find_stylesheets(document):
     Find and parse stylesheets in a Document object. Return an iterable of
     stylesheets, in tree order.
     """
+    parser = document.css_parser
     for element in document.dom.iter():
         if element.tag not in ('style', 'link'):
             continue
@@ -102,15 +103,17 @@ def find_stylesheets(document):
             content = ''.join(content)
             # lxml should give us either unicode or ASCII-only bytestrings, so
             # we don't need `encoding` here.
-            yield parseString(content, href=element.base_url,
-                              media=media_attr, title=element.get('title'))
+            yield parser.parseString(content,
+                href=element.base_url,
+                media=media_attr, title=element.get('title'))
         elif element.tag == 'link' and element.get('href') \
                 and ' stylesheet ' in ' %s ' % element.get('rel', ''):
             # URLs should NOT have been made absolute earlier
             # TODO: support the <base> HTML element, but do not use
             # lxml.html.HtmlElement.make_links_absolute() that changes the tree
             href = get_url_attribute(element, 'href')
-            yield parseUrl(href, media=media_attr, title=element.get('title'))
+            yield parser.parseUrl(href,
+                media=media_attr, title=element.get('title'))
 
 
 def find_style_attributes(document):

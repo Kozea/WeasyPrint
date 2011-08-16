@@ -56,17 +56,18 @@ def test_find_stylesheets():
     document = parse_html('doc1.html')
 
     sheets = list(css.find_stylesheets(document))
-    assert len(sheets) == 2
+    assert len(sheets) == 3
     # Also test that stylesheets are in tree order
-    assert [s.href.rsplit('/', 1)[-1] for s in sheets] \
-        == ['sheet1.css', 'doc1.html']
+    assert [s.href.rsplit('/', 1)[-1].rsplit(',', 1)[-1] for s in sheets] \
+        == ['sheet1.css', 'a%7Bcolor%3AcurrentColor%7D',
+            'doc1.html']
 
     rules = list(rule for sheet in sheets
                       for rule in css.effective_rules(sheet, 'print'))
     assert len(rules) == 9
     # Also test appearance order
     assert [rule.selectorText for rule in rules] \
-        == ['li', 'p', 'ul', 'li', 'a', 'a:after', ':first', 'ul',
+        == ['a', 'li', 'p', 'ul', 'li', 'a:after', ':first', 'ul',
             'body > h1:first-child']
 
 
