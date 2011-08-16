@@ -94,17 +94,30 @@ def single_value(function):
     return validator
 
 
-def is_dimension(value):
+def is_dimension(value, negative=True):
+    """
+    `negative` means that negative values are allowed.
+    """
     type_ = value.type
     # Units may be ommited on zero lenghts.
-    return type_ == 'DIMENSION' or (type_ == 'NUMBER' and value.value == 0)
+    return (
+        (type_ == 'DIMENSION' and (negative or value.value >= 0)) or
+        (type_ == 'NUMBER' and value.value == 0)
+    )
 
 
-def is_dimension_or_percentage(value):
+def is_dimension_or_percentage(value, negative=True):
+    """
+    `negative` means that negative values are allowed.
+    """
     type_ = value.type
-    return type_ in ('DIMENSION', 'PERCENTAGE') or (
+    return (
+        type_ in ('DIMENSION', 'PERCENTAGE') and
+        (negative or value.value >= 0)
+    ) or (
         # Units may be ommited on zero lenghts.
-        type_ == 'NUMBER' and value.value == 0)
+        type_ == 'NUMBER' and value.value == 0
+    )
 
 
 @validator()
@@ -138,10 +151,10 @@ def background_position(values):
     """
     if len(values) == 1:
         value = values[0]
-        if is_dimension_or_percentage(value):
-            return True
-        keyword = get_keyword(value)
-        return keyword in ('left', 'right', 'top', 'bottom', 'center')
+        return (
+            is_dimension_or_percentage(value) or
+            get_keyword(value) in ('left', 'right', 'top', 'bottom', 'center')
+        )
     if len(values) == 2:
         value_1, value_2 = values
         if is_dimension_or_percentage(value_1):
@@ -186,7 +199,7 @@ def border_style():
 @validator('border-bottom-width')
 @single_value
 def border_width(value):
-    return is_dimension(value) or get_keyword(value) in (
+    return is_dimension(value, negative=False) or get_keyword(value) in (
         'thin', 'medium', 'thick')
 
 
@@ -200,8 +213,6 @@ def content(values):
 #@validator('right')
 #@validator('left')
 #@validator('bottom')
-@validator('height')
-@validator('width')
 @validator('margin-top')
 @validator('margin-right')
 @validator('margin-bottom')
@@ -210,6 +221,16 @@ def content(values):
 def lenght_precentage_or_auto(value):
     return (
         is_dimension_or_percentage(value) or
+        get_keyword(value) == 'auto'
+    )
+
+
+@validator('height')
+@validator('width')
+@single_value
+def lenght_precentage_or_auto(value):
+    return (
+        is_dimension_or_percentage(value, negative=False) or
         get_keyword(value) == 'auto'
     )
 
@@ -266,9 +287,10 @@ def font_variant():
 @single_value
 def font_weight(value):
     return (
-        get_keyword(value) in ('normal', 'bold', 'bolder', 'lighter') or
-        value.type == 'NUMBER' and value.value in (100, 200, 300, 400, 500,
-                                                   600, 700, 800, 900)
+        get_keyword(value) in ('normal', 'bold', 'bolder', 'lighter') or (
+            value.type == 'NUMBER' and
+            value.value in (100, 200, 300, 400, 500, 600, 700, 800, 900)
+        )
     )
 
 
@@ -281,8 +303,10 @@ def letter_spacing(value):
 @validator()
 @single_value
 def line_height(value):
-    return get_keyword(value) == 'normal' or value.type in (
-        'NUMBER', 'DIMENSION', 'PERCENTAGE')
+    return get_keyword(value) == 'normal' or (
+        value.type in ('NUMBER', 'DIMENSION', 'PERCENTAGE') and
+        value.value >= 0
+    )
 
 
 @validator()
@@ -306,7 +330,7 @@ def list_style_type():
 @validator('padding-left')
 @single_value
 def lenght_or_precentage(value):
-    return is_dimension_or_percentage(value)
+    return is_dimension_or_percentage(value, negative=False)
 
 
 @validator()
@@ -640,7 +664,6 @@ def validate_non_shorthand(name, values, required=False):
 
     if (
         get_single_keyword(values) in ('initial', 'inherit') or
-        # TODO: refuse negative values for some properties.
         VALIDATORS[name](values)
     ):
         return [(name, values)]
