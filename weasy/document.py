@@ -19,7 +19,6 @@
 
 import os.path
 import math
-import logging
 
 from cssutils import parseFile, CSSParser
 import lxml.html

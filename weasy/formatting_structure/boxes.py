@@ -99,7 +99,8 @@ class Box(object):
         self.style = self.document.style_for(self.element).copy()
 
     def __repr__(self):
-        return '<%s %s>' % (type(self).__name__, self.element.tag)
+        return '<%s %s %i>' % (type(self).__name__, self.element.tag,
+                               self.element.sourceline)
 
     def ancestors(self):
         """Yield parent and recursively yield parent's parents."""
@@ -473,4 +474,3 @@ class InlineLevelReplacedBox(ReplacedBox, AtomicInlineLevelBox):
     A replaced element with a 'display' value of 'inline', 'inline-table', or
     'inline-block' generates an inline-level replaced box.
     """
-

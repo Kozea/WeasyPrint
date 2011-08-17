@@ -188,12 +188,13 @@ def test_inline_in_block():
 @suite.test
 def test_block_in_inline():
     box = parse('''
-        <style>
-            p { display: inline-block; }
-            span { display: block; }
-        </style>
-        <p>Lorem <em>ipsum <strong>dolor <span>sit</span>
-            <span>amet,</span></strong><span>consectetur</span></em></p>''')
+<style>
+    p { display: inline-block; }
+    span { display: block; }
+</style>
+<p>Lorem <em>ipsum <strong>dolor <span>sit</span>
+    <span>amet,</span></strong><span><em>consectetur<div/></em></span></em></p>
+    ''')
     box = build.inline_in_block(box)
     assert_tree(box, [
         ('body', 'line', [
@@ -208,13 +209,16 @@ def test_block_in_inline():
                                 ('span', 'line', [
                                     ('span', 'text', 'sit')])]),
                             # No whitespace processing here.
-                            ('strong', 'text', '\n            '),
+                            ('strong', 'text', '\n    '),
                             ('span', 'block', [ # This block is "pulled up"
                                 ('span', 'line', [
                                     ('span', 'text', 'amet,')])])]),
                         ('span', 'block', [ # This block is "pulled up"
                             ('span', 'line', [
-                                ('span', 'text', 'consectetur')])])])])])])])
+                                ('em', 'inline', [
+                                    ('em', 'text', 'consectetur'),
+                                    ('div', 'block', []),
+                                    ])])])])])])])])
 
     box = build.block_in_inline(box)
     assert_tree(box, [
@@ -235,7 +239,7 @@ def test_block_in_inline():
                         ('em', 'inline', [
                             ('strong', 'inline', [
                                 # Whitespace processing not done yet.
-                                ('strong', 'text', '\n            ')])])])]),
+                                ('strong', 'text', '\n    ')])])])]),
                 ('span', 'block', [
                     ('span', 'line', [
                         ('span', 'text', 'amet,')])]),
@@ -245,8 +249,14 @@ def test_block_in_inline():
                         ('em', 'inline', [
                             ('strong', 'inline', [])])])]),
                 ('span', 'block', [
-                    ('span', 'line', [
-                        ('span', 'text', 'consectetur')])]),
+                    ('span', 'anon_block', [
+                        ('span', 'line', [
+                            ('em', 'inline', [
+                                ('em', 'text', 'consectetur')])])]),
+                    ('div', 'block', []),
+                    ('span', 'anon_block', [
+                        ('span', 'line', [
+                            ('em', 'inline', [])])])]),
                 ('p', 'anon_block', [
                     ('p', 'line', [
                         ('em', 'inline', [])])])])])])
@@ -347,26 +357,27 @@ def test_page_style():
 @suite.test
 def test_containing_block():
     """Test the boxes containing block."""
-    box = parse('''
-        <html>
-          <style>
-            body { height: 297mm; width: 210mm }
-            p { width: 100mm; height: 200mm }
-            p span { position: absolute }
-            p em { position: relative }
-            li { position: fixed }
-            li span { position: fixed }
-          </style>
-          <body>
-            <p>
-              Lorem <em>ipsum <strong>dolor <span>sit</span>
-              <span>amet,</span></strong><span>consectetur</span></em>
-            </p>
-            <ul>
-              <li>Lorem ipsum dolor sit amet</li>
-              <li>Lorem ipsum <spam>dolor sit amet</span></li>
-            </ul>
-          </body>
-        </html>
-    ''')
-    tree = to_lists(box)
+    box = None
+#    box = parse('''
+#        <html>
+#          <style>
+#            body { height: 297mm; width: 210mm }
+#            p { width: 100mm; height: 200mm }
+#            p span { position: absolute }
+#            p em { position: relative }
+#            li { position: fixed }
+#            li span { position: fixed }
+#          </style>
+#          <body>
+#            <p>
+#              Lorem <em>ipsum <strong>dolor <span>sit</span>
+#              <span>amet,</span></strong><span>consectetur</span></em>
+#            </p>
+#            <ul>
+#              <li>Lorem ipsum dolor sit amet</li>
+#              <li>Lorem ipsum <spam>dolor sit amet</span></li>
+#            </ul>
+#          </body>
+#        </html>
+#    ''')
+#    tree = to_lists(box)

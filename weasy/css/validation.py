@@ -223,7 +223,7 @@ def lenght_precentage_or_auto(value):
 @validator('height')
 @validator('width')
 @single_value
-def lenght_precentage_or_auto(value):
+def positive_lenght_precentage_or_auto(value):
     return (
         is_dimension_or_percentage(value, negative=False) or
         get_keyword(value) == 'auto'
@@ -245,7 +245,7 @@ def display(values):
         'table-row', 'table-column-group', 'table-column', 'table-cell',
         'table-caption'
     ):
-        raise InvalidValues
+        raise InvalidValues('value not supported yet')
     return keyword in ('inline', 'block', 'none')
 
 
@@ -332,7 +332,7 @@ def lenght_or_precentage(value):
 def position(values):
     keyword = get_single_keyword(values)
     if keyword in ('relative', 'absolute', 'fixed'):
-        raise InvalidValues
+        raise InvalidValues('value not supported yet')
     return keyword in ('static',)
 
 
@@ -340,7 +340,7 @@ def position(values):
 def text_align(values):
     keyword = get_single_keyword(values)
     if keyword in ('right', 'center', 'justify'):
-        raise InvalidValues
+        raise InvalidValues('value not supported yet')
     return keyword in ('left',)
 
 

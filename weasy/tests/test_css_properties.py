@@ -18,7 +18,7 @@
 
 import attest
 from attest import Tests, assert_hook
-from cssutils.css import PropertyValue, CSSStyleDeclaration
+from cssutils.css import PropertyValue
 
 from ..css import validation
 from ..css.values import as_css

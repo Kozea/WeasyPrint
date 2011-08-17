@@ -80,9 +80,13 @@ def main():
 
     if hasattr(logging, 'NullHandler'):
         # New in 2.7
-        logging.getLogger('CSSUTILS').addHandler(logging.NullHandler())
+        cssutils_logger = logging.getLogger('CSSUTILS')
+        del cssutils_logger.handlers[:]
+        cssutils_logger.addHandler(logging.NullHandler())
 
-    logging.getLogger('WEASYPRINT').addHandler(logging.StreamHandler())
+    logger = logging.getLogger('WEASYPRINT')
+    logger.setLevel(logging.INFO)
+    logger.addHandler(logging.StreamHandler())
 
     document_class = FORMATS[args.format]
     document = document_class.from_file(args.input, encoding=args.encoding)

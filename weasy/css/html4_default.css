@@ -55,10 +55,7 @@ thead, tbody,
 tfoot           { vertical-align: middle }
 td, th, tr      { vertical-align: inherit }
 s, strike, del  { text-decoration: line-through }
-/*hr              { border: 1px inset }
-    'border' shorthand is not implemented yet
-    TODO: revert when it is */
-hr              { border-width: 1px; border-style: inset }
+hr              { border: 1px inset }
 ol, ul, dir,
 menu, dd        { margin-left: 40px }
 ol              { list-style-type: decimal }
