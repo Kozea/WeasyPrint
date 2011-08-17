@@ -86,6 +86,15 @@ def draw_canvas_background(context, page):
                 draw_background(context, child, on_entire_canvas=True)
 
 
+def get_page_size(box):
+    """
+    Find the PageBox this box is in, and return its outer (width, height).
+    """
+    while not isinstance(box, boxes.PageBox):
+        box = box.parent
+    return box.outer_width, box.outer_height
+
+
 def draw_background(context, box, on_entire_canvas=False):
     """
     Draw the box background color and image to a Cairo context.
@@ -122,8 +131,7 @@ def draw_background(context, box, on_entire_canvas=False):
             assert bg_attachement == 'fixed'
             # Percantages in background-position refer to the canvas size.
             canvas = context.get_target()
-            bg_width, bg_height = context.device_to_user_distance(
-                canvas.get_width(), canvas.get_height())
+            bg_width, bg_height = get_page_size(box)
 
         # Background image
         bg_image = box.style['background-image'][0]
@@ -295,4 +303,3 @@ def draw_replacedbox(context, box):
         scale_height = height/box.replacement.intrinsic_height()
         context.scale(scale_width, scale_height)
         box.replacement.draw(context)
-
