@@ -95,11 +95,15 @@ def compute_textbox_positions(box,ref_x, ref_y):
 
 def is_empty_line(linebox):
     #TODO: complete this function
+    if len(linebox.children) == 0:
+        return linebox
     text = ""
+    len_textbox = 0
     for child in linebox.descendants():
         if isinstance(child, boxes.TextBox):
+            len_textbox += 1
             text += child.text.strip(" ")
-    return (len(linebox.children) == 0 or text == "")
+    return text == "" and len_textbox == len(linebox.children)
 
 
 def get_new_empty_line(linebox):

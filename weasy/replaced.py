@@ -82,3 +82,4 @@ class ImageReplacement(Replacement):
         pattern = cairo.SurfacePattern(self.surface)
         context.set_source(pattern)
         context.paint()
+
