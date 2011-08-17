@@ -411,13 +411,14 @@ def test_linebox_text():
     assert len(lines) == 2
 
     def get_text(lines):
-        text = ""
         for line in lines:
+            text = ""
             for box in line.descendants():
                 if isinstance(box, boxes.TextBox):
                     text = "%s%s" % (text, box.text)
-        return text
-    assert get_text(lines) == u"Lorem Ipsumis very coool"
+            yield text
+
+    assert " ".join(get_text(lines)) == u"Lorem Ipsumis very coool"
 
 
 @suite.test
@@ -450,3 +451,4 @@ def test_linebox_positions():
         assert ref_position_x - line.position_x <= line.width
         ref_position_x = line.position_x
         ref_position_y += line.height
+
