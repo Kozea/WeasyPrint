@@ -23,14 +23,6 @@ from .. import text
 from ..css.values import get_single_keyword
 
 
-def get_new_empty_line(linebox):
-    new_line = linebox.copy()
-    new_line.empty()
-    new_line.width = 0
-    new_line.height = 0
-    return new_line
-
-
 def get_new_lineboxes(linebox):
     containing_block_width = linebox.containing_block_size()[0]
     lines = list(breaking_linebox(linebox, containing_block_width))
@@ -108,6 +100,14 @@ def is_empty_line(linebox):
         if isinstance(child, boxes.TextBox):
             text += child.text.strip(" ")
     return (len(linebox.children) == 0 or text == "")
+
+
+def get_new_empty_line(linebox):
+    new_line = linebox.copy()
+    new_line.empty()
+    new_line.width = 0
+    new_line.height = 0
+    return new_line
 
 
 def breaking_linebox(linebox, allocate_width):
@@ -316,15 +316,21 @@ def white_space_processing(linebox):
     last_textbox = get_last_textbox(linebox)
     # If a space (U+0020) at the beginning or the end of a line has
     # 'white-space' set to 'normal', 'nowrap', or 'pre-line', it is removed.
-    if get_single_keyword(first_textbox.style.white_space) in ('normal', 'nowrap', 'pre-line'):
-        if get_single_keyword(first_textbox.style.direction) == "rtl":
-            first_textbox.text = first_textbox.text.rstrip(' \t')
-        else:
-            first_textbox.text = first_textbox.text.lstrip(' \t')
-        if get_single_keyword(first_textbox.style.direction) == "rtl":
-            last_textbox.text = last_textbox.text.rstrip(' \t')
-        else:
-            last_textbox.text = last_textbox.text.lstrip(' \t')
+    if first_textbox:
+        white_space = get_single_keyword(first_textbox.style.white_space)
+        if white_space in ('normal', 'nowrap', 'pre-line'):
+            if get_single_keyword(first_textbox.style.direction) == "rtl":
+                first_textbox.text = first_textbox.text.rstrip(' \t')
+            else:
+                first_textbox.text = first_textbox.text.lstrip(' \t')
+    if last_textbox:
+        white_space = get_single_keyword(last_textbox.style.white_space)
+        if white_space in ('normal', 'nowrap', 'pre-line'):
+            if get_single_keyword(last_textbox.style.direction) == "rtl":
+                last_textbox.text = last_textbox.text.lstrip(' \t')
+            else:
+                last_textbox.text = last_textbox.text.rstrip(' \t')
+
 
     # TODO: All tabs (U+0009) are rendered as a horizontal shift that
     # lines up the start edge of the next glyph with the next tab stop.

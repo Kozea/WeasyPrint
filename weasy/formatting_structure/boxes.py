@@ -89,6 +89,8 @@ class Box(object):
         self._init_style()
         self.width = None
         self.height = None
+        self.position_x = 0
+        self.position_y = 0
 
     def _init_style(self):
         # Computed values
