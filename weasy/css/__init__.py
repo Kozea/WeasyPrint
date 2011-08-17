@@ -276,8 +276,8 @@ def match_selectors(document, selector_list):
         try:
             pseudo_type, selector_callable = selector_to_xpath(selector)
         except cssselect.ExpressionError:
-            LOGGER.warn('Invalid selector %r, the whole rule-set was ignored.',
-                selector.selectorText)
+            LOGGER.warn('Unsupported selector %r, the whole rule-set '
+                        'was ignored.', selector.selectorText)
             return
         selectors.append((selector_callable, pseudo_type,
                           selector.specificity))
@@ -308,7 +308,7 @@ def match_page_selector(selector):
         for page_type in page_types:
             yield '@page', page_type, specificity
     else:
-        LOGGER.warn('Invalid @page selector %r, the whole rule-set '
+        LOGGER.warn('Unsupported @page selector %r, the whole rule-set '
                     'was ignored.', selector)
 
 
