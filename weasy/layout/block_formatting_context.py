@@ -20,7 +20,7 @@
 from ..css.values import get_single_keyword
 from ..formatting_structure import boxes
 from .percentages import resolve_percentages
-from .inline_formatting_context import breaking_linebox
+from .inline_formatting_context import get_new_lineboxes
 
 def block_dimensions(box):
     resolve_percentages(box)
@@ -114,9 +114,7 @@ def block_level_height(box):
         child.position_x = position_x
         child.position_y = position_y
         if isinstance(child, boxes.LineBox):
-            lines = breaking_linebox(child)
-            for line in lines:
-#                resolve_percentages(line)
+            for line in get_new_lineboxes(child):
                 box.add_child(line)
                 position_y += line.height
         else:

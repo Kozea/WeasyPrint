@@ -141,6 +141,7 @@ class Box(object):
         new_box = cls.__new__(cls)
         # Copy attributes
         new_box.__dict__.update(self.__dict__)
+        new_box.style = self.style.copy()
         return new_box
 
     def translate(self, dx, dy):
@@ -219,6 +220,14 @@ class Box(object):
         """Absolute vertical position of the border box."""
         return self.position_y + self.margin_top
 
+    def reset_spacing(self, side):
+        setattr(self, 'margin_%s' % side, 0)
+        setattr(self, 'padding_%s' % side, 0)
+        setattr(self, 'border_%s_width' % side, 0)
+
+        self.style['margin-%s' % side] = None
+        self.style['padding-%s' % side] = None
+        self.style['border-%s-width' % side] = None
 
     ###  Positioning schemes
 
@@ -462,3 +471,4 @@ class InlineLevelReplacedBox(ReplacedBox, AtomicInlineLevelBox):
     A replaced element with a 'display' value of 'inline', 'inline-table', or
     'inline-block' generates an inline-level replaced box.
     """
+

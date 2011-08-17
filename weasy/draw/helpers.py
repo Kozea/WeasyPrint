@@ -244,8 +244,8 @@ def draw_border(context, box):
             yield Trapezoid(line1, line2)
 
     def draw_border_side(side, trapezoid):
-        width = float(box.style['border-%s-width'%side][0].value)
-        if box.style['border-%s-width'%side] == 0:
+        width = getattr(box, 'border_%s_width' %side)
+        if getattr(box, 'border_%s_width' % side) == 0:
             return
         color = box.style['border-%s-color'%side][0]
         style = box.style['border-%s-style'%side][0].value
@@ -295,3 +295,4 @@ def draw_replacedbox(context, box):
         scale_height = height/box.replacement.intrinsic_height()
         context.scale(scale_width, scale_height)
         box.replacement.draw(context)
+

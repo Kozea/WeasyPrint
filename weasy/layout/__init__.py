@@ -86,9 +86,18 @@ def textbox_dimensions(box):
     text_fragment = text.TextLineFragment.from_textbox(box)
     box.width, box.height = text_fragment.get_size()
 
+
 @compute_dimensions.register(boxes.InlineBox)
 def inlinebox_dimensions(box):
     resolve_percentages(box)
+    widths = [0]
+    heights = [0]
+    for child in box.children:
+        compute_dimensions(child)
+        widths.append(child.margin_width())
+        heights.append(child.height)
+    box.width = sum(widths)
+    box.height = max(heights)
 
 @compute_dimensions.register(boxes.LineBox)
 def linebox_dimensions(box):

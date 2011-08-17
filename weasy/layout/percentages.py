@@ -32,7 +32,10 @@ def resolve_one_percentage(box, property_name, refer_to,
     """
     # box.style has computed values
     values = box.style[property_name]
-    pixels = get_single_pixel_value(values)
+    if values is None:
+        pixels = 0
+    else:
+        pixels = get_single_pixel_value(values)
     if pixels is not None:
         # Absolute length (was converted to pixels in "computed values")
         result = pixels
@@ -94,4 +97,10 @@ def resolve_percentages(box):
     # Used value == computed value
     for side in ['top', 'right', 'bottom', 'left']:
         prop = 'border_{}_width'.format(side)
-        setattr(box, prop, get_single_pixel_value(getattr(box.style, prop)))
+        values = getattr(box.style, prop)
+        if values is None:
+            pixels = 0
+        else:
+            pixels = get_single_pixel_value(values)
+        setattr(box, prop, pixels)
+

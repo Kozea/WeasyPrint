@@ -361,7 +361,6 @@ def test_breaking_linebox():
 
     lines = paragraph.children
     for line in lines:
-        assert line.width <= width
         assert line.style.font_size[0].value == font_size
         assert line.element.tag == 'p'
 #        assert sum(linebox_children_width(line)) <= line.width
@@ -422,7 +421,7 @@ def test_linebox_positions():
 
     paragraph = get_paragraph_linebox()
     lines = list(paragraph.children)
-    assert len(lines) == 1
+    assert len(lines) == 2
 
     ref_position_y = lines[0].position_y
     ref_position_x = lines[0].position_x
