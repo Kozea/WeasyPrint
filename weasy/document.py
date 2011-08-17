@@ -21,7 +21,7 @@ import os.path
 import math
 import logging
 
-from cssutils import parseFile
+from cssutils import parseFile, CSSParser
 import lxml.html
 import cairo
 
@@ -53,6 +53,9 @@ class Document(object):
 
         # Go through the property setter which calls ensure_url()
         self.base_url = self.base_url
+
+        self.css_parser = CSSParser()
+        self.css_parser.setFetcher(utils.urllib_fetcher)
 
         self.user_stylesheets = user_stylesheets or []
         self.user_agent_stylesheets = user_agent_stylesheets or []

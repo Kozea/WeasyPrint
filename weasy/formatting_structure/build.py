@@ -96,8 +96,8 @@ def dom_to_box(document, element):
         for child_element in element:
             if get_single_keyword(
                     document.style_for(child_element).display) != 'none':
-                # TODO: We ignore html comments but also HTML/XML entities
-                # we need find another way to ignore html comments
+                # lxml.html already converts HTML entities to text.
+                # Here we ignore comments and XML processing instructions.
                 if isinstance(child_element.tag, basestring):
                     box.add_child(dom_to_box(document, child_element))
             if child_element.tail:

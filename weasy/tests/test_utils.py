@@ -31,7 +31,7 @@ def test_multifunction():
     @utils.MultiFunction
     def foo():
         "Hello, docstrings!"
-    
+
     assert foo.__name__ == 'foo'
     assert foo.__doc__ == 'Hello, docstrings!'
     assert foo.__module__ == __name__
