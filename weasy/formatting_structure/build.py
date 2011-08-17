@@ -37,6 +37,7 @@ def build_formatting_structure(document):
     box = inline_in_block(box)
     box = block_in_inline(box)
     box = process_whitespace(box)
+    sanity_checks(box)
     return box
 
 
@@ -299,7 +300,7 @@ def block_in_inline(box):
                 if block_level_box is None:
                     break
                 _add_anonymous_block(new_box, new_line)
-                new_box.add_child(block_level_box)
+                new_box.add_child(block_in_inline(block_level_box))
                 # Loop with the same child
             if new_box.children:
                 # Some children were already added, this became a block
@@ -351,3 +352,30 @@ def _inner_block_in_inline(box):
             box.children.appendleft(child)
             break
     return new_box, block_level_box
+
+
+def sanity_checks(box):
+    """
+    Check that the rules regarding boxes are met:
+
+    * A block container can contain either only block-level boxes or
+      only line boxes
+    * Line boxes and inline boxes can only contain inline-level boxes.
+    """
+    if not isinstance(box, boxes.ParentBox):
+        return
+
+    for child in box.children:
+        sanity_checks(child)
+
+    if isinstance(box, boxes.BlockContainerBox):
+        types = [boxes.BlockLevelBox, boxes.LineBox]
+    elif isinstance(box, (boxes.LineBox, boxes.InlineBox)):
+        types = [boxes.InlineLevelBox]
+    else:
+        return
+
+    assert any(
+        all(isinstance(child, type_) for child in box.children)
+        for type_ in types
+    )
