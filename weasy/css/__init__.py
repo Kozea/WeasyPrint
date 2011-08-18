@@ -47,7 +47,7 @@ from lxml import cssselect
 from . import properties
 from . import validation
 from . import computed_values
-from .values import get_single_keyword
+from .values import get_single_keyword, make_pixel_value
 from ..utils import get_url_attribute
 
 
@@ -341,6 +341,20 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None):
     Return a dict of computed styles from cascaded styles and the computed
     styles for the parent element.
     """
+    if not cascaded and parent_style is not None:
+        # Fast path for anonymous boxes:
+        # No cascaded style, only implicitly initial or inherited values.
+        computed = computed_values.StyleDict(properties.INITIAL_VALUES)
+        for name in properties.INHERITED:
+            computed[name] = parent_style[name]
+        zero = [make_pixel_value(0)]
+        # border-style is none, so border-width computes to zero.
+        # Other than that, properties that would need computing are
+        # border-color and size, but they do not apply.
+        for side in ('top', 'bottom', 'left', 'right'):
+            computed['border-%s-width' % side] = zero
+        return computed
+
     # Handle inheritance and initial values
     specified = computed_values.StyleDict()
     computed = computed_values.StyleDict()
