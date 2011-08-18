@@ -343,6 +343,7 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None):
     """
     # Handle inheritance and initial values
     specified = computed_values.StyleDict()
+    computed = computed_values.StyleDict()
     for name, initial in properties.INITIAL_VALUES.iteritems():
         if name in cascaded:
             values, _precedence = cascaded[name]
@@ -361,14 +362,13 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None):
             values = initial
         elif keyword == 'inherit':
             values = parent_style[name]
-            # Values for `parent_style` are already computed.
-            # TODO: mark the `name` property as already computed and use
-            # that to make compute_values() faster.
+            computed[name] = values
 
         specified[name] = values
 
-    return computed_values.Computer(
-        element, pseudo_type, specified, parent_style).computed
+    computed_values.Computer(element, pseudo_type, specified, computed,
+                             parent_style)
+    return computed
 
 
 def get_all_computed_styles(document, medium,

@@ -164,24 +164,30 @@ class Computer(object):
     """
     Things that compute are computers, right?
 
-    Once instanciated, this object has a `computed` attribute, a StyleDict
-    of all computed values.
-
     :param element: The HTML element these style apply to
     :param pseudo_type: The type of pseudo-element, eg 'before', None
-    :param specified: a StyleDict of specified values
-    :param parent_values: a StyleDict of computed values of the parent element,
+    :param specified: a StyleDict of specified values. Should contain values
+                      for all properties.
+    :param computed: a StyleDict of already known computed values. Only
+                     contains some properties (or none).
+    :param parent_values: a StyleDict of computed values of the parent element
+                          (should contain values for all properties),
                           or None if `element` is the root element.
+
+    Once instanciated, this object will have completed the `computed` dict
+    so that is has values for all properties.
     """
-    def __init__(self, element, pseudo_type, specified, parent_style):
+    def __init__(self, element, pseudo_type, specified, computed,
+                 parent_style):
         self.element = element
         self.pseudo_type = pseudo_type
         self.specified = specified
         self.parent_style = parent_style
+        self.computed = computed
 
-        self.computed = StyleDict()
         for name in INITIAL_VALUES:
-            self.get_computed(name)
+            if name not in computed:
+                self.get_computed(name)
 
     def get_computed(self, name):
         """
