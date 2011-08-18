@@ -312,28 +312,6 @@ def match_page_selector(selector):
                     'was ignored.', selector)
 
 
-class StyleDict(dict):
-    """
-    Allow attribute access to values, eg. style.font_size instead of
-    style['font-size'].
-    """
-    def __getattr__(self, key):
-        try:
-            return self[key.replace('_', '-')]
-        except KeyError:
-            raise AttributeError(key)
-
-    def __setattr__(self, key, value):
-        self[key.replace('_', '-')] = value
-
-    def copy(self):
-        """
-        Same as dict.copy, but return an object of the same class.
-        (dict.copy() always return a dict.)
-        """
-        return self.__class__(self)
-
-
 def set_computed_styles(cascaded_styles, computed_styles,
                         element, pseudo_type=None):
     """
@@ -363,42 +341,34 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None):
     Return a dict of computed styles from cascaded styles and the computed
     styles for the parent element.
     """
-    style = StyleDict(
-        (name, value)
-        for name, (value, _precedence) in cascaded.iteritems())
-
-    # `style` has cascaded values
-
-    # Handle inhertance and initial values
+    # Handle inheritance and initial values
+    specified = computed_values.StyleDict()
     for name, initial in properties.INITIAL_VALUES.iteritems():
-        values = style.get(name, None)
-        if values is None:
+        if name in cascaded:
+            values, _precedence = cascaded[name]
+            keyword = get_single_keyword(values)
+        else:
             if name in properties.INHERITED:
                 keyword = 'inherit'
             else:
                 keyword = 'initial'
-        else:
-            keyword = get_single_keyword(values)
 
         if keyword == 'inherit' and parent_style is None:
             # On the root element, 'inherit' from initial values
             keyword = 'initial'
 
         if keyword == 'initial':
-            style[name] = initial
+            values = initial
         elif keyword == 'inherit':
-            style[name] = parent_style[name]
+            values = parent_style[name]
             # Values for `parent_style` are already computed.
             # TODO: mark the `name` property as already computed and use
             # that to make compute_values() faster.
 
-    # `style` has specified values
+        specified[name] = values
 
-    computed_values.compute_values(element, pseudo_type, style, parent_style)
-
-    # `style` has computed values
-
-    return style
+    return computed_values.Computer(
+        element, pseudo_type, specified, parent_style).computed
 
 
 def get_all_computed_styles(document, medium,

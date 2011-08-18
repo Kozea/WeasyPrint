@@ -41,7 +41,7 @@ def parse_html(filename, **kwargs):
 
 @suite.test
 def test_style_dict():
-    style = css.StyleDict({
+    style = css.computed_values.StyleDict({
         'margin-left': cssutils.css.PropertyValue('12px'),
         'display': cssutils.css.PropertyValue('block')
     })

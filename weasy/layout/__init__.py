@@ -18,11 +18,14 @@
 
 
 from __future__ import division
+
+from ..css.values import get_pixel_value
 from ..formatting_structure import boxes
 from ..utils import MultiFunction
 from .percentages import resolve_percentages
 from . import block_formatting_context
 from .. import text
+
 
 # TODO: remove this if it is not needed?
 @MultiFunction
@@ -31,8 +34,10 @@ def compute_dimensions(box):
     Computes width, height and absolute position for all boxes in a box tree.
     """
 
+
 compute_dimensions.register(boxes.BlockBox)(
     block_formatting_context.block_dimensions)
+
 
 @compute_dimensions.register(boxes.ReplacedBox)
 def replacedbox_dimensions(box):
@@ -104,8 +109,7 @@ def linebox_dimensions(box):
     resolve_percentages(box)
 
 def page_dimensions(box):
-    box.outer_height = box.style._weasy_page_height
-    box.outer_width = box.style._weasy_page_width
+    box.outer_width, box.outer_height = map(get_pixel_value, box.style.size)
 
     resolve_percentages(box)
 
@@ -135,4 +139,3 @@ def layout(document):
 
     # TODO: do page breaks, split boxes into multiple pages
     return pages
-
