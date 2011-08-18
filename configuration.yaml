@@ -14,29 +14,19 @@ menu:
   - Contribute:
       link: /contribute/
 
-vcs:
-  git:
-    url: git://github.com/Kozea/WeasyPrint.git
-    path: /home/lize/Informatique/weasyprint
+vcs (git):
+  url: git://github.com/Kozea/WeasyPrint.git
+  path: /var/db/git/weasyprint.git
 
-code browser:
-  gitorious:
-    project name: weasyprint
-    repository name: weasyprint
-  redmine:
-    base url: http://redmine.kozea.fr/
-    project name: weasyprint
+code browser (github):
+  project name: Kozea/WeasyPrint
 
-bug tracker:
-  redmine:
-    base url: http://redmine.kozea.fr/
-    project name: weasyprint
-    database: /var/
+# bug tracker (redmine):
+#   base url: http://redmine.kozea.fr/
+#   project name: weasyprint
 
-mailing list:
-  mbox:
-    folder: /var/local/
+# mailing list (mbox):
+#   folder: /var/local/
 
-room:
-  jabber:
-    address: weasyprint@room.jabber.kozea.fr
+# room (jabber):
+#   address: weasyprint@room.jabber.kozea.fr
