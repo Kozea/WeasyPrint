@@ -45,6 +45,7 @@ def get_image_surface_from_uri(uri):
             else:
                 im = Image.open(StringIO(fileimage.read()))
                 image = StringIO()
+                im = im.convert('RGBA')
                 im.save(image, "PNG")
                 image.seek(0)
             return cairo.ImageSurface.create_from_png(image)
