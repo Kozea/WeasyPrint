@@ -97,8 +97,15 @@ def is_dimension(value, negative=True):
     type_ = value.type
     # Units may be ommited on zero lenghts.
     return (
-        (type_ == 'DIMENSION' and (negative or value.value >= 0)) or
-        (type_ == 'NUMBER' and value.value == 0)
+        type_ == 'DIMENSION' and
+        (negative or value.value >= 0) and
+        (
+            value.dimension in computed_values.LENGTHS_TO_PIXELS or
+            value.dimension in ('em', 'ex')
+        )
+    ) or (
+        type_ == 'NUMBER' and
+        value.value == 0
     )
 
 
@@ -106,13 +113,9 @@ def is_dimension_or_percentage(value, negative=True):
     """
     `negative` means that negative values are allowed.
     """
-    type_ = value.type
-    return (
-        type_ in ('DIMENSION', 'PERCENTAGE') and
+    return is_dimension(value, negative) or (
+        value.type == 'PERCENTAGE' and
         (negative or value.value >= 0)
-    ) or (
-        # Units may be ommited on zero lenghts.
-        type_ == 'NUMBER' and value.value == 0
     )
 
 
@@ -260,9 +263,11 @@ def font_size(value):
     if is_dimension_or_percentage(value):
         return True
     keyword = get_keyword(value)
+    if keyword in ('smaller', 'larger'):
+        raise InvalidValues('value not supported yet')
     return (
-        keyword in computed_values.FONT_SIZE_KEYWORDS or
-        keyword in ('smaller', 'larger')
+        keyword in computed_values.FONT_SIZE_KEYWORDS #or
+        #keyword in ('smaller', 'larger')
     )
 
 

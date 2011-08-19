@@ -225,11 +225,11 @@ def test_font():
         'line-height': 'normal',
         'font-family': 'sans-serif', ##
     }
-    assert expand_to_dict('font', 'smaller/1.2 "Some Font", serif') == {
+    assert expand_to_dict('font', 'small/1.2 "Some Font", serif') == {
         'font-style': 'normal',
         'font-variant': 'normal',
         'font-weight': 'normal',
-        'font-size': 'smaller', ##
+        'font-size': 'small', ##
         'line-height': '1.2', ##
         # The comma was lost in expand_to_dict()
         'font-family': '"Some Font" serif', ##
