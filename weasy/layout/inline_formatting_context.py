@@ -22,6 +22,7 @@ from .percentages import resolve_percentages
 from .. import text
 from ..css.values import get_single_keyword
 
+TEXT_FRAGMENT = text.TextLineFragment()
 
 def get_new_lineboxes(linebox):
     containing_block_width = linebox.containing_block_size()[0]
@@ -32,23 +33,50 @@ def get_new_lineboxes(linebox):
         white_space_processing(line)
         compute_linebox_dimensions(line)
         compute_linebox_positions(line,position_x, position_y)
+        vertical_align_processing(line)
         if not is_empty_line(line):
             position_y += line.height
             yield line
 
+
+# Dimensions
+
 def compute_linebox_dimensions(linebox):
     """Compute the height of the linebox """
-    from . import compute_dimensions
     assert isinstance(linebox, boxes.LineBox)
     heights = [0]
     widths = [0]
     for child in linebox.children:
-        compute_dimensions(child)
         widths.append(child.width)
         heights.append(child.height)
     linebox.width = sum(widths)
     linebox.height = max(heights)
 
+
+def compute_inlinebox_dimensions(inlinebox):
+    resolve_percentages(inlinebox)
+    widths = [0]
+    heights = [0]
+    for child in inlinebox.children:
+        widths.append(child.margin_width())
+        heights.append(child.height)
+    inlinebox.width = sum(widths)
+    inlinebox.height = max(heights)
+
+
+def compute_textbox_dimensions(textbox):
+    assert isinstance(textbox, boxes.TextBox)
+    TEXT_FRAGMENT.set_textbox(textbox)
+    textbox.width, textbox.height = TEXT_FRAGMENT.get_size()
+
+
+def compute_atomicbox_dimensions(atomicbox):
+    assert isinstance(atomicbox, boxes.AtomicInlineLevelBox)
+    from . import compute_dimensions
+    compute_dimensions(atomicbox)
+
+
+# Positions
 
 def compute_linebox_positions(linebox,ref_x, ref_y):
     assert isinstance(linebox, boxes.LineBox)
@@ -81,28 +109,32 @@ def compute_inlinebox_positions(box,ref_x, ref_y):
             compute_textbox_positions(child, inline_ref_x, inline_ref_y)
         inline_ref_x += child.margin_width()
 
-
-def compute_atomicbox_positions(box,ref_x, ref_y):
-    assert isinstance(box, boxes.AtomicInlineLevelBox)
-    box.translate(ref_x, ref_y)
-
-
 def compute_textbox_positions(box,ref_x, ref_y):
     assert isinstance(box, boxes.TextBox)
     box.position_x = ref_x
     box.position_y = ref_y
 
 
+def compute_atomicbox_positions(box,ref_x, ref_y):
+    assert isinstance(box, boxes.AtomicInlineLevelBox)
+    box.translate(ref_x, ref_y)
+
+
 def is_empty_line(linebox):
     #TODO: complete this function
+    if len(linebox.children) == 0:
+        return linebox
     text = ""
+    len_textbox = 0
     for child in linebox.descendants():
         if isinstance(child, boxes.TextBox):
+            len_textbox += 1
             text += child.text.strip(" ")
-    return (len(linebox.children) == 0 or text == "")
+    return text == "" and len_textbox == len(linebox.children)
 
 
 def get_new_empty_line(linebox):
+    """Return empty copy of `linebox`"""
     new_line = linebox.copy()
     new_line.empty()
     new_line.width = 0
@@ -142,7 +174,6 @@ def breaking_linebox(linebox, allocate_width):
         ]
     ]
     """
-    from . import compute_dimensions
     new_line = get_new_empty_line(linebox)
     while linebox.children:
         if not new_line.children:
@@ -150,25 +181,31 @@ def breaking_linebox(linebox, allocate_width):
         child = linebox.children.popleft()
         if isinstance(child, boxes.TextBox):
             part1, part2 = breaking_textbox(child, width)
+            compute_textbox_dimensions(part1)
         elif isinstance(child, boxes.InlineBox):
+            resolve_percentages(child)
             part1, part2 = breaking_inlinebox(child, width)
+            compute_inlinebox_dimensions(part1)
         elif isinstance(child, boxes.AtomicInlineLevelBox):
             part1 = child
             part2 = None
+            compute_atomicbox_dimensions(part1)
 
-        compute_dimensions(part1)
-
-        if part2 is not None:
+        if part2:
             linebox.children.appendleft(part2)
 
-        if part1.margin_width() <= width:
-            width -= part1.margin_width()
-            new_line.add_child(part1)
-        else:
-            if not new_line.children:
+        if part1:
+            if part1.margin_width() <= width:
+                width -= part1.margin_width()
                 new_line.add_child(part1)
             else:
-                linebox.children.appendleft(part1)
+                if not new_line.children:
+                    new_line.add_child(part1)
+                else:
+                    linebox.children.appendleft(part1)
+                yield new_line
+                new_line = get_new_empty_line(linebox)
+        else:
             yield new_line
             new_line = get_new_empty_line(linebox)
     yield new_line
@@ -176,10 +213,10 @@ def breaking_linebox(linebox, allocate_width):
 
 def breaking_inlinebox(inlinebox, allocate_width):
     """
-    Cut `inlinebox` that sticks out the LineBox
+    Cut `inlinebox` that sticks out the LineBox if possible
 
     >>> breaking_inlinebox(inlinebox, allocate_width)
-    (first_inlinebox, second_inlinebox, exceed)
+    (first_inlinebox, second_inlinebox)
 
     Eg.
         InlineBox[
@@ -193,22 +230,16 @@ def breaking_inlinebox(inlinebox, allocate_width):
                 TextBox('This is a long'),
             ], InlineBox[
                 TextBox(' long long text'),
-            ],
-            False
+            ]
         )
     """
-    width = allocate_width
-    from . import compute_dimensions
-
-    compute_dimensions(inlinebox)
-
     left_spacing = inlinebox.padding_left + inlinebox.margin_left + \
                    inlinebox.border_left_width
     right_spacing = inlinebox.padding_right + inlinebox.margin_right + \
                    inlinebox.border_right_width
     allocate_width -= left_spacing
     if allocate_width <= 0:
-        return inlinebox, None
+        return None, inlinebox
 
     new_inlinebox = inlinebox.copy()
     new_inlinebox.empty()
@@ -216,40 +247,43 @@ def breaking_inlinebox(inlinebox, allocate_width):
     while inlinebox.children:
         child = inlinebox.children.popleft()
         # if last child
-        if len(inlinebox.children) == 0:
-            last_child = True
-        else:
-            last_child = False
+        last_child = len(inlinebox.children) == 0
 
         if isinstance(child, boxes.TextBox):
             part1, part2 = breaking_textbox(child, allocate_width)
+            compute_textbox_dimensions(part1)
         elif isinstance(child, boxes.InlineBox):
+            resolve_percentages(child)
             part1, part2 = breaking_inlinebox(child,allocate_width)
+            compute_inlinebox_dimensions(part1)
         elif isinstance(child, boxes.AtomicInlineLevelBox):
             part1 = child
             part2 = None
+            compute_atomicbox_dimensions(part1)
 
-        compute_dimensions(part1)
 
         if part2 is not None:
             inlinebox.children.appendleft(part2)
 
-        if part1.margin_width() <= allocate_width:
-            if last_child:
-                if (part1.margin_width() + right_spacing) <= allocate_width:
+        if part1:
+            if part1.margin_width() <= allocate_width:
+                if last_child:
+                    if (part1.margin_width() + right_spacing) <= allocate_width:
+                        allocate_width -= part1.margin_width()
+                        new_inlinebox.add_child(part1)
+                        break
+                    else:
+                        inlinebox.children.appendleft(part1)
+                        break
+                else:
                     allocate_width -= part1.margin_width()
                     new_inlinebox.add_child(part1)
-                    break
-                else:
-                    inlinebox.children.appendleft(part1)
-                    break
+                    if allocate_width == 0:
+                        break
             else:
-                allocate_width -= part1.margin_width()
                 new_inlinebox.add_child(part1)
-                if allocate_width == 0:
-                    break
+                break
         else:
-            new_inlinebox.add_child(part1)
             break
 
     inlinebox.reset_spacing("left")
@@ -261,13 +295,14 @@ def breaking_inlinebox(inlinebox, allocate_width):
     else:
         return new_inlinebox, None
 
+
 def breaking_textbox(textbox, allocate_width):
     """
     Cut the `textbox` that sticks out the LineBox only if `textbox` can be cut
     by a line break
 
     >>> breaking_textbox(textbox, allocate_width)
-    (first_textbox, second_textbox, exceed)
+    (first_textbox, second_textbox)
 
     Eg.
         TextBox('This is a long long long long text')
@@ -275,32 +310,31 @@ def breaking_textbox(textbox, allocate_width):
 
         (
             TextBox('This is a long long'),
-            TextBox(' long long text'),
-            False
+            TextBox(' long long text')
         )
     but
         TextBox('Thisisalonglonglonglongtext')
     is turned into
         (
             TextBox('Thisisalonglonglonglongtext'),
-            None,
-            True
+            None
         )
     """
-    text_fragment = text.TextLineFragment.from_textbox(textbox)
-    text_fragment.set_width(allocate_width)
+    TEXT_FRAGMENT.set_textbox(textbox)
+    TEXT_FRAGMENT.set_width(allocate_width)
     # We create a new TextBox with the first part of the cutting text
     first_tb = textbox.copy()
-    first_tb.text = text_fragment.get_text()
+    first_tb.text = TEXT_FRAGMENT.get_text()
     # And we check the remaining text
     second_tb = None
-    if text_fragment.get_remaining_text() != "":
+    if TEXT_FRAGMENT.get_remaining_text() != "":
         second_tb = textbox.copy()
-        second_tb.text = text_fragment.get_remaining_text()
+        second_tb.text = TEXT_FRAGMENT.get_remaining_text()
     return first_tb, second_tb
 
 
 def white_space_processing(linebox):
+    """Remove firsts and last white space in the `linebox`"""
     def get_first_textbox(linebox):
         for child in linebox.descendants():
             if isinstance(child, boxes.TextBox):
@@ -331,7 +365,6 @@ def white_space_processing(linebox):
             else:
                 last_textbox.text = last_textbox.text.rstrip(' \t')
 
-
     # TODO: All tabs (U+0009) are rendered as a horizontal shift that
     # lines up the start edge of the next glyph with the next tab stop.
     # Tab stops occur at points that are multiples of 8 times the width
@@ -340,4 +373,23 @@ def white_space_processing(linebox):
 
     # TODO: If spaces (U+0020) or tabs (U+0009) at the end of a line have
     # 'white-space' set to 'pre-wrap', UAs may visually collapse them.
+
+def compute_baseline_position(box):
+    """Compute the relative position of baseline"""
+    max_position = 0
+    positions = []
+    for child in box.children:
+        if isinstance(child, boxes.InlineBox):
+            compute_baseline_positions(child)
+            positions.append(child.baseline)
+        elif isinstance(child, boxes.AtomicInlineLevelBox):
+            positions.append(child.height)
+        elif isinstance(child, boxes.TextBox):
+            positions.append(child.baseline)
+    box.baseline = max(positions)
+
+def vertical_align_processing(box):
+    top = box.position_y
+    bottom = top+box.height
+    #TODO: implement this
 

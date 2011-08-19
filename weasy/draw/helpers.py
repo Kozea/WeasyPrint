@@ -18,9 +18,12 @@
 
 
 from __future__ import division
+import os
 import urllib
 
 import cairo
+from PIL import Image
+from StringIO import StringIO
 
 from ..css.values import (get_single_keyword, get_keyword,
                           get_pixel_value, get_percentage_value)
@@ -29,12 +32,22 @@ from .. import text
 from .figures import Point, Line, Trapezoid
 
 
+SUPPORTED_IMAGES = ['image/png','image/gif', 'image/jpg', 'image/bmp']
+
+
 def get_image_surface_from_uri(uri):
     try:
         fileimage = urllib.urlopen(uri)
-        if fileimage.info().gettype() != 'image/png':
-            raise NotImplementedError("Only png images are implemented")
-        return cairo.ImageSurface.create_from_png(fileimage)
+        mime_type = fileimage.info().gettype()
+        if mime_type in SUPPORTED_IMAGES:
+            if mime_type == "image/png":
+                image = fileimage
+            else:
+                im = Image.open(StringIO(fileimage.read()))
+                image = StringIO()
+                im.save(image, "PNG")
+                image.seek(0)
+            return cairo.ImageSurface.create_from_png(image)
     except IOError:
         return None
 

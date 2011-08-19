@@ -88,36 +88,6 @@ def test_text_dimension():
 
 
 @suite.test
-def test_text_font():
-    string = u"This is a text for test. This is a test for text.py"
-    width = 200
-    fragment = text.TextFragment(string, width)
-    fragment.set_font_family(u"Comic Sans MS")
-    assert fragment.get_font_family() == u"Comic Sans MS"
-
-    fragment.set_font_family(u"inexistante font, Comic Sans MS")
-    dimension = list(fragment.get_size())
-    fragment.set_font_family(u"Comic Sans MS")
-    new_dimension = list(fragment.get_size())
-    assert new_dimension == dimension
-
-    fragment.set_font_size(12)
-    assert fragment.get_font_size() == 12
-
-    for value in text.STYLE_PROPERTIES.keys():
-        fragment.set_font_style(value)
-        assert fragment.get_font_style() == value
-
-    with attest.raises(ValueError):
-        fragment.set_font_style("inexistante property")
-
-    for value in text.VARIANT_PROPERTIES.keys():
-        fragment.set_font_variant(value)
-        assert fragment.get_font_variant() == value
-    with attest.raises(ValueError):
-        fragment.set_font_style("inexistante property")
-
-@suite.test
 def test_text_other():
     """ Test other properties """
     fragment = text.TextFragment(u"", 40)
