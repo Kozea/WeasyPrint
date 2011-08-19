@@ -17,8 +17,11 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
+Classes and helpers for HTML replaced elements.
+
 Replaced elements (eg. <img> elements) are rendered externally and behave
 as an atomic opaque box in CSS. They may or may not have intrinsic dimensions.
+
 """
 
 from __future__ import division
@@ -30,44 +33,36 @@ from .draw.helpers import get_image_surface_from_uri
 
 
 def get_replaced_element(element):
-    """
-    Take a DOM element, determines whether it is replaced, and return a
-    Replacement object if it is, None if it is not.
-    """
+    """Return a :class:`Replacement` object if ``element`` is replaced."""
     # TODO: maybe allow registering new replaced elements
     if element.tag == 'img':
         return ImageReplacement(element)
-    else:
-        return None
 
 
 class Replacement(object):
-    """
-    Abstract base class for replaced elements
-    """
-
+    """Abstract base class for replaced elements. """
     def __init__(self, element):
         self.element = element
 
     def intrinsic_width(self):
-        return None
+        """Intrinsic width if defined."""
 
     def intrinsic_height(self):
-        return None
+        """Intrinsic height if defined."""
 
     def intrinsic_ratio(self):
+        """Intrinsic ratio if defined."""
         if (self.intrinsic_width() is not None and
-           self.intrinsic_width() != 0 and
-           self.intrinsic_height() is not None and
-           self.intrinsic_height() != 0):
+            self.intrinsic_width() != 0 and
+            self.intrinsic_height() is not None and
+            self.intrinsic_height() != 0):
             return self.intrinsic_width() / self.intrinsic_height()
 
+
 class ImageReplacement(Replacement):
-    """
-    A replaced <img> element.
-    """
+    """Replaced ``<img>`` element."""
     def __init__(self, element):
-        self.element = element
+        super(ImageReplacement, self).__init__(element)
         self.src = get_url_attribute(element, 'src')
         self.alt_text = element.get('alt')
         self.surface = get_image_surface_from_uri(self.src)
@@ -82,7 +77,7 @@ class ImageReplacement(Replacement):
             return self.surface.get_height()
 
     def draw(self, context):
+        """Draw the element on the Cairo context."""
         pattern = cairo.SurfacePattern(self.surface)
         context.set_source(pattern)
         context.paint()
-
