@@ -282,7 +282,10 @@ def breaking_inlinebox(inlinebox, allocate_width):
                     if allocate_width == 0:
                         break
             else:
-                new_inlinebox.add_child(part1)
+                if new_inlinebox.children:
+                    inlinebox.children.appendleft(part1)
+                else:
+                    new_inlinebox.add_child(part1)
                 break
         else:
             break
