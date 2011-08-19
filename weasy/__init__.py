@@ -17,6 +17,14 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+"""
+WeasyPrint
+==========
+
+WeasyPrint converts web documents, mainly HTML documents with CSS, to PDF.
+
+"""
+
 import sys
 import argparse
 import logging
@@ -36,6 +44,15 @@ FORMATS = {
 
 
 def _join(sequence, key=lambda x: x):
+    """Return a string of the sorted elements of ``sequence``.
+
+    The two last elements are separated by ' or ', the other ones are separated
+    by ', '.
+
+    If a ``key`` function is given, this function is applied to the elements of
+    ``sequence`` before joining them.
+
+    """
     sequence = sorted(sequence)
     last = key(sequence[-1])
     if len(sequence) == 1:
@@ -45,6 +62,7 @@ def _join(sequence, key=lambda x: x):
 
 
 def main():
+    """Parse command-line arguments and convert the given document."""
     extensions = _join(FORMATS, lambda x: '.' + x)
 
     parser = argparse.ArgumentParser(
@@ -62,15 +80,14 @@ def main():
     args = parser.parse_args()
 
     if args.format is None:
-        for format in FORMATS:
-            if args.output.endswith('.' + format):
-                args.format = format
+        for file_format in FORMATS:
+            if args.output.endswith('.' + file_format):
+                args.format = file_format
                 break
         else:
             parser.error(
                 'Either sepecify a format with -f or choose an '
                 'output filename that ends in ' + extensions)
-
 
     if args.input == '-':
         args.input = sys.stdin
@@ -89,5 +106,5 @@ def main():
     logger.addHandler(logging.StreamHandler())
 
     document_class = FORMATS[args.format]
-    document = document_class.from_file(args.input, encoding=args.encoding)
-    document.write_to(args.output)
+    doc = document_class.from_file(args.input, encoding=args.encoding)
+    doc.write_to(args.output)
