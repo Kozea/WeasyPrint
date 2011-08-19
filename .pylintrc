@@ -33,11 +33,9 @@
 # can either give multiple identifier separated by comma (,) or put this option
 # multiple time.
 # Remove warning removal warning
-disable=I0011
 # Remove stupid warning on ** magic
-disable=W0142
 # Remove stupid reimport warning
-disable=W0404
+disable=I0011,W0142,W0404
 
 
 [REPORTS]
