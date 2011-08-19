@@ -71,12 +71,15 @@ class ImageReplacement(Replacement):
         self.src = get_url_attribute(element, 'src')
         self.alt_text = element.get('alt')
         self.surface = get_image_surface_from_uri(self.src)
+        # TODO: if surface is None, use alt attribute
 
     def intrinsic_width(self):
-        return self.surface.get_width()
+        if self.surface:
+            return self.surface.get_width()
 
     def intrinsic_height(self):
-        return self.surface.get_height()
+        if self.surface:
+            return self.surface.get_height()
 
     def draw(self, context):
         pattern = cairo.SurfacePattern(self.surface)
