@@ -22,6 +22,7 @@ setup(
     install_requires=[
         'lxml',
         'cssutils',
+        'PIL',
         # Tricky to compile: 'pycairo', 'PyGTK',
         # Not on PyPI: 'rsvg',
     ],
