@@ -310,4 +310,7 @@ class TextLineFragment(TextFragment):
         return self.layout.get_line(0).get_pixel_extents()[1]
 
     def get_baseline(self):
-        return pango.DESCENT(self.get_logical_extents())
+        descent = pango.DESCENT(self.get_logical_extents())
+        height = self.get_size()[1]
+        return height - descent
+

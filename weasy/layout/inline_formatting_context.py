@@ -68,6 +68,7 @@ def compute_textbox_dimensions(textbox):
     assert isinstance(textbox, boxes.TextBox)
     TEXT_FRAGMENT.set_textbox(textbox)
     textbox.width, textbox.height = TEXT_FRAGMENT.get_size()
+    textbox.baseline = TEXT_FRAGMENT.get_baseline()
 
 
 def compute_atomicbox_dimensions(atomicbox):
@@ -374,22 +375,34 @@ def white_space_processing(linebox):
     # TODO: If spaces (U+0020) or tabs (U+0009) at the end of a line have
     # 'white-space' set to 'pre-wrap', UAs may visually collapse them.
 
-def compute_baseline_position(box):
+def compute_baseline_positions(box):
     """Compute the relative position of baseline"""
     max_position = 0
     positions = []
     for child in box.children:
         if isinstance(child, boxes.InlineBox):
-            compute_baseline_positions(child)
+            if child.children:
+                compute_baseline_positions(child)
+            else:
+                child.baseline = child.height
             positions.append(child.baseline)
         elif isinstance(child, boxes.AtomicInlineLevelBox):
+            child.baseline = child.height
             positions.append(child.height)
         elif isinstance(child, boxes.TextBox):
             positions.append(child.baseline)
     box.baseline = max(positions)
 
-def vertical_align_processing(box):
-    top = box.position_y
-    bottom = top+box.height
-    #TODO: implement this
+
+def vertical_align_processing(linebox):
+    """compute the real positions of boxes, with vertical-align property"""
+    compute_baseline_positions(linebox)
+    absolute_baseline = linebox.baseline
+    #TODO: implement other properties
+
+    for box in linebox.descendants():
+        box.position_y += absolute_baseline - box.baseline
+
+    bottom_positions = [box.position_y+box.height for box in linebox.children]
+    linebox.height = max(bottom_positions) - linebox.position_y
 
