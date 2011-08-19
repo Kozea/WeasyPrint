@@ -147,10 +147,6 @@ class TextFragment(object):
         """ Return the real text area size in px unit """
         return self.layout.get_pixel_size()
 
-#    def get_width(self):
-#        """ Return the width. It's different to real width of text area """
-#        return self._width
-
     def set_width(self, value):
         """
         Set the desired width, or -1 to indicate that no wrapping should be
@@ -159,10 +155,6 @@ class TextFragment(object):
         if value != -1:
             value = pango.SCALE * value
         self.layout.set_width(int(value))
-
-    def get_spacing(self):
-        """Return the horizontal spacing (between the lines). """
-        return self.layout.get_spacing() / pango.SCALE
 
     def set_spacing(self, value):
         """ sets the spacing between the lines of the layout. """
@@ -178,10 +170,6 @@ class TextFragment(object):
         else:
             self.layout.set_alignment(ALIGN_PROPERTIES[alignment])
 
-    def get_font_family(self):
-        """Returns the font family name that used by the pango layout"""
-        return self.font.get_family().decode('utf-8')
-
     def set_font_family(self, value):
         """Sets the font used. VALUE can be a police list of comma-separated,
         as in CSS.
@@ -190,13 +178,6 @@ class TextFragment(object):
         """
         self.font.set_family(value.encode("utf-8"))
         self._update_font()
-
-    def get_font_style(self):
-        """Returns the font style that used by the pango layout"""
-        style = self.font.get_style()
-        for key in STYLE_PROPERTIES:
-            if STYLE_PROPERTIES[key] == style:
-                return key
 
     def set_font_style(self, value):
         """Sets the font style of text for pango layout.
@@ -209,10 +190,6 @@ class TextFragment(object):
             raise ValueError('The style property must be in %s' \
                 % STYLE_PROPERTIES.keys())
 
-    def get_font_size(self):
-        """Returns the font size of text"""
-        return self.font.get_size() / pango.SCALE
-
     def set_font_size(self, value):
         """Sets the font size. The value of size is specified in px units.
         `value` must be an interger.
@@ -220,12 +197,6 @@ class TextFragment(object):
         self.font.set_size(pango.SCALE * int(value))
         self._update_font()
 
-    def get_font_variant(self):
-        """Returns the font variant that used by the pango layout"""
-        variant = self.font.get_variant()
-        for key in VARIANT_PROPERTIES:
-            if VARIANT_PROPERTIES[key] == variant:
-                return key
 
     def set_font_variant(self, value):
         """Sets the font variant of text for pango layout.
@@ -237,23 +208,6 @@ class TextFragment(object):
         else:
             raise ValueError('The style property must be in %s' \
                 % VARIANT_PROPERTIES.keys())
-
-    def get_font_weight(self):
-        """Returns the font weight that used by the pango layout
-
-        The predefined values of weight are :
-
-        pango.WEIGHT_ULTRALIGHT the ultralight weight (= 200)
-        pango.WEIGHT_LIGHT the light weight (=300)
-        pango.WEIGHT_NORMAL the default weight (= 400)
-        pango.WEIGHT_BOLD the bold weight (= 700)
-        pango.WEIGHT_HEAVY the heavy weight (= 900)
-        pango.WEIGHT_ULTRABOLD the ultrabold weight (= 800)
-
-        The function returns an integer, and must first convert the value to
-        float for a weird reason
-        """
-        return int(float(self.font.get_weight()))
 
     def set_font_weight(self, value):
         """
@@ -349,11 +303,11 @@ class TextLineFragment(TextFragment):
 
     def get_size(self):
         """Gets the real text area dimensions for this line in px unit"""
-#        extents = self.layout.get_line(0).get_pixel_extents()[1]
-#        return (extents[2]-extents[0], extents[3]-extents[1])
-#        TODO: What's the size ? the line's size, or the size of a layoutLine ?
         return self.get_layout().get_pixel_size()
 
     def get_logical_extents(self):
         """Returns the size of the logical area that occupied by the text"""
         return self.layout.get_line(0).get_pixel_extents()[1]
+
+    def get_baseline(self):
+        return pango.DESCENT(self.get_logical_extents())
