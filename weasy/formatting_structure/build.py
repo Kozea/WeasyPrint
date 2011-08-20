@@ -29,6 +29,13 @@ from .. import replaced
 from . import boxes
 
 
+GLYPH_LIST_MARKERS = {
+    'disc': u'•',  # U+2022, BULLET
+    'circle': u'◦',  # U+25E6 WHITE BULLET
+    'square': u'▪',  # U+25AA BLACK SMALL SQUARE
+}
+
+
 def build_formatting_structure(document):
     """
     Build a formatting structure (box tree) from a Document.
@@ -81,8 +88,8 @@ def dom_to_box(document, element):
 
     if display in ('block', 'list-item'):
         box = boxes.BlockBox(document, element)
-        #if display == 'list-item':
-        #    TODO: add a box for the marker
+        if display == 'list-item':
+            add_list_marker(box)
     elif display == 'inline':
         box = boxes.InlineBox(document, element)
     elif display == 'inline-block':
@@ -106,6 +113,23 @@ def dom_to_box(document, element):
                     document, element, child_element.tail))
 
     return box
+
+
+def add_list_marker(box):
+    """
+    Add a list marker to elements with `display: list-item`.
+    See http://www.w3.org/TR/CSS21/generate.html#lists
+    """
+    marker = GLYPH_LIST_MARKERS[get_single_keyword(box.style.list_style_type)]
+    marker += u' '  # U+00A0, NO-BREAK SPACE
+    marker_box = boxes.TextBox(box.document, box.element, marker)
+
+    position = get_single_keyword(box.style.list_style_position)
+    if position == 'inside':
+        assert not box.children  # Make sure we’re adding at the beggining
+        box.add_child(marker_box)
+    elif position == 'outside':
+        box.outside_list_marker = marker_box
 
 
 def process_whitespace(box):

@@ -17,8 +17,11 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+import sys
+
 from ..css.values import get_single_keyword
 from ..formatting_structure import boxes
+from .. import text
 from .percentages import resolve_percentages
 from .inline_formatting_context import get_new_lineboxes
 
@@ -26,6 +29,32 @@ def block_dimensions(box):
     resolve_percentages(box)
     block_level_width(box)
     block_level_height(box)
+    list_marker_layout(box)
+
+
+def list_marker_layout(box):
+    # List markers can be either 'inside' or 'outside'.
+    # Inside markers are layed out just like normal inline content, but
+    # outside markers need specific layout.
+    # TODO: implement outside markers in terms of absolute positioning,
+    # see CSS3 lists.
+    marker_box = getattr(box, 'outside_list_marker', None)
+    if marker_box:
+        text_fragment = text.TextFragment.from_textbox(marker_box)
+        marker_box.width, marker_box.height = text_fragment.get_size()
+
+        # Align the top of the marker box with the top of its list-item’s
+        # content-box.
+        # TODO: align the baselines of the first lines instead?
+        marker_box.position_y = box.content_box_y()
+        # ... and its right with the left of its list-item’s padding box.
+        # (Swap left and right for right-to-left text.)
+        marker_box.position_x = box.padding_box_x()
+        direction = get_single_keyword(box.style.direction)
+        if direction == 'ltr':
+            marker_box.position_x -=  marker_box.width
+        else:
+            marker_box.position_x += box.padding_width()
 
 
 def block_level_width(box):

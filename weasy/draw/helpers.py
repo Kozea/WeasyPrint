@@ -57,6 +57,10 @@ def draw_box(context, box):
     if has_background(box):
         draw_background(context, box)
 
+    marker_box = getattr(box, 'outside_list_marker', None)
+    if marker_box:
+        draw_box(context, marker_box)
+
     if isinstance(box, boxes.TextBox):
         draw_text(context, box)
         return

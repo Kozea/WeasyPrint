@@ -321,6 +321,48 @@ def test_block_percentage_heights():
     assert body.height == 150
 
 
+@suite.test
+def test_lists():
+    page, = parse('''
+        <style>
+            body { margin: 0 }
+            ul { margin-left: 50px; list-style: inside circle }
+        </style>
+        <ul>
+          <li>abc</li>
+        </ul>
+    ''')
+    html = page.root_box
+    body = html.children[0]
+    ul = body.children[0]
+    li, = [child for child in ul.children
+           if not isinstance(child, boxes.AnonymousBox)]
+    line = li.children[0]
+    texts = [child.text for child in line.children]
+    assert texts == [u'◦ ', u'abc']
+
+    page, = parse('''
+        <style>
+            body { margin: 0 }
+            ul { margin-left: 50px; }
+        </style>
+        <ul>
+          <li>abc</li>
+        </ul>
+    ''')
+    html = page.root_box
+    body = html.children[0]
+    ul = body.children[0]
+    li, = [child for child in ul.children
+           if not isinstance(child, boxes.AnonymousBox)]
+    marker = li.outside_list_marker
+    assert marker.position_y == li.position_y
+    assert marker.position_x == li.padding_box_x() - marker.width
+    assert marker.text == u'• '
+    line = li.children[0]
+    texts = [child.text for child in line.children]
+    assert texts == [u'abc']
+
 
 @suite.test
 def test_breaking_empty_linebox():
@@ -449,4 +491,3 @@ def test_linebox_positions():
         assert ref_position_x - line.position_x <= line.width
         ref_position_x = line.position_x
         ref_position_y += line.height
-

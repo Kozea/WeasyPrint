@@ -125,10 +125,10 @@ def test_expand_list_style():
         'list-style-image': 'url(foo.png)',
         'list-style-type': 'disc',
     }
-    assert expand_to_dict('list-style', 'decimal') == {
+    assert expand_to_dict('list-style', 'square') == {
         'list-style-position': 'outside',
         'list-style-image': 'none',
-        'list-style-type': 'decimal',
+        'list-style-type': 'square',
     }
     assert expand_to_dict('list-style', 'circle inside') == {
         'list-style-position': 'inside',
