@@ -124,6 +124,8 @@ def add_list_marker(box):
     image = box.style.list_style_image
     if get_single_keyword(image) == 'none':
         type_ = get_single_keyword(box.style.list_style_type)
+        if type_ == 'none':
+            return
         marker = GLYPH_LIST_MARKERS[type_]
         marker_box = boxes.TextBox(box.document, box.element, marker)
     else:

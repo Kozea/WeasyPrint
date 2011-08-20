@@ -61,7 +61,7 @@ def test_pixels(name, expected_width, expected_height, expected_lines, html):
     lines = list(lines)
 
     assert width == expected_width
-    assert height == height
+    assert height == expected_height
     assert meta['greyscale'] == False
     assert meta['alpha'] == False
     assert meta['bitdepth'] == 8
@@ -471,3 +471,18 @@ def test_list_style_image():
             </style>
             <ul><li>
         ''' % (position,))
+
+    test_pixels('list_style_none' + position, 10, 5, [
+            _+_+_+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_+_+_,
+        ], '''
+            <style>
+                @page { size: 10px 5px }
+                body { margin: 0; background: white }
+                ul { margin: 0 0 0 5px; list-style: none; font-size: 2px; }
+            </style>
+            <ul><li>
+        ''')
