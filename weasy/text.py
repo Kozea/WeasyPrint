@@ -66,7 +66,7 @@ class TextFragment(object):
     def set_textbox(self, textbox):
         """Set the textbox properties in the layout."""
         self.set_text(textbox.text)
-        font = ', '.join(v.cssText for v in textbox.style['font-family'])
+        font = ', '.join(v.value for v in textbox.style['font-family'])
         self.set_font_family(font)
         self.set_font_size(get_single_pixel_value(textbox.style.font_size))
         self.set_alignment(get_single_keyword(textbox.style.text_align))
@@ -92,10 +92,9 @@ class TextFragment(object):
                     self.set_line_through(True)
                 else:
                     raise ValueError('text-decoration: %r' % values)
-        self.set_foreground(textbox.style.color[0].cssText)
-        background = textbox.style.background_color[0]
-        if background.alpha > 0:
-            self.set_background(background.cssText)
+        self.set_foreground(textbox.style.color[0])
+        # Have the draw package draw backgrounds like for blocks, do not
+        # set the background with Pango.
 
     @classmethod
     def from_textbox(cls, textbox):
@@ -233,30 +232,14 @@ class TextFragment(object):
         self.font.set_weight(weight)
         self._update_font()
 
-    @staticmethod
-    def get_color(color):
-        """Create a Pango color object from a ``color`` string.
-
-        ``color`` can either be one of a large set of standard names (taken
-        from the X11 rgb.txt file), or can be a hexadecimal value in the
-        form 'rgb', 'rrggbb', 'rrrgggbbb' or 'rrrrggggbbbb', where 'r', 'g' and
-        'b' are hexadecimal digits of the red, green, and blue components of
-        the color, respectively.
-
-        """
-        return pango.Color(color)
-
     def set_foreground(self, color):
         """Set the foreground ``color``."""
-        color = self.get_color(color)
         self._set_attribute(
-            pango.AttrForeground(color.red, color.green, color.blue, 0, -1))
-
-    def set_background(self, spec):
-        """Set the background ``color``."""
-        color = self.get_color(spec)
-        self._set_attribute(
-            pango.AttrBackground(color.red, color.green, color.blue, 0, -1))
+            # Pange colors channels take values in 0..65535,
+            # while cssutils values are in 0..255
+            # TODO: somehow handle color.alpha
+            pango.AttrForeground(color.red * 256, color.green * 256,
+                                 color.blue * 256, 0, -1))
 
     def set_underline(self, boolean):
         """Define if the text must be underlined."""
@@ -270,20 +253,6 @@ class TextFragment(object):
     def set_line_through(self, boolean):
         """Define if the text must be stroked."""
         self._set_attribute(pango.AttrStrikethrough(boolean, 0, -1))
-
-    def set_underline_color(self, color):
-        """Set the underline ``color``."""
-        color = self.get_color(color)
-        self._set_attribute(
-            pango.AttrUnderlineColor(
-                color.red, color.blue, color.green, 0, -1))
-
-    def set_line_through_color(self, color):
-        """Set the line through ``color``."""
-        color = self.get_color(color)
-        self._set_attribute(
-            pango.AttrStrikethroughColor(
-                color.red, color.blue, color.green, 0, -1))
 
     def set_letter_spacing(self, value):
         """Set the letter spacing ``value``."""
