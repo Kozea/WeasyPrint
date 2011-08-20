@@ -32,18 +32,32 @@ from .utils import get_url_attribute
 from .draw.helpers import get_image_surface_from_uri
 
 
+REPLACEMENT_HANDLERS = []
+
+
 def get_replaced_element(element):
     """Return a :class:`Replacement` object if ``element`` is replaced."""
-    # TODO: maybe allow registering new replaced elements
+    for handler in REPLACEMENT_HANDLERS:
+        replacement = handler(element)
+        if replacement is not None:
+            return replacement
+
+
+def register(function):
+    REPLACEMENT_HANDLERS.append(function)
+    return function
+
+
+@register
+def handle_img(element):
     if element.tag == 'img':
-        return ImageReplacement(element)
+        # TODO: somehow use the alt-text on broken images.
+        src = get_url_attribute(element, 'src')
+        return ImageReplacement(src)
 
 
 class Replacement(object):
     """Abstract base class for replaced elements. """
-    def __init__(self, element):
-        self.element = element
-
     def intrinsic_width(self):
         """Intrinsic width if defined."""
 
@@ -60,13 +74,13 @@ class Replacement(object):
 
 
 class ImageReplacement(Replacement):
-    """Replaced ``<img>`` element."""
-    def __init__(self, element):
-        super(ImageReplacement, self).__init__(element)
-        self.src = get_url_attribute(element, 'src')
-        self.alt_text = element.get('alt')
-        self.surface = get_image_surface_from_uri(self.src)
-        # TODO: if surface is None, use alt attribute
+    """Replaced ``<img>`` element.
+
+    :param image_uri: uri where to get the image.
+
+    """
+    def __init__(self, image_uri):
+        self.surface = get_image_surface_from_uri(image_uri)
 
     def intrinsic_width(self):
         if self.surface:

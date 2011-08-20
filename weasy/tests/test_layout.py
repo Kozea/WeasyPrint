@@ -19,7 +19,7 @@
 
 from attest import Tests, assert_hook
 
-from ..css.values import get_single_keyword
+from ..css.values import get_single_keyword, get_single_pixel_value
 from ..document import PNGDocument
 from ..formatting_structure import boxes
 from .test_boxes import monkeypatch_validation
@@ -339,7 +339,7 @@ def test_lists():
            if not isinstance(child, boxes.AnonymousBox)]
     line = li.children[0]
     texts = [child.text for child in line.children]
-    assert texts == [u'◦ ', u'abc']
+    assert texts == [u'◦', u'abc']
 
     page, = parse('''
         <style>
@@ -357,8 +357,9 @@ def test_lists():
            if not isinstance(child, boxes.AnonymousBox)]
     marker = li.outside_list_marker
     assert marker.position_y == li.position_y
-    assert marker.position_x == li.padding_box_x() - marker.width
-    assert marker.text == u'• '
+    assert marker.position_x == li.padding_box_x() - marker.width - (
+        0.5 * get_single_pixel_value(li.style.font_size))
+    assert marker.text == u'•'
     line = li.children[0]
     texts = [child.text for child in line.children]
     assert texts == [u'abc']

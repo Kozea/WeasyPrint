@@ -134,3 +134,17 @@ def test_background_image():
             </style>
             <body>
         ''' % (css,))
+
+
+@suite.test
+def test_list_style_image():
+    for position in ('inside', 'outside'):
+        test_pixels('list_style_image_' + position, 12, 10, '''
+            <style>
+                @page { size: 12px 10px }
+                body { margin: 0; background: white }
+                ul { margin: 2px 2px 2px 7px; list-style: url(pattern.png) %s;
+                     font-size: 4px; }
+            </style>
+            <ul><li>
+        ''' % (position,))

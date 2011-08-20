@@ -24,7 +24,8 @@ including handling of anonymous boxes and whitespace processing.
 
 
 import re
-from ..css.values import get_single_keyword
+from ..css.values import (get_single_keyword, get_single_pixel_value,
+                          make_pixel_value)
 from .. import replaced
 from . import boxes
 
@@ -120,9 +121,22 @@ def add_list_marker(box):
     Add a list marker to elements with `display: list-item`.
     See http://www.w3.org/TR/CSS21/generate.html#lists
     """
-    marker = GLYPH_LIST_MARKERS[get_single_keyword(box.style.list_style_type)]
-    marker += u' '  # U+00A0, NO-BREAK SPACE
-    marker_box = boxes.TextBox(box.document, box.element, marker)
+    image = box.style.list_style_image
+    if get_single_keyword(image) == 'none':
+        type_ = get_single_keyword(box.style.list_style_type)
+        marker = GLYPH_LIST_MARKERS[type_]
+        marker_box = boxes.TextBox(box.document, box.element, marker)
+    else:
+        replacement = replaced.ImageReplacement(image[0].absoluteUri)
+        marker_box = boxes.ImageMarkerBox(
+            box.document, box.element, replacement)
+
+    direction = get_single_keyword(box.style.direction)
+    font_size = get_single_pixel_value(box.style.font_size)
+    marker_box.style[
+        'margin-' + ('right' if direction == 'ltr' else 'left')
+    ] = [make_pixel_value(0.5 * font_size)]
+
 
     position = get_single_keyword(box.style.list_style_position)
     if position == 'inside':
@@ -130,6 +144,7 @@ def add_list_marker(box):
         box.add_child(marker_box)
     elif position == 'outside':
         box.outside_list_marker = marker_box
+        marker_box.parent = box
 
 
 def process_whitespace(box):

@@ -380,8 +380,7 @@ def white_space_processing(linebox):
 
 def compute_baseline_positions(box):
     """Compute the relative position of baseline"""
-    max_position = 0
-    positions = []
+    positions = [0]
     for child in box.children:
         if isinstance(child, boxes.InlineBox):
             if child.children:
@@ -407,5 +406,4 @@ def vertical_align_processing(linebox):
         box.position_y += absolute_baseline - box.baseline
 
     bottom_positions = [box.position_y+box.height for box in linebox.children]
-    linebox.height = max(bottom_positions) - linebox.position_y
-
+    linebox.height = max(bottom_positions or [0]) - linebox.position_y

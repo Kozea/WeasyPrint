@@ -17,9 +17,11 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+from __future__ import division
+
 import sys
 
-from ..css.values import get_single_keyword
+from ..css.values import get_single_keyword, get_single_pixel_value
 from ..formatting_structure import boxes
 from .. import text
 from .percentages import resolve_percentages
@@ -38,23 +40,57 @@ def list_marker_layout(box):
     # outside markers need specific layout.
     # TODO: implement outside markers in terms of absolute positioning,
     # see CSS3 lists.
-    marker_box = getattr(box, 'outside_list_marker', None)
-    if marker_box:
-        text_fragment = text.TextFragment.from_textbox(marker_box)
-        marker_box.width, marker_box.height = text_fragment.get_size()
+    marker = getattr(box, 'outside_list_marker', None)
+    if marker:
+        resolve_percentages(marker)
+        if isinstance(marker, boxes.TextBox):
+            text_fragment = text.TextFragment.from_textbox(marker)
+            marker.width, marker.height = text_fragment.get_size()
+        else:
+            # Image marker
+            marker.width, marker.height = list_style_image_size(marker)
 
         # Align the top of the marker box with the top of its list-item’s
         # content-box.
         # TODO: align the baselines of the first lines instead?
-        marker_box.position_y = box.content_box_y()
+        marker.position_y = box.content_box_y()
         # ... and its right with the left of its list-item’s padding box.
         # (Swap left and right for right-to-left text.)
-        marker_box.position_x = box.padding_box_x()
+        marker.position_x = box.border_box_x()
         direction = get_single_keyword(box.style.direction)
         if direction == 'ltr':
-            marker_box.position_x -=  marker_box.width
+            print marker.width, marker.margin_width()
+            marker.position_x -= marker.margin_width()
         else:
-            marker_box.position_x += box.padding_width()
+            marker.position_x += box.border_width()
+
+
+def list_style_image_size(marker_box):
+    """
+    Return the used (width, height) for an image in `list-style-image`.
+
+    See http://www.w3.org/TR/CSS21/generate.html#propdef-list-style-image
+    """
+    image = marker_box.replacement
+    width = image.intrinsic_width()
+    height = image.intrinsic_width()
+    ratio = image.intrinsic_ratio()
+    one_em = get_single_pixel_value(marker_box.style.font_size)
+    if width is not None and height is not None:
+        return width, height
+    elif width is not None and ratio is not None:
+        return width, width / ratio
+    elif height is not None and ratio is not None:
+        return height * ratio, height
+    elif ratio is not None:
+        # ratio >= 1 : width >= height
+        if ratio >= 1:
+            return one_em, one_em / ratio
+        else:
+            return one_em * ratio, one_em
+    else:
+        return (width if width is not None else one_em,
+                height if height is not None else one_em)
 
 
 def block_level_width(box):
