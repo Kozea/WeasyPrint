@@ -305,8 +305,15 @@ class TextLineFragment(TextFragment):
 
     def get_remaining_text(self):
         """Get the unicode text that can't be on the line."""
-        first_line = self.layout.get_line(0)
-        return self.layout.get_text()[first_line.length:].decode('utf-8')
+        # Do not use the length of the first line here.
+        # Preserved new-line characters are between get_line(0).length
+        # and get_line(1).start_index
+        second_line = self.layout.get_line(1)
+        if second_line is not None:
+            text = self.layout.get_text()[second_line.start_index:]
+            return text.decode('utf-8')
+        else:
+            return ''
 
     def get_text(self):
         """Get all the unicode text can be on the line."""
