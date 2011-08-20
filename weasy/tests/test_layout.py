@@ -338,8 +338,10 @@ def test_lists():
     li, = [child for child in ul.children
            if not isinstance(child, boxes.AnonymousBox)]
     line = li.children[0]
-    texts = [child.text for child in line.children]
-    assert texts == [u'◦', u'abc']
+    marker, spacer, content = line.children
+    assert marker.text == u'◦'
+    assert spacer.text == u'\u00a0'  # NO-BREAK SPACE
+    assert content.text == u'abc'
 
     page, = parse('''
         <style>
@@ -356,13 +358,15 @@ def test_lists():
     li, = [child for child in ul.children
            if not isinstance(child, boxes.AnonymousBox)]
     marker = li.outside_list_marker
+    font_size = get_single_pixel_value(marker.style.font_size)
+    assert marker.margin_right == 0.5 * font_size  # 0.5em
+    assert marker.position_x == (li.padding_box_x() - marker.width -
+                                 marker.margin_right)
     assert marker.position_y == li.position_y
-    assert marker.position_x == li.padding_box_x() - marker.width - (
-        0.5 * get_single_pixel_value(li.style.font_size))
     assert marker.text == u'•'
     line = li.children[0]
-    texts = [child.text for child in line.children]
-    assert texts == [u'abc']
+    content, = line.children
+    assert content.text == u'abc'
 
 
 @suite.test

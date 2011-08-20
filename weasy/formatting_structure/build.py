@@ -131,17 +131,13 @@ def add_list_marker(box):
         marker_box = boxes.ImageMarkerBox(
             box.document, box.element, replacement)
 
-    direction = get_single_keyword(box.style.direction)
-    font_size = get_single_pixel_value(box.style.font_size)
-    marker_box.style[
-        'margin-' + ('right' if direction == 'ltr' else 'left')
-    ] = [make_pixel_value(0.5 * font_size)]
-
-
     position = get_single_keyword(box.style.list_style_position)
     if position == 'inside':
         assert not box.children  # Make sure we’re adding at the beggining
         box.add_child(marker_box)
+        # U+00A0, NO-BREAK SPACE
+        spacer = boxes.TextBox(box.document, box.element, u'\u00a0')
+        box.add_child(spacer)
     elif position == 'outside':
         box.outside_list_marker = marker_box
         marker_box.parent = box

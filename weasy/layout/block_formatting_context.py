@@ -57,11 +57,14 @@ def list_marker_layout(box):
         # ... and its right with the left of its list-item’s padding box.
         # (Swap left and right for right-to-left text.)
         marker.position_x = box.border_box_x()
+
+        half_em = 0.5 * get_single_pixel_value(box.style.font_size)
         direction = get_single_keyword(box.style.direction)
         if direction == 'ltr':
-            print marker.width, marker.margin_width()
+            marker.margin_right = half_em
             marker.position_x -= marker.margin_width()
         else:
+            marker.margin_left = half_em
             marker.position_x += box.border_width()
 
 
