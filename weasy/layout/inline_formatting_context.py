@@ -262,19 +262,28 @@ def breaking_inlinebox(inlinebox, allocate_width):
             part2 = None
             compute_atomicbox_dimensions(part1)
 
-
         if part2 is not None:
             inlinebox.children.appendleft(part2)
 
         if part1:
             if part1.margin_width() <= allocate_width:
+                # We have enough room to fit `part1` in this line.
                 if last_child:
                     if (part1.margin_width() + right_spacing) <= allocate_width:
                         allocate_width -= part1.margin_width()
                         new_inlinebox.add_child(part1)
                         break
                     else:
-                        inlinebox.children.appendleft(part1)
+                        # Enough for `part1` but not `part1` plus the right
+                        # padding, border and margin of the parent.
+                        if new_inlinebox.children:
+                            inlinebox.children.appendleft(part1)
+                        else:
+                            # `part1` does not fit but the line box
+                            # is still empty: overflow
+                            # XXX: this is not correct, we should try to break
+                            # earlier. This fixes the infinite loop for now.
+                            new_inlinebox.add_child(part1)
                         break
                 else:
                     allocate_width -= part1.margin_width()
@@ -285,6 +294,8 @@ def breaking_inlinebox(inlinebox, allocate_width):
                 if new_inlinebox.children:
                     inlinebox.children.appendleft(part1)
                 else:
+                    # `part1` does not fit but the line box
+                    # is still empty: overflow
                     new_inlinebox.add_child(part1)
                 break
         else:
