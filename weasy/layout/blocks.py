@@ -171,6 +171,9 @@ def block_level_height(box, max_position_y):
             for line in get_new_lineboxes(child, max_position_y):
                 new_box.add_child(line)
                 position_y += line.height
+            if child.children:
+                box.children.appendleft(child)
+                break
         else:
             new_child, finished = block_level_layout(child,
                 max_position_y)
