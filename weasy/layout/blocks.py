@@ -26,20 +26,25 @@ from ..css.values import get_single_keyword
 from ..formatting_structure import boxes
 
 
-def block_level_layout(box):
+def block_level_layout(box, max_position_y):
+    """
+    :param max_position_y: the absolute vertical position (as in
+                                `some_box.position_y`) of the bottom of the
+                                content box of the current page area.
+    """
     if isinstance(box, boxes.BlockBox):
-        block_box_layout(box)
-    elif isinstance(box, boxes.ReplacedBox):
-        block_replaced_box_layout(box)
+        return block_box_layout(box, max_position_y)
+    elif isinstance(box, boxes.BlockLevelReplacedBox):
+        return block_replaced_box_layout(box), True
     else:
         raise TypeError('Layout for %s not handled yet' % type(box).__name__)
 
 
-def block_box_layout(box):
+def block_box_layout(box, max_position_y):
     resolve_percentages(box)
     block_level_width(box)
-    block_level_height(box)
     list_marker_layout(box)
+    return block_level_height(box, max_position_y)
 
 
 def block_replaced_box_layout(box):
@@ -75,6 +80,7 @@ def block_replaced_box_layout(box):
         # the largest rectangle that has a 2:1 ratio, has a height not
         # greater than 150px, and has a width not greater than the
         # device width.
+    return box
 
 
 def block_level_width(box):
@@ -136,11 +142,11 @@ def block_level_width(box):
         box.margin_right = margin_sum - margin_l
 
 
-def block_level_height(box):
+def block_level_height(box, max_position_y):
+    assert isinstance(box, boxes.BlockBox)
+
     if get_single_keyword(box.style.overflow) != 'visible':
         raise NotImplementedError
-
-    assert isinstance(box, boxes.BlockBox)
 
     if box.margin_top == 'auto':
         box.margin_top = 0
@@ -151,9 +157,10 @@ def block_level_height(box):
     position_y = box.content_box_y()
     initial_position_y = position_y
 
-    children = list(box.children)
-    box.empty()
-    for child in children:
+    new_box = box.copy()
+    new_box.empty()
+    while box.children:
+        child = box.children.popleft()
         if not child.is_in_normal_flow():
             continue
         # TODO: collapse margins:
@@ -162,12 +169,23 @@ def block_level_height(box):
         child.position_y = position_y
         if isinstance(child, boxes.LineBox):
             for line in get_new_lineboxes(child):
-                box.add_child(line)
+                new_box.add_child(line)
                 position_y += line.height
         else:
-            block_level_layout(child)
-            position_y += child.margin_height()
-            box.add_child(child)
+            new_child, finished = block_level_layout(child,
+                max_position_y)
+            new_position_y = position_y + new_child.margin_height()
+            if new_position_y <= max_position_y:
+                new_box.add_child(new_child)
+                position_y = new_position_y
+            else:
+                finished = False
+            if not finished:
+                box.children.appendleft(child)
+                break
 
-    if box.height == 'auto':
-        box.height = position_y - initial_position_y
+    if new_box.height == 'auto':
+        new_box.height = position_y - initial_position_y
+
+    finished = not box.children
+    return new_box, finished

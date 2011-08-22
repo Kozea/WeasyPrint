@@ -253,9 +253,7 @@ class PageBox(Box):
     Initially the whole document will be in a single page box. During layout
     a new page box is created after every page break.
     """
-    def __init__(self, document, root_box, page_number):
-        self.root_box = root_box
-        self.root_box.parent = self
+    def __init__(self, document, page_number):
         # starting at 1 for the first page.
         self.page_number = page_number
         # Page boxes are not linked to any element.

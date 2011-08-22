@@ -30,40 +30,54 @@ from ..css.values import get_pixel_value
 from ..formatting_structure import boxes
 
 
-def page_dimensions(box):
-    """Set the page dimensions of the given :class:`boxes.PageBox`."""
-    box.outer_width, box.outer_height = map(get_pixel_value, box.style.size)
+def make_page(document, page_number):
+    """
+    Take just enough content from the beginning of the document to fill
+    one page.
 
-    resolve_percentages(box)
+    Return (page, finished). `page` is a laid out Page object, `finished`
+    is True if there is no more content, this was the last page.
+    """
+    page = boxes.PageBox(document, page_number)
 
-    box.position_x = 0
-    box.position_y = 0
-    box.width = box.outer_width - box.horizontal_surroundings()
-    box.height = box.outer_height - box.vertical_surroundings()
+    page.outer_width, page.outer_height = map(get_pixel_value, page.style.size)
 
-    box.root_box.width = box.width
-    box.root_box.height = box.height
+    resolve_percentages(page)
 
-    box.root_box.position_x = box.content_box_x()
-    box.root_box.position_y = box.content_box_y()
+    page.position_x = 0
+    page.position_y = 0
+    page.width = page.outer_width - page.horizontal_surroundings()
+    page.height = page.outer_height - page.vertical_surroundings()
+
+    root_box = document.formatting_structure
+
+    root_box.parent = page
+    root_box.position_x = page.content_box_x()
+    root_box.position_y = page.content_box_y()
+    page_content_bottom = root_box.position_y + page.height
 
     # TODO: handle cases where the root element is something else.
     # See http://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
-    assert isinstance(box.root_box, boxes.BlockBox)
-    block_box_layout(box.root_box)
+    assert isinstance(root_box, boxes.BlockBox)
+    page.root_box, finished = block_box_layout(root_box, page_content_bottom)
+
+    return page, finished
 
 
 def layout(document):
-    """Create the layout of the whole document.
+    """Lay out the whole document.
 
     This includes line breaks, page breaks, absolute size and position for all
     boxes.
 
+    :param document: a Document object.
+    :returns: a list of laid out Page objects.
     """
     pages = []
-    page = boxes.PageBox(document, document.formatting_structure, 1)
-    page_dimensions(page)
-    pages.append(page)
-
-    # TODO: do page breaks, split boxes into multiple pages
-    return pages
+    page_number = 1
+    while True:
+        page, finished = make_page(document, page_number)
+        pages.append(page)
+        if finished:
+            return pages
+        page_number += 1
