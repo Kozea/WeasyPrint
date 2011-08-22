@@ -338,8 +338,7 @@ def test_page_style():
         </style>
     ''')
     def assert_page_margins(page_number, top, right, bottom, left):
-        page = boxes.PageBox(
-            document, boxes.BlockBox(document, document.dom), page_number)
+        page = boxes.PageBox(document, page_number)
         assert page.style.margin_top[0].value == top
         assert page.style.margin_right[0].value == right
         assert page.style.margin_bottom[0].value == bottom

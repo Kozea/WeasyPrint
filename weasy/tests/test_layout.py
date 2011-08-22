@@ -138,9 +138,9 @@ def test_page():
 
 @suite.test
 def test_block_widths():
-    pages = parse('''
+    page, = parse('''
         <style>
-            @page { margin: 0; size: 120px }
+            @page { margin: 0; size: 120px 2000px }
             body { margin: 0 }
             div { margin: 10px }
             p { padding: 2px; border-width: 1px; border-style: solid }
@@ -165,7 +165,7 @@ def test_block_widths():
           <p style="width: 200px; margin: auto"></p>
         </div>
     ''')
-    html = pages[0].root_box
+    html = page.root_box
     assert html.element.tag == 'html'
     body = html.children[0]
     assert body.element.tag == 'body'
@@ -496,3 +496,31 @@ def test_linebox_positions():
         assert ref_position_x - line.position_x <= line.width
         ref_position_x = line.position_x
         ref_position_y += line.height
+
+
+@suite.test
+def test_page_breaks():
+    pages = parse('''
+        <style>
+            @page { size: 100px; margin: 10px }
+            body { margin: 0 }
+            div { height: 30px }
+        </style>
+        <div/><div/><div/><div/><div/>
+    ''')
+    page_divs = []
+    for page in pages:
+        html = page.root_box
+        assert html.element.tag == 'html'
+        body = html.children[0]
+        assert body.element.tag == 'body'
+        divs = body.children
+        assert all([div.element.tag == 'div' for div in divs])
+        assert all([div.position_x == 10 for div in divs])
+        page_divs.append(divs)
+
+    positions_y = [
+        [div.position_y for div in divs]
+        for divs in page_divs
+    ]
+    assert positions_y == [[10, 40], [10, 40], [10]]

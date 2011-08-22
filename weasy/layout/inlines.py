@@ -17,9 +17,10 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from ..formatting_structure import boxes
+from .markers import image_marker_layout
 from .percentages import resolve_percentages
 from .. import text
+from ..formatting_structure import boxes
 from ..css.values import get_single_keyword
 
 TEXT_FRAGMENT = text.TextLineFragment()
@@ -61,6 +62,52 @@ def get_new_lineboxes(linebox, page_bottom):
     inline_context = InlineContext(linebox, page_bottom)
     return inline_context.lines()
 
+def inline_replaced_box_layout(box):
+    """Create the layout for an inline :class:`boxes.ReplacedBox` object."""
+    assert isinstance(box, boxes.ReplacedBox)
+    resolve_percentages(box)
+
+    # Compute width
+    if box.margin_left == 'auto':
+        box.margin_left = 0
+    if box.margin_right == 'auto':
+        box.margin_right = 0
+
+    intrinsic_ratio = box.replacement.intrinsic_ratio()
+    intrinsic_height = box.replacement.intrinsic_height()
+    intrinsic_width = box.replacement.intrinsic_width()
+
+    if box.width == 'auto':
+        if intrinsic_width is not None:
+            box.width = intrinsic_width
+        elif intrinsic_height is not None and intrinsic_ratio is not None:
+            box.width = intrinsic_ratio * intrinsic_height
+        else:
+            raise NotImplementedError
+            # Then the used value of 'width' becomes 300px. If 300px is too
+            # wide to fit the device, UAs should use the width of the largest
+            # rectangle that has a 2:1 ratio and fits the device instead.
+
+    # Compute height
+    if box.margin_top == 'auto':
+        box.margin_top = 0
+    if box.margin_bottom == 'auto':
+        box.margin_bottom = 0
+
+    if box.height == 'auto' and box.width == 'auto':
+        if intrinsic_height is not None:
+            box.height = intrinsic_height
+    elif intrinsic_ratio is not None and box.height == 'auto':
+        box.height = box.width / intrinsic_ratio
+    else:
+        raise NotImplementedError
+        # Then the used value of 'height' must be set to the height of
+        # the largest rectangle that has a 2:1 ratio, has a height not
+        # greater than 150px, and has a width not greater than the
+        # device width.
+
+
+# Dimensions
 
 def compute_linebox_dimensions(linebox):
     """Compute the height of the linebox """
@@ -95,11 +142,9 @@ def compute_textbox_dimensions(textbox):
 def compute_atomicbox_dimensions(box):
     assert isinstance(box, boxes.AtomicInlineLevelBox)
     if isinstance(box, boxes.ImageMarkerBox):
-        from . import image_marker_layout
         image_marker_layout(box)
     if isinstance(box, boxes.ReplacedBox):
-        from . import replaced_box_layout
-        replaced_box_layout(box)
+        inline_replaced_box_layout(box)
     else:
         raise TypeError('Layout for %s not handled yet' % type(box).__name__)
 

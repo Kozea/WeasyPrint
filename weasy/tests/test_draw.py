@@ -44,8 +44,9 @@ def format_pixel(lines, x, y):
 
 
 def test_pixels(name, expected_width, expected_height, expected_lines, html):
-    assert len(expected_lines) == expected_height
-    assert len(expected_lines[0]) == 3 * expected_width
+    assert len(expected_lines) == expected_height, name
+    assert len(expected_lines[0]) == 3 * expected_width, name
+
     writer = png.Writer(width=expected_width, height=expected_height)
     with open(make_filename('expected_results', name), 'wb') as fd:
         writer.write(fd, expected_lines)
@@ -55,18 +56,19 @@ def test_pixels(name, expected_width, expected_height, expected_lines, html):
     document.base_url = resource_filename('<test>')
     filename = make_filename('test_results', name)
     document.write_to(filename)
+    assert len(document.pages) == 1
 
     reader = png.Reader(filename=filename)
     width, height, lines, meta = reader.read()
     lines = list(lines)
 
-    assert width == expected_width
-    assert height == expected_height
-    assert meta['greyscale'] == False
-    assert meta['alpha'] == False
-    assert meta['bitdepth'] == 8
-    assert len(lines) == height
-    assert len(lines[0]) == width * 3
+    assert width == expected_width, name
+    assert height == expected_height, name
+    assert meta['greyscale'] == False, name
+    assert meta['alpha'] == False, name
+    assert meta['bitdepth'] == 8, name
+    assert len(lines) == height, name
+    assert len(lines[0]) == width * 3, name
     if lines != expected_lines:
         for y in xrange(height):
             for x in xrange(width):
@@ -433,14 +435,14 @@ def test_list_style_image():
         ('outside', [
         #   ++++++++++++++      ++++  <li> horizontal margins: 7px 2px
         #                 ######      <li> width: 12 - 7 - 2 = 3px
-        #             ----            list marker offset: 0.5em = 2px
-        #     ********                list marker image is 4px wide
+        #               --            list marker margin: 0.5em = 2px
+        #       ********              list marker image is 4px wide
             _+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_,
-            _+r+B+B+B+_+_+_+_+_+_+_,
-            _+B+B+B+B+_+_+_+_+_+_+_,
-            _+B+B+B+B+_+_+_+_+_+_+_,
-            _+B+B+B+B+_+_+_+_+_+_+_,
+            _+_+r+B+B+B+_+_+_+_+_+_,
+            _+_+B+B+B+B+_+_+_+_+_+_,
+            _+_+B+B+B+B+_+_+_+_+_+_,
+            _+_+B+B+B+B+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_,
@@ -466,13 +468,18 @@ def test_list_style_image():
             <style>
                 @page { size: 12px 10px }
                 body { margin: 0; background: white }
-                ul { margin: 2px 2px 2px 7px; list-style: url(pattern.png) %s;
-                     font-size: 4px; }
+                ul { margin: 2px 2px 0 7px; list-style: url(pattern.png) %s;
+                     font-size: 2px }
             </style>
-            <ul><li>
+            <ul><li></li></ul>
         ''' % (position,))
 
-    test_pixels('list_style_none' + position, 10, 5, [
+    test_pixels('list_style_none', 10, 10, [
+            _+_+_+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_,
@@ -480,7 +487,7 @@ def test_list_style_image():
             _+_+_+_+_+_+_+_+_+_,
         ], '''
             <style>
-                @page { size: 10px 5px }
+                @page { size: 10px }
                 body { margin: 0; background: white }
                 ul { margin: 0 0 0 5px; list-style: none; font-size: 2px; }
             </style>
