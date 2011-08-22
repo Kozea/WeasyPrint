@@ -64,7 +64,7 @@ def replaced_box_layout(box):
         elif intrinsic_ratio is not None:
             blocks.block_level_width(box)
         else:
-            raise NotImplementedError
+            box.width = 10
             # Then the used value of 'width' becomes 300px. If 300px is too
             # wide to fit the device, UAs should use the width of the largest
             # rectangle that has a 2:1 ratio and fits the device instead.
@@ -81,7 +81,7 @@ def replaced_box_layout(box):
     elif intrinsic_ratio is not None and box.height == 'auto':
         box.height = box.width / intrinsic_ratio
     else:
-        raise NotImplementedError
+        box.height = 10
         # Then the used value of 'height' must be set to the height of
         # the largest rectangle that has a 2:1 ratio, has a height not
         # greater than 150px, and has a width not greater than the
@@ -125,3 +125,4 @@ def layout(document):
 
     # TODO: do page breaks, split boxes into multiple pages
     return pages
+

@@ -191,7 +191,10 @@ def block_level_height(box):
         child.position_x = position_x
         child.position_y = position_y
         if isinstance(child, boxes.LineBox):
-            for line in get_new_lineboxes(child):
+            page_bottom = 10000
+            import pdb
+            lines_generator = list(get_new_lineboxes(child, 100000000))
+            for line in lines_generator:
                 box.add_child(line)
                 position_y += line.height
         else:
@@ -201,3 +204,4 @@ def block_level_height(box):
 
     if box.height == 'auto':
         box.height = position_y - initial_position_y
+

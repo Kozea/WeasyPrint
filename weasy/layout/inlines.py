@@ -24,22 +24,43 @@ from ..css.values import get_single_keyword
 
 TEXT_FRAGMENT = text.TextLineFragment()
 
-def get_new_lineboxes(linebox):
-    containing_block_width = linebox.containing_block_size()[0]
-    lines = list(breaking_linebox(linebox, containing_block_width))
-    position_y = linebox.position_y
-    position_x = linebox.position_x
-    for line in lines:
-        white_space_processing(line)
-        compute_linebox_dimensions(line)
-        compute_linebox_positions(line,position_x, position_y)
-        vertical_align_processing(line)
-        if not is_empty_line(line):
-            position_y += line.height
-            yield line
+class InlineContext(object):
+    def __init__(self, linebox, page_bottom):
+        self.linebox = linebox
+        self.page_bottom = page_bottom
+        self.position_y = linebox.position_y
+        self.position_x = linebox.position_x
+        self.containing_block_width = linebox.containing_block_size()[0]
+        self.save()
+
+    def save(self):
+        self._linebox = self.linebox.copy()
+        self._position_y = self.position_y
+
+    def restore(self):
+        self.linebox = self._linebox.copy()
+        self.position_y = self._position_y
+
+    def lines(self):
+        for line in breaking_linebox(self.linebox, self.containing_block_width):
+            white_space_processing(line)
+            compute_linebox_dimensions(line)
+            compute_linebox_positions(line, self.position_x, self.position_y)
+            vertical_align_processing(line)
+            if not is_empty_line(line):
+                self.position_y += line.height
+                if self.page_bottom > self.position_y:
+                    self.save()
+                    yield line
+                else:
+                    self.restore()
+                    break
 
 
-# Dimensions
+def get_new_lineboxes(linebox, page_bottom):
+    inline_context = InlineContext(linebox, page_bottom)
+    return inline_context.lines()
+
 
 def compute_linebox_dimensions(linebox):
     """Compute the height of the linebox """
@@ -83,8 +104,6 @@ def compute_atomicbox_dimensions(box):
         raise TypeError('Layout for %s not handled yet' % type(box).__name__)
 
 
-# Positions
-
 def compute_linebox_positions(linebox,ref_x, ref_y):
     assert isinstance(linebox, boxes.LineBox)
     # Linebox have no margin/padding/border
@@ -115,6 +134,7 @@ def compute_inlinebox_positions(box,ref_x, ref_y):
         elif isinstance(child, boxes.TextBox):
             compute_textbox_positions(child, inline_ref_x, inline_ref_y)
         inline_ref_x += child.margin_width()
+
 
 def compute_textbox_positions(box,ref_x, ref_y):
     assert isinstance(box, boxes.TextBox)
@@ -355,7 +375,7 @@ def breaking_textbox(textbox, allocate_width):
 
 
 def white_space_processing(linebox):
-    """Remove firsts and last white space in the `linebox`"""
+    """Remove first and last white space in `linebox`"""
     def get_first_textbox(linebox):
         for child in linebox.descendants():
             if isinstance(child, boxes.TextBox):
@@ -424,3 +444,4 @@ def vertical_align_processing(linebox):
 
     bottom_positions = [box.position_y+box.height for box in linebox.children]
     linebox.height = max(bottom_positions or [0]) - linebox.position_y
+

@@ -47,16 +47,12 @@ def get_image_surface_from_uri(uri):
             image = fileimage
         else:
             content= fileimage.read()
-#            1/0
             im = Image.open(StringIO(content))
             image = StringIO()
             im = im.convert('RGBA')
             im.save(image, "PNG")
             image.seek(0)
         return cairo.ImageSurface.create_from_png(image)
-    else:
-        1/0
-        print "format image not supported"
 
 
 def draw_box(context, box):

@@ -92,6 +92,11 @@ class ImageReplacement(Replacement):
 
     def draw(self, context):
         """Draw the element on the Cairo context."""
-        pattern = cairo.SurfacePattern(self.surface)
-        context.set_source(pattern)
-        context.paint()
+        if not self.surface:
+            # TODO Draw the alternative text ?
+            pass
+        else:
+            pattern = cairo.SurfacePattern(self.surface)
+            context.set_source(pattern)
+            context.paint()
+
