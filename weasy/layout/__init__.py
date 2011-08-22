@@ -22,7 +22,7 @@ from __future__ import division
 from ..css.values import get_pixel_value
 from ..formatting_structure import boxes
 from .percentages import resolve_percentages
-from . import block_formatting_context
+from . import blocks
 from .. import text
 
 
@@ -32,7 +32,7 @@ def image_marker_layout(box):
     is computed differently.
     """
     resolve_percentages(box)
-    box.width, box.height = block_formatting_context.list_style_image_size(box)
+    box.width, box.height = blocks.list_style_image_size(box)
 
 
 def replaced_box_layout(box):
@@ -54,7 +54,7 @@ def replaced_box_layout(box):
         elif not intrinsic_height is None and not intrinsic_ratio is None:
             box.width = intrinsic_ratio * intrinsic_height
         elif not intrinsic_ratio is None:
-            block_formatting_context.block_level_width(box)
+            blocks.block_level_width(box)
         else:
             raise NotImplementedError
             # then the used value of 'width' becomes 300px. If 300px is too
@@ -100,7 +100,7 @@ def page_dimensions(box):
     # TODO: handle cases where the root element is something else.
     # See http://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
     assert isinstance(box.root_box, boxes.BlockBox)
-    block_formatting_context.block_box_layout(box.root_box)
+    blocks.block_box_layout(box.root_box)
 
 
 def layout(document):

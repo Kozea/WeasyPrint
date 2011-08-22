@@ -25,7 +25,7 @@ from ..css.values import get_single_keyword, get_single_pixel_value
 from ..formatting_structure import boxes
 from .. import text
 from .percentages import resolve_percentages
-from .inline_formatting_context import get_new_lineboxes
+from .inlines import get_new_lineboxes
 
 
 def block_level_layout(box):
