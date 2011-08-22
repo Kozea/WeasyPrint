@@ -21,26 +21,12 @@ from __future__ import division
 
 from ..css.values import get_pixel_value
 from ..formatting_structure import boxes
-from ..utils import MultiFunction
 from .percentages import resolve_percentages
 from . import block_formatting_context
 from .. import text
 
 
-# TODO: remove this if it is not needed?
-@MultiFunction
-def compute_dimensions(box):
-    """
-    Computes width, height and absolute position for all boxes in a box tree.
-    """
-
-
-compute_dimensions.register(boxes.BlockBox)(
-    block_formatting_context.block_dimensions)
-
-
-@compute_dimensions.register(boxes.ImageMarkerBox)
-def image_marker_dimensions(box):
+def image_marker_layout(box):
     """
     ImageMarkerBox objects are ReplacedBox objects, but their used size
     is computed differently.
@@ -49,8 +35,7 @@ def image_marker_dimensions(box):
     box.width, box.height = block_formatting_context.list_style_image_size(box)
 
 
-@compute_dimensions.register(boxes.ReplacedBox)
-def replaced_box_dimensions(box):
+def replaced_box_layout(box):
     assert isinstance(box, boxes.ReplacedBox)
     resolve_percentages(box)
     # width
@@ -112,7 +97,10 @@ def page_dimensions(box):
     box.root_box.position_x = box.content_box_x()
     box.root_box.position_y = box.content_box_y()
 
-    compute_dimensions(box.root_box)
+    # TODO: handle cases where the root element is something else.
+    # See http://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
+    assert isinstance(box.root_box, boxes.BlockBox)
+    block_formatting_context.block_box_layout(box.root_box)
 
 
 def layout(document):

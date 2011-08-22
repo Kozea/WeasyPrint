@@ -161,7 +161,7 @@ class PNGDocument(Document):
 
     def write_page_to(self, page_index, target):
         """Write a single page as PNG into a file-like or filename `target`."""
-        surface = self.draw_page(self.pages[page_index])[2]
+        _width, _height, surface = self.draw_page(self.pages[page_index])
         surface.write_to_png(target)
 
     def write_to(self, target):

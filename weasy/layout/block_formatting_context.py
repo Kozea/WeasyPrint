@@ -27,7 +27,18 @@ from .. import text
 from .percentages import resolve_percentages
 from .inline_formatting_context import get_new_lineboxes
 
-def block_dimensions(box):
+
+def block_level_layout(box):
+    if isinstance(box, boxes.BlockBox):
+        block_box_layout(box)
+    elif isinstance(box, boxes.ReplacedBox):
+        from . import replaced_box_layout
+        replaced_box_layout(box)
+    else:
+        raise TypeError('Layout for %s not handled yet' % type(box).__name__)
+
+
+def block_box_layout(box):
     resolve_percentages(box)
     block_level_width(box)
     block_level_height(box)
@@ -166,8 +177,6 @@ def block_level_height(box):
     if box.margin_bottom == 'auto':
         box.margin_bottom = 0
 
-    from . import compute_dimensions  # Avoid circular import
-
     position_x = box.content_box_x()
     position_y = box.content_box_y()
     initial_position_y = position_y
@@ -186,7 +195,7 @@ def block_level_height(box):
                 box.add_child(line)
                 position_y += line.height
         else:
-            compute_dimensions(child)
+            block_level_layout(child)
             position_y += child.margin_height()
             box.add_child(child)
 
