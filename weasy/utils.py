@@ -29,32 +29,6 @@ from urlparse import urljoin, urlparse
 from cssutils.helper import path2url
 
 
-class MultiFunction(object):
-    """Callable with different behaviours depending on the first argument type.
-
-    This object takes ``__name__``, ``__module__`` and ``__doc__`` from
-    ``base_function`` if it is given, but does not use its body.
-
-    """
-    def __init__(self, base_function=None):
-        self.implementations = {}
-        if base_function:
-            functools.update_wrapper(self, base_function)
-
-    def register(self, cls):
-        def decorator(function):
-            self.implementations[cls] = function
-            return function
-        return decorator
-
-    def __call__(self, obj, *args, **kwargs):
-        for cls in type(obj).mro():
-            implementation = self.implementations.get(cls)
-            if implementation:
-                return implementation(obj, *args, **kwargs)
-        raise NotImplementedError('No implementation for %r' % type(obj))
-
-
 def get_url_attribute(element, key):
     """Get the URL corresponding to the ``key`` attribute of ``element``.
 

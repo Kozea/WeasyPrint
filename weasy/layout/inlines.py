@@ -71,10 +71,16 @@ def compute_textbox_dimensions(textbox):
     textbox.baseline = TEXT_FRAGMENT.get_baseline()
 
 
-def compute_atomicbox_dimensions(atomicbox):
-    assert isinstance(atomicbox, boxes.AtomicInlineLevelBox)
-    from . import compute_dimensions
-    compute_dimensions(atomicbox)
+def compute_atomicbox_dimensions(box):
+    assert isinstance(box, boxes.AtomicInlineLevelBox)
+    if isinstance(box, boxes.ImageMarkerBox):
+        from . import image_marker_layout
+        image_marker_layout(box)
+    if isinstance(box, boxes.ReplacedBox):
+        from . import replaced_box_layout
+        replaced_box_layout(box)
+    else:
+        raise TypeError('Layout for %s not handled yet' % type(box).__name__)
 
 
 # Positions

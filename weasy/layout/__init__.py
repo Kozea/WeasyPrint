@@ -17,43 +17,36 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+"""
+Module managing the layout creation before drawing a document.
+
+"""
+
 from __future__ import division
 
+from . import blocks
+from .percentages import resolve_percentages
 from ..css.values import get_pixel_value
 from ..formatting_structure import boxes
-from ..utils import MultiFunction
-from .percentages import resolve_percentages
-from . import block_formatting_context
-from .. import text
 
 
-# TODO: remove this if it is not needed?
-@MultiFunction
-def compute_dimensions(box):
-    """
-    Computes width, height and absolute position for all boxes in a box tree.
-    """
+def image_marker_layout(box):
+    """Create the layout for an :class:`boxes.ImageMarkerBox` object.
 
+    :class:`boxes.ImageMarkerBox` objects are :class:`boxes.ReplacedBox`
+    objects, but their used size is computed differently.
 
-compute_dimensions.register(boxes.BlockBox)(
-    block_formatting_context.block_dimensions)
-
-
-@compute_dimensions.register(boxes.ImageMarkerBox)
-def image_marker_dimensions(box):
-    """
-    ImageMarkerBox objects are ReplacedBox objects, but their used size
-    is computed differently.
     """
     resolve_percentages(box)
-    box.width, box.height = block_formatting_context.list_style_image_size(box)
+    box.width, box.height = blocks.list_style_image_size(box)
 
 
-@compute_dimensions.register(boxes.ReplacedBox)
-def replaced_box_dimensions(box):
+def replaced_box_layout(box):
+    """Create the layout for a :class:`boxes.ReplacedBox` object."""
     assert isinstance(box, boxes.ReplacedBox)
     resolve_percentages(box)
-    # width
+
+    # Compute width
     if box.margin_left == 'auto':
         box.margin_left = 0
     if box.margin_right == 'auto':
@@ -64,39 +57,39 @@ def replaced_box_dimensions(box):
     intrinsic_width = box.replacement.intrinsic_width()
 
     if box.width == 'auto':
-        if not intrinsic_width is None:
+        if intrinsic_width is not None:
             box.width = intrinsic_width
-        elif not intrinsic_height is None and not intrinsic_ratio is None:
+        elif intrinsic_height is not None and intrinsic_ratio is not None:
             box.width = intrinsic_ratio * intrinsic_height
-        elif not intrinsic_ratio is None:
-            block_formatting_context.block_level_width(box)
+        elif intrinsic_ratio is not None:
+            blocks.block_level_width(box)
         else:
             raise NotImplementedError
-            # then the used value of 'width' becomes 300px. If 300px is too
+            # Then the used value of 'width' becomes 300px. If 300px is too
             # wide to fit the device, UAs should use the width of the largest
             # rectangle that has a 2:1 ratio and fits the device instead.
 
-    # height
+    # Compute height
     if box.margin_top == 'auto':
         box.margin_top = 0
     if box.margin_bottom == 'auto':
         box.margin_bottom = 0
 
     if box.height == 'auto' and box.width == 'auto':
-        if not intrinsic_height is None:
+        if intrinsic_height is not None:
             box.height = intrinsic_height
     elif intrinsic_ratio is not None and box.height == 'auto':
         box.height = box.width / intrinsic_ratio
     else:
         raise NotImplementedError
-        # then the used value of 'height' must be set to the height of
+        # Then the used value of 'height' must be set to the height of
         # the largest rectangle that has a 2:1 ratio, has a height not
         # greater than 150px, and has a width not greater than the
-        # device width
-
+        # device width.
 
 
 def page_dimensions(box):
+    """Set the page dimensions of the given :class:`boxes.PageBox`."""
     box.outer_width, box.outer_height = map(get_pixel_value, box.style.size)
 
     resolve_percentages(box)
@@ -112,13 +105,18 @@ def page_dimensions(box):
     box.root_box.position_x = box.content_box_x()
     box.root_box.position_y = box.content_box_y()
 
-    compute_dimensions(box.root_box)
+    # TODO: handle cases where the root element is something else.
+    # See http://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
+    assert isinstance(box.root_box, boxes.BlockBox)
+    blocks.block_box_layout(box.root_box)
 
 
 def layout(document):
-    """
-    Do the layout for the whole document: line breaks, page breaks,
-    absolute size and position for all boxes.
+    """Create the layout of the whole document.
+
+    This includes line breaks, page breaks, absolute size and position for all
+    boxes.
+
     """
     pages = []
     page = boxes.PageBox(document, document.formatting_structure, 1)

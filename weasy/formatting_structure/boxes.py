@@ -152,6 +152,7 @@ class Box(object):
         Change this box’s position. Also update the children’s positions
         accordingly.
         """
+        # Overridden in ParentBox to also translate children, if any.
         self.position_x += dx
         self.position_y += dy
 
