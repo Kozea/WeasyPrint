@@ -17,26 +17,27 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
-weasy.css
----------
+Module managing CSS.
 
 This module takes care of steps 3 and 4 of “CSS 2.1 processing model”:
 Retrieve stylesheets associated with a document and annotate every element
 with a value for every CSS property.
 http://www.w3.org/TR/CSS21/intro.html#processing-model
 
-This module does this in more than two steps. The `get_all_computed_styles`
-function does everything, but there is also a function for each step:
+This module does this in more than two steps. The
+:func:`get_all_computed_styles` function does everything, but there is also a
+function for each step:
 
- * ``find_stylesheets``: Find and parse all author stylesheets in a document
- * ``effective_rules``: Resolve @media and @import rules
- * ``match_selectors``: Find elements in a document that match a selector list
- * ``find_style_attributes``: Find and parse all `style` HTML attributes
- * ``effective_declarations``: Remove ignored properties and expand shorthands
- * ``add_property``: Take applicable properties and only keep those with
-   highest weight.
- * ``set_computed_styles``: Handle initial values, inheritance and computed
-   values for one element.
+- ``find_stylesheets``: Find and parse all author stylesheets in a document
+- ``effective_rules``: Resolve @media and @import rules
+- ``match_selectors``: Find elements in a document that match a selector list
+- ``find_style_attributes``: Find and parse all `style` HTML attributes
+- ``effective_declarations``: Remove ignored properties and expand shorthands
+- ``add_property``: Take applicable properties and only keep those with
+  highest weight.
+- ``set_computed_styles``: Handle initial values, inheritance and computed
+  values for one element.
+
 """
 
 import logging
@@ -53,21 +54,18 @@ from ..utils import get_url_attribute
 
 LOGGER = logging.getLogger('WEASYPRINT')
 
-
 # Pseudo-classes and pseudo-elements are the same to lxml.cssselect.parse().
 # List the identifiers for all CSS3 pseudo elements here to distinguish them.
 PSEUDO_ELEMENTS = ('before', 'after', 'first-line', 'first-letter')
 
-
 # Selectors for @page rules can have a pseudo-class, one of :first, :left
 # or :right. This maps pseudo-classes to lists of "page types" selected.
 PAGE_PSEUDOCLASS_TARGETS = {
-    None: ['left', 'right', 'first_left', 'first_right'], # No pseudo-class
+    None: ['left', 'right', 'first_left', 'first_right'],  # no pseudo-class
     ':left': ['left', 'first_left'],
     ':right': ['right', 'first_right'],
     ':first': ['first_left', 'first_right'],
 }
-
 
 # Specificity of @page pseudo-classes for the cascade.
 PAGE_PSEUDOCLASS_SPECIFICITY = {
@@ -79,9 +77,10 @@ PAGE_PSEUDOCLASS_SPECIFICITY = {
 
 
 def find_stylesheets(document):
-    """
-    Find and parse stylesheets in a Document object. Return an iterable of
-    stylesheets, in tree order.
+    """Yield the stylesheets of ``document``.
+
+    The output order is the same as the order of the dom.
+
     """
     parser = document.css_parser
     for element in document.dom.iter():
@@ -112,15 +111,12 @@ def find_stylesheets(document):
             # TODO: support the <base> HTML element, but do not use
             # lxml.html.HtmlElement.make_links_absolute() that changes the tree
             href = get_url_attribute(element, 'href')
-            yield parser.parseUrl(href,
-                media=media_attr, title=element.get('title'))
+            yield parser.parseUrl(
+                href, media=media_attr, title=element.get('title'))
 
 
 def find_style_attributes(document):
-    """
-    Find and parse style HTML attributes in the given document. Return an
-    iterable of (element, declaration_block).
-    """
+    """Yield the ``element, declaration_block`` of ``document``."""
     for element in document.dom.iter():
         style_attribute = element.get('style')
         if style_attribute:
@@ -131,8 +127,7 @@ def find_style_attributes(document):
 
 
 def evaluate_media_query(query_list, medium):
-    """
-    Return the boolean evaluation of `query_list` for the given `medium`
+    """Return the boolean evaluation of `query_list` for the given `medium`.
 
     :attr query_list: a cssutilts.stlysheets.MediaList
     :attr medium: a media type string (for now)
@@ -144,9 +139,10 @@ def evaluate_media_query(query_list, medium):
 
 
 def effective_rules(sheet, medium):
-    """
-    Resolves @import and @media rules in the given CSSStlyleSheet, and yields
-    applicable rules for `medium`.
+    """Yield applicable rules of ``sheet`` for ``medium``.
+
+    The rules include those defined with ``@import`` and ``@media`` rules.
+
     """
     # sheet.media is not intrinsic but comes from where the stylesheet was
     # found: media HTML attribute, @import or @media rule.
@@ -154,7 +150,7 @@ def effective_rules(sheet, medium):
         return
     for rule in sheet.cssRules:
         if rule.type in (rule.CHARSET_RULE, rule.COMMENT):
-            continue # ignored
+            continue  # ignored
         elif rule.type == rule.IMPORT_RULE:
             subsheet = rule.styleSheet
         elif rule.type == rule.MEDIA_RULE:
@@ -165,36 +161,37 @@ def effective_rules(sheet, medium):
             # pass other rules through: "normal" rulesets, @font-face,
             # @namespace, @page, and @variables
             yield rule
-            continue # no sub-stylesheet here.
+            continue  # no sub-stylesheet here.
         # subsheet has the .media attribute from the @import or @media rule.
         for subrule in effective_rules(subsheet, medium):
             yield subrule
 
 
 def effective_declarations(declaration_block):
-    """
-    In the given declaration block, ignore invalid or unsupported declarations
-    and expand shorthand properties. Return a iterable of
-    (property_name, property_value_list, importance) tuples.
+    """Yield ``property_name, property_value_list, importance`` tuples.
+
+    In the given ``declaration_block``, the invalid or unsupported declarations
+    are ignored and the shorthand properties are expanded.
+
     """
     for declaration in declaration_block.getProperties(all=True):
         for name, values in validation.validate_and_expand(
-            declaration.name,
-            # list() may call len(), which is slow on PropertyValue
-            # Use iter() to avoid this.
-            list(iter(declaration.propertyValue))
-        ):
+                declaration.name,
+                # list() may call len(), which is slow on PropertyValue
+                # Use iter() to avoid this.
+                list(iter(declaration.propertyValue))):
             assert isinstance(values, list)
             yield name, values, declaration.priority
 
 
 def declaration_precedence(origin, importance):
-    """
-    Return the precedence for a declaration. Precedence values have no meaning
-    unless compared to each other.
+    """Return the precedence for a declaration.
 
-    Acceptable values for `origin` are the strings 'author', 'user' and
-    'user agent'.
+    Precedence values have no meaning unless compared to each other.
+
+    Acceptable values for ``origin`` are the strings ``'author'``, ``'user'``
+    and ``'user agent'``.
+
     """
     # See http://www.w3.org/TR/CSS21/cascade.html#cascading-order
     if origin == 'user agent':
@@ -203,9 +200,9 @@ def declaration_precedence(origin, importance):
         return 2
     elif origin == 'author' and not importance:
         return 3
-    elif origin == 'author': # and importance
+    elif origin == 'author':  # and importance
         return 4
-    elif origin == 'user': # and importance
+    elif origin == 'user':  # and importance
         return 5
     else:
         assert ValueError('Unkown origin: %r' % origin)
@@ -213,9 +210,10 @@ def declaration_precedence(origin, importance):
 
 def add_declaration(cascaded_styles, prop_name, prop_values, weight, element,
                     pseudo_type=None):
-    """
-    Set the value for a property on a given element unless there already
-    is a value of greater weight.
+    """Set the value for a property on a given element.
+
+    The value is only set if there is no value of greater weight defined yet.
+
     """
     style = cascaded_styles.setdefault((element, pseudo_type), {})
     _values, previous_weight = style.get(prop_name, (None, None))
@@ -224,9 +222,11 @@ def add_declaration(cascaded_styles, prop_name, prop_values, weight, element,
 
 
 def selector_to_xpath(selector):
-    """
-    Get a cssutils Selector object and return (pseudo_type, selector_callable)
-    a string and a lxml.cssselect XPath callable.
+    """Return ``pseudo_type, selector_callable`` from a cssutils ``selector``.
+
+    ``pseudo_type`` is a string and ``selector_callable`` is a
+    :class:`lxml.cssselect` XPath callable.
+
     """
     try:
         return selector._x_weasyprint_parsed_cssselect
@@ -236,15 +236,15 @@ def selector_to_xpath(selector):
         # in CSS3 terms (`rule.selectorList` is) so `parsed_selector` cannot be
         # of type `cssselect.Or`.
         # This leaves only three cases:
-        #  * The selector ends with a pseudo-element. As `cssselect.parse()`
-        #    parses left-to-right, `parsed_selector` is a `cssselect.Pseudo`
-        #    instance that we can unwrap. This is the only place where CSS
-        #    allows pseudo-element selectors.
-        #  * The selector has a pseudo-element not at the end. This is invalid
-        #    and the whole ruleset should be ignored.
-        #    cssselect.CSSSelector() will raise a cssselect.ExpressionError.
-        #  * The selector has no pseudo-element and is supported by
-        #    `cssselect.CSSSelector`.
+        # - The selector ends with a pseudo-element. As `cssselect.parse()`
+        #   parses left-to-right, `parsed_selector` is a `cssselect.Pseudo`
+        #   instance that we can unwrap. This is the only place where CSS
+        #   allows pseudo-element selectors.
+        # - The selector has a pseudo-element not at the end. This is invalid
+        #   and the whole ruleset should be ignored.
+        #   cssselect.CSSSelector() will raise a cssselect.ExpressionError.
+        # - The selector has no pseudo-element and is supported by
+        #   `cssselect.CSSSelector`.
         if isinstance(parsed_selector, cssselect.Pseudo) \
                 and parsed_selector.ident in PSEUDO_ELEMENTS:
             pseudo_type = parsed_selector.ident
@@ -262,14 +262,15 @@ def selector_to_xpath(selector):
 
 
 def match_selectors(document, selector_list):
-    """
-    Match a list of selectors against a document and return an iterable of
-    (element, pseudo_element_type, selector_specificity) tuples.
+    """Get the selectors of ``selector_list`` matching in the ``document``.
 
-    selector_list should be an iterable of cssutils’ Selector objects.
+    Yield ``element, pseudo_element_type, selector_specificity`` tuples.
+
+    ``selector_list`` should be an iterable of ``cssutils.Selector`` objects.
 
     If any of the selectors is invalid, an empty iterable is returned as the
     whole rule should be ignored.
+
     """
     selectors = []
     for selector in selector_list:
@@ -279,8 +280,8 @@ def match_selectors(document, selector_list):
             LOGGER.warn('Unsupported selector %r, the whole rule-set '
                         'was ignored.', selector.selectorText)
             return
-        selectors.append((selector_callable, pseudo_type,
-                          selector.specificity))
+        selectors.append(
+            (selector_callable, pseudo_type, selector.specificity))
 
     # Only apply to elements after seeing all selectors, as we want to
     # ignore he whole ruleset if just one selector is invalid.
@@ -291,40 +292,43 @@ def match_selectors(document, selector_list):
 
 
 def match_page_selector(selector):
-    """
-    Return an iterable of ('@page', page_type, selector_specificity)
-    for the given page selector text.
+    """Get the pages matching ``selector``.
 
-    '@page' is the marker for page pseudo-elements. It is added so that this
-    function has the same return type as `match_selectors()`.
+    Yield ``'@page', page_type, selector_specificity`` tuples.
+
+    ``'@page'`` is the marker for page pseudo-elements. It is added so that
+    this function has the same return type as :func:`match_selectors`.
 
     Return an empty iterable if the selector is invalid or unsupported.
+
     """
     # TODO: support "page names" in page selectors (see CSS3 Paged Media)
     pseudo_class = selector or None
     page_types = PAGE_PSEUDOCLASS_TARGETS.get(pseudo_class, None)
     specificity = PAGE_PSEUDOCLASS_SPECIFICITY[pseudo_class]
-    if page_types is not None:
-        for page_type in page_types:
-            yield '@page', page_type, specificity
-    else:
+    if page_types is None:
         LOGGER.warn('Unsupported @page selector %r, the whole rule-set '
                     'was ignored.', selector)
+    else:
+        for page_type in page_types:
+            yield '@page', page_type, specificity
 
 
 def set_computed_styles(cascaded_styles, computed_styles,
                         element, pseudo_type=None):
-    """
+    """Set the computed values of styles to ``element``.
+
     Take the properties left by ``apply_style_rule`` on an element or
     pseudo-element and assign computed values with respect to the cascade,
     declaration priority (ie. ``!important``) and selector specificity.
+
     """
     if element == '@page':
         parent = None
     elif pseudo_type:
         parent = element
     else:
-        parent = element.getparent() # None for the root element
+        parent = element.getparent()  # none for the root element
 
     if parent is None:
         parent_style = None
@@ -332,18 +336,16 @@ def set_computed_styles(cascaded_styles, computed_styles,
         parent_style = computed_styles[parent, None]
 
     cascaded = cascaded_styles.get((element, pseudo_type), {})
-    style = computed_from_cascaded(element, cascaded, parent_style, pseudo_type)
+    style = computed_from_cascaded(
+        element, cascaded, parent_style, pseudo_type)
     computed_styles[element, pseudo_type] = style
 
 
 def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None):
-    """
-    Return a dict of computed styles from cascaded styles and the computed
-    styles for the parent element.
-    """
+    """Get a dict of computed style mixed from parent and cascaded styles."""
     if not cascaded and parent_style is not None:
         # Fast path for anonymous boxes:
-        # No cascaded style, only implicitly initial or inherited values.
+        # no cascaded style, only implicitly initial or inherited values.
         computed = computed_values.StyleDict(properties.INITIAL_VALUES)
         for name in properties.INHERITED:
             computed[name] = parent_style[name]
@@ -387,11 +389,13 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None):
 
 def get_all_computed_styles(document, medium,
                             user_stylesheets=None, ua_stylesheets=None):
-    """
+    """Compute all the computed styles of ``document`` for ``medium``.
+
     Do everything from finding author stylesheets in the given HTML document
     to parsing and applying them.
 
     Return a dict of (DOM element, pseudo element type) -> StyleDict instance.
+
     """
     author_stylesheets = find_stylesheets(document)
 
