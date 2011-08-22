@@ -32,28 +32,28 @@ from .utils import get_url_attribute
 from .draw.helpers import get_image_surface_from_uri
 
 
-REPLACEMENT_HANDLERS = []
+REPLACEMENT_HANDLERS = {}
 
 
 def get_replaced_element(element):
     """Return a :class:`Replacement` object if ``element`` is replaced."""
-    for handler in REPLACEMENT_HANDLERS:
-        replacement = handler(element)
-        if replacement is not None:
-            return replacement
+    if element.tag in REPLACEMENT_HANDLERS:
+        handler = REPLACEMENT_HANDLERS[element.tag]
+        return handler(element)
 
 
-def register(function):
-    REPLACEMENT_HANDLERS.append(function)
-    return function
+def register(tag):
+    def decorator(function):
+        REPLACEMENT_HANDLERS[tag] = function
+        return function
+    return decorator
 
 
-@register
+@register('img')
 def handle_img(element):
-    if element.tag == 'img':
-        # TODO: somehow use the alt-text on broken images.
-        src = get_url_attribute(element, 'src')
-        return ImageReplacement(src)
+    # TODO: somehow use the alt-text on broken images.
+    src = get_url_attribute(element, 'src')
+    return ImageReplacement(src)
 
 
 class Replacement(object):
