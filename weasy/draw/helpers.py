@@ -17,36 +17,41 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+"""
+Various drawing helpers.
+
+"""
+
 from __future__ import division
-import os
 import urllib
 
 import cairo
 from PIL import Image
 from StringIO import StringIO
 
-from ..css.values import (get_single_keyword, get_keyword,
-                          get_pixel_value, get_percentage_value)
-from ..formatting_structure import boxes
-from .. import text
 from .figures import Point, Line, Trapezoid
+from ..text import TextLineFragment
+from ..formatting_structure import boxes
+from ..css.values import (
+    get_single_keyword, get_keyword, get_pixel_value, get_percentage_value)
 
 
-SUPPORTED_IMAGES = ['image/png','image/gif', 'image/jpg', 'image/bmp']
+SUPPORTED_IMAGES = ['image/png', 'image/gif', 'image/jpg', 'image/bmp']
 
 
 def get_image_surface_from_uri(uri):
+    """Get a :class:`cairo.ImageSurface`` from an image URI."""
     try:
         fileimage = urllib.urlopen(uri)
         mime_type = fileimage.info().gettype()
         if mime_type in SUPPORTED_IMAGES:
-            if mime_type == "image/png":
+            if mime_type == 'image/png':
                 image = fileimage
             else:
-                im = Image.open(StringIO(fileimage.read()))
+                pil_image = Image.open(StringIO(fileimage.read()))
                 image = StringIO()
-                im = im.convert('RGBA')
-                im.save(image, "PNG")
+                pil_image = pil_image.convert('RGBA')
+                pil_image.save(image, 'PNG')
                 image.seek(0)
             return cairo.ImageSurface.create_from_png(image)
     except IOError:
@@ -54,6 +59,7 @@ def get_image_surface_from_uri(uri):
 
 
 def draw_box(context, box):
+    """Draw a ``box`` on ``context``."""
     if has_background(box):
         draw_background(context, box)
 
@@ -76,24 +82,22 @@ def draw_box(context, box):
 
 
 def has_background(box):
-    """
-    Return the given box has any background.
-    """
+    """Return whether the given box has any background."""
     return box.style['background-color'][0].alpha > 0 or \
         get_single_keyword(box.style['background-image']) != 'none'
 
 
 def draw_canvas_background(context, page):
-    """
-    Draw the canvas’s background, taken from the root element.
+    """Draw the canvas’ background, taken from the root element.
 
-    If the root element is "html" and has no background, the canvas’s
+    If the root element is "html" and has no background, the canvas’
     background is taken from its "body" child.
 
     In both cases the background position is the same as if it was drawn on
     the element.
 
     See http://www.w3.org/TR/CSS21/colors.html#background
+
     """
     if has_background(page.root_box):
         draw_background(context, page.root_box, on_entire_canvas=True)
@@ -105,18 +109,14 @@ def draw_canvas_background(context, page):
 
 
 def get_page_size(box):
-    """
-    Find the PageBox this box is in, and return its outer (width, height).
-    """
+    """Return the outer ``width, height`` of the ``box``'s root ``PageBox``."""
     while not isinstance(box, boxes.PageBox):
         box = box.parent
     return box.outer_width, box.outer_height
 
 
 def draw_background(context, box, on_entire_canvas=False):
-    """
-    Draw the box background color and image to a Cairo context.
-    """
+    """Draw the box background color and image to a ``cairo.Context``."""
     if getattr(box, 'background_drawn', False):
         return
 
@@ -147,8 +147,6 @@ def draw_background(context, box, on_entire_canvas=False):
             context.translate(bg_x, bg_y)
         else:
             assert bg_attachement == 'fixed'
-            # Percantages in background-position refer to the canvas size.
-            canvas = context.get_target()
             bg_width, bg_height = get_page_size(box)
 
         # Background image
@@ -196,15 +194,14 @@ def draw_background(context, box, on_entire_canvas=False):
 
 
 def absolute_background_position(css_values, bg_dimensions, image_dimensions):
-    """
-    Parse values for background-position and return (position_x, position_y)
-    in pixels.
+    """Return the background's ``position_x, position_y`` in pixels.
 
     http://www.w3.org/TR/CSS21/colors.html#propdef-background-position
 
     :param css_values: a list of one or two cssutils Value objects.
-    :param bg_dimensions: (width, height) of the background positionning area
-    :param image_dimensions: (width, height) of the background image
+    :param bg_dimensions: ``width, height`` of the background positionning area
+    :param image_dimensions: ``width, height`` of the background image
+
     """
     values = list(css_values)
     keywords = [get_keyword(value) for value in values]
@@ -215,11 +212,9 @@ def absolute_background_position(css_values, bg_dimensions, image_dimensions):
     else:
         assert len(css_values) == 2
 
-    if not (
-        None in keywords or
-        keywords[0] in ('left', 'right') or
-        keywords[1] in ('top', 'bottom')
-    ):
+    if not (None in keywords or
+            keywords[0] in ('left', 'right') or
+            keywords[1] in ('top', 'bottom')):
         values.reverse()
         keywords.reverse()
     # Order is now [horizontal, vertical]
@@ -239,91 +234,92 @@ def absolute_background_position(css_values, bg_dimensions, image_dimensions):
 
 
 def draw_border(context, box):
-    """
-    Draw the box border to a Cairo context.
-    """
-    if all(
-        getattr(box, 'border_%s_width' % side) == 0
-        for side in ['top', 'right', 'bottom', 'left']
-    ):
+    """Draw the box border to a ``cairo.Context``."""
+    if all(getattr(box, 'border_%s_width' % side) == 0
+           for side in ['top', 'right', 'bottom', 'left']):
         # No border, return early.
         return
 
     def get_edge(x, y, width, height):
-        return (Point(x,y), Point(x+width,y), Point(x+width, y+height),
-                Point(x, y+height))
+        """Get the 4 points corresponding to the given parameters."""
+        return (Point(x, y), Point(x + width, y),
+                Point(x + width, y + height), Point(x, y + height))
 
     def get_border_area():
-        # border area
+        """Get the border area of ``box``."""
+        # Border area
         x = box.position_x + box.margin_left
         y = box.position_y + box.margin_top
         border_edge = get_edge(x, y, box.border_width(), box.border_height())
-        # padding area
+
+        # Padding area
         x = x + box.border_left_width
         y = y + box.border_top_width
-        padding_edge = get_edge(x, y, box.padding_width(), box.padding_height())
+        padding_edge = get_edge(
+            x, y, box.padding_width(), box.padding_height())
+
         return border_edge, padding_edge
 
     def get_lines(rectangle):
-        n = len (rectangle)
-        for i, point in enumerate(rectangle):
-            yield Line(rectangle[i], rectangle[(i+1) % n])
+        """Get the 4 lines of ``rectangle``."""
+        lines_number = len(rectangle)
+        for i in range(lines_number):
+            yield Line(rectangle[i], rectangle[(i + 1) % lines_number])
 
     def get_trapezoids():
-        border_edge, padding_edge = get_border_area()
-        for line1,line2 in zip(get_lines(border_edge), get_lines(padding_edge)):
+        """Get the 4 trapezoids of ``context``."""
+        border_lines, padding_lines = [
+            get_lines(area) for area in get_border_area()]
+        for line1, line2 in zip(border_lines, padding_lines):
             yield Trapezoid(line1, line2)
 
     def draw_border_side(side, trapezoid):
-        width = getattr(box, 'border_%s_width' %side)
+        """Draw ``trapezoid`` at the box's ``side``."""
+        width = getattr(box, 'border_%s_width' % side)
         if width == 0:
             return
-        color = box.style['border-%s-color'%side][0]
-        style = box.style['border-%s-style'%side][0].value
+        color = box.style['border-%s-color' % side][0]
+        style = box.style['border-%s-style' % side][0].value
         if color.alpha > 0:
             with context.stacked():
                 # TODO: implement other styles.
-                if not style in ["dotted", "dashed"]:
+                if not style in ['dotted', 'dashed']:
                     trapezoid.draw_path(context)
                     context.clip()
-                elif style == "dotted":
-                    #TODO:Find a way to make a real dotted border
+                elif style == 'dotted':
+                    # TODO: find a way to make a real dotted border
                     context.set_dash([width], 0)
-                elif style == "dashed":
-                    #TODO:Find a way to make a real dashed border
-                    context.set_dash([4*width], 0)
+                elif style == 'dashed':
+                    # TODO: find a way to make a real dashed border
+                    context.set_dash([4 * width], 0)
                 line = trapezoid.get_middle_line()
                 line.draw_path(context)
                 context.set_source_colorvalue(color)
                 context.set_line_width(width)
                 context.stroke()
 
-    trapezoids_side = zip(["top", "right", "bottom", "left"], get_trapezoids())
+    trapezoids_side = zip(['top', 'right', 'bottom', 'left'], get_trapezoids())
 
     for side, trapezoid in trapezoids_side:
         draw_border_side(side, trapezoid)
 
 
 def draw_text(context, textbox):
-    """
-    Draw the given TextBox to a Cairo context from Pangocairo Context
-    """
-    fragment = text.TextLineFragment.from_textbox(textbox)
+    """Draw ``textbox`` to a ``cairo.Context`` from ``pangocairo.Context``."""
+    fragment = TextLineFragment.from_textbox(textbox)
     context.move_to(textbox.position_x, textbox.position_y)
     context.show_layout(fragment.get_layout())
 
 
 def draw_replacedbox(context, box):
-    """
-    Draw the given ReplacedBox to a Cairo context
-    """
+    """Draw the given :class:`boxes.ReplacedBox` to a ``cairo.context``."""
     x, y = box.padding_box_x(), box.padding_box_y()
     width, height = box.width, box.height
     with context.stacked():
         context.translate(x, y)
         context.rectangle(0, 0, width, height)
         context.clip()
-        scale_width = width/box.replacement.intrinsic_width()
-        scale_height = height/box.replacement.intrinsic_height()
+        scale_width = width / box.replacement.intrinsic_width()
+        scale_height = height / box.replacement.intrinsic_height()
         context.scale(scale_width, scale_height)
         box.replacement.draw(context)

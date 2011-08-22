@@ -17,6 +17,10 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+"""
+Module drawing documents.
+
+"""
 
 from __future__ import division
 import contextlib
@@ -28,22 +32,22 @@ from . import helpers
 
 
 class CairoContext(cairo.Context):
-    """
-    A cairo.Context with a few more helper methods.
-    """
+    """A ``cairo.Context`` with a few more helper methods."""
     def show_layout(self, layout):
+        """Show the ``layout`` ."""
         pangocairo_context = pangocairo.CairoContext(self)
         pangocairo_context.set_antialias(cairo.ANTIALIAS_SUBPIXEL)
         pangocairo_context.show_layout(layout)
 
     def set_source_colorvalue(self, color):
-        """Set the source pattern from a cssutils ColorValue object."""
+        """Set the source pattern from a ``cssutils.ColorValue`` object."""
         self.set_source_rgba(
             color.red / 255., color.green / 255., color.blue / 255.,
             color.alpha)
 
     @contextlib.contextmanager
     def stacked(self):
+        """Save and restore the context when used with the ``with`` keyword."""
         self.save()
         try:
             yield
@@ -52,9 +56,10 @@ class CairoContext(cairo.Context):
 
 
 def draw_page(page, context):
-    """
-    Draw the given PageBox to a Cairo context.
+    """Draw the given PageBox to a Cairo context.
+
     The context should be scaled so that lengths are in CSS pixels.
+
     """
     helpers.draw_canvas_background(context, page)
     helpers.draw_box(context, page.root_box)
