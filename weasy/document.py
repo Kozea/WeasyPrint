@@ -17,13 +17,17 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+"""
+Output document classes for various formats.
+
+"""
+
 import os.path
 import math
 
 from cssutils import parseFile, CSSParser
 import lxml.html
 import cairo
-
 
 from .css import get_all_computed_styles
 from .css.computed_values import LENGTHS_TO_PIXELS
@@ -42,6 +46,7 @@ DEFAULT_USER_AGENT_STYLESHEETS = (
 
 
 class Document(object):
+    """Abstract output document."""
     def __init__(self, dom, user_stylesheets=None,
                  user_agent_stylesheets=DEFAULT_USER_AGENT_STYLESHEETS):
         assert getattr(dom, 'tag', None) == 'html', (
@@ -59,20 +64,19 @@ class Document(object):
         self.user_stylesheets = user_stylesheets or []
         self.user_agent_stylesheets = user_agent_stylesheets or []
 
-
         self._computed_styles = None
         self._formatting_structure = None
         self._pages = None
 
     @property
     def base_url(self):
-        """
-        The URL of the document, used for relative URLs it contains.
+        """The URL of the document, used for relative URLs it contains.
 
         If set to something that does not look like a URL, the value is
         assumed to be a filename and is converted to a file:// URL.
         If that filename is relative, it is interpreted from the current
         directory.
+
         """
         return self.dom.getroottree().docinfo.URL
 
@@ -84,9 +88,7 @@ class Document(object):
 
     @classmethod
     def from_string(cls, source, encoding=None, **kwargs):
-        """
-        Make a document from an HTML string.
-        """
+        """Make a document from an HTML string."""
         parser = lxml.html.HTMLParser(encoding=encoding)
         dom = lxml.html.document_fromstring(source, parser=parser)
         return cls(dom, **kwargs)
@@ -142,6 +144,7 @@ class Document(object):
 
 
 class PNGDocument(Document):
+    """PNG output document."""
     def __init__(self, dom):
         super(PNGDocument, self).__init__(dom)
         self.surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, 1, 1)
@@ -158,7 +161,7 @@ class PNGDocument(Document):
 
     def write_page_to(self, page_index, target):
         """Write a single page as PNG into a file-like or filename `target`."""
-        width, height, surface = self.draw_page(self.pages[page_index])
+        surface = self.draw_page(self.pages[page_index])[2]
         surface.write_to_png(target)
 
     def write_to(self, target):
@@ -187,6 +190,7 @@ class PNGDocument(Document):
 
 
 class PDFDocument(Document):
+    """PDF output document."""
     def __init__(self, dom):
         super(PDFDocument, self).__init__(dom)
         # Use a dummy page size initially

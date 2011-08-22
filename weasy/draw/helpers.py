@@ -63,6 +63,10 @@ def draw_box(context, box):
     if has_background(box):
         draw_background(context, box)
 
+    marker_box = getattr(box, 'outside_list_marker', None)
+    if marker_box:
+        draw_box(context, marker_box)
+
     if isinstance(box, boxes.TextBox):
         draw_text(context, box)
         return
@@ -244,7 +248,12 @@ def draw_border(context, box):
     """
     Draw the box border to a Cairo context.
     """
-    # TODO: implement border-spacing, border-collapse and the other border style
+    if all(
+        getattr(box, 'border_%s_width' % side) == 0
+        for side in ['top', 'right', 'bottom', 'left']
+    ):
+        # No border, return early.
+        return
 
     def get_edge(x, y, width, height):
         return (Point(x,y), Point(x+width,y), Point(x+width, y+height),
@@ -273,12 +282,13 @@ def draw_border(context, box):
 
     def draw_border_side(side, trapezoid):
         width = getattr(box, 'border_%s_width' %side)
-        if getattr(box, 'border_%s_width' % side) == 0:
+        if width == 0:
             return
         color = box.style['border-%s-color'%side][0]
         style = box.style['border-%s-style'%side][0].value
         if color.alpha > 0:
             with context.stacked():
+                # TODO: implement other styles.
                 if not style in ["dotted", "dashed"]:
                     trapezoid.draw_path(context)
                     context.clip()

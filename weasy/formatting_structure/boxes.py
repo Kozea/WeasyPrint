@@ -474,3 +474,13 @@ class InlineLevelReplacedBox(ReplacedBox, AtomicInlineLevelBox):
     A replaced element with a 'display' value of 'inline', 'inline-table', or
     'inline-block' generates an inline-level replaced box.
     """
+
+
+class ImageMarkerBox(InlineLevelReplacedBox, AnonymousBox):
+    """
+    A box for an image list marker.
+
+    An element with `display: list-item` and a valid image for
+    `list-style-image` generates an image list maker box.
+    This box is anonymous, inline-level, and replaced.
+    """

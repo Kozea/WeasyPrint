@@ -63,5 +63,10 @@ def index():
 
 
 if __name__ == '__main__':
-    app.run(port=12290, debug=True)
+    import logging
 
+    logger = logging.getLogger('WEASYPRINT')
+    logger.setLevel(logging.INFO)
+    logger.addHandler(logging.StreamHandler())
+
+    app.run(port=12290, debug=True)

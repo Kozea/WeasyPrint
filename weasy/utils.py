@@ -17,74 +17,74 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import urllib
-try:
-    from urlparse import urljoin, urlparse
-except ImportError:
-    # Python 3
-    from urllib.parse import urljoin, urlparse
+"""
+Various utils.
 
+"""
+
+import urllib
 import functools
+from urlparse import urljoin, urlparse
 
 from cssutils.helper import path2url
 
 
 class MultiFunction(object):
-    """
-    A callable with different implementations depending on the type of the
-    first argument.
+    """Callable with different behaviours depending on the first argument type.
 
-    This object takes __name__, __module__ and __doc__ from base_function
-    if it is given, but does not use it’s body.
-    """
+    This object takes ``__name__``, ``__module__`` and ``__doc__`` from
+    ``base_function`` if it is given, but does not use its body.
 
+    """
     def __init__(self, base_function=None):
         self.implementations = {}
         if base_function:
             functools.update_wrapper(self, base_function)
 
-    def register(self, class_):
+    def register(self, cls):
         def decorator(function):
-            self.implementations[class_] = function
+            self.implementations[cls] = function
             return function
         return decorator
 
     def __call__(self, obj, *args, **kwargs):
-        for class_ in type(obj).mro():
-            implementation = self.implementations.get(class_)
+        for cls in type(obj).mro():
+            implementation = self.implementations.get(cls)
             if implementation:
                 return implementation(obj, *args, **kwargs)
         raise NotImplementedError('No implementation for %r' % type(obj))
 
 
 def get_url_attribute(element, key):
-    """
-    Get a (possibly relative) URL from an element attribute and return
-    the absolute URL.
+    """Get the URL corresponding to the ``key`` attribute of ``element``.
+
+    The retrieved URL is absolute, even if the URL in the element is relative.
+
     """
     return urljoin(element.base_url, element.get(key).strip())
 
 
-def ensure_url(filename_or_url):
+def ensure_url(string):
+    """Get a ``scheme://path`` URL from ``string``.
+
+    If ``string`` looks like an URL, return it unchanged. Otherwise assume a
+    filename and convert it to a ``file://`` URL.
+
     """
-    If the argument looks like an URL, return it unchanged. Otherwise assume
-    a filename and convert it to a file:// URL.
-    """
-    if urlparse(filename_or_url).scheme:
-        return filename_or_url
-    else:
-        return path2url(filename_or_url)
+    return string if urlparse(string).scheme else path2url(string)
 
 
 def urllib_fetcher(url):
-    """
-    A "fetcher" for cssutils, based on urllib instead of urllib2, since
-    urllib has support for the "data" URL scheme.
+    """URL fetcher for cssutils.
+
+    This fetcher is based on urllib instead of urllib2, since urllib has
+    support for the "data" URL scheme.
+
     """
     result = urllib.urlopen(url)
     info = result.info()
     if info.gettype() != 'text/css':
-        # TODO: warn
+        # TODO: add a warning
         return None
     charset = info.getparam('charset')
     return charset, result.read()

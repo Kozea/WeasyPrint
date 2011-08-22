@@ -39,8 +39,18 @@ compute_dimensions.register(boxes.BlockBox)(
     block_formatting_context.block_dimensions)
 
 
+@compute_dimensions.register(boxes.ImageMarkerBox)
+def image_marker_dimensions(box):
+    """
+    ImageMarkerBox objects are ReplacedBox objects, but their used size
+    is computed differently.
+    """
+    resolve_percentages(box)
+    box.width, box.height = block_formatting_context.list_style_image_size(box)
+
+
 @compute_dimensions.register(boxes.ReplacedBox)
-def replacedbox_dimensions(box):
+def replaced_box_dimensions(box):
     assert isinstance(box, boxes.ReplacedBox)
     resolve_percentages(box)
     # width

@@ -32,7 +32,10 @@
 # Disable the message, report, category or checker with the given id(s). You
 # can either give multiple identifier separated by comma (,) or put this option
 # multiple time.
-#disable=
+# Remove warning removal warning
+# Remove stupid warning on ** magic
+# Remove stupid reimport warning
+disable=I0011,W0142,W0404
 
 
 [REPORTS]
@@ -72,7 +75,7 @@ ignore-mixin-members=no
 
 # List of classes names for which member attributes should not be checked
 # (useful for classes with attributes dynamically set).
-ignored-classes=
+ignored-classes=CairoContext,ParseResult
 
 # When zope mode is activated, add a predefined set of Zope acquired attributes
 # to generated-members.
@@ -209,10 +212,10 @@ max-statements=50
 max-parents=7
 
 # Maximum number of attributes for a class (see R0902).
-max-attributes=7
+max-attributes=10
 
 # Minimum number of public methods for a class (see R0903).
-min-public-methods=2
+min-public-methods=0
 
 # Maximum number of public methods for a class (see R0904).
 max-public-methods=20

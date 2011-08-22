@@ -243,13 +243,13 @@ def direction():
 def display(values):
     keyword = get_single_keyword(values)
     if keyword in (
-        'list-item', 'inline-block', 'table', 'inline-table',
+        'inline-block', 'table', 'inline-table',
         'table-row-group', 'table-header-group', 'table-footer-group',
         'table-row', 'table-column-group', 'table-column', 'table-cell',
         'table-caption'
     ):
         raise InvalidValues('value not supported yet')
-    return keyword in ('inline', 'block', 'none')
+    return keyword in ('inline', 'block', 'list-item', 'none')
 
 
 @validator()
@@ -316,12 +316,14 @@ def list_style_position():
 
 
 @validator()
-@keyword
-def list_style_type():
-    return ('disc', 'circle', 'square', 'decimal', 'decimal-leading-zero',
+def list_style_type(values):
+    keyword = get_single_keyword(values)
+    if keyword in ('decimal', 'decimal-leading-zero',
             'lower-roman', 'upper-roman', 'lower-greek', 'lower-latin',
             'upper-latin', 'armenian', 'georgian', 'lower-alpha',
-            'upper-alpha', 'none')
+            'upper-alpha'):
+        raise InvalidValues('value not supported yet')
+    return keyword in ('disc', 'circle', 'square', 'none')
 
 
 @validator('padding-top')
@@ -329,7 +331,7 @@ def list_style_type():
 @validator('padding-bottom')
 @validator('padding-left')
 @single_value
-def lenght_or_precentage(value):
+def length_or_precentage(value):
     return is_dimension_or_percentage(value, negative=False)
 
 

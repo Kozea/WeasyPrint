@@ -24,9 +24,17 @@ including handling of anonymous boxes and whitespace processing.
 
 
 import re
-from ..css.values import get_single_keyword
+from ..css.values import (get_single_keyword, get_single_pixel_value,
+                          make_pixel_value)
 from .. import replaced
 from . import boxes
+
+
+GLYPH_LIST_MARKERS = {
+    'disc': u'•',  # U+2022, BULLET
+    'circle': u'◦',  # U+25E6 WHITE BULLET
+    'square': u'▪',  # U+25AA BLACK SMALL SQUARE
+}
 
 
 def build_formatting_structure(document):
@@ -81,8 +89,8 @@ def dom_to_box(document, element):
 
     if display in ('block', 'list-item'):
         box = boxes.BlockBox(document, element)
-        #if display == 'list-item':
-        #    TODO: add a box for the marker
+        if display == 'list-item':
+            add_list_marker(box)
     elif display == 'inline':
         box = boxes.InlineBox(document, element)
     elif display == 'inline-block':
@@ -106,6 +114,35 @@ def dom_to_box(document, element):
                     document, element, child_element.tail))
 
     return box
+
+
+def add_list_marker(box):
+    """
+    Add a list marker to elements with `display: list-item`.
+    See http://www.w3.org/TR/CSS21/generate.html#lists
+    """
+    image = box.style.list_style_image
+    if get_single_keyword(image) == 'none':
+        type_ = get_single_keyword(box.style.list_style_type)
+        if type_ == 'none':
+            return
+        marker = GLYPH_LIST_MARKERS[type_]
+        marker_box = boxes.TextBox(box.document, box.element, marker)
+    else:
+        replacement = replaced.ImageReplacement(image[0].absoluteUri)
+        marker_box = boxes.ImageMarkerBox(
+            box.document, box.element, replacement)
+
+    position = get_single_keyword(box.style.list_style_position)
+    if position == 'inside':
+        assert not box.children  # Make sure we’re adding at the beggining
+        box.add_child(marker_box)
+        # U+00A0, NO-BREAK SPACE
+        spacer = boxes.TextBox(box.document, box.element, u'\u00a0')
+        box.add_child(spacer)
+    elif position == 'outside':
+        box.outside_list_marker = marker_box
+        marker_box.parent = box
 
 
 def process_whitespace(box):
