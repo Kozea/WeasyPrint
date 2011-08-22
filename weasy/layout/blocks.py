@@ -19,21 +19,18 @@
 
 from __future__ import division
 
-import sys
-
-from ..css.values import get_single_keyword, get_single_pixel_value
-from ..formatting_structure import boxes
-from .. import text
-from .percentages import resolve_percentages
 from .inlines import get_new_lineboxes
+from .markers import list_marker_layout
+from .percentages import resolve_percentages
+from ..css.values import get_single_keyword
+from ..formatting_structure import boxes
 
 
 def block_level_layout(box):
     if isinstance(box, boxes.BlockBox):
         block_box_layout(box)
     elif isinstance(box, boxes.ReplacedBox):
-        from . import replaced_box_layout
-        replaced_box_layout(box)
+        block_replaced_box_layout(box)
     else:
         raise TypeError('Layout for %s not handled yet' % type(box).__name__)
 
@@ -45,66 +42,39 @@ def block_box_layout(box):
     list_marker_layout(box)
 
 
-def list_marker_layout(box):
-    # List markers can be either 'inside' or 'outside'.
-    # Inside markers are layed out just like normal inline content, but
-    # outside markers need specific layout.
-    # TODO: implement outside markers in terms of absolute positioning,
-    # see CSS3 lists.
-    marker = getattr(box, 'outside_list_marker', None)
-    if marker:
-        resolve_percentages(marker)
-        if isinstance(marker, boxes.TextBox):
-            text_fragment = text.TextFragment.from_textbox(marker)
-            marker.width, marker.height = text_fragment.get_size()
+def block_replaced_box_layout(box):
+    """Create the layout for a block :class:`boxes.ReplacedBox` object."""
+    assert isinstance(box, boxes.ReplacedBox)
+    resolve_percentages(box)
+
+    intrinsic_ratio = box.replacement.intrinsic_ratio()
+    intrinsic_height = box.replacement.intrinsic_height()
+    intrinsic_width = box.replacement.intrinsic_width()
+
+    if box.width == 'auto':
+        if intrinsic_width is not None:
+            box.width = intrinsic_width
+        elif intrinsic_height is not None and intrinsic_ratio is not None:
+            box.width = intrinsic_ratio * intrinsic_height
+        elif intrinsic_ratio is not None:
+            block_level_width(box)
         else:
-            # Image marker
-            marker.width, marker.height = list_style_image_size(marker)
+            raise NotImplementedError
+            # Then the used value of 'width' becomes 300px. If 300px is too
+            # wide to fit the device, UAs should use the width of the largest
+            # rectangle that has a 2:1 ratio and fits the device instead.
 
-        # Align the top of the marker box with the top of its list-item’s
-        # content-box.
-        # TODO: align the baselines of the first lines instead?
-        marker.position_y = box.content_box_y()
-        # ... and its right with the left of its list-item’s padding box.
-        # (Swap left and right for right-to-left text.)
-        marker.position_x = box.border_box_x()
-
-        half_em = 0.5 * get_single_pixel_value(box.style.font_size)
-        direction = get_single_keyword(box.style.direction)
-        if direction == 'ltr':
-            marker.margin_right = half_em
-            marker.position_x -= marker.margin_width()
-        else:
-            marker.margin_left = half_em
-            marker.position_x += box.border_width()
-
-
-def list_style_image_size(marker_box):
-    """
-    Return the used (width, height) for an image in `list-style-image`.
-
-    See http://www.w3.org/TR/CSS21/generate.html#propdef-list-style-image
-    """
-    image = marker_box.replacement
-    width = image.intrinsic_width()
-    height = image.intrinsic_width()
-    ratio = image.intrinsic_ratio()
-    one_em = get_single_pixel_value(marker_box.style.font_size)
-    if width is not None and height is not None:
-        return width, height
-    elif width is not None and ratio is not None:
-        return width, width / ratio
-    elif height is not None and ratio is not None:
-        return height * ratio, height
-    elif ratio is not None:
-        # ratio >= 1 : width >= height
-        if ratio >= 1:
-            return one_em, one_em / ratio
-        else:
-            return one_em * ratio, one_em
+    if box.height == 'auto' and box.width == 'auto':
+        if intrinsic_height is not None:
+            box.height = intrinsic_height
+    elif intrinsic_ratio is not None and box.height == 'auto':
+        box.height = box.width / intrinsic_ratio
     else:
-        return (width if width is not None else one_em,
-                height if height is not None else one_em)
+        raise NotImplementedError
+        # Then the used value of 'height' must be set to the height of
+        # the largest rectangle that has a 2:1 ratio, has a height not
+        # greater than 150px, and has a width not greater than the
+        # device width.
 
 
 def block_level_width(box):

@@ -24,68 +24,10 @@ Module managing the layout creation before drawing a document.
 
 from __future__ import division
 
-from . import blocks
+from .blocks import block_box_layout
 from .percentages import resolve_percentages
 from ..css.values import get_pixel_value
 from ..formatting_structure import boxes
-
-
-def image_marker_layout(box):
-    """Create the layout for an :class:`boxes.ImageMarkerBox` object.
-
-    :class:`boxes.ImageMarkerBox` objects are :class:`boxes.ReplacedBox`
-    objects, but their used size is computed differently.
-
-    """
-    resolve_percentages(box)
-    box.width, box.height = blocks.list_style_image_size(box)
-
-
-def replaced_box_layout(box):
-    """Create the layout for a :class:`boxes.ReplacedBox` object."""
-    assert isinstance(box, boxes.ReplacedBox)
-    resolve_percentages(box)
-
-    # Compute width
-    if box.margin_left == 'auto':
-        box.margin_left = 0
-    if box.margin_right == 'auto':
-        box.margin_right = 0
-
-    intrinsic_ratio = box.replacement.intrinsic_ratio()
-    intrinsic_height = box.replacement.intrinsic_height()
-    intrinsic_width = box.replacement.intrinsic_width()
-
-    if box.width == 'auto':
-        if intrinsic_width is not None:
-            box.width = intrinsic_width
-        elif intrinsic_height is not None and intrinsic_ratio is not None:
-            box.width = intrinsic_ratio * intrinsic_height
-        elif intrinsic_ratio is not None:
-            blocks.block_level_width(box)
-        else:
-            raise NotImplementedError
-            # Then the used value of 'width' becomes 300px. If 300px is too
-            # wide to fit the device, UAs should use the width of the largest
-            # rectangle that has a 2:1 ratio and fits the device instead.
-
-    # Compute height
-    if box.margin_top == 'auto':
-        box.margin_top = 0
-    if box.margin_bottom == 'auto':
-        box.margin_bottom = 0
-
-    if box.height == 'auto' and box.width == 'auto':
-        if intrinsic_height is not None:
-            box.height = intrinsic_height
-    elif intrinsic_ratio is not None and box.height == 'auto':
-        box.height = box.width / intrinsic_ratio
-    else:
-        raise NotImplementedError
-        # Then the used value of 'height' must be set to the height of
-        # the largest rectangle that has a 2:1 ratio, has a height not
-        # greater than 150px, and has a width not greater than the
-        # device width.
 
 
 def page_dimensions(box):
@@ -108,7 +50,7 @@ def page_dimensions(box):
     # TODO: handle cases where the root element is something else.
     # See http://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
     assert isinstance(box.root_box, boxes.BlockBox)
-    blocks.block_box_layout(box.root_box)
+    block_box_layout(box.root_box)
 
 
 def layout(document):
