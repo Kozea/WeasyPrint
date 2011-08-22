@@ -36,26 +36,26 @@ from ..css.values import (
     get_single_keyword, get_keyword, get_pixel_value, get_percentage_value)
 
 
-SUPPORTED_IMAGES = ['image/png', 'image/gif', 'image/jpg', 'image/bmp']
-
+SUPPORTED_IMAGES = ['image/png', 'image/gif', 'image/jpeg', 'image/bmp']
 
 def get_image_surface_from_uri(uri):
     """Get a :class:`cairo.ImageSurface`` from an image URI."""
     try:
         fileimage = urllib.urlopen(uri)
-        mime_type = fileimage.info().gettype()
-        if mime_type in SUPPORTED_IMAGES:
-            if mime_type == 'image/png':
-                image = fileimage
-            else:
-                pil_image = Image.open(StringIO(fileimage.read()))
-                image = StringIO()
-                pil_image = pil_image.convert('RGBA')
-                pil_image.save(image, 'PNG')
-                image.seek(0)
-            return cairo.ImageSurface.create_from_png(image)
     except IOError:
         return None
+    mime_type = fileimage.info().gettype()
+    if mime_type in SUPPORTED_IMAGES:
+        if mime_type == "image/png":
+            image = fileimage
+        else:
+            content= fileimage.read()
+            im = Image.open(StringIO(content))
+            image = StringIO()
+            im = im.convert('RGBA')
+            im.save(image, "PNG")
+            image.seek(0)
+        return cairo.ImageSurface.create_from_png(image)
 
 
 def draw_box(context, box):

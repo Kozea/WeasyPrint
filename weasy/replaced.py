@@ -43,6 +43,10 @@ def get_replaced_element(element):
 
 
 def register(tag):
+    """
+    Return a decorator that registers a function handling replacements for
+    `tag` HTML elements.
+    """
     def decorator(function):
         REPLACEMENT_HANDLERS[tag] = function
         return function
@@ -51,6 +55,9 @@ def register(tag):
 
 @register('img')
 def handle_img(element):
+    """
+    Handle <img> tags: return either an image or the alt-text.
+    """
     # TODO: somehow use the alt-text on broken images.
     src = get_url_attribute(element, 'src')
     return ImageReplacement(src)
@@ -92,6 +99,11 @@ class ImageReplacement(Replacement):
 
     def draw(self, context):
         """Draw the element on the Cairo context."""
-        pattern = cairo.SurfacePattern(self.surface)
-        context.set_source(pattern)
-        context.paint()
+        if not self.surface:
+            # TODO Draw the alternative text ?
+            pass
+        else:
+            pattern = cairo.SurfacePattern(self.surface)
+            context.set_source(pattern)
+            context.paint()
+
