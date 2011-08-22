@@ -32,25 +32,31 @@ from .. import text
 from .figures import Point, Line, Trapezoid
 
 
-SUPPORTED_IMAGES = ['image/png','image/gif', 'image/jpg', 'image/bmp']
+SUPPORTED_IMAGES = ['image/png', 'image/gif', 'image/jpg',
+                    'image/jpeg', 'image/bmp']
 
 
 def get_image_surface_from_uri(uri):
     try:
         fileimage = urllib.urlopen(uri)
-        mime_type = fileimage.info().gettype()
-        if mime_type in SUPPORTED_IMAGES:
-            if mime_type == "image/png":
-                image = fileimage
-            else:
-                im = Image.open(StringIO(fileimage.read()))
-                image = StringIO()
-                im = im.convert('RGBA')
-                im.save(image, "PNG")
-                image.seek(0)
-            return cairo.ImageSurface.create_from_png(image)
     except IOError:
         return None
+    mime_type = fileimage.info().gettype()
+    if mime_type in SUPPORTED_IMAGES:
+        if mime_type == "image/png":
+            image = fileimage
+        else:
+            content= fileimage.read()
+#            1/0
+            im = Image.open(StringIO(content))
+            image = StringIO()
+            im = im.convert('RGBA')
+            im.save(image, "PNG")
+            image.seek(0)
+        return cairo.ImageSurface.create_from_png(image)
+    else:
+        1/0
+        print "format image not supported"
 
 
 def draw_box(context, box):
@@ -317,3 +323,4 @@ def draw_replacedbox(context, box):
         scale_height = height/box.replacement.intrinsic_height()
         context.scale(scale_width, scale_height)
         box.replacement.draw(context)
+
