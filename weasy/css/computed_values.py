@@ -18,8 +18,8 @@
 
 """
 Normalize values as much as possible without rendering the document.
-"""
 
+"""
 
 import collections
 import functools
@@ -28,22 +28,21 @@ import cssutils.helper
 from cssutils.css import PropertyValue, Value
 
 from .properties import INITIAL_VALUES
-from .values import (get_single_keyword, get_keyword, get_pixel_value,
-                     get_single_pixel_value,
-                     make_pixel_value, make_number, make_keyword)
+from .values import (
+    get_single_keyword, get_keyword, get_pixel_value, get_single_pixel_value,
+    make_pixel_value, make_number, make_keyword)
 
 
-# How many CSS pixels is one <unit> ?
+# How many CSS pixels is one <unit>?
 # http://www.w3.org/TR/CSS21/syndata.html#length-units
 LENGTHS_TO_PIXELS = {
     'px': 1,
     'pt': 1. / 0.75,
-    'pc': 16., # LENGTHS_TO_PIXELS['pt'] * 12
-    'in': 96., # LENGTHS_TO_PIXELS['pt'] * 72
-    'cm': 96. / 2.54, # LENGTHS_TO_PIXELS['in'] / 2.54
-    'mm': 96. / 25.4, # LENGTHS_TO_PIXELS['in'] / 25.4
+    'pc': 16.,  # LENGTHS_TO_PIXELS['pt'] * 12
+    'in': 96.,  # LENGTHS_TO_PIXELS['pt'] * 72
+    'cm': 96. / 2.54,  # LENGTHS_TO_PIXELS['in'] / 2.54
+    'mm': 96. / 25.4,  # LENGTHS_TO_PIXELS['in'] / 25.4
 }
-
 
 # Value in pixels of font-size for <absolute-size> keywords: 12pt (16px) for
 # medium, and scaling factors given in CSS3 for others:
@@ -63,7 +62,6 @@ FONT_SIZE_KEYWORDS = collections.OrderedDict(
     ]
 )
 
-
 # These are unspecified, other than 'thin' <='medium' <= 'thick'.
 # Values are in pixels.
 BORDER_WIDTH_KEYWORDS = {
@@ -71,7 +69,6 @@ BORDER_WIDTH_KEYWORDS = {
     'medium': make_pixel_value(3),
     'thick': make_pixel_value(5),
 }
-
 
 # http://www.w3.org/TR/CSS21/fonts.html#propdef-font-weight
 FONT_WEIGHT_RELATIVE = dict(
@@ -98,7 +95,6 @@ FONT_WEIGHT_RELATIVE = dict(
         900: make_number(700),
     },
 )
-
 
 # http://www.w3.org/TR/css3-page/#size
 # name=(width in pixels, height in pixels)
@@ -139,9 +135,10 @@ PAGE_SIZES = dict(
 
 
 class StyleDict(dict):
-    """
-    Allow attribute access to values, eg. style.font_size instead of
-    style['font-size'].
+    """Allow attribute access to values.
+
+    Allow eg. ``style.font_size`` instead of ``style['font-size']``.
+
     """
     def __getattr__(self, key):
         try:
@@ -153,29 +150,31 @@ class StyleDict(dict):
         self[key.replace('_', '-')] = value
 
     def copy(self):
-        """
-        Same as dict.copy, but return an object of the same class.
-        (dict.copy() always return a dict.)
+        """Copy the ``StyleDict``.
+
+        Same as ``dict.copy``, but return an object of the same class
+        (``dict.copy()`` always returns a ``dict``).
+
         """
         return self.__class__(self)
 
 
 class Computer(object):
-    """
-    Things that compute are computers, right?
+    """Things that compute are computers, right?
 
     :param element: The HTML element these style apply to
     :param pseudo_type: The type of pseudo-element, eg 'before', None
-    :param specified: a StyleDict of specified values. Should contain values
-                      for all properties.
-    :param computed: a StyleDict of already known computed values. Only
-                     contains some properties (or none).
-    :param parent_values: a StyleDict of computed values of the parent element
-                          (should contain values for all properties),
-                          or None if `element` is the root element.
+    :param specified: a :class:`StyleDict` of specified values. Should contain
+                      values for all properties.
+    :param computed: a :class:`StyleDict` of already known computed values.
+                     Only contains some properties (or none).
+    :param parent_values: a :class:`StyleDict` of computed values of the parent
+                          element (should contain values for all properties),
+                          or ``None`` if ``element`` is the root element.
 
-    Once instanciated, this object will have completed the `computed` dict
+    Once instanciated, this object will have completed the ``computed`` dict
     so that is has values for all properties.
+
     """
     def __init__(self, element, pseudo_type, specified, computed,
                  parent_style):
@@ -190,9 +189,11 @@ class Computer(object):
                 self.get_computed(name)
 
     def get_computed(self, name):
-        """
-        Call a "computer" function as needed, populate the `computed` dict
-        and return the computed value for the `name` property.
+        """Return the computed value for the ``name`` property.
+
+        Call a "computer" function as needed and populate the `computed` dict
+        before return the value.
+
         """
         if name in self.computed:
             # Already computed
@@ -212,15 +213,19 @@ class Computer(object):
 
     @classmethod
     def register(cls, name):
+        """Decorator registering a property ``name`` for a function."""
         def decorator(function):
+            """Register the property ``name`` for ``function``."""
             cls.COMPUTER_FUNCTIONS[name] = function
             return function
         return decorator
 
 
 def single_value(function):
+    """Decorator validating and computing the single-value properties."""
     @functools.wraps(function)
     def wrapper(computer, name, values):
+        """Compute a single-value property."""
         assert len(values) == 1
         new_value = function(computer, name, values[0])
         assert new_value is not None
@@ -228,12 +233,16 @@ def single_value(function):
     return wrapper
 
 
+# Let's be coherent, always use ``name`` as an argument even when it is useless
+# pylint: disable=W0613
+
 @Computer.register('background-color')
 @Computer.register('border-top-color')
 @Computer.register('border-right-color')
 @Computer.register('border-bottom-color')
 @Computer.register('border-left-color')
 def other_color(computer, name, values):
+    """Compute the ``*-color`` properties."""
     if get_single_keyword(values) == 'currentColor':
         return computer.get_computed('color')
     else:
@@ -243,6 +252,7 @@ def other_color(computer, name, values):
 
 @Computer.register('color')
 def color(computer, name, values):
+    """Compute the ``color`` property."""
     if get_single_keyword(values) == 'currentColor':
         if computer.parent_style is None:
             return INITIAL_VALUES['color']
@@ -271,13 +281,12 @@ def color(computer, name, values):
 @Computer.register('padding-bottom')
 @Computer.register('padding-left')
 def lengths(computer, name, values):
+    """Compute the properties with a list of lengths."""
     return [compute_length(computer, value) for value in values]
 
 
 def compute_length(computer, value):
-    """
-    Return the computed value for one non-font-size dimension value.
-    """
+    """Compute a length ``value``."""
     if value.type != 'DIMENSION' or value.dimension == 'px':
         # No conversion needed.
         return value
@@ -300,6 +309,7 @@ def compute_length(computer, value):
 @Computer.register('border-bottom-width')
 @single_value
 def border_width(computer, name, value):
+    """Compute the ``border-*-width`` properties."""
     style = computer.get_computed(name.replace('width', 'style'))
     if get_single_keyword(style) in ('none', 'hidden'):
         return make_number(0)
@@ -311,32 +321,15 @@ def border_width(computer, name, value):
     return compute_length(computer, value)
 
 
-def compute_content_value(computer, value):
-    if value.type == 'FUNCTION':
-        # value.seq is *NOT* part of the public API
-        # TODO: patch cssutils to provide a public API for arguments
-        # in CSSFunction objects
-        assert value.value.startswith('attr(')
-        args = [v.value for v in value.seq if isinstance(v.value, Value)]
-        assert len(args) == 1
-        attr_name = args[0].value
-        content = computer.element.get(attr_name, '')
-        # TODO: find a way to build a string Value without serializing
-        # and re-parsing.
-        value = PropertyValue(cssutils.helper.string(content))[0]
-        assert value.type == 'STRING'
-        assert value.value == content
-    return value
-
-
 @Computer.register('content')
 def content(computer, name, values):
+    """Compute the ``content`` property."""
     if computer.pseudo_type in ('before', 'after'):
         keyword = get_single_keyword(values)
         if keyword == 'normal':
             return [make_keyword('none')]
         else:
-            return [compute_content_value(computer, v) for v in values]
+            return [compute_content_value(computer, value) for value in values]
     else:
         # CSS 2.1 says it computes to 'normal' for elements, but does not say
         # anything for pseudo-elements other than :before and :after
@@ -345,33 +338,56 @@ def content(computer, name, values):
         return [make_keyword('normal')]
 
 
+def compute_content_value(computer, value):
+    """Compute a content ``value``."""
+    if value.type == 'FUNCTION':
+        # value.seq is *NOT* part of the public API
+        # TODO: patch cssutils to provide a public API for arguments
+        # in CSSFunction objects
+        assert value.value.startswith('attr(')
+        args = [v.value for v in value.seq if isinstance(v.value, Value)]
+        assert len(args) == 1
+        attr_name = args[0].value
+        content_value = computer.element.get(attr_name, '')
+        # TODO: find a way to build a string Value without serializing
+        # and re-parsing.
+        value = PropertyValue(cssutils.helper.string(content_value))[0]
+        assert value.type == 'STRING'
+        assert value.value == content
+    return value
+
+
 @Computer.register('display')
 def display(computer, name, values):
-    """
-    http://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
+    """Compute the ``display`` property.
+
+    See http://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
+
     """
     float_ = get_single_keyword(computer.specified['float'])
     position = get_single_keyword(computer.specified['position'])
     if position in ('absolute', 'fixed') or float_ != 'none' or \
             computer.parent_style is None:
-        display = get_single_keyword(computer.specified['display'])
-        if display == 'inline-table':
+        display_value = get_single_keyword(computer.specified['display'])
+        if display_value == 'inline-table':
             return [make_keyword('table')]
-        elif display in ('inline', 'table-row-group', 'table-column',
-                         'table-column-group', 'table-header-group',
-                         'table-footer-group', 'table-row', 'table-cell',
-                         'table-caption', 'inline-block'):
+        elif display_value in ('inline', 'table-row-group', 'table-column',
+                               'table-column-group', 'table-header-group',
+                               'table-footer-group', 'table-row', 'table-cell',
+                               'table-caption', 'inline-block'):
             return [make_keyword('block')]
     return values
 
 
 @Computer.register('float')
-def float_(computer, name, values):
+def compute_float(computer, name, values):
+    """Compute the ``float`` property.
+
+    See http://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
+
     """
-    http://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
-    """
-    if get_single_keyword(computer.specified['position']) in (
-            'absolute', 'fixed'):
+    position_value = get_single_keyword(computer.specified['position'])
+    if position_value in ('absolute', 'fixed'):
         return [make_keyword('none')]
     else:
         return values
@@ -380,6 +396,7 @@ def float_(computer, name, values):
 @Computer.register('font-size')
 @single_value
 def font_size(computer, name, value):
+    """Compute the ``font-size`` property."""
     keyword = get_keyword(value)
     if keyword in FONT_SIZE_KEYWORDS:
         return FONT_SIZE_KEYWORDS[keyword]
@@ -414,6 +431,7 @@ def font_size(computer, name, value):
 @Computer.register('font-weight')
 @single_value
 def font_weight(computer, name, value):
+    """Compute the ``font-weight`` property."""
     keyword = get_keyword(value)
     if keyword == 'normal':
         return make_number(400)
@@ -439,6 +457,7 @@ def font_weight(computer, name, value):
 @Computer.register('line-height')
 @single_value
 def line_height(computer, name, value):
+    """Compute the ``line-height`` property."""
     if get_keyword(value) == 'normal':
         # a "reasonable" value
         # http://www.w3.org/TR/CSS21/visudet.html#line-height
@@ -450,15 +469,18 @@ def line_height(computer, name, value):
         factor = value.value / 100.
     elif value.type == 'DIMENSION':
         return compute_length(computer, value)
-    font_size = get_single_pixel_value(computer.get_computed('font-size'))
+    font_size_value = get_single_pixel_value(
+        computer.get_computed('font-size'))
     # Raise if `factor` is not defined. It should be, because of validation.
-    return make_pixel_value(factor * font_size)
+    return make_pixel_value(factor * font_size_value)
 
 
 @Computer.register('size')
 def size(computer, name, values):
-    """
+    """Compute the ``size`` property.
+
     See CSS3 Paged Media.
+
     """
     if computer.element != '@page':
         return [None]
@@ -467,7 +489,7 @@ def size(computer, name, values):
 
     keywords = map(get_keyword, values)
     if keywords == ['auto']:
-        keywords = ['A4'] # Chosen by the UA. (That’s me!)
+        keywords = ['A4']  # Chosen by the UA. (That’s me!)
 
     if values[0].type == 'DIMENSION':
         assert values[0].dimension == 'px'
@@ -480,17 +502,17 @@ def size(computer, name, values):
             return values * 2  # list product, same as [values[0], values[0]]
     else:
         orientation = None
-        size = None
+        size_value = None
         for keyword in keywords:
             if keyword in ('portrait', 'landscape'):
                 orientation = keyword
             elif keyword in PAGE_SIZES:
-                size = keyword
+                size_value = keyword
             else:
                 raise ValueError("Illegal value for 'size': %r", keyword)
-        if size is None:
-            size = 'A4'
-        width, height = PAGE_SIZES[size]
+        if size_value is None:
+            size_value = 'A4'
+        width, height = PAGE_SIZES[size_value]
         if (orientation == 'portrait' and width > height) or \
                (orientation == 'landscape' and height > width):
             width, height = height, width
@@ -500,6 +522,7 @@ def size(computer, name, values):
 @Computer.register('text-align')
 @single_value
 def text_align(computer, name, value):
+    """Compute the ``text-align`` property."""
     if get_keyword(value) == 'start':
         if get_single_keyword(computer.get_computed('direction')) == 'rtl':
             return make_keyword('right')
@@ -512,6 +535,7 @@ def text_align(computer, name, value):
 @Computer.register('word-spacing')
 @single_value
 def word_spacing(computer, name, value):
+    """Compute the ``word-spacing`` property."""
     if get_keyword(value) == 'normal':
         return make_number(0)
 

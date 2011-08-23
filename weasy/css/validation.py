@@ -35,31 +35,30 @@ from . import computed_values
 
 LOGGER = logging.getLogger('WEASYPRINT')
 
-
 # yes/no validators for non-shorthand properties
 # Maps property names to functions taking a property name and a value list,
 # returning True for valid, False for invalid.
 VALIDATORS = {}
 
-
 EXPANDERS = {}
 
 
 class InvalidValues(ValueError):
-    """
-    Exception for invalid or unsupported values for a known CSS property.
-    """
+    """Invalid or unsupported values for a known CSS property."""
 
-class NotSupportedYet(InvalidValues):
-    def __init__(self):
-        super(NotSupportedYet, self).__init__('property not supported yet')
 
+# Validators
 
 def validator(property_name=None):
-    """
-    Decorator to add a function to the VALIDATORS dict.
+    """Decorator adding a function to the ``VALIDATORS``.
+
+    The name of the property covered by the decorated function is set to
+    ``property_name`` if given, or is inferred from the function name
+    (replacing underscores by hyphens).
+
     """
     def decorator(function):
+        """Add ``function`` to the ``VALIDATORS``."""
         if property_name is None:
             name = function.__name__.replace('_', '-')
         else:
@@ -73,55 +72,56 @@ def validator(property_name=None):
 
 
 def keyword(function):
+    """Decorator validating properties whose value is a defined key word."""
     valid_keywords = function()
     @functools.wraps(function)
-    def validator(values):
+    def keyword_validator(values):
+        """Validate a property whose value is a defined key word."""
         return get_single_keyword(values) in valid_keywords
-    return validator
+    return keyword_validator
 
 
 def single_value(function):
+    """Decorator validating properties whose value is single."""
     @functools.wraps(function)
-    def validator(values):
+    def single_value_validator(values):
+        """Validate a property whose value is single."""
         if len(values) != 1:
             return False
         else:
             return function(values[0])
-    return validator
+    return single_value_validator
 
 
 def is_dimension(value, negative=True):
-    """
-    `negative` means that negative values are allowed.
+    """Get if ``value`` is a dimension.
+
+    The ``negative`` argument sets wether negative values are allowed.
+
     """
     type_ = value.type
     # Units may be ommited on zero lenghts.
     return (
-        type_ == 'DIMENSION' and
-        (negative or value.value >= 0) and
-        (
+        type_ == 'DIMENSION' and (negative or value.value >= 0) and (
             value.dimension in computed_values.LENGTHS_TO_PIXELS or
-            value.dimension in ('em', 'ex')
-        )
-    ) or (
-        type_ == 'NUMBER' and
-        value.value == 0
-    )
+            value.dimension in ('em', 'ex'))
+        ) or (type_ == 'NUMBER' and value.value == 0)
 
 
 def is_dimension_or_percentage(value, negative=True):
-    """
-    `negative` means that negative values are allowed.
+    """Get if ``value`` is a dimension or a percentage.
+
+    The ``negative`` argument sets wether negative values are allowed.
+
     """
     return is_dimension(value, negative) or (
-        value.type == 'PERCENTAGE' and
-        (negative or value.value >= 0)
-    )
+        value.type == 'PERCENTAGE' and (negative or value.value >= 0))
 
 
 @validator()
 @keyword
 def background_attachment():
+    """``background-attachment`` property validation."""
     return 'scroll', 'fixed'
 
 
@@ -133,6 +133,7 @@ def background_attachment():
 @validator('color')
 @single_value
 def color(value):
+    """``*-color`` and ``color`` properties validation."""
     return value.type == 'COLOR_VALUE' or get_keyword(value) == 'currentColor'
 
 
@@ -140,26 +141,28 @@ def color(value):
 @validator('list-style-image')
 @single_value
 def image(value):
+    """``*-image`` properties validation."""
     return get_keyword(value) == 'none' or value.type == 'URI'
 
 
 @validator()
 def background_position(values):
-    """://www.w3.org/TR/CSS21/colors.html#propdef-background-position
+    """``background-position`` property validation.
+
+    See http://www.w3.org/TR/CSS21/colors.html#propdef-background-position
+
     """
     if len(values) == 1:
         value = values[0]
         return (
             is_dimension_or_percentage(value) or
-            get_keyword(value) in ('left', 'right', 'top', 'bottom', 'center')
-        )
+            get_keyword(value) in ('left', 'right', 'top', 'bottom', 'center'))
     if len(values) == 2:
         value_1, value_2 = values
         if is_dimension_or_percentage(value_1):
             return (
                 is_dimension_or_percentage(value_2) or
-                get_keyword(value_2) in ('top', 'center', 'bottom')
-            )
+                get_keyword(value_2) in ('top', 'center', 'bottom'))
         elif is_dimension_or_percentage(value_2):
             return get_keyword(value_1) in ('left', 'center', 'right')
         else:
@@ -169,8 +172,7 @@ def background_position(values):
                 keyword_2 in ('top', 'center', 'bottom')
             ) or (
                 keyword_1 in ('top', 'center', 'bottom') and
-                keyword_2 in ('left', 'center', 'right')
-            )
+                keyword_2 in ('left', 'center', 'right'))
     else:
         return False
 
@@ -178,6 +180,7 @@ def background_position(values):
 @validator()
 @keyword
 def background_repeat():
+    """``background-repeat`` property validation."""
     return 'repeat', 'repeat-x', 'repeat-y', 'no-repeat'
 
 
@@ -187,6 +190,7 @@ def background_repeat():
 @validator('border-bottom-style')
 @keyword
 def border_style():
+    """``border-*-style`` properties validation."""
     return ('none', 'hidden', 'dotted', 'dashed', 'solid',
             'double', 'groove', 'ridge', 'inset', 'outset')
 
@@ -197,14 +201,9 @@ def border_style():
 @validator('border-bottom-width')
 @single_value
 def border_width(value):
+    """``border-*-width`` properties validation."""
     return is_dimension(value, negative=False) or get_keyword(value) in (
         'thin', 'medium', 'thick')
-
-
-@validator()
-def content(values):
-    # TODO: implement validation for 'content'
-    return True
 
 
 #@validator('top')
@@ -217,56 +216,59 @@ def content(values):
 @validator('margin-left')
 @single_value
 def lenght_precentage_or_auto(value):
+    """``margin-*`` properties validation."""
     return (
         is_dimension_or_percentage(value) or
-        get_keyword(value) == 'auto'
-    )
+        get_keyword(value) == 'auto')
 
 
 @validator('height')
 @validator('width')
 @single_value
 def positive_lenght_precentage_or_auto(value):
+    """``width`` and ``height`` properties validation."""
     return (
         is_dimension_or_percentage(value, negative=False) or
-        get_keyword(value) == 'auto'
-    )
+        get_keyword(value) == 'auto')
 
 
 @validator()
 @keyword
 def direction():
+    """``direction`` property validation."""
     return 'ltr', 'rtl'
 
 
 @validator()
 def display(values):
-    keyword = get_single_keyword(values)
-    if keyword in (
-        'inline-block', 'table', 'inline-table',
-        'table-row-group', 'table-header-group', 'table-footer-group',
-        'table-row', 'table-column-group', 'table-column', 'table-cell',
-        'table-caption'
-    ):
+    """``display`` property validation."""
+    display_keyword = get_single_keyword(values)
+    if display_keyword in (
+            'inline-block', 'table', 'inline-table',
+            'table-row-group', 'table-header-group', 'table-footer-group',
+            'table-row', 'table-column-group', 'table-column', 'table-cell',
+            'table-caption'):
         raise InvalidValues('value not supported yet')
-    return keyword in ('inline', 'block', 'list-item', 'none')
+    return display_keyword in ('inline', 'block', 'list-item', 'none')
 
 
 @validator()
 def font_family(values):
+    """``font-family`` property validation."""
     return all(value.type in ('IDENT', 'STRING') for value in values)
 
 
 @validator()
 @single_value
 def font_size(value):
+    """``font-size`` property validation."""
     if is_dimension_or_percentage(value):
         return True
-    keyword = get_keyword(value)
-    if keyword in ('smaller', 'larger'):
+    font_size_keyword = get_keyword(value)
+    if font_size_keyword in ('smaller', 'larger'):
         raise InvalidValues('value not supported yet')
     return (
-        keyword in computed_values.FONT_SIZE_KEYWORDS #or
+        font_size_keyword in computed_values.FONT_SIZE_KEYWORDS #or
         #keyword in ('smaller', 'larger')
     )
 
@@ -274,56 +276,60 @@ def font_size(value):
 @validator()
 @keyword
 def font_style():
+    """``font-style`` property validation."""
     return 'normal', 'italic', 'oblique'
 
 
 @validator()
 @keyword
 def font_variant():
+    """``font-variant`` property validation."""
     return 'normal', 'small-caps'
 
 
 @validator()
 @single_value
 def font_weight(value):
+    """``font-weight`` property validation."""
     return (
         get_keyword(value) in ('normal', 'bold', 'bolder', 'lighter') or (
             value.type == 'NUMBER' and
-            value.value in (100, 200, 300, 400, 500, 600, 700, 800, 900)
-        )
-    )
+            value.value in (100, 200, 300, 400, 500, 600, 700, 800, 900)))
 
 
-@validator('letter-spacing')
+@validator()
 @single_value
 def letter_spacing(value):
+    """``letter-spacing`` property validation."""
     return get_keyword(value) == 'normal' or is_dimension(value)
 
 
 @validator()
 @single_value
 def line_height(value):
+    """``line-height`` property validation."""
     return get_keyword(value) == 'normal' or (
         value.type in ('NUMBER', 'DIMENSION', 'PERCENTAGE') and
-        value.value >= 0
-    )
+        value.value >= 0)
 
 
 @validator()
 @keyword
 def list_style_position():
+    """``list-style-position`` property validation."""
     return 'inside', 'outside'
 
 
 @validator()
 def list_style_type(values):
-    keyword = get_single_keyword(values)
-    if keyword in ('decimal', 'decimal-leading-zero',
+    """``list-style-type`` property validation."""
+    font_size_keyword = get_single_keyword(values)
+    if font_size_keyword in ('decimal', 'decimal-leading-zero',
             'lower-roman', 'upper-roman', 'lower-greek', 'lower-latin',
             'upper-latin', 'armenian', 'georgian', 'lower-alpha',
             'upper-alpha'):
         raise InvalidValues('value not supported yet')
-    return keyword in ('disc', 'circle', 'square', 'none')
+    return font_size_keyword in ('disc', 'circle', 'square', 'none')
 
 
 @validator('padding-top')
@@ -332,47 +338,52 @@ def list_style_type(values):
 @validator('padding-left')
 @single_value
 def length_or_precentage(value):
+    """``padding-*`` properties validation."""
     return is_dimension_or_percentage(value, negative=False)
 
 
 @validator()
 def position(values):
-    keyword = get_single_keyword(values)
-    if keyword in ('relative', 'absolute', 'fixed'):
+    """``position`` property validation."""
+    position_keyword = get_single_keyword(values)
+    if position_keyword in ('relative', 'absolute', 'fixed'):
         raise InvalidValues('value not supported yet')
-    return keyword in ('static',)
+    return position_keyword in ('static',)
 
 
 @validator()
 def text_align(values):
-    keyword = get_single_keyword(values)
-    if keyword in ('right', 'center', 'justify'):
+    """``text-align`` property validation."""
+    text_align_keyword = get_single_keyword(values)
+    if text_align_keyword in ('right', 'center', 'justify'):
         raise InvalidValues('value not supported yet')
-    return keyword in ('left',)
+    return text_align_keyword in ('left',)
 
 
 @validator()
 def text_decoration(values):
+    """``text-decoration`` property validation."""
     return (
         get_single_keyword(values) == 'none' or
         all(
-            get_keyword(value) in ('underline', 'overline', 'line-through',
-                                   'blink')
-            for value in values
-        )
-    )
+            get_keyword(value) in (
+                'underline', 'overline', 'line-through', 'blink')
+            for value in values))
 
 
 @validator()
 @keyword
 def white_space():
+    """``white-space`` property validation."""
     return 'normal', 'pre', 'nowrap', 'pre-wrap', 'pre-line'
 
 
 @validator()
 def size(values):
-    """
-    http://www.w3.org/TR/css3-page/#page-size-prop
+    """``size`` property validation.
+
+    See http://www.w3.org/TR/css3-page/#page-size-prop
+
     """
     return (
         len(values) == 1 and (
@@ -393,15 +404,19 @@ def size(values):
     )
 
 
+# Expanders
+
+# Let's be coherent, always use ``name`` as an argument even when it is useless
+# pylint: disable=W0613
+
 def expander(property_name):
-    """
-    Decorator to add a function to the EXPANDERS dict.
-    """
-    def decorator(function):
+    """Decorator adding a function to the ``EXPANDERS``."""
+    def expander_decorator(function):
+        """Add ``function`` to the ``EXPANDERS``."""
         assert property_name not in EXPANDERS, property_name
         EXPANDERS[property_name] = function
         return function
-    return decorator
+    return expander_decorator
 
 
 @expander('border-color')
@@ -410,19 +425,17 @@ def expander(property_name):
 @expander('margin')
 @expander('padding')
 def expand_four_sides(name, values):
-    """
-    Expand properties that set a value for each of the four sides of a box.
-    """
+    """Expand properties setting a value for the four sides of a box."""
     # Make sure we have 4 values
     if len(values) == 1:
         values *= 4
     elif len(values) == 2:
-        values *= 2 # (bottom, left) defaults to (top, right)
+        values *= 2  # (bottom, left) defaults to (top, right)
     elif len(values) == 3:
-        values.append(values[1]) # left defaults to right
+        values.append(values[1])  # left defaults to right
     elif len(values) != 4:
-        raise InvalidValues('Expected 1 to 4 value components got %i'
-            % len(values))
+        raise InvalidValues(
+            'Expected 1 to 4 value components got %i' % len(values))
     for suffix, value in zip(('-top', '-right', '-bottom', '-left'), values):
         i = name.rfind('-')
         if i == -1:
@@ -437,14 +450,18 @@ def expand_four_sides(name, values):
 
 
 def generic_expander(*expanded_names):
-    """
+    """Decorator helping expanders to handle ``inherit`` and ``initial``.
+
     Wrap an expander so that it does not have to handle the 'inherit' and
     'initial' cases, and can just yield name suffixes. Missing suffixes
     get the initial value.
+
     """
-    def decorator(wrapped):
+    def generic_expander_decorator(wrapped):
+        """Decorate the ``wrapped`` expander."""
         @functools.wraps(wrapped)
-        def wrapper(name, values):
+        def generic_expander_wrapper(name, values):
+            """Wrap the expander."""
             if get_single_keyword(values) in ('inherit', 'initial'):
                 results = dict.fromkeys(expanded_names, values)
             else:
@@ -467,17 +484,17 @@ def generic_expander(*expanded_names):
                     values = INITIAL_VALUES[actual_new_name]
                 validate_non_shorthand(actual_new_name, values, required=True)
                 yield actual_new_name, values
-        return wrapper
-    return decorator
+        return generic_expander_wrapper
+    return generic_expander_decorator
 
 
 @expander('list-style')
 @generic_expander('-type', '-position', '-image')
 def expand_list_style(name, values):
-    """
-    Expand the 'list-style' shorthand property.
+    """Expand the ``list-style`` shorthand property.
 
-    http://www.w3.org/TR/CSS21/generate.html#propdef-list-style
+    See http://www.w3.org/TR/CSS21/generate.html#propdef-list-style
+
     """
     type_specified = image_specified = False
     none_count = 0
@@ -516,10 +533,10 @@ def expand_list_style(name, values):
 
 @expander('border')
 def expand_border(name, values):
-    """
-    Expand the 'border' shorthand.
+    """Expand the ``border`` shorthand property.
 
-    http://www.w3.org/TR/CSS21/box.html#propdef-border
+    See http://www.w3.org/TR/CSS21/box.html#propdef-border
+
     """
     for suffix in ('-top', '-right', '-bottom', '-left'):
         for new_prop in expand_border_side(name + suffix, values):
@@ -532,10 +549,10 @@ def expand_border(name, values):
 @expander('border-left')
 @generic_expander('-width', '-color', '-style')
 def expand_border_side(name, values):
-    """
-    Expand 'border-top' and such.
+    """Expand the ``border-*`` shorthand properties.
 
-    http://www.w3.org/TR/CSS21/box.html#propdef-border-top
+    See http://www.w3.org/TR/CSS21/box.html#propdef-border-top
+
     """
     for value in values:
         if color([value]):
@@ -550,23 +567,20 @@ def expand_border_side(name, values):
 
 
 def is_valid_background_positition(value):
-    """
-    Tell whether the value a valid background-position.
-    """
+    """Tell whether the value is valid for ``background-position``."""
     return (
         value.type in ('DIMENSION', 'PERCENTAGE') or
         (value.type == 'NUMBER' and value.value == 0) or
-        get_keyword(value) in ('left', 'right', 'top', 'bottom', 'center')
-    )
+        get_keyword(value) in ('left', 'right', 'top', 'bottom', 'center'))
 
 
 @expander('background')
 @generic_expander('-color', '-image', '-repeat', '-attachment', '-position')
 def expand_background(name, values):
-    """
-    Expand the 'background' shorthand.
+    """Expand the ``background`` shorthand property.
 
-    http://www.w3.org/TR/CSS21/colors.html#propdef-background
+    See http://www.w3.org/TR/CSS21/colors.html#propdef-background
+
     """
     # Make `values` a stack
     values = list(reversed(values))
@@ -602,16 +616,16 @@ def expand_background(name, values):
 @generic_expander('-style', '-variant', '-weight', '-size',
                   'line-height', '-family')  # line-height is not a suffix
 def expand_font(name, values):
-    """
-    Expand the 'font' shorthand.
+    """Expand the ``font`` shorthand property.
 
     http://www.w3.org/TR/CSS21/fonts.html#font-shorthand
     """
-    keyword = get_single_keyword(values)
-    if keyword in ('caption', 'icon', 'menu', 'message-box',
-                   'small-caption', 'status-bar'):
+    expand_font_keyword = get_single_keyword(values)
+    if expand_font_keyword in ('caption', 'icon', 'menu', 'message-box',
+                               'small-caption', 'status-bar'):
         LOGGER.warn(
-            'System fonts are not supported, `font: %s` ignored.', keyword)
+            'System fonts are not supported, `font: %s` ignored.',
+            expand_font_keyword)
         return
 
     # Make `values` a stack
@@ -658,27 +672,27 @@ def expand_font(name, values):
 
 
 def validate_non_shorthand(name, values, required=False):
+    """Default validator for non-shorthand properties."""
     if not required and name not in INITIAL_VALUES:
         raise InvalidValues('unknown property')
 
     if not required and name not in VALIDATORS:
         raise InvalidValues('property not supported yet')
 
-    if (
-        get_single_keyword(values) in ('initial', 'inherit') or
-        VALIDATORS[name](values)
-    ):
+    if (get_single_keyword(values) in ('initial', 'inherit') or
+            VALIDATORS[name](values)):
         return [(name, values)]
     else:
         raise InvalidValues
 
 
 def validate_and_expand(name, values):
-    """
-    Ignore and log invalid or unsupported declarations, and expand shorthand
-    properties.
+    """Expand and validate shorthand properties.
 
-    Return a iterable of (name, values) tuples.
+    The invalid or unsupported declarations are ignored and logged.
+
+    Return a iterable of ``(name, values)`` tuples.
+
     """
     # Defaults
     level = 'warn'
@@ -688,9 +702,9 @@ def validate_and_expand(name, values):
         level = 'info'
         reason = 'the property does not apply for the print media'
     else:
+        expander_ = EXPANDERS.get(name, validate_non_shorthand)
         try:
-            expander = EXPANDERS.get(name, validate_non_shorthand)
-            results = expander(name, values)
+            results = expander_(name, values)
             # Use list() to consume any generator now,
             # so that InvalidValues is caught.
             return list(results)
