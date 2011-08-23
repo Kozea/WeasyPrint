@@ -201,12 +201,6 @@ def border_width(value):
         'thin', 'medium', 'thick')
 
 
-@validator()
-def content(values):
-    # TODO: implement validation for 'content'
-    return True
-
-
 #@validator('top')
 #@validator('right')
 #@validator('left')
