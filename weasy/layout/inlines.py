@@ -35,11 +35,11 @@ class InlineContext(object):
         self.save()
 
     def save(self):
-        self._linebox = self.linebox.copy()
+        self._children = list(self.linebox.children)
         self._position_y = self.position_y
 
     def restore(self):
-        self.linebox = self._linebox.copy()
+        self.linebox.children = self._children
         self.position_y = self._position_y
 
     def lines(self):
