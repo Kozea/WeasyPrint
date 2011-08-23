@@ -255,11 +255,13 @@ def breaking_linebox(linebox, allocate_width):
         child = linebox.children.popleft()
         if isinstance(child, boxes.TextBox):
             part1, part2 = breaking_textbox(child, width)
-            compute_textbox_dimensions(part1)
+            if part1 is not None:
+                compute_textbox_dimensions(part1)
         elif isinstance(child, boxes.InlineBox):
             resolve_percentages(child)
             part1, part2 = breaking_inlinebox(child, width)
-            compute_inlinebox_dimensions(part1)
+            if part1 is not None:
+                compute_inlinebox_dimensions(part1)
         elif isinstance(child, boxes.AtomicInlineLevelBox):
             part1 = child
             part2 = None
@@ -325,11 +327,13 @@ def breaking_inlinebox(inlinebox, allocate_width):
 
         if isinstance(child, boxes.TextBox):
             part1, part2 = breaking_textbox(child, allocate_width)
-            compute_textbox_dimensions(part1)
+            if part1 is not None:
+                compute_textbox_dimensions(part1)
         elif isinstance(child, boxes.InlineBox):
             resolve_percentages(child)
             part1, part2 = breaking_inlinebox(child,allocate_width)
-            compute_inlinebox_dimensions(part1)
+            if part1 is not None:
+                compute_inlinebox_dimensions(part1)
         elif isinstance(child, boxes.AtomicInlineLevelBox):
             part1 = child
             part2 = None
@@ -378,10 +382,13 @@ def breaking_inlinebox(inlinebox, allocate_width):
     if inlinebox.children:
         new_inlinebox.reset_spacing("right")
 
-    if inlinebox.children:
-        return new_inlinebox, inlinebox
+    if new_inlinebox.children:
+        if inlinebox.children:
+            return new_inlinebox, inlinebox
+        else:
+            return new_inlinebox, None
     else:
-        return new_inlinebox, None
+        return None, inlinebox
 
 
 def breaking_textbox(textbox, allocate_width):
@@ -491,4 +498,3 @@ def vertical_align_processing(linebox):
 
     bottom_positions = [box.position_y+box.height for box in linebox.children]
     linebox.height = max(bottom_positions or [0]) - linebox.position_y
-

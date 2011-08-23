@@ -27,6 +27,7 @@ from .. import css
 from ..document import Document
 
 from . import resource_filename
+from .test_boxes import monkeypatch_validation
 
 
 suite = Tests()
@@ -99,26 +100,35 @@ def test_expand_shorthands():
 def parse_css(filename):
     return cssutils.parseFile(resource_filename(filename))
 
+
+def validate_content(real_non_shorthand, name, values, required=False):
+    if name == 'content':
+        return [(name, values)]
+    return real_non_shorthand(name, values, required)
+
+
 @suite.test
 def test_annotate_document():
-    document = parse_html(
-        'doc1.html',
-        user_stylesheets=[parse_css('user.css')],
-        user_agent_stylesheets=[parse_css('mini_ua.css')],
-    )
+    # TODO: remove this patching when the `content` property is supported.
+    with monkeypatch_validation(validate_content):
+        document = parse_html(
+            'doc1.html',
+            user_stylesheets=[parse_css('user.css')],
+            user_agent_stylesheets=[parse_css('mini_ua.css')],
+        )
 
-    # Element objects behave a lists of their children
-    _head, body = document.dom
-    h1, p, ul = body
-    li_0, _li_1 = ul
-    a, = li_0
+        # Element objects behave a lists of their children
+        _head, body = document.dom
+        h1, p, ul = body
+        li_0, _li_1 = ul
+        a, = li_0
 
-    h1 = document.style_for(h1)
-    p = document.style_for(p)
-    ul = document.style_for(ul)
-    li_0 = document.style_for(li_0)
-    after = document.style_for(a, 'after')
-    a = document.style_for(a)
+        h1 = document.style_for(h1)
+        p = document.style_for(p)
+        ul = document.style_for(ul)
+        li_0 = document.style_for(li_0)
+        after = document.style_for(a, 'after')
+        a = document.style_for(a)
 
     assert h1['background-image'][0].absoluteUri == 'file://' \
         + os.path.abspath(resource_filename('logo_small.png'))
@@ -172,26 +182,31 @@ def test_annotate_document():
 
 @suite.test
 def test_default_stylesheet():
-    document = parse_html('doc1.html')
-    head_style = document.style_for(document.dom.head)
+    # TODO: remove this patching when the `content` property is supported.
+    with monkeypatch_validation(validate_content):
+        document = parse_html('doc1.html')
+        head_style = document.style_for(document.dom.head)
     assert head_style.display[0].value == 'none', \
         'The HTML4 user-agent stylesheet was not applied'
 
 
 @suite.test
 def test_page():
-    document = parse_html('doc1.html')
-    user_sheet = cssutils.parseString(u"""
-        @page {
-            margin: 10px;
-        }
-        @page :right {
-            margin-bottom: 12pt;
-        }
-    """)
-    document.user_stylesheets.append(user_sheet)
+    # TODO: remove this patching when the `content` property is supported.
+    with monkeypatch_validation(validate_content):
+        document = parse_html('doc1.html', user_stylesheets=[
+            cssutils.parseString(u"""
+                @page {
+                    margin: 10px;
+                }
+                @page :right {
+                    margin-bottom: 12pt;
+                }
+            """)
+        ])
 
-    style = document.style_for('@page', 'first_left')
+        style = document.style_for('@page', 'first_left')
+
     assert style.margin_top[0].value == 5
     assert style.margin_left[0].value == 10
     assert style.margin_bottom[0].value == 10

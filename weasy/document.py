@@ -145,8 +145,8 @@ class Document(object):
 
 class PNGDocument(Document):
     """PNG output document."""
-    def __init__(self, dom):
-        super(PNGDocument, self).__init__(dom)
+    def __init__(self, dom, *args, **kwargs):
+        super(PNGDocument, self).__init__(dom, *args, **kwargs)
         self.surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, 1, 1)
 
     def draw_page(self, page):
@@ -191,8 +191,8 @@ class PNGDocument(Document):
 
 class PDFDocument(Document):
     """PDF output document."""
-    def __init__(self, dom):
-        super(PDFDocument, self).__init__(dom)
+    def __init__(self, dom, *args, **kwargs):
+        super(PDFDocument, self).__init__(dom, *args, **kwargs)
         # Use a dummy page size initially
         self.surface = cairo.PDFSurface(None, 1, 1)
 
