@@ -82,7 +82,7 @@ class Trapezoid(object):
 
     def __repr__(self):
         return '<%s (%s, %s)>' % (
-            type(self).__name__, self.small_base, self.small_base)
+            type(self).__name__, self.long_base, self.small_base)
 
     def get_points(self):
         """Get the 4 points of the trapezoid."""
@@ -123,13 +123,13 @@ class Trapezoid(object):
             x2 = self.long_base.second_point.x
         else:
             x1 = self.long_base.first_point.x + self.small_base.first_point.x
-            x1, x2 = x1 / 2, x1
+            x1 = x2 = x1 / 2
         if self.long_base.first_point.y != self.long_base.second_point.y:
             y1 = self.long_base.first_point.y
             y2 = self.long_base.second_point.y
         else:
             y1 = self.long_base.first_point.y + self.small_base.first_point.y
-            y1, y2 = y1 / 2, y1
+            y1 = y2 = y1 / 2
         return Line(Point(x1, y1), Point(x2, y2))
 
     def draw_path(self, context):
