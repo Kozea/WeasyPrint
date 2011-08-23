@@ -71,9 +71,12 @@ See respective docstrings for details.
 
 import collections
 
-from .. import css
+from ..css import computed_from_cascaded
 from ..css.values import get_single_keyword
 
+
+# The *Box classes have many attributes and methods, but that's the way it is
+# pylint: disable=R0904,R0902
 
 class Box(object):
     """
@@ -147,14 +150,14 @@ class Box(object):
         new_box.style = self.style.copy()
         return new_box
 
-    def translate(self, dx, dy):
+    def translate(self, x, y):
         """
         Change this box’s position. Also update the children’s positions
         accordingly.
         """
         # Overridden in ParentBox to also translate children, if any.
-        self.position_x += dx
-        self.position_y += dy
+        self.position_x += x
+        self.position_y += y
 
     ###
 
@@ -309,14 +312,14 @@ class ParentBox(Box):
             else:
                 yield child
 
-    def translate(self, dx, dy):
+    def translate(self, x, y):
         """
         Change this box’s position. Also update the children’s positions
         accordingly.
         """
-        super(ParentBox, self).translate(dx, dy)
+        super(ParentBox, self).translate(x, y)
         for child in self.children:
-            child.translate(dx, dy)
+            child.translate(x, y)
 
 
 class BlockLevelBox(Box):
@@ -354,7 +357,7 @@ class AnonymousBox(Box):
     """
     def _init_style(self):
         parent_style = self.document.style_for(self.element)
-        self.style = css.computed_from_cascaded(self.element, {}, parent_style)
+        self.style = computed_from_cascaded(self.element, {}, parent_style)
 
         # These properties are not inherited so they always have their initial
         # value, zero. The used value is zero too.
