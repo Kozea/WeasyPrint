@@ -353,7 +353,7 @@ def compute_content_value(computer, value):
         # and re-parsing.
         value = PropertyValue(cssutils.helper.string(content_value))[0]
         assert value.type == 'STRING'
-        assert value.value == content
+        assert value.value == content_value
     return value
 
 
