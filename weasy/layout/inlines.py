@@ -17,6 +17,8 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+from collections import deque
+
 from .markers import image_marker_layout
 from .percentages import resolve_percentages
 from .. import text
@@ -35,7 +37,7 @@ class InlineContext(object):
         self.save()
 
     def save(self):
-        self._children = list(self.linebox.children)
+        self._children = deque(self.linebox.children)
         self._position_y = self.position_y
 
     def restore(self):
@@ -50,7 +52,7 @@ class InlineContext(object):
             vertical_align_processing(line)
             if not is_empty_line(line):
                 self.position_y += line.height
-                if self.page_bottom > self.position_y:
+                if self.page_bottom >= self.position_y:
                     self.save()
                     yield line
                 else:
