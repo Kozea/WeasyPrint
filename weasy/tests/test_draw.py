@@ -31,7 +31,7 @@ from attest import Tests, assert_hook  # pylint: disable=W0611
 from . import resource_filename
 from ..document import PNGDocument
 
-# One-letter variables are OK here
+# Short variable names are OK here
 # pylint: disable=C0103
 
 _ = array('B', [255, 255, 255])  # white
