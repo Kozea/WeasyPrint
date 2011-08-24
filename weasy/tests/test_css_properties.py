@@ -16,15 +16,19 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import attest
-from attest import Tests, assert_hook
+"""
+Test the management of the CSS properties.
+
+"""
+
+from attest import Tests, raises, assert_hook  # pylint: disable=W0611
 from cssutils.css import PropertyValue
 
 from ..css import validation
 from ..css.values import as_css
 
 
-suite = Tests()
+SUITE = Tests()
 
 
 def expand_to_dict(short_name, short_values):
@@ -34,8 +38,9 @@ def expand_to_dict(short_name, short_values):
                     short_name, list(PropertyValue(short_values))))
 
 
-@suite.test
+@SUITE.test
 def test_expand_four_sides():
+    """Test the 4-value properties."""
     assert expand_to_dict('margin', 'inherit') == {
         'margin-top': 'inherit',
         'margin-right': 'inherit',
@@ -66,12 +71,13 @@ def test_expand_four_sides():
         'padding-bottom': '2em',
         'padding-left': '5px',
     }
-    with attest.raises(ValueError):
+    with raises(ValueError):
         expand_to_dict('padding', '1 2 3 4 5')
 
 
-@suite.test
+@SUITE.test
 def test_expand_borders():
+    """Test the ``border`` property."""
     assert expand_to_dict('border-top', '3px dotted red') == {
         'border-top-width': '3px',
         'border-top-style': 'dotted',
@@ -109,12 +115,13 @@ def test_expand_borders():
         'border-right-style': 'dashed',
         'border-right-color': 'green',
     }
-    with attest.raises(ValueError):
+    with raises(ValueError):
         expand_to_dict('border', '6px dashed left')
 
 
-@suite.test
+@SUITE.test
 def test_expand_list_style():
+    """Test the ``list-style`` property."""
     assert expand_to_dict('list-style', 'inherit') == {
         'list-style-position': 'inherit',
         'list-style-image': 'inherit',
@@ -135,19 +142,21 @@ def test_expand_list_style():
         'list-style-image': 'none',
         'list-style-type': 'circle',
     }
-    with attest.raises(ValueError):
+    with raises(ValueError):
         expand_to_dict('list-style', 'red')
 
 
 def assert_background(css, **kwargs):
+    """Helper checking the background properties."""
     expanded = expand_to_dict('background', css).items()
     expected = [('background-' + key, value)
                 for key, value in kwargs.iteritems()]
     assert sorted(expanded) == sorted(expected)
 
 
-@suite.test
+@SUITE.test
 def test_expand_background():
+    """Test the ``background`` property."""
     assert_background(
         'red',
         color='red', ##
@@ -215,8 +224,9 @@ def test_expand_background():
     )
 
 
-@suite.test
+@SUITE.test
 def test_font():
+    """Test the ``font`` property."""
     assert expand_to_dict('font', '12px sans-serif') == {
         'font-style': 'normal',
         'font-variant': 'normal',
