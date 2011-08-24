@@ -18,16 +18,17 @@
 
 
 """
-This module builds a correct formatting structure from a DOM document,
+Building helpers.
+
+Functions building a correct formatting structure from a DOM document,
 including handling of anonymous boxes and whitespace processing.
+
 """
 
-
 import re
-from ..css.values import (get_single_keyword, get_single_pixel_value,
-                          make_pixel_value)
-from .. import replaced
 from . import boxes
+from ..replaced import get_replaced_element, ImageReplacement
+from ..css.values import get_single_keyword
 
 
 GLYPH_LIST_MARKERS = {
@@ -38,9 +39,7 @@ GLYPH_LIST_MARKERS = {
 
 
 def build_formatting_structure(document):
-    """
-    Build a formatting structure (box tree) from a Document.
-    """
+    """Build a formatting structure (box tree) from a ``document``."""
     box = dom_to_box(document, document.dom)
     box = inline_in_block(box)
     box = block_in_inline(box)
@@ -50,14 +49,13 @@ def build_formatting_structure(document):
 
 
 def dom_to_box(document, element):
-    """
-    Converts a DOM element (and its children) into a box (with children).
+    """Convert a DOM element and its children into a box with children.
 
-    Eg.
+    Eg.::
 
         <p>Some <em>emphasised</em> text.<p>
 
-    gives (not actual syntax)
+    gives (not actual syntax)::
 
         BlockBox[
             TextBox['Some '],
@@ -67,14 +65,15 @@ def dom_to_box(document, element):
             TextBox[' text.'],
         ]
 
-    TextBox`es are anonymous inline boxes:
-    http://www.w3.org/TR/CSS21/visuren.html#anonymous
+    ``TextBox``es are anonymous inline boxes:
+    See http://www.w3.org/TR/CSS21/visuren.html#anonymous
+
     """
     # TODO: should be the used value
     display = get_single_keyword(document.style_for(element).display)
     assert display != 'none'
 
-    replacement = replaced.get_replaced_element(element)
+    replacement = get_replaced_element(element)
     if replacement:
         if display in ('block', 'list-item', 'table'):
             type_ = boxes.BlockLevelReplacedBox
@@ -117,9 +116,10 @@ def dom_to_box(document, element):
 
 
 def add_list_marker(box):
-    """
-    Add a list marker to elements with `display: list-item`.
+    """Add a list marker to elements with ``display: list-item``.
+
     See http://www.w3.org/TR/CSS21/generate.html#lists
+
     """
     image = box.style.list_style_image
     if get_single_keyword(image) == 'none':
@@ -129,7 +129,7 @@ def add_list_marker(box):
         marker = GLYPH_LIST_MARKERS[type_]
         marker_box = boxes.TextBox(box.document, box.element, marker)
     else:
-        replacement = replaced.ImageReplacement(image[0].absoluteUri)
+        replacement = ImageReplacement(image[0].absoluteUri)
         marker_box = boxes.ImageMarkerBox(
             box.document, box.element, replacement)
 
@@ -146,9 +146,10 @@ def add_list_marker(box):
 
 
 def process_whitespace(box):
-    """
-    First part of "The 'white-space' processing model"
-    http://www.w3.org/TR/CSS21/text.html#white-space-model
+    """First part of "The 'white-space' processing model".
+
+    See http://www.w3.org/TR/CSS21/text.html#white-space-model
+
     """
     following_collapsible_space = False
     for child in box.descendants():
@@ -188,17 +189,19 @@ def process_whitespace(box):
 
 
 def inline_in_block(box):
-    """
+    """Build the structure of lines inside blocks.
+
     Consecutive inline-level boxes in a block container box are wrapped into a
     line box, itself wrapped into an anonymous block box.
-    (This line box will be broken into multiple lines later.)
+
+    This line box will be broken into multiple lines later.
 
     The box tree is changed *in place*.
 
     This is the first case in
     http://www.w3.org/TR/CSS21/visuren.html#anonymous-block-level
 
-    Eg.
+    Eg.::
 
         BlockBox[
             TextBox['Some '],
@@ -208,7 +211,7 @@ def inline_in_block(box):
             ]
         ]
 
-    is turned into
+    is turned into::
 
         BlockBox[
             AnonymousBlockBox[
@@ -223,6 +226,7 @@ def inline_in_block(box):
                 ]
             ]
         ]
+
     """
     for child_box in getattr(box, 'children', []):
         inline_in_block(child_box)
@@ -262,7 +266,8 @@ def inline_in_block(box):
 
 
 def block_in_inline(box):
-    """
+    """Build the structure of blocks inside lines.
+
     Inline boxes containing block-level boxes will be broken in two
     boxes on each side on consecutive block-level boxes, each side wrapped
     in an anonymous block-level box.
@@ -270,7 +275,7 @@ def block_in_inline(box):
     This is the second case in
     http://www.w3.org/TR/CSS21/visuren.html#anonymous-block-level
 
-    Eg.
+    Eg.::
 
         BlockBox[
             LineBox[
@@ -289,7 +294,7 @@ def block_in_inline(box):
             ]
         ]
 
-    is turned into
+    is turned into::
 
         BlockBox[
             AnonymousBlockBox[
@@ -319,6 +324,7 @@ def block_in_inline(box):
                 ]
             ],
         ]
+
     """
     # TODO: when splitting inline boxes, mark which are starting, ending, or
     # in the middle of the original box (for drawing borders).
@@ -353,18 +359,18 @@ def block_in_inline(box):
 
 
 def _add_anonymous_block(box, child):
-    """
-    Wrap the child in an AnonymousBlockBox and add it to box.
-    """
+    """Wrap the child in an AnonymousBlockBox and add it to box."""
     anon_block = boxes.AnonymousBlockBox(box.document, box.element)
     anon_block.add_child(child)
     box.add_child(anon_block)
 
 
 def _inner_block_in_inline(box):
-    """
-    Return (new_box, block_level_box)
-    block_level_box is a box when breaking, None otherwise.
+    """Find block in inline ``box``
+
+    Return ``new_box, block_level_box`` if a block level box is found in
+    ``box`` or in its children. Return ``empty_new_box, None`` otherwise.
+
     """
     if not isinstance(box, boxes.ParentBox):
         return box, None
@@ -381,7 +387,7 @@ def _inner_block_in_inline(box):
         elif isinstance(child, (boxes.InlineBox, boxes.TextBox)):
             new_child, block_level_box = _inner_block_in_inline(child)
         else:
-            # other inline-level: inline-block, inline-table, replaced
+            # Other inline-level: inline-block, inline-table, replaced
             new_child = block_in_inline(child)
         new_box.add_child(new_child)
         if block_level_box is not None:
@@ -392,12 +398,12 @@ def _inner_block_in_inline(box):
 
 
 def sanity_checks(box):
-    """
-    Check that the rules regarding boxes are met:
+    """Check that the rules regarding boxes are met.
 
-    * A block container can contain either only block-level boxes or
-      only line boxes
-    * Line boxes and inline boxes can only contain inline-level boxes.
+    - A block container can contain either only block-level boxes or
+      only line boxes;
+    - Line boxes and inline boxes can only contain inline-level boxes.
+
     """
     if not isinstance(box, boxes.ParentBox):
         return
@@ -414,5 +420,4 @@ def sanity_checks(box):
 
     assert any(
         all(isinstance(child, type_) for child in box.children)
-        for type_ in types
-    )
+        for type_ in types)
