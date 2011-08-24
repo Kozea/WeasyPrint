@@ -184,7 +184,7 @@ ignore-docstrings=yes
 ignore-iface-methods=
 
 # List of method names used to declare (i.e. assign) instance attributes.
-defining-attr-methods=__init__,__new__,setUp
+defining-attr-methods=__init__,__new__,_init_style
 
 
 [DESIGN]
