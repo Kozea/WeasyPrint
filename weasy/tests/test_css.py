@@ -16,21 +16,24 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""
+Test the base of the CSS .
+
+"""
+
 import os.path
 from cssutils.helper import path2url
 
-from attest import Tests, assert_hook
-import attest
+from attest import Tests, raises, assert_hook  # pylint: disable=W0611
 import cssutils
-
-from .. import css
-from ..document import Document
 
 from . import resource_filename
 from .test_boxes import monkeypatch_validation
+from .. import css
+from ..document import Document
 
 
-suite = Tests()
+SUITE = Tests()
 
 
 def parse_html(filename, **kwargs):
@@ -40,20 +43,22 @@ def parse_html(filename, **kwargs):
     return Document.from_file(url, **kwargs)
 
 
-@suite.test
+@SUITE.test
 def test_style_dict():
+    """Test a style in a ``dict``."""
     style = css.computed_values.StyleDict({
         'margin-left': cssutils.css.PropertyValue('12px'),
         'display': cssutils.css.PropertyValue('block')
     })
     assert style.display[0].value == 'block'
     assert style.margin_left[0].value == 12
-    with attest.raises(AttributeError):
-        style.position
+    with raises(AttributeError):
+        style.position  # pylint: disable=W0104
 
 
-@suite.test
+@SUITE.test
 def test_find_stylesheets():
+    """Test if the stylesheets are found in a HTML document."""
     document = parse_html('doc1.html')
 
     sheets = list(css.find_stylesheets(document))
@@ -72,8 +77,9 @@ def test_find_stylesheets():
             'body > h1:first-child']
 
 
-@suite.test
+@SUITE.test
 def test_expand_shorthands():
+    """Test the expand shorthands."""
     sheet = cssutils.parseFile(resource_filename('sheet2.css'))
     assert sheet.cssRules[0].selectorText == 'li'
 
@@ -98,17 +104,23 @@ def test_expand_shorthands():
 
 
 def parse_css(filename):
+    """Parse and return the CSS at ``filename``."""
     return cssutils.parseFile(resource_filename(filename))
 
 
 def validate_content(real_non_shorthand, name, values, required=False):
+    """Fake validator for the ``content`` property."""
     if name == 'content':
         return [(name, values)]
     return real_non_shorthand(name, values, required)
 
 
-@suite.test
+@SUITE.test
 def test_annotate_document():
+    """."""
+    # Short names for variables are OK here
+    # pylint: disable=C0103
+
     # TODO: remove this patching when the `content` property is supported.
     with monkeypatch_validation(validate_content):
         document = parse_html(
@@ -179,9 +191,12 @@ def test_annotate_document():
     # TODO much more tests here: test that origin and selector precedence
     # and inheritance are correct, ...
 
+    # pylint: enable=C0103
 
-@suite.test
+
+@SUITE.test
 def test_default_stylesheet():
+    """Test if the user-agent stylesheet is used and applied."""
     # TODO: remove this patching when the `content` property is supported.
     with monkeypatch_validation(validate_content):
         document = parse_html('doc1.html')
@@ -190,8 +205,9 @@ def test_default_stylesheet():
         'The HTML4 user-agent stylesheet was not applied'
 
 
-@suite.test
+@SUITE.test
 def test_page():
+    """Test the ``@page`` properties."""
     # TODO: remove this patching when the `content` property is supported.
     with monkeypatch_validation(validate_content):
         document = parse_html('doc1.html', user_stylesheets=[
