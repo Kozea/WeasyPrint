@@ -373,4 +373,3 @@ def draw_text_decoration(context, position_y, textbox):
         offset = textbox.extents[2] - textbox.extents[0]
         context.line_to(position_x + offset, position_y)
         context.stroke()
-
