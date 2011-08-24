@@ -16,6 +16,11 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""
+WeasyPrint testing suite.
+
+"""
+
 import os.path
 import logging
 
@@ -24,4 +29,5 @@ logging.getLogger('WEASYPRINT').addHandler(logging.StreamHandler())
 
 
 def resource_filename(basename):
+    """Return the absolute path of the resource called ``basename``."""
     return os.path.join(os.path.dirname(__file__), 'resources', basename)
