@@ -1,27 +1,79 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="fr" lang="fr">
-<head>
-<title>Interface de test de weasyprint</title>
-<meta http-equiv="Content-Language" content="fr" />
+<!doctype html>
+<title>Weasyprint testing web interface</title>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<meta name="description" content="Interface de test de weasyprint" />
-<link class="hydra-css" rel="stylesheet" type="text/css" title="style" href="http://static.pharminfo.fr/css/themes/common.css" media="screen" />
 <style>
+body {
+  margin: 20px;
+}
 img {
-  -webkit-box-shadow: 0px 0px 12px #aaa;
+  display: block;
+}
+textarea {
+    width: 40em;
+    min-height: 50em;
+    float: left;
+}
+#rendered {
+    display: block;
+    -webkit-box-shadow: 0px 0px 12px #aaa;
+       -moz-box-shadow: 0px 0px 12px #aaa;
+}
+iframe {
+    width: 800px;
+    height: 800px;
+    display: none;
+}
+#spinner {
+    visibility: hidden;
+    float: left;
+    margin: 0 20px;
 }
 </style>
-</head>
-<body>
-<div>
-  <form action="/" method="post">
-    <label for="content">HTML</label>
-    <textarea name="content" id="content" rows="30">{{ content }}</textarea>
-    <input type="submit" name="submit" value="Envoyer">
-  </form>
-</div>
-{% if image %}
-<img src="data:image/png;base64,{{ image.encode('base64') }}" alt="Draw" />
-{% endif %}
-</body>
-</html>
+<textarea id=html>{{ content }}</textarea>
+<img id=spinner src="/static/spinner.gif">
+<iframe id=iframe src=""></iframe>
+<img id=rendered src="">
+
+<script>
+(function() {
+    var timeout = null;
+    var textarea = document.getElementById('html');
+    var image = document.getElementById('rendered');
+    var iframe = document.getElementById('iframe');
+    var spinner = document.getElementById('spinner');
+    var old_content;
+
+    function update_now() {
+        if (textarea.value != old_content) {
+          old_content = textarea.value;
+          spinner.style.visibility = 'visible';
+          image.src = '/render.png?html=' + encodeURIComponent(textarea.value);
+        }
+    }
+
+    function update() {
+        if (timeout) {
+            clearTimeout(timeout);
+        }
+        timeout = setTimeout(update_now, 300);
+    }
+
+    image.onload = function() {
+        spinner.style.visibility = 'hidden';
+        iframe.style.display = 'none';
+        image.style.display = 'block';
+    }
+
+    image.onerror = function() {
+        spinner.style.visibility = 'hidden';
+        image.style.display = 'none';
+        iframe.style.display = 'block';
+        iframe.src = image.src;
+    }
+
+    textarea.onchange = update;
+    textarea.onkeydown = update;
+    textarea.onkeyup = update;
+    update_now();
+})();
+</script>
