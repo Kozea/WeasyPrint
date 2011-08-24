@@ -87,7 +87,8 @@ class TextFragment(object):
                 if keyword == 'overline':
                     self.set_overline(False)
                 elif keyword == 'underline':
-                    self.set_underline(True)
+                    pass
+#                    self.set_underline(True)
                 elif keyword == 'line-through':
                     self.set_line_through(True)
                 else:
@@ -291,14 +292,20 @@ class TextLineFragment(TextFragment):
 
     def get_size(self):
         """Get the real text area dimensions for this line in pixels."""
-        return self.get_layout().get_pixel_size()
+        first_line = self.layout.get_line(0)
+        return self.get_layout_line().get_pixel_size()
 
     def get_logical_extents(self):
         """Get the size of the logical area occupied by the text."""
+        return self.layout.get_line(0).get_pixel_extents()[0]
+
+    def get_ink_extents(self):
+        """Get the size of the ink area occupied by the text."""
         return self.layout.get_line(0).get_pixel_extents()[1]
 
     def get_baseline(self):
         """Get the baseline of the text."""
-        descent = pango.DESCENT(self.get_logical_extents())
+        descent = pango.DESCENT(self.layout.get_line(0).get_pixel_extents()[1])
         height = self.get_size()[1]
         return height - descent
+
