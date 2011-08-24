@@ -61,5 +61,6 @@ def draw_page(page, context):
     The context should be scaled so that lengths are in CSS pixels.
 
     """
-    helpers.draw_canvas_background(context, page)
+    helpers.draw_page_background(context, page)
+    helpers.draw_border(context, page)
     helpers.draw_box(context, page.root_box)

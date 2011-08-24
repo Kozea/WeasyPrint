@@ -89,10 +89,11 @@ def has_background(box):
         get_single_keyword(box.style['background-image']) != 'none'
 
 
-def draw_canvas_background(context, page):
-    """Draw the canvas’ background, taken from the root element.
+def draw_page_background(context, page):
+    """Draw the backgrounds for the page box (from @page style) and for the
+    page area (from the root element).
 
-    If the root element is "html" and has no background, the canvas’
+    If the root element is "html" and has no background, the page area’s
     background is taken from its "body" child.
 
     In both cases the background position is the same as if it was drawn on
@@ -101,13 +102,18 @@ def draw_canvas_background(context, page):
     See http://www.w3.org/TR/CSS21/colors.html#background
 
     """
+    # TODO: this one should have its origin at (0, 0), not the border box
+    # of the page.
+    # TODO: more tests for this, see
+    # http://www.w3.org/TR/css3-page/#page-properties
+    draw_background(context, page, clip=False)
     if has_background(page.root_box):
-        draw_background(context, page.root_box, on_entire_canvas=True)
+        draw_background(context, page.root_box, clip=False)
     elif page.root_box.element.tag.lower() == 'html':
         for child in page.root_box.children:
             if child.element.tag.lower() == 'body':
                 # This must be drawn now, before anything on the root element.
-                draw_background(context, child, on_entire_canvas=True)
+                draw_background(context, child, clip=False)
 
 
 def get_page_size(box):
@@ -117,7 +123,7 @@ def get_page_size(box):
     return box.outer_width, box.outer_height
 
 
-def draw_background(context, box, on_entire_canvas=False):
+def draw_background(context, box, clip=True):
     """Draw the box background color and image to a ``cairo.Context``."""
     if getattr(box, 'background_drawn', False):
         return
@@ -133,7 +139,7 @@ def draw_background(context, box, on_entire_canvas=False):
         bg_width = box.border_width()
         bg_height = box.border_height()
 
-        if not on_entire_canvas:
+        if clip:
             context.rectangle(bg_x, bg_y, bg_width, bg_height)
             context.clip()
 
