@@ -230,8 +230,6 @@ def get_new_empty_line(linebox):
     """Return empty copy of ``linebox``."""
     new_line = linebox.copy()
     new_line.empty()
-    new_line.width = 0
-    new_line.height = 0
     return new_line
 
 
@@ -270,41 +268,41 @@ def breaking_linebox(linebox, allocate_width):
 
     """
     new_line = get_new_empty_line(linebox)
+    remaining_width = allocate_width
     while linebox.children:
-        if not new_line.children:
-            width = allocate_width
         child = linebox.children.popleft()
         if isinstance(child, boxes.TextBox):
-            part1, part2 = breaking_textbox(child, width)
-            if part1 is not None:
-                compute_textbox_dimensions(part1)
+            part1, part2 = breaking_textbox(child, remaining_width)
+            assert part1 is not None
+            compute_textbox_dimensions(part1)
         elif isinstance(child, boxes.InlineBox):
             resolve_percentages(child)
-            part1, part2 = breaking_inlinebox(child, width)
+            part1, part2 = breaking_inlinebox(child, remaining_width)
             if part1 is not None:
                 compute_inlinebox_dimensions(part1)
         elif isinstance(child, boxes.AtomicInlineLevelBox):
+            compute_atomicbox_dimensions(child)
             part1 = child
             part2 = None
-            compute_atomicbox_dimensions(part1)
 
-        if part2:
-            linebox.children.appendleft(part2)
+        if part1.margin_width() > remaining_width and new_line.children:
+            # child is too wide, and the line is non-empty:
+            # put child on the next line.
+            part1 = None
+            part2 = child
 
-        if part1:
-            if part1.margin_width() <= width:
-                width -= part1.margin_width()
-                new_line.add_child(part1)
-            else:
-                if not new_line.children:
-                    new_line.add_child(part1)
-                else:
-                    linebox.children.appendleft(part1)
-                yield new_line
-                new_line = get_new_empty_line(linebox)
-        else:
+        assert part1 is not None or part2 is not None
+
+        if part1 is not None:
+            remaining_width -= part1.margin_width()
+            new_line.add_child(part1)
+
+        if part2 is not None:
             yield new_line
+            linebox.children.appendleft(part2)
             new_line = get_new_empty_line(linebox)
+            remaining_width = allocate_width
+
     yield new_line
 
 
