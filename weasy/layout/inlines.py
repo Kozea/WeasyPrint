@@ -271,46 +271,50 @@ def breaking_linebox(linebox, allocate_width):
     remaining_width = allocate_width
     while linebox.children:
         child = linebox.children.popleft()
+        # Split child into part1 (which could go on the current line)
+        # and part2 (which goes on the next line)
         if isinstance(child, boxes.TextBox):
             part1, part2 = breaking_textbox(child, remaining_width)
-            assert part1 is not None
             compute_textbox_dimensions(part1)
         elif isinstance(child, boxes.InlineBox):
             resolve_percentages(child)
             part1, part2 = breaking_inlinebox(child, remaining_width)
-            if part1 is not None:
-                compute_inlinebox_dimensions(part1)
+            compute_inlinebox_dimensions(part1)
         elif isinstance(child, boxes.AtomicInlineLevelBox):
             compute_atomicbox_dimensions(child)
             part1 = child
             part2 = None
 
+        assert part1 is not None
         if part1.margin_width() > remaining_width and new_line.children:
-            # child is too wide, and the line is non-empty:
-            # put child on the next line.
-            part1 = None
-            part2 = child
-
-        assert part1 is not None or part2 is not None
-
-        if part1 is not None:
+            # part1 is too wide, and the line is non-empty:
+            # put child entirely on the next line.
+            linebox.children.appendleft(part2)
+            part2 = part1
+        else:
             remaining_width -= part1.margin_width()
             new_line.add_child(part1)
 
         if part2 is not None:
-            yield new_line
             linebox.children.appendleft(part2)
+            # This line is done, create a new one and reset
+            # the available width.
+            yield new_line
             new_line = get_new_empty_line(linebox)
             remaining_width = allocate_width
 
-    yield new_line
+    if new_line.children:
+        yield new_line
 
 
-def breaking_inlinebox(inlinebox, allocate_width):
+def breaking_inlinebox(inlinebox, remaining_width):
     """Cut ``inlinebox`` that sticks out the ``LineBox`` if possible.
 
     >>> breaking_inlinebox(inlinebox, allocate_width)
     (first_inlinebox, second_inlinebox)
+
+    ``second_inlinebox`` may be None, but ``first_inlinebox`` always has
+    at least one child.
 
     Eg.::
 
@@ -335,82 +339,49 @@ def breaking_inlinebox(inlinebox, allocate_width):
                     inlinebox.border_left_width)
     right_spacing = (inlinebox.padding_right + inlinebox.margin_right +
                      inlinebox.border_right_width)
-    allocate_width -= left_spacing
-    if allocate_width <= 0:
-        return None, inlinebox
+    remaining_width -= left_spacing
 
     new_inlinebox = inlinebox.copy()
     new_inlinebox.empty()
 
     while inlinebox.children:
         child = inlinebox.children.popleft()
-        # if last child
-        last_child = len(inlinebox.children) == 0
+        last_child = not inlinebox.children  # ie. the list is empty
 
         if isinstance(child, boxes.TextBox):
-            part1, part2 = breaking_textbox(child, allocate_width)
-            if part1 is not None:
-                compute_textbox_dimensions(part1)
+            part1, part2 = breaking_textbox(child, remaining_width)
+            compute_textbox_dimensions(part1)
         elif isinstance(child, boxes.InlineBox):
             resolve_percentages(child)
-            part1, part2 = breaking_inlinebox(child, allocate_width)
-            if part1 is not None:
-                compute_inlinebox_dimensions(part1)
+            part1, part2 = breaking_inlinebox(child, remaining_width)
+            compute_inlinebox_dimensions(part1)
         elif isinstance(child, boxes.AtomicInlineLevelBox):
+            compute_atomicbox_dimensions(child)
             part1 = child
             part2 = None
-            compute_atomicbox_dimensions(part1)
+
+        # TODO: this is non-optimal when
+        #   width <= remaining_width < width + right_spacing
+        # with
+        #   width = part1.margin_width()
+
+        assert part1 is not None
+        if part1.margin_width() > remaining_width and new_inlinebox.children:
+            # part1 is too wide, and the inline is non-empty:
+            # put child entirely on the next line.
+            inlinebox.children.appendleft(part2)
+            part2 = part1
+        else:
+            remaining_width -= part1.margin_width()
+            new_inlinebox.add_child(part1)
 
         if part2 is not None:
             inlinebox.children.appendleft(part2)
-
-        if part1:
-            if part1.margin_width() <= allocate_width:
-                # We have enough room to fit `part1` in this line.
-                if last_child:
-                    if part1.margin_width() + right_spacing <= allocate_width:
-                        allocate_width -= part1.margin_width()
-                        new_inlinebox.add_child(part1)
-                        break
-                    else:
-                        # Enough for `part1` but not `part1` plus the right
-                        # padding, border and margin of the parent.
-                        if new_inlinebox.children:
-                            inlinebox.children.appendleft(part1)
-                        else:
-                            # `part1` does not fit but the line box
-                            # is still empty: overflow
-                            # XXX: this is not correct, we should try to break
-                            # earlier. This fixes the infinite loop for now.
-                            new_inlinebox.add_child(part1)
-                        break
-                else:
-                    allocate_width -= part1.margin_width()
-                    new_inlinebox.add_child(part1)
-                    if allocate_width == 0:
-                        break
-            else:
-                if new_inlinebox.children:
-                    inlinebox.children.appendleft(part1)
-                else:
-                    # `part1` does not fit but the line box
-                    # is still empty: overflow
-                    new_inlinebox.add_child(part1)
-                break
-        else:
-            break
-
-    inlinebox.reset_spacing("left")
-    if inlinebox.children:
-        new_inlinebox.reset_spacing("right")
-
-    if new_inlinebox.children:
-        if inlinebox.children:
+            inlinebox.reset_spacing("left")
+            new_inlinebox.reset_spacing("right")
             return new_inlinebox, inlinebox
-        else:
-            return new_inlinebox, None
-    else:
-        return None, inlinebox
+
+    return new_inlinebox, None
 
 
 def breaking_textbox(textbox, allocate_width):
