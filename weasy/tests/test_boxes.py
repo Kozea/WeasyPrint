@@ -16,24 +16,27 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""
+Test the CSS boxes.
+
+"""
+
 import contextlib
 
-from attest import Tests, assert_hook
+from attest import Tests, assert_hook  # pylint: disable=W0611
 
-from ..css.values import get_single_keyword
 from ..css import validation
+from ..css.values import get_single_keyword
 from ..document import Document
 from ..formatting_structure import boxes
 from ..formatting_structure import build
 
 
-suite = Tests()
+SUITE = Tests()
 
 
 def serialize(box_list):
-    """
-    Transform a box list into a structure easier to compare for testing.
-    """
+    """Transform a box list into a structure easier to compare for testing."""
     types = {
         boxes.TextBox: 'text',
         boxes.LineBox: 'line',
@@ -54,10 +57,11 @@ def serialize(box_list):
 
 
 def unwrap_html_body(box):
-    """
-    Test that the box tree starts with an <html> block and a <body> block
-    and remove them to simplify further tests. These are always at the root
+    """Test that the box tree starts with a ``<html>`` and a ``<body>`` blocks.
+
+    Remove them to simplify further tests. These are always at the root
     of HTML documents.
+
     """
     assert box.element.tag == 'html'
     assert isinstance(box, boxes.BlockBox)
@@ -71,15 +75,23 @@ def unwrap_html_body(box):
 
 
 def to_lists(box_tree):
-    """Serialize and unwrap <html> and <body>."""
+    """Serialize and unwrap ``<html>`` and ``<body>``."""
     return serialize(unwrap_html_body(box_tree))
 
 
 @contextlib.contextmanager
 def monkeypatch_validation(replacement):
+    """Create a context manager patching the validation mechanism.
+
+    This is useful to change the behaviour of the validation for one property
+    not yet supported, without affecting the validation for the other
+    properties.
+
+    """
     real_non_shorthand = validation.validate_non_shorthand
 
     def patched_non_shorthand(*args, **kwargs):
+        """Wraps the validator into ``replacement``."""
         return replacement(real_non_shorthand, *args, **kwargs)
 
     validation.validate_non_shorthand = patched_non_shorthand
@@ -90,15 +102,14 @@ def monkeypatch_validation(replacement):
 
 
 def validate_inline_block(real_non_shorthand, name, values, required=False):
+    """Fake validator for inline blocks."""
     if name == 'display' and get_single_keyword(values) == 'inline-block':
         return [(name, values)]
     return real_non_shorthand(name, values, required)
 
 
 def parse(html_content):
-    """
-    Parse some HTML, apply stylesheets and transform to boxes.
-    """
+    """Parse some HTML, apply stylesheets and transform to boxes."""
     # TODO: remove this patching when inline-block is validated.
     with monkeypatch_validation(validate_inline_block):
         document = Document.from_string(html_content)
@@ -108,11 +119,12 @@ def parse(html_content):
 def prettify(tree_list):
     """Special formatting for printing serialized box trees."""
     def lines(tree, indent=0):
+        """Recursively yield the lines of ``tree`` with ``indentation``."""
         tag, type_, content = tree
         if type_ in ('text', 'inline_replaced'):
-            yield '%s%s %s %r' % ('    ' * indent, tag, type_, content)
+            yield '%s%s %s %r' % (4 * ' ' * indent, tag, type_, content)
         else:
-            yield '%s%s %s' % ('    ' * indent, tag, type_)
+            yield '%s%s %s' % (4 * ' ' * indent, tag, type_)
             for child in content:
                 for line in lines(child, indent + 1):
                     yield line
@@ -121,19 +133,21 @@ def prettify(tree_list):
 
 
 def assert_tree(box, expected):
-    """
-    Test box tree equality with the prettified obtained result in the message
-    in case of failure.
+    """Check the box tree equality.
+
+    The obtained result is prettified in the message in case of failure.
 
     box: a Box object, starting with <html> and <body> blocks.
     expected: a list of serialized <body> children as returned by to_lists().
+
     """
     result = to_lists(box)
     assert result == expected, 'Got\n' + prettify(result)
 
 
-@suite.test
+@SUITE.test
 def test_box_tree():
+    """Test the creation of trees from HTML strings."""
     assert_tree(parse('<p>'), [('p', 'block', [])])
     assert_tree(parse('''
         <style>
@@ -151,16 +165,18 @@ def test_box_tree():
             ('p', 'text', '!')])])
 
 
-@suite.test
+@SUITE.test
 def test_html_entities():
+    """Test the management of HTML entities."""
     for quote in ['"', '&quot;', '&#x22;', '&#34;']:
         assert_tree(parse('<p>{}abc{}'.format(quote, quote)), [
             ('p', 'block', [
                 ('p', 'text', '"abc"')])])
 
 
-@suite.test
+@SUITE.test
 def test_inline_in_block():
+    """Test the management of inline boxes in block boxes."""
     source = '<div>Hello, <em>World</em>!\n<p>Lipsum.</p></div>'
     expected = [
         ('div', 'block', [
@@ -185,8 +201,9 @@ def test_inline_in_block():
     assert_tree(box, expected)
 
 
-@suite.test
+@SUITE.test
 def test_block_in_inline():
+    """Test the management of block boxes in inline boxes."""
     box = parse('''
 <style>
     p { display: inline-block; }
@@ -205,15 +222,15 @@ def test_block_in_inline():
                         ('em', 'text', 'ipsum '),
                         ('strong', 'inline', [
                             ('strong', 'text', 'dolor '),
-                            ('span', 'block', [ # This block is "pulled up"
+                            ('span', 'block', [  # This block is "pulled up"
                                 ('span', 'line', [
                                     ('span', 'text', 'sit')])]),
                             # No whitespace processing here.
                             ('strong', 'text', '\n    '),
-                            ('span', 'block', [ # This block is "pulled up"
+                            ('span', 'block', [  # This block is "pulled up"
                                 ('span', 'line', [
                                     ('span', 'text', 'amet,')])])]),
-                        ('span', 'block', [ # This block is "pulled up"
+                        ('span', 'block', [  # This block is "pulled up"
                             ('span', 'line', [
                                 ('em', 'inline', [
                                     ('em', 'text', 'consectetur'),
@@ -262,8 +279,9 @@ def test_block_in_inline():
                         ('em', 'inline', [])])])])])])
 
 
-@suite.test
+@SUITE.test
 def test_styles():
+    """Test the application of CSS to HTML."""
     box = parse('''
         <style>
             span { display: block; }
@@ -285,8 +303,9 @@ def test_styles():
             assert child.style.margin_top[0].value == 42
 
 
-@suite.test
+@SUITE.test
 def test_whitespace():
+    """Test the management of white spaces."""
     # TODO: test more cases
     # http://www.w3.org/TR/CSS21/text.html#white-space-model
     document = Document.from_string('''
@@ -327,8 +346,9 @@ def test_whitespace():
                 ('pre', 'text', u'foo\n')])])])
 
 
-@suite.test
+@SUITE.test
 def test_page_style():
+    """Test the management of page styles."""
     document = Document.from_string('''
         <style>
             @page { margin: 3px }
@@ -337,14 +357,16 @@ def test_page_style():
             @page :left { margin-left: 10px; margin-top: 10px }
         </style>
     ''')
+
     def assert_page_margins(page_number, top, right, bottom, left):
+        """Check the page margin values."""
         page = boxes.PageBox(document, page_number)
         assert page.style.margin_top[0].value == top
         assert page.style.margin_right[0].value == right
         assert page.style.margin_bottom[0].value == bottom
         assert page.style.margin_left[0].value == left
 
-    # odd numbers are :right pages, even are :left. 1 has :first as well
+    # Odd numbers are :right pages, even are :left. 1 has :first as well
     assert_page_margins(1, top=20, right=10, bottom=3, left=3)
     assert_page_margins(2, top=10, right=3, bottom=3, left=10)
     assert_page_margins(3, top=10, right=10, bottom=3, left=3)
@@ -353,10 +375,10 @@ def test_page_style():
     assert_page_margins(122, top=10, right=3, bottom=3, left=10)
 
 
-@suite.test
+@SUITE.test
 def test_containing_block():
-    """Test the boxes containing block."""
-    box = None
+    """Test the boxes containing blocks."""
+    # TODO: write this test
 #    box = parse('''
 #        <html>
 #          <style>

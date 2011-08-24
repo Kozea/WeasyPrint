@@ -17,17 +17,15 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
+Classes for all types of boxes in the CSS formatting structure / box model.
 
-This module defines the classes for all types of boxes in the CSS formatting
-structure / box model.
+See http://www.w3.org/TR/CSS21/visuren.html
 
-http://www.w3.org/TR/CSS21/visuren.html
+Names are the same as in CSS 2.1 with the exception of ``TextBox``. In
+WeasyPrint, any text is in a ``TextBox``. What CSS calls anonymous inline boxes
+are text boxes but not all text boxes are anonymous inline boxes.
 
-Names are the same as in CSS 2.1 with the exception of TextBox. In WeasyPrint,
-any text is in a TextBox. What CSS calls anonymous inline boxes are text boxes
-but not all text boxes are anonymous inline boxes.
-
-http://www.w3.org/TR/CSS21/visuren.html#anonymous
+See http://www.w3.org/TR/CSS21/visuren.html#anonymous
 
 Abstract classes, should not be instantiated:
 
@@ -52,17 +50,17 @@ Concrete classes:
  * TextBox
  * LineBox
 
-Apart from PageBox and LineBox, all concrete box classes have one of the
-following "outside" behavior:
+Apart from :class:`PageBox` and :class:`LineBox`, all concrete box classes have
+one of the following "outside" behavior:
 
- * Block-level (inherits from BlockLevelBox)
- * Inline-level (inherits from InlineLevelBox)
+ * Block-level (inherits from :class:`BlockLevelBox`)
+ * Inline-level (inherits from :class:`InlineLevelBox`)
 
 and one of the following "inside" behavior:
 
- * Block container (inherits from BlockContainerBox)
- * Inline content (InlineBox and TextBox)
- * Replaced content (inherits from ReplacedBox)
+ * Block container (inherits from :class:`BlockContainerBox`)
+ * Inline content (InlineBox and :class:`TextBox`)
+ * Replaced content (inherits from :class:`ReplacedBox`)
 
 See respective docstrings for details.
 
@@ -71,14 +69,15 @@ See respective docstrings for details.
 
 import collections
 
-from .. import css
+from ..css import computed_from_cascaded
 from ..css.values import get_single_keyword
 
 
+# The *Box classes have many attributes and methods, but that's the way it is
+# pylint: disable=R0904,R0902
+
 class Box(object):
-    """
-    Abstract base class for all boxes.
-    """
+    """Abstract base class for all boxes."""
     def __init__(self, document, element):
         self.document = document
         # Should never be None
@@ -93,14 +92,15 @@ class Box(object):
         self.position_y = 0
 
     def _init_style(self):
+        """Initialize the style."""
         # Computed values
         # Copying might not be needed, but let’s be careful with mutable
         # objects.
         self.style = self.document.style_for(self.element).copy()
 
     def __repr__(self):
-        return '<%s %s %i>' % (type(self).__name__, self.element.tag,
-                               self.element.sourceline)
+        return '<%s %s %i>' % (
+            type(self).__name__, self.element.tag, self.element.sourceline)
 
     def ancestors(self):
         """Yield parent and recursively yield parent's parents."""
@@ -147,16 +147,17 @@ class Box(object):
         new_box.style = self.style.copy()
         return new_box
 
-    def translate(self, dx, dy):
-        """
-        Change this box’s position. Also update the children’s positions
-        accordingly.
+    def translate(self, x, y):
+        """Change the box’s position.
+
+        Also update the children’s positions accordingly.
+
         """
         # Overridden in ParentBox to also translate children, if any.
-        self.position_x += dx
-        self.position_y += dy
+        self.position_x += x
+        self.position_y += y
 
-    ###
+    # Heights and widths
 
     def padding_width(self):
         """Width of the padding box."""
@@ -196,7 +197,7 @@ class Box(object):
                self.padding_top + self.padding_bottom + \
                self.border_top_width + self.border_bottom_width
 
-    ###  Corners positions
+    # Corners positions
 
     def content_box_x(self):
         """Absolute horizontal position of the content box."""
@@ -225,6 +226,7 @@ class Box(object):
         return self.position_y + self.margin_top
 
     def reset_spacing(self, side):
+        """Set to 0 the margin, padding and border of ``side``."""
         setattr(self, 'margin_%s' % side, 0)
         setattr(self, 'padding_%s' % side, 0)
         setattr(self, 'border_%s_width' % side, 0)
@@ -233,7 +235,7 @@ class Box(object):
         self.style['padding-%s' % side] = None
         self.style['border-%s-width' % side] = None
 
-    ###  Positioning schemes
+    # Positioning schemes
 
     def is_floated(self):
         """Return whether this box is floated."""
@@ -249,9 +251,11 @@ class Box(object):
 
 
 class PageBox(Box):
-    """
+    """Box for a page.
+
     Initially the whole document will be in a single page box. During layout
     a new page box is created after every page break.
+
     """
     def __init__(self, document, page_number):
         # starting at 1 for the first page.
@@ -263,8 +267,10 @@ class PageBox(Box):
         return '<%s %s>' % (type(self).__name__, self.page_number)
 
     def _init_style(self):
-        # First page is a right page. TODO: this "should depend on the major
-        # writing direction of the document".
+        """Initialize the style of the page.'"""
+        # First page is a right page.
+        # TODO: this "should depend on the major writing direction of the
+        # document".
         first_is_right = True
         is_right = (self.page_number % 2) == (1 if first_is_right else 0)
         page_type = 'right' if is_right else 'left'
@@ -276,13 +282,12 @@ class PageBox(Box):
         self.style = style.copy()
 
     def containing_block_size(self):
+        """Get the size of the containing block."""
         return self.outer_width, self.outer_height
 
 
 class ParentBox(Box):
-    """
-    A box that has children.
-    """
+    """A box that has children."""
     def __init__(self, document, element):
         super(ParentBox, self).__init__(document, element)
         self.empty()
@@ -292,10 +297,7 @@ class ParentBox(Box):
         self.children = collections.deque()
 
     def add_child(self, child):
-        """
-        Add the new child to this box’s children list and set this box as the
-        child’s parent.
-        """
+        """Add the new child to the children list and set its parent."""
         child.parent = self
         self.children.append(child)
 
@@ -309,52 +311,57 @@ class ParentBox(Box):
             else:
                 yield child
 
-    def translate(self, dx, dy):
+    def translate(self, x, y):
+        """Change the position of the box.
+
+        Also update the children’s positions accordingly.
+
         """
-        Change this box’s position. Also update the children’s positions
-        accordingly.
-        """
-        super(ParentBox, self).translate(dx, dy)
+        super(ParentBox, self).translate(x, y)
         for child in self.children:
-            child.translate(dx, dy)
+            child.translate(x, y)
 
 
 class BlockLevelBox(Box):
-    """
-    A box that participates in an block formatting context.
+    """A box that participates in an block formatting context.
 
-    An element with a 'display' value of 'block', 'liste-item' or 'table'
-    generates a block-level box.
+    An element with a ``display`` value of ``block``, ``list-item`` or
+    ``table`` generates a block-level box.
+
     """
 
 
 class BlockContainerBox(ParentBox):
-    """
+    """A box that contains only block-level boxes or only line boxes.
+
     A box that either contains only block-level boxes or establishes an inline
     formatting context and thus contains only line boxes.
 
-    A non-replaced element with a 'display' value of 'block', 'list-item',
-    'inline-block' or 'table-cell' generates a block container box.
+    A non-replaced element with a ``display`` value of ``block``,
+    ``list-item``, ``inline-block`` or 'table-cell' generates a block container
+    box.
+
     """
 
 
 class BlockBox(BlockContainerBox, BlockLevelBox):
-    """
-    A block-level box that is also a block container.
+    """A block-level box that is also a block container.
 
-    A non-replaced element with a 'display' value of 'block', 'list-item'
+    A non-replaced element with a ``display`` value of ``block``, ``list-item``
     generates a block box.
+
     """
 
 
 class AnonymousBox(Box):
-    """
-    A box that is not directly generated by an element. Inherits style instead
-    of copying them.
+    """A box that is not directly generated by an element.
+
+    Inherits style instead of copying them.
+
     """
     def _init_style(self):
         parent_style = self.document.style_for(self.element)
-        self.style = css.computed_from_cascaded(self.element, {}, parent_style)
+        self.style = computed_from_cascaded(self.element, {}, parent_style)
 
         # These properties are not inherited so they always have their initial
         # value, zero. The used value is zero too.
@@ -375,55 +382,58 @@ class AnonymousBox(Box):
 
 
 class AnonymousBlockBox(AnonymousBox, BlockBox):
-    """
-    Wraps inline-level boxes where block-level boxes are needed.
+    """A box that wraps inline-level boxes where block-level boxes are needed.
 
     Block containers (eventually) contain either only block-level boxes or only
     inline-level boxes. When they initially contain both, consecutive
     inline-level boxes are wrapped in an anonymous block box by
-    ``boxes.inline_in_block()``.
+    :meth:`boxes.inline_in_block`.
+
     """
 
 
 class LineBox(AnonymousBox, ParentBox):
-    """
-    Eventually a line in an inline formatting context. Can only contain
-    inline-level boxes.
+    """A box that represents a line in an inline formatting context.
+
+    Can only contain inline-level boxes.
 
     In early stages of building the box tree a single line box contains many
     consecutive inline boxes. Later, during layout phase, each line boxes will
     be split into multiple line boxes, one for each actual line.
+
     """
 
 
 class InlineLevelBox(Box):
-    """
-    A box that participates in an inline formatting context.
+    """A box that participates in an inline formatting context.
 
-    An inline-level box that is not an inline box (see below) is said to be
-    "atomic". Such boxes are inline-blocks, replaced elements and inline tables.
+    An inline-level box that is not an inline box is said to be "atomic". Such
+    boxes are inline blocks, replaced elements and inline tables.
 
-    An element with a 'display' value of 'inline', 'inline-table', or
-    'inline-block' generates an inline-level box.
+    An element with a ``display`` value of ``inline``, ``inline-table``, or
+    ``inline-block`` generates an inline-level box.
+
     """
 
 
 class InlineBox(InlineLevelBox, ParentBox):
-    """
-    A box who participates in an inline formatting context and whose content
+    """An inline box with inline children.
+
+    A box that participates in an inline formatting context and whose content
     also participates in that inline formatting context.
 
-    A non-replaced element with a 'display' value of 'inline' generates an
+    A non-replaced element with a ``display`` value of ``inline`` generates an
     inline box.
+
     """
 
 
 class TextBox(AnonymousBox, InlineLevelBox):
-    """
-    A box that contains only text and has no box children.
+    """A box that contains only text and has no box children.
 
     Any text in the document ends up in a text box. What CSS calls "anonymous
     inline boxes" are also text boxes.
+
     """
     def __init__(self, document, element, text):
         super(TextBox, self).__init__(document, element)
@@ -431,26 +441,30 @@ class TextBox(AnonymousBox, InlineLevelBox):
 
 
 class AtomicInlineLevelBox(InlineLevelBox):
-    """
-    A box that participates in an inline formatting context (it is
-    inline-level) but can not be split for line breaks.
+    """An atomic box in an inline formatting context.
+
+    This inline-level box cannot be split for line breaks.
+
     """
 
 
 class InlineBlockBox(AtomicInlineLevelBox, BlockContainerBox):
-    """
-    A box that is both inline-level and a block container: it behaves as
-    inline on the outside and as a block on the inside.
+    """A box that is both inline-level and a block container.
+
+    It behaves as inline on the outside and as a block on the inside.
 
     A non-replaced element with a 'display' value of 'inline-block' generates
     an inline-block box.
+
     """
 
 
 class ReplacedBox(Box):
-    """
-    A box that is replaced, ie. its content is rendered externally and is opaque
-    from CSS’s point of view. Example: <img> elements are replaced.
+    """A box whose content is replaced.
+
+    For example, ``<img>`` are replaced: their content is rendered externally
+    and is opaque from CSS’s point of view.
+
     """
     def __init__(self, document, element, replacement):
         super(ReplacedBox, self).__init__(document, element)
@@ -458,28 +472,29 @@ class ReplacedBox(Box):
 
 
 class BlockLevelReplacedBox(ReplacedBox, BlockLevelBox):
-    """
-    A box that is both replaced and block-level.
+    """A box that is both replaced and block-level.
 
-    A replaced element with a 'display' value of 'block', 'liste-item' or
-    'table' generates a block-level replaced box.
+    A replaced element with a ``display`` value of ``block``, ``liste-item`` or
+    ``table`` generates a block-level replaced box.
+
     """
 
 
 class InlineLevelReplacedBox(ReplacedBox, AtomicInlineLevelBox):
-    """
-    A box that is both replaced and inline-level.
+    """A box that is both replaced and inline-level.
 
-    A replaced element with a 'display' value of 'inline', 'inline-table', or
-    'inline-block' generates an inline-level replaced box.
+    A replaced element with a ``display`` value of ``inline``,
+    ``inline-table``, or ``inline-block`` generates an inline-level replaced
+    box.
+
     """
 
 
 class ImageMarkerBox(InlineLevelReplacedBox, AnonymousBox):
-    """
-    A box for an image list marker.
+    """A box for an image list marker.
 
-    An element with `display: list-item` and a valid image for
-    `list-style-image` generates an image list maker box.
-    This box is anonymous, inline-level, and replaced.
+    An element with ``display: list-item`` and a valid image for
+    ``list-style-image`` generates an image list maker box.  This box is
+    anonymous, inline-level, and replaced.
+
     """

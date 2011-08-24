@@ -38,6 +38,7 @@ from ..css.values import (
 
 SUPPORTED_IMAGES = ['image/png', 'image/gif', 'image/jpeg', 'image/bmp']
 
+
 def get_image_surface_from_uri(uri):
     """Get a :class:`cairo.ImageSurface`` from an image URI."""
     try:
@@ -49,11 +50,11 @@ def get_image_surface_from_uri(uri):
         if mime_type == "image/png":
             image = fileimage
         else:
-            content= fileimage.read()
-            im = Image.open(StringIO(content))
+            content = fileimage.read()
+            pil_image = Image.open(StringIO(content))
             image = StringIO()
-            im = im.convert('RGBA')
-            im.save(image, "PNG")
+            pil_image = pil_image.convert('RGBA')
+            pil_image.save(image, "PNG")
             image.seek(0)
         return cairo.ImageSurface.create_from_png(image)
 

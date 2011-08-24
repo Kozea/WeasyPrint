@@ -18,46 +18,46 @@
 
 """
 Utility functions and methods used by various modules in the css package.
-"""
 
+"""
 
 from cssutils.css import Value, DimensionValue
 
 
 def get_keyword(value):
-    """
-    If the given Value object is a keyword (identifier in cssutils), return its
-    name. Otherwise return None.
+    """If ``value`` is a keyword, return its name.
+
+    Otherwise return ``None``.
+
     """
     if value.type == 'IDENT':
         return value.value
 
 
 def get_single_keyword(values):
+    """If ``values`` is a 1-element list of keywords, return its name.
+
+    Otherwise return ``None``.
+
     """
-    If the given list of Value object is a single keyword (identifier in
-    cssutils), return its name. Otherwise return None.
-    """
-    # Unsafe, fast way:
+    # Fast but unsafe, as it depends on private attributes
     if len(values) == 1:
         value = values[0]
         if value._type == 'IDENT':
             return value._value
-#    if len(values) == 1:
-#        return get_keyword(values[0])
 
 
 def get_pixel_value(value):
-    """
-    Return the numeric value of a pixel length or None.
+    """If ``value`` is a pixel length, return its value.
+
+    Otherwise return ``None``.
+
     """
     value_type = value.type
     value_value = value.value
-    if (
-        (value_type == 'DIMENSION' and value.dimension == 'px') or
-        # Units may be ommited on 0
-        (value_type == 'NUMBER' and value_value == 0)
-    ):
+    if ((value_type == 'DIMENSION' and value.dimension == 'px') or
+            # Units may be ommited on 0
+            (value_type == 'NUMBER' and value_value == 0)):
         # cssutils promises that `DimensionValue.value` is an int or float
         assert isinstance(value_value, (int, float))
         return value_value
@@ -67,16 +67,20 @@ def get_pixel_value(value):
 
 
 def get_single_pixel_value(values):
-    """
-    Return the numeric value of a single pixel length or None.
+    """If ``values`` is a 1-element list of pixel lengths, return its value.
+
+    Otherwise return ``None``.
+
     """
     if len(values) == 1:
         return get_pixel_value(values[0])
 
 
 def get_percentage_value(value):
-    """
-    Return the numeric value of a percentage or None.
+    """If ``value`` is a percentage, return its value.
+
+    Otherwise return ``None``.
+
     """
     if value.type == 'PERCENTAGE':
         # cssutils promises that `DimensionValue.value` is an int or float
@@ -86,17 +90,22 @@ def get_percentage_value(value):
         # Not a percentage
         return None
 
+
 def get_single_percentage_value(values):
-    """
-    Return the numeric value of a single percentage or None.
+    """If ``values`` is a 1-element list of percentages, return its value.
+
+    Otherwise return ``None``.
+
     """
     if len(values) == 1:
         return get_percentage_value(values[0])
 
 
 def make_pixel_value(pixels):
-    """
-    Make a pixel DimensionValue. Reverse of get_single_pixel_value.
+    """Make a pixel :class:`DimensionValue`.
+
+    Reverse of :func:`get_single_pixel_value`.
+
     """
     value = DimensionValue()
     value._value = pixels
@@ -106,9 +115,7 @@ def make_pixel_value(pixels):
 
 
 def make_number(number):
-    """
-    Make a number DimensionValue.
-    """
+    """Make a number :class:`DimensionValue`."""
     value = DimensionValue()
     value._value = number
     value._type = 'NUMBER'
@@ -116,8 +123,10 @@ def make_number(number):
 
 
 def make_keyword(keyword):
-    """
-    Make a keyword Value. Reverse of get_keyword.
+    """Make a keyword :class:`Value`.
+
+    Reverse of :func:`get_keyword`.
+
     """
     value = Value()
     value._value = keyword
@@ -126,7 +135,5 @@ def make_keyword(keyword):
 
 
 def as_css(values):
-    """
-    Retur a string reperesentation for a value list.
-    """
+    """Return the string reperesentation of the ``values`` list."""
     return ' '.join(value.cssText for value in values)
