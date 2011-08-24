@@ -71,18 +71,17 @@ def validator(property_name=None):
     return decorator
 
 
-def keyword(function):
-    """Decorator validating properties whose value is a defined key word."""
-    valid_keywords = function()
+def single_keyword(function):
+    """Decorator for validators that only accept a single keyword."""
     @functools.wraps(function)
     def keyword_validator(values):
-        """Validate a property whose value is a defined key word."""
-        return get_single_keyword(values) in valid_keywords
+        """Wrap a validator to call get_single_keyword on values."""
+        return function(get_single_keyword(values))
     return keyword_validator
 
 
 def single_value(function):
-    """Decorator validating properties whose value is single."""
+    """Decorator for validators that only accept a single value."""
     @functools.wraps(function)
     def single_value_validator(values):
         """Validate a property whose value is single."""
@@ -119,10 +118,10 @@ def is_dimension_or_percentage(value, negative=True):
 
 
 @validator()
-@keyword
-def background_attachment():
+@single_keyword
+def background_attachment(keyword):
     """``background-attachment`` property validation."""
-    return 'scroll', 'fixed'
+    return keyword in ('scroll', 'fixed')
 
 
 @validator('background-color')
@@ -178,21 +177,21 @@ def background_position(values):
 
 
 @validator()
-@keyword
-def background_repeat():
+@single_keyword
+def background_repeat(keyword):
     """``background-repeat`` property validation."""
-    return 'repeat', 'repeat-x', 'repeat-y', 'no-repeat'
+    return keyword in ('repeat', 'repeat-x', 'repeat-y', 'no-repeat')
 
 
 @validator('border-top-style')
 @validator('border-right-style')
 @validator('border-left-style')
 @validator('border-bottom-style')
-@keyword
-def border_style():
+@single_keyword
+def border_style(keyword):
     """``border-*-style`` properties validation."""
-    return ('none', 'hidden', 'dotted', 'dashed', 'solid',
-            'double', 'groove', 'ridge', 'inset', 'outset')
+    return keyword in ('none', 'hidden', 'dotted', 'dashed', 'solid',
+                       'double', 'groove', 'ridge', 'inset', 'outset')
 
 
 @validator('border-top-width')
@@ -233,10 +232,10 @@ def positive_lenght_precentage_or_auto(value):
 
 
 @validator()
-@keyword
-def direction():
+@single_keyword
+def direction(keyword):
     """``direction`` property validation."""
-    return 'ltr', 'rtl'
+    return keyword in ('ltr', 'rtl')
 
 
 @validator()
@@ -274,17 +273,17 @@ def font_size(value):
 
 
 @validator()
-@keyword
-def font_style():
+@single_keyword
+def font_style(keyword):
     """``font-style`` property validation."""
-    return 'normal', 'italic', 'oblique'
+    return keyword in ('normal', 'italic', 'oblique')
 
 
 @validator()
-@keyword
-def font_variant():
+@single_keyword
+def font_variant(keyword):
     """``font-variant`` property validation."""
-    return 'normal', 'small-caps'
+    return keyword in ('normal', 'small-caps')
 
 
 @validator()
@@ -314,10 +313,10 @@ def line_height(value):
 
 
 @validator()
-@keyword
-def list_style_position():
+@single_keyword
+def list_style_position(keyword):
     """``list-style-position`` property validation."""
-    return 'inside', 'outside'
+    return keyword in ('inside', 'outside')
 
 
 @validator()
@@ -372,10 +371,10 @@ def text_decoration(values):
 
 
 @validator()
-@keyword
-def white_space():
+@single_keyword
+def white_space(keyword):
     """``white-space`` property validation."""
-    return 'normal', 'pre', 'nowrap', 'pre-wrap', 'pre-line'
+    return keyword in ('normal', 'pre', 'nowrap', 'pre-wrap', 'pre-line')
 
 
 @validator()
