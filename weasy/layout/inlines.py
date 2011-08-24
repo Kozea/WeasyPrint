@@ -30,8 +30,6 @@ from ..text import TextLineFragment
 from ..formatting_structure import boxes
 from ..css.values import get_single_keyword
 
-TEXT_FRAGMENT = TextLineFragment()
-
 
 class InlineContext(object):
     """Context manager for inline boxes."""
@@ -121,9 +119,6 @@ def inline_replaced_box_layout(box):
         # greater than 150px, and has a width not greater than the
         # device width.
 
-
-# Dimensions
-
 def compute_linebox_dimensions(linebox):
     """Compute the width and the height of the ``linebox``."""
     assert isinstance(linebox, boxes.LineBox)
@@ -151,9 +146,11 @@ def compute_inlinebox_dimensions(inlinebox):
 def compute_textbox_dimensions(textbox):
     """Compute the width, the height and the baseline of the ``textbox``."""
     assert isinstance(textbox, boxes.TextBox)
-    TEXT_FRAGMENT.set_textbox(textbox)
-    textbox.width, textbox.height = TEXT_FRAGMENT.get_size()
-    textbox.baseline = TEXT_FRAGMENT.get_baseline()
+    text_fragment = TextLineFragment.from_textbox(textbox)
+    textbox.width, textbox.height = text_fragment.get_size()
+    textbox.baseline = text_fragment.get_baseline()
+    textbox.extents = text_fragment.get_ink_extents()
+    textbox.logical_extents = text_fragment.get_logical_extents()
 
 
 def compute_atomicbox_dimensions(box):
@@ -449,16 +446,16 @@ def breaking_textbox(textbox, allocate_width):
         )
 
     """
-    TEXT_FRAGMENT.set_textbox(textbox)
-    TEXT_FRAGMENT.set_width(allocate_width)
+    text_fragment = TextLineFragment.from_textbox(textbox)
+    text_fragment.set_width(allocate_width)
     # We create a new TextBox with the first part of the cutting text
     first_tb = textbox.copy()
-    first_tb.text = TEXT_FRAGMENT.get_text()
+    first_tb.text = text_fragment.get_text()
     # And we check the remaining text
     second_tb = None
-    if TEXT_FRAGMENT.get_remaining_text() != "":
+    if text_fragment.get_remaining_text() != "":
         second_tb = textbox.copy()
-        second_tb.text = TEXT_FRAGMENT.get_remaining_text()
+        second_tb.text = text_fragment.get_remaining_text()
     return first_tb, second_tb
 
 
@@ -478,17 +475,19 @@ def white_space_processing(linebox):
         white_space = get_single_keyword(first_textbox.style.white_space)
         if white_space in ('normal', 'nowrap', 'pre-line'):
             if get_single_keyword(first_textbox.style.direction) == "rtl":
-                first_textbox.text = first_textbox.text.rstrip(' \t')
+                first_textbox.text = first_textbox.text.rstrip(' \t\n')
             else:
-                first_textbox.text = first_textbox.text.lstrip(' \t')
+                first_textbox.text = first_textbox.text.lstrip(' \t\n')
     if last_textbox:
+        # The extents for the last element must ignore the last white space,
+        # We use the logical extents instead of ink extents for this box.
+        last_textbox.extents = last_textbox.logical_extents
         white_space = get_single_keyword(last_textbox.style.white_space)
         if white_space in ('normal', 'nowrap', 'pre-line'):
             if get_single_keyword(last_textbox.style.direction) == "rtl":
-                last_textbox.text = last_textbox.text.lstrip(' \t')
+                last_textbox.text = last_textbox.text.lstrip(' \t\n')
             else:
-                last_textbox.text = last_textbox.text.rstrip(' \t')
-
+                last_textbox.text = last_textbox.text.rstrip(' \t\n')
     # TODO: All tabs (U+0009) are rendered as a horizontal shift that
     # lines up the start edge of the next glyph with the next tab stop.
     # Tab stops occur at points that are multiples of 8 times the width

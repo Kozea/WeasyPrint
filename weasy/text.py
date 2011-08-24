@@ -76,23 +76,6 @@ class TextFragment(object):
         letter_spacing = get_single_pixel_value(textbox.style.letter_spacing)
         if letter_spacing is not None:
             self.set_letter_spacing(letter_spacing)
-        if get_single_keyword(textbox.style.text_decoration) == 'none':
-            self.set_underline(False)
-            self.set_line_through(False)
-            self.set_overline(False)
-        else:
-            values = textbox.style.text_decoration
-            for value in values:
-                keyword = get_keyword(value)
-                if keyword == 'overline':
-                    self.set_overline(False)
-                elif keyword == 'underline':
-                    pass
-#                    self.set_underline(True)
-                elif keyword == 'line-through':
-                    self.set_line_through(True)
-                else:
-                    raise ValueError('text-decoration: %r' % values)
         self.set_foreground(textbox.style.color[0])
         # Have the draw package draw backgrounds like for blocks, do not
         # set the background with Pango.
@@ -241,19 +224,6 @@ class TextFragment(object):
             # TODO: somehow handle color.alpha
             pango.AttrForeground(color.red * 256, color.green * 256,
                                  color.blue * 256, 0, -1))
-
-    def set_underline(self, boolean):
-        """Define if the text must be underlined."""
-        value = pango.UNDERLINE_SINGLE if boolean else pango.UNDERLINE_NONE
-        self._set_attribute(pango.AttrUnderline(value, 0, -1))
-
-    def set_overline(self, boolean):
-        """Define if the text must be overlined."""
-        # TODO: implement the overline feature
-
-    def set_line_through(self, boolean):
-        """Define if the text must be stroked."""
-        self._set_attribute(pango.AttrStrikethrough(boolean, 0, -1))
 
     def set_letter_spacing(self, value):
         """Set the letter spacing ``value``."""

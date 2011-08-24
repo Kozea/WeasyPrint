@@ -33,7 +33,8 @@ from .figures import Point, Line, Trapezoid
 from ..text import TextLineFragment
 from ..formatting_structure import boxes
 from ..css.values import (
-    get_single_keyword, get_keyword, get_pixel_value, get_percentage_value)
+    get_single_keyword, get_keyword, get_pixel_value, get_percentage_value,
+    get_single_pixel_value)
 
 
 SUPPORTED_IMAGES = ['image/png', 'image/gif', 'image/jpeg', 'image/bmp']
@@ -305,13 +306,6 @@ def draw_border(context, box):
         draw_border_side(side, trapezoid)
 
 
-def draw_text(context, textbox):
-    """Draw ``textbox`` to a ``cairo.Context`` from ``pangocairo.Context``."""
-    fragment = TextLineFragment.from_textbox(textbox)
-    context.move_to(textbox.position_x, textbox.position_y)
-    context.show_layout(fragment.get_layout())
-
-
 def draw_replacedbox(context, box):
     """Draw the given :class:`boxes.ReplacedBox` to a ``cairo.context``."""
     x, y = box.padding_box_x(), box.padding_box_y()
@@ -324,3 +318,53 @@ def draw_replacedbox(context, box):
         scale_height = height / box.replacement.intrinsic_height()
         context.scale(scale_width, scale_height)
         box.replacement.draw(context)
+
+
+def draw_text(context, textbox):
+    """Draw ``textbox`` to a ``cairo.Context`` from ``pangocairo.Context``."""
+    fragment = TextLineFragment.from_textbox(textbox)
+    context.move_to(textbox.position_x, textbox.position_y)
+    context.show_layout(fragment.get_layout())
+    values = textbox.style.text_decoration
+    for value in values:
+        keyword = get_keyword(value)
+        if keyword == 'overline':
+            draw_overline(context, textbox)
+        elif keyword == 'underline':
+            draw_underline(context, textbox)
+        elif keyword == 'line-through':
+            draw_line_through(context, textbox)
+
+
+def draw_overline(context, textbox):
+    """Draw overline of ``textbox`` to a ``cairo.Context``."""
+    font_size = get_single_pixel_value(textbox.style.font_size)
+    position_y = textbox.baseline + textbox.position_y - (font_size * 0.15)
+    draw_text_decoration(context, position_y, textbox)
+
+
+def draw_underline(context, textbox):
+    """Draw underline of ``textbox`` to a ``cairo.Context``."""
+    font_size = get_single_pixel_value(textbox.style.font_size)
+    position_y = textbox.baseline + textbox.position_y + (font_size * 0.15)
+    draw_text_decoration(context, position_y, textbox)
+
+
+def draw_line_through(context, textbox):
+    """Draw line-through of ``textbox`` to a ``cairo.Context``."""
+    position_y = textbox.position_y + (textbox.height * 0.5)
+    draw_text_decoration(context, position_y, textbox)
+
+def draw_text_decoration(context, position_y, textbox):
+    """Draw text-decoration of ``textbox`` to a ``cairo.Context``."""
+    position_x = textbox.position_x
+    color = textbox.style['color'][0]
+    with context.stacked():
+        color = textbox.style['color'][0]
+        context.set_source_colorvalue(color)
+        context.set_line_width(1)
+        context.move_to(position_x, position_y)
+        offset = textbox.extents[2] - textbox.extents[0]
+        context.line_to(position_x + offset, position_y)
+        context.stroke()
+
