@@ -17,20 +17,25 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from attest import Tests, assert_hook
+"""
+Test the layout.
+
+"""
+
+from attest import Tests, assert_hook  # pylint: disable=W0611
 
 from ..css.values import get_single_keyword, get_single_pixel_value
 from ..document import PNGDocument
 from ..formatting_structure import boxes
 from .test_boxes import monkeypatch_validation
 
-suite = Tests()
-
+SUITE = Tests()
 FONTS = u"Nimbus Mono L, Liberation Mono, FreeMono, Monospace"
 
 
 def validate_absolute_and_float(real_non_shorthand,
         name, values, required=False):
+    """Fake validator for ``absolute`` and ``float``."""
     if (
         name == 'position' and
         get_single_keyword(values) == 'absolute'
@@ -43,16 +48,15 @@ def validate_absolute_and_float(real_non_shorthand,
 
 
 def parse(html_content):
-    """
-    Parse some HTML, apply stylesheets, transform to boxes and do layout.
-    """
+    """Parse some HTML, apply stylesheets, transform to boxes and lay out."""
     # TODO: remove this patching when asbolute and floats are validated
     with monkeypatch_validation(validate_absolute_and_float):
         return PNGDocument.from_string(html_content).pages
 
 
-@suite.test
+@SUITE.test
 def test_page():
+    """Test the layout for ``@page`` properties."""
     pages = parse('<p>')
     page = pages[0]
     assert isinstance(page, boxes.PageBox)
@@ -95,18 +99,18 @@ def test_page():
     assert page.outer_height == 300
     assert page.position_x == 0
     assert page.position_y == 0
-    assert page.width == 84 # 200px - 10% - 1 inch
-    assert page.height == 230 # 300px - 10px - 20%
+    assert page.width == 84  # 200px - 10% - 1 inch
+    assert page.height == 230  # 300px - 10px - 20%
 
     html = page.root_box
     assert html.element.tag == 'html'
-    assert html.position_x == 96 # 1in
+    assert html.position_x == 96  # 1in
     assert html.position_y == 10
     assert html.width == 84
 
     body = html.children[0]
     assert body.element.tag == 'body'
-    assert body.position_x == 96 # 1in
+    assert body.position_x == 96  # 1in
     assert body.position_y == 10
     # body has margins in the UA stylesheet
     assert body.margin_left == 8
@@ -117,8 +121,8 @@ def test_page():
 
     paragraph = body.children[0]
     assert paragraph.element.tag == 'p'
-    assert paragraph.position_x == 104 # 1in + 8px
-    assert paragraph.position_y == 18 # 10px + 8px
+    assert paragraph.position_x == 104  # 1in + 8px
+    assert paragraph.position_y == 18  # 10px + 8px
     assert paragraph.width == 68
 
     page, = parse('''
@@ -128,16 +132,17 @@ def test_page():
         </style>
         <body>
     ''')
-    assert page.width == 16 # 100 - 2 * 42
-    assert page.height == 58 # 100 - 2 * 21
+    assert page.width == 16  # 100 - 2 * 42
+    assert page.height == 58  # 100 - 2 * 21
     html = page.root_box
     assert html.element.tag == 'html'
-    assert html.position_x == 42 # 2 + 8 + 32
-    assert html.position_y == 21 # 1 + 4 + 16
+    assert html.position_x == 42  # 2 + 8 + 32
+    assert html.position_y == 21  # 1 + 4 + 16
 
 
-@suite.test
+@SUITE.test
 def test_block_widths():
+    """Test the blocks widths."""
     page, = parse('''
         <style>
             @page { margin: 0; size: 120px 2000px }
@@ -199,7 +204,6 @@ def test_block_widths():
     assert paragraphs[0].width == 94
     assert paragraphs[0].margin_left == 0
     assert paragraphs[0].margin_right == 0
-#    assert paragraphs[0].position_x == 0
 
     # No 'auto', over-constrained equation with ltr, the initial
     # 'margin-right: 0' was ignored.
@@ -254,8 +258,9 @@ def test_block_widths():
     assert paragraphs[10].margin_right == -106
 
 
-@suite.test
+@SUITE.test
 def test_block_heights():
+    """Test the blocks heights."""
     page, = parse('''
         <style>
             @page { margin: 0; size: 100px 2000px }
@@ -287,8 +292,9 @@ def test_block_heights():
     assert divs[1].height == 90 * 3
 
 
-@suite.test
+@SUITE.test
 def test_block_percentage_heights():
+    """Test the blocks heights set in percents."""
     page, = parse('''
         <style>
             html, body { margin: 0 }
@@ -321,8 +327,9 @@ def test_block_percentage_heights():
     assert body.height == 150
 
 
-@suite.test
+@SUITE.test
 def test_lists():
+    """Test the lists."""
     page, = parse('''
         <style>
             body { margin: 0 }
@@ -334,10 +341,10 @@ def test_lists():
     ''')
     html = page.root_box
     body = html.children[0]
-    ul = body.children[0]
-    li, = [child for child in ul.children
+    unordered_list = body.children[0]
+    list_element, = [child for child in unordered_list.children
            if not isinstance(child, boxes.AnonymousBox)]
-    line = li.children[0]
+    line = list_element.children[0]
     marker, spacer, content = line.children
     assert marker.text == u'◦'
     assert spacer.text == u'\u00a0'  # NO-BREAK SPACE
@@ -354,45 +361,48 @@ def test_lists():
     ''')
     html = page.root_box
     body = html.children[0]
-    ul = body.children[0]
-    li, = [child for child in ul.children
+    unordered_list = body.children[0]
+    list_element, = [child for child in unordered_list.children
            if not isinstance(child, boxes.AnonymousBox)]
-    marker = li.outside_list_marker
+    marker = list_element.outside_list_marker
     font_size = get_single_pixel_value(marker.style.font_size)
     assert marker.margin_right == 0.5 * font_size  # 0.5em
-    assert marker.position_x == (li.padding_box_x() - marker.width -
-                                 marker.margin_right)
-    assert marker.position_y == li.position_y
+    assert marker.position_x == (
+        list_element.padding_box_x() - marker.width - marker.margin_right)
+    assert marker.position_y == list_element.position_y
     assert marker.text == u'•'
-    line = li.children[0]
+    line = list_element.children[0]
     content, = line.children
     assert content.text == u'abc'
 
 
-@suite.test
-def test_breaking_empty_linebox():
+@SUITE.test
+def test_empty_linebox():
+    """Test lineboxes with no content other than space-like characters."""
     def get_paragraph_linebox(width, font_size):
+        """Helper returning a paragraph with given style."""
         page = u'''
             <style>
             p { font-size:%(font_size)spx; width:%(width)spx;
                 font-family:%(fonts)s;}
             </style>
             <p> </p>'''
-        page, = parse(page % {'fonts': FONTS, 'font_size': font_size,
-                              'width': width})
+        page, = parse(page % {
+            'fonts': FONTS, 'font_size': font_size, 'width': width})
         html = page.root_box
         body = html.children[0]
-        p = body.children[0]
-        return p
+        paraghaph = body.children[0]
+        return paraghaph
 
     font_size = 12
     width = 500
-    p = get_paragraph_linebox(width, font_size)
-    assert len(p.children) == 0
+    paragraph = get_paragraph_linebox(width, font_size)
+    assert len(paragraph.children) == 0
+    assert paragraph.height == 0
 
 
 # TODO: use Ahem font or an font from file directly
-#@suite.test
+#@SUITE.test
 #def test_breaking_linebox():
 #    def get_paragraph_linebox(width, font_size):
 #        page = u'''
@@ -436,9 +446,11 @@ def test_breaking_empty_linebox():
 #                    assert child.style.font_size[0].value == font_size
 
 
-@suite.test
+@SUITE.test
 def test_linebox_text():
+    """Test the creation of line boxes."""
     def get_paragraph_linebox():
+        """Helper returning a paragraph with customizable style."""
         page = u'''
             <style>
                 p { width:%(width)spx; font-family:%(fonts)s;}
@@ -456,19 +468,22 @@ def test_linebox_text():
     assert len(lines) == 2
 
     def get_text(lines):
+        """Get the whole text of line boxes."""
         for line in lines:
-            text = ""
+            text = ''
             for box in line.descendants():
                 if isinstance(box, boxes.TextBox):
-                    text = "%s%s" % (text, box.text)
+                    text = '%s%s' % (text, box.text)
             yield text
 
-    assert " ".join(get_text(lines)) == u"Lorem Ipsumis very coool"
+    assert ' '.join(get_text(lines)) == u'Lorem Ipsumis very coool'
 
 
-@suite.test
+@SUITE.test
 def test_linebox_positions():
+    """Test the position of line boxes."""
     def get_paragraph_linebox():
+        """Helper returning a paragraph with customizable style."""
         page = u'''
             <style>
                 p { width:%(width)spx; font-family:%(fonts)s;}
@@ -498,8 +513,9 @@ def test_linebox_positions():
         ref_position_y += line.height
 
 
-@suite.test
+@SUITE.test
 def test_page_breaks():
+    """Test the page breaks."""
     pages = parse('''
         <style>
             @page { size: 100px; margin: 10px }
@@ -519,8 +535,5 @@ def test_page_breaks():
         assert all([div.position_x == 10 for div in divs])
         page_divs.append(divs)
 
-    positions_y = [
-        [div.position_y for div in divs]
-        for divs in page_divs
-    ]
+    positions_y = [[div.position_y for div in divs] for divs in page_divs]
     assert positions_y == [[10, 40], [10, 40], [10]]
