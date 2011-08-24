@@ -271,25 +271,15 @@ def breaking_linebox(linebox, allocate_width):
     remaining_width = allocate_width
     while linebox.children:
         child = linebox.children.popleft()
-        # Split child into part1 (which could go on the current line)
-        # and part2 (which goes on the next line)
-        if isinstance(child, boxes.TextBox):
-            part1, part2 = breaking_textbox(child, remaining_width)
-            compute_textbox_dimensions(part1)
-        elif isinstance(child, boxes.InlineBox):
-            resolve_percentages(child)
-            part1, part2 = breaking_inlinebox(child, remaining_width)
-            compute_inlinebox_dimensions(part1)
-        elif isinstance(child, boxes.AtomicInlineLevelBox):
-            compute_atomicbox_dimensions(child)
-            part1 = child
-            part2 = None
 
+        part1, part2 = split_inline_level(child, remaining_width)
         assert part1 is not None
+
         if part1.margin_width() > remaining_width and new_line.children:
             # part1 is too wide, and the line is non-empty:
             # put child entirely on the next line.
-            linebox.children.appendleft(part2)
+            if part2 is not None:
+                linebox.children.appendleft(part2)
             part2 = part1
         else:
             remaining_width -= part1.margin_width()
@@ -307,14 +297,35 @@ def breaking_linebox(linebox, allocate_width):
         yield new_line
 
 
-def breaking_inlinebox(inlinebox, remaining_width):
-    """Cut ``inlinebox`` that sticks out the ``LineBox`` if possible.
+def split_inline_level(box, available_width):
+    """Split an inline-level box and return ``(part1, part2)``.
 
-    >>> breaking_inlinebox(inlinebox, allocate_width)
-    (first_inlinebox, second_inlinebox)
+    * The first part is non-empty (unless the box is empty)
+    * Have the first part as big as possible while being narrower than
+      ``available_width``, if possible (may overflow is no split is possible.)
+    * ``part2`` may be None.
 
-    ``second_inlinebox`` may be None, but ``first_inlinebox`` always has
-    at least one child.
+    """
+    if isinstance(box, boxes.TextBox):
+        part1, part2 = split_text_box(box, available_width)
+        compute_textbox_dimensions(part1)
+    elif isinstance(box, boxes.InlineBox):
+        resolve_percentages(box)
+        part1, part2 = split_inline_box(box, available_width)
+        compute_inlinebox_dimensions(part1)
+    elif isinstance(box, boxes.AtomicInlineLevelBox):
+        compute_atomicbox_dimensions(box)
+        part1 = box
+        part2 = None
+    else:
+        assert False, box
+    return part1, part2
+
+
+def split_inline_box(inlinebox, remaining_width):
+    """Split an inline box and return ``(part1, part2)``.
+
+    The same rules as split_inline_box() apply.
 
     Eg.::
 
@@ -348,28 +359,19 @@ def breaking_inlinebox(inlinebox, remaining_width):
         child = inlinebox.children.popleft()
         last_child = not inlinebox.children  # ie. the list is empty
 
-        if isinstance(child, boxes.TextBox):
-            part1, part2 = breaking_textbox(child, remaining_width)
-            compute_textbox_dimensions(part1)
-        elif isinstance(child, boxes.InlineBox):
-            resolve_percentages(child)
-            part1, part2 = breaking_inlinebox(child, remaining_width)
-            compute_inlinebox_dimensions(part1)
-        elif isinstance(child, boxes.AtomicInlineLevelBox):
-            compute_atomicbox_dimensions(child)
-            part1 = child
-            part2 = None
+        part1, part2 = split_inline_level(child, remaining_width)
+        assert part1 is not None
 
-        # TODO: this is non-optimal when
+        # TODO: this is non-optimal when last_child is True and
         #   width <= remaining_width < width + right_spacing
         # with
         #   width = part1.margin_width()
 
-        assert part1 is not None
         if part1.margin_width() > remaining_width and new_inlinebox.children:
             # part1 is too wide, and the inline is non-empty:
             # put child entirely on the next line.
-            inlinebox.children.appendleft(part2)
+            if part2 is not None:
+                inlinebox.children.appendleft(part2)
             part2 = part1
         else:
             remaining_width -= part1.margin_width()
@@ -384,13 +386,11 @@ def breaking_inlinebox(inlinebox, remaining_width):
     return new_inlinebox, None
 
 
-def breaking_textbox(textbox, allocate_width):
-    """Cut ``textbox`` to fit in ``allocate_width``.
+def split_text_box(textbox, allocate_width):
+    """Split a text box and return ``(part1, part2)``.
 
-    The `textbox` is cut only if it can be cut by a line break.
-
-    >>> breaking_textbox(textbox, allocate_width)
-    (first_textbox, second_textbox)
+    The same rules as split_inline_box() apply, but the text will also be
+    split at preserved newline characters.
 
     Eg.::
 
@@ -422,9 +422,10 @@ def breaking_textbox(textbox, allocate_width):
     first_tb.text = text_fragment.get_text()
     # And we check the remaining text
     second_tb = None
-    if text_fragment.get_remaining_text() != "":
+    remaining_text = text_fragment.get_remaining_text()
+    if remaining_text != "":
         second_tb = textbox.copy()
-        second_tb.text = text_fragment.get_remaining_text()
+        second_tb.text = remaining_text
     return first_tb, second_tb
 
 
