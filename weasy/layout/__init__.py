@@ -31,12 +31,11 @@ from ..formatting_structure import boxes
 
 
 def make_page(document, page_number):
-    """
-    Take just enough content from the beginning of the document to fill
-    one page.
+    """Take just enough content from the beginning to fill one page.
 
-    Return (page, finished). `page` is a laid out Page object, `finished`
-    is True if there is no more content, this was the last page.
+    Return ``page, finished``. ``page`` is a laid out Page object, ``finished``
+    is ``True`` if there is no more content, this was the last page.
+
     """
     page = boxes.PageBox(document, page_number)
 
@@ -72,6 +71,7 @@ def layout(document):
 
     :param document: a Document object.
     :returns: a list of laid out Page objects.
+
     """
     pages = []
     page_number = 1
