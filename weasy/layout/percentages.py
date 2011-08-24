@@ -17,18 +17,23 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from ..css.values import (get_single_keyword, get_single_pixel_value,
-                          get_single_percentage_value)
+"""
+Functions resolving percentages.
+
+"""
+
 from ..formatting_structure import boxes
+from ..css.values import (
+    get_single_keyword, get_single_pixel_value, get_single_percentage_value)
 
 
 def resolve_one_percentage(box, property_name, refer_to,
                            allowed_keywords=None):
-    """
-    Set a used length value from a computed length value.
-    `refer_to` is the length for 100%.
+    """Set a used length value from a computed length value.
 
-    If `refer_to` is not a number, it just replaces percentages.
+    ``refer_to`` is the length for 100%. If ``refer_to`` is not a number, it
+    just replaces percentages.
+
     """
     # box.style has computed values
     values = box.style[property_name]
@@ -58,9 +63,7 @@ def resolve_one_percentage(box, property_name, refer_to,
 
 
 def resolve_percentages(box):
-    """
-    Set used values as attributes of the box object.
-    """
+    """Set used values as attributes of the box object."""
     # cb = containing block
     cb_width, cb_height = box.containing_block_size()
     if isinstance(box, boxes.PageBox):
@@ -103,4 +106,3 @@ def resolve_percentages(box):
         else:
             pixels = get_single_pixel_value(values)
         setattr(box, prop, pixels)
-
