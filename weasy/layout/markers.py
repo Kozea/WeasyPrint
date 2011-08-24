@@ -18,17 +18,18 @@
 
 
 """
-
+Functions laying out the markers.
 
 """
 
 from .percentages import resolve_percentages
-from .. import text
+from ..text import TextFragment
 from ..css.values import get_single_keyword, get_single_pixel_value
 from ..formatting_structure import boxes
 
 
 def list_marker_layout(box):
+    """Lay out the list markers of ``box``."""
     # List markers can be either 'inside' or 'outside'.
     # Inside markers are layed out just like normal inline content, but
     # outside markers need specific layout.
@@ -38,7 +39,7 @@ def list_marker_layout(box):
     if marker:
         resolve_percentages(marker)
         if isinstance(marker, boxes.TextBox):
-            text_fragment = text.TextFragment.from_textbox(marker)
+            text_fragment = TextFragment.from_textbox(marker)
             marker.width, marker.height = text_fragment.get_size()
         else:
             # Image marker
@@ -63,7 +64,7 @@ def list_marker_layout(box):
 
 
 def image_marker_layout(box):
-    """Create the layout for an :class:`boxes.ImageMarkerBox` object.
+    """Layout the :class:`boxes.ImageMarkerBox` ``box``.
 
     :class:`boxes.ImageMarkerBox` objects are :class:`boxes.ReplacedBox`
     objects, but their used size is computed differently.
@@ -74,10 +75,10 @@ def image_marker_layout(box):
 
 
 def list_style_image_size(marker_box):
-    """
-    Return the used (width, height) for an image in `list-style-image`.
+    """Return the used ``width, height`` for an image in ``list-style-image``.
 
     See http://www.w3.org/TR/CSS21/generate.html#propdef-list-style-image
+
     """
     image = marker_box.replacement
     width = image.intrinsic_width()
