@@ -16,21 +16,27 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from attest import Tests, assert_hook
-import attest
+"""
+Test the text management.
 
-from .. import text
+"""
+
+from attest import Tests, assert_hook  # pylint: disable=W0611
+
+from ..text import TextFragment, TextLineFragment, ALIGN_PROPERTIES
 
 
-suite = Tests()
+SUITE = Tests()
 
 FONTS = u"Nimbus Mono L, Liberation Mono, FreeMono, Monospace"
 
-@suite.test
+
+@SUITE.test
 def test_line_content():
+    """Test the line break for various fixed-width lines."""
     string = u"This is a text for test"
     width = 120
-    line = text.TextLineFragment(string, width)
+    line = TextLineFragment(string, width)
     line.set_font_size(12)
     line.set_font_family(FONTS)
     assert line.get_remaining_text() == u'text for test'
@@ -39,71 +45,72 @@ def test_line_content():
     assert u"%s%s" % (line.get_text(), line.get_remaining_text())  == string
 
 
-@suite.test
+@SUITE.test
 def test_line_with_any_width():
-    """
-    we don't specify width in order to get the maximum width of the text
-    """
-    line = text.TextLineFragment(u"some text")
+    """Test the auto-fit width of lines."""
+    line = TextLineFragment(u'some text')
     line.set_font_family(FONTS)
     width = line.get_size()[0]
-    line.set_text("some some some text some some some text")
+    line.set_text('some some some text some some some text')
     new_width = line.get_size()[0]
 
     assert width < new_width
 
-@suite.test
+
+@SUITE.test
 def test_line_breaking():
-    string = u"This is a text for test"
+    """Test the line breaking."""
+    string = u'This is a text for test'
     width = 120
-    line = text.TextLineFragment(string, width)
+    line = TextLineFragment(string, width)
     line.set_font_family(FONTS)
 
     line.set_font_size(12)
     line.set_font_weight(200)
-    assert line.get_remaining_text() == u"text for test"
+    assert line.get_remaining_text() == u'text for test'
 
     line.set_font_weight(800)
-    assert line.get_remaining_text() == u"text for test"
+    assert line.get_remaining_text() == u'text for test'
 
     line.set_font_size(14)
-    assert line.get_remaining_text() == u"text for test"
+    assert line.get_remaining_text() == u'text for test'
 
-@suite.test
+
+@SUITE.test
 def test_text_dimension():
-    string = u"This is a text for test. This is a test for text.py"
+    """Test the font size and spacing size impact on the text dimension."""
+    string = u'This is a text for test. This is a test for text.py'
     width = 200
-    fragment = text.TextFragment(string, width)
+    fragment = TextFragment(string, width)
     fragment.set_font_size(12)
 
     dimension = list(fragment.get_size())
     fragment.set_font_size(20)
     new_dimension = list(fragment.get_size())
-    assert dimension[0]*dimension[1] < new_dimension[0]*new_dimension[1]
+    assert dimension[0] * dimension[1] < new_dimension[0] * new_dimension[1]
 
     dimension = list(fragment.get_size())
     fragment.set_spacing(20)
     new_dimension = list(fragment.get_size())
-    assert dimension[0]*dimension[1] < new_dimension[0]*new_dimension[1]
+    assert dimension[0] * dimension[1] < new_dimension[0] * new_dimension[1]
 
 
-@suite.test
+@SUITE.test
 def test_text_other():
-    """ Test other properties """
-    fragment = text.TextFragment(u"", 40)
-    fragment.set_text(u"some text")
+    """Test various text properties."""
+    fragment = TextFragment(u'', 40)
+    fragment.set_text(u'some text')
 
-    #The default value of alignement property is ``left`` for western script
-    assert fragment.layout.get_alignment() == text.ALIGN_PROPERTIES["left"]
+    # The default value of alignement property is ``left`` for western script
+    assert fragment.layout.get_alignment() == ALIGN_PROPERTIES['left']
     assert not fragment.layout.get_justify()
 
-    for key, value in text.ALIGN_PROPERTIES.iteritems():
+    for key, value in ALIGN_PROPERTIES.iteritems():
         fragment.set_alignment(key)
         assert fragment.layout.get_alignment() == value
 
     fragment.set_alignment('justify')
     assert fragment.layout.get_justify()
-
 
     fragment.justify = True
     assert fragment.justify != False
