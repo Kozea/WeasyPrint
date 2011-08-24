@@ -16,6 +16,10 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""
+Functions laying out the block boxes.
+
+"""
 
 from __future__ import division
 
@@ -27,10 +31,12 @@ from ..formatting_structure import boxes
 
 
 def block_level_layout(box, max_position_y):
-    """
+    """Lay out the block-level ``box``.
+
     :param max_position_y: the absolute vertical position (as in
-                                `some_box.position_y`) of the bottom of the
-                                content box of the current page area.
+                           ``some_box.position_y``) of the bottom of the
+                           content box of the current page area.
+
     """
     if isinstance(box, boxes.BlockBox):
         return block_box_layout(box, max_position_y)
@@ -41,6 +47,7 @@ def block_level_layout(box, max_position_y):
 
 
 def block_box_layout(box, max_position_y):
+    """Lay out the block ``box``."""
     resolve_percentages(box)
     block_level_width(box)
     list_marker_layout(box)
@@ -48,7 +55,7 @@ def block_box_layout(box, max_position_y):
 
 
 def block_replaced_box_layout(box):
-    """Create the layout for a block :class:`boxes.ReplacedBox` object."""
+    """Lay out the block :class:`boxes.ReplacedBox` ``box``."""
     assert isinstance(box, boxes.ReplacedBox)
     resolve_percentages(box)
 
@@ -84,8 +91,9 @@ def block_replaced_box_layout(box):
 
 
 def block_level_width(box):
-    # cb = containing block
-    cb_width, cb_height = box.containing_block_size()
+    """Set the ``box`` width."""
+    # 'cb' stands for 'containing block'
+    cb_width = box.containing_block_size()[0]
 
     # http://www.w3.org/TR/CSS21/visudet.html#blockwidth
 
@@ -143,6 +151,7 @@ def block_level_width(box):
 
 
 def block_level_height(box, max_position_y):
+    """Set the ``box`` height."""
     assert isinstance(box, boxes.BlockBox)
 
     if get_single_keyword(box.style.overflow) != 'visible':
@@ -163,8 +172,8 @@ def block_level_height(box, max_position_y):
         child = box.children.popleft()
         if not child.is_in_normal_flow():
             continue
-        # TODO: collapse margins:
-        # http://www.w3.org/TR/CSS21/visudet.html#normal-block
+        # TODO: collapse margins
+        # See http://www.w3.org/TR/CSS21/visudet.html#normal-block
         child.position_x = position_x
         child.position_y = position_y
         if isinstance(child, boxes.LineBox):
@@ -192,4 +201,3 @@ def block_level_height(box, max_position_y):
 
     finished = not box.children
     return new_box, finished
-
