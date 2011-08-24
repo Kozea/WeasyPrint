@@ -17,33 +17,43 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+"""
+Test the drawing functions.
+
+"""
+
 import os.path
 from array import array
 
 import png
-from attest import Tests, assert_hook
+from attest import Tests, assert_hook  # pylint: disable=W0611
 
 from . import resource_filename
 from ..document import PNGDocument
 
+# One-letter variables are OK here
+# pylint: disable=C0103
 
 _ = array('B', [255, 255, 255])  # white
 r = array('B', [255, 0, 0])  # red
 B = array('B', [0, 0, 255])  # blue
 
-suite = Tests()
+SUITE = Tests()
 
 
 def make_filename(dirname, basename):
+    """Return the filename of the output image."""
     return os.path.join(os.path.dirname(__file__), dirname, basename + '.png')
 
 
 def format_pixel(lines, x, y):
+    """Return the pixel color as ``#RRGGBB``."""
     pixel = lines[y][3 * x:3 * (x + 1)]
     return ('#' + 3 * '%02x') % tuple(pixel)
 
 
 def test_pixels(name, expected_width, expected_height, expected_lines, html):
+    """Helper testing the size of the image and the pixels values."""
     assert len(expected_lines) == expected_height, name
     assert len(expected_lines[0]) == 3 * expected_width, name
 
@@ -77,8 +87,9 @@ def test_pixels(name, expected_width, expected_height, expected_lines, html):
                 assert pixel == expected_pixel, \
                     'Pixel (%i, %i) does not match in %s' % (x, y, name)
 
-@suite.test
+@SUITE.test
 def test_canvas_background():
+    """Test the background applied on ``<html>`` and/or ``<body>`` tags."""
     test_pixels('all_blue', 10, 10, (10 * [10 * B]), '''
         <style>
             @page { size: 10px }
@@ -111,8 +122,9 @@ def test_canvas_background():
     ''')
 
 
-@suite.test
+@SUITE.test
 def test_background_image():
+    """Test background images."""
     # pattern.png looks like this:
 
     #    r+B+B+B,
@@ -429,8 +441,9 @@ def test_background_image():
         ''' % (css,))
 
 
-@suite.test
+@SUITE.test
 def test_list_style_image():
+    """Test images as list markers."""
     for position, pixels in [
         ('outside', [
         #   ++++++++++++++      ++++  <li> horizontal margins: 7px 2px
@@ -451,7 +464,7 @@ def test_list_style_image():
         ('inside', [
         #   ++++++++++++++      ++++  <li> horizontal margins: 7px 2px
         #                 ######      <li> width: 12 - 7 - 2 = 3px
-        #                 ********    list marker image is 4px wide, it overflows
+        #                 ********    list marker image is 4px wide: overflow
             _+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+r+B+B+B+_,
