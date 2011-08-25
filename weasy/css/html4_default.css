@@ -12,7 +12,7 @@ h5, h6, noframes,
 ol, p, ul, center,
 dir, hr, menu, pre   { display: block; unicode-bidi: embed }
 li              { display: list-item }
-head            { display: none }
+head, script    { display: none }
 table           { display: table }
 tr              { display: table-row }
 thead           { display: table-header-group }
