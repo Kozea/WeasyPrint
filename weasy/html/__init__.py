@@ -78,6 +78,16 @@ def handle_img(document, element):
     return make_replaced_box(document, element, replacement)
 
 
+@handler('br')
+def handle_br(document, element):
+    """
+    Handle <br> tags: return a preserved new-line character.
+    """
+    box = boxes.TextBox(document, element, '\n')
+    box.style.white_space = [make_keyword('pre')]
+    return box
+
+
 class Replacement(object):
     """Abstract base class for replaced elements. """
     def intrinsic_width(self):
