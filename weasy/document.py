@@ -40,7 +40,7 @@ from . import utils
 # This is a one-element tuple.
 DEFAULT_USER_AGENT_STYLESHEETS = (
     parseFile(
-        os.path.join(os.path.dirname(__file__), 'css', 'html4_default.css')
+        os.path.join(os.path.dirname(__file__), 'html', 'html4_default.css')
     ),
 )
 

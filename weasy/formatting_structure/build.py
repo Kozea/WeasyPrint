@@ -27,7 +27,7 @@ including handling of anonymous boxes and whitespace processing.
 
 import re
 from . import boxes
-from ..replaced import get_replaced_element, ImageReplacement
+from .. import html
 from ..css.values import get_single_keyword
 
 
@@ -41,6 +41,7 @@ GLYPH_LIST_MARKERS = {
 def build_formatting_structure(document):
     """Build a formatting structure (box tree) from a ``document``."""
     box = dom_to_box(document, document.dom)
+    assert box is not None
     box = inline_in_block(box)
     box = block_in_inline(box)
     box = process_whitespace(box)
@@ -70,21 +71,15 @@ def dom_to_box(document, element):
     See http://www.w3.org/TR/CSS21/visuren.html#anonymous
 
     """
-    # TODO: should be the used value
+    # TODO: should be the used value. When does the used value for `display`
+    # differ from the computer value?
     display = get_single_keyword(document.style_for(element).display)
-    assert display != 'none'
+    if display == 'none':
+        return None
 
-    replacement = get_replaced_element(element)
-    if replacement:
-        if display in ('block', 'list-item', 'table'):
-            type_ = boxes.BlockLevelReplacedBox
-        elif display in ('inline', 'inline-table', 'inline-block'):
-            type_ = boxes.InlineLevelReplacedBox
-        else:
-            raise NotImplementedError('Unsupported display: ' + display)
-        box = type_(document, element, replacement)
-        # The content is replaced, do not generate boxes for the element’s
-        # text and children.
+    box = html.handle_element(document, element)
+    if box is not None:
+        # Specific handling for the element. (eg. replaced element)
         return box
 
     if display in ('block', 'list-item'):
@@ -98,20 +93,20 @@ def dom_to_box(document, element):
     else:
         raise NotImplementedError('Unsupported display: ' + display)
 
-    # Ignore children on replaced elements.
-    if isinstance(box, boxes.ParentBox):
-        if element.text:
-            box.add_child(boxes.TextBox(document, element, element.text))
-        for child_element in element:
-            if get_single_keyword(
-                    document.style_for(child_element).display) != 'none':
-                # lxml.html already converts HTML entities to text.
-                # Here we ignore comments and XML processing instructions.
-                if isinstance(child_element.tag, basestring):
-                    box.add_child(dom_to_box(document, child_element))
-            if child_element.tail:
-                box.add_child(boxes.TextBox(
-                    document, element, child_element.tail))
+    assert isinstance(box, boxes.ParentBox)
+    if element.text:
+        box.add_child(boxes.TextBox(document, element, element.text))
+    for child_element in element:
+        # lxml.html already converts HTML entities to text.
+        # Here we ignore comments and XML processing instructions.
+        if isinstance(child_element.tag, basestring):
+            child_box = dom_to_box(document, child_element)
+            if child_box is not None:
+                box.add_child(child_box)
+            # else: child_element had `display: None`
+        if child_element.tail:
+            box.add_child(boxes.TextBox(
+                document, element, child_element.tail))
 
     return box
 
@@ -130,7 +125,7 @@ def add_list_marker(box):
         marker = GLYPH_LIST_MARKERS[type_]
         marker_box = boxes.TextBox(box.document, box.element, marker)
     else:
-        replacement = ImageReplacement(image[0].absoluteUri)
+        replacement = html.ImageReplacement(image[0].absoluteUri)
         marker_box = boxes.ImageMarkerBox(
             box.document, box.element, replacement)
 
