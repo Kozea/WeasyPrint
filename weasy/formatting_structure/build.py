@@ -44,6 +44,7 @@ def build_formatting_structure(document):
     box = inline_in_block(box)
     box = block_in_inline(box)
     box = process_whitespace(box)
+    # TODO: only run this while testing?
     sanity_checks(box)
     return box
 
@@ -159,7 +160,8 @@ def process_whitespace(box):
         text = child.text
         handling = get_single_keyword(child.style.white_space)
 
-        text = re.sub('[\t\r ]*\n[\t\r ]*', '\n', text)
+        if handling in ('normal', 'nowrap', 'pre-line'):
+            text = re.sub('[\t\r ]*\n[\t\r ]*', '\n', text)
         if handling in ('pre', 'pre-wrap'):
             # \xA0 is the non-breaking space
             text = text.replace(' ', u'\xA0')
@@ -399,6 +401,8 @@ def _inner_block_in_inline(box):
 
 def sanity_checks(box):
     """Check that the rules regarding boxes are met.
+
+    This is not required and only helps debugging.
 
     - A block container can contain either only block-level boxes or
       only line boxes;
