@@ -200,5 +200,8 @@ def block_level_height(box, max_position_y):
     if new_box.height == 'auto':
         new_box.height = position_y - initial_position_y
 
+    # If there was a list marker, we kept it on `new_box`. Do not repeat on
+    # `box` on the next page.
+    box.outside_list_marker = None
     finished = not box.children
     return new_box, finished
