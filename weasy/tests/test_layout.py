@@ -546,7 +546,7 @@ def test_page_breaks():
 
 @SUITE.test
 def test_inlinebox_spliting():
-    """Test the position of line boxes."""
+    """Test the inline boxes spliting."""
     from ..layout.inlines import split_inline_box
     from ..layout.percentages import resolve_percentages
     def get_inlinebox(content):
@@ -558,10 +558,10 @@ def test_inlinebox_spliting():
         paragraph = body.children[0]
         return paragraph.children[0].children[0]
 
-    def get_parts(original_inlinebox, width):
-        inlinebox = original_inlinebox.copy()
-        while inlinebox.children:
-            part1, part2 = split_inline_box(inlinebox, width)
+    def get_parts(inlinebox, width):
+        copy_inlinebox = inlinebox.copy()
+        while copy_inlinebox.children:
+            part1, part2 = split_inline_box(copy_inlinebox, width)
             yield part1
 
     def get_joined_text(parts):
@@ -575,10 +575,7 @@ def test_inlinebox_spliting():
             test_inlinebox_spacing(inlinebox, value, side)
 
     def test_inlinebox_spacing(inlinebox, value, side):
-        try:
-            assert getattr(inlinebox, 'margin_%s' % side) == value
-        except:
-            1/0
+        assert getattr(inlinebox, 'margin_%s' % side) == value
         assert getattr(inlinebox, 'padding_%s' % side) == value
         assert getattr(inlinebox, 'border_%s_width' % side) == value
 
@@ -594,11 +591,18 @@ def test_inlinebox_spliting():
     assert len(parts) == 1
     assert original_text == get_joined_text(parts)
 
+    inlinebox = get_inlinebox(content)
+    resolve_percentages(inlinebox)
+    original_text = inlinebox.children[0].text
+
     # test with width = 100
     parts = list(get_parts(inlinebox, 100))
     assert len(parts) != 1
     assert original_text == get_joined_text(parts)
-    assert len(inlinebox.children) != 0
+
+    inlinebox = get_inlinebox(content)
+    resolve_percentages(inlinebox)
+    original_text = inlinebox.children[0].text
 
     # test with width = 10
     parts = list(get_parts(inlinebox, 10))
@@ -619,6 +623,10 @@ def test_inlinebox_spliting():
     assert original_text == get_joined_text(parts)
     test_inlinebox_all_spacing(parts[0], 10)
 
+    inlinebox = get_inlinebox(content)
+    resolve_percentages(inlinebox)
+    original_text = inlinebox.children[0].text
+
     # test with width = 1000
     parts = list(get_parts(inlinebox, 100))
     assert len(parts) != 1
@@ -632,4 +640,91 @@ def test_inlinebox_spliting():
     for part in parts:
         test_inlinebox_spacing(part, 0, 'right')
         test_inlinebox_spacing(part, 0, 'left')
+
+
+@SUITE.test
+def test_inlinebox_text_after_spliting():
+    """Test the inlinebox text after spliting."""
+    from ..layout.inlines import split_inline_box
+    from ..layout.percentages import resolve_percentages
+    def get_inlinebox(content):
+        """Helper returning a inlinebox with customizable style."""
+        page = u'<style>p { width:%(width)spx; font-family:%(fonts)s;}</style>'
+        page = '%s <p>%s</p>' % (page, content)
+        html = parse_without_layout(page % {'fonts': FONTS, 'width': 200})
+        body = html.children[0]
+        paragraph = body.children[0]
+        return paragraph.children[0].children[0]
+
+    def get_parts(inlinebox, width):
+        while inlinebox.children:
+            part1, part2 = split_inline_box(inlinebox, width)
+            yield part1
+
+    def get_full_text(inlinebox):
+        text = ""
+        for part in inlinebox.descendants():
+            if isinstance(part, boxes.TextBox):
+                text = "%s%s" % (text, part.text)
+        return text
+
+    def get_joined_text(parts):
+        text = ""
+        for part in parts:
+            text = "%s%s" % (text, get_full_text(part))
+        return text
+
+    content = u"""<strong><em><em><em>
+                  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
+                  </em></em></em></strong>"""
+
+    inlinebox = get_inlinebox(content)
+    resolve_percentages(inlinebox)
+
+    original_text = get_full_text(inlinebox)
+
+    # test with width = 10
+    parts = list(get_parts(inlinebox, 100))
+    assert len(parts) > 2
+    assert original_text == get_joined_text(parts)
+
+
+@SUITE.test
+def test_page_and_linebox_breaking():
+    """Test the linebox text after spliting linebox and page."""
+    def get_pages(content):
+        """Helper returning a inlinebox with customizable style."""
+        page = '''
+                <style>
+                p { font-family:%(fonts)s; font-size:12px}
+                @page { size: 100px; margin:2px; border:1px solid }
+                body { margin: 0 }
+                </style>
+                <div>%(content)s</div>'''
+        page = page % {'fonts': FONTS, 'content':content}
+        return parse(page)
+
+    def get_full_text(lines):
+        text = ""
+        for line in lines:
+            for child in line.descendants():
+                if isinstance(child, boxes.TextBox):
+                    text = "%s %s" % (text, child.text)
+        return text.strip()
+
+    def get_joined_text(pages):
+        text = ""
+        for page in pages:
+            html = page.root_box
+            body = html.children[0]
+            div = body.children[0]
+            lines = div.children
+            text = "%s %s" % (text, get_full_text(lines))
+        return text.strip()
+
+    content = u"1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15"
+
+    pages = get_pages(content)
+    assert len(pages) == 2
+    assert content == get_joined_text(pages)
 

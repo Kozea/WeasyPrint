@@ -41,9 +41,25 @@ class InlineContext(object):
         self.containing_block_width = linebox.containing_block_size()[0]
         self.save()
 
+    def copy(self, box):
+        copy_box = box.copy()
+        if isinstance(box, boxes.ParentBox):
+            copy_box.empty()
+            for child in box.children:
+                if isinstance(box, boxes.ParentBox):
+                    copy_child = self.copy(child)
+                else:
+                    copy_child = child.copy()
+                copy_box.add_child(copy_child)
+            return copy_box
+        else:
+            return copy_box
+
     def save(self):
         """Save the context."""
-        self._children = deque(self.linebox.children)
+        self._children = deque()
+        for child in self.linebox.children:
+            self._children.append(self.copy(child))
         self._position_y = self.position_y
 
     def restore(self):
@@ -501,3 +517,4 @@ def vertical_align_processing(linebox):
     bottom_positions = [
         box.position_y + box.height for box in linebox.children]
     linebox.height = max(bottom_positions or [0]) - linebox.position_y
+
