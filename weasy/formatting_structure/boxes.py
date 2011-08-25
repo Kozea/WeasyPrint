@@ -321,6 +321,14 @@ class ParentBox(Box):
         for child in self.children:
             child.translate(x, y)
 
+    def copy(self):
+        """Return shallow copy of the box with also copy of children."""
+        new_box = super(ParentBox, self).copy()
+        new_box.empty()
+        for child in self.children:
+            new_box.add_child(child.copy())
+        return new_box
+
 
 class BlockLevelBox(Box):
     """A box that participates in an block formatting context.
@@ -498,3 +506,4 @@ class ImageMarkerBox(InlineLevelReplacedBox, AnonymousBox):
     anonymous, inline-level, and replaced.
 
     """
+
