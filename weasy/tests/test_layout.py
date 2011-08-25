@@ -33,6 +33,17 @@ SUITE = Tests()
 FONTS = u"Nimbus Mono L, Liberation Mono, FreeMono, Monospace"
 
 
+def body_children(page):
+    """
+    Take a page with boxes for <html> and <body> elements, and return
+    <body>’s children.
+    """
+    html = page.root_box
+    assert html.element.tag == 'html'
+    body, = html.children
+    assert body.element.tag == 'body'
+    return body.children
+
 def parse_without_layout(html_content):
     """Parse some HTML, apply stylesheets, transform to boxes """
     return PNGDocument.from_string(html_content).formatting_structure
@@ -113,7 +124,7 @@ def test_page():
     assert html.position_y == 10
     assert html.width == 84
 
-    body = html.children[0]
+    body, = html.children
     assert body.element.tag == 'body'
     assert body.position_x == 96  # 1in
     assert body.position_y == 10
@@ -124,7 +135,7 @@ def test_page():
     assert body.margin_bottom == 8
     assert body.width == 68
 
-    paragraph = body.children[0]
+    paragraph, = body.children
     assert paragraph.element.tag == 'p'
     assert paragraph.position_x == 104  # 1in + 8px
     assert paragraph.position_y == 18  # 10px + 8px
@@ -177,7 +188,7 @@ def test_block_widths():
     ''')
     html = page.root_box
     assert html.element.tag == 'html'
-    body = html.children[0]
+    body, = html.children
     assert body.element.tag == 'body'
     assert body.width == 120
 
@@ -287,11 +298,7 @@ def test_block_heights():
           <p></p>
         </div>
     ''')
-    html = page.root_box
-    assert html.element.tag == 'html'
-    body = html.children[0]
-    assert body.element.tag == 'body'
-    divs = body.children
+    divs = body_children(page)
 
     assert divs[0].height == 90
     assert divs[1].height == 90 * 3
@@ -309,7 +316,7 @@ def test_block_percentage_heights():
     ''')
     html = page.root_box
     assert html.element.tag == 'html'
-    body = html.children[0]
+    body, = html.children
     assert body.element.tag == 'body'
 
     # Since html’s height depend on body’s, body’s 50% means 'auto'
@@ -325,7 +332,7 @@ def test_block_percentage_heights():
     ''')
     html = page.root_box
     assert html.element.tag == 'html'
-    body = html.children[0]
+    body, = html.children
     assert body.element.tag == 'body'
 
     # This time the percentage makes sense
@@ -344,12 +351,10 @@ def test_lists():
           <li>abc</li>
         </ul>
     ''')
-    html = page.root_box
-    body = html.children[0]
-    unordered_list = body.children[0]
+    unordered_list, = body_children(page)
     list_element, = [child for child in unordered_list.children
            if not isinstance(child, boxes.AnonymousBox)]
-    line = list_element.children[0]
+    line, = list_element.children
     marker, spacer, content = line.children
     assert marker.text == u'◦'
     assert spacer.text == u'\u00a0'  # NO-BREAK SPACE
@@ -364,9 +369,7 @@ def test_lists():
           <li>abc</li>
         </ul>
     ''')
-    html = page.root_box
-    body = html.children[0]
-    unordered_list = body.children[0]
+    unordered_list, = body_children(page)
     list_element, = [child for child in unordered_list.children
            if not isinstance(child, boxes.AnonymousBox)]
     marker = list_element.outside_list_marker
@@ -376,7 +379,7 @@ def test_lists():
         list_element.padding_box_x() - marker.width - marker.margin_right)
     assert marker.position_y == list_element.position_y
     assert marker.text == u'•'
-    line = list_element.children[0]
+    line, = list_element.children
     content, = line.children
     assert content.text == u'abc'
 
@@ -394,9 +397,7 @@ def test_empty_linebox():
             <p> </p>'''
         page, = parse(page % {
             'fonts': FONTS, 'font_size': font_size, 'width': width})
-        html = page.root_box
-        body = html.children[0]
-        paraghaph = body.children[0]
+        paraghaph, = body_children(page)
         return paraghaph
 
     font_size = 12
@@ -463,9 +464,7 @@ def test_linebox_text():
             <p><em>Lorem Ipsum</em>is very <strong>coool</strong></p>'''
 
         page, = parse(page % {'fonts': FONTS, 'width': 200})
-        html = page.root_box
-        body = html.children[0]
-        paragraph = body.children[0]
+        paragraph, = body_children(page)
         return paragraph
 
     paragraph = get_paragraph_linebox()
@@ -495,9 +494,7 @@ def test_linebox_positions():
             </style>
             <p>this is test for <strong>Weasyprint</strong></p>'''
         page, = parse(page % {'fonts': FONTS, 'width': 200})
-        html = page.root_box
-        body = html.children[0]
-        paragraph = body.children[0]
+        paragraph, = body_children(page)
         return paragraph
 
     paragraph = get_paragraph_linebox()
@@ -518,7 +515,37 @@ def test_linebox_positions():
         ref_position_y += line.height
 
 
-#@SUITE.test
+@SUITE.test
+def test_forced_line_breaks():
+    """Test <pre> and <br>."""
+    # These lines should be small enough to fit on the default A4 page
+    # with the default 12pt font-size.
+    page, = parse("""
+        <pre>Lorem ipsum dolor sit amet,
+            consectetur adipiscing elit.
+            Sed sollicitudin nibh
+            et turpis molestie tristique.</pre>
+    """)
+    pre, = body_children(page)
+    assert pre.element.tag == 'pre'
+    lines = pre.children
+    assert all(isinstance(line, boxes.LineBox) for line in lines)
+    assert len(lines) == 4
+
+    page, = parse("""
+        <p>Lorem ipsum dolor sit amet,<br>
+            consectetur adipiscing elit.<br>
+            Sed sollicitudin nibh<br>
+            et turpis molestie tristique.</p>
+    """)
+    pre, = body_children(page)
+    assert pre.element.tag == 'p'
+    lines = pre.children
+    assert all(isinstance(line, boxes.LineBox) for line in lines)
+    assert len(lines) == 4
+
+
+@SUITE.test
 def test_page_breaks():
     """Test the page breaks."""
     pages = parse('''
@@ -531,11 +558,7 @@ def test_page_breaks():
     ''')
     page_divs = []
     for page in pages:
-        html = page.root_box
-        assert html.element.tag == 'html'
-        body = html.children[0]
-        assert body.element.tag == 'body'
-        divs = body.children
+        divs = body_children(page)
         assert all([div.element.tag == 'div' for div in divs])
         assert all([div.position_x == 10 for div in divs])
         page_divs.append(divs)

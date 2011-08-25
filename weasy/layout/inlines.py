@@ -442,7 +442,7 @@ def split_text_box(textbox, allocate_width):
     # And we check the remaining text
     second_tb = None
     remaining_text = text_fragment.get_remaining_text()
-    if remaining_text != "":
+    if remaining_text is not None:
         second_tb = textbox.copy()
         second_tb.text = remaining_text
     return first_tb, second_tb

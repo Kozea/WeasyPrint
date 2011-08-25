@@ -253,7 +253,7 @@ class TextLineFragment(TextFragment):
             text = self.layout.get_text()[second_line.start_index:]
             return text.decode('utf-8')
         else:
-            return ''
+            return None
 
     def get_text(self):
         """Get all the unicode text can be on the line."""
@@ -278,4 +278,3 @@ class TextLineFragment(TextFragment):
         descent = pango.DESCENT(self.layout.get_line(0).get_pixel_extents()[1])
         height = self.get_size()[1]
         return height - descent
-
