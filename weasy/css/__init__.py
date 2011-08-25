@@ -397,7 +397,10 @@ def get_all_computed_styles(document, medium,
     Return a dict of (DOM element, pseudo element type) -> StyleDict instance.
 
     """
-    author_stylesheets = find_stylesheets(document)
+    author_stylesheets = [sheet for sheet in find_stylesheets(document)
+                          # It seems that cssutils returns None for
+                          # some invalid (non-css?) stylesheets.
+                          if sheet is not None]
 
     # keys: (element, pseudo_element_type)
     #    element: a lxml element object or the '@page' string for @page styles
