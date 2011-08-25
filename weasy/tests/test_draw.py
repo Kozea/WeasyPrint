@@ -587,14 +587,14 @@ def test_images():
         </style>
         <div><img src="pattern.png"></div>
     ''')
-#    test_pixels('block_image', 8, 8, centered_image, '''
-#        <style>
-#            @page { size: 8px }
-#            body { margin: 0; background: #fff }
-#            img { display: block; margin: 2px auto 0 }
-#        </style>
-#        <div><img src="pattern.png"></div>
-#    ''')
+    test_pixels('block_image', 8, 8, centered_image, '''
+        <style>
+            @page { size: 8px }
+            body { margin: 0; background: #fff }
+            img { display: block; margin: 2px auto 0 }
+        </style>
+        <div><img src="pattern.png"></div>
+    ''')
     test_pixels('image_not_found', 8, 8, no_image, '''
         <style>
             @page { size: 8px }

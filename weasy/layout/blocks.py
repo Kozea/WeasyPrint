@@ -68,13 +68,15 @@ def block_replaced_box_layout(box):
             box.width = intrinsic_width
         elif intrinsic_height is not None and intrinsic_ratio is not None:
             box.width = intrinsic_ratio * intrinsic_height
-        elif intrinsic_ratio is not None:
-            block_level_width(box)
+#        elif intrinsic_ratio is not None: # TODO
         else:
             raise NotImplementedError
             # Then the used value of 'width' becomes 300px. If 300px is too
             # wide to fit the device, UAs should use the width of the largest
             # rectangle that has a 2:1 ratio and fits the device instead.
+
+    # Margins as for non-replaced blocks
+    block_level_width(box)
 
     if box.height == 'auto' and box.width == 'auto':
         if intrinsic_height is not None:
