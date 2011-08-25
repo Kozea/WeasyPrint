@@ -42,11 +42,10 @@ SUPPORTED_IMAGES = ['image/png', 'image/gif', 'image/jpeg', 'image/bmp']
 
 def get_image_surface_from_uri(uri):
     """Get a :class:`cairo.ImageSurface`` from an image URI."""
-    try:
-        fileimage = urllib.urlopen(uri)
-    except IOError:
-        return None
+    fileimage = urllib.urlopen(uri)
     mime_type = fileimage.info().gettype()
+    # TODO: implement image type sniffing?
+    # http://www.w3.org/TR/html5/fetching-resources.html#content-type-sniffing:-image
     if mime_type in SUPPORTED_IMAGES:
         if mime_type == "image/png":
             image = fileimage
@@ -162,8 +161,11 @@ def draw_background(context, box, clip=True):
         if bg_image.type != 'URI':
             return
 
-        surface = get_image_surface_from_uri(bg_image.absoluteUri)
-        if not surface:
+        try:
+            surface = get_image_surface_from_uri(bg_image.absoluteUri)
+        # TODO: have a more specific list of exception for network errors
+        # and PNG parsing errors.
+        except Exception:
             return
 
         image_width = surface.get_width()

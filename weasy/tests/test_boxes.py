@@ -30,6 +30,7 @@ from ..css.values import get_single_keyword
 from ..document import Document
 from ..formatting_structure import boxes
 from ..formatting_structure import build
+from . import resource_filename
 
 
 SUITE = Tests()
@@ -113,6 +114,8 @@ def parse(html_content):
     # TODO: remove this patching when inline-block is validated.
     with monkeypatch_validation(validate_inline_block):
         document = Document.from_string(html_content)
+        # Dummy filename, but in the right directory.
+        document.base_url = resource_filename('<test>')
         return build.dom_to_box(document, document.dom)
 
 
@@ -153,7 +156,7 @@ def test_box_tree():
         <style>
             span { display: inline-block }
         </style>
-        <p>Hello <em>World <img src="foo.png"><span>Lipsum</span></em>!</p>
+        <p>Hello <em>World <img src="pattern.png"><span>Lipsum</span></em>!</p>
     '''), [
         ('p', 'block', [
             ('p', 'text', 'Hello '),

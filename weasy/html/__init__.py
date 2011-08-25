@@ -37,12 +37,22 @@ from ..draw.helpers import get_image_surface_from_uri
 # Maps HTML tag names to function taking an HTML element and returning a Box.
 HTML_HANDLERS = {}
 
+# Marker saying that handle_element() has no special handling for this element
+DEFAULT_HANDLING = object()
+
 
 def handle_element(document, element):
-    """Return a :class:`Box` for ``element`` or None."""
+    """Handle HTML elements that need special care.
+
+    :returns: the :obj:`DEFAULT_HANDLING` constant if there is no special
+              handling for this element, a :class:`Box` built with the special
+              handling or, None if the element should be ignored.
+    """
     if element.tag in HTML_HANDLERS:
         handler = HTML_HANDLERS[element.tag]
         return handler(document, element)
+    else:
+        return DEFAULT_HANDLING
 
 
 def handler(tag):
@@ -55,27 +65,81 @@ def handler(tag):
     return decorator
 
 
-def make_replaced_box(document, element, replacement):
+def is_block_level(document, element):
+    """
+    Return True if the element is block-level, False if it is inline-level,
+    and raise ValueError if it is neither.
+    """
     display = get_single_keyword(document.style_for(element).display)
 
     if display in ('block', 'list-item', 'table'):
-        type_ = boxes.BlockLevelReplacedBox
+        return True
     elif display in ('inline', 'inline-table', 'inline-block'):
-        type_ = boxes.InlineLevelReplacedBox
+        return False
     else:
-        raise NotImplementedError('Unsupported display: ' + display)
+        raise ValueError('Unsupported display: ' + display)
+
+
+def make_replaced_box(document, element, replacement):
+    """
+    Wrap a :class:`Replacement` object in either replaced box.
+    That box is either block-level or inline-level, depending on what
+    the element should be.
+    """
+    if is_block_level(document, element):
+        type_ = boxes.BlockLevelReplacedBox
+    else:
+        type_ = boxes.InlineLevelReplacedBox
     return type_(document, element, replacement)
+
+
+def make_text_box(document, element, text):
+    """
+    Make a text box and, if the element should be block-level, wrap it in
+    a block box.
+    """
+    text_box = boxes.TextBox(document, element, text)
+    if is_block_level(document, element):
+        block = boxes.BlockBox(document, element)
+        block.add_child(text_box)
+        return block
+    else:
+        return text_box
 
 
 @handler('img')
 def handle_img(document, element):
     """
     Handle <img> tags: return either an image or the alt-text.
+
+    http://www.w3.org/TR/html5/embedded-content-1.html#the-img-element
     """
-    # TODO: somehow use the alt-text on broken images.
     src = get_url_attribute(element, 'src')
-    replacement = ImageReplacement(src)
-    return make_replaced_box(document, element, replacement)
+    alt = element.get('alt')
+    if src:
+        try:
+            replacement = ImageReplacement(src)
+        # TODO: have a more specific list of exception for network errors
+        # and image parsing errors.
+        except Exception:
+            # Invalid image, use the alt-text.
+            if alt:
+                return make_text_box(document, element, alt)
+            elif alt == '':
+                # The element represents nothing
+                return None
+            else:
+                assert alt is None
+                # TODO: find some indicator that an image is missing.
+                # For now, just remove the image.
+                return None
+        else:
+            return make_replaced_box(document, element, replacement)
+    else:
+        if alt:
+            return make_text_box(document, element, alt)
+        else:
+            return None
 
 
 @handler('br')

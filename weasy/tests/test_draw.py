@@ -34,9 +34,10 @@ from ..document import PNGDocument
 # Short variable names are OK here
 # pylint: disable=C0103
 
-_ = array('B', [255, 255, 255])  # white
-r = array('B', [255, 0, 0])  # red
-B = array('B', [0, 0, 255])  # blue
+_ = array('B', [255, 255, 255, 255])  # white
+r = array('B', [255, 0, 0, 255])  # red
+B = array('B', [0, 0, 255, 255])  # blue
+BYTES_PER_PIXELS = 4
 
 SUITE = Tests()
 
@@ -48,19 +49,60 @@ def make_filename(dirname, basename):
 
 def format_pixel(lines, x, y):
     """Return the pixel color as ``#RRGGBB``."""
-    pixel = lines[y][3 * x:3 * (x + 1)]
-    return ('#' + 3 * '%02x') % tuple(pixel)
+    start = BYTES_PER_PIXELS * x
+    end = BYTES_PER_PIXELS * (x + 1)
+    pixel = lines[y][start:end]
+    return ('#' + BYTES_PER_PIXELS * '%02x') % tuple(pixel)
 
 
 def test_pixels(name, expected_width, expected_height, expected_lines, html):
     """Helper testing the size of the image and the pixels values."""
-    assert len(expected_lines) == expected_height, name
-    assert len(expected_lines[0]) == 3 * expected_width, name
+    write_pixels('expected_results', name, expected_width, expected_height,
+                 expected_lines)
+    lines = html_to_png(name, expected_width, expected_height, html)
+    assert_pixels_equal(name, expected_width, expected_height, lines,
+                        expected_lines)
 
-    writer = png.Writer(width=expected_width, height=expected_height)
-    with open(make_filename('expected_results', name), 'wb') as fd:
-        writer.write(fd, expected_lines)
 
+def test_same_rendering(expected_width, expected_height, *documents):
+    """
+    Render two or more HTML documents to PNG and check that the pixels
+    are the same.
+
+    Each document is passed as a (name, html) tuple.
+    """
+    lines_list = []
+
+    for name, html in documents:
+        lines = html_to_png(name, expected_width, expected_height, html)
+        write_pixels('test_results', name, expected_width, expected_height,
+                     lines)
+        lines_list.append((name, lines))
+
+    _name, reference = lines_list[0]
+    for name, lines in lines_list[1:]:
+        assert_pixels_equal(name, expected_width, expected_height,
+                            reference, lines)
+
+
+def write_pixels(directory, name, expected_width, expected_height, lines):
+    """
+    Check the size of a pixel matrix and write it to a PNG file.
+    """
+    assert len(lines) == expected_height, name
+    assert len(lines[0]) == BYTES_PER_PIXELS * expected_width, name
+
+    filename = make_filename(directory, name)
+    writer = png.Writer(width=expected_width, height=expected_height,
+                        alpha=True)
+    with open(filename, 'wb') as fd:
+        writer.write(fd, lines)
+
+
+def html_to_png(name, expected_width, expected_height, html):
+    """
+    Render an HTML document to PNG, checks its size and return pixel data.
+    """
     document = PNGDocument.from_string(html)
     # Dummy filename, but in the right directory.
     document.base_url = resource_filename('<test>')
@@ -69,16 +111,24 @@ def test_pixels(name, expected_width, expected_height, expected_lines, html):
     assert len(document.pages) == 1
 
     reader = png.Reader(filename=filename)
-    width, height, lines, meta = reader.read()
+    width, height, lines, meta = reader.asRGBA()
     lines = list(lines)
 
     assert width == expected_width, name
     assert height == expected_height, name
     assert meta['greyscale'] == False, name
-    assert meta['alpha'] == False, name
+    assert meta['alpha'] == True, name
     assert meta['bitdepth'] == 8, name
     assert len(lines) == height, name
-    assert len(lines[0]) == width * 3, name
+    assert len(lines[0]) == width * BYTES_PER_PIXELS, name
+    return lines
+
+
+def assert_pixels_equal(name, width, height, lines, expected_lines):
+    """
+    Take 2 matrices of height by width pixels and assert that they
+    are the same.
+    """
     if lines != expected_lines:
         for y in xrange(height):
             for x in xrange(width):
@@ -506,3 +556,81 @@ def test_list_style_image():
             </style>
             <ul><li>
         ''')
+
+
+@SUITE.test
+def test_images():
+    centered_image = [
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+r+B+B+B+_+_,
+        _+_+B+B+B+B+_+_,
+        _+_+B+B+B+B+_+_,
+        _+_+B+B+B+B+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+    ]
+    no_image = [
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+    ]
+    test_pixels('inline_image', 8, 8, centered_image, '''
+        <style>
+            @page { size: 8px }
+            body { margin: 2px 0 0 2px; background: #fff }
+        </style>
+        <div><img src="pattern.png"></div>
+    ''')
+#    test_pixels('block_image', 8, 8, centered_image, '''
+#        <style>
+#            @page { size: 8px }
+#            body { margin: 0; background: #fff }
+#            img { display: block; margin: 2px auto 0 }
+#        </style>
+#        <div><img src="pattern.png"></div>
+#    ''')
+    test_pixels('image_not_found', 8, 8, no_image, '''
+        <style>
+            @page { size: 8px }
+            body { margin: 0; background: #fff }
+            img { display: block; margin: 2px auto 0 }
+        </style>
+        <div><img src="inexistent1.png" alt=""></div>
+    ''')
+    test_pixels('image_no_src', 8, 8, no_image, '''
+        <style>
+            @page { size: 8px }
+            body { margin: 0; background: #fff }
+            img { display: block; margin: 2px auto 0 }
+        </style>
+        <div><img alt=""></div>
+    ''')
+    test_same_rendering(200, 30,
+        ('image_alt_text_reference', '''
+            <style>
+                @page { size: 200px 30px }
+                body { margin: 0; background: #fff }
+            </style>
+            <div>Hello, world!</div>
+        '''),
+        ('image_alt_text_not_found', '''
+            <style>
+                @page { size: 200px 30px }
+                body { margin: 0; background: #fff }
+            </style>
+            <div><img src="inexistent2.png" alt="Hello, world!"></div>
+        '''),
+        ('image_alt_text_no_src', '''
+            <style>
+                @page { size: 200px 30px }
+                body { margin: 0; background: #fff }
+            </style>
+            <div><img alt="Hello, world!"></div>
+        '''),
+    )

@@ -77,10 +77,10 @@ def dom_to_box(document, element):
     if display == 'none':
         return None
 
-    box = html.handle_element(document, element)
-    if box is not None:
+    result = html.handle_element(document, element)
+    if result is not html.DEFAULT_HANDLING:
         # Specific handling for the element. (eg. replaced element)
-        return box
+        return result
 
     if display in ('block', 'list-item'):
         box = boxes.BlockBox(document, element)

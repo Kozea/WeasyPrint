@@ -35,7 +35,10 @@ def get_url_attribute(element, key):
     The retrieved URL is absolute, even if the URL in the element is relative.
 
     """
-    return urljoin(element.base_url, element.get(key).strip())
+    attr_value = element.get(key)
+    if attr_value is None:
+        return None
+    return urljoin(element.base_url, attr_value.strip())
 
 
 def ensure_url(string):
