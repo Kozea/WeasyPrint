@@ -70,6 +70,7 @@ class InlineContext(object):
     def lines(self):
         """Break the lines until the bottom of the page is reached."""
         lines = breaking_linebox(self.linebox, self.containing_block_width)
+        first = True
         for line in lines:
             white_space_processing(line)
             compute_linebox_dimensions(line)
@@ -77,9 +78,12 @@ class InlineContext(object):
             vertical_align_processing(line)
             if not is_empty_line(line):
                 self.position_y += line.height
-                if self.page_bottom >= self.position_y:
+                # Yield at least one line to avoid infinite loop.
+                # TODO: Find another way ...
+                if self.page_bottom >= self.position_y or first:
                     self.save()
                     yield line
+                    first = False
                 else:
                     self.restore()
                     break
