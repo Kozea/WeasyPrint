@@ -117,11 +117,11 @@ def handle_img(document, element):
     src = get_url_attribute(element, 'src')
     alt = element.get('alt')
     if src:
-        try:
-            replacement = ImageReplacement(src)
-        # TODO: have a more specific list of exception for network errors
-        # and image parsing errors.
-        except Exception:
+        surface = document.get_image_surface_from_uri(src)
+        if surface is not None:
+            replacement = ImageReplacement(surface)
+            return make_replaced_box(document, element, replacement)
+        else:
             # Invalid image, use the alt-text.
             if alt:
                 return make_text_box(document, element, alt)
@@ -133,8 +133,6 @@ def handle_img(document, element):
                 # TODO: find some indicator that an image is missing.
                 # For now, just remove the image.
                 return None
-        else:
-            return make_replaced_box(document, element, replacement)
     else:
         if alt:
             return make_text_box(document, element, alt)
@@ -172,11 +170,11 @@ class Replacement(object):
 class ImageReplacement(Replacement):
     """Replaced ``<img>`` element.
 
-    :param image_uri: uri where to get the image.
+    :param surface: a cairo :class:`ImageSurface` object.
 
     """
-    def __init__(self, image_uri):
-        self.surface = get_image_surface_from_uri(image_uri)
+    def __init__(self, surface):
+        self.surface = surface
 
     def intrinsic_width(self):
         if self.surface:

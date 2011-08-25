@@ -161,11 +161,8 @@ def draw_background(context, box, clip=True):
         if bg_image.type != 'URI':
             return
 
-        try:
-            surface = get_image_surface_from_uri(bg_image.absoluteUri)
-        # TODO: have a more specific list of exception for network errors
-        # and PNG parsing errors.
-        except Exception:
+        surface = box.document.get_image_surface_from_uri(bg_image.absoluteUri)
+        if surface is None:
             return
 
         image_width = surface.get_width()

@@ -118,14 +118,20 @@ def add_list_marker(box):
 
     """
     image = box.style.list_style_image
-    if get_single_keyword(image) == 'none':
+    if get_single_keyword(image) != 'none':
+        # surface may be None here too, in case the image is not available.
+        surface = box.document.get_image_surface_from_uri(image[0].absoluteUri)
+    else:
+        surface = None
+
+    if surface is None:
         type_ = get_single_keyword(box.style.list_style_type)
         if type_ == 'none':
             return
         marker = GLYPH_LIST_MARKERS[type_]
         marker_box = boxes.TextBox(box.document, box.element, marker)
     else:
-        replacement = html.ImageReplacement(image[0].absoluteUri)
+        replacement = html.ImageReplacement(surface)
         marker_box = boxes.ImageMarkerBox(
             box.document, box.element, replacement)
 

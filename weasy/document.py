@@ -34,6 +34,7 @@ from .css.computed_values import LENGTHS_TO_PIXELS
 from .formatting_structure.build import build_formatting_structure
 from .layout import layout
 from . import draw
+from .draw import helpers as draw_helpers
 from . import utils
 
 
@@ -67,6 +68,7 @@ class Document(object):
         self._computed_styles = None
         self._formatting_structure = None
         self._pages = None
+        self._image_cache = {}
 
     @property
     def base_url(self):
@@ -141,6 +143,18 @@ class Document(object):
         if self._pages is None:
             self._pages = layout(self)
         return self._pages
+
+    def get_image_surface_from_uri(self, uri):
+        if uri in self._image_cache:
+            return self._image_cache[uri]
+        try:
+            surface = draw_helpers.get_image_surface_from_uri(uri)
+        # TODO: have a more specific list of exception for network errors
+        # and PNG parsing errors.
+        except Exception:
+            surface = None
+        self._image_cache[uri] = surface
+        return surface
 
 
 class PNGDocument(Document):
