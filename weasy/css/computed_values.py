@@ -134,12 +134,36 @@ PAGE_SIZES = dict(
 )
 
 
-class StyleDict(dict):
+class StyleDict(object):
     """Allow attribute access to values.
 
     Allow eg. ``style.font_size`` instead of ``style['font-size']``.
 
+    :param parent: if given, should be a dict or StyleDict. Values not in this
+                   dict will be looked up in the parent dict. Setting a value
+                   in this dict masks any value in the parent.
+
     """
+    def __init__(self, data=None, parent=None):
+        if not data:
+            data = {}
+        else:
+            data = dict(data)
+        object.__setattr__(self, '_storage', data)
+        object.__setattr__(self, '_parent', parent or {})
+
+    def __getitem__(self, key):
+        try:
+            return self._storage[key]
+        except KeyError:
+            return self._parent[key]
+
+    def __setitem__(self, key, value):
+        self._storage[key] = value
+
+    def __contains__(self, key):
+        return key in self._storage or key in self._parent
+
     def __getattr__(self, key):
         try:
             return self[key.replace('_', '-')]
@@ -152,11 +176,13 @@ class StyleDict(dict):
     def copy(self):
         """Copy the ``StyleDict``.
 
-        Same as ``dict.copy``, but return an object of the same class
-        (``dict.copy()`` always returns a ``dict``).
+        Create a new StyleDict with this one as the parent. This is a cheap
+        "copy-on-write". Modifications in the copy will not affect
+        the original, but modifications in the original *may* affect the
+        copy.
 
         """
-        return self.__class__(self)
+        return type(self)(parent=self)
 
 
 class Computer(object):
