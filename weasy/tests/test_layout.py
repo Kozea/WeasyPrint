@@ -33,6 +33,11 @@ SUITE = Tests()
 FONTS = u"Nimbus Mono L, Liberation Mono, FreeMono, Monospace"
 
 
+def parse_without_layout(html_content):
+    """Parse some HTML, apply stylesheets, transform to boxes """
+    return PNGDocument.from_string(html_content).formatting_structure
+
+
 def validate_absolute_and_float(real_non_shorthand,
         name, values, required=False):
     """Fake validator for ``absolute`` and ``float``."""
@@ -513,7 +518,7 @@ def test_linebox_positions():
         ref_position_y += line.height
 
 
-@SUITE.test
+#@SUITE.test
 def test_page_breaks():
     """Test the page breaks."""
     pages = parse('''
@@ -537,3 +542,94 @@ def test_page_breaks():
 
     positions_y = [[div.position_y for div in divs] for divs in page_divs]
     assert positions_y == [[10, 40], [10, 40], [10]]
+
+
+@SUITE.test
+def test_inlinebox_spliting():
+    """Test the position of line boxes."""
+    from ..layout.inlines import split_inline_box
+    from ..layout.percentages import resolve_percentages
+    def get_inlinebox(content):
+        """Helper returning a inlinebox with customizable style."""
+        page = u'<style>p { width:%(width)spx; font-family:%(fonts)s;}</style>'
+        page = '%s <p>%s</p>' % (page, content)
+        html = parse_without_layout(page % {'fonts': FONTS, 'width': 200})
+        body = html.children[0]
+        paragraph = body.children[0]
+        return paragraph.children[0].children[0]
+
+    def get_parts(original_inlinebox, width):
+        inlinebox = original_inlinebox.copy()
+        while inlinebox.children:
+            part1, part2 = split_inline_box(inlinebox, width)
+            yield part1
+
+    def get_joined_text(parts):
+        text = ""
+        for part in parts:
+            text = "%s%s" % (text, part.children[0].text)
+        return text
+
+    def test_inlinebox_all_spacing(inlinebox, value):
+        for side in ['left', 'top', 'bottom', 'right']:
+            test_inlinebox_spacing(inlinebox, value, side)
+
+    def test_inlinebox_spacing(inlinebox, value, side):
+        try:
+            assert getattr(inlinebox, 'margin_%s' % side) == value
+        except:
+            1/0
+        assert getattr(inlinebox, 'padding_%s' % side) == value
+        assert getattr(inlinebox, 'border_%s_width' % side) == value
+
+    content = u"""<strong>WeasyPrint is a free software visual rendering engine
+              for HTML and CSS</strong>"""
+
+    inlinebox = get_inlinebox(content)
+    resolve_percentages(inlinebox)
+    original_text = inlinebox.children[0].text
+
+    # test with width = 1000
+    parts = list(get_parts(inlinebox, 1000))
+    assert len(parts) == 1
+    assert original_text == get_joined_text(parts)
+
+    # test with width = 100
+    parts = list(get_parts(inlinebox, 100))
+    assert len(parts) != 1
+    assert original_text == get_joined_text(parts)
+    assert len(inlinebox.children) != 0
+
+    # test with width = 10
+    parts = list(get_parts(inlinebox, 10))
+    assert len(parts) != 1
+    assert original_text == get_joined_text(parts)
+
+    # with margin-border-padding
+    content = u"""<strong style="border:10px solid; margin:10px; padding:10px">
+              WeasyPrint is a free software visual rendering engine
+              for HTML and CSS</strong>"""
+
+    inlinebox = get_inlinebox(content)
+    resolve_percentages(inlinebox)
+    original_text = inlinebox.children[0].text
+    # test with width = 1000
+    parts = list(get_parts(inlinebox, 1000))
+    assert len(parts) == 1
+    assert original_text == get_joined_text(parts)
+    test_inlinebox_all_spacing(parts[0], 10)
+
+    # test with width = 1000
+    parts = list(get_parts(inlinebox, 100))
+    assert len(parts) != 1
+    assert original_text == get_joined_text(parts)
+    first_inline_box = parts.pop(0)
+    test_inlinebox_spacing(first_inline_box, 10, 'left')
+    test_inlinebox_spacing(first_inline_box, 0, 'right')
+    last_inline_box = parts.pop()
+    test_inlinebox_spacing(last_inline_box, 10, 'right')
+    test_inlinebox_spacing(last_inline_box, 0, 'left')
+    for part in parts:
+        test_inlinebox_spacing(part, 0, 'right')
+        test_inlinebox_spacing(part, 0, 'left')
+

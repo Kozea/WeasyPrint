@@ -267,6 +267,7 @@ def breaking_linebox(linebox, allocate_width):
         ]
 
     """
+    assert isinstance(linebox, boxes.LineBox)
     new_line = get_new_empty_line(linebox)
     remaining_width = allocate_width
     while linebox.children:
@@ -346,6 +347,7 @@ def split_inline_box(inlinebox, remaining_width):
         )
 
     """
+    assert isinstance(inlinebox, boxes.InlineBox)
     left_spacing = (inlinebox.padding_left + inlinebox.margin_left +
                     inlinebox.border_left_width)
     right_spacing = (inlinebox.padding_right + inlinebox.margin_right +
@@ -415,6 +417,7 @@ def split_text_box(textbox, allocate_width):
         )
 
     """
+    assert isinstance(textbox, boxes.TextBox)
     text_fragment = TextLineFragment.from_textbox(textbox)
     text_fragment.set_width(allocate_width)
     # We create a new TextBox with the first part of the cutting text
