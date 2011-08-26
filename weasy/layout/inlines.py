@@ -26,9 +26,9 @@ from collections import deque
 
 from .markers import image_marker_layout
 from .percentages import resolve_percentages
-from ..text import TextLineFragment
+from ..text import TextLineFragment, FakeTextLineFragment
 from ..formatting_structure import boxes
-from ..css.values import get_single_keyword
+from ..css.values import get_single_keyword, get_single_pixel_value
 
 
 class InlineContext(object):
@@ -172,7 +172,11 @@ def compute_inlinebox_dimensions(inlinebox):
 def compute_textbox_dimensions(textbox):
     """Compute the width, the height and the baseline of the ``textbox``."""
     assert isinstance(textbox, boxes.TextBox)
-    text_fragment = TextLineFragment.from_textbox(textbox)
+    font_size = get_single_pixel_value(textbox.style.font_size)
+    if font_size == 0:
+        text_fragment = FakeTextLineFragment.from_textbox(textbox)
+    else:
+        text_fragment = TextLineFragment.from_textbox(textbox)
     textbox.width, textbox.height = text_fragment.get_size()
     textbox.baseline = text_fragment.get_baseline()
     textbox.extents = text_fragment.get_ink_extents()
@@ -456,6 +460,9 @@ def split_text_box(textbox, allocate_width):
 
     """
     assert isinstance(textbox, boxes.TextBox)
+    font_size = get_single_pixel_value(textbox.style.font_size)
+    if font_size == 0:
+        return textbox, None
     text_fragment = TextLineFragment.from_textbox(textbox)
     text_fragment.set_width(allocate_width)
     # We create a new TextBox with the first part of the cutting text

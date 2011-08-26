@@ -278,3 +278,27 @@ class TextLineFragment(TextFragment):
         descent = pango.DESCENT(self.layout.get_line(0).get_pixel_extents()[1])
         height = self.get_size()[1]
         return height - descent
+
+class FakeTextLineFragment(TextLineFragment):
+    """Text renderer splitting lines."""
+
+    def get_logical_extents(self):
+        """Get the fake size of the logical area occupied by the text."""
+        return (0,0,0,0)
+
+    def get_ink_extents(self):
+        """Get the fake size of the ink area occupied by the text."""
+        return (0,0,0,0)
+
+    def get_size(self):
+        """Get fake text area size in pixels."""
+        return (0,0)
+
+    def set_font_size(self, size):
+        """Don't set the layout font size in pixels."""
+        pass
+
+    def get_baseline(self):
+        """Get the baseline of the text."""
+        return 0
+

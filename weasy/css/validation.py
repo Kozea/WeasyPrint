@@ -715,3 +715,4 @@ def validate_and_expand(name, values):
     getattr(LOGGER, level)('The declaration `%s: %s` was ignored: %s.',
         name, as_css(values), reason)
     return []
+

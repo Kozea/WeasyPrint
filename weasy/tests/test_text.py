@@ -24,7 +24,8 @@ Test the text management.
 from attest import Tests, assert_hook  # pylint: disable=W0611
 
 from ..text import TextFragment, TextLineFragment, ALIGN_PROPERTIES
-
+from ..document import PNGDocument
+from .test_layout import parse, body_children
 
 SUITE = Tests()
 
@@ -114,3 +115,17 @@ def test_text_other():
 
     fragment.justify = True
     assert fragment.justify != False
+
+
+@SUITE.test
+def test_text_font_size_zero():
+    page, = parse('''
+        <style>
+            p { font-size: 0; }
+        </style>
+        <p>test font size zero</p>
+    ''')
+    textbox = body_children(page)[0].children[0].children[0]
+    assert textbox.height == 0
+    assert textbox.width == 0
+
