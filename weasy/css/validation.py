@@ -651,7 +651,8 @@ def expand_font(name, values):
 
     # Then font-size is mandatory
     # Latest `value` from the loop.
-    assert font_size([value])
+    if not font_size([value]):
+        raise InvalidValues
     yield '-size', [value]
 
     # Then line-height is optional, but font-family is not so the list
@@ -666,7 +667,8 @@ def expand_font(name, values):
 
     # Reverse the stack to get normal list
     values.reverse()
-    assert font_family(values)
+    if not font_family(values):
+        raise InvalidValues
     yield '-family', values
 
 
