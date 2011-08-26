@@ -449,8 +449,9 @@ def font_size(computer, name, value):
             factor = LENGTHS_TO_PIXELS[value.dimension]
     elif value.type == 'PERCENTAGE':
         factor = parent_font_size / 100.
+    elif value.type == 'NUMBER' and value.value == 0:
+        return value
 
-    # Raise if `factor` is not defined. It should be, because of validation.
     return make_pixel_value(value.value * factor)
 
 
