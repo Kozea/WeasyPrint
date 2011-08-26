@@ -10,7 +10,7 @@ It aims to support web standards for printing.
 The project is still in a very eary devlopment stage, but any `contribution
 </contribute>`_ is welcome!
 
- * `Source code on Gitorious <https://gitorious.org/weasyprint/weasyprint>`_
+ * :codelink:`Source code on GitHub`
  * `Issue tracker <http://redmine.kozea.fr/projects/weasyprint/issues>`_
  * Contact us by email at weasyprint@kozea.fr
  * … or on the Jabber chat-room: community@room.jabber.kozea.fr
