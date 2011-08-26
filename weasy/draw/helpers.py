@@ -115,13 +115,6 @@ def draw_page_background(context, page):
                 draw_background(context, child, clip=False)
 
 
-def get_page_size(box):
-    """Return the outer ``width, height`` of the ``box``'s root ``PageBox``."""
-    while not isinstance(box, boxes.PageBox):
-        box = box.parent
-    return box.outer_width, box.outer_height
-
-
 def draw_background(context, box, clip=True):
     """Draw the box background color and image to a ``cairo.Context``."""
     if getattr(box, 'background_drawn', False):
@@ -154,7 +147,8 @@ def draw_background(context, box, clip=True):
             context.translate(bg_x, bg_y)
         else:
             assert bg_attachement == 'fixed'
-            bg_width, bg_height = get_page_size(box)
+            page = box.find_page_ancestor()
+            bg_width, bg_height = page.outer_width, page.outer_height
 
         # Background image
         bg_image = box.style['background-image'][0]

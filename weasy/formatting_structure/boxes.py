@@ -109,6 +109,16 @@ class Box(object):
             parent = parent.parent
             yield parent
 
+    def find_page_ancestor(self):
+        """
+        Find the PageBox this box is in, or raise ValueError.
+        """
+        for ancestor in self.ancestors():
+            if isinstance(ancestor, PageBox):
+                return ancestor
+        else:
+            raise ValueError('Page ancestor not found')
+
     def containing_block_size(self):
         """``(width, height)`` size of the box's containing block."""
         if isinstance(self.parent, PageBox):
@@ -118,10 +128,8 @@ class Box(object):
         if position in ('relative', 'static'):
             return self.parent.width, self.parent.height
         elif position == 'fixed':
-            for ancestor in self.ancestors():
-                if isinstance(ancestor, PageBox):
-                    return ancestor.width, ancestor.height
-            assert False, 'Page not found'
+            page = self.find_page_ancestor()
+            return page.width, page.height
         elif position == 'absolute':
             for ancestor in self.ancestors():
                 position = get_single_keyword(ancestor.style.position)
@@ -498,4 +506,3 @@ class ImageMarkerBox(InlineLevelReplacedBox, AnonymousBox):
     anonymous, inline-level, and replaced.
 
     """
-
