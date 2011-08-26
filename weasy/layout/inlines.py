@@ -39,15 +39,16 @@ class InlineContext(object):
         self.position_y = linebox.position_y
         self.position_x = linebox.position_x
         self.containing_block_width = linebox.containing_block_size()[0]
-        self.save()
+        self.lines = []
+        self.execute_formatting()
 
-    def copy(self, box):
+    def deep_copy(self, box):
         copy_box = box.copy()
         if isinstance(box, boxes.ParentBox):
             copy_box.empty()
             for child in box.children:
                 if isinstance(box, boxes.ParentBox):
-                    copy_child = self.copy(child)
+                    copy_child = self.deep_copy(child)
                 else:
                     copy_child = child.copy()
                 copy_box.add_child(copy_child)
@@ -55,34 +56,34 @@ class InlineContext(object):
         else:
             return copy_box
 
-    def save(self):
-        """Save the context."""
-        self._children = deque()
-        for child in self.linebox.children:
-            self._children.append(self.copy(child))
+    def save(self, line):
+        """Save the line and the position_y."""
+        self.copy_line = self.deep_copy(line)
         self._position_y = self.position_y
 
     def restore(self):
-        """Restore the context."""
-        self.linebox.children = self._children
+        """Restore the linebox children."""
+        for child in self.copy_line.children:
+            self.linebox.children.appendleft(child)
+            child.parent = self.linebox
         self.position_y = self._position_y
 
-    def lines(self):
+    def execute_formatting(self):
         """Break the lines until the bottom of the page is reached."""
-        lines = breaking_linebox(self.linebox, self.containing_block_width)
         first = True
-        for line in lines:
+        for line in breaking_linebox(self.linebox, self.containing_block_width):
+            self.save(line)
             white_space_processing(line)
             compute_linebox_dimensions(line)
             compute_linebox_positions(line, self.position_x, self.position_y)
             vertical_align_processing(line)
+            compute_linebox_dimensions(line)
             if not is_empty_line(line):
                 self.position_y += line.height
                 # Yield at least one line to avoid infinite loop.
                 # TODO: Find another way ...
                 if self.page_bottom >= self.position_y or first:
-                    self.save()
-                    yield line
+                    self.lines.append(line)
                     first = False
                 else:
                     self.restore()
@@ -92,7 +93,7 @@ class InlineContext(object):
 def get_new_lineboxes(linebox, page_bottom):
     """Get the ``linebox`` lines until ``page_bottom`` is reached."""
     inline_context = InlineContext(linebox, page_bottom)
-    return inline_context.lines()
+    return inline_context.lines
 
 
 def inline_replaced_box_layout(box):
@@ -375,6 +376,7 @@ def split_inline_box(inlinebox, remaining_width):
         right_spacing = (inlinebox.padding_right + inlinebox.margin_right +
                          inlinebox.border_right_width)
     except TypeError:
+        # TODO: Find another way ...
         for side in ['left', 'top', 'right', 'bottom']:
             inlinebox.reset_spacing(side)
         left_spacing = 0

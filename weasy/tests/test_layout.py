@@ -728,22 +728,24 @@ def test_page_and_linebox_breaking():
         return parse(page)
 
     def get_full_text(lines):
-        text = ""
+        texts = []
         for line in lines:
+            line_texts = []
             for child in line.descendants():
                 if isinstance(child, boxes.TextBox):
-                    text = "%s %s" % (text, child.text)
-        return text.strip()
+                    line_texts.append(child.text)
+            texts.append(u''.join(line_texts))
+        return texts
 
     def get_joined_text(pages):
-        text = ""
+        texts = []
         for page in pages:
             html = page.root_box
             body = html.children[0]
             div = body.children[0]
             lines = div.children
-            text = "%s %s" % (text, get_full_text(lines))
-        return text.strip()
+            texts.extend(get_full_text(lines))
+        return u' '.join(texts)
 
     content = u"1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15"
 
