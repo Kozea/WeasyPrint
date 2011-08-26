@@ -155,6 +155,11 @@ def compute_linebox_dimensions(linebox):
 def compute_inlinebox_dimensions(inlinebox):
     """Compute the width and the height of the ``inlinebox``."""
     resolve_percentages(inlinebox)
+    if inlinebox.margin_left == 'auto':
+        inlinebox.margin_left = 0
+    if inlinebox.margin_right == 'auto':
+        inlinebox.margin_right = 0
+    # Make sure sum() and max() don’t raise if there is no children.
     widths = [0]
     heights = [0]
     for child in inlinebox.children:
@@ -205,8 +210,8 @@ def compute_inlinebox_positions(inlinebox, ref_x, ref_y):
     """Compute the x and y positions of ``inlinebox``."""
     assert isinstance(inlinebox, boxes.InlineBox)
     inlinebox.position_x = ref_x
-    ignored_height = (inlinebox.padding_top + inlinebox.border_top_width +
-                      inlinebox.margin_top)
+    inlinebox.margin_top = 0  # Vertical margins do not apply
+    ignored_height = inlinebox.padding_top + inlinebox.border_top_width
     inlinebox.position_y = ref_y - ignored_height
     inline_ref_y = inlinebox.position_y
     inline_ref_x = inlinebox.content_box_x()
@@ -333,6 +338,10 @@ def split_inline_level(box, available_width):
         compute_textbox_dimensions(part1)
     elif isinstance(box, boxes.InlineBox):
         resolve_percentages(box)
+        if box.margin_left == 'auto':
+            box.margin_left = 0
+        if box.margin_right == 'auto':
+            box.margin_right = 0
         part1, part2 = split_inline_box(box, available_width)
         compute_inlinebox_dimensions(part1)
     elif isinstance(box, boxes.AtomicInlineLevelBox):
@@ -530,4 +539,3 @@ def vertical_align_processing(linebox):
     bottom_positions = [
         box.position_y + box.height for box in linebox.children]
     linebox.height = max(bottom_positions or [0]) - linebox.position_y
-
