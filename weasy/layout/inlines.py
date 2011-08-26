@@ -26,7 +26,7 @@ from collections import deque
 
 from .markers import image_marker_layout
 from .percentages import resolve_percentages
-from ..text import TextLineFragment, FakeTextLineFragment
+from ..text import TextLineFragment
 from ..formatting_structure import boxes
 from ..css.values import get_single_keyword, get_single_pixel_value
 
@@ -174,13 +174,17 @@ def compute_textbox_dimensions(textbox):
     assert isinstance(textbox, boxes.TextBox)
     font_size = get_single_pixel_value(textbox.style.font_size)
     if font_size == 0:
-        text_fragment = FakeTextLineFragment.from_textbox(textbox)
+        # Pango crashes with font-size: 0 ...
+        textbox.width, textbox.height = 0, 0
+        textbox.baseline = 0
+        textbox.extents = (0, 0, 0, 0)
+        textbox.logical_extents = (0, 0, 0, 0)
     else:
         text_fragment = TextLineFragment.from_textbox(textbox)
-    textbox.width, textbox.height = text_fragment.get_size()
-    textbox.baseline = text_fragment.get_baseline()
-    textbox.extents = text_fragment.get_ink_extents()
-    textbox.logical_extents = text_fragment.get_logical_extents()
+        textbox.width, textbox.height = text_fragment.get_size()
+        textbox.baseline = text_fragment.get_baseline()
+        textbox.extents = text_fragment.get_ink_extents()
+        textbox.logical_extents = text_fragment.get_logical_extents()
 
 
 def compute_atomicbox_dimensions(box):

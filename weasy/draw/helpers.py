@@ -327,11 +327,14 @@ def draw_replacedbox(context, box):
 
 def draw_text(context, textbox):
     """Draw ``textbox`` to a ``cairo.Context`` from ``pangocairo.Context``."""
+    font_size = get_single_pixel_value(textbox.style.font_size)
+    if font_size == 0:
+        # Pango crashes with font-size: 0 ...
+        return
     context.move_to(textbox.position_x, textbox.position_y)
     fragment = TextLineFragment.from_textbox(textbox, context=context)
     fragment.show_layout()
     values = textbox.style.text_decoration
-    font_size = get_single_pixel_value(textbox.style.font_size)
     for value in values:
         keyword = get_keyword(value)
         if keyword == 'overline':
@@ -373,4 +376,3 @@ def draw_text_decoration(context, position_y, textbox):
         offset = textbox.extents[2] - textbox.extents[0]
         context.line_to(position_x + offset, position_y)
         context.stroke()
-
