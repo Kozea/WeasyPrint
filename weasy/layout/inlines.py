@@ -95,7 +95,6 @@ def get_new_lineboxes(linebox, page_bottom):
     inline_context = InlineContext(linebox, page_bottom)
     return inline_context.lines
 
-
 def inline_replaced_box_layout(box):
     """Lay out an inline :class:`boxes.ReplacedBox` ``box``."""
     assert isinstance(box, boxes.ReplacedBox)
@@ -107,12 +106,24 @@ def inline_replaced_box_layout(box):
         box.margin_left = 0
     if box.margin_right == 'auto':
         box.margin_right = 0
+    replaced_box_width(box)
 
+    # Compute height
+    # http://www.w3.org/TR/CSS21/visudet.html#inline-replaced-height
+    if box.margin_top == 'auto':
+        box.margin_top = 0
+    if box.margin_bottom == 'auto':
+        box.margin_bottom = 0
+    replaced_box_height(box)
+
+
+def replaced_box_width(box):
+    """
+    Compute and set the used width for replaced boxes (inline- or block-level)
+    """
     intrinsic_ratio = box.replacement.intrinsic_ratio()
     intrinsic_height = box.replacement.intrinsic_height()
     intrinsic_width = box.replacement.intrinsic_width()
-
-    device_width = None  # Not known yet.
 
     if box.height == 'auto' and box.width == 'auto':
         if intrinsic_width is not None:
@@ -140,12 +151,14 @@ def inline_replaced_box_layout(box):
             device_width = box.find_page_ancestor().outer_width
             box.width = min(300, device_width)
 
-    # Compute height
-    # http://www.w3.org/TR/CSS21/visudet.html#inline-replaced-height
-    if box.margin_top == 'auto':
-        box.margin_top = 0
-    if box.margin_bottom == 'auto':
-        box.margin_bottom = 0
+
+def replaced_box_height(box):
+    """
+    Compute and set the used height for replaced boxes (inline- or block-level)
+    """
+    intrinsic_ratio = box.replacement.intrinsic_ratio()
+    intrinsic_height = box.replacement.intrinsic_height()
+    intrinsic_width = box.replacement.intrinsic_width()
 
     if box.height == 'auto' and box.width == 'auto':
         if intrinsic_height is not None:
@@ -155,9 +168,9 @@ def inline_replaced_box_layout(box):
     elif box.height == 'auto' and intrinsic_height is not None:
         box.height = intrinsic_height
     elif box.height == 'auto':
-        if device_width is None:
-            device_width = box.find_page_ancestor().outer_width
+        device_width = box.find_page_ancestor().outer_width
         box.height = min(150, device_width / 2)
+
 
 def compute_linebox_dimensions(linebox):
     """Compute the width and the height of the ``linebox``."""

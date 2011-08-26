@@ -23,7 +23,7 @@ Functions laying out the block boxes.
 
 from __future__ import division
 
-from .inlines import get_new_lineboxes
+from .inlines import get_new_lineboxes, replaced_box_width, replaced_box_height
 from .markers import list_marker_layout
 from .percentages import resolve_percentages
 from ..css.values import get_single_keyword
@@ -59,36 +59,17 @@ def block_replaced_box_layout(box):
     assert isinstance(box, boxes.ReplacedBox)
     resolve_percentages(box)
 
-    intrinsic_ratio = box.replacement.intrinsic_ratio()
-    intrinsic_height = box.replacement.intrinsic_height()
-    intrinsic_width = box.replacement.intrinsic_width()
-
-    if box.width == 'auto':
-        if intrinsic_width is not None:
-            box.width = intrinsic_width
-        elif intrinsic_height is not None and intrinsic_ratio is not None:
-            box.width = intrinsic_ratio * intrinsic_height
-#        elif intrinsic_ratio is not None: # TODO
-        else:
-            raise NotImplementedError
-            # Then the used value of 'width' becomes 300px. If 300px is too
-            # wide to fit the device, UAs should use the width of the largest
-            # rectangle that has a 2:1 ratio and fits the device instead.
-
-    # Margins as for non-replaced blocks
+    # http://www.w3.org/TR/CSS21/visudet.html#block-replaced-width
+    replaced_box_width(box)
     block_level_width(box)
 
-    if box.height == 'auto' and box.width == 'auto':
-        if intrinsic_height is not None:
-            box.height = intrinsic_height
-    elif intrinsic_ratio is not None and box.height == 'auto':
-        box.height = box.width / intrinsic_ratio
-    else:
-        raise NotImplementedError
-        # Then the used value of 'height' must be set to the height of
-        # the largest rectangle that has a 2:1 ratio, has a height not
-        # greater than 150px, and has a width not greater than the
-        # device width.
+    # http://www.w3.org/TR/CSS21/visudet.html#inline-replaced-height
+    replaced_box_height(box)
+    if box.margin_top == 'auto':
+        box.margin_top = 0
+    if box.margin_bottom == 'auto':
+        box.margin_bottom = 0
+
     return box
 
 
