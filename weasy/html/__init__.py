@@ -177,12 +177,10 @@ class ImageReplacement(Replacement):
         self.surface = surface
 
     def intrinsic_width(self):
-        if self.surface:
-            return self.surface.get_width()
+        return self.surface.get_width()
 
     def intrinsic_height(self):
-        if self.surface:
-            return self.surface.get_height()
+        return self.surface.get_height()
 
     def draw(self, context):
         """Draw the element on the Cairo context."""

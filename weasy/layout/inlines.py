@@ -101,7 +101,8 @@ def inline_replaced_box_layout(box):
     assert isinstance(box, boxes.ReplacedBox)
     resolve_percentages(box)
 
-    # Compute width
+    # Compute width:
+    # http://www.w3.org/TR/CSS21/visudet.html#inline-replaced-width
     if box.margin_left == 'auto':
         box.margin_left = 0
     if box.margin_right == 'auto':
@@ -111,18 +112,36 @@ def inline_replaced_box_layout(box):
     intrinsic_height = box.replacement.intrinsic_height()
     intrinsic_width = box.replacement.intrinsic_width()
 
-    if box.width == 'auto':
+    device_width = None  # Not known yet.
+
+    if box.height == 'auto' and box.width == 'auto':
         if intrinsic_width is not None:
             box.width = intrinsic_width
         elif intrinsic_height is not None and intrinsic_ratio is not None:
             box.width = intrinsic_ratio * intrinsic_height
-        else:
-            raise NotImplementedError
+        elif box.height != 'auto' and intrinsic_ratio is not None:
+            box.width = intrinsic_ratio * box.height
+        elif intrinsic_ratio is not None:
+            pass
+            # Intrinsic ratio only: undefined in CSS 2.1.
+            # " It is suggested that, if the containing block's width does not
+            #   itself depend on the replaced element's width, then the used
+            #   value of 'width' is calculated from the constraint equation
+            #   used for block-level, non-replaced elements in normal flow. "
+
+    # Still no value
+    if box.width == 'auto':
+        if intrinsic_width is not None:
+            box.width = intrinsic_width
             # Then the used value of 'width' becomes 300px. If 300px is too
             # wide to fit the device, UAs should use the width of the largest
             # rectangle that has a 2:1 ratio and fits the device instead.
+        else:
+            device_width = box.find_page_ancestor().outer_width
+            box.width = min(300, device_width)
 
     # Compute height
+    # http://www.w3.org/TR/CSS21/visudet.html#inline-replaced-height
     if box.margin_top == 'auto':
         box.margin_top = 0
     if box.margin_bottom == 'auto':
@@ -133,12 +152,12 @@ def inline_replaced_box_layout(box):
             box.height = intrinsic_height
     elif intrinsic_ratio is not None and box.height == 'auto':
         box.height = box.width / intrinsic_ratio
-    else:
-        raise NotImplementedError
-        # Then the used value of 'height' must be set to the height of
-        # the largest rectangle that has a 2:1 ratio, has a height not
-        # greater than 150px, and has a width not greater than the
-        # device width.
+    elif box.height == 'auto' and intrinsic_height is not None:
+        box.height = intrinsic_height
+    elif box.height == 'auto':
+        if device_width is None:
+            device_width = box.find_page_ancestor().outer_width
+        box.height = min(150, device_width / 2)
 
 def compute_linebox_dimensions(linebox):
     """Compute the width and the height of the ``linebox``."""
