@@ -187,25 +187,31 @@ nav li {
 
 nav li a {
   background: url(img/rond_03.png) no-repeat 0px -2px;
-  color: black;
+  color: white;
   display: inline-block;
   font-family: "menu";
   margin-left: 0;
   height: 35px;
   padding: 4px 12px 0 14px;
   text-align: left;
+}
+
+nav li a:hover {
+  background: url(img/rond_03.png) no-repeat 0px -2px;
+  color: white;
+}
+
+nav li a[href] {
+  background: url(img/rond_03.png) no-repeat 0px -2px;
+  color: black;
+
   transition: background 0.7s ease;
 }
 
-nav li a:hover,
-nav li a:focus{
+nav li a[href]:hover,
+nav li a[href]:focus{
   background: url(img/rond_03.png) no-repeat right -2px;
   color: black;
-}
-
-nav li a:visited{
-  color: black;
-  background: url(img/rond_03.png) no-repeat 0px -4px;
 }
 
 nav li a:first-letter{
@@ -213,6 +219,10 @@ nav li a:first-letter{
 }
 
 nav li a:hover:first-letter{
+  color: white;
+}
+
+nav li a[href]:hover:first-letter{
   color: black;
 }
 
