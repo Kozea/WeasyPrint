@@ -22,8 +22,6 @@ Functions laying out the inline boxes.
 
 """
 
-from collections import deque
-
 from .markers import image_marker_layout
 from .percentages import resolve_percentages
 from ..text import TextLineFragment
@@ -158,7 +156,6 @@ def replaced_box_height(box):
     """
     intrinsic_ratio = box.replacement.intrinsic_ratio()
     intrinsic_height = box.replacement.intrinsic_height()
-    intrinsic_width = box.replacement.intrinsic_width()
 
     if box.height == 'auto' and box.width == 'auto':
         if intrinsic_height is not None:
@@ -437,7 +434,6 @@ def split_inline_box(inlinebox, remaining_width):
 
     while inlinebox.children:
         child = inlinebox.children.popleft()
-        last_child = not inlinebox.children  # ie. the list is empty
 
         part1, part2 = split_inline_level(child, remaining_width)
         assert part1 is not None
@@ -446,6 +442,11 @@ def split_inline_box(inlinebox, remaining_width):
         #   width <= remaining_width < width + right_spacing
         # with
         #   width = part1.margin_width()
+
+        last_child = not inlinebox.children  # ie. the list is now empty
+        if last_child:
+            pass
+            # TODO: take care of right_spacing
 
         if part1.margin_width() > remaining_width and new_inlinebox.children:
             # part1 is too wide, and the inline is non-empty:

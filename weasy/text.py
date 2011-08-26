@@ -26,7 +26,7 @@ import cairo
 import pangocairo
 import pango
 
-from .css.values import get_single_keyword, get_keyword, get_single_pixel_value
+from .css.values import get_single_keyword, get_single_pixel_value
 
 
 ALIGN_PROPERTIES = {'left': pango.ALIGN_LEFT,
@@ -271,7 +271,6 @@ class TextLineFragment(TextFragment):
 
     def get_size(self):
         """Get the real text area dimensions for this line in pixels."""
-        first_line = self.layout.get_line(0)
         return self.get_layout_line().get_pixel_size()
 
     def get_logical_extents(self):

@@ -26,7 +26,6 @@ from __future__ import division
 import contextlib
 
 import cairo
-import pangocairo
 
 from . import helpers
 

@@ -23,7 +23,6 @@ Various utils.
 """
 
 import urllib
-import functools
 from urlparse import urljoin, urlparse
 
 from cssutils.helper import path2url

@@ -31,7 +31,6 @@ import cairo
 from ..css.values import get_single_keyword, make_keyword
 from ..formatting_structure import boxes
 from ..utils import get_url_attribute
-from ..draw.helpers import get_image_surface_from_uri
 
 
 # Maps HTML tag names to function taking an HTML element and returning a Box.
