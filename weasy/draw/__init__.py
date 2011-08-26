@@ -33,11 +33,6 @@ from . import helpers
 
 class CairoContext(cairo.Context):
     """A ``cairo.Context`` with a few more helper methods."""
-    def show_layout(self, layout):
-        """Show the ``layout`` ."""
-        pangocairo_context = pangocairo.CairoContext(self)
-        pangocairo_context.set_antialias(cairo.ANTIALIAS_SUBPIXEL)
-        pangocairo_context.show_layout(layout)
 
     def set_source_colorvalue(self, color):
         """Set the source pattern from a ``cssutils.ColorValue`` object."""

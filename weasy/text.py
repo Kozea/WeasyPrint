@@ -47,11 +47,13 @@ class TextFragment(object):
     This class is mainly used to render the text from a TextBox.
 
     """
-    def __init__(self, text='', width=-1, surface=None):
-        if surface is None:
+    def __init__(self, text='', width=-1, context=None):
+        if context is None:
             surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, 400, 400)
-        context = pangocairo.CairoContext(cairo.Context(surface))
-        self.layout = context.create_layout()
+            context = cairo.Context(surface)
+        self.pango_context = pangocairo.CairoContext(context)
+        self.pango_context.set_antialias(cairo.ANTIALIAS_SUBPIXEL)
+        self.layout = self.pango_context.create_layout()
         self._font = None
         self.set_text(text)
         self.set_width(width)
@@ -80,11 +82,18 @@ class TextFragment(object):
         # Have the draw package draw backgrounds like for blocks, do not
         # set the background with Pango.
 
+    def show_layout(self):
+        """Draw the text to the ``context`` given at construction."""
+        self.pango_context.update_layout(self.layout)
+        self.pango_context.show_layout(self.layout)
+
     @classmethod
-    def from_textbox(cls, textbox):
+    def from_textbox(cls, textbox, context=None):
         """Create a TextFragment from a TextBox."""
-        surface = textbox.document.surface
-        object_cls = cls('', -1, surface)
+        if context is None:
+            surface = textbox.document.surface
+            context = cairo.Context(surface)
+        object_cls = cls('', -1, context)
         object_cls.set_textbox(textbox)
         return object_cls
 

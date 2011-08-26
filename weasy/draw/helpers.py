@@ -327,9 +327,9 @@ def draw_replacedbox(context, box):
 
 def draw_text(context, textbox):
     """Draw ``textbox`` to a ``cairo.Context`` from ``pangocairo.Context``."""
-    fragment = TextLineFragment.from_textbox(textbox)
     context.move_to(textbox.position_x, textbox.position_y)
-    context.show_layout(fragment.get_layout())
+    fragment = TextLineFragment.from_textbox(textbox, context=context)
+    fragment.show_layout()
     values = textbox.style.text_decoration
     font_size = get_single_pixel_value(textbox.style.font_size)
     for value in values:
