@@ -320,11 +320,7 @@ def draw_replacedbox(context, box):
 
 
 def draw_text(context, textbox):
-    """Draw ``textbox`` to a ``cairo.Context`` from ``pangocairo.Context``."""
-    font_size = get_single_pixel_value(textbox.style.font_size)
-    if font_size == 0:
-        # Pango crashes with font-size: 0 ...
-        return
+    """Draw ``textbox`` to a ``cairo.Context`` from ``PangoCairo.Context``."""
     context.move_to(textbox.position_x, textbox.position_y)
     fragment = TextLineFragment.from_textbox(textbox, context=context)
     fragment.show_layout()
@@ -367,6 +363,6 @@ def draw_text_decoration(context, position_y, textbox):
         context.set_source_colorvalue(color)
         context.set_line_width(1)
         context.move_to(position_x, position_y)
-        offset = textbox.extents[2] - textbox.extents[0]
+        offset = textbox.extents.width - textbox.extents.x
         context.line_to(position_x + offset, position_y)
         context.stroke()

@@ -22,8 +22,9 @@ Test the text management.
 """
 
 from attest import Tests, assert_hook  # pylint: disable=W0611
+from gi.repository import Pango
 
-from ..text import TextFragment, TextLineFragment, ALIGN_PROPERTIES
+from ..text import TextFragment, TextLineFragment
 from .test_layout import parse, body_children
 
 SUITE = Tests()
@@ -102,11 +103,12 @@ def test_text_other():
     fragment.set_text(u'some text')
 
     # The default value of alignement property is ``left`` for western script
-    assert fragment.layout.get_alignment() == ALIGN_PROPERTIES['left']
+    assert fragment.layout.get_alignment() == Pango.Alignment.LEFT
     assert not fragment.layout.get_justify()
 
-    for key, value in ALIGN_PROPERTIES.iteritems():
-        fragment.set_alignment(key)
+    for alignment in ('left', 'center', 'right'):
+        fragment.set_alignment(alignment)
+        value = getattr(Pango.Alignment, alignment.upper())
         assert fragment.layout.get_alignment() == value
 
     fragment.set_alignment('justify')
