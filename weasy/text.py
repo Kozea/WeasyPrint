@@ -157,7 +157,7 @@ class TextFragment(object):
 
     def set_font_size(self, size):
         """Set the layout font size in pixels."""
-        self._set_attribute('size', int(size) * 1024)
+        self._set_attribute('size', int(size) * Pango.SCALE)
 
     def set_font_variant(self, variant):
         """Set the layout font variant.
