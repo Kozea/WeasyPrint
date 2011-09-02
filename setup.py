@@ -23,12 +23,13 @@ setup(
         'lxml',
         'cssutils',
         'PIL',
-        # Tricky to compile: 'pycairo', 'PyGTK',
+        # Tricky to compile: 'pycairo'
         # Not on PyPI: 'rsvg',
+        # Also depends on Pango with introspection
     ],
     test_loader='attest:FancyReporter.test_loader',
     test_suite='weasy.tests.tests',
-    entry_points = {
+    entry_points={
         'console_scripts': [
             'weasyprint = weasy:main',
         ],
