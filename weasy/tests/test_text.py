@@ -22,7 +22,7 @@ Test the text management.
 """
 
 from attest import Tests, assert_hook  # pylint: disable=W0611
-from gi.repository import Pango
+from gi.repository import Pango  # pylint: disable=E0611
 
 from ..text import TextFragment, TextLineFragment
 from .test_layout import parse, body_children
