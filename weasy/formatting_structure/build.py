@@ -38,15 +38,15 @@ GLYPH_LIST_MARKERS = {
 }
 
 
-def build_formatting_structure(document):
+def build_formatting_structure(document, check_sanity=False):
     """Build a formatting structure (box tree) from a ``document``."""
     box = dom_to_box(document, document.dom)
     assert box is not None
     box = inline_in_block(box)
     box = block_in_inline(box)
     box = process_whitespace(box)
-    # TODO: only run this while testing?
-    sanity_checks(box)
+    if check_sanity:
+        sanity_checks(box)
     return box
 
 

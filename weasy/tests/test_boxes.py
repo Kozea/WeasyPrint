@@ -25,12 +25,11 @@ import contextlib
 
 from attest import Tests, assert_hook  # pylint: disable=W0611
 
+from . import resource_filename
 from ..css import validation
 from ..css.values import get_single_keyword
 from ..document import Document
-from ..formatting_structure import boxes
-from ..formatting_structure import build
-from . import resource_filename
+from ..formatting_structure import boxes, build
 
 
 SUITE = Tests()
@@ -317,7 +316,7 @@ def test_whitespace():
         <pre style="white-space: pre-wrap">\t  foo\n</pre>
         <pre style="white-space: pre-line">\t  foo\n</pre>
         ''')
-    box = build.build_formatting_structure(document)
+    box = build.build_formatting_structure(document, check_sanity=True)
 
     assert_tree(box, [
         ('p', 'block', [
