@@ -69,7 +69,8 @@ class InlineContext(object):
     def execute_formatting(self):
         """Break the lines until the bottom of the page is reached."""
         first = True
-        for line in breaking_linebox(self.linebox, self.containing_block_width):
+        for line in breaking_linebox(
+                self.linebox, self.containing_block_width):
             self.save(line)
             white_space_processing(line)
             compute_linebox_dimensions(line)

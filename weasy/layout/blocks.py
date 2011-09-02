@@ -167,8 +167,7 @@ def block_level_height(box, max_position_y):
                 box.children.appendleft(child)
                 break
         else:
-            new_child, finished = block_level_layout(child,
-                max_position_y)
+            new_child, finished = block_level_layout(child, max_position_y)
             new_position_y = position_y + new_child.margin_height()
             # TODO: find a way to break between blocks
 #            if new_position_y <= max_position_y:
