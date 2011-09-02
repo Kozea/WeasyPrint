@@ -560,6 +560,7 @@ def test_list_style_image():
 
 @SUITE.test
 def test_images():
+    """Test images sizes, positions and pixels."""
     centered_image = [
         _+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_,

@@ -120,6 +120,7 @@ def test_text_other():
 
 @SUITE.test
 def test_text_font_size_zero():
+    """Test a text with a font size set to 0."""
     page, = parse('''
         <style>
             p { font-size: 0; }

@@ -41,6 +41,7 @@ class InlineContext(object):
         self.execute_formatting()
 
     def deep_copy(self, box):
+        """Copy a ``box`` and its children recursively."""
         copy_box = box.copy()
         if isinstance(box, boxes.ParentBox):
             copy_box.empty()
