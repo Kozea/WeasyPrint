@@ -37,11 +37,13 @@ class TextFragment(object):
     def __init__(self, text='', width=-1, context=None):
         if context is None:
             surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, 400, 400)
-            context = cairo.Context(surface)
-        self.pango_context = PangoCairo.create_context(context)
+            self.context = cairo.Context(surface)
+        else:
+            self.context = context
+        pango_context = PangoCairo.create_context(self.context)
         # TODO: find how to do this with introspection
-        #self.pango_context.set_antialias(cairo.ANTIALIAS_SUBPIXEL)
-        self.layout = Pango.Layout(self.pango_context)
+        #pango_context.set_antialias(cairo.ANTIALIAS_SUBPIXEL)
+        self.layout = Pango.Layout(pango_context)
         self.set_text(text)
         self.set_width(width)
         self._attributes = {}
@@ -71,8 +73,8 @@ class TextFragment(object):
 
     def show_layout(self):
         """Draw the text to the ``context`` given at construction."""
-        PangoCairo.update_layout(self.pango_context, self.layout)
-        PangoCairo.show_layout(self.pango_context, self.layout)
+        PangoCairo.update_layout(self.context, self.layout)
+        PangoCairo.show_layout(self.context, self.layout)
 
     @classmethod
     def from_textbox(cls, textbox, context=None):
