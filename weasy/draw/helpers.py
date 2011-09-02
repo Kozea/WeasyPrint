@@ -321,6 +321,11 @@ def draw_replacedbox(context, box):
 
 def draw_text(context, textbox):
     """Draw ``textbox`` to a ``cairo.Context`` from ``PangoCairo.Context``."""
+    # Pango crashes with font-size: 0
+    font_size = get_single_pixel_value(textbox.style.font_size)
+    if font_size == 0:
+        return
+
     context.move_to(textbox.position_x, textbox.position_y)
     fragment = TextLineFragment.from_textbox(textbox, context=context)
     fragment.show_layout()
