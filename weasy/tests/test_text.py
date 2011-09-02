@@ -43,7 +43,7 @@ def test_line_content():
     assert line.get_remaining_text() == u'text for test'
     line.set_width(60)
     assert line.get_remaining_text() == u'is a text for test'
-    assert u"%s%s" % (line.get_text(), line.get_remaining_text())  == string
+    assert u"%s%s" % (line.get_text(), line.get_remaining_text()) == string
 
 
 @SUITE.test

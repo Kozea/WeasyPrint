@@ -44,6 +44,7 @@ def body_children(page):
     assert body.element.tag == 'body'
     return body.children
 
+
 def parse_without_layout(html_content):
     """Parse some HTML, apply stylesheets, transform to boxes """
     return PNGDocument.from_string(html_content).formatting_structure
@@ -572,6 +573,7 @@ def test_inlinebox_spliting():
     """Test the inline boxes spliting."""
     from ..layout.inlines import split_inline_box
     from ..layout.percentages import resolve_percentages
+
     def get_inlinebox(content):
         """Helper returning a inlinebox with customizable style."""
         page = u'<style>p { width:%(width)spx; font-family:%(fonts)s;}</style>'
@@ -670,6 +672,7 @@ def test_inlinebox_text_after_spliting():
     """Test the inlinebox text after spliting."""
     from ..layout.inlines import split_inline_box
     from ..layout.percentages import resolve_percentages
+
     def get_inlinebox(content):
         """Helper returning a inlinebox with customizable style."""
         page = u'<style>p { width:%(width)spx; font-family:%(fonts)s;}</style>'
@@ -724,7 +727,7 @@ def test_page_and_linebox_breaking():
                 body { margin: 0 }
                 </style>
                 <div>%(content)s</div>'''
-        page = page % {'fonts': FONTS, 'content':content}
+        page = page % {'fonts': FONTS, 'content': content}
         return parse(page)
 
     def get_full_text(lines):
@@ -752,4 +755,3 @@ def test_page_and_linebox_breaking():
     pages = get_pages(content)
     assert len(pages) == 2
     assert content == get_joined_text(pages)
-

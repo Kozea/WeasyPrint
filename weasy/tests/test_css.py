@@ -48,8 +48,7 @@ def test_style_dict():
     """Test a style in a ``dict``."""
     style = css.computed_values.StyleDict({
         'margin-left': cssutils.css.PropertyValue('12px'),
-        'display': cssutils.css.PropertyValue('block')
-    })
+        'display': cssutils.css.PropertyValue('block')})
     assert style.display[0].value == 'block'
     assert style.margin_left[0].value == 12
     with raises(AttributeError):
@@ -100,7 +99,6 @@ def test_expand_shorthands():
         "3em was before the shorthand, should be masked"
     assert style['margin-left'] == '4em', \
         "4em was after the shorthand, should not be masked"
-
 
 
 def parse_css(filename):
