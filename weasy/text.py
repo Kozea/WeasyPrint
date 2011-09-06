@@ -195,36 +195,33 @@ class TextFragment(object):
 
 class TextLineFragment(TextFragment):
     """Text renderer splitting lines."""
+    # TODO: use get_line instead of get_lines when it is not broken anymore
     def get_remaining_text(self):
         """Get the unicode text that can't be on the line."""
         # Do not use the length of the first line here.
-        # Preserved new-line characters are between get_line(0).length
-        # and get_line(1).start_index
-        second_line = self.layout.get_line(1)
-        if second_line is not None:
-            text = self.layout.get_text()[second_line.start_index:]
-            return text.decode('utf-8')
-        else:
-            return None
+        # Preserved new-line characters are between get_lines()[0].length
+        # and get_lines()[1].start_index
+        if self.layout.get_line_count() > 1:
+            index = self.layout.get_lines()[1].start_index
+            text = self.layout.get_text()[index:].decode('utf-8')
+            return text
 
     def get_text(self):
         """Get all the unicode text can be on the line."""
-        first_line = self.layout.get_line(0)
-        return self.layout.get_text()[:first_line.length].decode('utf-8')
+        length = self.layout.get_lines()[0].length
+        return self.layout.get_text()[:length].decode('utf-8')
 
     def get_size(self):
         """Get the real text area dimensions for this line in pixels."""
-        layout = self.layout.copy()
-        layout.set_text(self.get_text(), -1)
-        return layout.get_pixel_size()
+        return self.layout.get_pixel_size()
 
     def get_logical_extents(self):
         """Get the size of the logical area occupied by the text."""
-        return self.layout.get_line(0).get_pixel_extents()[0]
+        return self.layout.get_lines()[0].get_pixel_extents()[0]
 
     def get_ink_extents(self):
         """Get the size of the ink area occupied by the text."""
-        return self.layout.get_line(0).get_pixel_extents()[1]
+        return self.layout.get_lines()[0].get_pixel_extents()[1]
 
     def get_baseline(self):
         """Get the baseline of the text."""
