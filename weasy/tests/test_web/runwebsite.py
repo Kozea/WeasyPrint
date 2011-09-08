@@ -11,7 +11,7 @@ INPUT = os.path.join(app.root_path, 'input.html')
 PNG_OUTPUT = os.path.join(app.root_path, 'output.png')
 PDF_OUTPUT = os.path.join(app.root_path, 'output.pdf')
 
-DEFAULT_CONTENT = """
+DEFAULT_CONTENT = '''
 <style>
 body { margin: 1em 2em; }
 h1 { text-decoration : underline; }
@@ -21,7 +21,7 @@ div { border: 10px solid; background: #ddd; }
 <h1>Weasyprint testing</h1>
 
 <div><ul><li>Hello, world!
-"""
+'''
 
 
 @app.route('/')

@@ -96,9 +96,9 @@ def test_expand_shorthands():
     assert style['margin-top'] == '2em'
     assert style['margin-right'] == '0'
     assert style['margin-bottom'] == '2em', \
-        "3em was before the shorthand, should be masked"
+        '3em was before the shorthand, should be masked'
     assert style['margin-left'] == '4em', \
-        "4em was after the shorthand, should not be masked"
+        '4em was after the shorthand, should not be masked'
 
 
 def parse_css(filename):
@@ -115,7 +115,7 @@ def validate_content(real_non_shorthand, name, values, required=False):
 
 @SUITE.test
 def test_annotate_document():
-    """."""
+    """Test a document with inline style."""
     # Short names for variables are OK here
     # pylint: disable=C0103
 
@@ -209,14 +209,14 @@ def test_page():
     # TODO: remove this patching when the `content` property is supported.
     with monkeypatch_validation(validate_content):
         document = parse_html('doc1.html', user_stylesheets=[
-            cssutils.parseString(u"""
+            cssutils.parseString('''
                 @page {
                     margin: 10px;
                 }
                 @page :right {
                     margin-bottom: 12pt;
                 }
-            """)
+            ''')
         ])
 
         style = document.style_for('@page', 'first_left')

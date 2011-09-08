@@ -62,7 +62,7 @@ ol              { list-style-type: decimal }
 ol ul, ul ol,
 ul ul, ol ol    { margin-top: 0; margin-bottom: 0 }
 u, ins          { text-decoration: underline }
-br:before       { content: "\A"; white-space: pre-line }
+br:before       { content: '\A'; white-space: pre-line }
 center          { text-align: center }
 /*
  Not applicable to print:
@@ -72,11 +72,11 @@ center          { text-align: center }
 a[href] { text-decoration: underline }
 
 /* Begin bidirectionality settings (do not change) */
-BDO[DIR="ltr"]  { direction: ltr; unicode-bidi: bidi-override }
-BDO[DIR="rtl"]  { direction: rtl; unicode-bidi: bidi-override }
+BDO[DIR='ltr']  { direction: ltr; unicode-bidi: bidi-override }
+BDO[DIR='rtl']  { direction: rtl; unicode-bidi: bidi-override }
 
-*[DIR="ltr"]    { direction: ltr; unicode-bidi: embed }
-*[DIR="rtl"]    { direction: rtl; unicode-bidi: embed }
+*[DIR='ltr']    { direction: ltr; unicode-bidi: embed }
+*[DIR='rtl']    { direction: rtl; unicode-bidi: embed }
 
 @media print {
   h1            { page-break-before: always }

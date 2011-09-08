@@ -34,10 +34,7 @@ FONTS = u"Nimbus Mono L, Liberation Mono, FreeMono, Monospace"
 
 
 def body_children(page):
-    """
-    Take a page with boxes for <html> and <body> elements, and return
-    <body>’s children.
-    """
+    """Take a ``page``  and return its <body>’s children."""
     html = page.root_box
     assert html.element.tag == 'html'
     body, = html.children
@@ -46,12 +43,12 @@ def body_children(page):
 
 
 def parse_without_layout(html_content):
-    """Parse some HTML, apply stylesheets, transform to boxes """
+    """Parse some HTML, apply stylesheets, transform to boxes."""
     return PNGDocument.from_string(html_content).formatting_structure
 
 
-def validate_absolute_and_float(real_non_shorthand,
-        name, values, required=False):
+def validate_absolute_and_float(
+        real_non_shorthand, name, values, required=False):
     """Fake validator for ``absolute`` and ``float``."""
     if (
         name == 'position' and
@@ -521,24 +518,24 @@ def test_forced_line_breaks():
     """Test <pre> and <br>."""
     # These lines should be small enough to fit on the default A4 page
     # with the default 12pt font-size.
-    page, = parse("""
+    page, = parse('''
         <pre>Lorem ipsum dolor sit amet,
             consectetur adipiscing elit.
             Sed sollicitudin nibh
             et turpis molestie tristique.</pre>
-    """)
+    ''')
     pre, = body_children(page)
     assert pre.element.tag == 'pre'
     lines = pre.children
     assert all(isinstance(line, boxes.LineBox) for line in lines)
     assert len(lines) == 4
 
-    page, = parse("""
+    page, = parse('''
         <p>Lorem ipsum dolor sit amet,<br>
             consectetur adipiscing elit.<br>
             Sed sollicitudin nibh<br>
             et turpis molestie tristique.</p>
-    """)
+    ''')
     pre, = body_children(page)
     assert pre.element.tag == 'p'
     lines = pre.children
@@ -749,7 +746,7 @@ def test_page_and_linebox_breaking():
             texts.extend(get_full_text(lines))
         return u' '.join(texts)
 
-    content = u"1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15"
+    content = '1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15'
 
     pages = get_pages(content)
     assert len(pages) == 2

@@ -35,7 +35,7 @@ FONTS = u"Nimbus Mono L, Liberation Mono, FreeMono, Monospace"
 @SUITE.test
 def test_line_content():
     """Test the line break for various fixed-width lines."""
-    string = u"This is a text for test"
+    string = 'This is a text for test'
     width = 120
     line = TextLineFragment(string, width)
     line.set_font_size(12)
@@ -43,7 +43,7 @@ def test_line_content():
     assert line.get_remaining_text() == u'text for test'
     line.set_width(60)
     assert line.get_remaining_text() == u'is a text for test'
-    assert u"%s%s" % (line.get_text(), line.get_remaining_text()) == string
+    assert u'%s%s' % (line.get_text(), line.get_remaining_text()) == string
 
 
 @SUITE.test

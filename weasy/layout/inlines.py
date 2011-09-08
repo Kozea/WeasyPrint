@@ -282,13 +282,13 @@ def is_empty_line(linebox):
     # TODO: complete this function
     if len(linebox.children) == 0:
         return linebox
-    text = ""
+    text = ''
     len_textbox = 0
     for child in linebox.descendants():
         if isinstance(child, boxes.TextBox):
             len_textbox += 1
-            text += child.text.strip(" ")
-    return text == "" and len_textbox == len(linebox.children)
+            text += child.text.strip(' ')
+    return text == '' and len_textbox == len(linebox.children)
 
 
 def get_new_empty_line(linebox):
@@ -462,8 +462,8 @@ def split_inline_box(inlinebox, remaining_width):
 
         if part2 is not None:
             inlinebox.children.appendleft(part2)
-            inlinebox.reset_spacing("left")
-            new_inlinebox.reset_spacing("right")
+            inlinebox.reset_spacing('left')
+            new_inlinebox.reset_spacing('right')
             return new_inlinebox, inlinebox
 
     return new_inlinebox, None
