@@ -55,19 +55,20 @@ def handle_element(document, element):
 
 
 def handler(tag):
-    """
-    Return a decorator that registers a function handling `tag` HTML elements.
-    """
+    """Return a decorator registering a function handling ``tag`` elements."""
     def decorator(function):
+        """Decorator registering a function handling ``tag`` elements."""
         HTML_HANDLERS[tag] = function
         return function
     return decorator
 
 
 def is_block_level(document, element):
-    """
-    Return True if the element is block-level, False if it is inline-level,
-    and raise ValueError if it is neither.
+    """Find if ``element`` is a block-level element in ``document``.
+
+    Return ``True`` if the element is block-level, ``False`` if it is
+    inline-level, and raise ValueError if it is neither.
+
     """
     display = get_single_keyword(document.style_for(element).display)
 
@@ -80,10 +81,11 @@ def is_block_level(document, element):
 
 
 def make_replaced_box(document, element, replacement):
-    """
-    Wrap a :class:`Replacement` object in either replaced box.
-    That box is either block-level or inline-level, depending on what
-    the element should be.
+    """Wrap a :class:`Replacement` object in either replaced box.
+
+    That box is either block-level or inline-level, depending on what the
+    element should be.
+
     """
     if is_block_level(document, element):
         type_ = boxes.BlockLevelReplacedBox
@@ -93,9 +95,10 @@ def make_replaced_box(document, element, replacement):
 
 
 def make_text_box(document, element, text):
-    """
-    Make a text box and, if the element should be block-level, wrap it in
-    a block box.
+    """Make a text box and, if the element should be block-level.
+
+    The text box is wrapped it in a block box.
+
     """
     text_box = boxes.TextBox(document, element, text)
     if is_block_level(document, element):
@@ -108,10 +111,10 @@ def make_text_box(document, element, text):
 
 @handler('img')
 def handle_img(document, element):
-    """
-    Handle <img> tags: return either an image or the alt-text.
+    """Handle ``<img>`` tags, return either an image or the alt-text.
 
-    http://www.w3.org/TR/html5/embedded-content-1.html#the-img-element
+    See: http://www.w3.org/TR/html5/embedded-content-1.html#the-img-element
+
     """
     src = get_url_attribute(element, 'src')
     alt = element.get('alt')
@@ -141,16 +144,14 @@ def handle_img(document, element):
 
 @handler('br')
 def handle_br(document, element):
-    """
-    Handle <br> tags: return a preserved new-line character.
-    """
+    """Handle ``<br>`` tags, return a preserved new-line character."""
     box = boxes.TextBox(document, element, '\n')
     box.style.white_space = [make_keyword('pre')]
     return box
 
 
 class Replacement(object):
-    """Abstract base class for replaced elements. """
+    """Abstract base class for replaced elements."""
     def intrinsic_width(self):
         """Intrinsic width if defined."""
 

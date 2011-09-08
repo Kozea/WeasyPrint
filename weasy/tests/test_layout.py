@@ -584,28 +584,28 @@ def test_inlinebox_spliting():
         return paragraph.children[0].children[0]
 
     def get_parts(inlinebox, width):
+        """Yield the parts of the splitted ``inlinebox`` of given ``width``."""
         copy_inlinebox = inlinebox.copy()
         while copy_inlinebox.children:
-            part1, part2 = split_inline_box(copy_inlinebox, width)
-            yield part1
+            yield split_inline_box(copy_inlinebox, width)[0]
 
     def get_joined_text(parts):
-        text = ""
-        for part in parts:
-            text = "%s%s" % (text, part.children[0].text)
-        return text
+        """Get the joined text from ``parts``."""
+        return ''.join(part.children[0].text for part in parts)
 
     def test_inlinebox_all_spacing(inlinebox, value):
-        for side in ['left', 'top', 'bottom', 'right']:
+        """Test the spacing for the four sides of ``inlinebox``."""
+        for side in ('left', 'top', 'bottom', 'right'):
             test_inlinebox_spacing(inlinebox, value, side)
 
     def test_inlinebox_spacing(inlinebox, value, side):
+        """Test the margin, padding and border-width of ``inlinebox``."""
         assert getattr(inlinebox, 'margin_%s' % side) == value
         assert getattr(inlinebox, 'padding_%s' % side) == value
         assert getattr(inlinebox, 'border_%s_width' % side) == value
 
-    content = u"""<strong>WeasyPrint is a free software visual rendering engine
-              for HTML and CSS</strong>"""
+    content = '''<strong>WeasyPrint is a free software visual rendering engine
+              for HTML and CSS</strong>'''
 
     inlinebox = get_inlinebox(content)
     resolve_percentages(inlinebox)
@@ -635,9 +635,9 @@ def test_inlinebox_spliting():
     assert original_text == get_joined_text(parts)
 
     # with margin-border-padding
-    content = u"""<strong style="border:10px solid; margin:10px; padding:10px">
+    content = '''<strong style="border:10px solid; margin:10px; padding:10px">
               WeasyPrint is a free software visual rendering engine
-              for HTML and CSS</strong>"""
+              for HTML and CSS</strong>'''
 
     inlinebox = get_inlinebox(content)
     resolve_percentages(inlinebox)
@@ -683,26 +683,23 @@ def test_inlinebox_text_after_spliting():
         return paragraph.children[0].children[0]
 
     def get_parts(inlinebox, width):
+        """Yield the parts of the splitted ``inlinebox`` of given ``width``."""
         while inlinebox.children:
-            part1, part2 = split_inline_box(inlinebox, width)
-            yield part1
+            yield split_inline_box(inlinebox, width)[0]
 
     def get_full_text(inlinebox):
-        text = ""
-        for part in inlinebox.descendants():
-            if isinstance(part, boxes.TextBox):
-                text = "%s%s" % (text, part.text)
-        return text
+        """Get the full text in ``inlinebox``."""
+        return ''.join(
+            part.text for part in inlinebox.descendants()
+            if isinstance(part, boxes.TextBox))
 
     def get_joined_text(parts):
-        text = ""
-        for part in parts:
-            text = "%s%s" % (text, get_full_text(part))
-        return text
+        """Get the joined text from ``parts``."""
+        return ''.join(get_full_text(part) for part in parts)
 
-    content = u"""<strong><em><em><em>
+    content = '''<strong><em><em><em>
                   0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
-                  </em></em></em></strong>"""
+                  </em></em></em></strong>'''
 
     inlinebox = get_inlinebox(content)
     resolve_percentages(inlinebox)
@@ -731,6 +728,7 @@ def test_page_and_linebox_breaking():
         return parse(page)
 
     def get_full_text(lines):
+        """Get a list of a full text parts in ``inlinebox``."""
         texts = []
         for line in lines:
             line_texts = []
@@ -741,6 +739,7 @@ def test_page_and_linebox_breaking():
         return texts
 
     def get_joined_text(pages):
+        """Get the joined text from ``parts``."""
         texts = []
         for page in pages:
             html = page.root_box
