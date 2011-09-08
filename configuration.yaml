@@ -21,12 +21,10 @@ vcs (git):
 code browser (github):
   project name: Kozea/WeasyPrint
 
-# bug tracker (redmine):
-#   base url: http://redmine.kozea.fr/
-#   project name: weasyprint
+bug tracker (redmine):
+  base url: http://redmine.kozea.fr/
+  project name: weasyprint
 
-# mailing list (mbox):
-#   folder: /var/local/
-
-# room (jabber):
-#   address: weasyprint@room.jabber.kozea.fr
+continuous integration (jenkins):
+  base url: http://jenkins.kozea.org/
+  project name: WeasyPrint
