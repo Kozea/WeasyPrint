@@ -205,7 +205,7 @@ def test_block_widths():
         assert div.width == 100
         for paragraph in div.children:
             if isinstance(paragraph, boxes.AnonymousBox):
-                # TODO remove this when we have proper whitespace handling
+                # TODO: remove this when we have proper whitespace handling
                 continue
             assert isinstance(paragraph, boxes.BlockBox)
             assert paragraph.element.tag == 'p'
