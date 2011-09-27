@@ -39,7 +39,7 @@ def list_marker_layout(box):
     if marker:
         resolve_percentages(marker)
         if isinstance(marker, boxes.TextBox):
-            text_fragment = TextFragment.from_textbox(marker)
+            text_fragment = TextFragment(marker)
             marker.width, marker.height = text_fragment.get_size()
         else:
             # Image marker
