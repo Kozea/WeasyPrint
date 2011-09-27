@@ -1,0 +1,7 @@
+/*
+    Simplified user-agent stylesheet for HTML4 in tests.
+*/
+html, body, div, h1, h2, h3, h4, ol, p, ul, hr, pre { display: block; }
+li { display: list-item }
+head { display: none }
+pre { white-space: pre }

@@ -25,7 +25,7 @@ Test the layout.
 from attest import Tests, assert_hook  # pylint: disable=W0611
 
 from ..css.values import get_single_keyword, get_single_pixel_value
-from ..document import PNGDocument
+from . import TestPNGDocument
 from ..formatting_structure import boxes
 from .test_boxes import monkeypatch_validation
 
@@ -44,7 +44,7 @@ def body_children(page):
 
 def parse_without_layout(html_content):
     """Parse some HTML, apply stylesheets, transform to boxes."""
-    return PNGDocument.from_string(html_content).formatting_structure
+    return TestPNGDocument.from_string(html_content).formatting_structure
 
 
 def validate_absolute_and_float(
@@ -65,7 +65,7 @@ def parse(html_content):
     """Parse some HTML, apply stylesheets, transform to boxes and lay out."""
     # TODO: remove this patching when asbolute and floats are validated
     with monkeypatch_validation(validate_absolute_and_float):
-        return PNGDocument.from_string(html_content).pages
+        return TestPNGDocument.from_string(html_content).pages
 
 
 @SUITE.test
@@ -106,7 +106,9 @@ def test_page():
     assert int(page.outer_height) == 793  # A4: 210 mm
 
     page, = parse('''
-        <style>@page { size: 200px 300px; margin: 10px 10% 20% 1in }</style>
+        <style>@page { size: 200px 300px; margin: 10px 10% 20% 1in }
+               body { margin: 8px }
+        </style>
         <p style="margin: 0">
     ''')
     assert page.outer_width == 200

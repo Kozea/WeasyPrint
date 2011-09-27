@@ -24,7 +24,7 @@ Test the text management.
 from attest import Tests, assert_hook  # pylint: disable=W0611
 
 from ..text import TextFragment
-from ..document import PNGDocument
+from . import TestPNGDocument
 from .test_layout import parse, body_children
 
 SUITE = Tests()
@@ -34,7 +34,7 @@ def make_text(text, width=-1, style=''):
     """
     Make and return a TextFragment built from a TextBox in an HTML document.
     """
-    document = PNGDocument.from_string('''
+    document = TestPNGDocument.from_string('''
         <style>
         p {
             font-family: Nimbus Mono L, Liberation Mono, FreeMono, Monospace;

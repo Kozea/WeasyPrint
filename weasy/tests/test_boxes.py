@@ -28,7 +28,7 @@ from attest import Tests, assert_hook  # pylint: disable=W0611
 from . import resource_filename
 from ..css import validation
 from ..css.values import get_single_keyword
-from ..document import Document
+from . import TestPNGDocument
 from ..formatting_structure import boxes, build
 
 
@@ -112,7 +112,7 @@ def parse(html_content):
     """Parse some HTML, apply stylesheets and transform to boxes."""
     # TODO: remove this patching when inline-block is validated.
     with monkeypatch_validation(validate_inline_block):
-        document = Document.from_string(html_content)
+        document = TestPNGDocument.from_string(html_content)
         # Dummy filename, but in the right directory.
         document.base_url = resource_filename('<test>')
         return build.dom_to_box(document, document.dom)
@@ -338,7 +338,7 @@ def test_whitespace():
     """Test the management of white spaces."""
     # TODO: test more cases
     # http://www.w3.org/TR/CSS21/text.html#white-space-model
-    document = Document.from_string('''
+    document = TestPNGDocument.from_string('''
         <p>Lorem \t\r\n  ipsum\t<strong>  dolor </strong>.</p>
         <pre>\t  foo\n</pre>
         <pre style="white-space: pre-wrap">\t  foo\n</pre>
@@ -380,7 +380,7 @@ def test_whitespace():
 @SUITE.test
 def test_page_style():
     """Test the management of page styles."""
-    document = Document.from_string('''
+    document = TestPNGDocument.from_string('''
         <style>
             @page { margin: 3px }
             @page :first { margin-top: 20px }

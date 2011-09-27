@@ -30,7 +30,7 @@ import cssutils
 from . import resource_filename
 from .test_boxes import monkeypatch_validation
 from .. import css
-from ..document import Document
+from . import TestPNGDocument
 
 
 SUITE = Tests()
@@ -40,7 +40,7 @@ def parse_html(filename, **kwargs):
     """Parse an HTML file from the test resources and resolve relative URL."""
     # Make a file:// URL
     url = path2url(resource_filename(filename))
-    return Document.from_file(url, **kwargs)
+    return TestPNGDocument.from_file(url, **kwargs)
 
 
 @SUITE.test

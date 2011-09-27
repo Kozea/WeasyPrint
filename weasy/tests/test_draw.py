@@ -29,7 +29,7 @@ import png
 from attest import Tests, assert_hook  # pylint: disable=W0611
 
 from . import resource_filename
-from ..document import PNGDocument
+from . import TestPNGDocument
 
 # Short variable names are OK here
 # pylint: disable=C0103
@@ -103,7 +103,7 @@ def html_to_png(name, expected_width, expected_height, html):
     """
     Render an HTML document to PNG, checks its size and return pixel data.
     """
-    document = PNGDocument.from_string(html)
+    document = TestPNGDocument.from_string(html)
     # Dummy filename, but in the right directory.
     document.base_url = resource_filename('<test>')
     filename = make_filename('test_results', name)
