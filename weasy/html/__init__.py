@@ -95,9 +95,9 @@ def make_replaced_box(document, element, replacement):
 
 
 def make_text_box(document, element, text):
-    """Make a text box and, if the element should be block-level.
+    """Make a text box.
 
-    The text box is wrapped it in a block box.
+    If the element should be block-level, wrap it in a block box.
 
     """
     text_box = boxes.TextBox(document, element, text)
