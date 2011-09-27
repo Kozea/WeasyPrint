@@ -31,7 +31,7 @@ from .css.values import get_single_keyword, get_single_pixel_value
 class TextFragment(object):
     """Text renderer using Pango.
 
-    This class is mainly used to render the text from a TextBox.
+    This class is mainPly used to render the text from a TextBox.
 
     """
     def __init__(self, text='', width=-1, context=None):
@@ -44,32 +44,17 @@ class TextFragment(object):
         # TODO: find how to do this with introspection
         #pango_context.set_antialias(cairo.ANTIALIAS_SUBPIXEL)
         self.layout = Pango.Layout(pango_context)
-        self.set_text(text)
-        self.set_width(width)
-        self._attributes = {}
+        self.text = text  # Keep it here as Unicode
+        self.layout.set_text(text.encode('utf-8'), -1)  # Pango works on bytes
+        if width != -1:
+            width = Pango.SCALE * width
+        self.layout.set_width(int(width))
         # If fallback is True other fonts on the system can be used to provide
         # characters missing from the current font. Otherwise, only characters
         # from the closest matching font can be used.
-        self._set_attribute('fallback', 'true')
+        self._attributes = {'fallback': 'true'}
         # Other properties
         self.layout.set_wrap(Pango.WrapMode.WORD)
-
-    def set_textbox(self, textbox):
-        """Set the textbox properties in the layout."""
-        self.set_text(textbox.text)
-        font = ', '.join(v.value for v in textbox.style['font-family'])
-        self.set_font_family(font)
-        self.set_font_size(get_single_pixel_value(textbox.style.font_size))
-        self.set_alignment(get_single_keyword(textbox.style.text_align))
-        self.set_font_variant(get_single_keyword(textbox.style.font_variant))
-        self.set_font_weight(int(textbox.style.font_weight[0].value))
-        self.set_font_style(get_single_keyword(textbox.style.font_style))
-        letter_spacing = get_single_pixel_value(textbox.style.letter_spacing)
-        if letter_spacing is not None:
-            self.set_letter_spacing(letter_spacing)
-        self.set_foreground(textbox.style.color[0])
-        # Have the draw package draw backgrounds like for blocks, do not
-        # set the background with Pango.
 
     def show_layout(self):
         """Draw the text to the ``context`` given at construction."""
@@ -77,65 +62,51 @@ class TextFragment(object):
         PangoCairo.show_layout(self.context, self.layout)
 
     @classmethod
-    def from_textbox(cls, textbox, context=None):
+    def from_textbox(cls, textbox, context=None, width=-1):
         """Create a TextFragment from a TextBox."""
         if context is None:
             surface = textbox.document.surface
             context = cairo.Context(surface)
-        object_cls = cls('', -1, context)
-        object_cls.set_textbox(textbox)
-        return object_cls
 
-    def _set_attribute(self, key, value):
+        # Name abuse to make the following look like a normal method.
+        self = cls(textbox.text, width, context)
+
+        # TODO: somehow handle color.alpha
+        color = textbox.style.color[0]
+        self._attributes.update(dict(
+            color='#%02x%02x%02x' % (color.red, color.green, color.blue),
+            face=', '.join(v.value for v in textbox.style['font-family']),
+            variant=get_single_keyword(textbox.style.font_variant),
+            style=get_single_keyword(textbox.style.font_style),
+            size=int(get_single_pixel_value(textbox.style.font_size)
+                     * Pango.SCALE),
+            weight=int(textbox.style.font_weight[0].value),
+        ))
+
+        letter_spacing = get_single_pixel_value(textbox.style.letter_spacing)
+        if letter_spacing is not None:
+            self._attributes['letter_spacing'] = int(value * Pango.SCALE)
+
+        self._set_attributes()
+
+        # Alignments and backgrounds are not handled by Pango.
+
+        return self
+
+    def _set_attributes(self):
         """Set the ``key`` attribute to ``value`` in the layout."""
         # TODO: use an AttrList when it is available with introspection
-        self._attributes[key] = value
-        string = '<span %s>' % ' '.join(
-            '%s="%s" ' % (key, value)
+        attributes = ' '.join(
+            '%s="%s"' % (key, value)
             for key, value in self._attributes.items())
-        string += self.get_text().replace('&', '&amp;').replace('<', '&lt;')
-        string += '</span>'
-        attributes_list = Pango.parse_markup(string, -1, '\x00')[1]
+        text = self.text.replace('&', '&amp;').replace('<', '&lt;')
+        markup = ('<span %s>%s</span>' % (attributes, text)).encode('utf-8')
+        _, attributes_list, _, _ = Pango.parse_markup(markup, -1, '\x00')
         self.layout.set_attributes(attributes_list)
-
-    def get_text(self):
-        """Get the unicode text of the layout."""
-        return self.layout.get_text().decode('utf-8')
-
-    def set_text(self, text):
-        """Set the layout unicode ``text``."""
-        self.layout.set_text(text.encode('utf-8'), -1)
 
     def get_size(self):
         """Get the real text area size in pixels."""
         return self.layout.get_pixel_size()
-
-    def set_width(self, width):
-        """Set the layout ``width``.
-
-        The ``width`` value can be ``-1`` to indicate that no wrapping should
-        be performed.
-
-        """
-        if width != -1:
-            width = Pango.SCALE * width
-        self.layout.set_width(int(width))
-
-    def set_spacing(self, value):
-        """Set the spacing ``value`` between the lines of the layout."""
-        self.layout.set_spacing(Pango.SCALE * value)
-
-    def set_alignment(self, alignment):
-        """Set the default alignment of text in layout.
-
-        The value of alignment must be ``'left'``, ``'center'``, ``'right'`` or
-        ``'justify'``.
-
-        """
-        if alignment == 'justify':
-            alignment = 'left'
-            self.layout.set_justify(True)
-        self.layout.set_alignment(getattr(Pango.Alignment, alignment.upper()))
 
     def set_font_family(self, font):
         """Set the ``font`` used by the layout.
@@ -146,28 +117,14 @@ class TextFragment(object):
         >>> set_font_family('Al Mawash Bold, Comic sans MS')
 
         """
-        self._set_attribute('face', font.encode('utf-8'))
-
-    def set_font_style(self, style):
-        """Set the font style of the layout text.
-
-        The value must be ``'normal'``, ``'italic'`` or ``'oblique'``, as in
-        CSS.
-
-        """
-        self._set_attribute('style', style.encode('utf-8'))
+        self._attributes['face'] = font.encode('utf-8')
+        self._set_attributes()
 
     def set_font_size(self, size):
         """Set the layout font size in pixels."""
-        self._set_attribute('size', int(size) * Pango.SCALE)
+        self._attributes['size'] = int(size * Pango.SCALE)
+        self._set_attributes()
 
-    def set_font_variant(self, variant):
-        """Set the layout font variant.
-
-        The value of ``variant`` must be ``'normal'`` or ``'small-caps'``.
-
-        """
-        self._set_attribute('variant', variant.encode('utf-8'))
 
     def set_font_weight(self, weight):
         """Set the layout font weight.
@@ -175,26 +132,9 @@ class TextFragment(object):
         The value of ``weight`` must be an integer in a range from 100 to 900.
 
         """
-        self._set_attribute('weight', weight)
+        self._attributes['weight'] = weight
+        self._set_attributes()
 
-    def set_foreground(self, color):
-        """Set the foreground ``color``."""
-        # TODO: somehow handle color.alpha
-        self._set_attribute(
-            'color', '#%02x%02x%02x' % (color.red, color.green, color.blue))
-
-    def set_letter_spacing(self, value):
-        """Set the letter spacing ``value``."""
-        self._set_attribute(
-            'letter_spacing', int(value * Pango.SCALE))
-
-    def set_rise(self, value):
-        """Set the text displacement ``value`` from the baseline."""
-        self._set_attribute('raise', value * Pango.SCALE)
-
-
-class TextLineFragment(TextFragment):
-    """Text renderer splitting lines."""
     # TODO: use get_line instead of get_lines when it is not broken anymore
     def get_remaining_text(self):
         """Get the unicode text that can't be on the line."""
@@ -206,14 +146,10 @@ class TextLineFragment(TextFragment):
             text = self.layout.get_text()[index:].decode('utf-8')
             return text
 
-    def get_text(self):
+    def get_first_line_text(self):
         """Get all the unicode text can be on the line."""
         length = self.layout.get_lines()[0].length
         return self.layout.get_text()[:length].decode('utf-8')
-
-    def get_size(self):
-        """Get the real text area dimensions for this line in pixels."""
-        return self.layout.get_pixel_size()
 
     def get_logical_extents(self):
         """Get the size of the logical area occupied by the text."""
@@ -227,5 +163,5 @@ class TextLineFragment(TextFragment):
         """Get the baseline of the text."""
         # TODO: use introspection to get the descent
         #descent = self.layout.get_context().get_metrics().get_descent()
-        height = self.get_size()[1]
+        _width, height = self.get_size()
         return height   # - descent

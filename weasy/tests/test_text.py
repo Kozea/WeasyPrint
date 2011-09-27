@@ -24,7 +24,7 @@ Test the text management.
 from attest import Tests, assert_hook  # pylint: disable=W0611
 from gi.repository import Pango  # pylint: disable=E0611
 
-from ..text import TextFragment, TextLineFragment
+from ..text import TextFragment
 from .test_layout import parse, body_children
 
 SUITE = Tests()
@@ -35,25 +35,25 @@ FONTS = u"Nimbus Mono L, Liberation Mono, FreeMono, Monospace"
 @SUITE.test
 def test_line_content():
     """Test the line break for various fixed-width lines."""
-    string = 'This is a text for test'
-    width = 120
-    line = TextLineFragment(string, width)
-    line.set_font_size(12)
-    line.set_font_family(FONTS)
-    assert line.get_remaining_text() == u'text for test'
-    line.set_width(60)
-    assert line.get_remaining_text() == u'is a text for test'
-    assert u'%s%s' % (line.get_text(), line.get_remaining_text()) == string
+    for width, remaining in [(120, u'text for test'),
+                             (60, u'is a text for test')]:
+        text = 'This is a text for test'
+        line = TextFragment(text, width)
+        line.set_font_size(12)
+        line.set_font_family(FONTS)
+        assert line.get_remaining_text() == remaining
+        assert u'%s%s' % (line.get_first_line_text(),
+                          line.get_remaining_text()) == text
 
 
 @SUITE.test
 def test_line_with_any_width():
     """Test the auto-fit width of lines."""
-    line = TextLineFragment(u'some text')
-    line.set_font_family(FONTS)
-    width = line.get_size()[0]
-    line.set_text('some some some text some some some text')
-    new_width = line.get_size()[0]
+    line = TextFragment(u'some text')
+    width, _height = line.get_size()
+
+    line = TextFragment('some some some text some some some text')
+    new_width, _height = line.get_size()
 
     assert width < new_width
 
@@ -63,7 +63,7 @@ def test_line_breaking():
     """Test the line breaking."""
     string = u'This is a text for test'
     width = 120
-    line = TextLineFragment(string, width)
+    line = TextFragment(string, width)
     line.set_font_family(FONTS)
 
     line.set_font_size(12)
@@ -79,7 +79,7 @@ def test_line_breaking():
 
 @SUITE.test
 def test_text_dimension():
-    """Test the font size and spacing size impact on the text dimension."""
+    """Test the font size impact on the text dimension."""
     string = u'This is a text for test. This is a test for text.py'
     width = 200
     fragment = TextFragment(string, width)
@@ -89,33 +89,6 @@ def test_text_dimension():
     fragment.set_font_size(20)
     new_dimension = list(fragment.get_size())
     assert dimension[0] * dimension[1] < new_dimension[0] * new_dimension[1]
-
-    dimension = list(fragment.get_size())
-    fragment.set_spacing(20)
-    new_dimension = list(fragment.get_size())
-    assert dimension[0] * dimension[1] < new_dimension[0] * new_dimension[1]
-
-
-@SUITE.test
-def test_text_other():
-    """Test various text properties."""
-    fragment = TextFragment(u'', 40)
-    fragment.set_text(u'some text')
-
-    # The default value of alignement property is ``left`` for western script
-    assert fragment.layout.get_alignment() == Pango.Alignment.LEFT
-    assert not fragment.layout.get_justify()
-
-    for alignment in ('left', 'center', 'right'):
-        fragment.set_alignment(alignment)
-        value = getattr(Pango.Alignment, alignment.upper())
-        assert fragment.layout.get_alignment() == value
-
-    fragment.set_alignment('justify')
-    assert fragment.layout.get_justify()
-
-    fragment.justify = True
-    assert fragment.justify != False
 
 
 @SUITE.test
