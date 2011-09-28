@@ -418,17 +418,10 @@ def split_inline_box(inlinebox, remaining_width):
     """
     assert isinstance(inlinebox, boxes.InlineBox)
     resolve_percentages(inlinebox)
-    try:
-        left_spacing = (inlinebox.padding_left + inlinebox.margin_left +
-                        inlinebox.border_left_width)
-        right_spacing = (inlinebox.padding_right + inlinebox.margin_right +
-                         inlinebox.border_right_width)
-    except TypeError:
-        # TODO: Find another way ...
-        for side in ['left', 'top', 'right', 'bottom']:
-            inlinebox.reset_spacing(side)
-        left_spacing = 0
-        right_spacing = 0
+    left_spacing = (inlinebox.padding_left + inlinebox.margin_left +
+                    inlinebox.border_left_width)
+    right_spacing = (inlinebox.padding_right + inlinebox.margin_right +
+                     inlinebox.border_right_width)
     remaining_width -= left_spacing
 
     new_inlinebox = inlinebox.copy()
