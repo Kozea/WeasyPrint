@@ -300,6 +300,14 @@ class ParentBox(Box):
         super(ParentBox, self).__init__(document, element)
         self.empty()
 
+    def enumerate_skip(self, skip_num=0):
+        """
+        Yield ``(child, child_index)`` tuples for each children after skippng
+        ``skip_num`` of them.
+        """
+        for index in xrange(skip_num, len(self.children)):
+            yield index, self.children[index]
+
     def empty(self):
         """Initialize or empty the children list."""
         self.children = collections.deque()

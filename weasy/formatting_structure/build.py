@@ -276,7 +276,7 @@ def block_in_inline(box):
     This is the second case in
     http://www.w3.org/TR/CSS21/visuren.html#anonymous-block-level
 
-    Eg.::
+    Eg. if this is given::
 
         BlockBox[
             LineBox[
@@ -295,7 +295,7 @@ def block_in_inline(box):
             ]
         ]
 
-    is turned into::
+    this is returned::
 
         BlockBox[
             AnonymousBlockBox[
@@ -327,9 +327,6 @@ def block_in_inline(box):
         ]
 
     """
-    # TODO: when splitting inline boxes, mark which are starting, ending, or
-    # in the middle of the original box (for drawing borders).
-
     if not isinstance(box, boxes.ParentBox):
         return box
 
@@ -339,13 +336,14 @@ def block_in_inline(box):
         if isinstance(child, boxes.LineBox):
             assert len(box.children) == 1, ('Line boxes should have no '
                 'siblings at this stage, got %r.' % box.children)
+            stack = None
             while 1:
-                new_line, block_level_box = _inner_block_in_inline(child)
-                if block_level_box is None:
+                new_line, block, stack = _inner_block_in_inline(child, stack)
+                if block is None:
                     break
                 _add_anonymous_block(new_box, new_line)
-                new_box.add_child(block_in_inline(block_level_box))
-                # Loop with the same child
+                new_box.add_child(block_in_inline(block))
+                # Loop with the same child and the new stack.
             if new_box.children:
                 # Some children were already added, this became a block
                 # context.
@@ -366,33 +364,46 @@ def _add_anonymous_block(box, child):
     box.add_child(anon_block)
 
 
-def _inner_block_in_inline(box):
-    """Find block in inline ``box``
+def _inner_block_in_inline(box, skip_stack=None):
+    """Find a block-level box in an inline formatting context.
 
-    Return ``new_box, block_level_box`` if a block level box is found in
-    ``box`` or in its children. Return ``empty_new_box, None`` otherwise.
+    If one is found, return ``(new_box, block_level_box, resume_at)``.
+    ``new_box`` contains all of ``box`` content before the block-level box.
+    ``resume_at`` can be passed as ``skip_stack`` in a new call to
+    this function to resume the search just after thes block-level box.
+
+    If no block-level box is found after the position marked by
+    ``skip_stack``, return ``(new_box, None, None)``
 
     """
-    if not isinstance(box, boxes.ParentBox):
-        return box, None
-
     new_box = box.copy()
     new_box.empty()
     block_level_box = None
-    while box.children:
-        # Empty the children list from the left so that we can continue
-        # at the same point when we get here again after a break.
-        child = box.children.popleft()
+    resume_at = None
+
+    if skip_stack is None:
+        skip = 0
+    else:
+        skip, skip_stack = skip_stack
+
+    for index, child in box.enumerate_skip(skip):
         if isinstance(child, boxes.BlockLevelBox):
-            return new_box, child
-        elif isinstance(child, (boxes.InlineBox, boxes.TextBox)):
-            new_child, block_level_box = _inner_block_in_inline(child)
+            block_level_box = child
+            index += 1  # Resume *after* the block
         else:
-            # Other inline-level: inline-block, inline-table, replaced
-            new_child = block_in_inline(child)
-        new_box.add_child(new_child)
+            if isinstance(child, boxes.InlineBox):
+                recursion = _inner_block_in_inline(child, skip_stack)
+                new_child, block_level_box, resume_at = recursion
+            else:
+                if isinstance(child, boxes.ParentBox):
+                    # inline-block or inline-table.
+                    new_child = block_in_inline(child)
+                else:
+                    # text or replaced box
+                    new_child = child
+                # block_level_box is still None.
+            new_box.add_child(new_child)
         if block_level_box is not None:
-            # Not finished with this child yet.
-            box.children.appendleft(child)
+            resume_at = (index, resume_at)
             break
-    return new_box, block_level_box
+    return new_box, block_level_box, resume_at
