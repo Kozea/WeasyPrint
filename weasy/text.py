@@ -41,8 +41,7 @@ class TextFragment(object):
         else:
             self.context = context
         pango_context = PangoCairo.create_context(self.context)
-        # TODO: find how to do this with introspection
-        #pango_context.set_antialias(cairo.ANTIALIAS_SUBPIXEL)
+        self.context.set_antialias(cairo.ANTIALIAS_SUBPIXEL)
         self.layout = Pango.Layout(pango_context)
         self.set_text(text)
         self.set_width(width)
