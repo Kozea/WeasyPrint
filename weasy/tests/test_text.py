@@ -57,7 +57,7 @@ def test_line_content():
     for width, remaining in [(120, 'text for test'),
                              (60, 'is a text for test')]:
         text = 'This is a text for test'
-        line = make_text(text, width, 'font-size: 12px')
+        line = make_text(text, width)
         text1, text2 = line.split_first_line()
         assert text2 == remaining
         assert text1 + text2 == text
@@ -79,17 +79,17 @@ def test_line_with_any_width():
 def test_line_breaking():
     """Test the line breaking."""
     string = u'This is a text for test'
-    line = make_text(string, 120, 'font-size: 12px; font-weight: 200')
+    line = make_text(string, 120, 'font-size: 16px; font-weight: 200')
     text1, text2 = line.split_first_line()
     assert text2 == u'text for test'
 
-    line = make_text(string, 120, 'font-size: 12px; font-weight: 800')
+    line = make_text(string, 120, 'font-size: 16px; font-weight: 800')
     text1, text2 = line.split_first_line()
     assert text2 == u'text for test'
 
-    line = make_text(string, 120, 'font-size: 14px; font-weight: 800')
+    line = make_text(string, 120, 'font-size: 100px; font-weight: 800')
     text1, text2 = line.split_first_line()
-    assert text2 == u'text for test'
+    assert text2 == u'is a text for test'
 
 
 @SUITE.test
