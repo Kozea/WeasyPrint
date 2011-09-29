@@ -123,6 +123,6 @@ class TextFragment(object):
     def get_baseline(self):
         """Get the baseline of the text."""
         # TODO: use introspection to get the descent
-        #descent = self.layout.get_context().get_metrics().get_descent()
+        descent = self.layout.get_context().get_metrics(None, None).get_descent()
         _width, height = self.get_size()
-        return height   # - descent
+        return height - descent / Pango.SCALE
