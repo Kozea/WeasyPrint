@@ -330,8 +330,7 @@ def block_in_inline(box):
     if not isinstance(box, boxes.ParentBox):
         return box
 
-    new_box = box.copy()
-    new_box.empty()
+    new_children = []
     changed = False
 
     for child in box.children:
@@ -345,10 +344,10 @@ def block_in_inline(box):
                     break
                 anon = boxes.AnonymousBlockBox(box.document, box.element)
                 anon.add_child(new_line)
-                new_box.add_child(anon)
-                new_box.add_child(block_in_inline(block))
+                new_children.append(anon)
+                new_children.append(block_in_inline(block))
                 # Loop with the same child and the new stack.
-            if new_box.children:
+            if new_children:
                 # Some children were already added, this became a block
                 # context.
                 new_child = boxes.AnonymousBlockBox(box.document, box.element)
@@ -362,9 +361,13 @@ def block_in_inline(box):
 
         if new_child is not child:
             changed = True
-        new_box.add_child(new_child)
+        new_children.append(new_child)
 
     if changed:
+        new_box = box.copy()
+        new_box.empty()
+        for new_child in new_children:
+            new_box.add_child(new_child)
         return new_box
     else:
         return box
