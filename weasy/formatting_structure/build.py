@@ -332,6 +332,8 @@ def block_in_inline(box):
 
     new_box = box.copy()
     new_box.empty()
+    changed = False
+
     for child in box.children:
         if isinstance(child, boxes.LineBox):
             assert len(box.children) == 1, ('Line boxes should have no '
@@ -341,20 +343,31 @@ def block_in_inline(box):
                 new_line, block, stack = _inner_block_in_inline(child, stack)
                 if block is None:
                     break
-                _add_anonymous_block(new_box, new_line)
+                anon = boxes.AnonymousBlockBox(box.document, box.element)
+                anon.add_child(new_line)
+                new_box.add_child(anon)
                 new_box.add_child(block_in_inline(block))
                 # Loop with the same child and the new stack.
             if new_box.children:
                 # Some children were already added, this became a block
                 # context.
-                _add_anonymous_block(new_box, new_line)
+                new_child = boxes.AnonymousBlockBox(box.document, box.element)
+                new_child.add_child(new_line)
             else:
                 # Keep the single line box as-is, without anonymous blocks.
-                new_box.add_child(new_line)
+                new_child = new_line
         else:
             # Not in an inline formatting context.
-            new_box.add_child(block_in_inline(child))
-    return new_box
+            new_child = block_in_inline(child)
+
+        if new_child is not child:
+            changed = True
+        new_box.add_child(new_child)
+
+    if changed:
+        return new_box
+    else:
+        return box
 
 
 def _add_anonymous_block(box, child):
@@ -380,6 +393,7 @@ def _inner_block_in_inline(box, skip_stack=None):
     new_box.empty()
     block_level_box = None
     resume_at = None
+    changed = False
 
     if skip_stack is None:
         skip = 0
@@ -402,8 +416,13 @@ def _inner_block_in_inline(box, skip_stack=None):
                     # text or replaced box
                     new_child = child
                 # block_level_box is still None.
+            if new_child is not child:
+                changed = True
             new_box.add_child(new_child)
         if block_level_box is not None:
             resume_at = (index, resume_at)
             break
+    else:
+        if not (changed or skip):
+            new_box = box
     return new_box, block_level_box, resume_at
