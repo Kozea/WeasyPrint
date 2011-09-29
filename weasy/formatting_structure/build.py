@@ -38,15 +38,13 @@ GLYPH_LIST_MARKERS = {
 }
 
 
-def build_formatting_structure(document, check_sanity=False):
+def build_formatting_structure(document):
     """Build a formatting structure (box tree) from a ``document``."""
     box = dom_to_box(document, document.dom)
     assert box is not None
     box = inline_in_block(box)
     box = block_in_inline(box)
     box = process_whitespace(box)
-    if check_sanity:
-        sanity_checks(box)
     return box
 
 
@@ -398,31 +396,3 @@ def _inner_block_in_inline(box):
             box.children.appendleft(child)
             break
     return new_box, block_level_box
-
-
-def sanity_checks(box):
-    """Check that the rules regarding boxes are met.
-
-    This is not required and only helps debugging.
-
-    - A block container can contain either only block-level boxes or
-      only line boxes;
-    - Line boxes and inline boxes can only contain inline-level boxes.
-
-    """
-    if not isinstance(box, boxes.ParentBox):
-        return
-
-    for child in box.children:
-        sanity_checks(child)
-
-    if isinstance(box, boxes.BlockContainerBox):
-        types = [boxes.BlockLevelBox, boxes.LineBox]
-    elif isinstance(box, (boxes.LineBox, boxes.InlineBox)):
-        types = [boxes.InlineLevelBox]
-    else:
-        return
-
-    assert any(
-        all(isinstance(child, type_) for child in box.children)
-        for type_ in types)

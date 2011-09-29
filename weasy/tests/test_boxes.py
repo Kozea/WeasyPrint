@@ -147,6 +147,34 @@ def assert_tree(box, expected):
     assert result == expected, 'Got\n' + prettify(result)
 
 
+def sanity_checks(box):
+    """Check that the rules regarding boxes are met.
+
+    This is not required and only helps debugging.
+
+    - A block container can contain either only block-level boxes or
+      only line boxes;
+    - Line boxes and inline boxes can only contain inline-level boxes.
+
+    """
+    if not isinstance(box, boxes.ParentBox):
+        return
+
+    for child in box.children:
+        sanity_checks(child)
+
+    if isinstance(box, boxes.BlockContainerBox):
+        types = [boxes.BlockLevelBox, boxes.LineBox]
+    elif isinstance(box, (boxes.LineBox, boxes.InlineBox)):
+        types = [boxes.InlineLevelBox]
+    else:
+        return
+
+    assert any(
+        all(isinstance(child, type_) for child in box.children)
+        for type_ in types)
+
+
 @SUITE.test
 def test_box_tree():
     """Test the creation of trees from HTML strings."""
@@ -316,7 +344,8 @@ def test_whitespace():
         <pre style="white-space: pre-wrap">\t  foo\n</pre>
         <pre style="white-space: pre-line">\t  foo\n</pre>
         ''')
-    box = build.build_formatting_structure(document, check_sanity=True)
+    box = build.build_formatting_structure(document)
+    sanity_checks(box)
 
     assert_tree(box, [
         ('p', 'block', [

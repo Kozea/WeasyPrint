@@ -30,7 +30,7 @@ from PIL import Image
 from StringIO import StringIO
 
 from .figures import Point, Line, Trapezoid
-from ..text import TextLineFragment
+from ..text import TextFragment
 from ..formatting_structure import boxes
 from ..css.values import (
     get_single_keyword, get_keyword, get_pixel_value, get_percentage_value,
@@ -327,7 +327,7 @@ def draw_text(context, textbox):
         return
 
     context.move_to(textbox.position_x, textbox.position_y)
-    fragment = TextLineFragment.from_textbox(textbox, context=context)
+    fragment = TextFragment(textbox, context=context)
     fragment.show_layout()
     values = textbox.style.text_decoration
     for value in values:

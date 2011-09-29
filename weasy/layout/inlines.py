@@ -24,7 +24,7 @@ Functions laying out the inline boxes.
 
 from .markers import image_marker_layout
 from .percentages import resolve_percentages
-from ..text import TextLineFragment
+from ..text import TextFragment
 from ..formatting_structure import boxes
 from ..css.values import get_single_keyword, get_single_pixel_value
 
@@ -211,7 +211,7 @@ def compute_textbox_dimensions(textbox):
         textbox.extents = (0, 0, 0, 0)
         textbox.logical_extents = (0, 0, 0, 0)
     else:
-        text_fragment = TextLineFragment.from_textbox(textbox)
+        text_fragment = TextFragment(textbox)
         textbox.width, textbox.height = text_fragment.get_size()
         textbox.baseline = text_fragment.get_baseline()
         textbox.extents = text_fragment.get_ink_extents()
@@ -502,17 +502,17 @@ def split_text_box(textbox, allocate_width):
     font_size = get_single_pixel_value(textbox.style.font_size)
     if font_size == 0:
         return textbox, None
-    text_fragment = TextLineFragment.from_textbox(textbox)
-    text_fragment.set_width(allocate_width)
+    fragment = TextFragment(textbox, width=allocate_width)
+    text1, text2 = fragment.split_first_line()
     # We create a new TextBox with the first part of the cutting text
     first_tb = textbox.copy()
-    first_tb.text = text_fragment.get_text()
+    first_tb.text = text1
     # And we check the remaining text
-    second_tb = None
-    remaining_text = text_fragment.get_remaining_text()
-    if remaining_text is not None:
+    if text2 is not None:
         second_tb = textbox.copy()
-        second_tb.text = remaining_text
+        second_tb.text = text2
+    else:
+        second_tb = None
     return first_tb, second_tb
 
 
