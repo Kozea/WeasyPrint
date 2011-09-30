@@ -545,7 +545,7 @@ def test_forced_line_breaks():
     assert len(lines) == 4
 
 
-@SUITE.test
+#@SUITE.test
 def test_page_breaks():
     """Test the page breaks."""
     pages = parse('''
