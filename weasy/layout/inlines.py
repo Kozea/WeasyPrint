@@ -72,8 +72,11 @@ class InlineContext(object):
     def execute_formatting(self):
         """Break the lines until the bottom of the page is reached."""
         first = True
-        for line in breaking_linebox(
-                self.linebox, self.containing_block_width):
+        while 1:
+            line = layout_next_linebox(
+                self.linebox, self.containing_block_width)
+            if line is None:
+                break
             self.save(line)
             white_space_processing(line)
             compute_linebox_dimensions(line)
@@ -96,6 +99,7 @@ def get_new_lineboxes(linebox, page_bottom):
     """Get the ``linebox`` lines until ``page_bottom`` is reached."""
     inline_context = InlineContext(linebox, page_bottom)
     return inline_context.lines
+
 
 def inline_replaced_box_layout(box):
     """Lay out an inline :class:`boxes.ReplacedBox` ``box``."""
@@ -301,7 +305,7 @@ def get_new_empty_line(linebox):
     return new_line
 
 
-def breaking_linebox(linebox, allocate_width):
+def layout_next_linebox(linebox, allocate_width):
     """Cut the ``linebox`` to fit in ``alocate_width``.
 
     Eg.::
@@ -358,12 +362,10 @@ def breaking_linebox(linebox, allocate_width):
             linebox.children.appendleft(part2)
             # This line is done, create a new one and reset
             # the available width.
-            yield new_line
-            new_line = get_new_empty_line(linebox)
-            remaining_width = allocate_width
+            return new_line
 
     if new_line.children:
-        yield new_line
+        return new_line
 
 
 def split_inline_level(box, available_width):
