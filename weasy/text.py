@@ -41,7 +41,6 @@ class TextFragment(object):
         else:
             self.context = context
         pango_context = PangoCairo.create_context(self.context)
-        self.context.set_antialias(cairo.ANTIALIAS_SUBPIXEL)
         self.layout = Pango.Layout(pango_context)
         self.unicode_text = textbox.text
         self.utf8_text = textbox.text.encode('utf-8')
