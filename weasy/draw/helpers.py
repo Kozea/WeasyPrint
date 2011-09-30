@@ -327,7 +327,7 @@ def draw_text(context, textbox):
         return
 
     context.move_to(textbox.position_x, textbox.position_y)
-    fragment = TextFragment(textbox.text, textbox.style, context=context)
+    fragment = TextFragment(textbox.utf8_text, textbox.style, context)
     fragment.show_layout(context)
     values = textbox.style.text_decoration
     for value in values:

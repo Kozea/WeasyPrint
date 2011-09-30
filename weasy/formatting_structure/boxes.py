@@ -452,8 +452,9 @@ class TextBox(AnonymousBox, InlineLevelBox):
 
     """
     def __init__(self, document, element, text):
+        assert text
         super(TextBox, self).__init__(document, element)
-        self.text = text
+        self.utf8_text = text.encode('utf8')
 
 
 class AtomicInlineLevelBox(InlineLevelBox):

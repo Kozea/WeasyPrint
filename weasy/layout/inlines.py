@@ -213,7 +213,7 @@ def compute_textbox_dimensions(textbox):
         textbox.extents = (0, 0, 0, 0)
         textbox.logical_extents = (0, 0, 0, 0)
     else:
-        text_fragment = TextFragment(textbox.text, textbox.style,
+        text_fragment = TextFragment(textbox.utf8_text, textbox.style,
             context=cairo.Context(textbox.document.surface))
         textbox.width, textbox.height = text_fragment.get_size()
         textbox.baseline = text_fragment.get_baseline()
@@ -282,15 +282,16 @@ def compute_atomicbox_positions(box, ref_x, ref_y):
 def is_empty_line(linebox):
     """Return whether ``linebox`` has text."""
     # TODO: complete this function
+    # XXX what does 'complete' mean?
     if len(linebox.children) == 0:
-        return linebox
-    text = ''
-    len_textbox = 0
+        return True
+    num_textbox = 0
     for child in linebox.descendants():
         if isinstance(child, boxes.TextBox):
-            len_textbox += 1
-            text += child.text.strip(' ')
-    return text == '' and len_textbox == len(linebox.children)
+            if child.utf8_text.strip(' '):
+                return False
+            num_textbox += 1
+    return num_textbox == len(linebox.children)
 
 
 def get_new_empty_line(linebox):
@@ -497,16 +498,17 @@ def split_text_box(textbox, allocate_width):
     font_size = get_single_pixel_value(textbox.style.font_size)
     if font_size == 0:
         return textbox, None
-    fragment = TextFragment(textbox.text, textbox.style, width=allocate_width,
+    fragment = TextFragment(textbox.utf8_text, textbox.style,
+        width=allocate_width,
         context=cairo.Context(textbox.document.surface))
     text1, text2 = fragment.split_first_line()
     # We create a new TextBox with the first part of the cutting text
     first_tb = textbox.copy()
-    first_tb.text = text1
+    first_tb.utf8_text = text1
     # And we check the remaining text
     if text2 is not None:
         second_tb = textbox.copy()
-        second_tb.text = text2
+        second_tb.utf8_text = text2
     else:
         second_tb = None
     return first_tb, second_tb
@@ -527,20 +529,18 @@ def white_space_processing(linebox):
     if first_textbox:
         white_space = get_single_keyword(first_textbox.style.white_space)
         if white_space in ('normal', 'nowrap', 'pre-line'):
-            if get_single_keyword(first_textbox.style.direction) == "rtl":
-                first_textbox.text = first_textbox.text.rstrip(' \t\n')
-            else:
-                first_textbox.text = first_textbox.text.lstrip(' \t\n')
+            # "left" in "lstrip" actually means "start". It is on the right
+            # in rtl text.
+            first_textbox.utf8_text = first_textbox.utf8_text.lstrip(b' \t\n')
     if last_textbox:
         # The extents for the last element must ignore the last white space,
         # We use the logical extents instead of ink extents for this box.
         last_textbox.extents = last_textbox.logical_extents
         white_space = get_single_keyword(last_textbox.style.white_space)
         if white_space in ('normal', 'nowrap', 'pre-line'):
-            if get_single_keyword(last_textbox.style.direction) == "rtl":
-                last_textbox.text = last_textbox.text.lstrip(' \t\n')
-            else:
-                last_textbox.text = last_textbox.text.rstrip(' \t\n')
+            # "right" in "rstrip" actually means "end". It is on the left
+            # in rtl text.
+            last_textbox.utf8_text = last_textbox.utf8_text.rstrip(b' \t\n')
     # TODO: All tabs (U+0009) are rendered as a horizontal shift that
     # lines up the start edge of the next glyph with the next tab stop.
     # Tab stops occur at points that are multiples of 8 times the width

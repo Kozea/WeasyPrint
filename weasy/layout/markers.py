@@ -41,7 +41,7 @@ def list_marker_layout(box):
     if marker:
         resolve_percentages(marker)
         if isinstance(marker, boxes.TextBox):
-            text_fragment = TextFragment(marker.text, marker.style,
+            text_fragment = TextFragment(marker.utf8_text, marker.style,
                 context=cairo.Context(marker.document.surface))
             marker.width, marker.height = text_fragment.get_size()
         else:

@@ -356,9 +356,9 @@ def test_lists():
            if not isinstance(child, boxes.AnonymousBox)]
     line, = list_element.children
     marker, spacer, content = line.children
-    assert marker.text == u'◦'
-    assert spacer.text == u'\u00a0'  # NO-BREAK SPACE
-    assert content.text == u'abc'
+    assert marker.utf8_text.decode('utf8') == u'◦'
+    assert spacer.utf8_text.decode('utf8') == u'\u00a0'  # NO-BREAK SPACE
+    assert content.utf8_text.decode('utf8') == u'abc'
 
     page, = parse('''
         <style>
@@ -378,10 +378,10 @@ def test_lists():
     assert marker.position_x == (
         list_element.padding_box_x() - marker.width - marker.margin_right)
     assert marker.position_y == list_element.position_y
-    assert marker.text == u'•'
+    assert marker.utf8_text.decode('utf8') == u'•'
     line, = list_element.children
     content, = line.children
-    assert content.text == u'abc'
+    assert content.utf8_text == b'abc'
 
 
 @SUITE.test
@@ -471,16 +471,11 @@ def test_linebox_text():
     lines = list(paragraph.children)
     assert len(lines) == 2
 
-    def get_text(lines):
-        """Get the whole text of line boxes."""
-        for line in lines:
-            text = ''
-            for box in line.descendants():
-                if isinstance(box, boxes.TextBox):
-                    text = '%s%s' % (text, box.text)
-            yield text
-
-    assert ' '.join(get_text(lines)) == u'Lorem Ipsumis very coool'
+    text = ' '.join(
+        (''.join(box.utf8_text for box in line.descendants()
+                 if isinstance(box, boxes.TextBox)))
+        for line in lines)
+    assert text == b'Lorem Ipsumis very coool'
 
 
 @SUITE.test
@@ -590,7 +585,7 @@ def test_inlinebox_spliting():
 
     def get_joined_text(parts):
         """Get the joined text from ``parts``."""
-        return ''.join(part.children[0].text for part in parts)
+        return ''.join(part.children[0].utf8_text for part in parts)
 
     def test_inlinebox_all_spacing(inlinebox, value):
         """Test the spacing for the four sides of ``inlinebox``."""
@@ -608,7 +603,7 @@ def test_inlinebox_spliting():
 
     inlinebox = get_inlinebox(content)
     resolve_percentages(inlinebox)
-    original_text = inlinebox.children[0].text
+    original_text = inlinebox.children[0].utf8_text
 
     # test with width = 1000
     parts = list(get_parts(inlinebox, 1000))
@@ -617,7 +612,7 @@ def test_inlinebox_spliting():
 
     inlinebox = get_inlinebox(content)
     resolve_percentages(inlinebox)
-    original_text = inlinebox.children[0].text
+    original_text = inlinebox.children[0].utf8_text
 
     # test with width = 100
     parts = list(get_parts(inlinebox, 100))
@@ -626,7 +621,7 @@ def test_inlinebox_spliting():
 
     inlinebox = get_inlinebox(content)
     resolve_percentages(inlinebox)
-    original_text = inlinebox.children[0].text
+    original_text = inlinebox.children[0].utf8_text
 
     # test with width = 10
     parts = list(get_parts(inlinebox, 10))
@@ -640,7 +635,7 @@ def test_inlinebox_spliting():
 
     inlinebox = get_inlinebox(content)
     resolve_percentages(inlinebox)
-    original_text = inlinebox.children[0].text
+    original_text = inlinebox.children[0].utf8_text
     # test with width = 1000
     parts = list(get_parts(inlinebox, 1000))
     assert len(parts) == 1
@@ -649,7 +644,7 @@ def test_inlinebox_spliting():
 
     inlinebox = get_inlinebox(content)
     resolve_percentages(inlinebox)
-    original_text = inlinebox.children[0].text
+    original_text = inlinebox.children[0].utf8_text
 
     # test with width = 1000
     parts = list(get_parts(inlinebox, 100))
@@ -689,7 +684,7 @@ def test_inlinebox_text_after_spliting():
     def get_full_text(inlinebox):
         """Get the full text in ``inlinebox``."""
         return ''.join(
-            part.text for part in inlinebox.descendants()
+            part.utf8_text for part in inlinebox.descendants()
             if isinstance(part, boxes.TextBox))
 
     def get_joined_text(parts):
@@ -733,7 +728,7 @@ def test_page_and_linebox_breaking():
             line_texts = []
             for child in line.descendants():
                 if isinstance(child, boxes.TextBox):
-                    line_texts.append(child.text)
+                    line_texts.append(child.utf8_text)
             texts.append(u''.join(line_texts))
         return texts
 

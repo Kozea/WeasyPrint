@@ -38,8 +38,7 @@ class TextFragment(object):
     """
     def __init__(self, text, style, context, width=-1):
         self.layout = PangoCairo.create_layout(context)
-        self.unicode_text = text
-        self.utf8_text = text.encode('utf-8')
+        self.utf8_text = text
         # Pango works on bytes
         self.layout.set_text(self.utf8_text, -1)
         self.layout.set_wrap(Pango.WrapMode.WORD)
@@ -98,10 +97,9 @@ class TextFragment(object):
             # We don’t want them in either of the returned strings.
             first_end = lines[0].length
             second_start = lines[1].start_index
-            return (self.utf8_text[:first_end].decode('utf8'),
-                    self.utf8_text[second_start:].decode('utf8'))
+            return (self.utf8_text[:first_end], self.utf8_text[second_start:])
         else:
-            return self.unicode_text, None
+            return self.utf8_text, None
 
     def get_extents(self):
         """Return ``(logical_extents, ink_extents)``.

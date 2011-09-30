@@ -153,10 +153,11 @@ def process_whitespace(box):
     """
     following_collapsible_space = False
     for child in box.descendants():
-        if not (hasattr(child, 'text') and child.text):
+        if not (isinstance(child, boxes.TextBox) and child.utf8_text):
             continue
 
-        text = child.text
+        # TODO: find a way to do less decoding and re-encoding
+        text = child.utf8_text.decode('utf8')
         handling = get_single_keyword(child.style.white_space)
 
         if handling in ('normal', 'nowrap', 'pre-line'):
@@ -185,7 +186,7 @@ def process_whitespace(box):
         else:
             following_collapsible_space = False
 
-        child.text = text
+        child.utf8_text = text.encode('utf8')
     return box
 
 
