@@ -36,11 +36,10 @@ class TextFragment(object):
     This class is used to render the text from a TextBox.
 
     """
-    def __init__(self, text, style, context, width=-1):
+    def __init__(self, utf8_text, style, context, width=-1):
         self.layout = PangoCairo.create_layout(context)
-        self.utf8_text = text
         # Pango works on bytes
-        self.layout.set_text(self.utf8_text, -1)
+        self.layout.set_text(utf8_text, -1)
         self.layout.set_wrap(Pango.WrapMode.WORD)
         if width is not None:
             self.layout.set_width(int(Pango.SCALE * width))
@@ -69,7 +68,7 @@ class TextFragment(object):
         attributes = ' '.join(
             u'%s="%s"' % (key, value)
             for key, value in attributes.iteritems()).encode('utf8')
-        text = self.utf8_text.replace('&', '&amp;').replace('<', '&lt;')
+        text = utf8_text.replace('&', '&amp;').replace('<', '&lt;')
         markup = ('<span %s>%s</span>' % (attributes, text))
         _, attributes_list, _, _ = Pango.parse_markup(markup, -1, '\x00')
         self.layout.set_attributes(attributes_list)
@@ -95,11 +94,7 @@ class TextFragment(object):
         if len(lines) >= 2:
             # Preserved new-line characters are between these two indexes.
             # We don’t want them in either of the returned strings.
-            first_end = lines[0].length
-            second_start = lines[1].start_index
-            return (self.utf8_text[:first_end], self.utf8_text[second_start:])
-        else:
-            return self.utf8_text, None
+            return lines[0].length, lines[1].start_index
 
     def get_extents(self):
         """Return ``(logical_extents, ink_extents)``.

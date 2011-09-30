@@ -503,16 +503,14 @@ def split_text_box(textbox, allocate_width):
     fragment = TextFragment(textbox.utf8_text, textbox.style,
         width=allocate_width,
         context=cairo.Context(textbox.document.surface))
-    text1, text2 = fragment.split_first_line()
-    # We create a new TextBox with the first part of the cutting text
+    split = fragment.split_first_line()
+    if split is None:
+        return textbox, None
+    first_end, second_start = split
     first_tb = textbox.copy()
-    first_tb.utf8_text = text1
-    # And we check the remaining text
-    if text2 is not None:
-        second_tb = textbox.copy()
-        second_tb.utf8_text = text2
-    else:
-        second_tb = None
+    first_tb.utf8_text = textbox.utf8_text[:first_end]
+    second_tb = textbox.copy()
+    second_tb.utf8_text = textbox.utf8_text[second_start:]
     return first_tb, second_tb
 
 

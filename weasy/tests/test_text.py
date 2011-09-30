@@ -53,9 +53,9 @@ def test_line_content():
         text = 'This is a text for test'
         # TODO: find a way to not depend on a specific font
         line = make_text(text, width, 'font-family: "Arial"; font-size: 19px')
-        text1, text2 = line.split_first_line()
-        assert text2 == remaining
-        assert text1 + text2 == text
+        index1, index2 = line.split_first_line()
+        assert text[index2:] == remaining
+        assert index1 == index2
 
 
 @SUITE.test
@@ -77,17 +77,17 @@ def test_line_breaking():
 
     # These two tests do not really rely on installed fonts
     line = make_text(string, 120, 'font-size: 1px')
-    text1, text2 = line.split_first_line()
-    assert text2 == None
+    split = line.split_first_line()
+    assert split == None
 
     line = make_text(string, 120, 'font-size: 100px')
-    text1, text2 = line.split_first_line()
-    assert text2 == u'is a text for test'
+    index1, index2 = line.split_first_line()
+    assert string[index2:] == u'is a text for test'
 
     # TODO: find a way to not depend on a specific font
     line = make_text(string, 120, 'font-family: "Arial"; font-size: 19px')
-    text1, text2 = line.split_first_line()
-    assert text2 == u'text for test'
+    index1, index2 = line.split_first_line()
+    assert string[index2:] == u'text for test'
 
 
 @SUITE.test
