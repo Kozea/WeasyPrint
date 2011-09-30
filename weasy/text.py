@@ -22,6 +22,8 @@ Various classes to break text lines and draw them.
 
 """
 
+from __future__ import division
+
 import cairo
 from gi.repository import Pango, PangoCairo  # pylint: disable=E0611
 
@@ -31,26 +33,18 @@ from .css.values import get_single_keyword, get_single_pixel_value
 class TextFragment(object):
     """Text renderer using Pango.
 
-    This class is mainPly used to render the text from a TextBox.
+    This class is used to render the text from a TextBox.
 
     """
-    def __init__(self, textbox, width=-1, context=None):
-        if context is None:
-            surface = textbox.document.surface
-            self.context = cairo.Context(surface)
-        else:
-            self.context = context
-        pango_context = PangoCairo.create_context(self.context)
-        self.layout = Pango.Layout(pango_context)
+    def __init__(self, textbox, context, width=-1):
+        self.layout = PangoCairo.create_layout(context)
         self.unicode_text = textbox.text
         self.utf8_text = textbox.text.encode('utf-8')
         # Pango works on bytes
         self.layout.set_text(self.utf8_text, -1)
-        if width != -1:
-            width = Pango.SCALE * width
-        self.layout.set_width(int(width))
-        # Other properties
         self.layout.set_wrap(Pango.WrapMode.WORD)
+        if width is not None:
+            self.layout.set_width(int(Pango.SCALE * width))
 
         color = textbox.style.color[0]
         attributes = dict(
@@ -83,10 +77,10 @@ class TextFragment(object):
         _, attributes_list, _, _ = Pango.parse_markup(markup, -1, '\x00')
         self.layout.set_attributes(attributes_list)
 
-    def show_layout(self):
-        """Draw the text to the ``context`` given at construction."""
-        PangoCairo.update_layout(self.context, self.layout)
-        PangoCairo.show_layout(self.context, self.layout)
+    def show_layout(self, context):
+        """Draw the text to the Cairo ``context``."""
+        PangoCairo.update_layout(context, self.layout)
+        PangoCairo.show_layout(context, self.layout)
 
     def get_size(self):
         """Get the real text area size in pixels."""
@@ -111,13 +105,13 @@ class TextFragment(object):
         else:
             return self.unicode_text, None
 
-    def get_logical_extents(self):
-        """Get the size of the logical area occupied by the text."""
-        return self.layout.get_lines()[0].get_pixel_extents()[0]
+    def get_extents(self):
+        """Return ``(logical_extents, ink_extents)``.
 
-    def get_ink_extents(self):
-        """Get the size of the ink area occupied by the text."""
-        return self.layout.get_lines()[0].get_pixel_extents()[1]
+        The size of the logical and ink areas occupied by the text.
+
+        """
+        return self.layout.get_lines()[0].get_pixel_extents()
 
     def get_baseline(self):
         """Get the baseline of the text."""

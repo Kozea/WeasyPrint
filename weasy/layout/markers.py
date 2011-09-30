@@ -22,6 +22,8 @@ Functions laying out the markers.
 
 """
 
+import cairo
+
 from .percentages import resolve_percentages
 from ..text import TextFragment
 from ..css.values import get_single_keyword, get_single_pixel_value
@@ -39,7 +41,8 @@ def list_marker_layout(box):
     if marker:
         resolve_percentages(marker)
         if isinstance(marker, boxes.TextBox):
-            text_fragment = TextFragment(marker)
+            text_fragment = TextFragment(marker,
+                context=cairo.Context(marker.document.surface))
             marker.width, marker.height = text_fragment.get_size()
         else:
             # Image marker

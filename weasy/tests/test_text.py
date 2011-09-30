@@ -21,6 +21,7 @@ Test the text management.
 
 """
 
+import cairo
 from attest import Tests, assert_hook  # pylint: disable=W0611
 
 from ..text import TextFragment
@@ -48,7 +49,8 @@ def make_text(text, width=-1, style=''):
     p, = body.children
     line, = p.children
     text, = line.children
-    return TextFragment(text, width=width)
+    return TextFragment(text, width=width,
+        context=cairo.Context(document.surface))
 
 
 @SUITE.test

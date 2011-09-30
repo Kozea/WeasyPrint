@@ -22,6 +22,8 @@ Functions laying out the inline boxes.
 
 """
 
+import cairo
+
 from .markers import image_marker_layout
 from .percentages import resolve_percentages
 from ..text import TextFragment
@@ -211,11 +213,11 @@ def compute_textbox_dimensions(textbox):
         textbox.extents = (0, 0, 0, 0)
         textbox.logical_extents = (0, 0, 0, 0)
     else:
-        text_fragment = TextFragment(textbox)
+        text_fragment = TextFragment(textbox,
+            context=cairo.Context(textbox.document.surface))
         textbox.width, textbox.height = text_fragment.get_size()
         textbox.baseline = text_fragment.get_baseline()
-        textbox.extents = text_fragment.get_ink_extents()
-        textbox.logical_extents = text_fragment.get_logical_extents()
+        textbox.logical_extents, textbox.extents = text_fragment.get_extents()
 
 
 def compute_atomicbox_dimensions(box):
@@ -495,7 +497,8 @@ def split_text_box(textbox, allocate_width):
     font_size = get_single_pixel_value(textbox.style.font_size)
     if font_size == 0:
         return textbox, None
-    fragment = TextFragment(textbox, width=allocate_width)
+    fragment = TextFragment(textbox, width=allocate_width,
+        context=cairo.Context(textbox.document.surface))
     text1, text2 = fragment.split_first_line()
     # We create a new TextBox with the first part of the cutting text
     first_tb = textbox.copy()
