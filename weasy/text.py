@@ -36,30 +36,28 @@ class TextFragment(object):
     This class is used to render the text from a TextBox.
 
     """
-    def __init__(self, textbox, context, width=-1):
+    def __init__(self, text, style, context, width=-1):
         self.layout = PangoCairo.create_layout(context)
-        self.unicode_text = textbox.text
-        self.utf8_text = textbox.text.encode('utf-8')
+        self.unicode_text = text
+        self.utf8_text = text.encode('utf-8')
         # Pango works on bytes
         self.layout.set_text(self.utf8_text, -1)
         self.layout.set_wrap(Pango.WrapMode.WORD)
         if width is not None:
             self.layout.set_width(int(Pango.SCALE * width))
 
-        color = textbox.style.color[0]
+        color = style.color[0]
         attributes = dict(
             # TODO: somehow handle color.alpha
             color='#%02x%02x%02x' % (color.red, color.green, color.blue),
-            face=', '.join(v.value for v in textbox.style['font-family']),
-            variant=get_single_keyword(textbox.style.font_variant),
-            style=get_single_keyword(textbox.style.font_style),
-            size=int(
-                get_single_pixel_value(textbox.style.font_size) * Pango.SCALE
-            ),
-            weight=int(textbox.style.font_weight[0].value),
+            face=', '.join(v.value for v in style.font_family),
+            variant=get_single_keyword(style.font_variant),
+            style=get_single_keyword(style.font_style),
+            size=int(get_single_pixel_value(style.font_size) * Pango.SCALE),
+            weight=int(style.font_weight[0].value),
             # Alignments and backgrounds are not handled by Pango.
             letter_spacing = int(
-                (get_single_pixel_value(textbox.style.letter_spacing) or 0)
+                (get_single_pixel_value(style.letter_spacing) or 0)
                 * Pango.SCALE
             ),
             # Tell Pango that fonts on the system can be used to provide

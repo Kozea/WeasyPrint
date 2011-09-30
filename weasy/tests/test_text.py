@@ -21,9 +21,11 @@ Test the text management.
 
 """
 
+import cssutils
 import cairo
 from attest import Tests, assert_hook  # pylint: disable=W0611
 
+from ..css import effective_declarations, computed_from_cascaded
 from ..text import TextFragment
 from . import TestPNGDocument
 from .test_layout import parse, body_children
@@ -35,22 +37,12 @@ def make_text(text, width=-1, style=''):
     """
     Make and return a TextFragment built from a TextBox in an HTML document.
     """
-    document = TestPNGDocument.from_string('''
-        <style>
-        p {
-            font-family: Nimbus Mono L, Liberation Mono, FreeMono, Monospace;
-            %s
-        }
-        </style>
-        <p>%s</p>
-    ''' % (style, text))
-    html = document.formatting_structure
-    body, = html.children
-    p, = body.children
-    line, = p.children
-    text, = line.children
-    return TextFragment(text, width=width,
-        context=cairo.Context(document.surface))
+    style = dict(effective_declarations(cssutils.parseStyle(
+        'font-family: Nimbus Mono L, Liberation Mono, FreeMono, Monospace; '
+        + style)))
+    style = computed_from_cascaded(None, style, None)
+    surface = cairo.SVGSurface(None, 1, 1)
+    return TextFragment(text, style, cairo.Context(surface), width)
 
 
 @SUITE.test

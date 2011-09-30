@@ -213,7 +213,7 @@ def compute_textbox_dimensions(textbox):
         textbox.extents = (0, 0, 0, 0)
         textbox.logical_extents = (0, 0, 0, 0)
     else:
-        text_fragment = TextFragment(textbox,
+        text_fragment = TextFragment(textbox.text, textbox.style,
             context=cairo.Context(textbox.document.surface))
         textbox.width, textbox.height = text_fragment.get_size()
         textbox.baseline = text_fragment.get_baseline()
@@ -497,7 +497,7 @@ def split_text_box(textbox, allocate_width):
     font_size = get_single_pixel_value(textbox.style.font_size)
     if font_size == 0:
         return textbox, None
-    fragment = TextFragment(textbox, width=allocate_width,
+    fragment = TextFragment(textbox.text, textbox.style, width=allocate_width,
         context=cairo.Context(textbox.document.surface))
     text1, text2 = fragment.split_first_line()
     # We create a new TextBox with the first part of the cutting text

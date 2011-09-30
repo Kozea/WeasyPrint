@@ -90,7 +90,7 @@ def test_expand_shorthands():
 
     style = dict(
         (name, css.values.as_css(values))
-        for name, values, _priority in css.effective_declarations(style))
+        for name, (values, _priority) in css.effective_declarations(style))
 
     assert 'margin' not in style
     assert style['margin-top'] == '2em'

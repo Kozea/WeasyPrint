@@ -181,7 +181,7 @@ def effective_declarations(declaration_block):
                 # Use iter() to avoid this.
                 list(iter(declaration.propertyValue))):
             assert isinstance(values, list)
-            yield name, values, declaration.priority
+            yield name, (values, declaration.priority)
 
 
 def declaration_precedence(origin, importance):
@@ -440,14 +440,14 @@ def get_all_computed_styles(document, medium,
                     LOGGER.setLevel(level)
 
                 for element, pseudo_type, specificity in matched:
-                    for name, values, importance in declarations:
+                    for name, (values, importance) in declarations:
                         precedence = declaration_precedence(origin, importance)
                         weight = (precedence, specificity)
                         add_declaration(cascaded_styles, name, values, weight,
                                         element, pseudo_type)
 
     for element, declarations in find_style_attributes(document):
-        for name, values, importance in effective_declarations(declarations):
+        for name, (values, importance) in effective_declarations(declarations):
             precedence = declaration_precedence('author', importance)
             # 1 for being a style attribute, 0 as there is no selector.
             weight = (precedence, (1, 0, 0, 0))
