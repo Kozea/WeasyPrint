@@ -31,74 +31,38 @@ from ..formatting_structure import boxes
 from ..css.values import get_single_keyword, get_single_pixel_value
 
 
-class InlineContext(object):
-    """Context manager for inline boxes."""
-    def __init__(self, linebox, page_bottom):
-        self.linebox = linebox
-        self.page_bottom = page_bottom
-        self.position_y = linebox.position_y
-        self.position_x = linebox.position_x
-        self.containing_block_width = linebox.containing_block_size()[0]
-        self.lines = []
-        self.execute_formatting()
-
-    def deep_copy(self, box):
-        """Copy a ``box`` and its children recursively."""
-        copy_box = box.copy()
-        if isinstance(box, boxes.ParentBox):
-            copy_box.empty()
-            for child in box.children:
-                if isinstance(box, boxes.ParentBox):
-                    copy_child = self.deep_copy(child)
-                else:
-                    copy_child = child.copy()
-                copy_box.add_child(copy_child)
-            return copy_box
-        else:
-            return copy_box
-
-    def save(self, line):
-        """Save the line and the position_y."""
-        self.copy_line = self.deep_copy(line)
-        self._position_y = self.position_y
-
-    def restore(self):
-        """Restore the linebox children."""
-        for child in self.copy_line.children:
-            self.linebox.children.appendleft(child)
-            child.parent = self.linebox
-        self.position_y = self._position_y
-
-    def execute_formatting(self):
-        """Break the lines until the bottom of the page is reached."""
-        first = True
-        while 1:
-            line = layout_next_linebox(
-                self.linebox, self.containing_block_width)
-            if line is None:
-                break
-            self.save(line)
-            white_space_processing(line)
-            compute_linebox_dimensions(line)
-            compute_linebox_positions(line, self.position_x, self.position_y)
-            vertical_align_processing(line)
-            compute_linebox_dimensions(line)
-            if not is_empty_line(line):
-                self.position_y += line.height
-                # Yield at least one line to avoid infinite loop.
-                # TODO: Find another way ...
-                if self.page_bottom >= self.position_y or first:
-                    self.lines.append(line)
-                    first = False
-                else:
-                    self.restore()
-                    break
-
-
-def get_new_lineboxes(linebox, page_bottom):
+def get_new_lineboxes(linebox, page_bottom, skip_stack):
     """Get the ``linebox`` lines until ``page_bottom`` is reached."""
-    inline_context = InlineContext(linebox, page_bottom)
-    return inline_context.lines
+    first = True
+    position_y = linebox.position_y
+    position_x = linebox.position_x
+    containing_block_width = linebox.containing_block_size()[0]
+    lines = []
+    while 1:
+        line, resume_at = layout_next_linebox(
+            linebox, containing_block_width, skip_stack)
+        from ..tests.test_boxes import serialize, prettify
+        white_space_processing(line)
+        compute_linebox_dimensions(line)
+        compute_linebox_positions(line, position_x, position_y)
+        vertical_align_processing(line)
+        compute_linebox_dimensions(line)  # XXX twice?
+        if not is_empty_line(line):
+            position_y += line.height
+            # Yield at least one line to avoid infinite loop.
+            # TODO: Find another way ...
+            if page_bottom >= position_y or first:
+                lines.append(line)
+                first = False
+            else:
+                # Resume before this line
+                resume_at = skip_stack
+                break
+        if resume_at is None:
+            break
+        else:
+            skip_stack = resume_at
+    return lines, resume_at
 
 
 def inline_replaced_box_layout(box):
@@ -305,122 +269,73 @@ def get_new_empty_line(linebox):
     return new_line
 
 
-def layout_next_linebox(linebox, allocate_width):
-    """Cut the ``linebox`` to fit in ``alocate_width``.
-
-    Eg.::
-
-        LineBox[
-            InlineBox[
-                TextBox('Hello.'),
-            ],
-            InlineBox[
-                InlineBox[TextBox('Word :D')],
-                TextBox('This is a long long long text'),
-            ]
-        ]
-
-    is turned into::
-
-        [
-            LineBox[
-                InlineBox[
-                    TextBox('Hello.'),
-                ],
-                InlineBox[
-                    InlineBox[TextBox('Word :D')],
-                    TextBox('This is a long'),
-                ]
-            ], LineBox[
-                InlineBox[
-                    TextBox(' long long text'),
-                ]
-            ]
-        ]
-
-    """
+def layout_next_linebox(linebox, remaining_width, skip_stack):
+    """Same as split_inline_level."""
     assert isinstance(linebox, boxes.LineBox)
     new_line = get_new_empty_line(linebox)
-    remaining_width = allocate_width
-    while linebox.children:
-        child = linebox.children.popleft()
 
-        part1, part2 = split_inline_level(child, remaining_width)
-        assert part1 is not None
+    if skip_stack is None:
+        skip = 0
+    else:
+        skip, skip_stack = skip_stack
 
-        if part1.margin_width() > remaining_width and new_line.children:
-            # part1 is too wide, and the line is non-empty:
+    for index, child in linebox.enumerate_skip(skip):
+        new_child, resume_at = split_inline_level(
+            child, remaining_width, skip_stack)
+        skip_stack = None
+
+        margin_width = new_child.margin_width()
+        if margin_width > remaining_width and new_line.children:
+            # too wide, and the inline is non-empty:
             # put child entirely on the next line.
-            if part2 is not None:
-                linebox.children.appendleft(part2)
-            part2 = part1
+            resume_at = (index, None)
+            break
         else:
-            remaining_width -= part1.margin_width()
-            new_line.add_child(part1)
+            remaining_width -= margin_width
+            new_line.add_child(new_child)
 
-        if part2 is not None:
-            linebox.children.appendleft(part2)
-            # This line is done, create a new one and reset
-            # the available width.
-            return new_line
+        if resume_at is not None:
+            resume_at = (index, resume_at)
+            break
+    else:
+        resume_at = None
 
-    if new_line.children:
-        return new_line
+    return new_line, resume_at
 
 
-def split_inline_level(box, available_width):
-    """Split an inline-level box and return ``(part1, part2)``.
+def split_inline_level(box, available_width, skip_stack):
+    """Fit as much content as possible from an inline-level box in a width.
 
-    * The first part is non-empty (unless the box is empty)
-    * Have the first part as big as possible while being narrower than
-      ``available_width``, if possible (may overflow is no split is possible.)
-    * ``part2`` may be None.
+    Return ``(new_box, resume_at)``. ``resume_at`` is ``None`` if all of the
+    content fits. Otherwise it can be passed as a ``skip_stack`` parameter
+    to resume where we left off.
+
+    ``new_box`` is non-empty (unless the box is empty) and as big as possible
+    while being narrower than ``available_width``, if possible (may overflow
+    is no split is possible.)
 
     """
     if isinstance(box, boxes.TextBox):
-        part1, part2 = split_text_box(box, available_width)
-        compute_textbox_dimensions(part1)
+        new_box, resume_at = split_text_box(box, available_width, skip_stack)
+        compute_textbox_dimensions(new_box)
     elif isinstance(box, boxes.InlineBox):
         resolve_percentages(box)
         if box.margin_left == 'auto':
             box.margin_left = 0
         if box.margin_right == 'auto':
             box.margin_right = 0
-        part1, part2 = split_inline_box(box, available_width)
-        compute_inlinebox_dimensions(part1)
+        new_box, resume_at = split_inline_box(box, available_width, skip_stack)
+        compute_inlinebox_dimensions(new_box)
     elif isinstance(box, boxes.AtomicInlineLevelBox):
         compute_atomicbox_dimensions(box)
-        part1 = box
-        part2 = None
-    else:
-        assert False, box
-    return part1, part2
+        new_box = box
+        resume_at = None
+    #else: unexpected box type here
+    return new_box, resume_at
 
 
-def split_inline_box(inlinebox, remaining_width):
-    """Split an inline box and return ``(part1, part2)``.
-
-    The same rules as split_inline_box() apply.
-
-    Eg.::
-
-        InlineBox[
-            InlineBox[TextBox('Word :D')],
-            TextBox('This is a long long long text'),
-        ]
-
-    is turned into::
-
-        (
-            InlineBox[
-                InlineBox[TextBox('Word :D')],
-                TextBox('This is a long'),
-            ], InlineBox[
-                TextBox(' long long text'),
-            ]
-        )
-
-    """
+def split_inline_box(inlinebox, remaining_width, skip_stack):
+    """Same behavior as split_inline_level."""
     assert isinstance(inlinebox, boxes.InlineBox)
     resolve_percentages(inlinebox)
     left_spacing = (inlinebox.padding_left + inlinebox.margin_left +
@@ -432,86 +347,75 @@ def split_inline_box(inlinebox, remaining_width):
     new_inlinebox = inlinebox.copy()
     new_inlinebox.empty()
 
-    while inlinebox.children:
-        child = inlinebox.children.popleft()
+    if skip_stack is None:
+        skip = 0
+    else:
+        skip, skip_stack = skip_stack
 
-        part1, part2 = split_inline_level(child, remaining_width)
-        assert part1 is not None
+    for index, child in inlinebox.enumerate_skip(skip):
+
+        new_child, resume_at = split_inline_level(
+            child, remaining_width, skip_stack)
+        skip_stack = None
 
         # TODO: this is non-optimal when last_child is True and
         #   width <= remaining_width < width + right_spacing
         # with
         #   width = part1.margin_width()
 
-        last_child = not inlinebox.children  # ie. the list is now empty
-        if last_child:
-            pass
-            # TODO: take care of right_spacing
+        # TODO: on the last child, take care of right_spacing
 
-        if part1.margin_width() > remaining_width and new_inlinebox.children:
-            # part1 is too wide, and the inline is non-empty:
+        margin_width = new_child.margin_width()
+
+        if (margin_width > remaining_width and new_inlinebox.children):
+            # too wide, and the inline is non-empty:
             # put child entirely on the next line.
-            if part2 is not None:
-                inlinebox.children.appendleft(part2)
-            part2 = part1
+            resume_at = (index, None)
+            break
         else:
-            remaining_width -= part1.margin_width()
-            new_inlinebox.add_child(part1)
+            remaining_width -= margin_width
+            new_inlinebox.add_child(new_child)
 
-        if part2 is not None:
-            inlinebox.children.appendleft(part2)
+        if resume_at is not None:
             inlinebox.reset_spacing('left')
             new_inlinebox.reset_spacing('right')
-            return new_inlinebox, inlinebox
+            resume_at = (index, resume_at)
+            break
+    else:
+        resume_at = None
 
-    return new_inlinebox, None
+    return new_inlinebox, resume_at
 
 
-def split_text_box(textbox, allocate_width):
-    """Split a text box and return ``(part1, part2)``.
+def split_text_box(textbox, available_width, skip):
+    """Keep as much text as possible from a TextBox in a limitied width.
+    Try not to overflow but always have some text in ``new_textbox``
 
-    The same rules as split_inline_box() apply, but the text will also be
-    split at preserved newline characters.
+    Return ``(new_textbox, skip)``. ``skip`` is the number of UTF-8 bytes
+    to skip form the start of the TextBox for the next line, or ``None``
+    if all of the text fits.
 
-    Eg.::
-
-        TextBox('This is a long long long long text')
-
-    is turned into::
-
-        (
-            TextBox('This is a long long'),
-            TextBox(' long long text')
-        )
-
-    But::
-
-        TextBox('Thisisalonglonglonglongtext')
-
-    is turned into::
-
-        (
-            TextBox('Thisisalonglonglonglongtext'),
-            None
-        )
+    Also break an preserved whitespace.
 
     """
     assert isinstance(textbox, boxes.TextBox)
     font_size = get_single_pixel_value(textbox.style.font_size)
     if font_size == 0:
         return textbox, None
-    fragment = TextFragment(textbox.utf8_text, textbox.style,
-        width=allocate_width,
-        context=cairo.Context(textbox.document.surface))
+    skip = skip or 0
+    utf8_text = textbox.utf8_text[skip:]
+    fragment = TextFragment(utf8_text, textbox.style,
+        cairo.Context(textbox.document.surface), available_width)
     split = fragment.split_first_line()
     if split is None:
+        if skip:
+            textbox = textbox.copy()
+            textbox.utf8_text = utf8_text  # with skip
         return textbox, None
     first_end, second_start = split
-    first_tb = textbox.copy()
-    first_tb.utf8_text = textbox.utf8_text[:first_end]
-    second_tb = textbox.copy()
-    second_tb.utf8_text = textbox.utf8_text[second_start:]
-    return first_tb, second_tb
+    new_textbox = textbox.copy()
+    new_textbox.utf8_text = utf8_text[:first_end]
+    return new_textbox, skip + second_start
 
 
 def white_space_processing(linebox):

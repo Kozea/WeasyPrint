@@ -463,7 +463,7 @@ def test_linebox_text():
             </style>
             <p><em>Lorem Ipsum</em>is very <strong>coool</strong></p>'''
 
-        page, = parse(page % {'fonts': FONTS, 'width': 200})
+        page, = parse(page % {'fonts': FONTS, 'width': 250})
         paragraph, = body_children(page)
         return paragraph
 
@@ -488,7 +488,7 @@ def test_linebox_positions():
                 p { width:%(width)spx; font-family:%(fonts)s;}
             </style>
             <p>this is test for <strong>Weasyprint</strong></p>'''
-        page, = parse(page % {'fonts': FONTS, 'width': 200})
+        page, = parse(page % {'fonts': FONTS, 'width': 250})
         paragraph, = body_children(page)
         return paragraph
 
@@ -579,9 +579,12 @@ def test_inlinebox_spliting():
 
     def get_parts(inlinebox, width):
         """Yield the parts of the splitted ``inlinebox`` of given ``width``."""
-        copy_inlinebox = inlinebox.copy()
-        while copy_inlinebox.children:
-            yield split_inline_box(copy_inlinebox, width)[0]
+        skip = None
+        while 1:
+            box, skip = split_inline_box(inlinebox, width, skip)
+            yield box
+            if skip is None:
+                break
 
     def get_joined_text(parts):
         """Get the joined text from ``parts``."""
@@ -616,7 +619,7 @@ def test_inlinebox_spliting():
 
     # test with width = 100
     parts = list(get_parts(inlinebox, 100))
-    assert len(parts) != 1
+    assert len(parts) > 1
     assert original_text == get_joined_text(parts)
 
     inlinebox = get_inlinebox(content)
@@ -625,7 +628,7 @@ def test_inlinebox_spliting():
 
     # test with width = 10
     parts = list(get_parts(inlinebox, 10))
-    assert len(parts) != 1
+    assert len(parts) > 1
     assert original_text == get_joined_text(parts)
 
     # with margin-border-padding
@@ -678,8 +681,12 @@ def test_inlinebox_text_after_spliting():
 
     def get_parts(inlinebox, width):
         """Yield the parts of the splitted ``inlinebox`` of given ``width``."""
-        while inlinebox.children:
-            yield split_inline_box(inlinebox, width)[0]
+        skip = None
+        while 1:
+            box, skip = split_inline_box(inlinebox, width, skip)
+            yield box
+            if skip is None:
+                break
 
     def get_full_text(inlinebox):
         """Get the full text in ``inlinebox``."""
@@ -743,7 +750,7 @@ def test_page_and_linebox_breaking():
             texts.extend(get_full_text(lines))
         return u' '.join(texts)
 
-    content = '1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15'
+    content = u'1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15'
 
     pages = get_pages(content)
     assert len(pages) == 2

@@ -30,7 +30,7 @@ from ..css.values import get_single_keyword
 from ..formatting_structure import boxes
 
 
-def block_level_layout(box, max_position_y):
+def block_level_layout(box, max_position_y, skip_stack):
     """Lay out the block-level ``box``.
 
     :param max_position_y: the absolute vertical position (as in
@@ -39,19 +39,19 @@ def block_level_layout(box, max_position_y):
 
     """
     if isinstance(box, boxes.BlockBox):
-        return block_box_layout(box, max_position_y)
+        return block_box_layout(box, max_position_y, skip_stack)
     elif isinstance(box, boxes.BlockLevelReplacedBox):
-        return block_replaced_box_layout(box), True
+        return block_replaced_box_layout(box), None
     else:
         raise TypeError('Layout for %s not handled yet' % type(box).__name__)
 
 
-def block_box_layout(box, max_position_y):
+def block_box_layout(box, max_position_y, skip_stack):
     """Lay out the block ``box``."""
     resolve_percentages(box)
     block_level_width(box)
     list_marker_layout(box)
-    return block_level_height(box, max_position_y)
+    return block_level_height(box, max_position_y, skip_stack)
 
 
 def block_replaced_box_layout(box):
@@ -133,7 +133,7 @@ def block_level_width(box):
         box.margin_right = margin_sum - margin_l
 
 
-def block_level_height(box, max_position_y):
+def block_level_height(box, max_position_y, skip_stack):
     """Set the ``box`` height."""
     assert isinstance(box, boxes.BlockBox)
 
@@ -151,8 +151,13 @@ def block_level_height(box, max_position_y):
 
     new_box = box.copy()
     new_box.empty()
-    while box.children:
-        child = box.children.popleft()
+
+    if skip_stack is None:
+        skip = 0
+    else:
+        skip, skip_stack = skip_stack
+
+    for index, child in box.enumerate_skip(skip):
         if not child.is_in_normal_flow():
             continue
         # TODO: collapse margins
@@ -160,24 +165,31 @@ def block_level_height(box, max_position_y):
         child.position_x = position_x
         child.position_y = position_y
         if isinstance(child, boxes.LineBox):
-            for line in get_new_lineboxes(child, max_position_y):
+            lines, resume_at = get_new_lineboxes(
+                child, max_position_y, skip_stack)
+            skip_stack = None
+            for line in lines:
                 new_box.add_child(line)
                 position_y += line.height
-            if child.children:
-                box.children.appendleft(child)
+            if resume_at is not None:
+                resume_at = (index, resume_at)
                 break
         else:
-            new_child, finished = block_level_layout(child, max_position_y)
+            new_child, resume_at = block_level_layout(
+                child, max_position_y, skip_stack)
+            skip_stack = None
             new_position_y = position_y + new_child.margin_height()
             # TODO: find a way to break between blocks
 #            if new_position_y <= max_position_y:
             new_box.add_child(new_child)
             position_y = new_position_y
 #            else:
-#                finished = False
-            if not finished:
-                box.children.appendleft(child)
+#                resume_at = (index, None) # or something...  XXX
+            if resume_at is not None:
+                resume_at = (index, resume_at)
                 break
+    else:
+        resume_at = None
 
     if new_box.height == 'auto':
         new_box.height = position_y - initial_position_y
@@ -185,5 +197,4 @@ def block_level_height(box, max_position_y):
     # If there was a list marker, we kept it on `new_box`. Do not repeat on
     # `box` on the next page.
     box.outside_list_marker = None
-    finished = not box.children
-    return new_box, finished
+    return new_box, resume_at

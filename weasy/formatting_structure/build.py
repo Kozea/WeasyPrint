@@ -406,13 +406,16 @@ def _inner_block_in_inline(box, skip_stack=None):
 
     for index, child in box.enumerate_skip(skip):
         if isinstance(child, boxes.BlockLevelBox):
+            assert skip_stack is None  # Should no skip here
             block_level_box = child
             index += 1  # Resume *after* the block
         else:
             if isinstance(child, boxes.InlineBox):
                 recursion = _inner_block_in_inline(child, skip_stack)
+                skip_stack = None
                 new_child, block_level_box, resume_at = recursion
             else:
+                assert skip_stack is None  # Should no skip here
                 if isinstance(child, boxes.ParentBox):
                     # inline-block or inline-table.
                     new_child = block_in_inline(child)

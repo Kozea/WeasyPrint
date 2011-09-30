@@ -30,7 +30,7 @@ from ..css.values import get_pixel_value
 from ..formatting_structure import boxes
 
 
-def make_page(document, page_number):
+def make_page(document, page_number, resume_at):
     """Take just enough content from the beginning to fill one page.
 
     Return ``page, finished``. ``page`` is a laid out Page object, ``finished``
@@ -58,9 +58,10 @@ def make_page(document, page_number):
     # TODO: handle cases where the root element is something else.
     # See http://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
     assert isinstance(root_box, boxes.BlockBox)
-    page.root_box, finished = block_box_layout(root_box, page_content_bottom)
+    page.root_box, resume_at = block_box_layout(
+        root_box, page_content_bottom, resume_at)
 
-    return page, finished
+    return page, resume_at
 
 
 def layout(document):
@@ -75,9 +76,10 @@ def layout(document):
     """
     pages = []
     page_number = 1
+    resume_at = None
     while True:
-        page, finished = make_page(document, page_number)
+        page, resume_at = make_page(document, page_number, resume_at)
         pages.append(page)
-        if finished:
+        if resume_at is None:
             return pages
         page_number += 1
