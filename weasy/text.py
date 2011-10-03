@@ -24,7 +24,6 @@ Various classes to break text lines and draw them.
 
 from __future__ import division
 
-import cairo
 from gi.repository import Pango, PangoCairo  # pylint: disable=E0611
 
 from .css.values import get_single_keyword, get_single_pixel_value

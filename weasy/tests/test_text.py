@@ -27,7 +27,6 @@ from attest import Tests, assert_hook  # pylint: disable=W0611
 
 from ..css import effective_declarations, computed_from_cascaded
 from ..text import TextFragment
-from . import TestPNGDocument
 from .test_layout import parse, body_children
 
 SUITE = Tests()

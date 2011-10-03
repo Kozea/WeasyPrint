@@ -41,12 +41,10 @@ def get_new_lineboxes(linebox, page_bottom, skip_stack):
     while 1:
         line, resume_at = layout_next_linebox(
             linebox, containing_block_width, skip_stack)
-        from ..tests.test_boxes import serialize, prettify
         white_space_processing(line)
         compute_linebox_dimensions(line)
         compute_linebox_positions(line, position_x, position_y)
         vertical_align_processing(line)
-        compute_linebox_dimensions(line)  # XXX twice?
         if not is_empty_line(line):
             position_y += line.height
             # Yield at least one line to avoid infinite loop.
