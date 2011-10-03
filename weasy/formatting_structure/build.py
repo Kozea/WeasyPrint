@@ -80,37 +80,39 @@ def dom_to_box(document, element):
         # Specific handling for the element. (eg. replaced element)
         return result
 
-    if display in ('block', 'list-item'):
-        box = boxes.BlockBox(document, element)
-        if display == 'list-item':
-            add_list_marker(box)
-    elif display == 'inline':
-        box = boxes.InlineBox(document, element)
-    elif display == 'inline-block':
-        box = boxes.InlineBlockBox(document, element)
-    else:
-        raise NotImplementedError('Unsupported display: ' + display)
+    children = []
 
-    assert isinstance(box, boxes.ParentBox)
     if element.text:
-        box.add_child(boxes.TextBox(document, element, element.text))
+        children.append(boxes.TextBox(document, element, element.text))
     for child_element in element:
         # lxml.html already converts HTML entities to text.
         # Here we ignore comments and XML processing instructions.
         if isinstance(child_element.tag, basestring):
             child_box = dom_to_box(document, child_element)
             if child_box is not None:
-                box.add_child(child_box)
+                children.append(child_box)
             # else: child_element had `display: None`
         if child_element.tail:
-            box.add_child(boxes.TextBox(
+            children.append(boxes.TextBox(
                 document, element, child_element.tail))
+
+    if display in ('block', 'list-item'):
+        box = boxes.BlockBox(document, element, children)
+        if display == 'list-item':
+            box = create_box_marker(box)
+    elif display == 'inline':
+        box = boxes.InlineBox(document, element, children)
+    elif display == 'inline-block':
+        box = boxes.InlineBlockBox(document, element, children)
+    else:
+        raise NotImplementedError('Unsupported display: ' + display)
+    assert isinstance(box, boxes.ParentBox)
 
     return box
 
 
-def add_list_marker(box):
-    """Add a list marker to elements with ``display: list-item``.
+def create_box_marker(box):
+    """Return a box with a list marker to elements with ``display: list-item``.
 
     See http://www.w3.org/TR/CSS21/generate.html#lists
 
@@ -125,7 +127,7 @@ def add_list_marker(box):
     if surface is None:
         type_ = get_single_keyword(box.style.list_style_type)
         if type_ == 'none':
-            return
+            return box
         marker = GLYPH_LIST_MARKERS[type_]
         marker_box = boxes.TextBox(box.document, box.element, marker)
     else:
@@ -135,14 +137,13 @@ def add_list_marker(box):
 
     position = get_single_keyword(box.style.list_style_position)
     if position == 'inside':
-        assert not box.children  # Make sure we’re adding at the beggining
-        box.add_child(marker_box)
         # U+00A0, NO-BREAK SPACE
         spacer = boxes.TextBox(box.document, box.element, u'\u00a0')
-        box.add_child(spacer)
+        return box.copy_with_children((marker_box, spacer) + box.children)
     elif position == 'outside':
         box.outside_list_marker = marker_box
         marker_box.parent = box
+    return box
 
 
 def process_whitespace(box):
@@ -230,41 +231,51 @@ def inline_in_block(box):
         ]
 
     """
-    for child_box in getattr(box, 'children', []):
-        inline_in_block(child_box)
+    new_children = []
+    if isinstance(box, boxes.ParentBox):
+        for child_box in getattr(box, 'children', []):
+            new_child = inline_in_block(child_box)
+            new_children.append(new_child)
+        box = box.copy_with_children(new_children)
 
     if not isinstance(box, boxes.BlockContainerBox):
-        return
+        return box
 
-    line_box = boxes.LineBox(box.document, box.element)
-    children = box.children
-    box.empty()
-    for child_box in children:
+    new_line_children = []
+    new_children = []
+    for child_box in box.children:
         if isinstance(child_box, boxes.BlockLevelBox):
-            if line_box.children:
+            if new_line_children:
                 # Inlines are consecutive no more: add this line box
                 # and create a new one.
-                anonymous = boxes.AnonymousBlockBox(box.document, box.element)
-                anonymous.add_child(line_box)
-                box.add_child(anonymous)
-                line_box = boxes.LineBox(box.document, box.element)
-            box.add_child(child_box)
+                line_box = boxes.LineBox(
+                    box.document, box.element, new_line_children)
+                anonymous = boxes.AnonymousBlockBox(
+                    box.document, box.element, [line_box])
+                new_children.append(anonymous)
+                new_line_children = []
+            new_children.append(child_box)
         elif isinstance(child_box, boxes.LineBox):
             # Merge the line box we just found with the new one we are making
             for child in child_box.children:
-                line_box.add_child(child)
+                new_line_children.append(child)
         else:
-            line_box.add_child(child_box)
-    if line_box.children:
+            new_line_children.append(child_box)
+    if new_line_children:
         # There were inlines at the end
-        if box.children:
-            anonymous = boxes.AnonymousBlockBox(box.document, box.element)
-            anonymous.add_child(line_box)
-            box.add_child(anonymous)
+        if new_children:
+            line_box = boxes.LineBox(
+                box.document, box.element, new_line_children)
+            anonymous = boxes.AnonymousBlockBox(
+                box.document, box.element, [line_box])
+            new_children.append(anonymous)
         else:
             # Only inline-level children: one line box
-            box.add_child(line_box)
-    return box
+            line_box = boxes.LineBox(
+                box.document, box.element, new_line_children)
+            new_children.append(line_box)
+
+    return box.copy_with_children(new_children)
 
 
 def block_in_inline(box):
@@ -343,16 +354,16 @@ def block_in_inline(box):
                 new_line, block, stack = _inner_block_in_inline(child, stack)
                 if block is None:
                     break
-                anon = boxes.AnonymousBlockBox(box.document, box.element)
-                anon.add_child(new_line)
+                anon = boxes.AnonymousBlockBox(
+                    box.document, box.element, [new_line])
                 new_children.append(anon)
                 new_children.append(block_in_inline(block))
                 # Loop with the same child and the new stack.
             if new_children:
                 # Some children were already added, this became a block
                 # context.
-                new_child = boxes.AnonymousBlockBox(box.document, box.element)
-                new_child.add_child(new_line)
+                new_child = boxes.AnonymousBlockBox(
+                    box.document, box.element, [new_line])
             else:
                 # Keep the single line box as-is, without anonymous blocks.
                 new_child = new_line
@@ -365,20 +376,9 @@ def block_in_inline(box):
         new_children.append(new_child)
 
     if changed:
-        new_box = box.copy()
-        new_box.empty()
-        for new_child in new_children:
-            new_box.add_child(new_child)
-        return new_box
+        return box.copy_with_children(new_children)
     else:
         return box
-
-
-def _add_anonymous_block(box, child):
-    """Wrap the child in an AnonymousBlockBox and add it to box."""
-    anon_block = boxes.AnonymousBlockBox(box.document, box.element)
-    anon_block.add_child(child)
-    box.add_child(anon_block)
 
 
 def _inner_block_in_inline(box, skip_stack=None):
@@ -393,8 +393,7 @@ def _inner_block_in_inline(box, skip_stack=None):
     ``skip_stack``, return ``(new_box, None, None)``
 
     """
-    new_box = box.copy()
-    new_box.empty()
+    new_children = []
     block_level_box = None
     resume_at = None
     changed = False
@@ -425,11 +424,13 @@ def _inner_block_in_inline(box, skip_stack=None):
                 # block_level_box is still None.
             if new_child is not child:
                 changed = True
-            new_box.add_child(new_child)
+            new_children.append(new_child)
         if block_level_box is not None:
             resume_at = (index, resume_at)
+            box = box.copy_with_children(new_children)
             break
     else:
-        if not (changed or skip):
-            new_box = box
-    return new_box, block_level_box, resume_at
+        if changed or skip:
+            box = box.copy_with_children(new_children)
+
+    return box, block_level_box, resume_at

@@ -102,9 +102,7 @@ def make_text_box(document, element, text):
     """
     text_box = boxes.TextBox(document, element, text)
     if is_block_level(document, element):
-        block = boxes.BlockBox(document, element)
-        block.add_child(text_box)
-        return block
+        return boxes.BlockBox(document, element, [text_box])
     else:
         return text_box
 

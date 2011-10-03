@@ -411,6 +411,7 @@ def test_empty_linebox():
 def test_breaking_linebox():
     """Test lineboxes breaks with a lot of text and deep nesting."""
     def get_paragraph_linebox(width, font_size):
+        """Helper returning a paragraph with given style."""
         page = u'''
             <style>
             p { font-size: %(font_size)spx;

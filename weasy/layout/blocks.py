@@ -149,8 +149,7 @@ def block_level_height(box, max_position_y, skip_stack):
     position_y = box.content_box_y()
     initial_position_y = position_y
 
-    new_box = box.copy()
-    new_box.empty()
+    new_children = []
 
     if skip_stack is None:
         skip = 0
@@ -169,7 +168,7 @@ def block_level_height(box, max_position_y, skip_stack):
                 child, max_position_y, skip_stack)
             skip_stack = None
             for line in lines:
-                new_box.add_child(line)
+                new_children.append(line)
                 position_y += line.height
             if resume_at is not None:
                 resume_at = (index, resume_at)
@@ -181,7 +180,7 @@ def block_level_height(box, max_position_y, skip_stack):
             new_position_y = position_y + new_child.margin_height()
             # TODO: find a way to break between blocks
 #            if new_position_y <= max_position_y:
-            new_box.add_child(new_child)
+            new_children.append(new_child)
             position_y = new_position_y
 #            else:
 #                resume_at = (index, None) # or something...  XXX
@@ -190,6 +189,8 @@ def block_level_height(box, max_position_y, skip_stack):
                 break
     else:
         resume_at = None
+
+    new_box = box.copy_with_children(new_children)
 
     if new_box.height == 'auto':
         new_box.height = position_y - initial_position_y

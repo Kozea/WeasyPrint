@@ -67,8 +67,6 @@ See respective docstrings for details.
 """
 
 
-import collections
-
 from ..css import computed_from_cascaded
 from ..css.values import get_single_keyword
 
@@ -296,26 +294,29 @@ class PageBox(Box):
 
 class ParentBox(Box):
     """A box that has children."""
-    def __init__(self, document, element):
+    def __init__(self, document, element, children):
         super(ParentBox, self).__init__(document, element)
-        self.empty()
+        self.children = tuple(children)
+        # Kidnapping
+        for child in self.children:
+            child.parent = self
 
     def enumerate_skip(self, skip_num=0):
-        """
-        Yield ``(child, child_index)`` tuples for each children after skippng
-        ``skip_num`` of them.
+        """Yield ``(child, child_index)`` tuples for each child.
+
+        ``skip_num`` children are skipped before iterating over them.
+
         """
         for index in xrange(skip_num, len(self.children)):
             yield index, self.children[index]
 
-    def empty(self):
-        """Initialize or empty the children list."""
-        self.children = collections.deque()
-
-    def add_child(self, child):
-        """Add the new child to the children list and set its parent."""
-        child.parent = self
-        self.children.append(child)
+    def copy_with_children(self, children):
+        """Create a new equivalent box with given ``children``."""
+        new_box = self.copy()
+        new_box.children = tuple(children)
+        for child in new_box.children:
+            child.parent = new_box
+        return new_box
 
     def descendants(self):
         """A flat generator for a box, its children and descendants."""
