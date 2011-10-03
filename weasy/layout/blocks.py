@@ -23,7 +23,7 @@ Functions laying out the block boxes.
 
 from __future__ import division
 
-from .inlines import get_new_lineboxes, replaced_box_width, replaced_box_height
+from .inlines import get_next_linebox, replaced_box_width, replaced_box_height
 from .markers import list_marker_layout
 from .percentages import resolve_percentages
 from ..css.values import get_single_keyword
@@ -165,14 +165,30 @@ def block_level_height(box, max_position_y, skip_stack):
         child.position_x = position_x
         child.position_y = position_y
         if isinstance(child, boxes.LineBox):
-            lines, resume_at = get_new_lineboxes(
-                child, max_position_y, skip_stack)
-            skip_stack = None
-            for line in lines:
+            first = True
+            # Dummy value to help the else-continue-break hack below.
+            is_page_break = False
+            while 1:
+                line, resume_at = get_next_linebox(
+                    child, position_y, skip_stack)
+                if line is None:
+                    break
+                new_position_y = position_y + line.height
+                # `first`, keep at least one line to avoid infinite loops,
+                # even if it overflows
+                # TODO: fix infinite loops without overflowing.
+                if new_position_y > max_position_y and not first:
+                    # Page break here, resume before this line
+                    resume_at = (index, skip_stack)
+                    is_page_break = True
+                    break
                 new_box.add_child(line)
-                position_y += line.height
-            if resume_at is not None:
-                resume_at = (index, resume_at)
+                position_y = new_position_y
+                if resume_at is None:
+                    break
+                skip_stack = resume_at
+                first = False
+            if is_page_break:
                 break
         else:
             new_child, resume_at = block_level_layout(

@@ -31,13 +31,10 @@ from ..formatting_structure import boxes
 from ..css.values import get_single_keyword, get_single_pixel_value
 
 
-def get_new_lineboxes(linebox, page_bottom, skip_stack):
+def get_next_linebox(linebox, position_y, skip_stack):
     """Get the ``linebox`` lines until ``page_bottom`` is reached."""
-    first = True
-    position_y = linebox.position_y
     position_x = linebox.position_x
     containing_block_width = linebox.containing_block_size()[0]
-    lines = []
     while 1:
         line, resume_at = layout_next_linebox(
             linebox, containing_block_width, skip_stack)
@@ -45,22 +42,12 @@ def get_new_lineboxes(linebox, page_bottom, skip_stack):
         compute_linebox_dimensions(line)
         compute_linebox_positions(line, position_x, position_y)
         vertical_align_processing(line)
-        if not is_empty_line(line):
-            position_y += line.height
-            # Yield at least one line to avoid infinite loop.
-            # TODO: Find another way ...
-            if page_bottom >= position_y or first:
-                lines.append(line)
-                first = False
-            else:
-                # Resume before this line
-                resume_at = skip_stack
-                break
-        if resume_at is None:
-            break
-        else:
+        if is_empty_line(line):
+            if resume_at is None:
+                return None, None
             skip_stack = resume_at
-    return lines, resume_at
+        else:
+            return line, resume_at
 
 
 def inline_replaced_box_layout(box):
