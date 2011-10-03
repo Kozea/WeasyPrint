@@ -28,9 +28,9 @@ from ..css.values import get_single_keyword, get_single_pixel_value
 from . import TestPNGDocument
 from ..formatting_structure import boxes
 from .test_boxes import monkeypatch_validation
+from . import FONTS
 
 SUITE = Tests()
-FONTS = u"Arial, Liberation Sans"
 
 
 def body_children(page):
@@ -407,49 +407,45 @@ def test_empty_linebox():
     assert paragraph.height == 0
 
 
-# TODO: use Ahem font or an font from file directly
-#@SUITE.test
-#def test_breaking_linebox():
-#    def get_paragraph_linebox(width, font_size):
-#        page = u'''
-#            <style>
-#            p { font-size:%(font_size)spx;
-#                width:%(width)spx;
-#                font-family:%(fonts)s;
-#                background-color:#393939;
-#                color:#FFFFFF;
-#                font-family: Monospace;
-#                text-align:center;
-#                line-height:1;
-#                text-decoration : underline overline line-through;
-#            }
-#            </style>
-#            <p><em>Lorem<strong> Ipsum <span>is very</span>simply</strong><em>
-#            dummy</em>text of the printing and. naaaa </em> naaaa naaaa naaaa
-#            naaaa naaaa naaaa naaaa naaaa</p>'''
-#        page, = parse(page % {'fonts': FONTS, 'font_size': font_size,
-#                              'width': width})
-#        html = page.root_box
-#        body = html.children[0]
-#        paragraph = body.children[0]
-#        return paragraph
-#    font_size = 13
-#    width = 350
-#    paragraph = get_paragraph_linebox(width, font_size)
-#    assert len(list(paragraph.children)) == 4
+@SUITE.test
+def test_breaking_linebox():
+    """Test lineboxes breaks with a lot of text and deep nesting."""
+    def get_paragraph_linebox(width, font_size):
+        page = u'''
+            <style>
+            p { font-size: %(font_size)spx;
+                width: %(width)spx;
+                font-family: %(fonts)s;
+                background-color: #393939;
+                color: #FFFFFF;
+                line-height: 1;
+                text-decoration: underline overline line-through;}
+            </style>
+            <p><em>Lorem<strong> Ipsum <span>is very</span>simply</strong><em>
+            dummy</em>text of the printing and. naaaa </em> naaaa naaaa naaaa
+            naaaa naaaa naaaa naaaa naaaa</p>'''
+        page, = parse(
+            page % {'fonts': FONTS, 'font_size': font_size, 'width': width})
+        html = page.root_box
+        body = html.children[0]
+        paragraph = body.children[0]
+        return paragraph
+    font_size = 13
+    width = 350
+    paragraph = get_paragraph_linebox(width, font_size)
+    assert len(list(paragraph.children)) == 3
 
-#    lines = paragraph.children
-#    for line in lines:
-#        assert line.style.font_size[0].value == font_size
-#        assert line.element.tag == 'p'
-##        assert sum(linebox_children_width(line)) <= line.width
-#        for child in line.children:
-#             assert child.element.tag in ('em', 'p')
-#             assert child.style.font_size[0].value == font_size
-#             if isinstance(child, boxes.ParentBox):
-#                 for child_child in child.children:
-#                    assert child.element.tag in ('em', 'strong', 'span')
-#                    assert child.style.font_size[0].value == font_size
+    lines = paragraph.children
+    for line in lines:
+        assert line.style.font_size[0].value == font_size
+        assert line.element.tag == 'p'
+        for child in line.children:
+            assert child.element.tag in ('em', 'p')
+            assert child.style.font_size[0].value == font_size
+            if isinstance(child, boxes.ParentBox):
+                for child_child in child.children:
+                    assert child.element.tag in ('em', 'strong', 'span')
+                    assert child.style.font_size[0].value == font_size
 
 
 @SUITE.test

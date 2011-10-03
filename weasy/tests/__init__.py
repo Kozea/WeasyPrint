@@ -32,6 +32,8 @@ from ..document import PNGDocument
 logging.getLogger('WEASYPRINT').addHandler(logging.StreamHandler())
 
 
+# TODO: find a way to not depend on a specific font
+FONTS = u"Liberation Sans, Arial"
 TEST_USER_AGENT_STYLESHEETS = (
     parseFile(os.path.join(
         os.path.dirname(__file__), '..', 'html', 'tests_default.css'

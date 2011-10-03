@@ -28,6 +28,7 @@ from attest import Tests, assert_hook  # pylint: disable=W0611
 from ..css import effective_declarations, computed_from_cascaded
 from ..text import TextFragment
 from .test_layout import parse, body_children
+from . import FONTS
 
 SUITE = Tests()
 
@@ -50,8 +51,8 @@ def test_line_content():
     for width, remaining in [(120, 'text for test'),
                              (60, 'is a text for test')]:
         text = 'This is a text for test'
-        # TODO: find a way to not depend on a specific font
-        line = make_text(text, width, 'font-family: "Arial"; font-size: 19px')
+        line = make_text(
+            text, width, 'font-family: "%s"; font-size: 19px' % FONTS)
         index1, index2 = line.split_first_line()
         assert text[index2:] == remaining
         assert index1 == index2
@@ -83,8 +84,7 @@ def test_line_breaking():
     index1, index2 = line.split_first_line()
     assert string[index2:] == u'is a text for test'
 
-    # TODO: find a way to not depend on a specific font
-    line = make_text(string, 120, 'font-family: "Arial"; font-size: 19px')
+    line = make_text(string, 120, 'font-family: "%s"; font-size: 19px' % FONTS)
     index1, index2 = line.split_first_line()
     assert string[index2:] == u'text for test'
 
