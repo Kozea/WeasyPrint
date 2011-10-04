@@ -192,14 +192,12 @@ def process_whitespace(box):
 
 
 def inline_in_block(box):
-    """Build the structure of lines inside blocks.
+    """Build the structure of lines inside blocks and return a new box tree.
 
     Consecutive inline-level boxes in a block container box are wrapped into a
     line box, itself wrapped into an anonymous block box.
 
     This line box will be broken into multiple lines later.
-
-    The box tree is changed *in place*.
 
     This is the first case in
     http://www.w3.org/TR/CSS21/visuren.html#anonymous-block-level
