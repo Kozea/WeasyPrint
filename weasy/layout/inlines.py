@@ -36,7 +36,7 @@ def get_next_linebox(linebox, position_y, skip_stack):
     position_x = linebox.position_x
     containing_block_width = linebox.containing_block_size()[0]
     while 1:
-        line, resume_at = layout_next_linebox(
+        line, resume_at = split_inline_box(
             linebox, containing_block_width, skip_stack)
         white_space_processing(line)
         compute_linebox_dimensions(line)
@@ -247,40 +247,6 @@ def is_empty_line(linebox):
     return num_textbox == len(linebox.children)
 
 
-def layout_next_linebox(linebox, remaining_width, skip_stack):
-    """Same as split_inline_level."""
-    assert isinstance(linebox, boxes.LineBox)
-    children = []
-
-    if skip_stack is None:
-        skip = 0
-    else:
-        skip, skip_stack = skip_stack
-
-    for index, child in linebox.enumerate_skip(skip):
-        new_child, resume_at = split_inline_level(
-            child, remaining_width, skip_stack)
-        skip_stack = None
-
-        margin_width = new_child.margin_width()
-        if margin_width > remaining_width and children:
-            # too wide, and the inline is non-empty:
-            # put child entirely on the next line.
-            resume_at = (index, None)
-            break
-        else:
-            remaining_width -= margin_width
-            children.append(new_child)
-
-        if resume_at is not None:
-            resume_at = (index, resume_at)
-            break
-    else:
-        resume_at = None
-
-    return linebox.copy_with_children(children), resume_at
-
-
 def split_inline_level(box, available_width, skip_stack):
     """Fit as much content as possible from an inline-level box in a width.
 
@@ -314,7 +280,7 @@ def split_inline_level(box, available_width, skip_stack):
 
 def split_inline_box(inlinebox, remaining_width, skip_stack):
     """Same behavior as split_inline_level."""
-    assert isinstance(inlinebox, boxes.InlineBox)
+    assert isinstance(inlinebox, (boxes.LineBox, boxes.InlineBox))
     resolve_percentages(inlinebox)
     left_spacing = (inlinebox.padding_left + inlinebox.margin_left +
                     inlinebox.border_left_width)
@@ -323,7 +289,6 @@ def split_inline_box(inlinebox, remaining_width, skip_stack):
     remaining_width -= left_spacing
 
     children = []
-    reset_spacing = False
 
     if skip_stack is None:
         skip = 0
@@ -354,17 +319,16 @@ def split_inline_box(inlinebox, remaining_width, skip_stack):
             children.append(new_child)
 
         if resume_at is not None:
-            reset_spacing = True
             resume_at = (index, resume_at)
             break
     else:
         resume_at = None
 
     new_inlinebox = inlinebox.copy_with_children(children)
-    if reset_spacing:
+    if resume_at is not None:
+        # There is a line break inside this box.
         inlinebox.reset_spacing('left')
         new_inlinebox.reset_spacing('right')
-
     return new_inlinebox, resume_at
 
 
