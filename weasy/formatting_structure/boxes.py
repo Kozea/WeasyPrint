@@ -142,7 +142,7 @@ class Box(object):
                     return ancestor.width, ancestor.height
         assert False, 'Containing block not found'
 
-    def copy(self):
+    def _copy(self):
         """Return shallow copy of the box."""
         cls = type(self)
         # Create a new instance without calling __init__: initializing
@@ -312,7 +312,7 @@ class ParentBox(Box):
 
     def copy_with_children(self, children):
         """Create a new equivalent box with given ``children``."""
-        new_box = self.copy()
+        new_box = self._copy()
         new_box.children = tuple(children)
         for child in new_box.children:
             child.parent = new_box
@@ -456,6 +456,11 @@ class TextBox(AnonymousBox, InlineLevelBox):
         assert text
         super(TextBox, self).__init__(document, element)
         self.utf8_text = text.encode('utf8')
+
+    def copy_with_text(self, utf8_text):
+        new_box = self._copy()
+        new_box.utf8_text = utf8_text
+        return new_box
 
 
 class AtomicInlineLevelBox(InlineLevelBox):

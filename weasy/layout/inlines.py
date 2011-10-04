@@ -390,12 +390,10 @@ def split_text_box(textbox, available_width, skip):
     split = fragment.split_first_line()
     if split is None:
         if skip:
-            textbox = textbox.copy()
-            textbox.utf8_text = utf8_text  # with skip
+            textbox = textbox.copy_with_text(utf8_text)  # with skip
         return textbox, None
     first_end, second_start = split
-    new_textbox = textbox.copy()
-    new_textbox.utf8_text = utf8_text[:first_end]
+    new_textbox = textbox.copy_with_text(utf8_text[:first_end])
     return new_textbox, skip + second_start
 
 
