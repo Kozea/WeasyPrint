@@ -28,8 +28,7 @@ from array import array
 import png
 from attest import Tests, assert_hook  # pylint: disable=W0611
 
-from . import resource_filename
-from . import TestPNGDocument
+from . import resource_filename, TestPNGDocument, FONTS
 
 # Short variable names are OK here
 # pylint: disable=C0103
@@ -530,12 +529,12 @@ def test_list_style_image():
         test_pixels('list_style_image_' + position, 12, 10, pixels, '''
             <style>
                 @page { size: 12px 10px }
-                body { margin: 0; background: white }
+                body { margin: 0; background: white; font-family: %s }
                 ul { margin: 2px 2px 0 7px; list-style: url(pattern.png) %s;
                      font-size: 2px }
             </style>
             <ul><li></li></ul>
-        ''' % (position,))
+        ''' % (FONTS, position))
 
     test_pixels('list_style_none', 10, 10, [
             _+_+_+_+_+_+_+_+_+_,
@@ -551,11 +550,11 @@ def test_list_style_image():
         ], '''
             <style>
                 @page { size: 10px }
-                body { margin: 0; background: white }
+                body { margin: 0; background: white; font-family: %s }
                 ul { margin: 0 0 0 5px; list-style: none; font-size: 2px; }
             </style>
             <ul><li>
-        ''')
+        ''' % (FONTS,))
 
 
 @SUITE.test
