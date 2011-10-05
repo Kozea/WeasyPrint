@@ -458,6 +458,7 @@ class TextBox(AnonymousBox, InlineLevelBox):
         self.utf8_text = text.encode('utf8')
 
     def copy_with_text(self, utf8_text):
+        assert utf8_text
         new_box = self._copy()
         new_box.utf8_text = utf8_text
         return new_box

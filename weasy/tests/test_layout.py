@@ -578,7 +578,7 @@ def test_inlinebox_spliting():
         """Yield the parts of the splitted ``inlinebox`` of given ``width``."""
         skip = None
         while 1:
-            box, skip = split_inline_box(inlinebox, width, skip)
+            box, skip, _ = split_inline_box(inlinebox, width, skip)
             yield box
             if skip is None:
                 break
@@ -680,7 +680,7 @@ def test_inlinebox_text_after_spliting():
         """Yield the parts of the splitted ``inlinebox`` of given ``width``."""
         skip = None
         while 1:
-            box, skip = split_inline_box(inlinebox, width, skip)
+            box, skip, _ = split_inline_box(inlinebox, width, skip)
             yield box
             if skip is None:
                 break
@@ -752,3 +752,28 @@ def test_page_and_linebox_breaking():
     pages = get_pages(content)
     assert len(pages) == 2
     assert content == get_joined_text(pages)
+
+
+@SUITE.test
+def test_whitespace_processing():
+    for source in ['a', '  a  ', ' \n  \ta', ' a\t ']:
+        print
+        page, = parse('<p><em>%s</em></p>' % source)
+        html = page.root_box
+        body, = html.children
+        p, = body.children
+        line, = p.children
+        em, = line.children
+        text, = em.children
+        assert text.utf8_text == b'a', 'source was %r' % (source,)
+
+        print
+        page, = parse('<p style="white-space: pre-line">\n\n<em>%s</em></pre>'
+            % source.replace('\n', ' '))
+        html = page.root_box
+        body, = html.children
+        p, = body.children
+        _line1, _line2, line3 = p.children
+        em, = line3.children
+        text, = em.children
+        assert text.utf8_text == b'a', 'source was %r' % (source,)

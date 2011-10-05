@@ -34,20 +34,74 @@ from ..css.values import get_single_keyword, get_single_pixel_value
 def get_next_linebox(linebox, position_y, skip_stack):
     """Get the ``linebox`` lines until ``page_bottom`` is reached."""
     position_x = linebox.position_x
-    containing_block_width = linebox.containing_block_size()[0]
-    while 1:
-        line, resume_at = split_inline_box(
-            linebox, containing_block_width, skip_stack)
-        white_space_processing(line)
-        compute_linebox_dimensions(line)
-        compute_linebox_positions(line, position_x, position_y)
-        vertical_align_processing(line)
-        if is_empty_line(line):
-            if resume_at is None:
-                return None, None
-            skip_stack = resume_at
-        else:
-            return line, resume_at
+    width, _height = linebox.containing_block_size()
+
+    skip_stack = skip_first_whitespace(linebox, skip_stack)
+    if skip_stack == 'continue':
+        return None, None
+
+    line, resume_at, preserved_line_break = split_inline_box(
+        linebox, width, skip_stack)
+
+    remove_last_whitespace(line)
+
+#    white_space_processing(line)
+    compute_linebox_dimensions(line)
+    compute_linebox_positions(line, position_x, position_y)
+    vertical_align_processing(line)
+    if is_empty_line(line) and not preserved_line_break:
+        return None, None
+    else:
+        return line, resume_at
+
+
+def skip_first_whitespace(box, skip_stack):
+    """Return the ``skip_stack`` to start just after the remove spaces
+    at the beginning of the line.
+
+    See http://www.w3.org/TR/CSS21/text.html#white-space-model
+    """
+    if skip_stack is None:
+        index = 0
+        next_skip_stack = None
+    else:
+        index, next_skip_stack = skip_stack
+
+    if isinstance(box, boxes.TextBox):
+        assert next_skip_stack is None
+        white_space = get_single_keyword(box.style.white_space)
+        length = len(box.utf8_text)
+        if index == length:
+            # Starting a the end of the TextBox, no text to see: Continue
+            return 'continue'
+        if white_space in ('normal', 'nowrap', 'pre-line'):
+            while index < length and box.utf8_text[index] == ' ':
+                index += 1
+        return index, None
+
+    if isinstance(box, (boxes.LineBox, boxes.InlineBox)):
+        result = skip_first_whitespace(box.children[index], next_skip_stack)
+        if result == 'continue':
+            index += 1
+            if index >= len(box.children):
+                return 'continue'
+            result = skip_first_whitespace(box.children[index], None)
+        return index, result
+
+    assert skip_stack is None, 'unexpected skip inside %s' % box
+    return None
+
+
+def remove_last_whitespace(box):
+    """Remove in place space characters at the end of a line."""
+    while isinstance(box, (boxes.LineBox, boxes.InlineBox)):
+        if not box.children:
+            return
+        box = box.children[-1]
+    if isinstance(box, boxes.TextBox):
+        white_space = get_single_keyword(box.style.white_space)
+        if white_space in ('normal', 'nowrap', 'pre-line'):
+            box.utf8_text = box.utf8_text.rstrip(' ')
 
 
 def inline_replaced_box_layout(box):
@@ -260,22 +314,38 @@ def split_inline_level(box, available_width, skip_stack):
 
     """
     if isinstance(box, boxes.TextBox):
-        new_box, resume_at = split_text_box(box, available_width, skip_stack)
-        compute_textbox_dimensions(new_box)
+        if skip_stack is None:
+            skip = 0
+        else:
+            skip, skip_stack = skip_stack
+            skip = skip or 0
+            assert skip_stack is None
+
+        new_box, skip, preserved_line_break = split_text_box(
+            box, available_width, skip)
+
+        if skip is None:
+            resume_at = None
+        else:
+            resume_at = (skip, None)
+        if new_box is not None:
+            compute_textbox_dimensions(new_box)
     elif isinstance(box, boxes.InlineBox):
         resolve_percentages(box)
         if box.margin_left == 'auto':
             box.margin_left = 0
         if box.margin_right == 'auto':
             box.margin_right = 0
-        new_box, resume_at = split_inline_box(box, available_width, skip_stack)
+        new_box, resume_at, preserved_line_break = split_inline_box(
+            box, available_width, skip_stack)
         compute_inlinebox_dimensions(new_box)
     elif isinstance(box, boxes.AtomicInlineLevelBox):
         compute_atomicbox_dimensions(box)
         new_box = box
         resume_at = None
+        preserved_line_break = False
     #else: unexpected box type here
-    return new_box, resume_at
+    return new_box, resume_at, preserved_line_break
 
 
 def split_inline_box(inlinebox, remaining_width, skip_stack):
@@ -289,6 +359,7 @@ def split_inline_box(inlinebox, remaining_width, skip_stack):
     remaining_width -= left_spacing
 
     children = []
+    preserved_line_break = False
 
     if skip_stack is None:
         skip = 0
@@ -296,9 +367,11 @@ def split_inline_box(inlinebox, remaining_width, skip_stack):
         skip, skip_stack = skip_stack
 
     for index, child in inlinebox.enumerate_skip(skip):
-        new_child, resume_at = split_inline_level(
+        new_child, resume_at, preserved = split_inline_level(
             child, remaining_width, skip_stack)
         skip_stack = None
+        if preserved:
+            preserved_line_break = True
 
         # TODO: this is non-optimal when last_child is True and
         #   width <= remaining_width < width + right_spacing
@@ -307,16 +380,20 @@ def split_inline_box(inlinebox, remaining_width, skip_stack):
 
         # TODO: on the last child, take care of right_spacing
 
-        margin_width = new_child.margin_width()
-
-        if (margin_width > remaining_width and children):
-            # too wide, and the inline is non-empty:
-            # put child entirely on the next line.
-            resume_at = (index, None)
-            break
+        if new_child is None:
+            # may be None where we would have an empty TextBox
+            assert isinstance(child, boxes.TextBox)
         else:
-            remaining_width -= margin_width
-            children.append(new_child)
+            margin_width = new_child.margin_width()
+
+            if (margin_width > remaining_width and children):
+                # too wide, and the inline is non-empty:
+                # put child entirely on the next line.
+                resume_at = (index, None)
+                break
+            else:
+                remaining_width -= margin_width
+                children.append(new_child)
 
         if resume_at is not None:
             resume_at = (index, resume_at)
@@ -329,7 +406,7 @@ def split_inline_box(inlinebox, remaining_width, skip_stack):
         # There is a line break inside this box.
         inlinebox.reset_spacing('left')
         new_inlinebox.reset_spacing('right')
-    return new_inlinebox, resume_at
+    return new_inlinebox, resume_at, preserved_line_break
 
 
 def split_text_box(textbox, available_width, skip):
@@ -346,19 +423,29 @@ def split_text_box(textbox, available_width, skip):
     assert isinstance(textbox, boxes.TextBox)
     font_size = get_single_pixel_value(textbox.style.font_size)
     if font_size == 0:
-        return textbox, None
-    skip = skip or 0
+        return None, None, False
+
     utf8_text = textbox.utf8_text[skip:]
+    if not utf8_text:
+        return None, None, False
     fragment = TextFragment(utf8_text, textbox.style,
         cairo.Context(textbox.document.surface), available_width)
     split = fragment.split_first_line()
     if split is None:
         if skip:
             textbox = textbox.copy_with_text(utf8_text)  # with skip
-        return textbox, None
+        return textbox, None, False
     first_end, second_start = split
-    new_textbox = textbox.copy_with_text(utf8_text[:first_end])
-    return new_textbox, skip + second_start
+    preserved_line_break = first_end != second_start
+    if preserved_line_break:
+        between = utf8_text[first_end:second_start]
+        assert between == '\n', ('Got %r between two lines. '
+            'Expected nothing or a preserved line break' % (between,))
+    if first_end > 0:
+        new_textbox = textbox.copy_with_text(utf8_text[:first_end])
+    else:
+        new_textbox = None
+    return new_textbox, skip + second_start, preserved_line_break
 
 
 def white_space_processing(linebox):
@@ -378,6 +465,7 @@ def white_space_processing(linebox):
         if white_space in ('normal', 'nowrap', 'pre-line'):
             # "left" in "lstrip" actually means "start". It is on the right
             # in rtl text.
+            pass
             first_textbox.utf8_text = first_textbox.utf8_text.lstrip(b' \t\n')
     if last_textbox:
         # The extents for the last element must ignore the last white space,
@@ -387,6 +475,7 @@ def white_space_processing(linebox):
         if white_space in ('normal', 'nowrap', 'pre-line'):
             # "right" in "rstrip" actually means "end". It is on the left
             # in rtl text.
+            pass
             last_textbox.utf8_text = last_textbox.utf8_text.rstrip(b' \t\n')
     # TODO: All tabs (U+0009) are rendered as a horizontal shift that
     # lines up the start edge of the next glyph with the next tab stop.

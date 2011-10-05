@@ -110,6 +110,7 @@ def test_text_font_size_zero():
         </style>
         <p>test font size zero</p>
     ''')
-    textbox = body_children(page)[0].children[0].children[0]
-    assert textbox.height == 0
-    assert textbox.width == 0
+    paragraph, = body_children(page)
+    # zero-sized text boxes and empty line boxes are removed
+    assert not paragraph.children
+    assert paragraph.height == 0
