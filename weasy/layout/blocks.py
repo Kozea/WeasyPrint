@@ -30,7 +30,8 @@ from ..css.values import get_single_keyword
 from ..formatting_structure import boxes
 
 
-def block_level_layout(box, max_position_y, skip_stack, device_size):
+def block_level_layout(box, max_position_y, skip_stack, containing_block,
+                       device_size):
     """Lay out the block-level ``box``.
 
     :param max_position_y: the absolute vertical position (as in
@@ -39,29 +40,33 @@ def block_level_layout(box, max_position_y, skip_stack, device_size):
 
     """
     if isinstance(box, boxes.BlockBox):
-        return block_box_layout(box, max_position_y, skip_stack, device_size)
+        return block_box_layout(box, max_position_y, skip_stack,
+            containing_block, device_size)
     elif isinstance(box, boxes.BlockLevelReplacedBox):
-        return block_replaced_box_layout(box, device_size), None
+        return block_replaced_box_layout(
+            box, containing_block, device_size), None
     else:
         raise TypeError('Layout for %s not handled yet' % type(box).__name__)
 
 
-def block_box_layout(box, max_position_y, skip_stack, device_size):
+def block_box_layout(box, max_position_y, skip_stack, containing_block,
+                     device_size):
     """Lay out the block ``box``."""
     resolve_percentages(box)
-    block_level_width(box)
+    block_level_width(box, containing_block)
     list_marker_layout(box)
-    return block_level_height(box, max_position_y, skip_stack, device_size)
+    return block_level_height(box, max_position_y, skip_stack,
+        containing_block, device_size)
 
 
-def block_replaced_box_layout(box, device_size):
+def block_replaced_box_layout(box, containing_block, device_size):
     """Lay out the block :class:`boxes.ReplacedBox` ``box``."""
     assert isinstance(box, boxes.ReplacedBox)
     resolve_percentages(box)
 
     # http://www.w3.org/TR/CSS21/visudet.html#block-replaced-width
     replaced_box_width(box, device_size)
-    block_level_width(box)
+    block_level_width(box, containing_block)
 
     # http://www.w3.org/TR/CSS21/visudet.html#inline-replaced-height
     replaced_box_height(box, device_size)
@@ -73,10 +78,10 @@ def block_replaced_box_layout(box, device_size):
     return box
 
 
-def block_level_width(box):
+def block_level_width(box, containing_block):
     """Set the ``box`` width."""
     # 'cb' stands for 'containing block'
-    cb_width = box.containing_block_size()[0]
+    cb_width = containing_block.width
 
     # http://www.w3.org/TR/CSS21/visudet.html#blockwidth
 
@@ -109,10 +114,7 @@ def block_level_width(box):
     if width != 'auto' and margin_l != 'auto' and margin_r != 'auto':
         # The equation is over-constrained
         margin_sum = cb_width - paddings_plus_borders - width
-        # This is the direction of the containing block, but the containing
-        # block for block-level boxes in normal flow is always the parent.
-        # TODO: is it?
-        if get_single_keyword(box.parent.style.direction) == 'ltr':
+        if containing_block.direction == 'ltr':
             margin_r = box.margin_right = margin_sum - margin_l
         else:
             margin_l = box.margin_left = margin_sum - margin_r
@@ -133,7 +135,8 @@ def block_level_width(box):
         box.margin_right = margin_sum - margin_l
 
 
-def block_level_height(box, max_position_y, skip_stack, device_size):
+def block_level_height(box, max_position_y, skip_stack, containing_block,
+                       device_size):
     """Set the ``box`` height."""
     assert isinstance(box, boxes.BlockBox)
 
@@ -190,8 +193,10 @@ def block_level_height(box, max_position_y, skip_stack, device_size):
             if is_page_break:
                 break
         else:
+            new_containing_block = box
             new_child, resume_at = block_level_layout(
-                child, max_position_y, skip_stack, device_size)
+                child, max_position_y, skip_stack,
+                new_containing_block, device_size)
             skip_stack = None
             new_position_y = position_y + new_child.margin_height()
             # TODO: find a way to break between blocks

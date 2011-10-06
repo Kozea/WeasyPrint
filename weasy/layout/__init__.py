@@ -51,16 +51,22 @@ def make_page(document, page_number, resume_at):
 
     root_box = document.formatting_structure
 
+    # This box is not laid-out yet, but it may be needed during layout
+    # eg. for ``page.direction``.
+    page.root_box = root_box
+
     root_box.parent = page
     root_box.position_x = page.content_box_x()
     root_box.position_y = page.content_box_y()
     page_content_bottom = root_box.position_y + page.height
+    initial_containing_block = page
 
     # TODO: handle cases where the root element is something else.
     # See http://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
     assert isinstance(root_box, boxes.BlockBox)
     page.root_box, resume_at = block_box_layout(
-        root_box, page_content_bottom, resume_at, device_size)
+        root_box, page_content_bottom, resume_at,
+        initial_containing_block, device_size)
 
     return page, resume_at
 

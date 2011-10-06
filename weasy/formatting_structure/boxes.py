@@ -100,6 +100,10 @@ class Box(object):
         return '<%s %s %i>' % (
             type(self).__name__, self.element.tag, self.element.sourceline)
 
+    @property
+    def direction(self):
+        return get_single_keyword(self.style.direction)
+
     def _ancestors(self):
         """Yield parent and recursively yield parent's parents."""
         parent = self
@@ -276,6 +280,10 @@ class PageBox(Box):
         # Copying might not be needed, but let’s be careful with mutable
         # objects.
         self.style = style.copy()
+
+    @property
+    def direction(self):
+        return self.root_box.direction
 
     def containing_block_size(self):
         """Get the size of the containing block."""
