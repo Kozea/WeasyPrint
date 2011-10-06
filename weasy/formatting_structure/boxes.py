@@ -80,9 +80,6 @@ class Box(object):
         self.document = document
         # Should never be None
         self.element = element
-        # No parent yet. Will be set when this box is added to another box’s
-        # children. Only the root box should stay without a parent.
-        self.parent = None
         self._init_style()
         self.width = None
         self.height = None
@@ -259,9 +256,6 @@ class ParentBox(Box):
     def __init__(self, document, element, children):
         super(ParentBox, self).__init__(document, element)
         self.children = tuple(children)
-        # Kidnapping
-        for child in self.children:
-            child.parent = self
 
     def enumerate_skip(self, skip_num=0):
         """Yield ``(child, child_index)`` tuples for each child.
@@ -276,8 +270,6 @@ class ParentBox(Box):
         """Create a new equivalent box with given ``children``."""
         new_box = self._copy()
         new_box.children = tuple(children)
-        for child in new_box.children:
-            child.parent = new_box
         return new_box
 
     def descendants(self):

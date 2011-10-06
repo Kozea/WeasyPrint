@@ -58,7 +58,6 @@ def make_page(document, page_number, resume_at):
     # eg. for ``page.direction``.
     page.root_box = root_box
 
-    root_box.parent = page
     root_box.position_x = page.content_box_x()
     root_box.position_y = page.content_box_y()
     page_content_bottom = root_box.position_y + page.height

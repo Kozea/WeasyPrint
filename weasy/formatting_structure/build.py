@@ -142,7 +142,6 @@ def create_box_marker(box):
         return box.copy_with_children((marker_box, spacer) + box.children)
     elif position == 'outside':
         box.outside_list_marker = marker_box
-        marker_box.parent = box
     return box
 
 
