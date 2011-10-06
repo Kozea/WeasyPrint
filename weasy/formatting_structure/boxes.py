@@ -104,38 +104,6 @@ class Box(object):
     def direction(self):
         return get_single_keyword(self.style.direction)
 
-    def _ancestors(self):
-        """Yield parent and recursively yield parent's parents."""
-        parent = self
-        while parent.parent:
-            parent = parent.parent
-            yield parent
-
-    def containing_block_size(self):
-        """``(width, height)`` size of the box's containing block."""
-        if isinstance(self.parent, PageBox):
-            return self.parent.width, self.parent.height
-
-        position = get_single_keyword(self.style.position)
-        if position in ('relative', 'static'):
-            return self.parent.width, self.parent.height
-        elif position == 'fixed':
-            page = self.find_page_ancestor()
-            return page.width, page.height
-        elif position == 'absolute':
-            for ancestor in self._ancestors():
-                position = get_single_keyword(ancestor.style.position)
-                if position in ('absolute', 'relative', 'fixed'):
-                    display = get_single_keyword(ancestor.style.display)
-                    if display == 'inline':
-                        # TODO: fix this bad behaviour, see CSS 10.1
-                        return ancestor.width, ancestor.height
-                    else:
-                        return ancestor.width, ancestor.height
-                elif isinstance(ancestor, PageBox):
-                    return ancestor.width, ancestor.height
-        assert False, 'Containing block not found'
-
     def _copy(self):
         """Return shallow copy of the box."""
         cls = type(self)
@@ -284,10 +252,6 @@ class PageBox(Box):
     @property
     def direction(self):
         return self.root_box.direction
-
-    def containing_block_size(self):
-        """Get the size of the containing block."""
-        return self.outer_width, self.outer_height
 
 
 class ParentBox(Box):
