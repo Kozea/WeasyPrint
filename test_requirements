@@ -1,3 +1,4 @@
 git+git://github.com/dag/attest.git
+git+git://github.com/peterbe/python-gorun.git
 PyPNG
 -e .
