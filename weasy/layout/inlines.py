@@ -45,7 +45,6 @@ def get_next_linebox(linebox, position_y, skip_stack):
 
     remove_last_whitespace(line)
 
-#    white_space_processing(line)
     compute_linebox_dimensions(line)
     compute_linebox_positions(line, position_x, position_y)
     vertical_align_processing(line)
@@ -102,6 +101,15 @@ def remove_last_whitespace(box):
         white_space = get_single_keyword(box.style.white_space)
         if white_space in ('normal', 'nowrap', 'pre-line'):
             box.utf8_text = box.utf8_text.rstrip(' ')
+
+    # TODO: All tabs (U+0009) are rendered as a horizontal shift that
+    # lines up the start edge of the next glyph with the next tab stop.
+    # Tab stops occur at points that are multiples of 8 times the width
+    # of a space (U+0020) rendered in the block's font from the block's
+    # starting content edge.
+
+    # TODO: If spaces (U+0020) or tabs (U+0009) at the end of a line have
+    # 'white-space' set to 'pre-wrap', UAs may visually collapse them.
 
 
 def inline_replaced_box_layout(box):
@@ -446,45 +454,6 @@ def split_text_box(textbox, available_width, skip):
     else:
         new_textbox = None
     return new_textbox, skip + second_start, preserved_line_break
-
-
-def white_space_processing(linebox):
-    """Remove the first and the last white spaces in ``linebox``."""
-    first_textbox = last_textbox = None
-
-    for child in linebox.descendants():
-        if isinstance(child, boxes.TextBox):
-            if first_textbox is None:
-                first_textbox = child
-            last_textbox = child
-
-    # If a space (U+0020) at the beginning or the end of a line has
-    # 'white-space' set to 'normal', 'nowrap', or 'pre-line', it is removed.
-    if first_textbox:
-        white_space = get_single_keyword(first_textbox.style.white_space)
-        if white_space in ('normal', 'nowrap', 'pre-line'):
-            # "left" in "lstrip" actually means "start". It is on the right
-            # in rtl text.
-            pass
-            first_textbox.utf8_text = first_textbox.utf8_text.lstrip(b' \t\n')
-    if last_textbox:
-        # The extents for the last element must ignore the last white space,
-        # We use the logical extents instead of ink extents for this box.
-        last_textbox.extents = last_textbox.logical_extents
-        white_space = get_single_keyword(last_textbox.style.white_space)
-        if white_space in ('normal', 'nowrap', 'pre-line'):
-            # "right" in "rstrip" actually means "end". It is on the left
-            # in rtl text.
-            pass
-            last_textbox.utf8_text = last_textbox.utf8_text.rstrip(b' \t\n')
-    # TODO: All tabs (U+0009) are rendered as a horizontal shift that
-    # lines up the start edge of the next glyph with the next tab stop.
-    # Tab stops occur at points that are multiples of 8 times the width
-    # of a space (U+0020) rendered in the block's font from the block's
-    # starting content edge.
-
-    # TODO: If spaces (U+0020) or tabs (U+0009) at the end of a line have
-    # 'white-space' set to 'pre-wrap', UAs may visually collapse them.
 
 
 def compute_baseline_positions(box):
