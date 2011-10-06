@@ -31,17 +31,18 @@ from ..formatting_structure import boxes
 from ..css.values import get_single_keyword, get_single_pixel_value
 
 
-def get_next_linebox(linebox, position_y, skip_stack, device_size):
+def get_next_linebox(linebox, position_y, skip_stack, containing_block,
+                     device_size):
     """Get the ``linebox`` lines until ``page_bottom`` is reached."""
     position_x = linebox.position_x
-    width, _height = linebox.containing_block_size()
+    available_width = containing_block.width
 
     skip_stack = skip_first_whitespace(linebox, skip_stack)
     if skip_stack == 'continue':
         return None, None
 
     line, resume_at, preserved_line_break = split_inline_box(
-        linebox, width, skip_stack, device_size)
+        linebox, available_width, skip_stack, device_size)
 
     remove_last_whitespace(line)
 

@@ -171,8 +171,10 @@ def block_level_height(box, max_position_y, skip_stack, containing_block,
             # Dummy value to help the else-continue-break hack below.
             is_page_break = False
             while 1:
+                new_containing_block = box
                 line, resume_at = get_next_linebox(
-                    child, position_y, skip_stack, device_size)
+                    child, position_y, skip_stack,
+                    new_containing_block, device_size)
                 if line is None:
                     break
                 new_position_y = position_y + line.height
