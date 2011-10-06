@@ -30,7 +30,7 @@ from ..css.values import get_single_keyword, get_single_pixel_value
 from ..formatting_structure import boxes
 
 
-def list_marker_layout(box):
+def list_marker_layout(box, containing_block):
     """Lay out the list markers of ``box``."""
     # List markers can be either 'inside' or 'outside'.
     # Inside markers are layed out just like normal inline content, but
@@ -39,7 +39,7 @@ def list_marker_layout(box):
     # see CSS3 lists.
     marker = getattr(box, 'outside_list_marker', None)
     if marker:
-        resolve_percentages(marker)
+        resolve_percentages(marker, containing_block)
         if isinstance(marker, boxes.TextBox):
             text_fragment = TextFragment(marker.utf8_text, marker.style,
                 context=cairo.Context(marker.document.surface))
@@ -66,14 +66,14 @@ def list_marker_layout(box):
             marker.position_x += box.border_width()
 
 
-def image_marker_layout(box):
+def image_marker_layout(box, containing_block):
     """Layout the :class:`boxes.ImageMarkerBox` ``box``.
 
     :class:`boxes.ImageMarkerBox` objects are :class:`boxes.ReplacedBox`
     objects, but their used size is computed differently.
 
     """
-    resolve_percentages(box)
+    resolve_percentages(box, containing_block)
     box.width, box.height = list_style_image_size(box)
 
 

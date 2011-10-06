@@ -39,10 +39,13 @@ def make_page(document, page_number, resume_at):
     """
     page = boxes.PageBox(document, page_number)
 
+    sheet = type('SheetBox', (), {})()
+
     device_size = map(get_pixel_value, page.style.size)
     page.outer_width, page.outer_height = device_size
+    sheet.width, sheet.height = device_size
 
-    resolve_percentages(page)
+    resolve_percentages(page, sheet)
 
     page.position_x = 0
     page.position_y = 0

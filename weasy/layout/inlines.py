@@ -42,7 +42,7 @@ def get_next_linebox(linebox, position_y, skip_stack, containing_block,
         return None, None
 
     line, resume_at, preserved_line_break = split_inline_box(
-        linebox, available_width, skip_stack, device_size)
+        linebox, available_width, skip_stack, containing_block, device_size)
 
     remove_last_whitespace(line)
 
@@ -113,10 +113,10 @@ def remove_last_whitespace(box):
     # 'white-space' set to 'pre-wrap', UAs may visually collapse them.
 
 
-def inline_replaced_box_layout(box, device_size):
+def inline_replaced_box_layout(box, containing_block, device_size):
     """Lay out an inline :class:`boxes.ReplacedBox` ``box``."""
     assert isinstance(box, boxes.ReplacedBox)
-    resolve_percentages(box)
+    resolve_percentages(box, containing_block)
 
     # Compute width:
     # http://www.w3.org/TR/CSS21/visudet.html#inline-replaced-width
@@ -201,9 +201,9 @@ def compute_linebox_dimensions(linebox):
     linebox.height = max(heights)
 
 
-def compute_inlinebox_dimensions(inlinebox):
+def compute_inlinebox_dimensions(inlinebox, containing_block):
     """Compute the width and the height of the ``inlinebox``."""
-    resolve_percentages(inlinebox)
+    resolve_percentages(inlinebox, containing_block)
     if inlinebox.margin_left == 'auto':
         inlinebox.margin_left = 0
     if inlinebox.margin_right == 'auto':
@@ -236,13 +236,13 @@ def compute_textbox_dimensions(textbox):
         textbox.logical_extents, textbox.extents = text_fragment.get_extents()
 
 
-def compute_atomicbox_dimensions(box, device_size):
+def compute_atomicbox_dimensions(box, containing_block, device_size):
     """Compute the width and the height of the atomic ``box``."""
     assert isinstance(box, boxes.AtomicInlineLevelBox)
     if isinstance(box, boxes.ImageMarkerBox):
-        image_marker_layout(box)
+        image_marker_layout(box, containing_block)
     if isinstance(box, boxes.ReplacedBox):
-        inline_replaced_box_layout(box, device_size)
+        inline_replaced_box_layout(box, containing_block, device_size)
     else:
         raise TypeError('Layout for %s not handled yet' % type(box).__name__)
 
@@ -310,7 +310,8 @@ def is_empty_line(linebox):
     return num_textbox == len(linebox.children)
 
 
-def split_inline_level(box, available_width, skip_stack, device_size):
+def split_inline_level(box, available_width, skip_stack, containing_block,
+                       device_size):
     """Fit as much content as possible from an inline-level box in a width.
 
     Return ``(new_box, resume_at)``. ``resume_at`` is ``None`` if all of the
@@ -340,16 +341,16 @@ def split_inline_level(box, available_width, skip_stack, device_size):
         if new_box is not None:
             compute_textbox_dimensions(new_box)
     elif isinstance(box, boxes.InlineBox):
-        resolve_percentages(box)
+        resolve_percentages(box, containing_block)
         if box.margin_left == 'auto':
             box.margin_left = 0
         if box.margin_right == 'auto':
             box.margin_right = 0
         new_box, resume_at, preserved_line_break = split_inline_box(
-            box, available_width, skip_stack, device_size)
-        compute_inlinebox_dimensions(new_box)
+            box, available_width, skip_stack, containing_block, device_size)
+        compute_inlinebox_dimensions(new_box, containing_block)
     elif isinstance(box, boxes.AtomicInlineLevelBox):
-        compute_atomicbox_dimensions(box, device_size)
+        compute_atomicbox_dimensions(box, containing_block, device_size)
         new_box = box
         resume_at = None
         preserved_line_break = False
@@ -357,10 +358,11 @@ def split_inline_level(box, available_width, skip_stack, device_size):
     return new_box, resume_at, preserved_line_break
 
 
-def split_inline_box(inlinebox, remaining_width, skip_stack, device_size):
+def split_inline_box(inlinebox, remaining_width, skip_stack, containing_block,
+                     device_size):
     """Same behavior as split_inline_level."""
     assert isinstance(inlinebox, (boxes.LineBox, boxes.InlineBox))
-    resolve_percentages(inlinebox)
+    resolve_percentages(inlinebox, containing_block)
     left_spacing = (inlinebox.padding_left + inlinebox.margin_left +
                     inlinebox.border_left_width)
     right_spacing = (inlinebox.padding_right + inlinebox.margin_right +
@@ -377,7 +379,7 @@ def split_inline_box(inlinebox, remaining_width, skip_stack, device_size):
 
     for index, child in inlinebox.enumerate_skip(skip):
         new_child, resume_at, preserved = split_inline_level(
-            child, remaining_width, skip_stack, device_size)
+            child, remaining_width, skip_stack, containing_block, device_size)
         skip_stack = None
         if preserved:
             preserved_line_break = True

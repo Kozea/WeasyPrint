@@ -570,15 +570,18 @@ def test_inlinebox_spliting():
         page = u'<style>p { width:%(width)spx; font-family:%(fonts)s;}</style>'
         page = '%s <p>%s</p>' % (page, content)
         html = parse_without_layout(page % {'fonts': FONTS, 'width': 200})
-        body = html.children[0]
-        paragraph = body.children[0]
-        return paragraph.children[0].children[0]
+        body, = html.children
+        paragraph, = body.children
+        line, = paragraph.children
+        inline, = line.children
+        return inline, line
 
-    def get_parts(inlinebox, width):
+    def get_parts(inlinebox, width, parent):
         """Yield the parts of the splitted ``inlinebox`` of given ``width``."""
         skip = None
         while 1:
-            box, skip, _ = split_inline_box(inlinebox, width, skip, None)
+            box, skip, _ = split_inline_box(
+                inlinebox, width, skip, parent, None)
             yield box
             if skip is None:
                 break
@@ -601,30 +604,30 @@ def test_inlinebox_spliting():
     content = '''<strong>WeasyPrint is a free software visual rendering engine
               for HTML and CSS</strong>'''
 
-    inlinebox = get_inlinebox(content)
-    resolve_percentages(inlinebox)
+    inlinebox, parent = get_inlinebox(content)
+    resolve_percentages(inlinebox, parent)
     original_text = inlinebox.children[0].utf8_text
 
     # test with width = 1000
-    parts = list(get_parts(inlinebox, 1000))
+    parts = list(get_parts(inlinebox, 1000, parent))
     assert len(parts) == 1
     assert original_text == get_joined_text(parts)
 
-    inlinebox = get_inlinebox(content)
-    resolve_percentages(inlinebox)
+    inlinebox, parent = get_inlinebox(content)
+    resolve_percentages(inlinebox, parent)
     original_text = inlinebox.children[0].utf8_text
 
     # test with width = 100
-    parts = list(get_parts(inlinebox, 100))
+    parts = list(get_parts(inlinebox, 100, parent))
     assert len(parts) > 1
     assert original_text == get_joined_text(parts)
 
-    inlinebox = get_inlinebox(content)
-    resolve_percentages(inlinebox)
+    inlinebox, parent = get_inlinebox(content)
+    resolve_percentages(inlinebox, parent)
     original_text = inlinebox.children[0].utf8_text
 
     # test with width = 10
-    parts = list(get_parts(inlinebox, 10))
+    parts = list(get_parts(inlinebox, 10, parent))
     assert len(parts) > 1
     assert original_text == get_joined_text(parts)
 
@@ -633,21 +636,21 @@ def test_inlinebox_spliting():
               WeasyPrint is a free software visual rendering engine
               for HTML and CSS</strong>'''
 
-    inlinebox = get_inlinebox(content)
-    resolve_percentages(inlinebox)
+    inlinebox, parent = get_inlinebox(content)
+    resolve_percentages(inlinebox, parent)
     original_text = inlinebox.children[0].utf8_text
     # test with width = 1000
-    parts = list(get_parts(inlinebox, 1000))
+    parts = list(get_parts(inlinebox, 1000, parent))
     assert len(parts) == 1
     assert original_text == get_joined_text(parts)
     test_inlinebox_all_spacing(parts[0], 10)
 
-    inlinebox = get_inlinebox(content)
-    resolve_percentages(inlinebox)
+    inlinebox, parent = get_inlinebox(content)
+    resolve_percentages(inlinebox, parent)
     original_text = inlinebox.children[0].utf8_text
 
     # test with width = 1000
-    parts = list(get_parts(inlinebox, 100))
+    parts = list(get_parts(inlinebox, 100, parent))
     assert len(parts) != 1
     assert original_text == get_joined_text(parts)
     first_inline_box = parts.pop(0)
@@ -672,15 +675,18 @@ def test_inlinebox_text_after_spliting():
         page = u'<style>p { width:%(width)spx; font-family:%(fonts)s;}</style>'
         page = '%s <p>%s</p>' % (page, content)
         html = parse_without_layout(page % {'fonts': FONTS, 'width': 200})
-        body = html.children[0]
-        paragraph = body.children[0]
-        return paragraph.children[0].children[0]
+        body, = html.children
+        paragraph, = body.children
+        line, = paragraph.children
+        inline, = line.children
+        return inline, line
 
-    def get_parts(inlinebox, width):
+    def get_parts(inlinebox, width, parent):
         """Yield the parts of the splitted ``inlinebox`` of given ``width``."""
         skip = None
         while 1:
-            box, skip, _ = split_inline_box(inlinebox, width, skip, None)
+            box, skip, _ = split_inline_box(
+                inlinebox, width, skip, parent, None)
             yield box
             if skip is None:
                 break
@@ -699,13 +705,13 @@ def test_inlinebox_text_after_spliting():
                   0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
                   </em></em></em></strong>'''
 
-    inlinebox = get_inlinebox(content)
-    resolve_percentages(inlinebox)
+    inlinebox, parent = get_inlinebox(content)
+    resolve_percentages(inlinebox, parent)
 
     original_text = get_full_text(inlinebox)
 
     # test with width = 10
-    parts = list(get_parts(inlinebox, 100))
+    parts = list(get_parts(inlinebox, 100, parent))
     assert len(parts) > 2
     assert original_text == get_joined_text(parts)
 

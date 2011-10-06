@@ -52,9 +52,9 @@ def block_level_layout(box, max_position_y, skip_stack, containing_block,
 def block_box_layout(box, max_position_y, skip_stack, containing_block,
                      device_size):
     """Lay out the block ``box``."""
-    resolve_percentages(box)
+    resolve_percentages(box, containing_block)
     block_level_width(box, containing_block)
-    list_marker_layout(box)
+    list_marker_layout(box, containing_block)
     return block_level_height(box, max_position_y, skip_stack,
         containing_block, device_size)
 
@@ -62,7 +62,7 @@ def block_box_layout(box, max_position_y, skip_stack, containing_block,
 def block_replaced_box_layout(box, containing_block, device_size):
     """Lay out the block :class:`boxes.ReplacedBox` ``box``."""
     assert isinstance(box, boxes.ReplacedBox)
-    resolve_percentages(box)
+    resolve_percentages(box, containing_block)
 
     # http://www.w3.org/TR/CSS21/visudet.html#block-replaced-width
     replaced_box_width(box, device_size)
