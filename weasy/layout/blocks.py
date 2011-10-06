@@ -30,7 +30,7 @@ from ..css.values import get_single_keyword
 from ..formatting_structure import boxes
 
 
-def block_level_layout(box, max_position_y, skip_stack):
+def block_level_layout(box, max_position_y, skip_stack, device_size):
     """Lay out the block-level ``box``.
 
     :param max_position_y: the absolute vertical position (as in
@@ -39,32 +39,32 @@ def block_level_layout(box, max_position_y, skip_stack):
 
     """
     if isinstance(box, boxes.BlockBox):
-        return block_box_layout(box, max_position_y, skip_stack)
+        return block_box_layout(box, max_position_y, skip_stack, device_size)
     elif isinstance(box, boxes.BlockLevelReplacedBox):
-        return block_replaced_box_layout(box), None
+        return block_replaced_box_layout(box, device_size), None
     else:
         raise TypeError('Layout for %s not handled yet' % type(box).__name__)
 
 
-def block_box_layout(box, max_position_y, skip_stack):
+def block_box_layout(box, max_position_y, skip_stack, device_size):
     """Lay out the block ``box``."""
     resolve_percentages(box)
     block_level_width(box)
     list_marker_layout(box)
-    return block_level_height(box, max_position_y, skip_stack)
+    return block_level_height(box, max_position_y, skip_stack, device_size)
 
 
-def block_replaced_box_layout(box):
+def block_replaced_box_layout(box, device_size):
     """Lay out the block :class:`boxes.ReplacedBox` ``box``."""
     assert isinstance(box, boxes.ReplacedBox)
     resolve_percentages(box)
 
     # http://www.w3.org/TR/CSS21/visudet.html#block-replaced-width
-    replaced_box_width(box)
+    replaced_box_width(box, device_size)
     block_level_width(box)
 
     # http://www.w3.org/TR/CSS21/visudet.html#inline-replaced-height
-    replaced_box_height(box)
+    replaced_box_height(box, device_size)
     if box.margin_top == 'auto':
         box.margin_top = 0
     if box.margin_bottom == 'auto':
@@ -133,7 +133,7 @@ def block_level_width(box):
         box.margin_right = margin_sum - margin_l
 
 
-def block_level_height(box, max_position_y, skip_stack):
+def block_level_height(box, max_position_y, skip_stack, device_size):
     """Set the ``box`` height."""
     assert isinstance(box, boxes.BlockBox)
 
@@ -169,7 +169,7 @@ def block_level_height(box, max_position_y, skip_stack):
             is_page_break = False
             while 1:
                 line, resume_at = get_next_linebox(
-                    child, position_y, skip_stack)
+                    child, position_y, skip_stack, device_size)
                 if line is None:
                     break
                 new_position_y = position_y + line.height
@@ -191,7 +191,7 @@ def block_level_height(box, max_position_y, skip_stack):
                 break
         else:
             new_child, resume_at = block_level_layout(
-                child, max_position_y, skip_stack)
+                child, max_position_y, skip_stack, device_size)
             skip_stack = None
             new_position_y = position_y + new_child.margin_height()
             # TODO: find a way to break between blocks

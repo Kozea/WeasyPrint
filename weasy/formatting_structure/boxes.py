@@ -100,22 +100,12 @@ class Box(object):
         return '<%s %s %i>' % (
             type(self).__name__, self.element.tag, self.element.sourceline)
 
-    def ancestors(self):
+    def _ancestors(self):
         """Yield parent and recursively yield parent's parents."""
         parent = self
         while parent.parent:
             parent = parent.parent
             yield parent
-
-    def find_page_ancestor(self):
-        """
-        Find the PageBox this box is in, or raise ValueError.
-        """
-        for ancestor in self.ancestors():
-            if isinstance(ancestor, PageBox):
-                return ancestor
-        else:
-            raise ValueError('Page ancestor not found')
 
     def containing_block_size(self):
         """``(width, height)`` size of the box's containing block."""
@@ -129,7 +119,7 @@ class Box(object):
             page = self.find_page_ancestor()
             return page.width, page.height
         elif position == 'absolute':
-            for ancestor in self.ancestors():
+            for ancestor in self._ancestors():
                 position = get_single_keyword(ancestor.style.position)
                 if position in ('absolute', 'relative', 'fixed'):
                     display = get_single_keyword(ancestor.style.display)

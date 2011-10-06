@@ -39,7 +39,8 @@ def make_page(document, page_number, resume_at):
     """
     page = boxes.PageBox(document, page_number)
 
-    page.outer_width, page.outer_height = map(get_pixel_value, page.style.size)
+    device_size = map(get_pixel_value, page.style.size)
+    page.outer_width, page.outer_height = device_size
 
     resolve_percentages(page)
 
@@ -59,7 +60,7 @@ def make_page(document, page_number, resume_at):
     # See http://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
     assert isinstance(root_box, boxes.BlockBox)
     page.root_box, resume_at = block_box_layout(
-        root_box, page_content_bottom, resume_at)
+        root_box, page_content_bottom, resume_at, device_size)
 
     return page, resume_at
 

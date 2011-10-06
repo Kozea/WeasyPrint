@@ -578,7 +578,7 @@ def test_inlinebox_spliting():
         """Yield the parts of the splitted ``inlinebox`` of given ``width``."""
         skip = None
         while 1:
-            box, skip, _ = split_inline_box(inlinebox, width, skip)
+            box, skip, _ = split_inline_box(inlinebox, width, skip, None)
             yield box
             if skip is None:
                 break
@@ -680,7 +680,7 @@ def test_inlinebox_text_after_spliting():
         """Yield the parts of the splitted ``inlinebox`` of given ``width``."""
         skip = None
         while 1:
-            box, skip, _ = split_inline_box(inlinebox, width, skip)
+            box, skip, _ = split_inline_box(inlinebox, width, skip, None)
             yield box
             if skip is None:
                 break

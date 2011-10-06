@@ -131,6 +131,13 @@ def draw_background(context, box, clip=True):
         bg_width = box.border_width()
         bg_height = box.border_height()
 
+        bg_attachement = get_single_keyword(box.style['background-attachment'])
+        if bg_attachement == 'fixed':
+            # There should not be any clip yet
+            x1, y1, x2, y2 = context.clip_extents()
+            page_width = x2 - x1
+            page_height = y2 - y1
+
         if clip:
             context.rectangle(bg_x, bg_y, bg_width, bg_height)
             context.clip()
@@ -141,14 +148,13 @@ def draw_background(context, box, clip=True):
             context.set_source_colorvalue(bg_color)
             context.paint()
 
-        bg_attachement = get_single_keyword(box.style['background-attachment'])
         if bg_attachement == 'scroll':
             # Change coordinates to make the rest easier.
             context.translate(bg_x, bg_y)
         else:
             assert bg_attachement == 'fixed'
-            page = box.find_page_ancestor()
-            bg_width, bg_height = page.outer_width, page.outer_height
+            bg_width = page_width
+            bg_height = page_width
 
         # Background image
         bg_image = box.style['background-image'][0]
