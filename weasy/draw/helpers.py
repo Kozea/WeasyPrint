@@ -154,7 +154,7 @@ def draw_background(context, box, clip=True):
         else:
             assert bg_attachement == 'fixed'
             bg_width = page_width
-            bg_height = page_width
+            bg_height = page_height
 
         # Background image
         bg_image = box.style['background-image'][0]
