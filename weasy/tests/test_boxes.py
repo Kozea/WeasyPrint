@@ -27,7 +27,6 @@ from attest import Tests, assert_hook  # pylint: disable=W0611
 
 from . import resource_filename
 from ..css import validation
-from ..css.values import get_single_keyword
 from . import TestPNGDocument
 from ..formatting_structure import boxes, build
 
@@ -103,8 +102,8 @@ def monkeypatch_validation(replacement):
 
 def validate_inline_block(real_non_shorthand, name, values, required=False):
     """Fake validator for inline blocks."""
-    if name == 'display' and get_single_keyword(values) == 'inline-block':
-        return [(name, values)]
+    if name == 'display' and values[0].value == 'inline-block':
+        return [(name, 'inline-block')]
     return real_non_shorthand(name, values, required)
 
 
@@ -323,14 +322,18 @@ def test_styles():
     box = build.inline_in_block(box)
     box = build.block_in_inline(box)
 
-    for child in box.descendants():
+    descendants = list(box.descendants())
+    assert len(descendants) == 31
+    assert descendants[0] == box
+
+    for child in descendants:
         # All boxes inherit the color
-        assert child.style.color[0].value == 'blue'
+        assert child.style.color.value == 'blue'
         # Only non-anonymous boxes have margins
         if isinstance(child, boxes.AnonymousBox):
-            assert child.style.margin_top[0].value == 0
+            assert child.style.margin_top == 0
         else:
-            assert child.style.margin_top[0].value == 42
+            assert child.style.margin_top == 42
 
 
 @SUITE.test
@@ -392,10 +395,10 @@ def test_page_style():
     def assert_page_margins(page_number, top, right, bottom, left):
         """Check the page margin values."""
         page = boxes.PageBox(document, page_number)
-        assert page.style.margin_top[0].value == top
-        assert page.style.margin_right[0].value == right
-        assert page.style.margin_bottom[0].value == bottom
-        assert page.style.margin_left[0].value == left
+        assert page.style.margin_top == top
+        assert page.style.margin_right == right
+        assert page.style.margin_bottom == bottom
+        assert page.style.margin_left == left
 
     # Odd numbers are :right pages, even are :left. 1 has :first as well
     assert_page_margins(1, top=20, right=10, bottom=3, left=3)

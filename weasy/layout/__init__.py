@@ -26,7 +26,6 @@ from __future__ import division
 
 from .blocks import block_box_layout
 from .percentages import resolve_percentages
-from ..css.values import get_pixel_value
 from ..formatting_structure import boxes
 
 
@@ -39,7 +38,7 @@ def make_page(document, page_number, resume_at):
     """
     page = boxes.PageBox(document, page_number)
 
-    device_size = map(get_pixel_value, page.style.size)
+    device_size = page.style.size
     page.outer_width, page.outer_height = device_size
 
     sheet = lambda: 1  # dummy object holding attributes.

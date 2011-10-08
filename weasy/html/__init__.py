@@ -28,7 +28,6 @@ from __future__ import division
 
 import cairo
 
-from ..css.values import get_single_keyword, make_keyword
 from ..formatting_structure import boxes
 from ..utils import get_url_attribute
 
@@ -70,7 +69,7 @@ def is_block_level(document, element):
     inline-level, and raise ValueError if it is neither.
 
     """
-    display = get_single_keyword(document.style_for(element).display)
+    display = document.style_for(element).display
 
     if display in ('block', 'list-item', 'table'):
         return True
@@ -144,7 +143,7 @@ def handle_img(document, element):
 def handle_br(document, element):
     """Handle ``<br>`` tags, return a preserved new-line character."""
     box = boxes.TextBox(document, element, '\n')
-    box.style.white_space = [make_keyword('pre')]
+    box.style.white_space = 'pre'
     return box
 
 

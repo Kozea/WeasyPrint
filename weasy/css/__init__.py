@@ -48,7 +48,6 @@ from lxml import cssselect
 from . import properties
 from . import validation
 from . import computed_values
-from .values import get_single_keyword, make_pixel_value
 from ..utils import get_url_attribute
 
 
@@ -180,7 +179,6 @@ def effective_declarations(declaration_block):
                 # list() may call len(), which is slow on PropertyValue
                 # Use iter() to avoid this.
                 list(iter(declaration.propertyValue))):
-            assert isinstance(values, list)
             yield name, (values, declaration.priority)
 
 
@@ -349,12 +347,11 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None):
         computed = computed_values.StyleDict(properties.INITIAL_VALUES)
         for name in properties.INHERITED:
             computed[name] = parent_style[name]
-        zero = [make_pixel_value(0)]
         # border-style is none, so border-width computes to zero.
         # Other than that, properties that would need computing are
         # border-color and size, but they do not apply.
         for side in ('top', 'bottom', 'left', 'right'):
-            computed['border-%s-width' % side] = zero
+            computed['border-%s-width' % side] = 0
         return computed
 
     # Handle inheritance and initial values
@@ -362,8 +359,8 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None):
     computed = computed_values.StyleDict()
     for name, initial in properties.INITIAL_VALUES.iteritems():
         if name in cascaded:
-            values, _precedence = cascaded[name]
-            keyword = get_single_keyword(values)
+            value, _precedence = cascaded[name]
+            keyword = value
         else:
             if name in properties.INHERITED:
                 keyword = 'inherit'
@@ -375,12 +372,16 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None):
             keyword = 'initial'
 
         if keyword == 'initial':
-            values = initial
+            # Some initial values are the same when computed.
+            # TODO: Add them to the ``computed`` dict?
+            value = initial
         elif keyword == 'inherit':
-            values = parent_style[name]
-            computed[name] = values
+            value = parent_style[name]
+            # Values in parent_style are already computed.
+            computed[name] = value
 
-        specified[name] = values
+        assert value is not None
+        specified[name] = value
 
     computed_values.Computer(element, pseudo_type, specified, computed,
                              parent_style)

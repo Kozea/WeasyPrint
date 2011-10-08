@@ -26,7 +26,6 @@ from __future__ import division
 from .inlines import get_next_linebox, replaced_box_width, replaced_box_height
 from .markers import list_marker_layout
 from .percentages import resolve_percentages
-from ..css.values import get_single_keyword
 from ..formatting_structure import boxes
 
 
@@ -140,7 +139,7 @@ def block_level_height(box, max_position_y, skip_stack, containing_block,
     """Set the ``box`` height."""
     assert isinstance(box, boxes.BlockBox)
 
-    if get_single_keyword(box.style.overflow) != 'visible':
+    if box.style.overflow != 'visible':
         raise NotImplementedError
 
     if box.margin_top == 'auto':

@@ -28,7 +28,6 @@ from .markers import image_marker_layout
 from .percentages import resolve_percentages
 from ..text import TextFragment
 from ..formatting_structure import boxes
-from ..css.values import get_single_keyword, get_single_pixel_value
 
 
 def get_next_linebox(linebox, position_y, skip_stack, containing_block,
@@ -69,7 +68,7 @@ def skip_first_whitespace(box, skip_stack):
 
     if isinstance(box, boxes.TextBox):
         assert next_skip_stack is None
-        white_space = get_single_keyword(box.style.white_space)
+        white_space = box.style.white_space
         length = len(box.utf8_text)
         if index == length:
             # Starting a the end of the TextBox, no text to see: Continue
@@ -99,7 +98,7 @@ def remove_last_whitespace(box):
             return
         box = box.children[-1]
     if isinstance(box, boxes.TextBox):
-        white_space = get_single_keyword(box.style.white_space)
+        white_space = box.style.white_space
         if white_space in ('normal', 'nowrap', 'pre-line'):
             box.utf8_text = box.utf8_text.rstrip(' ')
 
@@ -221,7 +220,7 @@ def compute_inlinebox_dimensions(inlinebox, containing_block):
 def compute_textbox_dimensions(textbox):
     """Compute the width, the height and the baseline of the ``textbox``."""
     assert isinstance(textbox, boxes.TextBox)
-    font_size = get_single_pixel_value(textbox.style.font_size)
+    font_size = textbox.style.font_size
     if font_size == 0:
         # Pango crashes with font-size: 0 ...
         textbox.width, textbox.height = 0, 0
@@ -432,7 +431,7 @@ def split_text_box(textbox, available_width, skip):
 
     """
     assert isinstance(textbox, boxes.TextBox)
-    font_size = get_single_pixel_value(textbox.style.font_size)
+    font_size = textbox.style.font_size
     if font_size == 0:
         return None, None, False
 

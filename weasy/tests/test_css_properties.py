@@ -33,8 +33,9 @@ SUITE = Tests()
 
 def expand_to_dict(short_name, short_values):
     """Helper to test shorthand properties expander functions."""
-    return dict((name, as_css(values))
-                for name, values in validation.EXPANDERS[short_name](
+    return dict((name, as_css(value) if isinstance(value, (list, tuple))
+                       else getattr(value, 'cssText', value))
+                for name, value in validation.EXPANDERS[short_name](
                     short_name, list(PropertyValue(short_values))))
 
 
@@ -129,7 +130,7 @@ def test_expand_list_style():
     }
     assert expand_to_dict('list-style', 'url(foo.png)') == {
         'list-style-position': 'outside',
-        'list-style-image': 'url(foo.png)',
+        'list-style-image': 'foo.png',
         'list-style-type': 'disc',
     }
     assert expand_to_dict('list-style', 'square') == {
@@ -169,7 +170,7 @@ def test_expand_background():
     assert_background(
         'url(foo.png)',
         color='transparent',
-        image='url(foo.png)', ##
+        image='foo.png', ##
         repeat='repeat',
         attachment='scroll',
         position='0% 0%'
@@ -201,7 +202,7 @@ def test_expand_background():
     assert_background(
         'url(bar) #f00 repeat-y center left fixed',
         color='#f00', ##
-        image='url(bar)', ##
+        image='bar', ##
         repeat='repeat-y', ##
         attachment='fixed', ##
         position='center left' ##
@@ -241,13 +242,13 @@ def test_font():
         'font-weight': 'normal',
         'font-size': 'small', ##
         'line-height': '1.2', ##
-        # The comma was lost in expand_to_dict()
-        'font-family': '"Some Font" serif', ##
+        # The comma and quotes were lost in expand_to_dict()
+        'font-family': 'Some Font serif', ##
     }
     assert expand_to_dict('font', 'small-caps italic 700 large serif') == {
         'font-style': 'italic', ##
         'font-variant': 'small-caps', ##
-        'font-weight': '700', ##
+        'font-weight': 700, ##
         'font-size': 'large', ##
         'line-height': 'normal',
         'font-family': 'serif', ##

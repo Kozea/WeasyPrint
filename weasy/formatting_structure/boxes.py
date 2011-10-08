@@ -68,7 +68,6 @@ See respective docstrings for details.
 
 
 from ..css import computed_from_cascaded
-from ..css.values import get_single_keyword
 
 
 # The *Box classes have many attributes and methods, but that's the way it is
@@ -99,7 +98,7 @@ class Box(object):
 
     @property
     def direction(self):
-        return get_single_keyword(self.style.direction)
+        return self.style.direction
 
     def _copy(self):
         """Return shallow copy of the box."""
@@ -196,19 +195,19 @@ class Box(object):
         setattr(self, 'padding_%s' % side, 0)
         setattr(self, 'border_%s_width' % side, 0)
 
-        self.style['margin-%s' % side] = None
-        self.style['padding-%s' % side] = None
-        self.style['border-%s-width' % side] = None
+        self.style['margin-%s' % side] = 0
+        self.style['padding-%s' % side] = 0
+        self.style['border-%s-width' % side] = 0
 
     # Positioning schemes
 
     def is_floated(self):
         """Return whether this box is floated."""
-        return get_single_keyword(self.style.float) != 'none'
+        return self.style.float != 'none'
 
     def is_absolutely_positioned(self):
         """Return whether this box is in the absolute positioning scheme."""
-        return get_single_keyword(self.style.position) in ('absolute', 'fixed')
+        return self.style.position in ('absolute', 'fixed')
 
     def is_in_normal_flow(self):
         """Return whether this box is in normal flow."""
@@ -275,7 +274,7 @@ class ParentBox(Box):
     def descendants(self):
         """A flat generator for a box, its children and descendants."""
         yield self
-        for child in self.children or []:
+        for child in self.children:
             if hasattr(child, 'descendants'):
                 for grand_child in child.descendants():
                     yield grand_child

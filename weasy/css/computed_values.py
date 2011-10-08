@@ -22,15 +22,12 @@ Normalize values as much as possible without rendering the document.
 """
 
 import collections
-import functools
 
 import cssutils.helper
 from cssutils.css import PropertyValue, Value
 
 from .properties import INITIAL_VALUES
-from .values import (
-    get_single_keyword, get_keyword, get_pixel_value, get_single_pixel_value,
-    make_pixel_value, make_number, make_keyword)
+from .values import get_single_keyword, get_keyword
 
 
 # How many CSS pixels is one <unit>?
@@ -50,7 +47,7 @@ LENGTHS_TO_PIXELS = {
 # This dict has to be ordered to implement 'smaller' and 'larger'
 FONT_SIZE_KEYWORDS = collections.OrderedDict(
     # medium is 16px, others are a ratio of medium
-    (name, make_pixel_value(16. * a / b))
+    (name, 16. * a / b)
     for name, a, b in [
         ('xx-small', 3, 5),
         ('x-small', 3, 4),
@@ -65,34 +62,34 @@ FONT_SIZE_KEYWORDS = collections.OrderedDict(
 # These are unspecified, other than 'thin' <='medium' <= 'thick'.
 # Values are in pixels.
 BORDER_WIDTH_KEYWORDS = {
-    'thin': make_pixel_value(1),
-    'medium': make_pixel_value(3),
-    'thick': make_pixel_value(5),
+    'thin': 1,
+    'medium': 3,
+    'thick': 5,
 }
 
 # http://www.w3.org/TR/CSS21/fonts.html#propdef-font-weight
 FONT_WEIGHT_RELATIVE = dict(
     bolder={
-        100: make_number(400),
-        200: make_number(400),
-        300: make_number(400),
-        400: make_number(700),
-        500: make_number(700),
-        600: make_number(900),
-        700: make_number(900),
-        800: make_number(900),
-        900: make_number(900),
+        100: 400,
+        200: 400,
+        300: 400,
+        400: 700,
+        500: 700,
+        600: 900,
+        700: 900,
+        800: 900,
+        900: 900,
     },
     lighter={
-        100: make_number(100),
-        200: make_number(100),
-        300: make_number(100),
-        400: make_number(100),
-        500: make_number(100),
-        600: make_number(400),
-        700: make_number(400),
-        800: make_number(700),
-        900: make_number(700),
+        100: 100,
+        200: 100,
+        300: 100,
+        400: 100,
+        500: 100,
+        600: 400,
+        700: 400,
+        800: 700,
+        900: 700,
     },
 )
 
@@ -135,11 +132,11 @@ PAGE_SIZES = dict(
 
 
 class StyleDict(object):
-    """Allow attribute access to values.
+    """A mapping (dict-like) that allows attribute access to values.
 
     Allow eg. ``style.font_size`` instead of ``style['font-size']``.
 
-    :param parent: if given, should be a dict or StyleDict. Values not in this
+    :param parent: if given, should be a mapping. Values missing from this
                    dict will be looked up in the parent dict. Setting a value
                    in this dict masks any value in the parent.
 
@@ -186,7 +183,10 @@ class StyleDict(object):
 
 
 class Computer(object):
-    """Things that compute are computers, right?
+    """Things that compute are computers, right? Handle `computed values`.
+
+    Some computed values depend on other computed values. This object allow
+    to request them without worrying about which is computed first.
 
     :param element: The HTML element these style apply to
     :param pseudo_type: The type of pseudo-element, eg 'before', None
@@ -211,8 +211,7 @@ class Computer(object):
         self.computed = computed
 
         for name in INITIAL_VALUES:
-            if name not in computed:
-                self.get_computed(name)
+            self.get_computed(name)
 
     def get_computed(self, name):
         """Return the computed value for the ``name`` property.
@@ -225,14 +224,14 @@ class Computer(object):
             # Already computed
             return self.computed[name]
 
-        values = self.specified[name]
+        value = self.specified[name]
         if name in self.COMPUTER_FUNCTIONS:
-            values = self.COMPUTER_FUNCTIONS[name](self, name, values)
+            value = self.COMPUTER_FUNCTIONS[name](self, name, value)
         # else: same as specified
 
-        assert isinstance(values, list)
-        self.computed[name] = values
-        return values
+        assert value is not None
+        self.computed[name] = value
+        return value
 
     # Maps property names to functions returning the computed values
     COMPUTER_FUNCTIONS = {}
@@ -247,18 +246,6 @@ class Computer(object):
         return decorator
 
 
-def single_value(function):
-    """Decorator validating and computing the single-value properties."""
-    @functools.wraps(function)
-    def wrapper(computer, name, values):
-        """Compute a single-value property."""
-        assert len(values) == 1
-        new_value = function(computer, name, values[0])
-        assert new_value is not None
-        return [new_value]
-    return wrapper
-
-
 # Let's be coherent, always use ``name`` as an argument even when it is useless
 # pylint: disable=W0613
 
@@ -267,29 +254,34 @@ def single_value(function):
 @Computer.register('border-right-color')
 @Computer.register('border-bottom-color')
 @Computer.register('border-left-color')
-def other_color(computer, name, values):
+def other_color(computer, name, value):
     """Compute the ``*-color`` properties."""
-    if get_single_keyword(values) == 'currentColor':
+    if value == 'currentColor':
         return computer.get_computed('color')
     else:
         # As specified
-        return values
+        return value
 
 
 @Computer.register('color')
-def color(computer, name, values):
+def color(computer, name, value):
     """Compute the ``color`` property."""
-    if get_single_keyword(values) == 'currentColor':
+    if value == 'currentColor':
         if computer.parent_style is None:
             return INITIAL_VALUES['color']
         else:
             return computer.parent_style['color']
     else:
         # As specified
-        return values
+        return value
 
 
 @Computer.register('background-position')
+def length_list(computer, name, values):
+    """Compute the properties with a list of lengths."""
+    return [length(computer, name, value) for value in values]
+
+
 @Computer.register('border-spacing')
 @Computer.register('top')
 @Computer.register('right')
@@ -306,14 +298,12 @@ def color(computer, name, values):
 @Computer.register('padding-right')
 @Computer.register('padding-bottom')
 @Computer.register('padding-left')
-def lengths(computer, name, values):
-    """Compute the properties with a list of lengths."""
-    return [compute_length(computer, value) for value in values]
-
-
-def compute_length(computer, value):
+def length(computer, name, value):
     """Compute a length ``value``."""
-    if value.type != 'DIMENSION' or value.dimension == 'px':
+    if getattr(value, 'type', 'other') == 'NUMBER' and value.value == 0:
+        return 0
+
+    if getattr(value, 'type', 'other') != 'DIMENSION':
         # No conversion needed.
         return value
 
@@ -321,30 +311,28 @@ def compute_length(computer, value):
         # Convert absolute lengths to pixels
         factor = LENGTHS_TO_PIXELS[value.dimension]
     elif value.dimension in ('em', 'ex'):
-        factor = get_single_pixel_value(computer.get_computed('font-size'))
+        factor = computer.get_computed('font-size')
 
     if value.dimension == 'ex':
         factor *= 0.5
 
-    return make_pixel_value(value.value * factor)
+    return value.value * factor
 
 
 @Computer.register('border-top-width')
 @Computer.register('border-right-width')
 @Computer.register('border-left-width')
 @Computer.register('border-bottom-width')
-@single_value
 def border_width(computer, name, value):
     """Compute the ``border-*-width`` properties."""
     style = computer.get_computed(name.replace('width', 'style'))
-    if get_single_keyword(style) in ('none', 'hidden'):
-        return make_number(0)
+    if style in ('none', 'hidden'):
+        return 0
 
-    keyword = get_keyword(value)
-    if keyword in BORDER_WIDTH_KEYWORDS:
-        return BORDER_WIDTH_KEYWORDS[keyword]
+    if value in BORDER_WIDTH_KEYWORDS:
+        return BORDER_WIDTH_KEYWORDS[value]
 
-    return compute_length(computer, value)
+    return length(computer, name, value)
 
 
 @Computer.register('content')
@@ -353,7 +341,7 @@ def content(computer, name, values):
     if computer.pseudo_type in ('before', 'after'):
         keyword = get_single_keyword(values)
         if keyword == 'normal':
-            return [make_keyword('none')]
+            return 'none'
         else:
             return [compute_content_value(computer, value) for value in values]
     else:
@@ -361,7 +349,7 @@ def content(computer, name, values):
         # anything for pseudo-elements other than :before and :after
         # (ie. :first-line and :first-letter)
         # Assume the same as elements.
-        return [make_keyword('normal')]
+        return 'normal'
 
 
 def compute_content_value(computer, value):
@@ -384,61 +372,56 @@ def compute_content_value(computer, value):
 
 
 @Computer.register('display')
-def display(computer, name, values):
+def display(computer, name, value):
     """Compute the ``display`` property.
 
     See http://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
 
     """
-    float_ = get_single_keyword(computer.specified['float'])
-    position = get_single_keyword(computer.specified['position'])
+    float_ = computer.specified['float']
+    position = computer.specified['position']
     if position in ('absolute', 'fixed') or float_ != 'none' or \
             computer.parent_style is None:
-        display_value = get_single_keyword(computer.specified['display'])
-        if display_value == 'inline-table':
-            return [make_keyword('table')]
-        elif display_value in ('inline', 'table-row-group', 'table-column',
-                               'table-column-group', 'table-header-group',
-                               'table-footer-group', 'table-row', 'table-cell',
-                               'table-caption', 'inline-block'):
-            return [make_keyword('block')]
-    return values
+        if value == 'inline-table':
+            return'table'
+        elif value in ('inline', 'table-row-group', 'table-column',
+                       'table-column-group', 'table-header-group',
+                       'table-footer-group', 'table-row', 'table-cell',
+                       'table-caption', 'inline-block'):
+            return 'block'
+    return value
 
 
 @Computer.register('float')
-def compute_float(computer, name, values):
+def compute_float(computer, name, value):
     """Compute the ``float`` property.
 
     See http://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
 
     """
-    position_value = get_single_keyword(computer.specified['position'])
-    if position_value in ('absolute', 'fixed'):
-        return [make_keyword('none')]
+    position = computer.specified['position']
+    if position in ('absolute', 'fixed'):
+        return 'none'
     else:
-        return values
+        return value
 
 
 @Computer.register('font-size')
-@single_value
 def font_size(computer, name, value):
     """Compute the ``font-size`` property."""
-    keyword = get_keyword(value)
-    if keyword in FONT_SIZE_KEYWORDS:
-        return FONT_SIZE_KEYWORDS[keyword]
+    if value in FONT_SIZE_KEYWORDS:
+        return FONT_SIZE_KEYWORDS[value]
 
     if computer.parent_style is not None:
-        parent_font_size = computer.parent_style.font_size[0]
+        parent_font_size = computer.parent_style.font_size
     else:
         # root element, no parent
-        parent_keyword = get_single_keyword(INITIAL_VALUES['font-size'])
         # Initial is 'medium', it’s a keyword.
-        parent_font_size = FONT_SIZE_KEYWORDS[parent_keyword]
-    parent_font_size = get_pixel_value(parent_font_size)
+        parent_font_size = FONT_SIZE_KEYWORDS[INITIAL_VALUES['font-size']]
 
     if value.type == 'DIMENSION':
         if value.dimension == 'px':
-            return value  # unchanged
+            factor = 1
         elif value.dimension == 'em':
             factor = parent_font_size
         elif value.dimension == 'ex':
@@ -450,43 +433,37 @@ def font_size(computer, name, value):
     elif value.type == 'PERCENTAGE':
         factor = parent_font_size / 100.
     elif value.type == 'NUMBER' and value.value == 0:
-        return value
+        return 0
 
     # Raise if `factor` is not defined. It should be, because of validation.
-    return make_pixel_value(value.value * factor)
+    return value.value * factor
 
 
 @Computer.register('font-weight')
-@single_value
 def font_weight(computer, name, value):
     """Compute the ``font-weight`` property."""
-    keyword = get_keyword(value)
-    if keyword == 'normal':
-        return make_number(400)
-    elif keyword == 'bold':
-        return make_number(700)
-    elif keyword in ('bolder', 'lighter'):
+    if value == 'normal':
+        return 400
+    elif value == 'bold':
+        return 700
+    elif value in ('bolder', 'lighter'):
         if computer.parent_style is not None:
-            parent_values = computer.parent_style['font-weight']
-            assert len(parent_values) == 1
-            assert parent_values[0].type == 'NUMBER'
-            parent_value = parent_values[0].value
+            parent_value = computer.parent_style['font-weight']
         else:
             initial = get_single_keyword(INITIAL_VALUES['font-weight'])
             assert initial == 'normal'
             parent_value = 400
         # Use a string here as StyleDict.__setattr__ turns integers into pixel
         # lengths. This is a number without unit.
-        return FONT_WEIGHT_RELATIVE[keyword][parent_value]
+        return FONT_WEIGHT_RELATIVE[value][parent_value]
     else:
         return value
 
 
 @Computer.register('line-height')
-@single_value
 def line_height(computer, name, value):
     """Compute the ``line-height`` property."""
-    if get_keyword(value) == 'normal':
+    if value == 'normal':
         # a "reasonable" value
         # http://www.w3.org/TR/CSS21/visudet.html#line-height
         # TODO: use font metadata?
@@ -496,11 +473,10 @@ def line_height(computer, name, value):
     elif value.type == 'PERCENTAGE':
         factor = value.value / 100.
     elif value.type == 'DIMENSION':
-        return compute_length(computer, value)
-    font_size_value = get_single_pixel_value(
-        computer.get_computed('font-size'))
+        return length(computer, name, value)
+    font_size_value = computer.get_computed('font-size')
     # Raise if `factor` is not defined. It should be, because of validation.
-    return make_pixel_value(factor * font_size_value)
+    return factor * font_size_value
 
 
 @Computer.register('size')
@@ -511,60 +487,57 @@ def size(computer, name, values):
 
     """
     if computer.element != '@page':
-        return [None]
-
-    values = [compute_length(computer, value) for value in values]
+        return 'none'
 
     keywords = map(get_keyword, values)
+    values = length_list(computer, name, values)
+
     if keywords == ['auto']:
         keywords = ['A4']  # Chosen by the UA. (That’s me!)
 
-    if values[0].type == 'DIMENSION':
-        assert values[0].dimension == 'px'
+    if isinstance(values[0], (int, float)):
         if len(values) == 2:
-            assert values[1].type == 'DIMENSION'
-            assert values[1].dimension == 'px'
+            assert isinstance(values[1], (int, float))
             return values
         else:
             # square page
-            return values * 2  # list product, same as [values[0], values[0]]
+            value, = values
+            return value, value
     else:
         orientation = None
         size_value = None
-        for keyword in keywords:
+        for i, keyword in enumerate(keywords):
             if keyword in ('portrait', 'landscape'):
                 orientation = keyword
             elif keyword in PAGE_SIZES:
                 size_value = keyword
             else:
-                raise ValueError("Illegal value for 'size': %r", keyword)
+                raise ValueError("Illegal value for 'size': %r" % values[i])
         if size_value is None:
             size_value = 'A4'
         width, height = PAGE_SIZES[size_value]
         if (orientation == 'portrait' and width > height) or \
                (orientation == 'landscape' and height > width):
             width, height = height, width
-        return map(make_pixel_value, [width, height])
+        return width, height
 
 
 @Computer.register('text-align')
-@single_value
 def text_align(computer, name, value):
     """Compute the ``text-align`` property."""
-    if get_keyword(value) == 'start':
-        if get_single_keyword(computer.get_computed('direction')) == 'rtl':
-            return make_keyword('right')
+    if value == 'start':
+        if computer.get_computed('direction') == 'rtl':
+            return 'right'
         else:
-            return make_keyword('left')
+            return 'left'
     else:
         return value
 
 
 @Computer.register('word-spacing')
-@single_value
 def word_spacing(computer, name, value):
     """Compute the ``word-spacing`` property."""
-    if get_keyword(value) == 'normal':
-        return make_number(0)
+    if value == 'normal':
+        return 0
 
-    return compute_length(computer, value)
+    return length(computer, value)

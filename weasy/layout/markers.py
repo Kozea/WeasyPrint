@@ -26,7 +26,6 @@ import cairo
 
 from .percentages import resolve_percentages
 from ..text import TextFragment
-from ..css.values import get_single_keyword, get_single_pixel_value
 from ..formatting_structure import boxes
 
 
@@ -56,8 +55,8 @@ def list_marker_layout(box, containing_block):
         # (Swap left and right for right-to-left text.)
         marker.position_x = box.border_box_x()
 
-        half_em = 0.5 * get_single_pixel_value(box.style.font_size)
-        direction = get_single_keyword(box.style.direction)
+        half_em = 0.5 * box.style.font_size
+        direction = box.style.direction
         if direction == 'ltr':
             marker.margin_right = half_em
             marker.position_x -= marker.margin_width()
@@ -87,7 +86,7 @@ def list_style_image_size(marker_box):
     width = image.intrinsic_width()
     height = image.intrinsic_width()
     ratio = image.intrinsic_ratio()
-    one_em = get_single_pixel_value(marker_box.style.font_size)
+    one_em = marker_box.style.font_size
     if width is not None and height is not None:
         return width, height
     elif width is not None and ratio is not None:

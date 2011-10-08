@@ -47,42 +47,13 @@ def get_single_keyword(values):
             return value._value
 
 
-def get_pixel_value(value):
-    """If ``value`` is a pixel length, return its value.
-
-    Otherwise return ``None``.
-
-    """
-    value_type = value.type
-    value_value = value.value
-    if ((value_type == 'DIMENSION' and value.dimension == 'px') or
-            # Units may be ommited on 0
-            (value_type == 'NUMBER' and value_value == 0)):
-        # cssutils promises that `DimensionValue.value` is an int or float
-        assert isinstance(value_value, (int, float))
-        return value_value
-    else:
-        # Not a pixel length
-        return None
-
-
-def get_single_pixel_value(values):
-    """If ``values`` is a 1-element list of pixel lengths, return its value.
-
-    Otherwise return ``None``.
-
-    """
-    if len(values) == 1:
-        return get_pixel_value(values[0])
-
-
 def get_percentage_value(value):
     """If ``value`` is a percentage, return its value.
 
     Otherwise return ``None``.
 
     """
-    if value.type == 'PERCENTAGE':
+    if getattr(value, 'type', 'other') == 'PERCENTAGE':
         # cssutils promises that `DimensionValue.value` is an int or float
         assert isinstance(value.value, (int, float))
         return value.value
@@ -91,49 +62,6 @@ def get_percentage_value(value):
         return None
 
 
-def get_single_percentage_value(values):
-    """If ``values`` is a 1-element list of percentages, return its value.
-
-    Otherwise return ``None``.
-
-    """
-    if len(values) == 1:
-        return get_percentage_value(values[0])
-
-
-def make_pixel_value(pixels):
-    """Make a pixel :class:`DimensionValue`.
-
-    Reverse of :func:`get_single_pixel_value`.
-
-    """
-    value = DimensionValue()
-    value._value = pixels
-    value._dimension = 'px'
-    value._type = 'DIMENSION'
-    return value
-
-
-def make_number(number):
-    """Make a number :class:`DimensionValue`."""
-    value = DimensionValue()
-    value._value = number
-    value._type = 'NUMBER'
-    return value
-
-
-def make_keyword(keyword):
-    """Make a keyword :class:`Value`.
-
-    Reverse of :func:`get_keyword`.
-
-    """
-    value = Value()
-    value._value = keyword
-    value._type = 'IDENT'
-    return value
-
-
 def as_css(values):
     """Return the string reperesentation of the ``values`` list."""
-    return ' '.join(value.cssText for value in values)
+    return ' '.join(getattr(value, 'cssText', value) for value in values)

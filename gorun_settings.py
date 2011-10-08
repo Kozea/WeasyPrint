@@ -5,5 +5,5 @@
 # other files in that directory.
 
 DIRECTORIES = (
-  ('weasy', 'attest'),
+  ('weasy', 'attest --fail-fast'),
 )

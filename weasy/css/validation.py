@@ -37,7 +37,10 @@ LOGGER = logging.getLogger('WEASYPRINT')
 
 # yes/no validators for non-shorthand properties
 # Maps property names to functions taking a property name and a value list,
-# returning True for valid, False for invalid.
+# returning a value or None for invalid.
+# Also transform values: keyword and URLs are returned as strings.
+# For properties that take a single value, that value is returned by itself
+# instead of a list.
 VALIDATORS = {}
 
 EXPANDERS = {}
@@ -76,7 +79,9 @@ def single_keyword(function):
     @functools.wraps(function)
     def keyword_validator(values):
         """Wrap a validator to call get_single_keyword on values."""
-        return function(get_single_keyword(values))
+        keyword = get_single_keyword(values)
+        if function(keyword):
+            return keyword
     return keyword_validator
 
 
@@ -85,10 +90,9 @@ def single_value(function):
     @functools.wraps(function)
     def single_value_validator(values):
         """Validate a property whose value is single."""
-        if len(values) != 1:
-            return False
-        else:
+        if len(values) == 1:
             return function(values[0])
+    single_value_validator.__func__ = function
     return single_value_validator
 
 
@@ -133,7 +137,10 @@ def background_attachment(keyword):
 @single_value
 def color(value):
     """``*-color`` and ``color`` properties validation."""
-    return value.type == 'COLOR_VALUE' or get_keyword(value) == 'currentColor'
+    if value.type == 'COLOR_VALUE':
+        return value
+    if get_keyword(value) == 'currentColor':
+        return 'currentColor'
 
 
 @validator('background-image')
@@ -141,7 +148,10 @@ def color(value):
 @single_value
 def image(value):
     """``*-image`` properties validation."""
-    return get_keyword(value) == 'none' or value.type == 'URI'
+    if get_keyword(value) == 'none':
+        return 'none'
+    if value.type == 'URI':
+        return value.absoluteUri
 
 
 @validator()
@@ -153,27 +163,32 @@ def background_position(values):
     """
     if len(values) == 1:
         value = values[0]
-        return (
-            is_dimension_or_percentage(value) or
-            get_keyword(value) in ('left', 'right', 'top', 'bottom', 'center'))
-    if len(values) == 2:
+        keyword = get_keyword(value)
+        if keyword in ('left', 'right', 'top', 'bottom', 'center'):
+            return keyword, 'center'
+        elif is_dimension_or_percentage(value):
+            return value, 'center'
+
+    elif len(values) == 2:
         value_1, value_2 = values
+        keyword_1, keyword_2 = map(get_keyword, values)
         if is_dimension_or_percentage(value_1):
-            return (
-                is_dimension_or_percentage(value_2) or
-                get_keyword(value_2) in ('top', 'center', 'bottom'))
+            if keyword_2 in ('top', 'center', 'bottom'):
+                return value_1, keyword_2
+            elif is_dimension_or_percentage(value_2):
+                return value_1, value_2
         elif is_dimension_or_percentage(value_2):
-            return get_keyword(value_1) in ('left', 'center', 'right')
-        else:
-            keyword_1, keyword_2 = map(get_keyword, values)
-            return (
-                keyword_1 in ('left', 'center', 'right') and
-                keyword_2 in ('top', 'center', 'bottom')
-            ) or (
-                keyword_1 in ('top', 'center', 'bottom') and
-                keyword_2 in ('left', 'center', 'right'))
-    else:
-        return False
+            if keyword_1 in ('left', 'center', 'right'):
+                return keyword_1, value_2
+        elif (
+                    keyword_1 in ('left', 'center', 'right') and
+                    keyword_2 in ('top', 'center', 'bottom')
+                ) or (
+                    keyword_1 in ('top', 'center', 'bottom') and
+                    keyword_2 in ('left', 'center', 'right')
+                ):
+            return keyword_1, keyword_2
+    #else: invalid
 
 
 @validator()
@@ -201,8 +216,11 @@ def border_style(keyword):
 @single_value
 def border_width(value):
     """``border-*-width`` properties validation."""
-    return is_dimension(value, negative=False) or get_keyword(value) in (
-        'thin', 'medium', 'thick')
+    if is_dimension(value, negative=False):
+        return value
+    keyword = get_keyword(value)
+    if keyword in ('thin', 'medium', 'thick'):
+        return keyword
 
 
 #@validator('top')
@@ -214,21 +232,19 @@ def border_width(value):
 @validator('margin-bottom')
 @validator('margin-left')
 @single_value
-def lenght_precentage_or_auto(value):
+def lenght_precentage_or_auto(value, negative=True):
     """``margin-*`` properties validation."""
-    return (
-        is_dimension_or_percentage(value) or
-        get_keyword(value) == 'auto')
+    if is_dimension_or_percentage(value, negative):
+        return value
+    if get_keyword(value) == 'auto':
+        return 'auto'
 
 
 @validator('height')
 @validator('width')
 @single_value
 def positive_lenght_precentage_or_auto(value):
-    """``width`` and ``height`` properties validation."""
-    return (
-        is_dimension_or_percentage(value, negative=False) or
-        get_keyword(value) == 'auto')
+    return lenght_precentage_or_auto.__func__(value, negative=False)
 
 
 @validator()
@@ -239,22 +255,29 @@ def direction(keyword):
 
 
 @validator()
-def display(values):
+@single_keyword
+def display(keyword):
     """``display`` property validation."""
-    display_keyword = get_single_keyword(values)
-    if display_keyword in (
+    if keyword in (
             'inline-block', 'table', 'inline-table',
             'table-row-group', 'table-header-group', 'table-footer-group',
             'table-row', 'table-column-group', 'table-column', 'table-cell',
             'table-caption'):
         raise InvalidValues('value not supported yet')
-    return display_keyword in ('inline', 'block', 'list-item', 'none')
+    return keyword in ('inline', 'block', 'list-item', 'none')
 
 
 @validator()
 def font_family(values):
     """``font-family`` property validation."""
-    return all(value.type in ('IDENT', 'STRING') for value in values)
+    # TODO: we should split on commas only.
+    # " If a sequence of identifiers is given as a font family name, the
+    #   computed value is the name converted to a string by joining all the
+    #   identifiers in the sequence by single spaces. "
+    # http://www.w3.org/TR/CSS21/fonts.html#font-family-prop
+    # eg. `font-family: Foo  bar, "baz
+    if all(value.type in ('IDENT', 'STRING') for value in values):
+        return [value.value for value in values]
 
 
 @validator()
@@ -262,14 +285,15 @@ def font_family(values):
 def font_size(value):
     """``font-size`` property validation."""
     if is_dimension_or_percentage(value):
-        return True
+        return value
     font_size_keyword = get_keyword(value)
     if font_size_keyword in ('smaller', 'larger'):
         raise InvalidValues('value not supported yet')
-    return (
+    if (
         font_size_keyword in computed_values.FONT_SIZE_KEYWORDS #or
         #keyword in ('smaller', 'larger')
-    )
+    ):
+        return font_size_keyword
 
 
 @validator()
@@ -290,26 +314,34 @@ def font_variant(keyword):
 @single_value
 def font_weight(value):
     """``font-weight`` property validation."""
-    return (
-        get_keyword(value) in ('normal', 'bold', 'bolder', 'lighter') or (
-            value.type == 'NUMBER' and
-            value.value in (100, 200, 300, 400, 500, 600, 700, 800, 900)))
+    keyword = get_keyword(value)
+    if keyword in ('normal', 'bold', 'bolder', 'lighter'):
+        return keyword
+    if value.type == 'NUMBER':
+        value = value.value
+        if value in [100, 200, 300, 400, 500, 600, 700, 800, 900]:
+            return value
 
 
 @validator()
 @single_value
 def letter_spacing(value):
     """``letter-spacing`` property validation."""
-    return get_keyword(value) == 'normal' or is_dimension(value)
+    if get_keyword(value) == 'normal':
+        return 'normal'
+    if is_dimension(value):
+        return value
 
 
 @validator()
 @single_value
 def line_height(value):
     """``line-height`` property validation."""
-    return get_keyword(value) == 'normal' or (
-        value.type in ('NUMBER', 'DIMENSION', 'PERCENTAGE') and
-        value.value >= 0)
+    if get_keyword(value) == 'normal':
+        return 'normal'
+    if (value.type in ('NUMBER', 'DIMENSION', 'PERCENTAGE') and
+            value.value >= 0):
+        return value
 
 
 @validator()
@@ -320,15 +352,15 @@ def list_style_position(keyword):
 
 
 @validator()
-def list_style_type(values):
+@single_keyword
+def list_style_type(keyword):
     """``list-style-type`` property validation."""
-    font_size_keyword = get_single_keyword(values)
-    if font_size_keyword in ('decimal', 'decimal-leading-zero',
+    if keyword in ('decimal', 'decimal-leading-zero',
             'lower-roman', 'upper-roman', 'lower-greek', 'lower-latin',
             'upper-latin', 'armenian', 'georgian', 'lower-alpha',
             'upper-alpha'):
         raise InvalidValues('value not supported yet')
-    return font_size_keyword in ('disc', 'circle', 'square', 'none')
+    return keyword in ('disc', 'circle', 'square', 'none')
 
 
 @validator('padding-top')
@@ -338,36 +370,40 @@ def list_style_type(values):
 @single_value
 def length_or_precentage(value):
     """``padding-*`` properties validation."""
-    return is_dimension_or_percentage(value, negative=False)
+    if is_dimension_or_percentage(value, negative=False):
+        return value
 
 
 @validator()
-def position(values):
+@single_keyword
+def position(keyword):
     """``position`` property validation."""
-    position_keyword = get_single_keyword(values)
-    if position_keyword in ('relative', 'absolute', 'fixed'):
+    if keyword in ('relative', 'absolute', 'fixed'):
         raise InvalidValues('value not supported yet')
-    return position_keyword in ('static',)
+    return keyword in ('static',)
 
 
 @validator()
-def text_align(values):
+@single_keyword
+def text_align(keyword):
     """``text-align`` property validation."""
-    text_align_keyword = get_single_keyword(values)
-    if text_align_keyword in ('right', 'center', 'justify'):
+    if keyword in ('right', 'center', 'justify'):
         raise InvalidValues('value not supported yet')
-    return text_align_keyword in ('left',)
+    return keyword in ('left',)
 
 
 @validator()
 def text_decoration(values):
     """``text-decoration`` property validation."""
-    return (
-        get_single_keyword(values) == 'none' or
-        all(
-            get_keyword(value) in (
-                'underline', 'overline', 'line-through', 'blink')
-            for value in values))
+    keywords = map(get_keyword, values)
+    if keywords == ['none']:
+        return 'none'
+    if all(keyword in ('underline', 'overline', 'line-through', 'blink')
+            for keyword in keywords):
+        unique = frozenset(keywords)
+        if len(unique) == len(keywords):
+            # No duplicate
+            return unique
 
 
 @validator()
@@ -384,23 +420,25 @@ def size(values):
     See http://www.w3.org/TR/css3-page/#page-size-prop
 
     """
-    return (
-        len(values) == 1 and (
-            is_dimension(values[0]) or
-            get_single_keyword(values) in ('auto', 'portrait', 'landscape') or
-            get_single_keyword(values) in computed_values.PAGE_SIZES
-        )
-    ) or (
-        len(values) == 2 and (
-            all(is_dimension(value) for value in values) or (
-                get_keyword(values[0]) in ('portrait', 'landscape') and
-                get_keyword(values[1]) in computed_values.PAGE_SIZES
-            ) or (
-                get_keyword(values[0]) in computed_values.PAGE_SIZES and
-                get_keyword(values[1]) in ('portrait', 'landscape')
-            )
-        )
-    )
+    if len(values) == 1:
+        if is_dimension(values[0]):
+            return values
+        keyword = get_single_keyword(values)
+        if (keyword in ('auto', 'portrait', 'landscape') or
+                keyword in computed_values.PAGE_SIZES):
+            return values
+    if len(values) == 2:
+        if all(is_dimension(value) for value in values):
+            return values
+        keywords = map(get_keyword, values)
+        if (
+            keywords[0] in ('portrait', 'landscape') and
+            keywords[1] in computed_values.PAGE_SIZES
+        ) or (
+            keywords[0] in computed_values.PAGE_SIZES and
+            keywords[1] in ('portrait', 'landscape')
+        ):
+            return values
 
 
 # Expanders
@@ -443,9 +481,10 @@ def expand_four_sides(name, values):
             # eg. border-color becomes border-*-color, not border-color-*
             new_name = name[:i] + suffix + name[i:]
 
-        values = [value]
-        validate_non_shorthand(new_name, values, required=True)
-        yield new_name, values
+        # validate_non_shorthand returns [(name, value)], we want
+        # to yield (name, value)
+        result, = validate_non_shorthand(new_name, [value], required=True)
+        yield result
 
 
 def generic_expander(*expanded_names):
@@ -461,9 +500,12 @@ def generic_expander(*expanded_names):
         @functools.wraps(wrapped)
         def generic_expander_wrapper(name, values):
             """Wrap the expander."""
-            if get_single_keyword(values) in ('inherit', 'initial'):
-                results = dict.fromkeys(expanded_names, values)
+            keyword = get_single_keyword(values)
+            if keyword in ('inherit', 'initial'):
+                results = dict.fromkeys(expanded_names, keyword)
+                skip_validation = True
             else:
+                skip_validation = False
                 results = {}
                 for new_name, new_values in wrapped(name, values):
                     assert new_name in expanded_names, new_name
@@ -479,9 +521,13 @@ def generic_expander(*expanded_names):
 
                 if new_name in results:
                     values = results[new_name]
+                    if not skip_validation:
+                        # validate_non_shorthand returns [(name, value)]
+                        (actual_new_name, values), = validate_non_shorthand(
+                            actual_new_name, values, required=True)
                 else:
                     values = INITIAL_VALUES[actual_new_name]
-                validate_non_shorthand(actual_new_name, values, required=True)
+
                 yield actual_new_name, values
         return generic_expander_wrapper
     return generic_expander_decorator
@@ -505,12 +551,12 @@ def expand_list_style(name, values):
             none_value = value
             continue
 
-        if list_style_type([value]):
+        if list_style_type([value]) is not None:
             suffix = '-type'
             type_specified = True
-        elif list_style_position([value]):
+        elif list_style_position([value]) is not None:
             suffix = '-position'
-        elif image([value]):
+        elif image([value]) is not None:
             suffix = '-image'
             image_specified = True
         else:
@@ -554,11 +600,11 @@ def expand_border_side(name, values):
 
     """
     for value in values:
-        if color([value]):
+        if color([value]) is not None:
             suffix = '-color'
-        elif border_width([value]):
+        elif border_width([value]) is not None:
             suffix = '-width'
-        elif border_style([value]):
+        elif border_style([value]) is not None:
             suffix = '-style'
         else:
             raise InvalidValues
@@ -585,13 +631,13 @@ def expand_background(name, values):
     values = list(reversed(values))
     while values:
         value = values.pop()
-        if color([value]):
+        if color([value]) is not None:
             suffix = '-color'
-        elif image([value]):
+        elif image([value]) is not None:
             suffix = '-image'
-        elif background_repeat([value]):
+        elif background_repeat([value]) is not None:
             suffix = '-repeat'
-        elif background_attachment([value]):
+        elif background_attachment([value]) is not None:
             suffix = '-attachment'
         elif background_position([value]):
             if values:
@@ -638,11 +684,11 @@ def expand_font(name, values):
             # their initial value, which is 'normal' for all three here.
             continue
 
-        if font_style([value]):
+        if font_style([value]) is not None:
             suffix = '-style'
-        elif font_variant([value]):
+        elif font_variant([value]) is not None:
             suffix = '-variant'
-        elif font_weight([value]):
+        elif font_weight([value]) is not None:
             suffix = '-weight'
         else:
             # We’re done with these three, continue with font-size
@@ -651,7 +697,7 @@ def expand_font(name, values):
 
     # Then font-size is mandatory
     # Latest `value` from the loop.
-    if not font_size([value]):
+    if font_size([value]) is None:
         raise InvalidValues
     yield '-size', [value]
 
@@ -659,7 +705,7 @@ def expand_font(name, values):
     # must not be empty yet
 
     value = values.pop()
-    if line_height([value]):
+    if line_height([value]) is not None:
         yield 'line-height', [value]
     else:
         # We pop()ed a font-family, add it back
@@ -667,7 +713,7 @@ def expand_font(name, values):
 
     # Reverse the stack to get normal list
     values.reverse()
-    if not font_family(values):
+    if font_family(values) is None:
         raise InvalidValues
     yield '-family', values
 
@@ -680,11 +726,14 @@ def validate_non_shorthand(name, values, required=False):
     if not required and name not in VALIDATORS:
         raise InvalidValues('property not supported yet')
 
-    if (get_single_keyword(values) in ('initial', 'inherit') or
-            VALIDATORS[name](values)):
-        return [(name, values)]
+    keyword = get_single_keyword(values)
+    if keyword in ('initial', 'inherit'):
+        value = keyword
     else:
-        raise InvalidValues
+        value = VALIDATORS[name](values)
+        if value is None:
+            raise InvalidValues
+    return [(name, value)]
 
 
 def validate_and_expand(name, values):
@@ -715,4 +764,3 @@ def validate_and_expand(name, values):
     getattr(LOGGER, level)('The declaration `%s: %s` was ignored: %s.',
         name, as_css(values), reason)
     return []
-

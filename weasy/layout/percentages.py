@@ -23,8 +23,7 @@ Functions resolving percentages.
 """
 
 from ..formatting_structure import boxes
-from ..css.values import (
-    get_single_keyword, get_single_pixel_value, get_single_percentage_value)
+from ..css.values import get_percentage_value
 
 
 def resolve_one_percentage(box, property_name, refer_to,
@@ -37,15 +36,11 @@ def resolve_one_percentage(box, property_name, refer_to,
     """
     # box.style has computed values
     values = box.style[property_name]
-    if values is None:
-        pixels = 0
-    else:
-        pixels = get_single_pixel_value(values)
-    if pixels is not None:
+    if isinstance(values, (int, float)):
         # Absolute length (was converted to pixels in "computed values")
-        result = pixels
+        result = values
     else:
-        percentage = get_single_percentage_value(values)
+        percentage = get_percentage_value(values)
         if percentage is not None:
             if isinstance(refer_to, (int, float)):
                 # A percentage
@@ -56,7 +51,7 @@ def resolve_one_percentage(box, property_name, refer_to,
                 result = refer_to
         else:
             # Some other values such as 'auto' may be allowed
-            result = get_single_keyword(values)
+            result = values
             assert allowed_keywords and result in allowed_keywords
     # box attributes are used values
     setattr(box, property_name.replace('-', '_'), result)
@@ -102,8 +97,5 @@ def resolve_percentages(box, containing_block):
     for side in ['top', 'right', 'bottom', 'left']:
         prop = 'border_{}_width'.format(side)
         values = getattr(box.style, prop)
-        if values is None:
-            pixels = 0
-        else:
-            pixels = get_single_pixel_value(values)
+        pixels = values
         setattr(box, prop, pixels)

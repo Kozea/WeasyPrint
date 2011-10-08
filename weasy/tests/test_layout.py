@@ -24,7 +24,6 @@ Test the layout.
 
 from attest import Tests, assert_hook  # pylint: disable=W0611
 
-from ..css.values import get_single_keyword, get_single_pixel_value
 from . import TestPNGDocument
 from ..formatting_structure import boxes
 from .test_boxes import monkeypatch_validation
@@ -50,14 +49,10 @@ def parse_without_layout(html_content):
 def validate_absolute_and_float(
         real_non_shorthand, name, values, required=False):
     """Fake validator for ``absolute`` and ``float``."""
-    if (
-        name == 'position' and
-        get_single_keyword(values) == 'absolute'
-    ) or (
-        name == 'float' and
-        get_single_keyword(values) == 'left'
-    ):
-        return [(name, values)]
+    value = values[0].value
+    if (name == 'position' and value == 'absolute'
+            ) or (name == 'float' and value == 'left'):
+        return [(name, value)]
     return real_non_shorthand(name, values, required)
 
 
@@ -373,7 +368,7 @@ def test_lists():
     list_element, = [child for child in unordered_list.children
            if not isinstance(child, boxes.AnonymousBox)]
     marker = list_element.outside_list_marker
-    font_size = get_single_pixel_value(marker.style.font_size)
+    font_size = marker.style.font_size
     assert marker.margin_right == 0.5 * font_size  # 0.5em
     assert marker.position_x == (
         list_element.padding_box_x() - marker.width - marker.margin_right)
@@ -428,8 +423,8 @@ def test_breaking_linebox():
         page, = parse(
             page % {'fonts': FONTS, 'font_size': font_size, 'width': width})
         html = page.root_box
-        body = html.children[0]
-        paragraph = body.children[0]
+        body, = html.children
+        paragraph, = body.children
         return paragraph
     font_size = 13
     width = 350
@@ -438,15 +433,15 @@ def test_breaking_linebox():
 
     lines = paragraph.children
     for line in lines:
-        assert line.style.font_size[0].value == font_size
+        assert line.style.font_size == font_size
         assert line.element.tag == 'p'
         for child in line.children:
             assert child.element.tag in ('em', 'p')
-            assert child.style.font_size[0].value == font_size
+            assert child.style.font_size == font_size
             if isinstance(child, boxes.ParentBox):
                 for child_child in child.children:
                     assert child.element.tag in ('em', 'strong', 'span')
-                    assert child.style.font_size[0].value == font_size
+                    assert child.style.font_size == font_size
 
 
 @SUITE.test
@@ -747,8 +742,8 @@ def test_page_and_linebox_breaking():
         texts = []
         for page in pages:
             html = page.root_box
-            body = html.children[0]
-            div = body.children[0]
+            body, = html.children
+            div, = body.children
             lines = div.children
             texts.extend(get_full_text(lines))
         return u' '.join(texts)

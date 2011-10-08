@@ -26,8 +26,6 @@ from __future__ import division
 
 from gi.repository import Pango, PangoCairo  # pylint: disable=E0611
 
-from .css.values import get_single_keyword, get_single_pixel_value
-
 
 class TextFragment(object):
     """Text renderer using Pango.
@@ -43,25 +41,25 @@ class TextFragment(object):
         if width is not None:
             self.layout.set_width(int(Pango.SCALE * width))
 
-        color = style.color[0]
+        color = style.color
         attributes = dict(
             # TODO: somehow handle color.alpha
             color='#%02x%02x%02x' % (color.red, color.green, color.blue),
-            face=', '.join(v.value for v in style.font_family),
-            variant=get_single_keyword(style.font_variant),
-            style=get_single_keyword(style.font_style),
-            size=int(get_single_pixel_value(style.font_size) * Pango.SCALE),
-            weight=int(style.font_weight[0].value),
+            face=', '.join(style.font_family),
+            variant=style.font_variant,
+            style=style.font_style,
+            size=int(style.font_size * Pango.SCALE),
+            weight=int(style.font_weight),
             # Alignments and backgrounds are not handled by Pango.
-            letter_spacing = int(
-                (get_single_pixel_value(style.letter_spacing) or 0)
-                * Pango.SCALE
-            ),
+
             # Tell Pango that fonts on the system can be used to provide
             # characters missing from the current font. Otherwise, only
             # characters from the closest matching font can be used.
             fallback='true',
         )
+        if style.letter_spacing != 'normal':
+            attributes['letter_spacing'] = int(
+                style.letter_spacing * Pango.SCALE)
 
         # TODO: use an AttrList when it is available with introspection
         attributes = ' '.join(

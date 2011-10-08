@@ -32,9 +32,7 @@ from StringIO import StringIO
 from .figures import Point, Line, Trapezoid
 from ..text import TextFragment
 from ..formatting_structure import boxes
-from ..css.values import (
-    get_single_keyword, get_keyword, get_pixel_value, get_percentage_value,
-    get_single_pixel_value)
+from ..css.values import get_percentage_value
 
 
 SUPPORTED_IMAGES = ['image/png', 'image/gif', 'image/jpeg', 'image/bmp']
@@ -84,8 +82,8 @@ def draw_box(context, box):
 
 def has_background(box):
     """Return whether the given box has any background."""
-    return box.style['background-color'][0].alpha > 0 or \
-        get_single_keyword(box.style['background-image']) != 'none'
+    return box.style.background_color.alpha > 0 or \
+        box.style.background_image != 'none'
 
 
 def draw_page_background(context, page):
@@ -131,7 +129,7 @@ def draw_background(context, box, clip=True):
         bg_width = box.border_width()
         bg_height = box.border_height()
 
-        bg_attachement = get_single_keyword(box.style['background-attachment'])
+        bg_attachement = box.style.background_attachment
         if bg_attachement == 'fixed':
             # There should not be any clip yet
             x1, y1, x2, y2 = context.clip_extents()
@@ -143,7 +141,7 @@ def draw_background(context, box, clip=True):
             context.clip()
 
         # Background color
-        bg_color = box.style['background-color'][0]
+        bg_color = box.style.background_color
         if bg_color.alpha > 0:
             context.set_source_colorvalue(bg_color)
             context.paint()
@@ -157,23 +155,23 @@ def draw_background(context, box, clip=True):
             bg_height = page_height
 
         # Background image
-        bg_image = box.style['background-image'][0]
-        if bg_image.type != 'URI':
+        bg_image = box.style.background_image
+        if bg_image == 'none':
             return
 
-        surface = box.document.get_image_surface_from_uri(bg_image.absoluteUri)
+        surface = box.document.get_image_surface_from_uri(bg_image)
         if surface is None:
             return
 
         image_width = surface.get_width()
         image_height = surface.get_height()
 
-        bg_position = box.style['background-position']
+        bg_position = box.style.background_position
         bg_position_x, bg_position_y = absolute_background_position(
             bg_position, (bg_width, bg_height), (image_width, image_height))
         context.translate(bg_position_x, bg_position_y)
 
-        bg_repeat = get_single_keyword(box.style['background-repeat'])
+        bg_repeat = box.style.background_repeat
         if bg_repeat != 'repeat':
             # Get the current clip rectangle
             clip_x1, clip_y1, clip_x2, clip_y2 = context.clip_extents()
@@ -211,33 +209,25 @@ def absolute_background_position(css_values, bg_dimensions, image_dimensions):
 
     """
     values = list(css_values)
-    keywords = [get_keyword(value) for value in values]
 
     if len(css_values) == 1:
-        values.append(None)  # dummy value for zip()
-        keywords.append('center')
+        values.append('center')
     else:
         assert len(css_values) == 2
 
-    if not (None in keywords or
-            keywords[0] in ('left', 'right') or
-            keywords[1] in ('top', 'bottom')):
+    if values[1] in ('left', 'right') or values[0] in ('top', 'bottom'):
         values.reverse()
-        keywords.reverse()
     # Order is now [horizontal, vertical]
 
     kw_to_percentage = dict(top=0, left=0, center=50, bottom=100, right=100)
 
-    for value, keyword, bg_dimension, image_dimension in zip(
-            values, keywords, bg_dimensions, image_dimensions):
-        if keyword is not None:
-            percentage = kw_to_percentage[keyword]
-        else:
-            percentage = get_percentage_value(value)
+    for value, bg_dimension, image_dimension in zip(
+            values, bg_dimensions, image_dimensions):
+        percentage = kw_to_percentage.get(value, get_percentage_value(value))
         if percentage is not None:
             yield (bg_dimension - image_dimension) * percentage / 100.
         else:
-            yield get_pixel_value(value)
+            yield value
 
 
 def draw_border(context, box):
@@ -285,8 +275,8 @@ def draw_border(context, box):
         width = getattr(box, 'border_%s_width' % side)
         if width == 0:
             return
-        color = box.style['border-%s-color' % side][0]
-        style = box.style['border-%s-style' % side][0].value
+        color = box.style['border-%s-color' % side]
+        style = box.style['border-%s-style' % side]
         if color.alpha > 0:
             with context.stacked():
                 # TODO: implement other styles.
@@ -328,7 +318,7 @@ def draw_replacedbox(context, box):
 def draw_text(context, textbox):
     """Draw ``textbox`` to a ``cairo.Context`` from ``PangoCairo.Context``."""
     # Pango crashes with font-size: 0
-    font_size = get_single_pixel_value(textbox.style.font_size)
+    font_size = textbox.style.font_size
     if font_size == 0:
         return
 
@@ -337,25 +327,24 @@ def draw_text(context, textbox):
     fragment.show_layout(context)
     values = textbox.style.text_decoration
     for value in values:
-        keyword = get_keyword(value)
-        if keyword == 'overline':
+        if value == 'overline':
             draw_overline(context, textbox)
-        elif keyword == 'underline':
+        elif value == 'underline':
             draw_underline(context, textbox)
-        elif keyword == 'line-through':
+        elif value == 'line-through':
             draw_line_through(context, textbox)
 
 
 def draw_overline(context, textbox):
     """Draw overline of ``textbox`` to a ``cairo.Context``."""
-    font_size = get_single_pixel_value(textbox.style.font_size)
+    font_size = textbox.style.font_size
     position_y = textbox.baseline + textbox.position_y - (font_size * 0.15)
     draw_text_decoration(context, position_y, textbox)
 
 
 def draw_underline(context, textbox):
     """Draw underline of ``textbox`` to a ``cairo.Context``."""
-    font_size = get_single_pixel_value(textbox.style.font_size)
+    font_size = textbox.style.font_size
     position_y = textbox.baseline + textbox.position_y + (font_size * 0.15)
     draw_text_decoration(context, position_y, textbox)
 
@@ -368,9 +357,9 @@ def draw_line_through(context, textbox):
 def draw_text_decoration(context, position_y, textbox):
     """Draw text-decoration of ``textbox`` to a ``cairo.Context``."""
     position_x = textbox.position_x
-    color = textbox.style['color'][0]
+    color = textbox.style.color
     with context.stacked():
-        color = textbox.style['color'][0]
+        color = textbox.style.color
         context.set_source_colorvalue(color)
         context.set_line_width(1)
         context.move_to(position_x, position_y)

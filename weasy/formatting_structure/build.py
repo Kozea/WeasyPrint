@@ -28,7 +28,6 @@ including handling of anonymous boxes and whitespace processing.
 import re
 from . import boxes
 from .. import html
-from ..css.values import get_single_keyword
 
 
 GLYPH_LIST_MARKERS = {
@@ -71,7 +70,7 @@ def dom_to_box(document, element):
     """
     # TODO: should be the used value. When does the used value for `display`
     # differ from the computer value?
-    display = get_single_keyword(document.style_for(element).display)
+    display = document.style_for(element).display
     if display == 'none':
         return None
 
@@ -91,7 +90,7 @@ def dom_to_box(document, element):
             child_box = dom_to_box(document, child_element)
             if child_box is not None:
                 children.append(child_box)
-            # else: child_element had `display: None`
+            # else: child_element had `display: none`
         if child_element.tail:
             children.append(boxes.TextBox(
                 document, element, child_element.tail))
@@ -99,7 +98,7 @@ def dom_to_box(document, element):
     if display in ('block', 'list-item'):
         box = boxes.BlockBox(document, element, children)
         if display == 'list-item':
-            box = create_box_marker(box)
+            box = add_box_marker(box)
     elif display == 'inline':
         box = boxes.InlineBox(document, element, children)
     elif display == 'inline-block':
@@ -111,21 +110,21 @@ def dom_to_box(document, element):
     return box
 
 
-def create_box_marker(box):
+def add_box_marker(box):
     """Return a box with a list marker to elements with ``display: list-item``.
 
     See http://www.w3.org/TR/CSS21/generate.html#lists
 
     """
     image = box.style.list_style_image
-    if get_single_keyword(image) != 'none':
+    if image != 'none':
         # surface may be None here too, in case the image is not available.
-        surface = box.document.get_image_surface_from_uri(image[0].absoluteUri)
+        surface = box.document.get_image_surface_from_uri(image)
     else:
         surface = None
 
     if surface is None:
-        type_ = get_single_keyword(box.style.list_style_type)
+        type_ = box.style.list_style_type
         if type_ == 'none':
             return box
         marker = GLYPH_LIST_MARKERS[type_]
@@ -135,7 +134,7 @@ def create_box_marker(box):
         marker_box = boxes.ImageMarkerBox(
             box.document, box.element, replacement)
 
-    position = get_single_keyword(box.style.list_style_position)
+    position = box.style.list_style_position
     if position == 'inside':
         # U+00A0, NO-BREAK SPACE
         spacer = boxes.TextBox(box.document, box.element, u'\u00a0')
@@ -158,7 +157,7 @@ def process_whitespace(box):
 
         # TODO: find a way to do less decoding and re-encoding
         text = child.utf8_text.decode('utf8')
-        handling = get_single_keyword(child.style.white_space)
+        handling = child.style.white_space
 
         if handling in ('normal', 'nowrap', 'pre-line'):
             text = re.sub('[\t\r ]*\n[\t\r ]*', '\n', text)
