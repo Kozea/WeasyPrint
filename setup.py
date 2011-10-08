@@ -28,7 +28,7 @@ setup(
         # Also depends on Pango with introspection
     ],
     test_loader='attest:FancyReporter.test_loader',
-    test_suite='weasy.tests.tests',
+    test_suite='weasy.tests',
     entry_points={
         'console_scripts': [
             'weasyprint = weasy:main',
