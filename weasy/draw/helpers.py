@@ -363,6 +363,7 @@ def draw_text_decoration(context, position_y, textbox):
         context.set_source_colorvalue(color)
         context.set_line_width(1)
         context.move_to(position_x, position_y)
-        offset = textbox.extents.width - textbox.extents.x
+#        offset = textbox.extents.width - textbox.extents.x
+        offset = textbox.width  # TODO: Is this the same as commented above?
         context.line_to(position_x + offset, position_y)
         context.stroke()

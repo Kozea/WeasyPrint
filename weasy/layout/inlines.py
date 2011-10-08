@@ -217,24 +217,6 @@ def compute_inlinebox_dimensions(inlinebox, containing_block):
     inlinebox.height = max(heights)
 
 
-def compute_textbox_dimensions(textbox):
-    """Compute the width, the height and the baseline of the ``textbox``."""
-    assert isinstance(textbox, boxes.TextBox)
-    font_size = textbox.style.font_size
-    if font_size == 0:
-        # Pango crashes with font-size: 0 ...
-        textbox.width, textbox.height = 0, 0
-        textbox.baseline = 0
-        textbox.extents = (0, 0, 0, 0)
-        textbox.logical_extents = (0, 0, 0, 0)
-    else:
-        text_fragment = TextFragment(textbox.utf8_text, textbox.style,
-            context=cairo.Context(textbox.document.surface))
-        textbox.width, textbox.height = text_fragment.get_size()
-        textbox.baseline = text_fragment.get_baseline()
-        textbox.logical_extents, textbox.extents = text_fragment.get_extents()
-
-
 def compute_atomicbox_dimensions(box, containing_block, device_size):
     """Compute the width and the height of the atomic ``box``."""
     assert isinstance(box, boxes.AtomicInlineLevelBox)
@@ -337,8 +319,6 @@ def split_inline_level(box, available_width, skip_stack, containing_block,
             resume_at = None
         else:
             resume_at = (skip, None)
-        if new_box is not None:
-            compute_textbox_dimensions(new_box)
     elif isinstance(box, boxes.InlineBox):
         resolve_percentages(box, containing_block)
         if box.margin_left == 'auto':
@@ -440,22 +420,28 @@ def split_text_box(textbox, available_width, skip):
         return None, None, False
     fragment = TextFragment(utf8_text, textbox.style,
         cairo.Context(textbox.document.surface), available_width)
-    split = fragment.split_first_line()
-    if split is None:
-        if skip:
-            textbox = textbox.copy_with_text(utf8_text)  # with skip
-        return textbox, None, False
-    first_end, second_start = split
-    preserved_line_break = first_end != second_start
-    if preserved_line_break:
-        between = utf8_text[first_end:second_start]
-        assert between == '\n', ('Got %r between two lines. '
-            'Expected nothing or a preserved line break' % (between,))
-    if first_end > 0:
-        new_textbox = textbox.copy_with_text(utf8_text[:first_end])
+
+    length, width, height, baseline, resume_at = fragment.split_first_line()
+
+    if length > 0:
+        textbox = textbox.copy_with_text(utf8_text[:length])
+        textbox.width = width
+        textbox.height = height
+        textbox.baseline = baseline
     else:
-        new_textbox = None
-    return new_textbox, skip + second_start, preserved_line_break
+        textbox = None
+
+    if resume_at is None:
+        preserved_line_break = False
+    else:
+        preserved_line_break = (length != resume_at)
+        if preserved_line_break:
+            between = utf8_text[length:resume_at]
+            assert between == '\n', ('Got %r between two lines. '
+                'Expected nothing or a preserved line break' % (between,))
+        resume_at += skip
+
+    return textbox, resume_at, preserved_line_break
 
 
 def compute_baseline_positions(box):

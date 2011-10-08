@@ -39,7 +39,7 @@ class TextFragment(object):
         self.layout.set_text(utf8_text, -1)
         self.layout.set_wrap(Pango.WrapMode.WORD)
         if width is not None:
-            self.layout.set_width(int(Pango.SCALE * width))
+            self.layout.set_width(Pango.units_from_double(width))
 
         color = style.color
         attributes = dict(
@@ -48,7 +48,7 @@ class TextFragment(object):
             face=', '.join(style.font_family),
             variant=style.font_variant,
             style=style.font_style,
-            size=int(style.font_size * Pango.SCALE),
+            size=Pango.units_from_double(style.font_size),
             weight=int(style.font_weight),
             # Alignments and backgrounds are not handled by Pango.
 
@@ -58,8 +58,8 @@ class TextFragment(object):
             fallback='true',
         )
         if style.letter_spacing != 'normal':
-            attributes['letter_spacing'] = int(
-                style.letter_spacing * Pango.SCALE)
+            attributes['letter_spacing'] = Pango.units_from_double(
+                style.letter_spacing)
 
         # TODO: use an AttrList when it is available with introspection
         attributes = ' '.join(
@@ -75,36 +75,33 @@ class TextFragment(object):
         PangoCairo.update_layout(context, self.layout)
         PangoCairo.show_layout(context, self.layout)
 
-    def get_size(self):
-        """Get the real text area size in pixels."""
-        return self.layout.get_pixel_size()
-
     # TODO: use get_line instead of get_lines when it is not broken anymore
     def split_first_line(self):
-        """Return ``(first_line, remaining_text)``.
+        """Fit as much as possible in the available width for one line of text.
 
-        ``remaining_text`` may be None if the whole text fits on
-        the first line.
+        Return ``(length, width, height, resume_at)``.
+
+        ``length``: length in UTF-8 bytes of the first line
+        ``width``: width in pixels of the first line
+        ``height``: height in pixels of the first line
+        ``baseline``: baseline in pixels of the first line
+        ``resume_at``: The number of UTF-8 bytes to skip for the next line.
+                       May be ``None`` if the whole text fits in one line.
+                       This may be greater than ``length`` in case of preserved
+                       newline characters.
 
         """
         lines = self.layout.get_lines()
-        if len(lines) >= 2:
-            # Preserved new-line characters are between these two indexes.
-            # We don’t want them in either of the returned strings.
-            return lines[0].length, lines[1].start_index
-
-    def get_extents(self):
-        """Return ``(logical_extents, ink_extents)``.
-
-        The size of the logical and ink areas occupied by the text.
-
-        """
-        return self.layout.get_lines()[0].get_pixel_extents()
-
-    def get_baseline(self):
-        """Get the baseline of the text."""
-        # TODO: use introspection to get the descent
+        first_line = lines[0]
+        length = first_line.length
+        _ink_extents, logical_extents = first_line.get_extents()
+        width = Pango.units_to_double(logical_extents.width)
+        height = Pango.units_to_double(logical_extents.height)
         context = self.layout.get_context()
         descent = context.get_metrics(None, None).get_descent()
-        _width, height = self.get_size()
-        return height - descent / Pango.SCALE
+        baseline = height - Pango.units_to_double(descent)
+        if len(lines) >= 2:
+            resume_at = lines[1].start_index
+        else:
+            resume_at = None
+        return length, width, height, baseline, resume_at

@@ -758,7 +758,6 @@ def test_page_and_linebox_breaking():
 @SUITE.test
 def test_whitespace_processing():
     for source in ['a', '  a  ', ' \n  \ta', ' a\t ']:
-        print
         page, = parse('<p><em>%s</em></p>' % source)
         html = page.root_box
         body, = html.children
@@ -768,7 +767,6 @@ def test_whitespace_processing():
         text, = em.children
         assert text.utf8_text == b'a', 'source was %r' % (source,)
 
-        print
         page, = parse('<p style="white-space: pre-line">\n\n<em>%s</em></pre>'
             % source.replace('\n', ' '))
         html = page.root_box

@@ -53,19 +53,19 @@ def test_line_content():
         text = 'This is a text for test'
         line = make_text(
             text, width, 'font-family: "%s"; font-size: 19px' % FONTS)
-        index1, index2 = line.split_first_line()
-        assert text[index2:] == remaining
-        assert index1 == index2
+        length, _width, _height, _baseline, resume_at = line.split_first_line()
+        assert text[resume_at:] == remaining
+        assert length == resume_at
 
 
 @SUITE.test
 def test_line_with_any_width():
     """Test the auto-fit width of lines."""
     line = make_text(u'some text')
-    width, _height = line.get_size()
+    _, width, _, _, _ = line.split_first_line()
 
     line = make_text('some some some text some some some text')
-    new_width, _height = line.get_size()
+    _, new_width, _, _, _ = line.split_first_line()
 
     assert width < new_width
 
@@ -77,16 +77,16 @@ def test_line_breaking():
 
     # These two tests do not really rely on installed fonts
     line = make_text(string, 120, 'font-size: 1px')
-    split = line.split_first_line()
-    assert split == None
+    _length, _width, _height, _baseline, resume_at = line.split_first_line()
+    assert resume_at is None
 
     line = make_text(string, 120, 'font-size: 100px')
-    index1, index2 = line.split_first_line()
-    assert string[index2:] == u'is a text for test'
+    _length, _width, _height, _baseline, resume_at = line.split_first_line()
+    assert string[resume_at:] == u'is a text for test'
 
     line = make_text(string, 120, 'font-family: "%s"; font-size: 19px' % FONTS)
-    index1, index2 = line.split_first_line()
-    assert string[index2:] == u'text for test'
+    _length, _width, _height, _baseline, resume_at = line.split_first_line()
+    assert string[resume_at:] == u'text for test'
 
 
 @SUITE.test
@@ -94,11 +94,11 @@ def test_text_dimension():
     """Test the font size impact on the text dimension."""
     string = u'This is a text for test. This is a test for text.py'
     fragment = make_text(string, 200, 'font-size: 12px')
-    dimension = list(fragment.get_size())
+    _, width_1, height_1, _, _ = fragment.split_first_line()
 
     fragment = make_text(string, 200, 'font-size: 20px')
-    new_dimension = list(fragment.get_size())
-    assert dimension[0] * dimension[1] < new_dimension[0] * new_dimension[1]
+    _, width_2, height_2, _, _ = fragment.split_first_line()
+    assert width_1 * height_1 < width_2 * height_2
 
 
 @SUITE.test
