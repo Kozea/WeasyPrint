@@ -21,8 +21,6 @@ Utility functions and methods used by various modules in the css package.
 
 """
 
-from cssutils.css import Value, DimensionValue
-
 
 def get_keyword(value):
     """If ``value`` is a keyword, return its name.
