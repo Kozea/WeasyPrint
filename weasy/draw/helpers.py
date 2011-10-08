@@ -322,7 +322,7 @@ def draw_text(context, textbox):
     if font_size == 0:
         return
 
-    context.move_to(textbox.position_x, textbox.position_y)
+    context.move_to(textbox.position_x, textbox.position_y + textbox.baseline)
     textbox.show_line(context)
     values = textbox.style.text_decoration
     for value in values:
