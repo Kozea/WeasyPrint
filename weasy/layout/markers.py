@@ -43,7 +43,7 @@ def list_marker_layout(box, containing_block):
             text_fragment = TextFragment(marker.utf8_text, marker.style,
                 context=cairo.Context(marker.document.surface))
             result = text_fragment.split_first_line()
-            _, marker.width, marker.height, _, _ = result
+            marker.show_line, _, marker.width, marker.height, _, _ = result
         else:
             # Image marker
             marker.width, marker.height = list_style_image_size(marker)

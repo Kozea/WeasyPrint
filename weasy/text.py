@@ -70,17 +70,14 @@ class TextFragment(object):
         _, attributes_list, _, _ = Pango.parse_markup(markup, -1, '\x00')
         self.layout.set_attributes(attributes_list)
 
-    def show_layout(self, context):
-        """Draw the text to the Cairo ``context``."""
-        PangoCairo.update_layout(context, self.layout)
-        PangoCairo.show_layout(context, self.layout)
-
     # TODO: use get_line instead of get_lines when it is not broken anymore
     def split_first_line(self):
         """Fit as much as possible in the available width for one line of text.
 
-        Return ``(length, width, height, resume_at)``.
+        Return ``(show_line, length, width, height, resume_at)``.
 
+        ``show_line``: a closure that takes a cairo Context and draws the
+                       first line.
         ``length``: length in UTF-8 bytes of the first line
         ``width``: width in pixels of the first line
         ``height``: height in pixels of the first line
@@ -104,4 +101,10 @@ class TextFragment(object):
             resume_at = lines[1].start_index
         else:
             resume_at = None
-        return length, width, height, baseline, resume_at
+
+        def show_line(context):
+            """Draw the given ``line`` to the Cairo ``context``."""
+            PangoCairo.update_layout(context, self.layout)
+            PangoCairo.show_layout_line(context, first_line)
+
+        return show_line, length, width, height, baseline, resume_at

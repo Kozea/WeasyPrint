@@ -421,13 +421,15 @@ def split_text_box(textbox, available_width, skip):
     fragment = TextFragment(utf8_text, textbox.style,
         cairo.Context(textbox.document.surface), available_width)
 
-    length, width, height, baseline, resume_at = fragment.split_first_line()
+    show_line, length, width, height, baseline, resume_at = \
+        fragment.split_first_line()
 
     if length > 0:
         textbox = textbox.copy_with_text(utf8_text[:length])
         textbox.width = width
         textbox.height = height
         textbox.baseline = baseline
+        textbox.show_line = show_line
     else:
         textbox = None
 
