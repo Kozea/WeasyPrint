@@ -344,7 +344,7 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None):
     if not cascaded and parent_style is not None:
         # Fast path for anonymous boxes:
         # no cascaded style, only implicitly initial or inherited values.
-        computed = computed_values.StyleDict(properties.INITIAL_VALUES)
+        computed = computed_values.StyleDict(parent=properties.INITIAL_VALUES)
         for name in properties.INHERITED:
             computed[name] = parent_style[name]
         # border-style is none, so border-width computes to zero.

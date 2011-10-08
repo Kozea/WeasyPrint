@@ -150,9 +150,9 @@ class StyleDict(object):
         object.__setattr__(self, '_parent', parent or {})
 
     def __getitem__(self, key):
-        try:
+        if key in self._storage:
             return self._storage[key]
-        except KeyError:
+        else:
             return self._parent[key]
 
     def __setitem__(self, key, value):
@@ -161,14 +161,8 @@ class StyleDict(object):
     def __contains__(self, key):
         return key in self._storage or key in self._parent
 
-    def __getattr__(self, key):
-        try:
-            return self[key]
-        except KeyError:
-            raise AttributeError(key)
-
-    def __setattr__(self, key, value):
-        self[key] = value
+    __getattr__ = __getitem__  # May raise KeyError instead of AttributeError
+    __setattr__ = __setitem__
 
     def copy(self):
         """Copy the ``StyleDict``.
@@ -379,8 +373,8 @@ def display(computer, name, value):
     See http://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
 
     """
-    float_ = computer.specified['float']
-    position = computer.specified['position']
+    float_ = computer.specified.float
+    position = computer.specified.position
     if position in ('absolute', 'fixed') or float_ != 'none' or \
             computer.parent_style is None:
         if value == 'inline-table':
@@ -400,7 +394,7 @@ def compute_float(computer, name, value):
     See http://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
 
     """
-    position = computer.specified['position']
+    position = computer.specified.position
     if position in ('absolute', 'fixed'):
         return 'none'
     else:

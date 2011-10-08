@@ -51,7 +51,7 @@ def test_style_dict():
         'display': 'block'})
     assert style.display == 'block'
     assert style.margin_left == 12
-    with raises(AttributeError):
+    with raises(KeyError):
         style.position  # pylint: disable=W0104
 
 
@@ -184,7 +184,7 @@ def test_annotate_document():
     assert (color.red, color.green, color.blue, color.alpha) == (255, 0, 0, 1)
 
     # The href attr should be as in the source, not made absolute.
-    assert ''.join(v.value for v in after['content']) == ' [home.html]'
+    assert ''.join(v.value for v in after.content) == ' [home.html]'
 
     # TODO much more tests here: test that origin and selector precedence
     # and inheritance are correct, ...
