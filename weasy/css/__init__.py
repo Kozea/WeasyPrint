@@ -175,7 +175,7 @@ def effective_declarations(declaration_block):
     """
     for declaration in declaration_block.getProperties(all=True):
         for name, values in validation.validate_and_expand(
-                declaration.name,
+                declaration.name.replace('-', '_'),
                 # list() may call len(), which is slow on PropertyValue
                 # Use iter() to avoid this.
                 list(iter(declaration.propertyValue))):
@@ -351,7 +351,7 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None):
         # Other than that, properties that would need computing are
         # border-color and size, but they do not apply.
         for side in ('top', 'bottom', 'left', 'right'):
-            computed['border-%s-width' % side] = 0
+            computed['border_%s_width' % side] = 0
         return computed
 
     # Handle inheritance and initial values

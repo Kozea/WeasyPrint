@@ -54,7 +54,7 @@ def resolve_one_percentage(box, property_name, refer_to,
             result = values
             assert allowed_keywords and result in allowed_keywords
     # box attributes are used values
-    setattr(box, property_name.replace('-', '_'), result)
+    setattr(box, property_name, result)
 
 
 def resolve_percentages(box, containing_block):
@@ -66,17 +66,17 @@ def resolve_percentages(box, containing_block):
         maybe_height = cb_height
     else:
         maybe_height = cb_width
-    resolve_one_percentage(box, 'margin-left', cb_width, ['auto'])
-    resolve_one_percentage(box, 'margin-right', cb_width, ['auto'])
-    resolve_one_percentage(box, 'margin-top', maybe_height, ['auto'])
-    resolve_one_percentage(box, 'margin-bottom', maybe_height, ['auto'])
-    resolve_one_percentage(box, 'padding-left', cb_width)
-    resolve_one_percentage(box, 'padding-right', cb_width)
-    resolve_one_percentage(box, 'padding-top', maybe_height)
-    resolve_one_percentage(box, 'padding-bottom', maybe_height)
-    resolve_one_percentage(box, 'text-indent', cb_width)
-    resolve_one_percentage(box, 'min-width', cb_width)
-    resolve_one_percentage(box, 'max-width', cb_width, ['none'])
+    resolve_one_percentage(box, 'margin_left', cb_width, ['auto'])
+    resolve_one_percentage(box, 'margin_right', cb_width, ['auto'])
+    resolve_one_percentage(box, 'margin_top', maybe_height, ['auto'])
+    resolve_one_percentage(box, 'margin_bottom', maybe_height, ['auto'])
+    resolve_one_percentage(box, 'padding_left', cb_width)
+    resolve_one_percentage(box, 'padding_right', cb_width)
+    resolve_one_percentage(box, 'padding_top', maybe_height)
+    resolve_one_percentage(box, 'padding_bottom', maybe_height)
+    resolve_one_percentage(box, 'text_indent', cb_width)
+    resolve_one_percentage(box, 'min_width', cb_width)
+    resolve_one_percentage(box, 'max_width', cb_width, ['none'])
     resolve_one_percentage(box, 'width', cb_width, ['auto'])
 
     # TODO: background-position?
@@ -85,12 +85,12 @@ def resolve_percentages(box, containing_block):
     if cb_height == 'auto':
         # Special handling when the height of the containing block
         # depends on its content.
-        resolve_one_percentage(box, 'min-height', 0)
-        resolve_one_percentage(box, 'max-height', None, ['none'])
+        resolve_one_percentage(box, 'min_height', 0)
+        resolve_one_percentage(box, 'max_height', None, ['none'])
         resolve_one_percentage(box, 'height', 'auto', ['auto'])
     else:
-        resolve_one_percentage(box, 'min-height', cb_height)
-        resolve_one_percentage(box, 'max-height', cb_height, ['none'])
+        resolve_one_percentage(box, 'min_height', cb_height)
+        resolve_one_percentage(box, 'max_height', cb_height, ['none'])
         resolve_one_percentage(box, 'height', cb_height, ['auto'])
 
     # Used value == computed value

@@ -43,34 +43,34 @@ def expand_to_dict(short_name, short_values):
 def test_expand_four_sides():
     """Test the 4-value properties."""
     assert expand_to_dict('margin', 'inherit') == {
-        'margin-top': 'inherit',
-        'margin-right': 'inherit',
-        'margin-bottom': 'inherit',
-        'margin-left': 'inherit',
+        'margin_top': 'inherit',
+        'margin_right': 'inherit',
+        'margin_bottom': 'inherit',
+        'margin_left': 'inherit',
     }
     assert expand_to_dict('margin', '1em') == {
-        'margin-top': '1em',
-        'margin-right': '1em',
-        'margin-bottom': '1em',
-        'margin-left': '1em',
+        'margin_top': '1em',
+        'margin_right': '1em',
+        'margin_bottom': '1em',
+        'margin_left': '1em',
     }
     assert expand_to_dict('padding', '1em 0') == {
-        'padding-top': '1em',
-        'padding-right': '0',
-        'padding-bottom': '1em',
-        'padding-left': '0',
+        'padding_top': '1em',
+        'padding_right': '0',
+        'padding_bottom': '1em',
+        'padding_left': '0',
     }
     assert expand_to_dict('padding', '1em 0 2em') == {
-        'padding-top': '1em',
-        'padding-right': '0',
-        'padding-bottom': '2em',
-        'padding-left': '0',
+        'padding_top': '1em',
+        'padding_right': '0',
+        'padding_bottom': '2em',
+        'padding_left': '0',
     }
     assert expand_to_dict('padding', '1em 0 2em 5px') == {
-        'padding-top': '1em',
-        'padding-right': '0',
-        'padding-bottom': '2em',
-        'padding-left': '5px',
+        'padding_top': '1em',
+        'padding_right': '0',
+        'padding_bottom': '2em',
+        'padding_left': '5px',
     }
     with raises(ValueError):
         expand_to_dict('padding', '1 2 3 4 5')
@@ -79,42 +79,42 @@ def test_expand_four_sides():
 @SUITE.test
 def test_expand_borders():
     """Test the ``border`` property."""
-    assert expand_to_dict('border-top', '3px dotted red') == {
-        'border-top-width': '3px',
-        'border-top-style': 'dotted',
-        'border-top-color': 'red',
+    assert expand_to_dict('border_top', '3px dotted red') == {
+        'border_top_width': '3px',
+        'border_top_style': 'dotted',
+        'border_top_color': 'red',
     }
-    assert expand_to_dict('border-top', '3px dotted') == {
-        'border-top-width': '3px',
-        'border-top-style': 'dotted',
-        'border-top-color': 'currentColor',
+    assert expand_to_dict('border_top', '3px dotted') == {
+        'border_top_width': '3px',
+        'border_top_style': 'dotted',
+        'border_top_color': 'currentColor',
     }
-    assert expand_to_dict('border-top', '3px red') == {
-        'border-top-width': '3px',
-        'border-top-style': 'none',
-        'border-top-color': 'red',
+    assert expand_to_dict('border_top', '3px red') == {
+        'border_top_width': '3px',
+        'border_top_style': 'none',
+        'border_top_color': 'red',
     }
-    assert expand_to_dict('border-top', 'inset') == {
-        'border-top-width': 'medium',
-        'border-top-style': 'inset',
-        'border-top-color': 'currentColor',
+    assert expand_to_dict('border_top', 'inset') == {
+        'border_top_width': 'medium',
+        'border_top_style': 'inset',
+        'border_top_color': 'currentColor',
     }
     assert expand_to_dict('border', '6px dashed green') == {
-        'border-top-width': '6px',
-        'border-top-style': 'dashed',
-        'border-top-color': 'green',
+        'border_top_width': '6px',
+        'border_top_style': 'dashed',
+        'border_top_color': 'green',
 
-        'border-left-width': '6px',
-        'border-left-style': 'dashed',
-        'border-left-color': 'green',
+        'border_left_width': '6px',
+        'border_left_style': 'dashed',
+        'border_left_color': 'green',
 
-        'border-bottom-width': '6px',
-        'border-bottom-style': 'dashed',
-        'border-bottom-color': 'green',
+        'border_bottom_width': '6px',
+        'border_bottom_style': 'dashed',
+        'border_bottom_color': 'green',
 
-        'border-right-width': '6px',
-        'border-right-style': 'dashed',
-        'border-right-color': 'green',
+        'border_right_width': '6px',
+        'border_right_style': 'dashed',
+        'border_right_color': 'green',
     }
     with raises(ValueError):
         expand_to_dict('border', '6px dashed left')
@@ -122,35 +122,35 @@ def test_expand_borders():
 
 @SUITE.test
 def test_expand_list_style():
-    """Test the ``list-style`` property."""
-    assert expand_to_dict('list-style', 'inherit') == {
-        'list-style-position': 'inherit',
-        'list-style-image': 'inherit',
-        'list-style-type': 'inherit',
+    """Test the ``list_style`` property."""
+    assert expand_to_dict('list_style', 'inherit') == {
+        'list_style_position': 'inherit',
+        'list_style_image': 'inherit',
+        'list_style_type': 'inherit',
     }
-    assert expand_to_dict('list-style', 'url(foo.png)') == {
-        'list-style-position': 'outside',
-        'list-style-image': 'foo.png',
-        'list-style-type': 'disc',
+    assert expand_to_dict('list_style', 'url(foo.png)') == {
+        'list_style_position': 'outside',
+        'list_style_image': 'foo.png',
+        'list_style_type': 'disc',
     }
-    assert expand_to_dict('list-style', 'square') == {
-        'list-style-position': 'outside',
-        'list-style-image': 'none',
-        'list-style-type': 'square',
+    assert expand_to_dict('list_style', 'square') == {
+        'list_style_position': 'outside',
+        'list_style_image': 'none',
+        'list_style_type': 'square',
     }
-    assert expand_to_dict('list-style', 'circle inside') == {
-        'list-style-position': 'inside',
-        'list-style-image': 'none',
-        'list-style-type': 'circle',
+    assert expand_to_dict('list_style', 'circle inside') == {
+        'list_style_position': 'inside',
+        'list_style_image': 'none',
+        'list_style_type': 'circle',
     }
     with raises(ValueError):
-        expand_to_dict('list-style', 'red')
+        expand_to_dict('list_style', 'red')
 
 
 def assert_background(css, **kwargs):
     """Helper checking the background properties."""
     expanded = expand_to_dict('background', css).items()
-    expected = [('background-' + key, value)
+    expected = [('background_' + key, value)
                 for key, value in kwargs.iteritems()]
     assert sorted(expanded) == sorted(expected)
 
@@ -228,28 +228,28 @@ def test_expand_background():
 @SUITE.test
 def test_font():
     """Test the ``font`` property."""
-    assert expand_to_dict('font', '12px sans-serif') == {
-        'font-style': 'normal',
-        'font-variant': 'normal',
-        'font-weight': 'normal',
-        'font-size': '12px', ##
-        'line-height': 'normal',
-        'font-family': 'sans-serif', ##
+    assert expand_to_dict('font', '12px sans_serif') == {
+        'font_style': 'normal',
+        'font_variant': 'normal',
+        'font_weight': 'normal',
+        'font_size': '12px', ##
+        'line_height': 'normal',
+        'font_family': 'sans_serif', ##
     }
     assert expand_to_dict('font', 'small/1.2 "Some Font", serif') == {
-        'font-style': 'normal',
-        'font-variant': 'normal',
-        'font-weight': 'normal',
-        'font-size': 'small', ##
-        'line-height': '1.2', ##
+        'font_style': 'normal',
+        'font_variant': 'normal',
+        'font_weight': 'normal',
+        'font_size': 'small', ##
+        'line_height': '1.2', ##
         # The comma and quotes were lost in expand_to_dict()
-        'font-family': 'Some Font serif', ##
+        'font_family': 'Some Font serif', ##
     }
     assert expand_to_dict('font', 'small-caps italic 700 large serif') == {
-        'font-style': 'italic', ##
-        'font-variant': 'small-caps', ##
-        'font-weight': 700, ##
-        'font-size': 'large', ##
-        'line-height': 'normal',
-        'font-family': 'serif', ##
+        'font_style': 'italic', ##
+        'font_variant': 'small-caps', ##
+        'font_weight': 700, ##
+        'font_size': 'large', ##
+        'line_height': 'normal',
+        'font_family': 'serif', ##
     }

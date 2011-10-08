@@ -195,9 +195,9 @@ class Box(object):
         setattr(self, 'padding_%s' % side, 0)
         setattr(self, 'border_%s_width' % side, 0)
 
-        self.style['margin-%s' % side] = 0
-        self.style['padding-%s' % side] = 0
-        self.style['border-%s-width' % side] = 0
+        self.style['margin_%s' % side] = 0
+        self.style['padding_%s' % side] = 0
+        self.style['border_%s_width' % side] = 0
 
     # Positioning schemes
 

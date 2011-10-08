@@ -163,12 +163,12 @@ class StyleDict(object):
 
     def __getattr__(self, key):
         try:
-            return self[key.replace('_', '-')]
+            return self[key]
         except KeyError:
             raise AttributeError(key)
 
     def __setattr__(self, key, value):
-        self[key.replace('_', '-')] = value
+        self[key] = value
 
     def copy(self):
         """Copy the ``StyleDict``.
@@ -239,6 +239,7 @@ class Computer(object):
     @classmethod
     def register(cls, name):
         """Decorator registering a property ``name`` for a function."""
+        name = name.replace('-', '_')
         def decorator(function):
             """Register the property ``name`` for ``function``."""
             cls.COMPUTER_FUNCTIONS[name] = function
@@ -270,7 +271,7 @@ def color(computer, name, value):
         if computer.parent_style is None:
             return INITIAL_VALUES['color']
         else:
-            return computer.parent_style['color']
+            return computer.parent_style.color
     else:
         # As specified
         return value
@@ -311,7 +312,7 @@ def length(computer, name, value):
         # Convert absolute lengths to pixels
         factor = LENGTHS_TO_PIXELS[value.dimension]
     elif value.dimension in ('em', 'ex'):
-        factor = computer.get_computed('font-size')
+        factor = computer.get_computed('font_size')
 
     if value.dimension == 'ex':
         factor *= 0.5
@@ -417,7 +418,7 @@ def font_size(computer, name, value):
     else:
         # root element, no parent
         # Initial is 'medium', it’s a keyword.
-        parent_font_size = FONT_SIZE_KEYWORDS[INITIAL_VALUES['font-size']]
+        parent_font_size = FONT_SIZE_KEYWORDS[INITIAL_VALUES['font_size']]
 
     if value.type == 'DIMENSION':
         if value.dimension == 'px':
@@ -448,9 +449,9 @@ def font_weight(computer, name, value):
         return 700
     elif value in ('bolder', 'lighter'):
         if computer.parent_style is not None:
-            parent_value = computer.parent_style['font-weight']
+            parent_value = computer.parent_style.font_weight
         else:
-            initial = get_single_keyword(INITIAL_VALUES['font-weight'])
+            initial = get_single_keyword(INITIAL_VALUES['font_weight'])
             assert initial == 'normal'
             parent_value = 400
         # Use a string here as StyleDict.__setattr__ turns integers into pixel
@@ -474,7 +475,7 @@ def line_height(computer, name, value):
         factor = value.value / 100.
     elif value.type == 'DIMENSION':
         return length(computer, name, value)
-    font_size_value = computer.get_computed('font-size')
+    font_size_value = computer.get_computed('font_size')
     # Raise if `factor` is not defined. It should be, because of validation.
     return factor * font_size_value
 

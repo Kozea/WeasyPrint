@@ -63,9 +63,9 @@ def validator(property_name=None):
     def decorator(function):
         """Add ``function`` to the ``VALIDATORS``."""
         if property_name is None:
-            name = function.__name__.replace('_', '-')
+            name = function.__name__
         else:
-            name = property_name
+            name = property_name.replace('-', '_')
         assert name in INITIAL_VALUES, name
         assert name not in VALIDATORS, name
 
@@ -443,11 +443,13 @@ def size(values):
 
 # Expanders
 
-# Let's be coherent, always use ``name`` as an argument even when it is useless
+# Let's be consistent, always use ``name`` as an argument even
+# when it is useless.
 # pylint: disable=W0613
 
 def expander(property_name):
     """Decorator adding a function to the ``EXPANDERS``."""
+    property_name = property_name.replace('-', '_')
     def expander_decorator(function):
         """Add ``function`` to the ``EXPANDERS``."""
         assert property_name not in EXPANDERS, property_name
@@ -473,8 +475,8 @@ def expand_four_sides(name, values):
     elif len(values) != 4:
         raise InvalidValues(
             'Expected 1 to 4 value components got %i' % len(values))
-    for suffix, value in zip(('-top', '-right', '-bottom', '-left'), values):
-        i = name.rfind('-')
+    for suffix, value in zip(('_top', '_right', '_bottom', '_left'), values):
+        i = name.rfind('_')
         if i == -1:
             new_name = name + suffix
         else:
@@ -495,6 +497,7 @@ def generic_expander(*expanded_names):
     get the initial value.
 
     """
+    expanded_names = [name.replace('-', '_') for name in expanded_names]
     def generic_expander_decorator(wrapped):
         """Decorate the ``wrapped`` expander."""
         @functools.wraps(wrapped)
@@ -513,7 +516,7 @@ def generic_expander(*expanded_names):
                     results[new_name] = new_values
 
             for new_name in expanded_names:
-                if new_name.startswith('-'):
+                if new_name.startswith('_'):
                     # new_name is a suffix
                     actual_new_name = name + new_name
                 else:
@@ -552,23 +555,23 @@ def expand_list_style(name, values):
             continue
 
         if list_style_type([value]) is not None:
-            suffix = '-type'
+            suffix = '_type'
             type_specified = True
         elif list_style_position([value]) is not None:
-            suffix = '-position'
+            suffix = '_position'
         elif image([value]) is not None:
-            suffix = '-image'
+            suffix = '_image'
             image_specified = True
         else:
             raise InvalidValues
         yield suffix, [value]
 
     if not type_specified and none_count:
-        yield '-type', [none_value]
+        yield '_type', [none_value]
         none_count -= 1
 
     if not image_specified and none_count:
-        yield '-image', [none_value]
+        yield '_image', [none_value]
         none_count -= 1
 
     if none_count:
@@ -583,7 +586,7 @@ def expand_border(name, values):
     See http://www.w3.org/TR/CSS21/box.html#propdef-border
 
     """
-    for suffix in ('-top', '-right', '-bottom', '-left'):
+    for suffix in ('_top', '_right', '_bottom', '_left'):
         for new_prop in expand_border_side(name + suffix, values):
             yield new_prop
 
@@ -601,11 +604,11 @@ def expand_border_side(name, values):
     """
     for value in values:
         if color([value]) is not None:
-            suffix = '-color'
+            suffix = '_color'
         elif border_width([value]) is not None:
-            suffix = '-width'
+            suffix = '_width'
         elif border_style([value]) is not None:
-            suffix = '-style'
+            suffix = '_style'
         else:
             raise InvalidValues
         yield suffix, [value]
@@ -632,26 +635,26 @@ def expand_background(name, values):
     while values:
         value = values.pop()
         if color([value]) is not None:
-            suffix = '-color'
+            suffix = '_color'
         elif image([value]) is not None:
-            suffix = '-image'
+            suffix = '_image'
         elif background_repeat([value]) is not None:
-            suffix = '-repeat'
+            suffix = '_repeat'
         elif background_attachment([value]) is not None:
-            suffix = '-attachment'
+            suffix = '_attachment'
         elif background_position([value]):
             if values:
                 next_value = values.pop()
                 if background_position([value, next_value]):
                     # Two consecutive '-position' values, yield them together
-                    yield '-position', [value, next_value]
+                    yield '_position', [value, next_value]
                     continue
                 else:
                     # The next value is not a '-position', put it back
                     # for the next loop iteration
                     values.append(next_value)
             # A single '-position' value
-            suffix = '-position'
+            suffix = '_position'
         else:
             raise InvalidValues
         yield suffix, [value]
@@ -685,11 +688,11 @@ def expand_font(name, values):
             continue
 
         if font_style([value]) is not None:
-            suffix = '-style'
+            suffix = '_style'
         elif font_variant([value]) is not None:
-            suffix = '-variant'
+            suffix = '_variant'
         elif font_weight([value]) is not None:
-            suffix = '-weight'
+            suffix = '_weight'
         else:
             # We’re done with these three, continue with font-size
             break
@@ -699,14 +702,14 @@ def expand_font(name, values):
     # Latest `value` from the loop.
     if font_size([value]) is None:
         raise InvalidValues
-    yield '-size', [value]
+    yield '_size', [value]
 
     # Then line-height is optional, but font-family is not so the list
     # must not be empty yet
 
     value = values.pop()
     if line_height([value]) is not None:
-        yield 'line-height', [value]
+        yield 'line_height', [value]
     else:
         # We pop()ed a font-family, add it back
         values.append(value)
@@ -715,7 +718,7 @@ def expand_font(name, values):
     values.reverse()
     if font_family(values) is None:
         raise InvalidValues
-    yield '-family', values
+    yield '_family', values
 
 
 def validate_non_shorthand(name, values, required=False):

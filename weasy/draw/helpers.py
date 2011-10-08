@@ -275,8 +275,8 @@ def draw_border(context, box):
         width = getattr(box, 'border_%s_width' % side)
         if width == 0:
             return
-        color = box.style['border-%s-color' % side]
-        style = box.style['border-%s-style' % side]
+        color = box.style['border_%s_color' % side]
+        style = box.style['border_%s_style' % side]
         if color.alpha > 0:
             with context.stacked():
                 # TODO: implement other styles.

@@ -17,8 +17,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
-    Expand shorthand properties.
-    eg. margin becomes margin-top, margin-right, margin-bottom and margin-left.
+    Data about known CSS properties.
 """
 
 
@@ -29,7 +28,7 @@ def _parse(css):
 
 
 # See http://www.w3.org/TR/CSS21/propidx.html
-INITIAL_VALUES = {
+INITIAL_VALUES = dict((key.replace('-', '_'), value) for key, value in {
     'background-attachment': 'scroll',
     'background-color': _parse('transparent')[0],
     'background-image': 'none',
@@ -112,10 +111,10 @@ INITIAL_VALUES = {
 
     # CSS3 Paged Media: http://www.w3.org/TR/css3-page/#page-size
     'size': _parse('auto'),
-}
+}.iteritems())
 
 # Not applicable to the print media
-NOT_PRINT_MEDIA = set([
+NOT_PRINT_MEDIA = set(name.replace('-', '_') for name in [
     # Aural media:
     'azimuth',
     'cue',
@@ -151,7 +150,7 @@ NOT_PRINT_MEDIA = set([
 #
 # text-decoration is not a really inherited, see
 # http://www.w3.org/TR/CSS2/text.html#propdef-text-decoration
-INHERITED = set("""
+INHERITED = set(name.replace('-', '_') for name in """
     border-collapse
     border-spacing
     caption-side

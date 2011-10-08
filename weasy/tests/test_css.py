@@ -47,7 +47,7 @@ def parse_html(filename, **kwargs):
 def test_style_dict():
     """Test a style in a ``dict``."""
     style = css.computed_values.StyleDict({
-        'margin-left': 12,
+        'margin_left': 12,
         'display': 'block'})
     assert style.display == 'block'
     assert style.margin_left == 12
@@ -93,11 +93,11 @@ def test_expand_shorthands():
         for name, (value, _priority) in css.effective_declarations(style))
 
     assert 'margin' not in style
-    assert style['margin-top'] == '2em'
-    assert style['margin-right'] == '0'
-    assert style['margin-bottom'] == '2em', \
+    assert style['margin_top'] == '2em'
+    assert style['margin_right'] == '0'
+    assert style['margin_bottom'] == '2em', \
         '3em was before the shorthand, should be masked'
-    assert style['margin-left'] == '4em', \
+    assert style['margin_left'] == '4em', \
         '4em was after the shorthand, should not be masked'
 
 
