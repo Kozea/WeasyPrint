@@ -38,5 +38,6 @@ setup(
         'console_scripts': [
             'weasyprint = weasy:main',
         ],
-    }
+    },
+    use_2to3=True
 )

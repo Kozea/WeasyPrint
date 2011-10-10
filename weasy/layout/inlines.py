@@ -74,7 +74,7 @@ def skip_first_whitespace(box, skip_stack):
             # Starting a the end of the TextBox, no text to see: Continue
             return 'continue'
         if white_space in ('normal', 'nowrap', 'pre-line'):
-            while index < length and box.utf8_text[index] == ' ':
+            while index < length and box.utf8_text[index] == b' ':
                 index += 1
         return index, None
 
@@ -100,7 +100,7 @@ def remove_last_whitespace(box):
     if isinstance(box, boxes.TextBox):
         white_space = box.style.white_space
         if white_space in ('normal', 'nowrap', 'pre-line'):
-            box.utf8_text = box.utf8_text.rstrip(' ')
+            box.utf8_text = box.utf8_text.rstrip(b' ')
 
     # TODO: All tabs (U+0009) are rendered as a horizontal shift that
     # lines up the start edge of the next glyph with the next tab stop.
@@ -285,7 +285,7 @@ def is_empty_line(linebox):
     num_textbox = 0
     for child in linebox.descendants():
         if isinstance(child, boxes.TextBox):
-            if child.utf8_text.strip(' '):
+            if child.utf8_text.strip(b' '):
                 return False
             num_textbox += 1
     return num_textbox == len(linebox.children)
@@ -439,7 +439,7 @@ def split_text_box(textbox, available_width, skip):
         preserved_line_break = (length != resume_at)
         if preserved_line_break:
             between = utf8_text[length:resume_at]
-            assert between == '\n', ('Got %r between two lines. '
+            assert between == b'\n', ('Got %r between two lines. '
                 'Expected nothing or a preserved line break' % (between,))
         resume_at += skip
 

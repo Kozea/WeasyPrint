@@ -57,10 +57,21 @@ def urllib_fetcher(url):
     support for the "data" URL scheme.
 
     """
-    result = urllib.urlopen(url)
+    result = urllib.FancyURLopener().open(url)
     info = result.info()
-    if info.gettype() != 'text/css':
+    if hasattr(info, 'get_content_type'):
+        # Python 3
+        mime_type = info.get_content_type()
+    else:
+        # Python 2
+        mime_type = info.gettype()
+    if mime_type != 'text/css':
         # TODO: add a warning
         return None
-    charset = info.getparam('charset')
+    if hasattr(info, 'get_param'):
+        # Python 3
+        charset = info.get_param('charset')
+    else:
+        # Python 2
+        charset = info.getparam('charset')
     return charset, result.read()

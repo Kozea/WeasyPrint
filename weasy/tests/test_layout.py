@@ -463,8 +463,8 @@ def test_linebox_text():
     lines = list(paragraph.children)
     assert len(lines) == 2
 
-    text = ' '.join(
-        (''.join(box.utf8_text for box in line.descendants()
+    text = b' '.join(
+        (b''.join(box.utf8_text for box in line.descendants()
                  if isinstance(box, boxes.TextBox)))
         for line in lines)
     assert text == b'Lorem Ipsumis very coool'
@@ -583,7 +583,7 @@ def test_inlinebox_spliting():
 
     def get_joined_text(parts):
         """Get the joined text from ``parts``."""
-        return ''.join(part.children[0].utf8_text for part in parts)
+        return b''.join(part.children[0].utf8_text for part in parts)
 
     def test_inlinebox_all_spacing(inlinebox, value):
         """Test the spacing for the four sides of ``inlinebox``."""
@@ -688,13 +688,13 @@ def test_inlinebox_text_after_spliting():
 
     def get_full_text(inlinebox):
         """Get the full text in ``inlinebox``."""
-        return ''.join(
+        return b''.join(
             part.utf8_text for part in inlinebox.descendants()
             if isinstance(part, boxes.TextBox))
 
     def get_joined_text(parts):
         """Get the joined text from ``parts``."""
-        return ''.join(get_full_text(part) for part in parts)
+        return b''.join(get_full_text(part) for part in parts)
 
     content = '''<strong><em><em><em>
                   0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
@@ -734,7 +734,7 @@ def test_page_and_linebox_breaking():
             for child in line.descendants():
                 if isinstance(child, boxes.TextBox):
                     line_texts.append(child.utf8_text)
-            texts.append(u''.join(line_texts))
+            texts.append(b''.join(line_texts))
         return texts
 
     def get_joined_text(pages):
@@ -746,7 +746,7 @@ def test_page_and_linebox_breaking():
             div, = body.children
             lines = div.children
             texts.extend(get_full_text(lines))
-        return u' '.join(texts)
+        return b' '.join(texts)
 
     content = u'1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15'
 

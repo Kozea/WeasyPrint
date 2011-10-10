@@ -40,8 +40,14 @@ SUPPORTED_IMAGES = ['image/png', 'image/gif', 'image/jpeg', 'image/bmp']
 
 def get_image_surface_from_uri(uri):
     """Get a :class:`cairo.ImageSurface`` from an image URI."""
-    fileimage = urllib.urlopen(uri)
-    mime_type = fileimage.info().gettype()
+    fileimage = urllib.FancyURLopener().open(uri)
+    info = fileimage.info()
+    if hasattr(info, 'get_content_type'):
+        # Python 3
+        mime_type = info.get_content_type()
+    else:
+        # Python 2
+        mime_type = info.gettype()
     # TODO: implement image type sniffing?
     # http://www.w3.org/TR/html5/fetching-resources.html#content-type-sniffing:-image
     if mime_type in SUPPORTED_IMAGES:

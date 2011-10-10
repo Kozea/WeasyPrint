@@ -42,6 +42,7 @@ def make_text(text, width=-1, style=''):
         + style)))
     style = computed_from_cascaded(None, style, None)
     surface = cairo.SVGSurface(None, 1, 1)
+    text = text.encode('utf8')
     return TextFragment(text, style, cairo.Context(surface), width)
 
 

@@ -35,8 +35,8 @@ class TextFragment(object):
     """
     def __init__(self, utf8_text, style, context, width=-1):
         self.layout = PangoCairo.create_layout(context)
-        # Pango works on bytes
-        self.layout.set_text(utf8_text, -1)
+        unicode_text = utf8_text.decode('utf8')
+        self.layout.set_text(unicode_text, -1)
         self.layout.set_wrap(Pango.WrapMode.WORD)
         if width is not None:
             self.layout.set_width(Pango.units_from_double(width))
@@ -64,9 +64,9 @@ class TextFragment(object):
         # TODO: use an AttrList when it is available with introspection
         attributes = ' '.join(
             u'%s="%s"' % (key, value)
-            for key, value in attributes.iteritems()).encode('utf8')
-        text = utf8_text.replace('&', '&amp;').replace('<', '&lt;')
-        markup = ('<span %s>%s</span>' % (attributes, text))
+            for key, value in attributes.iteritems())
+        text = unicode_text.replace('&', '&amp;').replace('<', '&lt;')
+        markup = u'<span %s>%s</span>' % (attributes, text)
         _, attributes_list, _, _ = Pango.parse_markup(markup, -1, '\x00')
         self.layout.set_attributes(attributes_list)
 
