@@ -8,7 +8,7 @@ See the documentation at http://weasyprint.org/
 
 """
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name='WeasyPrint',
@@ -17,7 +17,12 @@ setup(
     license='GNU Affero General Public License',
     description='WeasyPrint converts web documents to PDF.',
     long_description=__doc__,
-    packages=['weasy'],
+    packages=find_packages(),
+    package_data={
+        'weasy.tests': ['resources/*',
+                        # Make sure the directories are created
+                        '*_results/.gitignore'],
+        'weasy.html': ['*.css']},
     zip_safe=False,
     install_requires=[
         'lxml',
