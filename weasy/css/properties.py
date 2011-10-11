@@ -61,7 +61,7 @@ INITIAL_VALUES = dict((key.replace('-', '_'), value) for key, value in {
     'display': 'inline',
     'empty-cells': 'show',
     'float': 'none',
-    'font-family': 'serif', # depends on user agent
+    'font-family': ['serif'], # depends on user agent
     'font-size': 'medium',
     'font-style': 'normal',
     'font-variant': 'normal',
