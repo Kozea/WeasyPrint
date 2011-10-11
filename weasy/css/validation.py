@@ -706,6 +706,8 @@ def expand_font(name, values):
 
     # Then line-height is optional, but font-family is not so the list
     # must not be empty yet
+    if not values:
+        raise InvalidValues
 
     value = values.pop()
     if line_height([value]) is not None:

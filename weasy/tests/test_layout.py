@@ -722,7 +722,9 @@ def test_page_and_linebox_breaking():
                 @page { size: 100px; margin:2px; border:1px solid }
                 body { margin: 0 }
                 </style>
-                <div>%(content)s</div>'''
+                <div><span/>%(content)s</div>'''
+                # The empty <span/> above tests a corner case
+                # in skip_first_whitespace()
         page = page % {'fonts': FONTS, 'content': content}
         return parse(page)
 

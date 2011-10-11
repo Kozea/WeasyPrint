@@ -79,6 +79,8 @@ def skip_first_whitespace(box, skip_stack):
         return index, None
 
     if isinstance(box, (boxes.LineBox, boxes.InlineBox)):
+        if index == 0 and not box.children:
+            return None
         result = skip_first_whitespace(box.children[index], next_skip_stack)
         if result == 'continue':
             index += 1

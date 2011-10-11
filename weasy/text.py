@@ -43,8 +43,12 @@ class TextFragment(object):
         attributes = dict(
             # TODO: somehow handle color.alpha
             color='#%02x%02x%02x' % (color.red, color.green, color.blue),
-            face=', '.join(style.font_family),
-            variant=style.font_variant,
+            # Other than 'face', values are numbers or known keyword and don’t
+            # need escaping.
+            face=', '.join(style.font_family)
+                .replace('&', '&amp;').replace('"', '&quot;'),
+            # CSS: small-caps, Pango: smallcaps
+            variant=style.font_variant.replace('-', ''),
             style=style.font_style,
             size=Pango.units_from_double(style.font_size),
             weight=int(style.font_weight),
