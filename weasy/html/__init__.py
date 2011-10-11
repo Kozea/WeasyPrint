@@ -157,11 +157,10 @@ class Replacement(object):
 
     def intrinsic_ratio(self):
         """Intrinsic ratio if defined."""
-        if (self.intrinsic_width() is not None and
-            self.intrinsic_width() != 0 and
-            self.intrinsic_height() is not None and
-            self.intrinsic_height() != 0):
-            return self.intrinsic_width() / self.intrinsic_height()
+        width = self.intrinsic_width()
+        height = self.intrinsic_height()
+        if (width is not None and height is not None and height != 0):
+            return width / height
 
 
 class ImageReplacement(Replacement):
@@ -171,6 +170,7 @@ class ImageReplacement(Replacement):
 
     """
     def __init__(self, surface):
+        assert surface
         self.surface = surface
 
     def intrinsic_width(self):
@@ -181,10 +181,5 @@ class ImageReplacement(Replacement):
 
     def draw(self, context):
         """Draw the element on the Cairo context."""
-        if not self.surface:
-            # TODO Draw the alternative text ?
-            pass
-        else:
-            pattern = cairo.SurfacePattern(self.surface)
-            context.set_source(pattern)
-            context.paint()
+        context.set_source_surface(self.surface)
+        context.paint()

@@ -198,9 +198,8 @@ def draw_background(context, box, clip=True):
             context.rectangle(clip_x1, clip_y1, clip_width, clip_height)
             context.clip()
 
-        pattern = cairo.SurfacePattern(surface)
-        pattern.set_extend(cairo.EXTEND_REPEAT)
-        context.set_source(pattern)
+        context.set_source_surface(surface)
+        context.get_source().set_extend(cairo.EXTEND_REPEAT)
         context.paint()
 
 

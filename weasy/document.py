@@ -194,10 +194,8 @@ class PNGDocument(Document):
         position_y = 0
         for width, height, page_surface in pages:
             position_x = (max_width - width) // 2
-            with context.stacked():
-                context.translate(position_x, position_y)
-                context.set_source(cairo.SurfacePattern(page_surface))
-                context.paint()
+            context.set_source_surface(page_surface, position_x, position_y)
+            context.paint()
             position_y += height
 
         surface.write_to_png(target)
