@@ -146,12 +146,14 @@ class StyleDict(object):
             data = {}
         else:
             data = dict(data)
+        # work around our own __setattr__
         object.__setattr__(self, '_storage', data)
         object.__setattr__(self, '_parent', parent or {})
 
     def __getitem__(self, key):
-        if key in self._storage:
-            return self._storage[key]
+        storage = self._storage
+        if key in storage:
+            return storage[key]
         else:
             return self._parent[key]
 
@@ -159,7 +161,7 @@ class StyleDict(object):
         self._storage[key] = value
 
     def __contains__(self, key):
-        return key in self._storage or key in self._parent
+        return key in self._parent or key in self._storage
 
     __getattr__ = __getitem__  # May raise KeyError instead of AttributeError
     __setattr__ = __setitem__
@@ -173,7 +175,11 @@ class StyleDict(object):
         copy.
 
         """
-        return type(self)(parent=self)
+        if self._storage:
+            parent = self
+        elif self._parent:
+            parent = self._parent
+        return type(self)(parent=parent)
 
 
 class Computer(object):

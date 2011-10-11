@@ -92,7 +92,7 @@ class TextFragment(object):
                        newline characters.
 
         """
-        lines = self.layout.get_lines()
+        lines = self.layout.get_lines_readonly()
         first_line = lines[0]
         length = first_line.length
         _ink_extents, logical_extents = first_line.get_extents()
