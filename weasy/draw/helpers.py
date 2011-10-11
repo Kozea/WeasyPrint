@@ -323,9 +323,7 @@ def draw_replacedbox(context, box):
 def draw_text(context, textbox):
     """Draw ``textbox`` to a ``cairo.Context`` from ``PangoCairo.Context``."""
     # Pango crashes with font-size: 0
-    font_size = textbox.style.font_size
-    if font_size == 0:
-        return
+    assert textbox.style.font_size
 
     context.move_to(textbox.position_x, textbox.position_y + textbox.baseline)
     textbox.show_line(context)
@@ -360,14 +358,9 @@ def draw_line_through(context, textbox):
 
 def draw_text_decoration(context, position_y, textbox):
     """Draw text-decoration of ``textbox`` to a ``cairo.Context``."""
-    position_x = textbox.position_x
-    color = textbox.style.color
     with context.stacked():
-        color = textbox.style.color
-        context.set_source_colorvalue(color)
-        context.set_line_width(1)
-        context.move_to(position_x, position_y)
-#        offset = textbox.extents.width - textbox.extents.x
-        offset = textbox.width  # TODO: Is this the same as commented above?
-        context.line_to(position_x + offset, position_y)
+        context.set_source_colorvalue(textbox.style.color)
+        context.set_line_width(1)  # TODO: make this proportional to font_size?
+        context.move_to(textbox.position_x, position_y)
+        context.rel_line_to(textbox.width, 0)
         context.stroke()
