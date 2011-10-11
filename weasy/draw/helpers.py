@@ -26,7 +26,6 @@ from __future__ import division
 import urllib
 
 import cairo
-from PIL import Image
 from StringIO import StringIO
 
 from .figures import Point, Line, Trapezoid
@@ -54,6 +53,7 @@ def get_image_surface_from_uri(uri):
         if mime_type == "image/png":
             image = fileimage
         else:
+            from PIL import Image
             content = fileimage.read()
             pil_image = Image.open(StringIO(content))
             image = StringIO()
