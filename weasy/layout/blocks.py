@@ -166,8 +166,8 @@ def block_level_height(box, max_position_y, skip_stack, containing_block,
         child.position_x = position_x
         child.position_y = position_y
         if isinstance(child, boxes.LineBox):
-            first = True
-            # Dummy value to help the else-continue-break hack below.
+            assert len(box.children) == 1, (
+                'line box with siblings before layout')
             is_page_break = False
             while 1:
                 new_containing_block = box
@@ -180,7 +180,10 @@ def block_level_height(box, max_position_y, skip_stack, containing_block,
                 # `first`, keep at least one line to avoid infinite loops,
                 # even if it overflows
                 # TODO: fix infinite loops without overflowing.
-                if new_position_y > max_position_y and not first:
+                if new_position_y > max_position_y:
+                    if not new_children:
+                        # Page break before any content, cancel the whole box.
+                        return None, None
                     # Page break here, resume before this line
                     resume_at = (index, skip_stack)
                     is_page_break = True
@@ -199,13 +202,19 @@ def block_level_height(box, max_position_y, skip_stack, containing_block,
                 child, max_position_y, skip_stack,
                 new_containing_block, device_size)
             skip_stack = None
+            if new_child is None:
+                if new_children:
+                    resume_at = (index, None)
+                else:
+                    # This was the first child of this box, cancel the box
+                    # completly
+                    resume_at = None
+                break
             new_position_y = position_y + new_child.margin_height()
-            # TODO: find a way to break between blocks
-#            if new_position_y <= max_position_y:
+            # Bottom borders may overflow here
+            # TODO: back-track somehow when all lines fit but not borders
             new_children.append(new_child)
             position_y = new_position_y
-#            else:
-#                resume_at = (index, None) # or something...  XXX
             if resume_at is not None:
                 resume_at = (index, resume_at)
                 break
@@ -219,5 +228,6 @@ def block_level_height(box, max_position_y, skip_stack, containing_block,
 
     # If there was a list marker, we kept it on `new_box`. Do not repeat on
     # `box` on the next page.
+    # TODO: Do this non-destructively
     box.outside_list_marker = None
     return new_box, resume_at
