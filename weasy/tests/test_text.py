@@ -49,8 +49,8 @@ def make_text(text, width=-1, style=''):
 @SUITE.test
 def test_line_content():
     """Test the line break for various fixed-width lines."""
-    for width, remaining in [(120, 'text for test'),
-                             (60, 'is a text for test')]:
+    for width, remaining in [(90, 'text for test'),
+                             (45, 'is a text for test')]:
         text = 'This is a text for test'
         line = make_text(
             text, width, 'font-family: "%s"; font-size: 19px' % FONTS)
@@ -77,15 +77,15 @@ def test_line_breaking():
     string = u'This is a text for test'
 
     # These two tests do not really rely on installed fonts
-    line = make_text(string, 120, 'font-size: 1px')
+    line = make_text(string, 90, 'font-size: 1px')
     _, _, _, _, _, resume_at = line.split_first_line()
     assert resume_at is None
 
-    line = make_text(string, 120, 'font-size: 100px')
+    line = make_text(string, 90, 'font-size: 100px')
     _, _, _, _, _, resume_at = line.split_first_line()
     assert string[resume_at:] == u'is a text for test'
 
-    line = make_text(string, 120, 'font-family: "%s"; font-size: 19px' % FONTS)
+    line = make_text(string, 90, 'font-family: "%s"; font-size: 19px' % FONTS)
     _, _, _, _, _, resume_at = line.split_first_line()
     assert string[resume_at:] == u'text for test'
 

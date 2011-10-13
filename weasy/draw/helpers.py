@@ -326,6 +326,7 @@ def draw_text(context, textbox):
     assert textbox.style.font_size
 
     context.move_to(textbox.position_x, textbox.position_y + textbox.baseline)
+    context.set_source_colorvalue(textbox.style.color)
     textbox.show_line(context)
     values = textbox.style.text_decoration
     for value in values:

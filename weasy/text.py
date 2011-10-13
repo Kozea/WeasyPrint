@@ -27,6 +27,17 @@ from __future__ import division
 from gi.repository import Pango, PangoCairo  # pylint: disable=E0611
 
 
+PANGO_VARIANT = {
+    'normal': Pango.Variant.NORMAL,
+    'small-caps': Pango.Variant.SMALL_CAPS,
+}
+
+PANGO_STYLE = {
+    'normal': Pango.Style.NORMAL,
+    'italic': Pango.Style.ITALIC,
+    'oblique': Pango.Style.OBLIQUE,
+}
+
 class TextFragment(object):
     """Text renderer using Pango.
 
@@ -35,44 +46,17 @@ class TextFragment(object):
     """
     def __init__(self, utf8_text, style, context, width=None):
         self.layout = PangoCairo.create_layout(context)
+        font = Pango.FontDescription()
+        font.set_family(', '.join(style.font_family))
+        font.set_variant(PANGO_VARIANT[style.font_variant])
+        font.set_style(PANGO_STYLE[style.font_style])
+        font.set_absolute_size(Pango.units_from_double(style.font_size))
+        font.set_weight(style.font_weight)
+        self.layout.set_font_description(font)
+        self.layout.set_text(utf8_text.decode('utf8'), -1)
         self.layout.set_wrap(Pango.WrapMode.WORD)
         if width is not None:
             self.layout.set_width(Pango.units_from_double(width))
-
-        color = style.color
-        attributes = dict(
-            # TODO: somehow handle color.alpha
-            color='#%02x%02x%02x' % (color.red, color.green, color.blue),
-            # Other than 'face', values are numbers or known keyword and don’t
-            # need escaping.
-            face=', '.join(style.font_family)
-                .replace('&', '&amp;').replace('"', '&quot;'),
-            # CSS: small-caps, Pango: smallcaps
-            variant=style.font_variant.replace('-', ''),
-            style=style.font_style,
-            size=Pango.units_from_double(style.font_size),
-            weight=int(style.font_weight),
-            # Alignments and backgrounds are not handled by Pango.
-
-            # Tell Pango that fonts on the system can be used to provide
-            # characters missing from the current font. Otherwise, only
-            # characters from the closest matching font can be used.
-            fallback='true',
-        )
-        if style.letter_spacing != 'normal':
-            attributes['letter_spacing'] = Pango.units_from_double(
-                style.letter_spacing)
-
-        # TODO: use an AttrList when it is available with introspection
-        markup = [u'<span']
-        for key, value in attributes.iteritems():
-            markup.append(u' %s="%s"' % (key, value))
-        markup.append(u'>')
-        markup.append(utf8_text.decode('utf8')
-            .replace('&', '&amp;').replace('<', '&lt;'))
-        markup.append(u'</span>')
-        # Sets both the text and attributes
-        self.layout.set_markup(u''.join(markup), -1)
 
     # TODO: use get_line instead of get_lines when it is not broken anymore
     def split_first_line(self):

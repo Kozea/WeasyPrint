@@ -455,7 +455,7 @@ def test_linebox_text():
             </style>
             <p><em>Lorem Ipsum</em>is very <strong>coool</strong></p>'''
 
-        page, = parse(page % {'fonts': FONTS, 'width': 220})
+        page, = parse(page % {'fonts': FONTS, 'width': 165})
         paragraph, = body_children(page)
         return paragraph
 
@@ -480,7 +480,7 @@ def test_linebox_positions():
                 p { width:%(width)spx; font-family:%(fonts)s;}
             </style>
             <p>this is test for <strong>Weasyprint</strong></p>'''
-        page, = parse(page % {'fonts': FONTS, 'width': 220})
+        page, = parse(page % {'fonts': FONTS, 'width': 165})
         paragraph, = body_children(page)
         return paragraph
 

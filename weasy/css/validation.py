@@ -323,7 +323,7 @@ def font_weight(value):
             return value
 
 
-@validator()
+#@validator()  XXX not supported yet
 @single_value
 def letter_spacing(value):
     """``letter-spacing`` property validation."""
