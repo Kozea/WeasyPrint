@@ -98,9 +98,7 @@ class TextFragment(object):
         _ink_extents, logical_extents = first_line.get_extents()
         width = Pango.units_to_double(logical_extents.width)
         height = Pango.units_to_double(logical_extents.height)
-        context = self.layout.get_context()
-        descent = context.get_metrics(None, None).get_descent()
-        baseline = height - Pango.units_to_double(descent)
+        baseline = Pango.units_to_double(self.layout.get_baseline())
         if len(lines) >= 2:
             resume_at = lines[1].start_index
         else:
