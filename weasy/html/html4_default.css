@@ -84,3 +84,5 @@ BDO[DIR='rtl']  { direction: rtl; unicode-bidi: bidi-override }
   h4, h5, h6    { page-break-after: avoid }
   ul, ol, dl    { page-break-before: avoid }
 }
+
+@page           { margin: 1cm }  /* The default size is A4 portrait */
