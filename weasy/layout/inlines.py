@@ -477,4 +477,8 @@ def vertical_align_processing(linebox):
 
     bottom_positions = [
         box.position_y + box.height for box in linebox.children]
-    linebox.height = max(bottom_positions or [0]) - linebox.position_y
+    if bottom_positions:
+        linebox.height = max(bottom_positions) - linebox.position_y
+    else:
+        # No children
+        linebox.height = 0
