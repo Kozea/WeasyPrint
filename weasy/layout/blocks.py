@@ -226,8 +226,11 @@ def block_level_height(box, max_position_y, skip_stack, containing_block,
     if new_box.height == 'auto':
         new_box.height = position_y - initial_position_y
 
-    # If there was a list marker, we kept it on `new_box`. Do not repeat on
-    # `box` on the next page.
-    # TODO: Do this non-destructively
-    box.outside_list_marker = None
+    if resume_at is not None:
+        # If there was a list marker, we kept it on `new_box`.
+        # Do not repeat it on `box` on the next page.
+        # TODO: Do this non-destructively
+        box.outside_list_marker = None
+        box.reset_spacing('top')
+        new_box.reset_spacing('bottom')
     return new_box, resume_at
