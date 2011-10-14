@@ -141,6 +141,10 @@ class Document(object):
         for every box.
         """
         if self._pages is None:
+            # "Linearize" code flow
+            _ = self.computed_styles
+            _ = self.formatting_structure
+            # Actual work
             self._pages = layout(self)
         return self._pages
 
