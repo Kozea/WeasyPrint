@@ -28,7 +28,6 @@ import urllib
 import cairo
 from StringIO import StringIO
 
-from .figures import Point, Line, Trapezoid
 from ..text import TextFragment
 from ..formatting_structure import boxes
 from ..css.values import get_percentage_value
@@ -235,6 +234,26 @@ def absolute_background_position(css_values, bg_dimensions, image_dimensions):
             yield value
 
 
+def get_rectangle_edges(x, y, width, height):
+    """Return the 4 edges of a rectangle as a list.
+
+    Edges are in clock-wise order, starting from the top.
+
+    Each edge is returned as ``(start_point, end_point)`` and each point
+    as ``(x, y)`` coordinates.
+
+    """
+    # In clock-wise order, starting on top left
+    corners = [
+        (x, y),
+        (x + width, y),
+        (x + width, y + height),
+        (x, y + height)]
+    # clock-wise order, starting on top right
+    shifted_corners = corners[1:] + corners[:1]
+    return zip(corners, shifted_corners)
+
+
 def draw_border(context, box):
     """Draw the box border to a ``cairo.Context``."""
     if all(getattr(box, 'border_%s_width' % side) == 0
@@ -242,68 +261,67 @@ def draw_border(context, box):
         # No border, return early.
         return
 
-    def get_edge(x, y, width, height):
-        """Get the 4 points corresponding to the given parameters."""
-        return (Point(x, y), Point(x + width, y),
-                Point(x + width, y + height), Point(x, y + height))
-
-    def get_border_area():
-        """Get the border area of ``box``."""
-        # Border area
-        x = box.position_x + box.margin_left
-        y = box.position_y + box.margin_top
-        border_edge = get_edge(x, y, box.border_width(), box.border_height())
-
-        # Padding area
-        x = x + box.border_left_width
-        y = y + box.border_top_width
-        padding_edge = get_edge(
-            x, y, box.padding_width(), box.padding_height())
-
-        return border_edge, padding_edge
-
-    def get_lines(rectangle):
-        """Get the 4 lines of ``rectangle``."""
-        lines_number = len(rectangle)
-        for i in range(lines_number):
-            yield Line(rectangle[i], rectangle[(i + 1) % lines_number])
-
-    def get_trapezoids():
-        """Get the 4 trapezoids of ``context``."""
-        border_lines, padding_lines = [
-            get_lines(area) for area in get_border_area()]
-        for line1, line2 in zip(border_lines, padding_lines):
-            yield Trapezoid(line1, line2)
-
-    def draw_border_side(side, trapezoid):
-        """Draw ``trapezoid`` at the box's ``side``."""
+    for side, x_offset, y_offset, border_edge, padding_edge in zip(
+        ['top', 'right', 'bottom', 'left'],
+        [0, -1, 0, 1],
+        [1, 0, -1, 0],
+        get_rectangle_edges(
+            box.border_box_x(), box.border_box_y(),
+            box.border_width(), box.border_height(),
+        ),
+        get_rectangle_edges(
+            box.padding_box_x(), box.padding_box_y(),
+            box.padding_width(), box.padding_height(),
+        ),
+    ):
         width = getattr(box, 'border_%s_width' % side)
         if width == 0:
-            return
+            continue
         color = box.style['border_%s_color' % side]
+        if color.alpha == 0:
+            continue
         style = box.style['border_%s_style' % side]
-        if color.alpha > 0:
-            with context.stacked():
-                # TODO: implement other styles.
-                if not style in ['dotted', 'dashed']:
-                    trapezoid.draw_path(context)
-                    context.clip()
-                elif style == 'dotted':
-                    # TODO: find a way to make a real dotted border
-                    context.set_dash([width], 0)
-                elif style == 'dashed':
-                    # TODO: find a way to make a real dashed border
-                    context.set_dash([4 * width], 0)
-                line = trapezoid.get_middle_line()
-                line.draw_path(context)
-                context.set_source_colorvalue(color)
-                context.set_line_width(width)
-                context.stroke()
+        with context.stacked():
+            """
+            Both edges form a trapezoid. This is the top one:
 
-    trapezoids_side = zip(['top', 'right', 'bottom', 'left'], get_trapezoids())
+              +---------------+
+               \             /
+              =================
+                 \         /
+                  +-------+
 
-    for side, trapezoid in trapezoids_side:
-        draw_border_side(side, trapezoid)
+            We clip on its outline on draw on the big line on the middle.
+            """
+            # TODO: implement other styles.
+            if not style in ['dotted', 'dashed']:
+                border_start, border_stop = border_edge
+                padding_start, padding_stop = padding_edge
+                # Move to one of the Trapezoid’s corner
+                context.move_to(*border_start)
+                for point in [border_stop, padding_stop,
+                              padding_start, border_start]:
+                    context.line_to(*point)
+                context.clip()
+            elif style == 'dotted':
+                # TODO: find a way to make a real dotted border
+                context.set_dash([width], 0)
+            elif style == 'dashed':
+                # TODO: find a way to make a real dashed border
+                context.set_dash([4 * width], 0)
+            (x1, y1), (x2, y2) = border_edge
+            offset = width / 2
+            x_offset *= offset
+            y_offset *= offset
+            x1 += x_offset
+            x2 += x_offset
+            y1 += y_offset
+            y2 += y_offset
+            context.move_to(x1, y1)
+            context.line_to(x2, y2)
+            context.set_source_colorvalue(color)
+            context.set_line_width(width)
+            context.stroke()
 
 
 def draw_replacedbox(context, box):
