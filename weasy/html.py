@@ -26,8 +26,8 @@ as an atomic opaque box in CSS. They may or may not have intrinsic dimensions.
 
 from __future__ import division
 
-from ..formatting_structure import boxes
-from ..utils import get_url_attribute
+from .formatting_structure import boxes
+from .utils import get_url_attribute
 
 
 # Maps HTML tag names to function taking an HTML element and returning a Box.

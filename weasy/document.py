@@ -34,14 +34,13 @@ from .css.computed_values import LENGTHS_TO_PIXELS
 from .formatting_structure.build import build_formatting_structure
 from .layout import layout
 from . import draw
-from .draw import helpers as draw_helpers
 from . import utils
 
 
 # This is a one-element tuple.
 DEFAULT_USER_AGENT_STYLESHEETS = (
     parseFile(
-        os.path.join(os.path.dirname(__file__), 'html', 'html4_default.css')
+        os.path.join(os.path.dirname(__file__), 'css', 'html4_ua.css')
     ),
 )
 
@@ -152,7 +151,7 @@ class Document(object):
         if uri in self._image_cache:
             return self._image_cache[uri]
         try:
-            surface = draw_helpers.get_image_surface_from_uri(uri)
+            surface = draw.get_image_surface_from_uri(uri)
         # TODO: have a more specific list of exception for network errors
         # and PNG parsing errors.
         except Exception:

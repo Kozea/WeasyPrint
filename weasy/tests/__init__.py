@@ -36,7 +36,7 @@ logging.getLogger('WEASYPRINT').addHandler(logging.StreamHandler())
 FONTS = u"Liberation Sans, Arial"
 TEST_USER_AGENT_STYLESHEETS = (
     parseFile(os.path.join(
-        os.path.dirname(__file__), '..', 'html', 'tests_default.css'
+        os.path.dirname(__file__), '..', 'css', 'tests_ua.css'
     )),
 )
 

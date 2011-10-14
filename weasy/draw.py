@@ -18,18 +18,19 @@
 
 
 """
-Various drawing helpers.
+Module drawing documents.
 
 """
 
 from __future__ import division
+import contextlib
 import urllib
 
 import cairo
 from StringIO import StringIO
 
-from ..formatting_structure import boxes
-from ..css.values import get_percentage_value
+from .formatting_structure import boxes
+from .css.values import get_percentage_value
 
 
 SUPPORTED_IMAGES = ['image/png', 'image/gif', 'image/jpeg', 'image/bmp']
@@ -59,6 +60,36 @@ def get_image_surface_from_uri(uri):
             pil_image.save(image, "PNG")
             image.seek(0)
         return cairo.ImageSurface.create_from_png(image)
+
+
+class CairoContext(cairo.Context):
+    """A ``cairo.Context`` with a few more helper methods."""
+
+    def set_source_colorvalue(self, color):
+        """Set the source pattern from a ``cssutils.ColorValue`` object."""
+        self.set_source_rgba(
+            color.red / 255., color.green / 255., color.blue / 255.,
+            color.alpha)
+
+    @contextlib.contextmanager
+    def stacked(self):
+        """Save and restore the context when used with the ``with`` keyword."""
+        self.save()
+        try:
+            yield
+        finally:
+            self.restore()
+
+
+def draw_page(page, context):
+    """Draw the given PageBox to a Cairo context.
+
+    The context should be scaled so that lengths are in CSS pixels.
+
+    """
+    draw_page_background(context, page)
+    draw_border(context, page)
+    draw_box(context, page.root_box)
 
 
 def draw_box(context, box):
@@ -373,6 +404,7 @@ def draw_line_through(context, textbox):
     """Draw line-through of ``textbox`` to a ``cairo.Context``."""
     position_y = textbox.position_y + (textbox.height * 0.5)
     draw_text_decoration(context, position_y, textbox)
+
 
 def draw_text_decoration(context, position_y, textbox):
     """Draw text-decoration of ``textbox`` to a ``cairo.Context``."""
