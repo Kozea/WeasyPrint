@@ -190,7 +190,6 @@ def block_level_height(box, max_position_y, skip_stack, containing_block,
                 if resume_at is None:
                     break
                 skip_stack = resume_at
-                first = False
             if is_page_break:
                 break
         else:

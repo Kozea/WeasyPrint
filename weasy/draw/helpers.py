@@ -28,7 +28,6 @@ import urllib
 import cairo
 from StringIO import StringIO
 
-from ..text import TextFragment
 from ..formatting_structure import boxes
 from ..css.values import get_percentage_value
 
