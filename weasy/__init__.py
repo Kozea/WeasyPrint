@@ -29,7 +29,10 @@ import sys
 import argparse
 import logging
 
+import cssutils
+
 from . import document
+from .utils import ensure_url
 
 
 FORMATS = {
@@ -72,6 +75,9 @@ def main():
     parser.add_argument('-f', '--format', choices=FORMATS,
                         help='Output format. Can be ommited if `output` '
                              'ends with ' + extensions)
+    parser.add_argument('-s', '--stylesheet', action='append',
+                        help='Apply a user stylesheet to the document. '
+                             'May be given multiple times.')
     parser.add_argument('input',
         help='URL or filename of the HTML input, or - for stdin')
     parser.add_argument('output',
@@ -105,6 +111,11 @@ def main():
     logger.setLevel(logging.INFO)
     logger.addHandler(logging.StreamHandler())
 
+    users_stylesheets = [
+        cssutils.parseUrl(ensure_url(filename_or_url))
+        for filename_or_url in args.stylesheet or []]
+
     document_class = FORMATS[args.format]
-    doc = document_class.from_file(args.input, encoding=args.encoding)
+    doc = document_class.from_file(args.input, encoding=args.encoding,
+        user_stylesheets=users_stylesheets)
     doc.write_to(args.output)
