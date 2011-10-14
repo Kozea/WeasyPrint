@@ -355,7 +355,7 @@ def content(computer, name, values):
 
 def compute_content_value(computer, value):
     """Compute a content ``value``."""
-    if value.type == 'FUNCTION':
+    if getattr(value, 'type', 'other') == 'FUNCTION':
         # value.seq is *NOT* part of the public API
         # TODO: patch cssutils to provide a public API for arguments
         # in CSSFunction objects
