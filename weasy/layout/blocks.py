@@ -177,9 +177,6 @@ def block_level_height(box, max_position_y, skip_stack, containing_block,
                 if line is None:
                     break
                 new_position_y = position_y + line.height
-                # `first`, keep at least one line to avoid infinite loops,
-                # even if it overflows
-                # TODO: fix infinite loops without overflowing.
                 if new_position_y > max_position_y:
                     if not new_children:
                         # Page break before any content, cancel the whole box.
@@ -205,11 +202,11 @@ def block_level_height(box, max_position_y, skip_stack, containing_block,
             if new_child is None:
                 if new_children:
                     resume_at = (index, None)
+                    break
                 else:
                     # This was the first child of this box, cancel the box
                     # completly
-                    resume_at = None
-                break
+                    return None, None
             new_position_y = position_y + new_child.margin_height()
             # Bottom borders may overflow here
             # TODO: back-track somehow when all lines fit but not borders
