@@ -142,13 +142,15 @@ class StyleDict(object):
 
     """
     def __init__(self, data=None, parent=None):
-        if not data:
+        if data is None:
             data = {}
         else:
             data = dict(data)
+        if parent is None:
+            parent = {}
         # work around our own __setattr__
         object.__setattr__(self, '_storage', data)
-        object.__setattr__(self, '_parent', parent or {})
+        object.__setattr__(self, '_parent', parent)
 
     def __getitem__(self, key):
         storage = self._storage
