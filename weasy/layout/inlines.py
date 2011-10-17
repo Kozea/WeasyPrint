@@ -343,7 +343,6 @@ def split_inline_box(inlinebox, remaining_width, skip_stack, containing_block,
                      device_size):
     """Same behavior as split_inline_level."""
     assert isinstance(inlinebox, (boxes.LineBox, boxes.InlineBox))
-    resolve_percentages(inlinebox, containing_block)
     left_spacing = (inlinebox.padding_left + inlinebox.margin_left +
                     inlinebox.border_left_width)
     right_spacing = (inlinebox.padding_right + inlinebox.margin_right +
