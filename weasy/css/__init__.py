@@ -42,7 +42,8 @@ function for each step:
 
 import logging
 
-from cssutils import parseStyle
+from cssutils import CSSParser
+from cssutils.css import CSSStyleDeclaration
 from lxml import cssselect
 
 from . import properties
@@ -73,6 +74,31 @@ PAGE_PSEUDOCLASS_SPECIFICITY = {
     ':right': 1,
     ':first': 10,
 }
+
+
+class WeasyCSSParser(CSSParser):
+    """
+    Add a :meth:`parseStyle` method to :class:`CSSParser`.
+    """
+
+    def parseStyle(self, cssText, encoding='utf-8'):
+        """Parse given `cssText` which is assumed to be the content of
+        a HTML style attribute.
+
+        :param cssText:
+            CSS string to parse
+        :param encoding:
+            It will be used to decode `cssText` if given as a (byte)
+            string.
+        :returns:
+            :class:`~cssutils.css.CSSStyleDeclaration`
+        """
+        self._CSSParser__parseSetting(True)
+        if isinstance(cssText, bytes):
+            cssText = cssText.decode(encoding)
+        style = CSSStyleDeclaration(cssText)
+        self._CSSParser__parseSetting(False)
+        return style
 
 
 def find_stylesheets(document):
@@ -122,7 +148,7 @@ def find_style_attributes(document):
             # TODO: no href for parseStyle. What about relative URLs?
             # CSS3 says we should resolve relative to the attribute:
             # http://www.w3.org/TR/css-style-attr/#interpret
-            yield element, parseStyle(style_attribute)
+            yield element, document.css_parser.parseStyle(style_attribute)
 
 
 def evaluate_media_query(query_list, medium):

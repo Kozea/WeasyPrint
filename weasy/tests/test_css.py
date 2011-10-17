@@ -22,10 +22,12 @@ Test the base mechanisms of CSS.
 """
 
 import os.path
-from cssutils.helper import path2url
+import logging
+import contextlib
 
 from attest import Tests, raises, assert_hook  # pylint: disable=W0611
 import cssutils
+from cssutils.helper import path2url
 
 from . import resource_filename
 from .test_boxes import monkeypatch_validation
@@ -239,3 +241,31 @@ def test_page():
     assert style.margin_top == 10
     assert style.margin_left == 10
     assert style.margin_bottom == 16
+
+
+@contextlib.contextmanager
+def without_cssutils_logging():
+    """Context manager that disables cssutils logging."""
+    handlers = logging.getLogger('CSSUTILS').handlers
+    previous_handlers = handlers[:]
+    handlers[:] = []
+    try:
+        yield
+    finally:
+        handlers[:] = previous_handlers
+
+
+@SUITE.test
+def test_error_recovery():
+    with without_cssutils_logging():
+        document = TestPNGDocument.from_string('''
+            <style> html { color red; color: blue; color
+        ''')
+        html = document.formatting_structure
+        assert html.style.color.value == 'blue'
+
+        document = TestPNGDocument.from_string('''
+            <html style="color; color: blue; color red">
+        ''')
+        html = document.formatting_structure
+        assert html.style.color.value == 'blue'

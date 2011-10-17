@@ -25,11 +25,11 @@ Output document classes for various formats.
 import os.path
 import math
 
-from cssutils import parseFile, CSSParser
+from cssutils import parseFile
 import lxml.html
 import cairo
 
-from .css import get_all_computed_styles
+from .css import get_all_computed_styles, WeasyCSSParser
 from .css.computed_values import LENGTHS_TO_PIXELS
 from .formatting_structure.build import build_formatting_structure
 from .layout import layout
@@ -58,7 +58,7 @@ class Document(object):
         # Go through the property setter which calls ensure_url()
         self.base_url = self.base_url
 
-        self.css_parser = CSSParser()
+        self.css_parser = WeasyCSSParser()
         self.css_parser.setFetcher(utils.urllib_fetcher)
 
         self.user_stylesheets = user_stylesheets or []
