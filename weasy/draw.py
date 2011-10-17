@@ -31,6 +31,7 @@ from StringIO import StringIO
 
 from .formatting_structure import boxes
 from .css.values import get_percentage_value
+from .utils import urlopen
 
 
 SUPPORTED_IMAGES = ['image/png', 'image/gif', 'image/jpeg', 'image/bmp']
@@ -38,23 +39,15 @@ SUPPORTED_IMAGES = ['image/png', 'image/gif', 'image/jpeg', 'image/bmp']
 
 def get_image_surface_from_uri(uri):
     """Get a :class:`cairo.ImageSurface`` from an image URI."""
-    fileimage = urllib.FancyURLopener().open(uri)
-    info = fileimage.info()
-    if hasattr(info, 'get_content_type'):
-        # Python 3
-        mime_type = info.get_content_type()
-    else:
-        # Python 2
-        mime_type = info.gettype()
+    file_like, mime_type, _charset = urlopen(uri)
     # TODO: implement image type sniffing?
     # http://www.w3.org/TR/html5/fetching-resources.html#content-type-sniffing:-image
     if mime_type in SUPPORTED_IMAGES:
         if mime_type == "image/png":
-            image = fileimage
+            image = file_like
         else:
             from PIL import Image
-            content = fileimage.read()
-            pil_image = Image.open(StringIO(content))
+            pil_image = Image.open(StringIO(file_like.read()))
             image = StringIO()
             pil_image = pil_image.convert('RGBA')
             pil_image.save(image, "PNG")

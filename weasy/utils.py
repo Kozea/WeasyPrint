@@ -27,6 +27,8 @@ from urlparse import urljoin, urlparse
 
 from cssutils.helper import path2url
 
+from . import VERSION
+
 
 def get_url_attribute(element, key):
     """Get the URL corresponding to the ``key`` attribute of ``element``.
@@ -50,6 +52,31 @@ def ensure_url(string):
     return string if urlparse(string).scheme else path2url(string)
 
 
+class URLopener(urllib.FancyURLopener):
+    # User-Agent
+    version = 'WeasyPrint/%s http://weasyprint.org/' % VERSION
+
+
+def urlopen(url):
+    """Fetch an URL and return ``(file_like, mime_type, charset)``.
+    """
+    file_like = URLopener().open(url)
+    info = file_like.info()
+    if hasattr(info, 'get_content_type'):
+        # Python 3
+        mime_type = info.get_content_type()
+    else:
+        # Python 2
+        mime_type = info.gettype()
+    if hasattr(info, 'get_param'):
+        # Python 3
+        charset = info.get_param('charset')
+    else:
+        # Python 2
+        charset = info.getparam('charset')
+    return file_like, mime_type, charset
+
+
 def urllib_fetcher(url):
     """URL fetcher for cssutils.
 
@@ -57,21 +84,8 @@ def urllib_fetcher(url):
     support for the "data" URL scheme.
 
     """
-    result = urllib.FancyURLopener().open(url)
-    info = result.info()
-    if hasattr(info, 'get_content_type'):
-        # Python 3
-        mime_type = info.get_content_type()
-    else:
-        # Python 2
-        mime_type = info.gettype()
+    file_like, mime_type, charset = urlopen(url)
     if mime_type != 'text/css':
         # TODO: add a warning
         return None
-    if hasattr(info, 'get_param'):
-        # Python 3
-        charset = info.get_param('charset')
-    else:
-        # Python 2
-        charset = info.getparam('charset')
-    return charset, result.read()
+    return charset, file_like.read()
