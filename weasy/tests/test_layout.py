@@ -576,7 +576,7 @@ def test_inlinebox_spliting():
         skip = None
         while 1:
             box, skip, _ = split_inline_box(
-                inlinebox, width, skip, parent, None)
+                inlinebox, 0, width, skip, parent, None)
             yield box
             if skip is None:
                 break
@@ -681,7 +681,7 @@ def test_inlinebox_text_after_spliting():
         skip = None
         while 1:
             box, skip, _ = split_inline_box(
-                inlinebox, width, skip, parent, None)
+                inlinebox, 0, width, skip, parent, None)
             yield box
             if skip is None:
                 break

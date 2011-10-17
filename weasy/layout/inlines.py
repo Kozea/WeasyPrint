@@ -48,14 +48,14 @@ def get_next_linebox(linebox, position_y, skip_stack, containing_block,
 
     """
     position_x = linebox.position_x
-    available_width = containing_block.width
+    max_x = position_x + containing_block.width
 
     skip_stack = skip_first_whitespace(linebox, skip_stack)
     if skip_stack == 'continue':
         return None, None
 
     line, resume_at, preserved_line_break = split_inline_box(
-        linebox, available_width, skip_stack, containing_block, device_size)
+        linebox, position_x, max_x, skip_stack, containing_block, device_size)
 
     remove_last_whitespace(line)
 
@@ -307,7 +307,7 @@ def is_empty_line(linebox):
     return num_textbox == len(linebox.children)
 
 
-def split_inline_level(box, available_width, skip_stack, containing_block,
+def split_inline_level(box, position_x, max_x, skip_stack, containing_block,
                        device_size):
     """Fit as much content as possible from an inline-level box in a width.
 
@@ -329,7 +329,7 @@ def split_inline_level(box, available_width, skip_stack, containing_block,
             assert skip_stack is None
 
         new_box, skip, preserved_line_break = split_text_box(
-            box, available_width, skip)
+            box, position_x, max_x, skip)
 
         if skip is None:
             resume_at = None
@@ -342,7 +342,7 @@ def split_inline_level(box, available_width, skip_stack, containing_block,
         if box.margin_right == 'auto':
             box.margin_right = 0
         new_box, resume_at, preserved_line_break = split_inline_box(
-            box, available_width, skip_stack, containing_block, device_size)
+            box, position_x, max_x, skip_stack, containing_block, device_size)
         compute_inlinebox_dimensions(new_box, containing_block)
     elif isinstance(box, boxes.AtomicInlineLevelBox):
         compute_atomicbox_dimensions(box, containing_block, device_size)
@@ -353,15 +353,15 @@ def split_inline_level(box, available_width, skip_stack, containing_block,
     return new_box, resume_at, preserved_line_break
 
 
-def split_inline_box(inlinebox, remaining_width, skip_stack, containing_block,
-                     device_size):
+def split_inline_box(inlinebox, position_x, max_x, skip_stack,
+                     containing_block, device_size):
     """Same behavior as split_inline_level."""
     assert isinstance(inlinebox, (boxes.LineBox, boxes.InlineBox))
     left_spacing = (inlinebox.padding_left + inlinebox.margin_left +
                     inlinebox.border_left_width)
     right_spacing = (inlinebox.padding_right + inlinebox.margin_right +
                      inlinebox.border_right_width)
-    remaining_width -= left_spacing
+    position_x += left_spacing
 
     children = []
     preserved_line_break = False
@@ -373,7 +373,8 @@ def split_inline_box(inlinebox, remaining_width, skip_stack, containing_block,
 
     for index, child in inlinebox.enumerate_skip(skip):
         new_child, resume_at, preserved = split_inline_level(
-            child, remaining_width, skip_stack, containing_block, device_size)
+            child, position_x, max_x, skip_stack,
+            containing_block, device_size)
         skip_stack = None
         if preserved:
             preserved_line_break = True
@@ -390,14 +391,15 @@ def split_inline_box(inlinebox, remaining_width, skip_stack, containing_block,
             assert isinstance(child, boxes.TextBox)
         else:
             margin_width = new_child.margin_width()
+            new_position_x = position_x + margin_width
 
-            if (margin_width > remaining_width and children):
+            if (new_position_x > max_x and children):
                 # too wide, and the inline is non-empty:
                 # put child entirely on the next line.
                 resume_at = (index, None)
                 break
             else:
-                remaining_width -= margin_width
+                position_x = new_position_x
                 children.append(new_child)
 
         if resume_at is not None:
@@ -414,7 +416,7 @@ def split_inline_box(inlinebox, remaining_width, skip_stack, containing_block,
     return new_inlinebox, resume_at, preserved_line_break
 
 
-def split_text_box(textbox, available_width, skip):
+def split_text_box(textbox, position_x, max_x, skip):
     """Keep as much text as possible from a TextBox in a limitied width.
     Try not to overflow but always have some text in ``new_textbox``
 
@@ -427,12 +429,11 @@ def split_text_box(textbox, available_width, skip):
     """
     assert isinstance(textbox, boxes.TextBox)
     font_size = textbox.style.font_size
-    if font_size == 0:
+    utf8_text = textbox.utf8_text[skip:]
+    available_width = max_x - position_x
+    if font_size == 0 or available_width <= 0 or not utf8_text:
         return None, None, False
 
-    utf8_text = textbox.utf8_text[skip:]
-    if not utf8_text:
-        return None, None, False
     fragment = TextFragment(utf8_text, textbox.style,
         cairo.Context(textbox.document.surface), available_width)
 
