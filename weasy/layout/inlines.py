@@ -32,7 +32,21 @@ from ..formatting_structure import boxes
 
 def get_next_linebox(linebox, position_y, skip_stack, containing_block,
                      device_size):
-    """Get the ``linebox`` lines until ``page_bottom`` is reached."""
+    """Return ``(line, resume_at)``.
+
+    ``line`` is a laid-out LineBox with as much content as possible that
+    fits in the available width.
+
+    :param linebox: a non-laid-out :class:`LineBox`
+    :param position_y: vertical top position of the line box on the page
+    :param skip_stack: ``None`` to start at the beginning of ``linebox``,
+                       or a ``resume_at`` value to continue just after an
+                       already laid-out line.
+    :param containing_block: Containing block of the line box:
+                             a :class:`BlockContainerBox`
+    :param device_size: ``(width, height)`` of the current page.
+
+    """
     position_x = linebox.position_x
     available_width = containing_block.width
 
@@ -153,7 +167,7 @@ def replaced_box_width(box, device_size):
             box.width = intrinsic_ratio * box.height
         elif intrinsic_ratio is not None:
             pass
-            # Intrinsic ratio only: undefined in CSS 2.1.
+            # TODO: Intrinsic ratio only: undefined in CSS 2.1.
             # " It is suggested that, if the containing block's width does not
             #   itself depend on the replaced element's width, then the used
             #   value of 'width' is calculated from the constraint equation
@@ -163,10 +177,10 @@ def replaced_box_width(box, device_size):
     if box.width == 'auto':
         if intrinsic_width is not None:
             box.width = intrinsic_width
+        else:
             # Then the used value of 'width' becomes 300px. If 300px is too
             # wide to fit the device, UAs should use the width of the largest
             # rectangle that has a 2:1 ratio and fits the device instead.
-        else:
             device_width, _device_height = device_size
             box.width = min(300, device_width)
 
