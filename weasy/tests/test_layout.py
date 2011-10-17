@@ -427,7 +427,7 @@ def test_breaking_linebox():
         paragraph, = body.children
         return paragraph
     font_size = 13
-    width = 350
+    width = 300
     paragraph = get_paragraph_linebox(width, font_size)
     assert len(list(paragraph.children)) == 3
 
@@ -718,7 +718,7 @@ def test_page_and_linebox_breaking():
         """Helper returning a inlinebox with customizable style."""
         page = '''
                 <style>
-                p { font-family:%(fonts)s; font-size:12px}
+                div { font-family:%(fonts)s; font-size:22px}
                 @page { size: 100px; margin:2px; border:1px solid }
                 body { margin: 0 }
                 </style>
