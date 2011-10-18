@@ -246,13 +246,16 @@ def test_page():
 @contextlib.contextmanager
 def without_cssutils_logging():
     """Context manager that disables cssutils logging."""
-    handlers = logging.getLogger('CSSUTILS').handlers
-    previous_handlers = handlers[:]
-    handlers[:] = []
+    logger = logging.getLogger('CSSUTILS')
+    handlers = logger.handlers[:]
+    del logger.handlers[:]
+    if hasattr(logging, 'NullHandler'):
+        # New in 2.7
+        logger.addHandler(logging.NullHandler())
     try:
         yield
     finally:
-        handlers[:] = previous_handlers
+        logger.handlers[:] = handlers
 
 
 @SUITE.test
