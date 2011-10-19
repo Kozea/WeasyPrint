@@ -398,7 +398,8 @@ def test_empty_linebox():
     font_size = 12
     width = 500
     paragraph = get_paragraph_linebox(width, font_size)
-    assert len(paragraph.children) == 0
+    line, = paragraph.children
+    assert line.height == 0
     assert paragraph.height == 0
 
 
@@ -473,18 +474,13 @@ def test_linebox_text():
 @SUITE.test
 def test_linebox_positions():
     """Test the position of line boxes."""
-    def get_paragraph_linebox():
-        """Helper returning a paragraph with customizable style."""
-        page = u'''
-            <style>
-                p { width:%(width)spx; font-family:%(fonts)s;}
-            </style>
-            <p>this is test for <strong>Weasyprint</strong></p>'''
-        page, = parse(page % {'fonts': FONTS, 'width': 165})
-        paragraph, = body_children(page)
-        return paragraph
-
-    paragraph = get_paragraph_linebox()
+    page = u'''
+        <style>
+            p { width:%(width)spx; font-family:%(fonts)s;}
+        </style>
+        <p>this is test for <strong>Weasyprint</strong></p>'''
+    page, = parse(page % {'fonts': FONTS, 'width': 165})
+    paragraph, = body_children(page)
     lines = list(paragraph.children)
     assert len(lines) == 2
 
@@ -508,28 +504,37 @@ def test_forced_line_breaks():
     # These lines should be small enough to fit on the default A4 page
     # with the default 12pt font-size.
     page, = parse('''
+        <style> pre { line-height: 42px }</style>
         <pre>Lorem ipsum dolor sit amet,
             consectetur adipiscing elit.
+
+
             Sed sollicitudin nibh
+
             et turpis molestie tristique.</pre>
     ''')
     pre, = body_children(page)
     assert pre.element.tag == 'pre'
     lines = pre.children
     assert all(isinstance(line, boxes.LineBox) for line in lines)
-    assert len(lines) == 4
+    assert len(lines) == 7
+    assert [line.height for line in lines] == [42] * 7
 
     page, = parse('''
+        <style> p { line-height: 42px }</style>
         <p>Lorem ipsum dolor sit amet,<br>
-            consectetur adipiscing elit.<br>
+            consectetur adipiscing elit.<br><br><br>
             Sed sollicitudin nibh<br>
+            <br>
+
             et turpis molestie tristique.</p>
     ''')
     pre, = body_children(page)
     assert pre.element.tag == 'p'
     lines = pre.children
     assert all(isinstance(line, boxes.LineBox) for line in lines)
-    assert len(lines) == 4
+    assert len(lines) == 7
+    assert [line.height for line in lines] == [42] * 7
 
 
 #@SUITE.test
@@ -592,7 +597,9 @@ def test_inlinebox_spliting():
 
     def test_inlinebox_spacing(inlinebox, value, side):
         """Test the margin, padding and border-width of ``inlinebox``."""
-        assert getattr(inlinebox, 'margin_%s' % side) == value
+        if side in ['left', 'right']:
+            # Vertical margins on inlines are irrelevant.
+            assert getattr(inlinebox, 'margin_%s' % side) == value
         assert getattr(inlinebox, 'padding_%s' % side) == value
         assert getattr(inlinebox, 'border_%s_width' % side) == value
 

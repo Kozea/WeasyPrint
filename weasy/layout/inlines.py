@@ -59,13 +59,23 @@ def get_next_linebox(linebox, position_y, skip_stack, containing_block,
 
     remove_last_whitespace(line)
 
-    compute_linebox_dimensions(line)
-    compute_linebox_positions(line, position_x, position_y)
-    vertical_align_processing(line)
-    if is_empty_line(line) and not preserved_line_break:
-        return None, None
+    bottom, top = inline_box_verticality(line)
+    if bottom is None:
+        # No children at all
+        line.position_y = position_y
+        if preserved_line_break:
+            # Only the strut.
+            line.height += line.margin_top + line.margin_bottom
+        else:
+            line.height = 0
     else:
-        return line, resume_at
+        line.position_y = top
+        line.height = bottom - top
+        # This also translates children
+        line.translate(0, position_y - top)
+    line.margin_top = 0
+    line.margin_bottom = 0
+    return line, resume_at
 
 
 def skip_first_whitespace(box, skip_stack):
@@ -204,107 +214,15 @@ def replaced_box_height(box, device_size):
         box.height = min(150, device_width / 2)
 
 
-def compute_linebox_dimensions(linebox):
-    """Compute the width and the height of the ``linebox``."""
-    assert isinstance(linebox, boxes.LineBox)
-    heights = [0]
-    widths = [0]
-    for child in linebox.children:
-        widths.append(child.width)
-        heights.append(child.height)
-    linebox.width = sum(widths)
-    linebox.height = max(heights)
-
-
-def compute_inlinebox_dimensions(inlinebox, containing_block):
-    """Compute the width and the height of the ``inlinebox``."""
-    resolve_percentages(inlinebox, containing_block)
-    if inlinebox.margin_left == 'auto':
-        inlinebox.margin_left = 0
-    if inlinebox.margin_right == 'auto':
-        inlinebox.margin_right = 0
-    # Make sure sum() and max() don’t raise if there is no children.
-    widths = [0]
-    heights = [0]
-    for child in inlinebox.children:
-        widths.append(child.margin_width())
-        heights.append(child.height)
-    inlinebox.width = sum(widths)
-    inlinebox.height = max(heights)
-
-
-def compute_atomicbox_dimensions(box, containing_block, device_size):
+def atomic_box(box, containing_block, device_size):
     """Compute the width and the height of the atomic ``box``."""
-    assert isinstance(box, boxes.AtomicInlineLevelBox)
     if isinstance(box, boxes.ImageMarkerBox):
         image_marker_layout(box, containing_block)
     if isinstance(box, boxes.ReplacedBox):
         inline_replaced_box_layout(box, containing_block, device_size)
     else:
         raise TypeError('Layout for %s not handled yet' % type(box).__name__)
-
-
-def compute_linebox_positions(linebox, ref_x, ref_y):
-    """Compute the x and y positions of ``linebox``."""
-    assert isinstance(linebox, boxes.LineBox)
-    # Linebox have no margin/padding/border
-    linebox.position_x = ref_x
-    linebox.position_y = ref_y
-    for child in linebox.children:
-        if isinstance(child, boxes.InlineBox):
-            compute_inlinebox_positions(child, ref_x, ref_y)
-        elif isinstance(child, boxes.AtomicInlineLevelBox):
-            compute_atomicbox_positions(child, ref_x, ref_y)
-        elif isinstance(child, boxes.TextBox):
-            compute_textbox_positions(child, ref_x, ref_y)
-        ref_x += child.margin_width()
-
-
-def compute_inlinebox_positions(inlinebox, ref_x, ref_y):
-    """Compute the x and y positions of ``inlinebox``."""
-    assert isinstance(inlinebox, boxes.InlineBox)
-    inlinebox.position_x = ref_x
-    inlinebox.margin_top = 0  # Vertical margins do not apply
-    ignored_height = inlinebox.padding_top + inlinebox.border_top_width
-    inlinebox.position_y = ref_y - ignored_height
-    inline_ref_y = inlinebox.position_y
-    inline_ref_x = inlinebox.content_box_x()
-    for child in inlinebox.children:
-        if isinstance(child, boxes.InlineBox):
-            compute_inlinebox_positions(child, inline_ref_x, inline_ref_y)
-        elif isinstance(child, boxes.AtomicInlineLevelBox):
-            compute_atomicbox_positions(child, inline_ref_x, inline_ref_y)
-        elif isinstance(child, boxes.TextBox):
-            compute_textbox_positions(child, inline_ref_x, inline_ref_y)
-        inline_ref_x += child.margin_width()
-
-
-def compute_textbox_positions(textbox, ref_x, ref_y):
-    """Compute the x and y positions of ``textbox``."""
-    assert isinstance(textbox, boxes.TextBox)
-    textbox.position_x = ref_x
-    textbox.position_y = ref_y
-
-
-def compute_atomicbox_positions(box, ref_x, ref_y):
-    """Compute the x and y positions of atomic ``box``."""
-    assert isinstance(box, boxes.AtomicInlineLevelBox)
-    box.translate(ref_x, ref_y)
-
-
-def is_empty_line(linebox):
-    """Return whether ``linebox`` has text."""
-    # TODO: complete this function
-    # XXX what does 'complete' mean?
-    if len(linebox.children) == 0:
-        return True
-    num_textbox = 0
-    for child in linebox.descendants():
-        if isinstance(child, boxes.TextBox):
-            if child.utf8_text.strip(b' '):
-                return False
-            num_textbox += 1
-    return num_textbox == len(linebox.children)
+    return box
 
 
 def split_inline_level(box, position_x, max_x, skip_stack, containing_block,
@@ -343,25 +261,27 @@ def split_inline_level(box, position_x, max_x, skip_stack, containing_block,
             box.margin_right = 0
         new_box, resume_at, preserved_line_break = split_inline_box(
             box, position_x, max_x, skip_stack, containing_block, device_size)
-        compute_inlinebox_dimensions(new_box, containing_block)
     elif isinstance(box, boxes.AtomicInlineLevelBox):
-        compute_atomicbox_dimensions(box, containing_block, device_size)
-        new_box = box
+        new_box = atomic_box(box, containing_block, device_size)
+        new_box.position_x = position_x
+        new_box.baseline = new_box.margin_height()
         resume_at = None
         preserved_line_break = False
     #else: unexpected box type here
     return new_box, resume_at, preserved_line_break
 
 
-def split_inline_box(inlinebox, position_x, max_x, skip_stack,
+def split_inline_box(box, position_x, max_x, skip_stack,
                      containing_block, device_size):
     """Same behavior as split_inline_level."""
-    assert isinstance(inlinebox, (boxes.LineBox, boxes.InlineBox))
-    left_spacing = (inlinebox.padding_left + inlinebox.margin_left +
-                    inlinebox.border_left_width)
-    right_spacing = (inlinebox.padding_right + inlinebox.margin_right +
-                     inlinebox.border_right_width)
+    box.position_x = position_x
+    assert isinstance(box, (boxes.LineBox, boxes.InlineBox))
+    left_spacing = (box.padding_left + box.margin_left +
+                    box.border_left_width)
+    right_spacing = (box.padding_right + box.margin_right +
+                     box.border_right_width)
     position_x += left_spacing
+    content_box_left = position_x
 
     children = []
     preserved_line_break = False
@@ -371,7 +291,8 @@ def split_inline_box(inlinebox, position_x, max_x, skip_stack,
     else:
         skip, skip_stack = skip_stack
 
-    for index, child in inlinebox.enumerate_skip(skip):
+    for index, child in box.enumerate_skip(skip):
+        assert child.is_in_normal_flow(), '"Abnormal" flow not supported yet.'
         new_child, resume_at, preserved = split_inline_level(
             child, position_x, max_x, skip_stack,
             containing_block, device_size)
@@ -408,46 +329,85 @@ def split_inline_box(inlinebox, position_x, max_x, skip_stack,
     else:
         resume_at = None
 
-    new_inlinebox = inlinebox.copy_with_children(children)
+    new_box = box.copy_with_children(children)
+    new_box.width = position_x - content_box_left
+
+    # Create a "strut":
+    # http://www.w3.org/TR/CSS21/visudet.html#strut
+    # TODO: cache these results for a given set of styles?
+    fragment = TextFragment(
+        b'', box.style, cairo.Context(box.document.surface))
+    _, _, _, height, baseline, _ = fragment.split_first_line()
+    leading = box.style.line_height - height
+    half_leading = leading / 2.
+    # Set margins to the half leading but also compensate for borders and
+    # paddings. We want margin_height() == line_height
+    new_box.margin_top = (half_leading - new_box.border_top_width -
+                          new_box.padding_bottom)
+    new_box.margin_bottom = (half_leading - new_box.border_bottom_width -
+                             new_box.padding_bottom)
+    # form the top of the content box
+    new_box.baseline = baseline
+    # form the top of the margin box
+    new_box.baseline += half_leading
+    new_box.height = height
+
     if resume_at is not None:
         # There is a line break inside this box.
-        inlinebox.reset_spacing('left')
-        new_inlinebox.reset_spacing('right')
-    return new_inlinebox, resume_at, preserved_line_break
+        box.reset_spacing('left')
+        new_box.reset_spacing('right')
+    return new_box, resume_at, preserved_line_break
 
 
-def split_text_box(textbox, position_x, max_x, skip):
+def split_text_box(box, position_x, max_x, skip):
     """Keep as much text as possible from a TextBox in a limitied width.
-    Try not to overflow but always have some text in ``new_textbox``
+    Try not to overflow but always have some text in ``new_box``
 
-    Return ``(new_textbox, skip)``. ``skip`` is the number of UTF-8 bytes
+    Return ``(new_box, skip)``. ``skip`` is the number of UTF-8 bytes
     to skip form the start of the TextBox for the next line, or ``None``
     if all of the text fits.
 
     Also break an preserved whitespace.
 
     """
-    assert isinstance(textbox, boxes.TextBox)
-    font_size = textbox.style.font_size
-    utf8_text = textbox.utf8_text[skip:]
+    assert isinstance(box, boxes.TextBox)
+    font_size = box.style.font_size
+    utf8_text = box.utf8_text[skip:]
     available_width = max_x - position_x
     if font_size == 0 or available_width <= 0 or not utf8_text:
         return None, None, False
 
-    fragment = TextFragment(utf8_text, textbox.style,
-        cairo.Context(textbox.document.surface), available_width)
+    fragment = TextFragment(utf8_text, box.style,
+        cairo.Context(box.document.surface), available_width)
 
     show_line, length, width, height, baseline, resume_at = \
         fragment.split_first_line()
 
     if length > 0:
-        textbox = textbox.copy_with_text(utf8_text[:length])
-        textbox.width = width
-        textbox.height = height
-        textbox.baseline = baseline
-        textbox.show_line = show_line
+        box = box.copy_with_text(utf8_text[:length])
+        box.position_x = position_x
+        box.width = width
+        box.show_line = show_line
+        # "The height of the content area should be based on the font,
+        #  but this specification does not specify how."
+        # http://www.w3.org/TR/CSS21/visudet.html#inline-non-replaced
+        # We trust Pango and use the height of the LayoutLine.
+        # It is based on font_size (slightly larger), but I’m not sure how.
+        # TODO: investigate this
+        box.height = height
+        # "only the 'line-height' is used when calculating the height
+        #  of the line box."
+        # Set margins so that margin_height() == line_height
+        leading = box.style.line_height - height
+        half_leading = leading / 2.
+        box.margin_top = half_leading
+        box.margin_bottom = half_leading
+        # form the top of the content box
+        box.baseline = baseline
+        # form the top of the margin box
+        box.baseline += box.margin_top + box.border_top_width + box.padding_top
     else:
-        textbox = None
+        box = None
 
     if resume_at is None:
         preserved_line_break = False
@@ -459,40 +419,39 @@ def split_text_box(textbox, position_x, max_x, skip):
                 'Expected nothing or a preserved line break' % (between,))
         resume_at += skip
 
-    return textbox, resume_at, preserved_line_break
+    return box, resume_at, preserved_line_break
 
 
-def compute_baseline_positions(box):
-    """Compute the relative position of the baseline of ``box``."""
-    positions = [0]
+def inline_box_verticality(box):
+    """Handle ``vertical-align`` within an :class:`InlineBox`.
+
+    Place all boxes vertically assuming that the baseline is at `y = 0`.
+
+    Return ``(max_y, min_y)``, the maximum and minimum vertical position
+    of margin boxes.
+
+    """
+    max_y = None
+    min_y = None
     for child in box.children:
+        # ``vertical-align: baseline`` for everyone.
+        # TODO: implement other values of the property.
         if isinstance(child, boxes.InlineBox):
-            if child.children:
-                compute_baseline_positions(child)
-            else:
-                child.baseline = child.height
-            positions.append(child.baseline)
-        elif isinstance(child, boxes.AtomicInlineLevelBox):
-            child.baseline = child.height
-            positions.append(child.height)
-        elif isinstance(child, boxes.TextBox):
-            positions.append(child.baseline)
-    box.baseline = max(positions)
-
-
-def vertical_align_processing(linebox):
-    """Compute the real positions of ``linebox``, using vertical-align."""
-    compute_baseline_positions(linebox)
-    absolute_baseline = linebox.baseline
-    #TODO: implement other properties
-
-    for box in linebox.descendants():
-        box.position_y += absolute_baseline - box.baseline
-
-    bottom_positions = [
-        box.position_y + box.height for box in linebox.children]
-    if bottom_positions:
-        linebox.height = max(bottom_positions) - linebox.position_y
-    else:
-        # No children
-        linebox.height = 0
+            children_max_y, children_min_y = inline_box_verticality(child)
+            empty = children_max_y and child.margin_width() == 0
+            if empty and (child.margin_left != 0 or child.margin_right != 0):
+                # Guard against the case where a negative margin compensates
+                # something else.
+                empty = False
+            if empty:
+                # No content, ignore this box’s line-height.
+                # See http://www.w3.org/TR/CSS21/visuren.html#phantom-line-box
+                continue
+        top = -child.baseline
+        child.position_y = top
+        bottom = top + child.margin_height()
+        if min_y is None or top < min_y:
+            min_y = top
+        if max_y is None or bottom > max_y:
+            max_y = bottom
+    return max_y, min_y
