@@ -815,6 +815,13 @@ def test_with_images():
     assert img_1.position_y == 20
     assert img_2.position_y == 0
 
+    """
+               +-------+      <- position_y = 0
+         +-----+       |
+    40px |     |       | 60px
+         |     |       |
+         +-----+-------+      <- baseline
+    """
     page, = parse('''
         <span>
             <img src="pattern.png" style="width: 40px">
@@ -832,4 +839,51 @@ def test_with_images():
     assert img_2.position_y == 0
     # 60px + the descent of the font below the baseline
     assert 60 < line.height < 70
+    assert body.height == line.height
+
+
+    """
+               +-------+      <- position_y = 0
+          35px |       |
+         +-----+       | 60px
+    40px |     |       |
+         |     +-------+      <- baseline
+         +-----+  15px
+
+    """
+    page, = parse('''
+        <span>
+            <img src="pattern.png" style="width: 40px; vertical-align: -15px">
+            <img src="pattern.png" style="width: 60px">
+        </span>
+    ''')
+    html = page.root_box
+    body, = html.children
+    line, = body.children
+    span, = line.children
+    img_1, img_2 = span.children
+    assert img_1.height == 40
+    assert img_2.height == 60
+    assert img_1.position_y == 35
+    assert img_2.position_y == 0
+    assert line.height == 75
+    assert body.height == line.height
+
+    # Same as previously, but with percentages
+    page, = parse('''
+        <span style="line-height: 10px">
+            <img src="pattern.png" style="width: 40px; vertical-align: -150%">
+            <img src="pattern.png" style="width: 60px">
+        </span>
+    ''')
+    html = page.root_box
+    body, = html.children
+    line, = body.children
+    span, = line.children
+    img_1, img_2 = span.children
+    assert img_1.height == 40
+    assert img_2.height == 60
+    assert img_1.position_y == 35
+    assert img_2.position_y == 0
+    assert line.height == 75
     assert body.height == line.height

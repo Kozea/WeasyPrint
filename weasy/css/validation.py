@@ -407,6 +407,19 @@ def text_decoration(values):
 
 
 @validator()
+@single_value
+def vertical_align(value):
+    if is_dimension_or_percentage(value, negative=True):
+        return value
+    keyword = get_keyword(value)
+    if keyword in ('middle', 'sub', 'sup', 'text-top', 'text-bottom',
+                   'top', 'bottom'):
+        raise InvalidValues('value not supported yet')
+    if keyword in ('baseline',):
+        return keyword
+
+
+@validator()
 @single_keyword
 def white_space(keyword):
     """``white-space`` property validation."""

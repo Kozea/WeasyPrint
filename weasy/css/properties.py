@@ -101,7 +101,7 @@ INITIAL_VALUES = dict((key.replace('-', '_'), value) for key, value in {
     'text-transform': 'none',
     'top': 'auto',
     'unicode-bidi': 'normal',
-    'vertical-align': 'baseline',
+    'vertical-align': 0,  # Same as 'baseline'
     'visibility': 'visible',
     'white-space': 'normal',
     'widows': 2,
