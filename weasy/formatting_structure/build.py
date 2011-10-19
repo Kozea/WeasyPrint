@@ -157,10 +157,15 @@ def process_whitespace(box):
 
         # TODO: find a way to do less decoding and re-encoding
         text = child.utf8_text.decode('utf8')
+
+        # Normalize line feeds
+        text = re.sub(u'\r\n?', u'\n', text)
+
         handling = child.style.white_space
 
         if handling in ('normal', 'nowrap', 'pre-line'):
-            text = re.sub('[\t\r ]*\n[\t\r ]*', '\n', text)
+            # \r characters were removed/converted earlier
+            text = re.sub('[\t ]*\n[\t ]*', '\n', text)
         if handling in ('pre', 'pre-wrap'):
             # \xA0 is the non-breaking space
             text = text.replace(' ', u'\xA0')

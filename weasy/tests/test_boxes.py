@@ -166,8 +166,7 @@ def sanity_checks(box):
         types = [boxes.BlockLevelBox, boxes.LineBox]
     elif isinstance(box, (boxes.LineBox, boxes.InlineBox)):
         types = [boxes.InlineLevelBox]
-    else:
-        return
+    # no other ParentBox concrete subclass
 
     assert any(
         all(isinstance(child, type_) for child in box.children)
