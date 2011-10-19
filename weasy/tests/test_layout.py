@@ -24,7 +24,7 @@ Test the layout.
 
 from attest import Tests, assert_hook  # pylint: disable=W0611
 
-from . import TestPNGDocument
+from . import TestPNGDocument, resource_filename
 from ..formatting_structure import boxes
 from .test_boxes import monkeypatch_validation
 from . import FONTS
@@ -60,7 +60,9 @@ def parse(html_content):
     """Parse some HTML, apply stylesheets, transform to boxes and lay out."""
     # TODO: remove this patching when asbolute and floats are validated
     with monkeypatch_validation(validate_absolute_and_float):
-        return TestPNGDocument.from_string(html_content).pages
+        document = TestPNGDocument.from_string(html_content)
+        document.base_url = resource_filename('<inline HTML>')
+        return document.pages
 
 
 @SUITE.test
@@ -785,3 +787,49 @@ def test_whitespace_processing():
         em, = line3.children
         text, = em.children
         assert text.utf8_text == b'a', 'source was %r' % (source,)
+
+
+@SUITE.test
+def test_with_images():
+    # pattern.png is 4x4 px. Layout rules try to preserve the ratio, so
+    # the height should be 40px too:
+    page, = parse('<img src="pattern.png" style="width: 40px">')
+    html = page.root_box
+    body, = html.children
+    line, = body.children
+    img, = line.children
+    assert body.height == 40
+    assert img.position_y == 0
+
+    page, = parse('''
+        <img src="pattern.png" style="width: 40px">
+        <img src="pattern.png" style="width: 60px">
+    ''')
+    html = page.root_box
+    body, = html.children
+    line, = body.children
+    img_1, img_2 = line.children
+    assert body.height == 60
+    assert img_1.height == 40
+    assert img_2.height == 60
+    assert img_1.position_y == 20
+    assert img_2.position_y == 0
+
+    page, = parse('''
+        <span>
+            <img src="pattern.png" style="width: 40px">
+            <img src="pattern.png" style="width: 60px">
+        </span>
+    ''')
+    html = page.root_box
+    body, = html.children
+    line, = body.children
+    span, = line.children
+    img_1, img_2 = span.children
+    assert img_1.height == 40
+    assert img_2.height == 60
+    assert img_1.position_y == 20
+    assert img_2.position_y == 0
+    # 60px + the descent of the font below the baseline
+    assert 60 < line.height < 70
+    assert body.height == line.height

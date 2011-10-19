@@ -438,7 +438,7 @@ def inline_box_verticality(box):
         # TODO: implement other values of the property.
         if isinstance(child, boxes.InlineBox):
             children_max_y, children_min_y = inline_box_verticality(child)
-            empty = children_max_y and child.margin_width() == 0
+            empty = children_max_y is None and child.margin_width() == 0
             if empty and (child.margin_left != 0 or child.margin_right != 0):
                 # Guard against the case where a negative margin compensates
                 # something else.
@@ -447,6 +447,10 @@ def inline_box_verticality(box):
                 # No content, ignore this box’s line-height.
                 # See http://www.w3.org/TR/CSS21/visuren.html#phantom-line-box
                 continue
+            if min_y is None or top < min_y:
+                min_y = children_min_y
+            if max_y is None or bottom > max_y:
+                max_y = children_max_y
         top = -child.baseline
         child.position_y = top
         bottom = top + child.margin_height()
