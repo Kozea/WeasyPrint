@@ -118,15 +118,31 @@ def skip_first_whitespace(box, skip_stack):
 
 
 def remove_last_whitespace(box):
-    """Remove in place space characters at the end of a line."""
+    """Remove in place space characters at the end of a line.
+
+    This also reduces the width of the inline parents of the modified text.
+
+    """
+    ancestors = []
     while isinstance(box, (boxes.LineBox, boxes.InlineBox)):
+        ancestors.append(box)
         if not box.children:
             return
         box = box.children[-1]
-    if isinstance(box, boxes.TextBox):
-        white_space = box.style.white_space
-        if white_space in ('normal', 'nowrap', 'pre-line'):
-            box.utf8_text = box.utf8_text.rstrip(b' ')
+    if not (isinstance(box, boxes.TextBox) and
+            box.style.white_space in ('normal', 'nowrap', 'pre-line')):
+        return
+    new_text = box.utf8_text.rstrip(b' ')
+    if len(new_text) == len(box.utf8_text):
+        return
+    box.utf8_text = new_text
+    new_box, resume, _ = split_text_box(box, box.width, None)
+    assert resume is None
+    space_width = box.width - new_box.width
+    box.width = new_box.width
+    box.show_line = new_box.show_line
+    for ancestor in ancestors:
+        ancestor.width -= space_width
 
     # TODO: All tabs (U+0009) are rendered as a horizontal shift that
     # lines up the start edge of the next glyph with the next tab stop.
@@ -239,6 +255,7 @@ def split_inline_level(box, position_x, max_x, skip_stack, containing_block,
 
     """
     if isinstance(box, boxes.TextBox):
+        box.position_x = position_x
         if skip_stack is None:
             skip = 0
         else:
@@ -247,7 +264,7 @@ def split_inline_level(box, position_x, max_x, skip_stack, containing_block,
             assert skip_stack is None
 
         new_box, skip, preserved_line_break = split_text_box(
-            box, position_x, max_x, skip)
+            box, max_x - position_x, skip)
 
         if skip is None:
             resume_at = None
@@ -359,7 +376,7 @@ def split_inline_box(box, position_x, max_x, skip_stack,
     return new_box, resume_at, preserved_line_break
 
 
-def split_text_box(box, position_x, max_x, skip):
+def split_text_box(box, available_width, skip):
     """Keep as much text as possible from a TextBox in a limitied width.
     Try not to overflow but always have some text in ``new_box``
 
@@ -373,7 +390,6 @@ def split_text_box(box, position_x, max_x, skip):
     assert isinstance(box, boxes.TextBox)
     font_size = box.style.font_size
     utf8_text = box.utf8_text[skip:]
-    available_width = max_x - position_x
     if font_size == 0 or available_width <= 0 or not utf8_text:
         return None, None, False
 
@@ -385,7 +401,6 @@ def split_text_box(box, position_x, max_x, skip):
 
     if length > 0:
         box = box.copy_with_text(utf8_text[:length])
-        box.position_x = position_x
         box.width = width
         box.show_line = show_line
         # "The height of the content area should be based on the font,
