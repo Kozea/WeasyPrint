@@ -387,9 +387,9 @@ def position(keyword):
 @single_keyword
 def text_align(keyword):
     """``text-align`` property validation."""
-    if keyword in ('right', 'center', 'justify'):
+    if keyword in ('justify',):
         raise InvalidValues('value not supported yet')
-    return keyword in ('left',)
+    return keyword in ('left', 'right', 'center')
 
 
 @validator()

@@ -58,11 +58,13 @@ def get_next_linebox(linebox, position_y, skip_stack, containing_block,
         linebox, position_x, max_x, skip_stack, containing_block, device_size)
 
     remove_last_whitespace(line)
+    offset_x = text_align(line, containing_block)
 
     bottom, top = inline_box_verticality(line)
     if bottom is None:
         # No children at all
         line.position_y = position_y
+        offset_y = 0
         if preserved_line_break:
             # Only the strut.
             line.height += line.margin_top + line.margin_bottom
@@ -71,10 +73,12 @@ def get_next_linebox(linebox, position_y, skip_stack, containing_block,
     else:
         line.position_y = top
         line.height = bottom - top
-        # This also translates children
-        line.translate(0, position_y - top)
+        offset_y = position_y - top
     line.margin_top = 0
     line.margin_bottom = 0
+    if offset_x != 0 or offset_y != 0:
+        # This also translates children
+        line.translate(offset_x, offset_y)
     return line, resume_at
 
 
@@ -474,3 +478,19 @@ def inline_box_verticality(box):
         if max_y is None or bottom > max_y:
             max_y = bottom
     return max_y, min_y
+
+
+def text_align(line, containing_block):
+    """Return how much the line should be moved horizontally according to
+    the `text-align` property.
+
+    """
+    align = line.style.text_align
+    if align == 'left':
+        return 0
+    offset = containing_block.width - line.width
+    if align == 'center':
+        offset /= 2.
+    else:
+        assert align == 'right'
+    return offset

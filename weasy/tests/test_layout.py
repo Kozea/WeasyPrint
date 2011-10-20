@@ -887,3 +887,92 @@ def test_with_images():
     assert img_2.position_y == 0
     assert line.height == 75
     assert body.height == line.height
+
+
+@SUITE.test
+def test_text_align_left():
+    """
+        <-------------------->  page, body
+            +-----+
+        +---+     |
+        |   |     |
+        +---+-----+
+
+        ^   ^     ^          ^
+        x=0 x=40  x=100      x=200
+    """
+    page, = parse('''
+        <style>
+            @page { size: 200px }
+        </style>
+        <body>
+            <img src="pattern.png" style="width: 40px">
+            <img src="pattern.png" style="width: 60px">
+    ''')
+    html = page.root_box
+    body, = html.children
+    line, = body.children
+    img_1, img_2 = line.children
+    # initial value for text-align: left (in ltr text)
+    assert img_1.position_x == 0
+    assert img_2.position_x == 40
+
+
+@SUITE.test
+def test_text_align_right():
+    """
+        <-------------------->  page, body
+                       +-----+
+                   +---+     |
+                   |   |     |
+                   +---+-----+
+
+        ^          ^   ^     ^
+        x=0        x=100     x=200
+                       x=140
+    """
+    page, = parse('''
+        <style>
+            @page { size: 200px }
+            body { text-align: right }
+        </style>
+        <body>
+            <img src="pattern.png" style="width: 40px">
+            <img src="pattern.png" style="width: 60px">
+    ''')
+    html = page.root_box
+    body, = html.children
+    line, = body.children
+    img_1, img_2 = line.children
+    assert img_1.position_x == 100  # 200 - 60 - 40
+    assert img_2.position_x == 140  # 200 - 60
+
+
+@SUITE.test
+def test_text_align_center():
+    """
+        <-------------------->  page, body
+                  +-----+
+              +---+     |
+              |   |     |
+              +---+-----+
+
+        ^     ^   ^     ^
+        x=    x=50     x=150
+                  x=90
+    """
+    page, = parse('''
+        <style>
+            @page { size: 200px }
+            body { text-align: center }
+        </style>
+        <body>
+            <img src="pattern.png" style="width: 40px">
+            <img src="pattern.png" style="width: 60px">
+    ''')
+    html = page.root_box
+    body, = html.children
+    line, = body.children
+    img_1, img_2 = line.children
+    assert img_1.position_x == 50
+    assert img_2.position_x == 90
