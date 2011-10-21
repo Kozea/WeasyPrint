@@ -25,7 +25,7 @@ Functions laying out the inline boxes.
 import cairo
 
 from .markers import image_marker_layout
-from .percentages import resolve_percentages
+from .percentages import resolve_percentages, resolve_one_percentage
 from ..text import TextFragment
 from ..formatting_structure import boxes
 
@@ -49,6 +49,12 @@ def get_next_linebox(linebox, position_y, skip_stack, containing_block,
     """
     position_x = linebox.position_x
     max_x = position_x + containing_block.width
+    print skip_stack, position_x
+    if skip_stack is None:
+        # text-indent only at the start of the first line
+        # Other percentages (margins, width, ...) do not apply.
+        resolve_one_percentage(linebox, 'text_indent', containing_block.width)
+        position_x += linebox.text_indent
 
     skip_stack = skip_first_whitespace(linebox, skip_stack)
     if skip_stack == 'continue':
@@ -295,7 +301,7 @@ def split_inline_level(box, position_x, max_x, skip_stack, containing_block,
 def split_inline_box(box, position_x, max_x, skip_stack,
                      containing_block, device_size):
     """Same behavior as split_inline_level."""
-    box.position_x = position_x
+    initial_position_x = position_x
     assert isinstance(box, (boxes.LineBox, boxes.InlineBox))
     left_spacing = (box.padding_left + box.margin_left +
                     box.border_left_width)
@@ -351,6 +357,7 @@ def split_inline_box(box, position_x, max_x, skip_stack,
         resume_at = None
 
     new_box = box.copy_with_children(children)
+    new_box.position_x = initial_position_x
     new_box.width = position_x - content_box_left
 
     # Create a "strut":

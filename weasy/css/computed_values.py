@@ -301,6 +301,7 @@ def length_list(computer, name, values):
 @Computer.register('padding-right')
 @Computer.register('padding-bottom')
 @Computer.register('padding-left')
+@Computer.register('text-indent')
 def length(computer, name, value):
     """Compute a length ``value``."""
     if getattr(value, 'type', 'other') == 'NUMBER' and value.value == 0:

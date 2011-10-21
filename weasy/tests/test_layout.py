@@ -394,8 +394,8 @@ def test_empty_linebox():
             <p> </p>'''
         page, = parse(page % {
             'fonts': FONTS, 'font_size': font_size, 'width': width})
-        paraghaph, = body_children(page)
-        return paraghaph
+        paragraph, = body_children(page)
+        return paragraph
 
     font_size = 12
     width = 500
@@ -976,3 +976,26 @@ def test_text_align_center():
     img_1, img_2 = line.children
     assert img_1.position_x == 50
     assert img_2.position_x == 90
+
+
+@SUITE.test
+def test_text_indent():
+    for indent in ['12px', '6%']:  # 6% of 200px is 12px
+        page, = parse('''
+            <style>
+                @page { size: 220px }
+                body { margin: 10px; text-indent: %(indent)s }
+            </style>
+            <p>Some text that is long enough that it take at least three line,
+               but maybe more.
+        ''' % {'indent': indent})
+        html = page.root_box
+        body, = html.children
+        paragraph, = body.children
+        lines = paragraph.children
+        text_1, = lines[0].children
+        text_2, = lines[1].children
+        text_3, = lines[2].children
+        assert text_1.position_x == 22  # 10px margin-left + 12px indent
+        assert text_2.position_x == 10  # No indent
+        assert text_3.position_x == 10  # No indent
