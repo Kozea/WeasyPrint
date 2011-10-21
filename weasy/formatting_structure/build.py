@@ -70,7 +70,8 @@ def dom_to_box(document, element):
     """
     # TODO: should be the used value. When does the used value for `display`
     # differ from the computer value?
-    display = document.style_for(element).display
+    style = document.style_for(element)
+    display = style.display
     if display == 'none':
         return None
 
@@ -82,7 +83,8 @@ def dom_to_box(document, element):
     children = []
 
     if element.text:
-        children.append(boxes.TextBox(document, element, element.text))
+        text = text_transform(element.text, style)
+        children.append(boxes.TextBox(document, element, text))
     for child_element in element:
         # lxml.html already converts HTML entities to text.
         # Here we ignore comments and XML processing instructions.
@@ -92,8 +94,8 @@ def dom_to_box(document, element):
                 children.append(child_box)
             # else: child_element had `display: none`
         if child_element.tail:
-            children.append(boxes.TextBox(
-                document, element, child_element.tail))
+            text = text_transform(child_element.tail, style)
+            children.append(boxes.TextBox(document, element, text))
 
     if display in ('block', 'list-item'):
         box = boxes.BlockBox(document, element, children)
@@ -435,3 +437,19 @@ def _inner_block_in_inline(box, skip_stack=None):
             box = box.copy_with_children(new_children)
 
     return box, block_level_box, resume_at
+
+
+def text_transform(text, style):
+    """Handle the `text-transform` CSS property.
+
+    Takes a Unicode text and a :cls:`StyleDict`, returns a new Unicode text.
+    """
+    transform = style.text_transform
+    if transform == 'none':
+        return text
+    elif transform == 'capitalize':
+        return text.title()  # Python’s unicode.captitalize is not the same.
+    elif transform == 'uppercase':
+        return text.upper()
+    elif transform == 'lowercase':
+        return text.lower()

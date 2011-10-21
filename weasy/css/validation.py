@@ -407,6 +407,13 @@ def text_decoration(values):
 
 
 @validator()
+@single_keyword
+def text_transform(keyword):
+    """``text-align`` property validation."""
+    return keyword in ('none', 'uppercase', 'lowercase', 'capitalize')
+
+
+@validator()
 @single_value
 def vertical_align(value):
     if is_dimension_or_percentage(value, negative=True):

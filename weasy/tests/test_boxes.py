@@ -406,3 +406,33 @@ def test_page_style():
     assert_page_margins(4, top=10, right=3, bottom=3, left=10)
     assert_page_margins(45, top=10, right=10, bottom=3, left=3)
     assert_page_margins(122, top=10, right=3, bottom=3, left=10)
+
+
+@SUITE.test
+def test_text_transform():
+    document = TestPNGDocument.from_string('''
+        <style>
+            p { text-transform: capitalize }
+            p+p { text-transform: uppercase }
+            p+p+p { text-transform: lowercase }
+            p+p+p+p { text-transform: none }
+        </style>
+<p>heLLo wOrlD!</p><p>heLLo wOrlD!</p><p>heLLo wOrlD!</p><p>heLLo wOrlD!</p>
+        ''')
+    box = build.build_formatting_structure(document)
+    sanity_checks(box)
+
+    assert_tree(box, [
+        ('p', 'block', [
+            ('p', 'line', [
+                ('p', 'text', 'Hello World!')])]),
+        ('p', 'block', [
+            ('p', 'line', [
+                ('p', 'text', 'HELLO WORLD!')])]),
+        ('p', 'block', [
+            ('p', 'line', [
+                ('p', 'text', 'hello world!')])]),
+        ('p', 'block', [
+            ('p', 'line', [
+                ('p', 'text', 'heLLo wOrlD!')])]),
+    ])
