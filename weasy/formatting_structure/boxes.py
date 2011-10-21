@@ -329,22 +329,22 @@ class AnonymousBox(Box):
         parent_style = self.document.style_for(self.element)
         self.style = computed_from_cascaded(self.element, {}, parent_style)
 
-        # These properties are not inherited so they always have their initial
-        # value, zero. The used value is zero too.
-        self.margin_top = 0
-        self.margin_bottom = 0
-        self.margin_left = 0
-        self.margin_right = 0
+    # These properties are not inherited so they always have their initial
+    # value, zero. The used value is zero too.
+    margin_top = 0
+    margin_bottom = 0
+    margin_left = 0
+    margin_right = 0
 
-        self.padding_top = 0
-        self.padding_bottom = 0
-        self.padding_left = 0
-        self.padding_right = 0
+    padding_top = 0
+    padding_bottom = 0
+    padding_left = 0
+    padding_right = 0
 
-        self.border_top_width = 0
-        self.border_bottom_width = 0
-        self.border_left_width = 0
-        self.border_right_width = 0
+    border_top_width = 0
+    border_bottom_width = 0
+    border_left_width = 0
+    border_right_width = 0
 
 
 class AnonymousBlockBox(AnonymousBox, BlockBox):
