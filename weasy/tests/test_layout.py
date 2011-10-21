@@ -28,6 +28,8 @@ from . import TestPNGDocument, resource_filename
 from ..formatting_structure import boxes
 from .test_boxes import monkeypatch_validation
 from . import FONTS
+from ..layout.inlines import split_inline_box
+from ..layout.percentages import resolve_percentages
 
 SUITE = Tests()
 
@@ -384,22 +386,14 @@ def test_lists():
 @SUITE.test
 def test_empty_linebox():
     """Test lineboxes with no content other than space-like characters."""
-    def get_paragraph_linebox(width, font_size):
-        """Helper returning a paragraph with given style."""
-        page = u'''
-            <style>
-            p { font-size:%(font_size)spx; width:%(width)spx;
-                font-family:%(fonts)s;}
-            </style>
-            <p> </p>'''
-        page, = parse(page % {
-            'fonts': FONTS, 'font_size': font_size, 'width': width})
-        paragraph, = body_children(page)
-        return paragraph
-
-    font_size = 12
-    width = 500
-    paragraph = get_paragraph_linebox(width, font_size)
+    page, = parse('''
+        <style>
+        p { font-size: 12px; width: 500px;
+            font-family:%(fonts)s;}
+        </style>
+        <p> </p>
+    ''' % {'fonts': FONTS})
+    paragraph, = body_children(page)
     line, = paragraph.children
     assert line.height == 0
     assert paragraph.height == 0
@@ -408,61 +402,48 @@ def test_empty_linebox():
 @SUITE.test
 def test_breaking_linebox():
     """Test lineboxes breaks with a lot of text and deep nesting."""
-    def get_paragraph_linebox(width, font_size):
-        """Helper returning a paragraph with given style."""
-        page = u'''
-            <style>
-            p { font-size: %(font_size)spx;
-                width: %(width)spx;
-                font-family: %(fonts)s;
-                background-color: #393939;
-                color: #FFFFFF;
-                line-height: 1;
-                text-decoration: underline overline line-through;}
-            </style>
-            <p><em>Lorem<strong> Ipsum <span>is very</span>simply</strong><em>
-            dummy</em>text of the printing and. naaaa </em> naaaa naaaa naaaa
-            naaaa naaaa naaaa naaaa naaaa</p>'''
-        page, = parse(
-            page % {'fonts': FONTS, 'font_size': font_size, 'width': width})
-        html = page.root_box
-        body, = html.children
-        paragraph, = body.children
-        return paragraph
-    font_size = 13
-    width = 300
-    paragraph = get_paragraph_linebox(width, font_size)
+    page, = parse(u'''
+        <style>
+        p { font-size: 13px;
+            width: 300px;
+            font-family: %(fonts)s;
+            background-color: #393939;
+            color: #FFFFFF;
+            line-height: 1;
+            text-decoration: underline overline line-through;}
+        </style>
+        <p><em>Lorem<strong> Ipsum <span>is very</span>simply</strong><em>
+        dummy</em>text of the printing and. naaaa </em> naaaa naaaa naaaa
+        naaaa naaaa naaaa naaaa naaaa</p>
+    ''' % {'fonts': FONTS})
+    html = page.root_box
+    body, = html.children
+    paragraph, = body.children
     assert len(list(paragraph.children)) == 3
 
     lines = paragraph.children
     for line in lines:
-        assert line.style.font_size == font_size
+        assert line.style.font_size == 13
         assert line.element.tag == 'p'
         for child in line.children:
             assert child.element.tag in ('em', 'p')
-            assert child.style.font_size == font_size
+            assert child.style.font_size == 13
             if isinstance(child, boxes.ParentBox):
                 for child_child in child.children:
                     assert child.element.tag in ('em', 'strong', 'span')
-                    assert child.style.font_size == font_size
+                    assert child.style.font_size == 13
 
 
 @SUITE.test
 def test_linebox_text():
     """Test the creation of line boxes."""
-    def get_paragraph_linebox():
-        """Helper returning a paragraph with customizable style."""
-        page = u'''
-            <style>
-                p { width:%(width)spx; font-family:%(fonts)s;}
-            </style>
-            <p><em>Lorem Ipsum</em>is very <strong>coool</strong></p>'''
-
-        page, = parse(page % {'fonts': FONTS, 'width': 165})
-        paragraph, = body_children(page)
-        return paragraph
-
-    paragraph = get_paragraph_linebox()
+    page, = parse('''
+        <style>
+            p { width: 165px; font-family:%(fonts)s;}
+        </style>
+        <p><em>Lorem Ipsum</em>is very <strong>coool</strong></p>
+    ''' % {'fonts': FONTS})
+    paragraph, = body_children(page)
     lines = list(paragraph.children)
     assert len(lines) == 2
 
@@ -564,9 +545,6 @@ def test_page_breaks():
 @SUITE.test
 def test_inlinebox_spliting():
     """Test the inline boxes spliting."""
-    from ..layout.inlines import split_inline_box
-    from ..layout.percentages import resolve_percentages
-
     def get_inlinebox(content):
         """Helper returning a inlinebox with customizable style."""
         page = u'<style>p { width:%(width)spx; font-family:%(fonts)s;}</style>'
@@ -591,11 +569,6 @@ def test_inlinebox_spliting():
     def get_joined_text(parts):
         """Get the joined text from ``parts``."""
         return b''.join(part.children[0].utf8_text for part in parts)
-
-    def test_inlinebox_all_spacing(inlinebox, value):
-        """Test the spacing for the four sides of ``inlinebox``."""
-        for side in ('left', 'top', 'bottom', 'right'):
-            test_inlinebox_spacing(inlinebox, value, side)
 
     def test_inlinebox_spacing(inlinebox, value, side):
         """Test the margin, padding and border-width of ``inlinebox``."""
@@ -647,7 +620,9 @@ def test_inlinebox_spliting():
     parts = list(get_parts(inlinebox, 1000, parent))
     assert len(parts) == 1
     assert original_text == get_joined_text(parts)
-    test_inlinebox_all_spacing(parts[0], 10)
+    for side in ('left', 'top', 'bottom', 'right'):
+        test_inlinebox_spacing(parts[0], 10, side)
+
 
     inlinebox, parent = get_inlinebox(content)
     resolve_percentages(inlinebox, parent)
@@ -671,99 +646,69 @@ def test_inlinebox_spliting():
 @SUITE.test
 def test_inlinebox_text_after_spliting():
     """Test the inlinebox text after spliting."""
-    from ..layout.inlines import split_inline_box
-    from ..layout.percentages import resolve_percentages
-
-    def get_inlinebox(content):
-        """Helper returning a inlinebox with customizable style."""
-        page = u'<style>p { width:%(width)spx; font-family:%(fonts)s;}</style>'
-        page = '%s <p>%s</p>' % (page, content)
-        html = parse_without_layout(page % {'fonts': FONTS, 'width': 200})
-        body, = html.children
-        paragraph, = body.children
-        line, = paragraph.children
-        inline, = line.children
-        return inline, line
-
-    def get_parts(inlinebox, width, parent):
-        """Yield the parts of the splitted ``inlinebox`` of given ``width``."""
-        skip = None
-        while 1:
-            box, skip, _ = split_inline_box(
-                inlinebox, 0, width, skip, parent, None)
-            yield box
-            if skip is None:
-                break
-
-    def get_full_text(inlinebox):
-        """Get the full text in ``inlinebox``."""
-        return b''.join(
-            part.utf8_text for part in inlinebox.descendants()
-            if isinstance(part, boxes.TextBox))
-
-    def get_joined_text(parts):
-        """Get the joined text from ``parts``."""
-        return b''.join(get_full_text(part) for part in parts)
-
-    content = '''<strong><em><em><em>
-                  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
-                  </em></em></em></strong>'''
-
-    inlinebox, parent = get_inlinebox(content)
+    html = parse_without_layout('''
+        <style>p { width: 200px; font-family:%(fonts)s;}</style>
+        <p><strong><em><em><em>
+            0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
+        </em></em></em></strong></p>
+    ''' % {'fonts': FONTS})
+    body, = html.children
+    paragraph, = body.children
+    parent, = paragraph.children
+    inlinebox, = parent.children
     resolve_percentages(inlinebox, parent)
 
-    original_text = get_full_text(inlinebox)
+    original_text = b''.join(
+        part.utf8_text for part in inlinebox.descendants()
+        if isinstance(part, boxes.TextBox))
 
     # test with width = 10
-    parts = list(get_parts(inlinebox, 100, parent))
+    parts = []
+    skip = None
+    while 1:
+        box, skip, _ = split_inline_box(inlinebox, 0, 100, skip, parent, None)
+        parts.append(box)
+        if skip is None:
+            break
     assert len(parts) > 2
-    assert original_text == get_joined_text(parts)
+    assert b''.join(
+        child.utf8_text
+        for part in parts
+        for child in part.descendants()
+        if isinstance(child, boxes.TextBox)
+    ) == original_text
 
 
 @SUITE.test
 def test_page_and_linebox_breaking():
     """Test the linebox text after spliting linebox and page."""
-    def get_pages(content):
-        """Helper returning a inlinebox with customizable style."""
-        page = '''
-                <style>
-                div { font-family:%(fonts)s; font-size:22px}
-                @page { size: 100px; margin:2px; border:1px solid }
-                body { margin: 0 }
-                </style>
-                <div><span/>%(content)s</div>'''
-                # The empty <span/> above tests a corner case
-                # in skip_first_whitespace()
-        page = page % {'fonts': FONTS, 'content': content}
-        return parse(page)
+    # The empty <span/> tests a corner case
+    # in skip_first_whitespace()
+    pages = parse('''
+        <style>
+            div { font-family:%(fonts)s; font-size:22px}
+            @page { size: 100px; margin:2px; border:1px solid }
+            body { margin: 0 }
+        </style>
+        <div><span/>1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15</div>
+    ''' % {'fonts': FONTS})
 
-    def get_full_text(lines):
-        """Get a list of a full text parts in ``inlinebox``."""
-        texts = []
+    texts = []
+    for page in pages:
+        html = page.root_box
+        body, = html.children
+        div, = body.children
+        lines = div.children
         for line in lines:
             line_texts = []
             for child in line.descendants():
                 if isinstance(child, boxes.TextBox):
                     line_texts.append(child.utf8_text)
             texts.append(b''.join(line_texts))
-        return texts
 
-    def get_joined_text(pages):
-        """Get the joined text from ``parts``."""
-        texts = []
-        for page in pages:
-            html = page.root_box
-            body, = html.children
-            div, = body.children
-            lines = div.children
-            texts.extend(get_full_text(lines))
-        return b' '.join(texts)
-
-    content = u'1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15'
-
-    pages = get_pages(content)
     assert len(pages) == 2
-    assert content == get_joined_text(pages)
+    assert b' '.join(texts) == \
+        '1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15'
 
 
 @SUITE.test
