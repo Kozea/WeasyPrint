@@ -49,7 +49,6 @@ def get_next_linebox(linebox, position_y, skip_stack, containing_block,
     """
     position_x = linebox.position_x
     max_x = position_x + containing_block.width
-    print skip_stack, position_x
     if skip_stack is None:
         # text-indent only at the start of the first line
         # Other percentages (margins, width, ...) do not apply.
@@ -470,6 +469,8 @@ def inline_box_verticality(box):
             if empty:
                 # No content, ignore this box’s line-height.
                 # See http://www.w3.org/TR/CSS21/visuren.html#phantom-line-box
+                child.position_y = 0
+                child.height = 0
                 continue
             # TODO: this is incorrect if this child’s own baseline is not y=0
             if min_y is None or top < min_y:

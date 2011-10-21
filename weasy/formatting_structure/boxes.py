@@ -80,10 +80,6 @@ class Box(object):
         # Should never be None
         self.element = element
         self._init_style()
-        self.width = None
-        self.height = None
-        self.position_x = 0
-        self.position_y = 0
 
     def _init_style(self):
         """Initialize the style."""

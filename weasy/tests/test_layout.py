@@ -28,6 +28,7 @@ from . import TestPNGDocument, resource_filename
 from ..formatting_structure import boxes
 from .test_boxes import monkeypatch_validation
 from . import FONTS
+from ..layout.blocks import block_level_width
 from ..layout.inlines import split_inline_box
 from ..layout.percentages import resolve_percentages
 
@@ -547,14 +548,16 @@ def test_inlinebox_spliting():
     """Test the inline boxes spliting."""
     def get_inlinebox(content):
         """Helper returning a inlinebox with customizable style."""
-        page = u'<style>p { width:%(width)spx; font-family:%(fonts)s;}</style>'
+        page = u'<style>p { font-family:%(fonts)s;}</style>'
         page = '%s <p>%s</p>' % (page, content)
-        html = parse_without_layout(page % {'fonts': FONTS, 'width': 200})
+        html = parse_without_layout(page % {'fonts': FONTS})
         body, = html.children
         paragraph, = body.children
         line, = paragraph.children
         inline, = line.children
-        return inline, line
+        paragraph.width = 200
+        paragraph.height = 'auto'
+        return inline, paragraph
 
     def get_parts(inlinebox, width, parent):
         """Yield the parts of the splitted ``inlinebox`` of given ``width``."""
@@ -654,9 +657,11 @@ def test_inlinebox_text_after_spliting():
     ''' % {'fonts': FONTS})
     body, = html.children
     paragraph, = body.children
-    parent, = paragraph.children
-    inlinebox, = parent.children
-    resolve_percentages(inlinebox, parent)
+    line, = paragraph.children
+    inlinebox, = line.children
+    paragraph.width = 200
+    paragraph.height = 'auto'
+    resolve_percentages(inlinebox, paragraph)
 
     original_text = b''.join(
         part.utf8_text for part in inlinebox.descendants()
@@ -666,7 +671,8 @@ def test_inlinebox_text_after_spliting():
     parts = []
     skip = None
     while 1:
-        box, skip, _ = split_inline_box(inlinebox, 0, 100, skip, parent, None)
+        box, skip, _ = split_inline_box(
+            inlinebox, 0, 100, skip, paragraph, None)
         parts.append(box)
         if skip is None:
             break
