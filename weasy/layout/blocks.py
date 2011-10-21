@@ -30,7 +30,7 @@ from ..formatting_structure import boxes
 
 
 def block_level_layout(box, max_position_y, skip_stack, containing_block,
-                       device_size):
+                       device_size, page_is_empty):
     """Lay out the block-level ``box``.
 
     :param max_position_y: the absolute vertical position (as in
@@ -40,7 +40,7 @@ def block_level_layout(box, max_position_y, skip_stack, containing_block,
     """
     if isinstance(box, boxes.BlockBox):
         return block_box_layout(box, max_position_y, skip_stack,
-            containing_block, device_size)
+            containing_block, device_size, page_is_empty)
     elif isinstance(box, boxes.BlockLevelReplacedBox):
         return block_replaced_box_layout(
             box, containing_block, device_size), None
@@ -49,13 +49,13 @@ def block_level_layout(box, max_position_y, skip_stack, containing_block,
 
 
 def block_box_layout(box, max_position_y, skip_stack, containing_block,
-                     device_size):
+                     device_size, page_is_empty):
     """Lay out the block ``box``."""
     resolve_percentages(box, containing_block)
     block_level_width(box, containing_block)
     list_marker_layout(box, containing_block)
     return block_level_height(box, max_position_y, skip_stack,
-        containing_block, device_size)
+        containing_block, device_size, page_is_empty=True)
 
 
 def block_replaced_box_layout(box, containing_block, device_size):
@@ -135,7 +135,7 @@ def block_level_width(box, containing_block):
 
 
 def block_level_height(box, max_position_y, skip_stack, containing_block,
-                       device_size):
+                       device_size, page_is_empty):
     """Set the ``box`` height."""
     assert isinstance(box, boxes.BlockBox)
 
@@ -177,7 +177,10 @@ def block_level_height(box, max_position_y, skip_stack, containing_block,
                 if line is None:
                     break
                 new_position_y = position_y + line.height
-                if new_position_y > max_position_y:
+                # Allow overflow if the first line of the page is higher
+                # than the page itself so that we put *something* on this
+                # page and can advance in the document.
+                if new_position_y > max_position_y and not page_is_empty:
                     if not new_children:
                         # Page break before any content, cancel the whole box.
                         return None, None
@@ -186,6 +189,7 @@ def block_level_height(box, max_position_y, skip_stack, containing_block,
                     is_page_break = True
                     break
                 new_children.append(line)
+                page_is_empty = False
                 position_y = new_position_y
                 if resume_at is None:
                     break
@@ -196,7 +200,7 @@ def block_level_height(box, max_position_y, skip_stack, containing_block,
             new_containing_block = box
             new_child, resume_at = block_level_layout(
                 child, max_position_y, skip_stack,
-                new_containing_block, device_size)
+                new_containing_block, device_size, page_is_empty)
             skip_stack = None
             if new_child is None:
                 if new_children:
@@ -210,6 +214,7 @@ def block_level_height(box, max_position_y, skip_stack, containing_block,
             # Bottom borders may overflow here
             # TODO: back-track somehow when all lines fit but not borders
             new_children.append(new_child)
+            page_is_empty = False
             position_y = new_position_y
             if resume_at is not None:
                 resume_at = (index, resume_at)
