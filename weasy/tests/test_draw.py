@@ -58,7 +58,7 @@ def test_pixels(name, expected_width, expected_height, expected_lines, html):
     """Helper testing the size of the image and the pixels values."""
     write_pixels('expected_results', name, expected_width, expected_height,
                  expected_lines)
-    lines = html_to_png(name, expected_width, expected_height, html)
+    _doc, lines = html_to_png(name, expected_width, expected_height, html)
     assert_pixels_equal(name, expected_width, expected_height, lines,
                         expected_lines)
 
@@ -73,7 +73,7 @@ def test_same_rendering(expected_width, expected_height, *documents):
     lines_list = []
 
     for name, html in documents:
-        lines = html_to_png(name, expected_width, expected_height, html)
+        _doc, lines = html_to_png(name, expected_width, expected_height, html)
         write_pixels('test_results', name, expected_width, expected_height,
                      lines)
         lines_list.append((name, lines))
@@ -101,6 +101,8 @@ def write_pixels(directory, name, expected_width, expected_height, lines):
 def html_to_png(name, expected_width, expected_height, html):
     """
     Render an HTML document to PNG, checks its size and return pixel data.
+
+    Also return the document to aid debugging.
     """
     document = TestPNGDocument.from_string(html)
     # Dummy filename, but in the right directory.
@@ -120,7 +122,7 @@ def html_to_png(name, expected_width, expected_height, html):
     assert meta['bitdepth'] == 8, name
     assert len(lines) == height, name
     assert len(lines[0]) == width * BYTES_PER_PIXELS, name
-    return lines
+    return document, lines
 
 
 def assert_pixels_equal(name, width, height, lines, expected_lines):
@@ -652,3 +654,49 @@ def test_images():
             <div><img alt="Hello, world!"></div>
         '''),
     )
+
+
+@SUITE.test
+def test_visibility():
+    source = '''
+        <style>
+            @page { size: 12px 7px }
+            body { background: #fff; font: 1px/1 serif }
+            img { margin: 1px 0 0 1px; }
+            %(extra_css)s
+        </style>
+        <div>
+            <img src="pattern.png">
+            <span><img src="pattern.png"></span>
+        </div>
+    '''
+    test_pixels('visibility_reference', 12, 7, [
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+r+B+B+B+_+r+B+B+B+_+_,
+        _+B+B+B+B+_+B+B+B+B+_+_,
+        _+B+B+B+B+_+B+B+B+B+_+_,
+        _+B+B+B+B+_+B+B+B+B+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+    ], source % {'extra_css': ''})
+
+    test_pixels('visibility_hidden', 12, 7, [
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+    ], source % {'extra_css': 'div { visibility: hidden }'})
+
+    test_pixels('visibility_mixed', 12, 7, [
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+r+B+B+B+_+_,
+        _+_+_+_+_+_+B+B+B+B+_+_,
+        _+_+_+_+_+_+B+B+B+B+_+_,
+        _+_+_+_+_+_+B+B+B+B+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+    ], source % {'extra_css': '''div { visibility: hidden }
+                                 span { visibility: visible } '''})

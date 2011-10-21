@@ -421,6 +421,13 @@ def vertical_align(value):
 
 @validator()
 @single_keyword
+def visibility(keyword):
+    """``white-space`` property validation."""
+    return keyword in ('visible', 'hidden', 'collapse')
+
+
+@validator()
+@single_keyword
 def white_space(keyword):
     """``white-space`` property validation."""
     return keyword in ('normal', 'pre', 'nowrap', 'pre-wrap', 'pre-line')

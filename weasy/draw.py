@@ -87,25 +87,27 @@ def draw_page(page, context):
 
 def draw_box(context, box):
     """Draw a ``box`` on ``context``."""
-    if has_background(box):
-        draw_background(context, box)
+    if box.style.visibility == 'visible':
+        if has_background(box):
+            draw_background(context, box)
 
-    marker_box = getattr(box, 'outside_list_marker', None)
-    if marker_box:
-        draw_box(context, marker_box)
+        draw_border(context, box)
 
-    if isinstance(box, boxes.TextBox):
-        draw_text(context, box)
-        return
+        marker_box = getattr(box, 'outside_list_marker', None)
+        if marker_box:
+            draw_box(context, marker_box)
 
-    if isinstance(box, boxes.ReplacedBox):
-        draw_replacedbox(context, box)
+        if isinstance(box, boxes.TextBox):
+            draw_text(context, box)
+            return
+
+        if isinstance(box, boxes.ReplacedBox):
+            draw_replacedbox(context, box)
 
     if isinstance(box, boxes.ParentBox):
         for child in box.children:
             draw_box(context, child)
 
-    draw_border(context, box)
 
 
 def has_background(box):
