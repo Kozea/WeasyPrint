@@ -74,28 +74,27 @@ def resolve_percentages(box, containing_block):
     resolve_one_percentage(box, 'padding_right', cb_width)
     resolve_one_percentage(box, 'padding_top', maybe_height)
     resolve_one_percentage(box, 'padding_bottom', maybe_height)
-    resolve_one_percentage(box, 'text_indent', cb_width)
-    resolve_one_percentage(box, 'min_width', cb_width)
-    resolve_one_percentage(box, 'max_width', cb_width, ['none'])
     resolve_one_percentage(box, 'width', cb_width, ['auto'])
+    # Not supported yet:
+#    resolve_one_percentage(box, 'min_width', cb_width)
+#    resolve_one_percentage(box, 'max_width', cb_width, ['none'])
 
-    # TODO: background-position?
     # XXX later: top, bottom, left and right on positioned elements
 
     if cb_height == 'auto':
         # Special handling when the height of the containing block
         # depends on its content.
-        resolve_one_percentage(box, 'min_height', 0)
-        resolve_one_percentage(box, 'max_height', None, ['none'])
         resolve_one_percentage(box, 'height', 'auto', ['auto'])
+        # Not supported yet:
+#        resolve_one_percentage(box, 'min_height', 0)
+#        resolve_one_percentage(box, 'max_height', None, ['none'])
     else:
-        resolve_one_percentage(box, 'min_height', cb_height)
-        resolve_one_percentage(box, 'max_height', cb_height, ['none'])
         resolve_one_percentage(box, 'height', cb_height, ['auto'])
+        # Not supported yet:
+#        resolve_one_percentage(box, 'min_height', cb_height)
+#        resolve_one_percentage(box, 'max_height', cb_height, ['none'])
 
     # Used value == computed value
     for side in ['top', 'right', 'bottom', 'left']:
         prop = 'border_{}_width'.format(side)
-        values = getattr(box.style, prop)
-        pixels = values
-        setattr(box, prop, pixels)
+        setattr(box, prop, box.style[prop])
