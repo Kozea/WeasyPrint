@@ -453,8 +453,6 @@ def inline_box_verticality(box):
     max_y = None
     min_y = None
     for child in box.children:
-        # ``vertical-align: baseline`` for everyone.
-        # TODO: implement other values of the property.
         if isinstance(child, boxes.InlineBox):
             children_max_y, children_min_y = inline_box_verticality(child)
             empty = children_max_y is None and child.margin_width() == 0
@@ -466,10 +464,13 @@ def inline_box_verticality(box):
                 # No content, ignore this box’s line-height.
                 # See http://www.w3.org/TR/CSS21/visuren.html#phantom-line-box
                 continue
+            # TODO: this is incorrect if this child’s own baseline is not y=0
             if min_y is None or top < min_y:
                 min_y = children_min_y
             if max_y is None or bottom > max_y:
                 max_y = children_max_y
+        # the child’s `top` is `child.baseline` above (lower y) its baseline.
+        # The child’s baseline is `vertical_align` above the parent’s baseline.
         top = -child.baseline - child.style.vertical_align
         child.position_y = top
         bottom = top + child.margin_height()
