@@ -95,7 +95,10 @@ def dom_to_box(document, element):
             # else: child_element had `display: none`
         if child_element.tail:
             text = text_transform(child_element.tail, style)
-            children.append(boxes.TextBox(document, element, text))
+            if children and isinstance(children[-1], boxes.TextBox):
+                children[-1].utf8_text += text.encode('utf8')
+            else:
+                children.append(boxes.TextBox(document, element, text))
 
     if display in ('block', 'list-item'):
         box = boxes.BlockBox(document, element, children)

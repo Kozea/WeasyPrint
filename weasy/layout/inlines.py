@@ -146,6 +146,7 @@ def remove_last_whitespace(box):
         return
     box.utf8_text = new_text
     new_box, resume, _ = split_text_box(box, box.width, None)
+    assert new_box is not None
     assert resume is None
     space_width = box.width - new_box.width
     box.width = new_box.width
