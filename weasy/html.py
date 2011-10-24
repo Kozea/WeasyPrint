@@ -142,7 +142,7 @@ def handle_br(document, element):
     """Handle ``<br>`` tags, return a preserved new-line character."""
     box = boxes.TextBox(document, element, '\n')
     box.style.white_space = 'pre'
-    return box
+    return boxes.InlineBox(document, element, [box])
 
 
 class Replacement(object):
