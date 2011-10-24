@@ -22,7 +22,7 @@ setup(
         'weasy.tests': ['resources/*',
                         # Make sure the directories are created
                         '*_results/.gitignore'],
-        'weasy.html': ['*.css']},
+        'weasy.css': ['*.css']},
     zip_safe=False,
     install_requires=[
         'lxml',

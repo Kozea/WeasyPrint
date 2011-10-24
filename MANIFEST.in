@@ -1,3 +1,3 @@
 include weasy/tests/resources/*
 include weasy/tests/*_results/.gitignore
-include weasy/html/*.css
+include weasy/css/*.css
