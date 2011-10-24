@@ -55,7 +55,7 @@ def block_box_layout(box, max_position_y, skip_stack, containing_block,
     block_level_width(box, containing_block)
     list_marker_layout(box, containing_block)
     return block_level_height(box, max_position_y, skip_stack,
-        containing_block, device_size, page_is_empty=True)
+        containing_block, device_size, page_is_empty)
 
 
 def block_replaced_box_layout(box, containing_block, device_size):
