@@ -94,9 +94,9 @@ def test_expand_borders():
         'border_top_style': 'none',
         'border_top_color': 'red',
     }
-    assert expand_to_dict('border_top', 'inset') == {
+    assert expand_to_dict('border_top', 'solid') == {
         'border_top_width': 'medium',
-        'border_top_style': 'inset',
+        'border_top_style': 'solid',
         'border_top_color': 'currentColor',
     }
     assert expand_to_dict('border', '6px dashed green') == {

@@ -205,8 +205,9 @@ def background_repeat(keyword):
 @single_keyword
 def border_style(keyword):
     """``border-*-style`` properties validation."""
-    return keyword in ('none', 'hidden', 'dotted', 'dashed', 'solid',
-                       'double', 'groove', 'ridge', 'inset', 'outset')
+    if keyword in ('double', 'groove', 'ridge', 'inset', 'outset'):
+        raise InvalidValues('value not supported yet')
+    return keyword in ('none', 'hidden', 'dotted', 'dashed', 'solid')
 
 
 @validator('border-top-width')
