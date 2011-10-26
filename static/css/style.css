@@ -21,7 +21,17 @@
 
 @font-face {
   font-family: "txt";
-  src: url(Fontin-Sans.otf), url(Fontin-Bold.otf), url(Fontin-Italic.otf), url(Fontin-SmallCaps.otf);
+  src: url(Fontin-Sans.otf);
+}
+@font-face {
+  font-family: "txt";
+  src: url(Fontin-Bold.otf);
+  font-weight: bold;
+}
+@font-face {
+  font-family: "txt";
+  src: url(Fontin-Italic.otf);
+  font-style: italic;
 }
 
 
