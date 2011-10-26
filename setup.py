@@ -25,12 +25,14 @@ setup(
         'weasy.css': ['*.css']},
     zip_safe=False,
     install_requires=[
+        # Keep this in sync with the "install" documentation
         'lxml',
-        'cssutils',
+        'cssutils>=0.9.8a3',
         'PIL',
-        # Tricky to compile: 'pycairo'
-        # Not on PyPI: 'rsvg',
-        # Also depends on Pango with introspection
+        # Not installable by pip:
+        #  Pango>=1.29.3
+        #  PyGObject
+        #  PyCairo
     ],
     test_loader='attest:FancyReporter.test_loader',
     test_suite='weasy.tests',
