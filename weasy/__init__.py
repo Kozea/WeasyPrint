@@ -34,13 +34,16 @@ import logging
 
 import cssutils
 
-from . import document
+from .document import PDFDocument, PNGDocument
 from .utils import ensure_url
 
 
+__all__ = ['PDFDocument', 'PNGDocument', 'main']
+
+
 FORMATS = {
-    'pdf': document.PDFDocument,
-    'png': document.PNGDocument,
+    'pdf': PDFDocument,
+    'png': PNGDocument,
 }
 
 
