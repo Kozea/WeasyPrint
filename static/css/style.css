@@ -48,7 +48,7 @@ html {
 }
 
 body{
-  background: url(img/logo.png) no-repeat center 65px,
+  background: url(img/logo.png) no-repeat center 50px,
               url(img/top.png) repeat-x left top,
               url(img/footer.jpg) repeat-x left bottom,
               url(img/background.png) repeat;
@@ -183,7 +183,7 @@ nav {
   display: block;
   font-family: "menu";
   font-size: 1.3em;
-  margin: 450px 0 0 0;
+  margin: 80px 0 165px 0;
   text-align: center;
 }
 
