@@ -21,8 +21,10 @@
 
 @font-face {
   font-family: "txt";
-  src: url(Fontin-Sans.otf);
+  src: url(Fontin-Sans.otf), url(Fontin-Bold.otf), url(Fontin-Italic.otf), url(Fontin-SmallCaps.otf);
 }
+
+
 /*
   ---------------
   - HTML / Body -
@@ -90,25 +92,25 @@ h3 a{
 }
 
 h3 a:hover,
-h3 a:visited{
+h3 a:visited {
   color: #35c6c7 ;
 }
 
 h4 a:first-letter,
-h4 a:before{
+h4 a:before {
   color: white;
 }
 
-h4 a:hover{
+h4 a:hover {
   background : url(img/rond-orange.png) no-repeat -1px -3px;
   color: #f47900;
 }
 
-h4{
+h4 {
   border-bottom: 1px solid #f47900;
 }
 
-h4 a{
+h4 a {
   background : url(img/rond-orange.png) no-repeat -1px -3px;
   color: #f47900;
   font-weight: bold;
