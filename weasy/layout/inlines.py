@@ -142,15 +142,20 @@ def remove_last_whitespace(box):
             box.style.white_space in ('normal', 'nowrap', 'pre-line')):
         return
     new_text = box.utf8_text.rstrip(b' ')
-    if len(new_text) == len(box.utf8_text):
-        return
+    if new_text:
+        if len(new_text) == len(box.utf8_text):
+            return
+        new_box, resume, _ = split_text_box(box, box.width * 2, 0)
+        assert new_box is not None
+        assert resume is None
+        space_width = box.width - new_box.width
+        box.width = new_box.width
+        box.show_line = new_box.show_line
+    else:
+        space_width = box.width
+        box.width = 0
+        box.show_line = lambda x: x  # No-op
     box.utf8_text = new_text
-    new_box, resume, _ = split_text_box(box, box.width, None)
-    assert new_box is not None
-    assert resume is None
-    space_width = box.width - new_box.width
-    box.width = new_box.width
-    box.show_line = new_box.show_line
     for ancestor in ancestors:
         ancestor.width -= space_width
 
