@@ -13,7 +13,7 @@ WeasyPrint depends on:
 .. Note: keep this in sync with setup.py
 
 * CPython 2.7
-* Pango >= 1.29.3 with GObject introspection
+* Pango **>= 1.29.3** with GObject introspection
 * PyGObject
 * PyCairo
 * PIL

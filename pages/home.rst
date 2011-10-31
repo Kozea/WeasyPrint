@@ -10,8 +10,8 @@ Get started by `installing it </install/>`_ or jump to:
 
  * :codelink:`Source code on GitHub`
  * `Issue tracker <http://redmine.kozea.fr/projects/weasyprint/issues>`_
- * Contact us by email at weasyprint@kozea.fr
- * … or on the Jabber chat-room: community@room.jabber.kozea.fr
+ * `Continuous integration <http://jenkins.kozea.org/job/WeasyPrint/>`_
+ * `Get in touch </community/>`_
 
 Sample output
 -------------

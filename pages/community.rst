@@ -4,9 +4,20 @@ Community
 Are you using WeasyPrint, do you want to make changes or see changes made to
 it, or are you just interested? Come talk to us!
 
- * :codelink:`Source code on GitHub`
- * `Issue tracker <http://redmine.kozea.fr/projects/weasyprint/issues>`_
- * Contact us by email at weasyprint@kozea.fr
- * … or on the Jabber chat-room: community@room.jabber.kozea.fr
+Mailing list
+------------
 
-**TODO:** Make this more narrative.
+The mailing list both for WeasyPrint’s users and developers is hosted on
+Librelist_.
+To subscribe, send a mail to weasyprint@librelist.com and reply to the
+confirmation mail. Make sure to check your Spam folder, just in case.
+To unsubscribe again, send a mail to weasyprint-unsubscribe@librelist.com and
+reply to the confirmation mail.
+
+.. _Librelist: http://librelist.com/
+
+Jabber
+------
+
+We have a Jabber/XMPP chat-room at community@room.jabber.kozea.fr. It’s not
+just about WeasyPrint though.

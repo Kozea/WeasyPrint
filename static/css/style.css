@@ -49,7 +49,7 @@ html {
 
 body{
   background: url(img/logo.png) no-repeat center 50px,
-              url(img/top.png) repeat-x left top,
+              url(img/top.png) repeat-x 25% top,
               url(img/footer.jpg) repeat-x left bottom,
               url(img/background.png) repeat;
   font-family: "txt";
