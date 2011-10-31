@@ -466,6 +466,12 @@ def get_all_computed_styles(document, medium,
                 if origin == 'user agent':
                     LOGGER.setLevel(level)
 
+                if not declarations:
+                    # Don’t bother working for nuthin’
+                    # ``matched`` is a generator, so no work is done until
+                    # we start iterating it.
+                    continue
+
                 for element, pseudo_type, specificity in matched:
                     for name, (values, importance) in declarations:
                         precedence = declaration_precedence(origin, importance)
