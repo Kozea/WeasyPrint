@@ -42,4 +42,11 @@ These classes are instanciated with `HTML document parsed by lxml
 in the form of class methods. ``from_string`` takes a byte or Unicode string
 while ``from_file`` can take an URL, a file name or a file-like object.
 
+Similarly, the ``write_to`` method can take a file name or a file-like object.
+The rendering of the document is lazy, so it will not happen until you
+call ``write_to`` or access other attributes of the document.
+
 **TODO:** details for the ``Document`` API.
+
+If you want to change something in WeasyPrint or just see how it works,
+it’s time to `start hacking </hacking>`_!
