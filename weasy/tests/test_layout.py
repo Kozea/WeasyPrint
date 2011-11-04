@@ -28,7 +28,6 @@ from . import TestPNGDocument, resource_filename
 from ..formatting_structure import boxes
 from .test_boxes import monkeypatch_validation
 from . import FONTS
-from ..layout.blocks import block_level_width
 from ..layout.inlines import split_inline_box
 from ..layout.percentages import resolve_percentages
 
@@ -626,7 +625,6 @@ def test_inlinebox_spliting():
     for side in ('left', 'top', 'bottom', 'right'):
         test_inlinebox_spacing(parts[0], 10, side)
 
-
     inlinebox, parent = get_inlinebox(content)
     resolve_percentages(inlinebox, parent)
     original_text = inlinebox.children[0].utf8_text
@@ -719,6 +717,7 @@ def test_page_and_linebox_breaking():
 
 @SUITE.test
 def test_whitespace_processing():
+    """Test various spaces and tabulations processing."""
     for source in ['a', '  a  ', ' \n  \ta', ' a\t ']:
         page, = parse('<p><em>%s</em></p>' % source)
         html = page.root_box
@@ -742,6 +741,7 @@ def test_whitespace_processing():
 
 @SUITE.test
 def test_with_images():
+    """Test that width, height and ratio of images are respected."""
     # pattern.png is 4x4 px. Layout rules try to preserve the ratio, so
     # the height should be 40px too:
     page, = parse('<img src="pattern.png" style="width: 40px">')
@@ -792,7 +792,6 @@ def test_with_images():
     assert 60 < line.height < 70
     assert body.height == line.height
 
-
     """
                +-------+      <- position_y = 0
           35px |       |
@@ -842,6 +841,8 @@ def test_with_images():
 
 @SUITE.test
 def test_text_align_left():
+    """Test the left text alignment."""
+
     """
         <-------------------->  page, body
             +-----+
@@ -871,6 +872,8 @@ def test_text_align_left():
 
 @SUITE.test
 def test_text_align_right():
+    """Test the right text alignment."""
+
     """
         <-------------------->  page, body
                        +-----+
@@ -901,6 +904,8 @@ def test_text_align_right():
 
 @SUITE.test
 def test_text_align_center():
+    """Test the center text alignment."""
+
     """
         <-------------------->  page, body
                   +-----+
@@ -931,6 +936,7 @@ def test_text_align_center():
 
 @SUITE.test
 def test_text_indent():
+    """Test the text-indent property."""
     for indent in ['12px', '6%']:  # 6% of 200px is 12px
         page, = parse('''
             <style>
@@ -950,3 +956,24 @@ def test_text_indent():
         assert text_1.position_x == 22  # 10px margin-left + 12px indent
         assert text_2.position_x == 10  # No indent
         assert text_3.position_x == 10  # No indent
+
+
+@SUITE.test
+def test_inline_margins():
+    """Test that the auto margins are ignored for inline replaced boxes."""
+    page, = parse('''
+        <style>
+            @page { size: 200px }
+            img { display: inline; margin: auto; width: 50px }
+        </style>
+        <body>
+          <img src="pattern.png" />
+    ''')
+    html = page.root_box
+    body, = html.children
+    line, = body.children
+    img, = line.children
+    assert img.margin_top == 0
+    assert img.margin_right == 0
+    assert img.margin_bottom == 0
+    assert img.margin_left == 0

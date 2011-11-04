@@ -410,6 +410,7 @@ def test_page_style():
 
 @SUITE.test
 def test_text_transform():
+    """Test the text-transform property."""
     document = TestPNGDocument.from_string('''
         <style>
             p { text-transform: capitalize }
