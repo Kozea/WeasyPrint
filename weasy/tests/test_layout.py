@@ -959,8 +959,8 @@ def test_text_indent():
 
 
 @SUITE.test
-def test_inline_margins():
-    """Test that the auto margins are ignored for inline replaced boxes."""
+def test_inline_replaced_auto_margins():
+    """Test that auto margins are ignored for inline replaced boxes."""
     page, = parse('''
         <style>
             @page { size: 200px }
@@ -977,3 +977,23 @@ def test_inline_margins():
     assert img.margin_right == 0
     assert img.margin_bottom == 0
     assert img.margin_left == 0
+
+
+@SUITE.test
+def test_empty_inline_auto_margins():
+    """Test that horizontal auto margins are ignored for empty inline boxes."""
+    page, = parse('''
+        <style>
+            @page { size: 200px }
+            span { margin: auto }
+        </style>
+        <body><span></span>
+    ''')
+    html = page.root_box
+    body, = html.children
+    block, = body.children
+    span, = block.children
+    assert span.margin_top != 0
+    assert span.margin_right == 0
+    assert span.margin_bottom != 0
+    assert span.margin_left == 0
