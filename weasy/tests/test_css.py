@@ -29,10 +29,9 @@ from attest import Tests, raises, assert_hook  # pylint: disable=W0611
 import cssutils
 from cssutils.helper import path2url
 
-from . import resource_filename
+from . import resource_filename, TestPNGDocument
 from .test_boxes import monkeypatch_validation
 from .. import css
-from . import TestPNGDocument
 
 
 SUITE = Tests()
