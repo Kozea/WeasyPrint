@@ -138,6 +138,7 @@ def assert_pixels_equal(name, width, height, lines, expected_lines):
                 assert pixel == expected_pixel, \
                     'Pixel (%i, %i) does not match in %s' % (x, y, name)
 
+
 @SUITE.test
 def test_canvas_background():
     """Test the background applied on ``<html>`` and/or ``<body>`` tags."""
