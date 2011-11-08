@@ -130,8 +130,10 @@ def find_stylesheets(document):
             yield parser.parseString(content,
                 href=element.base_url,
                 media=media_attr, title=element.get('title'))
-        elif element.tag == 'link' and element.get('href') \
-                and ' stylesheet ' in ' %s ' % element.get('rel', ''):
+        elif element.tag == 'link' and element.get('href'):
+            rel = element.get('rel', '').split()
+            if 'stylesheet' not in rel or 'alternate' in rel:
+                continue
             # URLs should NOT have been made absolute earlier
             # TODO: support the <base> HTML element, but do not use
             # lxml.html.HtmlElement.make_links_absolute() that changes the tree
