@@ -47,7 +47,7 @@ def list_marker_layout(box, containing_block):
                 marker.baseline, _) = result
         else:
             # Image marker
-            marker.width, marker.height = list_style_image_size(marker)
+            image_marker_layout(marker)
 
         # Align the top of the marker box with the top of its list-item’s
         # content-box.
@@ -67,40 +67,35 @@ def list_marker_layout(box, containing_block):
             marker.position_x += box.border_width()
 
 
-def image_marker_layout(box, containing_block):
+def image_marker_layout(box):
     """Layout the :class:`boxes.ImageMarkerBox` ``box``.
 
     :class:`boxes.ImageMarkerBox` objects are :class:`boxes.ReplacedBox`
     objects, but their used size is computed differently.
 
     """
-    resolve_percentages(box, containing_block)
-    box.width, box.height = list_style_image_size(box)
-
-
-def list_style_image_size(marker_box):
-    """Return the used ``width, height`` for an image in ``list-style-image``.
-
-    See http://www.w3.org/TR/CSS21/generate.html#propdef-list-style-image
-
-    """
-    image = marker_box.replacement
+    image = box.replacement
     width = image.intrinsic_width()
     height = image.intrinsic_width()
     ratio = image.intrinsic_ratio()
-    one_em = marker_box.style.font_size
+    one_em = box.style.font_size
     if width is not None and height is not None:
-        return width, height
+        box.width = width
+        box.height = height
     elif width is not None and ratio is not None:
-        return width, width / ratio
+        box.width = width
+        box.height = width / ratio
     elif height is not None and ratio is not None:
-        return height * ratio, height
+        box.width = height * ratio
+        box.height = height
     elif ratio is not None:
         # ratio >= 1 : width >= height
         if ratio >= 1:
-            return one_em, one_em / ratio
+            box.width = one_em
+            box.height = one_em / ratio
         else:
-            return one_em * ratio, one_em
+            box.width = one_em * ratio
+            box.height = one_em
     else:
-        return (width if width is not None else one_em,
-                height if height is not None else one_em)
+        box.width = width if width is not None else one_em
+        box.height = height if height is not None else one_em

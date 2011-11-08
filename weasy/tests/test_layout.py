@@ -194,7 +194,7 @@ def test_block_widths():
     divs = body.children
     # TODO: remove this when we have proper whitespace handling that
     # does not create anonymous block boxes for the whitespace between divs.
-    divs = [box for box in divs if not isinstance(box, boxes.AnonymousBox)]
+    divs = [box for box in divs if not box.anonymous]
 
     paragraphs = []
     for div in divs:
@@ -202,7 +202,7 @@ def test_block_widths():
         assert div.element.tag == 'div'
         assert div.width == 100
         for paragraph in div.children:
-            if isinstance(paragraph, boxes.AnonymousBox):
+            if paragraph.anonymous:
                 # TODO: remove this when we have proper whitespace handling
                 continue
             assert isinstance(paragraph, boxes.BlockBox)
@@ -352,7 +352,7 @@ def test_lists():
     ''')
     unordered_list, = body_children(page)
     list_element, = [child for child in unordered_list.children
-           if not isinstance(child, boxes.AnonymousBox)]
+           if not child.anonymous]
     line, = list_element.children
     marker, spacer, content = line.children
     assert marker.text == u'◦'
@@ -370,7 +370,7 @@ def test_lists():
     ''')
     unordered_list, = body_children(page)
     list_element, = [child for child in unordered_list.children
-           if not isinstance(child, boxes.AnonymousBox)]
+           if not child.anonymous]
     marker = list_element.outside_list_marker
     font_size = marker.style.font_size
     assert marker.margin_right == 0.5 * font_size  # 0.5em

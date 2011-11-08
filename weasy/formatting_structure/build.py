@@ -136,8 +136,9 @@ def add_box_marker(box):
         marker_box = boxes.TextBox(box.document, box.element, marker)
     else:
         replacement = html.ImageReplacement(surface)
-        marker_box = boxes.ImageMarkerBox(
-            box.document, box.element, replacement)
+        marker_box = boxes.InlineLevelReplacedBox(
+            box.document, box.element, replacement, anonymous=True)
+        marker_box.is_list_marker = True
 
     position = box.style.list_style_position
     if position == 'inside':
@@ -255,8 +256,8 @@ def inline_in_block(box):
                 # and create a new one.
                 line_box = boxes.LineBox(
                     box.document, box.element, new_line_children)
-                anonymous = boxes.AnonymousBlockBox(
-                    box.document, box.element, [line_box])
+                anonymous = boxes.BlockBox(
+                    box.document, box.element, [line_box], anonymous=True)
                 new_children.append(anonymous)
                 new_line_children = []
             new_children.append(child_box)
@@ -268,16 +269,14 @@ def inline_in_block(box):
             new_line_children.append(child_box)
     if new_line_children:
         # There were inlines at the end
+        line_box = boxes.LineBox(
+            box.document, box.element, new_line_children)
         if new_children:
-            line_box = boxes.LineBox(
-                box.document, box.element, new_line_children)
-            anonymous = boxes.AnonymousBlockBox(
-                box.document, box.element, [line_box])
+            anonymous = boxes.BlockBox(
+                box.document, box.element, [line_box], anonymous=True)
             new_children.append(anonymous)
         else:
             # Only inline-level children: one line box
-            line_box = boxes.LineBox(
-                box.document, box.element, new_line_children)
             new_children.append(line_box)
 
     return box.copy_with_children(new_children)
@@ -359,16 +358,16 @@ def block_in_inline(box):
                 new_line, block, stack = _inner_block_in_inline(child, stack)
                 if block is None:
                     break
-                anon = boxes.AnonymousBlockBox(
-                    box.document, box.element, [new_line])
+                anon = boxes.BlockBox(
+                    box.document, box.element, [new_line], anonymous=True)
                 new_children.append(anon)
                 new_children.append(block_in_inline(block))
                 # Loop with the same child and the new stack.
             if new_children:
                 # Some children were already added, this became a block
                 # context.
-                new_child = boxes.AnonymousBlockBox(
-                    box.document, box.element, [new_line])
+                new_child = boxes.BlockBox(
+                    box.document, box.element, [new_line], anonymous=True)
             else:
                 # Keep the single line box as-is, without anonymous blocks.
                 new_child = new_line

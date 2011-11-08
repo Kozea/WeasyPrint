@@ -247,10 +247,11 @@ def replaced_box_height(box, device_size):
 
 def atomic_box(box, containing_block, device_size):
     """Compute the width and the height of the atomic ``box``."""
-    if isinstance(box, boxes.ImageMarkerBox):
-        image_marker_layout(box, containing_block)
     if isinstance(box, boxes.ReplacedBox):
-        inline_replaced_box_layout(box, containing_block, device_size)
+        if getattr(box, 'is_list_marker', False):
+            image_marker_layout(box)
+        else:
+            inline_replaced_box_layout(box, containing_block, device_size)
     else:
         raise TypeError('Layout for %s not handled yet' % type(box).__name__)
     return box

@@ -37,16 +37,16 @@ SUITE = Tests()
 def serialize(box_list):
     """Transform a box list into a structure easier to compare for testing."""
     types = {
-        boxes.TextBox: 'text',
-        boxes.LineBox: 'line',
-        boxes.BlockBox: 'block',
-        boxes.InlineBox: 'inline',
-        boxes.InlineBlockBox: 'inline_block',
-        boxes.AnonymousBlockBox: 'anon_block',
-        boxes.InlineLevelReplacedBox: 'inline_replaced',
+        (boxes.TextBox, True): 'text',
+        (boxes.LineBox, True): 'line',
+        (boxes.BlockBox, True): 'anon_block',
+        (boxes.BlockBox, False): 'block',
+        (boxes.InlineBox, False): 'inline',
+        (boxes.InlineBlockBox, False): 'inline_block',
+        (boxes.InlineLevelReplacedBox, False): 'inline_replaced',
     }
     return [
-        (box.element.tag, types[box.__class__], (
+        (box.element.tag, types[box.__class__, box.anonymous], (
             # All concrete boxes are either text, replaced or parent.
             box.text if isinstance(box, boxes.TextBox)
             else '<replaced>' if isinstance(box, boxes.ReplacedBox)
@@ -329,7 +329,7 @@ def test_styles():
         # All boxes inherit the color
         assert child.style.color.value == 'blue'
         # Only non-anonymous boxes have margins
-        if isinstance(child, boxes.AnonymousBox):
+        if child.anonymous:
             assert child.style.margin_top == 0
         else:
             assert child.style.margin_top == 42
