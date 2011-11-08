@@ -355,9 +355,9 @@ def test_lists():
            if not isinstance(child, boxes.AnonymousBox)]
     line, = list_element.children
     marker, spacer, content = line.children
-    assert marker.utf8_text.decode('utf8') == u'◦'
-    assert spacer.utf8_text.decode('utf8') == u'\u00a0'  # NO-BREAK SPACE
-    assert content.utf8_text.decode('utf8') == u'abc'
+    assert marker.text == u'◦'
+    assert spacer.text == u'\u00a0'  # NO-BREAK SPACE
+    assert content.text == u'abc'
 
     page, = parse('''
         <style>
@@ -377,10 +377,10 @@ def test_lists():
     assert marker.position_x == (
         list_element.padding_box_x() - marker.width - marker.margin_right)
     assert marker.position_y == list_element.position_y
-    assert marker.utf8_text.decode('utf8') == u'•'
+    assert marker.text == u'•'
     line, = list_element.children
     content, = line.children
-    assert content.utf8_text == b'abc'
+    assert content.text == u'abc'
 
 
 @SUITE.test
@@ -447,11 +447,11 @@ def test_linebox_text():
     lines = list(paragraph.children)
     assert len(lines) == 2
 
-    text = b' '.join(
-        (b''.join(box.utf8_text for box in line.descendants()
+    text = ' '.join(
+        (''.join(box.text for box in line.descendants()
                  if isinstance(box, boxes.TextBox)))
         for line in lines)
-    assert text == b'Lorem Ipsumis very coool'
+    assert text == 'Lorem Ipsumis very coool'
 
 
 @SUITE.test
@@ -570,7 +570,7 @@ def test_inlinebox_spliting():
 
     def get_joined_text(parts):
         """Get the joined text from ``parts``."""
-        return b''.join(part.children[0].utf8_text for part in parts)
+        return ''.join(part.children[0].text for part in parts)
 
     def test_inlinebox_spacing(inlinebox, value, side):
         """Test the margin, padding and border-width of ``inlinebox``."""
@@ -585,7 +585,7 @@ def test_inlinebox_spliting():
 
     inlinebox, parent = get_inlinebox(content)
     resolve_percentages(inlinebox, parent)
-    original_text = inlinebox.children[0].utf8_text
+    original_text = inlinebox.children[0].text
 
     # test with width = 1000
     parts = list(get_parts(inlinebox, 1000, parent))
@@ -594,7 +594,7 @@ def test_inlinebox_spliting():
 
     inlinebox, parent = get_inlinebox(content)
     resolve_percentages(inlinebox, parent)
-    original_text = inlinebox.children[0].utf8_text
+    original_text = inlinebox.children[0].text
 
     # test with width = 100
     parts = list(get_parts(inlinebox, 100, parent))
@@ -603,7 +603,7 @@ def test_inlinebox_spliting():
 
     inlinebox, parent = get_inlinebox(content)
     resolve_percentages(inlinebox, parent)
-    original_text = inlinebox.children[0].utf8_text
+    original_text = inlinebox.children[0].text
 
     # test with width = 10
     parts = list(get_parts(inlinebox, 10, parent))
@@ -617,7 +617,7 @@ def test_inlinebox_spliting():
 
     inlinebox, parent = get_inlinebox(content)
     resolve_percentages(inlinebox, parent)
-    original_text = inlinebox.children[0].utf8_text
+    original_text = inlinebox.children[0].text
     # test with width = 1000
     parts = list(get_parts(inlinebox, 1000, parent))
     assert len(parts) == 1
@@ -627,7 +627,7 @@ def test_inlinebox_spliting():
 
     inlinebox, parent = get_inlinebox(content)
     resolve_percentages(inlinebox, parent)
-    original_text = inlinebox.children[0].utf8_text
+    original_text = inlinebox.children[0].text
 
     # test with width = 1000
     parts = list(get_parts(inlinebox, 100, parent))
@@ -661,8 +661,8 @@ def test_inlinebox_text_after_spliting():
     paragraph.height = 'auto'
     resolve_percentages(inlinebox, paragraph)
 
-    original_text = b''.join(
-        part.utf8_text for part in inlinebox.descendants()
+    original_text = ''.join(
+        part.text for part in inlinebox.descendants()
         if isinstance(part, boxes.TextBox))
 
     # test with width = 10
@@ -675,8 +675,8 @@ def test_inlinebox_text_after_spliting():
         if skip is None:
             break
     assert len(parts) > 2
-    assert b''.join(
-        child.utf8_text
+    assert ''.join(
+        child.text
         for part in parts
         for child in part.descendants()
         if isinstance(child, boxes.TextBox)
@@ -707,11 +707,11 @@ def test_page_and_linebox_breaking():
             line_texts = []
             for child in line.descendants():
                 if isinstance(child, boxes.TextBox):
-                    line_texts.append(child.utf8_text)
-            texts.append(b''.join(line_texts))
+                    line_texts.append(child.text)
+            texts.append(''.join(line_texts))
 
     assert len(pages) == 2
-    assert b' '.join(texts) == \
+    assert ' '.join(texts) == \
         '1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15'
 
 
@@ -726,7 +726,7 @@ def test_whitespace_processing():
         line, = p.children
         em, = line.children
         text, = em.children
-        assert text.utf8_text == b'a', 'source was %r' % (source,)
+        assert text.text == 'a', 'source was %r' % (source,)
 
         page, = parse('<p style="white-space: pre-line">\n\n<em>%s</em></pre>'
             % source.replace('\n', ' '))
@@ -736,7 +736,7 @@ def test_whitespace_processing():
         _line1, _line2, line3 = p.children
         em, = line3.children
         text, = em.children
-        assert text.utf8_text == b'a', 'source was %r' % (source,)
+        assert text.text == 'a', 'source was %r' % (source,)
 
 
 @SUITE.test

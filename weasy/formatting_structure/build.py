@@ -96,7 +96,7 @@ def dom_to_box(document, element):
         if child_element.tail:
             text = text_transform(child_element.tail, style)
             if children and isinstance(children[-1], boxes.TextBox):
-                children[-1].utf8_text += text.encode('utf8')
+                children[-1].text += text
             else:
                 children.append(boxes.TextBox(document, element, text))
 
@@ -157,11 +157,10 @@ def process_whitespace(box):
     """
     following_collapsible_space = False
     for child in box.descendants():
-        if not (isinstance(child, boxes.TextBox) and child.utf8_text):
+        if not (isinstance(child, boxes.TextBox) and child.text):
             continue
 
-        # TODO: find a way to do less decoding and re-encoding
-        text = child.utf8_text.decode('utf8')
+        text = child.text
 
         # Normalize line feeds
         text = re.sub(u'\r\n?', u'\n', text)
@@ -195,7 +194,7 @@ def process_whitespace(box):
         else:
             following_collapsible_space = False
 
-        child.utf8_text = text.encode('utf8')
+        child.text = text
     return box
 
 

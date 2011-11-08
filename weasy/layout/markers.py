@@ -40,7 +40,7 @@ def list_marker_layout(box, containing_block):
     if marker:
         resolve_percentages(marker, containing_block)
         if isinstance(marker, boxes.TextBox):
-            text_fragment = TextFragment(marker.utf8_text, marker.style,
+            text_fragment = TextFragment(marker.text, marker.style,
                 context=cairo.Context(marker.document.surface))
             result = text_fragment.split_first_line()
             (marker.show_line, _, marker.width, marker.height,

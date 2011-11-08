@@ -48,7 +48,7 @@ def serialize(box_list):
     return [
         (box.element.tag, types[box.__class__], (
             # All concrete boxes are either text, replaced or parent.
-            box.utf8_text.decode('utf8') if isinstance(box, boxes.TextBox)
+            box.text if isinstance(box, boxes.TextBox)
             else '<replaced>' if isinstance(box, boxes.ReplacedBox)
             else serialize(box.children)))
         for box in box_list

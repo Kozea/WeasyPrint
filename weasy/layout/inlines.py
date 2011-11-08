@@ -102,12 +102,12 @@ def skip_first_whitespace(box, skip_stack):
     if isinstance(box, boxes.TextBox):
         assert next_skip_stack is None
         white_space = box.style.white_space
-        length = len(box.utf8_text)
+        length = len(box.text)
         if index == length:
             # Starting a the end of the TextBox, no text to see: Continue
             return 'continue'
         if white_space in ('normal', 'nowrap', 'pre-line'):
-            while index < length and box.utf8_text[index] == b' ':
+            while index < length and box.text[index] == ' ':
                 index += 1
         return index, None
 
@@ -141,9 +141,9 @@ def remove_last_whitespace(box):
     if not (isinstance(box, boxes.TextBox) and
             box.style.white_space in ('normal', 'nowrap', 'pre-line')):
         return
-    new_text = box.utf8_text.rstrip(b' ')
+    new_text = box.text.rstrip(' ')
     if new_text:
-        if len(new_text) == len(box.utf8_text):
+        if len(new_text) == len(box.text):
             return
         new_box, resume, _ = split_text_box(box, box.width * 2, 0)
         assert new_box is not None
@@ -155,7 +155,7 @@ def remove_last_whitespace(box):
         space_width = box.width
         box.width = 0
         box.show_line = lambda x: x  # No-op
-    box.utf8_text = new_text
+    box.text = new_text
     for ancestor in ancestors:
         ancestor.width -= space_width
 
@@ -405,18 +405,33 @@ def split_text_box(box, available_width, skip):
     """
     assert isinstance(box, boxes.TextBox)
     font_size = box.style.font_size
-    utf8_text = box.utf8_text[skip:]
-    if font_size == 0 or available_width <= 0 or not utf8_text:
+    text = box.text[skip:]
+    if font_size == 0 or available_width <= 0 or not text:
         return None, None, False
 
-    fragment = TextFragment(utf8_text, box.style,
+    fragment = TextFragment(text, box.style,
         cairo.Context(box.document.surface), available_width)
 
+    # XXX ``resume_at`` is an index in UTF-8 bytes, not unicode codepoints.
     show_line, length, width, height, baseline, resume_at = \
         fragment.split_first_line()
 
+    # Convert ``length`` and ``resume_at`` from UTF-8 indexes in text
+    # to Unicode indexes.
+    # No need to encode what’s after resume_at (if set) or length (if
+    # resume_at is not set). One code point is one or more byte, so
+    # UTF-8 indexes are always bigger or equal to Unicode indexes.
+    partial_text = text[:resume_at or length]
+    utf8_text = partial_text.encode('utf8')
+    new_text = utf8_text[:length].decode('utf8')
+    new_length = len(new_text)
+    if resume_at is not None:
+        between = utf8_text[length:resume_at].decode('utf8')
+        resume_at = new_length + len(between)
+    length = new_length
+
     if length > 0:
-        box = box.copy_with_text(utf8_text[:length])
+        box = box.copy_with_text(new_text)
         box.width = width
         box.show_line = show_line
         # "The height of the content area should be based on the font,
@@ -445,8 +460,7 @@ def split_text_box(box, available_width, skip):
     else:
         preserved_line_break = (length != resume_at)
         if preserved_line_break:
-            between = utf8_text[length:resume_at]
-            assert between == b'\n', ('Got %r between two lines. '
+            assert between == '\n', ('Got %r between two lines. '
                 'Expected nothing or a preserved line break' % (between,))
         resume_at += skip
 

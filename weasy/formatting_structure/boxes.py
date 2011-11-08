@@ -404,12 +404,12 @@ class TextBox(AnonymousBox, InlineLevelBox):
     def __init__(self, document, element, text):
         assert text
         super(TextBox, self).__init__(document, element)
-        self.utf8_text = text.encode('utf8')
+        self.text = text
 
-    def copy_with_text(self, utf8_text):
-        assert utf8_text
+    def copy_with_text(self, text):
+        assert text
         new_box = self._copy()
-        new_box.utf8_text = utf8_text
+        new_box.text = text
         return new_box
 
 
