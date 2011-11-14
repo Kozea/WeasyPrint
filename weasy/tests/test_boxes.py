@@ -36,17 +36,12 @@ SUITE = Tests()
 
 def serialize(box_list):
     """Transform a box list into a structure easier to compare for testing."""
-    types = {
-        (boxes.TextBox, True): 'text',
-        (boxes.LineBox, True): 'line',
-        (boxes.BlockBox, True): 'anon_block',
-        (boxes.BlockBox, False): 'block',
-        (boxes.InlineBox, False): 'inline',
-        (boxes.InlineBlockBox, False): 'inline_block',
-        (boxes.InlineLevelReplacedBox, False): 'inline_replaced',
-    }
     return [
-        (box.element.tag, types[box.__class__, box.anonymous], (
+        (
+            box.element.tag,
+            ('Anon' if box.anonymous and type(box) not in (boxes.TextBox,
+                boxes.LineBox) else '') + type(box).__name__[:-3],
+            (
             # All concrete boxes are either text, replaced or parent.
             box.text if isinstance(box, boxes.TextBox)
             else '<replaced>' if isinstance(box, boxes.ReplacedBox)
@@ -117,22 +112,6 @@ def parse(html_content):
         return build.dom_to_box(document, document.dom)
 
 
-def prettify(tree_list):
-    """Special formatting for printing serialized box trees."""
-    def lines(tree, indent=0):
-        """Recursively yield the lines of ``tree`` with ``indentation``."""
-        tag, type_, content = tree
-        if type_ in ('text', 'inline_replaced'):
-            yield '%s%s %s %r' % (4 * ' ' * indent, tag, type_, content)
-        else:
-            yield '%s%s %s' % (4 * ' ' * indent, tag, type_)
-            for child in content:
-                for line in lines(child, indent + 1):
-                    yield line
-
-    return '\n'.join(line for tree in tree_list for line in lines(tree))
-
-
 def assert_tree(box, expected):
     """Check the box tree equality.
 
@@ -142,8 +121,7 @@ def assert_tree(box, expected):
     expected: a list of serialized <body> children as returned by to_lists().
 
     """
-    result = to_lists(box)
-    assert result == expected, 'Got\n' + prettify(result)
+    assert to_lists(box) == expected
 
 
 def sanity_checks(box):
@@ -176,21 +154,21 @@ def sanity_checks(box):
 @SUITE.test
 def test_box_tree():
     """Test the creation of trees from HTML strings."""
-    assert_tree(parse('<p>'), [('p', 'block', [])])
+    assert_tree(parse('<p>'), [('p', 'Block', [])])
     assert_tree(parse('''
         <style>
             span { display: inline-block }
         </style>
         <p>Hello <em>World <img src="pattern.png"><span>Lipsum</span></em>!</p>
     '''), [
-        ('p', 'block', [
-            ('p', 'text', 'Hello '),
-            ('em', 'inline', [
-                ('em', 'text', 'World '),
-                ('img', 'inline_replaced', '<replaced>'),
-                ('span', 'inline_block', [
-                    ('span', 'text', 'Lipsum')])]),
-            ('p', 'text', '!')])])
+        ('p', 'Block', [
+            ('p', 'Text', 'Hello '),
+            ('em', 'Inline', [
+                ('em', 'Text', 'World '),
+                ('img', 'InlineLevelReplaced', '<replaced>'),
+                ('span', 'InlineBlock', [
+                    ('span', 'Text', 'Lipsum')])]),
+            ('p', 'Text', '!')])])
 
 
 @SUITE.test
@@ -198,8 +176,8 @@ def test_html_entities():
     """Test the management of HTML entities."""
     for quote in ['"', '&quot;', '&#x22;', '&#34;']:
         assert_tree(parse('<p>{}abc{}'.format(quote, quote)), [
-            ('p', 'block', [
-                ('p', 'text', '"abc"')])])
+            ('p', 'Block', [
+                ('p', 'Text', '"abc"')])])
 
 
 @SUITE.test
@@ -207,16 +185,16 @@ def test_inline_in_block():
     """Test the management of inline boxes in block boxes."""
     source = '<div>Hello, <em>World</em>!\n<p>Lipsum.</p></div>'
     expected = [
-        ('div', 'block', [
-            ('div', 'anon_block', [
-                ('div', 'line', [
-                    ('div', 'text', 'Hello, '),
-                    ('em', 'inline', [
-                        ('em', 'text', 'World')]),
-                    ('div', 'text', '!\n')])]),
-            ('p', 'block', [
-                ('p', 'line', [
-                    ('p', 'text', 'Lipsum.')])])])]
+        ('div', 'Block', [
+            ('div', 'AnonBlock', [
+                ('div', 'Line', [
+                    ('div', 'Text', 'Hello, '),
+                    ('em', 'Inline', [
+                        ('em', 'Text', 'World')]),
+                    ('div', 'Text', '!\n')])]),
+            ('p', 'Block', [
+                ('p', 'Line', [
+                    ('p', 'Text', 'Lipsum.')])])])]
 
     box = parse(source)
     box = build.inline_in_block(box)
@@ -236,69 +214,69 @@ def test_block_in_inline():
     ''')
     box = build.inline_in_block(box)
     assert_tree(box, [
-        ('body', 'line', [
-            ('p', 'inline_block', [
-                ('p', 'line', [
-                    ('p', 'text', 'Lorem '),
-                    ('em', 'inline', [
-                        ('em', 'text', 'ipsum '),
-                        ('strong', 'inline', [
-                            ('strong', 'text', 'dolor '),
-                            ('span', 'block', [  # This block is "pulled up"
-                                ('span', 'line', [
-                                    ('span', 'text', 'sit')])]),
+        ('body', 'Line', [
+            ('p', 'InlineBlock', [
+                ('p', 'Line', [
+                    ('p', 'Text', 'Lorem '),
+                    ('em', 'Inline', [
+                        ('em', 'Text', 'ipsum '),
+                        ('strong', 'Inline', [
+                            ('strong', 'Text', 'dolor '),
+                            ('span', 'Block', [  # This block is "pulled up"
+                                ('span', 'Line', [
+                                    ('span', 'Text', 'sit')])]),
                             # No whitespace processing here.
-                            ('strong', 'text', '\n    '),
-                            ('span', 'block', [  # This block is "pulled up"
-                                ('span', 'line', [
-                                    ('span', 'text', 'amet,')])])]),
-                        ('span', 'block', [  # This block is "pulled up"
-                            ('span', 'line', [
-                                ('em', 'inline', [
-                                    ('em', 'text', 'consectetur'),
-                                    ('div', 'block', []),
+                            ('strong', 'Text', '\n    '),
+                            ('span', 'Block', [  # This block is "pulled up"
+                                ('span', 'Line', [
+                                    ('span', 'Text', 'amet,')])])]),
+                        ('span', 'Block', [  # This block is "pulled up"
+                            ('span', 'Line', [
+                                ('em', 'Inline', [
+                                    ('em', 'Text', 'consectetur'),
+                                    ('div', 'Block', []),
                                     ])])])])])])])])
 
     box = build.block_in_inline(box)
     assert_tree(box, [
-        ('body', 'line', [
-            ('p', 'inline_block', [
-                ('p', 'anon_block', [
-                    ('p', 'line', [
-                        ('p', 'text', 'Lorem '),
-                        ('em', 'inline', [
-                            ('em', 'text', 'ipsum '),
-                            ('strong', 'inline', [
-                                ('strong', 'text', 'dolor ')])])])]),
-                ('span', 'block', [
-                    ('span', 'line', [
-                        ('span', 'text', 'sit')])]),
-                ('p', 'anon_block', [
-                    ('p', 'line', [
-                        ('em', 'inline', [
-                            ('strong', 'inline', [
+        ('body', 'Line', [
+            ('p', 'InlineBlock', [
+                ('p', 'AnonBlock', [
+                    ('p', 'Line', [
+                        ('p', 'Text', 'Lorem '),
+                        ('em', 'Inline', [
+                            ('em', 'Text', 'ipsum '),
+                            ('strong', 'Inline', [
+                                ('strong', 'Text', 'dolor ')])])])]),
+                ('span', 'Block', [
+                    ('span', 'Line', [
+                        ('span', 'Text', 'sit')])]),
+                ('p', 'AnonBlock', [
+                    ('p', 'Line', [
+                        ('em', 'Inline', [
+                            ('strong', 'Inline', [
                                 # Whitespace processing not done yet.
-                                ('strong', 'text', '\n    ')])])])]),
-                ('span', 'block', [
-                    ('span', 'line', [
-                        ('span', 'text', 'amet,')])]),
+                                ('strong', 'Text', '\n    ')])])])]),
+                ('span', 'Block', [
+                    ('span', 'Line', [
+                        ('span', 'Text', 'amet,')])]),
 
-                ('p', 'anon_block', [
-                    ('p', 'line', [
-                        ('em', 'inline', [
-                            ('strong', 'inline', [])])])]),
-                ('span', 'block', [
-                    ('span', 'anon_block', [
-                        ('span', 'line', [
-                            ('em', 'inline', [
-                                ('em', 'text', 'consectetur')])])]),
-                    ('div', 'block', []),
-                    ('span', 'anon_block', [
-                        ('span', 'line', [
-                            ('em', 'inline', [])])])]),
-                ('p', 'anon_block', [
-                    ('p', 'line', [
-                        ('em', 'inline', [])])])])])])
+                ('p', 'AnonBlock', [
+                    ('p', 'Line', [
+                        ('em', 'Inline', [
+                            ('strong', 'Inline', [])])])]),
+                ('span', 'Block', [
+                    ('span', 'AnonBlock', [
+                        ('span', 'Line', [
+                            ('em', 'Inline', [
+                                ('em', 'Text', 'consectetur')])])]),
+                    ('div', 'Block', []),
+                    ('span', 'AnonBlock', [
+                        ('span', 'Line', [
+                            ('em', 'Inline', [])])])]),
+                ('p', 'AnonBlock', [
+                    ('p', 'Line', [
+                        ('em', 'Inline', [])])])])])])
 
 
 @SUITE.test
@@ -344,33 +322,33 @@ def test_whitespace():
     sanity_checks(box)
 
     assert_tree(box, [
-        ('p', 'block', [
-            ('p', 'line', [
-                ('p', 'text', 'Lorem ipsum '),
-                ('strong', 'inline', [
-                    ('strong', 'text', 'dolor ')]),
-                ('p', 'text', '.')])]),
-        ('body', 'anon_block', [
-            ('body', 'line', [
-                ('body', 'text', ' ')])]),
-        ('pre', 'block', [
-            ('pre', 'line', [
+        ('p', 'Block', [
+            ('p', 'Line', [
+                ('p', 'Text', 'Lorem ipsum '),
+                ('strong', 'Inline', [
+                    ('strong', 'Text', 'dolor ')]),
+                ('p', 'Text', '.')])]),
+        ('body', 'AnonBlock', [
+            ('body', 'Line', [
+                ('body', 'Text', ' ')])]),
+        ('pre', 'Block', [
+            ('pre', 'Line', [
                 # pre
-                ('pre', 'text', u'\t\xA0\xA0foo\n')])]),
-        ('body', 'anon_block', [
-            ('body', 'line', [
-                ('body', 'text', ' ')])]),
-        ('pre', 'block', [
-            ('pre', 'line', [
+                ('pre', 'Text', u'\t\xA0\xA0foo\n')])]),
+        ('body', 'AnonBlock', [
+            ('body', 'Line', [
+                ('body', 'Text', ' ')])]),
+        ('pre', 'Block', [
+            ('pre', 'Line', [
                 # pre-wrap
-                ('pre', 'text', u'\t\xA0\xA0\u200Bfoo\n')])]),
-        ('body', 'anon_block', [
-            ('body', 'line', [
-                ('body', 'text', ' ')])]),
-        ('pre', 'block', [
-            ('pre', 'line', [
+                ('pre', 'Text', u'\t\xA0\xA0\u200Bfoo\n')])]),
+        ('body', 'AnonBlock', [
+            ('body', 'Line', [
+                ('body', 'Text', ' ')])]),
+        ('pre', 'Block', [
+            ('pre', 'Line', [
                 # pre-line
-                ('pre', 'text', u'foo\n')])])])
+                ('pre', 'Text', u'foo\n')])])])
 
 
 @SUITE.test
@@ -418,16 +396,16 @@ def test_text_transform():
     sanity_checks(box)
 
     assert_tree(box, [
-        ('p', 'block', [
-            ('p', 'line', [
-                ('p', 'text', 'Hello World!')])]),
-        ('p', 'block', [
-            ('p', 'line', [
-                ('p', 'text', 'HELLO WORLD!')])]),
-        ('p', 'block', [
-            ('p', 'line', [
-                ('p', 'text', 'hello world!')])]),
-        ('p', 'block', [
-            ('p', 'line', [
-                ('p', 'text', 'heLLo wOrlD!')])]),
+        ('p', 'Block', [
+            ('p', 'Line', [
+                ('p', 'Text', 'Hello World!')])]),
+        ('p', 'Block', [
+            ('p', 'Line', [
+                ('p', 'Text', 'HELLO WORLD!')])]),
+        ('p', 'Block', [
+            ('p', 'Line', [
+                ('p', 'Text', 'hello world!')])]),
+        ('p', 'Block', [
+            ('p', 'Line', [
+                ('p', 'Text', 'heLLo wOrlD!')])]),
     ])
