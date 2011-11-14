@@ -222,12 +222,6 @@ def test_inline_in_block():
     box = build.inline_in_block(box)
     assert_tree(box, expected)
 
-    box = parse(source)
-    # This should be idempotent: doing more than once does not change anything.
-    box = build.inline_in_block(box)
-    box = build.inline_in_block(box)
-    assert_tree(box, expected)
-
 
 @SUITE.test
 def test_block_in_inline():

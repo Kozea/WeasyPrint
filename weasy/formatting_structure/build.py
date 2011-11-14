@@ -237,20 +237,20 @@ def inline_in_block(box):
         ]
 
     """
-    new_children = []
     if isinstance(box, boxes.ParentBox):
-        for child_box in getattr(box, 'children', []):
-            new_child = inline_in_block(child_box)
-            new_children.append(new_child)
-        box = box.copy_with_children(new_children)
-
-    if not isinstance(box, boxes.BlockContainerBox):
+        children = map(inline_in_block, box.children)
+        if not isinstance(box, boxes.BlockContainerBox):
+            return box.copy_with_children(children)
+    elif not isinstance(box, boxes.BlockContainerBox):
         return box
 
     new_line_children = []
     new_children = []
-    for child_box in box.children:
-        if isinstance(child_box, boxes.BlockLevelBox):
+    for child_box in children:
+        assert not isinstance(child_box, boxes.LineBox)
+        if isinstance(child_box, boxes.InlineLevelBox):
+            new_line_children.append(child_box)
+        else:
             if new_line_children:
                 # Inlines are consecutive no more: add this line box
                 # and create a new one.
@@ -261,12 +261,6 @@ def inline_in_block(box):
                 new_children.append(anonymous)
                 new_line_children = []
             new_children.append(child_box)
-        elif isinstance(child_box, boxes.LineBox):
-            # Merge the line box we just found with the new one we are making
-            for child in child_box.children:
-                new_line_children.append(child)
-        else:
-            new_line_children.append(child_box)
     if new_line_children:
         # There were inlines at the end
         line_box = boxes.LineBox(
