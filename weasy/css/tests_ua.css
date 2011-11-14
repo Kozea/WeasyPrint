@@ -5,3 +5,13 @@ html, body, div, h1, h2, h3, h4, ol, p, ul, hr, pre { display: block; }
 li { display: list-item }
 head { display: none }
 pre { white-space: pre }
+
+table           { display: table }
+tr              { display: table-row }
+thead           { display: table-header-group }
+tbody           { display: table-row-group }
+tfoot           { display: table-footer-group }
+col             { display: table-column }
+colgroup        { display: table-column-group }
+td, th          { display: table-cell }
+caption         { display: table-caption }

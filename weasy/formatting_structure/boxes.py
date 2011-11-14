@@ -74,6 +74,13 @@ from ..css import computed_from_cascaded
 
 class Box(object):
     """Abstract base class for all boxes."""
+    # Definitions for the rules generating anonymous table boxes
+    # http://www.w3.org/TR/CSS21/tables.html#anonymous-boxes
+    proper_table_child = False
+    internal_table_or_caption = False
+    tabular_container = True
+
+
     def __init__(self, document, element, anonymous=False):
         self.document = document
         self.element = element
@@ -449,3 +456,56 @@ class InlineLevelReplacedBox(ReplacedBox, AtomicInlineLevelBox):
     box.
 
     """
+
+
+class TableBox(BlockBox):
+    """Box for elements with ``display: table``"""
+    # Definitions for the rules generating anonymous table boxes
+    # http://www.w3.org/TR/CSS21/tables.html#anonymous-boxes
+    tabular_container = True
+
+
+class InlineTableBox(InlineBlockBox):
+    """Box for elements with ``display: inline-table``"""
+    tabular_container = True
+
+
+class TableRowGroupBox(ParentBox):
+    """Box for elements with ``display: table-row-group``"""
+    proper_table_child = True
+    internal_table_or_caption = True
+    tabular_container = True
+    proper_parents = (TableBox, InlineTableBox)
+
+
+class TableRowBox(ParentBox):
+    """Box for elements with ``display: table-row``"""
+    proper_table_child = True
+    internal_table_or_caption = True
+    tabular_container = True
+    proper_parents = (TableBox, InlineTableBox, TableRowGroupBox)
+
+
+class TableColumnGroupBox(ParentBox):
+    """Box for elements with ``display: table-column-group``"""
+    proper_table_child = True
+    internal_table_or_caption = True
+    proper_parents = (TableBox, InlineTableBox)
+
+
+class TableColumnBox(Box):
+    """Box for elements with ``display: table-column``"""
+    proper_table_child = True
+    internal_table_or_caption = True
+    proper_parents = (TableBox, InlineTableBox, TableColumnGroupBox)
+
+
+class TableCellBox(BlockContainerBox):
+    """Box for elements with ``display: table-cell``"""
+    internal_table_or_caption = True
+
+
+class TableCaptionBox(BlockBox):
+    """Box for elements with ``display: table-caption``"""
+    proper_table_child = True
+    proper_parents = (TableBox, InlineTableBox)

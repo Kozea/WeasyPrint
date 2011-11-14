@@ -37,10 +37,30 @@ GLYPH_LIST_MARKERS = {
 }
 
 
+# Maps values of the ``display`` CSS property to box types.
+BOX_TYPE_FROM_DISPLAY = {
+    'block': boxes.BlockBox,
+    'list-item': boxes.BlockBox,
+    'inline': boxes.InlineBox,
+    'inline-block': boxes.InlineBlockBox,
+    'table': boxes.TableBox,
+    'inline-table': boxes.InlineTableBox,
+    'table-row': boxes.TableRowBox,
+    'table-row-group': boxes.TableRowGroupBox,
+    'table-header-group': boxes.TableRowGroupBox,
+    'table-footer-group': boxes.TableRowGroupBox,
+    'table-column': boxes.TableColumnBox,
+    'table-column-group': boxes.TableColumnGroupBox,
+    'table-cell': boxes.TableCellBox,
+    'table-caption': boxes.TableCaptionBox,
+}
+
+
 def build_formatting_structure(document):
     """Build a formatting structure (box tree) from a ``document``."""
     box = dom_to_box(document, document.dom)
     assert box is not None
+    box = anonymous_table_boxes(box)
     box = inline_in_block(box)
     box = block_in_inline(box)
     box = process_whitespace(box)
@@ -100,17 +120,9 @@ def dom_to_box(document, element):
             else:
                 children.append(boxes.TextBox(document, element, text))
 
-    if display in ('block', 'list-item'):
-        box = boxes.BlockBox(document, element, children)
-        if display == 'list-item':
-            box = add_box_marker(box)
-    elif display == 'inline':
-        box = boxes.InlineBox(document, element, children)
-    elif display == 'inline-block':
-        box = boxes.InlineBlockBox(document, element, children)
-    else:
-        raise NotImplementedError('Unsupported display: ' + display)
-    assert isinstance(box, boxes.ParentBox)
+    box = BOX_TYPE_FROM_DISPLAY[display](document, element, children)
+    if display == 'list-item':
+        box = add_box_marker(box)
 
     return box
 
@@ -148,6 +160,129 @@ def add_box_marker(box):
     elif position == 'outside':
         box.outside_list_marker = marker_box
     return box
+
+
+def is_whitespace(box, _has_non_whitespace=re.compile('\S').search):
+    """Return True if ``box`` is a TextBox with only whitespace."""
+    return (
+        isinstance(box, boxes.TextBox)
+        and not _has_non_whitespace(box.text)
+    )
+
+
+def wrap_improper(box, children, wrapper, test):
+    """
+    Wrap consecutive children that do not pass ``test`` in a box of type
+    ``wrapper``.
+
+    """
+    improper = []
+    for child in children:
+        if test(child):
+            if improper:
+                yield wrapper(
+                    box.document, box.element, improper, anonymous=True)
+                improper = []
+            yield child
+        else:
+            # Whitespace go here too, so there is no need to take special
+            # care with the definition of "consecutive".
+            # TODO: do they?
+            improper.append(child)
+    if improper:
+        yield wrapper(box.document, box.element, improper, anonymous=True)
+
+
+def anonymous_table_boxes(box):
+    """Remove and add boxes according to the table model.
+
+    See http://www.w3.org/TR/CSS21/tables.html#anonymous-boxes
+
+    """
+    if not isinstance(box, boxes.ParentBox):
+        return box
+
+    display = box.style.display
+    if display == 'table-column' and box.children:  # rule 1.1
+        # Remove all children
+        children = []
+    elif display == 'table-column-group':  # rule 1.2
+        # Remove children other than table-column.
+        children = [
+            child for child in box.children
+            if isinstance(child, boxes.TableColumnBox)
+        ]
+    else:
+        children = box.children
+
+    # Do recursion.
+    children = map(anonymous_table_boxes, children)
+
+    if box.tabular_container and len(children) >= 2:
+        # rule 1.3
+        # TODO: Maybe only remove text if internal is also
+        #       a proper table descendant of box.
+        # This is what the spec says, but maybe not what browers do:
+        # http://lists.w3.org/Archives/Public/www-style/2011Oct/0567
+
+        # Last child
+        internal, text = children[-2:]
+        if (internal.internal_table_or_caption and is_whitespace(text)):
+            children.pop()
+
+        # First child
+        if len(children) >= 2:
+            text, internal = children[:2]
+            if (internal.internal_table_or_caption and is_whitespace(text)):
+                children.pop(0)
+
+        # Children other than first and last also match rule 1.4
+
+    children = [
+        child
+        for prev_child, child, next_child in zip(
+            [None] + children[:-1],
+            children,
+            children[1:] + [None]
+        )
+        if not (
+            # Ignore some whitespace: rule 1.4
+            prev_child and prev_child.internal_table_or_caption and
+            next_child and next_child.internal_table_or_caption and
+            is_whitespace(child)
+        )
+    ]
+
+    if display in ('table', 'inline-table'):
+        # Rule 2.1
+        children = wrap_improper(box, children, boxes.TableRowBox,
+            lambda child: child.proper_table_child)
+    elif isinstance(box, boxes.TableRowGroupBox):
+        # Rule 2.2
+        children = wrap_improper(box, children, boxes.TableRowBox,
+            lambda child: isinstance(child, boxes.TableRowBox))
+
+    if display == 'table-row':
+        # Rule 2.3
+        children = wrap_improper(box, children, boxes.TableCellBox,
+            lambda child: isinstance(child, boxes.TableCellBox))
+    else:
+        # Rule 3.1
+        children = wrap_improper(box, children, boxes.TableRowBox,
+            lambda child: not isinstance(child, boxes.TableCellBox))
+
+    # Rule 3.2
+    if display == 'inline':
+        children = wrap_improper(box, children, boxes.InlineTableBox,
+            lambda child: not child.proper_table_child)
+    else:
+        parent_type = type(box)
+        children = wrap_improper(box, children, boxes.TableBox,
+            lambda child:
+                not child.proper_table_child or
+                parent_type in child.proper_parents)
+
+    return box.copy_with_children(children)
 
 
 def process_whitespace(box):

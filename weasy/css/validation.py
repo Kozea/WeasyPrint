@@ -259,13 +259,13 @@ def direction(keyword):
 @single_keyword
 def display(keyword):
     """``display`` property validation."""
-    if keyword in (
-            'inline-block', 'table', 'inline-table',
-            'table-row-group', 'table-header-group', 'table-footer-group',
-            'table-row', 'table-column-group', 'table-column', 'table-cell',
-            'table-caption'):
+    if keyword in ('inline-block',):
         raise InvalidValues('value not supported yet')
-    return keyword in ('inline', 'block', 'list-item', 'none')
+    return keyword in (
+        'inline', 'block', 'list-item', 'none',
+        'table', 'inline-table', 'table-caption'
+        'table-row-group', 'table-header-group', 'table-footer-group',
+        'table-row', 'table-column-group', 'table-column', 'table-cell')
 
 
 @validator()

@@ -34,6 +34,20 @@ from ..formatting_structure import boxes, build
 SUITE = Tests()
 
 
+PROPER_CHILDREN = dict((key, tuple(map(tuple, value))) for key, value in {
+    # Children can be of *any* type in *one* of the lists.
+    boxes.BlockContainerBox: [[boxes.BlockLevelBox], [boxes.LineBox]],
+    boxes.LineBox: [[boxes.InlineLevelBox]],
+    boxes.InlineBox: [[boxes.InlineLevelBox]],
+    boxes.TableBox: [[boxes.TableCaptionBox,
+                      boxes.TableColumnGroupBox, boxes.TableColumnBox,
+                      boxes.TableRowGroupBox, boxes.TableRowBox]],
+    boxes.TableColumnGroupBox: [[boxes.TableColumnBox]],
+    boxes.TableRowGroupBox: [[boxes.TableRowBox]],
+    boxes.TableRowBox: [[boxes.TableCellBox]],
+}.iteritems())
+
+
 def serialize(box_list):
     """Transform a box list into a structure easier to compare for testing."""
     return [
@@ -137,18 +151,18 @@ def sanity_checks(box):
     if not isinstance(box, boxes.ParentBox):
         return
 
-    for child in box.children:
-        sanity_checks(child)
-
-    if isinstance(box, boxes.BlockContainerBox):
-        types = [boxes.BlockLevelBox, boxes.LineBox]
-    elif isinstance(box, (boxes.LineBox, boxes.InlineBox)):
-        types = [boxes.InlineLevelBox]
-    # no other ParentBox concrete subclass
+    for class_ in type(box).mro():
+        if class_ in PROPER_CHILDREN:
+            acceptable_types_lists = PROPER_CHILDREN[class_]
+            break
 
     assert any(
-        all(isinstance(child, type_) for child in box.children)
-        for type_ in types)
+        all(isinstance(child, acceptable_types) for child in box.children)
+        for acceptable_types in acceptable_types_lists
+    ), (box, acceptable_types_lists, box.children)
+
+    for child in box.children:
+        sanity_checks(child)
 
 
 @SUITE.test
@@ -409,3 +423,51 @@ def test_text_transform():
             ('p', 'Line', [
                 ('p', 'Text', 'heLLo wOrlD!')])]),
     ])
+
+
+@SUITE.test
+def test_tables():
+    document = TestPNGDocument.from_string('''
+        <table>
+            <tr>
+                <th>foo</th>
+                <th>bar</th>
+            </tr>
+            <tr>
+                <td>baz</td>
+            </tr>
+        </table>
+    ''')
+    box = build.build_formatting_structure(document)
+    sanity_checks(box)
+
+    assert_tree(box, [
+        ('table', 'Table', [
+            ('tr', 'TableRow', [
+                ('th', 'TableCell', [
+                    ('th', 'Line', [
+                        ('th', 'Text', 'foo')])]),
+                ('th', 'TableCell', [
+                    ('th', 'Line', [
+                        ('th', 'Text', 'bar')])])]),
+            ('tr', 'TableRow', [
+                ('td', 'TableCell', [
+                    ('td', 'Line', [
+                        ('td', 'Text', 'baz')])])])])])
+
+    document = TestPNGDocument.from_string('''
+        <span style="display: table-cell">foo</span>
+        <span style="display: table-cell">bar</span>
+    ''')
+    box = build.build_formatting_structure(document)
+    sanity_checks(box)
+
+    assert_tree(box, [
+        ('body', 'AnonTable', [
+            ('body', 'AnonTableRow', [
+                ('span', 'TableCell', [
+                    ('span', 'Line', [
+                        ('span', 'Text', 'foo')])]),
+                ('span', 'TableCell', [
+                    ('span', 'Line', [
+                        ('span', 'Text', 'bar')])])])])])
