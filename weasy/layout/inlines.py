@@ -485,6 +485,10 @@ def inline_box_verticality(box):
         top = -child.baseline - child.style.vertical_align
         child.position_y = top
         bottom = top + child.margin_height()
+        if min_y is None or top < min_y:
+            min_y = top
+        if max_y is None or bottom > max_y:
+            max_y = bottom
         if isinstance(child, boxes.InlineBox):
             children_max_y, children_min_y = inline_box_verticality(child)
             empty = children_max_y is None and child.margin_width() == 0
@@ -499,14 +503,10 @@ def inline_box_verticality(box):
                 child.height = 0
                 continue
             # TODO: this is incorrect if this child’s own baseline is not y=0
-            if min_y is None or top < min_y:
+            if children_min_y < min_y:
                 min_y = children_min_y
-            if max_y is None or bottom > max_y:
+            if children_max_y > max_y:
                 max_y = children_max_y
-        if min_y is None or top < min_y:
-            min_y = top
-        if max_y is None or bottom > max_y:
-            max_y = bottom
     return max_y, min_y
 
 
