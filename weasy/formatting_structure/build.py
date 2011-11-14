@@ -49,7 +49,6 @@ BOX_TYPE_FROM_DISPLAY = {
     'table-row-group': boxes.TableRowGroupBox,
     'table-header-group': boxes.TableRowGroupBox,
     'table-footer-group': boxes.TableRowGroupBox,
-    'table-column': boxes.TableColumnBox,
     'table-column-group': boxes.TableColumnGroupBox,
     'table-cell': boxes.TableCellBox,
     'table-caption': boxes.TableCaptionBox,
@@ -99,6 +98,10 @@ def dom_to_box(document, element):
     if result is not html.DEFAULT_HANDLING:
         # Specific handling for the element. (eg. replaced element)
         return result
+
+    if display == 'table-column':
+        # No children. Never.
+        return boxes.TableColumnBox(document, element)
 
     children = []
 
@@ -170,18 +173,20 @@ def is_whitespace(box, _has_non_whitespace=re.compile('\S').search):
     )
 
 
-def wrap_improper(box, children, wrapper, test):
+def wrap_improper(box, children, wrapper_type, test):
     """
     Wrap consecutive children that do not pass ``test`` in a box of type
-    ``wrapper``.
+    ``wrapper_type``.
 
     """
     improper = []
     for child in children:
         if test(child):
             if improper:
-                yield wrapper(
-                    box.document, box.element, improper, anonymous=True)
+                wrapper = wrapper_type(
+                    box.document, box.element, [], anonymous=True)
+                yield wrapper.copy_with_children(table_boxes_children(
+                    wrapper, improper))
                 improper = []
             yield child
         else:
@@ -190,7 +195,9 @@ def wrap_improper(box, children, wrapper, test):
             # TODO: do they?
             improper.append(child)
     if improper:
-        yield wrapper(box.document, box.element, improper, anonymous=True)
+        wrapper = wrapper_type(box.document, box.element, [], anonymous=True)
+        yield wrapper.copy_with_children(table_boxes_children(
+            wrapper, improper))
 
 
 def anonymous_table_boxes(box):
@@ -199,24 +206,23 @@ def anonymous_table_boxes(box):
     See http://www.w3.org/TR/CSS21/tables.html#anonymous-boxes
 
     """
+    # Rule 1.1 is implicit: TableColumnBox is not a ParentBox
     if not isinstance(box, boxes.ParentBox):
         return box
 
-    display = box.style.display
-    if display == 'table-column' and box.children:  # rule 1.1
-        # Remove all children
-        children = []
-    elif display == 'table-column-group':  # rule 1.2
+    # Do recursion.
+    children = map(anonymous_table_boxes, box.children)
+    return box.copy_with_children(table_boxes_children(box, children))
+
+
+def table_boxes_children(box, children):
+    """Internal implementation of anonymous_table_boxes()."""
+    if isinstance(box, boxes.TableColumnGroupBox):  # rule 1.2
         # Remove children other than table-column.
         children = [
-            child for child in box.children
+            child for child in children
             if isinstance(child, boxes.TableColumnBox)
         ]
-    else:
-        children = box.children
-
-    # Do recursion.
-    children = map(anonymous_table_boxes, children)
 
     if box.tabular_container and len(children) >= 2:
         # rule 1.3
@@ -253,7 +259,8 @@ def anonymous_table_boxes(box):
         )
     ]
 
-    if display in ('table', 'inline-table'):
+    if isinstance(box, boxes.TableBox) or \
+            isinstance(box, boxes.InlineTableBox):
         # Rule 2.1
         children = wrap_improper(box, children, boxes.TableRowBox,
             lambda child: child.proper_table_child)
@@ -262,7 +269,7 @@ def anonymous_table_boxes(box):
         children = wrap_improper(box, children, boxes.TableRowBox,
             lambda child: isinstance(child, boxes.TableRowBox))
 
-    if display == 'table-row':
+    if isinstance(box, boxes.TableRowBox):
         # Rule 2.3
         children = wrap_improper(box, children, boxes.TableCellBox,
             lambda child: isinstance(child, boxes.TableCellBox))
@@ -272,7 +279,7 @@ def anonymous_table_boxes(box):
             lambda child: not isinstance(child, boxes.TableCellBox))
 
     # Rule 3.2
-    if display == 'inline':
+    if isinstance(box, boxes.InlineBox):
         children = wrap_improper(box, children, boxes.InlineTableBox,
             lambda child: not child.proper_table_child)
     else:
@@ -282,7 +289,7 @@ def anonymous_table_boxes(box):
                 not child.proper_table_child or
                 parent_type in child.proper_parents)
 
-    return box.copy_with_children(children)
+    return children
 
 
 def process_whitespace(box):

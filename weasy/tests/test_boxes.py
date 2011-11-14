@@ -42,6 +42,9 @@ PROPER_CHILDREN = dict((key, tuple(map(tuple, value))) for key, value in {
     boxes.TableBox: [[boxes.TableCaptionBox,
                       boxes.TableColumnGroupBox, boxes.TableColumnBox,
                       boxes.TableRowGroupBox, boxes.TableRowBox]],
+    boxes.InlineTableBox: [[boxes.TableCaptionBox,
+                            boxes.TableColumnGroupBox, boxes.TableColumnBox,
+                            boxes.TableRowGroupBox, boxes.TableRowBox]],
     boxes.TableColumnGroupBox: [[boxes.TableColumnBox]],
     boxes.TableRowGroupBox: [[boxes.TableRowBox]],
     boxes.TableRowBox: [[boxes.TableCellBox]],
@@ -56,9 +59,10 @@ def serialize(box_list):
             ('Anon' if box.anonymous and type(box) not in (boxes.TextBox,
                 boxes.LineBox) else '') + type(box).__name__[:-3],
             (
-            # All concrete boxes are either text, replaced or parent.
+            # All concrete boxes are either text, replaced, column or parent.
             box.text if isinstance(box, boxes.TextBox)
             else '<replaced>' if isinstance(box, boxes.ReplacedBox)
+            else '<column>' if isinstance(box, boxes.TableColumnBox)
             else serialize(box.children)))
         for box in box_list
     ]
@@ -126,6 +130,14 @@ def parse(html_content):
         return build.dom_to_box(document, document.dom)
 
 
+def parse_all(html_content):
+    """Like parse() but also run all corrections on boxes."""
+    document = TestPNGDocument.from_string(html_content)
+    box = build.build_formatting_structure(document)
+    sanity_checks(box)
+    return box
+
+
 def assert_tree(box, expected):
     """Check the box tree equality.
 
@@ -155,11 +167,13 @@ def sanity_checks(box):
         if class_ in PROPER_CHILDREN:
             acceptable_types_lists = PROPER_CHILDREN[class_]
             break
+    else:
+        raise TypeError
 
     assert any(
         all(isinstance(child, acceptable_types) for child in box.children)
         for acceptable_types in acceptable_types_lists
-    ), (box, acceptable_types_lists, box.children)
+    ), (box, box.children)
 
     for child in box.children:
         sanity_checks(child)
@@ -326,16 +340,12 @@ def test_whitespace():
     """Test the management of white spaces."""
     # TODO: test more cases
     # http://www.w3.org/TR/CSS21/text.html#white-space-model
-    document = TestPNGDocument.from_string('''
+    assert_tree(parse_all('''
         <p>Lorem \t\r\n  ipsum\t<strong>  dolor </strong>.</p>
         <pre>\t  foo\n</pre>
         <pre style="white-space: pre-wrap">\t  foo\n</pre>
         <pre style="white-space: pre-line">\t  foo\n</pre>
-        ''')
-    box = build.build_formatting_structure(document)
-    sanity_checks(box)
-
-    assert_tree(box, [
+    '''), [
         ('p', 'Block', [
             ('p', 'Line', [
                 ('p', 'Text', 'Lorem ipsum '),
@@ -397,7 +407,7 @@ def test_page_style():
 @SUITE.test
 def test_text_transform():
     """Test the text-transform property."""
-    document = TestPNGDocument.from_string('''
+    assert_tree(parse_all('''
         <style>
             p { text-transform: capitalize }
             p+p { text-transform: uppercase }
@@ -405,11 +415,7 @@ def test_text_transform():
             p+p+p+p { text-transform: none }
         </style>
 <p>heLLo wOrlD!</p><p>heLLo wOrlD!</p><p>heLLo wOrlD!</p><p>heLLo wOrlD!</p>
-        ''')
-    box = build.build_formatting_structure(document)
-    sanity_checks(box)
-
-    assert_tree(box, [
+    '''), [
         ('p', 'Block', [
             ('p', 'Line', [
                 ('p', 'Text', 'Hello World!')])]),
@@ -427,7 +433,9 @@ def test_text_transform():
 
 @SUITE.test
 def test_tables():
-    document = TestPNGDocument.from_string('''
+    # Rules in http://www.w3.org/TR/CSS21/tables.html#anonymous-boxes
+    # Rule 1.3
+    assert_tree(parse_all('''
         <table>
             <tr>
                 <th>foo</th>
@@ -437,11 +445,7 @@ def test_tables():
                 <td>baz</td>
             </tr>
         </table>
-    ''')
-    box = build.build_formatting_structure(document)
-    sanity_checks(box)
-
-    assert_tree(box, [
+    '''), [
         ('table', 'Table', [
             ('tr', 'TableRow', [
                 ('th', 'TableCell', [
@@ -455,14 +459,11 @@ def test_tables():
                     ('td', 'Line', [
                         ('td', 'Text', 'baz')])])])])])
 
-    document = TestPNGDocument.from_string('''
+    # Rules 1.4 and 3.1
+    assert_tree(parse_all('''
         <span style="display: table-cell">foo</span>
         <span style="display: table-cell">bar</span>
-    ''')
-    box = build.build_formatting_structure(document)
-    sanity_checks(box)
-
-    assert_tree(box, [
+    '''), [
         ('body', 'AnonTable', [
             ('body', 'AnonTableRow', [
                 ('span', 'TableCell', [
@@ -471,3 +472,63 @@ def test_tables():
                 ('span', 'TableCell', [
                     ('span', 'Line', [
                         ('span', 'Text', 'bar')])])])])])
+
+    # http://www.w3.org/TR/CSS21/tables.html#anonymous-boxes
+    # Rules 1.1 and 1.2
+    assert_tree(parse_all('''
+        <span style="display: table-column-group">
+            1
+            <em style="display: table-column">
+                2
+                <strong>3</strong>
+            </em>
+            <strong>4</strong>
+        </span>
+    '''), [
+        ('body', 'AnonTable', [
+            ('span', 'TableColumnGroup', [
+                ('em', 'TableColumn', '<column>')])])])
+
+    # Rules 2.1 then 2.3
+    assert_tree(parse_all('<table>foo <div></div></table>'), [
+        ('table', 'Table', [
+            ('table', 'AnonTableRow', [
+                ('table', 'AnonTableCell', [
+                    ('table', 'AnonBlock', [
+                        ('table', 'Line', [
+                            ('table', 'Text', 'foo ')])]),
+                    ('div', 'Block', [])])])])])
+
+    # Rule 2.2
+    assert_tree(parse_all('<thead><div></div><td></td></thead>'), [
+        ('body', 'AnonTable', [
+            ('thead', 'TableRowGroup', [
+                ('thead', 'AnonTableRow', [
+                    ('thead', 'AnonTableCell', [
+                        ('div', 'Block', [])]),
+                    ('td', 'TableCell', [])])])])])
+
+    # Rule 3.2
+    assert_tree(parse_all('<span><tr></tr></span>'), [
+        ('body', 'Line', [
+            ('span', 'Inline', [
+                ('span', 'AnonInlineTable', [
+                    ('tr', 'TableRow', [])])])])])
+
+    # Rule 3.1
+    assert_tree(parse_all('''
+        <span><em style="display: table-cell"></em></span>
+    '''), [
+        ('body', 'Line', [
+            ('span', 'Inline', [
+                ('span', 'AnonInlineTable', [
+                    ('span', 'AnonTableRow', [
+                        ('em', 'TableCell', [])])])])])])
+
+    # Rule 3.2
+    assert_tree(parse_all('<tr></tr>'), [
+        ('body', 'AnonTable', [
+            ('tr', 'TableRow', [])])])
+    assert_tree(parse_all('<col></col>'), [
+        ('body', 'AnonTable', [
+            ('col', 'TableColumn', '<column>')])])
