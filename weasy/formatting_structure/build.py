@@ -182,23 +182,25 @@ def wrap_improper(box, children, wrapper_type, test):
             if improper:
                 wrapper = wrapper_type(
                     box.document, box.element, [], anonymous=True)
-                yield wrapper.copy_with_children(table_boxes_children(
-                    wrapper, improper))
+                # Apply the rules again on the new wrapper
+                yield table_boxes_children(wrapper, improper)
                 improper = []
             yield child
         else:
-            # Whitespace go here too, so there is no need to take special
-            # care with the definition of "consecutive".
-            # TODO: do they?
+            # Whitespace either fail the test or were removed earlier,
+            # so there is no need to take special care with the definition
+            # of "consecutive".
             improper.append(child)
     if improper:
         wrapper = wrapper_type(box.document, box.element, [], anonymous=True)
-        yield wrapper.copy_with_children(table_boxes_children(
-            wrapper, improper))
+        # Apply the rules again on the new wrapper
+        yield table_boxes_children(wrapper, improper)
 
 
 def anonymous_table_boxes(box):
     """Remove and add boxes according to the table model.
+
+    Take and return a ``Box`` object.
 
     See http://www.w3.org/TR/CSS21/tables.html#anonymous-boxes
 
@@ -209,11 +211,15 @@ def anonymous_table_boxes(box):
 
     # Do recursion.
     children = map(anonymous_table_boxes, box.children)
-    return box.copy_with_children(table_boxes_children(box, children))
+    return table_boxes_children(box, children)
 
 
 def table_boxes_children(box, children):
-    """Internal implementation of anonymous_table_boxes()."""
+    """Internal implementation of anonymous_table_boxes().
+
+    Take and return a ``Box`` object.
+
+    """
     if isinstance(box, boxes.TableColumnGroupBox):  # rule 1.2
         # Remove children other than table-column.
         children = [
@@ -221,8 +227,8 @@ def table_boxes_children(box, children):
             if isinstance(child, boxes.TableColumnBox)
         ]
 
+    # rule 1.3
     if box.tabular_container and len(children) >= 2:
-        # rule 1.3
         # TODO: Maybe only remove text if internal is also
         #       a proper table descendant of box.
         # This is what the spec says, but maybe not what browers do:
@@ -239,7 +245,8 @@ def table_boxes_children(box, children):
             if (internal.internal_table_or_caption and is_whitespace(text)):
                 children.pop(0)
 
-        # Children other than first and last also match rule 1.4
+        # Children other than first and last that would be removed by
+        # rule 1.3 are also removed by rule 1.4 below.
 
     children = [
         child
@@ -272,6 +279,7 @@ def table_boxes_children(box, children):
             lambda child: isinstance(child, boxes.TableCellBox))
     else:
         # Rule 3.1
+        # XXX whitespace pass the test
         children = wrap_improper(box, children, boxes.TableRowBox,
             lambda child: not isinstance(child, boxes.TableCellBox))
 
@@ -286,7 +294,7 @@ def table_boxes_children(box, children):
                 not child.proper_table_child or
                 parent_type in child.proper_parents)
 
-    return children
+    return box.copy_with_children(children)
 
 
 def process_whitespace(box):

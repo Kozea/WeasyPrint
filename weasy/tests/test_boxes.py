@@ -517,18 +517,24 @@ def test_tables():
 
     # Rule 3.1
     assert_tree(parse_all('''
-        <span><em style="display: table-cell"></em></span>
+        <span>
+            <em style="display: table-cell"></em>
+            <em style="display: table-cell"></em>
+        </span>
     '''), [
         ('body', 'Line', [
             ('span', 'Inline', [
                 ('span', 'AnonInlineTable', [
                     ('span', 'AnonTableRow', [
+                        ('em', 'TableCell', []),
                         ('em', 'TableCell', [])])])])])])
 
     # Rule 3.2
-    assert_tree(parse_all('<tr></tr>'), [
+    assert_tree(parse_all('<tr></tr>\t<tr></tr>'), [
         ('body', 'AnonTable', [
+            ('tr', 'TableRow', []),
             ('tr', 'TableRow', [])])])
-    assert_tree(parse_all('<col></col>'), [
+    assert_tree(parse_all('<col></col>\n<colgroup></colgroup>'), [
         ('body', 'AnonTable', [
-            ('col', 'TableColumn', '<column>')])])
+            ('col', 'TableColumn', '<column>'),
+            ('colgroup', 'TableColumnGroup', [])])])
