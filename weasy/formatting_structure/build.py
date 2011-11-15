@@ -94,40 +94,37 @@ def dom_to_box(document, element):
     if display == 'none':
         return None
 
-    result = html.handle_element(document, element)
-    if result is not html.DEFAULT_HANDLING:
-        # Specific handling for the element. (eg. replaced element)
-        return result
-
     if display == 'table-column':
-        # No children. Never.
-        return boxes.TableColumnBox(document, element)
+        # Ignore children.
+        box = boxes.TableColumnBox(document, element)
+    else:
+        children = []
 
-    children = []
+        if element.text:
+            text = text_transform(element.text, style)
+            children.append(boxes.TextBox(document, element, text))
+        for child_element in element:
+            # lxml.html already converts HTML entities to text.
+            # Here we ignore comments and XML processing instructions.
+            if isinstance(child_element.tag, basestring):
+                child_box = dom_to_box(document, child_element)
+                if child_box is not None:
+                    children.append(child_box)
+                # else: child_element had `display: none`
+            if child_element.tail:
+                text = text_transform(child_element.tail, style)
+                if children and isinstance(children[-1], boxes.TextBox):
+                    children[-1].text += text
+                else:
+                    children.append(boxes.TextBox(document, element, text))
 
-    if element.text:
-        text = text_transform(element.text, style)
-        children.append(boxes.TextBox(document, element, text))
-    for child_element in element:
-        # lxml.html already converts HTML entities to text.
-        # Here we ignore comments and XML processing instructions.
-        if isinstance(child_element.tag, basestring):
-            child_box = dom_to_box(document, child_element)
-            if child_box is not None:
-                children.append(child_box)
-            # else: child_element had `display: none`
-        if child_element.tail:
-            text = text_transform(child_element.tail, style)
-            if children and isinstance(children[-1], boxes.TextBox):
-                children[-1].text += text
-            else:
-                children.append(boxes.TextBox(document, element, text))
+        box = BOX_TYPE_FROM_DISPLAY[display](document, element, children)
 
-    box = BOX_TYPE_FROM_DISPLAY[display](document, element, children)
-    if display == 'list-item':
-        box = add_box_marker(box)
+        if display == 'list-item':
+            box = add_box_marker(box)
 
-    return box
+    # Specific handling for the element. (eg. replaced element)
+    return html.handle_element(box)
 
 
 def add_box_marker(box):

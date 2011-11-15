@@ -33,22 +33,18 @@ from .utils import get_url_attribute
 # Maps HTML tag names to function taking an HTML element and returning a Box.
 HTML_HANDLERS = {}
 
-# Marker saying that handle_element() has no special handling for this element
-DEFAULT_HANDLING = object()
 
-
-def handle_element(document, element):
+def handle_element(box):
     """Handle HTML elements that need special care.
 
     :returns: the :obj:`DEFAULT_HANDLING` constant if there is no special
               handling for this element, a :class:`Box` built with the special
               handling or, None if the element should be ignored.
     """
-    if element.tag in HTML_HANDLERS:
-        handler = HTML_HANDLERS[element.tag]
-        return handler(document, element)
+    if box.element.tag in HTML_HANDLERS:
+        return HTML_HANDLERS[box.element.tag](box)
     else:
-        return DEFAULT_HANDLING
+        return box
 
 
 def handler(tag):
@@ -60,14 +56,14 @@ def handler(tag):
     return decorator
 
 
-def is_block_level(document, element):
-    """Find if ``element`` is a block-level element in ``document``.
+def is_block_level(box):
+    """Tell wether ``box`` is supposed to be block level.
 
     Return ``True`` if the element is block-level, ``False`` if it is
     inline-level, and raise ValueError if it is neither.
 
     """
-    display = document.style_for(element).display
+    display = box.style.display
 
     if display in ('block', 'list-item', 'table'):
         return True
@@ -77,51 +73,51 @@ def is_block_level(document, element):
         raise ValueError('Unsupported display: ' + display)
 
 
-def make_replaced_box(document, element, replacement):
+def make_replaced_box(box, replacement):
     """Wrap a :class:`Replacement` object in either replaced box.
 
     That box is either block-level or inline-level, depending on what the
     element should be.
 
     """
-    if is_block_level(document, element):
+    if is_block_level(box):
         type_ = boxes.BlockLevelReplacedBox
     else:
         type_ = boxes.InlineLevelReplacedBox
-    return type_(document, element, replacement)
+    return type_(box.document, box.element, replacement)
 
 
-def make_text_box(document, element, text):
+def make_text_box(box, text):
     """Make a text box.
 
     If the element should be block-level, wrap it in a block box.
 
     """
-    text_box = boxes.TextBox(document, element, text)
-    if is_block_level(document, element):
-        return boxes.BlockBox(document, element, [text_box])
+    text_box = boxes.TextBox(box.document, box.element, text)
+    if is_block_level(box):
+        return boxes.BlockBox(box.document, box.element, [text_box])
     else:
         return text_box
 
 
 @handler('img')
-def handle_img(document, element):
+def handle_img(box):
     """Handle ``<img>`` tags, return either an image or the alt-text.
 
     See: http://www.w3.org/TR/html5/embedded-content-1.html#the-img-element
 
     """
-    src = get_url_attribute(element, 'src')
-    alt = element.get('alt')
+    src = get_url_attribute(box.element, 'src')
+    alt = box.element.get('alt')
     if src:
-        surface = document.get_image_surface_from_uri(src)
+        surface = box.document.get_image_surface_from_uri(src)
         if surface is not None:
             replacement = ImageReplacement(surface)
-            return make_replaced_box(document, element, replacement)
+            return make_replaced_box(box, replacement)
         else:
             # Invalid image, use the alt-text.
             if alt:
-                return make_text_box(document, element, alt)
+                return make_text_box(box, alt)
             elif alt == '':
                 # The element represents nothing
                 return None
@@ -132,17 +128,65 @@ def handle_img(document, element):
                 return None
     else:
         if alt:
-            return make_text_box(document, element, alt)
+            return make_text_box(box, alt)
         else:
             return None
 
 
 @handler('br')
-def handle_br(document, element):
+def handle_br(box):
     """Handle ``<br>`` tags, return a preserved new-line character."""
-    box = boxes.TextBox(document, element, '\n')
-    box.style.white_space = 'pre'
-    return boxes.InlineBox(document, element, [box])
+    newline = boxes.TextBox(box.document, box.element, '\n')
+    newline.style.white_space = 'pre'
+    return boxes.InlineBox(box.document, box.element, [newline])
+
+
+def integer_attribute(box, name, minimum=1):
+    """Read an integer attribute from the HTML element and set it on the box.
+
+    """
+    value = box.element.get(name, '').strip()
+    try:
+        value = int(value)
+    except ValueError:
+        pass
+    else:
+        if value >= minimum:
+            setattr(box, name, value)
+
+
+@handler('colgroup')
+def handle_colgroup(box):
+    """Handle the ``span`` attribute."""
+    if isinstance(box, boxes.TableColumnGroupBox):
+        if any(child.tag == 'col' for child in box.element):
+            box.span = None  # sum of the children’s spans
+        else:
+            integer_attribute(box, 'span')
+    return box
+
+
+@handler('col')
+def handle_col(box):
+    """Handle the ``span`` attribute."""
+    if isinstance(box, boxes.TableColumnBox):
+        integer_attribute(box, 'span')
+    return box
+
+
+@handler('th')
+@handler('td')
+def handle_td(box):
+    """Handle the ``colspan``, ``rowspan`` attributes."""
+    if isinstance(box, boxes.TableCellBox):
+        # HTML 4.01 gives special meaning to colspan=0
+        # http://www.w3.org/TR/html401/struct/tables.html#adef-rowspan
+        # but HTML 5 removed it
+        # http://www.w3.org/TR/html5/tabular-data.html#attr-tdth-colspan
+        # rowspan=0 is still there though.
+        integer_attribute(box, 'colspan')
+        integer_attribute(box, 'rowspan', minimum=0)
+    return box
 
 
 class Replacement(object):

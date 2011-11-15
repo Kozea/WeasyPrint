@@ -492,6 +492,9 @@ class TableColumnGroupBox(ParentBox):
     internal_table_or_caption = True
     proper_parents = (TableBox, InlineTableBox)
 
+    # Default value. May be overriden on instances.
+    span = 1
+
 
 class TableColumnBox(Box):
     """Box for elements with ``display: table-column``"""
@@ -499,10 +502,17 @@ class TableColumnBox(Box):
     internal_table_or_caption = True
     proper_parents = (TableBox, InlineTableBox, TableColumnGroupBox)
 
+    # Default value. May be overriden on instances.
+    span = 1
+
 
 class TableCellBox(BlockContainerBox):
     """Box for elements with ``display: table-cell``"""
     internal_table_or_caption = True
+
+    # Default values. May be overriden on instances.
+    colspan = 1
+    rowspan = 1
 
 
 class TableCaptionBox(BlockBox):
