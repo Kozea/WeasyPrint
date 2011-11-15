@@ -263,7 +263,7 @@ def display(keyword):
         raise InvalidValues('value not supported yet')
     return keyword in (
         'inline', 'block', 'list-item', 'none',
-        'table', 'inline-table', 'table-caption'
+        'table', 'inline-table', 'table-caption',
         'table-row-group', 'table-header-group', 'table-footer-group',
         'table-row', 'table-column-group', 'table-column', 'table-cell')
 
