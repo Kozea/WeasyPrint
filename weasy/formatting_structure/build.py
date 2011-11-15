@@ -28,6 +28,7 @@ including handling of anonymous boxes and whitespace processing.
 import re
 from . import boxes
 from .. import html
+from ..css import properties
 
 
 GLYPH_LIST_MARKERS = {
@@ -340,12 +341,23 @@ def wrap_table(box, children):
     table = box.copy_with_children(columns + header + rows + footer)
 
     if isinstance(box, boxes.InlineTableBox):
-        wrapper = boxes.InlineBlockBox
+        wrapper_type = boxes.InlineBlockBox
     else:
-        wrapper = boxes.BlockBox
-    return wrapper(box.document, box.element,
-                   top_captions + [table] + bottom_captions,
-                   anonymous=table.anonymous)
+        wrapper_type = boxes.BlockBox
+
+    wrapper = wrapper_type(box.document, box.element,
+                           top_captions + [table] + bottom_captions,
+                           anonymous=table.anonymous)
+    if not table.anonymous:
+        # Non-inherited properties of the table element apply to one
+        # of the wrapper and the table. The other get the initial value.
+        for name in properties.TABLE_BOX_PROPERTIES:
+            wrapper.style[name] = properties.INITIAL_VALUES[name]
+        for name in properties.TABLE_WRAPPER_BOX_PROPERTIES:
+            table.style[name] = properties.INITIAL_VALUES[name]
+    # else: non-inherited properties already have their initial values
+
+    return wrapper
 
 
 def process_whitespace(box):

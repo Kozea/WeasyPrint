@@ -564,3 +564,17 @@ def test_tables():
             ('body', 'AnonTable', [
                 ('col', 'TableColumn', '<column>'),
                 ('colgroup', 'TableColumnGroup', [])])])])
+
+
+@SUITE.test
+def test_table_style():
+    html = parse_all('<table style="margin: 1px; padding: 2px"></table>')
+    body, = html.children
+    wrapper, = body.children
+    table, = wrapper.children
+    assert isinstance(wrapper, boxes.BlockBox)
+    assert isinstance(table, boxes.TableBox)
+    assert wrapper.style.margin_top == 1
+    assert wrapper.style.padding_top == 0
+    assert table.style.margin_top == 0
+    assert table.style.padding_top == 2

@@ -28,169 +28,187 @@ def _parse(css):
 
 
 # See http://www.w3.org/TR/CSS21/propidx.html
-INITIAL_VALUES = dict((key.replace('-', '_'), value) for key, value in {
-    'background-attachment': 'scroll',
-    'background-color': _parse('transparent')[0],
-    'background-image': 'none',
-    'background-position': _parse('0% 0%'),
-    'background-repeat': 'repeat',
-    'border-collapse': 'separate',
+INITIAL_VALUES = {
+    'background_attachment': 'scroll',
+    'background_color': _parse('transparent')[0],
+    'background_image': 'none',
+    'background_position': _parse('0% 0%'),
+    'background_repeat': 'repeat',
+    'border_collapse': 'separate',
     # http://www.w3.org/TR/css3-color/#currentcolor
-    'border-top-color': 'currentColor',
-    'border-right-color': 'currentColor',
-    'border-bottom-color': 'currentColor',
-    'border-left-color': 'currentColor',
-    'border-spacing': 0,
-    'border-top-style': 'none',
-    'border-right-style': 'none',
-    'border-bottom-style': 'none',
-    'border-left-style': 'none',
-    'border-top-width': 'medium',
-    'border-right-width': 'medium',
-    'border-bottom-width': 'medium',
-    'border-left-width': 'medium',
+    'border_top_color': 'currentColor',
+    'border_right_color': 'currentColor',
+    'border_bottom_color': 'currentColor',
+    'border_left_color': 'currentColor',
+    'border_spacing': 0,
+    'border_top_style': 'none',
+    'border_right_style': 'none',
+    'border_bottom_style': 'none',
+    'border_left_style': 'none',
+    'border_top_width': 'medium',
+    'border_right_width': 'medium',
+    'border_bottom_width': 'medium',
+    'border_left_width': 'medium',
     'bottom': 'auto',
-    'caption-side': 'top',
+    'caption_side': 'top',
     'clear': 'none',
     'clip': 'auto',
     'color': _parse('#000')[0],     # depends on user agent
     'content': 'normal',
-    'counter-increment': 'none',
-    'counter-reset': 'none',
+    'counter_increment': 'none',
+    'counter_reset': 'none',
     'direction': 'ltr',
     'display': 'inline',
-    'empty-cells': 'show',
+    'empty_cells': 'show',
     'float': 'none',
-    'font-family': ['serif'], # depends on user agent
-    'font-size': 'medium',
-    'font-style': 'normal',
-    'font-variant': 'normal',
-    'font-weight': 'normal',
+    'font_family': ['serif'], # depends on user agent
+    'font_size': 'medium',
+    'font_style': 'normal',
+    'font_variant': 'normal',
+    'font_weight': 'normal',
     'height': 'auto',
     'left': 'auto',
-    'letter-spacing': 'normal',
-    'line-height': 'normal',
-    'list-style-image': 'none',
-    'list-style-position': 'outside',
-    'list-style-type': 'disc',
-    'margin-top': 0,
-    'margin-right': 0,
-    'margin-bottom': 0,
-    'margin-left': 0,
-    'max-height': 'none',
-    'max-width': 'none',
-    'min-height': 0,
-    'min-width': 0,
+    'letter_spacing': 'normal',
+    'line_height': 'normal',
+    'list_style_image': 'none',
+    'list_style_position': 'outside',
+    'list_style_type': 'disc',
+    'margin_top': 0,
+    'margin_right': 0,
+    'margin_bottom': 0,
+    'margin_left': 0,
+    'max_height': 'none',
+    'max_width': 'none',
+    'min_height': 0,
+    'min_width': 0,
     'orphans': 2,
     'overflow': 'visible',
-    'padding-top': 0,
-    'padding-right': 0,
-    'padding-bottom': 0,
-    'padding-left': 0,
-    'page-break-after': 'auto',
-    'page-break-before': 'auto',
-    'page-break-inside': 'auto',
+    'padding_top': 0,
+    'padding_right': 0,
+    'padding_bottom': 0,
+    'padding_left': 0,
+    'page_break_after': 'auto',
+    'page_break_before': 'auto',
+    'page_break_inside': 'auto',
     'quotes': list(u'“”‘’'),  # depends on user agent
     'position': 'static',
     'right': 'auto',
-    'table-layout': 'auto',
-    'text-align': 'start',  # Taken from CSS3 Text
+    'table_layout': 'auto',
+    'text_align': 'start',  # Taken from CSS3 Text
                             # Other CSS3 values are not supported.
-    'text-decoration': 'none',
-    'text-indent': 0,
-    'text-transform': 'none',
+    'text_decoration': 'none',
+    'text_indent': 0,
+    'text_transform': 'none',
     'top': 'auto',
-    'unicode-bidi': 'normal',
-    'vertical-align': 0,  # Same as 'baseline'
+    'unicode_bidi': 'normal',
+    'vertical_align': 0,  # Same as 'baseline'
     'visibility': 'visible',
-    'white-space': 'normal',
+    'white_space': 'normal',
     'widows': 2,
     'width': 'auto',
-    'word-spacing': 'normal',
-    'z-index': 'auto',
+    'word_spacing': 'normal',
+    'z_index': 'auto',
 
     # CSS3 Paged Media: http://www.w3.org/TR/css3-page/#page-size
     'size': _parse('auto'),
-}.iteritems())
+}
 
 # Not applicable to the print media
-NOT_PRINT_MEDIA = set(name.replace('-', '_') for name in [
+NOT_PRINT_MEDIA = set([
     # Aural media:
     'azimuth',
     'cue',
-    'cue-after',
-    'cue-before',
+    'cue_after',
+    'cue_before',
     'cursor',
     'elevation',
     'pause',
-    'pause-after',
-    'pause-before',
-    'pitch-range',
+    'pause_after',
+    'pause_before',
+    'pitch_range',
     'pitch',
-    'play-during',
+    'play_during',
     'richness',
-    'speak-header',
-    'speak-numeral',
-    'speak-punctuation',
+    'speak_header',
+    'speak_numeral',
+    'speak_punctuation',
     'speak',
-    'speech-rate',
+    'speech_rate',
     'stress',
-    'voice-family',
+    'voice_family',
     'volume',
 
     # Outlines only apply to interactive media, just like cursor.
     'outline'
-    'outline-color',
-    'outline-style',
-    'outline-width',
+    'outline_color',
+    'outline_style',
+    'outline_width',
 ])
 
 
 # Do not list shorthand properties here as we handle them before inheritance.
 #
-# text-decoration is not a really inherited, see
+# text_decoration is not a really inherited, see
 # http://www.w3.org/TR/CSS2/text.html#propdef-text-decoration
-INHERITED = set(name.replace('-', '_') for name in """
-    border-collapse
-    border-spacing
-    caption-side
+INHERITED = set("""
+    border_collapse
+    border_spacing
+    caption_side
     color
     direction
-    empty-cells
-    font-family
-    font-size
-    font-style
-    font-variant
-    font-weight
-    letter-spacing
-    line-height
-    list-style-image
-    list-style-position
-    list-style-type
+    empty_cells
+    font_family
+    font_size
+    font_style
+    font_variant
+    font_weight
+    letter_spacing
+    line_height
+    list_style_image
+    list_style_position
+    list_style_type
     orphans
     quotes
-    text-align
-    text-decoration
-    text-indent
-    text-transform
+    text_align
+    text_decoration
+    text_indent
+    text_transform
     visibility
-    white-space
+    white_space
     widows
-    word-spacing
+    word_spacing
 """.split())
 
 # Inherited but not applicable to print:
 #    azimuth
 #    cursor
 #    elevation
-#    pitch-range
+#    pitch_range
 #    pitch
 #    richness
-#    speak-header
-#    speak-numeral
-#    speak-punctuation
+#    speak_header
+#    speak_numeral
+#    speak_punctuation
 #    speak
-#    speech-rate
+#    speech_rate
 #    stress
-#    voice-family
+#    voice_family
 #    volume
+
+
+# http://www.w3.org/TR/CSS21/tables.html#model
+TABLE_WRAPPER_BOX_PROPERTIES = set('''
+    position
+    float
+    margin_top
+    margin_bottom
+    margin_left
+    margin_right
+    top
+    bottom
+    left
+    right
+'''.split())
+
+TABLE_BOX_PROPERTIES = (
+    set(INITIAL_VALUES) - INHERITED - TABLE_WRAPPER_BOX_PROPERTIES)
