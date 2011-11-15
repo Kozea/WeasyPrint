@@ -224,6 +224,13 @@ def border_width(value):
         return keyword
 
 
+@validator()
+@single_keyword
+def caption_side(keyword):
+    """``caption-side`` properties validation."""
+    return keyword in ('top', 'bottom')
+
+
 #@validator('top')
 #@validator('right')
 #@validator('left')

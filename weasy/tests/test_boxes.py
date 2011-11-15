@@ -435,43 +435,62 @@ def test_text_transform():
 def test_tables():
     # Rules in http://www.w3.org/TR/CSS21/tables.html#anonymous-boxes
     # Rule 1.3
+    # Also table model: http://www.w3.org/TR/CSS21/tables.html#model
     assert_tree(parse_all('''
         <table>
             <tr>
                 <th>foo</th>
                 <th>bar</th>
             </tr>
+            <tfoot></tfoot>
+            <thead><th></th></thead>
+            <caption style="caption-side: bottom"></caption>
+            <thead></thead>
+            <col></col>
+            <caption>top caption</caption>
             <tr>
                 <td>baz</td>
             </tr>
         </table>
     '''), [
-        ('table', 'Table', [
-            ('tr', 'TableRow', [
-                ('th', 'TableCell', [
-                    ('th', 'Line', [
-                        ('th', 'Text', 'foo')])]),
-                ('th', 'TableCell', [
-                    ('th', 'Line', [
-                        ('th', 'Text', 'bar')])])]),
-            ('tr', 'TableRow', [
-                ('td', 'TableCell', [
-                    ('td', 'Line', [
-                        ('td', 'Text', 'baz')])])])])])
+        ('table', 'Block', [
+            ('caption', 'TableCaption', [
+                ('caption', 'Line', [
+                    ('caption', 'Text', 'top caption')])]),
+            ('table', 'Table', [
+                ('col', 'TableColumn', '<column>'),
+                ('thead', 'TableRowGroup', [
+                    ('thead', 'AnonTableRow', [
+                        ('th', 'TableCell', [])])]),
+                ('tr', 'TableRow', [
+                    ('th', 'TableCell', [
+                        ('th', 'Line', [
+                            ('th', 'Text', 'foo')])]),
+                    ('th', 'TableCell', [
+                        ('th', 'Line', [
+                            ('th', 'Text', 'bar')])])]),
+                ('thead', 'TableRowGroup', []),
+                ('tr', 'TableRow', [
+                    ('td', 'TableCell', [
+                        ('td', 'Line', [
+                            ('td', 'Text', 'baz')])])]),
+                ('tfoot', 'TableRowGroup', [])]),
+            ('caption', 'TableCaption', [])])])
 
     # Rules 1.4 and 3.1
     assert_tree(parse_all('''
         <span style="display: table-cell">foo</span>
         <span style="display: table-cell">bar</span>
     '''), [
-        ('body', 'AnonTable', [
-            ('body', 'AnonTableRow', [
-                ('span', 'TableCell', [
-                    ('span', 'Line', [
-                        ('span', 'Text', 'foo')])]),
-                ('span', 'TableCell', [
-                    ('span', 'Line', [
-                        ('span', 'Text', 'bar')])])])])])
+        ('body', 'AnonBlock', [
+            ('body', 'AnonTable', [
+                ('body', 'AnonTableRow', [
+                    ('span', 'TableCell', [
+                        ('span', 'Line', [
+                            ('span', 'Text', 'foo')])]),
+                    ('span', 'TableCell', [
+                        ('span', 'Line', [
+                            ('span', 'Text', 'bar')])])])])])])
 
     # http://www.w3.org/TR/CSS21/tables.html#anonymous-boxes
     # Rules 1.1 and 1.2
@@ -485,35 +504,39 @@ def test_tables():
             <strong>4</strong>
         </span>
     '''), [
-        ('body', 'AnonTable', [
-            ('span', 'TableColumnGroup', [
-                ('em', 'TableColumn', '<column>')])])])
+        ('body', 'AnonBlock', [
+            ('body', 'AnonTable', [
+                ('span', 'TableColumnGroup', [
+                    ('em', 'TableColumn', '<column>')])])])])
 
     # Rules 2.1 then 2.3
     assert_tree(parse_all('<table>foo <div></div></table>'), [
-        ('table', 'Table', [
-            ('table', 'AnonTableRow', [
-                ('table', 'AnonTableCell', [
-                    ('table', 'AnonBlock', [
-                        ('table', 'Line', [
-                            ('table', 'Text', 'foo ')])]),
-                    ('div', 'Block', [])])])])])
+        ('table', 'Block', [
+            ('table', 'Table', [
+                ('table', 'AnonTableRow', [
+                    ('table', 'AnonTableCell', [
+                        ('table', 'AnonBlock', [
+                            ('table', 'Line', [
+                                ('table', 'Text', 'foo ')])]),
+                        ('div', 'Block', [])])])])])])
 
     # Rule 2.2
     assert_tree(parse_all('<thead><div></div><td></td></thead>'), [
-        ('body', 'AnonTable', [
-            ('thead', 'TableRowGroup', [
-                ('thead', 'AnonTableRow', [
-                    ('thead', 'AnonTableCell', [
-                        ('div', 'Block', [])]),
-                    ('td', 'TableCell', [])])])])])
+        ('body', 'AnonBlock', [
+            ('body', 'AnonTable', [
+                ('thead', 'TableRowGroup', [
+                    ('thead', 'AnonTableRow', [
+                        ('thead', 'AnonTableCell', [
+                            ('div', 'Block', [])]),
+                        ('td', 'TableCell', [])])])])])])
 
     # Rule 3.2
     assert_tree(parse_all('<span><tr></tr></span>'), [
         ('body', 'Line', [
             ('span', 'Inline', [
-                ('span', 'AnonInlineTable', [
-                    ('tr', 'TableRow', [])])])])])
+                ('span', 'AnonInlineBlock', [
+                    ('span', 'AnonInlineTable', [
+                        ('tr', 'TableRow', [])])])])])])
 
     # Rule 3.1
     assert_tree(parse_all('''
@@ -524,17 +547,20 @@ def test_tables():
     '''), [
         ('body', 'Line', [
             ('span', 'Inline', [
-                ('span', 'AnonInlineTable', [
-                    ('span', 'AnonTableRow', [
-                        ('em', 'TableCell', []),
-                        ('em', 'TableCell', [])])])])])])
+                ('span', 'AnonInlineBlock', [
+                    ('span', 'AnonInlineTable', [
+                        ('span', 'AnonTableRow', [
+                            ('em', 'TableCell', []),
+                            ('em', 'TableCell', [])])])])])])])
 
     # Rule 3.2
     assert_tree(parse_all('<tr></tr>\t<tr></tr>'), [
-        ('body', 'AnonTable', [
-            ('tr', 'TableRow', []),
-            ('tr', 'TableRow', [])])])
+        ('body', 'AnonBlock', [
+            ('body', 'AnonTable', [
+                ('tr', 'TableRow', []),
+                ('tr', 'TableRow', [])])])])
     assert_tree(parse_all('<col></col>\n<colgroup></colgroup>'), [
-        ('body', 'AnonTable', [
-            ('col', 'TableColumn', '<column>'),
-            ('colgroup', 'TableColumnGroup', [])])])
+        ('body', 'AnonBlock', [
+            ('body', 'AnonTable', [
+                ('col', 'TableColumn', '<column>'),
+                ('colgroup', 'TableColumnGroup', [])])])])

@@ -215,11 +215,7 @@ def anonymous_table_boxes(box):
 
 
 def table_boxes_children(box, children):
-    """Internal implementation of anonymous_table_boxes().
-
-    Take and return a ``Box`` object.
-
-    """
+    """Internal implementation of anonymous_table_boxes()."""
     if isinstance(box, boxes.TableColumnGroupBox):  # rule 1.2
         # Remove children other than table-column.
         children = [
@@ -294,7 +290,62 @@ def table_boxes_children(box, children):
                 not child.proper_table_child or
                 parent_type in child.proper_parents)
 
-    return box.copy_with_children(children)
+
+    if isinstance(box, boxes.TableBox):
+        return wrap_table(box, children)
+    else:
+        return box.copy_with_children(children)
+
+
+def wrap_table(box, children):
+    """Take a table box and return it in its table wrapper box.
+
+    http://www.w3.org/TR/CSS21/tables.html#model
+
+    """
+    top_captions = []
+    bottom_captions = []
+    header = []  # zero or one element
+    footer = []  # zero or one element
+    columns = []  # or column groups
+    rows = []  # or non-header non-footer groups
+
+    # distribute children in the lists we just created, but keep source order.
+    for child in children:
+        if isinstance(child, boxes.TableRowBox):
+            rows.append(child)
+        elif isinstance(child, boxes.TableRowGroupBox):
+            display = child.style.display
+            if display == 'table-header-group' and not header:
+                child.is_header_group = True
+                header.append(child)
+            elif display == 'table-footer-group' and not footer:
+                child.is_footer_group = True
+                footer.append(child)
+            else:
+                rows.append(child)
+        elif isinstance(child, boxes.TableCaptionBox):
+            side = child.style.caption_side
+            if side == 'top':
+                top_captions.append(child)
+            else:
+                bottom_captions.append(child)
+        else:
+            assert isinstance(child, (boxes.TableColumnBox,
+                boxes.TableColumnGroupBox))
+            columns.append(child)
+
+    # Put columns at the top so that their background are below (drawn before)
+    # http://www.w3.org/TR/CSS21/tables.html#table-layers
+    table = box.copy_with_children(columns + header + rows + footer)
+
+    if isinstance(box, boxes.InlineTableBox):
+        wrapper = boxes.InlineBlockBox
+    else:
+        wrapper = boxes.BlockBox
+    return wrapper(box.document, box.element,
+                   top_captions + [table] + bottom_captions,
+                   anonymous=table.anonymous)
 
 
 def process_whitespace(box):

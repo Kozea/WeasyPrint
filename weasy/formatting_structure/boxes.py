@@ -465,9 +465,8 @@ class TableBox(BlockBox):
     tabular_container = True
 
 
-class InlineTableBox(InlineBlockBox):
+class InlineTableBox(TableBox):
     """Box for elements with ``display: inline-table``"""
-    tabular_container = True
 
 
 class TableRowGroupBox(ParentBox):
@@ -476,6 +475,10 @@ class TableRowGroupBox(ParentBox):
     internal_table_or_caption = True
     tabular_container = True
     proper_parents = (TableBox, InlineTableBox)
+
+    # Default values. May be overriden on instances.
+    header_group = False
+    footer_group = False
 
 
 class TableRowBox(ParentBox):
@@ -518,4 +521,5 @@ class TableCellBox(BlockContainerBox):
 class TableCaptionBox(BlockBox):
     """Box for elements with ``display: table-caption``"""
     proper_table_child = True
+    internal_table_or_caption = True
     proper_parents = (TableBox, InlineTableBox)
