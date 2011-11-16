@@ -78,7 +78,7 @@ class Box(object):
     # http://www.w3.org/TR/CSS21/tables.html#anonymous-boxes
     proper_table_child = False
     internal_table_or_caption = False
-    tabular_container = True
+    tabular_container = False
 
 
     def __init__(self, document, element, anonymous=False):

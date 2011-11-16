@@ -368,10 +368,14 @@ def process_whitespace(box):
     """
     following_collapsible_space = False
     for child in box.descendants():
-        if not (isinstance(child, boxes.TextBox) and child.text):
+        if not isinstance(child, boxes.TextBox):
+            if not isinstance(child, boxes.InlineBox):
+                following_collapsible_space = False
             continue
 
         text = child.text
+        if not text:
+            continue
 
         # Normalize line feeds
         text = re.sub(u'\r\n?', u'\n', text)

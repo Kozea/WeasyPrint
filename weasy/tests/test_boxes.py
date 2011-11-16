@@ -133,6 +133,7 @@ def parse(html_content):
 def parse_all(html_content):
     """Like parse() but also run all corrections on boxes."""
     document = TestPNGDocument.from_string(html_content)
+    document.base_url = resource_filename('<test>')
     box = build.build_formatting_structure(document)
     sanity_checks(box)
     return box
@@ -341,7 +342,8 @@ def test_whitespace():
     # TODO: test more cases
     # http://www.w3.org/TR/CSS21/text.html#white-space-model
     assert_tree(parse_all('''
-        <p>Lorem \t\r\n  ipsum\t<strong>  dolor </strong>.</p>
+        <p>Lorem \t\r\n  ipsum\t<strong>  dolor
+            <img src=pattern.png> sit</strong>.</p>
         <pre>\t  foo\n</pre>
         <pre style="white-space: pre-wrap">\t  foo\n</pre>
         <pre style="white-space: pre-line">\t  foo\n</pre>
@@ -350,7 +352,9 @@ def test_whitespace():
             ('p', 'Line', [
                 ('p', 'Text', 'Lorem ipsum '),
                 ('strong', 'Inline', [
-                    ('strong', 'Text', 'dolor ')]),
+                    ('strong', 'Text', 'dolor '),
+                    ('img', 'InlineLevelReplaced', '<replaced>'),
+                    ('strong', 'Text', ' sit')]),
                 ('p', 'Text', '.')])]),
         ('body', 'AnonBlock', [
             ('body', 'Line', [
@@ -372,7 +376,7 @@ def test_whitespace():
         ('pre', 'Block', [
             ('pre', 'Line', [
                 # pre-line
-                ('pre', 'Text', u'foo\n')])])])
+                ('pre', 'Text', u' foo\n')])])])
 
 
 @SUITE.test
@@ -539,6 +543,7 @@ def test_tables():
                         ('tr', 'TableRow', [])])])])])])
 
     # Rule 3.1
+    # Also, rule 1.3 does not apply: whitespace before and after is preserved
     assert_tree(parse_all('''
         <span>
             <em style="display: table-cell"></em>
@@ -547,11 +552,15 @@ def test_tables():
     '''), [
         ('body', 'Line', [
             ('span', 'Inline', [
+                # Whitespace is preserved in table handling, then collapsed
+                # into a single space.
+                ('span', 'Text', ' '),
                 ('span', 'AnonInlineBlock', [
                     ('span', 'AnonInlineTable', [
                         ('span', 'AnonTableRow', [
                             ('em', 'TableCell', []),
-                            ('em', 'TableCell', [])])])])])])])
+                            ('em', 'TableCell', [])])])]),
+                ('span', 'Text', ' ')])])])
 
     # Rule 3.2
     assert_tree(parse_all('<tr></tr>\t<tr></tr>'), [
