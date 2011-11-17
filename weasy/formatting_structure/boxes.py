@@ -127,7 +127,7 @@ class Box(object):
     def direction(self):
         return self.style.direction
 
-    def _copy(self):
+    def copy(self):
         """Return shallow copy of the box."""
         cls = type(self)
         # Create a new instance without calling __init__: initializing
@@ -294,7 +294,7 @@ class ParentBox(Box):
 
     def copy_with_children(self, children):
         """Create a new equivalent box with given ``children``."""
-        new_box = self._copy()
+        new_box = self.copy()
         new_box.children = tuple(children)
         return new_box
 
@@ -403,7 +403,7 @@ class TextBox(InlineLevelBox):
 
     def copy_with_text(self, text):
         assert text
-        new_box = self._copy()
+        new_box = self.copy()
         new_box.text = text
         return new_box
 

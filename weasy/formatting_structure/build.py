@@ -58,8 +58,7 @@ BOX_TYPE_FROM_DISPLAY = {
 
 def build_formatting_structure(document):
     """Build a formatting structure (box tree) from a ``document``."""
-    box = dom_to_box(document, document.dom)
-    assert box is not None
+    box, = dom_to_box(document, document.dom)
     box = anonymous_table_boxes(box)
     box = inline_in_block(box)
     box = block_in_inline(box)
@@ -69,6 +68,9 @@ def build_formatting_structure(document):
 
 def dom_to_box(document, element):
     """Convert a DOM element and its children into a box with children.
+
+    Return a list of boxes. Most of the time it will have one element but
+    may have zero or more than one.
 
     Eg.::
 
@@ -93,7 +95,7 @@ def dom_to_box(document, element):
     style = document.style_for(element)
     display = style.display
     if display == 'none':
-        return None
+        return []
 
     if display == 'table-column':
         # Ignore children.
@@ -108,10 +110,8 @@ def dom_to_box(document, element):
             # lxml.html already converts HTML entities to text.
             # Here we ignore comments and XML processing instructions.
             if isinstance(child_element.tag, basestring):
-                child_box = dom_to_box(document, child_element)
-                if child_box is not None:
+                for child_box in dom_to_box(document, child_element):
                     children.append(child_box)
-                # else: child_element had `display: none`
             if child_element.tail:
                 text = text_transform(child_element.tail, style)
                 if children and isinstance(children[-1], boxes.TextBox):
@@ -276,7 +276,6 @@ def table_boxes_children(box, children):
             lambda child: isinstance(child, boxes.TableCellBox))
     else:
         # Rule 3.1
-        # XXX whitespace pass the test
         children = wrap_improper(box, children, boxes.TableRowBox,
             lambda child: not isinstance(child, boxes.TableCellBox))
 

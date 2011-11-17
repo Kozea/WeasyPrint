@@ -127,7 +127,8 @@ def parse(html_content):
         document = TestPNGDocument.from_string(html_content)
         # Dummy filename, but in the right directory.
         document.base_url = resource_filename('<test>')
-        return build.dom_to_box(document, document.dom)
+        box, = build.dom_to_box(document, document.dom)
+        return box
 
 
 def parse_all(html_content):
@@ -587,3 +588,20 @@ def test_table_style():
     assert wrapper.style.padding_top == 0
     assert table.style.margin_top == 0
     assert table.style.padding_top == 2
+
+
+@SUITE.test
+def test_table_style():
+    html = parse_all('''
+        <table>
+            <col span=3 style="width: 10px"></col>
+            <col span=2></col>
+        </table>
+    ''')
+    body, = html.children
+    wrapper, = body.children
+    table, = wrapper.children
+    widths = [col.style.width for col in table.children]
+    assert widths == [10, 10, 10, 'auto', 'auto']
+    # copies, not the same box object
+    assert table.children[0] is not table.children[1]

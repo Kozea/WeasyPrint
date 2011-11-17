@@ -37,14 +37,12 @@ HTML_HANDLERS = {}
 def handle_element(box):
     """Handle HTML elements that need special care.
 
-    :returns: the :obj:`DEFAULT_HANDLING` constant if there is no special
-              handling for this element, a :class:`Box` built with the special
-              handling or, None if the element should be ignored.
+    :returns: a (possibly empty) list of boxes.
     """
     if box.element.tag in HTML_HANDLERS:
         return HTML_HANDLERS[box.element.tag](box)
     else:
-        return box
+        return [box]
 
 
 def handler(tag):
@@ -113,24 +111,24 @@ def handle_img(box):
         surface = box.document.get_image_surface_from_uri(src)
         if surface is not None:
             replacement = ImageReplacement(surface)
-            return make_replaced_box(box, replacement)
+            return [make_replaced_box(box, replacement)]
         else:
             # Invalid image, use the alt-text.
             if alt:
-                return make_text_box(box, alt)
+                return [make_text_box(box, alt)]
             elif alt == '':
                 # The element represents nothing
-                return None
+                return []
             else:
                 assert alt is None
                 # TODO: find some indicator that an image is missing.
                 # For now, just remove the image.
-                return None
+                return []
     else:
         if alt:
-            return make_text_box(box, alt)
+            return [make_text_box(box, alt)]
         else:
-            return None
+            return []
 
 
 @handler('br')
@@ -138,7 +136,7 @@ def handle_br(box):
     """Handle ``<br>`` tags, return a preserved new-line character."""
     newline = boxes.TextBox(box.document, box.element, '\n')
     newline.style.white_space = 'pre'
-    return boxes.InlineBox(box.document, box.element, [newline])
+    return [boxes.InlineBox(box.document, box.element, [newline])]
 
 
 def integer_attribute(box, name, minimum=1):
@@ -163,7 +161,7 @@ def handle_colgroup(box):
             box.span = None  # sum of the children’s spans
         else:
             integer_attribute(box, 'span')
-    return box
+    return [box]
 
 
 @handler('col')
@@ -171,7 +169,11 @@ def handle_col(box):
     """Handle the ``span`` attribute."""
     if isinstance(box, boxes.TableColumnBox):
         integer_attribute(box, 'span')
-    return box
+        if box.span > 1:
+            # Generate multiple boxes
+            # http://lists.w3.org/Archives/Public/www-style/2011Nov/0293.html
+            return [box.copy() for i in xrange(box.span)]
+    return [box]
 
 
 @handler('th')
@@ -186,7 +188,7 @@ def handle_td(box):
         # rowspan=0 is still there though.
         integer_attribute(box, 'colspan')
         integer_attribute(box, 'rowspan', minimum=0)
-    return box
+    return [box]
 
 
 class Replacement(object):
