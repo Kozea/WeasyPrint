@@ -463,22 +463,25 @@ def test_tables():
                 ('caption', 'Line', [
                     ('caption', 'Text', 'top caption')])]),
             ('table', 'Table', [
-                ('col', 'TableColumn', '<column>'),
+                ('table', 'AnonTableColumnGroup', [
+                    ('col', 'TableColumn', '<column>')]),
                 ('thead', 'TableRowGroup', [
                     ('thead', 'AnonTableRow', [
                         ('th', 'TableCell', [])])]),
-                ('tr', 'TableRow', [
-                    ('th', 'TableCell', [
-                        ('th', 'Line', [
-                            ('th', 'Text', 'foo')])]),
-                    ('th', 'TableCell', [
-                        ('th', 'Line', [
-                            ('th', 'Text', 'bar')])])]),
+                ('table', 'AnonTableRowGroup', [
+                    ('tr', 'TableRow', [
+                        ('th', 'TableCell', [
+                            ('th', 'Line', [
+                                ('th', 'Text', 'foo')])]),
+                        ('th', 'TableCell', [
+                            ('th', 'Line', [
+                                ('th', 'Text', 'bar')])])])]),
                 ('thead', 'TableRowGroup', []),
-                ('tr', 'TableRow', [
-                    ('td', 'TableCell', [
-                        ('td', 'Line', [
-                            ('td', 'Text', 'baz')])])]),
+                ('table', 'AnonTableRowGroup', [
+                    ('tr', 'TableRow', [
+                        ('td', 'TableCell', [
+                            ('td', 'Line', [
+                                ('td', 'Text', 'baz')])])])]),
                 ('tfoot', 'TableRowGroup', [])]),
             ('caption', 'TableCaption', [])])])
 
@@ -489,13 +492,14 @@ def test_tables():
     '''), [
         ('body', 'AnonBlock', [
             ('body', 'AnonTable', [
-                ('body', 'AnonTableRow', [
-                    ('span', 'TableCell', [
-                        ('span', 'Line', [
-                            ('span', 'Text', 'foo')])]),
-                    ('span', 'TableCell', [
-                        ('span', 'Line', [
-                            ('span', 'Text', 'bar')])])])])])])
+                ('body', 'AnonTableRowGroup', [
+                    ('body', 'AnonTableRow', [
+                        ('span', 'TableCell', [
+                            ('span', 'Line', [
+                                ('span', 'Text', 'foo')])]),
+                        ('span', 'TableCell', [
+                            ('span', 'Line', [
+                                ('span', 'Text', 'bar')])])])])])])])
 
     # http://www.w3.org/TR/CSS21/tables.html#anonymous-boxes
     # Rules 1.1 and 1.2
@@ -518,12 +522,13 @@ def test_tables():
     assert_tree(parse_all('<table>foo <div></div></table>'), [
         ('table', 'Block', [
             ('table', 'Table', [
-                ('table', 'AnonTableRow', [
-                    ('table', 'AnonTableCell', [
-                        ('table', 'AnonBlock', [
-                            ('table', 'Line', [
-                                ('table', 'Text', 'foo ')])]),
-                        ('div', 'Block', [])])])])])])
+                ('table', 'AnonTableRowGroup', [
+                    ('table', 'AnonTableRow', [
+                        ('table', 'AnonTableCell', [
+                            ('table', 'AnonBlock', [
+                                ('table', 'Line', [
+                                    ('table', 'Text', 'foo ')])]),
+                            ('div', 'Block', [])])])])])])])
 
     # Rule 2.2
     assert_tree(parse_all('<thead><div></div><td></td></thead>'), [
@@ -541,7 +546,8 @@ def test_tables():
             ('span', 'Inline', [
                 ('span', 'AnonInlineBlock', [
                     ('span', 'AnonInlineTable', [
-                        ('tr', 'TableRow', [])])])])])])
+                        ('span', 'AnonTableRowGroup', [
+                            ('tr', 'TableRow', [])])])])])])])
 
     # Rule 3.1
     # Also, rule 1.3 does not apply: whitespace before and after is preserved
@@ -558,21 +564,24 @@ def test_tables():
                 ('span', 'Text', ' '),
                 ('span', 'AnonInlineBlock', [
                     ('span', 'AnonInlineTable', [
-                        ('span', 'AnonTableRow', [
-                            ('em', 'TableCell', []),
-                            ('em', 'TableCell', [])])])]),
+                        ('span', 'AnonTableRowGroup', [
+                            ('span', 'AnonTableRow', [
+                                ('em', 'TableCell', []),
+                                ('em', 'TableCell', [])])])])]),
                 ('span', 'Text', ' ')])])])
 
     # Rule 3.2
     assert_tree(parse_all('<tr></tr>\t<tr></tr>'), [
         ('body', 'AnonBlock', [
             ('body', 'AnonTable', [
-                ('tr', 'TableRow', []),
-                ('tr', 'TableRow', [])])])])
+                ('body', 'AnonTableRowGroup', [
+                    ('tr', 'TableRow', []),
+                    ('tr', 'TableRow', [])])])])])
     assert_tree(parse_all('<col></col>\n<colgroup></colgroup>'), [
         ('body', 'AnonBlock', [
             ('body', 'AnonTable', [
-                ('col', 'TableColumn', '<column>'),
+                ('body', 'AnonTableColumnGroup', [
+                    ('col', 'TableColumn', '<column>')]),
                 ('colgroup', 'TableColumnGroup', [])])])])
 
 
@@ -601,11 +610,12 @@ def test_table_style():
     body, = html.children
     wrapper, = body.children
     table, = wrapper.children
-    widths = [col.style.width for col in table.children]
+    colgroup, = table.column_groups
+    widths = [col.style.width for col in colgroup.children]
     assert widths == [10, 10, 10, 'auto', 'auto']
-    assert [col.grid_x for col in table.children] == [0, 1, 2, 3, 4]
+    assert [col.grid_x for col in colgroup.children] == [0, 1, 2, 3, 4]
     # copies, not the same box object
-    assert table.children[0] is not table.children[1]
+    assert colgroup.children[0] is not colgroup.children[1]
 
 
 @SUITE.test
@@ -624,10 +634,6 @@ def test_nested_grid_x():
     body, = html.children
     wrapper, = body.children
     table, = wrapper.children
-    grid = [(
-        col_or_colgroup.grid_x,
-        ([col.grid_x for col in col_or_colgroup.children]
-            if hasattr(col_or_colgroup, 'children')
-            else None)
-    ) for col_or_colgroup in table.children]
-    assert grid == [(0, None), (1, None), (2, []), (4, [4, 5, 6]), (7, None)]
+    grid = [(colgroup.grid_x, [col.grid_x for col in colgroup.children])
+            for colgroup in table.children]
+    assert grid == [(0, [0, 1]), (2, []), (4, [4, 5, 6]), (7, [7])]

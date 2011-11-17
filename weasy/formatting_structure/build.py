@@ -171,12 +171,16 @@ def is_whitespace(box, _has_non_whitespace=re.compile('\S').search):
     )
 
 
-def wrap_improper(box, children, wrapper_type, test):
+def wrap_improper(box, children, wrapper_type, test=None):
     """
     Wrap consecutive children that do not pass ``test`` in a box of type
     ``wrapper_type``.
 
+    ``test`` defaults to children being of the same type as ``wrapper_type``.
+
     """
+    if test is None:
+        test = lambda child: isinstance(child, wrapper_type)
     improper = []
     for child in children:
         if test(child):
@@ -267,13 +271,11 @@ def table_boxes_children(box, children):
             lambda child: child.proper_table_child)
     elif isinstance(box, boxes.TableRowGroupBox):
         # Rule 2.2
-        children = wrap_improper(box, children, boxes.TableRowBox,
-            lambda child: isinstance(child, boxes.TableRowBox))
+        children = wrap_improper(box, children, boxes.TableRowBox)
 
     if isinstance(box, boxes.TableRowBox):
         # Rule 2.3
-        children = wrap_improper(box, children, boxes.TableCellBox,
-            lambda child: isinstance(child, boxes.TableCellBox))
+        children = wrap_improper(box, children, boxes.TableCellBox)
     else:
         # Rule 3.1
         children = wrap_improper(box, children, boxes.TableRowBox,
@@ -309,8 +311,6 @@ def wrap_table(box, children):
     footer = None
     columns = []  # or column groups
     rows = []  # or non-header non-footer groups
-    grid_x = 0
-
 
     # distribute children in the lists we just created, but keep source order.
     # Also set grid_x on columns and column groups.
@@ -335,31 +335,36 @@ def wrap_table(box, children):
                 bottom_captions.append(child)
         elif isinstance(child, boxes.TableColumnBox):
             columns.append(child)
-            child.grid_x = grid_x
-            grid_x += 1
         else:
             assert isinstance(child, boxes.TableColumnGroupBox)
             columns.append(child)
-            child.grid_x = grid_x
-            if child.children:
-                for col in child.children:
-                    col.grid_x = grid_x
-                    grid_x += 1
-                child.span = len(child.children)
-            else:
-                grid_x += child.span
+
+    row_groups = list(wrap_improper(box, rows, boxes.TableRowGroupBox))
+
+    column_groups = list(wrap_improper(
+        box, columns, boxes.TableColumnGroupBox))
+    grid_x = 0
+    for group in column_groups:
+        group.grid_x = grid_x
+        if group.children:
+            for column in group.children:
+                column.grid_x = grid_x
+                grid_x += 1
+            group.span = len(group.children)
+        else:
+            grid_x += group.span
 
     # Put columns at the top so that their background are below (drawn before)
     # http://www.w3.org/TR/CSS21/tables.html#table-layers
     table = box.copy_with_children(
-        columns +
+        column_groups +
         ([header] if header is not None else []) +
-        rows +
+        row_groups +
         ([footer] if footer is not None else []))
 
     # table.children is just for drawing. The layout needs these separately.
-    table.columns = tuple(columns)
-    table.rows = tuple(rows)
+    table.column_groups = tuple(column_groups)
+    table.row_groups = tuple(row_groups)
     table.header = header
     table.footer = footer
 
