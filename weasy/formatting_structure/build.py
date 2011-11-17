@@ -305,23 +305,26 @@ def wrap_table(box, children):
     """
     top_captions = []
     bottom_captions = []
-    header = []  # zero or one element
-    footer = []  # zero or one element
+    header = None
+    footer = None
     columns = []  # or column groups
     rows = []  # or non-header non-footer groups
+    grid_x = 0
+
 
     # distribute children in the lists we just created, but keep source order.
+    # Also set grid_x on columns and column groups.
     for child in children:
         if isinstance(child, boxes.TableRowBox):
             rows.append(child)
         elif isinstance(child, boxes.TableRowGroupBox):
             display = child.style.display
-            if display == 'table-header-group' and not header:
+            if display == 'table-header-group' and header is None:
                 child.is_header_group = True
-                header.append(child)
-            elif display == 'table-footer-group' and not footer:
+                header = child
+            elif display == 'table-footer-group' and footer is None:
                 child.is_footer_group = True
-                footer.append(child)
+                footer = child
             else:
                 rows.append(child)
         elif isinstance(child, boxes.TableCaptionBox):
@@ -330,14 +333,35 @@ def wrap_table(box, children):
                 top_captions.append(child)
             else:
                 bottom_captions.append(child)
-        else:
-            assert isinstance(child, (boxes.TableColumnBox,
-                boxes.TableColumnGroupBox))
+        elif isinstance(child, boxes.TableColumnBox):
             columns.append(child)
+            child.grid_x = grid_x
+            grid_x += 1
+        else:
+            assert isinstance(child, boxes.TableColumnGroupBox)
+            columns.append(child)
+            child.grid_x = grid_x
+            if child.children:
+                for col in child.children:
+                    col.grid_x = grid_x
+                    grid_x += 1
+                child.span = len(child.children)
+            else:
+                grid_x += child.span
 
     # Put columns at the top so that their background are below (drawn before)
     # http://www.w3.org/TR/CSS21/tables.html#table-layers
-    table = box.copy_with_children(columns + header + rows + footer)
+    table = box.copy_with_children(
+        columns +
+        ([header] if header is not None else []) +
+        rows +
+        ([footer] if footer is not None else []))
+
+    # table.children is just for drawing. The layout needs these separately.
+    table.columns = tuple(columns)
+    table.rows = tuple(rows)
+    table.header = header
+    table.footer = footer
 
     if isinstance(box, boxes.InlineTableBox):
         wrapper_type = boxes.InlineBlockBox
@@ -347,6 +371,7 @@ def wrap_table(box, children):
     wrapper = wrapper_type(box.document, box.element,
                            top_captions + [table] + bottom_captions,
                            anonymous=table.anonymous)
+    wrapper.wrapper_for_table = table
     if not table.anonymous:
         # Non-inherited properties of the table element apply to one
         # of the wrapper and the table. The other get the initial value.

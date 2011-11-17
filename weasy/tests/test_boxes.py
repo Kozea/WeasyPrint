@@ -603,5 +603,31 @@ def test_table_style():
     table, = wrapper.children
     widths = [col.style.width for col in table.children]
     assert widths == [10, 10, 10, 'auto', 'auto']
+    assert [col.grid_x for col in table.children] == [0, 1, 2, 3, 4]
     # copies, not the same box object
     assert table.children[0] is not table.children[1]
+
+
+@SUITE.test
+def test_nested_grid_x():
+    html = parse_all('''
+        <table>
+            <col span=2></col>
+            <colgroup span=2></colgroup>
+            <colgroup>
+                <col></col>
+                <col span=2></col>
+            </colgroup>
+            <col></col>
+        </table>
+    ''')
+    body, = html.children
+    wrapper, = body.children
+    table, = wrapper.children
+    grid = [(
+        col_or_colgroup.grid_x,
+        ([col.grid_x for col in col_or_colgroup.children]
+            if hasattr(col_or_colgroup, 'children')
+            else None)
+    ) for col_or_colgroup in table.children]
+    assert grid == [(0, None), (1, None), (2, []), (4, [4, 5, 6]), (7, None)]
