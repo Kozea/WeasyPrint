@@ -305,42 +305,25 @@ def wrap_table(box, children):
     http://www.w3.org/TR/CSS21/tables.html#model
 
     """
-    top_captions = []
-    bottom_captions = []
-    header = None
-    footer = None
-    columns = []  # or column groups
-    rows = []  # or non-header non-footer groups
-
-    # distribute children in the lists we just created, but keep source order.
-    # Also set grid_x on columns and column groups.
+    columns = []
+    rows = []
+    all_captions = []
+    by_type = {
+        boxes.TableColumnBox: columns,
+        boxes.TableColumnGroupBox: columns,
+        boxes.TableRowBox: rows,
+        boxes.TableRowGroupBox: rows,
+        boxes.TableCaptionBox: all_captions,
+    }
     for child in children:
-        if isinstance(child, boxes.TableRowBox):
-            rows.append(child)
-        elif isinstance(child, boxes.TableRowGroupBox):
-            display = child.style.display
-            if display == 'table-header-group' and header is None:
-                child.is_header_group = True
-                header = child
-            elif display == 'table-footer-group' and footer is None:
-                child.is_footer_group = True
-                footer = child
-            else:
-                rows.append(child)
-        elif isinstance(child, boxes.TableCaptionBox):
-            side = child.style.caption_side
-            if side == 'top':
-                top_captions.append(child)
-            else:
-                bottom_captions.append(child)
-        elif isinstance(child, boxes.TableColumnBox):
-            columns.append(child)
-        else:
-            assert isinstance(child, boxes.TableColumnGroupBox)
-            columns.append(child)
+        by_type[type(child)].append(child)
 
-    row_groups = list(wrap_improper(box, rows, boxes.TableRowGroupBox))
+    # Split top and bottom captions
+    captions = {'top': [], 'bottom': []}
+    for caption in all_captions:
+        captions[caption.style.caption_side].append(caption)
 
+    # Assign X positions on the grid to column boxes
     column_groups = list(wrap_improper(
         box, columns, boxes.TableColumnGroupBox))
     grid_x = 0
@@ -353,6 +336,19 @@ def wrap_table(box, children):
             group.span = len(group.children)
         else:
             grid_x += group.span
+
+    # Extract the optional header and footer groups.
+    row_groups = []
+    header = None
+    footer = None
+    for group in wrap_improper(box, rows, boxes.TableRowGroupBox):
+        display = group.style.display
+        if display == 'table-header-group' and header is None:
+            header = group
+        elif display == 'table-footer-group' and footer is None:
+            footer = group
+        else:
+            row_groups.append(group)
 
     # Put columns at the top so that their background are below (drawn before)
     # http://www.w3.org/TR/CSS21/tables.html#table-layers
@@ -374,7 +370,7 @@ def wrap_table(box, children):
         wrapper_type = boxes.BlockBox
 
     wrapper = wrapper_type(box.document, box.element,
-                           top_captions + [table] + bottom_captions,
+                           captions['top'] + [table] + captions['bottom'],
                            anonymous=table.anonymous)
     wrapper.wrapper_for_table = table
     if not table.anonymous:
