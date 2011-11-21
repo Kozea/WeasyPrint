@@ -637,3 +637,67 @@ def test_nested_grid_x():
     grid = [(colgroup.grid_x, [col.grid_x for col in colgroup.children])
             for colgroup in table.children]
     assert grid == [(0, [0, 1]), (2, []), (4, [4, 5, 6]), (7, [7])]
+
+
+@SUITE.test
+def test_colspan_rowspan():
+    """
+    +---+---+---+
+    | A | B | C | #
+    +---+---+---+
+    | D |     E | #
+    +---+---+   +---+
+    |  F ...|   |   |   <-- overlap
+    +---+---+---+   +
+    | H | #   # | G |
+    +---+---+   +   +
+    | I | J | # |   |
+    +---+---+   +---+
+
+    # empty cells
+
+    """
+    html = parse_all('''
+        <table>
+            <tr>
+                <td>A <td>B <td>C
+            </tr>
+            <tr>
+                <td>D <td colspan=2 rowspan=2>E
+            </tr>
+            <tr>
+                <td colspan=2>F <td rowspan=0>G
+            </tr>
+            <tr>
+                <td>H
+            </tr>
+            <tr>
+                <td>I <td>J
+            </tr>
+        </table>
+    ''')
+    body, = html.children
+    wrapper, = body.children
+    table, = wrapper.children
+    group, = table.children
+    assert [[c.grid_x for c in row.children] for row in group.children] == [
+        [0, 1, 2],
+        [0, 1],
+        [0,      3],
+        [0],
+        [0, 1],
+    ]
+    assert [[c.colspan for c in row.children] for row in group.children] == [
+        [1, 1, 1],
+        [1, 2],
+        [2,      1],
+        [1],
+        [1, 1],
+    ]
+    assert [[c.rowspan for c in row.children] for row in group.children] == [
+        [1, 1, 1],
+        [1, 2],
+        [1,      3],
+        [1],
+        [1, 1],
+    ]

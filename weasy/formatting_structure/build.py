@@ -302,9 +302,13 @@ def table_boxes_children(box, children):
 def wrap_table(box, children):
     """Take a table box and return it in its table wrapper box.
 
+    Also re-order children and assign grid positions to each column an cell.
+
     http://www.w3.org/TR/CSS21/tables.html#model
+    http://www.w3.org/TR/CSS21/tables.html#table-layout
 
     """
+    # Group table children by type
     columns = []
     rows = []
     all_captions = []
@@ -338,7 +342,7 @@ def wrap_table(box, children):
             grid_x += group.span
 
     # Extract the optional header and footer groups.
-    row_groups = []
+    body_row_groups = []
     header = None
     footer = None
     for group in wrap_improper(box, rows, boxes.TableRowGroupBox):
@@ -348,18 +352,52 @@ def wrap_table(box, children):
         elif display == 'table-footer-group' and footer is None:
             footer = group
         else:
-            row_groups.append(group)
+            body_row_groups.append(group)
+
+    row_groups = (
+        ([header] if header is not None else []) +
+        body_row_groups +
+        ([footer] if footer is not None else []))
+
+    # Assign a (x,y) position in the grid to each cell.
+    # rowspan can not extend beyond a row group, so each row group
+    # is independent.
+    # http://www.w3.org/TR/CSS21/tables.html#table-layout
+    # Column 0 is on the left if direction is ltr, right if rtl.
+    # This algorithm does not change.
+    for group in row_groups:
+        # Indexes: row number in the group.
+        # Values: set of cells already occupied by row-spanning cells.
+        occupied_cells_by_row = [set() for row in group.children]
+        for row in group.children:
+            occupied_cells_in_this_row = occupied_cells_by_row.pop(0)
+            grid_x = 0
+            for cell in row.children:
+                # Make sure that the first grid cell is free.
+                while grid_x in occupied_cells_in_this_row:
+                    grid_x += 1
+                cell.grid_x = grid_x
+                new_grid_x = grid_x + cell.colspan
+                # http://www.w3.org/TR/html401/struct/tables.html#adef-rowspan
+                if cell.rowspan != 1:
+                    if cell.rowspan == 0:
+                        # All rows until the end of the group
+                        spanned_rows = occupied_cells_by_row
+                        cell.rowspan = len(occupied_cells_by_row) + 1
+                    else:
+                        spanned_rows = occupied_cells_by_row[:cell.rowspan - 1]
+                    spanned_columns = range(grid_x, new_grid_x)
+                    for occupied_cells in spanned_rows:
+                        occupied_cells.update(spanned_columns)
+                grid_x = new_grid_x
 
     # Put columns at the top so that their background are below (drawn before)
     # http://www.w3.org/TR/CSS21/tables.html#table-layers
-    table = box.copy_with_children(
-        column_groups +
-        ([header] if header is not None else []) +
-        row_groups +
-        ([footer] if footer is not None else []))
+    table = box.copy_with_children(column_groups + row_groups)
 
     # table.children is just for drawing. The layout needs these separately.
     table.column_groups = tuple(column_groups)
+    table.body_row_groups = tuple(body_row_groups)
     table.row_groups = tuple(row_groups)
     table.header = header
     table.footer = footer
