@@ -111,6 +111,9 @@ INITIAL_VALUES = {
 
     # CSS3 Paged Media: http://www.w3.org/TR/css3-page/#page-size
     'size': _parse('auto'),
+
+    # CSS3 User Interface: http://www.w3.org/TR/css3-ui/#box-sizing
+    'box_sizing': 'content-box',
 }
 
 # Not applicable to the print media

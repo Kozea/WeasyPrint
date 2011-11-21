@@ -997,3 +997,37 @@ def test_empty_inline_auto_margins():
     assert span.margin_right == 0
     assert span.margin_bottom != 0
     assert span.margin_left == 0
+
+
+@SUITE.test
+def test_box_sizing():
+    """Test the box-sizing property.
+
+    http://www.w3.org/TR/css3-ui/#box-sizing
+
+    """
+    page, = parse('''
+        <style>
+            @page { size: 100000px }
+            body { width: 10000px; margin: 0 }
+            div { width: 10%; height: 1000px;
+                  margin: 100px; padding: 10px; border: 1px solid }
+            div+div { box-sizing: border-box }
+        </style>
+        <div></div><div></div>
+    ''')
+    html = page.root_box
+    body, = html.children
+    div_1, div_2 = body.children
+    assert div_1.width == 1000
+    assert div_1.height == 1000
+    assert div_1.border_width() == 1022
+    assert div_1.border_height() == 1022
+    assert div_1.margin_height() == 1222
+    # Do not test margin_width as it depends on the containing block
+
+    assert div_2.width == 978  # 1000 - 22
+    assert div_2.height == 978
+    assert div_2.border_width() == 1000
+    assert div_2.border_height() == 1000
+    assert div_2.margin_height() == 1200

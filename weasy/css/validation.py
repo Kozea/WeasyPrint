@@ -226,6 +226,12 @@ def border_width(value):
 
 @validator()
 @single_keyword
+def box_sizing(keyword):
+    return keyword in ('padding-box', 'border-box')
+
+
+@validator()
+@single_keyword
 def caption_side(keyword):
     """``caption-side`` properties validation."""
     return keyword in ('top', 'bottom')
