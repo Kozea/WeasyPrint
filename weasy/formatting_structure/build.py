@@ -402,7 +402,9 @@ def wrap_table(box, children):
     table.header = header
     table.footer = footer
 
-    if isinstance(box, boxes.InlineTableBox):
+    # TODO: re-enable this once we support inline-block layout.
+    if False: # isinstance(box, boxes.InlineTableBox):
+        # XXX disabled
         wrapper_type = boxes.InlineBlockBox
     else:
         wrapper_type = boxes.BlockBox
