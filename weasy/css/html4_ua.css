@@ -13,7 +13,9 @@ ol, p, ul, center,
 dir, hr, menu, pre   { display: block; unicode-bidi: embed }
 li              { display: list-item }
 head, script    { display: none }
-table           { display: table }
+table           { display: table;
+          /* See http://www.w3.org/TR/CSS21/tables.html#separated-borders */
+                  box-sizing: border-box }
 tr              { display: table-row }
 thead           { display: table-header-group }
 tbody           { display: table-row-group }

@@ -285,7 +285,6 @@ def length_list(computer, name, values):
     return [length(computer, name, value) for value in values]
 
 
-@Computer.register('border-spacing')
 @Computer.register('top')
 @Computer.register('right')
 @Computer.register('left')
@@ -321,6 +320,15 @@ def length(computer, name, value):
         factor *= 0.5
 
     return value.value * factor
+
+
+@Computer.register('border-spacing')
+def border_spacing(computer, name, value):
+    value = tuple(length_list(computer, name, value))
+    if len(value) == 1:
+        return value * 2  # (v,) => (v, v)
+    else:
+        return value
 
 
 @Computer.register('border-top-width')

@@ -198,6 +198,14 @@ def background_repeat(keyword):
     return keyword in ('repeat', 'repeat-x', 'repeat-y', 'no-repeat')
 
 
+@validator()
+def border_spacing(values):
+    """Validator for the `border-spacing` property."""
+    if (all(is_dimension(value, negative=False) for value in values)
+            and len(values) in (1, 2)):
+        return values
+
+
 @validator('border-top-style')
 @validator('border-right-style')
 @validator('border-left-style')

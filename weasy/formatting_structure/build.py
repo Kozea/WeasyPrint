@@ -348,8 +348,10 @@ def wrap_table(box, children):
     for group in wrap_improper(box, rows, boxes.TableRowGroupBox):
         display = group.style.display
         if display == 'table-header-group' and header is None:
+            group.header_group = True
             header = group
         elif display == 'table-footer-group' and footer is None:
+            group.footer_group = True
             footer = group
         else:
             body_row_groups.append(group)
@@ -371,6 +373,7 @@ def wrap_table(box, children):
         occupied_cells_by_row = [set() for row in group.children]
         for row in group.children:
             occupied_cells_in_this_row = occupied_cells_by_row.pop(0)
+            # The list is now about rows after this one.
             grid_x = 0
             for cell in row.children:
                 # Make sure that the first grid cell is free.
@@ -391,16 +394,13 @@ def wrap_table(box, children):
                         occupied_cells.update(spanned_columns)
                 grid_x = new_grid_x
 
-    # Put columns at the top so that their background are below (drawn before)
-    # http://www.w3.org/TR/CSS21/tables.html#table-layers
-    table = box.copy_with_children(column_groups + row_groups)
-
-    # table.children is just for drawing. The layout needs these separately.
+    table = box.copy_with_children(row_groups)
     table.column_groups = tuple(column_groups)
-    table.body_row_groups = tuple(body_row_groups)
-    table.row_groups = tuple(row_groups)
-    table.header = header
-    table.footer = footer
+
+#    table.body_row_groups = tuple(body_row_groups)
+#    table.row_groups = tuple(row_groups)
+#    table.header = header
+#    table.footer = footer
 
     # TODO: re-enable this once we support inline-block layout.
     if False: # isinstance(box, boxes.InlineTableBox):
@@ -411,14 +411,13 @@ def wrap_table(box, children):
 
     wrapper = wrapper_type(box.document, box.element,
                            captions['top'] + [table] + captions['bottom'],
-                           anonymous=table.anonymous)
-    wrapper.wrapper_for_table = table
+                           anonymous=True)
+    wrapper.is_table_wrapper = True
     if not table.anonymous:
         # Non-inherited properties of the table element apply to one
         # of the wrapper and the table. The other get the initial value.
-        for name in properties.TABLE_BOX_PROPERTIES:
-            wrapper.style[name] = properties.INITIAL_VALUES[name]
         for name in properties.TABLE_WRAPPER_BOX_PROPERTIES:
+            wrapper.style[name] = table.style[name]
             table.style[name] = properties.INITIAL_VALUES[name]
     # else: non-inherited properties already have their initial values
 
@@ -516,12 +515,11 @@ def inline_in_block(box):
         ]
 
     """
-    if isinstance(box, boxes.ParentBox):
-        children = map(inline_in_block, box.children)
-        if not isinstance(box, boxes.BlockContainerBox):
-            return box.copy_with_children(children)
-    elif not isinstance(box, boxes.BlockContainerBox):
+    if not isinstance(box, boxes.ParentBox):
         return box
+    children = map(inline_in_block, box.children)
+    if not isinstance(box, boxes.BlockContainerBox):
+        return box.copy_with_children(children)
 
     new_line_children = []
     new_children = []

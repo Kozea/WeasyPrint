@@ -1031,3 +1031,94 @@ def test_box_sizing():
     assert div_2.border_width() == 1000
     assert div_2.border_height() == 1000
     assert div_2.margin_height() == 1200
+
+
+@SUITE.test
+def test_table_column_width():
+    page, = parse('''
+        <style>
+            body { width: 20000px; margin: 0 }
+            table { width: 10000px; margin: 0 auto; border-spacing: 100px }
+            td { border: 10px solid; padding: 1px }
+        </style>
+        <table>
+            <col style="width: 10%">
+            <tr>
+                <td style="width: 30%" colspan=3>
+                <td>
+            </tr>
+            <tr>
+                <td>
+                <td>
+                <td>
+                <td>
+            </tr>
+        </table>
+    ''')
+    html = page.root_box
+    body, = html.children
+    wrapper, = body.children
+    table, = wrapper.children
+    row_group, = table.children
+    first_row, second_row = row_group.children
+    cells = [first_row.children, second_row.children]
+
+    assert body.position_x == 0
+    assert wrapper.position_x == 0
+    assert wrapper.margin_left == 5000
+    assert wrapper.content_box_x() == 5000  # auto margin-left
+    assert wrapper.width == 10000
+    assert table.position_x == 5000
+    assert table.width  == 10000
+
+    # This cell has colspan=3
+    assert cells[0][0].position_x == 5100  # 5000 + border-spacing
+    # `width` on a cell sets the content width
+    assert cells[0][0].width == 3000  # 30% of 10000px
+    assert cells[0][0].border_width() == 3022  # 3000 + borders + padding
+
+    # Second cell of the first line, but on the fourth and last column
+    assert cells[0][1].position_x == 8222  # 5100 + 3022 + border-spacing
+    assert cells[0][1].border_width() == 6678  # 10000 - 3022 - 3*100
+    assert cells[0][1].width == 6656  # 6678 - borders - padding
+
+    assert cells[1][0].position_x == 5100  # 5000 + border-spacing
+    # `width` on a column sets the border width of cells
+    assert cells[1][0].border_width() == 1000  # 10% of 10000px
+    assert cells[1][0].width == 978  # 1000 - borders - padding
+
+    assert cells[1][1].position_x == 6200  # 5100 + 1000 + border-spacing
+    assert cells[1][1].border_width() == 911  # (3022 - 1000 - 2*100) / 2
+    assert cells[1][1].width == 889  # 911 - borders - padding
+
+    assert cells[1][2].position_x == 7211  # 6200 + 911 + border-spacing
+    assert cells[1][1].border_width() == 911  # (3022 - 1000 - 2*100) / 2
+    assert cells[1][1].width == 889  # 911 - borders - padding
+
+    # Same as cells[0][1]
+    assert cells[1][3].position_x == 8222  # Also 7211 + 911 + border-spacing
+    assert cells[1][3].border_width() == 6678
+    assert cells[1][3].width == 6656
+
+    page, = parse('''
+        <style>
+            table { width: 1000px; border-spacing: 100px }
+        </style>
+        <table>
+            <tr>
+                <td style="width: 50%">
+                <td style="width: 60%">
+                <td>
+            </tr>
+        </table>
+    ''')
+    html = page.root_box
+    body, = html.children
+    wrapper, = body.children
+    table, = wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    assert row.children[0].width == 500
+    assert row.children[1].width == 600
+    assert row.children[2].width == 0
+    assert table.width == 1500 # 500 + 600 + 4 * border-spacing

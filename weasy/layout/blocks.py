@@ -25,6 +25,7 @@ from __future__ import division
 
 from .inlines import get_next_linebox, replaced_box_width, replaced_box_height
 from .markers import list_marker_layout
+from .tables import table_layout
 from .percentages import resolve_percentages
 from ..formatting_structure import boxes
 
@@ -38,9 +39,19 @@ def block_level_layout(box, max_position_y, skip_stack, containing_block,
                            content box of the current page area.
 
     """
-    if isinstance(box, boxes.BlockBox):
-        return block_box_layout(box, max_position_y, skip_stack,
-            containing_block, device_size, page_is_empty)
+    if isinstance(box, boxes.TableBox):
+        # The actual layout was done earlier in block_table_wrapper.
+        # Just translate to the now-known position.
+        for child in box.children:
+            child.translate(box.position_x, box.position_y)
+        return box, None
+    elif isinstance(box, boxes.BlockBox):
+        if box.is_table_wrapper:
+            return block_table_wrapper(box, max_position_y, skip_stack,
+                 containing_block, device_size, page_is_empty)
+        else:
+            return block_box_layout(box, max_position_y, skip_stack,
+                containing_block, device_size, page_is_empty)
     elif isinstance(box, boxes.BlockLevelReplacedBox):
         return block_replaced_box_layout(
             box, containing_block, device_size), None
@@ -55,7 +66,7 @@ def block_box_layout(box, max_position_y, skip_stack, containing_block,
     block_level_width(box, containing_block)
     list_marker_layout(box, containing_block)
     return block_level_height(box, max_position_y, skip_stack,
-        containing_block, device_size, page_is_empty)
+        device_size, page_is_empty)
 
 
 def block_replaced_box_layout(box, containing_block, device_size):
@@ -134,10 +145,10 @@ def block_level_width(box, containing_block):
         box.margin_right = margin_sum - margin_l
 
 
-def block_level_height(box, max_position_y, skip_stack, containing_block,
+def block_level_height(box, max_position_y, skip_stack,
                        device_size, page_is_empty):
     """Set the ``box`` height."""
-    assert isinstance(box, boxes.BlockBox)
+    assert isinstance(box, boxes.BlockContainerBox)
 
     if box.style.overflow != 'visible':
         raise NotImplementedError
@@ -235,3 +246,21 @@ def block_level_height(box, max_position_y, skip_stack, containing_block,
         box.reset_spacing('top')
         new_box.reset_spacing('bottom')
     return new_box, resume_at
+
+
+def block_table_wrapper(box, max_position_y, skip_stack, containing_block,
+                        device_size, page_is_empty):
+    """Layout for the wrapper of a block-level table wrapper."""
+    for child in box.children:
+        if isinstance(child, boxes.TableBox):
+            table = child
+            break
+    else:
+        raise ValueError('Table wrapper without a table')
+    resolve_percentages(table, containing_block)
+    table_layout(table, containing_block, device_size)
+
+    resolve_percentages(box, containing_block)
+    box.width = box.style.width = table.width
+    return block_box_layout(box, max_position_y, skip_stack, containing_block,
+                            device_size, page_is_empty)

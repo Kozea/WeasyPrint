@@ -6,7 +6,8 @@ li { display: list-item }
 head { display: none }
 pre { white-space: pre }
 
-table           { display: table }
+table           { display: table;
+                  box-sizing: border-box }
 tr              { display: table-row }
 thead           { display: table-header-group }
 tbody           { display: table-row-group }

@@ -59,7 +59,7 @@ def resolve_one_percentage(box, property_name, refer_to,
 
 def resolve_percentages(box, containing_block):
     """Set used values as attributes of the box object."""
-    if box.anonymous:
+    if box.anonymous and not box.is_table_wrapper:
         # All values are 0, set in the box’s __init__
         return
 

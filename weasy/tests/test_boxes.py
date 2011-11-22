@@ -63,7 +63,7 @@ def serialize(box_list):
             box.text if isinstance(box, boxes.TextBox)
             else '<replaced>' if isinstance(box, boxes.ReplacedBox)
             else '<column>' if isinstance(box, boxes.TableColumnBox)
-            else serialize(box.children)))
+            else serialize(getattr(box, 'column_groups', ()) + box.children)))
         for box in box_list
     ]
 
@@ -458,7 +458,7 @@ def test_tables():
             </tr>
         </table>
     '''), [
-        ('table', 'Block', [
+        ('table', 'AnonBlock', [
             ('caption', 'TableCaption', [
                 ('caption', 'Line', [
                     ('caption', 'Text', 'top caption')])]),
@@ -520,7 +520,7 @@ def test_tables():
 
     # Rules 2.1 then 2.3
     assert_tree(parse_all('<table>foo <div></div></table>'), [
-        ('table', 'Block', [
+        ('table', 'AnonBlock', [
             ('table', 'Table', [
                 ('table', 'AnonTableRowGroup', [
                     ('table', 'AnonTableRow', [
@@ -601,7 +601,7 @@ def test_table_style():
 
 
 @SUITE.test
-def test_table_style():
+def test_column_style():
     html = parse_all('''
         <table>
             <col span=3 style="width: 10px"></col>
@@ -636,7 +636,7 @@ def test_nested_grid_x():
     wrapper, = body.children
     table, = wrapper.children
     grid = [(colgroup.grid_x, [col.grid_x for col in colgroup.children])
-            for colgroup in table.children]
+            for colgroup in table.column_groups]
     assert grid == [(0, [0, 1]), (2, []), (4, [4, 5, 6]), (7, [7])]
 
 

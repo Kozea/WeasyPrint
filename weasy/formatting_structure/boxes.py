@@ -80,6 +80,9 @@ class Box(object):
     internal_table_or_caption = False
     tabular_container = False
 
+    # Default, may be overriden on instances.
+    is_table_wrapper = False
+
 
     def __init__(self, document, element, anonymous=False):
         self.document = document
@@ -458,7 +461,7 @@ class InlineLevelReplacedBox(ReplacedBox, AtomicInlineLevelBox):
     """
 
 
-class TableBox(BlockBox):
+class TableBox(BlockLevelBox, ParentBox):
     """Box for elements with ``display: table``"""
     # Definitions for the rules generating anonymous table boxes
     # http://www.w3.org/TR/CSS21/tables.html#anonymous-boxes

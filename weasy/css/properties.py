@@ -40,7 +40,7 @@ INITIAL_VALUES = {
     'border_right_color': 'currentColor',
     'border_bottom_color': 'currentColor',
     'border_left_color': 'currentColor',
-    'border_spacing': 0,
+    'border_spacing': (0, 0),
     'border_top_style': 'none',
     'border_right_style': 'none',
     'border_bottom_style': 'none',
@@ -212,6 +212,3 @@ TABLE_WRAPPER_BOX_PROPERTIES = set('''
     left
     right
 '''.split())
-
-TABLE_BOX_PROPERTIES = (
-    set(INITIAL_VALUES) - INHERITED - TABLE_WRAPPER_BOX_PROPERTIES)
