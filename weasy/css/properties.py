@@ -101,7 +101,7 @@ INITIAL_VALUES = {
     'text_transform': 'none',
     'top': 'auto',
     'unicode_bidi': 'normal',
-    'vertical_align': 0,  # Same as 'baseline'
+    'vertical_align': 'baseline',
     'visibility': 'visible',
     'white_space': 'normal',
     'widows': 2,

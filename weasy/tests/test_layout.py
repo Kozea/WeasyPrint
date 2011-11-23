@@ -866,6 +866,29 @@ def test_vertical_align():
     assert line.height == 75
     assert body.height == line.height
 
+    # Same as previously, but with percentages
+    page, = parse('''
+        <span style="line-height: 12px; font-size: 12px">
+            <img src="pattern.png" style="width: 40px; vertical-align: middle">
+            <img src="pattern.png" style="width: 60px">
+        </span>
+    ''')
+    html = page.root_box
+    body, = html.children
+    line, = body.children
+    span, = line.children
+    img_1, img_2 = span.children
+    assert img_1.height == 40
+    assert img_2.height == 60
+    # middle of the image (position_y + 20) is at half the ex-height above
+    # the baseline of the parent. Currently the ex-height is 0.5em
+    # TODO: update this when we actually get ex form the font metrics
+    assert img_1.position_y == 37  # 60 - 0.5 * 0.5 * font-size - 40/2
+    assert img_2.position_y == 0
+    assert line.height == 77
+    assert body.height == line.height
+
+
 
 @SUITE.test
 def test_text_align_left():

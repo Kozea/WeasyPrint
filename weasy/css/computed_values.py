@@ -549,8 +549,6 @@ def text_align(computer, name, value):
 @Computer.register('vertical_align')
 def vertical_align(computer, name, value):
     """Compute the ``word-spacing`` property."""
-    if value == 'baseline':
-        return 0
     if getattr(value, 'type', 'other') == 'PERCENTAGE':
         return computer.get_computed('line_height') * value.value / 100.
     return length(computer, name, value)

@@ -481,8 +481,18 @@ def inline_box_verticality(box, baseline_y):
     max_y = None
     min_y = None
     for child in box.children:
-        # The child’s baseline is `vertical_align` above the parent’s baseline.
-        child_baseline_y = baseline_y - child.style.vertical_align
+        vertical_align = child.style.vertical_align
+        if vertical_align == 'baseline':
+            child_baseline_y = baseline_y
+        elif vertical_align == 'middle':
+            # TODO: find ex from font metrics
+            one_ex = box.style.font_size * 0.5
+            top = baseline_y - (one_ex + child.margin_height()) / 2.
+            child_baseline_y = top + child.baseline
+        else:
+            # Numeric value: The child’s baseline is `vertical_align` above
+            # (lower y) the parent’s baseline.
+            child_baseline_y = baseline_y - vertical_align
         # the child’s `top` is `child.baseline` above (lower y) its baseline.
         top = child_baseline_y - child.baseline
         child.position_y = top
@@ -504,7 +514,7 @@ def inline_box_verticality(box, baseline_y):
             ):
                 # No content, ignore this box’s line-height.
                 # See http://www.w3.org/TR/CSS21/visuren.html#phantom-line-box
-                child.position_y = 0
+                child.position_y = child_baseline_y
                 child.height = 0
                 continue
             if children_min_y < min_y:
