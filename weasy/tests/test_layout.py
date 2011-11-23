@@ -761,11 +761,17 @@ def test_with_images():
     line, = body.children
     img_1, img_2 = line.children
     assert body.height == 60
+    assert img_1.width == 40
     assert img_1.height == 40
+    assert img_2.width == 60
     assert img_2.height == 60
     assert img_1.position_y == 20
     assert img_2.position_y == 0
 
+
+@SUITE.test
+def test_vertical_align():
+    """Test various values of vertical-align."""
     """
                +-------+      <- position_y = 0
          +-----+       |
@@ -831,6 +837,28 @@ def test_with_images():
     line, = body.children
     span, = line.children
     img_1, img_2 = span.children
+    assert img_1.height == 40
+    assert img_2.height == 60
+    assert img_1.position_y == 35
+    assert img_2.position_y == 0
+    assert line.height == 75
+    assert body.height == line.height
+
+    # Same again, but have the vertical-align on an inline box.
+    page, = parse('''
+        <span style="line-height: 10px">
+            <span style="line-height: 10px; vertical-align: -15px">
+                <img src="pattern.png" style="width: 40px">
+            </span>
+            <img src="pattern.png" style="width: 60px">
+        </span>
+    ''')
+    html = page.root_box
+    body, = html.children
+    line, = body.children
+    span_1, = line.children
+    span_2, _whitespace, img_1 = span_1.children
+    img_1, = span_2.children
     assert img_1.height == 40
     assert img_2.height == 60
     assert img_1.position_y == 35

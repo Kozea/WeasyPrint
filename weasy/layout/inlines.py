@@ -65,7 +65,7 @@ def get_next_linebox(linebox, position_y, skip_stack, containing_block,
     remove_last_whitespace(line)
     offset_x = text_align(line, containing_block)
 
-    bottom, top = inline_box_verticality(line)
+    bottom, top = inline_box_verticality(line, baseline_y=0)
     if bottom is None:
         # No children at all
         line.position_y = position_y
@@ -468,10 +468,11 @@ def split_text_box(box, available_width, skip):
     return box, resume_at, preserved_line_break
 
 
-def inline_box_verticality(box):
+def inline_box_verticality(box, baseline_y):
     """Handle ``vertical-align`` within an :class:`InlineBox`.
 
-    Place all boxes vertically assuming that the baseline is at `y = 0`.
+    Place all boxes vertically assuming that the baseline of ``box``
+    is at `y = baseline_y`.
 
     Return ``(max_y, min_y)``, the maximum and minimum vertical position
     of margin boxes.
@@ -480,9 +481,10 @@ def inline_box_verticality(box):
     max_y = None
     min_y = None
     for child in box.children:
-        # the child’s `top` is `child.baseline` above (lower y) its baseline.
         # The child’s baseline is `vertical_align` above the parent’s baseline.
-        top = -child.baseline - child.style.vertical_align
+        child_baseline_y = baseline_y - child.style.vertical_align
+        # the child’s `top` is `child.baseline` above (lower y) its baseline.
+        top = child_baseline_y - child.baseline
         child.position_y = top
         bottom = top + child.margin_height()
         if min_y is None or top < min_y:
@@ -490,19 +492,21 @@ def inline_box_verticality(box):
         if max_y is None or bottom > max_y:
             max_y = bottom
         if isinstance(child, boxes.InlineBox):
-            children_max_y, children_min_y = inline_box_verticality(child)
-            empty = children_max_y is None and child.margin_width() == 0
-            if empty and (child.margin_left != 0 or child.margin_right != 0):
+            children_max_y, children_min_y = inline_box_verticality(
+                child, child_baseline_y)
+            if (
+                children_max_y is None
+                and child.margin_width() == 0
                 # Guard against the case where a negative margin compensates
                 # something else.
-                empty = False
-            if empty:
+                and child.margin_left == 0
+                and child.margin_right == 0
+            ):
                 # No content, ignore this box’s line-height.
                 # See http://www.w3.org/TR/CSS21/visuren.html#phantom-line-box
                 child.position_y = 0
                 child.height = 0
                 continue
-            # TODO: this is incorrect if this child’s own baseline is not y=0
             if children_min_y < min_y:
                 min_y = children_min_y
             if children_max_y > max_y:
