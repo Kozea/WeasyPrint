@@ -489,6 +489,16 @@ def inline_box_verticality(box, baseline_y):
             one_ex = box.style.font_size * 0.5
             top = baseline_y - (one_ex + child.margin_height()) / 2.
             child_baseline_y = top + child.baseline
+        elif vertical_align == 'text-top':
+            # align top with the top of the parent’s content area
+            top = (baseline_y - box.baseline + box.margin_top +
+                   box.border_top_width + box.padding_top)
+            child_baseline_y = top + child.baseline
+        elif vertical_align == 'text-bottom':
+            # align bottom with the bottom of the parent’s content area
+            bottom = (baseline_y - box.baseline + box.margin_top +
+                      box.border_top_width + box.padding_top + box.height)
+            child_baseline_y = bottom - child.margin_height() + child.baseline
         else:
             # Numeric value: The child’s baseline is `vertical_align` above
             # (lower y) the parent’s baseline.

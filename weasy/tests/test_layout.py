@@ -888,6 +888,47 @@ def test_vertical_align():
     assert line.height == 77
     assert body.height == line.height
 
+    # sup and sub currently mean +/- 0.5 em
+    # With the initial 16px font-size, that’s 8px.
+    page, = parse('''
+        <span style="line-height: 10px">
+            <img src="pattern.png" style="width: 60px">
+            <img src="pattern.png" style="width: 40px; vertical-align: super">
+            <img src="pattern.png" style="width: 40px; vertical-align: sub">
+        </span>
+    ''')
+    html = page.root_box
+    body, = html.children
+    line, = body.children
+    span, = line.children
+    img_1, img_2, img_3 = span.children
+    assert img_1.height == 60
+    assert img_2.height == 40
+    assert img_3.height == 40
+    assert img_1.position_y == 0
+    assert img_2.position_y == 12  # 20 - 16 * 0.5
+    assert img_3.position_y == 28  # 20 + 16 * 0.5
+    assert line.height == 68
+    assert body.height == line.height
+
+    # Pango gives a height of 19px for font-size of 16px
+    page, = parse('''
+        <span style="line-height: 10px">
+            <img src="pattern.png" style="vertical-align: text-top">
+            <img src="pattern.png" style="vertical-align: text-bottom">
+        </span>
+    ''')
+    html = page.root_box
+    body, = html.children
+    line, = body.children
+    span, = line.children
+    img_1, img_2 = span.children
+    assert img_1.height == 4
+    assert img_2.height == 4
+    assert img_1.position_y == 0
+    assert img_2.position_y == 15  # 19 - 4
+    assert line.height == 19
+    assert body.height == line.height
 
 
 @SUITE.test

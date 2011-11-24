@@ -549,6 +549,12 @@ def text_align(computer, name, value):
 @Computer.register('vertical_align')
 def vertical_align(computer, name, value):
     """Compute the ``word-spacing`` property."""
+    # Use +/- half an em for super and sub, same as Pango.
+    # (See the SUPERSUB_RISE constant in pango-markup.c)
+    if value == 'super':
+        return computer.get_computed('font_size') * 0.5
+    if value == 'sub':
+        return computer.get_computed('font_size') * -0.5
     if getattr(value, 'type', 'other') == 'PERCENTAGE':
         return computer.get_computed('line_height') * value.value / 100.
     return length(computer, name, value)
