@@ -72,10 +72,13 @@ def get_next_linebox(linebox, position_y, skip_stack, containing_block,
         offset_y = 0
         if preserved_line_break:
             # Only the strut.
+            line.baseline = line.margin_top
             line.height += line.margin_top + line.margin_bottom
         else:
             line.height = 0
+            line.baseline = 0
     else:
+        line.baseline = -top
         line.position_y = top
         line.height = bottom - top
         offset_y = position_y - top

@@ -23,6 +23,7 @@ Functions laying out tables.
 
 from __future__ import division
 
+from ..formatting_structure import boxes
 from .percentages import resolve_percentages, resolve_one_percentage
 
 
@@ -35,31 +36,179 @@ def table_layout(table, containing_block, device_size):
     # Avoid a circular import
     from .blocks import block_level_height
 
-#    assert table.style.table_layout == 'fixed'
-#    assert table.style.border_collapse == 'separate'
+    column_widths = fixed_table_layout(table)
 
+    border_spacing_x, border_spacing_y = table.style.border_spacing
+    column_positions = []
+    position_x = 0
+    for width in column_widths:
+        position_x += border_spacing_x
+        column_positions.append(position_x)
+        position_x += width
+
+    # Layout for row groups, rows and cells
+    # positions are relative to the table for now.
+    position_y = border_spacing_y
+    for group in table.children:
+        group.position_x = 0
+        group.position_y = position_y
+        group.width = table.width
+        # For each rows, cells for which this is the last row (with rowspan)
+        ending_cells_by_row = [[] for row in group.children]
+        for row in group.children:
+            row.position_x = 0
+            row.position_y = position_y
+            row.width = table.width
+            # Place cells at the top of the row and layout their content
+            new_row_children = []
+            for cell in row.children:
+                cell.position_x = column_positions[cell.grid_x]
+                cell.position_y = row.position_y
+                resolve_percentages(cell, containing_block)
+                cell.margin_top = 0
+                cell.margin_left = 0
+                cell.width = 0
+                borders_plus_padding = cell.border_width()  # with width==0
+                cell.width = (
+                    sum(column_widths[cell.grid_x:cell.grid_x + cell.colspan])
+                    + border_spacing_x * (cell.colspan - 1)
+                    - borders_plus_padding)
+                # The computed height is a minimum
+                computed_cell_height = cell.height
+                cell.height = 'auto'
+                cell, _ = block_level_height(cell,
+                    max_position_y=float('inf'),
+                    skip_stack=None,
+                    device_size=device_size,
+                    page_is_empty=True)
+                if computed_cell_height != 'auto':
+                    cell.height = max(cell.height, computed_cell_height)
+                new_row_children.append(cell)
+            # XXX mutating immutable objects! bad!
+            row.children = tuple(new_row_children)
+
+            # Table height algorithm
+            # http://www.w3.org/TR/CSS21/tables.html#height-layout
+
+            # cells with vertical-align: baseline
+            baseline_cells = []
+            for cell in row.children:
+                vertical_align = cell.style.vertical_align
+                if vertical_align in ('top', 'middle', 'bottom'):
+                    cell.vertical_align = vertical_align
+                else:
+                    # Assume 'baseline' for any other value
+                    cell.vertical_align = 'baseline'
+                    cell.baseline = cell_baseline(cell)
+                    baseline_cells.append(cell)
+            if baseline_cells:
+                row.baseline = max(cell.baseline for cell in baseline_cells)
+                for cell in baseline_cells:
+                    if cell.baseline != row.baseline:
+                        add_top_padding(cell, row.baseline - cell.baseline)
+            else:
+                row.baseline = None
+
+            # row height
+            for cell in row.children:
+                ending_cells_by_row[cell.rowspan - 1].append(cell)
+            ending_cells = ending_cells_by_row.pop(0)
+            if ending_cells:  # in this row
+                row_bottom_y = max(
+                    cell.position_y + cell.border_height()
+                    for cell in ending_cells)
+                row.height = row_bottom_y - row.position_y
+            else:
+                row_bottom_y = row.position_y
+                row.height = 0
+
+            # Add extra padding to make the cells the same height as the row
+            for cell in ending_cells:
+                cell_bottom_y = cell.position_y + cell.border_height()
+                extra = row_bottom_y - cell_bottom_y
+                if cell.vertical_align == 'bottom':
+                    add_top_padding(cell, extra)
+                elif cell.vertical_align == 'middle':
+                    extra /= 2.
+                    add_top_padding(cell, extra)
+                    cell.padding_bottom += extra
+                else:
+                    cell.padding_bottom += extra
+
+            position_y += row.height + border_spacing_y
+
+        # Set missing baselines in a second loop because of rowspan
+        for row in group.children:
+            if row.baseline is None:
+                if row.chidren:
+                    # lowest bottom content edge
+                    row.baseline = row.position_y - max(
+                        cell.content_box_y() + cell.height
+                        for cell in row.children)
+                else:
+                    row.baseline = 0
+        group.height = position_y - group.position_y
+        if group.children:
+            # The last border spacing is outside of the group.
+            group.height -= border_spacing_y
+
+    table.height = position_y
+
+    # Layout for column groups and columns
+    for group in table.column_groups:
+        for column in group.children:
+            column.position_x = column_positions[column.grid_x]
+            column.position_y = 0
+            column.width = column_widths[column.grid_x]
+            column.height = table.height
+        first = group.children[0]
+        last = group.children[-1]
+        group.position_x = first.position_x
+        group.position_y = 0
+        group.width = last.position_x + last.width - first.position_x
+        group.height = table.height
+
+
+def add_top_padding(box, extra_padding):
+    """Increase the top padding of a box. This also translates the children.
+    """
+    box.padding_top += extra_padding
+    for child in box.children:
+        child.translate(dy=extra_padding)
+
+
+def fixed_table_layout(table):
+    """Run the fixed table layout and return a list of column widths
+
+    http://www.w3.org/TR/CSS21/tables.html#fixed-table-layout
+
+    """
     assert table.width != 'auto'
 
     all_columns = [column for column_group in table.column_groups
                           for column in column_group.children]
-    first_row_group = table.children[0]
-    first_row = first_row_group.children[0]
+    if table.children and table.children[0].children:
+        first_rowgroup = table.children[0]
+        first_row_cells = first_rowgroup.children[0].children
+    else:
+        first_row_cells = []
     num_columns = max(
         len(all_columns),
-        sum(cell.colspan for cell in first_row.children)
+        sum(cell.colspan for cell in first_row_cells)
     )
     # ``None`` means not know yet.
     column_widths = [None] * num_columns
 
-    # http://www.w3.org/TR/CSS21/tables.html#fixed-table-layout
+    # `width` on column boxes
     for i, column in enumerate(all_columns):
         resolve_one_percentage(column, 'width', table.width, ['auto'])
         if column.width != 'auto':
             column_widths[i] = column.width
 
+    # `width` on cells of the first row.
     border_spacing_x, border_spacing_y = table.style.border_spacing
     i = 0
-    for cell in first_row.children:
+    for cell in first_row_cells:
         resolve_percentages(cell, table)
         if cell.width != 'auto':
             width = cell.border_width()
@@ -78,6 +227,8 @@ def table_layout(table, containing_block, device_size):
                 column_widths[j] = width_per_column
         i += cell.colspan
 
+    # Distribute the remaining space equally on columns that do not have
+    # a width yet.
     all_border_spacing = border_spacing_x * (num_columns + 1)
     min_table_width = (sum(w for w in column_widths if w is not None)
                        + all_border_spacing)
@@ -89,10 +240,12 @@ def table_layout(table, containing_block, device_size):
         for i in columns_without_width:
             column_widths[i] = width_per_column
     else:
-        # XXX this is bad, we were given a broken table to work with...
+        # XXX this is bad, but we were given a broken table to work with...
         for i in columns_without_width:
             column_widths[i] = 0
 
+    # If the sum is less than the table width,
+    # distribute the remaining space equally
     extra_width = table.width - sum(column_widths) - all_border_spacing
     if extra_width <= 0:
         # substract a negative: widen the table
@@ -103,58 +256,30 @@ def table_layout(table, containing_block, device_size):
 
     # Now we have table.width == sum(column_widths) + all_border_spacing
     # with possible floating point rounding errors.
+    return column_widths
 
-    column_positions = []
-    position_x = 0
-    for width in column_widths:
-        position_x += border_spacing_x
-        column_positions.append(position_x)
-        position_x += width
 
-    # Layout for row groups, rows and cells
-    # positions are relative to the table for now.
-    for group in table.children:
-        group.position_x = 0
-        group.position_y = 0
-        group.width = table.width
-        group.height = 0
-        for row in group.children:
-            row.position_x = 0
-            row.position_y = 0
-            row.width = table.width
-            row.height = 0
-            new_row_children = []
-            for cell in row.children:
-                cell.position_x = column_positions[cell.grid_x]
-                cell.position_y = 0
-                resolve_percentages(cell, containing_block)
-                cell.width = 0
-                borders_plus_padding = cell.border_width()
-                cell.width = (
-                    sum(column_widths[cell.grid_x:cell.grid_x + cell.colspan])
-                    + border_spacing_x * (cell.colspan - 1)
-                    - borders_plus_padding)
-                new_cell, _ = block_level_height(cell,
-                    max_position_y=None,
-                    skip_stack=None,
-                    device_size=device_size,
-                    page_is_empty=True)
-                new_row_children.append(new_cell)
-            # XXX mutating immutable objects! bad!
-            row.children = tuple(new_row_children)
+def cell_baseline(cell):
+    """
+    Return the y position of a cell’s baseline from the top of its border box.
 
-    table.height = 0  # XXX
+    See http://www.w3.org/TR/CSS21/tables.html#height-layout
 
-    # Layout for column groups and columns
-    for group in table.column_groups:
-        for column in group.children:
-            column.position_x = column_positions[column.grid_x]
-            column.position_y = 0
-            column.width = column_widths[column.grid_x]
-            column.height = table.height
-        first = group.children[0]
-        last = group.children[-1]
-        group.position_x = first.position_x
-        group.position_y = 0
-        group.width = last.position_x + last.width - first.position_x
-        group.height = table.height
+    """
+    # Do not use cell.descendants() as we do not want to recurse into
+    # out-of-flow children.
+    stack = [iter(cell.children)]  # DIY recursion
+    while stack:
+        child = next(stack[-1], None)
+        if child is None:
+            stack.pop()
+            continue
+        if not child.is_in_normal_flow():
+            continue
+        if isinstance(child, (boxes.LineBox, boxes.TableRowBox)):
+            # First in-flow line or row.
+            return child.baseline + child.position_y - cell.position_y
+        if isinstance(child, boxes.ParentBox):
+            stack.append(iter(child.children))
+    # Default to the bottom of the content area.
+    return cell.border_top_width + cell.padding_top + cell.height

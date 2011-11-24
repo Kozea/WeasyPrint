@@ -1214,3 +1214,67 @@ def test_table_column_width():
     assert row.children[1].width == 600
     assert row.children[2].width == 0
     assert table.width == 1500 # 500 + 600 + 4 * border-spacing
+
+
+@SUITE.test
+def test_table_row_height():
+    page, = parse('''
+        <table style="width: 1000px; border-spacing: 100px;
+                      font: 20px/1em serif; margin: 3px">
+            <tr>
+                <td rowspan=3 style="height: 320px; vertical-align: top">
+                <td>X<br>X<br>X
+                <td><div style="margin-top: 20px">X</div>
+                <td style="vertical-align: top">X
+                <td style="vertical-align: middle">X
+                <td style="vertical-align: bottom">X
+            </tr>
+            <tr>
+                <td style="padding: 15px">
+            </tr>
+            <tr>
+                <td>
+            </tr>
+        </table>
+    ''')
+    html = page.root_box
+    body, = html.children
+    wrapper, = body.children
+    table, = wrapper.children
+    row_group, = table.children
+
+    assert table.height == 520
+    assert [row.height for row in row_group.children] == [80, 30, 10]
+    assert [[cell.height for cell in row.children]
+            for row in row_group.children] == [
+        [320, 60, 40, 20, 20, 20],
+        [0],
+        [0]
+    ]
+    assert [[cell.border_height() for cell in row.children]
+            for row in row_group.children] == [
+        [320, 80, 80, 80, 80, 80],
+        [30],
+        [10]
+    ]
+    # The baseline of the first row is at 40px because of the third column.
+    # The second column thus gets a top padding of 20px pushes the bottom
+    # to 80px.The middle is at 40px.
+    assert [[cell.padding_top for cell in row.children]
+            for row in row_group.children] == [
+        [0, 20, 0, 0, 30, 60],
+        [15],
+        [0]
+    ]
+    assert [[cell.padding_bottom for cell in row.children]
+            for row in row_group.children] == [
+        [0, 0, 40, 60, 30, 0],
+        [15],
+        [10]
+    ]
+    assert [[cell.position_y for cell in row.children]
+            for row in row_group.children] == [
+        [103, 103, 103, 103, 103, 103],
+        [283],
+        [413]
+    ]

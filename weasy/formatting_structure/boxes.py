@@ -141,15 +141,15 @@ class Box(object):
         new_box.style = self.style.copy()
         return new_box
 
-    def translate(self, x, y):
+    def translate(self, dx=0, dy=0):
         """Change the box’s position.
 
         Also update the children’s positions accordingly.
 
         """
         # Overridden in ParentBox to also translate children, if any.
-        self.position_x += x
-        self.position_y += y
+        self.position_x += dx
+        self.position_y += dy
 
     # Heights and widths
 
@@ -311,15 +311,15 @@ class ParentBox(Box):
             else:
                 yield child
 
-    def translate(self, x, y):
+    def translate(self, dx=0, dy=0):
         """Change the position of the box.
 
         Also update the children’s positions accordingly.
 
         """
-        super(ParentBox, self).translate(x, y)
+        super(ParentBox, self).translate(dx, dy)
         for child in self.children:
-            child.translate(x, y)
+            child.translate(dx, dy)
 
 
 class BlockLevelBox(Box):
@@ -490,6 +490,11 @@ class TableRowBox(ParentBox):
     internal_table_or_caption = True
     tabular_container = True
     proper_parents = (TableBox, InlineTableBox, TableRowGroupBox)
+
+    border_top_width = 0
+    border_bottom_width = 0
+    border_left_width = 0
+    border_right_width = 0
 
 
 class TableColumnGroupBox(ParentBox):

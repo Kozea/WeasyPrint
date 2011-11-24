@@ -258,6 +258,7 @@ def block_table_wrapper(box, max_position_y, skip_stack, containing_block,
     else:
         raise ValueError('Table wrapper without a table')
     resolve_percentages(table, containing_block)
+    block_level_width(table, containing_block)
     table_layout(table, containing_block, device_size)
 
     resolve_percentages(box, containing_block)
