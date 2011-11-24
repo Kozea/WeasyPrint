@@ -449,10 +449,8 @@ def vertical_align(value):
     if is_dimension_or_percentage(value, negative=True):
         return value
     keyword = get_keyword(value)
-    if keyword in ('top', 'bottom'):
-        raise InvalidValues('value not supported yet')
     if keyword in ('baseline', 'middle', 'sub', 'super',
-                   'text-top', 'text-bottom'):
+                   'text-top', 'text-bottom', 'top', 'bottom'):
         return keyword
 
 
