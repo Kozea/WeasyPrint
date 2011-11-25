@@ -821,6 +821,6 @@ def validate_and_expand(name, values):
         except InvalidValues, exc:
             if exc.args and exc.args[0]:
                 reason = exc.args[0]
-    getattr(LOGGER, level)('The declaration `%s: %s` was ignored: %s.',
-        name, as_css(values), reason)
+    getattr(LOGGER, level)('Ignored declaration: `%s: %s`, %s.',
+        name.replace('_', '-'), as_css(values), reason)
     return []

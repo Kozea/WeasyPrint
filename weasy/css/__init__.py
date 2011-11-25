@@ -303,7 +303,7 @@ def match_selectors(document, selector_list):
         try:
             pseudo_type, selector_callable = selector_to_xpath(selector)
         except (cssselect.SelectorSyntaxError, cssselect.ExpressionError):
-            LOGGER.warn('Unsupported selector %r, the whole rule-set '
+            LOGGER.warn('Unsupported selector `%s`, the whole rule-set '
                         'was ignored.', selector.selectorText)
             return
         selectors.append(
