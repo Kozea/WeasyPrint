@@ -1,0 +1,21 @@
+Version 0.2, released on 2011-11-25
+===================================
+
+* Support for tables.
+* Support the `box-sizing` property from CSS 3 Basic User Interface
+* Support all values of vertical-align except top and bottom. They are
+  interpreted as text-top and text-bottom.
+* Minor bug fixes
+
+Tables have some limitations:
+Only the fixed layout and separate border model are supported.
+There are also no page break inside tables so a table higher
+than a page will overflow.
+
+
+Version 0.1, released on 2011-10-28
+===================================
+
+First packaged release. Supports "simple" CSS 2.1 pages: there is no
+support for floats, tables, or absolute positioning. Other than that
+most of CSS 2.1 is supported, as well as CSS 3 Colors and Selectors.
