@@ -27,7 +27,8 @@ from ..formatting_structure import boxes
 from .percentages import resolve_percentages, resolve_one_percentage
 
 
-def table_layout(table, containing_block, device_size):
+def table_layout(table, max_position_y, containing_block, device_size,
+                 page_is_empty):
     """Layout for a table box.
 
     For now only the fixed layout and separate border model are supported.
@@ -52,10 +53,12 @@ def table_layout(table, containing_block, device_size):
     # Layout for row groups, rows and cells
     position_y = table.content_box_y() + border_spacing_y
     initial_position_y = position_y
+    new_table_children = []
     for group in table.children:
         group.position_x = rows_x
         group.position_y = position_y
         group.width = rows_width
+        new_group_children = []
         # For each rows, cells for which this is the last row (with rowspan)
         ending_cells_by_row = [[] for row in group.children]
         for row in group.children:
@@ -87,8 +90,8 @@ def table_layout(table, containing_block, device_size):
                 if computed_cell_height != 'auto':
                     cell.height = max(cell.height, computed_cell_height)
                 new_row_children.append(cell)
-            # XXX mutating immutable objects! bad!
-            row.children = tuple(new_row_children)
+            row = row.copy_with_children(new_row_children)
+            new_group_children.append(row)
 
             # Table height algorithm
             # http://www.w3.org/TR/CSS21/tables.html#height-layout
@@ -140,6 +143,9 @@ def table_layout(table, containing_block, device_size):
 
             position_y += row.height + border_spacing_y
 
+        group = group.copy_with_children(new_group_children)
+        new_table_children.append(group)
+
         # Set missing baselines in a second loop because of rowspan
         for row in group.children:
             if row.baseline is None:
@@ -154,6 +160,7 @@ def table_layout(table, containing_block, device_size):
         if group.children:
             # The last border spacing is outside of the group.
             group.height -= border_spacing_y
+    table = table.copy_with_children(new_table_children)
 
     # If the height property has a bigger value, just add blank space
     # below the last row group.
@@ -178,6 +185,14 @@ def table_layout(table, containing_block, device_size):
         group.position_y = initial_position_y
         group.width = last.position_x + last.width - first.position_x
         group.height = columns_height
+
+    if ((table.position_y + table.margin_height()) > max_position_y
+            and not page_is_empty):
+        # If the table does not fit, put it on the next page.
+        # (No page break inside tables yet.)
+        return None, None
+    else:
+        return table, None
 
 
 def add_top_padding(box, extra_padding):
