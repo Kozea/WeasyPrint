@@ -1,7 +1,11 @@
 Features
 ========
 
-WeasyPrint supports:
+WeasyPrint 0.2 supports:
+
+(For older versions, see the changelog_.)
+
+.. _changelog: https://github.com/Kozea/WeasyPrint/blob/master/CHANGES
 
 * Fetching and parsing HTML
 
@@ -13,9 +17,9 @@ WeasyPrint supports:
 * CSS 3 Selectors except ``:lang``, ``:first-line`` and
   ``:first-letter``
 * Part of CSS 3 Paged Media: page size, borders, padding and margins
+* ``box-sizing`` form CSS3 Basic User Interface
 * All of CSS 2.1 except:
 
-  * Tables
   * Floats
   * Absolute, fixed and relative positioning and z-index
   * Inline blocks
@@ -23,7 +27,8 @@ WeasyPrint supports:
   * Minimum and maximum width and height
   * Overflow and clip
   * Border styles ``double``, ``groove``, ``ridge``, ``inset`` and ``outset``
-  * Vertical align values other than ``baseline``, lengths or percentages
+  * Vertical align ``top`` and ``bottom`` (they are interpreted as
+    ``text-top`` and ``text-bottom``, respectively)
   * The ``:lang`` pseudo-class, ``:first-line`` and ``:first-letter``
     pseudo-elements
   * Generated content with the ``:before`` and ``:after`` pseudo-elements,
