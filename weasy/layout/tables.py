@@ -149,7 +149,7 @@ def table_layout(table, max_position_y, containing_block, device_size,
         # Set missing baselines in a second loop because of rowspan
         for row in group.children:
             if row.baseline is None:
-                if row.chidren:
+                if row.children:
                     # lowest bottom content edge
                     row.baseline = row.position_y - max(
                         cell.content_box_y() + cell.height
