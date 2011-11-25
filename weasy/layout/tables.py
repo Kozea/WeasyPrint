@@ -155,8 +155,11 @@ def table_layout(table, containing_block, device_size):
             # The last border spacing is outside of the group.
             group.height -= border_spacing_y
 
-    # TODO: `height` property
-    table.height = position_y - table.content_box_y()
+    # If the height property has a bigger value, just add blank space
+    # below the last row group.
+    table.height = max(
+        table.height if table.height != 'auto' else 0,
+        position_y - table.content_box_y())
 
     # Layout for column groups and columns
     columns_height = position_y - initial_position_y
