@@ -39,26 +39,29 @@ def table_layout(table, containing_block, device_size):
     column_widths = fixed_table_layout(table)
 
     border_spacing_x, border_spacing_y = table.style.border_spacing
+    # TODO: revert this for direction: rtl
     column_positions = []
-    position_x = 0
+    position_x = table.content_box_x()
     for width in column_widths:
         position_x += border_spacing_x
         column_positions.append(position_x)
         position_x += width
+    rows_x = column_positions[0]
+    rows_width = position_x - rows_x
 
     # Layout for row groups, rows and cells
-    # positions are relative to the table for now.
-    position_y = border_spacing_y
+    position_y = table.content_box_y() + border_spacing_y
+    initial_position_y = position_y
     for group in table.children:
-        group.position_x = 0
+        group.position_x = rows_x
         group.position_y = position_y
-        group.width = table.width
+        group.width = rows_width
         # For each rows, cells for which this is the last row (with rowspan)
         ending_cells_by_row = [[] for row in group.children]
         for row in group.children:
-            row.position_x = 0
+            row.position_x = rows_x
             row.position_y = position_y
-            row.width = table.width
+            row.width = rows_width
             # Place cells at the top of the row and layout their content
             new_row_children = []
             for cell in row.children:
@@ -152,21 +155,26 @@ def table_layout(table, containing_block, device_size):
             # The last border spacing is outside of the group.
             group.height -= border_spacing_y
 
-    table.height = position_y
+    # TODO: `height` property
+    table.height = position_y - table.content_box_y()
 
     # Layout for column groups and columns
+    columns_height = position_y - initial_position_y
+    if table.children:
+        # The last border spacing is below the columns.
+        columns_height -= border_spacing_y
     for group in table.column_groups:
         for column in group.children:
             column.position_x = column_positions[column.grid_x]
-            column.position_y = 0
+            column.position_y = initial_position_y
             column.width = column_widths[column.grid_x]
-            column.height = table.height
+            column.height = columns_height
         first = group.children[0]
         last = group.children[-1]
         group.position_x = first.position_x
-        group.position_y = 0
+        group.position_y = initial_position_y
         group.width = last.position_x + last.width - first.position_x
-        group.height = table.height
+        group.height = columns_height
 
 
 def add_top_padding(box, extra_padding):

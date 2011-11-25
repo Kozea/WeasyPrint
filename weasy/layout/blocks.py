@@ -40,10 +40,7 @@ def block_level_layout(box, max_position_y, skip_stack, containing_block,
 
     """
     if isinstance(box, boxes.TableBox):
-        # The actual layout was done earlier in block_table_wrapper.
-        # Just translate to the now-known position.
-        for child in box.children:
-            child.translate(box.position_x, box.position_y)
+        table_layout(box, containing_block, device_size)
         return box, None
     elif isinstance(box, boxes.BlockBox):
         if box.is_table_wrapper:
@@ -259,7 +256,6 @@ def block_table_wrapper(box, max_position_y, skip_stack, containing_block,
         raise ValueError('Table wrapper without a table')
     resolve_percentages(table, containing_block)
     block_level_width(table, containing_block)
-    table_layout(table, containing_block, device_size)
 
     resolve_percentages(box, containing_block)
     box.width = box.style.width = table.width
