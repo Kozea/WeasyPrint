@@ -12,7 +12,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='WeasyPrint',
-    version='0.2',  # Also change this in weasy/__init__.py
+    version='0.3dev',  # Also change this in weasy/__init__.py
     url='http://weasyprint.org/',
     license='GNU Affero General Public License v3',
     description='WeasyPrint converts web documents to PDF.',
