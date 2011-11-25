@@ -1222,7 +1222,7 @@ def test_table_row_height():
         <table style="width: 1000px; border-spacing: 100px;
                       font: 20px/1em serif; margin: 3px">
             <tr>
-                <td rowspan=3 style="height: 320px; vertical-align: top">
+                <td rowspan=0 style="height: 420px; vertical-align: top">
                 <td>X<br>X<br>X
                 <td><div style="margin-top: 20px">X</div>
                 <td style="vertical-align: top">X
@@ -1232,8 +1232,9 @@ def test_table_row_height():
             <tr>
                 <td style="padding: 15px">
             </tr>
+            <tr></tr>
             <tr>
-                <td>
+                <td style="vertical-align: bottom">
             </tr>
         </table>
     ''')
@@ -1243,18 +1244,20 @@ def test_table_row_height():
     table, = wrapper.children
     row_group, = table.children
 
-    assert table.height == 520
-    assert [row.height for row in row_group.children] == [80, 30, 10]
+    assert table.height == 620
+    assert [row.height for row in row_group.children] == [80, 30, 0, 10]
     assert [[cell.height for cell in row.children]
             for row in row_group.children] == [
-        [320, 60, 40, 20, 20, 20],
+        [420, 60, 40, 20, 20, 20],
         [0],
+        [],
         [0]
     ]
     assert [[cell.border_height() for cell in row.children]
             for row in row_group.children] == [
-        [320, 80, 80, 80, 80, 80],
+        [420, 80, 80, 80, 80, 80],
         [30],
+        [],
         [10]
     ]
     # The baseline of the first row is at 40px because of the third column.
@@ -1264,17 +1267,20 @@ def test_table_row_height():
             for row in row_group.children] == [
         [0, 20, 0, 0, 30, 60],
         [15],
-        [0]
+        [],
+        [10]
     ]
     assert [[cell.padding_bottom for cell in row.children]
             for row in row_group.children] == [
         [0, 0, 40, 60, 30, 0],
         [15],
-        [10]
+        [],
+        [0]
     ]
     assert [[cell.position_y for cell in row.children]
             for row in row_group.children] == [
         [103, 103, 103, 103, 103, 103],
         [283],
-        [413]
+        [],
+        [513]
     ]
