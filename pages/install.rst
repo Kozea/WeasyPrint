@@ -30,7 +30,7 @@ your distribution’s packages.
 .. _virtualenv: http://www.virtualenv.org/
 
 On a Debian-based system: (Pango is recent enough in Debian Wheezy and
-Ubuntu 10.10.)
+Ubuntu 11.10.)
 
 .. code-block:: sh
 
