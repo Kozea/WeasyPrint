@@ -470,11 +470,6 @@ class TableRowBox(ParentBox):
     tabular_container = True
     proper_parents = (TableBox, InlineTableBox, TableRowGroupBox)
 
-    border_top_width = 0
-    border_bottom_width = 0
-    border_left_width = 0
-    border_right_width = 0
-
 
 class TableColumnGroupBox(ParentBox):
     """Box for elements with ``display: table-column-group``"""
