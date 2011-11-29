@@ -59,6 +59,7 @@ def get_next_linebox(linebox, position_y, skip_stack, containing_block,
     if skip_stack == 'continue':
         return None, None
 
+    resolve_percentages(linebox, containing_block)
     line, resume_at, preserved_line_break = split_inline_box(
         linebox, position_x, max_x, skip_stack, containing_block, device_size)
 
@@ -175,7 +176,6 @@ def remove_last_whitespace(box):
 def inline_replaced_box_layout(box, containing_block, device_size):
     """Lay out an inline :class:`boxes.ReplacedBox` ``box``."""
     assert isinstance(box, boxes.ReplacedBox)
-    resolve_percentages(box, containing_block)
 
     # Compute width:
     # http://www.w3.org/TR/CSS21/visudet.html#inline-replaced-width
@@ -273,6 +273,7 @@ def split_inline_level(box, position_x, max_x, skip_stack, containing_block,
     is no split is possible.)
 
     """
+    resolve_percentages(box, containing_block)
     if isinstance(box, boxes.TextBox):
         box.position_x = position_x
         if skip_stack is None:
@@ -290,7 +291,6 @@ def split_inline_level(box, position_x, max_x, skip_stack, containing_block,
         else:
             resume_at = (skip, None)
     elif isinstance(box, boxes.InlineBox):
-        resolve_percentages(box, containing_block)
         if box.margin_left == 'auto':
             box.margin_left = 0
         if box.margin_right == 'auto':
