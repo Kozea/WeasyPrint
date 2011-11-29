@@ -97,8 +97,8 @@ def block_level_width(box, containing_block):
     margin_r = box.margin_right
     padding_l = box.padding_left
     padding_r = box.padding_right
-    border_l = box.border_left_width
-    border_r = box.border_right_width
+    border_l = box.style.border_left_width
+    border_r = box.style.border_right_width
     width = box.width
 
     # Only margin-left, margin-right and width can be 'auto'.

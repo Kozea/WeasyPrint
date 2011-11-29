@@ -313,9 +313,9 @@ def split_inline_box(box, position_x, max_x, skip_stack,
     initial_position_x = position_x
     assert isinstance(box, (boxes.LineBox, boxes.InlineBox))
     left_spacing = (box.padding_left + box.margin_left +
-                    box.border_left_width)
+                    box.style.border_left_width)
     right_spacing = (box.padding_right + box.margin_right +
-                     box.border_right_width)
+                     box.style.border_right_width)
     position_x += left_spacing
     content_box_left = position_x
 
@@ -379,9 +379,9 @@ def split_inline_box(box, position_x, max_x, skip_stack,
     half_leading = leading / 2.
     # Set margins to the half leading but also compensate for borders and
     # paddings. We want margin_height() == line_height
-    new_box.margin_top = (half_leading - new_box.border_top_width -
+    new_box.margin_top = (half_leading - new_box.style.border_top_width -
                           new_box.padding_bottom)
-    new_box.margin_bottom = (half_leading - new_box.border_bottom_width -
+    new_box.margin_bottom = (half_leading - new_box.style.border_bottom_width -
                              new_box.padding_bottom)
     # form the top of the content box
     new_box.baseline = baseline
@@ -455,7 +455,8 @@ def split_text_box(box, available_width, skip):
         # form the top of the content box
         box.baseline = baseline
         # form the top of the margin box
-        box.baseline += box.margin_top + box.border_top_width + box.padding_top
+        box.baseline += (box.margin_top + box.style.border_top_width +
+                         box.padding_top)
     else:
         box = None
 
@@ -496,12 +497,13 @@ def inline_box_verticality(box, baseline_y):
         elif vertical_align in ('text-top', 'top'):
             # align top with the top of the parent’s content area
             top = (baseline_y - box.baseline + box.margin_top +
-                   box.border_top_width + box.padding_top)
+                   box.style.border_top_width + box.padding_top)
             child_baseline_y = top + child.baseline
         elif vertical_align in ('text-bottom', 'bottom'):
             # align bottom with the bottom of the parent’s content area
             bottom = (baseline_y - box.baseline + box.margin_top +
-                      box.border_top_width + box.padding_top + box.height)
+                      box.style.border_top_width + box.padding_top +
+                      box.height)
             child_baseline_y = bottom - child.margin_height() + child.baseline
         else:
             # Numeric value: The child’s baseline is `vertical_align` above

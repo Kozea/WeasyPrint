@@ -299,7 +299,7 @@ def draw_border(context, box):
             box.padding_width(), box.padding_height(),
         ),
     ):
-        width = getattr(box, 'border_%s_width' % side)
+        width = box.style['border_%s_width' % side]
         if width == 0:
             continue
         color = box.style['border_%s_color' % side]
