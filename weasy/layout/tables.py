@@ -43,11 +43,11 @@ def table_layout(table, max_position_y, containing_block, device_size,
     # TODO: revert this for direction: rtl
     column_positions = []
     position_x = table.content_box_x()
+    rows_x = position_x + border_spacing_x
     for width in column_widths:
         position_x += border_spacing_x
         column_positions.append(position_x)
         position_x += width
-    rows_x = column_positions[0]
     rows_width = position_x - rows_x
 
     # Layout for row groups, rows and cells
@@ -279,12 +279,13 @@ def fixed_table_layout(table):
     if extra_width <= 0:
         # substract a negative: widen the table
         table.width -= extra_width
-    else:
+    elif num_columns:
         extra_per_column = extra_width / num_columns
         column_widths = [w + extra_per_column for w in column_widths]
 
     # Now we have table.width == sum(column_widths) + all_border_spacing
     # with possible floating point rounding errors.
+    # (unless there is zero column)
     return column_widths
 
 
