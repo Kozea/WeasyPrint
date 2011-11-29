@@ -245,19 +245,25 @@ def block_level_height(box, max_position_y, skip_stack,
     return new_box, resume_at
 
 
-def block_table_wrapper(box, max_position_y, skip_stack, containing_block,
+def block_table_wrapper(wrapper, max_position_y, skip_stack, containing_block,
                         device_size, page_is_empty):
     """Layout for the wrapper of a block-level table wrapper."""
-    for child in box.children:
+    for child in wrapper.children:
         if isinstance(child, boxes.TableBox):
             table = child
             break
     else:
         raise ValueError('Table wrapper without a table')
+    resolve_percentages(wrapper, containing_block)
     resolve_percentages(table, containing_block)
+    # Count the wrapper margins in case of `width: auto`
+    table.margin_left = wrapper.margin_left
+    table.margin_right = wrapper.margin_right
     block_level_width(table, containing_block)
+    # The table margins are on the table wrapper box, not on the table box
+    table.margin_left = 0
+    table.margin_right = 0
 
-    resolve_percentages(box, containing_block)
-    box.width = box.style.width = table.width
-    return block_box_layout(box, max_position_y, skip_stack, containing_block,
-                            device_size, page_is_empty)
+    wrapper.width = wrapper.style.width = table.border_width()
+    return block_box_layout(wrapper, max_position_y, skip_stack,
+                            containing_block, device_size, page_is_empty)

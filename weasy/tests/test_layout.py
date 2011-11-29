@@ -1284,3 +1284,30 @@ def test_table_row_height():
         [],
         [513]
     ]
+
+
+@SUITE.test
+def test_table_wrapper():
+    page, = parse('''
+        <style>
+            @page { size: 1000px }
+            table { /* width: auto; */ height: 500px;
+                    padding: 1px; border: 10px solid; margin: 100px; }
+        </style>
+        <table></table>
+    ''')
+    html = page.root_box
+    body, = html.children
+    wrapper, = body.children
+    table, = wrapper.children
+    assert body.width == 1000
+    assert wrapper.margin_width() == 1000
+    assert wrapper.width == 800  # 1000 - 2*100, no borders or padding
+    assert table.margin_width() == 800
+    assert table.width == 778  # 800 - 2*10 - 2*1, no margin
+    # box-sizing in the UA stylesheet  makes `height: 500px` set this
+    assert table.border_height() == 500
+    assert table.height == 478  # 500 - 2*10 - 2*1
+    assert table.margin_height() == 500  # no margin
+    assert wrapper.height == 500
+    assert wrapper.margin_height() == 700  # 500 + 2*100
