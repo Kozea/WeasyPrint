@@ -79,6 +79,7 @@ def get_next_linebox(linebox, position_y, skip_stack, containing_block,
             line.height = 0
             line.baseline = 0
     else:
+        assert top is not None
         line.baseline = -top
         line.position_y = top
         line.height = bottom - top
@@ -520,23 +521,25 @@ def inline_box_verticality(box, baseline_y):
         if isinstance(child, boxes.InlineBox):
             children_max_y, children_min_y = inline_box_verticality(
                 child, child_baseline_y)
-            if (
-                children_max_y is None
-                and child.margin_width() == 0
-                # Guard against the case where a negative margin compensates
-                # something else.
-                and child.margin_left == 0
-                and child.margin_right == 0
-            ):
-                # No content, ignore this box’s line-height.
-                # See http://www.w3.org/TR/CSS21/visuren.html#phantom-line-box
-                child.position_y = child_baseline_y
-                child.height = 0
-                continue
-            if children_min_y < min_y:
-                min_y = children_min_y
-            if children_max_y > max_y:
-                max_y = children_max_y
+            if children_max_y is None:
+                if (
+                    child.margin_width() == 0
+                    # Guard against the case where a negative margin
+                    # compensates something else.
+                    and child.margin_left == 0
+                    and child.margin_right == 0
+                ):
+                    # No content, ignore this box’s line-height.
+                    # See http://www.w3.org/TR/CSS21/visuren.html#phantom-line-box
+                    child.position_y = child_baseline_y
+                    child.height = 0
+                    continue
+            else:
+                assert children_min_y is not None
+                if children_min_y < min_y:
+                    min_y = children_min_y
+                if children_max_y > max_y:
+                    max_y = children_max_y
     return max_y, min_y
 
 

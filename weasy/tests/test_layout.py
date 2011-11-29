@@ -930,6 +930,18 @@ def test_vertical_align():
     assert line.height == 19
     assert body.height == line.height
 
+    # This case used to cause an exception:
+    # The second span has no children but should count for line heights
+    # since it has padding.
+    page, = parse('<span><span style="padding: 1px"></span></span>')
+    html = page.root_box
+    body, = html.children
+    line, = body.children
+    span_1, = line.children
+    span_2, = span_1.children
+    assert span_1.height == 19
+    assert span_2.height == 19
+
 
 @SUITE.test
 def test_text_align_left():
