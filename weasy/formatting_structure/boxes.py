@@ -480,6 +480,17 @@ class TableColumnGroupBox(ParentBox):
     # Default value. May be overriden on instances.
     span = 1
 
+    # Columns groups never have margins or paddings
+    margin_top = 0
+    margin_bottom = 0
+    margin_left = 0
+    margin_right = 0
+
+    padding_top = 0
+    padding_bottom = 0
+    padding_left = 0
+    padding_right = 0
+
 
 class TableColumnBox(Box):
     """Box for elements with ``display: table-column``"""
@@ -489,6 +500,17 @@ class TableColumnBox(Box):
 
     # Default value. May be overriden on instances.
     span = 1
+
+    # Columns never have margins or paddings
+    margin_top = 0
+    margin_bottom = 0
+    margin_left = 0
+    margin_right = 0
+
+    padding_top = 0
+    padding_bottom = 0
+    padding_left = 0
+    padding_right = 0
 
 
 class TableCellBox(BlockContainerBox):
