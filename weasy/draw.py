@@ -104,6 +104,10 @@ def draw_box(context, box):
         if isinstance(box, boxes.ReplacedBox):
             draw_replacedbox(context, box)
 
+    if isinstance(box, boxes.TableBox):
+        for child in box.column_groups:
+            draw_box(context, child)
+
     if isinstance(box, boxes.ParentBox):
         for child in box.children:
             draw_box(context, child)
@@ -281,7 +285,7 @@ def get_rectangle_edges(x, y, width, height):
 
 def draw_border(context, box):
     """Draw the box border to a ``cairo.Context``."""
-    if all(getattr(box, 'border_%s_width' % side) == 0
+    if all(box.style['border_%s_width' % side] == 0
            for side in ['top', 'right', 'bottom', 'left']):
         # No border, return early.
         return
@@ -299,7 +303,7 @@ def draw_border(context, box):
             box.padding_width(), box.padding_height(),
         ),
     ):
-        width = getattr(box, 'border_%s_width' % side)
+        width = box.style['border_%s_width' % side]
         if width == 0:
             continue
         color = box.style['border_%s_color' % side]
@@ -318,6 +322,8 @@ def draw_border(context, box):
 
             We clip on its outline on draw on the big line on the middle.
             """
+            # I find that anti-aliasing does not look good on borders.
+            context.set_antialias(cairo.ANTIALIAS_NONE)
             # TODO: implement other styles.
             if not style in ['dotted', 'dashed']:
                 border_start, border_stop = border_edge

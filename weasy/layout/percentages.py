@@ -60,7 +60,11 @@ def resolve_one_percentage(box, property_name, refer_to,
 def resolve_percentages(box, containing_block):
     """Set used values as attributes of the box object."""
     if box.anonymous and not box.is_table_wrapper:
-        # All values are 0, set in the box’s __init__
+        for prop in ['margin_{}', 'border_{}_width', 'padding_{}']:
+            for side in ['top', 'right', 'bottom', 'left']:
+                setattr(box, prop.format(side), 0)
+        box.width = 'auto'
+        box.height = 'auto'
         return
 
     # cb = containing block
@@ -98,17 +102,14 @@ def resolve_percentages(box, containing_block):
 #        resolve_one_percentage(box, 'min_height', cb_height)
 #        resolve_one_percentage(box, 'max_height', cb_height, ['none'])
 
-    # Used value == computed value
-    for side in ['top', 'right', 'bottom', 'left']:
-        prop = 'border_{}_width'.format(side)
-        setattr(box, prop, box.style[prop])
-
     if box.style.box_sizing == 'border-box':
         if box.width != 'auto':
             box.width -= (box.padding_left + box.padding_right +
-                          box.border_left_width + box.border_right_width)
+                          box.style.border_left_width +
+                          box.style.border_right_width)
         if box.height != 'auto':
             box.height -= (box.padding_top + box.padding_bottom +
-                           box.border_top_width + box.border_bottom_width)
+                           box.style.border_top_width +
+                           box.style.border_bottom_width)
     else:
         assert box.style.box_sizing == 'content-box'

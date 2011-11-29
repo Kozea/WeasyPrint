@@ -209,8 +209,8 @@ def test_block_widths():
             assert paragraph.element.tag == 'p'
             assert paragraph.padding_left == 2
             assert paragraph.padding_right == 2
-            assert paragraph.border_left_width == 1
-            assert paragraph.border_right_width == 1
+            assert paragraph.style.border_left_width == 1
+            assert paragraph.style.border_right_width == 1
             paragraphs.append(paragraph)
 
     assert len(paragraphs) == 11
@@ -578,7 +578,7 @@ def test_inlinebox_spliting():
             # Vertical margins on inlines are irrelevant.
             assert getattr(inlinebox, 'margin_%s' % side) == value
         assert getattr(inlinebox, 'padding_%s' % side) == value
-        assert getattr(inlinebox, 'border_%s_width' % side) == value
+        assert getattr(inlinebox.style, 'border_%s_width' % side) == value
 
     content = '''<strong>WeasyPrint is a free software visual rendering engine
               for HTML and CSS</strong>'''
@@ -1284,3 +1284,30 @@ def test_table_row_height():
         [],
         [513]
     ]
+
+
+@SUITE.test
+def test_table_wrapper():
+    page, = parse('''
+        <style>
+            @page { size: 1000px }
+            table { /* width: auto; */ height: 500px;
+                    padding: 1px; border: 10px solid; margin: 100px; }
+        </style>
+        <table></table>
+    ''')
+    html = page.root_box
+    body, = html.children
+    wrapper, = body.children
+    table, = wrapper.children
+    assert body.width == 1000
+    assert wrapper.margin_width() == 1000
+    assert wrapper.width == 800  # 1000 - 2*100, no borders or padding
+    assert table.margin_width() == 800
+    assert table.width == 778  # 800 - 2*10 - 2*1, no margin
+    # box-sizing in the UA stylesheet  makes `height: 500px` set this
+    assert table.border_height() == 500
+    assert table.height == 478  # 500 - 2*10 - 2*1
+    assert table.margin_height() == 500  # no margin
+    assert wrapper.height == 500
+    assert wrapper.margin_height() == 700  # 500 + 2*100

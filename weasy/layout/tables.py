@@ -43,11 +43,11 @@ def table_layout(table, max_position_y, containing_block, device_size,
     # TODO: revert this for direction: rtl
     column_positions = []
     position_x = table.content_box_x()
+    rows_x = position_x + border_spacing_x
     for width in column_widths:
         position_x += border_spacing_x
         column_positions.append(position_x)
         position_x += width
-    rows_x = column_positions[0]
     rows_width = position_x - rows_x
 
     # Layout for row groups, rows and cells
@@ -55,6 +55,7 @@ def table_layout(table, max_position_y, containing_block, device_size,
     initial_position_y = position_y
     new_table_children = []
     for group in table.children:
+        resolve_percentages(group, containing_block=table)
         group.position_x = rows_x
         group.position_y = position_y
         group.width = rows_width
@@ -62,15 +63,16 @@ def table_layout(table, max_position_y, containing_block, device_size,
         # For each rows, cells for which this is the last row (with rowspan)
         ending_cells_by_row = [[] for row in group.children]
         for row in group.children:
+            resolve_percentages(row, containing_block=table)
             row.position_x = rows_x
             row.position_y = position_y
             row.width = rows_width
             # Place cells at the top of the row and layout their content
             new_row_children = []
             for cell in row.children:
+                resolve_percentages(cell, containing_block=table)
                 cell.position_x = column_positions[cell.grid_x]
                 cell.position_y = row.position_y
-                resolve_percentages(cell, containing_block)
                 cell.margin_top = 0
                 cell.margin_left = 0
                 cell.width = 0
@@ -90,6 +92,7 @@ def table_layout(table, max_position_y, containing_block, device_size,
                 if computed_cell_height != 'auto':
                     cell.height = max(cell.height, computed_cell_height)
                 new_row_children.append(cell)
+
             row = row.copy_with_children(new_row_children)
             new_group_children.append(row)
 
@@ -276,12 +279,13 @@ def fixed_table_layout(table):
     if extra_width <= 0:
         # substract a negative: widen the table
         table.width -= extra_width
-    else:
+    elif num_columns:
         extra_per_column = extra_width / num_columns
         column_widths = [w + extra_per_column for w in column_widths]
 
     # Now we have table.width == sum(column_widths) + all_border_spacing
     # with possible floating point rounding errors.
+    # (unless there is zero column)
     return column_widths
 
 
