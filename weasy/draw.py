@@ -318,6 +318,8 @@ def draw_border(context, box):
 
             We clip on its outline on draw on the big line on the middle.
             """
+            # I find that anti-aliasing does not look good on borders.
+            context.set_antialias(cairo.ANTIALIAS_NONE)
             # TODO: implement other styles.
             if not style in ['dotted', 'dashed']:
                 border_start, border_stop = border_edge
