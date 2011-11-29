@@ -23,9 +23,11 @@ Test the drawing functions.
 """
 
 import os.path
+import functools
 from array import array
 
 import png
+import cssutils
 from attest import Tests, assert_hook  # pylint: disable=W0611
 
 from . import resource_filename, TestPNGDocument, FONTS
@@ -703,7 +705,20 @@ def test_visibility():
                                  span { visibility: visible } '''})
 
 
+
+def disable_cssutils_validation(function):
+    """cssutils.profile.skipValidation = True
+    """
+    @functools.wraps(function)
+    def wrapper():
+        cssutils.profile.skipValidation = True
+        function()
+        cssutils.profile.skipValidation = False
+    return wrapper
+
+
 @SUITE.test
+@disable_cssutils_validation
 def test_tables():
     source = '''
         <style>
