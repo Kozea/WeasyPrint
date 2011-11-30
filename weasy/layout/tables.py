@@ -38,6 +38,7 @@ def table_layout(table, max_position_y, containing_block, device_size,
     from .blocks import block_level_height
 
     column_widths = table.column_widths
+    num_columns = len(column_widths)
 
     border_spacing_x, border_spacing_y = table.style.border_spacing
     # TODO: revert this for direction: rtl
@@ -69,7 +70,8 @@ def table_layout(table, max_position_y, containing_block, device_size,
             row.width = rows_width
             # Place cells at the top of the row and layout their content
             new_row_children = []
-            for cell in row.children:
+            # In the fixed layout, subsequent rows can not have more columns.
+            for cell in row.children[:num_columns]:
                 resolve_percentages(cell, containing_block=table)
                 cell.position_x = column_positions[cell.grid_x]
                 cell.position_y = row.position_y
