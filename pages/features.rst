@@ -23,6 +23,7 @@ WeasyPrint 0.2 supports:
   * Floats
   * Absolute, fixed and relative positioning and z-index
   * Inline blocks
+  * Automatic table layout and table border collapsing
   * Margin collapsing
   * Minimum and maximum width and height
   * Overflow and clip
