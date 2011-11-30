@@ -25,7 +25,7 @@ from __future__ import division
 
 from .inlines import get_next_linebox, replaced_box_width, replaced_box_height
 from .markers import list_marker_layout
-from .tables import table_layout
+from .tables import table_layout, fixed_table_layout
 from .percentages import resolve_percentages
 from ..formatting_structure import boxes
 
@@ -264,6 +264,7 @@ def block_table_wrapper(wrapper, max_position_y, skip_stack, containing_block,
     table.margin_left = 0
     table.margin_right = 0
 
+    fixed_table_layout(table)
     wrapper.width = wrapper.style.width = table.border_width()
     return block_box_layout(wrapper, max_position_y, skip_stack,
                             containing_block, device_size, page_is_empty)

@@ -37,7 +37,7 @@ def table_layout(table, max_position_y, containing_block, device_size,
     # Avoid a circular import
     from .blocks import block_level_height
 
-    column_widths = fixed_table_layout(table)
+    column_widths = table.column_widths
 
     border_spacing_x, border_spacing_y = table.style.border_spacing
     # TODO: revert this for direction: rtl
@@ -286,6 +286,7 @@ def fixed_table_layout(table):
     # Now we have table.width == sum(column_widths) + all_border_spacing
     # with possible floating point rounding errors.
     # (unless there is zero column)
+    table.column_widths = column_widths
     return column_widths
 
 

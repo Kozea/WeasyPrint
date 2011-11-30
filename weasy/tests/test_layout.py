@@ -1174,6 +1174,10 @@ def test_table_column_width():
     assert wrapper.width == 10000
     assert table.position_x == 5000
     assert table.width  == 10000
+    assert row_group.position_x == 5100  # 5000 + border_spacing
+    assert row_group.width == 9800  # 10000 - 2*border-spacing
+    assert first_row.position_x == row_group.position_x
+    assert first_row.width == row_group.width
 
     # This cell has colspan=3
     assert cells[0][0].position_x == 5100  # 5000 + border-spacing
@@ -1228,6 +1232,36 @@ def test_table_column_width():
     assert table.width == 1500 # 500 + 600 + 4 * border-spacing
 
 
+    # Sum of columns width larger that the table width:
+    # increase the table width
+    for body_width, table_width in [('auto', '1000px'), ('1000px', 'auto')]:
+        page, = parse('''
+            <style>
+                body { width: %(body_width)s }
+                table { width: %(table_width)s; border-spacing: 100px }
+                td { width: %(td_width)s }
+            </style>
+            <table>
+                <tr>
+                    <td>
+                    <td>
+                </tr>
+            </table>
+        ''' % {'body_width': body_width, 'table_width': table_width,
+               'td_width': '60%'})
+        html = page.root_box
+        body, = html.children
+        wrapper, = body.children
+        table, = wrapper.children
+        row_group, = table.children
+        row, = row_group.children
+        cell_1, cell_2 = row.children
+        assert cell_1.width == 600  # 60% of 1000px
+        assert cell_2.width == 600
+        assert table.width == 1500  # 600 + 600 + 3*border-spacing
+        assert wrapper.width == table.width
+
+
 @SUITE.test
 def test_table_row_height():
     page, = parse('''
@@ -1256,8 +1290,17 @@ def test_table_row_height():
     table, = wrapper.children
     row_group, = table.children
 
-    assert table.height == 620
-    assert [row.height for row in row_group.children] == [80, 30, 0, 10]
+    assert wrapper.position_y == 0
+    assert table.position_y == 3  # 0 + margin-top
+    assert table.height == 620  # sum of row heigths + 5*border-spacing
+    assert wrapper.height == table.height
+    assert row_group.position_y == 103  # 3 + border-spacing
+    assert row_group.height == 420  # 620 - 2*border-spacing
+    assert [row.height for row in row_group.children] == [
+        80, 30, 0, 10]
+    assert [row.position_y for row in row_group.children] == [
+        # cumulative sum of previous row heights and border-spacings
+        103, 283, 413, 513]
     assert [[cell.height for cell in row.children]
             for row in row_group.children] == [
         [420, 60, 40, 20, 20, 20],
