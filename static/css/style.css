@@ -141,10 +141,13 @@ h5 a:visited{
 }
 
 a{
-  color: #b3af00;
+  color: #870;
   transition: color 0.25s;
 }
-
+#features a {
+  /* Links are way too dense on this page. Make them less visible */
+  color: #650;
+}
 a:hover,a:focus {
   background: none;
   color: #258089;
