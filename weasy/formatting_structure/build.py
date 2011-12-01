@@ -113,10 +113,7 @@ def dom_to_box(document, element):
                 children.extend(dom_to_box(document, child_element))
             if child_element.tail:
                 text = text_transform(child_element.tail, style)
-                if children and isinstance(children[-1], boxes.TextBox):
-                    children[-1].text += text
-                else:
-                    children.append(boxes.TextBox(document, element, text))
+                children.append(boxes.TextBox(document, element, text))
 
         box = BOX_TYPE_FROM_DISPLAY[display](document, element, children)
 
