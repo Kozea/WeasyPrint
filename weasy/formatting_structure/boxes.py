@@ -92,14 +92,14 @@ class Box(object):
 
     def _init_style(self):
         """Initialize the style."""
+        # Computed values
+        style = self.document.style_for(self.element)
         if self.anonymous:
-            parent_style = self.document.style_for(self.element)
-            self.style = computed_from_cascaded(self.element, {}, parent_style)
+            self.style = style.inherit_from()
         else:
-            # Computed values
             # Copying might not be needed, but let’s be careful with mutable
             # objects.
-            self.style = self.document.style_for(self.element).copy()
+            self.style = style.copy()
 
     def __repr__(self):
         return '<%s %s %i>' % (
