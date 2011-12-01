@@ -59,10 +59,10 @@ BOX_TYPE_FROM_DISPLAY = {
 def build_formatting_structure(document):
     """Build a formatting structure (box tree) from a ``document``."""
     box, = dom_to_box(document, document.dom)
+    box = process_whitespace(box)
     box = anonymous_table_boxes(box)
     box = inline_in_block(box)
     box = block_in_inline(box)
-    box = process_whitespace(box)
     return box
 
 
@@ -517,7 +517,12 @@ def inline_in_block(box):
     """
     if not isinstance(box, boxes.ParentBox):
         return box
-    children = map(inline_in_block, box.children)
+
+    children = [inline_in_block(child) for child in box.children
+                # Remove empty text boxes.
+                # (They may have been emptied by process_whitespace().)
+                if not (isinstance(child, boxes.TextBox) and not child.text)]
+
     if not isinstance(box, boxes.BlockContainerBox):
         return box.copy_with_children(children)
 
@@ -526,7 +531,16 @@ def inline_in_block(box):
     for child_box in children:
         assert not isinstance(child_box, boxes.LineBox)
         if isinstance(child_box, boxes.InlineLevelBox):
-            new_line_children.append(child_box)
+            # Do not append white space at the start of a line:
+            # It would be removed during layout.
+            if new_line_children or not (
+                    isinstance(child_box, boxes.TextBox) and
+                    # Sequence of white-space was collapsed to a single
+                    # space by process_whitespace().
+                    child_box.text == ' ' and
+                    child_box.style.white_space in (
+                        'normal', 'nowrap', 'pre-line')):
+                new_line_children.append(child_box)
         else:
             if new_line_children:
                 # Inlines are consecutive no more: add this line box

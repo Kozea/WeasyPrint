@@ -357,23 +357,14 @@ def test_whitespace():
                     ('img', 'InlineLevelReplaced', '<replaced>'),
                     ('strong', 'Text', ' sit')]),
                 ('p', 'Text', '.')])]),
-        ('body', 'AnonBlock', [
-            ('body', 'Line', [
-                ('body', 'Text', ' ')])]),
         ('pre', 'Block', [
             ('pre', 'Line', [
                 # pre
                 ('pre', 'Text', u'\t\xA0\xA0foo\n')])]),
-        ('body', 'AnonBlock', [
-            ('body', 'Line', [
-                ('body', 'Text', ' ')])]),
         ('pre', 'Block', [
             ('pre', 'Line', [
                 # pre-wrap
                 ('pre', 'Text', u'\t\xA0\xA0\u200Bfoo\n')])]),
-        ('body', 'AnonBlock', [
-            ('body', 'Line', [
-                ('body', 'Text', ' ')])]),
         ('pre', 'Block', [
             ('pre', 'Line', [
                 # pre-line

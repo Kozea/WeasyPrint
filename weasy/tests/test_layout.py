@@ -192,9 +192,6 @@ def test_block_widths():
     assert body.width == 120
 
     divs = body.children
-    # TODO: remove this when we have proper whitespace handling that
-    # does not create anonymous block boxes for the whitespace between divs.
-    divs = [box for box in divs if not box.anonymous]
 
     paragraphs = []
     for div in divs:
@@ -202,9 +199,6 @@ def test_block_widths():
         assert div.element.tag == 'div'
         assert div.width == 100
         for paragraph in div.children:
-            if paragraph.anonymous:
-                # TODO: remove this when we have proper whitespace handling
-                continue
             assert isinstance(paragraph, boxes.BlockBox)
             assert paragraph.element.tag == 'p'
             assert paragraph.padding_left == 2
@@ -351,9 +345,8 @@ def test_lists():
         </ul>
     ''')
     unordered_list, = body_children(page)
-    list_element, = [child for child in unordered_list.children
-           if not child.anonymous]
-    line, = list_element.children
+    list_item, = unordered_list.children
+    line, = list_item.children
     marker, spacer, content = line.children
     assert marker.text == u'◦'
     assert spacer.text == u'\u00a0'  # NO-BREAK SPACE
@@ -369,16 +362,15 @@ def test_lists():
         </ul>
     ''')
     unordered_list, = body_children(page)
-    list_element, = [child for child in unordered_list.children
-           if not child.anonymous]
-    marker = list_element.outside_list_marker
+    list_item, = unordered_list.children
+    marker = list_item.outside_list_marker
     font_size = marker.style.font_size
     assert marker.margin_right == 0.5 * font_size  # 0.5em
     assert marker.position_x == (
-        list_element.padding_box_x() - marker.width - marker.margin_right)
-    assert marker.position_y == list_element.position_y
+        list_item.padding_box_x() - marker.width - marker.margin_right)
+    assert marker.position_y == list_item.position_y
     assert marker.text == u'•'
-    line, = list_element.children
+    line, = list_item.children
     content, = line.children
     assert content.text == u'abc'
 
@@ -394,8 +386,7 @@ def test_empty_linebox():
         <p> </p>
     ''' % {'fonts': FONTS})
     paragraph, = body_children(page)
-    line, = paragraph.children
-    assert line.height == 0
+    assert len(paragraph.children) == 0
     assert paragraph.height == 0
 
 
