@@ -241,6 +241,11 @@ def add_declaration(cascaded_styles, prop_name, prop_values, weight, element,
     The value is only set if there is no value of greater weight defined yet.
 
     """
+    if pseudo_type is not None:
+        if element == '@page':
+            assert pseudo_type in PAGE_PSEUDOCLASS_TARGETS[None]
+        else:
+            assert pseudo_type in PSEUDO_ELEMENTS
     style = cascaded_styles.setdefault((element, pseudo_type), {})
     _values, previous_weight = style.get(prop_name, (None, None))
     if previous_weight is None or previous_weight <= weight:
@@ -443,9 +448,13 @@ def get_all_computed_styles(document, medium,
     #             http://www.w3.org/TR/CSS21/cascade.html#cascading-order
     cascaded_styles = {}
 
-    for sheets, origin in ((author_stylesheets, 'author'),
-                           (user_stylesheets or [], 'user'),
-                           (ua_stylesheets or [], 'user agent')):
+    for sheets, origin in (
+        # Order here is not important ('origin' is).
+        # Use this order for a regression test
+        (ua_stylesheets or [], 'user agent'),
+        (author_stylesheets, 'author'),
+        (user_stylesheets or [], 'user'),
+    ):
         for sheet in sheets:
             # TODO: UA and maybe user stylesheets might only need to be
             # expanded once, not for every document.
@@ -486,8 +495,7 @@ def get_all_computed_styles(document, medium,
             precedence = declaration_precedence('author', importance)
             # 1 for being a style attribute, 0 as there is no selector.
             weight = (precedence, (1, 0, 0, 0))
-            add_declaration(cascaded_styles, name, values, weight,
-                            element, pseudo_type)
+            add_declaration(cascaded_styles, name, values, weight, element)
 
     # keys: (element, pseudo_element_type), like cascaded_styles
     # values: StyleDict objects:
