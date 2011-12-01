@@ -131,59 +131,6 @@ PAGE_SIZES = dict(
 )
 
 
-class StyleDict(object):
-    """A mapping (dict-like) that allows attribute access to values.
-
-    Allow eg. ``style.font_size`` instead of ``style['font-size']``.
-
-    :param parent: if given, should be a mapping. Values missing from this
-                   dict will be looked up in the parent dict. Setting a value
-                   in this dict masks any value in the parent.
-
-    """
-    def __init__(self, data=None, parent=None):
-        if data is None:
-            data = {}
-        else:
-            data = dict(data)
-        if parent is None:
-            parent = {}
-        # work around our own __setattr__
-        object.__setattr__(self, '_storage', data)
-        object.__setattr__(self, '_parent', parent)
-
-    def __getitem__(self, key):
-        storage = self._storage
-        if key in storage:
-            return storage[key]
-        else:
-            return self._parent[key]
-
-    def __setitem__(self, key, value):
-        self._storage[key] = value
-
-    def __contains__(self, key):
-        return key in self._parent or key in self._storage
-
-    __getattr__ = __getitem__  # May raise KeyError instead of AttributeError
-    __setattr__ = __setitem__
-
-    def copy(self):
-        """Copy the ``StyleDict``.
-
-        Create a new StyleDict with this one as the parent. This is a cheap
-        "copy-on-write". Modifications in the copy will not affect
-        the original, but modifications in the original *may* affect the
-        copy.
-
-        """
-        if self._storage:
-            parent = self
-        elif self._parent:
-            parent = self._parent
-        return type(self)(parent=parent)
-
-
 class Computer(object):
     """Things that compute are computers, right? Handle `computed values`.
 

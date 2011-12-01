@@ -47,7 +47,7 @@ def parse_html(filename, **kwargs):
 @SUITE.test
 def test_style_dict():
     """Test a style in a ``dict``."""
-    style = css.computed_values.StyleDict({
+    style = css.StyleDict({
         'margin_left': 12,
         'display': 'block'})
     assert style.display == 'block'
