@@ -50,6 +50,7 @@ BOX_TYPE_FROM_DISPLAY = {
     'table-row-group': boxes.TableRowGroupBox,
     'table-header-group': boxes.TableRowGroupBox,
     'table-footer-group': boxes.TableRowGroupBox,
+    'table-column': boxes.TableColumnBox,
     'table-column-group': boxes.TableColumnGroupBox,
     'table-cell': boxes.TableCellBox,
     'table-caption': boxes.TableCaptionBox,
@@ -97,28 +98,24 @@ def dom_to_box(document, element):
     if display == 'none':
         return []
 
-    if display == 'table-column':
-        # Ignore children.
-        box = boxes.TableColumnBox(document, element)
-    else:
-        children = []
+    children = []
 
-        if element.text:
-            text = text_transform(element.text, style)
+    if element.text:
+        text = text_transform(element.text, style)
+        children.append(boxes.TextBox(document, element, text))
+    for child_element in element:
+        # lxml.html already converts HTML entities to text.
+        # Here we ignore comments and XML processing instructions.
+        if isinstance(child_element.tag, basestring):
+            children.extend(dom_to_box(document, child_element))
+        if child_element.tail:
+            text = text_transform(child_element.tail, style)
             children.append(boxes.TextBox(document, element, text))
-        for child_element in element:
-            # lxml.html already converts HTML entities to text.
-            # Here we ignore comments and XML processing instructions.
-            if isinstance(child_element.tag, basestring):
-                children.extend(dom_to_box(document, child_element))
-            if child_element.tail:
-                text = text_transform(child_element.tail, style)
-                children.append(boxes.TextBox(document, element, text))
 
-        box = BOX_TYPE_FROM_DISPLAY[display](document, element, children)
+    box = BOX_TYPE_FROM_DISPLAY[display](document, element, children)
 
-        if display == 'list-item':
-            box = add_box_marker(box)
+    if display == 'list-item':
+        box = add_box_marker(box)
 
     # Specific handling for the element. (eg. replaced element)
     return html.handle_element(box)

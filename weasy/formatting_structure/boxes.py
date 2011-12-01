@@ -494,6 +494,10 @@ class TableColumnGroupBox(ParentBox):
 
 class TableColumnBox(Box):
     """Box for elements with ``display: table-column``"""
+    def __init__(self, document, element, _children=None, anonymous=False):
+        """Accept a children argument but ignore it."""
+        super(TableColumnBox, self).__init__(document, element, anonymous)
+
     proper_table_child = True
     internal_table_or_caption = True
     proper_parents = (TableBox, InlineTableBox, TableColumnGroupBox)
