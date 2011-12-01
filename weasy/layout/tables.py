@@ -326,4 +326,4 @@ def cell_baseline(cell):
         if isinstance(child, boxes.ParentBox):
             stack.append(iter(child.children))
     # Default to the bottom of the content area.
-    return cell.border_top_width + cell.padding_top + cell.height
+    return cell.style.border_top_width + cell.padding_top + cell.height

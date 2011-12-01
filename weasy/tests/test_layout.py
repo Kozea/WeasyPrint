@@ -1295,7 +1295,10 @@ def test_table_row_height():
                 <td style="vertical-align: bottom">X
             </tr>
             <tr>
-                <td style="padding: 15px">
+                <!-- cells with no text (no line boxes) is a corner case
+                     in cell baselines -->
+                <td style="padding: 15px"></td>
+                <td><div style="height: 10px"></div></td>
             </tr>
             <tr></tr>
             <tr>
@@ -1323,14 +1326,14 @@ def test_table_row_height():
     assert [[cell.height for cell in row.children]
             for row in row_group.children] == [
         [420, 60, 40, 20, 20, 20],
-        [0],
+        [0, 10],
         [],
         [0]
     ]
     assert [[cell.border_height() for cell in row.children]
             for row in row_group.children] == [
         [420, 80, 80, 80, 80, 80],
-        [30],
+        [30, 30],
         [],
         [10]
     ]
@@ -1340,21 +1343,21 @@ def test_table_row_height():
     assert [[cell.padding_top for cell in row.children]
             for row in row_group.children] == [
         [0, 20, 0, 0, 30, 60],
-        [15],
+        [15, 5],
         [],
         [10]
     ]
     assert [[cell.padding_bottom for cell in row.children]
             for row in row_group.children] == [
         [0, 0, 40, 60, 30, 0],
-        [15],
+        [15, 15],
         [],
         [0]
     ]
     assert [[cell.position_y for cell in row.children]
             for row in row_group.children] == [
         [103, 103, 103, 103, 103, 103],
-        [283],
+        [283, 283],
         [],
         [513]
     ]
