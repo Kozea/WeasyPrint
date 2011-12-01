@@ -1157,6 +1157,11 @@ def test_table_column_width():
                 <td>
                 <td>
             </tr>
+            <tr>
+                <td>
+                <td colspan=12>This cell will be truncated to grid width
+                <td>This cell will be removed as it is beyond the grid width
+            </tr>
         </table>
     ''')
     html = page.root_box
@@ -1164,8 +1169,12 @@ def test_table_column_width():
     wrapper, = body.children
     table, = wrapper.children
     row_group, = table.children
-    first_row, second_row = row_group.children
-    cells = [first_row.children, second_row.children]
+    first_row, second_row, third_row = row_group.children
+    cells = [first_row.children, second_row.children, third_row.children]
+    assert len(first_row.children) == 2
+    assert len(second_row.children) == 4
+    # Third cell here is completly removed
+    assert len(third_row.children) == 2
 
     assert body.position_x == 0
     assert wrapper.position_x == 0
@@ -1200,13 +1209,23 @@ def test_table_column_width():
     assert cells[1][1].width == 889  # 911 - borders - padding
 
     assert cells[1][2].position_x == 7211  # 6200 + 911 + border-spacing
-    assert cells[1][1].border_width() == 911  # (3022 - 1000 - 2*100) / 2
-    assert cells[1][1].width == 889  # 911 - borders - padding
+    assert cells[1][2].border_width() == 911  # (3022 - 1000 - 2*100) / 2
+    assert cells[1][2].width == 889  # 911 - borders - padding
 
     # Same as cells[0][1]
     assert cells[1][3].position_x == 8222  # Also 7211 + 911 + border-spacing
     assert cells[1][3].border_width() == 6678
     assert cells[1][3].width == 6656
+
+    # Same as cells[1][0]
+    assert cells[2][0].position_x == 5100
+    assert cells[2][0].border_width() == 1000
+    assert cells[2][0].width == 978
+
+    assert cells[2][1].position_x == 6200  # Same as cells[1][1]
+    assert cells[2][1].border_width() == 8700  # 1000 - 1000 - 3*border-spacing
+    assert cells[2][1].width == 8678  # 8700 - borders - padding
+    assert cells[2][1].colspan == 3  # truncated to grid width
 
     page, = parse('''
         <style>

@@ -38,10 +38,10 @@ def table_layout(table, max_position_y, containing_block, device_size,
     from .blocks import block_level_height
 
     column_widths = table.column_widths
-    num_columns = len(column_widths)
+    grid_width = len(column_widths)
 
     border_spacing_x, border_spacing_y = table.style.border_spacing
-    # TODO: revert this for direction: rtl
+    # TODO: reverse this for direction: rtl
     column_positions = []
     position_x = table.content_box_x()
     rows_x = position_x + border_spacing_x
@@ -70,8 +70,19 @@ def table_layout(table, max_position_y, containing_block, device_size,
             row.width = rows_width
             # Place cells at the top of the row and layout their content
             new_row_children = []
-            # In the fixed layout, subsequent rows can not have more columns.
-            for cell in row.children[:num_columns]:
+            for cell in row.children:
+                spanned_widths = column_widths[cell.grid_x:][:cell.colspan]
+                # In the fixed layout the grid width is set by cells in
+                # the first row and column elements.
+                # This may be less than the previous value  of cell.colspan
+                # if that would bring the cell beyond the grid width.
+                cell.colspan = len(spanned_widths)
+                if cell.colspan == 0:
+                    # The cell is entierly beyond the grid width, remove it
+                    # entierly. Subsequent cells in the same row have greater
+                    # grid_x, so they are beyond too.
+                    # TODO warn?
+                    break
                 resolve_percentages(cell, containing_block=table)
                 cell.position_x = column_positions[cell.grid_x]
                 cell.position_y = row.position_y
@@ -80,7 +91,7 @@ def table_layout(table, max_position_y, containing_block, device_size,
                 cell.width = 0
                 borders_plus_padding = cell.border_width()  # with width==0
                 cell.width = (
-                    sum(column_widths[cell.grid_x:cell.grid_x + cell.colspan])
+                    sum(spanned_widths)
                     + border_spacing_x * (cell.colspan - 1)
                     - borders_plus_padding)
                 # The computed height is a minimum
