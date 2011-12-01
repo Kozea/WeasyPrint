@@ -377,7 +377,7 @@ def test_whitespace():
         ('pre', 'Block', [
             ('pre', 'Line', [
                 # pre-line
-                ('pre', 'Text', u' foo\n')])])])
+                ('pre', 'Text', u'foo\n')])])])
 
 
 @SUITE.test

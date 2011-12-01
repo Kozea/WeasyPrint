@@ -433,7 +433,7 @@ def process_whitespace(box):
     following_collapsible_space = False
     for child in box.descendants():
         if not isinstance(child, boxes.TextBox):
-            if not isinstance(child, boxes.InlineBox):
+            if isinstance(child, boxes.AtomicInlineLevelBox):
                 following_collapsible_space = False
             continue
 
