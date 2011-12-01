@@ -23,6 +23,18 @@
   font-family: "txt";
   src: url(Fontin-Sans.otf);
 }
+@font-face {
+  font-family: "txt";
+  src: url(Fontin-Bold.otf);
+  font-weight: bold;
+}
+@font-face {
+  font-family: "txt";
+  src: url(Fontin-Italic.otf);
+  font-style: italic;
+}
+
+
 /*
   ---------------
   - HTML / Body -
@@ -32,13 +44,14 @@ html {
   color: #2E3436;
   margin: 0;
   padding: 0;
+  background: #f4e0be;
 }
 
 body{
-  background: url(img/logo.png) no-repeat center 65px,
-              url(img/top.png) repeat-x top left,
-              url(img/footer.jpg) no-repeat bottom left,
-              url(img/background.png) repeat top left;
+  background: url(img/logo.png) no-repeat center 50px,
+              url(img/top.png) repeat-x 25% top,
+              url(img/footer.jpg) repeat-x left bottom,
+              url(img/background.png) repeat;
   font-family: "txt";
   line-height:1.3em;
   margin: -2em 0 0 0;
@@ -89,25 +102,25 @@ h3 a{
 }
 
 h3 a:hover,
-h3 a:visited{
+h3 a:visited {
   color: #35c6c7 ;
 }
 
 h4 a:first-letter,
-h4 a:before{
+h4 a:before {
   color: white;
 }
 
-h4 a:hover{
+h4 a:hover {
   background : url(img/rond-orange.png) no-repeat -1px -3px;
   color: #f47900;
 }
 
-h4{
+h4 {
   border-bottom: 1px solid #f47900;
 }
 
-h4 a{
+h4 a {
   background : url(img/rond-orange.png) no-repeat -1px -3px;
   color: #f47900;
   font-weight: bold;
@@ -128,10 +141,13 @@ h5 a:visited{
 }
 
 a{
-  color: #b3af00;
+  color: #870;
   transition: color 0.25s;
 }
-
+#features a {
+  /* Links are way too dense on this page. Make them less visible */
+  color: #650;
+}
 a:hover,a:focus {
   background: none;
   color: #258089;
@@ -170,7 +186,7 @@ nav {
   display: block;
   font-family: "menu";
   font-size: 1.3em;
-  margin: 450px 0 0 0;
+  margin: 80px 0 165px 0;
   text-align: center;
 }
 

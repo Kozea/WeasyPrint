@@ -7,12 +7,12 @@ url: http://www.weasyprint.org/
 menu:
   - Overview:
       link: /
-  - Download:
-      link: /download/
+  - Documentation:
+      link: /install/
   - Issues:
       link: http://redmine.kozea.fr/projects/weasyprint/issues
-  - Contribute:
-      link: /contribute/
+  - Community:
+      link: /community/
 
 project (git):
   url: git://github.com/Kozea/WeasyPrint.git
