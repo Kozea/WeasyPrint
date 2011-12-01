@@ -347,9 +347,10 @@ def test_lists():
     unordered_list, = body_children(page)
     list_item, = unordered_list.children
     line, = list_item.children
-    marker, spacer, content = line.children
+    marker, content = line.children
     assert marker.text == u'◦'
-    assert spacer.text == u'\u00a0'  # NO-BREAK SPACE
+    assert marker.margin_left == 0
+    assert marker.margin_right == 8
     assert content.text == u'abc'
 
     page, = parse('''

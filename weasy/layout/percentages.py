@@ -59,14 +59,6 @@ def resolve_one_percentage(box, property_name, refer_to,
 
 def resolve_percentages(box, containing_block):
     """Set used values as attributes of the box object."""
-    if box.anonymous and not box.is_table_wrapper:
-        for prop in ['margin_{}', 'border_{}_width', 'padding_{}']:
-            for side in ['top', 'right', 'bottom', 'left']:
-                setattr(box, prop.format(side), 0)
-        box.width = 'auto'
-        box.height = 'auto'
-        return
-
     # cb = containing block
     cb_width = containing_block.width
     cb_height = containing_block.height

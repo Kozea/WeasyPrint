@@ -110,8 +110,7 @@ def dom_to_box(document, element):
             # lxml.html already converts HTML entities to text.
             # Here we ignore comments and XML processing instructions.
             if isinstance(child_element.tag, basestring):
-                for child_box in dom_to_box(document, child_element):
-                    children.append(child_box)
+                children.extend(dom_to_box(document, child_element))
             if child_element.tail:
                 text = text_transform(child_element.tail, style)
                 if children and isinstance(children[-1], boxes.TextBox):
@@ -155,9 +154,9 @@ def add_box_marker(box):
 
     position = box.style.list_style_position
     if position == 'inside':
-        # U+00A0, NO-BREAK SPACE
-        spacer = boxes.TextBox(box.document, box.element, u'\u00a0')
-        return box.copy_with_children((marker_box, spacer) + box.children)
+        side = 'right' if box.style.direction == 'ltr' else 'left'
+        marker_box.style['margin_' + side] = box.style.font_size * 0.5
+        return box.copy_with_children((marker_box,) + box.children)
     elif position == 'outside':
         box.outside_list_marker = marker_box
     return box
