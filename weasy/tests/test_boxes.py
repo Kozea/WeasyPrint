@@ -26,7 +26,7 @@ import contextlib
 from attest import Tests, assert_hook  # pylint: disable=W0611
 
 from . import resource_filename
-from ..css import validation
+from ..css import validation, page_style
 from . import TestPNGDocument
 from ..formatting_structure import boxes, build
 
@@ -385,11 +385,11 @@ def test_page_style():
 
     def assert_page_margins(page_number, top, right, bottom, left):
         """Check the page margin values."""
-        page = boxes.PageBox(document, page_number)
-        assert page.style.margin_top == top
-        assert page.style.margin_right == right
-        assert page.style.margin_bottom == bottom
-        assert page.style.margin_left == left
+        style = page_style(document, page_number)
+        assert style.margin_top == top
+        assert style.margin_right == right
+        assert style.margin_bottom == bottom
+        assert style.margin_left == left
 
     # Odd numbers are :right pages, even are :left. 1 has :first as well
     assert_page_margins(1, top=20, right=10, bottom=3, left=3)

@@ -24,6 +24,7 @@ Module managing the layout creation before drawing a document.
 
 from __future__ import division
 
+from .. import css
 from .blocks import block_box_layout
 from .percentages import resolve_percentages
 from ..formatting_structure import boxes
@@ -36,7 +37,8 @@ def make_page(document, page_number, resume_at):
     is ``True`` if there is no more content, this was the last page.
 
     """
-    page = boxes.PageBox(document, page_number)
+    style = css.page_style(document, page_number)
+    page = boxes.PageBox(document, page_number, style)
 
     device_size = page.style.size
     page.outer_width, page.outer_height = device_size

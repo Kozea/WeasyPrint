@@ -84,26 +84,25 @@ class Box(object):
     is_table_wrapper = False
 
 
-    def __init__(self, document, element, anonymous=False):
+    def __init__(self, document, element, style, anonymous=False):
         self.document = document
         self.element = element
         self.anonymous = anonymous
-        self._init_style()
-
-    def _init_style(self):
-        """Initialize the style."""
-        # Computed values
-        style = self.document.style_for(self.element)
-        if self.anonymous:
-            self.style = style.inherit_from()
-        else:
-            # Copying might not be needed, but let’s be careful with mutable
-            # objects.
-            self.style = style.copy()
+        # Copying might not be needed, but let’s be careful with mutable
+        # objects.
+        self.style = style.copy()
 
     def __repr__(self):
         return '<%s %s %i>' % (
             type(self).__name__, self.element.tag, self.element.sourceline)
+
+    @classmethod
+    def anonymous_from(cls, parent, *args, **kwargs):
+        """Return an anonymous box that inherits from ``parent``."""
+        kwargs['anonymous'] = True
+        return cls(parent.document, parent.element,
+                   parent.style.inherit_from(),
+                   *args, **kwargs)
 
     @property
     def direction(self):
@@ -230,29 +229,14 @@ class PageBox(Box):
     a new page box is created after every page break.
 
     """
-    def __init__(self, document, page_number):
+    def __init__(self, document, page_number, style):
         # starting at 1 for the first page.
         self.page_number = page_number
         # Page boxes are not linked to any element.
-        super(PageBox, self).__init__(document, element=None)
+        super(PageBox, self).__init__(document, element=None, style=style)
 
     def __repr__(self):
         return '<%s %s>' % (type(self).__name__, self.page_number)
-
-    def _init_style(self):
-        """Initialize the style of the page.'"""
-        # First page is a right page.
-        # TODO: this "should depend on the major writing direction of the
-        # document".
-        first_is_right = True
-        is_right = (self.page_number % 2) == (1 if first_is_right else 0)
-        page_type = 'right' if is_right else 'left'
-        if self.page_number == 1:
-            page_type = 'first_' + page_type
-        style = self.document.computed_styles['@page', page_type]
-        # Copying might not be needed, but let’s be careful with mutable
-        # objects.
-        self.style = style.copy()
 
     @property
     def direction(self):
@@ -261,8 +245,8 @@ class PageBox(Box):
 
 class ParentBox(Box):
     """A box that has children."""
-    def __init__(self, document, element, children, anonymous=False):
-        super(ParentBox, self).__init__(document, element, anonymous)
+    def __init__(self, document, element, style, children, anonymous=False):
+        super(ParentBox, self).__init__(document, element, style, anonymous)
         self.children = tuple(children)
 
     def enumerate_skip(self, skip_num=0):
@@ -342,9 +326,10 @@ class LineBox(ParentBox):
     be split into multiple line boxes, one for each actual line.
 
     """
-    def __init__(self, document, element, children):
+    def __init__(self, document, element, style, children, anonymous=True):
+        assert anonymous == True
         super(LineBox, self).__init__(
-            document, element, children, anonymous=True)
+            document, element, style, children, anonymous=True)
 
 
 class InlineLevelBox(Box):
@@ -378,9 +363,10 @@ class TextBox(InlineLevelBox):
     inline boxes" are also text boxes.
 
     """
-    def __init__(self, document, element, text):
+    def __init__(self, document, element, style, text, anonymous=True):
+        assert anonymous == True
         assert text
-        super(TextBox, self).__init__(document, element, anonymous=True)
+        super(TextBox, self).__init__(document, element, style, anonymous=True)
         self.text = text
 
     def copy_with_text(self, text):
@@ -416,8 +402,8 @@ class ReplacedBox(Box):
     and is opaque from CSS’s point of view.
 
     """
-    def __init__(self, document, element, replacement, anonymous=False):
-        super(ReplacedBox, self).__init__(document, element, anonymous)
+    def __init__(self, document, element, style, replacement, anonymous=False):
+        super(ReplacedBox, self).__init__(document, element, style, anonymous)
         self.replacement = replacement
 
 
@@ -494,9 +480,11 @@ class TableColumnGroupBox(ParentBox):
 
 class TableColumnBox(Box):
     """Box for elements with ``display: table-column``"""
-    def __init__(self, document, element, _children=None, anonymous=False):
+    def __init__(self, document, element, style, _children=None,
+                 anonymous=False):
         """Accept a children argument but ignore it."""
-        super(TableColumnBox, self).__init__(document, element, anonymous)
+        super(TableColumnBox, self).__init__(
+            document, element, style, anonymous)
 
     proper_table_child = True
     internal_table_or_caption = True

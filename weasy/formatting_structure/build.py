@@ -102,7 +102,8 @@ def dom_to_box(document, element):
 
     if element.text:
         text = text_transform(element.text, style)
-        children.append(boxes.TextBox(document, element, text))
+        children.append(boxes.TextBox(
+            document, element, style.inherit_from(), text))
     for child_element in element:
         # lxml.html already converts HTML entities to text.
         # Here we ignore comments and XML processing instructions.
@@ -110,9 +111,10 @@ def dom_to_box(document, element):
             children.extend(dom_to_box(document, child_element))
         if child_element.tail:
             text = text_transform(child_element.tail, style)
-            children.append(boxes.TextBox(document, element, text))
+            children.append(boxes.TextBox(
+                document, element, style.inherit_from(), text))
 
-    box = BOX_TYPE_FROM_DISPLAY[display](document, element, children)
+    box = BOX_TYPE_FROM_DISPLAY[display](document, element, style, children)
 
     if display == 'list-item':
         box = add_box_marker(box)
@@ -139,11 +141,11 @@ def add_box_marker(box):
         if type_ == 'none':
             return box
         marker = GLYPH_LIST_MARKERS[type_]
-        marker_box = boxes.TextBox(box.document, box.element, marker)
+        marker_box = boxes.TextBox.anonymous_from(box, marker)
     else:
         replacement = html.ImageReplacement(surface)
-        marker_box = boxes.InlineLevelReplacedBox(
-            box.document, box.element, replacement, anonymous=True)
+        marker_box = boxes.InlineLevelReplacedBox.anonymous_from(
+            box, replacement)
         marker_box.is_list_marker = True
 
     position = box.style.list_style_position
@@ -178,8 +180,7 @@ def wrap_improper(box, children, wrapper_type, test=None):
     for child in children:
         if test(child):
             if improper:
-                wrapper = wrapper_type(
-                    box.document, box.element, [], anonymous=True)
+                wrapper = wrapper_type.anonymous_from(box, children=[])
                 # Apply the rules again on the new wrapper
                 yield table_boxes_children(wrapper, improper)
                 improper = []
@@ -190,7 +191,7 @@ def wrap_improper(box, children, wrapper_type, test=None):
             # of "consecutive".
             improper.append(child)
     if improper:
-        wrapper = wrapper_type(box.document, box.element, [], anonymous=True)
+        wrapper = wrapper_type.anonymous_from(box, children=[])
         # Apply the rules again on the new wrapper
         yield table_boxes_children(wrapper, improper)
 
@@ -402,9 +403,8 @@ def wrap_table(box, children):
     else:
         wrapper_type = boxes.BlockBox
 
-    wrapper = wrapper_type(box.document, box.element,
-                           captions['top'] + [table] + captions['bottom'],
-                           anonymous=True)
+    wrapper = wrapper_type.anonymous_from(
+        box, captions['top'] + [table] + captions['bottom'])
     wrapper.is_table_wrapper = True
     if not table.anonymous:
         # Non-inherited properties of the table element apply to one
@@ -538,20 +538,16 @@ def inline_in_block(box):
             if new_line_children:
                 # Inlines are consecutive no more: add this line box
                 # and create a new one.
-                line_box = boxes.LineBox(
-                    box.document, box.element, new_line_children)
-                anonymous = boxes.BlockBox(
-                    box.document, box.element, [line_box], anonymous=True)
+                line_box = boxes.LineBox.anonymous_from(box, new_line_children)
+                anonymous = boxes.BlockBox.anonymous_from(box, [line_box])
                 new_children.append(anonymous)
                 new_line_children = []
             new_children.append(child_box)
     if new_line_children:
         # There were inlines at the end
-        line_box = boxes.LineBox(
-            box.document, box.element, new_line_children)
+        line_box = boxes.LineBox.anonymous_from(box, new_line_children)
         if new_children:
-            anonymous = boxes.BlockBox(
-                box.document, box.element, [line_box], anonymous=True)
+            anonymous = boxes.BlockBox.anonymous_from(box, [line_box])
             new_children.append(anonymous)
         else:
             # Only inline-level children: one line box
@@ -636,16 +632,14 @@ def block_in_inline(box):
                 new_line, block, stack = _inner_block_in_inline(child, stack)
                 if block is None:
                     break
-                anon = boxes.BlockBox(
-                    box.document, box.element, [new_line], anonymous=True)
+                anon = boxes.BlockBox.anonymous_from(box, [new_line])
                 new_children.append(anon)
                 new_children.append(block_in_inline(block))
                 # Loop with the same child and the new stack.
             if new_children:
                 # Some children were already added, this became a block
                 # context.
-                new_child = boxes.BlockBox(
-                    box.document, box.element, [new_line], anonymous=True)
+                new_child = boxes.BlockBox.anonymous_from(box, [new_line])
             else:
                 # Keep the single line box as-is, without anonymous blocks.
                 new_child = new_line

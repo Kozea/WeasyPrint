@@ -82,7 +82,7 @@ def make_replaced_box(box, replacement):
         type_ = boxes.BlockLevelReplacedBox
     else:
         type_ = boxes.InlineLevelReplacedBox
-    return type_(box.document, box.element, replacement)
+    return type_(box.document, box.element, box.style, replacement)
 
 
 def make_text_box(box, text):
@@ -91,9 +91,10 @@ def make_text_box(box, text):
     If the element should be block-level, wrap it in a block box.
 
     """
-    text_box = boxes.TextBox(box.document, box.element, text)
+    text_box = boxes.TextBox(box.document, box.element, box.style, text)
     if is_block_level(box):
-        return boxes.BlockBox(box.document, box.element, [text_box])
+        return boxes.BlockBox(
+            box.document, box.element, box.style, [text_box])
     else:
         return text_box
 
@@ -134,9 +135,9 @@ def handle_img(box):
 @handler('br')
 def handle_br(box):
     """Handle ``<br>`` tags, return a preserved new-line character."""
-    newline = boxes.TextBox(box.document, box.element, '\n')
+    newline = boxes.TextBox(box.document, box.element, box.style, '\n')
     newline.style.white_space = 'pre'
-    return [boxes.InlineBox(box.document, box.element, [newline])]
+    return [boxes.InlineBox(box.document, box.element, box.style, [newline])]
 
 
 def integer_attribute(box, name, minimum=1):
