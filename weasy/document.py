@@ -107,7 +107,7 @@ class Document(object):
         """
         Convenience method to get the computed styles for an element.
         """
-        return self.computed_styles[(element, pseudo_type)]
+        return self.computed_styles.get((element, pseudo_type))
 
     @property
     def computed_styles(self):

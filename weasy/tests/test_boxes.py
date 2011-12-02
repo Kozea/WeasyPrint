@@ -693,3 +693,41 @@ def test_colspan_rowspan():
         [1],
         [1, 1],
     ]
+
+
+@SUITE.test
+def test_before_after():
+    """Test the :before and :after pseudo-elements."""
+    assert_tree(parse_all('''
+        <style>
+            p:before { content: 'a' 'b' }
+            p:after { content: 'd' 'e' }
+        </style>
+        <p>
+            c
+        </p>
+    '''), [
+        ('p', 'Block', [
+            ('p', 'Line', [
+                ('p', 'Inline', [
+                    ('p', 'Text', 'a'),
+                    ('p', 'Text', 'b')]),
+                ('p', 'Text', ' c '),
+                ('p', 'Inline', [
+                    ('p', 'Text', 'd'),
+                    ('p', 'Text', 'e')])])])])
+
+    assert_tree(parse_all('''
+        <style>
+            a[href]:before { content: '[' attr(href) '] ' }
+        </style>
+        <p><a href="some url">some text</a></p>
+    '''), [
+        ('p', 'Block', [
+            ('p', 'Line', [
+                ('a', 'Inline', [
+                    ('a', 'Inline', [
+                        ('a', 'Text', '['),
+                        ('a', 'Text', 'some url'),
+                        ('a', 'Text', '] ')]),
+                    ('a', 'Text', 'some text')])])])])

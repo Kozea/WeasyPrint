@@ -895,3 +895,25 @@ def test_tables():
         thead { background: rgba(255, 0, 0, 0.5) }
         tr { background: rgba(0, 255, 0, 0.5) }
     '''})
+
+
+
+@SUITE.test
+def test_before_after():
+    test_same_rendering(300, 30,
+        ('pseudo_before', '''
+            <style>
+                @page { size: 300px 30px }
+                body { margin: 0; background: #fff }
+                a[href]:before { content: '[' '' attr(href) '] ' }
+            </style>
+            <p><a href="some url">some content</p>
+        '''),
+        ('pseudo_before_reference', '''
+            <style>
+                @page { size: 300px 30px }
+                body { margin: 0; background: #fff }
+            </style>
+            <p><a href="another url">[some url] some content</p>
+        ''')
+    )

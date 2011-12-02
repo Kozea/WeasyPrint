@@ -245,6 +245,38 @@ def caption_side(keyword):
     return keyword in ('top', 'bottom')
 
 
+@validator()
+def content(values):
+    """``content`` propertiy validation."""
+    keyword = get_single_keyword(values)
+    if keyword in ('normal', 'none'):
+        return keyword
+    parsed_values = map(validate_content_value, values)
+    if False not in parsed_values:
+        return parsed_values
+
+
+def validate_content_value(value):
+    """Validation for a signle value for the ``content`` property.
+
+    Return (type, content) or False for invalid values.
+
+    """
+    type_ = value.type
+    if type_ == 'STRING':
+        return ('STRING', value.value)
+    elif type_ == 'FUNCTION':
+        seq = list(value.seq)
+        if len(seq) != 3 or seq[0].value != 'attr(' or seq[2].value != ')':
+            return False
+        keyword = get_keyword(seq[1].value)
+        if keyword is None:
+            return False
+        return ('ATTR', keyword)
+    else:
+        return False
+
+
 #@validator('top')
 #@validator('right')
 #@validator('left')

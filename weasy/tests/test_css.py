@@ -30,7 +30,6 @@ import cssutils
 from cssutils.helper import path2url
 
 from . import resource_filename, TestPNGDocument
-from .test_boxes import monkeypatch_validation
 from .. import css
 
 
@@ -107,39 +106,30 @@ def parse_css(filename):
     return cssutils.parseFile(resource_filename(filename))
 
 
-def validate_content(real_non_shorthand, name, values, required=False):
-    """Fake validator for the ``content`` property."""
-    if name == 'content':
-        return [(name, values)]
-    return real_non_shorthand(name, values, required)
-
-
 @SUITE.test
 def test_annotate_document():
     """Test a document with inline style."""
     # Short names for variables are OK here
     # pylint: disable=C0103
 
-    # TODO: remove this patching when the `content` property is supported.
-    with monkeypatch_validation(validate_content):
-        document = parse_html(
-            'doc1.html',
-            user_stylesheets=[parse_css('user.css')],
-            user_agent_stylesheets=[parse_css('mini_ua.css')],
-        )
+    document = parse_html(
+        'doc1.html',
+        user_stylesheets=[parse_css('user.css')],
+        user_agent_stylesheets=[parse_css('mini_ua.css')],
+    )
 
-        # Element objects behave a lists of their children
-        _head, body = document.dom
-        h1, p, ul = body
-        li_0, _li_1 = ul
-        a, = li_0
+    # Element objects behave a lists of their children
+    _head, body = document.dom
+    h1, p, ul = body
+    li_0, _li_1 = ul
+    a, = li_0
 
-        h1 = document.style_for(h1)
-        p = document.style_for(p)
-        ul = document.style_for(ul)
-        li_0 = document.style_for(li_0)
-        after = document.style_for(a, 'after')
-        a = document.style_for(a)
+    h1 = document.style_for(h1)
+    p = document.style_for(p)
+    ul = document.style_for(ul)
+    li_0 = document.style_for(li_0)
+    after = document.style_for(a, 'after')
+    a = document.style_for(a)
 
     assert h1.background_image == 'file://' \
         + os.path.abspath(resource_filename('logo_small.png'))
@@ -185,7 +175,8 @@ def test_annotate_document():
     assert (color.red, color.green, color.blue, color.alpha) == (255, 0, 0, 1)
 
     # The href attr should be as in the source, not made absolute.
-    assert ''.join(v.value for v in after.content) == ' [home.html]'
+    assert after.content == [
+        ('STRING', ' ['), ('STRING', 'home.html'), ('STRING', ']')]
 
     # TODO much more tests here: test that origin and selector precedence
     # and inheritance are correct, ...
@@ -196,10 +187,8 @@ def test_annotate_document():
 @SUITE.test
 def test_default_stylesheet():
     """Test if the user-agent stylesheet is used and applied."""
-    # TODO: remove this patching when the `content` property is supported.
-    with monkeypatch_validation(validate_content):
-        document = parse_html('doc1.html')
-        head_style = document.style_for(document.dom.head)
+    document = parse_html('doc1.html')
+    head_style = document.style_for(document.dom.head)
     assert head_style.display == 'none', \
         'The HTML4 user-agent stylesheet was not applied'
 
@@ -207,20 +196,18 @@ def test_default_stylesheet():
 @SUITE.test
 def test_page():
     """Test the ``@page`` properties."""
-    # TODO: remove this patching when the `content` property is supported.
-    with monkeypatch_validation(validate_content):
-        document = parse_html('doc1.html', user_stylesheets=[
-            cssutils.parseString('''
-                @page {
-                    margin: 10px;
-                }
-                @page :right {
-                    margin-bottom: 12pt;
-                }
-            ''')
-        ])
+    document = parse_html('doc1.html', user_stylesheets=[
+        cssutils.parseString('''
+            @page {
+                margin: 10px;
+            }
+            @page :right {
+                margin-bottom: 12pt;
+            }
+        ''')
+    ])
 
-        style = document.style_for('@page', 'first_left')
+    style = document.style_for('@page', 'first_left')
 
     assert style.margin_top == 5
     assert style.margin_left == 10

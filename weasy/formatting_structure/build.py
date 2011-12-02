@@ -67,7 +67,7 @@ def build_formatting_structure(document):
     return box
 
 
-def dom_to_box(document, element):
+def dom_to_box(document, element, pseudo_type=None):
     """Convert a DOM element and its children into a box with children.
 
     Return a list of boxes. Most of the time it will have one element but
@@ -96,11 +96,17 @@ def dom_to_box(document, element):
         # Here we ignore comments and XML processing instructions.
         return []
 
-    style = document.style_for(element)
+    style = document.style_for(element, pseudo_type)
+    if pseudo_type and style is None:
+        # Pseudo-elements with no style at all do not get a StyleDict
+        # Their initial content property computes to 'none'.
+        return []
+
     # TODO: should be the used value. When does the used value for `display`
     # differ from the computer value?
     display = style.display
-    if display == 'none':
+    content = style.content
+    if 'none' in (display, content):
         return []
 
     def create_text_box(text):
@@ -111,10 +117,18 @@ def dom_to_box(document, element):
                                 style.inherit_from(), text)
 
     children = []
-    children.extend(create_text_box(element.text))
-    for child_element in element:
-        children.extend(dom_to_box(document, child_element))
-        children.extend(create_text_box(child_element.tail))
+    if pseudo_type is None:
+        children.extend(dom_to_box(document, element, pseudo_type='before'))
+        children.extend(create_text_box(element.text))
+        for child_element in element:
+            children.extend(dom_to_box(document, child_element))
+            children.extend(create_text_box(child_element.tail))
+        children.extend(dom_to_box(document, element, pseudo_type='after'))
+    else:
+        assert pseudo_type in ('before', 'after')
+        for type_, value in content:
+            assert type_ == 'STRING'
+            children.extend(create_text_box(value))
 
     box = BOX_TYPE_FROM_DISPLAY[display](
         element.tag, element.sourceline, style, children)

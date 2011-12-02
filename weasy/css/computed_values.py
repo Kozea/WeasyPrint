@@ -24,7 +24,6 @@ Normalize values as much as possible without rendering the document.
 import collections
 
 import cssutils.helper
-from cssutils.css import PropertyValue, Value
 
 from .properties import INITIAL_VALUES
 from .values import get_single_keyword, get_keyword
@@ -298,8 +297,7 @@ def border_width(computer, name, value):
 def content(computer, name, values):
     """Compute the ``content`` property."""
     if computer.pseudo_type in ('before', 'after'):
-        keyword = get_single_keyword(values)
-        if keyword == 'normal':
+        if values in ('normal', 'none'):
             return 'none'
         else:
             return [compute_content_value(computer, value) for value in values]
@@ -313,21 +311,12 @@ def content(computer, name, values):
 
 def compute_content_value(computer, value):
     """Compute a content ``value``."""
-    if getattr(value, 'type', 'other') == 'FUNCTION':
-        # value.seq is *NOT* part of the public API
-        # TODO: patch cssutils to provide a public API for arguments
-        # in CSSFunction objects
-        assert value.value.startswith('attr(')
-        args = [v.value for v in value.seq if isinstance(v.value, Value)]
-        assert len(args) == 1
-        attr_name = args[0].value
-        content_value = computer.element.get(attr_name, '')
-        # TODO: find a way to build a string Value without serializing
-        # and re-parsing.
-        value = PropertyValue(cssutils.helper.string(content_value))[0]
-        assert value.type == 'STRING'
-        assert value.value == content_value
-    return value
+    type_, content = value
+    if type_ == 'STRING':
+        return value
+    else:
+        assert type_ == 'ATTR'
+        return ('STRING', computer.element.get(content, ''))
 
 
 @Computer.register('display')
