@@ -33,6 +33,14 @@ from .properties import INITIAL_VALUES, NOT_PRINT_MEDIA
 from . import computed_values
 
 
+# keyword -> (open, insert)
+CONTENT_QUOTE_KEYWORDS = {
+    'open-quote': (True, True),
+    'close-quote': (False, True),
+    'no-open-quote': (True, False),
+    'no-close-quote': (False, False),
+}
+
 LOGGER = logging.getLogger('WEASYPRINT')
 
 # yes/no validators for non-shorthand properties
@@ -262,6 +270,10 @@ def validate_content_value(value):
     Return (type, content) or False for invalid values.
 
     """
+    quote_type = CONTENT_QUOTE_KEYWORDS.get(get_keyword(value))
+    if quote_type is not None:
+        return ('QUOTE', quote_type)
+
     type_ = value.type
     if type_ == 'STRING':
         return ('STRING', value.value)
@@ -435,6 +447,17 @@ def position(keyword):
     if keyword in ('relative', 'absolute', 'fixed'):
         raise InvalidValues('value not supported yet')
     return keyword in ('static',)
+
+
+@validator()
+def quotes(values):
+    """``quotes`` property validation."""
+    if (values and len(values) % 2 == 0
+            and all(v.type == 'STRING' for v in values)):
+        strings = [v.value for v in values]
+        # Separate open and close quotes.
+        # eg.  ['«', '»', '“', '”']  -> (['«', '“'], ['»', '”'])
+        return strings[::2], strings[1::2]
 
 
 @validator()

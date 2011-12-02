@@ -710,12 +710,10 @@ def test_before_after():
         ('p', 'Block', [
             ('p', 'Line', [
                 ('p', 'Inline', [
-                    ('p', 'Text', 'a'),
-                    ('p', 'Text', 'b')]),
+                    ('p', 'Text', 'ab')]),
                 ('p', 'Text', ' c '),
                 ('p', 'Inline', [
-                    ('p', 'Text', 'd'),
-                    ('p', 'Text', 'e')])])])])
+                    ('p', 'Text', 'de')])])])])
 
     assert_tree(parse_all('''
         <style>
@@ -726,8 +724,31 @@ def test_before_after():
         ('p', 'Block', [
             ('p', 'Line', [
                 ('a', 'Inline', [
-                    ('a', 'Inline', [
-                        ('a', 'Text', '['),
-                        ('a', 'Text', 'some url'),
-                        ('a', 'Text', '] ')]),
+                    ('a', 'Inline', [  # :before
+                        ('a', 'Text', '[some url] ')]),
                     ('a', 'Text', 'some text')])])])])
+
+    assert_tree(parse_all(u'''
+        <style>
+            /* \A0 is the no-break space. */
+            body { quotes: '«' '»' '“' '”' }
+            q:before { content: open-quote ' '}
+            q:after { content: ' ' close-quote }
+        </style>
+        <p><q>Lorem ipsum <q>dolor</q> sit amet</q></p>
+    '''), [
+        ('p', 'Block', [
+            ('p', 'Line', [
+                ('q', 'Inline', [
+                    ('q', 'Inline', [  # :before
+                        ('q', 'Text', u'« ')]),
+                    ('q', 'Text', 'Lorem ipsum '),
+                    ('q', 'Inline', [
+                        ('q', 'Inline', [  # :before
+                            ('q', 'Text', u'“ ')]),
+                        ('q', 'Text', 'dolor'),
+                        ('q', 'Inline', [  # :after
+                            ('q', 'Text', u' ”')])]),
+                    ('q', 'Text', ' sit amet'),
+                    ('q', 'Inline', [  # :after
+                        ('q', 'Text', u' »')])])])])])

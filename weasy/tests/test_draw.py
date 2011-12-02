@@ -917,3 +917,22 @@ def test_before_after():
             <p><a href="another url">[some url] some content</p>
         ''')
     )
+
+    test_same_rendering(500, 30,
+        ('pseudo_quotes', u'''
+            <style>
+                @page { size: 500px 30px }
+                body { margin: 0; background: #fff; quotes: '«' '»' '“' '”' }
+                q:before { content: open-quote ' '}
+                q:after { content: ' ' close-quote }
+            </style>
+            <p><q>Lorem ipsum <q>dolor</q> sit amet</q></p>
+        '''),
+        ('pseudo_quotes_reference', u'''
+            <style>
+                @page { size: 500px 30px }
+                body { margin: 0; background: #fff }
+            </style>
+            <p>« Lorem ipsum “ dolor ” sit amet »</p>
+        ''')
+    )

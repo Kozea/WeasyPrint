@@ -67,7 +67,7 @@ def build_formatting_structure(document):
     return box
 
 
-def dom_to_box(document, element, pseudo_type=None):
+def dom_to_box(document, element, quote_depth=None, pseudo_type=None):
     """Convert a DOM element and its children into a box with children.
 
     Return a list of boxes. Most of the time it will have one element but
@@ -116,19 +116,42 @@ def dom_to_box(document, element, pseudo_type=None):
             yield boxes.TextBox(element.tag, element.sourceline,
                                 style.inherit_from(), text)
 
+    if quote_depth is None:
+        quote_depth = [0]  # use a list to have a shared mutable object
+
     children = []
     if pseudo_type is None:
-        children.extend(dom_to_box(document, element, pseudo_type='before'))
+        children.extend(dom_to_box(
+            document, element, quote_depth, pseudo_type='before'))
         children.extend(create_text_box(element.text))
         for child_element in element:
-            children.extend(dom_to_box(document, child_element))
+            children.extend(dom_to_box(document, child_element, quote_depth))
             children.extend(create_text_box(child_element.tail))
-        children.extend(dom_to_box(document, element, pseudo_type='after'))
+        children.extend(dom_to_box(
+            document, element, quote_depth, pseudo_type='after'))
     else:
         assert pseudo_type in ('before', 'after')
+        texts = []
         for type_, value in content:
-            assert type_ == 'STRING'
-            children.extend(create_text_box(value))
+            if type_ == 'QUOTE':
+                is_open, insert = value
+                if is_open:
+                    this_quote_depth = quote_depth[0]
+                    quote_depth[0] += 1
+                else:
+                    quote_depth[0] = max(0, quote_depth[0] - 1)
+                    this_quote_depth = quote_depth[0]
+                if not insert:
+                    continue
+                open_quotes, close_quotes = style.quotes
+                quotes = open_quotes if is_open else close_quotes
+                texts.append(quotes[min(this_quote_depth, len(quotes) - 1)])
+            else:
+                assert type_ == 'STRING'
+                texts.append(value)
+        texts = u''.join(texts)
+        if texts:
+            children.extend(create_text_box(texts))
 
     box = BOX_TYPE_FROM_DISPLAY[display](
         element.tag, element.sourceline, style, children)
