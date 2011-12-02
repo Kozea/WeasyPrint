@@ -30,8 +30,8 @@ from ..text import TextFragment
 from ..formatting_structure import boxes
 
 
-def get_next_linebox(linebox, position_y, skip_stack, containing_block,
-                     device_size):
+def get_next_linebox(document, linebox, position_y, skip_stack,
+                     containing_block, device_size):
     """Return ``(line, resume_at)``.
 
     ``line`` is a laid-out LineBox with as much content as possible that
@@ -61,9 +61,10 @@ def get_next_linebox(linebox, position_y, skip_stack, containing_block,
 
     resolve_percentages(linebox, containing_block)
     line, resume_at, preserved_line_break = split_inline_box(
-        linebox, position_x, max_x, skip_stack, containing_block, device_size)
+        document, linebox, position_x, max_x, skip_stack, containing_block,
+        device_size)
 
-    remove_last_whitespace(line)
+    remove_last_whitespace(document, line)
     offset_x = text_align(line, containing_block)
 
     bottom, top = inline_box_verticality(line, baseline_y=0)
@@ -131,7 +132,7 @@ def skip_first_whitespace(box, skip_stack):
     return None
 
 
-def remove_last_whitespace(box):
+def remove_last_whitespace(document, box):
     """Remove in place space characters at the end of a line.
 
     This also reduces the width of the inline parents of the modified text.
@@ -150,7 +151,7 @@ def remove_last_whitespace(box):
     if new_text:
         if len(new_text) == len(box.text):
             return
-        new_box, resume, _ = split_text_box(box, box.width * 2, 0)
+        new_box, resume, _ = split_text_box(document, box, box.width * 2, 0)
         assert new_box is not None
         assert resume is None
         space_width = box.width - new_box.width
@@ -261,8 +262,8 @@ def atomic_box(box, containing_block, device_size):
     return box
 
 
-def split_inline_level(box, position_x, max_x, skip_stack, containing_block,
-                       device_size):
+def split_inline_level(document, box, position_x, max_x, skip_stack,
+                       containing_block, device_size):
     """Fit as much content as possible from an inline-level box in a width.
 
     Return ``(new_box, resume_at)``. ``resume_at`` is ``None`` if all of the
@@ -285,7 +286,7 @@ def split_inline_level(box, position_x, max_x, skip_stack, containing_block,
             assert skip_stack is None
 
         new_box, skip, preserved_line_break = split_text_box(
-            box, max_x - position_x, skip)
+            document, box, max_x - position_x, skip)
 
         if skip is None:
             resume_at = None
@@ -297,7 +298,8 @@ def split_inline_level(box, position_x, max_x, skip_stack, containing_block,
         if box.margin_right == 'auto':
             box.margin_right = 0
         new_box, resume_at, preserved_line_break = split_inline_box(
-            box, position_x, max_x, skip_stack, containing_block, device_size)
+            document, box, position_x, max_x, skip_stack, containing_block,
+            device_size)
     elif isinstance(box, boxes.AtomicInlineLevelBox):
         new_box = atomic_box(box, containing_block, device_size)
         new_box.position_x = position_x
@@ -308,7 +310,7 @@ def split_inline_level(box, position_x, max_x, skip_stack, containing_block,
     return new_box, resume_at, preserved_line_break
 
 
-def split_inline_box(box, position_x, max_x, skip_stack,
+def split_inline_box(document, box, position_x, max_x, skip_stack,
                      containing_block, device_size):
     """Same behavior as split_inline_level."""
     initial_position_x = position_x
@@ -331,7 +333,7 @@ def split_inline_box(box, position_x, max_x, skip_stack,
     for index, child in box.enumerate_skip(skip):
         assert child.is_in_normal_flow(), '"Abnormal" flow not supported yet.'
         new_child, resume_at, preserved = split_inline_level(
-            child, position_x, max_x, skip_stack,
+            document, child, position_x, max_x, skip_stack,
             containing_block, device_size)
         skip_stack = None
         if preserved:
@@ -374,7 +376,7 @@ def split_inline_box(box, position_x, max_x, skip_stack,
     # http://www.w3.org/TR/CSS21/visudet.html#strut
     # TODO: cache these results for a given set of styles?
     fragment = TextFragment(
-        b'', box.style, cairo.Context(box.document.surface))
+        b'', box.style, cairo.Context(document.surface))
     _, _, _, height, baseline, _ = fragment.split_first_line()
     leading = box.style.line_height - height
     half_leading = leading / 2.
@@ -397,7 +399,7 @@ def split_inline_box(box, position_x, max_x, skip_stack,
     return new_box, resume_at, preserved_line_break
 
 
-def split_text_box(box, available_width, skip):
+def split_text_box(document, box, available_width, skip):
     """Keep as much text as possible from a TextBox in a limitied width.
     Try not to overflow but always have some text in ``new_box``
 
@@ -415,7 +417,7 @@ def split_text_box(box, available_width, skip):
         return None, None, False
 
     fragment = TextFragment(text, box.style,
-        cairo.Context(box.document.surface), available_width)
+        cairo.Context(document.surface), available_width)
 
     # XXX ``resume_at`` is an index in UTF-8 bytes, not unicode codepoints.
     show_line, length, width, height, baseline, resume_at = \

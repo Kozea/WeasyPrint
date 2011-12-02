@@ -30,8 +30,8 @@ from .percentages import resolve_percentages
 from ..formatting_structure import boxes
 
 
-def block_level_layout(box, max_position_y, skip_stack, containing_block,
-                       device_size, page_is_empty):
+def block_level_layout(document, box, max_position_y, skip_stack,
+                       containing_block, device_size, page_is_empty):
     """Lay out the block-level ``box``.
 
     :param max_position_y: the absolute vertical position (as in
@@ -40,14 +40,14 @@ def block_level_layout(box, max_position_y, skip_stack, containing_block,
 
     """
     if isinstance(box, boxes.TableBox):
-        return table_layout(box, max_position_y, containing_block,
+        return table_layout(document, box, max_position_y, containing_block,
                             device_size, page_is_empty)
     elif isinstance(box, boxes.BlockBox):
         if box.is_table_wrapper:
-            return block_table_wrapper(box, max_position_y, skip_stack,
-                 containing_block, device_size, page_is_empty)
+            return block_table_wrapper(document, box, max_position_y,
+                skip_stack, containing_block, device_size, page_is_empty)
         else:
-            return block_box_layout(box, max_position_y, skip_stack,
+            return block_box_layout(document, box, max_position_y, skip_stack,
                 containing_block, device_size, page_is_empty)
     elif isinstance(box, boxes.BlockLevelReplacedBox):
         return block_replaced_box_layout(
@@ -56,13 +56,13 @@ def block_level_layout(box, max_position_y, skip_stack, containing_block,
         raise TypeError('Layout for %s not handled yet' % type(box).__name__)
 
 
-def block_box_layout(box, max_position_y, skip_stack, containing_block,
-                     device_size, page_is_empty):
+def block_box_layout(document, box, max_position_y, skip_stack,
+                     containing_block, device_size, page_is_empty):
     """Lay out the block ``box``."""
     resolve_percentages(box, containing_block)
     block_level_width(box, containing_block)
-    list_marker_layout(box, containing_block)
-    return block_level_height(box, max_position_y, skip_stack,
+    list_marker_layout(document, box, containing_block)
+    return block_level_height(document, box, max_position_y, skip_stack,
         device_size, page_is_empty)
 
 
@@ -142,7 +142,7 @@ def block_level_width(box, containing_block):
         box.margin_right = margin_sum - margin_l
 
 
-def block_level_height(box, max_position_y, skip_stack,
+def block_level_height(document, box, max_position_y, skip_stack,
                        device_size, page_is_empty):
     """Set the ``box`` height."""
     assert isinstance(box, boxes.BlockContainerBox)
@@ -180,7 +180,7 @@ def block_level_height(box, max_position_y, skip_stack,
             while 1:
                 new_containing_block = box
                 line, resume_at = get_next_linebox(
-                    child, position_y, skip_stack,
+                    document, child, position_y, skip_stack,
                     new_containing_block, device_size)
                 if line is None:
                     break
@@ -207,7 +207,7 @@ def block_level_height(box, max_position_y, skip_stack,
         else:
             new_containing_block = box
             new_child, resume_at = block_level_layout(
-                child, max_position_y, skip_stack,
+                document, child, max_position_y, skip_stack,
                 new_containing_block, device_size, page_is_empty)
             skip_stack = None
             if new_child is None:
@@ -245,8 +245,8 @@ def block_level_height(box, max_position_y, skip_stack,
     return new_box, resume_at
 
 
-def block_table_wrapper(wrapper, max_position_y, skip_stack, containing_block,
-                        device_size, page_is_empty):
+def block_table_wrapper(document, wrapper, max_position_y, skip_stack,
+                        containing_block, device_size, page_is_empty):
     """Layout for the wrapper of a block-level table wrapper."""
     for child in wrapper.children:
         if isinstance(child, boxes.TableBox):
@@ -266,5 +266,5 @@ def block_table_wrapper(wrapper, max_position_y, skip_stack, containing_block,
 
     fixed_table_layout(table)
     wrapper.width = wrapper.style.width = table.border_width()
-    return block_box_layout(wrapper, max_position_y, skip_stack,
+    return block_box_layout(document, wrapper, max_position_y, skip_stack,
                             containing_block, device_size, page_is_empty)

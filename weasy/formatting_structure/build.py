@@ -103,15 +103,12 @@ def dom_to_box(document, element):
     if display == 'none':
         return []
 
-    def create_box(type_, style, content):
-        """Boilerplate for creating a box."""
-        return type_(document, element.tag, element.sourceline, style, content)
-
     def create_text_box(text):
         """If text is non-empty, create and yield a text box."""
         if text:
             text = text_transform(text, style)
-            yield create_box(boxes.TextBox, style.inherit_from(), text)
+            yield boxes.TextBox(element.tag, element.sourceline,
+                                style.inherit_from(), text)
 
     children = []
     children.extend(create_text_box(element.text))
@@ -119,16 +116,17 @@ def dom_to_box(document, element):
         children.extend(dom_to_box(document, child_element))
         children.extend(create_text_box(child_element.tail))
 
-    box = create_box(BOX_TYPE_FROM_DISPLAY[display], style, children)
+    box = BOX_TYPE_FROM_DISPLAY[display](
+        element.tag, element.sourceline, style, children)
 
     if display == 'list-item':
-        box = add_box_marker(box)
+        box = add_box_marker(document, box)
 
     # Specific handling for the element. (eg. replaced element)
     return html.handle_element(document, element, box)
 
 
-def add_box_marker(box):
+def add_box_marker(document, box):
     """Return a box with a list marker to elements with ``display: list-item``.
 
     See http://www.w3.org/TR/CSS21/generate.html#lists
@@ -137,7 +135,7 @@ def add_box_marker(box):
     image = box.style.list_style_image
     if image != 'none':
         # surface may be None here too, in case the image is not available.
-        surface = box.document.get_image_surface_from_uri(image)
+        surface = document.get_image_surface_from_uri(image)
     else:
         surface = None
 
@@ -231,7 +229,7 @@ def table_boxes_children(box, children):
     if box.tabular_container and len(children) >= 2:
         # TODO: Maybe only remove text if internal is also
         #       a proper table descendant of box.
-        # This is what the spec says, but maybe not what browers do:
+        # This is what the spec says, but maybe not what browsers do:
         # http://lists.w3.org/Archives/Public/www-style/2011Oct/0567
 
         # Last child

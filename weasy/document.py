@@ -172,7 +172,7 @@ class PNGDocument(Document):
         height = int(math.ceil(page.outer_height))
         surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
         context = draw.CairoContext(surface)
-        draw.draw_page(page, context)
+        draw.draw_page(self, page, context)
         self.surface.finish()
         return width, height, surface
 
@@ -226,7 +226,7 @@ class PDFDocument(Document):
                 page.outer_height * px_to_pt)
             context = draw.CairoContext(surface)
             context.scale(px_to_pt, px_to_pt)
-            draw.draw_page(page, context)
+            draw.draw_page(self, page, context)
             surface.show_page()
 
         surface.finish()

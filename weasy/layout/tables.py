@@ -27,8 +27,8 @@ from ..formatting_structure import boxes
 from .percentages import resolve_percentages, resolve_one_percentage
 
 
-def table_layout(table, max_position_y, containing_block, device_size,
-                 page_is_empty):
+def table_layout(document, table, max_position_y, containing_block,
+                 device_size, page_is_empty):
     """Layout for a table box.
 
     For now only the fixed layout and separate border model are supported.
@@ -97,7 +97,8 @@ def table_layout(table, max_position_y, containing_block, device_size,
                 # The computed height is a minimum
                 computed_cell_height = cell.height
                 cell.height = 'auto'
-                cell, _ = block_level_height(cell,
+                cell, _ = block_level_height(
+                    document, cell,
                     max_position_y=float('inf'),
                     skip_stack=None,
                     device_size=device_size,

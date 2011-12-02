@@ -74,28 +74,28 @@ class CairoContext(cairo.Context):
             self.restore()
 
 
-def draw_page(page, context):
+def draw_page(document, page, context):
     """Draw the given PageBox to a Cairo context.
 
     The context should be scaled so that lengths are in CSS pixels.
 
     """
-    draw_page_background(context, page)
+    draw_page_background(document, context, page)
     draw_border(context, page)
-    draw_box(context, page.root_box)
+    draw_box(document, context, page.root_box)
 
 
-def draw_box(context, box):
+def draw_box(document, context, box):
     """Draw a ``box`` on ``context``."""
     if box.style.visibility == 'visible':
         if has_background(box):
-            draw_background(context, box)
+            draw_background(document, context, box)
 
         draw_border(context, box)
 
         marker_box = getattr(box, 'outside_list_marker', None)
         if marker_box:
-            draw_box(context, marker_box)
+            draw_box(document, context, marker_box)
 
         if isinstance(box, boxes.TextBox):
             draw_text(context, box)
@@ -106,11 +106,11 @@ def draw_box(context, box):
 
     if isinstance(box, boxes.TableBox):
         for child in box.column_groups:
-            draw_box(context, child)
+            draw_box(document, context, child)
 
     if isinstance(box, boxes.ParentBox):
         for child in box.children:
-            draw_box(context, child)
+            draw_box(document, context, child)
 
 
 
@@ -120,7 +120,7 @@ def has_background(box):
         box.style.background_image != 'none'
 
 
-def draw_page_background(context, page):
+def draw_page_background(document, context, page):
     """Draw the backgrounds for the page box (from @page style) and for the
     page area (from the root element).
 
@@ -137,17 +137,17 @@ def draw_page_background(context, page):
     # of the page.
     # TODO: more tests for this, see
     # http://www.w3.org/TR/css3-page/#page-properties
-    draw_background(context, page, clip=False)
+    draw_background(document, context, page, clip=False)
     if has_background(page.root_box):
-        draw_background(context, page.root_box, clip=False)
+        draw_background(document, context, page.root_box, clip=False)
     elif page.root_box.element_tag.lower() == 'html':
         for child in page.root_box.children:
             if child.element_tag.lower() == 'body':
                 # This must be drawn now, before anything on the root element.
-                draw_background(context, child, clip=False)
+                draw_background(document, context, child, clip=False)
 
 
-def draw_background(context, box, clip=True):
+def draw_background(document, context, box, clip=True):
     """Draw the box background color and image to a ``cairo.Context``."""
     if getattr(box, 'background_drawn', False):
         return
@@ -193,7 +193,7 @@ def draw_background(context, box, clip=True):
         if bg_image == 'none':
             return
 
-        surface = box.document.get_image_surface_from_uri(bg_image)
+        surface = document.get_image_surface_from_uri(bg_image)
         if surface is None:
             return
 

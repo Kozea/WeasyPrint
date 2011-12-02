@@ -45,7 +45,7 @@ def body_children(page):
 
 def parse_without_layout(html_content):
     """Parse some HTML, apply stylesheets, transform to boxes."""
-    return TestPNGDocument.from_string(html_content).formatting_structure
+    return TestPNGDocument.from_string(html_content)
 
 
 def validate_absolute_and_float(
@@ -541,21 +541,22 @@ def test_inlinebox_spliting():
         """Helper returning a inlinebox with customizable style."""
         page = u'<style>p { font-family:%(fonts)s;}</style>'
         page = '%s <p>%s</p>' % (page, content)
-        html = parse_without_layout(page % {'fonts': FONTS})
+        document = parse_without_layout(page % {'fonts': FONTS})
+        html = document.formatting_structure
         body, = html.children
         paragraph, = body.children
         line, = paragraph.children
         inline, = line.children
         paragraph.width = 200
         paragraph.height = 'auto'
-        return inline, paragraph
+        return document, inline, paragraph
 
-    def get_parts(inlinebox, width, parent):
+    def get_parts(document, inlinebox, width, parent):
         """Yield the parts of the splitted ``inlinebox`` of given ``width``."""
         skip = None
         while 1:
             box, skip, _ = split_inline_box(
-                inlinebox, 0, width, skip, parent, None)
+                document, inlinebox, 0, width, skip, parent, None)
             yield box
             if skip is None:
                 break
@@ -575,30 +576,30 @@ def test_inlinebox_spliting():
     content = '''<strong>WeasyPrint is a free software visual rendering engine
               for HTML and CSS</strong>'''
 
-    inlinebox, parent = get_inlinebox(content)
+    document, inlinebox, parent = get_inlinebox(content)
     resolve_percentages(inlinebox, parent)
     original_text = inlinebox.children[0].text
 
     # test with width = 1000
-    parts = list(get_parts(inlinebox, 1000, parent))
+    parts = list(get_parts(document, inlinebox, 1000, parent))
     assert len(parts) == 1
     assert original_text == get_joined_text(parts)
 
-    inlinebox, parent = get_inlinebox(content)
+    document, inlinebox, parent = get_inlinebox(content)
     resolve_percentages(inlinebox, parent)
     original_text = inlinebox.children[0].text
 
     # test with width = 100
-    parts = list(get_parts(inlinebox, 100, parent))
+    parts = list(get_parts(document, inlinebox, 100, parent))
     assert len(parts) > 1
     assert original_text == get_joined_text(parts)
 
-    inlinebox, parent = get_inlinebox(content)
+    document, inlinebox, parent = get_inlinebox(content)
     resolve_percentages(inlinebox, parent)
     original_text = inlinebox.children[0].text
 
     # test with width = 10
-    parts = list(get_parts(inlinebox, 10, parent))
+    parts = list(get_parts(document, inlinebox, 10, parent))
     assert len(parts) > 1
     assert original_text == get_joined_text(parts)
 
@@ -607,22 +608,22 @@ def test_inlinebox_spliting():
               WeasyPrint is a free software visual rendering engine
               for HTML and CSS</strong>'''
 
-    inlinebox, parent = get_inlinebox(content)
+    document, inlinebox, parent = get_inlinebox(content)
     resolve_percentages(inlinebox, parent)
     original_text = inlinebox.children[0].text
     # test with width = 1000
-    parts = list(get_parts(inlinebox, 1000, parent))
+    parts = list(get_parts(document, inlinebox, 1000, parent))
     assert len(parts) == 1
     assert original_text == get_joined_text(parts)
     for side in ('left', 'top', 'bottom', 'right'):
         test_inlinebox_spacing(parts[0], 10, side)
 
-    inlinebox, parent = get_inlinebox(content)
+    document, inlinebox, parent = get_inlinebox(content)
     resolve_percentages(inlinebox, parent)
     original_text = inlinebox.children[0].text
 
     # test with width = 1000
-    parts = list(get_parts(inlinebox, 100, parent))
+    parts = list(get_parts(document, inlinebox, 100, parent))
     assert len(parts) != 1
     assert original_text == get_joined_text(parts)
     first_inline_box = parts.pop(0)
@@ -639,12 +640,13 @@ def test_inlinebox_spliting():
 @SUITE.test
 def test_inlinebox_text_after_spliting():
     """Test the inlinebox text after spliting."""
-    html = parse_without_layout('''
+    document = parse_without_layout('''
         <style>p { width: 200px; font-family:%(fonts)s;}</style>
         <p><strong><em><em><em>
             0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
         </em></em></em></strong></p>
     ''' % {'fonts': FONTS})
+    html = document.formatting_structure
     body, = html.children
     paragraph, = body.children
     line, = paragraph.children
@@ -662,7 +664,7 @@ def test_inlinebox_text_after_spliting():
     skip = None
     while 1:
         box, skip, _ = split_inline_box(
-            inlinebox, 0, 100, skip, paragraph, None)
+            document, inlinebox, 0, 100, skip, paragraph, None)
         parts.append(box)
         if skip is None:
             break

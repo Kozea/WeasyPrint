@@ -71,7 +71,7 @@ def is_block_level(box):
         raise ValueError('Unsupported display: ' + display)
 
 
-def make_replaced_box(document, element, box, replacement):
+def make_replaced_box(element, box, replacement):
     """Wrap a :class:`Replacement` object in either replaced box.
 
     That box is either block-level or inline-level, depending on what the
@@ -82,23 +82,22 @@ def make_replaced_box(document, element, box, replacement):
         type_ = boxes.BlockLevelReplacedBox
     else:
         type_ = boxes.InlineLevelReplacedBox
-    return type_(document, element.tag, element.sourceline, box.style,
-                 replacement)
+    return type_(element.tag, element.sourceline, box.style, replacement)
 
 
-def make_text_box(document, element, box, text):
+def make_text_box(element, box, text):
     """Make a text box.
 
     If the element should be block-level, wrap it in a block box.
 
     """
-    text_box = boxes.TextBox(document, element.tag, element.sourceline,
+    text_box = boxes.TextBox(element.tag, element.sourceline,
                              box.style.inherit_from(), text)
     if is_block_level(box):
         type_ = boxes.BlockBox
     else:
         type_ = boxes.InlineBox
-    return type_(document, element.tag, element.sourceline,
+    return type_(element.tag, element.sourceline,
                  box.style, [text_box])
 
 
@@ -115,11 +114,11 @@ def handle_img(document, element, box):
         surface = document.get_image_surface_from_uri(src)
         if surface is not None:
             replacement = ImageReplacement(surface)
-            return [make_replaced_box(document, element, box, replacement)]
+            return [make_replaced_box(element, box, replacement)]
         else:
             # Invalid image, use the alt-text.
             if alt:
-                return [make_text_box(document, element, box, alt)]
+                return [make_text_box(element, box, alt)]
             elif alt == '':
                 # The element represents nothing
                 return []
@@ -130,7 +129,7 @@ def handle_img(document, element, box):
                 return []
     else:
         if alt:
-            return [make_text_box(document, element, box, alt)]
+            return [make_text_box(element, box, alt)]
         else:
             return []
 
@@ -138,10 +137,10 @@ def handle_img(document, element, box):
 @handler('br')
 def handle_br(document, element, box):
     """Handle ``<br>`` tags, return a preserved new-line character."""
-    newline = boxes.TextBox(document, element.tag, element.sourceline,
+    newline = boxes.TextBox(element.tag, element.sourceline,
                             box.style, '\n')
     newline.style.white_space = 'pre'
-    return [boxes.InlineBox(document, element.tag, element.sourceline,
+    return [boxes.InlineBox(element.tag, element.sourceline,
                             box.style, [newline])]
 
 
