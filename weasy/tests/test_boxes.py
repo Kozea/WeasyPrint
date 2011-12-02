@@ -730,7 +730,6 @@ def test_before_after():
 
     assert_tree(parse_all(u'''
         <style>
-            /* \A0 is the no-break space. */
             body { quotes: '«' '»' '“' '”' }
             q:before { content: open-quote ' '}
             q:after { content: ' ' close-quote }
@@ -752,3 +751,17 @@ def test_before_after():
                     ('q', 'Text', ' sit amet'),
                     ('q', 'Inline', [  # :after
                         ('q', 'Text', u' »')])])])])])
+
+    assert_tree(parse_all('''
+        <style>
+            p:before { content: 'a' url(pattern.png) 'b'}
+        </style>
+        <p>c</p>
+    '''), [
+        ('p', 'Block', [
+            ('p', 'Line', [
+                ('p', 'Inline', [  # :before
+                    ('p', 'Text', 'a'),
+                    ('p', 'InlineLevelReplaced', '<replaced>'),
+                    ('p', 'Text', 'b')]),
+                ('p', 'Text', 'c')])])])

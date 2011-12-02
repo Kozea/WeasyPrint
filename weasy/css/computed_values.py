@@ -312,7 +312,7 @@ def content(computer, name, values):
 def compute_content_value(computer, value):
     """Compute a content ``value``."""
     type_, content = value
-    if type_ in ('STRING', 'QUOTE'):
+    if type_ in ('STRING', 'QUOTE', 'URI'):
         return value
     else:
         assert type_ == 'ATTR'

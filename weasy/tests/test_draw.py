@@ -936,3 +936,21 @@ def test_before_after():
             <p>« Lorem ipsum “ dolor ” sit amet »</p>
         ''')
     )
+
+    test_same_rendering(100, 30,
+        ('pseudo_url', u'''
+            <style>
+                @page { size: 100px 30px }
+                body { margin: 0; background: #fff; }
+                p:before { content: 'a' url(pattern.png) 'b'}
+            </style>
+            <p>c</p>
+        '''),
+        ('pseudo_url_reference', u'''
+            <style>
+                @page { size: 100px 30px }
+                body { margin: 0; background: #fff }
+            </style>
+            <p>a<img src="pattern.png" alt="Missing image">bc</p>
+        ''')
+    )

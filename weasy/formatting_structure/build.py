@@ -133,7 +133,20 @@ def dom_to_box(document, element, quote_depth=None, pseudo_type=None):
         assert pseudo_type in ('before', 'after')
         texts = []
         for type_, value in content:
-            if type_ == 'QUOTE':
+            if type_ == 'STRING':
+                texts.append(value)
+            elif type_ == 'URI':
+                surface = document.get_image_surface_from_uri(value)
+                if surface is not None:
+                    texts = u''.join(texts)
+                    if texts:
+                        children.extend(create_text_box(texts))
+                    texts = []
+                    children.append(boxes.InlineLevelReplacedBox(
+                        element.tag, element.sourceline, style.inherit_from(),
+                        html.ImageReplacement(surface)))
+            else:
+                assert type_ == 'QUOTE'
                 is_open, insert = value
                 if is_open:
                     this_quote_depth = quote_depth[0]
@@ -146,9 +159,6 @@ def dom_to_box(document, element, quote_depth=None, pseudo_type=None):
                 open_quotes, close_quotes = style.quotes
                 quotes = open_quotes if is_open else close_quotes
                 texts.append(quotes[min(this_quote_depth, len(quotes) - 1)])
-            else:
-                assert type_ == 'STRING'
-                texts.append(value)
         texts = u''.join(texts)
         if texts:
             children.extend(create_text_box(texts))

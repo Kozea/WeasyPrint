@@ -277,6 +277,8 @@ def validate_content_value(value):
     type_ = value.type
     if type_ == 'STRING':
         return ('STRING', value.value)
+    if type_ == 'URI':
+        return ('URI', value.absoluteUri)
     elif type_ == 'FUNCTION':
         seq = list(value.seq)
         if len(seq) != 3 or seq[0].value != 'attr(' or seq[2].value != ')':
