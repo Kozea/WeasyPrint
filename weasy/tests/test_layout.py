@@ -37,9 +37,9 @@ SUITE = Tests()
 def body_children(page):
     """Take a ``page``  and return its <body>’s children."""
     html = page.root_box
-    assert html.element.tag == 'html'
+    assert html.element_tag == 'html'
     body, = html.children
-    assert body.element.tag == 'body'
+    assert body.element_tag == 'body'
     return body.children
 
 
@@ -118,13 +118,13 @@ def test_page():
     assert page.height == 230  # 300px - 10px - 20%
 
     html = page.root_box
-    assert html.element.tag == 'html'
+    assert html.element_tag == 'html'
     assert html.position_x == 96  # 1in
     assert html.position_y == 10
     assert html.width == 84
 
     body, = html.children
-    assert body.element.tag == 'body'
+    assert body.element_tag == 'body'
     assert body.position_x == 96  # 1in
     assert body.position_y == 10
     # body has margins in the UA stylesheet
@@ -135,7 +135,7 @@ def test_page():
     assert body.width == 68
 
     paragraph, = body.children
-    assert paragraph.element.tag == 'p'
+    assert paragraph.element_tag == 'p'
     assert paragraph.position_x == 104  # 1in + 8px
     assert paragraph.position_y == 18  # 10px + 8px
     assert paragraph.width == 68
@@ -150,7 +150,7 @@ def test_page():
     assert page.width == 16  # 100 - 2 * 42
     assert page.height == 58  # 100 - 2 * 21
     html = page.root_box
-    assert html.element.tag == 'html'
+    assert html.element_tag == 'html'
     assert html.position_x == 42  # 2 + 8 + 32
     assert html.position_y == 21  # 1 + 4 + 16
 
@@ -186,9 +186,9 @@ def test_block_widths():
         </div>
     ''')
     html = page.root_box
-    assert html.element.tag == 'html'
+    assert html.element_tag == 'html'
     body, = html.children
-    assert body.element.tag == 'body'
+    assert body.element_tag == 'body'
     assert body.width == 120
 
     divs = body.children
@@ -196,11 +196,11 @@ def test_block_widths():
     paragraphs = []
     for div in divs:
         assert isinstance(div, boxes.BlockBox)
-        assert div.element.tag == 'div'
+        assert div.element_tag == 'div'
         assert div.width == 100
         for paragraph in div.children:
             assert isinstance(paragraph, boxes.BlockBox)
-            assert paragraph.element.tag == 'p'
+            assert paragraph.element_tag == 'p'
             assert paragraph.padding_left == 2
             assert paragraph.padding_right == 2
             assert paragraph.style.border_left_width == 1
@@ -308,9 +308,9 @@ def test_block_percentage_heights():
         <body>
     ''')
     html = page.root_box
-    assert html.element.tag == 'html'
+    assert html.element_tag == 'html'
     body, = html.children
-    assert body.element.tag == 'body'
+    assert body.element_tag == 'body'
 
     # Since html’s height depend on body’s, body’s 50% means 'auto'
     assert body.height == 0
@@ -324,9 +324,9 @@ def test_block_percentage_heights():
         <body>
     ''')
     html = page.root_box
-    assert html.element.tag == 'html'
+    assert html.element_tag == 'html'
     body, = html.children
-    assert body.element.tag == 'body'
+    assert body.element_tag == 'body'
 
     # This time the percentage makes sense
     assert body.height == 150
@@ -416,13 +416,13 @@ def test_breaking_linebox():
     lines = paragraph.children
     for line in lines:
         assert line.style.font_size == 13
-        assert line.element.tag == 'p'
+        assert line.element_tag == 'p'
         for child in line.children:
-            assert child.element.tag in ('em', 'p')
+            assert child.element_tag in ('em', 'p')
             assert child.style.font_size == 13
             if isinstance(child, boxes.ParentBox):
                 for child_child in child.children:
-                    assert child.element.tag in ('em', 'strong', 'span')
+                    assert child.element_tag in ('em', 'strong', 'span')
                     assert child.style.font_size == 13
 
 
@@ -489,7 +489,7 @@ def test_forced_line_breaks():
             et turpis molestie tristique.</pre>
     ''')
     pre, = body_children(page)
-    assert pre.element.tag == 'pre'
+    assert pre.element_tag == 'pre'
     lines = pre.children
     assert all(isinstance(line, boxes.LineBox) for line in lines)
     assert len(lines) == 7
@@ -505,7 +505,7 @@ def test_forced_line_breaks():
             et turpis molestie tristique.</p>
     ''')
     pre, = body_children(page)
-    assert pre.element.tag == 'p'
+    assert pre.element_tag == 'p'
     lines = pre.children
     assert all(isinstance(line, boxes.LineBox) for line in lines)
     assert len(lines) == 7
@@ -526,7 +526,7 @@ def test_page_breaks():
     page_divs = []
     for page in pages:
         divs = body_children(page)
-        assert all([div.element.tag == 'div' for div in divs])
+        assert all([div.element_tag == 'div' for div in divs])
         assert all([div.position_x == 10 for div in divs])
         page_divs.append(divs)
 

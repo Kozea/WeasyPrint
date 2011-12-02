@@ -140,9 +140,9 @@ def draw_page_background(context, page):
     draw_background(context, page, clip=False)
     if has_background(page.root_box):
         draw_background(context, page.root_box, clip=False)
-    elif page.root_box.element.tag.lower() == 'html':
+    elif page.root_box.element_tag.lower() == 'html':
         for child in page.root_box.children:
-            if child.element.tag.lower() == 'body':
+            if child.element_tag.lower() == 'body':
                 # This must be drawn now, before anything on the root element.
                 draw_background(context, child, clip=False)
 

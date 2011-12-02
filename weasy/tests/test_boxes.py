@@ -55,7 +55,7 @@ def serialize(box_list):
     """Transform a box list into a structure easier to compare for testing."""
     return [
         (
-            box.element.tag,
+            box.element_tag,
             ('Anon' if box.anonymous and type(box) not in (boxes.TextBox,
                 boxes.LineBox) else '') + type(box).__name__[:-3],
             (
@@ -75,13 +75,13 @@ def unwrap_html_body(box):
     of HTML documents.
 
     """
-    assert box.element.tag == 'html'
+    assert box.element_tag == 'html'
     assert isinstance(box, boxes.BlockBox)
     assert len(box.children) == 1
 
     box = box.children[0]
     assert isinstance(box, boxes.BlockBox)
-    assert box.element.tag == 'body'
+    assert box.element_tag == 'body'
 
     return box.children
 

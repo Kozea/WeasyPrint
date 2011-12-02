@@ -91,36 +91,41 @@ def dom_to_box(document, element):
     See http://www.w3.org/TR/CSS21/visuren.html#anonymous
 
     """
+    if not isinstance(element.tag, basestring):
+        # lxml.html already converts HTML entities to text.
+        # Here we ignore comments and XML processing instructions.
+        return []
+
+    style = document.style_for(element)
     # TODO: should be the used value. When does the used value for `display`
     # differ from the computer value?
-    style = document.style_for(element)
     display = style.display
     if display == 'none':
         return []
 
+    def create_box(type_, style, content):
+        """Boilerplate for creating a box."""
+        return type_(document, element.tag, element.sourceline, style, content)
+
+    def create_text_box(text):
+        """If text is non-empty, create and yield a text box."""
+        if text:
+            text = text_transform(text, style)
+            yield create_box(boxes.TextBox, style.inherit_from(), text)
+
     children = []
-
-    if element.text:
-        text = text_transform(element.text, style)
-        children.append(boxes.TextBox(
-            document, element, style.inherit_from(), text))
+    children.extend(create_text_box(element.text))
     for child_element in element:
-        # lxml.html already converts HTML entities to text.
-        # Here we ignore comments and XML processing instructions.
-        if isinstance(child_element.tag, basestring):
-            children.extend(dom_to_box(document, child_element))
-        if child_element.tail:
-            text = text_transform(child_element.tail, style)
-            children.append(boxes.TextBox(
-                document, element, style.inherit_from(), text))
+        children.extend(dom_to_box(document, child_element))
+        children.extend(create_text_box(child_element.tail))
 
-    box = BOX_TYPE_FROM_DISPLAY[display](document, element, style, children)
+    box = create_box(BOX_TYPE_FROM_DISPLAY[display], style, children)
 
     if display == 'list-item':
         box = add_box_marker(box)
 
     # Specific handling for the element. (eg. replaced element)
-    return html.handle_element(box)
+    return html.handle_element(document, element, box)
 
 
 def add_box_marker(box):

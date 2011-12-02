@@ -84,9 +84,11 @@ class Box(object):
     is_table_wrapper = False
 
 
-    def __init__(self, document, element, style, anonymous=False):
+    def __init__(self, document, element_tag, sourceline, style,
+                 anonymous=False):
         self.document = document
-        self.element = element
+        self.element_tag = element_tag
+        self.sourceline = sourceline  # for debugging only
         self.anonymous = anonymous
         # Copying might not be needed, but let’s be careful with mutable
         # objects.
@@ -94,13 +96,13 @@ class Box(object):
 
     def __repr__(self):
         return '<%s %s %i>' % (
-            type(self).__name__, self.element.tag, self.element.sourceline)
+            type(self).__name__, self.element_tag, self.sourceline)
 
     @classmethod
     def anonymous_from(cls, parent, *args, **kwargs):
         """Return an anonymous box that inherits from ``parent``."""
         kwargs['anonymous'] = True
-        return cls(parent.document, parent.element,
+        return cls(parent.document, parent.element_tag, parent.sourceline,
                    parent.style.inherit_from(),
                    *args, **kwargs)
 
@@ -233,7 +235,8 @@ class PageBox(Box):
         # starting at 1 for the first page.
         self.page_number = page_number
         # Page boxes are not linked to any element.
-        super(PageBox, self).__init__(document, element=None, style=style)
+        super(PageBox, self).__init__(
+            document, element_tag=None, sourceline=None, style=style)
 
     def __repr__(self):
         return '<%s %s>' % (type(self).__name__, self.page_number)
@@ -245,8 +248,10 @@ class PageBox(Box):
 
 class ParentBox(Box):
     """A box that has children."""
-    def __init__(self, document, element, style, children, anonymous=False):
-        super(ParentBox, self).__init__(document, element, style, anonymous)
+    def __init__(self, document, element_tag, sourceline, style, children,
+                 anonymous=False):
+        super(ParentBox, self).__init__(document, element_tag, sourceline,
+                                        style, anonymous)
         self.children = tuple(children)
 
     def enumerate_skip(self, skip_num=0):
@@ -326,10 +331,11 @@ class LineBox(ParentBox):
     be split into multiple line boxes, one for each actual line.
 
     """
-    def __init__(self, document, element, style, children, anonymous=True):
+    def __init__(self, document, element_tag, sourceline, style, children,
+                 anonymous=True):
         assert anonymous == True
         super(LineBox, self).__init__(
-            document, element, style, children, anonymous=True)
+            document, element_tag, sourceline, style, children, anonymous=True)
 
 
 class InlineLevelBox(Box):
@@ -363,10 +369,12 @@ class TextBox(InlineLevelBox):
     inline boxes" are also text boxes.
 
     """
-    def __init__(self, document, element, style, text, anonymous=True):
+    def __init__(self, document, element_tag, sourceline, style, text,
+                 anonymous=True):
         assert anonymous == True
         assert text
-        super(TextBox, self).__init__(document, element, style, anonymous=True)
+        super(TextBox, self).__init__(document, element_tag, sourceline,
+                                      style, anonymous=True)
         self.text = text
 
     def copy_with_text(self, text):
@@ -402,8 +410,10 @@ class ReplacedBox(Box):
     and is opaque from CSS’s point of view.
 
     """
-    def __init__(self, document, element, style, replacement, anonymous=False):
-        super(ReplacedBox, self).__init__(document, element, style, anonymous)
+    def __init__(self, document, element_tag, sourceline, style, replacement,
+                 anonymous=False):
+        super(ReplacedBox, self).__init__(document, element_tag, sourceline,
+                                          style, anonymous)
         self.replacement = replacement
 
 
@@ -480,11 +490,11 @@ class TableColumnGroupBox(ParentBox):
 
 class TableColumnBox(Box):
     """Box for elements with ``display: table-column``"""
-    def __init__(self, document, element, style, _children=None,
-                 anonymous=False):
+    def __init__(self, document, element_tag, sourceline, style,
+                 _children=None, anonymous=False):
         """Accept a children argument but ignore it."""
         super(TableColumnBox, self).__init__(
-            document, element, style, anonymous)
+            document, element_tag, sourceline, style, anonymous)
 
     proper_table_child = True
     internal_table_or_caption = True
