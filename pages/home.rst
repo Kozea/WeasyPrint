@@ -30,12 +30,13 @@ rendered with WeasyPrint:
 Current status
 --------------
 
-WeasyPrint 0.1 can fetch a remote web page from an URL, find and fetch
+WeasyPrint 0.2 can fetch a remote web page from an URL, find and fetch
 associated stylesheets and images, and render it all to PDF or PNG.
 
-Floats, absolute positioning and tables are not supported yet, but WeasyPrint
-can already be useful for pages with “simple” layout.
+Floats and absolute positioning are not supported yet, but WeasyPrint
+can already be useful for pages with “simple” layout (ie. static positioning
+and tables.)
 See the `features </features/>`_ page for what exactly is supported or not.
 
-Tables (among other things) are being worked on and should be in the
-next version.
+Planned for 0.3: generated content with ``:before`` and ``:after``,
+CSS counters and ordered lists, SVG images.
