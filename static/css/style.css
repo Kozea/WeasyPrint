@@ -69,6 +69,7 @@ body{
 h2, h3, h4, h5, h6
 {
   font-family: "menu";
+  font-weight: normal;
   letter-spacing: 0.2em;
 }
 
