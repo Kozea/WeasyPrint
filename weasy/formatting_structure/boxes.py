@@ -485,14 +485,8 @@ class TableColumnGroupBox(ParentBox):
     padding_right = 0
 
 
-class TableColumnBox(Box):
-    """Box for elements with ``display: table-column``"""
-    def __init__(self, element_tag, sourceline, style,
-                 _children=None, anonymous=False):
-        """Accept a children argument but ignore it."""
-        super(TableColumnBox, self).__init__(
-            element_tag, sourceline, style, anonymous)
-
+# Not really a parent box, but pretending to be removes some special cases.
+class TableColumnBox(ParentBox):
     proper_table_child = True
     internal_table_or_caption = True
     proper_parents = (TableBox, InlineTableBox, TableColumnGroupBox)

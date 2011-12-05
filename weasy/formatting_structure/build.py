@@ -265,7 +265,10 @@ def anonymous_table_boxes(box):
 
 def table_boxes_children(box, children):
     """Internal implementation of anonymous_table_boxes()."""
-    if isinstance(box, boxes.TableColumnGroupBox):  # rule 1.2
+    if isinstance(box, boxes.TableColumnBox):  # rule 1.1
+        # Remove all children.
+        children = []
+    elif isinstance(box, boxes.TableColumnGroupBox):  # rule 1.2
         # Remove children other than table-column.
         children = [
             child for child in children

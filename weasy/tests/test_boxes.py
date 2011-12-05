@@ -62,7 +62,6 @@ def serialize(box_list):
             # All concrete boxes are either text, replaced, column or parent.
             box.text if isinstance(box, boxes.TextBox)
             else '<replaced>' if isinstance(box, boxes.ReplacedBox)
-            else '<column>' if isinstance(box, boxes.TableColumnBox)
             else serialize(getattr(box, 'column_groups', ()) + box.children)))
         for box in box_list
     ]
@@ -455,7 +454,7 @@ def test_tables():
                     ('caption', 'Text', 'top caption')])]),
             ('table', 'Table', [
                 ('table', 'AnonTableColumnGroup', [
-                    ('col', 'TableColumn', '<column>')]),
+                    ('col', 'TableColumn', [])]),
                 ('thead', 'TableRowGroup', [
                     ('thead', 'AnonTableRow', [
                         ('th', 'TableCell', [])])]),
@@ -507,7 +506,7 @@ def test_tables():
         ('body', 'AnonBlock', [
             ('body', 'AnonTable', [
                 ('span', 'TableColumnGroup', [
-                    ('em', 'TableColumn', '<column>')])])])])
+                    ('em', 'TableColumn', [])])])])])
 
     # Rules 2.1 then 2.3
     assert_tree(parse_all('<table>foo <div></div></table>'), [
@@ -573,7 +572,7 @@ def test_tables():
         ('body', 'AnonBlock', [
             ('body', 'AnonTable', [
                 ('body', 'AnonTableColumnGroup', [
-                    ('col', 'TableColumn', '<column>')]),
+                    ('col', 'TableColumn', [])]),
                 ('colgroup', 'TableColumnGroup', [])])])])
 
 
