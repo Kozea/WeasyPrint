@@ -364,7 +364,15 @@ class TextBox(InlineLevelBox):
     def __init__(self, element_tag, sourceline, style, text):
         assert style.anonymous
         assert text
-        super(TextBox, self).__init__(element_tag, sourceline, style,)
+        super(TextBox, self).__init__(element_tag, sourceline, style)
+        text_transform = style.text_transform
+        if text_transform != 'none':
+            text = {
+                'uppercase': lambda t: t.upper(),
+                'lowercase': lambda t: t.lower(),
+                # Python’s unicode.captitalize is not the same.
+                'capitalize': lambda t: t.title(),
+            }[text_transform](text)
         self.text = text
 
     def copy_with_text(self, text):

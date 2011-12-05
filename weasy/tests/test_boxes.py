@@ -711,11 +711,11 @@ def test_before_after():
     '''), [
         ('p', 'Block', [
             ('p', 'Line', [
-                ('p', 'Inline', [
-                    ('p', 'Text', 'ab')]),
+                ('p:before', 'Inline', [
+                    ('p:before', 'Text', 'ab')]),
                 ('p', 'Text', ' c '),
-                ('p', 'Inline', [
-                    ('p', 'Text', 'de')])])])])
+                ('p:after', 'Inline', [
+                    ('p:after', 'Text', 'de')])])])])
 
     assert_tree(parse_all('''
         <style>
@@ -726,8 +726,8 @@ def test_before_after():
         ('p', 'Block', [
             ('p', 'Line', [
                 ('a', 'Inline', [
-                    ('a', 'Inline', [  # :before
-                        ('a', 'Text', '[some url] ')]),
+                    ('a:before', 'Inline', [
+                        ('a:before', 'Text', '[some url] ')]),
                     ('a', 'Text', 'some text')])])])])
 
     assert_tree(parse_all(u'''
@@ -741,18 +741,18 @@ def test_before_after():
         ('p', 'Block', [
             ('p', 'Line', [
                 ('q', 'Inline', [
-                    ('q', 'Inline', [  # :before
-                        ('q', 'Text', u'« ')]),
+                    ('q:before', 'Inline', [
+                        ('q:before', 'Text', u'« ')]),
                     ('q', 'Text', 'Lorem ipsum '),
                     ('q', 'Inline', [
-                        ('q', 'Inline', [  # :before
-                            ('q', 'Text', u'“ ')]),
+                        ('q:before', 'Inline', [
+                            ('q:before', 'Text', u'“ ')]),
                         ('q', 'Text', 'dolor'),
-                        ('q', 'Inline', [  # :after
-                            ('q', 'Text', u' ”')])]),
+                        ('q:after', 'Inline', [
+                            ('q:after', 'Text', u' ”')])]),
                     ('q', 'Text', ' sit amet'),
-                    ('q', 'Inline', [  # :after
-                        ('q', 'Text', u' »')])])])])])
+                    ('q:after', 'Inline', [
+                        ('q:after', 'Text', u' »')])])])])])
 
     assert_tree(parse_all('''
         <style>
@@ -762,8 +762,8 @@ def test_before_after():
     '''), [
         ('p', 'Block', [
             ('p', 'Line', [
-                ('p', 'Inline', [  # :before
-                    ('p', 'Text', 'a'),
-                    ('p', 'AnonInlineReplaced', '<replaced>'),
-                    ('p', 'Text', 'b')]),
+                ('p:before', 'Inline', [
+                    ('p:before', 'Text', 'a'),
+                    ('p:before', 'AnonInlineReplaced', '<replaced>'),
+                    ('p:before', 'Text', 'b')]),
                 ('p', 'Text', 'c')])])])

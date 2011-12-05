@@ -67,10 +67,10 @@ def build_formatting_structure(document):
     return box
 
 
-def dom_to_box(document, element, quote_depth=None, pseudo_type=None):
+def dom_to_box(document, element, quote_depth=None):
     """Convert a DOM element and its children into a box with children.
 
-    Return a list of boxes. Most of the time it will have one element but
+    Return a list of boxes. Most of the time the list will have one item but
     may have zero or more than one.
 
     Eg.::
@@ -96,90 +96,101 @@ def dom_to_box(document, element, quote_depth=None, pseudo_type=None):
         # Here we ignore comments and XML processing instructions.
         return []
 
+    style = document.style_for(element)
+
+    # TODO: should be the used value. When does the used value for `display`
+    # differ from the computer value?
+    display = style.display
+    if display == 'none':
+        return []
+
+    box = BOX_TYPE_FROM_DISPLAY[display](
+        element.tag, element.sourceline, style, [])
+
+    if quote_depth is None:
+        quote_depth = [0]  # use a list to have a shared mutable object
+
+    children = []
+    if display == 'list-item':
+        children.extend(add_box_marker(document, box))
+    children.extend(pseudo_to_box(document, quote_depth, element, 'before'))
+    text = element.text
+    if text:
+        children.append(boxes.TextBox.anonymous_from(box, text))
+    for child_element in element:
+        children.extend(dom_to_box(document, child_element, quote_depth))
+        text = child_element.tail
+        if text:
+            children.append(boxes.TextBox.anonymous_from(box, text))
+    children.extend(pseudo_to_box(document, quote_depth, element, 'after'))
+
+    box = box.copy_with_children(children)
+
+    # Specific handling for the element. (eg. replaced element)
+    return html.handle_element(document, element, box)
+
+
+def pseudo_to_box(document, quote_depth, element, pseudo_type):
+    """Yield the box for a :before or :after pseudo-element if there is one."""
     style = document.style_for(element, pseudo_type)
     if pseudo_type and style is None:
         # Pseudo-elements with no style at all do not get a StyleDict
         # Their initial content property computes to 'none'.
-        return []
+        return
 
     # TODO: should be the used value. When does the used value for `display`
     # differ from the computer value?
     display = style.display
     content = style.content
     if 'none' in (display, content):
-        return []
-
-    def create_text_box(text):
-        """If text is non-empty, create and yield a text box."""
-        if text:
-            text = text_transform(text, style)
-            yield boxes.TextBox(element.tag, element.sourceline,
-                                style.inherit_from(), text)
-
-    if quote_depth is None:
-        quote_depth = [0]  # use a list to have a shared mutable object
-
-    children = []
-    if pseudo_type is None:
-        children.extend(dom_to_box(
-            document, element, quote_depth, pseudo_type='before'))
-        children.extend(create_text_box(element.text))
-        for child_element in element:
-            children.extend(dom_to_box(document, child_element, quote_depth))
-            children.extend(create_text_box(child_element.tail))
-        children.extend(dom_to_box(
-            document, element, quote_depth, pseudo_type='after'))
-    else:
-        assert pseudo_type in ('before', 'after')
-        texts = []
-        for type_, value in content:
-            if type_ == 'STRING':
-                texts.append(value)
-            elif type_ == 'URI':
-                surface = document.get_image_surface_from_uri(value)
-                if surface is not None:
-                    texts = u''.join(texts)
-                    if texts:
-                        children.extend(create_text_box(texts))
-                    texts = []
-                    children.append(boxes.InlineReplacedBox(
-                        element.tag, element.sourceline, style.inherit_from(),
-                        html.ImageReplacement(surface)))
-            else:
-                assert type_ == 'QUOTE'
-                is_open, insert = value
-                if is_open:
-                    this_quote_depth = quote_depth[0]
-                    quote_depth[0] += 1
-                else:
-                    quote_depth[0] = max(0, quote_depth[0] - 1)
-                    this_quote_depth = quote_depth[0]
-                if not insert:
-                    continue
-                open_quotes, close_quotes = style.quotes
-                quotes = open_quotes if is_open else close_quotes
-                texts.append(quotes[min(this_quote_depth, len(quotes) - 1)])
-        texts = u''.join(texts)
-        if texts:
-            children.extend(create_text_box(texts))
+        return
 
     box = BOX_TYPE_FROM_DISPLAY[display](
-        element.tag, element.sourceline, style, children)
+        '%s:%s' % (element.tag, pseudo_type), element.sourceline, style, [])
 
+    children = []
     if display == 'list-item':
-        box = add_box_marker(document, box)
+        children.extend(add_box_marker(document, box))
+    texts = []
+    for type_, value in content:
+        if type_ == 'STRING':
+            texts.append(value)
+        elif type_ == 'URI':
+            surface = document.get_image_surface_from_uri(value)
+            if surface is not None:
+                text = u''.join(texts)
+                if text:
+                    children.append(boxes.TextBox.anonymous_from(box, text))
+                texts = []
+                children.append(boxes.InlineReplacedBox.anonymous_from(
+                    box, html.ImageReplacement(surface)))
+        else:
+            assert type_ == 'QUOTE'
+            is_open, insert = value
+            if not is_open:
+                quote_depth[0] = max(0, quote_depth[0] - 1)
+            if insert:
+                open_quotes, close_quotes = style.quotes
+                quotes = open_quotes if is_open else close_quotes
+                texts.append(quotes[min(quote_depth[0], len(quotes) - 1)])
+            if is_open:
+                quote_depth[0] += 1
+    text = u''.join(texts)
+    if text:
+        children.append(boxes.TextBox.anonymous_from(box, text))
 
-    # Specific handling for the element. (eg. replaced element)
-    return html.handle_element(document, element, box)
+    yield box.copy_with_children(children)
 
 
 def add_box_marker(document, box):
-    """Return a box with a list marker to elements with ``display: list-item``.
+    """Add a list marker to boxes for elements with ``display: list-item``,
+    and yield children to add a the start of the box.
 
     See http://www.w3.org/TR/CSS21/generate.html#lists
 
     """
-    image = box.style.list_style_image
+    style = box.style
+    image = style.list_style_image
     if image != 'none':
         # surface may be None here too, in case the image is not available.
         surface = document.get_image_surface_from_uri(image)
@@ -187,9 +198,9 @@ def add_box_marker(document, box):
         surface = None
 
     if surface is None:
-        type_ = box.style.list_style_type
+        type_ = style.list_style_type
         if type_ == 'none':
-            return box
+            return
         marker = GLYPH_LIST_MARKERS[type_]
         marker_box = boxes.TextBox.anonymous_from(box, marker)
     else:
@@ -198,14 +209,13 @@ def add_box_marker(document, box):
             box, replacement)
         marker_box.is_list_marker = True
 
-    position = box.style.list_style_position
+    position = style.list_style_position
     if position == 'inside':
-        side = 'right' if box.style.direction == 'ltr' else 'left'
-        marker_box.style['margin_' + side] = box.style.font_size * 0.5
-        return box.copy_with_children((marker_box,) + box.children)
+        side = 'right' if style.direction == 'ltr' else 'left'
+        marker_box.style['margin_' + side] = style.font_size * 0.5
+        yield marker_box
     elif position == 'outside':
         box.outside_list_marker = marker_box
-    return box
 
 
 def is_whitespace(box, _has_non_whitespace=re.compile('\S').search):
@@ -763,19 +773,3 @@ def _inner_block_in_inline(box, skip_stack=None):
             box = box.copy_with_children(new_children)
 
     return box, block_level_box, resume_at
-
-
-def text_transform(text, style):
-    """Handle the `text-transform` CSS property.
-
-    Takes a Unicode text and a :cls:`StyleDict`, returns a new Unicode text.
-    """
-    transform = style.text_transform
-    if transform == 'none':
-        return text
-    elif transform == 'capitalize':
-        return text.title()  # Python’s unicode.captitalize is not the same.
-    elif transform == 'uppercase':
-        return text.upper()
-    elif transform == 'lowercase':
-        return text.lower()
