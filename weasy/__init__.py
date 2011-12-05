@@ -28,22 +28,15 @@ WeasyPrint converts web documents, mainly HTML documents with CSS, to PDF.
 VERSION = __version__ = '0.3dev'  # Also change this in setup.py
 
 
-import sys
 import argparse
-import logging
-
-import cssutils
-
-from .document import PDFDocument, PNGDocument
-from .utils import ensure_url
 
 
-__all__ = ['PDFDocument', 'PNGDocument', 'main']
+__all__ = ['main']
 
 
 FORMATS = {
-    'pdf': PDFDocument,
-    'png': PNGDocument,
+    'pdf': 'PDFDocument',
+    'png': 'PNGDocument',
 }
 
 
@@ -94,6 +87,14 @@ def main():
 
     args = parser.parse_args()
 
+    # Import here so that these are not needed for --version and --help
+    import sys
+    import logging
+    import cssutils
+
+    from . import document
+    from .utils import ensure_url
+
     if args.format is None:
         for file_format in FORMATS:
             if args.output.endswith('.' + file_format):
@@ -124,7 +125,7 @@ def main():
         cssutils.parseUrl(ensure_url(filename_or_url))
         for filename_or_url in args.stylesheet or []]
 
-    document_class = FORMATS[args.format]
+    document_class = getattr(document, FORMATS[args.format])
     doc = document_class.from_file(args.input, encoding=args.encoding,
         user_stylesheets=users_stylesheets)
     doc.write_to(args.output)
