@@ -149,9 +149,12 @@ class StyleDict(object):
         """
         if self._storage:
             parent = self
-        elif self._parent:
+        else:
             parent = self._parent
-        return type(self)(parent=parent)
+        style = type(self)(parent=parent)
+        if self.anonymous:
+            object.__setattr__(style, 'anonymous', True)
+        return style
 
     def inherit_from(self):
         """Return a new StyleDict with inherited properties from this one.
@@ -159,9 +162,14 @@ class StyleDict(object):
         Non-inherited properties get their initial values.
         This is the styles for an anonymous box.
         """
-        return computed_from_cascaded(cascaded={}, parent_style=self,
+        style = computed_from_cascaded(cascaded={}, parent_style=self,
             # Only used by non-inherited properties. eg `content: attr(href)`
             element=None)
+        object.__setattr__(style, 'anonymous', True)
+        return style
+
+    # Default values, may be overriden on instances
+    anonymous = False
 
 
 def find_stylesheets(document):

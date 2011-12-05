@@ -56,8 +56,11 @@ def serialize(box_list):
     return [
         (
             box.element_tag,
-            ('Anon' if box.anonymous and type(box) not in (boxes.TextBox,
-                boxes.LineBox) else '') + type(box).__name__[:-3],
+            ('Anon'
+                 if box.style.anonymous and
+                       type(box) not in (boxes.TextBox, boxes.LineBox)
+                 else ''
+             ) + type(box).__name__[:-3],
             (
             # All concrete boxes are either text, replaced, column or parent.
             box.text if isinstance(box, boxes.TextBox)
@@ -330,7 +333,7 @@ def test_styles():
         # All boxes inherit the color
         assert child.style.color.value == 'blue'
         # Only non-anonymous boxes have margins
-        if child.anonymous:
+        if child.style.anonymous:
             assert child.style.margin_top == 0
         else:
             assert child.style.margin_top == 42
@@ -761,6 +764,6 @@ def test_before_after():
             ('p', 'Line', [
                 ('p', 'Inline', [  # :before
                     ('p', 'Text', 'a'),
-                    ('p', 'InlineReplaced', '<replaced>'),
+                    ('p', 'AnonInlineReplaced', '<replaced>'),
                     ('p', 'Text', 'b')]),
                 ('p', 'Text', 'c')])])])

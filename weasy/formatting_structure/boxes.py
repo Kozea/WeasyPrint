@@ -84,10 +84,9 @@ class Box(object):
     is_table_wrapper = False
 
 
-    def __init__(self, element_tag, sourceline, style, anonymous=False):
+    def __init__(self, element_tag, sourceline, style):
         self.element_tag = element_tag
         self.sourceline = sourceline  # for debugging only
-        self.anonymous = anonymous
         # Copying might not be needed, but let’s be careful with mutable
         # objects.
         self.style = style.copy()
@@ -99,7 +98,6 @@ class Box(object):
     @classmethod
     def anonymous_from(cls, parent, *args, **kwargs):
         """Return an anonymous box that inherits from ``parent``."""
-        kwargs['anonymous'] = True
         return cls(parent.element_tag, parent.sourceline,
                    parent.style.inherit_from(),
                    *args, **kwargs)
@@ -246,10 +244,8 @@ class PageBox(Box):
 
 class ParentBox(Box):
     """A box that has children."""
-    def __init__(self, element_tag, sourceline, style, children,
-                 anonymous=False):
-        super(ParentBox, self).__init__(element_tag, sourceline,
-                                        style, anonymous)
+    def __init__(self, element_tag, sourceline, style, children):
+        super(ParentBox, self).__init__(element_tag, sourceline, style)
         self.children = tuple(children)
 
     def enumerate_skip(self, skip_num=0):
@@ -329,11 +325,9 @@ class LineBox(ParentBox):
     be split into multiple line boxes, one for each actual line.
 
     """
-    def __init__(self, element_tag, sourceline, style, children,
-                 anonymous=True):
-        assert anonymous == True
-        super(LineBox, self).__init__(
-            element_tag, sourceline, style, children, anonymous=True)
+    def __init__(self, element_tag, sourceline, style, children):
+        assert style.anonymous
+        super(LineBox, self).__init__(element_tag, sourceline, style, children)
 
 
 class InlineLevelBox(Box):
@@ -367,11 +361,10 @@ class TextBox(InlineLevelBox):
     inline boxes" are also text boxes.
 
     """
-    def __init__(self, element_tag, sourceline, style, text, anonymous=True):
-        assert anonymous == True
+    def __init__(self, element_tag, sourceline, style, text):
+        assert style.anonymous
         assert text
-        super(TextBox, self).__init__(
-            element_tag, sourceline, style, anonymous=True)
+        super(TextBox, self).__init__(element_tag, sourceline, style,)
         self.text = text
 
     def copy_with_text(self, text):
@@ -407,10 +400,8 @@ class ReplacedBox(Box):
     and is opaque from CSS’s point of view.
 
     """
-    def __init__(self, element_tag, sourceline, style, replacement,
-                 anonymous=False):
-        super(ReplacedBox, self).__init__(
-            element_tag, sourceline, style, anonymous)
+    def __init__(self, element_tag, sourceline, style, replacement):
+        super(ReplacedBox, self).__init__(element_tag, sourceline, style)
         self.replacement = replacement
 
 
