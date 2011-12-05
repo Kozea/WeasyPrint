@@ -194,7 +194,7 @@ def test_box_tree():
             ('p', 'Text', 'Hello '),
             ('em', 'Inline', [
                 ('em', 'Text', 'World '),
-                ('img', 'InlineLevelReplaced', '<replaced>'),
+                ('img', 'InlineReplaced', '<replaced>'),
                 ('span', 'InlineBlock', [
                     ('span', 'Text', 'Lipsum')])]),
             ('p', 'Text', '!')])])
@@ -353,7 +353,7 @@ def test_whitespace():
                 ('p', 'Text', 'Lorem ipsum '),
                 ('strong', 'Inline', [
                     ('strong', 'Text', 'dolor '),
-                    ('img', 'InlineLevelReplaced', '<replaced>'),
+                    ('img', 'InlineReplaced', '<replaced>'),
                     ('strong', 'Text', ' sit')]),
                 ('p', 'Text', '.')])]),
         ('pre', 'Block', [
@@ -761,6 +761,6 @@ def test_before_after():
             ('p', 'Line', [
                 ('p', 'Inline', [  # :before
                     ('p', 'Text', 'a'),
-                    ('p', 'InlineLevelReplaced', '<replaced>'),
+                    ('p', 'InlineReplaced', '<replaced>'),
                     ('p', 'Text', 'b')]),
                 ('p', 'Text', 'c')])])])

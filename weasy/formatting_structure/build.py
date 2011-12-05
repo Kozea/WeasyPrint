@@ -142,7 +142,7 @@ def dom_to_box(document, element, quote_depth=None, pseudo_type=None):
                     if texts:
                         children.extend(create_text_box(texts))
                     texts = []
-                    children.append(boxes.InlineLevelReplacedBox(
+                    children.append(boxes.InlineReplacedBox(
                         element.tag, element.sourceline, style.inherit_from(),
                         html.ImageReplacement(surface)))
             else:
@@ -194,7 +194,7 @@ def add_box_marker(document, box):
         marker_box = boxes.TextBox.anonymous_from(box, marker)
     else:
         replacement = html.ImageReplacement(surface)
-        marker_box = boxes.InlineLevelReplacedBox.anonymous_from(
+        marker_box = boxes.InlineReplacedBox.anonymous_from(
             box, replacement)
         marker_box.is_list_marker = True
 

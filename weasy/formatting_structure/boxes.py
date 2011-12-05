@@ -44,8 +44,8 @@ Concrete classes:
  * AnonymousBlockBox
  * InlineBox
  * InlineBlockBox
- * BlockLevelReplacedBox
- * InlineLevelReplacedBox
+ * BlockReplacedBox
+ * InlineReplacedBox
  * TextBox
  * LineBox
 
@@ -414,7 +414,7 @@ class ReplacedBox(Box):
         self.replacement = replacement
 
 
-class BlockLevelReplacedBox(ReplacedBox, BlockLevelBox):
+class BlockReplacedBox(ReplacedBox, BlockLevelBox):
     """A box that is both replaced and block-level.
 
     A replaced element with a ``display`` value of ``block``, ``liste-item`` or
@@ -423,7 +423,7 @@ class BlockLevelReplacedBox(ReplacedBox, BlockLevelBox):
     """
 
 
-class InlineLevelReplacedBox(ReplacedBox, AtomicInlineLevelBox):
+class InlineReplacedBox(ReplacedBox, AtomicInlineLevelBox):
     """A box that is both replaced and inline-level.
 
     A replaced element with a ``display`` value of ``inline``,

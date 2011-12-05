@@ -79,9 +79,9 @@ def make_replaced_box(element, box, replacement):
 
     """
     if is_block_level(box):
-        type_ = boxes.BlockLevelReplacedBox
+        type_ = boxes.BlockReplacedBox
     else:
-        type_ = boxes.InlineLevelReplacedBox
+        type_ = boxes.InlineReplacedBox
     return type_(element.tag, element.sourceline, box.style, replacement)
 
 

@@ -49,7 +49,7 @@ def block_level_layout(document, box, max_position_y, skip_stack,
         else:
             return block_box_layout(document, box, max_position_y, skip_stack,
                 containing_block, device_size, page_is_empty)
-    elif isinstance(box, boxes.BlockLevelReplacedBox):
+    elif isinstance(box, boxes.BlockReplacedBox):
         return block_replaced_box_layout(
             box, containing_block, device_size), None
     else:
