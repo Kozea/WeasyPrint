@@ -30,9 +30,9 @@ any other Python library:
 
 .. code-block:: python
 
-    import weasy
+    from weasy.document import PDFDocument
 
-    document = weasy.PDFDocument.from_file('http://weasyprint.org/')
+    document = PDFDocument.from_file('http://weasyprint.org/')
     document.write_to('/tmp/weasyprint-website.pdf')
 
 Which ``Document`` class you use determines the file format for the output.
