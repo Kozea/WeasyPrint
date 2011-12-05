@@ -5,6 +5,7 @@ html, body, div, h1, h2, h3, h4, ol, p, ul, hr, pre { display: block; }
 li { display: list-item }
 head { display: none }
 pre { white-space: pre }
+br:before { content: '\A'; white-space: pre-line }
 
 table           { display: table;
                   box-sizing: border-box }

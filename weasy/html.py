@@ -134,16 +134,6 @@ def handle_img(document, element, box):
             return []
 
 
-@handler('br')
-def handle_br(document, element, box):
-    """Handle ``<br>`` tags, return a preserved new-line character."""
-    newline = boxes.TextBox(element.tag, element.sourceline,
-                            box.style, '\n')
-    newline.style.white_space = 'pre'
-    return [boxes.InlineBox(element.tag, element.sourceline,
-                            box.style, [newline])]
-
-
 def integer_attribute(element, box, name, minimum=1):
     """Read an integer attribute from the HTML element and set it on the box.
 
