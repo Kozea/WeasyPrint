@@ -24,6 +24,7 @@ Output document classes for various formats.
 
 import os.path
 import math
+import logging
 
 from cssutils import parseFile
 import lxml.html
@@ -37,12 +38,17 @@ from . import draw
 from . import utils
 
 
+logger = logging.getLogger('CSSUTILS')
+level = logger.level
+logger.setLevel('ERROR')
 # This is a one-element tuple.
 DEFAULT_USER_AGENT_STYLESHEETS = (
     parseFile(
         os.path.join(os.path.dirname(__file__), 'css', 'html4_ua.css')
     ),
 )
+logger.setLevel(level)
+del logger, level
 
 
 class Document(object):
