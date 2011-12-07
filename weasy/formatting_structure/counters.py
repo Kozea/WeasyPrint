@@ -60,10 +60,14 @@ FORMATTERS = {}
 def register_style(name, type='symbolic', **descriptors):
     """Register a counter style."""
     if type == 'override':
+        # TODO: when we parse @counter-style rules
+        # override should bind late: when a value is generated
         style = dict(STYLES[descriptors.pop('override')])
     else:
         style = dict(INITIAL_VALUES, formatter=functools.partial(
-            FORMATTERS[type], descriptors.pop('symbols')))
+            FORMATTERS[type],
+            descriptors.pop('symbols'),
+            descriptors.pop('negative', INITIAL_VALUES['negative'])))
     style.update(descriptors)
     STYLES[name] = style
 
@@ -75,26 +79,34 @@ def register_formatter(function):
 
 
 @register_formatter
-def repeating(symbols, value):
+def repeating(symbols, _negative, value):
     return symbols[value % len(symbols)]
 
 
 @register_formatter
-def numeric(symbols, value):
+def numeric(symbols, _negative, value):
     """Implement the algorithm for `type: numeric`."""
     if value == 0:
         return symbols[0]
+    if value < 0:
+        is_negative = True
+        value = abs(value)
+        prefix, suffix = style['negative']
+        parts = [suffix]
+    else:
+        prefix = ''
+        parts = []
     length = len(symbols)
-    parts = []
     value = abs(value)
     while value != 0:
         parts.append(symbols[value % length])
         value //= length
+    parts.append(prefix)
     return ''.join(reversed(parts))
 
 
 @register_formatter
-def alphabetic(symbols, value):
+def alphabetic(symbols, _negative, value):
     """Implement the algorithm for `type: alphabetic`."""
     if value <= 0:
         return None
@@ -108,7 +120,7 @@ def alphabetic(symbols, value):
 
 
 @register_formatter
-def symbolic(symbols, value):
+def symbolic(symbols, _negative, value):
     """Implement the algorithm for `type: symbolic`."""
     if value <= 0:
         return None
@@ -117,7 +129,7 @@ def symbolic(symbols, value):
 
 
 @register_formatter
-def non_repeating(symbols, value):
+def non_repeating(symbols, _negative, value):
     """Implement the algorithm for `type: non-repeating`."""
     first_symbol_value, symbols = symbols
     value -= first_symbol_value
@@ -126,20 +138,26 @@ def non_repeating(symbols, value):
 
 
 @register_formatter
-def additive(symbols, value):
+def additive(symbols, _negative, value):
     """Implement the algorithm for `type: additive`."""
     if value == 0:
         for weight, symbol in symbols:
             if weight == 0:
                 return symbol
-    if value <= 0:
-        return None
-    parts = []
+    if value < 0:
+        is_negative = True
+        value = abs(value)
+        prefix, suffix = style['negative']
+        parts = [prefix]
+    else:
+        suffix = ''
+        parts = []
     for weight, symbol in symbols:
         repetitions = value // weight
         parts.extend([symbol] * repetitions)
         value -= weight * repetitions
         if value == 0:
+            parts.append(suffix)
             return ''.join(parts)
     return None  # Failed to find a representation for this value
 
@@ -154,8 +172,8 @@ def additive(symbols, value):
 register_style(
     'decimal-leading-zero',
     type='non-repeating',
-    symbols=(-9, '''09 08 07 06 05 04 03 02 01 00
-                    01 02 03 04 05 06 07 08 09'''.split()),
+    symbols=(-9, '''-09 -08 -07 -06 -05 -04 -03 -02 -01
+                    00 01 02 03 04 05 06 07 08 09'''.split()),
 )
 register_style(
     'lower-roman',
@@ -222,14 +240,12 @@ register_style(
     'disc',
     type='repeating',
     symbols=[u'•'],  # U+2022, BULLET
-    negative=('', ''),
     suffix='',
 )
 register_style(
     'circle',
     type='repeating',
     symbols=[u'◦'],  # U+25E6 WHITE BULLET
-    negative=('', ''),
     suffix='',
 )
 register_style(
@@ -238,7 +254,6 @@ register_style(
     # CSS Lists 3 suggests U+25FE BLACK MEDIUM SMALL SQUARE
     # But I think this one looks better.
     symbols=[u'▪'],  # U+25AA BLACK SMALL SQUARE
-    negative=('', ''),
     suffix='',
 )
 register_style(
@@ -261,6 +276,8 @@ def format(value, counter_style):
     The representation includes negative signs, but not the prefix and suffix.
 
     """
+    if counter_style == 'none':
+        return ''
     failed_styles = set()  # avoid fallback loops
     while True:
         if counter_style == 'decimal' or counter_style in failed_styles:
@@ -270,9 +287,6 @@ def format(value, counter_style):
         if low <= value <= high:
             representation = style['formatter'](value)
             if representation is not None:
-                if value < 0:
-                    prefix, suffix = style['negative']
-                    representation = prefix + representation + suffix
                 return representation
         failed_styles.add(counter_style)
         counter_style = style['fallback']
