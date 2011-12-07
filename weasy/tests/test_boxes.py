@@ -782,7 +782,7 @@ def test_counters():
         <p></p>
         <p></p>
         <p></p>
-        <p style="counter-reset: p"></p>
+        <p style="counter-reset: p 117 p"></p>
         <p></p>
         <p></p>
         <p style="counter-reset: p -13"></p>
@@ -842,6 +842,7 @@ def test_counters():
         <div>
             <p></p>
             <p></p>
+            <p style="counter-reset: list-item -7 list-item 56"></p>
         </div>
         <p></p>
     '''), [
@@ -851,7 +852,10 @@ def test_counters():
                     ('p::marker', 'Text', '1.')])]),
             ('p', 'Block', [
                 ('p', 'Line', [
-                    ('p::marker', 'Text', '2.')])])]),
+                    ('p::marker', 'Text', '2.')])]),
+            ('p', 'Block', [
+                ('p', 'Line', [
+                    ('p::marker', 'Text', '57.')])])]),
         ('p', 'Block', [
             ('p', 'Line', [
                 ('p::marker', 'Text', '1.')])])])

@@ -106,7 +106,7 @@ def dom_to_box(document, element, state=None):
             # Shared mutable objects:
             [0],  # quote_depth: single integer
             {},  # counter_values: name -> stacked/scoped values
-            [[]]  # counter_scopes: DOM tree depths -> counter names
+            [set()]  # counter_scopes: DOM tree depths -> counter names
         )
     quote_depth, counter_values, counter_scopes = state
 
@@ -118,7 +118,7 @@ def dom_to_box(document, element, state=None):
 
     # If this element’s direct children create new scopes, the counter
     # names will be in this new list
-    counter_scopes.append([])
+    counter_scopes.append(set())
 
     children.extend(pseudo_to_box(document, state, element, 'before'))
     text = element.text
@@ -200,25 +200,34 @@ def pseudo_to_box(document, state, element, pseudo_type):
 def update_counters(state, style):
     """Handle the ``counter-*`` properties."""
     quote_depth, counter_values, counter_scopes = state
-    scopes_created_here = counter_scopes[-1]
+    sibling_scopes = counter_scopes[-1]
 
     for name, value in style.counter_reset:
+        if name in sibling_scopes:
+            counter_values[name].pop()
+        else:
+            sibling_scopes.add(name)
         counter_values.setdefault(name, []).append(value)
-        scopes_created_here.append(name)
 
     # Disabled for now, only exists in Lists3’s editor’s draft.
     for name, value in []: # XXX style.counter_set:
         values = counter_values.setdefault(name, [])
         if not values:
+            if name in sibling_scopes:
+                counter_values[name].pop()
+            else:
+                sibling_scopes.add(name)
             values.append(0)
-            scopes_created_here.append(name)
         values[-1] = value
 
     for name, value in style.counter_increment:
         values = counter_values.setdefault(name, [])
         if not values:
+            if name in sibling_scopes:
+                counter_values[name].pop()
+            else:
+                sibling_scopes.add(name)
             values.append(0)
-            scopes_created_here.append(name)
         values[-1] += value
 
 
