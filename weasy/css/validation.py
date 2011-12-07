@@ -28,6 +28,7 @@ See http://www.w3.org/TR/CSS21/propidx.html for allowed values.
 import functools
 import logging
 
+from ..formatting_structure import counters
 from .values import get_keyword, get_single_keyword, as_css
 from .properties import INITIAL_VALUES, NOT_PRINT_MEDIA
 from . import computed_values
@@ -255,7 +256,7 @@ def caption_side(keyword):
 
 @validator()
 def content(values):
-    """``content`` propertiy validation."""
+    """``content`` property validation."""
     keyword = get_single_keyword(values)
     if keyword in ('normal', 'none'):
         return keyword
@@ -281,14 +282,68 @@ def validate_content_value(value):
         return ('URI', value.absoluteUri)
     elif type_ == 'FUNCTION':
         seq = list(value.seq)
-        if len(seq) != 3 or seq[0].value != 'attr(' or seq[2].value != ')':
-            return False
-        keyword = get_keyword(seq[1].value)
-        if keyword is None:
-            return False
-        return ('ATTR', keyword)
-    else:
-        return False
+        if len(seq) >= 3 and seq[-1].value == ')':
+            function_name = seq[0].value
+            args = [v.value for v in seq[1:-1]]
+            num_args = len(args)
+            if function_name == 'attr(':
+                attr_name = get_single_keyword(args)
+                if attr_name is not None:
+                    return ('ATTR', attr_name)
+            elif function_name == 'counter(':
+                counter_name =  get_keyword(args[0])
+                if num_args == 1:
+                    counter_style = 'decimal'
+                elif num_args == 2:
+                    # Might be None
+                    counter_style = get_keyword(args[1])
+                else:
+                    counter_style = None
+                if (counter_style in ('none', 'decimal')
+                        or counter_style in counters.STYLES):
+                    return ('COUNTER', (counter_name, counter_style))
+    return False
+
+
+@validator()
+def counter_increment(values):
+    """``counter-increment`` property validation."""
+    return counter(values, default_integer=1)
+
+
+@validator()
+def counter_reset(values):
+    """``counter-reset`` property validation."""
+    return counter(values, default_integer=0)
+
+
+def counter(values, default_integer):
+    """``counter-increment`` and ``counter-reset`` properties validation."""
+    if get_single_keyword(values) == 'none':
+        return []
+    values = iter(values)
+    value = next(values, None)
+    if value is None:
+        return  # expected at least one value
+    results = []
+    while value is not None:
+        counter_name = get_keyword(value)
+        if counter_name is None:
+            return  # expected a keyword here
+        if counter_name in ('none', 'initial', 'inherit'):
+            raise InvalidValues('Invalid counter name: '+ counter_name)
+        value = next(values, None)
+        if (value is not None and value.type == 'NUMBER' and
+                isinstance(value.value, int)):
+            # Found an integer. Use it and get the next value
+            integer = value.value
+            value = next(values, None)
+        else:
+            # Not an integer. Might be the next counter name.
+            # Keep `value` for the next loop iteration.
+            integer = default_integer
+        results.append((counter_name, integer))
+    return results
 
 
 #@validator('top')
@@ -423,12 +478,7 @@ def list_style_position(keyword):
 @single_keyword
 def list_style_type(keyword):
     """``list-style-type`` property validation."""
-    if keyword in ('decimal', 'decimal-leading-zero',
-            'lower-roman', 'upper-roman', 'lower-greek', 'lower-latin',
-            'upper-latin', 'armenian', 'georgian', 'lower-alpha',
-            'upper-alpha'):
-        raise InvalidValues('value not supported yet')
-    return keyword in ('disc', 'circle', 'square', 'none')
+    return keyword in ('none', 'decimal') or keyword in counters.STYLES
 
 
 @validator('padding-top')

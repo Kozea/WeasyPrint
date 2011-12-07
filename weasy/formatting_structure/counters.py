@@ -42,7 +42,11 @@ INITIAL_VALUES = dict(
 )
 
 # Maps counter-style names to a dict of descriptors.
-STYLES = {}
+STYLES = {
+    # Included here for format_list_marker().
+    # format() special-cases decimal and does not use this.
+    'decimal': INITIAL_VALUES,
+}
 
 # Maps counter types to a function implementing it.
 # The functions take two arguments: the value of the `symbols` descriptor

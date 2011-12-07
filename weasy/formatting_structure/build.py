@@ -26,16 +26,9 @@ including handling of anonymous boxes and whitespace processing.
 """
 
 import re
-from . import boxes
+from . import boxes, counters
 from .. import html
-from ..css import properties
-
-
-GLYPH_LIST_MARKERS = {
-    'disc': u'•',  # U+2022, BULLET
-    'circle': u'◦',  # U+25E6 WHITE BULLET
-    'square': u'▪',  # U+25AA BLACK SMALL SQUARE
-}
+from ..css import properties, StyleDict
 
 
 # Maps values of the ``display`` CSS property to box types.
@@ -67,7 +60,7 @@ def build_formatting_structure(document):
     return box
 
 
-def dom_to_box(document, element, quote_depth=None):
+def dom_to_box(document, element, state=None):
     """Convert a DOM element and its children into a box with children.
 
     Return a list of boxes. Most of the time the list will have one item but
@@ -107,22 +100,40 @@ def dom_to_box(document, element, quote_depth=None):
     box = BOX_TYPE_FROM_DISPLAY[display](
         element.tag, element.sourceline, style, [])
 
-    if quote_depth is None:
-        quote_depth = [0]  # use a list to have a shared mutable object
+    if state is None:
+        # use a list to have a shared mutable object
+        state = (
+            # Shared mutable objects:
+            [0],  # quote_depth: single integer
+            {},  # counter_values: name -> stacked/scoped values
+            [[]]  # counter_scopes: DOM tree depths -> counter names
+        )
+    quote_depth, counter_values, counter_scopes = state
+
+    update_counters(state, style)
 
     children = []
     if display == 'list-item':
-        children.extend(add_box_marker(document, box))
-    children.extend(pseudo_to_box(document, quote_depth, element, 'before'))
+        children.extend(add_box_marker(document, state, box))
+
+    # If this element’s direct children create new scopes, the counter
+    # names will be in this new list
+    counter_scopes.append([])
+
+    children.extend(pseudo_to_box(document, state, element, 'before'))
     text = element.text
     if text:
         children.append(boxes.TextBox.anonymous_from(box, text))
     for child_element in element:
-        children.extend(dom_to_box(document, child_element, quote_depth))
+        children.extend(dom_to_box(document, child_element, state))
         text = child_element.tail
         if text:
             children.append(boxes.TextBox.anonymous_from(box, text))
-    children.extend(pseudo_to_box(document, quote_depth, element, 'after'))
+    children.extend(pseudo_to_box(document, state, element, 'after'))
+
+    # Scopes created by this element’s children stop here.
+    for name in counter_scopes.pop():
+        counter_values[name].pop()
 
     box = box.copy_with_children(children)
 
@@ -130,7 +141,7 @@ def dom_to_box(document, element, quote_depth=None):
     return html.handle_element(document, element, box)
 
 
-def pseudo_to_box(document, quote_depth, element, pseudo_type):
+def pseudo_to_box(document, state, element, pseudo_type):
     """Yield the box for a :before or :after pseudo-element if there is one."""
     style = document.style_for(element, pseudo_type)
     if pseudo_type and style is None:
@@ -148,9 +159,9 @@ def pseudo_to_box(document, quote_depth, element, pseudo_type):
     box = BOX_TYPE_FROM_DISPLAY[display](
         '%s:%s' % (element.tag, pseudo_type), element.sourceline, style, [])
 
+    quote_depth, counter_values, counter_scopes = state
+    update_counters(state, style)
     children = []
-    if display == 'list-item':
-        children.extend(add_box_marker(document, box))
     texts = []
     for type_, value in content:
         if type_ == 'STRING':
@@ -164,6 +175,10 @@ def pseudo_to_box(document, quote_depth, element, pseudo_type):
                 texts = []
                 children.append(boxes.InlineReplacedBox.anonymous_from(
                     box, html.ImageReplacement(surface)))
+        elif type_ == 'COUNTER':
+            counter_name, counter_style = value
+            counter_value = counter_values.get(counter_name, [0])[-1]
+            texts.append(counters.format(counter_value, counter_style))
         else:
             assert type_ == 'QUOTE'
             is_open, insert = value
@@ -182,13 +197,44 @@ def pseudo_to_box(document, quote_depth, element, pseudo_type):
     yield box.copy_with_children(children)
 
 
-def add_box_marker(document, box):
+def update_counters(state, style):
+    """Handle the ``counter-*`` properties."""
+    quote_depth, counter_values, counter_scopes = state
+    scopes_created_here = counter_scopes[-1]
+
+    for name, value in style.counter_reset:
+        counter_values.setdefault(name, []).append(value)
+        scopes_created_here.append(name)
+
+    # Disabled for now, only exists in Lists3’s editor’s draft.
+    for name, value in []: # XXX style.counter_set:
+        values = counter_values.setdefault(name, [])
+        if not values:
+            values.append(0)
+            scopes_created_here.append(name)
+        values[-1] = value
+
+    for name, value in style.counter_increment:
+        values = counter_values.setdefault(name, [])
+        if not values:
+            values.append(0)
+            scopes_created_here.append(name)
+        values[-1] += value
+
+
+def add_box_marker(document, state, box):
     """Add a list marker to boxes for elements with ``display: list-item``,
     and yield children to add a the start of the box.
 
     See http://www.w3.org/TR/CSS21/generate.html#lists
 
     """
+    quote_depth, counter_values, counter_scopes = state
+    update_counters(state, StyleDict(dict(
+        counter_reset=[],
+        counter_set=[],
+        counter_increment=[('list-item', 1)],
+    )))
     style = box.style
     image = style.list_style_image
     if image != 'none':
@@ -201,13 +247,15 @@ def add_box_marker(document, box):
         type_ = style.list_style_type
         if type_ == 'none':
             return
-        marker = GLYPH_LIST_MARKERS[type_]
-        marker_box = boxes.TextBox.anonymous_from(box, marker)
+        counter_value = counter_values['list-item'][-1]
+        marker_text = counters.format_list_marker(counter_value, type_)
+        marker_box = boxes.TextBox.anonymous_from(box, marker_text)
     else:
         replacement = html.ImageReplacement(surface)
         marker_box = boxes.InlineReplacedBox.anonymous_from(
             box, replacement)
         marker_box.is_list_marker = True
+    marker_box.element_tag += '::marker'
 
     position = style.list_style_position
     if position == 'inside':

@@ -55,8 +55,9 @@ INITIAL_VALUES = {
     'clip': 'auto',
     'color': _parse('#000')[0],     # depends on user agent
     'content': 'normal',
-    'counter_increment': 'none',
-    'counter_reset': 'none',
+    'counter_increment': [],  # parsed value for 'none'
+    'counter_reset': [],  # parsed value for 'none'
+#    'counter_set': [],  # parsed value for 'none'
     'direction': 'ltr',
     'display': 'inline',
     'empty_cells': 'show',

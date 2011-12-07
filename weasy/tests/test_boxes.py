@@ -28,7 +28,7 @@ from attest import Tests, assert_hook  # pylint: disable=W0611
 from . import resource_filename
 from ..css import validation, page_style
 from . import TestPNGDocument
-from ..formatting_structure import boxes, build
+from ..formatting_structure import boxes, build, counters
 
 
 SUITE = Tests()
@@ -767,3 +767,91 @@ def test_before_after():
                     ('p:before', 'AnonInlineReplaced', '<replaced>'),
                     ('p:before', 'Text', 'b')]),
                 ('p', 'Text', 'c')])])])
+
+
+@SUITE.test
+def test_counters():
+    """Test the various counter styles."""
+    assert_tree(parse_all('''
+        <style>
+            p { counter-increment: p 2 }
+            p:before { content: counter(p); }
+            p:nth-child(1) { counter-increment: none; }
+            p:nth-child(2) { counter-increment: p; }
+        </style>
+        <p></p>
+        <p></p>
+        <p></p>
+        <p style="counter-reset: p"></p>
+        <p></p>
+        <p></p>
+        <p style="counter-reset: p -13"></p>
+        <p></p>
+        <p></p>
+        <p style="counter-reset: p 42"></p>
+        <p></p>
+        <p></p>
+    '''), [
+        ('p', 'Block', [
+            ('p', 'Line', [
+                ('p:before', 'Inline', [
+                    ('p:before', 'Text', counter)])])])
+        for counter in '0 1 3  2 4 6  -11 -9 -7  44 46 48'.split()])
+
+    assert_tree(parse_all('''
+        <ol style="list-style-position: inside">
+            <li></li>
+            <li></li>
+            <li></li>
+            <li><ol>
+                <li></li>
+                <li></li>
+            </ol></li>
+            <li></li>
+        </ol>
+    '''), [
+        ('ol', 'Block', [
+            ('li', 'Block', [
+                ('li', 'Line', [
+                    ('li::marker', 'Text', '1.')])]),
+            ('li', 'Block', [
+                ('li', 'Line', [
+                    ('li::marker', 'Text', '2.')])]),
+            ('li', 'Block', [
+                ('li', 'Line', [
+                    ('li::marker', 'Text', '3.')])]),
+            ('li', 'Block', [
+                ('li', 'AnonBlock', [
+                    ('li', 'Line', [
+                        ('li::marker', 'Text', '4.')])]),
+                ('ol', 'Block', [
+                    ('li', 'Block', [
+                        ('li', 'Line', [
+                            ('li::marker', 'Text', '1.')])]),
+                    ('li', 'Block', [
+                        ('li', 'Line', [
+                            ('li::marker', 'Text', '2.')])])])]),
+            ('li', 'Block', [
+                ('li', 'Line', [
+                    ('li::marker', 'Text', '5.')])])])])
+
+    assert_tree(parse_all('''
+        <style>
+            p { display: list-item; list-style: inside decimal }
+        </style>
+        <div>
+            <p></p>
+            <p></p>
+        </div>
+        <p></p>
+    '''), [
+        ('div', 'Block', [
+            ('p', 'Block', [
+                ('p', 'Line', [
+                    ('p::marker', 'Text', '1.')])]),
+            ('p', 'Block', [
+                ('p', 'Line', [
+                    ('p::marker', 'Text', '2.')])])]),
+        ('p', 'Block', [
+            ('p', 'Line', [
+                ('p::marker', 'Text', '1.')])])])
