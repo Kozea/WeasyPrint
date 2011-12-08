@@ -24,35 +24,11 @@ Module drawing documents.
 
 from __future__ import division
 import contextlib
-import urllib
 
 import cairo
-from StringIO import StringIO
 
 from .formatting_structure import boxes
 from .css.values import get_percentage_value
-from .utils import urlopen
-
-
-SUPPORTED_IMAGES = ['image/png', 'image/gif', 'image/jpeg', 'image/bmp']
-
-
-def get_image_surface_from_uri(uri):
-    """Get a :class:`cairo.ImageSurface`` from an image URI."""
-    file_like, mime_type, _charset = urlopen(uri)
-    # TODO: implement image type sniffing?
-    # http://www.w3.org/TR/html5/fetching-resources.html#content-type-sniffing:-image
-    if mime_type in SUPPORTED_IMAGES:
-        if mime_type == "image/png":
-            image = file_like
-        else:
-            from PIL import Image
-            pil_image = Image.open(StringIO(file_like.read()))
-            image = StringIO()
-            pil_image = pil_image.convert('RGBA')
-            pil_image.save(image, "PNG")
-            image.seek(0)
-        return cairo.ImageSurface.create_from_png(image)
 
 
 class CairoContext(cairo.Context):

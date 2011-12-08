@@ -59,6 +59,8 @@ class URLopener(urllib.FancyURLopener):
 
 def urlopen(url):
     """Fetch an URL and return ``(file_like, mime_type, charset)``.
+
+    It is the caller’s responsability to call ``file_like.close()``.
     """
     file_like = URLopener().open(url)
     info = file_like.info()
@@ -74,7 +76,7 @@ def urlopen(url):
     else:
         # Python 2
         charset = info.getparam('charset')
-    return file_like, mime_type, charset
+    return file_like.fp, mime_type, charset
 
 
 def urllib_fetcher(url):
@@ -88,4 +90,6 @@ def urllib_fetcher(url):
     if mime_type != 'text/css':
         # TODO: add a warning
         return None
-    return charset, file_like.read()
+    content = file_like.read()
+    file_like.close()
+    return charset, content

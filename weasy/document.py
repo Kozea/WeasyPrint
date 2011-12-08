@@ -37,6 +37,7 @@ from .formatting_structure.build import build_formatting_structure
 from .layout import layout
 from . import draw
 from . import utils
+from . import images
 
 
 def make_parser():
@@ -186,15 +187,11 @@ class Document(object):
         return self._pages
 
     def get_image_surface_from_uri(self, uri):
-        if uri in self._image_cache:
-            return self._image_cache[uri]
-        try:
-            surface = draw.get_image_surface_from_uri(uri)
-        # TODO: have a more specific list of exception for network errors
-        # and PNG parsing errors.
-        except Exception:
-            surface = None
-        self._image_cache[uri] = surface
+        missing = object()
+        surface = self._image_cache.get(uri, missing)
+        if surface is missing:
+            surface = images.get_image_surface_from_uri(uri)
+            self._image_cache[uri] = surface
         return surface
 
 
