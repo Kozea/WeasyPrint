@@ -21,7 +21,7 @@ setup(
     author_email='simon.sapin@kozea.fr',
     plateforms='Any',
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: GNU Affero General Public License v3',
         'Programming Language :: Python :: 2.7',
