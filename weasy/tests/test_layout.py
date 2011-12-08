@@ -754,6 +754,15 @@ def test_with_images():
     assert img.width == 4
     assert img.height == 4
 
+    # Try SVG too. (Not the same image though.)
+    page, = parse('<img src="blue.svg">')
+    html = page.root_box
+    body, = html.children
+    line, = body.children
+    img, = line.children
+    assert img.width == 10
+    assert img.height == 10
+
     # Layout rules try to preserve the ratio, so the height should be 40px too:
     page, = parse('<img src="pattern.png" style="width: 40px">')
     html = page.root_box

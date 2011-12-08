@@ -49,6 +49,24 @@ def png_handler(file_like):
     return surface, surface.get_width(), surface.get_height()
 
 
+@register_format('image/svg+xml')
+def cairosvg_handler(file_like):
+    """Return a cairo Surface from a SVG byte stream.
+
+    This handler uses CairoSVG: http://cairosvg.org/
+    """
+    # TODO: also offer librsvg?
+    try:
+        import cairosvg
+    except ImportError:
+        return None
+    from cairosvg.surface_type import DummySurface
+    # TODO: find a way to pass file_like to the parser, not read the
+    # whole string in memory.
+    surface = cairosvg.svg2surface(file_like.read(), DummySurface)
+    return surface.cairo, surface.width, surface.height
+
+
 def fallback_handler(file_like):
     """
     Parse a byte stream with PIL and return a cairo Surface.
