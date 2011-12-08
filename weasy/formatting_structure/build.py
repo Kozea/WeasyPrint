@@ -177,10 +177,16 @@ def pseudo_to_box(document, state, element, pseudo_type):
                 texts = []
                 children.append(boxes.InlineReplacedBox.anonymous_from(
                     box, html.ImageReplacement(surface)))
-        elif type_ == 'COUNTER':
+        elif type_ == 'counter':
             counter_name, counter_style = value
             counter_value = counter_values.get(counter_name, [0])[-1]
             texts.append(counters.format(counter_value, counter_style))
+        elif type_ == 'counters':
+            counter_name, separator, counter_style = value
+            texts.append(separator.join(
+                counters.format(counter_value, counter_style)
+                for counter_value in counter_values.get(counter_name, [0])
+            ))
         else:
             assert type_ == 'QUOTE'
             is_open, insert = value

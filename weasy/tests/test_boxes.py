@@ -846,7 +846,7 @@ def test_counters():
         <div>
             <p></p>
             <p></p>
-            <p style="counter-reset: list-item -7 list-item 56"></p>
+            <p style="counter-reset: list-item 7 list-item -56"></p>
         </div>
         <p></p>
     '''), [
@@ -859,7 +859,53 @@ def test_counters():
                     ('p::marker', 'Text', '2.')])]),
             ('p', 'Block', [
                 ('p', 'Line', [
-                    ('p::marker', 'Text', '57.')])])]),
+                    ('p::marker', 'Text', '-55.')])])]),
         ('p', 'Block', [
             ('p', 'Line', [
                 ('p::marker', 'Text', '1.')])])])
+
+    assert_tree(parse_all('''
+        <style>
+            section:before { counter-reset: h; content: '' }
+            h1:before { counter-increment: h; content: counters(h, '.') }
+        </style>
+        <body>
+            <section>
+                <h1></h1>
+                <h1></h1>
+                <section>
+                    <h1></h1>
+                    <h1></h1>
+                </section>
+                <h1></h1>
+            </section>
+        </body>
+    '''), [
+        ('section', 'Block', [
+            ('section', 'AnonBlock', [
+                ('section', 'Line', [
+                    ('section:before', 'Inline', [])])]),
+            ('h1', 'Block', [
+                ('h1', 'Line', [
+                    ('h1:before', 'Inline', [
+                        ('h1:before', 'Text', '1')])])]),
+            ('h1', 'Block', [
+                ('h1', 'Line', [
+                    ('h1:before', 'Inline', [
+                        ('h1:before', 'Text', '2')])])]),
+            ('section', 'Block', [
+                ('section', 'AnonBlock', [
+                    ('section', 'Line', [
+                        ('section:before', 'Inline', [])])]),
+                ('h1', 'Block', [
+                    ('h1', 'Line', [
+                        ('h1:before', 'Inline', [
+                            ('h1:before', 'Text', '2.1')])])]),
+                ('h1', 'Block', [
+                    ('h1', 'Line', [
+                        ('h1:before', 'Inline', [
+                            ('h1:before', 'Text', '2.2')])])])]),
+            ('h1', 'Block', [
+                ('h1', 'Line', [
+                    ('h1:before', 'Inline', [
+                        ('h1:before', 'Text', '3')])])])])])

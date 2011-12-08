@@ -261,7 +261,7 @@ def content(values):
     if keyword in ('normal', 'none'):
         return keyword
     parsed_values = map(validate_content_value, values)
-    if False not in parsed_values:
+    if None not in parsed_values:
         return parsed_values
 
 
@@ -281,28 +281,26 @@ def validate_content_value(value):
     if type_ == 'URI':
         return ('URI', value.absoluteUri)
     elif type_ == 'FUNCTION':
-        seq = list(value.seq)
-        if len(seq) >= 3 and seq[-1].value == ')':
-            function_name = seq[0].value
-            args = [v.value for v in seq[1:-1]]
-            num_args = len(args)
-            if function_name == 'attr(':
-                attr_name = get_single_keyword(args)
-                if attr_name is not None:
-                    return ('ATTR', attr_name)
-            elif function_name == 'counter(':
-                counter_name =  get_keyword(args[0])
-                if num_args == 1:
-                    counter_style = 'decimal'
-                elif num_args == 2:
-                    # Might be None
-                    counter_style = get_keyword(args[1])
-                else:
-                    counter_style = None
-                if (counter_style in ('none', 'decimal')
-                        or counter_style in counters.STYLES):
-                    return ('COUNTER', (counter_name, counter_style))
-    return False
+        seq = [e.value for e in value.seq]
+        # seq is expected to look like
+        # ['name(', ARG_1, ',', ARG_2, ',', ..., ARG_N, ')']
+        if (seq[0][-1] == '(' and seq[-1] == ')' and
+                all(v == ',' for v in seq[2:-1:2])):
+            name = seq[0][:-1]
+            args = seq[1:-1:2]
+            prototype = (name, [a.type for a in args])
+            args = [a.value for a in args]
+            if prototype == ('attr', ['IDENT']):
+                return (name, args[0])
+            elif prototype in (('counter', ['IDENT']),
+                               ('counters', ['IDENT', 'STRING'])):
+                args.append('decimal')
+                return (name, args)
+            elif prototype in (('counter', ['IDENT', 'IDENT']),
+                               ('counters', ['IDENT', 'STRING', 'IDENT'])):
+                style = args[-1]
+                if style in ('none', 'decimal') or style in counters.STYLES:
+                    return (name, args)
 
 
 @validator()

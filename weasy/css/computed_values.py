@@ -312,7 +312,7 @@ def content(computer, name, values):
 def compute_content_value(computer, value):
     """Compute a content ``value``."""
     type_, content = value
-    if type_ == 'ATTR':
+    if type_ == 'attr':
         return ('STRING', computer.element.get(content, ''))
     else:
         return value
