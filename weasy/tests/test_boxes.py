@@ -771,7 +771,7 @@ def test_before_after():
 
 @SUITE.test
 def test_counters():
-    """Test the various counter styles."""
+    """Test counter-reset, counter-increment, content: counter() counters()"""
     assert_tree(parse_all('''
         <style>
             p { counter-increment: p 2 }
@@ -909,3 +909,150 @@ def test_counters():
                 ('h1', 'Line', [
                     ('h1:before', 'Inline', [
                         ('h1:before', 'Text', '3')])])])])])
+
+
+@SUITE.test
+def test_counter_styles():
+    """Test the various counter styles."""
+    assert_tree(parse_all('''
+        <style>
+            body { counter-reset: p -12 }
+            p { counter-increment: p }
+            p:nth-child(1):before { content: '-' counter(p, none) '-'; }
+            p:nth-child(2):before { content: counter(p, disc); }
+            p:nth-child(3):before { content: counter(p, circle); }
+            p:nth-child(4):before { content: counter(p, square); }
+            p:nth-child(5):before { content: counter(p); }
+        </style>
+        <p></p>
+        <p></p>
+        <p></p>
+        <p></p>
+        <p></p>
+    '''), [
+        ('p', 'Block', [
+            ('p', 'Line', [
+                ('p:before', 'Inline', [
+                    ('p:before', 'Text', counter)])])])
+        for counter in u'--  •  ◦  ▪  -7'.split()])
+
+    assert_tree(parse_all('''
+        <style>
+            p { counter-increment: p }
+            p:before { content: counter(p, decimal-leading-zero); }
+        </style>
+        <p style="counter-reset: p -1987"></p>
+        <p></p>
+        <p style="counter-reset: p -12"></p>
+        <p></p>
+        <p></p>
+        <p></p>
+        <p style="counter-reset: p -2"></p>
+        <p></p>
+        <p></p>
+        <p></p>
+        <p style="counter-reset: p 8"></p>
+        <p></p>
+        <p></p>
+        <p style="counter-reset: p 98"></p>
+        <p></p>
+        <p></p>
+        <p style="counter-reset: p 4134"></p>
+        <p></p>
+    '''), [
+        ('p', 'Block', [
+            ('p', 'Line', [
+                ('p:before', 'Inline', [
+                    ('p:before', 'Text', counter)])])])
+        for counter in u'''-1986 -1985  -11 -10 -09 -08  -01 00 01 02  09 10 11
+                            99 100 101  4135 4136'''.split()])
+
+    # Same test as above, but short-circuit HTML and boxes
+
+    assert [counters.format(value, 'decimal-leading-zero') for value in [
+        -1986, -1985,  -11, -10, -9, -8,  -1, 0, 1, 2,  9, 10, 11,
+        99, 100, 101,  4135, 4136
+    ]] == '''
+        -1986 -1985  -11 -10 -09 -08  -01 00 01 02  09 10 11
+        99 100 101  4135 4136
+    '''.split()
+
+    # Now that we’re confident that they do the same, use the shorter form.
+
+# http://test.csswg.org/suites/css2.1/20110323/html4/content-counter-007.htm
+    assert [counters.format(value, 'lower-roman') for value in [
+        -1986, -1985,  -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
+        49, 50,  389, 390,  3489, 3490, 3491, 4999, 5000, 5001
+    ]] == '''
+        -1986 -1985  -1 0 i ii iii iv v vi vii viii ix x xi xii
+        xlix l  ccclxxxix cccxc  mmmcdlxxxix mmmcdxc mmmcdxci
+        mmmmcmxcix  5000 5001
+    '''.split()
+
+# http://test.csswg.org/suites/css2.1/20110323/html4/content-counter-008.htm
+    assert [counters.format(value, 'upper-roman') for value in [
+        -1986, -1985,  -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
+        49, 50,  389, 390,  3489, 3490, 3491, 4999, 5000, 5001
+    ]] == '''
+        -1986 -1985  -1 0 I II III IV V VI VII VIII IX X XI XII
+        XLIX L  CCCLXXXIX CCCXC  MMMCDLXXXIX MMMCDXC MMMCDXCI
+        MMMMCMXCIX 5000 5001
+    '''.split()
+
+    assert [counters.format(value, 'lower-alpha') for value in [
+        -1986, -1985,  -1, 0, 1, 2, 3, 4,  25, 26, 27, 28, 29,  2002, 2003
+    ]] == '''
+        -1986 -1985  -1 0 a b c d  y z aa ab ac bxz bya
+    '''.split()
+
+    assert [counters.format(value, 'upper-alpha') for value in [
+        -1986, -1985,  -1, 0, 1, 2, 3, 4,  25, 26, 27, 28, 29,  2002, 2003
+    ]] == '''
+        -1986 -1985  -1 0 A B C D  Y Z AA AB AC BXZ BYA
+    '''.split()
+
+    assert [counters.format(value, 'lower-latin') for value in [
+        -1986, -1985,  -1, 0, 1, 2, 3, 4,  25, 26, 27, 28, 29,  2002, 2003
+    ]] == '''
+        -1986 -1985  -1 0 a b c d  y z aa ab ac bxz bya
+    '''.split()
+
+    assert [counters.format(value, 'upper-latin') for value in [
+        -1986, -1985,  -1, 0, 1, 2, 3, 4,  25, 26, 27, 28, 29,  2002, 2003
+    ]] == '''
+        -1986 -1985  -1 0 A B C D  Y Z AA AB AC BXZ BYA
+    '''.split()
+
+# http://test.csswg.org/suites/css2.1/20110323/html4/content-counter-009.htm
+    assert [counters.format(value, 'georgian') for value in [
+        -1986, -1985,  -1, 0, 1,
+        2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
+        20, 30, 40, 50, 60, 70, 80, 90, 100,
+        200, 300, 400, 500, 600, 700, 800, 900, 1000,
+        2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000,
+        19999, 20000, 20001
+    ]] == u'''
+        -1986 -1985  -1 0 ა
+        ბ გ დ ე ვ ზ ჱ თ ი ია იბ
+        კ ლ მ ნ ჲ ო პ ჟ რ
+        ს ტ ჳ ფ ქ ღ ყ შ ჩ
+        ც ძ წ ჭ ხ ჴ ჯ ჰ ჵ
+        ჵჰშჟთ 20000 20001
+    '''.split()
+
+# http://test.csswg.org/suites/css2.1/20110323/html4/content-counter-010.htm
+    assert [counters.format(value, 'armenian') for value in [
+        -1986, -1985,  -1, 0, 1,
+        2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
+        20, 30, 40, 50, 60, 70, 80, 90, 100,
+        200, 300, 400, 500, 600, 700, 800, 900, 1000,
+        2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000,
+        9999, 10000, 10001
+    ]] == u'''
+        -1986 -1985  -1 0 Ա
+        Բ Գ Դ Ե Զ Է Ը Թ Ժ ԺԱ ԺԲ
+        Ի Լ Խ Ծ Կ Հ Ձ Ղ Ճ
+        Մ Յ Ն Շ Ո Չ Պ Ջ Ռ
+        Ս Վ Տ Ր Ց Ւ Փ Ք
+        ՔՋՂԹ 10000 10001
+    '''.split()

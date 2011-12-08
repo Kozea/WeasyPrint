@@ -262,7 +262,7 @@ register_style(
     override='lower-alpha',
 )
 register_style(
-    'uppe-latin',
+    'upper-latin',
     type='override',
     override='upper-alpha',
 )
