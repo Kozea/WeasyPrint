@@ -29,13 +29,15 @@ import cairo
 from .utils import urlopen
 
 
-SUPPORTED_FORMATS = {}
+# Map MIME types to functions that take a byte stream and return
+# ``(surface, width, height)`` a cairo Surface and its dimension in pixels.
+FORMAT_HANDLERS = {}
 
 
 def register_format(mime_type):
     """Register a handler for a give image MIME type."""
     def decorator(function):
-        SUPPORTED_FORMATS[mime_type] = function
+        FORMAT_HANDLERS[mime_type] = function
         return function
     return decorator
 
@@ -43,7 +45,8 @@ def register_format(mime_type):
 @register_format('image/png')
 def png_handler(file_like):
     """Return a cairo Surface from a PNG byte stream."""
-    return cairo.ImageSurface.create_from_png(file_like)
+    surface = cairo.ImageSurface.create_from_png(file_like)
+    return surface, surface.get_width(), surface.get_height()
 
 
 def fallback_handler(file_like):
@@ -81,7 +84,7 @@ def get_image_surface_from_uri(uri):
         return None
     # TODO: implement image type sniffing?
 # http://www.w3.org/TR/html5/fetching-resources.html#content-type-sniffing:-image
-    handler = SUPPORTED_FORMATS.get(mime_type, fallback_handler)
+    handler = FORMAT_HANDLERS.get(mime_type, fallback_handler)
     try:
         return handler(file_like)
     except (IOError, MemoryError):

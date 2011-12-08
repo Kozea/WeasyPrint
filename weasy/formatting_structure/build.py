@@ -169,14 +169,14 @@ def pseudo_to_box(document, state, element, pseudo_type):
         if type_ == 'STRING':
             texts.append(value)
         elif type_ == 'URI':
-            surface = document.get_image_surface_from_uri(value)
-            if surface is not None:
+            image = document.get_image_surface_from_uri(value)
+            if image is not None:
                 text = u''.join(texts)
                 if text:
                     children.append(boxes.TextBox.anonymous_from(box, text))
                 texts = []
                 children.append(boxes.InlineReplacedBox.anonymous_from(
-                    box, html.ImageReplacement(surface)))
+                    box, image))
         elif type_ == 'counter':
             counter_name, counter_style = value
             counter_value = counter_values.get(counter_name, [0])[-1]
@@ -260,11 +260,11 @@ def add_box_marker(document, counter_values, box):
     image = style.list_style_image
     if image != 'none':
         # surface may be None here too, in case the image is not available.
-        surface = document.get_image_surface_from_uri(image)
+        image = document.get_image_surface_from_uri(image)
     else:
-        surface = None
+        image = None
 
-    if surface is None:
+    if image is None:
         type_ = style.list_style_type
         if type_ == 'none':
             return
@@ -272,9 +272,7 @@ def add_box_marker(document, counter_values, box):
         marker_text = counters.format_list_marker(counter_value, type_)
         marker_box = boxes.TextBox.anonymous_from(box, marker_text)
     else:
-        replacement = html.ImageReplacement(surface)
-        marker_box = boxes.InlineReplacedBox.anonymous_from(
-            box, replacement)
+        marker_box = boxes.InlineReplacedBox.anonymous_from(box, image)
         marker_box.is_list_marker = True
     marker_box.element_tag += '::marker'
 

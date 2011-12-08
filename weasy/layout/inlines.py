@@ -200,9 +200,8 @@ def replaced_box_width(box, device_size):
     """
     Compute and set the used width for replaced boxes (inline- or block-level)
     """
-    intrinsic_ratio = box.replacement.intrinsic_ratio()
-    intrinsic_height = box.replacement.intrinsic_height()
-    intrinsic_width = box.replacement.intrinsic_width()
+    _surface, intrinsic_width, intrinsic_height = box.replacement
+    intrinsic_ratio = intrinsic_width / intrinsic_height
 
     if box.height == 'auto' and box.width == 'auto':
         if intrinsic_width is not None:
@@ -235,8 +234,8 @@ def replaced_box_height(box, device_size):
     """
     Compute and set the used height for replaced boxes (inline- or block-level)
     """
-    intrinsic_ratio = box.replacement.intrinsic_ratio()
-    intrinsic_height = box.replacement.intrinsic_height()
+    _surface, intrinsic_width, intrinsic_height = box.replacement
+    intrinsic_ratio = intrinsic_width / intrinsic_height
 
     if box.height == 'auto' and box.width == 'auto':
         if intrinsic_height is not None:

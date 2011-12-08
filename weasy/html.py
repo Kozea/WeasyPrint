@@ -71,8 +71,8 @@ def is_block_level(box):
         raise ValueError('Unsupported display: ' + display)
 
 
-def make_replaced_box(element, box, replacement):
-    """Wrap a :class:`Replacement` object in either replaced box.
+def make_replaced_box(element, box, image):
+    """Wrap an image in a replaced box.
 
     That box is either block-level or inline-level, depending on what the
     element should be.
@@ -82,7 +82,7 @@ def make_replaced_box(element, box, replacement):
         type_ = boxes.BlockReplacedBox
     else:
         type_ = boxes.InlineReplacedBox
-    return type_(element.tag, element.sourceline, box.style, replacement)
+    return type_(element.tag, element.sourceline, box.style, image)
 
 
 def make_text_box(element, box, text):
@@ -111,10 +111,9 @@ def handle_img(document, element, box):
     src = get_url_attribute(element, 'src')
     alt = element.get('alt')
     if src:
-        surface = document.get_image_surface_from_uri(src)
-        if surface is not None:
-            replacement = ImageReplacement(surface)
-            return [make_replaced_box(element, box, replacement)]
+        image = document.get_image_surface_from_uri(src)
+        if image is not None:
+            return [make_replaced_box(element, box, image)]
         else:
             # Invalid image, use the alt-text.
             if alt:
@@ -184,41 +183,3 @@ def handle_td(document, element, box):
         integer_attribute(element, box, 'colspan')
         integer_attribute(element, box, 'rowspan', minimum=0)
     return [box]
-
-
-class Replacement(object):
-    """Abstract base class for replaced elements."""
-    def intrinsic_width(self):
-        """Intrinsic width if defined."""
-
-    def intrinsic_height(self):
-        """Intrinsic height if defined."""
-
-    def intrinsic_ratio(self):
-        """Intrinsic ratio if defined."""
-        width = self.intrinsic_width()
-        height = self.intrinsic_height()
-        if (width is not None and height is not None and height != 0):
-            return width / height
-
-
-class ImageReplacement(Replacement):
-    """Replaced ``<img>`` element.
-
-    :param surface: a cairo :class:`ImageSurface` object.
-
-    """
-    def __init__(self, surface):
-        assert surface
-        self.surface = surface
-
-    def intrinsic_width(self):
-        return self.surface.get_width()
-
-    def intrinsic_height(self):
-        return self.surface.get_height()
-
-    def draw(self, context):
-        """Draw the element on the Cairo context."""
-        context.set_source_surface(self.surface)
-        context.paint()

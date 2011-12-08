@@ -169,12 +169,11 @@ def draw_background(document, context, box, clip=True):
         if bg_image == 'none':
             return
 
-        surface = document.get_image_surface_from_uri(bg_image)
-        if surface is None:
+        image = document.get_image_surface_from_uri(bg_image)
+        if image is None:
             return
 
-        image_width = surface.get_width()
-        image_height = surface.get_height()
+        surface, image_width, image_height = image
 
         bg_position = box.style.background_position
         bg_position_x, bg_position_y = absolute_background_position(
@@ -335,15 +334,16 @@ def draw_replacedbox(context, box):
     """Draw the given :class:`boxes.ReplacedBox` to a ``cairo.context``."""
     x, y = box.padding_box_x(), box.padding_box_y()
     width, height = box.width, box.height
+    surface, intrinsic_width, intrinsic_height = box.replacement
     with context.stacked():
         context.translate(x, y)
         context.rectangle(0, 0, width, height)
         context.clip()
-        scale_width = width / box.replacement.intrinsic_width()
-        scale_height = height / box.replacement.intrinsic_height()
+        scale_width = width / intrinsic_width
+        scale_height = height / intrinsic_height
         context.scale(scale_width, scale_height)
-        box.replacement.draw(context)
-
+        context.set_source_surface(surface)
+        context.paint()
 
 def draw_text(context, textbox):
     """Draw ``textbox`` to a ``cairo.Context`` from ``PangoCairo.Context``."""
