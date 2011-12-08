@@ -805,6 +805,7 @@ def test_counters():
             <li></li>
             <li><ol>
                 <li></li>
+                <li style="counter-increment: none"></li>
                 <li></li>
             </ol></li>
             <li></li>
@@ -825,6 +826,9 @@ def test_counters():
                     ('li', 'Line', [
                         ('li::marker', 'Text', '4.')])]),
                 ('ol', 'Block', [
+                    ('li', 'Block', [
+                        ('li', 'Line', [
+                            ('li::marker', 'Text', '1.')])]),
                     ('li', 'Block', [
                         ('li', 'Line', [
                             ('li::marker', 'Text', '1.')])]),

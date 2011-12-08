@@ -114,7 +114,7 @@ def dom_to_box(document, element, state=None):
 
     children = []
     if display == 'list-item':
-        children.extend(add_box_marker(document, state, box))
+        children.extend(add_box_marker(document, counter_values, box))
 
     # If this element’s direct children create new scopes, the counter
     # names will be in this new list
@@ -162,6 +162,8 @@ def pseudo_to_box(document, state, element, pseudo_type):
     quote_depth, counter_values, counter_scopes = state
     update_counters(state, style)
     children = []
+    if display == 'list-item':
+        children.extend(add_box_marker(document, counter_values, box))
     texts = []
     for type_, value in content:
         if type_ == 'STRING':
@@ -220,7 +222,17 @@ def update_counters(state, style):
             values.append(0)
         values[-1] = value
 
-    for name, value in style.counter_increment:
+    counter_increment = style.counter_increment
+    if counter_increment == 'auto':
+        # 'auto' is the initial value but is not valid in stylesheet:
+        # there was no counter-increment declaration for this element.
+        # (Or the winning value was 'initial'.)
+        # http://dev.w3.org/csswg/css3-lists/#declaring-a-list-item
+        if style.display == 'list-item':
+            counter_increment = [('list-item', 1)]
+        else:
+            counter_increment = []
+    for name, value in counter_increment:
         values = counter_values.setdefault(name, [])
         if not values:
             if name in sibling_scopes:
@@ -231,19 +243,13 @@ def update_counters(state, style):
         values[-1] += value
 
 
-def add_box_marker(document, state, box):
+def add_box_marker(document, counter_values, box):
     """Add a list marker to boxes for elements with ``display: list-item``,
     and yield children to add a the start of the box.
 
     See http://www.w3.org/TR/CSS21/generate.html#lists
 
     """
-    quote_depth, counter_values, counter_scopes = state
-    update_counters(state, StyleDict(dict(
-        counter_reset=[],
-        counter_set=[],
-        counter_increment=[('list-item', 1)],
-    )))
     style = box.style
     image = style.list_style_image
     if image != 'none':

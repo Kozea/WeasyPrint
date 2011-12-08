@@ -55,7 +55,10 @@ INITIAL_VALUES = {
     'clip': 'auto',
     'color': _parse('#000')[0],     # depends on user agent
     'content': 'normal',
-    'counter_increment': [],  # parsed value for 'none'
+    # Means 'none', but allow `display: list-item` to increment the
+    # list-item counter. If we ever have a way for authors to query
+    # computed values (JavaScript?), this value should serialize to 'none'.
+    'counter_increment': 'auto',
     'counter_reset': [],  # parsed value for 'none'
 #    'counter_set': [],  # parsed value for 'none'
     'direction': 'ltr',
