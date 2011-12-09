@@ -33,6 +33,10 @@ from .utils import urlopen
 # ``(surface, width, height)`` a cairo Surface and its dimension in pixels.
 FORMAT_HANDLERS = {}
 
+# TODO: currently CairoSVG only support images with an explicit
+# width and height. When it supports images with only an intrinsic ratio
+# this API will need to change.
+
 
 def register_format(mime_type):
     """Register a handler for a give image MIME type."""

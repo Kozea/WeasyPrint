@@ -101,6 +101,7 @@ def make_text_box(element, box, text):
                  box.style, [text_box])
 
 
+# TODO: also support images (including SVG) in <embed> and <object> elements?
 @handler('img')
 def handle_img(document, element, box):
     """Handle ``<img>`` tags, return either an image or the alt-text.
