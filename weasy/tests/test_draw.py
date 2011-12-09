@@ -593,6 +593,22 @@ def test_images():
         _+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_,
     ]
+    V = array('B', [0x65, 0x24, 0xe2, 255])
+    v = array('B', [0x35, 0x00, 0xb2, 255])
+    u = array('B', [0x36, 0x00, 0xb3, 255])
+    b = array('B', [0, 1, 254, 255])
+    d = array('B', [0, 0, 254, 255])
+    centered_jpg_image = [
+        # JPG is lossy...
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+V+v+b+b+_+_,
+        _+_+v+u+b+b+_+_,
+        _+_+d+d+d+d+_+_,
+        _+_+d+d+d+d+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+    ]
     no_image = [
         _+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_,
@@ -603,13 +619,15 @@ def test_images():
         _+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_,
     ]
-    test_pixels('inline_image', 8, 8, centered_image, '''
-        <style>
-            @page { size: 8px }
-            body { margin: 2px 0 0 2px; background: #fff }
-        </style>
-        <div><img src="pattern.png"></div>
-    ''')
+    for format in ['png', 'gif', 'svg', 'jpg']:
+        image = centered_jpg_image if format == 'jpg' else centered_image
+        test_pixels('inline_image_' + format, 8, 8, image, '''
+            <style>
+                @page { size: 8px }
+                body { margin: 2px 0 0 2px; background: #fff }
+            </style>
+            <div><img src="pattern.%s"></div>
+        ''' % format)
     test_pixels('block_image', 8, 8, centered_image, '''
         <style>
             @page { size: 8px }

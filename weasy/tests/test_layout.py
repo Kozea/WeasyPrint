@@ -736,32 +736,15 @@ def test_whitespace_processing():
 @SUITE.test
 def test_with_images():
     """Test that width, height and ratio of images are respected."""
-    page, = parse('<img src="pattern.png">')
-    html = page.root_box
-    body, = html.children
-    line, = body.children
-    img, = line.children
-    # pattern.png is 4x4 px.
-    assert img.width == 4
-    assert img.height == 4
-
-    # Try the same image in JPEG
-    page, = parse('<img src="pattern.jpg">')
-    html = page.root_box
-    body, = html.children
-    line, = body.children
-    img, = line.children
-    assert img.width == 4
-    assert img.height == 4
-
-    # Try SVG too. (Not the same image though.)
-    page, = parse('<img src="blue.svg">')
-    html = page.root_box
-    body, = html.children
-    line, = body.children
-    img, = line.children
-    assert img.width == 10
-    assert img.height == 10
+    # Try a few image formats
+    for format in ['png', 'gif', 'svg', 'jpg']:
+        page, = parse('<img src="pattern.%s">' % format)
+        html = page.root_box
+        body, = html.children
+        line, = body.children
+        img, = line.children
+        assert img.width == 4
+        assert img.height == 4
 
     # Layout rules try to preserve the ratio, so the height should be 40px too:
     page, = parse('<img src="pattern.png" style="width: 40px">')
