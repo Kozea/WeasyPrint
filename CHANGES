@@ -1,6 +1,7 @@
 Version 0.3, released on 2011-12-XX
 ===================================
 
+* Support SVG images
 * Support generated content: the ``:before`` and ``:after`` pseudo-elements,
   the ``content``, ``quotes`` and ``counter-*`` properties.
 * Support ordered lists: all CSS 2.1 values of the ``list-style-type`` property.
