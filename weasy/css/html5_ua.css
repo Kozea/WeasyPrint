@@ -1,0 +1,506 @@
+/*
+
+User agent stylsheet for HTML.
+
+Contributed by Peter Moulder.
+Based on suggested styles in the HTML5 specification and what various
+web browsers use.
+
+*/
+
+*[dir] { unicode-bidi: embed; }
+*[hidden] { display: none; }
+*[dir=ltr] { direction: ltr; }
+*[dir=rtl] { direction: rtl; }
+:dir(ltr) { direction: ltr; }
+:dir(rtl) { direction: rtl; }
+:lang(af) { quotes: '\201c' '\201d' '\2018' '\201d'; }
+:lang(agq) { quotes: '\0027' '\0027' '\201e' '\201d'; }
+:lang(ak) { quotes: '\2018' '\2019' '\201c' '\201d'; }
+:lang(am) { quotes: '\00ab' '\00bb' '\2039' '\203a'; }
+:lang(ar) { quotes: '\201c' '\201d' '\2018' '\2019'; }
+:lang(asa) { quotes: '\0027' '\0027' '\201c' '\201d'; }
+:lang(az) { quotes: '\201c' '\201d' '\2018' '\2019'; }
+:lang(bas) { quotes: '\00ab' '\00bb' '\201c' '\201e'; }
+:lang(be) { quotes: '\201e' '\201d' '\00ab' '\00bb'; }
+:lang(bem) { quotes: '\0027' '\0027' '\201c' '\201c'; }
+:lang(bez) { quotes: '\2018' '\2019' '\201c' '\201d'; }
+:lang(bg) { quotes: '\201e' '\201c' '\2018' '\2019'; }
+:lang(bm) { quotes: '\00ab' '\00bb' '\201c' '\201d'; }
+:lang(bn) { quotes: '\201c' '\201d' '\2018' '\2019'; }
+:lang(brx) { quotes: '\0027' '\0027' '\0022' '\0022'; }
+:lang(bs) { quotes: '\2018' '\2019' '\201c' '\201d'; }
+:lang(ca) { quotes: '\2018' '\2019' '\201c' '\201d'; }
+:lang(cgg) { quotes: '\0027' '\0027' '\201c' '\201e'; }
+:lang(chr) { quotes: '\201c' '\201d' '\2018' '\2019'; }
+:lang(cs) { quotes: '\201e' '\201c' '\201a' '\2018'; }
+:lang(cy) { quotes: '\2018' '\2019' '\201c' '\201d'; }
+:lang(da) { quotes: '\201d' '\201d' '\201d' '\201d'; }
+:lang(dav) { quotes: '\0027' '\0027' '\201c' '\201d'; }
+:lang(de) { quotes: '\201e' '\201c' '\201a' '\2018'; }
+:lang(de-CH) { quotes: '\00ab' '\00bb' '\2039' '\203a'; }
+:lang(dje) { quotes: '\201c' '\201d' '\00ab' '\00bb'; }
+:lang(dua) { quotes: '\00ab' '\00bb' '\0027' '\0027'; }
+:lang(dyo) { quotes: '\00ab' '\00bb' '\201c' '\201d'; }
+:lang(dz) { quotes: '\0022' '\0022' '\0027' '\0027'; }
+:lang(ebu) { quotes: '\0027' '\0027' '\201c' '\201d'; }
+:lang(ee) { quotes: '\0027' '\0027' '\201c' '\201c'; }
+:lang(el) { quotes: '\00ab' '\00bb' '\2018' '\2019'; }
+:lang(el-POLYTON) { quotes: '\00ab' '\00bb' '\201b' '\2019'; }
+:lang(en) { quotes: '\201c' '\201d' '\2018' '\2019'; }
+:lang(en-GB) { quotes: '\2018' '\2019' '\201c' '\201d'; }
+:lang(es) { quotes: '\2018' '\2019' '\201c' '\201d'; }
+:lang(et) { quotes: '\201e' '\201c' '\201e' '\201c'; }
+:lang(eu) { quotes: '\201c' '\201d' '\2018' '\2019'; }
+:lang(ewo) { quotes: '\00ab' '\00bb' '\201c' '\201d'; }
+:lang(fa) { quotes: '\00ab' '\00bb' '\2039' '\203a'; }
+:lang(ff) { quotes: '\201e' '\201d' '\0027' '\0027'; }
+:lang(fi) { quotes: '\201d' '\201d' '\2019' '\2019'; }
+:lang(fil) { quotes: '\201c' '\201d' '\2018' '\2019'; }
+:lang(fo) { quotes: '\201d' '\201d' '\2019' '\2019'; }
+:lang(fr) { quotes: '\00ab' '\00bb' '\201c' '\201d'; }
+:lang(fr-CH) { quotes: '\00ab' '\00bb' '\2039' '\203a'; }
+:lang(fur) { quotes: '\2018' '\2019' '\201c' '\201d'; }
+:lang(gaa) { quotes: '\0027' '\0027' '\0022' '\0022'; }
+:lang(gd) { quotes: '\201c' '\201d' '\2018' '\2019'; }
+:lang(gl) { quotes: '\201c' '\201d' '\2018' '\2019'; }
+:lang(gsw) { quotes: '\00ab' '\00bb' '\2039' '\203a'; }
+:lang(gu) { quotes: '\0027' '\0027' '\0022' '\0022'; }
+:lang(guz) { quotes: '\0027' '\2018' '\201c' '\201c'; }
+:lang(ha) { quotes: '\0027' '\0027' '\201c' '\201c'; }
+:lang(he) { quotes: '\201c' '\201d' '\0022' '\0022'; }
+:lang(hi) { quotes: '\0027' '\0027' '\0022' '\0022'; }
+:lang(hr) { quotes: '\2018' '\2019' '\201c' '\201d'; }
+:lang(hu) { quotes: '\201e' '\201d' '\201e' '\201d'; }
+:lang(ia) { quotes: '\2018' '\2019' '\201c' '\201d'; }
+:lang(id) { quotes: '\201c' '\201d' '\2018' '\2019'; }
+:lang(ig) { quotes: '\0027' '\0027' '\201c' '\201d'; }
+:lang(is) { quotes: '\201e' '\201c' '\201a' '\2018'; }
+:lang(it) { quotes: '\2018' '\2019' '\201c' '\201d'; }
+:lang(it-CH) { quotes: '\00ab' '\00bb' '\2039' '\203a'; }
+:lang(ja) { quotes: '\300c' '\300d' '\300e' '\300f'; }
+:lang(jmc) { quotes: '\0027' '\0027' '\201c' '\201c'; }
+:lang(ka) { quotes: '\201c' '\201d' '\2018' '\2019'; }
+:lang(kab) { quotes: '\00ab' '\00bb' '\201c' '\201d'; }
+:lang(kam) { quotes: '\0027' '\0027' '\201c' '\201d'; }
+:lang(kde) { quotes: '\0027' '\0027' '\201c' '\201d'; }
+:lang(kea) { quotes: '\201c' '\201d' '\00ab' '\00bb'; }
+:lang(khq) { quotes: '\201c' '\201d' '\00ab' '\00bb'; }
+:lang(ki) { quotes: '\0027' '\0027' '\201c' '\201d'; }
+:lang(kl) { quotes: '\00bb' '\00ab' '\203a' '\2039'; }
+:lang(kln) { quotes: '\0027' '\0027' '\201c' '\201d'; }
+:lang(km) { quotes: '\0027' '\0027' '\0022' '\0022'; }
+:lang(kn) { quotes: '\201c' '\201d' '\2018' '\2019'; }
+:lang(ko) { quotes: '\2018' '\2019' '\201c' '\201d'; }
+:lang(ksb) { quotes: '\0027' '\0027' '\201c' '\201d'; }
+:lang(ksf) { quotes: '\0027' '\0027' '\00ab' '\00bb'; }
+:lang(ksh) { quotes: '\201e' '\201c' '\201a' '\2018'; }
+:lang(lag) { quotes: '\201d' '\201d' '\0027' '\0027'; }
+:lang(lg) { quotes: '\0027' '\0027' '\201c' '\201d'; }
+:lang(ln) { quotes: '\0027' '\0027' '\201c' '\201d'; }
+:lang(lo) { quotes: '\0027' '\0027' '\0022' '\0022'; }
+:lang(lt) { quotes: '\201e' '\201c' '\201e' '\201c'; }
+:lang(lu) { quotes: '\2018' '\2018' '\201c' '\201c'; }
+:lang(luo) { quotes: '\2018' '\2019' '\201c' '\201d'; }
+:lang(luy) { quotes: '\0027' '\0027' '\201e' '\201c'; }
+:lang(lv) { quotes: '\201c' '\201d' '\2018' '\2019'; }
+:lang(mas) { quotes: '\0027' '\0027' '\201d' '\201c'; }
+:lang(mer) { quotes: '\0027' '\0027' '\201c' '\201d'; }
+:lang(mfe) { quotes: '\201c' '\201d' '\2018' '\2019'; }
+:lang(mg) { quotes: '\00ab' '\00bb' '\201c' '\201d'; }
+:lang(ml) { quotes: '\201c' '\201d' '\2018' '\2019'; }
+:lang(mn) { quotes: '\2018' '\2019' '\201c' '\201d'; }
+:lang(mr) { quotes: '\0027' '\0027' '\0022' '\0022'; }
+:lang(ms) { quotes: '\201c' '\201d' '\2018' '\2019'; }
+:lang(mt) { quotes: '\201c' '\201d' '\2018' '\2019'; }
+:lang(mua) { quotes: '\00ab' '\00bb' '\201c' '\201d'; }
+:lang(my) { quotes: '\201c' '\201d' '\2018' '\2019'; }
+:lang(naq) { quotes: '\0027' '\0027' '\201c' '\201d'; }
+:lang(nb) { quotes: '\201c' '\201d' '\2018' '\2019'; }
+:lang(nd) { quotes: '\0027' '\0027' '\201c' '\201d'; }
+:lang(nds) { quotes: '\201e' '\201c' '\201a' '\2018'; }
+:lang(ne) { quotes: '\0027' '\0027' '\0022' '\0022'; }
+:lang(nl) { quotes: '\2018' '\2019' '\201c' '\201d'; }
+:lang(nmg) { quotes: '\201c' '\201e' '\00ab' '\00bb'; }
+:lang(nn) { quotes: '\00ab' '\00bb' '\201c' '\201d'; }
+:lang(nr) { quotes: '\2018' '\2019' '\201c' '\201d'; }
+:lang(nso) { quotes: '\2018' '\2019' '\201c' '\201d'; }
+:lang(nus) { quotes: '\201c' '\201d' '\2018' '\2019'; }
+:lang(nyn) { quotes: '\0027' '\0027' '\201c' '\201e'; }
+:lang(pa) { quotes: '\0027' '\0027' '\0022' '\0022'; }
+:lang(pl) { quotes: '\2018' '\2019' '\201e' '\201d'; }
+:lang(pt) { quotes: '\201c' '\201d' '\2018' '\2019'; }
+:lang(rm) { quotes: '\00ab' '\00bb' '\2039' '\203a'; }
+:lang(rn) { quotes: '\0027' '\0027' '\201d' '\201d'; }
+:lang(ro) { quotes: '\201e' '\201d' '\00ab' '\00bb'; }
+:lang(rof) { quotes: '\0027' '\0027' '\201c' '\201c'; }
+:lang(ru) { quotes: '\00ab' '\00bb' '\201e' '\201c'; }
+:lang(rw) { quotes: '\2018' '\2019' '\00ab' '\00bb'; }
+:lang(rwk) { quotes: '\0027' '\0027' '\201c' '\201c'; }
+:lang(saq) { quotes: '\0027' '\0027' '\201c' '\201d'; }
+:lang(sbp) { quotes: '\0027' '\0027' '\201c' '\201d'; }
+:lang(se) { quotes: '\201d' '\201d' '\2019' '\2019'; }
+:lang(seh) { quotes: '\0027' '\0027' '\0027' '\0027'; }
+:lang(ses) { quotes: '\201c' '\201d' '\00ab' '\00bb'; }
+:lang(sg) { quotes: '\00ab' '\00bb' '\201c' '\2019'; }
+:lang(shi) { quotes: '\00ab' '\00bb' '\201e' '\201d'; }
+:lang(shi-Tfng) { quotes: '\00ab' '\00bb' '\201e' '\201d'; }
+:lang(sk) { quotes: '\201a' '\2018' '\201e' '\201c'; }
+:lang(sl) { quotes: '\00bb' '\00ab' '\201e' '\201c'; }
+:lang(sn) { quotes: '\0027' '\0027' '\201d' '\201d'; }
+:lang(so) { quotes: '\201c' '\201d' '\2018' '\2019'; }
+:lang(sr) { quotes: '\201c' '\201d' '\2018' '\2019'; }
+:lang(ss) { quotes: '\2018' '\2019' '\201c' '\201d'; }
+:lang(st) { quotes: '\2018' '\2019' '\201c' '\201d'; }
+:lang(sv) { quotes: '\201d' '\201d' '\2019' '\2019'; }
+:lang(sw) { quotes: '\0027' '\0027' '\0027' '\0027'; }
+:lang(swc) { quotes: '\0027' '\0027' '\201d' '\201c'; }
+:lang(ta) { quotes: '\201c' '\201d' '\2018' '\2019'; }
+:lang(te) { quotes: '\201c' '\201d' '\2018' '\2019'; }
+:lang(teo) { quotes: '\0027' '\2019' '\201c' '\201d'; }
+:lang(tg) { quotes: '\00ab' '\00bb' '\00ab' '\201e'; }
+:lang(th) { quotes: '\201c' '\201d' '\2018' '\2019'; }
+:lang(ti-ER) { quotes: '\2018' '\2019' '\201c' '\201d'; }
+:lang(tn) { quotes: '\2018' '\2019' '\201c' '\201d'; }
+:lang(to) { quotes: '\201c' '\201d' '\00ab' '\00bb'; }
+:lang(tr) { quotes: '\201c' '\201d' '\2018' '\2019'; }
+:lang(trv) { quotes: '\201c' '\201d' '\2018' '\2019'; }
+:lang(ts) { quotes: '\2018' '\2019' '\201c' '\201d'; }
+:lang(twq) { quotes: '\201c' '\201d' '\00ab' '\00bb'; }
+:lang(tzm) { quotes: '\2018' '\2019' '\201c' '\201d'; }
+:lang(uk) { quotes: '\00ab' '\00bb' '\201e' '\201c'; }
+:lang(ur) { quotes: '\0022' '\0022' '\0027' '\0027'; }
+:lang(vai) { quotes: '\2018' '\2019' '\201c' '\201d'; }
+:lang(vai-Latn) { quotes: '\2018' '\2019' '\201c' '\201d'; }
+:lang(ve) { quotes: '\2018' '\2019' '\201c' '\201d'; }
+:lang(vi) { quotes: '\201c' '\201d' '\2018' '\2019'; }
+:lang(vun) { quotes: '\0027' '\0027' '\201c' '\201c'; }
+:lang(wae) { quotes: '\00ab' '\00bb' '\2039' '\203a'; }
+:lang(xh) { quotes: '\2018' '\2019' '\201c' '\201d'; }
+:lang(xog) { quotes: '\0027' '\0027' '\201c' '\201e'; }
+:lang(yav) { quotes: '\00ab' '\00bb' '\00ab' '\00bb'; }
+:lang(yo) { quotes: '\0027' '\0027' '\0027' '\0027'; }
+:lang(zh) { quotes: '\201c' '\201d' '\2018' '\2019'; }
+:lang(zh-Hant) { quotes: '\300c' '\300d' '\300e' '\300f'; }
+:lang(zu) { quotes: '\2018' '\2019' '\201c' '\201d'; }
+:link { color: #0000EE; text-decoration: underline; }
+:root { quotes: '\201c' '\201d' '\2018' '\2019'; }
+:visited { color: #551A8B; text-decoration: underline; }
+a:link[rel~=help] { cursor: help; }
+a:visited[rel~=help] { cursor: help; }
+abbr[title] { text-decoration: dotted underline; }
+acronym[title] { text-decoration: dotted underline; }
+address { display: block; font-style: italic; unicode-bidi: isolate; }
+area { display: none; }
+area:link[rel~=help] { cursor: help; }
+area:visited[rel~=help] { cursor: help; }
+article { display: block; unicode-bidi: isolate; }
+aside { display: block; unicode-bidi: isolate; }
+b { font-weight: bold; }
+base { display: none; }
+basefont { display: none; }
+bdi { unicode-bidi: isolate; }
+bdi[dir] { unicode-bidi: isolate; }
+bdo { unicode-bidi: bidi-override; }
+bdo[dir] { unicode-bidi: bidi-override; }
+big { font-size: larger; }
+blink { text-decoration: blink; }
+blockquote { display: block; margin: 1em 40px; unicode-bidi: isolate; }
+body { display: block; margin: 8px; }
+br:before { content: '\A'; white-space: pre-line; }
+button { display: inline-block; text-align: center; text-indent: 0; }
+caption { display: table-caption; unicode-bidi: isolate; }
+center { display: block; text-align: center; unicode-bidi: isolate; }
+cite { font-style: italic; }
+code { font-family: monospace; }
+col { display: table-column; unicode-bidi: isolate; }
+col[hidden] { display: table-column; unicode-bidi: isolate; visibility: collapse; }
+colgroup { display: table-column-group; unicode-bidi: isolate; }
+colgroup[hidden] { display: table-column-group; unicode-bidi: isolate; visibility: collapse; }
+command { display: none; }
+datalist { display: none; }
+
+dd { display: block; margin-left: 40px; unicode-bidi: isolate; }
+
+*[dir=ltr] dd { margin-left: 0; margin-right: 40px; }
+*[dir=rtl] dd { margin-left: 40px; margin-right: 0; }
+*[dir] *[dir=ltr] dd { margin-left: 0; margin-right: 40px; }
+*[dir] *[dir=rtl] dd { margin-left: 40px; margin-right: 0; }
+*[dir] *[dir] *[dir=ltr] dd { margin-left: 0; margin-right: 40px; }
+*[dir] *[dir] *[dir=rtl] dd { margin-left: 40px; margin-right: 0; }
+dd[dir=ltr][dir][dir] { margin-left: 0; margin-right: 40px; }
+dd[dir=rtl][dir][dir] { margin-left: 40px; margin-right: 0; }
+
+del { text-decoration: line-through; }
+dfn { font-style: italic; }
+
+dir { display: block; list-style-type: disc; margin-bottom: 1em; margin-top: 1em; padding-left: 40px; unicode-bidi: isolate; }
+
+*[dir=rtl] dir { padding-left: 0; padding-right: 40px; }
+*[dir=ltr] dir { padding-left: 40px; padding-right: 0; }
+*[dir] *[dir=rtl] dir { padding-left: 0; padding-right: 40px; }
+*[dir] *[dir=ltr] dir { padding-left: 40px; padding-right: 0; }
+*[dir] *[dir] *[dir=rtl] dir { padding-left: 0; padding-right: 40px; }
+*[dir] *[dir] *[dir=ltr] dir { padding-left: 40px; padding-right: 0; }
+dir[dir=rtl][dir][dir] { padding-left: 0; padding-right: 40px; }
+dir[dir=ltr][dir][dir] { padding-left: 40px; padding-right: 0; }
+
+dir dir { list-style-type: circle; margin-bottom: 0; margin-top: 0; }
+dl dir { list-style-type: circle; margin-bottom: 0; margin-top: 0; }
+menu dir { list-style-type: circle; margin-bottom: 0; margin-top: 0; }
+ol dir { list-style-type: circle; margin-bottom: 0; margin-top: 0; }
+ul dir { list-style-type: circle; margin-bottom: 0; margin-top: 0; }
+
+div { display: block; unicode-bidi: isolate; }
+
+dl { display: block; margin-bottom: 1em; margin-top: 1em; unicode-bidi: isolate; }
+
+dir dl { list-style-type: circle; margin-bottom: 0; margin-top: 0; }
+dl dl { margin-bottom: 0; margin-top: 0; }
+ol dl { list-style-type: circle; margin-bottom: 0; margin-top: 0; }
+ul dl { list-style-type: circle; margin-bottom: 0; margin-top: 0; }
+
+dir dir dl { list-style-type: square; }
+dir menu dl { list-style-type: square; }
+dir ol dl { list-style-type: square; }
+dir ul dl { list-style-type: square; }
+menu dir dl { list-style-type: square; }
+menu dl { list-style-type: circle; margin-bottom: 0; margin-top: 0; }
+menu menu dl { list-style-type: square; }
+menu ol dl { list-style-type: square; }
+menu ul dl { list-style-type: square; }
+ol dir dl { list-style-type: square; }
+ol menu dl { list-style-type: square; }
+ol ol dl { list-style-type: square; }
+ol ul dl { list-style-type: square; }
+ul dir dl { list-style-type: square; }
+ul menu dl { list-style-type: square; }
+ul ol dl { list-style-type: square; }
+ul ul dl { list-style-type: square; }
+
+dt { display: block; unicode-bidi: isolate; }
+em { font-style: italic; }
+fieldset { border-style: groove; border-width: 2px; margin-left: 2px; margin-right: 2px; padding: .35em .625em .75em .625em; }
+figcaption { display: block; unicode-bidi: isolate; }
+figure { display: block; margin: 1em 40px; unicode-bidi: isolate; }
+footer { display: block; unicode-bidi: isolate; }
+form { display: block; unicode-bidi: isolate; }
+frame { display: block; }
+frameset { display: block; }
+
+h1 { display: block; font-size: 2em; font-weight: bold; hyphens: manual; margin-bottom: .67em; margin-top: .67em; page-break-after: avoid; page-break-inside: avoid; unicode-bidi: isolate; }
+section h1 { font-size: 1.50em; margin-bottom: .83em; margin-top: .83em; }
+section section h1 { font-size: 1.17em; margin-bottom: 1.00em; margin-top: 1.00em; }
+section section section h1 { font-size: 1.00em; margin-bottom: 1.33em; margin-top: 1.33em; }
+section section section section h1 { font-size: .83em; margin-bottom: 1.67em; margin-top: 1.67em; }
+section section section section section h1 { font-size: .67em; margin-bottom: 2.33em; margin-top: 2.33em; }
+h2 { display: block; font-size: 1.50em; font-weight: bold; hyphens: manual; margin-bottom: .83em; margin-top: .83em; page-break-after: avoid; page-break-inside: avoid; unicode-bidi: isolate; }
+h3 { display: block; font-size: 1.17em; font-weight: bold; hyphens: manual; margin-bottom: 1.00em; margin-top: 1.00em; page-break-after: avoid; page-break-inside: avoid; unicode-bidi: isolate; }
+h4 { display: block; font-size: 1.00em; font-weight: bold; hyphens: manual; margin-bottom: 1.33em; margin-top: 1.33em; page-break-after: avoid; page-break-inside: avoid; unicode-bidi: isolate; }
+h5 { display: block; font-size: .83em; font-weight: bold; hyphens: manual; margin-bottom: 1.67em; margin-top: 1.67em; page-break-after: avoid; unicode-bidi: isolate; }
+h6 { display: block; font-size: .67em; font-weight: bold; hyphens: manual; margin-bottom: 2.33em; margin-top: 2.33em; page-break-after: avoid; unicode-bidi: isolate; }
+
+head { display: none; }
+header { display: block; unicode-bidi: isolate; }
+hgroup { display: block; unicode-bidi: isolate; }
+
+hr { border-style: inset; border-width: 1px; color: gray; display: block; margin-bottom: .5em; margin-left: auto; margin-right: auto; margin-top: .5em; unicode-bidi: isolate; }
+html { display: block; }
+i { font-style: italic; }
+*[dir=auto] { unicode-bidi: isolate; }
+bdo[dir=auto] { unicode-bidi: bidi-override isolate; }
+input[type=hidden] { display: none; }
+menu[type=context] { display: none; }
+pre[dir=auto] { unicode-bidi: plaintext; }
+table[frame=above] { border-color: black; }
+table[frame=below] { border-color: black; }
+table[frame=border] { border-color: black; }
+table[frame=box] { border-color: black; }
+table[frame=hsides] { border-color: black; }
+table[frame=lhs] { border-color: black; }
+table[frame=rhs] { border-color: black; }
+table[frame=void] { border-color: black; }
+table[frame=vsides] { border-color: black; }
+table[rules=all] { border-color: black; }
+table[rules=cols] { border-color: black; }
+table[rules=groups] { border-color: black; }
+table[rules=none] { border-color: black; }
+table[rules=rows] { border-color: black; }
+textarea[dir=auto] { unicode-bidi: plaintext; }
+iframe { border: 2px inset; }
+iframe[seamless] { border: none; }
+input { display: inline-block; text-indent: 0; }
+ins { text-decoration: underline; }
+kbd { font-family: monospace; }
+keygen { display: inline-block; text-indent: 0; }
+legend { display: block; unicode-bidi: isolate; }
+li { display: list-item; unicode-bidi: isolate; }
+link { display: none; }
+listing { display: block; font-family: monospace; margin-bottom: 1em; margin-top: 1em; unicode-bidi: isolate; white-space: pre; }
+mark { background: yellow; color: black; }
+
+menu { display: block; list-style-type: disc; margin-bottom: 1em; margin-top: 1em; padding-left: 40px; unicode-bidi: isolate; }
+
+*[dir=rtl] menu { padding-left: 0; padding-right: 40px; }
+*[dir=ltr] menu { padding-left: 40px; padding-right: 0; }
+*[dir] *[dir=rtl] menu { padding-left: 0; padding-right: 40px; }
+*[dir] *[dir=ltr] menu { padding-left: 40px; padding-right: 0; }
+*[dir] *[dir] *[dir=rtl] menu { padding-left: 0; padding-right: 40px; }
+*[dir] *[dir] *[dir=ltr] menu { padding-left: 40px; padding-right: 0; }
+menu[dir=rtl][dir][dir] { padding-left: 0; padding-right: 40px; }
+menu[dir=ltr][dir][dir] { padding-left: 40px; padding-right: 0; }
+
+dir menu { list-style-type: circle; margin-bottom: 0; margin-top: 0; }
+dl menu { margin-bottom: 0; margin-top: 0; }
+menu menu { list-style-type: circle; margin-bottom: 0; margin-top: 0; }
+
+dir dir menu { list-style-type: square; }
+dir menu menu { list-style-type: square; }
+dir ol menu { list-style-type: square; }
+dir ul menu { list-style-type: square; }
+menu dir menu { list-style-type: square; }
+menu menu menu { list-style-type: square; }
+menu ol menu { list-style-type: square; }
+menu ul menu { list-style-type: square; }
+
+ol menu { list-style-type: circle; margin-bottom: 0; margin-top: 0; }
+ol dir menu { list-style-type: square; }
+ol menu menu { list-style-type: square; }
+ol ol menu { list-style-type: square; }
+ol ul menu { list-style-type: square; }
+ul dir menu { list-style-type: square; }
+ul menu menu { list-style-type: square; }
+ul menu { list-style-type: circle; margin-bottom: 0; margin-top: 0; }
+ul ol menu { list-style-type: square; }
+ul ul menu { list-style-type: square; }
+meta { display: none; }
+nav { display: block; unicode-bidi: isolate; }
+nobr { white-space: nowrap; }
+noembed { display: none; }
+
+/* The HTML5 spec suggests display:none for the old (now forbidden) noframes element,
+ * but Morp doesn't currently handle frames, so we might as well render it.
+ */
+/*noframes { display: none; }*/
+noframes { display: block; }
+
+ol { page-break-before: avoid; }
+ol { display: block; list-style-type: decimal; margin-bottom: 1em; margin-top: 1em; padding-left: 40px; unicode-bidi: isolate; }
+
+*[dir=ltr] ol { padding-left: 0; padding-right: 40px; }
+*[dir=rtl] ol { padding-left: 40px; padding-right: 0; }
+*[dir] *[dir=ltr] ol { padding-left: 0; padding-right: 40px; }
+*[dir] *[dir=rtl] ol { padding-left: 40px; padding-right: 0; }
+*[dir] *[dir] *[dir=ltr] ol { padding-left: 0; padding-right: 40px; }
+*[dir] *[dir] *[dir=rtl] ol { padding-left: 40px; padding-right: 0; }
+ol[dir=ltr][dir][dir] { padding-left: 0; padding-right: 40px; }
+ol[dir=rtl][dir][dir] { padding-left: 40px; padding-right: 0; }
+
+dir ol { margin-bottom: 0; margin-top: 0; }
+dl ol { margin-bottom: 0; margin-top: 0; }
+menu ol { margin-bottom: 0; margin-top: 0; }
+ol ol { margin-bottom: 0; margin-top: 0; }
+ul ol { margin-bottom: 0; margin-top: 0; }
+
+optgroup { text-indent: 0; }
+option { text-indent: 0; }
+output { unicode-bidi: isolate; }
+output[dir] { unicode-bidi: isolate; }
+p { display: block; margin-bottom: 1em; margin-top: 1em; unicode-bidi: isolate; }
+param { display: none; }
+plaintext { display: block; font-family: monospace; margin-bottom: 1em; margin-top: 1em; unicode-bidi: isolate; white-space: pre; }
+pre { display: block; font-family: monospace; margin-bottom: 1em; margin-top: 1em; unicode-bidi: isolate; white-space: pre; }
+q:after { content: close-quote; }
+q:before { content: open-quote; }
+rp { display: none; }
+rt { display: ruby-text; }
+ruby { display: ruby; }
+s { text-decoration: line-through; }
+samp { font-family: monospace; }
+script { display: none; }
+section { display: block; unicode-bidi: isolate; }
+select { text-indent: 0; }
+small { font-size: smaller; }
+source { display: none; }
+strike { text-decoration: line-through; }
+strong { font-weight: bolder; }
+style { display: none; }
+sub { font-size: smaller; line-height: normal; vertical-align: sub; }
+summary { display: block; unicode-bidi: isolate; }
+sup { font-size: smaller; line-height: normal; vertical-align: super; }
+
+table { border-collapse: separate; border-color: gray; border-spacing: 2px; display: table; text-indent: 0; unicode-bidi: isolate; }
+
+/* The html5 spec doesn't mention the following, though the CSS 2.1 spec does
+ * hint at its use, and a couple of UAs do have this.  I haven't looked into
+ * why the HTML5 spec doesn't include this rule.
+ */
+table { box-sizing: border-box; }
+
+tbody { border-color: inherit; display: table-row-group; unicode-bidi: isolate; vertical-align: middle; }
+tbody[hidden] { display: table-row-group; unicode-bidi: isolate; visibility: collapse; }
+
+td { border-color: gray; display: table-cell; padding: 1px; unicode-bidi: isolate; vertical-align: inherit; }
+td[hidden] { display: table-cell; unicode-bidi: isolate; visibility: collapse; }
+
+textarea { display: inline-block; text-indent: 0; white-space: pre-wrap; }
+
+tfoot { border-color: inherit; display: table-footer-group; unicode-bidi: isolate; vertical-align: middle; }
+tfoot[hidden] { display: table-footer-group; unicode-bidi: isolate; visibility: collapse; }
+
+table[rules=none] > tr > td, table[rules=none] > tr > th, table[rules=groups] > tr > td, table[rules=groups] > tr > th, table[rules=rows] > tr > td, table[rules=rows] > tr > th, table[rules=cols] > tr > td, table[rules=cols] > tr > th, table[rules=all] > tr > td, table[rules=all] > tr > th, table[rules=none] > thead > tr > td, table[rules=none] > thead > tr > th, table[rules=groups] > thead > tr > td, table[rules=groups] > thead > tr > th, table[rules=rows] > thead > tr > td, table[rules=rows] > thead > tr > th, table[rules=cols] > thead > tr > td, table[rules=cols] > thead > tr > th, table[rules=all] > thead > tr > td, table[rules=all] > thead > tr > th, table[rules=none] > tbody > tr > td, table[rules=none] > tbody > tr > th, table[rules=groups] > tbody > tr > td, table[rules=groups] > tbody > tr > th, table[rules=rows] > tbody > tr > td, table[rules=rows] > tbody > tr > th, table[rules=cols] > tbody > tr > td, table[rules=cols] > tbody > tr > th, table[rules=all] > tbody > tr > td, table[rules=all] > tbody > tr > th, table[rules=none] > tfoot > tr > td, table[rules=none] > tfoot > tr > th, table[rules=groups] > tfoot > tr > td, table[rules=groups] > tfoot > tr > th, table[rules=rows] > tfoot > tr > td, table[rules=rows] > tfoot > tr > th, table[rules=cols] > tfoot > tr > td, table[rules=cols] > tfoot > tr > th, table[rules=all] > tfoot > tr > td, table[rules=all] > tfoot > tr > th { border-color: black; }
+th { border-color: gray; display: table-cell; font-weight: bold; padding: 1px; unicode-bidi: isolate; vertical-align: inherit; }
+
+th[hidden] { display: table-cell; unicode-bidi: isolate; visibility: collapse; }
+thead { border-color: inherit; display: table-header-group; unicode-bidi: isolate; vertical-align: middle; }
+thead[hidden] { display: table-header-group; unicode-bidi: isolate; visibility: collapse; }
+title { display: none; }
+table > tr { vertical-align: middle; }
+tr { border-color: inherit; display: table-row; unicode-bidi: isolate; vertical-align: inherit; }
+tr[hidden] { display: table-row; unicode-bidi: isolate; visibility: collapse; }
+track { display: none; }
+tt { font-family: monospace; }
+u { text-decoration: underline; }
+
+ul { display: block; list-style-type: disc; margin-bottom: 1em; margin-top: 1em; padding-left: 40px; unicode-bidi: isolate; }
+
+*[dir=ltr] ul { padding-left: 40px; padding-right: 0; }
+*[dir=rtl] ul { padding-left: 0; padding-right: 40px; }
+*[dir] *[dir=ltr] ul { padding-left: 40px; padding-right: 0; }
+*[dir] *[dir=rtl] ul { padding-left: 0; padding-right: 40px; }
+*[dir] *[dir] *[dir=ltr] ul { padding-left: 40px; padding-right: 0; }
+*[dir] *[dir] *[dir=rtl] ul { padding-left: 0; padding-right: 40px; }
+ul[dir=ltr][dir][dir] { padding-left: 40px; padding-right: 0; }
+ul[dir=rtl][dir][dir] { padding-left: 0; padding-right: 40px; }
+
+/* This isn't in the HTML5 spec's suggested styling, and should probably be a
+ * mere hint rather than a demand.  It usually is the right thing, though.
+ */
+ul { display: block; page-break-before: avoid; }
+
+dir ul { list-style-type: circle; margin-bottom: 0; margin-top: 0; }
+dl ul { margin-bottom: 0; margin-top: 0; }
+menu ul { list-style-type: circle; margin-bottom: 0; margin-top: 0; }
+ol ul { list-style-type: circle; margin-bottom: 0; margin-top: 0; }
+ul ul { list-style-type: circle; margin-bottom: 0; margin-top: 0; }
+
+dir dir ul { list-style-type: square; }
+dir menu ul { list-style-type: square; }
+dir ol ul { list-style-type: square; }
+dir ul ul { list-style-type: square; }
+menu dir ul { list-style-type: square; }
+menu menu ul { list-style-type: square; }
+menu ol ul { list-style-type: square; }
+menu ul ul { list-style-type: square; }
+ol dir ul { list-style-type: square; }
+ol menu ul { list-style-type: square; }
+ol ol ul { list-style-type: square; }
+ol ul ul { list-style-type: square; }
+ul dir ul { list-style-type: square; }
+ul menu ul { list-style-type: square; }
+ul ol ul { list-style-type: square; }
+ul ul ul { list-style-type: square; }
+
+var { font-style: italic; }
+video { object-fit: contain; }
+xmp { display: block; font-family: monospace; margin-bottom: 1em; margin-top: 1em; unicode-bidi: isolate; white-space: pre; }
