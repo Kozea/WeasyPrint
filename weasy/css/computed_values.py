@@ -23,8 +23,6 @@ Normalize values as much as possible without rendering the document.
 
 import collections
 
-import cssutils.helper
-
 from .properties import INITIAL_VALUES
 from .values import get_single_keyword, get_keyword
 

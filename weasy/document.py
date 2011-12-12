@@ -27,7 +27,6 @@ import math
 import logging
 
 from cssutils import CSSParser
-from cssutils.css import CSSStyleDeclaration
 import lxml.html
 import cairo
 

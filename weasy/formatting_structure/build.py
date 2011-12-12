@@ -28,7 +28,7 @@ including handling of anonymous boxes and whitespace processing.
 import re
 from . import boxes, counters
 from .. import html
-from ..css import properties, StyleDict
+from ..css import properties
 
 
 # Maps values of the ``display`` CSS property to box types.

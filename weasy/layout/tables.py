@@ -38,7 +38,6 @@ def table_layout(document, table, max_position_y, containing_block,
     from .blocks import block_level_height
 
     column_widths = table.column_widths
-    grid_width = len(column_widths)
 
     border_spacing_x, border_spacing_y = table.style.border_spacing
     # TODO: reverse this for direction: rtl

@@ -66,9 +66,6 @@ See respective docstrings for details.
 """
 
 
-from ..css import computed_from_cascaded
-
-
 # The *Box classes have many attributes and methods, but that's the way it is
 # pylint: disable=R0904,R0902
 

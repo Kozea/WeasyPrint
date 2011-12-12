@@ -22,7 +22,6 @@ Handle various image formats.
 
 from __future__ import division
 from StringIO import StringIO
-import urllib
 
 import cairo
 

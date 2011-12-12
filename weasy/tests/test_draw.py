@@ -23,11 +23,9 @@ Test the drawing functions.
 """
 
 import os.path
-import functools
 from array import array
 
 import png
-import cssutils
 from attest import Tests, assert_hook  # pylint: disable=W0611
 
 from . import resource_filename, TestPNGDocument, FONTS

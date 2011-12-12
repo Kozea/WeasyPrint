@@ -42,7 +42,6 @@ function for each step:
 
 import logging
 
-from cssutils.css import CSSStyleDeclaration
 from lxml import cssselect
 
 from . import properties

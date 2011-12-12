@@ -86,7 +86,7 @@ def make_test_suite():
             for reference in references:
                 ref_filename = render(reference)
 
-                reader = png.Reader(filename=test_filename)
+                reader = png.Reader(filename=ref_filename)
                 ref_width, ref_height, ref_lines, ref_meta = reader.read()
                 ref_lines = list(ref_lines)
 
