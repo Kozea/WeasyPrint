@@ -1,15 +1,16 @@
 Version 0.3, released on 2011-12-XX
 ===================================
 
+* cssutils 0.9.8 or higher is now required.
 * Support SVG images
 * Support generated content: the ``:before`` and ``:after`` pseudo-elements,
   the ``content``, ``quotes`` and ``counter-*`` properties.
 * Support ordered lists: all CSS 2.1 values of the ``list-style-type`` property.
+* New user-agent stylesheet with HTML 5 elements and automatic quotes for many
+  languages. Thanks Peter Moulder!
 * Disable cssutils validation warnings, they are redundant with WeasyPrint’s.
 * Add ``--version`` to the command-line script.
 * Various bug fixes
-
-cssutils 0.9.8a4 or higher (XXX not released yet!) is now required.
 
 
 * Support for tables.
