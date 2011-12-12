@@ -22,6 +22,8 @@ Functions laying out the markers.
 
 """
 
+from __future__ import division
+
 import cairo
 
 from .percentages import resolve_percentages

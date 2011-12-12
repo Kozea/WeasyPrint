@@ -22,6 +22,8 @@ Functions laying out the inline boxes.
 
 """
 
+from __future__ import division
+
 import cairo
 
 from .markers import image_marker_layout
