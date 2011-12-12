@@ -723,20 +723,7 @@ def test_visibility():
                                  span { visibility: visible } '''})
 
 
-
-def disable_cssutils_validation(function):
-    """cssutils.profile.skipValidation = True
-    """
-    @functools.wraps(function)
-    def wrapper():
-        cssutils.profile.skipValidation = True
-        function()
-        cssutils.profile.skipValidation = False
-    return wrapper
-
-
 @SUITE.test
-@disable_cssutils_validation
 def test_tables():
     source = '''
         <style>
