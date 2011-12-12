@@ -504,3 +504,5 @@ ul ul ul { list-style-type: square; }
 var { font-style: italic; }
 video { object-fit: contain; }
 xmp { display: block; font-family: monospace; margin-bottom: 1em; margin-top: 1em; unicode-bidi: isolate; white-space: pre; }
+
+@page { margin: 2cm }  /* The default size is A4 portrait */

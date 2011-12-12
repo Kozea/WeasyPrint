@@ -77,7 +77,7 @@ logger.setLevel('ERROR')
 # This is a one-element tuple.
 DEFAULT_USER_AGENT_STYLESHEETS = (
     make_parser().parseFile(
-        os.path.join(os.path.dirname(__file__), 'css', 'html4_ua.css')
+        os.path.join(os.path.dirname(__file__), 'css', 'html5_ua.css')
     ),
 )
 logger.setLevel(level)
