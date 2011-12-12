@@ -50,3 +50,25 @@ call ``write_to`` or access other attributes of the document.
 
 If you want to change something in WeasyPrint or just see how it works,
 it’s time to `start hacking </hacking>`_!
+
+Logging
+-------
+
+Some errors (syntax error in CSS, unsupported CSS property, missing image, ...)
+are not fatal and will not prevent a document from being rendered.
+
+Both cssutils and WeasyPrint use the ``logging`` module from the Python
+standard library to log these errors and let you know about it.
+Two *loggers* are defined. The ``CSSUTILS`` logger reports syntax errors while
+the ``WEASYPRINT`` reports everything else. You can access the logger objects
+like this:
+
+.. code-block:: python
+
+    import logging
+    cssutils_logger = logging.getLogger('CSSUTILS')
+    weasyprint_logger = logging.getLogger('WEASYPRINT')
+
+See the `logging documentation`_ on how to configure them.
+
+.. _logging documentation: http://docs.python.org/library/logging.html
