@@ -501,6 +501,11 @@ def get_all_computed_styles(document, medium,
         (author_stylesheets, 'author'),
         (user_stylesheets or [], 'user'),
     ):
+        if origin == 'user agent':
+            # XXX temporarily disable logging for user-agent stylesheet
+            level = LOGGER.level
+            LOGGER.setLevel('ERROR')
+
         for sheet in sheets:
             # TODO: UA and maybe user stylesheets might only need to be
             # expanded once, not for every document.
@@ -513,15 +518,7 @@ def get_all_computed_styles(document, medium,
                     # TODO: handle @font-face, @namespace, and @variables
                     continue
 
-                if origin == 'user agent':
-                    # XXX temporarily disable logging for user-agent stylesheet
-                    level = LOGGER.level
-                    LOGGER.setLevel('ERROR')
-
                 declarations = list(effective_declarations(rule.style))
-
-                if origin == 'user agent':
-                    LOGGER.setLevel(level)
 
                 if not declarations:
                     # Don’t bother working for nuthin’
@@ -535,6 +532,9 @@ def get_all_computed_styles(document, medium,
                         weight = (precedence, specificity)
                         add_declaration(cascaded_styles, name, values, weight,
                                         element, pseudo_type)
+
+        if origin == 'user agent':
+            LOGGER.setLevel(level)
 
     for element, declarations in find_style_attributes(document):
         for name, (values, importance) in effective_declarations(declarations):
