@@ -40,43 +40,12 @@ from . import utils
 from . import images
 
 
-def make_parser():
-    try:
-        return CSSParser(parseComments=False, validate=False)
-    except TypeError:
-        # The validate parameter and parseStyle method do not exist
-        # in the current released version (0.9.8a3).
-        # TODO: Remove this after the next release.
-
-        def parseStyle(self, cssText, encoding='utf-8'):
-            """Parse given `cssText` which is assumed to be the content of
-            a HTML style attribute.
-
-            :param cssText:
-                CSS string to parse
-            :param encoding:
-                It will be used to decode `cssText` if given as a (byte)
-                string.
-            :returns:
-                :class:`~cssutils.css.CSSStyleDeclaration`
-            """
-            self._CSSParser__parseSetting(True)
-            if isinstance(cssText, bytes):
-                cssText = cssText.decode(encoding)
-            style = CSSStyleDeclaration(cssText)
-            self._CSSParser__parseSetting(False)
-            return style
-
-        CSSParser.parseStyle = parseStyle
-
-        return CSSParser(parseComments=False)
-
 logger = logging.getLogger('CSSUTILS')
 level = logger.level
 logger.setLevel('ERROR')
 # This is a one-element tuple.
 DEFAULT_USER_AGENT_STYLESHEETS = (
-    make_parser().parseFile(
+    CSSParser(parseComments=False, validate=False).parseFile(
         os.path.join(os.path.dirname(__file__), 'css', 'html5_ua.css')
     ),
 )
@@ -97,7 +66,7 @@ class Document(object):
         # Go through the property setter which calls ensure_url()
         self.base_url = self.base_url
 
-        self.css_parser = make_parser()
+        self.css_parser = CSSParser(parseComments=False, validate=False)
         self.css_parser.setFetcher(utils.urllib_fetcher)
 
         self.user_stylesheets = user_stylesheets or []
