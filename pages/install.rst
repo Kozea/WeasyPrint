@@ -8,7 +8,7 @@ Documentation
 Installing WeasyPrint
 ---------------------
 
-WeasyPrint depends on:
+WeasyPrint 0.3 depends on:
 
 .. Note: keep this in sync with setup.py
 
@@ -18,12 +18,13 @@ WeasyPrint depends on:
 * PyCairo
 * PIL
 * lxml
-* cssutils >= 0.9.8a3
+* cssutils >= 0.9.8
+* CairoSVG
 
 Unless you distribution already has a package for WeasyPrint, (the `Kozea
-overlay`_ has one for Gentoo), we recommend that you install cssutils and
-WeasyPrint itself in a `virtualenv`_ with `pip`_, and everything else with
-your distribution’s packages.
+overlay`_ has one for Gentoo), we recommend that you install cssutils,
+CairoSVG and WeasyPrint itself in a `virtualenv`_ with `pip`_,
+and everything else with your distribution’s packages.
 
 .. _Kozea overlay: https://github.com/Kozea/Overlay/blob/master/README
 .. _pip: http://www.pip-installer.org/
@@ -36,7 +37,7 @@ Ubuntu 11.10.)
 
     sudo apt-get install gir1.2-pango-1.0 python-gobject python-cairo python-imaging python-lxml
 
-Then, in a virtualenv: (this will also pull cssutils)
+Then, in a virtualenv: (this will also pull cssutils and CairoSVG)
 
 .. code-block:: sh
 

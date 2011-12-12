@@ -37,6 +37,3 @@ Floats and absolute positioning are not supported yet, but WeasyPrint
 can already be useful for pages with “simple” layout (ie. static positioning
 and tables.)
 See the `features </features/>`_ page for what exactly is supported or not.
-
-Planned for 0.3: generated content with ``:before`` and ``:after``,
-CSS counters and ordered lists, SVG images.

@@ -1,7 +1,7 @@
 Features
 ========
 
-WeasyPrint 0.2 supports:
+WeasyPrint 0.3 supports:
 
 (For older versions, see the changelog_.)
 
@@ -10,9 +10,10 @@ WeasyPrint 0.2 supports:
 * HTML documents with:
 
   * Linked and embedded CSS stylesheets
-  * Raster images in ``<img>`` elements (files formats supported by PIL)
+  * Raster and SVG images in ``<img>`` elements. (Support for raster file
+    formats is that of the PIL)
 
-* `CSS 3 Colors`_
+* `CSS 3 Colors`_ except the ``opacity`` property.
 * `CSS 3 Selectors`_ except ``:lang``, ``:first-line`` and
   ``:first-letter``
 * Part of `CSS 3 Paged Media`_: page size, borders, padding and margins
@@ -29,9 +30,6 @@ WeasyPrint 0.2 supports:
   * `Border styles`_ ``double``, ``groove``, ``ridge``, ``inset`` and ``outset``
   * `Vertical align`_ ``top`` and ``bottom`` (they are interpreted as
     ``text-top`` and ``text-bottom``, respectively)
-  * `Generated content`_ with the ``:before`` and ``:after`` pseudo-elements,
-    including counters
-  * Numbered / `ordered lists`_
   * `Letter and word spacing`_
   * `Justified text`_
   * Controlling `page breaks`_ (``page-break-*``, ``orphans``, ``widows``)
@@ -58,8 +56,6 @@ WeasyPrint 0.2 supports:
 .. _Overflow: http://www.w3.org/TR/CSS21/visufx.html#overflow-clipping
 .. _Border styles: http://www.w3.org/TR/CSS21/box.html#border-style-properties
 .. _Vertical align: http://www.w3.org/TR/CSS21/visudet.html#propdef-vertical-align
-.. _Generated content: http://www.w3.org/TR/CSS21/generate.html
-.. _ordered lists: http://www.w3.org/TR/CSS21/generate.html#propdef-list-style-type
 .. _Letter and word spacing: http://www.w3.org/TR/CSS21/text.html#spacing-props
 .. _Justified text: http://www.w3.org/TR/CSS21/text.html#alignment-prop
 .. _page breaks: http://www.w3.org/TR/CSS21/page.html#page-breaks
