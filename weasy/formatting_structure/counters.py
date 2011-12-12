@@ -84,24 +84,24 @@ def repeating(symbols, _negative, value):
 
 
 @register_formatter
-def numeric(symbols, _negative, value):
+def numeric(symbols, negative, value):
     """Implement the algorithm for `type: numeric`."""
     if value == 0:
         return symbols[0]
-    if value < 0:
-        is_negative = True
+    is_negative = value < 0
+    if is_negative:
         value = abs(value)
-        prefix, suffix = style['negative']
+        prefix, suffix = negative
         parts = [suffix]
     else:
-        prefix = ''
         parts = []
     length = len(symbols)
     value = abs(value)
     while value != 0:
         parts.append(symbols[value % length])
         value //= length
-    parts.append(prefix)
+    if is_negative:
+        parts.append(prefix)
     return ''.join(reversed(parts))
 
 
@@ -138,26 +138,26 @@ def non_repeating(symbols, _negative, value):
 
 
 @register_formatter
-def additive(symbols, _negative, value):
+def additive(symbols, negative, value):
     """Implement the algorithm for `type: additive`."""
     if value == 0:
         for weight, symbol in symbols:
             if weight == 0:
                 return symbol
-    if value < 0:
-        is_negative = True
+    is_negative = value < 0
+    if is_negative:
         value = abs(value)
-        prefix, suffix = style['negative']
+        prefix, suffix = negative
         parts = [prefix]
     else:
-        suffix = ''
         parts = []
     for weight, symbol in symbols:
         repetitions = value // weight
         parts.extend([symbol] * repetitions)
         value -= weight * repetitions
         if value == 0:
-            parts.append(suffix)
+            if is_negative:
+                parts.append(suffix)
             return ''.join(parts)
     return None  # Failed to find a representation for this value
 
