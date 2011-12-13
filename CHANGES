@@ -1,4 +1,4 @@
-Version 0.3, released on 2011-12-XX
+Version 0.3, released on 2011-12-13
 ===================================
 
 * **Backward-incompatible change:** the 'size' property is now prefixed (since
