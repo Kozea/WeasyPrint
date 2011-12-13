@@ -991,6 +991,16 @@ def test_borders():
         <body>
     '''
 
+    # Do not test the exact rendering of earch border style but at least
+    # check that they do not do the same.
+    assert_different_renderings(140, 110, [
+        ('border_' + border_style, source % {'border_style': border_style})
+        for border_style in [
+            'none', 'solid', 'dashed', 'dotted', 'double',
+            'inset', 'outset', 'groove', 'ridge',
+        ]
+    ])
+
     width = 140
     height = 110
     margin = 10
@@ -1008,12 +1018,3 @@ def test_borders():
         'border_solid', 140, 110, solid_pixels,
         source % {'border_style': 'solid'}
     )
-
-    assert_different_renderings(140, 110, [
-        ('border_' + border_style, source % {'border_style': border_style})
-        for border_style in [
-            'none', 'solid', 'dashed', 'dotted', 'double',
-            # These are not supported yet
-            #'groove', 'ridge', 'inset', 'outset',
-        ]
-    ])

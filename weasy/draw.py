@@ -34,10 +34,12 @@ from .css.values import get_percentage_value
 class CairoContext(cairo.Context):
     """A ``cairo.Context`` with a few more helper methods."""
 
-    def set_source_colorvalue(self, color):
+    def set_source_colorvalue(self, color, lighten=0):
         """Set the source pattern from a ``cssutils.ColorValue`` object."""
         self.set_source_rgba(
-            color.red / 255., color.green / 255., color.blue / 255.,
+            color.red / 255. + lighten,
+            color.green / 255. + lighten,
+            color.blue / 255. + lighten,
             color.alpha)
 
     @contextlib.contextmanager
@@ -325,6 +327,38 @@ def draw_border(context, box):
             if style == 'solid':
                 # Fill the whole trapezoid
                 context.paint()
+            elif style in ('inset', 'outset'):
+                lighten = (side in ('top', 'left')) ^ (style == 'inset')
+                factor = 1 if lighten else -1
+                context.set_source_colorvalue(color, lighten=0.5 * factor)
+                context.paint()
+            elif style in ('groove', 'ridge'):
+                # TODO: these would look better with more color stops
+                """
+                Divide the width in 2 and stroke lines in different colors
+                  +-------------+
+                  1\           /2
+                  1'\         / 2'
+                     +-------+
+                """
+                lighten = (side in ('top', 'left')) ^ (style == 'groove')
+                factor = 1 if lighten else -1
+                context.set_line_width(width / 2)
+                (x1, y1), (x2, y2) = border_edge
+                # from the border edge to the center of the first line
+                x1, y1 = xy_offset(x1, y1, x_offset, y_offset, width / 4)
+                x2, y2 = xy_offset(x2, y2, x_offset, y_offset, width / 4)
+                context.move_to(x1, y1)
+                context.line_to(x2, y2)
+                context.set_source_colorvalue(color, lighten=0.5 * factor)
+                context.stroke()
+                # Between the centers of both lines. 1/4 + 1/4 = 1/2
+                x1, y1 = xy_offset(x1, y1, x_offset, y_offset, width / 2)
+                x2, y2 = xy_offset(x2, y2, x_offset, y_offset, width / 2)
+                context.move_to(x1, y1)
+                context.line_to(x2, y2)
+                context.set_source_colorvalue(color, lighten=-0.5 * factor)
+                context.stroke()
             elif style == 'double':
                 """
                 Divide the width in 3 and stroke both outer lines
@@ -342,9 +376,9 @@ def draw_border(context, box):
                 context.move_to(x1, y1)
                 context.line_to(x2, y2)
                 context.stroke()
-                # Between the centers of both lines. 1/6 + 1/3 + 1/6 = 1/3
-                x1, y1 = xy_offset(x1, y1, x_offset, y_offset, width / 3)
-                x2, y2 = xy_offset(x2, y2, x_offset, y_offset, width / 3)
+                # Between the centers of both lines. 1/6 + 1/3 + 1/6 = 2/3
+                x1, y1 = xy_offset(x1, y1, x_offset, y_offset, 2 * width / 3)
+                x2, y2 = xy_offset(x2, y2, x_offset, y_offset, 2 * width / 3)
                 context.move_to(x1, y1)
                 context.line_to(x2, y2)
                 context.stroke()
