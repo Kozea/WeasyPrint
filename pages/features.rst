@@ -24,7 +24,6 @@ WeasyPrint 0.3 supports:
 * `CSS 3 Colors`_ except the ``opacity`` property.
 * `CSS 3 Selectors`_ except ``:lang``, ``:first-line`` and
   ``:first-letter``
-* Part of `CSS 3 Paged Media`_: page size, borders, padding and margins
 * `box-sizing`_ form CSS3 Basic User Interface
 * All of CSS 2.1 except:
 
@@ -49,7 +48,6 @@ WeasyPrint 0.3 supports:
 .. _PIL: http://www.pythonware.com/products/pil/
 .. _CSS 3 Colors: http://www.w3.org/TR/css3-color/
 .. _CSS 3 Selectors: http://www.w3.org/TR/css3-selectors/
-.. _CSS 3 Paged Media: http://www.w3.org/TR/css3-page/
 .. _box-sizing: http://www.w3.org/TR/css3-ui/#box-sizing
 .. _Floats: http://www.w3.org/TR/CSS21/visuren.html#floats
 .. _Absolute: http://www.w3.org/TR/CSS21/visuren.html#absolute-positioning
@@ -70,3 +68,17 @@ WeasyPrint 0.3 supports:
 .. _page breaks: http://www.w3.org/TR/CSS21/page.html#page-breaks
 .. _font matching algorithm: http://www.w3.org/TR/CSS21/fonts.html#algorithm
 .. _Bi-directional text: http://www.w3.org/TR/CSS21/visuren.html#direction
+
+
+Experimental features
+~~~~~~~~~~~~~~~~~~~~~
+
+These features are only described in *Working Draft* specification.
+As they are `at risk of changing`_, you need to use th ``-weasy-`` prefix
+to use them.
+
+* The ``size`` property from `CSS 3 Paged Media`_ to set the page size.
+  Use ``-weasy-size``.
+
+.. _at risk of changing: http://www.w3.org/TR/css-2010/#experimental
+.. _CSS 3 Paged Media: http://www.w3.org/TR/css3-page/
