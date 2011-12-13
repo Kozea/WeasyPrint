@@ -7,10 +7,10 @@ url: http://www.weasyprint.org/
 menu:
   - Overview:
       link: /
+  - News:
+      link: /news/
   - Documentation:
       link: /install/
-  - Issues:
-      link: http://redmine.kozea.fr/projects/weasyprint/issues
   - Community:
       link: /community/
 
