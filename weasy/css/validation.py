@@ -228,9 +228,9 @@ def border_spacing(values):
 @single_keyword
 def border_style(keyword):
     """``border-*-style`` properties validation."""
-    if keyword in ('double', 'groove', 'ridge', 'inset', 'outset'):
+    if keyword in ('groove', 'ridge', 'inset', 'outset'):
         raise InvalidValues('value not supported yet')
-    return keyword in ('none', 'hidden', 'dotted', 'dashed', 'solid')
+    return keyword in ('none', 'hidden', 'dotted', 'dashed', 'double', 'solid')
 
 
 @validator('border-top-width')

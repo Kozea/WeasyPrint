@@ -1012,8 +1012,8 @@ def test_borders():
     assert_different_renderings(140, 110, [
         ('border_' + border_style, source % {'border_style': border_style})
         for border_style in [
-            'none', 'solid', 'dashed', 'dotted',
+            'none', 'solid', 'dashed', 'dotted', 'double',
             # These are not supported yet
-            #'double', 'groove', 'ridge', 'inset', 'outset',
+            #'groove', 'ridge', 'inset', 'outset',
         ]
     ])

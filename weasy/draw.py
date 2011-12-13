@@ -258,6 +258,11 @@ def get_rectangle_edges(x, y, width, height):
     return zip(corners, shifted_corners)
 
 
+def xy_offset(x, y, offset_x, offset_y, offset):
+    """Increment X and Y coordinates by the given offsets."""
+    return x + offset_x * offset, y + offset_y * offset
+
+
 def draw_border(context, box):
     """Draw the box border to a ``cairo.Context``."""
     if all(box.style['border_%s_width' % side] == 0
@@ -318,41 +323,59 @@ def draw_border(context, box):
                 context.clip()
 
             if style == 'solid':
+                # Fill the whole trapezoid
                 context.paint()
+            elif style == 'double':
+                """
+                Divide the width in 3 and stroke both outer lines
+                  +---------------+
+                  1\             /2
+                    \           /
+                  1' \         /  2'
+                      +-------+
+                """
+                context.set_line_width(width / 3)
+                (x1, y1), (x2, y2) = border_edge
+                # from the border edge to the center of the first line
+                x1, y1 = xy_offset(x1, y1, x_offset, y_offset, width / 6)
+                x2, y2 = xy_offset(x2, y2, x_offset, y_offset, width / 6)
+                context.move_to(x1, y1)
+                context.line_to(x2, y2)
+                context.stroke()
+                # Between the centers of both lines. 1/6 + 1/3 + 1/6 = 1/3
+                x1, y1 = xy_offset(x1, y1, x_offset, y_offset, width / 3)
+                x2, y2 = xy_offset(x2, y2, x_offset, y_offset, width / 3)
+                context.move_to(x1, y1)
+                context.line_to(x2, y2)
+                context.stroke()
             else:
                 assert style in ('dotted', 'dashed')
                 (x1, y1), (x2, y2) = border_edge
                 if style == 'dotted':
+                    # Half-way from the extremities of the border and padding
+                    # edges.
                     (px1, py1), (px2, py2) = padding_edge
                     x1 = (x1 + px1) / 2
                     x2 = (x2 + px2) / 2
                     y1 = (y1 + py1) / 2
                     y2 = (y2 + py2) / 2
                     """
-
                       +---------------+
                        \             /
                         1           2
                          \         /
                           +-------+
-
                     """
                 else:  # dashed
-                    offset = width / 2
-                    x_offset *= offset
-                    y_offset *= offset
-                    x1 += x_offset
-                    x2 += x_offset
-                    y1 += y_offset
-                    y2 += y_offset
+                    # From the border edge to the middle:
+                    x1, y1 = xy_offset(x1, y1, x_offset, y_offset, width / 2)
+                    x2, y2 = xy_offset(x2, y2, x_offset, y_offset, width / 2)
                     """
-
                       +---------------+
                        \             /
                       1 \           / 2
                          \         /
                           +-------+
-
                     """
                 length = ((x2 - x1)**2 + (y2 - y1)**2) ** 0.5
                 dash = 2 * width
