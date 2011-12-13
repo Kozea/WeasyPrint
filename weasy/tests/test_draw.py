@@ -54,28 +54,26 @@ def format_pixel(lines, x, y):
     return ('#' + BYTES_PER_PIXELS * '%02x') % tuple(pixel)
 
 
-def test_pixels(name, expected_width, expected_height, expected_lines, html):
+def assert_pixels(name, expected_width, expected_height, expected_lines, html):
     """Helper testing the size of the image and the pixels values."""
-    write_pixels('expected_results', name, expected_width, expected_height,
+    write_png('expected_results', name, expected_width, expected_height,
                  expected_lines)
     _doc, lines = html_to_png(name, expected_width, expected_height, html)
     assert_pixels_equal(name, expected_width, expected_height, lines,
                         expected_lines)
 
 
-def test_same_rendering(expected_width, expected_height, *documents):
+def assert_same_rendering(expected_width, expected_height, documents):
     """
-    Render two or more HTML documents to PNG and check that the pixels
-    are the same.
+    Render HTML documents to PNG and check that they render the same,
+    pixel-per-pixel.
 
-    Each document is passed as a (name, html) tuple.
+    Each document is passed as a (name, html_source) tuple.
     """
     lines_list = []
 
     for name, html in documents:
         _doc, lines = html_to_png(name, expected_width, expected_height, html)
-        write_pixels('test_results', name, expected_width, expected_height,
-                     lines)
         lines_list.append((name, lines))
 
     _name, reference = lines_list[0]
@@ -84,7 +82,28 @@ def test_same_rendering(expected_width, expected_height, *documents):
                             reference, lines)
 
 
-def write_pixels(directory, name, expected_width, expected_height, lines):
+def assert_different_renderings(expected_width, expected_height, documents):
+    """
+    Render HTML documents to PNG and check that no two documents render
+    the same.
+
+    Each document is passed as a (name, html_source) tuple.
+    """
+    lines_list = []
+
+    for name, html in documents:
+        _doc, lines = html_to_png(name, expected_width, expected_height, html)
+        lines_list.append((name, lines))
+
+    for i, (name_1, lines_1) in enumerate(lines_list):
+        for name_2, lines_2 in lines_list[i + 1:]:
+            if lines_1 == lines_2:
+                # Same as "assert lines_1 != lines_2" but the output of
+                # the assert hook would be gigantic and useless.
+                assert False, '%s and %s are the same' % (name_1, name_2)
+
+
+def write_png(directory, name, expected_width, expected_height, lines):
     """
     Check the size of a pixel matrix and write it to a PNG file.
     """
@@ -142,7 +161,7 @@ def assert_pixels_equal(name, width, height, lines, expected_lines):
 @SUITE.test
 def test_canvas_background():
     """Test the background applied on ``<html>`` and/or ``<body>`` tags."""
-    test_pixels('all_blue', 10, 10, (10 * [10 * B]), '''
+    assert_pixels('all_blue', 10, 10, (10 * [10 * B]), '''
         <style>
             @page { -weasy-size: 10px }
             /* body’s background propagates to the whole canvas */
@@ -151,7 +170,7 @@ def test_canvas_background():
         <body>
     ''')
 
-    test_pixels('blocks', 10, 10, [
+    assert_pixels('blocks', 10, 10, [
         r+r+r+r+r+r+r+r+r+r,
         r+r+r+r+r+r+r+r+r+r,
         r+r+B+B+B+B+B+B+r+r,
@@ -500,7 +519,7 @@ def test_background_image():
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         ]),
     ]:
-        test_pixels('background_' + name, 14, 16, pixels, '''
+        assert_pixels('background_' + name, 14, 16, pixels, '''
             <style>
                 @page { -weasy-size: 14px 16px }
                 html { background: #fff }
@@ -547,7 +566,7 @@ def test_list_style_image():
             _+_+_+_+_+_+_+_+_+_+_+_,
         ])
     ]:
-        test_pixels('list_style_image_' + position, 12, 10, pixels, '''
+        assert_pixels('list_style_image_' + position, 12, 10, pixels, '''
             <style>
                 @page { -weasy-size: 12px 10px }
                 body { margin: 0; background: white; font-family: %s }
@@ -557,7 +576,7 @@ def test_list_style_image():
             <ul><li></li></ul>
         ''' % (FONTS, position))
 
-    test_pixels('list_style_none', 10, 10, [
+    assert_pixels('list_style_none', 10, 10, [
             _+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_,
@@ -619,14 +638,14 @@ def test_images():
     ]
     for format in ['png', 'gif', 'svg', 'jpg']:
         image = centered_jpg_image if format == 'jpg' else centered_image
-        test_pixels('inline_image_' + format, 8, 8, image, '''
+        assert_pixels('inline_image_' + format, 8, 8, image, '''
             <style>
                 @page { -weasy-size: 8px }
                 body { margin: 2px 0 0 2px; background: #fff }
             </style>
             <div><img src="pattern.%s"></div>
         ''' % format)
-    test_pixels('block_image', 8, 8, centered_image, '''
+    assert_pixels('block_image', 8, 8, centered_image, '''
         <style>
             @page { -weasy-size: 8px }
             body { margin: 0; background: #fff }
@@ -634,7 +653,7 @@ def test_images():
         </style>
         <div><img src="pattern.png"></div>
     ''')
-    test_pixels('image_not_found', 8, 8, no_image, '''
+    assert_pixels('image_not_found', 8, 8, no_image, '''
         <style>
             @page { -weasy-size: 8px }
             body { margin: 0; background: #fff }
@@ -642,7 +661,7 @@ def test_images():
         </style>
         <div><img src="inexistent1.png" alt=""></div>
     ''')
-    test_pixels('image_no_src', 8, 8, no_image, '''
+    assert_pixels('image_no_src', 8, 8, no_image, '''
         <style>
             @page { -weasy-size: 8px }
             body { margin: 0; background: #fff }
@@ -650,7 +669,7 @@ def test_images():
         </style>
         <div><img alt=""></div>
     ''')
-    test_same_rendering(200, 30,
+    assert_same_rendering(200, 30, [
         ('image_alt_text_reference', '''
             <style>
                 @page { -weasy-size: 200px 30px }
@@ -672,7 +691,7 @@ def test_images():
             </style>
             <div><img alt="Hello, world!"></div>
         '''),
-    )
+    ])
 
 
 @SUITE.test
@@ -689,7 +708,7 @@ def test_visibility():
             <span><img src="pattern.png"></span>
         </div>
     '''
-    test_pixels('visibility_reference', 12, 7, [
+    assert_pixels('visibility_reference', 12, 7, [
         _+_+_+_+_+_+_+_+_+_+_+_,
         _+r+B+B+B+_+r+B+B+B+_+_,
         _+B+B+B+B+_+B+B+B+B+_+_,
@@ -699,7 +718,7 @@ def test_visibility():
         _+_+_+_+_+_+_+_+_+_+_+_,
     ], source % {'extra_css': ''})
 
-    test_pixels('visibility_hidden', 12, 7, [
+    assert_pixels('visibility_hidden', 12, 7, [
         _+_+_+_+_+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_+_+_+_+_,
@@ -709,7 +728,7 @@ def test_visibility():
         _+_+_+_+_+_+_+_+_+_+_+_,
     ], source % {'extra_css': 'div { visibility: hidden }'})
 
-    test_pixels('visibility_mixed', 12, 7, [
+    assert_pixels('visibility_mixed', 12, 7, [
         _+_+_+_+_+_+_+_+_+_+_+_,
         _+_+_+_+_+_+r+B+B+B+_+_,
         _+_+_+_+_+_+B+B+B+B+_+_,
@@ -758,7 +777,7 @@ def test_tables():
     '''
     r = array('B', [255, 127, 127, 255])  # rgba(255, 0, 0, 0.5) above #fff
     R = array('B', [255, 63, 63, 255])  # r above r above #fff
-    test_pixels('table_borders', 28, 28, [
+    assert_pixels('table_borders', 28, 28, [
         _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
         _+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+_,
         _+B+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+B+_,
@@ -792,7 +811,7 @@ def test_tables():
         td { border-color: rgba(255, 0, 0, 0.5) }
     '''})
 
-    test_pixels('table_td_backgrounds', 28, 28, [
+    assert_pixels('table_td_backgrounds', 28, 28, [
         _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
         _+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+_,
         _+B+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+B+_,
@@ -829,7 +848,7 @@ def test_tables():
     g = array('B', [127, 255, 127, 255])  # rgba(0, 255, 0, 0.5) above #fff
     G = array('B', [127, 191, 63, 255])  # g above r above #fff
                                          # Not the same as r above g above #fff
-    test_pixels('table_column_backgrounds', 28, 28, [
+    assert_pixels('table_column_backgrounds', 28, 28, [
         _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
         _+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+_,
         _+B+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+B+_,
@@ -864,7 +883,7 @@ def test_tables():
         col { background: rgba(0, 255, 0, 0.5) }
     '''})
 
-    test_pixels('table_row_backgrounds', 28, 28, [
+    assert_pixels('table_row_backgrounds', 28, 28, [
         _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
         _+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+_,
         _+B+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+B+_,
@@ -903,7 +922,7 @@ def test_tables():
 
 @SUITE.test
 def test_before_after():
-    test_same_rendering(300, 30,
+    assert_same_rendering(300, 30, [
         ('pseudo_before', '''
             <style>
                 @page { -weasy-size: 300px 30px }
@@ -919,9 +938,9 @@ def test_before_after():
             </style>
             <p><a href="another url">[some url] some content</p>
         ''')
-    )
+    ])
 
-    test_same_rendering(500, 30,
+    assert_same_rendering(500, 30, [
         ('pseudo_quotes', u'''
             <style>
                 @page { -weasy-size: 500px 30px }
@@ -938,9 +957,9 @@ def test_before_after():
             </style>
             <p>« Lorem ipsum “ dolor ” sit amet »</p>
         ''')
-    )
+    ])
 
-    test_same_rendering(100, 30,
+    assert_same_rendering(100, 30, [
         ('pseudo_url', u'''
             <style>
                 @page { -weasy-size: 100px 30px }
@@ -956,4 +975,45 @@ def test_before_after():
             </style>
             <p>a<img src="pattern.png" alt="Missing image">bc</p>
         ''')
+    ])
+
+
+@SUITE.test
+def test_borders():
+    """Test the rendering of borders"""
+    source = u'''
+        <style>
+            @page { -weasy-size: 140px 110px }
+            html { background: #fff }
+            body { margin: 10px; width: 100px; height: 70px;
+                   border: 10px %(border_style)s blue }
+        </style>
+        <body>
+    '''
+
+    width = 140
+    height = 110
+    margin = 10
+    border = 10
+    solid_pixels = [_ * width for y in xrange(height)]
+    for x in xrange(margin, width - margin):
+        for y in (range(margin, margin + border) +
+                  range(height - margin - border, height - margin)):
+            solid_pixels[y][x * 4:(x+1) * 4] = B
+    for y in xrange(margin, height - margin):
+        for x in (range(margin, margin + border) +
+                  range(width - margin - border, width - margin)):
+            solid_pixels[y][x * 4:(x+1) * 4] = B
+    assert_pixels(
+        'border_solid', 140, 110, solid_pixels,
+        source % {'border_style': 'solid'}
     )
+
+    assert_different_renderings(140, 110, [
+        ('border_' + border_style, source % {'border_style': border_style})
+        for border_style in [
+            'none', 'solid', 'dashed', 'dotted',
+            # These are not supported yet
+            #'double', 'groove', 'ridge', 'inset', 'outset',
+        ]
+    ])
