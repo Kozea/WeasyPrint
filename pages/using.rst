@@ -4,6 +4,7 @@ Documentation
 * `Installing </install/>`_
 * **Using**
 * `Hacking </hacking/>`_
+* `Features </using>`_
 
 Using WeasyPrint
 ~~~~~~~~~~~~~~~~

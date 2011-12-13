@@ -1,5 +1,13 @@
+Documentation
+=============
+
+* `Installing </install/>`_
+* `Using </using/>`_
+* `Hacking </hacking/>`_
+* **Features**
+
 Features
-========
+~~~~~~~~
 
 WeasyPrint 0.3 supports:
 
@@ -11,7 +19,7 @@ WeasyPrint 0.3 supports:
 
   * Linked and embedded CSS stylesheets
   * Raster and SVG images in ``<img>`` elements. (Support for raster file
-    formats is that of the PIL)
+    formats is that of the PIL_)
 
 * `CSS 3 Colors`_ except the ``opacity`` property.
 * `CSS 3 Selectors`_ except ``:lang``, ``:first-line`` and
@@ -38,6 +46,7 @@ WeasyPrint 0.3 supports:
   * `Bi-directional text`_. (May happen to kind of work in uninterrupted text
     thanks to Pango)
 
+.. _PIL: http://www.pythonware.com/products/pil/
 .. _CSS 3 Colors: http://www.w3.org/TR/css3-color/
 .. _CSS 3 Selectors: http://www.w3.org/TR/css3-selectors/
 .. _CSS 3 Paged Media: http://www.w3.org/TR/css3-page/
