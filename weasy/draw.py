@@ -286,48 +286,92 @@ def draw_border(context, box):
             continue
         style = box.style['border_%s_style' % side]
         with context.stacked():
-            """
-            Both edges form a trapezoid. This is the top one:
+            context.set_source_colorvalue(color)
 
-              +---------------+
-               \             /
-              =================
-                 \         /
-                  +-------+
-
-            We clip on its outline on draw on the big line on the middle.
-            """
-            # I find that anti-aliasing does not look good on borders.
+            # Avoid an artefact in the corner joining two solid borders
+            # of the same color.
             context.set_antialias(cairo.ANTIALIAS_NONE)
-            # TODO: implement other styles.
-            if not style in ['dotted', 'dashed']:
+
+            if style not in ('dotted', 'dashed'):
+                # Clip on the trapezoid shape
+                """
+                Clip on the trapezoid formed by the border edge (longer)
+                and the padding edge (shorter).
+
+                This is on the top side:
+
+                  +---------------+    <= border edge      ^
+                   \             /                         |
+                    \           /                          |  top border width
+                     \         /                           |
+                      +-------+        <= padding edge     v
+
+                  <-->         <-->    <=  left and right border widths
+
+                """
                 border_start, border_stop = border_edge
                 padding_start, padding_stop = padding_edge
-                # Move to one of the Trapezoid’s corner
                 context.move_to(*border_start)
                 for point in [border_stop, padding_stop,
                               padding_start, border_start]:
                     context.line_to(*point)
                 context.clip()
-            elif style == 'dotted':
-                # TODO: find a way to make a real dotted border
-                context.set_dash([width], 0)
-            elif style == 'dashed':
-                # TODO: find a way to make a real dashed border
-                context.set_dash([4 * width], 0)
-            (x1, y1), (x2, y2) = border_edge
-            offset = width / 2
-            x_offset *= offset
-            y_offset *= offset
-            x1 += x_offset
-            x2 += x_offset
-            y1 += y_offset
-            y2 += y_offset
-            context.move_to(x1, y1)
-            context.line_to(x2, y2)
-            context.set_source_colorvalue(color)
-            context.set_line_width(width)
-            context.stroke()
+
+            if style == 'solid':
+                context.paint()
+            else:
+                assert style in ('dotted', 'dashed')
+                (x1, y1), (x2, y2) = border_edge
+                if style == 'dotted':
+                    (px1, py1), (px2, py2) = padding_edge
+                    x1 = (x1 + px1) / 2
+                    x2 = (x2 + px2) / 2
+                    y1 = (y1 + py1) / 2
+                    y2 = (y2 + py2) / 2
+                    """
+
+                      +---------------+
+                       \             /
+                        1           2
+                         \         /
+                          +-------+
+
+                    """
+                else:  # dashed
+                    offset = width / 2
+                    x_offset *= offset
+                    y_offset *= offset
+                    x1 += x_offset
+                    x2 += x_offset
+                    y1 += y_offset
+                    y2 += y_offset
+                    """
+
+                      +---------------+
+                       \             /
+                      1 \           / 2
+                         \         /
+                          +-------+
+
+                    """
+                length = ((x2 - x1)**2 + (y2 - y1)**2) ** 0.5
+                dash = 2 * width
+                if style == 'dotted':
+                    if context.user_to_device_distance(width, 0)[0] > 3:
+                        # Round so that dash is a divisor of length,
+                        # but not in the dots are too small.
+                        dash = length / round(length / dash)
+                    context.set_line_cap(cairo.LINE_CAP_ROUND)
+                    context.set_dash([0, dash])
+                else:  # dashed
+                    # Round so that 2*dash is a divisor of length
+                    dash = length / (2 * round(length / (2 * dash)))
+                    context.set_dash([dash])
+                # Stroke along the line in === above, as wide as the border
+                context.move_to(x1, y1)
+                context.line_to(x2, y2)
+                context.set_line_width(width)
+                context.stroke()
 
 
 def draw_replacedbox(context, box):
