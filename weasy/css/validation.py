@@ -54,6 +54,10 @@ VALIDATORS = {}
 
 EXPANDERS = {}
 
+PREFIXED = set()
+# The same replacement was done on property names:
+PREFIX = '-weasy-'.replace('-', '_')
+
 
 class InvalidValues(ValueError):
     """Invalid or unsupported values for a known CSS property."""
@@ -61,7 +65,7 @@ class InvalidValues(ValueError):
 
 # Validators
 
-def validator(property_name=None):
+def validator(property_name=None, prefixed=False):
     """Decorator adding a function to the ``VALIDATORS``.
 
     The name of the property covered by the decorated function is set to
@@ -79,6 +83,8 @@ def validator(property_name=None):
         assert name not in VALIDATORS, name
 
         VALIDATORS[name] = function
+        if prefixed:
+            PREFIXED.add(name)
         return function
     return decorator
 
@@ -573,7 +579,7 @@ def white_space(keyword):
     return keyword in ('normal', 'pre', 'nowrap', 'pre-wrap', 'pre-line')
 
 
-@validator()
+@validator(prefixed=True)
 def size(values):
     """``size`` property validation.
 
@@ -909,14 +915,18 @@ def validate_and_expand(name, values):
     Return a iterable of ``(name, values)`` tuples.
 
     """
-    # Defaults
-    level = 'warn'
-    reason = 'invalid value'
-
-    if name in NOT_PRINT_MEDIA:
+    if name in PREFIXED and not name.startswith(PREFIX):
+        level = 'warn'
+        reason = ('the property is experimental, use ' +
+                  (PREFIX + name).replace('_', '-'))
+    elif name in NOT_PRINT_MEDIA:
         level = 'info'
         reason = 'the property does not apply for the print media'
     else:
+        if name.startswith(PREFIX):
+            unprefixed_name = name[len(PREFIX):]
+            if unprefixed_name in PREFIXED:
+                name = unprefixed_name
         expander_ = EXPANDERS.get(name, validate_non_shorthand)
         try:
             results = expander_(name, values)
@@ -924,8 +934,11 @@ def validate_and_expand(name, values):
             # so that InvalidValues is caught.
             return list(results)
         except InvalidValues, exc:
+            level = 'warn'
             if exc.args and exc.args[0]:
                 reason = exc.args[0]
+            else:
+                reason = 'invalid value'
     getattr(LOGGER, level)('Ignored declaration: `%s: %s`, %s.',
         name.replace('_', '-'), as_css(values), reason)
     return []

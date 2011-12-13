@@ -1,8 +1,10 @@
 Version 0.3, released on 2011-12-XX
 ===================================
 
+* **Backward-incompatible change:** the 'size' property is now prefixed (since
+  it is in an experimental specification). Use '-weasy-size' instead.
 * cssutils 0.9.8 or higher is now required.
-* Support SVG images
+* Support SVG images with CairoSVG
 * Support generated content: the ``:before`` and ``:after`` pseudo-elements,
   the ``content``, ``quotes`` and ``counter-*`` properties.
 * Support ordered lists: all CSS 2.1 values of the ``list-style-type`` property.

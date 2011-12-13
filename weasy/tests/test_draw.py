@@ -144,7 +144,7 @@ def test_canvas_background():
     """Test the background applied on ``<html>`` and/or ``<body>`` tags."""
     test_pixels('all_blue', 10, 10, (10 * [10 * B]), '''
         <style>
-            @page { size: 10px }
+            @page { -weasy-size: 10px }
             /* body’s background propagates to the whole canvas */
             body { margin: 2px; background: #00f; height: 5px }
         </style>
@@ -164,7 +164,7 @@ def test_canvas_background():
         r+r+r+r+r+r+r+r+r+r,
      ], '''
         <style>
-            @page { size: 10px }
+            @page { -weasy-size: 10px }
             /* html’s background propagates to the whole canvas */
             html { margin: 1px; background: #f00 }
             /* html has a background, so body’s does not propagate */
@@ -502,7 +502,7 @@ def test_background_image():
     ]:
         test_pixels('background_' + name, 14, 16, pixels, '''
             <style>
-                @page { size: 14px 16px }
+                @page { -weasy-size: 14px 16px }
                 html { background: #fff }
                 body { margin: 2px; height: 10px;
                        background: url(pattern.png) %s }
@@ -549,7 +549,7 @@ def test_list_style_image():
     ]:
         test_pixels('list_style_image_' + position, 12, 10, pixels, '''
             <style>
-                @page { size: 12px 10px }
+                @page { -weasy-size: 12px 10px }
                 body { margin: 0; background: white; font-family: %s }
                 ul { margin: 2px 2px 0 7px; list-style: url(pattern.png) %s;
                      font-size: 2px }
@@ -570,7 +570,7 @@ def test_list_style_image():
             _+_+_+_+_+_+_+_+_+_,
         ], '''
             <style>
-                @page { size: 10px }
+                @page { -weasy-size: 10px }
                 body { margin: 0; background: white; font-family: %s }
                 ul { margin: 0 0 0 5px; list-style: none; font-size: 2px; }
             </style>
@@ -621,14 +621,14 @@ def test_images():
         image = centered_jpg_image if format == 'jpg' else centered_image
         test_pixels('inline_image_' + format, 8, 8, image, '''
             <style>
-                @page { size: 8px }
+                @page { -weasy-size: 8px }
                 body { margin: 2px 0 0 2px; background: #fff }
             </style>
             <div><img src="pattern.%s"></div>
         ''' % format)
     test_pixels('block_image', 8, 8, centered_image, '''
         <style>
-            @page { size: 8px }
+            @page { -weasy-size: 8px }
             body { margin: 0; background: #fff }
             img { display: block; margin: 2px auto 0 }
         </style>
@@ -636,7 +636,7 @@ def test_images():
     ''')
     test_pixels('image_not_found', 8, 8, no_image, '''
         <style>
-            @page { size: 8px }
+            @page { -weasy-size: 8px }
             body { margin: 0; background: #fff }
             img { display: block; margin: 2px auto 0 }
         </style>
@@ -644,7 +644,7 @@ def test_images():
     ''')
     test_pixels('image_no_src', 8, 8, no_image, '''
         <style>
-            @page { size: 8px }
+            @page { -weasy-size: 8px }
             body { margin: 0; background: #fff }
             img { display: block; margin: 2px auto 0 }
         </style>
@@ -653,21 +653,21 @@ def test_images():
     test_same_rendering(200, 30,
         ('image_alt_text_reference', '''
             <style>
-                @page { size: 200px 30px }
+                @page { -weasy-size: 200px 30px }
                 body { margin: 0; background: #fff }
             </style>
             <div>Hello, world!</div>
         '''),
         ('image_alt_text_not_found', '''
             <style>
-                @page { size: 200px 30px }
+                @page { -weasy-size: 200px 30px }
                 body { margin: 0; background: #fff }
             </style>
             <div><img src="inexistent2.png" alt="Hello, world!"></div>
         '''),
         ('image_alt_text_no_src', '''
             <style>
-                @page { size: 200px 30px }
+                @page { -weasy-size: 200px 30px }
                 body { margin: 0; background: #fff }
             </style>
             <div><img alt="Hello, world!"></div>
@@ -679,7 +679,7 @@ def test_images():
 def test_visibility():
     source = '''
         <style>
-            @page { size: 12px 7px }
+            @page { -weasy-size: 12px 7px }
             body { background: #fff; font: 1px/1 serif }
             img { margin: 1px 0 0 1px; }
             %(extra_css)s
@@ -725,7 +725,7 @@ def test_visibility():
 def test_tables():
     source = '''
         <style>
-            @page { size: 28px }
+            @page { -weasy-size: 28px }
             html { background: #fff; }
             table { margin: 1px; padding: 1px; border-spacing: 1px;
                     border: 1px solid transparent }
@@ -906,7 +906,7 @@ def test_before_after():
     test_same_rendering(300, 30,
         ('pseudo_before', '''
             <style>
-                @page { size: 300px 30px }
+                @page { -weasy-size: 300px 30px }
                 body { margin: 0; background: #fff }
                 a[href]:before { content: '[' '' attr(href) '] ' }
             </style>
@@ -914,7 +914,7 @@ def test_before_after():
         '''),
         ('pseudo_before_reference', '''
             <style>
-                @page { size: 300px 30px }
+                @page { -weasy-size: 300px 30px }
                 body { margin: 0; background: #fff }
             </style>
             <p><a href="another url">[some url] some content</p>
@@ -924,7 +924,7 @@ def test_before_after():
     test_same_rendering(500, 30,
         ('pseudo_quotes', u'''
             <style>
-                @page { size: 500px 30px }
+                @page { -weasy-size: 500px 30px }
                 body { margin: 0; background: #fff; quotes: '«' '»' '“' '”' }
                 q:before { content: open-quote ' '}
                 q:after { content: ' ' close-quote }
@@ -933,7 +933,7 @@ def test_before_after():
         '''),
         ('pseudo_quotes_reference', u'''
             <style>
-                @page { size: 500px 30px }
+                @page { -weasy-size: 500px 30px }
                 body { margin: 0; background: #fff }
             </style>
             <p>« Lorem ipsum “ dolor ” sit amet »</p>
@@ -943,7 +943,7 @@ def test_before_after():
     test_same_rendering(100, 30,
         ('pseudo_url', u'''
             <style>
-                @page { size: 100px 30px }
+                @page { -weasy-size: 100px 30px }
                 body { margin: 0; background: #fff; }
                 p:before { content: 'a' url(pattern.png) 'b'}
             </style>
@@ -951,7 +951,7 @@ def test_before_after():
         '''),
         ('pseudo_url_reference', u'''
             <style>
-                @page { size: 100px 30px }
+                @page { -weasy-size: 100px 30px }
                 body { margin: 0; background: #fff }
             </style>
             <p>a<img src="pattern.png" alt="Missing image">bc</p>
