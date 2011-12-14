@@ -49,19 +49,19 @@ STYLES = {
 }
 
 # Maps counter types to a function implementing it.
-# The functions take two arguments: the value of the `symbols` descriptor
-# (or `additive-symbols` for the additive type) and the integer value being
-# formatted.
-# They return the representation as a string. The representation does not
-# include any negative sign.
+# The functions take three arguments: the values of the `symbols`
+# (or `additive-symbols` for the additive type) and `negative` descriptors,
+# and the integer value being formatted.
+# They return the representation as a string or None. None means that
+# the value can not represented and the fallback should be used.
 FORMATTERS = {}
 
 
 def register_style(name, type='symbolic', **descriptors):
     """Register a counter style."""
     if type == 'override':
-        # TODO: when we parse @counter-style rules
-        # override should bind late: when a value is generated
+        # TODO: when @counter-style rules are supported, change override
+        # to bind when a value is generated, not when the @rule is parsed.
         style = dict(STYLES[descriptors.pop('override')])
     else:
         style = dict(INITIAL_VALUES, formatter=functools.partial(
@@ -80,6 +80,7 @@ def register_formatter(function):
 
 @register_formatter
 def repeating(symbols, _negative, value):
+    """Implement the algorithm for `type: repeating`."""
     return symbols[value % len(symbols)]
 
 
@@ -92,17 +93,17 @@ def numeric(symbols, negative, value):
     if is_negative:
         value = abs(value)
         prefix, suffix = negative
-        parts = [suffix]
+        reversed_parts = [suffix]
     else:
-        parts = []
+        reversed_parts = []
     length = len(symbols)
     value = abs(value)
     while value != 0:
-        parts.append(symbols[value % length])
+        reversed_parts.append(symbols[value % length])
         value //= length
     if is_negative:
-        parts.append(prefix)
-    return ''.join(reversed(parts))
+        reversed_parts.append(prefix)
+    return ''.join(reversed(reversed_parts))
 
 
 @register_formatter
@@ -111,12 +112,12 @@ def alphabetic(symbols, _negative, value):
     if value <= 0:
         return None
     length = len(symbols)
-    parts = []
+    reversed_parts = []
     while value != 0:
         value -= 1
-        parts.append(symbols[value % length])
+        reversed_parts.append(symbols[value % length])
         value //= length
-    return ''.join(reversed(parts))
+    return ''.join(reversed(reversed_parts))
 
 
 @register_formatter
