@@ -41,7 +41,7 @@ setup(
         'lxml',
         'cssutils>=0.9.8',
         'PIL',
-        'CairoSVG',
+        'CairoSVG>=0.1.2',
         # Not installable by pip:
         #  Pango>=1.29.3
         #  PyGObject

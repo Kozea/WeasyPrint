@@ -66,7 +66,7 @@ def cairosvg_handler(file_like):
     from cairosvg.surface_type import DummySurface
     # TODO: find a way to pass file_like to the parser, not read the
     # whole string in memory.
-    surface = cairosvg.svg2surface(file_like.read(), DummySurface)
+    surface = cairosvg.svg2surface(file_like, DummySurface)
     return surface.cairo, surface.width, surface.height
 
 
@@ -108,7 +108,7 @@ def get_image_surface_from_uri(uri):
     handler = FORMAT_HANDLERS.get(mime_type, fallback_handler)
     try:
         return handler(file_like)
-    except (IOError, MemoryError):
+    except (IOError, MemoryError, NotImplementedError):
         # Network or parsing error
         # TODO: warn
         return None
