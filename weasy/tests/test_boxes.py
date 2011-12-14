@@ -496,6 +496,7 @@ def test_tables():
 
     # http://www.w3.org/TR/CSS21/tables.html#anonymous-boxes
     # Rules 1.1 and 1.2
+    # Rule XXX (not in the spec): column groups have at least one column child
     assert_tree(parse_all('''
         <span style="display: table-column-group">
             1
@@ -505,11 +506,14 @@ def test_tables():
             </em>
             <strong>4</strong>
         </span>
+        <ins style="display: table-column-group"></ins>
     '''), [
         ('body', 'AnonBlock', [
             ('body', 'AnonTable', [
                 ('span', 'TableColumnGroup', [
-                    ('em', 'TableColumn', [])])])])])
+                    ('em', 'TableColumn', [])]),
+                ('ins', 'TableColumnGroup', [
+                    ('ins', 'AnonTableColumn', [])])])])])
 
     # Rules 2.1 then 2.3
     assert_tree(parse_all('<table>foo <div></div></table>'), [
@@ -576,7 +580,8 @@ def test_tables():
             ('body', 'AnonTable', [
                 ('body', 'AnonTableColumnGroup', [
                     ('col', 'TableColumn', [])]),
-                ('colgroup', 'TableColumnGroup', [])])])])
+                ('colgroup', 'TableColumnGroup', [
+                    ('colgroup', 'AnonTableColumn', [])])])])])
 
 
 @SUITE.test
@@ -630,7 +635,7 @@ def test_nested_grid_x():
     table, = wrapper.children
     grid = [(colgroup.grid_x, [col.grid_x for col in colgroup.children])
             for colgroup in table.column_groups]
-    assert grid == [(0, [0, 1]), (2, []), (4, [4, 5, 6]), (7, [7])]
+    assert grid == [(0, [0, 1]), (2, [2, 3]), (4, [4, 5, 6]), (7, [7])]
 
 
 @SUITE.test

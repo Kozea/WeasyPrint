@@ -350,6 +350,11 @@ def table_boxes_children(box, children):
             child for child in children
             if isinstance(child, boxes.TableColumnBox)
         ]
+        # Rule XXX (not in the spec): column groups have at least
+        # one column child.
+        if not children:
+            children = [boxes.TableColumnBox.anonymous_from(box, [])
+                        for i in xrange(box.span)]
 
     # rule 1.3
     if box.tabular_container and len(children) >= 2:
