@@ -1393,3 +1393,6 @@ def test_table_wrapper():
     assert table.margin_height() == 500  # no margin
     assert wrapper.height == 500
     assert wrapper.margin_height() == 700  # 500 + 2*100
+
+    # Non-regression test: this used to cause an exception
+    page, = parse('<html style="display: table">')

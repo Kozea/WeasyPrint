@@ -80,14 +80,14 @@ def make_test_suite():
             test_filename = render(test)
 
             reader = png.Reader(filename=test_filename)
-            test_width, test_height, test_lines, test_meta = reader.read()
+            test_width, test_height, test_lines, test_meta = reader.asRGBA()
             test_lines = list(test_lines)
 
             for reference in references:
                 ref_filename = render(reference)
 
                 reader = png.Reader(filename=ref_filename)
-                ref_width, ref_height, ref_lines, ref_meta = reader.read()
+                ref_width, ref_height, ref_lines, ref_meta = reader.asRGBA()
                 ref_lines = list(ref_lines)
 
                 if equal:

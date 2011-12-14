@@ -331,7 +331,6 @@ def anonymous_table_boxes(box):
     See http://www.w3.org/TR/CSS21/tables.html#anonymous-boxes
 
     """
-    # Rule 1.1 is implicit: TableColumnBox is not a ParentBox
     if not isinstance(box, boxes.ParentBox):
         return box
 

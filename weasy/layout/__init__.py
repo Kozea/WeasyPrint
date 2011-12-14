@@ -25,7 +25,7 @@ Module managing the layout creation before drawing a document.
 from __future__ import division
 
 from .. import css
-from .blocks import block_box_layout
+from .blocks import block_level_layout
 from .percentages import resolve_percentages
 from ..formatting_structure import boxes
 
@@ -66,7 +66,7 @@ def make_page(document, page_number, resume_at):
     # TODO: handle cases where the root element is something else.
     # See http://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
     assert isinstance(root_box, boxes.BlockBox)
-    page.root_box, resume_at = block_box_layout(
+    page.root_box, resume_at = block_level_layout(
         document, root_box, page_content_bottom, resume_at,
         initial_containing_block, device_size, page_is_empty=True)
     assert page.root_box
