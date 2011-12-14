@@ -737,14 +737,43 @@ def test_whitespace_processing():
 def test_with_images():
     """Test that width, height and ratio of images are respected."""
     # Try a few image formats
-    for format in ['png', 'gif', 'svg', 'jpg']:
-        page, = parse('<img src="pattern.%s">' % format)
+    for url in ['pattern.png', 'pattern.gif', 'pattern.jpg', 'pattern.svg',
+                "data:image/svg+xml,<svg width='4' height='4'></svg>"]:
+        page, = parse('<img src="%s">' % url)
         html = page.root_box
         body, = html.children
         line, = body.children
         img, = line.children
         assert img.width == 4
         assert img.height == 4
+
+    # Invalid images
+    for url in [
+        '',
+        'inexistant.png',
+        'unknownprotocol://weasyprint.org/foo.png',
+        'data:image/unknowntype,Not an image',
+        # zero-byte images
+        'data:image/png,',
+        'data:image/jpeg,',
+        'data:image/svg+xml,',
+        # Incorrect format
+        'data:image/png,Not a PNG',
+        'data:image/jpeg,Not a JPEG',
+        'data:image/svg+xml,<svg>invalid xml',
+        # Unsupported units (yet) in CairoSVG
+        'data:image/svg+xml,<svg width="100%" height="100%"></svg>',
+        'data:image/svg+xml,<svg width="20em" height="10em"></svg>',
+        'data:image/svg+xml,<svg width="20ex" height="10ex"></svg>',
+    ]:
+        page, = parse("<p><img src='%s' alt='invalid image'>" % url)
+        html = page.root_box
+        body, = html.children
+        paragraph, = body.children
+        line, = paragraph.children
+        img, = line.children
+        text, = img.children
+        assert text.text == 'invalid image', url
 
     # Layout rules try to preserve the ratio, so the height should be 40px too:
     page, = parse('<img src="pattern.png" style="width: 40px">')
