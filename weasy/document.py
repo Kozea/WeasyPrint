@@ -184,13 +184,15 @@ class PNGDocument(Document):
         _width, _height, surface = self.draw_page(self.pages[page_index])
         surface.write_to_png(target)
 
-    def write_to(self, target):
-        """Write all pages as PNG into a file-like or filename `target`.
+    def draw_all_pages(self):
+        """Draw all pages and return a single ImageSurface.
 
         Pages are layed out vertically each above the next and centered
         horizontally.
         """
         pages = [self.draw_page(page) for page in self.pages]
+        if len(pages) == 1:
+            return pages[0]
         total_height = sum(height for width, height, surface in pages)
         max_width = max(width for width, height, surface in pages)
         surface = cairo.ImageSurface(cairo.FORMAT_ARGB32,
@@ -204,6 +206,15 @@ class PNGDocument(Document):
             context.paint()
             position_y += height
 
+        return max_width, total_height, surface
+
+    def write_to(self, target):
+        """Write all pages as PNG into a file-like or filename `target`.
+
+        Pages are layed out vertically each above the next and centered
+        horizontally.
+        """
+        _width, _height, surface = self.draw_all_pages()
         surface.write_to_png(target)
 
 

@@ -32,8 +32,11 @@ from weasy.tests.test_draw import assert_pixels_equal
 
 TEST_SUITE_VERSION = '20110323'
 
-BASE_URL = 'http://test.csswg.org/suites/css2.1/{}/html4/'.format(
-    TEST_SUITE_VERSION)
+#BASE_URL = 'http://test.csswg.org/suites/css2.1/{}/html4/'
+# Download and extract the zip file from http://test.csswg.org/suites/css2.1/
+BASE_URL = os.path.expanduser('~/css2.1_test_suite/{}/html4/')
+
+BASE_URL = BASE_URL.format(TEST_SUITE_VERSION)
 
 RESULTS_DIRECTORY = os.path.join(os.path.dirname(__file__),
                                  'test_results', 'w3')
@@ -66,42 +69,28 @@ def get_test_list():
 
 
 def make_test_suite():
-    rendered = set()
+    rendered = {}  # Memoize
 
     def render(name):
-        filename = os.path.join(RESULTS_DIRECTORY, name + '.png')
-        if name not in rendered:
-            PNGDocument.from_file(BASE_URL + name).write_to(filename)
-            rendered.add(name)
-        return filename
-
-    def make_test(equal, test, references):
-        def test_function():
-            test_filename = render(test)
-
-            reader = png.Reader(filename=test_filename)
-            test_width, test_height, test_lines, test_meta = reader.asRGBA()
-            test_lines = list(test_lines)
-
-            for reference in references:
-                ref_filename = render(reference)
-
-                reader = png.Reader(filename=ref_filename)
-                ref_width, ref_height, ref_lines, ref_meta = reader.asRGBA()
-                ref_lines = list(ref_lines)
-
-                if equal:
-                    assert test_width == ref_width
-                    assert test_height == ref_height
-                    assert_pixels_equal(test, test_width, test_height,
-                                        test_lines, ref_lines)
-                else:
-                    assert test_lines != ref_lines
-
-        return test_function
+        result = rendered.get(name)
+        if result is None:
+            document = PNGDocument.from_file(BASE_URL + name)
+            width, height, surface = document.draw_all_pages()
+            filename = os.path.join(RESULTS_DIRECTORY, name + '.png')
+            surface.write_to_png(filename)
+            result = width, height, surface.get_data()
+            rendered[name] = result
+        return result
 
     for equal, test, references in get_test_list():
-        yield test, make_test(equal, test, references)
+        # Use default parameter values to bind to the current values,
+        # not to the variables as a closure would do.
+        def test_function(equal=equal, test=test, references=references):
+            test_render = render(test)
+            references_render = map(render, references)
+            return all((test_render != ref_render) ^ equal
+                       for ref_render in references_render)
+        yield test, test_function
 
 
 def main():
@@ -125,20 +114,22 @@ def main():
             print '### Test %i of %i: %s' % (i, len(tests), name),
             sys.stdout.flush()
             try:
-                test()
-            except AssertionError:
-                print 'FAIL'
-                failed += 1
+                test_passed = test()
             except Exception:
                 print 'ERROR:'
                 traceback.print_exc()
                 errors += 1
             else:
-                print 'PASS'
-                passed += 1
+                if test_passed:
+                    print 'PASS'
+                    passed += 1
+                else:
+                    print 'FAIL'
+                    failed += 1
     except KeyboardInterrupt:
-        print
-        print 'Passed: %i, failed: %i, errors: %i' % (passed, failed, errors)
+        pass
+    print
+    print 'Passed: %i, failed: %i, errors: %i' % (passed, failed, errors)
 
 if __name__ == '__main__':
     main()
