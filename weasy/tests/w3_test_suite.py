@@ -76,7 +76,9 @@ def make_test_suite():
         if result is None:
             document = PNGDocument.from_file(BASE_URL + name)
             width, height, surface = document.draw_all_pages()
-            filename = os.path.join(RESULTS_DIRECTORY, name + '.png')
+            # name is sometimes "support/something.htm"
+            basename = os.path.basename(name)
+            filename = os.path.join(RESULTS_DIRECTORY, basename + '.png')
             surface.write_to_png(filename)
             result = width, height, surface.get_data()
             rendered[name] = result
