@@ -63,12 +63,13 @@ def cairosvg_handler(file_like):
         import cairosvg
     except ImportError:
         return None
-    from cairosvg.surface_type import DummySurface
+    from cairosvg.surface import SVGSurface
     from cairosvg.parser import ParseError
     # TODO: find a way to pass file_like to the parser, not read the
     # whole string in memory.
     try:
-        surface = cairosvg.svg2surface(file_like, DummySurface)
+        # Draw to a cairo surface but do not write to a file
+        surface = SVGSurface(file_like, output=None)
     except (ParseError, NotImplementedError):
         return None
     return surface.cairo, surface.width, surface.height

@@ -738,7 +738,9 @@ def test_with_images():
     """Test that width, height and ratio of images are respected."""
     # Try a few image formats
     for url in ['pattern.png', 'pattern.gif', 'pattern.jpg', 'pattern.svg',
-                "data:image/svg+xml,<svg width='4' height='4'></svg>"]:
+                "data:image/svg+xml,<svg width='4' height='4'></svg>",
+                "data:image/svg+xml,<svg width='4px' height='4px'></svg>",
+                ]:
         page, = parse('<img src="%s">' % url)
         html = page.root_box
         body, = html.children
