@@ -155,7 +155,7 @@ def color(value):
     if value.type == 'COLOR_VALUE':
         return value
     if get_keyword(value) == 'currentColor':
-        return 'currentColor'
+        return 'inherit'
 
 
 @validator('background-image')

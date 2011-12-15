@@ -210,19 +210,6 @@ def other_color(computer, name, value):
         return value
 
 
-@Computer.register('color')
-def color(computer, name, value):
-    """Compute the ``color`` property."""
-    if value == 'currentColor':
-        if computer.parent_style is None:
-            return INITIAL_VALUES['color']
-        else:
-            return computer.parent_style.color
-    else:
-        # As specified
-        return value
-
-
 @Computer.register('background-position')
 def length_list(computer, name, values):
     """Compute the properties with a list of lengths."""
