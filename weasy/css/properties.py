@@ -66,10 +66,10 @@ INITIAL_VALUES = {
     'empty_cells': 'show',
     'float': 'none',
     'font_family': ['serif'], # depends on user agent
-    'font_size': 'medium',
+    'font_size': 16,  # Actually medium, but we define medium from this.
     'font_style': 'normal',
     'font_variant': 'normal',
-    'font_weight': 'normal',
+    'font_weight': 400,
     'height': 'auto',
     'left': 'auto',
     'letter_spacing': 'normal',

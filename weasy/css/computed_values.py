@@ -44,7 +44,7 @@ LENGTHS_TO_PIXELS = {
 # This dict has to be ordered to implement 'smaller' and 'larger'
 FONT_SIZE_KEYWORDS = collections.OrderedDict(
     # medium is 16px, others are a ratio of medium
-    (name, 16. * a / b)
+    (name, INITIAL_VALUES['font_size'] * a / b)
     for name, a, b in [
         ('xx-small', 3, 5),
         ('x-small', 3, 4),
@@ -157,7 +157,10 @@ class Computer(object):
         self.element = element
         self.pseudo_type = pseudo_type
         self.specified = specified
-        self.parent_style = parent_style
+        if parent_style is None:
+            self.parent_style = INITIAL_VALUES
+        else:
+            self.parent_style = parent_style
         self.computed = computed
 
         for name in INITIAL_VALUES:
@@ -282,22 +285,11 @@ def content(computer, name, values):
         if values in ('normal', 'none'):
             return 'none'
         else:
-            return [compute_content_value(computer, value) for value in values]
+            return [('STRING', computer.element.get(value, ''))
+                    if type_ == 'attr' else (type_, value)
+                    for type_, value in values]
     else:
-        # CSS 2.1 says it computes to 'normal' for elements, but does not say
-        # anything for pseudo-elements other than :before and :after
-        # (ie. :first-line and :first-letter)
-        # Assume the same as elements.
         return 'normal'
-
-
-def compute_content_value(computer, value):
-    """Compute a content ``value``."""
-    type_, content = value
-    if type_ == 'attr':
-        return ('STRING', computer.element.get(content, ''))
-    else:
-        return value
 
 
 @Computer.register('display')
@@ -310,7 +302,7 @@ def display(computer, name, value):
     float_ = computer.specified.float
     position = computer.specified.position
     if position in ('absolute', 'fixed') or float_ != 'none' or \
-            computer.parent_style is None:
+            getattr(computer.element, 'getparent', lambda: None)() is None:
         if value == 'inline-table':
             return'table'
         elif value in ('inline', 'table-row-group', 'table-column',
@@ -328,8 +320,7 @@ def compute_float(computer, name, value):
     See http://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
 
     """
-    position = computer.specified.position
-    if position in ('absolute', 'fixed'):
+    if computer.specified.position in ('absolute', 'fixed'):
         return 'none'
     else:
         return value
@@ -338,15 +329,12 @@ def compute_float(computer, name, value):
 @Computer.register('font-size')
 def font_size(computer, name, value):
     """Compute the ``font-size`` property."""
+    if isinstance(value, (int, float)):
+        return value
     if value in FONT_SIZE_KEYWORDS:
         return FONT_SIZE_KEYWORDS[value]
 
-    if computer.parent_style is not None:
-        parent_font_size = computer.parent_style.font_size
-    else:
-        # root element, no parent
-        # Initial is 'medium', it’s a keyword.
-        parent_font_size = FONT_SIZE_KEYWORDS[INITIAL_VALUES['font_size']]
+    parent_font_size = computer.parent_style['font_size']
 
     if value.type == 'DIMENSION':
         if value.dimension == 'px':
@@ -376,12 +364,7 @@ def font_weight(computer, name, value):
     elif value == 'bold':
         return 700
     elif value in ('bolder', 'lighter'):
-        if computer.parent_style is not None:
-            parent_value = computer.parent_style.font_weight
-        else:
-            initial = get_single_keyword(INITIAL_VALUES['font_weight'])
-            assert initial == 'normal'
-            parent_value = 400
+        parent_value = computer.parent_style['font_weight']
         # Use a string here as StyleDict.__setattr__ turns integers into pixel
         # lengths. This is a number without unit.
         return FONT_WEIGHT_RELATIVE[value][parent_value]
