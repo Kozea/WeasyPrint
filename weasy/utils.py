@@ -22,12 +22,16 @@ Various utils.
 
 """
 
+import logging
 import urllib
 from urlparse import urljoin, urlparse
 
 from cssutils.helper import path2url
 
 from . import VERSION
+
+
+LOGGER = logging.getLogger('WEASYPRINT')
 
 
 def get_url_attribute(element, key):
@@ -37,9 +41,8 @@ def get_url_attribute(element, key):
 
     """
     attr_value = element.get(key)
-    if attr_value is None:
-        return None
-    return urljoin(element.base_url, attr_value.strip())
+    if attr_value:
+        return urljoin(element.base_url, attr_value.strip())
 
 
 def ensure_url(string):
@@ -88,7 +91,8 @@ def urllib_fetcher(url):
     """
     file_like, mime_type, charset = urlopen(url)
     if mime_type != 'text/css':
-        # TODO: add a warning
+        LOGGER.warn('Expected `text/css` for stylsheet at %s, got `%s`',
+                    url, mime_type)
         return None
     content = file_like.read()
     file_like.close()

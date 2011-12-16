@@ -22,11 +22,14 @@ Handle various image formats.
 
 from __future__ import division
 from StringIO import StringIO
+import logging
 
 import cairo
 
 from .utils import urlopen
 
+
+LOGGER = logging.getLogger('WEASYPRINT')
 
 # Map MIME types to functions that take a byte stream and return
 # ``(surface, width, height)`` a cairo Surface and its dimension in pixels.
@@ -65,8 +68,6 @@ def cairosvg_handler(file_like):
         return None
     from cairosvg.surface import SVGSurface
     from cairosvg.parser import ParseError
-    # TODO: find a way to pass file_like to the parser, not read the
-    # whole string in memory.
     try:
         # Draw to a cairo surface but do not write to a file
         surface = SVGSurface(file_like, output=None)
@@ -106,16 +107,18 @@ def get_image_surface_from_uri(uri):
     try:
         file_like, mime_type, _charset = urlopen(uri)
     except IOError:
-        # TODO: warn
+        LOGGER.warn('Error while fetching an image from %s', uri)
         return None
     # TODO: implement image type sniffing?
 # http://www.w3.org/TR/html5/fetching-resources.html#content-type-sniffing:-image
     handler = FORMAT_HANDLERS.get(mime_type, fallback_handler)
     try:
-        return handler(file_like)
+        image = handler(file_like)
     except (IOError, MemoryError):
         # Network or parsing error
-        # TODO: warn
-        return None
+        image = None
     finally:
         file_like.close()
+    if image is None:
+        LOGGER.warn('Error while parsing an image at %s', uri)
+    return image

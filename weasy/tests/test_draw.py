@@ -29,7 +29,7 @@ import png
 from attest import Tests, assert_hook  # pylint: disable=W0611
 
 from .testing_utils import (
-    resource_filename, TestPNGDocument, FONTS, assert_no_logs)
+    resource_filename, TestPNGDocument, FONTS, assert_no_logs, capture_logs)
 
 # Short variable names are OK here
 # pylint: disable=C0103
@@ -655,14 +655,18 @@ def test_images():
         </style>
         <div><img src="pattern.png"></div>
     ''')
-    assert_pixels('image_not_found', 8, 8, no_image, '''
-        <style>
-            @page { -weasy-size: 8px }
-            body { margin: 0; background: #fff }
-            img { display: block; margin: 2px auto 0 }
-        </style>
-        <div><img src="inexistent1.png" alt=""></div>
-    ''')
+    with capture_logs() as logs:
+        assert_pixels('image_not_found', 8, 8, no_image, '''
+            <style>
+                @page { -weasy-size: 8px }
+                body { margin: 0; background: #fff }
+                img { display: block; margin: 2px auto 0 }
+            </style>
+            <div><img src="inexistent1.png" alt=""></div>
+        ''')
+    assert len(logs) == 1
+    assert 'WARNING: Error while fetching an image' in logs[0]
+    assert 'inexistent1.png' in logs[0]
     assert_pixels('image_no_src', 8, 8, no_image, '''
         <style>
             @page { -weasy-size: 8px }
@@ -671,29 +675,33 @@ def test_images():
         </style>
         <div><img alt=""></div>
     ''')
-    assert_same_rendering(200, 30, [
-        ('image_alt_text_reference', '''
-            <style>
-                @page { -weasy-size: 200px 30px }
-                body { margin: 0; background: #fff }
-            </style>
-            <div>Hello, world!</div>
-        '''),
-        ('image_alt_text_not_found', '''
-            <style>
-                @page { -weasy-size: 200px 30px }
-                body { margin: 0; background: #fff }
-            </style>
-            <div><img src="inexistent2.png" alt="Hello, world!"></div>
-        '''),
-        ('image_alt_text_no_src', '''
-            <style>
-                @page { -weasy-size: 200px 30px }
-                body { margin: 0; background: #fff }
-            </style>
-            <div><img alt="Hello, world!"></div>
-        '''),
-    ])
+    with capture_logs() as logs:
+        assert_same_rendering(200, 30, [
+            ('image_alt_text_reference', '''
+                <style>
+                    @page { -weasy-size: 200px 30px }
+                    body { margin: 0; background: #fff }
+                </style>
+                <div>Hello, world!</div>
+            '''),
+            ('image_alt_text_not_found', '''
+                <style>
+                    @page { -weasy-size: 200px 30px }
+                    body { margin: 0; background: #fff }
+                </style>
+                <div><img src="inexistent2.png" alt="Hello, world!"></div>
+            '''),
+            ('image_alt_text_no_src', '''
+                <style>
+                    @page { -weasy-size: 200px 30px }
+                    body { margin: 0; background: #fff }
+                </style>
+                <div><img alt="Hello, world!"></div>
+            '''),
+        ])
+    assert len(logs) == 1
+    assert 'WARNING: Error while fetching an image' in logs[0]
+    assert 'inexistent2.png' in logs[0]
 
 
 @SUITE.test

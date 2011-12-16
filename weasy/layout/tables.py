@@ -22,9 +22,13 @@ Functions laying out tables.
 """
 
 from __future__ import division
+import logging
 
 from ..formatting_structure import boxes
 from .percentages import resolve_percentages, resolve_one_percentage
+
+
+LOGGER = logging.getLogger('WEASYPRINT')
 
 
 def table_layout(document, table, max_position_y, containing_block,
@@ -80,7 +84,11 @@ def table_layout(document, table, max_position_y, containing_block,
                     # The cell is entierly beyond the grid width, remove it
                     # entierly. Subsequent cells in the same row have greater
                     # grid_x, so they are beyond too.
-                    # TODO warn?
+                    cell_index = row.children.index(cell)
+                    ignored_cells = row.children[cell_index:]
+                    LOGGER.warn('This table row has more columns than '
+                                'the table, ignored %i cells: %r',
+                                len(ignored_cells), ignored_cells)
                     break
                 resolve_percentages(cell, containing_block=table)
                 cell.position_x = column_positions[cell.grid_x]

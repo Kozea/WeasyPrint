@@ -232,14 +232,18 @@ def test_page():
 
 
 @SUITE.test
-def test_invalid_selectors():
-    """Check that appropriate warnings are logged for invalid selectors."""
-    for css, message in [
-        (':link { margin: 2cm', 'WARNING: Unsupported selector'),
-        ('@page foo { margin: 2cm', 'WARNING: Unsupported @page selector'),
+def test_warnings():
+    """Check that appropriate warnings are logged."""
+    for source, message in [
+        ('<style>:link { margin: 2cm',
+            'WARNING: Unsupported selector'),
+        ('<style>@page foo { margin: 2cm',
+            'WARNING: Unsupported @page selector'),
+        ('<link rel=stylesheet href=data:image/png,>',
+            'WARNING: Expected `text/css` for stylsheet at'),
     ]:
         with capture_logs() as logs:
-            TestPNGDocument.from_string('<style>' + css).style_for('')
+            TestPNGDocument.from_string(source).style_for('')
         assert len(logs) == 1
         assert message in logs[0]
 

@@ -25,7 +25,7 @@ Test the layout.
 from attest import Tests, assert_hook  # pylint: disable=W0611
 
 from .testing_utils import (
-    TestPNGDocument, resource_filename, FONTS, assert_no_logs)
+    TestPNGDocument, resource_filename, FONTS, assert_no_logs, capture_logs)
 from .test_boxes import monkeypatch_validation
 from ..formatting_structure import boxes
 from ..layout.inlines import split_inline_box
@@ -753,7 +753,6 @@ def test_with_images():
 
     # Invalid images
     for url in [
-        '',
         'inexistant.png',
         'unknownprotocol://weasyprint.org/foo.png',
         'data:image/unknowntype,Not an image',
@@ -770,7 +769,13 @@ def test_with_images():
         'data:image/svg+xml,<svg width="20em" height="10em"></svg>',
         'data:image/svg+xml,<svg width="20ex" height="10ex"></svg>',
     ]:
-        page, = parse("<p><img src='%s' alt='invalid image'>" % url)
+        with capture_logs() as logs:
+            page, = parse("<p><img src='%s' alt='invalid image'>" % url)
+        assert len(logs) == 1
+        if url.startswith('data:'):
+            assert 'WARNING: Error while parsing an image' in logs[0]
+        else:
+            assert 'WARNING: Error while fetching an image' in logs[0]
         html = page.root_box
         body, = html.children
         paragraph, = body.children
@@ -1177,7 +1182,7 @@ def test_box_sizing():
 
 @SUITE.test
 def test_table_column_width():
-    page, = parse('''
+    source = '''
         <style>
             body { width: 20000px; margin: 0 }
             table { width: 10000px; margin: 0 auto; border-spacing: 100px }
@@ -1201,7 +1206,12 @@ def test_table_column_width():
                 <td>This cell will be removed as it is beyond the grid width
             </tr>
         </table>
-    ''')
+    '''
+    with capture_logs() as logs:
+        page, = parse(source)
+    assert len(logs) == 1
+    assert logs[0] == ('WARNING: This table row has more columns than '
+                       'the table, ignored 1 cells: (<TableCellBox td 22>,)')
     html = page.root_box
     body, = html.children
     wrapper, = body.children
