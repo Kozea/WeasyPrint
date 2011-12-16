@@ -377,19 +377,17 @@ def font_weight(computer, name, value):
 def line_height(computer, name, value):
     """Compute the ``line-height`` property."""
     if value == 'normal':
-        # a "reasonable" value
-        # http://www.w3.org/TR/CSS21/visudet.html#line-height
-        # TODO: use font metadata?
-        factor = 1.2
+        return value
     elif value.type == 'NUMBER':
-        factor = value.value
+        return ('NUMBER', value.value)
     elif value.type == 'PERCENTAGE':
         factor = value.value / 100.
-    elif value.type == 'DIMENSION':
-        return length(computer, name, value)
-    font_size_value = computer.get_computed('font_size')
-    # Raise if `factor` is not defined. It should be, because of validation.
-    return factor * font_size_value
+        font_size_value = computer.get_computed('font_size')
+        pixels = factor * font_size_value
+    else:
+        assert value.type == 'DIMENSION'
+        pixels = length(computer, name, value)
+    return ('PIXELS', pixels)
 
 
 @Computer.register('vertical_align')
@@ -399,8 +397,28 @@ def vertical_align(computer, name, value):
     # (See the SUPERSUB_RISE constant in pango-markup.c)
     if value == 'super':
         return computer.get_computed('font_size') * 0.5
-    if value == 'sub':
+    elif value == 'sub':
         return computer.get_computed('font_size') * -0.5
-    if getattr(value, 'type', 'other') == 'PERCENTAGE':
-        return computer.get_computed('line_height') * value.value / 100.
-    return length(computer, name, value)
+    elif getattr(value, 'type', 'other') == 'PERCENTAGE':
+        line_height = used_line_height({
+            'line_height': computer.get_computed('line_height'),
+            'font_size': computer.get_computed('font_size')
+        })
+        return line_height * value.value / 100.
+    else:
+        return length(computer, name, value)
+
+
+def used_line_height(style):
+    """Return the used value for the ``line-height`` property."""
+    line_height = style['line_height']
+    if line_height == 'normal':
+        # a "reasonable" value
+        # http://www.w3.org/TR/CSS21/visudet.html#line-height
+        # TODO: use font metrics?
+        line_height = ('NUMBER', 1.2)
+    type_, value = line_height
+    if type_ == 'NUMBER':
+        return value * style['font_size']
+    else:
+        return value

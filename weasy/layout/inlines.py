@@ -30,6 +30,7 @@ from .markers import image_marker_layout
 from .percentages import resolve_percentages, resolve_one_percentage
 from ..text import TextFragment
 from ..formatting_structure import boxes
+from ..css.computed_values import used_line_height
 
 
 def get_next_linebox(document, linebox, position_y, skip_stack,
@@ -379,7 +380,7 @@ def split_inline_box(document, box, position_x, max_x, skip_stack,
     fragment = TextFragment(
         b'', box.style, cairo.Context(document.surface))
     _, _, _, height, baseline, _ = fragment.split_first_line()
-    leading = box.style.line_height - height
+    leading = used_line_height(box.style) - height
     half_leading = leading / 2.
     # Set margins to the half leading but also compensate for borders and
     # paddings. We want margin_height() == line_height
@@ -452,7 +453,7 @@ def split_text_box(document, box, available_width, skip):
         # "only the 'line-height' is used when calculating the height
         #  of the line box."
         # Set margins so that margin_height() == line_height
-        leading = box.style.line_height - height
+        leading = used_line_height(box.style) - height
         half_leading = leading / 2.
         box.margin_top = half_leading
         box.margin_bottom = half_leading

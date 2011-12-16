@@ -32,6 +32,7 @@ from cssutils.helper import path2url
 from .testing_utils import (
     resource_filename, TestPNGDocument, assert_no_logs, capture_logs)
 from .. import css
+from ..css.computed_values import used_line_height
 
 
 SUITE = Tests()
@@ -263,3 +264,30 @@ def test_error_recovery():
         html = document.formatting_structure
         assert html.style.color.value == 'blue'
     assert len(logs) == 12
+
+
+@SUITE.test
+def test_line_height_inheritance():
+    document = TestPNGDocument.from_string('''
+        <style>
+            html { font-size: 10px; line-height: 140% }
+            section { font-size: 10px; line-height: 1.4 }
+            div, p { font-size: 20px; vertical-align: 50% }
+        </style>
+        <body><div><section><p></p></section></div></body>
+    ''')
+    html = document.formatting_structure
+    body, = html.children
+    div, = body.children
+    section, = div.children
+    paragraph, = section.children
+    assert html.style.font_size == 10
+    assert div.style.font_size == 20
+    # 140% of 10px = 14px is inherited from html
+    assert used_line_height(div.style) == 14
+    assert div.style.vertical_align == 7  # 50 % of 14px
+
+    assert paragraph.style.font_size == 20
+    # 1.4 is inherited from p, 1.4 * 20px on em = 28px
+    assert used_line_height(paragraph.style) == 28
+    assert paragraph.style.vertical_align == 14  # 50% of 28pxhh
