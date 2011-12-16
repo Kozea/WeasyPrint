@@ -61,10 +61,7 @@ class CallbackHandler(logging.Handler):
     """A logging handler that calls a function for every message."""
     def __init__(self, callback):
         super(CallbackHandler, self).__init__()
-        self.callback = callback
-
-    def emit(self, record):
-        self.callback((record.levelname.lower(), record.getMessage()))
+        self.emit = callback
 
 
 @contextlib.contextmanager
@@ -72,11 +69,16 @@ def capture_logs(logger_names=('WEASYPRINT', 'CSSUTILS')):
     """Return a context manager that captures all logged messages."""
     previous_handlers = []
     messages = []
+
+    def emit(record):
+        messages.append('%s: %s' % (record.levelname.upper(),
+                                    record.getMessage()))
+
     for name in set(logger_names):
         logger = logging.getLogger(name)
         previous_handlers.append((logger, logger.handlers))
         logger.handlers = []
-        logger.addHandler(CallbackHandler(messages.append))
+        logger.addHandler(CallbackHandler(emit))
     try:
         yield messages
     finally:

@@ -232,6 +232,19 @@ def test_page():
 
 
 @SUITE.test
+def test_invalid_selectors():
+    """Check that appropriate warnings are logged for invalid selectors."""
+    for css, message in [
+        (':link { margin: 2cm', 'WARNING: Unsupported selector'),
+        ('@page foo { margin: 2cm', 'WARNING: Unsupported @page selector'),
+    ]:
+        with capture_logs() as logs:
+            TestPNGDocument.from_string('<style>' + css).style_for('')
+        assert len(logs) == 1
+        assert message in logs[0]
+
+
+@SUITE.test
 def test_error_recovery():
     with capture_logs() as logs:
         document = TestPNGDocument.from_string('''

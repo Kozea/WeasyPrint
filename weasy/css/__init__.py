@@ -381,11 +381,11 @@ def match_page_selector(selector):
     # TODO: support "page names" in page selectors (see CSS3 Paged Media)
     pseudo_class = selector or None
     page_types = PAGE_PSEUDOCLASS_TARGETS.get(pseudo_class, None)
-    specificity = PAGE_PSEUDOCLASS_SPECIFICITY[pseudo_class]
     if page_types is None:
         LOGGER.warn('Unsupported @page selector %r, the whole rule-set '
                     'was ignored.', selector)
     else:
+        specificity = PAGE_PSEUDOCLASS_SPECIFICITY[pseudo_class]
         for page_type in page_types:
             yield '@page', page_type, specificity
 
