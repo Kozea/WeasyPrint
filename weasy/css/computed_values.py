@@ -63,6 +63,7 @@ BORDER_WIDTH_KEYWORDS = {
     'medium': 3,
     'thick': 5,
 }
+assert INITIAL_VALUES['border_top_width'] == BORDER_WIDTH_KEYWORDS['medium']
 
 # http://www.w3.org/TR/CSS21/fonts.html#propdef-font-weight
 FONT_WEIGHT_RELATIVE = dict(

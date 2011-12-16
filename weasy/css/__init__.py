@@ -40,6 +40,7 @@ function for each step:
 
 """
 
+import re
 import logging
 
 from lxml import cssselect
@@ -72,6 +73,11 @@ PAGE_PSEUDOCLASS_SPECIFICITY = {
     ':right': 1,
     ':first': 10,
 }
+
+# A test function that returns True if the given property name has an
+# initial value that is not always the same when computed.
+RE_INITIAL_NOT_COMPUTED = re.compile(
+    '^(display|border_[a-z]+_(width|color))$').match
 
 
 class StyleDict(object):
@@ -450,9 +456,10 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None):
             keyword = 'initial'
 
         if keyword == 'initial':
-            # Some initial values are the same when computed.
-            # TODO: Add them to the ``computed`` dict?
             value = initial
+            if not RE_INITIAL_NOT_COMPUTED(name):
+                # The value is the same as when computed
+                computed[name] = value
         elif keyword == 'inherit':
             value = parent_style[name]
             # Values in parent_style are already computed.
