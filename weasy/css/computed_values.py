@@ -126,6 +126,10 @@ PAGE_SIZES = dict(
         17 * LENGTHS_TO_PIXELS['in'],
     ),
 )
+for w, h in PAGE_SIZES.values():
+    assert w < h
+
+INITIAL_VALUES['size'] = PAGE_SIZES['A4']
 
 
 class Computer(object):
@@ -212,6 +216,7 @@ def other_color(computer, name, value):
 
 @Computer.register('background-position')
 @Computer.register('border-spacing')
+@Computer.register('size')
 def length_list(computer, name, values):
     """Compute the properties with a list of lengths."""
     return [length(computer, name, value) for value in values]
@@ -401,49 +406,6 @@ def line_height(computer, name, value):
     font_size_value = computer.get_computed('font_size')
     # Raise if `factor` is not defined. It should be, because of validation.
     return factor * font_size_value
-
-
-@Computer.register('size')
-def size(computer, name, values):
-    """Compute the ``size`` property.
-
-    See CSS3 Paged Media.
-
-    """
-    if computer.element != '@page':
-        return 'none'
-
-    keywords = map(get_keyword, values)
-    values = length_list(computer, name, values)
-
-    if keywords == ['auto']:
-        keywords = ['A4']  # Chosen by the UA. (That’s me!)
-
-    if isinstance(values[0], (int, float)):
-        if len(values) == 2:
-            assert isinstance(values[1], (int, float))
-            return values
-        else:
-            # square page
-            value, = values
-            return value, value
-    else:
-        orientation = None
-        size_value = None
-        for i, keyword in enumerate(keywords):
-            if keyword in ('portrait', 'landscape'):
-                orientation = keyword
-            elif keyword in PAGE_SIZES:
-                size_value = keyword
-            else:
-                raise ValueError("Illegal value for 'size': %r" % values[i])
-        if size_value is None:
-            size_value = 'A4'
-        width, height = PAGE_SIZES[size_value]
-        if (orientation == 'portrait' and width > height) or \
-               (orientation == 'landscape' and height > width):
-            width, height = height, width
-        return width, height
 
 
 @Computer.register('text-align')

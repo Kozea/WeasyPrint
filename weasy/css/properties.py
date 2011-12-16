@@ -114,7 +114,7 @@ INITIAL_VALUES = {
     'z_index': 'auto',
 
     # CSS3 Paged Media: http://www.w3.org/TR/css3-page/#page-size
-    'size': _parse('auto'),
+    'size': None,  # XXX set to A4 in computed_values
 
     # CSS3 User Interface: http://www.w3.org/TR/css3-ui/#box-sizing
     'box_sizing': 'content-box',

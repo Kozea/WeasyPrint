@@ -599,25 +599,37 @@ def size(values):
     See http://www.w3.org/TR/css3-page/#page-size-prop
 
     """
-    if len(values) == 1:
-        if is_dimension(values[0]):
+    if is_dimension(values[0]):
+        if len(values) == 1:
+            return values * 2
+        elif len(values) == 2 and is_dimension(values[1]):
             return values
-        keyword = get_single_keyword(values)
-        if (keyword in ('auto', 'portrait', 'landscape') or
-                keyword in computed_values.PAGE_SIZES):
-            return values
-    if len(values) == 2:
-        if all(is_dimension(value) for value in values):
-            return values
-        keywords = map(get_keyword, values)
-        if (
-            keywords[0] in ('portrait', 'landscape') and
-            keywords[1] in computed_values.PAGE_SIZES
-        ) or (
-            keywords[0] in computed_values.PAGE_SIZES and
-            keywords[1] in ('portrait', 'landscape')
-        ):
-            return values
+
+    keywords = map(get_keyword, values)
+    if len(keywords) == 1:
+        keyword = keywords[0]
+        if keyword in ('auto', 'portrait'):
+            return INITIAL_VALUES['size']
+        elif keyword == 'landscape':
+            height, width = INITIAL_VALUES['size']
+            return width, height
+        elif keyword in computed_values.PAGE_SIZES:
+            return computed_values.PAGE_SIZES[keyword]
+
+    if len(keywords) == 2:
+        if keywords[0] in ('portrait', 'landscape'):
+            orientation, size = keywords
+        elif keywords[1] in ('portrait', 'landscape'):
+            size, orientation = keywords
+        else:
+            size = None
+        if size in computed_values.PAGE_SIZES:
+            size = computed_values.PAGE_SIZES[size]
+            if orientation == 'portrait':
+                return size
+            else:
+                height, width = size
+                return width, height
 
 
 # Expanders
