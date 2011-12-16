@@ -392,18 +392,6 @@ def line_height(computer, name, value):
     return factor * font_size_value
 
 
-@Computer.register('text-align')
-def text_align(computer, name, value):
-    """Compute the ``text-align`` property."""
-    if value == 'start':
-        if computer.get_computed('direction') == 'rtl':
-            return 'right'
-        else:
-            return 'left'
-    else:
-        return value
-
-
 @Computer.register('vertical_align')
 def vertical_align(computer, name, value):
     """Compute the ``word-spacing`` property."""

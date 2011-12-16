@@ -98,8 +98,8 @@ INITIAL_VALUES = {
     'position': 'static',
     'right': 'auto',
     'table_layout': 'auto',
-    'text_align': 'start',  # Taken from CSS3 Text
-                            # Other CSS3 values are not supported.
+    'text_align': '-weasy-start',  # Taken from CSS3 Text.
+                   # The only other supported value form CSS3 is -weasy-end.
     'text_decoration': 'none',
     'text_indent': 0,
     'text_transform': 'none',

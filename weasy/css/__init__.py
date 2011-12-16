@@ -425,9 +425,9 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None):
         computed = StyleDict(parent=properties.INITIAL_VALUES)
         for name in properties.INHERITED:
             computed[name] = parent_style[name]
-        # border-style is none, so border-width computes to zero.
+        # border-*-style is none, so border-width computes to zero.
         # Other than that, properties that would need computing are
-        # border-color and size, but they do not apply.
+        # border-*-color, but they do not apply.
         for side in ('top', 'bottom', 'left', 'right'):
             computed['border_%s_width' % side] = 0
         return computed

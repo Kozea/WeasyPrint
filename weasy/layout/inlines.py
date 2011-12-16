@@ -552,6 +552,11 @@ def text_align(line, containing_block):
 
     """
     align = line.style.text_align
+    if align in ('-weasy-start', '-weasy-end'):
+        if (align == '-weasy-start') ^ (line.style.direction == 'rtl'):
+            align = 'left'
+        else:
+            align = 'right'
     if align == 'left':
         return 0
     offset = containing_block.width - line.width
