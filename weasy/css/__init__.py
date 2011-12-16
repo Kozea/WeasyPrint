@@ -468,9 +468,8 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None):
         assert value is not None
         specified[name] = value
 
-    computed_values.Computer(element, pseudo_type, specified, computed,
-                             parent_style)
-    return computed
+    return computed_values.compute(
+        element, pseudo_type, specified, computed, parent_style)
 
 
 def get_all_computed_styles(document, medium,

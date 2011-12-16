@@ -22,6 +22,7 @@ Normalize values as much as possible without rendering the document.
 """
 
 import collections
+import itertools
 
 from .properties import INITIAL_VALUES
 from .values import get_single_keyword, get_keyword
@@ -133,11 +134,33 @@ for w, h in PAGE_SIZES.values():
 INITIAL_VALUES['size'] = PAGE_SIZES['A4']
 
 
-class Computer(object):
-    """Things that compute are computers, right? Handle `computed values`.
+# These may be required by other and need to be computed first
+COMPUTED_FIRST = ['font_size', 'line_height', 'color']
+COMPUTING_ORDER = sorted(INITIAL_VALUES)
+for name in COMPUTED_FIRST:
+    COMPUTING_ORDER.remove(name)
+COMPUTING_ORDER = COMPUTED_FIRST + COMPUTING_ORDER
+del name, COMPUTED_FIRST
 
-    Some computed values depend on other computed values. This object allow
-    to request them without worrying about which is computed first.
+
+
+# Maps property names to functions returning the computed values
+COMPUTER_FUNCTIONS = {}
+
+
+def register_computer(name):
+    """Decorator registering a property ``name`` for a function."""
+    name = name.replace('-', '_')
+    def decorator(function):
+        """Register the property ``name`` for ``function``."""
+        COMPUTER_FUNCTIONS[name] = function
+        return function
+    return decorator
+
+
+def compute(element, pseudo_type, specified, computed, parent_style):
+    """
+    Return a StyleDict of computed values.
 
     :param element: The HTML element these style apply to
     :param pseudo_type: The type of pseudo-element, eg 'before', None
@@ -148,101 +171,78 @@ class Computer(object):
     :param parent_values: a :class:`StyleDict` of computed values of the parent
                           element (should contain values for all properties),
                           or ``None`` if ``element`` is the root element.
-
-    Once instanciated, this object will have completed the ``computed`` dict
-    so that is has values for all properties.
-
     """
-    def __init__(self, element, pseudo_type, specified, computed,
-                 parent_style):
-        self.element = element
-        self.pseudo_type = pseudo_type
-        self.specified = specified
-        if parent_style is None:
-            self.parent_style = INITIAL_VALUES
-        else:
-            self.parent_style = parent_style
-        self.computed = computed
+    if parent_style is None:
+        parent_style = INITIAL_VALUES
 
-        for name in INITIAL_VALUES:
-            self.get_computed(name)
+    computer = lambda: 0  # Dummy object that holds attributes
+    computer.element = element
+    computer.pseudo_type = pseudo_type
+    computer.specified = specified
+    computer.computed = computed
+    computer.parent_style = parent_style
 
-    def get_computed(self, name):
-        """Return the computed value for the ``name`` property.
+    getter = COMPUTER_FUNCTIONS.get
 
-        Call a "computer" function as needed and populate the `computed` dict
-        before return the value.
-
-        """
-        if name in self.computed:
+    for name in COMPUTING_ORDER:
+        if name in computed:
             # Already computed
-            return self.computed[name]
+            continue
 
-        value = self.specified[name]
-        if name in self.COMPUTER_FUNCTIONS:
-            value = self.COMPUTER_FUNCTIONS[name](self, name, value)
+        value = specified[name]
+        function = getter(name)
+        if function is not None:
+            value = function(computer, name, value)
         # else: same as specified
 
         assert value is not None
-        self.computed[name] = value
-        return value
+        computed[name] = value
 
-    # Maps property names to functions returning the computed values
-    COMPUTER_FUNCTIONS = {}
-
-    @classmethod
-    def register(cls, name):
-        """Decorator registering a property ``name`` for a function."""
-        name = name.replace('-', '_')
-        def decorator(function):
-            """Register the property ``name`` for ``function``."""
-            cls.COMPUTER_FUNCTIONS[name] = function
-            return function
-        return decorator
+    return computed
 
 
 # Let's be coherent, always use ``name`` as an argument even when it is useless
 # pylint: disable=W0613
 
-@Computer.register('background-color')
-@Computer.register('border-top-color')
-@Computer.register('border-right-color')
-@Computer.register('border-bottom-color')
-@Computer.register('border-left-color')
+@register_computer('background-color')
+@register_computer('border-top-color')
+@register_computer('border-right-color')
+@register_computer('border-bottom-color')
+@register_computer('border-left-color')
 def other_color(computer, name, value):
     """Compute the ``*-color`` properties."""
     if value == 'currentColor':
-        return computer.get_computed('color')
+        return computer.computed.color
     else:
         # As specified
         return value
 
 
-@Computer.register('background-position')
-@Computer.register('border-spacing')
-@Computer.register('size')
+@register_computer('background-position')
+@register_computer('border-spacing')
+@register_computer('size')
 def length_list(computer, name, values):
     """Compute the properties with a list of lengths."""
     return [length(computer, name, value) for value in values]
 
 
-@Computer.register('top')
-@Computer.register('right')
-@Computer.register('left')
-@Computer.register('bottom')
-@Computer.register('margin-top')
-@Computer.register('margin-right')
-@Computer.register('margin-bottom')
-@Computer.register('margin-left')
-@Computer.register('height')
-@Computer.register('width')
-@Computer.register('letter-spacing')
-@Computer.register('padding-top')
-@Computer.register('padding-right')
-@Computer.register('padding-bottom')
-@Computer.register('padding-left')
-@Computer.register('text-indent')
-@Computer.register('word-spacing')
+@register_computer('top')
+@register_computer('right')
+@register_computer('left')
+@register_computer('bottom')
+@register_computer('margin-top')
+@register_computer('margin-right')
+@register_computer('margin-bottom')
+@register_computer('margin-left')
+@register_computer('height')
+@register_computer('width')
+@register_computer('letter-spacing')
+@register_computer('padding-top')
+@register_computer('padding-right')
+@register_computer('padding-bottom')
+@register_computer('padding-left')
+@register_computer('text-indent')
+@register_computer('word-spacing')
 def length(computer, name, value):
     """Compute a length ``value``."""
     if getattr(value, 'type', 'other') == 'NUMBER' and value.value == 0:
@@ -256,7 +256,7 @@ def length(computer, name, value):
         # Convert absolute lengths to pixels
         factor = LENGTHS_TO_PIXELS[value.dimension]
     elif value.dimension in ('em', 'ex'):
-        factor = computer.get_computed('font_size')
+        factor = computer.computed.font_size
 
     if value.dimension == 'ex':
         factor *= 0.5
@@ -264,13 +264,13 @@ def length(computer, name, value):
     return value.value * factor
 
 
-@Computer.register('border-top-width')
-@Computer.register('border-right-width')
-@Computer.register('border-left-width')
-@Computer.register('border-bottom-width')
+@register_computer('border-top-width')
+@register_computer('border-right-width')
+@register_computer('border-left-width')
+@register_computer('border-bottom-width')
 def border_width(computer, name, value):
     """Compute the ``border-*-width`` properties."""
-    style = computer.get_computed(name.replace('width', 'style'))
+    style = computer.computed[name.replace('width', 'style')]
     if style in ('none', 'hidden'):
         return 0
 
@@ -280,7 +280,7 @@ def border_width(computer, name, value):
     return length(computer, name, value)
 
 
-@Computer.register('content')
+@register_computer('content')
 def content(computer, name, values):
     """Compute the ``content`` property."""
     if computer.pseudo_type in ('before', 'after'):
@@ -294,7 +294,7 @@ def content(computer, name, values):
         return 'normal'
 
 
-@Computer.register('display')
+@register_computer('display')
 def display(computer, name, value):
     """Compute the ``display`` property.
 
@@ -315,7 +315,7 @@ def display(computer, name, value):
     return value
 
 
-@Computer.register('float')
+@register_computer('float')
 def compute_float(computer, name, value):
     """Compute the ``float`` property.
 
@@ -328,7 +328,7 @@ def compute_float(computer, name, value):
         return value
 
 
-@Computer.register('font-size')
+@register_computer('font-size')
 def font_size(computer, name, value):
     """Compute the ``font-size`` property."""
     if isinstance(value, (int, float)):
@@ -358,7 +358,7 @@ def font_size(computer, name, value):
     return value.value * factor
 
 
-@Computer.register('font-weight')
+@register_computer('font-weight')
 def font_weight(computer, name, value):
     """Compute the ``font-weight`` property."""
     if value == 'normal':
@@ -374,16 +374,17 @@ def font_weight(computer, name, value):
         return value
 
 
-@Computer.register('line-height')
+@register_computer('line-height')
 def line_height(computer, name, value):
     """Compute the ``line-height`` property."""
-    if value == 'normal':
+    # No .type attribute: already computed
+    if value == 'normal' or not hasattr(value, 'type'):
         return value
     elif value.type == 'NUMBER':
         return ('NUMBER', value.value)
     elif value.type == 'PERCENTAGE':
         factor = value.value / 100.
-        font_size_value = computer.get_computed('font_size')
+        font_size_value = computer.computed.font_size
         pixels = factor * font_size_value
     else:
         assert value.type == 'DIMENSION'
@@ -391,19 +392,19 @@ def line_height(computer, name, value):
     return ('PIXELS', pixels)
 
 
-@Computer.register('vertical_align')
+@register_computer('vertical_align')
 def vertical_align(computer, name, value):
     """Compute the ``word-spacing`` property."""
     # Use +/- half an em for super and sub, same as Pango.
     # (See the SUPERSUB_RISE constant in pango-markup.c)
     if value == 'super':
-        return computer.get_computed('font_size') * 0.5
+        return computer.computed.font_size * 0.5
     elif value == 'sub':
-        return computer.get_computed('font_size') * -0.5
+        return computer.computed.font_size * -0.5
     elif getattr(value, 'type', 'other') == 'PERCENTAGE':
         line_height = used_line_height({
-            'line_height': computer.get_computed('line_height'),
-            'font_size': computer.get_computed('font_size')
+            'line_height': computer.computed.line_height,
+            'font_size': computer.computed.font_size
         })
         return line_height * value.value / 100.
     else:
