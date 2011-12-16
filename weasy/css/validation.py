@@ -216,9 +216,11 @@ def background_repeat(keyword):
 @validator()
 def border_spacing(values):
     """Validator for the `border-spacing` property."""
-    if (all(is_dimension(value, negative=False) for value in values)
-            and len(values) in (1, 2)):
-        return values
+    if all(is_dimension(value, negative=False) for value in values):
+        if len(values) == 1:
+            return (values[0], values[0])
+        elif len(values) == 2:
+            return tuple(values)
 
 
 @validator('border-top-style')

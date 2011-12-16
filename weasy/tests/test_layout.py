@@ -1185,7 +1185,7 @@ def test_table_column_width():
     source = '''
         <style>
             body { width: 20000px; margin: 0 }
-            table { width: 10000px; margin: 0 auto; border-spacing: 100px }
+            table { width: 10000px; margin: 0 auto; border-spacing: 100px 0 }
             td { border: 10px solid; padding: 1px }
         </style>
         <table>
@@ -1332,7 +1332,7 @@ def test_table_column_width():
 @SUITE.test
 def test_table_row_height():
     page, = parse('''
-        <table style="width: 1000px; border-spacing: 100px;
+        <table style="width: 1000px; border-spacing: 0 100px;
                       font: 20px/1em serif; margin: 3px">
             <tr>
                 <td rowspan=0 style="height: 420px; vertical-align: top">

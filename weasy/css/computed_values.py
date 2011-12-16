@@ -211,6 +211,7 @@ def other_color(computer, name, value):
 
 
 @Computer.register('background-position')
+@Computer.register('border-spacing')
 def length_list(computer, name, values):
     """Compute the properties with a list of lengths."""
     return [length(computer, name, value) for value in values]
@@ -251,15 +252,6 @@ def length(computer, name, value):
         factor *= 0.5
 
     return value.value * factor
-
-
-@Computer.register('border-spacing')
-def border_spacing(computer, name, value):
-    value = tuple(length_list(computer, name, value))
-    if len(value) == 1:
-        return value * 2  # (v,) => (v, v)
-    else:
-        return value
 
 
 @Computer.register('border-top-width')
