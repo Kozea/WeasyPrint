@@ -241,6 +241,7 @@ def length_list(computer, name, values):
 @Computer.register('padding-bottom')
 @Computer.register('padding-left')
 @Computer.register('text-indent')
+@Computer.register('word-spacing')
 def length(computer, name, value):
     """Compute a length ``value``."""
     if getattr(value, 'type', 'other') == 'NUMBER' and value.value == 0:
@@ -414,13 +415,4 @@ def vertical_align(computer, name, value):
         return computer.get_computed('font_size') * -0.5
     if getattr(value, 'type', 'other') == 'PERCENTAGE':
         return computer.get_computed('line_height') * value.value / 100.
-    return length(computer, name, value)
-
-
-@Computer.register('word-spacing')
-def word_spacing(computer, name, value):
-    """Compute the ``word-spacing`` property."""
-    if value == 'normal':
-        return 0
-
     return length(computer, name, value)
