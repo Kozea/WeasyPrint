@@ -29,7 +29,8 @@ import functools
 import logging
 
 from ..formatting_structure import counters
-from .values import get_keyword, get_single_keyword, as_css
+from .values import (get_keyword, get_single_keyword, as_css,
+                     make_percentage_value)
 from .properties import INITIAL_VALUES, NOT_PRINT_MEDIA
 from . import computed_values
 
@@ -40,6 +41,14 @@ CONTENT_QUOTE_KEYWORDS = {
     'close-quote': (False, True),
     'no-open-quote': (True, False),
     'no-close-quote': (False, False),
+}
+
+BACKGROUND_POSITION_PERCENTAGES = {
+    'top': make_percentage_value(0),
+    'left': make_percentage_value(0),
+    'center': make_percentage_value(50),
+    'bottom': make_percentage_value(100),
+    'right': make_percentage_value(100),
 }
 
 LOGGER = logging.getLogger('WEASYPRINT')
@@ -176,25 +185,27 @@ def background_position(values):
     See http://www.w3.org/TR/CSS21/colors.html#propdef-background-position
 
     """
+    kw_to_percentage = dict(top=0, left=0, center=50, bottom=100, right=100)
     if len(values) == 1:
+        center = BACKGROUND_POSITION_PERCENTAGES['center']
         value = values[0]
         keyword = get_keyword(value)
-        if keyword in ('left', 'right', 'top', 'bottom', 'center'):
-            return keyword, 'center'
+        if keyword in BACKGROUND_POSITION_PERCENTAGES:
+            return BACKGROUND_POSITION_PERCENTAGES[keyword], center
         elif is_dimension_or_percentage(value):
-            return value, 'center'
+            return value, center
 
     elif len(values) == 2:
         value_1, value_2 = values
         keyword_1, keyword_2 = map(get_keyword, values)
         if is_dimension_or_percentage(value_1):
             if keyword_2 in ('top', 'center', 'bottom'):
-                return value_1, keyword_2
+                return value_1, BACKGROUND_POSITION_PERCENTAGES[keyword_2]
             elif is_dimension_or_percentage(value_2):
                 return value_1, value_2
         elif is_dimension_or_percentage(value_2):
             if keyword_1 in ('left', 'center', 'right'):
-                return keyword_1, value_2
+                return BACKGROUND_POSITION_PERCENTAGES[keyword_1], value_2
         elif (
                     keyword_1 in ('left', 'center', 'right') and
                     keyword_2 in ('top', 'center', 'bottom')
@@ -202,7 +213,8 @@ def background_position(values):
                     keyword_1 in ('top', 'center', 'bottom') and
                     keyword_2 in ('left', 'center', 'right')
                 ):
-            return keyword_1, keyword_2
+            return (BACKGROUND_POSITION_PERCENTAGES[keyword_1],
+                    BACKGROUND_POSITION_PERCENTAGES[keyword_2])
     #else: invalid
 
 

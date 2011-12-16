@@ -177,9 +177,16 @@ def draw_background(document, context, box, clip=True):
 
         surface, image_width, image_height = image
 
-        bg_position = box.style.background_position
-        bg_position_x, bg_position_y = absolute_background_position(
-            bg_position, (bg_width, bg_height), (image_width, image_height))
+        bg_position_x, bg_position_y = box.style.background_position
+
+        percentage = get_percentage_value(bg_position_x)
+        if percentage is not None:
+            bg_position_x = (bg_width - image_width) * percentage / 100.
+
+        percentage = get_percentage_value(bg_position_y)
+        if percentage is not None:
+            bg_position_y = (bg_height - image_height) * percentage / 100.
+
         context.translate(bg_position_x, bg_position_y)
 
         bg_repeat = box.style.background_repeat
@@ -206,38 +213,6 @@ def draw_background(document, context, box, clip=True):
         context.set_source_surface(surface)
         context.get_source().set_extend(cairo.EXTEND_REPEAT)
         context.paint()
-
-
-def absolute_background_position(css_values, bg_dimensions, image_dimensions):
-    """Return the background's ``position_x, position_y`` in pixels.
-
-    http://www.w3.org/TR/CSS21/colors.html#propdef-background-position
-
-    :param css_values: a list of one or two cssutils Value objects.
-    :param bg_dimensions: ``width, height`` of the background positionning area
-    :param image_dimensions: ``width, height`` of the background image
-
-    """
-    values = list(css_values)
-
-    if len(css_values) == 1:
-        values.append('center')
-    else:
-        assert len(css_values) == 2
-
-    if values[1] in ('left', 'right') or values[0] in ('top', 'bottom'):
-        values.reverse()
-    # Order is now [horizontal, vertical]
-
-    kw_to_percentage = dict(top=0, left=0, center=50, bottom=100, right=100)
-
-    for value, bg_dimension, image_dimension in zip(
-            values, bg_dimensions, image_dimensions):
-        percentage = kw_to_percentage.get(value, get_percentage_value(value))
-        if percentage is not None:
-            yield (bg_dimension - image_dimension) * percentage / 100.
-        else:
-            yield value
 
 
 def get_rectangle_edges(x, y, width, height):

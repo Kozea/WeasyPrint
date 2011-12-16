@@ -22,6 +22,9 @@ Utility functions and methods used by various modules in the css package.
 """
 
 
+import collections
+
+
 def get_keyword(value):
     """If ``value`` is a keyword, return its name.
 
@@ -63,3 +66,11 @@ def get_percentage_value(value):
 def as_css(values):
     """Return the string reperesentation of the ``values`` list."""
     return ' '.join(getattr(value, 'cssText', value) for value in values)
+
+
+FakeValue = collections.namedtuple('FakeValue', ('type', 'value', 'cssText'))
+
+
+def make_percentage_value(value):
+    """Return an object that ``get_percentage_value()`` will accept."""
+    return FakeValue('PERCENTAGE', value, '{}%'.format(value))
