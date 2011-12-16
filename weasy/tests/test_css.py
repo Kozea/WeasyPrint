@@ -29,11 +29,13 @@ from attest import Tests, raises, assert_hook  # pylint: disable=W0611
 import cssutils
 from cssutils.helper import path2url
 
-from . import resource_filename, TestPNGDocument
+from .testing_utils import (
+    resource_filename, TestPNGDocument, assert_no_logs, capture_logs)
 from .. import css
 
 
 SUITE = Tests()
+SUITE.context(assert_no_logs)
 
 
 def parse_html(filename, **kwargs):
@@ -229,24 +231,9 @@ def test_page():
     assert style.margin_bottom == 16
 
 
-@contextlib.contextmanager
-def without_cssutils_logging():
-    """Context manager that disables cssutils logging."""
-    logger = logging.getLogger('CSSUTILS')
-    handlers = logger.handlers[:]
-    del logger.handlers[:]
-    if hasattr(logging, 'NullHandler'):
-        # New in 2.7
-        logger.addHandler(logging.NullHandler())
-    try:
-        yield
-    finally:
-        logger.handlers[:] = handlers
-
-
 @SUITE.test
 def test_error_recovery():
-    with without_cssutils_logging():
+    with capture_logs() as logs:
         document = TestPNGDocument.from_string('''
             <style> html { color red; color: blue; color
         ''')
@@ -258,3 +245,4 @@ def test_error_recovery():
         ''')
         html = document.formatting_structure
         assert html.style.color.value == 'blue'
+    assert len(logs) == 12

@@ -24,11 +24,13 @@ Test the management of the CSS properties.
 from attest import Tests, raises, assert_hook  # pylint: disable=W0611
 from cssutils.css import PropertyValue
 
+from .testing_utils import assert_no_logs
 from ..css import validation
 from ..css.values import as_css
 
 
 SUITE = Tests()
+SUITE.context(assert_no_logs)
 
 
 def expand_to_dict(short_name, short_values):

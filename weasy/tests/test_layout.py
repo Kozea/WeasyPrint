@@ -24,14 +24,16 @@ Test the layout.
 
 from attest import Tests, assert_hook  # pylint: disable=W0611
 
-from . import TestPNGDocument, resource_filename
-from ..formatting_structure import boxes
+from .testing_utils import (
+    TestPNGDocument, resource_filename, FONTS, assert_no_logs)
 from .test_boxes import monkeypatch_validation
-from . import FONTS
+from ..formatting_structure import boxes
 from ..layout.inlines import split_inline_box
 from ..layout.percentages import resolve_percentages
 
+
 SUITE = Tests()
+SUITE.context(assert_no_logs)
 
 
 def body_children(page):

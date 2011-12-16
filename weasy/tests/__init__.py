@@ -20,39 +20,3 @@
 WeasyPrint testing suite.
 
 """
-
-import os.path
-import logging
-
-from cssutils import parseFile
-
-from ..document import PNGDocument
-
-
-logging.getLogger('WEASYPRINT').addHandler(logging.StreamHandler())
-
-
-# TODO: find a way to not depend on a specific font
-FONTS = u"Liberation Sans, Arial"
-TEST_USER_AGENT_STYLESHEETS = (
-    parseFile(os.path.join(
-        os.path.dirname(__file__), '..', 'css', 'tests_ua.css'
-    )),
-)
-
-
-class TestPNGDocument(PNGDocument):
-    """Like PNGDocument, but with a different user-agent stylesheet.
-
-    This stylesheet is shorter, which makes tests faster.
-
-    """
-    def __init__(self, dom, user_stylesheets=None,
-                 user_agent_stylesheets=TEST_USER_AGENT_STYLESHEETS):
-        super(TestPNGDocument, self).__init__(
-            dom, user_stylesheets, user_agent_stylesheets)
-
-
-def resource_filename(basename):
-    """Return the absolute path of the resource called ``basename``."""
-    return os.path.join(os.path.dirname(__file__), 'resources', basename)

@@ -28,7 +28,8 @@ from array import array
 import png
 from attest import Tests, assert_hook  # pylint: disable=W0611
 
-from . import resource_filename, TestPNGDocument, FONTS
+from .testing_utils import (
+    resource_filename, TestPNGDocument, FONTS, assert_no_logs)
 
 # Short variable names are OK here
 # pylint: disable=C0103
@@ -39,6 +40,7 @@ B = array('B', [0, 0, 255, 255])  # blue
 BYTES_PER_PIXELS = 4
 
 SUITE = Tests()
+SUITE.context(assert_no_logs)
 
 
 def make_filename(dirname, basename):

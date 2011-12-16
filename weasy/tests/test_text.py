@@ -28,9 +28,11 @@ from attest import Tests, assert_hook  # pylint: disable=W0611
 from ..css import effective_declarations, computed_from_cascaded
 from ..text import TextFragment
 from .test_layout import parse, body_children
-from . import FONTS
+from .testing_utils import FONTS, assert_no_logs
+
 
 SUITE = Tests()
+SUITE.context(assert_no_logs)
 
 
 def make_text(text, width=-1, style=''):

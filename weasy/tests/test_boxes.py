@@ -25,13 +25,13 @@ import contextlib
 
 from attest import Tests, assert_hook  # pylint: disable=W0611
 
-from . import resource_filename
+from .testing_utils import resource_filename, TestPNGDocument, assert_no_logs
 from ..css import validation, page_style
-from . import TestPNGDocument
 from ..formatting_structure import boxes, build, counters
 
 
 SUITE = Tests()
+SUITE.context(assert_no_logs)
 
 
 PROPER_CHILDREN = dict((key, tuple(map(tuple, value))) for key, value in {
@@ -49,6 +49,11 @@ PROPER_CHILDREN = dict((key, tuple(map(tuple, value))) for key, value in {
     boxes.TableRowGroupBox: [[boxes.TableRowBox]],
     boxes.TableRowBox: [[boxes.TableCellBox]],
 }.iteritems())
+
+
+def test_no_log(test_function):
+    """Add a test function to the suite, and check that is produces no log."""
+    SUITE.test(assert_no_logs(test_function))
 
 
 def serialize(box_list):
