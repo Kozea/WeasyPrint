@@ -81,7 +81,7 @@ def register_formatter(function):
 @register_formatter
 def repeating(symbols, _negative, value):
     """Implement the algorithm for `type: repeating`."""
-    return symbols[value % len(symbols)]
+    return symbols[(value - 1) % len(symbols)]
 
 
 @register_formatter
