@@ -67,10 +67,11 @@ def cairosvg_handler(file_like):
     except ImportError:
         return None
     from cairosvg.surface import SVGSurface
-    from cairosvg.parser import ParseError
+    from cairosvg.parser import Tree, ParseError
     try:
         # Draw to a cairo surface but do not write to a file
-        surface = SVGSurface(file_like, output=None)
+        tree = Tree(file_obj=file_like)
+        surface = SVGSurface(tree, output=None)
     except (ParseError, NotImplementedError):
         return None
     return surface.cairo, surface.width, surface.height
