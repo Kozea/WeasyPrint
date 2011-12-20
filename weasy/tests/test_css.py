@@ -235,18 +235,27 @@ def test_page():
 @SUITE.test
 def test_warnings():
     """Check that appropriate warnings are logged."""
-    for source, message in [
+    for source, messages in [
         ('<style>:link { margin: 2cm',
-            'WARNING: Unsupported selector'),
+            ['WARNING: Unsupported selector']),
         ('<style>@page foo { margin: 2cm',
-            'WARNING: Unsupported @page selector'),
+            ['WARNING: Unsupported @page selector']),
         ('<link rel=stylesheet href=data:image/png,>',
-            'WARNING: Expected `text/css` for stylsheet at'),
+            ['WARNING: Expected `text/css` for stylsheet at']),
+        ('<style>foo { margin-color: red',
+            ['WARNING: Ignored declaration', 'unknown property']),
+        ('<style>foo { margin-top: red',
+            ['WARNING: Ignored declaration', 'invalid value']),
+        ('<html style="margin-color: red">',
+            ['WARNING: Ignored declaration', 'unknown property']),
+        ('<html style="margin-top: red">',
+            ['WARNING: Ignored declaration', 'invalid value']),
     ]:
         with capture_logs() as logs:
             TestPNGDocument.from_string(source).style_for('')
         assert len(logs) == 1
-        assert message in logs[0]
+        for message in messages:
+            assert message in logs[0]
 
 
 @SUITE.test
