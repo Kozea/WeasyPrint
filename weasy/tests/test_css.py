@@ -22,8 +22,6 @@ Test the base mechanisms of CSS.
 """
 
 import os.path
-import logging
-import contextlib
 
 from attest import Tests, raises, assert_hook  # pylint: disable=W0611
 import cssutils

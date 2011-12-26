@@ -149,7 +149,7 @@ def integer_attribute(element, box, name, minimum=1):
 
 
 @handler('colgroup')
-def handle_colgroup(document, element, box):
+def handle_colgroup(_document, element, box):
     """Handle the ``span`` attribute."""
     if isinstance(box, boxes.TableColumnGroupBox):
         if any(child.tag == 'col' for child in element):
@@ -160,20 +160,20 @@ def handle_colgroup(document, element, box):
 
 
 @handler('col')
-def handle_col(document, element, box):
+def handle_col(_document, element, box):
     """Handle the ``span`` attribute."""
     if isinstance(box, boxes.TableColumnBox):
         integer_attribute(element, box, 'span')
         if box.span > 1:
             # Generate multiple boxes
             # http://lists.w3.org/Archives/Public/www-style/2011Nov/0293.html
-            return [box.copy() for i in xrange(box.span)]
+            return [box.copy() for _i in xrange(box.span)]
     return [box]
 
 
 @handler('th')
 @handler('td')
-def handle_td(document, element, box):
+def handle_td(_document, element, box):
     """Handle the ``colspan``, ``rowspan`` attributes."""
     if isinstance(box, boxes.TableCellBox):
         # HTML 4.01 gives special meaning to colspan=0

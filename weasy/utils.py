@@ -56,6 +56,7 @@ def ensure_url(string):
 
 
 class URLopener(urllib.FancyURLopener):
+    """Sets the user agent string."""
     # User-Agent
     version = 'WeasyPrint/%s http://weasyprint.org/' % VERSION
 

@@ -24,7 +24,6 @@ Output document classes for various formats.
 
 import os.path
 import math
-import logging
 
 from cssutils import CSSParser
 import lxml.html
@@ -39,17 +38,12 @@ from . import utils
 from . import images
 
 
-logger = logging.getLogger('CSSUTILS')
-level = logger.level
-logger.setLevel('ERROR')
 # This is a one-element tuple.
 DEFAULT_USER_AGENT_STYLESHEETS = (
     CSSParser(parseComments=False, validate=False).parseFile(
         os.path.join(os.path.dirname(__file__), 'css', 'html5_ua.css')
     ),
 )
-logger.setLevel(level)
-del logger, level
 
 
 class Document(object):
@@ -155,6 +149,9 @@ class Document(object):
         return self._pages
 
     def get_image_surface_from_uri(self, uri):
+        """
+        Same as ``weasy.images.get_image_surface_from_uri`` but cache results
+        """
         missing = object()
         surface = self._image_cache.get(uri, missing)
         if surface is missing:

@@ -108,7 +108,7 @@ def dom_to_box(document, element, state=None):
             {},  # counter_values: name -> stacked/scoped values
             [set()]  # counter_scopes: DOM tree depths -> counter names
         )
-    quote_depth, counter_values, counter_scopes = state
+    _quote_depth, counter_values, counter_scopes = state
 
     update_counters(state, style)
 
@@ -159,7 +159,7 @@ def pseudo_to_box(document, state, element, pseudo_type):
     box = BOX_TYPE_FROM_DISPLAY[display](
         '%s:%s' % (element.tag, pseudo_type), element.sourceline, style, [])
 
-    quote_depth, counter_values, counter_scopes = state
+    quote_depth, counter_values, _counter_scopes = state
     update_counters(state, style)
     children = []
     if display == 'list-item':
@@ -207,7 +207,7 @@ def pseudo_to_box(document, state, element, pseudo_type):
 
 def update_counters(state, style):
     """Handle the ``counter-*`` properties."""
-    quote_depth, counter_values, counter_scopes = state
+    _quote_depth, counter_values, counter_scopes = state
     sibling_scopes = counter_scopes[-1]
 
     for name, value in style.counter_reset:
@@ -354,7 +354,7 @@ def table_boxes_children(box, children):
         # one column child.
         if not children:
             children = [boxes.TableColumnBox.anonymous_from(box, [])
-                        for i in xrange(box.span)]
+                        for _i in xrange(box.span)]
 
     # rule 1.3
     if box.tabular_container and len(children) >= 2:

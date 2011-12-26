@@ -22,10 +22,8 @@ Normalize values as much as possible without rendering the document.
 """
 
 import collections
-import itertools
 
 from .properties import INITIAL_VALUES
-from .values import get_single_keyword, get_keyword
 
 
 # How many CSS pixels is one <unit>?
@@ -134,15 +132,14 @@ for w, h in PAGE_SIZES.values():
 INITIAL_VALUES['size'] = PAGE_SIZES['A4']
 
 
-# These may be required by other and need to be computed first
-COMPUTED_FIRST = ['font_size', 'line_height', 'color']
-COMPUTING_ORDER = sorted(INITIAL_VALUES)
-for name in COMPUTED_FIRST:
-    COMPUTING_ORDER.remove(name)
-COMPUTING_ORDER = COMPUTED_FIRST + COMPUTING_ORDER
-del name, COMPUTED_FIRST
-
-
+def _computing_order():
+    """Some computed values are required by others, so order matters."""
+    first = ['font_size', 'line_height', 'color']
+    order = sorted(INITIAL_VALUES)
+    for name in first:
+        order.remove(name)
+    return tuple(first + order)
+COMPUTING_ORDER = _computing_order()
 
 # Maps property names to functions returning the computed values
 COMPUTER_FUNCTIONS = {}
@@ -402,24 +399,24 @@ def vertical_align(computer, name, value):
     elif value == 'sub':
         return computer.computed.font_size * -0.5
     elif getattr(value, 'type', 'other') == 'PERCENTAGE':
-        line_height = used_line_height({
+        height = used_line_height({
             'line_height': computer.computed.line_height,
             'font_size': computer.computed.font_size
         })
-        return line_height * value.value / 100.
+        return height * value.value / 100.
     else:
         return length(computer, name, value)
 
 
 def used_line_height(style):
     """Return the used value for the ``line-height`` property."""
-    line_height = style['line_height']
-    if line_height == 'normal':
+    height = style['line_height']
+    if height == 'normal':
         # a "reasonable" value
         # http://www.w3.org/TR/CSS21/visudet.html#line-height
         # TODO: use font metrics?
-        line_height = ('NUMBER', 1.2)
-    type_, value = line_height
+        height = ('NUMBER', 1.2)
+    type_, value = height
     if type_ == 'NUMBER':
         return value * style['font_size']
     else:

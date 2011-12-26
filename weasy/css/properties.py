@@ -23,16 +23,13 @@
 
 from cssutils.css import PropertyValue
 
-def _parse(css):
-    return list(PropertyValue(css))
-
 
 # See http://www.w3.org/TR/CSS21/propidx.html
 INITIAL_VALUES = {
     'background_attachment': 'scroll',
-    'background_color': _parse('transparent')[0],
+    'background_color': PropertyValue('transparent')[0],
     'background_image': 'none',
-    'background_position': _parse('0% 0%'),
+    'background_position': list(PropertyValue('0% 0%')),
     'background_repeat': 'repeat',
     'border_collapse': 'separate',
     # http://www.w3.org/TR/css3-color/#currentcolor
@@ -53,7 +50,7 @@ INITIAL_VALUES = {
     'caption_side': 'top',
     'clear': 'none',
     'clip': 'auto',
-    'color': _parse('#000')[0],     # depends on user agent
+    'color': PropertyValue('#000')[0],     # depends on user agent
     'content': 'normal',
     # Means 'none', but allow `display: list-item` to increment the
     # list-item counter. If we ever have a way for authors to query

@@ -101,6 +101,9 @@ class Box(object):
 
     @property
     def direction(self):
+        """
+        Value for the ``direction`` property when used as a containing block.
+        """
         return self.style.direction
 
     def copy(self):
@@ -236,6 +239,9 @@ class PageBox(Box):
 
     @property
     def direction(self):
+        """
+        Value for the ``direction`` property when used as a containing block.
+        """
         return self.root_box.direction
 
 
@@ -373,6 +379,7 @@ class TextBox(InlineLevelBox):
         self.text = text
 
     def copy_with_text(self, text):
+        """Return a new TextBox identical to this one except for the text."""
         assert text
         new_box = self.copy()
         new_box.text = text
@@ -483,6 +490,7 @@ class TableColumnGroupBox(ParentBox):
 
 # Not really a parent box, but pretending to be removes some special cases.
 class TableColumnBox(ParentBox):
+    """Box for elements with ``display: table-column``"""
     proper_table_child = True
     internal_table_or_caption = True
     proper_parents = (TableBox, InlineTableBox, TableColumnGroupBox)

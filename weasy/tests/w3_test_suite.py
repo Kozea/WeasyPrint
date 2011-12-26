@@ -24,10 +24,7 @@ import logging
 import traceback
 from contextlib import closing
 
-import png
-
 from weasy.document import PNGDocument
-from weasy.tests.test_draw import assert_pixels_equal
 
 
 TEST_SUITE_VERSION = '20110323'

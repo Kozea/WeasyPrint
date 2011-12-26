@@ -185,7 +185,6 @@ def background_position(values):
     See http://www.w3.org/TR/CSS21/colors.html#propdef-background-position
 
     """
-    kw_to_percentage = dict(top=0, left=0, center=50, bottom=100, right=100)
     if len(values) == 1:
         center = BACKGROUND_POSITION_PERCENTAGES['center']
         value = values[0]
@@ -263,6 +262,7 @@ def border_width(value):
 @validator()
 @single_keyword
 def box_sizing(keyword):
+    """Validation for the ``box-sizing`` property from css3-ui"""
     return keyword in ('padding-box', 'border-box')
 
 
@@ -383,7 +383,8 @@ def lenght_precentage_or_auto(value, negative=True):
 @validator('height')
 @validator('width')
 @single_value
-def positive_lenght_precentage_or_auto(value):
+def width_height(value):
+    """Validation for the ``width`` and ``height`` properties."""
     return lenght_precentage_or_auto.__func__(value, negative=False)
 
 
@@ -570,6 +571,7 @@ def text_transform(keyword):
 @validator()
 @single_value
 def vertical_align(value):
+    """Validation for the ``vertical-align`` property"""
     if is_dimension_or_percentage(value, negative=True):
         return value
     keyword = get_keyword(value)
@@ -618,17 +620,17 @@ def size(values):
 
     if len(keywords) == 2:
         if keywords[0] in ('portrait', 'landscape'):
-            orientation, size = keywords
+            orientation, page_size = keywords
         elif keywords[1] in ('portrait', 'landscape'):
-            size, orientation = keywords
+            page_size, orientation = keywords
         else:
-            size = None
-        if size in computed_values.PAGE_SIZES:
-            size = computed_values.PAGE_SIZES[size]
+            page_size = None
+        if page_size in computed_values.PAGE_SIZES:
+            width_height = computed_values.PAGE_SIZES[page_size]
             if orientation == 'portrait':
-                return size
+                return width_height
             else:
-                height, width = size
+                height, width = width_height
                 return width, height
 
 

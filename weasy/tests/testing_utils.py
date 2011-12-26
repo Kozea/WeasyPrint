@@ -23,7 +23,6 @@ WeasyPrint testing suite.
 
 import os.path
 import logging
-import functools
 import contextlib
 
 from cssutils import parseFile
