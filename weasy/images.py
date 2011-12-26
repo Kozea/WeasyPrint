@@ -42,10 +42,10 @@ FORMAT_HANDLERS = {}
 
 def register_format(mime_type):
     """Register a handler for a give image MIME type."""
-    def decorator(function):
+    def _decorator(function):
         FORMAT_HANDLERS[mime_type] = function
         return function
-    return decorator
+    return _decorator
 
 
 @register_format('image/png')
@@ -63,17 +63,17 @@ def cairosvg_handler(file_like):
     """
     # TODO: also offer librsvg?
     try:
-        import cairosvg
-    except ImportError:
-        return None
+        import cairosvg as _
+    except ImportError as exception:
+        return exception
     from cairosvg.surface import SVGSurface
     from cairosvg.parser import Tree, ParseError
     try:
         # Draw to a cairo surface but do not write to a file
         tree = Tree(file_obj=file_like)
         surface = SVGSurface(tree, output=None)
-    except (ParseError, NotImplementedError):
-        return None
+    except (ParseError, NotImplementedError) as exception:
+        return exception
     return surface.cairo, surface.width, surface.height
 
 
@@ -86,12 +86,12 @@ def fallback_handler(file_like):
     """
     try:
         from PIL import Image
-    except ImportError:
+    except ImportError as exception:
         try:
             # It is sometimes installed with another name...
             import Image
         except ImportError:
-            return None  # PIL is not installed
+            return exception  # PIL is not installed
     if not (hasattr(file_like, 'seek') and hasattr(file_like, 'tell')):
         # PIL likes to have these methods
         file_like = StringIO(file_like.read())
@@ -107,19 +107,24 @@ def get_image_surface_from_uri(uri):
     """Get a :class:`cairo.Surface`` from an image URI."""
     try:
         file_like, mime_type, _charset = urlopen(uri)
-    except IOError:
-        LOGGER.warn('Error while fetching an image from %s', uri)
+    except IOError as exc:
+        LOGGER.warn('Error while fetching an image from %s : %s', uri, exc)
         return None
     # TODO: implement image type sniffing?
 # http://www.w3.org/TR/html5/fetching-resources.html#content-type-sniffing:-image
+
     handler = FORMAT_HANDLERS.get(mime_type, fallback_handler)
     try:
         image = handler(file_like)
-    except (IOError, MemoryError):
-        # Network or parsing error
-        image = None
+    except (IOError, MemoryError) as exception:
+        pass # Network or parsing error
+    else:
+        exception = image if isinstance(image, Exception) else None
     finally:
         file_like.close()
-    if image is None:
-        LOGGER.warn('Error while parsing an image at %s', uri)
-    return image
+
+    if exception is None:
+        return image
+    else:
+        LOGGER.warn('Error while parsing an image at %s : %s', uri, exception)
+        return None

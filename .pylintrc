@@ -42,7 +42,7 @@ disable=I0011,W0142,W0404
 
 # Set the output format. Available formats are text, parseable, colorized, msvs
 # (visual studio) and html
-#output-format=colorized
+output-format=colorized
 
 # Include message's id in output
 #include-ids=yes
@@ -162,7 +162,7 @@ bad-names=foo,bar,baz
 
 # Regular expression which should only match functions or classes name which do
 # not require a docstring
-no-docstring-rgx=__.*__
+no-docstring-rgx=__.*__|_decorator
 
 
 [SIMILARITIES]
