@@ -204,30 +204,40 @@ def test_page():
             }
             @page :right {
                 margin-bottom: 12pt;
+                font-size: 20px;
+                @top-left {
+                    width: 10em;
+                }
             }
         ''')
     ])
 
-    style = document.style_for('@page', 'first_left')
-
+    style = document.style_for('first_left_page')
     assert style.margin_top == 5
     assert style.margin_left == 10
     assert style.margin_bottom == 10
 
-    style = document.style_for('@page', 'first_right')
+    style = document.style_for('first_right_page')
     assert style.margin_top == 5
     assert style.margin_left == 10
     assert style.margin_bottom == 16
 
-    style = document.style_for('@page', 'left')
+    style = document.style_for('left_page')
     assert style.margin_top == 10
     assert style.margin_left == 10
     assert style.margin_bottom == 10
 
-    style = document.style_for('@page', 'right')
+    style = document.style_for('right_page')
     assert style.margin_top == 10
     assert style.margin_left == 10
     assert style.margin_bottom == 16
+
+    style = document.style_for('first_left_page', '@top-left')
+    assert style is None
+
+    style = document.style_for('first_right_page', '@top-left')
+    assert style.font_size == 20
+    assert style.width == 200
 
 
 @SUITE.test

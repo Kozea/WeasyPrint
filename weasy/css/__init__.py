@@ -60,18 +60,19 @@ PSEUDO_ELEMENTS = ('before', 'after', 'first-line', 'first-letter')
 # Selectors for @page rules can have a pseudo-class, one of :first, :left
 # or :right. This maps pseudo-classes to lists of "page types" selected.
 PAGE_PSEUDOCLASS_TARGETS = {
-    None: ['left', 'right', 'first_left', 'first_right'],  # no pseudo-class
-    ':left': ['left', 'first_left'],
-    ':right': ['right', 'first_right'],
-    ':first': ['first_left', 'first_right'],
+    ':first': ['first_left_page', 'first_right_page'],
+    ':left': ['left_page', 'first_left_page'],
+    ':right': ['right_page', 'first_right_page'],
+    # no pseudo-class: all pages
+    None: ['left_page', 'right_page', 'first_left_page', 'first_right_page'],
 }
 
 # Specificity of @page pseudo-classes for the cascade.
 PAGE_PSEUDOCLASS_SPECIFICITY = {
-    None: 0,
+    ':first': 10,
     ':left': 1,
     ':right': 1,
-    ':first': 10,
+    None: 0,
 }
 
 # A test function that returns True if the given property name has an
@@ -238,6 +239,10 @@ def effective_rules(sheet, medium):
             # pass other rules through: "normal" rulesets, @font-face,
             # @namespace, @page, and @variables
             yield rule
+            if rule.type == rule.PAGE_RULE:
+                # Do not use recursion here as page rules have no .media attr
+                for margin_rule in rule.cssRules:
+                    yield margin_rule
             continue  # no sub-stylesheet here.
         # subsheet has the .media attribute from the @import or @media rule.
         for subrule in effective_rules(subsheet, medium):
@@ -291,11 +296,6 @@ def add_declaration(cascaded_styles, prop_name, prop_values, weight, element,
     The value is only set if there is no value of greater weight defined yet.
 
     """
-    if pseudo_type is not None:
-        if element == '@page':
-            assert pseudo_type in PAGE_PSEUDOCLASS_TARGETS[None]
-        else:
-            assert pseudo_type in PSEUDO_ELEMENTS
     style = cascaded_styles.setdefault((element, pseudo_type), {})
     _values, previous_weight = style.get(prop_name, (None, None))
     if previous_weight is None or previous_weight <= weight:
@@ -328,7 +328,7 @@ def selector_to_xpath(selector):
         #   `cssselect.CSSSelector`.
         if isinstance(parsed_selector, cssselect.Pseudo) \
                 and parsed_selector.ident in PSEUDO_ELEMENTS:
-            pseudo_type = parsed_selector.ident
+            pseudo_type = str(parsed_selector.ident)
             # Remove the pseudo-element from the selector
             parsed_selector = parsed_selector.element
         else:
@@ -373,13 +373,11 @@ def match_selectors(document, selector_list):
             yield element, pseudo_type, specificity
 
 
-def match_page_selector(selector):
+def match_page_selector(selector, margin_type=None):
     """Get the pages matching ``selector``.
 
-    Yield ``'@page', page_type, selector_specificity`` tuples.
-
-    ``'@page'`` is the marker for page pseudo-elements. It is added so that
-    this function has the same return type as :func:`match_selectors`.
+    Yield ``page_type, margin_type, selector_specificity`` tuples.
+    ``margin_type`` is as passed as an argument.
 
     Return an empty iterable if the selector is invalid or unsupported.
 
@@ -393,7 +391,7 @@ def match_page_selector(selector):
     else:
         specificity = PAGE_PSEUDOCLASS_SPECIFICITY[pseudo_class]
         for page_type in page_types:
-            yield '@page', page_type, specificity
+            yield page_type, margin_type, specificity
 
 
 def set_computed_styles(cascaded_styles, computed_styles,
@@ -405,12 +403,12 @@ def set_computed_styles(cascaded_styles, computed_styles,
     declaration priority (ie. ``!important``) and selector specificity.
 
     """
-    if element == '@page':
-        parent = None
-    elif pseudo_type:
+    if pseudo_type is not None:
         parent = element
+    elif hasattr(element, 'getparent'):
+        parent = element.getparent()  # None for the root element
     else:
-        parent = element.getparent()  # none for the root element
+        parent = None  # Non-ruleset rule such as @page
 
     if parent is None:
         parent_style = None
@@ -519,6 +517,11 @@ def get_all_computed_styles(document, medium,
                     matched = match_selectors(document, rule.selectorList)
                 elif rule.type == rule.PAGE_RULE:
                     matched = match_page_selector(rule.selectorText)
+                elif rule.type == rule.MARGIN_RULE:
+                    # TODO: refactor this to reuse the result of
+                    # match_page_selector() on the parent @page rule.
+                    matched = match_page_selector(
+                        rule.parent.selectorText, rule.margin)
                 else:
                     # TODO: handle @font-face, @namespace, and @variables
                     continue
@@ -562,26 +565,26 @@ def get_all_computed_styles(document, medium,
     for element in document.dom.iter():
         set_computed_styles(cascaded_styles, computed_styles, element)
 
+
+    # Then computed styles for @page.
+
+    # Iterate on all possible page types, even if there is no cascaded style
+    # for them.
+    for page_type in PAGE_PSEUDOCLASS_TARGETS[None]:
+        set_computed_styles(cascaded_styles, computed_styles, page_type)
+
     # Then computed styles for pseudo elements, in any order.
     # Pseudo-elements inherit from their associated element so they come
-    # after. Do them in a second pass as there is no easy way to iterate
+    # last. Do them in a second pass as there is no easy way to iterate
     # on the pseudo-elements for a given element with the current structure
     # of cascaded_styles. (Keys are (element, pseudo_type) tuples.)
 
     # Only iterate on pseudo-elements that have cascaded styles. (Others
     # might as well not exist.)
     for element, pseudo_type in cascaded_styles:
-        if pseudo_type and element != '@page':
+        if pseudo_type:
             set_computed_styles(cascaded_styles, computed_styles,
                                 element, pseudo_type)
-
-    # Then computed styles for @page. (They could be done at any time.)
-
-    # Iterate on all possible page types, even if there is no cascaded style
-    # for them.
-    for page_type in PAGE_PSEUDOCLASS_TARGETS[None]:
-        set_computed_styles(cascaded_styles, computed_styles,
-                            '@page', page_type)
 
     return computed_styles
 
@@ -594,7 +597,7 @@ def page_style(document, page_number):
     first_is_right = True
 
     is_right = (page_number % 2) == (1 if first_is_right else 0)
-    page_type = 'right' if is_right else 'left'
+    page_type = 'right_page' if is_right else 'left_page'
     if page_number == 1:
         page_type = 'first_' + page_type
-    return document.computed_styles['@page', page_type]
+    return document.computed_styles[page_type, None]
