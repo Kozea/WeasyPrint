@@ -67,14 +67,6 @@ PAGE_PSEUDOCLASS_TARGETS = {
     None: ['left_page', 'right_page', 'first_left_page', 'first_right_page'],
 }
 
-# Specificity of @page pseudo-classes for the cascade.
-PAGE_PSEUDOCLASS_SPECIFICITY = {
-    ':first': 10,
-    ':left': 1,
-    ':right': 1,
-    None: 0,
-}
-
 # A test function that returns True if the given property name has an
 # initial value that is not always the same when computed.
 RE_INITIAL_NOT_COMPUTED = re.compile(
@@ -342,8 +334,9 @@ def selector_to_xpath(selector):
         return result
 
 
-def match_selectors(document, selector_list):
-    """Get the selectors of ``selector_list`` matching in the ``document``.
+def match_selectors(document, rule):
+    """Get the elements in ``document`` matched by the select selectors in
+    ``rule``.
 
     Yield ``element, pseudo_element_type, selector_specificity`` tuples.
 
@@ -354,7 +347,7 @@ def match_selectors(document, selector_list):
 
     """
     selectors = []
-    for selector in selector_list:
+    for selector in rule.selectorList:
         try:
             pseudo_type, selector_callable = selector_to_xpath(selector)
         except (cssselect.SelectorSyntaxError, cssselect.ExpressionError,
@@ -373,8 +366,8 @@ def match_selectors(document, selector_list):
             yield element, pseudo_type, specificity
 
 
-def match_page_selector(selector, margin_type=None):
-    """Get the pages matching ``selector``.
+def match_page_selector(rule, margin_type=None):
+    """Get the page types matching the selector in ``rule``.
 
     Yield ``page_type, margin_type, selector_specificity`` tuples.
     ``margin_type`` is as passed as an argument.
@@ -382,6 +375,7 @@ def match_page_selector(selector, margin_type=None):
     Return an empty iterable if the selector is invalid or unsupported.
 
     """
+    selector = rule.selectorText
     # TODO: support "page names" in page selectors (see CSS3 Paged Media)
     pseudo_class = selector or None
     page_types = PAGE_PSEUDOCLASS_TARGETS.get(pseudo_class, None)
@@ -389,7 +383,7 @@ def match_page_selector(selector, margin_type=None):
         LOGGER.warn('Unsupported @page selector %r, the whole rule-set '
                     'was ignored.', selector)
     else:
-        specificity = PAGE_PSEUDOCLASS_SPECIFICITY[pseudo_class]
+        specificity = rule.specificity
         for page_type in page_types:
             yield page_type, margin_type, specificity
 
@@ -514,14 +508,13 @@ def get_all_computed_styles(document, medium,
             # expanded once, not for every document.
             for rule in effective_rules(sheet, medium):
                 if rule.type == rule.STYLE_RULE:
-                    matched = match_selectors(document, rule.selectorList)
+                    matched = match_selectors(document, rule)
                 elif rule.type == rule.PAGE_RULE:
-                    matched = match_page_selector(rule.selectorText)
+                    matched = match_page_selector(rule)
                 elif rule.type == rule.MARGIN_RULE:
                     # TODO: refactor this to reuse the result of
                     # match_page_selector() on the parent @page rule.
-                    matched = match_page_selector(
-                        rule.parent.selectorText, rule.margin)
+                    matched = match_page_selector(rule.parent, rule.margin)
                 else:
                     # TODO: handle @font-face, @namespace, and @variables
                     continue
