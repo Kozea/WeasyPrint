@@ -1028,3 +1028,61 @@ def test_borders():
         'border_solid', 140, 110, solid_pixels,
         source % {'border_style': 'solid'}
     )
+
+
+@SUITE.test
+def test_margin_boxes():
+    """Test the rendering of margin boxes"""
+    R = array('B', [255, 0, 0, 255])  # red
+    G = array('B', [0, 255, 0, 255])  # green
+    B = array('B', [0, 0, 255, 255])  # blue
+    g = array('B', [0, 128, 0, 255])  # half green
+    b = array('B', [0, 0, 128, 255])  # half blue
+    assert_pixels('margin_boxes', 15, 15, [
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+G+G+G+_+_+_+_+_+_+B+B+B+B+_,
+        _+G+G+G+_+_+_+_+_+_+B+B+B+B+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+R+R+R+R+_+_+_+_+_+_,
+        _+_+_+_+_+R+R+R+R+_+_+_+_+_+_,
+        _+_+_+_+_+R+R+R+R+_+_+_+_+_+_,
+        _+_+_+_+_+R+R+R+R+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+b+b+b+_+_+_+_+_+_+g+g+g+g+_,
+        _+b+b+b+_+_+_+_+_+_+g+g+g+g+_,
+        _+b+b+b+_+_+_+_+_+_+g+g+g+g+_,
+        _+b+b+b+_+_+_+_+_+_+g+g+g+g+_,
+        _+b+b+b+_+_+_+_+_+_+g+g+g+g+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            html { background: white; height: 100% }
+            body { background: #f00; height: 100% }
+            @page {
+                -weasy-size: 15px;
+                margin: 4px 6px 7px 5px;
+
+                @top-left-corner {
+                    margin: 1px;
+                    content: " ";
+                    background: #0f0;
+                }
+                @top-right-corner {
+                    margin: 1px;
+                    content: " ";
+                    background: #00f;
+                }
+                @bottom-right-corner {
+                    margin: 1px;
+                    content: " ";
+                    background: #008000;
+                }
+                @bottom-left-corner {
+                    margin: 1px;
+                    content: " ";
+                    background: #000080;
+                }
+            }
+        </style>
+        <body>
+    ''')

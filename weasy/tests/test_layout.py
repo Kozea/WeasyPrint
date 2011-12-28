@@ -1446,3 +1446,64 @@ def test_table_wrapper():
 
     # Non-regression test: this used to cause an exception
     page, = parse('<html style="display: table">')
+
+
+@SUITE.test
+def test_margin_boxes():
+    # Corner boxes
+    page, = parse('''
+        <style>
+            @page {
+                @top-left-corner {
+                    content: 'top_left';
+                    padding: 10px;
+                }
+                @top-right-corner {
+                    content: 'top_right';
+                    padding: 10px;
+                }
+                @bottom-left-corner {
+                    content: 'bottom_left';
+                    padding: 10px;
+                }
+                @bottom-right-corner {
+                    content: 'bottom_right';
+                    padding: 10px;
+                }
+
+                -weasy-size: 1000px;
+                margin-top: 100px;
+                margin-bottom: 400px;
+                margin-left: 200px;
+                margin-right: 300px;
+            }
+        </style>
+    ''')
+    html, top_left, top_right, bottom_left, bottom_right = page.children
+    for margin_box, text in zip(
+            [top_left, top_right, bottom_left, bottom_right],
+            ['top_left', 'top_right', 'bottom_left', 'bottom_right']):
+
+        line, = margin_box.children
+        text, = line.children
+        assert text == text
+
+    assert top_left.position_x == 0
+    assert top_left.position_y == 0
+    assert top_left.margin_width() == 200  # margin-left
+    assert top_left.margin_height() == 100  # margin-top
+
+    assert top_right.position_x == 700  # size-x - margin-right
+    assert top_right.position_y == 0
+    assert top_right.margin_width() == 300  # margin-right
+    assert top_right.margin_height() == 100  # margin-top
+
+    assert bottom_left.position_x == 0
+    assert bottom_left.position_y == 600  # size-y - margin-bottom
+    assert bottom_left.margin_width() == 200  # margin-left
+    assert bottom_left.margin_height() == 400  # margin-bottom
+
+    assert bottom_right.position_x == 700  # size-x - margin-right
+    assert bottom_right.position_y == 600  # size-y - margin-bottom
+    assert bottom_right.margin_width() == 300  # margin-right
+    assert bottom_right.margin_height() == 400  # margin-bottom
