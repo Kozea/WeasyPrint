@@ -22,56 +22,7 @@ Module managing the layout creation before drawing a document.
 
 """
 
-from __future__ import division
-
-from .. import css
-from .blocks import block_level_layout
-from .percentages import resolve_percentages
-from ..formatting_structure import boxes
-
-
-def make_page(document, page_number, resume_at):
-    """Take just enough content from the beginning to fill one page.
-
-    Return ``page, finished``. ``page`` is a laid out Page object, ``finished``
-    is ``True`` if there is no more content, this was the last page.
-
-    """
-    style = css.page_style(document, page_number)
-    page = boxes.PageBox(page_number, style)
-
-    device_size = page.style.size
-    page.outer_width, page.outer_height = device_size
-
-    sheet = lambda: 1  # dummy object holding attributes.
-    sheet.width, sheet.height = device_size
-    resolve_percentages(page, sheet)
-
-    page.position_x = 0
-    page.position_y = 0
-    page.width = page.outer_width - page.horizontal_surroundings()
-    page.height = page.outer_height - page.vertical_surroundings()
-
-    root_box = document.formatting_structure
-
-    # This box is not laid-out yet, but it may be needed during layout
-    # eg. for ``page.direction``.
-    page.root_box = root_box
-
-    root_box.position_x = page.content_box_x()
-    root_box.position_y = page.content_box_y()
-    page_content_bottom = root_box.position_y + page.height
-    initial_containing_block = page
-
-    # TODO: handle cases where the root element is something else.
-    # See http://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
-    assert isinstance(root_box, boxes.BlockBox)
-    page.root_box, resume_at = block_level_layout(
-        document, root_box, page_content_bottom, resume_at,
-        initial_containing_block, device_size, page_is_empty=True)
-    assert page.root_box
-
-    return page, resume_at
+from .pages import make_page
 
 
 def layout(document):

@@ -59,8 +59,7 @@ def draw_page(document, page, context):
 
     """
     draw_page_background(document, context, page)
-    draw_border(context, page)
-    draw_box(document, context, page.root_box)
+    draw_box(document, context, page)
 
 
 def draw_box(document, context, box):
@@ -116,10 +115,13 @@ def draw_page_background(document, context, page):
     # TODO: more tests for this, see
     # http://www.w3.org/TR/css3-page/#page-properties
     draw_background(document, context, page, clip=False)
-    if has_background(page.root_box):
-        draw_background(document, context, page.root_box, clip=False)
-    elif page.root_box.element_tag.lower() == 'html':
-        for child in page.root_box.children:
+    # Margin boxes come before the content for painting order,
+    # so the box for the root element is the last child.
+    root_box = page.children[-1]
+    if has_background(root_box):
+        draw_background(document, context, root_box, clip=False)
+    elif root_box.element_tag.lower() == 'html':
+        for child in root_box.children:
             if child.element_tag.lower() == 'body':
                 # This must be drawn now, before anything on the root element.
                 draw_background(document, context, child, clip=False)

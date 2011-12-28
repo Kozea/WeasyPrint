@@ -220,31 +220,6 @@ class Box(object):
         return not (self.is_floated() or self.is_absolutely_positioned())
 
 
-class PageBox(Box):
-    """Box for a page.
-
-    Initially the whole document will be in a single page box. During layout
-    a new page box is created after every page break.
-
-    """
-    def __init__(self, page_number, style):
-        # starting at 1 for the first page.
-        self.page_number = page_number
-        # Page boxes are not linked to any element.
-        super(PageBox, self).__init__(
-            element_tag=None, sourceline=None, style=style)
-
-    def __repr__(self):
-        return '<%s %s>' % (type(self).__name__, self.page_number)
-
-    @property
-    def direction(self):
-        """
-        Value for the ``direction`` property when used as a containing block.
-        """
-        return self.root_box.direction
-
-
 class ParentBox(Box):
     """A box that has children."""
     def __init__(self, element_tag, sourceline, style, children):
@@ -286,6 +261,32 @@ class ParentBox(Box):
         for child in self.children:
             child.translate(dx, dy)
 
+
+class PageBox(ParentBox):
+    """Box for a page.
+
+    Initially the whole document will be in the box for the root element.
+    During layout a new page box is created after every page break.
+
+    """
+    def __init__(self, page_number, style, direction):
+        self._direction = direction
+        # starting at 1 for the first page.
+        self.page_number = page_number
+        # Page boxes are not linked to any element.
+        super(PageBox, self).__init__(
+            element_tag=None, sourceline=None, style=style, children=[])
+
+    def __repr__(self):
+        return '<%s %s>' % (type(self).__name__, self.page_number)
+
+    @property
+    def direction(self):
+        """
+        The direction of the page box (containing block to the root element)
+        is that of the root element.
+        """
+        return self._direction
 
 class BlockLevelBox(Box):
     """A box that participates in an block formatting context.

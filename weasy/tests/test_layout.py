@@ -38,7 +38,7 @@ SUITE.context(assert_no_logs)
 
 def body_children(page):
     """Take a ``page``  and return its <body>’s children."""
-    html = page.root_box
+    html, = page.children
     assert html.element_tag == 'html'
     body, = html.children
     assert body.element_tag == 'body'
@@ -119,7 +119,7 @@ def test_page():
     assert page.width == 84  # 200px - 10% - 1 inch
     assert page.height == 230  # 300px - 10px - 20%
 
-    html = page.root_box
+    html, = page.children
     assert html.element_tag == 'html'
     assert html.position_x == 96  # 1in
     assert html.position_y == 10
@@ -151,7 +151,7 @@ def test_page():
     ''')
     assert page.width == 16  # 100 - 2 * 42
     assert page.height == 58  # 100 - 2 * 21
-    html = page.root_box
+    html, = page.children
     assert html.element_tag == 'html'
     assert html.position_x == 42  # 2 + 8 + 32
     assert html.position_y == 21  # 1 + 4 + 16
@@ -187,7 +187,7 @@ def test_block_widths():
           <p style="width: 200px; margin: auto"></p>
         </div>
     ''')
-    html = page.root_box
+    html, = page.children
     assert html.element_tag == 'html'
     body, = html.children
     assert body.element_tag == 'body'
@@ -309,7 +309,7 @@ def test_block_percentage_heights():
         </style>
         <body>
     ''')
-    html = page.root_box
+    html, = page.children
     assert html.element_tag == 'html'
     body, = html.children
     assert body.element_tag == 'body'
@@ -325,7 +325,7 @@ def test_block_percentage_heights():
         </style>
         <body>
     ''')
-    html = page.root_box
+    html, = page.children
     assert html.element_tag == 'html'
     body, = html.children
     assert body.element_tag == 'body'
@@ -410,7 +410,7 @@ def test_breaking_linebox():
         dummy</em>text of the printing and. naaaa </em> naaaa naaaa naaaa
         naaaa naaaa naaaa naaaa naaaa</p>
     ''' % {'fonts': FONTS})
-    html = page.root_box
+    html, = page.children
     body, = html.children
     paragraph, = body.children
     assert len(list(paragraph.children)) == 3
@@ -695,7 +695,7 @@ def test_page_and_linebox_breaking():
 
     texts = []
     for page in pages:
-        html = page.root_box
+        html, = page.children
         body, = html.children
         div, = body.children
         lines = div.children
@@ -716,7 +716,7 @@ def test_whitespace_processing():
     """Test various spaces and tabulations processing."""
     for source in ['a', '  a  ', ' \n  \ta', ' a\t ']:
         page, = parse('<p><em>%s</em></p>' % source)
-        html = page.root_box
+        html, = page.children
         body, = html.children
         p, = body.children
         line, = p.children
@@ -726,7 +726,7 @@ def test_whitespace_processing():
 
         page, = parse('<p style="white-space: pre-line">\n\n<em>%s</em></pre>'
             % source.replace('\n', ' '))
-        html = page.root_box
+        html, = page.children
         body, = html.children
         p, = body.children
         _line1, _line2, line3 = p.children
@@ -744,7 +744,7 @@ def test_with_images():
                 "data:image/svg+xml,<svg width='4px' height='4px'></svg>",
                 ]:
         page, = parse('<img src="%s">' % url)
-        html = page.root_box
+        html, = page.children
         body, = html.children
         line, = body.children
         img, = line.children
@@ -776,7 +776,7 @@ def test_with_images():
             assert 'WARNING: Error while parsing an image' in logs[0]
         else:
             assert 'WARNING: Error while fetching an image' in logs[0]
-        html = page.root_box
+        html, = page.children
         body, = html.children
         paragraph, = body.children
         line, = paragraph.children
@@ -786,7 +786,7 @@ def test_with_images():
 
     # Layout rules try to preserve the ratio, so the height should be 40px too:
     page, = parse('<img src="pattern.png" style="width: 40px">')
-    html = page.root_box
+    html, = page.children
     body, = html.children
     line, = body.children
     img, = line.children
@@ -799,7 +799,7 @@ def test_with_images():
         <img src="pattern.png" style="width: 40px">
         <img src="pattern.png" style="width: 60px">
     ''')
-    html = page.root_box
+    html, = page.children
     body, = html.children
     line, = body.children
     img_1, img_2 = line.children
@@ -828,7 +828,7 @@ def test_vertical_align():
             <img src="pattern.png" style="width: 60px">
         </span>
     ''')
-    html = page.root_box
+    html, = page.children
     body, = html.children
     line, = body.children
     span, = line.children
@@ -856,7 +856,7 @@ def test_vertical_align():
             <img src="pattern.png" style="width: 60px">
         </span>
     ''')
-    html = page.root_box
+    html, = page.children
     body, = html.children
     line, = body.children
     span, = line.children
@@ -875,7 +875,7 @@ def test_vertical_align():
             <img src="pattern.png" style="width: 60px">
         </span>
     ''')
-    html = page.root_box
+    html, = page.children
     body, = html.children
     line, = body.children
     span, = line.children
@@ -896,7 +896,7 @@ def test_vertical_align():
             <img src="pattern.png" style="width: 60px">
         </span>
     ''')
-    html = page.root_box
+    html, = page.children
     body, = html.children
     line, = body.children
     span_1, = line.children
@@ -916,7 +916,7 @@ def test_vertical_align():
             <img src="pattern.png" style="width: 60px">
         </span>
     ''')
-    html = page.root_box
+    html, = page.children
     body, = html.children
     line, = body.children
     span, = line.children
@@ -940,7 +940,7 @@ def test_vertical_align():
             <img src="pattern.png" style="width: 40px; vertical-align: sub">
         </span>
     ''')
-    html = page.root_box
+    html, = page.children
     body, = html.children
     line, = body.children
     span, = line.children
@@ -961,7 +961,7 @@ def test_vertical_align():
             <img src="pattern.png" style="vertical-align: text-bottom">
         </span>
     ''')
-    html = page.root_box
+    html, = page.children
     body, = html.children
     line, = body.children
     span, = line.children
@@ -977,7 +977,7 @@ def test_vertical_align():
     # The second span has no children but should count for line heights
     # since it has padding.
     page, = parse('<span><span style="padding: 1px"></span></span>')
-    html = page.root_box
+    html, = page.children
     body, = html.children
     line, = body.children
     span_1, = line.children
@@ -1008,7 +1008,7 @@ def test_text_align_left():
             <img src="pattern.png" style="width: 40px">
             <img src="pattern.png" style="width: 60px">
     ''')
-    html = page.root_box
+    html, = page.children
     body, = html.children
     line, = body.children
     img_1, img_2 = line.children
@@ -1041,7 +1041,7 @@ def test_text_align_right():
             <img src="pattern.png" style="width: 40px">
             <img src="pattern.png" style="width: 60px">
     ''')
-    html = page.root_box
+    html, = page.children
     body, = html.children
     line, = body.children
     img_1, img_2 = line.children
@@ -1073,7 +1073,7 @@ def test_text_align_center():
             <img src="pattern.png" style="width: 40px">
             <img src="pattern.png" style="width: 60px">
     ''')
-    html = page.root_box
+    html, = page.children
     body, = html.children
     line, = body.children
     img_1, img_2 = line.children
@@ -1093,7 +1093,7 @@ def test_text_indent():
             <p>Some text that is long enough that it take at least three line,
                but maybe more.
         ''' % {'indent': indent})
-        html = page.root_box
+        html, = page.children
         body, = html.children
         paragraph, = body.children
         lines = paragraph.children
@@ -1116,7 +1116,7 @@ def test_inline_replaced_auto_margins():
         <body>
           <img src="pattern.png" />
     ''')
-    html = page.root_box
+    html, = page.children
     body, = html.children
     line, = body.children
     img, = line.children
@@ -1136,7 +1136,7 @@ def test_empty_inline_auto_margins():
         </style>
         <body><span></span>
     ''')
-    html = page.root_box
+    html, = page.children
     body, = html.children
     block, = body.children
     span, = block.children
@@ -1163,7 +1163,7 @@ def test_box_sizing():
         </style>
         <div></div><div></div>
     ''')
-    html = page.root_box
+    html, = page.children
     body, = html.children
     div_1, div_2 = body.children
     assert div_1.width == 1000
@@ -1212,7 +1212,7 @@ def test_table_column_width():
     assert len(logs) == 1
     assert logs[0] == ('WARNING: This table row has more columns than '
                        'the table, ignored 1 cells: (<TableCellBox td 22>,)')
-    html = page.root_box
+    html, = page.children
     body, = html.children
     wrapper, = body.children
     table, = wrapper.children
@@ -1287,7 +1287,7 @@ def test_table_column_width():
             </tr>
         </table>
     ''')
-    html = page.root_box
+    html, = page.children
     body, = html.children
     wrapper, = body.children
     table, = wrapper.children
@@ -1316,7 +1316,7 @@ def test_table_column_width():
             </table>
         ''' % {'body_width': body_width, 'table_width': table_width,
                'td_width': '60%'})
-        html = page.root_box
+        html, = page.children
         body, = html.children
         wrapper, = body.children
         table, = wrapper.children
@@ -1354,7 +1354,7 @@ def test_table_row_height():
             </tr>
         </table>
     ''')
-    html = page.root_box
+    html, = page.children
     body, = html.children
     wrapper, = body.children
     table, = wrapper.children
@@ -1421,7 +1421,7 @@ def test_table_wrapper():
         </style>
         <table></table>
     ''')
-    html = page.root_box
+    html, = page.children
     body, = html.children
     wrapper, = body.children
     table, = wrapper.children
