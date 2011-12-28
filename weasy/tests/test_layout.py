@@ -451,28 +451,30 @@ def test_linebox_text():
 @SUITE.test
 def test_linebox_positions():
     """Test the position of line boxes."""
-    page = u'''
-        <style>
-            p { width:%(width)spx; font-family:%(fonts)s;}
-        </style>
-        <p>this is test for <strong>Weasyprint</strong></p>'''
-    page, = parse(page % {'fonts': FONTS, 'width': 165})
-    paragraph, = body_children(page)
-    lines = list(paragraph.children)
-    assert len(lines) == 2
+    for width, expected_lines in [(165, 2), (1, 5), (0, 5)]:
+        page = u'''
+            <style>
+                p { width:%(width)spx; font-family:%(fonts)s;
+                    line-height: 20px }
+            </style>
+            <p>this is test for <strong>Weasyprint</strong></p>'''
+        page, = parse(page % {'fonts': FONTS, 'width': width})
+        paragraph, = body_children(page)
+        lines = list(paragraph.children)
+        assert len(lines) == expected_lines
 
-    ref_position_y = lines[0].position_y
-    ref_position_x = lines[0].position_x
-    for line in lines:
-        assert ref_position_y == line.position_y
-        assert ref_position_x == line.position_x
-        for box in line.children:
-            assert ref_position_x == box.position_x
-            ref_position_x += box.width
-            assert ref_position_y == box.position_y
-        assert ref_position_x - line.position_x <= line.width
-        ref_position_x = line.position_x
-        ref_position_y += line.height
+        ref_position_y = lines[0].position_y
+        ref_position_x = lines[0].position_x
+        for line in lines:
+            assert ref_position_y == line.position_y
+            assert ref_position_x == line.position_x
+            for box in line.children:
+                assert ref_position_x == box.position_x
+                ref_position_x += box.width
+                assert ref_position_y == box.position_y
+            assert ref_position_x - line.position_x <= line.width
+            ref_position_x = line.position_x
+            ref_position_y += line.height
 
 
 @SUITE.test
@@ -602,6 +604,11 @@ def test_inlinebox_spliting():
 
     # test with width = 10
     parts = list(get_parts(document, inlinebox, 10, parent))
+    assert len(parts) > 1
+    assert original_text == get_joined_text(parts)
+
+    # test with width = 0
+    parts = list(get_parts(document, inlinebox, 0, parent))
     assert len(parts) > 1
     assert original_text == get_joined_text(parts)
 

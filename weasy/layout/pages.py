@@ -24,14 +24,81 @@ Layout for page boxes and margin boxes.
 
 from __future__ import division
 
-from .. import css
-from .blocks import block_level_layout
+from .blocks import block_level_layout, block_level_height
 from .percentages import resolve_percentages
-from ..formatting_structure import boxes
+from ..formatting_structure import boxes, build
 
 
-def make_margin_boxes(document, page_number):
-    return []
+MARGIN_BOXES = (
+    # Order recommended on http://dev.w3.org/csswg/css3-page/#painting
+    # center/middle on top (last in tree order), then corner, ther others
+    '@top-left',
+    '@top-right',
+    '@bottom-left',
+    '@bottom-right',
+    '@left-top',
+    '@right-bottom',
+    '@right-top',
+    '@right-bottom'
+
+    '@top-left-corner',
+    '@top-right-corner',
+    '@bottom-left-corner',
+    '@bottom-right-corner',
+
+    '@bottom-center',
+    '@top-center',
+    '@left-middle',
+    '@right-middle',
+)
+
+
+def empty_margin_boxes(document, page, page_type):
+    for at_keyword in MARGIN_BOXES:
+        style = document.style_for(page_type, at_keyword)
+        if style is not None and style.content not in ('normal', 'none'):
+            box = boxes.MarginBox(at_keyword, style)
+            # TODO: Actual layout
+            box.position_x = 0
+            box.position_y = 0
+            containing_block = 0, 0
+            resolve_percentages(box, containing_block)
+            for name in ['width', 'height', 'margin_top', 'margin_bottom',
+                         'margin_left', 'margin_right']:
+                if getattr(box, name) == 'auto':
+                    setattr(box, name, 0)
+            yield box
+
+
+def make_margin_boxes(document, page, page_type):
+    for box in empty_margin_boxes(document, page, page_type):
+        # TODO: get actual counter values at the time of the last page break
+        counter_values = {}
+        quote_depth = [0]
+        children = build.content_to_boxes(
+            document, box.style, page, quote_depth, counter_values)
+        box = box.copy_with_children(children)
+        # content_to_boxes() only produces inline-level boxes
+        box = build.inline_in_block(box)
+        box, resume_at = block_level_height(document, box,
+            max_position_y=float('inf'), skip_stack=None,
+            device_size=page.style.size, page_is_empty=True)
+        assert resume_at is None
+        yield box
+
+
+def page_type_for_number(page_number):
+    """Return a page type such as ``'first_right_page'`` from a page number."""
+    # First page is a right page.
+    # TODO: this "should depend on the major writing direction of the
+    # document".
+    first_is_right = True
+
+    is_right = (page_number % 2) == (1 if first_is_right else 0)
+    page_type = 'right_page' if is_right else 'left_page'
+    if page_number == 1:
+        page_type = 'first_' + page_type
+    return page_type
 
 
 def make_page(document, page_number, resume_at):
@@ -42,15 +109,14 @@ def make_page(document, page_number, resume_at):
 
     """
     root_box = document.formatting_structure
-    style = css.page_style(document, page_number)
+    page_type = page_type_for_number(page_number)
+    style = document.style_for(page_type)
     page = boxes.PageBox(page_number, style, root_box.style.direction)
 
     device_size = page.style.size
     page.outer_width, page.outer_height = device_size
 
-    sheet = lambda: 1  # dummy object holding attributes.
-    sheet.width, sheet.height = device_size
-    resolve_percentages(page, sheet)
+    resolve_percentages(page, device_size)
 
     page.position_x = 0
     page.position_y = 0
@@ -70,8 +136,8 @@ def make_page(document, page_number, resume_at):
         initial_containing_block, device_size, page_is_empty=True)
     assert root_box
 
-    children = make_margin_boxes(document, page_number)
-    children.append(root_box)
+    children = [root_box]
+    children.extend(make_margin_boxes(document, page, page_type))
 
     page = page.copy_with_children(children)
 

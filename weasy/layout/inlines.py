@@ -415,7 +415,7 @@ def split_text_box(document, box, available_width, skip):
     assert isinstance(box, boxes.TextBox)
     font_size = box.style.font_size
     text = box.text[skip:]
-    if font_size == 0 or available_width <= 0 or not text:
+    if font_size == 0 or not text:
         return None, None, False
 
     fragment = TextFragment(text, box.style,

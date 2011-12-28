@@ -89,7 +89,7 @@ class Box(object):
         self.style = style.copy()
 
     def __repr__(self):
-        return '<%s %s %i>' % (
+        return '<%s %s %s>' % (
             type(self).__name__, self.element_tag, self.sourceline)
 
     @classmethod
@@ -261,32 +261,6 @@ class ParentBox(Box):
         for child in self.children:
             child.translate(dx, dy)
 
-
-class PageBox(ParentBox):
-    """Box for a page.
-
-    Initially the whole document will be in the box for the root element.
-    During layout a new page box is created after every page break.
-
-    """
-    def __init__(self, page_number, style, direction):
-        self._direction = direction
-        # starting at 1 for the first page.
-        self.page_number = page_number
-        # Page boxes are not linked to any element.
-        super(PageBox, self).__init__(
-            element_tag=None, sourceline=None, style=style, children=[])
-
-    def __repr__(self):
-        return '<%s %s>' % (type(self).__name__, self.page_number)
-
-    @property
-    def direction(self):
-        """
-        The direction of the page box (containing block to the root element)
-        is that of the root element.
-        """
-        return self._direction
 
 class BlockLevelBox(Box):
     """A box that participates in an block formatting context.
@@ -525,3 +499,42 @@ class TableCaptionBox(BlockBox):
     proper_table_child = True
     internal_table_or_caption = True
     proper_parents = (TableBox, InlineTableBox)
+
+
+class PageBox(ParentBox):
+    """Box for a page.
+
+    Initially the whole document will be in the box for the root element.
+    During layout a new page box is created after every page break.
+
+    """
+    def __init__(self, page_number, style, direction):
+        self._direction = direction
+        # starting at 1 for the first page.
+        self.page_number = page_number
+        # Page boxes are not linked to any element.
+        super(PageBox, self).__init__(
+            element_tag=None, sourceline=None, style=style, children=[])
+
+    def __repr__(self):
+        return '<%s %s>' % (type(self).__name__, self.page_number)
+
+    @property
+    def direction(self):
+        """
+        The direction of the page box (containing block to the root element)
+        is that of the root element.
+        """
+        return self._direction
+
+
+class MarginBox(BlockContainerBox):
+    """Box in page margins, as defined in CSS3 Paged Media"""
+    def __init__(self, at_keyword, style, children=[]):
+        self.at_keyword = at_keyword
+        # Margin boxes are not linked to any element.
+        super(MarginBox, self).__init__(
+            element_tag=None, sourceline=None, style=style, children=children)
+
+    def __repr__(self):
+        return '<%s %s>' % (type(self).__name__, self.at_keyword)

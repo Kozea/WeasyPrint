@@ -580,17 +580,3 @@ def get_all_computed_styles(document, medium,
                                 element, pseudo_type)
 
     return computed_styles
-
-
-def page_style(document, page_number):
-    """Return the StyleDict for a page box."""
-    # First page is a right page.
-    # TODO: this "should depend on the major writing direction of the
-    # document".
-    first_is_right = True
-
-    is_right = (page_number % 2) == (1 if first_is_right else 0)
-    page_type = 'right_page' if is_right else 'left_page'
-    if page_number == 1:
-        page_type = 'first_' + page_type
-    return document.computed_styles[page_type, None]

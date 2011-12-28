@@ -280,15 +280,12 @@ def border_width(computer, name, value):
 @register_computer('content')
 def content(computer, name, values):
     """Compute the ``content`` property."""
-    if computer.pseudo_type in ('before', 'after'):
-        if values in ('normal', 'none'):
-            return 'none'
-        else:
-            return [('STRING', computer.element.get(value, ''))
-                    if type_ == 'attr' else (type_, value)
-                    for type_, value in values]
+    if values in ('normal', 'none'):
+        return values
     else:
-        return 'normal'
+        return [('STRING', computer.element.get(value, ''))
+                if type_ == 'attr' else (type_, value)
+                for type_, value in values]
 
 
 @register_computer('display')

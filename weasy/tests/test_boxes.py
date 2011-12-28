@@ -26,8 +26,9 @@ import contextlib
 from attest import Tests, assert_hook  # pylint: disable=W0611
 
 from .testing_utils import resource_filename, TestPNGDocument, assert_no_logs
-from ..css import validation, page_style
+from ..css import validation
 from ..formatting_structure import boxes, build, counters
+from ..layout.pages import page_type_for_number
 
 
 SUITE = Tests()
@@ -392,7 +393,8 @@ def test_page_style():
 
     def assert_page_margins(page_number, top, right, bottom, left):
         """Check the page margin values."""
-        style = page_style(document, page_number)
+        page_type = page_type_for_number(page_number)
+        style = document.style_for(page_type)
         assert style.margin_top == top
         assert style.margin_right == right
         assert style.margin_bottom == bottom
@@ -710,6 +712,21 @@ def test_colspan_rowspan():
 @SUITE.test
 def test_before_after():
     """Test the :before and :after pseudo-elements."""
+    assert_tree(parse_all('''
+        <style>
+            p:before { content: normal }
+            div:before { content: none }
+            section:before { color: black }
+        </style>
+        <p></p>
+        <div></div>
+        <section></section>
+    '''), [
+        # No content in pseudo-element, no box generated
+        ('p', 'Block', []),
+        ('div', 'Block', []),
+        ('section', 'Block', [])])
+
     assert_tree(parse_all('''
         <style>
             p:before { content: 'a' 'b' }
@@ -1066,3 +1083,39 @@ def test_counter_styles():
         Ս Վ Տ Ր Ց Ւ Փ Ք
         ՔՋՂԹ 10000 10001
     '''.split()
+
+
+@SUITE.test
+def test_margin_boxes():
+    """
+    Test that the correct margin boxes are created.
+    """
+    document = TestPNGDocument.from_string('''
+        <style>
+            @page {
+                -weasy-size: 30px;
+                margin: 10px;
+                @top-center { content: "Title" }
+            }
+            @page :first {
+                @bottom-left { content: "foo" }
+                @bottom-left-corner { content: "baz" }
+            }
+        </style>
+        <p>lorem ipsum
+    ''')
+    page_1, page_2 = document.pages
+    assert page_1.children[0].element_tag == 'html'
+    assert page_2.children[0].element_tag == 'html'
+
+    margin_boxes_1 = [box.at_keyword for box in page_1.children[1:]]
+    margin_boxes_2 = [box.at_keyword for box in page_2.children[1:]]
+    # Order matters, see http://dev.w3.org/csswg/css3-page/#painting
+    assert margin_boxes_1 == ['@bottom-left', '@bottom-left-corner',
+                              '@top-center']
+    assert margin_boxes_2 == ['@top-center']
+
+    html, top_center = page_2.children
+    line_box, = top_center.children
+    text_box, = line_box.children
+    assert text_box.text == 'Title'

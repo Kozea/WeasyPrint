@@ -61,9 +61,12 @@ def resolve_one_percentage(box, property_name, refer_to,
 
 def resolve_percentages(box, containing_block):
     """Set used values as attributes of the box object."""
-    # cb = containing block
-    cb_width = containing_block.width
-    cb_height = containing_block.height
+    if isinstance(containing_block, boxes.Box):
+        # cb is short for containing block
+        cb_width = containing_block.width
+        cb_height = containing_block.height
+    else:
+        cb_width, cb_height = containing_block
     if isinstance(box, boxes.PageBox):
         maybe_height = cb_height
     else:

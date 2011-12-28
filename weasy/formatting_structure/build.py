@@ -153,7 +153,7 @@ def pseudo_to_box(document, state, element, pseudo_type):
     # differ from the computer value?
     display = style.display
     content = style.content
-    if 'none' in (display, content):
+    if 'none' in (display, content) or content == 'normal':
         return
 
     box = BOX_TYPE_FROM_DISPLAY[display](
@@ -164,8 +164,16 @@ def pseudo_to_box(document, state, element, pseudo_type):
     children = []
     if display == 'list-item':
         children.extend(add_box_marker(document, counter_values, box))
+    children.extend(content_to_boxes(
+        document, style, box, quote_depth, counter_values))
+
+    yield box.copy_with_children(children)
+
+
+def content_to_boxes(document, style, parent_box, quote_depth, counter_values):
+    """Takes the value of a ``content`` property and yield boxes."""
     texts = []
-    for type_, value in content:
+    for type_, value in style.content:
         if type_ == 'STRING':
             texts.append(value)
         elif type_ == 'URI':
@@ -173,10 +181,9 @@ def pseudo_to_box(document, state, element, pseudo_type):
             if image is not None:
                 text = u''.join(texts)
                 if text:
-                    children.append(boxes.TextBox.anonymous_from(box, text))
+                    yield boxes.TextBox.anonymous_from(parent_box, text)
                 texts = []
-                children.append(boxes.InlineReplacedBox.anonymous_from(
-                    box, image))
+                yield boxes.InlineReplacedBox.anonymous_from(parent_box, image)
         elif type_ == 'counter':
             counter_name, counter_style = value
             counter_value = counter_values.get(counter_name, [0])[-1]
@@ -200,9 +207,7 @@ def pseudo_to_box(document, state, element, pseudo_type):
                 quote_depth[0] += 1
     text = u''.join(texts)
     if text:
-        children.append(boxes.TextBox.anonymous_from(box, text))
-
-    yield box.copy_with_children(children)
+        yield boxes.TextBox.anonymous_from(parent_box, text)
 
 
 def update_counters(state, style):
