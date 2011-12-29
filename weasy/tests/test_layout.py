@@ -1449,7 +1449,7 @@ def test_table_wrapper():
 
 
 @SUITE.test
-def test_margin_boxes():
+def test_margin_boxes_fixed_dimension():
     # Corner boxes
     page, = parse('''
         <style>
@@ -1488,6 +1488,7 @@ def test_margin_boxes():
         text, = line.children
         assert text == text
 
+    # Check positioning and Rule 1 for fixed dimensions
     assert top_left.position_x == 0
     assert top_left.position_y == 0
     assert top_left.margin_width() == 200  # margin-left
@@ -1507,3 +1508,161 @@ def test_margin_boxes():
     assert bottom_right.position_y == 600  # size-y - margin-bottom
     assert bottom_right.margin_width() == 300  # margin-right
     assert bottom_right.margin_height() == 400  # margin-bottom
+
+    # Test rules 2 and 3
+    page, = parse('''
+        <style>
+            @page {
+                margin: 100px 200px;
+                @bottom-left-corner {
+                    content: "";
+                    margin: 60px
+                }
+            }
+        </style>
+    ''')
+    html, margin_box = page.children
+    assert margin_box.margin_width() == 200
+    assert margin_box.margin_left == 60
+    assert margin_box.margin_right == 60
+    assert margin_box.width == 80 # 200 - 60 - 60
+
+    assert margin_box.margin_height() == 100
+    # total was too big, the outside margin was ignored:
+    assert margin_box.margin_top == 60
+    assert margin_box.margin_bottom == 40  # Not 60
+    assert margin_box.height == 0  # But not negative
+
+    # Test rule 3 with a non-auto inner dimension
+    page, = parse('''
+        <style>
+            @page {
+                margin: 100px;
+                @left-middle {
+                    content: "";
+                    margin: 10px;
+                    width: 130px;
+                }
+            }
+        </style>
+    ''')
+    html, margin_box = page.children
+    assert margin_box.margin_width() == 100
+    assert margin_box.margin_left == -40  # Not 10px
+    assert margin_box.margin_right == 10
+    assert margin_box.width == 130  # As specified
+
+    # Test rule 4
+    page, = parse('''
+        <style>
+            @page {
+                margin: 100px;
+                @left-bottom {
+                    content: "";
+                    margin-left: 10px;
+                    margin-right: auto;
+                    width: 70px;
+                }
+            }
+        </style>
+    ''')
+    html, margin_box = page.children
+    assert margin_box.margin_width() == 100
+    assert margin_box.margin_left == 10  # 10px this time, no over-constrain
+    assert margin_box.margin_right == 20
+    assert margin_box.width == 70  # As specified
+
+    # Test rules 2, 3 and 4
+    page, = parse('''
+        <style>
+            @page {
+                margin: 100px;
+                @right-top {
+                    content: "";
+                    margin-right: 10px;
+                    margin-left: auto;
+                    width: 130px;
+                }
+            }
+        </style>
+    ''')
+    html, margin_box = page.children
+    assert margin_box.margin_width() == 100
+    assert margin_box.margin_left == 0  # rule 2
+    assert margin_box.margin_right == -30  # rule 3, after rule 2
+    assert margin_box.width == 130  # As specified
+
+    # Test rule 5
+    page, = parse('''
+        <style>
+            @page {
+                margin: 100px;
+                @top-left {
+                    content: "";
+                    margin-top: 10px;
+                    margin-bottom: auto;
+                }
+            }
+        </style>
+    ''')
+    html, margin_box = page.children
+    assert margin_box.margin_height() == 100
+    assert margin_box.margin_top == 10
+    assert margin_box.margin_bottom == 0
+    assert margin_box.height == 90
+
+    # Test rule 5
+    page, = parse('''
+        <style>
+            @page {
+                margin: 100px;
+                @top-center {
+                    content: "";
+                    margin: auto;
+                }
+            }
+        </style>
+    ''')
+    html, margin_box = page.children
+    assert margin_box.margin_height() == 100
+    assert margin_box.margin_top == 0
+    assert margin_box.margin_bottom == 0
+    assert margin_box.height == 100
+
+    # Test rule 6
+    page, = parse('''
+        <style>
+            @page {
+                margin: 100px;
+                @bottom-right {
+                    content: "";
+                    margin: auto;
+                    height: 70px;
+                }
+            }
+        </style>
+    ''')
+    html, margin_box = page.children
+    assert margin_box.margin_height() == 100
+    assert margin_box.margin_top == 15
+    assert margin_box.margin_bottom == 15
+    assert margin_box.height == 70
+
+    # Rule 2 inhibits rule 6
+    page, = parse('''
+        <style>
+            @page {
+                margin: 100px;
+                @bottom-center {
+                    content: "";
+                    margin: auto;
+                    height: 150px;
+                }
+            }
+        </style>
+    ''')
+    html, margin_box = page.children
+    assert margin_box.margin_height() == 100
+    assert margin_box.margin_top == 0
+    assert margin_box.margin_bottom == -50  # outside
+    assert margin_box.height == 150

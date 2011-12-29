@@ -70,7 +70,12 @@ def compute_fixed_dimension(box, outer, vertical, top_or_left):
         if margin_1 == 'auto':
             margin_1 = 0
         if margin_2 == 'auto':
-            margin_1 = 0
+            margin_2 = 0
+        if inner == 'auto':
+            # XXX this is not in the spec, but without it inner would end up
+            # with negative value.
+            # Instead, this will trigger rule 3 below.
+            inner = 0
     # Rule 3
     if 'auto' not in [margin_1, margin_2, inner]:
         # Over-constrained
@@ -91,8 +96,11 @@ def compute_fixed_dimension(box, outer, vertical, top_or_left):
         if margin_1 == 'auto':
             margin_1 = 0
         if margin_2 == 'auto':
-            margin_1 = 0
+            margin_2 = 0
         inner = outer - padding_plus_border - margin_1 - margin_2
+    # Rule 6
+    if margin_1 == 'auto' and margin_2 == 'auto':
+        margin_1 = margin_2 = (outer - padding_plus_border - inner) / 2
 
     assert 'auto' not in [margin_1, margin_2, inner]
     # This should also be true, but may not be exact due to
@@ -124,6 +132,7 @@ class DummyBox(object):
 
     @property
     def style(self):
+        """Do not use a real attribute to avoid a circular reference."""
         return self
 
 
@@ -182,7 +191,6 @@ def compute_variable_dimension(side_boxes, vertical, outer):
             for box in side_boxes)
 
     # TODO: Actual layout
-
 
     if vertical:
         box_a.margin_top = margin_a1
