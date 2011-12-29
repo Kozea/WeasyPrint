@@ -48,80 +48,183 @@ def compute_fixed_dimension(box, outer, vertical, top_or_left):
         over-constrained. (Rule 3 of the algorithm.)
     """
     if vertical:
-        margin_a = box.margin_top
-        margin_b = box.margin_bottom
-        padding_a = box.padding_top
-        padding_b = box.padding_bottom
-        border_a = box.style.border_top_width
-        border_b = box.style.border_bottom_width
+        margin_1 = box.margin_top
+        margin_2 = box.margin_bottom
         inner = box.height
+        padding_plus_border = (
+            box.padding_top + box.padding_bottom +
+            box.style.border_top_width + box.style.border_bottom_width)
     else:
-        margin_a = box.margin_left
-        margin_b = box.margin_right
-        padding_a = box.padding_left
-        padding_b = box.padding_right
-        border_a = box.style.border_left_width
-        border_b = box.style.border_right_width
+        margin_1 = box.margin_left
+        margin_2 = box.margin_right
         inner = box.width
-    padding_plus_border = padding_a + padding_b + border_a + border_b
+        padding_plus_border = (
+            box.padding_left + box.padding_right +
+            box.style.border_left_width + box.style.border_right_width)
 
     # Rule 2
     total = padding_plus_border + sum(
-        value for value in [margin_a, margin_b, inner]
+        value for value in [margin_1, margin_2, inner]
         if value != 'auto')
     if total > outer:
-        if margin_a == 'auto':
-            margin_a = 0
-        if margin_b == 'auto':
-            margin_a = 0
+        if margin_1 == 'auto':
+            margin_1 = 0
+        if margin_2 == 'auto':
+            margin_1 = 0
     # Rule 3
-    if 'auto' not in [margin_a, margin_b, inner]:
+    if 'auto' not in [margin_1, margin_2, inner]:
         # Over-constrained
         if top_or_left:
-            margin_a = 'auto'
+            margin_1 = 'auto'
         else:
-            margin_b = 'auto'
+            margin_2 = 'auto'
     # Rule 4
-    if [margin_a, margin_b, inner].count('auto') == 1:
+    if [margin_1, margin_2, inner].count('auto') == 1:
         if inner == 'auto':
-            inner = outer - padding_plus_border - margin_a - margin_b
-        elif margin_a == 'auto':
-            margin_a = outer - padding_plus_border - margin_b - inner
-        elif margin_b == 'auto':
-            margin_b = outer - padding_plus_border - margin_a - inner
+            inner = outer - padding_plus_border - margin_1 - margin_2
+        elif margin_1 == 'auto':
+            margin_1 = outer - padding_plus_border - margin_2 - inner
+        elif margin_2 == 'auto':
+            margin_2 = outer - padding_plus_border - margin_1 - inner
     # Rule 5
     if inner == 'auto':
-        if margin_a == 'auto':
-            margin_a = 0
-        if margin_b == 'auto':
-            margin_a = 0
-        inner = outer - padding_plus_border - margin_a - margin_b
+        if margin_1 == 'auto':
+            margin_1 = 0
+        if margin_2 == 'auto':
+            margin_1 = 0
+        inner = outer - padding_plus_border - margin_1 - margin_2
 
-    assert 'auto' not in [margin_a, margin_b, inner]
+    assert 'auto' not in [margin_1, margin_2, inner]
     # This should also be true, but may not be exact due to
     # floating point errors:
-    #assert inner + padding_plus_border + margin_a + margin_b == outer
+    #assert inner + padding_plus_border + margin_1 + margin_2 == outer
     if vertical:
-        box.margin_top = margin_a
-        box.margin_bottom = margin_b
+        box.margin_top = margin_1
+        box.margin_bottom = margin_2
         box.height = inner
     else:
-        box.margin_left = margin_a
-        box.margin_right = margin_b
+        box.margin_left = margin_1
+        box.margin_right = margin_2
         box.width = inner
 
 
-def dummy_layout(box):
-    """Dummy layout so that boxes can be generated without exceptions."""
-    for name in ['width', 'height', 'margin_top', 'margin_bottom',
-                 'margin_left', 'margin_right']:
-        if getattr(box, name) == 'auto':
-            setattr(box, name, 0)
+class DummyBox(object):
+    """
+    Dummy object to pass to compute_variable_dimension() when one of the
+    margin boxes is not instantiated.
+    """
+    def __init__(self):
+        self.width = self.height = 'auto'
+        self.margin_top = self.margin_bottom = \
+            self.margin_left = self.margin_right = \
+            self.padding_top = self.padding_bottom = \
+            self.padding_left = self.padding_right = \
+            self.border_top_width = self.border_bottom_width = \
+            self.border_left_width = self.border_right_width = 0
+
+    @property
+    def style(self):
+        return self
+
+
+def compute_variable_dimension(side_boxes, vertical, outer):
+    """
+    Compute and set a margin box fixed dimension on ``box``, as described in:
+    http://dev.w3.org/csswg/css3-page/#margin-dimension
+
+    :param side_boxes: A list of:
+        - A @*-left or @*-top margin box
+        - A @*-center or @*-middle margin box
+        - A @*-right or @*-bottom margin box
+    :param vertical:
+        True to set height, margin-top and margin-bottom; False for width,
+        margin-left and margin-right
+    :param outer:
+        The target total outer dimension (max box width or height)
+
+    """
+    side_boxes = [DummyBox() if box is None else box for box in side_boxes]
+    box_a, box_b, box_c =  side_boxes
+
+    if vertical:
+        margin_a1 = box_a.margin_top
+        margin_a2 = box_a.margin_bottom
+        inner_a = box_a.height
+
+        margin_b1 = box_b.margin_top
+        margin_b2 = box_b.margin_bottom
+        inner_b = box_b.height
+
+        margin_c1 = box_c.margin_top
+        margin_c2 = box_c.margin_bottom
+        inner_c = box_c.height
+
+        padding_plus_border = sum(
+            (box.padding_top + box.padding_bottom +
+                box.style.border_top_width + box.style.border_bottom_width)
+            for box in side_boxes)
+    else:
+        margin_a1 = box_a.margin_left
+        margin_a2 = box_a.margin_right
+        inner_a = box_a.width
+
+        margin_b1 = box_b.margin_left
+        margin_b2 = box_b.margin_right
+        inner_b = box_b.width
+
+        margin_c1 = box_c.margin_left
+        margin_c2 = box_c.margin_bottom
+        inner_c = box_c.width
+
+        padding_plus_border = sum(
+            (box.padding_left + box.padding_right +
+                box.style.border_left_width + box.style.border_right_width)
+            for box in side_boxes)
+
+    # TODO: Actual layout
+
+
+    if vertical:
+        box_a.margin_top = margin_a1
+        box_a.margin_bottom = margin_a2
+        box_a.height = inner_a
+
+        box_b.margin_top = margin_b1
+        box_b.margin_bottom = margin_b2
+        box_b.height = inner_b
+
+        box_c.margin_top = margin_c1
+        box_c.margin_bottom = margin_c2
+        box_c.height = inner_c
+    else:
+        box_a.margin_left = margin_a1
+        box_a.margin_right = margin_a2
+        box_a.width = inner_a
+
+        box_b.margin_left = margin_b1
+        box_b.margin_right = margin_b2
+        box_b.width = inner_b
+
+        box_c.margin_left = margin_c1
+        box_c.margin_bottom = margin_c2
+        box_c.width = inner_c
+
+
+    # XXX
+    if vertical:
+        names = ['height', 'margin_top', 'margin_bottom']
+    else:
+        names = ['width', 'margin_left', 'margin_right']
+    for box in [box_a, box_b, box_c]:
+        if box is not None:
+            for name in names:
+                if getattr(box, name) == 'auto':
+                    setattr(box, name, 0)
 
 
 def empty_margin_boxes(document, page, page_type):
     """
-    Yield margin boxes for this page that have their own dimensions and
+    Return the margin boxes for this page that have their own dimensions and
     position set, but still need their content.
 
     Parameters: same as :func:`make_margin_boxes`.
@@ -162,139 +265,66 @@ def empty_margin_boxes(document, page, page_type):
 
     # Order recommended on http://dev.w3.org/csswg/css3-page/#painting
     # center/middle on top (last in tree order), then corner, ther others
-    box = make_box('@top-left', (max_box_width, margin_top))
-    if box is not None:
-        box.position_x = 0  # TODO
-        box.position_y = 0
-        # TODO: actual layout
-        dummy_layout(box)
-        yield box
 
-    # First, boxes that are neither cornen nor center/middle
+    # First, boxes that are neither corner nor center/middle
+    # Delay center/middle boxes
+    generated_boxes = []
+    delayed_boxes = []
 
-    box = make_box('@top-right', (max_box_width, margin_top))
-    if box is not None:
-        box.position_x = 0  # TODO
-        box.position_y = 0
-        # TODO: actual layout
-        dummy_layout(box)
-        yield box
-
-    box = make_box('@bottom-left', (max_box_width, margin_bottom))
-    if box is not None:
-        box.position_x = 0  # TODO
-        box.position_y = page_end_y
-        # TODO: actual layout
-        dummy_layout(box)
-        yield box
-
-    box = make_box('@bottom-right', (max_box_width, margin_bottom))
-    if box is not None:
-        box.position_x = 0  # TODO
-        box.position_y = page_end_y
-        # TODO: actual layout
-        dummy_layout(box)
-        yield box
-
-    box = make_box('@left-top', (margin_left, max_box_height))
-    if box is not None:
-        box.position_x = 0
-        box.position_y = 0  # TODO
-        # TODO: actual layout
-        dummy_layout(box)
-        yield box
-
-    box = make_box('@left-bottom', (margin_left, max_box_height))
-    if box is not None:
-        box.position_x = 0
-        box.position_y = 0  # TODO
-        # TODO: actual layout
-        dummy_layout(box)
-        yield box
-
-    box = make_box('@right-top', (margin_right, max_box_height))
-    if box is not None:
-        box.position_x = page_end_x
-        box.position_y = 0  # TODO
-        # TODO: actual layout
-        dummy_layout(box)
-        yield box
-
-    box = make_box('@right-bottom', (margin_right, max_box_height))
-    if box is not None:
-        box.position_x = page_end_x
-        box.position_y = 0  # TODO
-        # TODO: actual layout
-        dummy_layout(box)
-        yield box
+    for prefix, vertical, containing_block, position_x, position_y in [
+        ('top', False, (max_box_width, margin_top),
+            margin_left, 0),
+        ('bottom', False, (max_box_width, margin_bottom),
+            margin_left, page_end_y),
+        ('left', True, (margin_left, max_box_height),
+            0, margin_top),
+        ('right', True, (margin_right, max_box_height),
+            page_end_x, margin_top),
+    ]:
+        if vertical:
+            suffixes = ['top', 'middle', 'bottom']
+            fixed_outer, variable_outer = containing_block
+        else:
+            suffixes = ['left', 'center', 'right']
+            variable_outer, fixed_outer = containing_block
+        side_boxes = [make_box('@%s-%s' % (prefix, suffix), containing_block)
+                      for suffix in suffixes]
+        # We need the three boxes together for the variable dimension:
+        compute_variable_dimension(side_boxes, vertical, variable_outer)
+        for box, delay in zip(side_boxes, [False, True, False]):
+            if box is not None:
+                compute_fixed_dimension(
+                    box, fixed_outer, not vertical, prefix in ['top', 'left'])
+                box.position_x = position_x
+                box.position_y = position_y
+                if vertical:
+                    position_y += box.margin_height()
+                else:
+                    position_x += box.margin_width()
+                if delay:
+                    delayed_boxes.append(box)
+                else:
+                    generated_boxes.append(box)
 
     # Corner boxes
 
-    box = make_box('@top-left-corner', (margin_left, margin_top))
-    if box is not None:
-        box.position_x = 0
-        box.position_y = 0
-        compute_fixed_dimension(box, margin_top, True, True)
-        compute_fixed_dimension(box, margin_left, False, True)
-        yield box
+    for at_keyword, cb_width, cb_height, position_x, position_y in [
+        ('@top-left-corner', margin_left, margin_top, 0, 0),
+        ('@top-right-corner', margin_right, margin_top, page_end_x, 0),
+        ('@bottom-left-corner', margin_left, margin_bottom, 0, page_end_y),
+        ('@bottom-right-corner', margin_right, margin_bottom,
+            page_end_x, page_end_y),
+    ]:
+        box = make_box(at_keyword, (cb_width, cb_height))
+        if box is not None:
+            box.position_x = position_x
+            box.position_y = position_y
+            compute_fixed_dimension(box, cb_height, True, 'top' in at_keyword)
+            compute_fixed_dimension(box, cb_width, False, 'left' in at_keyword)
+            generated_boxes.append(box)
 
-    box = make_box('@top-right-corner', (margin_right, margin_top))
-    if box is not None:
-        box.position_x = page_end_x
-        box.position_y = 0
-        compute_fixed_dimension(box, margin_top, True, True)
-        compute_fixed_dimension(box, margin_right, False, False)
-        yield box
-
-    box = make_box('@bottom-left-corner', (margin_left, margin_bottom))
-    if box is not None:
-        box.position_x = 0
-        box.position_y = page_end_y
-        compute_fixed_dimension(box, margin_bottom, True, False)
-        compute_fixed_dimension(box, margin_left, False, True)
-        yield box
-
-    box = make_box('@bottom-right-corner', (margin_right, margin_bottom))
-    if box is not None:
-        box.position_x = page_end_x
-        box.position_y = page_end_y
-        compute_fixed_dimension(box, margin_bottom, True, False)
-        compute_fixed_dimension(box, margin_right, False, False)
-        yield box
-
-    # Center and middle boxes
-
-    box = make_box('@bottom-center', (max_box_width, margin_bottom))
-    if box is not None:
-        box.position_x = 0  # TODO
-        box.position_y = page_end_y
-        # TODO: actual layout
-        dummy_layout(box)
-        yield box
-
-    box = make_box('@top-center', (max_box_width, margin_top))
-    if box is not None:
-        box.position_x = 0  # TODO
-        box.position_y = 0
-        # TODO: actual layout
-        dummy_layout(box)
-        yield box
-
-    box = make_box('@left-middle', (margin_left, max_box_height))
-    if box is not None:
-        box.position_x = 0
-        box.position_y = 0  # TODO
-        # TODO: actual layout
-        dummy_layout(box)
-        yield box
-
-    box = make_box('@right-middle', (margin_right, max_box_height))
-    if box is not None:
-        box.position_x = page_end_x
-        box.position_y = 0  # TODO
-        # TODO: actual layout
-        dummy_layout(box)
-        yield box
+    generated_boxes.extend(delayed_boxes)
+    return generated_boxes
 
 
 def make_margin_boxes(document, page, page_type):
@@ -310,7 +340,7 @@ def make_margin_boxes(document, page, page_type):
         counter_values = {}
         quote_depth = [0]
         children = build.content_to_boxes(
-            document, box.style, page, quote_depth, counter_values)
+            document, box.style, box, quote_depth, counter_values)
         box = box.copy_with_children(children)
         # content_to_boxes() only produces inline-level boxes
         box = build.inline_in_block(box)
