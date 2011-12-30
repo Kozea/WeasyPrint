@@ -275,22 +275,25 @@ def empty_margin_boxes(document, page, page_type):
             variable_outer, fixed_outer = containing_block
         side_boxes = [make_box('@%s-%s' % (prefix, suffix), containing_block)
                       for suffix in suffixes]
+        if all(box.empty for box in side_boxes):
+            continue
         # We need the three boxes together for the variable dimension:
         compute_variable_dimension(side_boxes, vertical, variable_outer)
         for box, delay in zip(side_boxes, [False, True, False]):
-            if box is not None:
-                compute_fixed_dimension(
-                    box, fixed_outer, not vertical, prefix in ['top', 'left'])
-                box.position_x = position_x
-                box.position_y = position_y
-                if vertical:
-                    position_y += box.margin_height()
-                else:
-                    position_x += box.margin_width()
-                if delay:
-                    delayed_boxes.append(box)
-                else:
-                    generated_boxes.append(box)
+            if box.empty:
+                continue
+            compute_fixed_dimension(
+                box, fixed_outer, not vertical, prefix in ['top', 'left'])
+            box.position_x = position_x
+            box.position_y = position_y
+            if vertical:
+                position_y += box.margin_height()
+            else:
+                position_x += box.margin_width()
+            if delay:
+                delayed_boxes.append(box)
+            else:
+                generated_boxes.append(box)
 
     # Corner boxes
 
@@ -302,12 +305,13 @@ def empty_margin_boxes(document, page, page_type):
             page_end_x, page_end_y),
     ]:
         box = make_box(at_keyword, (cb_width, cb_height))
-        if box is not None:
-            box.position_x = position_x
-            box.position_y = position_y
-            compute_fixed_dimension(box, cb_height, True, 'top' in at_keyword)
-            compute_fixed_dimension(box, cb_width, False, 'left' in at_keyword)
-            generated_boxes.append(box)
+        if box.empty:
+            continue
+        box.position_x = position_x
+        box.position_y = position_y
+        compute_fixed_dimension(box, cb_height, True, 'top' in at_keyword)
+        compute_fixed_dimension(box, cb_width, False, 'left' in at_keyword)
+        generated_boxes.append(box)
 
     generated_boxes.extend(delayed_boxes)
     return generated_boxes
@@ -322,7 +326,7 @@ def make_margin_boxes(document, page, page_type):
 
     """
     for box in empty_margin_boxes(document, page, page_type):
-        if box.empty:
+        if box.style.content in ('normal', 'none'):
             continue
         # TODO: get actual counter values at the time of the last page break
         counter_values = {}
