@@ -199,10 +199,12 @@ def table_layout(document, table, max_position_y, containing_block,
         columns_height -= border_spacing_y
     for group in table.column_groups:
         for column in group.children:
+            resolve_percentages(column, containing_block=table)
             column.position_x = column_positions[column.grid_x]
             column.position_y = initial_position_y
             column.width = column_widths[column.grid_x]
             column.height = columns_height
+        resolve_percentages(group, containing_block=table)
         first = group.children[0]
         last = group.children[-1]
         group.position_x = first.position_x
@@ -334,4 +336,4 @@ def cell_baseline(cell):
         if isinstance(child, boxes.ParentBox):
             stack.append(iter(child.children))
     # Default to the bottom of the content area.
-    return cell.style.border_top_width + cell.padding_top + cell.height
+    return cell.border_top_width + cell.padding_top + cell.height

@@ -244,7 +244,7 @@ def xy_offset(x, y, offset_x, offset_y, offset):
 
 def draw_border(context, box):
     """Draw the box border to a ``cairo.Context``."""
-    if all(box.style['border_%s_width' % side] == 0
+    if all(getattr(box, 'border_%s_width' % side) == 0
            for side in ['top', 'right', 'bottom', 'left']):
         # No border, return early.
         return
@@ -262,7 +262,7 @@ def draw_border(context, box):
             box.padding_width(), box.padding_height(),
         ),
     ):
-        width = box.style['border_%s_width' % side]
+        width = getattr(box, 'border_%s_width' % side)
         if width == 0:
             continue
         color = box.style['border_%s_color' % side]

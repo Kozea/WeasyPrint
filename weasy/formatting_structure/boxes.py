@@ -139,13 +139,13 @@ class Box(object):
 
     def border_width(self):
         """Width of the border box."""
-        return self.padding_width() + self.style.border_left_width + \
-            self.style.border_right_width
+        return self.padding_width() + self.border_left_width + \
+            self.border_right_width
 
     def border_height(self):
         """Height of the border box."""
-        return self.padding_height() + self.style.border_top_width + \
-            self.style.border_bottom_width
+        return self.padding_height() + self.border_top_width + \
+            self.border_bottom_width
 
     def margin_width(self):
         """Width of the margin box (aka. outer box)."""
@@ -159,34 +159,33 @@ class Box(object):
         """Sum of all horizontal margins, paddings and borders."""
         return self.margin_left + self.margin_right + \
                self.padding_left + self.padding_right + \
-               self.style.border_left_width + self.style.border_right_width
+               self.border_left_width + self.border_right_width
 
     def vertical_surroundings(self):
         """Sum of all vertical margins, paddings and borders."""
         return self.margin_top + self.margin_bottom + \
                self.padding_top + self.padding_bottom + \
-               self.style.border_top_width + self.style.border_bottom_width
+               self.border_top_width + self.border_bottom_width
 
     # Corners positions
 
     def content_box_x(self):
         """Absolute horizontal position of the content box."""
         return self.position_x + self.margin_left + self.padding_left + \
-            self.style.border_left_width
+            self.border_left_width
 
     def content_box_y(self):
         """Absolute vertical position of the content box."""
         return self.position_y + self.margin_top + self.padding_top + \
-            self.style.border_top_width
+            self.border_top_width
 
     def padding_box_x(self):
         """Absolute horizontal position of the padding box."""
-        return (self.position_x + self.margin_left +
-                self.style.border_left_width)
+        return self.position_x + self.margin_left + self.border_left_width
 
     def padding_box_y(self):
         """Absolute vertical position of the padding box."""
-        return self.position_y + self.margin_top + self.style.border_top_width
+        return self.position_y + self.margin_top + self.border_top_width
 
     def border_box_x(self):
         """Absolute horizontal position of the border box."""
@@ -200,6 +199,7 @@ class Box(object):
         """Set to 0 the margin, padding and border of ``side``."""
         setattr(self, 'margin_%s' % side, 0)
         setattr(self, 'padding_%s' % side, 0)
+        setattr(self, 'border_%s_width' % side, 0)
 
         self.style['margin_%s' % side] = 0
         self.style['padding_%s' % side] = 0

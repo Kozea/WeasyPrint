@@ -205,8 +205,8 @@ def test_block_widths():
             assert paragraph.element_tag == 'p'
             assert paragraph.padding_left == 2
             assert paragraph.padding_right == 2
-            assert paragraph.style.border_left_width == 1
-            assert paragraph.style.border_right_width == 1
+            assert paragraph.border_left_width == 1
+            assert paragraph.border_right_width == 1
             paragraphs.append(paragraph)
 
     assert len(paragraphs) == 11
@@ -575,7 +575,7 @@ def test_inlinebox_spliting():
             # Vertical margins on inlines are irrelevant.
             assert getattr(inlinebox, 'margin_%s' % side) == value
         assert getattr(inlinebox, 'padding_%s' % side) == value
-        assert getattr(inlinebox.style, 'border_%s_width' % side) == value
+        assert getattr(inlinebox, 'border_%s_width' % side) == value
 
     content = '''<strong>WeasyPrint is a free software visual rendering engine
               for HTML and CSS</strong>'''

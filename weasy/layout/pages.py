@@ -53,14 +53,14 @@ def compute_fixed_dimension(box, outer, vertical, top_or_left):
         inner = box.height
         padding_plus_border = (
             box.padding_top + box.padding_bottom +
-            box.style.border_top_width + box.style.border_bottom_width)
+            box.border_top_width + box.border_bottom_width)
     else:
         margin_1 = box.margin_left
         margin_2 = box.margin_right
         inner = box.width
         padding_plus_border = (
             box.padding_left + box.padding_right +
-            box.style.border_left_width + box.style.border_right_width)
+            box.border_left_width + box.border_right_width)
 
     # Rule 2
     total = padding_plus_border + sum(
@@ -144,12 +144,12 @@ def compute_variable_dimension(side_boxes, vertical, outer):
                 # Rule 3
                 box.padding_top = 0
                 box.padding_bottom = 0
-                box.style.border_top_width = 0
-                box.style.border_bottom_width = 0
+                box.border_top_width = 0
+                box.border_bottom_width = 0
             else:
                 padding_plus_border += (
                     box.padding_top + box.padding_bottom +
-                    box.style.border_top_width + box.style.border_bottom_width)
+                    box.border_top_width + box.border_bottom_width)
         else:
             box.margin_a = box.margin_left
             box.margin_b = box.margin_right
@@ -158,12 +158,12 @@ def compute_variable_dimension(side_boxes, vertical, outer):
                 # Rule 3
                 box.padding_left = 0
                 box.padding_right = 0
-                box.style.border_left_width = 0
-                box.style.border_right_width = 0
+                box.border_left_width = 0
+                box.border_right_width = 0
             else:
                 padding_plus_border += (
                     box.padding_left + box.padding_right +
-                    box.style.border_left_width + box.style.border_right_width)
+                    box.border_left_width + box.border_right_width)
 
 
     total = padding_plus_border + sum(
