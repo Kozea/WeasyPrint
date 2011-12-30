@@ -116,26 +116,6 @@ def compute_fixed_dimension(box, outer, vertical, top_or_left):
         box.width = inner
 
 
-class DummyBox(object):
-    """
-    Dummy object to pass to compute_variable_dimension() when one of the
-    margin boxes is not instantiated.
-    """
-    def __init__(self):
-        self.width = self.height = 'auto'
-        self.margin_top = self.margin_bottom = \
-            self.margin_left = self.margin_right = \
-            self.padding_top = self.padding_bottom = \
-            self.padding_left = self.padding_right = \
-            self.border_top_width = self.border_bottom_width = \
-            self.border_left_width = self.border_right_width = 0
-
-    @property
-    def style(self):
-        """Do not use a real attribute to avoid a circular reference."""
-        return self
-
-
 def compute_variable_dimension(side_boxes, vertical, outer):
     """
     Compute and set a margin box fixed dimension on ``box``, as described in:
@@ -152,7 +132,6 @@ def compute_variable_dimension(side_boxes, vertical, outer):
         The target total outer dimension (max box width or height)
 
     """
-    side_boxes = [DummyBox() if box is None else box for box in side_boxes]
     box_a, box_b, box_c =  side_boxes
 
     if vertical:
@@ -251,10 +230,11 @@ def empty_margin_boxes(document, page, page_type):
 
         """
         style = document.style_for(page_type, at_keyword)
-        if style is not None and style.content not in ('normal', 'none'):
-            box = boxes.MarginBox(at_keyword, style)
-            resolve_percentages(box, containing_block)
-            return box
+        if style is None:
+            style = page.style.inherit_from()
+        box = boxes.MarginBox(at_keyword, style)
+        resolve_percentages(box, containing_block)
+        return box
 
     page_style = page.style
     margin_top = page_style.margin_top
@@ -344,6 +324,8 @@ def make_margin_boxes(document, page, page_type):
 
     """
     for box in empty_margin_boxes(document, page, page_type):
+        if box.style.content in ('normal', 'none'):
+            continue
         # TODO: get actual counter values at the time of the last page break
         counter_values = {}
         quote_depth = [0]
@@ -376,8 +358,14 @@ def page_type_for_number(page_number):
 def make_page(document, page_number, resume_at):
     """Take just enough content from the beginning to fill one page.
 
-    Return ``page, finished``. ``page`` is a laid out Page object, ``finished``
-    is ``True`` if there is no more content, this was the last page.
+    Return ``(page, finished)``. ``page`` is a laid out PageBox object
+    and ``resume_at`` indicates where in the document to start the next page,
+    or is ``None`` if this was the last page.
+
+    :param document: a Document object
+    :param page_number: integer, start at 1 for the first page
+    :param resume_at: as returned by ``make_page()`` for the previous page,
+                      or ``None`` for the first page.
 
     """
     root_box = document.formatting_structure
