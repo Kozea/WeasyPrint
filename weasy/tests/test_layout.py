@@ -1472,10 +1472,10 @@ def test_margin_boxes_fixed_dimension():
                 }
 
                 -weasy-size: 1000px;
-                margin-top: 100px;
-                margin-bottom: 400px;
-                margin-left: 200px;
-                margin-right: 300px;
+                margin-top: 10%;
+                margin-bottom: 40%;
+                margin-left: 20%;
+                margin-right: 30%;
             }
         </style>
     ''')

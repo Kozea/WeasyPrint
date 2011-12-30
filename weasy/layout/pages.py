@@ -236,11 +236,10 @@ def empty_margin_boxes(document, page, page_type):
         resolve_percentages(box, containing_block)
         return box
 
-    page_style = page.style
-    margin_top = page_style.margin_top
-    margin_bottom = page_style.margin_bottom
-    margin_left = page_style.margin_left
-    margin_right = page_style.margin_right
+    margin_top = page.margin_top
+    margin_bottom = page.margin_bottom
+    margin_left = page.margin_left
+    margin_right = page.margin_right
     max_box_width = page.border_width()
     max_box_height = page.border_height()
 
