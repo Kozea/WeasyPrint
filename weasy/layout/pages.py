@@ -134,68 +134,63 @@ def compute_variable_dimension(side_boxes, vertical, outer):
     """
     box_a, box_b, box_c =  side_boxes
 
-    if vertical:
-        margin_a1 = box_a.margin_top
-        margin_a2 = box_a.margin_bottom
-        inner_a = box_a.height
+    padding_plus_border = 0
+    for box in side_boxes:
+        if vertical:
+            box.margin_a = box.margin_top
+            box.margin_b = box.margin_bottom
+            box.inner = box.height
+            if box.empty:
+                # Rule 3
+                box.padding_top = 0
+                box.padding_bottom = 0
+                box.style.border_top_width = 0
+                box.style.border_bottom_width = 0
+            else:
+                padding_plus_border += (
+                    box.padding_top + box.padding_bottom +
+                    box.style.border_top_width + box.style.border_bottom_width)
+        else:
+            box.margin_a = box.margin_left
+            box.margin_b = box.margin_right
+            box.inner = box.width
+            if box.empty:
+                # Rule 3
+                box.padding_left = 0
+                box.padding_right = 0
+                box.style.border_left_width = 0
+                box.style.border_right_width = 0
+            else:
+                padding_plus_border += (
+                    box.padding_left + box.padding_right +
+                    box.style.border_left_width + box.style.border_right_width)
 
-        margin_b1 = box_b.margin_top
-        margin_b2 = box_b.margin_bottom
-        inner_b = box_b.height
 
-        margin_c1 = box_c.margin_top
-        margin_c2 = box_c.margin_bottom
-        inner_c = box_c.height
+    total = padding_plus_border + sum(
+        value
+        for box in side_boxes
+        for value in [box.margin_a, box.margin_b, box.inner]
+        if value != 'auto')
 
-        padding_plus_border = sum(
-            (box.padding_top + box.padding_bottom +
-                box.style.border_top_width + box.style.border_bottom_width)
-            for box in side_boxes)
-    else:
-        margin_a1 = box_a.margin_left
-        margin_a2 = box_a.margin_right
-        inner_a = box_a.width
-
-        margin_b1 = box_b.margin_left
-        margin_b2 = box_b.margin_right
-        inner_b = box_b.width
-
-        margin_c1 = box_c.margin_left
-        margin_c2 = box_c.margin_bottom
-        inner_c = box_c.width
-
-        padding_plus_border = sum(
-            (box.padding_left + box.padding_right +
-                box.style.border_left_width + box.style.border_right_width)
-            for box in side_boxes)
+    if box_b.empty:
+        # TODO: rule 2
+        # box_a.outer() == box_b.outer()
+        pass
 
     # TODO: Actual layout
 
-    if vertical:
-        box_a.margin_top = margin_a1
-        box_a.margin_bottom = margin_a2
-        box_a.height = inner_a
-
-        box_b.margin_top = margin_b1
-        box_b.margin_bottom = margin_b2
-        box_b.height = inner_b
-
-        box_c.margin_top = margin_c1
-        box_c.margin_bottom = margin_c2
-        box_c.height = inner_c
-    else:
-        box_a.margin_left = margin_a1
-        box_a.margin_right = margin_a2
-        box_a.width = inner_a
-
-        box_b.margin_left = margin_b1
-        box_b.margin_right = margin_b2
-        box_b.width = inner_b
-
-        box_c.margin_left = margin_c1
-        box_c.margin_bottom = margin_c2
-        box_c.width = inner_c
-
+    for box in side_boxes:
+        if vertical:
+            box.margin_top = box.margin_a
+            box.margin_bottom = box.margin_a
+            box.height = box.inner
+        else:
+            box.margin_left = box.margin_a
+            box.margin_right = box.margin_a
+            box.width = box.inner
+        del box.margin_a
+        del box.margin_b
+        del box.inner
 
     # XXX
     if vertical:
@@ -234,6 +229,10 @@ def empty_margin_boxes(document, page, page_type):
             style = page.style.inherit_from()
         box = boxes.MarginBox(at_keyword, style)
         resolve_percentages(box, containing_block)
+        # Empty boxes should not be generated, but they may be needed for
+        # the layout of their neighbors.
+        box.empty = (style.content in ('normal', 'none') and
+                     style.width == 'auto')
         return box
 
     margin_top = page.margin_top
@@ -251,7 +250,7 @@ def empty_margin_boxes(document, page, page_type):
     # http://dev.w3.org/csswg/css3-page/#margin-box-dimensions
 
     # Order recommended on http://dev.w3.org/csswg/css3-page/#painting
-    # center/middle on top (last in tree order), then corner, ther others
+    # center/middle on top (last in tree order), then corner, then others
 
     # First, boxes that are neither corner nor center/middle
     # Delay center/middle boxes
@@ -323,7 +322,7 @@ def make_margin_boxes(document, page, page_type):
 
     """
     for box in empty_margin_boxes(document, page, page_type):
-        if box.style.content in ('normal', 'none'):
+        if box.empty:
             continue
         # TODO: get actual counter values at the time of the last page break
         counter_values = {}

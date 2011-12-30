@@ -1666,3 +1666,34 @@ def test_margin_boxes_fixed_dimension():
     assert margin_box.margin_top == 0
     assert margin_box.margin_bottom == -50  # outside
     assert margin_box.height == 150
+
+
+@SUITE.test
+def test_margin_boxes_variable_dimension():
+    page, = parse('''
+        <style>
+            @page {
+                -weasy-size: 1200px;
+                margin: 100px;
+                padding: 42px;
+                border: 7px solid;
+
+                @top-left {
+                    content: "";
+                }
+                @top-center {
+                    content: "";
+                }
+                @top-right {
+                    content: "";
+                }
+            }
+        </style>
+    ''')
+    html, top_left, top_right, top_center = page.children
+    assert top_left.at_keyword == '@top-left'
+    assert top_center.at_keyword == '@top-center'
+    assert top_right.at_keyword == '@top-right'
+
+#    assert (top_left.margin_width() + top_center.margin_width() +
+#            top_right.margin_width()) == 1000
