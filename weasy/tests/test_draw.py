@@ -23,6 +23,7 @@ Test the drawing functions.
 """
 
 import os.path
+from io import BytesIO
 from array import array
 
 import png
@@ -43,11 +44,6 @@ SUITE = Tests()
 SUITE.context(assert_no_logs)
 
 
-def make_filename(dirname, basename):
-    """Return the filename of the output image."""
-    return os.path.join(os.path.dirname(__file__), dirname, basename + '.png')
-
-
 def format_pixel(lines, x, y):
     """Return the pixel color as ``#RRGGBB``."""
     start = BYTES_PER_PIXELS * x
@@ -58,8 +54,6 @@ def format_pixel(lines, x, y):
 
 def assert_pixels(name, expected_width, expected_height, expected_lines, html):
     """Helper testing the size of the image and the pixels values."""
-    write_png('expected_results', name, expected_width, expected_height,
-                 expected_lines)
     _doc, lines = html_to_png(name, expected_width, expected_height, html)
     assert_pixels_equal(name, expected_width, expected_height, lines,
                         expected_lines)
@@ -105,18 +99,13 @@ def assert_different_renderings(expected_width, expected_height, documents):
                 assert False, '%s and %s are the same' % (name_1, name_2)
 
 
-def write_png(directory, name, expected_width, expected_height, lines):
-    """
-    Check the size of a pixel matrix and write it to a PNG file.
-    """
-    assert len(lines) == expected_height, name
-    assert len(lines[0]) == BYTES_PER_PIXELS * expected_width, name
-
-    filename = make_filename(directory, name)
-    writer = png.Writer(width=expected_width, height=expected_height,
-                        alpha=True)
-    with open(filename, 'wb') as fd:
-        writer.write(fd, lines)
+def write_png(basename, lines):
+    """Take a pixel matrix and write a PNG file."""
+    directory = os.path.join(os.path.dirname(__file__), 'test_results')
+    if not os.path.isdir(directory):
+        os.mkdir(directory)
+    filename = os.path.join(directory, basename + '.png')
+    png.from_array(lines, 'RGBA').save(filename)
 
 
 def html_to_png(name, expected_width, expected_height, html):
@@ -128,11 +117,12 @@ def html_to_png(name, expected_width, expected_height, html):
     document = TestPNGDocument.from_string(html)
     # Dummy filename, but in the right directory.
     document.base_url = resource_filename('<test>')
-    filename = make_filename('test_results', name)
-    document.write_to(filename)
+    file_like = BytesIO()
+    document.write_to(file_like)
     assert len(document.pages) == 1
 
-    reader = png.Reader(filename=filename)
+    file_like.seek(0)
+    reader = png.Reader(file=file_like)
     width, height, lines, meta = reader.asRGBA()
     lines = list(lines)
 
@@ -152,6 +142,8 @@ def assert_pixels_equal(name, width, height, lines, expected_lines):
     are the same.
     """
     if lines != expected_lines:
+        write_png(name + '.expected', expected_lines)
+        write_png(name, lines)
         for y in xrange(height):
             for x in xrange(width):
                 pixel = format_pixel(lines, x, y)
