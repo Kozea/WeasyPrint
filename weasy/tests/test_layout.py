@@ -30,6 +30,8 @@ from .test_boxes import monkeypatch_validation
 from ..formatting_structure import boxes
 from ..layout.inlines import split_inline_box
 from ..layout.percentages import resolve_percentages
+from ..layout.preferred import (inline_preferred_width,
+                                inline_preferred_minimum_width)
 
 
 SUITE = Tests()
@@ -60,13 +62,16 @@ def validate_absolute_and_float(
     return real_non_shorthand(name, values, required)
 
 
-def parse(html_content):
+def parse(html_content, return_document=False):
     """Parse some HTML, apply stylesheets, transform to boxes and lay out."""
     # TODO: remove this patching when asbolute and floats are validated
     with monkeypatch_validation(validate_absolute_and_float):
         document = TestPNGDocument.from_string(html_content)
         document.base_url = resource_filename('<inline HTML>')
-        return document.pages
+        if return_document:
+            return document
+        else:
+            return document.pages
 
 
 @SUITE.test
@@ -1695,5 +1700,29 @@ def test_margin_boxes_variable_dimension():
     assert top_center.at_keyword == '@top-center'
     assert top_right.at_keyword == '@top-right'
 
-#    assert (top_left.margin_width() + top_center.margin_width() +
-#            top_right.margin_width()) == 1000
+    assert (top_left.margin_width() + top_center.margin_width() +
+            top_right.margin_width()) == 1000
+
+
+@SUITE.test
+def test_preferred_widths():
+    """Unit tests for preferred widths."""
+    document = parse(u'''
+        <p style="white-space: pre-line">
+            Lorem ipsum dolor sit amet,
+              consectetur elit
+        </p>
+                   <!--  ^  No-break space here  -->
+    ''', return_document=True)
+    # Non-laid-out boxes:
+    body, = document.formatting_structure.children
+    paragraph, = body.children
+    line, = paragraph.children
+    text, = line.children
+    assert text.text == u'\nLorem ipsum dolor sit amet,\nconsectetur elit\n'
+
+    minimum = inline_preferred_minimum_width(line)
+    preferred = inline_preferred_width(line)
+    # Not exact, depends on the installed fonts
+    assert 120 < minimum < 140
+    assert 220 < preferred < 240

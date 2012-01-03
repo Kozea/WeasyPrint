@@ -53,6 +53,7 @@ BOX_TYPE_FROM_DISPLAY = {
 def build_formatting_structure(document):
     """Build a formatting structure (box tree) from a ``document``."""
     box, = dom_to_box(document, document.dom)
+    # If this is changed, maybe update weasy.layout.pages.make_margin_boxes()
     box = process_whitespace(box)
     box = anonymous_table_boxes(box)
     box = inline_in_block(box)

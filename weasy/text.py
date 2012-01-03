@@ -94,3 +94,10 @@ class TextFragment(object):
             PangoCairo.show_layout_line(context, first_line)
 
         return show_line, length, width, height, baseline, resume_at
+
+    def line_widths(self):
+        """Return the width for each line."""
+        lines = self.layout.get_lines_readonly()
+        for line in lines:
+            _ink_extents, logical_extents = line.get_extents()
+            yield Pango.units_to_double(logical_extents.width)
