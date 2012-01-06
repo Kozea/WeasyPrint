@@ -28,6 +28,7 @@ from ..formatting_structure import boxes, build
 from .blocks import block_level_layout, block_level_height
 from .percentages import resolve_percentages
 from .preferred import inline_preferred_minimum_width, inline_preferred_width
+from .variable_margin_dimension import with_rule_2
 
 
 def compute_fixed_dimension(box, outer, vertical, top_or_left):
@@ -117,7 +118,24 @@ def compute_fixed_dimension(box, outer, vertical, top_or_left):
         box.width = inner
 
 
-def compute_variable_dimension(side_boxes, vertical, outer):
+class VerticalIntrinsic(object):
+    # TODO: preferred (minimum) height???
+
+    @staticmethod
+    def minimum(box):
+        return 0
+
+    @staticmethod
+    def preferred(box):
+        return float('inf')
+
+
+class HorizontalIntrinsic(object):
+    minimum = staticmethod(inline_preferred_minimum_width)
+    preferred = staticmethod(inline_preferred_width)
+
+
+def compute_variable_dimension(side_boxes, vertical, outer_sum):
     """
     Compute and set a margin box fixed dimension on ``box``, as described in:
     http://dev.w3.org/csswg/css3-page/#margin-dimension
@@ -130,133 +148,132 @@ def compute_variable_dimension(side_boxes, vertical, outer):
     :param vertical:
         True to set height, margin-top and margin-bottom; False for width,
         margin-left and margin-right
-    :param outer:
+    :param outer_sum:
         The target total outer dimension (max box width or height)
 
     """
     box_a, box_b, box_c =  side_boxes
 
     # Set variables that are independent of vertical
-    padding_plus_border = 0
     for box in side_boxes:
         if vertical:
+            intrinsic = VerticalIntrinsic
             box.margin_a = box.margin_top
             box.margin_b = box.margin_bottom
             # Inner dimension: that of the content area, as opposed to the
             # outer dimension: that of the margin area.
             box.inner = box.height
-            if box.exists:
+            if not box.exists:
                 # Rule 3
                 box.padding_top = 0
                 box.padding_bottom = 0
                 box.border_top_width = 0
                 box.border_bottom_width = 0
-            else:
-                padding_plus_border += (
-                    box.padding_top + box.padding_bottom +
-                    box.border_top_width + box.border_bottom_width)
+            box.padding_plus_border = (
+                box.padding_top + box.padding_bottom +
+                box.border_top_width + box.border_bottom_width)
         else:
+            intrinsic = HorizontalIntrinsic
             box.margin_a = box.margin_left
             box.margin_b = box.margin_right
             box.inner = box.width
-            if box.exists:
+            if not box.exists:
                 # Rule 3
                 box.padding_left = 0
                 box.padding_right = 0
                 box.border_left_width = 0
                 box.border_right_width = 0
-            else:
-                padding_plus_border += (
-                    box.padding_left + box.padding_right +
-                    box.border_left_width + box.border_right_width)
+            box.padding_plus_border = (
+                box.padding_left + box.padding_right +
+                box.border_left_width + box.border_right_width)
 
 
-    if not box_b.exists:
-        # TODO: rule 2
-        # box_a.outer() == box_b.outer()
-        pass
-
-    # Rule 1: Target sum of all 'auto' values
-    remaining = outer - padding_plus_border - sum(
-        value
-        for box in side_boxes
-        for value in [box.margin_a, box.margin_b, box.inner]
-        if value != 'auto')
-
-    auto_inner_boxes = [box for box in side_boxes if box.inner == 'auto']
-    if auto_inner_boxes:
-        if vertical:
-            # TODO: preferred (minimum) height???
-            min_inners = [0 for box in auto_inner_boxes]
-            max_inners = [float('inf') for _box in auto_inner_boxes]
-        else:
-            min_inners = map(inline_preferred_minimum_width, auto_inner_boxes)
-            max_inners = map(inline_preferred_width, auto_inner_boxes)
-        sum_min_inners = sum(min_inners)
-        sum_max_inners = sum(max_inners)
-        # Minimize margins while keeping inner dimensions within bounds
-        if remaining < sum_min_inners:
-            # minimum widths are bigger than the target sum for 'auto' values.
-            # Use that, and 'auto' margins will be negative
-            # Content will most likely overlap.
-            for box, min_inner in zip(auto_inner_boxes, min_inners):
-                # Rule 5
-                box.inner = min_inner
-            sum_margins = remaining - sum_min_inners
-        elif remaining > sum_max_inners:
-            for box, max_inner in zip(auto_inner_boxes, max_inners):
-                # Rule 6
-                box.inner = max_inner
-            sum_margins = remaining - sum_max_inners
-        else:
-            sum_margins = 0
-            sum_inners = remaining
-
-            # Choose the inner dimension for all boxes with 'auto' but the last
-            for box, max_inner, min_inner in zip(
-                    auto_inner_boxes, max_inners, min_inners)[:-1]:
-                if max_inner == float('inf'):
-                    # XXX Until we have a better value for preferred heights...
-                    weight = 1 / len(auto_inner_boxes)
-                else:
-                    weight = max_inner / sum_max_inners
-                # Ideal inner for A, to balance contents
-                target = sum_inners * weight
-                # The ranges for other boxes combined with the sum constraint
-                # restrict the range for this box:
-                others_sum_max = sum_max_inners - max_inner
-                others_sum_min = sum_min_inners - min_inner
-                min_inner = max(min_inner, sum_inners - others_sum_max)
-                max_inner = min(max_inner, sum_inners - others_sum_min)
-                # As close as possible to target, but within bounds
-                box.inner = min(max_inner, max(min_inner, target))
-            # The dimension for the last box is resolved with the target sum
-            auto_inner_boxes[-1].inner = sum_inners - sum(
-                box.inner for box in auto_inner_boxes[:-1])
-
+    if box_b.exists:
+        # Rule 2:  outer(box_a) == outer(box_b)
+        with_rule_2(side_boxes, outer_sum, intrinsic)
     else:
-        sum_margins = remaining
-
-    if sum_margins == 0:
-        # Valid even if there is no 'auto' margin
-        each_auto_margin = 0
-    else:
-        num_auto_margins = sum(
-            value == 'auto'  # boolean as int
+        # Rule 2 does not apply
+        # Rule 1: Target sum of all 'auto' values
+        remaining = outer_sum - sum(
+            value
             for box in side_boxes
-            for value in (box.margin_a, box.margin_b)
-        )
-        if num_auto_margins == 0:
-            # Over-constrained: ignore the computed values of these margins
-            box_a.margin_b = 'auto'
-            box_c.margin_a = 'auto'
-            num_auto_margins = 2
-        each_auto_margin = sum_margins / num_auto_margins
-    for box in side_boxes:
-        if box.margin_a == 'auto':
-            box.margin_a = each_auto_margin
-        if box.margin_b == 'auto':
-            box.margin_b = each_auto_margin
+            for value in [box.margin_a, box.margin_b, box.inner,
+                          box.padding_plus_border]
+            if value != 'auto')
+
+        auto_inner_boxes = [box for box in side_boxes if box.inner == 'auto']
+        if auto_inner_boxes:
+            min_inners = map(intrinsic.minimum, auto_inner_boxes)
+            max_inners = map(intrinsic.preferred, auto_inner_boxes)
+            sum_min_inners = sum(min_inners)
+            sum_max_inners = sum(max_inners)
+            # Minimize margins while keeping inner dimensions within bounds
+            if remaining < sum_min_inners:
+                # minimum widths are bigger than the target sum for
+                # 'auto' values.
+                # Use that, and 'auto' margins will be negative
+                # Content will most likely overlap.
+                for box, min_inner in zip(auto_inner_boxes, min_inners):
+                    # Rule 5
+                    box.inner = min_inner
+                sum_margins = remaining - sum_min_inners
+            elif remaining > sum_max_inners:
+                for box, max_inner in zip(auto_inner_boxes, max_inners):
+                    # Rule 6
+                    box.inner = max_inner
+                sum_margins = remaining - sum_max_inners
+            else:
+                sum_margins = 0
+                sum_inners = remaining
+
+                # Choose the inner dimension for all boxes with 'auto'
+                # but the last
+                for box, max_inner, min_inner in zip(
+                        auto_inner_boxes, max_inners, min_inners)[:-1]:
+                    if max_inner == float('inf'):
+                        # XXX Until we have a better value for preferred
+                        # heights...
+                        weight = 1 / len(auto_inner_boxes)
+                    else:
+                        weight = max_inner / sum_max_inners
+                    # Ideal inner for A, to balance contents
+                    target = sum_inners * weight
+                    # The ranges for other boxes combined with the sum
+                    # constraint restrict the range for this box:
+                    others_sum_max = sum_max_inners - max_inner
+                    others_sum_min = sum_min_inners - min_inner
+                    min_inner = max(min_inner, sum_inners - others_sum_max)
+                    max_inner = min(max_inner, sum_inners - others_sum_min)
+                    # As close as possible to target, but within bounds
+                    box.inner = min(max_inner, max(min_inner, target))
+                # The dimension for the last box is resolved with the
+                # target sum
+                auto_inner_boxes[-1].inner = sum_inners - sum(
+                    box.inner for box in auto_inner_boxes[:-1])
+        else:
+            sum_margins = remaining
+
+        if sum_margins == 0:
+            # Valid even if there is no 'auto' margin
+            each_auto_margin = 0
+        else:
+            num_auto_margins = sum(
+                value == 'auto'  # boolean as int
+                for box in side_boxes
+                for value in (box.margin_a, box.margin_b)
+            )
+            if num_auto_margins == 0:
+                # Over-constrained: ignore the computed values of these margins
+                box_a.margin_b = 'auto'
+                box_c.margin_a = 'auto'
+                num_auto_margins = 2
+            each_auto_margin = sum_margins / num_auto_margins
+        for box in side_boxes:
+            if box.margin_a == 'auto':
+                box.margin_a = each_auto_margin
+            if box.margin_b == 'auto':
+                box.margin_b = each_auto_margin
+
 
     # And, we’re done!
     assert all(
@@ -276,6 +293,7 @@ def compute_variable_dimension(side_boxes, vertical, outer):
         del box.margin_a
         del box.margin_b
         del box.inner
+        del box.padding_plus_border
 
 
 def empty_margin_boxes(document, page, page_type):
@@ -306,7 +324,7 @@ def empty_margin_boxes(document, page, page_type):
         # Empty boxes should not be generated, but they may be needed for
         # the layout of their neighbors.
         box.exists = (
-            style.content in ('normal', 'none') and style.width == 'auto')
+            style.content not in ('normal', 'none') or style.width != 'auto')
         return box
 
     margin_top = page.margin_top
@@ -349,12 +367,12 @@ def empty_margin_boxes(document, page, page_type):
             variable_outer, fixed_outer = containing_block
         side_boxes = [make_box('@%s-%s' % (prefix, suffix), containing_block)
                       for suffix in suffixes]
-        if all(box.exists for box in side_boxes):
+        if not any(box.exists for box in side_boxes):
             continue
         # We need the three boxes together for the variable dimension:
         compute_variable_dimension(side_boxes, vertical, variable_outer)
         for box, delay in zip(side_boxes, [False, True, False]):
-            if box.exists:
+            if not box.exists:
                 continue
             compute_fixed_dimension(
                 box, fixed_outer, not vertical, prefix in ['top', 'left'])
@@ -379,7 +397,7 @@ def empty_margin_boxes(document, page, page_type):
             page_end_x, page_end_y),
     ]:
         box = make_box(at_keyword, (cb_width, cb_height))
-        if box.exists:
+        if not box.exists:
             continue
         box.position_x = position_x
         box.position_y = position_y

@@ -1623,7 +1623,7 @@ def test_margin_boxes_fixed_dimension():
                 margin: 100px;
                 @top-center {
                     content: "";
-                    margin: auto;
+                    margin: auto 0;
                 }
             }
         </style>
@@ -1660,7 +1660,7 @@ def test_margin_boxes_fixed_dimension():
                 margin: 100px;
                 @bottom-center {
                     content: "";
-                    margin: auto;
+                    margin: auto 0;
                     height: 150px;
                 }
             }
@@ -1678,7 +1678,7 @@ def test_margin_boxes_variable_dimension():
     page, = parse('''
         <style>
             @page {
-                -weasy-size: 1200px;
+                -weasy-size: 800px;
                 margin: 100px;
                 padding: 42px;
                 border: 7px solid;
@@ -1700,8 +1700,9 @@ def test_margin_boxes_variable_dimension():
     assert top_center.at_keyword == '@top-center'
     assert top_right.at_keyword == '@top-right'
 
-    assert (top_left.margin_width() + top_center.margin_width() +
-            top_right.margin_width()) == 1000
+    assert top_left.margin_width() == 200
+    assert top_center.margin_width() == 200
+    assert top_right.margin_width() == 200
 
 
 @SUITE.test
