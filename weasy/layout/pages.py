@@ -187,6 +187,11 @@ def compute_variable_dimension(side_boxes, vertical, outer_sum):
                 box.padding_left + box.padding_right +
                 box.border_left_width + box.border_right_width)
 
+    num_auto_margins = sum(
+        value == 'auto'  # boolean as int
+        for box in side_boxes
+        for value in (box.margin_a, box.margin_b)
+    )
 
     if box_b.exists:
         # Rule 2:  outer(box_a) == outer(box_b)
@@ -217,7 +222,11 @@ def compute_variable_dimension(side_boxes, vertical, outer_sum):
                     # Rule 5
                     box.inner = min_inner
                 sum_margins = remaining - sum_min_inners
-            elif remaining > sum_max_inners:
+            # If remaining is not within range and the number of auto margins
+            # is zero the problem is over-constrained.
+            # The maximum constraints are the first to be dropped in this
+            # case: only keep them if there are auto margins.
+            elif remaining > sum_max_inners and num_auto_margins > 0:
                 for box, max_inner in zip(auto_inner_boxes, max_inners):
                     # Rule 6
                     box.inner = max_inner
@@ -226,23 +235,32 @@ def compute_variable_dimension(side_boxes, vertical, outer_sum):
                 sum_margins = 0
                 sum_inners = remaining
 
+                weights = [
+                    (max_inner / sum_max_inners
+                        if max_inner != float('inf') and sum_max_inners != 0
+                        else 1 / len(auto_inner_boxes))
+                    for box, max_inner in zip(auto_inner_boxes, max_inners)
+                ]
+                # sum(weights) == 1, with some floating point error
+
+                if remaining > sum_max_inners:
+                    # num_auto_margins == 0
+                    max_inners = [float('inf')] * 3
+                    sum_max_inners = float('inf')
+
                 # Choose the inner dimension for all boxes with 'auto'
                 # but the last
-                for box, max_inner, min_inner in zip(
-                        auto_inner_boxes, max_inners, min_inners)[:-1]:
-                    if max_inner == float('inf'):
-                        # XXX Until we have a better value for preferred
-                        # heights...
-                        weight = 1 / len(auto_inner_boxes)
-                    else:
-                        weight = max_inner / sum_max_inners
+                for box, max_inner, min_inner, weight in zip(
+                    auto_inner_boxes, max_inners, min_inners, weights
+                )[:-1]:
                     # Ideal inner for A, to balance contents
                     target = sum_inners * weight
                     # The ranges for other boxes combined with the sum
                     # constraint restrict the range for this box:
-                    others_sum_max = sum_max_inners - max_inner
+                    if sum_max_inners != float('inf'):
+                        others_sum_max = sum_max_inners - max_inner
+                        min_inner = max(min_inner, sum_inners - others_sum_max)
                     others_sum_min = sum_min_inners - min_inner
-                    min_inner = max(min_inner, sum_inners - others_sum_max)
                     max_inner = min(max_inner, sum_inners - others_sum_min)
                     # As close as possible to target, but within bounds
                     box.inner = min(max_inner, max(min_inner, target))
@@ -257,11 +275,6 @@ def compute_variable_dimension(side_boxes, vertical, outer_sum):
             # Valid even if there is no 'auto' margin
             each_auto_margin = 0
         else:
-            num_auto_margins = sum(
-                value == 'auto'  # boolean as int
-                for box in side_boxes
-                for value in (box.margin_a, box.margin_b)
-            )
             if num_auto_margins == 0:
                 # Over-constrained: ignore the computed values of these margins
                 box_a.margin_b = 'auto'
@@ -320,6 +333,13 @@ def empty_margin_boxes(document, page, page_type):
         if style is None:
             style = page.style.inherit_from()
         box = boxes.MarginBox(at_keyword, style)
+        # TODO: get actual counter values at the time of the last page break
+        counter_values = {}
+        quote_depth = [0]
+        if style.content not in ('normal', 'none'):
+            children = build.content_to_boxes(
+                document, box.style, box, quote_depth, counter_values)
+            box = box.copy_with_children(children)
         resolve_percentages(box, containing_block)
         # Empty boxes should not be generated, but they may be needed for
         # the layout of their neighbors.
@@ -418,14 +438,6 @@ def make_margin_boxes(document, page, page_type):
 
     """
     for box in empty_margin_boxes(document, page, page_type):
-        if box.style.content in ('normal', 'none'):
-            continue
-        # TODO: get actual counter values at the time of the last page break
-        counter_values = {}
-        quote_depth = [0]
-        children = build.content_to_boxes(
-            document, box.style, box, quote_depth, counter_values)
-        box = box.copy_with_children(children)
         # content_to_boxes() only produces inline-level boxes, no need to
         # run other post-processors from build.build_formatting_structure()
         box = build.process_whitespace(box)

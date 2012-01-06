@@ -51,13 +51,16 @@ def with_rule_2(side_boxes, outer_sum, intrinsic):
 
         # XXX
         if result is NotImplemented:
+            import logging
+            logging.getLogger('WEASYPRINT').error(
+                'Got NotImplemented for inners=%r, margins=%r',
+                [box.inner for box in side_boxes],
+                [(box.margin_a, box.margin_b) for box in side_boxes],
+                )
             for box in side_boxes:
                 for attr in ['margin_a', 'margin_b', 'inner']:
                     if getattr(box, attr) == 'auto':
                         setattr(box, attr, 0)
-                        import logging
-                        logging.getLogger('WEASYPRINT').error(
-                            '%s was left to auto on %r', attr, box)
             return
 
 
@@ -281,7 +284,14 @@ def implementation_28(box_a, box_b, box_c, outer_sum, intrinsic):
 
 @register(auto_inners=(0, 0, 0), auto_margins=(1, 0, 1))
 def implementation_29(box_a, box_b, box_c, outer_sum, intrinsic):
-    return NotImplemented
+    new_outer_ac = (outer_sum - outer(box_b)) / 2
+    for box in [box_a, box_c]:
+        num_auto = [box.margin_a, box.margin_b].count('auto')
+        each_auto = (new_outer_ac - outer(box, ignore_auto=True)) / num_auto
+        if box.margin_a == 'auto':
+            box.margin_a = each_auto
+        if box.margin_b == 'auto':
+            box.margin_b = each_auto
 
 
 @register(auto_inners=(0, 0, 1), auto_margins=(1, 0, 1))

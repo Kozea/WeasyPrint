@@ -27,6 +27,7 @@ import cairo
 from ..formatting_structure import boxes
 from ..text import TextFragment
 from .inlines import replaced_box_width
+from .percentages import resolve_percentages
 
 
 def inline_preferred_minimum_width(box):
@@ -91,7 +92,8 @@ def text_lines_width(box, width):
 
 def replaced_preferred_width(box):
     """Return the preferred (minimum) width for an ``InlineReplacedBox``."""
-    # TODO: what about percentage widths?
     # TODO: get the actual device size. Or do we really care?
+    # TODO: what about percentage widths?
+    resolve_percentages(box, containing_block=(0, 0))
     replaced_box_width(box, device_size=None)
     return box.width

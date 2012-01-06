@@ -1674,6 +1674,30 @@ def test_margin_boxes_fixed_dimension():
 
 
 @SUITE.test
+def test_preferred_widths():
+    """Unit tests for preferred widths."""
+    document = parse(u'''
+        <p style="white-space: pre-line">
+            Lorem ipsum dolor sit amet,
+              consectetur elit
+        </p>
+                   <!--  ^  No-break space here  -->
+    ''', return_document=True)
+    # Non-laid-out boxes:
+    body, = document.formatting_structure.children
+    paragraph, = body.children
+    line, = paragraph.children
+    text, = line.children
+    assert text.text == u'\nLorem ipsum dolor sit amet,\nconsectetur elit\n'
+
+    minimum = inline_preferred_minimum_width(line)
+    preferred = inline_preferred_width(line)
+    # Not exact, depends on the installed fonts
+    assert 120 < minimum < 140
+    assert 220 < preferred < 240
+
+
+@SUITE.test
 def test_margin_boxes_variable_dimension():
     page, = parse('''
         <style>
@@ -1704,26 +1728,70 @@ def test_margin_boxes_variable_dimension():
     assert top_center.margin_width() == 200
     assert top_right.margin_width() == 200
 
+    page, = parse('''
+        <style>
+            @page {
+                -weasy-size: 800px;
+                margin: 100px;
+                padding: 42px;
+                border: 7px solid;
 
-@SUITE.test
-def test_preferred_widths():
-    """Unit tests for preferred widths."""
-    document = parse(u'''
-        <p style="white-space: pre-line">
-            Lorem ipsum dolor sit amet,
-              consectetur elit
-        </p>
-                   <!--  ^  No-break space here  -->
-    ''', return_document=True)
-    # Non-laid-out boxes:
-    body, = document.formatting_structure.children
-    paragraph, = body.children
-    line, = paragraph.children
-    text, = line.children
-    assert text.text == u'\nLorem ipsum dolor sit amet,\nconsectetur elit\n'
+                @top-left {
+                    content: "Lorem";
+                }
+                @top-right {
+                    content: "Lorem";
+                }
+            }
+        </style>
+    ''')
+    html, top_left, top_right = page.children
+    assert top_left.at_keyword == '@top-left'
+    assert top_right.at_keyword == '@top-right'
 
-    minimum = inline_preferred_minimum_width(line)
-    preferred = inline_preferred_width(line)
-    # Not exact, depends on the installed fonts
-    assert 120 < minimum < 140
-    assert 220 < preferred < 240
+    assert top_left.margin_width() == 300
+    assert top_right.margin_width() == 300
+
+    page, = parse('''
+        <style>
+            @page {
+                -weasy-size: 800px;
+                margin: 100px;
+                padding: 42px;
+                border: 7px solid;
+
+                @top-left {
+                    content: "HelloHello";
+                }
+                @top-right {
+                    content: "Hello";
+                }
+            }
+        </style>
+    ''')
+    html, top_left, top_right = page.children
+    assert top_left.margin_width() == 400
+    assert top_right.margin_width() == 200
+
+    page, = parse('''
+        <style>
+            @page {
+                -weasy-size: 800px;
+                margin: 100px;
+                padding: 42px;
+                border: 7px solid;
+
+                @top-left {
+                    content: url('data:image/svg+xml, \
+                                    <svg width="10" height="10"></svg>');
+                }
+                @top-right {
+                    content: url('data:image/svg+xml, \
+                                    <svg width="30" height="10"></svg>');
+                }
+            }
+        </style>
+    ''')
+    html, top_left, top_right = page.children
+    assert top_left.margin_width() == 150
+    assert top_right.margin_width() == 450
