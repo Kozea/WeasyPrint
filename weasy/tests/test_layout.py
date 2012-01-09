@@ -1737,6 +1737,35 @@ def test_margin_boxes_variable_dimension():
                 border: 7px solid;
 
                 @top-left {
+                    content: "HeyHey";
+                }
+                @top-center {
+                    content: "Hey";
+                }
+                @top-right {
+                    content: "";
+                }
+            }
+        </style>
+    ''')
+    html, top_left, top_right, top_center = page.children
+    assert top_left.at_keyword == '@top-left'
+    assert top_center.at_keyword == '@top-center'
+    assert top_right.at_keyword == '@top-right'
+
+    assert top_left.margin_width() == 240
+    assert top_center.margin_width() == 120
+    assert top_right.margin_width() == 240
+
+    page, = parse('''
+        <style>
+            @page {
+                -weasy-size: 800px;
+                margin: 100px;
+                padding: 42px;
+                border: 7px solid;
+
+                @top-left {
                     content: "Lorem";
                 }
                 @top-right {
