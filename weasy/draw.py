@@ -213,7 +213,8 @@ def draw_background(document, context, box, clip=True):
             context.clip()
 
         context.set_source_surface(surface)
-        context.get_source().set_extend(cairo.EXTEND_REPEAT)
+        if bg_repeat != 'no-repeat':
+            context.get_source().set_extend(cairo.EXTEND_REPEAT)
         context.paint()
 
 
