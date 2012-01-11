@@ -49,14 +49,14 @@ def register_format(mime_type):
 
 
 @register_format('image/png')
-def png_handler(file_like):
+def png_handler(file_like, _uri):
     """Return a cairo Surface from a PNG byte stream."""
     surface = cairo.ImageSurface.create_from_png(file_like)
     return surface, surface.get_width(), surface.get_height()
 
 
 @register_format('image/svg+xml')
-def cairosvg_handler(file_like):
+def cairosvg_handler(file_like, uri):
     """Return a cairo Surface from a SVG byte stream.
 
     This handler uses CairoSVG: http://cairosvg.org/
@@ -70,14 +70,14 @@ def cairosvg_handler(file_like):
     from cairosvg.parser import Tree, ParseError
     try:
         # Draw to a cairo surface but do not write to a file
-        tree = Tree(file_obj=file_like)
+        tree = Tree(file_obj=file_like, url=uri)
         surface = SVGSurface(tree, output=None)
     except (ParseError, NotImplementedError) as exception:
         return exception
     return surface.cairo, surface.width, surface.height
 
 
-def fallback_handler(file_like):
+def fallback_handler(file_like, uri):
     """
     Parse a byte stream with PIL and return a cairo Surface.
 
@@ -100,7 +100,7 @@ def fallback_handler(file_like):
     image = image.convert('RGBA')
     image.save(png, "PNG")
     png.seek(0)
-    return png_handler(png)
+    return png_handler(png, uri)
 
 
 def get_image_surface_from_uri(uri):
@@ -115,7 +115,7 @@ def get_image_surface_from_uri(uri):
 
     handler = FORMAT_HANDLERS.get(mime_type, fallback_handler)
     try:
-        image = handler(file_like)
+        image = handler(file_like, uri)
     except (IOError, MemoryError) as exception:
         pass # Network or parsing error
     else:
