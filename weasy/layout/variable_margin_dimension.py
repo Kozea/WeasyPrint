@@ -138,6 +138,29 @@ def distribute_margins(box, new_outer):
         box.margin_b = each_auto
 
 
+def distribute_margins_and_inner(box, new_outer, intrinsic):
+    """Set 'auto' values when both inner and some margins are 'auto'."""
+    remaining = new_outer - outer(box, ignore_auto='MI')
+    set_inner_within_range(box, remaining, intrinsic)
+    distribute_margins(box, new_outer)
+
+
+def set_inner_within_range(box, optimal_inner, intrinsic):
+    """Set ``box.inner`` as close to ``optimal_inner`` as possible with
+    range of its intrinsic bounds.
+
+    """
+    min_inner = intrinsic.minimum(box)
+    if optimal_inner < min_inner:
+        box.inner = min_inner
+    else:
+        max_inner = intrinsic.preferred(box)
+        if remaining > max_inner:
+            box.inner = max_inner
+        else:
+            box.inner = optimal_inner
+
+
 @register(auto_inners=(0, 0, 0), auto_margins=(0, 0, 0))
 def implementation_1(box_a, box_b, box_c, outer_sum, intrinsic):
     outer_a = outer(box_a)
@@ -239,7 +262,8 @@ def implementation_6(box_a, box_b, box_c, outer_sum, intrinsic):
     max_outer_b = max_b + constants_b
     max_outer_c = max_c + constants_c
 
-    # Same for A and C, rule 2:
+    # Rule 2: Same outer for A and C, rule 2
+    # So their common min/max is the most restrictive
     min_outer_ac = max(min_outer_a, min_outer_c)
     max_outer_ac = min(max_outer_a, max_outer_c)
     # Condition 1
@@ -306,16 +330,7 @@ def implementation_8(box_a, box_b, box_c, outer_sum, intrinsic):
     outer_b = outer(box_b)
     if outer_a == (outer_sum - outer_b) / 2: # Rules 1 and 2
         outer_c = outer_a  # Rule 2
-        remaining = outer_c - outer(box_c, ignore_auto='MI')
-        min_c = intrinsic.minimum(box_c)
-        max_c = intrinsic.preferred(box_c)
-        if remaining < min_c:
-            box_c.inner = min_c
-        elif remaining > max_c:
-            box_c.inner = max_c
-        else:
-            box_c.inner = remaining
-        distribute_margins(box_c, outer_c)
+        distribute_margins_and_inner(box_c, outer_c, intrinsic)
         return 'ok'
     # Over-constrained
 
@@ -350,17 +365,7 @@ def implementation_10(box_a, box_b, box_c, outer_sum, intrinsic):
         # Ignore the preferred/maximum as the next best solution
         # is to drop these constraints.
         box_b.inner = inner_b
-
-        remaining_c = outer_c - outer(box_c, ignore_auto='MI')
-        min_c = intrinsic.minimum(box_c)
-        max_c = intrinsic.preferred(box_c)
-        if remaining_c < min_c:
-            box_c.inner = min_c
-        elif remaining_c > max_c:
-            box_c.inner = max_c
-        else:
-            box_c.inner = remaining_c
-        distribute_margins(box_c, outer_c)
+        distribute_margins_and_inner(box_c, outer_c, intrinsic)
         return 'ok'
     # Over-constrained
 
@@ -398,14 +403,7 @@ def implementation_12(box_a, box_b, box_c, outer_sum, intrinsic):
         box_a.inner = inner_a
 
         remaining_c = outer_c - outer(box_c, ignore_auto='MI')
-        min_c = intrinsic.minimum(box_c)
-        max_c = intrinsic.preferred(box_c)
-        if remaining_c < min_c:
-            box_c.inner = min_c
-        elif remaining_c > max_c:
-            box_c.inner = max_c
-        else:
-            box_c.inner = remaining_c
+        set_inner_within_range(box_c, remaining_c, intrinsic)
         distribute_margins(box_c, outer_c)
         return 'ok'
     # Over-constrained
@@ -423,27 +421,90 @@ def implementation_14(box_a, box_b, box_c, outer_sum, intrinsic):
 
 @register(auto_inners=(0, 0, 0), auto_margins=(0, 1, 0))
 def implementation_15(box_a, box_b, box_c, outer_sum, intrinsic):
-    return NotImplemented
+    outer_a = outer(box_a)
+    outer_c = outer(box_c)
+    if outer_a == outer_c:  # Rule 2
+        outer_b = outer_sum - outer_a - outer_c  # Rule 1
+        distribute_margins(box_b, outer_b)
+        return 'ok'
+    # Over-constrained
 
 
 @register(auto_inners=(0, 0, 1), auto_margins=(0, 1, 0))
 def implementation_16(box_a, box_b, box_c, outer_sum, intrinsic):
-    return NotImplemented
+    outer_a = outer(box_a)
+    outer_c = outer_a  # Rule 2
+    outer_b = outer_sum - outer_a - outer_c  # Rule 1
+
+    inner_c = outer_c - outer(box_c, ignore_auto='I')
+    min_c = intrinsic.minimum(box_c)
+    if inner_c >= min_c:
+        # Ignore the preferred/maximum as the next best solution
+        # is to drop these constraints.
+        box_c.inner = inner_c
+        distribute_margins(box_b, outer_b)
+        return 'ok'
+    # Over-constrained
 
 
 @register(auto_inners=(0, 1, 0), auto_margins=(0, 1, 0))
 def implementation_17(box_a, box_b, box_c, outer_sum, intrinsic):
-    return NotImplemented
+    outer_a = outer(box_a)
+    outer_c = outer(box_c)
+    if outer_a == outer_c:  # Rule 2
+        outer_b = outer_sum - outer_a - outer_c  # Rule 1
+        distribute_margins_and_inner(box_b, outer_b, intrinsic)
+        return 'ok'
+    # Over-constrained
 
 
 @register(auto_inners=(0, 1, 1), auto_margins=(0, 1, 0))
 def implementation_18(box_a, box_b, box_c, outer_sum, intrinsic):
-    return NotImplemented
+    outer_a = outer(box_a)
+    outer_c = outer_a  # Rule 2
+    outer_b = outer_sum - outer_a - outer_c  # Rule 1
+
+    inner_c = outer_c - outer(box_c, ignore_auto='I')
+    min_c = intrinsic.minimum(box_c)
+    if inner_c >= min_c:
+        # Ignore the preferred/maximum as the next best solution
+        # is to drop these constraints.
+        box_c.inner = inner_c
+        distribute_margins_and_inner(box_b, outer_b, intrinsic)
+        return 'ok'
+    # Over-constrained
 
 
 @register(auto_inners=(1, 0, 1), auto_margins=(0, 1, 0))
 def implementation_19(box_a, box_b, box_c, outer_sum, intrinsic):
-    return NotImplemented
+    constants_a = outer(box_a, ignore_auto='I')
+    constants_b = outer(box_b, ignore_auto='M')
+    constants_c = outer(box_c, ignore_auto='I')
+
+    min_outer_a = intrinsic.minimum(box_a) + constants_a
+    min_outer_c = intrinsic.minimum(box_c) + constants_c
+
+    max_a = intrinsic.preferred(box_a)
+    max_c = intrinsic.preferred(box_c)
+    max_outer_a = max_a + constants_a
+    max_outer_c = max_c + constants_c
+
+    # Rule 2: Same outer for A and C, rule 2
+    # So their common min/max is the most restrictive
+    min_outer_ac = max(min_outer_a, min_outer_c)
+    max_outer_ac = min(max_outer_a, max_outer_c)
+
+    # The goal function is minimized for this value:
+    optimal_outer_ac = (outer_sum - constants_b) / 2
+
+    # Within bounds
+    outer_ac = min(max_outer_ac, max(min_outer_ac, optimal_outer_ac))
+    outer_b = outer_sum - 2 * outer_ac
+
+    box_a.inner = outer_ac - constants_a
+    box_c.inner = outer_ac - constants_c
+    distribute_margins(box_b, outer_b)
+    return 'ok'
 
 
 @register(auto_inners=(1, 1, 1), auto_margins=(0, 1, 0))
@@ -453,27 +514,79 @@ def implementation_20(box_a, box_b, box_c, outer_sum, intrinsic):
 
 @register(auto_inners=(0, 0, 0), auto_margins=(0, 1, 1))
 def implementation_21(box_a, box_b, box_c, outer_sum, intrinsic):
-    return NotImplemented
+    outer_a = outer(box_a)
+    outer_c = outer_a  # Rule 2
+    outer_b = outer_sum - outer_a - outer_c  # Rule 1
+
+    distribute_margins(box_b, outer_b)
+    distribute_margins(box_c, outer_c)
+    return 'ok'
 
 
 @register(auto_inners=(0, 0, 1), auto_margins=(0, 1, 1))
 def implementation_22(box_a, box_b, box_c, outer_sum, intrinsic):
-    return NotImplemented
+    outer_a = outer(box_a)
+    outer_c = outer_a  # Rule 2
+    outer_b = outer_sum - outer_a - outer_c  # Rule 1
+
+    distribute_margins(box_b, outer_b)
+    distribute_margins_and_inner(box_c, outer_c, intrinsic)
+    return 'ok'
 
 
 @register(auto_inners=(0, 1, 0), auto_margins=(0, 1, 1))
 def implementation_23(box_a, box_b, box_c, outer_sum, intrinsic):
-    return NotImplemented
+    outer_a = outer(box_a)
+    outer_c = outer_a  # Rule 2
+    outer_b = outer_sum - outer_a - outer_c  # Rule 1
+
+    distribute_margins_and_inner(box_b, outer_b, intrinsic)
+    distribute_margins(box_c, outer_c)
+    return 'ok'
 
 
 @register(auto_inners=(0, 1, 1), auto_margins=(0, 1, 1))
 def implementation_24(box_a, box_b, box_c, outer_sum, intrinsic):
-    return NotImplemented
+    outer_a = outer(box_a)
+    outer_c = outer_a  # Rule 2
+    outer_b = outer_sum - outer_a - outer_c  # Rule 1
+
+    distribute_margins_and_inner(box_b, outer_b, intrinsic)
+    distribute_margins_and_inner(box_c, outer_c, intrinsic)
+    return 'ok'
 
 
 @register(auto_inners=(1, 0, 0), auto_margins=(0, 1, 1))
 def implementation_25(box_a, box_b, box_c, outer_sum, intrinsic):
-    return NotImplemented
+    constants_a = outer(box_a, ignore_auto='I')
+    constants_b = outer(box_b, ignore_auto='M')
+    constants_c = outer(box_c, ignore_auto='M')
+
+    n_margins_b = [box_b.margin_a, box_b.margin_b].count('auto')
+    n_margins_c = [box_c.margin_a, box_c.margin_b].count('auto')
+
+    # Math:
+    # Use rule 1 and 2 to rewrite the goal function in terms of outer_ac
+    # The result is still quadratic but with only one variable:
+    #    Goal = A * outer_ac**2  +  B * outer_ac  +  C
+    # The minimum of a quadratic function is at
+    #    outer_ac = -B / (2 * A)
+    optimal_outer_ac = (
+          constants_c / n_margins_c
+        + 2 * (outer_sum - constants_b) / n_margins_b
+    ) / (
+          1 / n_margins_c
+        + 4 / n_margins_b
+    )
+    optimal_inner_a = optimal_outer_ac - constants_a
+
+    set_inner_within_range(box_a, optimal_inner_a, intrinsic)
+
+    outer_ac = box_a.inner + constants_a
+    outer_b = outer_sum - 2 * outer_ac
+    distribute_margins(box_b, outer_b)
+    distribute_margins(box_c, outer_ac)
+    return 'ok'
 
 
 @register(auto_inners=(1, 0, 1), auto_margins=(0, 1, 1))
@@ -501,12 +614,48 @@ def implementation_29(box_a, box_b, box_c, outer_sum, intrinsic):
 
 @register(auto_inners=(0, 0, 1), auto_margins=(1, 0, 1))
 def implementation_30(box_a, box_b, box_c, outer_sum, intrinsic):
-    return NotImplemented
+    outer_b = outer(box_b)
+    outer_ac = outer_sum - outer_b  # Rule 1
+    outer_a = outer_ac / 2  # Rule 2
+    outer_c = outer_ac / 2  # Rule 2
+
+    distribute_margins(box_a, outer_a)
+    distribute_margins_and_inner(box_c, outer_c, intrinsic)
+    return 'ok'
 
 
 @register(auto_inners=(0, 1, 0), auto_margins=(1, 0, 1))
 def implementation_31(box_a, box_b, box_c, outer_sum, intrinsic):
-    return NotImplemented
+    constants_a = outer(box_a, ignore_auto='M')
+    constants_b = outer(box_b, ignore_auto='I')
+    constants_c = outer(box_c, ignore_auto='M')
+
+    n_margins_a = [box_a.margin_a, box_a.margin_b].count('auto')
+    n_margins_c = [box_c.margin_a, box_c.margin_b].count('auto')
+
+    # Math:
+    # Use rule 1 and 2 to rewrite the goal function in terms of outer_ac
+    # The result is still quadratic but with only one variable:
+    #    Goal = A * outer_ac**2  +  B * outer_ac  +  C
+    # The minimum of a quadratic function is at
+    #    outer_ac = -B / (2 * A)
+    optimal_outer_ac = (
+          constants_a / n_margins_a
+        + constants_c / n_margins_c
+    ) / (
+          1 / n_margins_a
+        + 1 / n_margins_c
+    )
+    optimal_outer_b = outer_sum - 2 * optimal_outer_ac
+    optimal_inner_b = optimal_outer_b - constants_b
+
+    set_inner_within_range(box_b, optimal_inner_b, intrinsic)
+
+    outer_b = box_b.inner + constants_b
+    outer_ac = (outer_sum - outer_b) / 2
+    distribute_margins(box_a, outer_ac)
+    distribute_margins(box_c, outer_ac)
+    return 'ok'
 
 
 @register(auto_inners=(0, 1, 1), auto_margins=(1, 0, 1))
@@ -516,7 +665,14 @@ def implementation_32(box_a, box_b, box_c, outer_sum, intrinsic):
 
 @register(auto_inners=(1, 0, 1), auto_margins=(1, 0, 1))
 def implementation_33(box_a, box_b, box_c, outer_sum, intrinsic):
-    return NotImplemented
+    outer_b = outer(box_b)
+    outer_ac = outer_sum - outer_b  # Rule 1
+    outer_a = outer_ac / 2  # Rule 2
+    outer_c = outer_ac / 2  # Rule 2
+
+    distribute_margins_and_inner(box_a, outer_a, intrinsic)
+    distribute_margins_and_inner(box_c, outer_c, intrinsic)
+    return 'ok'
 
 
 @register(auto_inners=(1, 1, 1), auto_margins=(1, 0, 1))
@@ -526,7 +682,35 @@ def implementation_34(box_a, box_b, box_c, outer_sum, intrinsic):
 
 @register(auto_inners=(0, 0, 0), auto_margins=(1, 1, 1))
 def implementation_35(box_a, box_b, box_c, outer_sum, intrinsic):
-    return NotImplemented
+    constants_a = outer(box_a, ignore_auto='M')
+    constants_b = outer(box_b, ignore_auto='M')
+    constants_c = outer(box_c, ignore_auto='M')
+
+    n_margins_a = [box_a.margin_a, box_a.margin_b].count('auto')
+    n_margins_b = [box_b.margin_a, box_b.margin_b].count('auto')
+    n_margins_c = [box_c.margin_a, box_c.margin_b].count('auto')
+
+    # Math:
+    # Use rule 1 and 2 to rewrite the goal function in terms of outer_ac
+    # The result is still quadratic but with only one variable:
+    #    Goal = A * outer_ac**2  +  B * outer_ac  +  C
+    # The minimum of a quadratic function is at
+    #    outer_ac = -B / (2 * A)
+    outer_ac = (
+          constants_a / n_margins_a
+        + constants_c / n_margins_c
+        + 2 * (outer_sum - constants_b) / n_margins_b
+    ) / (
+          1 / n_margins_a
+        + 1 / n_margins_b
+        + 1 / n_margins_c
+    )
+    outer_b = outer_sum - 2 * outer_ac
+    distribute_margins(box_a, outer_ac)
+    distribute_margins(box_b, outer_b)
+    distribute_margins(box_c, outer_ac)
+    return 'ok'
+
 
 
 @register(auto_inners=(0, 0, 1), auto_margins=(1, 1, 1))
