@@ -27,6 +27,7 @@ import logging
 import cairo
 
 from .utils import urlopen
+from .css.computed_values import LENGTHS_TO_PIXELS
 
 
 LOGGER = logging.getLogger('WEASYPRINT')
@@ -66,7 +67,7 @@ def cairosvg_handler(file_like, uri):
         import cairosvg as _
     except ImportError as exception:
         return exception
-    from cairosvg.surface import SVGSurface
+    from cairosvg.surface import SVGSurface, units
     from cairosvg.parser import Tree, ParseError
     try:
         # Draw to a cairo surface but do not write to a file
@@ -74,7 +75,33 @@ def cairosvg_handler(file_like, uri):
         surface = SVGSurface(tree, output=None)
     except (ParseError, NotImplementedError) as exception:
         return exception
-    return surface.cairo, surface.width, surface.height
+    # These are in CairoSVG’s internal pixel units.
+    # These are generally *not* the same as CSS pixels.
+    # Convert to inches...
+    width = surface.width / units.DPI
+    height = surface.height / units.DPI
+    # Now convert to our own internal units: CSS pixels
+    pixels_per_inch = LENGTHS_TO_PIXELS['in']
+    width *= pixels_per_inch
+    height *= pixels_per_inch
+    return surface.cairo, width, height
+
+
+def _init_cairosvg():
+    """Initialize cairosvg’s DPI to 96 to match CSS pixels.
+
+    Do this only once when the module is imported so that it may be
+    overriden later.
+
+    """
+    try:
+        import cairosvg as _
+    except ImportError:
+        pass
+    else:
+        import cairosvg.surface.units
+        cairosvg.surface.units.DPI = 96
+_init_cairosvg()
 
 
 def fallback_handler(file_like, uri):
