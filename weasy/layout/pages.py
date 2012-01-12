@@ -206,70 +206,68 @@ def compute_variable_dimension(side_boxes, vertical, outer_sum):
                           box.padding_plus_border]
             if value != 'auto')
 
+        # Not empty because box_b does not "exist", box_b.inner == 'auto'
         auto_inner_boxes = [box for box in side_boxes if box.inner == 'auto']
-        if auto_inner_boxes:
-            min_inners = map(intrinsic.minimum, auto_inner_boxes)
-            max_inners = map(intrinsic.preferred, auto_inner_boxes)
-            sum_min_inners = sum(min_inners)
-            sum_max_inners = sum(max_inners)
-            # Minimize margins while keeping inner dimensions within bounds
-            if remaining < sum_min_inners:
-                # minimum widths are bigger than the target sum for
-                # 'auto' values.
-                # Use that, and 'auto' margins will be negative
-                # Content will most likely overlap.
-                for box, min_inner in zip(auto_inner_boxes, min_inners):
-                    # Rule 5
-                    box.inner = min_inner
-                sum_margins = remaining - sum_min_inners
-            # If remaining is not within range and the number of auto margins
-            # is zero the problem is over-constrained.
-            # The maximum constraints are the first to be dropped in this
-            # case: only keep them if there are auto margins.
-            elif remaining > sum_max_inners and num_auto_margins > 0:
-                for box, max_inner in zip(auto_inner_boxes, max_inners):
-                    # Rule 6
-                    box.inner = max_inner
-                sum_margins = remaining - sum_max_inners
-            else:
-                sum_margins = 0
-                sum_inners = remaining
-
-                weights = [
-                    (max_inner / sum_max_inners
-                        if max_inner != float('inf') and sum_max_inners != 0
-                        else 1 / len(auto_inner_boxes))
-                    for box, max_inner in zip(auto_inner_boxes, max_inners)
-                ]
-                # sum(weights) == 1, with some floating point error
-
-                if remaining > sum_max_inners:
-                    # num_auto_margins == 0
-                    max_inners = [float('inf')] * 3
-                    sum_max_inners = float('inf')
-
-                # Choose the inner dimension for all boxes with 'auto'
-                # but the last
-                for box, max_inner, min_inner, weight in zip(
-                    auto_inner_boxes, max_inners, min_inners, weights
-                )[:-1]:
-                    # Ideal inner for A, to balance contents
-                    target = sum_inners * weight
-                    # The ranges for other boxes combined with the sum
-                    # constraint restrict the range for this box:
-                    if sum_max_inners != float('inf'):
-                        others_sum_max = sum_max_inners - max_inner
-                        min_inner = max(min_inner, sum_inners - others_sum_max)
-                    others_sum_min = sum_min_inners - min_inner
-                    max_inner = min(max_inner, sum_inners - others_sum_min)
-                    # As close as possible to target, but within bounds
-                    box.inner = min(max_inner, max(min_inner, target))
-                # The dimension for the last box is resolved with the
-                # target sum
-                auto_inner_boxes[-1].inner = sum_inners - sum(
-                    box.inner for box in auto_inner_boxes[:-1])
+        min_inners = map(intrinsic.minimum, auto_inner_boxes)
+        max_inners = map(intrinsic.preferred, auto_inner_boxes)
+        sum_min_inners = sum(min_inners)
+        sum_max_inners = sum(max_inners)
+        # Minimize margins while keeping inner dimensions within bounds
+        if remaining < sum_min_inners:
+            # minimum widths are bigger than the target sum for
+            # 'auto' values.
+            # Use that, and 'auto' margins will be negative
+            # Content will most likely overlap.
+            for box, min_inner in zip(auto_inner_boxes, min_inners):
+                # Rule 5
+                box.inner = min_inner
+            sum_margins = remaining - sum_min_inners
+        # If remaining is not within range and the number of auto margins
+        # is zero the problem is over-constrained.
+        # The maximum constraints are the first to be dropped in this
+        # case: only keep them if there are auto margins.
+        elif remaining > sum_max_inners and num_auto_margins > 0:
+            for box, max_inner in zip(auto_inner_boxes, max_inners):
+                # Rule 6
+                box.inner = max_inner
+            sum_margins = remaining - sum_max_inners
         else:
-            sum_margins = remaining
+            sum_margins = 0
+            sum_inners = remaining
+
+            weights = [
+                (max_inner / sum_max_inners
+                    if max_inner != float('inf') and sum_max_inners != 0
+                    else 1 / len(auto_inner_boxes))
+                for box, max_inner in zip(auto_inner_boxes, max_inners)
+            ]
+            # sum(weights) == 1, with some floating point error
+
+            if remaining > sum_max_inners:
+                # num_auto_margins == 0
+                max_inners = [float('inf')] * 3
+                sum_max_inners = float('inf')
+
+            # Choose the inner dimension for all boxes with 'auto'
+            # but the last
+            for box, max_inner, min_inner, weight in zip(
+                auto_inner_boxes, max_inners, min_inners, weights
+            )[:-1]:
+                # Ideal inner for A, to balance contents
+                target = sum_inners * weight
+                # The ranges for other boxes combined with the sum
+                # constraint restrict the range for this box:
+                if sum_max_inners != float('inf'):
+                    others_sum_max = sum_max_inners - max_inner
+                    min_inner = max(min_inner, sum_inners - others_sum_max)
+                others_sum_min = sum_min_inners - min_inner
+                max_inner = min(max_inner, sum_inners - others_sum_min)
+                # As close as possible to target, but within bounds
+                box.inner = min(max_inner, max(min_inner, target))
+            # The dimension for the last box is resolved with the
+            # target sum
+            auto_inner_boxes[-1].inner = sum_inners - sum(
+                box.inner for box in auto_inner_boxes[:-1])
 
         if sum_margins == 0:
             # Valid even if there is no 'auto' margin
@@ -297,11 +295,11 @@ def compute_variable_dimension(side_boxes, vertical, outer_sum):
     for box in side_boxes:
         if vertical:
             box.margin_top = box.margin_a
-            box.margin_bottom = box.margin_a
+            box.margin_bottom = box.margin_b
             box.height = box.inner
         else:
             box.margin_left = box.margin_a
-            box.margin_right = box.margin_a
+            box.margin_right = box.margin_b
             box.width = box.inner
         del box.margin_a
         del box.margin_b
