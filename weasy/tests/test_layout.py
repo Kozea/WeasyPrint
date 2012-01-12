@@ -1824,3 +1824,138 @@ def test_margin_boxes_variable_dimension():
     html, top_left, top_right = page.children
     assert top_left.margin_width() == 150
     assert top_right.margin_width() == 450
+
+    page, = parse('''
+        <style>
+            @page {
+                -weasy-size: 800px;
+                margin: 100px;
+
+                @top-left {
+                    width: 150px;
+                }
+                @top-right {
+                    width: 250px;
+                }
+            }
+        </style>
+    ''')
+    html, top_left, top_right = page.children
+    assert top_left.margin_width() == 150
+    assert top_right.margin_width() == 250
+
+    page, = parse('''
+        <style>
+            @page {
+                -weasy-size: 800px;
+                margin: 100px;
+
+                @top-left {
+                    margin: auto;
+                    width: 100px;
+                }
+                @top-center {
+                    margin-left: auto;
+                }
+                @top-right {
+                    width: 200px;
+                }
+            }
+        </style>
+    ''')
+    html, top_left, top_right = page.children
+    # 300 pixels evenly distributed over the 3 margins
+    assert top_left.margin_left == 100
+    assert top_left.margin_right == 100
+    assert top_left.width == 100
+    assert top_right.margin_left == 0
+    assert top_right.margin_right == 0
+    assert top_right.width == 200
+
+    page, = parse('''
+        <style>
+            @page {
+                -weasy-size: 800px;
+                margin: 100px;
+
+                @top-left {
+                    margin: auto;
+                    width: 500px;
+                }
+                @top-center {
+                    margin-left: auto;
+                }
+                @top-right {
+                    width: 400px;
+                }
+            }
+        </style>
+    ''')
+    html, top_left, top_right = page.children
+    # -300 pixels evenly distributed over the 3 margins
+    assert top_left.margin_left == -100
+    assert top_left.margin_right == -100
+    assert top_left.width == 500
+    assert top_right.margin_left == 0
+    assert top_right.margin_right == 0
+    assert top_right.width == 400
+
+    page, = parse('''
+        <style>
+            @page {
+                -weasy-size: 800px;
+                margin: 100px;
+                padding: 42px;
+                border: 7px solid;
+
+                @top-left {
+                    content: url('data:image/svg+xml, \
+                                    <svg width="450" height="10"></svg>');
+                }
+                @top-right {
+                    content: url('data:image/svg+xml, \
+                                    <svg width="350" height="10"></svg>');
+                }
+            }
+        </style>
+    ''')
+    html, top_left, top_right = page.children
+    # -200 pixels evenly distributed over the 2 added margins
+    assert top_left.margin_left == 0
+    assert top_left.margin_right == -100
+    assert top_left.width == 450
+    assert top_right.margin_left == -100
+    assert top_right.margin_right == 0
+    assert top_right.width == 350
+
+    page, = parse('''
+        <style>
+            @page {
+                -weasy-size: 800px;
+                margin: 100px;
+                padding: 42px;
+                border: 7px solid;
+
+                @top-left {
+                    content: url('data:image/svg+xml, \
+                                    <svg width="100" height="10"></svg>');
+                    border-right: 50px solid;
+                    margin: auto;
+                }
+                @top-right {
+                    content: url('data:image/svg+xml, \
+                                    <svg width="200" height="10"></svg>');
+                    margin-left: 30px;
+                }
+            }
+        </style>
+    ''')
+    html, top_left, top_right = page.children
+    assert top_left.margin_left == 110
+    assert top_left.margin_right == 110
+    assert top_left.width == 100
+    assert top_left.margin_width() == 370
+    assert top_right.margin_left == 30
+    assert top_right.margin_right == 0
+    assert top_right.width == 200
+    assert top_right.margin_width() == 230
