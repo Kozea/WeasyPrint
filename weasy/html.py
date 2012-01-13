@@ -112,7 +112,7 @@ def handle_img(document, element, box):
     src = get_url_attribute(element, 'src')
     alt = element.get('alt')
     if src:
-        image = document.get_image_surface_from_uri(src)
+        image = document.get_image_from_uri(src)
         if image is not None:
             return [make_replaced_box(element, box, image)]
         else:

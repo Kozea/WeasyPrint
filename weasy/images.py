@@ -33,7 +33,7 @@ from .css.computed_values import LENGTHS_TO_PIXELS
 LOGGER = logging.getLogger('WEASYPRINT')
 
 # Map MIME types to functions that take a byte stream and return
-# ``(surface, width, height)`` a cairo Surface and its dimension in pixels.
+# ``(pattern, width, height)`` a cairo Pattern and its dimension in pixels.
 FORMAT_HANDLERS = {}
 
 # TODO: currently CairoSVG only support images with an explicit
@@ -53,7 +53,8 @@ def register_format(mime_type):
 def png_handler(file_like, _uri):
     """Return a cairo Surface from a PNG byte stream."""
     surface = cairo.ImageSurface.create_from_png(file_like)
-    return surface, surface.get_width(), surface.get_height()
+    pattern = cairo.SurfacePattern(surface)
+    return pattern, surface.get_width(), surface.get_height()
 
 
 @register_format('image/svg+xml')
@@ -75,16 +76,19 @@ def cairosvg_handler(file_like, uri):
         surface = SVGSurface(tree, output=None)
     except (ParseError, NotImplementedError) as exception:
         return exception
-    # These are in CairoSVG’s internal pixel units.
-    # These are generally *not* the same as CSS pixels.
-    # Convert to inches...
-    width = surface.width / units.DPI
-    height = surface.height / units.DPI
-    # Now convert to our own internal units: CSS pixels
-    pixels_per_inch = LENGTHS_TO_PIXELS['in']
-    width *= pixels_per_inch
-    height *= pixels_per_inch
-    return surface.cairo, width, height
+    # These are in points. Convert to CSS pixels.
+    css_px_per_points = LENGTHS_TO_PIXELS['pt']
+    width = surface.width * css_px_per_points
+    height = surface.height * css_px_per_points
+
+    pattern = cairo.SurfacePattern(surface.cairo)
+    # surface.cairo has an intrinsic size in points but we want pixels,
+    # to be consistent with raster images
+    transform = cairo.Matrix()
+    transform.scale(1 / css_px_per_points, 1 / css_px_per_points)
+    pattern.set_matrix(transform)
+
+    return pattern, width, height
 
 
 def _init_cairosvg():
@@ -130,7 +134,7 @@ def fallback_handler(file_like, uri):
     return png_handler(png, uri)
 
 
-def get_image_surface_from_uri(uri):
+def get_image_from_uri(uri):
     """Get a :class:`cairo.Surface`` from an image URI."""
     try:
         file_like, mime_type, _charset = urlopen(uri)

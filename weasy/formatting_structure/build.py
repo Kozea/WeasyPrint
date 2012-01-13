@@ -178,7 +178,7 @@ def content_to_boxes(document, style, parent_box, quote_depth, counter_values):
         if type_ == 'STRING':
             texts.append(value)
         elif type_ == 'URI':
-            image = document.get_image_surface_from_uri(value)
+            image = document.get_image_from_uri(value)
             if image is not None:
                 text = u''.join(texts)
                 if text:
@@ -266,7 +266,7 @@ def add_box_marker(document, counter_values, box):
     image = style.list_style_image
     if image != 'none':
         # surface may be None here too, in case the image is not available.
-        image = document.get_image_surface_from_uri(image)
+        image = document.get_image_from_uri(image)
     else:
         image = None
 

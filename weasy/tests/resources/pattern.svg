@@ -1,4 +1,7 @@
-<svg width="4" height="4" viewbox="0 0 4 4">
-    <rect width="10" height="10" fill="#00f" /> <!-- Overflow the veiwbox -->
-    <rect width="1" height="1" fill="#f00" />
+<!-- Use points to work around a CairoSVG bug.  3pt == 4px   -->
+<svg width="3pt" height="3pt" viewbox="0 0 3 3">
+    <!-- Overflow the veiwbox -->
+    <rect width="10pt" height="10pt" fill="#00f" />
+
+    <rect width="0.75pt" height="0.75pt" fill="#f00" />
 </svg>

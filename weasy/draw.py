@@ -173,11 +173,11 @@ def draw_background(document, context, box, clip=True):
         if bg_image == 'none':
             return
 
-        image = document.get_image_surface_from_uri(bg_image)
+        image = document.get_image_from_uri(bg_image)
         if image is None:
             return
 
-        surface, image_width, image_height = image
+        pattern, image_width, image_height = image
 
         bg_position_x, bg_position_y = box.style.background_position
 
@@ -192,18 +192,18 @@ def draw_background(document, context, box, clip=True):
         context.translate(bg_position_x, bg_position_y)
 
         bg_repeat = box.style.background_repeat
-        if bg_repeat != 'repeat':
+        if bg_repeat in ('repeat-x', 'repeat-y'):
             # Get the current clip rectangle
             clip_x1, clip_y1, clip_x2, clip_y2 = context.clip_extents()
             clip_width = clip_x2 - clip_x1
             clip_height = clip_y2 - clip_y1
 
-            if bg_repeat in ('no-repeat', 'repeat-x'):
+            if bg_repeat == 'repeat-x':
                 # Limit the drawn area vertically
                 clip_y1 = 0  # because of the last context.translate()
                 clip_height = image_height
-
-            if bg_repeat in ('no-repeat', 'repeat-y'):
+            else:
+                # repeat-y
                 # Limit the drawn area horizontally
                 clip_x1 = 0  # because of the last context.translate()
                 clip_width = image_width
@@ -212,9 +212,13 @@ def draw_background(document, context, box, clip=True):
             context.rectangle(clip_x1, clip_y1, clip_width, clip_height)
             context.clip()
 
-        context.set_source_surface(surface)
-        if bg_repeat != 'no-repeat':
-            context.get_source().set_extend(cairo.EXTEND_REPEAT)
+        if bg_repeat == 'no-repeat':
+            # The same image/pattern may have been used
+            # in a repeating background.
+            pattern.set_extend(cairo.EXTEND_NONE)
+        else:
+            pattern.set_extend(cairo.EXTEND_REPEAT)
+        context.set_source(pattern)
         context.paint()
 
 
@@ -413,7 +417,7 @@ def draw_replacedbox(context, box):
     """Draw the given :class:`boxes.ReplacedBox` to a ``cairo.context``."""
     x, y = box.padding_box_x(), box.padding_box_y()
     width, height = box.width, box.height
-    surface, intrinsic_width, intrinsic_height = box.replacement
+    pattern, intrinsic_width, intrinsic_height = box.replacement
     with context.stacked():
         context.translate(x, y)
         context.rectangle(0, 0, width, height)
@@ -421,7 +425,9 @@ def draw_replacedbox(context, box):
         scale_width = width / intrinsic_width
         scale_height = height / intrinsic_height
         context.scale(scale_width, scale_height)
-        context.set_source_surface(surface)
+        # The same image/pattern may have been used in a repeating background.
+        pattern.set_extend(cairo.EXTEND_NONE)
+        context.set_source(pattern)
         context.paint()
 
 def draw_text(context, textbox):

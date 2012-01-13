@@ -22,6 +22,7 @@ Test the drawing functions.
 
 """
 
+import contextlib
 import os.path
 from io import BytesIO
 from array import array
@@ -591,6 +592,28 @@ def test_list_style_image():
         ''' % (FONTS,))
 
 
+@contextlib.contextmanager
+def fuuuuuuuuuuu():
+    import cairo
+    from cairosvg import surface
+    from .. import images
+
+    @images.register_format('image/svg+xml')
+    def fake_cairosvg_handler(file_like, uri):
+        pattern, w, h = images.cairosvg_handler(file_like, uri)
+        pattern.set_matrix(cairo.Matrix())
+        return pattern, w, h
+
+    svg_surface = surface.SVGSurface
+    surface.SVGSurface = surface.PNGSurface
+
+    try:
+        yield
+    finally:
+        surface.SVGSurface = svg_surface
+        images.register_format('image/svg+xml')(images.cairosvg_handler)
+
+
 @SUITE.test
 def test_images():
     """Test images sizes, positions and pixels."""
@@ -630,14 +653,15 @@ def test_images():
         _+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_,
     ]
-    for format in ['png', 'gif', 'svg', 'jpg']:
-        image = centered_jpg_image if format == 'jpg' else centered_image
-        assert_pixels('inline_image_' + format, 8, 8, image, '''
-            <style>
-                @page { -weasy-size: 8px }
-                body { margin: 2px 0 0 2px; background: #fff }
-            </style>
-            <div><img src="pattern.%s"></div>
+    with fuuuuuuuuuuu():
+        for format in ['svg', 'png', 'gif', 'jpg']:
+            image = centered_jpg_image if format == 'jpg' else centered_image
+            assert_pixels('inline_image_' + format, 8, 8, image, '''
+                <style>
+                    @page { -weasy-size: 8px }
+                    body { margin: 2px 0 0 2px; background: #fff }
+                </style>
+                <div><img src="pattern.%s"></div>
         ''' % format)
     assert_pixels('block_image', 8, 8, centered_image, '''
         <style>

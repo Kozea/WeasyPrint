@@ -148,14 +148,14 @@ class Document(object):
             self._pages = layout(self)
         return self._pages
 
-    def get_image_surface_from_uri(self, uri):
+    def get_image_from_uri(self, uri):
         """
-        Same as ``weasy.images.get_image_surface_from_uri`` but cache results
+        Same as ``weasy.images.get_image_from_uri`` but cache results
         """
         missing = object()
         surface = self._image_cache.get(uri, missing)
         if surface is missing:
-            surface = images.get_image_surface_from_uri(uri)
+            surface = images.get_image_from_uri(uri)
             self._image_cache[uri] = surface
         return surface
 

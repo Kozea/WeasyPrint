@@ -763,6 +763,16 @@ def test_with_images():
         assert img.width == 4
         assert img.height == 4
 
+    # With physical units
+    url = "data:image/svg+xml,<svg width='2.54cm' height='0.5in'></svg>"
+    page, = parse('<img src="%s">' % url)
+    html, = page.children
+    body, = html.children
+    line, = body.children
+    img, = line.children
+    assert img.width == 96
+    assert img.height == 48
+
     # Invalid images
     for url in [
         'inexistant.png',
