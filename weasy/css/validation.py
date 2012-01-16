@@ -205,15 +205,15 @@ def background_position(values):
         elif is_dimension_or_percentage(value_2):
             if keyword_1 in ('left', 'center', 'right'):
                 return BACKGROUND_POSITION_PERCENTAGES[keyword_1], value_2
-        elif (
-                    keyword_1 in ('left', 'center', 'right') and
-                    keyword_2 in ('top', 'center', 'bottom')
-                ) or (
-                    keyword_1 in ('top', 'center', 'bottom') and
-                    keyword_2 in ('left', 'center', 'right')
-                ):
+        elif (keyword_1 in ('left', 'center', 'right') and
+              keyword_2 in ('top', 'center', 'bottom')):
             return (BACKGROUND_POSITION_PERCENTAGES[keyword_1],
                     BACKGROUND_POSITION_PERCENTAGES[keyword_2])
+        elif (keyword_1 in ('top', 'center', 'bottom') and
+              keyword_2 in ('left', 'center', 'right')):
+            # Swap values. They need to be in (horizontal, vertical) order.
+            return (BACKGROUND_POSITION_PERCENTAGES[keyword_2],
+                    BACKGROUND_POSITION_PERCENTAGES[keyword_1])
     #else: invalid
 
 

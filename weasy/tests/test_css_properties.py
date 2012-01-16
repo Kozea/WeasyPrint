@@ -199,7 +199,8 @@ def test_expand_background():
         image='none',
         repeat='repeat',
         attachment='scroll',
-        position='0% 100%' ##
+        # Order swapped to be in (horizontal, vertical) order.
+        position='100% 0%' ##
     )
     assert_background(
         'url(bar) #f00 repeat-y center left fixed',
@@ -207,7 +208,8 @@ def test_expand_background():
         image='bar', ##
         repeat='repeat-y', ##
         attachment='fixed', ##
-        position='50% 0%' ##
+        # Order swapped to be in (horizontal, vertical) order.
+        position='0% 50%' ##
     )
     assert_background(
         '#00f 10% 200px',
