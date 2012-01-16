@@ -52,7 +52,10 @@ def ensure_url(string):
     filename and convert it to a ``file://`` URL.
 
     """
-    return string if urlparse(string).scheme else path2url(string)
+    if urlparse(string).scheme:
+        return string
+    else:
+        return path2url(string.encode('utf8'))
 
 
 class URLopener(urllib.FancyURLopener):

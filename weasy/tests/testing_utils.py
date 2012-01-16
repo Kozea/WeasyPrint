@@ -90,8 +90,6 @@ def assert_no_logs():
     When passed to ``attest.Tests.context()``, asserts that nothing is logged.
     """
     with capture_logs() as logs:
-        try:
-            yield
-        finally:
-            assert not logs, (
-                '%i errors were logged by WeasyPrint or cssutils' % len(logs))
+        yield
+        assert not logs, (
+            '%i errors were logged by WeasyPrint or cssutils' % len(logs))

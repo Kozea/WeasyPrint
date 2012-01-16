@@ -24,12 +24,15 @@ Test the drawing functions.
 
 import contextlib
 import os.path
+import tempfile
+import shutil
 from io import BytesIO
 from array import array
 
 import png
 from attest import Tests, assert_hook  # pylint: disable=W0611
 
+from ..utils import ensure_url
 from .testing_utils import (
     resource_filename, TestPNGDocument, FONTS, assert_no_logs, capture_logs)
 
@@ -119,6 +122,14 @@ def html_to_png(name, expected_width, expected_height, html):
     document = TestPNGDocument.from_string(html)
     # Dummy filename, but in the right directory.
     document.base_url = resource_filename('<test>')
+    lines = document_to_png(document, name, expected_width, expected_height)
+    return document, lines
+
+
+def document_to_png(document, name, expected_width, expected_height):
+    """
+    Render an HTML document to PNG, checks its size and return pixel data.
+    """
     file_like = BytesIO()
     document.write_to(file_like)
     assert len(document.pages) == 1
@@ -135,7 +146,7 @@ def html_to_png(name, expected_width, expected_height, html):
     assert meta['bitdepth'] == 8, name
     assert len(lines) == height, name
     assert len(lines[0]) == width * BYTES_PER_PIXELS, name
-    return document, lines
+    return lines
 
 
 def assert_pixels_equal(name, width, height, lines, expected_lines):
@@ -1080,3 +1091,44 @@ def test_margin_boxes():
         </style>
         <body>
     ''')
+
+
+@SUITE.test
+def test_unicode():
+    """Test non-ASCII filenames (URLs)"""
+    text = u'I løvë Unicode'
+    style = '''
+        @page {
+            -weasy-size: 200px 50px;
+        }
+        p { color: blue }
+    '''
+    _doc, expected_lines = html_to_png('unicode_reference', 200, 50, u'''
+        <style>{}</style>
+        <p><img src="pattern.png"> {}</p>
+    '''.format(style, text))
+
+    temp = tempfile.mkdtemp(prefix=text + '-')
+    try:
+        stylesheet = os.path.join(temp, 'style.css')
+        image = os.path.join(temp, 'pattern.png')
+        html = os.path.join(temp, 'doc.html')
+        with open(stylesheet, 'wb') as fd:
+            fd.write(style)
+        with open(resource_filename('pattern.png'), 'rb') as fd:
+            image_content = fd.read()
+        with open(image, 'wb') as fd:
+            fd.write(image_content)
+        with open(html, 'wb') as fd:
+            fd.write(u'''
+                <link rel=stylesheet href="{}">
+                <p><img src="{}"> {}</p>
+            '''.format(
+                ensure_url(stylesheet), ensure_url(image), text
+            ).encode('utf8'))
+
+        document = TestPNGDocument.from_file(html, encoding='utf8')
+        lines = document_to_png(document, 'unicode', 200, 50)
+        assert_pixels_equal('unicode', 200, 50, lines, expected_lines)
+    finally:
+        shutil.rmtree(temp)

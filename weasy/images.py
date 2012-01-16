@@ -139,7 +139,7 @@ def get_image_from_uri(uri):
     try:
         file_like, mime_type, _charset = urlopen(uri)
     except IOError as exc:
-        LOGGER.warn('Error while fetching an image from %s : %s', uri, exc)
+        LOGGER.warn('Error while fetching an image from %s : %r', uri, exc)
         return None
     # TODO: implement image type sniffing?
 # http://www.w3.org/TR/html5/fetching-resources.html#content-type-sniffing:-image
@@ -157,5 +157,5 @@ def get_image_from_uri(uri):
     if exception is None:
         return image
     else:
-        LOGGER.warn('Error while parsing an image at %s : %s', uri, exception)
+        LOGGER.warn('Error while parsing an image at %s : %r', uri, exception)
         return None
