@@ -68,7 +68,7 @@ def cairosvg_handler(file_like, uri):
         import cairosvg as _
     except ImportError as exception:
         return exception
-    from cairosvg.surface import SVGSurface, units
+    from cairosvg.surface import SVGSurface
     from cairosvg.parser import Tree, ParseError
     try:
         # Draw to a cairo surface but do not write to a file
@@ -76,21 +76,18 @@ def cairosvg_handler(file_like, uri):
         surface = SVGSurface(tree, output=None)
     except (ParseError, NotImplementedError) as exception:
         return exception
-    # These are in points. Convert to CSS pixels.
-    css_px_per_points = LENGTHS_TO_PIXELS['pt']
-    width = surface.width * css_px_per_points
-    height = surface.height * css_px_per_points
-
+    # Dimension are already in pixels because of SCALE. (See below.)
+    # Due to going through several unit scaling, the dimensions may
+    # accumulate floating point error like a width of 95.99999999999999
+    # where 96 is expected.
+    # Rounding to a millionth of a pixel should be fine.
+    width = round(surface.width, 6)
+    height = round(surface.height, 6)
     pattern = cairo.SurfacePattern(surface.cairo)
-    # surface.cairo has an intrinsic size in points but we want pixels,
-    # to be consistent with raster images
-    transform = cairo.Matrix()
-    transform.scale(1 / css_px_per_points, 1 / css_px_per_points)
-    pattern.set_matrix(transform)
-
     return pattern, width, height
 
 
+@apply
 def _init_cairosvg():
     """Initialize cairosvg’s DPI to 96 to match CSS pixels.
 
@@ -103,9 +100,12 @@ def _init_cairosvg():
     except ImportError:
         pass
     else:
-        import cairosvg.surface.units
-        cairosvg.surface.units.DPI = 96
-_init_cairosvg()
+        from cairosvg.surface import units
+        # Have SVG px unit equal CSS px unit.
+        units.DPI = 96
+        # Have the cairo.Surface objects for CairoSVG have intrinsic dimension
+        # in pixels instead of points.
+        units.SCALE = 4 / 3
 
 
 def fallback_handler(file_like, uri):
