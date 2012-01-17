@@ -28,7 +28,6 @@ from attest import Tests, assert_hook  # pylint: disable=W0611
 from .testing_utils import resource_filename, TestPNGDocument, assert_no_logs
 from ..css import validation
 from ..formatting_structure import boxes, build, counters
-from ..layout.pages import page_type_for_number
 
 
 SUITE = Tests()
@@ -391,22 +390,18 @@ def test_page_style():
         </style>
     ''')
 
-    def assert_page_margins(page_number, top, right, bottom, left):
+    def assert_page_margins(page_type, top, right, bottom, left):
         """Check the page margin values."""
-        page_type = page_type_for_number(page_number)
         style = document.style_for(page_type)
         assert style.margin_top == top
         assert style.margin_right == right
         assert style.margin_bottom == bottom
         assert style.margin_left == left
 
-    # Odd numbers are :right pages, even are :left. 1 has :first as well
-    assert_page_margins(1, top=20, right=10, bottom=3, left=3)
-    assert_page_margins(2, top=10, right=3, bottom=3, left=10)
-    assert_page_margins(3, top=10, right=10, bottom=3, left=3)
-    assert_page_margins(4, top=10, right=3, bottom=3, left=10)
-    assert_page_margins(45, top=10, right=10, bottom=3, left=3)
-    assert_page_margins(122, top=10, right=3, bottom=3, left=10)
+    assert_page_margins('first_left_page', top=20, right=3, bottom=3, left=10)
+    assert_page_margins('first_right_page', top=20, right=10, bottom=3, left=3)
+    assert_page_margins('left_page', top=10, right=3, bottom=3, left=10)
+    assert_page_margins('right_page', top=10, right=10, bottom=3, left=3)
 
 
 @SUITE.test
@@ -1093,6 +1088,8 @@ def test_margin_boxes():
     document = TestPNGDocument.from_string('''
         <style>
             @page {
+                /* Make the page content area only 10px high and wide,
+                   so every word in <p> end up on a page of its own. */
                 -weasy-size: 30px;
                 margin: 10px;
                 @top-center { content: "Title" }
@@ -1119,3 +1116,27 @@ def test_margin_boxes():
     line_box, = top_center.children
     text_box, = line_box.children
     assert text_box.text == 'Title'
+
+
+@SUITE.test
+def test_page_counters():
+    """Test page-based counters."""
+    document = TestPNGDocument.from_string(u'''
+        <style>
+            @page {
+                /* Make the page content area only 10px high and wide,
+                   so every word in <p> end up on a page of its own. */
+                -weasy-size: 30px;
+                margin: 10px;
+                @bottom-center {
+                    content: "Page " counter(page) " of " counter(pages) ".";
+                }
+            }
+        </style>
+        <p>lorem ipsum dolor
+    ''')
+    for page_number, page in enumerate(document.pages, 1):
+        html, bottom_center = page.children
+        line_box, = bottom_center.children
+        text_box, = line_box.children
+        assert text_box.text == u'Page {} of 3.'.format(page_number)

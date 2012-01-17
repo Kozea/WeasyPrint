@@ -2,6 +2,8 @@ Version 0.4, released on 201X-XX-XX
 ===================================
 
 * All CSS 2.1 border styles
+* Partial support for CSS3 Paged Media: page size and margin boxes with
+  page-based counters.
 
 
 Version 0.3.1, released on 2011-12-14

@@ -24,6 +24,8 @@ Layout for page boxes and margin boxes.
 
 from __future__ import division
 
+import itertools
+
 from ..formatting_structure import boxes, build
 from .blocks import block_level_layout, block_level_height
 from .percentages import resolve_percentages
@@ -307,12 +309,11 @@ def compute_variable_dimension(side_boxes, vertical, outer_sum):
         del box.padding_plus_border
 
 
-def empty_margin_boxes(document, page, page_type):
-    """
-    Return the margin boxes for this page that have their own dimensions and
-    position set, but still need their content.
+def make_margin_boxes(document, page, counter_values):
+    """Yield laid-out margin boxes for this page.
 
-    Parameters: same as :func:`make_margin_boxes`.
+    :param document: a :class:`Document` object
+    :param page: a :class:`PageBox` object
 
     """
     # This is a closure only to make calls shorter
@@ -327,17 +328,17 @@ def empty_margin_boxes(document, page, page_type):
         :param containing_block: as expected by :func:`resolve_percentages`.
 
         """
-        style = document.style_for(page_type, at_keyword)
+        style = document.style_for(page.page_type, at_keyword)
         if style is None:
             style = page.style.inherit_from()
         box = boxes.MarginBox(at_keyword, style)
         # TODO: get actual counter values at the time of the last page break
-        counter_values = {}
         quote_depth = [0]
         if style.content not in ('normal', 'none'):
             children = build.content_to_boxes(
                 document, box.style, box, quote_depth, counter_values)
             box = box.copy_with_children(children)
+            box = build.process_whitespace(box)
         resolve_percentages(box, containing_block)
         # Empty boxes should not be generated, but they may be needed for
         # the layout of their neighbors.
@@ -424,21 +425,10 @@ def empty_margin_boxes(document, page, page_type):
         generated_boxes.append(box)
 
     generated_boxes.extend(delayed_boxes)
-    return generated_boxes
 
-
-def make_margin_boxes(document, page, page_type):
-    """Yield laid-out margin boxes for this page.
-
-    :param document: a :class:`Document` object
-    :param page: a :class:`PageBox` object
-    :param page_type: as returned by :func:`page_type_for_number`
-
-    """
-    for box in empty_margin_boxes(document, page, page_type):
+    for box in generated_boxes:
         # content_to_boxes() only produces inline-level boxes, no need to
         # run other post-processors from build.build_formatting_structure()
-        box = build.process_whitespace(box)
         box = build.inline_in_block(box)
         box, resume_at = block_level_height(document, box,
             max_position_y=float('inf'), skip_stack=None,
@@ -447,21 +437,7 @@ def make_margin_boxes(document, page, page_type):
         yield box
 
 
-def page_type_for_number(page_number):
-    """Return a page type such as ``'first_right_page'`` from a page number."""
-    # First page is a right page.
-    # TODO: this "should depend on the major writing direction of the
-    # document".
-    first_is_right = True
-
-    is_right = (page_number % 2) == (1 if first_is_right else 0)
-    page_type = 'right_page' if is_right else 'left_page'
-    if page_number == 1:
-        page_type = 'first_' + page_type
-    return page_type
-
-
-def make_page(document, page_number, resume_at):
+def make_page(document, page_type, resume_at):
     """Take just enough content from the beginning to fill one page.
 
     Return ``(page, finished)``. ``page`` is a laid out PageBox object
@@ -475,9 +451,8 @@ def make_page(document, page_number, resume_at):
 
     """
     root_box = document.formatting_structure
-    page_type = page_type_for_number(page_number)
     style = document.style_for(page_type)
-    page = boxes.PageBox(page_number, style, root_box.style.direction)
+    page = boxes.PageBox(page_type, style, root_box.style.direction)
 
     device_size = page.style.size
     page.outer_width, page.outer_height = device_size
@@ -502,9 +477,39 @@ def make_page(document, page_number, resume_at):
         initial_containing_block, device_size, page_is_empty=True)
     assert root_box
 
-    children = [root_box]
-    children.extend(make_margin_boxes(document, page, page_type))
-
-    page = page.copy_with_children(children)
+    page = page.copy_with_children([root_box])
 
     return page, resume_at
+
+
+def make_all_pages(document):
+    """Return a list of laid out pages without margin boxes."""
+    root_box = document.formatting_structure
+    prefix = 'first_'
+    right_page = root_box.style.direction == 'ltr'
+    resume_at = None
+    while True:
+        page_type = prefix + ('right_page' if right_page else 'left_page')
+        page, resume_at = make_page(document, page_type, resume_at)
+        yield page
+        if resume_at is None:
+            return
+        prefix = ''
+        right_page = not right_page
+
+
+def add_margin_boxes(document, pages):
+    """Take a list of pages and return a new list with margin boxes added
+    to each PageBox object.
+
+    This is a later step as the total number of pages is needed for
+    the pages counter.
+
+    """
+    page_counter = [1]
+    counter_values = {'page': page_counter, 'pages': [len(pages)]}
+    for page in pages:
+        yield page.copy_with_children(itertools.chain(
+            page.children,
+            make_margin_boxes(document, page, counter_values)))
+        page_counter[0] += 1

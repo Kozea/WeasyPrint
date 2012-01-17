@@ -22,7 +22,7 @@ Module managing the layout creation before drawing a document.
 
 """
 
-from .pages import make_page
+from .pages import make_all_pages, add_margin_boxes
 
 
 def layout(document):
@@ -35,12 +35,5 @@ def layout(document):
     :returns: a list of laid out Page objects.
 
     """
-    pages = []
-    page_number = 1
-    resume_at = None
-    while True:
-        page, resume_at = make_page(document, page_number, resume_at)
-        pages.append(page)
-        if resume_at is None:
-            return pages
-        page_number += 1
+    pages = list(make_all_pages(document))
+    return list(add_margin_boxes(document, pages))

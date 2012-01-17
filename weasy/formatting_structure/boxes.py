@@ -508,16 +508,15 @@ class PageBox(ParentBox):
     During layout a new page box is created after every page break.
 
     """
-    def __init__(self, page_number, style, direction):
+    def __init__(self, page_type, style, direction):
         self._direction = direction
-        # starting at 1 for the first page.
-        self.page_number = page_number
+        self.page_type = page_type
         # Page boxes are not linked to any element.
         super(PageBox, self).__init__(
             element_tag=None, sourceline=None, style=style, children=[])
 
     def __repr__(self):
-        return '<%s %s>' % (type(self).__name__, self.page_number)
+        return '<%s %s>' % (type(self).__name__, self.page_type)
 
     @property
     def direction(self):
