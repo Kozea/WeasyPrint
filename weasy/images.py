@@ -63,28 +63,31 @@ def cairosvg_handler(file_like, uri):
 
     This handler uses CairoSVG: http://cairosvg.org/
     """
-    # TODO: also offer librsvg?
     try:
         import cairosvg as _
     except ImportError as exception:
         return exception
     from cairosvg.surface import SVGSurface
     from cairosvg.parser import Tree, ParseError
+
+    class ScaledSVGSurface(SVGSurface):
+        """
+        Have the cairo Surface object have intrinsic dimension
+        in pixels instead of points.
+        """
+        @property
+        def device_units_per_user_units(self):
+            scale = super(ScaledSVGSurface, self).device_units_per_user_units
+            return scale * LENGTHS_TO_PIXELS['pt']
+
     try:
         # Draw to a cairo surface but do not write to a file
         tree = Tree(file_obj=file_like, url=uri)
-        surface = SVGSurface(tree, output=None)
+        surface = ScaledSVGSurface(tree, output=None)
     except (ParseError, NotImplementedError) as exception:
         return exception
-    # Dimension are already in pixels because of SCALE. (See below.)
-    # Due to going through several unit scaling, the dimensions may
-    # accumulate floating point error like a width of 95.99999999999999
-    # where 96 is expected.
-    # Rounding to a millionth of a pixel should be fine.
-    width = round(surface.width, 6)
-    height = round(surface.height, 6)
     pattern = cairo.SurfacePattern(surface.cairo)
-    return pattern, width, height
+    return pattern, surface.width, surface.height
 
 
 @apply
@@ -101,11 +104,7 @@ def _init_cairosvg():
         pass
     else:
         from cairosvg.surface import units
-        # Have SVG px unit equal CSS px unit.
         units.DPI = 96
-        # Have the cairo.Surface objects for CairoSVG have intrinsic dimension
-        # in pixels instead of points.
-        units.SCALE = 4 / 3
 
 
 def fallback_handler(file_like, uri):
