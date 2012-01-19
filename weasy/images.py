@@ -83,28 +83,11 @@ def cairosvg_handler(file_like, uri):
     try:
         # Draw to a cairo surface but do not write to a file
         tree = Tree(file_obj=file_like, url=uri)
-        surface = ScaledSVGSurface(tree, output=None)
+        surface = ScaledSVGSurface(tree, output=None, dpi=96)
     except (ParseError, NotImplementedError) as exception:
         return exception
     pattern = cairo.SurfacePattern(surface.cairo)
     return pattern, surface.width, surface.height
-
-
-@apply
-def _init_cairosvg():
-    """Initialize cairosvg’s DPI to 96 to match CSS pixels.
-
-    Do this only once when the module is imported so that it may be
-    overriden later.
-
-    """
-    try:
-        import cairosvg as _
-    except ImportError:
-        pass
-    else:
-        from cairosvg.surface import units
-        units.DPI = 96
 
 
 def fallback_handler(file_like, uri):
