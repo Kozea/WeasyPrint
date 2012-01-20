@@ -521,16 +521,20 @@ def test_forced_line_breaks():
     assert [line.height for line in lines] == [42] * 7
 
 
-#@SUITE.test
+@SUITE.test
 def test_page_breaks():
     """Test the page breaks."""
     pages = parse('''
         <style>
             @page { -weasy-size: 100px; margin: 10px }
             body { margin: 0 }
-            div { height: 30px }
+            div { height: 30px; font-size: 20px; }
         </style>
-        <div/><div/><div/><div/><div/>
+        <div>1</div>
+        <div>2</div>
+        <div>3</div>
+        <div>4</div>
+        <div>5</div>
     ''')
     page_divs = []
     for page in pages:
@@ -541,6 +545,73 @@ def test_page_breaks():
 
     positions_y = [[div.position_y for div in divs] for divs in page_divs]
     assert positions_y == [[10, 40], [10, 40], [10]]
+
+    # Same as above, but no content inside each <div>.
+    # TODO: This currently gives no page break. Should it?
+#    pages = parse('''
+#        <style>
+#            @page { -weasy-size: 100px; margin: 10px }
+#            body { margin: 0 }
+#            div { height: 30px }
+#        </style>
+#        <div/><div/><div/><div/><div/>
+#    ''')
+#    page_divs = []
+#    for page in pages:
+#        divs = body_children(page)
+#        assert all([div.element_tag == 'div' for div in divs])
+#        assert all([div.position_x == 10 for div in divs])
+#        page_divs.append(divs)
+
+#    positions_y = [[div.position_y for div in divs] for divs in page_divs]
+#    assert positions_y == [[10, 40], [10, 40], [10]]
+
+    page_1, page_2, page_3, page_4 = parse('''
+        <style>
+            @page { margin: 10px }
+            @page :left { margin-left: 50px }
+            @page :right { margin-right: 50px }
+
+            html { page-break-before: left }
+            div { page-break-after: left }
+            ul { page-break-before: always }
+        </style>
+        <div>1</div>
+        <p>2</p>
+        <p>3</p>
+        <ul><li>4</li></ul>
+    ''')
+
+    # The first page is a right page on rtl, but not here because of
+    # page-break-before on the root element.
+    assert page_1.margin_left == 50  # left page
+    assert page_1.margin_right == 10
+    html, = page_1.children
+    body, = html.children
+    div, = body.children
+    line, = div.children
+    text, = line.children
+    assert div.element_tag == 'div'
+    assert text.text == '1'
+
+    assert page_2.margin_left == 10
+    assert page_2.margin_right == 50  # right page
+    assert not page_2.children  # empty page to get to a left page
+
+    assert page_3.margin_left == 50  # left page
+    assert page_3.margin_right == 10
+    html, = page_3.children
+    body, = html.children
+    p_1, p_2 = body.children
+    assert p_1.element_tag == 'p'
+    assert p_2.element_tag == 'p'
+
+    assert page_4.margin_left == 10
+    assert page_4.margin_right == 50  # right page
+    html, = page_4.children
+    body, = html.children
+    ulist, = body.children
+    assert ulist.element_tag == 'ul'
 
 
 @SUITE.test

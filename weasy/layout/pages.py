@@ -430,11 +430,28 @@ def make_margin_boxes(document, page, counter_values):
         # content_to_boxes() only produces inline-level boxes, no need to
         # run other post-processors from build.build_formatting_structure()
         box = build.inline_in_block(box)
-        box, resume_at = block_level_height(document, box,
+        box, resume_at, next_page = block_level_height(document, box,
             max_position_y=float('inf'), skip_stack=None,
             device_size=page.style.size, page_is_empty=True)
         assert resume_at is None
         yield box
+
+
+def make_empty_page(document, page_type):
+    root_box = document.formatting_structure
+    style = document.style_for(page_type)
+    page = boxes.PageBox(page_type, style, root_box.style.direction)
+
+    device_size = page.style.size
+    page.outer_width, page.outer_height = device_size
+
+    resolve_percentages(page, device_size)
+
+    page.position_x = 0
+    page.position_y = 0
+    page.width = page.outer_width - page.horizontal_surroundings()
+    page.height = page.outer_height - page.vertical_surroundings()
+    return page
 
 
 def make_page(document, page_type, resume_at):
@@ -450,19 +467,9 @@ def make_page(document, page_type, resume_at):
                       or ``None`` for the first page.
 
     """
+    page = make_empty_page(document, page_type)
     root_box = document.formatting_structure
-    style = document.style_for(page_type)
-    page = boxes.PageBox(page_type, style, root_box.style.direction)
-
     device_size = page.style.size
-    page.outer_width, page.outer_height = device_size
-
-    resolve_percentages(page, device_size)
-
-    page.position_x = 0
-    page.position_y = 0
-    page.width = page.outer_width - page.horizontal_surroundings()
-    page.height = page.outer_height - page.vertical_surroundings()
 
     root_box.position_x = page.content_box_x()
     root_box.position_y = page.content_box_y()
@@ -472,25 +479,41 @@ def make_page(document, page_type, resume_at):
     # TODO: handle cases where the root element is something else.
     # See http://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
     assert isinstance(root_box, boxes.BlockBox)
-    root_box, resume_at = block_level_layout(
+    root_box, resume_at, next_page = block_level_layout(
         document, root_box, page_content_bottom, resume_at,
         initial_containing_block, device_size, page_is_empty=True)
     assert root_box
 
     page = page.copy_with_children([root_box])
 
-    return page, resume_at
+    return page, resume_at, next_page
 
 
 def make_all_pages(document):
     """Return a list of laid out pages without margin boxes."""
     root_box = document.formatting_structure
     prefix = 'first_'
-    right_page = root_box.style.direction == 'ltr'
+
+    # Special case the root box
+    page_break = root_box.style.page_break_before
+    if page_break == 'right':
+        right_page = True
+    if page_break == 'left':
+        right_page = False
+    else:
+        right_page = root_box.style.direction == 'ltr'
+
     resume_at = None
+    next_page = 'any'
     while True:
         page_type = prefix + ('right_page' if right_page else 'left_page')
-        page, resume_at = make_page(document, page_type, resume_at)
+        if ((next_page == 'left' and right_page) or
+            (next_page == 'right' and not right_page)):
+            page = make_empty_page(document, page_type)
+        else:
+            page, resume_at, next_page = make_page(
+                document, page_type, resume_at)
+            assert next_page
         yield page
         if resume_at is None:
             return

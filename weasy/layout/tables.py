@@ -104,7 +104,7 @@ def table_layout(document, table, max_position_y, containing_block,
                 # The computed height is a minimum
                 computed_cell_height = cell.height
                 cell.height = 'auto'
-                cell, _ = block_level_height(
+                cell, _, _ = block_level_height(
                     document, cell,
                     max_position_y=float('inf'),
                     skip_stack=None,
@@ -216,9 +216,9 @@ def table_layout(document, table, max_position_y, containing_block,
             and not page_is_empty):
         # If the table does not fit, put it on the next page.
         # (No page break inside tables yet.)
-        return None, None
+        return None, None, 'any'
     else:
-        return table, None
+        return table, None, 'any'
 
 
 def add_top_padding(box, extra_padding):

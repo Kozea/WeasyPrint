@@ -510,6 +510,30 @@ def length_or_precentage(value):
         return value
 
 
+@validator('page-break-before')
+@validator('page-break-after')
+@single_keyword
+def page_break(keyword):
+    """Validation for the ``page-break-before`` and ``page-break-after``
+    properties.
+
+    """
+    if keyword == 'avoid':
+        raise InvalidValues('value not supported yet')
+    return keyword in ('auto', 'always', 'left', 'right')
+
+
+# Not very useful, might as well ignore the property anyway.
+# Keep it for completeness.
+@validator()
+@single_keyword
+def page_break_inside(keyword):
+    """Validation for the ``page-break-inside`` property."""
+    if keyword == 'avoid':
+        raise InvalidValues('value not supported yet')
+    return keyword  ('auto',)
+
+
 @validator()
 @single_keyword
 def position(keyword):

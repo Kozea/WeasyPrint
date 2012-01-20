@@ -50,8 +50,9 @@ def block_level_layout(document, box, max_position_y, skip_stack,
             return block_box_layout(document, box, max_position_y, skip_stack,
                 containing_block, device_size, page_is_empty)
     elif isinstance(box, boxes.BlockReplacedBox):
-        return block_replaced_box_layout(
-            box, containing_block, device_size), None
+        box = block_replaced_box_layout(
+            box, containing_block, device_size)
+        return box, None, 'any'
     else:
         raise TypeError('Layout for %s not handled yet' % type(box).__name__)
 
@@ -142,6 +143,7 @@ def block_level_width(box, containing_block):
         box.margin_right = margin_sum - margin_l
 
 
+# TODO: rename this to block_container_something
 def block_level_height(document, box, max_position_y, skip_stack,
                        device_size, page_is_empty):
     """Set the ``box`` height."""
@@ -160,6 +162,7 @@ def block_level_height(document, box, max_position_y, skip_stack,
     initial_position_y = position_y
 
     new_children = []
+    next_page = 'any'
 
     if skip_stack is None:
         skip = 0
@@ -191,7 +194,7 @@ def block_level_height(document, box, max_position_y, skip_stack,
                 if new_position_y > max_position_y and not page_is_empty:
                     if not new_children:
                         # Page break before any content, cancel the whole box.
-                        return None, None
+                        return None, None, 'any'
                     # Page break here, resume before this line
                     resume_at = (index, skip_stack)
                     is_page_break = True
@@ -205,8 +208,17 @@ def block_level_height(document, box, max_position_y, skip_stack,
             if is_page_break:
                 break
         else:
+            page_break = child.style.page_break_before
+            if page_break in ('always', 'left', 'right'):
+                next_page = 'any' if page_break == 'always' else page_break
+                resume_at = (index, None)
+                # Force break only once
+                # TODO: refactor to avoid doing this?
+                child.style.page_break_before = 'auto'
+                break
+
             new_containing_block = box
-            new_child, resume_at = block_level_layout(
+            new_child, resume_at, next_page = block_level_layout(
                 document, child, max_position_y, skip_stack,
                 new_containing_block, device_size, page_is_empty)
             skip_stack = None
@@ -217,7 +229,7 @@ def block_level_height(document, box, max_position_y, skip_stack,
                 else:
                     # This was the first child of this box, cancel the box
                     # completly
-                    return None, None
+                    return None, None, 'any'
             new_position_y = position_y + new_child.margin_height()
             # Bottom borders may overflow here
             # TODO: back-track somehow when all lines fit but not borders
@@ -226,6 +238,13 @@ def block_level_height(document, box, max_position_y, skip_stack,
             position_y = new_position_y
             if resume_at is not None:
                 resume_at = (index, resume_at)
+                break
+
+            page_break = child.style.page_break_after
+            if page_break in ('always', 'left', 'right'):
+                next_page = 'any' if page_break == 'always' else page_break
+                # Resume after this
+                resume_at = (index + 1, None)
                 break
     else:
         resume_at = None
@@ -242,7 +261,7 @@ def block_level_height(document, box, max_position_y, skip_stack,
         box.outside_list_marker = None
         box.reset_spacing('top')
         new_box.reset_spacing('bottom')
-    return new_box, resume_at
+    return new_box, resume_at, next_page
 
 
 def block_table_wrapper(document, wrapper, max_position_y, skip_stack,

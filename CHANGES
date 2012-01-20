@@ -5,6 +5,8 @@ Version 0.4, released on 201X-XX-XX
   page-based counters.
 * All CSS 2.1 border styles
 * Fix SVG images with non-pixel units. Requires CairoSVG 0.3
+* Support for ``page-break-before`` and ``page-break-after``, except for
+  the value ``avoid``.
 
 
 Version 0.3.1, released on 2011-12-14
