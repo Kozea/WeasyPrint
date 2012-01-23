@@ -33,6 +33,65 @@ from .preferred import inline_preferred_minimum_width, inline_preferred_width
 from .variable_margin_dimension import with_rule_2
 
 
+class VerticalBox(object):
+    def __init__(self, box):
+        self.box = box
+        # Inner dimension: that of the content area, as opposed to the
+        # outer dimension: that of the margin area.
+        self.inner = box.height
+        self.margin_a = box.margin_top
+        self.margin_b = box.margin_bottom
+        self.padding_plus_border = (
+            box.padding_top + box.padding_bottom +
+            box.border_top_width + box.border_bottom_width)
+
+    def restore_box_attributes(self):
+        box = self.box
+        box.height = self.inner
+        box.margin_top = self.margin_a
+        box.margin_bottom = self.margin_b
+
+    # TODO: preferred (minimum) height???
+    @property
+    def minimum(self):
+        return 0
+
+    @property
+    def preferred(self):
+        return float('inf')
+
+
+class HorizontalBox(object):
+    def __init__(self, box):
+        self.box = box
+        self.inner = box.width
+        self.margin_a = box.margin_left
+        self.margin_b = box.margin_right
+        self.padding_plus_border = (
+            box.padding_left + box.padding_right +
+            box.border_left_width + box.border_right_width)
+        self._minimum = None
+        self._preferred = None
+
+    def restore_box_attributes(self):
+        box = self.box
+        box.width = self.inner
+        box.margin_left = self.margin_a
+        box.margin_right = self.margin_b
+
+    @property
+    def minimum(self):
+        if self._minimum is None:
+            self._minimum = inline_preferred_minimum_width(self.box)
+        return self._minimum
+
+    @property
+    def preferred(self):
+        if self._preferred is None:
+            self._preferred = inline_preferred_width(self.box)
+        return self._preferred
+
+
 def compute_fixed_dimension(box, outer, vertical, top_or_left):
     """
     Compute and set a margin box fixed dimension on ``box``, as described in:
@@ -51,90 +110,59 @@ def compute_fixed_dimension(box, outer, vertical, top_or_left):
         This determines which margin should be 'auto' if the values are
         over-constrained. (Rule 3 of the algorithm.)
     """
-    if vertical:
-        margin_1 = box.margin_top
-        margin_2 = box.margin_bottom
-        inner = box.height
-        padding_plus_border = (
-            box.padding_top + box.padding_bottom +
-            box.border_top_width + box.border_bottom_width)
-    else:
-        margin_1 = box.margin_left
-        margin_2 = box.margin_right
-        inner = box.width
-        padding_plus_border = (
-            box.padding_left + box.padding_right +
-            box.border_left_width + box.border_right_width)
+    box = (VerticalBox if vertical else HorizontalBox)(box)
 
     # Rule 2
-    total = padding_plus_border + sum(
-        value for value in [margin_1, margin_2, inner]
+    total = box.padding_plus_border + sum(
+        value for value in [box.margin_a, box.margin_b, box.inner]
         if value != 'auto')
     if total > outer:
-        if margin_1 == 'auto':
-            margin_1 = 0
-        if margin_2 == 'auto':
-            margin_2 = 0
-        if inner == 'auto':
-            # XXX this is not in the spec, but without it inner would end up
-            # with negative value.
+        if box.margin_a == 'auto':
+            box.margin_a = 0
+        if box.margin_b == 'auto':
+            box.margin_b = 0
+        if box.inner == 'auto':
+            # XXX this is not in the spec, but without it box.inner
+            # would end up with a negative value.
             # Instead, this will trigger rule 3 below.
-            inner = 0
+            box.inner = 0
     # Rule 3
-    if 'auto' not in [margin_1, margin_2, inner]:
+    if 'auto' not in [box.margin_a, box.margin_b, box.inner]:
         # Over-constrained
         if top_or_left:
-            margin_1 = 'auto'
+            box.margin_a = 'auto'
         else:
-            margin_2 = 'auto'
+            box.margin_b = 'auto'
     # Rule 4
-    if [margin_1, margin_2, inner].count('auto') == 1:
-        if inner == 'auto':
-            inner = outer - padding_plus_border - margin_1 - margin_2
-        elif margin_1 == 'auto':
-            margin_1 = outer - padding_plus_border - margin_2 - inner
-        elif margin_2 == 'auto':
-            margin_2 = outer - padding_plus_border - margin_1 - inner
+    if [box.margin_a, box.margin_b, box.inner].count('auto') == 1:
+        if box.inner == 'auto':
+            box.inner = (outer - box.padding_plus_border -
+                         box.margin_a - box.margin_b)
+        elif box.margin_a == 'auto':
+            box.margin_a = (outer - box.padding_plus_border -
+                            box.margin_b - box.inner)
+        elif box.margin_b == 'auto':
+            box.margin_b = (outer - box.padding_plus_border -
+                            box.margin_a - box.inner)
     # Rule 5
-    if inner == 'auto':
-        if margin_1 == 'auto':
-            margin_1 = 0
-        if margin_2 == 'auto':
-            margin_2 = 0
-        inner = outer - padding_plus_border - margin_1 - margin_2
+    if box.inner == 'auto':
+        if box.margin_a == 'auto':
+            box.margin_a = 0
+        if box.margin_b == 'auto':
+            box.margin_b = 0
+        box.inner = (outer - box.padding_plus_border -
+                     box.margin_a - box.margin_b)
     # Rule 6
-    if margin_1 == 'auto' and margin_2 == 'auto':
-        margin_1 = margin_2 = (outer - padding_plus_border - inner) / 2
+    if box.margin_a == 'auto' and box.margin_b == 'auto':
+        box.margin_a = box.margin_b = (
+            outer - box.padding_plus_border - box.inner) / 2
 
-    assert 'auto' not in [margin_1, margin_2, inner]
+    assert 'auto' not in [box.margin_a, box.margin_b, box.inner]
     # This should also be true, but may not be exact due to
     # floating point errors:
-    #assert inner + padding_plus_border + margin_1 + margin_2 == outer
-    if vertical:
-        box.margin_top = margin_1
-        box.margin_bottom = margin_2
-        box.height = inner
-    else:
-        box.margin_left = margin_1
-        box.margin_right = margin_2
-        box.width = inner
-
-
-class VerticalIntrinsic(object):
-    # TODO: preferred (minimum) height???
-
-    @staticmethod
-    def minimum(box):
-        return 0
-
-    @staticmethod
-    def preferred(box):
-        return float('inf')
-
-
-class HorizontalIntrinsic(object):
-    minimum = staticmethod(inline_preferred_minimum_width)
-    preferred = staticmethod(inline_preferred_width)
+    # assert (box.inner + box.padding_plus_border +
+    #         box.margin_a + box.margin_b) == outer
+    box.restore_box_attributes()
 
 
 def compute_variable_dimension(side_boxes, vertical, outer_sum):
@@ -154,40 +182,9 @@ def compute_variable_dimension(side_boxes, vertical, outer_sum):
         The target total outer dimension (max box width or height)
 
     """
+    box_class = VerticalBox if vertical else HorizontalBox
+    side_boxes = map(box_class, side_boxes)
     box_a, box_b, box_c =  side_boxes
-
-    # Set variables that are independent of vertical
-    for box in side_boxes:
-        if vertical:
-            intrinsic = VerticalIntrinsic
-            box.margin_a = box.margin_top
-            box.margin_b = box.margin_bottom
-            # Inner dimension: that of the content area, as opposed to the
-            # outer dimension: that of the margin area.
-            box.inner = box.height
-            if not box.exists:
-                # Rule 3
-                box.padding_top = 0
-                box.padding_bottom = 0
-                box.border_top_width = 0
-                box.border_bottom_width = 0
-            box.padding_plus_border = (
-                box.padding_top + box.padding_bottom +
-                box.border_top_width + box.border_bottom_width)
-        else:
-            intrinsic = HorizontalIntrinsic
-            box.margin_a = box.margin_left
-            box.margin_b = box.margin_right
-            box.inner = box.width
-            if not box.exists:
-                # Rule 3
-                box.padding_left = 0
-                box.padding_right = 0
-                box.border_left_width = 0
-                box.border_right_width = 0
-            box.padding_plus_border = (
-                box.padding_left + box.padding_right +
-                box.border_left_width + box.border_right_width)
 
     num_auto_margins = sum(
         value == 'auto'  # boolean as int
@@ -195,9 +192,9 @@ def compute_variable_dimension(side_boxes, vertical, outer_sum):
         for value in (box.margin_a, box.margin_b)
     )
 
-    if box_b.exists:
+    if box_b.box.exists:
         # Rule 2:  outer(box_a) == outer(box_b)
-        with_rule_2(side_boxes, outer_sum, intrinsic)
+        with_rule_2(side_boxes, outer_sum)
     else:
         # Rule 2 does not apply
         # Rule 1: Target sum of all 'auto' values
@@ -210,8 +207,8 @@ def compute_variable_dimension(side_boxes, vertical, outer_sum):
 
         # Not empty because box_b does not "exist", box_b.inner == 'auto'
         auto_inner_boxes = [box for box in side_boxes if box.inner == 'auto']
-        min_inners = map(intrinsic.minimum, auto_inner_boxes)
-        max_inners = map(intrinsic.preferred, auto_inner_boxes)
+        min_inners = [box.minimum for box in auto_inner_boxes]
+        max_inners = [box.preferred for box in auto_inner_boxes]
         sum_min_inners = sum(min_inners)
         sum_max_inners = sum(max_inners)
         # Minimize margins while keeping inner dimensions within bounds
@@ -295,18 +292,7 @@ def compute_variable_dimension(side_boxes, vertical, outer_sum):
         for value in [box.margin_a, box.margin_b, box.inner])
     # Set the actual attributes back.
     for box in side_boxes:
-        if vertical:
-            box.margin_top = box.margin_a
-            box.margin_bottom = box.margin_b
-            box.height = box.inner
-        else:
-            box.margin_left = box.margin_a
-            box.margin_right = box.margin_b
-            box.width = box.inner
-        del box.margin_a
-        del box.margin_b
-        del box.inner
-        del box.padding_plus_border
+        box.restore_box_attributes()
 
 
 def make_margin_boxes(document, page, counter_values):
