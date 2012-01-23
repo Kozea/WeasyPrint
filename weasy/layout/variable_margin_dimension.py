@@ -131,6 +131,7 @@ def distribute_margins(box, new_outer):
 
     """
     num_auto = [box.margin_a, box.margin_b].count('auto')
+    # Raises if num_auto == 0:
     each_auto = (new_outer - outer(box, ignore_auto='M')) / num_auto
     if box.margin_a == 'auto':
         box.margin_a = each_auto
@@ -163,13 +164,13 @@ def set_inner_within_range(box, optimal_inner, intrinsic):
 
 @register(auto_inners=(0, 0, 0), auto_margins=(0, 0, 0))
 def implementation_1(box_a, box_b, box_c, outer_sum, intrinsic):
-    outer_a = outer(box_a)
-    outer_b = outer(box_b)
-    outer_c = outer(box_c)
-    # Rules 1 and 2
-    if outer_a == outer_c and (outer_a + outer_b + outer_c) == outer_sum:
-        return 'ok'
-    # Nothing is auto, over-constrained.
+    # If the previous values matched the constraints,
+    # they will end up unchanged
+    box_a.margin_b = 'auto'
+    box_c.margin_a = 'auto'
+    target_outer_ac = (outer_sum - outer(box_b)) / 2
+    distribute_margins(box_a, target_outer_ac)
+    distribute_margins(box_c, target_outer_ac)
 
 
 @register(auto_inners=(0, 0, 1), auto_margins=(0, 0, 0))
@@ -185,7 +186,7 @@ def implementation_2(box_a, box_b, box_c, outer_sum, intrinsic):
             # is to drop that constraint.
             box_c.inner = inner_c
             return 'ok'
-    # Over-constrained
+    # else: Over-constrained
 
 
 @register(auto_inners=(0, 1, 0), auto_margins=(0, 0, 0))
@@ -201,7 +202,7 @@ def implementation_3(box_a, box_b, box_c, outer_sum, intrinsic):
             # is to drop that constraint.
             box_b.inner = inner_b
             return 'ok'
-    # Over-constrained
+    # else: Over-constrained
 
 
 @register(auto_inners=(0, 1, 1), auto_margins=(0, 0, 0))
@@ -221,7 +222,7 @@ def implementation_4(box_a, box_b, box_c, outer_sum, intrinsic):
         box_b.inner = inner_b
         box_c.inner = inner_c
         return 'ok'
-    # Over-constrained
+    # else: Over-constrained
 
 
 @register(auto_inners=(1, 0, 1), auto_margins=(0, 0, 0))
@@ -242,7 +243,7 @@ def implementation_5(box_a, box_b, box_c, outer_sum, intrinsic):
         box_a.inner = inner_a
         box_c.inner = inner_c
         return 'ok'
-    # Over-constrained
+    # else: Over-constrained
 
 
 @register(auto_inners=(1, 1, 1), auto_margins=(0, 0, 0))
@@ -307,7 +308,7 @@ def implementation_6(box_a, box_b, box_c, outer_sum, intrinsic):
 
     # Over-constrained by minimums.
     # Margins that become 'auto' will end up negative.
-    # Choose inner so that they are as small (close to 0) as possible.
+    # Choose inner so that margins are as small (close to 0) as possible.
     box_a.inner = min_outer_ac - constants_a
     box_b.inner = min_outer_b - constants_b
     box_c.inner = min_outer_ac - constants_c
@@ -321,7 +322,7 @@ def implementation_7(box_a, box_b, box_c, outer_sum, intrinsic):
         outer_c = outer_a  # Rule 2
         distribute_margins(box_c, outer_c)
         return 'ok'
-    # Over-constrained
+    # else: Over-constrained
 
 
 @register(auto_inners=(0, 0, 1), auto_margins=(0, 0, 1))
@@ -332,7 +333,7 @@ def implementation_8(box_a, box_b, box_c, outer_sum, intrinsic):
         outer_c = outer_a  # Rule 2
         distribute_margins_and_inner(box_c, outer_c, intrinsic)
         return 'ok'
-    # Over-constrained
+    # else: Over-constrained
 
 
 @register(auto_inners=(0, 1, 0), auto_margins=(0, 0, 1))
@@ -349,7 +350,7 @@ def implementation_9(box_a, box_b, box_c, outer_sum, intrinsic):
         box_b.inner = inner_b
         distribute_margins(box_c, outer_c)
         return 'ok'
-    # Over-constrained
+    # else: Over-constrained
 
 
 @register(auto_inners=(0, 1, 1), auto_margins=(0, 0, 1))
@@ -367,7 +368,7 @@ def implementation_10(box_a, box_b, box_c, outer_sum, intrinsic):
         box_b.inner = inner_b
         distribute_margins_and_inner(box_c, outer_c, intrinsic)
         return 'ok'
-    # Over-constrained
+    # else: Over-constrained
 
 
 @register(auto_inners=(1, 0, 0), auto_margins=(0, 0, 1))
@@ -385,7 +386,7 @@ def implementation_11(box_a, box_b, box_c, outer_sum, intrinsic):
         box_a.inner = inner_a
         distribute_margins(box_c, outer_c)
         return 'ok'
-    # Over-constrained
+    # else: Over-constrained
 
 
 @register(auto_inners=(1, 0, 1), auto_margins=(0, 0, 1))
@@ -406,12 +407,40 @@ def implementation_12(box_a, box_b, box_c, outer_sum, intrinsic):
         set_inner_within_range(box_c, remaining_c, intrinsic)
         distribute_margins(box_c, outer_c)
         return 'ok'
-    # Over-constrained
+    # else: Over-constrained
 
 
 @register(auto_inners=(1, 1, 0), auto_margins=(0, 0, 1))
 def implementation_13(box_a, box_b, box_c, outer_sum, intrinsic):
-    return NotImplemented
+    constants_a = outer(box_a, ignore_auto='I')
+    constants_b = outer(box_b, ignore_auto='I')
+    constants_c = outer(box_c, ignore_auto='M')
+
+    min_outer_a = intrinsic.minimum(box_a) + constants_a
+    min_outer_b = intrinsic.minimum(box_b) + constants_b
+
+    # C can have any margin, so it is unconstrained other than rule 2.
+    if outer_sum >= min_outer_b + 2 * min_outer_a:
+        # Ignore the preferred/maximum as the next best solution
+        # is to drop these constraints.
+
+        # Rule 2: Same outer for A and C, rule 2
+        # So their common min/max is the most restrictive
+        min_outer_ac = min_outer_a
+        max_outer_ac = (outer_sum - min_outer_b) / 2
+
+        # The goal function is minimized (auto margins == 0) for this value:
+        optimal_outer_ac = constants_c
+
+        # Within bounds
+        outer_ac = min(max_outer_ac, max(min_outer_ac, optimal_outer_ac))
+        outer_b = outer_sum - 2 * outer_ac
+
+        box_a.inner = outer_ac - constants_a
+        box_b.inner = outer_b - constants_b
+        distribute_margins(box_c, outer_c)
+        return 'ok'
+    # else: Over-constrained
 
 
 @register(auto_inners=(1, 1, 1), auto_margins=(0, 0, 1))
@@ -427,7 +456,7 @@ def implementation_15(box_a, box_b, box_c, outer_sum, intrinsic):
         outer_b = outer_sum - outer_a - outer_c  # Rule 1
         distribute_margins(box_b, outer_b)
         return 'ok'
-    # Over-constrained
+    # else: Over-constrained
 
 
 @register(auto_inners=(0, 0, 1), auto_margins=(0, 1, 0))
@@ -444,7 +473,7 @@ def implementation_16(box_a, box_b, box_c, outer_sum, intrinsic):
         box_c.inner = inner_c
         distribute_margins(box_b, outer_b)
         return 'ok'
-    # Over-constrained
+    # else: Over-constrained
 
 
 @register(auto_inners=(0, 1, 0), auto_margins=(0, 1, 0))
@@ -455,7 +484,7 @@ def implementation_17(box_a, box_b, box_c, outer_sum, intrinsic):
         outer_b = outer_sum - outer_a - outer_c  # Rule 1
         distribute_margins_and_inner(box_b, outer_b, intrinsic)
         return 'ok'
-    # Over-constrained
+    # else: Over-constrained
 
 
 @register(auto_inners=(0, 1, 1), auto_margins=(0, 1, 0))
@@ -472,7 +501,7 @@ def implementation_18(box_a, box_b, box_c, outer_sum, intrinsic):
         box_c.inner = inner_c
         distribute_margins_and_inner(box_b, outer_b, intrinsic)
         return 'ok'
-    # Over-constrained
+    # else: Over-constrained
 
 
 @register(auto_inners=(1, 0, 1), auto_margins=(0, 1, 0))
@@ -484,21 +513,18 @@ def implementation_19(box_a, box_b, box_c, outer_sum, intrinsic):
     min_outer_a = intrinsic.minimum(box_a) + constants_a
     min_outer_c = intrinsic.minimum(box_c) + constants_c
 
-    max_a = intrinsic.preferred(box_a)
-    max_c = intrinsic.preferred(box_c)
-    max_outer_a = max_a + constants_a
-    max_outer_c = max_c + constants_c
+    # Ignore the preferred/maximum as the next best solution
+    # is to drop these constraints.
 
     # Rule 2: Same outer for A and C, rule 2
-    # So their common min/max is the most restrictive
+    # So their common min is the most restrictive
     min_outer_ac = max(min_outer_a, min_outer_c)
-    max_outer_ac = min(max_outer_a, max_outer_c)
 
-    # The goal function is minimized for this value:
+    # The goal function is minimized (auto margins == 0) for this value:
     optimal_outer_ac = (outer_sum - constants_b) / 2
 
     # Within bounds
-    outer_ac = min(max_outer_ac, max(min_outer_ac, optimal_outer_ac))
+    outer_ac = max(min_outer_ac, optimal_outer_ac)
     outer_b = outer_sum - 2 * outer_ac
 
     box_a.inner = outer_ac - constants_a
