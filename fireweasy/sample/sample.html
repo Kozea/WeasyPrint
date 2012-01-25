@@ -6,7 +6,7 @@
         -weasy-size: 500px 300px;
         margin: 2em 1em;
         border: blue dotted;
-        background: url(background.png);
+        background: url(background.png) #f5e0be repeat-x;
         @bottom-center {
             content: "Page " counter(page) " of " counter(pages);
             font-size: 80%;
@@ -18,6 +18,9 @@
         padding: .5em;
         background: rgba(100%, 100%, 100%, 0.3);
         page-break-after: always;
+    }
+    h1 img {
+        width: 150px;
     }
 </style>
 
