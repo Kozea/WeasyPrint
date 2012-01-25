@@ -1,0 +1,12 @@
+html, body {
+/*    height: 100%;*/
+    margin: 0;
+}
+
+iframe {
+    display: none;
+    width: 100%;
+    height: 95%;
+    margin: 0;
+    border: none;
+}

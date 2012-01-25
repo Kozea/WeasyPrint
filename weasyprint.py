@@ -1,3 +1,5 @@
 #!/usr/bin/env python
 import weasy
-weasy.main()
+
+if __name__ == '__main__':
+    weasy.main()

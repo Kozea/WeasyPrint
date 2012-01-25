@@ -128,6 +128,17 @@ class StyleDict(object):
             object.__setattr__(style, 'anonymous', True)
         return style
 
+    def as_dict(self):
+        """Return a new dict completly separate from this object."""
+        if hasattr(self._parent, 'as_dict'):
+            rv = self._parent.as_dict()
+        elif hasattr(self._parent, 'items'):
+            rv = dict(self._parent)
+        else:
+            rv = {}
+        rv.update(self._storage)
+        return rv
+
     def inherit_from(self):
         """Return a new StyleDict with inherited properties from this one.
 
