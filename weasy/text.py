@@ -44,7 +44,7 @@ class TextFragment(object):
     This class is used to render the text from a TextBox.
 
     """
-    def __init__(self, text, style, context, width=None):
+    def __init__(self, text, style, context, width=None, word_spacing=0):
         self.layout = PangoCairo.create_layout(context)
         font = Pango.FontDescription()
         font.set_family(', '.join(style.font_family))
@@ -55,6 +55,12 @@ class TextFragment(object):
         self.layout.set_font_description(font)
         self.layout.set_text(text, -1)
         self.layout.set_wrap(Pango.WrapMode.WORD)
+        if text:
+            word_spacing = Pango.units_from_double(word_spacing)
+            markup = text.replace(
+                ' ', '<span letter_spacing="%i"> </span>' % word_spacing)
+            attributes_list = Pango.parse_markup(markup, -1, '\x00')[1]
+            self.layout.set_attributes(attributes_list)
         if width is not None:
             self.layout.set_width(Pango.units_from_double(width))
 

@@ -239,7 +239,6 @@ def length_list(computer, name, values):
 @register_computer('padding-bottom')
 @register_computer('padding-left')
 @register_computer('text-indent')
-@register_computer('word-spacing')
 def length(computer, name, value):
     """Compute a length ``value``."""
     if getattr(value, 'type', 'other') == 'NUMBER' and value.value == 0:
@@ -386,9 +385,9 @@ def line_height(computer, name, value):
     return ('PIXELS', pixels)
 
 
-@register_computer('vertical_align')
+@register_computer('vertical-align')
 def vertical_align(computer, name, value):
-    """Compute the ``word-spacing`` property."""
+    """Compute the ``vertical-align`` property."""
     # Use +/- half an em for super and sub, same as Pango.
     # (See the SUPERSUB_RISE constant in pango-markup.c)
     if value == 'super':
@@ -401,6 +400,15 @@ def vertical_align(computer, name, value):
             'font_size': computer.computed.font_size
         })
         return height * value.value / 100.
+    else:
+        return length(computer, name, value)
+
+
+@register_computer('word-spacing')
+def word_spacing(computer, name, value):
+    """Compute the ``word-spacing`` property."""
+    if value == 'normal':
+        return 0
     else:
         return length(computer, name, value)
 

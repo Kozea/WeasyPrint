@@ -30,7 +30,7 @@ from .markers import image_marker_layout
 from .percentages import resolve_percentages, resolve_one_percentage
 from ..text import TextFragment
 from ..formatting_structure import boxes
-from ..css.computed_values import used_line_height
+from ..css.computed_values import used_line_height, word_spacing
 
 
 def get_next_linebox(document, linebox, position_y, skip_stack,
@@ -135,6 +135,22 @@ def skip_first_whitespace(box, skip_stack):
     return None
 
 
+def x_advance(document, box, advance=0):
+    """WTF?????"""
+    if isinstance(box, boxes.TextBox):
+        if box.text:
+            box.position_x += advance
+            new_box, _, _ = split_text_box(document, box, box.width * 2, 0)
+            advance += new_box.width - box.width
+            box.width = new_box.width
+            box.show_line = new_box.show_line
+        return advance
+    else:
+        for child in box.children:
+            advance += x_advance(document, child, advance)
+        return advance
+
+
 def remove_last_whitespace(document, box):
     """Remove in place space characters at the end of a line.
 
@@ -142,6 +158,7 @@ def remove_last_whitespace(document, box):
 
     """
     ancestors = []
+    parent_box = box
     while isinstance(box, (boxes.LineBox, boxes.InlineBox)):
         ancestors.append(box)
         if not box.children:
@@ -165,6 +182,9 @@ def remove_last_whitespace(document, box):
         box.width = 0
         box.show_line = lambda x: x  # No-op
     box.text = new_text
+
+    x_advance(document, parent_box)
+
     for ancestor in ancestors:
         ancestor.width -= space_width
 
@@ -398,7 +418,42 @@ def split_inline_box(document, box, position_x, max_x, skip_stack,
         # There is a line break inside this box.
         box.reset_spacing('left')
         new_box.reset_spacing('right')
+
+    if isinstance(new_box, boxes.LineBox):
+        if new_box.style.text_align == 'justify' and resume_at:
+            spaces = box_spaces(new_box)
+            width = box_width(new_box)
+            full_spacing = (max_x - initial_position_x - width)
+            set_word_spacing(new_box, full_spacing, spaces)
+
     return new_box, resume_at, preserved_line_break
+
+
+def set_word_spacing(box, full_spacing, spaces):
+    if isinstance(box, boxes.TextBox):
+        if spaces:
+            spacing = word_spacing(None, None, box.style.word_spacing)
+            spacing += full_spacing / spaces
+            box.style.word_spacing = spacing
+    else:
+        for child in box.children:
+            if box_spaces(box):
+                set_word_spacing(child, full_spacing, spaces)
+
+
+def box_width(box):
+    if isinstance(box, boxes.TextBox):
+        return box.width
+    else:
+        return sum(box_width(child) for child in box.children)
+
+
+def box_spaces(box):
+    if isinstance(box, boxes.TextBox):
+        # TODO: remove trailing spaces correctly()
+        return box.text.rstrip().count(' ')
+    else:
+        return sum(box_spaces(child) for child in box.children)
 
 
 def split_text_box(document, box, available_width, skip):
@@ -417,9 +472,10 @@ def split_text_box(document, box, available_width, skip):
     text = box.text[skip:]
     if font_size == 0 or not text:
         return None, None, False
+    spacing = word_spacing(None, None, box.style.word_spacing)
 
     fragment = TextFragment(text, box.style,
-        cairo.Context(document.surface), available_width)
+        cairo.Context(document.surface), available_width, spacing)
 
     # XXX ``resume_at`` is an index in UTF-8 bytes, not unicode codepoints.
     show_line, length, width, height, baseline, resume_at = \
@@ -556,6 +612,8 @@ def text_align(line, containing_block):
             align = 'left'
         else:
             align = 'right'
+    if align == 'justify':
+        align = 'right' if line.style.direction == 'rtl' else 'left'
     if align == 'left':
         return 0
     offset = containing_block.width - line.width

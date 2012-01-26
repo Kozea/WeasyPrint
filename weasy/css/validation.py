@@ -476,6 +476,16 @@ def letter_spacing(value):
 
 @validator()
 @single_value
+def word_spacing(value):
+    """``word-spacing`` property validation."""
+    if get_keyword(value) == 'normal':
+        return 'normal'
+    if is_dimension(value):
+        return value
+
+
+@validator()
+@single_value
 def line_height(value):
     """``line-height`` property validation."""
     if get_keyword(value) == 'normal':
@@ -558,9 +568,7 @@ def quotes(values):
 @single_keyword
 def text_align(keyword):
     """``text-align`` property validation."""
-    if keyword in ('justify',):
-        raise InvalidValues('value not supported yet')
-    return keyword in ('left', 'right', 'center')
+    return keyword in ('left', 'right', 'center', 'justify')
 
 
 @validator()
