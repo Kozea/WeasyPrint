@@ -122,7 +122,7 @@ def block_level_width(box, containing_block):
     if width != 'auto' and margin_l != 'auto' and margin_r != 'auto':
         # The equation is over-constrained
         margin_sum = cb_width - paddings_plus_borders - width
-        if containing_block.direction == 'ltr':
+        if containing_block.style.direction == 'ltr':
             margin_r = box.margin_right = margin_sum - margin_l
         else:
             margin_l = box.margin_left = margin_sum - margin_r
