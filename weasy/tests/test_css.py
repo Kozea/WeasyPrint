@@ -199,14 +199,21 @@ def test_page():
     """Test the ``@page`` properties."""
     document = parse_html('doc1.html', user_stylesheets=[
         cssutils.parseString('''
+            html {
+                color: red;
+            }
             @page {
                 margin: 10px;
             }
             @page :right {
+                color: blue;
                 margin-bottom: 12pt;
                 font-size: 20px;
                 @top-left {
                     width: 10em;
+                }
+                @top-right {
+                    font-size: 10px;
                 }
             }
         ''')
@@ -216,28 +223,35 @@ def test_page():
     assert style.margin_top == 5
     assert style.margin_left == 10
     assert style.margin_bottom == 10
+    assert style.color.cssText == 'red'  # inherited from html
 
     style = document.style_for('first_right_page')
     assert style.margin_top == 5
     assert style.margin_left == 10
     assert style.margin_bottom == 16
+    assert style.color.cssText == 'blue'
 
     style = document.style_for('left_page')
     assert style.margin_top == 10
     assert style.margin_left == 10
     assert style.margin_bottom == 10
+    assert style.color.cssText == 'red'  # inherited from html
 
     style = document.style_for('right_page')
     assert style.margin_top == 10
     assert style.margin_left == 10
     assert style.margin_bottom == 16
+    assert style.color.cssText == 'blue'
 
     style = document.style_for('first_left_page', '@top-left')
     assert style is None
 
     style = document.style_for('first_right_page', '@top-left')
-    assert style.font_size == 20
+    assert style.font_size == 20  # inherited from @page
     assert style.width == 200
+
+    style = document.style_for('first_right_page', '@top-right')
+    assert style.font_size == 10
 
 
 @SUITE.test

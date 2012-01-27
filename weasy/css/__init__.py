@@ -400,7 +400,7 @@ def match_page_selector(rule, margin_type=None):
 
 
 def set_computed_styles(cascaded_styles, computed_styles,
-                        element, pseudo_type=None):
+                        element, parent, pseudo_type=None):
     """Set the computed values of styles to ``element``.
 
     Take the properties left by ``apply_style_rule`` on an element or
@@ -408,13 +408,6 @@ def set_computed_styles(cascaded_styles, computed_styles,
     declaration priority (ie. ``!important``) and selector specificity.
 
     """
-    if pseudo_type is not None:
-        parent = element
-    elif hasattr(element, 'getparent'):
-        parent = element.getparent()  # None for the root element
-    else:
-        parent = None  # Non-ruleset rule such as @page
-
     if parent is None:
         parent_style = None
     else:
@@ -567,7 +560,8 @@ def get_all_computed_styles(document, medium,
 
     # Iterate on all elements, even if there is no cascaded style for them.
     for element in document.dom.iter():
-        set_computed_styles(cascaded_styles, computed_styles, element)
+        set_computed_styles(cascaded_styles, computed_styles, element,
+                            parent=element.getparent())
 
 
     # Then computed styles for @page.
@@ -575,7 +569,10 @@ def get_all_computed_styles(document, medium,
     # Iterate on all possible page types, even if there is no cascaded style
     # for them.
     for page_type in PAGE_PSEUDOCLASS_TARGETS[None]:
-        set_computed_styles(cascaded_styles, computed_styles, page_type)
+        set_computed_styles(cascaded_styles, computed_styles, page_type,
+        # @page inherits from the root element:
+        # http://lists.w3.org/Archives/Public/www-style/2012Jan/1164.html
+                            parent=document.dom)
 
     # Then computed styles for pseudo elements, in any order.
     # Pseudo-elements inherit from their associated element so they come
@@ -588,6 +585,8 @@ def get_all_computed_styles(document, medium,
     for element, pseudo_type in cascaded_styles:
         if pseudo_type:
             set_computed_styles(cascaded_styles, computed_styles,
-                                element, pseudo_type)
+                                element, pseudo_type=pseudo_type,
+                                # The pseudo-element inherits from the element.
+                                parent=element)
 
     return computed_styles
