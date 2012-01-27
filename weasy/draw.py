@@ -58,21 +58,18 @@ def draw_page(document, page, context):
     The context should be scaled so that lengths are in CSS pixels.
 
     """
-    draw_page_background(document, context, page)
-    draw_box(document, context, page)
+    draw_box(document, context, page, page)
 
 
-def draw_box(document, context, box):
+def draw_box(document, context, page, box):
     """Draw a ``box`` on ``context``."""
     if box.style.visibility == 'visible':
-        if has_background(box):
-            draw_background(document, context, box)
-
+        draw_box_background(document, context, page, box)
         draw_border(context, box)
 
         marker_box = getattr(box, 'outside_list_marker', None)
         if marker_box:
-            draw_box(document, context, marker_box)
+            draw_box(document, context, page, marker_box)
 
         if isinstance(box, boxes.TextBox):
             draw_text(context, box)
@@ -83,117 +80,114 @@ def draw_box(document, context, box):
 
     if isinstance(box, boxes.TableBox):
         for child in box.column_groups:
-            draw_box(document, context, child)
+            draw_box(document, context, page, child)
+
+    # XXX TODO: check the painting order for page boxes
+    if box is page:
+        draw_canvas_background(document, context, page)
 
     if isinstance(box, boxes.ParentBox):
         for child in box.children:
-            draw_box(document, context, child)
+            draw_box(document, context, page, child)
 
 
+def background_positioning_area(page, box, style):
+    if style.background_attachment == 'fixed' and box is not page:
+        # Initial containing block
+        return (
+            page.content_box_x(),
+            page.content_box_y(),
+            page.width,
+            page.height,
+        )
+    else:
+        # CSS3: box.style.background_origin
+        return (
+            box.border_box_x(),
+            box.border_box_y(),
+            box.border_width(),
+            box.border_height(),
+        )
 
-def has_background(box):
-    """Return whether the given box has any background."""
-    return box.style.background_color.alpha > 0 or \
-        box.style.background_image != 'none'
 
-
-def draw_page_background(document, context, page):
-    """Draw the backgrounds for the page box (from @page style) and for the
-    page area (from the root element).
-
-    If the root element is "html" and has no background, the page area’s
-    background is taken from its "body" child.
-
-    In both cases the background position is the same as if it was drawn on
-    the element.
-
-    See http://www.w3.org/TR/CSS21/colors.html#background
-
-    """
-    # TODO: this one should have its origin at (0, 0), not the border box
-    # of the page.
-    # TODO: more tests for this, see
-    # http://www.w3.org/TR/css3-page/#page-properties
-    draw_background(document, context, page, clip=False)
-    # Margin boxes come after the content for painting order,
-    # so the box for the root element is the first child.
+def draw_canvas_background(document, context, page):
     root_box = page.children[0]
-    if has_background(root_box):
-        draw_background(document, context, root_box, clip=False)
-    elif root_box.element_tag.lower() == 'html':
-        for child in root_box.children:
-            if child.element_tag.lower() == 'body':
-                # This must be drawn now, before anything on the root element.
-                draw_background(document, context, child, clip=False)
+    style = root_box.canvas_background
+    draw_background(document, context, style,
+        painting_area=(
+            page.padding_box_x(),
+            page.padding_box_y(),
+            page.padding_width(),
+            page.padding_height(),
+        ),
+        positioning_area=background_positioning_area(page, root_box, style)
+    )
 
 
-def draw_background(document, context, box, clip=True):
+def draw_box_background(document, context, page, box):
     """Draw the box background color and image to a ``cairo.Context``."""
-    if getattr(box, 'background_drawn', False):
-        return
+    draw_background(document, context, box.style,
+        # CSS3: box.style.background_clip
+        painting_area=(
+            box.border_box_x(),
+            box.border_box_y(),
+            box.border_width(),
+            box.border_height(),
+        ) if box is not page else None,
+        positioning_area=background_positioning_area(page, box, box.style)
+    )
 
-    box.background_drawn = True
 
-    if not has_background(box):
+def draw_background(document, context, style, painting_area, positioning_area):
+    """Draw the background color and image to a ``cairo.Context``."""
+    bg_color = style.background_color
+    bg_image = style.background_image
+    if bg_image == 'none':
+        image = None
+    else:
+        image = document.get_image_from_uri(bg_image)
+    if bg_color.alpha == 0 and image is None:
+        # No background.
         return
 
     with context.stacked():
-        bg_x = box.border_box_x()
-        bg_y = box.border_box_y()
-        bg_width = box.border_width()
-        bg_height = box.border_height()
-
-        bg_attachement = box.style.background_attachment
-        if bg_attachement == 'fixed':
-            # There should not be any clip yet
-            x1, y1, x2, y2 = context.clip_extents()
-            page_width = x2 - x1
-            page_height = y2 - y1
-
-        if clip:
-            context.rectangle(bg_x, bg_y, bg_width, bg_height)
+        if painting_area:
+            context.rectangle(*painting_area)
             context.clip()
+        #else: unrestricted, whole page box
 
         # Background color
-        bg_color = box.style.background_color
         if bg_color.alpha > 0:
             context.set_source_colorvalue(bg_color)
             context.paint()
 
-        if bg_attachement == 'scroll':
-            # Change coordinates to make the rest easier.
-            context.translate(bg_x, bg_y)
-        else:
-            assert bg_attachement == 'fixed'
-            bg_width = page_width
-            bg_height = page_height
-
         # Background image
-        bg_image = box.style.background_image
-        if bg_image == 'none':
-            return
-
-        image = document.get_image_from_uri(bg_image)
         if image is None:
             return
 
         pattern, image_width, image_height = image
 
-        bg_position_x, bg_position_y = box.style.background_position
+        (positioning_x, positioning_y,
+            positioning_width, positioning_height) = positioning_area
+        context.translate(positioning_x, positioning_y)
 
-        percentage = get_percentage_value(bg_position_x)
-        if percentage is not None:
-            bg_position_x = (bg_width - image_width) * percentage / 100.
+        def percentage(value, refer_to):
+            percentage_value = get_percentage_value(value)
+            if percentage_value is None:
+                return value
+            else:
+                return refer_to * percentage_value / 100
 
-        percentage = get_percentage_value(bg_position_y)
-        if percentage is not None:
-            bg_position_y = (bg_height - image_height) * percentage / 100.
+        bg_position_x, bg_position_y = style.background_position
+        context.translate(
+            percentage(bg_position_x, positioning_width - image_width),
+            percentage(bg_position_y, positioning_height - image_height),
+        )
 
-        context.translate(bg_position_x, bg_position_y)
-
-        bg_repeat = box.style.background_repeat
+        bg_repeat = style.background_repeat
         if bg_repeat in ('repeat-x', 'repeat-y'):
-            # Get the current clip rectangle
+            # Get the current clip rectangle. This is the same as
+            # painting_area, but in new coordinates after translate()
             clip_x1, clip_y1, clip_x2, clip_y2 = context.clip_extents()
             clip_width = clip_x2 - clip_x1
             clip_height = clip_y2 - clip_y1

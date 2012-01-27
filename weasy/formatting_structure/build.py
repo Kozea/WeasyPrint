@@ -58,6 +58,7 @@ def build_formatting_structure(document):
     box = anonymous_table_boxes(box)
     box = inline_in_block(box)
     box = block_in_inline(box)
+    box = set_canvas_background(box)
     return box
 
 
@@ -803,7 +804,7 @@ def _inner_block_in_inline(box, skip_stack=None):
     If one is found, return ``(new_box, block_level_box, resume_at)``.
     ``new_box`` contains all of ``box`` content before the block-level box.
     ``resume_at`` can be passed as ``skip_stack`` in a new call to
-    this function to resume the search just after thes block-level box.
+    this function to resume the search just after the block-level box.
 
     If no block-level box is found after the position marked by
     ``skip_stack``, return ``(new_box, None, None)``
@@ -850,3 +851,28 @@ def _inner_block_in_inline(box, skip_stack=None):
             box = box.copy_with_children(new_children)
 
     return box, block_level_box, resume_at
+
+
+def set_canvas_background(root_box):
+    """
+    Set a ``canvas_background`` attribute on the box for the root element,
+    with style for the canvas background, taken from the root elememt
+    or a <body> child of the root element.
+
+    See http://www.w3.org/TR/CSS21/colors.html#background
+    """
+    chosen_box = root_box
+    if (root_box.element_tag.lower() == 'html' and
+            root_box.style.background_color.alpha == 0 and
+            root_box.style.background_image == 'none'):
+        for child in root_box.children:
+            if child.element_tag.lower() == 'body':
+                chosen_box = child
+                break
+
+    style = chosen_box.style
+    style_without_background = style.copy()
+    style_without_background.update(properties.BACKGROUND_INITIAL)
+    chosen_box.style = style_without_background
+    root_box.canvas_background = style
+    return root_box

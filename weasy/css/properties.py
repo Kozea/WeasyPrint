@@ -213,3 +213,8 @@ TABLE_WRAPPER_BOX_PROPERTIES = set('''
     left
     right
 '''.split())
+
+
+BACKGROUND_INITIAL = dict(
+    (name, value) for name, value in INITIAL_VALUES.iteritems()
+    if name.startswith('background'))

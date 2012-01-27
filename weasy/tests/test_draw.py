@@ -1096,11 +1096,12 @@ def test_margin_boxes():
         _+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
     ], '''
         <style>
-            html { background: white; height: 100% }
+            html { height: 100% }
             body { background: #f00; height: 100% }
             @page {
                 -weasy-size: 15px;
                 margin: 4px 6px 7px 5px;
+                background: white;
 
                 @top-left-corner {
                     margin: 1px;
