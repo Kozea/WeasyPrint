@@ -24,6 +24,7 @@ Various classes to break text lines and draw them.
 
 from __future__ import division
 
+from cgi import escape
 from gi.repository import Pango, PangoCairo  # pylint: disable=E0611
 
 
@@ -57,7 +58,7 @@ class TextFragment(object):
         self.layout.set_wrap(Pango.WrapMode.WORD)
         if text:
             word_spacing = Pango.units_from_double(word_spacing)
-            markup = text.replace(
+            markup = escape(text).replace(
                 ' ', '<span letter_spacing="%i"> </span>' % word_spacing)
             attributes_list = Pango.parse_markup(markup, -1, '\x00')[1]
             self.layout.set_attributes(attributes_list)
