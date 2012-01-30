@@ -573,6 +573,127 @@ def test_background_image():
 
 
 @SUITE.test
+def test_background_origin():
+    def test_value(value, pixels, css=None):
+        assert_pixels('background_origin_' + value, 12, 12, pixels, '''
+            <style>
+                @page { -weasy-size: 12px }
+                html { background: #fff }
+                body { margin: 1px; padding: 1px; height: 6px;
+                       border: 1px solid  transparent;
+                       background: url(pattern.png) bottom right no-repeat;
+                       background-origin: %s }
+            </style>
+            <body>
+        ''' % (css or value,))
+
+    test_value('border-box', [
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+r+B+B+B+_,
+        _+_+_+_+_+_+_+B+B+B+B+_,
+        _+_+_+_+_+_+_+B+B+B+B+_,
+        _+_+_+_+_+_+_+B+B+B+B+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+    ])
+    test_value('padding-box', [
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+r+B+B+B+_+_,
+        _+_+_+_+_+_+B+B+B+B+_+_,
+        _+_+_+_+_+_+B+B+B+B+_+_,
+        _+_+_+_+_+_+B+B+B+B+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+    ])
+    test_value('content-box', [
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+r+B+B+B+_+_+_,
+        _+_+_+_+_+B+B+B+B+_+_+_,
+        _+_+_+_+_+B+B+B+B+_+_+_,
+        _+_+_+_+_+B+B+B+B+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+    ])
+
+    test_value('border-box_clip', [
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+r+B+_+_+_,
+        _+_+_+_+_+_+_+B+B+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+    ], css='border-box; background-clip: content-box')
+
+
+
+@SUITE.test
+def test_background_clip():
+    def test_value(value, pixels):
+        assert_pixels('background_clip_' + value, 8, 8, pixels, '''
+            <style>
+                @page { -weasy-size: 8px }
+                html { background: #fff }
+                body { margin: 1px; padding: 1px; height: 2px;
+                       border: 1px solid  transparent;
+                       background: #00f; background-clip : %s }
+            </style>
+            <body>
+        ''' % (value,))
+
+    test_value('border-box', [
+        _+_+_+_+_+_+_+_,
+        _+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+_,
+        _+_+_+_+_+_+_+_,
+    ])
+    test_value('padding-box', [
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+B+B+B+B+_+_,
+        _+_+B+B+B+B+_+_,
+        _+_+B+B+B+B+_+_,
+        _+_+B+B+B+B+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+    ])
+    test_value('content-box', [
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+_+B+B+_+_+_,
+        _+_+_+B+B+_+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+    ])
+
+
+@SUITE.test
 def test_list_style_image():
     """Test images as list markers."""
     for position, pixels in [

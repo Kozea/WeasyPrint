@@ -224,6 +224,15 @@ def background_repeat(keyword):
     return keyword in ('repeat', 'repeat-x', 'repeat-y', 'no-repeat')
 
 
+@validator('background_clip')
+@validator('background_origin')
+@single_keyword
+def box(keyword):
+    """Validation for the ``<box>`` type used in ``background-clip``
+    and ``background-origin``."""
+    return keyword in ('border-box', 'padding-box', 'content-box')
+
+
 @validator()
 def border_spacing(values):
     """Validator for the `border-spacing` property."""

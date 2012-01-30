@@ -91,51 +91,57 @@ def draw_box(document, context, page, box):
             draw_box(document, context, page, child)
 
 
-def background_positioning_area(page, box, style):
-    if style.background_attachment == 'fixed' and box is not page:
-        # Initial containing block
-        return (
-            page.content_box_x(),
-            page.content_box_y(),
-            page.width,
-            page.height,
-        )
-    else:
-        # CSS3: box.style.background_origin
+def box_rectangle(box, which_rectangle):
+    if which_rectangle == 'border-box':
         return (
             box.border_box_x(),
             box.border_box_y(),
             box.border_width(),
             box.border_height(),
         )
+    elif which_rectangle == 'padding-box':
+        return (
+            box.padding_box_x(),
+            box.padding_box_y(),
+            box.padding_width(),
+            box.padding_height(),
+        )
+    elif which_rectangle == 'content-box':
+        return (
+            box.content_box_x(),
+            box.content_box_y(),
+            box.width,
+            box.height,
+        )
+    else:
+        raise ValueError(which_rectangle)
+
+
+def background_positioning_area(page, box, style):
+    if style.background_attachment == 'fixed' and box is not page:
+        # Initial containing block
+        return box_rectangle(page, 'content-box')
+    else:
+        return box_rectangle(box, box.style.background_origin)
 
 
 def draw_canvas_background(document, context, page):
     root_box = page.children[0]
     style = root_box.canvas_background
     draw_background(document, context, style,
-        painting_area=(
-            page.padding_box_x(),
-            page.padding_box_y(),
-            page.padding_width(),
-            page.padding_height(),
-        ),
+        painting_area=box_rectangle(page, 'padding-box'),
         positioning_area=background_positioning_area(page, root_box, style)
     )
 
 
 def draw_box_background(document, context, page, box):
     """Draw the box background color and image to a ``cairo.Context``."""
-    draw_background(document, context, box.style,
-        # CSS3: box.style.background_clip
-        painting_area=(
-            box.border_box_x(),
-            box.border_box_y(),
-            box.border_width(),
-            box.border_height(),
-        ) if box is not page else None,
-        positioning_area=background_positioning_area(page, box, box.style)
-    )
+    if box is page:
+        painting_area = None
+    else:
+        painting_area=box_rectangle(box, box.style.background_clip)
+    draw_background(document, context, box.style, painting_area,
+        positioning_area=background_positioning_area(page, box, box.style))
 
 
 def draw_background(document, context, style, painting_area, positioning_area):
