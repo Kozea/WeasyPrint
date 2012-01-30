@@ -26,6 +26,8 @@ http://dev.w3.org/csswg/css3-page/#margin-dimension
 
 from __future__ import division
 
+from ..logging import LOGGER
+
 
 def with_rule_2(side_boxes, outer_sum):
     """Margin box variable dimension computation, in the case where
@@ -46,8 +48,7 @@ def with_rule_2(side_boxes, outer_sum):
 
         # XXX
         if result is NotImplemented:
-            import logging
-            logging.getLogger('WEASYPRINT').error(
+            LOGGER.error(
                 'Got NotImplemented for inners=%r, margins=%r',
                 [box.inner for box in side_boxes],
                 [(box.margin_a, box.margin_b) for box in side_boxes],

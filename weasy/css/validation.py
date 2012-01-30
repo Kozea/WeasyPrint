@@ -26,8 +26,8 @@ See http://www.w3.org/TR/CSS21/propidx.html for allowed values.
 
 
 import functools
-import logging
 
+from ..logging import LOGGER
 from ..formatting_structure import counters
 from .values import (get_keyword, get_single_keyword, as_css,
                      make_percentage_value)
@@ -51,7 +51,6 @@ BACKGROUND_POSITION_PERCENTAGES = {
     'right': make_percentage_value(100),
 }
 
-LOGGER = logging.getLogger('WEASYPRINT')
 
 # yes/no validators for non-shorthand properties
 # Maps property names to functions taking a property name and a value list,

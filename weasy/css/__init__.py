@@ -41,7 +41,6 @@ function for each step:
 """
 
 import re
-import logging
 
 from lxml import cssselect
 
@@ -49,9 +48,8 @@ from . import properties
 from . import validation
 from . import computed_values
 from ..utils import get_url_attribute
+from ..logging import LOGGER
 
-
-LOGGER = logging.getLogger('WEASYPRINT')
 
 # Pseudo-classes and pseudo-elements are the same to lxml.cssselect.parse().
 # List the identifiers for all CSS3 pseudo elements here to distinguish them.
