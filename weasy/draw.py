@@ -31,6 +31,14 @@ from .formatting_structure import boxes
 from .css.values import get_percentage_value
 
 
+# Map values of the image-rendering property to cairo FILTER values:
+IMAGE_RENDERING_TO_FILTER = dict(
+    optimizeSpeed=cairo.FILTER_FAST,
+    auto=cairo.FILTER_GOOD,
+    optimizeQuality=cairo.FILTER_BEST,
+)
+
+
 class CairoContext(cairo.Context):
     """A ``cairo.Context`` with a few more helper methods."""
 
@@ -171,18 +179,43 @@ def draw_background(document, context, style, painting_area, positioning_area):
         if image is None:
             return
 
-        pattern, image_width, image_height = image
-
-        (positioning_x, positioning_y,
-            positioning_width, positioning_height) = positioning_area
-        context.translate(positioning_x, positioning_y)
-
         def percentage(value, refer_to):
             percentage_value = get_percentage_value(value)
             if percentage_value is None:
                 return value
             else:
                 return refer_to * percentage_value / 100
+
+        (positioning_x, positioning_y,
+            positioning_width, positioning_height) = positioning_area
+        context.translate(positioning_x, positioning_y)
+
+        pattern, intrinsic_width, intrinsic_height = image
+
+        bg_size = style.background_size
+        if bg_size in ('cover', 'contain'):
+            scale_x = scale_y = {'cover': max, 'contain': min}[bg_size](
+                positioning_width / intrinsic_width,
+                positioning_height / intrinsic_height)
+            image_width = intrinsic_width * scale_x
+            image_height = intrinsic_height * scale_y
+        elif bg_size == ('auto', 'auto'):
+            scale_x = scale_y = 1
+            image_width = intrinsic_width
+            image_height = intrinsic_height
+        elif bg_size[0] == 'auto':
+            image_height = percentage(bg_size[1], positioning_height)
+            scale_x = scale_y = image_height / intrinsic_height
+            image_width = intrinsic_width * scale_x
+        elif bg_size[1] == 'auto':
+            image_width = percentage(bg_size[0], positioning_width)
+            scale_x = scale_y = image_width / intrinsic_width
+            image_height = intrinsic_height * scale_y
+        else:
+            image_width = percentage(bg_size[0], positioning_width)
+            image_height = percentage(bg_size[1], positioning_height)
+            scale_x = image_width / intrinsic_width
+            scale_y = image_height / intrinsic_height
 
         bg_position_x, bg_position_y = style.background_position
         context.translate(
@@ -218,6 +251,9 @@ def draw_background(document, context, style, painting_area, positioning_area):
             pattern.set_extend(cairo.EXTEND_NONE)
         else:
             pattern.set_extend(cairo.EXTEND_REPEAT)
+        # TODO: de-duplicate this with draw_replacedbox()
+        pattern.set_filter(IMAGE_RENDERING_TO_FILTER[style.image_rendering])
+        context.scale(scale_x, scale_y)
         context.set_source(pattern)
         context.paint()
 
@@ -427,6 +463,8 @@ def draw_replacedbox(context, box):
         context.scale(scale_width, scale_height)
         # The same image/pattern may have been used in a repeating background.
         pattern.set_extend(cairo.EXTEND_NONE)
+        pattern.set_filter(IMAGE_RENDERING_TO_FILTER[
+            box.style.image_rendering])
         context.set_source(pattern)
         context.paint()
 

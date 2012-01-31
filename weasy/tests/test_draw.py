@@ -59,6 +59,8 @@ def format_pixel(lines, x, y):
 
 def assert_pixels(name, expected_width, expected_height, expected_lines, html):
     """Helper testing the size of the image and the pixels values."""
+    assert len(expected_lines) == expected_height
+    assert len(expected_lines[0]) == expected_width * BYTES_PER_PIXELS
     _doc, lines = html_to_png(name, expected_width, expected_height, html)
     assert_pixels_equal(name, expected_width, expected_height, lines,
                         expected_lines)
@@ -574,6 +576,7 @@ def test_background_image():
 
 @SUITE.test
 def test_background_origin():
+    """Test the background-origin property."""
     def test_value(value, pixels, css=None):
         assert_pixels('background_origin_' + value, 12, 12, pixels, '''
             <style>
@@ -649,6 +652,7 @@ def test_background_origin():
 
 @SUITE.test
 def test_background_clip():
+    """Test the background-clip property."""
     def test_value(value, pixels):
         assert_pixels('background_clip_' + value, 8, 8, pixels, '''
             <style>
@@ -691,6 +695,84 @@ def test_background_clip():
         _+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_,
     ])
+
+
+@SUITE.test
+def test_background_size():
+    """Test the background-size property."""
+    assert_pixels('background_size', 12, 12, [
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+r+r+B+B+B+B+B+B+_,
+        _+_+_+r+r+B+B+B+B+B+B+_,
+        _+_+_+B+B+B+B+B+B+B+B+_,
+        _+_+_+B+B+B+B+B+B+B+B+_,
+        _+_+_+B+B+B+B+B+B+B+B+_,
+        _+_+_+B+B+B+B+B+B+B+B+_,
+        _+_+_+B+B+B+B+B+B+B+B+_,
+        _+_+_+B+B+B+B+B+B+B+B+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { -weasy-size: 12px }
+            html { background: #fff }
+            body { margin: 1px; height: 10px;
+                   /* Use nearest neighbor algorithm for image resizing: */
+                   -weasy-image-rendering: optimizeSpeed;
+                   background: url(pattern.png) bottom right no-repeat;
+                   background-size: 8px }
+        </style>
+        <body>
+    ''')
+
+    assert_pixels('background_size_contain', 14, 10, [
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+r+r+B+B+B+B+B+B+_+_+_+_+_,
+        _+r+r+B+B+B+B+B+B+_+_+_+_+_,
+        _+B+B+B+B+B+B+B+B+_+_+_+_+_,
+        _+B+B+B+B+B+B+B+B+_+_+_+_+_,
+        _+B+B+B+B+B+B+B+B+_+_+_+_+_,
+        _+B+B+B+B+B+B+B+B+_+_+_+_+_,
+        _+B+B+B+B+B+B+B+B+_+_+_+_+_,
+        _+B+B+B+B+B+B+B+B+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { -weasy-size: 14px 10px }
+            html { background: #fff }
+            body { margin: 1px; height: 8px;
+                   /* Use nearest neighbor algorithm for image resizing: */
+                   -weasy-image-rendering: optimizeSpeed;
+                   background: url(pattern.png) no-repeat;
+                   background-size: contain }
+        </style>
+        <body>
+    ''')
+
+    assert_pixels('background_size_cover', 14, 10, [
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+r+r+r+B+B+B+B+B+B+B+B+B+_,
+        _+r+r+r+B+B+B+B+B+B+B+B+B+_,
+        _+r+r+r+B+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+B+B+B+B+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { -weasy-size: 14px 10px }
+            html { background: #fff }
+            body { margin: 1px; height: 8px;
+                   /* Use nearest neighbor algorithm for image resizing: */
+                   -weasy-image-rendering: optimizeSpeed;
+                   background: url(pattern.png) no-repeat;
+                   background-size: cover }
+        </style>
+        <body>
+    ''')
 
 
 @SUITE.test

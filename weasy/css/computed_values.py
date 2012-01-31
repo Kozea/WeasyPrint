@@ -261,6 +261,15 @@ def length(computer, name, value):
     return value.value * factor
 
 
+@register_computer('background-size')
+def border_width(computer, name, value):
+    """Compute the ``background-size`` properties."""
+    if value in ('contain', 'cover'):
+        return value
+    else:
+        return length_list(computer, name, value)
+
+
 @register_computer('border-top-width')
 @register_computer('border-right-width')
 @register_computer('border-left-width')
