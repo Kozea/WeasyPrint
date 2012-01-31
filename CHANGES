@@ -7,6 +7,11 @@ Version 0.4, released on 201X-XX-XX
 * Fix SVG images with non-pixel units. Requires CairoSVG 0.3
 * Support for ``page-break-before`` and ``page-break-after``, except for
   the value ``avoid``.
+* Support for the ``background-clip``, ``background-origin`` and
+  ``background-size`` from CSS3 (but still with a single background
+  per element)
+* Support for the ``image-rendering`` from SVG. This one is prefixed,
+  use ``-weasy-image-rendering``. It only has an effect on PNG output.
 
 
 Version 0.3.1, released on 2011-12-14
