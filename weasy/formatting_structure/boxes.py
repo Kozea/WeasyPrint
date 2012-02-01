@@ -99,13 +99,6 @@ class Box(object):
                    parent.style.inherit_from(),
                    *args, **kwargs)
 
-    @property
-    def direction(self):
-        """
-        Value for the ``direction`` property when used as a containing block.
-        """
-        return self.style.direction
-
     def copy(self):
         """Return shallow copy of the box."""
         cls = type(self)
@@ -508,8 +501,7 @@ class PageBox(ParentBox):
     During layout a new page box is created after every page break.
 
     """
-    def __init__(self, page_type, style, direction):
-        self._direction = direction
+    def __init__(self, page_type, style):
         self.page_type = page_type
         # Page boxes are not linked to any element.
         super(PageBox, self).__init__(
@@ -517,14 +509,6 @@ class PageBox(ParentBox):
 
     def __repr__(self):
         return '<%s %s>' % (type(self).__name__, self.page_type)
-
-    @property
-    def direction(self):
-        """
-        The direction of the page box (containing block to the root element)
-        is that of the root element.
-        """
-        return self._direction
 
 
 class MarginBox(BlockContainerBox):

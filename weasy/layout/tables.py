@@ -22,13 +22,10 @@ Functions laying out tables.
 """
 
 from __future__ import division
-import logging
 
+from ..logging import LOGGER
 from ..formatting_structure import boxes
 from .percentages import resolve_percentages, resolve_one_percentage
-
-
-LOGGER = logging.getLogger('WEASYPRINT')
 
 
 def table_layout(document, table, max_position_y, containing_block,

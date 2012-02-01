@@ -22,16 +22,13 @@ Various utils.
 
 """
 
-import logging
 import urllib
 from urlparse import urljoin, urlparse
 
 from cssutils.helper import path2url
 
 from . import VERSION
-
-
-LOGGER = logging.getLogger('WEASYPRINT')
+from .logging import LOGGER
 
 
 def get_url_attribute(element, key):

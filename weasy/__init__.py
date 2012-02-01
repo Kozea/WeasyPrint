@@ -40,11 +40,6 @@ FORMATS = {
 }
 
 
-# cssutils defaults to logging to stderr, but we want to hide its validation
-# warnings as we’re doing our own validation.
-#logging.getLogger('CSSUTILS').handlers[:] = []
-
-
 def _join(sequence, key=lambda x: x):
     """Return a string of the sorted elements of ``sequence``.
 
@@ -89,7 +84,6 @@ def main():
 
     # Import here so that these are not needed for --version and --help
     import sys
-    import logging
     import cssutils
 
     from . import document
@@ -110,16 +104,6 @@ def main():
 
     if args.output == '-':
         args.output = sys.stdout
-
-    if hasattr(logging, 'NullHandler'):
-        # New in 2.7
-        cssutils_logger = logging.getLogger('CSSUTILS')
-        del cssutils_logger.handlers[:]
-        cssutils_logger.addHandler(logging.NullHandler())
-
-    logger = logging.getLogger('WEASYPRINT')
-    logger.setLevel(logging.INFO)
-    logger.addHandler(logging.StreamHandler())
 
     users_stylesheets = [
         cssutils.parseUrl(ensure_url(filename_or_url))

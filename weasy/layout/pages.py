@@ -424,9 +424,8 @@ def make_margin_boxes(document, page, counter_values):
 
 
 def make_empty_page(document, page_type):
-    root_box = document.formatting_structure
     style = document.style_for(page_type)
-    page = boxes.PageBox(page_type, style, root_box.style.direction)
+    page = boxes.PageBox(page_type, style)
 
     device_size = page.style.size
     page.outer_width, page.outer_height = device_size

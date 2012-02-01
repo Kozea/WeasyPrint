@@ -26,8 +26,8 @@ See http://www.w3.org/TR/CSS21/propidx.html for allowed values.
 
 
 import functools
-import logging
 
+from ..logging import LOGGER
 from ..formatting_structure import counters
 from .values import (get_keyword, get_single_keyword, as_css,
                      make_percentage_value)
@@ -51,7 +51,6 @@ BACKGROUND_POSITION_PERCENTAGES = {
     'right': make_percentage_value(100),
 }
 
-LOGGER = logging.getLogger('WEASYPRINT')
 
 # yes/no validators for non-shorthand properties
 # Maps property names to functions taking a property name and a value list,
@@ -222,6 +221,39 @@ def background_position(values):
 def background_repeat(keyword):
     """``background-repeat`` property validation."""
     return keyword in ('repeat', 'repeat-x', 'repeat-y', 'no-repeat')
+
+
+@validator()
+def background_size(values):
+    """Validation for ``background-size``."""
+    if len(values) == 1:
+        value = values[0]
+        keyword = get_keyword(value)
+        if keyword in ('contain', 'cover'):
+            return keyword
+        if keyword == 'auto':
+            return ('auto', 'auto')
+        if is_dimension_or_percentage(value, negative=False):
+            return (value, 'auto')
+    elif len(values) == 2:
+        new_values = []
+        for value in values:
+            if get_keyword(value) == 'auto':
+                new_values.append('auto')
+            elif is_dimension_or_percentage(value, negative=False):
+                new_values.append(value)
+            else:
+                return
+        return tuple(values)
+
+
+@validator('background_clip')
+@validator('background_origin')
+@single_keyword
+def box(keyword):
+    """Validation for the ``<box>`` type used in ``background-clip``
+    and ``background-origin``."""
+    return keyword in ('border-box', 'padding-box', 'content-box')
 
 
 @validator()
@@ -626,7 +658,14 @@ def white_space(keyword):
     return keyword in ('normal', 'pre', 'nowrap', 'pre-wrap', 'pre-line')
 
 
-@validator(prefixed=True)
+@validator(prefixed=True)  # Taken from SVG
+@single_keyword
+def image_rendering(keyword):
+    """Validation for ``image-rendering``."""
+    return keyword in ('auto', 'optimizeSpeed', 'optimizeQuality')
+
+
+@validator(prefixed=True)  # Not in CR yet
 def size(values):
     """``size`` property validation.
 

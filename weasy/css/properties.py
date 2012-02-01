@@ -31,6 +31,9 @@ INITIAL_VALUES = {
     'background_image': 'none',
     'background_position': list(PropertyValue('0% 0%')),
     'background_repeat': 'repeat',
+    'background_clip': 'border-box',  # CSS3
+    'background_origin': 'padding-box',  # CSS3
+    'background_size': ('auto', 'auto'),  # CSS3
     'border_collapse': 'separate',
     # http://www.w3.org/TR/css3-color/#currentcolor
     'border_top_color': 'currentColor',
@@ -115,6 +118,10 @@ INITIAL_VALUES = {
 
     # CSS3 User Interface: http://www.w3.org/TR/css3-ui/#box-sizing
     'box_sizing': 'content-box',
+
+    # Taken from SVG:
+    # http://www.w3.org/TR/SVG/painting.html#ImageRenderingProperty
+    'image_rendering': 'auto',
 }
 
 # Not applicable to the print media
@@ -213,3 +220,8 @@ TABLE_WRAPPER_BOX_PROPERTIES = set('''
     left
     right
 '''.split())
+
+
+BACKGROUND_INITIAL = dict(
+    (name, value) for name, value in INITIAL_VALUES.iteritems()
+    if name.startswith('background'))

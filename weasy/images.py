@@ -22,15 +22,13 @@ Handle various image formats.
 
 from __future__ import division
 from StringIO import StringIO
-import logging
 
 import cairo
 
 from .utils import urlopen
 from .css.computed_values import LENGTHS_TO_PIXELS
+from .logging import LOGGER
 
-
-LOGGER = logging.getLogger('WEASYPRINT')
 
 # Map MIME types to functions that take a byte stream and return
 # ``(pattern, width, height)`` a cairo Pattern and its dimension in pixels.

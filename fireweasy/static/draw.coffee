@@ -12,11 +12,13 @@ window.FireWeasy = (($) ->
             width: box.width
             height: box.height
         for name in ['font-size', 'font-family', 'font-weight',
-                     'text-decoration', 'background-color', 'background-repeat']
+                     'text-decoration', 'background-color',
+                     'background-repeat']
             css[name] = style[name.replace('-', '_')]
         if style.background_image
             css['background-image'] = 'url(data:image/png;base64,' +
                 style.background_image + ')'
+        css['background-position'] = style.background_position.join(' ')
         for side in ['top', 'bottom', 'left', 'right']
             css['margin-' + side] = style['margin_' + side]
             css['padding-' + side] = style['padding_' + side]
