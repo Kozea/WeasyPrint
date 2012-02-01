@@ -1,6 +1,7 @@
 Version 0.4, released on 201X-XX-XX
 ===================================
 
+* Support ``text-align: justify``
 * Partial support for CSS3 Paged Media: page size and margin boxes with
   page-based counters.
 * All CSS 2.1 border styles
