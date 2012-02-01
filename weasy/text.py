@@ -57,10 +57,17 @@ class TextFragment(object):
         self.layout.set_text(text, -1)
         self.layout.set_wrap(Pango.WrapMode.WORD)
         word_spacing = style.word_spacing
-        if ' ' in text and word_spacing != 0:
+        letter_spacing = style.letter_spacing
+        if letter_spacing == 'normal':
+            letter_spacing = 0
+        if text and (word_spacing != 0 or letter_spacing != 0):
             word_spacing = Pango.units_from_double(word_spacing)
+            letter_spacing = Pango.units_from_double(letter_spacing)
             markup = escape(text).replace(
-                ' ', '<span letter_spacing="%i"> </span>' % word_spacing)
+                ' ', '<span letter_spacing="%i"> </span>' % (
+                    word_spacing + letter_spacing,))
+            markup = '<span letter_spacing="%i">%s</span>' % (
+                letter_spacing , markup)
             attributes_list = Pango.parse_markup(markup, -1, '\x00')[1]
             self.layout.set_attributes(attributes_list)
         if width is not None:

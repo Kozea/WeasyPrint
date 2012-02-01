@@ -1194,7 +1194,6 @@ def test_text_align_justify():
     body, = html.children
     paragraph, = body.children
     line_1, line_2 = paragraph.children
-    print line_1.children, line_2.children
     image_1, space_1, strong = line_1.children
     image_2, space_2, image_3, space_3, image_4 = strong.children
     image_5, = line_2.children
@@ -1213,6 +1212,57 @@ def test_text_align_justify():
     assert strong.width == 230
 
     assert image_5.position_x == 0
+
+
+@SUITE.test
+def test_word_spacing():
+    """Test word-spacing."""
+    # keep the empty <style> as a regression test: element.text is None
+    # (Not a string.)
+    page, = parse('''
+        <style></style>
+        <body><strong>Lorem ipsum dolor<em>sit amet</em></strong>
+    ''')
+    html, = page.children
+    body, = html.children
+    line, = body.children
+    strong_1, = line.children
+    assert 200 <= strong_1.width <= 250
+
+    # TODO: Pango gives only half of word-spacing to a space at the end
+    # of a TextBox. Is this what we want?
+    page, = parse('''
+        <style>strong { word-spacing: 11px }</style>
+        <body><strong>Lorem ipsum dolor<em>sit amet</em></strong>
+    ''')
+    html, = page.children
+    body, = html.children
+    line, = body.children
+    strong_2, = line.children
+    assert strong_2.width - strong_1.width == 33
+
+
+@SUITE.test
+def test_letter_spacing():
+    """Test letter-spacing."""
+    page, = parse('''
+        <body><strong>Supercalifragilisticexpialidocious></strong>
+    ''')
+    html, = page.children
+    body, = html.children
+    line, = body.children
+    strong_1, = line.children
+    assert 280 <= strong_1.width <= 310
+
+    page, = parse('''
+        <style>strong { letter-spacing: 11px }</style>
+        <body><strong>Supercalifragilisticexpialidocious></strong>
+    ''')
+    html, = page.children
+    body, = html.children
+    line, = body.children
+    strong_2, = line.children
+    assert strong_2.width - strong_1.width == 34 * 11
 
 
 @SUITE.test

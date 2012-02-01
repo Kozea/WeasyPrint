@@ -176,9 +176,9 @@ def find_stylesheets(document):
             # TODO: handle the `scoped` attribute
             # Content is text that is directly in the <style> element, not its
             # descendants
-            content = [element.text]
+            content = [element.text or '']
             for child in element:
-                content.append(child.tail)
+                content.append(child.tail or '')
             content = ''.join(content)
             # lxml should give us either unicode or ASCII-only bytestrings, so
             # we don't need `encoding` here.

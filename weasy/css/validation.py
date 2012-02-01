@@ -496,20 +496,11 @@ def font_weight(value):
             return value
 
 
-#@validator()  XXX not supported yet
+@validator('letter_spacing')
+@validator('word_spacing')
 @single_value
-def letter_spacing(value):
-    """``letter-spacing`` property validation."""
-    if get_keyword(value) == 'normal':
-        return 'normal'
-    if is_dimension(value):
-        return value
-
-
-@validator()
-@single_value
-def word_spacing(value):
-    """``word-spacing`` property validation."""
+def spacing(value):
+    """Validation for ``letter-spacing`` and ``word-spacing``."""
     if get_keyword(value) == 'normal':
         return 'normal'
     if is_dimension(value):
