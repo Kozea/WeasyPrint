@@ -110,7 +110,7 @@ INITIAL_VALUES = {
     'white_space': 'normal',
     'widows': 2,
     'width': 'auto',
-    'word_spacing': 'normal',
+    'word_spacing': 0,  # computed value for 'normal'
     'z_index': 'auto',
 
     # CSS3 Paged Media: http://www.w3.org/TR/css3-page/#page-size

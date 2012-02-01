@@ -1175,6 +1175,47 @@ def test_text_align_center():
 
 
 @SUITE.test
+def test_text_align_justify():
+    """Test justified text."""
+    page, = parse('''
+        <style>
+            @page { -weasy-size: 300px 1000px }
+            body { text-align: justify }
+        </style>
+        <p><img src="pattern.png" style="width: 40px"> &#20;
+           <strong>
+                <img src="pattern.png" style="width: 60px"> &#20;
+                <img src="pattern.png" style="width: 10px"> &#20;
+                <img src="pattern.png" style="width: 100px">
+           </strong><img src="pattern.png" style="width: 290px">
+            <!-- Last image will be on its own line. -->
+    ''')
+    html, = page.children
+    body, = html.children
+    paragraph, = body.children
+    line_1, line_2 = paragraph.children
+    print line_1.children, line_2.children
+    image_1, space_1, strong = line_1.children
+    image_2, space_2, image_3, space_3, image_4 = strong.children
+    image_5, = line_2.children
+    assert space_1.text == ' '
+    assert space_2.text == ' '
+    assert space_3.text == ' '
+
+    assert image_1.position_x == 0
+    assert space_1.position_x == 40
+    assert strong.position_x == 70
+    assert image_2.position_x == 70
+    assert space_2.position_x == 130
+    assert image_3.position_x == 160
+    assert space_3.position_x == 170
+    assert image_4.position_x == 200
+    assert strong.width == 230
+
+    assert image_5.position_x == 0
+
+
+@SUITE.test
 def test_text_indent():
     """Test the text-indent property."""
     for indent in ['12px', '6%']:  # 6% of 200px is 12px
