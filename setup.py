@@ -39,7 +39,7 @@ setup(
     install_requires=[
         # Keep this in sync with the "install" documentation
         'lxml',
-        'cssutils>=0.9.9a1',
+        'cssutils>=0.9.9',
         'PIL',
         'CairoSVG>=0.3',
         # Not installable by pip:

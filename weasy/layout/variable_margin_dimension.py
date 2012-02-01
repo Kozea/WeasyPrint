@@ -172,6 +172,7 @@ def implementation_1(box_a, box_b, box_c, outer_sum):
     target_outer_ac = (outer_sum - outer(box_b)) / 2
     distribute_margins(box_a, target_outer_ac)
     distribute_margins(box_c, target_outer_ac)
+    return 'ok'
 
 
 @register(auto_inners=(0, 0, 1), auto_margins=(0, 0, 0))
