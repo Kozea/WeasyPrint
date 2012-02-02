@@ -413,14 +413,34 @@ def make_margin_boxes(document, page, counter_values):
     generated_boxes.extend(delayed_boxes)
 
     for box in generated_boxes:
-        # content_to_boxes() only produces inline-level boxes, no need to
-        # run other post-processors from build.build_formatting_structure()
-        box = build.inline_in_block(box)
-        box, resume_at, next_page = block_level_height(document, box,
-            max_position_y=float('inf'), skip_stack=None,
-            device_size=page.style.size, page_is_empty=True)
-        assert resume_at is None
-        yield box
+        yield margin_box_content_layout(document, page, box)
+
+
+def margin_box_content_layout(document, page, box):
+    """Layout a margin box’s content once the box has dimensions."""
+    # content_to_boxes() only produces inline-level boxes, no need to
+    # run other post-processors from build.build_formatting_structure()
+    box = build.inline_in_block(box)
+    box, resume_at, next_page = block_level_height(document, box,
+        max_position_y=float('inf'), skip_stack=None,
+        device_size=page.style.size, page_is_empty=True)
+    assert resume_at is None
+
+    vertical_align = box.style.vertical_align
+    # Every other value is read as 'top', ie. no change.
+    if vertical_align in ('middle', 'bottom') and box.children:
+        first_child = box.children[0]
+        last_child = box.children[-1]
+        top = first_child.position_y
+        assert top == box.content_box_y()
+        bottom = last_child.position_y + last_child.margin_height()
+        content_height = bottom - top
+        offset = box.height - content_height
+        if vertical_align == 'middle':
+            offset /= 2
+        for child in box.children:
+            child.translate(0, offset)
+    return box
 
 
 def make_empty_page(document, page_type):

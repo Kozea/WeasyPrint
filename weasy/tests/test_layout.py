@@ -2131,3 +2131,48 @@ def test_margin_boxes_variable_dimension():
     assert top_right.margin_right == 0
     assert top_right.width == 200
     assert top_right.margin_width() == 230
+
+
+@SUITE.test
+def test_margin_boxes_vertical_align():
+    """
+         3 px ->    +-----+
+                    |  1  |
+                    +-----+
+
+                43 px ->   +-----+
+                53 px ->   |  2  |
+                           +-----+
+
+                       83 px ->   +-----+
+                                  |  3  |
+                       103px ->   +-----+
+    """
+    page, = parse('''
+        <style>
+            @page {
+                -weasy-size: 800px;
+                margin: 106px;  /* margin boxes’ content height is 100px */
+
+                @top-left {
+                    content: "foo"; line-height: 20px; border: 3px solid;
+                    vertical-align: top;
+                }
+                @top-center {
+                    content: "foo"; line-height: 20px; border: 3px solid;
+                    vertical-align: middle;
+                }
+                @top-right {
+                    content: "foo"; line-height: 20px; border: 3px solid;
+                    vertical-align: bottom;
+                }
+            }
+        </style>
+    ''')
+    html, top_left, top_right, top_center = page.children
+    line_1, = top_left.children
+    line_2, = top_center.children
+    line_3, = top_right.children
+    assert line_1.position_y == 3
+    assert line_2.position_y == 43
+    assert line_3.position_y == 83
