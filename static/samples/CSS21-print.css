@@ -10,6 +10,7 @@
         content: "Page " counter(page) " of " counter(pages);
     }
 }
-body { font-family: Palatino !important; text-align: justify; line-height: 1.25 }
+body { font-family: Palatino !important; text-align: justify;
+       line-height: 1.25; padding: 0 0 0 50px !important }
 hr.navbar { display: none }
 h1 { page-break-before: auto !important }
