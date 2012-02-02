@@ -507,4 +507,23 @@ var { font-style: italic; }
 video { object-fit: contain; }
 xmp { display: block; font-family: monospace; margin-bottom: 1em; margin-top: 1em; unicode-bidi: isolate; white-space: pre; }
 
-@page { margin: 2cm }  /* The default size is A4 portrait */
+@page {
+    /* `size: auto` (the inital) is A4 portrait */
+    margin: 2cm;
+    @top-left-corner     { text-align: right;  vertical-align:  middle }
+    @top-left            { text-align: left;   vertical-align:  middle }
+    @top-center          { text-align: center; vertical-align:  middle }
+    @top-right           { text-align: right;  vertical-align:  middle }
+    @top-right-corner    { text-align: left;   vertical-align:  middle }
+    @left-top            { text-align: center; vertical-align:  top    }
+    @left-middle         { text-align: center; vertical-align:  middle }
+    @left-bottom         { text-align: center; vertical-align:  bottom }
+    @right-top           { text-align: center; vertical-align:  top    }
+    @right-middle        { text-align: center; vertical-align:  middle }
+    @right-bottom        { text-align: center; vertical-align:  bottom }
+    @bottom-left-corner  { text-align: right;  vertical-align:  middle }
+    @bottom-left         { text-align: left;   vertical-align:  middle }
+    @bottom-center       { text-align: center; vertical-align:  middle }
+    @bottom-right        { text-align: right;  vertical-align:  middle }
+    @bottom-right-corner { text-align: left;   vertical-align:  middle }
+}
