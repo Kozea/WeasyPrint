@@ -134,6 +134,11 @@ def background_positioning_area(page, box, style):
 
 
 def draw_canvas_background(document, context, page):
+    if not page.children or isinstance(page.children[0], boxes.MarginBox):
+        # Skip the canvas background on content-empty pages
+        # TODO: remove this when content empty pages still get boxes
+        # up to the break point, so that the backgrounds and borders are drawn.
+        return
     root_box = page.children[0]
     style = root_box.canvas_background
     draw_background(document, context, style,
