@@ -25,7 +25,30 @@ As an example, here is the `introduction chapter
 rendered with WeasyPrint:
 `CSS21-intro.pdf </samples/CSS21-intro.pdf>`_. It was obtained by running::
 
-    weasyprint http://www.w3.org/TR/CSS21/intro.html CSS21-intro.pdf
+    weasyprint http://www.w3.org/TR/CSS21/intro.html CSS21-intro.pdf \
+        -s http://weasyprint.org/samples/CSS21-print.css
+
+Here is the content of `CSS21-print.css`_:
+
+.. code-block:: css
+
+    @page {
+        font-family: Palatino;
+        @top-center {
+            content: "Introduction to CSS 2.1";
+            vertical-align: bottom;
+            border-bottom: thin solid;
+            margin-bottom: 1em;
+        }
+        @bottom-right {
+            content: "Page " counter(page) " of " counter(pages);
+        }
+    }
+    body { font-family: Palatino !important; text-align: justify; line-height: 1.25 }
+    hr.navbar { display: none }
+    h1 { page-break-before: auto !important }
+
+.. _CSS21-print.css: /samples/CSS21-print.css
 
 Current status
 --------------

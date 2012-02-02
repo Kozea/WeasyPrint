@@ -1,0 +1,15 @@
+@page {
+    font-family: Palatino;
+    @top-center {
+        content: "Introduction to CSS 2.1";
+        vertical-align: bottom;
+        border-bottom: thin solid;
+        margin-bottom: 1em;
+    }
+    @bottom-right {
+        content: "Page " counter(page) " of " counter(pages);
+    }
+}
+body { font-family: Palatino !important; text-align: justify; line-height: 1.25 }
+hr.navbar { display: none }
+h1 { page-break-before: auto !important }
