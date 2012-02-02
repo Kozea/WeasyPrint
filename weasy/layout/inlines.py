@@ -373,8 +373,14 @@ def split_inline_box(document, box, position_x, max_x, skip_stack,
         resume_at = None
 
     new_box = box.copy_with_children(children)
-    new_box.position_x = initial_position_x
-    new_box.width = position_x - content_box_left
+    if isinstance(box, boxes.LineBox):
+        # Line boxes already have a position_x which may not be the same
+        # as content_box_left when text-indent is non-zero.
+        # This is important for justified text.
+        new_box.width = position_x - new_box.position_x
+    else:
+        new_box.position_x = initial_position_x
+        new_box.width = position_x - content_box_left
 
     # Create a "strut":
     # http://www.w3.org/TR/CSS21/visudet.html#strut
