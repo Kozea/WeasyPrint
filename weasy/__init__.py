@@ -25,12 +25,11 @@ WeasyPrint converts web documents, mainly HTML documents with CSS, to PDF.
 
 """
 
-VERSION = __version__ = '0.4dev'  # Also change this in setup.py
-
-
 import argparse
+from .version import VERSION
 
 
+__version__ = VERSION
 __all__ = ['main']
 
 

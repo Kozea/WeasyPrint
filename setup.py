@@ -8,11 +8,16 @@ See the documentation at http://weasyprint.org/
 
 """
 
+import re
+from os import path
 from setuptools import setup, find_packages
+
+with open(path.join(path.dirname(__file__), 'weasy', 'version.py')) as fd:
+    VERSION = re.match("VERSION = '([^']+)'", fd.read().strip()).group(1)
 
 setup(
     name='WeasyPrint',
-    version='0.4dev',  # Also change this in weasy/__init__.py
+    version=VERSION,
     url='http://weasyprint.org/',
     license='GNU Affero General Public License v3',
     description='WeasyPrint converts web documents to PDF.',
