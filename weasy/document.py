@@ -70,6 +70,9 @@ class Document(object):
         self._pages = None
         self._image_cache = {}
 
+        # TODO: remove this when Margin boxes variable dimension is correct.
+        self._auto_margin_boxes_warning_shown = False
+
     @property
     def base_url(self):
         """The URL of the document, used for relative URLs it contains.

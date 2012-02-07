@@ -26,6 +26,7 @@ from __future__ import division
 
 import itertools
 
+from ..logging import LOGGER
 from ..formatting_structure import boxes, build
 from .blocks import block_level_layout, block_level_height
 from .percentages import resolve_percentages
@@ -165,7 +166,7 @@ def compute_fixed_dimension(box, outer, vertical, top_or_left):
     box.restore_box_attributes()
 
 
-def compute_variable_dimension(side_boxes, vertical, outer_sum):
+def compute_variable_dimension(document, side_boxes, vertical, outer_sum):
     """
     Compute and set a margin box fixed dimension on ``box``, as described in:
     http://dev.w3.org/csswg/css3-page/#margin-dimension
@@ -193,6 +194,14 @@ def compute_variable_dimension(side_boxes, vertical, outer_sum):
     )
 
     if box_b.box.exists:
+        # TODO: remove this when Margin boxes variable dimension is correct
+        if not document._auto_margin_boxes_warning_shown and (
+                any('auto' in [box.margin_a, box.margin_b]
+                    for box in side_boxes)):
+            LOGGER.warn("Margin boxes with 'auto' margins are not supported. "
+                        "You may get unexpected results.")
+            document._auto_margin_boxes_warning_shown = True
+
         # Rule 2:  outer(box_a) == outer(box_b)
         with_rule_2(side_boxes, outer_sum)
     else:
@@ -375,7 +384,8 @@ def make_margin_boxes(document, page, counter_values):
         if not any(box.exists for box in side_boxes):
             continue
         # We need the three boxes together for the variable dimension:
-        compute_variable_dimension(side_boxes, vertical, variable_outer)
+        compute_variable_dimension(
+            document, side_boxes, vertical, variable_outer)
         for box, delay in zip(side_boxes, [False, True, False]):
             if not box.exists:
                 continue

@@ -34,39 +34,34 @@ def with_rule_2(side_boxes, outer_sum):
     rule 2 applies.
     """
     box_a, box_b, box_c = side_boxes
-    first = True
+    seen = set()
     while 1:
         implementation, swap = IMPLEMENTATIONS[
             tuple(box.inner == 'auto' for box in side_boxes),
             tuple('auto' in [box.margin_a, box.margin_b] for box in side_boxes),
         ]
+        assert implementation not in seen  # break loops
+        seen.add(implementation)
         if swap:
             box_a, box_c = swap_ac(box_a, box_c)
         result = implementation(box_a, box_b, box_c, outer_sum)
         if swap:
             box_a, box_c = swap_ac(box_a, box_c)
 
-        # XXX
-        if result is NotImplemented:
-            LOGGER.error(
-                'Got NotImplemented for inners=%r, margins=%r',
-                [box.inner for box in side_boxes],
-                [(box.margin_a, box.margin_b) for box in side_boxes],
-                )
-            for box in side_boxes:
-                for attr in ['margin_a', 'margin_b', 'inner']:
-                    if getattr(box, attr) == 'auto':
-                        setattr(box, attr, 0)
-            return
-
         if result == 'ok':
             return
 
-        assert first  # break loops
+        # XXX
+        if result is NotImplemented:
+            for box in side_boxes:
+                if box.margin_a == 'auto':
+                    box.margin_a = 0
+                if box.margin_b == 'auto':
+                    box.margin_b = 0
+
         # Try again with less constraints
         box_a.margin_b = 'auto'
         box_c.margin_a = 'auto'
-        first = False
 
 
 def swap_ac(box_a, box_c):
