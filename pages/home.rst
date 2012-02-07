@@ -28,26 +28,20 @@ rendered with WeasyPrint:
     weasyprint http://www.w3.org/TR/CSS21/intro.html CSS21-intro.pdf \
         -s http://weasyprint.org/samples/CSS21-print.css
 
-Here is the content of `CSS21-print.css`_:
+Here an extract of `CSS21-print.css`_:
 
 .. code-block:: css
 
     @page {
-        font-family: Palatino;
         @top-center {
             content: "Introduction to CSS 2.1";
-            vertical-align: bottom;
             border-bottom: thin solid;
-            margin-bottom: 1em;
         }
         @bottom-right {
             content: "Page " counter(page) " of " counter(pages);
         }
     }
-    body { font-family: Palatino !important; text-align: justify;
-           line-height: 1.25; padding: 0 0 0 50px !important }
-    hr.navbar { display: none }
-    h1 { page-break-before: auto !important }
+    body { text-align: justify; padding: 0 0 0 50px !important }
 
 .. _CSS21-print.css: /samples/CSS21-print.css
 
