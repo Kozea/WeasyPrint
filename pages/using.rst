@@ -52,6 +52,15 @@ call ``write_to`` or access other attributes of the document.
 If you want to change something in WeasyPrint or just see how it works,
 it’s time to `start hacking </hacking>`_!
 
+Errors
+------
+
+If you get an exception from WeasyPrint during the document layout,
+*this is a bug*. Please copy the whole traceback and report it on our `issue tracker`_. (An error while loading your input document or writing the output is
+probably not a bug in WeasyPrint, though.)
+
+.. _issue tracker: http://redmine.kozea.fr/projects/weasyprint/issues
+
 Logging
 -------
 
