@@ -119,6 +119,9 @@ INITIAL_VALUES = {
     # CSS3 User Interface: http://www.w3.org/TR/css3-ui/#box-sizing
     'box_sizing': 'content-box',
 
+    # CSS3 Color: http://www.w3.org/TR/css3-color/#transparency
+    'opacity': 1,
+
     # Taken from SVG:
     # http://www.w3.org/TR/SVG/painting.html#ImageRenderingProperty
     'image_rendering': 'auto',

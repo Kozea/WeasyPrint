@@ -1450,3 +1450,32 @@ def test_clip():
         </style>
         <div>
     ''')
+
+
+@SUITE.test
+def test_opacity():
+    """Test the opacity property."""
+    template = '''
+        <style>
+            @page { -weasy-size: 200px 60px }
+            body { margin: 0; background: #fff }
+        </style>
+        %s
+    '''
+    assert_same_rendering(200, 60, [
+        ('opacity_0', template % '''
+            <div>Hello, world!</div>
+        '''),
+        ('opacity_0_reference', template % '''
+            <div>Hello, world!</div>
+            <div style="opacity: 0">Lorem ipsum</div>
+        '''),
+    ])
+    assert_same_rendering(200, 60, [
+        ('opacity_color', template % '''
+            <div style="color: black; opacity: 0.6">Hello, world!</div>
+        '''),
+        ('opacity_color_reference', template % '''
+            <div style="color: rgb(103, 102, 102)">Hello, world!</div>
+        '''),
+    ])

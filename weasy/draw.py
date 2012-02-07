@@ -100,6 +100,9 @@ def draw_box(document, context, page, box, parent=None):
                 context.rectangle(*box_rectangle(overflow_box, 'padding-box'))
                 context.clip()
 
+        if box.style.opacity < 1:
+            context.push_group()
+
         if box.style.visibility == 'visible':
             draw_box_background(document, context, page, box)
             draw_border(context, box)
@@ -126,6 +129,10 @@ def draw_box(document, context, page, box, parent=None):
         if isinstance(box, boxes.ParentBox):
             for child in box.children:
                 draw_box(document, context, page, child, parent=box)
+
+        if box.style.opacity < 1:
+            context.pop_group_to_source()
+            context.paint_with_alpha(box.style.opacity)
 
 
 def box_rectangle(box, which_rectangle):

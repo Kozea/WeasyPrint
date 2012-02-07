@@ -2,6 +2,7 @@ Version 0.5, released on 2012-XX-XX
 ===================================
 
 * Support for the ``overflow`` and ``clip`` properties.
+* Support for the ``opacity`` property from CSS3 Colors.
 
 
 Version 0.4, released on 2012-01-07

@@ -576,6 +576,14 @@ def length_or_precentage(value):
 
 
 @validator()
+@single_value
+def opacity(value):
+    """Validation for the ``opacity`` property."""
+    if value.type == 'NUMBER':
+        return min(1, max(0, value.value))
+
+
+@validator()
 @single_keyword
 def overflow(keyword):
     """Validation for the ``overflow`` property."""
