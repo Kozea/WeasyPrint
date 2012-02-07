@@ -9,7 +9,7 @@ Documentation
 Installing WeasyPrint
 ---------------------
 
-WeasyPrint 0.3 depends on:
+WeasyPrint 0.4 depends on:
 
 .. Note: keep this in sync with setup.py
 
@@ -19,8 +19,8 @@ WeasyPrint 0.3 depends on:
 * PyCairo
 * PIL
 * lxml
-* cssutils >= 0.9.8
-* CairoSVG
+* cssutils >= 0.9.9
+* CairoSVG >= 0.3
 
 Unless you distribution already has a package for WeasyPrint, (the `Kozea
 overlay`_ has one for Gentoo), we recommend that you install cssutils,

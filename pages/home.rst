@@ -48,7 +48,7 @@ Here an extract of `CSS21-print.css`_:
 Current status
 --------------
 
-WeasyPrint 0.2 can fetch a remote web page from an URL, find and fetch
+WeasyPrint 0.4 can fetch a remote web page from an URL, find and fetch
 associated stylesheets and images, and render it all to PDF or PNG.
 
 Floats and absolute positioning are not supported yet, but WeasyPrint

@@ -9,7 +9,7 @@ Documentation
 Features
 ~~~~~~~~
 
-WeasyPrint 0.3 supports:
+WeasyPrint 0.4 supports:
 
 (For older versions, see the changelog_.)
 
@@ -24,6 +24,9 @@ WeasyPrint 0.3 supports:
 * `CSS 3 Colors`_ except the ``opacity`` property.
 * `CSS 3 Selectors`_ except ``:lang``, ``:first-line`` and
   ``:first-letter``
+* From `CSS 3 Backgrounds and Borders`_: ``background-clip``,
+  ``background-origin`` and ``background-size``.
+* From `CSS 3 Paged Media`_: margin boxes and page counters.
 * `box-sizing`_ form CSS3 Basic User Interface
 * All of CSS 2.1 except:
 
@@ -34,12 +37,9 @@ WeasyPrint 0.3 supports:
   * `Collapsing margins`_
   * Minimum and maximum width_ and height_
   * Overflow_ and clip
-  * `Border styles`_ ``double``, ``groove``, ``ridge``, ``inset`` and ``outset``
   * `Vertical align`_ ``top`` and ``bottom`` (they are interpreted as
     ``text-top`` and ``text-bottom``, respectively)
-  * `Letter and word spacing`_
-  * `Justified text`_
-  * Controlling `page breaks`_ (``page-break-*``, ``orphans``, ``widows``)
+  * Avoiding `page breaks`_ (``page-break-*: avoid``, ``orphans``, ``widows``)
   * Conforming `font matching algorithm`_. Currently ``font-family``
     is directly passed to Pango.
   * `Bi-directional text`_. (May happen to kind of work in uninterrupted text
@@ -48,6 +48,7 @@ WeasyPrint 0.3 supports:
 .. _PIL: http://www.pythonware.com/products/pil/
 .. _CSS 3 Colors: http://www.w3.org/TR/css3-color/
 .. _CSS 3 Selectors: http://www.w3.org/TR/css3-selectors/
+.. _CSS 3 Backgrounds and Borders: http://www.w3.org/TR/css3-background/
 .. _box-sizing: http://www.w3.org/TR/css3-ui/#box-sizing
 .. _Floats: http://www.w3.org/TR/CSS21/visuren.html#floats
 .. _Absolute: http://www.w3.org/TR/CSS21/visuren.html#absolute-positioning
@@ -61,10 +62,7 @@ WeasyPrint 0.3 supports:
 .. _width: http://www.w3.org/TR/CSS21/visudet.html#min-max-widths
 .. _height: http://www.w3.org/TR/CSS21/visudet.html#min-max-heights
 .. _Overflow: http://www.w3.org/TR/CSS21/visufx.html#overflow-clipping
-.. _Border styles: http://www.w3.org/TR/CSS21/box.html#border-style-properties
 .. _Vertical align: http://www.w3.org/TR/CSS21/visudet.html#propdef-vertical-align
-.. _Letter and word spacing: http://www.w3.org/TR/CSS21/text.html#spacing-props
-.. _Justified text: http://www.w3.org/TR/CSS21/text.html#alignment-prop
 .. _page breaks: http://www.w3.org/TR/CSS21/page.html#page-breaks
 .. _font matching algorithm: http://www.w3.org/TR/CSS21/fonts.html#algorithm
 .. _Bi-directional text: http://www.w3.org/TR/CSS21/visuren.html#direction
