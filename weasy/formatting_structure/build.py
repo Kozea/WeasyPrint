@@ -59,6 +59,7 @@ def build_formatting_structure(document):
     box = inline_in_block(box)
     box = block_in_inline(box)
     box = set_canvas_background(box)
+    box = set_viewport_overflow(box)
     return box
 
 
@@ -871,8 +872,28 @@ def set_canvas_background(root_box):
                 break
 
     style = chosen_box.style
-    style_without_background = style.copy()
-    style_without_background.update(properties.BACKGROUND_INITIAL)
-    chosen_box.style = style_without_background
     root_box.canvas_background = style
+    chosen_box.style = style.updated_copy(properties.BACKGROUND_INITIAL)
+    return root_box
+
+
+def set_viewport_overflow(root_box):
+    """
+    Set a ``viewport_overflow`` attribute on the box for the root element.
+
+    Like backgrounds, ``overflow`` on the root element must be propagated
+    to the viewport.
+
+    See http://www.w3.org/TR/CSS21/visufx.html#overflow
+    """
+    chosen_box = root_box
+    if (root_box.element_tag.lower() == 'html' and
+            root_box.style.overflow == 'visible'):
+        for child in root_box.children:
+            if child.element_tag.lower() == 'body':
+                chosen_box = child
+                break
+
+    root_box.viewport_overflow = chosen_box.style.overflow
+    chosen_box.style = chosen_box.style.updated_copy({'overflow': 'visible'})
     return root_box

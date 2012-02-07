@@ -1371,3 +1371,48 @@ def test_unicode():
         assert_pixels_equal('unicode', 200, 50, lines, expected_lines)
     finally:
         shutil.rmtree(temp)
+
+
+@SUITE.test
+def test_overflow():
+    """Test the overflow property."""
+    assert_pixels('inline_image_overflow', 8, 8, [
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+r+B+B+B+_+_,
+        _+_+B+B+B+B+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { -weasy-size: 8px }
+            body { margin: 2px 0 0 2px; background: #fff }
+            div { height: 2px; overflow: hidden }
+        </style>
+        <div><img src="pattern.png"></div>
+    ''')
+
+    # <body> is only 1px high, but its overflow is propageted to the viewport
+    # ie. the padding edge of the page box.
+    assert_pixels('inline_image_viewport_overflow', 8, 8, [
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+r+B+B+B+_+_,
+        _+_+B+B+B+B+_+_,
+        _+_+B+B+B+B+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { -weasy-size: 8px; background: #fff;
+                    margin: 2px;
+                    padding-bottom: 2px;
+                    border-bottom: 1px transparent solid; }
+            body { height: 1px;
+                   overflow: hidden }
+        </style>
+        <div><img src="pattern.png"></div>
+    ''')

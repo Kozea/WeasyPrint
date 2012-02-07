@@ -543,6 +543,13 @@ def length_or_precentage(value):
         return value
 
 
+@validator()
+@single_keyword
+def overflow(keyword):
+    """Validation for the ``overflow`` property."""
+    return keyword in ('auto', 'visible', 'hidden', 'scroll')
+
+
 @validator('page-break-before')
 @validator('page-break-after')
 @single_keyword

@@ -149,8 +149,12 @@ def block_level_height(document, box, max_position_y, skip_stack,
     """Set the ``box`` height."""
     assert isinstance(box, boxes.BlockContainerBox)
 
-    if box.style.overflow != 'visible':
-        raise NotImplementedError
+    # TODO: this should make a differenc, but that is currently neglected.
+    # See http://www.w3.org/TR/CSS21/visudet.html#normal-block
+    #     http://www.w3.org/TR/CSS21/visudet.html#root-height
+
+    #if box.style.overflow != 'visible':
+    #    ...
 
     if box.margin_top == 'auto':
         box.margin_top = 0

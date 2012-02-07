@@ -102,8 +102,10 @@ class StyleDict(object):
     def __setitem__(self, key, value):
         self._storage[key] = value
 
-    def update(self, other):
-        self._storage.update(other)
+    def updated_copy(self, other):
+        copy = self.copy()
+        copy._storage.update(other)
+        return copy
 
     def __contains__(self, key):
         return key in self._parent or key in self._storage

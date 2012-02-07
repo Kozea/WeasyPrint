@@ -455,6 +455,8 @@ def margin_box_content_layout(document, page, box):
 
 def make_empty_page(document, page_type):
     style = document.style_for(page_type)
+    # Propagated from the root or <body>.
+    style.overflow = document.formatting_structure.viewport_overflow
     page = boxes.PageBox(page_type, style)
 
     device_size = page.style.size

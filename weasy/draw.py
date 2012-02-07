@@ -95,8 +95,12 @@ def draw_box(document, context, page, box):
         draw_canvas_background(document, context, page)
 
     if isinstance(box, boxes.ParentBox):
-        for child in box.children:
-            draw_box(document, context, page, child)
+        with context.stacked():
+            if box.style.overflow == 'hidden':
+                context.rectangle(*box_rectangle(box, 'padding-box'))
+                context.clip()
+            for child in box.children:
+                draw_box(document, context, page, child)
 
 
 def box_rectangle(box, which_rectangle):
