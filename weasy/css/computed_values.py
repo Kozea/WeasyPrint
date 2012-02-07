@@ -218,6 +218,7 @@ def other_color(computer, name, value):
 @register_computer('background-position')
 @register_computer('border-spacing')
 @register_computer('size')
+@register_computer('clip')
 def length_list(computer, name, values):
     """Compute the properties with a list of lengths."""
     return [length(computer, name, value) for value in values]

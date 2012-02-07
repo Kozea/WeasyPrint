@@ -306,6 +306,27 @@ def caption_side(keyword):
 
 
 @validator()
+@single_value
+def clip(value):
+    """Validation for the ``clip`` property."""
+    function = parse_function(value)
+    if function:
+        name, args = function
+        if name == 'rect' and len(args) == 4:
+            values = []
+            for arg in args:
+                if get_keyword(arg) == 'auto':
+                    values.append('auto')
+                elif is_dimension(arg, negative=True):
+                    values.append(arg)
+                else:
+                    raise InvalidValues
+            return values
+    if get_keyword(value) == 'auto':
+        return []
+
+
+@validator()
 def content(values):
     """``content`` property validation."""
     keyword = get_single_keyword(values)
@@ -331,7 +352,30 @@ def validate_content_value(value):
         return ('STRING', value.value)
     if type_ == 'URI':
         return ('URI', value.absoluteUri)
-    elif type_ == 'FUNCTION':
+    function = parse_function(value)
+    if function:
+        name, args = function
+        prototype = (name, [a.type for a in args])
+        args = [a.value for a in args]
+        if prototype == ('attr', ['IDENT']):
+            return (name, args[0])
+        elif prototype in (('counter', ['IDENT']),
+                           ('counters', ['IDENT', 'STRING'])):
+            args.append('decimal')
+            return (name, args)
+        elif prototype in (('counter', ['IDENT', 'IDENT']),
+                           ('counters', ['IDENT', 'STRING', 'IDENT'])):
+            style = args[-1]
+            if style in ('none', 'decimal') or style in counters.STYLES:
+                return (name, args)
+
+
+def parse_function(value):
+    """Return ``(name, args)`` if the given value is a function
+    with comma-separated arguments, or None.
+    .
+    """
+    if value.type == 'FUNCTION':
         seq = [e.value for e in value.seq]
         # seq is expected to look like
         # ['name(', ARG_1, ',', ARG_2, ',', ..., ARG_N, ')']
@@ -339,19 +383,7 @@ def validate_content_value(value):
                 all(v == ',' for v in seq[2:-1:2])):
             name = seq[0][:-1]
             args = seq[1:-1:2]
-            prototype = (name, [a.type for a in args])
-            args = [a.value for a in args]
-            if prototype == ('attr', ['IDENT']):
-                return (name, args[0])
-            elif prototype in (('counter', ['IDENT']),
-                               ('counters', ['IDENT', 'STRING'])):
-                args.append('decimal')
-                return (name, args)
-            elif prototype in (('counter', ['IDENT', 'IDENT']),
-                               ('counters', ['IDENT', 'STRING', 'IDENT'])):
-                style = args[-1]
-                if style in ('none', 'decimal') or style in counters.STYLES:
-                    return (name, args)
+            return name, args
 
 
 @validator()

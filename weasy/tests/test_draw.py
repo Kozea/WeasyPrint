@@ -1376,6 +1376,7 @@ def test_unicode():
 @SUITE.test
 def test_overflow():
     """Test the overflow property."""
+    # See test_images
     assert_pixels('inline_image_overflow', 8, 8, [
         _+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_,
@@ -1415,4 +1416,37 @@ def test_overflow():
                    overflow: hidden }
         </style>
         <div><img src="pattern.png"></div>
+    ''')
+
+
+@SUITE.test
+def test_clip():
+    """Test the clip property."""
+    # See test_background_image
+    assert_pixels('background_repeat_clipped', 14, 16, [
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+r+B+B+B+r+B+_+_,
+        _+_+_+_+_+_+B+B+B+B+B+B+_+_,
+        _+_+_+_+_+_+B+B+B+B+B+B+_+_,
+        _+_+_+_+_+_+B+B+B+B+B+B+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+
+    ], '''
+        <style>
+            @page { -weasy-size: 14px 16px; background: #fff }
+            div { margin: 2px; height: 10px;
+                  background: url(pattern.png);
+                  clip: rect(4px, 4px, 8px, auto); }
+        </style>
+        <div>
     ''')

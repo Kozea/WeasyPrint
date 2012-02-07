@@ -52,7 +52,7 @@ INITIAL_VALUES = {
     'bottom': 'auto',
     'caption_side': 'top',
     'clear': 'none',
-    'clip': 'auto',
+    'clip': (),  # empty collection, computed value for 'auto'
     'color': PropertyValue('#000')[0],     # depends on user agent
     'content': 'normal',
     # Means 'none', but allow `display: list-item` to increment the

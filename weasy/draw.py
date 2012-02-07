@@ -69,38 +69,63 @@ def draw_page(document, page, context):
     draw_box(document, context, page, page)
 
 
-def draw_box(document, context, page, box):
+def draw_box(document, context, page, box, parent=None):
     """Draw a ``box`` on ``context``."""
-    if box.style.visibility == 'visible':
-        draw_box_background(document, context, page, box)
-        draw_border(context, box)
-
-        marker_box = getattr(box, 'outside_list_marker', None)
-        if marker_box:
-            draw_box(document, context, page, marker_box)
-
-        if isinstance(box, boxes.TextBox):
-            draw_text(context, box)
-            return
-
-        if isinstance(box, boxes.ReplacedBox):
-            draw_replacedbox(context, box)
-
-    if isinstance(box, boxes.TableBox):
-        for child in box.column_groups:
-            draw_box(document, context, page, child)
-
-    # XXX TODO: check the painting order for page boxes
-    if box is page:
-        draw_canvas_background(document, context, page)
-
-    if isinstance(box, boxes.ParentBox):
-        with context.stacked():
-            if box.style.overflow == 'hidden':
-                context.rectangle(*box_rectangle(box, 'padding-box'))
+    with context.stacked():
+        if box is not page:
+            if box.style.clip:
+                top, right, bottom, left = box.style.clip
+                if top == 'auto':
+                    top = 0
+                if right == 'auto':
+                    right = 0
+                if bottom == 'auto':
+                    bottom = box.padding_height()
+                if left == 'auto':
+                    left = box.padding_width()
+                context.rectangle(
+                    box.padding_box_x() + right,
+                    box.padding_box_y() + top,
+                    left - right,
+                    bottom - top)
                 context.clip()
-            for child in box.children:
+
+            # TODO: find a better way to do this test?
+            if parent is page and not isinstance(box, boxes.MarginBox):
+                overflow_box = page
+            else:
+                overflow_box = box
+
+            if overflow_box.style.overflow == 'hidden':
+                context.rectangle(*box_rectangle(overflow_box, 'padding-box'))
+                context.clip()
+
+        if box.style.visibility == 'visible':
+            draw_box_background(document, context, page, box)
+            draw_border(context, box)
+
+            marker_box = getattr(box, 'outside_list_marker', None)
+            if marker_box:
+                draw_box(document, context, page, marker_box)
+
+            if isinstance(box, boxes.TextBox):
+                draw_text(context, box)
+                return
+
+            if isinstance(box, boxes.ReplacedBox):
+                draw_replacedbox(context, box)
+
+        if isinstance(box, boxes.TableBox):
+            for child in box.column_groups:
                 draw_box(document, context, page, child)
+
+        # XXX TODO: check the painting order for page boxes
+        if box is page:
+            draw_canvas_background(document, context, page)
+
+        if isinstance(box, boxes.ParentBox):
+            for child in box.children:
+                draw_box(document, context, page, child, parent=box)
 
 
 def box_rectangle(box, which_rectangle):
