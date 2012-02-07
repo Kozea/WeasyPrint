@@ -1463,19 +1463,34 @@ def test_opacity():
         %s
     '''
     assert_same_rendering(200, 60, [
-        ('opacity_0', template % '''
-            <div>Hello, world!</div>
-        '''),
         ('opacity_0_reference', template % '''
             <div>Hello, world!</div>
             <div style="opacity: 0">Lorem ipsum</div>
         '''),
+        ('opacity_0', template % '''
+            <div>Hello, world!</div>
+        '''),
     ])
     assert_same_rendering(200, 60, [
+        ('opacity_color_reference', template % '''
+            <div style="color: rgb(102, 102, 102)">Hello, world!</div>
+        '''),
         ('opacity_color', template % '''
             <div style="color: black; opacity: 0.6">Hello, world!</div>
         '''),
-        ('opacity_color_reference', template % '''
-            <div style="color: rgb(103, 102, 102)">Hello, world!</div>
+    ])
+    assert_same_rendering(200, 60, [
+        ('opacity_multiplied_reference', template % '''
+            <div style="color: transparent;
+                background: rgb(102, 102, 102)">Hello, world!</div>
         '''),
+        ('opacity_multiplied', template % '''
+            <div style="color: transparent;
+                background: black; opacity: 0.6">Hello, world!</div>
+        '''),
+        ('opacity_multiplied_2', template % '''
+            <div style="opacity: 0.666666">
+            <div style="color: transparent;
+                background: black; opacity: 0.9">Hello, world!</div>
+        '''),  #  0.9 * 0.666666 == 0.6
     ])
