@@ -44,6 +44,8 @@ Here an extract of `CSS21-print.css`_:
 .. code-block:: css
 
     @page {
+        margin: 3cm 2cm;
+        padding-left: 1.5cm;
         @top-center {
             content: "Introduction to CSS 2.1";
             vertical-align: bottom;
@@ -59,6 +61,6 @@ Here an extract of `CSS21-print.css`_:
             -weasy-transform: rotate(-90deg);
         }
     }
-    body { text-align: justify; padding: 0 0 0 1.5cm !important }
+    body { text-align: justify }
 
 .. _CSS21-print.css: /samples/CSS21-print.css

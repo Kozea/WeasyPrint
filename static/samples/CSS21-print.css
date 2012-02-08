@@ -1,6 +1,7 @@
 @page {
     font-family: Palatino;
     margin: 3cm 2cm;
+    padding-left: 1.5cm;
     @top-center {
         content: "Introduction to CSS 2.1";
         vertical-align: bottom;
@@ -19,8 +20,7 @@
         -weasy-transform: rotate(-90deg);
     }
 }
-body { font-family: Palatino !important; text-align: justify;
-       line-height: 1.25; padding: 0 0 0 1.5cm !important;
-       background: none !important; }
+body { font: 12pt/1.25 Palatino !important; text-align: justify;
+       padding: 0 !important; background: none !important; }
 hr.navbar { display: none }
 h1 { page-break-before: auto !important }
