@@ -90,16 +90,6 @@ def draw_box(document, context, page, box, parent=None):
                     bottom - top)
                 context.clip()
 
-            # TODO: find a better way to do this test?
-            if parent is page and not isinstance(box, boxes.MarginBox):
-                overflow_box = page
-            else:
-                overflow_box = box
-
-            if overflow_box.style.overflow == 'hidden':
-                context.rectangle(*box_rectangle(overflow_box, 'padding-box'))
-                context.clip()
-
         if box.style.opacity < 1:
             context.push_group()
 
@@ -125,6 +115,16 @@ def draw_box(document, context, page, box, parent=None):
         # XXX TODO: check the painting order for page boxes
         if box is page:
             draw_canvas_background(document, context, page)
+        else:
+            # TODO: find a better way to do this test?
+            if parent is page and not isinstance(box, boxes.MarginBox):
+                overflow_box = page
+            else:
+                overflow_box = box
+
+            if overflow_box.style.overflow == 'hidden':
+                context.rectangle(*box_rectangle(overflow_box, 'padding-box'))
+                context.clip()
 
         if isinstance(box, boxes.ParentBox):
             for child in box.children:
