@@ -1,16 +1,26 @@
 @page {
     font-family: Palatino;
+    margin: 3cm 2cm;
     @top-center {
         content: "Introduction to CSS 2.1";
         vertical-align: bottom;
         border-bottom: thin solid;
-        margin-bottom: 1em;
+        margin-bottom: .7cm;
+        font-size: 1.3em;
     }
     @bottom-right {
         content: "Page " counter(page) " of " counter(pages);
     }
+    @left-top {
+        content: "W3C Recommendation"; font: .5cm/1.5 sans;
+        background: #005a9c; color: #fff; text-align: right;
+        padding-right: 2em; height: 1.5em; width: 10cm;
+        -weasy-transform-origin: 100% 0;
+        -weasy-transform: rotate(-90deg);
+    }
 }
 body { font-family: Palatino !important; text-align: justify;
-       line-height: 1.25; padding: 0 0 0 50px !important }
+       line-height: 1.25; padding: 0 0 0 1.5cm !important;
+       background: none !important; }
 hr.navbar { display: none }
 h1 { page-break-before: auto !important }

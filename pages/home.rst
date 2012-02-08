@@ -25,8 +25,7 @@ As an example, here is the `introduction chapter
 rendered with WeasyPrint:
 `CSS21-intro.pdf </samples/CSS21-intro.pdf>`_. It was obtained by running::
 
-    weasyprint http://www.w3.org/TR/CSS21/intro.html CSS21-intro.pdf \
-        -s http://weasyprint.org/samples/CSS21-print.css
+    weasyprint http://www.w3.org/TR/CSS21/intro.html CSS21-intro.pdf -s http://weasyprint.org/samples/CSS21-print.css
 
 Here an extract of `CSS21-print.css`_:
 
@@ -35,13 +34,20 @@ Here an extract of `CSS21-print.css`_:
     @page {
         @top-center {
             content: "Introduction to CSS 2.1";
+            vertical-align: bottom;
             border-bottom: thin solid;
         }
         @bottom-right {
             content: "Page " counter(page) " of " counter(pages);
         }
+        @left-top {
+            content: "W3C Recommendation";
+            background: #005a9c; color: #fff; text-align: right;
+            -weasy-transform-origin: 100% 0;
+            -weasy-transform: rotate(-90deg);
+        }
     }
-    body { text-align: justify; padding: 0 0 0 50px !important }
+    body { text-align: justify; padding: 0 0 0 1.5cm !important }
 
 .. _CSS21-print.css: /samples/CSS21-print.css
 

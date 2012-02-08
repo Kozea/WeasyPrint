@@ -56,9 +56,9 @@ body{
   line-height:1.3em;
   margin: -2em 0 0 0;
   min-height: 100%;
-  padding: 0 0 2em 0;
+  padding: 0 2% 2em 2%;
   position: absolute;
-  width: 100%;
+  width: 96%;
 }
 
 /*
@@ -165,6 +165,7 @@ pre{
   color: #EEEEEC;
   padding:1em;
   text-shadow: 1px 1px 1px #111;
+  white-space: pre-wrap;
 }
 
 /*
@@ -252,7 +253,8 @@ body > section {
   border-radius: 0.2em;
   box-shadow: 0 0 2px #b7b7b7 ;
   padding: 1px 30px 32px;
-  margin: 0 20% 2em;
+  margin: 0 auto 2em;
+  max-width: 900px;
   line-height:1.3em;
   font-size: 1.2em;
 }
