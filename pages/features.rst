@@ -9,7 +9,7 @@ Documentation
 Features
 ~~~~~~~~
 
-WeasyPrint 0.4 supports:
+WeasyPrint 0.5 supports:
 
 (For older versions, see the changelog_.)
 
@@ -21,9 +21,10 @@ WeasyPrint 0.4 supports:
   * Raster and SVG images in ``<img>`` elements. (Support for raster file
     formats is that of the PIL_)
 
-* `CSS 3 Colors`_ except the ``opacity`` property.
+* `CSS 3 Colors`_
 * `CSS 3 Selectors`_ except ``:lang``, ``:first-line`` and
   ``:first-letter``
+* `CSS 2D Transforms`_
 * From `CSS 3 Backgrounds and Borders`_: ``background-clip``,
   ``background-origin`` and ``background-size``.
 * From `CSS 3 Paged Media`_: margin boxes and page counters.
@@ -36,7 +37,6 @@ WeasyPrint 0.4 supports:
   * `Automatic table layout`_ and table `border collapsing`_
   * `Collapsing margins`_
   * Minimum and maximum width_ and height_
-  * Overflow_ and clip
   * `Vertical align`_ ``top`` and ``bottom`` (they are interpreted as
     ``text-top`` and ``text-bottom``, respectively)
   * Avoiding `page breaks`_ (``page-break-*: avoid``, ``orphans``, ``widows``)
@@ -61,7 +61,6 @@ WeasyPrint 0.4 supports:
 .. _Collapsing margins: http://www.w3.org/TR/CSS21/box.html#collapsing-margins
 .. _width: http://www.w3.org/TR/CSS21/visudet.html#min-max-widths
 .. _height: http://www.w3.org/TR/CSS21/visudet.html#min-max-heights
-.. _Overflow: http://www.w3.org/TR/CSS21/visufx.html#overflow-clipping
 .. _Vertical align: http://www.w3.org/TR/CSS21/visudet.html#propdef-vertical-align
 .. _page breaks: http://www.w3.org/TR/CSS21/page.html#page-breaks
 .. _font matching algorithm: http://www.w3.org/TR/CSS21/fonts.html#algorithm
@@ -75,8 +74,15 @@ These features are only described in *Working Draft* specification.
 As they are `at risk of changing`_, you need to use th ``-weasy-`` prefix
 to use them.
 
+WeasyPrint tries to follow specification changes. Be aware of this if you
+use any experimental feature!
+
 * The ``size`` property from `CSS 3 Paged Media`_ to set the page size.
   Use ``-weasy-size``.
 
+* `CSS 2D Transforms`_: use ``-weasy-transform`` and
+  ``-weasy-transform-origin``.
+
 .. _at risk of changing: http://www.w3.org/TR/css-2010/#experimental
 .. _CSS 3 Paged Media: http://www.w3.org/TR/css3-page/
+.. _CSS 2D Transforms: http://www.w3.org/TR/css3-2d-transforms/

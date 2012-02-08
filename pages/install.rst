@@ -9,7 +9,7 @@ Documentation
 Installing WeasyPrint
 ---------------------
 
-WeasyPrint 0.4 depends on:
+WeasyPrint 0.5 depends on:
 
 .. Note: keep this in sync with setup.py
 
