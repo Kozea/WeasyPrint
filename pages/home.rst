@@ -17,6 +17,18 @@ Get started by `installing it </install/>`_ or jump to:
  * `Continuous integration <http://jenkins.kozea.org/job/WeasyPrint/>`_
  * `Get in touch </community/>`_
 
+
+Current status
+--------------
+
+Give it an URL and WeasyPrint will fetch and render a web document just
+like a web browsers, except that the output is a PDF with nice page breaks.
+
+Some layout styles (floats, absolute positioning, ...) are not supported yet,
+but WeasyPrint can already be useful for documents with “simple” layout.
+See the `features </features/>`_ page for what exactly is supported or not.
+
+
 Sample output
 -------------
 
@@ -50,14 +62,3 @@ Here an extract of `CSS21-print.css`_:
     body { text-align: justify; padding: 0 0 0 1.5cm !important }
 
 .. _CSS21-print.css: /samples/CSS21-print.css
-
-Current status
---------------
-
-WeasyPrint 0.4 can fetch a remote web page from an URL, find and fetch
-associated stylesheets and images, and render it all to PDF or PNG.
-
-Floats and absolute positioning are not supported yet, but WeasyPrint
-can already be useful for pages with “simple” layout (ie. static positioning
-and tables.)
-See the `features </features/>`_ page for what exactly is supported or not.
