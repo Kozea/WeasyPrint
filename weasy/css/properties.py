@@ -122,6 +122,10 @@ INITIAL_VALUES = {
     # CSS3 Color: http://www.w3.org/TR/css3-color/#transparency
     'opacity': 1,
 
+    # CSS3 2D Transforms: http://www.w3.org/TR/css3-2d-transforms
+    'transform_origin': list(PropertyValue('50% 50%')),
+    'transform': (),  # computed value for 'none'
+
     # Taken from SVG:
     # http://www.w3.org/TR/SVG/painting.html#ImageRenderingProperty
     'image_rendering': 'auto',
@@ -191,6 +195,8 @@ INHERITED = set("""
     white_space
     widows
     word_spacing
+
+    image_rendering
 """.split())
 
 # Inherited but not applicable to print:

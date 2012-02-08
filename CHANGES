@@ -3,6 +3,8 @@ Version 0.5, released on 2012-XX-XX
 
 * Support for the ``overflow`` and ``clip`` properties.
 * Support for the ``opacity`` property from CSS3 Colors.
+* Support for CSS 2D Transforms. These are prefixed, so you need to use
+  ``-weasy-transform`` and ``-weasy-transform-origin``.
 
 
 Version 0.4, released on 2012-01-07

@@ -21,7 +21,10 @@ Normalize values as much as possible without rendering the document.
 
 """
 
+from __future__ import division
+
 import collections
+import math
 
 from .properties import INITIAL_VALUES
 
@@ -35,6 +38,15 @@ LENGTHS_TO_PIXELS = {
     'in': 96.,  # LENGTHS_TO_PIXELS['pt'] * 72
     'cm': 96. / 2.54,  # LENGTHS_TO_PIXELS['in'] / 2.54
     'mm': 96. / 25.4,  # LENGTHS_TO_PIXELS['in'] / 25.4
+}
+
+# http://dev.w3.org/csswg/css3-values/#angles
+# How many radians is one <unit>?
+ANGLE_TO_RADIANS = {
+    'rad': 1,
+    'turn': 2 * math.pi,
+    'deg': math.pi / 180,
+    'grad': math.pi / 200,
 }
 
 # Value in pixels of font-size for <absolute-size> keywords: 12pt (16px) for
@@ -219,6 +231,7 @@ def other_color(computer, name, value):
 @register_computer('border-spacing')
 @register_computer('size')
 @register_computer('clip')
+@register_computer('transform-origin')
 def length_list(computer, name, values):
     """Compute the properties with a list of lengths."""
     return [length(computer, name, value) for value in values]
@@ -240,7 +253,7 @@ def length_list(computer, name, values):
 @register_computer('padding-bottom')
 @register_computer('padding-left')
 @register_computer('text-indent')
-def length(computer, name, value):
+def length(computer, name, value, font_size=None):
     """Compute a length ``value``."""
     if getattr(value, 'type', 'other') == 'NUMBER' and value.value == 0:
         return 0
@@ -253,7 +266,10 @@ def length(computer, name, value):
         # Convert absolute lengths to pixels
         factor = LENGTHS_TO_PIXELS[value.dimension]
     elif value.dimension in ('em', 'ex'):
-        factor = computer.computed.font_size
+        if font_size is None:
+            factor = computer.computed.font_size
+        else:
+            factor = font_size
 
     if value.dimension == 'ex':
         factor *= 0.5
@@ -436,3 +452,10 @@ def used_line_height(style):
         return value * style['font_size']
     else:
         return value
+
+
+def angle_to_radian(value):
+    """Take a cssutils DimensionValue for an angle and return the value
+    in radians.
+    """
+    return value.value * ANGLE_TO_RADIANS[value.dimension]

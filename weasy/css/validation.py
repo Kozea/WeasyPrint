@@ -144,6 +144,12 @@ def is_dimension_or_percentage(value, negative=True):
         value.type == 'PERCENTAGE' and (negative or value.value >= 0))
 
 
+def is_angle(value):
+    """Return whether the argument is an angle value."""
+    return value.type == 'DIMENSION' and \
+        value.dimension in computed_values.ANGLE_TO_RADIANS
+
+
 @validator()
 @single_keyword
 def background_attachment(keyword):
@@ -177,6 +183,7 @@ def image(value):
         return value.absoluteUri
 
 
+@validator('transform-origin', prefixed=True)  # Not in CR yet
 @validator()
 def background_position(values):
     """``background-position`` property validation.
@@ -741,6 +748,42 @@ def size(values):
             else:
                 height, width = width_height
                 return width, height
+
+
+@validator(prefixed=True)  # Not in CR yet
+def transform(values):
+    if get_single_keyword(values) == 'none':
+        return 'none'
+    else:
+        return map(transform_function, values)
+
+
+def transform_function(value):
+    function = parse_function(value)
+    if not function:
+        raise InvalidValues
+    name, args = function  # cssutils has already made name lower-case
+
+    if len(args) == 1:
+        if name in ('rotate', 'skewx', 'skewy') and is_angle(args[0]):
+            return name, args[0]
+        elif name == 'translatex' and is_dimension_or_percentage(args[0]):
+            return 'translate', (args[0], 0)
+        elif name == 'translatey' and is_dimension_or_percentage(args[0]):
+            return 'translate', (0, args[0])
+        elif name == 'scalex' and args[0].type == 'NUMBER':
+            return 'scale', (args[0].value, 1)
+        elif name == 'scaley' and args[0].type == 'NUMBER':
+            return 'scale', (1, args[0].value)
+    elif len(args) == 2:
+        if name == 'scale' and all(a.type == 'NUMBER' for a in args):
+            return name, [arg.value for arg in args]
+        if name == 'translate' and all(map(is_dimension_or_percentage, args)):
+            return name, args
+    elif len(args) == 6 and name == 'matrix' and all(
+            a.type == 'NUMBER' for a in args):
+        return name, [arg.value for arg in args]
+    raise InvalidValues
 
 
 # Expanders

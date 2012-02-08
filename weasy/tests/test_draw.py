@@ -1494,3 +1494,193 @@ def test_opacity():
                 background: black; opacity: 0.9">Hello, world!</div>
         '''),  #  0.9 * 0.666666 == 0.6
     ])
+
+
+@SUITE.test
+def test_2d_transform():
+    """Test 2D transformations."""
+    assert_pixels('image_rotate90', 8, 8, [
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+B+B+B+r+_+_,
+        _+_+B+B+B+B+_+_,
+        _+_+B+B+B+B+_+_,
+        _+_+B+B+B+B+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { -weasy-size: 8px; margin: 2px; background: #fff; }
+            div { -weasy-transform: rotate(90deg); }
+        </style>
+        <div><img src="pattern.png"></div>
+    ''')
+
+    assert_pixels('image_reflection', 8, 8, [
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+B+B+B+r+_+_,
+        _+_+B+B+B+B+_+_,
+        _+_+B+B+B+B+_+_,
+        _+_+B+B+B+B+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { -weasy-size: 8px; margin: 2px; background: #fff; }
+            div { -weasy-transform: matrix(-1, 0, 0, 1, 0, 0); }
+        </style>
+        <div><img src="pattern.png"></div>
+    ''')
+
+    assert_pixels('image_translate', 8, 8, [
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+_+r+B+B+B+_,
+        _+_+_+B+B+B+B+_,
+        _+_+_+B+B+B+B+_,
+        _+_+_+B+B+B+B+_,
+    ], '''
+        <style>
+            @page { -weasy-size: 8px; margin: 2px; background: #fff; }
+            div { -weasy-transform: translate(1px, 2px); }
+        </style>
+        <div><img src="pattern.png"></div>
+    ''')
+
+    assert_pixels('image_translate_percentage', 8, 8, [
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+_+r+B+B+B+_,
+        _+_+_+B+B+B+B+_,
+        _+_+_+B+B+B+B+_,
+        _+_+_+B+B+B+B+_,
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { -weasy-size: 8px; margin: 2px; background: #fff; }
+            div { -weasy-transform: translate(25%, 0); }
+        </style>
+        <div><img src="pattern.png"></div>
+    ''')
+
+    assert_pixels('image_translateX', 8, 8, [
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+r+B+B,
+        _+_+_+_+_+B+B+B,
+        _+_+_+_+_+B+B+B,
+        _+_+_+_+_+B+B+B,
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { -weasy-size: 8px; margin: 2px; background: #fff; }
+            div { -weasy-transform: translateX(0.25em); font-size: 12px; }
+        </style>
+        <div><img src="pattern.png"></div>
+    ''')
+
+    assert_pixels('image_translateY', 8, 8, [
+        _+_+_+_+_+_+_+_,
+        _+_+r+B+B+B+_+_,
+        _+_+B+B+B+B+_+_,
+        _+_+B+B+B+B+_+_,
+        _+_+B+B+B+B+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { -weasy-size: 8px; margin: 2px; background: #fff; }
+            div { -weasy-transform: translateY(-1px); }
+        </style>
+        <div><img src="pattern.png"></div>
+    ''')
+
+    assert_pixels('image_scale', 10, 10, [
+        _+_+_+_+_+_+_+_+_+_,
+        _+r+r+B+B+B+B+B+B+_,
+        _+r+r+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+_+_+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { -weasy-size: 10px; margin: 2px; background: #fff; }
+            div { -weasy-transform: scale(2, 2);
+                  -weasy-transform-origin: 1px 1px;
+                  -weasy-image-rendering: optimizeSpeed; }
+        </style>
+        <div><img src="pattern.png"></div>
+    ''')
+
+    assert_pixels('image_scale12', 10, 10, [
+        _+_+_+_+_+_+_+_+_+_,
+        _+_+r+B+B+B+_+_+_+_,
+        _+_+r+B+B+B+_+_+_+_,
+        _+_+B+B+B+B+_+_+_+_,
+        _+_+B+B+B+B+_+_+_+_,
+        _+_+B+B+B+B+_+_+_+_,
+        _+_+B+B+B+B+_+_+_+_,
+        _+_+B+B+B+B+_+_+_+_,
+        _+_+B+B+B+B+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { -weasy-size: 10px; margin: 2px; background: #fff; }
+            div { -weasy-transform: scale(1, 2);
+                  -weasy-transform-origin: 1px 1px;
+                  -weasy-image-rendering: optimizeSpeed; }
+        </style>
+        <div><img src="pattern.png"></div>
+    ''')
+
+    assert_pixels('image_scaleY', 10, 10, [
+        _+_+_+_+_+_+_+_+_+_,
+        _+_+r+B+B+B+_+_+_+_,
+        _+_+r+B+B+B+_+_+_+_,
+        _+_+B+B+B+B+_+_+_+_,
+        _+_+B+B+B+B+_+_+_+_,
+        _+_+B+B+B+B+_+_+_+_,
+        _+_+B+B+B+B+_+_+_+_,
+        _+_+B+B+B+B+_+_+_+_,
+        _+_+B+B+B+B+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { -weasy-size: 10px; margin: 2px; background: #fff; }
+            div { -weasy-transform: scaleY(2);
+                  -weasy-transform-origin: 1px 1px;
+                  -weasy-image-rendering: optimizeSpeed; }
+        </style>
+        <div><img src="pattern.png"></div>
+    ''')
+
+    assert_pixels('image_scaleX', 10, 10, [
+        _+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_,
+        _+r+r+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { -weasy-size: 10px; margin: 2px; background: #fff; }
+            div { -weasy-transform: scaleX(2);
+                  -weasy-transform-origin: 1px 1px;
+                  -weasy-image-rendering: optimizeSpeed; }
+        </style>
+        <div><img src="pattern.png"></div>
+    ''')

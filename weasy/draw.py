@@ -24,11 +24,13 @@ Module drawing documents.
 
 from __future__ import division
 import contextlib
+import math
 
 import cairo
 
 from .formatting_structure import boxes
 from .css.values import get_percentage_value
+from .css import computed_values
 
 
 # Map values of the image-rendering property to cairo FILTER values:
@@ -72,6 +74,8 @@ def draw_page(document, page, context):
 def draw_box(document, context, page, box, parent=None):
     """Draw a ``box`` on ``context``."""
     with context.stacked():
+        apply_2d_transforms(context, box)
+
         if box is not page:
             if box.style.clip:
                 top, right, bottom, left = box.style.clip
@@ -193,6 +197,15 @@ def draw_box_background(document, context, page, box):
         positioning_area=background_positioning_area(page, box, box.style))
 
 
+def percentage(value, refer_to):
+    """Return the evaluated percentage value, or the value unchanged."""
+    percentage_value = get_percentage_value(value)
+    if percentage_value is None:
+        return value
+    else:
+        return refer_to * percentage_value / 100
+
+
 def draw_background(document, context, style, painting_area, positioning_area):
     """Draw the background color and image to a ``cairo.Context``."""
     bg_color = style.background_color
@@ -219,13 +232,6 @@ def draw_background(document, context, style, painting_area, positioning_area):
         # Background image
         if image is None:
             return
-
-        def percentage(value, refer_to):
-            percentage_value = get_percentage_value(value)
-            if percentage_value is None:
-                return value
-            else:
-                return refer_to * percentage_value / 100
 
         (positioning_x, positioning_y,
             positioning_width, positioning_height) = positioning_area
@@ -555,3 +561,45 @@ def draw_text_decoration(context, position_y, textbox):
         context.move_to(textbox.position_x, position_y)
         context.rel_line_to(textbox.width, 0)
         context.stroke()
+
+
+def apply_2d_transforms(context, box):
+    # "Transforms apply to block-level and atomic inline-level elements,
+    #  but do not apply to elements which may be split into
+    #  multiple inline-level boxes."
+    # http://www.w3.org/TR/css3-2d-transforms/#introduction
+    if box.style.transform and not isinstance(box, boxes.InlineBox):
+        border_width = box.border_width()
+        border_height = box.border_height()
+        origin_x, origin_y = box.style.transform_origin
+        origin_x = percentage(origin_x, border_width)
+        origin_y = percentage(origin_y, border_height)
+        origin_x += box.border_box_x()
+        origin_y += box.border_box_y()
+
+        def length(value, font_size=box.style.font_size):
+            return computed_values.length(None, None, value, font_size)
+        angle = computed_values.angle_to_radian
+
+        context.translate(origin_x, origin_y)
+        for name, args in box.style.transform:
+            if name == 'scale':
+                context.scale(*args)
+            elif name == 'rotate':
+                context.rotate(angle(args))
+            elif name == 'translate':
+                translate_x, translate_y = map(length, args)
+                context.translate(
+                    percentage(translate_x, border_width),
+                    percentage(translate_y, border_height),
+                )
+            else:
+                if name == 'skewx':
+                    args = (1, 0, math.tan(angle(args)), 1, 0, 0)
+                elif name == 'skewy':
+                    args = (1, math.tan(angle(args)), 0, 1, 0, 0)
+                else:
+                    assert name == 'matrix'
+                context.set_matrix(cairo.Matrix(*args).multiply(
+                    context.get_matrix()))
+        context.translate(-origin_x, -origin_y)
