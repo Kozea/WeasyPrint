@@ -767,7 +767,7 @@ def transform_function(value):
     if len(args) == 1:
         if name in ('rotate', 'skewx', 'skewy') and is_angle(args[0]):
             return name, args[0]
-        elif name == 'translatex' and is_dimension_or_percentage(args[0]):
+        elif name in ('translatex', 'translate') and is_dimension_or_percentage(args[0]):
             return 'translate', (args[0], 0)
         elif name == 'translatey' and is_dimension_or_percentage(args[0]):
             return 'translate', (0, args[0])
@@ -775,6 +775,8 @@ def transform_function(value):
             return 'scale', (args[0].value, 1)
         elif name == 'scaley' and args[0].type == 'NUMBER':
             return 'scale', (1, args[0].value)
+        elif name == 'scale' and args[0].type == 'NUMBER':
+            return 'scale', (args[0].value,) * 2
     elif len(args) == 2:
         if name == 'scale' and all(a.type == 'NUMBER' for a in args):
             return name, [arg.value for arg in args]
