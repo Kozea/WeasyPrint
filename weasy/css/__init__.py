@@ -43,12 +43,18 @@ function for each step:
 import re
 
 from lxml import cssselect
+import cssutils
 
+from .colors import CSS3_COLORS
 from . import properties
 from . import validation
 from . import computed_values
 from ..utils import get_url_attribute
 from ..logging import LOGGER
+
+
+# Monkey-patch cssutils to add extended color keywords:
+cssutils.css.ColorValue.COLORS.update(CSS3_COLORS)
 
 
 # Pseudo-classes and pseudo-elements are the same to lxml.cssselect.parse().
