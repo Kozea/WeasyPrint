@@ -1,0 +1,20 @@
+<!doctype html>
+<title>{{ title }}</title>
+<style>
+li { margin: 1em }
+</style>
+
+<h1>CSS 2.1 Test Suite</h1>
+<h2>{{ chapter }}</h2>
+<h3><a href="{{ url }}">{{ title }}</a></h3>
+
+<ul>
+{% for test in tests %}
+    <li>
+        <a href="{{ url_for('run_test', test_id=test.test_id) }}">
+            {{ test.test_id }}</a>
+        {% if test.flags %}({{ test.flags|join(', ') }}){% endif %}
+        <em>{{ test.title }}</em>
+        <br>
+        {{ test.assertion }}
+{% endfor %}
