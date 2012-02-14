@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import weasy
+from weasy.__main__ import main
 
 if __name__ == '__main__':
-    weasy.main()
+    main()

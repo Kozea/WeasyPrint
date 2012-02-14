@@ -56,7 +56,7 @@ setup(
     test_suite='weasy.tests',
     entry_points={
         'console_scripts': [
-            'weasyprint = weasy:main',
+            'weasyprint = weasy.__main__:main',
         ],
     },
     use_2to3=True
