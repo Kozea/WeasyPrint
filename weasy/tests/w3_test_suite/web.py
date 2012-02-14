@@ -99,7 +99,8 @@ def run(suite_directory):
 
     @app.route('/')
     def toc():
-        return render_template('toc.html', chapters=enumerate(chapters, 1))
+        return render_template('toc.html',
+            chapters=enumerate(chapters, 1), total=len(tests))
 
 
     @app.route('/chapter<int:chapter_num>/')
@@ -142,16 +143,16 @@ def run(suite_directory):
             test=tests[test_id], source=source, css=css)
 
 
-    @app.route('/test-data/<path:filename>/')
+    @app.route('/test-data/<path:filename>')
     def test_data(filename):
         return send_from_directory(suite_directory, filename)
 
 
     stylesheet = cssutils.parseString('''
         @page { margin: 8px; -weasy-size: 640px }
-    ''')
+    ''', validate=False)
 
-    @app.route('/render/<test_id>/')
+    @app.route('/render/<test_id>.png')
     def render(test_id):
         filename = safe_join(suite_directory, test_id + '.htm')
         png = io.BytesIO()
