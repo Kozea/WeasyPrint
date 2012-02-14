@@ -2,7 +2,7 @@
 
 import os.path
 from flask import Flask, request, render_template, send_file
-from weasy.document import PNGDocument, PDFDocument
+from weasyprint.document import PNGDocument, PDFDocument
 
 app = Flask(__name__)
 

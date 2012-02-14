@@ -32,7 +32,7 @@ import cssutils
 import lxml.html
 from flask import Flask, render_template, abort, send_from_directory, safe_join
 
-from weasy.document import PNGDocument
+from weasyprint.document import PNGDocument
 
 
 def split(something):

@@ -24,7 +24,7 @@ import logging
 import traceback
 from contextlib import closing
 
-from weasy.document import PNGDocument
+from weasyprint.document import PNGDocument
 
 
 TEST_SUITE_VERSION = '20110323'

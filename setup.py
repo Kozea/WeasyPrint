@@ -12,8 +12,8 @@ import re
 from os import path
 from setuptools import setup, find_packages
 
-with open(path.join(path.dirname(__file__), 'weasy', 'version.py')) as fd:
-    VERSION = re.match("VERSION = '([^']+)'", fd.read().strip()).group(1)
+with open(path.join(path.dirname(__file__), 'weasyprint', '__init__.py')) as fd:
+    VERSION = re.search("VERSION = '([^']+)'", fd.read().strip()).group(1)
 
 setup(
     name='WeasyPrint',
@@ -36,10 +36,8 @@ setup(
     ],
     packages=find_packages(),
     package_data={
-        'weasy.tests': ['resources/*',
-                        # Make sure the directories are created
-                        '*_results/.gitignore'],
-        'weasy.css': ['*.css']},
+        'weasyprint.tests': ['resources/*'],
+        'weasyprint.css': ['*.css']},
     zip_safe=False,
     install_requires=[
         # Keep this in sync with the "install" documentation
@@ -56,7 +54,7 @@ setup(
     test_suite='weasy.tests',
     entry_points={
         'console_scripts': [
-            'weasyprint = weasy.__main__:main',
+            'weasyprint = weasyprint.__main__:main',
         ],
     },
     use_2to3=True

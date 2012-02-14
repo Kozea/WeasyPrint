@@ -25,5 +25,5 @@ WeasyPrint converts web documents, mainly HTML documents with CSS, to PDF.
 
 """
 
-from .version import VERSION
+VERSION = '0.6dev'
 __version__ = VERSION

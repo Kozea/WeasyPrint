@@ -14,7 +14,7 @@ def home():
 @app.route('/sample.json')
 def sample_json():
     # Import late so that the HTTP server starts listening quickly.
-    from weasy.document import PDFDocument
+    from weasyprint.document import PDFDocument
     from .serialize import serialize
 
     sample = os.path.join(app.root_path, 'sample', 'sample.html')
