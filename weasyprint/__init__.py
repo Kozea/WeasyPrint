@@ -81,7 +81,7 @@ class HTML(object):
         return [HTML5_UA_STYLESHEET]
 
     def _write(self, document_class, target, stylesheets):
-        document_class(
+        return document_class(
             self.root_element,
             user_stylesheets=list(_parse_stylesheets(stylesheets)),
             user_agent_stylesheets=self._ua_stylesheet(),
