@@ -26,18 +26,18 @@ import os.path
 import logging
 import contextlib
 
-from cssutils import parseFile
 from attest import assert_hook
 
+from .. import HTML
 from ..document import PNGDocument
+from ..css import PARSER as CSS_PARSER
 
 # TODO: find a way to not depend on a specific font
 FONTS = u"Liberation Sans, Arial"
-TEST_USER_AGENT_STYLESHEETS = (
-    parseFile(os.path.join(
-        os.path.dirname(__file__), '..', 'css', 'tests_ua.css'
-    )),
-)
+
+TEST_UA_STYLESHEET = CSS_PARSER.parseFile(os.path.join(
+    os.path.dirname(__file__), '..', 'css', 'tests_ua.css'
+))
 
 
 class TestPNGDocument(PNGDocument):
@@ -46,10 +46,11 @@ class TestPNGDocument(PNGDocument):
     This stylesheet is shorter, which makes tests faster.
 
     """
-    def __init__(self, dom, user_stylesheets=None,
-                 user_agent_stylesheets=TEST_USER_AGENT_STYLESHEETS):
+    def __init__(self, html_source, base_url=None):
         super(TestPNGDocument, self).__init__(
-            dom, user_stylesheets, user_agent_stylesheets)
+            HTML(string=html_source, base_url=base_url).root_element,
+            user_stylesheets=[],
+            user_agent_stylesheets=[TEST_UA_STYLESHEET])
 
 
 def resource_filename(basename):

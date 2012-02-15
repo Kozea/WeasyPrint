@@ -41,6 +41,7 @@ function for each step:
 """
 
 import re
+import os.path
 
 from lxml import cssselect
 import cssutils
@@ -49,12 +50,19 @@ from .colors import CSS3_COLORS
 from . import properties
 from . import validation
 from . import computed_values
-from ..utils import get_url_attribute
+from ..utils import get_url_attribute, urllib_fetcher
 from ..logging import LOGGER
 
 
 # Monkey-patch cssutils to add extended color keywords:
 cssutils.css.ColorValue.COLORS.update(CSS3_COLORS)
+
+
+PARSER = cssutils.CSSParser(parseComments=False, validate=False)
+PARSER.setFetcher(urllib_fetcher)
+
+HTML5_UA_STYLESHEET = PARSER.parseFile(
+    os.path.join(os.path.dirname(__file__), 'html5_ua.css'))
 
 
 # Pseudo-classes and pseudo-elements are the same to lxml.cssselect.parse().
@@ -170,7 +178,7 @@ def find_stylesheets(document):
     The output order is the same as the order of the dom.
 
     """
-    parser = document.css_parser
+    parser = PARSER
     for element in document.dom.iter():
         if element.tag not in ('style', 'link'):
             continue
@@ -207,13 +215,14 @@ def find_stylesheets(document):
 
 def find_style_attributes(document):
     """Yield the ``element, declaration_block`` of ``document``."""
+    parser = PARSER
     for element in document.dom.iter():
         style_attribute = element.get('style')
         if style_attribute:
             # TODO: no href for parseStyle. What about relative URLs?
             # CSS3 says we should resolve relative to the attribute:
             # http://www.w3.org/TR/css-style-attr/#interpret
-            yield element, document.css_parser.parseStyle(style_attribute)
+            yield element, parser.parseStyle(style_attribute)
 
 
 def evaluate_media_query(query_list, medium):

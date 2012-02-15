@@ -131,17 +131,17 @@ def parse(html_content):
     """Parse some HTML, apply stylesheets and transform to boxes."""
     # TODO: remove this patching when inline-block is validated.
     with monkeypatch_validation(validate_inline_block):
-        document = TestPNGDocument.from_string(html_content)
-        # Dummy filename, but in the right directory.
-        document.base_url = resource_filename('<test>')
+        document = TestPNGDocument(html_content,
+            # Dummy filename, but in the right directory.
+            base_url=resource_filename('<test>'))
         box, = build.dom_to_box(document, document.dom)
         return box
 
 
 def parse_all(html_content):
     """Like parse() but also run all corrections on boxes."""
-    document = TestPNGDocument.from_string(html_content)
-    document.base_url = resource_filename('<test>')
+    document = TestPNGDocument(html_content,
+        base_url=resource_filename('<test>'))
     box = build.build_formatting_structure(document)
     sanity_checks(box)
     return box
@@ -381,7 +381,7 @@ def test_whitespace():
 @SUITE.test
 def test_page_style():
     """Test the management of page styles."""
-    document = TestPNGDocument.from_string('''
+    document = TestPNGDocument('''
         <style>
             @page { margin: 3px }
             @page :first { margin-top: 20px }
@@ -1085,7 +1085,7 @@ def test_margin_boxes():
     """
     Test that the correct margin boxes are created.
     """
-    document = TestPNGDocument.from_string('''
+    document = TestPNGDocument('''
         <style>
             @page {
                 /* Make the page content area only 10px high and wide,
@@ -1121,7 +1121,7 @@ def test_margin_boxes():
 @SUITE.test
 def test_page_counters():
     """Test page-based counters."""
-    document = TestPNGDocument.from_string(u'''
+    document = TestPNGDocument(u'''
         <style>
             @page {
                 /* Make the page content area only 10px high and wide,

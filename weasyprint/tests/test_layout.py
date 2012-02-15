@@ -49,7 +49,7 @@ def body_children(page):
 
 def parse_without_layout(html_content):
     """Parse some HTML, apply stylesheets, transform to boxes."""
-    return TestPNGDocument.from_string(html_content)
+    return TestPNGDocument(html_content)
 
 
 def validate_absolute_and_float(
@@ -66,8 +66,8 @@ def parse(html_content, return_document=False):
     """Parse some HTML, apply stylesheets, transform to boxes and lay out."""
     # TODO: remove this patching when asbolute and floats are validated
     with monkeypatch_validation(validate_absolute_and_float):
-        document = TestPNGDocument.from_string(html_content)
-        document.base_url = resource_filename('<inline HTML>')
+        document = TestPNGDocument(html_content,
+            base_url=resource_filename('<inline HTML>'))
         if return_document:
             return document
         else:

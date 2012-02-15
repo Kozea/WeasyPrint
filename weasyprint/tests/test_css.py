@@ -28,9 +28,12 @@ import cssutils
 from cssutils.helper import path2url
 
 from .testing_utils import (
-    resource_filename, TestPNGDocument, assert_no_logs, capture_logs)
+    resource_filename, assert_no_logs, capture_logs,
+    TestPNGDocument, TEST_UA_STYLESHEET)
 from .. import css
 from ..css.computed_values import used_line_height
+from ..document import PNGDocument
+from .. import HTML
 
 
 SUITE = Tests()
@@ -39,9 +42,10 @@ SUITE.context(assert_no_logs)
 
 def parse_html(filename, **kwargs):
     """Parse an HTML file from the test resources and resolve relative URL."""
-    # Make a file:// URL
-    url = path2url(resource_filename(filename))
-    return TestPNGDocument.from_file(url, **kwargs)
+    html = HTML(filename=resource_filename(filename))
+    kwargs.setdefault('user_agent_stylesheets', [TEST_UA_STYLESHEET])
+    kwargs.setdefault('user_stylesheets', [])
+    return PNGDocument(html.root_element, **kwargs)
 
 
 @SUITE.test
@@ -244,6 +248,8 @@ def test_page():
     assert style.color.cssText == 'blue'
 
     style = document.style_for('first_left_page', '@top-left')
+    print style
+    print style is None
     assert style is None
 
     style = document.style_for('first_right_page', '@top-left')
@@ -274,7 +280,7 @@ def test_warnings():
             ['WARNING: Ignored declaration', 'invalid value']),
     ]:
         with capture_logs() as logs:
-            TestPNGDocument.from_string(source).style_for('')
+            TestPNGDocument(source).style_for('')
         assert len(logs) == 1
         for message in messages:
             assert message in logs[0]
@@ -283,13 +289,13 @@ def test_warnings():
 @SUITE.test
 def test_error_recovery():
     with capture_logs() as logs:
-        document = TestPNGDocument.from_string('''
+        document = TestPNGDocument('''
             <style> html { color red; color: blue; color
         ''')
         html = document.formatting_structure
         assert html.style.color.value == 'blue'
 
-        document = TestPNGDocument.from_string('''
+        document = TestPNGDocument('''
             <html style="color; color: blue; color red">
         ''')
         html = document.formatting_structure
@@ -299,7 +305,7 @@ def test_error_recovery():
 
 @SUITE.test
 def test_line_height_inheritance():
-    document = TestPNGDocument.from_string('''
+    document = TestPNGDocument('''
         <style>
             html { font-size: 10px; line-height: 140% }
             section { font-size: 10px; line-height: 1.4 }

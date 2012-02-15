@@ -121,9 +121,9 @@ def html_to_png(name, expected_width, expected_height, html):
 
     Also return the document to aid debugging.
     """
-    document = TestPNGDocument.from_string(html)
-    # Dummy filename, but in the right directory.
-    document.base_url = resource_filename('<test>')
+    document = TestPNGDocument(html,
+        # Dummy filename, but in the right directory.
+        base_url=resource_filename('<test>'))
     lines = document_to_png(document, name, expected_width, expected_height)
     return document, lines
 
@@ -1359,14 +1359,16 @@ def test_unicode():
         with open(image, 'wb') as fd:
             fd.write(image_content)
         with open(html, 'wb') as fd:
-            fd.write(u'''
+            html_content = u'''
                 <link rel=stylesheet href="{}">
                 <p><img src="{}"> {}</p>
             '''.format(
                 ensure_url(stylesheet), ensure_url(image), text
-            ).encode('utf8'))
+            )
+            fd.write(html_content.encode('utf8'))
 
-        document = TestPNGDocument.from_file(html, encoding='utf8')
+        # TODO: change this back to actually read from a file
+        document = TestPNGDocument(html_content)
         lines = document_to_png(document, 'unicode', 200, 50)
         assert_pixels_equal('unicode', 200, 50, lines, expected_lines)
     finally:

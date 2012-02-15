@@ -22,49 +22,26 @@ Command-line interface to WeasyPrint.
 
 """
 
+import sys
 import argparse
-from . import VERSION
 
-
-__all__ = ['main']
-
-
-FORMATS = {
-    'pdf': 'PDFDocument',
-    'png': 'PNGDocument',
-}
-
-
-def _join(sequence, key=lambda x: x):
-    """Return a string of the sorted elements of ``sequence``.
-
-    The two last elements are separated by ' or ', the other ones are separated
-    by ', '.
-
-    If a ``key`` function is given, this function is applied to the elements of
-    ``sequence`` before joining them.
-
-    """
-    sequence = sorted(sequence)
-    last = key(sequence[-1])
-    if len(sequence) == 1:
-        return last
-    else:
-        return ' or '.join([', '.join(map(key, sequence[:-1])), last])
+from . import VERSION, HTML
 
 
 def main():
     """Parse command-line arguments and convert the given document."""
-    extensions = _join(FORMATS, lambda x: '.' + x)
+    format_values = ['pdf', 'png']
+    formats = 'PDF or PNG'
+    extensions = '.pdf or .png'
 
     parser = argparse.ArgumentParser(
-        description='Renders web pages into ' + _join(FORMATS, str.upper))
+        description='Renders web pages into ' + formats)
     parser.add_argument('--version', action='version',
                         version='WeasyPrint version %s' % VERSION,
                         help='Print WeasyPrint’s version number and exit.')
     parser.add_argument('-e', '--encoding',
                         help='Character encoding of the input')
-    parser.add_argument('-f', '--format', choices=FORMATS,
+    parser.add_argument('-f', '--format', choices=format_values,
                         help='Output format. Can be ommited if `output` '
                              'ends with ' + extensions)
     parser.add_argument('-s', '--stylesheet', action='append',
@@ -77,15 +54,8 @@ def main():
 
     args = parser.parse_args()
 
-    # Import here so that these are not needed for --version and --help
-    import sys
-    import cssutils
-
-    from . import document
-    from .utils import ensure_url
-
     if args.format is None:
-        for file_format in FORMATS:
+        for file_format in format_values:
             if args.output.endswith('.' + file_format):
                 args.format = file_format
                 break
@@ -95,19 +65,15 @@ def main():
                 'output filename that ends in ' + extensions)
 
     if args.input == '-':
-        args.input = sys.stdin
+        source = HTML(file_obj=sys.stdin)
+    else:
+        source = HTML(args.input)
 
     if args.output == '-':
         args.output = sys.stdout
 
-    users_stylesheets = [
-        cssutils.parseUrl(ensure_url(filename_or_url))
-        for filename_or_url in args.stylesheet or []]
-
-    document_class = getattr(document, FORMATS[args.format])
-    doc = document_class.from_file(args.input, encoding=args.encoding,
-        user_stylesheets=users_stylesheets)
-    doc.write_to(args.output)
+    getattr(source, 'write_' + args.format)(
+        args.output, stylesheets=args.stylesheet)
 
 
 if __name__ == '__main__':

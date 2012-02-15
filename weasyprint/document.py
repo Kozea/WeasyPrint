@@ -22,11 +22,9 @@ Output document classes for various formats.
 
 """
 
-import os.path
+import io
 import math
 
-from cssutils import CSSParser
-import lxml.html
 import cairo
 
 from .css import get_all_computed_styles
@@ -34,36 +32,17 @@ from .css.computed_values import LENGTHS_TO_PIXELS
 from .formatting_structure.build import build_formatting_structure
 from .layout import layout
 from . import draw
-from . import utils
 from . import images
 
-
-# This is a one-element tuple.
-DEFAULT_USER_AGENT_STYLESHEETS = (
-    CSSParser(parseComments=False, validate=False).parseFile(
-        os.path.join(os.path.dirname(__file__), 'css', 'html5_ua.css')
-    ),
-)
 
 
 class Document(object):
     """Abstract output document."""
-    def __init__(self, dom, user_stylesheets=None,
-                 user_agent_stylesheets=DEFAULT_USER_AGENT_STYLESHEETS):
-        assert getattr(dom, 'tag', None) == 'html', (
-            'HTML document expected, got %r.' % (dom,))
-
+    def __init__(self, dom, user_stylesheets, user_agent_stylesheets):
         #: lxml HtmlElement object
         self.dom = dom
-
-        # Go through the property setter which calls ensure_url()
-        self.base_url = self.base_url
-
-        self.css_parser = CSSParser(parseComments=False, validate=False)
-        self.css_parser.setFetcher(utils.urllib_fetcher)
-
-        self.user_stylesheets = user_stylesheets or []
-        self.user_agent_stylesheets = user_agent_stylesheets or []
+        self.user_stylesheets = user_stylesheets
+        self.user_agent_stylesheets = user_agent_stylesheets
 
         self._computed_styles = None
         self._formatting_structure = None
@@ -73,39 +52,11 @@ class Document(object):
         # TODO: remove this when Margin boxes variable dimension is correct.
         self._auto_margin_boxes_warning_shown = False
 
+    # XXX
     @property
     def base_url(self):
-        """The URL of the document, used for relative URLs it contains.
-
-        If set to something that does not look like a URL, the value is
-        assumed to be a filename and is converted to a file:// URL.
-        If that filename is relative, it is interpreted from the current
-        directory.
-
-        """
+        """The URL of the document, used for relative URLs it contains."""
         return self.dom.getroottree().docinfo.URL
-
-    @base_url.setter
-    def base_url(self, value):
-        if value:
-            value = utils.ensure_url(value)
-        self.dom.getroottree().docinfo.URL = value
-
-    @classmethod
-    def from_string(cls, source, encoding=None, **kwargs):
-        """Make a document from an HTML string."""
-        parser = lxml.html.HTMLParser(encoding=encoding)
-        dom = lxml.html.document_fromstring(source, parser=parser)
-        return cls(dom, **kwargs)
-
-    @classmethod
-    def from_file(cls, file_or_filename_or_url, encoding=None, **kwargs):
-        """
-        Make a document from a filename or open file object.
-        """
-        parser = lxml.html.HTMLParser(encoding=encoding)
-        dom = lxml.html.parse(file_or_filename_or_url, parser=parser).getroot()
-        return cls(dom, **kwargs)
 
     def style_for(self, element, pseudo_type=None):
         """
@@ -162,6 +113,16 @@ class Document(object):
             self._image_cache[uri] = surface
         return surface
 
+    def write_to(self, target=None):
+        """Like .write_to() but returns a byte stringif target is None."""
+        if target is None:
+            import io
+            target = io.BytesIO()
+            self._write_to(target)
+            return target.getvalue()
+        else:
+            self._write_to(target)
+
 
 class PNGDocument(Document):
     """PNG output document."""
@@ -208,7 +169,7 @@ class PNGDocument(Document):
 
         return max_width, total_height, surface
 
-    def write_to(self, target):
+    def _write_to(self, target):
         """Write all pages as PNG into a file-like or filename `target`.
 
         Pages are layed out vertically each above the next and centered
@@ -225,7 +186,7 @@ class PDFDocument(Document):
         # Use a dummy page size initially
         self.surface = cairo.PDFSurface(None, 1, 1)
 
-    def write_to(self, target):
+    def _write_to(self, target):
         """
         Write the whole document as PDF into a file-like or filename `target`.
         """
