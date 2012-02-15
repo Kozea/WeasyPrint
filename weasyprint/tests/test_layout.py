@@ -857,10 +857,6 @@ def test_with_images():
         'data:image/png,Not a PNG',
         'data:image/jpeg,Not a JPEG',
         'data:image/svg+xml,<svg>invalid xml',
-        # Unsupported units (yet) in CairoSVG
-        'data:image/svg+xml,<svg width="100%" height="100%"></svg>',
-        'data:image/svg+xml,<svg width="20em" height="10em"></svg>',
-        'data:image/svg+xml,<svg width="20ex" height="10ex"></svg>',
     ]:
         with capture_logs() as logs:
             page, = parse("<p><img src='%s' alt='invalid image'>" % url)
