@@ -144,9 +144,15 @@ class CSS(object):
         if source_type == 'file_obj':
             source = source.read()
             source_type = 'string'
-        parser = {'filename': PARSER.parseFile, 'url': PARSER.parseUrl,
-                  'string': PARSER.parseString}[source_type]
-        self.stylesheet = parser(source, encoding=encoding, href=base_url)
+        if source_type == 'url':
+            self.stylesheet = PARSER.parseUrl(source, encoding=encoding)
+            if base_url is not None:
+                # source and href are the same for parseUrl
+                self.stylesheet.href = base_url
+        else:
+            parser = {'filename': PARSER.parseFile,
+                      'string': PARSER.parseString}[source_type]
+            self.stylesheet = parser(source, encoding=encoding, href=base_url)
 
 
 def _select_source(filename_or_url, filename, url, file_obj, string, base_url):
