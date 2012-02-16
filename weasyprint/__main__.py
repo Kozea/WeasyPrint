@@ -28,13 +28,13 @@ import argparse
 from . import VERSION, HTML
 
 
-def main():
+def main(argv):
     """Parse command-line arguments and convert the given document."""
     format_values = ['pdf', 'png']
     formats = 'PDF or PNG'
     extensions = '.pdf or .png'
 
-    parser = argparse.ArgumentParser(
+    parser = argparse.ArgumentParser(prog='weasyprint',
         description='Renders web pages into ' + formats)
     parser.add_argument('--version', action='version',
                         version='WeasyPrint version %s' % VERSION,
@@ -52,7 +52,7 @@ def main():
     parser.add_argument('output',
         help='Filename where output is written, or - for stdout')
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     if args.format is None:
         for file_format in format_values:
@@ -65,9 +65,9 @@ def main():
                 'output filename that ends in ' + extensions)
 
     if args.input == '-':
-        source = HTML(file_obj=sys.stdin)
+        source = HTML(file_obj=sys.stdin, encoding=args.encoding)
     else:
-        source = HTML(args.input)
+        source = HTML(args.input, encoding=args.encoding)
 
     if args.output == '-':
         args.output = sys.stdout
@@ -77,4 +77,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1:])
