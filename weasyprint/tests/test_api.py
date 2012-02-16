@@ -35,9 +35,10 @@ import subprocess
 import png
 from attest import Tests, assert_hook  # pylint: disable=W0611
 
-from .testing_utils import resource_filename, assert_no_logs
+from .testing_utils import (
+    resource_filename, assert_no_logs, TEST_UA_STYLESHEET)
 from .. import HTML, CSS, VERSION
-from ..__main__ import main
+from .. import __main__
 
 
 SUITE = Tests()
@@ -97,6 +98,12 @@ def monkey_patch_stdio(input_bytes=b''):
         sys.stdout = old_stdout
 
 
+class TestHTML(HTML):
+    """Like HTML, but with the testing (smaller) UA stylesheet"""
+    def _ua_stylesheet(self):
+        return [TEST_UA_STYLESHEET]
+
+
 def test_resource(class_, basename, check, **kwargs):
     """Common code for testing the HTML and CSS classes."""
     absolute_filename = resource_filename(basename)
@@ -132,8 +139,8 @@ def test_html_parsing():
         assert url.startswith('file:')
         assert url.endswith('weasyprint/tests/resources/pattern.png')
 
-    test_resource(HTML, 'doc1.html', check_doc1)
-    test_resource(HTML, 'doc1-utf32.html', check_doc1, encoding='utf32')
+    test_resource(TestHTML, 'doc1.html', check_doc1)
+    test_resource(TestHTML, 'doc1-utf32.html', check_doc1, encoding='utf32')
 
 
 @SUITE.test
@@ -181,7 +188,7 @@ def check_png_pattern(png_bytes):
 @SUITE.test
 def test_python_render():
     """Test rendering with the Python API."""
-    html = HTML(string='<body><img src=pattern.png>',
+    html = TestHTML(string='<body><img src=pattern.png>',
         base_url=resource_filename('dummy.html'))
     css = CSS(string='''
         @page { margin: 2px; -weasy-size: 8px; background: #fff }
@@ -241,12 +248,16 @@ def test_command_line_render():
 
     with chdir(resource_filename('')):
         # Reference
-        png_bytes = HTML(string=combined).write_png()
-        pdf_bytes = HTML(string=combined).write_pdf()
+        png_bytes = TestHTML(string=combined).write_png()
+        pdf_bytes = TestHTML(string=combined).write_pdf()
     check_png_pattern(png_bytes)
 
     def run(args):
-        main(args.split())
+        try:
+            __main__.HTML = TestHTML
+            __main__.main(args.split())
+        finally:
+            __main__.HTML = HTML
 
     with temp_directory() as temp:
         with chdir(temp):
