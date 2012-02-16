@@ -174,6 +174,11 @@ def _select_source(filename_or_url, filename, url, file_obj, string, base_url):
     if nones == [True, True, False, True, True]:
         return 'url', url, base_url
     if nones == [True, True, True, False, True]:
+        if base_url is None:
+            # filesystem file objects have a 'name' attribute.
+            name = getattr(file_obj, 'name', None)
+            if name:
+                base_url = ensure_url(name)
         return 'file_obj', file_obj, base_url
     if nones == [True, True, True, True, False]:
         return 'string', string, base_url
