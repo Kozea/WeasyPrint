@@ -442,7 +442,8 @@ def margin_box_content_layout(document, page, box):
         first_child = box.children[0]
         last_child = box.children[-1]
         top = first_child.position_y
-        assert top == box.content_box_y()
+        # Not always exact because floating point errors
+        #assert top == box.content_box_y()
         bottom = last_child.position_y + last_child.margin_height()
         content_height = bottom - top
         offset = box.height - content_height
