@@ -1,0 +1,4 @@
+h1::before {
+    content: "I løvë Unicode";
+    background-image: url(pattern.png)
+}
