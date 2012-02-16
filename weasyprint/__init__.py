@@ -71,10 +71,11 @@ class HTML(object):
                 source = ensure_url(source)
         parser = lxml.html.HTMLParser(encoding=encoding)
         result = parse(source, base_url=base_url, parser=parser)
-        if source_type == 'string':
-            self.root_element = result
-        else:
-            self.root_element = result.getroot()
+        if source_type != 'string':
+            result = result.getroot()
+        if result is None:
+            raise ValueError('Error while parsing HTML')
+        self.root_element = result
 
     def _write(self, document_class, target, stylesheets):
         from .css import HTML5_UA_STYLESHEET
