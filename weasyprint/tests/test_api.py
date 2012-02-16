@@ -22,6 +22,7 @@ Test the public API.
 
 """
 
+import sys
 import os
 import io
 import contextlib
@@ -29,12 +30,14 @@ import threading
 import shutil
 import urlparse
 import tempfile
+import subprocess
 
 import png
 from attest import Tests, assert_hook  # pylint: disable=W0611
 
 from .testing_utils import resource_filename, assert_no_logs
-from .. import HTML, CSS
+from .. import HTML, CSS, VERSION
+from ..__main__ import main
 
 
 SUITE = Tests()
@@ -73,6 +76,25 @@ def read_file(filename):
     """Shortcut for reading a file."""
     with open(filename, 'rb') as fd:
         return fd.read()
+
+
+def write_file(filename, content):
+    """Shortcut for reading a file."""
+    with open(filename, 'wb') as fd:
+        fd.write(content)
+
+
+@contextlib.contextmanager
+def monkey_patch_stdio(input_bytes=b''):
+    old_stdin = sys.stdin
+    old_stdout = sys.stdout
+    try:
+        sys.stdin = io.BytesIO(input_bytes)
+        sys.stdout = io.BytesIO()
+        yield sys.stdout
+    finally:
+        sys.stdin = old_stdin
+        sys.stdout = old_stdout
 
 
 def test_resource(class_, basename, check, **kwargs):
@@ -138,21 +160,7 @@ def test_css_parsing():
     test_resource(CSS, 'latin1-test.css', check_css, encoding='latin1')
 
 
-@SUITE.test
-def test_python_render():
-    """Test rendering with the Python API."""
-    html = HTML(string='<body><img src=pattern.png>',
-        base_url=resource_filename('dummy.html'))
-    css = CSS(string='''
-        @page { margin: 2px; -weasy-size: 8px; background: #fff }
-        body { margin: 0; }
-    ''')
-
-    png_bytes = html.write_png(stylesheets=[css])
-    pdf_bytes = html.write_pdf(stylesheets=[css])
-    assert png_bytes.startswith(b'\211PNG\r\n\032\n')
-    assert pdf_bytes.startswith(b'%PDF')
-
+def check_png_pattern(png_bytes):
     reader = png.Reader(bytes=png_bytes)
     width, height, lines, meta = reader.asRGBA()
     assert width == 8
@@ -168,6 +176,24 @@ def test_python_render():
         _+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_,
     ])
+
+
+@SUITE.test
+def test_python_render():
+    """Test rendering with the Python API."""
+    html = HTML(string='<body><img src=pattern.png>',
+        base_url=resource_filename('dummy.html'))
+    css = CSS(string='''
+        @page { margin: 2px; -weasy-size: 8px; background: #fff }
+        body { margin: 0; }
+    ''')
+
+    png_bytes = html.write_png(stylesheets=[css])
+    pdf_bytes = html.write_pdf(stylesheets=[css])
+    assert png_bytes.startswith(b'\211PNG\r\n\032\n')
+    assert pdf_bytes.startswith(b'%PDF')
+
+    check_png_pattern(png_bytes)
     # TODO: check PDF content? How?
 
     class fake_file(object):
@@ -200,3 +226,76 @@ def test_python_render():
             html.write_pdf(pdf_file, stylesheets=[css])
         assert read_file(png_filename) == png_bytes
         assert read_file(pdf_filename) == pdf_bytes
+
+
+@SUITE.test
+def test_command_line_render():
+    """Test rendering with the command-line API."""
+    css = b'''
+        @page { margin: 2px; -weasy-size: 8px; background: #fff }
+        body { margin: 0; }
+    '''
+    html = b'<body><img src=pattern.png>'
+    combined = b'<style>{}</style>{}'.format(css, html)
+    linked = b'<link rel=stylesheet href=style.css>' + html
+
+    with chdir(resource_filename('')):
+        # Reference
+        png_bytes = HTML(string=combined).write_png()
+        pdf_bytes = HTML(string=combined).write_pdf()
+    check_png_pattern(png_bytes)
+
+    def run(args):
+        main(args.split())
+
+    with temp_directory() as temp:
+        with chdir(temp):
+            pattern_bytes = read_file(resource_filename('pattern.png'))
+            write_file('pattern.png', pattern_bytes)
+            write_file('no_css.html', html)
+            write_file('combined.html', combined)
+            write_file('combined-utf32.html',
+                combined.decode('ascii').encode('utf32'))
+            write_file('linked.html', linked)
+            write_file('style.css', css)
+
+            run('combined.html out1.png')
+            run('combined.html out2.pdf')
+            assert read_file('out1.png') == png_bytes
+            assert read_file('out2.pdf') == pdf_bytes
+
+            run('combined-utf32.html out3.png --encoding utf32')
+            assert read_file('out3.png') == png_bytes
+
+            combined_absolute = os.path.join(temp, 'combined.html')
+            run(combined_absolute + ' out4.png')
+            assert read_file('out4.png') == png_bytes
+
+            combined_url = 'file://{}/{}'.format(temp, 'combined.html')
+            run(combined_url + ' out5.png')
+            assert read_file('out5.png') == png_bytes
+
+            run('linked.html out6.png')  # test relative URLs
+            assert read_file('out6.png') == png_bytes
+
+            run('combined.html out7 -f png')
+            run('combined.html out8 --format pdf')
+            assert read_file('out7') == png_bytes
+            assert read_file('out8') == pdf_bytes
+
+            run('no_css.html out9.png')
+            run('no_css.html out10.png -s style.css')
+            assert read_file('out9.png') != png_bytes
+            assert read_file('out10.png') == png_bytes
+
+            with monkey_patch_stdio() as stdout:
+                run('--format png combined.html -')
+            assert stdout.getvalue() == png_bytes
+
+            with monkey_patch_stdio(combined):
+                run('- out11.png')
+            assert read_file('out11.png') == png_bytes
+
+            with monkey_patch_stdio(combined) as stdout:
+                run('--format png - -')
+            assert stdout.getvalue() == png_bytes
