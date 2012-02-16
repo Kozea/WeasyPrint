@@ -76,15 +76,12 @@ class HTML(object):
         else:
             self.root_element = result.getroot()
 
-    def _ua_stylesheet(self):
-        from .css import HTML5_UA_STYLESHEET
-        return [HTML5_UA_STYLESHEET]
-
     def _write(self, document_class, target, stylesheets):
+        from .css import HTML5_UA_STYLESHEET
         return document_class(
             self.root_element,
             user_stylesheets=list(_parse_stylesheets(stylesheets)),
-            user_agent_stylesheets=self._ua_stylesheet(),
+            user_agent_stylesheets=[HTML5_UA_STYLESHEET],
         ).write_to(target)
 
     def write_pdf(self, target=None, stylesheets=None):

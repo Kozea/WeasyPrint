@@ -23,11 +23,14 @@ Test the public API.
 """
 
 import os
+import io
 import contextlib
 import threading
 import shutil
 import urlparse
+import tempfile
 
+import png
 from attest import Tests, assert_hook  # pylint: disable=W0611
 
 from .testing_utils import resource_filename, assert_no_logs
@@ -64,6 +67,12 @@ def temp_directory():
         yield directory
     finally:
         shutil.rmtree(directory)
+
+
+def read_file(filename):
+    """Shortcut for reading a file."""
+    with open(filename, 'rb') as fd:
+        return fd.read()
 
 
 def test_resource(class_, basename, check, **kwargs):
@@ -127,3 +136,67 @@ def test_css_parsing():
 
     test_resource(CSS, 'utf8-test.css', check_css)
     test_resource(CSS, 'latin1-test.css', check_css, encoding='latin1')
+
+
+@SUITE.test
+def test_python_render():
+    """Test rendering with the Python API."""
+    html = HTML(string='<body><img src=pattern.png>',
+        base_url=resource_filename('dummy.html'))
+    css = CSS(string='''
+        @page { margin: 2px; -weasy-size: 8px; background: #fff }
+        body { margin: 0; }
+    ''')
+
+    png_bytes = html.write_png(stylesheets=[css])
+    pdf_bytes = html.write_pdf(stylesheets=[css])
+    assert png_bytes.startswith(b'\211PNG\r\n\032\n')
+    assert pdf_bytes.startswith(b'%PDF')
+
+    reader = png.Reader(bytes=png_bytes)
+    width, height, lines, meta = reader.asRGBA()
+    assert width == 8
+    assert height == 8
+    from .test_draw import _, r, B, assert_pixels_equal
+    assert_pixels_equal('api_png', width, height, list(lines), [
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+r+B+B+B+_+_,
+        _+_+B+B+B+B+_+_,
+        _+_+B+B+B+B+_+_,
+        _+_+B+B+B+B+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+    ])
+    # TODO: check PDF content? How?
+
+    class fake_file(object):
+        def __init__(self):
+            self.chunks = []
+            self.write = self.chunks.append
+
+        def getvalue(self):
+            return b''.join(self.chunks)
+    png_file = fake_file()
+    html.write_png(png_file, stylesheets=[css])
+    assert png_file.getvalue() == png_bytes
+    pdf_file = fake_file()
+    html.write_pdf(pdf_file, stylesheets=[css])
+    assert pdf_file.getvalue() == pdf_bytes
+
+    with temp_directory() as temp:
+        png_filename = os.path.join(temp, '1.png')
+        pdf_filename = os.path.join(temp, '1.pdf')
+        html.write_png(png_filename, stylesheets=[css])
+        html.write_pdf(pdf_filename, stylesheets=[css])
+        assert read_file(png_filename) == png_bytes
+        assert read_file(pdf_filename) == pdf_bytes
+
+        png_filename = os.path.join(temp, '2.png')
+        pdf_filename = os.path.join(temp, '2.pdf')
+        with open(png_filename, 'wb') as png_file:
+            html.write_png(png_file, stylesheets=[css])
+        with open(pdf_filename, 'wb') as pdf_file:
+            html.write_pdf(pdf_file, stylesheets=[css])
+        assert read_file(png_filename) == png_bytes
+        assert read_file(pdf_filename) == pdf_bytes
