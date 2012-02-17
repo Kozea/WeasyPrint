@@ -28,7 +28,7 @@ import argparse
 from . import VERSION, HTML
 
 
-def main(argv):
+def main(argv=None):
     """Parse command-line arguments and convert the given document."""
     format_values = ['pdf', 'png']
     formats = 'PDF or PNG'
@@ -77,4 +77,4 @@ def main(argv):
 
 
 if __name__ == '__main__':
-    main(sys.argv[1:])
+    main()
