@@ -22,6 +22,8 @@ Module managing the layout creation before drawing a document.
 
 """
 
+from __future__ import division, unicode_literals
+
 from .pages import make_all_pages, add_margin_boxes
 
 

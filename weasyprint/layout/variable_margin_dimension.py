@@ -24,7 +24,7 @@ http://dev.w3.org/csswg/css3-page/#margin-dimension
 
 """
 
-from __future__ import division
+from __future__ import division, unicode_literals
 
 from ..logging import LOGGER
 

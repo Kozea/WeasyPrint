@@ -40,6 +40,8 @@ function for each step:
 
 """
 
+from __future__ import division, unicode_literals
+
 import re
 import os.path
 
@@ -52,6 +54,7 @@ from . import validation
 from . import computed_values
 from ..utils import get_url_attribute, urllib_fetcher
 from ..logging import LOGGER
+from ..compat import iteritems
 
 
 # Monkey-patch cssutils to add extended color keywords:
@@ -455,7 +458,7 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None):
     # Handle inheritance and initial values
     specified = StyleDict()
     computed = StyleDict()
-    for name, initial in properties.INITIAL_VALUES.iteritems():
+    for name, initial in iteritems(properties.INITIAL_VALUES):
         if name in cascaded:
             value, _precedence = cascaded[name]
             keyword = value

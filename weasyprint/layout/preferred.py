@@ -22,6 +22,8 @@ Preferred minimum width and preferred width, also know as shrink-to-fit.
 
 """
 
+from __future__ import division, unicode_literals
+
 import cairo
 
 from ..formatting_structure import boxes

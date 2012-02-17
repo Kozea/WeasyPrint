@@ -22,7 +22,7 @@ Layout for page boxes and margin boxes.
 
 """
 
-from __future__ import division
+from __future__ import division, unicode_literals
 
 import itertools
 
@@ -184,7 +184,7 @@ def compute_variable_dimension(document, side_boxes, vertical, outer_sum):
 
     """
     box_class = VerticalBox if vertical else HorizontalBox
-    side_boxes = map(box_class, side_boxes)
+    side_boxes = [box_class(box) for box in side_boxes]
     box_a, box_b, box_c =  side_boxes
 
     num_auto_margins = sum(
@@ -258,9 +258,9 @@ def compute_variable_dimension(document, side_boxes, vertical, outer_sum):
 
             # Choose the inner dimension for all boxes with 'auto'
             # but the last
-            for box, max_inner, min_inner, weight in zip(
+            for box, max_inner, min_inner, weight in list(zip(
                 auto_inner_boxes, max_inners, min_inners, weights
-            )[:-1]:
+            ))[:-1]:
                 # Ideal inner for A, to balance contents
                 target = sum_inners * weight
                 # The ranges for other boxes combined with the sum

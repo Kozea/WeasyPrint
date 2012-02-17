@@ -22,7 +22,7 @@ Functions resolving percentages.
 
 """
 
-from __future__ import division
+from __future__ import division, unicode_literals
 
 from ..formatting_structure import boxes
 from ..css.values import get_percentage_value

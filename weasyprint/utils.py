@@ -22,13 +22,21 @@ Various utils.
 
 """
 
-import urllib
-from urlparse import urljoin, urlparse
+from __future__ import division, unicode_literals
+
+import io
+import base64
 
 from cssutils.helper import path2url
 
 from . import VERSION
 from .logging import LOGGER
+from .compat import (
+    urljoin, urlparse, unquote_to_bytes, urlopen_contenttype, Request,
+    parse_email)
+
+
+HTTP_USER_AGENT = 'WeasyPrint/%s http://weasyprint.org/' % VERSION
 
 
 def get_url_attribute(element, key):
@@ -55,10 +63,46 @@ def ensure_url(string):
         return path2url(string.encode('utf8'))
 
 
-class URLopener(urllib.FancyURLopener):
-    """Sets the user agent string."""
-    # User-Agent
-    version = 'WeasyPrint/%s http://weasyprint.org/' % VERSION
+def parse_data_url(url):
+    """Decode URLs with the 'data' stream. urllib can handle them
+    in Python 2, but that is broken in Python 3.
+
+    Inspired from the Python 2.7.2’s urllib.py.
+
+    """
+    # syntax of data URLs:
+    # dataurl   := "data:" [ mediatype ] [ ";base64" ] "," data
+    # mediatype := [ type "/" subtype ] *( ";" parameter )
+    # data      := *urlchar
+    # parameter := attribute "=" value
+    try:
+        header, data = url.split(',', 1)
+    except ValueError:
+        raise IOError('bad data URL')
+    header = header[5:]  # len('data:') == 5
+    if header:
+        semi = header.rfind(';')
+        if semi >= 0 and '=' not in header[semi:]:
+            content_type = header[:semi]
+            encoding = header[semi+1:]
+        else:
+            content_type = header
+            encoding = ''
+        message = parse_email('Content-type: ' + content_type)
+        mime_type = message.get_content_type()
+        charset = message.get_content_charset()
+    else:
+        mime_type = 'text/plain'
+        charset = 'US-ASCII'
+        encoding = ''
+
+    if encoding == 'base64':
+        data = data.encode('ascii')
+        data = base64.decodestring(data)
+    else:
+        data = unquote_to_bytes(data)
+
+    return io.BytesIO(data), mime_type, charset
 
 
 def urlopen(url):
@@ -66,21 +110,11 @@ def urlopen(url):
 
     It is the caller’s responsability to call ``file_like.close()``.
     """
-    file_like = URLopener().open(url)
-    info = file_like.info()
-    if hasattr(info, 'get_content_type'):
-        # Python 3
-        mime_type = info.get_content_type()
+    if url.startswith('data:'):
+        return parse_data_url(url)
     else:
-        # Python 2
-        mime_type = info.gettype()
-    if hasattr(info, 'get_param'):
-        # Python 3
-        charset = info.get_param('charset')
-    else:
-        # Python 2
-        charset = info.getparam('charset')
-    return file_like.fp, mime_type, charset
+        return urlopen_contenttype(Request(url,
+            headers={'User-Agent': HTTP_USER_AGENT}))
 
 
 def urllib_fetcher(url):

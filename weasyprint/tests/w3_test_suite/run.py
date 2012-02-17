@@ -17,6 +17,8 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+from __future__ import division, unicode_literals, print_function
+
 import sys
 import os.path
 import urllib
@@ -110,25 +112,25 @@ def main():
     errors = 0
     try:
         for i, (name, test) in enumerate(tests, 1):
-            print '### Test %i of %i: %s' % (i, len(tests), name),
+            print('### Test %i of %i: %s' % (i, len(tests), name), end='')
             sys.stdout.flush()
             try:
                 test_passed = test()
             except Exception:
-                print 'ERROR:'
+                print('ERROR:')
                 traceback.print_exc()
                 errors += 1
             else:
                 if test_passed:
-                    print 'PASS'
+                    print('PASS')
                     passed += 1
                 else:
-                    print 'FAIL'
+                    print('FAIL')
                     failed += 1
     except KeyboardInterrupt:
         pass
     print
-    print 'Passed: %i, failed: %i, errors: %i' % (passed, failed, errors)
+    print('Passed: %i, failed: %i, errors: %i' % (passed, failed, errors))
 
 if __name__ == '__main__':
     main()

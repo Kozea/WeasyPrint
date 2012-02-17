@@ -21,6 +21,7 @@ Utility functions and methods used by various modules in the css package.
 
 """
 
+from __future__ import division, unicode_literals
 
 import collections
 

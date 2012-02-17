@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, unicode_literals
 
 import functools
 from io import BytesIO
@@ -73,10 +73,8 @@ def serialize_replacement(replacement, scaled_width=None, scaled_height=None):
     return file_like.getvalue().encode('base64').replace('\n', '')
 
 
-@apply
-def serialize_page_box():
-    return functools.partial(serialize_box, attributes=PAGE_BOX_ATTRIBUTES)
-
+serialize_page_box = functools.partial(
+    serialize_box, attributes=PAGE_BOX_ATTRIBUTES)
 
 def serialize_style(document, style):
     style = style.as_dict()

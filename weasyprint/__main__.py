@@ -22,6 +22,8 @@ Command-line interface to WeasyPrint.
 
 """
 
+from __future__ import division, unicode_literals
+
 import sys
 import argparse
 
@@ -65,7 +67,9 @@ def main(argv=None):
                 'output filename that ends in ' + extensions)
 
     if args.input == '-':
-        source = HTML(file_obj=sys.stdin, encoding=args.encoding)
+        source = HTML(file_obj=sys.stdin, encoding=args.encoding,
+            # Dummy filename in the current directory.
+            base_url='<stdin>')
     else:
         source = HTML(args.input, encoding=args.encoding)
 

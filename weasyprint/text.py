@@ -22,7 +22,7 @@ Various classes to break text lines and draw them.
 
 """
 
-from __future__ import division
+from __future__ import division, unicode_literals
 
 from cgi import escape
 from gi.repository import Pango, PangoCairo  # pylint: disable=E0611

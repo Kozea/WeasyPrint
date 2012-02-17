@@ -20,3 +20,6 @@
 WeasyPrint testing suite.
 
 """
+
+
+from __future__ import division, unicode_literals

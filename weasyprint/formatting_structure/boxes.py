@@ -66,6 +66,11 @@ See respective docstrings for details.
 """
 
 
+from __future__ import division, unicode_literals
+
+from ..compat import xrange
+
+
 # The *Box classes have many attributes and methods, but that's the way it is
 # pylint: disable=R0904,R0902
 

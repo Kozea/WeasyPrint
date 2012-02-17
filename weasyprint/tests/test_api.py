@@ -22,13 +22,14 @@ Test the public API.
 
 """
 
+from __future__ import division, unicode_literals
+
 import sys
 import os
 import io
 import contextlib
 import threading
 import shutil
-import urlparse
 import tempfile
 import subprocess
 
@@ -37,6 +38,7 @@ from attest import Tests, assert_hook  # pylint: disable=W0611
 
 from .testing_utils import (
     resource_filename, assert_no_logs, TEST_UA_STYLESHEET)
+from ..compat import urljoin
 from .. import HTML, CSS, VERSION
 from .. import __main__
 
@@ -111,9 +113,9 @@ def test_resource(class_, basename, check, **kwargs):
     check(class_(filename_or_url=absolute_filename, **kwargs))
     check(class_(filename=absolute_filename, **kwargs))
     check(class_(url='file://' + absolute_filename, **kwargs))
-    with open(absolute_filename) as fd:
+    with open(absolute_filename, 'rb') as fd:
         check(class_(file_obj=fd, **kwargs))
-    with open(absolute_filename) as fd:
+    with open(absolute_filename, 'rb') as fd:
         content = fd.read()
     with chdir(os.path.dirname(__file__)):
         relative_filename = os.path.join('resources', basename)
@@ -134,8 +136,8 @@ def test_html_parsing():
         _head, body = html.root_element
         assert [child.tag for child in body] == ['h1', 'p', 'ul']
         h1 = body[0]
-        assert h1.text == u'WeasyPrint test document (with Ünicōde)'
-        url = urlparse.urljoin(h1.base_url, 'pattern.png')
+        assert h1.text == 'WeasyPrint test document (with Ünicōde)'
+        url = urljoin(h1.base_url, 'pattern.png')
         assert url.startswith('file:')
         assert url.endswith('weasyprint/tests/resources/pattern.png')
 
@@ -155,7 +157,7 @@ def test_css_parsing():
 
         assert content.name == 'content'
         string, = content.propertyValue
-        assert string.value == u'I løvë Unicode'
+        assert string.value == 'I løvë Unicode'
 
         assert background.name == 'background-image'
         url, = background.propertyValue
@@ -243,13 +245,13 @@ def test_command_line_render():
         body { margin: 0; }
     '''
     html = b'<body><img src=pattern.png>'
-    combined = b'<style>{}</style>{}'.format(css, html)
+    combined = b'<style>' + css + b'</style>' + html
     linked = b'<link rel=stylesheet href=style.css>' + html
 
     with chdir(resource_filename('')):
         # Reference
-        png_bytes = TestHTML(string=combined).write_png()
-        pdf_bytes = TestHTML(string=combined).write_pdf()
+        png_bytes = TestHTML(string=combined, base_url='dummy.html').write_png()
+        pdf_bytes = TestHTML(string=combined, base_url='dummy.html').write_pdf()
     check_png_pattern(png_bytes)
 
     def run(args):
@@ -305,6 +307,7 @@ def test_command_line_render():
 
             with monkey_patch_stdio(combined):
                 run('- out11.png')
+            check_png_pattern(read_file('out11.png'))
             assert read_file('out11.png') == png_bytes
 
             with monkey_patch_stdio(combined) as stdout:

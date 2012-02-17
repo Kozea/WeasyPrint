@@ -20,3 +20,5 @@
 Formatting structures of the CSS.
 
 """
+
+from __future__ import division, unicode_literals

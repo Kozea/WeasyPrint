@@ -22,7 +22,7 @@ Functions laying out the inline boxes.
 
 """
 
-from __future__ import division
+from __future__ import division, unicode_literals
 
 import cairo
 
@@ -386,7 +386,7 @@ def split_inline_box(document, box, position_x, max_x, skip_stack,
     # http://www.w3.org/TR/CSS21/visudet.html#strut
     # TODO: cache these results for a given set of styles?
     fragment = TextFragment(
-        b'', box.style, cairo.Context(document.surface))
+        '', box.style, cairo.Context(document.surface))
     _, _, _, height, baseline, _ = fragment.split_first_line()
     leading = used_line_height(box.style) - height
     half_leading = leading / 2.

@@ -21,6 +21,8 @@ WeasyPrint testing suite.
 
 """
 
+from __future__ import division, unicode_literals
+
 import sys
 import os.path
 import logging
@@ -33,7 +35,7 @@ from ..document import PNGDocument
 from ..css import PARSER as CSS_PARSER
 
 # TODO: find a way to not depend on a specific font
-FONTS = u"Liberation Sans, Arial"
+FONTS = 'Liberation Sans, Arial'
 
 TEST_UA_STYLESHEET = CSS_PARSER.parseFile(os.path.join(
     os.path.dirname(__file__), '..', 'css', 'tests_ua.css'

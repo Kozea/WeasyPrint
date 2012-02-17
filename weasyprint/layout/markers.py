@@ -22,7 +22,7 @@ Functions laying out the markers.
 
 """
 
-from __future__ import division
+from __future__ import division, unicode_literals
 
 import cairo
 

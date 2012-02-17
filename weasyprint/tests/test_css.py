@@ -21,6 +21,8 @@ Test the base mechanisms of CSS.
 
 """
 
+from __future__ import division, unicode_literals
+
 import os.path
 
 from attest import Tests, raises, assert_hook  # pylint: disable=W0611
@@ -248,8 +250,6 @@ def test_page():
     assert style.color.cssText == 'blue'
 
     style = document.style_for('first_left_page', '@top-left')
-    print style
-    print style is None
     assert style is None
 
     style = document.style_for('first_right_page', '@top-left')

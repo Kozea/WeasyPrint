@@ -25,10 +25,13 @@ including handling of anonymous boxes and whitespace processing.
 
 """
 
+from __future__ import division, unicode_literals
+
 import re
 from . import boxes, counters
 from .. import html
 from ..css import properties
+from ..compat import string_types, xrange
 
 
 # Maps values of the ``display`` CSS property to box types.
@@ -87,7 +90,7 @@ def dom_to_box(document, element, state=None):
     See http://www.w3.org/TR/CSS21/visuren.html#anonymous
 
     """
-    if not isinstance(element.tag, basestring):
+    if not isinstance(element.tag, string_types):
         # lxml.html already converts HTML entities to text.
         # Here we ignore comments and XML processing instructions.
         return []
@@ -182,7 +185,7 @@ def content_to_boxes(document, style, parent_box, quote_depth, counter_values):
         elif type_ == 'URI':
             image = document.get_image_from_uri(value)
             if image is not None:
-                text = u''.join(texts)
+                text = ''.join(texts)
                 if text:
                     yield boxes.TextBox.anonymous_from(parent_box, text)
                 texts = []
@@ -208,7 +211,7 @@ def content_to_boxes(document, style, parent_box, quote_depth, counter_values):
                 texts.append(quotes[min(quote_depth[0], len(quotes) - 1)])
             if is_open:
                 quote_depth[0] += 1
-    text = u''.join(texts)
+    text = ''.join(texts)
     if text:
         yield boxes.TextBox.anonymous_from(parent_box, text)
 
@@ -343,7 +346,7 @@ def anonymous_table_boxes(box):
         return box
 
     # Do recursion.
-    children = map(anonymous_table_boxes, box.children)
+    children = [anonymous_table_boxes(child) for child in box.children]
     return table_boxes_children(box, children)
 
 
@@ -577,7 +580,7 @@ def process_whitespace(box):
             continue
 
         # Normalize line feeds
-        text = re.sub(u'\r\n?', u'\n', text)
+        text = re.sub('\r\n?', '\n', text)
 
         handling = child.style.white_space
 
@@ -586,12 +589,12 @@ def process_whitespace(box):
             text = re.sub('[\t ]*\n[\t ]*', '\n', text)
         if handling in ('pre', 'pre-wrap'):
             # \xA0 is the non-breaking space
-            text = text.replace(' ', u'\xA0')
+            text = text.replace(' ', '\xA0')
             if handling == 'pre-wrap':
                 # "a line break opportunity at the end of the sequence"
                 # \u200B is the zero-width space, marks a line break
                 # opportunity.
-                text = re.sub(u'\xA0([^\xA0]|$)', u'\xA0\u200B\\1', text)
+                text = re.sub('\xA0([^\xA0]|$)', '\xA0\u200B\\1', text)
         elif handling in ('normal', 'nowrap'):
             # TODO: this should be language-specific
             # Could also replace with a zero width space character (U+200B),

@@ -22,16 +22,19 @@ Test the drawing functions.
 
 """
 
+from __future__ import division, unicode_literals
+
 import contextlib
 import os.path
 import tempfile
 import shutil
+import itertools
 from io import BytesIO
-from array import array
 
 import png
 from attest import Tests, assert_hook  # pylint: disable=W0611
 
+from ..compat import array, xrange
 from ..utils import ensure_url
 from .testing_utils import (
     resource_filename, TestPNGDocument, FONTS, assert_no_logs, capture_logs)
@@ -1194,7 +1197,7 @@ def test_before_after():
     ])
 
     assert_same_rendering(500, 30, [
-        ('pseudo_quotes', u'''
+        ('pseudo_quotes', '''
             <style>
                 @page { -weasy-size: 500px 30px }
                 body { margin: 0; background: #fff; quotes: '«' '»' '“' '”' }
@@ -1203,7 +1206,7 @@ def test_before_after():
             </style>
             <p><q>Lorem ipsum <q>dolor</q> sit amet</q></p>
         '''),
-        ('pseudo_quotes_reference', u'''
+        ('pseudo_quotes_reference', '''
             <style>
                 @page { -weasy-size: 500px 30px }
                 body { margin: 0; background: #fff }
@@ -1213,7 +1216,7 @@ def test_before_after():
     ])
 
     assert_same_rendering(100, 30, [
-        ('pseudo_url', u'''
+        ('pseudo_url', '''
             <style>
                 @page { -weasy-size: 100px 30px }
                 body { margin: 0; background: #fff; }
@@ -1221,7 +1224,7 @@ def test_before_after():
             </style>
             <p>c</p>
         '''),
-        ('pseudo_url_reference', u'''
+        ('pseudo_url_reference', '''
             <style>
                 @page { -weasy-size: 100px 30px }
                 body { margin: 0; background: #fff }
@@ -1234,7 +1237,7 @@ def test_before_after():
 @SUITE.test
 def test_borders():
     """Test the rendering of borders"""
-    source = u'''
+    source = '''
         <style>
             @page { -weasy-size: 140px 110px }
             html { background: #fff }
@@ -1260,12 +1263,14 @@ def test_borders():
     border = 10
     solid_pixels = [_ * width for y in xrange(height)]
     for x in xrange(margin, width - margin):
-        for y in (range(margin, margin + border) +
-                  range(height - margin - border, height - margin)):
+        for y in itertools.chain(
+                range(margin, margin + border),
+                range(height - margin - border, height - margin)):
             solid_pixels[y][x * 4:(x+1) * 4] = B
     for y in xrange(margin, height - margin):
-        for x in (range(margin, margin + border) +
-                  range(width - margin - border, width - margin)):
+        for x in itertools.chain(
+                range(margin, margin + border),
+                range(width - margin - border, width - margin)):
             solid_pixels[y][x * 4:(x+1) * 4] = B
     assert_pixels(
         'border_solid', 140, 110, solid_pixels,
@@ -1335,14 +1340,14 @@ def test_margin_boxes():
 @SUITE.test
 def test_unicode():
     """Test non-ASCII filenames (URLs)"""
-    text = u'I løvë Unicode'
+    text = 'I løvë Unicode'
     style = '''
         @page {
             -weasy-size: 200px 50px;
         }
         p { color: blue }
     '''
-    _doc, expected_lines = html_to_png('unicode_reference', 200, 50, u'''
+    _doc, expected_lines = html_to_png('unicode_reference', 200, 50, '''
         <style>{}</style>
         <p><img src="pattern.png"> {}</p>
     '''.format(style, text))
@@ -1353,13 +1358,13 @@ def test_unicode():
         image = os.path.join(temp, 'pattern.png')
         html = os.path.join(temp, 'doc.html')
         with open(stylesheet, 'wb') as fd:
-            fd.write(style)
+            fd.write(style.encode('utf8'))
         with open(resource_filename('pattern.png'), 'rb') as fd:
             image_content = fd.read()
         with open(image, 'wb') as fd:
             fd.write(image_content)
         with open(html, 'wb') as fd:
-            html_content = u'''
+            html_content = '''
                 <link rel=stylesheet href="{}">
                 <p><img src="{}"> {}</p>
             '''.format(

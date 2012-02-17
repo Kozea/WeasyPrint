@@ -21,7 +21,7 @@ Normalize values as much as possible without rendering the document.
 
 """
 
-from __future__ import division
+from __future__ import division, unicode_literals
 
 import collections
 import math

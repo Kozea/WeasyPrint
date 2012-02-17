@@ -22,7 +22,8 @@ Module drawing documents.
 
 """
 
-from __future__ import division
+from __future__ import division, unicode_literals
+
 import contextlib
 import math
 

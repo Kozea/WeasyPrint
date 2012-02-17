@@ -24,13 +24,15 @@ http://test.csswg.org/suites/css2.1/20110323/
 
 """
 
+from __future__ import division, unicode_literals
+
 import io
 import os.path
 import collections
 
 import cssutils
 import lxml.html
-from flask import Flask, render_template, abort, send_from_directory, safe_join
+# Don’t try to import Flask on Python 3
 
 from weasyprint.document import PNGDocument
 
@@ -91,6 +93,9 @@ def prepare_test_data(suite_directory):
 
 
 def run(suite_directory):
+    from flask import (
+        Flask, render_template, abort, send_from_directory, safe_join)
+
     chapters, tests = prepare_test_data(suite_directory)
 
     app = Flask(__name__)

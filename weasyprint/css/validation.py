@@ -25,6 +25,8 @@ See http://www.w3.org/TR/CSS21/propidx.html for allowed values.
 # TODO: unit-test these validators
 
 
+from __future__ import division, unicode_literals
+
 import functools
 
 from ..logging import LOGGER
@@ -339,7 +341,7 @@ def content(values):
     keyword = get_single_keyword(values)
     if keyword in ('normal', 'none'):
         return keyword
-    parsed_values = map(validate_content_value, values)
+    parsed_values = [validate_content_value(v) for v in values]
     if None not in parsed_values:
         return parsed_values
 
@@ -651,7 +653,7 @@ def text_align(keyword):
 @validator()
 def text_decoration(values):
     """``text-decoration`` property validation."""
-    keywords = map(get_keyword, values)
+    keywords = [get_keyword(v) for v in values]
     if keywords == ['none']:
         return 'none'
     if all(keyword in ('underline', 'overline', 'line-through', 'blink')
@@ -723,7 +725,7 @@ def size(values):
         elif len(values) == 2 and is_dimension(values[1]):
             return values
 
-    keywords = map(get_keyword, values)
+    keywords = [get_keyword(v) for v in values]
     if len(keywords) == 1:
         keyword = keywords[0]
         if keyword in ('auto', 'portrait'):
@@ -755,7 +757,7 @@ def transform(values):
     if get_single_keyword(values) == 'none':
         return 'none'
     else:
-        return map(transform_function, values)
+        return [transform_function(v) for v in values]
 
 
 def transform_function(value):
@@ -1114,7 +1116,7 @@ def validate_and_expand(name, values):
             # Use list() to consume any generator now,
             # so that InvalidValues is caught.
             return list(results)
-        except InvalidValues, exc:
+        except InvalidValues as exc:
             level = 'warn'
             if exc.args and exc.args[0]:
                 reason = exc.args[0]

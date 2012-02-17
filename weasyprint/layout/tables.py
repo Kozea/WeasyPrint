@@ -21,8 +21,9 @@ Functions laying out tables.
 
 """
 
-from __future__ import division
+from __future__ import division, unicode_literals
 
+from ..compat import xrange
 from ..logging import LOGGER
 from ..formatting_structure import boxes
 from .percentages import resolve_percentages, resolve_one_percentage

@@ -22,6 +22,8 @@ Test the layout.
 
 """
 
+from __future__ import division, unicode_literals
+
 from attest import Tests, assert_hook  # pylint: disable=W0611
 
 from .testing_utils import (
@@ -355,10 +357,10 @@ def test_lists():
     list_item, = unordered_list.children
     line, = list_item.children
     marker, content = line.children
-    assert marker.text == u'◦'
+    assert marker.text == '◦'
     assert marker.margin_left == 0
     assert marker.margin_right == 8
-    assert content.text == u'abc'
+    assert content.text == 'abc'
 
     page, = parse('''
         <style>
@@ -377,10 +379,10 @@ def test_lists():
     assert marker.position_x == (
         list_item.padding_box_x() - marker.width - marker.margin_right)
     assert marker.position_y == list_item.position_y
-    assert marker.text == u'•'
+    assert marker.text == '•'
     line, = list_item.children
     content, = line.children
-    assert content.text == u'abc'
+    assert content.text == 'abc'
 
 
 @SUITE.test
@@ -401,7 +403,7 @@ def test_empty_linebox():
 @SUITE.test
 def test_breaking_linebox():
     """Test lineboxes breaks with a lot of text and deep nesting."""
-    page, = parse(u'''
+    page, = parse('''
         <style>
         p { font-size: 13px;
             width: 300px;
@@ -457,7 +459,7 @@ def test_linebox_text():
 def test_linebox_positions():
     """Test the position of line boxes."""
     for width, expected_lines in [(165, 2), (1, 5), (0, 5)]:
-        page = u'''
+        page = '''
             <style>
                 p { width:%(width)spx; font-family:%(fonts)s;
                     line-height: 20px }
@@ -619,7 +621,7 @@ def test_inlinebox_spliting():
     """Test the inline boxes spliting."""
     def get_inlinebox(content):
         """Helper returning a inlinebox with customizable style."""
-        page = u'<style>p { font-family:%(fonts)s;}</style>'
+        page = '<style>p { font-family:%(fonts)s;}</style>'
         page = '%s <p>%s</p>' % (page, content)
         document = parse_without_layout(page % {'fonts': FONTS})
         html = document.formatting_structure
@@ -1844,7 +1846,7 @@ def test_margin_boxes_fixed_dimension():
 @SUITE.test
 def test_preferred_widths():
     """Unit tests for preferred widths."""
-    document = parse(u'''
+    document = parse('''
         <p style="white-space: pre-line">
             Lorem ipsum dolor sit amet,
               consectetur elit
@@ -1856,7 +1858,7 @@ def test_preferred_widths():
     paragraph, = body.children
     line, = paragraph.children
     text, = line.children
-    assert text.text == u'\nLorem ipsum dolor sit amet,\nconsectetur elit\n'
+    assert text.text == '\nLorem ipsum dolor sit amet,\nconsectetur elit\n'
 
     minimum = inline_preferred_minimum_width(line)
     preferred = inline_preferred_width(line)

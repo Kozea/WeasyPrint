@@ -25,6 +25,9 @@ WeasyPrint converts web documents, mainly HTML documents with CSS, to PDF.
 
 """
 
+from __future__ import division, unicode_literals
+
+
 VERSION = '0.6dev'
 __version__ = VERSION
 
@@ -167,8 +170,8 @@ def _select_source(filename_or_url, filename, url, file_obj, string, base_url):
     nones = [filename_or_url is None, filename is None, url is None,
              file_obj is None, string is None]
     if nones == [False, True, True, True, True]:
-        import urlparse
-        if urlparse.urlparse(filename_or_url).scheme:
+        from .compat import urlparse
+        if urlparse(filename_or_url).scheme:
             return 'url', filename_or_url, base_url
         else:
             return 'filename', filename_or_url, base_url

@@ -21,7 +21,7 @@ Functions laying out the block boxes.
 
 """
 
-from __future__ import division
+from __future__ import division, unicode_literals
 
 from .inlines import get_next_linebox, replaced_box_width, replaced_box_height
 from .markers import list_marker_layout

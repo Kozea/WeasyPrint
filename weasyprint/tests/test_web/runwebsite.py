@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import division, unicode_literals
+
 import os.path
 from flask import Flask, request, render_template, send_file
 from weasyprint.document import PNGDocument, PDFDocument

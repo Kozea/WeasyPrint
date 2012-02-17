@@ -1,4 +1,4 @@
-from fireweasy import app
+from fireweasy import make_app
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    make_app().run(debug=True)

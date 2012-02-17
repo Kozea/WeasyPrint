@@ -21,6 +21,8 @@ Test the CSS boxes.
 
 """
 
+from __future__ import division, unicode_literals
+
 import contextlib
 
 from attest import Tests, assert_hook  # pylint: disable=W0611
@@ -48,7 +50,7 @@ PROPER_CHILDREN = dict((key, tuple(map(tuple, value))) for key, value in {
     boxes.TableColumnGroupBox: [[boxes.TableColumnBox]],
     boxes.TableRowGroupBox: [[boxes.TableRowBox]],
     boxes.TableRowBox: [[boxes.TableCellBox]],
-}.iteritems())
+}.items())
 
 
 def test_no_log(test_function):
@@ -367,15 +369,15 @@ def test_whitespace():
         ('pre', 'Block', [
             ('pre', 'Line', [
                 # pre
-                ('pre', 'Text', u'\t\xA0\xA0foo\n')])]),
+                ('pre', 'Text', '\t\xA0\xA0foo\n')])]),
         ('pre', 'Block', [
             ('pre', 'Line', [
                 # pre-wrap
-                ('pre', 'Text', u'\t\xA0\xA0\u200Bfoo\n')])]),
+                ('pre', 'Text', '\t\xA0\xA0\u200Bfoo\n')])]),
         ('pre', 'Block', [
             ('pre', 'Line', [
                 # pre-line
-                ('pre', 'Text', u'foo\n')])])])
+                ('pre', 'Text', 'foo\n')])])])
 
 
 @SUITE.test
@@ -752,7 +754,7 @@ def test_before_after():
                         ('a:before', 'Text', '[some url] ')]),
                     ('a', 'Text', 'some text')])])])])
 
-    assert_tree(parse_all(u'''
+    assert_tree(parse_all('''
         <style>
             body { quotes: '«' '»' '“' '”' }
             q:before { content: open-quote ' '}
@@ -764,17 +766,17 @@ def test_before_after():
             ('p', 'Line', [
                 ('q', 'Inline', [
                     ('q:before', 'Inline', [
-                        ('q:before', 'Text', u'« ')]),
+                        ('q:before', 'Text', '« ')]),
                     ('q', 'Text', 'Lorem ipsum '),
                     ('q', 'Inline', [
                         ('q:before', 'Inline', [
-                            ('q:before', 'Text', u'“ ')]),
+                            ('q:before', 'Text', '“ ')]),
                         ('q', 'Text', 'dolor'),
                         ('q:after', 'Inline', [
-                            ('q:after', 'Text', u' ”')])]),
+                            ('q:after', 'Text', ' ”')])]),
                     ('q', 'Text', ' sit amet'),
                     ('q:after', 'Inline', [
-                        ('q:after', 'Text', u' »')])])])])])
+                        ('q:after', 'Text', ' »')])])])])])
 
     assert_tree(parse_all('''
         <style>
@@ -956,7 +958,7 @@ def test_counter_styles():
             ('p', 'Line', [
                 ('p:before', 'Inline', [
                     ('p:before', 'Text', counter)])])])
-        for counter in u'--  •  ◦  ▪  -7'.split()])
+        for counter in '--  •  ◦  ▪  -7'.split()])
 
     assert_tree(parse_all('''
         <style>
@@ -986,7 +988,7 @@ def test_counter_styles():
             ('p', 'Line', [
                 ('p:before', 'Inline', [
                     ('p:before', 'Text', counter)])])])
-        for counter in u'''-1986 -1985  -11 -10 -09 -08  -01 00 01 02  09 10 11
+        for counter in '''-1986 -1985  -11 -10 -09 -08  -01 00 01 02  09 10 11
                             99 100 101  4135 4136'''.split()])
 
     # Same test as above, but short-circuit HTML and boxes
@@ -1053,7 +1055,7 @@ def test_counter_styles():
         200, 300, 400, 500, 600, 700, 800, 900, 1000,
         2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000,
         19999, 20000, 20001
-    ]] == u'''
+    ]] == '''
         -1986 -1985  -1 0 ა
         ბ გ დ ე ვ ზ ჱ თ ი ია იბ
         კ ლ მ ნ ჲ ო პ ჟ რ
@@ -1070,7 +1072,7 @@ def test_counter_styles():
         200, 300, 400, 500, 600, 700, 800, 900, 1000,
         2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000,
         9999, 10000, 10001
-    ]] == u'''
+    ]] == '''
         -1986 -1985  -1 0 Ա
         Բ Գ Դ Ե Զ Է Ը Թ Ժ ԺԱ ԺԲ
         Ի Լ Խ Ծ Կ Հ Ձ Ղ Ճ
@@ -1121,7 +1123,7 @@ def test_margin_boxes():
 @SUITE.test
 def test_page_counters():
     """Test page-based counters."""
-    document = TestPNGDocument(u'''
+    document = TestPNGDocument('''
         <style>
             @page {
                 /* Make the page content area only 10px high and wide,
@@ -1139,4 +1141,4 @@ def test_page_counters():
         html, bottom_center = page.children
         line_box, = bottom_center.children
         text_box, = line_box.children
-        assert text_box.text == u'Page {} of 3.'.format(page_number)
+        assert text_box.text == 'Page {} of 3.'.format(page_number)

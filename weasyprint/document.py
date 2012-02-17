@@ -22,6 +22,9 @@ Output document classes for various formats.
 
 """
 
+from __future__ import division, unicode_literals
+
+
 import io
 import math
 

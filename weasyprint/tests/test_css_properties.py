@@ -21,6 +21,8 @@ Test the management of the CSS properties.
 
 """
 
+from __future__ import division, unicode_literals
+
 from attest import Tests, raises, assert_hook  # pylint: disable=W0611
 from cssutils.css import PropertyValue
 
@@ -153,7 +155,7 @@ def assert_background(css, **kwargs):
     """Helper checking the background properties."""
     expanded = expand_to_dict('background', css).items()
     expected = [('background_' + key, value)
-                for key, value in kwargs.iteritems()]
+                for key, value in kwargs.items()]
     assert sorted(expanded) == sorted(expected)
 
 

@@ -21,6 +21,8 @@ Test the text management.
 
 """
 
+from __future__ import division, unicode_literals
+
 import cssutils
 import cairo
 from attest import Tests, assert_hook  # pylint: disable=W0611
@@ -44,7 +46,6 @@ def make_text(text, width=-1, style=''):
         + style)))
     style = computed_from_cascaded(None, style, None)
     surface = cairo.SVGSurface(None, 1, 1)
-    text = text.encode('utf8')
     return TextFragment(text, style, cairo.Context(surface), width)
 
 
@@ -64,7 +65,7 @@ def test_line_content():
 @SUITE.test
 def test_line_with_any_width():
     """Test the auto-fit width of lines."""
-    line = make_text(u'some text')
+    line = make_text('some text')
     _, _, width, _, _, _ = line.split_first_line()
 
     line = make_text('some some some text some some some text')
@@ -76,7 +77,7 @@ def test_line_with_any_width():
 @SUITE.test
 def test_line_breaking():
     """Test the line breaking."""
-    string = u'This is a text for test'
+    string = 'This is a text for test'
 
     # These two tests do not really rely on installed fonts
     line = make_text(string, 90, 'font-size: 1px')
@@ -85,17 +86,17 @@ def test_line_breaking():
 
     line = make_text(string, 90, 'font-size: 100px')
     _, _, _, _, _, resume_at = line.split_first_line()
-    assert string[resume_at:] == u'is a text for test'
+    assert string[resume_at:] == 'is a text for test'
 
     line = make_text(string, 90, 'font-family: "%s"; font-size: 19px' % FONTS)
     _, _, _, _, _, resume_at = line.split_first_line()
-    assert string[resume_at:] == u'text for test'
+    assert string[resume_at:] == 'text for test'
 
 
 @SUITE.test
 def test_text_dimension():
     """Test the font size impact on the text dimension."""
-    string = u'This is a text for test. This is a test for text.py'
+    string = 'This is a text for test. This is a test for text.py'
     fragment = make_text(string, 200, 'font-size: 12px')
     _, _, width_1, height_1, _, _ = fragment.split_first_line()
 

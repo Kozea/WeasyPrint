@@ -20,6 +20,7 @@
     Data about known CSS properties.
 """
 
+from __future__ import division, unicode_literals
 
 from cssutils.css import PropertyValue
 
@@ -94,7 +95,7 @@ INITIAL_VALUES = {
     'page_break_after': 'auto',
     'page_break_before': 'auto',
     'page_break_inside': 'auto',
-    'quotes': list(u'“”‘’'),  # depends on user agent
+    'quotes': list('“”‘’'),  # depends on user agent
     'position': 'static',
     'right': 'auto',
     'table_layout': 'auto',
@@ -232,5 +233,5 @@ TABLE_WRAPPER_BOX_PROPERTIES = set('''
 
 
 BACKGROUND_INITIAL = dict(
-    (name, value) for name, value in INITIAL_VALUES.iteritems()
+    (name, value) for name, value in INITIAL_VALUES.items()
     if name.startswith('background'))

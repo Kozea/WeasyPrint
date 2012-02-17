@@ -20,8 +20,9 @@
 Handle various image formats.
 """
 
-from __future__ import division
-from StringIO import StringIO
+from __future__ import division, unicode_literals
+
+from io import BytesIO
 
 import cairo
 
@@ -105,8 +106,8 @@ def fallback_handler(file_like, uri):
             return exception  # PIL is not installed
     if not (hasattr(file_like, 'seek') and hasattr(file_like, 'tell')):
         # PIL likes to have these methods
-        file_like = StringIO(file_like.read())
-    png = StringIO()
+        file_like = BytesIO(file_like.read())
+    png = BytesIO()
     image = Image.open(file_like)
     image = image.convert('RGBA')
     image.save(png, "PNG")
@@ -118,19 +119,19 @@ def get_image_from_uri(uri):
     """Get a :class:`cairo.Surface`` from an image URI."""
     try:
         file_like, mime_type, _charset = urlopen(uri)
-    except IOError as exc:
+    except (IOError, ValueError) as exc:
         LOGGER.warn('Error while fetching an image from %s : %r', uri, exc)
         return None
-    # TODO: implement image type sniffing?
-# http://www.w3.org/TR/html5/fetching-resources.html#content-type-sniffing:-image
 
     handler = FORMAT_HANDLERS.get(mime_type, fallback_handler)
+    exception = None
     try:
         image = handler(file_like, uri)
-    except (IOError, MemoryError) as exception:
-        pass # Network or parsing error
+    except (IOError, MemoryError) as e:
+        exception = e # Network or parsing error
     else:
-        exception = image if isinstance(image, Exception) else None
+        if isinstance(image, Exception):
+            exception = image
     finally:
         file_like.close()
 

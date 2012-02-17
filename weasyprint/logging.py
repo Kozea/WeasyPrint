@@ -22,7 +22,7 @@ Logging setup.
 
 """
 
-from __future__ import absolute_import
+from __future__ import division, unicode_literals, absolute_import
 
 import logging
 
