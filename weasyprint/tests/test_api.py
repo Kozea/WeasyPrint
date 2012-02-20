@@ -43,10 +43,6 @@ from .. import HTML, CSS, VERSION
 from .. import __main__
 
 
-SUITE = Tests()
-SUITE.context(assert_no_logs)
-
-
 CHDIR_LOCK = threading.Lock()
 
 @contextlib.contextmanager
@@ -106,7 +102,7 @@ class TestHTML(HTML):
         return [TEST_UA_STYLESHEET]
 
 
-def test_resource(class_, basename, check, **kwargs):
+def _test_resource(class_, basename, check, **kwargs):
     """Common code for testing the HTML and CSS classes."""
     absolute_filename = resource_filename(basename)
     check(class_(absolute_filename, **kwargs))
@@ -126,7 +122,7 @@ def test_resource(class_, basename, check, **kwargs):
                         base_url=relative_filename, **kwargs))
 
 
-@SUITE.test
+@assert_no_logs
 def test_html_parsing():
     """Test the constructor for the HTML class."""
     def check_doc1(html):
@@ -141,11 +137,11 @@ def test_html_parsing():
         assert url.startswith('file:')
         assert url.endswith('weasyprint/tests/resources/pattern.png')
 
-    test_resource(TestHTML, 'doc1.html', check_doc1)
-    test_resource(TestHTML, 'doc1-utf32.html', check_doc1, encoding='utf32')
+    _test_resource(TestHTML, 'doc1.html', check_doc1)
+    _test_resource(TestHTML, 'doc1-utf32.html', check_doc1, encoding='utf32')
 
 
-@SUITE.test
+@assert_no_logs
 def test_css_parsing():
     """Test the constructor for the CSS class."""
     def check_css(css):
@@ -165,8 +161,8 @@ def test_css_parsing():
         assert url.startswith('file:')
         assert url.endswith('weasyprint/tests/resources/pattern.png')
 
-    test_resource(CSS, 'utf8-test.css', check_css)
-    test_resource(CSS, 'latin1-test.css', check_css, encoding='latin1')
+    _test_resource(CSS, 'utf8-test.css', check_css)
+    _test_resource(CSS, 'latin1-test.css', check_css, encoding='latin1')
 
 
 def check_png_pattern(png_bytes):
@@ -187,7 +183,7 @@ def check_png_pattern(png_bytes):
     ])
 
 
-@SUITE.test
+@assert_no_logs
 def test_python_render():
     """Test rendering with the Python API."""
     html = TestHTML(string='<body><img src=pattern.png>',
@@ -237,7 +233,7 @@ def test_python_render():
         assert read_file(pdf_filename) == pdf_bytes
 
 
-@SUITE.test
+@assert_no_logs
 def test_command_line_render():
     """Test rendering with the command-line API."""
     css = b'''

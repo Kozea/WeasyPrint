@@ -33,10 +33,6 @@ from .test_layout import parse, body_children
 from .testing_utils import FONTS, assert_no_logs
 
 
-SUITE = Tests()
-SUITE.context(assert_no_logs)
-
-
 def make_text(text, width=-1, style=''):
     """
     Make and return a TextFragment built from a TextBox in an HTML document.
@@ -49,7 +45,7 @@ def make_text(text, width=-1, style=''):
     return TextFragment(text, style, cairo.Context(surface), width)
 
 
-@SUITE.test
+@assert_no_logs
 def test_line_content():
     """Test the line break for various fixed-width lines."""
     for width, remaining in [(90, 'text for test'),
@@ -62,7 +58,7 @@ def test_line_content():
         assert length == resume_at
 
 
-@SUITE.test
+@assert_no_logs
 def test_line_with_any_width():
     """Test the auto-fit width of lines."""
     line = make_text('some text')
@@ -74,7 +70,7 @@ def test_line_with_any_width():
     assert width < new_width
 
 
-@SUITE.test
+@assert_no_logs
 def test_line_breaking():
     """Test the line breaking."""
     string = 'This is a text for test'
@@ -93,7 +89,7 @@ def test_line_breaking():
     assert string[resume_at:] == 'text for test'
 
 
-@SUITE.test
+@assert_no_logs
 def test_text_dimension():
     """Test the font size impact on the text dimension."""
     string = 'This is a text for test. This is a test for text.py'
@@ -105,7 +101,7 @@ def test_text_dimension():
     assert width_1 * height_1 < width_2 * height_2
 
 
-@SUITE.test
+@assert_no_logs
 def test_text_font_size_zero():
     """Test a text with a font size set to 0."""
     page, = parse('''

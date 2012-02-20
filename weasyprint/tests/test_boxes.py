@@ -32,10 +32,6 @@ from ..css import validation
 from ..formatting_structure import boxes, build, counters
 
 
-SUITE = Tests()
-SUITE.context(assert_no_logs)
-
-
 PROPER_CHILDREN = dict((key, tuple(map(tuple, value))) for key, value in {
     # Children can be of *any* type in *one* of the lists.
     boxes.BlockContainerBox: [[boxes.BlockLevelBox], [boxes.LineBox]],
@@ -51,11 +47,6 @@ PROPER_CHILDREN = dict((key, tuple(map(tuple, value))) for key, value in {
     boxes.TableRowGroupBox: [[boxes.TableRowBox]],
     boxes.TableRowBox: [[boxes.TableCellBox]],
 }.items())
-
-
-def test_no_log(test_function):
-    """Add a test function to the suite, and check that is produces no log."""
-    SUITE.test(assert_no_logs(test_function))
 
 
 def serialize(box_list):
@@ -190,7 +181,7 @@ def sanity_checks(box):
         sanity_checks(child)
 
 
-@SUITE.test
+@assert_no_logs
 def test_box_tree():
     """Test the creation of trees from HTML strings."""
     assert_tree(parse('<p>'), [('p', 'Block', [])])
@@ -210,7 +201,7 @@ def test_box_tree():
             ('p', 'Text', '!')])])
 
 
-@SUITE.test
+@assert_no_logs
 def test_html_entities():
     """Test the management of HTML entities."""
     for quote in ['"', '&quot;', '&#x22;', '&#34;']:
@@ -219,7 +210,7 @@ def test_html_entities():
                 ('p', 'Text', '"abc"')])])
 
 
-@SUITE.test
+@assert_no_logs
 def test_inline_in_block():
     """Test the management of inline boxes in block boxes."""
     source = '<div>Hello, <em>World</em>!\n<p>Lipsum.</p></div>'
@@ -240,7 +231,7 @@ def test_inline_in_block():
     assert_tree(box, expected)
 
 
-@SUITE.test
+@assert_no_logs
 def test_block_in_inline():
     """Test the management of block boxes in inline boxes."""
     box = parse('''
@@ -318,7 +309,7 @@ def test_block_in_inline():
                         ('em', 'Inline', [])])])])])])
 
 
-@SUITE.test
+@assert_no_logs
 def test_styles():
     """Test the application of CSS to HTML."""
     box = parse('''
@@ -346,7 +337,7 @@ def test_styles():
             assert child.style.margin_top == 42
 
 
-@SUITE.test
+@assert_no_logs
 def test_whitespace():
     """Test the management of white spaces."""
     # TODO: test more cases
@@ -380,7 +371,7 @@ def test_whitespace():
                 ('pre', 'Text', 'foo\n')])])])
 
 
-@SUITE.test
+@assert_no_logs
 def test_page_style():
     """Test the management of page styles."""
     document = TestPNGDocument('''
@@ -406,7 +397,7 @@ def test_page_style():
     assert_page_margins('right_page', top=10, right=10, bottom=3, left=3)
 
 
-@SUITE.test
+@assert_no_logs
 def test_text_transform():
     """Test the text-transform property."""
     assert_tree(parse_all('''
@@ -433,7 +424,7 @@ def test_text_transform():
     ])
 
 
-@SUITE.test
+@assert_no_logs
 def test_tables():
     # Rules in http://www.w3.org/TR/CSS21/tables.html#anonymous-boxes
     # Rule 1.3
@@ -588,7 +579,7 @@ def test_tables():
                     ('colgroup', 'AnonTableColumn', [])])])])])
 
 
-@SUITE.test
+@assert_no_logs
 def test_table_style():
     html = parse_all('<table style="margin: 1px; padding: 2px"></table>')
     body, = html.children
@@ -602,7 +593,7 @@ def test_table_style():
     assert table.style.padding_top == 2
 
 
-@SUITE.test
+@assert_no_logs
 def test_column_style():
     html = parse_all('''
         <table>
@@ -621,7 +612,7 @@ def test_column_style():
     assert colgroup.children[0] is not colgroup.children[1]
 
 
-@SUITE.test
+@assert_no_logs
 def test_nested_grid_x():
     html = parse_all('''
         <table>
@@ -642,7 +633,7 @@ def test_nested_grid_x():
     assert grid == [(0, [0, 1]), (2, [2, 3]), (4, [4, 5, 6]), (7, [7])]
 
 
-@SUITE.test
+@assert_no_logs
 def test_colspan_rowspan():
     """
     +---+---+---+
@@ -706,7 +697,7 @@ def test_colspan_rowspan():
     ]
 
 
-@SUITE.test
+@assert_no_logs
 def test_before_after():
     """Test the :before and :after pseudo-elements."""
     assert_tree(parse_all('''
@@ -793,7 +784,7 @@ def test_before_after():
                 ('p', 'Text', 'c')])])])
 
 
-@SUITE.test
+@assert_no_logs
 def test_counters():
     """Test counter-reset, counter-increment, content: counter() counters()"""
     assert_tree(parse_all('''
@@ -935,7 +926,7 @@ def test_counters():
                         ('h1:before', 'Text', '3')])])])])])
 
 
-@SUITE.test
+@assert_no_logs
 def test_counter_styles():
     """Test the various counter styles."""
     assert_tree(parse_all('''
@@ -1082,7 +1073,7 @@ def test_counter_styles():
     '''.split()
 
 
-@SUITE.test
+@assert_no_logs
 def test_margin_boxes():
     """
     Test that the correct margin boxes are created.
@@ -1120,7 +1111,7 @@ def test_margin_boxes():
     assert text_box.text == 'Title'
 
 
-@SUITE.test
+@assert_no_logs
 def test_page_counters():
     """Test page-based counters."""
     document = TestPNGDocument('''

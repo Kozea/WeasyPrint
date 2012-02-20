@@ -31,10 +31,6 @@ from ..css import validation
 from ..css.values import as_css
 
 
-SUITE = Tests()
-SUITE.context(assert_no_logs)
-
-
 def expand_to_dict(short_name, short_values):
     """Helper to test shorthand properties expander functions."""
     return dict((name, as_css(value) if isinstance(value, (list, tuple))
@@ -43,7 +39,7 @@ def expand_to_dict(short_name, short_values):
                     short_name, list(PropertyValue(short_values))))
 
 
-@SUITE.test
+@assert_no_logs
 def test_expand_four_sides():
     """Test the 4-value properties."""
     assert expand_to_dict('margin', 'inherit') == {
@@ -80,7 +76,7 @@ def test_expand_four_sides():
         expand_to_dict('padding', '1 2 3 4 5')
 
 
-@SUITE.test
+@assert_no_logs
 def test_expand_borders():
     """Test the ``border`` property."""
     assert expand_to_dict('border_top', '3px dotted red') == {
@@ -124,7 +120,7 @@ def test_expand_borders():
         expand_to_dict('border', '6px dashed left')
 
 
-@SUITE.test
+@assert_no_logs
 def test_expand_list_style():
     """Test the ``list_style`` property."""
     assert expand_to_dict('list_style', 'inherit') == {
@@ -159,7 +155,7 @@ def assert_background(css, **kwargs):
     assert sorted(expanded) == sorted(expected)
 
 
-@SUITE.test
+@assert_no_logs
 def test_expand_background():
     """Test the ``background`` property."""
     assert_background(
@@ -231,7 +227,7 @@ def test_expand_background():
     )
 
 
-@SUITE.test
+@assert_no_logs
 def test_font():
     """Test the ``font`` property."""
     assert expand_to_dict('font', '12px sans_serif') == {

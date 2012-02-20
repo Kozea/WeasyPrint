@@ -35,11 +35,6 @@ from ..layout.percentages import resolve_percentages
 from ..layout.preferred import (inline_preferred_width,
                                 inline_preferred_minimum_width)
 
-
-SUITE = Tests()
-SUITE.context(assert_no_logs)
-
-
 def body_children(page):
     """Take a ``page``  and return its <body>’s children."""
     html, = page.children
@@ -76,7 +71,7 @@ def parse(html_content, return_document=False):
             return document.pages
 
 
-@SUITE.test
+@assert_no_logs
 def test_page():
     """Test the layout for ``@page`` properties."""
     pages = parse('<p>')
@@ -164,7 +159,7 @@ def test_page():
     assert html.position_y == 21  # 1 + 4 + 16
 
 
-@SUITE.test
+@assert_no_logs
 def test_block_widths():
     """Test the blocks widths."""
     page, = parse('''
@@ -276,7 +271,7 @@ def test_block_widths():
     assert paragraphs[10].margin_right == -106
 
 
-@SUITE.test
+@assert_no_logs
 def test_block_heights():
     """Test the blocks heights."""
     page, = parse('''
@@ -306,7 +301,7 @@ def test_block_heights():
     assert divs[1].height == 90 * 3
 
 
-@SUITE.test
+@assert_no_logs
 def test_block_percentage_heights():
     """Test the blocks heights set in percents."""
     page, = parse('''
@@ -341,7 +336,7 @@ def test_block_percentage_heights():
     assert body.height == 150
 
 
-@SUITE.test
+@assert_no_logs
 def test_lists():
     """Test the lists."""
     page, = parse('''
@@ -385,7 +380,7 @@ def test_lists():
     assert content.text == 'abc'
 
 
-@SUITE.test
+@assert_no_logs
 def test_empty_linebox():
     """Test lineboxes with no content other than space-like characters."""
     page, = parse('''
@@ -400,7 +395,7 @@ def test_empty_linebox():
     assert paragraph.height == 0
 
 
-@SUITE.test
+@assert_no_logs
 def test_breaking_linebox():
     """Test lineboxes breaks with a lot of text and deep nesting."""
     page, = parse('''
@@ -435,7 +430,7 @@ def test_breaking_linebox():
                     assert child.style.font_size == 13
 
 
-@SUITE.test
+@assert_no_logs
 def test_linebox_text():
     """Test the creation of line boxes."""
     page, = parse('''
@@ -455,7 +450,7 @@ def test_linebox_text():
     assert text == 'Lorem Ipsumis very coool'
 
 
-@SUITE.test
+@assert_no_logs
 def test_linebox_positions():
     """Test the position of line boxes."""
     for width, expected_lines in [(165, 2), (1, 5), (0, 5)]:
@@ -484,7 +479,7 @@ def test_linebox_positions():
             ref_position_y += line.height
 
 
-@SUITE.test
+@assert_no_logs
 def test_forced_line_breaks():
     """Test <pre> and <br>."""
     # These lines should be small enough to fit on the default A4 page
@@ -523,7 +518,7 @@ def test_forced_line_breaks():
     assert [line.height for line in lines] == [42] * 7
 
 
-@SUITE.test
+@assert_no_logs
 def test_page_breaks():
     """Test the page breaks."""
     pages = parse('''
@@ -616,7 +611,7 @@ def test_page_breaks():
     assert ulist.element_tag == 'ul'
 
 
-@SUITE.test
+@assert_no_logs
 def test_inlinebox_spliting():
     """Test the inline boxes spliting."""
     def get_inlinebox(content):
@@ -724,7 +719,7 @@ def test_inlinebox_spliting():
         test_inlinebox_spacing(part, 0, 'left')
 
 
-@SUITE.test
+@assert_no_logs
 def test_inlinebox_text_after_spliting():
     """Test the inlinebox text after spliting."""
     document = parse_without_layout('''
@@ -764,7 +759,7 @@ def test_inlinebox_text_after_spliting():
     ) == original_text
 
 
-@SUITE.test
+@assert_no_logs
 def test_page_and_linebox_breaking():
     """Test the linebox text after spliting linebox and page."""
     # The empty <span/> tests a corner case
@@ -796,7 +791,7 @@ def test_page_and_linebox_breaking():
         '1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15'
 
 
-@SUITE.test
+@assert_no_logs
 def test_whitespace_processing():
     """Test various spaces and tabulations processing."""
     for source in ['a', '  a  ', ' \n  \ta', ' a\t ']:
@@ -820,7 +815,7 @@ def test_whitespace_processing():
         assert text.text == 'a', 'source was %r' % (source,)
 
 
-@SUITE.test
+@assert_no_logs
 def test_with_images():
     """Test that width, height and ratio of images are respected."""
     # Try a few image formats
@@ -903,7 +898,7 @@ def test_with_images():
     assert img_2.position_y == 0
 
 
-@SUITE.test
+@assert_no_logs
 def test_vertical_align():
     """Test various values of vertical-align."""
     """
@@ -1077,7 +1072,7 @@ def test_vertical_align():
     assert span_2.height == 19
 
 
-@SUITE.test
+@assert_no_logs
 def test_text_align_left():
     """Test the left text alignment."""
 
@@ -1108,7 +1103,7 @@ def test_text_align_left():
     assert img_2.position_x == 40
 
 
-@SUITE.test
+@assert_no_logs
 def test_text_align_right():
     """Test the right text alignment."""
 
@@ -1140,7 +1135,7 @@ def test_text_align_right():
     assert img_2.position_x == 140  # 200 - 60
 
 
-@SUITE.test
+@assert_no_logs
 def test_text_align_center():
     """Test the center text alignment."""
 
@@ -1172,7 +1167,7 @@ def test_text_align_center():
     assert img_2.position_x == 90
 
 
-@SUITE.test
+@assert_no_logs
 def test_text_align_justify():
     """Test justified text."""
     page, = parse('''
@@ -1212,7 +1207,7 @@ def test_text_align_justify():
     assert image_5.position_x == 0
 
 
-@SUITE.test
+@assert_no_logs
 def test_word_spacing():
     """Test word-spacing."""
     # keep the empty <style> as a regression test: element.text is None
@@ -1240,7 +1235,7 @@ def test_word_spacing():
     assert strong_2.width - strong_1.width == 33
 
 
-@SUITE.test
+@assert_no_logs
 def test_letter_spacing():
     """Test letter-spacing."""
     page, = parse('''
@@ -1263,7 +1258,7 @@ def test_letter_spacing():
     assert strong_2.width - strong_1.width == 34 * 11
 
 
-@SUITE.test
+@assert_no_logs
 def test_text_indent():
     """Test the text-indent property."""
     for indent in ['12px', '6%']:  # 6% of 200px is 12px
@@ -1287,7 +1282,7 @@ def test_text_indent():
         assert text_3.position_x == 10  # No indent
 
 
-@SUITE.test
+@assert_no_logs
 def test_inline_replaced_auto_margins():
     """Test that auto margins are ignored for inline replaced boxes."""
     page, = parse('''
@@ -1308,7 +1303,7 @@ def test_inline_replaced_auto_margins():
     assert img.margin_left == 0
 
 
-@SUITE.test
+@assert_no_logs
 def test_empty_inline_auto_margins():
     """Test that horizontal auto margins are ignored for empty inline boxes."""
     page, = parse('''
@@ -1328,7 +1323,7 @@ def test_empty_inline_auto_margins():
     assert span.margin_left == 0
 
 
-@SUITE.test
+@assert_no_logs
 def test_box_sizing():
     """Test the box-sizing property.
 
@@ -1362,7 +1357,7 @@ def test_box_sizing():
     assert div_2.margin_height() == 1200
 
 
-@SUITE.test
+@assert_no_logs
 def test_table_column_width():
     source = '''
         <style>
@@ -1511,7 +1506,7 @@ def test_table_column_width():
         assert wrapper.width == table.width
 
 
-@SUITE.test
+@assert_no_logs
 def test_table_row_height():
     page, = parse('''
         <table style="width: 1000px; border-spacing: 0 100px;
@@ -1593,7 +1588,7 @@ def test_table_row_height():
     ]
 
 
-@SUITE.test
+@assert_no_logs
 def test_table_wrapper():
     page, = parse('''
         <style>
@@ -1623,7 +1618,7 @@ def test_table_wrapper():
     page, = parse('<html style="display: table">')
 
 
-@SUITE.test
+@assert_no_logs
 def test_margin_boxes_fixed_dimension():
     # Corner boxes
     page, = parse('''
@@ -1843,7 +1838,7 @@ def test_margin_boxes_fixed_dimension():
     assert margin_box.height == 150
 
 
-@SUITE.test
+@assert_no_logs
 def test_preferred_widths():
     """Unit tests for preferred widths."""
     document = parse('''
@@ -1867,7 +1862,7 @@ def test_preferred_widths():
     assert 220 < preferred < 240
 
 
-@SUITE.test
+@assert_no_logs
 def test_margin_boxes_variable_dimension():
     page, = parse('''
         <style>
@@ -2131,7 +2126,7 @@ def test_margin_boxes_variable_dimension():
     assert top_right.margin_width() == 230
 
 
-@SUITE.test
+@assert_no_logs
 def test_margin_boxes_vertical_align():
     """
          3 px ->    +-----+

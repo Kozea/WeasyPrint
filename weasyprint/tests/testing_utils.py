@@ -21,12 +21,13 @@ WeasyPrint testing suite.
 
 """
 
-from __future__ import division, unicode_literals
+from __future__ import division, unicode_literals, print_function
 
 import sys
 import os.path
 import logging
 import contextlib
+import functools
 
 from attest import assert_hook
 
@@ -89,18 +90,20 @@ def capture_logs(logger_names=('WEASYPRINT', 'CSSUTILS')):
             logger.handlers = handlers
 
 
-def assert_no_logs():
-    """
-    When passed to ``attest.Tests.context()``, asserts that nothing is logged.
-    """
-    with capture_logs() as logs:
-        try:
-            yield
-        except:
+def assert_no_logs(function):
+    """Decorator that asserts that nothing is logged in a function."""
+    @functools.wraps(function)
+    def wrapper():
+        with capture_logs() as logs:
+            try:
+                function()
+            except:
+                exception = True
+            else:
+                exception = False
             if logs:
-                sys.stderr.write('%i errors logged:\n%s\n' % (
-                    len(logs), '\n'.join(logs)))
-            raise
-        else:
-            # The assert hook prints the log.
-            assert not logs, ('%i errors logged' % len(logs))
+                print('%i errors logged:' % len(logs), file=sys.stderr)
+                for message in logs:
+                    print(message, file=sys.stderr)
+            assert len(logs) == 0
+    return wrapper

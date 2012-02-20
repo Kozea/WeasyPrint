@@ -38,10 +38,6 @@ from ..document import PNGDocument
 from .. import HTML
 
 
-SUITE = Tests()
-SUITE.context(assert_no_logs)
-
-
 def parse_html(filename, **kwargs):
     """Parse an HTML file from the test resources and resolve relative URL."""
     html = HTML(filename=resource_filename(filename))
@@ -50,7 +46,7 @@ def parse_html(filename, **kwargs):
     return PNGDocument(html.root_element, **kwargs)
 
 
-@SUITE.test
+@assert_no_logs
 def test_style_dict():
     """Test a style in a ``dict``."""
     style = css.StyleDict({
@@ -62,7 +58,7 @@ def test_style_dict():
         style.position  # pylint: disable=W0104
 
 
-@SUITE.test
+@assert_no_logs
 def test_find_stylesheets():
     """Test if the stylesheets are found in a HTML document."""
     document = parse_html('doc1.html')
@@ -83,7 +79,7 @@ def test_find_stylesheets():
             'body > h1:first-child']
 
 
-@SUITE.test
+@assert_no_logs
 def test_expand_shorthands():
     """Test the expand shorthands."""
     sheet = cssutils.parseFile(resource_filename('sheet2.css'))
@@ -113,7 +109,7 @@ def parse_css(filename):
     return cssutils.parseFile(resource_filename(filename))
 
 
-@SUITE.test
+@assert_no_logs
 def test_annotate_document():
     """Test a document with inline style."""
     # Short names for variables are OK here
@@ -191,7 +187,7 @@ def test_annotate_document():
     # pylint: enable=C0103
 
 
-@SUITE.test
+@assert_no_logs
 def test_default_stylesheet():
     """Test if the user-agent stylesheet is used and applied."""
     document = parse_html('doc1.html')
@@ -200,7 +196,7 @@ def test_default_stylesheet():
         'The HTML4 user-agent stylesheet was not applied'
 
 
-@SUITE.test
+@assert_no_logs
 def test_page():
     """Test the ``@page`` properties."""
     document = parse_html('doc1.html', user_stylesheets=[
@@ -260,7 +256,7 @@ def test_page():
     assert style.font_size == 10
 
 
-@SUITE.test
+@assert_no_logs
 def test_warnings():
     """Check that appropriate warnings are logged."""
     for source, messages in [
@@ -286,7 +282,7 @@ def test_warnings():
             assert message in logs[0]
 
 
-@SUITE.test
+@assert_no_logs
 def test_error_recovery():
     with capture_logs() as logs:
         document = TestPNGDocument('''
@@ -303,7 +299,7 @@ def test_error_recovery():
     assert len(logs) == 12
 
 
-@SUITE.test
+@assert_no_logs
 def test_line_height_inheritance():
     document = TestPNGDocument('''
         <style>

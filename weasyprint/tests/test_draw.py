@@ -48,9 +48,6 @@ r = array('B', [255, 0, 0, 255])  # red
 B = array('B', [0, 0, 255, 255])  # blue
 BYTES_PER_PIXELS = 4
 
-SUITE = Tests()
-SUITE.context(assert_no_logs)
-
 
 def format_pixel(lines, x, y):
     """Return the pixel color as ``#RRGGBB``."""
@@ -170,7 +167,7 @@ def assert_pixels_equal(name, width, height, lines, expected_lines):
                     'Pixel (%i, %i) does not match in %s' % (x, y, name)
 
 
-@SUITE.test
+@assert_no_logs
 def test_canvas_background():
     """Test the background applied on ``<html>`` and/or ``<body>`` tags."""
     assert_pixels('all_blue', 10, 10, (10 * [10 * B]), '''
@@ -205,7 +202,7 @@ def test_canvas_background():
     ''')
 
 
-@SUITE.test
+@assert_no_logs
 def test_background_image():
     """Test background images."""
     # pattern.png looks like this:
@@ -577,7 +574,7 @@ def test_background_image():
         ''' % (css,))
 
 
-@SUITE.test
+@assert_no_logs
 def test_background_origin():
     """Test the background-origin property."""
     def test_value(value, pixels, css=None):
@@ -653,7 +650,7 @@ def test_background_origin():
 
 
 
-@SUITE.test
+@assert_no_logs
 def test_background_clip():
     """Test the background-clip property."""
     def test_value(value, pixels):
@@ -700,7 +697,7 @@ def test_background_clip():
     ])
 
 
-@SUITE.test
+@assert_no_logs
 def test_background_size():
     """Test the background-size property."""
     assert_pixels('background_size', 12, 12, [
@@ -778,7 +775,7 @@ def test_background_size():
     ''')
 
 
-@SUITE.test
+@assert_no_logs
 def test_list_style_image():
     """Test images as list markers."""
     for position, pixels in [
@@ -845,7 +842,7 @@ def test_list_style_image():
         ''' % (FONTS,))
 
 
-@SUITE.test
+@assert_no_logs
 def test_images():
     """Test images sizes, positions and pixels."""
     centered_image = [
@@ -950,7 +947,7 @@ def test_images():
     assert 'inexistent2.png' in logs[0]
 
 
-@SUITE.test
+@assert_no_logs
 def test_visibility():
     source = '''
         <style>
@@ -996,7 +993,7 @@ def test_visibility():
                                  span { visibility: visible } '''})
 
 
-@SUITE.test
+@assert_no_logs
 def test_tables():
     source = '''
         <style>
@@ -1176,7 +1173,7 @@ def test_tables():
 
 
 
-@SUITE.test
+@assert_no_logs
 def test_before_after():
     assert_same_rendering(300, 30, [
         ('pseudo_before', '''
@@ -1234,7 +1231,7 @@ def test_before_after():
     ])
 
 
-@SUITE.test
+@assert_no_logs
 def test_borders():
     """Test the rendering of borders"""
     source = '''
@@ -1278,7 +1275,7 @@ def test_borders():
     )
 
 
-@SUITE.test
+@assert_no_logs
 def test_margin_boxes():
     """Test the rendering of margin boxes"""
     R = array('B', [255, 0, 0, 255])  # red
@@ -1337,7 +1334,7 @@ def test_margin_boxes():
     ''')
 
 
-@SUITE.test
+@assert_no_logs
 def test_unicode():
     """Test non-ASCII filenames (URLs)"""
     text = 'I løvë Unicode'
@@ -1380,7 +1377,7 @@ def test_unicode():
         shutil.rmtree(temp)
 
 
-@SUITE.test
+@assert_no_logs
 def test_overflow():
     """Test the overflow property."""
     # See test_images
@@ -1426,7 +1423,7 @@ def test_overflow():
     ''')
 
 
-@SUITE.test
+@assert_no_logs
 def test_clip():
     """Test the clip property."""
     # See test_background_image
@@ -1459,7 +1456,7 @@ def test_clip():
     ''')
 
 
-@SUITE.test
+@assert_no_logs
 def test_opacity():
     """Test the opacity property."""
     template = '''
@@ -1503,7 +1500,7 @@ def test_opacity():
     ])
 
 
-@SUITE.test
+@assert_no_logs
 def test_2d_transform():
     """Test 2D transformations."""
     assert_pixels('image_rotate90', 8, 8, [
