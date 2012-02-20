@@ -29,8 +29,6 @@ import logging
 import contextlib
 import functools
 
-from attest import assert_hook
-
 from .. import HTML
 from ..document import PNGDocument
 from ..css import PARSER as CSS_PARSER
@@ -64,7 +62,7 @@ def resource_filename(basename):
 class CallbackHandler(logging.Handler):
     """A logging handler that calls a function for every message."""
     def __init__(self, callback):
-        super(CallbackHandler, self).__init__()
+        logging.Handler.__init__(self)
         self.emit = callback
 
 

@@ -1,2 +1,2 @@
-include weasy/tests/resources/*
-include weasy/css/*.css
+include weasyprint/tests/resources/*
+include weasyprint/css/*.css

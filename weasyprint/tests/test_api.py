@@ -34,7 +34,6 @@ import tempfile
 import subprocess
 
 import png
-from attest import Tests, assert_hook  # pylint: disable=W0611
 
 from .testing_utils import (
     resource_filename, assert_no_logs, TEST_UA_STYLESHEET)

@@ -74,4 +74,4 @@ FakeValue = collections.namedtuple('FakeValue', ('type', 'value', 'cssText'))
 
 def make_percentage_value(value):
     """Return an object that ``get_percentage_value()`` will accept."""
-    return FakeValue('PERCENTAGE', value, '{}%'.format(value))
+    return FakeValue('PERCENTAGE', value, '{0}%'.format(value))

@@ -25,7 +25,6 @@ from __future__ import division, unicode_literals
 
 import os.path
 
-from attest import Tests, raises, assert_hook  # pylint: disable=W0611
 import cssutils
 from cssutils.helper import path2url
 

@@ -23,7 +23,6 @@ Test the management of the CSS properties.
 
 from __future__ import division, unicode_literals
 
-from attest import Tests, raises, assert_hook  # pylint: disable=W0611
 from cssutils.css import PropertyValue
 
 from .testing_utils import assert_no_logs

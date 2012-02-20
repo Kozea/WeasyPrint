@@ -25,8 +25,6 @@ from __future__ import division, unicode_literals
 
 import contextlib
 
-from attest import Tests, assert_hook  # pylint: disable=W0611
-
 from .testing_utils import resource_filename, TestPNGDocument, assert_no_logs
 from ..css import validation
 from ..formatting_structure import boxes, build, counters

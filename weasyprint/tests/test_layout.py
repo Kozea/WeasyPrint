@@ -24,8 +24,6 @@ Test the layout.
 
 from __future__ import division, unicode_literals
 
-from attest import Tests, assert_hook  # pylint: disable=W0611
-
 from .testing_utils import (
     TestPNGDocument, resource_filename, FONTS, assert_no_logs, capture_logs)
 from .test_boxes import monkeypatch_validation

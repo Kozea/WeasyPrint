@@ -9,11 +9,28 @@ See the documentation at http://weasyprint.org/
 """
 
 import re
+import sys
 from os import path
 from setuptools import setup, find_packages
 
 with open(path.join(path.dirname(__file__), 'weasyprint', '__init__.py')) as fd:
     VERSION = re.search("VERSION = '([^']+)'", fd.read().strip()).group(1)
+
+
+REQUIRES = [
+        # Keep this in sync with the "install" documentation
+        'lxml',
+        'cssutils>=0.9.9',
+        'PIL',
+        'CairoSVG>=0.3',
+        # Not installable by pip:
+        #  Pango>=1.29.3
+        #  PyGObject
+        #  PyCairo
+]
+if sys.version_info < (2, 7):
+    # In the stdlib from 2.7:
+    REQUIRES.append('argparse')
 
 setup(
     name='WeasyPrint',
@@ -39,18 +56,7 @@ setup(
         'weasyprint.tests': ['resources/*'],
         'weasyprint.css': ['*.css']},
     zip_safe=False,
-    install_requires=[
-        # Keep this in sync with the "install" documentation
-        'lxml',
-        'cssutils>=0.9.9',
-        'PIL',
-        'CairoSVG>=0.3',
-        # Not installable by pip:
-        #  Pango>=1.29.3
-        #  PyGObject
-        #  PyCairo
-    ],
-    test_loader='attest:FancyReporter.test_loader',
+    install_requires=REQUIRES,
     test_suite='weasy.tests',
     entry_points={
         'console_scripts': [

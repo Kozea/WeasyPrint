@@ -25,7 +25,6 @@ from __future__ import division, unicode_literals
 
 import cssutils
 import cairo
-from attest import Tests, assert_hook  # pylint: disable=W0611
 
 from ..css import effective_declarations, computed_from_cascaded
 from ..text import TextFragment

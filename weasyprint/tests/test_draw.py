@@ -32,7 +32,6 @@ import itertools
 from io import BytesIO
 
 import png
-from attest import Tests, assert_hook  # pylint: disable=W0611
 
 from ..compat import array, xrange
 from ..utils import ensure_url

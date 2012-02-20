@@ -23,7 +23,6 @@ Normalize values as much as possible without rendering the document.
 
 from __future__ import division, unicode_literals
 
-import collections
 import math
 
 from .properties import INITIAL_VALUES
@@ -52,8 +51,8 @@ ANGLE_TO_RADIANS = {
 # Value in pixels of font-size for <absolute-size> keywords: 12pt (16px) for
 # medium, and scaling factors given in CSS3 for others:
 # http://www.w3.org/TR/css3-fonts/#font-size-prop
-# This dict has to be ordered to implement 'smaller' and 'larger'
-FONT_SIZE_KEYWORDS = collections.OrderedDict(
+# TODO: this will need to be ordered to implement 'smaller' and 'larger'
+FONT_SIZE_KEYWORDS = dict(
     # medium is 16px, others are a ratio of medium
     (name, INITIAL_VALUES['font_size'] * a / b)
     for name, a, b in [
