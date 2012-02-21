@@ -1344,8 +1344,8 @@ def test_unicode():
         p { color: blue }
     '''
     _doc, expected_lines = html_to_png('unicode_reference', 200, 50, '''
-        <style>{}</style>
-        <p><img src="pattern.png"> {}</p>
+        <style>{0}</style>
+        <p><img src="pattern.png"> {1}</p>
     '''.format(style, text))
 
     temp = tempfile.mkdtemp(prefix=text + '-')
@@ -1361,8 +1361,8 @@ def test_unicode():
             fd.write(image_content)
         with open(html, 'wb') as fd:
             html_content = '''
-                <link rel=stylesheet href="{}">
-                <p><img src="{}"> {}</p>
+                <link rel=stylesheet href="{0}">
+                <p><img src="{1}"> {2}</p>
             '''.format(
                 ensure_url(stylesheet), ensure_url(image), text
             )

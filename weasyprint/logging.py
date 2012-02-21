@@ -31,4 +31,4 @@ LOGGER = logging.getLogger('WEASYPRINT')
 
 # Default to logging to stderr.
 LOGGER.addHandler(logging.StreamHandler())
-LOGGER.setLevel('INFO')
+LOGGER.setLevel(logging.INFO)

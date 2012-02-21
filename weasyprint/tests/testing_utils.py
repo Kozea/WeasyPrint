@@ -73,8 +73,9 @@ def capture_logs(logger_names=('WEASYPRINT', 'CSSUTILS')):
     messages = []
 
     def emit(record):
-        messages.append('%s: %s' % (record.levelname.upper(),
-                                    record.getMessage()))
+        message = '%s: %s' % (record.levelname.upper(), record.getMessage())
+        messages.append(message)
+        print(message, file=sys.stderr)
 
     for name in set(logger_names):
         logger = logging.getLogger(name)
@@ -90,20 +91,15 @@ def capture_logs(logger_names=('WEASYPRINT', 'CSSUTILS')):
 
 def assert_no_logs(function):
     """Decorator that asserts that nothing is logged in a function."""
-    def print_logs(logs):
-        if logs:
-            print('%i errors logged:' % len(logs), file=sys.stderr)
-            for message in logs:
-                print(message, file=sys.stderr)
     @functools.wraps(function)
     def wrapper():
         with capture_logs() as logs:
             try:
                 function()
             except Exception:
-                print_logs(logs)
+                if logs:
+                    print('%i errors logged:' % len(logs), file=sys.stderr)
                 raise
             else:
-                print_logs(logs)
-                assert len(logs) == 0
+                assert len(logs) == 0, '%i errors logged:' % len(logs)
     return wrapper

@@ -279,7 +279,7 @@ def test_command_line_render():
             run(combined_absolute + ' out4.png')
             assert read_file('out4.png') == png_bytes
 
-            combined_url = 'file://{}/{}'.format(temp, 'combined.html')
+            combined_url = 'file://{0}/{1}'.format(temp, 'combined.html')
             run(combined_url + ' out5.png')
             assert read_file('out5.png') == png_bytes
 

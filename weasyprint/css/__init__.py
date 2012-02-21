@@ -43,6 +43,7 @@ function for each step:
 from __future__ import division, unicode_literals
 
 import re
+import logging
 import os.path
 
 from lxml import cssselect
@@ -526,7 +527,7 @@ def get_all_computed_styles(document, medium,
         if origin == 'user agent':
             # XXX temporarily disable logging for user-agent stylesheet
             level = LOGGER.level
-            LOGGER.setLevel('ERROR')
+            LOGGER.setLevel(logging.ERROR)
 
         for sheet in sheets:
             # TODO: UA and maybe user stylesheets might only need to be

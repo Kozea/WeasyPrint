@@ -101,7 +101,7 @@ def resolve_percentages(box, containing_block):
 
     # Used value == computed value
     for side in ['top', 'right', 'bottom', 'left']:
-        prop = 'border_{}_width'.format(side)
+        prop = 'border_{0}_width'.format(side)
         setattr(box, prop, box.style[prop])
 
     if box.style.box_sizing == 'border-box':
