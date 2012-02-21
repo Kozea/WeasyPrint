@@ -20,8 +20,8 @@ with open(path.join(path.dirname(__file__), 'weasyprint', '__init__.py')) as fd:
 REQUIRES = [
         # Keep this in sync with the "install" documentation
         'lxml',
+        'pystacia',
         'cssutils>=0.9.9',
-        'PIL',
         'CairoSVG>=0.3',
         # Not installable by pip:
         #  Pango>=1.29.3

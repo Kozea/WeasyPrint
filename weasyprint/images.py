@@ -101,22 +101,16 @@ def fallback_handler(file_like, uri):
     parameter, it guesses the format from the content.
     """
     try:
-        from PIL import Image
+        import pystacia as _
     except ImportError as exception:
-        try:
-            # It is sometimes installed with another name...
-            import Image
-        except ImportError:
-            return exception  # PIL is not installed
-    if not (hasattr(file_like, 'seek') and hasattr(file_like, 'tell')):
-        # PIL likes to have these methods
-        file_like = BytesIO(file_like.read())
-    png = BytesIO()
-    image = Image.open(file_like)
-    image = image.convert('RGBA')
-    image.save(png, "PNG")
-    png.seek(0)
-    return png_handler(png, uri)
+        return exception
+    from pystacia import read_blob, TinyException
+    try:
+        png_bytes = read_blob(file_like.read()).get_blob('png')
+    except TinyException as exception:
+        return exception
+    else:
+        return png_handler(BytesIO(png_bytes), uri)
 
 
 def get_image_from_uri(uri):

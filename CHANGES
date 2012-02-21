@@ -1,9 +1,10 @@
 Version 0.6, released on 2012-XX-XX
 ===================================
 
-*Backward incompatible*: completely change the API. See the documentation:
-    http://weasyprint.org/using/#as-a-python-library
-
+* *Backward incompatible*: completely change the API. See the documentation:
+  http://weasyprint.org/using/#as-a-python-library
+* Switch to pystacia instead of PIL for raster images
+* Compatibility with CPython 2.6, 2.7, 3.1 and 3.2
 
 
 Version 0.5, released on 2012-01-08

@@ -880,7 +880,7 @@ def test_images():
         _+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_,
     ]
-    for format in ['svg', 'png', 'gif', 'jpg']:
+    for format in ['svg', 'png', 'palette.png', 'gif', 'jpg']:
         image = centered_jpg_image if format == 'jpg' else centered_image
         assert_pixels('inline_image_' + format, 8, 8, image, '''
             <style>
