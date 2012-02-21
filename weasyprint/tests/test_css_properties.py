@@ -24,6 +24,7 @@ Test the management of the CSS properties.
 from __future__ import division, unicode_literals
 
 from cssutils.css import PropertyValue
+from pytest import raises
 
 from .testing_utils import assert_no_logs
 from ..css import validation

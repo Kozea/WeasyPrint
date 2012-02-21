@@ -79,6 +79,10 @@ def cairosvg_handler(file_like, uri):
             scale = super(ScaledSVGSurface, self).device_units_per_user_units
             return scale * LENGTHS_TO_PIXELS['pt']
 
+    if uri.startswith('data:'):
+        # Don’t pass data URIs to CairoSVG.
+        # They are useless for relative URIs anyway.
+        uri = None
     try:
         # Draw to a cairo surface but do not write to a file
         tree = Tree(file_obj=file_like, url=uri)

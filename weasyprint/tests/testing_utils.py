@@ -90,18 +90,20 @@ def capture_logs(logger_names=('WEASYPRINT', 'CSSUTILS')):
 
 def assert_no_logs(function):
     """Decorator that asserts that nothing is logged in a function."""
+    def print_logs(logs):
+        if logs:
+            print('%i errors logged:' % len(logs), file=sys.stderr)
+            for message in logs:
+                print(message, file=sys.stderr)
     @functools.wraps(function)
     def wrapper():
         with capture_logs() as logs:
             try:
                 function()
-            except:
-                exception = True
+            except Exception:
+                print_logs(logs)
+                raise
             else:
-                exception = False
-            if logs:
-                print('%i errors logged:' % len(logs), file=sys.stderr)
-                for message in logs:
-                    print(message, file=sys.stderr)
-            assert len(logs) == 0
+                print_logs(logs)
+                assert len(logs) == 0
     return wrapper
