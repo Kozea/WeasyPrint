@@ -278,7 +278,9 @@ def test_block_heights():
             html, body { margin: 0 }
             div { margin: 4px; border-width: 2px; border-style: solid;
                   padding: 4px }
-            p { margin: 8px; border-width: 4px; border-style: solid;
+            /* Only use top margins so that margin collapsing does not change
+               the result: */
+            p { margin: 16px 0 0; border-width: 4px; border-style: solid;
                 padding: 8px; height: 50px }
         </style>
         <div>
@@ -2167,3 +2169,35 @@ def test_margin_boxes_vertical_align():
     assert line_1.position_y == 3
     assert line_2.position_y == 43
     assert line_3.position_y == 83
+
+
+@assert_no_logs
+def test_margin_collapsing():
+    """
+    The vertical space between to sibling blocks is the max of their margins,
+    not the sum. But that’s only the simplest case...
+    """
+    def vertical_space(p1_margin_bottom, p2_margin_top):
+        page, = parse('''
+            <style>
+                p { font: 20px/1 serif } /* block height == 20px */
+                #p1 { margin-bottom: %s }
+                #p2 { margin-top: %s }
+            </style>
+            <p id=p1>Lorem ipsum
+            <p id=p2>dolor sit amet
+        ''' % (p1_margin_bottom, p2_margin_top))
+        html, = page.children
+        body, = html.children
+        p1, p2 = body.children
+        p1_bottom = p1.content_box_y() + p1.height
+        p2_top = p2.content_box_y()
+        return p2_top - p1_bottom
+
+    assert vertical_space('10px', '15px') == 15  # not 25
+    # "The maximum of the absolute values of the negative adjoining margins
+    #  is deducted from the maximum of the positive adjoining margins"
+    assert vertical_space('-10px', '15px') == 5
+    assert vertical_space('10px', '-15px') == -5
+    assert vertical_space('-10px', '-15px') == -15
+    assert vertical_space('10px', 'auto') == 10  # 'auto' is 0 

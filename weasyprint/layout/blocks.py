@@ -164,6 +164,8 @@ def block_level_height(document, box, max_position_y, skip_stack,
     position_x = box.content_box_x()
     position_y = box.content_box_y()
     initial_position_y = position_y
+    # (positive_margins, negative_margins)
+    collapsible_margins = []
 
     new_children = []
     next_page = 'any'
@@ -225,6 +227,7 @@ def block_level_height(document, box, max_position_y, skip_stack,
             new_child, resume_at, next_page = block_level_layout(
                 document, child, max_position_y, skip_stack,
                 new_containing_block, device_size, page_is_empty)
+
             skip_stack = None
             if new_child is None:
                 if new_children:
@@ -234,12 +237,27 @@ def block_level_height(document, box, max_position_y, skip_stack,
                     # This was the first child of this box, cancel the box
                     # completly
                     return None, None, 'any'
-            new_position_y = position_y + new_child.margin_height()
+
+            # We need to do this after the child layout to have the used value
+            # for margin_top (eg. it might be a percentage.)
+            # TODO: refactor so that .translate() can be avoided?
+            collapsible_margins.append(new_child.margin_top)
+            # Make sure max() does not get an empty list:
+            collapsible_margins.append(0)
+            collapsed_margin = (
+                max(m for m in collapsible_margins if m >= 0) +
+                min(m for m in collapsible_margins if m <= 0))
+            offset_y = collapsed_margin - new_child.margin_top
+            if offset_y != 0:
+                new_child.translate(0, offset_y)
+
+            position_y = new_child.border_box_y() + new_child.border_height()
+            collapsible_margins = [new_child.margin_bottom]
+
             # Bottom borders may overflow here
             # TODO: back-track somehow when all lines fit but not borders
             new_children.append(new_child)
             page_is_empty = False
-            position_y = new_position_y
             if resume_at is not None:
                 resume_at = (index, resume_at)
                 break
@@ -250,6 +268,7 @@ def block_level_height(document, box, max_position_y, skip_stack,
                 # Resume after this
                 resume_at = (index + 1, None)
                 break
+
     else:
         resume_at = None
 
