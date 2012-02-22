@@ -23,6 +23,7 @@ Handle various image formats.
 from __future__ import division, unicode_literals
 
 from io import BytesIO
+import contextlib
 
 import cairo
 
@@ -106,7 +107,8 @@ def fallback_handler(file_like, uri):
         return exception
     from pystacia import read_blob, TinyException
     try:
-        png_bytes = read_blob(file_like.read()).get_blob('png')
+        with contextlib.closing(read_blob(file_like.read())) as image:
+            png_bytes = image.get_blob('png')
     except TinyException as exception:
         return exception
     else:
