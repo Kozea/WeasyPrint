@@ -133,7 +133,7 @@ def parse_all(html_content):
     """Like parse() but also run all corrections on boxes."""
     document = TestPNGDocument(html_content,
         base_url=resource_filename('<test>'))
-    box = build.build_formatting_structure(document)
+    box = build.build_formatting_structure(document, document.computed_styles)
     sanity_checks(box)
     return box
 

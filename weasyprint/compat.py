@@ -33,7 +33,7 @@ if sys.version_info[0] >= 3:
     from urllib.request import urlopen, Request
     from array import array
 
-    string_types = (str,)
+    basestring = str
     xrange = range
     iteritems = dict.items
 
@@ -57,7 +57,7 @@ else:
     from urllib2 import urlopen, Request
     from array import array as _array
 
-    string_types = (str, unicode)
+    basestring = basestring
     xrange = xrange
     iteritems = dict.iteritems
 

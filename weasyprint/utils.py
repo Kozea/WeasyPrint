@@ -132,3 +132,31 @@ def urllib_fetcher(url):
     content = file_like.read()
     file_like.close()
     return charset, content
+
+
+class cached_property(object):
+    """A decorator that converts a function into a lazy property. The
+    function wrapped is called the first time to retrieve the result
+    and then that calculated result is used the next time you access
+    the value.
+
+    Stolen from Werkzeug:
+    https://github.com/mitsuhiko/werkzeug/blob/7b8d887d33/werkzeug/utils.py#L28
+
+    """
+
+    def __init__(self, func):
+        self.__name__ = func.__name__
+        self.__module__ = func.__module__
+        self.__doc__ = func.__doc__
+        self.func = func
+
+    def __get__(self, obj, type=None):
+        if obj is None:
+            return self
+        missing = object()
+        value = obj.__dict__.get(self.__name__, missing)
+        if value is missing:
+            value = self.func(obj)
+            obj.__dict__[self.__name__] = value
+        return value

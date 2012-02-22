@@ -26,8 +26,6 @@ http://dev.w3.org/csswg/css3-page/#margin-dimension
 
 from __future__ import division, unicode_literals
 
-from ..logging import LOGGER
-
 
 def with_rule_2(side_boxes, outer_sum):
     """Margin box variable dimension computation, in the case where
@@ -86,10 +84,6 @@ def register(auto_inners, auto_margins):
         the value 'auto'.
 
     """
-    keys = set([
-        ((auto_inners, auto_margins), False),
-        ((auto_inners[::-1], auto_margins[::-1]), True),
-    ])
     def decorator(function):
         key_1 = auto_inners, auto_margins
         keys = [(key_1, False)]
@@ -152,7 +146,7 @@ def set_inner_within_range(box, optimal_inner):
         box.inner = min_inner
     else:
         max_inner = box.preferred
-        if remaining > max_inner:
+        if optimal_inner > max_inner:
             box.inner = max_inner
         else:
             box.inner = optimal_inner
@@ -435,7 +429,7 @@ def implementation_13(box_a, box_b, box_c, outer_sum):
 
         box_a.inner = outer_ac - constants_a
         box_b.inner = outer_b - constants_b
-        distribute_margins(box_c, outer_c)
+        distribute_margins(box_c, outer_ac)
         return 'ok'
     # else: Over-constrained
 

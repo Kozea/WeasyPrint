@@ -31,14 +31,13 @@ import contextlib
 import threading
 import shutil
 import tempfile
-import subprocess
 
 import pystacia
 
 from .testing_utils import (
     resource_filename, assert_no_logs, TEST_UA_STYLESHEET)
 from ..compat import urljoin
-from .. import HTML, CSS, VERSION
+from .. import HTML, CSS
 from .. import __main__
 
 

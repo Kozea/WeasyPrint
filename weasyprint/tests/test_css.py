@@ -26,7 +26,6 @@ from __future__ import division, unicode_literals
 import os.path
 
 import cssutils
-from cssutils.helper import path2url
 from pytest import raises
 
 from .testing_utils import (

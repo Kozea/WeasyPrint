@@ -277,7 +277,7 @@ def length(computer, name, value, font_size=None):
 
 
 @register_computer('background-size')
-def border_width(computer, name, value):
+def background_size(computer, name, value):
     """Compute the ``background-size`` properties."""
     if value in ('contain', 'cover'):
         return value

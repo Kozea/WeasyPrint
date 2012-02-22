@@ -24,8 +24,6 @@ Layout for page boxes and margin boxes.
 
 from __future__ import division, unicode_literals
 
-import itertools
-
 from ..logging import LOGGER
 from ..formatting_structure import boxes, build
 from .blocks import block_level_layout, block_level_height
@@ -454,10 +452,10 @@ def margin_box_content_layout(document, page, box):
     return box
 
 
-def make_empty_page(document, page_type):
+def make_empty_page(document, root_box, page_type):
     style = document.style_for(page_type)
     # Propagated from the root or <body>.
-    style.overflow = document.formatting_structure.viewport_overflow
+    style.overflow = root_box.viewport_overflow
     page = boxes.PageBox(page_type, style)
 
     device_size = page.style.size
@@ -472,7 +470,7 @@ def make_empty_page(document, page_type):
     return page
 
 
-def make_page(document, page_type, resume_at):
+def make_page(document, root_box, page_type, resume_at):
     """Take just enough content from the beginning to fill one page.
 
     Return ``(page, finished)``. ``page`` is a laid out PageBox object
@@ -485,8 +483,7 @@ def make_page(document, page_type, resume_at):
                       or ``None`` for the first page.
 
     """
-    page = make_empty_page(document, page_type)
-    root_box = document.formatting_structure
+    page = make_empty_page(document, root_box, page_type)
     device_size = page.style.size
 
     root_box.position_x = page.content_box_x()
@@ -507,9 +504,8 @@ def make_page(document, page_type, resume_at):
     return page, resume_at, next_page
 
 
-def make_all_pages(document):
+def make_all_pages(document, root_box):
     """Return a list of laid out pages without margin boxes."""
-    root_box = document.formatting_structure
     prefix = 'first_'
 
     # Special case the root box
@@ -527,10 +523,10 @@ def make_all_pages(document):
         page_type = prefix + ('right_page' if right_page else 'left_page')
         if ((next_page == 'left' and right_page) or
             (next_page == 'right' and not right_page)):
-            page = make_empty_page(document, page_type)
+            page = make_empty_page(document, root_box, page_type)
         else:
             page, resume_at, next_page = make_page(
-                document, page_type, resume_at)
+                document, root_box, page_type, resume_at)
             assert next_page
         yield page
         if resume_at is None:
@@ -550,7 +546,7 @@ def add_margin_boxes(document, pages):
     page_counter = [1]
     counter_values = {'page': page_counter, 'pages': [len(pages)]}
     for page in pages:
-        yield page.copy_with_children(itertools.chain(
-            page.children,
-            make_margin_boxes(document, page, counter_values)))
+        page.children += tuple(make_margin_boxes(
+            document, page, counter_values))
+        yield page
         page_counter[0] += 1

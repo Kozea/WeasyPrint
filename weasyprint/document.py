@@ -33,10 +33,10 @@ import cairo
 from .css import get_all_computed_styles
 from .css.computed_values import LENGTHS_TO_PIXELS
 from .formatting_structure.build import build_formatting_structure
-from .layout import layout
+from . import layout
 from . import draw
 from . import images
-
+from . import utils
 
 
 class Document(object):
@@ -46,20 +46,10 @@ class Document(object):
         self.dom = dom
         self.user_stylesheets = user_stylesheets
         self.user_agent_stylesheets = user_agent_stylesheets
-
-        self._computed_styles = None
-        self._formatting_structure = None
-        self._pages = None
         self._image_cache = {}
 
         # TODO: remove this when Margin boxes variable dimension is correct.
         self._auto_margin_boxes_warning_shown = False
-
-    # XXX
-    @property
-    def base_url(self):
-        """The URL of the document, used for relative URLs it contains."""
-        return self.dom.getroottree().docinfo.URL
 
     def style_for(self, element, pseudo_type=None):
         """
@@ -67,43 +57,34 @@ class Document(object):
         """
         return self.computed_styles.get((element, pseudo_type))
 
-    @property
+    @utils.cached_property
     def computed_styles(self):
         """
         dict of (element, pseudo_element_type) -> StyleDict
         StyleDict: a dict of property_name -> PropertyValue,
                    also with attribute access
         """
-        if self._computed_styles is None:
-            self._computed_styles = get_all_computed_styles(
-                self,
-                user_stylesheets=self.user_stylesheets,
-                ua_stylesheets=self.user_agent_stylesheets,
-                medium='print')
-        return self._computed_styles
+        return get_all_computed_styles(
+            self,
+            user_stylesheets=self.user_stylesheets,
+            ua_stylesheets=self.user_agent_stylesheets,
+            medium='print')
 
-    @property
+    @utils.cached_property
     def formatting_structure(self):
         """
-        The Box object for the root element. Represents the tree of all boxes.
+        The root of the formatting structure tree, ie. the Box
+        for the root element.
         """
-        if self._formatting_structure is None:
-            self._formatting_structure = build_formatting_structure(self)
-        return self._formatting_structure
+        return build_formatting_structure(self, self.computed_styles)
 
-    @property
+    @utils.cached_property
     def pages(self):
         """
         List of layed-out pages with an absolute size and postition
         for every box.
         """
-        if self._pages is None:
-            # "Linearize" code flow
-            _ = self.computed_styles
-            _ = self.formatting_structure
-            # Actual work
-            self._pages = layout(self)
-        return self._pages
+        return layout.layout_document(self, self.formatting_structure)
 
     def get_image_from_uri(self, uri):
         """
@@ -119,7 +100,6 @@ class Document(object):
     def write_to(self, target=None):
         """Like .write_to() but returns a byte stringif target is None."""
         if target is None:
-            import io
             target = io.BytesIO()
             self._write_to(target)
             return target.getvalue()

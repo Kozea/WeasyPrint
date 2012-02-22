@@ -28,7 +28,6 @@ from __future__ import division, unicode_literals
 
 import io
 import os.path
-import collections
 
 import cssutils
 import lxml.html
@@ -44,7 +43,7 @@ def split(something):
 def read_testinfo(suite_directory):
     with open(os.path.join(suite_directory, '..', 'testinfo.data')) as fd:
         lines = iter(fd)
-        _labels = next(lines)
+        next(lines)  # skip labels
         for line in lines:
             test_id, references, title, flags, links, _, _, assertion = \
                  line.strip(' \n').split('\t')

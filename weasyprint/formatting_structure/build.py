@@ -31,7 +31,7 @@ import re
 from . import boxes, counters
 from .. import html
 from ..css import properties
-from ..compat import string_types, xrange
+from ..compat import basestring, xrange
 
 
 # Maps values of the ``display`` CSS property to box types.
@@ -53,8 +53,9 @@ BOX_TYPE_FROM_DISPLAY = {
 }
 
 
-def build_formatting_structure(document):
+def build_formatting_structure(document, computed_styles):
     """Build a formatting structure (box tree) from a ``document``."""
+    # TODO: use computed_styles intsead of document.style_for()
     box, = dom_to_box(document, document.dom)
     # If this is changed, maybe update weasy.layout.pages.make_margin_boxes()
     box = process_whitespace(box)
@@ -90,7 +91,7 @@ def dom_to_box(document, element, state=None):
     See http://www.w3.org/TR/CSS21/visuren.html#anonymous
 
     """
-    if not isinstance(element.tag, string_types):
+    if not isinstance(element.tag, basestring):
         # lxml.html already converts HTML entities to text.
         # Here we ignore comments and XML processing instructions.
         return []

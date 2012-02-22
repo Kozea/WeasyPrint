@@ -27,7 +27,7 @@ from __future__ import division, unicode_literals
 from .pages import make_all_pages, add_margin_boxes
 
 
-def layout(document):
+def layout_document(document, root_box):
     """Lay out the whole document.
 
     This includes line breaks, page breaks, absolute size and position for all
@@ -37,5 +37,5 @@ def layout(document):
     :returns: a list of laid out Page objects.
 
     """
-    pages = list(make_all_pages(document))
+    pages = list(make_all_pages(document, root_box))
     return list(add_margin_boxes(document, pages))
