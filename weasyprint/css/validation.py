@@ -29,7 +29,7 @@ from __future__ import division, unicode_literals
 
 import functools
 
-from ..logging import LOGGER
+from ..logger import LOGGER
 from ..formatting_structure import counters
 from .values import (get_keyword, get_single_keyword, as_css,
                      make_percentage_value)

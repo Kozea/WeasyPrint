@@ -24,7 +24,7 @@ Layout for page boxes and margin boxes.
 
 from __future__ import division, unicode_literals
 
-from ..logging import LOGGER
+from ..logger import LOGGER
 from ..formatting_structure import boxes, build
 from .blocks import block_level_layout, block_level_height
 from .percentages import resolve_percentages

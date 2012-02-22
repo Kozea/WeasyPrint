@@ -98,11 +98,7 @@ def main():
     if not os.path.isdir(RESULTS_DIRECTORY):
         os.makedirs(RESULTS_DIRECTORY)
 
-    cssutils_logger = logging.getLogger('CSSUTILS')
-    del cssutils_logger.handlers[:]
-    cssutils_logger.addHandler(logging.NullHandler())
-
-    logger = logging.getLogger('WEASYPRINT')
+    logger = logging.getLogger('weasyprint')
     del logger.handlers[:]
     logger.addHandler(logging.NullHandler())
 

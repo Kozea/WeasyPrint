@@ -54,7 +54,7 @@ from . import properties
 from . import validation
 from . import computed_values
 from ..utils import get_url_attribute, urllib_fetcher
-from ..logging import LOGGER
+from ..logger import LOGGER
 from ..compat import iteritems
 
 

@@ -22,12 +22,12 @@ Logging setup.
 
 """
 
-from __future__ import division, unicode_literals, absolute_import
+from __future__ import division, unicode_literals
 
 import logging
 
 
-LOGGER = logging.getLogger('WEASYPRINT')
+LOGGER = logging.getLogger('weasyprint')
 
 # Default to logging to stderr.
 LOGGER.addHandler(logging.StreamHandler())

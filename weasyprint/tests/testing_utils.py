@@ -32,6 +32,7 @@ import functools
 from .. import HTML
 from ..document import PNGDocument
 from ..css import PARSER as CSS_PARSER
+from ..logger import LOGGER
 
 # TODO: find a way to not depend on a specific font
 FONTS = 'Liberation Sans, Arial'
@@ -67,8 +68,9 @@ class CallbackHandler(logging.Handler):
 
 
 @contextlib.contextmanager
-def capture_logs(logger_names=('WEASYPRINT', 'CSSUTILS')):
+def capture_logs():
     """Return a context manager that captures all logged messages."""
+    loggers = [LOGGER, logging.getLogger('CSSUTILS')]
     previous_handlers = []
     messages = []
 
@@ -77,8 +79,7 @@ def capture_logs(logger_names=('WEASYPRINT', 'CSSUTILS')):
         messages.append(message)
         print(message, file=sys.stderr)
 
-    for name in set(logger_names):
-        logger = logging.getLogger(name)
+    for logger in loggers:
         previous_handlers.append((logger, logger.handlers))
         logger.handlers = []
         logger.addHandler(CallbackHandler(emit))

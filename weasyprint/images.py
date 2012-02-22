@@ -29,7 +29,7 @@ import cairo
 
 from .utils import urlopen
 from .css.computed_values import LENGTHS_TO_PIXELS
-from .logging import LOGGER
+from .logger import LOGGER
 
 
 # Map MIME types to functions that take a byte stream and return

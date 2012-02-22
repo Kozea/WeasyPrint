@@ -30,7 +30,7 @@ import base64
 from cssutils.helper import path2url
 
 from . import VERSION
-from .logging import LOGGER
+from .logger import LOGGER
 from .compat import (
     urljoin, urlparse, unquote_to_bytes, urlopen_contenttype, Request,
     parse_email)
