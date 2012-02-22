@@ -4,10 +4,11 @@ Version 0.6, released on 2012-XX-XX
 * *Backward incompatible*: completely change the API. See the documentation:
   http://weasyprint.org/using/#as-a-python-library
 * Switch to pystacia instead of PIL for raster images
-* Compatibility with CPython 2.6, 2.7, 3.1 and 3.2
+* Add compatibility with CPython 2.6 and 3.2 (was only 2.7 previously)
+* Bug fixes
 
 
-Version 0.5, released on 2012-01-08
+Version 0.5, released on 2012-02-08
 ===================================
 
 * Support for the ``overflow`` and ``clip`` properties.
@@ -16,7 +17,7 @@ Version 0.5, released on 2012-01-08
   ``-weasy-transform`` and ``-weasy-transform-origin``.
 
 
-Version 0.4, released on 2012-01-07
+Version 0.4, released on 2012-02-07
 ===================================
 
 * Support ``text-align: justify``, ``word-spacing`` and ``letter-spacing``.
