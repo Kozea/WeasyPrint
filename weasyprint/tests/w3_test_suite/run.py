@@ -21,33 +21,39 @@ from __future__ import division, unicode_literals, print_function
 
 import sys
 import os.path
-import urllib
 import logging
 import traceback
 from contextlib import closing
 
-from weasyprint.document import PNGDocument
+import pystacia
+
+from weasyprint import HTML, CSS
+from weasyprint.compat import urlopen
 
 
 TEST_SUITE_VERSION = '20110323'
 
 #BASE_URL = 'http://test.csswg.org/suites/css2.1/{}/html4/'
 # Download and extract the zip file from http://test.csswg.org/suites/css2.1/
-BASE_URL = os.path.expanduser('~/css2.1_test_suite/{}/html4/')
+BASE_URL = 'file://' + os.path.expanduser('~/css2.1_test_suite/{}/html4/')
 
 BASE_URL = BASE_URL.format(TEST_SUITE_VERSION)
 
-RESULTS_DIRECTORY = os.path.join(os.path.dirname(__file__),
-                                 'test_results', 'w3')
+RESULTS_DIRECTORY = os.path.join(os.path.dirname(__file__), 'test_results')
+
+PAGE_SIZE_STYLESHEET = CSS(string='''
+    @page { margin: 0; -weasy-size: 640px }
+''')
 
 
 def get_url(url):
-    return closing(urllib.urlopen(BASE_URL + url))
+    return closing(urlopen(BASE_URL + url))
 
 
 def get_test_list():
     with get_url('reftest.list') as reflist:
         for line in reflist:
+            line = line.decode('ascii')
             # Remove comments
             line = line.split('#', 1)[0]
             if not line.strip():
@@ -73,14 +79,14 @@ def make_test_suite():
     def render(name):
         result = rendered.get(name)
         if result is None:
-            document = PNGDocument.from_file(BASE_URL + name)
-            width, height, surface = document.draw_all_pages()
             # name is sometimes "support/something.htm"
             basename = os.path.basename(name)
-            filename = os.path.join(RESULTS_DIRECTORY, basename + '.png')
-            surface.write_to_png(filename)
-            result = width, height, surface.get_data()
-            rendered[name] = result
+            png_filename = os.path.join(RESULTS_DIRECTORY, basename + '.png')
+            png = HTML(BASE_URL + name).write_png(
+                png_filename, stylesheets=[PAGE_SIZE_STYLESHEET])
+            with closing(pystacia.read(png_filename)) as image:
+                raw = image.get_raw('rgba')
+            rendered[name] = raw
         return result
 
     for equal, test, references in get_test_list():
@@ -108,7 +114,7 @@ def main():
     errors = 0
     try:
         for i, (name, test) in enumerate(tests, 1):
-            print('### Test %i of %i: %s' % (i, len(tests), name), end='')
+            print('Test %i of %i: %s ' % (i, len(tests), name), end='')
             sys.stdout.flush()
             try:
                 test_passed = test()

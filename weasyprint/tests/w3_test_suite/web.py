@@ -33,7 +33,7 @@ import cssutils
 import lxml.html
 # Don’t try to import Flask on Python 3
 
-from weasyprint.document import PNGDocument
+from weasyprint import HTML, CSS
 
 
 def split(something):
@@ -152,17 +152,15 @@ def run(suite_directory):
         return send_from_directory(suite_directory, filename)
 
 
-    stylesheet = cssutils.parseString('''
-        @page { margin: 8px; -weasy-size: 640px }
-    ''', validate=False)
+    page_size_stylesheet = CSS(string='''
+        @page { margin: 0; -weasy-size: 640px }
+    ''')
 
     @app.route('/render/<test_id>.png')
     def render(test_id):
-        filename = safe_join(suite_directory, test_id + '.htm')
-        png = io.BytesIO()
-        PNGDocument.from_file(filename, user_stylesheets=[stylesheet]
-            ).write_to(png)
-        return png.getvalue(), 200, {'Content-Type': 'image/png'}
+        png = HTML(safe_join(suite_directory, test_id + '.htm')).write_png(
+            stylesheets=[page_size_stylesheet])
+        return png, 200, {'Content-Type': 'image/png'}
 
 
     app.run(debug=True)

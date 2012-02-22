@@ -27,6 +27,9 @@ WeasyPrint converts web documents, mainly HTML documents with CSS, to PDF.
 
 from __future__ import division, unicode_literals
 
+# Make sure the logger is configured early:
+from .logger import LOGGER
+
 
 VERSION = '0.6dev'
 __version__ = VERSION
