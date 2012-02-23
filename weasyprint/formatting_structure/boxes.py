@@ -415,6 +415,17 @@ class TableBox(BlockLevelBox, ParentBox):
     # http://www.w3.org/TR/CSS21/tables.html#anonymous-boxes
     tabular_container = True
 
+    def translate(self, dx=0, dy=0):
+        """Change the position of the box.
+
+        Also update the children’s positions accordingly.
+
+        """
+        super(TableBox, self).translate(dx, dy)
+        for child in getattr(self, 'column_groups', []):
+            # TODO: why did we not put these in .children again?
+            child.translate(dx, dy)
+
 
 class InlineTableBox(TableBox):
     """Box for elements with ``display: inline-table``"""
