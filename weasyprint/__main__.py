@@ -67,14 +67,18 @@ def main(argv=None):
                 'output filename that ends in ' + extensions)
 
     if args.input == '-':
-        source = HTML(file_obj=sys.stdin, encoding=args.encoding,
+        stdin = sys.stdin
+        stdin = getattr(stdin, 'buffer', stdin)
+        source = HTML(file_obj=stdin, encoding=args.encoding,
             # Dummy filename in the current directory.
             base_url='<stdin>')
     else:
         source = HTML(args.input, encoding=args.encoding)
 
     if args.output == '-':
-        args.output = sys.stdout
+        stdout = sys.stdout
+        stdout = getattr(stdout, 'buffer', stdout)
+        args.output = stdout
 
     getattr(source, 'write_' + args.format)(
         args.output, stylesheets=args.stylesheet)

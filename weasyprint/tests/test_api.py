@@ -36,7 +36,7 @@ import pystacia
 
 from .testing_utils import (
     resource_filename, assert_no_logs, TEST_UA_STYLESHEET)
-from ..compat import urljoin
+from ..compat import urljoin, PY3
 from .. import HTML, CSS
 from .. import __main__
 
@@ -86,9 +86,15 @@ def monkey_patch_stdio(input_bytes=b''):
     old_stdin = sys.stdin
     old_stdout = sys.stdout
     try:
-        sys.stdin = io.BytesIO(input_bytes)
-        sys.stdout = io.BytesIO()
-        yield sys.stdout
+        stdin = io.BytesIO(input_bytes)
+        stdout = io.BytesIO()
+        if PY3:
+            sys.stdin = io.TextIOWrapper(stdin)
+            sys.stdout = io.TextIOWrapper(stdout)
+        else:
+            sys.stdin = stdin
+            sys.stdout = stdout
+        yield stdout
     finally:
         sys.stdin = old_stdin
         sys.stdout = old_stdout
@@ -296,7 +302,7 @@ def test_command_line_render():
 
             with monkey_patch_stdio() as stdout:
                 run('--format png combined.html -')
-            assert stdout.getvalue() == png_bytes
+                assert stdout.getvalue() == png_bytes
 
             with monkey_patch_stdio(combined):
                 run('- out11.png')
@@ -305,4 +311,4 @@ def test_command_line_render():
 
             with monkey_patch_stdio(combined) as stdout:
                 run('--format png - -')
-            assert stdout.getvalue() == png_bytes
+                assert stdout.getvalue() == png_bytes

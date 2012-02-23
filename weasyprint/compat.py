@@ -23,11 +23,16 @@ Python 2/3 compatibility.
 
 from __future__ import division, unicode_literals
 
+import io
 import sys
 import email
+import contextlib
 
 
-if sys.version_info[0] >= 3:
+PY3 = sys.version_info[0] >= 3
+
+
+if PY3:
     # Python 3
     from urllib.parse import urljoin, urlparse, unquote_to_bytes
     from urllib.request import urlopen, Request
@@ -37,6 +42,7 @@ if sys.version_info[0] >= 3:
     xrange = range
     iteritems = dict.items
 
+
     def urlopen_contenttype(url):
         """Return (file_obj, mime_type, encoding)"""
         result = urlopen(url)
@@ -45,6 +51,7 @@ if sys.version_info[0] >= 3:
         charset = info.get_param('charset')
         # Using here result.fp gives 'ValueError: read of closed file'
         return result, mime_type, charset
+
 
     def parse_email(data):
         if isinstance(data, bytes):
@@ -61,8 +68,10 @@ else:
     xrange = xrange
     iteritems = dict.iteritems
 
+
     def array(typecode, initializer):
         return _array(typecode.encode('ascii'), initializer)
+
 
     def urlopen_contenttype(url):
         """Return (file_obj, mime_type, encoding)"""
@@ -72,10 +81,12 @@ else:
         charset = info.getparam('charset')
         return result.fp, mime_type, charset
 
+
     def unquote_to_bytes(data):
         if isinstance(data, unicode):
             data = data.encode('ascii')
         return unquote(data)
+
 
     def parse_email(data):
         if isinstance(data, unicode):
