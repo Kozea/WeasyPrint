@@ -122,7 +122,7 @@ def test_page():
     html, = page.children
     assert html.element_tag == 'html'
     assert html.position_x == 96  # 1in
-    assert html.position_y == 10
+    assert html.position_y == 18  # +8 because of margin collapsing
     assert html.width == 84
 
     body, = html.children

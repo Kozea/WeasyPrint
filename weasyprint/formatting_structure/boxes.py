@@ -289,6 +289,17 @@ class BlockBox(BlockContainerBox, BlockLevelBox):
     generates a block box.
 
     """
+    # TODO: remove this when outside list marker are absolute children
+    def translate(self, dx=0, dy=0):
+        """Change the position of the box.
+
+        Also update the children’s positions accordingly.
+
+        """
+        super(BlockBox, self).translate(dx, dy)
+        marker = getattr(self, 'outside_list_marker', None)
+        if marker:
+            marker.translate(dx, dy)
 
 
 class LineBox(ParentBox):

@@ -31,7 +31,8 @@ from ..formatting_structure import boxes
 
 
 def block_level_layout(document, box, max_position_y, skip_stack,
-                       containing_block, device_size, page_is_empty):
+                       containing_block, device_size, page_is_empty,
+                       adjoining_margins=None):
     """Lay out the block-level ``box``.
 
     :param max_position_y: the absolute vertical position (as in
@@ -45,10 +46,12 @@ def block_level_layout(document, box, max_position_y, skip_stack,
     elif isinstance(box, boxes.BlockBox):
         if box.is_table_wrapper:
             return block_table_wrapper(document, box, max_position_y,
-                skip_stack, containing_block, device_size, page_is_empty)
+                skip_stack, containing_block, device_size, page_is_empty,
+                adjoining_margins)
         else:
             return block_box_layout(document, box, max_position_y, skip_stack,
-                containing_block, device_size, page_is_empty)
+                containing_block, device_size, page_is_empty,
+                adjoining_margins)
     elif isinstance(box, boxes.BlockReplacedBox):
         box = block_replaced_box_layout(
             box, containing_block, device_size)
@@ -61,13 +64,16 @@ def block_level_layout(document, box, max_position_y, skip_stack,
 
 
 def block_box_layout(document, box, max_position_y, skip_stack,
-                     containing_block, device_size, page_is_empty):
+                     containing_block, device_size, page_is_empty,
+                     adjoining_margins=None):
     """Lay out the block ``box``."""
     resolve_percentages(box, containing_block)
     block_level_width(box, containing_block)
-    list_marker_layout(document, box, containing_block)
-    return block_level_height(document, box, max_position_y, skip_stack,
-        device_size, page_is_empty)
+    new_box, resume_at, next_page, adjoining_margins = block_level_height(
+        document, box, max_position_y, skip_stack,
+        device_size, page_is_empty, adjoining_margins)
+    list_marker_layout(document, new_box, containing_block)
+    return new_box, resume_at, next_page, adjoining_margins
 
 
 def block_replaced_box_layout(box, containing_block, device_size):
@@ -148,7 +154,7 @@ def block_level_width(box, containing_block):
 
 # TODO: rename this to block_container_something
 def block_level_height(document, box, max_position_y, skip_stack,
-                       device_size, page_is_empty):
+                       device_size, page_is_empty, adjoining_margins=None):
     """Set the ``box`` height."""
     assert isinstance(box, boxes.BlockContainerBox)
 
@@ -164,11 +170,23 @@ def block_level_height(document, box, max_position_y, skip_stack,
     if box.margin_bottom == 'auto':
         box.margin_bottom = 0
 
+    if adjoining_margins is None:
+        adjoining_margins = []
+
+    adjoining_margins.append(box.margin_top)
+    this_box_adjoining_margins = adjoining_margins
+
+    collapsing_with_children = not (box.border_top_width or box.padding_top
+        or establishes_formatting_context(box))
+    if collapsing_with_children:
+        # XXX not counting margins in adjoining_margins, if any
+        position_y = box.position_y
+    else:
+        box.position_y += collapse_margin(adjoining_margins) - box.margin_top
+        adjoining_margins = []
+        position_y = box.content_box_y()
+
     position_x = box.content_box_x()
-    position_y = box.content_box_y()
-    initial_position_y = position_y
-    # (positive_margins, negative_margins)
-    adjoining_margins = []
 
     new_children = []
     next_page = 'any'
@@ -178,17 +196,24 @@ def block_level_height(document, box, max_position_y, skip_stack,
     else:
         skip, skip_stack = skip_stack
 
+    first_child_in_flow = None
     for index, child in box.enumerate_skip(skip):
         if not child.is_in_normal_flow():
             continue
-        # TODO: collapse margins
-        # See http://www.w3.org/TR/CSS21/visudet.html#normal-block
+        if first_child_in_flow is None:
+            first_child_in_flow = child
+
         child.position_x = position_x
+        # XXX does not count margins in adjoining_margins:
         child.position_y = position_y
+
         if isinstance(child, boxes.LineBox):
             assert len(box.children) == 1, (
                 'line box with siblings before layout')
             is_page_break = False
+            if adjoining_margins:
+                position_y += collapse_margin(adjoining_margins)
+                adjoining_margins = []
             while 1:
                 new_containing_block = box
                 line, resume_at = get_next_linebox(
@@ -227,10 +252,11 @@ def block_level_height(document, box, max_position_y, skip_stack,
                 break
 
             new_containing_block = box
-            new_child, resume_at, next_page, child_adjoining_margins = \
+            new_child, resume_at, next_page, next_adjoining_margins = \
                 block_level_layout(
                     document, child, max_position_y, skip_stack,
-                    new_containing_block, device_size, page_is_empty)
+                    new_containing_block, device_size, page_is_empty,
+                    adjoining_margins)
 
             skip_stack = None
             if new_child is None:
@@ -244,16 +270,18 @@ def block_level_height(document, box, max_position_y, skip_stack,
 
             # We need to do this after the child layout to have the used value
             # for margin_top (eg. it might be a percentage.)
-            # TODO: refactor so that .translate() can be avoided?
-            adjoining_margins.append(new_child.margin_top)
-            collapsed = collapse_margin(adjoining_margins)
-            offset_y = collapsed - new_child.margin_top
-            if offset_y != 0:
+            if not isinstance(new_child, boxes.BlockBox):
+                adjoining_margins.append(new_child.margin_top)
+                offset_y = (collapse_margin(adjoining_margins)
+                             - new_child.margin_top)
                 new_child.translate(0, offset_y)
+                adjoining_margins = []
+            #else: blocks handle that themselves.
+
+            adjoining_margins = next_adjoining_margins
+            adjoining_margins.append(new_child.margin_bottom)
 
             position_y = new_child.border_box_y() + new_child.border_height()
-            adjoining_margins = (
-                child_adjoining_margins + [new_child.margin_bottom])
 
             # Bottom borders may overflow here
             # TODO: back-track somehow when all lines fit but not borders
@@ -273,13 +301,40 @@ def block_level_height(document, box, max_position_y, skip_stack,
     else:
         resume_at = None
 
+
+    if collapsing_with_children:
+        if new_children and not isinstance(
+                # margins are used for something else on line boxes
+                new_children[0], boxes.LineBox):
+            border_box_y = new_children[0].border_box_y()
+        else:
+            # this_adjoining_margins contains box.margin_top
+            border_box_y = box.position_y + collapse_margin(
+                this_box_adjoining_margins)
+        box.position_y = border_box_y - box.margin_top
+
+    if new_children:
+        # bottom margin of the last child and bottom margin of this box ...
+        if box.height != 'auto':
+            # not adjoining. (position_y is not used afterwards.)
+            adjoining_margins = []
+    else:
+        # top and bottom margin of this box
+        if box.height not in ('auto', 0) or box.min_height != 0:
+            # not adjoining. (position_y is not used afterwards.)
+            adjoining_margins = []
+
+    if box.border_bottom_width or box.padding_bottom or (
+            establishes_formatting_context(box)):
+        position_y += collapse_margin(adjoining_margins)
+        adjoining_margins = []
+
     new_box = box.copy_with_children(new_children)
 
+    # TODO: See corner cases in
+    # http://www.w3.org/TR/CSS21/visudet.html#normal-block
     if new_box.height == 'auto':
-        if new_box.padding_bottom or new_box.border_bottom_width:
-            position_y += collapse_margin(adjoining_margins)
-            adjoining_margins = []
-        new_box.height = position_y - initial_position_y
+        new_box.height = position_y - new_box.content_box_y()
 
     if resume_at is not None:
         # If there was a list marker, we kept it on `new_box`.
@@ -288,11 +343,13 @@ def block_level_height(document, box, max_position_y, skip_stack,
         box.outside_list_marker = None
         box.reset_spacing('top')
         new_box.reset_spacing('bottom')
+
     return new_box, resume_at, next_page, adjoining_margins
 
 
 def block_table_wrapper(document, wrapper, max_position_y, skip_stack,
-                        containing_block, device_size, page_is_empty):
+                        containing_block, device_size, page_is_empty,
+                        adjoining_margins):
     """Layout for the wrapper of a block-level table wrapper."""
     for child in wrapper.children:
         if isinstance(child, boxes.TableBox):
@@ -313,7 +370,8 @@ def block_table_wrapper(document, wrapper, max_position_y, skip_stack,
     fixed_table_layout(table)
     wrapper.width = wrapper.style.width = table.border_width()
     return block_box_layout(document, wrapper, max_position_y, skip_stack,
-                            containing_block, device_size, page_is_empty)
+                            containing_block, device_size, page_is_empty,
+                            adjoining_margins)
 
 
 def collapse_margin(adjoining_margins):
@@ -325,3 +383,17 @@ def collapse_margin(adjoining_margins):
     positives = (m for m in margins if m >= 0)
     negatives = (m for m in margins if m <= 0)
     return max(positives) + min(negatives)
+
+
+def establishes_formatting_context(box):
+    """Return wether a box establishes a block formatting context.
+
+    See http://www.w3.org/TR/CSS2/visuren.html#block-formatting
+
+    """
+    return box.is_floated() or box.is_absolutely_positioned() or (
+        isinstance(box, boxes.BlockContainerBox)
+        and not isinstance(box, boxes.BlockBox)
+    ) or (
+        isinstance(box, boxes.BlockBox) and box.style.overflow != 'visible'
+    )

@@ -495,9 +495,12 @@ def make_page(document, root_box, page_type, resume_at):
     # TODO: handle cases where the root element is something else.
     # See http://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
     assert isinstance(root_box, boxes.BlockBox)
+    page_is_empty = True
+    adjoining_margins = []
     root_box, resume_at, next_page, _adj_margins = block_level_layout(
         document, root_box, page_content_bottom, resume_at,
-        initial_containing_block, device_size, page_is_empty=True)
+        initial_containing_block, device_size, page_is_empty,
+        adjoining_margins)
     assert root_box
 
     page = page.copy_with_children([root_box])

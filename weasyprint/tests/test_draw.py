@@ -195,7 +195,7 @@ def test_canvas_background():
         <style>
             @page { -weasy-size: 10px }
             /* html’s background propagates to the whole canvas */
-            html { margin: 1px; background: #f00 }
+            html { padding: 1px; background: #f00 }
             /* html has a background, so body’s does not propagate */
             body { margin: 1px; background: #00f; height: 5px }
         </style>

@@ -90,13 +90,13 @@ def resolve_percentages(box, containing_block):
         # Special handling when the height of the containing block
         # depends on its content.
         resolve_one_percentage(box, 'height', 'auto', ['auto'])
-        # Not supported yet:
-#        resolve_one_percentage(box, 'min_height', 0)
+        # Not supported yet, but min_height is used for margin collapsing.
+        resolve_one_percentage(box, 'min_height', 0)
 #        resolve_one_percentage(box, 'max_height', None, ['none'])
     else:
         resolve_one_percentage(box, 'height', cb_height, ['auto'])
-        # Not supported yet:
-#        resolve_one_percentage(box, 'min_height', cb_height)
+        # Not supported yet, but min_height is used for margin collapsing.
+        resolve_one_percentage(box, 'min_height', cb_height)
 #        resolve_one_percentage(box, 'max_height', cb_height, ['none'])
 
     # Used value == computed value
