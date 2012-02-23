@@ -52,7 +52,10 @@ def block_level_layout(document, box, max_position_y, skip_stack,
     elif isinstance(box, boxes.BlockReplacedBox):
         box = block_replaced_box_layout(
             box, containing_block, device_size)
-        return box, None, 'any'
+        resume_at = None
+        next_page = 'any'
+        adjoining_margins = []
+        return box, resume_at, next_page, adjoining_margins
     else:
         raise TypeError('Layout for %s not handled yet' % type(box).__name__)
 
@@ -165,7 +168,7 @@ def block_level_height(document, box, max_position_y, skip_stack,
     position_y = box.content_box_y()
     initial_position_y = position_y
     # (positive_margins, negative_margins)
-    collapsible_margins = []
+    adjoining_margins = []
 
     new_children = []
     next_page = 'any'
@@ -200,7 +203,7 @@ def block_level_height(document, box, max_position_y, skip_stack,
                 if new_position_y > max_position_y and not page_is_empty:
                     if not new_children:
                         # Page break before any content, cancel the whole box.
-                        return None, None, 'any'
+                        return None, None, 'any', []
                     # Page break here, resume before this line
                     resume_at = (index, skip_stack)
                     is_page_break = True
@@ -224,9 +227,10 @@ def block_level_height(document, box, max_position_y, skip_stack,
                 break
 
             new_containing_block = box
-            new_child, resume_at, next_page = block_level_layout(
-                document, child, max_position_y, skip_stack,
-                new_containing_block, device_size, page_is_empty)
+            new_child, resume_at, next_page, child_adjoining_margins = \
+                block_level_layout(
+                    document, child, max_position_y, skip_stack,
+                    new_containing_block, device_size, page_is_empty)
 
             skip_stack = None
             if new_child is None:
@@ -236,23 +240,20 @@ def block_level_height(document, box, max_position_y, skip_stack,
                 else:
                     # This was the first child of this box, cancel the box
                     # completly
-                    return None, None, 'any'
+                    return None, None, 'any', []
 
             # We need to do this after the child layout to have the used value
             # for margin_top (eg. it might be a percentage.)
             # TODO: refactor so that .translate() can be avoided?
-            collapsible_margins.append(new_child.margin_top)
-            # Make sure max() does not get an empty list:
-            collapsible_margins.append(0)
-            collapsed_margin = (
-                max(m for m in collapsible_margins if m >= 0) +
-                min(m for m in collapsible_margins if m <= 0))
-            offset_y = collapsed_margin - new_child.margin_top
+            adjoining_margins.append(new_child.margin_top)
+            collapsed = collapse_margin(adjoining_margins)
+            offset_y = collapsed - new_child.margin_top
             if offset_y != 0:
                 new_child.translate(0, offset_y)
 
             position_y = new_child.border_box_y() + new_child.border_height()
-            collapsible_margins = [new_child.margin_bottom]
+            adjoining_margins = (
+                child_adjoining_margins + [new_child.margin_bottom])
 
             # Bottom borders may overflow here
             # TODO: back-track somehow when all lines fit but not borders
@@ -275,6 +276,9 @@ def block_level_height(document, box, max_position_y, skip_stack,
     new_box = box.copy_with_children(new_children)
 
     if new_box.height == 'auto':
+        if new_box.padding_bottom or new_box.border_bottom_width:
+            position_y += collapse_margin(adjoining_margins)
+            adjoining_margins = []
         new_box.height = position_y - initial_position_y
 
     if resume_at is not None:
@@ -284,7 +288,7 @@ def block_level_height(document, box, max_position_y, skip_stack,
         box.outside_list_marker = None
         box.reset_spacing('top')
         new_box.reset_spacing('bottom')
-    return new_box, resume_at, next_page
+    return new_box, resume_at, next_page, adjoining_margins
 
 
 def block_table_wrapper(document, wrapper, max_position_y, skip_stack,
@@ -310,3 +314,14 @@ def block_table_wrapper(document, wrapper, max_position_y, skip_stack,
     wrapper.width = wrapper.style.width = table.border_width()
     return block_box_layout(document, wrapper, max_position_y, skip_stack,
                             containing_block, device_size, page_is_empty)
+
+
+def collapse_margin(adjoining_margins):
+    """Return the amount of collapsed margin for a list of adjoining margins.
+    """
+    # Add 0 to make sure that neither max() or min() get an empty list
+    margins = [0]
+    margins.extend(adjoining_margins)
+    positives = (m for m in margins if m >= 0)
+    negatives = (m for m in margins if m <= 0)
+    return max(positives) + min(negatives)

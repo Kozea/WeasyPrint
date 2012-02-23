@@ -429,7 +429,8 @@ def margin_box_content_layout(document, page, box):
     # content_to_boxes() only produces inline-level boxes, no need to
     # run other post-processors from build.build_formatting_structure()
     box = build.inline_in_block(box)
-    box, resume_at, next_page = block_level_height(document, box,
+    box, resume_at, next_page, _adj_margins = block_level_height(
+        document, box,
         max_position_y=float('inf'), skip_stack=None,
         device_size=page.style.size, page_is_empty=True)
     assert resume_at is None
@@ -494,7 +495,7 @@ def make_page(document, root_box, page_type, resume_at):
     # TODO: handle cases where the root element is something else.
     # See http://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
     assert isinstance(root_box, boxes.BlockBox)
-    root_box, resume_at, next_page = block_level_layout(
+    root_box, resume_at, next_page, _adj_margins = block_level_layout(
         document, root_box, page_content_bottom, resume_at,
         initial_containing_block, device_size, page_is_empty=True)
     assert root_box

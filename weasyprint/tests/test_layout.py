@@ -2177,7 +2177,7 @@ def test_margin_collapsing():
     The vertical space between to sibling blocks is the max of their margins,
     not the sum. But that’s only the simplest case...
     """
-    def vertical_space(p1_margin_bottom, p2_margin_top):
+    def vertical_space_1(p1_margin_bottom, p2_margin_top):
         page, = parse('''
             <style>
                 p { font: 20px/1 serif } /* block height == 20px */
@@ -2194,10 +2194,38 @@ def test_margin_collapsing():
         p2_top = p2.content_box_y()
         return p2_top - p1_bottom
 
-    assert vertical_space('10px', '15px') == 15  # not 25
+    assert vertical_space_1('10px', '15px') == 15  # not 25
     # "The maximum of the absolute values of the negative adjoining margins
     #  is deducted from the maximum of the positive adjoining margins"
-    assert vertical_space('-10px', '15px') == 5
-    assert vertical_space('10px', '-15px') == -5
-    assert vertical_space('-10px', '-15px') == -15
-    assert vertical_space('10px', 'auto') == 10  # 'auto' is 0 
+    assert vertical_space_1('-10px', '15px') == 5
+    assert vertical_space_1('10px', '-15px') == -5
+    assert vertical_space_1('-10px', '-15px') == -15
+    assert vertical_space_1('10px', 'auto') == 10  # 'auto' is 0
+
+    def vertical_space_2(p1_margin_bottom, p2_margin_top):
+        page, = parse('''
+            <style>
+                p { font: 20px/1 serif } /* block height == 20px */
+                #p1 { margin-bottom: %s }
+                #p2 { margin-top: %s }
+            </style>
+            <div>
+                <p id=p1>Lorem ipsum
+            </div>
+            <p id=p2>dolor sit amet
+        ''' % (p1_margin_bottom, p2_margin_top))
+        html, = page.children
+        body, = html.children
+        div, p2 = body.children
+        p1, = div.children
+        p1_bottom = p1.content_box_y() + p1.height
+        p2_top = p2.content_box_y()
+        return p2_top - p1_bottom
+
+    assert vertical_space_2('10px', '15px') == 15  # not 25
+    # "The maximum of the absolute values of the negative adjoining margins
+    #  is deducted from the maximum of the positive adjoining margins"
+    assert vertical_space_2('-10px', '15px') == 5
+    assert vertical_space_2('10px', '-15px') == -5
+    assert vertical_space_2('-10px', '-15px') == -15
+    assert vertical_space_2('10px', 'auto') == 10  # 'auto' is 0
