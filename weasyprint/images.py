@@ -104,7 +104,8 @@ def fallback_handler(file_like, uri):
         import pystacia as _
     except ImportError as exception:
         return exception
-    from pystacia import read_blob, TinyException
+    from pystacia import read_blob
+    from pytsacia.util import TinyException
     try:
         png_bytes = read_blob(file_like.read()).get_blob('png')
     except TinyException as exception:
