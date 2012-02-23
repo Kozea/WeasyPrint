@@ -106,7 +106,7 @@ def fallback_handler(file_like, uri):
     except ImportError as exception:
         return exception
     from pystacia import read_blob
-    from pytsacia.util import TinyException
+    from pystacia.util import TinyException
     try:
         with contextlib.closing(read_blob(file_like.read())) as image:
             png_bytes = image.get_blob('png')
