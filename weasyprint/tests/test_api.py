@@ -33,7 +33,7 @@ import shutil
 import tempfile
 import subprocess
 
-import png
+import pystacia
 
 from .testing_utils import (
     resource_filename, assert_no_logs, TEST_UA_STYLESHEET)
@@ -165,12 +165,11 @@ def test_css_parsing():
 
 
 def check_png_pattern(png_bytes):
-    reader = png.Reader(bytes=png_bytes)
-    width, height, lines, meta = reader.asRGBA()
-    assert width == 8
-    assert height == 8
+    with contextlib.closing(pystacia.read_blob(png_bytes)) as image:
+        assert image.size == (8, 8)
+        lines = image.get_raw('rgba')['raw']
     from .test_draw import _, r, B, assert_pixels_equal
-    assert_pixels_equal('api_png', width, height, list(lines), [
+    assert_pixels_equal('api_png', 8, 8, lines, b''.join([
         _+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_,
         _+_+r+B+B+B+_+_,
@@ -179,7 +178,7 @@ def check_png_pattern(png_bytes):
         _+_+B+B+B+B+_+_,
         _+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_,
-    ])
+    ]))
 
 
 @assert_no_logs

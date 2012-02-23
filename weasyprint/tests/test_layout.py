@@ -817,7 +817,7 @@ def test_whitespace_processing():
 def test_with_images():
     """Test that width, height and ratio of images are respected."""
     # Try a few image formats
-    for url in ['pattern.png', 'pattern.gif', 'pattern.jpg', 'pattern.svg',
+    for url in ['pattern.png', 'pattern.gif', 'blue.jpg', 'pattern.svg',
                 "data:image/svg+xml,<svg width='4' height='4'></svg>",
                 "data:image/svg+xml,<svg width='4px' height='4px'></svg>",
                 ]:

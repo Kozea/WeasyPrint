@@ -31,9 +31,9 @@ import shutil
 import itertools
 from io import BytesIO
 
-import png
+import pystacia
 
-from ..compat import array, xrange
+from ..compat import xrange
 from ..utils import ensure_url
 from .testing_utils import (
     resource_filename, TestPNGDocument, FONTS, assert_no_logs, capture_logs)
@@ -42,27 +42,31 @@ from .testing_utils import (
 # Short variable names are OK here
 # pylint: disable=C0103
 
-_ = array('B', [255, 255, 255, 255])  # white
-r = array('B', [255, 0, 0, 255])  # red
-B = array('B', [0, 0, 255, 255])  # blue
+_ = b'\xff\xff\xff\xff'  # white
+r = b'\xff\x00\x00\xff'  # red
+B = b'\x00\x00\xff\xff'  # blue
 BYTES_PER_PIXELS = 4
+PIXEL_FORMAT = 'rgba(%i, %i, %i, %i)'
 
 
-def format_pixel(lines, x, y):
+def format_pixel(pixels, width, x, y):
     """Return the pixel color as ``#RRGGBB``."""
-    start = BYTES_PER_PIXELS * x
-    end = BYTES_PER_PIXELS * (x + 1)
-    pixel = lines[y][start:end]
-    return ('#' + BYTES_PER_PIXELS * '%02x') % tuple(pixel)
+    start = (y * width + x) * BYTES_PER_PIXELS
+    end = start + BYTES_PER_PIXELS
+    pixel_bytes = pixels[start:end]
+    # Py2/3 compat:
+    pixel_ints = tuple(ord(byte) for byte in pixel_bytes.decode('latin1'))
+    return PIXEL_FORMAT % pixel_ints
 
 
 def assert_pixels(name, expected_width, expected_height, expected_lines, html):
     """Helper testing the size of the image and the pixels values."""
     assert len(expected_lines) == expected_height
     assert len(expected_lines[0]) == expected_width * BYTES_PER_PIXELS
-    _doc, lines = html_to_png(name, expected_width, expected_height, html)
+    expected_raw = b''.join(expected_lines)
+    _doc, lines = html_to_pixels(name, expected_width, expected_height, html)
     assert_pixels_equal(name, expected_width, expected_height, lines,
-                        expected_lines)
+                        expected_raw)
 
 
 def assert_same_rendering(expected_width, expected_height, documents):
@@ -75,7 +79,8 @@ def assert_same_rendering(expected_width, expected_height, documents):
     lines_list = []
 
     for name, html in documents:
-        _doc, lines = html_to_png(name, expected_width, expected_height, html)
+        _doc, lines = html_to_pixels(
+            name, expected_width, expected_height, html)
         lines_list.append((name, lines))
 
     _name, reference = lines_list[0]
@@ -94,7 +99,8 @@ def assert_different_renderings(expected_width, expected_height, documents):
     lines_list = []
 
     for name, html in documents:
-        _doc, lines = html_to_png(name, expected_width, expected_height, html)
+        _doc, lines = html_to_pixels(
+            name, expected_width, expected_height, html)
         lines_list.append((name, lines))
 
     for i, (name_1, lines_1) in enumerate(lines_list):
@@ -105,16 +111,19 @@ def assert_different_renderings(expected_width, expected_height, documents):
                 assert False, '%s and %s are the same' % (name_1, name_2)
 
 
-def write_png(basename, lines):
+def write_png(basename, lines, width, height):
     """Take a pixel matrix and write a PNG file."""
     directory = os.path.join(os.path.dirname(__file__), 'test_results')
     if not os.path.isdir(directory):
         os.mkdir(directory)
     filename = os.path.join(directory, basename + '.png')
-    png.from_array(lines, 'RGBA').save(filename)
+
+    with contextlib.closing(pystacia.read_raw(
+            lines, 'rgba', width, height, depth=8)) as image:
+        image.write(filename)
 
 
-def html_to_png(name, expected_width, expected_height, html):
+def html_to_pixels(name, expected_width, expected_height, html):
     """
     Render an HTML document to PNG, checks its size and return pixel data.
 
@@ -123,11 +132,11 @@ def html_to_png(name, expected_width, expected_height, html):
     document = TestPNGDocument(html,
         # Dummy filename, but in the right directory.
         base_url=resource_filename('<test>'))
-    lines = document_to_png(document, name, expected_width, expected_height)
+    lines = document_to_pixels(document, name, expected_width, expected_height)
     return document, lines
 
 
-def document_to_png(document, name, expected_width, expected_height):
+def document_to_pixels(document, name, expected_width, expected_height):
     """
     Render an HTML document to PNG, checks its size and return pixel data.
     """
@@ -135,19 +144,11 @@ def document_to_png(document, name, expected_width, expected_height):
     document.write_to(file_like)
     assert len(document.pages) == 1
 
-    file_like.seek(0)
-    reader = png.Reader(file=file_like)
-    width, height, lines, meta = reader.asRGBA()
-    lines = list(lines)
-
-    assert width == expected_width, name
-    assert height == expected_height, name
-    assert meta['greyscale'] == False, name
-    assert meta['alpha'] == True, name
-    assert meta['bitdepth'] == 8, name
-    assert len(lines) == height, name
-    assert len(lines[0]) == width * BYTES_PER_PIXELS, name
-    return lines
+    with contextlib.closing(pystacia.read_blob(file_like.getvalue())) as image:
+        assert image.size == (expected_width, expected_height), name
+        raw = image.get_raw('rgba')['raw']
+        assert len(raw) == expected_width * expected_height * BYTES_PER_PIXELS
+        return raw
 
 
 def assert_pixels_equal(name, width, height, lines, expected_lines):
@@ -156,14 +157,15 @@ def assert_pixels_equal(name, width, height, lines, expected_lines):
     are the same.
     """
     if lines != expected_lines:
-        write_png(name + '.expected', expected_lines)
-        write_png(name, lines)
+        write_png(name + '.expected', expected_lines, width, height)
+        write_png(name, lines, width, height)
         for y in xrange(height):
             for x in xrange(width):
-                pixel = format_pixel(lines, x, y)
-                expected_pixel = format_pixel(expected_lines, x, y)
-                assert pixel == expected_pixel, \
-                    'Pixel (%i, %i) does not match in %s' % (x, y, name)
+                pixel = format_pixel(lines, width, x, y)
+                expected_pixel = format_pixel(expected_lines, width, x, y)
+                assert pixel == expected_pixel , (
+                    'Pixel (%i, %i) in %s: expected %s, got %s' % (
+                    x, y, name, expected_pixel, pixel))
 
 
 @assert_no_logs
@@ -854,19 +856,15 @@ def test_images():
         _+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_,
     ]
-    V = array('B', [0x65, 0x24, 0xe2, 255])
-    v = array('B', [0x35, 0x00, 0xb2, 255])
-    u = array('B', [0x36, 0x00, 0xb3, 255])
-    b = array('B', [0, 1, 254, 255])
-    d = array('B', [0, 0, 254, 255])
-    centered_jpg_image = [
-        # JPG is lossy...
+    # JPG is lossy...
+    b = b'\x00\x00\xfe\xff'
+    blue_image = [
         _+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_,
-        _+_+V+v+b+b+_+_,
-        _+_+v+u+b+b+_+_,
-        _+_+d+d+d+d+_+_,
-        _+_+d+d+d+d+_+_,
+        _+_+b+b+b+b+_+_,
+        _+_+b+b+b+b+_+_,
+        _+_+b+b+b+b+_+_,
+        _+_+b+b+b+b+_+_,
         _+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_,
     ]
@@ -880,15 +878,19 @@ def test_images():
         _+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_,
     ]
-    for format in ['svg', 'png', 'palette.png', 'gif', 'jpg']:
-        image = centered_jpg_image if format == 'jpg' else centered_image
-        assert_pixels('inline_image_' + format, 8, 8, image, '''
+    for filename, image in [
+            ('pattern.svg', centered_image),
+            ('pattern.png', centered_image),
+            ('pattern.palette.png', centered_image),
+            ('pattern.gif', centered_image),
+            ('blue.jpg', blue_image)]:
+        assert_pixels('inline_image_' + filename, 8, 8, image, '''
             <style>
                 @page { -weasy-size: 8px }
                 body { margin: 2px 0 0 2px; background: #fff }
             </style>
-            <div><img src="pattern.%s"></div>
-    ''' % format)
+            <div><img src="%s"></div>
+        ''' % filename)
     assert_pixels('block_image', 8, 8, centered_image, '''
         <style>
             @page { -weasy-size: 8px }
@@ -1027,8 +1029,8 @@ def test_tables():
             </tr>
         </table>
     '''
-    r = array('B', [255, 127, 127, 255])  # rgba(255, 0, 0, 0.5) above #fff
-    R = array('B', [255, 63, 63, 255])  # r above r above #fff
+    r = b'\xff\x7f\x7f\xff'  # rgba(255, 0, 0, 0.5) above #fff
+    R = b'\xff\x3f\x3f\xff'  # r above r above #fff
     assert_pixels('table_borders', 28, 28, [
         _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
         _+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+_,
@@ -1097,8 +1099,8 @@ def test_tables():
         td { background: rgba(255, 0, 0, 0.5) }
     '''})
 
-    g = array('B', [127, 255, 127, 255])  # rgba(0, 255, 0, 0.5) above #fff
-    G = array('B', [127, 191, 63, 255])  # g above r above #fff
+    g = b'\x7f\xff\x7f\xff'  # rgba(0, 255, 0, 0.5) above #fff
+    G = b'\x7f\xbf\x3f\xff'  # g above r above #fff
                                          # Not the same as r above g above #fff
     assert_pixels('table_column_backgrounds', 28, 28, [
         _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
@@ -1257,17 +1259,18 @@ def test_borders():
     height = 110
     margin = 10
     border = 10
-    solid_pixels = [_ * width for y in xrange(height)]
+    solid_pixels = [[_] * width for y in xrange(height)]
     for x in xrange(margin, width - margin):
         for y in itertools.chain(
                 range(margin, margin + border),
                 range(height - margin - border, height - margin)):
-            solid_pixels[y][x * 4:(x+1) * 4] = B
+            solid_pixels[y][x] = B
     for y in xrange(margin, height - margin):
         for x in itertools.chain(
                 range(margin, margin + border),
                 range(width - margin - border, width - margin)):
-            solid_pixels[y][x * 4:(x+1) * 4] = B
+            solid_pixels[y][x] = B
+    solid_pixels = [b''.join(line) for line in solid_pixels]
     assert_pixels(
         'border_solid', 140, 110, solid_pixels,
         source % {'border_style': 'solid'}
@@ -1277,11 +1280,12 @@ def test_borders():
 @assert_no_logs
 def test_margin_boxes():
     """Test the rendering of margin boxes"""
-    R = array('B', [255, 0, 0, 255])  # red
-    G = array('B', [0, 255, 0, 255])  # green
-    B = array('B', [0, 0, 255, 255])  # blue
-    g = array('B', [0, 128, 0, 255])  # half green
-    b = array('B', [0, 0, 128, 255])  # half blue
+    _ = b'\xff\xff\xff\xff'  # white
+    R = b'\xff\x00\x00\xff'  # red
+    G = b'\x00\xff\x00\xff'  # green
+    B = b'\x00\x00\xff\xff'  # blue
+    g = b'\x00\x80\x00\xff'  # half green
+    b = b'\x00\x00\x80\xff'  # half blue
     assert_pixels('margin_boxes', 15, 15, [
         _+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
         _+G+G+G+_+_+_+_+_+_+B+B+B+B+_,
@@ -1343,7 +1347,7 @@ def test_unicode():
         }
         p { color: blue }
     '''
-    _doc, expected_lines = html_to_png('unicode_reference', 200, 50, '''
+    _doc, expected_lines = html_to_pixels('unicode_reference', 200, 50, '''
         <style>{0}</style>
         <p><img src="pattern.png"> {1}</p>
     '''.format(style, text))
@@ -1370,7 +1374,7 @@ def test_unicode():
 
         # TODO: change this back to actually read from a file
         document = TestPNGDocument(html_content)
-        lines = document_to_png(document, 'unicode', 200, 50)
+        lines = document_to_pixels(document, 'unicode', 200, 50)
         assert_pixels_equal('unicode', 200, 50, lines, expected_lines)
     finally:
         shutil.rmtree(temp)
