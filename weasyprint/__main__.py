@@ -30,7 +30,7 @@ import argparse
 from . import VERSION, HTML
 
 
-def main(argv=None):
+def main(argv=None, stdout=sys.stdout, stdin=sys.stdin):
     """Parse command-line arguments and convert the given document."""
     format_values = ['pdf', 'png']
     formats = 'PDF or PNG'
@@ -59,29 +59,29 @@ def main(argv=None):
     if args.format is None:
         for file_format in format_values:
             if args.output.endswith('.' + file_format):
-                args.format = file_format
+                format_ = file_format
                 break
         else:
             parser.error(
                 'Either sepecify a format with -f or choose an '
                 'output filename that ends in ' + extensions)
+    else:
+        format_ = args.format
 
     if args.input == '-':
-        stdin = sys.stdin
-        stdin = getattr(stdin, 'buffer', stdin)
-        source = HTML(file_obj=stdin, encoding=args.encoding,
-            # Dummy filename in the current directory.
-            base_url='<stdin>')
+        html = HTML(file_obj=getattr(stdin, 'buffer', stdin),
+                    encoding=args.encoding,
+                    # Dummy filename in the current directory:
+                    base_url='<stdin>')
     else:
-        source = HTML(args.input, encoding=args.encoding)
+        html = HTML(args.input, encoding=args.encoding)
 
     if args.output == '-':
-        stdout = sys.stdout
-        stdout = getattr(stdout, 'buffer', stdout)
-        args.output = stdout
+        output = getattr(stdout, 'buffer', stdout)
+    else:
+        output = args.output
 
-    getattr(source, 'write_' + args.format)(
-        args.output, stylesheets=args.stylesheet)
+    getattr(html, 'write_' + format_)(output, stylesheets=args.stylesheet)
 
 
 if __name__ == '__main__':

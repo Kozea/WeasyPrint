@@ -81,25 +81,6 @@ def write_file(filename, content):
         fd.write(content)
 
 
-@contextlib.contextmanager
-def monkey_patch_stdio(input_bytes=b''):
-    old_stdin = sys.stdin
-    old_stdout = sys.stdout
-    try:
-        stdin = io.BytesIO(input_bytes)
-        stdout = io.BytesIO()
-        if PY3:
-            sys.stdin = io.TextIOWrapper(stdin)
-            sys.stdout = io.TextIOWrapper(stdout)
-        else:
-            sys.stdin = stdin
-            sys.stdout = stdout
-        yield stdout
-    finally:
-        sys.stdin = old_stdin
-        sys.stdout = old_stdout
-
-
 class TestHTML(HTML):
     """Like HTML, but with the testing (smaller) UA stylesheet"""
     def _ua_stylesheet(self):
@@ -253,12 +234,15 @@ def test_command_line_render():
         pdf_bytes = TestHTML(string=combined, base_url='dummy.html').write_pdf()
     check_png_pattern(png_bytes)
 
-    def run(args):
+    def run(args, stdin=b''):
+        stdin = io.BytesIO(stdin)
+        stdout = io.BytesIO()
         try:
             __main__.HTML = TestHTML
-            __main__.main(args.split())
+            __main__.main(args.split(), stdin=stdin, stdout=stdout)
         finally:
             __main__.HTML = HTML
+        return stdout.getvalue()
 
     with temp_directory() as temp:
         with chdir(temp):
@@ -300,15 +284,12 @@ def test_command_line_render():
             assert read_file('out9.png') != png_bytes
             assert read_file('out10.png') == png_bytes
 
-            with monkey_patch_stdio() as stdout:
-                run('--format png combined.html -')
-                assert stdout.getvalue() == png_bytes
+            stdout = run('--format png combined.html -')
+            assert stdout == png_bytes
 
-            with monkey_patch_stdio(combined):
-                run('- out11.png')
+            run('- out11.png', stdin=combined)
             check_png_pattern(read_file('out11.png'))
             assert read_file('out11.png') == png_bytes
 
-            with monkey_patch_stdio(combined) as stdout:
-                run('--format png - -')
-                assert stdout.getvalue() == png_bytes
+            stdout = run('--format png - -', stdin=combined)
+            assert stdout == png_bytes
