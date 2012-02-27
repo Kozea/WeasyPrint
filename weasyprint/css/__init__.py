@@ -351,14 +351,26 @@ def selector_to_xpath(selector):
         #   cssselect.CSSSelector() will raise a cssselect.ExpressionError.
         # - The selector has no pseudo-element and is supported by
         #   `cssselect.CSSSelector`.
-        if isinstance(parsed_selector, cssselect.Pseudo) \
-                and parsed_selector.ident in PSEUDO_ELEMENTS:
-            pseudo_type = str(parsed_selector.ident)
-            # Remove the pseudo-element from the selector
-            parsed_selector = parsed_selector.element
+        if isinstance(parsed_selector, cssselect.CombinedSelector):
+            simple_selector = parsed_selector.subselector
+            if isinstance(simple_selector, cssselect.Pseudo) \
+                    and simple_selector.ident in PSEUDO_ELEMENTS:
+                pseudo_type = str(simple_selector.ident)
+                # Remove the pseudo-element from the selector
+                parsed_selector.subselector = simple_selector.element
+            else:
+                # No pseudo-element or invalid selector.
+                pseudo_type = None
         else:
-            # No pseudo-element or invalid selector.
-            pseudo_type = None
+            if isinstance(parsed_selector, cssselect.Pseudo) \
+                    and parsed_selector.ident in PSEUDO_ELEMENTS:
+                pseudo_type = str(parsed_selector.ident)
+                # Remove the pseudo-element from the selector
+                parsed_selector = parsed_selector.element
+            else:
+                # No pseudo-element or invalid selector.
+                pseudo_type = None
+
         selector_callable = cssselect.CSSSelector(parsed_selector)
         result = (pseudo_type, selector_callable)
 

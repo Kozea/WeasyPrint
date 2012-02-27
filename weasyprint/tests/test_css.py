@@ -71,11 +71,11 @@ def test_find_stylesheets():
 
     rules = list(rule for sheet in sheets
                       for rule in css.effective_rules(sheet, 'print'))
-    assert len(rules) == 9
+    assert len(rules) == 10
     # Also test appearance order
     assert [rule.selectorText for rule in rules] \
         == ['a', 'li', 'p', 'ul', 'li', 'a:after', ':first', 'ul',
-            'body > h1:first-child']
+            'body > h1:first-child', 'h1 ~ p ~ ul a:after']
 
 
 @assert_no_logs
@@ -179,6 +179,8 @@ def test_annotate_document():
     # The href attr should be as in the source, not made absolute.
     assert after.content == [
         ('STRING', ' ['), ('STRING', 'home.html'), ('STRING', ']')]
+    color = after.background_color
+    assert (color.red, color.green, color.blue, color.alpha) == (255, 0, 0, 1)
 
     # TODO much more tests here: test that origin and selector precedence
     # and inheritance are correct, ...
