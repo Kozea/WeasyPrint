@@ -47,7 +47,9 @@ def get_url_attribute(element, key):
     """
     attr_value = element.get(key)
     if attr_value:
-        return urljoin(element.base_url, attr_value.strip())
+        attr_value = attr_value.strip()
+        if attr_value:
+            return urljoin(element.base_url, attr_value)
 
 
 def ensure_url(string):

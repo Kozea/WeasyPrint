@@ -134,7 +134,11 @@ def get_image_from_uri(uri):
         if isinstance(image, Exception):
             exception = image
     finally:
-        file_like.close()
+        try:
+            file_like.close()
+        except Exception:
+            # Do not hide a more relevant exception.
+            pass
 
     if exception is None:
         return image
