@@ -91,9 +91,15 @@ def _test_resource(class_, basename, check, **kwargs):
     """Common code for testing the HTML and CSS classes."""
     absolute_filename = resource_filename(basename)
     check(class_(absolute_filename, **kwargs))
-    check(class_(filename_or_url=absolute_filename, **kwargs))
+    check(class_(guess=absolute_filename, **kwargs))
     check(class_(filename=absolute_filename, **kwargs))
+    check(class_('file://' + absolute_filename, **kwargs))
+    check(class_(guess='file://' + absolute_filename, **kwargs))
     check(class_(url='file://' + absolute_filename, **kwargs))
+    with open(absolute_filename, 'rb') as fd:
+        check(class_(fd, **kwargs))
+    with open(absolute_filename, 'rb') as fd:
+        check(class_(guess=fd, **kwargs))
     with open(absolute_filename, 'rb') as fd:
         check(class_(file_obj=fd, **kwargs))
     with open(absolute_filename, 'rb') as fd:

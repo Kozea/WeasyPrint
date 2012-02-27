@@ -39,33 +39,49 @@ __version__ = VERSION
 # (This reduces the work for eg. 'weasyprint --help')
 
 
-class HTML(object):
-    def __init__(self, filename_or_url=None, filename=None, url=None,
-                 file_obj=None, string=None, encoding=None, base_url=None):
-        """Fetch and parse an HTML document.
+class Resource(object):
+    """Common API for creating instances of :class:`HTML` or :class:`CSS`.
 
-        Only one of :obj:`filename_or_url`, :obj:`filename`, :obj:`url`,
-        :obj:`file_obj` or :obj:`string` should be given.
+    You can just create an instance with a positional argument
+    (ie. ``HTML(something)``) and it will try to guess if the input is
+    a filename, an absolute URL, or a file-like object.
 
-        :param filename_or_url:
-            Same as :obj:`url` if this looks like an URL, a filename otherwise
-        :param filename:
-            Path to a file in the local filesystem
-        :param url:
-            An HTTP or FTP URL. Other schemes may or may not be supported.
-        :param file_obj:
-            A file-like object with a :meth:`~file.read` method.
-        :param string:
-            A byte or Unicode string.
+    Alternatively, you can name the argument so that no guessing is
+    involved:
 
-        :param encoding:
-            Force the document encoding.
-        """
+    * ``HTML(filename=foo)`` a filename, absolute or relative to
+      the current directory.
+    * ``HTML(url=foo)`` an absolute, fully qualified URL.
+    * ``HTML(file_obj=foo)`` a file-like object: any object with
+      a :meth:`read` method.
+    * ``HTML(string=foo)`` a string of HTML source.
+      (This argument must be named.)
+
+    Specifying multiple inputs is an error: ``HTML(filename=foo, url=bar)``
+
+    Optional, additional named arguments:
+
+    * ``encoding``: force the character encoding
+    * ``base_url``: used to resolve relative URLs. If not passed explicitly,
+      try to use the input filename, URL, or ``name`` attribute of
+      file objects.
+
+    """
+
+
+class HTML(Resource):
+    """Fetch and parse an HTML document.
+
+    See :class:`Resource` to create an instance.
+
+    """
+    def __init__(self, guess=None, filename=None, url=None, file_obj=None,
+                 string=None, encoding=None, base_url=None):
         import lxml.html
         from .utils import ensure_url
 
         source_type, source, base_url = _select_source(
-            filename_or_url, filename, url, file_obj, string, base_url)
+            guess, filename, url, file_obj, string, base_url)
 
         if source_type == 'string':
             parse = lxml.html.document_fromstring
@@ -82,7 +98,6 @@ class HTML(object):
         if result is None:
             raise ValueError('Error while parsing HTML')
         self.root_element = result
-
 
     def _ua_stylesheet(self):
         from .css import HTML5_UA_STYLESHEET
@@ -122,32 +137,20 @@ class HTML(object):
         return self._write(PNGDocument, target, stylesheets)
 
 
-class CSS(object):
-    def __init__(self, filename_or_url=None, filename=None, url=None,
-                 file_obj=None, string=None, encoding=None, base_url=None):
-        """Fetch and parse a CSS stylesheet.
+class CSS(Resource):
+    """Fetch and parse a CSS stylesheet.
 
-        Only one of :obj:`filename_or_url`, :obj:`filename`, :obj:`url`,
-        :obj:`file_obj` or :obj:`string` should be given.
+    See :class:`Resource` to create an instance. A :class:`CSS` object
+    is not useful on its own but can be passed to :meth:`HTML.write_pdf` or
+    :meth:`HTML.write_png`.
 
-        :param filename_or_url:
-            Same as :obj:`url` if this looks like an URL, a filename otherwise
-        :param filename:
-            Path to a file in the local filesystem
-        :param url:
-            An HTTP or FTP URL. Other schemes may or may not be supported.
-        :param file_obj:
-            A file-like object with a :meth:`~file.read` method.
-        :param string:
-            A byte or Unicode string.
-
-        :param encoding:
-            Force the document encoding.
-        """
+    """
+    def __init__(self, guess=None, filename=None, url=None, file_obj=None,
+                 string=None, encoding=None, base_url=None):
         from .css import PARSER
 
         source_type, source, base_url = _select_source(
-            filename_or_url, filename, url, file_obj, string, base_url)
+            guess, filename, url, file_obj, string, base_url)
 
         if source_type == 'file_obj':
             source = source.read()
@@ -163,20 +166,32 @@ class CSS(object):
             self.stylesheet = parser(source, encoding=encoding, href=base_url)
 
 
-def _select_source(filename_or_url, filename, url, file_obj, string, base_url):
-    """Check that only one of the argument is not None, and return which."""
+def _select_source(guess, filename, url, file_obj, string, base_url):
+    """
+    Check that only one input is not None, and return it with the
+    normalized ``base_url``.
+    """
     from .utils import ensure_url
+    from .compat import urlparse
+
     if base_url is not None:
         base_url = ensure_url(base_url)
 
-    nones = [filename_or_url is None, filename is None, url is None,
+    nones = [guess is None, filename is None, url is None,
              file_obj is None, string is None]
     if nones == [False, True, True, True, True]:
-        from .compat import urlparse
-        if urlparse(filename_or_url).scheme:
-            return 'url', filename_or_url, base_url
+        if hasattr(guess, 'read'):
+            type_ = 'file_obj'
+            if base_url is None:
+                # filesystem file objects have a 'name' attribute.
+                name = getattr(guess, 'name', None)
+                if name:
+                    base_url = ensure_url(name)
+        elif urlparse(guess).scheme:
+            type_ = 'url'
         else:
-            return 'filename', filename_or_url, base_url
+            type_ = 'filename'
+        return type_, guess, base_url
     if nones == [True, False, True, True, True]:
         return 'filename', filename, base_url
     if nones == [True, True, False, True, True]:

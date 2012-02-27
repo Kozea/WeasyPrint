@@ -69,18 +69,18 @@ def main(argv=None, stdout=sys.stdout, stdin=sys.stdin):
         format_ = args.format
 
     if args.input == '-':
-        html = HTML(file_obj=getattr(stdin, 'buffer', stdin),
-                    encoding=args.encoding,
-                    # Dummy filename in the current directory:
-                    base_url='<stdin>')
+        source = getattr(stdin, 'buffer', stdin)
+        base_url = '<stdin>' # Dummy filename in the current directory
     else:
-        html = HTML(args.input, encoding=args.encoding)
+        source = args.input
+        base_url = args.input
 
     if args.output == '-':
         output = getattr(stdout, 'buffer', stdout)
     else:
         output = args.output
 
+    html = HTML(source, base_url=base_url, encoding=args.encoding)
     getattr(html, 'write_' + format_)(output, stylesheets=args.stylesheet)
 
 
