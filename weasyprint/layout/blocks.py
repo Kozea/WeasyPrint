@@ -58,7 +58,8 @@ def block_level_layout(document, box, max_position_y, skip_stack,
         resume_at = None
         next_page = 'any'
         adjoining_margins = []
-        return box, resume_at, next_page, adjoining_margins
+        collapsing_through = False
+        return box, resume_at, next_page, adjoining_margins, collapsing_through
     else:
         raise TypeError('Layout for %s not handled yet' % type(box).__name__)
 
@@ -69,11 +70,12 @@ def block_box_layout(document, box, max_position_y, skip_stack,
     """Lay out the block ``box``."""
     resolve_percentages(box, containing_block)
     block_level_width(box, containing_block)
-    new_box, resume_at, next_page, adjoining_margins = block_level_height(
-        document, box, max_position_y, skip_stack,
-        device_size, page_is_empty, adjoining_margins)
+    new_box, resume_at, next_page, adjoining_margins, collapsing_through = \
+        block_level_height(
+            document, box, max_position_y, skip_stack,
+            device_size, page_is_empty, adjoining_margins)
     list_marker_layout(document, new_box, containing_block)
-    return new_box, resume_at, next_page, adjoining_margins
+    return new_box, resume_at, next_page, adjoining_margins, collapsing_through
 
 
 def block_replaced_box_layout(box, containing_block, device_size):
@@ -228,7 +230,7 @@ def block_level_height(document, box, max_position_y, skip_stack,
                 if new_position_y > max_position_y and not page_is_empty:
                     if not new_children:
                         # Page break before any content, cancel the whole box.
-                        return None, None, 'any', []
+                        return None, None, 'any', [], False
                     # Page break here, resume before this line
                     resume_at = (index, skip_stack)
                     is_page_break = True
@@ -252,8 +254,8 @@ def block_level_height(document, box, max_position_y, skip_stack,
                 break
 
             new_containing_block = box
-            new_child, resume_at, next_page, next_adjoining_margins = \
-                block_level_layout(
+            (new_child, resume_at, next_page, next_adjoining_margins,
+                collapsing_through) = block_level_layout(
                     document, child, max_position_y, skip_stack,
                     new_containing_block, device_size, page_is_empty,
                     adjoining_margins)
@@ -266,7 +268,7 @@ def block_level_height(document, box, max_position_y, skip_stack,
                 else:
                     # This was the first child of this box, cancel the box
                     # completly
-                    return None, None, 'any', []
+                    return None, None, 'any', [], False
 
             # We need to do this after the child layout to have the used value
             # for margin_top (eg. it might be a percentage.)
@@ -281,7 +283,8 @@ def block_level_height(document, box, max_position_y, skip_stack,
             adjoining_margins = next_adjoining_margins
             adjoining_margins.append(new_child.margin_bottom)
 
-            position_y = new_child.border_box_y() + new_child.border_height()
+            if not collapsing_through:
+                position_y = new_child.border_box_y() + new_child.border_height()
 
             # Bottom borders may overflow here
             # TODO: back-track somehow when all lines fit but not borders
@@ -313,6 +316,7 @@ def block_level_height(document, box, max_position_y, skip_stack,
                 this_box_adjoining_margins)
         box.position_y = border_box_y - box.margin_top
 
+    collapsing_through = False
     if new_children:
         # bottom margin of the last child and bottom margin of this box ...
         if box.height != 'auto':
@@ -320,7 +324,9 @@ def block_level_height(document, box, max_position_y, skip_stack,
             adjoining_margins = []
     else:
         # top and bottom margin of this box
-        if box.height not in ('auto', 0) or box.min_height != 0:
+        if box.height in ('auto', 0) and box.min_height == 0:
+            collapsing_through = True
+        else:
             # not adjoining. (position_y is not used afterwards.)
             adjoining_margins = []
 
@@ -344,7 +350,7 @@ def block_level_height(document, box, max_position_y, skip_stack,
         box.reset_spacing('top')
         new_box.reset_spacing('bottom')
 
-    return new_box, resume_at, next_page, adjoining_margins
+    return new_box, resume_at, next_page, adjoining_margins, collapsing_through
 
 
 def block_table_wrapper(document, wrapper, max_position_y, skip_stack,
