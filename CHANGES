@@ -5,7 +5,8 @@ Version 0.6, released on 2012-XX-XX
   http://weasyprint.org/using/#as-a-python-library
 * Switch to pystacia instead of PIL for raster images
 * Add compatibility with CPython 2.6 and 3.2 (was only 2.7 previously)
-* Bug fixes
+* Proper margin collapsing
+* Many bug fixes
 
 
 Version 0.5, released on 2012-02-08

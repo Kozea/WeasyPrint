@@ -2177,6 +2177,26 @@ def test_margin_collapsing():
     The vertical space between to sibling blocks is the max of their margins,
     not the sum. But that’s only the simplest case...
     """
+    def assert_collapsing(vertical_space):
+        assert vertical_space('10px', '15px') == 15  # not 25
+        # "The maximum of the absolute values of the negative adjoining margins
+        #  is deducted from the maximum of the positive adjoining margins"
+        assert vertical_space('-10px', '15px') == 5
+        assert vertical_space('10px', '-15px') == -5
+        assert vertical_space('-10px', '-15px') == -15
+        assert vertical_space('10px', 'auto') == 10  # 'auto' is 0
+        return vertical_space
+
+    def assert_NOT_collapsing(vertical_space):
+        assert vertical_space('10px', '15px') == 25
+        assert vertical_space('-10px', '15px') == 5
+        assert vertical_space('10px', '-15px') == -5
+        assert vertical_space('-10px', '-15px') == -25
+        assert vertical_space('10px', 'auto') == 10  # 'auto' is 0
+        return vertical_space
+
+    # Siblings
+    @assert_collapsing
     def vertical_space_1(p1_margin_bottom, p2_margin_top):
         page, = parse('''
             <style>
@@ -2194,14 +2214,8 @@ def test_margin_collapsing():
         p2_top = p2.content_box_y()
         return p2_top - p1_bottom
 
-    assert vertical_space_1('10px', '15px') == 15  # not 25
-    # "The maximum of the absolute values of the negative adjoining margins
-    #  is deducted from the maximum of the positive adjoining margins"
-    assert vertical_space_1('-10px', '15px') == 5
-    assert vertical_space_1('10px', '-15px') == -5
-    assert vertical_space_1('-10px', '-15px') == -15
-    assert vertical_space_1('10px', 'auto') == 10  # 'auto' is 0
-
+    # Not siblings, first is nested
+    @assert_collapsing
     def vertical_space_2(p1_margin_bottom, p2_margin_top):
         page, = parse('''
             <style>
@@ -2222,10 +2236,163 @@ def test_margin_collapsing():
         p2_top = p2.content_box_y()
         return p2_top - p1_bottom
 
-    assert vertical_space_2('10px', '15px') == 15  # not 25
-    # "The maximum of the absolute values of the negative adjoining margins
-    #  is deducted from the maximum of the positive adjoining margins"
-    assert vertical_space_2('-10px', '15px') == 5
-    assert vertical_space_2('10px', '-15px') == -5
-    assert vertical_space_2('-10px', '-15px') == -15
-    assert vertical_space_2('10px', 'auto') == 10  # 'auto' is 0
+    # Not siblings, second is nested
+    @assert_collapsing
+    def vertical_space_3(p1_margin_bottom, p2_margin_top):
+        page, = parse('''
+            <style>
+                p { font: 20px/1 serif } /* block height == 20px */
+                #p1 { margin-bottom: %s }
+                #p2 { margin-top: %s }
+            </style>
+            <p id=p1>Lorem ipsum
+            <div>
+                <p id=p2>dolor sit amet
+            </div>
+        ''' % (p1_margin_bottom, p2_margin_top))
+        html, = page.children
+        body, = html.children
+        p1, div = body.children
+        p2, = div.children
+        p1_bottom = p1.content_box_y() + p1.height
+        p2_top = p2.content_box_y()
+        return p2_top - p1_bottom
+
+    # Not siblings, second is doubly nested
+    @assert_collapsing
+    def vertical_space_4(p1_margin_bottom, p2_margin_top):
+        page, = parse('''
+            <style>
+                p { font: 20px/1 serif } /* block height == 20px */
+                #p1 { margin-bottom: %s }
+                #p2 { margin-top: %s }
+            </style>
+            <p id=p1>Lorem ipsum
+            <div>
+                <div>
+                    <p id=p2>dolor sit amet
+                </div>
+            </div>
+        ''' % (p1_margin_bottom, p2_margin_top))
+        html, = page.children
+        body, = html.children
+        p1, div1 = body.children
+        div2, = div1.children
+        p2, = div2.children
+        p1_bottom = p1.content_box_y() + p1.height
+        p2_top = p2.content_box_y()
+        return p2_top - p1_bottom
+
+    # Collapsing with children
+    @assert_collapsing
+    def vertical_space_5(margin_1, margin_2):
+        page, = parse('''
+            <style>
+                p { font: 20px/1 serif } /* block height == 20px */
+                #div1 { margin-top: %s }
+                #div2 { margin-top: %s }
+            </style>
+            <p>Lorem ipsum
+            <div id=div1>
+                <div id=div2>
+                    <p id=p2>dolor sit amet
+                </div>
+            </div>
+        ''' % (margin_1, margin_2))
+        html, = page.children
+        body, = html.children
+        p1, div1 = body.children
+        div2, = div1.children
+        p2, = div2.children
+        p1_bottom = p1.content_box_y() + p1.height
+        p2_top = p2.content_box_y()
+        # Parent and element edge are the same:
+        assert div1.border_box_y() == p2.border_box_y()
+        assert div2.border_box_y() == p2.border_box_y()
+        return p2_top - p1_bottom
+
+    # Block formatting context: Not collapsing with children
+    @assert_NOT_collapsing
+    def vertical_space_6(margin_1, margin_2):
+        page, = parse('''
+            <style>
+                p { font: 20px/1 serif } /* block height == 20px */
+                #div1 { margin-top: %s; overflow: hidden }
+                #div2 { margin-top: %s }
+            </style>
+            <p>Lorem ipsum
+            <div id=div1>
+                <div id=div2>
+                    <p id=p2>dolor sit amet
+                </div>
+            </div>
+        ''' % (margin_1, margin_2))
+        html, = page.children
+        body, = html.children
+        p1, div1 = body.children
+        div2, = div1.children
+        p2, = div2.children
+        p1_bottom = p1.content_box_y() + p1.height
+        p2_top = p2.content_box_y()
+        return p2_top - p1_bottom
+
+    # Collapsing through an empty div
+    @assert_collapsing
+    def vertical_space_7(p1_margin_bottom, p2_margin_top):
+        page, = parse('''
+            <style>
+                p { font: 20px/1 serif } /* block height == 20px */
+                #p1 { margin-bottom: %s }
+                #p2 { margin-top: %s }
+                div { margin-bottom: %s; margin-top: %s }
+            </style>
+            <p id=p1>Lorem ipsum
+            <div></div>
+            <p id=p2>dolor sit amet
+        ''' % (2 * (p1_margin_bottom, p2_margin_top)))
+        html, = page.children
+        body, = html.children
+        p1, div, p2 = body.children
+        p1_bottom = p1.content_box_y() + p1.height
+        p2_top = p2.content_box_y()
+        return p2_top - p1_bottom
+
+    # The root elememt does not collapse
+    @assert_NOT_collapsing
+    def vertical_space_8(margin_1, margin_2):
+        page, = parse('''
+            <html>
+                <style>
+                    html { margin-top: %s }
+                    body { margin-top: %s }
+                </style>
+                <body>
+                    <p>Lorem ipsum
+        ''' % (margin_1, margin_2))
+        html, = page.children
+        body, = html.children
+        p1, = body.children
+        p1_top = p1.content_box_y()
+        # Vertical space from y=0
+        return p1_top
+
+    # <body> DOES collapse
+    @assert_collapsing
+    def vertical_space_9(margin_1, margin_2):
+        page, = parse('''
+            <html>
+                <style>
+                    body { margin-top: %s }
+                    div { margin-top: %s }
+                </style>
+                <body>
+                    <div>
+                        <p>Lorem ipsum
+        ''' % (margin_1, margin_2))
+        html, = page.children
+        body, = html.children
+        div, = body.children
+        p1, = div.children
+        p1_top = p1.content_box_y()
+        # Vertical space from y=0
+        return p1_top
