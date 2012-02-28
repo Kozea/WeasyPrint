@@ -179,7 +179,7 @@ def block_level_height(document, box, max_position_y, skip_stack,
     this_box_adjoining_margins = adjoining_margins
 
     collapsing_with_children = not (box.border_top_width or box.padding_top
-        or establishes_formatting_context(box))
+        or establishes_formatting_context(box) or box.is_for_root_element)
     if collapsing_with_children:
         # XXX not counting margins in adjoining_margins, if any
         position_y = box.position_y
@@ -331,7 +331,7 @@ def block_level_height(document, box, max_position_y, skip_stack,
             adjoining_margins = []
 
     if box.border_bottom_width or box.padding_bottom or (
-            establishes_formatting_context(box)):
+            establishes_formatting_context(box) or box.is_for_root_element):
         position_y += collapse_margin(adjoining_margins)
         adjoining_margins = []
 

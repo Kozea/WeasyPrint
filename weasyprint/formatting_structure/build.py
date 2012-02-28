@@ -57,6 +57,7 @@ def build_formatting_structure(document, computed_styles):
     """Build a formatting structure (box tree) from a ``document``."""
     # TODO: use computed_styles intsead of document.style_for()
     box, = dom_to_box(document, document.dom)
+    box.is_for_root_element = True
     # If this is changed, maybe update weasy.layout.pages.make_margin_boxes()
     box = process_whitespace(box)
     box = anonymous_table_boxes(box)

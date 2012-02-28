@@ -85,6 +85,9 @@ class Box(object):
     # Default, may be overriden on instances.
     is_table_wrapper = False
 
+    # Default, may be overriden on instances.
+    is_for_root_element = False
+
 
     def __init__(self, element_tag, sourceline, style):
         self.element_tag = element_tag
