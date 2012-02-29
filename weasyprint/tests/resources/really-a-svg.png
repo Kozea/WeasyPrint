@@ -1,0 +1,6 @@
+<svg width="4px" height="4px" viewbox="0 0 4 4" id="root">
+    <!-- Overflow the veiwbox -->
+    <rect width="10pt" height="10pt" fill="#00f" />
+
+    <rect width="1px" height="1px" fill="#f00" />
+</svg>
