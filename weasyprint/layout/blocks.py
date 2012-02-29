@@ -260,6 +260,33 @@ def block_level_height(document, box, max_position_y, skip_stack,
                     new_containing_block, device_size, page_is_empty,
                     adjoining_margins)
 
+            if new_child is not None:
+                # We need to do this after the child layout to have the
+                # used value for margin_top (eg. it might be a percentage.)
+                if not isinstance(new_child, boxes.BlockBox):
+                    adjoining_margins.append(new_child.margin_top)
+                    offset_y = (collapse_margin(adjoining_margins)
+                                 - new_child.margin_top)
+                    new_child.translate(0, offset_y)
+                    adjoining_margins = []
+                #else: blocks handle that themselves.
+
+                adjoining_margins = next_adjoining_margins
+                adjoining_margins.append(new_child.margin_bottom)
+
+                if not collapsing_through:
+                    new_position_y = (
+                        new_child.border_box_y() + new_child.border_height())
+
+                    if (new_position_y > max_position_y and not page_is_empty
+                            and not isinstance(child, boxes.BlockBox)):
+                        # The child overflows the page area, put it on the
+                        # next page. (But don’t delay whole blocks if eg.
+                        # only the bottom border overflows.)
+                        new_child = None
+                    else:
+                        position_y = new_position_y
+
             skip_stack = None
             if new_child is None:
                 if new_children:
@@ -269,22 +296,6 @@ def block_level_height(document, box, max_position_y, skip_stack,
                     # This was the first child of this box, cancel the box
                     # completly
                     return None, None, 'any', [], False
-
-            # We need to do this after the child layout to have the used value
-            # for margin_top (eg. it might be a percentage.)
-            if not isinstance(new_child, boxes.BlockBox):
-                adjoining_margins.append(new_child.margin_top)
-                offset_y = (collapse_margin(adjoining_margins)
-                             - new_child.margin_top)
-                new_child.translate(0, offset_y)
-                adjoining_margins = []
-            #else: blocks handle that themselves.
-
-            adjoining_margins = next_adjoining_margins
-            adjoining_margins.append(new_child.margin_bottom)
-
-            if not collapsing_through:
-                position_y = new_child.border_box_y() + new_child.border_height()
 
             # Bottom borders may overflow here
             # TODO: back-track somehow when all lines fit but not borders
@@ -340,6 +351,7 @@ def block_level_height(document, box, max_position_y, skip_stack,
     # TODO: See corner cases in
     # http://www.w3.org/TR/CSS21/visudet.html#normal-block
     if new_box.height == 'auto':
+        print(box, position_y, new_box.content_box_y())
         new_box.height = position_y - new_box.content_box_y()
 
     if resume_at is not None:

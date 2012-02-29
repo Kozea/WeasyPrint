@@ -563,6 +563,29 @@ def test_page_breaks():
 #    positions_y = [[div.position_y for div in divs] for divs in page_divs]
 #    assert positions_y == [[10, 40], [10, 40], [10]]
 
+    pages = parse('''
+        <style>
+            @page { -weasy-size: 100px; margin: 10px }
+            img { height: 30px; display: block }
+        </style>
+        <body>
+            <img src=pattern.png>
+            <img src=pattern.png>
+            <img src=pattern.png>
+            <img src=pattern.png>
+            <img src=pattern.png>
+    ''')
+    page_images = []
+    for page in pages:
+        images = body_children(page)
+        assert all([img.element_tag == 'img' for img in images])
+        assert all([img.position_x == 10 for img in images])
+        page_images.append(images)
+    positions_y = [[img.position_y for img in images]
+                   for images in page_images]
+    assert positions_y == [[10, 40], [10, 40], [10]]
+
+
     page_1, page_2, page_3, page_4 = parse('''
         <style>
             @page { margin: 10px }

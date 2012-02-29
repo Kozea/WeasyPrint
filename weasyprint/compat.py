@@ -29,10 +29,7 @@ import email
 import contextlib
 
 
-PY3 = sys.version_info[0] >= 3
-
-
-if PY3:
+if sys.version_info[0] >= 3:
     # Python 3
     from urllib.parse import urljoin, urlparse, unquote_to_bytes
     from urllib.request import urlopen, Request
