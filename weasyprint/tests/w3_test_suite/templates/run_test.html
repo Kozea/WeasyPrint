@@ -4,9 +4,9 @@
     iframe {
         border: 2px inset;
         padding: 0;
-        width: 660px;
-        height: 660px;
-        box-sizing: border-box
+        width: 640px;
+        height: 640px;
+        box-sizing: content-box
     }
     .render {
         display: table-cell;
@@ -23,7 +23,8 @@
 
 <div class=render>
     <h3>WeasyPrint</h3>
-    <iframe src="{{ url_for('render', test_id=test.test_id) }}"></iframe>
+    <iframe src="{{ url_for('render', test_id=test.test_id) }}"
+            marginwidth=0 marginheight=0></iframe>
 </div>
 
 <div class=render>

@@ -102,10 +102,9 @@ def make_text_box(element, box, text):
                  box.style, [text_box])
 
 
-# TODO: also support images (including SVG) in <embed> and <object> elements?
 @handler('img')
 def handle_img(document, element, box):
-    """Handle ``<img>`` tags, return either an image or the alt-text.
+    """Handle ``<img>`` elements, return either an image or the alt-text.
 
     See: http://www.w3.org/TR/html5/embedded-content-1.html#the-img-element
 
@@ -135,18 +134,54 @@ def handle_img(document, element, box):
             return []
 
 
+@handler('embed')
+def handle_embed(document, element, box):
+    """Handle ``<embed>`` elements, return either an image or nothing.
+
+    See: http://www.w3.org/TR/html5/the-iframe-element.html#the-embed-element
+
+    """
+    src = get_url_attribute(element, 'src')
+    type_ = element.get('type', '').strip()
+    if src:
+        image = document.get_image_from_uri(src, type_)
+        if image is not None:
+            return [make_replaced_box(element, box, image)]
+    # No fallback.
+    return []
+
+
+@handler('object')
+def handle_object(document, element, box):
+    """Handle ``<object>`` elements, return either an image or the fallback
+    content.
+
+    See: http://www.w3.org/TR/html5/the-iframe-element.html#the-object-element
+
+    """
+    data = get_url_attribute(element, 'data')
+    type_ = element.get('type', '').strip()
+    if data:
+        image = document.get_image_from_uri(data, type_)
+        if image is not None:
+            return [make_replaced_box(element, box, image)]
+    # The element’s children are the fallback.
+    return [box]
+
+
 def integer_attribute(element, box, name, minimum=1):
     """Read an integer attribute from the HTML element and set it on the box.
 
     """
     value = element.get(name, '').strip()
-    try:
-        value = int(value)
-    except ValueError:
-        pass
-    else:
-        if value >= minimum:
-            setattr(box, name, value)
+    if value:
+        try:
+            value = int(value)
+        except ValueError:
+            pass
+        else:
+            if value >= minimum:
+                setattr(box, name, value)
 
 
 @handler('colgroup')
@@ -157,6 +192,9 @@ def handle_colgroup(_document, element, box):
             box.span = None  # sum of the children’s spans
         else:
             integer_attribute(element, box, 'span')
+            box.children = (
+                boxes.TableColumnBox.anonymous_from(box, [])
+                for _i in xrange(box.span))
     return [box]
 
 

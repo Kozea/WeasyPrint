@@ -1,11 +1,15 @@
 Version 0.6, released on 2012-XX-XX
 ===================================
 
-* *Backward incompatible*: completely change the API. See the documentation:
-  http://weasyprint.org/using/#as-a-python-library
+* *Backward incompatible*: completely change the Python API.
+  See the documentation: http://weasyprint.org/using/#as-a-python-library
+* *Backward incompatible*: Proper margin collapsing.
+  This changes how blocks are rendered: adjoining margins "collapse"
+  (their maximum is used) instead of accumulating.
+* Support images in ``embed`` or ``object`` elements.
 * Switch to pystacia instead of PIL for raster images
-* Add compatibility with CPython 2.6 and 3.2 (was only 2.7 previously)
-* Proper margin collapsing
+* Add compatibility with CPython 2.6 and 3.2. (Previously only 2.7
+  was supported)
 * Many bug fixes
 
 

@@ -842,11 +842,24 @@ def test_whitespace_processing():
 def test_with_images():
     """Test that width, height and ratio of images are respected."""
     # Try a few image formats
-    for url in ['pattern.png', 'pattern.gif', 'blue.jpg', 'pattern.svg',
-                "data:image/svg+xml,<svg width='4' height='4'></svg>",
-                "data:image/svg+xml,<svg width='4px' height='4px'></svg>",
-                ]:
-        page, = parse('<img src="%s">' % url)
+    for html in [
+        '<img src="%s">' % url for url in [
+            'pattern.png', 'pattern.gif', 'blue.jpg', 'pattern.svg',
+            "data:image/svg+xml,<svg width='4' height='4'></svg>",
+            "data:image/svg+xml,<svg width='4px' height='4px'></svg>",
+        ]
+    ] + [
+        '<embed src=pattern.png>',
+        '<embed src=pattern.svg>',
+        '<embed src=really-a-png.svg type=image/png>',
+        '<embed src=really-a-svg.png type=image/svg+xml>',
+
+        '<object data=pattern.png>',
+        '<object data=pattern.svg>',
+        '<object data=really-a-png.svg type=image/png>',
+        '<object data=really-a-svg.png type=image/svg+xml>',
+    ]:
+        page, = parse(html)
         html, = page.children
         body, = html.children
         line, = body.children
@@ -877,11 +890,12 @@ def test_with_images():
         'data:image/png,Not a PNG',
         'data:image/jpeg,Not a JPEG',
         'data:image/svg+xml,<svg>invalid xml',
+        'really-a-svg.png',
     ]:
         with capture_logs() as logs:
             page, = parse("<p><img src='%s' alt='invalid image'>" % url)
         assert len(logs) == 1
-        if url.startswith('data:'):
+        if url.startswith('data:') or 'really' in url:
             assert 'WARNING: Error while parsing an image' in logs[0]
         else:
             assert 'WARNING: Error while fetching an image' in logs[0]

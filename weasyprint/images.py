@@ -116,7 +116,7 @@ def fallback_handler(file_like, uri):
         return png_handler(BytesIO(png_bytes), uri)
 
 
-def get_image_from_uri(uri):
+def get_image_from_uri(uri, type_=None):
     """Get a :class:`cairo.Surface`` from an image URI."""
     try:
         file_like, mime_type, _charset = urlopen(uri)
@@ -124,7 +124,10 @@ def get_image_from_uri(uri):
         LOGGER.warn('Error while fetching an image from %s : %r', uri, exc)
         return None
 
-    handler = FORMAT_HANDLERS.get(mime_type, fallback_handler)
+    if not type_:
+        type_ = mime_type  # Use eg. the HTTP header
+    #else: the type was forced by eg. a 'type' attribute on <embed>
+    handler = FORMAT_HANDLERS.get(type_, fallback_handler)
     exception = None
     try:
         image = handler(file_like, uri)

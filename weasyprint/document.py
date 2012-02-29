@@ -86,14 +86,14 @@ class Document(object):
         """
         return layout.layout_document(self, self.formatting_structure)
 
-    def get_image_from_uri(self, uri):
+    def get_image_from_uri(self, uri, type_=None):
         """
         Same as ``weasy.images.get_image_from_uri`` but cache results
         """
         missing = object()
         surface = self._image_cache.get(uri, missing)
         if surface is missing:
-            surface = images.get_image_from_uri(uri)
+            surface = images.get_image_from_uri(uri, type_)
             self._image_cache[uri] = surface
         return surface
 

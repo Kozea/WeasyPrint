@@ -351,7 +351,6 @@ def block_level_height(document, box, max_position_y, skip_stack,
     # TODO: See corner cases in
     # http://www.w3.org/TR/CSS21/visudet.html#normal-block
     if new_box.height == 'auto':
-        print(box, position_y, new_box.content_box_y())
         new_box.height = position_y - new_box.content_box_y()
 
     if resume_at is not None:
