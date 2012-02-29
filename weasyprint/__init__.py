@@ -70,7 +70,7 @@ class Resource(object):
 
 
 class HTML(Resource):
-    """Fetch and parse an HTML document.
+    """Fetch and parse an HTML document with lxml.
 
     See :class:`Resource` to create an instance.
 
@@ -116,7 +116,8 @@ class HTML(Resource):
         :param target:
             a filename, file-like object, or :obj:`None`.
         :param stylesheets:
-            a list of user stylsheets, as :class:`CSS` objects
+            a list of user stylsheets, as :class:`CSS` objects, filenames,
+            URLs, or file-like objects
         :returns:
             If :obj:`target` is :obj:`None`, a PDF byte string.
         """
@@ -129,7 +130,8 @@ class HTML(Resource):
         :param target:
             a filename, file-like object, or :obj:`None`.
         :param stylesheets:
-            a list of user stylsheets, as :class:`CSS` objects
+            a list of user stylsheets, as :class:`CSS` objects, filenames,
+            URLs, or file-like objects
         :returns:
             If :obj:`target` is :obj:`None`, a PNG byte string.
         """
@@ -138,7 +140,7 @@ class HTML(Resource):
 
 
 class CSS(Resource):
-    """Fetch and parse a CSS stylesheet.
+    """Fetch and parse a CSS stylesheet with cssutils.
 
     See :class:`Resource` to create an instance. A :class:`CSS` object
     is not useful on its own but can be passed to :meth:`HTML.write_pdf` or

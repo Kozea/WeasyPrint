@@ -57,8 +57,9 @@ def main(argv=None, stdout=sys.stdout, stdin=sys.stdin):
     args = parser.parse_args(argv)
 
     if args.format is None:
+        output_lower = args.output.lower()
         for file_format in format_values:
-            if args.output.endswith('.' + file_format):
+            if output_lower.endswith('.' + file_format):
                 format_ = file_format
                 break
         else:
@@ -66,7 +67,7 @@ def main(argv=None, stdout=sys.stdout, stdin=sys.stdin):
                 'Either sepecify a format with -f or choose an '
                 'output filename that ends in ' + extensions)
     else:
-        format_ = args.format
+        format_ = args.format.lower()
 
     if args.input == '-':
         source = getattr(stdin, 'buffer', stdin)
