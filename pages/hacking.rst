@@ -17,18 +17,22 @@ Assuming you already have the `dependencies </install/>`_, install the
     git clone git://github.com/Kozea/WeasyPrint.git
     cd WeasyPrint
     source $MY_VIRTUALENV/bin/activate
-    pip install -r test_requirements
+    pip install pytest -e .
 
 This will install WeasyPrint in “editable” mode (which means that you don’t
 need to re-install it every time you make a change in the source code) as
-well as the additional dependencies for the test suite: PyPNG and Attest.
+well as py.test
 
-Use the ``attest`` command from the ``WeasyPrint`` directory to run the
+Use the `py.test`_ command from the ``WeasyPrint`` directory to run the
 test suite.
 
-**TODO:** How to report bugs/feature requests (on `Redmine
-<http://redmine.kozea.fr/projects/weasyprint/issues>`_) and submit
-patches/pull requests (on `Github <https://github.com/Kozea/WeasyPrint>`_).
+
+Please report any bug or feature request on Redmine_ and submit
+patches/pull requests on Github_.
+
+.. _py.test: http://pytest.org/
+.. _Redmine: http://redmine.kozea.fr/projects/weasyprint/issues
+.. _Github: https://github.com/Kozea/WeasyPrint
 
 Dive into the source
 --------------------
@@ -53,7 +57,7 @@ the rendering of a document in WeasyPrint goes like this:
 Documents
 .........
 
-WeasyPrint’s user API is the ``Document`` class. It has two concrete
+WeasyPrint’s “entry point” is the ``Document`` class. It has two concrete
 sub-classes: ``PDFDocument`` and ``PNGDocument``, one for each output format.
 An instance of one of these classes handles a document for all of its lifetime.
 It is responsible of calling other parts of the code for each step listed
@@ -91,10 +95,10 @@ this point:
 * Shorthand properties are expanded. For example, ``margin`` is replaced by
   ``margin-top``, ``margin-right``, ``margin-bottom`` and ``margin-left``.
 * Some values are simplified. They come as a list as a list of cssutils
-  `Value objects`_. Fore example, keyword values are replaced by simple
+  `Value objects`_. For example, keyword values are replaced by simple
   strings and the list is dropped when its length is always one for a given
   property.
-* Hyphens in property names are replaces by underscores (``margin-top``
+* Hyphens in property names are replaced by underscores (``margin-top``
   becomes ``margin_top``) so that they can be used as Python attribute names
   later on.
 
@@ -131,16 +135,20 @@ classes to represent all these boxes. We won’t go into the details here, see
 the module and class docstrings.
 
 The ``weasy.formatting_structure.build`` module takes a DOM tree with
-associated computed styles, and builds a formatting_structure. It generates
+associated computed styles, and builds a formatting structure. It generates
 the right boxes for each element and ensures they conform to the models rules.
-(Eg. an inline box can not contain a block.) Each box has a ``style``
+(Eg. an inline box can not contain a block.) Each box has a ``some_box.style``
 attribute containing computed values for each known CSS property.
 
 The main logic is based on the ``display`` property, but it can be overridden for some elements by adding a handler in the ``weasy.html`` module. This is
-how ``<img>`` and ``<br>`` are currently implemented.
+how ``<img>`` and ``<td colspan=3>`` are currently implemented, for example.
+This module is rather short as most of HTML is defined in CSS rather than
+in Python, in the `user agent stylesheet`_.
 
 The box for the root element (and, through its ``children`` attribute, the
 whole tree) is set to the ``formatting_structure`` attribute of the document.
+
+.. _user agent stylesheet: https://github.com/Kozea/WeasyPrint/blob/master/weasyprint/css/html5_ua.css
 
 Layout
 ......

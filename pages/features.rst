@@ -9,7 +9,7 @@ Documentation
 Features
 ~~~~~~~~
 
-WeasyPrint 0.5 supports:
+WeasyPrint 0.6 supports:
 
 (For older versions, see the changelog_.)
 
@@ -18,24 +18,31 @@ WeasyPrint 0.5 supports:
 * HTML documents with:
 
   * Linked and embedded CSS stylesheets
-  * Raster and SVG images in ``<img>`` elements. (Support for raster file
-    formats is that of the PIL_)
+  * Images in ``<img>``, ``<embed>`` or ``<object>`` elements:
+
+    - Raster images formats supported by ImageMagick_ (includes
+      PNG, JPEG, GIF, ...)
+    - SVG images with CairoSVG_
+
+  * **Not** supported: HTML `presentational hints`_ (like the ``width``
+    attribute on an ``img`` element). Use CSS in the ``style``
+    attribute instead.
 
 * `CSS 3 Colors`_
 * `CSS 3 Selectors`_ except ``:lang``, ``:first-line`` and
   ``:first-letter``
-* `CSS 2D Transforms`_
+* Experimental: `CSS 2D Transforms`_
 * From `CSS 3 Backgrounds and Borders`_: ``background-clip``,
   ``background-origin`` and ``background-size``.
-* From `CSS 3 Paged Media`_: margin boxes and page counters.
-* `box-sizing`_ form CSS3 Basic User Interface
+* Experimental: margin boxes, page counter and the ``size`` property
+  from `CSS 3 Paged Media`_
+* `box-sizing`_ from CSS3 Basic User Interface
 * All of CSS 2.1 except:
 
   * Floats_
   * Absolute_, fixed_ and relative_ positioning and z-index_
   * `Inline blocks`_
   * `Automatic table layout`_ and table `border collapsing`_
-  * `Collapsing margins`_
   * Minimum and maximum width_ and height_
   * `Vertical align`_ ``top`` and ``bottom`` (they are interpreted as
     ``text-top`` and ``text-bottom``, respectively)
@@ -45,7 +52,9 @@ WeasyPrint 0.5 supports:
   * `Bi-directional text`_. (May happen to kind of work in uninterrupted text
     thanks to Pango)
 
-.. _PIL: http://www.pythonware.com/products/pil/
+.. _CairoSVG: http://cairosvg.org/
+.. _ImageMagick: http://www.imagemagick.org/script/formats.php
+.. _presentational hints: http://www.w3.org/TR/html5/rendering.html#presentational-hints
 .. _CSS 3 Colors: http://www.w3.org/TR/css3-color/
 .. _CSS 3 Selectors: http://www.w3.org/TR/css3-selectors/
 .. _CSS 3 Backgrounds and Borders: http://www.w3.org/TR/css3-background/
@@ -58,7 +67,6 @@ WeasyPrint 0.5 supports:
 .. _Automatic table layout: http://www.w3.org/TR/CSS21/tables.html#auto-table-layout
 .. _Inline blocks: http://www.w3.org/TR/CSS21/visuren.html#value-def-inline-block
 .. _border collapsing: http://www.w3.org/TR/CSS21/tables.html#collapsing-borders
-.. _Collapsing margins: http://www.w3.org/TR/CSS21/box.html#collapsing-margins
 .. _width: http://www.w3.org/TR/CSS21/visudet.html#min-max-widths
 .. _height: http://www.w3.org/TR/CSS21/visudet.html#min-max-heights
 .. _Vertical align: http://www.w3.org/TR/CSS21/visudet.html#propdef-vertical-align
