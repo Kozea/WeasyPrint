@@ -1,4 +1,4 @@
-Version 0.6, released on 2012-XX-XX
+Version 0.6, released on 2012-02-29
 ===================================
 
 * *Backward incompatible*: completely change the Python API.
