@@ -31,7 +31,7 @@ from __future__ import division, unicode_literals
 from .logger import LOGGER
 
 
-VERSION = '0.6'
+VERSION = '0.6.1'
 __version__ = VERSION
 
 
