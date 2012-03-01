@@ -1,4 +1,11 @@
-Version 0.6, released on 2012-XX-XX
+Version 0.6.1, released on 2012-03-01
+=====================================
+
+Fix a packaging bug. (Remove use_2to3 in setup.py. We use the same
+codebase for Python 2 and 3.)
+
+
+Version 0.6, released on 2012-02-29
 ===================================
 
 * *Backward incompatible*: completely change the Python API.
