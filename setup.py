@@ -66,5 +66,4 @@ setup(
             'weasyprint = weasyprint.__main__:main',
         ],
     },
-    use_2to3=True
 )
