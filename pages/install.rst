@@ -22,17 +22,28 @@ WeasyPrint 0.6 depends on:
 * cssutils >= 0.9.9
 * CairoSVG >= 0.3
 
-Unless you distribution already has a package for WeasyPrint, (the `Kozea
-overlay`_ has one for Gentoo), we recommend that you install pystacia,
+WeasyPrint has been packaged for some Linux distributions:
+
+* Archlinux: in the AUR as `python2-weasyprint`_ (for Python 2) or
+  `python-weasyprint`_ (for Python 3). Only the later installs a
+  ``/usr/bin/weasyprint`` executable.
+* Gentoo: in the `Kozea overlay`_
+
+(Please do `tell us`_ if you make such a package!)
+
+.. _python-weasyprint: https://aur.archlinux.org/packages.php?ID=57205
+.. _python2-weasyprint: https://aur.archlinux.org/packages.php?ID=57201
+.. _Kozea overlay: https://github.com/Kozea/Overlay/blob/master/README
+.. _tell us: /community/
+
+For other distributions, we recommend that you install pystacia,
 cssutils, CairoSVG and WeasyPrint itself in a `virtualenv`_ with `pip`_,
 and everything else with your distribution’s packages.
 
-.. _Kozea overlay: https://github.com/Kozea/Overlay/blob/master/README
 .. _pip: http://www.pip-installer.org/
 .. _virtualenv: http://www.virtualenv.org/
 
-On a Debian-based system: (Pango is recent enough in Debian Wheezy and
-Ubuntu 11.10.)
+For example, on a Debian Wheezy or later, or Ubuntu 11.10 or later:
 
 .. code-block:: sh
 
