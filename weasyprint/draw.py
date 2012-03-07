@@ -601,6 +601,5 @@ def apply_2d_transforms(context, box):
                     args = (1, math.tan(angle(args)), 0, 1, 0, 0)
                 else:
                     assert name == 'matrix'
-                context.set_matrix(cairo.Matrix(*args).multiply(
-                    context.get_matrix()))
+                context.transform(cairo.Matrix(*args))
         context.translate(-origin_x, -origin_y)
