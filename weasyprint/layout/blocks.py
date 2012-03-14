@@ -23,7 +23,7 @@ Functions laying out the block boxes.
 
 from __future__ import division, unicode_literals
 
-from .inlines import get_next_linebox, replaced_box_width, replaced_box_height
+from .inlines import iter_line_boxes, replaced_box_width, replaced_box_height
 from .markers import list_marker_layout
 from .tables import table_layout, fixed_table_layout
 from .percentages import resolve_percentages
@@ -198,12 +198,9 @@ def block_level_height(document, box, max_position_y, skip_stack,
     else:
         skip, skip_stack = skip_stack
 
-    first_child_in_flow = None
     for index, child in box.enumerate_skip(skip):
         if not child.is_in_normal_flow():
             continue
-        if first_child_in_flow is None:
-            first_child_in_flow = child
 
         child.position_x = position_x
         # XXX does not count margins in adjoining_margins:
@@ -212,35 +209,52 @@ def block_level_height(document, box, max_position_y, skip_stack,
         if isinstance(child, boxes.LineBox):
             assert len(box.children) == 1, (
                 'line box with siblings before layout')
-            is_page_break = False
             if adjoining_margins:
                 position_y += collapse_margin(adjoining_margins)
                 adjoining_margins = []
-            while 1:
-                new_containing_block = box
-                line, resume_at = get_next_linebox(
-                    document, child, position_y, skip_stack,
-                    new_containing_block, device_size)
-                if line is None:
-                    break
+            new_containing_block = box
+            lines_iterator = iter_line_boxes(
+                document, child, position_y, skip_stack,
+                new_containing_block, device_size)
+            new_lines = []
+            is_page_break = False
+            for line, resume_at in lines_iterator:
                 new_position_y = position_y + line.height
                 # Allow overflow if the first line of the page is higher
                 # than the page itself so that we put *something* on this
                 # page and can advance in the document.
-                if new_position_y > max_position_y and not page_is_empty:
-                    if not new_children:
-                        # Page break before any content, cancel the whole box.
+                if new_position_y > max_position_y and (
+                        new_lines or not page_is_empty):
+                    over_orphans = len(new_lines) - box.style.orphans
+                    if over_orphans < 0 and not page_is_empty:
+                        # Reached the bottom of the page before we had
+                        # enough lines for orphans, cancel the whole box.
                         return None, None, 'any', [], False
+                    # How many lines we need on the next page to satisfy widows
+                    # -1 for the current line.
+                    needed = box.style.widows - 1
+                    if needed:
+                        for _ in lines_iterator:
+                            needed -= 1
+                            if needed == 0:
+                                break
+                    if needed > over_orphans and not page_is_empty:
+                        # Total number of lines < orphans + widows
+                        return None, None, 'any', [], False
+                    if needed and needed <= over_orphans:
+                        # Remove lines to keep them for the next page
+                        del new_lines[-needed:]
                     # Page break here, resume before this line
                     resume_at = (index, skip_stack)
                     is_page_break = True
                     break
-                new_children.append(line)
-                page_is_empty = False
+                new_lines.append((line, resume_at))
                 position_y = new_position_y
-                if resume_at is None:
-                    break
                 skip_stack = resume_at
+            new_children = [line for line, resume_at in new_lines]
+            if new_lines:
+                _, resume_at = new_lines[-1]
+                resume_at = (index, resume_at)
             if is_page_break:
                 break
         else:
@@ -259,6 +273,7 @@ def block_level_height(document, box, max_position_y, skip_stack,
                     document, child, max_position_y, skip_stack,
                     new_containing_block, device_size, page_is_empty,
                     adjoining_margins)
+            skip_stack = None
 
             if new_child is not None:
                 # We need to do this after the child layout to have the
@@ -287,7 +302,6 @@ def block_level_height(document, box, max_position_y, skip_stack,
                     else:
                         position_y = new_position_y
 
-            skip_stack = None
             if new_child is None:
                 if new_children:
                     resume_at = (index, None)

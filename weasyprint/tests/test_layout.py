@@ -641,6 +641,51 @@ def test_page_breaks():
 
 
 @assert_no_logs
+def test_orphans_widows():
+    """Test orphans and widows control."""
+    def line_distribution(orphans, widows):
+        pages = parse('''
+            <style>
+                @page { -weasy-size: 200px }
+                h1 { height: 120px }
+                p { line-height: 20px;
+                    width: 1px; /* line break at each word */
+                    orphans: %s; widows: %s }
+            </style>
+            <h1>Tasty test</h1>
+            <!-- There is room for 4 lines after h1 on the fist page -->
+            <p>
+                one
+                two
+                three
+                four
+                five
+                six
+                seven
+            </p>
+        ''' % (orphans, widows))
+        line_counts = []
+        for i, page in enumerate(pages):
+            html, = page.children
+            body, = html.children
+            if i == 0:
+                body_children = body.children[1:]  # skip h1
+            else:
+                body_children = body.children
+            if body_children:
+                paragraph, = body_children
+                line_counts.append(len(paragraph.children))
+            else:
+                line_counts.append(0)
+        return line_counts
+
+    assert line_distribution(orphans=2, widows=2) == [4, 3]
+    assert line_distribution(orphans=5, widows=2) == [0, 7]
+    assert line_distribution(orphans=2, widows=4) == [3, 4]
+    assert line_distribution(orphans=4, widows=4) == [0, 7]
+
+
+@assert_no_logs
 def test_inlinebox_spliting():
     """Test the inline boxes spliting."""
     def get_inlinebox(content):

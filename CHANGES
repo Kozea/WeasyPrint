@@ -1,3 +1,9 @@
+Version 0.7, released on 2012-XX-XX
+===================================
+
+* Support for the ``orphans`` and ``widows`` properties.
+
+
 Version 0.6.1, released on 2012-03-01
 =====================================
 

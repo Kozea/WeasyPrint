@@ -592,6 +592,17 @@ def opacity(value):
         return min(1, max(0, value.value))
 
 
+@validator('orphans')
+@validator('widows')
+@single_value
+def orphans_widows(value):
+    """Validation for the ``orphans`` or ``widows`` properties."""
+    if value.type == 'NUMBER':  # INTEGER
+        value = value.value
+        if int(value) == value and value >= 1:
+            return value
+
+
 @validator()
 @single_keyword
 def overflow(keyword):

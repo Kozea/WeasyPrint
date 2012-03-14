@@ -33,9 +33,9 @@ from ..formatting_structure import boxes
 from ..css.computed_values import used_line_height
 
 
-def get_next_linebox(document, linebox, position_y, skip_stack,
-                     containing_block, device_size):
-    """Return ``(line, resume_at)``.
+def iter_line_boxes(document, box, position_y, skip_stack,
+                    containing_block, device_size):
+    """Return an iterator of ``(line, resume_at)``.
 
     ``line`` is a laid-out LineBox with as much content as possible that
     fits in the available width.
@@ -50,6 +50,22 @@ def get_next_linebox(document, linebox, position_y, skip_stack,
     :param device_size: ``(width, height)`` of the current page.
 
     """
+    while 1:
+        line, resume_at = get_next_linebox(
+            document, box, position_y, skip_stack,
+            containing_block, device_size)
+        if line is None:
+            return
+        yield line, resume_at
+        if resume_at is None:
+            return
+        skip_stack = resume_at
+        position_y += line.height
+
+
+def get_next_linebox(document, linebox, position_y, skip_stack,
+                     containing_block, device_size):
+    """Return ``(line, resume_at)``."""
     position_x = linebox.position_x
     max_x = position_x + containing_block.width
     if skip_stack is None:
