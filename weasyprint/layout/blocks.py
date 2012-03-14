@@ -244,14 +244,14 @@ def block_level_height(document, box, max_position_y, skip_stack,
             if is_page_break:
                 break
         else:
-            page_break = child.style.page_break_before
-            if page_break in ('always', 'left', 'right'):
-                next_page = 'any' if page_break == 'always' else page_break
-                resume_at = (index, None)
-                # Force break only once
-                # TODO: refactor to avoid doing this?
-                child.style.page_break_before = 'auto'
-                break
+            if new_children and not page_is_empty:
+                # between siblings, but not before the first child
+                # or after the last child.
+                break_here, next_page = forced_page_break(
+                    new_children[-1], child)
+                if break_here:
+                    resume_at = (index, None)
+                    break
 
             new_containing_block = box
             (new_child, resume_at, next_page, next_adjoining_margins,
@@ -303,13 +303,6 @@ def block_level_height(document, box, max_position_y, skip_stack,
             page_is_empty = False
             if resume_at is not None:
                 resume_at = (index, resume_at)
-                break
-
-            page_break = child.style.page_break_after
-            if page_break in ('always', 'left', 'right'):
-                next_page = 'any' if page_break == 'always' else page_break
-                # Resume after this
-                resume_at = (index + 1, None)
                 break
 
     else:
@@ -414,3 +407,46 @@ def establishes_formatting_context(box):
     ) or (
         isinstance(box, boxes.BlockBox) and box.style.overflow != 'visible'
     )
+
+
+def forced_page_break(sibling_before, sibling_after):
+    """Return the value of ``page-break-before`` or ``page-break-after``
+    that "wins" for boxes that meet at the margin between two sibling boxes.
+
+    For boxes before the margin, the 'page-break-after' value is considered;
+    for boxes after the margin the 'page-break-before' value is considered.
+
+    Return (break_here, next_page) where break_here is a boolean, and
+    next_page the side the next page should be on: 'left', 'right', or 'any'
+
+    """
+    counts = dict(
+        avoid=False,
+        auto=False,
+        left=False,
+        right=False,
+        always=False,
+    )
+    for box, index, property_name in [
+            (sibling_before, -1, 'page_break_after'),
+            (sibling_after, 0, 'page_break_before')]:
+        while 1:
+            counts[box.style[property_name]] = True
+            if not getattr(box, 'children', None):
+                break
+            box = box.children[index]
+            if not isinstance(box, boxes.BlockLevelBox):
+                break
+    left = counts['left']
+    right = counts['right']
+    if left and right:
+        # Nonsense. Just do a single page break
+        return True, 'any'
+    if left:
+        return True, 'left'
+    if right:
+        return True, 'right'
+    if counts['always']:
+        return True, 'any'
+    return False, 'any'
+    # TODO: support 'avoid'

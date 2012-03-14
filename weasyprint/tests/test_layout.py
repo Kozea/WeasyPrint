@@ -599,7 +599,11 @@ def test_page_breaks():
         <div>1</div>
         <p>2</p>
         <p>3</p>
-        <ul><li>4</li></ul>
+        <article>
+            <section>
+                <ul><li>4</li></ul>
+            </section>
+        </article>
     ''')
 
     # The first page is a right page on rtl, but not here because of
@@ -630,7 +634,9 @@ def test_page_breaks():
     assert page_4.margin_right == 50  # right page
     html, = page_4.children
     body, = html.children
-    ulist, = body.children
+    article, = body.children
+    section, = article.children
+    ulist, = section.children
     assert ulist.element_tag == 'ul'
 
 
