@@ -839,7 +839,7 @@ def test_whitespace_processing():
 
 
 @assert_no_logs
-def test_with_images():
+def test_images():
     """Test that width, height and ratio of images are respected."""
     # Try a few image formats
     for html in [
@@ -918,9 +918,10 @@ def test_with_images():
     assert img.width == 40
     assert img.height == 40
 
+    # display: table-cell is ignored
     page, = parse('''
         <img src="pattern.png" style="width: 40px">
-        <img src="pattern.png" style="width: 60px">
+        <img src="pattern.png" style="width: 60px; display: table-cell">
     ''')
     html, = page.children
     body, = html.children
@@ -933,6 +934,25 @@ def test_with_images():
     assert img_2.height == 60
     assert img_1.position_y == 20
     assert img_2.position_y == 0
+
+    # Block-level image:
+    page, = parse('''
+        <style>
+            @page { -weasy-size: 100px }
+            img { width: 40px; margin: 10px auto; display: block }
+        </style>
+        <body>
+            <img src="pattern.png">
+    ''')
+    html, = page.children
+    body, = html.children
+    img, = body.children
+    assert img.element_tag == 'img'
+    assert img.position_x == 0
+    assert img.position_y == 0
+    assert img.content_box_x() == 30  # (100 - 40) / 2 == 30px for margin-left
+    assert img.content_box_y() == 10
+
 
 
 @assert_no_logs

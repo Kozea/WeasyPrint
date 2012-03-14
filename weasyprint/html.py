@@ -55,23 +55,6 @@ def handler(tag):
     return decorator
 
 
-def is_block_level(box):
-    """Tell wether ``box`` is supposed to be block level.
-
-    Return ``True`` if the element is block-level, ``False`` if it is
-    inline-level, and raise ValueError if it is neither.
-
-    """
-    display = box.style.display
-
-    if display in ('block', 'list-item', 'table'):
-        return True
-    elif display in ('inline', 'inline-table', 'inline-block'):
-        return False
-    else:
-        raise ValueError('Unsupported display: ' + display)
-
-
 def make_replaced_box(element, box, image):
     """Wrap an image in a replaced box.
 
@@ -79,27 +62,12 @@ def make_replaced_box(element, box, image):
     element should be.
 
     """
-    if is_block_level(box):
+    if box.style.display in ('block', 'list-item', 'table'):
         type_ = boxes.BlockReplacedBox
     else:
+        # TODO: support images with 'display: table-cell'?
         type_ = boxes.InlineReplacedBox
     return type_(element.tag, element.sourceline, box.style, image)
-
-
-def make_text_box(element, box, text):
-    """Make a text box.
-
-    If the element should be block-level, wrap it in a block box.
-
-    """
-    text_box = boxes.TextBox(element.tag, element.sourceline,
-                             box.style.inherit_from(), text)
-    if is_block_level(box):
-        type_ = boxes.BlockBox
-    else:
-        type_ = boxes.InlineBox
-    return type_(element.tag, element.sourceline,
-                 box.style, [text_box])
 
 
 @handler('img')
@@ -118,7 +86,8 @@ def handle_img(document, element, box):
         else:
             # Invalid image, use the alt-text.
             if alt:
-                return [make_text_box(element, box, alt)]
+                return [box.copy_with_children(
+                    [boxes.TextBox.anonymous_from(box, alt)])]
             elif alt == '':
                 # The element represents nothing
                 return []
@@ -129,7 +98,8 @@ def handle_img(document, element, box):
                 return []
     else:
         if alt:
-            return [make_text_box(element, box, alt)]
+            return [box.copy_with_children(
+                [boxes.TextBox.anonymous_from(box, alt)])]
         else:
             return []
 
