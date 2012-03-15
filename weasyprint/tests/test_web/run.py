@@ -4,7 +4,7 @@ from __future__ import division, unicode_literals
 
 import os.path
 from flask import Flask, request, render_template, send_file
-from weasyprint.document import PNGDocument, PDFDocument
+from weasyprint import HTML
 
 app = Flask(__name__)
 
@@ -47,8 +47,9 @@ def render():
         with open(INPUT, 'w') as fd:
             fd.write(html)
 
-    PDFDocument.from_file(INPUT, encoding='utf8').write_to(PDF_OUTPUT)
-    PNGDocument.from_file(INPUT, encoding='utf8').write_to(PNG_OUTPUT)
+    html = HTML(INPUT, encoding='utf8')
+    html.write_pdf(PDF_OUTPUT)
+    html.write_png(PNG_OUTPUT)
 
     return send_file(PNG_OUTPUT, cache_timeout=0)
 
