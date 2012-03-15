@@ -3,4 +3,5 @@
 /.coverage
 /.tox
 /dist
+/env
 /weasyprint/tests/test_results
