@@ -9,8 +9,10 @@ menu:
       link: /
   - News:
       link: /news/
-  - Documentation:
+  - Download:
       link: /install/
+  - Documentation:
+      link: /using/
   - Community:
       link: /community/
 

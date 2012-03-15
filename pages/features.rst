@@ -42,7 +42,8 @@ WeasyPrint 0.6 supports:
   * Floats_
   * Absolute_, fixed_ and relative_ positioning and z-index_
   * `Inline blocks`_
-  * `Automatic table layout`_ and table `border collapsing`_
+  * `Automatic table layout`_, table `border collapsing`_ and the
+    `empty-cells`_ property.
   * Minimum and maximum width_ and height_
   * `Vertical align`_ ``top`` and ``bottom`` (they are interpreted as
     ``text-top`` and ``text-bottom``, respectively)
@@ -67,6 +68,7 @@ WeasyPrint 0.6 supports:
 .. _Automatic table layout: http://www.w3.org/TR/CSS21/tables.html#auto-table-layout
 .. _Inline blocks: http://www.w3.org/TR/CSS21/visuren.html#value-def-inline-block
 .. _border collapsing: http://www.w3.org/TR/CSS21/tables.html#collapsing-borders
+.. _empty-cells: http://www.w3.org/TR/CSS21/tables.html#empty-cells
 .. _width: http://www.w3.org/TR/CSS21/visudet.html#min-max-widths
 .. _height: http://www.w3.org/TR/CSS21/visudet.html#min-max-heights
 .. _Vertical align: http://www.w3.org/TR/CSS21/visudet.html#propdef-vertical-align

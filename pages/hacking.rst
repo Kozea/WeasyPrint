@@ -9,23 +9,28 @@ Documentation
 Hacking WeasyPrint
 ~~~~~~~~~~~~~~~~~~
 
-Assuming you already have the `dependencies </install/>`_, install the
-`development version  <https://github.com/Kozea/WeasyPrint>`_ of WeasyPrint:
+Assuming you already have the dependencies_, install the `development
+version`_ of WeasyPrint:
+
+.. _dependencies: /install/
+.. _development version: https://github.com/Kozea/WeasyPrint
 
 .. code-block:: sh
 
     git clone git://github.com/Kozea/WeasyPrint.git
     cd WeasyPrint
-    source $MY_VIRTUALENV/bin/activate
-    pip install pytest -e .
+    virtualenv --system-site-packages env
+    . env/bin/activate
+    pip install pytest
+    pip install -e .
+    weasyprint --help
 
 This will install WeasyPrint in “editable” mode (which means that you don’t
 need to re-install it every time you make a change in the source code) as
 well as py.test
 
-Use the `py.test`_ command from the ``WeasyPrint`` directory to run the
+Use the `py.test`_ command in the ``WeasyPrint`` directory to run the
 test suite.
-
 
 Please report any bug or feature request on Redmine_ and submit
 patches/pull requests on Github_.

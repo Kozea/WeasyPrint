@@ -77,26 +77,26 @@ The ``weasyprint.CSS`` class
 
 A ``CSS`` object represents a CSS stylesheet parsed by cssutils.
 
-You can just create an instance with a positional argument and it will try
-to guess if the input is a filename, an absolute URL, or a file-like object:
+You can just create an instance with a positional argument:
 ``stylesheet = CSS(something)``
+It will try to guess if the input is a filename, an absolute URL, or
+a file-like object.
 
 Alternatively, you can name the argument so that no guessing is
 involved:
 
-* ``CSS(filename=foo)`` a filename, absolute or relative to
-  the current directory.
+* ``CSS(filename=foo)`` a filename, relative to the current directory
+  or absolute.
 * ``CSS(url=foo)`` an absolute, fully qualified URL.
-* ``CSS(file_obj=foo)`` a file-like object: any object with
-  a ``read()`` method.
-* ``CSS(string=foo)`` a string of HTML source.
-  (This argument must be named.)
+* ``CSS(file_obj=foo)`` a file-like: any object with a ``read()`` method.
+* ``CSS(string=foo)`` a string of CSS source. (This argument must be named.)
 
 Specifying multiple inputs is an error: ``CSS(filename=foo, url=bar)``
+will raise.
 
-Optional, additional named arguments:
+You can also pass optional named arguments:
 
-* ``encoding``: force the character encoding
+* ``encoding``: force the source character encoding
 * ``base_url``: used to resolve relative URLs (eg. in ``@import``)
   If not passed explicitly, try to use the input filename, URL, or
   ``name`` attribute of file objects.
@@ -137,9 +137,10 @@ It has two public methods:
 Errors
 ------
 
-If you get an exception from WeasyPrint during the document layout,
-*this is a bug*. Please copy the whole traceback and report it on our `issue tracker`_. (An error while loading your input document or writing the output is
-probably not a bug in WeasyPrint, though.)
+If you get an exception when running ``write_pdf`` or ``write_png``
+(unless it is about writing to ``target``), it is probably a bug
+in WeasyPrint. Please copy the whole traceback and report it on our
+`issue tracker`_.
 
 .. _issue tracker: http://redmine.kozea.fr/projects/weasyprint/issues
 
@@ -147,7 +148,7 @@ probably not a bug in WeasyPrint, though.)
 Logging
 -------
 
-Some errors (syntax error in CSS, unsupported CSS property, missing image, ...)
+Most errors (syntax error in CSS, unsupported CSS property, missing image, ...)
 are not fatal and will not prevent a document from being rendered.
 
 Both cssutils and WeasyPrint use the ``logging`` module from the Python
