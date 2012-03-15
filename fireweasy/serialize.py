@@ -89,8 +89,7 @@ def serialize_style(document, style):
         if bg_image is not None:
             bg_image = serialize_replacement(bg_image)
     style['background_image'] = bg_image
-    style['background_position'] = [
-        getattr(v, 'cssText', v)
-        for v in style['background_position']]
+    for key in ['background_position', 'transform_origin']:
+        style[key] = [getattr(v, 'cssText', v) for v in style[key]]
     style['text_decoration'] = ' '.join(style['text_decoration']) or 'none'
     return style

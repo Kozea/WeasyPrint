@@ -103,12 +103,14 @@ class HTML(Resource):
         from .css import HTML5_UA_STYLESHEET
         return [HTML5_UA_STYLESHEET]
 
-    def _write(self, document_class, target, stylesheets):
+    def _get_document(self, document_class, stylesheets):
         return document_class(
             self.root_element,
             user_stylesheets=list(_parse_stylesheets(stylesheets)),
-            user_agent_stylesheets=self._ua_stylesheet(),
-        ).write_to(target)
+            user_agent_stylesheets=self._ua_stylesheet())
+
+    def _write(self, document_class, target, stylesheets):
+        return self._get_document(document_class, stylesheets).write_to(target)
 
     def write_pdf(self, target=None, stylesheets=None):
         """Render the document to PDF.

@@ -18,9 +18,12 @@ def make_app():
     @app.route('/sample.json')
     def sample_json():
         # Import late so that the HTTP server starts listening quickly.
+        from weasyprint import HTML
         from weasyprint.document import PDFDocument
         from .serialize import serialize
 
         sample = os.path.join(app.root_path, 'sample', 'sample.html')
-        document = PDFDocument.from_file(sample)
+        document = HTML(sample)._get_document(PDFDocument, [])
         return jsonify(serialize(document))
+
+    return app
