@@ -41,8 +41,8 @@ def block_level_layout(document, box, max_position_y, skip_stack,
 
     """
     if isinstance(box, boxes.TableBox):
-        return table_layout(document, box, max_position_y, containing_block,
-                            device_size, page_is_empty)
+        return table_layout(document, box, max_position_y, skip_stack,
+                            containing_block, device_size, page_is_empty)
     elif isinstance(box, boxes.BlockBox):
         if box.is_table_wrapper:
             return block_table_wrapper(document, box, max_position_y,
