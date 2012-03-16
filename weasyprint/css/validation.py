@@ -631,7 +631,7 @@ def page_break_inside(keyword):
     """Validation for the ``page-break-inside`` property."""
     if keyword == 'avoid':
         raise InvalidValues('value not supported yet')
-    return keyword  ('auto',)
+    return keyword in ('auto',)
 
 
 @validator()
