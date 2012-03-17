@@ -174,8 +174,11 @@ def table_layout(document, table, max_position_y, skip_stack,
             cur_pos_y = position_y + row.height + border_spacing_y
             # Check whether we should handle page-break
             if cur_pos_y > max_position_y:
-                force_page_break = True
-                break
+                # We should overflow if page is empty and we have currently
+                # only single element in the group...
+                if page_is_empty and len(new_group_children) > 1:
+                    force_page_break = True
+                    break
 
             position_y = cur_pos_y
 
@@ -229,11 +232,6 @@ def table_layout(document, table, max_position_y, skip_stack,
         group.width = last.position_x + last.width - first.position_x
         group.height = columns_height
 
-    if ((table.position_y + table.margin_height()) > max_position_y
-            and not page_is_empty):
-        # If the table does not fit, put it on the next page.
-        # (No page break inside tables yet.)
-        table = None
     next_page = 'any'
     adjoining_margins = []
     collapsing_through = False
