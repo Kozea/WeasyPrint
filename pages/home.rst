@@ -12,9 +12,13 @@ in Python and meant to be easy to hack on.
 
 Get started by `installing it </install/>`_ or jump to:
 
- * :codelink:`Source code on GitHub`
+ * :codelink:`Source code` on GitHub
  * `Issue tracker <http://redmine.kozea.fr/projects/weasyprint/issues>`_
+   with Redmine
  * `Continuous integration <http://jenkins.kozea.org/job/WeasyPrint/>`_
+   with Jenkins
+ * `Releases <http://pypi.python.org/pypi/WeasyPrint>`_ on PyPI
+   (but pip is recommended for `installing </install/>`_)
  * `Get in touch </community/>`_
 
 
