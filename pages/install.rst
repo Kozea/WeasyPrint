@@ -61,7 +61,7 @@ with pip. Installing WeasyPrint will also pull other Python dependencies.
     weasyprint --help
 
 If everything goes well, you’re ready to `start using </using/>`_ WeasyPrint!
-Otherwise, please copy the exact error message before `asking for help
+Otherwise, please copy the exact error message and `report the problem
 </community/>`_.
 
 .. [#] Symbolic links to the system packages in the virtualenv’s
