@@ -11,12 +11,15 @@ Installing WeasyPrint
 
 WeasyPrint has been packaged for some Linux distributions:
 
-* Archlinux: in `the AUR`_
+* Archlinux, in the AUR: `python-weasyprint`_ (for Python 3) or
+  `python2-weasyprint`_ (for Python 2, installs the command-line script
+  as ``weasyprint2``).
 * Gentoo: in the `Kozea overlay`_
 
 (Please do `tell us`_ if you make such a package!)
 
-.. _the AUR: https://aur.archlinux.org/packages.php?ID=57621
+.. _python-weasyprint: https://aur.archlinux.org/packages.php?ID=57205
+.. _python2-weasyprint: https://aur.archlinux.org/packages.php?ID=57201
 .. _Kozea overlay: https://github.com/Kozea/Overlay/blob/master/README
 .. _tell us: /community/
 
