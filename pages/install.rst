@@ -6,6 +6,13 @@ Documentation
 * `Hacking </hacking/>`_
 * `Features </features/>`_
 
+Source code
+-----------
+
+The git repository is :codelink:`on GitHub` and releases tarballs are
+`on PyPI <http://pypi.python.org/pypi/WeasyPrint>`_, but these are not
+the recommended way of installing.
+
 Installing WeasyPrint
 ---------------------
 
