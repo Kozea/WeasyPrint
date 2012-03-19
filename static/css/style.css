@@ -287,12 +287,24 @@ body > section {
   text-transform: uppercase;
 }
 
+article footer div {
+  padding: 0.2em;
+}
+
+article footer div a:first-child {
+  margin-right: 0.5em;
+}
+
+article footer div * {
+  display: inline;
+}
+
 /*
   ----------
   - Footer -
   ----------
 */
-footer {
+body > footer {
   background: black;
   bottom: 0;
   height: 2em;
@@ -303,24 +315,42 @@ footer {
   text-align: center;
 }
 
-footer ul {
+body > footer ul {
   color: #babdb6;
   font-size:90%;
   margin: 0;
 }
 
-footer li{
+body > footer li{
   display: inline;
 }
 
-footer li a{
+body > footer li a{
 
   font-variant: small-caps;
   color: white;
   padding:5px;
 }
 
-footer li a:hover,
-footer li a:focus{
+body > footer li a:hover,
+body > footer li a:focus{
   color: red;
+}
+
+/*
+  --------
+  - Misc -
+  --------
+*/
+#rss {
+  background-color: black;
+  position: fixed;
+  right: 20px;
+  top: 20px;
+  transition: background-color 0.3s linear;
+}
+
+#rss:hover, #rss:focus {
+  background-color: #E70;
+  box-shadow: 0 0 5px #D60;
 }
