@@ -18,7 +18,7 @@ Get started by `installing it </install/>`_ or jump to:
  * `Continuous integration <http://jenkins.kozea.org/job/WeasyPrint/>`_
    with Jenkins
  * `Releases <http://pypi.python.org/pypi/WeasyPrint>`_ on PyPI
-   (but pip is recommended for `installing </install/>`_)
+   (but using pip is recommended for `installing </install/>`_)
  * `Get in touch </community/>`_
 
 

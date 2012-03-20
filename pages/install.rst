@@ -38,7 +38,7 @@ WeasyPrint 0.6 depends on:
 
 * CPython 2.6, 2.7 or 3.2
 * Pango **>= 1.29.3** with GObject introspection
-* PyGObject
+* PyGObject with cairo bindings
 * pycairo
 * lxml
 * Pystacia
@@ -48,11 +48,17 @@ WeasyPrint 0.6 depends on:
 We recommend that you install Pango, PyGObject, pycairo, lxml and ImageMagick
 (used by Pystacia) with your distribution’s packages.
 
-For example, on a Debian Wheezy or Ubuntu 11.10:
+For example, on Debian Wheezy or Ubuntu 12.04:
 
 .. code-block:: sh
 
-    sudo apt-get install gir1.2-pango-1.0 python-gobject python-cairo python-lxml imagemagick
+    sudo apt-get install gir1.2-pango-1.0 python-gobject python-cairo python-gi-cairo python-lxml imagemagick
+
+On Ubuntu 11.10, ``python-gi-cairo`` is named ``python-gobject-cairo`` instead:
+
+.. code-block:: sh
+
+    sudo apt-get install gir1.2-pango-1.0 python-gobject python-cairo python-gobject-cairo python-lxml imagemagick
 
 Then, create a `virtualenv`_. You’ll need ``--system-site-packages`` or
 some other workaround\ [#]_ as PyGObject and pycairo can not be installed
