@@ -32,7 +32,7 @@ from __future__ import division, unicode_literals
 from .logger import LOGGER
 
 
-VERSION = '0.7'
+VERSION = '0.8dev'
 __version__ = VERSION
 
 
