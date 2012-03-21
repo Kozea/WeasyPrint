@@ -870,7 +870,10 @@ def generic_expander(*expanded_names):
                 results = {}
                 for new_name, new_values in wrapped(name, values):
                     assert new_name in expanded_names, new_name
-                    assert new_name not in results, new_name
+                    if new_name in results:
+                        raise InvalidValues(
+                            'got multiple %s values in a %s shorthand'
+                            % (new_name.strip('_'), name))
                     results[new_name] = new_values
 
             for new_name in expanded_names:
