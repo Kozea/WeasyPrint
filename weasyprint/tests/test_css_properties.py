@@ -1,24 +1,12 @@
 # coding: utf8
-
-#  WeasyPrint converts web documents (HTML, CSS, ...) to PDF.
-#  Copyright (C) 2011-2012 Simon Sapin and contributors.
-#  See AUTHORS for more details.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as
-#  published by the Free Software Foundation, either version 3 of the
-#  License, or (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 """
-Test the management of the CSS properties.
+    weasyprint.tests.test_css_properties
+    ------------------------------------
+
+    Test expanders for shorthand properties.
+
+    :copyright: Copyright 2011-2012 Simon Sapin and contributors, see AUTHORS.
+    :license: BSD, see LICENSE for details.
 
 """
 
@@ -30,6 +18,8 @@ from pytest import raises
 from .testing_utils import assert_no_logs
 from ..css import validation
 from ..css.values import as_css
+
+# TODO: merge this into test_css.py ?
 
 
 def expand_to_dict(short_name, short_values):

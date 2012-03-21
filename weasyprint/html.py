@@ -1,27 +1,17 @@
 # coding: utf8
-
-#  WeasyPrint converts web documents (HTML, CSS, ...) to PDF.
-#  Copyright (C) 2011-2012 Simon Sapin and contributors.
-#  See AUTHORS for more details.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as
-#  published by the Free Software Foundation, either version 3 of the
-#  License, or (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 """
-Specific handling for some HTML elements, especially replaced elements.
+    weasyprint.html
+    ---------------
 
-Replaced elements (eg. <img> elements) are rendered externally and behave
-as an atomic opaque box in CSS. They may or may not have intrinsic dimensions.
+    Specific handling for some HTML elements, especially replaced elements.
+
+    Replaced elements (eg. <img> elements) are rendered externally and
+    behave as an atomic opaque box in CSS. In general, they may or may not
+    have intrinsic dimensions. But the only replaced elements currently
+    supported in WeasyPrint are images with intrinsic dimensions.
+
+    :copyright: Copyright 2011-2012 Simon Sapin and contributors, see AUTHORS.
+    :license: BSD, see LICENSE for details.
 
 """
 

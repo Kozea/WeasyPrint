@@ -1,43 +1,42 @@
 # coding: utf8
-
-#  WeasyPrint converts web documents (HTML, CSS, ...) to PDF.
-#  Copyright (C) 2011-2012 Simon Sapin and contributors.
-#  See AUTHORS for more details.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as
-#  published by the Free Software Foundation, either version 3 of the
-#  License, or (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 """
-Module managing CSS.
+    weasyprint.css
+    --------------
 
-This module takes care of steps 3 and 4 of “CSS 2.1 processing model”:
-Retrieve stylesheets associated with a document and annotate every element
-with a value for every CSS property.
-http://www.w3.org/TR/CSS21/intro.html#processing-model
+    This module takes care of steps 3 and 4 of “CSS 2.1 processing model”:
+    Retrieve stylesheets associated with a document and annotate every element
+    with a value for every CSS property.
 
-This module does this in more than two steps. The
-:func:`get_all_computed_styles` function does everything, but there is also a
-function for each step:
+    http://www.w3.org/TR/CSS21/intro.html#processing-model
 
-- ``find_stylesheets``: Find and parse all author stylesheets in a document
-- ``effective_rules``: Resolve @media and @import rules
-- ``match_selectors``: Find elements in a document that match a selector list
-- ``find_style_attributes``: Find and parse all `style` HTML attributes
-- ``effective_declarations``: Remove ignored properties and expand shorthands
-- ``add_property``: Take applicable properties and only keep those with
-  highest weight.
-- ``set_computed_styles``: Handle initial values, inheritance and computed
-  values for one element.
+    This module does this in more than two steps. The
+    :func:`get_all_computed_styles` function does everything, but it itsef
+    calls a function for each step:
+
+    ``find_stylesheets``
+        Find and parse all author stylesheets in a document.
+
+    ``effective_rules``
+        Resolve @media and @import rules.
+
+    ``match_selectors``
+        Find elements in a document that match a selector list.
+
+    ``find_style_attributes``
+        Find and parse all `style` HTML attributes.
+
+    ``effective_declarations``
+        Remove ignored properties and expand shorthands.
+
+    ``add_property``
+        Take applicable properties and only keep those with highest weight.
+
+    ``set_computed_styles``
+        Handle initial values, inheritance and computed values for one element.
+
+
+    :copyright: Copyright 2011-2012 Simon Sapin and contributors, see AUTHORS.
+    :license: BSD, see LICENSE for details.
 
 """
 
