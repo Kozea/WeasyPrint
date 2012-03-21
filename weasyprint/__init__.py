@@ -19,7 +19,7 @@ from __future__ import division, unicode_literals
 from .logger import LOGGER
 
 
-VERSION = '0.7'
+VERSION = '0.7.1'
 __version__ = VERSION
 
 
