@@ -698,6 +698,7 @@ def test_table_page_breaks():
         for i, page in enumerate(pages):
             html, = page.children
             body, = html.children
+            print(body.children)
             if i == 0:
                 body_children = body.children[1:]  # skip h1
             else:
@@ -707,14 +708,17 @@ def test_table_page_breaks():
                 continue
             table_wrapper, = body_children
             table, = table_wrapper.children
-            group, = table.children
-            rows_per_page.append(len(group.children))
-            for row in group.children:
-                rows_position_y.append(row.position_y)
-                cell, = row.children
-                line, = cell.children
-                text, = line.children
-                assert text.text == 'row %i' % len(rows_position_y)
+            rows_in_this_page = 0
+            for group in table.children:
+                assert group.children, 'found an empty table group'
+                for row in group.children:
+                    rows_in_this_page += 1
+                    rows_position_y.append(row.position_y)
+                    cell, = row.children
+                    line, = cell.children
+                    text, = line.children
+                    assert text.text == 'row %i' % len(rows_position_y)
+            rows_per_page.append(rows_in_this_page)
         return rows_per_page, rows_position_y
 
     rows_per_page, rows_position_y = run('''
@@ -760,7 +764,46 @@ def test_table_page_breaks():
     assert rows_per_page == [0, 3, 1]
     assert rows_position_y == [0, 40, 80, 0]
 
-    # TODO: test page breaks between table row groups
+    rows_per_page, rows_position_y = run('''
+        <style>
+            @page { -weasy-size: 120px }
+            h1 { height: 30px}
+            td { height: 40px }
+            table { page-break-inside: avoid }
+        </style>
+        <h1>Dummy title</h1>
+        <table>
+            <tbody>
+                <tr><td>row 1</td></tr>
+                <tr><td>row 2</td></tr>
+                <tr><td>row 3</td></tr>
+            </tbody>
+
+            <tr><td>row 4</td></tr>
+        </table>
+    ''')
+    assert rows_per_page == [0, 3, 1]
+    assert rows_position_y == [0, 40, 80, 0]
+
+    rows_per_page, rows_position_y = run('''
+        <style>
+            @page { -weasy-size: 120px }
+            h1 { height: 30px}
+            td { height: 40px }
+        </style>
+        <h1>Dummy title</h1>
+        <table>
+            <tr><td>row 1</td></tr>
+
+            <tbody style="page-break-inside: avoid">
+                <tr><td>row 2</td></tr>
+                <tr><td>row 3</td></tr>
+            </tbody>
+        </table>
+    ''')
+    assert rows_per_page == [1, 2]
+    assert rows_position_y == [30, 0, 40]
+
 
 
 @assert_no_logs

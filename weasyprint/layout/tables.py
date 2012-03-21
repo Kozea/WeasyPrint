@@ -187,23 +187,31 @@ def table_layout(document, table, max_position_y, skip_stack,
             new_group_children.append(row)
 
         skip_stack = None
-        group = group.copy_with_children(new_group_children)
-        new_table_children.append(group)
 
-        # Set missing baselines in a second loop because of rowspan
-        for row in group.children:
-            if row.baseline is None:
-                if row.children:
-                    # lowest bottom content edge
-                    row.baseline = row.position_y - max(
-                        cell.content_box_y() + cell.height
-                        for cell in row.children)
-                else:
-                    row.baseline = 0
-        group.height = position_y - group.position_y
-        if group.children:
-            # The last border spacing is outside of the group.
-            group.height -= border_spacing_y
+        if resume_at and group.style.page_break_inside == 'avoid':
+            resume_at = (index_group, None)
+            break
+
+        # Do not keep the row group if we made a page break
+        # before any of its rows.
+        if not (group.children and not new_group_children):
+            group = group.copy_with_children(new_group_children)
+            new_table_children.append(group)
+
+            # Set missing baselines in a second loop because of rowspan
+            for row in group.children:
+                if row.baseline is None:
+                    if row.children:
+                        # lowest bottom content edge
+                        row.baseline = row.position_y - max(
+                            cell.content_box_y() + cell.height
+                            for cell in row.children)
+                    else:
+                        row.baseline = 0
+            group.height = position_y - group.position_y
+            if group.children:
+                # The last border spacing is outside of the group.
+                group.height -= border_spacing_y
 
         if resume_at:
             resume_at = (index_group, resume_at)
