@@ -1,7 +1,7 @@
 # coding: utf8
 
 #  WeasyPrint converts web documents (HTML, CSS, ...) to PDF.
-#  Copyright (C) 2011  Simon Sapin
+#  Copyright (C) 2011-2012 Simon Sapin
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Affero General Public License as
