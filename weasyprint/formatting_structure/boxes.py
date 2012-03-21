@@ -1,71 +1,61 @@
 # coding: utf8
+"""
+    weasyprint.formatting_structure.boxes
+    -------------------------------------
 
-#  WeasyPrint converts web documents (HTML, CSS, ...) to PDF.
-#  Copyright (C) 2011-2012 Simon Sapin and contributors.
-#  See AUTHORS for more details.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as
-#  published by the Free Software Foundation, either version 3 of the
-#  License, or (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+    Classes for all types of boxes in the CSS formatting structure / box model.
+
+    See http://www.w3.org/TR/CSS21/visuren.html
+
+    Names are the same as in CSS 2.1 with the exception of ``TextBox``. In
+    WeasyPrint, any text is in a ``TextBox``. What CSS calls anonymous
+    inline boxes are text boxes but not all text boxes are anonymous
+    inline boxes.
+
+    See http://www.w3.org/TR/CSS21/visuren.html#anonymous
+
+    Abstract classes, should not be instantiated:
+
+    * Box
+    * BlockLevelBox
+    * InlineLevelBox
+    * BlockContainerBox
+    * ReplacedBox
+    * ParentBox
+    * AtomicInlineLevelBox
+
+    Concrete classes:
+
+    * PageBox
+    * BlockBox
+    * InlineBox
+    * InlineBlockBox
+    * BlockReplacedBox
+    * InlineReplacedBox
+    * TextBox
+    * LineBox
+    * Various table-related Box subclasses
+
+    All concrete box classes whose name contains "Inline" or "Block" have
+    one of the following "outside" behavior:
+
+    * Block-level (inherits from :class:`BlockLevelBox`)
+    * Inline-level (inherits from :class:`InlineLevelBox`)
+
+    and one of the following "inside" behavior:
+
+    * Block container (inherits from :class:`BlockContainerBox`)
+    * Inline content (InlineBox and :class:`TextBox`)
+    * Replaced content (inherits from :class:`ReplacedBox`)
+
+    ... with various combinasions of both.
+
+    See respective docstrings for details.
+
+    :copyright: Copyright 2011-2012 Simon Sapin and contributors, see AUTHORS.
+    :license: BSD, see LICENSE for details.
 
 """
-Classes for all types of boxes in the CSS formatting structure / box model.
-
-See http://www.w3.org/TR/CSS21/visuren.html
-
-Names are the same as in CSS 2.1 with the exception of ``TextBox``. In
-WeasyPrint, any text is in a ``TextBox``. What CSS calls anonymous inline boxes
-are text boxes but not all text boxes are anonymous inline boxes.
-
-See http://www.w3.org/TR/CSS21/visuren.html#anonymous
-
-Abstract classes, should not be instantiated:
-
- * Box
- * BlockLevelBox
- * InlineLevelBox
- * BlockContainerBox
- * ReplacedBox
- * ParentBox
- * AtomicInlineLevelBox
-
-Concrete classes:
-
- * PageBox
- * BlockBox
- * AnonymousBlockBox
- * InlineBox
- * InlineBlockBox
- * BlockReplacedBox
- * InlineReplacedBox
- * TextBox
- * LineBox
-
-Apart from :class:`PageBox` and :class:`LineBox`, all concrete box classes have
-one of the following "outside" behavior:
-
- * Block-level (inherits from :class:`BlockLevelBox`)
- * Inline-level (inherits from :class:`InlineLevelBox`)
-
-and one of the following "inside" behavior:
-
- * Block container (inherits from :class:`BlockContainerBox`)
- * Inline content (InlineBox and :class:`TextBox`)
- * Replaced content (inherits from :class:`ReplacedBox`)
-
-See respective docstrings for details.
-
-"""
-
 
 from __future__ import division, unicode_literals
 

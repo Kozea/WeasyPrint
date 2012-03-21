@@ -1,27 +1,15 @@
 # coding: utf8
-
-#  WeasyPrint converts web documents (HTML, CSS, ...) to PDF.
-#  Copyright (C) 2011-2012 Simon Sapin and contributors.
-#  See AUTHORS for more details.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as
-#  published by the Free Software Foundation, either version 3 of the
-#  License, or (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 """
-Implement the various counter types and list-style-type values.
+    weasyprint.formatting_structure.counters
+    ----------------------------------------
 
-These are defined in the same terms as CSS 3 Lists:
-http://dev.w3.org/csswg/css3-lists/#predefined-counters
+    Implement the various counter types and list-style-type values.
+
+    These are defined in the same terms as CSS 3 Lists:
+    http://dev.w3.org/csswg/css3-lists/#predefined-counters
+
+    :copyright: Copyright 2011-2012 Simon Sapin and contributors, see AUTHORS.
+    :license: BSD, see LICENSE for details.
 
 """
 
@@ -30,8 +18,6 @@ from __future__ import division, unicode_literals
 import functools
 
 __all__ = ['format', 'format_list_marker']
-
-
 
 
 # Initial values for counter style descriptors.

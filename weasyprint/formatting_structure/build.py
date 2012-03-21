@@ -1,28 +1,16 @@
 # coding: utf8
-
-#  WeasyPrint converts web documents (HTML, CSS, ...) to PDF.
-#  Copyright (C) 2011-2012 Simon Sapin and contributors.
-#  See AUTHORS for more details.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as
-#  published by the Free Software Foundation, either version 3 of the
-#  License, or (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-
 """
-Building helpers.
+    weasyprint.formatting_structure.build
+    -------------------------------------
 
-Functions building a correct formatting structure from a DOM document,
-including handling of anonymous boxes and whitespace processing.
+    Turn an element tree with associated CSS style (computed values)
+    into a "before layout" formatting structure / box tree.
+
+    This includes creating anonymous boxes and processing whitespace
+    as necessary.
+
+    :copyright: Copyright 2011-2012 Simon Sapin and contributors, see AUTHORS.
+    :license: BSD, see LICENSE for details.
 
 """
 

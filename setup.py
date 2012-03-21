@@ -1,10 +1,12 @@
+# coding: utf8
 """
-WeasyPrint
-----------
+    WeasyPrint
+    ==========
 
-WeasyPrint converts web documents (HTML, CSS, SVG, ...) to PDF.
+    WeasyPrint converts web documents to PDF.
 
-See the documentation at http://weasyprint.org/
+    :copyright: Copyright 2011-2012 Simon Sapin and contributors, see AUTHORS.
+    :license: BSD, see LICENSE for details.
 
 """
 
@@ -16,8 +18,11 @@ from setuptools import setup, find_packages
 with open(path.join(path.dirname(__file__), 'weasyprint', '__init__.py')) as fd:
     VERSION = re.search("VERSION = '([^']+)'", fd.read().strip()).group(1)
 
+with open(path.join(path.dirname(__file__), 'README')) as fd:
+    LONG_DESCRIPTION = fd.read()
 
-REQUIRES = [
+
+REQUIREMENTS = [
         # Keep this in sync with the "install" documentation
         'lxml',
         'pystacia',
@@ -30,21 +35,21 @@ REQUIRES = [
 ]
 if sys.version_info < (2, 7) or (3,) <= sys.version_info < (3, 2):
     # In the stdlib from 2.7:
-    REQUIRES.append('argparse')
+    REQUIREMENTS.append('argparse')
 
 setup(
     name='WeasyPrint',
     version=VERSION,
     url='http://weasyprint.org/',
-    license='GNU Affero General Public License v3',
+    license='BSD',
     description='WeasyPrint converts web documents to PDF.',
-    long_description=__doc__,
+    long_description=LONG_DESCRIPTION,
     author='Simon Sapin',
     author_email='simon.sapin@kozea.fr',
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: GNU Affero General Public License v3',
+        'License :: OSI Approved :: BSD License',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
@@ -52,6 +57,7 @@ setup(
         'Programming Language :: Python :: 3.2',
         'Topic :: Internet :: WWW/HTTP',
         'Topic :: Text Processing :: Markup :: HTML',
+        'Topic :: Multimedia :: Graphics :: Graphics Conversion',
         'Topic :: Printing',
     ],
     packages=find_packages(),
@@ -59,8 +65,8 @@ setup(
         'weasyprint.tests': ['resources/*'],
         'weasyprint.css': ['*.css']},
     zip_safe=False,
-    install_requires=REQUIRES,
-    test_suite='weasy.tests',
+    install_requires=REQUIREMENTS,
+    test_suite='weasyprint.tests',
     entry_points={
         'console_scripts': [
             'weasyprint = weasyprint.__main__:main',

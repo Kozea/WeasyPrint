@@ -1,25 +1,21 @@
 # coding: utf8
-
-#  WeasyPrint converts web documents (HTML, CSS, ...) to PDF.
-#  Copyright (C) 2011-2012 Simon Sapin and contributors.
-#  See AUTHORS for more details.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as
-#  published by the Free Software Foundation, either version 3 of the
-#  License, or (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-
 """
-Module managing the layout creation before drawing a document.
+    weasyprint.layout
+    -----------------
+
+    Transform a "before layout" box tree into an "after layout" tree.
+    (Surprising, hu?)
+
+    Break boxes across lines and pages; determine the size and dimension
+    of each box fragement.
+
+    Boxes in the new tree have *used values* in their ``position_x``,
+    ``position_y``, ``width`` and ``height`` attributes, amongst others.
+
+    See http://www.w3.org/TR/CSS21/cascade.html#used-value
+
+    :copyright: Copyright 2011-2012 Simon Sapin and contributors, see AUTHORS.
+    :license: BSD, see LICENSE for details.
 
 """
 

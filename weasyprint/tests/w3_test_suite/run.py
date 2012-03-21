@@ -1,22 +1,17 @@
 # coding: utf8
+"""
+    weasyprint.tests.w3_test_suite.run
+    ----------------------------------
 
-#  WeasyPrint converts web documents (HTML, CSS, ...) to PDF.
-#  Copyright (C) 2011-2012 Simon Sapin and contributors.
-#  See AUTHORS for more details.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as
-#  published by the Free Software Foundation, either version 3 of the
-#  License, or (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+    Run and automatically check the tests from the W3C CSS 2.1 Test Suite
+    that have a reference rendering. (This is a small subset.)
 
+    See http://test.csswg.org/suites/css2.1/
+
+    :copyright: Copyright 2011-2012 Simon Sapin and contributors, see AUTHORS.
+    :license: BSD, see LICENSE for details.
+
+"""
 
 from __future__ import division, unicode_literals, print_function
 
