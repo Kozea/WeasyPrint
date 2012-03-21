@@ -237,6 +237,10 @@ def table_layout(document, table, max_position_y, skip_stack,
         group.width = last.position_x + last.width - first.position_x
         group.height = columns_height
 
+    if resume_at and not page_is_empty and (
+            table.style.page_break_inside == 'avoid'):
+        table = None
+        resume_at = None
     next_page = 'any'
     adjoining_margins = []
     collapsing_through = False

@@ -691,7 +691,33 @@ def test_orphans_widows_avoid():
 @assert_no_logs
 def test_table_page_breaks():
     """Test the page breaks inside tables."""
-    pages = parse('''
+    def run(html):
+        pages = parse(html)
+        rows_per_page = []
+        rows_position_y = []
+        for i, page in enumerate(pages):
+            html, = page.children
+            body, = html.children
+            if i == 0:
+                body_children = body.children[1:]  # skip h1
+            else:
+                body_children = body.children
+            if not body_children:
+                rows_per_page.append(0)
+                continue
+            table_wrapper, = body_children
+            table, = table_wrapper.children
+            group, = table.children
+            rows_per_page.append(len(group.children))
+            for row in group.children:
+                rows_position_y.append(row.position_y)
+                cell, = row.children
+                line, = cell.children
+                text, = line.children
+                assert text.text == 'row %i' % len(rows_position_y)
+        return rows_per_page, rows_position_y
+
+    rows_per_page, rows_position_y = run('''
         <style>
             @page { -weasy-size: 120px }
             h1 { height: 30px}
@@ -712,28 +738,29 @@ def test_table_page_breaks():
             <tr><td>row 8</td></tr>
         </table>
     ''')
-    row_counts = []
-    rows_position_y = []
-    for i, page in enumerate(pages):
-        html, = page.children
-        body, = html.children
-        if i == 0:
-            body_children = body.children[1:]  # skip h1
-        else:
-            body_children = body.children
-        table_wrapper, = body_children
-        table, = table_wrapper.children
-        group, = table.children
-        row_counts.append(len(group.children))
-        for row in group.children:
-            rows_position_y.append(row.position_y)
-            cell, = row.children
-            line, = cell.children
-            text, = line.children
-            assert text.text == 'row %i' % len(rows_position_y)
-
-    assert row_counts == [2, 3, 1, 2]
+    assert rows_per_page == [2, 3, 1, 2]
     assert rows_position_y == [30, 70, 0, 40, 80, 0, 0, 40]
+
+    rows_per_page, rows_position_y = run('''
+        <style>
+            @page { -weasy-size: 120px }
+            h1 { height: 30px}
+            td { height: 40px }
+            table { page-break-inside: avoid }
+        </style>
+        <h1>Dummy title</h1>
+        <table>
+            <tr><td>row 1</td></tr>
+            <tr><td>row 2</td></tr>
+            <tr><td>row 3</td></tr>
+
+            <tr><td>row 4</td></tr>
+        </table>
+    ''')
+    assert rows_per_page == [0, 3, 1]
+    assert rows_position_y == [0, 40, 80, 0]
+
+    # TODO: test page breaks between table row groups
 
 
 @assert_no_logs
