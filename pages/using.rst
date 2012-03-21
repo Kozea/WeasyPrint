@@ -54,7 +54,7 @@ any other Python library:
     import weasyprint
     weasyprint.HTML('http://weasyprint.org/').write_pdf('/tmp/weasyprint-website.pdf')
 
-The public API for WeasyPrint 0.6 is made of two classes: ``HTML`` and ``CSS``
+The public API for WeasyPrint 0.7 is made of two classes: ``HTML`` and ``CSS``
 
 
 API stability

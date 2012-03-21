@@ -9,7 +9,7 @@ Documentation
 Features
 ~~~~~~~~
 
-WeasyPrint 0.6 supports:
+WeasyPrint 0.7 supports:
 
 (For older versions, see the changelog_.)
 
@@ -47,7 +47,8 @@ WeasyPrint 0.6 supports:
   * Minimum and maximum width_ and height_
   * `Vertical align`_ ``top`` and ``bottom`` (they are interpreted as
     ``text-top`` and ``text-bottom``, respectively)
-  * Avoiding `page breaks`_ (``page-break-*: avoid``, ``orphans``, ``widows``)
+  * Avoiding `page breaks`_ before or after an element
+    (avoiding **inside** is supported)
   * Conforming `font matching algorithm`_. Currently ``font-family``
     is directly passed to Pango.
   * `Bi-directional text`_. (May happen to kind of work in uninterrupted text
