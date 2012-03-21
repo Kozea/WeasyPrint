@@ -641,16 +641,16 @@ def test_page_breaks():
 
 
 @assert_no_logs
-def test_orphans_widows():
+def test_orphans_widows_avoid():
     """Test orphans and widows control."""
-    def line_distribution(orphans, widows):
+    def line_distribution(css):
         pages = parse('''
             <style>
                 @page { -weasy-size: 200px }
                 h1 { height: 120px }
                 p { line-height: 20px;
                     width: 1px; /* line break at each word */
-                    orphans: %s; widows: %s }
+                    %s }
             </style>
             <h1>Tasty test</h1>
             <!-- There is room for 4 lines after h1 on the fist page -->
@@ -663,7 +663,7 @@ def test_orphans_widows():
                 six
                 seven
             </p>
-        ''' % (orphans, widows))
+        ''' % css)
         line_counts = []
         for i, page in enumerate(pages):
             html, = page.children
@@ -679,10 +679,13 @@ def test_orphans_widows():
                 line_counts.append(0)
         return line_counts
 
-    assert line_distribution(orphans=2, widows=2) == [4, 3]
-    assert line_distribution(orphans=5, widows=2) == [0, 7]
-    assert line_distribution(orphans=2, widows=4) == [3, 4]
-    assert line_distribution(orphans=4, widows=4) == [0, 7]
+    assert line_distribution('orphans: 2; widows: 2') == [4, 3]
+    assert line_distribution('orphans: 5; widows: 2') == [0, 7]
+    assert line_distribution('orphans: 2; widows: 4') == [3, 4]
+    assert line_distribution('orphans: 4; widows: 4') == [0, 7]
+
+    assert line_distribution(
+        'orphans: 2; widows: 2; page-break-inside: avoid') == [0, 7]
 
 
 @assert_no_logs
@@ -946,10 +949,7 @@ def test_images():
         with capture_logs() as logs:
             page, = parse("<p><img src='%s' alt='invalid image'>" % url)
         assert len(logs) == 1
-        if url.startswith('data:') or 'really' in url:
-            assert 'WARNING: Error while parsing an image' in logs[0]
-        else:
-            assert 'WARNING: Error while fetching an image' in logs[0]
+        assert 'WARNING: Error for image' in logs[0]
         html, = page.children
         body, = html.children
         paragraph, = body.children

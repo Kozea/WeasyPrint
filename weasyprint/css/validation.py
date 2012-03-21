@@ -629,9 +629,7 @@ def page_break(keyword):
 @single_keyword
 def page_break_inside(keyword):
     """Validation for the ``page-break-inside`` property."""
-    if keyword == 'avoid':
-        raise InvalidValues('value not supported yet')
-    return keyword in ('auto',)
+    return keyword in ('auto', 'avoid')
 
 
 @validator()
@@ -872,7 +870,10 @@ def generic_expander(*expanded_names):
                 results = {}
                 for new_name, new_values in wrapped(name, values):
                     assert new_name in expanded_names, new_name
-                    assert new_name not in results, new_name
+                    if new_name in results:
+                        raise InvalidValues(
+                            'got multiple %s values in a %s shorthand'
+                            % (new_name.strip('_'), name))
                     results[new_name] = new_values
 
             for new_name in expanded_names:

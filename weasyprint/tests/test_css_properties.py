@@ -145,6 +145,8 @@ def test_expand_list_style():
     }
     with raises(ValueError):
         expand_to_dict('list_style', 'red')
+    with raises(ValueError):
+        expand_to_dict('list_style', 'circle disc')
 
 
 def assert_background(css, **kwargs):

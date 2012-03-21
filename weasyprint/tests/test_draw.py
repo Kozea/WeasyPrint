@@ -909,7 +909,7 @@ def test_images():
             <div><img src="inexistent1.png" alt=""></div>
         ''')
     assert len(logs) == 1
-    assert 'WARNING: Error while fetching an image' in logs[0]
+    assert 'WARNING: Error for image' in logs[0]
     assert 'inexistent1.png' in logs[0]
     assert_pixels('image_no_src', 8, 8, no_image, '''
         <style>
@@ -944,7 +944,7 @@ def test_images():
             '''),
         ])
     assert len(logs) == 1
-    assert 'WARNING: Error while fetching an image' in logs[0]
+    assert 'WARNING: Error for image' in logs[0]
     assert 'inexistent2.png' in logs[0]
 
 

@@ -258,7 +258,7 @@ def block_level_height(document, box, max_position_y, skip_stack,
             if is_page_break:
                 break
         else:
-            if new_children and not page_is_empty:
+            if new_children:
                 # between siblings, but not before the first child
                 # or after the last child.
                 break_here, next_page = forced_page_break(
@@ -271,7 +271,8 @@ def block_level_height(document, box, max_position_y, skip_stack,
             (new_child, resume_at, next_page, next_adjoining_margins,
                 collapsing_through) = block_level_layout(
                     document, child, max_position_y, skip_stack,
-                    new_containing_block, device_size, page_is_empty,
+                    new_containing_block, device_size,
+                    page_is_empty and not new_children,
                     adjoining_margins)
             skip_stack = None
 
@@ -293,7 +294,8 @@ def block_level_height(document, box, max_position_y, skip_stack,
                     new_position_y = (
                         new_child.border_box_y() + new_child.border_height())
 
-                    if (new_position_y > max_position_y and not page_is_empty
+                    if (new_position_y > max_position_y and (
+                                new_children or not page_is_empty)
                             and not isinstance(child, boxes.BlockBox)):
                         # The child overflows the page area, put it on the
                         # next page. (But don’t delay whole blocks if eg.
@@ -314,13 +316,16 @@ def block_level_height(document, box, max_position_y, skip_stack,
             # Bottom borders may overflow here
             # TODO: back-track somehow when all lines fit but not borders
             new_children.append(new_child)
-            page_is_empty = False
             if resume_at is not None:
                 resume_at = (index, resume_at)
                 break
 
     else:
         resume_at = None
+
+    if resume_at is not None and box.style.page_break_inside == 'avoid' \
+            and not page_is_empty:
+        return None, None, 'any', [], False
 
 
     if collapsing_with_children:

@@ -63,10 +63,6 @@ def cairosvg_handler(file_like, uri):
 
     This handler uses CairoSVG: http://cairosvg.org/
     """
-    try:
-        import cairosvg as _
-    except ImportError as exception:
-        return exception
     from cairosvg.surface import SVGSurface
     from cairosvg.parser import Tree, ParseError
 
@@ -84,12 +80,9 @@ def cairosvg_handler(file_like, uri):
         # Don’t pass data URIs to CairoSVG.
         # They are useless for relative URIs anyway.
         uri = None
-    try:
-        # Draw to a cairo surface but do not write to a file
-        tree = Tree(file_obj=file_like, url=uri)
-        surface = ScaledSVGSurface(tree, output=None, dpi=96)
-    except (ParseError, NotImplementedError) as exception:
-        return exception
+    # Draw to a cairo surface but do not write to a file
+    tree = Tree(file_obj=file_like, url=uri)
+    surface = ScaledSVGSurface(tree, output=None, dpi=96)
     pattern = cairo.SurfacePattern(surface.cairo)
     return pattern, surface.width, surface.height
 
@@ -101,50 +94,27 @@ def fallback_handler(file_like, uri):
     PIL supports many raster image formats and does not take a `format`
     parameter, it guesses the format from the content.
     """
-    try:
-        import pystacia as _
-    except ImportError as exception:
-        return exception
     from pystacia import read_blob
     from pystacia.util import TinyException
-    try:
-        with contextlib.closing(read_blob(file_like.read())) as image:
-            png_bytes = image.get_blob('png')
-    except TinyException as exception:
-        return exception
-    else:
-        return png_handler(BytesIO(png_bytes), uri)
+    with contextlib.closing(read_blob(file_like.read())) as image:
+        png_bytes = image.get_blob('png')
+    return png_handler(BytesIO(png_bytes), uri)
 
 
 def get_image_from_uri(uri, type_=None):
     """Get a :class:`cairo.Surface`` from an image URI."""
     try:
         file_like, mime_type, _charset = urlopen(uri)
-    except (IOError, ValueError) as exc:
-        LOGGER.warn('Error while fetching an image from %s : %r', uri, exc)
-        return None
-
-    if not type_:
-        type_ = mime_type  # Use eg. the HTTP header
-    #else: the type was forced by eg. a 'type' attribute on <embed>
-    handler = FORMAT_HANDLERS.get(type_, fallback_handler)
-    exception = None
-    try:
-        image = handler(file_like, uri)
-    except (IOError, MemoryError) as e:
-        exception = e # Network or parsing error
-    else:
-        if isinstance(image, Exception):
-            exception = image
+        if not type_:
+            type_ = mime_type  # Use eg. the HTTP header
+        #else: the type was forced by eg. a 'type' attribute on <embed>
+        handler = FORMAT_HANDLERS.get(type_, fallback_handler)
+        return handler(file_like, uri)
+    except Exception as exc:
+        LOGGER.warn('Error for image at %s : %r', uri, exc)
     finally:
         try:
             file_like.close()
         except Exception:
-            # Do not hide a more relevant exception.
+            # May already be closed or something. This is just cleanup anyway.
             pass
-
-    if exception is None:
-        return image
-    else:
-        LOGGER.warn('Error while parsing an image at %s : %r', uri, exception)
-        return None

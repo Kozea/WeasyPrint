@@ -34,6 +34,7 @@ from .testing_utils import (
 from .. import css
 from ..css.computed_values import used_line_height
 from ..document import PNGDocument
+from ..utils import parse_data_url
 from .. import HTML
 
 
@@ -43,6 +44,36 @@ def parse_html(filename, **kwargs):
     kwargs.setdefault('user_agent_stylesheets', [TEST_UA_STYLESHEET])
     kwargs.setdefault('user_stylesheets', [])
     return PNGDocument(html.root_element, **kwargs)
+
+
+@assert_no_logs
+def test_data_url():
+    """Test URLs with the "data:" scheme."""
+    def parse(url, expected_content, expected_mime_type, expected_charset):
+        file_like, mime_type, charset = parse_data_url(url)
+        assert file_like.read() == expected_content
+        assert mime_type == expected_mime_type
+        assert charset == expected_charset
+    parse('data:,foo', b'foo', 'text/plain', 'US-ASCII')
+    parse('data:,foo%22bar', b'foo"bar', 'text/plain', 'US-ASCII')
+    parse('data:text/plain,foo', b'foo', 'text/plain', None)
+    parse('data:text/html;charset=utf8,<body>', b'<body>', 'text/html', 'utf8')
+    parse('data:text/plain;base64,Zm9v', b'foo', 'text/plain', None)
+    parse('data:text/plain;base64,Zm9vbw==', b'fooo', 'text/plain', None)
+    parse('data:text/plain;base64,Zm9vb28=', b'foooo', 'text/plain', None)
+    parse('data:text/plain;base64,Zm9vb29v', b'fooooo', 'text/plain', None)
+    parse('data:text/plain;base64,Zm9vbw%3D%3D', b'fooo', 'text/plain', None)
+    parse('data:text/plain;base64,Zm9vb28%3D', b'foooo', 'text/plain', None)
+
+    # "From a theoretical point of view, the padding character is not needed,
+    #  since the number of missing bytes can be calculated from the number
+    #  of Base64 digits."
+    # https://en.wikipedia.org/wiki/Base64#Padding
+
+    # The Acid 2 test uses base64 URLs without padding.
+    # http://acid2.acidtests.org/
+    parse('data:text/plain;base64,Zm9vbw', b'fooo', 'text/plain', None)
+    parse('data:text/plain;base64,Zm9vb28', b'foooo', 'text/plain', None)
 
 
 @assert_no_logs
