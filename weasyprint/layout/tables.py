@@ -63,7 +63,7 @@ def table_layout(document, table, max_position_y, skip_stack,
     position_y = table.content_box_y() + border_spacing_y
     initial_position_y = position_y
     new_table_children = []
-    for group in table.children:
+    for index_group, group in table.enumerate_skip(skip):
         resolve_percentages(group, containing_block=table)
         group.position_x = rows_x
         group.position_y = position_y
@@ -71,8 +71,12 @@ def table_layout(document, table, max_position_y, skip_stack,
         new_group_children = []
         # For each rows, cells for which this is the last row (with rowspan)
         ending_cells_by_row = [[] for row in group.children]
-        force_page_break = False
-        for index, row in group.enumerate_skip(skip):
+
+        if skip_stack is None:
+            skip = 0
+        else:
+            skip, skip_stack = skip_stack
+        for index_row, row in group.enumerate_skip(skip):
             resolve_percentages(row, containing_block=table)
             row.position_x = rows_x
             row.position_y = position_y
@@ -121,7 +125,6 @@ def table_layout(document, table, max_position_y, skip_stack,
                 new_row_children.append(cell)
 
             row = row.copy_with_children(new_row_children)
-            new_group_children.append(row)
 
             # Table height algorithm
             # http://www.w3.org/TR/CSS21/tables.html#height-layout
@@ -171,17 +174,19 @@ def table_layout(document, table, max_position_y, skip_stack,
                 else:
                     cell.padding_bottom += extra
 
-            cur_pos_y = position_y + row.height + border_spacing_y
-            # Check whether we should handle page-break
-            if cur_pos_y > max_position_y:
-                # We should overflow if page is empty and we have currently
-                # only single element in the group...
-                if page_is_empty and len(new_group_children) > 1:
-                    force_page_break = True
-                    break
+            next_position_y = position_y + row.height + border_spacing_y
+            # Break if this row overflows the page, unless there is no
+            # other content on the page.
+            if next_position_y > max_position_y and (
+                    new_table_children or new_group_children
+                    or not page_is_empty):
+                resume_at = (index_row, None)
+                break
 
-            position_y = cur_pos_y
+            position_y = next_position_y
+            new_group_children.append(row)
 
+        skip_stack = None
         group = group.copy_with_children(new_group_children)
         new_table_children.append(group)
 
@@ -200,8 +205,8 @@ def table_layout(document, table, max_position_y, skip_stack,
             # The last border spacing is outside of the group.
             group.height -= border_spacing_y
 
-        if force_page_break:
-            resume_at = (index, row)
+        if resume_at:
+            resume_at = (index_group, resume_at)
             break
 
     table = table.copy_with_children(new_table_children)
