@@ -65,6 +65,25 @@ def ensure_url(string):
         return path2url(string.encode('utf8'))
 
 
+def decode_base64(data):
+    """Decode base64, padding being optional.
+
+    "From a theoretical point of view, the padding character is not needed,
+     since the number of missing bytes can be calculated from the number
+     of Base64 digits."
+
+    https://en.wikipedia.org/wiki/Base64#Padding
+
+    :param data: Base64 data as an ASCII byte string
+    :returns: The decoded byte string.
+
+    """
+    missing_padding = 4 - len(data) % 4
+    if missing_padding:
+        data += b'='* missing_padding
+    return base64.decodestring(data)
+
+
 def parse_data_url(url):
     """Decode URLs with the 'data' stream. urllib can handle them
     in Python 2, but that is broken in Python 3.
@@ -98,11 +117,9 @@ def parse_data_url(url):
         charset = 'US-ASCII'
         encoding = ''
 
+    data = unquote_to_bytes(data)
     if encoding == 'base64':
-        data = data.encode('ascii')
-        data = base64.decodestring(data)
-    else:
-        data = unquote_to_bytes(data)
+        data = decode_base64(data)
 
     return io.BytesIO(data), mime_type, charset
 
