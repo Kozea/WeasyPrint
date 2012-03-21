@@ -3,12 +3,12 @@ WeasyPrint converts HTML/CSS documents to PDF
 
 WeasyPrint is a visual rendering engine for HTML and CSS that can export
 to PDF. It aims to support web standards for printing.
-WeasyPrint is free software released under the `AGPL license
-<https://github.com/Kozea/WeasyPrint/blob/master/COPYING>`_.
+WeasyPrint is free software released under the `BSD license
+<https://github.com/Kozea/WeasyPrint/blob/master/LICENSE>`_.
 
-It is based on libraries for parsing, text and drawing but **not** on full
-rendering engines like WebKit on Gecko. The CSS visual rendering is written
-in Python and meant to be easy to hack on.
+It is based on various libraries for parsing, text and drawing but **not**
+on full a rendering engines like WebKit on Gecko. The CSS visual rendering
+is written in Python and meant to be easy to hack on.
 
 Get started by `installing it </install/>`_ or jump to:
 

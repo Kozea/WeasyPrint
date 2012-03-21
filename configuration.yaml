@@ -1,6 +1,6 @@
 name: WeasyPrint
 description: Converts HTML + CSS to PDF
-license: AGPL
+license: BSD
 public: true
 url: http://www.weasyprint.org/
 
