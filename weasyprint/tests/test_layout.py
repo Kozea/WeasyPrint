@@ -949,10 +949,7 @@ def test_images():
         with capture_logs() as logs:
             page, = parse("<p><img src='%s' alt='invalid image'>" % url)
         assert len(logs) == 1
-        if url.startswith('data:') or 'really' in url:
-            assert 'WARNING: Error while parsing an image' in logs[0]
-        else:
-            assert 'WARNING: Error while fetching an image' in logs[0]
+        assert 'WARNING: Error for image' in logs[0]
         html, = page.children
         body, = html.children
         paragraph, = body.children
