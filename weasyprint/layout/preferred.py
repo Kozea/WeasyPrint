@@ -81,7 +81,9 @@ def block_preferred_width(box, maximum_width=None):
     """Return the preferred width for a ``BlockBox``."""
     if box.width == 'auto':
         if box.children:
-            return max(preferred_width(child) for child in box.children)
+            return max(
+                preferred_width(child, maximum_width)
+                for child in box.children)
         else:
             return 0
     else:
