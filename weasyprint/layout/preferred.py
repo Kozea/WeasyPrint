@@ -68,8 +68,6 @@ def block_preferred_minimum_width(box):
     """Return the preferred minimum width for a ``BlockBox``."""
     if box.style['width'] == 'auto':
         if box.children:
-            print(box)
-            print(box.children)
             return max(
                 preferred_mimimum_width(child) for child in box.children)
         else:
