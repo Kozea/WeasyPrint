@@ -20,14 +20,60 @@ from .inlines import replaced_box_width
 from .percentages import resolve_percentages
 
 
-def shrink_to_fit(box):
-    raise NotImplementedError
+def shrink_to_fit(box, maximum_width=None):
+    """Return ``preferred_mimimum_width, preferred_width`` for ``box``.
+
+    If ``maximum_width`` is not ``None``, the preferred width is calculated to
+    be smaller than this width.
+
+    """
+    return preferred_mimimum_width(box), preferred_width(box, maximum_width)
+
+
+def preferred_mimimum_width(box):
+    """Return the preferred minimum width for ``box``.
+
+    This is the width by breaking at every line-break opportunity.
+
+    """
+    if isinstance(box, boxes.BlockBox):
+        return block_preferred_minimum_width(box)
+    elif isinstance(box, boxes.InlineBox):
+        return inline_preferred_minimum_width(box)
+    else:
+        raise TypeError(
+            'Preferred minimum width for %s not handled yet' %
+            type(box).__name__)
+
+
+def preferred_width(box, maximum_width=None):
+    """Return the preferred width for ``box``.
+
+    This is the width by only breaking at forced line breaks.
+
+    If ``maximum_width`` is not ``None``, the preferred width is calculated to
+    be smaller than this width.
+
+    """
+    if isinstance(box, boxes.BlockBox):
+        return block_preferred_width(box, maximum_width)
+    elif isinstance(box, boxes.InlineBox):
+        return inline_preferred_width(box, maximum_width)
+    else:
+        raise TypeError(
+            'Preferred width for %s not handled yet' % type(box).__name__)
+
+
+def block_preferred_minimum_width(box):
+    """Return the preferred minimum width for a ``BlockBox``."""
+
+
+def block_preferred_width(box, maximum_width=None):
+    """Return the preferred width for a ``BlockBox``."""
 
 
 def inline_preferred_minimum_width(box):
     """Return the preferred minimum width for an ``InlineBox``.
-
-    This is the width by breaking at every line-break opportunity.
 
     *Warning:* only TextBox and InlineReplacedBox children are supported
     for now. (No recursive InlineBox childdren.)
@@ -45,13 +91,11 @@ def inline_preferred_minimum_width(box):
     return widest_line
 
 
-def inline_preferred_width(box):
+def inline_preferred_width(box, maximum_width=None):
     """Return the preferred width for an ``InlineBox``.
 
-    This is the width by only breaking at forced line breaks.
-
     *Warning:* only TextBox and InlineReplacedBox children are supported
-    for now. (No recursive InlineBox childdren.)
+    for now. (No recursive InlineBox children.)
 
     """
     widest_line = 0
@@ -62,7 +106,7 @@ def inline_preferred_width(box):
             current_line += replaced_preferred_width(child)
         else:
             assert isinstance(child, boxes.TextBox)
-            lines = list(text_lines_width(child, width=None))
+            lines = list(text_lines_width(child, width=maximum_width))
             assert lines
             # The first text line goes on the current line
             current_line += lines[0]
