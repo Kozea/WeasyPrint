@@ -66,29 +66,35 @@ def preferred_width(box, maximum_width=None):
 
 def block_preferred_minimum_width(box):
     """Return the preferred minimum width for a ``BlockBox``."""
-    if box.width == 'auto':
+    if box.style['width'] == 'auto':
         if box.children:
+            print(box)
+            print(box.children)
             return max(
                 preferred_mimimum_width(child) for child in box.children)
         else:
             return 0
+    elif isinstance(box.style['width'], (int, float)):
+        return box.style['width']
     else:
-        # TODO: handle fixed and % widths
-        raise TypeError('Width %s is unknown' % box.width)
+        # TODO: handle % widths
+        raise TypeError('Width %s is unknown' % box.style['width'])
 
 
 def block_preferred_width(box, maximum_width=None):
     """Return the preferred width for a ``BlockBox``."""
-    if box.width == 'auto':
+    if box.style['width'] == 'auto':
         if box.children:
             return max(
                 preferred_width(child, maximum_width)
                 for child in box.children)
         else:
             return 0
+    elif isinstance(box.style['width'], (int, float)):
+        return box.style['width']
     else:
-        # TODO: handle fixed and % widths
-        raise TypeError('Width %s is unknown' % box.width)
+        # TODO: handle % widths
+        raise TypeError('Width %s is unknown' % box.style['width'])
 
 
 def inline_preferred_minimum_width(box):
