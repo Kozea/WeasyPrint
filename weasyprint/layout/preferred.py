@@ -20,6 +20,10 @@ from .inlines import replaced_box_width
 from .percentages import resolve_percentages
 
 
+def shrink_to_fit(box):
+    raise NotImplementedError
+
+
 def inline_preferred_minimum_width(box):
     """Return the preferred minimum width for an ``InlineBox``.
 

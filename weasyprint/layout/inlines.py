@@ -258,15 +258,33 @@ def replaced_box_height(box, device_size):
         box.height = min(150, device_width / 2)
 
 
-def atomic_box(box, containing_block, device_size):
+def atomic_box(document, box, containing_block, device_size):
     """Compute the width and the height of the atomic ``box``."""
     if isinstance(box, boxes.ReplacedBox):
         if getattr(box, 'is_list_marker', False):
             image_marker_layout(box)
         else:
             inline_replaced_box_layout(box, containing_block, device_size)
+    elif isinstance(box, boxes.InlineBlockBox):
+        box = inline_block_box_layout(document, box, containing_block)
     else:
         raise TypeError('Layout for %s not handled yet' % type(box).__name__)
+    return box
+
+
+def inline_block_box_layout(document, box, containing_block):
+    resolve_percentages(box, containing_block)
+    if box.width == 'auto':
+        from .preferred import shrink_to_fit
+        preferred, minimum = shrink_to_fit(box)
+        box.width = min(max(minimum, containing_block.width), preferred)
+    # Avoid a circular import
+    from .blocks import block_level_height
+    box, _, _, _, _ = block_level_height(document, box,
+        max_position_y=float('inf'),
+        skip_stack=None,
+        device_size=device_size,
+        page_is_empty=True)
     return box
 
 
@@ -309,7 +327,7 @@ def split_inline_level(document, box, position_x, max_x, skip_stack,
             document, box, position_x, max_x, skip_stack, containing_block,
             device_size)
     elif isinstance(box, boxes.AtomicInlineLevelBox):
-        new_box = atomic_box(box, containing_block, device_size)
+        new_box = atomic_box(document, box, containing_block, device_size)
         new_box.position_x = position_x
         new_box.baseline = new_box.margin_height()
         resume_at = None
