@@ -21,13 +21,13 @@ from .percentages import resolve_percentages
 
 
 def shrink_to_fit(box, maximum_width=None):
-    """Return ``preferred_mimimum_width, preferred_width`` for ``box``.
+    """Return ``(preferred_width, preferred_mimimum_width)`` for ``box``.
 
     If ``maximum_width`` is not ``None``, the preferred width is calculated to
     be smaller than this width.
 
     """
-    return preferred_mimimum_width(box), preferred_width(box, maximum_width)
+    return preferred_width(box, maximum_width), preferred_mimimum_width(box)
 
 
 def preferred_mimimum_width(box):
@@ -36,9 +36,9 @@ def preferred_mimimum_width(box):
     This is the width by breaking at every line-break opportunity.
 
     """
-    if isinstance(box, boxes.BlockBox):
+    if isinstance(box, boxes.BlockContainerBox):
         return block_preferred_minimum_width(box)
-    elif isinstance(box, boxes.InlineBox):
+    elif isinstance(box, (boxes.InlineBox, boxes.LineBox)):
         return inline_preferred_minimum_width(box)
     else:
         raise TypeError(
@@ -55,9 +55,9 @@ def preferred_width(box, maximum_width=None):
     be smaller than this width.
 
     """
-    if isinstance(box, boxes.BlockBox):
+    if isinstance(box, boxes.BlockContainerBox):
         return block_preferred_width(box, maximum_width)
-    elif isinstance(box, boxes.InlineBox):
+    elif isinstance(box, (boxes.InlineBox, boxes.LineBox)):
         return inline_preferred_width(box, maximum_width)
     else:
         raise TypeError(
@@ -66,10 +66,27 @@ def preferred_width(box, maximum_width=None):
 
 def block_preferred_minimum_width(box):
     """Return the preferred minimum width for a ``BlockBox``."""
+    if box.width == 'auto':
+        if box.children:
+            return max(
+                preferred_mimimum_width(child) for child in box.children)
+        else:
+            return 0
+    else:
+        # TODO: handle fixed and % widths
+        raise TypeError('Width %s is unknown' % box.width)
 
 
 def block_preferred_width(box, maximum_width=None):
     """Return the preferred width for a ``BlockBox``."""
+    if box.width == 'auto':
+        if box.children:
+            return max(preferred_width(child) for child in box.children)
+        else:
+            return 0
+    else:
+        # TODO: handle fixed and % widths
+        raise TypeError('Width %s is unknown' % box.width)
 
 
 def inline_preferred_minimum_width(box):

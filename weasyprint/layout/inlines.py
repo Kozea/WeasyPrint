@@ -266,25 +266,37 @@ def atomic_box(document, box, containing_block, device_size):
         else:
             inline_replaced_box_layout(box, containing_block, device_size)
     elif isinstance(box, boxes.InlineBlockBox):
-        box = inline_block_box_layout(document, box, containing_block)
+        box = inline_block_box_layout(
+            document, box, containing_block, device_size)
     else:
         raise TypeError('Layout for %s not handled yet' % type(box).__name__)
     return box
 
 
-def inline_block_box_layout(document, box, containing_block):
-    resolve_percentages(box, containing_block)
-    if box.width == 'auto':
-        from .preferred import shrink_to_fit
-        preferred, minimum = shrink_to_fit(box)
-        box.width = min(max(minimum, containing_block.width), preferred)
+def inline_block_box_layout(document, box, containing_block, device_size):
     # Avoid a circular import
     from .blocks import block_level_height
-    box, _, _, _, _ = block_level_height(document, box,
-        max_position_y=float('inf'),
-        skip_stack=None,
-        device_size=device_size,
-        page_is_empty=True)
+    from .preferred import shrink_to_fit
+
+    resolve_percentages(box, containing_block)
+
+    # http://www.w3.org/TR/CSS21/visudet.html#inlineblock-width
+    if box.margin_left == 'auto':
+        box.margin_left = 0
+    if box.margin_right == 'auto':
+        box.margin_right = 0
+
+    if box.width == 'auto':
+        preferred, minimum = shrink_to_fit(box, containing_block.width)
+        box.width = min(max(minimum, containing_block.width), preferred)
+
+    # TODO: don't set these wrong values
+    box.position_x = containing_block.position_x
+    box.position_y = containing_block.position_y
+    box, _, _, _, _ = block_level_height(
+        document, box, max_position_y=float('inf'), skip_stack=None,
+        device_size=device_size, page_is_empty=True)
+
     return box
 
 
