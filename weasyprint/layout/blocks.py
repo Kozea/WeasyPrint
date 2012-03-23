@@ -14,7 +14,7 @@ from __future__ import division, unicode_literals
 
 from .inlines import iter_line_boxes, replaced_box_width, replaced_box_height
 from .markers import list_marker_layout
-from .tables import table_layout, fixed_table_layout
+from .tables import table_layout, fixed_table_layout, auto_table_layout
 from .percentages import resolve_percentages
 from ..formatting_structure import boxes
 
@@ -377,15 +377,21 @@ def block_table_wrapper(document, wrapper, max_position_y, skip_stack,
         raise ValueError('Table wrapper without a table')
     resolve_percentages(wrapper, containing_block)
     resolve_percentages(table, containing_block)
+
     # Count the wrapper margins in case of `width: auto`
     table.margin_left = wrapper.margin_left
     table.margin_right = wrapper.margin_right
-    block_level_width(table, containing_block)
+
+    if table.style.table_layout == 'fixed':
+        block_level_width(table, containing_block)
+        fixed_table_layout(table)
+    else:
+        auto_table_layout(table, containing_block)
+
     # The table margins are on the table wrapper box, not on the table box
     table.margin_left = 0
     table.margin_right = 0
 
-    fixed_table_layout(table)
     wrapper.width = wrapper.style.width = table.border_width()
     return block_box_layout(document, wrapper, max_position_y, skip_stack,
                             containing_block, device_size, page_is_empty,

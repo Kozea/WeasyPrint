@@ -713,7 +713,8 @@ def test_table_page_breaks():
     rows_per_page, rows_position_y = run('''
         <style>
             @page { -weasy-size: 120px }
-            h1 { height: 30px}
+            table { table-layout: fixed }
+            h1 { height: 30px }
             td { height: 40px }
         </style>
         <h1>Dummy title</h1>
@@ -739,7 +740,7 @@ def test_table_page_breaks():
             @page { -weasy-size: 120px }
             h1 { height: 30px}
             td { height: 40px }
-            table { page-break-inside: avoid }
+            table { page-break-inside: avoid; table-layout: fixed }
         </style>
         <h1>Dummy title</h1>
         <table>
@@ -758,7 +759,7 @@ def test_table_page_breaks():
             @page { -weasy-size: 120px }
             h1 { height: 30px}
             td { height: 40px }
-            table { page-break-inside: avoid }
+            table { page-break-inside: avoid; table-layout: fixed }
         </style>
         <h1>Dummy title</h1>
         <table>
@@ -779,6 +780,7 @@ def test_table_page_breaks():
             @page { -weasy-size: 120px }
             h1 { height: 30px}
             td { height: 40px }
+            table { table-layout: fixed }
         </style>
         <h1>Dummy title</h1>
         <table>
@@ -1577,7 +1579,10 @@ def test_table_column_width():
     source = '''
         <style>
             body { width: 20000px; margin: 0 }
-            table { width: 10000px; margin: 0 auto; border-spacing: 100px 0 }
+            table {
+              width: 10000px; margin: 0 auto; border-spacing: 100px 0;
+              table-layout: fixed
+            }
             td { border: 10px solid; padding: 1px }
         </style>
         <table>
@@ -1603,7 +1608,7 @@ def test_table_column_width():
         page, = parse(source)
     assert len(logs) == 1
     assert logs[0] == ('WARNING: This table row has more columns than '
-                       'the table, ignored 1 cells: (<TableCellBox td 22>,)')
+                       'the table, ignored 1 cells: (<TableCellBox td 25>,)')
     html, = page.children
     body, = html.children
     wrapper, = body.children
@@ -1669,7 +1674,7 @@ def test_table_column_width():
 
     page, = parse('''
         <style>
-            table { width: 1000px; border-spacing: 100px }
+            table { width: 1000px; border-spacing: 100px; table-layout: fixed }
         </style>
         <table>
             <tr>
@@ -1697,7 +1702,10 @@ def test_table_column_width():
         page, = parse('''
             <style>
                 body { width: %(body_width)s }
-                table { width: %(table_width)s; border-spacing: 100px }
+                table {
+                  width: %(table_width)s; border-spacing: 100px;
+                  table-layout: fixed
+                }
                 td { width: %(td_width)s }
             </style>
             <table>
@@ -1725,7 +1733,7 @@ def test_table_column_width():
 def test_table_row_height():
     page, = parse('''
         <table style="width: 1000px; border-spacing: 0 100px;
-                      font: 20px/1em serif; margin: 3px">
+                      font: 20px/1em serif; margin: 3px; table-layout: fixed">
             <tr>
                 <td rowspan=0 style="height: 420px; vertical-align: top">
                 <td>X<br>X<br>X
@@ -1808,7 +1816,7 @@ def test_table_wrapper():
     page, = parse('''
         <style>
             @page { -weasy-size: 1000px }
-            table { /* width: auto; */ height: 500px;
+            table { /* width: auto; */ height: 500px; table-layout: fixed;
                     padding: 1px; border: 10px solid; margin: 100px; }
         </style>
         <table></table>

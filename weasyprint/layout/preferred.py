@@ -49,9 +49,15 @@ def variable_and_fixed_widths(box, width=None):
     return variable_ratio, fixed_width
 
 
-def shrink_to_fit(box):
-    """Return ``(preferred_width, preferred_mimimum_width)`` for ``box``."""
-    return preferred_width(box), preferred_mimimum_width(box)
+def shrink_to_fit(box, available_width):
+    """Return the shrink-to-fit width of ``box``.
+
+    http://www.w3.org/TR/CSS21/visudet.html#float-width
+
+    """
+    return min(
+        max(preferred_mimimum_width(box), available_width),
+        preferred_width(box))
 
 
 def preferred_mimimum_width(box):

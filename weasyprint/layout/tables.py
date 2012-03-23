@@ -16,6 +16,7 @@ from ..compat import xrange
 from ..logger import LOGGER
 from ..formatting_structure import boxes
 from .percentages import resolve_percentages, resolve_one_percentage
+from .preferred import preferred_mimimum_width, preferred_width
 
 
 def table_layout(document, table, max_position_y, skip_stack,
@@ -333,7 +334,57 @@ def fixed_table_layout(table):
     # with possible floating point rounding errors.
     # (unless there is zero column)
     table.column_widths = column_widths
-    return column_widths
+
+
+def auto_table_layout(table, containing_block):
+    """Run the auto table layout and return a list of column widths.
+
+    http://www.w3.org/TR/CSS21/tables.html#auto-table-layout
+
+    """
+    column_preferred_widths = []
+    column_preferred_minimum_widths = []
+    for i, row in enumerate(table.children):
+        # TODO: handle row groups
+        for j, row_group in enumerate(row.children):
+            for k, cell in enumerate(row_group.children):
+                assert k <= len(column_preferred_widths)
+                if k == len(column_preferred_widths):
+                    column_preferred_widths.append([0] * i)
+                    column_preferred_minimum_widths.append([0] * i)
+                column_preferred_widths[k].append(preferred_width(cell))
+                column_preferred_minimum_widths[k].append(
+                    preferred_mimimum_width(cell))
+
+    column_preferred_widths = [
+        max(widths) for widths in column_preferred_widths]
+    column_preferred_minimum_widths = [
+        max(widths) for widths in column_preferred_minimum_widths]
+
+    table_preferred_minimum_width = sum(column_preferred_minimum_widths)
+    table_preferred_width = sum(column_preferred_widths)
+    table_maximum_width = max(
+        containing_block.width, table_preferred_minimum_width)
+    # TODO: handle the border spacings
+    table.width = min(table_preferred_width, table_maximum_width)
+
+    # TODO: find a better algorithm
+    if table_preferred_width == table.width:
+        # Preferred width fits in the containing block
+        table.column_widths = column_preferred_widths
+    else:
+        # Preferred width is too large for the containing block
+        # Use the minimum widths and add the lost space to the columns
+        # according to their preferred widths
+        table.column_widths = column_preferred_minimum_widths
+        lost_width = (
+            min(containing_block.width, table_preferred_width) -
+            table_preferred_minimum_width)
+        table.column_widths = [
+            (column_width + lost_width *
+             preferred_column_width / table_preferred_width)
+            for (preferred_column_width, column_width)
+            in zip(column_preferred_widths, column_preferred_minimum_widths)]
 
 
 def cell_baseline(cell):

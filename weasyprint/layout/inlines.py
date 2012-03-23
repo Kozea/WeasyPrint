@@ -290,8 +290,7 @@ def inline_block_box_layout(document, box, position_x, skip_stack,
         box.margin_right = 0
 
     if box.width == 'auto':
-        preferred, minimum = shrink_to_fit(box)
-        box.width = min(max(minimum, containing_block.width), preferred)
+        box.width = shrink_to_fit(box, containing_block.width)
 
     box.position_x = position_x
     box.position_y = 0

@@ -640,6 +640,14 @@ def quotes(values):
 
 @validator()
 @single_keyword
+def table_layout(keyword):
+    """Validation for the ``table-layout`` property"""
+    if keyword in ('fixed', 'auto'):
+        return keyword
+
+
+@validator()
+@single_keyword
 def text_align(keyword):
     """``text-align`` property validation."""
     return keyword in ('left', 'right', 'center', 'justify')
