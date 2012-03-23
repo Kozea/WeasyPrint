@@ -20,14 +20,9 @@ from .inlines import replaced_box_width
 from .percentages import resolve_percentages
 
 
-def shrink_to_fit(box, maximum_width=None):
-    """Return ``(preferred_width, preferred_mimimum_width)`` for ``box``.
-
-    If ``maximum_width`` is not ``None``, the preferred width is calculated to
-    be smaller than this width.
-
-    """
-    return preferred_width(box, maximum_width), preferred_mimimum_width(box)
+def shrink_to_fit(box):
+    """Return ``(preferred_width, preferred_mimimum_width)`` for ``box``."""
+    return preferred_width(box), preferred_mimimum_width(box)
 
 
 def preferred_mimimum_width(box, containing_block=None):
@@ -46,19 +41,16 @@ def preferred_mimimum_width(box, containing_block=None):
             type(box).__name__)
 
 
-def preferred_width(box, maximum_width=None, containing_block=None):
+def preferred_width(box, containing_block=None):
     """Return the preferred width for ``box``.
 
     This is the width by only breaking at forced line breaks.
 
-    If ``maximum_width`` is not ``None``, the preferred width is calculated to
-    be smaller than this width.
-
     """
     if isinstance(box, boxes.BlockContainerBox):
-        return block_preferred_width(box, maximum_width, containing_block)
+        return block_preferred_width(box, containing_block)
     elif isinstance(box, (boxes.InlineBox, boxes.LineBox)):
-        return inline_preferred_width(box, maximum_width, containing_block)
+        return inline_preferred_width(box, containing_block)
     else:
         raise TypeError(
             'Preferred width for %s not handled yet' % type(box).__name__)
@@ -82,13 +74,12 @@ def block_preferred_minimum_width(box, containing_block=None):
         raise TypeError('Width %s is unknown' % box.style['width'])
 
 
-def block_preferred_width(box, maximum_width=None, containing_block=None):
+def block_preferred_width(box, containing_block=None):
     """Return the preferred width for a ``BlockBox``."""
     if box.style['width'] == 'auto':
         if box.children:
             return max(
-                preferred_width(child, maximum_width, box)
-                for child in box.children)
+                preferred_width(child, box) for child in box.children)
         else:
             return 0
     elif isinstance(box.style['width'], (int, float)):
@@ -119,7 +110,7 @@ def inline_preferred_minimum_width(box, containing_block=None):
     return widest_line
 
 
-def inline_preferred_width(box, maximum_width=None, containing_block=None):
+def inline_preferred_width(box, containing_block=None):
     """Return the preferred width for an ``InlineBox``.
 
     *Warning:* only TextBox and InlineReplacedBox children are supported
@@ -134,7 +125,7 @@ def inline_preferred_width(box, maximum_width=None, containing_block=None):
             current_line += replaced_preferred_width(child)
         else:
             assert isinstance(child, boxes.TextBox)
-            lines = list(text_lines_width(child, width=maximum_width))
+            lines = list(text_lines_width(child, width=None))
             assert lines
             # The first text line goes on the current line
             current_line += lines[0]
