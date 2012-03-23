@@ -299,7 +299,7 @@ def inline_block_box_layout(document, box, position_x, skip_stack,
         document, box, max_position_y=float('inf'), skip_stack=skip_stack,
         device_size=device_size, page_is_empty=True)
     # TODO: Why this translation?
-    box.translate(0, -box.height)
+    box.translate(0, -box.margin_height())
 
     return box
 
