@@ -30,23 +30,23 @@ def shrink_to_fit(box, maximum_width=None):
     return preferred_width(box, maximum_width), preferred_mimimum_width(box)
 
 
-def preferred_mimimum_width(box):
+def preferred_mimimum_width(box, containing_block=None):
     """Return the preferred minimum width for ``box``.
 
     This is the width by breaking at every line-break opportunity.
 
     """
     if isinstance(box, boxes.BlockContainerBox):
-        return block_preferred_minimum_width(box)
+        return block_preferred_minimum_width(box, containing_block)
     elif isinstance(box, (boxes.InlineBox, boxes.LineBox)):
-        return inline_preferred_minimum_width(box)
+        return inline_preferred_minimum_width(box, containing_block)
     else:
         raise TypeError(
             'Preferred minimum width for %s not handled yet' %
             type(box).__name__)
 
 
-def preferred_width(box, maximum_width=None):
+def preferred_width(box, maximum_width=None, containing_block=None):
     """Return the preferred width for ``box``.
 
     This is the width by only breaking at forced line breaks.
@@ -56,46 +56,51 @@ def preferred_width(box, maximum_width=None):
 
     """
     if isinstance(box, boxes.BlockContainerBox):
-        return block_preferred_width(box, maximum_width)
+        return block_preferred_width(box, maximum_width, containing_block)
     elif isinstance(box, (boxes.InlineBox, boxes.LineBox)):
-        return inline_preferred_width(box, maximum_width)
+        return inline_preferred_width(box, maximum_width, containing_block)
     else:
         raise TypeError(
             'Preferred width for %s not handled yet' % type(box).__name__)
 
 
-def block_preferred_minimum_width(box):
+def block_preferred_minimum_width(box, containing_block=None):
     """Return the preferred minimum width for a ``BlockBox``."""
     if box.style['width'] == 'auto':
         if box.children:
             return max(
-                preferred_mimimum_width(child) for child in box.children)
-        else:
-            return 0
-    elif isinstance(box.style['width'], (int, float)):
-        return box.style['width']
-    else:
-        # TODO: handle % widths
-        raise TypeError('Width %s is unknown' % box.style['width'])
-
-
-def block_preferred_width(box, maximum_width=None):
-    """Return the preferred width for a ``BlockBox``."""
-    if box.style['width'] == 'auto':
-        if box.children:
-            return max(
-                preferred_width(child, maximum_width)
+                preferred_mimimum_width(child, box)
                 for child in box.children)
         else:
             return 0
     elif isinstance(box.style['width'], (int, float)):
-        return box.style['width']
+        assert containing_block
+        resolve_percentages(box, containing_block)
+        return box.margin_width()
     else:
-        # TODO: handle % widths
+        # TODO: find a value for % width
         raise TypeError('Width %s is unknown' % box.style['width'])
 
 
-def inline_preferred_minimum_width(box):
+def block_preferred_width(box, maximum_width=None, containing_block=None):
+    """Return the preferred width for a ``BlockBox``."""
+    if box.style['width'] == 'auto':
+        if box.children:
+            return max(
+                preferred_width(child, maximum_width, box)
+                for child in box.children)
+        else:
+            return 0
+    elif isinstance(box.style['width'], (int, float)):
+        assert containing_block
+        resolve_percentages(box, containing_block)
+        return box.margin_width()
+    else:
+        # TODO: find a value for % width
+        raise TypeError('Width %s is unknown' % box.style['width'])
+
+
+def inline_preferred_minimum_width(box, containing_block=None):
     """Return the preferred minimum width for an ``InlineBox``.
 
     *Warning:* only TextBox and InlineReplacedBox children are supported
@@ -114,7 +119,7 @@ def inline_preferred_minimum_width(box):
     return widest_line
 
 
-def inline_preferred_width(box, maximum_width=None):
+def inline_preferred_width(box, maximum_width=None, containing_block=None):
     """Return the preferred width for an ``InlineBox``.
 
     *Warning:* only TextBox and InlineReplacedBox children are supported
