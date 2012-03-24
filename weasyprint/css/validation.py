@@ -15,8 +15,12 @@ from __future__ import division, unicode_literals
 
 import functools
 
+from tinycss.color3 import parse_color
+from tinycss.parsing import split_on_comma
+
 from ..logger import LOGGER
 from ..formatting_structure import counters
+from ..compat import urljoin
 from .values import (get_keyword, get_single_keyword, as_css,
                      make_percentage_value)
 from .properties import INITIAL_VALUES, NOT_PRINT_MEDIA
@@ -63,7 +67,7 @@ class InvalidValues(ValueError):
 
 # Validators
 
-def validator(property_name=None, prefixed=False):
+def validator(property_name=None, prefixed=False, wants_base_url=False):
     """Decorator adding a function to the ``VALIDATORS``.
 
     The name of the property covered by the decorated function is set to
@@ -80,6 +84,7 @@ def validator(property_name=None, prefixed=False):
         assert name in INITIAL_VALUES, name
         assert name not in VALIDATORS, name
 
+        function.wants_base_url = wants_base_url
         VALIDATORS[name] = function
         if prefixed:
             PREFIXED.add(name)
@@ -101,10 +106,10 @@ def single_keyword(function):
 def single_value(function):
     """Decorator for validators that only accept a single value."""
     @functools.wraps(function)
-    def single_value_validator(values):
+    def single_value_validator(values, *args):
         """Validate a property whose value is single."""
         if len(values) == 1:
-            return function(values[0])
+            return function(values[0], *args)
     single_value_validator.__func__ = function
     return single_value_validator
 
@@ -119,9 +124,9 @@ def is_dimension(value, negative=True):
     # Units may be ommited on zero lenghts.
     return (
         type_ == 'DIMENSION' and (negative or value.value >= 0) and (
-            value.dimension in computed_values.LENGTHS_TO_PIXELS or
-            value.dimension in ('em', 'ex'))
-        ) or (type_ == 'NUMBER' and value.value == 0)
+            value.unit in computed_values.LENGTHS_TO_PIXELS or
+            value.unit in ('em', 'ex'))
+        ) or (type_ in ('NUMBER', 'INTEGER') and value.value == 0)
 
 
 def is_dimension_or_percentage(value, negative=True):
@@ -137,7 +142,7 @@ def is_dimension_or_percentage(value, negative=True):
 def is_angle(value):
     """Return whether the argument is an angle value."""
     return value.type == 'DIMENSION' and \
-        value.dimension in computed_values.ANGLE_TO_RADIANS
+        value.unit in computed_values.ANGLE_TO_RADIANS
 
 
 @validator()
@@ -156,21 +161,22 @@ def background_attachment(keyword):
 @single_value
 def color(value):
     """``*-color`` and ``color`` properties validation."""
-    if value.type == 'COLOR_VALUE':
-        return value
-    if get_keyword(value) == 'currentColor':
+    value = parse_color(value)
+    if value == 'currentColor':
         return 'inherit'
+    else:
+        return value
 
 
-@validator('background-image')
-@validator('list-style-image')
+@validator('background-image', wants_base_url=True)
+@validator('list-style-image', wants_base_url=True)
 @single_value
-def image(value):
+def image(value, base_url):
     """``*-image`` properties validation."""
     if get_keyword(value) == 'none':
         return 'none'
     if value.type == 'URI':
-        return value.absoluteUri
+        return urljoin(base_url, value.value)
 
 
 @validator('transform-origin', prefixed=True)  # Not in CR yet
@@ -323,18 +329,18 @@ def clip(value):
         return []
 
 
-@validator()
-def content(values):
+@validator(wants_base_url=True)
+def content(values, base_url):
     """``content`` property validation."""
     keyword = get_single_keyword(values)
     if keyword in ('normal', 'none'):
         return keyword
-    parsed_values = [validate_content_value(v) for v in values]
+    parsed_values = [validate_content_value(base_url, v) for v in values]
     if None not in parsed_values:
         return parsed_values
 
 
-def validate_content_value(value):
+def validate_content_value(base_url, value):
     """Validation for a signle value for the ``content`` property.
 
     Return (type, content) or False for invalid values.
@@ -348,7 +354,7 @@ def validate_content_value(value):
     if type_ == 'STRING':
         return ('STRING', value.value)
     if type_ == 'URI':
-        return ('URI', value.absoluteUri)
+        return ('URI', urljoin(base_url, value.value))
     function = parse_function(value)
     if function:
         name, args = function
@@ -373,14 +379,13 @@ def parse_function(value):
     .
     """
     if value.type == 'FUNCTION':
-        seq = [e.value for e in value.seq]
-        # seq is expected to look like
-        # ['name(', ARG_1, ',', ARG_2, ',', ..., ARG_N, ')']
-        if (seq[0][-1] == '(' and seq[-1] == ')' and
-                all(v == ',' for v in seq[2:-1:2])):
-            name = seq[0][:-1]
-            args = seq[1:-1:2]
-            return name, args
+        content = [token for token in value.content if token.type != 'S']
+        if len(content) % 2:
+            for token in content[1::2]:
+                if token.type != 'DELIM' or token.value != ',':
+                    break
+            else:
+                return value.function_name.lower(), content[::2]
 
 
 @validator()
@@ -411,8 +416,7 @@ def counter(values, default_integer):
         if counter_name in ('none', 'initial', 'inherit'):
             raise InvalidValues('Invalid counter name: '+ counter_name)
         value = next(values, None)
-        if (value is not None and value.type == 'NUMBER' and
-                isinstance(value.value, int)):
+        if value is not None and value.type == 'INTEGER':
             # Found an integer. Use it and get the next value
             integer = value.value
             value = next(values, None)
@@ -472,14 +476,17 @@ def display(keyword):
 @validator()
 def font_family(values):
     """``font-family`` property validation."""
-    # TODO: we should split on commas only.
-    # " If a sequence of identifiers is given as a font family name, the
-    #   computed value is the name converted to a string by joining all the
-    #   identifiers in the sequence by single spaces. "
-    # http://www.w3.org/TR/CSS21/fonts.html#font-family-prop
-    # eg. `font-family: Foo  bar, "baz
-    if all(value.type in ('IDENT', 'STRING') for value in values):
-        return [value.value for value in values]
+    parts = split_on_comma(values)
+    families = []
+    for part in parts:
+        if len(part) == 1 and part[0].type == 'STRING':
+            families.append(part[0].value)
+        elif part and all(token.type == 'IDENT' for token in part):
+            families.append(' '.join(token.value for token in part))
+        else:
+            break
+    else:
+        return families
 
 
 @validator()
@@ -519,7 +526,7 @@ def font_weight(value):
     keyword = get_keyword(value)
     if keyword in ('normal', 'bold', 'bolder', 'lighter'):
         return keyword
-    if value.type == 'NUMBER':
+    if value.type == 'INTEGER':
         value = value.value
         if value in [100, 200, 300, 400, 500, 600, 700, 800, 900]:
             return value
@@ -542,7 +549,7 @@ def line_height(value):
     """``line-height`` property validation."""
     if get_keyword(value) == 'normal':
         return 'normal'
-    if (value.type in ('NUMBER', 'DIMENSION', 'PERCENTAGE') and
+    if (value.type in ('NUMBER', 'INTEGER', 'DIMENSION', 'PERCENTAGE') and
             value.value >= 0):
         return value
 
@@ -576,7 +583,7 @@ def length_or_precentage(value):
 @single_value
 def opacity(value):
     """Validation for the ``opacity`` property."""
-    if value.type == 'NUMBER':
+    if value.type in ('NUMBER', 'INTEGER'):
         return min(1, max(0, value.value))
 
 
@@ -585,7 +592,7 @@ def opacity(value):
 @single_value
 def orphans_widows(value):
     """Validation for the ``orphans`` or ``widows`` properties."""
-    if value.type == 'NUMBER':  # INTEGER
+    if value.type == 'INTEGER':
         value = value.value
         if int(value) == value and value >= 1:
             return value
@@ -770,19 +777,20 @@ def transform_function(value):
             return 'translate', (args[0], 0)
         elif name == 'translatey' and is_dimension_or_percentage(args[0]):
             return 'translate', (0, args[0])
-        elif name == 'scalex' and args[0].type == 'NUMBER':
+        elif name == 'scalex' and args[0].type in ('NUMBER', 'INTEGER'):
             return 'scale', (args[0].value, 1)
-        elif name == 'scaley' and args[0].type == 'NUMBER':
+        elif name == 'scaley' and args[0].type in ('NUMBER', 'INTEGER'):
             return 'scale', (1, args[0].value)
-        elif name == 'scale' and args[0].type == 'NUMBER':
+        elif name == 'scale' and args[0].type in ('NUMBER', 'INTEGER'):
             return 'scale', (args[0].value,) * 2
     elif len(args) == 2:
-        if name == 'scale' and all(a.type == 'NUMBER' for a in args):
+        if name == 'scale' and all(a.type in ('NUMBER', 'INTEGER')
+                                   for a in args):
             return name, [arg.value for arg in args]
         if name == 'translate' and all(map(is_dimension_or_percentage, args)):
             return name, args
     elif len(args) == 6 and name == 'matrix' and all(
-            a.type == 'NUMBER' for a in args):
+            a.type in ('NUMBER', 'INTEGER') for a in args):
         return name, [arg.value for arg in args]
     raise InvalidValues
 
@@ -809,7 +817,7 @@ def expander(property_name):
 @expander('border-width')
 @expander('margin')
 @expander('padding')
-def expand_four_sides(name, values):
+def expand_four_sides(base_url, name, values):
     """Expand properties setting a value for the four sides of a box."""
     # Make sure we have 4 values
     if len(values) == 1:
@@ -831,11 +839,12 @@ def expand_four_sides(name, values):
 
         # validate_non_shorthand returns [(name, value)], we want
         # to yield (name, value)
-        result, = validate_non_shorthand(new_name, [value], required=True)
+        result, = validate_non_shorthand(
+            base_url, new_name, [value], required=True)
         yield result
 
 
-def generic_expander(*expanded_names):
+def generic_expander(*expanded_names, **kwargs):
     """Decorator helping expanders to handle ``inherit`` and ``initial``.
 
     Wrap an expander so that it does not have to handle the 'inherit' and
@@ -843,11 +852,13 @@ def generic_expander(*expanded_names):
     get the initial value.
 
     """
+    wants_base_url = kwargs.pop('wants_base_url', False)
+    assert not kwargs
     expanded_names = [name.replace('-', '_') for name in expanded_names]
     def generic_expander_decorator(wrapped):
         """Decorate the ``wrapped`` expander."""
         @functools.wraps(wrapped)
-        def generic_expander_wrapper(name, values):
+        def generic_expander_wrapper(base_url, name, values):
             """Wrap the expander."""
             keyword = get_single_keyword(values)
             if keyword in ('inherit', 'initial'):
@@ -856,7 +867,11 @@ def generic_expander(*expanded_names):
             else:
                 skip_validation = False
                 results = {}
-                for new_name, new_values in wrapped(name, values):
+                if wants_base_url:
+                    result = wrapped(name, values, base_url)
+                else:
+                    result = wrapped(name, values)
+                for new_name, new_values in result:
                     assert new_name in expanded_names, new_name
                     if new_name in results:
                         raise InvalidValues(
@@ -876,7 +891,7 @@ def generic_expander(*expanded_names):
                     if not skip_validation:
                         # validate_non_shorthand returns [(name, value)]
                         (actual_new_name, values), = validate_non_shorthand(
-                            actual_new_name, values, required=True)
+                            base_url, actual_new_name, values, required=True)
                 else:
                     values = INITIAL_VALUES[actual_new_name]
 
@@ -886,8 +901,8 @@ def generic_expander(*expanded_names):
 
 
 @expander('list-style')
-@generic_expander('-type', '-position', '-image')
-def expand_list_style(name, values):
+@generic_expander('-type', '-position', '-image', wants_base_url=True)
+def expand_list_style(name, values, base_url):
     """Expand the ``list-style`` shorthand property.
 
     See http://www.w3.org/TR/CSS21/generate.html#propdef-list-style
@@ -908,7 +923,7 @@ def expand_list_style(name, values):
             type_specified = True
         elif list_style_position([value]) is not None:
             suffix = '_position'
-        elif image([value]) is not None:
+        elif image([value], base_url) is not None:
             suffix = '_image'
             image_specified = True
         else:
@@ -929,14 +944,14 @@ def expand_list_style(name, values):
 
 
 @expander('border')
-def expand_border(name, values):
+def expand_border(base_url, name, values):
     """Expand the ``border`` shorthand property.
 
     See http://www.w3.org/TR/CSS21/box.html#propdef-border
 
     """
     for suffix in ('_top', '_right', '_bottom', '_left'):
-        for new_prop in expand_border_side(name + suffix, values):
+        for new_prop in expand_border_side(base_url, name + suffix, values):
             yield new_prop
 
 
@@ -967,13 +982,14 @@ def is_valid_background_positition(value):
     """Tell whether the value is valid for ``background-position``."""
     return (
         value.type in ('DIMENSION', 'PERCENTAGE') or
-        (value.type == 'NUMBER' and value.value == 0) or
+        (value.type in ('NUMBER', 'INTEGER') and value.value == 0) or
         get_keyword(value) in ('left', 'right', 'top', 'bottom', 'center'))
 
 
 @expander('background')
-@generic_expander('-color', '-image', '-repeat', '-attachment', '-position')
-def expand_background(name, values):
+@generic_expander('-color', '-image', '-repeat', '-attachment', '-position',
+                  wants_base_url=True)
+def expand_background(name, values, base_url):
     """Expand the ``background`` shorthand property.
 
     See http://www.w3.org/TR/CSS21/colors.html#propdef-background
@@ -985,7 +1001,7 @@ def expand_background(name, values):
         value = values.pop()
         if color([value]) is not None:
             suffix = '_color'
-        elif image([value]) is not None:
+        elif image([value], base_url) is not None:
             suffix = '_image'
         elif background_repeat([value]) is not None:
             suffix = '_repeat'
@@ -1059,7 +1075,10 @@ def expand_font(name, values):
         raise InvalidValues
 
     value = values.pop()
-    if line_height([value]) is not None:
+    if value.type == 'DELIM' and value.value == '/':
+        value = values.pop()
+        if line_height([value]) is None:
+            raise InvalidValues
         yield 'line_height', [value]
     else:
         # We pop()ed a font-family, add it back
@@ -1072,7 +1091,7 @@ def expand_font(name, values):
     yield '_family', values
 
 
-def validate_non_shorthand(name, values, required=False):
+def validate_non_shorthand(base_url, name, values, required=False):
     """Default validator for non-shorthand properties."""
     if not required and name not in INITIAL_VALUES:
         raise InvalidValues('unknown property')
@@ -1084,13 +1103,17 @@ def validate_non_shorthand(name, values, required=False):
     if keyword in ('initial', 'inherit'):
         value = keyword
     else:
-        value = VALIDATORS[name](values)
+        function = VALIDATORS[name]
+        if function.wants_base_url:
+            value = function(values, base_url)
+        else:
+            value = function(values)
         if value is None:
             raise InvalidValues
     return [(name, value)]
 
 
-def validate_and_expand(name, values):
+def validate_and_expand(base_url, name, values):
     """Expand and validate shorthand properties.
 
     The invalid or unsupported declarations are ignored and logged.
@@ -1112,7 +1135,8 @@ def validate_and_expand(name, values):
                 name = unprefixed_name
         expander_ = EXPANDERS.get(name, validate_non_shorthand)
         try:
-            results = expander_(name, values)
+            tokens = [token for token in values if token.type != 'S']
+            results = expander_(base_url, name, tokens)
             # Use list() to consume any generator now,
             # so that InvalidValues is caught.
             return list(results)
@@ -1123,5 +1147,5 @@ def validate_and_expand(name, values):
             else:
                 reason = 'invalid value'
     getattr(LOGGER, level)('Ignored declaration: `%s: %s`, %s.',
-        name.replace('_', '-'), as_css(values), reason)
+        name.replace('_', '-'), values.as_css, reason)
     return []

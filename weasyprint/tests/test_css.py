@@ -14,7 +14,6 @@ from __future__ import division, unicode_literals
 
 import os.path
 
-import cssutils
 from pytest import raises
 
 from .testing_utils import (
@@ -24,7 +23,7 @@ from .. import css
 from ..css.computed_values import used_line_height
 from ..document import PNGDocument
 from ..utils import parse_data_url
-from .. import HTML
+from .. import HTML, CSS
 
 
 def parse_html(filename, **kwargs):
@@ -85,7 +84,7 @@ def test_find_stylesheets():
     sheets = list(css.find_stylesheets(document))
     assert len(sheets) == 3
     # Also test that stylesheets are in tree order
-    assert [s.href.rsplit('/', 1)[-1].rsplit(',', 1)[-1] for s in sheets] \
+    assert [s.base_url.rsplit('/', 1)[-1].rsplit(',', 1)[-1] for s in sheets] \
         == ['sheet1.css', 'a%7Bcolor%3AcurrentColor%7D',
             'doc1.html']
 
@@ -93,26 +92,30 @@ def test_find_stylesheets():
                       for rule in css.effective_rules(sheet, 'print'))
     assert len(rules) == 10
     # Also test appearance order
-    assert [rule.selectorText for rule in rules] \
-        == ['a', 'li', 'p', 'ul', 'li', 'a:after', ':first', 'ul',
+    print(rules[0].selector.as_css)
+    assert [rule.selector if rule.at_keyword else rule.selector.as_css.strip()
+                for rule in rules] == [
+            'a', 'li', 'p', 'ul', 'li', 'a:after', (None, 'first'), 'ul',
             'body > h1:first-child', 'h1 ~ p ~ ul a:after']
 
 
 @assert_no_logs
 def test_expand_shorthands():
     """Test the expand shorthands."""
-    sheet = cssutils.parseFile(resource_filename('sheet2.css'))
-    assert sheet.cssRules[0].selectorText == 'li'
+    sheet = CSS(resource_filename('sheet2.css')).stylesheet
+    assert sheet.statements[0].selector.as_css == 'li '
 
-    style = sheet.cssRules[0].style
+    style = dict((d.name, d.value.as_css)
+                 for d in sheet.statements[0].declarations)
     assert style['margin'] == '2em 0'
     assert style['margin-bottom'] == '3em'
     assert style['margin-left'] == '4em'
-    assert not style['margin-top']
+    assert 'margin-top' not in style
 
     style = dict(
         (name, css.values.as_css([value]))
-        for name, (value, _priority) in css.effective_declarations(style))
+        for name, (value, _priority) in css.effective_declarations(
+            '', sheet.statements[0].declarations))
 
     assert 'margin' not in style
     assert style['margin_top'] == '2em'
@@ -123,11 +126,6 @@ def test_expand_shorthands():
         '4em was after the shorthand, should not be masked'
 
 
-def parse_css(filename):
-    """Parse and return the CSS at ``filename``."""
-    return cssutils.parseFile(resource_filename(filename))
-
-
 @assert_no_logs
 def test_annotate_document():
     """Test a document with inline style."""
@@ -136,8 +134,8 @@ def test_annotate_document():
 
     document = parse_html(
         'doc1.html',
-        user_stylesheets=[parse_css('user.css')],
-        user_agent_stylesheets=[parse_css('mini_ua.css')],
+        user_stylesheets=[CSS(resource_filename('user.css'))],
+        user_agent_stylesheets=[CSS(resource_filename('mini_ua.css'))],
     )
 
     # Element objects behave a lists of their children
@@ -190,17 +188,14 @@ def test_annotate_document():
     assert a.padding_bottom == 3
     assert a.padding_left == 4
 
-    color = a.color
-    assert (color.red, color.green, color.blue, color.alpha) == (255, 0, 0, 1)
+    assert a.color == (1, 0, 0, 1)
     # Test the initial border-color: currentColor
-    color = a.border_top_color
-    assert (color.red, color.green, color.blue, color.alpha) == (255, 0, 0, 1)
+    assert a.border_top_color == (1, 0, 0, 1)
 
     # The href attr should be as in the source, not made absolute.
     assert after.content == [
         ('STRING', ' ['), ('STRING', 'home.html'), ('STRING', ']')]
-    color = after.background_color
-    assert (color.red, color.green, color.blue, color.alpha) == (255, 0, 0, 1)
+    assert after.background_color == (1, 0, 0, 1)
 
     # TODO much more tests here: test that origin and selector precedence
     # and inheritance are correct, ...
@@ -221,7 +216,7 @@ def test_default_stylesheet():
 def test_page():
     """Test the ``@page`` properties."""
     document = parse_html('doc1.html', user_stylesheets=[
-        cssutils.parseString('''
+        CSS(string='''
             html {
                 color: red;
             }
@@ -246,25 +241,25 @@ def test_page():
     assert style.margin_top == 5
     assert style.margin_left == 10
     assert style.margin_bottom == 10
-    assert style.color.cssText == 'red'  # inherited from html
+    assert style.color == (1, 0, 0, 1)  # red, inherited from html
 
     style = document.style_for('first_right_page')
     assert style.margin_top == 5
     assert style.margin_left == 10
     assert style.margin_bottom == 16
-    assert style.color.cssText == 'blue'
+    assert style.color == (0, 0, 1, 1)  # blue
 
     style = document.style_for('left_page')
     assert style.margin_top == 10
     assert style.margin_left == 10
     assert style.margin_bottom == 10
-    assert style.color.cssText == 'red'  # inherited from html
+    assert style.color == (1, 0, 0, 1)  # red, inherited from html
 
     style = document.style_for('right_page')
     assert style.margin_top == 10
     assert style.margin_left == 10
     assert style.margin_bottom == 16
-    assert style.color.cssText == 'blue'
+    assert style.color == (0, 0, 1, 1)  # blue
 
     style = document.style_for('first_left_page', '@top-left')
     assert style is None
@@ -282,11 +277,11 @@ def test_warnings():
     """Check that appropriate warnings are logged."""
     for source, messages in [
         ('<style>:link { margin: 2cm',
-            ['WARNING: Unsupported selector']),
+            ['WARNING: Parse error', 'pseudo-class', 'unsupported']),
         ('<style>@page foo { margin: 2cm',
-            ['WARNING: Unsupported @page selector']),
+            ['WARNING: Named pages are not supported yet']),
         ('<link rel=stylesheet href=data:image/png,>',
-            ['WARNING: Expected `text/css` for stylsheet at']),
+            ['WARNING: Unsupported stylesheet type: image/png']),
         ('<style>foo { margin-color: red',
             ['WARNING: Ignored declaration', 'unknown property']),
         ('<style>foo { margin-top: red',
@@ -298,6 +293,7 @@ def test_warnings():
     ]:
         with capture_logs() as logs:
             TestPNGDocument(source).style_for('')
+        print(source)
         assert len(logs) == 1
         for message in messages:
             assert message in logs[0]
@@ -310,14 +306,14 @@ def test_error_recovery():
             <style> html { color red; color: blue; color
         ''')
         html = document.formatting_structure
-        assert html.style.color.value == 'blue'
+        assert html.style.color == (0, 0, 1, 1)  # blue
 
         document = TestPNGDocument('''
             <html style="color; color: blue; color red">
         ''')
         html = document.formatting_structure
-        assert html.style.color.value == 'blue'
-    assert len(logs) == 12
+        assert html.style.color == (0, 0, 1, 1)  # blue
+    assert len(logs) == 4
 
 
 @assert_no_logs

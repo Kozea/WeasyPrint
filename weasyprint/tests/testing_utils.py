@@ -18,15 +18,16 @@ import logging
 import contextlib
 import functools
 
-from .. import HTML
+from .. import HTML, CSS
 from ..document import PNGDocument
-from ..css import PARSER as CSS_PARSER
+from ..css import PARSER
 from ..logger import LOGGER
+
 
 # TODO: find a way to not depend on a specific font
 FONTS = 'Liberation Sans, Arial'
 
-TEST_UA_STYLESHEET = CSS_PARSER.parseFile(os.path.join(
+TEST_UA_STYLESHEET = CSS(os.path.join(
     os.path.dirname(__file__), '..', 'css', 'tests_ua.css'
 ))
 

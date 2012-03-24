@@ -12,22 +12,26 @@
 
 from __future__ import division, unicode_literals
 
+import os.path
 import io
 import base64
-
-from cssutils.helper import path2url
 
 from . import VERSION
 from .logger import LOGGER
 from .compat import (
     urljoin, urlparse, unquote_to_bytes, urlopen_contenttype, Request,
-    parse_email)
+    parse_email, pathname2url)
 
 
 # TODO: Most of this module is URL-related. Rename it to weasyprint.urls?
 
 
 HTTP_USER_AGENT = 'WeasyPrint/%s http://weasyprint.org/' % VERSION
+
+
+def path2url(path):
+    """Return file URL of `path`"""
+    return 'file:' + pathname2url(os.path.abspath(path))
 
 
 def get_url_attribute(element, key):
@@ -40,6 +44,9 @@ def get_url_attribute(element, key):
     if attr_value:
         attr_value = attr_value.strip()
         if attr_value:
+            # TODO: support the <base> HTML element, but do not use
+            # lxml.html.HtmlElement.make_links_absolute() that changes
+            # the tree for content: attr(href)
             return urljoin(element.base_url, attr_value)
 
 

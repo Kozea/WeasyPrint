@@ -12,15 +12,16 @@
 
 from __future__ import division, unicode_literals
 
-from cssutils.css import PropertyValue
+from tinycss.color3 import COLOR_KEYWORDS
 
+from .values import make_percentage_value
 
 # See http://www.w3.org/TR/CSS21/propidx.html
 INITIAL_VALUES = {
     'background_attachment': 'scroll',
-    'background_color': PropertyValue('transparent')[0],
+    'background_color': COLOR_KEYWORDS['transparent'],
     'background_image': 'none',
-    'background_position': list(PropertyValue('0% 0%')),
+    'background_position': (make_percentage_value(0),) * 2,
     'background_repeat': 'repeat',
     'background_clip': 'border-box',  # CSS3
     'background_origin': 'padding-box',  # CSS3
@@ -44,7 +45,7 @@ INITIAL_VALUES = {
     'caption_side': 'top',
     'clear': 'none',
     'clip': (),  # empty collection, computed value for 'auto'
-    'color': PropertyValue('#000')[0],     # depends on user agent
+    'color': COLOR_KEYWORDS['black'],     # chosen by the user agent
     'content': 'normal',
     # Means 'none', but allow `display: list-item` to increment the
     # list-item counter. If we ever have a way for authors to query
@@ -114,7 +115,7 @@ INITIAL_VALUES = {
     'opacity': 1,
 
     # CSS3 2D Transforms: http://www.w3.org/TR/css3-2d-transforms
-    'transform_origin': list(PropertyValue('50% 50%')),
+    'transform_origin': (make_percentage_value(50),) * 2,
     'transform': (),  # computed value for 'none'
 
     # Taken from SVG:

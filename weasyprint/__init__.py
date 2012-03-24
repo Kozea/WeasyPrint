@@ -138,32 +138,47 @@ class CSS(Resource):
 
     """
     def __init__(self, guess=None, filename=None, url=None, file_obj=None,
-                 string=None, encoding=None, base_url=None):
+                 string=None, encoding=None, base_url=None,
+                 _check_mime_type=False):
         from .css import PARSER
+        from .utils import path2url, urlopen
 
         source_type, source, base_url = _select_source(
             guess, filename, url, file_obj, string, base_url)
 
-        if source_type == 'file_obj':
-            source = source.read()
-            source_type = 'string'
-        if source_type == 'url':
-            self.stylesheet = PARSER.parseUrl(source, encoding=encoding)
-            if base_url is not None:
-                # source and href are the same for parseUrl
-                self.stylesheet.href = base_url
+        kwargs = dict(linking_encoding=encoding)
+        if source_type == 'string':
+            if isinstance(source, bytes):
+                method = 'parse_stylesheet_bytes'
+            else:
+                # unicode, no encoding
+                method = 'parse_stylesheet'
+                kwargs.clear()
+        elif source_type == 'url':
+            method = 'parse_stylesheet_file'
+            source, mime_type, kwargs['protocol_encoding'] = urlopen(source)
+            if _check_mime_type:
+                self.mime_type = mime_type
+                if mime_type != 'text/css':
+                    return
         else:
-            parser = {'filename': PARSER.parseFile,
-                      'string': PARSER.parseString}[source_type]
-            self.stylesheet = parser(source, encoding=encoding, href=base_url)
+            # file_obj or filename
+            method = 'parse_stylesheet_file'
+        self.stylesheet = getattr(PARSER, method)(source, **kwargs)
+        self.base_url = base_url
+        self.media = ['all']
+        for error in self.stylesheet.errors:
+            LOGGER.warn(error)
 
 
-def _select_source(guess, filename, url, file_obj, string, base_url):
+
+def _select_source(guess=None, filename=None, url=None, file_obj=None,
+                   string=None, base_url=None):
     """
     Check that only one input is not None, and return it with the
     normalized ``base_url``.
     """
-    from .utils import ensure_url
+    from .utils import path2url, ensure_url
     from .compat import urlparse
 
     if base_url is not None:
@@ -174,19 +189,18 @@ def _select_source(guess, filename, url, file_obj, string, base_url):
     if nones == [False, True, True, True, True]:
         if hasattr(guess, 'read'):
             type_ = 'file_obj'
-            if base_url is None:
-                # filesystem file objects have a 'name' attribute.
-                name = getattr(guess, 'name', None)
-                if name:
-                    base_url = ensure_url(name)
         elif urlparse(guess).scheme:
             type_ = 'url'
         else:
             type_ = 'filename'
-        return type_, guess, base_url
+        return _select_source(base_url=base_url, **{type_: guess})
     if nones == [True, False, True, True, True]:
+        if base_url is None:
+            base_url = path2url(filename)
         return 'filename', filename, base_url
     if nones == [True, True, False, True, True]:
+        if base_url is None:
+            base_url = url
         return 'url', url, base_url
     if nones == [True, True, True, False, True]:
         if base_url is None:
@@ -211,6 +225,6 @@ def _parse_stylesheets(stylesheets):
         return
     for css in stylesheets:
         if hasattr(css, 'stylesheet'):
-            yield css.stylesheet
+            yield css
         else:
-            yield CSS(css).stylesheet
+            yield CSS(css)

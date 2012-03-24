@@ -35,8 +35,8 @@ def get_single_keyword(values):
     # Fast but unsafe, as it depends on private attributes
     if len(values) == 1:
         value = values[0]
-        if value._type == 'IDENT':
-            return value._value
+        if value.type == 'IDENT':
+            return value.value
 
 
 def get_percentage_value(value):
@@ -46,8 +46,6 @@ def get_percentage_value(value):
 
     """
     if getattr(value, 'type', 'other') == 'PERCENTAGE':
-        # cssutils promises that `DimensionValue.value` is an int or float
-        assert isinstance(value.value, (int, float))
         return value.value
     else:
         # Not a percentage
@@ -56,10 +54,10 @@ def get_percentage_value(value):
 
 def as_css(values):
     """Return the string reperesentation of the ``values`` list."""
-    return ' '.join(getattr(value, 'cssText', value) for value in values)
+    return ' '.join('%s' % getattr(value, 'as_css', value) for value in values)
 
 
-FakeValue = collections.namedtuple('FakeValue', ('type', 'value', 'cssText'))
+FakeValue = collections.namedtuple('FakeValue', ('type', 'value', 'as_css'))
 
 
 def make_percentage_value(value):

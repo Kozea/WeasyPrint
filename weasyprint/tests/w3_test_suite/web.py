@@ -18,7 +18,6 @@ from __future__ import division, unicode_literals
 import io
 import os.path
 
-import cssutils
 import lxml.html
 # Don’t try to import Flask on Python 3
 

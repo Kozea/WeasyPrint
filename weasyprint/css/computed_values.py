@@ -244,23 +244,24 @@ def length_list(computer, name, values):
 @register_computer('text-indent')
 def length(computer, name, value, font_size=None):
     """Compute a length ``value``."""
-    if getattr(value, 'type', 'other') == 'NUMBER' and value.value == 0:
+    if (getattr(value, 'type', 'other') in ('NUMBER', 'INTEGER')
+            and value.value == 0):
         return 0
 
     if getattr(value, 'type', 'other') != 'DIMENSION':
         # No conversion needed.
         return value
 
-    if value.dimension in LENGTHS_TO_PIXELS:
+    if value.unit in LENGTHS_TO_PIXELS:
         # Convert absolute lengths to pixels
-        factor = LENGTHS_TO_PIXELS[value.dimension]
-    elif value.dimension in ('em', 'ex'):
+        factor = LENGTHS_TO_PIXELS[value.unit]
+    elif value.unit in ('em', 'ex'):
         if font_size is None:
             factor = computer.computed.font_size
         else:
             factor = font_size
 
-    if value.dimension == 'ex':
+    if value.unit == 'ex':
         factor *= 0.5
 
     return value.value * factor
@@ -347,19 +348,19 @@ def font_size(computer, name, value):
     parent_font_size = computer.parent_style['font_size']
 
     if value.type == 'DIMENSION':
-        if value.dimension == 'px':
+        if value.unit == 'px':
             factor = 1
-        elif value.dimension == 'em':
+        elif value.unit == 'em':
             factor = parent_font_size
-        elif value.dimension == 'ex':
+        elif value.unit == 'ex':
             # TODO: find a better way to measure ex, see
             # http://www.w3.org/TR/CSS21/syndata.html#length-units
             factor = parent_font_size * 0.5
-        elif value.dimension in LENGTHS_TO_PIXELS:
-            factor = LENGTHS_TO_PIXELS[value.dimension]
+        elif value.unit in LENGTHS_TO_PIXELS:
+            factor = LENGTHS_TO_PIXELS[value.unit]
     elif value.type == 'PERCENTAGE':
         factor = parent_font_size / 100.
-    elif value.type == 'NUMBER' and value.value == 0:
+    elif value.type in ('NUMBER', 'INTEGER') and value.value == 0:
         return 0
 
     # Raise if `factor` is not defined. It should be, because of validation.
@@ -388,7 +389,7 @@ def line_height(computer, name, value):
     # No .type attribute: already computed
     if value == 'normal' or not hasattr(value, 'type'):
         return value
-    elif value.type == 'NUMBER':
+    elif value.type in ('NUMBER', 'INTEGER'):
         return ('NUMBER', value.value)
     elif value.type == 'PERCENTAGE':
         factor = value.value / 100.
@@ -447,4 +448,4 @@ def angle_to_radian(value):
     """Take a cssutils DimensionValue for an angle and return the value
     in radians.
     """
-    return value.value * ANGLE_TO_RADIANS[value.dimension]
+    return value.value * ANGLE_TO_RADIANS[value.unit]

@@ -12,22 +12,27 @@
 
 from __future__ import division, unicode_literals
 
-from cssutils.css import PropertyValue
 from pytest import raises
+from tinycss.color3 import RGBA
 
 from .testing_utils import assert_no_logs
-from ..css import validation
+from ..css import validation, PARSER
 from ..css.values import as_css
 
 # TODO: merge this into test_css.py ?
 
 
+# TODO: rewrite this mess
 def expand_to_dict(short_name, short_values):
     """Helper to test shorthand properties expander functions."""
-    return dict((name, as_css(value) if isinstance(value, (list, tuple))
-                       else getattr(value, 'cssText', value))
+    return dict((name, value if isinstance(value, RGBA)
+                       else as_css(value) if isinstance(value, (list, tuple))
+                       else getattr(value, 'as_css', value))
                 for name, value in validation.EXPANDERS[short_name](
-                    short_name, list(PropertyValue(short_values))))
+                    '', short_name,
+                    [token for token in PARSER.parse_style_attr(
+                        'prop: ' + short_values)[0][0].value
+                     if token.type != 'S']))
 
 
 @assert_no_logs
@@ -73,7 +78,7 @@ def test_expand_borders():
     assert expand_to_dict('border_top', '3px dotted red') == {
         'border_top_width': '3px',
         'border_top_style': 'dotted',
-        'border_top_color': 'red',
+        'border_top_color': (1, 0, 0, 1),  # red
     }
     assert expand_to_dict('border_top', '3px dotted') == {
         'border_top_width': '3px',
@@ -83,29 +88,29 @@ def test_expand_borders():
     assert expand_to_dict('border_top', '3px red') == {
         'border_top_width': '3px',
         'border_top_style': 'none',
-        'border_top_color': 'red',
+        'border_top_color': (1, 0, 0, 1),  # red
     }
     assert expand_to_dict('border_top', 'solid') == {
         'border_top_width': 3,
         'border_top_style': 'solid',
         'border_top_color': 'currentColor',
     }
-    assert expand_to_dict('border', '6px dashed green') == {
+    assert expand_to_dict('border', '6px dashed lime') == {
         'border_top_width': '6px',
         'border_top_style': 'dashed',
-        'border_top_color': 'green',
+        'border_top_color': (0, 1, 0, 1),  # lime
 
         'border_left_width': '6px',
         'border_left_style': 'dashed',
-        'border_left_color': 'green',
+        'border_left_color': (0, 1, 0, 1),  # lime
 
         'border_bottom_width': '6px',
         'border_bottom_style': 'dashed',
-        'border_bottom_color': 'green',
+        'border_bottom_color': (0, 1, 0, 1),  # lime
 
         'border_right_width': '6px',
         'border_right_style': 'dashed',
-        'border_right_color': 'green',
+        'border_right_color': (0, 1, 0, 1),  # lime
     }
     with raises(ValueError):
         expand_to_dict('border', '6px dashed left')
@@ -153,7 +158,7 @@ def test_expand_background():
     """Test the ``background`` property."""
     assert_background(
         'red',
-        color='red', ##
+        color=(1, 0, 0, 1), ## red
         image='none',
         repeat='repeat',
         attachment='scroll',
@@ -162,7 +167,7 @@ def test_expand_background():
     )
     assert_background(
         'url(foo.png)',
-        color='transparent',
+        color=(0, 0, 0, 0), # transparent
         image='foo.png', ##
         repeat='repeat',
         attachment='scroll',
@@ -170,7 +175,7 @@ def test_expand_background():
     )
     assert_background(
         'no-repeat',
-        color='transparent',
+        color=(0, 0, 0, 0), # transparent
         image='none',
         repeat='no-repeat', ##
         attachment='scroll',
@@ -178,7 +183,7 @@ def test_expand_background():
     )
     assert_background(
         'fixed',
-        color='transparent',
+        color=(0, 0, 0, 0), # transparent
         image='none',
         repeat='repeat',
         attachment='fixed', ##
@@ -186,7 +191,7 @@ def test_expand_background():
     )
     assert_background(
         'top right',
-        color='transparent',
+        color=(0, 0, 0, 0), # transparent
         image='none',
         repeat='repeat',
         attachment='scroll',
@@ -195,7 +200,7 @@ def test_expand_background():
     )
     assert_background(
         'url(bar) #f00 repeat-y center left fixed',
-        color='#f00', ##
+        color=(1, 0, 0, 1), ## #f00
         image='bar', ##
         repeat='repeat-y', ##
         attachment='fixed', ##
@@ -204,7 +209,7 @@ def test_expand_background():
     )
     assert_background(
         '#00f 10% 200px',
-        color='#00f', ##
+        color=(0, 0, 1, 1), ## #00f
         image='none',
         repeat='repeat',
         attachment='scroll',
@@ -212,7 +217,7 @@ def test_expand_background():
     )
     assert_background(
         'right 78px fixed',
-        color='transparent',
+        color=(0, 0, 0, 0), # transparent
         image='none',
         repeat='repeat',
         attachment='fixed', ##

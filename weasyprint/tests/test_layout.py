@@ -37,13 +37,13 @@ def parse_without_layout(html_content):
 
 
 def validate_absolute_and_float(
-        real_non_shorthand, name, values, required=False):
+        real_non_shorthand, base_url, name, values, required=False):
     """Fake validator for ``absolute`` and ``float``."""
     value = values[0].value
     if (name == 'position' and value == 'absolute'
             ) or (name == 'float' and value == 'left'):
         return [(name, value)]
-    return real_non_shorthand(name, values, required)
+    return real_non_shorthand(base_url, name, values, required)
 
 
 def parse(html_content, return_document=False):

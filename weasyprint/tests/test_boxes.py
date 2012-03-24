@@ -100,11 +100,12 @@ def monkeypatch_validation(replacement):
         validation.validate_non_shorthand = real_non_shorthand
 
 
-def validate_inline_block(real_non_shorthand, name, values, required=False):
+def validate_inline_block(real_non_shorthand, base_url, name, values,
+                          required=False):
     """Fake validator for inline blocks."""
     if name == 'display' and values[0].value == 'inline-block':
         return [(name, 'inline-block')]
-    return real_non_shorthand(name, values, required)
+    return real_non_shorthand(base_url, name, values, required)
 
 
 def parse(html_content):
@@ -316,7 +317,7 @@ def test_styles():
 
     for child in descendants:
         # All boxes inherit the color
-        assert child.style.color.value == 'blue'
+        assert child.style.color == (0, 0, 1, 1)  # blue
         # Only non-anonymous boxes have margins
         if child.style.anonymous:
             assert child.style.margin_top == 0
