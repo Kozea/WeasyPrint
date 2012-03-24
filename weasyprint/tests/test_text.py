@@ -14,7 +14,7 @@ from __future__ import division, unicode_literals
 
 import cairo
 
-from ..css import effective_declarations, computed_from_cascaded, PARSER
+from ..css import preprocess_stylesheet, computed_from_cascaded, PARSER
 from ..text import TextFragment
 from .test_layout import parse, body_children
 from .testing_utils import FONTS, assert_no_logs
@@ -24,12 +24,18 @@ def make_text(text, width=-1, style=''):
     """
     Make and return a TextFragment built from a TextBox in an HTML document.
     """
-    style = ('font-family: '
-        'Nimbus Mono L, Liberation Mono, FreeMono, Monospace;' + style)
-    declarations, errors = PARSER.parse_style_attr(style)
-    assert not errors
-    style = dict(effective_declarations('', declarations))
+    style = '''foo {
+        font-family: Nimbus Mono L, Liberation Mono, FreeMono, Monospace;
+        %s
+    }''' % (style,)
+    stylesheet = PARSER.parse_stylesheet(style)
+    assert not stylesheet.errors
+    preprocess_stylesheet('', stylesheet.statements)
+    rule, = stylesheet.statements
+    style = dict((name, (values, importance)) for name, values, importance
+                 in rule._weasyprint_validated_declarations)
     style = computed_from_cascaded(None, style, None)
+    print(style.font_size)
     surface = cairo.SVGSurface(None, 1, 1)
     return TextFragment(text, style, cairo.Context(surface), width)
 

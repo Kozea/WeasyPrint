@@ -16,10 +16,24 @@
 """
 
 from __future__ import division, unicode_literals
+import os.path
+import logging
 
 from .formatting_structure import boxes
 from .utils import get_url_attribute
 from .compat import xrange
+from .logger import LOGGER
+from . import CSS
+
+
+# XXX temporarily disable logging for user-agent stylesheet
+level = LOGGER.level
+LOGGER.setLevel(logging.ERROR)
+
+HTML5_UA_STYLESHEET = CSS(
+    os.path.join(os.path.dirname(__file__), 'css', 'html5_ua.css'))
+
+LOGGER.setLevel(level)
 
 
 # Maps HTML tag names to function taking an HTML element and returning a Box.

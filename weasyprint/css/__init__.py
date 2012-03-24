@@ -43,8 +43,6 @@
 from __future__ import division, unicode_literals
 
 import re
-import logging
-import os.path
 
 import tinycss
 from lxml import cssselect
@@ -59,10 +57,6 @@ from .. import CSS
 
 
 PARSER = tinycss.make_parser(with_selectors3=True, with_page3=True)
-
-
-HTML5_UA_STYLESHEET = CSS(
-    os.path.join(os.path.dirname(__file__), 'html5_ua.css'))
 
 
 # Pseudo-classes and pseudo-elements are the same to lxml.cssselect.parse().
@@ -273,19 +267,6 @@ def effective_rules(sheet, medium):
             yield subrule
 
 
-def effective_declarations(base_url, declarations):
-    """Yield ``property_name, property_value_list, importance`` tuples.
-
-    In the given ``declaration_block``, the invalid or unsupported declarations
-    are ignored and the shorthand properties are expanded.
-
-    """
-    for declaration in declarations:
-        for name, values in validation.validate_and_expand(base_url,
-                declaration.name.replace('-', '_'), declaration.value):
-            yield name, (values, declaration.priority)
-
-
 def declaration_precedence(origin, importance):
     """Return the precedence for a declaration.
 
@@ -431,6 +412,38 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None):
         element, pseudo_type, specified, computed, parent_style)
 
 
+def preprocess_stylesheet(base_url, rules):
+    """Do the work that can be done early on stylesheet, before they are
+    in a document.
+
+    """
+    for rule in rules:
+        if rule.at_keyword == '@page':
+            preprocess_stylesheet(base_url, rule.at_rules)
+        if rule.at_keyword == '@media':
+            preprocess_stylesheet(base_url, rule.statements)
+        if hasattr(rule, 'declarations'):
+            rule._weasyprint_validated_declarations = list(
+                preprocess_declarations(base_url, rule.declarations))
+
+
+def preprocess_declarations(base_url, declarations):
+    # set() + reversed(): only keep the last valid declaration,
+    # don’t bother checking the previous ones for the same property
+    seen = set()
+    for declaration in reversed(declarations):
+        name = declaration.name.replace('-', '_')
+        if name in seen:
+            # This only helps on non-shorthands, but still
+            continue
+        priority = declaration.priority
+        for long_name, values in validation.validate_and_expand(
+                base_url, name, declaration.value):
+            if long_name not in seen:
+                yield long_name, values, priority
+                seen.add(long_name)
+
+
 def get_all_computed_styles(document, medium,
                             user_stylesheets=None, ua_stylesheets=None):
     """Compute all the computed styles of ``document`` for ``medium``.
@@ -441,7 +454,7 @@ def get_all_computed_styles(document, medium,
     Return a dict of (DOM element, pseudo element type) -> StyleDict instance.
 
     """
-    author_stylesheets = [sheet for sheet in find_stylesheets(document)]
+    author_stylesheets = list(find_stylesheets(document))
 
     # keys: (element, pseudo_element_type)
     #    element: a lxml element object or the '@page' string for @page styles
@@ -462,25 +475,19 @@ def get_all_computed_styles(document, medium,
         (author_stylesheets, 'author'),
         (user_stylesheets or [], 'user'),
     ):
-        if origin == 'user agent':
-            # XXX temporarily disable logging for user-agent stylesheet
-            level = LOGGER.level
-            LOGGER.setLevel(logging.ERROR)
-
         for sheet in sheets:
             # TODO: UA and maybe user stylesheets might only need to be
             # expanded once, not for every document.
             base_url = sheet.base_url
             for rule in effective_rules(sheet, medium):
                 if not rule.at_keyword:
-                    declarations = list(effective_declarations(
-                        base_url, rule.declarations))
+                    declarations = rule._weasyprint_validated_declarations
                     if not declarations:
                         continue
 
                     matched = match_selectors(document, rule)
                     for element, pseudo_type, specificity in matched:
-                        for name, (values, importance) in declarations:
+                        for name, values, importance in declarations:
                             precedence = declaration_precedence(
                                 origin, importance)
                             weight = (precedence, specificity)
@@ -489,12 +496,11 @@ def get_all_computed_styles(document, medium,
                                 element, pseudo_type)
                 elif rule.at_keyword == '@page':
                     # TODO: refactor with the above
-                    declarations = list(effective_declarations(
-                        base_url, rule.declarations))
+                    declarations = rule._weasyprint_validated_declarations
                     matched = match_page_selector(rule)
                     for element, specificity in matched:
                         pseudo_type = None
-                        for name, (values, importance) in declarations:
+                        for name, values, importance in declarations:
                             precedence = declaration_precedence(
                                 origin, importance)
                             weight = (precedence, specificity)
@@ -504,9 +510,8 @@ def get_all_computed_styles(document, medium,
 
                         for margin_rule in rule.at_rules:
                             pseudo_type = margin_rule.at_keyword
-                            for name, (values, importance) in \
-                                     effective_declarations(
-                                        base_url, margin_rule.declarations):
+                            for name, values, importance in (margin_rule
+                                    ._weasyprint_validated_declarations):
                                 precedence = declaration_precedence(
                                     origin, importance)
                                 weight = (precedence, specificity)
@@ -517,12 +522,8 @@ def get_all_computed_styles(document, medium,
                     # TODO: handle @font-face, @namespace, and @variables
                     continue
 
-
-        if origin == 'user agent':
-            LOGGER.setLevel(level)
-
     for element, declarations, base_url in find_style_attributes(document):
-        for name, (values, importance) in effective_declarations(
+        for name, values, importance in preprocess_declarations(
                 base_url, declarations):
             precedence = declaration_precedence('author', importance)
             # 1 for being a style attribute, 0 as there is no selector.

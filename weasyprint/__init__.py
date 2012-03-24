@@ -88,7 +88,7 @@ class HTML(Resource):
         self.root_element = result
 
     def _ua_stylesheet(self):
-        from .css import HTML5_UA_STYLESHEET
+        from .html import HTML5_UA_STYLESHEET
         return [HTML5_UA_STYLESHEET]
 
     def _get_document(self, document_class, stylesheets):
@@ -140,7 +140,7 @@ class CSS(Resource):
     def __init__(self, guess=None, filename=None, url=None, file_obj=None,
                  string=None, encoding=None, base_url=None,
                  _check_mime_type=False):
-        from .css import PARSER
+        from .css import PARSER, preprocess_stylesheet
         from .utils import path2url, urlopen
 
         source_type, source, base_url = _select_source(
@@ -167,6 +167,7 @@ class CSS(Resource):
         self.stylesheet = getattr(PARSER, method)(source, **kwargs)
         self.base_url = base_url
         self.media = ['all']
+        preprocess_stylesheet(base_url, self.stylesheet.statements)
         for error in self.stylesheet.errors:
             LOGGER.warn(error)
 

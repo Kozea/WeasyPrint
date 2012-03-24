@@ -1,3 +1,10 @@
+Version 0.8, released on 2012-XX-XX
+===================================
+
+* Switch from cssutils to tinycss as the CSS parser.
+* Great speed improvements, in part thanks to tinycss.
+
+
 Version 0.7.1, released on 2012-03-21
 =====================================
 

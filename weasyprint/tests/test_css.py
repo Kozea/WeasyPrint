@@ -114,8 +114,8 @@ def test_expand_shorthands():
 
     style = dict(
         (name, css.values.as_css([value]))
-        for name, (value, _priority) in css.effective_declarations(
-            '', sheet.statements[0].declarations))
+        for name, value, _priority in
+            sheet.statements[0]._weasyprint_validated_declarations)
 
     assert 'margin' not in style
     assert style['margin_top'] == '2em'
@@ -293,7 +293,6 @@ def test_warnings():
     ]:
         with capture_logs() as logs:
             TestPNGDocument(source).style_for('')
-        print(source)
         assert len(logs) == 1
         for message in messages:
             assert message in logs[0]
