@@ -130,7 +130,7 @@ class HTML(Resource):
 
 
 class CSS(Resource):
-    """Fetch and parse a CSS stylesheet with cssutils.
+    """Fetch and parse a CSS stylesheet.
 
     See :class:`Resource` to create an instance. A :class:`CSS` object
     is not useful on its own but can be passed to :meth:`HTML.write_pdf` or
@@ -216,7 +216,7 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
 
 
 def _parse_stylesheets(stylesheets):
-    """Yield parsed cssutils stylesheets.
+    """Yield parsed stylesheets.
 
     Accept :obj:`None` or a list of filenames, urls or CSS objects.
 

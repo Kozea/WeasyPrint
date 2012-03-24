@@ -3,8 +3,7 @@
     weasyprint.css.values
     ---------------------
 
-    Utility function to work with cssutils :class:`Value` and
-    :class:`PropertyValue` objects.
+    Utility function to work with tinycss tokens.
 
     :copyright: Copyright 2011-2012 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.

@@ -44,7 +44,7 @@ class CairoContext(cairo.Context):
 
 
 def lighten(color, offset):
-    """Set the source pattern from a ``cssutils.ColorValue`` object."""
+    """Return a lighter color (or darker, for negative offsets)."""
     return (
         color.red + offset,
         color.green + offset,

@@ -768,7 +768,7 @@ def transform_function(value):
     function = parse_function(value)
     if not function:
         raise InvalidValues
-    name, args = function  # cssutils has already made name lower-case
+    name, args = function
 
     if len(args) == 1:
         if name in ('rotate', 'skewx', 'skewy') and is_angle(args[0]):

@@ -134,23 +134,6 @@ def urlopen(url):
             headers={'User-Agent': HTTP_USER_AGENT}))
 
 
-def urllib_fetcher(url):
-    """URL fetcher for cssutils.
-
-    This fetcher is based on urllib instead of urllib2, since urllib has
-    support for the "data" URL scheme.
-
-    """
-    file_like, mime_type, charset = urlopen(url)
-    if mime_type != 'text/css':
-        LOGGER.warn('Expected `text/css` for stylsheet at %s, got `%s`',
-                    url, mime_type)
-        return None
-    content = file_like.read()
-    file_like.close()
-    return charset, content
-
-
 class cached_property(object):
     """A decorator that converts a function into a lazy property. The
     function wrapped is called the first time to retrieve the result

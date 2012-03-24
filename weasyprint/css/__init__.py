@@ -52,7 +52,7 @@ from lxml import cssselect
 from . import properties
 from . import validation
 from . import computed_values
-from ..utils import get_url_attribute, urllib_fetcher
+from ..utils import get_url_attribute
 from ..logger import LOGGER
 from ..compat import iteritems, urljoin
 from .. import CSS
@@ -329,8 +329,6 @@ def match_selectors(document, rule):
 
     Yield ``element, pseudo_element_type, selector_specificity`` tuples.
 
-    ``selector_list`` should be an iterable of ``cssutils.Selector`` objects.
-
     If any of the selectors is invalid, an empty iterable is returned as the
     whole rule should be ignored.
 
@@ -443,10 +441,7 @@ def get_all_computed_styles(document, medium,
     Return a dict of (DOM element, pseudo element type) -> StyleDict instance.
 
     """
-    author_stylesheets = [sheet for sheet in find_stylesheets(document)
-                          # It seems that cssutils returns None for
-                          # some invalid (non-css?) stylesheets.
-                          if sheet is not None]
+    author_stylesheets = [sheet for sheet in find_stylesheets(document)]
 
     # keys: (element, pseudo_element_type)
     #    element: a lxml element object or the '@page' string for @page styles

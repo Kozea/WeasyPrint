@@ -445,7 +445,6 @@ def used_line_height(style):
 
 
 def angle_to_radian(value):
-    """Take a cssutils DimensionValue for an angle and return the value
-    in radians.
+    """Take a DIMENSION token for an angle and return the value in radians.
     """
     return value.value * ANGLE_TO_RADIANS[value.unit]
