@@ -234,39 +234,6 @@ def evaluate_media_query(query_list, medium):
     return 'all' in query_list or medium in query_list
 
 
-def effective_rules(sheet, medium):
-    """Yield applicable rules of ``sheet`` for ``medium``.
-
-    The rules include those defined with ``@import`` and ``@media`` rules.
-
-    """
-    # sheet.media is not intrinsic but comes from where the stylesheet was
-    # found: media HTML attribute, @import or @media rule.
-    if not evaluate_media_query(sheet.media, medium):
-        return
-    # getattr() is a hack for CSS vs. MediaRule objects.
-    # TODO: refactor this.
-    for rule in getattr(sheet, 'stylesheet', sheet).statements:
-        if rule.at_keyword == '@import':
-            subsheet = CSS(url=urljoin(sheet.base_url, rule.uri))
-        elif rule.at_keyword == '@media':
-            # CSSMediaRule is kinda like a CSSStyleSheet: it has media and
-            # cssRules attributes.
-            subsheet = rule
-        else:
-            # pass other rules through: "normal" rulesets, @font-face,
-            # @namespace, @page, and @variables
-            yield rule
-            if rule.at_keyword == '@page':
-                # Do not use recursion here as page rules have no .media attr
-                for margin_rule in rule.at_rules:
-                    yield margin_rule
-            continue  # no sub-stylesheet here.
-        # subsheet has the .media attribute from the @import or @media rule.
-        for subrule in effective_rules(subsheet, medium):
-            yield subrule
-
-
 def declaration_precedence(origin, importance):
     """Return the precedence for a declaration.
 
@@ -302,45 +269,6 @@ def add_declaration(cascaded_styles, prop_name, prop_values, weight, element,
     _values, previous_weight = style.get(prop_name, (None, None))
     if previous_weight is None or previous_weight <= weight:
         style[prop_name] = prop_values, weight
-
-
-def match_selectors(document, rule):
-    """Get the elements in ``document`` matched by the select selectors in
-    ``rule``.
-
-    Yield ``element, pseudo_element_type, selector_specificity`` tuples.
-
-    If any of the selectors is invalid, an empty iterable is returned as the
-    whole rule should be ignored.
-
-    """
-    selectors = []
-    for selector in rule.selector_list:
-        pseudo_type = selector.pseudo_element
-        specificity = selector.specificity
-        for element in selector.match(document.dom):
-            yield element, pseudo_type, specificity
-
-
-def match_page_selector(rule):
-    """Get the page types matching the selector in ``rule``.
-
-    Yield ``page_type, selector_specificity`` tuples.
-
-    Return an empty iterable if the selector is invalid or unsupported.
-
-    """
-    page_name, pseudo_class = rule.selector
-    page_types = PAGE_PSEUDOCLASS_TARGETS[pseudo_class]
-    # TODO: support "page names" in page selectors (see CSS3 Paged Media)
-    if page_name is not None:
-        LOGGER.warn('Named pages are not supported yet, the whole @page %s '
-                    'rule was ignored.', page_name + (
-                        ':' + pseudo_class if pseudo_class else ''))
-    else:
-        specificity = rule.specificity
-        for page_type in page_types:
-            yield page_type, specificity
 
 
 def set_computed_styles(cascaded_styles, computed_styles,
@@ -412,19 +340,64 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None):
         element, pseudo_type, specified, computed, parent_style)
 
 
-def preprocess_stylesheet(base_url, rules):
+class PageSelector(object):
+    """Mimic the API of :class:`tinycss.selectors3.Selector`"""
+
+    def __init__(self, specificity, pseudo_element, matched):
+        self.specificity = specificity
+        self.pseudo_element = pseudo_element
+        self.match = lambda _document: matched
+
+
+def preprocess_stylesheet(medium, base_url, rules):
     """Do the work that can be done early on stylesheet, before they are
     in a document.
 
     """
     for rule in rules:
-        if rule.at_keyword == '@page':
-            preprocess_stylesheet(base_url, rule.at_rules)
-        if rule.at_keyword == '@media':
-            preprocess_stylesheet(base_url, rule.statements)
-        if hasattr(rule, 'declarations'):
-            rule._weasyprint_validated_declarations = list(
-                preprocess_declarations(base_url, rule.declarations))
+        if not rule.at_keyword:
+            declarations = list(preprocess_declarations(
+                base_url, rule.declarations))
+            if declarations:
+                yield rule, rule.selector_list, declarations
+
+        elif rule.at_keyword == '@import':
+            if not evaluate_media_query(rule.media, medium):
+                continue
+            for result in CSS(url=urljoin(base_url, rule.uri)).rules:
+                yield result
+
+        elif rule.at_keyword == '@media':
+            if not evaluate_media_query(rule.media, medium):
+                continue
+            for result in preprocess_stylesheet(
+                    medium, base_url, rule.statements):
+                yield result
+
+        elif rule.at_keyword == '@page':
+            page_name, pseudo_class = rule.selector
+            page_types = PAGE_PSEUDOCLASS_TARGETS[pseudo_class]
+            # TODO: support named pages (see CSS3 Paged Media)
+            if page_name is not None:
+                LOGGER.warn('Named pages are not supported yet, the whole '
+                            '@page %s rule was ignored.', page_name + (
+                                ':' + pseudo_class if pseudo_class else ''))
+                continue
+            specificity = rule.specificity
+
+            declarations = list(preprocess_declarations(
+                base_url, rule.declarations))
+            if declarations:
+                selector_list = [PageSelector(specificity, None, page_types)]
+                yield rule, selector_list, declarations
+
+            for margin_rule in rule.at_rules:
+                declarations = list(preprocess_declarations(
+                    base_url, margin_rule.declarations))
+                if declarations:
+                    selector_list = [PageSelector(
+                        specificity, margin_rule.at_keyword, page_types)]
+                    yield margin_rule, selector_list, declarations
 
 
 def preprocess_declarations(base_url, declarations):
@@ -476,17 +449,11 @@ def get_all_computed_styles(document, medium,
         (user_stylesheets or [], 'user'),
     ):
         for sheet in sheets:
-            # TODO: UA and maybe user stylesheets might only need to be
-            # expanded once, not for every document.
-            base_url = sheet.base_url
-            for rule in effective_rules(sheet, medium):
-                if not rule.at_keyword:
-                    declarations = rule._weasyprint_validated_declarations
-                    if not declarations:
-                        continue
-
-                    matched = match_selectors(document, rule)
-                    for element, pseudo_type, specificity in matched:
+            for _rule, selector_list, declarations in sheet.rules:
+                for selector in selector_list:
+                    specificity = selector.specificity
+                    pseudo_type = selector.pseudo_element
+                    for element in selector.match(document.dom):
                         for name, values, importance in declarations:
                             precedence = declaration_precedence(
                                 origin, importance)
@@ -494,33 +461,6 @@ def get_all_computed_styles(document, medium,
                             add_declaration(
                                 cascaded_styles, name, values, weight,
                                 element, pseudo_type)
-                elif rule.at_keyword == '@page':
-                    # TODO: refactor with the above
-                    declarations = rule._weasyprint_validated_declarations
-                    matched = match_page_selector(rule)
-                    for element, specificity in matched:
-                        pseudo_type = None
-                        for name, values, importance in declarations:
-                            precedence = declaration_precedence(
-                                origin, importance)
-                            weight = (precedence, specificity)
-                            add_declaration(
-                                cascaded_styles, name, values, weight,
-                                element, pseudo_type)
-
-                        for margin_rule in rule.at_rules:
-                            pseudo_type = margin_rule.at_keyword
-                            for name, values, importance in (margin_rule
-                                    ._weasyprint_validated_declarations):
-                                precedence = declaration_precedence(
-                                    origin, importance)
-                                weight = (precedence, specificity)
-                                add_declaration(
-                                    cascaded_styles, name, values, weight,
-                                    element, pseudo_type)
-                else:
-                    # TODO: handle @font-face, @namespace, and @variables
-                    continue
 
     for element, declarations, base_url in find_style_attributes(document):
         for name, values, importance in preprocess_declarations(

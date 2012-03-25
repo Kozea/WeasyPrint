@@ -88,25 +88,27 @@ def test_find_stylesheets():
         == ['sheet1.css', 'a%7Bcolor%3AcurrentColor%7D',
             'doc1.html']
 
-    rules = list(rule for sheet in sheets
-                      for rule in css.effective_rules(sheet, 'print'))
-    assert len(rules) == 10
+    rules = [rule for sheet in sheets for rule in sheet.rules]
+    assert len(rules) == 13
     # Also test appearance order
-    print(rules[0].selector.as_css)
-    assert [rule.selector if rule.at_keyword else rule.selector.as_css.strip()
-                for rule in rules] == [
-            'a', 'li', 'p', 'ul', 'li', 'a:after', (None, 'first'), 'ul',
-            'body > h1:first-child', 'h1 ~ p ~ ul a:after']
+    assert [
+        rule.selector if rule.at_keyword else rule.selector.as_css.strip()
+        for rule, _selector_list, _declarations in rules
+    ] == [
+        'li', 'p', 'ul',  # imported
+        'a', 'li', 'p', 'ul', 'li', 'a:after', (None, 'first'), 'ul',
+        'body > h1:first-child', 'h1 ~ p ~ ul a:after'
+    ]
 
 
 @assert_no_logs
 def test_expand_shorthands():
     """Test the expand shorthands."""
-    sheet = CSS(resource_filename('sheet2.css')).stylesheet
-    assert sheet.statements[0].selector.as_css == 'li '
+    sheet = CSS(resource_filename('sheet2.css'))
+    assert sheet.stylesheet.statements[0].selector.as_css == 'li '
 
     style = dict((d.name, d.value.as_css)
-                 for d in sheet.statements[0].declarations)
+                 for d in sheet.stylesheet.statements[0].declarations)
     assert style['margin'] == '2em 0'
     assert style['margin-bottom'] == '3em'
     assert style['margin-left'] == '4em'
@@ -114,8 +116,8 @@ def test_expand_shorthands():
 
     style = dict(
         (name, css.values.as_css([value]))
-        for name, value, _priority in
-            sheet.statements[0]._weasyprint_validated_declarations)
+        for _rule, _selectors, declarations in sheet.rules
+        for name, value, _priority in declarations)
 
     assert 'margin' not in style
     assert style['margin_top'] == '2em'

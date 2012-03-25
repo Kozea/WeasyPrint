@@ -164,10 +164,12 @@ class CSS(Resource):
         else:
             # file_obj or filename
             method = 'parse_stylesheet_file'
+        # TODO: do not keep this?
         self.stylesheet = getattr(PARSER, method)(source, **kwargs)
         self.base_url = base_url
-        self.media = ['all']
-        preprocess_stylesheet(base_url, self.stylesheet.statements)
+        medium = 'print'  # for @media
+        self.rules = list(preprocess_stylesheet(
+            medium, base_url, self.stylesheet.statements))
         for error in self.stylesheet.errors:
             LOGGER.warn(error)
 
