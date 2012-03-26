@@ -26,8 +26,9 @@ We have a Jabber/XMPP chat-room at community@room.jabber.kozea.fr. It’s not
 just about WeasyPrint though. You may see people writing in French there,
 but English is accepted too.
 
-Issue tracker
--------------
+Issue/bug tracker
+-----------------
 
 Specific bug reports or feature requests should go to `our Redmine instance
-<http://redmine.kozea.fr/projects/weasyprint/issues>`_
+<http://redmine.kozea.fr/projects/weasyprint/issues>`_.
+Please include in full any detail such as an error message or tracebacks.
