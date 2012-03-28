@@ -371,7 +371,7 @@ def preprocess_stylesheet(medium, base_url, rules):
             if not evaluate_media_query(rule.media, medium):
                 continue
             for result in preprocess_stylesheet(
-                    medium, base_url, rule.statements):
+                    medium, base_url, rule.rules):
                 yield result
 
         elif rule.at_keyword == '@page':
