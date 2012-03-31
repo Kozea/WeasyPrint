@@ -287,18 +287,6 @@ body > section {
   text-transform: uppercase;
 }
 
-article footer div {
-  padding: 0.2em;
-}
-
-article footer div a:first-child {
-  margin-right: 0.5em;
-}
-
-article footer div * {
-  display: inline;
-}
-
 /*
   ----------
   - Footer -
