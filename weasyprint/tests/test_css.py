@@ -92,7 +92,8 @@ def test_find_stylesheets():
     assert len(rules) == 13
     # Also test appearance order
     assert [
-        rule.selector if rule.at_keyword else rule.selector.as_css
+        rule.selector if rule.at_keyword else ''.join(
+            v.as_css for v in rule.selector)
         for rule, _selector_list, _declarations in rules
     ] == [
         'li', 'p', 'ul',  # imported
@@ -105,9 +106,10 @@ def test_find_stylesheets():
 def test_expand_shorthands():
     """Test the expand shorthands."""
     sheet = CSS(resource_filename('sheet2.css'))
-    assert sheet.stylesheet.rules[0].selector.as_css == 'li'
+    assert ''.join(v.as_css for v in sheet.stylesheet.rules[0].selector) \
+        == 'li'
 
-    style = dict((d.name, d.value.as_css)
+    style = dict((d.name, ''.join(v.as_css for v in d.value))
                  for d in sheet.stylesheet.rules[0].declarations)
     assert style['margin'] == '2em 0'
     assert style['margin-bottom'] == '3em'

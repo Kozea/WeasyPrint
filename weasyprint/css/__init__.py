@@ -45,6 +45,7 @@ from __future__ import division, unicode_literals
 import re
 
 import tinycss
+from tinycss.selectors3 import STYLE_ATTRIBUTE_SPECIFICITY
 from lxml import cssselect
 
 from . import properties
@@ -462,12 +463,12 @@ def get_all_computed_styles(document, medium,
                                 cascaded_styles, name, values, weight,
                                 element, pseudo_type)
 
+    specificity = STYLE_ATTRIBUTE_SPECIFICITY
     for element, declarations, base_url in find_style_attributes(document):
         for name, values, importance in preprocess_declarations(
                 base_url, declarations):
             precedence = declaration_precedence('author', importance)
-            # 1 for being a style attribute, 0 as there is no selector.
-            weight = (precedence, (1, 0, 0, 0))
+            weight = (precedence, specificity)
             add_declaration(cascaded_styles, name, values, weight, element)
 
     # keys: (element, pseudo_element_type), like cascaded_styles

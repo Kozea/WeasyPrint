@@ -1147,5 +1147,5 @@ def validate_and_expand(base_url, name, values):
             else:
                 reason = 'invalid value'
     getattr(LOGGER, level)('Ignored declaration: `%s: %s`, %s.',
-        name.replace('_', '-'), values.as_css, reason)
+        name.replace('_', '-'), ''.join(v.as_css for v in values), reason)
     return []
