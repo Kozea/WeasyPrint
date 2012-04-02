@@ -51,14 +51,11 @@ def get_percentage_value(value):
         return None
 
 
-def as_css(values):
-    """Return the string reperesentation of the ``values`` list."""
-    return ' '.join('%s' % getattr(value, 'as_css', value) for value in values)
+class FakePercentage(object):
+    type = 'PERCENTAGE'
 
+    def __init__(self, value):
+        self.value = value
+        self.as_css = '{}%'.format(value)
 
-FakeValue = collections.namedtuple('FakeValue', ('type', 'value', 'as_css'))
-
-
-def make_percentage_value(value):
-    """Return an object that ``get_percentage_value()`` will accept."""
-    return FakeValue('PERCENTAGE', value, '{0}%'.format(value))
+make_percentage_value = FakePercentage

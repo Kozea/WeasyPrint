@@ -38,10 +38,10 @@ class TestPNGDocument(PNGDocument):
     This stylesheet is shorter, which makes tests faster.
 
     """
-    def __init__(self, html_source, base_url=None):
+    def __init__(self, html_source, base_url=None, user_stylesheets=()):
         super(TestPNGDocument, self).__init__(
             HTML(string=html_source, base_url=base_url).root_element,
-            user_stylesheets=[],
+            user_stylesheets=user_stylesheets,
             user_agent_stylesheets=[TEST_UA_STYLESHEET])
 
 
@@ -87,7 +87,7 @@ def assert_no_logs(function):
         with capture_logs() as logs:
             try:
                 function()
-            except Exception:
+            except Exception:  # pragma: no cover
                 if logs:
                     print('%i errors logged:' % len(logs), file=sys.stderr)
                 raise

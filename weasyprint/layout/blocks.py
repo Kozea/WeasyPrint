@@ -49,7 +49,7 @@ def block_level_layout(document, box, max_position_y, skip_stack,
         adjoining_margins = []
         collapsing_through = False
         return box, resume_at, next_page, adjoining_margins, collapsing_through
-    else:
+    else:  # pragma: no cover
         raise TypeError('Layout for %s not handled yet' % type(box).__name__)
 
 
@@ -373,7 +373,7 @@ def block_table_wrapper(document, wrapper, max_position_y, skip_stack,
         if isinstance(child, boxes.TableBox):
             table = child
             break
-    else:
+    else: # pragma: no cover
         raise ValueError('Table wrapper without a table')
     resolve_percentages(wrapper, containing_block)
     resolve_percentages(table, containing_block)

@@ -351,12 +351,11 @@ def cell_baseline(cell):
         if child is None:
             stack.pop()
             continue
-        if not child.is_in_normal_flow():
-            continue
-        if isinstance(child, (boxes.LineBox, boxes.TableRowBox)):
-            # First in-flow line or row.
-            return child.baseline + child.position_y - cell.position_y
-        if isinstance(child, boxes.ParentBox):
-            stack.append(iter(child.children))
+        if child.is_in_normal_flow():
+            if isinstance(child, (boxes.LineBox, boxes.TableRowBox)):
+                # First in-flow line or row.
+                return child.baseline + child.position_y - cell.position_y
+            if isinstance(child, boxes.ParentBox):
+                stack.append(iter(child.children))
     # Default to the bottom of the content area.
     return cell.border_top_width + cell.padding_top + cell.height

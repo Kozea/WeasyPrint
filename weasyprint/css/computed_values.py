@@ -340,8 +340,6 @@ def compute_float(computer, name, value):
 @register_computer('font-size')
 def font_size(computer, name, value):
     """Compute the ``font-size`` property."""
-    if isinstance(value, (int, float)):
-        return value
     if value in FONT_SIZE_KEYWORDS:
         return FONT_SIZE_KEYWORDS[value]
 

@@ -140,17 +140,6 @@ class StyleDict(object):
             object.__setattr__(style, 'anonymous', True)
         return style
 
-    def as_dict(self):
-        """Return a new dict completly separate from this object."""
-        if hasattr(self._parent, 'as_dict'):
-            rv = self._parent.as_dict()
-        elif hasattr(self._parent, 'items'):
-            rv = dict(self._parent)
-        else:
-            rv = {}
-        rv.update(self._storage)
-        return rv
-
     def inherit_from(self):
         """Return a new StyleDict with inherited properties from this one.
 
@@ -167,7 +156,7 @@ class StyleDict(object):
     anonymous = False
 
 
-def find_stylesheets(document):
+def find_stylesheets(document, medium):
     """Yield the stylesheets of ``document``.
 
     The output order is the same as the order of the dom.
@@ -176,14 +165,15 @@ def find_stylesheets(document):
     for element in document.dom.iter():
         if element.tag not in ('style', 'link'):
             continue
-        mimetype = element.get('type')
+        mime_type = element.get('type', 'text/css').split(';', 1)[0].strip()
         # Only keep 'type/subtype' from 'type/subtype ; param1; param2'.
-        if mimetype and mimetype.split(';', 1)[0].strip() != 'text/css':
+        if mime_type != 'text/css':
             continue
         media_attr = element.get('media', '').strip() or 'all'
         media = [media_type.strip() for media_type in media_attr.split(',')]
+        if not evaluate_media_query(media, medium):
+            continue
         if element.tag == 'style':
-            # TODO: handle the `scoped` attribute
             # Content is text that is directly in the <style> element, not its
             # descendants
             content = [element.text or '']
@@ -193,17 +183,14 @@ def find_stylesheets(document):
             # lxml should give us either unicode or ASCII-only bytestrings, so
             # we don't need `encoding` here.
             css = CSS(string=content, base_url=element.base_url)
-            css.media = media
             yield css
-        elif element.tag == 'link' and element.get('href') and (
-                element.get('type', 'text/css').strip() == 'text/css'):
+        elif element.tag == 'link' and element.get('href'):
             rel = element.get('rel', '').split()
             if 'stylesheet' not in rel or 'alternate' in rel:
                 continue
             href = get_url_attribute(element, 'href')
             css = CSS(url=href, _check_mime_type=True)
             if css.mime_type == 'text/css':
-                css.media = media
                 yield css
             else:
                 LOGGER.warn('Unsupported stylesheet type: %s', css.mime_type)
@@ -253,10 +240,9 @@ def declaration_precedence(origin, importance):
         return 3
     elif origin == 'author':  # and importance
         return 4
-    elif origin == 'user':  # and importance
-        return 5
     else:
-        assert ValueError('Unkown origin: %r' % origin)
+        assert origin == 'user'  # and importance
+        return 5
 
 
 def add_declaration(cascaded_styles, prop_name, prop_values, weight, element,
@@ -428,7 +414,7 @@ def get_all_computed_styles(document, medium,
     Return a dict of (DOM element, pseudo element type) -> StyleDict instance.
 
     """
-    author_stylesheets = list(find_stylesheets(document))
+    author_stylesheets = list(find_stylesheets(document, medium))
 
     # keys: (element, pseudo_element_type)
     #    element: a lxml element object or the '@page' string for @page styles

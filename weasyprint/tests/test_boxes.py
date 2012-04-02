@@ -153,12 +153,11 @@ def sanity_checks(box):
     if not isinstance(box, boxes.ParentBox):
         return
 
+    acceptable_types_lists = None  # raises when iterated
     for class_ in type(box).mro():
         if class_ in PROPER_CHILDREN:
             acceptable_types_lists = PROPER_CHILDREN[class_]
             break
-    else:
-        raise TypeError
 
     assert any(
         all(isinstance(child, acceptable_types) for child in box.children)
@@ -213,6 +212,23 @@ def test_inline_in_block():
             ('p', 'Block', [
                 ('p', 'Line', [
                     ('p', 'Text', 'Lipsum.')])])])]
+
+    box = parse(source)
+    box = build.inline_in_block(box)
+    assert_tree(box, expected)
+
+    source = '<div><p>Lipsum.</p>Hello, <em>World</em>!\n</div>'
+    expected = [
+        ('div', 'Block', [
+            ('p', 'Block', [
+                ('p', 'Line', [
+                    ('p', 'Text', 'Lipsum.')])]),
+            ('div', 'AnonBlock', [
+                ('div', 'Line', [
+                    ('div', 'Text', 'Hello, '),
+                    ('em', 'Inline', [
+                        ('em', 'Text', 'World')]),
+                    ('div', 'Text', '!\n')])])])]
 
     box = parse(source)
     box = build.inline_in_block(box)

@@ -63,6 +63,9 @@ def test_data_url():
     parse('data:text/plain;base64,Zm9vbw', b'fooo', 'text/plain', None)
     parse('data:text/plain;base64,Zm9vb28', b'foooo', 'text/plain', None)
 
+    with raises(IOError):
+        parse_data_url('data:foo')
+
 
 @assert_no_logs
 def test_style_dict():
@@ -81,22 +84,20 @@ def test_find_stylesheets():
     """Test if the stylesheets are found in a HTML document."""
     document = parse_html('doc1.html')
 
-    sheets = list(css.find_stylesheets(document))
-    assert len(sheets) == 3
+    sheets = list(css.find_stylesheets(document, 'print'))
+    assert len(sheets) == 2
     # Also test that stylesheets are in tree order
     assert [s.base_url.rsplit('/', 1)[-1].rsplit(',', 1)[-1] for s in sheets] \
-        == ['sheet1.css', 'a%7Bcolor%3AcurrentColor%7D',
-            'doc1.html']
+        == ['a%7Bcolor%3AcurrentColor%7D', 'doc1.html']
 
     rules = [rule for sheet in sheets for rule in sheet.rules]
-    assert len(rules) == 13
+    assert len(rules) == 10
     # Also test appearance order
     assert [
         rule.selector if rule.at_keyword else ''.join(
             v.as_css for v in rule.selector)
         for rule, _selector_list, _declarations in rules
     ] == [
-        'li', 'p', 'ul',  # imported
         'a', 'li', 'p', 'ul', 'li', 'a:after', (None, 'first'), 'ul',
         'body > h1:first-child', 'h1 ~ p ~ ul a:after'
     ]
@@ -117,7 +118,7 @@ def test_expand_shorthands():
     assert 'margin-top' not in style
 
     style = dict(
-        (name, css.values.as_css([value]))
+        (name, value.as_css)
         for _rule, _selectors, declarations in sheet.rules
         for name, value, _priority in declarations)
 
@@ -159,38 +160,42 @@ def test_annotate_document():
         + os.path.abspath(resource_filename('logo_small.png'))
 
     assert h1.font_weight == 700
+    assert h1.font_size == 32  # 4ex
 
-    # 32px = 1em * font-size: 2em * initial 16px
-    assert p.margin_top == 32
+    # 32px = 1em * font-size = x-large = 3/2 * initial 16px = 24px
+    assert p.margin_top == 24
     assert p.margin_right == 0
-    assert p.margin_bottom == 32
+    assert p.margin_bottom == 24
     assert p.margin_left == 0
+    assert p.background_color == (0, 0, 1, 1)  # blue
 
-    # 32px = 2em * initial 16px
-    assert ul.margin_top == 32
-    assert ul.margin_right == 32
-    assert ul.margin_bottom == 32
-    assert ul.margin_left == 32
+    # 80px = 2em * 5ex = 10 * half of initial 16px
+    assert ul.margin_top == 80
+    assert ul.margin_right == 80
+    assert ul.margin_bottom == 80
+    assert ul.margin_left == 80
 
+    assert ul.font_weight == 700
     # thick = 5px, 0.25 inches = 96*.25 = 24px
     assert ul.border_top_width == 0
     assert ul.border_right_width == 5
     assert ul.border_bottom_width == 0
     assert ul.border_left_width == 24
 
-    # 32px = 2em * initial 16px
-    # 64px = 4em * initial 16px
-    assert li_0.margin_top == 32
+    assert li_0.font_weight == 900
+    assert li_0.font_size == 8  # 6pt
+    assert li_0.margin_top == 16  # 2em
     assert li_0.margin_right == 0
-    assert li_0.margin_bottom == 32
-    assert li_0.margin_left == 64
+    assert li_0.margin_bottom == 16
+    assert li_0.margin_left == 32  # 4em
 
     assert a.text_decoration == frozenset(['underline'])
-
+    assert a.font_size == 24  # 300% of 8px
     assert a.padding_top == 1
     assert a.padding_right == 2
     assert a.padding_bottom == 3
     assert a.padding_left == 4
+
 
     assert a.color == (1, 0, 0, 1)
     # Test the initial border-color: currentColor
@@ -343,4 +348,39 @@ def test_line_height_inheritance():
     assert paragraph.style.font_size == 20
     # 1.4 is inherited from p, 1.4 * 20px on em = 28px
     assert used_line_height(paragraph.style) == 28
-    assert paragraph.style.vertical_align == 14  # 50% of 28pxhh
+    assert paragraph.style.vertical_align == 14  # 50% of 28px
+
+
+@assert_no_logs
+def test_important():
+    document = TestPNGDocument('''
+        <style>
+            p:nth-child(1) { color: lime }
+            body p:nth-child(2) { color: red }
+
+            p:nth-child(3) { color: lime !important }
+            body p:nth-child(3) { color: red }
+
+            body p:nth-child(5) { color: lime }
+            p:nth-child(5) { color: red }
+
+            p:nth-child(6) { color: red }
+            p:nth-child(6) { color: lime }
+        </style>
+        <p></p>
+        <p></p>
+        <p></p>
+        <p></p>
+        <p></p>
+        <p></p>
+    ''', user_stylesheets=[CSS(string='''
+            body p:nth-child(1) { color: red }
+            p:nth-child(2) { color: lime !important }
+
+            p:nth-child(4) { color: lime !important }
+            body p:nth-child(4) { color: red }
+    ''')])
+    html = document.formatting_structure
+    body, = html.children
+    for paragraph in body.children:
+        assert paragraph.style.color == (0, 1, 0, 1)  # lime (light green)

@@ -144,15 +144,14 @@ def box_rectangle(box, which_rectangle):
             box.padding_width(),
             box.padding_height(),
         )
-    elif which_rectangle == 'content-box':
+    else:
+        assert which_rectangle == 'content-box', which_rectangle
         return (
             box.content_box_x(),
             box.content_box_y(),
             box.width,
             box.height,
         )
-    else:
-        raise ValueError(which_rectangle)
 
 
 def background_positioning_area(page, box, style):

@@ -265,7 +265,7 @@ def atomic_box(box, containing_block, device_size):
             image_marker_layout(box)
         else:
             inline_replaced_box_layout(box, containing_block, device_size)
-    else:
+    else:  # pragma: no cover
         raise TypeError('Layout for %s not handled yet' % type(box).__name__)
     return box
 

@@ -14,25 +14,25 @@ from __future__ import division, unicode_literals
 
 from pytest import raises
 from tinycss.color3 import RGBA
+from tinycss.parsing import remove_whitespace
 
 from .testing_utils import assert_no_logs
 from ..css import validation, PARSER
-from ..css.values import as_css
 
 # TODO: merge this into test_css.py ?
 
 
-# TODO: rewrite this mess
 def expand_to_dict(short_name, short_values):
     """Helper to test shorthand properties expander functions."""
-    return dict((name, value if isinstance(value, RGBA)
-                       else as_css(value) if isinstance(value, (list, tuple))
+    declarations, errors = PARSER.parse_style_attr('prop: ' + short_values)
+    assert not errors
+    assert len(declarations) == 1
+    tokens = remove_whitespace(declarations[0].value)
+    expanded = validation.EXPANDERS[short_name]('', short_name, tokens)
+    return dict((name, tuple(v.as_css for v in value)
+                       if name == 'background_position'
                        else getattr(value, 'as_css', value))
-                for name, value in validation.EXPANDERS[short_name](
-                    '', short_name,
-                    [token for token in PARSER.parse_style_attr(
-                        'prop: ' + short_values)[0][0].value
-                     if token.type != 'S']))
+                for name, value in expanded)
 
 
 @assert_no_logs
@@ -162,7 +162,7 @@ def test_expand_background():
         image='none',
         repeat='repeat',
         attachment='scroll',
-        position='0% 0%'
+        position=('0%', '0%'),
 
     )
     assert_background(
@@ -171,7 +171,7 @@ def test_expand_background():
         image='foo.png', ##
         repeat='repeat',
         attachment='scroll',
-        position='0% 0%'
+        position=('0%', '0%'),
     )
     assert_background(
         'no-repeat',
@@ -179,7 +179,7 @@ def test_expand_background():
         image='none',
         repeat='no-repeat', ##
         attachment='scroll',
-        position='0% 0%'
+        position=('0%', '0%'),
     )
     assert_background(
         'fixed',
@@ -187,7 +187,7 @@ def test_expand_background():
         image='none',
         repeat='repeat',
         attachment='fixed', ##
-        position='0% 0%'
+        position=('0%', '0%'),
     )
     assert_background(
         'top right',
@@ -196,7 +196,7 @@ def test_expand_background():
         repeat='repeat',
         attachment='scroll',
         # Order swapped to be in (horizontal, vertical) order.
-        position='100% 0%' ##
+        position=('100%', '0%'), ##
     )
     assert_background(
         'url(bar) #f00 repeat-y center left fixed',
@@ -205,7 +205,7 @@ def test_expand_background():
         repeat='repeat-y', ##
         attachment='fixed', ##
         # Order swapped to be in (horizontal, vertical) order.
-        position='0% 50%' ##
+        position=('0%', '50%'), ##
     )
     assert_background(
         '#00f 10% 200px',
@@ -213,7 +213,7 @@ def test_expand_background():
         image='none',
         repeat='repeat',
         attachment='scroll',
-        position='10% 200px' ##
+        position=('10%', '200px'),  ##
     )
     assert_background(
         'right 78px fixed',
@@ -221,20 +221,20 @@ def test_expand_background():
         image='none',
         repeat='repeat',
         attachment='fixed', ##
-        position='100% 78px' ##
+        position=('100%', '78px'), ##
     )
 
 
 @assert_no_logs
 def test_font():
     """Test the ``font`` property."""
-    assert expand_to_dict('font', '12px sans_serif') == {
+    assert expand_to_dict('font', '12px My Fancy Font, serif') == {
         'font_style': 'normal',
         'font_variant': 'normal',
         'font_weight': 400,
         'font_size': '12px', ##
         'line_height': 'normal',
-        'font_family': 'sans_serif', ##
+        'font_family': ['My Fancy Font', 'serif'], ##
     }
     assert expand_to_dict('font', 'small/1.2 "Some Font", serif') == {
         'font_style': 'normal',
@@ -242,8 +242,7 @@ def test_font():
         'font_weight': 400,
         'font_size': 'small', ##
         'line_height': '1.2', ##
-        # The comma and quotes were lost in expand_to_dict()
-        'font_family': 'Some Font serif', ##
+        'font_family': ['Some Font', 'serif'], ##
     }
     assert expand_to_dict('font', 'small-caps italic 700 large serif') == {
         'font_style': 'italic', ##
@@ -251,5 +250,5 @@ def test_font():
         'font_weight': 700, ##
         'font_size': 'large', ##
         'line_height': 'normal',
-        'font_family': 'serif', ##
+        'font_family': ['serif'], ##
     }

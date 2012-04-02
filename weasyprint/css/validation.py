@@ -21,8 +21,7 @@ from tinycss.parsing import split_on_comma
 from ..logger import LOGGER
 from ..formatting_structure import counters
 from ..compat import urljoin
-from .values import (get_keyword, get_single_keyword, as_css,
-                     make_percentage_value)
+from .values import get_keyword, get_single_keyword, make_percentage_value
 from .properties import INITIAL_VALUES, NOT_PRINT_MEDIA
 from . import computed_values
 
@@ -157,6 +156,11 @@ def background_attachment(keyword):
 @validator('border-right-color')
 @validator('border-bottom-color')
 @validator('border-left-color')
+@single_value
+def other_colors(value):
+    return parse_color(value)
+
+
 @validator('color')
 @single_value
 def color(value):
@@ -967,7 +971,7 @@ def expand_border_side(name, values):
 
     """
     for value in values:
-        if color([value]) is not None:
+        if parse_color(value) is not None:
             suffix = '_color'
         elif border_width([value]) is not None:
             suffix = '_width'
@@ -999,7 +1003,7 @@ def expand_background(name, values, base_url):
     values = list(reversed(values))
     while values:
         value = values.pop()
-        if color([value]) is not None:
+        if parse_color(value) is not None:
             suffix = '_color'
         elif image([value], base_url) is not None:
             suffix = '_image'

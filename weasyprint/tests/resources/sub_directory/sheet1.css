@@ -1,0 +1,16 @@
+@import url(../sheet2.css) all;
+p {
+    background: currentColor;
+}
+
+@media print {
+    ul {
+        /* Currently, 1ex == 0.5em exactly. */
+        margin: 2em 4ex;
+    }
+}
+@media screen {
+    ul {
+        border-width: 1000px !important;
+    }
+}

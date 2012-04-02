@@ -37,7 +37,7 @@ BYTES_PER_PIXELS = 4
 PIXEL_FORMAT = 'rgba(%i, %i, %i, %i)'
 
 
-def format_pixel(pixels, width, x, y):
+def format_pixel(pixels, width, x, y):  # pragma: no cover
     """Return the pixel color as ``#RRGGBB``."""
     start = (y * width + x) * BYTES_PER_PIXELS
     end = start + BYTES_PER_PIXELS
@@ -93,13 +93,13 @@ def assert_different_renderings(expected_width, expected_height, documents):
 
     for i, (name_1, lines_1) in enumerate(lines_list):
         for name_2, lines_2 in lines_list[i + 1:]:
-            if lines_1 == lines_2:
+            if lines_1 == lines_2:  # pragma: no cover
                 # Same as "assert lines_1 != lines_2" but the output of
                 # the assert hook would be gigantic and useless.
                 assert False, '%s and %s are the same' % (name_1, name_2)
 
 
-def write_png(basename, lines, width, height):
+def write_png(basename, lines, width, height):  # pragma: no cover
     """Take a pixel matrix and write a PNG file."""
     directory = os.path.join(os.path.dirname(__file__), 'test_results')
     if not os.path.isdir(directory):
@@ -144,7 +144,7 @@ def assert_pixels_equal(name, width, height, lines, expected_lines):
     Take 2 matrices of height by width pixels and assert that they
     are the same.
     """
-    if lines != expected_lines:
+    if lines != expected_lines:  # pragma: no cover
         write_png(name + '.expected', expected_lines, width, height)
         write_png(name, lines, width, height)
         for y in xrange(height):

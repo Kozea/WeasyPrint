@@ -219,16 +219,14 @@ def update_counters(state, style):
             sibling_scopes.add(name)
         counter_values.setdefault(name, []).append(value)
 
-    # Disabled for now, only exists in Lists3’s editor’s draft.
-    for name, value in []: # XXX style.counter_set:
-        values = counter_values.setdefault(name, [])
-        if not values:
-            if name in sibling_scopes:
-                counter_values[name].pop()
-            else:
-                sibling_scopes.add(name)
-            values.append(0)
-        values[-1] = value
+    # XXX Disabled for now, only exists in Lists3’s editor’s draft.
+#    for name, value in style.counter_set:
+#        values = counter_values.setdefault(name, [])
+#        if not values:
+#            assert name not in sibling_scopes
+#            sibling_scopes.add(name)
+#            values.append(0)
+#        values[-1] = value
 
     counter_increment = style.counter_increment
     if counter_increment == 'auto':
@@ -243,10 +241,8 @@ def update_counters(state, style):
     for name, value in counter_increment:
         values = counter_values.setdefault(name, [])
         if not values:
-            if name in sibling_scopes:
-                counter_values[name].pop()
-            else:
-                sibling_scopes.add(name)
+            assert name not in sibling_scopes
+            sibling_scopes.add(name)
             values.append(0)
         values[-1] += value
 
