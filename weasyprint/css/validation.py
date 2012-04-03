@@ -94,54 +94,54 @@ def validator(property_name=None, prefixed=False, wants_base_url=False):
 def single_keyword(function):
     """Decorator for validators that only accept a single keyword."""
     @functools.wraps(function)
-    def keyword_validator(values):
-        """Wrap a validator to call get_single_keyword on values."""
-        keyword = get_single_keyword(values)
+    def keyword_validator(tokens):
+        """Wrap a validator to call get_single_keyword on tokens."""
+        keyword = get_single_keyword(tokens)
         if function(keyword):
             return keyword
     return keyword_validator
 
 
-def single_value(function):
-    """Decorator for validators that only accept a single value."""
+def single_token(function):
+    """Decorator for validators that only accept a single token."""
     @functools.wraps(function)
-    def single_value_validator(values, *args):
-        """Validate a property whose value is single."""
-        if len(values) == 1:
-            return function(values[0], *args)
-    single_value_validator.__func__ = function
-    return single_value_validator
+    def single_token_validator(tokens, *args):
+        """Validate a property whose token is single."""
+        if len(tokens) == 1:
+            return function(tokens[0], *args)
+    single_token_validator.__func__ = function
+    return single_token_validator
 
 
-def is_dimension(value, negative=True):
-    """Get if ``value`` is a dimension.
+def is_dimension(token, negative=True):
+    """Get if ``token`` is a dimension.
 
-    The ``negative`` argument sets wether negative values are allowed.
+    The ``negative`` argument sets wether negative tokens are allowed.
 
     """
-    type_ = value.type
+    type_ = token.type
     # Units may be ommited on zero lenghts.
     return (
-        type_ == 'DIMENSION' and (negative or value.value >= 0) and (
-            value.unit in computed_values.LENGTHS_TO_PIXELS or
-            value.unit in ('em', 'ex'))
-        ) or (type_ in ('NUMBER', 'INTEGER') and value.value == 0)
+        type_ == 'DIMENSION' and (negative or token.value >= 0) and (
+            token.unit in computed_values.LENGTHS_TO_PIXELS or
+            token.unit in ('em', 'ex'))
+        ) or (type_ in ('NUMBER', 'INTEGER') and token.value == 0)
 
 
-def is_dimension_or_percentage(value, negative=True):
-    """Get if ``value`` is a dimension or a percentage.
+def is_dimension_or_percentage(token, negative=True):
+    """Get if ``token`` is a dimension or a percentage.
 
-    The ``negative`` argument sets wether negative values are allowed.
+    The ``negative`` argument sets wether negative tokens are allowed.
 
     """
-    return is_dimension(value, negative) or (
-        value.type == 'PERCENTAGE' and (negative or value.value >= 0))
+    return is_dimension(token, negative) or (
+        token.type == 'PERCENTAGE' and (negative or token.value >= 0))
 
 
-def is_angle(value):
-    """Return whether the argument is an angle value."""
-    return value.type == 'DIMENSION' and \
-        value.unit in computed_values.ANGLE_TO_RADIANS
+def is_angle(token):
+    """Return whether the argument is an angle token."""
+    return token.type == 'DIMENSION' and \
+        token.unit in computed_values.ANGLE_TO_RADIANS
 
 
 @validator()
@@ -156,68 +156,68 @@ def background_attachment(keyword):
 @validator('border-right-color')
 @validator('border-bottom-color')
 @validator('border-left-color')
-@single_value
-def other_colors(value):
-    return parse_color(value)
+@single_token
+def other_colors(token):
+    return parse_color(token)
 
 
 @validator('color')
-@single_value
-def color(value):
+@single_token
+def color(token):
     """``*-color`` and ``color`` properties validation."""
-    value = parse_color(value)
-    if value == 'currentColor':
+    result = parse_color(token)
+    if result == 'currentColor':
         return 'inherit'
     else:
-        return value
+        return result
 
 
 @validator('background-image', wants_base_url=True)
 @validator('list-style-image', wants_base_url=True)
-@single_value
-def image(value, base_url):
+@single_token
+def image(token, base_url):
     """``*-image`` properties validation."""
-    if get_keyword(value) == 'none':
+    if get_keyword(token) == 'none':
         return 'none'
-    if value.type == 'URI':
-        return urljoin(base_url, value.value)
+    if token.type == 'URI':
+        return urljoin(base_url, token.value)
 
 
 @validator('transform-origin', prefixed=True)  # Not in CR yet
 @validator()
-def background_position(values):
+def background_position(tokens):
     """``background-position`` property validation.
 
     See http://www.w3.org/TR/CSS21/colors.html#propdef-background-position
 
     """
-    if len(values) == 1:
+    if len(tokens) == 1:
         center = BACKGROUND_POSITION_PERCENTAGES['center']
-        value = values[0]
-        keyword = get_keyword(value)
+        token = tokens[0]
+        keyword = get_keyword(token)
         if keyword in BACKGROUND_POSITION_PERCENTAGES:
             return BACKGROUND_POSITION_PERCENTAGES[keyword], center
-        elif is_dimension_or_percentage(value):
-            return value, center
+        elif is_dimension_or_percentage(token):
+            return token, center
 
-    elif len(values) == 2:
-        value_1, value_2 = values
-        keyword_1, keyword_2 = map(get_keyword, values)
-        if is_dimension_or_percentage(value_1):
+    elif len(tokens) == 2:
+        token_1, token_2 = tokens
+        keyword_1, keyword_2 = map(get_keyword, tokens)
+        if is_dimension_or_percentage(token_1):
             if keyword_2 in ('top', 'center', 'bottom'):
-                return value_1, BACKGROUND_POSITION_PERCENTAGES[keyword_2]
-            elif is_dimension_or_percentage(value_2):
-                return value_1, value_2
-        elif is_dimension_or_percentage(value_2):
+                return token_1, BACKGROUND_POSITION_PERCENTAGES[keyword_2]
+            elif is_dimension_or_percentage(token_2):
+                return token_1, token_2
+        elif is_dimension_or_percentage(token_2):
             if keyword_1 in ('left', 'center', 'right'):
-                return BACKGROUND_POSITION_PERCENTAGES[keyword_1], value_2
+                return BACKGROUND_POSITION_PERCENTAGES[keyword_1], token_2
         elif (keyword_1 in ('left', 'center', 'right') and
               keyword_2 in ('top', 'center', 'bottom')):
             return (BACKGROUND_POSITION_PERCENTAGES[keyword_1],
                     BACKGROUND_POSITION_PERCENTAGES[keyword_2])
         elif (keyword_1 in ('top', 'center', 'bottom') and
               keyword_2 in ('left', 'center', 'right')):
-            # Swap values. They need to be in (horizontal, vertical) order.
+            # Swap tokens. They need to be in (horizontal, vertical) order.
             return (BACKGROUND_POSITION_PERCENTAGES[keyword_2],
                     BACKGROUND_POSITION_PERCENTAGES[keyword_1])
     #else: invalid
@@ -231,27 +231,27 @@ def background_repeat(keyword):
 
 
 @validator()
-def background_size(values):
+def background_size(tokens):
     """Validation for ``background-size``."""
-    if len(values) == 1:
-        value = values[0]
-        keyword = get_keyword(value)
+    if len(tokens) == 1:
+        token = tokens[0]
+        keyword = get_keyword(token)
         if keyword in ('contain', 'cover'):
             return keyword
         if keyword == 'auto':
             return ('auto', 'auto')
-        if is_dimension_or_percentage(value, negative=False):
-            return (value, 'auto')
-    elif len(values) == 2:
-        new_values = []
-        for value in values:
-            if get_keyword(value) == 'auto':
-                new_values.append('auto')
-            elif is_dimension_or_percentage(value, negative=False):
-                new_values.append(value)
+        if is_dimension_or_percentage(token, negative=False):
+            return (token, 'auto')
+    elif len(tokens) == 2:
+        new_tokens = []
+        for token in tokens:
+            if get_keyword(token) == 'auto':
+                new_tokens.append('auto')
+            elif is_dimension_or_percentage(token, negative=False):
+                new_tokens.append(token)
             else:
                 return
-        return tuple(values)
+        return tuple(tokens)
 
 
 @validator('background_clip')
@@ -264,13 +264,13 @@ def box(keyword):
 
 
 @validator()
-def border_spacing(values):
+def border_spacing(tokens):
     """Validator for the `border-spacing` property."""
-    if all(is_dimension(value, negative=False) for value in values):
-        if len(values) == 1:
-            return (values[0], values[0])
-        elif len(values) == 2:
-            return tuple(values)
+    if all(is_dimension(token, negative=False) for token in tokens):
+        if len(tokens) == 1:
+            return (tokens[0], tokens[0])
+        elif len(tokens) == 2:
+            return tuple(tokens)
 
 
 @validator('border-top-style')
@@ -288,12 +288,12 @@ def border_style(keyword):
 @validator('border-right-width')
 @validator('border-left-width')
 @validator('border-bottom-width')
-@single_value
-def border_width(value):
+@single_token
+def border_width(token):
     """``border-*-width`` properties validation."""
-    if is_dimension(value, negative=False):
-        return value
-    keyword = get_keyword(value)
+    if is_dimension(token, negative=False):
+        return token
+    keyword = get_keyword(token)
     if keyword in ('thin', 'medium', 'thick'):
         return keyword
 
@@ -313,53 +313,53 @@ def caption_side(keyword):
 
 
 @validator()
-@single_value
-def clip(value):
+@single_token
+def clip(token):
     """Validation for the ``clip`` property."""
-    function = parse_function(value)
+    function = parse_function(token)
     if function:
         name, args = function
         if name == 'rect' and len(args) == 4:
-            values = []
+            tokens = []
             for arg in args:
                 if get_keyword(arg) == 'auto':
-                    values.append('auto')
+                    tokens.append('auto')
                 elif is_dimension(arg, negative=True):
-                    values.append(arg)
+                    tokens.append(arg)
                 else:
                     raise InvalidValues
-            return values
-    if get_keyword(value) == 'auto':
+            return tokens
+    if get_keyword(token) == 'auto':
         return []
 
 
 @validator(wants_base_url=True)
-def content(values, base_url):
+def content(tokens, base_url):
     """``content`` property validation."""
-    keyword = get_single_keyword(values)
+    keyword = get_single_keyword(tokens)
     if keyword in ('normal', 'none'):
         return keyword
-    parsed_values = [validate_content_value(base_url, v) for v in values]
-    if None not in parsed_values:
-        return parsed_values
+    parsed_tokens = [validate_content_token(base_url, v) for v in tokens]
+    if None not in parsed_tokens:
+        return parsed_tokens
 
 
-def validate_content_value(base_url, value):
-    """Validation for a signle value for the ``content`` property.
+def validate_content_token(base_url, token):
+    """Validation for a signle token for the ``content`` property.
 
-    Return (type, content) or False for invalid values.
+    Return (type, content) or False for invalid tokens.
 
     """
-    quote_type = CONTENT_QUOTE_KEYWORDS.get(get_keyword(value))
+    quote_type = CONTENT_QUOTE_KEYWORDS.get(get_keyword(token))
     if quote_type is not None:
         return ('QUOTE', quote_type)
 
-    type_ = value.type
+    type_ = token.type
     if type_ == 'STRING':
-        return ('STRING', value.value)
+        return ('STRING', token.value)
     if type_ == 'URI':
-        return ('URI', urljoin(base_url, value.value))
-    function = parse_function(value)
+        return ('URI', urljoin(base_url, token.value))
+    function = parse_function(token)
     if function:
         name, args = function
         prototype = (name, [a.type for a in args])
@@ -377,56 +377,56 @@ def validate_content_value(base_url, value):
                 return (name, args)
 
 
-def parse_function(value):
-    """Return ``(name, args)`` if the given value is a function
+def parse_function(function_token):
+    """Return ``(name, args)`` if the given token is a function
     with comma-separated arguments, or None.
     .
     """
-    if value.type == 'FUNCTION':
-        content = [token for token in value.content if token.type != 'S']
+    if function_token.type == 'FUNCTION':
+        content = [t for t in function_token.content if t.type != 'S']
         if len(content) % 2:
             for token in content[1::2]:
                 if token.type != 'DELIM' or token.value != ',':
                     break
             else:
-                return value.function_name.lower(), content[::2]
+                return function_token.function_name.lower(), content[::2]
 
 
 @validator()
-def counter_increment(values):
+def counter_increment(tokens):
     """``counter-increment`` property validation."""
-    return counter(values, default_integer=1)
+    return counter(tokens, default_integer=1)
 
 
 @validator()
-def counter_reset(values):
+def counter_reset(tokens):
     """``counter-reset`` property validation."""
-    return counter(values, default_integer=0)
+    return counter(tokens, default_integer=0)
 
 
-def counter(values, default_integer):
+def counter(tokens, default_integer):
     """``counter-increment`` and ``counter-reset`` properties validation."""
-    if get_single_keyword(values) == 'none':
+    if get_single_keyword(tokens) == 'none':
         return []
-    values = iter(values)
-    value = next(values, None)
-    if value is None:
-        return  # expected at least one value
+    tokens = iter(tokens)
+    token = next(tokens, None)
+    if token is None:
+        return  # expected at least one token
     results = []
-    while value is not None:
-        counter_name = get_keyword(value)
+    while token is not None:
+        counter_name = get_keyword(token)
         if counter_name is None:
             return  # expected a keyword here
         if counter_name in ('none', 'initial', 'inherit'):
             raise InvalidValues('Invalid counter name: '+ counter_name)
-        value = next(values, None)
-        if value is not None and value.type == 'INTEGER':
-            # Found an integer. Use it and get the next value
-            integer = value.value
-            value = next(values, None)
+        token = next(tokens, None)
+        if token is not None and token.type == 'INTEGER':
+            # Found an integer. Use it and get the next token
+            integer = token.value
+            token = next(tokens, None)
         else:
             # Not an integer. Might be the next counter name.
-            # Keep `value` for the next loop iteration.
+            # Keep `token` for the next loop iteration.
             integer = default_integer
         results.append((counter_name, integer))
     return results
@@ -440,21 +440,21 @@ def counter(values, default_integer):
 @validator('margin-right')
 @validator('margin-bottom')
 @validator('margin-left')
-@single_value
-def lenght_precentage_or_auto(value, negative=True):
+@single_token
+def lenght_precentage_or_auto(token, negative=True):
     """``margin-*`` properties validation."""
-    if is_dimension_or_percentage(value, negative):
-        return value
-    if get_keyword(value) == 'auto':
+    if is_dimension_or_percentage(token, negative):
+        return token
+    if get_keyword(token) == 'auto':
         return 'auto'
 
 
 @validator('height')
 @validator('width')
-@single_value
-def width_height(value):
+@single_token
+def width_height(token):
     """Validation for the ``width`` and ``height`` properties."""
-    return lenght_precentage_or_auto.__func__(value, negative=False)
+    return lenght_precentage_or_auto.__func__(token, negative=False)
 
 
 @validator()
@@ -478,9 +478,9 @@ def display(keyword):
 
 
 @validator()
-def font_family(values):
+def font_family(tokens):
     """``font-family`` property validation."""
-    parts = split_on_comma(values)
+    parts = split_on_comma(tokens)
     families = []
     for part in parts:
         if len(part) == 1 and part[0].type == 'STRING':
@@ -494,12 +494,12 @@ def font_family(values):
 
 
 @validator()
-@single_value
-def font_size(value):
+@single_token
+def font_size(token):
     """``font-size`` property validation."""
-    if is_dimension_or_percentage(value):
-        return value
-    font_size_keyword = get_keyword(value)
+    if is_dimension_or_percentage(token):
+        return token
+    font_size_keyword = get_keyword(token)
     if font_size_keyword in ('smaller', 'larger'):
         raise InvalidValues('value not supported yet')
     if (
@@ -524,38 +524,37 @@ def font_variant(keyword):
 
 
 @validator()
-@single_value
-def font_weight(value):
+@single_token
+def font_weight(token):
     """``font-weight`` property validation."""
-    keyword = get_keyword(value)
+    keyword = get_keyword(token)
     if keyword in ('normal', 'bold', 'bolder', 'lighter'):
         return keyword
-    if value.type == 'INTEGER':
-        value = value.value
-        if value in [100, 200, 300, 400, 500, 600, 700, 800, 900]:
-            return value
+    if token.type == 'INTEGER':
+        if token.value in [100, 200, 300, 400, 500, 600, 700, 800, 900]:
+            return token.value
 
 
 @validator('letter_spacing')
 @validator('word_spacing')
-@single_value
-def spacing(value):
+@single_token
+def spacing(token):
     """Validation for ``letter-spacing`` and ``word-spacing``."""
-    if get_keyword(value) == 'normal':
+    if get_keyword(token) == 'normal':
         return 'normal'
-    if is_dimension(value):
-        return value
+    if is_dimension(token):
+        return token
 
 
 @validator()
-@single_value
-def line_height(value):
+@single_token
+def line_height(token):
     """``line-height`` property validation."""
-    if get_keyword(value) == 'normal':
+    if get_keyword(token) == 'normal':
         return 'normal'
-    if (value.type in ('NUMBER', 'INTEGER', 'DIMENSION', 'PERCENTAGE') and
-            value.value >= 0):
-        return value
+    if (token.type in ('NUMBER', 'INTEGER', 'DIMENSION', 'PERCENTAGE') and
+            token.value >= 0):
+        return token
 
 
 @validator()
@@ -576,28 +575,28 @@ def list_style_type(keyword):
 @validator('padding-right')
 @validator('padding-bottom')
 @validator('padding-left')
-@single_value
-def length_or_precentage(value):
+@single_token
+def length_or_precentage(token):
     """``padding-*`` properties validation."""
-    if is_dimension_or_percentage(value, negative=False):
-        return value
+    if is_dimension_or_percentage(token, negative=False):
+        return token
 
 
 @validator()
-@single_value
-def opacity(value):
+@single_token
+def opacity(token):
     """Validation for the ``opacity`` property."""
-    if value.type in ('NUMBER', 'INTEGER'):
-        return min(1, max(0, value.value))
+    if token.type in ('NUMBER', 'INTEGER'):
+        return min(1, max(0, token.value))
 
 
 @validator('orphans')
 @validator('widows')
-@single_value
-def orphans_widows(value):
+@single_token
+def orphans_widows(token):
     """Validation for the ``orphans`` or ``widows`` properties."""
-    if value.type == 'INTEGER':
-        value = value.value
+    if token.type == 'INTEGER':
+        value = token.value
         if int(value) == value and value >= 1:
             return value
 
@@ -641,11 +640,11 @@ def position(keyword):
 
 
 @validator()
-def quotes(values):
+def quotes(tokens):
     """``quotes`` property validation."""
-    if (values and len(values) % 2 == 0
-            and all(v.type == 'STRING' for v in values)):
-        strings = [v.value for v in values]
+    if (tokens and len(tokens) % 2 == 0
+            and all(v.type == 'STRING' for v in tokens)):
+        strings = [v.value for v in tokens]
         # Separate open and close quotes.
         # eg.  ['«', '»', '“', '”']  -> (['«', '“'], ['»', '”'])
         return strings[::2], strings[1::2]
@@ -659,9 +658,9 @@ def text_align(keyword):
 
 
 @validator()
-def text_decoration(values):
+def text_decoration(tokens):
     """``text-decoration`` property validation."""
-    keywords = [get_keyword(v) for v in values]
+    keywords = [get_keyword(v) for v in tokens]
     if keywords == ['none']:
         return 'none'
     if all(keyword in ('underline', 'overline', 'line-through', 'blink')
@@ -673,11 +672,11 @@ def text_decoration(values):
 
 
 @validator()
-@single_value
-def text_indent(value):
+@single_token
+def text_indent(token):
     """``text-indent`` property validation."""
-    if is_dimension_or_percentage(value, negative=True):
-        return value
+    if is_dimension_or_percentage(token, negative=True):
+        return token
 
 
 @validator()
@@ -688,12 +687,12 @@ def text_transform(keyword):
 
 
 @validator()
-@single_value
-def vertical_align(value):
+@single_token
+def vertical_align(token):
     """Validation for the ``vertical-align`` property"""
-    if is_dimension_or_percentage(value, negative=True):
-        return value
-    keyword = get_keyword(value)
+    if is_dimension_or_percentage(token, negative=True):
+        return token
+    keyword = get_keyword(token)
     if keyword in ('baseline', 'middle', 'sub', 'super',
                    'text-top', 'text-bottom', 'top', 'bottom'):
         return keyword
@@ -721,19 +720,19 @@ def image_rendering(keyword):
 
 
 @validator(prefixed=True)  # Not in CR yet
-def size(values):
+def size(tokens):
     """``size`` property validation.
 
     See http://www.w3.org/TR/css3-page/#page-size-prop
 
     """
-    if is_dimension(values[0]):
-        if len(values) == 1:
-            return values * 2
-        elif len(values) == 2 and is_dimension(values[1]):
-            return values
+    if is_dimension(tokens[0]):
+        if len(tokens) == 1:
+            return tokens * 2
+        elif len(tokens) == 2 and is_dimension(tokens[1]):
+            return tokens
 
-    keywords = [get_keyword(v) for v in values]
+    keywords = [get_keyword(v) for v in tokens]
     if len(keywords) == 1:
         keyword = keywords[0]
         if keyword in ('auto', 'portrait'):
@@ -761,15 +760,15 @@ def size(values):
 
 
 @validator(prefixed=True)  # Not in CR yet
-def transform(values):
-    if get_single_keyword(values) == 'none':
+def transform(tokens):
+    if get_single_keyword(tokens) == 'none':
         return 'none'
     else:
-        return [transform_function(v) for v in values]
+        return [transform_function(v) for v in tokens]
 
 
-def transform_function(value):
-    function = parse_function(value)
+def transform_function(token):
+    function = parse_function(token)
     if not function:
         raise InvalidValues
     name, args = function
@@ -821,19 +820,19 @@ def expander(property_name):
 @expander('border-width')
 @expander('margin')
 @expander('padding')
-def expand_four_sides(base_url, name, values):
-    """Expand properties setting a value for the four sides of a box."""
-    # Make sure we have 4 values
-    if len(values) == 1:
-        values *= 4
-    elif len(values) == 2:
-        values *= 2  # (bottom, left) defaults to (top, right)
-    elif len(values) == 3:
-        values.append(values[1])  # left defaults to right
-    elif len(values) != 4:
+def expand_four_sides(base_url, name, tokens):
+    """Expand properties setting a token for the four sides of a box."""
+    # Make sure we have 4 tokens
+    if len(tokens) == 1:
+        tokens *= 4
+    elif len(tokens) == 2:
+        tokens *= 2  # (bottom, left) defaults to (top, right)
+    elif len(tokens) == 3:
+        tokens.append(tokens[1])  # left defaults to right
+    elif len(tokens) != 4:
         raise InvalidValues(
-            'Expected 1 to 4 value components got %i' % len(values))
-    for suffix, value in zip(('_top', '_right', '_bottom', '_left'), values):
+            'Expected 1 to 4 token components got %i' % len(tokens))
+    for suffix, token in zip(('_top', '_right', '_bottom', '_left'), tokens):
         i = name.rfind('_')
         if i == -1:
             new_name = name + suffix
@@ -844,7 +843,7 @@ def expand_four_sides(base_url, name, values):
         # validate_non_shorthand returns [(name, value)], we want
         # to yield (name, value)
         result, = validate_non_shorthand(
-            base_url, new_name, [value], required=True)
+            base_url, new_name, [token], required=True)
         yield result
 
 
@@ -862,9 +861,9 @@ def generic_expander(*expanded_names, **kwargs):
     def generic_expander_decorator(wrapped):
         """Decorate the ``wrapped`` expander."""
         @functools.wraps(wrapped)
-        def generic_expander_wrapper(base_url, name, values):
+        def generic_expander_wrapper(base_url, name, tokens):
             """Wrap the expander."""
-            keyword = get_single_keyword(values)
+            keyword = get_single_keyword(tokens)
             if keyword in ('inherit', 'initial'):
                 results = dict.fromkeys(expanded_names, keyword)
                 skip_validation = True
@@ -872,16 +871,16 @@ def generic_expander(*expanded_names, **kwargs):
                 skip_validation = False
                 results = {}
                 if wants_base_url:
-                    result = wrapped(name, values, base_url)
+                    result = wrapped(name, tokens, base_url)
                 else:
-                    result = wrapped(name, values)
-                for new_name, new_values in result:
+                    result = wrapped(name, tokens)
+                for new_name, new_token in result:
                     assert new_name in expanded_names, new_name
                     if new_name in results:
                         raise InvalidValues(
                             'got multiple %s values in a %s shorthand'
                             % (new_name.strip('_'), name))
-                    results[new_name] = new_values
+                    results[new_name] = new_token
 
             for new_name in expanded_names:
                 if new_name.startswith('_'):
@@ -891,22 +890,22 @@ def generic_expander(*expanded_names, **kwargs):
                     actual_new_name = new_name
 
                 if new_name in results:
-                    values = results[new_name]
+                    value = results[new_name]
                     if not skip_validation:
                         # validate_non_shorthand returns [(name, value)]
-                        (actual_new_name, values), = validate_non_shorthand(
-                            base_url, actual_new_name, values, required=True)
+                        (actual_new_name, value), = validate_non_shorthand(
+                            base_url, actual_new_name, value, required=True)
                 else:
-                    values = INITIAL_VALUES[actual_new_name]
+                    value = INITIAL_VALUES[actual_new_name]
 
-                yield actual_new_name, values
+                yield actual_new_name, value
         return generic_expander_wrapper
     return generic_expander_decorator
 
 
 @expander('list-style')
 @generic_expander('-type', '-position', '-image', wants_base_url=True)
-def expand_list_style(name, values, base_url):
+def expand_list_style(name, tokens, base_url):
     """Expand the ``list-style`` shorthand property.
 
     See http://www.w3.org/TR/CSS21/generate.html#propdef-list-style
@@ -914,48 +913,48 @@ def expand_list_style(name, values, base_url):
     """
     type_specified = image_specified = False
     none_count = 0
-    for value in values:
-        if get_keyword(value) == 'none':
+    for token in tokens:
+        if get_keyword(token) == 'none':
             # Can be either -style or -image, see at the end which is not
             # otherwise specified.
             none_count += 1
-            none_value = value
+            none_token = token
             continue
 
-        if list_style_type([value]) is not None:
+        if list_style_type([token]) is not None:
             suffix = '_type'
             type_specified = True
-        elif list_style_position([value]) is not None:
+        elif list_style_position([token]) is not None:
             suffix = '_position'
-        elif image([value], base_url) is not None:
+        elif image([token], base_url) is not None:
             suffix = '_image'
             image_specified = True
         else:
             raise InvalidValues
-        yield suffix, [value]
+        yield suffix, [token]
 
     if not type_specified and none_count:
-        yield '_type', [none_value]
+        yield '_type', [none_token]
         none_count -= 1
 
     if not image_specified and none_count:
-        yield '_image', [none_value]
+        yield '_image', [none_token]
         none_count -= 1
 
     if none_count:
-        # Too many none values.
+        # Too many none tokens.
         raise InvalidValues
 
 
 @expander('border')
-def expand_border(base_url, name, values):
+def expand_border(base_url, name, tokens):
     """Expand the ``border`` shorthand property.
 
     See http://www.w3.org/TR/CSS21/box.html#propdef-border
 
     """
     for suffix in ('_top', '_right', '_bottom', '_left'):
-        for new_prop in expand_border_side(base_url, name + suffix, values):
+        for new_prop in expand_border_side(base_url, name + suffix, tokens):
             yield new_prop
 
 
@@ -964,80 +963,80 @@ def expand_border(base_url, name, values):
 @expander('border-bottom')
 @expander('border-left')
 @generic_expander('-width', '-color', '-style')
-def expand_border_side(name, values):
+def expand_border_side(name, tokens):
     """Expand the ``border-*`` shorthand properties.
 
     See http://www.w3.org/TR/CSS21/box.html#propdef-border-top
 
     """
-    for value in values:
-        if parse_color(value) is not None:
+    for token in tokens:
+        if parse_color(token) is not None:
             suffix = '_color'
-        elif border_width([value]) is not None:
+        elif border_width([token]) is not None:
             suffix = '_width'
-        elif border_style([value]) is not None:
+        elif border_style([token]) is not None:
             suffix = '_style'
         else:
             raise InvalidValues
-        yield suffix, [value]
+        yield suffix, [token]
 
 
-def is_valid_background_positition(value):
-    """Tell whether the value is valid for ``background-position``."""
+def is_valid_background_positition(token):
+    """Tell whether the token is valid for ``background-position``."""
     return (
-        value.type in ('DIMENSION', 'PERCENTAGE') or
-        (value.type in ('NUMBER', 'INTEGER') and value.value == 0) or
-        get_keyword(value) in ('left', 'right', 'top', 'bottom', 'center'))
+        token.type in ('DIMENSION', 'PERCENTAGE') or
+        (token.type in ('NUMBER', 'INTEGER') and token.value == 0) or
+        get_keyword(token) in ('left', 'right', 'top', 'bottom', 'center'))
 
 
 @expander('background')
 @generic_expander('-color', '-image', '-repeat', '-attachment', '-position',
                   wants_base_url=True)
-def expand_background(name, values, base_url):
+def expand_background(name, tokens, base_url):
     """Expand the ``background`` shorthand property.
 
     See http://www.w3.org/TR/CSS21/colors.html#propdef-background
 
     """
-    # Make `values` a stack
-    values = list(reversed(values))
-    while values:
-        value = values.pop()
-        if parse_color(value) is not None:
+    # Make `tokens` a stack
+    tokens = list(reversed(tokens))
+    while tokens:
+        token = tokens.pop()
+        if parse_color(token) is not None:
             suffix = '_color'
-        elif image([value], base_url) is not None:
+        elif image([token], base_url) is not None:
             suffix = '_image'
-        elif background_repeat([value]) is not None:
+        elif background_repeat([token]) is not None:
             suffix = '_repeat'
-        elif background_attachment([value]) is not None:
+        elif background_attachment([token]) is not None:
             suffix = '_attachment'
-        elif background_position([value]):
-            if values:
-                next_value = values.pop()
-                if background_position([value, next_value]):
-                    # Two consecutive '-position' values, yield them together
-                    yield '_position', [value, next_value]
+        elif background_position([token]):
+            if tokens:
+                next_token = tokens.pop()
+                if background_position([token, next_token]):
+                    # Two consecutive '-position' tokens, yield them together
+                    yield '_position', [token, next_token]
                     continue
                 else:
-                    # The next value is not a '-position', put it back
+                    # The next token is not a '-position', put it back
                     # for the next loop iteration
-                    values.append(next_value)
-            # A single '-position' value
+                    tokens.append(next_token)
+            # A single '-position' token
             suffix = '_position'
         else:
             raise InvalidValues
-        yield suffix, [value]
+        yield suffix, [token]
 
 
 @expander('font')
 @generic_expander('-style', '-variant', '-weight', '-size',
                   'line-height', '-family')  # line-height is not a suffix
-def expand_font(name, values):
+def expand_font(name, tokens):
     """Expand the ``font`` shorthand property.
 
     http://www.w3.org/TR/CSS21/fonts.html#font-shorthand
     """
-    expand_font_keyword = get_single_keyword(values)
+    expand_font_keyword = get_single_keyword(tokens)
     if expand_font_keyword in ('caption', 'icon', 'menu', 'message-box',
                                'small-caption', 'status-bar'):
         LOGGER.warn(
@@ -1045,57 +1044,57 @@ def expand_font(name, values):
             expand_font_keyword)
         return
 
-    # Make `values` a stack
-    values = list(reversed(values))
+    # Make `tokens` a stack
+    tokens = list(reversed(tokens))
     # Values for font-style font-variant and font-weight can come in any
     # order and are all optional.
-    while values:
-        value = values.pop()
-        if get_keyword(value) == 'normal':
+    while tokens:
+        token = tokens.pop()
+        if get_keyword(token) == 'normal':
             # Just ignore 'normal' keywords. Unspecified properties will get
-            # their initial value, which is 'normal' for all three here.
+            # their initial token, which is 'normal' for all three here.
             continue
 
-        if font_style([value]) is not None:
+        if font_style([token]) is not None:
             suffix = '_style'
-        elif font_variant([value]) is not None:
+        elif font_variant([token]) is not None:
             suffix = '_variant'
-        elif font_weight([value]) is not None:
+        elif font_weight([token]) is not None:
             suffix = '_weight'
         else:
             # We’re done with these three, continue with font-size
             break
-        yield suffix, [value]
+        yield suffix, [token]
 
     # Then font-size is mandatory
-    # Latest `value` from the loop.
-    if font_size([value]) is None:
+    # Latest `token` from the loop.
+    if font_size([token]) is None:
         raise InvalidValues
-    yield '_size', [value]
+    yield '_size', [token]
 
     # Then line-height is optional, but font-family is not so the list
     # must not be empty yet
-    if not values:
+    if not tokens:
         raise InvalidValues
 
-    value = values.pop()
-    if value.type == 'DELIM' and value.value == '/':
-        value = values.pop()
-        if line_height([value]) is None:
+    token = tokens.pop()
+    if token.type == 'DELIM' and token.value == '/':
+        token = tokens.pop()
+        if line_height([token]) is None:
             raise InvalidValues
-        yield 'line_height', [value]
+        yield 'line_height', [token]
     else:
         # We pop()ed a font-family, add it back
-        values.append(value)
+        tokens.append(token)
 
     # Reverse the stack to get normal list
-    values.reverse()
-    if font_family(values) is None:
+    tokens.reverse()
+    if font_family(tokens) is None:
         raise InvalidValues
-    yield '_family', values
+    yield '_family', tokens
 
 
-def validate_non_shorthand(base_url, name, values, required=False):
+def validate_non_shorthand(base_url, name, tokens, required=False):
     """Default validator for non-shorthand properties."""
     if not required and name not in INITIAL_VALUES:
         raise InvalidValues('unknown property')
@@ -1103,26 +1102,26 @@ def validate_non_shorthand(base_url, name, values, required=False):
     if not required and name not in VALIDATORS:
         raise InvalidValues('property not supported yet')
 
-    keyword = get_single_keyword(values)
+    keyword = get_single_keyword(tokens)
     if keyword in ('initial', 'inherit'):
         value = keyword
     else:
         function = VALIDATORS[name]
         if function.wants_base_url:
-            value = function(values, base_url)
+            value = function(tokens, base_url)
         else:
-            value = function(values)
+            value = function(tokens)
         if value is None:
             raise InvalidValues
     return [(name, value)]
 
 
-def validate_and_expand(base_url, name, values):
+def validate_and_expand(base_url, name, tokens):
     """Expand and validate shorthand properties.
 
     The invalid or unsupported declarations are ignored and logged.
 
-    Return a iterable of ``(name, values)`` tuples.
+    Return a iterable of ``(name, value)`` tuples.
 
     """
     if name in PREFIXED and not name.startswith(PREFIX):
@@ -1139,7 +1138,7 @@ def validate_and_expand(base_url, name, values):
                 name = unprefixed_name
         expander_ = EXPANDERS.get(name, validate_non_shorthand)
         try:
-            tokens = [token for token in values if token.type != 'S']
+            tokens = [token for token in tokens if token.type != 'S']
             results = expander_(base_url, name, tokens)
             # Use list() to consume any generator now,
             # so that InvalidValues is caught.
@@ -1151,5 +1150,5 @@ def validate_and_expand(base_url, name, values):
             else:
                 reason = 'invalid value'
     getattr(LOGGER, level)('Ignored declaration: `%s: %s`, %s.',
-        name.replace('_', '-'), ''.join(v.as_css for v in values), reason)
+        name.replace('_', '-'), ''.join(v.as_css for v in tokens), reason)
     return []
