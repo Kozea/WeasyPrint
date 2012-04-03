@@ -12,86 +12,91 @@
 
 from __future__ import division, unicode_literals
 
-from pytest import raises
 from tinycss.color3 import RGBA
-from tinycss.parsing import remove_whitespace
 
-from .testing_utils import assert_no_logs
-from ..css import validation, PARSER
-
-# TODO: merge this into test_css.py ?
+from .testing_utils import assert_no_logs, capture_logs
+from ..css import PARSER, preprocess_declarations
 
 
-def expand_to_dict(short_name, short_values):
+def expand_to_dict(css, expected_error=None):
     """Helper to test shorthand properties expander functions."""
-    declarations, errors = PARSER.parse_style_attr('prop: ' + short_values)
+    declarations, errors = PARSER.parse_style_attr(css)
     assert not errors
-    assert len(declarations) == 1
-    tokens = remove_whitespace(declarations[0].value)
-    return dict(validation.EXPANDERS[short_name]('', short_name, tokens))
+
+    with capture_logs() as logs:
+        base_url = 'http://weasyprint.org/foo/'
+        declarations = list(preprocess_declarations(base_url, declarations))
+
+    if expected_error:
+        assert len(logs) == 1
+        assert expected_error in logs[0]
+    else:
+        assert not logs
+
+    return dict((name, value) for name, value, _priority in declarations)
 
 
 @assert_no_logs
 def test_expand_four_sides():
     """Test the 4-value properties."""
-    assert expand_to_dict('margin', 'inherit') == {
+    assert expand_to_dict('margin: inherit') == {
         'margin_top': 'inherit',
         'margin_right': 'inherit',
         'margin_bottom': 'inherit',
         'margin_left': 'inherit',
     }
-    assert expand_to_dict('margin', '1em') == {
+    assert expand_to_dict('margin: 1em') == {
         'margin_top': (1, 'em'),
         'margin_right': (1, 'em'),
         'margin_bottom': (1, 'em'),
         'margin_left': (1, 'em'),
     }
-    assert expand_to_dict('padding', '1em 0') == {
+    assert expand_to_dict('padding: 1em 0') == {
         'padding_top': (1, 'em'),
         'padding_right': (0, None),
         'padding_bottom': (1, 'em'),
         'padding_left': (0, None),
     }
-    assert expand_to_dict('padding', '1em 0 2em') == {
+    assert expand_to_dict('padding: 1em 0 2em') == {
         'padding_top': (1, 'em'),
         'padding_right': (0, None),
         'padding_bottom': (2, 'em'),
         'padding_left': (0, None),
     }
-    assert expand_to_dict('padding', '1em 0 2em 5px') == {
+    assert expand_to_dict('padding: 1em 0 2em 5px') == {
         'padding_top': (1, 'em'),
         'padding_right': (0, None),
         'padding_bottom': (2, 'em'),
         'padding_left': (5, 'px'),
     }
-    with raises(ValueError):
-        expand_to_dict('padding', '1 2 3 4 5')
+    assert expand_to_dict('padding: 1 2 3 4 5',
+        'Expected 1 to 4 token components got 5') == {}
 
 
 @assert_no_logs
 def test_expand_borders():
     """Test the ``border`` property."""
-    assert expand_to_dict('border_top', '3px dotted red') == {
+    assert expand_to_dict('border_top: 3px dotted red') == {
         'border_top_width': (3, 'px'),
         'border_top_style': 'dotted',
         'border_top_color': (1, 0, 0, 1),  # red
     }
-    assert expand_to_dict('border_top', '3px dotted') == {
+    assert expand_to_dict('border_top: 3px dotted') == {
         'border_top_width': (3, 'px'),
         'border_top_style': 'dotted',
         'border_top_color': 'currentColor',
     }
-    assert expand_to_dict('border_top', '3px red') == {
+    assert expand_to_dict('border_top: 3px red') == {
         'border_top_width': (3, 'px'),
         'border_top_style': 'none',
         'border_top_color': (1, 0, 0, 1),  # red
     }
-    assert expand_to_dict('border_top', 'solid') == {
+    assert expand_to_dict('border_top: solid') == {
         'border_top_width': 3,  # initial value
         'border_top_style': 'solid',
         'border_top_color': 'currentColor',
     }
-    assert expand_to_dict('border', '6px dashed lime') == {
+    assert expand_to_dict('border: 6px dashed lime') == {
         'border_top_width': (6, 'px'),
         'border_top_style': 'dashed',
         'border_top_color': (0, 1, 0, 1),  # lime
@@ -108,42 +113,40 @@ def test_expand_borders():
         'border_right_style': 'dashed',
         'border_right_color': (0, 1, 0, 1),  # lime
     }
-    with raises(ValueError):
-        expand_to_dict('border', '6px dashed left')
+    assert expand_to_dict('border: 6px dashed left', 'invalid') == {}
 
 
 @assert_no_logs
 def test_expand_list_style():
     """Test the ``list_style`` property."""
-    assert expand_to_dict('list_style', 'inherit') == {
+    assert expand_to_dict('list_style: inherit') == {
         'list_style_position': 'inherit',
         'list_style_image': 'inherit',
         'list_style_type': 'inherit',
     }
-    assert expand_to_dict('list_style', 'url(foo.png)') == {
+    assert expand_to_dict('list_style: url(../bar/lipsum.png)') == {
         'list_style_position': 'outside',
-        'list_style_image': 'foo.png',
+        'list_style_image': 'http://weasyprint.org/bar/lipsum.png',
         'list_style_type': 'disc',
     }
-    assert expand_to_dict('list_style', 'square') == {
+    assert expand_to_dict('list_style: square') == {
         'list_style_position': 'outside',
         'list_style_image': 'none',
         'list_style_type': 'square',
     }
-    assert expand_to_dict('list_style', 'circle inside') == {
+    assert expand_to_dict('list_style: circle inside') == {
         'list_style_position': 'inside',
         'list_style_image': 'none',
         'list_style_type': 'circle',
     }
-    with raises(ValueError):
-        expand_to_dict('list_style', 'red')
-    with raises(ValueError):
-        expand_to_dict('list_style', 'circle disc')
+    assert expand_to_dict('list_style: red', 'invalid') == {}
+    assert expand_to_dict('list_style: circle disc',
+        'got multiple type values in a list_style shorthand') == {}
 
 
 def assert_background(css, **kwargs):
     """Helper checking the background properties."""
-    expanded = expand_to_dict('background', css).items()
+    expanded = expand_to_dict('background: '+ css).items()
     expected = [('background_' + key, value)
                 for key, value in kwargs.items()]
     assert sorted(expanded) == sorted(expected)
@@ -162,9 +165,9 @@ def test_expand_background():
 
     )
     assert_background(
-        'url(foo.png)',
+        'url(lipsum.png)',
         color=(0, 0, 0, 0), # transparent
-        image='foo.png', ##
+        image='http://weasyprint.org/foo/lipsum.png', ##
         repeat='repeat',
         attachment='scroll',
         position=((0, '%'), (0, '%')),
@@ -197,7 +200,7 @@ def test_expand_background():
     assert_background(
         'url(bar) #f00 repeat-y center left fixed',
         color=(1, 0, 0, 1), ## #f00
-        image='bar', ##
+        image='http://weasyprint.org/foo/bar', ##
         repeat='repeat-y', ##
         attachment='fixed', ##
         # Order swapped to be in (horizontal, vertical) order.
@@ -224,7 +227,7 @@ def test_expand_background():
 @assert_no_logs
 def test_font():
     """Test the ``font`` property."""
-    assert expand_to_dict('font', '12px My Fancy Font, serif') == {
+    assert expand_to_dict('font: 12px My Fancy Font, serif') == {
         'font_style': 'normal',
         'font_variant': 'normal',
         'font_weight': 400,
@@ -232,7 +235,7 @@ def test_font():
         'line_height': 'normal',
         'font_family': ['My Fancy Font', 'serif'], ##
     }
-    assert expand_to_dict('font', 'small/1.2 "Some Font", serif') == {
+    assert expand_to_dict('font: small/1.2 "Some Font", serif') == {
         'font_style': 'normal',
         'font_variant': 'normal',
         'font_weight': 400,
@@ -240,7 +243,7 @@ def test_font():
         'line_height': (1.2, None), ##
         'font_family': ['Some Font', 'serif'], ##
     }
-    assert expand_to_dict('font', 'small-caps italic 700 large serif') == {
+    assert expand_to_dict('font: small-caps italic 700 large serif') == {
         'font_style': 'italic', ##
         'font_variant': 'small-caps', ##
         'font_weight': 700, ##
