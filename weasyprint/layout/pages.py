@@ -319,7 +319,7 @@ def make_margin_boxes(document, page, counter_values):
             children = build.content_to_boxes(
                 document, box.style, box, quote_depth, counter_values)
             box = box.copy_with_children(children)
-            box = build.process_whitespace(box)
+            build.process_whitespace(box)
         resolve_percentages(box, containing_block)
         # Empty boxes should not be generated, but they may be needed for
         # the layout of their neighbors.

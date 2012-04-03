@@ -48,7 +48,7 @@ def build_formatting_structure(document, computed_styles):
     box, = dom_to_box(document, document.dom)
     box.is_for_root_element = True
     # If this is changed, maybe update weasy.layout.pages.make_margin_boxes()
-    box = process_whitespace(box)
+    process_whitespace(box)
     box = anonymous_table_boxes(box)
     box = inline_in_block(box)
     box = block_in_inline(box)
@@ -553,27 +553,21 @@ def wrap_table(box, children):
     return wrapper
 
 
-def process_whitespace(box):
+def process_whitespace(box, following_collapsible_space=False):
     """First part of "The 'white-space' processing model".
 
     See http://www.w3.org/TR/CSS21/text.html#white-space-model
 
     """
-    following_collapsible_space = False
-    for child in box.descendants():
-        if not isinstance(child, boxes.TextBox):
-            if isinstance(child, boxes.AtomicInlineLevelBox):
-                following_collapsible_space = False
-            continue
-
-        text = child.text
+    if isinstance(box, boxes.TextBox):
+        text = box.text
         if not text:
-            continue
+            return following_collapsible_space
 
         # Normalize line feeds
         text = re.sub('\r\n?', '\n', text)
 
-        handling = child.style.white_space
+        handling = box.style.white_space
 
         if handling in ('normal', 'nowrap', 'pre-line'):
             # \r characters were removed/converted earlier
@@ -602,8 +596,23 @@ def process_whitespace(box):
         else:
             following_collapsible_space = False
 
-        child.text = text
-    return box
+        box.text = text
+        return following_collapsible_space
+
+    # Don't collapse across starting tag
+    if isinstance(box, boxes.AtomicInlineLevelBox):
+        following_collapsible_space = False
+
+    if isinstance(box, boxes.ParentBox):
+        for child in box.children:
+            following_collapsible_space = process_whitespace(
+                child, following_collapsible_space)
+
+    # Don't collapse across ending tag
+    if isinstance(box, boxes.AtomicInlineLevelBox):
+        following_collapsible_space = False
+
+    return following_collapsible_space
 
 
 def inline_in_block(box):
