@@ -15,7 +15,10 @@ from __future__ import division, unicode_literals
 
 import math
 
-from .properties import INITIAL_VALUES
+from .properties import INITIAL_VALUES, Dimension
+
+
+ZERO_PIXELS = Dimension(0, 'px')
 
 
 # How many CSS pixels is one <unit>?
@@ -95,42 +98,45 @@ FONT_WEIGHT_RELATIVE = dict(
 # name=(width in pixels, height in pixels)
 PAGE_SIZES = dict(
     A5=(
-        148 * LENGTHS_TO_PIXELS['mm'],
-        210 * LENGTHS_TO_PIXELS['mm'],
+        Dimension(148, 'mm'),
+        Dimension(210, 'mm'),
     ),
     A4=(
-        210 * LENGTHS_TO_PIXELS['mm'],
-        297 * LENGTHS_TO_PIXELS['mm'],
+        Dimension(210, 'mm'),
+        Dimension(297, 'mm'),
     ),
     A3=(
-        297 * LENGTHS_TO_PIXELS['mm'],
-        420 * LENGTHS_TO_PIXELS['mm'],
+        Dimension(297, 'mm'),
+        Dimension(420, 'mm'),
     ),
     B5=(
-        176 * LENGTHS_TO_PIXELS['mm'],
-        250 * LENGTHS_TO_PIXELS['mm'],
+        Dimension(176, 'mm'),
+        Dimension(250, 'mm'),
     ),
     B4=(
-        250 * LENGTHS_TO_PIXELS['mm'],
-        353 * LENGTHS_TO_PIXELS['mm'],
+        Dimension(250, 'mm'),
+        Dimension(353, 'mm'),
     ),
     letter=(
-        8.5 * LENGTHS_TO_PIXELS['in'],
-        11 * LENGTHS_TO_PIXELS['in'],
+        Dimension(8.5, 'in'),
+        Dimension(11, 'in'),
     ),
     legal=(
-        8.5 * LENGTHS_TO_PIXELS['in'],
-        14 * LENGTHS_TO_PIXELS['in'],
+        Dimension(8.5, 'in'),
+        Dimension(14, 'in'),
     ),
     ledger=(
-        11 * LENGTHS_TO_PIXELS['in'],
-        17 * LENGTHS_TO_PIXELS['in'],
+        Dimension(11, 'in'),
+        Dimension(17, 'in'),
     ),
 )
+# In "portrait" orientation.
 for w, h in PAGE_SIZES.values():
-    assert w < h
+    assert w.value < h.value
 
-INITIAL_VALUES['size'] = PAGE_SIZES['A4']
+INITIAL_PAGE_SIZE = PAGE_SIZES['A4']
+INITIAL_VALUES['size'] = tuple(
+    d.value * LENGTHS_TO_PIXELS[d.unit] for d in INITIAL_PAGE_SIZE)
 
 
 def _computing_order():
@@ -199,7 +205,8 @@ def compute(element, pseudo_type, specified, computed, parent_style):
     return computed
 
 
-# Let's be coherent, always use ``name`` as an argument even when it is useless
+# Let's be consistent, always use ``name`` as an argument even when
+# it is useless.
 # pylint: disable=W0613
 
 @register_computer('background-color')
@@ -217,13 +224,19 @@ def other_color(computer, name, value):
 
 
 @register_computer('background-position')
+@register_computer('transform-origin')
+def length_or_percentage_tuple(computer, name, values):
+    """Compute the lists of lengths that can be percentages."""
+    return tuple(length(computer, name, value) for value in values)
+
+
 @register_computer('border-spacing')
 @register_computer('size')
 @register_computer('clip')
-@register_computer('transform-origin')
-def length_list(computer, name, values):
+def length_tuple(computer, name, values):
     """Compute the properties with a list of lengths."""
-    return [length(computer, name, value) for value in values]
+    return tuple(length(computer, name, value, pixels_only=True)
+                 for value in values)
 
 
 @register_computer('top')
@@ -236,35 +249,42 @@ def length_list(computer, name, values):
 @register_computer('margin-left')
 @register_computer('height')
 @register_computer('width')
-@register_computer('letter-spacing')
 @register_computer('padding-top')
 @register_computer('padding-right')
 @register_computer('padding-bottom')
 @register_computer('padding-left')
 @register_computer('text-indent')
-def length(computer, name, value, font_size=None):
+def length(computer, name, value, font_size=None, pixels_only=False):
     """Compute a length ``value``."""
-    if (getattr(value, 'type', 'other') in ('NUMBER', 'INTEGER')
-            and value.value == 0):
-        return 0
+    if value.value == 0:
+        return 0 if pixels_only else ZERO_PIXELS
 
-    if getattr(value, 'type', 'other') != 'DIMENSION':
-        # No conversion needed.
-        return value
-
-    if value.unit in LENGTHS_TO_PIXELS:
+    unit = value.unit
+    if unit == 'px':
+        return value.value if pixels_only else value
+    elif unit in LENGTHS_TO_PIXELS:
         # Convert absolute lengths to pixels
-        factor = LENGTHS_TO_PIXELS[value.unit]
-    elif value.unit in ('em', 'ex'):
+        factor = LENGTHS_TO_PIXELS[unit]
+    elif unit in ('em', 'ex'):
         if font_size is None:
             factor = computer.computed.font_size
         else:
             factor = font_size
+        if unit == 'ex':
+            # TODO: find a better way to measure ex, see
+            # http://www.w3.org/TR/CSS21/syndata.html#length-units
+            factor *= 0.5
+    else:
+        # A percentage or 'auto': no conversion needed.
+        return value
 
-    if value.unit == 'ex':
-        factor *= 0.5
+    result = value.value * factor
+    return result if pixels_only else Dimension(result, 'px')
 
-    return value.value * factor
+
+@register_computer('letter-spacing')
+def pixel_length(computer, name, value):
+    return length(computer, name, value, pixels_only=True)
 
 
 @register_computer('background-size')
@@ -273,7 +293,7 @@ def background_size(computer, name, value):
     if value in ('contain', 'cover'):
         return value
     else:
-        return length_list(computer, name, value)
+        return length_or_percentage_tuple(computer, name, value)
 
 
 @register_computer('border-top-width')
@@ -289,7 +309,7 @@ def border_width(computer, name, value):
     if value in BORDER_WIDTH_KEYWORDS:
         return BORDER_WIDTH_KEYWORDS[value]
 
-    return length(computer, name, value)
+    return length(computer, name, value, pixels_only=True)
 
 
 @register_computer('content')
@@ -342,27 +362,14 @@ def font_size(computer, name, value):
     """Compute the ``font-size`` property."""
     if value in FONT_SIZE_KEYWORDS:
         return FONT_SIZE_KEYWORDS[value]
+    # TODO: support 'larger' and 'smaller'
 
     parent_font_size = computer.parent_style['font_size']
-
-    if value.type == 'DIMENSION':
-        if value.unit == 'px':
-            factor = 1
-        elif value.unit == 'em':
-            factor = parent_font_size
-        elif value.unit == 'ex':
-            # TODO: find a better way to measure ex, see
-            # http://www.w3.org/TR/CSS21/syndata.html#length-units
-            factor = parent_font_size * 0.5
-        elif value.unit in LENGTHS_TO_PIXELS:
-            factor = LENGTHS_TO_PIXELS[value.unit]
-    elif value.type == 'PERCENTAGE':
-        factor = parent_font_size / 100.
-    elif value.type in ('NUMBER', 'INTEGER') and value.value == 0:
-        return 0
-
-    # Raise if `factor` is not defined. It should be, because of validation.
-    return value.value * factor
+    if value.unit == '%':
+        return value.value * parent_font_size / 100.
+    else:
+        return length(computer, name, value, pixels_only=True,
+                      font_size=parent_font_size)
 
 
 @register_computer('font-weight')
@@ -384,19 +391,30 @@ def font_weight(computer, name, value):
 @register_computer('line-height')
 def line_height(computer, name, value):
     """Compute the ``line-height`` property."""
-    # No .type attribute: already computed
-    if value == 'normal' or not hasattr(value, 'type'):
+    if value == 'normal':
         return value
-    elif value.type in ('NUMBER', 'INTEGER'):
+    elif not value.unit:
         return ('NUMBER', value.value)
-    elif value.type == 'PERCENTAGE':
+    elif value.unit == '%':
         factor = value.value / 100.
         font_size_value = computer.computed.font_size
         pixels = factor * font_size_value
     else:
-        assert value.type == 'DIMENSION'
-        pixels = length(computer, name, value)
+        pixels = length(computer, name, value, pixels_only=True)
     return ('PIXELS', pixels)
+
+
+@register_computer('transform')
+def transform(computer, name, value):
+    """Compute the ``transform`` property."""
+    result = []
+    for function, args in value:
+        if function in ('rotate', 'skewx', 'skewy'):
+            args = args.value * ANGLE_TO_RADIANS[args.unit]
+        elif function == 'translate':
+            args = length_or_percentage_tuple(computer, name, args)
+        result.append((function, args))
+    return result
 
 
 @register_computer('vertical-align')
@@ -404,18 +422,21 @@ def vertical_align(computer, name, value):
     """Compute the ``vertical-align`` property."""
     # Use +/- half an em for super and sub, same as Pango.
     # (See the SUPERSUB_RISE constant in pango-markup.c)
-    if value == 'super':
+    if value in ('baseline', 'middle', 'text-top', 'text-bottom',
+                 'top', 'bottom'):
+        return value
+    elif value == 'super':
         return computer.computed.font_size * 0.5
     elif value == 'sub':
         return computer.computed.font_size * -0.5
-    elif getattr(value, 'type', 'other') == 'PERCENTAGE':
+    elif value.unit == '%':
         height = used_line_height({
             'line_height': computer.computed.line_height,
             'font_size': computer.computed.font_size
         })
         return height * value.value / 100.
     else:
-        return length(computer, name, value)
+        return length(computer, name, value, pixels_only=True)
 
 
 @register_computer('word-spacing')
@@ -424,7 +445,7 @@ def word_spacing(computer, name, value):
     if value == 'normal':
         return 0
     else:
-        return length(computer, name, value)
+        return length(computer, name, value, pixels_only=True)
 
 
 def used_line_height(style):
@@ -440,9 +461,3 @@ def used_line_height(style):
         return value * style['font_size']
     else:
         return value
-
-
-def angle_to_radian(value):
-    """Take a DIMENSION token for an angle and return the value in radians.
-    """
-    return value.value * ANGLE_TO_RADIANS[value.unit]

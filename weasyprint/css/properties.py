@@ -11,21 +11,30 @@
 """
 
 from __future__ import division, unicode_literals
+import collections
 
 from tinycss.color3 import COLOR_KEYWORDS
 
-from .values import make_percentage_value
+
+Dimension = collections.namedtuple('Dimension', ['value', 'unit'])
+
+
+class _Auto(str):
+    unit = None
+    value = 'auto'
+AUTO = _Auto('auto')  # for values that can be 'auto' as well as a dimension
+
 
 # See http://www.w3.org/TR/CSS21/propidx.html
 INITIAL_VALUES = {
     'background_attachment': 'scroll',
     'background_color': COLOR_KEYWORDS['transparent'],
     'background_image': 'none',
-    'background_position': (make_percentage_value(0),) * 2,
+    'background_position': (Dimension(0, '%'), Dimension(0, '%')),
     'background_repeat': 'repeat',
     'background_clip': 'border-box',  # CSS3
     'background_origin': 'padding-box',  # CSS3
-    'background_size': ('auto', 'auto'),  # CSS3
+    'background_size': (AUTO, AUTO),  # CSS3
     'border_collapse': 'separate',
     # http://www.w3.org/TR/css3-color/#currentcolor
     'border_top_color': 'currentColor',
@@ -41,7 +50,7 @@ INITIAL_VALUES = {
     'border_right_width': 3,
     'border_bottom_width': 3,
     'border_left_width': 3,
-    'bottom': 'auto',
+    'bottom': AUTO,
     'caption_side': 'top',
     'clear': 'none',
     'clip': (),  # empty collection, computed value for 'auto'
@@ -62,46 +71,46 @@ INITIAL_VALUES = {
     'font_style': 'normal',
     'font_variant': 'normal',
     'font_weight': 400,
-    'height': 'auto',
-    'left': 'auto',
+    'height': AUTO,
+    'left': AUTO,
     'letter_spacing': 'normal',
     'line_height': 'normal',
     'list_style_image': 'none',
     'list_style_position': 'outside',
     'list_style_type': 'disc',
-    'margin_top': 0,
-    'margin_right': 0,
-    'margin_bottom': 0,
-    'margin_left': 0,
+    'margin_top': Dimension(0, 'px'),
+    'margin_right': Dimension(0, 'px'),
+    'margin_bottom': Dimension(0, 'px'),
+    'margin_left': Dimension(0, 'px'),
     'max_height': 'none',
     'max_width': 'none',
-    'min_height': 0,
-    'min_width': 0,
+    'min_height': Dimension(0, 'px'),
+    'min_width': Dimension(0, 'px'),
     'orphans': 2,
     'overflow': 'visible',
-    'padding_top': 0,
-    'padding_right': 0,
-    'padding_bottom': 0,
-    'padding_left': 0,
+    'padding_top': Dimension(0, 'px'),
+    'padding_right': Dimension(0, 'px'),
+    'padding_bottom': Dimension(0, 'px'),
+    'padding_left': Dimension(0, 'px'),
     'page_break_after': 'auto',
     'page_break_before': 'auto',
     'page_break_inside': 'auto',
     'quotes': list('“”‘’'),  # depends on user agent
     'position': 'static',
-    'right': 'auto',
+    'right': AUTO,
     'table_layout': 'auto',
     'text_align': '-weasy-start',  # Taken from CSS3 Text.
                    # The only other supported value form CSS3 is -weasy-end.
     'text_decoration': 'none',
-    'text_indent': 0,
+    'text_indent': Dimension(0, 'px'),
     'text_transform': 'none',
-    'top': 'auto',
+    'top': AUTO,
     'unicode_bidi': 'normal',
     'vertical_align': 'baseline',
     'visibility': 'visible',
     'white_space': 'normal',
     'widows': 2,
-    'width': 'auto',
+    'width': AUTO,
     'word_spacing': 0,  # computed value for 'normal'
     'z_index': 'auto',
 
@@ -115,8 +124,8 @@ INITIAL_VALUES = {
     'opacity': 1,
 
     # CSS3 2D Transforms: http://www.w3.org/TR/css3-2d-transforms
-    'transform_origin': (make_percentage_value(50),) * 2,
-    'transform': (),  # computed value for 'none'
+    'transform_origin': (Dimension(50, '%'), Dimension(50, '%')),
+    'transform': (),  # empty sequence: computed value for 'none'
 
     # Taken from SVG:
     # http://www.w3.org/TR/SVG/painting.html#ImageRenderingProperty

@@ -28,11 +28,7 @@ def expand_to_dict(short_name, short_values):
     assert not errors
     assert len(declarations) == 1
     tokens = remove_whitespace(declarations[0].value)
-    expanded = validation.EXPANDERS[short_name]('', short_name, tokens)
-    return dict((name, tuple(v.as_css for v in value)
-                       if name == 'background_position'
-                       else getattr(value, 'as_css', value))
-                for name, value in expanded)
+    return dict(validation.EXPANDERS[short_name]('', short_name, tokens))
 
 
 @assert_no_logs
@@ -45,28 +41,28 @@ def test_expand_four_sides():
         'margin_left': 'inherit',
     }
     assert expand_to_dict('margin', '1em') == {
-        'margin_top': '1em',
-        'margin_right': '1em',
-        'margin_bottom': '1em',
-        'margin_left': '1em',
+        'margin_top': (1, 'em'),
+        'margin_right': (1, 'em'),
+        'margin_bottom': (1, 'em'),
+        'margin_left': (1, 'em'),
     }
     assert expand_to_dict('padding', '1em 0') == {
-        'padding_top': '1em',
-        'padding_right': '0',
-        'padding_bottom': '1em',
-        'padding_left': '0',
+        'padding_top': (1, 'em'),
+        'padding_right': (0, None),
+        'padding_bottom': (1, 'em'),
+        'padding_left': (0, None),
     }
     assert expand_to_dict('padding', '1em 0 2em') == {
-        'padding_top': '1em',
-        'padding_right': '0',
-        'padding_bottom': '2em',
-        'padding_left': '0',
+        'padding_top': (1, 'em'),
+        'padding_right': (0, None),
+        'padding_bottom': (2, 'em'),
+        'padding_left': (0, None),
     }
     assert expand_to_dict('padding', '1em 0 2em 5px') == {
-        'padding_top': '1em',
-        'padding_right': '0',
-        'padding_bottom': '2em',
-        'padding_left': '5px',
+        'padding_top': (1, 'em'),
+        'padding_right': (0, None),
+        'padding_bottom': (2, 'em'),
+        'padding_left': (5, 'px'),
     }
     with raises(ValueError):
         expand_to_dict('padding', '1 2 3 4 5')
@@ -76,39 +72,39 @@ def test_expand_four_sides():
 def test_expand_borders():
     """Test the ``border`` property."""
     assert expand_to_dict('border_top', '3px dotted red') == {
-        'border_top_width': '3px',
+        'border_top_width': (3, 'px'),
         'border_top_style': 'dotted',
         'border_top_color': (1, 0, 0, 1),  # red
     }
     assert expand_to_dict('border_top', '3px dotted') == {
-        'border_top_width': '3px',
+        'border_top_width': (3, 'px'),
         'border_top_style': 'dotted',
         'border_top_color': 'currentColor',
     }
     assert expand_to_dict('border_top', '3px red') == {
-        'border_top_width': '3px',
+        'border_top_width': (3, 'px'),
         'border_top_style': 'none',
         'border_top_color': (1, 0, 0, 1),  # red
     }
     assert expand_to_dict('border_top', 'solid') == {
-        'border_top_width': 3,
+        'border_top_width': 3,  # initial value
         'border_top_style': 'solid',
         'border_top_color': 'currentColor',
     }
     assert expand_to_dict('border', '6px dashed lime') == {
-        'border_top_width': '6px',
+        'border_top_width': (6, 'px'),
         'border_top_style': 'dashed',
         'border_top_color': (0, 1, 0, 1),  # lime
 
-        'border_left_width': '6px',
+        'border_left_width': (6, 'px'),
         'border_left_style': 'dashed',
         'border_left_color': (0, 1, 0, 1),  # lime
 
-        'border_bottom_width': '6px',
+        'border_bottom_width': (6, 'px'),
         'border_bottom_style': 'dashed',
         'border_bottom_color': (0, 1, 0, 1),  # lime
 
-        'border_right_width': '6px',
+        'border_right_width': (6, 'px'),
         'border_right_style': 'dashed',
         'border_right_color': (0, 1, 0, 1),  # lime
     }
@@ -162,7 +158,7 @@ def test_expand_background():
         image='none',
         repeat='repeat',
         attachment='scroll',
-        position=('0%', '0%'),
+        position=((0, '%'), (0, '%')),
 
     )
     assert_background(
@@ -171,7 +167,7 @@ def test_expand_background():
         image='foo.png', ##
         repeat='repeat',
         attachment='scroll',
-        position=('0%', '0%'),
+        position=((0, '%'), (0, '%')),
     )
     assert_background(
         'no-repeat',
@@ -179,7 +175,7 @@ def test_expand_background():
         image='none',
         repeat='no-repeat', ##
         attachment='scroll',
-        position=('0%', '0%'),
+        position=((0, '%'), (0, '%')),
     )
     assert_background(
         'fixed',
@@ -187,7 +183,7 @@ def test_expand_background():
         image='none',
         repeat='repeat',
         attachment='fixed', ##
-        position=('0%', '0%'),
+        position=((0, '%'), (0, '%')),
     )
     assert_background(
         'top right',
@@ -196,7 +192,7 @@ def test_expand_background():
         repeat='repeat',
         attachment='scroll',
         # Order swapped to be in (horizontal, vertical) order.
-        position=('100%', '0%'), ##
+        position=((100, '%'), (0, '%')), ##
     )
     assert_background(
         'url(bar) #f00 repeat-y center left fixed',
@@ -205,7 +201,7 @@ def test_expand_background():
         repeat='repeat-y', ##
         attachment='fixed', ##
         # Order swapped to be in (horizontal, vertical) order.
-        position=('0%', '50%'), ##
+        position=((0, '%'), (50, '%')), ##
     )
     assert_background(
         '#00f 10% 200px',
@@ -213,7 +209,7 @@ def test_expand_background():
         image='none',
         repeat='repeat',
         attachment='scroll',
-        position=('10%', '200px'),  ##
+        position=((10, '%'), (200, 'px')),  ##
     )
     assert_background(
         'right 78px fixed',
@@ -221,7 +217,7 @@ def test_expand_background():
         image='none',
         repeat='repeat',
         attachment='fixed', ##
-        position=('100%', '78px'), ##
+        position=((100, '%'), (78, 'px')), ##
     )
 
 
@@ -232,7 +228,7 @@ def test_font():
         'font_style': 'normal',
         'font_variant': 'normal',
         'font_weight': 400,
-        'font_size': '12px', ##
+        'font_size': (12, 'px'), ##
         'line_height': 'normal',
         'font_family': ['My Fancy Font', 'serif'], ##
     }
@@ -241,7 +237,7 @@ def test_font():
         'font_variant': 'normal',
         'font_weight': 400,
         'font_size': 'small', ##
-        'line_height': '1.2', ##
+        'line_height': (1.2, None), ##
         'font_family': ['Some Font', 'serif'], ##
     }
     assert expand_to_dict('font', 'small-caps italic 700 large serif') == {

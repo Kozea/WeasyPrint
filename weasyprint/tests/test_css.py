@@ -118,16 +118,16 @@ def test_expand_shorthands():
     assert 'margin-top' not in style
 
     style = dict(
-        (name, value.as_css)
+        (name, value)
         for _rule, _selectors, declarations in sheet.rules
         for name, value, _priority in declarations)
 
     assert 'margin' not in style
-    assert style['margin_top'] == '2em'
-    assert style['margin_right'] == '0'
-    assert style['margin_bottom'] == '2em', \
+    assert style['margin_top'] == (2, 'em')
+    assert style['margin_right'] == (0, None)
+    assert style['margin_bottom'] == (2, 'em'), \
         '3em was before the shorthand, should be masked'
-    assert style['margin_left'] == '4em', \
+    assert style['margin_left'] == (4, 'em'), \
         '4em was after the shorthand, should not be masked'
 
 
@@ -163,17 +163,17 @@ def test_annotate_document():
     assert h1.font_size == 32  # 4ex
 
     # 32px = 1em * font-size = x-large = 3/2 * initial 16px = 24px
-    assert p.margin_top == 24
-    assert p.margin_right == 0
-    assert p.margin_bottom == 24
-    assert p.margin_left == 0
+    assert p.margin_top == (24, 'px')
+    assert p.margin_right == (0, 'px')
+    assert p.margin_bottom == (24, 'px')
+    assert p.margin_left == (0, 'px')
     assert p.background_color == (0, 0, 1, 1)  # blue
 
     # 80px = 2em * 5ex = 10 * half of initial 16px
-    assert ul.margin_top == 80
-    assert ul.margin_right == 80
-    assert ul.margin_bottom == 80
-    assert ul.margin_left == 80
+    assert ul.margin_top == (80, 'px')
+    assert ul.margin_right == (80, 'px')
+    assert ul.margin_bottom == (80, 'px')
+    assert ul.margin_left == (80, 'px')
 
     assert ul.font_weight == 700
     # thick = 5px, 0.25 inches = 96*.25 = 24px
@@ -184,17 +184,17 @@ def test_annotate_document():
 
     assert li_0.font_weight == 900
     assert li_0.font_size == 8  # 6pt
-    assert li_0.margin_top == 16  # 2em
-    assert li_0.margin_right == 0
-    assert li_0.margin_bottom == 16
-    assert li_0.margin_left == 32  # 4em
+    assert li_0.margin_top == (16, 'px')  # 2em
+    assert li_0.margin_right == (0, 'px')
+    assert li_0.margin_bottom == (16, 'px')
+    assert li_0.margin_left == (32, 'px')  # 4em
 
     assert a.text_decoration == frozenset(['underline'])
     assert a.font_size == 24  # 300% of 8px
-    assert a.padding_top == 1
-    assert a.padding_right == 2
-    assert a.padding_bottom == 3
-    assert a.padding_left == 4
+    assert a.padding_top == (1, 'px')
+    assert a.padding_right == (2, 'px')
+    assert a.padding_bottom == (3, 'px')
+    assert a.padding_left == (4, 'px')
 
 
     assert a.color == (1, 0, 0, 1)
@@ -247,27 +247,27 @@ def test_page():
     ])
 
     style = document.style_for('first_left_page')
-    assert style.margin_top == 5
-    assert style.margin_left == 10
-    assert style.margin_bottom == 10
+    assert style.margin_top == (5, 'px')
+    assert style.margin_left == (10, 'px')
+    assert style.margin_bottom == (10, 'px')
     assert style.color == (1, 0, 0, 1)  # red, inherited from html
 
     style = document.style_for('first_right_page')
-    assert style.margin_top == 5
-    assert style.margin_left == 10
-    assert style.margin_bottom == 16
+    assert style.margin_top == (5, 'px')
+    assert style.margin_left == (10, 'px')
+    assert style.margin_bottom == (16, 'px')
     assert style.color == (0, 0, 1, 1)  # blue
 
     style = document.style_for('left_page')
-    assert style.margin_top == 10
-    assert style.margin_left == 10
-    assert style.margin_bottom == 10
+    assert style.margin_top == (10, 'px')
+    assert style.margin_left == (10, 'px')
+    assert style.margin_bottom == (10, 'px')
     assert style.color == (1, 0, 0, 1)  # red, inherited from html
 
     style = document.style_for('right_page')
-    assert style.margin_top == 10
-    assert style.margin_left == 10
-    assert style.margin_bottom == 16
+    assert style.margin_top == (10, 'px')
+    assert style.margin_left == (10, 'px')
+    assert style.margin_bottom == (16, 'px')
     assert style.color == (0, 0, 1, 1)  # blue
 
     style = document.style_for('first_left_page', '@top-left')
@@ -275,7 +275,7 @@ def test_page():
 
     style = document.style_for('first_right_page', '@top-left')
     assert style.font_size == 20  # inherited from @page
-    assert style.width == 200
+    assert style.width == (200, 'px')
 
     style = document.style_for('first_right_page', '@top-right')
     assert style.font_size == 10

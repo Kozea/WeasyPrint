@@ -21,12 +21,15 @@ from tinycss.parsing import split_on_comma
 from ..logger import LOGGER
 from ..formatting_structure import counters
 from ..compat import urljoin
-from .values import get_keyword, get_single_keyword, make_percentage_value
-from .properties import INITIAL_VALUES, NOT_PRINT_MEDIA
+from .properties import INITIAL_VALUES, NOT_PRINT_MEDIA, AUTO, Dimension
 from . import computed_values
 
-
 # TODO: unit-test these validators
+
+
+# get the sets of keys
+LENGTH_UNITS = set(computed_values.LENGTHS_TO_PIXELS) | set(['ex', 'em'])
+ANGLE_UNITS = set(computed_values.ANGLE_TO_RADIANS)
 
 # keyword -> (open, insert)
 CONTENT_QUOTE_KEYWORDS = {
@@ -37,11 +40,11 @@ CONTENT_QUOTE_KEYWORDS = {
 }
 
 BACKGROUND_POSITION_PERCENTAGES = {
-    'top': make_percentage_value(0),
-    'left': make_percentage_value(0),
-    'center': make_percentage_value(50),
-    'bottom': make_percentage_value(100),
-    'right': make_percentage_value(100),
+    'top': Dimension(0, '%'),
+    'left': Dimension(0, '%'),
+    'center': Dimension(50, '%'),
+    'bottom': Dimension(100, '%'),
+    'right': Dimension(100, '%'),
 }
 
 
@@ -91,6 +94,28 @@ def validator(property_name=None, prefixed=False, wants_base_url=False):
     return decorator
 
 
+def get_keyword(token):
+    """If ``value`` is a keyword, return its name.
+
+    Otherwise return ``None``.
+
+    """
+    if token.type == 'IDENT':
+        return token.value.lower()
+
+
+def get_single_keyword(tokens):
+    """If ``values`` is a 1-element list of keywords, return its name.
+
+    Otherwise return ``None``.
+
+    """
+    if len(tokens) == 1:
+        token = tokens[0]
+        if token.type == 'IDENT':
+            return token.value.lower()
+
+
 def single_keyword(function):
     """Decorator for validators that only accept a single keyword."""
     @functools.wraps(function)
@@ -113,35 +138,17 @@ def single_token(function):
     return single_token_validator
 
 
-def is_dimension(token, negative=True):
-    """Get if ``token`` is a dimension.
-
-    The ``negative`` argument sets wether negative tokens are allowed.
-
-    """
-    type_ = token.type
-    # Units may be ommited on zero lenghts.
-    return (
-        type_ == 'DIMENSION' and (negative or token.value >= 0) and (
-            token.unit in computed_values.LENGTHS_TO_PIXELS or
-            token.unit in ('em', 'ex'))
-        ) or (type_ in ('NUMBER', 'INTEGER') and token.value == 0)
+def get_length(token, negative=True, percentage=False):
+    if (token.unit in LENGTH_UNITS or (percentage and token.unit == '%')
+                or (token.value == 0 and token.type in ('INTEGER', 'NUMBER'))
+            ) and (negative or token.value >= 0):
+        return Dimension(token.value, token.unit)
 
 
-def is_dimension_or_percentage(token, negative=True):
-    """Get if ``token`` is a dimension or a percentage.
-
-    The ``negative`` argument sets wether negative tokens are allowed.
-
-    """
-    return is_dimension(token, negative) or (
-        token.type == 'PERCENTAGE' and (negative or token.value >= 0))
-
-
-def is_angle(token):
+def get_angle(token):
     """Return whether the argument is an angle token."""
-    return token.type == 'DIMENSION' and \
-        token.unit in computed_values.ANGLE_TO_RADIANS
+    if token.unit in ANGLE_UNITS:
+        return Dimension(token.value, token.unit)
 
 
 @validator()
@@ -197,20 +204,26 @@ def background_position(tokens):
         keyword = get_keyword(token)
         if keyword in BACKGROUND_POSITION_PERCENTAGES:
             return BACKGROUND_POSITION_PERCENTAGES[keyword], center
-        elif is_dimension_or_percentage(token):
-            return token, center
+        else:
+            length = get_length(token, percentage=True)
+            if length:
+                return length, center
 
     elif len(tokens) == 2:
         token_1, token_2 = tokens
         keyword_1, keyword_2 = map(get_keyword, tokens)
-        if is_dimension_or_percentage(token_1):
+        length_1 = get_length(token_1, percentage=True)
+        if length_1:
             if keyword_2 in ('top', 'center', 'bottom'):
-                return token_1, BACKGROUND_POSITION_PERCENTAGES[keyword_2]
-            elif is_dimension_or_percentage(token_2):
-                return token_1, token_2
-        elif is_dimension_or_percentage(token_2):
+                return length_1, BACKGROUND_POSITION_PERCENTAGES[keyword_2]
+            length_2 = get_length(token_2, percentage=True)
+            if length_2:
+                return length_1, length_2
+            raise InvalidValues
+        length_2 = get_length(token_2, percentage=True)
+        if length_2:
             if keyword_1 in ('left', 'center', 'right'):
-                return BACKGROUND_POSITION_PERCENTAGES[keyword_1], token_2
+                return BACKGROUND_POSITION_PERCENTAGES[keyword_1], length_2
         elif (keyword_1 in ('left', 'center', 'right') and
               keyword_2 in ('top', 'center', 'bottom')):
             return (BACKGROUND_POSITION_PERCENTAGES[keyword_1],
@@ -239,19 +252,22 @@ def background_size(tokens):
         if keyword in ('contain', 'cover'):
             return keyword
         if keyword == 'auto':
-            return ('auto', 'auto')
-        if is_dimension_or_percentage(token, negative=False):
-            return (token, 'auto')
+            return (AUTO, AUTO)
+        length = get_length(token, negative=False)
+        if length:
+            return (length, AUTO)
     elif len(tokens) == 2:
-        new_tokens = []
+        values = []
         for token in tokens:
             if get_keyword(token) == 'auto':
-                new_tokens.append('auto')
-            elif is_dimension_or_percentage(token, negative=False):
-                new_tokens.append(token)
+                new_tokens.append(AUTO)
             else:
-                return
-        return tuple(tokens)
+                length = get_length(token, negative=False)
+                if length:
+                    new_tokens.append(token)
+                break
+        else:
+            return tuple(values)
 
 
 @validator('background_clip')
@@ -266,11 +282,12 @@ def box(keyword):
 @validator()
 def border_spacing(tokens):
     """Validator for the `border-spacing` property."""
-    if all(is_dimension(token, negative=False) for token in tokens):
-        if len(tokens) == 1:
-            return (tokens[0], tokens[0])
-        elif len(tokens) == 2:
-            return tuple(tokens)
+    lengths = [get_length(token, negative=False) for token in tokens]
+    if all(lengths):
+        if len(lengths) == 1:
+            return (lengths[0], lengths[0])
+        elif len(lengths) == 2:
+            return tuple(lengths)
 
 
 @validator('border-top-style')
@@ -291,8 +308,9 @@ def border_style(keyword):
 @single_token
 def border_width(token):
     """``border-*-width`` properties validation."""
-    if is_dimension(token, negative=False):
-        return token
+    length = get_length(token, negative=False)
+    if length:
+        return length
     keyword = get_keyword(token)
     if keyword in ('thin', 'medium', 'thick'):
         return keyword
@@ -323,11 +341,13 @@ def clip(token):
             tokens = []
             for arg in args:
                 if get_keyword(arg) == 'auto':
-                    tokens.append('auto')
-                elif is_dimension(arg, negative=True):
-                    tokens.append(arg)
+                    tokens.append(AUTO)
                 else:
-                    raise InvalidValues
+                    length = get_length(arg)
+                    if length:
+                        tokens.append(length)
+                    else:
+                        raise InvalidValues
             return tokens
     if get_keyword(token) == 'auto':
         return []
@@ -443,10 +463,11 @@ def counter(tokens, default_integer):
 @single_token
 def lenght_precentage_or_auto(token, negative=True):
     """``margin-*`` properties validation."""
-    if is_dimension_or_percentage(token, negative):
-        return token
+    length = get_length(token, negative, percentage=True)
+    if length:
+        return length
     if get_keyword(token) == 'auto':
-        return 'auto'
+        return AUTO
 
 
 @validator('height')
@@ -497,8 +518,9 @@ def font_family(tokens):
 @single_token
 def font_size(token):
     """``font-size`` property validation."""
-    if is_dimension_or_percentage(token):
-        return token
+    length = get_length(token, percentage=True)
+    if length:
+        return length
     font_size_keyword = get_keyword(token)
     if font_size_keyword in ('smaller', 'larger'):
         raise InvalidValues('value not supported yet')
@@ -542,8 +564,9 @@ def spacing(token):
     """Validation for ``letter-spacing`` and ``word-spacing``."""
     if get_keyword(token) == 'normal':
         return 'normal'
-    if is_dimension(token):
-        return token
+    length = get_length(token)
+    if length:
+        return length
 
 
 @validator()
@@ -554,7 +577,7 @@ def line_height(token):
         return 'normal'
     if (token.type in ('NUMBER', 'INTEGER', 'DIMENSION', 'PERCENTAGE') and
             token.value >= 0):
-        return token
+        return Dimension(token.value, token.unit)
 
 
 @validator()
@@ -578,8 +601,9 @@ def list_style_type(keyword):
 @single_token
 def length_or_precentage(token):
     """``padding-*`` properties validation."""
-    if is_dimension_or_percentage(token, negative=False):
-        return token
+    length = get_length(token, negative=False)
+    if length:
+        return length
 
 
 @validator()
@@ -675,8 +699,9 @@ def text_decoration(tokens):
 @single_token
 def text_indent(token):
     """``text-indent`` property validation."""
-    if is_dimension_or_percentage(token, negative=True):
-        return token
+    length = get_length(token, percentage=True)
+    if length:
+        return length
 
 
 @validator()
@@ -690,8 +715,9 @@ def text_transform(keyword):
 @single_token
 def vertical_align(token):
     """Validation for the ``vertical-align`` property"""
-    if is_dimension_or_percentage(token, negative=True):
-        return token
+    length = get_length(token, percentage=True)
+    if length:
+        return length
     keyword = get_keyword(token)
     if keyword in ('baseline', 'middle', 'sub', 'super',
                    'text-top', 'text-bottom', 'top', 'bottom'):
@@ -716,7 +742,7 @@ def white_space(keyword):
 @single_keyword
 def image_rendering(keyword):
     """Validation for ``image-rendering``."""
-    return keyword in ('auto', 'optimizeSpeed', 'optimizeQuality')
+    return keyword in ('auto', 'optimizespeed', 'optimizequality')
 
 
 @validator(prefixed=True)  # Not in CR yet
@@ -726,22 +752,22 @@ def size(tokens):
     See http://www.w3.org/TR/css3-page/#page-size-prop
 
     """
-    if is_dimension(tokens[0]):
-        if len(tokens) == 1:
-            return tokens * 2
-        elif len(tokens) == 2 and is_dimension(tokens[1]):
-            return tokens
+    lengths = [get_length(token, negative=False) for token in tokens]
+    if all(lengths):
+        if len(lengths) == 1:
+            return (lengths[0], lengths[0])
+        elif len(lengths) == 2:
+            return tuple(lengths)
 
     keywords = [get_keyword(v) for v in tokens]
     if len(keywords) == 1:
         keyword = keywords[0]
-        if keyword in ('auto', 'portrait'):
-            return INITIAL_VALUES['size']
-        elif keyword == 'landscape':
-            height, width = INITIAL_VALUES['size']
-            return width, height
-        elif keyword in computed_values.PAGE_SIZES:
+        if keyword in computed_values.PAGE_SIZES:
             return computed_values.PAGE_SIZES[keyword]
+        elif keyword in ('auto', 'portrait'):
+            return computed_values.INITIAL_PAGE_SIZE
+        elif keyword == 'landscape':
+            return computed_values.INITIAL_PAGE_SIZE[::-1]
 
     if len(keywords) == 2:
         if keywords[0] in ('portrait', 'landscape'):
@@ -762,7 +788,7 @@ def size(tokens):
 @validator(prefixed=True)  # Not in CR yet
 def transform(tokens):
     if get_single_keyword(tokens) == 'none':
-        return 'none'
+        return []
     else:
         return [transform_function(v) for v in tokens]
 
@@ -774,12 +800,14 @@ def transform_function(token):
     name, args = function
 
     if len(args) == 1:
-        if name in ('rotate', 'skewx', 'skewy') and is_angle(args[0]):
-            return name, args[0]
-        elif name in ('translatex', 'translate') and is_dimension_or_percentage(args[0]):
-            return 'translate', (args[0], 0)
-        elif name == 'translatey' and is_dimension_or_percentage(args[0]):
-            return 'translate', (0, args[0])
+        angle = get_angle(args[0])
+        length = get_length(args[0], percentage=True)
+        if name in ('rotate', 'skewx', 'skewy') and angle:
+            return name, angle
+        elif name in ('translatex', 'translate') and length:
+            return 'translate', (length, computed_values.ZERO_PIXELS)
+        elif name == 'translatey' and length:
+            return 'translate', (computed_values.ZERO_PIXELS, length)
         elif name == 'scalex' and args[0].type in ('NUMBER', 'INTEGER'):
             return 'scale', (args[0].value, 1)
         elif name == 'scaley' and args[0].type in ('NUMBER', 'INTEGER'):
@@ -790,8 +818,9 @@ def transform_function(token):
         if name == 'scale' and all(a.type in ('NUMBER', 'INTEGER')
                                    for a in args):
             return name, [arg.value for arg in args]
-        if name == 'translate' and all(map(is_dimension_or_percentage, args)):
-            return name, args
+        lengths = [get_length(token, percentage=True) for token in args]
+        if name == 'translate' and all(lengths):
+            return name, lengths
     elif len(args) == 6 and name == 'matrix' and all(
             a.type in ('NUMBER', 'INTEGER') for a in args):
         return name, [arg.value for arg in args]

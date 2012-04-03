@@ -277,7 +277,8 @@ def add_box_marker(document, counter_values, box):
     position = style.list_style_position
     if position == 'inside':
         side = 'right' if style.direction == 'ltr' else 'left'
-        marker_box.style['margin_' + side] = style.font_size * 0.5
+        margin = style.font_size * 0.5
+        marker_box.style['margin_' + side] = properties.Dimension(margin, 'px')
         yield marker_box
     elif position == 'outside':
         box.outside_list_marker = marker_box

@@ -18,15 +18,15 @@ import math
 import cairo
 
 from .formatting_structure import boxes
-from .css.values import get_percentage_value
 from .css import computed_values
 
 
 # Map values of the image-rendering property to cairo FILTER values:
+# Values are normalized to lower case.
 IMAGE_RENDERING_TO_FILTER = dict(
-    optimizeSpeed=cairo.FILTER_FAST,
+    optimizespeed=cairo.FILTER_FAST,
     auto=cairo.FILTER_GOOD,
-    optimizeQuality=cairo.FILTER_BEST,
+    optimizequality=cairo.FILTER_BEST,
 )
 
 
@@ -188,11 +188,11 @@ def draw_box_background(document, context, page, box):
 
 def percentage(value, refer_to):
     """Return the evaluated percentage value, or the value unchanged."""
-    percentage_value = get_percentage_value(value)
-    if percentage_value is None:
-        return value
+    if value.unit == 'px':
+        return value.value
     else:
-        return refer_to * percentage_value / 100
+        assert value.unit == '%'
+        return refer_to * value.value / 100
 
 
 def draw_background(document, context, style, painting_area, positioning_area):
@@ -566,18 +566,14 @@ def apply_2d_transforms(context, box):
         origin_x += box.border_box_x()
         origin_y += box.border_box_y()
 
-        def length(value, font_size=box.style.font_size):
-            return computed_values.length(None, None, value, font_size)
-        angle = computed_values.angle_to_radian
-
         context.translate(origin_x, origin_y)
         for name, args in box.style.transform:
             if name == 'scale':
                 context.scale(*args)
             elif name == 'rotate':
-                context.rotate(angle(args))
+                context.rotate(args)
             elif name == 'translate':
-                translate_x, translate_y = map(length, args)
+                translate_x, translate_y = args
                 context.translate(
                     percentage(translate_x, border_width),
                     percentage(translate_y, border_height),

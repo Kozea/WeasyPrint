@@ -691,7 +691,6 @@ def test_table_page_breaks():
         for i, page in enumerate(pages):
             html, = page.children
             body, = html.children
-            print(body.children)
             if i == 0:
                 body_children = body.children[1:]  # skip h1
             else:

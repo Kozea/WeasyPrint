@@ -17,6 +17,7 @@ from .markers import list_marker_layout
 from .tables import table_layout, fixed_table_layout
 from .percentages import resolve_percentages
 from ..formatting_structure import boxes
+from ..css.properties import Dimension
 
 
 def block_level_layout(document, box, max_position_y, skip_stack,
@@ -386,7 +387,8 @@ def block_table_wrapper(document, wrapper, max_position_y, skip_stack,
     table.margin_right = 0
 
     fixed_table_layout(table)
-    wrapper.width = wrapper.style.width = table.border_width()
+    wrapper.width = table.border_width()
+    wrapper.style.width = Dimension(wrapper.width, 'px')
     return block_box_layout(document, wrapper, max_position_y, skip_stack,
                             containing_block, device_size, page_is_empty,
                             adjoining_margins)

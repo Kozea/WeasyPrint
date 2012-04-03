@@ -336,9 +336,9 @@ def test_styles():
         assert child.style.color == (0, 0, 1, 1)  # blue
         # Only non-anonymous boxes have margins
         if child.style.anonymous:
-            assert child.style.margin_top == 0
+            assert child.style.margin_top == (0, 'px')
         else:
-            assert child.style.margin_top == 42
+            assert child.style.margin_top == (42, 'px')
 
 
 @assert_no_logs
@@ -390,10 +390,10 @@ def test_page_style():
     def assert_page_margins(page_type, top, right, bottom, left):
         """Check the page margin values."""
         style = document.style_for(page_type)
-        assert style.margin_top == top
-        assert style.margin_right == right
-        assert style.margin_bottom == bottom
-        assert style.margin_left == left
+        assert style.margin_top == (top, 'px')
+        assert style.margin_right == (right, 'px')
+        assert style.margin_bottom == (bottom, 'px')
+        assert style.margin_left == (left, 'px')
 
     assert_page_margins('first_left_page', top=20, right=3, bottom=3, left=10)
     assert_page_margins('first_right_page', top=20, right=10, bottom=3, left=3)
@@ -591,10 +591,10 @@ def test_table_style():
     table, = wrapper.children
     assert isinstance(wrapper, boxes.BlockBox)
     assert isinstance(table, boxes.TableBox)
-    assert wrapper.style.margin_top == 1
-    assert wrapper.style.padding_top == 0
-    assert table.style.margin_top == 0
-    assert table.style.padding_top == 2
+    assert wrapper.style.margin_top == (1, 'px')
+    assert wrapper.style.padding_top == (0, 'px')
+    assert table.style.margin_top == (0, 'px')
+    assert table.style.padding_top == (2, 'px')
 
 
 @assert_no_logs
@@ -610,7 +610,7 @@ def test_column_style():
     table, = wrapper.children
     colgroup, = table.column_groups
     widths = [col.style.width for col in colgroup.children]
-    assert widths == [10, 10, 10, 'auto', 'auto']
+    assert widths == [(10, 'px'), (10, 'px'), (10, 'px'), 'auto', 'auto']
     assert [col.grid_x for col in colgroup.children] == [0, 1, 2, 3, 4]
     # copies, not the same box object
     assert colgroup.children[0] is not colgroup.children[1]

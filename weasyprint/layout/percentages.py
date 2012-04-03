@@ -13,7 +13,6 @@
 from __future__ import division, unicode_literals
 
 from ..formatting_structure import boxes
-from ..css.values import get_percentage_value
 
 
 def resolve_one_percentage(box, property_name, refer_to,
@@ -25,23 +24,21 @@ def resolve_one_percentage(box, property_name, refer_to,
 
     """
     # box.style has computed values
-    values = box.style[property_name]
-    if isinstance(values, (int, float)):
-        # Absolute length (was converted to pixels in "computed values")
-        result = values
+    value = box.style[property_name]
+    if value.unit == 'px':
+        result = value.value
     else:
-        percentage = get_percentage_value(values)
-        if percentage is not None:
+        if value.unit == '%':
             if isinstance(refer_to, (int, float)):
                 # A percentage
-                result = percentage * refer_to / 100.
+                result = value.value * refer_to / 100.
             else:
                 # Replace percentages when we have no refer_to that
                 # makes sense.
                 result = refer_to
         else:
             # Some other values such as 'auto' may be allowed
-            result = values
+            result = value
             assert allowed_keywords and result in allowed_keywords
     # box attributes are used values
     setattr(box, property_name, result)
