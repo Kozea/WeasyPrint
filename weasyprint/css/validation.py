@@ -260,13 +260,12 @@ def background_size(tokens):
         values = []
         for token in tokens:
             if get_keyword(token) == 'auto':
-                new_tokens.append(AUTO)
+                values.append(AUTO)
             else:
                 length = get_length(token, negative=False)
                 if length:
-                    new_tokens.append(token)
-                break
-        else:
+                    values.append(token)
+        if len(values) == 2:
             return tuple(values)
 
 
@@ -338,17 +337,16 @@ def clip(token):
     if function:
         name, args = function
         if name == 'rect' and len(args) == 4:
-            tokens = []
+            values = []
             for arg in args:
                 if get_keyword(arg) == 'auto':
-                    tokens.append(AUTO)
+                    values.append(AUTO)
                 else:
                     length = get_length(arg)
                     if length:
-                        tokens.append(length)
-                    else:
-                        raise InvalidValues
-            return tokens
+                        values.append(length)
+            if len(values) == 4:
+                return values
     if get_keyword(token) == 'auto':
         return []
 
@@ -430,8 +428,7 @@ def counter(tokens, default_integer):
         return []
     tokens = iter(tokens)
     token = next(tokens, None)
-    if token is None:
-        return  # expected at least one token
+    assert token, 'got an empty token list'
     results = []
     while token is not None:
         counter_name = get_keyword(token)
@@ -689,10 +686,12 @@ def text_decoration(tokens):
         return 'none'
     if all(keyword in ('underline', 'overline', 'line-through', 'blink')
             for keyword in keywords):
-        unique = frozenset(keywords)
+        unique = set(keywords)
         if len(unique) == len(keywords):
             # No duplicate
-            return unique
+            # blink is accepted but ignored
+            # "Conforming user agents may simply not blink the text."
+            return frozenset(unique - set(['blink']))
 
 
 @validator()
@@ -818,7 +817,7 @@ def transform_function(token):
         if name == 'scale' and all(a.type in ('NUMBER', 'INTEGER')
                                    for a in args):
             return name, [arg.value for arg in args]
-        lengths = [get_length(token, percentage=True) for token in args]
+        lengths = tuple(get_length(token, percentage=True) for token in args)
         if name == 'translate' and all(lengths):
             return name, lengths
     elif len(args) == 6 and name == 'matrix' and all(
@@ -1010,14 +1009,6 @@ def expand_border_side(name, tokens):
         yield suffix, [token]
 
 
-def is_valid_background_positition(token):
-    """Tell whether the token is valid for ``background-position``."""
-    return (
-        token.type in ('DIMENSION', 'PERCENTAGE') or
-        (token.type in ('NUMBER', 'INTEGER') and token.value == 0) or
-        get_keyword(token) in ('left', 'right', 'top', 'bottom', 'center'))
-
-
 @expander('background')
 @generic_expander('-color', '-image', '-repeat', '-attachment', '-position',
                   wants_base_url=True)
@@ -1068,10 +1059,7 @@ def expand_font(name, tokens):
     expand_font_keyword = get_single_keyword(tokens)
     if expand_font_keyword in ('caption', 'icon', 'menu', 'message-box',
                                'small-caption', 'status-bar'):
-        LOGGER.warn(
-            'System fonts are not supported, `font: %s` ignored.',
-            expand_font_keyword)
-        return
+        raise InvalidValues('System fonts are not supported')
 
     # Make `tokens` a stack
     tokens = list(reversed(tokens))
@@ -1082,6 +1070,7 @@ def expand_font(name, tokens):
         if get_keyword(token) == 'normal':
             # Just ignore 'normal' keywords. Unspecified properties will get
             # their initial token, which is 'normal' for all three here.
+            # TODO: fail if there is too many 'normal' values?
             continue
 
         if font_style([token]) is not None:

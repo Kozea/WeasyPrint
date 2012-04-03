@@ -558,8 +558,10 @@ def test_background_image():
                 html { background: #fff }
                 body { margin: 2px; height: 10px;
                        background: url(pattern.png) %s }
+                p { background: none }
             </style>
             <body>
+            <p>&nbsp;
         ''' % (css,))
 
 
@@ -715,6 +717,32 @@ def test_background_size():
         <body>
     ''')
 
+    assert_pixels('background_size_auto', 12, 12, [
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+r+B+B+B+_,
+        _+_+_+_+_+_+_+B+B+B+B+_,
+        _+_+_+_+_+_+_+B+B+B+B+_,
+        _+_+_+_+_+_+_+B+B+B+B+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { -weasy-size: 12px }
+            html { background: #fff }
+            body { margin: 1px; height: 10px;
+                   /* Use nearest neighbor algorithm for image resizing: */
+                   -weasy-image-rendering: optimizeSpeed;
+                   background: url(pattern.png) bottom right no-repeat;
+                   background-size: auto }
+        </style>
+        <body>
+    ''')
+
     assert_pixels('background_size_contain', 14, 10, [
         _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         _+r+r+B+B+B+B+B+B+_+_+_+_+_,
@@ -735,6 +763,31 @@ def test_background_size():
                    -weasy-image-rendering: optimizeSpeed;
                    background: url(pattern.png) no-repeat;
                    background-size: contain }
+        </style>
+        <body>
+    ''')
+
+    assert_pixels('background_size_mixed', 14, 10, [
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+r+r+B+B+B+B+B+B+_+_+_+_+_,
+        _+r+r+B+B+B+B+B+B+_+_+_+_+_,
+        _+B+B+B+B+B+B+B+B+_+_+_+_+_,
+        _+B+B+B+B+B+B+B+B+_+_+_+_+_,
+        _+B+B+B+B+B+B+B+B+_+_+_+_+_,
+        _+B+B+B+B+B+B+B+B+_+_+_+_+_,
+        _+B+B+B+B+B+B+B+B+_+_+_+_+_,
+        _+B+B+B+B+B+B+B+B+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { -weasy-size: 14px 10px }
+            html { background: #fff }
+            body { margin: 1px; height: 8px;
+                   /* Use nearest neighbor algorithm for image resizing: */
+                   -weasy-image-rendering: optimizeSpeed;
+                   background: url(pattern.png) no-repeat;
+                   background-size: auto 8px;
+                   clip: auto; /* no-op to cover more validation */ }
         </style>
         <body>
     ''')

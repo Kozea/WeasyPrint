@@ -97,23 +97,23 @@ FONT_WEIGHT_RELATIVE = dict(
 # http://www.w3.org/TR/css3-page/#size
 # name=(width in pixels, height in pixels)
 PAGE_SIZES = dict(
-    A5=(
+    a5=(
         Dimension(148, 'mm'),
         Dimension(210, 'mm'),
     ),
-    A4=(
+    a4=(
         Dimension(210, 'mm'),
         Dimension(297, 'mm'),
     ),
-    A3=(
+    a3=(
         Dimension(297, 'mm'),
         Dimension(420, 'mm'),
     ),
-    B5=(
+    b5=(
         Dimension(176, 'mm'),
         Dimension(250, 'mm'),
     ),
-    B4=(
+    b4=(
         Dimension(250, 'mm'),
         Dimension(353, 'mm'),
     ),
@@ -134,7 +134,7 @@ PAGE_SIZES = dict(
 for w, h in PAGE_SIZES.values():
     assert w.value < h.value
 
-INITIAL_PAGE_SIZE = PAGE_SIZES['A4']
+INITIAL_PAGE_SIZE = PAGE_SIZES['a4']
 INITIAL_VALUES['size'] = tuple(
     d.value * LENGTHS_TO_PIXELS[d.unit] for d in INITIAL_PAGE_SIZE)
 

@@ -15,7 +15,7 @@ from __future__ import division, unicode_literals
 from tinycss.color3 import RGBA
 
 from .testing_utils import assert_no_logs, capture_logs
-from ..css import PARSER, preprocess_declarations
+from ..css import validation, PARSER, preprocess_declarations
 
 
 def expand_to_dict(css, expected_error=None):
@@ -34,6 +34,115 @@ def expand_to_dict(css, expected_error=None):
         assert not logs
 
     return dict((name, value) for name, value, _priority in declarations)
+
+
+@assert_no_logs
+def test_not_print():
+    assert expand_to_dict('volume: 42',
+        'the property does not apply for the print media') == {}
+
+
+@assert_no_logs
+def test_function():
+    assert expand_to_dict('clip: rect(1px, 3em, auto, auto)') == {
+        'clip': [(1, 'px'), (3, 'em'), 'auto', 'auto']}
+    assert expand_to_dict('clip: square(1px, 3em, auto, auto)',
+        'invalid') == {}
+    assert expand_to_dict('clip: rect(1px, 3em, auto auto)', 'invalid') == {}
+    assert expand_to_dict('clip: rect(1px, 3em, auto)', 'invalid') == {}
+    assert expand_to_dict('clip: rect(1px, 3em / auto)', 'invalid') == {}
+
+
+@assert_no_logs
+def test_counters():
+    assert expand_to_dict('counter-reset: foo bar 2 baz') == {
+        'counter_reset': [('foo', 0), ('bar', 2), ('baz', 0)]}
+    assert expand_to_dict('counter-increment: foo bar 2 baz') == {
+        'counter_increment': [('foo', 1), ('bar', 2), ('baz', 1)]}
+    assert expand_to_dict('counter-reset: foo') == {
+        'counter_reset': [('foo', 0)]}
+    assert expand_to_dict('counter-reset: none') == {
+        'counter_reset': []}
+    assert expand_to_dict('counter-reset: foo none',
+        'Invalid counter name') == {}
+    assert expand_to_dict('counter-reset: foo initial',
+        'Invalid counter name') == {}
+    assert expand_to_dict('counter-reset: foo 3px', 'invalid') == {}
+    assert expand_to_dict('counter-reset: 3', 'invalid') == {}
+
+
+@assert_no_logs
+def test_spacing():
+    assert expand_to_dict('letter-spacing: normal') == {
+        'letter_spacing': 'normal'}
+    assert expand_to_dict('letter-spacing: 3px') == {
+        'letter_spacing': (3, 'px')}
+    assert expand_to_dict('letter-spacing: 3', 'invalid') == {}
+
+    assert expand_to_dict('word-spacing: normal') == {
+        'word_spacing': 'normal'}
+    assert expand_to_dict('word-spacing: 3px') == {
+        'word_spacing': (3, 'px')}
+    assert expand_to_dict('word-spacing: 3', 'invalid') == {}
+
+
+@assert_no_logs
+def test_decoration():
+    assert expand_to_dict('text-decoration: none') == {
+        'text_decoration': 'none'}
+    assert expand_to_dict('text-decoration: overline') == {
+        'text_decoration': frozenset(['overline'])}
+    # blink is accepted but ignored
+    assert expand_to_dict('text-decoration: overline blink line-through') == {
+        'text_decoration': frozenset(['line-through', 'overline'])}
+
+
+@assert_no_logs
+def test_size():
+    assert expand_to_dict('-weasy-size: 200px') == {
+        'size': ((200, 'px'), (200, 'px'))}
+    assert expand_to_dict('-weasy-size: 200px 300pt') == {
+        'size': ((200, 'px'), (300, 'pt'))}
+    assert expand_to_dict('-weasy-size: auto') == {
+        'size': ((210, 'mm'), (297, 'mm'))}
+    assert expand_to_dict('-weasy-size: portrait') == {
+        'size': ((210, 'mm'), (297, 'mm'))}
+    assert expand_to_dict('-weasy-size: landscape') == {
+        'size': ((297, 'mm'), (210, 'mm'))}
+    assert expand_to_dict('-weasy-size: A3 portrait') == {
+        'size': ((297, 'mm'), (420, 'mm'))}
+    assert expand_to_dict('-weasy-size: A3 landscape') == {
+        'size': ((420, 'mm'), (297, 'mm'))}
+    assert expand_to_dict('-weasy-size: portrait A3') == {
+        'size': ((297, 'mm'), (420, 'mm'))}
+    assert expand_to_dict('-weasy-size: landscape A3') == {
+        'size': ((420, 'mm'), (297, 'mm'))}
+    assert expand_to_dict('-weasy-size: A3 landscape A3', 'invalid') == {}
+    assert expand_to_dict('-weasy-size: A9', 'invalid') == {}
+    assert expand_to_dict('-weasy-size: foo', 'invalid') == {}
+    assert expand_to_dict('-weasy-size: foo bar', 'invalid') == {}
+    assert expand_to_dict('-weasy-size: 20%', 'invalid') == {}
+
+
+@assert_no_logs
+def test_transforms():
+    assert expand_to_dict('-weasy-transform: none') == {
+        'transform': []}
+    assert expand_to_dict('-weasy-transform: translate(6px) rotate(90deg)'
+        ) == {'transform': [('translate', ((6, 'px'), (0, 'px'))),
+                            ('rotate', (90, 'deg'))]}
+    assert expand_to_dict('-weasy-transform: translate(6px, 20%)'
+        ) == {'transform': [('translate', ((6, 'px'), (20, '%')))]}
+    assert expand_to_dict('-weasy-transform: scale(2)'
+        ) == {'transform': [('scale', (2, 2))]}
+    assert expand_to_dict('-weasy-transform: translate(6px 20%)',
+        'invalid') == {}  # missing comma
+    assert expand_to_dict('-weasy-transform: lipsumize(6px)', 'invalid') == {}
+    assert expand_to_dict('-weasy-transform: foo', 'invalid') == {}
+    assert expand_to_dict('-weasy-transform: scale(2) foo', 'invalid') == {}
+    assert expand_to_dict('-weasy-transform: 6px', 'invalid') == {}
+    assert expand_to_dict('transform: none',
+        'the property is experimental, use -weasy-transform') == {}
 
 
 @assert_no_logs
@@ -139,6 +248,17 @@ def test_expand_list_style():
         'list_style_image': 'none',
         'list_style_type': 'circle',
     }
+    assert expand_to_dict('list_style: none circle inside') == {
+        'list_style_position': 'inside',
+        'list_style_image': 'none',
+        'list_style_type': 'circle',
+    }
+    assert expand_to_dict('list_style: none inside none') == {
+        'list_style_position': 'inside',
+        'list_style_image': 'none',
+        'list_style_type': 'none',
+    }
+    assert expand_to_dict('list_style: none inside none none', 'invalid') == {}
     assert expand_to_dict('list_style: red', 'invalid') == {}
     assert expand_to_dict('list_style: circle disc',
         'got multiple type values in a list_style shorthand') == {}
@@ -198,6 +318,22 @@ def test_expand_background():
         position=((100, '%'), (0, '%')), ##
     )
     assert_background(
+        'top no-repeat',
+        color=(0, 0, 0, 0), # transparent
+        image='none',
+        repeat='no-repeat',  ##
+        attachment='scroll',
+        position=((0, '%'), (50, '%')), ##
+    )
+    assert_background(
+        'top',
+        color=(0, 0, 0, 0), # transparent
+        image='none',
+        repeat='repeat',
+        attachment='scroll',
+        position=((0, '%'), (50, '%')), ##
+    )
+    assert_background(
         'url(bar) #f00 repeat-y center left fixed',
         color=(1, 0, 0, 1), ## #f00
         image='http://weasyprint.org/foo/bar', ##
@@ -222,6 +358,8 @@ def test_expand_background():
         attachment='fixed', ##
         position=((100, '%'), (78, 'px')), ##
     )
+    assert expand_to_dict('background: 10px lipsum', 'invalid') == {}
+    assert expand_to_dict('background-position: 10px lipsum', 'invalid') == {}
 
 
 @assert_no_logs
@@ -251,3 +389,19 @@ def test_font():
         'line_height': 'normal',
         'font_family': ['serif'], ##
     }
+    assert expand_to_dict('font: small-caps normal 700 large serif') == {
+        'font_style': 'normal', ##
+        'font_variant': 'small-caps', ##
+        'font_weight': 700, ##
+        'font_size': 'large', ##
+        'line_height': 'normal',
+        'font_family': ['serif'], ##
+    }
+    assert expand_to_dict('font-family: "My" Font, serif', 'invalid') == {}
+    assert expand_to_dict('font-family: "My" "Font", serif', 'invalid') == {}
+    assert expand_to_dict('font-family: "My", 12pt, serif', 'invalid') == {}
+    assert expand_to_dict('font: menu', 'System fonts are not supported') == {}
+    assert expand_to_dict('font: 12deg My Fancy Font, serif', 'invalid') == {}
+    assert expand_to_dict('font: 12px', 'invalid') == {}
+    assert expand_to_dict('font: 12px/foo serif', 'invalid') == {}
+    assert expand_to_dict('font: 12px "Invalid" family', 'invalid') == {}
