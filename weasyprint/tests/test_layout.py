@@ -326,6 +326,82 @@ def test_block_percentage_heights():
 
 
 @assert_no_logs
+def test_inline_block_sizes():
+    """Test the inline-block elements sizes."""
+    page, = parse('''
+        <style>
+            @page { margin: 0; -weasy-size: 200px 2000px }
+            body { margin: 0 }
+            div { display: inline-block; }
+        </style>
+        <div> </div>
+        <div>a</div>
+        <div style="margin: 10px; height: 100px"></div>
+        <div style="margin-left: 10px; margin-top: -50px;
+                    padding-right: 20px;"></div>
+        <div>
+            Ipsum dolor sit amet,
+            consectetur adipiscing elit.
+            Sed sollicitudin nibh
+            et turpis molestie tristique.
+        </div>
+        <div style="width: 100px; height: 100px;
+                    padding-left: 10px; margin-right: 10px;
+                    margin-top: -10px; margin-bottom: 50px"></div>
+    ''')
+    html, = page.children
+    assert html.element_tag == 'html'
+    body, = html.children
+    assert body.element_tag == 'body'
+    assert body.width == 200
+
+    lines = body.children
+    assert len(lines) == 3
+
+    # First line:
+    # div1 div2 space div3 space div4 space
+    divs = lines[0].children
+    assert len(divs) == 8
+
+    # First div, one ignored space collapsing with next space
+    assert divs[0].element_tag == 'div'
+    assert divs[0].width == 0
+
+    # Second div, one letter
+    assert divs[2].element_tag == 'div'
+    assert divs[2].width != 0
+
+    # Third div, empty with margin
+    assert divs[4].element_tag == 'div'
+    assert divs[4].width == 0
+    assert divs[4].margin_width() == 20
+    assert divs[4].height == 100
+
+    # Fourth div, empty with margin and padding
+    assert divs[6].element_tag == 'div'
+    assert divs[6].width == 0
+    assert divs[6].margin_width() == 30
+
+    # Second line:
+    # div5
+    div, = lines[1].children
+
+    # Fifth div, long text, full-width div
+    assert div.element_tag == 'div'
+    assert len(div.children) > 1
+    assert div.width == 200
+
+    # Third line:
+    # div6
+    div, = lines[2].children
+
+    # Sixth div, empty div with fixed width and height
+    assert div.element_tag == 'div'
+    assert div.margin_width() == 120
+    assert div.margin_height() == 140
+
+
+@assert_no_logs
 def test_lists():
     """Test the lists."""
     page, = parse('''
