@@ -87,6 +87,9 @@ INITIAL_VALUES = {
     'min_height': Dimension(0, 'px'),
     'min_width': Dimension(0, 'px'),
     'orphans': 2,
+    'outline_color': 'invert',  # or currentColor if invert is not supported
+    'outline_style': 'none',
+    'outline_width': 3,  # Computed value for 'medium'
     'overflow': 'visible',
     'padding_top': Dimension(0, 'px'),
     'padding_right': Dimension(0, 'px'),
@@ -132,36 +135,35 @@ INITIAL_VALUES = {
     'image_rendering': 'auto',
 }
 
+
+KNOWN_PROPERTIES = set(name.replace('_', '-') for name in INITIAL_VALUES)
+
 # Not applicable to the print media
 NOT_PRINT_MEDIA = set([
     # Aural media:
     'azimuth',
     'cue',
-    'cue_after',
-    'cue_before',
+    'cue-after',
+    'cue-before',
     'cursor',
     'elevation',
     'pause',
-    'pause_after',
-    'pause_before',
-    'pitch_range',
+    'pause-after',
+    'pause-before',
+    'pitch-range',
     'pitch',
-    'play_during',
+    'play-during',
     'richness',
-    'speak_header',
-    'speak_numeral',
-    'speak_punctuation',
+    'speak-header',
+    'speak-numeral',
+    'speak-punctuation',
     'speak',
-    'speech_rate',
+    'speech-rate',
     'stress',
-    'voice_family',
+    'voice-family',
     'volume',
 
-    # Outlines only apply to interactive media, just like cursor.
-    'outline'
-    'outline_color',
-    'outline_style',
-    'outline_width',
+    # outlines are not just for interactive but any visual media in css3-ui
 ])
 
 

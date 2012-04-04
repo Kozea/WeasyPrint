@@ -21,7 +21,8 @@ from tinycss.parsing import split_on_comma
 from ..logger import LOGGER
 from ..formatting_structure import counters
 from ..compat import urljoin
-from .properties import INITIAL_VALUES, NOT_PRINT_MEDIA, AUTO, Dimension
+from .properties import (INITIAL_VALUES, KNOWN_PROPERTIES, NOT_PRINT_MEDIA,
+                         AUTO, Dimension)
 from . import computed_values
 
 # TODO: unit-test these validators
@@ -60,7 +61,7 @@ EXPANDERS = {}
 
 PREFIXED = set()
 # The same replacement was done on property names:
-PREFIX = '-weasy-'.replace('-', '_')
+PREFIX = '-weasy-'
 
 
 class InvalidValues(ValueError):
@@ -80,10 +81,10 @@ def validator(property_name=None, prefixed=False, wants_base_url=False):
     def decorator(function):
         """Add ``function`` to the ``VALIDATORS``."""
         if property_name is None:
-            name = function.__name__
+            name = function.__name__.replace('_', '-')
         else:
-            name = property_name.replace('-', '_')
-        assert name in INITIAL_VALUES, name
+            name = property_name
+        assert name in KNOWN_PROPERTIES, name
         assert name not in VALIDATORS, name
 
         function.wants_base_url = wants_base_url
@@ -269,8 +270,8 @@ def background_size(tokens):
             return tuple(values)
 
 
-@validator('background_clip')
-@validator('background_origin')
+@validator('background-clip')
+@validator('background-origin')
 @single_keyword
 def box(keyword):
     """Validation for the ``<box>`` type used in ``background-clip``
@@ -554,8 +555,8 @@ def font_weight(token):
             return token.value
 
 
-@validator('letter_spacing')
-@validator('word_spacing')
+@validator('letter-spacing')
+@validator('word-spacing')
 @single_token
 def spacing(token):
     """Validation for ``letter-spacing`` and ``word-spacing``."""
@@ -834,7 +835,6 @@ def transform_function(token):
 
 def expander(property_name):
     """Decorator adding a function to the ``EXPANDERS``."""
-    property_name = property_name.replace('-', '_')
     def expander_decorator(function):
         """Add ``function`` to the ``EXPANDERS``."""
         assert property_name not in EXPANDERS, property_name
@@ -860,8 +860,8 @@ def expand_four_sides(base_url, name, tokens):
     elif len(tokens) != 4:
         raise InvalidValues(
             'Expected 1 to 4 token components got %i' % len(tokens))
-    for suffix, token in zip(('_top', '_right', '_bottom', '_left'), tokens):
-        i = name.rfind('_')
+    for suffix, token in zip(('-top', '-right', '-bottom', '-left'), tokens):
+        i = name.rfind('-')
         if i == -1:
             new_name = name + suffix
         else:
@@ -885,7 +885,6 @@ def generic_expander(*expanded_names, **kwargs):
     """
     wants_base_url = kwargs.pop('wants_base_url', False)
     assert not kwargs
-    expanded_names = [name.replace('-', '_') for name in expanded_names]
     def generic_expander_decorator(wrapped):
         """Decorate the ``wrapped`` expander."""
         @functools.wraps(wrapped)
@@ -907,11 +906,11 @@ def generic_expander(*expanded_names, **kwargs):
                     if new_name in results:
                         raise InvalidValues(
                             'got multiple %s values in a %s shorthand'
-                            % (new_name.strip('_'), name))
+                            % (new_name.strip('-'), name))
                     results[new_name] = new_token
 
             for new_name in expanded_names:
-                if new_name.startswith('_'):
+                if new_name.startswith('-'):
                     # new_name is a suffix
                     actual_new_name = name + new_name
                 else:
@@ -924,7 +923,7 @@ def generic_expander(*expanded_names, **kwargs):
                         (actual_new_name, value), = validate_non_shorthand(
                             base_url, actual_new_name, value, required=True)
                 else:
-                    value = INITIAL_VALUES[actual_new_name]
+                    value = INITIAL_VALUES[actual_new_name.replace('-', '_')]
 
                 yield actual_new_name, value
         return generic_expander_wrapper
@@ -950,23 +949,23 @@ def expand_list_style(name, tokens, base_url):
             continue
 
         if list_style_type([token]) is not None:
-            suffix = '_type'
+            suffix = '-type'
             type_specified = True
         elif list_style_position([token]) is not None:
-            suffix = '_position'
+            suffix = '-position'
         elif image([token], base_url) is not None:
-            suffix = '_image'
+            suffix = '-image'
             image_specified = True
         else:
             raise InvalidValues
         yield suffix, [token]
 
     if not type_specified and none_count:
-        yield '_type', [none_token]
+        yield '-type', [none_token]
         none_count -= 1
 
     if not image_specified and none_count:
-        yield '_image', [none_token]
+        yield '-image', [none_token]
         none_count -= 1
 
     if none_count:
@@ -981,7 +980,7 @@ def expand_border(base_url, name, tokens):
     See http://www.w3.org/TR/CSS21/box.html#propdef-border
 
     """
-    for suffix in ('_top', '_right', '_bottom', '_left'):
+    for suffix in ('-top', '-right', '-bottom', '-left'):
         for new_prop in expand_border_side(base_url, name + suffix, tokens):
             yield new_prop
 
@@ -999,11 +998,11 @@ def expand_border_side(name, tokens):
     """
     for token in tokens:
         if parse_color(token) is not None:
-            suffix = '_color'
+            suffix = '-color'
         elif border_width([token]) is not None:
-            suffix = '_width'
+            suffix = '-width'
         elif border_style([token]) is not None:
-            suffix = '_style'
+            suffix = '-style'
         else:
             raise InvalidValues
         yield suffix, [token]
@@ -1023,26 +1022,26 @@ def expand_background(name, tokens, base_url):
     while tokens:
         token = tokens.pop()
         if parse_color(token) is not None:
-            suffix = '_color'
+            suffix = '-color'
         elif image([token], base_url) is not None:
-            suffix = '_image'
+            suffix = '-image'
         elif background_repeat([token]) is not None:
-            suffix = '_repeat'
+            suffix = '-repeat'
         elif background_attachment([token]) is not None:
-            suffix = '_attachment'
+            suffix = '-attachment'
         elif background_position([token]):
             if tokens:
                 next_token = tokens.pop()
                 if background_position([token, next_token]):
                     # Two consecutive '-position' tokens, yield them together
-                    yield '_position', [token, next_token]
+                    yield '-position', [token, next_token]
                     continue
                 else:
                     # The next token is not a '-position', put it back
                     # for the next loop iteration
                     tokens.append(next_token)
             # A single '-position' token
-            suffix = '_position'
+            suffix = '-position'
         else:
             raise InvalidValues
         yield suffix, [token]
@@ -1074,11 +1073,11 @@ def expand_font(name, tokens):
             continue
 
         if font_style([token]) is not None:
-            suffix = '_style'
+            suffix = '-style'
         elif font_variant([token]) is not None:
-            suffix = '_variant'
+            suffix = '-variant'
         elif font_weight([token]) is not None:
-            suffix = '_weight'
+            suffix = '-weight'
         else:
             # We’re done with these three, continue with font-size
             break
@@ -1088,7 +1087,7 @@ def expand_font(name, tokens):
     # Latest `token` from the loop.
     if font_size([token]) is None:
         raise InvalidValues
-    yield '_size', [token]
+    yield '-size', [token]
 
     # Then line-height is optional, but font-family is not so the list
     # must not be empty yet
@@ -1100,7 +1099,7 @@ def expand_font(name, tokens):
         token = tokens.pop()
         if line_height([token]) is None:
             raise InvalidValues
-        yield 'line_height', [token]
+        yield 'line-height', [token]
     else:
         # We pop()ed a font-family, add it back
         tokens.append(token)
@@ -1109,13 +1108,17 @@ def expand_font(name, tokens):
     tokens.reverse()
     if font_family(tokens) is None:
         raise InvalidValues
-    yield '_family', tokens
+    yield '-family', tokens
 
 
 def validate_non_shorthand(base_url, name, tokens, required=False):
     """Default validator for non-shorthand properties."""
-    if not required and name not in INITIAL_VALUES:
-        raise InvalidValues('unknown property')
+    if not required and name not in KNOWN_PROPERTIES:
+        hyphens_name = name.replace('_', '-')
+        if hyphens_name in KNOWN_PROPERTIES:
+            raise InvalidValues('did you mean %s?' % hyphens_name)
+        else:
+            raise InvalidValues('unknown property')
 
     if not required and name not in VALIDATORS:
         raise InvalidValues('property not supported yet')
@@ -1135,17 +1138,17 @@ def validate_non_shorthand(base_url, name, tokens, required=False):
 
 
 def validate_and_expand(base_url, name, tokens):
-    """Expand and validate shorthand properties.
+    """
+    Expand shorthand properties and filter unsupported properties and values.
 
-    The invalid or unsupported declarations are ignored and logged.
+    Log a warning for every ignored declaration.
 
     Return a iterable of ``(name, value)`` tuples.
 
     """
     if name in PREFIXED and not name.startswith(PREFIX):
         level = 'warn'
-        reason = ('the property is experimental, use ' +
-                  (PREFIX + name).replace('_', '-'))
+        reason = 'the property is experimental, use ' + PREFIX + name
     elif name in NOT_PRINT_MEDIA:
         level = 'info'
         reason = 'the property does not apply for the print media'
@@ -1156,8 +1159,8 @@ def validate_and_expand(base_url, name, tokens):
                 name = unprefixed_name
         expander_ = EXPANDERS.get(name, validate_non_shorthand)
         try:
-            tokens = [token for token in tokens if token.type != 'S']
-            results = expander_(base_url, name, tokens)
+            results = expander_(base_url, name,
+               [token for token in tokens if token.type != 'S'])
             # Use list() to consume any generator now,
             # so that InvalidValues is caught.
             return list(results)
@@ -1168,5 +1171,5 @@ def validate_and_expand(base_url, name, tokens):
             else:
                 reason = 'invalid value'
     getattr(LOGGER, level)('Ignored declaration: `%s: %s`, %s.',
-        name.replace('_', '-'), ''.join(v.as_css for v in tokens), reason)
+        name, ''.join(v.as_css for v in tokens), reason)
     return []

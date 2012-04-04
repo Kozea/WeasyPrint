@@ -78,6 +78,8 @@ def test_spacing():
     assert expand_to_dict('letter-spacing: 3px') == {
         'letter_spacing': (3, 'px')}
     assert expand_to_dict('letter-spacing: 3', 'invalid') == {}
+    assert expand_to_dict('letter_spacing: normal',
+        'did you mean letter-spacing') == {}
 
     assert expand_to_dict('word-spacing: normal') == {
         'word_spacing': 'normal'}
@@ -185,22 +187,22 @@ def test_expand_four_sides():
 @assert_no_logs
 def test_expand_borders():
     """Test the ``border`` property."""
-    assert expand_to_dict('border_top: 3px dotted red') == {
+    assert expand_to_dict('border-top: 3px dotted red') == {
         'border_top_width': (3, 'px'),
         'border_top_style': 'dotted',
         'border_top_color': (1, 0, 0, 1),  # red
     }
-    assert expand_to_dict('border_top: 3px dotted') == {
+    assert expand_to_dict('border-top: 3px dotted') == {
         'border_top_width': (3, 'px'),
         'border_top_style': 'dotted',
         'border_top_color': 'currentColor',
     }
-    assert expand_to_dict('border_top: 3px red') == {
+    assert expand_to_dict('border-top: 3px red') == {
         'border_top_width': (3, 'px'),
         'border_top_style': 'none',
         'border_top_color': (1, 0, 0, 1),  # red
     }
-    assert expand_to_dict('border_top: solid') == {
+    assert expand_to_dict('border-top: solid') == {
         'border_top_width': 3,  # initial value
         'border_top_style': 'solid',
         'border_top_color': 'currentColor',
@@ -228,40 +230,40 @@ def test_expand_borders():
 @assert_no_logs
 def test_expand_list_style():
     """Test the ``list_style`` property."""
-    assert expand_to_dict('list_style: inherit') == {
+    assert expand_to_dict('list-style: inherit') == {
         'list_style_position': 'inherit',
         'list_style_image': 'inherit',
         'list_style_type': 'inherit',
     }
-    assert expand_to_dict('list_style: url(../bar/lipsum.png)') == {
+    assert expand_to_dict('list-style: url(../bar/lipsum.png)') == {
         'list_style_position': 'outside',
         'list_style_image': 'http://weasyprint.org/bar/lipsum.png',
         'list_style_type': 'disc',
     }
-    assert expand_to_dict('list_style: square') == {
+    assert expand_to_dict('list-style: square') == {
         'list_style_position': 'outside',
         'list_style_image': 'none',
         'list_style_type': 'square',
     }
-    assert expand_to_dict('list_style: circle inside') == {
+    assert expand_to_dict('list-style: circle inside') == {
         'list_style_position': 'inside',
         'list_style_image': 'none',
         'list_style_type': 'circle',
     }
-    assert expand_to_dict('list_style: none circle inside') == {
+    assert expand_to_dict('list-style: none circle inside') == {
         'list_style_position': 'inside',
         'list_style_image': 'none',
         'list_style_type': 'circle',
     }
-    assert expand_to_dict('list_style: none inside none') == {
+    assert expand_to_dict('list-style: none inside none') == {
         'list_style_position': 'inside',
         'list_style_image': 'none',
         'list_style_type': 'none',
     }
-    assert expand_to_dict('list_style: none inside none none', 'invalid') == {}
-    assert expand_to_dict('list_style: red', 'invalid') == {}
-    assert expand_to_dict('list_style: circle disc',
-        'got multiple type values in a list_style shorthand') == {}
+    assert expand_to_dict('list-style: none inside none none', 'invalid') == {}
+    assert expand_to_dict('list-style: red', 'invalid') == {}
+    assert expand_to_dict('list-style: circle disc',
+        'got multiple type values in a list-style shorthand') == {}
 
 
 def assert_background(css, **kwargs):

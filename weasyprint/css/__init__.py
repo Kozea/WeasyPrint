@@ -392,7 +392,7 @@ def preprocess_declarations(base_url, declarations):
     # don’t bother checking the previous ones for the same property
     seen = set()
     for declaration in reversed(declarations):
-        name = declaration.name.replace('-', '_')
+        name = declaration.name
         if name in seen:
             # This only helps on non-shorthands, but still
             continue
@@ -400,7 +400,7 @@ def preprocess_declarations(base_url, declarations):
         for long_name, values in validation.validate_and_expand(
                 base_url, name, declaration.value):
             if long_name not in seen:
-                yield long_name, values, priority
+                yield long_name.replace('-', '_'), values, priority
                 seen.add(long_name)
 
 
