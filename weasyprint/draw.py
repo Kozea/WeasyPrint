@@ -74,12 +74,12 @@ def draw_box(document, context, page, box, parent=None):
                 if right == 'auto':
                     right = 0
                 if bottom == 'auto':
-                    bottom = box.padding_height()
+                    bottom = box.border_height()
                 if left == 'auto':
-                    left = box.padding_width()
+                    left = box.border_width()
                 context.rectangle(
-                    box.padding_box_x() + right,
-                    box.padding_box_y() + top,
+                    box.border_box_x() + right,
+                    box.border_box_y() + top,
                     left - right,
                     bottom - top)
                 context.clip()
@@ -513,41 +513,22 @@ def draw_text(context, textbox):
     context.set_source_rgba(*textbox.style.color)
     textbox.show_line(context)
     values = textbox.style.text_decoration
-    for value in values:
-        if value == 'overline':
-            draw_overline(context, textbox)
-        elif value == 'underline':
-            draw_underline(context, textbox)
-        elif value == 'line-through':
-            draw_line_through(context, textbox)
+    if 'overline' in values:
+        draw_text_decoration(context, textbox,
+            textbox.baseline - 0.15 * textbox.style.font_size)
+    elif 'underline' in values:
+        draw_text_decoration(context, textbox,
+            textbox.baseline + 0.15 * textbox.style.font_size)
+    elif 'line-through' in values:
+        draw_text_decoration(context, textbox, textbox.height * 0.5)
 
 
-def draw_overline(context, textbox):
-    """Draw overline of ``textbox`` to a ``cairo.Context``."""
-    font_size = textbox.style.font_size
-    position_y = textbox.baseline + textbox.position_y - (font_size * 0.15)
-    draw_text_decoration(context, position_y, textbox)
-
-
-def draw_underline(context, textbox):
-    """Draw underline of ``textbox`` to a ``cairo.Context``."""
-    font_size = textbox.style.font_size
-    position_y = textbox.baseline + textbox.position_y + (font_size * 0.15)
-    draw_text_decoration(context, position_y, textbox)
-
-
-def draw_line_through(context, textbox):
-    """Draw line-through of ``textbox`` to a ``cairo.Context``."""
-    position_y = textbox.position_y + (textbox.height * 0.5)
-    draw_text_decoration(context, position_y, textbox)
-
-
-def draw_text_decoration(context, position_y, textbox):
+def draw_text_decoration(context, textbox, offset_y):
     """Draw text-decoration of ``textbox`` to a ``cairo.Context``."""
     with context.stacked():
         context.set_source_rgba(*textbox.style.color)
         context.set_line_width(1)  # TODO: make this proportional to font_size?
-        context.move_to(textbox.position_x, position_y)
+        context.move_to(textbox.position_x, textbox.position_y + offset_y)
         context.rel_line_to(textbox.width, 0)
         context.stroke()
 
