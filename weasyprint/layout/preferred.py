@@ -14,7 +14,6 @@ from __future__ import division, unicode_literals
 
 import cairo
 
-from ..css.values import get_percentage_value
 from ..formatting_structure import boxes
 from ..text import TextFragment
 
@@ -63,31 +62,35 @@ def preferred_width(box, outer=True):
 
 def _block_preferred_width(box, function, outer):
     """Helper to create ``block_preferred_*_width.``"""
-    if isinstance(box.style.width, (int, float)):
-        width = box.style.width
-    else:
-        # % and 'auto' width
+    width = box.style.width
+    if width == 'auto' or width.unit == '%':
+        # "percentages on the following properties are treated instead as
+        #  though they were the following: width: auto"
+        # http://dbaron.org/css/intrinsic/#outer-intrinsic
         if box.children:
             width = max(function(child, outer=True) for child in box.children)
         else:
             width = 0
-
-    if isinstance(width, (int, float)):
-        fixed_width = width
-        variable_ratio = 0
     else:
-        fixed_width = 0
-        variable_ratio = get_percentage_value(width) / 100.
+        assert width.unit == 'px'
+        width = width.value
 
+    return adjust(box, outer, width)
+
+
+def adjust(box, outer, fixed_width, variable_ratio=0):
     if outer:
+        fixed_width += (box.style.border_left_width
+                      + box.style.border_right_width)
         for value in ('margin_left', 'margin_right',
-                      'border_left_width', 'border_right_width',
                       'padding_left', 'padding_right'):
             style_value = box.style[value]
-            if isinstance(style_value, (int, float)):
-                fixed_width += style_value
-            elif style_value != 'auto':
-                variable_ratio += get_percentage_value(style_value) / 100.
+            if style_value != 'auto':
+                if style_value.unit == 'px':
+                    fixed_width += style_value.value
+                else:
+                    assert style_value.unit == '%'
+                    variable_ratio += style_value.value / 100.
 
     if variable_ratio < 1:
         return fixed_width / (1 - variable_ratio)
@@ -154,7 +157,8 @@ def inline_preferred_width(box, outer=True):
                     widest_line = max(widest_line, max(lines[1:-1]))
                 current_line = lines[-1]
     widest_line = max(widest_line, current_line)
-    return widest_line
+
+    return adjust(box, outer, widest_line)
 
 
 def text_lines_width(box, width):
@@ -167,20 +171,17 @@ def text_lines_width(box, width):
 
 def replaced_preferred_width(box, outer=True):
     """Return the preferred minimum width for an ``InlineReplacedBox``."""
-    if isinstance(box.style.width, (int, float)):
-        width = box.style.width
-    else:
+    variable_ratio = 0
+    fixed_width = 0
+
+    width = box.style.width
+    if width == 'auto':
         # TODO: handle the images with no intinsic width
-        _, width, _ = box.replacement
-
-    if isinstance(width, (int, float)):
-        fixed_width = width
-        variable_ratio = 0
+        _, fixed_width, _ = box.replacement
+    elif width.unit == 'px':
+        fixed_width = width.value
     else:
-        fixed_width = 0
-        variable_ratio = get_percentage_value(width) / 100.
+        assert width.unit == '%'
+        variable_ratio = width.value / 100.
 
-    if variable_ratio < 1:
-        return fixed_width / (1 - variable_ratio)
-    else:
-        return 0
+    return adjust(box, outer, fixed_width, variable_ratio)
