@@ -294,13 +294,13 @@ def test_warnings():
         ('<link rel=stylesheet href=data:image/png,>',
             ['WARNING: Unsupported stylesheet type: image/png']),
         ('<style>foo { margin-color: red',
-            ['WARNING: Ignored declaration', 'unknown property']),
+            ['WARNING: Ignored', 'unknown property']),
         ('<style>foo { margin-top: red',
-            ['WARNING: Ignored declaration', 'invalid value']),
+            ['WARNING: Ignored', 'invalid value']),
         ('<html style="margin-color: red">',
-            ['WARNING: Ignored declaration', 'unknown property']),
+            ['WARNING: Ignored', 'unknown property']),
         ('<html style="margin-top: red">',
-            ['WARNING: Ignored declaration', 'invalid value']),
+            ['WARNING: Ignored', 'invalid value']),
     ]:
         with capture_logs() as logs:
             TestPNGDocument(source).style_for('')
