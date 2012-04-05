@@ -9,7 +9,10 @@
                     bABpAHsAYwBvAGwAbwByADoAcgBlAGQAfQA=";
         @import "data:,ul {border-width: 1000px !important}" screen;
         a:after {
-            content: " [" attr(href) "]"
+            content: " [" attr(href) "]";
+            border-style: solid;
+            border-top-width: inherit;
+            border-bottom-width: initial;
         }
         @page :first { margin-top: 5px }
         ul {
@@ -42,7 +45,8 @@
     <ul style="font-size: 5ex">
         <li style="font-size: 6pt; font-weight: bolder">
             <a href=home.html
-                style="padding: 1px 2px 3px 4px; font-size: 300%">Home</a>
+                style="padding: 1px 2px 3px 4px; font-size: 300%;
+                       border: 42px solid">Home</a>
         <li>…
     </ul>
 </body>

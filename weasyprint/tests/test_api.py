@@ -127,7 +127,7 @@ def test_css_parsing():
         """Check that a parsed stylsheet looks like resources/utf8-test.css"""
         # Using 'encoding' adds a CSSCharsetRule
         rule = css.stylesheet.rules[-1]
-        assert ''.join(v.as_css for v in rule.selector) == 'h1::before'
+        assert rule.selector.as_css() == 'h1::before'
         content, background = rule.declarations
 
         assert content.name == 'content'
