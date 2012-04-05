@@ -69,13 +69,14 @@ class HorizontalBox(object):
     @property
     def minimum(self):
         if self._minimum is None:
-            self._minimum = inline_preferred_minimum_width(self.box)
+            self._minimum = inline_preferred_minimum_width(
+                self.box, outer=False)
         return self._minimum
 
     @property
     def preferred(self):
         if self._preferred is None:
-            self._preferred = inline_preferred_width(self.box)
+            self._preferred = inline_preferred_width(self.box, outer=False)
         return self._preferred
 
 

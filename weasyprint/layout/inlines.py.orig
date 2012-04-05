@@ -266,11 +266,15 @@ def atomic_box(document, box, position_x, skip_stack, containing_block,
             image_marker_layout(box)
         else:
             inline_replaced_box_layout(box, containing_block, device_size)
+<<<<<<< HEAD
     elif isinstance(box, boxes.InlineBlockBox):
         box = inline_block_box_layout(
             document, box, position_x, skip_stack, containing_block,
             device_size)
+    else:
+=======
     else:  # pragma: no cover
+>>>>>>> master
         raise TypeError('Layout for %s not handled yet' % type(box).__name__)
     return box
 

@@ -1,6 +1,8 @@
 *.pyc
 /*.egg-info
 /.coverage
+/htmlcov
+/coverage.xml
 /.tox
 /dist
 /env

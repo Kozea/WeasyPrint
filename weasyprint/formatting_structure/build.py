@@ -219,16 +219,14 @@ def update_counters(state, style):
             sibling_scopes.add(name)
         counter_values.setdefault(name, []).append(value)
 
-    # Disabled for now, only exists in Lists3’s editor’s draft.
-    for name, value in []: # XXX style.counter_set:
-        values = counter_values.setdefault(name, [])
-        if not values:
-            if name in sibling_scopes:
-                counter_values[name].pop()
-            else:
-                sibling_scopes.add(name)
-            values.append(0)
-        values[-1] = value
+    # XXX Disabled for now, only exists in Lists3’s editor’s draft.
+#    for name, value in style.counter_set:
+#        values = counter_values.setdefault(name, [])
+#        if not values:
+#            assert name not in sibling_scopes
+#            sibling_scopes.add(name)
+#            values.append(0)
+#        values[-1] = value
 
     counter_increment = style.counter_increment
     if counter_increment == 'auto':
@@ -243,10 +241,8 @@ def update_counters(state, style):
     for name, value in counter_increment:
         values = counter_values.setdefault(name, [])
         if not values:
-            if name in sibling_scopes:
-                counter_values[name].pop()
-            else:
-                sibling_scopes.add(name)
+            assert name not in sibling_scopes
+            sibling_scopes.add(name)
             values.append(0)
         values[-1] += value
 
@@ -281,7 +277,8 @@ def add_box_marker(document, counter_values, box):
     position = style.list_style_position
     if position == 'inside':
         side = 'right' if style.direction == 'ltr' else 'left'
-        marker_box.style['margin_' + side] = style.font_size * 0.5
+        margin = style.font_size * 0.5
+        marker_box.style['margin_' + side] = properties.Dimension(margin, 'px')
         yield marker_box
     elif position == 'outside':
         box.outside_list_marker = marker_box

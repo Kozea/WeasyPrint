@@ -1,4 +1,8 @@
 [report]
 exclude_lines =
+    pragma: no cover
     def __repr__
     raise NotImplementedError
+omit =
+    weasyprint/tests/test_web/*
+    weasyprint/tests/w3_test_suite/*

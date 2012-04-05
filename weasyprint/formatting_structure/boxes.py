@@ -60,6 +60,7 @@
 from __future__ import division, unicode_literals
 
 from ..compat import xrange
+from ..css.computed_values import ZERO_PIXELS
 
 
 # The *Box classes have many attributes and methods, but that's the way it is
@@ -193,8 +194,8 @@ class Box(object):
         setattr(self, 'padding_%s' % side, 0)
         setattr(self, 'border_%s_width' % side, 0)
 
-        self.style['margin_%s' % side] = 0
-        self.style['padding_%s' % side] = 0
+        self.style['margin_%s' % side] = ZERO_PIXELS
+        self.style['padding_%s' % side] = ZERO_PIXELS
         self.style['border_%s_width' % side] = 0
 
     # Positioning schemes
