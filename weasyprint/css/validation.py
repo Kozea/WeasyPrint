@@ -16,7 +16,7 @@ from __future__ import division, unicode_literals
 import functools
 
 from tinycss.color3 import parse_color
-from tinycss.parsing import split_on_comma
+from tinycss.parsing import split_on_comma, remove_whitespace
 
 from ..logger import LOGGER
 from ..formatting_structure import counters
@@ -141,7 +141,7 @@ def single_token(function):
 
 def get_length(token, negative=True, percentage=False):
     if (token.unit in LENGTH_UNITS or (percentage and token.unit == '%')
-                or (token.value == 0 and token.type in ('INTEGER', 'NUMBER'))
+                or (token.type in ('INTEGER', 'NUMBER') and token.value == 0)
             ) and (negative or token.value >= 0):
         return Dimension(token.value, token.unit)
 
@@ -1137,39 +1137,48 @@ def validate_non_shorthand(base_url, name, tokens, required=False):
     return [(name, value)]
 
 
-def validate_and_expand(base_url, name, tokens):
+def preprocess_declarations(base_url, declarations):
     """
     Expand shorthand properties and filter unsupported properties and values.
 
     Log a warning for every ignored declaration.
 
-    Return a iterable of ``(name, value)`` tuples.
+    Return a iterable of ``(name, value, priority)`` tuples.
 
     """
-    if name in PREFIXED and not name.startswith(PREFIX):
-        level = 'warn'
-        reason = 'the property is experimental, use ' + PREFIX + name
-    elif name in NOT_PRINT_MEDIA:
-        level = 'info'
-        reason = 'the property does not apply for the print media'
-    else:
+    def validation_error(level, reason):
+        getattr(LOGGER, level)('Ignored `%s: %s` at %i:%i, %s.',
+            declaration.name, declaration.value.as_css(),
+            declaration.line, declaration.column, reason)
+
+    for declaration in declarations:
+        name = declaration.name
+
+        if name in PREFIXED and not name.startswith(PREFIX):
+            validation_error('warn',
+                'the property is experimental, use ' + PREFIX + name)
+            continue
+
+        if name in NOT_PRINT_MEDIA:
+            validation_error('info',
+                'the property does not apply for the print media')
+            continue
+
         if name.startswith(PREFIX):
             unprefixed_name = name[len(PREFIX):]
             if unprefixed_name in PREFIXED:
                 name = unprefixed_name
+
         expander_ = EXPANDERS.get(name, validate_non_shorthand)
+        tokens = remove_whitespace(declaration.value)
         try:
-            results = expander_(base_url, name,
-               [token for token in tokens if token.type != 'S'])
-            # Use list() to consume any generator now,
-            # so that InvalidValues is caught.
-            return list(results)
+            # Use list() to consume generators now and catch any error.
+            result = list(expander_(base_url, name, tokens))
         except InvalidValues as exc:
-            level = 'warn'
-            if exc.args and exc.args[0]:
-                reason = exc.args[0]
-            else:
-                reason = 'invalid value'
-    getattr(LOGGER, level)('Ignored declaration: `%s: %s`, %s.',
-        name, ''.join(v.as_css for v in tokens), reason)
-    return []
+            validation_error('warn',
+                exc.args[0] if exc.args and exc.args[0] else 'invalid value')
+            continue
+
+        priority = declaration.priority
+        for long_name, value in result:
+            yield long_name.replace('-', '_'), value, priority

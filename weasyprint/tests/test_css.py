@@ -94,8 +94,7 @@ def test_find_stylesheets():
     assert len(rules) == 10
     # Also test appearance order
     assert [
-        rule.selector if rule.at_keyword else ''.join(
-            v.as_css for v in rule.selector)
+        rule.selector if rule.at_keyword else rule.selector.as_css()
         for rule, _selector_list, _declarations in rules
     ] == [
         'a', 'li', 'p', 'ul', 'li', 'a:after', (None, 'first'), 'ul',
@@ -107,10 +106,9 @@ def test_find_stylesheets():
 def test_expand_shorthands():
     """Test the expand shorthands."""
     sheet = CSS(resource_filename('sheet2.css'))
-    assert ''.join(v.as_css for v in sheet.stylesheet.rules[0].selector) \
-        == 'li'
+    assert sheet.stylesheet.rules[0].selector.as_css() == 'li'
 
-    style = dict((d.name, ''.join(v.as_css for v in d.value))
+    style = dict((d.name, d.value.as_css())
                  for d in sheet.stylesheet.rules[0].declarations)
     assert style['margin'] == '2em 0'
     assert style['margin-bottom'] == '3em'
@@ -195,6 +193,8 @@ def test_annotate_document():
     assert a.padding_right == (2, 'px')
     assert a.padding_bottom == (3, 'px')
     assert a.padding_left == (4, 'px')
+    assert a.border_top_width == 42
+    assert a.border_bottom_width == 42
 
 
     assert a.color == (1, 0, 0, 1)
@@ -205,6 +205,8 @@ def test_annotate_document():
     assert after.content == [
         ('STRING', ' ['), ('STRING', 'home.html'), ('STRING', ']')]
     assert after.background_color == (1, 0, 0, 1)
+    assert after.border_top_width == 42
+    assert after.border_bottom_width == 3
 
     # TODO much more tests here: test that origin and selector precedence
     # and inheritance are correct, ...

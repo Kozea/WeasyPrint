@@ -49,8 +49,8 @@ from tinycss.selectors3 import STYLE_ATTRIBUTE_SPECIFICITY
 from lxml import cssselect
 
 from . import properties
-from . import validation
 from . import computed_values
+from .validation import preprocess_declarations
 from ..utils import get_url_attribute
 from ..logger import LOGGER
 from ..compat import iteritems, urljoin
@@ -385,23 +385,6 @@ def preprocess_stylesheet(medium, base_url, rules):
                     selector_list = [PageSelector(
                         specificity, margin_rule.at_keyword, page_types)]
                     yield margin_rule, selector_list, declarations
-
-
-def preprocess_declarations(base_url, declarations):
-    # set() + reversed(): only keep the last valid declaration,
-    # don’t bother checking the previous ones for the same property
-    seen = set()
-    for declaration in reversed(declarations):
-        name = declaration.name
-        if name in seen:
-            # This only helps on non-shorthands, but still
-            continue
-        priority = declaration.priority
-        for long_name, values in validation.validate_and_expand(
-                base_url, name, declaration.value):
-            if long_name not in seen:
-                yield long_name.replace('-', '_'), values, priority
-                seen.add(long_name)
 
 
 def get_all_computed_styles(document, medium,

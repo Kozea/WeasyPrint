@@ -311,6 +311,11 @@ def border_width(computer, name, value):
     if value in BORDER_WIDTH_KEYWORDS:
         return BORDER_WIDTH_KEYWORDS[value]
 
+    if isinstance(value, int):
+        # The initial value can get here, but length() would fail as
+        # it does not have a 'unit' attribute.
+        return value
+
     return length(computer, name, value, pixels_only=True)
 
 

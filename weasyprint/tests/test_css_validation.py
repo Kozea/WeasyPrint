@@ -182,6 +182,7 @@ def test_expand_four_sides():
     }
     assert expand_to_dict('padding: 1 2 3 4 5',
         'Expected 1 to 4 token components got 5') == {}
+    assert expand_to_dict('margin: rgb(0, 0, 0)', 'invalid') == {}
 
 
 @assert_no_logs
