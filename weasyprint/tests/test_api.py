@@ -126,17 +126,18 @@ def test_css_parsing():
     def check_css(css):
         """Check that a parsed stylsheet looks like resources/utf8-test.css"""
         # Using 'encoding' adds a CSSCharsetRule
-        rule = css.stylesheet.cssRules[-1]
-        assert rule.selectorText == 'h1::before'
-        content, background = rule.style.getProperties(all=True)
+        rule = css.stylesheet.rules[-1]
+        assert ''.join(v.as_css for v in rule.selector) == 'h1::before'
+        content, background = rule.declarations
 
         assert content.name == 'content'
-        string, = content.propertyValue
+        string, = content.value
         assert string.value == 'I løvë Unicode'
 
         assert background.name == 'background-image'
-        url, = background.propertyValue
-        url = url.absoluteUri
+        url_value, = background.value
+        assert url_value.type == 'URI'
+        url = urljoin(css.base_url, url_value.value)
         assert url.startswith('file:')
         assert url.endswith('weasyprint/tests/resources/pattern.png')
 

@@ -21,7 +21,7 @@ import contextlib
 if sys.version_info[0] >= 3:
     # Python 3
     from urllib.parse import urljoin, urlparse, unquote_to_bytes
-    from urllib.request import urlopen, Request
+    from urllib.request import urlopen, Request, pathname2url
     from array import array
 
     basestring = str
@@ -48,6 +48,7 @@ else:
     # Python 2
     from urlparse import urljoin, urlparse, unquote
     from urllib2 import urlopen, Request
+    from urllib import pathname2url
     from array import array as _array
 
     basestring = basestring

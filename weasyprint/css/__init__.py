@@ -43,30 +43,21 @@
 from __future__ import division, unicode_literals
 
 import re
-import logging
-import os.path
 
+import tinycss
+from tinycss.selectors3 import STYLE_ATTRIBUTE_SPECIFICITY
 from lxml import cssselect
-import cssutils
 
-from .colors import CSS3_COLORS
 from . import properties
 from . import validation
 from . import computed_values
-from ..utils import get_url_attribute, urllib_fetcher
+from ..utils import get_url_attribute
 from ..logger import LOGGER
-from ..compat import iteritems
+from ..compat import iteritems, urljoin
+from .. import CSS
 
 
-# Monkey-patch cssutils to add extended color keywords:
-cssutils.css.ColorValue.COLORS.update(CSS3_COLORS)
-
-
-PARSER = cssutils.CSSParser(parseComments=False, validate=False)
-PARSER.setFetcher(urllib_fetcher)
-
-HTML5_UA_STYLESHEET = PARSER.parseFile(
-    os.path.join(os.path.dirname(__file__), 'html5_ua.css'))
+PARSER = tinycss.make_parser(with_selectors3=True, with_page3=True)
 
 
 # Pseudo-classes and pseudo-elements are the same to lxml.cssselect.parse().
@@ -76,9 +67,9 @@ PSEUDO_ELEMENTS = ('before', 'after', 'first-line', 'first-letter')
 # Selectors for @page rules can have a pseudo-class, one of :first, :left
 # or :right. This maps pseudo-classes to lists of "page types" selected.
 PAGE_PSEUDOCLASS_TARGETS = {
-    ':first': ['first_left_page', 'first_right_page'],
-    ':left': ['left_page', 'first_left_page'],
-    ':right': ['right_page', 'first_right_page'],
+    'first': ['first_left_page', 'first_right_page'],
+    'left': ['left_page', 'first_left_page'],
+    'right': ['right_page', 'first_right_page'],
     # no pseudo-class: all pages
     None: ['left_page', 'right_page', 'first_left_page', 'first_right_page'],
 }
@@ -149,17 +140,6 @@ class StyleDict(object):
             object.__setattr__(style, 'anonymous', True)
         return style
 
-    def as_dict(self):
-        """Return a new dict completly separate from this object."""
-        if hasattr(self._parent, 'as_dict'):
-            rv = self._parent.as_dict()
-        elif hasattr(self._parent, 'items'):
-            rv = dict(self._parent)
-        else:
-            rv = {}
-        rv.update(self._storage)
-        return rv
-
     def inherit_from(self):
         """Return a new StyleDict with inherited properties from this one.
 
@@ -176,24 +156,24 @@ class StyleDict(object):
     anonymous = False
 
 
-def find_stylesheets(document):
+def find_stylesheets(document, medium):
     """Yield the stylesheets of ``document``.
 
     The output order is the same as the order of the dom.
 
     """
-    parser = PARSER
     for element in document.dom.iter():
         if element.tag not in ('style', 'link'):
             continue
-        mimetype = element.get('type')
+        mime_type = element.get('type', 'text/css').split(';', 1)[0].strip()
         # Only keep 'type/subtype' from 'type/subtype ; param1; param2'.
-        if mimetype and mimetype.split(';', 1)[0].strip() != 'text/css':
+        if mime_type != 'text/css':
             continue
-        # cssutils translates '' to 'all'.
-        media_attr = (element.get('media') or '').strip()
+        media_attr = element.get('media', '').strip() or 'all'
+        media = [media_type.strip() for media_type in media_attr.split(',')]
+        if not evaluate_media_query(media, medium):
+            continue
         if element.tag == 'style':
-            # TODO: handle the `scoped` attribute
             # Content is text that is directly in the <style> element, not its
             # descendants
             content = [element.text or '']
@@ -202,31 +182,33 @@ def find_stylesheets(document):
             content = ''.join(content)
             # lxml should give us either unicode or ASCII-only bytestrings, so
             # we don't need `encoding` here.
-            yield parser.parseString(content,
-                href=element.base_url,
-                media=media_attr, title=element.get('title'))
+            css = CSS(string=content, base_url=element.base_url)
+            yield css
         elif element.tag == 'link' and element.get('href'):
             rel = element.get('rel', '').split()
             if 'stylesheet' not in rel or 'alternate' in rel:
                 continue
-            # URLs should NOT have been made absolute earlier
-            # TODO: support the <base> HTML element, but do not use
-            # lxml.html.HtmlElement.make_links_absolute() that changes the tree
             href = get_url_attribute(element, 'href')
-            yield parser.parseUrl(
-                href, media=media_attr, title=element.get('title'))
+            css = CSS(url=href, _check_mime_type=True)
+            if css.mime_type == 'text/css':
+                yield css
+            else:
+                LOGGER.warn('Unsupported stylesheet type: %s', css.mime_type)
 
 
 def find_style_attributes(document):
-    """Yield the ``element, declaration_block`` of ``document``."""
+    """
+    Yield ``element, declaration, base_url`` for elements with
+    a "style" attribute.
+    """
     parser = PARSER
     for element in document.dom.iter():
         style_attribute = element.get('style')
         if style_attribute:
-            # TODO: no href for parseStyle. What about relative URLs?
-            # CSS3 says we should resolve relative to the attribute:
-            # http://www.w3.org/TR/css-style-attr/#interpret
-            yield element, parser.parseStyle(style_attribute)
+            declarations, errors = parser.parse_style_attr(style_attribute)
+            for error in errors:
+                LOGGER.warn(error)
+            yield element, declarations, element.base_url
 
 
 def evaluate_media_query(query_list, medium):
@@ -237,57 +219,7 @@ def evaluate_media_query(query_list, medium):
 
     """
     # TODO: actual support for media queries, not just media types
-    return query_list.mediaText == 'all' \
-        or any(query.mediaText == medium for query in query_list)
-
-
-def effective_rules(sheet, medium):
-    """Yield applicable rules of ``sheet`` for ``medium``.
-
-    The rules include those defined with ``@import`` and ``@media`` rules.
-
-    """
-    # sheet.media is not intrinsic but comes from where the stylesheet was
-    # found: media HTML attribute, @import or @media rule.
-    if not evaluate_media_query(sheet.media, medium):
-        return
-    for rule in sheet.cssRules:
-        if rule.type in (rule.CHARSET_RULE, rule.COMMENT):
-            continue  # ignored
-        elif rule.type == rule.IMPORT_RULE:
-            subsheet = rule.styleSheet
-        elif rule.type == rule.MEDIA_RULE:
-            # CSSMediaRule is kinda like a CSSStyleSheet: it has media and
-            # cssRules attributes.
-            subsheet = rule
-        else:
-            # pass other rules through: "normal" rulesets, @font-face,
-            # @namespace, @page, and @variables
-            yield rule
-            if rule.type == rule.PAGE_RULE:
-                # Do not use recursion here as page rules have no .media attr
-                for margin_rule in rule.cssRules:
-                    yield margin_rule
-            continue  # no sub-stylesheet here.
-        # subsheet has the .media attribute from the @import or @media rule.
-        for subrule in effective_rules(subsheet, medium):
-            yield subrule
-
-
-def effective_declarations(declaration_block):
-    """Yield ``property_name, property_value_list, importance`` tuples.
-
-    In the given ``declaration_block``, the invalid or unsupported declarations
-    are ignored and the shorthand properties are expanded.
-
-    """
-    for declaration in declaration_block.getProperties(all=True):
-        for name, values in validation.validate_and_expand(
-                declaration.name.replace('-', '_'),
-                # list() may call len(), which is slow on PropertyValue
-                # Use iter() to avoid this.
-                list(iter(declaration.propertyValue))):
-            yield name, (values, declaration.priority)
+    return 'all' in query_list or medium in query_list
 
 
 def declaration_precedence(origin, importance):
@@ -308,10 +240,9 @@ def declaration_precedence(origin, importance):
         return 3
     elif origin == 'author':  # and importance
         return 4
-    elif origin == 'user':  # and importance
-        return 5
     else:
-        assert ValueError('Unkown origin: %r' % origin)
+        assert origin == 'user'  # and importance
+        return 5
 
 
 def add_declaration(cascaded_styles, prop_name, prop_values, weight, element,
@@ -325,112 +256,6 @@ def add_declaration(cascaded_styles, prop_name, prop_values, weight, element,
     _values, previous_weight = style.get(prop_name, (None, None))
     if previous_weight is None or previous_weight <= weight:
         style[prop_name] = prop_values, weight
-
-
-def selector_to_xpath(selector):
-    """Return ``pseudo_type, selector_callable`` from a cssutils ``selector``.
-
-    ``pseudo_type`` is a string and ``selector_callable`` is a
-    :class:`lxml.cssselect` XPath callable.
-
-    """
-    try:
-        return selector._x_weasyprint_parsed_cssselect
-    except AttributeError:
-        parsed_selector = cssselect.parse(selector.selectorText)
-        # cssutils made sure that `selector` is not a "group of selectors"
-        # in CSS3 terms (`rule.selectorList` is) so `parsed_selector` cannot be
-        # of type `cssselect.Or`.
-        # This leaves only three cases:
-        # - The selector ends with a pseudo-element. As `cssselect.parse()`
-        #   parses left-to-right, `parsed_selector` is a `cssselect.Pseudo`
-        #   instance that we can unwrap. This is the only place where CSS
-        #   allows pseudo-element selectors.
-        # - The selector has a pseudo-element not at the end. This is invalid
-        #   and the whole ruleset should be ignored.
-        #   cssselect.CSSSelector() will raise a cssselect.ExpressionError.
-        # - The selector has no pseudo-element and is supported by
-        #   `cssselect.CSSSelector`.
-        if isinstance(parsed_selector, cssselect.CombinedSelector):
-            simple_selector = parsed_selector.subselector
-            if isinstance(simple_selector, cssselect.Pseudo) \
-                    and simple_selector.ident in PSEUDO_ELEMENTS:
-                pseudo_type = str(simple_selector.ident)
-                # Remove the pseudo-element from the selector
-                parsed_selector.subselector = simple_selector.element
-            else:
-                # No pseudo-element or invalid selector.
-                pseudo_type = None
-        else:
-            if isinstance(parsed_selector, cssselect.Pseudo) \
-                    and parsed_selector.ident in PSEUDO_ELEMENTS:
-                pseudo_type = str(parsed_selector.ident)
-                # Remove the pseudo-element from the selector
-                parsed_selector = parsed_selector.element
-            else:
-                # No pseudo-element or invalid selector.
-                pseudo_type = None
-
-        selector_callable = cssselect.CSSSelector(parsed_selector)
-        result = (pseudo_type, selector_callable)
-
-        # Cache for next time we use the same stylesheet
-        selector._x_weasyprint_parsed_cssselect = result
-        return result
-
-
-def match_selectors(document, rule):
-    """Get the elements in ``document`` matched by the select selectors in
-    ``rule``.
-
-    Yield ``element, pseudo_element_type, selector_specificity`` tuples.
-
-    ``selector_list`` should be an iterable of ``cssutils.Selector`` objects.
-
-    If any of the selectors is invalid, an empty iterable is returned as the
-    whole rule should be ignored.
-
-    """
-    selectors = []
-    for selector in rule.selectorList:
-        try:
-            pseudo_type, selector_callable = selector_to_xpath(selector)
-        except (cssselect.SelectorSyntaxError, cssselect.ExpressionError,
-                NotImplementedError):
-            LOGGER.warn('Unsupported selector `%s`, the whole rule-set '
-                        'was ignored.', selector.selectorText)
-            return
-        selectors.append(
-            (selector_callable, pseudo_type, selector.specificity))
-
-    # Only apply to elements after seeing all selectors, as we want to
-    # ignore he whole ruleset if just one selector is invalid.
-    # TODO: test that ignoring actually happens.
-    for selector, pseudo_type, specificity in selectors:
-        for element in selector(document.dom):
-            yield element, pseudo_type, specificity
-
-
-def match_page_selector(rule, margin_type=None):
-    """Get the page types matching the selector in ``rule``.
-
-    Yield ``page_type, margin_type, selector_specificity`` tuples.
-    ``margin_type`` is as passed as an argument.
-
-    Return an empty iterable if the selector is invalid or unsupported.
-
-    """
-    selector = rule.selectorText
-    # TODO: support "page names" in page selectors (see CSS3 Paged Media)
-    pseudo_class = selector or None
-    page_types = PAGE_PSEUDOCLASS_TARGETS.get(pseudo_class, None)
-    if page_types is None:
-        LOGGER.warn('Unsupported @page selector %r, the whole rule-set '
-                    'was ignored.', selector)
-    else:
-        specificity = rule.specificity
-        for page_type in page_types:
-            yield page_type, margin_type, specificity
 
 
 def set_computed_styles(cascaded_styles, computed_styles,
@@ -502,6 +327,83 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None):
         element, pseudo_type, specified, computed, parent_style)
 
 
+class PageSelector(object):
+    """Mimic the API of :class:`tinycss.selectors3.Selector`"""
+
+    def __init__(self, specificity, pseudo_element, matched):
+        self.specificity = specificity
+        self.pseudo_element = pseudo_element
+        self.match = lambda _document: matched
+
+
+def preprocess_stylesheet(medium, base_url, rules):
+    """Do the work that can be done early on stylesheet, before they are
+    in a document.
+
+    """
+    for rule in rules:
+        if not rule.at_keyword:
+            declarations = list(preprocess_declarations(
+                base_url, rule.declarations))
+            if declarations:
+                yield rule, rule.selector_list, declarations
+
+        elif rule.at_keyword == '@import':
+            if not evaluate_media_query(rule.media, medium):
+                continue
+            for result in CSS(url=urljoin(base_url, rule.uri)).rules:
+                yield result
+
+        elif rule.at_keyword == '@media':
+            if not evaluate_media_query(rule.media, medium):
+                continue
+            for result in preprocess_stylesheet(
+                    medium, base_url, rule.rules):
+                yield result
+
+        elif rule.at_keyword == '@page':
+            page_name, pseudo_class = rule.selector
+            page_types = PAGE_PSEUDOCLASS_TARGETS[pseudo_class]
+            # TODO: support named pages (see CSS3 Paged Media)
+            if page_name is not None:
+                LOGGER.warn('Named pages are not supported yet, the whole '
+                            '@page %s rule was ignored.', page_name + (
+                                ':' + pseudo_class if pseudo_class else ''))
+                continue
+            specificity = rule.specificity
+
+            declarations = list(preprocess_declarations(
+                base_url, rule.declarations))
+            if declarations:
+                selector_list = [PageSelector(specificity, None, page_types)]
+                yield rule, selector_list, declarations
+
+            for margin_rule in rule.at_rules:
+                declarations = list(preprocess_declarations(
+                    base_url, margin_rule.declarations))
+                if declarations:
+                    selector_list = [PageSelector(
+                        specificity, margin_rule.at_keyword, page_types)]
+                    yield margin_rule, selector_list, declarations
+
+
+def preprocess_declarations(base_url, declarations):
+    # set() + reversed(): only keep the last valid declaration,
+    # don’t bother checking the previous ones for the same property
+    seen = set()
+    for declaration in reversed(declarations):
+        name = declaration.name
+        if name in seen:
+            # This only helps on non-shorthands, but still
+            continue
+        priority = declaration.priority
+        for long_name, values in validation.validate_and_expand(
+                base_url, name, declaration.value):
+            if long_name not in seen:
+                yield long_name.replace('-', '_'), values, priority
+                seen.add(long_name)
+
+
 def get_all_computed_styles(document, medium,
                             user_stylesheets=None, ua_stylesheets=None):
     """Compute all the computed styles of ``document`` for ``medium``.
@@ -512,10 +414,7 @@ def get_all_computed_styles(document, medium,
     Return a dict of (DOM element, pseudo element type) -> StyleDict instance.
 
     """
-    author_stylesheets = [sheet for sheet in find_stylesheets(document)
-                          # It seems that cssutils returns None for
-                          # some invalid (non-css?) stylesheets.
-                          if sheet is not None]
+    author_stylesheets = list(find_stylesheets(document, medium))
 
     # keys: (element, pseudo_element_type)
     #    element: a lxml element object or the '@page' string for @page styles
@@ -536,50 +435,26 @@ def get_all_computed_styles(document, medium,
         (author_stylesheets, 'author'),
         (user_stylesheets or [], 'user'),
     ):
-        if origin == 'user agent':
-            # XXX temporarily disable logging for user-agent stylesheet
-            level = LOGGER.level
-            LOGGER.setLevel(logging.ERROR)
-
         for sheet in sheets:
-            # TODO: UA and maybe user stylesheets might only need to be
-            # expanded once, not for every document.
-            for rule in effective_rules(sheet, medium):
-                if rule.type == rule.STYLE_RULE:
-                    matched = match_selectors(document, rule)
-                elif rule.type == rule.PAGE_RULE:
-                    matched = match_page_selector(rule)
-                elif rule.type == rule.MARGIN_RULE:
-                    # TODO: refactor this to reuse the result of
-                    # match_page_selector() on the parent @page rule.
-                    matched = match_page_selector(rule.parent, rule.margin)
-                else:
-                    # TODO: handle @font-face, @namespace, and @variables
-                    continue
+            for _rule, selector_list, declarations in sheet.rules:
+                for selector in selector_list:
+                    specificity = selector.specificity
+                    pseudo_type = selector.pseudo_element
+                    for element in selector.match(document.dom):
+                        for name, values, importance in declarations:
+                            precedence = declaration_precedence(
+                                origin, importance)
+                            weight = (precedence, specificity)
+                            add_declaration(
+                                cascaded_styles, name, values, weight,
+                                element, pseudo_type)
 
-                declarations = list(effective_declarations(rule.style))
-
-                if not declarations:
-                    # Don’t bother working for nuthin’
-                    # ``matched`` is a generator, so no work is done until
-                    # we start iterating it.
-                    continue
-
-                for element, pseudo_type, specificity in matched:
-                    for name, (values, importance) in declarations:
-                        precedence = declaration_precedence(origin, importance)
-                        weight = (precedence, specificity)
-                        add_declaration(cascaded_styles, name, values, weight,
-                                        element, pseudo_type)
-
-        if origin == 'user agent':
-            LOGGER.setLevel(level)
-
-    for element, declarations in find_style_attributes(document):
-        for name, (values, importance) in effective_declarations(declarations):
+    specificity = STYLE_ATTRIBUTE_SPECIFICITY
+    for element, declarations, base_url in find_style_attributes(document):
+        for name, values, importance in preprocess_declarations(
+                base_url, declarations):
             precedence = declaration_precedence('author', importance)
-            # 1 for being a style attribute, 0 as there is no selector.
-            weight = (precedence, (1, 0, 0, 0))
+            weight = (precedence, specificity)
             add_declaration(cascaded_styles, name, values, weight, element)
 
     # keys: (element, pseudo_element_type), like cascaded_styles

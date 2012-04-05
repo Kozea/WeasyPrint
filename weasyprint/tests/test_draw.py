@@ -37,7 +37,7 @@ BYTES_PER_PIXELS = 4
 PIXEL_FORMAT = 'rgba(%i, %i, %i, %i)'
 
 
-def format_pixel(pixels, width, x, y):
+def format_pixel(pixels, width, x, y):  # pragma: no cover
     """Return the pixel color as ``#RRGGBB``."""
     start = (y * width + x) * BYTES_PER_PIXELS
     end = start + BYTES_PER_PIXELS
@@ -93,13 +93,13 @@ def assert_different_renderings(expected_width, expected_height, documents):
 
     for i, (name_1, lines_1) in enumerate(lines_list):
         for name_2, lines_2 in lines_list[i + 1:]:
-            if lines_1 == lines_2:
+            if lines_1 == lines_2:  # pragma: no cover
                 # Same as "assert lines_1 != lines_2" but the output of
                 # the assert hook would be gigantic and useless.
                 assert False, '%s and %s are the same' % (name_1, name_2)
 
 
-def write_png(basename, lines, width, height):
+def write_png(basename, lines, width, height):  # pragma: no cover
     """Take a pixel matrix and write a PNG file."""
     directory = os.path.join(os.path.dirname(__file__), 'test_results')
     if not os.path.isdir(directory):
@@ -144,7 +144,7 @@ def assert_pixels_equal(name, width, height, lines, expected_lines):
     Take 2 matrices of height by width pixels and assert that they
     are the same.
     """
-    if lines != expected_lines:
+    if lines != expected_lines:  # pragma: no cover
         write_png(name + '.expected', expected_lines, width, height)
         write_png(name, lines, width, height)
         for y in xrange(height):
@@ -558,8 +558,10 @@ def test_background_image():
                 html { background: #fff }
                 body { margin: 2px; height: 10px;
                        background: url(pattern.png) %s }
+                p { background: none }
             </style>
             <body>
+            <p>&nbsp;
         ''' % (css,))
 
 
@@ -715,6 +717,32 @@ def test_background_size():
         <body>
     ''')
 
+    assert_pixels('background_size_auto', 12, 12, [
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+r+B+B+B+_,
+        _+_+_+_+_+_+_+B+B+B+B+_,
+        _+_+_+_+_+_+_+B+B+B+B+_,
+        _+_+_+_+_+_+_+B+B+B+B+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { -weasy-size: 12px }
+            html { background: #fff }
+            body { margin: 1px; height: 10px;
+                   /* Use nearest neighbor algorithm for image resizing: */
+                   -weasy-image-rendering: optimizeSpeed;
+                   background: url(pattern.png) bottom right no-repeat;
+                   background-size: auto }
+        </style>
+        <body>
+    ''')
+
     assert_pixels('background_size_contain', 14, 10, [
         _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         _+r+r+B+B+B+B+B+B+_+_+_+_+_,
@@ -735,6 +763,56 @@ def test_background_size():
                    -weasy-image-rendering: optimizeSpeed;
                    background: url(pattern.png) no-repeat;
                    background-size: contain }
+        </style>
+        <body>
+    ''')
+
+    assert_pixels('background_size_mixed', 14, 10, [
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+r+r+B+B+B+B+B+B+_+_+_+_+_,
+        _+r+r+B+B+B+B+B+B+_+_+_+_+_,
+        _+B+B+B+B+B+B+B+B+_+_+_+_+_,
+        _+B+B+B+B+B+B+B+B+_+_+_+_+_,
+        _+B+B+B+B+B+B+B+B+_+_+_+_+_,
+        _+B+B+B+B+B+B+B+B+_+_+_+_+_,
+        _+B+B+B+B+B+B+B+B+_+_+_+_+_,
+        _+B+B+B+B+B+B+B+B+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { -weasy-size: 14px 10px }
+            html { background: #fff }
+            body { margin: 1px; height: 8px;
+                   /* Use nearest neighbor algorithm for image resizing: */
+                   -weasy-image-rendering: optimizeSpeed;
+                   background: url(pattern.png) no-repeat;
+                   background-size: auto 8px;
+                   clip: auto; /* no-op to cover more validation */ }
+        </style>
+        <body>
+    ''')
+
+    assert_pixels('background_size_double', 14, 10, [
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+r+r+B+B+B+B+B+B+_+_+_+_+_,
+        _+B+B+B+B+B+B+B+B+_+_+_+_+_,
+        _+B+B+B+B+B+B+B+B+_+_+_+_+_,
+        _+B+B+B+B+B+B+B+B+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { -weasy-size: 14px 10px }
+            html { background: #fff }
+            body { margin: 1px; height: 8px;
+                   /* Use nearest neighbor algorithm for image resizing: */
+                   -weasy-image-rendering: optimizeSpeed;
+                   background: url(pattern.png) no-repeat;
+                   background-size: 8px 4px;
+                   clip: auto; /* no-op to cover more validation */ }
         </style>
         <body>
     ''')
@@ -1417,18 +1495,36 @@ def test_overflow():
 @assert_no_logs
 def test_clip():
     """Test the clip property."""
-    # See test_background_image
-    assert_pixels('background_repeat_clipped', 14, 16, [
+    num = [0]
+    def clip(css, pixels):
+        num[0] += 1
+        name = 'background_repeat_clipped_%s' % num[0]
+        assert_pixels(name, 14, 16, pixels, '''
+            <style>
+                @page { -weasy-size: 14px 16px; background: #fff }
+                div { margin: 1px; height: 10px;
+                      border: 1px green solid;
+                      background: url(pattern.png);
+                      clip: rect(%s); }
+            </style>
+            <div>
+        ''' % (css,))
+
+    print('test_draw.test_clip() is known to fail with cairo 1.10, '
+          'try with 1.12.')
+
+    g = b'\x00\x80\x00\xff'  # green
+    clip('5px, 5px, 9px, auto', [
         _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_+_+_+_+_+_+_,
-        _+_+_+_+_+_+r+B+B+B+r+B+_+_,
-        _+_+_+_+_+_+B+B+B+B+B+B+_+_,
-        _+_+_+_+_+_+B+B+B+B+B+B+_+_,
-        _+_+_+_+_+_+B+B+B+B+B+B+_+_,
+        _+_+_+_+_+_+r+B+B+B+r+B+g+_,
+        _+_+_+_+_+_+B+B+B+B+B+B+g+_,
+        _+_+_+_+_+_+B+B+B+B+B+B+g+_,
+        _+_+_+_+_+_+B+B+B+B+B+B+g+_,
         _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_+_+_+_+_+_+_,
@@ -1436,15 +1532,65 @@ def test_clip():
         _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_+_+_+_+_+_+_,
 
-    ], '''
-        <style>
-            @page { -weasy-size: 14px 16px; background: #fff }
-            div { margin: 2px; height: 10px;
-                  background: url(pattern.png);
-                  clip: rect(4px, 4px, 8px, auto); }
-        </style>
-        <div>
-    ''')
+    ])
+    clip('5px, 5px, auto, 10px', [
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+r+B+B+B+r+_+_+_,
+        _+_+_+_+_+_+B+B+B+B+B+_+_+_,
+        _+_+_+_+_+_+B+B+B+B+B+_+_+_,
+        _+_+_+_+_+_+B+B+B+B+B+_+_+_,
+        _+_+_+_+_+_+r+B+B+B+r+_+_+_,
+        _+_+_+_+_+_+B+B+B+B+B+_+_+_,
+        _+_+_+_+_+_+g+g+g+g+g+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+
+    ])
+    clip('5px, auto, 9px, 10px', [
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+g+r+B+B+B+r+B+B+B+r+_+_+_,
+        _+g+B+B+B+B+B+B+B+B+B+_+_+_,
+        _+g+B+B+B+B+B+B+B+B+B+_+_+_,
+        _+g+B+B+B+B+B+B+B+B+B+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+
+    ])
+    clip('auto, 5px, 9px, 10px', [
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+g+g+g+g+g+_+_+_,
+        _+_+_+_+_+_+r+B+B+B+r+_+_+_,
+        _+_+_+_+_+_+B+B+B+B+B+_+_+_,
+        _+_+_+_+_+_+B+B+B+B+B+_+_+_,
+        _+_+_+_+_+_+B+B+B+B+B+_+_+_,
+        _+_+_+_+_+_+r+B+B+B+r+_+_+_,
+        _+_+_+_+_+_+B+B+B+B+B+_+_+_,
+        _+_+_+_+_+_+B+B+B+B+B+_+_+_,
+        _+_+_+_+_+_+B+B+B+B+B+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+
+    ])
+
 
 
 @assert_no_logs

@@ -11,16 +11,20 @@
 """
 
 from __future__ import division, unicode_literals
+import collections
 
-from cssutils.css import PropertyValue
+from tinycss.color3 import COLOR_KEYWORDS
+
+
+Dimension = collections.namedtuple('Dimension', ['value', 'unit'])
 
 
 # See http://www.w3.org/TR/CSS21/propidx.html
 INITIAL_VALUES = {
     'background_attachment': 'scroll',
-    'background_color': PropertyValue('transparent')[0],
+    'background_color': COLOR_KEYWORDS['transparent'],
     'background_image': 'none',
-    'background_position': list(PropertyValue('0% 0%')),
+    'background_position': (Dimension(0, '%'), Dimension(0, '%')),
     'background_repeat': 'repeat',
     'background_clip': 'border-box',  # CSS3
     'background_origin': 'padding-box',  # CSS3
@@ -44,7 +48,7 @@ INITIAL_VALUES = {
     'caption_side': 'top',
     'clear': 'none',
     'clip': (),  # empty collection, computed value for 'auto'
-    'color': PropertyValue('#000')[0],     # depends on user agent
+    'color': COLOR_KEYWORDS['black'],     # chosen by the user agent
     'content': 'normal',
     # Means 'none', but allow `display: list-item` to increment the
     # list-item counter. If we ever have a way for authors to query
@@ -68,20 +72,23 @@ INITIAL_VALUES = {
     'list_style_image': 'none',
     'list_style_position': 'outside',
     'list_style_type': 'disc',
-    'margin_top': 0,
-    'margin_right': 0,
-    'margin_bottom': 0,
-    'margin_left': 0,
+    'margin_top': Dimension(0, 'px'),
+    'margin_right': Dimension(0, 'px'),
+    'margin_bottom': Dimension(0, 'px'),
+    'margin_left': Dimension(0, 'px'),
     'max_height': 'none',
     'max_width': 'none',
-    'min_height': 0,
-    'min_width': 0,
+    'min_height': Dimension(0, 'px'),
+    'min_width': Dimension(0, 'px'),
     'orphans': 2,
+    'outline_color': 'invert',  # or currentColor if invert is not supported
+    'outline_style': 'none',
+    'outline_width': 3,  # Computed value for 'medium'
     'overflow': 'visible',
-    'padding_top': 0,
-    'padding_right': 0,
-    'padding_bottom': 0,
-    'padding_left': 0,
+    'padding_top': Dimension(0, 'px'),
+    'padding_right': Dimension(0, 'px'),
+    'padding_bottom': Dimension(0, 'px'),
+    'padding_left': Dimension(0, 'px'),
     'page_break_after': 'auto',
     'page_break_before': 'auto',
     'page_break_inside': 'auto',
@@ -92,7 +99,7 @@ INITIAL_VALUES = {
     'text_align': '-weasy-start',  # Taken from CSS3 Text.
                    # The only other supported value form CSS3 is -weasy-end.
     'text_decoration': 'none',
-    'text_indent': 0,
+    'text_indent': Dimension(0, 'px'),
     'text_transform': 'none',
     'top': 'auto',
     'unicode_bidi': 'normal',
@@ -114,44 +121,43 @@ INITIAL_VALUES = {
     'opacity': 1,
 
     # CSS3 2D Transforms: http://www.w3.org/TR/css3-2d-transforms
-    'transform_origin': list(PropertyValue('50% 50%')),
-    'transform': (),  # computed value for 'none'
+    'transform_origin': (Dimension(50, '%'), Dimension(50, '%')),
+    'transform': (),  # empty sequence: computed value for 'none'
 
     # Taken from SVG:
     # http://www.w3.org/TR/SVG/painting.html#ImageRenderingProperty
     'image_rendering': 'auto',
 }
 
+
+KNOWN_PROPERTIES = set(name.replace('_', '-') for name in INITIAL_VALUES)
+
 # Not applicable to the print media
 NOT_PRINT_MEDIA = set([
     # Aural media:
     'azimuth',
     'cue',
-    'cue_after',
-    'cue_before',
+    'cue-after',
+    'cue-before',
     'cursor',
     'elevation',
     'pause',
-    'pause_after',
-    'pause_before',
-    'pitch_range',
+    'pause-after',
+    'pause-before',
+    'pitch-range',
     'pitch',
-    'play_during',
+    'play-during',
     'richness',
-    'speak_header',
-    'speak_numeral',
-    'speak_punctuation',
+    'speak-header',
+    'speak-numeral',
+    'speak-punctuation',
     'speak',
-    'speech_rate',
+    'speech-rate',
     'stress',
-    'voice_family',
+    'voice-family',
     'volume',
 
-    # Outlines only apply to interactive media, just like cursor.
-    'outline'
-    'outline_color',
-    'outline_style',
-    'outline_width',
+    # outlines are not just for interactive but any visual media in css3-ui
 ])
 
 

@@ -37,13 +37,13 @@ def parse_without_layout(html_content):
 
 
 def validate_absolute_and_float(
-        real_non_shorthand, name, values, required=False):
+        real_non_shorthand, base_url, name, values, required=False):
     """Fake validator for ``absolute`` and ``float``."""
     value = values[0].value
     if (name == 'position' and value == 'absolute'
             ) or (name == 'float' and value == 'left'):
         return [(name, value)]
-    return real_non_shorthand(name, values, required)
+    return real_non_shorthand(base_url, name, values, required)
 
 
 def parse(html_content, return_document=False):
@@ -450,16 +450,20 @@ def test_lists():
 @assert_no_logs
 def test_empty_linebox():
     """Test lineboxes with no content other than space-like characters."""
-    page, = parse('''
-        <style>
-        p { font-size: 12px; width: 500px;
-            font-family:%(fonts)s;}
-        </style>
-        <p> </p>
-    ''' % {'fonts': FONTS})
+    page, = parse('<p> </p>')
     paragraph, = body_children(page)
     assert len(paragraph.children) == 0
     assert paragraph.height == 0
+
+    # Whitespace removed at the beginning of the line => empty line => no line
+    page, = parse('''
+        <style>
+            p { width: 1px }
+        </style>
+        <p><br>  </p>
+    ''')
+    paragraph, = body_children(page)
+    assert len(paragraph.children) == 1
 
 
 @assert_no_logs
@@ -765,7 +769,6 @@ def test_table_page_breaks():
         for i, page in enumerate(pages):
             html, = page.children
             body, = html.children
-            print(body.children)
             if i == 0:
                 body_children = body.children[1:]  # skip h1
             else:
@@ -1501,6 +1504,20 @@ def test_text_align_justify():
 
     assert image_5.position_x == 0
 
+    # single-word line (zero spaces)
+    page, = parse('''
+        <style>
+            body { text-align: justify; width: 50px }
+        </style>
+        <p>Supercalifragilisticexpialidocious bar</p>
+    ''')
+    html, = page.children
+    body, = html.children
+    paragraph, = body.children
+    line_1, line_2 = paragraph.children
+    text, = line_1.children
+    assert text.position_x == 0
+
 
 @assert_no_logs
 def test_word_spacing():
@@ -1534,23 +1551,23 @@ def test_word_spacing():
 def test_letter_spacing():
     """Test letter-spacing."""
     page, = parse('''
-        <body><strong>Supercalifragilisticexpialidocious></strong>
+        <body><strong>Supercalifragilisticexpialidocious</strong>
     ''')
     html, = page.children
     body, = html.children
     line, = body.children
     strong_1, = line.children
-    assert 280 <= strong_1.width <= 310
+    assert 250 <= strong_1.width <= 300
 
     page, = parse('''
         <style>strong { letter-spacing: 11px }</style>
-        <body><strong>Supercalifragilisticexpialidocious></strong>
+        <body><strong>Supercalifragilisticexpialidocious</strong>
     ''')
     html, = page.children
     body, = html.children
     line, = body.children
     strong_2, = line.children
-    assert strong_2.width - strong_1.width == 34 * 11
+    assert strong_2.width - strong_1.width == 33 * 11
 
 
 @assert_no_logs

@@ -100,11 +100,12 @@ def monkeypatch_validation(replacement):
         validation.validate_non_shorthand = real_non_shorthand
 
 
-def validate_inline_block(real_non_shorthand, name, values, required=False):
+def validate_inline_block(real_non_shorthand, base_url, name, values,
+                          required=False):
     """Fake validator for inline blocks."""
     if name == 'display' and values[0].value == 'inline-block':
         return [(name, 'inline-block')]
-    return real_non_shorthand(name, values, required)
+    return real_non_shorthand(base_url, name, values, required)
 
 
 def parse(html_content):
@@ -152,12 +153,11 @@ def sanity_checks(box):
     if not isinstance(box, boxes.ParentBox):
         return
 
+    acceptable_types_lists = None  # raises when iterated
     for class_ in type(box).mro():
         if class_ in PROPER_CHILDREN:
             acceptable_types_lists = PROPER_CHILDREN[class_]
             break
-    else:
-        raise TypeError
 
     assert any(
         all(isinstance(child, acceptable_types) for child in box.children)
@@ -212,6 +212,23 @@ def test_inline_in_block():
             ('p', 'Block', [
                 ('p', 'Line', [
                     ('p', 'Text', 'Lipsum.')])])])]
+
+    box = parse(source)
+    box = build.inline_in_block(box)
+    assert_tree(box, expected)
+
+    source = '<div><p>Lipsum.</p>Hello, <em>World</em>!\n</div>'
+    expected = [
+        ('div', 'Block', [
+            ('p', 'Block', [
+                ('p', 'Line', [
+                    ('p', 'Text', 'Lipsum.')])]),
+            ('div', 'AnonBlock', [
+                ('div', 'Line', [
+                    ('div', 'Text', 'Hello, '),
+                    ('em', 'Inline', [
+                        ('em', 'Text', 'World')]),
+                    ('div', 'Text', '!\n')])])])]
 
     box = parse(source)
     box = build.inline_in_block(box)
@@ -316,12 +333,12 @@ def test_styles():
 
     for child in descendants:
         # All boxes inherit the color
-        assert child.style.color.value == 'blue'
+        assert child.style.color == (0, 0, 1, 1)  # blue
         # Only non-anonymous boxes have margins
         if child.style.anonymous:
-            assert child.style.margin_top == 0
+            assert child.style.margin_top == (0, 'px')
         else:
-            assert child.style.margin_top == 42
+            assert child.style.margin_top == (42, 'px')
 
 
 @assert_no_logs
@@ -373,10 +390,10 @@ def test_page_style():
     def assert_page_margins(page_type, top, right, bottom, left):
         """Check the page margin values."""
         style = document.style_for(page_type)
-        assert style.margin_top == top
-        assert style.margin_right == right
-        assert style.margin_bottom == bottom
-        assert style.margin_left == left
+        assert style.margin_top == (top, 'px')
+        assert style.margin_right == (right, 'px')
+        assert style.margin_bottom == (bottom, 'px')
+        assert style.margin_left == (left, 'px')
 
     assert_page_margins('first_left_page', top=20, right=3, bottom=3, left=10)
     assert_page_margins('first_right_page', top=20, right=10, bottom=3, left=3)
@@ -574,10 +591,10 @@ def test_table_style():
     table, = wrapper.children
     assert isinstance(wrapper, boxes.BlockBox)
     assert isinstance(table, boxes.TableBox)
-    assert wrapper.style.margin_top == 1
-    assert wrapper.style.padding_top == 0
-    assert table.style.margin_top == 0
-    assert table.style.padding_top == 2
+    assert wrapper.style.margin_top == (1, 'px')
+    assert wrapper.style.padding_top == (0, 'px')
+    assert table.style.margin_top == (0, 'px')
+    assert table.style.padding_top == (2, 'px')
 
 
 @assert_no_logs
@@ -593,7 +610,7 @@ def test_column_style():
     table, = wrapper.children
     colgroup, = table.column_groups
     widths = [col.style.width for col in colgroup.children]
-    assert widths == [10, 10, 10, 'auto', 'auto']
+    assert widths == [(10, 'px'), (10, 'px'), (10, 'px'), 'auto', 'auto']
     assert [col.grid_x for col in colgroup.children] == [0, 1, 2, 3, 4]
     # copies, not the same box object
     assert colgroup.children[0] is not colgroup.children[1]

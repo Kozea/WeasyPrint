@@ -18,28 +18,20 @@ import math
 import cairo
 
 from .formatting_structure import boxes
-from .css.values import get_percentage_value
 from .css import computed_values
 
 
 # Map values of the image-rendering property to cairo FILTER values:
+# Values are normalized to lower case.
 IMAGE_RENDERING_TO_FILTER = dict(
-    optimizeSpeed=cairo.FILTER_FAST,
+    optimizespeed=cairo.FILTER_FAST,
     auto=cairo.FILTER_GOOD,
-    optimizeQuality=cairo.FILTER_BEST,
+    optimizequality=cairo.FILTER_BEST,
 )
 
 
 class CairoContext(cairo.Context):
     """A ``cairo.Context`` with a few more helper methods."""
-
-    def set_source_colorvalue(self, color, lighten=0):
-        """Set the source pattern from a ``cssutils.ColorValue`` object."""
-        self.set_source_rgba(
-            color.red / 255. + lighten,
-            color.green / 255. + lighten,
-            color.blue / 255. + lighten,
-            color.alpha)
 
     @contextlib.contextmanager
     def stacked(self):
@@ -49,6 +41,15 @@ class CairoContext(cairo.Context):
             yield
         finally:
             self.restore()
+
+
+def lighten(color, offset):
+    """Return a lighter color (or darker, for negative offsets)."""
+    return (
+        color.red + offset,
+        color.green + offset,
+        color.blue + offset,
+        color.alpha)
 
 
 def draw_page(document, page, context):
@@ -73,12 +74,12 @@ def draw_box(document, context, page, box, parent=None):
                 if right == 'auto':
                     right = 0
                 if bottom == 'auto':
-                    bottom = box.padding_height()
+                    bottom = box.border_height()
                 if left == 'auto':
-                    left = box.padding_width()
+                    left = box.border_width()
                 context.rectangle(
-                    box.padding_box_x() + right,
-                    box.padding_box_y() + top,
+                    box.border_box_x() + right,
+                    box.border_box_y() + top,
                     left - right,
                     bottom - top)
                 context.clip()
@@ -143,15 +144,14 @@ def box_rectangle(box, which_rectangle):
             box.padding_width(),
             box.padding_height(),
         )
-    elif which_rectangle == 'content-box':
+    else:
+        assert which_rectangle == 'content-box', which_rectangle
         return (
             box.content_box_x(),
             box.content_box_y(),
             box.width,
             box.height,
         )
-    else:
-        raise ValueError(which_rectangle)
 
 
 def background_positioning_area(page, box, style):
@@ -188,11 +188,11 @@ def draw_box_background(document, context, page, box):
 
 def percentage(value, refer_to):
     """Return the evaluated percentage value, or the value unchanged."""
-    percentage_value = get_percentage_value(value)
-    if percentage_value is None:
-        return value
+    if value.unit == 'px':
+        return value.value
     else:
-        return refer_to * percentage_value / 100
+        assert value.unit == '%'
+        return refer_to * value.value / 100
 
 
 def draw_background(document, context, style, painting_area, positioning_area):
@@ -215,7 +215,7 @@ def draw_background(document, context, style, painting_area, positioning_area):
 
         # Background color
         if bg_color.alpha > 0:
-            context.set_source_colorvalue(bg_color)
+            context.set_source_rgba(*bg_color)
             context.paint()
 
         # Background image
@@ -347,7 +347,7 @@ def draw_border(context, box):
             continue
         style = box.style['border_%s_style' % side]
         with context.stacked():
-            context.set_source_colorvalue(color)
+            context.set_source_rgba(*color)
 
             # Avoid an artefact in the corner joining two solid borders
             # of the same color.
@@ -382,9 +382,9 @@ def draw_border(context, box):
                 # Fill the whole trapezoid
                 context.paint()
             elif style in ('inset', 'outset'):
-                lighten = (side in ('top', 'left')) ^ (style == 'inset')
-                factor = 1 if lighten else -1
-                context.set_source_colorvalue(color, lighten=0.5 * factor)
+                do_lighten = (side in ('top', 'left')) ^ (style == 'inset')
+                factor = 1 if do_lighten else -1
+                context.set_source_rgba(*lighten(color, 0.5 * factor))
                 context.paint()
             elif style in ('groove', 'ridge'):
                 # TODO: these would look better with more color stops
@@ -395,8 +395,8 @@ def draw_border(context, box):
                   1'\         / 2'
                      +-------+
                 """
-                lighten = (side in ('top', 'left')) ^ (style == 'groove')
-                factor = 1 if lighten else -1
+                do_lighten = (side in ('top', 'left')) ^ (style == 'groove')
+                factor = 1 if do_lighten else -1
                 context.set_line_width(width / 2)
                 (x1, y1), (x2, y2) = border_edge
                 # from the border edge to the center of the first line
@@ -404,14 +404,14 @@ def draw_border(context, box):
                 x2, y2 = xy_offset(x2, y2, x_offset, y_offset, width / 4)
                 context.move_to(x1, y1)
                 context.line_to(x2, y2)
-                context.set_source_colorvalue(color, lighten=0.5 * factor)
+                context.set_source_rgba(*lighten(color, 0.5 * factor))
                 context.stroke()
                 # Between the centers of both lines. 1/4 + 1/4 = 1/2
                 x1, y1 = xy_offset(x1, y1, x_offset, y_offset, width / 2)
                 x2, y2 = xy_offset(x2, y2, x_offset, y_offset, width / 2)
                 context.move_to(x1, y1)
                 context.line_to(x2, y2)
-                context.set_source_colorvalue(color, lighten=-0.5 * factor)
+                context.set_source_rgba(*lighten(color, -0.5 * factor))
                 context.stroke()
             elif style == 'double':
                 """
@@ -510,44 +510,25 @@ def draw_text(context, textbox):
     assert textbox.style.font_size
 
     context.move_to(textbox.position_x, textbox.position_y + textbox.baseline)
-    context.set_source_colorvalue(textbox.style.color)
+    context.set_source_rgba(*textbox.style.color)
     textbox.show_line(context)
     values = textbox.style.text_decoration
-    for value in values:
-        if value == 'overline':
-            draw_overline(context, textbox)
-        elif value == 'underline':
-            draw_underline(context, textbox)
-        elif value == 'line-through':
-            draw_line_through(context, textbox)
+    if 'overline' in values:
+        draw_text_decoration(context, textbox,
+            textbox.baseline - 0.15 * textbox.style.font_size)
+    elif 'underline' in values:
+        draw_text_decoration(context, textbox,
+            textbox.baseline + 0.15 * textbox.style.font_size)
+    elif 'line-through' in values:
+        draw_text_decoration(context, textbox, textbox.height * 0.5)
 
 
-def draw_overline(context, textbox):
-    """Draw overline of ``textbox`` to a ``cairo.Context``."""
-    font_size = textbox.style.font_size
-    position_y = textbox.baseline + textbox.position_y - (font_size * 0.15)
-    draw_text_decoration(context, position_y, textbox)
-
-
-def draw_underline(context, textbox):
-    """Draw underline of ``textbox`` to a ``cairo.Context``."""
-    font_size = textbox.style.font_size
-    position_y = textbox.baseline + textbox.position_y + (font_size * 0.15)
-    draw_text_decoration(context, position_y, textbox)
-
-
-def draw_line_through(context, textbox):
-    """Draw line-through of ``textbox`` to a ``cairo.Context``."""
-    position_y = textbox.position_y + (textbox.height * 0.5)
-    draw_text_decoration(context, position_y, textbox)
-
-
-def draw_text_decoration(context, position_y, textbox):
+def draw_text_decoration(context, textbox, offset_y):
     """Draw text-decoration of ``textbox`` to a ``cairo.Context``."""
     with context.stacked():
-        context.set_source_colorvalue(textbox.style.color)
+        context.set_source_rgba(*textbox.style.color)
         context.set_line_width(1)  # TODO: make this proportional to font_size?
-        context.move_to(textbox.position_x, position_y)
+        context.move_to(textbox.position_x, textbox.position_y + offset_y)
         context.rel_line_to(textbox.width, 0)
         context.stroke()
 
@@ -566,18 +547,14 @@ def apply_2d_transforms(context, box):
         origin_x += box.border_box_x()
         origin_y += box.border_box_y()
 
-        def length(value, font_size=box.style.font_size):
-            return computed_values.length(None, None, value, font_size)
-        angle = computed_values.angle_to_radian
-
         context.translate(origin_x, origin_y)
         for name, args in box.style.transform:
             if name == 'scale':
                 context.scale(*args)
             elif name == 'rotate':
-                context.rotate(angle(args))
+                context.rotate(args)
             elif name == 'translate':
-                translate_x, translate_y = map(length, args)
+                translate_x, translate_y = args
                 context.translate(
                     percentage(translate_x, border_width),
                     percentage(translate_y, border_height),

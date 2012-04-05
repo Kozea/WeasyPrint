@@ -13,11 +13,9 @@
 from __future__ import division, unicode_literals
 
 from ..formatting_structure import boxes
-from ..css.values import get_percentage_value
 
 
-def resolve_one_percentage(box, property_name, refer_to,
-                           allowed_keywords=None):
+def resolve_one_percentage(box, property_name, refer_to):
     """Set a used length value from a computed length value.
 
     ``refer_to`` is the length for 100%. If ``refer_to`` is not a number, it
@@ -25,24 +23,14 @@ def resolve_one_percentage(box, property_name, refer_to,
 
     """
     # box.style has computed values
-    values = box.style[property_name]
-    if isinstance(values, (int, float)):
-        # Absolute length (was converted to pixels in "computed values")
-        result = values
+    value = box.style[property_name]
+    if value == 'auto':
+        result = value
+    elif value.unit == 'px':
+        result = value.value
     else:
-        percentage = get_percentage_value(values)
-        if percentage is not None:
-            if isinstance(refer_to, (int, float)):
-                # A percentage
-                result = percentage * refer_to / 100.
-            else:
-                # Replace percentages when we have no refer_to that
-                # makes sense.
-                result = refer_to
-        else:
-            # Some other values such as 'auto' may be allowed
-            result = values
-            assert allowed_keywords and result in allowed_keywords
+        assert value.unit == '%'
+        result = value.value * refer_to / 100.
     # box attributes are used values
     setattr(box, property_name, result)
 
@@ -59,15 +47,15 @@ def resolve_percentages(box, containing_block):
         maybe_height = cb_height
     else:
         maybe_height = cb_width
-    resolve_one_percentage(box, 'margin_left', cb_width, ['auto'])
-    resolve_one_percentage(box, 'margin_right', cb_width, ['auto'])
-    resolve_one_percentage(box, 'margin_top', maybe_height, ['auto'])
-    resolve_one_percentage(box, 'margin_bottom', maybe_height, ['auto'])
+    resolve_one_percentage(box, 'margin_left', cb_width)
+    resolve_one_percentage(box, 'margin_right', cb_width)
+    resolve_one_percentage(box, 'margin_top', maybe_height)
+    resolve_one_percentage(box, 'margin_bottom', maybe_height)
     resolve_one_percentage(box, 'padding_left', cb_width)
     resolve_one_percentage(box, 'padding_right', cb_width)
     resolve_one_percentage(box, 'padding_top', maybe_height)
     resolve_one_percentage(box, 'padding_bottom', maybe_height)
-    resolve_one_percentage(box, 'width', cb_width, ['auto'])
+    resolve_one_percentage(box, 'width', cb_width)
     # Not supported yet:
 #    resolve_one_percentage(box, 'min_width', cb_width)
 #    resolve_one_percentage(box, 'max_width', cb_width, ['none'])
@@ -77,12 +65,17 @@ def resolve_percentages(box, containing_block):
     if cb_height == 'auto':
         # Special handling when the height of the containing block
         # depends on its content.
-        resolve_one_percentage(box, 'height', 'auto', ['auto'])
+        height = box.style.height
+        if height == 'auto' or height.unit == '%':
+            box.height = 'auto'
+        else:
+            assert height.unit == 'px'
+            box.height = height.value
         # Not supported yet, but min_height is used for margin collapsing.
         resolve_one_percentage(box, 'min_height', 0)
 #        resolve_one_percentage(box, 'max_height', None, ['none'])
     else:
-        resolve_one_percentage(box, 'height', cb_height, ['auto'])
+        resolve_one_percentage(box, 'height', cb_height)
         # Not supported yet, but min_height is used for margin collapsing.
         resolve_one_percentage(box, 'min_height', cb_height)
 #        resolve_one_percentage(box, 'max_height', cb_height, ['none'])

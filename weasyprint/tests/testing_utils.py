@@ -18,15 +18,16 @@ import logging
 import contextlib
 import functools
 
-from .. import HTML
+from .. import HTML, CSS
 from ..document import PNGDocument
-from ..css import PARSER as CSS_PARSER
+from ..css import PARSER
 from ..logger import LOGGER
+
 
 # TODO: find a way to not depend on a specific font
 FONTS = 'Liberation Sans, Arial'
 
-TEST_UA_STYLESHEET = CSS_PARSER.parseFile(os.path.join(
+TEST_UA_STYLESHEET = CSS(os.path.join(
     os.path.dirname(__file__), '..', 'css', 'tests_ua.css'
 ))
 
@@ -37,10 +38,10 @@ class TestPNGDocument(PNGDocument):
     This stylesheet is shorter, which makes tests faster.
 
     """
-    def __init__(self, html_source, base_url=None):
+    def __init__(self, html_source, base_url=None, user_stylesheets=()):
         super(TestPNGDocument, self).__init__(
             HTML(string=html_source, base_url=base_url).root_element,
-            user_stylesheets=[],
+            user_stylesheets=user_stylesheets,
             user_agent_stylesheets=[TEST_UA_STYLESHEET])
 
 
@@ -86,7 +87,7 @@ def assert_no_logs(function):
         with capture_logs() as logs:
             try:
                 function()
-            except Exception:
+            except Exception:  # pragma: no cover
                 if logs:
                     print('%i errors logged:' % len(logs), file=sys.stderr)
                 raise

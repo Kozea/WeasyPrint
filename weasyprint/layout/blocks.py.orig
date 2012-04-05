@@ -393,8 +393,13 @@ def block_table_wrapper(document, wrapper, max_position_y, skip_stack,
     table.margin_left = 0
     table.margin_right = 0
 
+<<<<<<< HEAD
+    wrapper.width = wrapper.style.width = table.border_width()
+=======
+    fixed_table_layout(table)
     wrapper.width = table.border_width()
     wrapper.style.width = Dimension(wrapper.width, 'px')
+>>>>>>> master
     return block_box_layout(document, wrapper, max_position_y, skip_stack,
                             containing_block, device_size, page_is_empty,
                             adjoining_margins)

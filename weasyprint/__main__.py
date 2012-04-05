@@ -73,5 +73,5 @@ def main(argv=None, stdout=sys.stdout, stdin=sys.stdin):
     getattr(html, 'write_' + format_)(output, stylesheets=args.stylesheet)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     main()
