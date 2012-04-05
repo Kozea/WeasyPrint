@@ -348,6 +348,12 @@ def test_inline_block_sizes():
         <div style="width: 100px; height: 100px;
                     padding-left: 10px; margin-right: 10px;
                     margin-top: -10px; margin-bottom: 50px"></div>
+        <div style="font-size: 0">
+          <div style="width: 10px; height: 10px"></div>
+          <div style="width: 10%">
+            <div style="width: 10px; height: 10px"></div>
+          </div>
+        </div>
     ''')
     html, = page.children
     assert html.element_tag == 'html'
@@ -392,15 +398,31 @@ def test_inline_block_sizes():
     assert div.width == 200
 
     # Third line:
-    # div6
-    div, = lines[2].children
+    # div6, space, div7
+    divs = lines[2].children
+    assert len(divs) == 3
 
     # Sixth div, empty div with fixed width and height
-    assert div.element_tag == 'div'
-    assert div.width == 100
-    assert div.margin_width() == 120
-    assert div.height == 100
-    assert div.margin_height() == 140
+    assert divs[0].element_tag == 'div'
+    assert divs[0].width == 100
+    assert divs[0].margin_width() == 120
+    assert divs[0].height == 100
+    assert divs[0].margin_height() == 140
+
+    # Seventh div
+    assert divs[2].element_tag == 'div'
+    assert divs[2].width == 20
+    line, = divs[2].children
+    children = line.children
+    # No spaces with font-size: 0
+    assert len(children) == 2
+    assert children[0].element_tag == 'div'
+    assert children[0].width == 10
+    assert children[1].element_tag == 'div'
+    assert children[1].width == 2
+    grandchild, = children[1].children
+    assert grandchild.element_tag == 'div'
+    assert grandchild.width == 10
 
 
 @assert_no_logs
