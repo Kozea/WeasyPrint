@@ -397,7 +397,9 @@ def test_inline_block_sizes():
 
     # Sixth div, empty div with fixed width and height
     assert div.element_tag == 'div'
+    assert div.width == 100
     assert div.margin_width() == 120
+    assert div.height == 100
     assert div.margin_height() == 140
 
 
