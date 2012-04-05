@@ -256,6 +256,8 @@ def length_tuple(computer, name, values):
 @register_computer('text-indent')
 def length(computer, name, value, font_size=None, pixels_only=False):
     """Compute a length ``value``."""
+    if value == 'auto':
+        return value
     if value.value == 0:
         return 0 if pixels_only else ZERO_PIXELS
 

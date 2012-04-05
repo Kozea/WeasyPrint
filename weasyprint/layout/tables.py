@@ -276,7 +276,7 @@ def fixed_table_layout(table):
 
     # `width` on column boxes
     for i, column in enumerate(all_columns):
-        resolve_one_percentage(column, 'width', table.width, ['auto'])
+        resolve_one_percentage(column, 'width', table.width)
         if column.width != 'auto':
             column_widths[i] = column.width
 

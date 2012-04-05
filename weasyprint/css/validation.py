@@ -22,7 +22,7 @@ from ..logger import LOGGER
 from ..formatting_structure import counters
 from ..compat import urljoin
 from .properties import (INITIAL_VALUES, KNOWN_PROPERTIES, NOT_PRINT_MEDIA,
-                         AUTO, Dimension)
+                         Dimension)
 from . import computed_values
 
 # TODO: unit-test these validators
@@ -253,15 +253,15 @@ def background_size(tokens):
         if keyword in ('contain', 'cover'):
             return keyword
         if keyword == 'auto':
-            return (AUTO, AUTO)
+            return ('auto', 'auto')
         length = get_length(token, negative=False)
         if length:
-            return (length, AUTO)
+            return (length, 'auto')
     elif len(tokens) == 2:
         values = []
         for token in tokens:
             if get_keyword(token) == 'auto':
-                values.append(AUTO)
+                values.append('auto')
             else:
                 length = get_length(token, negative=False)
                 if length:
@@ -341,7 +341,7 @@ def clip(token):
             values = []
             for arg in args:
                 if get_keyword(arg) == 'auto':
-                    values.append(AUTO)
+                    values.append('auto')
                 else:
                     length = get_length(arg)
                     if length:
@@ -465,7 +465,7 @@ def lenght_precentage_or_auto(token, negative=True):
     if length:
         return length
     if get_keyword(token) == 'auto':
-        return AUTO
+        return 'auto'
 
 
 @validator('height')
