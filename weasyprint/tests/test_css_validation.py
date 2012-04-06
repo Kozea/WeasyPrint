@@ -133,6 +133,8 @@ def test_transforms():
     assert expand_to_dict('-weasy-transform: translate(6px) rotate(90deg)'
         ) == {'transform': [('translate', ((6, 'px'), (0, 'px'))),
                             ('rotate', (90, 'deg'))]}
+    assert expand_to_dict('-weasy-transform: translate(-4px, 0)'
+        ) == {'transform': [('translate', ((-4, 'px'), (0, None)))]}
     assert expand_to_dict('-weasy-transform: translate(6px, 20%)'
         ) == {'transform': [('translate', ((6, 'px'), (20, '%')))]}
     assert expand_to_dict('-weasy-transform: scale(2)'
@@ -162,16 +164,22 @@ def test_expand_four_sides():
         'margin_bottom': (1, 'em'),
         'margin_left': (1, 'em'),
     }
+    assert expand_to_dict('margin: -1em auto 20%') == {
+        'margin_top': (-1, 'em'),
+        'margin_right': 'auto',
+        'margin_bottom': (20, '%'),
+        'margin_left': 'auto',
+    }
     assert expand_to_dict('padding: 1em 0') == {
         'padding_top': (1, 'em'),
         'padding_right': (0, None),
         'padding_bottom': (1, 'em'),
         'padding_left': (0, None),
     }
-    assert expand_to_dict('padding: 1em 0 2em') == {
+    assert expand_to_dict('padding: 1em 0 2%') == {
         'padding_top': (1, 'em'),
         'padding_right': (0, None),
-        'padding_bottom': (2, 'em'),
+        'padding_bottom': (2, '%'),
         'padding_left': (0, None),
     }
     assert expand_to_dict('padding: 1em 0 2em 5px') == {
@@ -183,6 +191,10 @@ def test_expand_four_sides():
     assert expand_to_dict('padding: 1 2 3 4 5',
         'Expected 1 to 4 token components got 5') == {}
     assert expand_to_dict('margin: rgb(0, 0, 0)', 'invalid') == {}
+    assert expand_to_dict('padding: auto', 'invalid') == {}
+    assert expand_to_dict('padding: -12px', 'invalid') == {}
+    assert expand_to_dict('border-width: -3em', 'invalid') == {}
+    assert expand_to_dict('border-width: 12%', 'invalid') == {}
 
 
 @assert_no_logs

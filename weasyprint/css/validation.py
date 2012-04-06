@@ -459,9 +459,9 @@ def counter(tokens, default_integer):
 @validator('margin-bottom')
 @validator('margin-left')
 @single_token
-def lenght_precentage_or_auto(token, negative=True):
+def lenght_precentage_or_auto(token):
     """``margin-*`` properties validation."""
-    length = get_length(token, negative, percentage=True)
+    length = get_length(token, percentage=True)
     if length:
         return length
     if get_keyword(token) == 'auto':
@@ -473,7 +473,11 @@ def lenght_precentage_or_auto(token, negative=True):
 @single_token
 def width_height(token):
     """Validation for the ``width`` and ``height`` properties."""
-    return lenght_precentage_or_auto.__func__(token, negative=False)
+    length = get_length(token, negative=False, percentage=True)
+    if length:
+        return length
+    if get_keyword(token) == 'auto':
+        return 'auto'
 
 
 @validator()
@@ -599,7 +603,7 @@ def list_style_type(keyword):
 @single_token
 def length_or_precentage(token):
     """``padding-*`` properties validation."""
-    length = get_length(token, negative=False)
+    length = get_length(token, negative=False, percentage=True)
     if length:
         return length
 
