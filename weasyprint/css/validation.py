@@ -320,7 +320,7 @@ def border_width(token):
 @single_keyword
 def box_sizing(keyword):
     """Validation for the ``box-sizing`` property from css3-ui"""
-    return keyword in ('padding-box', 'border-box')
+    return keyword in ('padding-box', 'border-box', 'content-box')
 
 
 @validator()

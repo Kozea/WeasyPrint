@@ -92,5 +92,10 @@ def resolve_percentages(box, containing_block):
         if box.height != 'auto':
             box.height -= (box.padding_top + box.padding_bottom +
                            box.border_top_width + box.border_bottom_width)
+    elif box.style.box_sizing == 'padding-box':
+        if box.width != 'auto':
+            box.width -= box.padding_left + box.padding_right
+        if box.height != 'auto':
+            box.height -= box.padding_top + box.padding_bottom
     else:
         assert box.style.box_sizing == 'content-box'

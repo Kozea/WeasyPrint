@@ -1568,25 +1568,48 @@ def test_box_sizing():
             body { width: 10000px; margin: 0 }
             div { width: 10%; height: 1000px;
                   margin: 100px; padding: 10px; border: 1px solid }
-            div+div { box-sizing: border-box }
+            div:nth-child(2) { box-sizing: content-box }
+            div:nth-child(3) { box-sizing: padding-box }
+            div:nth-child(4) { box-sizing: border-box }
         </style>
-        <div></div><div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
     ''')
     html, = page.children
     body, = html.children
-    div_1, div_2 = body.children
-    assert div_1.width == 1000
-    assert div_1.height == 1000
-    assert div_1.border_width() == 1022
-    assert div_1.border_height() == 1022
-    assert div_1.margin_height() == 1222
-    # Do not test margin_width as it depends on the containing block
+    div_1, div_2, div_3, div_4 = body.children
+    for div in div_1, div_2:
+        assert div.style.box_sizing == 'content-box'
+        assert div.width == 1000
+        assert div.height == 1000
+        assert div.padding_width() == 1020
+        assert div.padding_height() == 1020
+        assert div.border_width() == 1022
+        assert div.border_height() == 1022
+        assert div.margin_height() == 1222
+        # margin_width() is the width of the containing block
 
-    assert div_2.width == 978  # 1000 - 22
-    assert div_2.height == 978
-    assert div_2.border_width() == 1000
-    assert div_2.border_height() == 1000
-    assert div_2.margin_height() == 1200
+    # padding-box
+    assert div_3.style.box_sizing == 'padding-box'
+    assert div_3.width == 980  # 1000 - 20
+    assert div_3.height == 980
+    assert div_3.padding_width() == 1000
+    assert div_3.padding_height() == 1000
+    assert div_3.border_width() == 1002
+    assert div_3.border_height() == 1002
+    assert div_3.margin_height() == 1202
+
+    # border-box
+    assert div_4.style.box_sizing == 'border-box'
+    assert div_4.width == 978  # 1000 - 20 - 2
+    assert div_4.height == 978
+    assert div_4.padding_width() == 998
+    assert div_4.padding_height() == 998
+    assert div_4.border_width() == 1000
+    assert div_4.border_height() == 1000
+    assert div_4.margin_height() == 1200
 
 
 @assert_no_logs
