@@ -76,8 +76,8 @@ INITIAL_VALUES = {
     'margin_right': Dimension(0, 'px'),
     'margin_bottom': Dimension(0, 'px'),
     'margin_left': Dimension(0, 'px'),
-    'max_height': 'none',
-    'max_width': 'none',
+    'max_height': Dimension(float('inf'), 'px'),  # Parsed value for 'none'
+    'max_width': Dimension(float('inf'), 'px'),
     'min_height': Dimension(0, 'px'),
     'min_width': Dimension(0, 'px'),
     'orphans': 2,

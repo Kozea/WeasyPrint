@@ -56,9 +56,8 @@ def resolve_percentages(box, containing_block):
     resolve_one_percentage(box, 'padding_top', maybe_height)
     resolve_one_percentage(box, 'padding_bottom', maybe_height)
     resolve_one_percentage(box, 'width', cb_width)
-    # Not supported yet:
-#    resolve_one_percentage(box, 'min_width', cb_width)
-#    resolve_one_percentage(box, 'max_width', cb_width, ['none'])
+    resolve_one_percentage(box, 'min_width', cb_width)
+    resolve_one_percentage(box, 'max_width', cb_width)
 
     # XXX later: top, bottom, left and right on positioned elements
 
@@ -71,14 +70,12 @@ def resolve_percentages(box, containing_block):
         else:
             assert height.unit == 'px'
             box.height = height.value
-        # Not supported yet, but min_height is used for margin collapsing.
         resolve_one_percentage(box, 'min_height', 0)
-#        resolve_one_percentage(box, 'max_height', None, ['none'])
+        resolve_one_percentage(box, 'max_height', None)
     else:
         resolve_one_percentage(box, 'height', cb_height)
-        # Not supported yet, but min_height is used for margin collapsing.
         resolve_one_percentage(box, 'min_height', cb_height)
-#        resolve_one_percentage(box, 'max_height', cb_height, ['none'])
+        resolve_one_percentage(box, 'max_height', cb_height)
 
     # Used value == computed value
     for side in ['top', 'right', 'bottom', 'left']:

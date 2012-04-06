@@ -11,6 +11,7 @@
 """
 
 from __future__ import division, unicode_literals
+import functools
 
 from .inlines import iter_line_boxes, replaced_box_width, replaced_box_height
 from .markers import list_marker_layout
@@ -87,6 +88,23 @@ def block_replaced_box_layout(box, containing_block, device_size):
     return box
 
 
+def handle_min_max_width(function):
+    @functools.wraps(function)
+    def wrapper(box, containing_block):
+        computed_margins = box.margin_left, box.margin_right
+        function(box, containing_block)
+        if box.width > box.max_width:
+            box.width = box.max_width
+            box.margin_left, box.margin_right = computed_margins
+            function(box, containing_block)
+        if box.width < box.min_width:
+            box.width = box.min_width
+            box.margin_left, box.margin_right = computed_margins
+            function(box, containing_block)
+    return wrapper
+
+
+@handle_min_max_width
 def block_level_width(box, containing_block):
     """Set the ``box`` width."""
     # 'cb' stands for 'containing block'

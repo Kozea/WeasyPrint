@@ -174,6 +174,12 @@ def test_block_widths():
           <p style="margin: auto"></p>
 
           <p style="width: 200px; margin: auto"></p>
+
+          <p style="min-width: 200px; margin: auto"></p>
+          <p style="max-width: 50px; margin: auto"></p>
+          <p style="min-width: 50px; margin: auto"></p>
+
+          <p style="width: 70%"></p>
         </div>
     ''')
     html, = page.children
@@ -198,7 +204,7 @@ def test_block_widths():
             assert paragraph.border_right_width == 1
             paragraphs.append(paragraph)
 
-    assert len(paragraphs) == 11
+    assert len(paragraphs) == 15
 
     # width is 'auto'
     assert paragraphs[0].width == 94
@@ -256,6 +262,26 @@ def test_block_widths():
     assert paragraphs[10].width == 200
     assert paragraphs[10].margin_left == 0
     assert paragraphs[10].margin_right == -106
+
+    # Constrained by min-width, same as above
+    assert paragraphs[11].width == 200
+    assert paragraphs[11].margin_left == 0
+    assert paragraphs[11].margin_right == -106
+
+    # Constrained by max-width, same as paragraphs[6]
+    assert paragraphs[12].width == 50
+    assert paragraphs[12].margin_left == 22
+    assert paragraphs[12].margin_right == 22
+
+    # NOT constrained by min-width
+    assert paragraphs[13].width == 94
+    assert paragraphs[13].margin_left == 0
+    assert paragraphs[13].margin_right == 0
+
+    # 70%
+    assert paragraphs[14].width == 70
+    assert paragraphs[14].margin_left == 0
+    assert paragraphs[14].margin_right == 24
 
 
 @assert_no_logs
