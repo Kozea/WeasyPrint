@@ -1048,6 +1048,14 @@ def test_whitespace_processing():
 @assert_no_logs
 def test_images():
     """Test that width, height and ratio of images are respected."""
+    def get_img(html):
+        page, = parse(html)
+        html, = page.children
+        body, = html.children
+        line, = body.children
+        img, = line.children
+        return body, img
+
     # Try a few image formats
     for html in [
         '<img src="%s">' % url for url in [
@@ -1066,21 +1074,13 @@ def test_images():
         '<object data=really-a-png.svg type=image/png>',
         '<object data=really-a-svg.png type=image/svg+xml>',
     ]:
-        page, = parse(html)
-        html, = page.children
-        body, = html.children
-        line, = body.children
-        img, = line.children
+        body, img = get_img(html)
         assert img.width == 4
         assert img.height == 4
 
     # With physical units
     url = "data:image/svg+xml,<svg width='2.54cm' height='0.5in'></svg>"
-    page, = parse('<img src="%s">' % url)
-    html, = page.children
-    body, = html.children
-    line, = body.children
-    img, = line.children
+    body, img = get_img('<img src="%s">' % url)
     assert img.width == 96
     assert img.height == 48
 
@@ -1100,27 +1100,37 @@ def test_images():
         'really-a-svg.png',
     ]:
         with capture_logs() as logs:
-            page, = parse("<p><img src='%s' alt='invalid image'>" % url)
+            body, img = get_img("<img src='%s' alt='invalid image'>" % url)
         assert len(logs) == 1
         assert 'WARNING: Error for image' in logs[0]
-        html, = page.children
-        body, = html.children
-        paragraph, = body.children
-        line, = paragraph.children
-        img, = line.children
+        assert isinstance(img, boxes.InlineBox)  # not a replaced box
         text, = img.children
         assert text.text == 'invalid image', url
 
     # Layout rules try to preserve the ratio, so the height should be 40px too:
-    page, = parse('<img src="pattern.png" style="width: 40px">')
-    html, = page.children
-    body, = html.children
-    line, = body.children
-    img, = line.children
+    body, img = get_img('<img src="pattern.png" style="width: 40px">')
     assert body.height == 40
     assert img.position_y == 0
     assert img.width == 40
     assert img.height == 40
+
+    # Same with percentages
+    body, img = get_img('''<p style="width: 200px">
+        <img src="pattern.png" style="width: 20%">''')
+    assert body.height == 40
+    assert img.position_y == 0
+    assert img.width == 40
+    assert img.height == 40
+
+    body, img = get_img('<img src="pattern.png" style="min-width: 40px">')
+    assert body.height == 40
+    assert img.position_y == 0
+    assert img.width == 40
+    assert img.height == 40
+
+    body, img = get_img('<img src="pattern.png" style="max-width: 2px">')
+    assert img.width == 2
+    assert img.height == 2
 
     # display: table-cell is ignored
     page, = parse('''
@@ -1144,6 +1154,23 @@ def test_images():
         <style>
             @page { -weasy-size: 100px }
             img { width: 40px; margin: 10px auto; display: block }
+        </style>
+        <body>
+            <img src="pattern.png">
+    ''')
+    html, = page.children
+    body, = html.children
+    img, = body.children
+    assert img.element_tag == 'img'
+    assert img.position_x == 0
+    assert img.position_y == 0
+    assert img.content_box_x() == 30  # (100 - 40) / 2 == 30px for margin-left
+    assert img.content_box_y() == 10
+
+    page, = parse('''
+        <style>
+            @page { -weasy-size: 100px }
+            img { min-width: 40%; margin: 10px auto; display: block }
         </style>
         <body>
             <img src="pattern.png">

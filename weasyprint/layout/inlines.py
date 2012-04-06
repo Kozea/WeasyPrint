@@ -11,6 +11,7 @@
 """
 
 from __future__ import division, unicode_literals
+import functools
 
 import cairo
 
@@ -184,31 +185,11 @@ def remove_last_whitespace(document, box):
     # 'white-space' set to 'pre-wrap', UAs may visually collapse them.
 
 
-def inline_replaced_box_layout(box, containing_block, device_size):
-    """Lay out an inline :class:`boxes.ReplacedBox` ``box``."""
-    assert isinstance(box, boxes.ReplacedBox)
-
-    # Compute width:
-    # http://www.w3.org/TR/CSS21/visudet.html#inline-replaced-width
-    if box.margin_left == 'auto':
-        box.margin_left = 0
-    if box.margin_right == 'auto':
-        box.margin_right = 0
-    replaced_box_width(box, device_size)
-
-    # Compute height
-    # http://www.w3.org/TR/CSS21/visudet.html#inline-replaced-height
-    if box.margin_top == 'auto':
-        box.margin_top = 0
-    if box.margin_bottom == 'auto':
-        box.margin_bottom = 0
-    replaced_box_height(box, device_size)
-
-
 def replaced_box_width(box, device_size):
     """
     Compute and set the used width for replaced boxes (inline- or block-level)
     """
+    # http://www.w3.org/TR/CSS21/visudet.html#inline-replaced-width
     _surface, intrinsic_width, _intrinsic_height = box.replacement
     # TODO: update this when we have replaced elements that do not
     # always have an intrinsic width. (See commented code below.)
@@ -250,6 +231,7 @@ def replaced_box_height(box, device_size):
     """
     Compute and set the used height for replaced boxes (inline- or block-level)
     """
+    # http://www.w3.org/TR/CSS21/visudet.html#inline-replaced-height
     _surface, intrinsic_width, intrinsic_height = box.replacement
     # TODO: update this when we have replaced elements that do not
     # always have intrinsic dimensions. (See commented code below.)
@@ -279,6 +261,120 @@ def replaced_box_height(box, device_size):
 #    elif box.style.height == 'auto':
 #        device_width, _device_height = device_size
 #        box.height = min(150, device_width / 2)
+
+
+def handle_min_max_width(function):
+    """Decorate a function that sets the used width of a box to handle
+    {min,max}-width.
+    """
+    @functools.wraps(function)
+    def wrapper(box, *args):
+        computed_margins = box.margin_left, box.margin_right
+        function(box, *args)
+        if box.width > box.max_width:
+            box.width = box.max_width
+            box.margin_left, box.margin_right = computed_margins
+            function(box, *args)
+        if box.width < box.min_width:
+            box.width = box.min_width
+            box.margin_left, box.margin_right = computed_margins
+            function(box, *args)
+    return wrapper
+
+
+def handle_min_max_height(function):
+    """Decorate a function that sets the used height of a box to handle
+    {min,max}-height.
+    """
+    @functools.wraps(function)
+    def wrapper(box, *args):
+        computed_margins = box.margin_top, box.margin_bottom
+        function(box, *args)
+        if box.height > box.max_height:
+            box.height = box.max_height
+            box.margin_top, box.margin_bottom = computed_margins
+            function(box, *args)
+        if box.height < box.min_height:
+            box.height = box.min_height
+            box.margin_top, box.margin_bottom = computed_margins
+            function(box, *args)
+    return wrapper
+
+
+min_max_replaced_width = handle_min_max_width(replaced_box_width)
+min_max_replaced_height = handle_min_max_height(replaced_box_height)
+
+
+def inline_replaced_box_layout(box, containing_block, device_size):
+    """Lay out an inline :class:`boxes.ReplacedBox` ``box``."""
+    for side in ['top', 'right', 'bottom', 'left']:
+        if getattr(box, 'margin_' + side) == 'auto':
+            setattr(box, 'margin_' + side, 0)
+
+    if box.style.width == 'auto' and box.style.height == 'auto':
+        replaced_box_width(box, device_size)
+        replaced_box_height(box, device_size)
+        min_max_auto_replaced(box)
+    else:
+        min_max_replaced_width(box, device_size)
+        min_max_replaced_height(box, device_size)
+
+
+def min_max_auto_replaced(box):
+    """Resolve {min,max}-{width,height} constraints on replaced elements
+    that have 'auto' width and heights.
+    """
+    width = box.width
+    height = box.height
+    min_width = box.min_width
+    min_height = box.min_height
+    max_width = max(min_width, box.max_width)
+    max_height = max(min_height, box.max_height)
+
+    # (violation_width, violation_height)
+    violations = (
+        'min' if width < min_width else 'max' if width > max_width else '',
+        'min' if height < min_height else 'max' if height > max_height else '')
+
+    # Work around divisions by zero. These are pathological cases anyway.
+    if width == 0:
+        width = 1e-6
+    if height == 0:
+        height = 1e-6
+
+    # ('', ''): nothing to do
+    if violations == ('max', ''):
+        box.width = max_width
+        box.height = max(max_width * height / width, min_height)
+    elif violations == ('min', ''):
+        box.width = min_width
+        box.height = min(min_width * height / width, max_height)
+    elif violations == ('', 'max'):
+        box.width = max(max_height * width / height, min_width)
+        box.height = max_height
+    elif violations == ('', 'min'):
+        box.width = min(min_height * width / height, max_width)
+        box.height = min_height
+    elif violations == ('max', 'max'):
+        if max_width / width <= max_height / height:
+            box.width = max_width
+            box.height = max(min_height, max_width * height / width)
+        else:
+            box.width = max(min_width, max_height * width / height)
+            box.height = max_height
+    elif violations == ('min', 'min'):
+        if min_width / width <= min_height / height:
+            box.width = min(max_width, min_height * width / height)
+            box.height = min_height
+        else:
+            box.width = min_width
+            box.height = min(max_height, min_width * height / width)
+    elif violations == ('min', 'max'):
+        box.width = min_width
+        box.height = max_height
+    elif violations == ('max', 'min'):
+        box.width = max_width
+        box.height = min_height
 
 
 def atomic_box(box, containing_block, device_size):
