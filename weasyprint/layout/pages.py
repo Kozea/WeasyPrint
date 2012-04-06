@@ -14,7 +14,7 @@ from __future__ import division, unicode_literals
 
 from ..logger import LOGGER
 from ..formatting_structure import boxes, build
-from .blocks import block_level_layout, block_level_height
+from .blocks import block_level_layout, block_container_layout
 from .percentages import resolve_percentages
 from .preferred import inline_preferred_minimum_width, inline_preferred_width
 from .variable_margin_dimension import with_rule_2
@@ -417,7 +417,7 @@ def margin_box_content_layout(document, page, box):
     # content_to_boxes() only produces inline-level boxes, no need to
     # run other post-processors from build.build_formatting_structure()
     box = build.inline_in_block(box)
-    box, resume_at, next_page, _, _ = block_level_height(
+    box, resume_at, next_page, _, _ = block_container_layout(
         document, box,
         max_position_y=float('inf'), skip_stack=None,
         device_size=page.style.size, page_is_empty=True)

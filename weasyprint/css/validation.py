@@ -601,6 +601,7 @@ def list_style_type(keyword):
 @validator('padding-bottom')
 @validator('padding-left')
 @validator('min-width')
+@validator('min-height')
 @single_token
 def length_or_precentage(token):
     """``padding-*`` properties validation."""
@@ -610,6 +611,7 @@ def length_or_precentage(token):
 
 
 @validator('max-width')
+@validator('max-height')
 @single_token
 def max_width_height(token):
     """Validation for max-width and max-height"""

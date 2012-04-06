@@ -3,6 +3,8 @@ Version 0.8, released on 2012-XX-XX
 
 * Switch from cssutils to tinycss as the CSS parser.
 * Great speed improvements, in part thanks to tinycss.
+* Add support for the ``min-width``, ``max-width``, ``min-height`` and
+  ``max-height`` properties, but only on blocks for now.
 * Many bug fixes
 
 

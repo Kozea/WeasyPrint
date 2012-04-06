@@ -62,7 +62,7 @@ def block_box_layout(document, box, max_position_y, skip_stack,
     resolve_percentages(box, containing_block)
     block_level_width(box, containing_block)
     new_box, resume_at, next_page, adjoining_margins, collapsing_through = \
-        block_level_height(
+        block_container_layout(
             document, box, max_position_y, skip_stack,
             device_size, page_is_empty, adjoining_margins)
     list_marker_layout(document, new_box, containing_block)
@@ -162,13 +162,12 @@ def block_level_width(box, containing_block):
         box.margin_right = margin_sum - margin_l
 
 
-# TODO: rename this to block_container_something
-def block_level_height(document, box, max_position_y, skip_stack,
+def block_container_layout(document, box, max_position_y, skip_stack,
                        device_size, page_is_empty, adjoining_margins=None):
     """Set the ``box`` height."""
     assert isinstance(box, boxes.BlockContainerBox)
 
-    # TODO: this should make a differenc, but that is currently neglected.
+    # TODO: this should make a difference, but that is currently neglected.
     # See http://www.w3.org/TR/CSS21/visudet.html#normal-block
     #     http://www.w3.org/TR/CSS21/visudet.html#root-height
 
@@ -372,6 +371,9 @@ def block_level_height(document, box, max_position_y, skip_stack,
     # http://www.w3.org/TR/CSS21/visudet.html#normal-block
     if new_box.height == 'auto':
         new_box.height = position_y - new_box.content_box_y()
+    new_box.height = max(
+        min(new_box.height, new_box.max_height),
+        new_box.min_height)
 
     if resume_at is not None:
         # If there was a list marker, we kept it on `new_box`.

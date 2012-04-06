@@ -289,7 +289,7 @@ def test_block_heights():
     """Test the blocks heights."""
     page, = parse('''
         <style>
-            @page { margin: 0; -weasy-size: 100px 2000px }
+            @page { margin: 0; -weasy-size: 100px 20000px }
             html, body { margin: 0 }
             div { margin: 4px; border-width: 2px; border-style: solid;
                   padding: 4px }
@@ -304,16 +304,33 @@ def test_block_heights():
             the parent’s height. -->
           <p style="position: absolute"></p>
           <p style="float: left"></p>
-        </div><div>
+        </div>
+        <div>
           <p></p>
           <p></p>
           <p></p>
         </div>
+        <div style="height: 20px">
+          <p></p>
+        </div>
+        <div style="height: 120px">
+          <p></p>
+        </div>
+        <div style="max-height: 20px">
+          <p></p>
+        </div>
+        <div style="min-height: 120px">
+          <p></p>
+        </div>
+        <div style="min-height: 20px">
+          <p></p>
+        </div>
+        <div style="max-height: 120px">
+          <p></p>
+        </div>
     ''')
-    divs = body_children(page)
-
-    assert divs[0].height == 90
-    assert divs[1].height == 90 * 3
+    heights = [div.height for div in body_children(page)]
+    assert heights == [90, 90 * 3, 20, 120, 20, 120, 90, 90]
 
 
 @assert_no_logs

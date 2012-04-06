@@ -26,7 +26,7 @@ def table_layout(document, table, max_position_y, skip_stack,
 
     """
     # Avoid a circular import
-    from .blocks import block_level_height
+    from .blocks import block_container_layout
 
     column_widths = table.column_widths
 
@@ -103,7 +103,7 @@ def table_layout(document, table, max_position_y, skip_stack,
                 # The computed height is a minimum
                 computed_cell_height = cell.height
                 cell.height = 'auto'
-                cell, _, _, _, _ = block_level_height(
+                cell, _, _, _, _ = block_container_layout(
                     document, cell,
                     max_position_y=float('inf'),
                     skip_stack=None,
