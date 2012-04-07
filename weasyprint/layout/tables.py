@@ -387,8 +387,11 @@ def auto_table_layout(table, wrapper, containing_block):
         max(widths) for widths in column_preferred_minimum_widths]
 
     # Point #2
+    column_groups_widths = []
     column_widths = [None] * nb_columns
     for column_group in table.column_groups:
+        assert isinstance(column_group, boxes.TableColumnGroupBox)
+        column_groups_widths.append((column_group, column_group.style.width))
         for column in column_group.children:
             assert isinstance(column, boxes.TableColumnBox)
             column_widths[column.grid_x] = column.style.width
@@ -399,8 +402,8 @@ def auto_table_layout(table, wrapper, containing_block):
                        column_preferred_minimum_widths):
             for i, width in enumerate(widths):
                 column_width = column_widths[i]
-                if (column_width and column_width != 'auto'
-                    and column_width.unit != '%'):
+                if (column_width and column_width != 'auto' and
+                    column_width.unit != '%'):
                     widths[i] = max(column_width.value, widths[i])
 
     # Point #3
@@ -425,7 +428,28 @@ def auto_table_layout(table, wrapper, containing_block):
             for i in range(cell.grid_x, cell.grid_x + cell.colspan):
                 column_preferred_minimum_widths[i] += added_space
 
-    # TODO: Point #4
+    # Point #4
+    for column_group, column_group_width in column_groups_widths:
+        # TODO: handle percentages for column group widths
+        if (column_group_width and column_group_width != 'auto' and
+            column_group_width.unit != '%'):
+            column_indexes = [
+                column.grid_x for column in column_group.children]
+            columns_width = sum(
+                column_preferred_minimum_widths[index]
+                for index in column_indexes)
+            column_group_width = column_group_width.value
+            print(column_group_width, columns_width)
+            if column_group_width > columns_width:
+                added_space = (
+                    (column_group_width - columns_width) / len(column_indexes))
+                print(added_space)
+                for i in column_indexes:
+                    column_preferred_minimum_widths[i] += added_space
+                    if (column_preferred_widths[i] <
+                        column_preferred_minimum_widths[i]):
+                        column_preferred_widths[i] = \
+                            column_preferred_minimum_widths[i]
 
     total_border_spacing = (nb_columns + 1) * table.style.border_spacing[0]
     table_preferred_minimum_width = (
