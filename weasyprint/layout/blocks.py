@@ -387,7 +387,7 @@ def block_table_wrapper(document, wrapper, max_position_y, skip_stack,
         block_level_width(table, containing_block)
         fixed_table_layout(table)
     else:
-        auto_table_layout(table, containing_block)
+        auto_table_layout(table, wrapper, containing_block)
 
     # The table margins are on the table wrapper box, not on the table box
     table.margin_left = 0

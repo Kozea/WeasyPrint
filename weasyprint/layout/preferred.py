@@ -25,11 +25,11 @@ def shrink_to_fit(box, available_width):
 
     """
     return min(
-        max(preferred_mimimum_width(box, outer=False), available_width),
+        max(preferred_minimum_width(box, outer=False), available_width),
         preferred_width(box, outer=False))
 
 
-def preferred_mimimum_width(box, outer=True):
+def preferred_minimum_width(box, outer=True):
     """Return the preferred minimum width for ``box``.
 
     This is the width by breaking at every line-break opportunity.
@@ -100,7 +100,7 @@ def adjust(box, outer, fixed_width, variable_ratio=0):
 
 def block_preferred_minimum_width(box, outer=True):
     """Return the preferred minimum width for a ``BlockBox``."""
-    return _block_preferred_width(box, preferred_mimimum_width, outer)
+    return _block_preferred_width(box, preferred_minimum_width, outer)
 
 
 def block_preferred_width(box, outer=True):
@@ -111,9 +111,6 @@ def block_preferred_width(box, outer=True):
 def inline_preferred_minimum_width(box, outer=True):
     """Return the preferred minimum width for an ``InlineBox``.
 
-    *Warning:* only TextBox and InlineReplacedBox children are supported
-    for now. (No recursive InlineBox children.)
-
     """
     widest_line = 0
     for child in box.children:
@@ -122,6 +119,9 @@ def inline_preferred_minimum_width(box, outer=True):
             current_line = replaced_preferred_width(child)
         elif isinstance(child, boxes.InlineBlockBox):
             current_line = block_preferred_minimum_width(child)
+        elif isinstance(child, boxes.InlineBox):
+            # TODO: handle forced line breaks
+            current_line = inline_preferred_minimum_width(child)
         else:
             assert isinstance(child, boxes.TextBox)
             current_line = max(text_lines_width(child, width=0))
@@ -132,9 +132,6 @@ def inline_preferred_minimum_width(box, outer=True):
 def inline_preferred_width(box, outer=True):
     """Return the preferred width for an ``InlineBox``.
 
-    *Warning:* only TextBox and InlineReplacedBox children are supported
-    for now. (No recursive InlineBox children.)
-
     """
     widest_line = 0
     current_line = 0
@@ -144,6 +141,9 @@ def inline_preferred_width(box, outer=True):
             current_line += replaced_preferred_width(child)
         elif isinstance(child, boxes.InlineBlockBox):
             current_line += block_preferred_width(child)
+        elif isinstance(child, boxes.InlineBox):
+            # TODO: handle forced line breaks
+            current_line += inline_preferred_width(child)
         else:
             assert isinstance(child, boxes.TextBox)
             lines = list(text_lines_width(child, width=None))
