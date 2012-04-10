@@ -3,9 +3,10 @@ Version 0.8, released on 2012-XX-XX
 
 * Switch from cssutils to tinycss as the CSS parser.
 * Great speed improvements, in part thanks to tinycss.
-* Add support for the ``min-width``, ``max-width``, ``min-height`` and
-  ``max-height`` properties, but only on blocks and images (replaced
-  elements) for now.
+* Support for inline blocks
+* Automatic table layout (column widths)
+* Support for the ``min-width``, ``max-width``, ``min-height`` and
+  ``max-height`` properties on all but table-related and page-related boxes.
 * Many bug fixes
 
 

@@ -397,6 +397,8 @@ def test_inline_block_sizes():
             <div style="width: 10px; height: 10px"></div>
           </div>
         </div>
+        <div style="min-width: 185px">foo</div>
+        <div style="max-width: 10px">Supercalifragilisticexpialidocious</div>
     ''')
     html, = page.children
     assert html.element_tag == 'html'
@@ -404,68 +406,66 @@ def test_inline_block_sizes():
     assert body.element_tag == 'body'
     assert body.width == 200
 
-    lines = body.children
-    assert len(lines) == 3
+    line_1, line_2, line_3, line_4 = body.children
 
     # First line:
-    # div1 div2 space div3 space div4 space
-    divs = lines[0].children
-    assert len(divs) == 8
+    # White space in-between divs ends up preserved in TextBoxes
+    div_1, _, div_2, _, div_3, _, div_4, _ = line_1.children
 
     # First div, one ignored space collapsing with next space
-    assert divs[0].element_tag == 'div'
-    assert divs[0].width == 0
+    assert div_1.element_tag == 'div'
+    assert div_1.width == 0
 
     # Second div, one letter
-    assert divs[2].element_tag == 'div'
-    assert divs[2].width != 0
+    assert div_2.element_tag == 'div'
+    assert 0 < div_2.width < 20
 
     # Third div, empty with margin
-    assert divs[4].element_tag == 'div'
-    assert divs[4].width == 0
-    assert divs[4].margin_width() == 20
-    assert divs[4].height == 100
+    assert div_3.element_tag == 'div'
+    assert div_3.width == 0
+    assert div_3.margin_width() == 20
+    assert div_3.height == 100
 
     # Fourth div, empty with margin and padding
-    assert divs[6].element_tag == 'div'
-    assert divs[6].width == 0
-    assert divs[6].margin_width() == 30
+    assert div_4.element_tag == 'div'
+    assert div_4.width == 0
+    assert div_4.margin_width() == 30
 
     # Second line:
-    # div5
-    div, = lines[1].children
+    div_5, = line_2.children
 
     # Fifth div, long text, full-width div
-    assert div.element_tag == 'div'
-    assert len(div.children) > 1
-    assert div.width == 200
+    assert div_5.element_tag == 'div'
+    assert len(div_5.children) > 1
+    assert div_5.width == 200
 
     # Third line:
-    # div6, space, div7
-    divs = lines[2].children
-    assert len(divs) == 3
+    div_6, _, div_7, _ = line_3.children
 
     # Sixth div, empty div with fixed width and height
-    assert divs[0].element_tag == 'div'
-    assert divs[0].width == 100
-    assert divs[0].margin_width() == 120
-    assert divs[0].height == 100
-    assert divs[0].margin_height() == 140
+    assert div_6.element_tag == 'div'
+    assert div_6.width == 100
+    assert div_6.margin_width() == 120
+    assert div_6.height == 100
+    assert div_6.margin_height() == 140
 
     # Seventh div
-    assert divs[2].element_tag == 'div'
-    assert divs[2].width == 20
-    line, = divs[2].children
-    children = line.children
-    # No spaces with font-size: 0
-    assert len(children) == 2
-    assert children[0].element_tag == 'div'
-    assert children[0].width == 10
-    assert children[1].element_tag == 'div'
-    assert children[1].width == 2
-    grandchild, = children[1].children
+    assert div_7.element_tag == 'div'
+    assert div_7.width == 20
+    child_line, = div_7.children
+    # Spaces have font-size: 0, they get removed
+    child_div_1, child_div_2 = child_line.children
+    assert child_div_1.element_tag == 'div'
+    assert child_div_1.width == 10
+    assert child_div_2.element_tag == 'div'
+    assert child_div_2.width == 2
+    grandchild, = child_div_2.children
     assert grandchild.element_tag == 'div'
     assert grandchild.width == 10
+
+    div_8, _, div_9 = line_4.children
+    assert div_8.width == 185
+    assert div_9.width == 10
 
 
 @assert_no_logs

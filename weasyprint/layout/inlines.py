@@ -17,6 +17,7 @@ import cairo
 
 from .markers import image_marker_layout
 from .percentages import resolve_percentages, resolve_one_percentage
+from .preferred import shrink_to_fit
 from ..text import TextFragment
 from ..formatting_structure import boxes
 from ..css.computed_values import used_line_height
@@ -398,7 +399,6 @@ def inline_block_box_layout(document, box, position_x, skip_stack,
                             containing_block, device_size):
     # Avoid a circular import
     from .blocks import block_container_layout
-    from .preferred import shrink_to_fit
 
     resolve_percentages(box, containing_block)
 
@@ -408,8 +408,7 @@ def inline_block_box_layout(document, box, position_x, skip_stack,
     if box.margin_right == 'auto':
         box.margin_right = 0
 
-    if box.width == 'auto':
-        box.width = shrink_to_fit(box, containing_block.width)
+    inline_block_width(box, containing_block)
 
     box.position_x = position_x
     box.position_y = 0
@@ -420,6 +419,12 @@ def inline_block_box_layout(document, box, position_x, skip_stack,
     box.translate(0, -box.margin_height())
 
     return box
+
+
+@handle_min_max_width
+def inline_block_width(box, containing_block):
+    if box.width == 'auto':
+        box.width = shrink_to_fit(box, containing_block.width)
 
 
 def split_inline_level(document, box, position_x, max_x, skip_stack,
