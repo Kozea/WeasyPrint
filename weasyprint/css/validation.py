@@ -491,10 +491,8 @@ def direction(keyword):
 @single_keyword
 def display(keyword):
     """``display`` property validation."""
-    if keyword in ('inline-block',):
-        raise InvalidValues('value not supported yet')
     return keyword in (
-        'inline', 'block', 'list-item', 'none',
+        'inline', 'block', 'inline-block', 'list-item', 'none',
         'table', 'inline-table', 'table-caption',
         'table-row-group', 'table-header-group', 'table-footer-group',
         'table-row', 'table-column-group', 'table-column', 'table-cell')
@@ -688,6 +686,14 @@ def quotes(tokens):
         # Separate open and close quotes.
         # eg.  ['«', '»', '“', '”']  -> (['«', '“'], ['»', '”'])
         return strings[::2], strings[1::2]
+
+
+@validator()
+@single_keyword
+def table_layout(keyword):
+    """Validation for the ``table-layout`` property"""
+    if keyword in ('fixed', 'auto'):
+        return keyword
 
 
 @validator()

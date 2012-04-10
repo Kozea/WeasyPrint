@@ -12,9 +12,7 @@
 
 from __future__ import division, unicode_literals
 
-from .inlines import (iter_line_boxes, replaced_box_width, replaced_box_height,
-                      handle_min_max_width, min_max_replaced_height,
-                      min_max_auto_replaced)
+from .inlines import iter_line_boxes, replaced_box_width, replaced_box_height
 from .markers import list_marker_layout
 from .tables import table_layout, fixed_table_layout, auto_table_layout
 from .percentages import resolve_percentages
@@ -63,41 +61,32 @@ def block_box_layout(document, box, max_position_y, skip_stack,
     resolve_percentages(box, containing_block)
     block_level_width(box, containing_block)
     new_box, resume_at, next_page, adjoining_margins, collapsing_through = \
-        block_container_layout(
+        block_level_height(
             document, box, max_position_y, skip_stack,
             device_size, page_is_empty, adjoining_margins)
     list_marker_layout(document, new_box, containing_block)
     return new_box, resume_at, next_page, adjoining_margins, collapsing_through
 
 
-def block_replaced_width(box, containing_block, device_size):
+def block_replaced_box_layout(box, containing_block, device_size):
+    """Lay out the block :class:`boxes.ReplacedBox` ``box``."""
+    assert isinstance(box, boxes.ReplacedBox)
+    resolve_percentages(box, containing_block)
+
     # http://www.w3.org/TR/CSS21/visudet.html#block-replaced-width
     replaced_box_width(box, device_size)
     block_level_width(box, containing_block)
 
-min_max_block_replaced_width = handle_min_max_width(block_replaced_width)
-
-
-def block_replaced_box_layout(box, containing_block, device_size):
-    """Lay out the block :class:`boxes.ReplacedBox` ``box``."""
-    resolve_percentages(box, containing_block)
+    # http://www.w3.org/TR/CSS21/visudet.html#inline-replaced-height
+    replaced_box_height(box, device_size)
     if box.margin_top == 'auto':
         box.margin_top = 0
     if box.margin_bottom == 'auto':
         box.margin_bottom = 0
 
-    if box.style.width == 'auto' and box.style.height == 'auto':
-        block_replaced_width(box, containing_block, device_size)
-        replaced_box_height(box, device_size)
-        min_max_auto_replaced(box)
-    else:
-        min_max_block_replaced_width(box, containing_block, device_size)
-        min_max_replaced_height(box, device_size)
-
     return box
 
 
-@handle_min_max_width
 def block_level_width(box, containing_block):
     """Set the ``box`` width."""
     # 'cb' stands for 'containing block'
@@ -155,12 +144,13 @@ def block_level_width(box, containing_block):
         box.margin_right = margin_sum - margin_l
 
 
-def block_container_layout(document, box, max_position_y, skip_stack,
+# TODO: rename this to block_container_something
+def block_level_height(document, box, max_position_y, skip_stack,
                        device_size, page_is_empty, adjoining_margins=None):
     """Set the ``box`` height."""
     assert isinstance(box, boxes.BlockContainerBox)
 
-    # TODO: this should make a difference, but that is currently neglected.
+    # TODO: this should make a differenc, but that is currently neglected.
     # See http://www.w3.org/TR/CSS21/visudet.html#normal-block
     #     http://www.w3.org/TR/CSS21/visudet.html#root-height
 
@@ -364,9 +354,6 @@ def block_container_layout(document, box, max_position_y, skip_stack,
     # http://www.w3.org/TR/CSS21/visudet.html#normal-block
     if new_box.height == 'auto':
         new_box.height = position_y - new_box.content_box_y()
-    new_box.height = max(
-        min(new_box.height, new_box.max_height),
-        new_box.min_height)
 
     if resume_at is not None:
         # If there was a list marker, we kept it on `new_box`.
@@ -400,14 +387,19 @@ def block_table_wrapper(document, wrapper, max_position_y, skip_stack,
         block_level_width(table, containing_block)
         fixed_table_layout(table)
     else:
-        auto_table_layout(table, wrapper, containing_block)
+        auto_table_layout(table, containing_block)
 
     # The table margins are on the table wrapper box, not on the table box
     table.margin_left = 0
     table.margin_right = 0
 
+<<<<<<< HEAD
+    wrapper.width = wrapper.style.width = table.border_width()
+=======
+    fixed_table_layout(table)
     wrapper.width = table.border_width()
     wrapper.style.width = Dimension(wrapper.width, 'px')
+>>>>>>> master
     return block_box_layout(document, wrapper, max_position_y, skip_stack,
                             containing_block, device_size, page_is_empty,
                             adjoining_margins)

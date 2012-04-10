@@ -369,6 +369,106 @@ def test_block_percentage_heights():
 
 
 @assert_no_logs
+def test_inline_block_sizes():
+    """Test the inline-block elements sizes."""
+    page, = parse('''
+        <style>
+            @page { margin: 0; -weasy-size: 200px 2000px }
+            body { margin: 0 }
+            div { display: inline-block; }
+        </style>
+        <div> </div>
+        <div>a</div>
+        <div style="margin: 10px; height: 100px"></div>
+        <div style="margin-left: 10px; margin-top: -50px;
+                    padding-right: 20px;"></div>
+        <div>
+            Ipsum dolor sit amet,
+            consectetur adipiscing elit.
+            Sed sollicitudin nibh
+            et turpis molestie tristique.
+        </div>
+        <div style="width: 100px; height: 100px;
+                    padding-left: 10px; margin-right: 10px;
+                    margin-top: -10px; margin-bottom: 50px"></div>
+        <div style="font-size: 0">
+          <div style="width: 10px; height: 10px"></div>
+          <div style="width: 10%">
+            <div style="width: 10px; height: 10px"></div>
+          </div>
+        </div>
+    ''')
+    html, = page.children
+    assert html.element_tag == 'html'
+    body, = html.children
+    assert body.element_tag == 'body'
+    assert body.width == 200
+
+    lines = body.children
+    assert len(lines) == 3
+
+    # First line:
+    # div1 div2 space div3 space div4 space
+    divs = lines[0].children
+    assert len(divs) == 8
+
+    # First div, one ignored space collapsing with next space
+    assert divs[0].element_tag == 'div'
+    assert divs[0].width == 0
+
+    # Second div, one letter
+    assert divs[2].element_tag == 'div'
+    assert divs[2].width != 0
+
+    # Third div, empty with margin
+    assert divs[4].element_tag == 'div'
+    assert divs[4].width == 0
+    assert divs[4].margin_width() == 20
+    assert divs[4].height == 100
+
+    # Fourth div, empty with margin and padding
+    assert divs[6].element_tag == 'div'
+    assert divs[6].width == 0
+    assert divs[6].margin_width() == 30
+
+    # Second line:
+    # div5
+    div, = lines[1].children
+
+    # Fifth div, long text, full-width div
+    assert div.element_tag == 'div'
+    assert len(div.children) > 1
+    assert div.width == 200
+
+    # Third line:
+    # div6, space, div7
+    divs = lines[2].children
+    assert len(divs) == 3
+
+    # Sixth div, empty div with fixed width and height
+    assert divs[0].element_tag == 'div'
+    assert divs[0].width == 100
+    assert divs[0].margin_width() == 120
+    assert divs[0].height == 100
+    assert divs[0].margin_height() == 140
+
+    # Seventh div
+    assert divs[2].element_tag == 'div'
+    assert divs[2].width == 20
+    line, = divs[2].children
+    children = line.children
+    # No spaces with font-size: 0
+    assert len(children) == 2
+    assert children[0].element_tag == 'div'
+    assert children[0].width == 10
+    assert children[1].element_tag == 'div'
+    assert children[1].width == 2
+    grandchild, = children[1].children
+    assert grandchild.element_tag == 'div'
+    assert grandchild.width == 10
+
+
+@assert_no_logs
 def test_lists():
     """Test the lists."""
     page, = parse('''
@@ -759,7 +859,8 @@ def test_table_page_breaks():
     rows_per_page, rows_position_y = run('''
         <style>
             @page { -weasy-size: 120px }
-            h1 { height: 30px}
+            table { table-layout: fixed }
+            h1 { height: 30px }
             td { height: 40px }
         </style>
         <h1>Dummy title</h1>
@@ -785,7 +886,7 @@ def test_table_page_breaks():
             @page { -weasy-size: 120px }
             h1 { height: 30px}
             td { height: 40px }
-            table { page-break-inside: avoid }
+            table { page-break-inside: avoid; table-layout: fixed }
         </style>
         <h1>Dummy title</h1>
         <table>
@@ -804,7 +905,7 @@ def test_table_page_breaks():
             @page { -weasy-size: 120px }
             h1 { height: 30px}
             td { height: 40px }
-            table { page-break-inside: avoid }
+            table { page-break-inside: avoid; table-layout: fixed }
         </style>
         <h1>Dummy title</h1>
         <table>
@@ -825,6 +926,7 @@ def test_table_page_breaks():
             @page { -weasy-size: 120px }
             h1 { height: 30px}
             td { height: 40px }
+            table { table-layout: fixed }
         </style>
         <h1>Dummy title</h1>
         <table>
@@ -1687,7 +1789,10 @@ def test_table_column_width():
     source = '''
         <style>
             body { width: 20000px; margin: 0 }
-            table { width: 10000px; margin: 0 auto; border-spacing: 100px 0 }
+            table {
+              width: 10000px; margin: 0 auto; border-spacing: 100px 0;
+              table-layout: fixed
+            }
             td { border: 10px solid; padding: 1px }
         </style>
         <table>
@@ -1713,7 +1818,7 @@ def test_table_column_width():
         page, = parse(source)
     assert len(logs) == 1
     assert logs[0] == ('WARNING: This table row has more columns than '
-                       'the table, ignored 1 cells: (<TableCellBox td 22>,)')
+                       'the table, ignored 1 cells: (<TableCellBox td 25>,)')
     html, = page.children
     body, = html.children
     wrapper, = body.children
@@ -1779,7 +1884,7 @@ def test_table_column_width():
 
     page, = parse('''
         <style>
-            table { width: 1000px; border-spacing: 100px }
+            table { width: 1000px; border-spacing: 100px; table-layout: fixed }
         </style>
         <table>
             <tr>
@@ -1807,7 +1912,10 @@ def test_table_column_width():
         page, = parse('''
             <style>
                 body { width: %(body_width)s }
-                table { width: %(table_width)s; border-spacing: 100px }
+                table {
+                  width: %(table_width)s; border-spacing: 100px;
+                  table-layout: fixed
+                }
                 td { width: %(td_width)s }
             </style>
             <table>
@@ -1835,7 +1943,7 @@ def test_table_column_width():
 def test_table_row_height():
     page, = parse('''
         <table style="width: 1000px; border-spacing: 0 100px;
-                      font: 20px/1em serif; margin: 3px">
+                      font: 20px/1em serif; margin: 3px; table-layout: fixed">
             <tr>
                 <td rowspan=0 style="height: 420px; vertical-align: top">
                 <td>X<br>X<br>X
@@ -1918,7 +2026,7 @@ def test_table_wrapper():
     page, = parse('''
         <style>
             @page { -weasy-size: 1000px }
-            table { /* width: auto; */ height: 500px;
+            table { /* width: auto; */ height: 500px; table-layout: fixed;
                     padding: 1px; border: 10px solid; margin: 100px; }
         </style>
         <table></table>

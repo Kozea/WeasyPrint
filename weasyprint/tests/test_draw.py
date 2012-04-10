@@ -1127,7 +1127,7 @@ def test_tables():
         _+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+_,
         _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
     ], source % {'extra_css': '''
-        table { border-color: #00f }
+        table { border-color: #00f; table-layout: fixed }
         td { border-color: rgba(255, 0, 0, 0.5) }
     '''})
 
@@ -1161,7 +1161,7 @@ def test_tables():
         _+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+_,
         _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
     ], source % {'extra_css': '''
-        table { border-color: #00f }
+        table { border-color: #00f; table-layout: fixed }
         td { background: rgba(255, 0, 0, 0.5) }
     '''})
 
@@ -1198,7 +1198,7 @@ def test_tables():
         _+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+_,
         _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
     ], source % {'extra_css': '''
-        table { border-color: #00f }
+        table { border-color: #00f; table-layout: fixed }
         colgroup { background: rgba(255, 0, 0, 0.5) }
         col { background: rgba(0, 255, 0, 0.5) }
     '''})
@@ -1233,7 +1233,7 @@ def test_tables():
         _+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+_,
         _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
     ], source % {'extra_css': '''
-        table { border-color: #00f }
+        table { border-color: #00f; table-layout: fixed }
         thead { background: rgba(255, 0, 0, 0.5) }
         tr { background: rgba(0, 255, 0, 0.5) }
     '''})
