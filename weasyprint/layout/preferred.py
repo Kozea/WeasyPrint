@@ -97,9 +97,14 @@ def adjust(box, outer, width):
     fixed = max(min_width, min(width, max_width))
     percentages = 0
 
-    fixed += box.style.border_left_width + box.style.border_right_width
     for value in ('margin_left', 'margin_right',
                   'padding_left', 'padding_right'):
+        # Padding and border are set on the table, not on the wrapper
+        # http://www.w3.org/TR/CSS21/tables.html#model
+        # TODO: clean this horrible hack!
+        if box.is_table_wrapper and value == 'padding_left':
+            box = box.get_wrapped_table()
+
         style_value = box.style[value]
         if style_value != 'auto':
             if style_value.unit == 'px':
@@ -107,6 +112,8 @@ def adjust(box, outer, width):
             else:
                 assert style_value.unit == '%'
                 percentages += style_value.value
+
+    fixed += box.style.border_left_width + box.style.border_right_width
 
     if percentages < 1:
         return fixed / (1 - percentages / 100.)
