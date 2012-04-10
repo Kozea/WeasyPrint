@@ -298,6 +298,23 @@ def table_and_columns_preferred_widths(box, outer=True):
         sum(column_preferred_minimum_widths) + total_border_spacing)
     table_preferred_width = sum(column_preferred_widths) + total_border_spacing
 
+    captions = [child for child in box.children if child != table]
+
+    if captions:
+        caption_width = max(
+            preferred_minimum_width(caption) for caption in captions)
+    else:
+        caption_width = 0
+
+    if box.width != 'auto' and box.width > table_preferred_minimum_width:
+        table_preferred_minimum_width = box.width
+
+    if table_preferred_minimum_width < caption_width:
+        table_preferred_minimum_width = caption_width
+
+    if table_preferred_minimum_width > table_preferred_width:
+        table_preferred_width = table_preferred_minimum_width
+
     return (
         table_preferred_minimum_width, table_preferred_width,
         column_preferred_minimum_widths, column_preferred_widths)
