@@ -193,7 +193,7 @@ def table_layout(document, table, max_position_y, skip_stack,
                 if row.baseline is None:
                     if row.children:
                         # lowest bottom content edge
-                        row.baseline =  max(
+                        row.baseline = max(
                             cell.content_box_y() + cell.height
                             for cell in row.children) - row.position_y
                     else:
@@ -392,7 +392,7 @@ def cell_baseline(cell):
         return cell.border_top_width + cell.padding_top + cell.height
 
 
-def find_in_flow_baseline(box, last=False, baseline_types=(boxes,LineBox,)):
+def find_in_flow_baseline(box, last=False, baseline_types=(boxes.LineBox,)):
     """
     Return the absolute Y position for the first (or last) in-flow baseline
     if any, or None.
