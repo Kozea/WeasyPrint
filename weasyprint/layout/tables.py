@@ -444,11 +444,12 @@ def auto_table_layout(table, wrapper, containing_block):
                     (column_group_width - columns_width) / len(column_indexes))
                 for i in column_indexes:
                     column_preferred_minimum_widths[i] += added_space
-                    # TODO: Do we need to do this? The spec seems to say that
-                    # the colgroup's width is just a hint for column group's
-                    # columns minimum width, but if the sum of the preferred
-                    # maximum width of the colums is lower or greater than the
-                    # colgroup's one, then the columns don't follow the hint.
+                    # The spec seems to say that the colgroup's width is just a
+                    # hint for column group's columns minimum width, but if the
+                    # sum of the preferred maximum width of the colums is lower
+                    # or greater than the colgroup's one, then the columns
+                    # don't follow the hint. These lines make the maximum
+                    # preferred width equal or greater than the preferred width.
                     if (column_preferred_widths[i] <
                         column_preferred_minimum_widths[i]):
                         column_preferred_widths[i] = \
