@@ -1466,34 +1466,43 @@ def test_vertical_align():
             <img src="pattern.png" style="width: 40px; vertical-align: -15px">
             <img src="pattern.png" style="width: 60px">
         </span>
-        <div style="display: inline-block; vertical-align: -3px">
-            <img src="pattern.png" style="width: 40px; vertical-align: -15px">
-            <img src="pattern.png" style="width: 60px">
+        <div style="display: inline-block; vertical-align: 3px">
+            <div>
+                <div style="height: 100px">foo</div>
+                <div>
+                    <img src="pattern.png" style="
+                        width: 40px; vertical-align: -15px">
+                    <img src="pattern.png" style="width: 60px">
+                </div>
+            </div>
         </div>
     ''')
     html, = page.children
     body, = html.children
     line, = body.children
-    span, _, div = line.children  # _ is white space
-    assert line.height == 78
+    span, _, div_1 = line.children  # _ is white space
+    assert line.height == 178
     assert body.height == line.height
 
     # Same as earlier
     img_1, img_2 = span.children
     assert img_1.height == 40
     assert img_2.height == 60
-    assert img_1.position_y == 35
-    assert img_2.position_y == 0
+    assert img_1.position_y == 138
+    assert img_2.position_y == 103
 
-    div_line, = div.children
+    div_2, = div_1.children
+    div_3, div_4 = div_2.children
+    div_line, = div_4.children
     div_img_1, div_img_2 = div_line.children
-    assert div.position_y == 3
-    assert div.height == 75
+    assert div_1.position_y == 0
+    assert div_1.height == 175
+    assert div_3.height == 100
     assert div_line.height == 75
     assert div_img_1.height == 40
     assert div_img_2.height == 60
-    assert div_img_1.position_y == 38
-    assert div_img_2.position_y == 3
+    assert div_img_1.position_y == 135
+    assert div_img_2.position_y == 100
 
 
 @assert_no_logs

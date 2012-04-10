@@ -401,6 +401,6 @@ def find_in_flow_baseline(box, last=False):
     if isinstance(box, boxes.ParentBox):
         children = reversed(box.children) if last else box.children
         for child in children:
-            result = find_in_flow_baseline(child)
+            result = find_in_flow_baseline(child, last)
             if result is not None:
                 return result
