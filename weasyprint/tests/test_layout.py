@@ -1461,6 +1461,40 @@ def test_vertical_align():
     assert span_1.height == 19
     assert span_2.height == 19
 
+    page, = parse('''
+        <span>
+            <img src="pattern.png" style="width: 40px; vertical-align: -15px">
+            <img src="pattern.png" style="width: 60px">
+        </span>
+        <div style="display: inline-block; vertical-align: -3px">
+            <img src="pattern.png" style="width: 40px; vertical-align: -15px">
+            <img src="pattern.png" style="width: 60px">
+        </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    line, = body.children
+    span, _, div = line.children  # _ is white space
+    assert line.height == 78
+    assert body.height == line.height
+
+    # Same as earlier
+    img_1, img_2 = span.children
+    assert img_1.height == 40
+    assert img_2.height == 60
+    assert img_1.position_y == 35
+    assert img_2.position_y == 0
+
+    div_line, = div.children
+    div_img_1, div_img_2 = div_line.children
+    assert div.position_y == 3
+    assert div.height == 75
+    assert div_line.height == 75
+    assert div_img_1.height == 40
+    assert div_img_2.height == 60
+    assert div_img_1.position_y == 38
+    assert div_img_2.position_y == 3
+
 
 @assert_no_logs
 def test_text_align_left():

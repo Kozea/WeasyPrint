@@ -492,19 +492,24 @@ def cell_baseline(cell):
     See http://www.w3.org/TR/CSS21/tables.html#height-layout
 
     """
-    # Do not use cell.descendants() as we do not want to recurse into
-    # out-of-flow children.
-    stack = [iter(cell.children)]  # DIY recursion
-    while stack:
-        child = next(stack[-1], None)
-        if child is None:
-            stack.pop()
-            continue
-        if child.is_in_normal_flow():
-            if isinstance(child, (boxes.LineBox, boxes.TableRowBox)):
-                # First in-flow line or row.
-                return child.baseline + child.position_y - cell.position_y
-            if isinstance(child, boxes.ParentBox):
-                stack.append(iter(child.children))
-    # Default to the bottom of the content area.
-    return cell.border_top_width + cell.padding_top + cell.height
+    result = find_in_flow_baseline(cell)
+    if result is not None:
+        return result
+    else:
+        # Default to the bottom of the content area.
+        return cell.border_top_width + cell.padding_top + cell.height
+
+
+def find_in_flow_baseline(box, last=False):
+    """
+    Return the absolute Y position for the first (or last) in-flow baseline
+    if any, or None.
+    """
+    if isinstance(box, (boxes.LineBox, boxes.TableRowBox)):
+        return box.position_y + box.baseline
+    if isinstance(box, boxes.ParentBox):
+        children = reversed(box.children) if last else box.children
+        for child in children:
+            result = find_in_flow_baseline(child)
+            if result is not None:
+                return result

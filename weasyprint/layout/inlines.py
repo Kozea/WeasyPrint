@@ -18,6 +18,7 @@ import cairo
 from .markers import image_marker_layout
 from .percentages import resolve_percentages, resolve_one_percentage
 from .preferred import shrink_to_fit
+from .tables import find_in_flow_baseline
 from ..text import TextFragment
 from ..formatting_structure import boxes
 from ..css.computed_values import used_line_height
@@ -386,6 +387,7 @@ def atomic_box(document, box, position_x, skip_stack, containing_block,
             image_marker_layout(box)
         else:
             inline_replaced_box_layout(box, containing_block, device_size)
+        box.baseline = box.margin_height()
     elif isinstance(box, boxes.InlineBlockBox):
         box = inline_block_box_layout(
             document, box, position_x, skip_stack, containing_block,
@@ -415,10 +417,23 @@ def inline_block_box_layout(document, box, position_x, skip_stack,
     box, _, _, _, _ = block_container_layout(
         document, box, max_position_y=float('inf'), skip_stack=skip_stack,
         device_size=device_size, page_is_empty=True)
-    # TODO: Why this translation?
-    box.translate(0, -box.margin_height())
-
+    box.baseline = inline_block_baseline(box)
     return box
+
+
+def inline_block_baseline(box):
+    """
+    Return the y position of the baseline for an inline block
+    from the top of its margin box.
+
+    http://www.w3.org/TR/CSS21/visudet.html#propdef-vertical-align
+
+    """
+    if box.style.overflow == 'visible':
+        result = find_in_flow_baseline(box, last=True)
+        if result:
+            return result
+    return box.position_y + box.margin_height()
 
 
 @handle_min_max_width
@@ -470,7 +485,6 @@ def split_inline_level(document, box, position_x, max_x, skip_stack,
             document, box, position_x, skip_stack, containing_block,
             device_size)
         new_box.position_x = position_x
-        new_box.baseline = new_box.margin_height()
         resume_at = None
         preserved_line_break = False
     #else: unexpected box type here
@@ -684,7 +698,12 @@ def inline_box_verticality(box, baseline_y):
             child_baseline_y = baseline_y - vertical_align
         # the child’s `top` is `child.baseline` above (lower y) its baseline.
         top = child_baseline_y - child.baseline
-        child.position_y = top
+        if isinstance(child, boxes.InlineBlockBox):
+            # This also includes table wrappers for inline tables.
+            child.translate(dy=top - child.position_y)
+        else:
+            child.position_y = top
+            # grand-children for inline boxes are handled below
         bottom = top + child.margin_height()
         if min_y is None or top < min_y:
             min_y = top
