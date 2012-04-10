@@ -392,7 +392,7 @@ def test_inline_block_sizes():
                     padding-left: 10px; margin-right: 10px;
                     margin-top: -10px; margin-bottom: 50px"></div>
         <div style="font-size: 0">
-          <div style="width: 10px; height: 10px"></div>
+          <div style="min-width: 10px; height: 10px"></div>
           <div style="width: 10%">
             <div style="width: 10px; height: 10px"></div>
           </div>

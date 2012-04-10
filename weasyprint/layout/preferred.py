@@ -78,23 +78,33 @@ def _block_preferred_width(box, function, outer):
     return adjust(box, outer, width)
 
 
-def adjust(box, outer, fixed_width, variable_ratio=0):
-    if outer:
-        fixed_width += (box.style.border_left_width
-                      + box.style.border_right_width)
-        for value in ('margin_left', 'margin_right',
-                      'padding_left', 'padding_right'):
-            style_value = box.style[value]
-            if style_value != 'auto':
-                if style_value.unit == 'px':
-                    fixed_width += style_value.value
-                else:
-                    assert style_value.unit == '%'
-                    variable_ratio += style_value.value / 100.
+def adjust(box, outer, width):
+    if not outer:
+        return width
 
-    if variable_ratio < 1:
-        return fixed_width / (1 - variable_ratio)
+    min_width = box.style.min_width
+    max_width = box.style.max_width
+    min_width = min_width.value if min_width.unit != '%' else 0
+    max_width = max_width.value if max_width.unit != '%' else float('inf')
+
+    fixed = max(min_width, min(width, max_width))
+    percentages = 0
+
+    fixed += box.style.border_left_width + box.style.border_right_width
+    for value in ('margin_left', 'margin_right',
+                  'padding_left', 'padding_right'):
+        style_value = box.style[value]
+        if style_value != 'auto':
+            if style_value.unit == 'px':
+                fixed += style_value.value
+            else:
+                assert style_value.unit == '%'
+                percentages += style_value.value
+
+    if percentages < 1:
+        return fixed / (1 - percentages / 100.)
     else:
+        # Pathological case, ignore
         return 0
 
 
@@ -171,17 +181,11 @@ def text_lines_width(box, width):
 
 def replaced_preferred_width(box, outer=True):
     """Return the preferred minimum width for an ``InlineReplacedBox``."""
-    variable_ratio = 0
-    fixed_width = 0
-
     width = box.style.width
-    if width == 'auto':
+    if width == 'auto' or width.unit == '%':
         # TODO: handle the images with no intinsic width
-        _, fixed_width, _ = box.replacement
-    elif width.unit == 'px':
-        fixed_width = width.value
+        _, width, _ = box.replacement
     else:
-        assert width.unit == '%'
-        variable_ratio = width.value / 100.
-
-    return adjust(box, outer, fixed_width, variable_ratio)
+        assert width.unit == 'px'
+        width = width.value
+    return adjust(box, outer, width)
