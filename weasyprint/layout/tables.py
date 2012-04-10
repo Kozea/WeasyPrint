@@ -494,7 +494,7 @@ def cell_baseline(cell):
     """
     result = find_in_flow_baseline(cell)
     if result is not None:
-        return result
+        return result - cell.position_y
     else:
         # Default to the bottom of the content area.
         return cell.border_top_width + cell.padding_top + cell.height

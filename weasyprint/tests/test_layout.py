@@ -1990,7 +1990,8 @@ def test_table_row_height():
             <tr>
                 <td rowspan=0 style="height: 420px; vertical-align: top">
                 <td>X<br>X<br>X
-                <td><div style="margin-top: 20px">X</div>
+                <td><table style="margin-top: 20px;
+                                  border-spacing: 0">X</table>
                 <td style="vertical-align: top">X
                 <td style="vertical-align: middle">X
                 <td style="vertical-align: bottom">X
