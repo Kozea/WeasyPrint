@@ -346,7 +346,7 @@ def auto_table_layout(box, containing_block):
     table = box.get_wrapped_table()
     (table_preferred_minimum_width, table_preferred_width,
      column_preferred_minimum_widths, column_preferred_widths) = \
-        table_and_columns_preferred_widths(box)
+        table_and_columns_preferred_widths(box, resolved_table_width=True)
 
     table_maximum_width = max(
         containing_block.width, table_preferred_minimum_width)

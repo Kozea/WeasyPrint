@@ -174,8 +174,12 @@ def inline_preferred_width(box, outer=True):
     return adjust(box, outer, widest_line)
 
 
-def table_and_columns_preferred_widths(box, outer=True):
+def table_and_columns_preferred_widths(box, outer=True,
+                                       resolved_table_width=False):
     """Return preferred widths for the table and its columns.
+
+    If ``resolved_table_width`` is ``True``, the resolved width (instead of the
+    one given in ``box.style``) is used to get the preferred widths.
 
     The tuple returned is
     ``(table_preferred_minimum_width, table_preferred_width,
@@ -306,8 +310,14 @@ def table_and_columns_preferred_widths(box, outer=True):
     else:
         caption_width = 0
 
-    if box.width != 'auto' and box.width > table_preferred_minimum_width:
-        table_preferred_minimum_width = box.width
+    if resolved_table_width:
+        if (table.width != 'auto' and
+            table.width > table_preferred_minimum_width):
+            table_preferred_minimum_width = table.width
+    else:
+        if (table.style.width != 'auto' and table.style.width.unit != '%' and
+            table.width > table_preferred_minimum_width):
+            table_preferred_minimum_width = table.width
 
     if table_preferred_minimum_width < caption_width:
         table_preferred_minimum_width = caption_width
