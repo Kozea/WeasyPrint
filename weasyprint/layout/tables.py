@@ -448,8 +448,8 @@ def auto_table_layout(table, wrapper, containing_block):
                     # hint for column group's columns minimum width, but if the
                     # sum of the preferred maximum width of the colums is lower
                     # or greater than the colgroup's one, then the columns
-                    # don't follow the hint. These lines make the maximum
-                    # preferred width equal or greater than the preferred width.
+                    # don't follow the hint. These lines make the preferred
+                    # width equal or greater than the minimum preferred width.
                     if (column_preferred_widths[i] <
                         column_preferred_minimum_widths[i]):
                         column_preferred_widths[i] = \
