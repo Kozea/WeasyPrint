@@ -524,13 +524,8 @@ def wrap_table(box, children):
     table = box.copy_with_children(row_groups)
     table.column_groups = tuple(column_groups)
 
-#    table.body_row_groups = tuple(body_row_groups)
-#    table.row_groups = tuple(row_groups)
-#    table.header = header
-#    table.footer = footer
-
     # TODO: re-enable this once we support inline-block layout.
-    if False: # isinstance(box, boxes.InlineTableBox):
+    if False:  # isinstance(box, boxes.InlineTableBox):
         # XXX disabled
         wrapper_type = boxes.InlineBlockBox
     else:

@@ -36,7 +36,10 @@ def preferred_minimum_width(box, outer=True):
 
     """
     if isinstance(box, boxes.BlockContainerBox):
-        return block_preferred_minimum_width(box, outer)
+        if box.is_table_wrapper:
+            return table_preferred_minimum_width(box, outer)
+        else:
+            return block_preferred_minimum_width(box, outer)
     elif isinstance(box, (boxes.InlineBox, boxes.LineBox)):
         return inline_preferred_minimum_width(box, outer)
     else:
@@ -52,7 +55,10 @@ def preferred_width(box, outer=True):
 
     """
     if isinstance(box, boxes.BlockContainerBox):
-        return block_preferred_width(box, outer)
+        if box.is_table_wrapper:
+            return table_preferred_width(box, outer)
+        else:
+            return block_preferred_width(box, outer)
     elif isinstance(box, (boxes.InlineBox, boxes.LineBox)):
         return inline_preferred_width(box, outer)
     else:
@@ -79,6 +85,7 @@ def _block_preferred_width(box, function, outer):
 
 
 def adjust(box, outer, width):
+    """Add paddings, borders and margins to ``width`` when ``outer`` is set."""
     if not outer:
         return width
 
@@ -119,9 +126,7 @@ def block_preferred_width(box, outer=True):
 
 
 def inline_preferred_minimum_width(box, outer=True):
-    """Return the preferred minimum width for an ``InlineBox``.
-
-    """
+    """Return the preferred minimum width for an ``InlineBox``."""
     widest_line = 0
     for child in box.children:
         if isinstance(child, boxes.InlineReplacedBox):
@@ -140,9 +145,7 @@ def inline_preferred_minimum_width(box, outer=True):
 
 
 def inline_preferred_width(box, outer=True):
-    """Return the preferred width for an ``InlineBox``.
-
-    """
+    """Return the preferred width for an ``InlineBox``."""
     widest_line = 0
     current_line = 0
     for child in box.children:
@@ -169,6 +172,147 @@ def inline_preferred_width(box, outer=True):
     widest_line = max(widest_line, current_line)
 
     return adjust(box, outer, widest_line)
+
+
+def table_and_columns_preferred_widths(box, outer=True):
+    """Return preferred widths for the table and its columns.
+
+    The tuple returned is
+    ``(table_preferred_minimum_width, table_preferred_width,
+    column_preferred_minimum_widths, column_preferred_widths)``
+
+    """
+    table = box.get_wrapped_table()
+
+    nb_columns = 0
+    rows = []
+    for i, row_group in enumerate(table.children):
+        assert isinstance(row_group, boxes.TableRowGroupBox)
+        for j, row in enumerate(row_group.children):
+            assert isinstance(row, boxes.TableRowBox)
+            rows.append(row)
+            for k, cell in enumerate(row.children):
+                assert isinstance(cell, boxes.TableCellBox)
+                nb_columns = max(nb_columns, k + cell.colspan)
+    nb_rows = len(rows)
+
+    colspan_cells = []
+    grid = [[None] * nb_columns for i in range(nb_rows)]
+    for i, row in enumerate(rows):
+        for cell in row.children:
+            if cell.colspan == 1:
+                grid[i][cell.grid_x] = cell
+            else:
+                cell.grid_y = i
+                colspan_cells.append(cell)
+
+    # Point #1
+    column_preferred_widths = [[0] * nb_rows for i in range(nb_columns)]
+    column_preferred_minimum_widths = [
+        [0] * nb_rows for i in range(nb_columns)]
+    for i, row in enumerate(grid):
+        for j, cell in enumerate(row):
+            if cell:
+                # TODO: when border-collapse: collapse; set outer=False
+                column_preferred_widths[j][i] = \
+                    preferred_width(cell)
+                column_preferred_minimum_widths[j][i] = \
+                    preferred_minimum_width(cell)
+
+    column_preferred_widths = [
+        max(widths) for widths in column_preferred_widths]
+    column_preferred_minimum_widths = [
+        max(widths) for widths in column_preferred_minimum_widths]
+
+    # Point #2
+    column_groups_widths = []
+    column_widths = [None] * nb_columns
+    for column_group in table.column_groups:
+        assert isinstance(column_group, boxes.TableColumnGroupBox)
+        column_groups_widths.append((column_group, column_group.style.width))
+        for column in column_group.children:
+            assert isinstance(column, boxes.TableColumnBox)
+            column_widths[column.grid_x] = column.style.width
+
+    # TODO: handle percentages for column widths
+    if column_widths:
+        for widths in (column_preferred_widths,
+                       column_preferred_minimum_widths):
+            for i, width in enumerate(widths):
+                column_width = column_widths[i]
+                if (column_width and column_width != 'auto' and
+                    column_width.unit != '%'):
+                    widths[i] = max(column_width.value, widths[i])
+
+    # Point #3
+    for cell in colspan_cells:
+        column_slice = slice(cell.grid_x, cell.grid_x + cell.colspan)
+
+        # TODO: when border-collapse: collapse; set outer=False
+        cell_width = preferred_width(cell)
+        columns_width = sum(column_preferred_widths[column_slice])
+        if cell_width > columns_width:
+            added_space = (cell_width - columns_width) / cell.colspan
+            for i in range(cell.grid_x, cell.grid_x + cell.colspan):
+                column_preferred_widths[i] += added_space
+
+        # TODO: when border-collapse: collapse; set outer=False
+        cell_minimum_width = preferred_minimum_width(cell)
+        columns_minimum_width = sum(
+            column_preferred_minimum_widths[column_slice])
+        if cell_minimum_width > columns_minimum_width:
+            added_space = (
+                (cell_minimum_width - columns_minimum_width) / cell.colspan)
+            for i in range(cell.grid_x, cell.grid_x + cell.colspan):
+                column_preferred_minimum_widths[i] += added_space
+
+    # Point #4
+    for column_group, column_group_width in column_groups_widths:
+        # TODO: handle percentages for column group widths
+        if (column_group_width and column_group_width != 'auto' and
+            column_group_width.unit != '%'):
+            column_indexes = [
+                column.grid_x for column in column_group.children]
+            columns_width = sum(
+                column_preferred_minimum_widths[index]
+                for index in column_indexes)
+            column_group_width = column_group_width.value
+            if column_group_width > columns_width:
+                added_space = (
+                    (column_group_width - columns_width) / len(column_indexes))
+                for i in column_indexes:
+                    column_preferred_minimum_widths[i] += added_space
+                    # The spec seems to say that the colgroup's width is just a
+                    # hint for column group's columns minimum width, but if the
+                    # sum of the preferred maximum width of the colums is lower
+                    # or greater than the colgroup's one, then the columns
+                    # don't follow the hint. These lines make the preferred
+                    # width equal or greater than the minimum preferred width.
+                    if (column_preferred_widths[i] <
+                        column_preferred_minimum_widths[i]):
+                        column_preferred_widths[i] = \
+                            column_preferred_minimum_widths[i]
+
+    total_border_spacing = (nb_columns + 1) * table.style.border_spacing[0]
+    table_preferred_minimum_width = (
+        sum(column_preferred_minimum_widths) + total_border_spacing)
+    table_preferred_width = sum(column_preferred_widths) + total_border_spacing
+
+    return (
+        table_preferred_minimum_width, table_preferred_width,
+        column_preferred_minimum_widths, column_preferred_widths)
+
+
+def table_preferred_minimum_width(box, outer=True):
+    """Return the preferred minimum width for a ``TableBox``. wrapper"""
+    minimum_width, _, _, _ = table_and_columns_preferred_widths(box)
+    return adjust(box, outer, minimum_width)
+
+
+def table_preferred_width(box, outer=True):
+    """Return the preferred width for a ``TableBox`` wrapper."""
+    _, width, _, _ = table_and_columns_preferred_widths(box)
+    return adjust(box, outer, width)
 
 
 def text_lines_width(box, width):

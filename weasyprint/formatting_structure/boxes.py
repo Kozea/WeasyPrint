@@ -198,6 +198,15 @@ class Box(object):
         self.style['padding_%s' % side] = ZERO_PIXELS
         self.style['border_%s_width' % side] = 0
 
+    def get_wrapped_table(self):
+        """Get the table wrapped by the box."""
+        if self.is_table_wrapper:
+            for child in self.children:
+                if isinstance(child, TableBox):
+                    return child
+            else:  # pragma: no cover
+                raise ValueError('Table wrapper without a table')
+
     # Positioning schemes
 
     def is_floated(self):

@@ -383,12 +383,8 @@ def block_table_wrapper(document, wrapper, max_position_y, skip_stack,
                         containing_block, device_size, page_is_empty,
                         adjoining_margins):
     """Layout for the wrapper of a block-level table wrapper."""
-    for child in wrapper.children:
-        if isinstance(child, boxes.TableBox):
-            table = child
-            break
-    else: # pragma: no cover
-        raise ValueError('Table wrapper without a table')
+    table = wrapper.get_wrapped_table()
+
     resolve_percentages(wrapper, containing_block)
     resolve_percentages(table, containing_block)
 
@@ -398,9 +394,9 @@ def block_table_wrapper(document, wrapper, max_position_y, skip_stack,
 
     if table.style.table_layout == 'fixed':
         block_level_width(table, containing_block)
-        fixed_table_layout(table)
+        fixed_table_layout(wrapper)
     else:
-        auto_table_layout(table, wrapper, containing_block)
+        auto_table_layout(wrapper, containing_block)
 
     # The table margins are on the table wrapper box, not on the table box
     table.margin_left = 0

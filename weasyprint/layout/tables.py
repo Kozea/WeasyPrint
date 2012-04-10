@@ -16,7 +16,7 @@ from ..compat import xrange
 from ..logger import LOGGER
 from ..formatting_structure import boxes
 from .percentages import resolve_percentages, resolve_one_percentage
-from .preferred import preferred_minimum_width, preferred_width
+from .preferred import table_and_columns_preferred_widths
 
 
 def table_layout(document, table, max_position_y, skip_stack,
@@ -253,12 +253,13 @@ def add_top_padding(box, extra_padding):
         child.translate(dy=extra_padding)
 
 
-def fixed_table_layout(table):
+def fixed_table_layout(box):
     """Run the fixed table layout and return a list of column widths
 
     http://www.w3.org/TR/CSS21/tables.html#fixed-table-layout
 
     """
+    table = box.get_wrapped_table()
     assert table.width != 'auto'
 
     all_columns = [column for column_group in table.column_groups
@@ -328,7 +329,7 @@ def fixed_table_layout(table):
         table.width -= extra_width
     elif num_columns:
         extra_per_column = extra_width / num_columns
-        column_widths = [w + extra_per_column for w in column_widths]
+        column_widths = [width + extra_per_column for width in column_widths]
 
     # Now we have table.width == sum(column_widths) + all_border_spacing
     # with possible floating point rounding errors.
@@ -336,131 +337,21 @@ def fixed_table_layout(table):
     table.column_widths = column_widths
 
 
-def auto_table_layout(table, wrapper, containing_block):
+def auto_table_layout(box, containing_block):
     """Run the auto table layout and return a list of column widths.
 
     http://www.w3.org/TR/CSS21/tables.html#auto-table-layout
 
     """
-    # TODO: change this naive code, don't go through the whole table so many
-    # times
+    table = box.get_wrapped_table()
+    (table_preferred_minimum_width, table_preferred_width,
+     column_preferred_minimum_widths, column_preferred_widths) = \
+        table_and_columns_preferred_widths(box)
 
-    # First of all, we have to get a grid with cells inside
-    nb_columns = 0
-    rows = []
-    for i, row_group in enumerate(table.children):
-        assert isinstance(row_group, boxes.TableRowGroupBox)
-        for j, row in enumerate(row_group.children):
-            assert isinstance(row, boxes.TableRowBox)
-            rows.append(row)
-            for k, cell in enumerate(row.children):
-                assert isinstance(cell, boxes.TableCellBox)
-                nb_columns = max(nb_columns, k + cell.colspan)
-    nb_rows = len(rows)
-
-    colspan_cells = []
-    grid = [[None] * nb_columns for i in range(nb_rows)]
-    for i, row in enumerate(rows):
-        for cell in row.children:
-            if cell.colspan == 1:
-                grid[i][cell.grid_x] = cell
-            else:
-                cell.grid_y = i
-                colspan_cells.append(cell)
-
-    # Point #1
-    column_preferred_widths = [[0] * nb_rows for i in range(nb_columns)]
-    column_preferred_minimum_widths = [
-        [0] * nb_rows for i in range(nb_columns)]
-    for i, row in enumerate(grid):
-        for j, cell in enumerate(row):
-            if cell:
-                # TODO: when border-collapse: collapse; set outer=False
-                column_preferred_widths[j][i] = \
-                    preferred_width(cell)
-                column_preferred_minimum_widths[j][i] = \
-                    preferred_minimum_width(cell)
-
-    column_preferred_widths = [
-        max(widths) for widths in column_preferred_widths]
-    column_preferred_minimum_widths = [
-        max(widths) for widths in column_preferred_minimum_widths]
-
-    # Point #2
-    column_groups_widths = []
-    column_widths = [None] * nb_columns
-    for column_group in table.column_groups:
-        assert isinstance(column_group, boxes.TableColumnGroupBox)
-        column_groups_widths.append((column_group, column_group.style.width))
-        for column in column_group.children:
-            assert isinstance(column, boxes.TableColumnBox)
-            column_widths[column.grid_x] = column.style.width
-
-    # TODO: handle percentages for column widths
-    if column_widths:
-        for widths in (column_preferred_widths,
-                       column_preferred_minimum_widths):
-            for i, width in enumerate(widths):
-                column_width = column_widths[i]
-                if (column_width and column_width != 'auto' and
-                    column_width.unit != '%'):
-                    widths[i] = max(column_width.value, widths[i])
-
-    # Point #3
-    for cell in colspan_cells:
-        column_slice = slice(cell.grid_x, cell.grid_x + cell.colspan)
-
-        # TODO: when border-collapse: collapse; set outer=False
-        cell_width = preferred_width(cell)
-        columns_width = sum(column_preferred_widths[column_slice])
-        if cell_width > columns_width:
-            added_space = (cell_width - columns_width) / cell.colspan
-            for i in range(cell.grid_x, cell.grid_x + cell.colspan):
-                column_preferred_widths[i] += added_space
-
-        # TODO: when border-collapse: collapse; set outer=False
-        cell_minimum_width = preferred_minimum_width(cell)
-        columns_minimum_width = sum(
-            column_preferred_minimum_widths[column_slice])
-        if cell_minimum_width > columns_minimum_width:
-            added_space = (
-                (cell_minimum_width - columns_minimum_width) / cell.colspan)
-            for i in range(cell.grid_x, cell.grid_x + cell.colspan):
-                column_preferred_minimum_widths[i] += added_space
-
-    # Point #4
-    for column_group, column_group_width in column_groups_widths:
-        # TODO: handle percentages for column group widths
-        if (column_group_width and column_group_width != 'auto' and
-            column_group_width.unit != '%'):
-            column_indexes = [
-                column.grid_x for column in column_group.children]
-            columns_width = sum(
-                column_preferred_minimum_widths[index]
-                for index in column_indexes)
-            column_group_width = column_group_width.value
-            if column_group_width > columns_width:
-                added_space = (
-                    (column_group_width - columns_width) / len(column_indexes))
-                for i in column_indexes:
-                    column_preferred_minimum_widths[i] += added_space
-                    # The spec seems to say that the colgroup's width is just a
-                    # hint for column group's columns minimum width, but if the
-                    # sum of the preferred maximum width of the colums is lower
-                    # or greater than the colgroup's one, then the columns
-                    # don't follow the hint. These lines make the preferred
-                    # width equal or greater than the minimum preferred width.
-                    if (column_preferred_widths[i] <
-                        column_preferred_minimum_widths[i]):
-                        column_preferred_widths[i] = \
-                            column_preferred_minimum_widths[i]
-
-    total_border_spacing = (nb_columns + 1) * table.style.border_spacing[0]
-    table_preferred_minimum_width = (
-        sum(column_preferred_minimum_widths) + total_border_spacing)
-    table_preferred_width = sum(column_preferred_widths) + total_border_spacing
     table_maximum_width = max(
         containing_block.width, table_preferred_minimum_width)
+
+    # First of all, we have to get a grid with cells inside
     # TODO: handle the border spacings
     table.width = min(table_preferred_width, table_maximum_width)
 
