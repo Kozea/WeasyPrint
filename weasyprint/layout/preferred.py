@@ -317,14 +317,15 @@ def table_and_columns_preferred_widths(box, outer=True,
     else:
         caption_width = 0
 
-    if resolved_table_width:
-        if (table.width != 'auto' and
-            table.width > table_preferred_minimum_width):
-            table_preferred_minimum_width = table.width
-    else:
-        if (table.style.width != 'auto' and table.style.width.unit != '%' and
-            table.width > table_preferred_minimum_width):
-            table_preferred_minimum_width = table.width
+    if table.style.width != 'auto':
+        # Take care of the table width
+        if resolved_table_width:
+            if table.width > table_preferred_minimum_width:
+                table_preferred_minimum_width = table.width
+        else:
+            if (table.style.width.unit != '%' and
+                table.style.width.value > table_preferred_minimum_width):
+                table_preferred_minimum_width = table.style.width.value
 
     if table_preferred_minimum_width < caption_width:
         table_preferred_minimum_width = caption_width
