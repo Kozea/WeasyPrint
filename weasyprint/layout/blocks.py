@@ -392,7 +392,7 @@ def block_table_wrapper(document, wrapper, max_position_y, skip_stack,
     table.margin_left = wrapper.margin_left
     table.margin_right = wrapper.margin_right
 
-    if table.style.table_layout == 'fixed':
+    if table.style.table_layout == 'fixed' and table.width != 'auto':
         block_level_width(table, containing_block)
         fixed_table_layout(wrapper)
     else:

@@ -859,7 +859,7 @@ def test_table_page_breaks():
     rows_per_page, rows_position_y = run('''
         <style>
             @page { -weasy-size: 120px }
-            table { table-layout: fixed }
+            table { table-layout: fixed; width: 100% }
             h1 { height: 30px }
             td { height: 40px }
         </style>
@@ -886,7 +886,8 @@ def test_table_page_breaks():
             @page { -weasy-size: 120px }
             h1 { height: 30px}
             td { height: 40px }
-            table { page-break-inside: avoid; table-layout: fixed }
+            table { table-layout: fixed; width: 100%;
+                    page-break-inside: avoid }
         </style>
         <h1>Dummy title</h1>
         <table>
@@ -905,7 +906,8 @@ def test_table_page_breaks():
             @page { -weasy-size: 120px }
             h1 { height: 30px}
             td { height: 40px }
-            table { page-break-inside: avoid; table-layout: fixed }
+            table { table-layout: fixed; width: 100%;
+                    page-break-inside: avoid }
         </style>
         <h1>Dummy title</h1>
         <table>
@@ -926,7 +928,7 @@ def test_table_page_breaks():
             @page { -weasy-size: 120px }
             h1 { height: 30px}
             td { height: 40px }
-            table { table-layout: fixed }
+            table { table-layout: fixed; width: 100% }
         </style>
         <h1>Dummy title</h1>
         <table>
@@ -1951,35 +1953,29 @@ def test_table_column_width():
 
     # Sum of columns width larger that the table width:
     # increase the table width
-    for body_width, table_width in [('auto', '1000px'), ('1000px', 'auto')]:
-        page, = parse('''
-            <style>
-                body { width: %(body_width)s }
-                table {
-                  width: %(table_width)s; border-spacing: 100px;
-                  table-layout: fixed
-                }
-                td { width: %(td_width)s }
-            </style>
-            <table>
-                <tr>
-                    <td>
-                    <td>
-                </tr>
-            </table>
-        ''' % {'body_width': body_width, 'table_width': table_width,
-               'td_width': '60%'})
-        html, = page.children
-        body, = html.children
-        wrapper, = body.children
-        table, = wrapper.children
-        row_group, = table.children
-        row, = row_group.children
-        cell_1, cell_2 = row.children
-        assert cell_1.width == 600  # 60% of 1000px
-        assert cell_2.width == 600
-        assert table.width == 1500  # 600 + 600 + 3*border-spacing
-        assert wrapper.width == table.width
+    page, = parse('''
+        <style>
+            table { width: 1000px; border-spacing: 100px; table-layout: fixed }
+            td { width: 60% }
+        </style>
+        <table>
+            <tr>
+                <td>
+                <td>
+            </tr>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    wrapper, = body.children
+    table, = wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    cell_1, cell_2 = row.children
+    assert cell_1.width == 600  # 60% of 1000px
+    assert cell_2.width == 600
+    assert table.width == 1500  # 600 + 600 + 3*border-spacing
+    assert wrapper.width == table.width
 
 
 @assert_no_logs
@@ -2070,7 +2066,7 @@ def test_table_wrapper():
     page, = parse('''
         <style>
             @page { -weasy-size: 1000px }
-            table { /* width: auto; */ height: 500px; table-layout: fixed;
+            table { width: 600px; height: 500px; table-layout: fixed;
                     padding: 1px; border: 10px solid; margin: 100px; }
         </style>
         <table></table>
@@ -2080,10 +2076,11 @@ def test_table_wrapper():
     wrapper, = body.children
     table, = wrapper.children
     assert body.width == 1000
-    assert wrapper.margin_width() == 1000
-    assert wrapper.width == 800  # 1000 - 2*100, no borders or padding
-    assert table.margin_width() == 800
-    assert table.width == 778  # 800 - 2*10 - 2*1, no margin
+    assert wrapper.width == 600  # Not counting borders or padding
+    assert wrapper.margin_left == 100
+    assert wrapper.margin_right == 300  # To fill the 1000px of the container
+    assert table.margin_width() == 600
+    assert table.width == 578  # 600 - 2*10 - 2*1, no margin
     # box-sizing in the UA stylesheet  makes `height: 500px` set this
     assert table.border_height() == 500
     assert table.height == 478  # 500 - 2*10 - 2*1
