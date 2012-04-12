@@ -15,6 +15,7 @@ from __future__ import division, unicode_literals
 from ..compat import xrange
 from ..logger import LOGGER
 from ..formatting_structure import boxes
+from ..css.properties import Dimension
 from .percentages import resolve_percentages, resolve_one_percentage
 from .preferred import table_and_columns_preferred_widths
 
@@ -374,6 +375,20 @@ def auto_table_layout(box, containing_block):
                 for (preferred_column_width, column_width)
                 in zip(column_preferred_widths,
                        column_preferred_minimum_widths)]
+
+
+def table_wrapper_width(wrapper, containing_block):
+    """Find the width of each column and derive the wrapper width."""
+    table = wrapper.get_wrapped_table()
+    resolve_percentages(table, containing_block)
+
+    if table.style.table_layout == 'fixed' and table.width != 'auto':
+        fixed_table_layout(wrapper)
+    else:
+        auto_table_layout(wrapper, containing_block)
+
+    wrapper.width = table.border_width()
+    wrapper.style.width = Dimension(wrapper.width, 'px')
 
 
 def cell_baseline(cell):

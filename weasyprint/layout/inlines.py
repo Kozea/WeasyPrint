@@ -18,7 +18,7 @@ import cairo
 from .markers import image_marker_layout
 from .percentages import resolve_percentages, resolve_one_percentage
 from .preferred import shrink_to_fit
-from .tables import find_in_flow_baseline
+from .tables import find_in_flow_baseline, table_wrapper_width
 from ..text import TextFragment
 from ..formatting_structure import boxes
 from ..css.computed_values import used_line_height
@@ -389,6 +389,8 @@ def atomic_box(document, box, position_x, skip_stack, containing_block,
             inline_replaced_box_layout(box, containing_block, device_size)
         box.baseline = box.margin_height()
     elif isinstance(box, boxes.InlineBlockBox):
+        if box.is_table_wrapper:
+            table_wrapper_width(box, containing_block)
         box = inline_block_box_layout(
             document, box, position_x, skip_stack, containing_block,
             device_size)

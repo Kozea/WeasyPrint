@@ -469,6 +469,38 @@ def test_inline_block_sizes():
 
 
 @assert_no_logs
+def test_inline_table():
+    """Test the inline-block elements sizes."""
+    page, = parse('''
+        <table style="display: inline-table; border-spacing: 10px;
+                      margin: 5px">
+            <tr>
+                <td><img src=pattern.png style="width: 20px"></td>
+                <td><img src=pattern.png style="width: 30px"></td>
+            </tr>
+        </table>
+        foo
+    ''')
+    html, = page.children
+    body, = html.children
+    line, = body.children
+    table_wrapper, text = line.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2 = row.children
+    assert table_wrapper.position_x == 0
+    assert table.position_x == 5  # 0 + margin-left
+    assert td_1.position_x == 15  # 0 + border-spacing
+    assert td_1.width == 20
+    assert td_2.position_x == 45  # 10 + 20 + border-spacing
+    assert td_2.width == 30
+    assert table.width == 80  # 20 + 30 + 3 * border-spacing
+    assert table_wrapper.margin_width() == 90  # 80 + 2 * margin
+    assert text.position_x == 90
+
+
+@assert_no_logs
 def test_lists():
     """Test the lists."""
     page, = parse('''

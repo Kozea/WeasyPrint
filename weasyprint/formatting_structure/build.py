@@ -391,8 +391,7 @@ def table_boxes_children(box, children):
         )
     ]
 
-    if isinstance(box, boxes.TableBox) or \
-            isinstance(box, boxes.InlineTableBox):
+    if isinstance(box, boxes.TableBox):
         # Rule 2.1
         children = wrap_improper(box, children, boxes.TableRowBox,
             lambda child: child.proper_table_child)
@@ -524,9 +523,7 @@ def wrap_table(box, children):
     table = box.copy_with_children(row_groups)
     table.column_groups = tuple(column_groups)
 
-    # TODO: re-enable this once we support inline-block layout.
-    if False:  # isinstance(box, boxes.InlineTableBox):
-        # XXX disabled
+    if isinstance(box, boxes.InlineTableBox):
         wrapper_type = boxes.InlineBlockBox
     else:
         wrapper_type = boxes.BlockBox

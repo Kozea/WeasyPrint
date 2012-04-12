@@ -16,10 +16,9 @@ from .inlines import (iter_line_boxes, replaced_box_width, replaced_box_height,
                       handle_min_max_width, min_max_replaced_height,
                       min_max_auto_replaced)
 from .markers import list_marker_layout
-from .tables import table_layout, fixed_table_layout, auto_table_layout
+from .tables import table_layout, table_wrapper_width
 from .percentages import resolve_percentages
 from ..formatting_structure import boxes
-from ..css.properties import Dimension
 
 
 def block_level_layout(document, box, max_position_y, skip_stack,
@@ -37,13 +36,10 @@ def block_level_layout(document, box, max_position_y, skip_stack,
                             containing_block, device_size, page_is_empty)
     elif isinstance(box, boxes.BlockBox):
         if box.is_table_wrapper:
-            return block_table_wrapper(document, box, max_position_y,
-                skip_stack, containing_block, device_size, page_is_empty,
-                adjoining_margins)
-        else:
-            return block_box_layout(document, box, max_position_y, skip_stack,
-                containing_block, device_size, page_is_empty,
-                adjoining_margins)
+            table_wrapper_width(box, containing_block)
+        return block_box_layout(document, box, max_position_y, skip_stack,
+            containing_block, device_size, page_is_empty,
+            adjoining_margins)
     elif isinstance(box, boxes.BlockReplacedBox):
         box = block_replaced_box_layout(
             box, containing_block, device_size)
@@ -377,26 +373,6 @@ def block_container_layout(document, box, max_position_y, skip_stack,
         new_box.reset_spacing('bottom')
 
     return new_box, resume_at, next_page, adjoining_margins, collapsing_through
-
-
-def block_table_wrapper(document, wrapper, max_position_y, skip_stack,
-                        containing_block, device_size, page_is_empty,
-                        adjoining_margins):
-    """Layout for the wrapper of a block-level table wrapper."""
-    table = wrapper.get_wrapped_table()
-
-    resolve_percentages(table, containing_block)
-
-    if table.style.table_layout == 'fixed' and table.width != 'auto':
-        fixed_table_layout(wrapper)
-    else:
-        auto_table_layout(wrapper, containing_block)
-
-    wrapper.width = table.border_width()
-    wrapper.style.width = Dimension(wrapper.width, 'px')
-    return block_box_layout(document, wrapper, max_position_y, skip_stack,
-                            containing_block, device_size, page_is_empty,
-                            adjoining_margins)
 
 
 def collapse_margin(adjoining_margins):
