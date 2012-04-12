@@ -385,22 +385,12 @@ def block_table_wrapper(document, wrapper, max_position_y, skip_stack,
     """Layout for the wrapper of a block-level table wrapper."""
     table = wrapper.get_wrapped_table()
 
-    resolve_percentages(wrapper, containing_block)
     resolve_percentages(table, containing_block)
 
-    # Count the wrapper margins in case of `width: auto`
-    table.margin_left = wrapper.margin_left
-    table.margin_right = wrapper.margin_right
-
     if table.style.table_layout == 'fixed' and table.width != 'auto':
-        block_level_width(table, containing_block)
         fixed_table_layout(wrapper)
     else:
         auto_table_layout(wrapper, containing_block)
-
-    # The table margins are on the table wrapper box, not on the table box
-    table.margin_left = 0
-    table.margin_right = 0
 
     wrapper.width = table.border_width()
     wrapper.style.width = Dimension(wrapper.width, 'px')
