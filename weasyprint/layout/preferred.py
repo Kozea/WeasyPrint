@@ -115,7 +115,7 @@ def adjust(box, outer, width):
 
     fixed += box.style.border_left_width + box.style.border_right_width
 
-    if percentages < 1:
+    if percentages < 100:
         return fixed / (1 - percentages / 100.)
     else:
         # Pathological case, ignore
