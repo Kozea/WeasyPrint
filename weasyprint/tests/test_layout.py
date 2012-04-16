@@ -470,7 +470,7 @@ def test_inline_block_sizes():
 
 @assert_no_logs
 def test_inline_table():
-    """Test the inline-block elements sizes."""
+    """Test the inline-table elements sizes."""
     page, = parse('''
         <table style="display: inline-table; border-spacing: 10px;
                       margin: 5px">
@@ -493,11 +493,127 @@ def test_inline_table():
     assert table.position_x == 5  # 0 + margin-left
     assert td_1.position_x == 15  # 0 + border-spacing
     assert td_1.width == 20
-    assert td_2.position_x == 45  # 10 + 20 + border-spacing
+    assert td_2.position_x == 45  # 15 + 20 + border-spacing
     assert td_2.width == 30
     assert table.width == 80  # 20 + 30 + 3 * border-spacing
     assert table_wrapper.margin_width() == 90  # 80 + 2 * margin
     assert text.position_x == 90
+
+
+@assert_no_logs
+def test_fixed_layout_table():
+    """Test the fixed layout table elements sizes."""
+    page, = parse('''
+        <table style="table-layout: fixed; border-spacing: 10px;
+                      margin: 5px">
+            <colgroup>
+              <col style="width: 20px" />
+            </colgroup>
+            <tr>
+                <td></td>
+                <td style="width: 40px">a</td>
+            </tr>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2 = row.children
+    assert table_wrapper.position_x == 0
+    assert table.position_x == 5  # 0 + margin-left
+    assert td_1.position_x == 15  # 0 + border-spacing
+    assert td_1.width == 20
+    assert td_2.position_x == 45  # 15 + 20 + border-spacing
+    assert td_2.width == 40
+    assert table.width == 90  # 20 + 40 + 3 * border-spacing
+
+    page, = parse('''
+        <table style="table-layout: fixed; border-spacing: 10px;
+                      width: 200px; margin: 5px">
+            <tr>
+                <td style="width: 20px">a</td>
+                <td style="width: 40px"></td>
+            </tr>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2 = row.children
+    assert table_wrapper.position_x == 0
+    assert table.position_x == 5  # 0 + margin-left
+    assert td_1.position_x == 15  # 5 + border-spacing
+    assert td_1.width == 75  # 20 + ((200 - 20 - 40 - 3 * border-spacing) / 2)
+    assert td_2.position_x == 100  # 15 + 75 + border-spacing
+    assert td_2.width == 95  # 40 + ((200 - 20 - 40 - 3 * border-spacing) / 2)
+    assert table.width == 200
+
+    page, = parse('''
+        <table style="table-layout: fixed; border-spacing: 10px;
+                      width: 110px; margin: 5px">
+            <tr>
+                <td style="width: 40px">a</td>
+                <td>b</td>
+            </tr>
+            <tr>
+                <td style="width: 50px">a</td>
+                <td style="width: 30px">b</td>
+            </tr>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row_1, row_2 = row_group.children
+    td_1, td_2 = row_1.children
+    td_3, td_4 = row_2.children
+    assert table_wrapper.position_x == 0
+    assert table.position_x == 5  # 0 + margin-left
+    assert td_1.position_x == 15  # 0 + border-spacing
+    assert td_3.position_x == 15
+    assert td_1.width == 40
+    assert td_2.width == 40
+    assert td_2.position_x == 65  # 15 + 40 + border-spacing
+    assert td_4.position_x == 65
+    assert td_3.width == 40
+    assert td_4.width == 40
+    assert table.width == 110  # 20 + 40 + 3 * border-spacing
+
+    page, = parse('''
+        <table style="table-layout: fixed; border-spacing: 0;
+                      width: 100px; margin: 10px">
+            <colgroup>
+              <col />
+              <col style="width: 20px" />
+            </colgroup>
+            <tr>
+                <td></td>
+                <td style="width: 40px">a</td>
+            </tr>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2 = row.children
+    assert table_wrapper.position_x == 0
+    assert table.position_x == 10  # 0 + margin-left
+    assert td_1.position_x == 10
+    assert td_1.width == 80  # 100 - 20
+    assert td_2.position_x == 90  # 10 + 80
+    assert td_2.width == 20
+    assert table.width == 100
 
 
 @assert_no_logs
