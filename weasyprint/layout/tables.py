@@ -300,9 +300,10 @@ def fixed_table_layout(box):
                     columns_without_width.append(j)
                 else:
                     width -= column_widths[j]
-            width_per_column = width / len(columns_without_width)
-            for j in columns_without_width:
-                column_widths[j] = width_per_column
+            if columns_without_width:
+                width_per_column = width / len(columns_without_width)
+                for j in columns_without_width:
+                    column_widths[j] = width_per_column
         i += cell.colspan
 
     # Distribute the remaining space equally on columns that do not have
