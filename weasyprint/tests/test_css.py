@@ -287,8 +287,10 @@ def test_page():
 def test_warnings():
     """Check that appropriate warnings are logged."""
     for source, messages in [
-        ('<style>:link { margin: 2cm',
-            ['WARNING: Parse error', 'pseudo-class', 'unsupported']),
+        ('<style>:lipsum { margin: 2cm',
+            ['WARNING: Invalid or unsupported selector']),
+        ('<style>::lipsum { margin: 2cm',
+            ['WARNING: Invalid or unsupported selector']),
         ('<style>@page foo { margin: 2cm',
             ['WARNING: Named pages are not supported yet']),
         ('<link rel=stylesheet href=data:image/png,>',

@@ -26,8 +26,9 @@ REQUIREMENTS = [
         # Keep this in sync with the "install" documentation
         'lxml',
         'pystacia',
-        'tinycss',
-        'CairoSVG>=0.3',
+        'tinycss>=0.2',
+        'cssselect>=0.6',
+        'CairoSVG>=0.4.1',
         # Not installable by pip:
         #  Pango>=1.29.3
         #  PyGObject

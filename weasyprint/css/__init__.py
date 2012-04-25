@@ -45,8 +45,8 @@ from __future__ import division, unicode_literals
 import re
 
 import tinycss
-from tinycss.selectors3 import STYLE_ATTRIBUTE_SPECIFICITY
-from lxml import cssselect
+import cssselect
+import lxml.etree
 
 from . import properties
 from . import computed_values
@@ -57,12 +57,11 @@ from ..compat import iteritems, urljoin
 from .. import CSS
 
 
-PARSER = tinycss.make_parser(with_selectors3=True, with_page3=True)
+PARSER = tinycss.make_parser('page3')
 
 
-# Pseudo-classes and pseudo-elements are the same to lxml.cssselect.parse().
-# List the identifiers for all CSS3 pseudo elements here to distinguish them.
-PSEUDO_ELEMENTS = ('before', 'after', 'first-line', 'first-letter')
+# Reject anything not in here:
+PSEUDO_ELEMENTS = (None, 'before', 'after', 'first-line', 'first-letter')
 
 # Selectors for @page rules can have a pseudo-class, one of :first, :left
 # or :right. This maps pseudo-classes to lists of "page types" selected.
@@ -327,13 +326,11 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None):
         element, pseudo_type, specified, computed, parent_style)
 
 
-class PageSelector(object):
-    """Mimic the API of :class:`tinycss.selectors3.Selector`"""
-
-    def __init__(self, specificity, pseudo_element, matched):
+class Selector(object):
+    def __init__(self, specificity, pseudo_element, match):
         self.specificity = specificity
         self.pseudo_element = pseudo_element
-        self.match = lambda _document: matched
+        self.match = match
 
 
 def preprocess_stylesheet(medium, base_url, rules):
@@ -341,12 +338,31 @@ def preprocess_stylesheet(medium, base_url, rules):
     in a document.
 
     """
+    selector_to_xpath = cssselect.HTMLTranslator().selector_to_xpath
     for rule in rules:
         if not rule.at_keyword:
             declarations = list(preprocess_declarations(
                 base_url, rule.declarations))
             if declarations:
-                yield rule, rule.selector_list, declarations
+                selector_string = rule.selector.as_css()
+                try:
+                    selector_list = [
+                        Selector(
+                            (0,) + selector.specificity(),
+                            selector.pseudo_element,
+                            lxml.etree.XPath(selector_to_xpath(selector)))
+                        for selector in cssselect.parse(selector_string)
+                    ]
+                    for selector in selector_list:
+                        if selector.pseudo_element not in PSEUDO_ELEMENTS:
+                            raise cssselect.ExpressionError(
+                                'Unknown pseudo-element: %s'
+                                % selector.pseudo_element)
+                except cssselect.SelectorError as exc:
+                    LOGGER.warn("Invalid or unsupported selector '%s', %s",
+                                selector_string, exc)
+                    continue
+                yield rule, selector_list, declarations
 
         elif rule.at_keyword == '@import':
             if not evaluate_media_query(rule.media, medium):
@@ -363,27 +379,30 @@ def preprocess_stylesheet(medium, base_url, rules):
 
         elif rule.at_keyword == '@page':
             page_name, pseudo_class = rule.selector
-            page_types = PAGE_PSEUDOCLASS_TARGETS[pseudo_class]
             # TODO: support named pages (see CSS3 Paged Media)
             if page_name is not None:
                 LOGGER.warn('Named pages are not supported yet, the whole '
                             '@page %s rule was ignored.', page_name + (
                                 ':' + pseudo_class if pseudo_class else ''))
                 continue
-            specificity = rule.specificity
-
             declarations = list(preprocess_declarations(
                 base_url, rule.declarations))
+
+            # The double lambda to have a closure that holds page_types
+            match = (lambda page_types: lambda _document: page_types)(
+                PAGE_PSEUDOCLASS_TARGETS[pseudo_class])
+            specificity = rule.specificity
+
             if declarations:
-                selector_list = [PageSelector(specificity, None, page_types)]
+                selector_list = [Selector(specificity, None, match)]
                 yield rule, selector_list, declarations
 
             for margin_rule in rule.at_rules:
                 declarations = list(preprocess_declarations(
                     base_url, margin_rule.declarations))
                 if declarations:
-                    selector_list = [PageSelector(
-                        specificity, margin_rule.at_keyword, page_types)]
+                    selector_list = [Selector(
+                        specificity, margin_rule.at_keyword, match)]
                     yield margin_rule, selector_list, declarations
 
 
@@ -432,7 +451,7 @@ def get_all_computed_styles(document, medium,
                                 cascaded_styles, name, values, weight,
                                 element, pseudo_type)
 
-    specificity = STYLE_ATTRIBUTE_SPECIFICITY
+    specificity = (1, 0, 0, 0)
     for element, declarations, base_url in find_style_attributes(document):
         for name, values, importance in preprocess_declarations(
                 base_url, declarations):
