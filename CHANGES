@@ -1,13 +1,17 @@
 Version 0.8, released on 2012-XX-XX
 ===================================
 
-* Switch from cssutils to tinycss as the CSS parser.
+* Switch from cssutils to tinycss_ as the CSS parser.
+* Switch to the new cssselect_, almost all level 3 selectors are supported now.
 * Great speed improvements, in part thanks to tinycss.
 * Support for inline blocks and inline tables
 * Automatic table layout (column widths)
 * Support for the ``min-width``, ``max-width``, ``min-height`` and
   ``max-height`` properties, except on table-related and page-related boxes.
 * Many bug fixes
+
+.. _tinycss: http://packages.python.org/tinycss/
+.. _cssselect: http://packages.python.org/cssselect/
 
 
 Version 0.7.1, released on 2012-03-21
