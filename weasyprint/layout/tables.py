@@ -43,18 +43,11 @@ def table_layout(document, table, max_position_y, skip_stack,
         position_x += width
     rows_width = position_x - rows_x
 
-    if skip_stack is None:
-        skip = 0
-    else:
-        skip, skip_stack = skip_stack
-
-    resume_at = None
-
-    # Layout for row groups, rows and cells
-    position_y = table.content_box_y() + border_spacing_y
-    initial_position_y = position_y
-    new_table_children = []
-    for index_group, group in table.enumerate_skip(skip):
+    # Make this a sub-function so that many local variables like rows_x
+    # need not be passed as parameters.
+    def group_layout(group, position_y, max_position_y,
+                     page_is_empty, skip_stack):
+        resume_at = None
         resolve_percentages(group, containing_block=table)
         group.position_x = rows_x
         group.position_y = position_y
@@ -168,47 +161,156 @@ def table_layout(document, table, max_position_y, skip_stack,
             next_position_y = position_y + row.height + border_spacing_y
             # Break if this row overflows the page, unless there is no
             # other content on the page.
-            if next_position_y > max_position_y and (
-                    new_table_children or new_group_children
-                    or not page_is_empty):
+            if next_position_y > max_position_y and not page_is_empty:
                 resume_at = (index_row, None)
                 break
 
             position_y = next_position_y
             new_group_children.append(row)
-
-        skip_stack = None
-
-        if resume_at and group.style.page_break_inside == 'avoid':
-            resume_at = (index_group, None)
-            break
+            page_is_empty = False
 
         # Do not keep the row group if we made a page break
-        # before any of its rows.
-        if not (group.children and not new_group_children):
-            group = group.copy_with_children(new_group_children)
-            new_table_children.append(group)
+        # before any of its rows or with 'avoid'
+        if resume_at and (group.style.page_break_inside == 'avoid'
+                          or not new_group_children):
+            return None, None
 
-            # Set missing baselines in a second loop because of rowspan
-            for row in group.children:
-                if row.baseline is None:
-                    if row.children:
-                        # lowest bottom content edge
-                        row.baseline = max(
-                            cell.content_box_y() + cell.height
-                            for cell in row.children) - row.position_y
-                    else:
-                        row.baseline = 0
-            group.height = position_y - group.position_y
-            if group.children:
-                # The last border spacing is outside of the group.
-                group.height -= border_spacing_y
+        group = group.copy_with_children(new_group_children)
 
-        if resume_at:
-            resume_at = (index_group, resume_at)
-            break
+        # Set missing baselines in a second loop because of rowspan
+        for row in group.children:
+            if row.baseline is None:
+                if row.children:
+                    # lowest bottom content edge
+                    row.baseline = max(
+                        cell.content_box_y() + cell.height
+                        for cell in row.children) - row.position_y
+                else:
+                    row.baseline = 0
+        group.height = position_y - group.position_y
+        if group.children:
+            # The last border spacing is outside of the group.
+            group.height -= border_spacing_y
 
-    table = table.copy_with_children(new_table_children)
+        return group, resume_at
+
+    def body_groups_layout(skip_stack, position_y, max_position_y,
+                           page_is_empty):
+        if skip_stack is None:
+            skip = 0
+        else:
+            skip, skip_stack = skip_stack
+        new_table_children = []
+        resume_at = None
+        for index_group, group in table.enumerate_skip(skip):
+            if group.is_header or group.is_footer:
+                continue
+            new_group, resume_at = group_layout(
+                group, position_y, max_position_y, page_is_empty, skip_stack)
+            skip_stack = None
+
+            if new_group is None:
+                resume_at = (index_group, None)
+                break
+
+            new_table_children.append(new_group)
+            position_y += new_group.height + border_spacing_y
+            page_is_empty = False
+
+            if resume_at:
+                resume_at = (index_group, resume_at)
+                break
+
+        return new_table_children, resume_at, position_y
+
+
+    # Layout for row groups, rows and cells
+    position_y = table.content_box_y() + border_spacing_y
+    initial_position_y = position_y
+
+    def all_groups_layout():
+        if table.children and table.children[0].is_header:
+            header = table.children[0]
+            header, resume_at = group_layout(
+                header, position_y, max_position_y,
+                skip_stack=None, page_is_empty=False)
+            if header and not resume_at:
+                header_height = header.height + border_spacing_y
+            else:  # Header too big for the page
+                header = None
+        else:
+            header = None
+
+        if table.children and table.children[-1].is_footer:
+            footer = table.children[-1]
+            footer, resume_at = group_layout(
+                footer, position_y, max_position_y,
+                skip_stack=None, page_is_empty=False)
+            if footer and not resume_at:
+                footer_height = footer.height + border_spacing_y
+            else:  # Footer too big for the page
+                footer = None
+        else:
+            footer = None
+
+        if header and footer:
+            # Try with both the header and footer
+            new_table_children, resume_at, end_position_y = body_groups_layout(
+                skip_stack,
+                position_y=position_y + header_height,
+                max_position_y=max_position_y - footer_height,
+                page_is_empty=False)
+            if new_table_children or not page_is_empty:
+                footer.translate(dy=end_position_y - footer.position_y)
+                end_position_y += footer_height
+                return (header, new_table_children, footer,
+                        end_position_y, resume_at)
+            else:
+                # We could not fit any content, drop the footer
+                footer = None
+
+        if header and not footer:
+            # Try with just the header
+            new_table_children, resume_at, end_position_y = body_groups_layout(
+                skip_stack,
+                position_y=position_y + header_height,
+                max_position_y=max_position_y,
+                page_is_empty=False)
+            if new_table_children or not page_is_empty:
+                return (header, new_table_children, footer,
+                        end_position_y, resume_at)
+            else:
+                # We could not fit any content, drop the footer
+                header = None
+
+        if footer and not header:
+            # Try with just the footer
+            new_table_children, resume_at, end_position_y = body_groups_layout(
+                skip_stack,
+                position_y=position_y,
+                max_position_y=max_position_y - footer_height,
+                page_is_empty=False)
+            if new_table_children or not page_is_empty:
+                footer.translate(dy=end_position_y - footer.position_y)
+                end_position_y += footer_height
+                return (header, new_table_children, footer,
+                        end_position_y, resume_at)
+            else:
+                # We could not fit any content, drop the footer
+                footer = None
+
+        assert not (header or footer)
+        new_table_children, resume_at, end_position_y = body_groups_layout(
+            skip_stack, position_y, max_position_y, page_is_empty)
+        return header, new_table_children, footer, end_position_y, resume_at
+
+
+    header, new_table_children, footer, position_y, resume_at = \
+        all_groups_layout()
+    table = table.copy_with_children(
+        ([header] if header is not None else []) +
+        new_table_children +
+        ([footer] if footer is not None else []))
 
     # If the height property has a bigger value, just add blank space
     # below the last row group.
@@ -237,7 +339,8 @@ def table_layout(document, table, max_position_y, skip_stack,
         group.height = columns_height
 
     if resume_at and not page_is_empty and (
-            table.style.page_break_inside == 'avoid'):
+            table.style.page_break_inside == 'avoid'
+            or not new_table_children):
         table = None
         resume_at = None
     next_page = 'any'

@@ -454,8 +454,8 @@ class TableRowGroupBox(ParentBox):
     proper_parents = (TableBox, InlineTableBox)
 
     # Default values. May be overriden on instances.
-    header_group = False
-    footer_group = False
+    is_header = False
+    is_footer = False
 
 
 class TableRowBox(ParentBox):

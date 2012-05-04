@@ -1091,6 +1091,56 @@ def test_table_page_breaks():
     assert rows_per_page == [1, 2]
     assert rows_position_y == [30, 0, 40]
 
+    pages = parse('''
+        <style>
+            @page { -weasy-size: 100px }
+        </style>
+        <h1 style="margin: 0; height: 30px">Lipsum</h1>
+        <!-- Leave 70px on the first page: enough for the header or row1
+             but not both.  -->
+        <table style="border-spacing: 0; font-size: 5px">
+            <thead>
+                <tr><td style="height: 20px">Header</td></tr>
+            </thead>
+            <tbody>
+                <tr><td style="height: 60px">Row 1</td></tr>
+                <tr><td style="height: 10px">Row 2</td></tr>
+                <tr><td style="height: 50px">Row 3</td></tr>
+                <tr><td style="height: 61px">Row 4</td></tr>
+                <tr><td style="height: 90px">Row 5</td></tr>
+            </tbody>
+            <tfoot>
+                <tr><td style="height: 20px">Footer</td></tr>
+            </tfoot>
+        </table>
+    ''')
+    rows_per_page = []
+    for i, page in enumerate(pages):
+        groups = []
+        html, = page.children
+        body, = html.children
+        table_wrapper, = body.children
+        if i == 0:
+            assert table_wrapper.element_tag == 'h1'
+        else:
+            table, = table_wrapper.children
+            for group in table.children:
+                assert group.children, 'found an empty table group'
+                rows = []
+                for row in group.children:
+                    cell, = row.children
+                    line, = cell.children
+                    text, = line.children
+                    rows.append(text.text)
+                groups.append(rows)
+        rows_per_page.append(groups)
+    assert rows_per_page == [
+        [],
+        [['Header'], ['Row 1'], ['Footer']],
+        [['Header'], ['Row 2', 'Row 3'], ['Footer']],
+        [['Header'], ['Row 4']],
+        [['Row 5']]
+    ]
 
 
 @assert_no_logs

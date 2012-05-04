@@ -474,10 +474,10 @@ def wrap_table(box, children):
     for group in wrap_improper(box, rows, boxes.TableRowGroupBox):
         display = group.style.display
         if display == 'table-header-group' and header is None:
-            group.header_group = True
+            group.is_header = True
             header = group
         elif display == 'table-footer-group' and footer is None:
-            group.footer_group = True
+            group.is_footer = True
             footer = group
         else:
             body_row_groups.append(group)
