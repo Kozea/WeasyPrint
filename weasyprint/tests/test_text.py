@@ -35,7 +35,7 @@ def make_text(text, width=-1, **style):
 @assert_no_logs
 def test_line_content():
     """Test the line break for various fixed-width lines."""
-    for width, remaining in [(90, 'text for test'),
+    for width, remaining in [(120, 'text for test'),
                              (45, 'is a text for test')]:
         text = 'This is a text for test'
         line = make_text(
@@ -71,7 +71,7 @@ def test_line_breaking():
     _, _, _, _, _, resume_at = line.split_first_line()
     assert string[resume_at:] == 'is a text for test'
 
-    line = make_text(string, 90, font_family=FONTS, font_size=19)
+    line = make_text(string, 120, font_family=FONTS, font_size=19)
     _, _, _, _, _, resume_at = line.split_first_line()
     assert string[resume_at:] == 'text for test'
 
