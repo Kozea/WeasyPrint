@@ -63,7 +63,7 @@ setup(
     ],
     packages=find_packages(),
     package_data={
-        'weasyprint.tests': ['resources/*'],
+        'weasyprint.tests': ['resources/*.*', 'resources/*/*'],
         'weasyprint.css': ['*.css']},
     zip_safe=False,
     install_requires=REQUIREMENTS,

@@ -1,4 +1,4 @@
-include weasyprint/tests/resources/*
+recursive-include weasyprint/tests/resources *
 include weasyprint/css/*.css
 include CHANGES
 include LICENSE
