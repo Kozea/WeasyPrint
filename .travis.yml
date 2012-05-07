@@ -1,0 +1,34 @@
+branches:
+  except:
+    - website
+
+language: python
+
+python:
+  - "2.6"
+  - "2.7"
+  - "3.2"
+
+before_install:
+
+ # Tests require cairo 1.12
+ - yes | sudo add-apt-repository ppa:ricotz/testing
+ - sudo apt-get -q update
+
+ # See http://weasyprint.org/install/
+ - sudo apt-get -qy install
+    gir1.2-pango-1.0 imagemagick libcairo2 libcairo-gobject2
+    python-lxml  python-cairo  python-gobject  python-gobject-cairo
+    python3-lxml python3-cairo
+
+ # There is no python3-gobject-cairo in Ubuntu 11.10...
+ - sudo sed -i s/oneiric/precise/ /etc/apt/sources.list
+ - sudo apt-get -q update
+
+ - sudo apt-get -qy install python3-gi python3-gi-cairo
+
+install:
+  - rm $VIRTUAL_ENV/lib/*/no-global-site-packages.txt
+  - pip install --use-mirrors .
+
+script: py.test
