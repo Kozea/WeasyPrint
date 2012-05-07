@@ -617,6 +617,346 @@ def test_fixed_layout_table():
 
 
 @assert_no_logs
+def test_auto_layout_table():
+    """Test the auto layout table elements sizes."""
+    page, = parse('''
+        <table style="border-spacing: 10px; margin: 5px">
+            <tr>
+                <td><img src=pattern.png></td>
+                <td><img src=pattern.png></td>
+            </tr>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2 = row.children
+    assert table_wrapper.position_x == 0
+    assert table.position_x == 5  # 0 + margin-left
+    assert td_1.position_x == 15  # 5 + spacing
+    assert td_1.width == 4
+    assert td_2.position_x == 29  # 15 + 4 + spacing
+    assert td_2.width == 4
+    assert table.width == 38  # 3 * spacing + 2 * 4
+
+    page, = parse('''
+        <table style="border-spacing: 1px; margin: 5px">
+            <tr>
+                <td style="border: 3px solid black"><img src=pattern.png></td>
+                <td style="border: 3px solid black">
+                    <img src=pattern.png><img src=pattern.png>
+                </td>
+            </tr>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2 = row.children
+    assert table_wrapper.position_x == 0
+    assert table.position_x == 5  # 0 + margin-left
+    assert td_1.position_x == 6  # 5 + border-spacing
+    assert td_1.width == 4
+    assert td_2.position_x == 17  # 6 + 4 + spacing + 2 * border
+    assert td_2.width == 8
+    assert table.width == 27  # 3 * spacing + 4 + 8 + 4 * border
+
+    page, = parse('''
+        <table style="border-spacing: 1px; margin: 5px">
+            <tr>
+                <td></td>
+                <td><img src=pattern.png><img src=pattern.png></td>
+            </tr>
+            <tr>
+                <td>
+                    <img src=pattern.png>
+                    <img src=pattern.png>
+                    <img src=pattern.png>
+                </td>
+                <td><img src=pattern.png></td>
+            </tr>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row1, row2 = row_group.children
+    td_11, td_12 = row1.children
+    td_21, td_22 = row2.children
+    assert table_wrapper.position_x == 0
+    assert table.position_x == 5  # 0 + margin-left
+    assert td_11.position_x == td_21.position_x == 6  # 5 + spacing
+    assert td_11.width == td_21.width == 12
+    assert td_12.position_x == td_22.position_x == 19  # 6 + 12 + spacing
+    assert td_12.width == td_22.width == 8
+    assert table.width == 23  # 3 * spacing + 12 + 8
+
+    page, = parse('''
+        <table style="border-spacing: 1px; margin: 5px">
+            <tr>
+                <td style="border: 1px solid black"><img src=pattern.png></td>
+                <td style="border: 2px solid black; padding: 1px">
+                    <img src=pattern.png>
+                </td>
+            </tr>
+            <tr>
+                <td style="border: 5px solid black"><img src=pattern.png></td>
+                <td><img src=pattern.png></td>
+            </tr>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row1, row2 = row_group.children
+    td_11, td_12 = row1.children
+    td_21, td_22 = row2.children
+    assert table_wrapper.position_x == 0
+    assert table.position_x == 5  # 0 + margin-left
+    assert td_11.position_x == td_21.position_x == 6  # 5 + spacing
+    assert td_11.width == 12  # 4 + 2 * 5 - 2 * 1
+    assert td_21.width == 4
+    assert td_12.position_x == td_22.position_x == 21  # 6 + 4 + 2 * b1 + sp
+    assert td_12.width == 4
+    assert td_22.width == 10  # 4 + 2 * 3
+    assert table.width == 27  # 3 * spacing + 4 + 4 + 2 * b1 + 2 * b2
+
+    page, = parse('''
+        <style>
+            @page { -weasy-size: 100px 1000px; }
+        </style>
+        <table style="border-spacing: 1px; margin-right: 79px; font-size: 0">
+            <tr>
+                <td><img src=pattern.png></td>
+                <td>
+                    <img src=pattern.png> <img src=pattern.png>
+                    <img src=pattern.png> <img src=pattern.png>
+                    <img src=pattern.png> <img src=pattern.png>
+                    <img src=pattern.png> <img src=pattern.png>
+                    <img src=pattern.png>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+            </tr>
+        </table>
+    ''')
+    # Preferred minimum width is 2 * 4 + 3 * 1 = 11
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row1, row2 = row_group.children
+    td_11, td_12 = row1.children
+    td_21, = row2.children
+    assert table_wrapper.position_x == 0
+    assert table.position_x == 0
+    assert td_11.position_x == td_21.position_x == 1  # spacing
+    assert td_11.width == td_21.width == 5  # 4 + (width - pmw) * 1 / 10
+    assert td_12.position_x == 7  # 1 + 5 + sp
+    assert td_12.width == 13  # 4 + (width - pmw) * 9 / 10
+    assert table.width == 21
+
+    page, = parse('''
+        <table style="border-spacing: 10px; margin: 5px">
+            <colgroup>
+              <col style="width: 20px" />
+            </colgroup>
+            <tr>
+                <td></td>
+                <td style="width: 40px">a</td>
+            </tr>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2 = row.children
+    assert table_wrapper.position_x == 0
+    assert table.position_x == 5  # 0 + margin-left
+    assert td_1.position_x == 15  # 0 + border-spacing
+    assert td_1.width == 20
+    assert td_2.position_x == 45  # 15 + 20 + border-spacing
+    assert td_2.width == 40
+    assert table.width == 90  # 20 + 40 + 3 * border-spacing
+
+    page, = parse('''
+        <table style="border-spacing: 10px; width: 120px; margin: 5px;
+                      font-size: 0">
+            <tr>
+                <td style="width: 20px"><img src=pattern.png></td>
+                <td><img src=pattern.png style="width: 40px"></td>
+            </tr>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2 = row.children
+    assert table_wrapper.position_x == 0
+    assert table.position_x == 5  # 0 + margin-left
+    assert td_1.position_x == 15  # 5 + border-spacing
+    assert td_1.width == 30  # 20 + ((120 - 20 - 40 - 3 * sp) * 1 / 3)
+    assert td_2.position_x == 55  # 15 + 30 + border-spacing
+    assert td_2.width == 60  # 40 + ((120 - 20 - 40 - 3 * sp) * 2 / 3)
+    assert table.width == 120
+
+    page, = parse('''
+        <table style="border-spacing: 10px; width: 110px; margin: 5px">
+            <tr>
+                <td style="width: 60px"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td style="width: 50px"></td>
+                <td style="width: 30px"></td>
+            </tr>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row_1, row_2 = row_group.children
+    td_1, td_2 = row_1.children
+    td_3, td_4 = row_2.children
+    assert table_wrapper.position_x == 0
+    assert table.position_x == 5  # 0 + margin-left
+    assert td_1.position_x == 15  # 0 + border-spacing
+    assert td_3.position_x == 15
+    assert td_1.width == 60
+    assert td_2.width == 30
+    assert td_2.position_x == 85  # 15 + 60 + border-spacing
+    assert td_4.position_x == 85
+    assert td_3.width == 60
+    assert td_4.width == 30
+    assert table.width == 120  # 60 + 30 + 3 * border-spacing
+
+    page, = parse('''
+        <table style="border-spacing: 0; width: 14px; margin: 10px">
+            <colgroup>
+              <col />
+              <col style="width: 6px" />
+            </colgroup>
+            <tr>
+                <td><img src=pattern.png><img src=pattern.png></td>
+                <td style="width: 8px"></td>
+            </tr>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2 = row.children
+    assert table_wrapper.position_x == 0
+    assert table.position_x == 10  # 0 + margin-left
+    assert td_1.position_x == 10
+    assert td_1.width == 5  # 4 + ((14 - 4 - 8) * 8 / 16)
+    assert td_2.position_x == 15  # 10 + 5
+    assert td_2.width == 9  # 8 + ((14 - 4 - 8) * 8 / 16)
+    assert table.width == 14
+
+    page, = parse('''
+        <table style="border-spacing: 0">
+            <tr>
+                <td style="width: 10px"></td>
+                <td colspan="3"></td>
+            </tr>
+            <tr>
+                <td colspan="2" style="width: 22px"></td>
+                <td style="width: 8px"></td>
+                <td style="width: 8px"></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+                <td colspan="2"></td>
+            </tr>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row1, row2, row3 = row_group.children
+    td_11, td_12 = row1.children
+    td_21, td_22, td_23 = row2.children
+    td_31, td_32, td_33 = row3.children
+    assert table_wrapper.position_x == 0
+    assert table.position_x == 0
+    assert td_11.width == 16  # 10 + (22 - 10) / 2
+    assert td_12.width == 22  # (0 + (22 - 10) / 2) + 8 + 8
+    assert td_21.width == 22
+    assert td_22.width == 8
+    assert td_23.width == 8
+    assert td_31.width == 16
+    assert td_32.width == 6
+    assert td_33.width == 16
+    assert table.width == 38
+
+    page, = parse('''
+        <table style="border-spacing: 10px">
+            <tr>
+                <td style="width: 10px"></td>
+                <td colspan="3"></td>
+            </tr>
+            <tr>
+                <td colspan="2" style="width: 32px"></td>
+                <td style="width: 8px"></td>
+                <td style="width: 8px"></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+                <td colspan="2"></td>
+            </tr>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row1, row2, row3 = row_group.children
+    td_11, td_12 = row1.children
+    td_21, td_22, td_23 = row2.children
+    td_31, td_32, td_33 = row3.children
+    assert table_wrapper.position_x == 0
+    assert table.position_x == 0
+    assert td_11.width == 16  # 10 + (22 - 10) / 2
+    assert td_12.width == 42  # (0 + (22 - 10) / 2) + 8 + 8
+    assert td_21.width == 32
+    assert td_22.width == 8
+    assert td_23.width == 8
+    assert td_31.width == 16
+    assert td_32.width == 6
+    assert td_33.width == 26
+    assert table.width == 88
+
+
+@assert_no_logs
 def test_lists():
     """Test the lists."""
     page, = parse('''
@@ -2080,7 +2420,7 @@ def test_table_column_width():
     assert wrapper.content_box_x() == 5000  # auto margin-left
     assert wrapper.width == 10000
     assert table.position_x == 5000
-    assert table.width  == 10000
+    assert table.width == 10000
     assert row_group.position_x == 5100  # 5000 + border_spacing
     assert row_group.width == 9800  # 10000 - 2*border-spacing
     assert first_row.position_x == row_group.position_x

@@ -453,32 +453,43 @@ def auto_table_layout(box, containing_block):
      column_preferred_minimum_widths, column_preferred_widths) = \
         table_and_columns_preferred_widths(box, resolved_table_width=True)
 
-    table_maximum_width = max(
-        containing_block.width, table_preferred_minimum_width)
+    all_border_spacing = (
+        table.style.border_spacing[0] * (len(column_preferred_widths) + 1))
 
-    # First of all, we have to get a grid with cells inside
-    # TODO: handle the border spacings
-    table.width = min(table_preferred_width, table_maximum_width)
+    # TODO: handle percentages
+    margins = 0
+    if box.style.margin_left.unit != '%':
+        margins += box.style.margin_left.value
+    if box.style.margin_right.unit != '%':
+        margins += box.style.margin_right.value
 
-    # TODO: find a better algorithm
-    if table_preferred_width == table.width:
-        # Preferred width fits in the containing block
-        table.column_widths = column_preferred_widths
+    available_width = containing_block.width - margins
+    if table.width == 'auto':
+        if available_width < table_preferred_minimum_width:
+            table.width = table_preferred_minimum_width
+            table.column_widths = column_preferred_minimum_widths
+        elif available_width < table_preferred_width:
+            table.width = available_width
+            table.column_widths = column_preferred_minimum_widths
+        else:
+            table.width = table_preferred_width
+            table.column_widths = column_preferred_widths
     else:
-        # Preferred width is too large for the containing block
-        # Use the minimum widths and add the lost space to the columns
-        # according to their preferred widths
-        table.column_widths = column_preferred_minimum_widths
-        lost_width = (
-            min(containing_block.width, table_preferred_width) -
-            table_preferred_minimum_width)
-        if lost_width > 0:
-            table.column_widths = [
-                (column_width + lost_width *
-                 preferred_column_width / table_preferred_width)
-                for (preferred_column_width, column_width)
-                in zip(column_preferred_widths,
-                       column_preferred_minimum_widths)]
+        if table.width < table_preferred_minimum_width:
+            table.width = table_preferred_minimum_width
+            table.column_widths = column_preferred_minimum_widths
+        elif table.width < table_preferred_width:
+            table.column_widths = column_preferred_minimum_widths
+        else:
+            table.column_widths = column_preferred_widths
+
+    lost_width = table.width - sum(table.column_widths) - all_border_spacing
+    if lost_width > 0:
+        table.column_widths = [
+            (column_width + lost_width * preferred_column_width /
+             sum(column_preferred_widths))
+            for (preferred_column_width, column_width)
+            in zip(column_preferred_widths, table.column_widths)]
 
 
 def table_wrapper_width(wrapper, containing_block):

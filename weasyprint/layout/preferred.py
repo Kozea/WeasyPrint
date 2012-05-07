@@ -260,7 +260,9 @@ def table_and_columns_preferred_widths(box, outer=True,
         column_slice = slice(cell.grid_x, cell.grid_x + cell.colspan)
 
         # TODO: when border-collapse: collapse; set outer=False
-        cell_width = preferred_width(cell)
+        cell_width = (
+            preferred_width(cell) -
+            table.style.border_spacing[0] * (cell.colspan - 1))
         columns_width = sum(column_preferred_widths[column_slice])
         if cell_width > columns_width:
             added_space = (cell_width - columns_width) / cell.colspan
@@ -268,7 +270,9 @@ def table_and_columns_preferred_widths(box, outer=True,
                 column_preferred_widths[i] += added_space
 
         # TODO: when border-collapse: collapse; set outer=False
-        cell_minimum_width = preferred_minimum_width(cell)
+        cell_minimum_width = (
+            preferred_minimum_width(cell) -
+            table.style.border_spacing[0] * (cell.colspan - 1))
         columns_minimum_width = sum(
             column_preferred_minimum_widths[column_slice])
         if cell_minimum_width > columns_minimum_width:
