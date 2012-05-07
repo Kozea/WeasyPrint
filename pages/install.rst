@@ -32,7 +32,7 @@ WeasyPrint has been packaged for some Linux distributions:
 
 
 For other distributions or if you want to install it yourself,
-WeasyPrint 0.7 depends on:
+WeasyPrint 0.8 depends on:
 
 .. Note: keep this in sync with setup.py
 
@@ -42,8 +42,9 @@ WeasyPrint 0.7 depends on:
 * pycairo
 * lxml
 * Pystacia
-* cssutils >= 0.9.9
-* CairoSVG >= 0.3
+* tinycss >= 0.2
+* cssselect >= 0.6
+* CairoSVG >= 0.4.1
 
 We recommend that you install Pango, PyGObject, pycairo, lxml and ImageMagick
 (used by Pystacia) with your distribution’s packages.
@@ -52,9 +53,9 @@ For example, on Debian Wheezy or Ubuntu 12.04:
 
 .. code-block:: sh
 
-    sudo apt-get install gir1.2-pango-1.0 python-gobject python-cairo python-gi-cairo python-lxml imagemagick
+    sudo apt-get install gir1.2-pango-1.0 python-gi python-cairo python-gi-cairo python-lxml imagemagick
 
-On Ubuntu 11.10, ``python-gi-cairo`` is named ``python-gobject-cairo`` instead:
+On Ubuntu 11.10, ``python-gi`` is named ``python-gobject`` instead:
 
 .. code-block:: sh
 

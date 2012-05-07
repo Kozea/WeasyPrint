@@ -1,0 +1,19 @@
+WeasyPrint 0.8, tinycss and cssselect
+-------------------------------------
+
+Some `new features`_ as usual. The big one is *automatic layout* for tables.
+Roughly, columns will get their width determined by the amount of content.
+
+Other important but more underlying changes are tinycss_ and cssselect_.
+tinycss is a new CSS parser I wrote from scratch as a smaller and faster
+alternative to cssutils_. You can `read more about it`_ on my blog.
+As to cssselect, I took over its maintenance after extracting it from lxml_.
+It now supports most Level 3 selectors and can be extended more easily.
+
+
+.. _new features: https://github.com/Kozea/WeasyPrint/blob/master/CHANGES
+.. _tinycss: http://packages.python.org/tinycss/
+.. _cssselect: http://packages.python.org/cssselect/
+.. _cssutils: http://packages.python.org/cssutils/
+.. _lxml: http://lxml.de/
+.. _read more about it: http://exyr.org/2012/tinycss-css-parser/

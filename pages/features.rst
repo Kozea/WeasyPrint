@@ -9,7 +9,7 @@ Documentation
 Features
 ~~~~~~~~
 
-WeasyPrint 0.7 supports:
+WeasyPrint 0.8 supports:
 
 (For older versions, see the changelog_.)
 
@@ -76,23 +76,16 @@ use any experimental feature!
 Missing CSS 3 selectors
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Selectors in WeasyPrint are based on lxml.cssselect_ and share some of its
-limitations. (But not all: there is special support for pseudo-elements.
-``:before`` and ``:after`` *are* supported.)
+Selectors in WeasyPrint are based on cssselect_ and share its limitations.
+Namely:
 
-.. _lxml.cssselect: http://lxml.de/cssselect.html
-
-Some pseudo-classes and pseudo-elements are not supported:
-
-* ``:root`` `should be`_ in the next lxml release
-* ``:first-line`` and ``:first-letter``
-* ``:lang(language)``
-* Link state: ``:link`` and ``:visited``
-* Actions: ``:hover``, ``:active``, ``:focus`` and ``:target``
-* UI state: ``:enabled`` and ``:disabled``
 * ``*:first-of-type``, ``*:last-of-type``, ``*:nth-of-type``,
-  ``*:nth-last-of-type``, ``*:only-of-type``.
-  All of these work when you specify an element type, but not with ``*``
+  ``*:nth-last-of-type`` and ``*:only-of-type`` are not supported.
+  They work when you specify an element type but parse as invalid with ``*``.
+* ``:hover``, ``:active``, ``:focus``, ``:target`` and ``:visited``
+  are accepted but never match anything.
+
+.. _cssselect: http://packages.python.org/cssselect/
 
 
 Missing CSS 2.1 features
@@ -109,10 +102,9 @@ Some CSS 2.1 features are not supported yet but are on the *to do* list:
 
 * Floats_
 * Absolute_, fixed_ and relative_ positioning and z-index_
-* `Inline blocks`_ and `inline tables`_
-* `Automatic table layout`_, table `border collapsing`_ and the
-  `empty-cells`_ property.
-* Minimum and maximum width_ and height_
+* Table `border collapsing`_ and the `empty-cells`_ property.
+* Minimum and maximum width_ and height_ on table-related and page-related
+  boxes
 * Avoiding `page breaks`_ before or after an element
   (avoiding **inside** is supported)
 * `Vertical align`_ ``top`` and ``bottom`` (they are interpreted as
@@ -133,8 +125,6 @@ Others are not planned for now:
 .. _z-index: http://www.w3.org/TR/CSS21/visuren.html#layers
 .. _relative: http://www.w3.org/TR/CSS21/visuren.html#relative-positioning
 .. _Automatic table layout: http://www.w3.org/TR/CSS21/tables.html#auto-table-layout
-.. _Inline blocks: http://www.w3.org/TR/CSS21/visuren.html#value-def-inline-block
-.. _inline tables: http://www.w3.org/TR/CSS21/tables.html#value-def-inline-table
 .. _border collapsing: http://www.w3.org/TR/CSS21/tables.html#collapsing-borders
 .. _empty-cells: http://www.w3.org/TR/CSS21/tables.html#empty-cells
 .. _width: http://www.w3.org/TR/CSS21/visudet.html#min-max-widths
