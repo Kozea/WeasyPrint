@@ -172,7 +172,7 @@ def compute_variable_dimension(document, side_boxes, vertical, outer_sum):
     """
     box_class = VerticalBox if vertical else HorizontalBox
     side_boxes = [box_class(box) for box in side_boxes]
-    box_a, box_b, box_c =  side_boxes
+    box_a, box_b, box_c = side_boxes
 
     num_auto_margins = sum(
         value == 'auto'  # boolean as int
