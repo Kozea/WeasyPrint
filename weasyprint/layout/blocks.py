@@ -151,6 +151,38 @@ def block_level_width(box, containing_block):
         box.margin_right = margin_sum - margin_l
 
 
+def relative_positioning(box, containing_block):
+    """Translate the ``box`` if it is relatively positioned."""
+    if box.style.position == 'relative':
+        resolve_one_percentage(box, 'left', containing_block.width)
+        resolve_one_percentage(box, 'right', containing_block.width)
+        resolve_one_percentage(box, 'top', containing_block.height)
+        resolve_one_percentage(box, 'bottom', containing_block.height)
+
+        if box.left != 'auto' and box.right != 'auto':
+            # TODO: handle bidi
+            translate_x = box.left
+        elif box.left != 'auto':
+            translate_x = box.left
+        elif box.right != 'auto':
+            translate_x = -box.right
+        else:
+            translate_x = 0
+
+        if box.top != 'auto':
+            translate_y = box.top
+        elif box.style.bottom != 'auto':
+            translate_y = -box.bottom
+        else:
+            translate_y = 0
+
+        box.translate(translate_x, translate_y)
+
+    if isinstance(box, (boxes.InlineBox, boxes.LineBox)):
+        for child in box.children:
+            relative_positioning(child, containing_block)
+
+
 def block_container_layout(document, box, max_position_y, skip_stack,
                        device_size, page_is_empty, adjoining_margins=None):
     """Set the ``box`` height."""
@@ -364,30 +396,7 @@ def block_container_layout(document, box, max_position_y, skip_stack,
         new_box.min_height)
 
     for child in new_box.children:
-        if child.style.position == 'relative':
-            resolve_one_percentage(child, 'left', new_box.width)
-            resolve_one_percentage(child, 'right', new_box.width)
-            resolve_one_percentage(child, 'top', new_box.height)
-            resolve_one_percentage(child, 'bottom', new_box.height)
-
-            if child.left != 'auto' and child.right != 'auto':
-                # TODO: handle bidi
-                translate_x = child.left
-            elif child.left != 'auto':
-                translate_x = child.left
-            elif child.right != 'auto':
-                translate_x = -child.right
-            else:
-                translate_x = 0
-
-            if child.top != 'auto':
-                translate_y = child.top
-            elif child.style.bottom != 'auto':
-                translate_y = -child.bottom
-            else:
-                translate_y = 0
-
-            child.translate(translate_x, translate_y)
+        relative_positioning(child, new_box)
 
     if resume_at is not None:
         # If there was a list marker, we kept it on `new_box`.

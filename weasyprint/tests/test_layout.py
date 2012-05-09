@@ -3408,3 +3408,74 @@ def test_margin_collapsing():
         p1_top = p1.content_box_y()
         # Vertical space from y=0
         return p1_top
+
+
+@assert_no_logs
+def test_relative_positioning():
+    page, = parse('''
+        <style>
+          p { height: 20px }
+        </style>
+        <p>1</p>
+        <div style="position: relative; top: 10px">
+            <p>2</p>
+            <p style="position: relative; top: -5px; left: 5px">3</p>
+            <p>4</p>
+            <p style="position: relative; bottom: 5px; right: 5px">5</p>
+            <p style="position: relative">6</p>
+            <p>7</p>
+        </div>
+        <p>8</p>
+    ''')
+    html, = page.children
+    body, = html.children
+    p1, div, p8 = body.children
+    p2, p3, p4, p5, p6, p7 = div.children
+    assert (p1.position_x, p1.position_y) == (0, 0)
+    assert (div.position_x, div.position_y) == (0, 30)
+    assert (p2.position_x, p2.position_y) == (0, 30)
+    assert (p3.position_x, p3.position_y) == (5, 45)  # (0 + 5, 50 - 5)
+    assert (p4.position_x, p4.position_y) == (0, 70)
+    assert (p5.position_x, p5.position_y) == (-5, 85)  # (0 - 5, 90 - 5)
+    assert (p6.position_x, p6.position_y) == (0, 110)
+    assert (p7.position_x, p7.position_y) == (0, 130)
+    assert (p8.position_x, p8.position_y) == (0, 140)
+    assert div.height == 120
+
+    page, = parse('''
+        <style>
+          img { width: 20px }
+          body { font-size: 0 } /* Remove spaces */
+        </style>
+        <body>
+        <span><img src=pattern.png></span>
+        <span style="position: relative; left: 10px">
+            <img src=pattern.png>
+            <img src=pattern.png
+                 style="position: relative; left: -5px; top: 5px">
+            <img src=pattern.png>
+            <img src=pattern.png
+                 style="position: relative; right: 5px; bottom: 5px">
+            <img src=pattern.png style="position: relative">
+            <img src=pattern.png>
+        </span>
+        <span><img src=pattern.png></span>
+    ''')
+    html, = page.children
+    body, = html.children
+    line, = body.children
+    span1, span2, span3 = line.children
+    img1, = span1.children
+    img2, img3, img4, img5, img6, img7 = span2.children
+    img8, = span3.children
+    assert (img1.position_x, img1.position_y) == (0, 0)
+    # Don't test the span2.position_y because it depends on fonts
+    assert span2.position_x == 30
+    assert (img2.position_x, img2.position_y) == (30, 0)
+    assert (img3.position_x, img3.position_y) == (45, 5)  # (50 - 5, y + 5)
+    assert (img4.position_x, img4.position_y) == (70, 0)
+    assert (img5.position_x, img5.position_y) == (85, -5)  # (90 - 5, y - 5)
+    assert (img6.position_x, img6.position_y) == (110, 0)
+    assert (img7.position_x, img7.position_y) == (130, 0)
+    assert (img8.position_x, img8.position_y) == (140, 0)
+    assert span2.width == 120
