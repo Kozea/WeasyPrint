@@ -100,23 +100,13 @@ def monkeypatch_validation(replacement):
         validation.validate_non_shorthand = real_non_shorthand
 
 
-def validate_inline_block(real_non_shorthand, base_url, name, values,
-                          required=False):
-    """Fake validator for inline blocks."""
-    if name == 'display' and values[0].value == 'inline-block':
-        return [(name, 'inline-block')]
-    return real_non_shorthand(base_url, name, values, required)
-
-
 def parse(html_content):
     """Parse some HTML, apply stylesheets and transform to boxes."""
-    # TODO: remove this patching when inline-block is validated.
-    with monkeypatch_validation(validate_inline_block):
-        document = TestPNGDocument(html_content,
-            # Dummy filename, but in the right directory.
-            base_url=resource_filename('<test>'))
-        box, = build.dom_to_box(document, document.dom)
-        return box
+    document = TestPNGDocument(html_content,
+        # Dummy filename, but in the right directory.
+        base_url=resource_filename('<test>'))
+    box, = build.dom_to_box(document, document.dom)
+    return box
 
 
 def parse_all(html_content):
