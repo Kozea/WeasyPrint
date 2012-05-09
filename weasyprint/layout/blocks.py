@@ -17,7 +17,7 @@ from .inlines import (iter_line_boxes, replaced_box_width, replaced_box_height,
                       min_max_auto_replaced)
 from .markers import list_marker_layout
 from .tables import table_layout, table_wrapper_width
-from .percentages import resolve_percentages
+from .percentages import resolve_percentages, resolve_one_percentage
 from ..formatting_structure import boxes
 
 
@@ -323,7 +323,6 @@ def block_container_layout(document, box, max_position_y, skip_stack,
             and not page_is_empty:
         return None, None, 'any', [], False
 
-
     if collapsing_with_children:
         if new_children and not isinstance(
                 # margins are used for something else on line boxes
@@ -363,6 +362,32 @@ def block_container_layout(document, box, max_position_y, skip_stack,
     new_box.height = max(
         min(new_box.height, new_box.max_height),
         new_box.min_height)
+
+    for child in new_box.children:
+        if child.style.position == 'relative':
+            resolve_one_percentage(child, 'left', new_box.width)
+            resolve_one_percentage(child, 'right', new_box.width)
+            resolve_one_percentage(child, 'top', new_box.height)
+            resolve_one_percentage(child, 'bottom', new_box.height)
+
+            if child.left != 'auto' and child.right != 'auto':
+                # TODO: handle bidi
+                translate_x = child.left
+            elif child.left != 'auto':
+                translate_x = child.left
+            elif child.right != 'auto':
+                translate_x = -child.right
+            else:
+                translate_x = 0
+
+            if child.top != 'auto':
+                translate_y = child.top
+            elif child.style.bottom != 'auto':
+                translate_y = -child.bottom
+            else:
+                translate_y = 0
+
+            child.translate(translate_x, translate_y)
 
     if resume_at is not None:
         # If there was a list marker, we kept it on `new_box`.

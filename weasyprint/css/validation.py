@@ -450,10 +450,10 @@ def counter(tokens, default_integer):
     return results
 
 
-#@validator('top')
-#@validator('right')
-#@validator('left')
-#@validator('bottom')
+@validator('top')
+@validator('right')
+@validator('left')
+@validator('bottom')
 @validator('margin-top')
 @validator('margin-right')
 @validator('margin-bottom')
@@ -672,9 +672,9 @@ def page_break_inside(keyword):
 @single_keyword
 def position(keyword):
     """``position`` property validation."""
-    if keyword in ('relative', 'absolute', 'fixed'):
+    if keyword in ('absolute', 'fixed'):
         raise InvalidValues('value not supported yet')
-    return keyword in ('static',)
+    return keyword in ('static', 'relative')
 
 
 @validator()
