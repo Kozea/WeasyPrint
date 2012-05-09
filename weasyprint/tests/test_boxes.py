@@ -78,6 +78,16 @@ def to_lists(box_tree):
     return serialize(unwrap_html_body(box_tree))
 
 
+def validate_absolute_and_float(
+        real_non_shorthand, base_url, name, values, required=False):
+    """Fake validator for ``absolute`` and ``float``."""
+    value = values[0].value
+    if (name == 'position' and value == 'absolute'
+            ) or (name == 'float' and value == 'left'):
+        return [(name, value)]
+    return real_non_shorthand(base_url, name, values, required)
+
+
 @contextlib.contextmanager
 def monkeypatch_validation(replacement):
     """Create a context manager patching the validation mechanism.
@@ -102,11 +112,12 @@ def monkeypatch_validation(replacement):
 
 def parse(html_content):
     """Parse some HTML, apply stylesheets and transform to boxes."""
-    document = TestPNGDocument(html_content,
-        # Dummy filename, but in the right directory.
-        base_url=resource_filename('<test>'))
-    box, = build.dom_to_box(document, document.dom)
-    return box
+    with monkeypatch_validation(validate_absolute_and_float):
+        document = TestPNGDocument(html_content,
+            # Dummy filename, but in the right directory.
+            base_url=resource_filename('<test>'))
+        box, = build.dom_to_box(document, document.dom)
+        return box
 
 
 def parse_all(html_content):
@@ -222,6 +233,22 @@ def test_inline_in_block():
 
     box = parse(source)
     box = build.inline_in_block(box)
+    assert_tree(box, expected)
+
+    source = '<p>Hello <em style="position:absolute">World</em>!</p>'
+    expected = [
+        ('p', 'Block', [
+            ('p', 'Line', [
+                ('p', 'Text', 'Hello '),
+                ('em', 'Block', [
+                    ('em', 'Line', [
+                        ('em', 'Text', 'World')])]),
+                ('p', 'Text', '!')])])]
+
+    box = parse(source)
+    box = build.inline_in_block(box)
+    assert_tree(box, expected)
+    box = build.block_in_inline(box)
     assert_tree(box, expected)
 
 

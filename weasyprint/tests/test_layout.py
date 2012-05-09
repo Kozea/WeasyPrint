@@ -15,7 +15,7 @@ from __future__ import division, unicode_literals
 
 from .testing_utils import (
     TestPNGDocument, resource_filename, FONTS, assert_no_logs, capture_logs)
-from .test_boxes import monkeypatch_validation
+from .test_boxes import monkeypatch_validation, validate_absolute_and_float
 from ..formatting_structure import boxes
 from ..layout.inlines import split_inline_box
 from ..layout.percentages import resolve_percentages
@@ -34,16 +34,6 @@ def body_children(page):
 def parse_without_layout(html_content):
     """Parse some HTML, apply stylesheets, transform to boxes."""
     return TestPNGDocument(html_content)
-
-
-def validate_absolute_and_float(
-        real_non_shorthand, base_url, name, values, required=False):
-    """Fake validator for ``absolute`` and ``float``."""
-    value = values[0].value
-    if (name == 'position' and value == 'absolute'
-            ) or (name == 'float' and value == 'left'):
-        return [(name, value)]
-    return real_non_shorthand(base_url, name, values, required)
 
 
 def parse(html_content, return_document=False):

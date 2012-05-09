@@ -657,7 +657,9 @@ def inline_in_block(box):
     new_children = []
     for child_box in children:
         assert not isinstance(child_box, boxes.LineBox)
-        if isinstance(child_box, boxes.InlineLevelBox):
+        if new_line_children and not child_box.is_in_normal_flow():
+            new_line_children.append(child_box)
+        elif isinstance(child_box, boxes.InlineLevelBox):
             # Do not append white space at the start of a line:
             # It would be removed during layout.
             if new_line_children or not (
@@ -814,7 +816,8 @@ def _inner_block_in_inline(box, skip_stack=None):
         skip, skip_stack = skip_stack
 
     for index, child in box.enumerate_skip(skip):
-        if isinstance(child, boxes.BlockLevelBox):
+        if isinstance(child, boxes.BlockLevelBox) and \
+                child.is_in_normal_flow():
             assert skip_stack is None  # Should not skip here
             block_level_box = child
             index += 1  # Resume *after* the block
