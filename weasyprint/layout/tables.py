@@ -21,7 +21,7 @@ from .preferred import table_and_columns_preferred_widths
 
 
 def table_layout(document, table, max_position_y, skip_stack,
-                 containing_block, device_size, page_is_empty):
+                 containing_block, device_size, page_is_empty, absolute_boxes):
     """Layout for a table box.
 
     For now only the fixed layout and separate border model are supported.
@@ -103,7 +103,8 @@ def table_layout(document, table, max_position_y, skip_stack,
                     max_position_y=float('inf'),
                     skip_stack=None,
                     device_size=device_size,
-                    page_is_empty=True)
+                    page_is_empty=True,
+                    absolute_boxes=absolute_boxes)
                 if computed_cell_height != 'auto':
                     cell.height = max(cell.height, computed_cell_height)
                 new_row_children.append(cell)
@@ -357,7 +358,7 @@ def add_top_padding(box, extra_padding):
         child.translate(dy=extra_padding)
 
 
-def fixed_table_layout(box):
+def fixed_table_layout(box, absolute_boxes):
     """Run the fixed table layout and return a list of column widths
 
     http://www.w3.org/TR/CSS21/tables.html#fixed-table-layout
@@ -442,7 +443,7 @@ def fixed_table_layout(box):
     table.column_widths = column_widths
 
 
-def auto_table_layout(box, containing_block):
+def auto_table_layout(box, containing_block, absolute_boxes):
     """Run the auto table layout and return a list of column widths.
 
     http://www.w3.org/TR/CSS21/tables.html#auto-table-layout
@@ -492,15 +493,15 @@ def auto_table_layout(box, containing_block):
             in zip(column_preferred_widths, table.column_widths)]
 
 
-def table_wrapper_width(wrapper, containing_block):
+def table_wrapper_width(wrapper, containing_block, absolute_boxes):
     """Find the width of each column and derive the wrapper width."""
     table = wrapper.get_wrapped_table()
     resolve_percentages(table, containing_block)
 
     if table.style.table_layout == 'fixed' and table.width != 'auto':
-        fixed_table_layout(wrapper)
+        fixed_table_layout(wrapper, absolute_boxes)
     else:
-        auto_table_layout(wrapper, containing_block)
+        auto_table_layout(wrapper, containing_block, absolute_boxes)
 
     wrapper.width = table.border_width()
     wrapper.style.width = Dimension(wrapper.width, 'px')

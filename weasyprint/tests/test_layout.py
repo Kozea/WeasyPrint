@@ -15,7 +15,7 @@ from __future__ import division, unicode_literals
 
 from .testing_utils import (
     TestPNGDocument, resource_filename, FONTS, assert_no_logs, capture_logs)
-from .test_boxes import monkeypatch_validation, validate_absolute_and_float
+from .test_boxes import monkeypatch_validation, validate_float
 from ..formatting_structure import boxes
 from ..layout.inlines import split_inline_box
 from ..layout.percentages import resolve_percentages
@@ -39,7 +39,7 @@ def parse_without_layout(html_content):
 def parse(html_content, return_document=False):
     """Parse some HTML, apply stylesheets, transform to boxes and lay out."""
     # TODO: remove this patching when asbolute and floats are validated
-    with monkeypatch_validation(validate_absolute_and_float):
+    with monkeypatch_validation(validate_float):
         document = TestPNGDocument(html_content,
             base_url=resource_filename('<inline HTML>'))
         if return_document:
@@ -1494,8 +1494,9 @@ def test_inlinebox_spliting():
         """Yield the parts of the splitted ``inlinebox`` of given ``width``."""
         skip = None
         while 1:
+            inlinebox.position_y = 0
             box, skip, _ = split_inline_box(
-                document, inlinebox, 0, width, skip, parent, None)
+                document, inlinebox, 0, width, skip, parent, None, [])
             yield box
             if skip is None:
                 break
@@ -1607,8 +1608,9 @@ def test_inlinebox_text_after_spliting():
     parts = []
     skip = None
     while 1:
+        inlinebox.position_y = 0
         box, skip, _ = split_inline_box(
-            document, inlinebox, 0, 100, skip, paragraph, None)
+            document, inlinebox, 0, 100, skip, paragraph, None, [])
         parts.append(box)
         if skip is None:
             break

@@ -78,12 +78,11 @@ def to_lists(box_tree):
     return serialize(unwrap_html_body(box_tree))
 
 
-def validate_absolute_and_float(
+def validate_float(
         real_non_shorthand, base_url, name, values, required=False):
-    """Fake validator for ``absolute`` and ``float``."""
+    """Fake validator for ``float``."""
     value = values[0].value
-    if (name == 'position' and value == 'absolute'
-            ) or (name == 'float' and value == 'left'):
+    if name == 'float' and value == 'left':
         return [(name, value)]
     return real_non_shorthand(base_url, name, values, required)
 
@@ -112,7 +111,7 @@ def monkeypatch_validation(replacement):
 
 def parse(html_content):
     """Parse some HTML, apply stylesheets and transform to boxes."""
-    with monkeypatch_validation(validate_absolute_and_float):
+    with monkeypatch_validation(validate_float):
         document = TestPNGDocument(html_content,
             # Dummy filename, but in the right directory.
             base_url=resource_filename('<test>'))

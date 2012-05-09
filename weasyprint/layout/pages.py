@@ -421,7 +421,8 @@ def margin_box_content_layout(document, page, box):
     box, resume_at, next_page, _, _ = block_container_layout(
         document, box,
         max_position_y=float('inf'), skip_stack=None,
-        device_size=page.style.size, page_is_empty=True)
+        device_size=page.style.size, page_is_empty=True,
+        absolute_boxes=[])
     assert resume_at is None
 
     vertical_align = box.style.vertical_align
@@ -489,7 +490,7 @@ def make_page(document, root_box, page_type, resume_at):
     root_box, resume_at, next_page, _, _ = block_level_layout(
         document, root_box, page_content_bottom, resume_at,
         initial_containing_block, device_size, page_is_empty,
-        adjoining_margins)
+        [], adjoining_margins)
     assert root_box
 
     page = page.copy_with_children([root_box])

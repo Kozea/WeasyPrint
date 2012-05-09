@@ -672,9 +672,9 @@ def page_break_inside(keyword):
 @single_keyword
 def position(keyword):
     """``position`` property validation."""
-    if keyword in ('absolute', 'fixed'):
+    if keyword == 'fixed':
         raise InvalidValues('value not supported yet')
-    return keyword in ('static', 'relative')
+    return keyword in ('static', 'relative', 'absolute')
 
 
 @validator()

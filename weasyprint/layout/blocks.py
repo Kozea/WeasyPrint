@@ -18,12 +18,13 @@ from .inlines import (iter_line_boxes, replaced_box_width, replaced_box_height,
 from .markers import list_marker_layout
 from .tables import table_layout, table_wrapper_width
 from .percentages import resolve_percentages, resolve_one_percentage
+from .preferred import shrink_to_fit
 from ..formatting_structure import boxes
 
 
 def block_level_layout(document, box, max_position_y, skip_stack,
                        containing_block, device_size, page_is_empty,
-                       adjoining_margins=None):
+                       absolute_boxes, adjoining_margins):
     """Lay out the block-level ``box``.
 
     :param max_position_y: the absolute vertical position (as in
@@ -32,17 +33,17 @@ def block_level_layout(document, box, max_position_y, skip_stack,
 
     """
     if isinstance(box, boxes.TableBox):
-        return table_layout(document, box, max_position_y, skip_stack,
-                            containing_block, device_size, page_is_empty)
+        return table_layout(
+            document, box, max_position_y, skip_stack, containing_block,
+            device_size, page_is_empty, absolute_boxes)
     elif isinstance(box, boxes.BlockBox):
         if box.is_table_wrapper:
-            table_wrapper_width(box, containing_block)
+            table_wrapper_width(box, containing_block, absolute_boxes)
         return block_box_layout(document, box, max_position_y, skip_stack,
             containing_block, device_size, page_is_empty,
-            adjoining_margins)
+            absolute_boxes, adjoining_margins)
     elif isinstance(box, boxes.BlockReplacedBox):
-        box = block_replaced_box_layout(
-            box, containing_block, device_size)
+        box = block_replaced_box_layout(box, containing_block, device_size)
         resume_at = None
         next_page = 'any'
         adjoining_margins = []
@@ -54,14 +55,14 @@ def block_level_layout(document, box, max_position_y, skip_stack,
 
 def block_box_layout(document, box, max_position_y, skip_stack,
                      containing_block, device_size, page_is_empty,
-                     adjoining_margins=None):
+                     absolute_boxes, adjoining_margins):
     """Lay out the block ``box``."""
     resolve_percentages(box, containing_block)
     block_level_width(box, containing_block)
     new_box, resume_at, next_page, adjoining_margins, collapsing_through = \
         block_container_layout(
             document, box, max_position_y, skip_stack,
-            device_size, page_is_empty, adjoining_margins)
+            device_size, page_is_empty, absolute_boxes, adjoining_margins)
     list_marker_layout(document, new_box, containing_block)
     return new_box, resume_at, next_page, adjoining_margins, collapsing_through
 
@@ -91,6 +92,147 @@ def block_replaced_box_layout(box, containing_block, device_size):
         min_max_replaced_height(box, device_size)
 
     return box
+
+
+def absolute_layout(box, positioned_ancestor):
+    """Set the width of absolute positioned ``box``."""
+    # These names are waaay too long
+    margin_l = box.margin_left
+    margin_r = box.margin_right
+    margin_t = box.margin_top
+    margin_b = box.margin_bottom
+    padding_l = box.padding_left
+    padding_r = box.padding_right
+    padding_t = box.padding_top
+    padding_b = box.padding_bottom
+    border_l = box.border_left_width
+    border_r = box.border_right_width
+    border_t = box.border_top_width
+    border_b = box.border_bottom_width
+    width = box.width
+    height = box.height
+    left = box.left
+    right = box.right
+    top = box.top
+    bottom = box.bottom
+
+    # 'pa' stands for 'positioned ancestor'
+    pa = positioned_ancestor
+
+    # http://www.w3.org/TR/CSS2/visudet.html#abs-replaced-width
+
+    # TODO: handle bidi
+    paddings_plus_borders_x = padding_l + padding_r + border_l + border_r
+    if left == right == width == 'auto':
+        if margin_l == 'auto':
+            box.margin_left = 0
+        if margin_r == 'auto':
+            box.margin_right = 0
+        available_width = (
+            pa.width - paddings_plus_borders_x -
+            box.margin_left - box.margin_right)
+        box.width = shrink_to_fit(box, available_width)
+    elif left != 'auto' and right != 'auto' and width != 'auto':
+        if margin_l == margin_r == 'auto':
+            if width <= right - left:
+                box.margin_left = box.margin_right = (
+                    right - left - paddings_plus_borders_x -
+                    width / 2)
+            else:
+                box.margin_left = 0
+                box.margin_right = (
+                    right - left - paddings_plus_borders_x - width)
+        elif margin_l == 'auto':
+            box.margin_left = (
+                right - left - paddings_plus_borders_x - width)
+        elif margin_r == 'auto':
+            box.margin_right = (
+                right - left - paddings_plus_borders_x - width)
+        else:
+            box.margin_right = (
+                right - left - paddings_plus_borders_x - width)
+        box.position_x = (
+            pa.position_x + pa.margin_left +
+            pa.border_left_width + left)
+    else:
+        if margin_l == 'auto':
+            box.margin_left = 0
+        if margin_r == 'auto':
+            box.margin_right = 0
+        spacing = paddings_plus_borders_x + box.margin_left + box.margin_right
+        if left == width == 'auto':
+            box.width = shrink_to_fit(box, right - spacing)
+            box.position_x = (
+                pa.position_x + pa.width + pa.margin_left + pa.padding_left +
+                pa.border_left_width - right - box.width -
+                box.margin_left - box.border_left_width - box.padding_left)
+        elif left == right == 'auto':
+            pass  # Keep the static position
+        elif width == right == 'auto':
+            box.width = shrink_to_fit(box, pa.width - spacing - left)
+            box.position_x = (
+                pa.position_x + pa.margin_left +
+                pa.border_left_width + left)
+        elif left == 'auto':
+            box.position_x = right - width - spacing
+        elif width == 'auto':
+            box.width = right - left - spacing
+            box.position_x = (
+                pa.position_x + pa.margin_left +
+                pa.border_left_width + left)
+        elif right == 'auto':
+            box.position_x = (
+                pa.position_x + pa.margin_left +
+                pa.border_left_width + left)
+
+    # http://www.w3.org/TR/CSS2/visudet.html#abs-non-replaced-height
+
+    paddings_plus_borders_y = padding_t + padding_b + border_t + border_b
+    if top == bottom == height == 'auto':
+        pass  # Keep the static position
+    elif top != 'auto' and bottom != 'auto' and width != 'auto':
+        if margin_t == margin_b == 'auto':
+            box.margin_top = box.margin_bottom = (
+                bottom - top - paddings_plus_borders_y -
+                height / 2)
+        elif margin_t == 'auto':
+            box.margin_top = (
+                bottom - top - paddings_plus_borders_y - height)
+        elif margin_b == 'auto':
+            box.margin_bottom = (
+                bottom - top - paddings_plus_borders_y - height)
+        else:
+            box.margin_bottom = (
+                bottom - top - paddings_plus_borders_y - height)
+        box.position_y = (
+            pa.position_y + pa.margin_top + pa.border_top_width + top)
+    else:
+        if margin_t == 'auto':
+            box.margin_top = 0
+        if margin_b == 'auto':
+            box.margin_bottom = 0
+        if top == height == 'auto':
+            box.position_y = (
+                pa.position_y - bottom + pa.margin_top +
+                pa.border_top_width + pa.padding_top + pa.height)
+        elif top == bottom == 'auto':
+            pass  # Keep the static position
+        elif height == bottom == 'auto':
+            box.position_y = (
+                pa.position_y + pa.margin_top + pa.border_top_width +
+                top)
+        elif top == 'auto':
+            box.position_y = (
+                pa.position_y - bottom - pa.margin_bottom -
+                pa.border_bottom_width - pa.padding_bottom - height +
+                pa.height)
+        elif height == 'auto':
+            box.height = bottom - top
+            box.position_y = (
+                pa.position_y + pa.margin_top + pa.border_top_width)
+        elif bottom == 'auto':
+            box.position_y = (
+                pa.position_y + pa.margin_top + pa.border_top_width)
 
 
 @handle_min_max_width
@@ -184,7 +326,8 @@ def relative_positioning(box, containing_block):
 
 
 def block_container_layout(document, box, max_position_y, skip_stack,
-                       device_size, page_is_empty, adjoining_margins=None):
+                           device_size, page_is_empty, absolute_boxes,
+                           adjoining_margins=None):
     """Set the ``box`` height."""
     assert isinstance(box, boxes.BlockContainerBox)
 
@@ -227,12 +370,15 @@ def block_container_layout(document, box, max_position_y, skip_stack,
         skip, skip_stack = skip_stack
 
     for index, child in box.enumerate_skip(skip):
-        if not child.is_in_normal_flow():
-            continue
-
         child.position_x = position_x
         # XXX does not count margins in adjoining_margins:
         child.position_y = position_y
+
+        if not child.is_in_normal_flow():
+            if child.style.position == 'absolute':
+                child.position_y += collapse_margin(adjoining_margins)
+                absolute_boxes.append(child)
+            continue
 
         if isinstance(child, boxes.LineBox):
             assert len(box.children) == 1, (
@@ -243,7 +389,7 @@ def block_container_layout(document, box, max_position_y, skip_stack,
             new_containing_block = box
             lines_iterator = iter_line_boxes(
                 document, child, position_y, skip_stack,
-                new_containing_block, device_size)
+                new_containing_block, device_size, absolute_boxes)
             new_lines = []
             is_page_break = False
             for line, resume_at in lines_iterator:
@@ -301,6 +447,7 @@ def block_container_layout(document, box, max_position_y, skip_stack,
                     document, child, max_position_y, skip_stack,
                     new_containing_block, device_size,
                     page_is_empty and not new_children,
+                    absolute_boxes,
                     adjoining_margins)
             skip_stack = None
 
