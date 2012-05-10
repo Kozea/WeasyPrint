@@ -41,12 +41,19 @@ def absolute_layout(document, box, containing_block):
     top = box.top
     bottom = box.bottom
 
-    # 'cb' stands for 'containing block'
     cb = containing_block
-    cb_x = cb.padding_box_x()
-    cb_y = cb.padding_box_y()
-    cb_width = cb.padding_width()
-    cb_height = cb.padding_height()
+    # TODO: handle inline boxes (point 10.1.4.1)
+    # http://www.w3.org/TR/CSS2/visudet.html#containing-block-details
+    if isinstance(box, boxes.PageBox):
+        cb_x = cb.content_box_x()
+        cb_y = cb.content_box_y()
+        cb_width = cb.padding_width()
+        cb_height = cb.padding_height()
+    else:
+        cb_x = cb.padding_box_x()
+        cb_y = cb.padding_box_y()
+        cb_width = cb.padding_width()
+        cb_height = cb.padding_height()
 
     # http://www.w3.org/TR/CSS2/visudet.html#abs-replaced-width
 
@@ -85,16 +92,17 @@ def absolute_layout(document, box, containing_block):
             box.margin_right = 0
         spacing = paddings_plus_borders_x + box.margin_left + box.margin_right
         if left == width == 'auto':
-            box.width = shrink_to_fit(box, cb.width - spacing - right)
+            box.width = shrink_to_fit(box, cb_width - spacing - right)
             translate_x = cb_width - right - spacing + default_translate_x
             translate_box_width = True
         elif left == right == 'auto':
             pass  # Keep the static position
         elif width == right == 'auto':
-            box.width = shrink_to_fit(box, cb.width - spacing - left)
+            box.width = shrink_to_fit(box, cb_width - spacing - left)
             translate_x = left + default_translate_x
         elif left == 'auto':
-            translate_x = cb_width - right - spacing + default_translate_x - width
+            translate_x = (
+                cb_width - right - spacing + default_translate_x - width)
         elif width == 'auto':
             box.width = cb_width - right - left - spacing
             translate_x = left + default_translate_x
@@ -133,7 +141,8 @@ def absolute_layout(document, box, containing_block):
         elif height == bottom == 'auto':
             translate_y = top + default_translate_y
         elif top == 'auto':
-            translate_y = cb_height + default_translate_y - bottom - spacing - height
+            translate_y = (
+                cb_height + default_translate_y - bottom - spacing - height)
         elif height == 'auto':
             box.height = cb_height - bottom - top - spacing
             translate_y = top + default_translate_y

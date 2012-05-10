@@ -235,7 +235,7 @@ def block_container_layout(document, box, max_position_y, skip_stack,
                 absolute_boxes.append(child)
             continue
 
-        if child.style.position in ('relative', 'fixed'):
+        if child.style.position == 'relative':
             # New containing block, use a new absolute list
             old_absolute_boxes = absolute_boxes
             absolute_boxes = []
@@ -355,7 +355,7 @@ def block_container_layout(document, box, max_position_y, skip_stack,
                 resume_at = (index, resume_at)
                 break
 
-        if child.style.position in ('relative', 'fixed'):
+        if child.style.position == 'relative':
             absolute_boxes = old_absolute_boxes
 
     else:
@@ -408,14 +408,13 @@ def block_container_layout(document, box, max_position_y, skip_stack,
     for child in new_box.children:
         relative_positioning(child, new_box)
 
-    # TODO: don't rely on the html element tag to detect the root box
-    if (new_box.style.position in ('relative', 'fixed')) or new_box.element_tag == 'html':
+    if new_box.style.position == 'relative':
         # New containing block, resolve the layout of the absolute descendants
         # TODO: avoid this (circular import)
         from .absolute import absolute_layout
         for absolute_box in absolute_boxes:
-            absolute_box.new_box = absolute_layout(document, absolute_box, new_box)
-            new_box.children += (absolute_box.new_box,)
+            new_box.children += (
+                absolute_layout(document, absolute_box, new_box),)
 
     if resume_at is not None:
         # If there was a list marker, we kept it on `new_box`.

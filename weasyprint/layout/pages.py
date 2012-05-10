@@ -14,6 +14,7 @@ from __future__ import division, unicode_literals
 
 from ..logger import LOGGER
 from ..formatting_structure import boxes, build
+from .absolute import absolute_layout
 from .blocks import block_level_layout, block_container_layout
 from .percentages import resolve_percentages
 from .preferred import inline_preferred_minimum_width, inline_preferred_width
@@ -487,13 +488,19 @@ def make_page(document, root_box, page_type, resume_at):
     assert isinstance(root_box, boxes.BlockBox)
     page_is_empty = True
     adjoining_margins = []
+    absolute_boxes = []
     root_box, resume_at, next_page, _, _ = block_level_layout(
         document, root_box, page_content_bottom, resume_at,
         initial_containing_block, device_size, page_is_empty,
-        [], adjoining_margins)
+        absolute_boxes, adjoining_margins)
     assert root_box
 
-    page = page.copy_with_children([root_box])
+    children = [root_box]
+
+    for absolute_box in absolute_boxes:
+        children.append(absolute_layout(document, absolute_box, page))
+
+    page = page.copy_with_children(children)
 
     return page, resume_at, next_page
 
