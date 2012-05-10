@@ -18,7 +18,6 @@ import math
 import cairo
 
 from .formatting_structure import boxes
-from .css import computed_values
 
 
 # Map values of the image-rendering property to cairo FILTER values:
@@ -181,7 +180,7 @@ def draw_box_background(document, context, page, box):
     if box is page:
         painting_area = None
     else:
-        painting_area=box_rectangle(box, box.style.background_clip)
+        painting_area = box_rectangle(box, box.style.background_clip)
     draw_background(document, context, box.style, painting_area,
         positioning_area=background_positioning_area(page, box, box.style))
 
@@ -504,6 +503,7 @@ def draw_replacedbox(context, box):
         context.set_source(pattern)
         context.paint()
 
+
 def draw_text(context, textbox):
     """Draw ``textbox`` to a ``cairo.Context`` from ``PangoCairo.Context``."""
     # Pango crashes with font-size: 0
@@ -560,6 +560,7 @@ def apply_2d_transforms(context, box):
                     percentage(translate_y, border_height),
                 )
             else:
+                # TODO: define angle
                 if name == 'skewx':
                     args = (1, 0, math.tan(angle(args)), 1, 0, 0)
                 elif name == 'skewy':
