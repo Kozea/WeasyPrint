@@ -498,7 +498,7 @@ def make_page(document, root_box, page_type, resume_at):
     children = [root_box]
 
     for absolute_box in absolute_boxes:
-        children.append(absolute_layout(document, absolute_box, page))
+        absolute_layout(document, absolute_box, page)
 
     page = page.copy_with_children(children)
 

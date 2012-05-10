@@ -58,7 +58,6 @@ def get_next_linebox(document, linebox, position_y, skip_stack,
                      containing_block, device_size, absolute_boxes):
     """Return ``(line, resume_at)``."""
     position_x = linebox.position_x
-    linebox.position_y = position_y
     max_x = position_x + containing_block.width
     if skip_stack is None:
         # text-indent only at the start of the first line
@@ -70,10 +69,12 @@ def get_next_linebox(document, linebox, position_y, skip_stack,
     if skip_stack == 'continue':
         return None, None
 
+    new_absolute_boxes = []
+
     resolve_percentages(linebox, containing_block)
     line, resume_at, preserved_line_break = split_inline_box(
         document, linebox, position_x, max_x, skip_stack, containing_block,
-        device_size, absolute_boxes)
+        device_size, new_absolute_boxes)
 
     remove_last_whitespace(document, line)
 
@@ -102,6 +103,12 @@ def get_next_linebox(document, linebox, position_y, skip_stack,
     if offset_x != 0 or offset_y != 0:
         # This also translates children
         line.translate(offset_x, offset_y)
+
+    for absolute_box in new_absolute_boxes:
+        absolute_box.position_y = position_y
+
+    absolute_boxes.extend(new_absolute_boxes)
+
     return line, resume_at
 
 
@@ -519,12 +526,10 @@ def split_inline_box(document, box, position_x, max_x, skip_stack,
         if not child.is_in_normal_flow():
             if child.style.position == 'absolute':
                 child.position_x = position_x
-                child.position_y = box.position_y
+                child.position_y = 0
                 absolute_boxes.append(child)
+            children.append(child)
             continue
-        # Will be changed for vertical-align. Used in the child
-        # for absolute grand-children.
-        child.position_y = box.position_y
         new_child, resume_at, preserved = split_inline_level(
             document, child, position_x, max_x, skip_stack,
             containing_block, device_size, absolute_boxes)
@@ -685,6 +690,8 @@ def inline_box_verticality(box, baseline_y):
     max_y = None
     min_y = None
     for child in box.children:
+        if not child.is_in_normal_flow():
+            continue
         vertical_align = child.style.vertical_align
         if vertical_align == 'baseline':
             child_baseline_y = baseline_y

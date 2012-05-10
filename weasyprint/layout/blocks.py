@@ -233,6 +233,7 @@ def block_container_layout(document, box, max_position_y, skip_stack,
             if child.style.position == 'absolute':
                 child.position_y += collapse_margin(adjoining_margins)
                 absolute_boxes.append(child)
+            new_children.append(child)
             continue
 
         if child.style.position == 'relative':
@@ -366,14 +367,9 @@ def block_container_layout(document, box, max_position_y, skip_stack,
         return None, None, 'any', [], False
 
     if collapsing_with_children:
-        if new_children and not isinstance(
-                # margins are used for something else on line boxes
-                new_children[0], boxes.LineBox):
-            border_box_y = new_children[0].border_box_y()
-        else:
-            # this_adjoining_margins contains box.margin_top
-            border_box_y = box.position_y + collapse_margin(
-                this_box_adjoining_margins)
+        # this_adjoining_margins contains box.margin_top
+        border_box_y = box.position_y + collapse_margin(
+            this_box_adjoining_margins)
         box.position_y = border_box_y - box.margin_top
 
     collapsing_through = False
@@ -413,8 +409,7 @@ def block_container_layout(document, box, max_position_y, skip_stack,
         # TODO: avoid this (circular import)
         from .absolute import absolute_layout
         for absolute_box in absolute_boxes:
-            new_box.children += (
-                absolute_layout(document, absolute_box, new_box),)
+            absolute_layout(document, absolute_box, new_box)
 
     if resume_at is not None:
         # If there was a list marker, we kept it on `new_box`.

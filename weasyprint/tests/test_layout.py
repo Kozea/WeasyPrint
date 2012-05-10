@@ -25,10 +25,7 @@ from ..layout.preferred import (inline_preferred_width,
 
 def body_children(page):
     """Take a ``page``  and return its <body>’s children."""
-    html = page.children[0]
-    assert html.style.position != 'absolute'
-    assert all(
-        child.style.position == 'absolute' for child in page.children[1:])
+    html, = page.children
     assert html.element_tag == 'html'
     body, = html.children
     assert body.element_tag == 'body'
@@ -3488,9 +3485,10 @@ def test_absolute_positioning():
                         top: 0"></div>
         </div>
     ''')
-    html, div2, div3, div4 = page.children
+    html, = page.children
     body, = html.children
     div1, = body.children
+    div2, div3, div4 = div1.children
     assert div1.height == 0
     assert (div1.position_x, div1.position_y) == (0, 0)
     assert (div2.width, div2.height) == (20, 20)
@@ -3546,19 +3544,25 @@ def test_absolute_positioning():
             <p style="position: absolute; top: -5px; left: 5px">3</p>
             <p style="margin: 3px">4</p>
             <p style="position: relative; bottom: 5px; left: 5px;
-                      padding: 3px; margin: 7px">
-                <span style="position: absolute; top: -10px; right: 5px;
-                             width: 20px; height: 15px"></span>
+                      padding: 3px; margin: 7px">5
+                <span>
+                  <img src="pattern.png">
+                  <span style="position: absolute"></span>
+                  <span style="position: absolute; top: -10px; right: 5px;
+                               width: 20px; height: 15px"></span>
+                </span>
             </p>
             <p>6</p>
         </div>
         <p>7</p>
     ''')
-    html, p3 = page.children
+    html, = page.children
     body, = html.children
     p1, div, p7 = body.children
-    p2, p4, p5, p6 = div.children
-    span, = p5.children
+    p2, p3, p4, p5, p6 = div.children
+    line, = p5.children
+    span1, = line.children
+    img, span2, span3 = span1.children
     assert (p1.position_x, p1.position_y) == (0, 0)
     assert (div.position_x, div.position_y) == (0, 20)
     assert (p2.position_x, p2.position_y) == (0, 20)
@@ -3568,13 +3572,15 @@ def test_absolute_positioning():
     #      = 40   + 26               - 5         - 3
     #      = 58
     assert (p5.position_x, p5.position_y) == (5, 58)
-    # span x = p5 right - p5 right margin - span width - span right
-    #        = 105      - 7               - 20         - 5
-    #        = 73
-    # span y = p5 y + p5 margin top + span top
-    #        = 58   + 7             + -10
-    #        = 55
-    assert (span.position_x, span.position_y) == (73, 55)
+    assert (img.position_x, img.position_y) == (15, 68)
+    assert (span2.position_x, span2.position_y) == (19, 68)
+    # span3 x = p5 right - p5 right margin - span width - span right
+    #         = 105      - 7               - 20         - 5
+    #         = 73
+    # span3 y = p5 y + p5 margin top + span top
+    #         = 58   + 7             + -10
+    #         = 55
+    assert (span3.position_x, span3.position_y) == (73, 55)
     # p6 y = p4 y + p4 margin height + p5 margin height - margin collapsing
     #      = 40   + 26               + 40               - 3
     #      = 103
