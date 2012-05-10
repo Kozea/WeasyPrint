@@ -35,6 +35,13 @@ def resolve_one_percentage(box, property_name, refer_to):
     setattr(box, property_name, result)
 
 
+def resolve_position_percentages(box, containing_block):
+    resolve_one_percentage(box, 'left', containing_block.width)
+    resolve_one_percentage(box, 'right', containing_block.width)
+    resolve_one_percentage(box, 'top', containing_block.height)
+    resolve_one_percentage(box, 'bottom', containing_block.height)
+
+
 def resolve_percentages(box, containing_block):
     """Set used values as attributes of the box object."""
     if isinstance(containing_block, boxes.Box):
