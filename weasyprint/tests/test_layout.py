@@ -22,9 +22,13 @@ from ..layout.percentages import resolve_percentages
 from ..layout.preferred import (inline_preferred_width,
                                 inline_preferred_minimum_width)
 
+
 def body_children(page):
     """Take a ``page``  and return its <body>’s children."""
-    html, = page.children
+    html = page.children[0]
+    assert html.style.position != 'absolute'
+    assert all(
+        child.style.position == 'absolute' for child in page.children[1:])
     assert html.element_tag == 'html'
     body, = html.children
     assert body.element_tag == 'body'
@@ -3471,3 +3475,109 @@ def test_relative_positioning():
     assert (img7.position_x, img7.position_y) == (130, 0)
     assert (img8.position_x, img8.position_y) == (140, 0)
     assert span2.width == 120
+
+
+@assert_no_logs
+def test_absolute_positioning():
+    page, = parse('''
+        <div style="margin: 3px">
+            <div style="height: 20px; width: 20px; position: absolute"></div>
+            <div style="height: 20px; width: 20px; position: absolute;
+                        left: 0"></div>
+            <div style="height: 20px; width: 20px; position: absolute;
+                        top: 0"></div>
+        </div>
+    ''')
+    html, div2, div3, div4 = page.children
+    body, = html.children
+    div1, = body.children
+    assert div1.height == 0
+    assert (div1.position_x, div1.position_y) == (0, 0)
+    assert (div2.width, div2.height) == (20, 20)
+    assert (div2.position_x, div2.position_y) == (3, 3)
+    assert (div3.width, div3.height) == (20, 20)
+    assert (div3.position_x, div3.position_y) == (0, 3)
+    assert (div4.width, div4.height) == (20, 20)
+    assert (div4.position_x, div4.position_y) == (3, 0)
+
+    page, = parse('''
+        <div style="position: relative; width: 20px">
+            <div style="height: 20px; width: 20px; position: absolute"></div>
+            <div style="height: 20px; width: 20px"></div>
+        </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div1, = body.children
+    div2, div3 = div1.children
+    for div in (div1, div2, div3):
+        assert (div.position_x, div.position_y) == (0, 0)
+        assert (div.width, div.height) == (20, 20)
+
+    page, = parse('''
+        <div style="position: relative; width: 20px; height: 60px;
+                    border: 10px solid; padding-top: 3px; top: 5px; left: 1px">
+            <div style="height: 20px; width: 20px; position: absolute;
+                        bottom: 50%"></div>
+            <div style="height: 20px; width: 20px; position: absolute;
+                        top: 13px"></div>
+        </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div1, = body.children
+    div2, div3 = div1.children
+    assert (div1.position_x, div1.position_y) == (1, 5)
+    assert (div1.width, div1.height) == (20, 60)
+    assert (div1.border_width(), div1.border_height()) == (40, 83)
+    assert (div2.position_x, div2.position_y) == (11, 28)
+    assert (div2.width, div2.height) == (20, 20)
+    assert (div3.position_x, div3.position_y) == (11, 28)
+    assert (div3.width, div3.height) == (20, 20)
+
+    page, = parse('''
+        <style>
+          html { font-size: 0 }
+          p { height: 20px }
+        </style>
+        <p>1</p>
+        <div style="width: 100px">
+            <p>2</p>
+            <p style="position: absolute; top: -5px; left: 5px">3</p>
+            <p style="margin: 3px">4</p>
+            <p style="position: relative; bottom: 5px; left: 5px;
+                      padding: 3px; margin: 7px">
+                <span style="position: absolute; top: -10px; right: 5px;
+                             width: 20px; height: 15px"></span>
+            </p>
+            <p>6</p>
+        </div>
+        <p>7</p>
+    ''')
+    html, p3 = page.children
+    body, = html.children
+    p1, div, p7 = body.children
+    p2, p4, p5, p6 = div.children
+    span, = p5.children
+    assert (p1.position_x, p1.position_y) == (0, 0)
+    assert (div.position_x, div.position_y) == (0, 20)
+    assert (p2.position_x, p2.position_y) == (0, 20)
+    assert (p3.position_x, p3.position_y) == (5, -5)
+    assert (p4.position_x, p4.position_y) == (0, 40)
+    # p5 y = p4 y + p4 margin height - p5 bottom - margin collapsing
+    #      = 40   + 26               - 5         - 3
+    #      = 58
+    assert (p5.position_x, p5.position_y) == (5, 58)
+    # span x = p5 right - p5 right margin - span width - span right
+    #        = 105      - 7               - 20         - 5
+    #        = 73
+    # span y = p5 y + p5 margin top + span top
+    #        = 58   + 7             + -10
+    #        = 55
+    assert (span.position_x, span.position_y) == (73, 55)
+    # p6 y = p4 y + p4 margin height + p5 margin height - margin collapsing
+    #      = 40   + 26               + 40               - 3
+    #      = 103
+    assert (p6.position_x, p6.position_y) == (0, 103)
+    assert (p7.position_x, p7.position_y) == (0, 123)
+    assert div.height == 103

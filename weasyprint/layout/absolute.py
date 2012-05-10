@@ -102,7 +102,7 @@ def absolute_layout(document, box, containing_block):
             translate_x = left + default_translate_x
         elif left == 'auto':
             translate_x = (
-                cb_width - right - spacing + default_translate_x - width)
+                cb_width + default_translate_x - right - spacing - width)
         elif width == 'auto':
             box.width = cb_width - right - left - spacing
             translate_x = left + default_translate_x
