@@ -560,11 +560,10 @@ def apply_2d_transforms(context, box):
                     percentage(translate_y, border_height),
                 )
             else:
-                # TODO: define angle
                 if name == 'skewx':
-                    args = (1, 0, math.tan(angle(args)), 1, 0, 0)
+                    args = (1, 0, math.tan(args), 1, 0, 0)
                 elif name == 'skewy':
-                    args = (1, math.tan(angle(args)), 0, 1, 0, 0)
+                    args = (1, math.tan(args), 0, 1, 0, 0)
                 else:
                     assert name == 'matrix'
                 context.transform(cairo.Matrix(*args))
