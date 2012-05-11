@@ -408,7 +408,7 @@ ol ol { margin-bottom: 0; margin-top: 0; }
 ul ol { margin-bottom: 0; margin-top: 0; }
 
 optgroup { text-indent: 0; }
-option { text-indent: 0; }
+option { text-indent: 0; display: none; } /* Don't display the tag, it's replaced content in dynamic browsers */
 output { unicode-bidi: isolate; }
 output[dir] { unicode-bidi: isolate; }
 p { display: block; margin-bottom: 1em; margin-top: 1em; unicode-bidi: isolate; }
