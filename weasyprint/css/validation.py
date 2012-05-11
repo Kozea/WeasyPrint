@@ -628,6 +628,16 @@ def opacity(token):
         return min(1, max(0, token.value))
 
 
+@validator()
+@single_token
+def z_index(token):
+    """Validation for the ``z-index`` property."""
+    if get_keyword(token) == 'auto':
+        return 'auto'
+    if token.type == 'INTEGER':
+        return token.value
+
+
 @validator('orphans')
 @validator('widows')
 @single_token

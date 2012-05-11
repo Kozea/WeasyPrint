@@ -121,7 +121,8 @@ def draw_stacking_context(document, context, stacking_context):
         # Point 1 is done in draw_page
 
         # Point 2
-        if isinstance(stacking_context.box, (boxes.BlockBox, boxes.MarginBox)):
+        if isinstance(stacking_context.box,
+                      (boxes.BlockBox, boxes.MarginBox, boxes.InlineBlockBox)):
             # The canvas background was removed by set_canvas_background
             draw_box_background_and_border(
                 document, context, stacking_context.page, stacking_context.box)
@@ -624,8 +625,9 @@ def draw_replacedbox(context, box):
 
 
 def draw_inline_level(document, context, page, box):
-    draw_box_background(document, context, page, box)
-    draw_border(context, box)
+    if not isinstance(box, boxes.InlineBlockBox):
+        draw_box_background(document, context, page, box)
+        draw_border(context, box)
     if isinstance(box, (boxes.InlineBox, boxes.LineBox)):
         for child in box.children:
             if isinstance(child, boxes.TextBox):
@@ -637,6 +639,9 @@ def draw_inline_level(document, context, page, box):
         draw_stacking_context(document, context, stacking_context)
     elif isinstance(box, boxes.InlineReplacedBox):
         draw_replacedbox(context, box)
+    elif isinstance(box, boxes.TextBox):
+        # Should only happen for list markers
+        draw_text(context, box)
 
 
 def draw_text(context, textbox):

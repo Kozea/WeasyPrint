@@ -162,11 +162,11 @@ def absolute_layout(document, box, containing_block):
         absolute_boxes=absolute_boxes, adjoining_margins=None)
     box.__dict__ = new_box.__dict__
 
+    for absolute_box in absolute_boxes:
+        absolute_layout(document, absolute_box, new_box)
+
     if translate_box_width:
         translate_x -= new_box.width
     if translate_box_height:
         translate_y -= new_box.height
     new_box.translate(translate_x, translate_y)
-
-    for absolute_box in absolute_boxes:
-        absolute_layout(document, absolute_box, new_box)
