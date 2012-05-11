@@ -18,6 +18,7 @@ import math
 import cairo
 
 from .formatting_structure import boxes
+from .stacking import StackingContext
 
 
 # Map values of the image-rendering property to cairo FILTER values:
@@ -57,75 +58,185 @@ def draw_page(document, page, context):
     The context should be scaled so that lengths are in CSS pixels.
 
     """
-    draw_box(document, context, page, page)
+    stacking_context = StackingContext.from_page(page)
+    draw_box_background(
+        document, context, stacking_context.page, stacking_context.box)
+    draw_canvas_background(document, context, page)
+    draw_stacking_context(document, context, stacking_context)
 
 
-def draw_box(document, context, page, box, parent=None):
-    """Draw a ``box`` on ``context``."""
+def draw_box_background_and_border(document, context, page, box):
+    draw_box_background(document, context, page, box)
+    if isinstance(box, boxes.TableBox):
+        # TODO: handle border-collapse: 'collapse'
+        assert box.style.border_collapse == 'separate'
+        for column_group in box.column_groups:
+            draw_box_background(document, context, page, column_group)
+            for column in column_group.children:
+                draw_box_background(document, context, page, column)
+        for row_group in box.children:
+            draw_box_background(document, context, page, row_group)
+            for row in row_group.children:
+                draw_box_background(document, context, page, row)
+                for cell in row.children:
+                    draw_box_background(document, context, page, cell)
+        for row_group in box.children:
+            for row in row_group.children:
+                for cell in row.children:
+                    draw_border(context, cell)
+    draw_border(context, box)
+
+
+def draw_stacking_context(document, context, stacking_context):
+    """Draw a ``stacking_context`` on ``context``."""
+    # See http://www.w3.org/TR/CSS2/zindex.html
     with context.stacked():
-        apply_2d_transforms(context, box)
+        if stacking_context.box.style.clip:
+            top, right, bottom, left = stacking_context.box.style.clip
+            if top == 'auto':
+                top = 0
+            if right == 'auto':
+                right = 0
+            if bottom == 'auto':
+                bottom = stacking_context.box.border_height()
+            if left == 'auto':
+                left = stacking_context.box.border_width()
+            context.rectangle(
+                stacking_context.box.border_box_x() + right,
+                stacking_context.box.border_box_y() + top,
+                left - right,
+                bottom - top)
+            context.clip()
 
-        if box is not page:
-            if box.style.clip:
-                top, right, bottom, left = box.style.clip
-                if top == 'auto':
-                    top = 0
-                if right == 'auto':
-                    right = 0
-                if bottom == 'auto':
-                    bottom = box.border_height()
-                if left == 'auto':
-                    left = box.border_width()
-                context.rectangle(
-                    box.border_box_x() + right,
-                    box.border_box_y() + top,
-                    left - right,
-                    bottom - top)
-                context.clip()
+        if stacking_context.box.style.overflow != 'visible':
+            context.rectangle(
+                *box_rectangle(stacking_context.box, 'padding-box'))
+            context.clip()
 
-        if box.style.opacity < 1:
+        if stacking_context.box.style.opacity < 1:
             context.push_group()
 
-        if box.style.visibility == 'visible':
-            draw_box_background(document, context, page, box)
-            draw_border(context, box)
+        apply_2d_transforms(context, stacking_context.box)
 
+        # Point 1 is done in draw_page
+
+        # Point 2
+        if isinstance(stacking_context.box, (boxes.BlockBox, boxes.MarginBox)):
+            # The canvas background was removed by set_canvas_background
+            draw_box_background_and_border(
+                document, context, stacking_context.page, stacking_context.box)
+
+        # Point 3
+        for child_context in stacking_context.negative_z_contexts:
+            draw_stacking_context(document, context, child_context)
+
+        # Point 4
+        for box in stacking_context.block_level_boxes:
+            draw_box_background_and_border(
+                document, context, stacking_context.page, box)
+
+        # Point 5
+        for child_context in stacking_context.float_contexts:
+            draw_stacking_context(document, context, child_context)
+
+        # Point 6
+        if isinstance(stacking_context.box, boxes.InlineBox):
+            draw_inline_level(
+                document, context, stacking_context.page, stacking_context.box)
+
+        # Point 7
+        for box in [stacking_context.box] + stacking_context.blocks_and_cells:
             marker_box = getattr(box, 'outside_list_marker', None)
             if marker_box:
-                draw_box(document, context, page, marker_box)
+                draw_inline_level(
+                    document, context, stacking_context.page, marker_box)
 
-            if isinstance(box, boxes.TextBox):
-                draw_text(context, box)
-                return
-
-            if isinstance(box, boxes.ReplacedBox):
+            if isinstance(box, boxes.BlockReplacedBox):
                 draw_replacedbox(context, box)
-
-        if isinstance(box, boxes.TableBox):
-            for child in box.column_groups:
-                draw_box(document, context, page, child)
-
-        # XXX TODO: check the painting order for page boxes
-        if box is page:
-            draw_canvas_background(document, context, page)
-        else:
-            # TODO: find a better way to do this test?
-            if parent is page and not isinstance(box, boxes.MarginBox):
-                overflow_box = page
             else:
-                overflow_box = box
+                for child in box.children:
+                    if isinstance(child, boxes.LineBox):
+                        # TODO: draw inline tables
+                        draw_inline_level(
+                            document, context, stacking_context.page, child)
 
-            if overflow_box.style.overflow == 'hidden':
-                context.rectangle(*box_rectangle(overflow_box, 'padding-box'))
-                context.clip()
+        # Point 8
+        for child_context in stacking_context.zero_z_contexts:
+            draw_stacking_context(document, context, child_context)
 
-        if isinstance(box, boxes.ParentBox):
-            for child in box.children:
-                draw_box(document, context, page, child, parent=box)
+        # Point 9
+        for child_context in stacking_context.positive_z_contexts:
+            draw_stacking_context(document, context, child_context)
 
-        if box.style.opacity < 1:
+        if stacking_context.box.style.opacity < 1:
             context.pop_group_to_source()
-            context.paint_with_alpha(box.style.opacity)
+            context.paint_with_alpha(stacking_context.box.style.opacity)
+
+
+# def draw_box(document, context, page, box, parent=None):
+#     """Draw a ``box`` on ``context``."""
+#     with context.stacked():
+#         if box is not page:
+#             if box.style.clip:
+#                 top, right, bottom, left = box.style.clip
+#                 if top == 'auto':
+#                     top = 0
+#                 if right == 'auto':
+#                     right = 0
+#                 if bottom == 'auto':
+#                     bottom = box.border_height()
+#                 if left == 'auto':
+#                     left = box.border_width()
+#                 context.rectangle(
+#                     box.border_box_x() + right,
+#                     box.border_box_y() + top,
+#                     left - right,
+#                     bottom - top)
+#                 context.clip()
+
+#         if box.style.opacity < 1:
+#             context.push_group()
+
+#         if box.style.visibility == 'visible':
+#             draw_box_background(document, context, page, box)
+#             draw_border(context, box)
+
+#             marker_box = getattr(box, 'outside_list_marker', None)
+#             if marker_box:
+#                 draw_box(document, context, page, marker_box)
+
+#             if isinstance(box, boxes.TextBox):
+#                 draw_text(context, box)
+#                 return
+
+#             if isinstance(box, boxes.ReplacedBox):
+#                 draw_replacedbox(context, box)
+
+#         if isinstance(box, boxes.TableBox):
+#             for child in box.column_groups:
+#                 draw_box(document, context, page, child)
+
+#         # XXX TODO: check the painting order for page boxes
+#         if box is page:
+#             draw_canvas_background(document, context, page)
+#         else:
+#             # TODO: find a better way to do this test?
+#             if parent is page and not isinstance(box, boxes.MarginBox):
+#                 overflow_box = page
+#             else:
+#                 overflow_box = box
+
+#             if overflow_box.style.overflow == 'hidden':
+#                 context.rectangle(*box_rectangle(overflow_box, 'padding-box'))
+#                 context.clip()
+
+#         if isinstance(box, boxes.ParentBox):
+#             for child in box.children:
+#                 draw_box(document, context, page, child, parent=box)
+
+#         if box.style.opacity < 1:
+#             context.pop_group_to_source()
+#             context.paint_with_alpha(box.style.opacity)
 
 
 def box_rectangle(box, which_rectangle):
@@ -177,11 +288,14 @@ def draw_canvas_background(document, context, page):
 
 def draw_box_background(document, context, page, box):
     """Draw the box background color and image to a ``cairo.Context``."""
+    if box.style.visibility == 'hidden':
+        return
     if box is page:
         painting_area = None
     else:
         painting_area = box_rectangle(box, box.style.background_clip)
-    draw_background(document, context, box.style, painting_area,
+    draw_background(
+        document, context, box.style, painting_area,
         positioning_area=background_positioning_area(page, box, box.style))
 
 
@@ -320,6 +434,8 @@ def xy_offset(x, y, offset_x, offset_y, offset):
 
 def draw_border(context, box):
     """Draw the box border to a ``cairo.Context``."""
+    if box.style.visibility == 'hidden':
+        return
     if all(getattr(box, 'border_%s_width' % side) == 0
            for side in ['top', 'right', 'bottom', 'left']):
         # No border, return early.
@@ -486,6 +602,9 @@ def draw_border(context, box):
 
 def draw_replacedbox(context, box):
     """Draw the given :class:`boxes.ReplacedBox` to a ``cairo.context``."""
+    if box.style.visibility == 'hidden':
+        return
+
     x, y = box.padding_box_x(), box.padding_box_y()
     width, height = box.width, box.height
     pattern, intrinsic_width, intrinsic_height = box.replacement
@@ -504,10 +623,29 @@ def draw_replacedbox(context, box):
         context.paint()
 
 
+def draw_inline_level(document, context, page, box):
+    draw_box_background(document, context, page, box)
+    draw_border(context, box)
+    if isinstance(box, (boxes.InlineBox, boxes.LineBox)):
+        for child in box.children:
+            if isinstance(child, boxes.TextBox):
+                draw_text(context, child)
+            else:
+                draw_inline_level(document, context, page, child)
+    elif isinstance(box, boxes.InlineBlockBox):
+        stacking_context = StackingContext.from_box(box, page)
+        draw_stacking_context(document, context, stacking_context)
+    elif isinstance(box, boxes.InlineReplacedBox):
+        draw_replacedbox(context, box)
+
+
 def draw_text(context, textbox):
     """Draw ``textbox`` to a ``cairo.Context`` from ``PangoCairo.Context``."""
     # Pango crashes with font-size: 0
     assert textbox.style.font_size
+
+    if textbox.style.visibility == 'hidden':
+        return
 
     context.move_to(textbox.position_x, textbox.position_y + textbox.baseline)
     context.set_source_rgba(*textbox.style.color)

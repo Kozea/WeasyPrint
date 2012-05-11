@@ -437,7 +437,7 @@ class TableBox(BlockLevelBox, ParentBox):
 
         """
         super(TableBox, self).translate(dx, dy)
-        for child in getattr(self, 'column_groups', []):
+        for child in self.column_groups:
             # TODO: why did we not put these in .children again?
             child.translate(dx, dy)
 

@@ -25,12 +25,16 @@ class StackingContext(object):
     http://www.w3.org/TR/CSS21/zindex.html
 
     """
-    def __init__(self, box, child_contexts, blocks, floats):
-        self.block_boxes = blocks  # 4, 7: In flow, non positioned
-        self.float_boxes = floats  # 5: Non positioned
+    def __init__(self, box, child_contexts, blocks, floats, blocks_and_cells,
+                 page):
+        self.box = box
+        self.page = page
+        self.block_level_boxes = blocks  # 4: In flow, non positioned
+        self.float_contexts = floats  # 5: Non positioned
         self.negative_z_contexts = []  # 3: Child contexts, z-index < 0
         self.zero_z_contexts = []  # 8: Child contexts, z-index = 0
         self.positive_z_contexts = []  # 9: Child contexts, z-index > 0
+        self.blocks_and_cells = blocks_and_cells  # 7: Non positioned
 
         for context in child_contexts:
             if context.z_index < 0:
@@ -52,13 +56,15 @@ class StackingContext(object):
     def from_page(cls, page):
         # Page children (the box for the root element and margin boxes)
         # as well as the page box itself are unconditionally stacking contexts.
-        cls(page, [cls.from_box(child) for child in page.children], [], [])
+        child_contexts = [cls.from_box(child, page) for child in page.children]
+        return cls(page, child_contexts, [], [], [], page)
 
     @classmethod
-    def from_box(cls, box):
+    def from_box(cls, box, page):
         child_contexts = []
         blocks = []
         floats = []
+        blocks_and_cells = []
 
         def dispatch_children(box):
             if not isinstance(box, boxes.ParentBox):
@@ -71,23 +77,30 @@ class StackingContext(object):
                         or child.style.opacity < 1
                         # 'transform: none' gives a "falsy" empty list here
                         or child.style.transform
+                        or child.style.clip
+                        or child.style.overflow != 'visible'
                     ):
                     # This child defines a new stacking context, remove it
                     # from the "normal" children list.
-                    child_contexts.append(StackingContext.from_box(child))
+                    child_contexts.append(
+                        StackingContext.from_box(child, page))
                 else:
                     child = dispatch_children(child)
                     children.append(child)
                     if child.style.position != 'static':
                         assert child.style.z_index == 'auto'
                         # "Fake" context: sub-contexts are already removed
-                        child_contexts.append(StackingContext.from_box(child))
+                        child_contexts.append(
+                            StackingContext.from_box(child, page))
                     elif child.is_floated():
-                        floats.append(child)
-                    elif isinstance(child, boxes.BlockBox):
+                        floats.append(StackingContext.from_box(child, page))
+                    elif isinstance(child, boxes.BlockLevelBox):
                         blocks.append(child)
+                        blocks_and_cells.append(child)
+                    elif isinstance(child, boxes.TableCellBox):
+                        blocks_and_cells.append(child)
             return box.copy_with_children(children)
 
         dispatch_children(box)
 
-        return cls(box, child_contexts, blocks, floats)
+        return cls(box, child_contexts, blocks, floats, blocks_and_cells, page)
