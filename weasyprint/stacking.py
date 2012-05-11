@@ -10,7 +10,12 @@
 
 from __future__ import division, unicode_literals
 
+import operator
+
 from .formatting_structure import boxes
+
+
+_Z_INDEX_GETTER = operator.attrgetter('z_index')
 
 
 def establishes_stacking_context(box):
@@ -32,6 +37,12 @@ class StackingContext(object):
         self.positive_z_contexts = []  # 9: Child contexts, z-index > 0
 
         self.box = self._dispatch_children(box)
+
+        self.negative_z_contexts.sort(key=_Z_INDEX_GETTER)
+        self.positive_z_contexts.sort(key=_Z_INDEX_GETTER)
+        # sort() is stable, so the lists are now storted
+        # by z-index, then tree order.
+
         self.z_index = box.style.z_index
         if self.z_index == 'auto':
             self.z_index = 0
@@ -65,4 +76,3 @@ class StackingContext(object):
 
                 children.append(child)
         return box.copy_with_children(children)
-                
