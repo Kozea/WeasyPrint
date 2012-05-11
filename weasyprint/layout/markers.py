@@ -19,7 +19,7 @@ from ..text import TextFragment
 from ..formatting_structure import boxes
 
 
-def list_marker_layout(document, box, containing_block):
+def list_marker_layout(document, box):
     """Lay out the list markers of ``box``."""
     # List markers can be either 'inside' or 'outside'.
     # Inside markers are layed out just like normal inline content, but
@@ -28,7 +28,7 @@ def list_marker_layout(document, box, containing_block):
     # see CSS3 lists.
     marker = getattr(box, 'outside_list_marker', None)
     if marker:
-        resolve_percentages(marker, containing_block)
+        resolve_percentages(marker, containing_block=box)
         if isinstance(marker, boxes.TextBox):
             text_fragment = TextFragment(marker.text, marker.style,
                 context=cairo.Context(document.surface))

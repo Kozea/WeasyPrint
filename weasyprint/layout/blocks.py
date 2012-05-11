@@ -37,8 +37,6 @@ def block_level_layout(document, box, max_position_y, skip_stack,
             document, box, max_position_y, skip_stack, containing_block,
             device_size, page_is_empty, absolute_boxes)
     elif isinstance(box, boxes.BlockBox):
-        if box.is_table_wrapper:
-            table_wrapper_width(box, containing_block, absolute_boxes)
         return block_box_layout(document, box, max_position_y, skip_stack,
             containing_block, device_size, page_is_empty,
             absolute_boxes, adjoining_margins)
@@ -58,12 +56,14 @@ def block_box_layout(document, box, max_position_y, skip_stack,
                      absolute_boxes, adjoining_margins):
     """Lay out the block ``box``."""
     resolve_percentages(box, containing_block)
+    if box.is_table_wrapper:
+        table_wrapper_width(box, containing_block, absolute_boxes)
     block_level_width(box, containing_block)
     new_box, resume_at, next_page, adjoining_margins, collapsing_through = \
         block_container_layout(
             document, box, max_position_y, skip_stack,
             device_size, page_is_empty, absolute_boxes, adjoining_margins)
-    list_marker_layout(document, new_box, containing_block)
+    list_marker_layout(document, new_box)
     return new_box, resume_at, next_page, adjoining_margins, collapsing_through
 
 

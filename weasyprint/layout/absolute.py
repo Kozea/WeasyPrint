@@ -12,6 +12,7 @@ from __future__ import division, unicode_literals
 
 from .percentages import resolve_percentages, resolve_position_percentages
 from .preferred import shrink_to_fit
+from .markers import list_marker_layout
 from ..formatting_structure import boxes
 
 
@@ -164,6 +165,8 @@ def absolute_layout(document, box, containing_block):
         absolute_boxes=absolute_boxes, adjoining_margins=None)
     box.__dict__ = new_box.__dict__
 
+    list_marker_layout(document, box)
+
     for absolute_box in absolute_boxes:
         absolute_layout(document, absolute_box, new_box)
 
@@ -182,7 +185,15 @@ def translate_except_absolute(box, dx=0, dy=0):
     """
     box.position_x += dx
     box.position_y += dy
-    if isinstance(box, boxes.ParentBox) and \
-            box.style.position in ('static', 'relative'):
-        for child in box.children:
-            translate_except_absolute(child, dx, dy)
+
+    marker = getattr(box, 'outside_list_marker', None)
+    if marker:
+        translate_except_absolute(marker, dx, dy)
+
+    if box.style.position in ('static', 'relative'):
+        if isinstance(box, boxes.ParentBox):
+            for child in box.children:
+                translate_except_absolute(child, dx, dy)
+        if isinstance(box, boxes.TableBox):
+            for child in box.column_groups:
+                translate_except_absolute(child, dx, dy)
