@@ -171,7 +171,7 @@ def absolute_layout(document, box, containing_block):
         translate_x -= new_box.width
     if translate_box_height:
         translate_y -= new_box.height
-    new_box.translate(translate_x, translate_y)
+    translate_except_absolute(new_box, translate_x, translate_y)
 
 
 def translate_except_absolute(box, dx=0, dy=0):

@@ -320,7 +320,7 @@ def block_container_layout(document, box, max_position_y, skip_stack,
                     adjoining_margins.append(new_child.margin_top)
                     offset_y = (collapse_margin(adjoining_margins)
                                  - new_child.margin_top)
-                    new_child.translate(0, offset_y)
+                    translate_except_absolute(new_child, 0, offset_y)
                     adjoining_margins = []
                 #else: blocks handle that themselves.
 

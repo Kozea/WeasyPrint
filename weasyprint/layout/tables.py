@@ -539,6 +539,7 @@ def find_in_flow_baseline(box, last=False, baseline_types=(boxes.LineBox,)):
     if isinstance(box, boxes.ParentBox):
         children = reversed(box.children) if last else box.children
         for child in children:
-            result = find_in_flow_baseline(child, last, baseline_types)
-            if result is not None:
-                return result
+            if child.is_in_normal_flow():
+                result = find_in_flow_baseline(child, last, baseline_types)
+                if result is not None:
+                    return result
