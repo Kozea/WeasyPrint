@@ -15,6 +15,7 @@ import functools
 
 import cairo
 
+from .absolute import absolute_layout, translate_except_absolute
 from .markers import image_marker_layout
 from .percentages import resolve_percentages, resolve_one_percentage
 from .preferred import shrink_to_fit
@@ -58,6 +59,7 @@ def get_next_linebox(document, linebox, position_y, skip_stack,
                      containing_block, device_size, absolute_boxes):
     """Return ``(line, resume_at)``."""
     position_x = linebox.position_x
+    linebox.position_y = position_y
     max_x = position_x + containing_block.width
     if skip_stack is None:
         # text-indent only at the start of the first line
@@ -102,7 +104,7 @@ def get_next_linebox(document, linebox, position_y, skip_stack,
     line.margin_bottom = 0
     if offset_x != 0 or offset_y != 0:
         # This also translates children
-        line.translate(offset_x, offset_y)
+        translate_except_absolute(line, offset_x, offset_y)
 
     for absolute_box in new_absolute_boxes:
         absolute_box.position_y = position_y
@@ -522,6 +524,9 @@ def split_inline_box(document, box, position_x, max_x, skip_stack,
     else:
         skip, skip_stack = skip_stack
 
+    if box.style.position == 'relative':
+        absolute_boxes = []
+
     for index, child in box.enumerate_skip(skip):
         if not child.is_in_normal_flow():
             if child.style.position == 'absolute':
@@ -530,6 +535,8 @@ def split_inline_box(document, box, position_x, max_x, skip_stack,
                 absolute_boxes.append(child)
             children.append(child)
             continue
+
+        child.position_y = box.position_y
         new_child, resume_at, preserved = split_inline_level(
             document, child, position_x, max_x, skip_stack,
             containing_block, device_size, absolute_boxes)
@@ -595,6 +602,10 @@ def split_inline_box(document, box, position_x, max_x, skip_stack,
     # form the top of the margin box
     new_box.baseline += half_leading
     new_box.height = height
+
+    if new_box.style.position == 'relative':
+        for absolute_box in absolute_boxes:
+            absolute_layout(document, absolute_box, new_box)
 
     if resume_at is not None:
         # There is a line break inside this box.

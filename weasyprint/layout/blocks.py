@@ -12,6 +12,7 @@
 
 from __future__ import division, unicode_literals
 
+from .absolute import absolute_layout, translate_except_absolute
 from .inlines import (iter_line_boxes, replaced_box_width, replaced_box_height,
                       handle_min_max_width, min_max_replaced_height,
                       min_max_auto_replaced)
@@ -173,7 +174,7 @@ def relative_positioning(box, containing_block):
         else:
             translate_y = 0
 
-        box.translate(translate_x, translate_y)
+        translate_except_absolute(box, translate_x, translate_y)
 
     if isinstance(box, (boxes.InlineBox, boxes.LineBox)):
         for child in box.children:
@@ -401,15 +402,13 @@ def block_container_layout(document, box, max_position_y, skip_stack,
         min(new_box.height, new_box.max_height),
         new_box.min_height)
 
-    for child in new_box.children:
-        relative_positioning(child, new_box)
-
     if new_box.style.position == 'relative':
         # New containing block, resolve the layout of the absolute descendants
-        # TODO: avoid this (circular import)
-        from .absolute import absolute_layout
         for absolute_box in absolute_boxes:
             absolute_layout(document, absolute_box, new_box)
+
+    for child in new_box.children:
+        relative_positioning(child, new_box)
 
     if resume_at is not None:
         # If there was a list marker, we kept it on `new_box`.

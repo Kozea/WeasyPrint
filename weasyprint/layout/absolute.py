@@ -10,7 +10,6 @@
 
 from __future__ import division, unicode_literals
 
-from .blocks import block_container_layout
 from .percentages import resolve_percentages, resolve_position_percentages
 from .preferred import shrink_to_fit
 from ..formatting_structure import boxes
@@ -18,6 +17,9 @@ from ..formatting_structure import boxes
 
 def absolute_layout(document, box, containing_block):
     """Set the width of absolute positioned ``box``."""
+    # TODO: avoid this (circular import)
+    from .blocks import block_container_layout
+
     resolve_percentages(box, containing_block)
     resolve_position_percentages(box, containing_block)
 
@@ -170,3 +172,17 @@ def absolute_layout(document, box, containing_block):
     if translate_box_height:
         translate_y -= new_box.height
     new_box.translate(translate_x, translate_y)
+
+
+def translate_except_absolute(box, dx=0, dy=0):
+    """Change the position of the box, except its absolute descandants.
+
+    Also update the children’s positions accordingly.
+
+    """
+    box.position_x += dx
+    box.position_y += dy
+    if isinstance(box, boxes.ParentBox) and \
+            box.style.position in ('static', 'relative'):
+        for child in box.children:
+            translate_except_absolute(child, dx, dy)
