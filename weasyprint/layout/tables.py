@@ -486,11 +486,17 @@ def auto_table_layout(box, containing_block, absolute_boxes):
 
     lost_width = table.width - sum(table.column_widths) - all_border_spacing
     if lost_width > 0:
-        table.column_widths = [
-            (column_width + lost_width * preferred_column_width /
-             sum(column_preferred_widths))
-            for (preferred_column_width, column_width)
-            in zip(column_preferred_widths, table.column_widths)]
+        sum_column_preferred_widths = sum(column_preferred_widths)
+        if sum_column_preferred_widths:
+            table.column_widths = [
+                (column_width + lost_width * preferred_column_width /
+                 sum_column_preferred_widths)
+                for (preferred_column_width, column_width)
+                in zip(column_preferred_widths, table.column_widths)]
+        else:
+            table.column_widths = [
+                column_width + lost_width / len(table.column_widths)
+                for column_width in table.column_widths]
 
 
 def table_wrapper_width(wrapper, containing_block, absolute_boxes):
