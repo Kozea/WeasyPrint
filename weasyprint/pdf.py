@@ -20,7 +20,6 @@ class PDF(object):
         self.objects = {}
         self.active = None
         self.numbers = []
-        self.added_numbers = []
         self.pages = []
 
         lines = bytesio.readlines()
@@ -109,7 +108,6 @@ class PDF(object):
         last_object_size = len(''.join(self.objects[self.numbers[-1]]))
         self.xref.append(b'%010d 00000 n \n' % (last_size + last_object_size))
         self.numbers.append(next_number)
-        self.added_numbers.append(next_number)
         self.objects[next_number] = [
             line + b'\n' for line in text.split(b'\n')]
         self.xref[1] = b'0 %d\n' % (next_number + 1)
