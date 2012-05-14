@@ -162,5 +162,6 @@ class PDF(object):
         self.size += offset_size
 
     def write(self, target):
+        """Write the PDF content into the ``target`` stream."""
         for outline in self.outlines:
             target.write(outline)
