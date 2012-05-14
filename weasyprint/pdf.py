@@ -15,18 +15,18 @@ class PDF(object):
     """PDF document post-processor adding links."""
     def __init__(self, bytesio, links, destinations):
         bytesio.seek(0)
-        self.lines = bytesio.readlines()
         self.xref = []
         self.trailer = []
-        self.outlines = []  # Lines of the output
-        self.info = None
         self.objects = {}
         self.active = None
         self.numbers = []
         self.added_numbers = []
         self.pages = []
 
-        for line in self.lines:
+        lines = bytesio.readlines()
+        self.outlines = self.lines[:2]
+
+        for line in lines:
             if line.endswith(b' obj\n'):
                 self.active = 'object'
                 number = int(line.split()[0])
@@ -46,7 +46,15 @@ class PDF(object):
                     break
                 self.trailer.append(line)
                 if b'/Info' in line:
-                    self.info = int(line.rsplit()[-3])
+                    info = int(line.rsplit()[-3])
+                    for i, info_line in enumerate(self.objects[info]):
+                        if b'/Creator' in info_line:
+                            pre = info_line.split(b'/Creator')[0]
+                            new_line = b'%s/Creator (%s)\n' % (
+                                pre, b'WeasyPrint')
+                            self.objects[info][i] = new_line
+                            self.replace_xref_size(
+                                info, len(new_line) - len(info_line))
             elif self.active == 'object':
                 if number not in self.objects:
                     self.objects[number] = []
@@ -55,36 +63,22 @@ class PDF(object):
             if line == b'endobj\n':
                 self.active = None
 
-        for i, line in enumerate(self.objects[self.info]):
-            if b'/Creator' in line:
-                pre = line.split(b'/Creator')[0]
-                new_line = b'%s/Creator (%s)\n' % (pre, b'WeasyPrint')
-                self.objects[self.info][i] = new_line
-                offset_size = len(new_line) - len(line)
-                self.replace_xref_size(self.info, offset_size)
-
         for pdf_page_number, link_page in zip(self.pages, links):
             annot_numbers = []
             for link, x1, y1, x2, y2 in link_page:
                 text = b''.join((
-                    b'<<',
-                    b'/Type /Annot',
-                    b'/Subtype /Link',
+                    b'<< /Type /Annot /Subtype /Link',
                     b'/Rect [%f %f %f %f]\n' % (x1, y1, x2, y2)))
                 if link:
                     if link.startswith('#'):
                         if link[1:] in destinations:
                             text += b''.join((
-                                b'/A <<',
-                                b'/Type /Action',
-                                b'/S /GoTo',
+                                b'/A << /Type /Action /S /GoTo',
                                 b'/D [%d /XYZ %d %d 1]\n' % (
                                     destinations[link[1:]])))
                     else:
                         text += b''.join((
-                            b'/A <<',
-                            b'/Type /Action',
-                            b'/S /URI',
+                            b'/A << /Type /Action /S /URI',
                             b'/URI (%s)\n' % link))
                 text += b'>>\n>>'
                 annot_numbers.append(self.add_object(text))
@@ -97,29 +91,14 @@ class PDF(object):
         for i, line in enumerate(self.trailer):
             if b'/Size' in line:
                 pre = line.split(b'/Size')[0]
-                new_line = b'%s/Size %s\n' % (
-                    pre, b'%s' % (len(self.added_numbers) + len(self.numbers)))
-                self.trailer[i] = new_line
+                self.trailer[i] = b'%s/Size %s\n' % (
+                    pre, b'%s' % (len(self.numbers) + 1))
 
-        for line in self.lines:
-            if line.endswith(b' obj\n'):
-                self.active = 'object'
-                number = int(line.split()[0])
-                self.outlines.extend(self.objects[number])
-            elif line == b'xref\n':
-                for added_number in self.added_numbers:
-                    self.outlines.extend(self.objects[added_number])
-                self.outlines.extend(
-                    self.xref + self.trailer + [
-                        b'startxref\n',
-                        b'%d\n' % sum([len(line) for line in self.outlines]),
-                        b'%%EOF\n'])
-                break
-            elif self.active == 'object':
-                if line == b'endobj\n':
-                    self.active = None
-            else:
-                self.outlines.append(line)
+        for number in self.numbers:
+            self.outlines.extend(self.objects[number])
+        size = sum([len(line) for line in self.outlines])
+        self.outlines.extend(self.xref + self.trailer)
+        self.outlines.append(b'startxref\n%d\n%%EOF\n' % size)
 
     def add_object(self, text):
         """Add an object with ``text`` content at the end of the objects."""
