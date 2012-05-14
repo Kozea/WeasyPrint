@@ -16,10 +16,9 @@ class PDF(object):
     def __init__(self, bytesio, links, destinations):
         bytesio.seek(0)
         self.lines = bytesio.readlines()
-        self.outlines = []
         self.xref = []
         self.trailer = []
-        self.size = None
+        self.outlines = []  # Lines of the output
         self.info = None
         self.objects = {}
         self.active = None
@@ -40,12 +39,11 @@ class PDF(object):
             if line.endswith(b'/Type /Page\n'):
                 self.pages.append(number)
 
-            if self.active == 'size':
-                self.size = int(line)
-                self.active = None
-            elif self.active == 'xref':
+            if self.active == 'xref':
                 self.xref.append(line)
             elif self.active == 'trailer':
+                if line == b'startxref\n':
+                    break
                 self.trailer.append(line)
                 if b'/Info' in line:
                     self.info = int(line.rsplit()[-3])
@@ -54,9 +52,7 @@ class PDF(object):
                     self.objects[number] = []
                 self.objects[number].append(line)
 
-            if line == b'startxref\n':
-                self.active = 'size'
-            elif line == b'endobj\n':
+            if line == b'endobj\n':
                 self.active = None
 
         for i, line in enumerate(self.objects[self.info]):
@@ -110,30 +106,21 @@ class PDF(object):
                 self.active = 'object'
                 number = int(line.split()[0])
                 self.outlines.extend(self.objects[number])
+                continue
             elif line == b'xref\n':
-                self.active = 'xref'
                 for added_number in self.added_numbers:
                     self.outlines.extend(self.objects[added_number])
-                self.outlines.extend(self.xref)
-            elif line == b'trailer\n':
-                self.active = 'trailer'
-
-            if self.active == 'size':
-                self.outlines.append(b'%d\n' % self.size)
-                self.active = None
-            elif self.active == 'trailer':
-                if self.trailer:
-                    self.outlines.extend(self.trailer)
-                    self.trailer = None
-            elif self.active in ('xref', 'object'):
-                pass  # xref and object are already handled
+                self.outlines.extend(
+                    self.xref + self.trailer + [
+                        b'startxref\n',
+                        b'%d\n' % sum([len(line) for line in self.outlines]),
+                        b'%%EOF\n'])
+                break
+            elif self.active == 'object':
+                if line == b'endobj\n':
+                    self.active = None
             else:
                 self.outlines.append(line)
-
-            if line == b'endobj\n':
-                self.active = None
-            elif line == b'startxref\n':
-                self.active = 'size'
 
     def add_object(self, text):
         """Add an object with ``text`` content at the end of the objects."""
@@ -147,7 +134,6 @@ class PDF(object):
         self.added_numbers.append(next_number)
         self.objects[next_number] = [
             line + b'\n' for line in text.split(b'\n')]
-        self.size += len(text) + 1
         self.xref[1] = b'0 %d\n' % (next_number + 1)
         return next_number
 
@@ -159,7 +145,6 @@ class PDF(object):
             old_size, content = out.split(b' ', 1)
             old_size = int(old_size.lstrip(b'0')) + offset_size
             self.xref[next_number + 2] = b'%010d %s' % (old_size, content)
-        self.size += offset_size
 
     def write(self, target):
         """Write the PDF content into the ``target`` stream."""
