@@ -106,7 +106,6 @@ class PDF(object):
                 self.active = 'object'
                 number = int(line.split()[0])
                 self.outlines.extend(self.objects[number])
-                continue
             elif line == b'xref\n':
                 for added_number in self.added_numbers:
                     self.outlines.extend(self.objects[added_number])
