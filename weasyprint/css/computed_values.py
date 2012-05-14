@@ -290,7 +290,10 @@ def length(computer, name, value, font_size=None, pixels_only=False):
 
 @register_computer('letter-spacing')
 def pixel_length(computer, name, value):
-    return length(computer, name, value, pixels_only=True)
+    if value == 'normal':
+        return value
+    else:
+        return length(computer, name, value, pixels_only=True)
 
 
 @register_computer('background-size')
