@@ -13,6 +13,7 @@ from __future__ import division, unicode_literals
 from .percentages import resolve_percentages, resolve_position_percentages
 from .preferred import shrink_to_fit
 from .markers import list_marker_layout
+from .tables import table_wrapper_width
 from ..formatting_structure import boxes
 
 
@@ -157,6 +158,9 @@ def absolute_layout(document, box, containing_block):
 
     # New containing block, use a new absolute list
     absolute_boxes = []
+
+    if box.is_table_wrapper:
+        table_wrapper_width(box, containing_block, absolute_boxes)
 
     # TODO: remove device_size everywhere else
     new_box, _, _, _, _ = block_container_layout(
