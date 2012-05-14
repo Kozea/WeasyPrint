@@ -837,6 +837,21 @@ def link(token, base_url):
         return token.value
 
 
+@validator(prefixed=True)  # Proprietary
+@single_token
+def label(token):
+    """Validation for ``label``."""
+    if get_keyword(token) == 'none':
+        return 'none'
+    function = parse_function(token)
+    if function:
+        name, args = function
+        prototype = (name, [a.type for a in args])
+        args = [a.value for a in args]
+        if prototype == ('attr', ['IDENT']):
+            return (name, args[0])
+
+
 @validator(prefixed=True)  # Not in CR yet
 def transform(tokens):
     if get_single_keyword(tokens) == 'none':

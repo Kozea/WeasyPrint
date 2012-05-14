@@ -424,9 +424,22 @@ def link(computer, name, values):
     else:
         type_, value = values
         if type_ == 'attr':
-            return get_url_attribute(computer.element, value)
+            url = get_url_attribute(computer.element, value)
         else:
-            return value
+            url = value
+        if url.startswith(computer.element.base_url):
+            url = u'#%s' % url[len(computer.element.base_url):]
+        return url
+
+
+@register_computer('label')
+def label(computer, name, values):
+    """Compute the ``label`` property."""
+    if values == 'none':
+        return None
+    else:
+        _, key = values
+        return computer.element.get(key)
 
 
 @register_computer('transform')

@@ -181,12 +181,13 @@ class PDFDocument(Document):
         surface.finish()
 
         links = [self._get_link_rectangles(page) for page in self.pages]
+        destinations = dict(self._get_link_destinations())
 
         if hasattr(target, 'write'):
-            pdf.PDF(bytesio, links).write(target)
+            pdf.PDF(bytesio, links, destinations).write(target)
         else:
             with open(target, 'wb') as fd:
-                pdf.PDF(bytesio, links).write(fd)
+                pdf.PDF(bytesio, links, destinations).write(fd)
 
     def _get_link_rectangles(self, page, box=None):
         if box is None:
@@ -206,3 +207,27 @@ class PDFDocument(Document):
             for child in box.children:
                 for rectangle in self._get_link_rectangles(page, child):
                     yield rectangle
+
+    def _get_link_destinations(self, page=None, box=None, names=None):
+        if page is None:
+            names = set()
+            for page in self.pages:
+                for destination in self._get_link_destinations(
+                        page, page, names):
+                    yield destination
+        else:
+            if box.style.label and (box.style.label not in names):
+                names.add(box.style.label)
+                position_x = box.position_x
+                position_y = page.outer_height - box.position_y
+                yield (
+                    box.style.label,
+                    (self.pages.index(page),
+                     position_x / LENGTHS_TO_PIXELS['pt'],
+                     position_y / LENGTHS_TO_PIXELS['pt']))
+
+            if isinstance(box, boxes.ParentBox):
+                for child in box.children:
+                    for destination in self._get_link_destinations(
+                            page, child, names):
+                        yield destination

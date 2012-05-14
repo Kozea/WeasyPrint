@@ -12,7 +12,7 @@ from __future__ import division, unicode_literals
 
 
 class PDF(object):
-    def __init__(self, bytesio, links):
+    def __init__(self, bytesio, links, destinations):
         bytesio.seek(0)
         self.lines = bytesio.readlines()
         self.outlines = []
@@ -71,7 +71,22 @@ class PDF(object):
         for pdf_page_number, link_page in zip(self.pages, links):
             annot_numbers = []
             for link, x1, y1, x2, y2 in link_page:
-                annot_numbers.append(self.add_object(b"""<<
+                if link.startswith('#'):
+                    destination = destinations.get(link[2:])
+                    if not destination:
+                        continue
+                    annot_numbers.append(self.add_object(b"""<<
+/Type /Annot
+/Subtype /Link
+/Rect [%f %f %f %f]
+/A <<
+/Type /Action
+/S /GoTo
+/D [%d /XYZ %d %d 1]
+>>
+>>""" % (x1, y1, x2, y2, destination[0], destination[1], destination[2])))
+                else:
+                    annot_numbers.append(self.add_object(b"""<<
 /Type /Annot
 /Subtype /Link
 /Rect [%f %f %f %f]

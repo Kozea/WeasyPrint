@@ -8,6 +8,8 @@ web browsers use.
 
 */
 
+*[id] { -weasy-label: attr(id); }
+*[name] { -weasy-label: attr(name); }
 *[dir] { unicode-bidi: embed; }
 *[hidden] { display: none; }
 *[dir=ltr] { direction: ltr; }

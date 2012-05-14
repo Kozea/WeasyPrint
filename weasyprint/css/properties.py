@@ -130,6 +130,7 @@ INITIAL_VALUES = {
 
     # Proprietary
     'link': None,  # computed value of 'none'
+    'label': None,  # computed value of 'none'
 }
 
 
