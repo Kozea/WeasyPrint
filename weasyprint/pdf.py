@@ -12,6 +12,7 @@ from __future__ import division, unicode_literals
 
 
 class PDF(object):
+    """PDF document post-processor adding links."""
     def __init__(self, bytesio, links, destinations):
         bytesio.seek(0)
         self.lines = bytesio.readlines()
@@ -46,6 +47,8 @@ class PDF(object):
                 self.xref.append(line)
             elif self.active == 'trailer':
                 self.trailer.append(line)
+                if b'/Info' in line:
+                    self.info = int(line.rsplit()[-3])
             elif self.active == 'object':
                 if number not in self.objects:
                     self.objects[number] = []
@@ -55,10 +58,6 @@ class PDF(object):
                 self.active = 'size'
             elif line == b'endobj\n':
                 self.active = None
-
-        for i, line in enumerate(self.trailer):
-            if b'/Info' in line:
-                self.info = int(line.rsplit()[-3])
 
         for i, line in enumerate(self.objects[self.info]):
             if b'/Creator' in line:
@@ -71,31 +70,33 @@ class PDF(object):
         for pdf_page_number, link_page in zip(self.pages, links):
             annot_numbers = []
             for link, x1, y1, x2, y2 in link_page:
-                text = b"""<<
-/Type /Annot
-/Subtype /Link
-/Rect [%f %f %f %f]
-""" % (x1, y1, x2, y2)
-                if link.startswith('#'):
-                    destination = destinations.get(link[1:])
-                    if destination:
-                        text += b"""
-/A <<
-/Type /Action
-/S /GoTo
-/D [%d /XYZ %d %d 1]""" % (destination[0], destination[1], destination[2])
-                elif link:
-                    text += b"""
-/A <<
-/Type /Action
-/S /URI
-/URI (%s)""" % link
-                text += b'\n>>\n>>'
+                text = b''.join((
+                    b'<<',
+                    b'/Type /Annot',
+                    b'/Subtype /Link',
+                    b'/Rect [%f %f %f %f]\n' % (x1, y1, x2, y2)))
+                if link:
+                    if link.startswith('#'):
+                        if link[1:] in destinations:
+                            text += b''.join((
+                                b'/A <<',
+                                b'/Type /Action',
+                                b'/S /GoTo',
+                                b'/D [%d /XYZ %d %d 1]\n' % (
+                                    destinations[link[1:]])))
+                    else:
+                        text += b''.join((
+                            b'/A <<',
+                            b'/Type /Action',
+                            b'/S /URI',
+                            b'/URI (%s)\n' % link))
+                text += b'>>\n>>'
                 annot_numbers.append(self.add_object(text))
-            string = b'/Annots [%s]\n' % b' '.join(
-                b'%d 0 R' % number for number in annot_numbers)
-            self.objects[pdf_page_number].insert(-2, string)
-            self.replace_xref_size(pdf_page_number, len(string))
+            if annot_numbers:
+                string = b'/Annots [%s]\n' % b' '.join(
+                    b'%d 0 R' % number for number in annot_numbers)
+                self.objects[pdf_page_number].insert(-2, string)
+                self.replace_xref_size(pdf_page_number, len(string))
 
         for i, line in enumerate(self.trailer):
             if b'/Size' in line:
@@ -120,14 +121,12 @@ class PDF(object):
             if self.active == 'size':
                 self.outlines.append(b'%d\n' % self.size)
                 self.active = None
-            elif self.active == 'xref':
-                pass
-            elif self.active == 'object':
-                pass
             elif self.active == 'trailer':
                 if self.trailer:
                     self.outlines.extend(self.trailer)
                     self.trailer = None
+            elif self.active in ('xref', 'object'):
+                pass  # xref and object are already handled
             else:
                 self.outlines.append(line)
 
@@ -135,10 +134,9 @@ class PDF(object):
                 self.active = None
             elif line == b'startxref\n':
                 self.active = 'size'
-            elif line == b'endobj\n':
-                self.active = None
 
     def add_object(self, text):
+        """Add an object with ``text`` content at the end of the objects."""
         next_number = len(self.numbers) + 1
         text = b'%d 0 obj\n%s\nendobj' % (next_number, text)
         last_size = int(
@@ -154,12 +152,12 @@ class PDF(object):
         return next_number
 
     def replace_xref_size(self, number, offset_size):
+        """Update xref adding ``offset_size`` bytes to ``object[number]``."""
         index = self.numbers.index(number)
         for next_number in self.numbers[index + 1:len(self.numbers)]:
             out = self.xref[next_number + 2]
             old_size, content = out.split(b' ', 1)
-            old_size = int(old_size.lstrip(b'0'))
-            old_size += offset_size
+            old_size = int(old_size.lstrip(b'0')) + offset_size
             self.xref[next_number + 2] = b'%010d %s' % (old_size, content)
         self.size += offset_size
 
