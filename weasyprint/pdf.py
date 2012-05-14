@@ -24,7 +24,7 @@ class PDF(object):
         self.pages = []
 
         lines = bytesio.readlines()
-        self.outlines = self.lines[:2]
+        self.outlines = lines[:2]
 
         for line in lines:
             if line.endswith(b' obj\n'):
