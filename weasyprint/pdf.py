@@ -10,60 +10,56 @@
 
 from __future__ import division, unicode_literals
 
+from . import VERSION
+
 
 class PDF(object):
     """PDF document post-processor adding links."""
     def __init__(self, bytesio, links, destinations):
-        bytesio.seek(0)
         self.xref = []
         self.trailer = []
         self.objects = {}
-        self.active = None
         self.numbers = []
         self.pages = []
+        self.outlines = []
 
+        bytesio.seek(0)
         lines = bytesio.readlines()
-        self.outlines = lines[:2]
 
-        for line in lines:
+        while not lines[0].endswith(b' obj\n'):
+            self.outlines.append(lines.pop(0))
+
+        while lines[0] != b'xref\n':
+            line = lines.pop(0)
             if line.endswith(b' obj\n'):
-                self.active = 'object'
                 number = int(line.split()[0])
                 self.numbers.append(number)
-            elif line == b'xref\n':
-                self.active = 'xref'
-            elif line == b'trailer\n':
-                self.active = 'trailer'
+                self.objects[number] = []
+
+            self.objects[number].append(line)
 
             if line.endswith(b'/Type /Page\n'):
                 self.pages.append(number)
 
-            if self.active == 'xref':
-                self.xref.append(line)
-            elif self.active == 'trailer':
-                if line == b'startxref\n':
-                    break
-                self.trailer.append(line)
-                if b'/Info' in line:
-                    info = int(line.rsplit()[-3])
-                    for i, info_line in enumerate(self.objects[info]):
-                        if b'/Creator' in info_line:
-                            pre = info_line.split(b'/Creator')[0]
-                            new_line = b'%s/Creator (%s)\n' % (
-                                pre, b'WeasyPrint')
-                            self.objects[info][i] = new_line
-                            self.replace_xref_size(
-                                info, len(new_line) - len(info_line))
-            elif self.active == 'object':
-                if number not in self.objects:
-                    self.objects[number] = []
-                self.objects[number].append(line)
+        while lines[0] != b'trailer\n':
+            self.xref.append(lines.pop(0))
 
-            if line == b'endobj\n':
-                self.active = None
+        while lines[0] != b'startxref\n':
+            line = lines.pop(0)
+            self.trailer.append(line)
+            if b'/Info' in line:
+                info = int(line.rsplit()[-3])
+                for i, info_line in enumerate(self.objects[info]):
+                    if b'/Creator' in info_line:
+                        new_line = b'%s/Creator (WeasyPrint %s)\n' % (
+                            info_line.split(b'/Creator')[0], bytes(VERSION))
+                        self.objects[info][i] = new_line
+                        self.replace_xref_size(
+                            info, len(new_line) - len(info_line))
 
         for pdf_page_number, link_page in zip(self.pages, links):
             annot_numbers = []
+
             for link, x1, y1, x2, y2 in link_page:
                 text = b''.join((
                     b'<< /Type /Annot /Subtype /Link',
@@ -81,6 +77,7 @@ class PDF(object):
                             b'/URI (%s)\n' % link))
                 text += b'>>\n>>'
                 annot_numbers.append(self.add_object(text))
+
             if annot_numbers:
                 string = b'/Annots [%s]\n' % b' '.join(
                     b'%d 0 R' % number for number in annot_numbers)
@@ -89,9 +86,8 @@ class PDF(object):
 
         for i, line in enumerate(self.trailer):
             if b'/Size' in line:
-                pre = line.split(b'/Size')[0]
-                self.trailer[i] = b'%s/Size %s\n' % (
-                    pre, b'%s' % (len(self.numbers) + 1))
+                self.trailer[i] = b'%s/Size %d\n' % (
+                    line.split(b'/Size')[0], len(self.numbers) + 1)
 
         for number in self.numbers:
             self.outlines.extend(self.objects[number])
