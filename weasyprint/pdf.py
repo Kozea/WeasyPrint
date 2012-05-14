@@ -72,7 +72,7 @@ class PDF(object):
             annot_numbers = []
             for link, x1, y1, x2, y2 in link_page:
                 if link.startswith('#'):
-                    destination = destinations.get(link[2:])
+                    destination = destinations.get(link[1:])
                     if not destination:
                         continue
                     annot_numbers.append(self.add_object(b"""<<

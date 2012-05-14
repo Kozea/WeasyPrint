@@ -427,8 +427,8 @@ def link(computer, name, values):
             url = get_url_attribute(computer.element, value)
         else:
             url = value
-        if url.startswith(computer.element.base_url):
-            url = u'#%s' % url[len(computer.element.base_url):]
+        if url.startswith(computer.element.base_url + '#'):
+            url = url[len(computer.element.base_url):]
         return url
 
 
