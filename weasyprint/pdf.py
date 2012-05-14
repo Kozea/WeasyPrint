@@ -71,35 +71,30 @@ class PDF(object):
         for pdf_page_number, link_page in zip(self.pages, links):
             annot_numbers = []
             for link, x1, y1, x2, y2 in link_page:
-                if link.startswith('#'):
-                    destination = destinations.get(link[1:])
-                    if not destination:
-                        continue
-                    annot_numbers.append(self.add_object(b"""<<
+                text = b"""<<
 /Type /Annot
 /Subtype /Link
 /Rect [%f %f %f %f]
+""" % (x1, y1, x2, y2)
+                if link.startswith('#'):
+                    destination = destinations.get(link[1:])
+                    if destination:
+                        text += b"""
 /A <<
 /Type /Action
 /S /GoTo
-/D [%d /XYZ %d %d 1]
->>
->>""" % (x1, y1, x2, y2, destination[0], destination[1], destination[2])))
-                else:
-                    annot_numbers.append(self.add_object(b"""<<
-/Type /Annot
-/Subtype /Link
-/Rect [%f %f %f %f]
+/D [%d /XYZ %d %d 1]""" % (destination[0], destination[1], destination[2])
+                elif link:
+                    text += b"""
 /A <<
 /Type /Action
 /S /URI
-/URI (%s)
->>
->>""" % (x1, y1, x2, y2, link)))
-
+/URI (%s)""" % link
+                text += b'\n>>\n>>'
+                annot_numbers.append(self.add_object(text))
             string = b'/Annots [%s]\n' % b' '.join(
                 b'%d 0 R' % number for number in annot_numbers)
-            self.objects[pdf_page_number].insert(12, string)
+            self.objects[pdf_page_number].insert(-2, string)
             self.replace_xref_size(pdf_page_number, len(string))
 
         for i, line in enumerate(self.trailer):
