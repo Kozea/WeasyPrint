@@ -19,11 +19,13 @@ import cairo
 
 from .css import get_all_computed_styles
 from .css.computed_values import LENGTHS_TO_PIXELS
+from .formatting_structure import boxes
 from .formatting_structure.build import build_formatting_structure
 from . import layout
 from . import draw
 from . import images
 from . import utils
+from . import pdf
 
 
 class Document(object):
@@ -160,8 +162,10 @@ class PDFDocument(Document):
         """
         Write the whole document as PDF into a file-like or filename `target`.
         """
+        bytesio = io.BytesIO()
+
         # The actual page size is set for each page.
-        surface = cairo.PDFSurface(target, 1, 1)
+        surface = cairo.PDFSurface(bytesio, 1, 1)
 
         px_to_pt = 1 / LENGTHS_TO_PIXELS['pt']
         for page in self.pages:
@@ -175,3 +179,30 @@ class PDFDocument(Document):
             surface.show_page()
 
         surface.finish()
+
+        links = [self._get_link_rectangles(page) for page in self.pages]
+
+        if hasattr(target, 'write'):
+            pdf.PDF(bytesio, links).write(target)
+        else:
+            with open(target, 'wb') as fd:
+                pdf.PDF(bytesio, links).write(fd)
+
+    def _get_link_rectangles(self, page, box=None):
+        if box is None:
+            box = page
+
+        if box.style.link:
+            position_x = box.position_x
+            position_y = page.outer_height - box.position_y
+            yield (
+                box.style.link,
+                position_x / LENGTHS_TO_PIXELS['pt'],
+                position_y / LENGTHS_TO_PIXELS['pt'],
+                (position_x + box.margin_width()) / LENGTHS_TO_PIXELS['pt'],
+                (position_y - box.margin_height()) / LENGTHS_TO_PIXELS['pt'])
+
+        if isinstance(box, boxes.ParentBox):
+            for child in box.children:
+                for rectangle in self._get_link_rectangles(page, child):
+                    yield rectangle

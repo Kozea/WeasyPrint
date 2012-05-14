@@ -127,6 +127,9 @@ INITIAL_VALUES = {
     # Taken from SVG:
     # http://www.w3.org/TR/SVG/painting.html#ImageRenderingProperty
     'image_rendering': 'auto',
+
+    # Proprietary
+    'link': None,  # computed value of 'none'
 }
 
 

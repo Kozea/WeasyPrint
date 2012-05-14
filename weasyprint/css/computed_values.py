@@ -16,6 +16,7 @@ from __future__ import division, unicode_literals
 import math
 
 from .properties import INITIAL_VALUES, Dimension
+from ..utils import get_url_attribute
 
 
 ZERO_PIXELS = Dimension(0, 'px')
@@ -413,6 +414,19 @@ def line_height(computer, name, value):
     else:
         pixels = length(computer, name, value, pixels_only=True)
     return ('PIXELS', pixels)
+
+
+@register_computer('link')
+def link(computer, name, values):
+    """Compute the ``link`` property."""
+    if values == 'none':
+        return None
+    else:
+        type_, value = values
+        if type_ == 'attr':
+            return get_url_attribute(computer.element, value)
+        else:
+            return value
 
 
 @register_computer('transform')

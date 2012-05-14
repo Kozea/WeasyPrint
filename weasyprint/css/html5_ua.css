@@ -185,8 +185,7 @@ web browsers use.
 [lang|=zh-Hant] { quotes: '\300c' '\300d' '\300e' '\300f'; }
 [lang|=zu] { quotes: '\2018' '\2019' '\201c' '\201d'; }
 :link { color: #0000EE; text-decoration: underline; }
-/* TODO: remove this when :link is implemented. */
-a[href] { color: #0000EE; text-decoration: underline; }
+a[href] { -weasy-link: attr(href); }
 :visited { color: #551A8B; text-decoration: underline; }
 a:link[rel~=help] { cursor: help; }
 a:visited[rel~=help] { cursor: help; }

@@ -819,6 +819,24 @@ def size(tokens):
                 return width, height
 
 
+@validator(prefixed=True, wants_base_url=True)  # Proprietary
+@single_token
+def link(token, base_url):
+    """Validation for ``link``."""
+    if get_keyword(token) == 'none':
+        return 'none'
+    elif token.type == 'URI':
+        return ('URI', urljoin(base_url, token.value))
+    function = parse_function(token)
+    if function:
+        name, args = function
+        prototype = (name, [a.type for a in args])
+        args = [a.value for a in args]
+        if prototype == ('attr', ['IDENT']):
+            return (name, args[0])
+        return token.value
+
+
 @validator(prefixed=True)  # Not in CR yet
 def transform(tokens):
     if get_single_keyword(tokens) == 'none':
