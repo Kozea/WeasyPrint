@@ -184,10 +184,10 @@ class PDFDocument(Document):
         destinations = dict(self._get_link_destinations())
 
         if hasattr(target, 'write'):
-            pdf.PDF(bytesio, links, destinations).write(target)
+            pdf.write(bytesio, target, links, destinations)
         else:
             with open(target, 'wb') as fd:
-                pdf.PDF(bytesio, links, destinations).write(fd)
+                pdf.write(bytesio, fd, links, destinations)
 
     def _get_link_rectangles(self, page, box=None):
         if box is None:
