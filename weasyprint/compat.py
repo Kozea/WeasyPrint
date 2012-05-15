@@ -47,9 +47,9 @@ if sys.version_info[0] >= 3:
 
 else:
     # Python 2
-    from urlparse import urljoin, urlparse, quote, unquote
+    from urlparse import urljoin, urlparse
     from urllib2 import urlopen, Request
-    from urllib import pathname2url
+    from urllib import pathname2url, quote, unquote
     from array import array as _array
 
     basestring = basestring
