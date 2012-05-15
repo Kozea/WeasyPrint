@@ -416,6 +416,16 @@ def line_height(computer, name, value):
     return ('PIXELS', pixels)
 
 
+@register_computer('anchor')
+def anchor(computer, name, values):
+    """Compute the ``anchor`` property."""
+    if values == 'none':
+        return None
+    else:
+        _, key = values
+        return computer.element.get(key)
+
+
 @register_computer('link')
 def link(computer, name, values):
     """Compute the ``link`` property."""
@@ -430,16 +440,6 @@ def link(computer, name, values):
         if url.startswith(computer.element.base_url + '#'):
             url = url[len(computer.element.base_url):]
         return url
-
-
-@register_computer('label')
-def label(computer, name, values):
-    """Compute the ``label`` property."""
-    if values == 'none':
-        return None
-    else:
-        _, key = values
-        return computer.element.get(key)
 
 
 @register_computer('transform')

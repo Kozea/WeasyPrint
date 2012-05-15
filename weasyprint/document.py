@@ -182,12 +182,54 @@ class PDFDocument(Document):
 
         links = [self._get_link_rectangles(page) for page in self.pages]
         destinations = dict(self._get_link_destinations())
+        bookmarks_tree = []
+        bookmarks_stack = [bookmarks_tree]
+        bookmark_level = 0
+        for level, label, destination in self._get_bookmarks():
+            if not bookmark_level:
+                bookmark_level = level - 1
+            if level < bookmark_level:
+                for i in range(bookmark_level - level + 1):
+                    bookmarks_stack.pop()
+            elif level > bookmark_level:
+                missing_levels = level - bookmark_level
+                for i in range(missing_levels):
+                    children = []
+                    bookmarks_stack[-1].append((label, destination, children))
+                    bookmarks_stack.append(children)
+            else:
+                bookmarks_stack.pop()
+                children = []
+                bookmarks_stack[-1].append((label, destination, children))
+                bookmarks_stack.append(children)
+            bookmark_level = level
 
         if hasattr(target, 'write'):
-            pdf.write(bytesio, target, links, destinations)
+            pdf.write(bytesio, target, links, destinations, bookmarks_tree)
         else:
             with open(target, 'wb') as fd:
-                pdf.write(bytesio, fd, links, destinations)
+                pdf.write(bytesio, fd, links, destinations, bookmarks_tree)
+
+    def _get_bookmarks(self, page=None, box=None):
+        if page is None:
+            for page in self.pages:
+                for bookmark in self._get_bookmarks(page, page):
+                    yield bookmark
+        else:
+            if box.bookmark_label and box.style.bookmark_level != 'none':
+                position_x = box.position_x
+                position_y = page.outer_height - box.position_y
+                yield (
+                    box.style.bookmark_level,
+                    box.bookmark_label,
+                    (self.pages.index(page),
+                     position_x / LENGTHS_TO_PIXELS['pt'],
+                     position_y / LENGTHS_TO_PIXELS['pt']))
+
+            if isinstance(box, boxes.ParentBox):
+                for child in box.children:
+                    for bookmark in self._get_bookmarks(page, child):
+                        yield bookmark
 
     def _get_link_rectangles(self, page, box=None):
         if box is None:
@@ -216,12 +258,12 @@ class PDFDocument(Document):
                         page, page, names):
                     yield destination
         else:
-            if box.style.label and (box.style.label not in names):
-                names.add(box.style.label)
+            if box.style.anchor and box.style.anchor not in names:
+                names.add(box.style.anchor)
                 position_x = box.position_x
                 position_y = page.outer_height - box.position_y
                 yield (
-                    box.style.label,
+                    box.style.anchor,
                     (self.pages.index(page),
                      position_x / LENGTHS_TO_PIXELS['pt'],
                      position_y / LENGTHS_TO_PIXELS['pt']))
