@@ -15,7 +15,13 @@ try:
 except ImportError:
     from ordereddict import OrderedDict
 
-from . import VERSION
+from . import VERSION_STRING
+from .utils import safe_urlquote
+
+
+def pdf_encode(unicode_string):
+    """PDF uses either latin1 or UTF-16 BE with a BOM"""
+    return ('\ufeff' + unicode_string).encode('utf-16-be')
 
 
 def write(bytesio, target, links, destinations):
@@ -52,50 +58,62 @@ def write(bytesio, target, links, destinations):
             info = int(line.rsplit()[-3])
             for i, infoline in enumerate(objects[info]):
                 if b'/Creator' in infoline:
-                    objects[info][i] = (
-                        b'%s/Creator (WeasyPrint %s)\n' % (
-                            infoline.split(b'/Creator')[0], bytes(VERSION)))
+                    objects[info][i] = b''.join([
+                        infoline.split(b'/Creator')[0],
+                        b'/Creator (',
+                        pdf_encode(VERSION_STRING),
+                        b')\n'])
 
     number = len(objects) + 1
     for pdf_page_number, link_page in zip(pages, links):
         annot_numbers = []
 
         for link, x1, y1, x2, y2 in link_page:
-            text = b''.join((
-                b'%d 0 obj\n' % number,
-                b'<< /Type /Annot /Subtype /Link',
-                b'/Rect [%f %f %f %f]\n' % (x1, y1, x2, y2)))
+            text = [(
+                '%d 0 obj\n'
+                '<< /Type /Annot /Subtype /Link/Rect [%f %f %f %f]\n'
+                % (number, x1, y1, x2, y2)
+            ).encode('ascii')]
             if link:
                 if link.startswith('#'):
                     if link[1:] in destinations:
-                        text += b''.join((
-                            b'/A << /Type /Action /S /GoTo',
-                            b'/D [%d /XYZ %d %d 1]\n' % (
-                                destinations[link[1:]])))
+                        text.append((
+                            '/A << /Type /Action /S /GoTo'
+                            '/D [%d /XYZ %d %d 1]\n'
+                            % destinations[link[1:]]
+                        ).encode('ascii'))
                 else:
-                    text += b''.join((
-                        b'/A << /Type /Action /S /URI', b'/URI (%s)\n' % link))
-            text += b'>>\n>>\nendobj\n'
-            objects[number] = [text]
+                    text.extend([
+                        b'/A << /Type /Action /S /URI /URI (',
+                        safe_urlquote(link),
+                        b')\n'])
+            text.append(b'>>\n>>\nendobj\n')
+            objects[number] = text
             annot_numbers.append(number)
             number += 1
 
         if annot_numbers:
-            objects[pdf_page_number].insert(-2, b'/Annots [%s]\n' % b' '.join(
-                b'%d 0 R' % annot_number for annot_number in annot_numbers))
+            objects[pdf_page_number].insert(-2, b''.join([
+                b'/Annots [',
+                (' '.join(
+                    '%d 0 R' % n for n in annot_numbers).encode('ascii')),
+                b']\n'
+            ]))
 
     for i, line in enumerate(trailer):
         if b'/Size' in line:
-            trailer[i] = b'%s/Size %d\n' % (line.split(b'/Size')[0], number)
+            trailer[i] = (
+                line.split(b'/Size', 1)[0]
+                + ('/Size %d\n' % number).encode('ascii'))
 
     xref = (number - 1) * [None]
     for number, obj in objects.items():
-        xref[number - 1] = b'%010d 00000 n \n' % position
-        for line in obj:
-            position += len(line)
-            target.write(line)
-    target.write(b'xref\n0 %d\n0000000000 65535 f \n' % (number + 1))
-    for table in (xref, trailer):
-        for line in table:
-            target.write(line)
-    target.write(b'startxref\n%d\n%%EOF\n' % position)
+        xref[number - 1] = ('%010d 00000 n \n' % position).encode('ascii')
+        obj_bytes = b''.join(obj)
+        position += len(obj_bytes)
+        target.write(obj_bytes)
+    target.write(
+        ('xref\n0 %d\n0000000000 65535 f \n' % (number + 1)).encode('ascii'))
+    target.write(b''.join(xref))
+    target.write(b''.join(trailer))
+    target.write(('startxref\n%d\n%%EOF\n' % position).encode('ascii'))

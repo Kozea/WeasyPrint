@@ -16,17 +16,20 @@ import os.path
 import io
 import base64
 
-from . import VERSION
+from . import VERSION_STRING
 from .logger import LOGGER
 from .compat import (
-    urljoin, urlparse, unquote_to_bytes, urlopen_contenttype, Request,
-    parse_email, pathname2url)
+    urljoin, urlparse, quote, unquote, unquote_to_bytes, urlopen_contenttype,
+    Request, parse_email, pathname2url)
 
 
 # TODO: Most of this module is URL-related. Rename it to weasyprint.urls?
 
-
-HTTP_USER_AGENT = 'WeasyPrint/%s http://weasyprint.org/' % VERSION
+def safe_urlquote(url):
+    """Return a %-encoded byte string form an Unicode URL that may
+    contain both %-encoded bytes and non-ASCII characters.
+    """
+    return quote(unquote(url).encode('utf8')).encode('ascii')
 
 
 def path2url(path):
@@ -131,7 +134,7 @@ def urlopen(url):
         return parse_data_url(url)
     else:
         return urlopen_contenttype(Request(url,
-            headers={'User-Agent': HTTP_USER_AGENT}))
+            headers={'User-Agent': VERSION_STRING}))
 
 
 class cached_property(object):

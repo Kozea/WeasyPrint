@@ -20,7 +20,8 @@ import contextlib
 
 if sys.version_info[0] >= 3:
     # Python 3
-    from urllib.parse import urljoin, urlparse, unquote_to_bytes
+    from urllib.parse import (
+        urljoin, urlparse, quote, unquote, unquote_to_bytes)
     from urllib.request import urlopen, Request, pathname2url
     from array import array
 
@@ -46,7 +47,7 @@ if sys.version_info[0] >= 3:
 
 else:
     # Python 2
-    from urlparse import urljoin, urlparse, unquote
+    from urlparse import urljoin, urlparse, quote, unquote
     from urllib2 import urlopen, Request
     from urllib import pathname2url
     from array import array as _array

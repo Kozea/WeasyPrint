@@ -22,6 +22,10 @@ from .logger import LOGGER
 VERSION = '0.9dev'
 __version__ = VERSION
 
+# Used for 'User-Agent' in HTTP and 'Creator' in PDF
+VERSION_STRING = 'WeasyPrint %s (http://weasyprint.org/)' % VERSION
+
+
 
 # No import here. For this module, do them in functions/methods instead.
 # (This reduces the work for eg. 'weasyprint --help')
