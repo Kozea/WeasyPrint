@@ -74,7 +74,7 @@ def write(bytesio, target, links, destinations, bookmarks):
         for link, x1, y1, x2, y2 in link_page:
             text = [(
                 '%d 0 obj\n'
-                '<< /Type /Annot /Subtype /Link/Rect [%f %f %f %f]\n'
+                '<< /Type /Annot /Subtype /Link /Rect [%f %f %f %f]\n'
                 % (number, x1, y1, x2, y2)
             ).encode('ascii')]
             if link:
@@ -103,7 +103,7 @@ def write(bytesio, target, links, destinations, bookmarks):
                 b']\n'
             ]))
 
-    if bookmarks:
+    if len(bookmarks) > 1:
         parent = number
         objects[catalog].insert(
             -2, ('/Outlines %d 0 R\n' % parent).encode('ascii'))
@@ -114,21 +114,33 @@ def write(bytesio, target, links, destinations, bookmarks):
             ).encode('ascii')]
         number += 1
 
-    for bookmark in bookmarks:
-        label, destination, children = bookmark
-        text = ('%d 0 obj\n<< /Title (' % number).encode('ascii')
-        text += pdf_encode(label)
-        text += (') /Parent %d 0 R\n' % parent).encode('ascii')
-        if number > parent + 1:
-            text += ('/Prev %d 0 R\n' % (number - 1)).encode('ascii')
-        elif number < parent + len(bookmarks):
-            text += ('/Next %d 0 R\n' % (number + 1)).encode('ascii')
-        text += (
-            '/A << /Type /Action /S /GoTo '
-            '/D [%d /XYZ %f %f 0]\n>>\n>>\nendobj\n'
-                 % destination).encode('ascii')
-        objects[number] = [text]
-        number += 1
+        for bookmark in bookmarks:
+            text = ('%d 0 obj\n<< /Title (' % number).encode('ascii')
+            text += pdf_encode(bookmark['label'])
+            text += (b')\n')
+            if bookmark['parent'] is not None:
+                text += ('/Parent %d 0 R\n' % (
+                    bookmark['parent'] + parent + 1)).encode('ascii')
+            if bookmark['count']:
+                text += ('/Count %d\n' % bookmark['count']).encode('ascii')
+            if bookmark['prev']:
+                text += ('/Prev %d 0 R\n' % (
+                    bookmark['prev'] + parent + 1)).encode('ascii')
+            if bookmark['next']:
+                text += ('/Next %d 0 R\n' % (
+                    bookmark['next'] + parent + 1)).encode('ascii')
+            if bookmark['first']:
+                text += ('/First %d 0 R\n' % (
+                    bookmark['first'] + parent + 1)).encode('ascii')
+            if bookmark['last']:
+                text += ('/Last %d 0 R\n' % (
+                    bookmark['last'] + parent + 1)).encode('ascii')
+            text += (
+                '/A << /Type /Action /S /GoTo '
+                '/D [%d /XYZ %f %f 0]\n>>\n>>\nendobj\n'
+                     % bookmark['destination']).encode('ascii')
+            objects[number] = [text]
+            number += 1
 
     for i, line in enumerate(trailer):
         if b'/Size' in line:
