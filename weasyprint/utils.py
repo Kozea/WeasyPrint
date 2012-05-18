@@ -37,7 +37,7 @@ def iri_to_uri(url):
     # * Unreserved characters: ASCII letters, digits and -._~
     #   Of these, only '~' is not in urllib’s "always safe" list.
     # * '%' to avoid double-encoding
-    return quote(url, safe="/:?#[]@!$&'()*+,;=~%")
+    return quote(url, safe=b"/:?#[]@!$&'()*+,;=~%")
 
 
 def path2url(path):
