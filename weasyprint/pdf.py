@@ -16,7 +16,7 @@ except ImportError:
     from ordereddict import OrderedDict
 
 from . import VERSION_STRING
-from .utils import safe_urlquote
+from .utils import iri_to_uri
 
 
 def pdf_encode(unicode_string):
@@ -88,7 +88,7 @@ def write(bytesio, target, links, destinations, bookmarks):
                 else:
                     text.extend([
                         b'/A << /Type /Action /S /URI /URI (',
-                        safe_urlquote(link),
+                        iri_to_uri(link).encode('ascii'),
                         b')\n'])
             text.append(b'>>\n>>\nendobj\n')
             objects[number] = text
