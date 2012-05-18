@@ -182,55 +182,67 @@ class PDFDocument(Document):
 
         links = [self._get_link_rectangles(page) for page in self.pages]
         destinations = dict(self._get_link_destinations())
-        bookmark_list = []
-        bookmark_levels = {0: {
-            'count': 0, 'first': None, 'last': None,
-            'prev': None, 'next': None, 'parent': None}}
-        bookmark_level = lambda: max(bookmark_levels)
-        for i, (level, label, destination) in enumerate(self._get_bookmarks()):
-            bookmark = {
-                'count': 0, 'first': None, 'last': None, 'prev': None,
-                'next': None, 'parent': None, 'label': label,
-                'destination': destination}
-            bookmark_list.append(bookmark)
-            if level < bookmark_level():
-                count = 0
-                while level < bookmark_level():
-                    count += bookmark_levels.pop(bookmark_level())['count'] + 1
-                bookmark['prev'] = bookmark_list.index(bookmark_levels[level])
-                bookmark['parent'] = bookmark_list.index(
-                    bookmark_levels[level - 1])
-                bookmark_levels[level]['next'] = i
-                bookmark_levels[level - 1]['count'] += count + 1
-            elif level > bookmark_level():
-                level = min(level, bookmark_level() + 1)
-                bookmark['parent'] = i - 1
-                bookmark_levels[level - 1]['first'] = i
-                bookmark_levels[level - 1]['count'] += 1
-            else:
-                bookmark['prev'] = bookmark_list.index(bookmark_levels[level])
-                bookmark['parent'] = bookmark_list.index(
-                    bookmark_levels[level - 1])
-                bookmark_levels[level]['next'] = i
-                bookmark_levels[level - 1]['count'] += (
-                    bookmark_levels[level]['count'] + 1)
-            bookmark_levels[level - 1]['last'] = i
-            bookmark_levels[level] = bookmark
-
-        bookmark_levels[level - 1]['count'] += (
-            bookmark_levels[level]['count'] + 1)
-        bookmark_list[0]['parent'] = None
+        bookmarks = self._get_bookmarks()
 
         if hasattr(target, 'write'):
-            pdf.write(bytesio, target, links, destinations, bookmark_list)
+            pdf.write(bytesio, target, links, destinations, bookmarks)
         else:
             with open(target, 'wb') as fd:
-                pdf.write(bytesio, fd, links, destinations, bookmark_list)
+                pdf.write(bytesio, fd, links, destinations, bookmarks)
 
-    def _get_bookmarks(self, page=None, box=None):
+    def _get_bookmarks(self):
+        """Get the list of document's bookmarks."""
+        root = {'count': 0}
+        bookmark_list = []
+
+        level_shifts = []
+        last_by_level = [root]
+        indices_by_level = [0]
+
+        for i, (level, label, destination) in enumerate(
+                self._get_bookmarks_in_box(), start=1):
+            # Calculate the real level of the bookmark
+            previous_level = len(last_by_level) - 1 + sum(level_shifts)
+            if level > previous_level:
+                level_shifts.append(level - previous_level - 1)
+            else:
+                k = 0
+                while k < previous_level - level:
+                    k += 1 + level_shifts.pop()
+
+            # Resolve level inconsistancies
+            level -= sum(level_shifts)
+
+            bookmark = {
+                'count': 0, 'first': None, 'last': None, 'prev': None,
+                'next': None, 'parent': indices_by_level[level - 1],
+                'label': label, 'destination': destination}
+
+            if level > len(last_by_level) - 1:
+                last_by_level[level - 1]['first'] = i
+            else:
+                # The bookmark is sibling of indices_by_level[level]
+                bookmark['prev'] = indices_by_level[level]
+                last_by_level[level]['next'] = i
+
+                # Remove the bookmarks with a level higher than the current one
+                del last_by_level[level:]
+                del indices_by_level[level:]
+
+            for count_level in range(level):
+                last_by_level[count_level]['count'] += 1
+            last_by_level[level - 1]['last'] = i
+
+            last_by_level.append(bookmark)
+            indices_by_level.append(i)
+            bookmark_list.append(bookmark)
+
+        return root, bookmark_list
+
+    def _get_bookmarks_in_box(self, page=None, box=None):
         if page is None:
             for page in self.pages:
-                for bookmark in self._get_bookmarks(page, page):
+                for bookmark in self._get_bookmarks_in_box(page, page):
                     yield bookmark
         else:
             if box.bookmark_label and box.style.bookmark_level != 'none':
@@ -245,7 +257,7 @@ class PDFDocument(Document):
 
             if isinstance(box, boxes.ParentBox):
                 for child in box.children:
-                    for bookmark in self._get_bookmarks(page, child):
+                    for bookmark in self._get_bookmarks_in_box(page, child):
                         yield bookmark
 
     def _get_link_rectangles(self, page, box=None):

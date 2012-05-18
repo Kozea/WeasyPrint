@@ -103,14 +103,16 @@ def write(bytesio, target, links, destinations, bookmarks):
                 b']\n'
             ]))
 
-    if len(bookmarks) > 1:
+    root, bookmarks = bookmarks
+    if bookmarks:
         parent = number
         objects[catalog].insert(
             -2, ('/Outlines %d 0 R\n' % parent).encode('ascii'))
         objects[parent] = [(
             '%d 0 obj\n<< /Type /Outlines '
             '/Count %d /First %d 0 R /Last %d 0 R\n>>\nendobj\n' % (
-                parent, len(bookmarks), parent + 1, parent + len(bookmarks))
+                parent, root['count'],
+                root['first'] + parent, root['last'] + parent)
             ).encode('ascii')]
         number += 1
 
@@ -118,23 +120,24 @@ def write(bytesio, target, links, destinations, bookmarks):
             text = ('%d 0 obj\n<< /Title (' % number).encode('ascii')
             text += pdf_encode(bookmark['label'])
             text += (b')\n')
-            if bookmark['parent'] is not None:
+            if bookmark['parent']:
+                # parent == 0 means no parent, as the root is not a bookmark
                 text += ('/Parent %d 0 R\n' % (
-                    bookmark['parent'] + parent + 1)).encode('ascii')
+                    bookmark['parent'] + parent)).encode('ascii')
             if bookmark['count']:
                 text += ('/Count %d\n' % bookmark['count']).encode('ascii')
             if bookmark['prev']:
                 text += ('/Prev %d 0 R\n' % (
-                    bookmark['prev'] + parent + 1)).encode('ascii')
+                    bookmark['prev'] + parent)).encode('ascii')
             if bookmark['next']:
                 text += ('/Next %d 0 R\n' % (
-                    bookmark['next'] + parent + 1)).encode('ascii')
+                    bookmark['next'] + parent)).encode('ascii')
             if bookmark['first']:
                 text += ('/First %d 0 R\n' % (
-                    bookmark['first'] + parent + 1)).encode('ascii')
+                    bookmark['first'] + parent)).encode('ascii')
             if bookmark['last']:
                 text += ('/Last %d 0 R\n' % (
-                    bookmark['last'] + parent + 1)).encode('ascii')
+                    bookmark['last'] + parent)).encode('ascii')
             text += (
                 '/A << /Type /Action /S /GoTo '
                 '/D [%d /XYZ %f %f 0]\n>>\n>>\nendobj\n'
