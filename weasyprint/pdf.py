@@ -28,37 +28,37 @@ def write(bytesio, target, links, destinations, bookmarks):
     """Write PDF from ``bytesio`` to ``target`` adding ``links``."""
     bytesio.seek(0)
     position = 0
-    lines = bytesio.readlines()
+    lines = iter(bytesio)
+    current_line = next(lines)
 
-    while not lines[0].endswith(b' obj\n'):
-        line = lines.pop(0)
-        position += len(line)
-        target.write(line)
+    while not current_line.endswith(b' obj\n'):
+        position += len(current_line)
+        target.write(current_line)
+        current_line = next(lines)
 
     pages = []
     objects = OrderedDict()
-    while lines[0] != b'xref\n':
-        line = lines.pop(0)
-        if line.endswith(b' obj\n'):
-            number = int(line.split()[0])
+    while current_line != b'xref\n':
+        if current_line.endswith(b' obj\n'):
+            number = int(current_line.split()[0])
             objects[number] = []
-        objects[number].append(line)
+        objects[number].append(current_line)
 
-        if line.endswith(b'/Type /Page\n'):
+        if current_line.endswith(b'/Type /Page\n'):
             pages.append(number)
 
-        if line.endswith(b'/Type /Catalog\n'):
+        if current_line.endswith(b'/Type /Catalog\n'):
             catalog = number
+        current_line = next(lines)
 
-    while lines[0] != b'trailer\n':
-        lines.pop(0)
+    while current_line != b'trailer\n':
+        current_line = next(lines)
 
     trailer = []
-    while lines[0] != b'startxref\n':
-        line = lines.pop(0)
-        trailer.append(line)
-        if b'/Info' in line:
-            info = int(line.rsplit()[-3])
+    while current_line != b'startxref\n':
+        trailer.append(current_line)
+        if b'/Info' in current_line:
+            info = int(current_line.rsplit()[-3])
             for i, infoline in enumerate(objects[info]):
                 if b'/Creator' in infoline:
                     objects[info][i] = b''.join([
@@ -66,6 +66,7 @@ def write(bytesio, target, links, destinations, bookmarks):
                         b'/Creator (',
                         pdf_encode(VERSION_STRING),
                         b')\n'])
+        current_line = next(lines)
 
     number = len(objects) + 1
     for pdf_page_number, link_page in zip(pages, links):
