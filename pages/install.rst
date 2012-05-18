@@ -38,7 +38,7 @@ WeasyPrint 0.8 depends on:
 
 * CPython 2.6, 2.7 or 3.2
 * Pango **>= 1.29.3** with GObject introspection
-* PyGObject with cairo bindings
+* PyGObject 3.x with cairo bindings
 * pycairo
 * lxml
 * Pystacia
