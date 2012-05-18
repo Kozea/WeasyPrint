@@ -44,19 +44,19 @@ def test_bookmarks():
         <h1>10</h1>
         <h2>11</h2>
     ''')
-    assert root == dict(count=11, first=1, last=10)
+    assert root == dict(Count=11, First=1, Last=10)
     assert bookmarks == [
-        dict(count=0, first=None, last=None, next=2, parent=0, prev=None),
-        dict(count=4, first=3, last=6, next=7, parent=0, prev=1),
-        dict(count=0, first=None, last=None, next=4, parent=2, prev=None),
-        dict(count=1, first=5, last=5, next=6, parent=2, prev=3),
-        dict(count=0, first=None, last=None, next=None, parent=4, prev=None),
-        dict(count=0, first=None, last=None, next=None, parent=2, prev=4),
-        dict(count=2, first=8, last=8, next=10, parent=0, prev=2),
-        dict(count=1, first=9, last=9, next=None, parent=7, prev=None),
-        dict(count=0, first=None, last=None, next=None, parent=8, prev=None),
-        dict(count=1, first=11, last=11, next=None, parent=0, prev=7),
-        dict(count=0, first=None, last=None, next=None, parent=10, prev=None)]
+        dict(Count=0, First=None, Last=None, Next=2, Parent=0, Prev=None),
+        dict(Count=4, First=3, Last=6, Next=7, Parent=0, Prev=1),
+        dict(Count=0, First=None, Last=None, Next=4, Parent=2, Prev=None),
+        dict(Count=1, First=5, Last=5, Next=6, Parent=2, Prev=3),
+        dict(Count=0, First=None, Last=None, Next=None, Parent=4, Prev=None),
+        dict(Count=0, First=None, Last=None, Next=None, Parent=2, Prev=4),
+        dict(Count=2, First=8, Last=8, Next=10, Parent=0, Prev=2),
+        dict(Count=1, First=9, Last=9, Next=None, Parent=7, Prev=None),
+        dict(Count=0, First=None, Last=None, Next=None, Parent=8, Prev=None),
+        dict(Count=1, First=11, Last=11, Next=None, Parent=0, Prev=7),
+        dict(Count=0, First=None, Last=None, Next=None, Parent=10, Prev=None)]
 
     root, bookmarks = get_bookmarks('''
         <h2>1</h2> level 1
@@ -65,13 +65,13 @@ def test_bookmarks():
         <h3>4</h3> level 2
         <h4>5</h4> level 3
     ''')
-    assert root == dict(count=5, first=1, last=3)
+    assert root == dict(Count=5, First=1, Last=3)
     assert bookmarks == [
-        dict(count=1, first=2, last=2, next=3, parent=0, prev=None),
-        dict(count=0, first=None, last=None, next=None, parent=1, prev=None),
-        dict(count=2, first=4, last=4, next=None, parent=0, prev=1),
-        dict(count=1, first=5, last=5, next=None, parent=3, prev=None),
-        dict(count=0, first=None, last=None, next=None, parent=4, prev=None)]
+        dict(Count=1, First=2, Last=2, Next=3, Parent=0, Prev=None),
+        dict(Count=0, First=None, Last=None, Next=None, Parent=1, Prev=None),
+        dict(Count=2, First=4, Last=4, Next=None, Parent=0, Prev=1),
+        dict(Count=1, First=5, Last=5, Next=None, Parent=3, Prev=None),
+        dict(Count=0, First=None, Last=None, Next=None, Parent=4, Prev=None)]
 
     root, bookmarks = get_bookmarks('''
         <h2>1</h2> h2 level 1
@@ -84,14 +84,14 @@ def test_bookmarks():
         <h4>8</h4> h4 level 3
         <h1>9</h1> h1 level 1
     ''')
-    assert root == dict(count=9, first=1, last=9)
+    assert root == dict(Count=9, First=1, Last=9)
     assert bookmarks == [
-        dict(count=3, first=2, last=3, next=5, parent=0, prev=None),
-        dict(count=0, first=None, last=None, next=3, parent=1, prev=None),
-        dict(count=1, first=4, last=4, next=None, parent=1, prev=2),
-        dict(count=0, first=None, last=None, next=None, parent=3, prev=None),
-        dict(count=3, first=6, last=7, next=9, parent=0, prev=1),
-        dict(count=0, first=None, last=None, next=7, parent=5, prev=None),
-        dict(count=1, first=8, last=8, next=None, parent=5, prev=6),
-        dict(count=0, first=None, last=None, next=None, parent=7, prev=None),
-        dict(count=0, first=None, last=None, next=None, parent=0, prev=5)]
+        dict(Count=3, First=2, Last=3, Next=5, Parent=0, Prev=None),
+        dict(Count=0, First=None, Last=None, Next=3, Parent=1, Prev=None),
+        dict(Count=1, First=4, Last=4, Next=None, Parent=1, Prev=2),
+        dict(Count=0, First=None, Last=None, Next=None, Parent=3, Prev=None),
+        dict(Count=3, First=6, Last=7, Next=9, Parent=0, Prev=1),
+        dict(Count=0, First=None, Last=None, Next=7, Parent=5, Prev=None),
+        dict(Count=1, First=8, Last=8, Next=None, Parent=5, Prev=6),
+        dict(Count=0, First=None, Last=None, Next=None, Parent=7, Prev=None),
+        dict(Count=0, First=None, Last=None, Next=None, Parent=0, Prev=5)]

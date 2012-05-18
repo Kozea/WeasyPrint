@@ -192,7 +192,7 @@ class PDFDocument(Document):
 
     def _get_bookmarks(self):
         """Get the list of document's bookmarks."""
-        root = {'count': 0}
+        root = {'Count': 0}
         bookmark_list = []
 
         level_shifts = []
@@ -214,24 +214,24 @@ class PDFDocument(Document):
             level -= sum(level_shifts)
 
             bookmark = {
-                'count': 0, 'first': None, 'last': None, 'prev': None,
-                'next': None, 'parent': indices_by_level[level - 1],
+                'Count': 0, 'First': None, 'Last': None, 'Prev': None,
+                'Next': None, 'Parent': indices_by_level[level - 1],
                 'label': label, 'destination': destination}
 
             if level > len(last_by_level) - 1:
-                last_by_level[level - 1]['first'] = i
+                last_by_level[level - 1]['First'] = i
             else:
                 # The bookmark is sibling of indices_by_level[level]
-                bookmark['prev'] = indices_by_level[level]
-                last_by_level[level]['next'] = i
+                bookmark['Prev'] = indices_by_level[level]
+                last_by_level[level]['Next'] = i
 
                 # Remove the bookmarks with a level higher than the current one
                 del last_by_level[level:]
                 del indices_by_level[level:]
 
             for count_level in range(level):
-                last_by_level[count_level]['count'] += 1
-            last_by_level[level - 1]['last'] = i
+                last_by_level[count_level]['Count'] += 1
+            last_by_level[level - 1]['Last'] = i
 
             last_by_level.append(bookmark)
             indices_by_level.append(i)
