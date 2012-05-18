@@ -74,8 +74,8 @@ def write(bytesio, target, links, destinations, bookmarks):
         for link, x1, y1, x2, y2 in link_page:
             text = [(
                 '%d 0 obj\n'
-                '<< /Type /Annot /Subtype /Link /Rect [%f %f %f %f] '
-                '/Border [0 0 0]\n'
+                '<< /Type /Annot /Subtype /Link '
+                '/Rect [%f %f %f %f] /Border [0 0 0]\n'
                 % (number, x1, y1, x2, y2)
             ).encode('ascii')]
             if link:
