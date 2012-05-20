@@ -34,7 +34,6 @@ from __future__ import division, unicode_literals
 import os
 import re
 import string
-import itertools
 
 from . import VERSION_STRING
 from .compat import xrange, iteritems
@@ -80,7 +79,7 @@ class PDFDictionary(object):
 
     _re_cache = {}
 
-    def _get_value(self, key, value_re):
+    def get_value(self, key, value_re):
         regex = self._re_cache.get((key, value_re))
         if not regex:
             regex = re.compile(pdf_format('/{0} {1}', key, value_re))
@@ -93,7 +92,7 @@ class PDFDictionary(object):
 
         """
         # No end delimiter, + defaults to greedy
-        return self._get_value('Type', '/(\w+)').decode('ascii')
+        return self.get_value('Type', '/(\w+)').decode('ascii')
 
     def get_indirect_dict(self, key, pdf_file):
         """Read the value for `key` and follow the reference, assuming
@@ -102,7 +101,7 @@ class PDFDictionary(object):
         :return: a new PDFDictionary instance.
 
         """
-        object_number = int(self._get_value(key, '(\d+) 0 R'))
+        object_number = int(self.get_value(key, '(\d+) 0 R'))
         return type(self)(object_number, pdf_file.read_object(object_number))
 
     def get_indirect_dict_array(self, key, pdf_file):
@@ -112,7 +111,7 @@ class PDFDictionary(object):
         :return: a list of new PDFDictionary instance.
 
         """
-        parts = self._get_value(key, '\[([^\]]+)\]').split(b' 0 R')
+        parts = self.get_value(key, '\[(.+?)\]').split(b' 0 R')
         # The array looks like this: ' <a> 0 R <b> 0 R <c> 0 R '
         # so `parts` ends up like this [' <a>', ' <b>', ' <c>', ' ']
         # With the trailing white space in the list.
@@ -344,23 +343,3 @@ def add_pdf_metadata(fileobj, links, destinations, bookmarks):
                     '{0} 0 R'.format(n) for n in annotations)))
 
     pdf.finish()
-
-
-def test():
-    import cairo
-    import io
-    fileobj = io.BytesIO()
-    surface = cairo.PDFSurface(fileobj, 100, 100)
-#    for i in xrange(20):
-#        surface.show_page()
-    surface.finish()
-    add_pdf_metadata(fileobj)
-    print(fileobj.getvalue().decode('latin1'))
-
-#    pdf = PDFFile(fileobj)
-#    print(pdf.page_tree)
-#    print(len(pdf.pages))
-
-
-if __name__ == '__main__':
-    test()

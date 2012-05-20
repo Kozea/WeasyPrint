@@ -12,8 +12,32 @@
 
 from __future__ import division, unicode_literals
 
+import io
+
+import cairo
+
 from .. import HTML
 from ..document import PDFDocument
+from .. import pdf
+from .testing_utils import assert_no_logs
+
+
+@assert_no_logs
+def test_pdf_parser():
+    fileobj = io.BytesIO()
+    surface = cairo.PDFSurface(fileobj, 1, 1)
+    for width, height in [
+        (100, 100),
+        (200, 10),
+        (3.14, 987654321)
+    ]:
+        surface.set_size(width, height)
+        surface.show_page()
+    surface.finish()
+
+    sizes = [page.get_value('MediaBox', '\[(.+?)\]').strip()
+             for page in pdf.PDFFile(fileobj).pages]
+    assert sizes == [b'0 0 100 100', b'0 0 200 10', b'0 0 3.14 987654321']
 
 
 def get_bookmarks(html):
@@ -25,6 +49,7 @@ def get_bookmarks(html):
     return root, bookmarks
 
 
+@assert_no_logs
 def test_bookmarks():
     """Test the structure of the document bookmarks.
 
