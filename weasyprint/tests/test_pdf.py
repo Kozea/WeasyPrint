@@ -40,9 +40,13 @@ def test_pdf_parser():
     assert sizes == [b'0 0 100 100', b'0 0 200 10', b'0 0 3.14 987654321']
 
 
-def get_bookmarks(html):
+def get_metadata(html):
     document = HTML(string=html)._get_document(PDFDocument, [])
-    root, bookmarks = document._get_bookmarks()
+    return pdf.gather_metadata(document)
+
+
+def get_bookmarks(html):
+    (root, bookmarks), links, destinations = get_metadata(html)
     for bookmark in bookmarks:
         bookmark.pop('destination')
         bookmark.pop('label')

@@ -35,9 +35,16 @@ import os
 import re
 import string
 
+import cairo
+
 from . import VERSION_STRING
 from .compat import xrange, iteritems
 from .utils import iri_to_uri
+from .formatting_structure import boxes
+from .css.computed_values import LENGTHS_TO_PIXELS
+
+
+PX_TO_PT = 1 / LENGTHS_TO_PIXELS['pt']
 
 
 class PDFFormatter(string.Formatter):
@@ -288,7 +295,102 @@ class PDFFile(object):
         return fileobj.tell(), fileobj.write
 
 
-def add_pdf_metadata(fileobj, links, destinations, bookmarks):
+def process_bookmarks(raw_bookmarks):
+    """Transform a list of bookmarks as found in the document
+    to a data structure ready for PDF.
+
+    """
+    root = {'Count': 0}
+    bookmark_list = []
+
+    level_shifts = []
+    last_by_level = [root]
+    indices_by_level = [0]
+
+    for i, (level, label, destination) in enumerate(raw_bookmarks, start=1):
+        # Calculate the real level of the bookmark
+        previous_level = len(last_by_level) - 1 + sum(level_shifts)
+        if level > previous_level:
+            level_shifts.append(level - previous_level - 1)
+        else:
+            k = 0
+            while k < previous_level - level:
+                k += 1 + level_shifts.pop()
+
+        # Resolve level inconsistencies
+        level -= sum(level_shifts)
+
+        bookmark = {
+            'Count': 0, 'First': None, 'Last': None, 'Prev': None,
+            'Next': None, 'Parent': indices_by_level[level - 1],
+            'label': label, 'destination': destination}
+
+        if level > len(last_by_level) - 1:
+            last_by_level[level - 1]['First'] = i
+        else:
+            # The bookmark is sibling of indices_by_level[level]
+            bookmark['Prev'] = indices_by_level[level]
+            last_by_level[level]['Next'] = i
+
+            # Remove the bookmarks with a level higher than the current one
+            del last_by_level[level:]
+            del indices_by_level[level:]
+
+        for count_level in range(level):
+            last_by_level[count_level]['Count'] += 1
+        last_by_level[level - 1]['Last'] = i
+
+        last_by_level.append(bookmark)
+        indices_by_level.append(i)
+        bookmark_list.append(bookmark)
+
+    return root, bookmark_list
+
+
+def gather_metadata(document):
+    """Traverse the layout tree (boxes) to find all metadata."""
+    def walk(box):
+        if box.bookmark_label and box.style.bookmark_level != 'none':
+            bookmarks.append((
+                box.style.bookmark_level,
+                box.bookmark_label,
+                (page_index,) + point_to_pdf(box.position_x, box.position_y)))
+
+        if box.style.link:
+            pos_x, pos_y = point_to_pdf(box.position_x, box.position_y)
+            width, height = distance_to_pdf(
+                box.margin_width(), box.margin_height())
+            links.append((
+                box.style.link,
+                (pos_x, pos_y, pos_x + width, pos_y + height)))
+
+        if box.style.anchor and box.style.anchor not in destinations:
+            destinations['#' + box.style.anchor] = (
+                (page_index,) + point_to_pdf(box.position_x, box.position_y))
+
+        if isinstance(box, boxes.ParentBox):
+            for child in box.children:
+                walk(child)
+
+    bookmarks = []
+    links_by_page = []
+    destinations = {}
+    for page_index, page in enumerate(document.pages):
+        # cairo coordinates are pixels right and down from the top-left corner
+        # PDF coordinates are points right and up from the bottom-left corner
+        matrix = cairo.Matrix(
+            PX_TO_PT, 0, 0, -PX_TO_PT, 0, page.outer_height * PX_TO_PT)
+        point_to_pdf = matrix.transform_point
+        distance_to_pdf = matrix.transform_distance
+        links = []
+        walk(page)
+        links_by_page.append(links)
+    return process_bookmarks(bookmarks), links_by_page, destinations
+
+
+def write_pdf_metadata(document, fileobj):
+    bookmarks, links, destinations = gather_metadata(document)
+
     pdf = PDFFile(fileobj)
     pdf.overwrite_object(pdf.info.object_number, pdf_format(
         '<< /Producer {producer!P} >>',
@@ -320,16 +422,16 @@ def add_pdf_metadata(fileobj, links, destinations, bookmarks):
 
     for page, page_links in zip(pdf.pages, links):
         annotations = []
-        for uri, x1, y1, x2, y2 in page_links:
+        for uri, rectangle in page_links:
             content = [pdf_format(
                 '<< /Type /Annot /Subtype /Link '
                     '/Rect [{0:f} {1:f} {2:f} {3:f}] /Border [0 0 0]\n',
-                x1, y1, x2, y2)]
-            if uri and uri.startswith('#') and uri[1:] in destinations:
+                *rectangle)]
+            if uri and uri.startswith('#') and uri in destinations:
                 content.append(pdf_format(
                     '/A << /Type /Action /S /GoTo '
                         '/D [{0} /XYZ {1:f} {2:f} 0] >>\n',
-                    *destinations[uri[1:]]))
+                    *destinations[uri]))
             elif uri:
                 content.append(pdf_format(
                     '/A << /Type /Action /S /URI /URI ({0}) >>\n',

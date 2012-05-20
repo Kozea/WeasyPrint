@@ -19,8 +19,6 @@ import shutil
 import cairo
 
 from .css import get_all_computed_styles
-from .css.computed_values import LENGTHS_TO_PIXELS
-from .formatting_structure import boxes
 from .formatting_structure.build import build_formatting_structure
 from . import layout
 from . import draw
@@ -163,12 +161,11 @@ class PDFDocument(Document):
         """
         Write the whole document as PDF into a file-like or filename `target`.
         """
+        px_to_pt = pdf.PX_TO_PT
         fileobj = io.BytesIO()
-
         # The actual page size is set for each page.
         surface = cairo.PDFSurface(fileobj, 1, 1)
 
-        px_to_pt = 1 / LENGTHS_TO_PIXELS['pt']
         for page in self.pages:
             # Actual page size is here. May be different between pages.
             surface.set_size(
@@ -180,129 +177,11 @@ class PDFDocument(Document):
             surface.show_page()
 
         surface.finish()
+        pdf.write_pdf_metadata(self, fileobj)
 
-        links = [self._get_link_rectangles(page) for page in self.pages]
-        destinations = dict(self._get_link_destinations())
-        bookmarks = self._get_bookmarks()
-
-        pdf.add_pdf_metadata(fileobj, links, destinations, bookmarks)
         fileobj.seek(0)
-
         if hasattr(target, 'write'):
             shutil.copyfileobj(fileobj, target)
         else:
             with open(target, 'wb') as fd:
                 shutil.copyfileobj(fileobj, fd)
-
-    def _get_bookmarks(self):
-        """Get the list of document's bookmarks."""
-        root = {'Count': 0}
-        bookmark_list = []
-
-        level_shifts = []
-        last_by_level = [root]
-        indices_by_level = [0]
-
-        for i, (level, label, destination) in enumerate(
-                self._get_bookmarks_in_box(), start=1):
-            # Calculate the real level of the bookmark
-            previous_level = len(last_by_level) - 1 + sum(level_shifts)
-            if level > previous_level:
-                level_shifts.append(level - previous_level - 1)
-            else:
-                k = 0
-                while k < previous_level - level:
-                    k += 1 + level_shifts.pop()
-
-            # Resolve level inconsistancies
-            level -= sum(level_shifts)
-
-            bookmark = {
-                'Count': 0, 'First': None, 'Last': None, 'Prev': None,
-                'Next': None, 'Parent': indices_by_level[level - 1],
-                'label': label, 'destination': destination}
-
-            if level > len(last_by_level) - 1:
-                last_by_level[level - 1]['First'] = i
-            else:
-                # The bookmark is sibling of indices_by_level[level]
-                bookmark['Prev'] = indices_by_level[level]
-                last_by_level[level]['Next'] = i
-
-                # Remove the bookmarks with a level higher than the current one
-                del last_by_level[level:]
-                del indices_by_level[level:]
-
-            for count_level in range(level):
-                last_by_level[count_level]['Count'] += 1
-            last_by_level[level - 1]['Last'] = i
-
-            last_by_level.append(bookmark)
-            indices_by_level.append(i)
-            bookmark_list.append(bookmark)
-
-        return root, bookmark_list
-
-    def _get_bookmarks_in_box(self, page=None, box=None):
-        if page is None:
-            for page in self.pages:
-                for bookmark in self._get_bookmarks_in_box(page, page):
-                    yield bookmark
-        else:
-            if box.bookmark_label and box.style.bookmark_level != 'none':
-                position_x = box.position_x
-                position_y = page.outer_height - box.position_y
-                yield (
-                    box.style.bookmark_level,
-                    box.bookmark_label,
-                    (self.pages.index(page),
-                     position_x / LENGTHS_TO_PIXELS['pt'],
-                     position_y / LENGTHS_TO_PIXELS['pt']))
-
-            if isinstance(box, boxes.ParentBox):
-                for child in box.children:
-                    for bookmark in self._get_bookmarks_in_box(page, child):
-                        yield bookmark
-
-    def _get_link_rectangles(self, page, box=None):
-        if box is None:
-            box = page
-
-        if box.style.link:
-            position_x = box.position_x
-            position_y = page.outer_height - box.position_y
-            yield (
-                box.style.link,
-                position_x / LENGTHS_TO_PIXELS['pt'],
-                position_y / LENGTHS_TO_PIXELS['pt'],
-                (position_x + box.margin_width()) / LENGTHS_TO_PIXELS['pt'],
-                (position_y - box.margin_height()) / LENGTHS_TO_PIXELS['pt'])
-
-        if isinstance(box, boxes.ParentBox):
-            for child in box.children:
-                for rectangle in self._get_link_rectangles(page, child):
-                    yield rectangle
-
-    def _get_link_destinations(self, page=None, box=None, names=None):
-        if page is None:
-            names = set()
-            for page in self.pages:
-                for destination in self._get_link_destinations(
-                        page, page, names):
-                    yield destination
-        else:
-            if box.style.anchor and box.style.anchor not in names:
-                names.add(box.style.anchor)
-                position_x = box.position_x
-                position_y = page.outer_height - box.position_y
-                yield (
-                    box.style.anchor,
-                    (self.pages.index(page),
-                     position_x / LENGTHS_TO_PIXELS['pt'],
-                     position_y / LENGTHS_TO_PIXELS['pt']))
-
-            if isinstance(box, boxes.ParentBox):
-                for child in box.children:
-                    for destination in self._get_link_destinations(
-                            page, child, names):
-                        yield destination
