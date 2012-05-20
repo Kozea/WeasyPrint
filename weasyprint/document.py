@@ -186,7 +186,7 @@ class PDFDocument(Document):
 #        destinations = dict(self._get_link_destinations())
 #        bookmarks = self._get_bookmarks()
 
-#        pdf.add_pdf_metadata(fileobj)
+        pdf.add_pdf_metadata(fileobj)
         fileobj.seek(0)
 
         if hasattr(target, 'write'):
