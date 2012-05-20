@@ -38,6 +38,7 @@ import itertools
 
 from . import VERSION_STRING
 from .compat import xrange, iteritems
+from .utils import iri_to_uri
 
 
 class PDFFormatter(string.Formatter):
@@ -210,6 +211,21 @@ class PDFFile(object):
         self.overwritten_objects_offsets[object_number] = (
             self._write_object(object_number, byte_string))
 
+    def extend_dict(self, dictionary, new_content):
+        """Overwrite a dictionary object after adding content inside
+        the << >> delimiters.
+
+        """
+        assert dictionary.byte_string.endswith(b'>>\n')
+        self.overwrite_object(
+            dictionary.object_number,
+            dictionary.byte_string[:-3] + new_content + b'\n>>\n')
+
+    def next_object_number(self):
+        """Return the object number that would be used by write_new_object().
+        """
+        return len(self.objects_offsets) + len(self.new_objects_offsets)
+
     def write_new_object(self, byte_string):
         """Write a new object at the end of the file.
 
@@ -219,9 +235,8 @@ class PDFFile(object):
             The new object number.
 
         """
-        new_objects_offsets = self.new_objects_offsets
-        object_number = len(self.objects_offsets) + len(new_objects_offsets)
-        new_objects_offsets.append(
+        object_number = self.next_object_number()
+        self.new_objects_offsets.append(
             self._write_object(object_number, byte_string))
         return object_number
 
@@ -254,7 +269,7 @@ class PDFFile(object):
             'trailer\n<< '
             '/Size {size} /Root {root} 0 R /Info {info} 0 R /Prev {prev}'
             ' >>\nstartxref\n{startxref}\n%%EOF\n',
-            size=len(self.objects_offsets) + len(self.new_objects_offsets),
+            size=self.next_object_number(),
             root=self.catalog.object_number,
             info=self.info.object_number,
             prev=self.startxref,
@@ -274,11 +289,60 @@ class PDFFile(object):
         return fileobj.tell(), fileobj.write
 
 
-def add_pdf_metadata(fileobj):
+def add_pdf_metadata(fileobj, links, destinations, bookmarks):
     pdf = PDFFile(fileobj)
     pdf.overwrite_object(pdf.info.object_number, pdf_format(
         '<< /Producer {producer!P} >>',
         producer=VERSION_STRING))
+
+    root, bookmarks = bookmarks
+    if bookmarks:
+        bookmark_root = pdf.next_object_number()
+        pdf.write_new_object(pdf_format(
+            '<< /Type /Outlines /Count {0} /First {1} 0 R /Last {2} 0 R\n>>',
+            root['Count'],
+            root['First'] + bookmark_root,
+            root['Last'] + bookmark_root))
+        pdf.extend_dict(pdf.catalog, pdf_format(
+            '/Outlines {0} 0 R', bookmark_root))
+        for bookmark in bookmarks:
+            content = [pdf_format('<< /Title {0!P}\n', bookmark['label'])]
+            if bookmark['Count']:
+                content.append(pdf_format('/Count {0}\n', bookmark['Count']))
+            for key in ['Parent', 'Prev', 'Next', 'First', 'Last']:
+                if bookmark[key]:
+                    content.append(pdf_format(
+                        '/{0} {1} 0 R\n', key, bookmark[key] + bookmark_root))
+            content.append(pdf_format(
+                '/A << /Type /Action /S /GoTo '
+                    '/D [{0} /XYZ {1:f} {2:f} 0] >>\n>>',
+                *bookmark['destination']))
+            pdf.write_new_object(b''.join(content))
+
+    for page, page_links in zip(pdf.pages, links):
+        annotations = []
+        for uri, x1, y1, x2, y2 in page_links:
+            content = [pdf_format(
+                '<< /Type /Annot /Subtype /Link '
+                    '/Rect [{0:f} {1:f} {2:f} {3:f}] /Border [0 0 0]\n',
+                x1, y1, x2, y2)]
+            if uri and uri.startswith('#') and uri[1:] in destinations:
+                content.append(pdf_format(
+                    '/A << /Type /Action /S /GoTo '
+                        '/D [{0} /XYZ {1:f} {2:f} 0] >>\n',
+                    *destinations[uri[1:]]))
+            elif uri:
+                content.append(pdf_format(
+                    '/A << /Type /Action /S /URI /URI ({0}) >>\n',
+                    iri_to_uri(uri)))
+            content.append(b'>>')
+            annotations.append(pdf.write_new_object(b''.join(content)))
+
+        if annotations:
+            pdf.extend_dict(page, pdf_format(
+                '/Annots [{0}]', ' '.join(
+                    '{0} 0 R'.format(n) for n in annotations)))
+
     pdf.finish()
 
 

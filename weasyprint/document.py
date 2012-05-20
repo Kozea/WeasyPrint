@@ -181,12 +181,11 @@ class PDFDocument(Document):
 
         surface.finish()
 
-        # XXX
-#        links = [self._get_link_rectangles(page) for page in self.pages]
-#        destinations = dict(self._get_link_destinations())
-#        bookmarks = self._get_bookmarks()
+        links = [self._get_link_rectangles(page) for page in self.pages]
+        destinations = dict(self._get_link_destinations())
+        bookmarks = self._get_bookmarks()
 
-        pdf.add_pdf_metadata(fileobj)
+        pdf.add_pdf_metadata(fileobj, links, destinations, bookmarks)
         fileobj.seek(0)
 
         if hasattr(target, 'write'):
