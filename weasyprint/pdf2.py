@@ -52,7 +52,8 @@ class PDFDictionary(object):
     def _get_value(self, key, value_re):
         regex = self._re_cache.get((key, value_re))
         if not regex:
-            regex = re.compile('/{} {}'.format(key, value_re).encode('ascii'))
+            regex = re.compile(
+                '/{0} {1}'.format(key, value_re).encode('ascii'))
             self._re_cache[key, value_re] = regex
         return regex.search(self.byte_string).group(1)
 
@@ -209,12 +210,12 @@ class PDFFile(object):
         # just write a new sub-section for each overwritten object.
         for object_number, offset in iteritems(
                 self.overwritten_objects_offsets):
-            write('{} 1\n{:010} 00000 n \n'.format(
+            write('{0} 1\n{1:010} 00000 n \n'.format(
                 object_number, offset).encode('ascii'))
 
         if self.new_objects_offsets:
             first_new_object = len(self.objects_offsets)
-            write('{} {}\n'.format(
+            write('{0} {1}\n'.format(
                 first_new_object, len(self.new_objects_offsets)
             ).encode('ascii'))
             for object_number, offset in enumerate(
@@ -223,14 +224,18 @@ class PDFFile(object):
 
         size = object_number + 1
         write(
-            'trailer\n<< /Size {} /Root {} 0 R /Info {} 0 R /Prev {} >>\n'
-            'startxref\n{}\n%%EOF\n'.format(
-                size, self.catalog.object_number, self.info.object_number,
-                self.startxref, new_startxref).encode('ascii'))
+            'trailer\n<< /Size {size} /Root {root} 0 R '
+            '/Info {info} 0 R /Prev {prev} >>\n'
+            'startxref\n{startxref}\n%%EOF\n'.format(
+                size=size,
+                root=self.catalog.object_number,
+                info=self.info.object_number,
+                prev=self.startxref,
+                startxref=new_startxref).encode('ascii'))
 
     def _write_object(self, object_number, byte_string):
         offset, write = self._start_writing()
-        write('{} 0 obj\n'.format(object_number).encode('ascii'))
+        write('{0} 0 obj\n'.format(object_number).encode('ascii'))
         write(byte_string)
         write(b'\nendobj\n')
         return offset
