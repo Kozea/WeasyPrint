@@ -30,12 +30,42 @@ r"""
 """
 
 from __future__ import division, unicode_literals
+
 import os
 import re
+import string
 import itertools
 
 from . import VERSION_STRING
 from .compat import xrange, iteritems
+
+
+class PDFFormatter(string.Formatter):
+    """Like str.format except:
+
+    * Results are byte strings
+    * The new !P conversion flags encodes a PDF string.
+      (UTF-16 BE with a BOM, then backslash-escape parentheses.)
+
+    Except for fields marked !P, everything should be ASCII-only.
+
+    """
+    def convert_field(self, value, conversion):
+        if conversion == 'P':
+            # Make a round-trip back through Unicode for the .translate()
+            # method. (bytes.translate only maps to single bytes.)
+            # Use latin1 to map all byte values.
+            return '({0})'.format(
+                ('\ufeff' + value).encode('utf-16-be').decode('latin1')
+                .translate({40: r'\(', 41: r'\)', 92: r'\\'}))
+        else:
+            return super(PDFFormatter, self).convert_field(value, conversion)
+
+    def vformat(self, format_string, args, kwargs):
+        result = super(PDFFormatter, self).vformat(format_string, args, kwargs)
+        return result.encode('latin1')
+
+pdf_format = PDFFormatter().format
 
 
 class PDFDictionary(object):
@@ -52,8 +82,7 @@ class PDFDictionary(object):
     def _get_value(self, key, value_re):
         regex = self._re_cache.get((key, value_re))
         if not regex:
-            regex = re.compile(
-                '/{0} {1}'.format(key, value_re).encode('ascii'))
+            regex = re.compile(pdf_format('/{0} {1}', key, value_re))
             self._re_cache[key, value_re] = regex
         return regex.search(self.byte_string).group(1)
 
@@ -210,32 +239,30 @@ class PDFFile(object):
         # just write a new sub-section for each overwritten object.
         for object_number, offset in iteritems(
                 self.overwritten_objects_offsets):
-            write('{0} 1\n{1:010} 00000 n \n'.format(
-                object_number, offset).encode('ascii'))
+            write(pdf_format(
+                '{0} 1\n{1:010} 00000 n \n', object_number, offset))
 
         if self.new_objects_offsets:
             first_new_object = len(self.objects_offsets)
-            write('{0} {1}\n'.format(
-                first_new_object, len(self.new_objects_offsets)
-            ).encode('ascii'))
+            write(pdf_format(
+                '{0} {1}\n', first_new_object, len(self.new_objects_offsets)))
             for object_number, offset in enumerate(
                     self.new_objects_offsets, start=first_new_object):
-                write('{:010} 00000 n \n'.format(offset).encode('ascii'))
+                write(pdf_format('{0:010} 00000 n \n', offset))
 
-        size = object_number + 1
-        write(
-            'trailer\n<< /Size {size} /Root {root} 0 R '
-            '/Info {info} 0 R /Prev {prev} >>\n'
-            'startxref\n{startxref}\n%%EOF\n'.format(
-                size=size,
-                root=self.catalog.object_number,
-                info=self.info.object_number,
-                prev=self.startxref,
-                startxref=new_startxref).encode('ascii'))
+        write(pdf_format(
+            'trailer\n<< '
+            '/Size {size} /Root {root} 0 R /Info {info} 0 R /Prev {prev}'
+            ' >>\nstartxref\n{startxref}\n%%EOF\n',
+            size=len(self.objects_offsets) + len(self.new_objects_offsets),
+            root=self.catalog.object_number,
+            info=self.info.object_number,
+            prev=self.startxref,
+            startxref=new_startxref))
 
     def _write_object(self, object_number, byte_string):
         offset, write = self._start_writing()
-        write('{0} 0 obj\n'.format(object_number).encode('ascii'))
+        write(pdf_format('{0} 0 obj\n', object_number))
         write(byte_string)
         write(b'\nendobj\n')
         return offset
@@ -247,30 +274,12 @@ class PDFFile(object):
         return fileobj.tell(), fileobj.write
 
 
-def encode_pdf_string(unicode_string):
-    """UTF-16 BE with a BOM, then backshlash-escape parentheses.
-
-    :returns: an Unicode string that needs to be wrapped in parentheses and
-              encoded to latin1
-
-    """
-    byte_string = ('\ufeff' + unicode_string).encode('utf-16-be')
-    # Make a round-trip back through Unicode for the .translate() method.
-    # (bytes.translate only maps to single bytes.)
-    # Use latin1 to map all byte values.
-    return byte_string.decode('latin1').translate(
-        {40: r'\(', 41: r'\)', 92: r'\\'})
-
-
 def add_pdf_metadata(fileobj):
     pdf = PDFFile(fileobj)
-    pdf.overwrite_object(pdf.info.object_number,
-        '<< /Producer ({0}) >>'.format(
-            encode_pdf_string(VERSION_STRING)
-        ).encode('latin1'))
-    pdf.write_new_object(b'foo')
+    pdf.overwrite_object(pdf.info.object_number, pdf_format(
+        '<< /Producer {producer!P} >>',
+        producer=VERSION_STRING))
     pdf.finish()
-    print(pdf.fileobj.getvalue().decode('latin1'))
 
 
 def test():
@@ -282,6 +291,7 @@ def test():
 #        surface.show_page()
     surface.finish()
     add_pdf_metadata(fileobj)
+    print(fileobj.getvalue().decode('latin1'))
 
 #    pdf = PDFFile(fileobj)
 #    print(pdf.page_tree)
