@@ -1,11 +1,26 @@
+WeasyPrint changelog
+====================
+
 Version 0.9
-===========
+-----------
 
-* Relative positioning
+Not released yet.
+
+* Relative and absolute positioning
+* In PDF: support for internal and external hyperlinks as well as bookmarks.
+
+Bookmarks can be controlled by the ``-weasy-bookmark-level`` and
+``-weasy-bookmark-label`` properties, as described in `CSS Generated Content
+for Paged Media Module <http://dev.w3.org/csswg/css3-gcpm/#bookmarks>`_.
+
+The default UA stylesheet sets a matching bookmark level on all ``<h1>``
+to ``<h6>`` elements.
 
 
-Version 0.8, released on 2012-05-07
-===================================
+Version 0.8
+-----------
+
+Released on 2012-05-07.
 
 * Switch from cssutils to tinycss_ as the CSS parser.
 * Switch to the new cssselect_, almost all level 3 selectors are supported now.
@@ -20,14 +35,18 @@ Version 0.8, released on 2012-05-07
 .. _cssselect: http://packages.python.org/cssselect/
 
 
-Version 0.7.1, released on 2012-03-21
-=====================================
+Version 0.7.1
+-------------
+
+Released on 2012-03-21.
 
 Change the license from AGPL to BSD.
 
 
-Version 0.7, released on 2012-03-21
-===================================
+Version 0.7
+-----------
+
+Released on 2012-03-21.
 
 * Support page breaks between table rows
 * Support for the ``orphans`` and ``widows`` properties.
@@ -37,15 +56,19 @@ Version 0.7, released on 2012-03-21
 Only avoiding page breaks before/after an element is still missing.
 
 
-Version 0.6.1, released on 2012-03-01
-=====================================
+Version 0.6.1
+-------------
+
+Released on 2012-03-01.
 
 Fix a packaging bug. (Remove use_2to3 in setup.py. We use the same
 codebase for Python 2 and 3.)
 
 
-Version 0.6, released on 2012-02-29
-===================================
+Version 0.6
+-----------
+
+Released on 2012-02-29.
 
 * *Backward incompatible*: completely change the Python API.
   See the documentation: http://weasyprint.org/using/#as-a-python-library
@@ -59,8 +82,10 @@ Version 0.6, released on 2012-02-29
 * Many bug fixes
 
 
-Version 0.5, released on 2012-02-08
-===================================
+Version 0.5
+-----------
+
+Released on 2012-02-08.
 
 * Support for the ``overflow`` and ``clip`` properties.
 * Support for the ``opacity`` property from CSS3 Colors.
@@ -68,8 +93,10 @@ Version 0.5, released on 2012-02-08
   ``-weasy-transform`` and ``-weasy-transform-origin``.
 
 
-Version 0.4, released on 2012-02-07
-===================================
+Version 0.4
+-----------
+
+Released on 2012-02-07.
 
 * Support ``text-align: justify``, ``word-spacing`` and ``letter-spacing``.
 * Partial support for CSS3 Paged Media: page size and margin boxes with
@@ -85,14 +112,18 @@ Version 0.4, released on 2012-02-07
   use ``-weasy-image-rendering``. It only has an effect on PNG output.
 
 
-Version 0.3.1, released on 2011-12-14
-===================================
+Version 0.3.1
+-----------
+
+Released on 2011-12-14.
 
 Compatibility with CairoSVG 0.1.2
 
 
-Version 0.3, released on 2011-12-13
-===================================
+Version 0.3
+-----------
+
+Released on 2011-12-13.
 
 * **Backward-incompatible change:** the 'size' property is now prefixed (since
   it is in an experimental specification). Use '-weasy-size' instead.
@@ -108,8 +139,10 @@ Version 0.3, released on 2011-12-13
 * Various bug fixes
 
 
-Version 0.2, released on 2011-11-25
-===================================
+Version 0.2
+-----------
+
+Released on 2011-11-25.
 
 * Support for tables.
 * Support the `box-sizing` property from CSS 3 Basic User Interface
@@ -123,8 +156,10 @@ There are also no page break inside tables so a table higher
 than a page will overflow.
 
 
-Version 0.1, released on 2011-10-28
-===================================
+Version 0.1
+-----------
+
+Released on 2011-10-28.
 
 First packaged release. Supports "simple" CSS 2.1 pages: there is no
 support for floats, tables, or absolute positioning. Other than that
