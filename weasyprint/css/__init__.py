@@ -319,7 +319,6 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None):
             # Values in parent_style are already computed.
             computed[name] = value
 
-        assert value is not None
         specified[name] = value
 
     return computed_values.compute(

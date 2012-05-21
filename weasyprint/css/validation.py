@@ -645,7 +645,7 @@ def orphans_widows(token):
     """Validation for the ``orphans`` or ``widows`` properties."""
     if token.type == 'INTEGER':
         value = token.value
-        if int(value) == value and value >= 1:
+        if value >= 1:
             return value
 
 
@@ -817,6 +817,63 @@ def size(tokens):
             else:
                 height, width = width_height
                 return width, height
+
+
+@validator(prefixed=True)  # Proprietary
+@single_token
+def anchor(token):
+    """Validation for ``anchor``."""
+    if get_keyword(token) == 'none':
+        return 'none'
+    function = parse_function(token)
+    if function:
+        name, args = function
+        prototype = (name, [a.type for a in args])
+        args = [a.value for a in args]
+        if prototype == ('attr', ['IDENT']):
+            return (name, args[0])
+
+
+@validator(prefixed=True, wants_base_url=True)  # Proprietary
+@single_token
+def link(token, base_url):
+    """Validation for ``link``."""
+    if get_keyword(token) == 'none':
+        return 'none'
+    elif token.type == 'URI':
+        return ('URI', urljoin(base_url, token.value))
+    function = parse_function(token)
+    if function:
+        name, args = function
+        prototype = (name, [a.type for a in args])
+        args = [a.value for a in args]
+        if prototype == ('attr', ['IDENT']):
+            return (name, args[0])
+        return token.value
+
+
+@validator(prefixed=True)  # CSS3 GCPM
+@single_token
+def bookmark_label(token):
+    """Validation for ``bookmark-label``."""
+    keyword = get_keyword(token)
+    if keyword in ('none', 'contents', 'content-before',
+                   'content-element', 'content-after'):
+        return ('keyword', keyword)
+    elif token.type == 'STRING':
+        return ('string', token.value)
+
+
+@validator(prefixed=True)  # CSS3 GCPM
+@single_token
+def bookmark_level(token):
+    """Validation for ``bookmark-level``."""
+    if token.type == 'INTEGER':
+        value = token.value
+        if value >= 1:
+            return value
+    elif get_keyword(token) == 'none':
+        return 'none'
 
 
 @validator(prefixed=True)  # Not in CR yet

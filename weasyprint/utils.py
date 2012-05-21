@@ -16,17 +16,28 @@ import os.path
 import io
 import base64
 
-from . import VERSION
+from . import VERSION_STRING
 from .logger import LOGGER
 from .compat import (
-    urljoin, urlparse, unquote_to_bytes, urlopen_contenttype, Request,
-    parse_email, pathname2url)
+    urljoin, urlparse, quote, unquote, unquote_to_bytes, urlopen_contenttype,
+    Request, parse_email, pathname2url)
 
 
 # TODO: Most of this module is URL-related. Rename it to weasyprint.urls?
 
-
-HTTP_USER_AGENT = 'WeasyPrint/%s http://weasyprint.org/' % VERSION
+def iri_to_uri(url):
+    """Turn an IRI that can contain any Unicode character into an ASII-only
+    URI that conforms to RFC 3986.
+    """
+    # Use UTF-8 as per RFC 3987 (IRI)
+    url = url.encode('utf8')
+    # This is a full URI, not just a component. Only %-encode characters
+    # that are not allowed at all in URIs. Everthing else is "safe":
+    # * Reserved characters: /:?#[]@!$&'()*+,;=
+    # * Unreserved characters: ASCII letters, digits and -._~
+    #   Of these, only '~' is not in urllib’s "always safe" list.
+    # * '%' to avoid double-encoding
+    return quote(url, safe=b"/:?#[]@!$&'()*+,;=~%")
 
 
 def path2url(path):
@@ -130,8 +141,9 @@ def urlopen(url):
     if url.startswith('data:'):
         return parse_data_url(url)
     else:
+        url = iri_to_uri(url)
         return urlopen_contenttype(Request(url,
-            headers={'User-Agent': HTTP_USER_AGENT}))
+            headers={'User-Agent': VERSION_STRING}))
 
 
 class cached_property(object):

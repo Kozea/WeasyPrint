@@ -8,6 +8,8 @@ web browsers use.
 
 */
 
+*[id] { -weasy-anchor: attr(id); }
+*[name] { -weasy-anchor: attr(name); }
 *[dir] { unicode-bidi: embed; }
 *[hidden] { display: none; }
 *[dir=ltr] { direction: ltr; }
@@ -185,8 +187,7 @@ web browsers use.
 [lang|=zh-Hant] { quotes: '\300c' '\300d' '\300e' '\300f'; }
 [lang|=zu] { quotes: '\2018' '\2019' '\201c' '\201d'; }
 :link { color: #0000EE; text-decoration: underline; }
-/* TODO: remove this when :link is implemented. */
-a[href] { color: #0000EE; text-decoration: underline; }
+a[href] { -weasy-link: attr(href); }
 :visited { color: #551A8B; text-decoration: underline; }
 a:link[rel~=help] { cursor: help; }
 a:visited[rel~=help] { cursor: help; }
@@ -293,17 +294,17 @@ form { display: block; unicode-bidi: isolate; }
 frame { display: block; }
 frameset { display: block; }
 
-h1 { display: block; font-size: 2em; font-weight: bold; hyphens: manual; margin-bottom: .67em; margin-top: .67em; page-break-after: avoid; page-break-inside: avoid; unicode-bidi: isolate; }
+h1 { display: block; font-size: 2em; font-weight: bold; hyphens: manual; margin-bottom: .67em; margin-top: .67em; page-break-after: avoid; page-break-inside: avoid; unicode-bidi: isolate; -weasy-bookmark-level: 1; -weasy-bookmark-label: contents; }
 section h1 { font-size: 1.50em; margin-bottom: .83em; margin-top: .83em; }
 section section h1 { font-size: 1.17em; margin-bottom: 1.00em; margin-top: 1.00em; }
 section section section h1 { font-size: 1.00em; margin-bottom: 1.33em; margin-top: 1.33em; }
 section section section section h1 { font-size: .83em; margin-bottom: 1.67em; margin-top: 1.67em; }
 section section section section section h1 { font-size: .67em; margin-bottom: 2.33em; margin-top: 2.33em; }
-h2 { display: block; font-size: 1.50em; font-weight: bold; hyphens: manual; margin-bottom: .83em; margin-top: .83em; page-break-after: avoid; page-break-inside: avoid; unicode-bidi: isolate; }
-h3 { display: block; font-size: 1.17em; font-weight: bold; hyphens: manual; margin-bottom: 1.00em; margin-top: 1.00em; page-break-after: avoid; page-break-inside: avoid; unicode-bidi: isolate; }
-h4 { display: block; font-size: 1.00em; font-weight: bold; hyphens: manual; margin-bottom: 1.33em; margin-top: 1.33em; page-break-after: avoid; page-break-inside: avoid; unicode-bidi: isolate; }
-h5 { display: block; font-size: .83em; font-weight: bold; hyphens: manual; margin-bottom: 1.67em; margin-top: 1.67em; page-break-after: avoid; unicode-bidi: isolate; }
-h6 { display: block; font-size: .67em; font-weight: bold; hyphens: manual; margin-bottom: 2.33em; margin-top: 2.33em; page-break-after: avoid; unicode-bidi: isolate; }
+h2 { display: block; font-size: 1.50em; font-weight: bold; hyphens: manual; margin-bottom: .83em; margin-top: .83em; page-break-after: avoid; page-break-inside: avoid; unicode-bidi: isolate; -weasy-bookmark-level: 2; -weasy-bookmark-label: contents; }
+h3 { display: block; font-size: 1.17em; font-weight: bold; hyphens: manual; margin-bottom: 1.00em; margin-top: 1.00em; page-break-after: avoid; page-break-inside: avoid; unicode-bidi: isolate; -weasy-bookmark-level: 3; -weasy-bookmark-label: contents; }
+h4 { display: block; font-size: 1.00em; font-weight: bold; hyphens: manual; margin-bottom: 1.33em; margin-top: 1.33em; page-break-after: avoid; page-break-inside: avoid; unicode-bidi: isolate; -weasy-bookmark-level: 4; -weasy-bookmark-label: contents; }
+h5 { display: block; font-size: .83em; font-weight: bold; hyphens: manual; margin-bottom: 1.67em; margin-top: 1.67em; page-break-after: avoid; unicode-bidi: isolate; -weasy-bookmark-level: 5; -weasy-bookmark-label: contents; }
+h6 { display: block; font-size: .67em; font-weight: bold; hyphens: manual; margin-bottom: 2.33em; margin-top: 2.33em; page-break-after: avoid; unicode-bidi: isolate; -weasy-bookmark-level: 6; -weasy-bookmark-label: contents; }
 
 head { display: none; }
 header { display: block; unicode-bidi: isolate; }

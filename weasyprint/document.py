@@ -14,16 +14,17 @@ from __future__ import division, unicode_literals
 
 import io
 import math
+import shutil
 
 import cairo
 
 from .css import get_all_computed_styles
-from .css.computed_values import LENGTHS_TO_PIXELS
 from .formatting_structure.build import build_formatting_structure
 from . import layout
 from . import draw
 from . import images
 from . import utils
+from . import pdf
 
 
 class Document(object):
@@ -160,10 +161,11 @@ class PDFDocument(Document):
         """
         Write the whole document as PDF into a file-like or filename `target`.
         """
+        px_to_pt = pdf.PX_TO_PT
+        fileobj = io.BytesIO()
         # The actual page size is set for each page.
-        surface = cairo.PDFSurface(target, 1, 1)
+        surface = cairo.PDFSurface(fileobj, 1, 1)
 
-        px_to_pt = 1 / LENGTHS_TO_PIXELS['pt']
         for page in self.pages:
             # Actual page size is here. May be different between pages.
             surface.set_size(
@@ -175,3 +177,11 @@ class PDFDocument(Document):
             surface.show_page()
 
         surface.finish()
+        pdf.write_pdf_metadata(self, fileobj)
+
+        fileobj.seek(0)
+        if hasattr(target, 'write'):
+            shutil.copyfileobj(fileobj, target)
+        else:
+            with open(target, 'wb') as fd:
+                shutil.copyfileobj(fileobj, fd)

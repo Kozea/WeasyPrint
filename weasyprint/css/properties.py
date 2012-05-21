@@ -127,6 +127,15 @@ INITIAL_VALUES = {
     # Taken from SVG:
     # http://www.w3.org/TR/SVG/painting.html#ImageRenderingProperty
     'image_rendering': 'auto',
+
+    # Proprietary
+    'anchor': None,  # computed value of 'none'
+    'link': None,  # computed value of 'none'
+
+    # CSS3 Generated Content for Paged Media
+    # http://dev.w3.org/csswg/css3-gcpm/
+    'bookmark_label': ('keyword', 'none'),  # computed value of 'none'
+    'bookmark_level': 'none',
 }
 
 

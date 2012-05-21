@@ -134,6 +134,8 @@ def dom_to_box(document, element, state=None):
 
     box = box.copy_with_children(children)
 
+    resolve_bookmark_labels(box)
+
     # Specific handling for the element. (eg. replaced element)
     return html.handle_element(document, element, box)
 
@@ -892,3 +894,61 @@ def set_viewport_overflow(root_box):
     root_box.viewport_overflow = chosen_box.style.overflow
     chosen_box.style = chosen_box.style.updated_copy({'overflow': 'visible'})
     return root_box
+
+
+def box_text_contents(box):
+    if isinstance(box, boxes.TextBox):
+        return box.text
+    elif isinstance(box, boxes.ParentBox):
+        return ''.join(box_text_contents(child) for child in box.children)
+    else:
+        return ''
+
+
+def box_text_content_element(box):
+    if isinstance(box, boxes.ParentBox):
+        return ''.join(
+            box_text_contents(child) for child in box.children
+            if not child.element_tag.endswith((':after', ':before')))
+    else:
+        return ''
+
+
+def box_text_content_before(box):
+    if isinstance(box, boxes.ParentBox):
+        return ''.join(
+            box_text_contents(child) for child in box.children
+            if child.element_tag.endswith(':before'))
+    else:
+        return ''
+
+
+def box_text_content_after(box):
+    if isinstance(box, boxes.ParentBox):
+        return ''.join(
+            box_text_contents(child) for child in box.children
+            if child.element_tag.endswith(':after'))
+    else:
+        return ''
+
+
+def resolve_bookmark_labels(box):
+    """Set the used value of the bookmark-label.
+
+    See http://dev.w3.org/csswg/css3-gcpm/#bookmarks
+
+    """
+    key, value = box.style.bookmark_label
+    if key == 'keyword':
+        if value == 'none':
+            box.bookmark_label = None
+        elif value == 'content-element':
+            box.bookmark_label = box_text_content_element(box)
+        elif value == 'contents':
+            box.bookmark_label = box_text_contents(box)
+        elif value == 'content-before':
+            box.bookmark_label = box_text_content_before(box)
+        elif value == 'content-before':
+            box.bookmark_label = box_text_content_after(box)
+    else:
+        box.bookmark_label = value
