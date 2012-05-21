@@ -365,7 +365,7 @@ def gather_metadata(document):
                 (pos_x, pos_y, pos_x + width, pos_y + height)))
 
         if box.style.anchor and box.style.anchor not in destinations:
-            destinations['#' + box.style.anchor] = (
+            destinations[box.style.anchor] = (
                 (page_index,) + point_to_pdf(box.position_x, box.position_y))
 
         if isinstance(box, boxes.ParentBox):
@@ -422,17 +422,17 @@ def write_pdf_metadata(document, fileobj):
 
     for page, page_links in zip(pdf.pages, links):
         annotations = []
-        for uri, rectangle in page_links:
+        for (is_internal, uri), rectangle in page_links:
             content = [pdf_format(
                 '<< /Type /Annot /Subtype /Link '
                     '/Rect [{0:f} {1:f} {2:f} {3:f}] /Border [0 0 0]\n',
                 *rectangle)]
-            if uri and uri.startswith('#') and uri in destinations:
+            if is_internal == 'internal':
                 content.append(pdf_format(
                     '/A << /Type /Action /S /GoTo '
                         '/D [{0} /XYZ {1:f} {2:f} 0] >>\n',
                     *destinations[uri]))
-            elif uri:
+            else:
                 content.append(pdf_format(
                     '/A << /Type /Action /S /URI /URI ({0}) >>\n',
                     iri_to_uri(uri)))

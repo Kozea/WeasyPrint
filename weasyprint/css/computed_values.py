@@ -17,6 +17,7 @@ import math
 
 from .properties import INITIAL_VALUES, Dimension
 from ..utils import get_url_attribute
+from ..compat import urlsplit
 
 
 ZERO_PIXELS = Dimension(0, 'px')
@@ -440,9 +441,13 @@ def link(computer, name, values):
             url = get_url_attribute(computer.element, value)
         else:
             url = value
-        if url.startswith(computer.element.base_url + '#'):
-            url = url[len(computer.element.base_url):]
-        return url
+        document_uri = urlsplit(computer.element.base_url or '')
+        parsed = urlsplit(url)
+        # Compare with fragments removed
+        if parsed[:-1] == document_uri[:-1]:
+            return 'internal', parsed.fragment
+        else:
+            return 'external', url
 
 
 @register_computer('transform')

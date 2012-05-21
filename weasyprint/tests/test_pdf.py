@@ -19,7 +19,7 @@ import cairo
 from .. import HTML
 from ..document import PDFDocument
 from .. import pdf
-from .testing_utils import assert_no_logs
+from .testing_utils import assert_no_logs, resource_filename
 
 
 @assert_no_logs
@@ -41,12 +41,14 @@ def test_pdf_parser():
 
 
 def get_metadata(html):
-    document = HTML(string=html)._get_document(PDFDocument, [])
+    document = HTML(
+        string=html, base_url=resource_filename('<inline HTML>')
+    )._get_document(PDFDocument, [])
     return pdf.gather_metadata(document)
 
 
 def get_bookmarks(html, structure_only=False):
-    (root, bookmarks), links, destinations = get_metadata(html)
+    (root, bookmarks), _links, _anchors = get_metadata(html)
     for bookmark in bookmarks:
         if structure_only:
             bookmark.pop('destination')
@@ -59,6 +61,16 @@ def get_bookmarks(html, structure_only=False):
     return root, bookmarks
 
 
+def get_links(html):
+    _bookmarks, links, anchors = get_metadata(html)
+    links = [
+        [(uri, tuple(round(v, 6) for v in rect)) for uri, rect in page_links]
+        for page_links in links]
+    for key, (page, x, y) in anchors.items():
+        anchors[key] = page, round(x, 6), round(y, 6)
+    return links, anchors
+
+
 @assert_no_logs
 def test_bookmarks():
     """Test the structure of the document bookmarks.
@@ -66,6 +78,10 @@ def test_bookmarks():
     Warning: the PDF output of this structure is not tested.
 
     """
+    root, bookmarks = get_bookmarks('<body>')
+    assert root == dict(Count=0)
+    assert bookmarks == []
+
     root, bookmarks = get_bookmarks('''
         <style>
             @page { -weasy-size: 1000pt; margin: 0 }
@@ -146,3 +162,37 @@ def test_bookmarks():
         dict(Count=1, First=8, Last=8, Next=None, Parent=5, Prev=6),
         dict(Count=0, First=None, Last=None, Next=None, Parent=7, Prev=None),
         dict(Count=0, First=None, Last=None, Next=None, Parent=0, Prev=5)]
+
+
+@assert_no_logs
+def test_links():
+    links, anchors = get_links('<body>')
+    assert links == [[]]
+    assert anchors == {}
+
+    links, anchors = get_links('''
+        <style>
+            @page { -weasy-size: 1000pt; margin: 50pt }
+            body { margin: 0; font-size: 10pt; line-height: 2 }
+            p { display: block; height: 90pt; margin: 0 0 10pt 0 }
+        </style>
+        <p><a href="http://weasyprint.org"><img src=pattern.png></a></p>
+        <p style="padding: 0 10pt"><a
+            href="#lipsum"><img style="border: solid 1pt"
+                                src=pattern.png></a></p>
+        <p id=hello>Hello, World</p>
+        <p id=lipsum><a style="display: block; page-break-before: always"
+                        href="#hello">Lorem ipsum ...</a></p>
+    ''')
+    assert links == [
+        [
+            # 4px == 3pt wide (like the image), 20pt high (like line-height)
+            (('external', 'http://weasyprint.org'), (50, 950, 53, 930)),
+            # 5pt wide (image + 2 * 1pt of border), 20pt high
+            (('internal', 'lipsum'), (60, 850, 65, 830)),
+        ], [
+            # 900pt wide (block), 20pt high
+            (('internal', 'hello'), (50, 950, 950, 930)),
+        ]
+    ]
+    assert anchors == {'hello': (0, 50, 750), 'lipsum': (1, 50, 950)}

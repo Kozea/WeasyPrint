@@ -19,7 +19,7 @@ import base64
 from . import VERSION_STRING
 from .logger import LOGGER
 from .compat import (
-    urljoin, urlparse, quote, unquote, unquote_to_bytes, urlopen_contenttype,
+    urljoin, urlsplit, quote, unquote, unquote_to_bytes, urlopen_contenttype,
     Request, parse_email, pathname2url)
 
 
@@ -45,20 +45,31 @@ def path2url(path):
     return 'file:' + pathname2url(os.path.abspath(path))
 
 
-def get_url_attribute(element, key):
-    """Get the URL corresponding to the ``key`` attribute of ``element``.
+def url_is_absolute(url):
+    return bool(urlsplit(url).scheme)
 
-    The retrieved URL is absolute, even if the URL in the element is relative.
+
+def get_url_attribute(element, key):
+    """Get the URI corresponding to the ``key`` attribute.
+
+    Return ``None`` if:
+
+    * the attribute is empty or missing or,
+    * the value is a relative URI but the document has no base URI.
+
+    Otherwise, return an absolute URI.
 
     """
-    attr_value = element.get(key)
+    attr_value = element.get(key, '').strip()
     if attr_value:
-        attr_value = attr_value.strip()
-        if attr_value:
-            # TODO: support the <base> HTML element, but do not use
-            # lxml.html.HtmlElement.make_links_absolute() that changes
-            # the tree for content: attr(href)
+        # TODO: support the <base> HTML element, but do not use
+        # lxml.html.HtmlElement.make_links_absolute() that changes
+        # the tree for content: attr(href)
+        if url_is_absolute(attr_value):
+            return attr_value
+        elif element.base_url:
             return urljoin(element.base_url, attr_value)
+        #else: TODO warn
 
 
 def ensure_url(string):
@@ -68,7 +79,7 @@ def ensure_url(string):
     filename and convert it to a ``file://`` URL.
 
     """
-    if urlparse(string).scheme:
+    if url_is_absolute(string):
         return string
     else:
         return path2url(string.encode('utf8'))

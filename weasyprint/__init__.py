@@ -186,7 +186,7 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
     normalized ``base_url``.
     """
     from .utils import path2url, ensure_url
-    from .compat import urlparse
+    from .compat import urlsplit
 
     if base_url is not None:
         base_url = ensure_url(base_url)
@@ -196,7 +196,7 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
     if nones == [False, True, True, True, True]:
         if hasattr(guess, 'read'):
             type_ = 'file_obj'
-        elif urlparse(guess).scheme:
+        elif urlsplit(guess).scheme:
             type_ = 'url'
         else:
             type_ = 'filename'
