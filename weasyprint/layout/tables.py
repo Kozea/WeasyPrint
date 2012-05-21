@@ -56,7 +56,8 @@ def table_layout(document, table, max_position_y, skip_stack,
         # For each rows, cells for which this is the last row (with rowspan)
         ending_cells_by_row = [[] for row in group.children]
 
-        if skip_stack is None:
+        is_group_start = skip_stack is None
+        if is_group_start:
             skip = 0
         else:
             skip, skip_stack = skip_stack
@@ -176,7 +177,9 @@ def table_layout(document, table, max_position_y, skip_stack,
                           or not new_group_children):
             return None, None
 
-        group = group.copy_with_children(new_group_children)
+        group = group.copy_with_children(
+            new_group_children,
+            is_start=is_group_start, is_end=resume_at is None)
 
         # Set missing baselines in a second loop because of rowspan
         for row in group.children:
@@ -311,7 +314,8 @@ def table_layout(document, table, max_position_y, skip_stack,
     table = table.copy_with_children(
         ([header] if header is not None else []) +
         new_table_children +
-        ([footer] if footer is not None else []))
+        ([footer] if footer is not None else []),
+        is_start=skip_stack is None, is_end=resume_at is None)
 
     # If the height property has a bigger value, just add blank space
     # below the last row group.

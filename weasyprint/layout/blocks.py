@@ -220,7 +220,8 @@ def block_container_layout(document, box, max_position_y, skip_stack,
     new_children = []
     next_page = 'any'
 
-    if skip_stack is None:
+    is_start = skip_stack is None
+    if is_start:
         skip = 0
     else:
         skip, skip_stack = skip_stack
@@ -392,7 +393,8 @@ def block_container_layout(document, box, max_position_y, skip_stack,
         position_y += collapse_margin(adjoining_margins)
         adjoining_margins = []
 
-    new_box = box.copy_with_children(new_children)
+    new_box = box.copy_with_children(
+        new_children, is_start=is_start, is_end=resume_at is None)
 
     # TODO: See corner cases in
     # http://www.w3.org/TR/CSS21/visudet.html#normal-block
@@ -409,14 +411,6 @@ def block_container_layout(document, box, max_position_y, skip_stack,
 
     for child in new_box.children:
         relative_positioning(child, new_box)
-
-    if resume_at is not None:
-        # If there was a list marker, we kept it on `new_box`.
-        # Do not repeat it on `box` on the next page.
-        # TODO: Do this non-destructively
-        box.outside_list_marker = None
-        box.reset_spacing('top')
-        new_box.reset_spacing('bottom')
 
     return new_box, resume_at, next_page, adjoining_margins, collapsing_through
 

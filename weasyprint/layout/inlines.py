@@ -519,7 +519,8 @@ def split_inline_box(document, box, position_x, max_x, skip_stack,
     children = []
     preserved_line_break = False
 
-    if skip_stack is None:
+    is_start = skip_stack is None
+    if is_start:
         skip = 0
     else:
         skip, skip_stack = skip_stack
@@ -573,7 +574,8 @@ def split_inline_box(document, box, position_x, max_x, skip_stack,
     else:
         resume_at = None
 
-    new_box = box.copy_with_children(children)
+    new_box = box.copy_with_children(
+        children, is_start=is_start, is_end=resume_at is None)
     if isinstance(box, boxes.LineBox):
         # Line boxes already have a position_x which may not be the same
         # as content_box_left when text-indent is non-zero.
@@ -606,11 +608,6 @@ def split_inline_box(document, box, position_x, max_x, skip_stack,
     if new_box.style.position == 'relative':
         for absolute_box in absolute_boxes:
             absolute_layout(document, absolute_box, new_box)
-
-    if resume_at is not None:
-        # There is a line break inside this box.
-        box.reset_spacing('left')
-        new_box.reset_spacing('right')
     return new_box, resume_at, preserved_line_break
 
 

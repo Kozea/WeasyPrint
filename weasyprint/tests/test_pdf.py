@@ -61,17 +61,21 @@ def test_bookmarks():
 
     """
     root, bookmarks = get_bookmarks('''
-        <h1>1</h1>
-        <h1>2</h1>
-        <h2>3</h2>
-        <h2>4</h2>
-        <h3>5</h3>
-        <h2>6</h2>
-        <h1>7</h1>
-        <h2>8</h2>
-        <h3>9</h3>
-        <h1>10</h1>
-        <h2>11</h2>
+        <style>
+            @page { -weasy-size: 1000pt; margin: 0 }
+            * { height: 100pt }
+        </style>
+        <h1>Title 1</h1>
+        <h1>Title 2</h1>
+        <h2>Title 3</h2>
+        <h2>Title 4</h2>
+        <h3>Title 5<div style="page-break-before: always"></div></h3>
+        <h2>Title 6</h2>
+        <h1>Title 7</h1>
+        <h2>Title 8</h2>
+        <h3>Title 9</h3>
+        <h1>Title 10</h1>
+        <h2>Title 11</h2>
     ''')
     assert root == dict(Count=11, First=1, Last=10)
     assert bookmarks == [

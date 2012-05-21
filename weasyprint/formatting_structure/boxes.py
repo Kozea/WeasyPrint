@@ -78,6 +78,7 @@ class Box(object):
     is_table_wrapper = False
     is_for_root_element = False
     bookmark_label = None
+    bookmark_level = None
 
     def __init__(self, element_tag, sourceline, style):
         self.element_tag = element_tag
@@ -85,6 +86,9 @@ class Box(object):
         # Copying might not be needed, but let’s be careful with mutable
         # objects.
         self.style = style.copy()
+        bookmark_level = style.bookmark_level
+        if bookmark_level != 'none':
+            self.bookmark_level = bookmark_level
 
     def __repr__(self):
         return '<%s %s %s>' % (
@@ -186,16 +190,6 @@ class Box(object):
         """Absolute vertical position of the border box."""
         return self.position_y + self.margin_top
 
-    def reset_spacing(self, side):
-        """Set to 0 the margin, padding and border of ``side``."""
-        setattr(self, 'margin_%s' % side, 0)
-        setattr(self, 'padding_%s' % side, 0)
-        setattr(self, 'border_%s_width' % side, 0)
-
-        self.style['margin_%s' % side] = ZERO_PIXELS
-        self.style['padding_%s' % side] = ZERO_PIXELS
-        self.style['border_%s_width' % side] = 0
-
     def get_wrapped_table(self):
         """Get the table wrapped by the box."""
         if self.is_table_wrapper:
@@ -235,10 +229,31 @@ class ParentBox(Box):
         for index in xrange(skip_num, len(self.children)):
             yield index, self.children[index]
 
-    def copy_with_children(self, children):
+    def _reset_spacing(self, side):
+        """Set to 0 the margin, padding and border of ``side``."""
+        setattr(self, 'margin_%s' % side, 0)
+        setattr(self, 'padding_%s' % side, 0)
+        setattr(self, 'border_%s_width' % side, 0)
+
+        self.style['margin_%s' % side] = ZERO_PIXELS
+        self.style['padding_%s' % side] = ZERO_PIXELS
+        self.style['border_%s_width' % side] = 0
+
+    def _remove_decoration(self, start, end):
+        if start:
+            self._reset_spacing('top')
+        if end:
+            self._reset_spacing('bottom')
+
+    def copy_with_children(self, children, is_start=True, is_end=True):
         """Create a new equivalent box with given ``children``."""
         new_box = self.copy()
         new_box.children = tuple(children)
+        if not is_start:
+            new_box.outside_list_marker = None
+            if new_box.bookmark_level:
+                del new_box.bookmark_level
+        new_box._remove_decoration(not is_start, not is_end)
         return new_box
 
     def descendants(self):
@@ -329,6 +344,12 @@ class InlineLevelBox(Box):
     ``inline-block`` generates an inline-level box.
 
     """
+    def _remove_decoration(self, start, end):
+        ltr = self.style.direction == 'ltr'
+        if start:
+            self._reset_spacing('left' if ltr else 'right')
+        if end:
+            self._reset_spacing('right' if ltr else 'left')
 
 
 class InlineBox(InlineLevelBox, ParentBox):

@@ -350,9 +350,9 @@ def process_bookmarks(raw_bookmarks):
 def gather_metadata(document):
     """Traverse the layout tree (boxes) to find all metadata."""
     def walk(box):
-        if box.bookmark_label and box.style.bookmark_level != 'none':
+        if box.bookmark_label and box.bookmark_level:
             bookmarks.append((
-                box.style.bookmark_level,
+                box.bookmark_level,
                 box.bookmark_label,
                 (page_index,) + point_to_pdf(box.position_x, box.position_y)))
 
