@@ -22,7 +22,7 @@ from io import BytesIO
 import pystacia
 
 from ..compat import xrange
-from ..utils import ensure_url
+from ..urls import ensure_url
 from .testing_utils import (
     resource_filename, TestPNGDocument, FONTS, assert_no_logs, capture_logs)
 

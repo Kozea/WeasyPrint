@@ -17,7 +17,7 @@ import contextlib
 
 import cairo
 
-from .utils import urlopen
+from .urls import urlopen
 from .css.computed_values import LENGTHS_TO_PIXELS
 from .logger import LOGGER
 

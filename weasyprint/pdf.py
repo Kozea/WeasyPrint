@@ -39,7 +39,7 @@ import cairo
 
 from . import VERSION_STRING
 from .compat import xrange, iteritems
-from .utils import iri_to_uri
+from .urls import iri_to_uri
 from .formatting_structure import boxes
 from .css.computed_values import LENGTHS_TO_PIXELS
 

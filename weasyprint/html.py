@@ -20,7 +20,7 @@ import os.path
 import logging
 
 from .formatting_structure import boxes
-from .utils import get_url_attribute
+from .urls import get_url_attribute
 from .compat import xrange
 from .logger import LOGGER
 from . import CSS

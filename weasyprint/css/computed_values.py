@@ -16,7 +16,7 @@ from __future__ import division, unicode_literals
 import math
 
 from .properties import INITIAL_VALUES, Dimension
-from ..utils import get_url_attribute
+from ..urls import get_url_attribute
 from ..compat import urlsplit
 
 

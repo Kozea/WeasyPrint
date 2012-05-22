@@ -69,7 +69,7 @@ class HTML(Resource):
     def __init__(self, guess=None, filename=None, url=None, file_obj=None,
                  string=None, encoding=None, base_url=None):
         import lxml.html
-        from .utils import ensure_url
+        from .urls import ensure_url
 
         source_type, source, base_url = _select_source(
             guess, filename, url, file_obj, string, base_url)
@@ -155,7 +155,7 @@ class CSS(Resource):
                  string=None, encoding=None, base_url=None,
                  _check_mime_type=False):
         from .css import PARSER, preprocess_stylesheet
-        from .utils import urlopen
+        from .urls import urlopen
 
         source_type, source, base_url = _select_source(
             guess, filename, url, file_obj, string, base_url)
@@ -195,7 +195,7 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
     Check that only one input is not None, and return it with the
     normalized ``base_url``.
     """
-    from .utils import path2url, ensure_url
+    from .urls import path2url, ensure_url
     from .compat import urlsplit
 
     if base_url is not None:

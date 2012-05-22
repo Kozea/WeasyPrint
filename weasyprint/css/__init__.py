@@ -51,7 +51,7 @@ import lxml.etree
 from . import properties
 from . import computed_values
 from .validation import preprocess_declarations
-from ..utils import get_url_attribute
+from ..urls import get_url_attribute
 from ..logger import LOGGER
 from ..compat import iteritems, urljoin
 from .. import CSS
