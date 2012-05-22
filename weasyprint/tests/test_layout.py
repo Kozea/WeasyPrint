@@ -611,7 +611,8 @@ def test_fixed_layout_table():
 def test_auto_layout_table():
     """Test the auto layout table elements sizes."""
     page, = parse('''
-        <table style="border-spacing: 10px; margin: 5px">
+        <body style="width: 100px">
+        <table style="border-spacing: 10px; margin: auto">
             <tr>
                 <td><img src=pattern.png></td>
                 <td><img src=pattern.png></td>
@@ -626,15 +627,19 @@ def test_auto_layout_table():
     row, = row_group.children
     td_1, td_2 = row.children
     assert table_wrapper.position_x == 0
-    assert table.position_x == 5  # 0 + margin-left
-    assert td_1.position_x == 15  # 5 + spacing
+    assert table_wrapper.width == 38  # Same as table, see below
+    assert table_wrapper.margin_left == 31  # 0 + margin-left = (100 - 38) / 2
+    assert table_wrapper.margin_right == 31
+    assert table.position_x == 31
+    assert td_1.position_x == 41  # 31 + spacing
     assert td_1.width == 4
-    assert td_2.position_x == 29  # 15 + 4 + spacing
+    assert td_2.position_x == 55  # 31 + 4 + spacing
     assert td_2.width == 4
     assert table.width == 38  # 3 * spacing + 2 * 4
 
     page, = parse('''
-        <table style="border-spacing: 1px; margin: 5px">
+        <body style="width: 50px">
+        <table style="border-spacing: 1px; margin: 10%">
             <tr>
                 <td style="border: 3px solid black"><img src=pattern.png></td>
                 <td style="border: 3px solid black">

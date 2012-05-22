@@ -461,12 +461,11 @@ def auto_table_layout(box, containing_block, absolute_boxes):
     all_border_spacing = (
         table.style.border_spacing[0] * (len(column_preferred_widths) + 1))
 
-    # TODO: handle percentages
     margins = 0
-    if box.style.margin_left.unit != '%':
-        margins += box.style.margin_left.value
-    if box.style.margin_right.unit != '%':
-        margins += box.style.margin_right.value
+    if box.margin_left != 'auto':
+        margins += box.margin_left
+    if box.margin_right != 'auto':
+        margins += box.margin_right
 
     available_width = containing_block.width - margins
     if table.width == 'auto':
