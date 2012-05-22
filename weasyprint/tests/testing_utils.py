@@ -62,8 +62,7 @@ class CallbackHandler(logging.Handler):
 @contextlib.contextmanager
 def capture_logs():
     """Return a context manager that captures all logged messages."""
-    loggers = [LOGGER, logging.getLogger('CSSUTILS')]
-    previous_handlers = []
+    logger = LOGGER
     messages = []
 
     def emit(record):
@@ -71,15 +70,13 @@ def capture_logs():
         messages.append(message)
         print(message, file=sys.stderr)
 
-    for logger in loggers:
-        previous_handlers.append((logger, logger.handlers))
-        logger.handlers = []
-        logger.addHandler(CallbackHandler(emit))
+    previous_handlers = logger.handlers
+    logger.handlers = []
+    logger.addHandler(CallbackHandler(emit))
     try:
         yield messages
     finally:
-        for logger, handlers in previous_handlers:
-            logger.handlers = handlers
+        logger.handlers = previous_handlers
 
 
 def assert_no_logs(function):
