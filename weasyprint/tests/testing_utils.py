@@ -19,7 +19,8 @@ import contextlib
 import functools
 
 from .. import HTML, CSS
-from ..document import PNGDocument
+from ..document import Document
+from ..backends import PNGBackend
 from ..css import PARSER
 from ..logger import LOGGER
 
@@ -32,17 +33,19 @@ TEST_UA_STYLESHEET = CSS(os.path.join(
 ))
 
 
-class TestPNGDocument(PNGDocument):
+class TestPNGDocument(Document):
     """Like PNGDocument, but with a different user-agent stylesheet.
 
     This stylesheet is shorter, which makes tests faster.
 
     """
-    def __init__(self, html_source, base_url=None, user_stylesheets=()):
+    def __init__(self, html_source, base_url=None, user_stylesheets=(),
+                 user_agent_stylesheets=(TEST_UA_STYLESHEET,)):
         super(TestPNGDocument, self).__init__(
+            PNGBackend,
             HTML(string=html_source, base_url=base_url).root_element,
             user_stylesheets=user_stylesheets,
-            user_agent_stylesheets=[TEST_UA_STYLESHEET])
+            user_agent_stylesheets=user_agent_stylesheets)
 
 
 def resource_filename(basename):

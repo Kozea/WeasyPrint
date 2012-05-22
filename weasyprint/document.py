@@ -13,8 +13,6 @@
 from __future__ import division, unicode_literals
 
 import io
-import math
-import shutil
 
 import cairo
 
@@ -23,20 +21,22 @@ from .formatting_structure.build import build_formatting_structure
 from . import layout
 from . import draw
 from . import images
-from . import pdf
+from . import backends
 
 
 class Document(object):
     """Abstract output document."""
-    def __init__(self, dom, user_stylesheets, user_agent_stylesheets):
-        #: lxml HtmlElement object
-        self.dom = dom
+    def __init__(self, backend, dom, user_stylesheets, user_agent_stylesheets):
+        self.backend = backend
+        self.dom = dom  #: lxml HtmlElement object
         self.user_stylesheets = user_stylesheets
         self.user_agent_stylesheets = user_agent_stylesheets
         self._image_cache = {}
         self._computed_styles = None
         self._formatting_structure = None
         self._pages = None
+        self.surface = backend.get_dummy_surface()
+
 
         # TODO: remove this when Margin boxes variable dimension is correct.
         self._auto_margin_boxes_warning_shown = False
@@ -95,103 +95,9 @@ class Document(object):
             self._image_cache[uri] = surface
         return surface
 
-    def write_to(self, target=None):
-        """Like .write_to() but returns a byte stringif target is None."""
-        if target is None:
-            target = io.BytesIO()
-            self._write_to(target)
-            return target.getvalue()
-        else:
-            self._write_to(target)
-
-
-class PNGDocument(Document):
-    """PNG output document."""
-    def __init__(self, dom, *args, **kwargs):
-        super(PNGDocument, self).__init__(dom, *args, **kwargs)
-        self.surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, 1, 1)
-
-    def draw_page(self, page):
-        """Draw a single page and return an ImageSurface."""
-        width = int(math.ceil(page.outer_width))
-        height = int(math.ceil(page.outer_height))
-        surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
-        context = draw.CairoContext(surface)
-        draw.draw_page(self, page, context)
-        self.surface.finish()
-        return width, height, surface
-
-    def write_page_to(self, page_index, target):
-        """Write a single page as PNG into a file-like or filename `target`."""
-        _width, _height, surface = self.draw_page(self.pages[page_index])
-        surface.write_to_png(target)
-
-    def draw_all_pages(self):
-        """Draw all pages and return a single ImageSurface.
-
-        Pages are layed out vertically each above the next and centered
-        horizontally.
-        """
-        pages = [self.draw_page(page) for page in self.pages]
-        if len(pages) == 1:
-            return pages[0]
-        total_height = sum(height for width, height, surface in pages)
-        max_width = max(width for width, height, surface in pages)
-        surface = cairo.ImageSurface(cairo.FORMAT_ARGB32,
-            max_width, total_height)
-        context = draw.CairoContext(surface)
-
-        position_y = 0
-        for width, height, page_surface in pages:
-            position_x = (max_width - width) // 2
-            context.set_source_surface(page_surface, position_x, position_y)
-            context.paint()
-            position_y += height
-
-        return max_width, total_height, surface
-
-    def _write_to(self, target):
-        """Write all pages as PNG into a file-like or filename `target`.
-
-        Pages are layed out vertically each above the next and centered
-        horizontally.
-        """
-        _width, _height, surface = self.draw_all_pages()
-        surface.write_to_png(target)
-
-
-class PDFDocument(Document):
-    """PDF output document."""
-    def __init__(self, dom, *args, **kwargs):
-        super(PDFDocument, self).__init__(dom, *args, **kwargs)
-        # Use a dummy page size initially
-        self.surface = cairo.PDFSurface(None, 1, 1)
-
-    def _write_to(self, target):
-        """
-        Write the whole document as PDF into a file-like or filename `target`.
-        """
-        px_to_pt = pdf.PX_TO_PT
-        fileobj = io.BytesIO()
-        # The actual page size is set for each page.
-        surface = cairo.PDFSurface(fileobj, 1, 1)
-
+    def write_to(self, target):
+        backend = self.backend(target)
         for page in self.pages:
-            # Actual page size is here. May be different between pages.
-            surface.set_size(
-                page.outer_width * px_to_pt,
-                page.outer_height * px_to_pt)
-            context = draw.CairoContext(surface)
-            context.scale(px_to_pt, px_to_pt)
+            context = backend.start_page(page.outer_width, page.outer_height)
             draw.draw_page(self, page, context)
-            surface.show_page()
-
-        surface.finish()
-        pdf.write_pdf_metadata(self, fileobj)
-
-        fileobj.seek(0)
-        if hasattr(target, 'write'):
-            shutil.copyfileobj(fileobj, target)
-        else:
-            with open(target, 'wb') as fd:
-                shutil.copyfileobj(fileobj, fd)
+        backend.finish(self)

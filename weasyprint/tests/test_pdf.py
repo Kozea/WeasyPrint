@@ -17,7 +17,7 @@ import io
 import cairo
 
 from .. import HTML
-from ..document import PDFDocument
+from ..backends import MetadataPDFBackend
 from .. import pdf
 from .testing_utils import assert_no_logs, resource_filename
 
@@ -43,7 +43,7 @@ def test_pdf_parser():
 def get_metadata(html):
     document = HTML(
         string=html, base_url=resource_filename('<inline HTML>')
-    )._get_document(PDFDocument, [])
+    )._get_document(MetadataPDFBackend, [])
     return pdf.gather_metadata(document)
 
 

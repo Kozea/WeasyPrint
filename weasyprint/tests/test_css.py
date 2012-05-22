@@ -21,17 +21,15 @@ from .testing_utils import (
     TestPNGDocument, TEST_UA_STYLESHEET)
 from .. import css
 from ..css.computed_values import used_line_height
-from ..document import PNGDocument
 from ..utils import parse_data_url
-from .. import HTML, CSS
+from .. import CSS
 
 
 def parse_html(filename, **kwargs):
     """Parse an HTML file from the test resources and resolve relative URL."""
-    html = HTML(filename=resource_filename(filename))
-    kwargs.setdefault('user_agent_stylesheets', [TEST_UA_STYLESHEET])
-    kwargs.setdefault('user_stylesheets', [])
-    return PNGDocument(html.root_element, **kwargs)
+    filename = resource_filename(filename)
+    with open(filename, 'rb') as fd:
+        return TestPNGDocument(fd.read(), base_url=filename, **kwargs)
 
 
 @assert_no_logs
