@@ -12,7 +12,6 @@
 
 from __future__ import division, unicode_literals
 
-import sys
 import os
 import io
 import contextlib

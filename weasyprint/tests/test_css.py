@@ -17,8 +17,7 @@ import os.path
 from pytest import raises
 
 from .testing_utils import (
-    resource_filename, assert_no_logs, capture_logs,
-    TestPNGDocument, TEST_UA_STYLESHEET)
+    resource_filename, assert_no_logs, capture_logs, TestPNGDocument)
 from .. import css
 from ..css.computed_values import used_line_height
 from ..utils import parse_data_url

@@ -12,10 +12,8 @@
 
 from __future__ import division, unicode_literals
 
-import io
 import sys
 import email
-import contextlib
 
 
 if sys.version_info[0] >= 3:

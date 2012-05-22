@@ -17,9 +17,8 @@ import io
 import base64
 
 from . import VERSION_STRING
-from .logger import LOGGER
 from .compat import (
-    urljoin, urlsplit, quote, unquote, unquote_to_bytes, urlopen_contenttype,
+    urljoin, urlsplit, quote, unquote_to_bytes, urlopen_contenttype,
     Request, parse_email, pathname2url)
 
 

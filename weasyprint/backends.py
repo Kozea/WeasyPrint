@@ -108,6 +108,6 @@ class PNGBackend(object):
                 pos_x = (max_width - width) // 2
                 context.set_source_surface(page_surface, pos_x, pos_y)
                 context.paint()
-                position_y += height
+                pos_y += height
 
         surface.write_to_png(self.target)

@@ -155,7 +155,7 @@ class CSS(Resource):
                  string=None, encoding=None, base_url=None,
                  _check_mime_type=False):
         from .css import PARSER, preprocess_stylesheet
-        from .utils import path2url, urlopen
+        from .utils import urlopen
 
         source_type, source, base_url = _select_source(
             guess, filename, url, file_obj, string, base_url)

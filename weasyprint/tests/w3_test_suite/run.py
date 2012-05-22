@@ -78,7 +78,7 @@ def make_test_suite():
             # name is sometimes "support/something.htm"
             basename = os.path.basename(name)
             png_filename = os.path.join(RESULTS_DIRECTORY, basename + '.png')
-            png = HTML(BASE_URL + name).write_png(
+            HTML(BASE_URL + name).write_png(
                 png_filename, stylesheets=[PAGE_SIZE_STYLESHEET])
             with closing(pystacia.read(png_filename)) as image:
                 raw = image.get_raw('rgba')

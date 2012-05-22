@@ -21,7 +21,6 @@ import functools
 from .. import HTML, CSS
 from ..document import Document
 from ..backends import PNGBackend
-from ..css import PARSER
 from ..logger import LOGGER
 
 

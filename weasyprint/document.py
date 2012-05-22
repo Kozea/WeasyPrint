@@ -12,22 +12,18 @@
 
 from __future__ import division, unicode_literals
 
-import io
-
-import cairo
-
 from .css import get_all_computed_styles
 from .formatting_structure.build import build_formatting_structure
 from . import layout
 from . import draw
 from . import images
-from . import backends
 
 
 class Document(object):
     """Abstract output document."""
     def __init__(self, backend, dom, user_stylesheets, user_agent_stylesheets):
         self.backend = backend
+        self.surface = backend.get_dummy_surface()
         self.dom = dom  #: lxml HtmlElement object
         self.user_stylesheets = user_stylesheets
         self.user_agent_stylesheets = user_agent_stylesheets
@@ -35,8 +31,6 @@ class Document(object):
         self._computed_styles = None
         self._formatting_structure = None
         self._pages = None
-        self.surface = backend.get_dummy_surface()
-
 
         # TODO: remove this when Margin boxes variable dimension is correct.
         self._auto_margin_boxes_warning_shown = False

@@ -54,7 +54,7 @@ def cairosvg_handler(file_like, uri):
     This handler uses CairoSVG: http://cairosvg.org/
     """
     from cairosvg.surface import SVGSurface
-    from cairosvg.parser import Tree, ParseError
+    from cairosvg.parser import Tree
 
     class ScaledSVGSurface(SVGSurface):
         """
@@ -85,7 +85,6 @@ def fallback_handler(file_like, uri):
     parameter, it guesses the format from the content.
     """
     from pystacia import read_blob
-    from pystacia.util import TinyException
     with contextlib.closing(read_blob(file_like.read())) as image:
         png_bytes = image.get_blob('png')
     return png_handler(BytesIO(png_bytes), uri)

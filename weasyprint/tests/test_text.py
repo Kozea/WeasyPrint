@@ -14,7 +14,7 @@ from __future__ import division, unicode_literals
 
 import cairo
 
-from ..css import StyleDict, PARSER
+from ..css import StyleDict
 from ..css.properties import INITIAL_VALUES
 from ..text import TextFragment
 from .test_layout import parse, body_children
