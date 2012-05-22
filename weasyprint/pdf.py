@@ -405,7 +405,7 @@ def write_pdf_metadata(document, fileobj):
             root['First'] + bookmark_root,
             root['Last'] + bookmark_root))
         pdf.extend_dict(pdf.catalog, pdf_format(
-            '/Outlines {0} 0 R', bookmark_root))
+            '/Outlines {0} 0 R /PageMode /UseOutlines', bookmark_root))
         for bookmark in bookmarks:
             content = [pdf_format('<< /Title {0!P}\n', bookmark['label'])]
             if bookmark['Count']:
