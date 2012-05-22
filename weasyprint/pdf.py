@@ -364,8 +364,8 @@ def gather_metadata(document):
                 box.style.link,
                 (pos_x, pos_y, pos_x + width, pos_y + height)))
 
-        if box.style.anchor and box.style.anchor not in destinations:
-            destinations[box.style.anchor] = (
+        if box.style.anchor and box.style.anchor not in anchors:
+            anchors[box.style.anchor] = (
                 (page_index,) + point_to_pdf(box.position_x, box.position_y))
 
         if isinstance(box, boxes.ParentBox):
@@ -374,7 +374,7 @@ def gather_metadata(document):
 
     bookmarks = []
     links_by_page = []
-    destinations = {}
+    anchors = {}
     for page_index, page in enumerate(document.pages):
         # cairo coordinates are pixels right and down from the top-left corner
         # PDF coordinates are points right and up from the bottom-left corner
@@ -385,11 +385,11 @@ def gather_metadata(document):
         links = []
         walk(page)
         links_by_page.append(links)
-    return process_bookmarks(bookmarks), links_by_page, destinations
+    return process_bookmarks(bookmarks), links_by_page, anchors
 
 
 def write_pdf_metadata(document, fileobj):
-    bookmarks, links, destinations = gather_metadata(document)
+    bookmarks, links, anchors = gather_metadata(document)
 
     pdf = PDFFile(fileobj)
     pdf.overwrite_object(pdf.info.object_number, pdf_format(
@@ -431,7 +431,7 @@ def write_pdf_metadata(document, fileobj):
                 content.append(pdf_format(
                     '/A << /Type /Action /S /GoTo '
                         '/D [{0} /XYZ {1:f} {2:f} 0] >>\n',
-                    *destinations[uri]))
+                    *anchors[uri]))
             else:
                 content.append(pdf_format(
                     '/A << /Type /Action /S /URI /URI ({0}) >>\n',
