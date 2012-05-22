@@ -23,7 +23,6 @@ from .formatting_structure.build import build_formatting_structure
 from . import layout
 from . import draw
 from . import images
-from . import utils
 from . import pdf
 
 
@@ -35,6 +34,9 @@ class Document(object):
         self.user_stylesheets = user_stylesheets
         self.user_agent_stylesheets = user_agent_stylesheets
         self._image_cache = {}
+        self._computed_styles = None
+        self._formatting_structure = None
+        self._pages = None
 
         # TODO: remove this when Margin boxes variable dimension is correct.
         self._auto_margin_boxes_warning_shown = False
@@ -45,34 +47,42 @@ class Document(object):
         """
         return self.computed_styles.get((element, pseudo_type))
 
-    @utils.cached_property
+    @property
     def computed_styles(self):
         """
         dict of (element, pseudo_element_type) -> StyleDict
         StyleDict: a dict of property_name -> PropertyValue,
                    also with attribute access
         """
-        return get_all_computed_styles(
-            self,
-            user_stylesheets=self.user_stylesheets,
-            ua_stylesheets=self.user_agent_stylesheets,
-            medium='print')
+        if self._computed_styles is None:
+            self._computed_styles = get_all_computed_styles(
+                self,
+                user_stylesheets=self.user_stylesheets,
+                ua_stylesheets=self.user_agent_stylesheets,
+                medium='print')
+        return self._computed_styles
 
-    @utils.cached_property
+    @property
     def formatting_structure(self):
         """
         The root of the formatting structure tree, ie. the Box
         for the root element.
         """
-        return build_formatting_structure(self, self.computed_styles)
+        if self._formatting_structure is None:
+            self._formatting_structure = build_formatting_structure(
+                self, self.computed_styles)
+        return self._formatting_structure
 
-    @utils.cached_property
+    @property
     def pages(self):
         """
         List of layed-out pages with an absolute size and postition
         for every box.
         """
-        return layout.layout_document(self, self.formatting_structure)
+        if self._pages is None:
+            self._pages = layout.layout_document(
+                self, self.formatting_structure)
+        return self._pages
 
     def get_image_from_uri(self, uri, type_=None):
         """
