@@ -12,9 +12,10 @@
 
 from __future__ import division, unicode_literals
 
-import os.path
 import io
+import re
 import base64
+import os.path
 
 from . import VERSION_STRING
 from .compat import (
@@ -22,7 +23,28 @@ from .compat import (
     Request, parse_email, pathname2url)
 
 
-# TODO: Most of this module is URL-related. Rename it to weasyprint.urls?
+SCHEME_RE = re.compile('^([a-z][a-z0-1.+-]*):', re.I)
+OPENER_BY_SCHEME = {}
+
+def register_opener(scheme):
+    """Register globally an opener function for a given URI scheme.
+
+    Expected usage::
+
+        from weasyprint.urls import register_opener
+        @register_opener('foo')
+        def git_urlopen(url):
+            url = urlparse.urlsplit(url)
+            assert url.scheme == 'foo'
+            # ...
+            return fileobj, mimetype, charset
+
+    """
+    def decorator(function):
+        OPENER_BY_SCHEME[scheme] = function
+        return function
+    return decorator
+
 
 def iri_to_uri(url):
     """Turn an IRI that can contain any Unicode character into an ASII-only
@@ -45,7 +67,7 @@ def path2url(path):
 
 
 def url_is_absolute(url):
-    return bool(urlsplit(url).scheme)
+    return bool(SCHEME_RE.match(url))
 
 
 def get_url_attribute(element, key):
@@ -103,7 +125,8 @@ def decode_base64(data):
     return base64.decodestring(data)
 
 
-def parse_data_url(url):
+@register_opener('data')
+def open_data_url(url):
     """Decode URLs with the 'data' stream. urllib can handle them
     in Python 2, but that is broken in Python 3.
 
@@ -148,8 +171,12 @@ def urlopen(url):
 
     It is the caller’s responsability to call ``file_like.close()``.
     """
-    if url.startswith('data:'):
-        return parse_data_url(url)
+    match = SCHEME_RE.match(url)
+    if not match:
+        raise ValueError('Not an absolute URI: %r' % url)
+    opener = OPENER_BY_SCHEME.get(match.group(1))
+    if opener:
+        return opener(url)
     else:
         url = iri_to_uri(url)
         return urlopen_contenttype(Request(url,

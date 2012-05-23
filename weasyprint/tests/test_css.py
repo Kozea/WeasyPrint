@@ -20,7 +20,7 @@ from .testing_utils import (
     resource_filename, assert_no_logs, capture_logs, TestPNGDocument)
 from .. import css
 from ..css.computed_values import used_line_height
-from ..urls import parse_data_url
+from ..urls import open_data_url
 from .. import CSS
 
 
@@ -35,7 +35,7 @@ def parse_html(filename, **kwargs):
 def test_data_url():
     """Test URLs with the "data:" scheme."""
     def parse(url, expected_content, expected_mime_type, expected_charset):
-        file_like, mime_type, charset = parse_data_url(url)
+        file_like, mime_type, charset = open_data_url(url)
         assert file_like.read() == expected_content
         assert mime_type == expected_mime_type
         assert charset == expected_charset
@@ -61,7 +61,7 @@ def test_data_url():
     parse('data:text/plain;base64,Zm9vb28', b'foooo', 'text/plain', None)
 
     with raises(IOError):
-        parse_data_url('data:foo')
+        open_data_url('data:foo')
 
 
 @assert_no_logs
