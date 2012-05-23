@@ -21,7 +21,8 @@
 
 from __future__ import division, unicode_literals
 
-from .pages import make_all_pages, add_margin_boxes
+from .absolute import absolute_layout
+from .pages import make_all_pages, make_margin_boxes
 
 
 def layout_document(document, root_box):
@@ -35,4 +36,18 @@ def layout_document(document, root_box):
 
     """
     pages = list(make_all_pages(document, root_box))
-    return list(add_margin_boxes(document, pages))
+    page_counter = [1]
+    counter_values = {'page': page_counter, 'pages': [len(pages)]}
+    for page in pages:
+        root, = page.children
+        root_children = list(root.children)
+        for fixed_box in document.fixed_boxes:
+            fixed_box_for_page = fixed_box.copy()
+            absolute_layout(document, fixed_box_for_page, page)
+            root_children.append(fixed_box_for_page)
+
+        root = root.copy_with_children(root_children)
+        page.children = (root,) + tuple(
+            make_margin_boxes(document, page, counter_values))
+        yield page
+        page_counter[0] += 1

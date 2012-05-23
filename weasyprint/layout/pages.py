@@ -525,6 +525,7 @@ def make_all_pages(document, root_box):
         if ((next_page == 'left' and right_page) or
             (next_page == 'right' and not right_page)):
             page = make_empty_page(document, root_box, page_type)
+            page.children = (root_box.copy_with_children([]),)
         else:
             page, resume_at, next_page = make_page(
                 document, root_box, page_type, resume_at)
@@ -534,20 +535,3 @@ def make_all_pages(document, root_box):
             return
         prefix = ''
         right_page = not right_page
-
-
-def add_margin_boxes(document, pages):
-    """Take a list of pages and return a new list with margin boxes added
-    to each PageBox object.
-
-    This is a later step as the total number of pages is needed for
-    the pages counter.
-
-    """
-    page_counter = [1]
-    counter_values = {'page': page_counter, 'pages': [len(pages)]}
-    for page in pages:
-        page.children += tuple(make_margin_boxes(
-            document, page, counter_values))
-        yield page
-        page_counter[0] += 1

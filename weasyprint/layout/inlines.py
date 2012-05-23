@@ -534,7 +534,14 @@ def split_inline_box(document, box, position_x, max_x, skip_stack,
                 child.position_x = position_x
                 child.position_y = 0
                 absolute_boxes.append(child)
-            children.append(child)
+                children.append(child)
+            elif child.style.position == 'fixed':
+                child.position_x = position_x
+                child.position_y = 0
+                document.fixed_boxes.append(child)
+            else:
+                # TODO: Floats
+                children.append(child)
             continue
 
         child.position_y = box.position_y

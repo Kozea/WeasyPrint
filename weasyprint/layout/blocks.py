@@ -235,7 +235,13 @@ def block_container_layout(document, box, max_position_y, skip_stack,
             if child.style.position == 'absolute':
                 child.position_y += collapse_margin(adjoining_margins)
                 absolute_boxes.append(child)
-            new_children.append(child)
+                new_children.append(child)
+            elif child.style.position == 'fixed':
+                child.position_y += collapse_margin(adjoining_margins)
+                document.fixed_boxes.append(child)
+            else:
+                # TODO: Floats
+                new_children.append(child)
             continue
 
         if child.style.position == 'relative':

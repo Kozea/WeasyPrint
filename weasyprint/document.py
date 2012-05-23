@@ -23,6 +23,7 @@ class Document(object):
     """Abstract output document."""
     def __init__(self, backend, dom, user_stylesheets, user_agent_stylesheets):
         self.backend = backend
+        self.fixed_boxes = []
         self.surface = backend.get_dummy_surface()
         self.dom = dom  #: lxml HtmlElement object
         self.user_stylesheets = user_stylesheets
@@ -74,8 +75,8 @@ class Document(object):
         for every box.
         """
         if self._pages is None:
-            self._pages = layout.layout_document(
-                self, self.formatting_structure)
+            self._pages = list(layout.layout_document(
+                self, self.formatting_structure))
         return self._pages
 
     def get_image_from_uri(self, uri, type_=None):

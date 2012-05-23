@@ -1238,9 +1238,10 @@ def test_page_breaks():
     assert div.element_tag == 'div'
     assert text.text == '1'
 
+    html, = page_2.children
     assert page_2.margin_left == 10
     assert page_2.margin_right == 50  # right page
-    assert not page_2.children  # empty page to get to a left page
+    assert not html.children  # empty page to get to a left page
 
     assert page_3.margin_left == 50  # left page
     assert page_3.margin_right == 10
