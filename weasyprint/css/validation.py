@@ -847,7 +847,6 @@ def link(token, base_url):
         args = [a.value for a in args]
         if prototype == ('attr', ['IDENT']):
             return (name, args[0])
-        return token.value
 
 
 @validator(prefixed=True)  # CSS3 GCPM

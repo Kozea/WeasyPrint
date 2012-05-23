@@ -201,7 +201,6 @@ def compute(element, pseudo_type, specified, computed, parent_style):
             value = function(computer, name, value)
         # else: same as specified
 
-        assert value is not None
         computed[name] = value
 
     return computed
@@ -439,6 +438,8 @@ def link(computer, name, values):
         type_, value = values
         if type_ == 'attr':
             url = get_url_attribute(computer.element, value)
+            if not url:
+                return None
         else:
             url = value
         document_uri = urlsplit(computer.element.base_url or '')
