@@ -52,6 +52,7 @@ def build_formatting_structure(document, computed_styles):
     box = anonymous_table_boxes(box)
     box = inline_in_block(box)
     box = block_in_inline(box)
+    box = resolve_bookmark_labels(box)
     box = set_canvas_background(box)
     box = set_viewport_overflow(box)
     return box
@@ -133,8 +134,6 @@ def dom_to_box(document, element, state=None):
         counter_values[name].pop()
 
     box = box.copy_with_children(children)
-
-    resolve_bookmark_labels(box)
 
     # Specific handling for the element. (eg. replaced element)
     return html.handle_element(document, element, box)
@@ -932,23 +931,32 @@ def box_text_content_after(box):
         return ''
 
 
+TEXT_CONTENT_EXTRACTORS = {
+    'contents': box_text_contents,
+    'content-element': box_text_content_element,
+    'content-before': box_text_content_before,
+    'content-before': box_text_content_after}
+
+
 def resolve_bookmark_labels(box):
     """Set the used value of the bookmark-label.
 
     See http://dev.w3.org/csswg/css3-gcpm/#bookmarks
 
     """
-    key, value = box.style.bookmark_label
-    if key == 'keyword':
-        if value == 'none':
-            box.bookmark_label = None
-        elif value == 'content-element':
-            box.bookmark_label = box_text_content_element(box)
-        elif value == 'contents':
-            box.bookmark_label = box_text_contents(box)
-        elif value == 'content-before':
-            box.bookmark_label = box_text_content_before(box)
-        elif value == 'content-before':
-            box.bookmark_label = box_text_content_after(box)
-    else:
+    value_type, value = box.style.bookmark_label
+    if value_type == 'string':
         box.bookmark_label = value
+    else:
+        assert value_type == 'keyword'
+        if value != 'none':
+            text = TEXT_CONTENT_EXTRACTORS[value](box)
+            # Simulate the step of white space processing
+            # (normally done during the layout)
+            box.bookmark_label = text.strip()
+
+    if isinstance(box, boxes.ParentBox):
+        for child in box.children:
+            resolve_bookmark_labels(child)
+
+    return box

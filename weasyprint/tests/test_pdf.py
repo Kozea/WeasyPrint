@@ -91,8 +91,10 @@ def test_bookmarks():
         <h1>Title 2</h1>
         <div style="margin-left: 50pt"><h2>Title 3</h2></div>
         <h2>Title 4</h2>
-        <h3>Title 5<span style="display: block;
-                                page-break-before: always"></span></h3>
+        <h3>
+            Title 5
+            <span style="display: block; page-break-before: always"></span>
+        </h3>
         <h2>Title 6</h2>
         <h1>Title 7</h1>
         <h2>Title 8</h2>
