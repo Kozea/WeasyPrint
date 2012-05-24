@@ -151,22 +151,21 @@ Logging
 Most errors (syntax error in CSS, unsupported CSS property, missing image, ...)
 are not fatal and will not prevent a document from being rendered.
 
-Both cssutils and WeasyPrint use the ``logging`` module from the Python
-standard library to log these errors and let you know about it.
-Two *loggers* are defined. The ``CSSUTILS`` logger reports syntax errors while
-the ``weasyprint`` reports everything else. You can access the logger objects
-like this:
+WeasyPrint uses the ``logging`` module from the Python standard library
+to log these errors and let you know about them.
+
+Logged messaged will go to stderr by default. You can change that by
+configuring the ``weasyprint`` logger object:
 
 .. code-block:: python
 
     import logging
-    cssutils_logger = logging.getLogger('CSSUTILS')
-    weasyprint_logger = logging.getLogger('weasyprint')
+    logger = logging.getLogger('weasyprint')
+    logger.handlers = []  # Remove the default stderr handler
+    logger.addHandler(logging.FileHandler('/path/to/weasyprint.log'))
 
-Logged messaged will go to stderr by default.
-See the `logging documentation`_ if you want to change that.
-
-.. _logging documentation: http://docs.python.org/library/logging.html
+See the `logging documentation <http://docs.python.org/library/logging.html>`_
+for details.
 
 
 What’s next
