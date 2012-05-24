@@ -67,27 +67,33 @@ class HTML(Resource):
 
     """
     def __init__(self, guess=None, filename=None, url=None, file_obj=None,
-                 string=None, encoding=None, base_url=None):
+                 string=None, tree=None, encoding=None, base_url=None):
         import lxml.html
         from .urls import ensure_url
 
         source_type, source, base_url = _select_source(
-            guess, filename, url, file_obj, string, base_url)
+            guess, filename, url, file_obj, string, tree, base_url)
 
-        if source_type == 'string':
-            parse = lxml.html.document_fromstring
+        if source_type == 'tree':
+            result = source
         else:
-            parse = lxml.html.parse
-            if source_type != 'file_obj':
-                # If base_url is None we want the used base URL to be
-                # an URL, not a filename.
-                source = ensure_url(source)
-        parser = lxml.html.HTMLParser(encoding=encoding)
-        result = parse(source, base_url=base_url, parser=parser)
-        if source_type != 'string':
+            if source_type == 'string':
+                parse = lxml.html.document_fromstring
+            else:
+                parse = lxml.html.parse
+                if source_type != 'file_obj':
+                    # If base_url is None we want the used base URL to be
+                    # an URL, not a filename.
+                    source = ensure_url(source)
+            parser = lxml.html.HTMLParser(encoding=encoding)
+            result = parse(source, parser=parser)
+            if result is None:
+                raise ValueError('Error while parsing HTML')
+        if hasattr(result, 'getroot'):
+            result.docinfo.URL = base_url
             result = result.getroot()
-        if result is None:
-            raise ValueError('Error while parsing HTML')
+        else:
+            result.getroottree().docinfo.URL = base_url
         self.root_element = result
 
     def _ua_stylesheet(self):
@@ -158,7 +164,8 @@ class CSS(Resource):
         from .urls import urlopen
 
         source_type, source, base_url = _select_source(
-            guess, filename, url, file_obj, string, base_url)
+            guess, filename, url, file_obj, string, tree=None,
+            base_url=base_url)
 
         kwargs = dict(linking_encoding=encoding)
         if source_type == 'string':
@@ -190,7 +197,7 @@ class CSS(Resource):
 
 
 def _select_source(guess=None, filename=None, url=None, file_obj=None,
-                   string=None, base_url=None):
+                   string=None, tree=None, base_url=None):
     """
     Check that only one input is not None, and return it with the
     normalized ``base_url``.
@@ -202,8 +209,8 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
         base_url = ensure_url(base_url)
 
     nones = [guess is None, filename is None, url is None,
-             file_obj is None, string is None]
-    if nones == [False, True, True, True, True]:
+             file_obj is None, string is None, tree is None]
+    if nones == [False, True, True, True, True, True]:
         if hasattr(guess, 'read'):
             type_ = 'file_obj'
         elif urlsplit(guess).scheme:
@@ -211,23 +218,25 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
         else:
             type_ = 'filename'
         return _select_source(base_url=base_url, **{type_: guess})
-    if nones == [True, False, True, True, True]:
+    if nones == [True, False, True, True, True, True]:
         if base_url is None:
             base_url = path2url(filename)
         return 'filename', filename, base_url
-    if nones == [True, True, False, True, True]:
+    if nones == [True, True, False, True, True, True]:
         if base_url is None:
             base_url = url
         return 'url', url, base_url
-    if nones == [True, True, True, False, True]:
+    if nones == [True, True, True, False, True, True]:
         if base_url is None:
             # filesystem file objects have a 'name' attribute.
             name = getattr(file_obj, 'name', None)
             if name:
                 base_url = ensure_url(name)
         return 'file_obj', file_obj, base_url
-    if nones == [True, True, True, True, False]:
+    if nones == [True, True, True, True, False, True]:
         return 'string', string, base_url
+    if nones == [True, True, True, True, True, False]:
+        return 'tree', tree, base_url
 
     raise TypeError('Expected only one source, got %i' % nones.count(False))
 

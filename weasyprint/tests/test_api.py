@@ -20,6 +20,7 @@ import shutil
 import tempfile
 
 import pystacia
+import lxml.html
 
 from .testing_utils import (
     resource_filename, assert_no_logs, TEST_UA_STYLESHEET)
@@ -117,6 +118,9 @@ def test_html_parsing():
 
     _test_resource(TestHTML, 'doc1.html', check_doc1)
     _test_resource(TestHTML, 'doc1-utf32.html', check_doc1, encoding='utf32')
+
+    filename = resource_filename('doc1.html')
+    check_doc1(TestHTML(tree=lxml.html.parse(filename), base_url=filename))
 
 
 @assert_no_logs
