@@ -14,7 +14,8 @@ from __future__ import division, unicode_literals
 
 import contextlib
 
-from .testing_utils import resource_filename, TestPNGDocument, assert_no_logs
+from .testing_utils import (
+    resource_filename, TestPNGDocument, assert_no_logs, capture_logs)
 from ..css import validation
 from ..formatting_structure import boxes, build, counters
 
@@ -119,10 +120,9 @@ def parse(html_content):
         return box
 
 
-def parse_all(html_content):
+def parse_all(html_content, base_url=resource_filename('<test>')):
     """Like parse() but also run all corrections on boxes."""
-    document = TestPNGDocument(html_content,
-        base_url=resource_filename('<test>'))
+    document = TestPNGDocument(html_content, base_url=base_url)
     box = build.build_formatting_structure(document, document.computed_styles)
     sanity_checks(box)
     return box
@@ -442,6 +442,40 @@ def test_text_transform():
             ('p', 'Line', [
                 ('p', 'Text', 'heLLo wOrlD!')])]),
     ])
+
+
+@assert_no_logs
+def test_images():
+    """Test images that may or may not be available."""
+    with capture_logs() as logs:
+        result = parse_all('''
+            <p><img src=pattern.png
+                /><img alt="No src"
+                /><img src=inexistent.jpg alt="Inexistent src" />
+        ''')
+    assert len(logs) == 1
+    assert 'WARNING: Error for image' in logs[0]
+    assert 'inexistent.jpg' in logs[0]
+    assert_tree(result, [
+        ('p', 'Block', [
+            ('p', 'Line', [
+                ('img', 'InlineReplaced', '<replaced>'),
+                ('img', 'Inline', [
+                    ('img', 'Text', 'No src')]),
+                ('img', 'Inline', [
+                    ('img', 'Text', 'Inexistent src')]),
+            ])])])
+
+    with capture_logs() as logs:
+        result = parse_all('<p><img src=pattern.png alt="No base_url">',
+                           base_url=None)
+    assert len(logs) == 1
+    assert 'WARNING: Relative URI reference without a base URI' in logs[0]
+    assert_tree(result, [
+        ('p', 'Block', [
+            ('p', 'Line', [
+                ('img', 'Inline', [
+                    ('img', 'Text', 'No base_url')])])])])
 
 
 @assert_no_logs

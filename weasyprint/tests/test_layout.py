@@ -3368,7 +3368,7 @@ def test_margin_collapsing():
         p2_top = p2.content_box_y()
         return p2_top - p1_bottom
 
-    # The root elememt does not collapse
+    # The root element does not collapse
     @assert_NOT_collapsing
     def vertical_space_8(margin_1, margin_2):
         page, = parse('''

@@ -18,6 +18,7 @@ import base64
 import os.path
 
 from . import VERSION_STRING
+from .logger import LOGGER
 from .compat import (
     urljoin, urlsplit, quote, unquote_to_bytes, urlopen_contenttype,
     Request, parse_email, pathname2url)
@@ -70,8 +71,8 @@ def url_is_absolute(url):
     return bool(SCHEME_RE.match(url))
 
 
-def get_url_attribute(element, key):
-    """Get the URI corresponding to the ``key`` attribute.
+def get_url_attribute(element, attr_name):
+    """Get the URI corresponding to the ``attr_name`` attribute.
 
     Return ``None`` if:
 
@@ -81,7 +82,7 @@ def get_url_attribute(element, key):
     Otherwise, return an absolute URI.
 
     """
-    attr_value = element.get(key, '').strip()
+    attr_value = element.get(attr_name, '').strip()
     if attr_value:
         # TODO: support the <base> HTML element, but do not use
         # lxml.html.HtmlElement.make_links_absolute() that changes
@@ -90,7 +91,11 @@ def get_url_attribute(element, key):
             return attr_value
         elif element.base_url:
             return urljoin(element.base_url, attr_value)
-        #else: TODO warn
+        else:
+            LOGGER.warn(
+                'Relative URI reference without a base URI: '
+                '<%s %s="%s"> at line %d',
+                element.tag, attr_name, attr_value, element.sourceline)
 
 
 def ensure_url(string):
