@@ -5,6 +5,9 @@
 
     Logging setup.
 
+    The rest of the code gets the logger through this module rather than
+    ``logging.getLogger`` to make sure that it is configured.
+
     :copyright: Copyright 2011-2012 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
@@ -18,5 +21,8 @@ import logging
 LOGGER = logging.getLogger('weasyprint')
 
 # Default to logging to stderr.
-LOGGER.addHandler(logging.StreamHandler())
-LOGGER.setLevel(logging.INFO)
+if not LOGGER.handlers:
+    LOGGER.addHandler(logging.StreamHandler())
+
+if LOGGER.level == logging.NOTSET:
+    LOGGER.setLevel(logging.INFO)
