@@ -467,7 +467,8 @@ def auto_table_layout(box, containing_block, absolute_boxes):
     if box.margin_right != 'auto':
         margins += box.margin_right
 
-    available_width = containing_block.width - margins
+    cb_width, cb_height = containing_block
+    available_width = cb_width - margins
     if table.width == 'auto':
         if available_width < table_preferred_minimum_width:
             table.width = table_preferred_minimum_width

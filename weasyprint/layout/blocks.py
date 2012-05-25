@@ -57,7 +57,8 @@ def block_box_layout(document, box, max_position_y, skip_stack,
     """Lay out the block ``box``."""
     resolve_percentages(box, containing_block)
     if box.is_table_wrapper:
-        table_wrapper_width(box, containing_block, absolute_boxes)
+        table_wrapper_width(box, (containing_block.width,
+                                  containing_block.height), absolute_boxes)
     block_level_width(box, containing_block)
     new_box, resume_at, next_page, adjoining_margins, collapsing_through = \
         block_container_layout(

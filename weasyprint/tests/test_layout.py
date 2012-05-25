@@ -3538,7 +3538,7 @@ def test_absolute_positioning():
 
     page, = parse('''
         <div style="position: relative; width: 20px; height: 60px;
-                    border: 10px solid; padding-top: 3px; top: 5px; left: 1px">
+                    border: 10px solid; padding-top: 6px; top: 5px; left: 1px">
             <div style="height: 20px; width: 20px; position: absolute;
                         bottom: 50%"></div>
             <div style="height: 20px; width: 20px; position: absolute;
@@ -3551,7 +3551,7 @@ def test_absolute_positioning():
     div2, div3 = div1.children
     assert (div1.position_x, div1.position_y) == (1, 5)
     assert (div1.width, div1.height) == (20, 60)
-    assert (div1.border_width(), div1.border_height()) == (40, 83)
+    assert (div1.border_width(), div1.border_height()) == (40, 86)
     assert (div2.position_x, div2.position_y) == (11, 28)
     assert (div2.width, div2.height) == (20, 20)
     assert (div3.position_x, div3.position_y) == (11, 28)
