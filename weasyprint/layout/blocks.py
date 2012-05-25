@@ -12,7 +12,7 @@
 
 from __future__ import division, unicode_literals
 
-from .absolute import absolute_layout, translate_except_absolute
+from .absolute import absolute_layout, AbsolutePlaceholder
 from .inlines import (iter_line_boxes, replaced_box_width, replaced_box_height,
                       handle_min_max_width, min_max_replaced_height,
                       min_max_auto_replaced)
@@ -174,7 +174,7 @@ def relative_positioning(box, containing_block):
         else:
             translate_y = 0
 
-        translate_except_absolute(box, translate_x, translate_y)
+        box.translate(translate_x, translate_y)
 
     if isinstance(box, (boxes.InlineBox, boxes.LineBox)):
         for child in box.children:
@@ -232,13 +232,14 @@ def block_container_layout(document, box, max_position_y, skip_stack,
         child.position_y = position_y
 
         if not child.is_in_normal_flow():
-            if child.style.position == 'absolute':
+            if child.style.position in ('absolute', 'fixed'):
                 child.position_y += collapse_margin(adjoining_margins)
-                absolute_boxes.append(child)
-                new_children.append(child)
-            elif child.style.position == 'fixed':
-                child.position_y += collapse_margin(adjoining_margins)
-                document.fixed_boxes.append(child)
+                placeholder = AbsolutePlaceholder(child)
+                if child.style.position == 'absolute':
+                    absolute_boxes.append(placeholder)
+                    new_children.append(placeholder)
+                else:
+                    document.fixed_boxes.append(placeholder)
             else:
                 # TODO: Floats
                 new_children.append(child)
@@ -327,7 +328,7 @@ def block_container_layout(document, box, max_position_y, skip_stack,
                     adjoining_margins.append(new_child.margin_top)
                     offset_y = (collapse_margin(adjoining_margins)
                                  - new_child.margin_top)
-                    translate_except_absolute(new_child, 0, offset_y)
+                    new_child.translate(0, offset_y)
                     adjoining_margins = []
                 #else: blocks handle that themselves.
 

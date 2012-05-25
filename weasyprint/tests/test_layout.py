@@ -39,7 +39,7 @@ def parse_without_layout(html_content):
 
 def parse(html_content, return_document=False):
     """Parse some HTML, apply stylesheets, transform to boxes and lay out."""
-    # TODO: remove this patching when asbolute and floats are validated
+    # TODO: remove this patching when floats are validated
     with monkeypatch_validation(validate_float):
         document = TestPNGDocument(html_content,
             base_url=resource_filename('<inline HTML>'))
@@ -1503,7 +1503,7 @@ def test_inlinebox_spliting():
         while 1:
             inlinebox.position_y = 0
             box, skip, _ = split_inline_box(
-                document, inlinebox, 0, width, skip, parent, None, [])
+                document, inlinebox, 0, width, skip, parent, None, [], [])
             yield box
             if skip is None:
                 break
@@ -1617,7 +1617,7 @@ def test_inlinebox_text_after_spliting():
     while 1:
         inlinebox.position_y = 0
         box, skip, _ = split_inline_box(
-            document, inlinebox, 0, 100, skip, paragraph, None, [])
+            document, inlinebox, 0, 100, skip, paragraph, None, [], [])
         parts.append(box)
         if skip is None:
             break
@@ -3559,6 +3559,7 @@ def test_absolute_positioning():
 
     page, = parse('''
         <style>
+          @page { -weasy-size: 1000px 2000px }
           html { font-size: 0 }
           p { height: 20px }
         </style>
@@ -3567,7 +3568,8 @@ def test_absolute_positioning():
             <p>2</p>
             <p style="position: absolute; top: -5px; left: 5px">3</p>
             <p style="margin: 3px">4</p>
-            <p style="position: relative; bottom: 5px; left: 5px;
+            <p style="position: absolute; bottom: 5px; right: 15px;
+                      width: 50px; height: 10%;
                       padding: 3px; margin: 7px">5
                 <span>
                   <img src="pattern.png">
@@ -3576,7 +3578,7 @@ def test_absolute_positioning():
                                width: 20px; height: 15px"></span>
                 </span>
             </p>
-            <p>6</p>
+            <p style="margin-top: 8px">6</p>
         </div>
         <p>7</p>
     ''')
@@ -3592,22 +3594,25 @@ def test_absolute_positioning():
     assert (p2.position_x, p2.position_y) == (0, 20)
     assert (p3.position_x, p3.position_y) == (5, -5)
     assert (p4.position_x, p4.position_y) == (0, 40)
-    # p5 y = p4 y + p4 margin height - p5 bottom - margin collapsing
-    #      = 40   + 26               - 5         - 3
-    #      = 58
-    assert (p5.position_x, p5.position_y) == (5, 58)
-    assert (img.position_x, img.position_y) == (15, 68)
-    assert (span2.position_x, span2.position_y) == (19, 68)
-    # span3 x = p5 right - p5 right margin - span width - span right
-    #         = 105      - 7               - 20         - 5
-    #         = 73
+    # p5 x = page width - right - margin/padding/border - width
+    #      = 1000       - 15    - 2 * 10                - 50
+    #      = 915
+    # p5 y = page height - bottom - margin/padding/border - height
+    #      = 2000        - 5      - 2 * 10                - 200
+    #      = 1775
+    assert (p5.position_x, p5.position_y) == (915, 1775)
+    assert (img.position_x, img.position_y) == (925, 1785)
+    assert (span2.position_x, span2.position_y) == (929, 1785)
+    # span3 x = p5 right - p5 margin - span width - span right
+    #         = 985      - 7         - 20         - 5
+    #         = 953
     # span3 y = p5 y + p5 margin top + span top
-    #         = 58   + 7             + -10
-    #         = 55
-    assert (span3.position_x, span3.position_y) == (73, 55)
-    # p6 y = p4 y + p4 margin height + p5 margin height - margin collapsing
-    #      = 40   + 26               + 40               - 3
-    #      = 103
-    assert (p6.position_x, p6.position_y) == (0, 103)
-    assert (p7.position_x, p7.position_y) == (0, 123)
-    assert div.height == 103
+    #         = 1775 + 7             + -10
+    #         = 1772
+    assert (span3.position_x, span3.position_y) == (953, 1772)
+    # p6 y = p4 y + p4 margin height - margin collapsing
+    #      = 40   + 26               - 3
+    #      = 63
+    assert (p6.position_x, p6.position_y) == (0, 63)
+    assert div.height == 71  # 20*3 + 2*3 + 8 - 3
+    assert (p7.position_x, p7.position_y) == (0, 91)

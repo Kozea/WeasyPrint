@@ -15,7 +15,7 @@ import functools
 
 import cairo
 
-from .absolute import absolute_layout, translate_except_absolute
+from .absolute import absolute_layout, AbsolutePlaceholder
 from .markers import image_marker_layout
 from .percentages import resolve_percentages, resolve_one_percentage
 from .preferred import shrink_to_fit
@@ -71,12 +71,12 @@ def get_next_linebox(document, linebox, position_y, skip_stack,
     if skip_stack == 'continue':
         return None, None
 
-    new_absolute_boxes = []
+    line_placeholders = []
 
     resolve_percentages(linebox, containing_block)
     line, resume_at, preserved_line_break = split_inline_box(
         document, linebox, position_x, max_x, skip_stack, containing_block,
-        device_size, new_absolute_boxes)
+        device_size, absolute_boxes, line_placeholders)
 
     remove_last_whitespace(document, line)
 
@@ -104,12 +104,10 @@ def get_next_linebox(document, linebox, position_y, skip_stack,
     line.margin_bottom = 0
     if offset_x != 0 or offset_y != 0:
         # This also translates children
-        translate_except_absolute(line, offset_x, offset_y)
+        line.translate(offset_x, offset_y)
 
-    for absolute_box in new_absolute_boxes:
-        absolute_box.position_y = position_y
-
-    absolute_boxes.extend(new_absolute_boxes)
+    for placeholder in line_placeholders:
+        placeholder.position_y = position_y
 
     return line, resume_at
 
@@ -456,7 +454,8 @@ def inline_block_width(box, containing_block):
 
 
 def split_inline_level(document, box, position_x, max_x, skip_stack,
-                       containing_block, device_size, absolute_boxes):
+                       containing_block, device_size, absolute_boxes,
+                       line_placeholders):
     """Fit as much content as possible from an inline-level box in a width.
 
     Return ``(new_box, resume_at)``. ``resume_at`` is ``None`` if all of the
@@ -492,7 +491,7 @@ def split_inline_level(document, box, position_x, max_x, skip_stack,
             box.margin_right = 0
         new_box, resume_at, preserved_line_break = split_inline_box(
             document, box, position_x, max_x, skip_stack, containing_block,
-            device_size, absolute_boxes)
+            device_size, absolute_boxes, line_placeholders)
     elif isinstance(box, boxes.AtomicInlineLevelBox):
         new_box = atomic_box(
             document, box, position_x, skip_stack, containing_block,
@@ -505,7 +504,8 @@ def split_inline_level(document, box, position_x, max_x, skip_stack,
 
 
 def split_inline_box(document, box, position_x, max_x, skip_stack,
-                     containing_block, device_size, absolute_boxes):
+                     containing_block, device_size, absolute_boxes,
+                     line_placeholders):
     """Same behavior as split_inline_level."""
     initial_position_x = position_x
     assert isinstance(box, (boxes.LineBox, boxes.InlineBox))
@@ -527,27 +527,28 @@ def split_inline_box(document, box, position_x, max_x, skip_stack,
 
     if box.style.position == 'relative':
         absolute_boxes = []
+        line_placeholders = []
 
     for index, child in box.enumerate_skip(skip):
+        child.position_y = box.position_y
         if not child.is_in_normal_flow():
-            if child.style.position == 'absolute':
+            if child.style.position in ('absolute', 'fixed'):
                 child.position_x = position_x
-                child.position_y = 0
-                absolute_boxes.append(child)
-                children.append(child)
-            elif child.style.position == 'fixed':
-                child.position_x = position_x
-                child.position_y = 0
-                document.fixed_boxes.append(child)
+                placeholder = AbsolutePlaceholder(child)
+                line_placeholders.append(placeholder)
+                if child.style.position == 'absolute':
+                    absolute_boxes.append(placeholder)
+                    children.append(placeholder)
+                else:
+                    document.fixed_boxes.append(placeholder)
             else:
                 # TODO: Floats
                 children.append(child)
             continue
 
-        child.position_y = box.position_y
         new_child, resume_at, preserved = split_inline_level(
             document, child, position_x, max_x, skip_stack,
-            containing_block, device_size, absolute_boxes)
+            containing_block, device_size, absolute_boxes, line_placeholders)
         skip_stack = None
         if preserved:
             preserved_line_break = True

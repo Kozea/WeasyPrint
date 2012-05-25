@@ -17,11 +17,39 @@ from .tables import table_wrapper_width
 from ..formatting_structure import boxes
 
 
-def absolute_layout(document, box, containing_block):
+class AbsolutePlaceholder(object):
+    """Left where an absolutely-positioned box was taken out of the flow."""
+    def __init__(self, box):
+        # Work around the overloaded __setattr__
+        object.__setattr__(self, '_box', box)
+        object.__setattr__(self, '_layout_done', False)
+
+    def set_laid_out_box(self, new_box):
+        object.__setattr__(self, '_box', new_box)
+        object.__setattr__(self, '_layout_done', True)
+
+    def translate(self, dx=0, dy=0):
+        if self._layout_done:
+            self._box.translate(dx, dy)
+        else:
+            # Descendants do not have a position yet.
+            self._box.position_x += dx
+            self._box.position_y += dy
+
+    # Pretend to be the box itself
+    def __getattr__(self, name):
+        return getattr(self._box, name)
+
+    def __setattr__(self, name, value):
+        setattr(self._box, name, value)
+
+
+def absolute_layout(document, placeholder, containing_block):
     """Set the width of absolute positioned ``box``."""
     # TODO: avoid this (circular import)
     from .blocks import block_container_layout
 
+    box = placeholder._box
     resolve_percentages(box, containing_block)
     resolve_position_percentages(box, containing_block)
 
@@ -156,7 +184,7 @@ def absolute_layout(document, box, containing_block):
     # TODO: handle absolute tables
     assert isinstance(box, boxes.BlockBox)
 
-    # New containing block, use a new absolute list
+    # This box is the containing block for absolute descendants.
     absolute_boxes = []
 
     if box.is_table_wrapper:
@@ -167,37 +195,16 @@ def absolute_layout(document, box, containing_block):
         document, box, max_position_y=float('inf'), skip_stack=None,
         device_size=None, page_is_empty=False,
         absolute_boxes=absolute_boxes, adjoining_margins=None)
-    box.__dict__ = new_box.__dict__
 
-    list_marker_layout(document, box)
+    list_marker_layout(document, new_box)
 
-    for absolute_box in absolute_boxes:
-        absolute_layout(document, absolute_box, new_box)
+    for child_placeholder in absolute_boxes:
+        absolute_layout(document, child_placeholder, new_box)
 
     if translate_box_width:
         translate_x -= new_box.width
     if translate_box_height:
         translate_y -= new_box.height
-    translate_except_absolute(new_box, translate_x, translate_y)
+    new_box.translate(translate_x, translate_y)
 
-
-def translate_except_absolute(box, dx=0, dy=0):
-    """Change the position of the box, except its absolute descandants.
-
-    Also update the children’s positions accordingly.
-
-    """
-    box.position_x += dx
-    box.position_y += dy
-
-    marker = getattr(box, 'outside_list_marker', None)
-    if marker:
-        translate_except_absolute(marker, dx, dy)
-
-    if box.style.position in ('static', 'relative'):
-        if isinstance(box, boxes.ParentBox):
-            for child in box.children:
-                translate_except_absolute(child, dx, dy)
-        if isinstance(box, boxes.TableBox):
-            for child in box.column_groups:
-                translate_except_absolute(child, dx, dy)
+    placeholder.set_laid_out_box(new_box)

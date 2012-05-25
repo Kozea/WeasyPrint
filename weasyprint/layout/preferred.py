@@ -74,7 +74,8 @@ def _block_preferred_width(box, function, outer):
         #  though they were the following: width: auto"
         # http://dbaron.org/css/intrinsic/#outer-intrinsic
         if box.children:
-            width = max(function(child, outer=True) for child in box.children)
+            width = max(function(child, outer=True) for child in box.children
+                        if child.is_in_normal_flow())
         else:
             width = 0
     else:
@@ -136,6 +137,9 @@ def inline_preferred_minimum_width(box, outer=True):
     """Return the preferred minimum width for an ``InlineBox``."""
     widest_line = 0
     for child in box.children:
+        if not child.is_in_normal_flow():
+            continue  # Skip
+
         if isinstance(child, boxes.InlineReplacedBox):
             # Images are on their own line
             current_line = replaced_preferred_width(child)
@@ -156,6 +160,9 @@ def inline_preferred_width(box, outer=True):
     widest_line = 0
     current_line = 0
     for child in box.children:
+        if not child.is_in_normal_flow():
+            continue  # Skip
+
         if isinstance(child, boxes.InlineReplacedBox):
             # No line break around images
             current_line += replaced_preferred_width(child)
@@ -313,7 +320,8 @@ def table_and_columns_preferred_widths(box, outer=True,
         sum(column_preferred_minimum_widths) + total_border_spacing)
     table_preferred_width = sum(column_preferred_widths) + total_border_spacing
 
-    captions = [child for child in box.children if child != table]
+    captions = [child for child in box.children
+                if child is not table and child.is_in_normal_flow()]
 
     if captions:
         caption_width = max(
