@@ -89,7 +89,6 @@ class StackingContext(object):
                     child_contexts.append(
                         StackingContext.from_box(child, page))
                 else:
-                    child = dispatch_children(child)
                     children.append(child)
                     if child.style.position != 'static':
                         assert child.style.z_index == 'auto'
@@ -103,6 +102,7 @@ class StackingContext(object):
                         blocks_and_cells.append(child)
                     elif isinstance(child, boxes.TableCellBox):
                         blocks_and_cells.append(child)
+                    child = dispatch_children(child)
             return box.copy_with_children(children)
 
         box = dispatch_children(box)

@@ -1,5 +1,6 @@
 <!doctype html>
 <title>{{ title }}</title>
+<link rel=stylesheet href="{{ url_for('static', filename='style.css') }}" />
 <style>
 li { margin: 1em }
 </style>
@@ -7,6 +8,10 @@ li { margin: 1em }
 <h1>CSS 2.1 Test Suite</h1>
 <h2>{{ chapter }}</h2>
 <h3><a href="{{ url }}">{{ title }}</a></h3>
+
+<nav>
+<a href=..>↑</a>
+</nav>
 
 <ul>
 {% for test in tests %}
