@@ -3616,3 +3616,28 @@ def test_absolute_positioning():
     assert (p6.position_x, p6.position_y) == (0, 63)
     assert div.height == 71  # 20*3 + 2*3 + 8 - 3
     assert (p7.position_x, p7.position_y) == (0, 91)
+
+
+@assert_no_logs
+def test_absolute_images():
+    page, = parse('''
+        <style>
+            img { display: block; position: absolute }
+        </style>
+        <div style="margin: 10px">
+            <img src=pattern.png />
+            <img src=pattern.png style="left: 15px" />
+        </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    img1, img2 = div.children
+    assert div.height == 0
+    assert (div.position_x, div.position_y) == (0, 0)
+    assert (img1.position_x, img1.position_y) == (10, 10)
+    assert (img1.width, img1.height) == (4, 4)
+    assert (img2.position_x, img2.position_y) == (15, 10)
+    assert (img2.width, img2.height) == (4, 4)
+
+    # TODO: test the various cases in absolute_replaced()

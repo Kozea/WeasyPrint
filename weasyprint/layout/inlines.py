@@ -315,12 +315,14 @@ min_max_replaced_width = handle_min_max_width(replaced_box_width)
 min_max_replaced_height = handle_min_max_height(replaced_box_height)
 
 
-def inline_replaced_box_layout(box, containing_block, device_size):
+def inline_replaced_box_layout(box, device_size):
     """Lay out an inline :class:`boxes.ReplacedBox` ``box``."""
     for side in ['top', 'right', 'bottom', 'left']:
         if getattr(box, 'margin_' + side) == 'auto':
             setattr(box, 'margin_' + side, 0)
+    inline_replaced_box_width_height(box, device_size)
 
+def inline_replaced_box_width_height(box, device_size):
     if box.style.width == 'auto' and box.style.height == 'auto':
         replaced_box_width(box, device_size)
         replaced_box_height(box, device_size)
@@ -394,7 +396,7 @@ def atomic_box(document, box, position_x, skip_stack, containing_block,
         if getattr(box, 'is_list_marker', False):
             image_marker_layout(box)
         else:
-            inline_replaced_box_layout(box, containing_block, device_size)
+            inline_replaced_box_layout(box, device_size)
         box.baseline = box.margin_height()
     elif isinstance(box, boxes.InlineBlockBox):
         if box.is_table_wrapper:

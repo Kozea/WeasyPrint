@@ -36,6 +36,11 @@ class AbsolutePlaceholder(object):
             self._box.position_x += dx
             self._box.position_y += dy
 
+    def copy(self):
+        new_placeholder = AbsolutePlaceholder(self._box.copy())
+        object.__setattr__(new_placeholder, '_layout_done', self._layout_done)
+        return new_placeholder
+
     # Pretend to be the box itself
     def __getattr__(self, name):
         return getattr(self._box, name)
@@ -46,12 +51,37 @@ class AbsolutePlaceholder(object):
 
 def absolute_layout(document, placeholder, containing_block):
     """Set the width of absolute positioned ``box``."""
-    # TODO: avoid this (circular import)
-    from .blocks import block_container_layout
-
     box = placeholder._box
     resolve_percentages(box, containing_block)
     resolve_position_percentages(box, containing_block)
+
+    cb = containing_block
+    # TODO: handle inline boxes (point 10.1.4.1)
+    # http://www.w3.org/TR/CSS2/visudet.html#containing-block-details
+    if isinstance(box, boxes.PageBox):
+        cb_x = cb.content_box_x()
+        cb_y = cb.content_box_y()
+        cb_width = cb.padding_width()
+        cb_height = cb.padding_height()
+    else:
+        cb_x = cb.padding_box_x()
+        cb_y = cb.padding_box_y()
+        cb_width = cb.padding_width()
+        cb_height = cb.padding_height()
+    containing_block = cb_x, cb_y, cb_width, cb_height
+
+    # TODO: handle absolute tables
+    if isinstance(box, boxes.BlockBox):
+        new_box = absolute_block(document, box, containing_block)
+    else:
+        assert isinstance(box, boxes.BlockReplacedBox)
+        new_box = absolute_replaced(document, box, containing_block)
+
+    placeholder.set_laid_out_box(new_box)
+
+
+def absolute_block(document, box, containing_block):
+    # http://www.w3.org/TR/CSS2/visudet.html#abs-replaced-width
 
     # These names are waaay too long
     margin_l = box.margin_left
@@ -73,24 +103,10 @@ def absolute_layout(document, placeholder, containing_block):
     top = box.top
     bottom = box.bottom
 
-    cb = containing_block
-    # TODO: handle inline boxes (point 10.1.4.1)
-    # http://www.w3.org/TR/CSS2/visudet.html#containing-block-details
-    if isinstance(box, boxes.PageBox):
-        cb_x = cb.content_box_x()
-        cb_y = cb.content_box_y()
-        cb_width = cb.padding_width()
-        cb_height = cb.padding_height()
-    else:
-        cb_x = cb.padding_box_x()
-        cb_y = cb.padding_box_y()
-        cb_width = cb.padding_width()
-        cb_height = cb.padding_height()
-
-    # http://www.w3.org/TR/CSS2/visudet.html#abs-replaced-width
+    cb_x, cb_y, cb_width, cb_height = containing_block
 
     # TODO: handle bidi
-    paddings_plus_borders_x = padding_l + padding_r + border_l + border_r
+    padding_plus_borders_x = padding_l + padding_r + border_l + border_r
     translate_x = translate_y = 0
     translate_box_width = translate_box_height = False
     default_translate_x = cb_x - box.position_x
@@ -103,9 +119,9 @@ def absolute_layout(document, placeholder, containing_block):
         box.width = shrink_to_fit(box, available_width)
     elif left != 'auto' and right != 'auto' and width != 'auto':
         width_for_margins = cb_width - (
-            right + left + paddings_plus_borders_x)
+            right + left + padding_plus_borders_x)
         if margin_l == margin_r == 'auto':
-            if width + paddings_plus_borders_x + right + left <= cb_width:
+            if width + padding_plus_borders_x + right + left <= cb_width:
                 box.margin_left = box.margin_right = width_for_margins / 2
             else:
                 box.margin_left = 0
@@ -122,7 +138,7 @@ def absolute_layout(document, placeholder, containing_block):
             box.margin_left = 0
         if margin_r == 'auto':
             box.margin_right = 0
-        spacing = paddings_plus_borders_x + box.margin_left + box.margin_right
+        spacing = padding_plus_borders_x + box.margin_left + box.margin_right
         if left == width == 'auto':
             box.width = shrink_to_fit(box, cb_width - spacing - right)
             translate_x = cb_width - right - spacing + default_translate_x
@@ -181,14 +197,14 @@ def absolute_layout(document, placeholder, containing_block):
         elif bottom == 'auto':
             translate_y = top + default_translate_y
 
-    # TODO: handle absolute tables
-    assert isinstance(box, boxes.BlockBox)
-
     # This box is the containing block for absolute descendants.
     absolute_boxes = []
 
     if box.is_table_wrapper:
         table_wrapper_width(box, containing_block, absolute_boxes)
+
+    # avoid a circular import
+    from .blocks import block_container_layout
 
     # TODO: remove device_size everywhere else
     new_box, _, _, _, _ = block_container_layout(
@@ -205,6 +221,86 @@ def absolute_layout(document, placeholder, containing_block):
         translate_x -= new_box.width
     if translate_box_height:
         translate_y -= new_box.height
+
     new_box.translate(translate_x, translate_y)
 
-    placeholder.set_laid_out_box(new_box)
+    return new_box
+
+
+def absolute_replaced(document, box, containing_block):
+    # avoid a circular import
+    from .inlines import inline_replaced_box_width_height
+    inline_replaced_box_width_height(box, device_size=None)
+
+    cb_x, cb_y, cb_width, cb_height = containing_block
+    ltr = box.style.direction == 'ltr'
+
+    # http://www.w3.org/TR/CSS21/visudet.html#abs-replaced-width
+    if box.left == box.right == 'auto':
+        # static position:
+        if ltr:
+            box.left = box.position_x - cb_x
+        else:
+            box.right = cb_x + cb_width - box.position_x
+    if 'auto' in (box.left, box.right):
+        if box.margin_left == 'auto':
+            box.margin_left = 0
+        if box.margin_right == 'auto':
+            box.margin_right = 0
+        remaining = cb_width - box.margin_width()
+        if box.left == 'auto':
+            box.left = remaining
+        if box.right == 'auto':
+            box.right = remaining
+    elif 'auto' in (box.margin_left, box.margin_right):
+        remaining = cb_width - (box.border_width() + box.left + box.right)
+        if box.margin_left == box.margin_right == 'auto':
+            if remaining >= 0:
+                box.margin_left = box.margin_right = remaining // 2
+            elif ltr:
+                box.margin_left = 0
+                box.margin_right = remaining
+            else:
+                box.margin_left = remaining
+                box.margin_right = 0
+        elif box.margin_left == 'auto':
+            box.margin_left = remaining
+        else:
+            box.margin_right = remaining
+    else:
+        # Over-constrained
+        if ltr:
+            box.right = cb_width - (box.margin_width() + box.left)
+        else:
+            box.left = cb_width - (box.margin_width() + box.right)
+
+
+    # http://www.w3.org/TR/CSS21/visudet.html#abs-replaced-height
+    if box.top == box.bottom == 'auto':
+        box.top = box.position_y - cb_y
+    if 'auto' in (box.top, box.bottom):
+        if box.margin_top == 'auto':
+            box.margin_top = 0
+        if box.margin_bottom == 'auto':
+            box.margin_bottom = 0
+        remaining = cb_height - box.margin_height()
+        if box.top == 'auto':
+            box.top = remaining
+        if box.bottom == 'auto':
+            box.bottom = remaining
+    elif 'auto' in (box.margin_top, box.margin_bottom):
+        remaining = cb_height - (box.border_height() + box.top + box.bottom)
+        if box.margin_top == box.margin_bottom == 'auto':
+            box.margin_top = box.margin_bottom = remaining // 2
+        elif box.margin_top == 'auto':
+            box.margin_top = remaining
+        else:
+            box.margin_bottom = remaining
+    else:
+        # Over-constrained
+        box.bottom = cb_height - (box.margin_height() + box.top)
+
+    # No children for replaced boxes, no need to .translate()
+    box.position_x = cb_x + box.left
+    box.position_y = cb_y + box.top
+    return box

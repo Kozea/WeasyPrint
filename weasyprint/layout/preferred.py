@@ -42,6 +42,8 @@ def preferred_minimum_width(box, outer=True):
             return block_preferred_minimum_width(box, outer)
     elif isinstance(box, (boxes.InlineBox, boxes.LineBox)):
         return inline_preferred_minimum_width(box, outer)
+    elif isinstance(box, boxes.ReplacedBox):
+        return replaced_preferred_width(box, outer)
     else:
         raise TypeError(
             'Preferred minimum width for %s not handled yet' %
@@ -61,6 +63,8 @@ def preferred_width(box, outer=True):
             return block_preferred_width(box, outer)
     elif isinstance(box, (boxes.InlineBox, boxes.LineBox)):
         return inline_preferred_width(box, outer)
+    elif isinstance(box, boxes.ReplacedBox):
+        return replaced_preferred_width(box, outer)
     else:
         raise TypeError(
             'Preferred width for %s not handled yet' % type(box).__name__)
