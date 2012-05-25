@@ -13,6 +13,7 @@ from __future__ import division, unicode_literals
 import operator
 
 from .formatting_structure import boxes
+from .layout.absolute import AbsolutePlaceholder
 
 
 _Z_INDEX_GETTER = operator.attrgetter('z_index')
@@ -67,6 +68,9 @@ class StackingContext(object):
         blocks_and_cells = []
 
         def dispatch_children(box):
+            if isinstance(box, AbsolutePlaceholder):
+                box = box._box
+
             if not isinstance(box, boxes.ParentBox):
                 return box
 
@@ -101,6 +105,6 @@ class StackingContext(object):
                         blocks_and_cells.append(child)
             return box.copy_with_children(children)
 
-        dispatch_children(box)
+        box = dispatch_children(box)
 
         return cls(box, child_contexts, blocks, floats, blocks_and_cells, page)
