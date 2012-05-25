@@ -11,7 +11,8 @@ li { margin: 1em }
 <ul>
 {% for test in tests %}
     <li>
-        <a href="{{ url_for('run_test', test_id=test.test_id) }}">
+        <a href="{{ url_for('run_test', chapter_num=chapter_num,
+                            section_num=section_num, test_index=loop.index) }}">
             {{ test.test_id }}</a>
         {% if test.flags %}({{ test.flags|join(', ') }}){% endif %}
         <em>{{ test.title }}</em>

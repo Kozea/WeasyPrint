@@ -12,14 +12,36 @@
         display: table-cell;
         padding-right: 10px;
     }
+    nav {
+        font-size: 1.5em;
+        margin: 0;
+        position: fixed;
+        top: 1em;
+        right: 1em;
+    }
+    nav a {
+        text-decoration: none;
+        margin-left: 1em;
+        color: inherit;
+    }
+    nav a:not([href]) {
+        opacity: .2;
+    }
     {{ css }}
 </style>
 
 <h1>CSS 2.1 Test Suite</h1>
-<h2>{{ test.title }}</h2>
+<nav>
+<a href=..>↑</a>
+{% for text, index in [('←', previous_index), ('→', next_index)] %}
+<a{% if index %} href="{{ url_for('run_test',
+    chapter_num=chapter_num, section_num=section_num, test_index=index)
+    }}"{% endif %}>{{ text }}</a>
+{% endfor %}
+</nav>
+<h2><code>{{ test.test_id }}</code> {{ test.title }}</h2>
 {% if test.flags %}<p>Flags: {{ test.flags|join(', ') }}</p>{% endif %}
 {% if test.assertion %}<p>Assertion: {{ test.assertion }}</p>{% endif %}
-
 
 <div class=render>
     <h3>WeasyPrint</h3>
