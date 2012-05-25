@@ -77,11 +77,10 @@ def _block_preferred_width(box, function, outer):
         # "percentages on the following properties are treated instead as
         #  though they were the following: width: auto"
         # http://dbaron.org/css/intrinsic/#outer-intrinsic
-        if box.children:
-            width = max(function(child, outer=True) for child in box.children
-                        if child.is_in_normal_flow())
-        else:
-            width = 0
+        children_widths = [
+            function(child, outer=True) for child in box.children
+            if child.is_in_normal_flow()]
+        width = max(children_widths) if children_widths else 0
     else:
         assert width.unit == 'px'
         width = width.value

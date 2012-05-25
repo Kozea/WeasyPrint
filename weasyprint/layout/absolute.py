@@ -52,8 +52,6 @@ class AbsolutePlaceholder(object):
 def absolute_layout(document, placeholder, containing_block):
     """Set the width of absolute positioned ``box``."""
     box = placeholder._box
-    resolve_percentages(box, containing_block)
-    resolve_position_percentages(box, containing_block)
 
     cb = containing_block
     # TODO: handle inline boxes (point 10.1.4.1)
@@ -69,6 +67,9 @@ def absolute_layout(document, placeholder, containing_block):
         cb_width = cb.padding_width()
         cb_height = cb.padding_height()
     containing_block = cb_x, cb_y, cb_width, cb_height
+
+    resolve_percentages(box, (cb_width, cb_height))
+    resolve_position_percentages(box, (cb_width, cb_height))
 
     # TODO: handle absolute tables
     if isinstance(box, boxes.BlockBox):
@@ -201,7 +202,7 @@ def absolute_block(document, box, containing_block):
     absolute_boxes = []
 
     if box.is_table_wrapper:
-        table_wrapper_width(box, containing_block, absolute_boxes)
+        table_wrapper_width(box, (cb_width, cb_height), absolute_boxes)
 
     # avoid a circular import
     from .blocks import block_container_layout

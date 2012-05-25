@@ -36,10 +36,11 @@ def resolve_one_percentage(box, property_name, refer_to):
 
 
 def resolve_position_percentages(box, containing_block):
-    resolve_one_percentage(box, 'left', containing_block.width)
-    resolve_one_percentage(box, 'right', containing_block.width)
-    resolve_one_percentage(box, 'top', containing_block.height)
-    resolve_one_percentage(box, 'bottom', containing_block.height)
+    cb_width, cb_height = containing_block
+    resolve_one_percentage(box, 'left', cb_width)
+    resolve_one_percentage(box, 'right', cb_width)
+    resolve_one_percentage(box, 'top', cb_height)
+    resolve_one_percentage(box, 'bottom', cb_height)
 
 
 def resolve_percentages(box, containing_block):

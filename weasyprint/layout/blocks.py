@@ -158,8 +158,10 @@ def relative_positioning(box, containing_block):
         resolve_position_percentages(box, containing_block)
 
         if box.left != 'auto' and box.right != 'auto':
-            # TODO: handle bidi
-            translate_x = box.left
+            if box.style.direction == 'ltr':
+                translate_x = box.left
+            else:
+                translate_x = -box.right
         elif box.left != 'auto':
             translate_x = box.left
         elif box.right != 'auto':
@@ -389,10 +391,12 @@ def block_container_layout(document, box, max_position_y, skip_stack,
             adjoining_margins = []
     else:
         # top and bottom margin of this box
-        if box.height in ('auto', 0) and box.min_height == 0:
+        if box.height in ('auto', 0) and all(v == 0 for v in [
+                box.min_height, box.border_top_width, box.padding_top,
+                box.border_bottom_width, box.padding_bottom]):
             collapsing_through = True
         else:
-            # not adjoining. (position_y is not used afterwards.)
+            position_y += collapse_margin(adjoining_margins)
             adjoining_margins = []
 
     if box.border_bottom_width or box.padding_bottom or (
@@ -417,7 +421,7 @@ def block_container_layout(document, box, max_position_y, skip_stack,
             absolute_layout(document, absolute_box, new_box)
 
     for child in new_box.children:
-        relative_positioning(child, new_box)
+        relative_positioning(child, (new_box.width, new_box.height))
 
     return new_box, resume_at, next_page, adjoining_margins, collapsing_through
 

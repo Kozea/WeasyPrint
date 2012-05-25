@@ -152,7 +152,7 @@ def draw_stacking_context(document, context, stacking_context):
                 draw_inline_level(
                     document, context, stacking_context.page, marker_box)
 
-            if isinstance(box, boxes.BlockReplacedBox):
+            if isinstance(box, boxes.ReplacedBox):
                 draw_replacedbox(context, box)
             else:
                 for child in box.children:
