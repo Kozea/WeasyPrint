@@ -3537,6 +3537,36 @@ def test_absolute_positioning():
     assert span2.position_y == span3.position_y
 
     page, = parse('''
+        <style> img { width: 5px; height: 20px} </style>
+        <body style="font-size: 0">
+            <img src=pattern.png>
+            <span style="position: absolute">2</span>
+            <img src=pattern.png>
+    ''')
+    html, = page.children
+    body, = html.children
+    line, = body.children
+    img1, span, img2 = line.children
+    assert (img1.position_x, img1.position_y) == (0, 0)
+    assert (span.position_x, span.position_y) == (5, 0)
+    assert (img2.position_x, img2.position_y) == (5, 0)
+
+    page, = parse('''
+        <style> img { width: 5px; height: 20px} </style>
+        <body style="font-size: 0">
+            <img src=pattern.png>
+            <span style="position: absolute; display: block">2</span>
+            <img src=pattern.png>
+    ''')
+    html, = page.children
+    body, = html.children
+    line, = body.children
+    img1, span, img2 = line.children
+    assert (img1.position_x, img1.position_y) == (0, 0)
+    assert (span.position_x, span.position_y) == (0, 20)
+    assert (img2.position_x, img2.position_y) == (5, 0)
+
+    page, = parse('''
         <div style="position: relative; width: 20px; height: 60px;
                     border: 10px solid; padding-top: 6px; top: 5px; left: 1px">
             <div style="height: 20px; width: 20px; position: absolute;

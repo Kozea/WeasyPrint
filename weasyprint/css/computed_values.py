@@ -203,6 +203,7 @@ def compute(element, pseudo_type, specified, computed, parent_style):
 
         computed[name] = value
 
+    computed['_weasy_specified_display'] = specified.display
     return computed
 
 

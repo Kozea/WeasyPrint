@@ -136,6 +136,9 @@ INITIAL_VALUES = {
     # http://dev.w3.org/csswg/css3-gcpm/
     'bookmark_label': ('keyword', 'none'),  # computed value of 'none'
     'bookmark_level': 'none',
+
+    # Internal, to implement the "static position" for absolute boxes.
+    '_weasy_specified_display': 'inline',
 }
 
 

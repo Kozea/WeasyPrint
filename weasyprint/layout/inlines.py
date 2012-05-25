@@ -107,7 +107,13 @@ def get_next_linebox(document, linebox, position_y, skip_stack,
         line.translate(offset_x, offset_y)
 
     for placeholder in line_placeholders:
-        placeholder.position_y = position_y
+        if placeholder.style._weasy_specified_display.startswith('inline'):
+            # Inline-level static position:
+            placeholder.position_y = position_y
+        else:
+            # Block-level static position: at the start of the next line
+            placeholder.position_y = position_y + line.height
+            placeholder.position_x = line.position_x
 
     return line, resume_at
 
