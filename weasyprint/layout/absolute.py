@@ -56,11 +56,11 @@ def absolute_layout(document, placeholder, containing_block):
     cb = containing_block
     # TODO: handle inline boxes (point 10.1.4.1)
     # http://www.w3.org/TR/CSS2/visudet.html#containing-block-details
-    if isinstance(box, boxes.PageBox):
+    if isinstance(containing_block, boxes.PageBox):
         cb_x = cb.content_box_x()
         cb_y = cb.content_box_y()
-        cb_width = cb.padding_width()
-        cb_height = cb.padding_height()
+        cb_width = cb.width
+        cb_height = cb.height
     else:
         cb_x = cb.padding_box_x()
         cb_y = cb.padding_box_y()
