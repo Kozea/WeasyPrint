@@ -295,6 +295,12 @@ def block_container_layout(document, box, max_position_y, skip_stack,
                     resume_at = (index, skip_stack)
                     is_page_break = True
                     break
+                elif page_is_empty and new_position_y > max_position_y:
+                    # Remove the top border when a page is empty and the box is
+                    # too high to be drawn in one page
+                    new_position_y -= box.margin_top
+                    line.translate(0, -box.margin_top)
+                    box.margin_top = 0
                 new_lines.append((line, resume_at))
                 position_y = new_position_y
                 skip_stack = resume_at
