@@ -295,6 +295,10 @@ def block_container_layout(document, box, max_position_y, skip_stack,
                     resume_at = (index, skip_stack)
                     is_page_break = True
                     break
+                # TODO: this is incomplete.
+                # See http://dev.w3.org/csswg/css3-page/#allowed-pg-brk
+                # "When an unforced page break occurs here, both the adjoining
+                #  ‘margin-top’ and ‘margin-bottom’ are set to zero."
                 elif page_is_empty and new_position_y > max_position_y:
                     # Remove the top border when a page is empty and the box is
                     # too high to be drawn in one page
