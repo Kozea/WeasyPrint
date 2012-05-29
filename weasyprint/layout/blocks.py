@@ -220,6 +220,10 @@ def block_container_layout(document, box, max_position_y, skip_stack,
 
     position_x = box.content_box_x()
 
+    if box.style.position == 'relative':
+        # New containing block, use a new absolute list
+        absolute_boxes = []
+
     new_children = []
     next_page = 'any'
 
@@ -247,11 +251,6 @@ def block_container_layout(document, box, max_position_y, skip_stack,
                 # TODO: Floats
                 new_children.append(child)
             continue
-
-        if child.style.position == 'relative':
-            # New containing block, use a new absolute list
-            old_absolute_boxes = absolute_boxes
-            absolute_boxes = []
 
         if isinstance(child, boxes.LineBox):
             assert len(box.children) == 1, (
@@ -377,9 +376,6 @@ def block_container_layout(document, box, max_position_y, skip_stack,
             if resume_at is not None:
                 resume_at = (index, resume_at)
                 break
-
-        if child.style.position == 'relative':
-            absolute_boxes = old_absolute_boxes
 
     else:
         resume_at = None

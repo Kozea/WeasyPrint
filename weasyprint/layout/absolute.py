@@ -20,6 +20,7 @@ from ..formatting_structure import boxes
 class AbsolutePlaceholder(object):
     """Left where an absolutely-positioned box was taken out of the flow."""
     def __init__(self, box):
+        assert not isinstance(box, AbsolutePlaceholder)
         # Work around the overloaded __setattr__
         object.__setattr__(self, '_box', box)
         object.__setattr__(self, '_layout_done', False)
@@ -71,7 +72,7 @@ def absolute_layout(document, placeholder, containing_block):
     resolve_percentages(box, (cb_width, cb_height))
     resolve_position_percentages(box, (cb_width, cb_height))
 
-    # TODO: handle absolute tables
+    # Absolute tables are wrapped into block boxes
     if isinstance(box, boxes.BlockBox):
         new_box = absolute_block(document, box, containing_block)
     else:
