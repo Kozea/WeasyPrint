@@ -13,6 +13,7 @@
 from __future__ import division, unicode_literals
 
 from .absolute import absolute_layout, AbsolutePlaceholder
+from .float import float_layout, FloatPlaceholder
 from .inlines import (iter_line_boxes, replaced_box_width, replaced_box_height,
                       handle_min_max_width, min_max_replaced_height,
                       min_max_auto_replaced)
@@ -225,6 +226,7 @@ def block_container_layout(document, box, max_position_y, skip_stack,
         absolute_boxes = []
 
     new_children = []
+    float_children = []
     next_page = 'any'
 
     is_start = skip_stack is None
@@ -247,9 +249,10 @@ def block_container_layout(document, box, max_position_y, skip_stack,
                     new_children.append(placeholder)
                 else:
                     document.fixed_boxes.append(placeholder)
-            else:
-                # TODO: Floats
-                new_children.append(child)
+            elif child.style.float in ('left', 'right'):
+                placeholder = FloatPlaceholder(child)
+                float_children.append(placeholder)
+                new_children.append(placeholder)
             continue
 
         if isinstance(child, boxes.LineBox):
@@ -426,6 +429,9 @@ def block_container_layout(document, box, max_position_y, skip_stack,
         # New containing block, resolve the layout of the absolute descendants
         for absolute_box in absolute_boxes:
             absolute_layout(document, absolute_box, new_box)
+
+    for float_box in float_children:
+        float_layout(document, float_box, new_box, absolute_boxes)
 
     for child in new_box.children:
         relative_positioning(child, (new_box.width, new_box.height))

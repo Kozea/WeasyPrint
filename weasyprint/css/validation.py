@@ -331,6 +331,13 @@ def caption_side(keyword):
 
 
 @validator()
+@single_keyword
+def clear(keyword):
+    """``clear`` property validation."""
+    return keyword in ('left', 'right', 'both', 'none')
+
+
+@validator()
 @single_token
 def clip(token):
     """Validation for the ``clip`` property."""
@@ -496,6 +503,13 @@ def display(keyword):
         'table', 'inline-table', 'table-caption',
         'table-row-group', 'table-header-group', 'table-footer-group',
         'table-row', 'table-column-group', 'table-column', 'table-cell')
+
+
+@validator()
+@single_keyword
+def float(keyword):
+    """``float`` property validation."""
+    return keyword in ('left', 'right', 'none')
 
 
 @validator()
