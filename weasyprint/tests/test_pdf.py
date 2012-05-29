@@ -16,10 +16,9 @@ import io
 
 import cairo
 
-from .. import HTML
-from ..backends import MetadataPDFBackend
+from .. import HTML, CSS
 from .. import pdf
-from .testing_utils import assert_no_logs, resource_filename
+from .testing_utils import assert_no_logs, resource_filename, TestPDFDocument
 
 
 @assert_no_logs
@@ -40,10 +39,10 @@ def test_pdf_parser():
     assert sizes == [b'0 0 100 100', b'0 0 200 10', b'0 0 3.14 987654321']
 
 
-def get_metadata(html):
-    document = HTML(
-        string=html, base_url=resource_filename('<inline HTML>')
-    )._get_document(MetadataPDFBackend, [])
+def get_metadata(html, base_url=resource_filename('<inline HTML>')):
+    document = TestPDFDocument(html, base_url=base_url,
+        user_stylesheets=[CSS(
+            string='@page { -weasy-size: 500pt 1000pt; margin: 50pt }')])
     return pdf.gather_metadata(document)
 
 
@@ -61,8 +60,8 @@ def get_bookmarks(html, structure_only=False):
     return root, bookmarks
 
 
-def get_links(html):
-    _bookmarks, links, anchors = get_metadata(html)
+def get_links(html, **kwargs):
+    _bookmarks, links, anchors = get_metadata(html, **kwargs)
     links = [
         [(uri, tuple(round(v, 6) for v in rect)) for uri, rect in page_links]
         for page_links in links]
@@ -84,12 +83,11 @@ def test_bookmarks():
 
     root, bookmarks = get_bookmarks('''
         <style>
-            @page { -weasy-size: 1000pt; margin: 0 }
             * { height: 90pt; margin: 0 0 10pt 0; page-break-inside: auto }
         </style>
         <h1>Title 1</h1>
         <h1>Title 2</h1>
-        <div style="margin-left: 50pt"><h2>Title 3</h2></div>
+        <div style="margin-left: 20pt"><h2>Title 3</h2></div>
         <h2>Title 4</h2>
         <h3>
             Title 5
@@ -105,27 +103,27 @@ def test_bookmarks():
     assert root == dict(Count=11, First=1, Last=10)
     assert bookmarks == [
         dict(Count=0, First=None, Last=None, Next=2, Parent=0, Prev=None,
-             label='Title 1', destination=(0, 0, 1000)),
+             label='Title 1', destination=(0, 50, 950)),
         dict(Count=4, First=3, Last=6, Next=7, Parent=0, Prev=1,
-             label='Title 2', destination=(0, 0, 900)),
+             label='Title 2', destination=(0, 50, 850)),
         dict(Count=0, First=None, Last=None, Next=4, Parent=2, Prev=None,
-             label='Title 3', destination=(0, 50, 800)),
+             label='Title 3', destination=(0, 70, 750)),
         dict(Count=1, First=5, Last=5, Next=6, Parent=2, Prev=3,
-             label='Title 4', destination=(0, 0, 700)),
+             label='Title 4', destination=(0, 50, 650)),
         dict(Count=0, First=None, Last=None, Next=None, Parent=4, Prev=None,
-             label='Title 5', destination=(0, 0, 600)),
+             label='Title 5', destination=(0, 50, 550)),
         dict(Count=0, First=None, Last=None, Next=None, Parent=2, Prev=4,
-             label='Title 6', destination=(1, 0, 900)),
+             label='Title 6', destination=(1, 50, 850)),
         dict(Count=2, First=8, Last=8, Next=10, Parent=0, Prev=2,
-             label='Title 7', destination=(1, 0, 800)),
+             label='Title 7', destination=(1, 50, 750)),
         dict(Count=1, First=9, Last=9, Next=None, Parent=7, Prev=None,
-             label='Title 8', destination=(1, 0, 700)),
+             label='Title 8', destination=(1, 50, 650)),
         dict(Count=0, First=None, Last=None, Next=None, Parent=8, Prev=None,
-             label='Title 9', destination=(1, 0, 600)),
+             label='Title 9', destination=(1, 50, 550)),
         dict(Count=1, First=11, Last=11, Next=None, Parent=0, Prev=7,
-             label='Title 10', destination=(1, 0, 500)),
+             label='Title 10', destination=(1, 50, 450)),
         dict(Count=0, First=None, Last=None, Next=None, Parent=10, Prev=None,
-             label='Title 11', destination=(1, 0, 400))]
+             label='Title 11', destination=(1, 50, 350))]
 
     root, bookmarks = get_bookmarks('''
         <h2>1</h2> level 1
@@ -174,7 +172,6 @@ def test_links():
 
     links, anchors = get_links('''
         <style>
-            @page { -weasy-size: 1000pt; margin: 50pt }
             body { margin: 0; font-size: 10pt; line-height: 2 }
             p { display: block; height: 90pt; margin: 0 0 10pt 0 }
         </style>
@@ -184,7 +181,7 @@ def test_links():
                                 src=pattern.png></a></p>
         <p id=hello>Hello, World</p>
         <p id=lipsum><a style="display: block; page-break-before: always"
-                        href="#hello">Lorem ipsum ...</a></p>
+                        href="#hel%6Co">Lorem ipsum ...</a></p>
     ''')
     assert links == [
         [
@@ -193,8 +190,20 @@ def test_links():
             # 5pt wide (image + 2 * 1pt of border), 20pt high
             (('internal', 'lipsum'), (60, 850, 65, 830)),
         ], [
-            # 900pt wide (block), 20pt high
-            (('internal', 'hello'), (50, 950, 950, 930)),
+            # 400pt wide (block), 20pt high
+            (('internal', 'hello'), (50, 950, 450, 930)),
         ]
     ]
     assert anchors == {'hello': (0, 50, 750), 'lipsum': (1, 50, 950)}
+
+    links, anchors = get_links(
+        '<div style="-weasy-link: url(../lipsum)">',
+        base_url='http://weasyprint.org/foo/bar/')
+    assert links == [[(('external', 'http://weasyprint.org/foo/lipsum'),
+                       (50, 950, 450, 950))]]
+
+    # Relative URI reference without a base URI.
+#    links, anchors = get_links(
+#        '<div style="-weasy-link: url(../lipsum)">',
+#        base_url=None)
+#    assert links == [[]]
