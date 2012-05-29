@@ -17,6 +17,7 @@ from .formatting_structure.build import build_formatting_structure
 from . import layout
 from . import draw
 from . import images
+from .logger import LOGGER
 
 
 class Document(object):
@@ -80,19 +81,12 @@ class Document(object):
         return self._pages
 
     def get_image_from_uri(self, uri, type_=None):
-        """
-        Same as ``weasy.images.get_image_from_uri`` but cache results
-        """
-        missing = object()
-        surface = self._image_cache.get(uri, missing)
-        if surface is missing:
-            surface = images.get_image_from_uri(uri, type_)
-            self._image_cache[uri] = surface
-        return surface
+        return images.get_image_from_uri(self._image_cache, uri, type_)
 
     def write_to(self, target):
         backend = self.backend(target)
         for page in self.pages:
             context = backend.start_page(page.outer_width, page.outer_height)
             draw.draw_page(self, page, context)
+
         backend.finish(self)

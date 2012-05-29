@@ -556,6 +556,14 @@ def draw_replacedbox(context, box):
             box.style.image_rendering])
         context.set_source(pattern)
         context.paint()
+    # Make sure `pattern` is garbage collected. If a surface for a SVG image
+    # is still alive by the time we call show_page(), cairo will rasterize
+    # the image instead writing vectors.
+    # Use a unique string that can be traced back here.
+    # Replaced boxes are atomic, so they should only ever be drawn once.
+    # Use an object incompatible with the usual 3-tuple to cause an exception
+    # if this box is used more than that.
+    box.replacement = 'Removed to work around cairo’s behavior'
 
 
 def draw_inline_level(document, context, page, box):
