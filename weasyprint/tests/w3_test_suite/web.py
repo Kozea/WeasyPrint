@@ -150,8 +150,10 @@ def run(suite_directory):
 
     @app.route('/render/<test_id>.png')
     def render(test_id):
-        png = HTML(safe_join(suite_directory, test_id + '.htm')).write_png(
-            stylesheets=[page_size_stylesheet])
+        # TODO: handle encodings
+        png = HTML(
+            safe_join(suite_directory, test_id + '.htm'),
+            encoding='utf-8').write_png(stylesheets=[page_size_stylesheet])
         return png, 200, {'Content-Type': 'image/png'}
 
 
