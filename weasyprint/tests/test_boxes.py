@@ -979,6 +979,27 @@ def test_counters():
                     ('h1:before', 'Inline', [
                         ('h1:before', 'Text', '3')])])])])])
 
+    assert_tree(parse_all('''
+        <style>
+            p:before { content: counter(c) }
+        </style>
+        <div>
+            <span style="counter-reset: c">
+                Scope created now, deleted after the div
+            </span>
+        </div>
+        <p>
+    '''), [
+        ('div', 'Block', [
+            ('div', 'Line', [
+                ('span', 'Inline', [
+                    ('span', 'Text',
+                     'Scope created now, deleted after the div ')])])]),
+        ('p', 'Block', [
+            ('p', 'Line', [
+                ('p:before', 'Inline', [
+                    ('p:before', 'Text', '0')])])])])
+
 
 @assert_no_logs
 def test_counter_styles():

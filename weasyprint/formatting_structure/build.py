@@ -132,6 +132,8 @@ def dom_to_box(document, element, state=None):
     # Scopes created by this element’s children stop here.
     for name in counter_scopes.pop():
         counter_values[name].pop()
+        if not counter_values[name]:
+            counter_values.pop(name)
 
     box = box.copy_with_children(children)
 
