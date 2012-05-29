@@ -109,11 +109,12 @@ def get_next_linebox(document, linebox, position_y, skip_stack,
     for placeholder in line_placeholders:
         if placeholder.style._weasy_specified_display.startswith('inline'):
             # Inline-level static position:
-            placeholder.position_y = position_y
+            placeholder.translate(0, position_y - placeholder.position_y)
         else:
             # Block-level static position: at the start of the next line
-            placeholder.position_y = position_y + line.height
-            placeholder.position_x = line.position_x
+            placeholder.translate(
+                line.position_x - placeholder.position_x,
+                position_y + line.height - placeholder.position_y)
 
     return line, resume_at
 
@@ -536,7 +537,6 @@ def split_inline_box(document, box, position_x, max_x, skip_stack,
 
     if box.style.position == 'relative':
         absolute_boxes = []
-        line_placeholders = []
 
     for index, child in box.enumerate_skip(skip):
         child.position_y = box.position_y
