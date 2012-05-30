@@ -839,7 +839,8 @@ def link(token, base_url):
     if get_keyword(token) == 'none':
         return 'none'
     elif token.type == 'URI':
-        return ('URI', urljoin(base_url, token.value))
+        # TODO handle (not base_url) and internal references
+        return ('external', urljoin(base_url, token.value))
     function = parse_function(token)
     if function:
         name, args = function

@@ -20,7 +20,7 @@ import os.path
 from . import VERSION_STRING
 from .logger import LOGGER
 from .compat import (
-    urljoin, urlsplit, quote, unquote_to_bytes, urlopen_contenttype,
+    urljoin, urlsplit, quote, unquote, unquote_to_bytes, urlopen_contenttype,
     Request, parse_email, pathname2url)
 
 
@@ -64,6 +64,7 @@ def iri_to_uri(url):
 
 def path2url(path):
     """Return file URL of `path`"""
+    # TODO: should this be 'file://' ? Maybe only on Unix?
     return 'file:' + pathname2url(os.path.abspath(path))
 
 
@@ -96,6 +97,27 @@ def get_url_attribute(element, attr_name):
                 'Relative URI reference without a base URI: '
                 '<%s %s="%s"> at line %d',
                 element.tag, attr_name, attr_value, element.sourceline)
+
+
+def get_link_attribute(element, attr_name):
+    """Return ('external', absolute_uri) or
+    ('internal', unquoted_fragment_id) or None.
+
+    """
+    attr_value = element.get(attr_name, '').strip()
+    if attr_value.startswith('#'):
+        # Do not require a base_url when the value is just a fragment.
+        return 'internal', unquote(attr_value[1:])
+    else:
+        uri = get_url_attribute(element, attr_name)
+        if uri is not None:
+            document_uri = urlsplit(element.base_url or '')
+            parsed = urlsplit(uri)
+            # Compare with fragments removed
+            if parsed[:-1] == document_uri[:-1]:
+                return 'internal', unquote(parsed.fragment)
+            else:
+                return 'external', uri
 
 
 def ensure_url(string):
@@ -132,10 +154,10 @@ def decode_base64(data):
 
 @register_opener('data')
 def open_data_url(url):
-    """Decode URLs with the 'data' stream. urllib can handle them
+    """Decode URLs with the 'data' scheme. urllib can handle them
     in Python 2, but that is broken in Python 3.
 
-    Inspired from the Python 2.7.2’s urllib.py.
+    Inspired from Python 2.7.2’s urllib.py.
 
     """
     # syntax of data URLs:
