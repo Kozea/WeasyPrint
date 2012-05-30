@@ -19,6 +19,7 @@ from ..formatting_structure import boxes
 class FloatPlaceholder(object):
     """Left where an float box was taken out of the flow."""
     def __init__(self, box):
+        assert not isinstance(box, FloatPlaceholder)
         # Work around the overloaded __setattr__
         object.__setattr__(self, '_box', box)
         object.__setattr__(self, '_layout_done', False)
@@ -69,27 +70,28 @@ def float_layout(document, placeholder, containing_block, absolute_boxes):
 
     if box.width == 'auto':
         if isinstance(box, boxes.BlockReplacedBox):
-            box.width = replaced_box_width(box, None)
-            box.height = replaced_box_height(box, None)
+            replaced_box_width(box, None)
+            replaced_box_height(box, None)
         else:
             box.width = shrink_to_fit(box, containing_block.width)
 
     # avoid a circular import
     from .blocks import block_container_layout
 
-    new_box, _, _, _, _ = block_container_layout(
-        document, box, max_position_y=float('inf'),
-        skip_stack=None, device_size=None, page_is_empty=False,
-        absolute_boxes=absolute_boxes, adjoining_margins=None)
+    if isinstance(box, boxes.BlockBox):
+        box, _, _, _, _ = block_container_layout(
+            document, box, max_position_y=float('inf'),
+            skip_stack=None, device_size=None, page_is_empty=False,
+            absolute_boxes=absolute_boxes, adjoining_margins=None)
 
     for child_placeholder in absolute_boxes:
-        absolute_layout(document, child_placeholder, new_box)
+        absolute_layout(document, child_placeholder, box)
 
-    find_float_position(document, new_box, containing_block)
+    find_float_position(document, box, containing_block)
 
-    document.excluded_shapes.append(new_box)
+    document.excluded_shapes.append(box)
 
-    placeholder.set_laid_out_box(new_box)
+    placeholder.set_laid_out_box(box)
 
 
 def find_float_position(document, box, containing_block):
@@ -108,7 +110,7 @@ def find_float_position(document, box, containing_block):
             excluded_shape.position_x, excluded_shape.position_y,
             excluded_shape.margin_width(), excluded_shape.margin_height())
         if box.style.clear in (excluded_shape.style.float, 'both'):
-            position_y = max(excluded_shape.position_y, y + h)
+            position_y = max(position_y, y + h)
 
     # Points 5 and 6, box.position_y is set to the highest position_y possible
     if document.excluded_shapes:

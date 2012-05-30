@@ -543,8 +543,8 @@ def split_inline_box(document, box, position_x, max_x, skip_stack,
     for index, child in box.enumerate_skip(skip):
         child.position_y = box.position_y
         if not child.is_in_normal_flow():
+            child.position_x = position_x
             if child.style.position in ('absolute', 'fixed'):
-                child.position_x = position_x
                 placeholder = AbsolutePlaceholder(child)
                 line_placeholders.append(placeholder)
                 if child.style.position == 'absolute':
@@ -630,7 +630,6 @@ def split_inline_box(document, box, position_x, max_x, skip_stack,
             absolute_layout(document, absolute_box, new_box)
 
     for float_box in float_children:
-        print(float_box, new_box)
         float_layout(document, float_box, new_box, absolute_boxes)
 
     return new_box, resume_at, preserved_line_break
