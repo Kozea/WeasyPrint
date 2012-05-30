@@ -62,6 +62,7 @@ def draw_page(document, page, context):
     draw_box_background(
         document, context, stacking_context.page, stacking_context.box)
     draw_canvas_background(document, context, page)
+    draw_border(context, page)
     draw_stacking_context(document, context, stacking_context)
 
 
