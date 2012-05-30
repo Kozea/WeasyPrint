@@ -214,9 +214,25 @@ def test_links():
     assert len(logs) == 1
     assert 'WARNING: Relative URI reference without a base URI' in logs[0]
 
+    with capture_logs() as logs:
+        links, anchors = get_links(
+            '<div style="-weasy-link: url(../lipsum)">',
+            base_url=None)
+    assert links == [[]]
+    assert anchors == {}
+    assert len(logs) == 1
+    assert 'WARNING: Ignored `-weasy-link: url(../lipsum)`' in logs[0]
+    assert 'Relative URI reference without a base URI' in logs[0]
+
     # Internal URI reference without a base URI: OK
     links, anchors = get_links(
         '<a href="#lipsum" id="lipsum" style="display: block">',
+        base_url=None)
+    assert links == [[(('internal', 'lipsum'), (50, 950, 450, 950))]]
+    assert anchors == {'lipsum': (0, 50, 950)}
+
+    links, anchors = get_links(
+        '<div style="-weasy-link: url(#lipsum)" id="lipsum">',
         base_url=None)
     assert links == [[(('internal', 'lipsum'), (50, 950, 450, 950))]]
     assert anchors == {'lipsum': (0, 50, 950)}

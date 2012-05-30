@@ -20,7 +20,8 @@ from tinycss.parsing import split_on_comma, remove_whitespace
 
 from ..logger import LOGGER
 from ..formatting_structure import counters
-from ..compat import urljoin
+from ..compat import urljoin, unquote
+from ..urls import url_is_absolute
 from .properties import (INITIAL_VALUES, KNOWN_PROPERTIES, NOT_PRINT_MEDIA,
                          Dimension)
 from . import computed_values
@@ -152,6 +153,16 @@ def get_angle(token):
         return Dimension(token.value, token.unit)
 
 
+def safe_urljoin(base_url, url):
+    if url_is_absolute(url):
+        return url
+    elif base_url:
+        return urljoin(base_url, url)
+    else:
+        raise InvalidValues(
+            'Relative URI reference without a base URI: %r' % url)
+
+
 @validator()
 @single_keyword
 def background_attachment(keyword):
@@ -188,7 +199,7 @@ def image(token, base_url):
     if get_keyword(token) == 'none':
         return 'none'
     if token.type == 'URI':
-        return urljoin(base_url, token.value)
+        return safe_urljoin(base_url, token.value)
 
 
 @validator('transform-origin', prefixed=True)  # Not in CR yet
@@ -377,7 +388,7 @@ def validate_content_token(base_url, token):
     if type_ == 'STRING':
         return ('STRING', token.value)
     if type_ == 'URI':
-        return ('URI', urljoin(base_url, token.value))
+        return ('URI', safe_urljoin(base_url, token.value))
     function = parse_function(token)
     if function:
         name, args = function
@@ -839,8 +850,10 @@ def link(token, base_url):
     if get_keyword(token) == 'none':
         return 'none'
     elif token.type == 'URI':
-        # TODO handle (not base_url) and internal references
-        return ('external', urljoin(base_url, token.value))
+        if token.value.startswith('#'):
+            return 'internal', unquote(token.value[1:])
+        else:
+            return 'external', safe_urljoin(base_url, token.value)
     function = parse_function(token)
     if function:
         name, args = function
