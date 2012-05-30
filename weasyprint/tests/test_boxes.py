@@ -79,15 +79,6 @@ def to_lists(box_tree):
     return serialize(unwrap_html_body(box_tree))
 
 
-def validate_float(
-        real_non_shorthand, base_url, name, values, required=False):
-    """Fake validator for ``float``."""
-    value = values[0].value
-    if name == 'float' and value == 'left':
-        return [(name, value)]
-    return real_non_shorthand(base_url, name, values, required)
-
-
 @contextlib.contextmanager
 def monkeypatch_validation(replacement):
     """Create a context manager patching the validation mechanism.
@@ -112,12 +103,11 @@ def monkeypatch_validation(replacement):
 
 def parse(html_content):
     """Parse some HTML, apply stylesheets and transform to boxes."""
-    with monkeypatch_validation(validate_float):
-        document = TestPNGDocument(html_content,
-            # Dummy filename, but in the right directory.
-            base_url=resource_filename('<test>'))
-        box, = build.dom_to_box(document, document.dom)
-        return box
+    document = TestPNGDocument(html_content,
+        # Dummy filename, but in the right directory.
+        base_url=resource_filename('<test>'))
+    box, = build.dom_to_box(document, document.dom)
+    return box
 
 
 def parse_all(html_content, base_url=resource_filename('<test>')):

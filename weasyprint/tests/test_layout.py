@@ -15,7 +15,7 @@ from __future__ import division, unicode_literals
 
 from .testing_utils import (
     TestPNGDocument, resource_filename, FONTS, assert_no_logs, capture_logs)
-from .test_boxes import monkeypatch_validation, validate_float
+from .test_boxes import monkeypatch_validation
 from ..formatting_structure import boxes
 from ..layout.inlines import split_inline_box
 from ..layout.percentages import resolve_percentages
@@ -39,14 +39,12 @@ def parse_without_layout(html_content):
 
 def parse(html_content, return_document=False):
     """Parse some HTML, apply stylesheets, transform to boxes and lay out."""
-    # TODO: remove this patching when floats are validated
-    with monkeypatch_validation(validate_float):
-        document = TestPNGDocument(html_content,
-            base_url=resource_filename('<inline HTML>'))
-        if return_document:
-            return document
-        else:
-            return document.pages
+    document = TestPNGDocument(html_content,
+        base_url=resource_filename('<inline HTML>'))
+    if return_document:
+        return document
+    else:
+        return document.pages
 
 
 @assert_no_logs
