@@ -160,9 +160,13 @@ def avoid_collisions(document, box, containing_block, outer=True):
             if shape.style.float == 'right'
             and (shape.position_y <= position_y <
                  shape.position_y + shape.margin_height())]
+
+        # Set the default maximum bounds
         max_left_bound = containing_block.content_box_x()
         max_right_bound = \
             containing_block.content_box_x() + containing_block.width
+
+        # Set the real maximum bounds according to sibling float elements
         if left_bounds or right_bounds:
             if left_bounds:
                 max_left_bound = max(left_bounds)
@@ -170,14 +174,17 @@ def avoid_collisions(document, box, containing_block, outer=True):
                 max_right_bound = min(right_bounds)
             # Points 3, 7 and 8
             if box_width > max_right_bound - max_left_bound:
+                # The box does not fit here
                 new_positon_y = min(
                     shape.position_y + shape.margin_height()
                     for shape in excluded_shapes
                     if (shape.position_y <= position_y <
                         shape.position_y + shape.margin_height()))
                 if new_positon_y > position_y:
+                    # We can find a solution with a higher position_y
                     position_y = new_positon_y
                     continue
+                # No solution, we must put the box here
         break
 
     position_x = max_left_bound

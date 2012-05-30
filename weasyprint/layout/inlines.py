@@ -16,7 +16,7 @@ import functools
 import cairo
 
 from .absolute import absolute_layout, AbsolutePlaceholder
-from .float import avoid_collisions
+from .float import avoid_collisions, float_layout, FloatPlaceholder
 from .markers import image_marker_layout
 from .percentages import resolve_percentages, resolve_one_percentage
 from .preferred import shrink_to_fit, inline_preferred_minimum_width
@@ -546,8 +546,8 @@ def split_inline_box(document, box, position_x, max_x, skip_stack,
     for index, child in box.enumerate_skip(skip):
         child.position_y = box.position_y
         if not child.is_in_normal_flow():
+            child.position_x = position_x
             if child.style.position in ('absolute', 'fixed'):
-                child.position_x = position_x
                 placeholder = AbsolutePlaceholder(child)
                 line_placeholders.append(placeholder)
                 if child.style.position == 'absolute':
@@ -555,9 +555,16 @@ def split_inline_box(document, box, position_x, max_x, skip_stack,
                     children.append(placeholder)
                 else:
                     document.fixed_boxes.append(placeholder)
-            else:
-                # TODO: Floats
-                children.append(child)
+            elif child.style.float in ('left', 'right'):
+                # Set a maximum line width to lay out the float element, it
+                # will be correctly set after that
+                if box.width == 'auto':
+                    box.width = (
+                        containing_block.content_box_x() +
+                        containing_block.width - position_x)
+                placeholder = FloatPlaceholder(child)
+                float_layout(document, placeholder, box, absolute_boxes)
+                children.append(placeholder)
             continue
 
         new_child, resume_at, preserved = split_inline_level(
