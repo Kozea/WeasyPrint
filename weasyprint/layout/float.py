@@ -73,7 +73,11 @@ def float_layout(document, placeholder, containing_block, absolute_boxes):
             replaced_box_width(box, None)
             replaced_box_height(box, None)
         else:
-            box.width = shrink_to_fit(box, containing_block.width)
+            available_width = containing_block.width - (
+                box.margin_left + box.margin_right +
+                box.border_left_width + box.border_right_width +
+                box.padding_left + box.padding_right)
+            box.width = shrink_to_fit(box, available_width)
 
     # avoid a circular import
     from .blocks import block_container_layout
