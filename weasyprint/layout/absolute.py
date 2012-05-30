@@ -117,7 +117,8 @@ def absolute_block(document, box, containing_block):
             box.margin_left = 0
         if margin_r == 'auto':
             box.margin_right = 0
-        available_width = cb_width
+        available_width = cb_width - (
+            padding_plus_borders_x + box.margin_left + box.margin_right)
         box.width = shrink_to_fit(box, available_width)
     elif left != 'auto' and right != 'auto' and width != 'auto':
         width_for_margins = cb_width - (
