@@ -241,8 +241,8 @@ def block_container_layout(document, box, max_position_y, skip_stack,
         child.position_y = position_y
 
         if not child.is_in_normal_flow():
+            child.position_y += collapse_margin(adjoining_margins)
             if child.style.position in ('absolute', 'fixed'):
-                child.position_y += collapse_margin(adjoining_margins)
                 placeholder = AbsolutePlaceholder(child)
                 if child.style.position == 'absolute':
                     absolute_boxes.append(placeholder)
@@ -430,11 +430,11 @@ def block_container_layout(document, box, max_position_y, skip_stack,
         for absolute_box in absolute_boxes:
             absolute_layout(document, absolute_box, new_box)
 
-    for float_box in float_children:
-        float_layout(document, float_box, new_box, absolute_boxes)
-
     for child in new_box.children:
         relative_positioning(child, (new_box.width, new_box.height))
+
+    for float_box in float_children:
+        float_layout(document, float_box, new_box, absolute_boxes)
 
     return new_box, resume_at, next_page, adjoining_margins, collapsing_through
 

@@ -475,6 +475,7 @@ def make_page(document, root_box, page_type, resume_at):
                       or ``None`` for the first page.
 
     """
+    document.excluded_shapes = []
     page = make_empty_page(document, root_box, page_type)
     device_size = page.style.size
 

@@ -24,6 +24,7 @@ class Document(object):
     def __init__(self, backend, dom, user_stylesheets, user_agent_stylesheets):
         self.backend = backend
         self.fixed_boxes = []
+        self.excluded_shapes = []
         self.surface = backend.get_dummy_surface()
         self.dom = dom  #: lxml HtmlElement object
         self.user_stylesheets = user_stylesheets
