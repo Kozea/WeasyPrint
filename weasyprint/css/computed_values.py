@@ -17,7 +17,7 @@ import math
 
 from .properties import INITIAL_VALUES, Dimension
 from ..urls import get_url_attribute
-from ..compat import urlsplit
+from ..compat import urlsplit, unquote
 
 
 ZERO_PIXELS = Dimension(0, 'px')
@@ -435,11 +435,9 @@ def line_height(computer, name, value):
 @register_computer('anchor')
 def anchor(computer, name, values):
     """Compute the ``anchor`` property."""
-    if values == 'none':
-        return None
-    else:
+    if values != 'none':
         _, key = values
-        return computer.element.get(key)
+        return computer.element.get(key) or None
 
 
 @register_computer('link')
@@ -459,7 +457,7 @@ def link(computer, name, values):
         parsed = urlsplit(url)
         # Compare with fragments removed
         if parsed[:-1] == document_uri[:-1]:
-            return 'internal', parsed.fragment
+            return 'internal', unquote(parsed.fragment)
         else:
             return 'external', url
 

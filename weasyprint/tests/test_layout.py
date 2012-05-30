@@ -3521,18 +3521,19 @@ def test_absolute_positioning():
             <img src=pattern.png>
             <span style="position: relative">
                 <span style="position: absolute">2</span>
-                <span>3</span>
+                <span style="position: absolute">3</span>
+                <span>4</span>
             </span>
     ''')
     html, = page.children
     body, = html.children
     line, = body.children
     img, span1 = line.children
-    span2, span3 = span1.children
+    span2, span3, span4 = span1.children
     assert span1.position_x == 4
-    assert span2.position_x == 4
-    assert span3.position_x == 4
-    assert span2.position_y == span3.position_y
+    assert (span2.position_x, span2.position_y) == (4, 0)
+    assert (span3.position_x, span3.position_y) == (4, 0)
+    assert span4.position_x == 4
 
     page, = parse('''
         <style> img { width: 5px; height: 20px} </style>

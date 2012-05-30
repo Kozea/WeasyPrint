@@ -21,9 +21,13 @@ from .urls import urlopen
 from .css.computed_values import LENGTHS_TO_PIXELS
 from .logger import LOGGER
 
+#import faulthandler
+#faulthandler.enable()
 
-# Map MIME types to functions that take a byte stream and return
-# ``(pattern, width, height)`` a cairo Pattern and its dimension in pixels.
+
+# Map MIME types to functions that take a byte stream and return a callable
+# that returns ``(pattern, width, height)`` a cairo Pattern and
+# its dimension in pixels.
 FORMAT_HANDLERS = {}
 
 # TODO: currently CairoSVG only support images with an explicit
@@ -44,7 +48,8 @@ def png_handler(file_like, _uri):
     """Return a cairo Surface from a PNG byte stream."""
     surface = cairo.ImageSurface.create_from_png(file_like)
     pattern = cairo.SurfacePattern(surface)
-    return pattern, surface.get_width(), surface.get_height()
+    result = pattern, surface.get_width(), surface.get_height()
+    return lambda: result
 
 
 @register_format('image/svg+xml')
@@ -70,11 +75,19 @@ def cairosvg_handler(file_like, uri):
         # Don’t pass data URIs to CairoSVG.
         # They are useless for relative URIs anyway.
         uri = None
-    # Draw to a cairo surface but do not write to a file
-    tree = Tree(file_obj=file_like, url=uri)
-    surface = ScaledSVGSurface(tree, output=None, dpi=96)
-    pattern = cairo.SurfacePattern(surface.cairo)
-    return pattern, surface.width, surface.height
+    bytestring = file_like.read()
+
+    # Do not keep a Surface object alive, but regenerate it as needed.
+    # If a surface for a SVG image is still alive by the time we call
+    # show_page(), cairo will rasterize the image instead writing vectors.
+    def draw_svg():
+        # Draw to a cairo surface but do not write to a file
+        tree = Tree(bytestring=bytestring, url=uri)
+        surface = ScaledSVGSurface(tree, output=None, dpi=96)
+        pattern = cairo.SurfacePattern(surface.cairo)
+        return pattern, surface.width, surface.height
+
+    return draw_svg
 
 
 def fallback_handler(file_like, uri):
@@ -90,20 +103,29 @@ def fallback_handler(file_like, uri):
     return png_handler(BytesIO(png_bytes), uri)
 
 
-def get_image_from_uri(uri, type_=None):
+def get_image_from_uri(cache, uri, type_=None):
     """Get a :class:`cairo.Surface`` from an image URI."""
     try:
+        missing = object()
+        function = cache.get(uri, missing)
+        if function is not missing:
+            return function()
         file_like, mime_type, _charset = urlopen(uri)
-        if not type_:
-            type_ = mime_type  # Use eg. the HTTP header
-        #else: the type was forced by eg. a 'type' attribute on <embed>
-        handler = FORMAT_HANDLERS.get(type_, fallback_handler)
-        return handler(file_like, uri)
+        try:
+            if not type_:
+                type_ = mime_type  # Use eg. the HTTP header
+            #else: the type was forced by eg. a 'type' attribute on <embed>
+            handler = FORMAT_HANDLERS.get(type_, fallback_handler)
+            function = handler(file_like, uri)
+        finally:
+            try:
+                file_like.close()
+            except Exception:
+                # May already be closed or something.
+                # This is just cleanup anyway.
+                pass
+
+        cache[uri] = function
+        return function()
     except Exception as exc:
         LOGGER.warn('Error for image at %s : %r', uri, exc)
-    finally:
-        try:
-            file_like.close()
-        except Exception:
-            # May already be closed or something. This is just cleanup anyway.
-            pass

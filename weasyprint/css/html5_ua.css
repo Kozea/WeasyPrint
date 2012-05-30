@@ -8,8 +8,10 @@ web browsers use.
 
 */
 
+/* http://www.w3.org/TR/html5/Overview#scroll-to-the-fragment-identifier */
 *[id] { -weasy-anchor: attr(id); }
-*[name] { -weasy-anchor: attr(name); }
+a[name] { -weasy-anchor: attr(name); }
+
 *[dir] { unicode-bidi: embed; }
 *[hidden] { display: none; }
 *[dir=ltr] { direction: ltr; }

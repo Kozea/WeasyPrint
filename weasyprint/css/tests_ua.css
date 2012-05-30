@@ -20,3 +20,13 @@ col             { display: table-column }
 colgroup        { display: table-column-group }
 td, th          { display: table-cell }
 caption         { display: table-caption }
+
+a[href] { -weasy-link: attr(href); }
+a[name] { -weasy-anchor: attr(name); }
+*[id] { -weasy-anchor: attr(id); }
+h1 { -weasy-bookmark-level: 1; -weasy-bookmark-label: contents; }
+h2 { -weasy-bookmark-level: 2; -weasy-bookmark-label: contents; }
+h3 { -weasy-bookmark-level: 3; -weasy-bookmark-label: contents; }
+h4 { -weasy-bookmark-level: 4; -weasy-bookmark-label: contents; }
+h5 { -weasy-bookmark-level: 5; -weasy-bookmark-label: contents; }
+h6 { -weasy-bookmark-level: 6; -weasy-bookmark-label: contents; }

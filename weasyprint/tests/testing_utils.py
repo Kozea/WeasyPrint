@@ -20,7 +20,7 @@ import functools
 
 from .. import HTML, CSS
 from ..document import Document
-from ..backends import PNGBackend
+from ..backends import PNGBackend, MetadataPDFBackend
 from ..logger import LOGGER
 
 
@@ -33,18 +33,29 @@ TEST_UA_STYLESHEET = CSS(os.path.join(
 
 
 class TestPNGDocument(Document):
-    """Like PNGDocument, but with a different user-agent stylesheet.
+    """A Document with a PNG backend and a different user-agent stylesheet.
 
     This stylesheet is shorter, which makes tests faster.
 
     """
+    backend_class = PNGBackend
+
     def __init__(self, html_source, base_url=None, user_stylesheets=(),
                  user_agent_stylesheets=(TEST_UA_STYLESHEET,)):
         super(TestPNGDocument, self).__init__(
-            PNGBackend,
+            self.backend_class,
             HTML(string=html_source, base_url=base_url).root_element,
             user_stylesheets=user_stylesheets,
             user_agent_stylesheets=user_agent_stylesheets)
+
+
+class TestPDFDocument(TestPNGDocument):
+    """A Document with a PDF backend and a different user-agent stylesheet.
+
+    This stylesheet is shorter, which makes tests faster.
+
+    """
+    backend_class = MetadataPDFBackend
 
 
 def resource_filename(basename):

@@ -130,8 +130,9 @@ def run(suite_directory):
         from pygments.lexers import HtmlLexer
         from pygments.formatters import HtmlFormatter
 
-        with open(safe_join(suite_directory, test['test_id'] + '.htm')) as fd:
-            source = fd.read()
+        filename = safe_join(suite_directory, test['test_id'] + '.htm')
+        with open(filename, 'rb') as fd:
+            source = fd.read().decode('utf8')
 
         formatter = HtmlFormatter()
         source = highlight(source, HtmlLexer(), formatter)

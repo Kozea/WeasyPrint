@@ -21,6 +21,9 @@ from ..text import TextFragment
 def shrink_to_fit(box, available_width):
     """Return the shrink-to-fit width of ``box``.
 
+    *Warning:* both available_outer_width and the return value are
+    for width of the *content area*, not margin area.
+
     http://www.w3.org/TR/CSS21/visudet.html#float-width
 
     """
