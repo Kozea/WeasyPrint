@@ -16,10 +16,10 @@ import functools
 import cairo
 
 from .absolute import absolute_layout, AbsolutePlaceholder
-from .float import float_layout, FloatPlaceholder
+from .float import avoid_collisions
 from .markers import image_marker_layout
 from .percentages import resolve_percentages, resolve_one_percentage
-from .preferred import shrink_to_fit
+from .preferred import shrink_to_fit, inline_preferred_minimum_width
 from .tables import find_in_flow_baseline, table_wrapper_width
 from ..text import TextFragment
 from ..formatting_structure import boxes
@@ -53,15 +53,20 @@ def iter_line_boxes(document, box, position_y, skip_stack,
         if resume_at is None:
             return
         skip_stack = resume_at
-        position_y += line.height
+        position_y = line.position_y + line.height
 
 
 def get_next_linebox(document, linebox, position_y, skip_stack,
                      containing_block, device_size, absolute_boxes):
     """Return ``(line, resume_at)``."""
-    position_x = linebox.position_x
     linebox.position_y = position_y
-    max_x = position_x + containing_block.width
+    linebox.width = inline_preferred_minimum_width(
+        linebox, skip_stack=skip_stack)
+    position_x, position_y, available_width = avoid_collisions(
+        document, linebox, containing_block, outer=False)
+    linebox.position_x = position_x
+    linebox.position_y = position_y
+    max_x = position_x + available_width
     if skip_stack is None:
         # text-indent only at the start of the first line
         # Other percentages (margins, width, ...) do not apply.
@@ -83,7 +88,7 @@ def get_next_linebox(document, linebox, position_y, skip_stack,
 
     bottom, top = inline_box_verticality(line, baseline_y=0)
     last = resume_at is None or preserved_line_break
-    offset_x = text_align(document, line, containing_block, last)
+    offset_x = text_align(document, line, available_width, last)
     if bottom is None:
         # No children at all
         line.position_y = position_y
@@ -528,23 +533,21 @@ def split_inline_box(document, box, position_x, max_x, skip_stack,
     content_box_left = position_x
 
     children = []
-    float_children = []
     preserved_line_break = False
+
+    if box.style.position == 'relative':
+        absolute_boxes = []
 
     is_start = skip_stack is None
     if is_start:
         skip = 0
     else:
         skip, skip_stack = skip_stack
-
-    if box.style.position == 'relative':
-        absolute_boxes = []
-
     for index, child in box.enumerate_skip(skip):
         child.position_y = box.position_y
         if not child.is_in_normal_flow():
-            child.position_x = position_x
             if child.style.position in ('absolute', 'fixed'):
+                child.position_x = position_x
                 placeholder = AbsolutePlaceholder(child)
                 line_placeholders.append(placeholder)
                 if child.style.position == 'absolute':
@@ -552,10 +555,9 @@ def split_inline_box(document, box, position_x, max_x, skip_stack,
                     children.append(placeholder)
                 else:
                     document.fixed_boxes.append(placeholder)
-            elif child.style.float in ('left', 'right'):
-                placeholder = FloatPlaceholder(child)
-                float_children.append(placeholder)
-                children.append(placeholder)
+            else:
+                # TODO: Floats
+                children.append(child)
             continue
 
         new_child, resume_at, preserved = split_inline_level(
@@ -628,10 +630,6 @@ def split_inline_box(document, box, position_x, max_x, skip_stack,
     if new_box.style.position == 'relative':
         for absolute_box in absolute_boxes:
             absolute_layout(document, absolute_box, new_box)
-
-    for float_box in float_children:
-        float_layout(document, float_box, new_box, absolute_boxes)
-
     return new_box, resume_at, preserved_line_break
 
 
@@ -785,7 +783,7 @@ def inline_box_verticality(box, baseline_y):
     return max_y, min_y
 
 
-def text_align(document, line, containing_block, last):
+def text_align(document, line, available_width, last):
     """Return how much the line should be moved horizontally according to
     the `text-align` property.
 
@@ -800,7 +798,7 @@ def text_align(document, line, containing_block, last):
         align = 'right' if line.style.direction == 'rtl' else 'left'
     if align == 'left':
         return 0
-    offset = containing_block.width - line.width
+    offset = available_width - line.width
     if align == 'justify':
         justify_line(document, line, offset)
         return 0

@@ -274,7 +274,7 @@ def block_container_layout(document, box, max_position_y, skip_stack,
             new_lines = []
             is_page_break = False
             for line, resume_at in lines_iterator:
-                new_position_y = position_y + line.height
+                new_position_y = line.position_y + line.height
                 # Allow overflow if the first line of the page is higher
                 # than the page itself so that we put *something* on this
                 # page and can advance in the document.
