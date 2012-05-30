@@ -27,6 +27,7 @@ PANGO_STYLE = {
     'oblique': Pango.Style.OBLIQUE,
 }
 
+
 class TextFragment(object):
     """Text renderer using Pango.
 
@@ -55,7 +56,7 @@ class TextFragment(object):
                 ' ', '<span letter_spacing="%i"> </span>' % (
                     word_spacing + letter_spacing,))
             markup = '<span letter_spacing="%i">%s</span>' % (
-                letter_spacing , markup)
+                letter_spacing, markup)
             attributes_list = Pango.parse_markup(markup, -1, '\x00')[1]
             self.layout.set_attributes(attributes_list)
         if width is not None:
