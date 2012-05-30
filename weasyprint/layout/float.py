@@ -65,6 +65,10 @@ def float_layout(document, placeholder, containing_block, absolute_boxes):
     if box.margin_right == 'auto':
         box.margin_right = 0
 
+    clearance = get_clearance(document, box)
+    if clearance:
+        box.position_y += clearance
+
     # avoid a circular import
     from .inlines import replaced_box_width, replaced_box_height
 
@@ -87,13 +91,15 @@ def float_layout(document, placeholder, containing_block, absolute_boxes):
             document, box, max_position_y=float('inf'),
             skip_stack=None, device_size=None, page_is_empty=False,
             absolute_boxes=absolute_boxes, adjoining_margins=None)
+    else:
+        assert isinstance(box, boxes.BlockReplacedBox)
 
     for child_placeholder in absolute_boxes:
         absolute_layout(document, child_placeholder, box)
 
     find_float_position(document, box, containing_block)
 
-    document.excluded_shapes.append(box)
+    document.excluded_shapes.append(placeholder)
 
     placeholder.set_laid_out_box(box)
 
@@ -103,34 +109,27 @@ def find_float_position(document, box, containing_block):
     # See http://www.w3.org/TR/CSS2/visuren.html#dis-pos-flo
 
     position_x, position_y = box.position_x, box.position_y
+    excluded_shapes = document.excluded_shapes
 
     # Point 4 is already handled as box.position_y is set according to the
     # containing box top position, with collapsing margins handled
     # TODO: are the collapsing margins *really* handled?
 
-    # Handle clear
-    for excluded_shape in document.excluded_shapes:
-        x, y, w, h = (
-            excluded_shape.position_x, excluded_shape.position_y,
-            excluded_shape.margin_width(), excluded_shape.margin_height())
-        if box.style.clear in (excluded_shape.style.float, 'both'):
-            position_y = max(position_y, y + h)
-
     # Points 5 and 6, box.position_y is set to the highest position_y possible
-    if document.excluded_shapes:
-        position_y = max(position_y, document.excluded_shapes[-1].position_y)
+    if excluded_shapes:
+        position_y = max(position_y, excluded_shapes[-1].position_y)
 
     # Points 1 and 2
     while True:
         left_bounds = [
             shape.position_x + shape.margin_width()
-            for shape in document.excluded_shapes
+            for shape in excluded_shapes
             if shape.style.float == 'left'
             and (shape.position_y <= position_y <
                  shape.position_y + shape.margin_height())]
         right_bounds = [
             shape.position_x
-            for shape in document.excluded_shapes
+            for shape in excluded_shapes
             if shape.style.float == 'right'
             and (shape.position_y <= position_y <
                  shape.position_y + shape.margin_height())]
@@ -146,7 +145,7 @@ def find_float_position(document, box, containing_block):
             if box.margin_width() > max_right_bound - max_left_bound:
                 new_positon_y = min(
                     shape.position_y + shape.margin_height()
-                    for shape in document.excluded_shapes
+                    for shape in excluded_shapes
                     if (shape.position_y <= position_y <
                         shape.position_y + shape.margin_height()))
                 if new_positon_y > position_y:
@@ -163,3 +162,12 @@ def find_float_position(document, box, containing_block):
         position_x = max_right_bound - box.margin_width()
 
     box.translate(position_x - box.position_x, position_y - box.position_y)
+
+
+def get_clearance(document, box):
+    clearance = 0
+    for excluded_shape in document.excluded_shapes:
+        if box.style.clear in (excluded_shape.style.float, 'both'):
+            y, h = excluded_shape.position_y, excluded_shape.margin_height()
+            clearance = max(clearance, y + h - box.position_y)
+    return clearance

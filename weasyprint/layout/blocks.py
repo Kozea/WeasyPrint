@@ -13,7 +13,7 @@
 from __future__ import division, unicode_literals
 
 from .absolute import absolute_layout, AbsolutePlaceholder
-from .float import float_layout, FloatPlaceholder
+from .float import float_layout, get_clearance, FloatPlaceholder
 from .inlines import (iter_line_boxes, replaced_box_width, replaced_box_height,
                       handle_min_max_width, min_max_replaced_height,
                       min_max_auto_replaced)
@@ -33,6 +33,11 @@ def block_level_layout(document, box, max_position_y, skip_stack,
                            content box of the current page area.
 
     """
+    clearance = get_clearance(document, box)
+    if clearance:
+        box.position_y += clearance
+        adjoining_margins = []
+
     if isinstance(box, boxes.TableBox):
         return table_layout(
             document, box, max_position_y, skip_stack, containing_block,
@@ -61,6 +66,7 @@ def block_box_layout(document, box, max_position_y, skip_stack,
         table_wrapper_width(box, (containing_block.width,
                                   containing_block.height), absolute_boxes)
     block_level_width(box, containing_block)
+
     new_box, resume_at, next_page, adjoining_margins, collapsing_through = \
         block_container_layout(
             document, box, max_position_y, skip_stack,
@@ -226,7 +232,6 @@ def block_container_layout(document, box, max_position_y, skip_stack,
         absolute_boxes = []
 
     new_children = []
-    float_children = []
     next_page = 'any'
 
     is_start = skip_stack is None
@@ -251,7 +256,8 @@ def block_container_layout(document, box, max_position_y, skip_stack,
                     document.fixed_boxes.append(placeholder)
             elif child.style.float in ('left', 'right'):
                 placeholder = FloatPlaceholder(child)
-                float_children.append(placeholder)
+                float_layout(document, placeholder, box, absolute_boxes)
+                document.excluded_shapes.append(placeholder)
                 new_children.append(placeholder)
             continue
 
@@ -432,9 +438,6 @@ def block_container_layout(document, box, max_position_y, skip_stack,
 
     for child in new_box.children:
         relative_positioning(child, (new_box.width, new_box.height))
-
-    for float_box in float_children:
-        float_layout(document, float_box, new_box, absolute_boxes)
 
     return new_box, resume_at, next_page, adjoining_margins, collapsing_through
 
