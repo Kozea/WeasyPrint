@@ -16,9 +16,10 @@ import io
 
 import cairo
 
-from .. import HTML, CSS
+from .. import CSS
 from .. import pdf
-from .testing_utils import assert_no_logs, resource_filename, TestPDFDocument
+from .testing_utils import (
+    assert_no_logs, resource_filename, TestPDFDocument, capture_logs)
 
 
 @assert_no_logs
@@ -197,13 +198,41 @@ def test_links():
     assert anchors == {'hello': (0, 50, 750), 'lipsum': (1, 50, 950)}
 
     links, anchors = get_links(
-        '<div style="-weasy-link: url(../lipsum)">',
+        '<a href="../lipsum" style="display: block">',
         base_url='http://weasyprint.org/foo/bar/')
     assert links == [[(('external', 'http://weasyprint.org/foo/lipsum'),
                        (50, 950, 450, 950))]]
+    assert anchors == {}
 
-    # Relative URI reference without a base URI.
-#    links, anchors = get_links(
-#        '<div style="-weasy-link: url(../lipsum)">',
-#        base_url=None)
-#    assert links == [[]]
+    # Relative URI reference without a base URI: not allowed
+    with capture_logs() as logs:
+        links, anchors = get_links(
+            '<a href="../lipsum" style="display: block">',
+            base_url=None)
+    assert links == [[]]
+    assert anchors == {}
+    assert len(logs) == 1
+    assert 'WARNING: Relative URI reference without a base URI' in logs[0]
+
+    with capture_logs() as logs:
+        links, anchors = get_links(
+            '<div style="-weasy-link: url(../lipsum)">',
+            base_url=None)
+    assert links == [[]]
+    assert anchors == {}
+    assert len(logs) == 1
+    assert 'WARNING: Ignored `-weasy-link: url(../lipsum)`' in logs[0]
+    assert 'Relative URI reference without a base URI' in logs[0]
+
+    # Internal URI reference without a base URI: OK
+    links, anchors = get_links(
+        '<a href="#lipsum" id="lipsum" style="display: block">',
+        base_url=None)
+    assert links == [[(('internal', 'lipsum'), (50, 950, 450, 950))]]
+    assert anchors == {'lipsum': (0, 50, 950)}
+
+    links, anchors = get_links(
+        '<div style="-weasy-link: url(#lipsum)" id="lipsum">',
+        base_url=None)
+    assert links == [[(('internal', 'lipsum'), (50, 950, 450, 950))]]
+    assert anchors == {'lipsum': (0, 50, 950)}

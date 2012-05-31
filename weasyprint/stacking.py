@@ -61,8 +61,16 @@ class StackingContext(object):
         return cls(page, child_contexts, [], [], [], page)
 
     @classmethod
-    def from_box(cls, box, page):
-        child_contexts = []
+    def from_box(cls, box, page, child_contexts=None):
+        children = []  # What will be passed to this box
+        if child_contexts is None:
+            child_contexts = children
+        # child_contexts: where to put sub-contexts that we find here.
+        # May not be the same as children for:
+        #   "treat the element as if it created a new stacking context,
+        #    but any positioned descendants and descendants which actually
+        #    create a new stacking context should be considered part of the
+        #    parent stacking context, not this new one."
         blocks = []
         floats = []
         blocks_and_cells = []
@@ -89,22 +97,25 @@ class StackingContext(object):
                     child_contexts.append(
                         StackingContext.from_box(child, page))
                 else:
-                    children.append(child)
                     if child.style.position != 'static':
                         assert child.style.z_index == 'auto'
                         # "Fake" context: sub-contexts are already removed
-                        child_contexts.append(
-                            StackingContext.from_box(child, page))
+                        child_contexts.append(StackingContext.from_box(
+                            child, page, child_contexts))
+                        continue
                     elif child.is_floated():
-                        floats.append(StackingContext.from_box(child, page))
+                        floats.append(StackingContext.from_box(
+                            child, page, child_contexts))
+                        continue
                     elif isinstance(child, boxes.BlockLevelBox):
                         blocks.append(child)
                         blocks_and_cells.append(child)
                     elif isinstance(child, boxes.TableCellBox):
                         blocks_and_cells.append(child)
-                    child = dispatch_children(child)
+
+                    children.append(dispatch_children(child))
             return box.copy_with_children(children)
 
         box = dispatch_children(box)
 
-        return cls(box, child_contexts, blocks, floats, blocks_and_cells, page)
+        return cls(box, children, blocks, floats, blocks_and_cells, page)

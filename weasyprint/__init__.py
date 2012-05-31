@@ -69,7 +69,7 @@ class HTML(Resource):
     def __init__(self, guess=None, filename=None, url=None, file_obj=None,
                  string=None, tree=None, encoding=None, base_url=None):
         import lxml.html
-        from .urls import ensure_url
+        from .urls import urlopen
 
         source_type, source, base_url = _select_source(
             guess, filename, url, file_obj, string, tree, base_url)
@@ -81,10 +81,10 @@ class HTML(Resource):
                 parse = lxml.html.document_fromstring
             else:
                 parse = lxml.html.parse
-                if source_type != 'file_obj':
-                    # If base_url is None we want the used base URL to be
-                    # an URL, not a filename.
-                    source = ensure_url(source)
+                if source_type == 'url':
+                    source, _, protocol_encoding = urlopen(source)
+                    if not encoding:
+                        encoding = protocol_encoding
             parser = lxml.html.HTMLParser(encoding=encoding)
             result = parse(source, parser=parser)
             if result is None:
@@ -201,9 +201,9 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
     """
     Check that only one input is not None, and return it with the
     normalized ``base_url``.
+
     """
-    from .urls import path2url, ensure_url
-    from .compat import urlsplit
+    from .urls import path2url, ensure_url, url_is_absolute
 
     if base_url is not None:
         base_url = ensure_url(base_url)
@@ -213,7 +213,7 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
     if nones == [False, True, True, True, True, True]:
         if hasattr(guess, 'read'):
             type_ = 'file_obj'
-        elif urlsplit(guess).scheme:
+        elif url_is_absolute(guess):
             type_ = 'url'
         else:
             type_ = 'filename'
@@ -238,7 +238,7 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
     if nones == [True, True, True, True, True, False]:
         return 'tree', tree, base_url
 
-    raise TypeError('Expected only one source, got %i' % nones.count(False))
+    raise TypeError('Expected exactly one source, got %i' % nones.count(False))
 
 
 def _parse_stylesheets(stylesheets):

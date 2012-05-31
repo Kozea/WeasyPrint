@@ -17,7 +17,6 @@ from .formatting_structure.build import build_formatting_structure
 from . import layout
 from . import draw
 from . import images
-from .logger import LOGGER
 
 
 class Document(object):
