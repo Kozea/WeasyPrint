@@ -115,16 +115,21 @@ def run(suite_directory):
         return render_template('section.html', **locals())
 
 
+    @app.route('/test/<test_id>/')
     @app.route('/chapter<int:chapter_num>/section<int:section_num>/test<int:test_index>/')
-    def run_test(chapter_num, section_num, test_index):
-        try:
-            chapter, sections, _ = chapters[chapter_num - 1]
-            title, url, tests = sections[section_num - 1]
-            test = tests[test_index - 1]
-            previous_index = test_index - 1
-            next_index = test_index + 1 if test_index < len(tests) else None
-        except IndexError:
-            abort(404)
+    def run_test(chapter_num=None, section_num=None, test_index=None,
+                 test_id=None):
+        if test_id is None:
+            try:
+                chapter, sections, _ = chapters[chapter_num - 1]
+                title, url, tests = sections[section_num - 1]
+                test = tests[test_index - 1]
+                previous_index = test_index - 1
+                next_index = test_index + 1 if test_index < len(tests) else None
+            except IndexError:
+                abort(404)
+        else:
+            test = dict(test_id=test_id)
 
         from pygments import highlight
         from pygments.lexers import HtmlLexer
