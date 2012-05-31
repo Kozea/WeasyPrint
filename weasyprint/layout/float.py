@@ -51,14 +51,13 @@ def float_layout(document, box, containing_block, absolute_boxes):
             absolute_boxes)
 
     if isinstance(box, boxes.BlockBox):
-        excluded_shapes = document.excluded_shapes
-        document.excluded_shapes = []
+        document.create_block_formatting_context()
         box, _, _, _, _ = block_container_layout(
             document, box, max_position_y=float('inf'),
             skip_stack=None, device_size=None, page_is_empty=False,
             absolute_boxes=absolute_boxes, adjoining_margins=None)
         list_marker_layout(document, box)
-        document.excluded_shapes = excluded_shapes
+        document.finish_block_formatting_context(box)
     else:
         assert isinstance(box, boxes.BlockReplacedBox)
 

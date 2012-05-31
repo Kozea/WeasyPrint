@@ -72,15 +72,14 @@ def absolute_layout(document, placeholder, containing_block):
     resolve_percentages(box, (cb_width, cb_height))
     resolve_position_percentages(box, (cb_width, cb_height))
 
-    excluded_shapes = document.excluded_shapes
-    document.excluded_shapes = []
+    document.create_block_formatting_context()
     # Absolute tables are wrapped into block boxes
     if isinstance(box, boxes.BlockBox):
         new_box = absolute_block(document, box, containing_block)
     else:
         assert isinstance(box, boxes.BlockReplacedBox)
         new_box = absolute_replaced(document, box, containing_block)
-    document.excluded_shapes = excluded_shapes
+    document.finish_block_formatting_context(new_box)
 
     placeholder.set_laid_out_box(new_box)
 

@@ -24,7 +24,6 @@ class Document(object):
     def __init__(self, backend, dom, user_stylesheets, user_agent_stylesheets):
         self.backend = backend
         self.fixed_boxes = []
-        self.excluded_shapes = []
         self.surface = backend.get_dummy_surface()
         self.dom = dom  #: lxml HtmlElement object
         self.user_stylesheets = user_stylesheets
@@ -33,6 +32,9 @@ class Document(object):
         self._computed_styles = None
         self._formatting_structure = None
         self._pages = None
+        self._excluded_shapes_lists = []
+
+        self.create_block_formatting_context()
 
         # TODO: remove this when Margin boxes variable dimension is correct.
         self._auto_margin_boxes_warning_shown = False
@@ -90,3 +92,19 @@ class Document(object):
             draw.draw_page(self, page, context)
 
         backend.finish(self)
+
+    def create_block_formatting_context(self):
+        self.excluded_shapes = []
+        self._excluded_shapes_lists.append(self.excluded_shapes)
+
+    def finish_block_formatting_context(self, root_box):
+        excluded_shapes = self._excluded_shapes_lists.pop()
+        self.excluded_shapes = self._excluded_shapes_lists[-1]
+
+        # See http://www.w3.org/TR/CSS2/visudet.html#root-height
+        if root_box.style.height == 'auto':
+            box_bottom = root_box.content_box_y() + root_box.height
+            for shape in excluded_shapes:
+                shape_bottom = shape.position_y + shape.margin_height()
+                if shape_bottom > box_bottom:
+                    root_box.height += shape_bottom - box_bottom
