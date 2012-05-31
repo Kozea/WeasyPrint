@@ -82,7 +82,7 @@ def _block_preferred_width(box, function, outer):
         # http://dbaron.org/css/intrinsic/#outer-intrinsic
         children_widths = [
             function(child, outer=True) for child in box.children
-            if child.is_in_normal_flow()]
+            if not child.is_absolutely_positioned()]
         width = max(children_widths) if children_widths else 0
     else:
         assert width.unit == 'px'
@@ -154,7 +154,7 @@ def inline_preferred_minimum_width(box, outer=True, skip_stack=None,
     else:
         skip, skip_stack = skip_stack
     for index, child in box.enumerate_skip(skip):
-        if not child.is_in_normal_flow():
+        if child.is_absolutely_positioned():
             continue  # Skip
 
         if isinstance(child, boxes.InlineReplacedBox):
@@ -182,7 +182,7 @@ def inline_preferred_width(box, outer=True):
     widest_line = 0
     current_line = 0
     for child in box.children:
-        if not child.is_in_normal_flow():
+        if child.is_absolutely_positioned():
             continue  # Skip
 
         if isinstance(child, boxes.InlineReplacedBox):
@@ -343,7 +343,7 @@ def table_and_columns_preferred_widths(box, outer=True,
     table_preferred_width = sum(column_preferred_widths) + total_border_spacing
 
     captions = [child for child in box.children
-                if child is not table and child.is_in_normal_flow()]
+                if child is not table and not child.is_absolutely_positioned()]
 
     if captions:
         caption_width = max(
