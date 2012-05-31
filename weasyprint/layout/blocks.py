@@ -204,6 +204,11 @@ def block_container_layout(document, box, max_position_y, skip_stack,
     #if box.style.overflow != 'visible':
     #    ...
 
+    # See http://www.w3.org/TR/CSS21/visuren.html#block-formatting
+    if not isinstance(box, boxes.BlockBox):
+        excluded_shapes = document.excluded_shapes
+        document.excluded_shapes = []
+
     if box.margin_top == 'auto':
         box.margin_top = 0
     if box.margin_bottom == 'auto':
@@ -436,6 +441,9 @@ def block_container_layout(document, box, max_position_y, skip_stack,
 
     for child in new_box.children:
         relative_positioning(child, (new_box.width, new_box.height))
+
+    if not isinstance(box, boxes.BlockBox):
+        document.excluded_shapes = excluded_shapes
 
     return new_box, resume_at, next_page, adjoining_margins, collapsing_through
 
