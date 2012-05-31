@@ -17,43 +17,8 @@ from .preferred import shrink_to_fit
 from ..formatting_structure import boxes
 
 
-class FloatPlaceholder(object):
-    """Left where an float box was taken out of the flow."""
-    def __init__(self, box):
-        assert not isinstance(box, FloatPlaceholder)
-        # Work around the overloaded __setattr__
-        object.__setattr__(self, '_box', box)
-        object.__setattr__(self, '_layout_done', False)
-
-    def set_laid_out_box(self, new_box):
-        object.__setattr__(self, '_box', new_box)
-        object.__setattr__(self, '_layout_done', True)
-
-    def translate(self, dx=0, dy=0):
-        if self._layout_done:
-            self._box.translate(dx, dy)
-        else:
-            # Descendants do not have a position yet.
-            self._box.position_x += dx
-            self._box.position_y += dy
-
-    def copy(self):
-        new_placeholder = FloatPlaceholder(self._box.copy())
-        object.__setattr__(new_placeholder, '_layout_done', self._layout_done)
-        return new_placeholder
-
-    # Pretend to be the box itself
-    def __getattr__(self, name):
-        return getattr(self._box, name)
-
-    def __setattr__(self, name, value):
-        setattr(self._box, name, value)
-
-
-def float_layout(document, placeholder, containing_block, absolute_boxes):
+def float_layout(document, box, containing_block, absolute_boxes):
     """Set the width and position of floating ``box``."""
-    box = placeholder._box
-
     cb = containing_block
     cb_width = cb.width
     cb_height = cb.height
@@ -98,11 +63,11 @@ def float_layout(document, placeholder, containing_block, absolute_boxes):
     for child_placeholder in absolute_boxes:
         absolute_layout(document, child_placeholder, box)
 
-    find_float_position(document, box, containing_block)
+    box = find_float_position(document, box, containing_block)
 
-    document.excluded_shapes.append(placeholder)
+    document.excluded_shapes.append(box)
 
-    placeholder.set_laid_out_box(box)
+    return box
 
 
 def find_float_position(document, box, containing_block):
@@ -130,6 +95,8 @@ def find_float_position(document, box, containing_block):
         position_x = position_x + available_width - box.margin_width()
 
     box.translate(position_x - box.position_x, position_y - box.position_y)
+
+    return box
 
 
 def get_clearance(document, box):

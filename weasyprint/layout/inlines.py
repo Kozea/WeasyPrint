@@ -16,7 +16,7 @@ import functools
 import cairo
 
 from .absolute import absolute_layout, AbsolutePlaceholder
-from .float import avoid_collisions, float_layout, FloatPlaceholder
+from .float import avoid_collisions, float_layout
 from .markers import image_marker_layout
 from .percentages import resolve_percentages, resolve_one_percentage
 from .preferred import shrink_to_fit, inline_preferred_minimum_width
@@ -562,9 +562,8 @@ def split_inline_box(document, box, position_x, max_x, skip_stack,
                     box.width = (
                         containing_block.content_box_x() +
                         containing_block.width - position_x)
-                placeholder = FloatPlaceholder(child)
-                float_layout(document, placeholder, box, absolute_boxes)
-                children.append(placeholder)
+                child = float_layout(document, child, box, absolute_boxes)
+                children.append(child)
             continue
 
         new_child, resume_at, preserved = split_inline_level(

@@ -13,7 +13,7 @@
 from __future__ import division, unicode_literals
 
 from .absolute import absolute_layout, AbsolutePlaceholder
-from .float import float_layout, get_clearance, FloatPlaceholder
+from .float import float_layout, get_clearance
 from .inlines import (iter_line_boxes, replaced_box_width, replaced_box_height,
                       handle_min_max_width, min_max_replaced_height,
                       min_max_auto_replaced)
@@ -255,10 +255,9 @@ def block_container_layout(document, box, max_position_y, skip_stack,
                 else:
                     document.fixed_boxes.append(placeholder)
             elif child.style.float in ('left', 'right'):
-                placeholder = FloatPlaceholder(child)
-                float_layout(document, placeholder, box, absolute_boxes)
-                document.excluded_shapes.append(placeholder)
-                new_children.append(placeholder)
+                child = float_layout(document, child, box, absolute_boxes)
+                document.excluded_shapes.append(child)
+                new_children.append(child)
             continue
 
         if isinstance(child, boxes.LineBox):
