@@ -165,7 +165,7 @@ def inline_preferred_minimum_width(box, outer=True, skip_stack=None,
         elif isinstance(child, boxes.InlineBox):
             # TODO: handle forced line breaks
             current_line = inline_preferred_minimum_width(
-                child, skip_stack, first_line)
+                child, skip_stack=skip_stack, first_line=first_line)
         else:
             assert isinstance(child, boxes.TextBox)
             widths = text_lines_width(child, width=0, skip=skip)
