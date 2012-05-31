@@ -16,7 +16,7 @@ import io
 
 import cairo
 
-from .. import HTML, CSS
+from .. import CSS
 from .. import pdf
 from .testing_utils import (
     assert_no_logs, resource_filename, TestPDFDocument, capture_logs)

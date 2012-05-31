@@ -17,7 +17,6 @@ import math
 
 from .properties import INITIAL_VALUES, Dimension
 from ..urls import get_link_attribute
-from ..compat import urlsplit, unquote
 
 
 ZERO_PIXELS = Dimension(0, 'px')

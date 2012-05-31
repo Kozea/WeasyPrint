@@ -69,7 +69,7 @@ class HTML(Resource):
     def __init__(self, guess=None, filename=None, url=None, file_obj=None,
                  string=None, tree=None, encoding=None, base_url=None):
         import lxml.html
-        from .urls import ensure_url, urlopen
+        from .urls import urlopen
 
         source_type, source, base_url = _select_source(
             guess, filename, url, file_obj, string, tree, base_url)
