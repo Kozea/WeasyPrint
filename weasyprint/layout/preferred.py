@@ -150,7 +150,10 @@ def inline_preferred_minimum_width(box, outer=True):
             # Images are on their own line
             current_line = replaced_preferred_width(child)
         elif isinstance(child, boxes.InlineBlockBox):
-            current_line = block_preferred_minimum_width(child)
+            if child.is_table_wrapper:
+                current_line = table_preferred_minimum_width(child)
+            else:
+                current_line = block_preferred_minimum_width(child)
         elif isinstance(child, boxes.InlineBox):
             # TODO: handle forced line breaks
             current_line = inline_preferred_minimum_width(child)
@@ -158,7 +161,7 @@ def inline_preferred_minimum_width(box, outer=True):
             assert isinstance(child, boxes.TextBox)
             current_line = max(text_lines_width(child, width=0))
         widest_line = max(widest_line, current_line)
-    return widest_line
+    return adjust(box, outer, widest_line)
 
 
 def inline_preferred_width(box, outer=True):
@@ -173,7 +176,10 @@ def inline_preferred_width(box, outer=True):
             # No line break around images
             current_line += replaced_preferred_width(child)
         elif isinstance(child, boxes.InlineBlockBox):
-            current_line += block_preferred_width(child)
+            if child.is_table_wrapper:
+                current_line += table_preferred_width(child)
+            else:
+                current_line += block_preferred_width(child)
         elif isinstance(child, boxes.InlineBox):
             # TODO: handle forced line breaks
             current_line += inline_preferred_width(child)
