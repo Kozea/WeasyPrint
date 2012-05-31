@@ -170,7 +170,7 @@ def inline_preferred_minimum_width(box, outer=True, skip_stack=None,
             assert isinstance(child, boxes.TextBox)
             widths = text_lines_width(child, width=0, skip=skip)
             if first_line:
-                return widths.next()
+                return next(widths)
             else:
                 current_line = max(widths)
         widest_line = max(widest_line, current_line)
