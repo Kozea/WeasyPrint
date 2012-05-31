@@ -10,10 +10,10 @@
 
 from __future__ import division, unicode_literals
 
-from .absolute import absolute_layout
 from .markers import list_marker_layout
 from .percentages import resolve_percentages, resolve_position_percentages
 from .preferred import shrink_to_fit
+from .tables import table_wrapper_width
 from ..formatting_structure import boxes
 
 
@@ -44,6 +44,11 @@ def float_layout(document, box, containing_block, absolute_boxes):
 
     # avoid a circular import
     from .blocks import block_container_layout
+
+    if box.is_table_wrapper:
+        table_wrapper_width(
+            box, (containing_block.width, containing_block.height),
+            absolute_boxes)
 
     if isinstance(box, boxes.BlockBox):
         excluded_shapes = document.excluded_shapes
