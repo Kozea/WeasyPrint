@@ -57,9 +57,6 @@ def float_layout(document, box, containing_block, absolute_boxes):
     else:
         assert isinstance(box, boxes.BlockReplacedBox)
 
-    for child_placeholder in absolute_boxes:
-        absolute_layout(document, child_placeholder, box)
-
     box = find_float_position(document, box, containing_block)
 
     document.excluded_shapes.append(box)
