@@ -139,8 +139,15 @@ def block_preferred_width(box, outer=True):
     return _block_preferred_width(box, preferred_width, outer)
 
 
-def inline_preferred_minimum_width(box, outer=True, skip_stack=None):
-    """Return the preferred minimum width for an ``InlineBox``."""
+def inline_preferred_minimum_width(box, outer=True, skip_stack=None,
+                                   first_line=False):
+    """Return the preferred minimum width for an ``InlineBox``.
+
+    The width is calculated from the lines from ``skip_stack``. If
+    ``first_line`` is ``True``, only the first line minimum width is
+    calculated.
+
+    """
     widest_line = 0
     if skip_stack is None:
         skip = 0
@@ -157,11 +164,15 @@ def inline_preferred_minimum_width(box, outer=True, skip_stack=None):
             current_line = block_preferred_minimum_width(child)
         elif isinstance(child, boxes.InlineBox):
             # TODO: handle forced line breaks
-            current_line = inline_preferred_minimum_width(child, skip_stack)
+            current_line = inline_preferred_minimum_width(
+                child, skip_stack, first_line)
         else:
             assert isinstance(child, boxes.TextBox)
-            current_line = max(
-                text_lines_width(child, width=0, skip=skip))
+            widths = text_lines_width(child, width=0, skip=skip)
+            if first_line:
+                return widths.next()
+            else:
+                current_line = max(widths)
         widest_line = max(widest_line, current_line)
     return widest_line
 
@@ -377,7 +388,7 @@ def text_lines_width(box, width, skip=None):
     """Return the list of line widths for a ``TextBox``."""
     # TODO: find the real surface, to have correct hinting
     context = cairo.Context(cairo.PDFSurface(None, 1, 1))
-    fragment = TextFragment(box.text[skip:], box.style, context, width=width)
+    fragment = TextFragment(box.text[skip:], box.style, context, width)
     return fragment.line_widths()
 
 
