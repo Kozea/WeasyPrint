@@ -19,12 +19,9 @@ from ..formatting_structure import boxes
 
 def float_layout(document, box, containing_block, absolute_boxes):
     """Set the width and position of floating ``box``."""
-    cb = containing_block
-    cb_width = cb.width
-    cb_height = cb.height
-
-    resolve_percentages(box, (cb_width, cb_height))
-    resolve_position_percentages(box, (cb_width, cb_height))
+    resolve_percentages(box, (containing_block.width, containing_block.height))
+    resolve_position_percentages(
+        box, (containing_block.width, containing_block.height))
 
     if box.margin_left == 'auto':
         box.margin_left = 0
