@@ -951,6 +951,60 @@ def test_auto_layout_table():
     assert td_33.width == 26
     assert table.width == 88
 
+    # Regression tests: these used to crash
+    page, = parse('''
+        <table style="width: 30px">
+            <tr>
+                <td colspan=2></td>
+                <td></td>
+            </tr>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2 = row.children
+    assert td_1.width == 20
+    assert td_2.width == 10
+    assert table.width == 30
+
+    page, = parse('''
+        <table style="width: 20px">
+            <col />
+            <col />
+            <tr>
+                <td></td>
+            </tr>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, = row.children
+    assert td_1.width == 10  # TODO: should this be 20?
+    assert table.width == 20
+
+    page, = parse('''
+        <table style="width: 20px">
+            <col />
+            <col />
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    column_group, = table.column_groups
+    column_1, column_2 = column_group.children
+    assert column_1.width == 10
+    assert column_2.width == 10
+
 
 @assert_no_logs
 def test_lists():
