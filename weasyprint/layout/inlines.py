@@ -695,7 +695,10 @@ def split_text_box(document, box, available_width, skip):
     else:
         preserved_line_break = (length != resume_at)
         if preserved_line_break:
-            assert between == '\n', ('Got %r between two lines. '
+            # See http://unicode.org/reports/tr14/
+            # TODO: are there others? Find Pango docs on this
+            assert between in ('\n', '\u2029'), (
+                'Got %r between two lines. '
                 'Expected nothing or a preserved line break' % (between,))
         resume_at += skip
 

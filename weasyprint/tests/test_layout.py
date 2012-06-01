@@ -1103,6 +1103,18 @@ def test_breaking_linebox():
                     assert child.element_tag in ('em', 'strong', 'span')
                     assert child.style.font_size == 13
 
+    # See http://unicode.org/reports/tr14/
+    page, = parse('<pre>a\nb\rc\r\nd\u2029e</pre>')
+    html, = page.children
+    body, = html.children
+    pre, = body.children
+    lines = pre.children
+    texts = []
+    for line in lines:
+        text_box, = line.children
+        texts.append(text_box.text)
+    assert texts == ['a', 'b', 'c', 'd', 'e']
+
 
 @assert_no_logs
 def test_linebox_text():
