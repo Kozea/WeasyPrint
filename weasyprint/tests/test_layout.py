@@ -323,6 +323,48 @@ def test_block_heights():
     heights = [div.height for div in body_children(page)]
     assert heights == [90, 90 * 3, 20, 120, 20, 120, 90, 90]
 
+    page, = parse('''
+        <style>
+            body { height: 200px }
+        </style>
+        <div>
+          <img src=pattern.png style="height: 40px">
+        </div>
+        <div style="height: 10%">
+          <img src=pattern.png style="height: 40px">
+        </div>
+        <div style="max-height: 20px">
+          <img src=pattern.png style="height: 40px">
+        </div>
+        <div style="max-height: 10%">
+          <img src=pattern.png style="height: 40px">
+        </div>
+        <div style="min-height: 20px"></div>
+        <div style="min-height: 10%"></div>
+    ''')
+    heights = [div.height for div in body_children(page)]
+    assert heights == [40, 20, 20, 20, 20, 20]
+
+    # Same but with no height on body: percentage *-height is ignored
+    page, = parse('''
+        <div>
+          <img src=pattern.png style="height: 40px">
+        </div>
+        <div style="height: 10%">
+          <img src=pattern.png style="height: 40px">
+        </div>
+        <div style="max-height: 20px">
+          <img src=pattern.png style="height: 40px">
+        </div>
+        <div style="max-height: 10%">
+          <img src=pattern.png style="height: 40px">
+        </div>
+        <div style="min-height: 20px"></div>
+        <div style="min-height: 10%"></div>
+    ''')
+    heights = [div.height for div in body_children(page)]
+    assert heights == [40, 40, 20, 40, 20, 0]
+
 
 @assert_no_logs
 def test_block_percentage_heights():

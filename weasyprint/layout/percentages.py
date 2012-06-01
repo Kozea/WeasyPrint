@@ -79,7 +79,7 @@ def resolve_percentages(box, containing_block):
             assert height.unit == 'px'
             box.height = height.value
         resolve_one_percentage(box, 'min_height', 0)
-        resolve_one_percentage(box, 'max_height', None)
+        resolve_one_percentage(box, 'max_height', float('inf'))
     else:
         resolve_one_percentage(box, 'height', cb_height)
         resolve_one_percentage(box, 'min_height', cb_height)
