@@ -544,19 +544,22 @@ def draw_replacedbox(context, box):
     x, y = box.padding_box_x(), box.padding_box_y()
     width, height = box.width, box.height
     pattern, intrinsic_width, intrinsic_height = box.replacement
-    with context.stacked():
-        context.translate(x, y)
-        context.rectangle(0, 0, width, height)
-        context.clip()
-        scale_width = width / intrinsic_width
-        scale_height = height / intrinsic_height
-        context.scale(scale_width, scale_height)
-        # The same image/pattern may have been used in a repeating background.
-        pattern.set_extend(cairo.EXTEND_NONE)
-        pattern.set_filter(IMAGE_RENDERING_TO_FILTER[
-            box.style.image_rendering])
-        context.set_source(pattern)
-        context.paint()
+    scale_width = width / intrinsic_width
+    scale_height = height / intrinsic_height
+    # Draw nothing for width:0 or height:0
+    if scale_width != 0 and scale_height != 0:
+        with context.stacked():
+            context.translate(x, y)
+            context.rectangle(0, 0, width, height)
+            context.clip()
+            context.scale(scale_width, scale_height)
+            # The same image/pattern may have been used in a
+            # repeating background.
+            pattern.set_extend(cairo.EXTEND_NONE)
+            pattern.set_filter(IMAGE_RENDERING_TO_FILTER[
+                box.style.image_rendering])
+            context.set_source(pattern)
+            context.paint()
     # Make sure `pattern` is garbage collected. If a surface for a SVG image
     # is still alive by the time we call show_page(), cairo will rasterize
     # the image instead writing vectors.

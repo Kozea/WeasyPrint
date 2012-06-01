@@ -1013,6 +1013,31 @@ def test_images():
     assert 'WARNING: Error for image' in logs[0]
     assert 'inexistent2.png' in logs[0]
 
+    assert_pixels('image_0x1', 8, 8, no_image, '''
+        <style>
+            @page { -weasy-size: 8px }
+            body { margin: 2px; background: #fff }
+        </style>
+        <div><img src="pattern.png" alt="not shown"
+                  style="width: 0; height: 1px"></div>
+    ''')
+    assert_pixels('image_1x0', 8, 8, no_image, '''
+        <style>
+            @page { -weasy-size: 8px }
+            body { margin: 2px; background: #fff }
+        </style>
+        <div><img src="pattern.png" alt="not shown"
+                  style="width: 1px; height: 0"></div>
+    ''')
+    assert_pixels('image_0x0', 8, 8, no_image, '''
+        <style>
+            @page { -weasy-size: 8px }
+            body { margin: 2px; background: #fff }
+        </style>
+        <div><img src="pattern.png" alt="not shown"
+                  style="width: 0; height: 0"></div>
+    ''')
+
 
 @assert_no_logs
 def test_visibility():
