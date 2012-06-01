@@ -27,10 +27,10 @@ LOGGER.handlers = []
 LOGGER.addHandler(logging.NullHandler())
 
 
-def run_all(suite_directory):
+def run_simple(suite_directory):
     from flask import safe_join
     chapters, tests = prepare_test_data(suite_directory)
-    tests = sorted(tests)[1123:]
+    tests = sorted(tests)
     for i, test_id in enumerate(tests):
         print('%s of %s  %s' % (i, len(tests), test_id))
         filename = safe_join(suite_directory, test_id + '.htm')
@@ -50,8 +50,6 @@ def run(suite_directory):
     chapters, tests = prepare_test_data(suite_directory)
 #    tests = list(tests)[:400]
 
-    length = len(tests)
-
     from flask import safe_join
     tests = sorted(
         (test_id, filename)
@@ -60,7 +58,8 @@ def run(suite_directory):
             for test_id in tests
         )
         if os.path.exists(filename)
-    )[9300:]
+    )
+    length = len(tests)
 
     errors = open('/tmp/a.txt', 'w')
     pool = multiprocessing.Pool(2)
