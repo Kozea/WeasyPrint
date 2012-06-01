@@ -321,6 +321,48 @@ def test_block_heights():
     heights = [div.height for div in body_children(page)]
     assert heights == [90, 90 * 3, 20, 120, 20, 120, 90, 90]
 
+    page, = parse('''
+        <style>
+            body { height: 200px }
+        </style>
+        <div>
+          <img src=pattern.png style="height: 40px">
+        </div>
+        <div style="height: 10%">
+          <img src=pattern.png style="height: 40px">
+        </div>
+        <div style="max-height: 20px">
+          <img src=pattern.png style="height: 40px">
+        </div>
+        <div style="max-height: 10%">
+          <img src=pattern.png style="height: 40px">
+        </div>
+        <div style="min-height: 20px"></div>
+        <div style="min-height: 10%"></div>
+    ''')
+    heights = [div.height for div in body_children(page)]
+    assert heights == [40, 20, 20, 20, 20, 20]
+
+    # Same but with no height on body: percentage *-height is ignored
+    page, = parse('''
+        <div>
+          <img src=pattern.png style="height: 40px">
+        </div>
+        <div style="height: 10%">
+          <img src=pattern.png style="height: 40px">
+        </div>
+        <div style="max-height: 20px">
+          <img src=pattern.png style="height: 40px">
+        </div>
+        <div style="max-height: 10%">
+          <img src=pattern.png style="height: 40px">
+        </div>
+        <div style="min-height: 20px"></div>
+        <div style="min-height: 10%"></div>
+    ''')
+    heights = [div.height for div in body_children(page)]
+    assert heights == [40, 40, 20, 40, 20, 0]
+
 
 @assert_no_logs
 def test_block_percentage_heights():
@@ -949,6 +991,60 @@ def test_auto_layout_table():
     assert td_33.width == 26
     assert table.width == 88
 
+    # Regression tests: these used to crash
+    page, = parse('''
+        <table style="width: 30px">
+            <tr>
+                <td colspan=2></td>
+                <td></td>
+            </tr>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2 = row.children
+    assert td_1.width == 20
+    assert td_2.width == 10
+    assert table.width == 30
+
+    page, = parse('''
+        <table style="width: 20px">
+            <col />
+            <col />
+            <tr>
+                <td></td>
+            </tr>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, = row.children
+    assert td_1.width == 10  # TODO: should this be 20?
+    assert table.width == 20
+
+    page, = parse('''
+        <table style="width: 20px">
+            <col />
+            <col />
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    column_group, = table.column_groups
+    column_1, column_2 = column_group.children
+    assert column_1.width == 10
+    assert column_2.width == 10
+
 
 @assert_no_logs
 def test_lists():
@@ -1046,6 +1142,18 @@ def test_breaking_linebox():
                 for child_child in child.children:
                     assert child.element_tag in ('em', 'strong', 'span')
                     assert child.style.font_size == 13
+
+    # See http://unicode.org/reports/tr14/
+    page, = parse('<pre>a\nb\rc\r\nd\u2029e</pre>')
+    html, = page.children
+    body, = html.children
+    pre, = body.children
+    lines = pre.children
+    texts = []
+    for line in lines:
+        text_box, = line.children
+        texts.append(text_box.text)
+    assert texts == ['a', 'b', 'c', 'd', 'e']
 
 
 @assert_no_logs

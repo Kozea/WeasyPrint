@@ -444,7 +444,19 @@ def margin_box_content_layout(document, page, box):
     return box
 
 
-def make_empty_page(document, root_box, page_type):
+def make_page(document, root_box, page_type, resume_at, content_empty):
+    """Take just enough content from the beginning to fill one page.
+
+    Return ``(page, finished)``. ``page`` is a laid out PageBox object
+    and ``resume_at`` indicates where in the document to start the next page,
+    or is ``None`` if this was the last page.
+
+    :param document: a Document object
+    :param page_number: integer, start at 1 for the first page
+    :param resume_at: as returned by ``make_page()`` for the previous page,
+                      or ``None`` for the first page.
+
+    """
     style = document.style_for(page_type)
     # Propagated from the root or <body>.
     style.overflow = root_box.viewport_overflow
@@ -459,30 +471,15 @@ def make_empty_page(document, root_box, page_type):
     page.position_y = 0
     page.width = page.outer_width - page.horizontal_surroundings()
     page.height = page.outer_height - page.vertical_surroundings()
-    return page
-
-
-def make_page(document, root_box, page_type, resume_at):
-    """Take just enough content from the beginning to fill one page.
-
-    Return ``(page, finished)``. ``page`` is a laid out PageBox object
-    and ``resume_at`` indicates where in the document to start the next page,
-    or is ``None`` if this was the last page.
-
-    :param document: a Document object
-    :param page_number: integer, start at 1 for the first page
-    :param resume_at: as returned by ``make_page()`` for the previous page,
-                      or ``None`` for the first page.
-
-    """
-    document.excluded_shapes = []
-    page = make_empty_page(document, root_box, page_type)
-    device_size = page.style.size
 
     root_box.position_x = page.content_box_x()
     root_box.position_y = page.content_box_y()
     page_content_bottom = root_box.position_y + page.height
     initial_containing_block = page
+
+    if content_empty:
+        previous_resume_at = resume_at
+        root_box = root_box.copy_with_children([])
 
     # TODO: handle cases where the root element is something else.
     # See http://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
@@ -503,6 +500,8 @@ def make_page(document, root_box, page_type, resume_at):
 
     page = page.copy_with_children(children)
 
+    if content_empty:
+        resume_at = previous_resume_at
     return page, resume_at, next_page
 
 
@@ -523,14 +522,11 @@ def make_all_pages(document, root_box):
     next_page = 'any'
     while True:
         page_type = prefix + ('right_page' if right_page else 'left_page')
-        if ((next_page == 'left' and right_page) or
-            (next_page == 'right' and not right_page)):
-            page = make_empty_page(document, root_box, page_type)
-            page.children = (root_box.copy_with_children([]),)
-        else:
-            page, resume_at, next_page = make_page(
-                document, root_box, page_type, resume_at)
-            assert next_page
+        content_empty = ((next_page == 'left' and right_page) or
+                         (next_page == 'right' and not right_page))
+        page, resume_at, next_page = make_page(
+            document, root_box, page_type, resume_at, content_empty)
+        assert next_page
         yield page
         if resume_at is None:
             return

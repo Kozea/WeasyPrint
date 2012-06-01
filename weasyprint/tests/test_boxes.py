@@ -990,6 +990,15 @@ def test_counters():
                 ('p:before', 'Inline', [
                     ('p:before', 'Text', '0')])])])])
 
+    # counter-increment may interfere with display: list-item
+    assert_tree(parse_all('''
+        <p style="counter-increment: c;
+                  display: list-item; list-style: inside decimal">
+    '''), [
+        ('p', 'Block', [
+            ('p', 'Line', [
+                    ('p::marker', 'Text', '0.')])])])
+
 
 @assert_no_logs
 def test_counter_styles():

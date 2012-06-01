@@ -231,15 +231,21 @@ def table_and_columns_preferred_widths(box, outer=True,
     table = box.get_wrapped_table()
 
     nb_columns = 0
+    if table.column_groups:
+        last_column_group = table.column_groups[-1]
+        # Column groups always have at least one child column.
+        last_column = last_column_group.children[-1]
+        # +1 as the grid starts at 0
+        nb_columns = last_column.grid_x + 1
+
     rows = []
     for i, row_group in enumerate(table.children):
-        assert isinstance(row_group, boxes.TableRowGroupBox)
         for j, row in enumerate(row_group.children):
-            assert isinstance(row, boxes.TableRowBox)
             rows.append(row)
-            for k, cell in enumerate(row.children):
-                assert isinstance(cell, boxes.TableCellBox)
-                nb_columns = max(nb_columns, k + cell.colspan)
+            if row.children:
+                last_cell = row.children[-1]
+                row_grid_width = last_cell.grid_x + last_cell.colspan
+                nb_columns = max(nb_columns, row_grid_width)
     nb_rows = len(rows)
 
     colspan_cells = []
@@ -266,9 +272,11 @@ def table_and_columns_preferred_widths(box, outer=True,
                     preferred_minimum_width(cell)
 
     column_preferred_widths = [
-        max(widths) for widths in column_preferred_widths]
+        max(widths) if widths else 0
+        for widths in column_preferred_widths]
     column_preferred_minimum_widths = [
-        max(widths) for widths in column_preferred_minimum_widths]
+        max(widths) if widths else 0
+        for widths in column_preferred_minimum_widths]
 
     # Point #2
     column_groups_widths = []
