@@ -21,10 +21,13 @@ from . import VERSION_STRING
 from .logger import LOGGER
 from .compat import (
     urljoin, urlsplit, quote, unquote, unquote_to_bytes, urlopen_contenttype,
-    Request, parse_email, pathname2url)
+    Request, parse_email, pathname2url, unicode)
 
 
-SCHEME_RE = re.compile('^([a-z][a-z0-1.+-]*):', re.I)
+# Both are needed in Python 3 as the re module does not like to mix
+UNICODE_SCHEME_RE = re.compile('^([a-z][a-z0-1.+-]*):', re.I)
+BYTES_SCHEME_RE = re.compile(b'^([a-z][a-z0-1.+-]*):', re.I)
+
 OPENER_BY_SCHEME = {}
 
 def register_opener(scheme):
@@ -64,12 +67,17 @@ def iri_to_uri(url):
 
 def path2url(path):
     """Return file URL of `path`"""
+    path = os.path.abspath(path)
+    if isinstance(path, unicode):
+        path = path.encode('utf8')
     # TODO: should this be 'file://' ? Maybe only on Unix?
-    return 'file:' + pathname2url(os.path.abspath(path))
+    return 'file:' + pathname2url(path)
 
 
 def url_is_absolute(url):
-    return bool(SCHEME_RE.match(url))
+    return bool(
+        (UNICODE_SCHEME_RE if isinstance(url, unicode) else BYTES_SCHEME_RE)
+        .match(url))
 
 
 def get_url_attribute(element, attr_name):
@@ -198,7 +206,7 @@ def urlopen(url):
 
     It is the caller’s responsability to call ``file_like.close()``.
     """
-    match = SCHEME_RE.match(url)
+    match = UNICODE_SCHEME_RE.match(url)
     if not match:
         raise ValueError('Not an absolute URI: %r' % url)
     opener = OPENER_BY_SCHEME.get(match.group(1))
