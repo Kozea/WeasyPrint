@@ -447,7 +447,7 @@ def fixed_table_layout(box, absolute_boxes):
     table.column_widths = column_widths
 
 
-def auto_table_layout(box, containing_block, absolute_boxes):
+def auto_table_layout(document, box, containing_block, absolute_boxes):
     """Run the auto table layout and return a list of column widths.
 
     http://www.w3.org/TR/CSS21/tables.html#auto-table-layout
@@ -456,7 +456,8 @@ def auto_table_layout(box, containing_block, absolute_boxes):
     table = box.get_wrapped_table()
     (table_preferred_minimum_width, table_preferred_width,
      column_preferred_minimum_widths, column_preferred_widths) = \
-        table_and_columns_preferred_widths(box, resolved_table_width=True)
+        table_and_columns_preferred_widths(
+            document, box, resolved_table_width=True)
 
     all_border_spacing = (
         table.style.border_spacing[0] * (len(column_preferred_widths) + 1))
@@ -503,7 +504,7 @@ def auto_table_layout(box, containing_block, absolute_boxes):
                 for column_width in table.column_widths]
 
 
-def table_wrapper_width(wrapper, containing_block, absolute_boxes):
+def table_wrapper_width(document, wrapper, containing_block, absolute_boxes):
     """Find the width of each column and derive the wrapper width."""
     table = wrapper.get_wrapped_table()
     resolve_percentages(table, containing_block)
@@ -511,7 +512,7 @@ def table_wrapper_width(wrapper, containing_block, absolute_boxes):
     if table.style.table_layout == 'fixed' and table.width != 'auto':
         fixed_table_layout(wrapper, absolute_boxes)
     else:
-        auto_table_layout(wrapper, containing_block, absolute_boxes)
+        auto_table_layout(document, wrapper, containing_block, absolute_boxes)
 
     wrapper.width = table.border_width()
     wrapper.style.width = Dimension(wrapper.width, 'px')

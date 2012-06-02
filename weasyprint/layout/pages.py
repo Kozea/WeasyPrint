@@ -22,7 +22,8 @@ from .variable_margin_dimension import with_rule_2
 
 
 class VerticalBox(object):
-    def __init__(self, box):
+    def __init__(self, document, box):
+        self.document = document
         self.box = box
         # Inner dimension: that of the content area, as opposed to the
         # outer dimension: that of the margin area.
@@ -50,7 +51,8 @@ class VerticalBox(object):
 
 
 class HorizontalBox(object):
-    def __init__(self, box):
+    def __init__(self, document, box):
+        self.document = document
         self.box = box
         self.inner = box.width
         self.margin_a = box.margin_left
@@ -71,17 +73,18 @@ class HorizontalBox(object):
     def minimum(self):
         if self._minimum is None:
             self._minimum = inline_preferred_minimum_width(
-                self.box, outer=False)
+                self.document, self.box, outer=False)
         return self._minimum
 
     @property
     def preferred(self):
         if self._preferred is None:
-            self._preferred = inline_preferred_width(self.box, outer=False)
+            self._preferred = inline_preferred_width(
+                self.document, self.box, outer=False)
         return self._preferred
 
 
-def compute_fixed_dimension(box, outer, vertical, top_or_left):
+def compute_fixed_dimension(document, box, outer, vertical, top_or_left):
     """
     Compute and set a margin box fixed dimension on ``box``, as described in:
     http://dev.w3.org/csswg/css3-page/#margin-constraints
@@ -99,7 +102,7 @@ def compute_fixed_dimension(box, outer, vertical, top_or_left):
         This determines which margin should be 'auto' if the values are
         over-constrained. (Rule 3 of the algorithm.)
     """
-    box = (VerticalBox if vertical else HorizontalBox)(box)
+    box = (VerticalBox if vertical else HorizontalBox)(document, box)
 
     # Rule 2
     total = box.padding_plus_border + sum(
@@ -172,7 +175,7 @@ def compute_variable_dimension(document, side_boxes, vertical, outer_sum):
 
     """
     box_class = VerticalBox if vertical else HorizontalBox
-    side_boxes = [box_class(box) for box in side_boxes]
+    side_boxes = [box_class(document, box) for box in side_boxes]
     box_a, box_b, box_c = side_boxes
 
     num_auto_margins = sum(
@@ -378,7 +381,8 @@ def make_margin_boxes(document, page, counter_values):
             if not box.exists:
                 continue
             compute_fixed_dimension(
-                box, fixed_outer, not vertical, prefix in ['top', 'left'])
+                document, box, fixed_outer, not vertical,
+                prefix in ['top', 'left'])
             box.position_x = position_x
             box.position_y = position_y
             if vertical:
@@ -404,8 +408,10 @@ def make_margin_boxes(document, page, counter_values):
             continue
         box.position_x = position_x
         box.position_y = position_y
-        compute_fixed_dimension(box, cb_height, True, 'top' in at_keyword)
-        compute_fixed_dimension(box, cb_width, False, 'left' in at_keyword)
+        compute_fixed_dimension(
+            document, box, cb_height, True, 'top' in at_keyword)
+        compute_fixed_dimension(
+            document, box, cb_width, False, 'left' in at_keyword)
         generated_boxes.append(box)
 
     generated_boxes.extend(delayed_boxes)
