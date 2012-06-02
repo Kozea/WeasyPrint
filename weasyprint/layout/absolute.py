@@ -207,7 +207,8 @@ def absolute_block(document, box, containing_block):
     absolute_boxes = []
 
     if box.is_table_wrapper:
-        table_wrapper_width(box, (cb_width, cb_height), absolute_boxes)
+        table_wrapper_width(
+            document, box, (cb_width, cb_height), absolute_boxes)
 
     # avoid a circular import
     from .blocks import block_container_layout

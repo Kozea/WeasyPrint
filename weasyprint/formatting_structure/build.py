@@ -512,11 +512,13 @@ def wrap_table(box, children):
                 new_grid_x = grid_x + cell.colspan
                 # http://www.w3.org/TR/html401/struct/tables.html#adef-rowspan
                 if cell.rowspan != 1:
+                    max_rowspan = len(occupied_cells_by_row) + 1
                     if cell.rowspan == 0:
                         # All rows until the end of the group
                         spanned_rows = occupied_cells_by_row
-                        cell.rowspan = len(occupied_cells_by_row) + 1
+                        cell.rowspan = max_rowspan
                     else:
+                        cell.rowspan = min(cell.rowspan, max_rowspan)
                         spanned_rows = occupied_cells_by_row[:cell.rowspan - 1]
                     spanned_columns = range(grid_x, new_grid_x)
                     for occupied_cells in spanned_rows:
