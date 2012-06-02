@@ -269,7 +269,7 @@ def add_box_marker(document, counter_values, box):
         type_ = style.list_style_type
         if type_ == 'none':
             return
-        counter_value = counter_values['list-item'][-1]
+        counter_value = counter_values.get('list-item', [0])[-1]
         marker_text = counters.format_list_marker(counter_value, type_)
         marker_box = boxes.TextBox.anonymous_from(box, marker_text)
     else:
@@ -660,7 +660,7 @@ def inline_in_block(box):
     new_children = []
     for child_box in children:
         assert not isinstance(child_box, boxes.LineBox)
-        if new_line_children and not child_box.is_in_normal_flow():
+        if new_line_children and child_box.is_absolutely_positioned():
             new_line_children.append(child_box)
         elif isinstance(child_box, boxes.InlineLevelBox):
             # Do not append white space at the start of a line:

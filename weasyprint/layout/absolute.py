@@ -121,7 +121,7 @@ def absolute_block(document, box, containing_block):
             box.margin_right = 0
         available_width = cb_width - (
             padding_plus_borders_x + box.margin_left + box.margin_right)
-        box.width = shrink_to_fit(box, available_width)
+        box.width = shrink_to_fit(document, box, available_width)
     elif left != 'auto' and right != 'auto' and width != 'auto':
         width_for_margins = cb_width - (
             right + left + padding_plus_borders_x)
@@ -145,13 +145,14 @@ def absolute_block(document, box, containing_block):
             box.margin_right = 0
         spacing = padding_plus_borders_x + box.margin_left + box.margin_right
         if left == width == 'auto':
-            box.width = shrink_to_fit(box, cb_width - spacing - right)
+            box.width = shrink_to_fit(
+                document, box, cb_width - spacing - right)
             translate_x = cb_width - right - spacing + default_translate_x
             translate_box_width = True
         elif left == right == 'auto':
             pass  # Keep the static position
         elif width == right == 'auto':
-            box.width = shrink_to_fit(box, cb_width - spacing - left)
+            box.width = shrink_to_fit(document, box, cb_width - spacing - left)
             translate_x = left + default_translate_x
         elif left == 'auto':
             translate_x = (

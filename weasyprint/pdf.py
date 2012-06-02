@@ -38,6 +38,7 @@ import string
 import cairo
 
 from . import VERSION_STRING
+from .logger import LOGGER
 from .compat import xrange, iteritems
 from .urls import iri_to_uri
 from .formatting_structure import boxes
@@ -351,18 +352,18 @@ def gather_metadata(document):
     """Traverse the layout tree (boxes) to find all metadata."""
     def walk(box):
         if box.bookmark_label and box.bookmark_level:
+            pos_x, pos_y = point_to_pdf(box.position_x, box.position_y)
             bookmarks.append((
                 box.bookmark_level,
                 box.bookmark_label,
-                (page_index,) + point_to_pdf(box.position_x, box.position_y)))
+                (page_index, pos_x, pos_y)))
 
         if box.style.link:
             pos_x, pos_y = point_to_pdf(box.position_x, box.position_y)
             width, height = distance_to_pdf(
                 box.margin_width(), box.margin_height())
-            links.append((
-                box.style.link,
-                (pos_x, pos_y, pos_x + width, pos_y + height)))
+            page_links.append(
+                (box, (pos_x, pos_y, pos_x + width, pos_y + height)))
 
         if box.style.anchor and box.style.anchor not in anchors:
             anchors[box.style.anchor] = (
@@ -382,14 +383,36 @@ def gather_metadata(document):
             PX_TO_PT, 0, 0, -PX_TO_PT, 0, page.outer_height * PX_TO_PT)
         point_to_pdf = matrix.transform_point
         distance_to_pdf = matrix.transform_distance
-        links = []
+        page_links = []
         walk(page)
-        links_by_page.append(links)
-    return process_bookmarks(bookmarks), links_by_page, anchors
+        links_by_page.append(page_links)
+
+    # A list (by page) of lists of either:
+    # ('external', uri, rectangle) or
+    # ('internal', (page_index, target_x, target_y), rectangle)
+    resolved_links_by_page = []
+    for page_links in links_by_page:
+        resolved_page_links = []
+        for box, rectangle in page_links:
+            type_, href = box.style.link
+            if type_ == 'internal':
+                target = anchors.get(href)
+                if target is None:
+                    LOGGER.warn(
+                        'No anchor #%s for internal URI reference at line %s'
+                        % (href, box.sourceline))
+                else:
+                    resolved_page_links.append((type_, target, rectangle))
+            else:
+                # external link:
+                resolved_page_links.append((type_, href, rectangle))
+        resolved_links_by_page.append(resolved_page_links)
+
+    return process_bookmarks(bookmarks), resolved_links_by_page
 
 
 def write_pdf_metadata(document, fileobj):
-    bookmarks, links, anchors = gather_metadata(document)
+    bookmarks, links = gather_metadata(document)
 
     pdf = PDFFile(fileobj)
     pdf.overwrite_object(pdf.info.object_number, pdf_format(
@@ -422,7 +445,7 @@ def write_pdf_metadata(document, fileobj):
 
     for page, page_links in zip(pdf.pages, links):
         annotations = []
-        for (is_internal, uri), rectangle in page_links:
+        for is_internal, target, rectangle in page_links:
             content = [pdf_format(
                 '<< /Type /Annot /Subtype /Link '
                     '/Rect [{0:f} {1:f} {2:f} {3:f}] /Border [0 0 0]\n',
@@ -431,11 +454,11 @@ def write_pdf_metadata(document, fileobj):
                 content.append(pdf_format(
                     '/A << /Type /Action /S /GoTo '
                         '/D [{0} /XYZ {1:f} {2:f} 0] >>\n',
-                    *anchors[uri]))
+                    *target))
             else:
                 content.append(pdf_format(
                     '/A << /Type /Action /S /URI /URI ({0}) >>\n',
-                    iri_to_uri(uri)))
+                    iri_to_uri(target)))
             content.append(b'>>')
             annotations.append(pdf.write_new_object(b''.join(content)))
 

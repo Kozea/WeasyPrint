@@ -47,12 +47,14 @@ def format_pixel(pixels, width, x, y):  # pragma: no cover
     return PIXEL_FORMAT % pixel_ints
 
 
-def assert_pixels(name, expected_width, expected_height, expected_lines, html):
+def assert_pixels(name, expected_width, expected_height, expected_lines,
+                  html, nb_pages=1):
     """Helper testing the size of the image and the pixels values."""
     assert len(expected_lines) == expected_height
     assert len(expected_lines[0]) == expected_width * BYTES_PER_PIXELS
     expected_raw = b''.join(expected_lines)
-    _doc, lines = html_to_pixels(name, expected_width, expected_height, html)
+    _doc, lines = html_to_pixels(name, expected_width, expected_height,
+                                 html, nb_pages=nb_pages)
     assert_pixels_equal(name, expected_width, expected_height, lines,
                         expected_raw)
 
@@ -111,7 +113,7 @@ def write_png(basename, lines, width, height):  # pragma: no cover
         image.write(filename)
 
 
-def html_to_pixels(name, expected_width, expected_height, html):
+def html_to_pixels(name, expected_width, expected_height, html, nb_pages=1):
     """
     Render an HTML document to PNG, checks its size and return pixel data.
 
@@ -120,20 +122,22 @@ def html_to_pixels(name, expected_width, expected_height, html):
     document = TestPNGDocument(html,
         # Dummy filename, but in the right directory.
         base_url=resource_filename('<test>'))
-    lines = document_to_pixels(document, name, expected_width, expected_height)
+    lines = document_to_pixels(document, name, expected_width,
+                               expected_height, nb_pages=nb_pages)
     return document, lines
 
 
-def document_to_pixels(document, name, expected_width, expected_height):
+def document_to_pixels(document, name, expected_width, expected_height,
+                       nb_pages=1):
     """
     Render an HTML document to PNG, checks its size and return pixel data.
     """
     file_like = BytesIO()
     document.write_to(file_like)
-    assert len(document.pages) == 1
+    assert len(document.pages) == nb_pages
 
     with contextlib.closing(pystacia.read_blob(file_like.getvalue())) as image:
-        assert image.size == (expected_width, expected_height), name
+        assert image.size == (expected_width, expected_height)
         raw = image.get_raw('rgba')['raw']
         assert len(raw) == expected_width * expected_height * BYTES_PER_PIXELS
         return raw
@@ -1012,6 +1016,69 @@ def test_images():
     assert len(logs) == 1
     assert 'WARNING: Error for image' in logs[0]
     assert 'inexistent2.png' in logs[0]
+
+    assert_pixels('image_0x1', 8, 8, no_image, '''
+        <style>
+            @page { -weasy-size: 8px }
+            body { margin: 2px; background: #fff }
+        </style>
+        <div><img src="pattern.png" alt="not shown"
+                  style="width: 0; height: 1px"></div>
+    ''')
+    assert_pixels('image_1x0', 8, 8, no_image, '''
+        <style>
+            @page { -weasy-size: 8px }
+            body { margin: 2px; background: #fff }
+        </style>
+        <div><img src="pattern.png" alt="not shown"
+                  style="width: 1px; height: 0"></div>
+    ''')
+    assert_pixels('image_0x0', 8, 8, no_image, '''
+        <style>
+            @page { -weasy-size: 8px }
+            body { margin: 2px; background: #fff }
+        </style>
+        <div><img src="pattern.png" alt="not shown"
+                  style="width: 0; height: 0"></div>
+    ''')
+
+
+    page_break = [
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+r+B+B+B+_+_,
+        _+_+B+B+B+B+_+_,
+        _+_+B+B+B+B+_+_,
+        _+_+B+B+B+B+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+r+B+B+B+_+_,
+        _+_+B+B+B+B+_+_,
+        _+_+B+B+B+B+_+_,
+        _+_+B+B+B+B+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+    ]
+    assert_pixels('image_page_break', 8, 3 * 8, page_break, '''
+        <style>
+            @page { -weasy-size: 8px; margin: 2px; background: #fff }
+        </style>
+        <div><img src="pattern.png"></div>
+        <div style="page-break-before: right"><img src="pattern.png"></div>
+    ''', nb_pages=3)
+
 
 
 @assert_no_logs

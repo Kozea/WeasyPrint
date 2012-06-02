@@ -22,7 +22,8 @@ from .variable_margin_dimension import with_rule_2
 
 
 class VerticalBox(object):
-    def __init__(self, box):
+    def __init__(self, document, box):
+        self.document = document
         self.box = box
         # Inner dimension: that of the content area, as opposed to the
         # outer dimension: that of the margin area.
@@ -50,7 +51,8 @@ class VerticalBox(object):
 
 
 class HorizontalBox(object):
-    def __init__(self, box):
+    def __init__(self, document, box):
+        self.document = document
         self.box = box
         self.inner = box.width
         self.margin_a = box.margin_left
@@ -71,17 +73,18 @@ class HorizontalBox(object):
     def minimum(self):
         if self._minimum is None:
             self._minimum = inline_preferred_minimum_width(
-                self.box, outer=False)
+                self.document, self.box, outer=False)
         return self._minimum
 
     @property
     def preferred(self):
         if self._preferred is None:
-            self._preferred = inline_preferred_width(self.box, outer=False)
+            self._preferred = inline_preferred_width(
+                self.document, self.box, outer=False)
         return self._preferred
 
 
-def compute_fixed_dimension(box, outer, vertical, top_or_left):
+def compute_fixed_dimension(document, box, outer, vertical, top_or_left):
     """
     Compute and set a margin box fixed dimension on ``box``, as described in:
     http://dev.w3.org/csswg/css3-page/#margin-constraints
@@ -99,7 +102,7 @@ def compute_fixed_dimension(box, outer, vertical, top_or_left):
         This determines which margin should be 'auto' if the values are
         over-constrained. (Rule 3 of the algorithm.)
     """
-    box = (VerticalBox if vertical else HorizontalBox)(box)
+    box = (VerticalBox if vertical else HorizontalBox)(document, box)
 
     # Rule 2
     total = box.padding_plus_border + sum(
@@ -172,7 +175,7 @@ def compute_variable_dimension(document, side_boxes, vertical, outer_sum):
 
     """
     box_class = VerticalBox if vertical else HorizontalBox
-    side_boxes = [box_class(box) for box in side_boxes]
+    side_boxes = [box_class(document, box) for box in side_boxes]
     box_a, box_b, box_c = side_boxes
 
     num_auto_margins = sum(
@@ -378,7 +381,8 @@ def make_margin_boxes(document, page, counter_values):
             if not box.exists:
                 continue
             compute_fixed_dimension(
-                box, fixed_outer, not vertical, prefix in ['top', 'left'])
+                document, box, fixed_outer, not vertical,
+                prefix in ['top', 'left'])
             box.position_x = position_x
             box.position_y = position_y
             if vertical:
@@ -404,8 +408,10 @@ def make_margin_boxes(document, page, counter_values):
             continue
         box.position_x = position_x
         box.position_y = position_y
-        compute_fixed_dimension(box, cb_height, True, 'top' in at_keyword)
-        compute_fixed_dimension(box, cb_width, False, 'left' in at_keyword)
+        compute_fixed_dimension(
+            document, box, cb_height, True, 'top' in at_keyword)
+        compute_fixed_dimension(
+            document, box, cb_width, False, 'left' in at_keyword)
         generated_boxes.append(box)
 
     generated_boxes.extend(delayed_boxes)
@@ -444,7 +450,19 @@ def margin_box_content_layout(document, page, box):
     return box
 
 
-def make_empty_page(document, root_box, page_type):
+def make_page(document, root_box, page_type, resume_at, content_empty):
+    """Take just enough content from the beginning to fill one page.
+
+    Return ``(page, finished)``. ``page`` is a laid out PageBox object
+    and ``resume_at`` indicates where in the document to start the next page,
+    or is ``None`` if this was the last page.
+
+    :param document: a Document object
+    :param page_number: integer, start at 1 for the first page
+    :param resume_at: as returned by ``make_page()`` for the previous page,
+                      or ``None`` for the first page.
+
+    """
     style = document.style_for(page_type)
     # Propagated from the root or <body>.
     style.overflow = root_box.viewport_overflow
@@ -459,30 +477,16 @@ def make_empty_page(document, root_box, page_type):
     page.position_y = 0
     page.width = page.outer_width - page.horizontal_surroundings()
     page.height = page.outer_height - page.vertical_surroundings()
-    return page
-
-
-def make_page(document, root_box, page_type, resume_at):
-    """Take just enough content from the beginning to fill one page.
-
-    Return ``(page, finished)``. ``page`` is a laid out PageBox object
-    and ``resume_at`` indicates where in the document to start the next page,
-    or is ``None`` if this was the last page.
-
-    :param document: a Document object
-    :param page_number: integer, start at 1 for the first page
-    :param resume_at: as returned by ``make_page()`` for the previous page,
-                      or ``None`` for the first page.
-
-    """
     document.excluded_shapes = []
-    page = make_empty_page(document, root_box, page_type)
-    device_size = page.style.size
 
     root_box.position_x = page.content_box_x()
     root_box.position_y = page.content_box_y()
     page_content_bottom = root_box.position_y + page.height
     initial_containing_block = page
+
+    if content_empty:
+        previous_resume_at = resume_at
+        root_box = root_box.copy_with_children([])
 
     # TODO: handle cases where the root element is something else.
     # See http://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
@@ -503,6 +507,8 @@ def make_page(document, root_box, page_type, resume_at):
 
     page = page.copy_with_children(children)
 
+    if content_empty:
+        resume_at = previous_resume_at
     return page, resume_at, next_page
 
 
@@ -523,14 +529,11 @@ def make_all_pages(document, root_box):
     next_page = 'any'
     while True:
         page_type = prefix + ('right_page' if right_page else 'left_page')
-        if ((next_page == 'left' and right_page) or
-            (next_page == 'right' and not right_page)):
-            page = make_empty_page(document, root_box, page_type)
-            page.children = (root_box.copy_with_children([]),)
-        else:
-            page, resume_at, next_page = make_page(
-                document, root_box, page_type, resume_at)
-            assert next_page
+        content_empty = ((next_page == 'left' and right_page) or
+                         (next_page == 'right' and not right_page))
+        page, resume_at, next_page = make_page(
+            document, root_box, page_type, resume_at, content_empty)
+        assert next_page
         yield page
         if resume_at is None:
             return
