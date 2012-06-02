@@ -47,7 +47,7 @@ def float_layout(document, box, containing_block, absolute_boxes):
 
     if box.is_table_wrapper:
         table_wrapper_width(
-            box, (containing_block.width, containing_block.height),
+            document, box, (containing_block.width, containing_block.height),
             absolute_boxes)
 
     if isinstance(box, boxes.BlockBox):
