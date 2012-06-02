@@ -61,7 +61,7 @@ def get_next_linebox(document, linebox, position_y, skip_stack,
     """Return ``(line, resume_at)``."""
     linebox.position_y = position_y
     linebox.width = inline_preferred_minimum_width(
-        linebox, skip_stack=skip_stack, first_line=True)
+        document, linebox, skip_stack=skip_stack, first_line=True)
     position_x, position_y, available_width = avoid_collisions(
         document, linebox, containing_block, outer=False)
     linebox.position_x = position_x
