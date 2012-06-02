@@ -660,7 +660,7 @@ def inline_in_block(box):
     new_children = []
     for child_box in children:
         assert not isinstance(child_box, boxes.LineBox)
-        if new_line_children and not child_box.is_in_normal_flow():
+        if new_line_children and child_box.is_absolutely_positioned():
             new_line_children.append(child_box)
         elif isinstance(child_box, boxes.InlineLevelBox):
             # Do not append white space at the start of a line:

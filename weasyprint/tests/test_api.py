@@ -14,6 +14,7 @@ from __future__ import division, unicode_literals
 
 import os
 import io
+import sys
 import contextlib
 import threading
 import shutil
@@ -291,3 +292,45 @@ def test_command_line_render():
 
             stdout = run('--format png - -', stdin=combined)
             assert stdout == png_bytes
+
+
+@assert_no_logs
+def test_unicode_filenames():
+    """Test non-ASCII filenames both in Unicode or bytes form."""
+    # Replicate pattern.png in CSS so that base_url does not matter.
+    html = b'''
+        <style>
+            @page { margin: 2px; -weasy-size: 8px; background: #fff }
+            html { background: #00f; }
+            body { background: #f00; width: 1px; height: 1px; }
+        </style>
+        <body>
+    '''
+    png_bytes = TestHTML(string=html).write_png()
+    check_png_pattern(png_bytes)
+    # Remember we have __future__.unicode_literals
+    unicode_filename = 'Unicödé'
+    with temp_directory() as temp:
+        with chdir(temp):
+            write_file(unicode_filename, html)
+            assert os.listdir('.') == [unicode_filename]
+            # This should be independent of the encoding used by the filesystem
+            bytes_filename, = os.listdir(b'.')
+
+            assert TestHTML(unicode_filename).write_png() == png_bytes
+            assert TestHTML(bytes_filename).write_png() == png_bytes
+
+            os.remove(unicode_filename)
+            assert os.listdir('.') == []
+
+            TestHTML(string=html).write_png(unicode_filename)
+            assert read_file(bytes_filename) == png_bytes
+
+            # Surface.write_to_png does not accept bytes filenames
+            # on Python 3
+            if sys.version_info[0] < 3:
+                os.remove(unicode_filename)
+                assert os.listdir('.') == []
+
+                TestHTML(string=html).write_png(bytes_filename)
+                assert read_file(unicode_filename) == png_bytes

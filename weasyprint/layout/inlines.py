@@ -61,7 +61,7 @@ def get_next_linebox(document, linebox, position_y, skip_stack,
     """Return ``(line, resume_at)``."""
     linebox.position_y = position_y
     linebox.width = inline_preferred_minimum_width(
-        linebox, skip_stack=skip_stack, first_line=True)
+        document, linebox, skip_stack=skip_stack, first_line=True)
     position_x, position_y, available_width = avoid_collisions(
         document, linebox, containing_block, outer=False)
     linebox.position_x = position_x
@@ -413,8 +413,10 @@ def atomic_box(document, box, position_x, skip_stack, containing_block,
         box.baseline = box.margin_height()
     elif isinstance(box, boxes.InlineBlockBox):
         if box.is_table_wrapper:
-            table_wrapper_width(box, (containing_block.width,
-                                      containing_block.height), absolute_boxes)
+            table_wrapper_width(
+                document, box,
+                (containing_block.width, containing_block.height),
+                absolute_boxes)
         box = inline_block_box_layout(
             document, box, position_x, skip_stack, containing_block,
             device_size, absolute_boxes)
@@ -436,7 +438,7 @@ def inline_block_box_layout(document, box, position_x, skip_stack,
     if box.margin_right == 'auto':
         box.margin_right = 0
 
-    inline_block_width(box, containing_block)
+    inline_block_width(box, document, containing_block)
 
     box.position_x = position_x
     box.position_y = 0
@@ -464,9 +466,9 @@ def inline_block_baseline(box):
 
 
 @handle_min_max_width
-def inline_block_width(box, containing_block):
+def inline_block_width(box, document, containing_block):
     if box.width == 'auto':
-        box.width = shrink_to_fit(box, containing_block.width)
+        box.width = shrink_to_fit(document, box, containing_block.width)
 
 
 def split_inline_level(document, box, position_x, max_x, skip_stack,

@@ -498,6 +498,21 @@ def test_inline_block_sizes():
     assert div_8.width == 185
     assert div_9.width == 10
 
+    # Previously, the hinting for in shrink-to-fit did not match that
+    # of the layout, which often resulted in a line break just before
+    # the last word.
+    page, = parse('''
+        <p style="display: inline-block">Lorem ipsum dolor sit amet …</p>
+    ''')
+    html, = page.children
+    body, = html.children
+    outer_line, = body.children
+    paragraph, = outer_line.children
+    inner_lines = paragraph.children
+    assert len(inner_lines) == 1
+    text_box, = inner_lines[0].children
+    assert text_box.text == 'Lorem ipsum dolor sit amet …'
+
 
 @assert_no_logs
 def test_inline_table():
@@ -2972,8 +2987,8 @@ def test_preferred_widths():
     text, = line.children
     assert text.text == '\nLorem ipsum dolor sit amet,\nconsectetur elit\n'
 
-    minimum = inline_preferred_minimum_width(line)
-    preferred = inline_preferred_width(line)
+    minimum = inline_preferred_minimum_width(document, line)
+    preferred = inline_preferred_width(document, line)
     # Not exact, depends on the installed fonts
     assert 120 < minimum < 140
     assert 220 < preferred < 240

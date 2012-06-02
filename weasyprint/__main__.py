@@ -18,7 +18,7 @@ import argparse
 from . import VERSION, HTML
 
 
-def main(argv=None, stdout=sys.stdout, stdin=sys.stdin):
+def main(argv=None, stdout=None, stdin=None):
     """Parse command-line arguments and convert the given document."""
     format_values = ['pdf', 'png']
     formats = 'PDF or PNG'
@@ -58,6 +58,9 @@ def main(argv=None, stdout=sys.stdout, stdin=sys.stdin):
         format_ = args.format.lower()
 
     if args.input == '-':
+        if stdin is None:
+            stdin = sys.stdin
+        # stdin.buffer on Py3, stdin on Py2
         source = getattr(stdin, 'buffer', stdin)
         base_url = '<stdin>' # Dummy filename in the current directory
     else:
@@ -65,6 +68,9 @@ def main(argv=None, stdout=sys.stdout, stdin=sys.stdin):
         base_url = args.input
 
     if args.output == '-':
+        if stdout is None:
+            stdout = sys.stdout
+        # stdout.buffer on Py3, stdout on Py2
         output = getattr(stdout, 'buffer', stdout)
     else:
         output = args.output

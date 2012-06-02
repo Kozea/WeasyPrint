@@ -23,6 +23,7 @@ if sys.version_info[0] >= 3:
     from urllib.request import urlopen, Request, pathname2url
     from array import array
 
+    unicode = str
     basestring = str
     xrange = range
     iteritems = dict.items
@@ -50,6 +51,7 @@ else:
     from urllib import pathname2url, quote, unquote
     from array import array as _array
 
+    unicode = unicode
     basestring = basestring
     xrange = xrange
     iteritems = dict.iteritems

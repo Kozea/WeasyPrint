@@ -202,7 +202,6 @@ def test_inline_in_block():
             ('p', 'Block', [
                 ('p', 'Line', [
                     ('p', 'Text', 'Lipsum.')])])])]
-
     box = parse(source)
     box = build.inline_in_block(box)
     assert_tree(box, expected)
@@ -219,12 +218,13 @@ def test_inline_in_block():
                     ('em', 'Inline', [
                         ('em', 'Text', 'World')]),
                     ('div', 'Text', '!\n')])])])]
-
     box = parse(source)
     box = build.inline_in_block(box)
     assert_tree(box, expected)
 
-    source = '<p>Hello <em style="position:absolute">World</em>!</p>'
+    # Absolutes are left in the lines to get their static position later.
+    source = '''<p>Hello <em style="position:absolute;
+                                    display: block">World</em>!</p>'''
     expected = [
         ('p', 'Block', [
             ('p', 'Line', [
@@ -233,9 +233,29 @@ def test_inline_in_block():
                     ('em', 'Line', [
                         ('em', 'Text', 'World')])]),
                 ('p', 'Text', '!')])])]
-
     box = parse(source)
     box = build.inline_in_block(box)
+    assert_tree(box, expected)
+    box = build.block_in_inline(box)
+    assert_tree(box, expected)
+
+    # Floats however  stay out of line boxes
+    source = '<p>Hello <em style="float: left">World</em>!</p>'
+    expected = [
+        ('p', 'Block', [
+            ('p', 'AnonBlock', [
+                ('p', 'Line', [
+                    ('p', 'Text', 'Hello ')])]),
+            ('em', 'Block', [
+                ('em', 'Line', [
+                    ('em', 'Text', 'World')])]),
+            ('p', 'AnonBlock', [
+                ('p', 'Line', [
+                    ('p', 'Text', '!')])])])]
+    box = parse(source)
+    box = build.inline_in_block(box)
+    import pprint
+    pprint.pprint(to_lists(box))
     assert_tree(box, expected)
     box = build.block_in_inline(box)
     assert_tree(box, expected)

@@ -48,7 +48,7 @@ def get_metadata(html, base_url=resource_filename('<inline HTML>')):
 
 
 def get_bookmarks(html, structure_only=False):
-    (root, bookmarks), _links, _anchors = get_metadata(html)
+    (root, bookmarks), _links = get_metadata(html)
     for bookmark in bookmarks:
         if structure_only:
             bookmark.pop('destination')
@@ -62,13 +62,19 @@ def get_bookmarks(html, structure_only=False):
 
 
 def get_links(html, **kwargs):
-    _bookmarks, links, anchors = get_metadata(html, **kwargs)
-    links = [
-        [(uri, tuple(round(v, 6) for v in rect)) for uri, rect in page_links]
+    _bookmarks, links = get_metadata(html, **kwargs)
+    return [
+        [
+            (
+                type_,
+                (target if type_ == 'external' else
+                    (lambda page, x, y: (page, round(x, 6), round(y, 6)))
+                        (*target)),
+                tuple(round(v, 6) for v in rect)
+            )
+            for type_, target, rect in page_links
+        ]
         for page_links in links]
-    for key, (page, x, y) in anchors.items():
-        anchors[key] = page, round(x, 6), round(y, 6)
-    return links, anchors
 
 
 @assert_no_logs
@@ -167,11 +173,10 @@ def test_bookmarks():
 
 @assert_no_logs
 def test_links():
-    links, anchors = get_links('<body>')
+    links = get_links('<body>')
     assert links == [[]]
-    assert anchors == {}
 
-    links, anchors = get_links('''
+    links = get_links('''
         <style>
             body { margin: 0; font-size: 10pt; line-height: 2 }
             p { display: block; height: 90pt; margin: 0 0 10pt 0 }
@@ -187,52 +192,64 @@ def test_links():
     assert links == [
         [
             # 4px == 3pt wide (like the image), 20pt high (like line-height)
-            (('external', 'http://weasyprint.org'), (50, 950, 53, 930)),
+            ('external', 'http://weasyprint.org', (50, 950, 53, 930)),
             # 5pt wide (image + 2 * 1pt of border), 20pt high
-            (('internal', 'lipsum'), (60, 850, 65, 830)),
+            ('internal', (1, 50, 950), (60, 850, 65, 830)),
         ], [
             # 400pt wide (block), 20pt high
-            (('internal', 'hello'), (50, 950, 450, 930)),
+            ('internal', (0, 50, 750), (50, 950, 450, 930)),
         ]
     ]
-    assert anchors == {'hello': (0, 50, 750), 'lipsum': (1, 50, 950)}
 
-    links, anchors = get_links(
+    links = get_links(
         '<a href="../lipsum" style="display: block">',
         base_url='http://weasyprint.org/foo/bar/')
-    assert links == [[(('external', 'http://weasyprint.org/foo/lipsum'),
+    assert links == [[('external',
+                       'http://weasyprint.org/foo/lipsum',
                        (50, 950, 450, 950))]]
-    assert anchors == {}
 
+
+@assert_no_logs
+def test_relative_links():
     # Relative URI reference without a base URI: not allowed
     with capture_logs() as logs:
-        links, anchors = get_links(
+        links = get_links(
             '<a href="../lipsum" style="display: block">',
             base_url=None)
     assert links == [[]]
-    assert anchors == {}
     assert len(logs) == 1
     assert 'WARNING: Relative URI reference without a base URI' in logs[0]
 
     with capture_logs() as logs:
-        links, anchors = get_links(
+        links = get_links(
             '<div style="-weasy-link: url(../lipsum)">',
             base_url=None)
     assert links == [[]]
-    assert anchors == {}
     assert len(logs) == 1
     assert 'WARNING: Ignored `-weasy-link: url(../lipsum)`' in logs[0]
     assert 'Relative URI reference without a base URI' in logs[0]
 
     # Internal URI reference without a base URI: OK
-    links, anchors = get_links(
+    links = get_links(
         '<a href="#lipsum" id="lipsum" style="display: block">',
         base_url=None)
-    assert links == [[(('internal', 'lipsum'), (50, 950, 450, 950))]]
-    assert anchors == {'lipsum': (0, 50, 950)}
+    assert links == [[('internal', (0, 50, 950), (50, 950, 450, 950))]]
 
-    links, anchors = get_links(
+    links = get_links(
         '<div style="-weasy-link: url(#lipsum)" id="lipsum">',
         base_url=None)
-    assert links == [[(('internal', 'lipsum'), (50, 950, 450, 950))]]
-    assert anchors == {'lipsum': (0, 50, 950)}
+    assert links == [[('internal', (0, 50, 950), (50, 950, 450, 950))]]
+
+
+@assert_no_logs
+def test_missing_links():
+    with capture_logs() as logs:
+        links = get_links('''
+            <style> a { display: block; height: 15pt; } </style>
+            <body>
+                <a href="#lipsum"></a>
+                <a href="#missing" id="lipsum"></a>
+        ''', base_url=None)
+    assert links == [[('internal', (0, 50, 935), (50, 950, 450, 935))]]
+    assert len(logs) == 1
+    assert 'WARNING: No anchor #missing for internal URI reference' in logs[0]
