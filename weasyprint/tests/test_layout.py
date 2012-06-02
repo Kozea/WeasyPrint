@@ -3114,8 +3114,9 @@ def test_margin_boxes_variable_dimension():
     html, top_left, top_right = page.children
     assert top_left.at_keyword == '@top-left'
     assert top_right.at_keyword == '@top-right'
-
+    assert top_left.position_x == 100
     assert top_left.margin_width() == 300
+    assert top_right.position_x == 400  # 100 + 300
     assert top_right.margin_width() == 300
 
     page, = parse('''
@@ -3136,8 +3137,36 @@ def test_margin_boxes_variable_dimension():
         </style>
     ''')
     html, top_left, top_right = page.children
+    assert top_left.position_x == 100
     assert top_left.margin_width() == 400
+    assert top_right.position_x == 500
     assert top_right.margin_width() == 200
+
+    page, = parse('''
+        <style>
+            @page {
+                -weasy-size: 800px;
+                margin: 100px;
+                padding: 42px;
+                border: 7px solid;
+
+                @top-left {
+                    content: "HelloHello";
+                }
+                @top-center {
+                    content: "Hello";
+                }
+            }
+        </style>
+    ''')
+    html, top_left, top_center = page.children
+    assert top_left.at_keyword == '@top-left'
+    assert top_center.at_keyword == '@top-center'
+    assert top_left.position_x == 100
+    assert top_left.margin_width() == 240
+    assert top_center.position_x == 340
+    assert top_center.margin_width() == 120
+    # ... + 240 for top-right = 600
 
     page, = parse('''
         <style>
@@ -3202,9 +3231,11 @@ def test_margin_boxes_variable_dimension():
     ''')
     html, top_left, top_right = page.children
     # 300 pixels evenly distributed over the 3 margins
+    assert top_left.position_x == 100
     assert top_left.margin_left == 100
     assert top_left.margin_right == 100
     assert top_left.width == 100
+    assert top_right.position_x == 500
     assert top_right.margin_left == 0
     assert top_right.margin_right == 0
     assert top_right.width == 200

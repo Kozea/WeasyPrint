@@ -378,8 +378,6 @@ def make_margin_boxes(document, page, counter_values):
         compute_variable_dimension(
             document, side_boxes, vertical, variable_outer)
         for box, delay in zip(side_boxes, [False, True, False]):
-            if not box.exists:
-                continue
             compute_fixed_dimension(
                 document, box, fixed_outer, not vertical,
                 prefix in ['top', 'left'])
@@ -389,6 +387,8 @@ def make_margin_boxes(document, page, counter_values):
                 position_y += box.margin_height()
             else:
                 position_x += box.margin_width()
+            if not box.exists:
+                continue
             if delay:
                 delayed_boxes.append(box)
             else:
