@@ -771,6 +771,36 @@ def test_colspan_rowspan():
     ]
 
 
+    # A cell box cannot extend beyond the last row box of a table.
+    html = parse_all('''
+        <table>
+            <tr>
+                <td rowspan=5></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+            </tr>
+        </table>
+    ''')
+    body, = html.children
+    wrapper, = body.children
+    table, = wrapper.children
+    group, = table.children
+    assert [[c.grid_x for c in row.children] for row in group.children] == [
+        [0, 1],
+        [1],
+    ]
+    assert [[c.colspan for c in row.children] for row in group.children] == [
+        [1, 1],
+        [1],
+    ]
+    assert [[c.rowspan for c in row.children] for row in group.children] == [
+        [2, 1],  # Not 5
+        [1],
+    ]
+
+
 @assert_no_logs
 def test_before_after():
     """Test the :before and :after pseudo-elements."""

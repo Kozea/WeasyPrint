@@ -2740,6 +2740,24 @@ def test_table_row_height():
         [513]
     ]
 
+    # A cell box cannot extend beyond the last row box of a table.
+    page, = parse('''
+        <table style="border-spacing: 0">
+            <tr style="height: 10px">
+                <td rowspan=5></td>
+                <td></td>
+            </tr>
+            <tr style="height: 10px">
+                <td></td>
+            </tr>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    wrapper, = body.children
+    table, = wrapper.children
+    row_group, = table.children
+
 
 @assert_no_logs
 def test_table_wrapper():
