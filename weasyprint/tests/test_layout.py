@@ -1062,6 +1062,26 @@ def test_auto_layout_table():
     assert column_1.width == 10
     assert column_2.width == 10
 
+    # Absolute table
+    page, = parse('''
+        <table style="width: 30px; position: absolute">
+            <tr>
+                <td colspan=2></td>
+                <td></td>
+            </tr>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2 = row.children
+    assert td_1.width == 20
+    assert td_2.width == 10
+    assert table.width == 30
+
 
 @assert_no_logs
 def test_lists():
