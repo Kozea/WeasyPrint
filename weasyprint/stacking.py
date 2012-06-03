@@ -100,11 +100,13 @@ class StackingContext(object):
                     if child.style.position != 'static':
                         assert child.style.z_index == 'auto'
                         # "Fake" context: sub-contexts are already removed
-                        child_contexts.append(StackingContext.from_box(
+                        child_contexts.insert(
+                            len(child_contexts), StackingContext.from_box(
                             child, page, child_contexts))
                         continue
                     elif child.is_floated():
-                        floats.append(StackingContext.from_box(
+                        floats.insert(
+                            len(child_contexts), StackingContext.from_box(
                             child, page, child_contexts))
                         continue
                     elif isinstance(child, boxes.BlockLevelBox):
