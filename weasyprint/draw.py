@@ -571,6 +571,10 @@ def draw_replacedbox(context, box):
 
 
 def draw_inline_level(document, context, page, box):
+    if not isinstance(box, boxes.InlineBlockBox):
+        draw_box_background(document, context, page, box)
+        draw_border(context, box)
+
     if isinstance(box, StackingContext):
         stacking_context = box
         assert isinstance(stacking_context.box, boxes.InlineBlockBox)
