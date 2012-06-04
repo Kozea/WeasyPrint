@@ -43,12 +43,16 @@ def iter_line_boxes(document, box, position_y, skip_stack,
     :param device_size: ``(width, height)`` of the current page.
 
     """
+    strut = used_line_height(containing_block.style)
     while 1:
         line, resume_at = get_next_linebox(
             document, box, position_y, skip_stack,
             containing_block, device_size, absolute_boxes)
         if line is None:
             return
+        # TODO: Make sure the line and the strut are on the same baseline.
+        # See http://www.w3.org/TR/CSS21/visudet.html#line-height
+        line.height = max(line.height, strut)
         yield line, resume_at
         if resume_at is None:
             return

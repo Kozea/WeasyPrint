@@ -571,21 +571,20 @@ def draw_replacedbox(context, box):
 
 
 def draw_inline_level(document, context, page, box):
-    if not isinstance(box, boxes.InlineBlockBox):
-        draw_box_background(document, context, page, box)
-        draw_border(context, box)
-    if isinstance(box, (boxes.InlineBox, boxes.LineBox)):
+    if isinstance(box, StackingContext):
+        stacking_context = box
+        assert isinstance(stacking_context.box, boxes.InlineBlockBox)
+        draw_stacking_context(document, context, stacking_context)
+    elif isinstance(box, (boxes.InlineBox, boxes.LineBox)):
         for child in box.children:
             if isinstance(child, boxes.TextBox):
                 draw_text(context, child)
             else:
                 draw_inline_level(document, context, page, child)
-    elif isinstance(box, boxes.InlineBlockBox):
-        stacking_context = StackingContext.from_box(box, page)
-        draw_stacking_context(document, context, stacking_context)
     elif isinstance(box, boxes.InlineReplacedBox):
         draw_replacedbox(context, box)
-    elif isinstance(box, boxes.TextBox):
+    else:
+        assert isinstance(box, boxes.TextBox)
         # Should only happen for list markers
         draw_text(context, box)
 
