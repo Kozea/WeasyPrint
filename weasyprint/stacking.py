@@ -75,46 +75,65 @@ class StackingContext(object):
         floats = []
         blocks_and_cells = []
 
-        def dispatch_children(box):
+        def dispatch(box):
             if isinstance(box, AbsolutePlaceholder):
                 box = box._box
 
+            if ((box.style.position != 'static' and
+                        box.style.z_index != 'auto')
+                    or box.style.opacity < 1
+                    # 'transform: none' gives a "falsy" empty list here
+                    or box.style.transform
+                    or box.style.clip
+                    or box.style.overflow != 'visible'
+                ):
+                # This box defines a new stacking context, remove it
+                # from the "normal" children list.
+                child_contexts.append(
+                    StackingContext.from_box(box, page))
+            else:
+                if box.style.position != 'static':
+                    assert box.style.z_index == 'auto'
+                    # "Fake" context: sub-contexts will go in this
+                    # `child_contexts` list.
+                    child_contexts.append(StackingContext.from_box(
+                        box, page, child_contexts))
+                elif box.is_floated():
+                    floats.append(StackingContext.from_box(
+                        box, page, child_contexts))
+                else:
+                    if isinstance(box, boxes.BlockLevelBox):
+                        blocks_index = len(blocks)
+                        blocks_and_cells_index = len(blocks_and_cells)
+                        blocks.append('reserved spot')
+                        blocks_and_cells.append('reserved spot')
+                    elif isinstance(box, boxes.TableCellBox):
+                        blocks_index = None
+                        blocks_and_cells_index = len(blocks_and_cells)
+                        blocks_and_cells.append('reserved spot')
+                    else:
+                        blocks_index = None
+                        blocks_and_cells_index = None
+
+                    box = dispatch_children(box)
+
+                    if blocks_index is not None:
+                        blocks[blocks_index] = box
+                    if blocks_and_cells_index is not None:
+                        blocks_and_cells[blocks_and_cells_index] = box
+
+                    return box
+
+        def dispatch_children(box):
             if not isinstance(box, boxes.ParentBox):
                 return box
 
-            children = []
+            new_children = []
             for child in box.children:
-                if ((child.style.position != 'static' and
-                            child.style.z_index != 'auto')
-                        or child.style.opacity < 1
-                        # 'transform: none' gives a "falsy" empty list here
-                        or child.style.transform
-                        or child.style.clip
-                        or child.style.overflow != 'visible'
-                    ):
-                    # This child defines a new stacking context, remove it
-                    # from the "normal" children list.
-                    child_contexts.append(
-                        StackingContext.from_box(child, page))
-                else:
-                    if child.style.position != 'static':
-                        assert child.style.z_index == 'auto'
-                        # "Fake" context: sub-contexts are already removed
-                        child_contexts.append(StackingContext.from_box(
-                            child, page, child_contexts))
-                        continue
-                    elif child.is_floated():
-                        floats.append(StackingContext.from_box(
-                            child, page, child_contexts))
-                        continue
-                    elif isinstance(child, boxes.BlockLevelBox):
-                        blocks.append(child)
-                        blocks_and_cells.append(child)
-                    elif isinstance(child, boxes.TableCellBox):
-                        blocks_and_cells.append(child)
-
-                    children.append(dispatch_children(child))
-            return box.copy_with_children(children)
+                result = dispatch(child)
+                if result is not None:
+                    new_children.append(result)
+            return box.copy_with_children(new_children)
 
         box = dispatch_children(box)
 
