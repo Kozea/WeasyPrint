@@ -1077,6 +1077,17 @@ def test_images():
         <div style="page-break-before: right"><img src="pattern.png"></div>
     ''', nb_pages=3)
 
+    # Regression test: this used to cause an exception
+    assert_pixels('image_in_inline_block', 8, 8, centered_image, '''
+        <style>
+            @page { -weasy-size: 8px }
+            body { margin: 2px 0 0 2px; background: #fff }
+        </style>
+        <div style="display: inline-block">
+            <p><img src=pattern.png></p>
+        </div>
+    ''')
+
 
 
 @assert_no_logs

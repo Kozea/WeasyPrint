@@ -58,6 +58,8 @@ class StackingContext(object):
         # Page children (the box for the root element and margin boxes)
         # as well as the page box itself are unconditionally stacking contexts.
         child_contexts = [cls.from_box(child, page) for child in page.children]
+        # Children are sub-contexts, remove them from the "normal" tree.
+        page = page.copy_with_children([])
         return cls(page, child_contexts, [], [], [], page)
 
     @classmethod
@@ -104,6 +106,11 @@ class StackingContext(object):
                 elif box.is_floated():
                     floats.append(StackingContext.from_box(
                         box, page, child_contexts))
+                elif isinstance(box, boxes.InlineBlockBox):
+                    # Have this fake stacking context be part of the "normal"
+                    # box tree, because we need its position in the middle
+                    # of a tree of inline boxes.
+                    return StackingContext.from_box(box, page, child_contexts)
                 else:
                     if isinstance(box, boxes.BlockLevelBox):
                         blocks_index = len(blocks)
