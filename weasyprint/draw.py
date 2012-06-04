@@ -541,7 +541,7 @@ def draw_replacedbox(context, box):
     if box.style.visibility == 'hidden':
         return
 
-    x, y = box.padding_box_x(), box.padding_box_y()
+    x, y = box.content_box_x(), box.content_box_y()
     width, height = box.width, box.height
     pattern, intrinsic_width, intrinsic_height = box.replacement
     scale_width = width / intrinsic_width
