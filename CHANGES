@@ -4,10 +4,14 @@ WeasyPrint changelog
 Version 0.9
 -----------
 
-Not released yet.
+Released on 2012-06-04.
 
-* Relative and absolute positioning
+* Relative, absolute and fixed positioning
+* Proper painting order (z-index)
 * In PDF: support for internal and external hyperlinks as well as bookmarks.
+* Added the ``tree`` parameter to the ``HTML`` class: accepts a parsed lxml
+  object.
+* Bug fixes, including many crashes.
 
 Bookmarks can be controlled by the ``-weasy-bookmark-level`` and
 ``-weasy-bookmark-label`` properties, as described in `CSS Generated Content
