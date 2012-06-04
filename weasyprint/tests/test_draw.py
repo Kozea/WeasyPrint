@@ -991,31 +991,29 @@ def test_images():
     ''')
     with capture_logs() as logs:
         assert_same_rendering(200, 30, [
-            ('image_alt_text_reference', '''
+            (name, '''
                 <style>
                     @page { -weasy-size: 200px 30px }
                     body { margin: 0; background: #fff }
                 </style>
-                <div>Hello, world!</div>
-            '''),
-            ('image_alt_text_not_found', '''
-                <style>
-                    @page { -weasy-size: 200px 30px }
-                    body { margin: 0; background: #fff }
-                </style>
-                <div><img src="inexistent2.png" alt="Hello, world!"></div>
-            '''),
-            ('image_alt_text_no_src', '''
-                <style>
-                    @page { -weasy-size: 200px 30px }
-                    body { margin: 0; background: #fff }
-                </style>
-                <div><img alt="Hello, world!"></div>
-            '''),
+                <div>%s</div>
+            ''' % html)
+            for name, html in [
+                ('image_alt_text_reference', 'Hello, world!'),
+                ('image_alt_text_not_found',
+                    '<img src="inexistent2.png" alt="Hello, world!">'),
+                ('image_alt_text_no_src',
+                    '<img alt="Hello, world!">'),
+                ('image_svg_no_intrinsic_size',
+                    '''<img src="data:image/svg+xml,<svg></svg>"
+                            alt="Hello, world!">'''),
+            ]
         ])
-    assert len(logs) == 1
+    assert len(logs) == 2
     assert 'WARNING: Error for image' in logs[0]
     assert 'inexistent2.png' in logs[0]
+    assert 'WARNING: Error for image at data:image/svg+xml' in logs[1]
+    assert 'intrinsic size' in logs[1]
 
     assert_pixels('image_0x1', 8, 8, no_image, '''
         <style>

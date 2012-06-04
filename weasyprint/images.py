@@ -84,6 +84,9 @@ def cairosvg_handler(file_like, uri):
         # Draw to a cairo surface but do not write to a file
         tree = Tree(bytestring=bytestring, url=uri)
         surface = ScaledSVGSurface(tree, output=None, dpi=96)
+        if not (surface.width > 0 and surface.height > 0):
+            raise ValueError(
+                'Images without an intrinsic size are not supported.')
         pattern = cairo.SurfacePattern(surface.cairo)
         return pattern, surface.width, surface.height
 
