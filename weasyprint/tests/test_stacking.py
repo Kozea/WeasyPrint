@@ -50,6 +50,17 @@ def test_nested():
             ['p 3'],
             [])])
 
+    page, = parse('''\
+        <div style="position: relative">
+            <p style="position: relative"></p>
+        </div>
+    ''')
+    assert to_lists(page) == (
+        'html 1',
+        ['body 1'],
+        [('div 1', [], []),  # In this order
+         ('p 2', [], [])])
+
 
 @assert_no_logs
 def test_image_contexts():

@@ -96,8 +96,11 @@ class StackingContext(object):
                     assert box.style.z_index == 'auto'
                     # "Fake" context: sub-contexts will go in this
                     # `child_contexts` list.
-                    child_contexts.append(StackingContext.from_box(
-                        box, page, child_contexts))
+                    # Insert at the position before creating the sub-context.
+                    index = len(child_contexts)
+                    child_contexts.insert(
+                        index,
+                        StackingContext.from_box(box, page, child_contexts))
                 elif box.is_floated():
                     floats.append(StackingContext.from_box(
                         box, page, child_contexts))
@@ -105,22 +108,20 @@ class StackingContext(object):
                     if isinstance(box, boxes.BlockLevelBox):
                         blocks_index = len(blocks)
                         blocks_and_cells_index = len(blocks_and_cells)
-                        blocks.append('reserved spot')
-                        blocks_and_cells.append('reserved spot')
                     elif isinstance(box, boxes.TableCellBox):
                         blocks_index = None
                         blocks_and_cells_index = len(blocks_and_cells)
-                        blocks_and_cells.append('reserved spot')
                     else:
                         blocks_index = None
                         blocks_and_cells_index = None
 
                     box = dispatch_children(box)
 
+                    # Insert at the positions before dispatch the children.
                     if blocks_index is not None:
-                        blocks[blocks_index] = box
+                        blocks.insert(blocks_index, box)
                     if blocks_and_cells_index is not None:
-                        blocks_and_cells[blocks_and_cells_index] = box
+                        blocks_and_cells.insert(blocks_and_cells_index, box)
 
                     return box
 
