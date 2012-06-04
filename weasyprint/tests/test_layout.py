@@ -2114,10 +2114,11 @@ def test_vertical_align():
 
     # Pango gives a height of 19px for font-size of 16px
     page, = parse('''
-        <span style="line-height: 10px">
-            <img src="pattern.png" style="vertical-align: text-top">
-            <img src="pattern.png" style="vertical-align: text-bottom">
-        </span>
+        <body style="line-height: 10px">
+            <span>
+                <img src="pattern.png" style="vertical-align: text-top">
+                <img src="pattern.png" style="vertical-align: text-bottom">
+            </span>
     ''')
     html, = page.children
     body, = html.children

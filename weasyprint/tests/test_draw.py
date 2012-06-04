@@ -1077,11 +1077,21 @@ def test_images():
         <div style="page-break-before: right"><img src="pattern.png"></div>
     ''', nb_pages=3)
 
+    # Regression test: padding used to be ignored on images
+    assert_pixels('image_with_padding', 8, 8, centered_image, '''
+        <style>
+            @page { -weasy-size: 8px; background: #fff }
+        </style>
+        <div style="line-height: 1px">
+            <img src=pattern.png style="padding: 2px 0 0 2px">
+        </div>
+    ''')
+
     # Regression test: this used to cause an exception
     assert_pixels('image_in_inline_block', 8, 8, centered_image, '''
         <style>
             @page { -weasy-size: 8px }
-            body { margin: 2px 0 0 2px; background: #fff }
+            body { margin: 2px 0 0 2px; background: #fff; line-height: 1px }
         </style>
         <div style="display: inline-block">
             <p><img src=pattern.png></p>
@@ -1728,7 +1738,7 @@ def test_2d_transform():
     ], '''
         <style>
             @page { -weasy-size: 8px; margin: 2px; background: #fff; }
-            div { -weasy-transform: rotate(90deg); }
+            div { -weasy-transform: rotate(90deg); line-height: 1px }
         </style>
         <div><img src="pattern.png"></div>
     ''')
