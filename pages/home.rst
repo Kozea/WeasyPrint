@@ -66,5 +66,6 @@ Here an extract of `CSS21-print.css`_:
         }
     }
     body { text-align: justify }
+    h1 { -weasy-bookmark-level: none }
 
 .. _CSS21-print.css: /samples/CSS21-print.css
