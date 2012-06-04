@@ -11,13 +11,13 @@
 """
 
 from __future__ import division, unicode_literals
-import functools
 
 import cairo
 
 from .absolute import absolute_layout, AbsolutePlaceholder
 from .float import avoid_collisions, float_layout
 from .markers import image_marker_layout
+from .min_max import handle_min_max_width, handle_min_max_height
 from .percentages import resolve_percentages, resolve_one_percentage
 from .preferred import shrink_to_fit, inline_preferred_minimum_width
 from .tables import find_in_flow_baseline, table_wrapper_width
@@ -290,44 +290,6 @@ def replaced_box_height(box, device_size):
 #        box.height = min(150, device_width / 2)
 
 
-def handle_min_max_width(function):
-    """Decorate a function that sets the used width of a box to handle
-    {min,max}-width.
-    """
-    @functools.wraps(function)
-    def wrapper(box, *args):
-        computed_margins = box.margin_left, box.margin_right
-        function(box, *args)
-        if box.width > box.max_width:
-            box.width = box.max_width
-            box.margin_left, box.margin_right = computed_margins
-            function(box, *args)
-        if box.width < box.min_width:
-            box.width = box.min_width
-            box.margin_left, box.margin_right = computed_margins
-            function(box, *args)
-    return wrapper
-
-
-def handle_min_max_height(function):
-    """Decorate a function that sets the used height of a box to handle
-    {min,max}-height.
-    """
-    @functools.wraps(function)
-    def wrapper(box, *args):
-        computed_margins = box.margin_top, box.margin_bottom
-        function(box, *args)
-        if box.height > box.max_height:
-            box.height = box.max_height
-            box.margin_top, box.margin_bottom = computed_margins
-            function(box, *args)
-        if box.height < box.min_height:
-            box.height = box.min_height
-            box.margin_top, box.margin_bottom = computed_margins
-            function(box, *args)
-    return wrapper
-
-
 min_max_replaced_width = handle_min_max_width(replaced_box_width)
 min_max_replaced_height = handle_min_max_height(replaced_box_height)
 
@@ -338,6 +300,7 @@ def inline_replaced_box_layout(box, device_size):
         if getattr(box, 'margin_' + side) == 'auto':
             setattr(box, 'margin_' + side, 0)
     inline_replaced_box_width_height(box, device_size)
+
 
 def inline_replaced_box_width_height(box, device_size):
     if box.style.width == 'auto' and box.style.height == 'auto':

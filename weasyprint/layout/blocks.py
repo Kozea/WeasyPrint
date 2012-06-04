@@ -15,9 +15,9 @@ from __future__ import division, unicode_literals
 from .absolute import absolute_layout, AbsolutePlaceholder
 from .float import float_layout, get_clearance
 from .inlines import (iter_line_boxes, replaced_box_width, replaced_box_height,
-                      handle_min_max_width, min_max_replaced_height,
-                      min_max_auto_replaced)
+                      min_max_replaced_height, min_max_auto_replaced)
 from .markers import list_marker_layout
+from .min_max import handle_min_max_width
 from .tables import table_layout, table_wrapper_width
 from .percentages import resolve_percentages, resolve_position_percentages
 from ..formatting_structure import boxes
@@ -430,9 +430,6 @@ def block_container_layout(document, box, max_position_y, skip_stack,
     # http://www.w3.org/TR/CSS21/visudet.html#normal-block
     if new_box.height == 'auto':
         new_box.height = position_y - new_box.content_box_y()
-    new_box.height = max(
-        min(new_box.height, new_box.max_height),
-        new_box.min_height)
 
     if new_box.style.position == 'relative':
         # New containing block, resolve the layout of the absolute descendants
@@ -444,6 +441,11 @@ def block_container_layout(document, box, max_position_y, skip_stack,
 
     if not isinstance(new_box, boxes.BlockBox):
         document.finish_block_formatting_context(new_box)
+
+    # After finish_block_formatting_context which may increment new_box.height
+    new_box.height = max(
+        min(new_box.height, new_box.max_height),
+        new_box.min_height)
 
     return new_box, resume_at, next_page, adjoining_margins, collapsing_through
 

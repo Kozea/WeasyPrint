@@ -11,10 +11,16 @@
 from __future__ import division, unicode_literals
 
 from .markers import list_marker_layout
+from .min_max import handle_min_max_width
 from .percentages import resolve_percentages, resolve_position_percentages
 from .preferred import shrink_to_fit
 from .tables import table_wrapper_width
 from ..formatting_structure import boxes
+
+
+@handle_min_max_width
+def float_width(box, document, containing_block):
+    box.width = shrink_to_fit(document, box, containing_block.width)
 
 
 def float_layout(document, box, containing_block, absolute_boxes):
@@ -33,14 +39,14 @@ def float_layout(document, box, containing_block, absolute_boxes):
         box.position_y += clearance
 
     # avoid a circular import
-    from .inlines import replaced_box_width, replaced_box_height
+    from .inlines import min_max_replaced_width, min_max_replaced_height
 
     if box.width == 'auto':
         if isinstance(box, boxes.BlockReplacedBox):
-            replaced_box_width(box, None)
-            replaced_box_height(box, None)
+            min_max_replaced_width(box, None)
+            min_max_replaced_height(box, None)
         else:
-            box.width = shrink_to_fit(document, box, containing_block.width)
+            float_width(box, document, containing_block)
 
     # avoid a circular import
     from .blocks import block_container_layout
