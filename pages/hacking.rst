@@ -27,9 +27,9 @@ version`_ of WeasyPrint:
 
 This will install WeasyPrint in “editable” mode (which means that you don’t
 need to re-install it every time you make a change in the source code) as
-well as py.test
+well as `py.test`_.
 
-Use the `py.test`_ command in the ``WeasyPrint`` directory to run the
+Use the ``py.test`` command from the ``WeasyPrint`` directory to run the
 test suite.
 
 Please report any bug or feature request on Redmine_ and submit
@@ -54,22 +54,21 @@ the rendering of a document in WeasyPrint goes like this:
 2. CSS stylesheets (either found in the HTML or supplied by the user) are
    fetched and parsed
 3. The stylesheets are applied to the DOM tree
-4. The DOM tree with styles is transformed into a *formatting structure* made
-   of rectangular boxes.
-5. These boxes are *laid-out* with fixed dimensions and position onto pages
-6. Finally, the pages are drawn in a PDF file
+4. The DOM tree with styles is transformed into a *formatting structure* made of rectangular boxes.
+5. These boxes are *laid-out* with fixed dimensions and position onto pages.
+6. The boxes are re-ordered to observe stacking rules.
+7. The pages are drawn in a PDF file through a cairo surface.
+8. Cairo’s PDF is modified to add metadata such as bookmarks and hyperlinks.
 
 Documents
 .........
 
-WeasyPrint’s “entry point” is the ``Document`` class. It has two concrete
-sub-classes: ``PDFDocument`` and ``PNGDocument``, one for each output format.
-An instance of one of these classes handles a document for all of its lifetime.
-It is responsible of calling other parts of the code for each step listed
-above.
+WeasyPrint’s “entry point” is the ``Document`` class. An instance handles
+a document for all of its lifetime. It is responsible of calling other parts
+of the code for each step listed above.
 
 The document is lazy: the various steps of the rendering are only done
-when required (ie. when something accesses relevant attributes.)
+when required (ie. when relevant attributes are accessed.)
 
 HTML
 ....
@@ -84,9 +83,9 @@ attribute of the document.
 CSS
 ...
 
-Steps 2 and 3 happen in the ``weasy.css`` package. CSS stylesheets are parsed
-with cssutils_. ``@import`` and ``@media`` rules are resolved to find
-applicable rule sets. Then the ``weasy.css.validation`` module filters out
+Steps 2 and 3 happen in the ``weasyprint.css`` package. CSS stylesheets are
+parsed with cssutils_. ``@import`` and ``@media`` rules are resolved to find
+applicable rule sets. Then the ``weasyprint.css.validation`` module filters out
 declarations with properties unknown to or unsupported by WeasyPrint or with
 illegal or unsupported values.
 
@@ -111,7 +110,7 @@ this point:
 
 After that, the cascade_ (that’s the C in CSS!), together with inhertance
 and initial values, assigns a value for each property to each DOM element.
-These values are *computed* in ``weasy.css.computed_values``: lengths
+These values are *computed* in ``weasyprint.css.computed_values``: lengths
 are converted to pixels, etc. The objects representing the values are
 simplified further: pixel length are simple floating points numbers.
 Some values however are still cssutils objects to avoid ambiguities (eg.
@@ -135,18 +134,19 @@ no or more than one box.
 
 Boxes are of a lot of different kinds. For example you should not confuse
 *block-level boxes* and *block containers*, though *block boxes* are both.
-The ``weasy.formatting_structure.boxes`` module has a whole hierarchy of
+The ``weasyprint.formatting_structure.boxes`` module has a whole hierarchy of
 classes to represent all these boxes. We won’t go into the details here, see
 the module and class docstrings.
 
-The ``weasy.formatting_structure.build`` module takes a DOM tree with
+The ``weasyprint.formatting_structure.build`` module takes a DOM tree with
 associated computed styles, and builds a formatting structure. It generates
 the right boxes for each element and ensures they conform to the models rules.
 (Eg. an inline box can not contain a block.) Each box has a ``some_box.style``
 attribute containing computed values for each known CSS property.
 
-The main logic is based on the ``display`` property, but it can be overridden for some elements by adding a handler in the ``weasy.html`` module. This is
-how ``<img>`` and ``<td colspan=3>`` are currently implemented, for example.
+The main logic is based on the ``display`` property, but it can be overridden for some elements by adding a handler in the ``weasyprint.html`` module.
+This is how ``<img>`` and ``<td colspan=3>`` are currently implemented,
+for example.
 This module is rather short as most of HTML is defined in CSS rather than
 in Python, in the `user agent stylesheet`_.
 
@@ -191,18 +191,31 @@ parts of the code.
 When the layout is done, a list of ``PageBox`` objects is set to the
 ``pages`` attribute of the document.
 
+Stacking
+........
+
+In step 6, the boxes are reorder by the ``weasyprint.stacking`` module
+to observe `stacking rules`_ such as the ``z-index`` property.
+The result is a tree of `stacking contexts`.
+
+.. _stacking rules: http://www.w3.org/TR/CSS21/zindex.html
+
 Drawing
 .......
 
-Finally (step 6), each laid-out page is *drawn* onto a cairo_ surface.
+Next, in step 7, each laid-out page is *drawn* onto a cairo_ surface.
 Since each box has absolute coordinates on the page from the layout step,
 the logic here should be minimal. If you find yourself adding a lot of logic
-here, maybe it should go in the layout instead.
+here, maybe it should go in the layout or stacking instead.
 
-For now boxes are simply drawn recursively in tree order, but this will need
-to change to implement ``z-index``.
-
-The code lives in the ``weasy.draw`` module and is called by the ``write_to``
-method of the document.
+The code lives in the ``weasyprint.draw`` module and is called by the
+``write_to`` method of the document.
 
 .. _cairo: http://cairographics.org/pycairo/
+
+Metadata
+........
+
+Finally (step 8), the ``weasyprint.pdf`` parses the PDF file produced by cairo
+and makes an *incremental update* to add internal and external hyperlinks,
+as well as outlines / bookmarks.

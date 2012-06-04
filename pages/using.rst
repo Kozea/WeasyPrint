@@ -19,8 +19,8 @@ Once you have WeasyPrint `installed </install/>`_, you should have a
 
 You may see warnings on stderr about unsupported CSS.
 
-The ``weasyprint`` command takes two arguments: its input and its output.
-The input is a filename or an URL to an HTML document, or ``-`` to read
+The ``weasyprint`` command takes two arguments: its input and output.
+The input is a filename or URL to an HTML document, or ``-`` to read
 HTML from stdin. The output is a filename, or ``-`` to write to stdout.
 
 More options are available:
@@ -54,7 +54,7 @@ any other Python library:
     import weasyprint
     weasyprint.HTML('http://weasyprint.org/').write_pdf('/tmp/weasyprint-website.pdf')
 
-The public API for WeasyPrint 0.7 is made of two classes: ``HTML`` and ``CSS``
+The public API for WeasyPrint 0.9 is made of two classes: ``HTML`` and ``CSS``.
 
 
 API stability
@@ -72,46 +72,40 @@ be added in the next version.
 .. _tell us: /community/
 
 
-The ``weasyprint.CSS`` class
-............................
+The ``weasyprint.HTML`` class
+.............................
 
-A ``CSS`` object represents a CSS stylesheet parsed by cssutils.
+An ``HTML`` object represents an HTML document parsed by lxml_.
+
+.. _lxml: http://lxml.de/
 
 You can just create an instance with a positional argument:
-``stylesheet = CSS(something)``
-It will try to guess if the input is a filename, an absolute URL, or
-a file-like object.
+``doc = HTML(something)``
+The class will try to guess if the input is a filename, an absolute URL,
+or a file-like object.
 
 Alternatively, you can name the argument so that no guessing is
 involved:
 
-* ``CSS(filename=foo)`` a filename, relative to the current directory
+* ``HTML(filename=foo)`` a filename, relative to the current directory
   or absolute.
-* ``CSS(url=foo)`` an absolute, fully qualified URL.
-* ``CSS(file_obj=foo)`` a file-like: any object with a ``read()`` method.
-* ``CSS(string=foo)`` a string of CSS source. (This argument must be named.)
+* ``HTML(url=foo)`` an absolute, fully qualified URL.
+* ``HTML(file_obj=foo)`` a file-like: any object with a ``read()`` method.
+* ``HTML(string=foo)`` a string of HTML source. (This argument must be named.)
+* ``HTML(tree=foo)`` a parsed lxml tree. (This argument must be named.)
 
-Specifying multiple inputs is an error: ``CSS(filename=foo, url=bar)``
+Specifying multiple inputs is an error: ``HTML(filename=foo, url=bar)``
 will raise.
 
 You can also pass optional named arguments:
 
 * ``encoding``: force the source character encoding
-* ``base_url``: used to resolve relative URLs (eg. in ``@import``)
+* ``base_url``: used to resolve relative URLs (eg. in
+  ``<img src="../foo.png">``).
   If not passed explicitly, try to use the input filename, URL, or
   ``name`` attribute of file objects.
 
-``CSS`` objects have no public attribute or method. They are only meant to
-be used in the ``write_pdf`` or ``write_png`` method. (See below.)
-
-
-The ``weasyprint.HTML`` class
-.............................
-
-An ``HTML`` object represents an HTML document parsed by lxml.
-An instance is created in exactly the same way as ``CSS``.
-
-It has two public methods:
+``HTML`` objects have two public methods:
 
 ``HTML.write_pdf(target=None, stylesheets=None)``
     Render the document with stylesheets from three *origins*:
@@ -121,26 +115,48 @@ It has two public methods:
       linked by ``<link rel=stylesheet>`` elements;
     * User stylesheets provided in the ``stylesheets`` parameter to this
       method. If provided, ``stylesheets`` must be an iterable where elements
-      are ``CSS`` instances or anything that can be passed to ``CSS()``.
+      are ``CSS`` instances (see below) or anything that can be passed
+      as an unnamed argument to ``CSS()``.
+
+    If you use this ``stylesheet`` parameter or the ``-s`` option of the
+    command-line API, keep in mind that *user* stylesheets have a lower
+    priority than *author* stylesheets in the cascade_.
 
     ``target`` can be a filename or a file-like object (anything with a
     ``write()`` method) where the PDF output is written.
-    If ``target`` is not provided, the method returns PDF as a byte string.
+    If ``target`` is not provided, the method returns the PDF content
+    as a byte string.
 
 ``HTML.write_png(target=None, stylesheets=None)``
     Like ``write_pdf``, but writes PNG instead of PDF.
 
+    Pages are painted in order from top to bottom, and horizontally centered.
+    The resulting image is a wide as the widest page, and as high as the
+    sum of all pages. There is no decoration around pages other than
+    specified in CSS.
+
 
 .. _user agent stylesheet: https://github.com/Kozea/WeasyPrint/blob/master/weasyprint/css/html5_ua.css
+.. _cascade: http://www.w3.org/TR/CSS21/cascade.html#cascading-order
+
+
+The ``weasyprint.CSS`` class
+............................
+
+A ``CSS`` object represents a CSS stylesheet parsed by tinycss.
+An instance is created in the same way as ``HTML``, except that
+the ``tree`` parameter is not available.
+
+``CSS`` objects have no public attribute or method. They are only meant to
+be used in the ``write_pdf`` or ``write_png`` method. (See above.)
 
 
 Errors
 ------
 
 If you get an exception when running ``write_pdf`` or ``write_png``
-(unless it is about writing to ``target``), it is probably a bug
-in WeasyPrint. Please copy the whole traceback and report it on our
-`issue tracker`_.
+it is probably a bug in WeasyPrint (unless it is about writing to ``target``).
+Please copy the full traceback and report it on our `issue tracker`_.
 
 .. _issue tracker: http://redmine.kozea.fr/projects/weasyprint/issues
 

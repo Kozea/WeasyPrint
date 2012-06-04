@@ -9,7 +9,7 @@ Documentation
 Features
 ~~~~~~~~
 
-WeasyPrint 0.8 supports:
+WeasyPrint 0.9 supports:
 
 (For older versions, see the changelog_.)
 
@@ -24,6 +24,9 @@ WeasyPrint 0.8 supports:
       PNG, JPEG, GIF, ...)
     - SVG images with CairoSVG_
 
+  * Hyperlinks, either internal (with the target in the same document:
+    ``<a href="#foo">``) or external. The links are clickable in PDF viewers
+    that support them.
   * **Not** supported: HTML `presentational hints`_ (like the ``width``
     attribute on an ``img`` element). Use CSS in the ``style``
     attribute instead.
@@ -31,6 +34,7 @@ WeasyPrint 0.8 supports:
 * Most of `CSS 2.1`_ (see below__)
 * Most `CSS 3 Selectors`_ (see below__)
 * `CSS 3 Colors`_
+* Bookmarks from `CSS Generated Content for Paged Media`_
 * Experimental: `CSS 2D Transforms`_
 * From `CSS 3 Backgrounds and Borders`_: ``background-clip``,
   ``background-origin`` and ``background-size``.
@@ -38,6 +42,7 @@ WeasyPrint 0.8 supports:
   from `CSS 3 Paged Media`_
 * `box-sizing`_ from CSS3 Basic User Interface
 
+.. _PDF bookmarks: #pdf-bookmarks
 __ #missing-css-2-1-features
 __ #missing-css-3-selectors
 
@@ -47,10 +52,8 @@ __ #missing-css-3-selectors
 .. _CSS 2.1: http://www.w3.org/TR/CSS21/
 .. _CSS 3 Colors: http://www.w3.org/TR/css3-color/
 .. _CSS 3 Selectors: http://www.w3.org/TR/css3-selectors/
-.. _should be: https://github.com/lxml/lxml/pull/22
 .. _CSS 3 Backgrounds and Borders: http://www.w3.org/TR/css3-background/
 .. _box-sizing: http://www.w3.org/TR/css3-ui/#box-sizing
-
 
 Experimental features
 ~~~~~~~~~~~~~~~~~~~~~
@@ -68,9 +71,13 @@ use any experimental feature!
 * `CSS 2D Transforms`_: use ``-weasy-transform`` and
   ``-weasy-transform-origin``.
 
+* Bookmarks from `CSS Generated Content for Paged Media`_: use
+  ``-weasy-bookmark-level`` and ``-weasy-bookmark-level``.
+
 .. _at risk of changing: http://www.w3.org/TR/css-2010/#experimental
 .. _CSS 3 Paged Media: http://www.w3.org/TR/css3-page/
 .. _CSS 2D Transforms: http://www.w3.org/TR/css3-2d-transforms/
+.. _CSS Generated Content for Paged Media: http://dev.w3.org/csswg/css3-gcpm/#bookmarks
 
 
 Missing CSS 3 selectors
@@ -101,7 +108,6 @@ incomplete.
 Some CSS 2.1 features are not supported yet but are on the *to do* list:
 
 * Floats_
-* Absolute_, fixed_ and relative_ positioning and z-index_
 * Table `border collapsing`_ and the `empty-cells`_ property.
 * Minimum and maximum width_ and height_ on table-related and page-related
   boxes

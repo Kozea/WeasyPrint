@@ -28,8 +28,8 @@ Current status
 Give it an URL and WeasyPrint will fetch and render a web document just
 like a web browsers, except that the output is a PDF with nice page breaks.
 
-Some layout styles (floats, absolute positioning, ...) are not supported yet,
-but WeasyPrint can already be useful for documents with “simple” layout.
+Some important features such as floats are not supported yet,
+but WeasyPrint is already used in production with complex documents.
 See the `features </features/>`_ page for what exactly is supported or not.
 
 

@@ -14,6 +14,8 @@ confirmation mail. Make sure to check your Spam folder, just in case.
 To unsubscribe again, send a mail to weasyprint-unsubscribe@librelist.com and
 reply to the confirmation mail.
 
+This list is very low traffic, mostly announcements for new versions.
+
 The archives_ are published on the Librelist website.
 
 .. _Librelist: http://librelist.com/
