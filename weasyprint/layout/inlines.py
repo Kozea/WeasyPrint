@@ -758,6 +758,12 @@ def inline_box_verticality(box, baseline_y):
                     min_y = children_min_y
                 if children_max_y > max_y:
                     max_y = children_max_y
+
+    if isinstance(box, boxes.LineBox):
+        ascent = -box.baseline
+        descent = ascent + box.height
+        max_y = max(max_y, descent)
+        min_y = min(min_y, ascent)
     return max_y, min_y
 
 
