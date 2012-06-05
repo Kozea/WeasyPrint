@@ -327,18 +327,6 @@ def border_width(computer, name, value):
     return length(computer, name, value, pixels_only=True)
 
 
-@register_computer('clear')
-def clear(computer, name, values):
-    """Compute the ``clear`` property."""
-    return values
-
-
-@register_computer('float')
-def float(computer, name, values):
-    """Compute the ``float`` property."""
-    return values
-
-
 @register_computer('content')
 def content(computer, name, values):
     """Compute the ``content`` property."""
