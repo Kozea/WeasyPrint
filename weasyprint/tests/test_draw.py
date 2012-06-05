@@ -19,10 +19,13 @@ import shutil
 import itertools
 from io import BytesIO
 
+import pytest
 import pystacia
 
-from ..compat import xrange
+from ..compat import xrange, ints_from_bytes
 from ..urls import ensure_url
+from .. import HTML, CSS
+from ..backends import PNGBackend
 from .testing_utils import (
     resource_filename, TestPNGDocument, FONTS, assert_no_logs, capture_logs)
 
@@ -34,17 +37,6 @@ _ = b'\xff\xff\xff\xff'  # white
 r = b'\xff\x00\x00\xff'  # red
 B = b'\x00\x00\xff\xff'  # blue
 BYTES_PER_PIXELS = 4
-PIXEL_FORMAT = 'rgba(%i, %i, %i, %i)'
-
-
-def format_pixel(pixels, width, x, y):  # pragma: no cover
-    """Return the pixel color as ``#RRGGBB``."""
-    start = (y * width + x) * BYTES_PER_PIXELS
-    end = start + BYTES_PER_PIXELS
-    pixel_bytes = pixels[start:end]
-    # Py2/3 compat:
-    pixel_ints = tuple(ord(byte) for byte in pixel_bytes.decode('latin1'))
-    return PIXEL_FORMAT % pixel_ints
 
 
 def assert_pixels(name, expected_width, expected_height, expected_lines,
@@ -143,21 +135,30 @@ def document_to_pixels(document, name, expected_width, expected_height,
         return raw
 
 
-def assert_pixels_equal(name, width, height, lines, expected_lines):
+def assert_pixels_equal(name, width, height, raw, expected_raw, tolerance=0):
     """
     Take 2 matrices of height by width pixels and assert that they
     are the same.
     """
-    if lines != expected_lines:  # pragma: no cover
-        write_png(name + '.expected', expected_lines, width, height)
-        write_png(name, lines, width, height)
-        for y in xrange(height):
-            for x in xrange(width):
-                pixel = format_pixel(lines, width, x, y)
-                expected_pixel = format_pixel(expected_lines, width, x, y)
-                assert pixel == expected_pixel , (
-                    'Pixel (%i, %i) in %s: expected %s, got %s' % (
-                    x, y, name, expected_pixel, pixel))
+    if raw != expected_raw:  # pragma: no cover
+        for i, (value, expected) in enumerate(zip(
+            ints_from_bytes(raw),
+            ints_from_bytes(expected_raw)
+        )):
+            if abs(value - expected) > tolerance:
+                write_png(name, raw, width, height)
+                write_png(name + '.expected', expected_raw,
+                          width, height)
+                pixel_n = i // BYTES_PER_PIXELS
+                x = pixel_n // width
+                y = pixel_n % width
+                i % BYTES_PER_PIXELS
+                pixel = tuple(ints_from_bytes(raw[i:i + BYTES_PER_PIXELS]))
+                expected_pixel = tuple(ints_from_bytes(
+                    expected_raw[i:i + BYTES_PER_PIXELS]))
+                assert 0, (
+                    'Pixel (%i, %i) in %s: expected rgba%s, got rgab%s'
+                    % (x, y, name, expected_pixel, pixel))
 
 
 @assert_no_logs
@@ -1911,3 +1912,31 @@ def test_2d_transform():
         </style>
         <div><img src="pattern.png"></div>
     ''')
+
+
+@pytest.mark.xfail
+@assert_no_logs
+def test_acid2():
+    """A local version of http://acid2.acidtests.org/"""
+    size = 640
+    tolerance = 3
+
+    stylesheet = CSS(string='''
+        @page { -weasy-size: %ipx; margin: 0 }
+
+        /* Remove the introduction from the test, it is not in the reference */
+        .intro { display: none }
+
+        /* Work around 'vertical-align: top' not being implemented */
+        a[href="reference.png"], img[src="reference.png"] { display: block }
+    ''' % size)
+    def get_pixels(filename):
+        return document_to_pixels(
+            HTML(resource_filename(filename))._get_document(
+                PNGBackend, [stylesheet]),
+            'acid2', size, size)
+
+    with capture_logs():
+        result = get_pixels('acid2/index.html')
+    reference = get_pixels('acid2/reference.html')
+    assert_pixels_equal('acid2', size, size, result, reference, tolerance)
