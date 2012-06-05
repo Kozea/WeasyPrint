@@ -33,16 +33,26 @@ def block_level_layout(document, box, max_position_y, skip_stack,
                            content box of the current page area.
 
     """
-    clearance = get_clearance(document, box)
-    if clearance:
-        box.position_y += clearance
-        adjoining_margins = []
-
     if isinstance(box, boxes.TableBox):
         return table_layout(
             document, box, max_position_y, skip_stack, containing_block,
             device_size, page_is_empty, absolute_boxes)
-    elif isinstance(box, boxes.BlockBox):
+
+    resolve_percentages(box, containing_block)
+
+    if box.margin_top == 'auto':
+        box.margin_top = 0
+    if box.margin_bottom == 'auto':
+        box.margin_bottom = 0
+
+    collapsed_margin = collapse_margin(adjoining_margins + [box.margin_top])
+    clearance = get_clearance(document, box, collapsed_margin)
+    if clearance:
+        top_border_edge = box.position_y + collapsed_margin + clearance
+        box.position_y = top_border_edge - box.margin_top
+        adjoining_margins = []
+
+    if isinstance(box, boxes.BlockBox):
         return block_box_layout(document, box, max_position_y, skip_stack,
             containing_block, device_size, page_is_empty,
             absolute_boxes, adjoining_margins)
@@ -61,7 +71,6 @@ def block_box_layout(document, box, max_position_y, skip_stack,
                      containing_block, device_size, page_is_empty,
                      absolute_boxes, adjoining_margins):
     """Lay out the block ``box``."""
-    resolve_percentages(box, containing_block)
     if box.is_table_wrapper:
         table_wrapper_width(
             document, box, (containing_block.width, containing_block.height),
@@ -86,12 +95,6 @@ min_max_block_replaced_width = handle_min_max_width(block_replaced_width)
 
 def block_replaced_box_layout(box, containing_block, device_size):
     """Lay out the block :class:`boxes.ReplacedBox` ``box``."""
-    resolve_percentages(box, containing_block)
-    if box.margin_top == 'auto':
-        box.margin_top = 0
-    if box.margin_bottom == 'auto':
-        box.margin_bottom = 0
-
     if box.style.width == 'auto' and box.style.height == 'auto':
         block_replaced_width(box, containing_block, device_size)
         replaced_box_height(box, device_size)
@@ -208,11 +211,6 @@ def block_container_layout(document, box, max_position_y, skip_stack,
     # See http://www.w3.org/TR/CSS21/visuren.html#block-formatting
     if not isinstance(box, boxes.BlockBox):
         document.create_block_formatting_context()
-
-    if box.margin_top == 'auto':
-        box.margin_top = 0
-    if box.margin_bottom == 'auto':
-        box.margin_bottom = 0
 
     if adjoining_margins is None:
         adjoining_margins = []

@@ -238,6 +238,7 @@ TABLE_WRAPPER_BOX_PROPERTIES = set('''
     left
     right
     z_index
+    clear
 '''.split())
 
 

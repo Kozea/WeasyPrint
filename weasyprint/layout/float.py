@@ -103,12 +103,13 @@ def find_float_position(document, box, containing_block):
     return box
 
 
-def get_clearance(document, box):
+def get_clearance(document, box, collapsed_margin=0):
     clearance = 0
+    hypothetical_position = box.position_y + collapsed_margin
     for excluded_shape in document.excluded_shapes:
         if box.style.clear in (excluded_shape.style.float, 'both'):
             y, h = excluded_shape.position_y, excluded_shape.margin_height()
-            clearance = max(clearance, y + h - box.position_y)
+            clearance = max(clearance, y + h - hypothetical_position)
     return clearance
 
 
