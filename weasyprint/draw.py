@@ -257,6 +257,9 @@ def draw_background(document, context, style, painting_area, positioning_area):
         return
 
     with context.stacked():
+        # Prefer crisp edges on background rectangles.
+        context.set_antialias(cairo.ANTIALIAS_NONE)
+
         if painting_area:
             context.rectangle(*painting_area)
             context.clip()
