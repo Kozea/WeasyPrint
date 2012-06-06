@@ -12,11 +12,8 @@
 
 from __future__ import division, unicode_literals
 
-import contextlib
-
 from .testing_utils import (
     resource_filename, TestPNGDocument, assert_no_logs, capture_logs)
-from ..css import validation
 from ..formatting_structure import boxes, build, counters
 
 
@@ -77,28 +74,6 @@ def unwrap_html_body(box):
 def to_lists(box_tree):
     """Serialize and unwrap ``<html>`` and ``<body>``."""
     return serialize(unwrap_html_body(box_tree))
-
-
-@contextlib.contextmanager
-def monkeypatch_validation(replacement):
-    """Create a context manager patching the validation mechanism.
-
-    This is useful to change the behaviour of the validation for one property
-    not yet supported, without affecting the validation for the other
-    properties.
-
-    """
-    real_non_shorthand = validation.validate_non_shorthand
-
-    def patched_non_shorthand(*args, **kwargs):
-        """Wraps the validator into ``replacement``."""
-        return replacement(real_non_shorthand, *args, **kwargs)
-
-    validation.validate_non_shorthand = patched_non_shorthand
-    try:
-        yield
-    finally:
-        validation.validate_non_shorthand = real_non_shorthand
 
 
 def parse(html_content):

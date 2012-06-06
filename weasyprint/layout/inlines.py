@@ -383,8 +383,7 @@ def atomic_box(document, box, position_x, skip_stack, containing_block,
         if box.is_table_wrapper:
             table_wrapper_width(
                 document, box,
-                (containing_block.width, containing_block.height),
-                absolute_boxes, fixed_boxes)
+                (containing_block.width, containing_block.height))
         box = inline_block_box_layout(
             document, box, position_x, skip_stack, containing_block,
             device_size, absolute_boxes, fixed_boxes)

@@ -429,7 +429,7 @@ def margin_box_content_layout(document, page, box):
         document, box,
         max_position_y=float('inf'), skip_stack=None,
         device_size=page.style.size, page_is_empty=True,
-        absolute_boxes=[])
+        absolute_boxes=[], fixed_boxes=[])
     assert resume_at is None
 
     vertical_align = box.style.vertical_align

@@ -15,7 +15,6 @@ from __future__ import division, unicode_literals
 
 from .testing_utils import (
     TestPNGDocument, resource_filename, FONTS, assert_no_logs, capture_logs)
-from .test_boxes import monkeypatch_validation
 from ..formatting_structure import boxes
 from ..layout.inlines import split_inline_box
 from ..layout.percentages import resolve_percentages
@@ -1644,7 +1643,7 @@ def test_inlinebox_spliting():
         while 1:
             inlinebox.position_y = 0
             box, skip, _ = split_inline_box(
-                document, inlinebox, 0, width, skip, parent, None, [], [])
+                document, inlinebox, 0, width, skip, parent, None, [], [], [])
             yield box
             if skip is None:
                 break
@@ -1758,7 +1757,7 @@ def test_inlinebox_text_after_spliting():
     while 1:
         inlinebox.position_y = 0
         box, skip, _ = split_inline_box(
-            document, inlinebox, 0, 100, skip, paragraph, None, [], [])
+            document, inlinebox, 0, 100, skip, paragraph, None, [], [], [])
         parts.append(box)
         if skip is None:
             break

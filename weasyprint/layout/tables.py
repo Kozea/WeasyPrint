@@ -364,7 +364,7 @@ def add_top_padding(box, extra_padding):
         child.translate(dy=extra_padding)
 
 
-def fixed_table_layout(box, absolute_boxes):
+def fixed_table_layout(box):
     """Run the fixed table layout and return a list of column widths
 
     http://www.w3.org/TR/CSS21/tables.html#fixed-table-layout
