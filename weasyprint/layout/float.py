@@ -23,7 +23,7 @@ def float_width(box, document, containing_block):
     box.width = shrink_to_fit(document, box, containing_block.width)
 
 
-def float_layout(document, box, containing_block, absolute_boxes):
+def float_layout(document, box, containing_block, absolute_boxes, fixed_boxes):
     """Set the width and position of floating ``box``."""
     resolve_percentages(box, (containing_block.width, containing_block.height))
     resolve_position_percentages(
@@ -53,15 +53,15 @@ def float_layout(document, box, containing_block, absolute_boxes):
 
     if box.is_table_wrapper:
         table_wrapper_width(
-            document, box, (containing_block.width, containing_block.height),
-            absolute_boxes)
+            document, box, (containing_block.width, containing_block.height))
 
     if isinstance(box, boxes.BlockBox):
         document.create_block_formatting_context()
         box, _, _, _, _ = block_container_layout(
             document, box, max_position_y=float('inf'),
             skip_stack=None, device_size=None, page_is_empty=False,
-            absolute_boxes=absolute_boxes, adjoining_margins=None)
+            absolute_boxes=absolute_boxes, fixed_boxes=fixed_boxes,
+            adjoining_margins=None)
         list_marker_layout(document, box)
         document.finish_block_formatting_context(box)
     else:

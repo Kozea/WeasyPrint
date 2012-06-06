@@ -30,7 +30,10 @@ def layout_fixed_boxes(document, pages):
     for page in pages:
         for fixed_box in page.fixed_boxes:
             fixed_box_for_page = fixed_box.copy()
-            absolute_layout(document, fixed_box_for_page, page)
+            # Use an empty list as last argument because the fixed boxes in the
+            # fixed box has already been added to page.fixed_boxes, we don't
+            # want to get them again
+            absolute_layout(document, fixed_box_for_page, page, [])
             yield fixed_box_for_page
 
 

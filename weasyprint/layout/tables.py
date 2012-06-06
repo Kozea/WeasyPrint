@@ -21,7 +21,8 @@ from .preferred import table_and_columns_preferred_widths
 
 
 def table_layout(document, table, max_position_y, skip_stack,
-                 containing_block, device_size, page_is_empty, absolute_boxes):
+                 containing_block, device_size, page_is_empty, absolute_boxes,
+                 fixed_boxes):
     """Layout for a table box.
 
     For now only the fixed layout and separate border model are supported.
@@ -105,7 +106,8 @@ def table_layout(document, table, max_position_y, skip_stack,
                     skip_stack=None,
                     device_size=device_size,
                     page_is_empty=True,
-                    absolute_boxes=absolute_boxes)
+                    absolute_boxes=absolute_boxes,
+                    fixed_boxes=fixed_boxes)
                 if computed_cell_height != 'auto':
                     cell.height = max(cell.height, computed_cell_height)
                 new_row_children.append(cell)
@@ -447,7 +449,7 @@ def fixed_table_layout(box, absolute_boxes):
     table.column_widths = column_widths
 
 
-def auto_table_layout(document, box, containing_block, absolute_boxes):
+def auto_table_layout(document, box, containing_block):
     """Run the auto table layout and return a list of column widths.
 
     http://www.w3.org/TR/CSS21/tables.html#auto-table-layout
@@ -504,15 +506,15 @@ def auto_table_layout(document, box, containing_block, absolute_boxes):
                 for column_width in table.column_widths]
 
 
-def table_wrapper_width(document, wrapper, containing_block, absolute_boxes):
+def table_wrapper_width(document, wrapper, containing_block):
     """Find the width of each column and derive the wrapper width."""
     table = wrapper.get_wrapped_table()
     resolve_percentages(table, containing_block)
 
     if table.style.table_layout == 'fixed' and table.width != 'auto':
-        fixed_table_layout(wrapper, absolute_boxes)
+        fixed_table_layout(wrapper)
     else:
-        auto_table_layout(document, wrapper, containing_block, absolute_boxes)
+        auto_table_layout(document, wrapper, containing_block)
 
     wrapper.width = table.border_width()
     wrapper.style.width = Dimension(wrapper.width, 'px')

@@ -25,7 +25,7 @@ from ..formatting_structure import boxes
 
 def block_level_layout(document, box, max_position_y, skip_stack,
                        containing_block, device_size, page_is_empty,
-                       absolute_boxes, adjoining_margins):
+                       absolute_boxes, fixed_boxes, adjoining_margins):
     """Lay out the block-level ``box``.
 
     :param max_position_y: the absolute vertical position (as in
@@ -36,7 +36,7 @@ def block_level_layout(document, box, max_position_y, skip_stack,
     if isinstance(box, boxes.TableBox):
         return table_layout(
             document, box, max_position_y, skip_stack, containing_block,
-            device_size, page_is_empty, absolute_boxes)
+            device_size, page_is_empty, absolute_boxes, fixed_boxes)
 
     resolve_percentages(box, containing_block)
 
@@ -55,7 +55,7 @@ def block_level_layout(document, box, max_position_y, skip_stack,
     if isinstance(box, boxes.BlockBox):
         return block_box_layout(document, box, max_position_y, skip_stack,
             containing_block, device_size, page_is_empty,
-            absolute_boxes, adjoining_margins)
+            absolute_boxes, fixed_boxes, adjoining_margins)
     elif isinstance(box, boxes.BlockReplacedBox):
         box = block_replaced_box_layout(box, containing_block, device_size)
         resume_at = None
@@ -69,18 +69,17 @@ def block_level_layout(document, box, max_position_y, skip_stack,
 
 def block_box_layout(document, box, max_position_y, skip_stack,
                      containing_block, device_size, page_is_empty,
-                     absolute_boxes, adjoining_margins):
+                     absolute_boxes, fixed_boxes, adjoining_margins):
     """Lay out the block ``box``."""
     if box.is_table_wrapper:
         table_wrapper_width(
-            document, box, (containing_block.width, containing_block.height),
-            absolute_boxes)
+            document, box, (containing_block.width, containing_block.height))
     block_level_width(box, containing_block)
 
     new_box, resume_at, next_page, adjoining_margins, collapsing_through = \
         block_container_layout(
-            document, box, max_position_y, skip_stack,
-            device_size, page_is_empty, absolute_boxes, adjoining_margins)
+            document, box, max_position_y, skip_stack, device_size,
+            page_is_empty, absolute_boxes, fixed_boxes, adjoining_margins)
     list_marker_layout(document, new_box)
     return new_box, resume_at, next_page, adjoining_margins, collapsing_through
 
@@ -197,7 +196,7 @@ def relative_positioning(box, containing_block):
 
 def block_container_layout(document, box, max_position_y, skip_stack,
                            device_size, page_is_empty, absolute_boxes,
-                           adjoining_margins=None):
+                           fixed_boxes, adjoining_margins=None):
     """Set the ``box`` height."""
     assert isinstance(box, boxes.BlockContainerBox)
 
@@ -253,11 +252,13 @@ def block_container_layout(document, box, max_position_y, skip_stack,
             if child.is_absolutely_positioned():
                 placeholder = AbsolutePlaceholder(child)
                 new_children.append(placeholder)
-                absolute_boxes.append(placeholder)
-                if child.style.position == 'fixed':
-                    document.current_page.fixed_boxes.append(placeholder)
+                if child.style.position == 'absolute':
+                    absolute_boxes.append(placeholder)
+                else:
+                    fixed_boxes.append(placeholder)
             elif child.style.float in ('left', 'right'):
-                child = float_layout(document, child, box, absolute_boxes)
+                child = float_layout(
+                    document, child, box, absolute_boxes, fixed_boxes)
                 new_children.append(child)
             continue
 
@@ -270,7 +271,7 @@ def block_container_layout(document, box, max_position_y, skip_stack,
             new_containing_block = box
             lines_iterator = iter_line_boxes(
                 document, child, position_y, skip_stack,
-                new_containing_block, device_size, absolute_boxes)
+                new_containing_block, device_size, absolute_boxes, fixed_boxes)
             new_lines = []
             is_page_break = False
             for line, resume_at in lines_iterator:
@@ -338,7 +339,7 @@ def block_container_layout(document, box, max_position_y, skip_stack,
                     document, child, max_position_y, skip_stack,
                     new_containing_block, device_size,
                     page_is_empty and not new_children,
-                    absolute_boxes,
+                    absolute_boxes, fixed_boxes,
                     adjoining_margins)
             skip_stack = None
 
@@ -431,10 +432,7 @@ def block_container_layout(document, box, max_position_y, skip_stack,
     if new_box.style.position == 'relative':
         # New containing block, resolve the layout of the absolute descendants
         for absolute_box in absolute_boxes:
-            if absolute_box.style.position == 'absolute':
-                absolute_layout(document, absolute_box, new_box)
-            else:
-                absolute_layout(document, absolute_box, document.current_page)
+            absolute_layout(document, absolute_box, new_box, fixed_boxes)
 
     for child in new_box.children:
         relative_positioning(child, (new_box.width, new_box.height))
