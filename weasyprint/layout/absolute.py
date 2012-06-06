@@ -50,7 +50,7 @@ class AbsolutePlaceholder(object):
         setattr(self._box, name, value)
 
 
-def absolute_layout(document, placeholder, containing_block):
+def absolute_layout(document, placeholder, containing_block, fixed_boxes):
     """Set the width of absolute positioned ``box``."""
     box = placeholder._box
 
@@ -74,7 +74,7 @@ def absolute_layout(document, placeholder, containing_block):
 
     # Absolute tables are wrapped into block boxes
     if isinstance(box, boxes.BlockBox):
-        new_box = absolute_block(document, box, containing_block)
+        new_box = absolute_block(document, box, containing_block, fixed_boxes)
     else:
         assert isinstance(box, boxes.BlockReplacedBox)
         new_box = absolute_replaced(document, box, containing_block)
@@ -82,7 +82,7 @@ def absolute_layout(document, placeholder, containing_block):
     placeholder.set_laid_out_box(new_box)
 
 
-def absolute_block(document, box, containing_block):
+def absolute_block(document, box, containing_block, fixed_boxes):
     # http://www.w3.org/TR/CSS2/visudet.html#abs-replaced-width
 
     # These names are waaay too long
@@ -205,8 +205,7 @@ def absolute_block(document, box, containing_block):
     absolute_boxes = []
 
     if box.is_table_wrapper:
-        table_wrapper_width(
-            document, box, (cb_width, cb_height), absolute_boxes)
+        table_wrapper_width(document, box, (cb_width, cb_height))
 
     # avoid a circular import
     from .blocks import block_container_layout
@@ -215,12 +214,13 @@ def absolute_block(document, box, containing_block):
     new_box, _, _, _, _ = block_container_layout(
         document, box, max_position_y=float('inf'), skip_stack=None,
         device_size=None, page_is_empty=False,
-        absolute_boxes=absolute_boxes, adjoining_margins=None)
+        absolute_boxes=absolute_boxes, fixed_boxes=fixed_boxes,
+        adjoining_margins=None)
 
     list_marker_layout(document, new_box)
 
     for child_placeholder in absolute_boxes:
-        absolute_layout(document, child_placeholder, new_box)
+        absolute_layout(document, child_placeholder, new_box, fixed_boxes)
 
     if translate_box_width:
         translate_x -= new_box.width
