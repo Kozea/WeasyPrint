@@ -24,7 +24,7 @@ from weasyprint import HTML, CSS
 
 
 def split(something):
-    return something.split(',') if something else ''
+    return something.split(',') if something else []
 
 
 def read_testinfo(suite_directory):
