@@ -466,7 +466,7 @@ def make_page(document, root_box, page_type, resume_at, content_empty):
     style = document.style_for(page_type)
     # Propagated from the root or <body>.
     style.overflow = root_box.viewport_overflow
-    page = boxes.PageBox(page_type, style)
+    document.current_page = page = boxes.PageBox(page_type, style)
 
     device_size = page.style.size
     page.outer_width, page.outer_height = device_size
@@ -504,11 +504,11 @@ def make_page(document, root_box, page_type, resume_at, content_empty):
     for absolute_box in absolute_boxes:
         absolute_layout(document, absolute_box, page)
 
-    page = page.copy_with_children(children)
+    document.current_page = page.copy_with_children(children)
 
     if content_empty:
         resume_at = previous_resume_at
-    return page, resume_at, next_page
+    return document.current_page, resume_at, next_page
 
 
 def make_all_pages(document, root_box):

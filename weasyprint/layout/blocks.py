@@ -240,16 +240,16 @@ def block_container_layout(document, box, max_position_y, skip_stack,
         child.position_y = position_y
 
         if not child.is_in_normal_flow():
-            if child.style.position in ('absolute', 'fixed'):
+            if child.is_absolutely_positioned():
                 child.position_y += collapse_margin(adjoining_margins)
                 placeholder = AbsolutePlaceholder(child)
-                if child.style.position == 'absolute':
-                    absolute_boxes.append(placeholder)
-                    new_children.append(placeholder)
-                else:
-                    document.fixed_boxes.append(placeholder)
-            else:
+                new_children.append(placeholder)
+                absolute_boxes.append(placeholder)
+                if child.style.position == 'fixed':
+                    document.current_page.fixed_boxes.append(placeholder)
+            elif child.is_floated():
                 # TODO: Floats
+                assert 0
                 new_children.append(child)
             continue
 
@@ -426,7 +426,10 @@ def block_container_layout(document, box, max_position_y, skip_stack,
     if new_box.style.position == 'relative':
         # New containing block, resolve the layout of the absolute descendants
         for absolute_box in absolute_boxes:
-            absolute_layout(document, absolute_box, new_box)
+            if absolute_box.style.position == 'absolute':
+                absolute_layout(document, absolute_box, new_box)
+            else:
+                absolute_layout(document, absolute_box, document.current_page)
 
     for child in new_box.children:
         relative_positioning(child, (new_box.width, new_box.height))

@@ -25,6 +25,15 @@ from .absolute import absolute_layout
 from .pages import make_all_pages, make_margin_boxes
 
 
+def layout_fixed_boxes(document, pages):
+    """Lay out and yield the fixed boxes of ``pages``."""
+    for page in pages:
+        for fixed_box in page.fixed_boxes:
+            fixed_box_for_page = fixed_box.copy()
+            absolute_layout(document, fixed_box_for_page, page)
+            yield fixed_box_for_page
+
+
 def layout_document(document, root_box):
     """Lay out the whole document.
 
@@ -38,14 +47,12 @@ def layout_document(document, root_box):
     pages = list(make_all_pages(document, root_box))
     page_counter = [1]
     counter_values = {'page': page_counter, 'pages': [len(pages)]}
-    for page in pages:
+    for i, page in enumerate(pages):
+        root_children = []
         root, = page.children
-        root_children = list(root.children)
-        for fixed_box in document.fixed_boxes:
-            fixed_box_for_page = fixed_box.copy()
-            absolute_layout(document, fixed_box_for_page, page)
-            root_children.append(fixed_box_for_page)
-
+        root_children.extend(layout_fixed_boxes(document, pages[:i]))
+        root_children.extend(root.children)
+        root_children.extend(layout_fixed_boxes(document, pages[i+1:]))
         root = root.copy_with_children(root_children)
         page.children = (root,) + tuple(
             make_margin_boxes(document, page, counter_values))
