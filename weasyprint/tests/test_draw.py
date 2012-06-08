@@ -1931,9 +1931,6 @@ def test_acid2():
 
         /* Remove the introduction from the test, it is not in the reference */
         .intro { display: none }
-
-        /* Work around 'vertical-align: top' not being implemented */
-        a[href="reference.png"], img[src="reference.png"] { display: block }
     ''' % size)
     def get_pixels(filename):
         return document_to_pixels(
