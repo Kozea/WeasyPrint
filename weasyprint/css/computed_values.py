@@ -15,7 +15,10 @@ from __future__ import division, unicode_literals
 
 import math
 
+import cairo
+
 from .properties import INITIAL_VALUES, Dimension
+from ..text import TextFragment
 from ..urls import get_link_attribute
 
 
@@ -466,10 +469,7 @@ def vertical_align(computer, name, value):
     elif value == 'sub':
         return computer.computed.font_size * -0.5
     elif value.unit == '%':
-        height = used_line_height({
-            'line_height': computer.computed.line_height,
-            'font_size': computer.computed.font_size
-        })
+        height, _ = strut_layout(computer.computed)
         return height * value.value / 100.
     else:
         return length(computer, name, value, pixels_only=True)
@@ -484,16 +484,27 @@ def word_spacing(computer, name, value):
         return length(computer, name, value, pixels_only=True)
 
 
-def used_line_height(style):
-    """Return the used value for the ``line-height`` property."""
-    height = style['line_height']
-    if height == 'normal':
-        # a "reasonable" value
-        # http://www.w3.org/TR/CSS21/visudet.html#line-height
-        # TODO: use font metrics?
-        height = ('NUMBER', 1.2)
-    type_, value = height
-    if type_ == 'NUMBER':
-        return value * style['font_size']
+DUMMY_CAIRO_CONTEXT = cairo.Context(
+    cairo.ImageSurface(cairo.FORMAT_ARGB32, 1, 1))
+
+
+def strut_layout(style):
+    """Return a tuple of the used value of ``line-height`` and the baseline.
+
+    The baseline is given from the top edge of line height.
+
+    """
+    # TODO: cache these results for a given set of styles?
+    line_height = style.line_height
+    if style.font_size == 0:
+        pango_height = baseline = 0
     else:
-        return value
+        # TODO: use the real surface for hinting? (if we really care…)
+        fragment = TextFragment('', style, DUMMY_CAIRO_CONTEXT)
+        _, _, _, pango_height, baseline, _ = fragment.split_first_line()
+    if line_height == 'normal':
+        return pango_height, baseline
+    type_, value = line_height
+    if type_ == 'NUMBER':
+        value *= style.font_size
+    return value, baseline + (value - pango_height) / 2

@@ -19,7 +19,7 @@ from pytest import raises
 from .testing_utils import (
     resource_filename, assert_no_logs, capture_logs, TestPNGDocument)
 from .. import css
-from ..css.computed_values import used_line_height
+from ..css.computed_values import strut_layout
 from ..urls import open_data_url
 from .. import CSS
 
@@ -343,12 +343,12 @@ def test_line_height_inheritance():
     assert html.style.font_size == 10
     assert div.style.font_size == 20
     # 140% of 10px = 14px is inherited from html
-    assert used_line_height(div.style) == 14
+    assert strut_layout(div.style)[0] == 14
     assert div.style.vertical_align == 7  # 50 % of 14px
 
     assert paragraph.style.font_size == 20
     # 1.4 is inherited from p, 1.4 * 20px on em = 28px
-    assert used_line_height(paragraph.style) == 28
+    assert strut_layout(paragraph.style)[0] == 28
     assert paragraph.style.vertical_align == 14  # 50% of 28px
 
 
