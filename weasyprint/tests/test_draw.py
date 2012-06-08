@@ -1920,7 +1920,6 @@ def test_2d_transform():
     ''')
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_acid2():
     """A local version of http://acid2.acidtests.org/"""
