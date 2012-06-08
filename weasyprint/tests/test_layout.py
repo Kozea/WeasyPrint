@@ -325,7 +325,7 @@ def test_block_heights():
 
     page, = parse('''
         <style>
-            body { height: 200px }
+            body { height: 200px; font-size: 0; }
         </style>
         <div>
           <img src=pattern.png style="height: 40px">
@@ -347,6 +347,9 @@ def test_block_heights():
 
     # Same but with no height on body: percentage *-height is ignored
     page, = parse('''
+        <style>
+            body { font-size: 0; }
+        </style>
         <div>
           <img src=pattern.png style="height: 40px">
         </div>
@@ -1438,6 +1441,7 @@ def test_orphans_widows_avoid():
                 body_children = body.children
             if body_children:
                 paragraph, = body_children
+                print(paragraph.children[0].height, paragraph.children[0].margin_height())
                 line_counts.append(len(paragraph.children))
             else:
                 line_counts.append(0)
@@ -1892,21 +1896,23 @@ def test_images():
         assert text.text == 'invalid image', url
 
     # Layout rules try to preserve the ratio, so the height should be 40px too:
-    body, img = get_img('<img src="pattern.png" style="width: 40px">')
+    body, img = get_img('''<body style="font-size: 0">
+        <img src="pattern.png" style="width: 40px">''')
     assert body.height == 40
     assert img.position_y == 0
     assert img.width == 40
     assert img.height == 40
 
     # Same with percentages
-    body, img = get_img('''<p style="width: 200px">
+    body, img = get_img('''<body style="font-size: 0"><p style="width: 200px">
         <img src="pattern.png" style="width: 20%">''')
     assert body.height == 40
     assert img.position_y == 0
     assert img.width == 40
     assert img.height == 40
 
-    body, img = get_img('<img src="pattern.png" style="min-width: 40px">')
+    body, img = get_img('''<body style="font-size: 0">
+        <img src="pattern.png" style="min-width: 40px">''')
     assert body.height == 40
     assert img.position_y == 0
     assert img.width == 40
@@ -1917,7 +1923,7 @@ def test_images():
     assert img.height == 2
 
     # display: table-cell is ignored
-    page, = parse('''
+    page, = parse('''<body style="font-size: 0">
         <img src="pattern.png" style="width: 40px">
         <img src="pattern.png" style="width: 60px; display: table-cell">
     ''')
@@ -2112,7 +2118,6 @@ def test_vertical_align():
     assert line.height == 68
     assert body.height == line.height
 
-    # Pango gives a height of 19px for font-size of 16px
     page, = parse('''
         <body style="line-height: 10px">
             <span>
@@ -2128,21 +2133,27 @@ def test_vertical_align():
     assert img_1.height == 4
     assert img_2.height == 4
     assert img_1.position_y == 0
-    assert img_2.position_y == 15  # 19 - 4
-    assert line.height == 19
+    assert img_2.position_y == 12  # 16 - 4
+    assert line.height == 16
     assert body.height == line.height
 
     # This case used to cause an exception:
     # The second span has no children but should count for line heights
     # since it has padding.
-    page, = parse('<span><span style="padding: 1px"></span></span>')
+    page, = parse('''<span style="line-height: 1.5">
+         <span style="padding: 1px"></span></span>''')
     html, = page.children
     body, = html.children
     line, = body.children
     span_1, = line.children
     span_2, = span_1.children
-    assert span_1.height == 19
-    assert span_2.height == 19
+    assert span_1.height == 16
+    assert span_2.height == 16
+    # The line’s strut does not has 'line-height: normal' but the result should
+    # be smaller than 1.5.
+    assert span_1.margin_height() == 24
+    assert span_2.margin_height() == 24
+    assert line.height == 24
 
     page, = parse('''
         <span>

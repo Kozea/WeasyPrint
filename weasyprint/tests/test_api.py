@@ -173,7 +173,7 @@ def test_python_render():
         base_url=resource_filename('dummy.html'))
     css = CSS(string='''
         @page { margin: 2px; -weasy-size: 8px; background: #fff }
-        body { margin: 0; }
+        body { margin: 0; font-size: 0 }
     ''')
 
     png_bytes = html.write_png(stylesheets=[css])
@@ -221,7 +221,7 @@ def test_command_line_render():
     """Test rendering with the command-line API."""
     css = b'''
         @page { margin: 2px; -weasy-size: 8px; background: #fff }
-        body { margin: 0; }
+        body { margin: 0; font-size: 0 }
     '''
     html = b'<body><img src=pattern.png>'
     combined = b'<style>' + css + b'</style>' + html

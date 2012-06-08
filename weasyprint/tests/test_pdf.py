@@ -186,8 +186,10 @@ def test_links():
             href="#lipsum"><img style="border: solid 1pt"
                                 src=pattern.png></a></p>
         <p id=hello>Hello, World</p>
-        <p id=lipsum><a style="display: block; page-break-before: always"
-                        href="#hel%6Co">Lorem ipsum ...</a></p>
+        <p id=lipsum>
+            <a style="display: block; page-break-before: always; height: 30pt"
+               href="#hel%6Co">Lorem ipsum ...</a>
+        </p>
     ''')
     assert links == [
         [
@@ -196,8 +198,8 @@ def test_links():
             # 5pt wide (image + 2 * 1pt of border), 20pt high
             ('internal', (1, 50, 950), (60, 850, 65, 830)),
         ], [
-            # 400pt wide (block), 20pt high
-            ('internal', (0, 50, 750), (50, 950, 450, 930)),
+            # 400pt wide (block), 30pt high
+            ('internal', (0, 50, 750), (50, 950, 450, 920)),
         ]
     ]
 

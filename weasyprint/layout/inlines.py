@@ -22,7 +22,7 @@ from .preferred import shrink_to_fit
 from .tables import find_in_flow_baseline, table_wrapper_width
 from ..text import TextFragment
 from ..formatting_structure import boxes
-from ..css.computed_values import used_line_height
+from ..css.computed_values import strut_layout
 
 
 def iter_line_boxes(document, box, position_y, skip_stack,
@@ -42,16 +42,12 @@ def iter_line_boxes(document, box, position_y, skip_stack,
     :param device_size: ``(width, height)`` of the current page.
 
     """
-    strut = used_line_height(containing_block.style)
     while 1:
         line, resume_at = get_next_linebox(
             document, box, position_y, skip_stack,
             containing_block, device_size, absolute_boxes)
         if line is None:
             return
-        # TODO: Make sure the line and the strut are on the same baseline.
-        # See http://www.w3.org/TR/CSS21/visudet.html#line-height
-        line.height = max(line.height, strut)
         yield line, resume_at
         if resume_at is None:
             return
@@ -84,7 +80,7 @@ def get_next_linebox(document, linebox, position_y, skip_stack,
 
     remove_last_whitespace(document, line)
 
-    bottom, top = inline_box_verticality(line, baseline_y=0)
+    bottom, top = line_box_verticality(line)
     last = resume_at is None or preserved_line_break
     offset_x = text_align(document, line, containing_block, last)
     if bottom is None:
@@ -608,25 +604,15 @@ def split_inline_box(document, box, position_x, max_x, skip_stack,
         new_box.position_x = initial_position_x
         new_box.width = position_x - content_box_left
 
-    # Create a "strut":
-    # http://www.w3.org/TR/CSS21/visudet.html#strut
-    # TODO: cache these results for a given set of styles?
-    fragment = TextFragment(
-        '', box.style, cairo.Context(document.surface))
-    _, _, _, height, baseline, _ = fragment.split_first_line()
-    leading = used_line_height(box.style) - height
-    half_leading = leading / 2.
+    line_height, new_box.baseline = strut_layout(box.style)
+    new_box.height = box.style.font_size
+    half_leading = (line_height - new_box.height) / 2.
     # Set margins to the half leading but also compensate for borders and
     # paddings. We want margin_height() == line_height
     new_box.margin_top = (half_leading - new_box.border_top_width -
                           new_box.padding_bottom)
     new_box.margin_bottom = (half_leading - new_box.border_bottom_width -
                              new_box.padding_bottom)
-    # form the top of the content box
-    new_box.baseline = baseline
-    # form the top of the margin box
-    new_box.baseline += half_leading
-    new_box.height = height
 
     if new_box.style.position == 'relative':
         for absolute_box in absolute_boxes:
@@ -679,20 +665,19 @@ def split_text_box(document, box, available_width, skip):
         #  but this specification does not specify how."
         # http://www.w3.org/TR/CSS21/visudet.html#inline-non-replaced
         # We trust Pango and use the height of the LayoutLine.
-        # It is based on font_size (slightly larger), but I’m not sure how.
-        # TODO: investigate this
         box.height = height
         # "only the 'line-height' is used when calculating the height
         #  of the line box."
         # Set margins so that margin_height() == line_height
-        leading = used_line_height(box.style) - height
-        half_leading = leading / 2.
+        line_height, _ = strut_layout(box.style)
+        half_leading = (line_height - height) / 2.
         box.margin_top = half_leading
         box.margin_bottom = half_leading
         # form the top of the content box
         box.baseline = baseline
         # form the top of the margin box
-        box.baseline += box.margin_top + box.border_top_width + box.padding_top
+        box.baseline += box.margin_top
+        assert box.border_top_width == box.padding_top == 0
     else:
         box = None
 
@@ -709,6 +694,27 @@ def split_text_box(document, box, available_width, skip):
         resume_at += skip
 
     return box, resume_at, preserved_line_break
+
+
+def line_box_verticality(box):
+    """Handle ``vertical-align`` within an :class:`LineBox`.
+
+    Place all boxes vertically assuming that the baseline of ``box``
+    is at `y = 0`.
+
+    Return ``(max_y, min_y)``, the maximum and minimum vertical position
+    of margin boxes.
+
+    """
+    baseline_y = 0
+    max_y, min_y = inline_box_verticality(box, baseline_y)
+    top = baseline_y - box.baseline
+    bottom = top + box.margin_height()
+    if min_y is None or top < min_y:
+        min_y = top
+    if max_y is None or bottom > max_y:
+        max_y = bottom
+    return max_y, min_y
 
 
 def inline_box_verticality(box, baseline_y):

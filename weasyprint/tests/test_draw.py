@@ -957,14 +957,14 @@ def test_images():
         assert_pixels('inline_image_' + filename, 8, 8, image, '''
             <style>
                 @page { -weasy-size: 8px }
-                body { margin: 2px 0 0 2px; background: #fff }
+                body { margin: 2px 0 0 2px; background: #fff; font-size: 0 }
             </style>
             <div><img src="%s"></div>
         ''' % filename)
     assert_pixels('block_image', 8, 8, centered_image, '''
         <style>
             @page { -weasy-size: 8px }
-            body { margin: 0; background: #fff }
+            body { margin: 0; background: #fff; font-size: 0 }
             img { display: block; margin: 2px auto 0 }
         </style>
         <div><img src="pattern.png"></div>
@@ -973,7 +973,7 @@ def test_images():
         assert_pixels('image_not_found', 8, 8, no_image, '''
             <style>
                 @page { -weasy-size: 8px }
-                body { margin: 0; background: #fff }
+                body { margin: 0; background: #fff; font-size: 0 }
                 img { display: block; margin: 2px auto 0 }
             </style>
             <div><img src="inexistent1.png" alt=""></div>
@@ -984,7 +984,7 @@ def test_images():
     assert_pixels('image_no_src', 8, 8, no_image, '''
         <style>
             @page { -weasy-size: 8px }
-            body { margin: 0; background: #fff }
+            body { margin: 0; background: #fff; font-size: 0 }
             img { display: block; margin: 2px auto 0 }
         </style>
         <div><img alt=""></div>
@@ -994,7 +994,7 @@ def test_images():
             (name, '''
                 <style>
                     @page { -weasy-size: 200px 30px }
-                    body { margin: 0; background: #fff }
+                    body { margin: 0; background: #fff; font-size: 0 }
                 </style>
                 <div>%s</div>
             ''' % html)
@@ -1018,7 +1018,7 @@ def test_images():
     assert_pixels('image_0x1', 8, 8, no_image, '''
         <style>
             @page { -weasy-size: 8px }
-            body { margin: 2px; background: #fff }
+            body { margin: 2px; background: #fff; font-size: 0 }
         </style>
         <div><img src="pattern.png" alt="not shown"
                   style="width: 0; height: 1px"></div>
@@ -1026,7 +1026,7 @@ def test_images():
     assert_pixels('image_1x0', 8, 8, no_image, '''
         <style>
             @page { -weasy-size: 8px }
-            body { margin: 2px; background: #fff }
+            body { margin: 2px; background: #fff; font-size: 0 }
         </style>
         <div><img src="pattern.png" alt="not shown"
                   style="width: 1px; height: 0"></div>
@@ -1034,7 +1034,7 @@ def test_images():
     assert_pixels('image_0x0', 8, 8, no_image, '''
         <style>
             @page { -weasy-size: 8px }
-            body { margin: 2px; background: #fff }
+            body { margin: 2px; background: #fff; font-size: 0 }
         </style>
         <div><img src="pattern.png" alt="not shown"
                   style="width: 0; height: 0"></div>
@@ -1072,6 +1072,7 @@ def test_images():
     assert_pixels('image_page_break', 8, 3 * 8, page_break, '''
         <style>
             @page { -weasy-size: 8px; margin: 2px; background: #fff }
+            body { font-size: 0 }
         </style>
         <div><img src="pattern.png"></div>
         <div style="page-break-before: right"><img src="pattern.png"></div>
@@ -1081,6 +1082,7 @@ def test_images():
     assert_pixels('image_with_padding', 8, 8, centered_image, '''
         <style>
             @page { -weasy-size: 8px; background: #fff }
+            body { font-size: 0 }
         </style>
         <div style="line-height: 1px">
             <img src=pattern.png style="padding: 2px 0 0 2px">
@@ -1091,7 +1093,7 @@ def test_images():
     assert_pixels('image_in_inline_block', 8, 8, centered_image, '''
         <style>
             @page { -weasy-size: 8px }
-            body { margin: 2px 0 0 2px; background: #fff; line-height: 1px }
+            body { margin: 2px 0 0 2px; background: #fff; font-size: 0 }
         </style>
         <div style="display: inline-block">
             <p><img src=pattern.png></p>
@@ -1548,7 +1550,7 @@ def test_overflow():
     ], '''
         <style>
             @page { -weasy-size: 8px }
-            body { margin: 2px 0 0 2px; background: #fff }
+            body { margin: 2px 0 0 2px; background: #fff; font-size:0 }
             div { height: 2px; overflow: hidden }
         </style>
         <div><img src="pattern.png"></div>
@@ -1571,8 +1573,7 @@ def test_overflow():
                     margin: 2px;
                     padding-bottom: 2px;
                     border-bottom: 1px transparent solid; }
-            body { height: 1px;
-                   overflow: hidden }
+            body { height: 1px; overflow: hidden; font-size:0 }
         </style>
         <div><img src="pattern.png"></div>
     ''')
@@ -1738,7 +1739,7 @@ def test_2d_transform():
     ], '''
         <style>
             @page { -weasy-size: 8px; margin: 2px; background: #fff; }
-            div { -weasy-transform: rotate(90deg); line-height: 1px }
+            div { -weasy-transform: rotate(90deg); font-size: 0 }
         </style>
         <div><img src="pattern.png"></div>
     ''')
@@ -1755,7 +1756,7 @@ def test_2d_transform():
     ], '''
         <style>
             @page { -weasy-size: 8px; margin: 2px; background: #fff; }
-            div { -weasy-transform: matrix(-1, 0, 0, 1, 0, 0); }
+            div { -weasy-transform: matrix(-1, 0, 0, 1, 0, 0); font-size: 0 }
         </style>
         <div><img src="pattern.png"></div>
     ''')
@@ -1772,7 +1773,7 @@ def test_2d_transform():
     ], '''
         <style>
             @page { -weasy-size: 8px; margin: 2px; background: #fff; }
-            div { -weasy-transform: translate(1px, 2px); }
+            div { -weasy-transform: translate(1px, 2px); font-size: 0 }
         </style>
         <div><img src="pattern.png"></div>
     ''')
@@ -1789,7 +1790,7 @@ def test_2d_transform():
     ], '''
         <style>
             @page { -weasy-size: 8px; margin: 2px; background: #fff; }
-            div { -weasy-transform: translate(25%, 0); }
+            div { -weasy-transform: translate(25%, 0); font-size: 0 }
         </style>
         <div><img src="pattern.png"></div>
     ''')
@@ -1806,7 +1807,8 @@ def test_2d_transform():
     ], '''
         <style>
             @page { -weasy-size: 8px; margin: 2px; background: #fff; }
-            div { -weasy-transform: translateX(0.25em); font-size: 12px; }
+            div { -weasy-transform: translateX(0.25em);
+                  font-size: 12px; line-height: 0 }
         </style>
         <div><img src="pattern.png"></div>
     ''')
@@ -1823,7 +1825,7 @@ def test_2d_transform():
     ], '''
         <style>
             @page { -weasy-size: 8px; margin: 2px; background: #fff; }
-            div { -weasy-transform: translateY(-1px); }
+            div { -weasy-transform: translateY(-1px); font-size: 0 }
         </style>
         <div><img src="pattern.png"></div>
     ''')
@@ -1844,7 +1846,8 @@ def test_2d_transform():
             @page { -weasy-size: 10px; margin: 2px; background: #fff; }
             div { -weasy-transform: scale(2, 2);
                   -weasy-transform-origin: 1px 1px;
-                  -weasy-image-rendering: optimizeSpeed; }
+                  -weasy-image-rendering: optimizeSpeed;
+                  font-size: 0 }
         </style>
         <div><img src="pattern.png"></div>
     ''')
@@ -1865,7 +1868,8 @@ def test_2d_transform():
             @page { -weasy-size: 10px; margin: 2px; background: #fff; }
             div { -weasy-transform: scale(1, 2);
                   -weasy-transform-origin: 1px 1px;
-                  -weasy-image-rendering: optimizeSpeed; }
+                  -weasy-image-rendering: optimizeSpeed;
+                  font-size: 0 }
         </style>
         <div><img src="pattern.png"></div>
     ''')
@@ -1886,7 +1890,8 @@ def test_2d_transform():
             @page { -weasy-size: 10px; margin: 2px; background: #fff; }
             div { -weasy-transform: scaleY(2);
                   -weasy-transform-origin: 1px 1px;
-                  -weasy-image-rendering: optimizeSpeed; }
+                  -weasy-image-rendering: optimizeSpeed;
+                  font-size: 0 }
         </style>
         <div><img src="pattern.png"></div>
     ''')
@@ -1907,7 +1912,8 @@ def test_2d_transform():
             @page { -weasy-size: 10px; margin: 2px; background: #fff; }
             div { -weasy-transform: scaleX(2);
                   -weasy-transform-origin: 1px 1px;
-                  -weasy-image-rendering: optimizeSpeed; }
+                  -weasy-image-rendering: optimizeSpeed;
+                  font-size: 0 }
         </style>
         <div><img src="pattern.png"></div>
     ''')
