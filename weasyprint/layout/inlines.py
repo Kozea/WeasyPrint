@@ -674,7 +674,8 @@ def split_text_box(document, box, available_width, skip):
 
 
 def line_box_verticality(box):
-    """Handle ``vertical-align`` within an :class:`LineBox`.
+    """Handle ``vertical-align`` within an :class:`LineBox` (or of a
+    non-align sub-tree).
 
     Place all boxes vertically assuming that the baseline of ``box``
     is at `y = 0`.
@@ -683,18 +684,59 @@ def line_box_verticality(box):
     of margin boxes.
 
     """
-    baseline_y = 0
-    max_y, min_y = inline_box_verticality(box, baseline_y)
+    top_bottom_subtrees = []
+    subtrees_with_min_max = []
+    max_y, min_y = aligned_subtree_verticality(
+        box, top_bottom_subtrees, baseline_y=0)
+    for subtree in top_bottom_subtrees:
+        sub_max_y, sub_min_y = aligned_subtree_verticality(
+            subtree, top_bottom_subtrees, baseline_y=0)
+        subtrees_with_min_max.append(
+            (subtree, sub_max_y, sub_min_y))
+
+    if subtrees_with_min_max:
+        highest_sub = max(
+            sub_max_y - sub_min_y
+            for subtree, sub_max_y, sub_min_y in subtrees_with_min_max
+        )
+        max_y = max(max_y, min_y + highest_sub)
+
+    for subtree, sub_max_y, sub_min_y in subtrees_with_min_max:
+        if subtree.style.vertical_align == 'top':
+            dy = min_y - sub_min_y
+        else:
+            assert subtree.style.vertical_align == 'bottom'
+            dy = max_y - sub_max_y
+        translate_subtree(subtree, dy)
+    return max_y, min_y
+
+
+def translate_subtree(box, dy):
+    if isinstance(box, boxes.InlineBox):
+        box.position_y += dy
+        if box.style.vertical_align in ('top', 'bottom'):
+            for child in box.children:
+                translate_subtree(child, dy)
+    else:
+        # Text or atomic boxes
+        box.translate(dy=dy)
+
+
+def aligned_subtree_verticality(box, top_bottom_subtrees, baseline_y):
+    max_y, min_y = inline_box_verticality(box, top_bottom_subtrees, baseline_y)
+
+    # Account for the line box itself:
     top = baseline_y - box.baseline
     bottom = top + box.margin_height()
     if min_y is None or top < min_y:
         min_y = top
     if max_y is None or bottom > max_y:
         max_y = bottom
+
     return max_y, min_y
 
 
-def inline_box_verticality(box, baseline_y):
+def inline_box_verticality(box, top_bottom_subtrees, baseline_y):
     """Handle ``vertical-align`` within an :class:`InlineBox`.
 
     Place all boxes vertically assuming that the baseline of ``box``
@@ -706,6 +748,9 @@ def inline_box_verticality(box, baseline_y):
     """
     max_y = None
     min_y = None
+    if not isinstance(box, (boxes.LineBox, boxes.InlineBox)):
+        return max_y, min_y
+
     for child in box.children:
         if not child.is_in_normal_flow():
             continue
@@ -718,16 +763,22 @@ def inline_box_verticality(box, baseline_y):
             top = baseline_y - (one_ex + child.margin_height()) / 2.
             child_baseline_y = top + child.baseline
         # TODO: actually implement vertical-align: top and bottom
-        elif vertical_align in ('text-top', 'top'):
+        elif vertical_align == 'text-top':
             # align top with the top of the parent’s content area
             top = (baseline_y - box.baseline + box.margin_top +
                    box.border_top_width + box.padding_top)
             child_baseline_y = top + child.baseline
-        elif vertical_align in ('text-bottom', 'bottom'):
+        elif vertical_align == 'text-bottom':
             # align bottom with the bottom of the parent’s content area
             bottom = (baseline_y - box.baseline + box.margin_top +
                       box.border_top_width + box.padding_top + box.height)
             child_baseline_y = bottom - child.margin_height() + child.baseline
+        elif vertical_align in ('top', 'bottom'):
+            top_bottom_subtrees.append(child)
+            # Later, we will assume for this subtree that its baseline
+            # is at y=0.
+            child.position_y = -child.baseline
+            continue
         else:
             # Numeric value: The child’s baseline is `vertical_align` above
             # (lower y) the parent’s baseline.
@@ -747,7 +798,7 @@ def inline_box_verticality(box, baseline_y):
             max_y = bottom
         if isinstance(child, boxes.InlineBox):
             children_max_y, children_min_y = inline_box_verticality(
-                child, child_baseline_y)
+                child, top_bottom_subtrees, child_baseline_y)
             if children_max_y is None:
                 if (
                     child.margin_width() == 0

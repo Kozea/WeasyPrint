@@ -2195,6 +2195,53 @@ def test_vertical_align():
     assert div_img_1.position_y == 135
     assert div_img_2.position_y == 100
 
+    # The first two images bring the top of the line box 30px above
+    # the baseline and 10px below.
+    # Each of the inner span
+    page, = parse('''
+        <span style="font-size: 0">
+            <img src="pattern.png" style="vertical-align: 26px">
+            <img src="pattern.png" style="vertical-align: -10px">
+            <span style="vertical-align: top">
+                <img src="pattern.png" style="vertical-align: -10px">
+                <span style="vertical-align: -10px">
+                    <img src="pattern.png" style="vertical-align: bottom">
+                </span>
+            </span>
+            <span style="vertical-align: bottom">
+                <img src="pattern.png" style="vertical-align: 6px">
+            </span>
+        </span>
+    ''')
+    html, = page.children
+    body, = html.children
+    line, = body.children
+    span_1, = line.children
+    img_1, img_2, span_2, span_4 = span_1.children
+    img_3, span_3 = span_2.children
+    img_4, = span_3.children
+    img_5, = span_4.children
+    assert body.height == line.height
+    assert line.height == 40
+    assert img_1.position_y == 0
+    assert img_2.position_y == 36
+    assert img_3.position_y == 6
+    assert img_4.position_y == 36
+    assert img_5.position_y == 30
+
+    page, = parse('''
+        <span style="font-size: 0">
+            <img src="pattern.png" style="vertical-align: bottom">
+            <img src="pattern.png" style="vertical-align: top; height: 100px">
+        </span>
+    ''')
+    html, = page.children
+    body, = html.children
+    line, = body.children
+    span, = line.children
+    img_1, img_2 = span.children
+    assert img_1.position_y == 96
+    assert img_2.position_y == 0
 
 @assert_no_logs
 def test_text_align_left():
