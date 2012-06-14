@@ -135,7 +135,9 @@ def make_app():
         if url:
             if request.query_string:
                 url += '?' + request.query_string
-            pages = get_svg_pages(HTML(url), stylesheet)
+            html = HTML(url)
+            url = html.base_url
+            pages = get_svg_pages(html, stylesheet)
         else:
             pages = []
         return template.render(**locals())

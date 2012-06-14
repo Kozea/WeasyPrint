@@ -35,7 +35,6 @@ if sys.version_info[0] >= 3:
         info = result.info()
         mime_type = info.get_content_type()
         charset = info.get_param('charset')
-        # Using here result.fp gives 'ValueError: read of closed file'
         return result, mime_type, charset
 
 
@@ -67,7 +66,7 @@ else:
         info = result.info()
         mime_type = info.gettype()
         charset = info.getparam('charset')
-        return result.fp, mime_type, charset
+        return result, mime_type, charset
 
 
     def unquote_to_bytes(data):

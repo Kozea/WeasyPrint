@@ -188,11 +188,7 @@ def find_stylesheets(document, medium):
             if 'stylesheet' not in rel or 'alternate' in rel:
                 continue
             href = get_url_attribute(element, 'href')
-            css = CSS(url=href, _check_mime_type=True)
-            if css.mime_type == 'text/css':
-                yield css
-            else:
-                LOGGER.warn('Unsupported stylesheet type: %s', css.mime_type)
+            yield CSS(url=href, _check_mime_type=True)
 
 
 def find_style_attributes(document):
