@@ -360,7 +360,8 @@ def gather_metadata(document):
                 box.bookmark_label,
                 (page_index, pos_x, pos_y)))
 
-        if box.style.link:
+        # 'link' is inherited but redundant on text boxes
+        if box.style.link and not isinstance(box, boxes.TextBox):
             pos_x, pos_y = point_to_pdf(box.border_box_x(), box.border_box_y())
             width, height = distance_to_pdf(
                 box.border_width(), box.border_height())

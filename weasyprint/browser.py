@@ -21,26 +21,28 @@ from weasyprint.backends import PNGBackend
 from weasyprint.formatting_structure import boxes
 
 
-def find_links(box, links):
+def find_links(box, links, anchors):
     link = box.style.link
-    anchor = box.style.anchor
-    if link or anchor:
-        if link:
-            type_, href = box.style.link
-            if type_ == 'internal':
-                href = '#' + href
-            else:
-                href = '/' + href
+    # 'link' is inherited but redundant on text boxes
+    if link and not isinstance(box, boxes.TextBox):
+        type_, href = box.style.link
+        if type_ == 'internal':
+            href = '#' + href
         else:
-            href = None
+            href = '/' + href
         # "Border area.  That's the area that hit-testing is done on."
         # http://lists.w3.org/Archives/Public/www-style/2012Jun/0318.html
-        links.append((href, anchor, box.border_box_x(), box.border_box_y(),
+        links.append((href, box.border_box_x(), box.border_box_y(),
                       box.border_width(), box.border_height()))
+
+    anchor = box.style.anchor
+    if anchor:
+        anchors.append((anchor, box.border_box_x(), box.border_box_y(),
+                        box.border_width(), box.border_height()))
 
     if isinstance(box, boxes.ParentBox):
         for child in box.children:
-            find_links(child, links)
+            find_links(child, links, anchors)
 
 
 def surface_to_base64(surface):
@@ -59,11 +61,11 @@ def get_svg_pages(html, *stylesheets):
         draw.draw_page(document, page, context)
         width, height, surface = backend.pages.pop()
         links = []
-        find_links(page, links)
+        anchors = []
+        find_links(page, links, anchors)
         result.append(dict(
-            width=width,
-            height=height,
-            links=links,
+            width=width, height=height,
+            links=links, anchors=anchors,
             data_url=surface_to_base64(surface),
         ))
     return result
@@ -81,16 +83,15 @@ def make_app():
         <meta charset=utf-8>
         <title>WeasyPrint Browser</title>
         <style>
-            body { padding-top: 3em }
-            form { border-bottom: 1px #888 solid; padding: .5em;
-                   position: fixed; top: 0; left: 0; right: 0; z-index: 1; }
-            form, input:not([type]) { background: rgba(255, 255, 255, .7) }
-            input { font: 1.5em sans-serif }
-            section { -webkit-box-shadow: 0 0 10px 2px #aaa;
-                         -moz-box-shadow: 0 0 10px 2px #aaa;
-                          -ms-box-shadow: 0 0 10px 2px #aaa;
-                           -o-box-shadow: 0 0 10px 2px #aaa;
-                              box-shadow: 0 0 10px 2px #aaa;
+            form { position: fixed; z-index: 1;
+                   top: 8px; left: 16px; right: 0; }
+            input { font: 24px/30px sans-serif }
+            input:not([type]) { background: rgba(255, 255, 255, .9);
+                                border-radius: 6px; padding: 0 3px;
+                                border-width: 2px }
+            input:not([type]):focus { outline: none }
+            body { margin-top: 0; padding-top: 50px }
+            section { box-shadow: 0 0 10px 2px #aaa;
                       margin: 25px; position: relative }
             a { position: absolute; display: block }
             a[href]:hover, a[href]:focus { outline: 1px dotted }
@@ -98,19 +99,24 @@ def make_app():
         <body>
         <form onsubmit="window.location.href = '/' + this.url.value;
                         return false;">
-            <input name=url style="width: 90%" value="{{ url }}" />
+            <input name=url style="width: 85%" value="{{ url }}" />
             <input type=submit value=Go />
         </form>
         {% for page in pages %}
             <section style="width: {{ page.width }}px;
                             height: {{ page.height }}px">
                 <img src="{{ page.data_url }}">
-                {% for href, anchor, pos_x, pos_y, width, height
-                   in page.links %}
-                    <a{% if href %} href="{{ href }}"{% endif %}
-                      {% if anchor %} name="{{ anchor }}"{% endif %}
-                       style="width: {{ width }}px; height: {{ height }}px;
-                              left: {{ pos_x }}px; top: {{ pos_y }}px;"></a>
+                {% for href, pos_x, pos_y, width, height in page.links %}
+                    <a style="width: {{ width }}px; height: {{ height }}px;
+                              left: {{ pos_x }}px; top: {{ pos_y }}px;"
+                       href="{{ href }}"></a>
+                {% endfor %}
+                {% for anchor, pos_x, pos_y, width, height in page.anchors %}
+                    <a style="left: {{ pos_x }}px; top: {#
+                                Remove 60px so that the real pos is below
+                                the address bar.
+                              #}{{ pos_y - 60 }}px;"
+                       name="{{ anchor }}"></a>
                 {% endfor %}
             </section>
         {% endfor %}
