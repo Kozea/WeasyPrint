@@ -354,7 +354,8 @@ def gather_metadata(document):
         # "Border area. That's the area that hit-testing is done on."
         # http://lists.w3.org/Archives/Public/www-style/2012Jun/0318.html
         if box.bookmark_label and box.bookmark_level:
-            pos_x, pos_y = point_to_pdf(box.border_box_x(), box.border_box_y())
+            pos_x, pos_y, _, _ = box.hit_area()
+            pos_x, pos_y = point_to_pdf(pos_x, pos_y)
             bookmarks.append((
                 box.bookmark_level,
                 box.bookmark_label,
@@ -362,14 +363,15 @@ def gather_metadata(document):
 
         # 'link' is inherited but redundant on text boxes
         if box.style.link and not isinstance(box, boxes.TextBox):
-            pos_x, pos_y = point_to_pdf(box.border_box_x(), box.border_box_y())
-            width, height = distance_to_pdf(
-                box.border_width(), box.border_height())
+            pos_x, pos_y, width, height = box.hit_area()
+            pos_x, pos_y = point_to_pdf(pos_x, pos_y)
+            width, height = distance_to_pdf(width, height)
             page_links.append(
                 (box, (pos_x, pos_y, pos_x + width, pos_y + height)))
 
         if box.style.anchor and box.style.anchor not in anchors:
-            pos_x, pos_y = point_to_pdf(box.border_box_x(), box.border_box_y())
+            pos_x, pos_y, _, _ = box.hit_area()
+            pos_x, pos_y = point_to_pdf(pos_x, pos_y)
             anchors[box.style.anchor] = (page_index, pos_x, pos_y)
 
         if isinstance(box, boxes.ParentBox):

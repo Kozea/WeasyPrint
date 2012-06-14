@@ -190,14 +190,12 @@ class Box(object):
         """Absolute vertical position of the border box."""
         return self.position_y + self.margin_top
 
-    def get_wrapped_table(self):
-        """Get the table wrapped by the box."""
-        if self.is_table_wrapper:
-            for child in self.children:
-                if isinstance(child, TableBox):
-                    return child
-            else:  # pragma: no cover
-                raise ValueError('Table wrapper without a table')
+    def hit_area(self):
+        """Return the (x, y, w, h) rectangle where the box is clickable."""
+        # "Border area. That's the area that hit-testing is done on."
+        # http://lists.w3.org/Archives/Public/www-style/2012Jun/0318.html
+        return (self.border_box_x(), self.border_box_y(),
+                self.border_width(), self.border_height())
 
     # Positioning schemes
 
@@ -275,6 +273,15 @@ class ParentBox(Box):
         super(ParentBox, self).translate(dx, dy)
         for child in self.children:
             child.translate(dx, dy)
+
+    def get_wrapped_table(self):
+        """Get the table wrapped by the box."""
+        if self.is_table_wrapper:
+            for child in self.children:
+                if isinstance(child, TableBox):
+                    return child
+            else:  # pragma: no cover
+                raise ValueError('Table wrapper without a table')
 
 
 class BlockLevelBox(Box):
@@ -362,6 +369,11 @@ class InlineBox(InlineLevelBox, ParentBox):
     inline box.
 
     """
+    def hit_area(self):
+        """Return the (x, y, w, h) rectangle where the box is clickable."""
+        # Use line-height (margin_height) rather than border_height
+        return (self.border_box_x(), self.position_y,
+                self.border_width(), self.margin_height())
 
 
 class TextBox(InlineLevelBox):

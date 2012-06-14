@@ -32,13 +32,11 @@ def find_links(box, links, anchors):
             href = '/' + href
         # "Border area.  That's the area that hit-testing is done on."
         # http://lists.w3.org/Archives/Public/www-style/2012Jun/0318.html
-        links.append((href, box.border_box_x(), box.border_box_y(),
-                      box.border_width(), box.border_height()))
+        links.append((href,) + box.hit_area())
 
     anchor = box.style.anchor
     if anchor:
-        anchors.append((anchor, box.border_box_x(), box.border_box_y(),
-                        box.border_width(), box.border_height()))
+        anchors.append((anchor,) + box.hit_area())
 
     if isinstance(box, boxes.ParentBox):
         for child in box.children:

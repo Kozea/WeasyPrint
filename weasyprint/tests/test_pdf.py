@@ -180,6 +180,7 @@ def test_links():
         <style>
             body { margin: 0; font-size: 10pt; line-height: 2 }
             p { display: block; height: 90pt; margin: 0 0 10pt 0 }
+            img { width: 30pt; vertical-align: top }
         </style>
         <p><a href="http://weasyprint.org"><img src=pattern.png></a></p>
         <p style="padding: 0 10pt"><a
@@ -188,15 +189,20 @@ def test_links():
         <p id=hello>Hello, World</p>
         <p id=lipsum>
             <a style="display: block; page-break-before: always; height: 30pt"
-               href="#hel%6Co">Lorem ipsum ...</a>
+               href="#hel%6Co"></a>
         </p>
     ''')
     assert links == [
         [
-            # 4px == 3pt wide (like the image), 20pt high (like line-height)
-            ('external', 'http://weasyprint.org', (50, 950, 53, 930)),
-            # 5pt wide (image + 2 * 1pt of border), 20pt high
-            ('internal', (1, 50, 950), (60, 850, 65, 830)),
+            # 30pt wide (like the image), 20pt high (like line-height)
+            ('external', 'http://weasyprint.org', (50, 950, 80, 930)),
+            # The image itself: 30*30pt
+            ('external', 'http://weasyprint.org', (50, 950, 80, 920)),
+
+            # 32pt wide (image + 2 * 1pt of border), 20pt high
+            ('internal', (1, 50, 950), (60, 850, 92, 830)),
+            # The image itself: 32*32pt
+            ('internal', (1, 50, 950), (60, 850, 92, 818)),
         ], [
             # 400pt wide (block), 30pt high
             ('internal', (0, 50, 750), (50, 950, 450, 920)),
