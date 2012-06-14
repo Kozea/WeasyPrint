@@ -177,6 +177,9 @@ NOT_PRINT_MEDIA = set([
 #
 # text_decoration is not a really inherited, see
 # http://www.w3.org/TR/CSS2/text.html#propdef-text-decoration
+#
+# link: click events normally bubble up to link ancestors
+#   See http://lists.w3.org/Archives/Public/www-style/2012Jun/0315.html
 INHERITED = set("""
     border_collapse
     border_spacing
@@ -206,6 +209,7 @@ INHERITED = set("""
     word_spacing
 
     image_rendering
+    link
 """.split())
 
 # Inherited but not applicable to print:
