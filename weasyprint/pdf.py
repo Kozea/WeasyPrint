@@ -351,23 +351,25 @@ def process_bookmarks(raw_bookmarks):
 def gather_metadata(document):
     """Traverse the layout tree (boxes) to find all metadata."""
     def walk(box):
+        # "Border area. That's the area that hit-testing is done on."
+        # http://lists.w3.org/Archives/Public/www-style/2012Jun/0318.html
         if box.bookmark_label and box.bookmark_level:
-            pos_x, pos_y = point_to_pdf(box.position_x, box.position_y)
+            pos_x, pos_y = point_to_pdf(box.border_box_x(), box.border_box_y())
             bookmarks.append((
                 box.bookmark_level,
                 box.bookmark_label,
                 (page_index, pos_x, pos_y)))
 
         if box.style.link:
-            pos_x, pos_y = point_to_pdf(box.position_x, box.position_y)
+            pos_x, pos_y = point_to_pdf(box.border_box_x(), box.border_box_y())
             width, height = distance_to_pdf(
-                box.margin_width(), box.margin_height())
+                box.border_width(), box.border_height())
             page_links.append(
                 (box, (pos_x, pos_y, pos_x + width, pos_y + height)))
 
         if box.style.anchor and box.style.anchor not in anchors:
-            anchors[box.style.anchor] = (
-                (page_index,) + point_to_pdf(box.position_x, box.position_y))
+            pos_x, pos_y = point_to_pdf(box.border_box_x(), box.border_box_y())
+            anchors[box.style.anchor] = (page_index, pos_x, pos_y)
 
         if isinstance(box, boxes.ParentBox):
             for child in box.children:
