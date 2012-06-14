@@ -79,8 +79,11 @@ def make_app():
         <meta charset=utf-8>
         <title>WeasyPrint Browser</title>
         <style>
+            body { padding-top: 3em }
+            form { border-bottom: 1px #888 solid; padding: .5em;
+                   position: fixed; top: 0; left: 0; right: 0; z-index: 1; }
+            form, input:not([type]) { background: rgba(255, 255, 255, .7) }
             input { font: 1.5em sans-serif }
-            form { border-bottom: 1px #888 solid; padding: .5em }
             section { -webkit-box-shadow: 0 0 10px 2px #aaa;
                          -moz-box-shadow: 0 0 10px 2px #aaa;
                           -ms-box-shadow: 0 0 10px 2px #aaa;
@@ -90,6 +93,7 @@ def make_app():
             a { position: absolute; display: block }
             a[href]:hover, a[href]:focus { outline: 1px dotted }
         </style>
+        <body>
         <form onsubmit="window.location.href = '/' + this.url.value;
                         return false;">
             <input name=url style="width: 90%" value="{{ url }}" />
@@ -111,7 +115,8 @@ def make_app():
     ''')
 
     stylesheet = CSS(string='''
-        @page { -weasy-size: 640px; margin: 0 }
+       /* @page { -weasy-size: 640px; margin: 0 }*/
+       :root { font-size: 12px }
     ''')
 
     @app.route('/favicon.ico')
