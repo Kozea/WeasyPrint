@@ -408,7 +408,8 @@ def block_container_layout(document, box, max_position_y, skip_stack,
             adjoining_margins = []
     else:
         # top and bottom margin of this box
-        if box.height in ('auto', 0) and all(v == 0 for v in [
+        if box.height in ('auto', 0) and box.style.clear == 'none' and all(
+            v == 0 for v in [
                 box.min_height, box.border_top_width, box.padding_top,
                 box.border_bottom_width, box.padding_bottom]):
             collapsing_through = True
