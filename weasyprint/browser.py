@@ -13,6 +13,7 @@
 from __future__ import division, unicode_literals
 
 import io
+import os.path
 
 import cairo
 
@@ -20,6 +21,10 @@ from weasyprint import HTML, CSS, draw
 from weasyprint.backends import PNGBackend
 from weasyprint.formatting_structure import boxes
 from weasyprint.urls import url_is_absolute
+
+
+FAVICON = os.path.join(os.path.dirname(__file__),
+                       'tests', 'resources', 'icon.png')
 
 
 def find_links(box, links, anchors):
@@ -72,7 +77,7 @@ def get_svg_pages(html, *stylesheets):
 
 def make_app():
     # Keep here imports that are not required for the rest of WeasyPrint
-    from flask import Flask, request
+    from flask import Flask, request, send_file
     from jinja2 import Template
 
     app = Flask(__name__)
@@ -128,7 +133,7 @@ def make_app():
 
     @app.route('/favicon.ico')
     def favicon():
-        return 'No favicon yet.', 404
+        return send_file(FAVICON)
 
     @app.route('/')
     @app.route('/<path:url>')
