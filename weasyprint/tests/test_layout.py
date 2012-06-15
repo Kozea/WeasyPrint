@@ -4016,3 +4016,49 @@ def test_floats():
     assert anon_block.position_y == 0
     assert (line_1.position_x, line_1.position_y) == (20, 0)
     assert (line_2.position_x, line_2.position_y) == (0, 200)
+
+    # floats-placement-vertical-001b
+    page, = parse('''
+        <style>
+            body { width: 90px; font-size: 0 }
+            img { vertical-align: top }
+        </style>
+        <body>
+        <span>
+            <img src=pattern.png style="width: 50px" />
+            <img src=pattern.png style="width: 50px" />
+            <img src=pattern.png style="float: left; width: 30px" />
+        </span>
+    ''')
+    html, = page.children
+    body, = html.children
+    img_3, anon_block = body.children
+    line_1, line_2 = anon_block.children
+    span_1, = line_1.children
+    span_2, = line_2.children
+    img_1, = span_1.children
+    img_2, = span_2.children
+    assert outer_area(img_3) == (0, 0, 30, 30)
+    assert outer_area(img_1) == (30, 0, 50, 50)
+    assert outer_area(img_2) == (0, 50, 50, 50)
+
+    # Variant of the above: no <span>
+    page, = parse('''
+        <style>
+            body { width: 90px; font-size: 0 }
+            img { vertical-align: top }
+        </style>
+        <body>
+        <img src=pattern.png style="width: 50px" />
+        <img src=pattern.png style="width: 50px" />
+        <img src=pattern.png style="float: left; width: 30px" />
+    ''')
+    html, = page.children
+    body, = html.children
+    img_3, anon_block = body.children
+    line_1, line_2 = anon_block.children
+    img_1, = line_1.children
+    img_2, = line_2.children
+    assert outer_area(img_3) == (0, 0, 30, 30)
+    assert outer_area(img_1) == (30, 0, 50, 50)
+    assert outer_area(img_2) == (0, 50, 50, 50)

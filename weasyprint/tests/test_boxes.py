@@ -214,26 +214,20 @@ def test_inline_in_block():
     box = build.block_in_inline(box)
     assert_tree(box, expected)
 
-    # Floats however  stay out of line boxes
+    # Floats are pull to the top of their containing blocks
     source = '<p>Hello <em style="float: left">World</em>!</p>'
-    expected = [
+    box = parse(source)
+    box = build.inline_in_block(box)
+    box = build.block_in_inline(box)
+    assert_tree(box, [
         ('p', 'Block', [
-            ('p', 'AnonBlock', [
-                ('p', 'Line', [
-                    ('p', 'Text', 'Hello ')])]),
             ('em', 'Block', [
                 ('em', 'Line', [
                     ('em', 'Text', 'World')])]),
             ('p', 'AnonBlock', [
                 ('p', 'Line', [
-                    ('p', 'Text', '!')])])])]
-    box = parse(source)
-    box = build.inline_in_block(box)
-    import pprint
-    pprint.pprint(to_lists(box))
-    assert_tree(box, expected)
-    box = build.block_in_inline(box)
-    assert_tree(box, expected)
+                    ('p', 'Text', 'Hello '),
+                    ('p', 'Text', '!')])])])])
 
 
 @assert_no_logs

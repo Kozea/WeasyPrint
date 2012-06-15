@@ -25,6 +25,10 @@ def float_width(box, document, containing_block):
 
 def float_layout(document, box, containing_block, absolute_boxes, fixed_boxes):
     """Set the width and position of floating ``box``."""
+    # avoid a circular imports
+    from .blocks import block_container_layout
+    from .inlines import inline_replaced_box_width_height
+
     resolve_percentages(box, (containing_block.width, containing_block.height))
     resolve_position_percentages(
         box, (containing_block.width, containing_block.height))
@@ -38,18 +42,10 @@ def float_layout(document, box, containing_block, absolute_boxes, fixed_boxes):
     if clearance:
         box.position_y += clearance
 
-    # avoid a circular import
-    from .inlines import min_max_replaced_width, min_max_replaced_height
-
-    if box.width == 'auto':
-        if isinstance(box, boxes.BlockReplacedBox):
-            min_max_replaced_width(box, None)
-            min_max_replaced_height(box, None)
-        else:
-            float_width(box, document, containing_block)
-
-    # avoid a circular import
-    from .blocks import block_container_layout
+    if isinstance(box, boxes.BlockReplacedBox):
+        inline_replaced_box_width_height(box, device_size=None)
+    elif box.width == 'auto':
+        float_width(box, document, containing_block)
 
     if box.is_table_wrapper:
         table_wrapper_width(

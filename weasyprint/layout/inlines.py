@@ -169,7 +169,7 @@ def skip_first_whitespace(box, skip_stack):
         if white_space in ('normal', 'nowrap', 'pre-line'):
             while index < length and box.text[index] == ' ':
                 index += 1
-        return index, None
+        return (index, None) if index else None
 
     if isinstance(box, (boxes.LineBox, boxes.InlineBox)):
         if index == 0 and not box.children:
@@ -180,7 +180,7 @@ def skip_first_whitespace(box, skip_stack):
             if index >= len(box.children):
                 return 'continue'
             result = skip_first_whitespace(box.children[index], None)
-        return index, result
+        return (index, result) if (index or result) else None
 
     assert skip_stack is None, 'unexpected skip inside %s' % box
     return None
@@ -510,13 +510,15 @@ def split_inline_box(document, box, position_x, max_x, skip_stack,
                      containing_block, device_size, absolute_boxes,
                      fixed_boxes, line_placeholders):
     """Same behavior as split_inline_level."""
+    is_start = skip_stack is None
     initial_position_x = position_x
     assert isinstance(box, (boxes.LineBox, boxes.InlineBox))
     left_spacing = (box.padding_left + box.margin_left +
                     box.border_left_width)
     right_spacing = (box.padding_right + box.margin_right +
                      box.border_right_width)
-    position_x += left_spacing
+    if is_start:
+        position_x += left_spacing
     content_box_left = position_x
 
     children = []
@@ -525,35 +527,26 @@ def split_inline_box(document, box, position_x, max_x, skip_stack,
     if box.style.position == 'relative':
         absolute_boxes = []
 
-    is_start = skip_stack is None
     if is_start:
         skip = 0
     else:
         skip, skip_stack = skip_stack
     for index, child in box.enumerate_skip(skip):
         child.position_y = box.position_y
-        if not child.is_in_normal_flow():
+        if child.is_absolutely_positioned():
             child.position_x = position_x
-            if child.is_absolutely_positioned():
-                placeholder = AbsolutePlaceholder(child)
-                line_placeholders.append(placeholder)
-                children.append(placeholder)
+            placeholder = AbsolutePlaceholder(child)
+            line_placeholders.append(placeholder)
+            children.append(placeholder)
+            absolute_boxes.append(placeholder)
+            if child.style.position == 'absolute':
                 absolute_boxes.append(placeholder)
-                if child.style.position == 'absolute':
-                    absolute_boxes.append(placeholder)
-                else:
-                    fixed_boxes.append(placeholder)
-            elif child.style.float in ('left', 'right'):
-                # Set a maximum line width to lay out the float element, it
-                # will be correctly set after that
-                if box.width == 'auto':
-                    box.width = (
-                        containing_block.content_box_x() +
-                        containing_block.width - position_x)
-                child = float_layout(
-                    document, child, box, absolute_boxes, fixed_boxes)
-                children.append(child)
+            else:
+                fixed_boxes.append(placeholder)
             continue
+        # Floats are not supposed to be here, there are moved to the
+        # top of the containing block during box creation.
+        assert child.is_in_normal_flow()
 
         new_child, resume_at, preserved = split_inline_level(
             document, child, position_x, max_x, skip_stack, containing_block,
