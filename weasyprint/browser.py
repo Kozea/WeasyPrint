@@ -19,6 +19,7 @@ import cairo
 from weasyprint import HTML, CSS, draw
 from weasyprint.backends import PNGBackend
 from weasyprint.formatting_structure import boxes
+from weasyprint.urls import url_is_absolute
 
 
 def find_links(box, links, anchors):
@@ -135,6 +136,9 @@ def make_app():
         if url:
             if request.query_string:
                 url += '?' + request.query_string
+            if not url_is_absolute(url):
+                # Default to HTTP rather than relative filenames
+                url = 'http://' + url
             html = HTML(url)
             url = html.base_url
             pages = get_svg_pages(html, stylesheet)
