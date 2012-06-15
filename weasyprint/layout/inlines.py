@@ -60,58 +60,79 @@ def get_next_linebox(document, linebox, position_y, skip_stack,
                      containing_block, device_size, absolute_boxes,
                      fixed_boxes):
     """Return ``(line, resume_at)``."""
-    linebox.position_y = position_y
-    linebox.width = inline_preferred_minimum_width(
-        document, linebox, skip_stack=skip_stack, first_line=True)
-    position_x, position_y, available_width = avoid_collisions(
-        document, linebox, containing_block, outer=False)
-    linebox.position_x = position_x
-    linebox.position_y = position_y
-    max_x = position_x + available_width
+    resolve_percentages(linebox, containing_block)
     if skip_stack is None:
         # text-indent only at the start of the first line
         # Other percentages (margins, width, ...) do not apply.
         resolve_one_percentage(linebox, 'text_indent', containing_block.width)
-        position_x += linebox.text_indent
+    else:
+        linebox.text_indent = 0
 
     skip_stack = skip_first_whitespace(linebox, skip_stack)
     if skip_stack == 'continue':
         return None, None
 
-    line_placeholders = []
+    linebox.width = inline_preferred_minimum_width(
+        document, linebox, skip_stack=skip_stack, first_line=True)
 
-    resolve_percentages(linebox, containing_block)
-    line, resume_at, preserved_line_break = split_inline_box(
-        document, linebox, position_x, max_x, skip_stack, containing_block,
-        device_size, absolute_boxes, fixed_boxes, line_placeholders)
+    linebox.height, _ = strut_layout(linebox.style)
+    linebox.position_y = position_y
+    position_x, position_y, available_width = avoid_collisions(
+        document, linebox, containing_block, outer=False)
+    candidate_height = linebox.height
+    while 1:
+        linebox.position_x = position_x
+        linebox.position_y = position_y
+        max_x = position_x + available_width
+        position_x += linebox.text_indent
 
-    remove_last_whitespace(document, line)
+        line_placeholders = []
+        line_absolutes = []
+        line_fixed = []
 
-    bottom, top = line_box_verticality(line)
-    last = resume_at is None or preserved_line_break
-    offset_x = text_align(document, line, available_width, last)
-    if bottom is None:
-        # No children at all
-        line.position_y = position_y
-        offset_y = 0
-        if preserved_line_break:
-            # Only the strut.
-            line.baseline = line.margin_top
-            line.height += line.margin_top + line.margin_bottom
+        line, resume_at, preserved_line_break = split_inline_box(
+            document, linebox, position_x, max_x, skip_stack, containing_block,
+            device_size, line_absolutes, line_fixed, line_placeholders)
+
+        remove_last_whitespace(document, line)
+
+        bottom, top = line_box_verticality(line)
+        if bottom is None:
+            # No children at all
+            offset_y = 0
+            if preserved_line_break:
+                # Only the strut.
+                line.baseline = line.margin_top
+                line.height += line.margin_top + line.margin_bottom
+            else:
+                line.height = 0
+                line.baseline = 0
         else:
-            line.height = 0
-            line.baseline = 0
-    else:
-        assert top is not None
-        line.baseline = -top
-        line.position_y = top
-        line.height = bottom - top
-        offset_y = position_y - top
-    line.margin_top = 0
-    line.margin_bottom = 0
-    if offset_x != 0 or offset_y != 0:
-        # This also translates children
-        line.translate(offset_x, offset_y)
+            assert top is not None
+            line.baseline = -top
+            line.position_y = top
+            line.height = bottom - top
+            offset_y = position_y - top
+        line.margin_top = 0
+        line.margin_bottom = 0
+
+        offset_x = text_align(document, line, available_width,
+                              last=resume_at is None or preserved_line_break)
+        if offset_x != 0 or offset_y != 0:
+            line.translate(offset_x, offset_y)
+
+        if line.height <= candidate_height:
+            break
+        candidate_height = line.height
+
+        position_x, position_y, available_width = avoid_collisions(
+            document, line, containing_block, outer=False)
+        if (position_x, position_y) == (
+                linebox.position_x, linebox.position_y):
+            break
+
+    absolute_boxes.extend(line_absolutes)
+    fixed_boxes.extend(line_fixed)
 
     for placeholder in line_placeholders:
         if placeholder.style._weasy_specified_display.startswith('inline'):

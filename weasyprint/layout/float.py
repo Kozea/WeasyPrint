@@ -120,18 +120,21 @@ def avoid_collisions(document, box, containing_block, outer=True):
     box_width = box.margin_width() if outer else box.width
 
     while True:
+        colliding_shapes = [
+            shape for shape in excluded_shapes
+            if (shape.position_y <= position_y <
+                shape.position_y + shape.margin_height())
+            or (shape.position_y < position_y + box.margin_height() <=
+                shape.position_y + shape.margin_height())
+        ]
         left_bounds = [
             shape.position_x + shape.margin_width()
-            for shape in excluded_shapes
-            if shape.style.float == 'left'
-            and (shape.position_y <= position_y <
-                 shape.position_y + shape.margin_height())]
+            for shape in colliding_shapes
+            if shape.style.float == 'left']
         right_bounds = [
             shape.position_x
-            for shape in excluded_shapes
-            if shape.style.float == 'right'
-            and (shape.position_y <= position_y <
-                 shape.position_y + shape.margin_height())]
+            for shape in colliding_shapes
+            if shape.style.float == 'right']
 
         # Set the default maximum bounds
         max_left_bound = containing_block.content_box_x()
@@ -149,9 +152,7 @@ def avoid_collisions(document, box, containing_block, outer=True):
                 # The box does not fit here
                 new_positon_y = min(
                     shape.position_y + shape.margin_height()
-                    for shape in excluded_shapes
-                    if (shape.position_y <= position_y <
-                        shape.position_y + shape.margin_height()))
+                    for shape in colliding_shapes)
                 if new_positon_y > position_y:
                     # We can find a solution with a higher position_y
                     position_y = new_positon_y
