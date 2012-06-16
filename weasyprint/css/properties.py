@@ -231,6 +231,7 @@ INHERITED = set("""
 
 # http://www.w3.org/TR/CSS21/tables.html#model
 # See also http://lists.w3.org/Archives/Public/www-style/2012Jun/0066.html
+# Only non-inherited properties need to be included here.
 TABLE_WRAPPER_BOX_PROPERTIES = set('''
     position
     float
@@ -242,15 +243,18 @@ TABLE_WRAPPER_BOX_PROPERTIES = set('''
     bottom
     left
     right
-    z_index
+
     clear
+    counter_increment
+    counter_reset
+    opacity
     page_break_before
     page_break_after
     page_break_inside
-    vertical_align
-    line_height
     transform
     transform_origin
+    vertical_align
+    z_index
 '''.split())
 
 
