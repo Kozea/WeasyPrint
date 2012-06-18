@@ -407,14 +407,16 @@ def block_container_layout(document, box, max_position_y, skip_stack,
             # not adjoining. (position_y is not used afterwards.)
             adjoining_margins = []
     else:
+        collapsed_margin = collapse_margin(adjoining_margins)
         # top and bottom margin of this box
-        if box.height in ('auto', 0) and box.style.clear == 'none' and all(
-            v == 0 for v in [
+        if (box.height in ('auto', 0) and
+            not get_clearance(document, box, collapsed_margin) and
+            all(v == 0 for v in [
                 box.min_height, box.border_top_width, box.padding_top,
-                box.border_bottom_width, box.padding_bottom]):
+                box.border_bottom_width, box.padding_bottom])):
             collapsing_through = True
         else:
-            position_y += collapse_margin(adjoining_margins)
+            position_y += collapsed_margin
             adjoining_margins = []
 
     if box.border_bottom_width or box.padding_bottom or (
