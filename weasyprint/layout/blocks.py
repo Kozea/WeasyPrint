@@ -410,7 +410,7 @@ def block_container_layout(document, box, max_position_y, skip_stack,
         collapsed_margin = collapse_margin(adjoining_margins)
         # top and bottom margin of this box
         if (box.height in ('auto', 0) and
-            not get_clearance(document, box, collapsed_margin) and
+            get_clearance(document, box, collapsed_margin) is None and
             all(v == 0 for v in [
                 box.min_height, box.border_top_width, box.padding_top,
                 box.border_bottom_width, box.padding_bottom])):
