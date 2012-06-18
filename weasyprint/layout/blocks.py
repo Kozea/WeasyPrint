@@ -256,7 +256,7 @@ def block_container_layout(document, box, max_position_y, skip_stack,
                     absolute_boxes.append(placeholder)
                 else:
                     fixed_boxes.append(placeholder)
-            elif child.style.float in ('left', 'right'):
+            elif child.is_floated():
                 child = float_layout(
                     document, child, box, absolute_boxes, fixed_boxes)
                 new_children.append(child)
@@ -370,6 +370,10 @@ def block_container_layout(document, box, max_position_y, skip_stack,
                         new_child = None
                     else:
                         position_y = new_position_y
+
+                if new_child.style.clear != 'none':
+                    position_y = (
+                        new_child.border_box_y() + new_child.border_height())
 
             if new_child is None:
                 if new_children:

@@ -76,7 +76,6 @@ def find_float_position(document, box, containing_block):
 
     # Point 4 is already handled as box.position_y is set according to the
     # containing box top position, with collapsing margins handled
-    # TODO: are the collapsing margins *really* handled?
 
     # Points 5 and 6, box.position_y is set to the highest position_y possible
     if document.excluded_shapes:
