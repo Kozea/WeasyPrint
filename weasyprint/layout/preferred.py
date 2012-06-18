@@ -404,7 +404,10 @@ def table_preferred_width(document, box, outer=True):
 def text_lines_width(document, box, width, skip=None):
     """Return the list of line widths for a ``TextBox``."""
     context = cairo.Context(document.surface)
-    fragment = TextFragment(box.text[skip:], box.style, context, width)
+    # TODO: without the lstrip, we get an extra empty line at the beginning. Is
+    # there a better solution to avoid that?
+    fragment = TextFragment(
+        box.text[skip:].lstrip(), box.style, context, width)
     return fragment.line_widths()
 
 
