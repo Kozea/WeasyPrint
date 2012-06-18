@@ -39,7 +39,7 @@ def float_layout(document, box, containing_block, absolute_boxes, fixed_boxes):
         box.margin_right = 0
 
     clearance = get_clearance(document, box)
-    if clearance:
+    if clearance is not None:
         box.position_y += clearance
 
     if isinstance(box, boxes.BlockReplacedBox):
@@ -86,7 +86,7 @@ def find_float_position(document, box, containing_block):
 
     # Points 1 and 2
     position_x, position_y, available_width = avoid_collisions(
-        document, box, containing_block)
+        document, box, containing_block, outer_height=False)
 
     # Point 9
     # position_y is set now, let's define position_x
@@ -100,27 +100,32 @@ def find_float_position(document, box, containing_block):
 
 
 def get_clearance(document, box, collapsed_margin=0):
-    clearance = 0
+    """Return None if there is no clearance, otherwise the clearance value."""
+    clearance = None
     hypothetical_position = box.position_y + collapsed_margin
     for excluded_shape in document.excluded_shapes:
         if box.style.clear in (excluded_shape.style.float, 'both'):
             y, h = excluded_shape.position_y, excluded_shape.margin_height()
-            clearance = max(clearance, y + h - hypothetical_position)
+            if hypothetical_position < y + h:
+                clearance = max(
+                    (clearance or 0), y + h - hypothetical_position)
     return clearance
 
 
-def avoid_collisions(document, box, containing_block, outer=True):
+def avoid_collisions(document, box, containing_block, outer_width=True,
+                     outer_height=True):
     excluded_shapes = document.excluded_shapes
     position_y = box.position_y
 
-    box_width = box.margin_width() if outer else box.width
+    box_width = box.margin_width() if outer_width else box.width
+    box_height = box.margin_height() if outer_height else box.height
 
     while True:
         colliding_shapes = [
             shape for shape in excluded_shapes
             if (shape.position_y <= position_y <
                 shape.position_y + shape.margin_height())
-            or (shape.position_y < position_y + box.margin_height() <=
+            or (shape.position_y < position_y + box_height <=
                 shape.position_y + shape.margin_height())
         ]
         left_bounds = [

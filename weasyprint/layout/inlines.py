@@ -78,7 +78,7 @@ def get_next_linebox(document, linebox, position_y, skip_stack,
     linebox.height, _ = strut_layout(linebox.style)
     linebox.position_y = position_y
     position_x, position_y, available_width = avoid_collisions(
-        document, linebox, containing_block, outer=False)
+        document, linebox, containing_block, outer_width=False)
     candidate_height = linebox.height
     while 1:
         linebox.position_x = position_x
@@ -126,7 +126,7 @@ def get_next_linebox(document, linebox, position_y, skip_stack,
         candidate_height = line.height
 
         position_x, position_y, available_width = avoid_collisions(
-            document, line, containing_block, outer=False)
+            document, line, containing_block, outer_width=False)
         if (position_x, position_y) == (
                 linebox.position_x, linebox.position_y):
             break

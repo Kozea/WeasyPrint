@@ -47,7 +47,7 @@ def block_level_layout(document, box, max_position_y, skip_stack,
 
     collapsed_margin = collapse_margin(adjoining_margins + [box.margin_top])
     clearance = get_clearance(document, box, collapsed_margin)
-    if clearance:
+    if clearance is not None:
         top_border_edge = box.position_y + collapsed_margin + clearance
         box.position_y = top_border_edge - box.margin_top
         adjoining_margins = []
