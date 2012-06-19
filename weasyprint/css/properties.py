@@ -177,6 +177,9 @@ NOT_PRINT_MEDIA = set([
 #
 # text_decoration is not a really inherited, see
 # http://www.w3.org/TR/CSS2/text.html#propdef-text-decoration
+#
+# link: click events normally bubble up to link ancestors
+#   See http://lists.w3.org/Archives/Public/www-style/2012Jun/0315.html
 INHERITED = set("""
     border_collapse
     border_spacing
@@ -206,6 +209,7 @@ INHERITED = set("""
     word_spacing
 
     image_rendering
+    link
 """.split())
 
 # Inherited but not applicable to print:
@@ -226,6 +230,8 @@ INHERITED = set("""
 
 
 # http://www.w3.org/TR/CSS21/tables.html#model
+# See also http://lists.w3.org/Archives/Public/www-style/2012Jun/0066.html
+# Only non-inherited properties need to be included here.
 TABLE_WRAPPER_BOX_PROPERTIES = set('''
     position
     float
@@ -237,6 +243,17 @@ TABLE_WRAPPER_BOX_PROPERTIES = set('''
     bottom
     left
     right
+
+    clear
+    counter_increment
+    counter_reset
+    opacity
+    page_break_before
+    page_break_after
+    page_break_inside
+    transform
+    transform_origin
+    vertical_align
     z_index
     clear
 '''.split())

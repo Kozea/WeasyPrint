@@ -71,7 +71,7 @@ class HTML(Resource):
         import lxml.html
         from .urls import urlopen
 
-        source_type, source, base_url = _select_source(
+        source_type, source, base_url, protocol_encoding = _select_source(
             guess, filename, url, file_obj, string, tree, base_url)
 
         if source_type == 'tree':
@@ -81,10 +81,8 @@ class HTML(Resource):
                 parse = lxml.html.document_fromstring
             else:
                 parse = lxml.html.parse
-                if source_type == 'url':
-                    source, _, protocol_encoding = urlopen(source)
-                    if not encoding:
-                        encoding = protocol_encoding
+            if not encoding:
+                encoding = protocol_encoding
             parser = lxml.html.HTMLParser(encoding=encoding)
             result = parse(source, parser=parser)
             if result is None:
@@ -95,6 +93,7 @@ class HTML(Resource):
         else:
             result.getroottree().docinfo.URL = base_url
         self.root_element = result
+        self.base_url = base_url
 
     def _ua_stylesheet(self):
         from .html import HTML5_UA_STYLESHEET
@@ -163,11 +162,12 @@ class CSS(Resource):
         from .css import PARSER, preprocess_stylesheet
         from .urls import urlopen
 
-        source_type, source, base_url = _select_source(
+        source_type, source, base_url, protocol_encoding = _select_source(
             guess, filename, url, file_obj, string, tree=None,
-            base_url=base_url)
+            base_url=base_url, check_css_mime_type=_check_mime_type)
 
-        kwargs = dict(linking_encoding=encoding)
+        kwargs = dict(linking_encoding=encoding,
+                      protocol_encoding=protocol_encoding)
         if source_type == 'string':
             if isinstance(source, bytes):
                 method = 'parse_stylesheet_bytes'
@@ -175,13 +175,6 @@ class CSS(Resource):
                 # unicode, no encoding
                 method = 'parse_stylesheet'
                 kwargs.clear()
-        elif source_type == 'url':
-            method = 'parse_stylesheet_file'
-            source, mime_type, kwargs['protocol_encoding'] = urlopen(source)
-            if _check_mime_type:
-                self.mime_type = mime_type
-                if mime_type != 'text/css':
-                    return
         else:
             # file_obj or filename
             method = 'parse_stylesheet_file'
@@ -197,13 +190,14 @@ class CSS(Resource):
 
 
 def _select_source(guess=None, filename=None, url=None, file_obj=None,
-                   string=None, tree=None, base_url=None):
+                   string=None, tree=None, base_url=None,
+                   check_css_mime_type=False):
     """
     Check that only one input is not None, and return it with the
     normalized ``base_url``.
 
     """
-    from .urls import path2url, ensure_url, url_is_absolute
+    from .urls import path2url, ensure_url, url_is_absolute, urlopen
 
     if base_url is not None:
         base_url = ensure_url(base_url)
@@ -217,26 +211,35 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
             type_ = 'url'
         else:
             type_ = 'filename'
-        return _select_source(base_url=base_url, **{type_: guess})
+        return _select_source(
+            base_url=base_url, check_css_mime_type=check_css_mime_type,
+            **{type_: guess})
     if nones == [True, False, True, True, True, True]:
         if base_url is None:
             base_url = path2url(filename)
-        return 'filename', filename, base_url
+        return 'filename', filename, base_url, None
     if nones == [True, True, False, True, True, True]:
+        file_obj, mime_type, protocol_encoding = urlopen(url)
+        if check_css_mime_type and mime_type != 'text/css':
+            LOGGER.warn('Unsupported stylesheet type: %s', mime_type)
+            return 'string', '', base_url, None
         if base_url is None:
-            base_url = url
-        return 'url', url, base_url
+            if hasattr(file_obj, 'geturl'):
+                base_url = file_obj.geturl()
+            else:
+                base_url = url
+        return 'file_obj', file_obj, base_url, protocol_encoding
     if nones == [True, True, True, False, True, True]:
         if base_url is None:
             # filesystem file objects have a 'name' attribute.
             name = getattr(file_obj, 'name', None)
             if name:
                 base_url = ensure_url(name)
-        return 'file_obj', file_obj, base_url
+        return 'file_obj', file_obj, base_url, None
     if nones == [True, True, True, True, False, True]:
-        return 'string', string, base_url
+        return 'string', string, base_url, None
     if nones == [True, True, True, True, True, False]:
-        return 'tree', tree, base_url
+        return 'tree', tree, base_url, None
 
     raise TypeError('Expected exactly one source, got %i' % nones.count(False))
 
