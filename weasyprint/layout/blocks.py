@@ -46,9 +46,9 @@ def block_level_layout(document, box, max_position_y, skip_stack,
         box.margin_bottom = 0
 
     collapsed_margin = collapse_margin(adjoining_margins + [box.margin_top])
-    clearance = get_clearance(document, box, collapsed_margin)
-    if clearance is not None:
-        top_border_edge = box.position_y + collapsed_margin + clearance
+    box.clearance = get_clearance(document, box, collapsed_margin)
+    if box.clearance is not None:
+        top_border_edge = box.position_y + collapsed_margin + box.clearance
         box.position_y = top_border_edge - box.margin_top
         adjoining_margins = []
 
@@ -371,7 +371,7 @@ def block_container_layout(document, box, max_position_y, skip_stack,
                     else:
                         position_y = new_position_y
 
-                if new_child.style.clear != 'none':
+                if new_child.clearance is not None:
                     position_y = (
                         new_child.border_box_y() + new_child.border_height())
 
