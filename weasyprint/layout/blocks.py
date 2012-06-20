@@ -21,6 +21,7 @@ from .min_max import handle_min_max_width
 from .tables import table_layout, table_wrapper_width
 from .percentages import resolve_percentages, resolve_position_percentages
 from ..formatting_structure import boxes
+from ..compat import xrange, izip
 
 
 def block_level_layout(document, box, max_position_y, skip_stack,
@@ -238,11 +239,11 @@ def block_container_layout(document, box, max_position_y, skip_stack,
 
     is_start = skip_stack is None
     if is_start:
-        skip = 0
+        block_container_skip = 0
     else:
-        skip, skip_stack = skip_stack
+        block_container_skip, skip_stack = skip_stack
 
-    for index, child in box.enumerate_skip(skip):
+    for index, child in box.enumerate_skip(block_container_skip):
         child.position_x = position_x
         # XXX does not count margins in adjoining_margins:
         child.position_y = position_y
@@ -272,16 +273,16 @@ def block_container_layout(document, box, max_position_y, skip_stack,
             lines_iterator = iter_line_boxes(
                 document, child, position_y, skip_stack,
                 new_containing_block, device_size, absolute_boxes, fixed_boxes)
-            new_lines = []
             is_page_break = False
             for line, resume_at in lines_iterator:
+                line.resume_at = resume_at
                 new_position_y = line.position_y + line.height
                 # Allow overflow if the first line of the page is higher
                 # than the page itself so that we put *something* on this
                 # page and can advance in the document.
                 if new_position_y > max_position_y and (
-                        new_lines or not page_is_empty):
-                    over_orphans = len(new_lines) - box.style.orphans
+                        new_children or not page_is_empty):
+                    over_orphans = len(new_children) - box.style.orphans
                     if over_orphans < 0 and not page_is_empty:
                         # Reached the bottom of the page before we had
                         # enough lines for orphans, cancel the whole box.
@@ -299,7 +300,7 @@ def block_container_layout(document, box, max_position_y, skip_stack,
                         return None, None, 'any', [], False
                     if needed and needed <= over_orphans:
                         # Remove lines to keep them for the next page
-                        del new_lines[-needed:]
+                        del new_children[-needed:]
                     # Page break here, resume before this line
                     resume_at = (index, skip_stack)
                     is_page_break = True
@@ -314,24 +315,32 @@ def block_container_layout(document, box, max_position_y, skip_stack,
                     new_position_y -= box.margin_top
                     line.translate(0, -box.margin_top)
                     box.margin_top = 0
-                new_lines.append((line, resume_at))
+                new_children.append(line)
                 position_y = new_position_y
                 skip_stack = resume_at
-            new_children = [line for line, resume_at in new_lines]
-            if new_lines:
-                _, resume_at = new_lines[-1]
-                resume_at = (index, resume_at)
+            if new_children:
+                resume_at = (index, new_children[-1].resume_at)
             if is_page_break:
                 break
         else:
-            if new_children:
-                # between siblings, but not before the first child
-                # or after the last child.
-                break_here, next_page = forced_page_break(
-                    new_children[-1], child)
-                if break_here:
+            for previous_child in reversed(new_children):
+                if previous_child.is_in_normal_flow():
+                    last_in_flow_child = previous_child
+                    break
+            else:
+                last_in_flow_child = None
+            if last_in_flow_child is not None:
+                # Between in-flow siblings
+                page_break = block_level_page_break(last_in_flow_child, child)
+                if page_break in ('always', 'left', 'right'):
+                    if page_break in ('left', 'right'):
+                        next_page = page_break
+                    else:
+                        next_page = 'any'
                     resume_at = (index, None)
                     break
+            else:
+                page_break = 'auto'
 
             new_containing_block = box
             (new_child, resume_at, next_page, next_adjoining_margins,
@@ -371,11 +380,29 @@ def block_container_layout(document, box, max_position_y, skip_stack,
                     else:
                         position_y = new_position_y
 
-                if new_child.clearance is not None:
+                if new_child is not None and new_child.clearance is not None:
                     position_y = (
                         new_child.border_box_y() + new_child.border_height())
 
             if new_child is None:
+                # Nothing fits in the remaining space of this page: break
+                if page_break == 'avoid':
+                    result = find_earlier_page_break(
+                        new_children, absolute_boxes, fixed_boxes,
+                        block_container_skip)
+                    if result:
+                        new_children, resume_at = result
+                        break
+                    else:
+                        # We did not find any page break opportunity
+                        if not page_is_empty:
+                            # The page has content *before* this block:
+                            # cancel the block and try to find a break
+                            # in the parent.
+                            return None, None, 'any', [], False
+                        # else:
+                        # ignore this 'avoid' and break anyway.
+
                 if new_children:
                     resume_at = (index, None)
                     break
@@ -480,44 +507,114 @@ def establishes_formatting_context(box):
     )
 
 
-def forced_page_break(sibling_before, sibling_after):
+def block_level_page_break(sibling_before, sibling_after):
     """Return the value of ``page-break-before`` or ``page-break-after``
     that "wins" for boxes that meet at the margin between two sibling boxes.
 
     For boxes before the margin, the 'page-break-after' value is considered;
     for boxes after the margin the 'page-break-before' value is considered.
 
-    Return (break_here, next_page) where break_here is a boolean, and
-    next_page the side the next page should be on: 'left', 'right', or 'any'
+    * 'avoid' takes priority over 'auto'
+    * 'always' takes priority over 'avoid' or 'auto'
+    * 'left' or 'right' take priority over 'always', 'avoid' or 'auto'
+    * Among 'left' and 'right', later values in the tree take priority.
+
+    See http://dev.w3.org/csswg/css3-page/#allowed-pg-brk
 
     """
-    counts = dict(
-        avoid=False,
-        auto=False,
-        left=False,
-        right=False,
-        always=False,
-    )
-    for box, index, property_name in [
-            (sibling_before, -1, 'page_break_after'),
-            (sibling_after, 0, 'page_break_before')]:
-        while 1:
-            counts[box.style[property_name]] = True
-            if not getattr(box, 'children', None):
+    values = []
+    box = sibling_before
+    while isinstance(box, boxes.BlockLevelBox):
+        values.append(box.style.page_break_after)
+        if not (isinstance(box, boxes.ParentBox) and box.children):
+            break
+        box = box.children[-1]
+    values.reverse()  # Have them in tree order
+
+    box = sibling_after
+    while isinstance(box, boxes.BlockLevelBox):
+        values.append(box.style.page_break_before)
+        if not (isinstance(box, boxes.ParentBox) and box.children):
+            break
+        box = box.children[0]
+
+    result = 'auto'
+    for value in values:
+        if value in ('left', 'right') or (value, result) in [
+                ('always', 'auto'),
+                ('always', 'avoid'),
+                ('avoid', 'auto')]:
+            result = value
+    return result
+
+
+def find_earlier_page_break(children, absolute_boxes, fixed_boxes, skip=0):
+    """Because of a `page-break-before: avoid` or a `page-break-after: avoid`
+    we need to find an earlier page break opportunity inside `children`.
+
+    Absolute or fixed placeholders removed from children should also be
+    removed from `absolute_boxes` or `fixed_boxes`.
+
+    Return (new_children, resume_at)
+
+    """
+    if children and isinstance(children[0], boxes.LineBox):
+        # Normally `orphans` and `widows` apply to the block container, but
+        # line boxes inherit them.
+        orphans = children[0].style.orphans
+        widows = children[0].style.widows
+        index = len(children) - widows  # how many lines we keep
+        if index < orphans:
+            return None
+        new_children = children[:index]
+        resume_at = (0, new_children[-1].resume_at)
+        remove_placeholders(children[index:], absolute_boxes, fixed_boxes)
+        return new_children, resume_at
+
+    last_in_flow = None
+    for index, child in reversed_enumerate(children):
+        if child.is_in_normal_flow() and (
+                child.style.page_break_inside != 'avoid'):
+            if isinstance(child, boxes.BlockBox):
+                result = find_earlier_page_break(
+                    child.children, absolute_boxes, fixed_boxes)
+                if result:
+                    new_grand_children, resume_at = result
+                    new_child = child.copy_with_children(new_grand_children)
+                    new_children = children[:index] + [new_child]
+                    resume_at = (index + skip, resume_at)
+                    break
+            elif isinstance(child, boxes.TableBox):
+                pass # TODO: find an earlier break between table rows.
+        if child.is_in_normal_flow():
+            if last_in_flow is not None and (
+                    block_level_page_break(child, last_in_flow) != 'avoid'):
+                index += 1  # break after child
+                new_children = children[:index]
+                resume_at = (index + skip, None)
                 break
-            box = box.children[index]
-            if not isinstance(box, boxes.BlockLevelBox):
-                break
-    left = counts['left']
-    right = counts['right']
-    if left and right:
-        # Nonsense. Just do a single page break
-        return True, 'any'
-    if left:
-        return True, 'left'
-    if right:
-        return True, 'right'
-    if counts['always']:
-        return True, 'any'
-    return False, 'any'
-    # TODO: support 'avoid'
+            last_in_flow = child
+    else:
+        return None
+
+    remove_placeholders(children[index:], absolute_boxes, fixed_boxes)
+    return new_children, resume_at
+
+
+def reversed_enumerate(seq):
+    """Like reversed(list(enumerate(seq))) without copying the whole seq."""
+    return izip(reversed(xrange(len(seq))), reversed(seq))
+
+
+def remove_placeholders(box_list, absolute_boxes, fixed_boxes):
+    """For boxes that have been removed in find_earlier_page_break(),
+    also remove the matching placeholders in absolute_boxes and fixed_boxes.
+
+    """
+    for box in box_list:
+        if isinstance(box, boxes.ParentBox):
+            remove_placeholders(box.children, absolute_boxes, fixed_boxes)
+        if box.style.position == 'absolute':
+            absolute_boxes.remove(box)
+        elif box.style.position == 'fixed':
+            fixed_boxes.remove(box)
