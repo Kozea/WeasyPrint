@@ -430,6 +430,8 @@ def block_container_layout(document, box, max_position_y, skip_stack,
         border_box_y = box.position_y + collapse_margin(
             this_box_adjoining_margins)
         box.position_y = border_box_y - box.margin_top
+        # TODO: move the float boxes inside box too
+        # See W3C test margin-collapse-clear-004
 
     collapsing_through = False
     if new_children:
