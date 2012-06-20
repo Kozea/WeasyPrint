@@ -230,11 +230,11 @@ def block_container_layout(document, box, max_position_y, skip_stack,
 
     is_start = skip_stack is None
     if is_start:
-        skip = 0
+        block_container_skip = 0
     else:
-        skip, skip_stack = skip_stack
+        block_container_skip, skip_stack = skip_stack
 
-    for index, child in box.enumerate_skip(skip):
+    for index, child in box.enumerate_skip(block_container_skip):
         child.position_x = position_x
         # XXX does not count margins in adjoining_margins:
         child.position_y = position_y
@@ -374,7 +374,8 @@ def block_container_layout(document, box, max_position_y, skip_stack,
                 # Nothing fits in the remaining space of this page: break
                 if page_break == 'avoid':
                     result = find_earlier_page_break(
-                        new_children, absolute_boxes, fixed_boxes)
+                        new_children, absolute_boxes, fixed_boxes,
+                        block_container_skip)
                     if result:
                         new_children, resume_at = result
                         break
@@ -525,7 +526,7 @@ def block_level_page_break(sibling_before, sibling_after):
     return result
 
 
-def find_earlier_page_break(children, absolute_boxes, fixed_boxes):
+def find_earlier_page_break(children, absolute_boxes, fixed_boxes, skip=0):
     """Because of a `page-break-before: avoid` or a `page-break-after: avoid`
     we need to find an earlier page break opportunity inside `children`.
 
@@ -559,7 +560,7 @@ def find_earlier_page_break(children, absolute_boxes, fixed_boxes):
                     new_grand_children, resume_at = result
                     new_child = child.copy_with_children(new_grand_children)
                     new_children = children[:index] + [new_child]
-                    resume_at = (index, resume_at)
+                    resume_at = (index + skip, resume_at)
                     break
             elif isinstance(child, boxes.TableBox):
                 pass # TODO: find an earlier break between table rows.
@@ -568,7 +569,7 @@ def find_earlier_page_break(children, absolute_boxes, fixed_boxes):
                     block_level_page_break(child, last_in_flow) != 'avoid'):
                 index += 1  # break after child
                 new_children = children[:index]
-                resume_at = (index, None)
+                resume_at = (index + skip, None)
                 break
             last_in_flow = child
     else:
