@@ -617,6 +617,7 @@ def draw_text(context, textbox):
 def draw_text_decoration(context, textbox, offset_y):
     """Draw text-decoration of ``textbox`` to a ``cairo.Context``."""
     with context.stacked():
+        context.set_antialias(cairo.ANTIALIAS_NONE)
         context.set_source_rgba(*textbox.style.color)
         context.set_line_width(1)  # TODO: make this proportional to font_size?
         context.move_to(textbox.position_x, textbox.position_y + offset_y)
