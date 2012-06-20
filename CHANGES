@@ -1,6 +1,18 @@
 WeasyPrint changelog
 ====================
 
+Version 0.10
+------------
+
+Not released yet.
+
+* Add *WeasyPrint Navigator*, a web application that shows WeasyPrint’s
+  output with clickable links. Yes, that’s a browser in your browser.
+* Add support for `vertical-align: top` and `vertical-align: bottom`
+* Add supportfor `page-break-before: avoid` and `page-break-after: avoid`
+* Bug fixes
+
+
 Version 0.9
 -----------
 
