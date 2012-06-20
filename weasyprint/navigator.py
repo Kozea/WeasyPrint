@@ -1,7 +1,7 @@
 # coding: utf8
 """
-    weasyprint.browser
-    ------------------
+    weasyprint.navigator
+    --------------------
 
     A WeasyPrint-based web browser. In your web browser.
 
@@ -85,7 +85,7 @@ def make_app():
     template = Template('''
         <!doctype html>
         <meta charset=utf-8>
-        <title>WeasyPrint Browser</title>
+        <title>WeasyPrint Navigator</title>
         <style>
             form { position: fixed; z-index: 1;
                    top: 8px; left: 16px; right: 0; }
