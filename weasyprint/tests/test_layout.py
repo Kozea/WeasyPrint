@@ -1407,6 +1407,104 @@ def test_page_breaks():
     assert ulist.element_tag == 'ul'
 
 
+    # Reference for the following test:
+    # Without any 'avoid', this breaks after the <div>
+    page_1, page_2 = parse('''
+        <style>
+            @page { -weasy-size: 140px; margin: 0 }
+            img { height: 25px; vertical-align: top }
+            p { orphans: 1; widows: 1 }
+        </style>
+        <body>
+            <img src=pattern.png>
+            <div>
+                <p><img src=pattern.png><br/><img src=pattern.png><p>
+                <p><img src=pattern.png><br/><img src=pattern.png><p>
+            </div>
+            <img src=pattern.png>
+    ''')
+    html, = page_1.children
+    body, = html.children
+    img_1, div = body.children
+    assert img_1.position_y == 0
+    assert img_1.height == 25
+    assert div.position_y == 25
+    assert div.height == 100
+
+    html, = page_2.children
+    body, = html.children
+    img_2, = body.children
+    assert img_2.position_y == 0
+    assert img_2.height == 25
+
+    # Adding a few page-break-*: avoid, the only legal break is
+    # before the <div>
+    page_1, page_2 = parse('''
+        <style>
+            @page { -weasy-size: 140px; margin: 0 }
+            img { height: 25px; vertical-align: top }
+            p { orphans: 1; widows: 1 }
+        </style>
+        <body>
+            <img src=pattern.png>
+            <div>
+                <p style="page-break-inside: avoid">
+                    ><img src=pattern.png><br/><img src=pattern.png></p>
+                <p style="page-break-before: avoid; page-break-after: avoid;
+                          widows: 2"
+                    ><img src=pattern.png><br/><img src=pattern.png></p>
+            </div>
+            <img src=pattern.png>
+    ''')
+    html, = page_1.children
+    body, = html.children
+    img_1, = body.children
+    assert img_1.position_y == 0
+    assert img_1.height == 25
+
+    html, = page_2.children
+    body, = html.children
+    div, img_2 = body.children
+    assert div.position_y == 0
+    assert div.height == 100
+    assert img_2.position_y == 100
+    assert img_2.height == 25
+
+    page_1, page_2 = parse('''
+        <style>
+            @page { -weasy-size: 140px; margin: 0 }
+            img { height: 25px; vertical-align: top }
+            p { orphans: 1; widows: 1 }
+        </style>
+        <body>
+            <img src=pattern.png>
+            <div>
+                <div>
+                    <p style="page-break-inside: avoid">
+                        ><img src=pattern.png><br/><img src=pattern.png></p>
+                    <p style="page-break-before: avoid; page-break-after: avoid;
+                              widows: 2"
+                        ><img src=pattern.png><br/><img src=pattern.png></p>
+                </div>
+                <img src=pattern.png>
+            </div>
+    ''')
+    html, = page_1.children
+    body, = html.children
+    img_1, = body.children
+    assert img_1.position_y == 0
+    assert img_1.height == 25
+
+    html, = page_2.children
+    body, = html.children
+    outer_div, = body.children
+    inner_div, img_2 = outer_div.children
+    assert inner_div.position_y == 0
+    assert inner_div.height == 100
+    assert img_2.position_y == 100
+    assert img_2.height == 25
+
+
 @assert_no_logs
 def test_orphans_widows_avoid():
     """Test orphans and widows control."""

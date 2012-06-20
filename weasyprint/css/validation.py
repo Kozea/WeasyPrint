@@ -675,13 +675,9 @@ def page_break(keyword):
     properties.
 
     """
-    if keyword == 'avoid':
-        raise InvalidValues('value not supported yet')
-    return keyword in ('auto', 'always', 'left', 'right')
+    return keyword in ('auto', 'always', 'left', 'right', 'avoid')
 
 
-# Not very useful, might as well ignore the property anyway.
-# Keep it for completeness.
 @validator()
 @single_keyword
 def page_break_inside(keyword):

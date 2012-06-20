@@ -27,6 +27,7 @@ if sys.version_info[0] >= 3:
     basestring = str
     xrange = range
     iteritems = dict.items
+    izip = zip
 
 
     def urlopen_contenttype(url):
@@ -49,6 +50,7 @@ else:
     from urllib2 import urlopen, Request
     from urllib import pathname2url, quote, unquote
     from array import array as _array
+    from itertools import izip
 
     unicode = unicode
     basestring = basestring
