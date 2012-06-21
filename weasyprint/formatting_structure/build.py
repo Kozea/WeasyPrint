@@ -772,7 +772,7 @@ def block_in_inline(box):
             stack = None
             while 1:
                 new_line, block, stack = _inner_block_in_inline(
-                    child, floats=new_children, skip_stack=stack)
+                    child, skip_stack=stack)
                 if block is None:
                     break
                 anon = boxes.BlockBox.anonymous_from(box, [new_line])
@@ -800,7 +800,7 @@ def block_in_inline(box):
         return box
 
 
-def _inner_block_in_inline(box, floats, skip_stack=None):
+def _inner_block_in_inline(box, skip_stack=None):
     """Find a block-level box in an inline formatting context.
 
     If one is found, return ``(new_box, block_level_box, resume_at)``.
@@ -831,13 +831,9 @@ def _inner_block_in_inline(box, floats, skip_stack=None):
             index += 1  # Resume *after* the block
         else:
             if isinstance(child, boxes.InlineBox):
-                recursion = _inner_block_in_inline(child, floats, skip_stack)
+                recursion = _inner_block_in_inline(child, skip_stack)
                 skip_stack = None
                 new_child, block_level_box, resume_at = recursion
-            elif child.is_floated():
-                floats.append(child)
-                changed = True
-                continue
             else:
                 assert skip_stack is None  # Should not skip here
                 new_child = block_in_inline(child)

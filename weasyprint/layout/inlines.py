@@ -15,7 +15,7 @@ from __future__ import division, unicode_literals
 import cairo
 
 from .absolute import absolute_layout, AbsolutePlaceholder
-from .float import avoid_collisions
+from .float import avoid_collisions, float_layout
 from .markers import image_marker_layout
 from .min_max import handle_min_max_width, handle_min_max_height
 from .percentages import resolve_percentages, resolve_one_percentage
@@ -128,7 +128,7 @@ def get_next_linebox(document, linebox, position_y, skip_stack,
         position_x, position_y, available_width = avoid_collisions(
             document, line, containing_block, outer_width=False)
         if (position_x, position_y) == (
-                linebox.position_x, linebox.position_y):
+            linebox.position_x, linebox.position_y):
             break
 
     absolute_boxes.extend(line_absolutes)
@@ -544,9 +544,12 @@ def split_inline_box(document, box, position_x, max_x, skip_stack,
             else:
                 fixed_boxes.append(placeholder)
             continue
-        # Floats are not supposed to be here, there are moved to the
-        # top of the containing block during box creation.
-        assert child.is_in_normal_flow()
+        elif child.is_floated():
+            child.position_x = position_x
+            child = float_layout(
+                document, child, box, absolute_boxes, fixed_boxes)
+            children.append(child)
+            continue
 
         new_child, resume_at, preserved = split_inline_level(
             document, child, position_x, max_x, skip_stack, containing_block,
@@ -703,20 +706,28 @@ def line_box_verticality(box):
     max_y, min_y = aligned_subtree_verticality(
         box, top_bottom_subtrees, baseline_y=0)
     for subtree in top_bottom_subtrees:
-        sub_max_y, sub_min_y = aligned_subtree_verticality(
-            subtree, top_bottom_subtrees, baseline_y=0)
+        if subtree.is_floated():
+            sub_min_y = None
+            sub_max_y = None
+        else:
+            sub_max_y, sub_min_y = aligned_subtree_verticality(
+                subtree, top_bottom_subtrees, baseline_y=0)
         subtrees_with_min_max.append(
             (subtree, sub_max_y, sub_min_y))
 
     if subtrees_with_min_max:
-        highest_sub = max(
+        sub_positions = [
             sub_max_y - sub_min_y
             for subtree, sub_max_y, sub_min_y in subtrees_with_min_max
-        )
-        max_y = max(max_y, min_y + highest_sub)
+            if not subtree.is_floated()]
+        if sub_positions:
+            highest_sub = max(sub_positions)
+            max_y = max(max_y, min_y + highest_sub)
 
     for subtree, sub_max_y, sub_min_y in subtrees_with_min_max:
-        if subtree.style.vertical_align == 'top':
+        if subtree.is_floated():
+            dy = min_y - subtree.position_y
+        elif subtree.style.vertical_align == 'top':
             dy = min_y - sub_min_y
         else:
             assert subtree.style.vertical_align == 'bottom'
@@ -767,6 +778,8 @@ def inline_box_verticality(box, top_bottom_subtrees, baseline_y):
 
     for child in box.children:
         if not child.is_in_normal_flow():
+            if child.is_floated():
+                top_bottom_subtrees.append(child)
             continue
         vertical_align = child.style.vertical_align
         if vertical_align == 'baseline':

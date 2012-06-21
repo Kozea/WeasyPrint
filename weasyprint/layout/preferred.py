@@ -157,7 +157,7 @@ def inline_preferred_minimum_width(document, box, outer=True, skip_stack=None,
     else:
         skip, skip_stack = skip_stack
     for index, child in box.enumerate_skip(skip):
-        if child.is_absolutely_positioned():
+        if not child.is_in_normal_flow():
             continue  # Skip
 
         if isinstance(child, boxes.InlineReplacedBox):
@@ -188,7 +188,7 @@ def inline_preferred_width(document, box, outer=True):
     widest_line = 0
     current_line = 0
     for child in box.children:
-        if child.is_absolutely_positioned():
+        if not child.is_in_normal_flow():
             continue  # Skip
 
         if isinstance(child, boxes.InlineReplacedBox):
