@@ -124,11 +124,10 @@ def document_to_pixels(document, name, expected_width, expected_height,
     """
     Render an HTML document to PNG, checks its size and return pixel data.
     """
-    file_like = BytesIO()
-    document.write_to(file_like)
+    png_bytes = document.write_png()
     assert len(document.pages) == nb_pages
 
-    with contextlib.closing(pystacia.read_blob(file_like.getvalue())) as image:
+    with contextlib.closing(pystacia.read_blob(png_bytes)) as image:
         assert image.size == (expected_width, expected_height)
         raw = image.get_raw('rgba')['raw']
         assert len(raw) == expected_width * expected_height * BYTES_PER_PIXELS
@@ -1808,10 +1807,10 @@ def test_2d_transform():
     ], '''
         <style>
             @page { -weasy-size: 8px; margin: 2px; background: #fff; }
-            div { -weasy-transform: translateX(0.25em);
-                  font-size: 12px; line-height: 0 }
+            div { -weasy-transform: translateX(0.25em); font-size: 12px }
+            div div { font-size: 0 }
         </style>
-        <div><img src="pattern.png"></div>
+        <div><div><img src="pattern.png"></div></div>
     ''')
 
     assert_pixels('image_translateY', 8, 8, [
@@ -1935,7 +1934,7 @@ def test_acid2():
     def get_pixels(filename):
         return document_to_pixels(
             HTML(resource_filename(filename))._get_document(
-                PNGBackend, [stylesheet]),
+                [stylesheet], True),
             'acid2', size, size)
 
     with capture_logs():

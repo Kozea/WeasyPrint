@@ -13,20 +13,24 @@
 from __future__ import division, unicode_literals
 
 import io
+import math
+import shutil
+
+import cairo
 
 from .css import get_all_computed_styles
 from .formatting_structure.build import build_formatting_structure
 from . import layout
 from . import draw
 from . import images
-from . import backends
+from . import pdf
 
 
 class Document(object):
     """Abstract output document."""
-    def __init__(self, backend, dom, user_stylesheets, user_agent_stylesheets):
-        self.backend = backend
-        self.surface = backend.get_dummy_surface()
+    def __init__(self, dom, enable_hinting, user_stylesheets,
+                 user_agent_stylesheets):
+        self.enable_hinting = enable_hinting
         self.dom = dom  #: lxml HtmlElement object
         self.user_stylesheets = user_stylesheets
         self.user_agent_stylesheets = user_agent_stylesheets
@@ -87,14 +91,14 @@ class Document(object):
     def get_image_from_uri(self, uri, type_=None):
         return images.get_image_from_uri(self._image_cache, uri, type_)
 
-    def write_to(self, target):
-        """Write to the filename or file-like `target`."""
-        backend = self.backend(target)
+    def get_png_surfaces(self):
+        """Yield (width, height, image_surface) tuples, one for each page."""
         for page in self.pages:
-            context = backend.start_page(page.outer_width, page.outer_height)
-            draw.draw_page(self, page, context)
-
-        backend.finish(self)
+            width = int(math.ceil(page.outer_width))
+            height = int(math.ceil(page.outer_height))
+            surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
+            draw.draw_page(self, page, draw.CairoContext(surface))
+            yield width, height, surface
 
     def create_block_formatting_context(self):
         self.excluded_shapes = []
@@ -114,11 +118,61 @@ class Document(object):
 
     def get_png_pages(self):
         """Yield (width, height, png_bytes) tuples, one for each page."""
-        backend = backends.PNGBackend(None)
-        for page in self.pages:
-            context = backend.start_page(page.outer_width, page.outer_height)
-            draw.draw_page(self, page, context)
-            width, height, surface = backend.pages.pop()
+        for width, height, surface in self.get_png_surfaces():
             file_obj = io.BytesIO()
             surface.write_to_png(file_obj)
             yield width, height, file_obj.getvalue()
+
+    def write_png(self, target=None):
+        """Write a single PNG image."""
+        surfaces = list(self.get_png_surfaces())
+        if len(surfaces) == 1:
+            _, _, surface = surfaces[0]
+        else:
+            total_height = sum(height for _, height, _ in surfaces)
+            max_width = max(width for width, _, _ in surfaces)
+            surface = cairo.ImageSurface(
+                cairo.FORMAT_ARGB32, max_width, total_height)
+            context = cairo.Context(surface)
+            pos_y = 0
+            for width, height, page_surface in surfaces:
+                pos_x = (max_width - width) // 2
+                context.set_source_surface(page_surface, pos_x, pos_y)
+                context.paint()
+                pos_y += height
+
+        if target is None:
+            target = io.BytesIO()
+            surface.write_to_png(target)
+            return target.getvalue()
+        else:
+            surface.write_to_png(target)
+
+    def write_pdf(self, target=None):
+        """Write a single PNG image."""
+        # Use an in-memory buffer. We will need to seek for metadata
+        # TODO: avoid this if target can seek? Benchmark first.
+        file_obj = io.BytesIO()
+        # We’ll change the surface size for each page
+        surface = cairo.PDFSurface(file_obj, 1, 1)
+        px_to_pt = pdf.PX_TO_PT
+        for page in self.pages:
+            surface.set_size(page.outer_width * px_to_pt,
+                             page.outer_height * px_to_pt)
+            context = draw.CairoContext(surface)
+            context.scale(px_to_pt, px_to_pt)
+            draw.draw_page(self, page, context)
+            surface.show_page()
+        surface.finish()
+
+        pdf.write_pdf_metadata(self, file_obj)
+
+        if target is None:
+            return file_obj.getvalue()
+        else:
+            file_obj.seek(0)
+            if hasattr(target, 'write'):
+                shutil.copyfileobj(file_obj, target)
+            else:
+                with open(target, 'wb') as fd:
+                    shutil.copyfileobj(file_obj, fd)

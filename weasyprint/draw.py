@@ -19,6 +19,7 @@ import cairo
 
 from .formatting_structure import boxes
 from .stacking import StackingContext
+from .text import show_first_line
 
 
 # Map values of the image-rendering property to cairo FILTER values:
@@ -584,7 +585,7 @@ def draw_inline_level(document, context, page, box):
         if isinstance(box, (boxes.InlineBox, boxes.LineBox)):
             for child in box.children:
                 if isinstance(child, boxes.TextBox):
-                    draw_text(context, child)
+                    draw_text(document, context, child)
                 else:
                     draw_inline_level(document, context, page, child)
         elif isinstance(box, boxes.InlineReplacedBox):
@@ -592,10 +593,10 @@ def draw_inline_level(document, context, page, box):
         else:
             assert isinstance(box, boxes.TextBox)
             # Should only happen for list markers
-            draw_text(context, box)
+            draw_text(document, context, box)
 
 
-def draw_text(context, textbox):
+def draw_text(document, context, textbox):
     """Draw ``textbox`` to a ``cairo.Context`` from ``PangoCairo.Context``."""
     # Pango crashes with font-size: 0
     assert textbox.style.font_size
@@ -605,7 +606,7 @@ def draw_text(context, textbox):
 
     context.move_to(textbox.position_x, textbox.position_y + textbox.baseline)
     context.set_source_rgba(*textbox.style.color)
-    textbox.show_line(context)
+    show_first_line(context, textbox.pango_layout, document.enable_hinting)
     values = textbox.style.text_decoration
     if 'overline' in values:
         draw_text_decoration(context, textbox,

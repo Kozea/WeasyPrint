@@ -15,11 +15,9 @@ from __future__ import division, unicode_literals
 
 import math
 
-import cairo
-
 from .properties import INITIAL_VALUES, Dimension
-from ..text import TextFragment
 from ..urls import get_link_attribute
+from .. import text
 
 
 ZERO_PIXELS = Dimension(0, 'px')
@@ -484,10 +482,6 @@ def word_spacing(computer, name, value):
         return length(computer, name, value, pixels_only=True)
 
 
-DUMMY_CAIRO_CONTEXT = cairo.Context(
-    cairo.ImageSurface(cairo.FORMAT_ARGB32, 1, 1))
-
-
 def strut_layout(style):
     """Return a tuple of the used value of ``line-height`` and the baseline.
 
@@ -499,9 +493,9 @@ def strut_layout(style):
     if style.font_size == 0:
         pango_height = baseline = 0
     else:
-        # TODO: use the real surface for hinting? (if we really care…)
-        fragment = TextFragment('', style, DUMMY_CAIRO_CONTEXT)
-        _, _, _, pango_height, baseline, _ = fragment.split_first_line()
+        # TODO: get the real value for `hinting`? (if we really care…)
+        _, _, _, _, pango_height, baseline = text.split_first_line(
+            '', style, hinting=True, max_width=None)
     if line_height == 'normal':
         return pango_height, baseline
     type_, value = line_height

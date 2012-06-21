@@ -1423,7 +1423,7 @@ def test_page_breaks():
             <div>
                 <p><img src=pattern.png><br/><img src=pattern.png><p>
                 <p><img src=pattern.png><br/><img src=pattern.png><p>
-            </div>
+            </div><!-- page break here -->
             <img src=pattern.png>
     ''')
     html, = page_1.children
@@ -1449,7 +1449,7 @@ def test_page_breaks():
             p { orphans: 1; widows: 1 }
         </style>
         <body>
-            <img src=pattern.png>
+            <img src=pattern.png><!-- page break here -->
             <div>
                 <p style="page-break-inside: avoid">
                     ><img src=pattern.png><br/><img src=pattern.png></p>
@@ -1480,7 +1480,7 @@ def test_page_breaks():
             p { orphans: 1; widows: 1 }
         </style>
         <body>
-            <img src=pattern.png>
+            <img src=pattern.png><!-- page break here -->
             <div>
                 <div>
                     <p style="page-break-inside: avoid">
@@ -1506,6 +1506,71 @@ def test_page_breaks():
     assert inner_div.height == 100
     assert img_2.position_y == 100
     assert img_2.height == 25
+
+    # Reference for the next test
+    page_1, page_2, page_3 = parse('''
+        <style>
+            @page { -weasy-size: 100px; margin: 0 }
+            img { height: 30px; display: block; }
+            p { orphans: 1; widows: 1 }
+        </style>
+        <body>
+            <div>
+                <img src=pattern.png style="page-break-after: always">
+                <img src=pattern.png>
+                <img src=pattern.png>
+            </div>
+            <img src=pattern.png><!-- page break here -->
+            <img src=pattern.png>
+    ''')
+    html, = page_1.children
+    body, = html.children
+    div, = body.children
+    assert div.height == 30
+    html, = page_2.children
+    body, = html.children
+    div, img_4 = body.children
+    assert div.height == 60
+    assert img_4.height == 30
+    html, = page_3.children
+    body, = html.children
+    img_5, = body.children
+    assert img_5.height == 30
+
+    page_1, page_2, page_3 = parse('''
+        <style>
+            @page { -weasy-size: 100px; margin: 0 }
+            img { height: 30px; display: block; }
+            p { orphans: 1; widows: 1 }
+        </style>
+        <body>
+            <div>
+                <img src=pattern.png style="page-break-after: always">
+                <img src=pattern.png><!-- page break here -->
+                <img src=pattern.png style="page-break-after: avoid">
+            </div>
+            <img src=pattern.png style="page-break-after: avoid">
+            <img src=pattern.png>
+    ''')
+    html, = page_1.children
+    body, = html.children
+    div, = body.children
+    assert div.height == 30
+    html, = page_2.children
+    body, = html.children
+    div, = body.children
+    img_2, = div.children
+    assert img_2.height == 30
+    # TODO: currently this is 60: we do not decrease the used height of
+    # blocks with 'height: auto' when we remove children from them for
+    # some page-break-*: avoid.
+    #assert div.height == 30
+    html, = page_3.children
+    body, = html.children
+    div, img_4, img_5, = body.children
+    assert div.height == 30
+    assert img_4.height == 30
+    assert img_5.height == 30
 
 
 @assert_no_logs
@@ -1542,7 +1607,6 @@ def test_orphans_widows_avoid():
                 body_children = body.children
             if body_children:
                 paragraph, = body_children
-                print(paragraph.children[0].height, paragraph.children[0].margin_height())
                 line_counts.append(len(paragraph.children))
             else:
                 line_counts.append(0)
