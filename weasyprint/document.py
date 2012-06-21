@@ -12,11 +12,14 @@
 
 from __future__ import division, unicode_literals
 
+import io
+
 from .css import get_all_computed_styles
 from .formatting_structure.build import build_formatting_structure
 from . import layout
 from . import draw
 from . import images
+from . import backends
 
 
 class Document(object):
@@ -82,9 +85,21 @@ class Document(object):
         return images.get_image_from_uri(self._image_cache, uri, type_)
 
     def write_to(self, target):
+        """Write to the filename or file-like `target`."""
         backend = self.backend(target)
         for page in self.pages:
             context = backend.start_page(page.outer_width, page.outer_height)
             draw.draw_page(self, page, context)
 
         backend.finish(self)
+
+    def get_png_pages(self):
+        """Yield (width, height, png_bytes) tuples, one for each page."""
+        backend = backends.PNGBackend(None)
+        for page in self.pages:
+            context = backend.start_page(page.outer_width, page.outer_height)
+            draw.draw_page(self, page, context)
+            width, height, surface = backend.pages.pop()
+            file_obj = io.BytesIO()
+            surface.write_to_png(file_obj)
+            yield width, height, file_obj.getvalue()
