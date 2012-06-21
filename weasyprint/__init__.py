@@ -134,7 +134,7 @@ class HTML(Resource):
         return self._write(MetadataPDFBackend, target, stylesheets)
 
     def write_png(self, target=None, stylesheets=None):
-        """Render the document to PNG.
+        """Render the document to a single PNG image.
 
         :param target:
             a filename, file-like object, or :obj:`None`.
@@ -146,6 +146,21 @@ class HTML(Resource):
         """
         from .backends import PNGBackend
         return self._write(PNGBackend, target, stylesheets)
+
+    def get_png_pages(self, stylesheets=None):
+        """Render the document to multiple PNG images, one per page.
+
+        :param stylesheets:
+            a list of user stylsheets, as :class:`CSS` objects, filenames,
+            URLs, or file-like objects
+        :returns:
+            A generator of ``(width, height, png_bytes)`` tuples, one for
+            each page, in order.
+
+        """
+        from .backends import PNGBackend
+        document = self._get_document(PNGBackend, stylesheets)
+        return document.get_png_pages()
 
 
 class CSS(Resource):

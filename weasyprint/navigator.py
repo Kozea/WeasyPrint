@@ -49,30 +49,18 @@ def find_links(box, links, anchors):
             find_links(child, links, anchors)
 
 
-def surface_to_base64(surface):
-    file_obj = io.BytesIO()
-    surface.write_to_png(file_obj)
-    return 'data:image/png;base64,' + (
-        file_obj.getvalue().encode('base64').replace('\n', ''))
-
-
-def get_svg_pages(html, *stylesheets):
+def get_pages(html, *stylesheets):
     document = html._get_document(PNGBackend, stylesheets)
-    backend = PNGBackend(None)
-    result = []
-    for page in document.pages:
-        context = backend.start_page(page.outer_width, page.outer_height)
-        draw.draw_page(document, page, context)
-        width, height, surface = backend.pages.pop()
+    for page, (width, height, png_bytes) in zip(
+            document.pages, document.get_png_pages()):
         links = []
         anchors = []
         find_links(page, links, anchors)
-        result.append(dict(
+        yield dict(
             width=width, height=height,
             links=links, anchors=anchors,
-            data_url=surface_to_base64(surface),
-        ))
-    return result
+            data_url='data:image/png;base64,' + (
+                png_bytes.encode('base64').replace('\n', '')))
 
 
 def make_app():
@@ -146,7 +134,7 @@ def make_app():
                 url = 'http://' + url
             html = HTML(url)
             url = html.base_url
-            pages = get_svg_pages(html, stylesheet)
+            pages = get_pages(html, stylesheet)
         else:
             pages = []
         return template.render(**locals())

@@ -115,6 +115,11 @@ def run(suite_directory):
         return render_template('section.html', **locals())
 
 
+    default_stylesheet = CSS(string='''
+        @page { margin: 20px; -weasy-size: 680px }
+        body { margin: 0 }
+    ''')
+
     @app.route('/test/<test_id>/')
     @app.route('/chapter<int:chapter_num>/section<int:section_num>/test<int:test_index>/')
     def run_test(chapter_num=None, section_num=None, test_index=None,
@@ -139,7 +144,13 @@ def run(suite_directory):
         with open(filename, 'rb') as fd:
             source = fd.read().decode('utf8')
 
-        formatter = HtmlFormatter()
+        pages = [
+            'data:image/png;base64,' + (
+                png_bytes.encode('base64').replace('\n', ''))
+            for _, _, png_bytes in HTML(string=source).get_png_pages(
+                stylesheets=[default_stylesheet])]
+
+        formatter = HtmlFormatter(linenos='inline')
         source = highlight(source, HtmlLexer(), formatter)
         css = formatter.get_style_defs('.highlight')
         return render_template('run_test.html', **locals())
@@ -148,20 +159,6 @@ def run(suite_directory):
     @app.route('/test-data/<path:filename>')
     def test_data(filename):
         return send_from_directory(suite_directory, filename)
-
-
-    page_size_stylesheet = CSS(string='''
-        @page { margin: 0; -weasy-size: 640px }
-    ''')
-
-    @app.route('/render/<test_id>.png')
-    def render(test_id):
-        # TODO: handle encodings
-        png = HTML(
-            safe_join(suite_directory, test_id + '.htm'),
-            encoding='utf-8').write_png(stylesheets=[page_size_stylesheet])
-        return png, 200, {'Content-Type': 'image/png'}
-
 
     app.run(debug=True)
 

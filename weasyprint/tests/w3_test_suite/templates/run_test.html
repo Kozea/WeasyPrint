@@ -2,22 +2,62 @@
 <title>{{ test.test_id }}</title>
 <link rel=stylesheet href="{{ url_for('static', filename='style.css') }}" />
 <style>
-    iframe {
-        border: 2px inset;
-        padding: 0;
-        width: 640px;
-        height: 640px;
-        box-sizing: content-box
+    body {
+        margin: 0 1em 1em;
+    }
+    header {
+        display: block;
+        margin: 1em 0;
+    }
+    h1, h2 {
+        display: inline;
+        margin-right: 1em;
     }
     .render {
         display: table-cell;
-        padding-right: 10px;
+        padding-right: 1em;
+    }
+    h3 {
+        margin: 0;
+    }
+    .render div {
+        width: 720px;
+        height: 720px;
+        overflow: auto;
+        margin-left: -10px;
+    }
+    .render img {
+        display: block;
+        margin: 10px 0 20px 10px;
+        box-shadow: 0 0 10px 2px #aaa;
+    }
+    iframe {
+        margin-top: 10px;
+        border: 2px inset;
+        padding: 0;
+        width: 680px;
+        height: 680px;
+        box-sizing: content-box
+    }
+    pre {
+        white-space: pre-wrap;
+        padding-left: 3em;
+    }
+    .lineno {
+        margin-left: -3em;
+        margin-right: -1ex; /* fallback */
+        margin-right: -1ch;
+        width: 3em;
+        display: inline-block;
     }
 
     {{ css }}
 </style>
 
+<header>
 <h1>CSS 2.1 Test Suite</h1>
+<h2><code>{{ test.test_id }}</code> {{ test.title }}</h2>
+</header>
 <nav>
 {% for text, index in [('←', previous_index), ('→', next_index)] %}
 <a{% if index %} href="{{ url_for('run_test',
@@ -26,14 +66,16 @@
 {% endfor %}
 <a href=..>↑</a>
 </nav>
-<h2><code>{{ test.test_id }}</code> {{ test.title }}</h2>
 {% if test.flags %}<p>Flags: {{ test.flags|join(', ') }}</p>{% endif %}
 {% if test.assertion %}<p>Assertion: {{ test.assertion }}</p>{% endif %}
 
 <div class=render>
     <h3>WeasyPrint</h3>
-    <iframe src="{{ url_for('render', test_id=test.test_id) }}"
-            marginwidth=0 marginheight=0></iframe>
+    <div>
+    {% for page in pages %}
+        <img src="{{ page }} " />
+    {% endfor %}
+    </div>
 </div>
 
 <div class=render>
