@@ -80,6 +80,9 @@ def get_next_linebox(document, linebox, position_y, skip_stack,
     position_x, position_y, available_width = avoid_collisions(
         document, linebox, containing_block, outer_width=False)
     candidate_height = linebox.height
+
+    excluded_shapes = document.excluded_shapes[:]
+
     while 1:
         linebox.position_x = position_x
         linebox.position_y = position_y
@@ -125,10 +128,13 @@ def get_next_linebox(document, linebox, position_y, skip_stack,
             break
         candidate_height = line.height
 
+        new_excluded_shapes = document.excluded_shapes
+        document.excluded_shapes = excluded_shapes
         position_x, position_y, available_width = avoid_collisions(
             document, line, containing_block, outer_width=False)
         if (position_x, position_y) == (
             linebox.position_x, linebox.position_y):
+            document.excluded_shapes = new_excluded_shapes
             break
 
     absolute_boxes.extend(line_absolutes)
@@ -531,6 +537,7 @@ def split_inline_box(document, box, position_x, max_x, skip_stack,
         skip = 0
     else:
         skip, skip_stack = skip_stack
+
     for index, child in box.enumerate_skip(skip):
         child.position_y = box.position_y
         if child.is_absolutely_positioned():
@@ -547,7 +554,7 @@ def split_inline_box(document, box, position_x, max_x, skip_stack,
         elif child.is_floated():
             child.position_x = position_x
             child = float_layout(
-                document, child, box, absolute_boxes, fixed_boxes)
+                document, child, containing_block, absolute_boxes, fixed_boxes)
             children.append(child)
             continue
 
