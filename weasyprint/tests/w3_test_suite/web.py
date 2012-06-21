@@ -144,10 +144,11 @@ def run(suite_directory):
         with open(filename, 'rb') as fd:
             source = fd.read().decode('utf8')
 
+        html = HTML(string=source, base_url=filename)
         pages = [
             'data:image/png;base64,' + (
                 png_bytes.encode('base64').replace('\n', ''))
-            for _, _, png_bytes in HTML(string=source).get_png_pages(
+            for _, _, png_bytes in html.get_png_pages(
                 stylesheets=[default_stylesheet])]
 
         formatter = HtmlFormatter(linenos='inline')
