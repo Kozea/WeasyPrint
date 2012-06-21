@@ -1807,10 +1807,10 @@ def test_2d_transform():
     ], '''
         <style>
             @page { -weasy-size: 8px; margin: 2px; background: #fff; }
-            div { -weasy-transform: translateX(0.25em);
-                  font-size: 12px; line-height: 0 }
+            div { -weasy-transform: translateX(0.25em); font-size: 12px }
+            div div { font-size: 0 }
         </style>
-        <div><img src="pattern.png"></div>
+        <div><div><img src="pattern.png"></div></div>
     ''')
 
     assert_pixels('image_translateY', 8, 8, [

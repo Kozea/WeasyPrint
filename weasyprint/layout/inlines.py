@@ -20,7 +20,7 @@ from .markers import image_marker_layout
 from .percentages import resolve_percentages, resolve_one_percentage
 from .preferred import shrink_to_fit
 from .tables import find_in_flow_baseline, table_wrapper_width
-from ..text import TextFragment
+from ..text import split_first_line
 from ..formatting_structure import boxes
 from ..css.computed_values import strut_layout
 
@@ -183,11 +183,9 @@ def remove_last_whitespace(document, box):
         assert resume is None
         space_width = box.width - new_box.width
         box.width = new_box.width
-        box.show_line = new_box.show_line
     else:
         space_width = box.width
         box.width = 0
-        box.show_line = lambda x: x  # No-op
     box.text = new_text
 
     for ancestor in ancestors:
@@ -639,12 +637,9 @@ def split_text_box(document, box, available_width, skip):
     text = box.text[skip:]
     if font_size == 0 or not text:
         return None, None, False
-    fragment = TextFragment(text, box.style,
-        cairo.Context(document.surface), available_width)
-
     # XXX ``resume_at`` is an index in UTF-8 bytes, not unicode codepoints.
-    show_line, length, width, height, baseline, resume_at = \
-        fragment.split_first_line()
+    layout, length, resume_at, width, height, baseline = split_first_line(
+        text, box.style, document.enable_hinting, available_width)
 
     # Convert ``length`` and ``resume_at`` from UTF-8 indexes in text
     # to Unicode indexes.
@@ -663,7 +658,7 @@ def split_text_box(document, box, available_width, skip):
     if length > 0:
         box = box.copy_with_text(new_text)
         box.width = width
-        box.show_line = show_line
+        box.pango_layout = layout
         # "The height of the content area should be based on the font,
         #  but this specification does not specify how."
         # http://www.w3.org/TR/CSS21/visudet.html#inline-non-replaced
@@ -905,7 +900,7 @@ def add_word_spacing(document, box, extra_word_spacing, x_advance):
             #x_advance +=  new_box.width - box.width
             x_advance += extra_word_spacing * nb_spaces
             box.width = new_box.width
-            box.show_line = new_box.show_line
+            box.pango_layout = new_box.pango_layout
     elif isinstance(box, (boxes.LineBox, boxes.InlineBox)):
         box.position_x += x_advance
         previous_x_advance = x_advance

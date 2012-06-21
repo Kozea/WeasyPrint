@@ -15,7 +15,7 @@ from __future__ import division, unicode_literals
 import cairo
 
 from .percentages import resolve_percentages
-from ..text import TextFragment
+from ..text import split_first_line
 from ..formatting_structure import boxes
 
 
@@ -30,11 +30,10 @@ def list_marker_layout(document, box):
     if marker:
         resolve_percentages(marker, containing_block=box)
         if isinstance(marker, boxes.TextBox):
-            text_fragment = TextFragment(marker.text, marker.style,
-                context=cairo.Context(document.surface))
-            result = text_fragment.split_first_line()
-            (marker.show_line, _, marker.width, marker.height,
-                marker.baseline, _) = result
+            (marker.pango_layout, _, _, marker.width, marker.height,
+                marker.baseline) = split_first_line(
+                    marker.text, marker.style, document.enable_hinting,
+                    max_width=None)
         else:
             # Image marker
             image_marker_layout(marker)

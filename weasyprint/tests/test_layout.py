@@ -1539,7 +1539,6 @@ def test_orphans_widows_avoid():
                 body_children = body.children
             if body_children:
                 paragraph, = body_children
-                print(paragraph.children[0].height, paragraph.children[0].margin_height())
                 line_counts.append(len(paragraph.children))
             else:
                 line_counts.append(0)

@@ -29,9 +29,7 @@ from . import pdf
 
 
 class SimplePDFBackend(object):
-    @classmethod
-    def get_dummy_surface(cls):
-        return cairo.PDFSurface(None, 1, 1)
+    enable_hinting = False
 
     def __init__(self, target):
         # We’ll change the surface size in .start_page()
@@ -77,9 +75,7 @@ class MetadataPDFBackend(SimplePDFBackend):
 
 
 class PNGBackend(object):
-    @classmethod
-    def get_dummy_surface(cls):
-        return cairo.ImageSurface(cairo.FORMAT_ARGB32, 1, 1)
+    enable_hinting = True
 
     def __init__(self, target):
         self.target = target

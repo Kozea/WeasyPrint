@@ -15,7 +15,7 @@ from __future__ import division, unicode_literals
 import cairo
 
 from ..formatting_structure import boxes
-from ..text import TextFragment
+from .. import text
 
 
 def shrink_to_fit(document, box, available_width):
@@ -162,7 +162,7 @@ def inline_preferred_minimum_width(document, box, outer=True):
             current_line = inline_preferred_minimum_width(document, child)
         else:
             assert isinstance(child, boxes.TextBox)
-            current_line = max(text_lines_width(document, child, width=0))
+            current_line = max(text.line_widths(document, child, width=0))
         widest_line = max(widest_line, current_line)
     return adjust(box, outer, widest_line)
 
@@ -188,7 +188,7 @@ def inline_preferred_width(document, box, outer=True):
             current_line += inline_preferred_width(document, child)
         else:
             assert isinstance(child, boxes.TextBox)
-            lines = list(text_lines_width(document, child, width=None))
+            lines = list(text.line_widths(document, child, width=None))
             assert lines
             # The first text line goes on the current line
             current_line += lines[0]
@@ -383,13 +383,6 @@ def table_preferred_width(document, box, outer=True):
     """Return the preferred width for a ``TableBox`` wrapper."""
     _, width, _, _ = table_and_columns_preferred_widths(document, box)
     return adjust(box, outer, width)
-
-
-def text_lines_width(document, box, width):
-    """Return the list of line widths for a ``TextBox``."""
-    context = cairo.Context(document.surface)
-    fragment = TextFragment(box.text, box.style, context, width=width)
-    return fragment.line_widths()
 
 
 def replaced_preferred_width(box, outer=True):
