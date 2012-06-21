@@ -99,25 +99,15 @@ class HTML(Resource):
         from .html import HTML5_UA_STYLESHEET
         return [HTML5_UA_STYLESHEET]
 
-    def _get_document(self, backend, stylesheets=(), ua_stylesheets=None):
+    def _get_document(self, stylesheets, enable_hinting, ua_stylesheets=None):
         if ua_stylesheets is None:
             ua_stylesheets = self._ua_stylesheet()
         from .document import Document
         return Document(
-            backend,
             self.root_element,
+            enable_hinting,
             user_stylesheets=list(_parse_stylesheets(stylesheets)),
             user_agent_stylesheets=ua_stylesheets)
-
-    def _write(self, backend, target, stylesheets):
-        write_to = self._get_document(backend, stylesheets).write_to
-        if target is None:
-            import io
-            target = io.BytesIO()
-            write_to(target)
-            return target.getvalue()
-        else:
-            write_to(target)
 
     def write_pdf(self, target=None, stylesheets=None):
         """Render the document to PDF.
@@ -130,8 +120,8 @@ class HTML(Resource):
         :returns:
             If :obj:`target` is :obj:`None`, a PDF byte string.
         """
-        from .backends import MetadataPDFBackend
-        return self._write(MetadataPDFBackend, target, stylesheets)
+        document = self._get_document(stylesheets, enable_hinting=False)
+        return document.write_pdf(target)
 
     def write_png(self, target=None, stylesheets=None):
         """Render the document to a single PNG image.
@@ -144,10 +134,10 @@ class HTML(Resource):
         :returns:
             If :obj:`target` is :obj:`None`, a PNG byte string.
         """
-        from .backends import PNGBackend
-        return self._write(PNGBackend, target, stylesheets)
+        document = self._get_document(stylesheets, enable_hinting=True)
+        return document.write_png(target)
 
-    def get_png_pages(self, stylesheets=None):
+    def get_png_pages(self, stylesheets=None, _with_document=False):
         """Render the document to multiple PNG images, one per page.
 
         :param stylesheets:
@@ -158,9 +148,12 @@ class HTML(Resource):
             each page, in order.
 
         """
-        from .backends import PNGBackend
-        document = self._get_document(PNGBackend, stylesheets)
-        return document.get_png_pages()
+        document = self._get_document(stylesheets, enable_hinting=True)
+        pages = document.get_png_pages()
+        if _with_document:
+            return document, pages
+        else:
+            return pages
 
 
 class CSS(Resource):

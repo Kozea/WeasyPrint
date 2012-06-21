@@ -132,11 +132,10 @@ def document_to_pixels(document, name, expected_width, expected_height,
     """
     Render an HTML document to PNG, checks its size and return pixel data.
     """
-    file_like = BytesIO()
-    document.write_to(file_like)
+    png_bytes = document.write_png()
     assert len(document.pages) == nb_pages
 
-    with contextlib.closing(pystacia.read_blob(file_like.getvalue())) as image:
+    with contextlib.closing(pystacia.read_blob(png_bytes)) as image:
         assert image.size == (expected_width, expected_height)
         raw = image.get_raw('rgba')['raw']
         assert len(raw) == expected_width * expected_height * BYTES_PER_PIXELS

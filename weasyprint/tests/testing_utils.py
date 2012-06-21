@@ -20,7 +20,6 @@ import functools
 
 from .. import HTML, CSS
 from ..document import Document
-from ..backends import PNGBackend, MetadataPDFBackend
 from ..logger import LOGGER
 
 
@@ -38,13 +37,13 @@ class TestPNGDocument(Document):
     This stylesheet is shorter, which makes tests faster.
 
     """
-    backend_class = PNGBackend
+    enable_hinting = True
 
     def __init__(self, html_source, base_url=None, user_stylesheets=(),
                  user_agent_stylesheets=(TEST_UA_STYLESHEET,)):
         super(TestPNGDocument, self).__init__(
-            self.backend_class,
             HTML(string=html_source, base_url=base_url).root_element,
+            enable_hinting=self.enable_hinting,
             user_stylesheets=user_stylesheets,
             user_agent_stylesheets=user_agent_stylesheets)
 
@@ -55,7 +54,7 @@ class TestPDFDocument(TestPNGDocument):
     This stylesheet is shorter, which makes tests faster.
 
     """
-    backend_class = MetadataPDFBackend
+    enable_hinting = False
 
 
 def resource_filename(basename):
