@@ -123,7 +123,7 @@ class HTML(Resource):
         document = self._get_document(stylesheets, enable_hinting=False)
         return document.write_pdf(target)
 
-    def write_png(self, target=None, stylesheets=None):
+    def write_png(self, target=None, stylesheets=None, resolution=None):
         """Render the document to a single PNG image.
 
         :param target:
@@ -135,9 +135,10 @@ class HTML(Resource):
             If :obj:`target` is :obj:`None`, a PNG byte string.
         """
         document = self._get_document(stylesheets, enable_hinting=True)
-        return document.write_png(target)
+        return document.write_png(target, resolution)
 
-    def get_png_pages(self, stylesheets=None, _with_document=False):
+    def get_png_pages(self, stylesheets=None, resolution=None,
+                      _with_document=False):
         """Render the document to multiple PNG images, one per page.
 
         :param stylesheets:
@@ -149,7 +150,7 @@ class HTML(Resource):
 
         """
         document = self._get_document(stylesheets, enable_hinting=True)
-        pages = document.get_png_pages()
+        pages = document.get_png_pages(resolution)
         if _with_document:
             return document, pages
         else:
