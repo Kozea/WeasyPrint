@@ -29,7 +29,6 @@ FAVICON = os.path.join(os.path.dirname(__file__),
                        'tests', 'resources', 'icon.png')
 
 STYLESHEET = CSS(string='''
-   /* @page { -weasy-size: 640px; margin: 0 }*/
    :root { font-size: 12px }
 ''')
 
@@ -85,17 +84,17 @@ def render_template(url, pages):
             body { margin-top: 0; padding-top: 50px }
             section { box-shadow: 0 0 10px 2px #aaa;
                       margin: 25px; position: relative }
-            a { position: absolute; display: block }
-            a[href]:hover, a[href]:focus { outline: 1px dotted }
+            section a { position: absolute; display: block }
+            section a[href]:hover, a[href]:focus { outline: 1px dotted }
         </style>
         <body>
         <form onsubmit="window.location.href = '/view/' + this.url.value;
                         return false;">
-            <input name=url style="width: 85%" value="''')
+            <input name=url style="width: 80%" value="''')
     write(url)
-    write('''" />
-            <input type=submit value=Go />
-        </form>\n''')
+    write('" />\n<input type=submit value=Go />\n<a href="/pdf/')
+    write(url)
+    write('">PDF</a>\n</form>\n')
     for width, height, data_url, links, anchors in pages:
         write('<section style="width: {0}px; height: {1}px">\n'
               '  <img src="{2}">\n'.format(width, height, data_url))
@@ -112,6 +111,14 @@ def render_template(url, pages):
     return ''.join(parts).encode('utf8')
 
 
+def get_html(environ, url):
+    if environ.get('QUERY_STRING'):
+        url += '?' + environ['QUERY_STRING']
+    if not url_is_absolute(url):
+        # Default to HTTP rather than relative filenames
+        url = 'http://' + url
+    return HTML(url)
+
 
 def app(environ, start_response):
     path = environ['PATH_INFO']
@@ -125,14 +132,13 @@ def app(environ, start_response):
             body = fd.read()
 
     elif path.startswith('/view/'):
-        url = path[6:]  # len('/view/') == 6
-        if environ.get('QUERY_STRING'):
-            url += '?' + environ['QUERY_STRING']
-        if not url_is_absolute(url):
-            # Default to HTTP rather than relative filenames
-            url = 'http://' + url
-        html = HTML(url)
+        html = get_html(environ, path[6:])  # len('/view/') == 6
         body = render_template(html.base_url, get_pages(html))
+
+    elif path.startswith('/pdf/'):
+        html = get_html(environ, path[5:])  # len('/pdf/') == 5
+        body = html.write_pdf(stylesheets=[STYLESHEET])
+        content_type = 'application/pdf'
 
     elif path == '/':
         body = render_template('', [])
