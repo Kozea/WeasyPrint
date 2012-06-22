@@ -10,10 +10,12 @@
 
 """
 
-from __future__ import division, unicode_literals
+# Do NOT import unicode_literals here. Raw WSGI requires native strings.
+from __future__ import division
 
 import io
 import os.path
+import base64
 
 import cairo
 
@@ -26,6 +28,11 @@ from weasyprint.compat import izip
 FAVICON = os.path.join(os.path.dirname(__file__),
                        'tests', 'resources', 'icon.png')
 
+STYLESHEET = CSS(string='''
+   /* @page { -weasy-size: 640px; margin: 0 }*/
+   :root { font-size: 12px }
+''')
+
 
 def find_links(box, links, anchors):
     link = box.style.link
@@ -35,7 +42,7 @@ def find_links(box, links, anchors):
         if type_ == 'internal':
             href = '#' + href
         else:
-            href = '/' + href
+            href = '/view/' + href
         # "Border area.  That's the area that hit-testing is done on."
         # http://lists.w3.org/Archives/Public/www-style/2012Jun/0318.html
         links.append((href,) + box.hit_area())
@@ -49,27 +56,21 @@ def find_links(box, links, anchors):
             find_links(child, links, anchors)
 
 
-def get_pages(html, *stylesheets):
-    document, png_pages = html.get_png_pages(stylesheets, _with_document=True)
+def get_pages(html):
+    document, png_pages = html.get_png_pages([STYLESHEET], _with_document=True)
     for page, (width, height, png_bytes) in izip(document.pages, png_pages):
         links = []
         anchors = []
         find_links(page, links, anchors)
-        yield dict(
-            width=width, height=height,
-            links=links, anchors=anchors,
-            data_url='data:image/png;base64,' + (
-                png_bytes.encode('base64').replace('\n', '')))
+        data_url = 'data:image/png;base64,' + (
+            base64.encodestring(png_bytes).decode('ascii').replace('\n', ''))
+        yield width, height, data_url, links, anchors
 
 
-def make_app():
-    # Keep here imports that are not required for the rest of WeasyPrint
-    from flask import Flask, request, send_file
-    from jinja2 import Template
-
-    app = Flask(__name__)
-
-    template = Template('''
+def render_template(url, pages):
+    parts = []
+    write = parts.append
+    write(r'''
         <!doctype html>
         <meta charset=utf-8>
         <title>WeasyPrint Navigator</title>
@@ -88,57 +89,78 @@ def make_app():
             a[href]:hover, a[href]:focus { outline: 1px dotted }
         </style>
         <body>
-        <form onsubmit="window.location.href = '/' + this.url.value;
+        <form onsubmit="window.location.href = '/view/' + this.url.value;
                         return false;">
-            <input name=url style="width: 85%" value="{{ url }}" />
+            <input name=url style="width: 85%" value="''')
+    write(url)
+    write('''" />
             <input type=submit value=Go />
-        </form>
-        {% for page in pages %}
-            <section style="width: {{ page.width }}px;
-                            height: {{ page.height }}px">
-                <img src="{{ page.data_url }}">
-                {% for href, pos_x, pos_y, width, height in page.links %}
-                    <a style="width: {{ width }}px; height: {{ height }}px;
-                              left: {{ pos_x }}px; top: {{ pos_y }}px;"
-                       href="{{ href }}"></a>
-                {% endfor %}
-                {% for anchor, pos_x, pos_y, width, height in page.anchors %}
-                    <a style="left: {{ pos_x }}px; top: {#
-                                Remove 60px so that the real pos is below
-                                the address bar.
-                              #}{{ pos_y - 60 }}px;"
-                       name="{{ anchor }}"></a>
-                {% endfor %}
-            </section>
-        {% endfor %}
-    ''')
+        </form>\n''')
+    for width, height, data_url, links, anchors in pages:
+        write('<section style="width: {0}px; height: {1}px">\n'
+              '  <img src="{2}">\n'.format(width, height, data_url))
+        for href, pos_x, pos_y, width, height in links:
+            write('  <a style="left: {0}px; top: {1}px; '
+                  'width: {2}px; height: {3}px" href="{4}"></a>\n'
+                  .format(pos_x, pos_y, width, height, href))
+        for anchor, pos_x, pos_y, width, height in anchors:
+            # Remove 60px to pos_y so that the real pos is below
+            # the address bar.
+            write('  <a style="left: {0}px; top: {1}px;" name="{2}"></a>\n'
+                  .format(pos_x, pos_y - 60, anchor))
+        write('</section>\n')
+    return ''.join(parts).encode('utf8')
 
-    stylesheet = CSS(string='''
-       /* @page { -weasy-size: 640px; margin: 0 }*/
-       :root { font-size: 12px }
-    ''')
 
-    @app.route('/favicon.ico')
-    def favicon():
-        return send_file(FAVICON)
 
-    @app.route('/')
-    @app.route('/<path:url>')
-    def index(url=''):
-        if url:
-            if request.query_string:
-                url += '?' + request.query_string
-            if not url_is_absolute(url):
-                # Default to HTTP rather than relative filenames
-                url = 'http://' + url
-            html = HTML(url)
-            url = html.base_url
-            pages = get_pages(html, stylesheet)
-        else:
-            pages = []
-        return template.render(**locals())
+def app(environ, start_response):
+    path = environ['PATH_INFO']
 
-    return app
+    content_type = 'text/html; charset=UTF-8'
+    status = '200 OK'
+
+    if path == '/favicon.ico':
+        content_type = 'image/x-icon'
+        with open(FAVICON, 'rb') as fd:
+            body = fd.read()
+
+    elif path.startswith('/view/'):
+        url = path[6:]  # len('/view/') == 6
+        if environ.get('QUERY_STRING'):
+            url += '?' + environ['QUERY_STRING']
+        if not url_is_absolute(url):
+            # Default to HTTP rather than relative filenames
+            url = 'http://' + url
+        html = HTML(url)
+        body = render_template(html.base_url, get_pages(html))
+
+    elif path == '/':
+        body = render_template('', [])
+
+    else:
+        status = '404 Not Found'
+        body = '<!doctype html><title>Not Found</title><h1>Not Found</h1>'
+
+    start_response(status, [
+        ('Content-type', content_type),
+        ('Content-Length', str(len(body))),
+    ])
+    return [body]
+
+
+def run(port=5000):
+    host = '127.0.0.1'
+    try:
+        from werkzeug.serving import run_simple
+    except ImportError:
+        print('Could not import Werkzeug, running without the reloader '
+              'or debugger.')
+        from wsgiref.simple_server import make_server
+        print('Listening on http://%s:%s/ ...' % (host, port))
+        make_server(host, port, app).serve_forever()
+    else:
+        run_simple(host, port, app, use_reloader=True, use_debugger=True)
+
 
 if __name__ == '__main__':
-    make_app().run(debug=True)
+    run()
