@@ -561,7 +561,7 @@ def find_earlier_page_break(children, absolute_boxes, fixed_boxes):
                 if result:
                     new_grand_children, resume_at = result
                     new_child = child.copy_with_children(new_grand_children)
-                    new_children = children[:index] + [new_child]
+                    new_children = list(children[:index]) + [new_child]
                     # Index in the original parent
                     resume_at = (new_child.index, resume_at)
                     break

@@ -1514,8 +1514,10 @@ def test_page_breaks():
         <body>
             <div>
                 <img src=pattern.png style="page-break-after: always">
-                <img src=pattern.png>
-                <img src=pattern.png>
+                <section>
+                    <img src=pattern.png>
+                    <img src=pattern.png>
+                </section>
             </div>
             <img src=pattern.png><!-- page break here -->
             <img src=pattern.png>
@@ -1543,8 +1545,10 @@ def test_page_breaks():
         <body>
             <div>
                 <img src=pattern.png style="page-break-after: always">
-                <img src=pattern.png><!-- page break here -->
-                <img src=pattern.png style="page-break-after: avoid">
+                <section>
+                    <img src=pattern.png><!-- page break here -->
+                    <img src=pattern.png style="page-break-after: avoid">
+                </section>
             </div>
             <img src=pattern.png style="page-break-after: avoid">
             <img src=pattern.png>
@@ -1556,7 +1560,8 @@ def test_page_breaks():
     html, = page_2.children
     body, = html.children
     div, = body.children
-    img_2, = div.children
+    section, = div.children
+    img_2, = section.children
     assert img_2.height == 30
     # TODO: currently this is 60: we do not decrease the used height of
     # blocks with 'height: auto' when we remove children from them for
