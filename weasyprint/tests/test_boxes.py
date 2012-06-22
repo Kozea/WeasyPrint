@@ -221,13 +221,12 @@ def test_inline_in_block():
     box = build.block_in_inline(box)
     assert_tree(box, [
         ('p', 'Block', [
-            ('em', 'Block', [
-                ('em', 'Line', [
-                    ('em', 'Text', 'World')])]),
-            ('p', 'AnonBlock', [
-                ('p', 'Line', [
-                    ('p', 'Text', 'Hello '),
-                    ('p', 'Text', '!')])])])])
+            ('p', 'Line', [
+                ('p', 'Text', 'Hello '),
+                ('em', 'Block', [
+                    ('em', 'Line', [
+                        ('em', 'Text', 'World')])]),
+                ('p', 'Text', '!')])])])
 
 
 @assert_no_logs
