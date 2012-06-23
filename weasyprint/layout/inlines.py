@@ -554,6 +554,13 @@ def split_inline_box(document, box, position_x, max_x, skip_stack,
             child = float_layout(
                 document, child, containing_block, absolute_boxes, fixed_boxes)
             children.append(child)
+            for old_child in children[:index]:
+                if child.style.float == 'left' and box.style.text_align in (
+                        '-weasy-start', 'left', 'justify'):
+                    old_child.translate(dx=child.margin_width())
+                elif child.style.float == 'right' and box.style.text_align in (
+                        '-weasy-end', 'right', 'justify'):
+                    old_child.translate(dx=-child.margin_width())
             continue
 
         new_child, resume_at, preserved = split_inline_level(
