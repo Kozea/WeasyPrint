@@ -12,8 +12,6 @@
 
 from __future__ import division, unicode_literals
 
-import cairo
-
 from .absolute import absolute_layout, AbsolutePlaceholder
 from .float import avoid_collisions, float_layout
 from .markers import image_marker_layout

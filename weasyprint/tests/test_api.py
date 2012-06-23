@@ -22,12 +22,14 @@ import tempfile
 
 import pystacia
 import lxml.html
+import pytest
 
 from .testing_utils import (
     resource_filename, assert_no_logs, TEST_UA_STYLESHEET)
 from ..compat import urljoin
 from .. import HTML, CSS
 from .. import __main__
+from .. import navigator
 
 
 CHDIR_LOCK = threading.Lock()
@@ -100,6 +102,8 @@ def _test_resource(class_, basename, check, **kwargs):
         encoding = kwargs.get('encoding') or 'utf8'
         check(class_(string=content.decode(encoding),  # unicode
                         base_url=relative_filename, **kwargs))
+    with pytest.raises(TypeError):
+        class_(filename='foo', url='bar')
 
 
 @assert_no_logs
@@ -367,3 +371,43 @@ def test_unicode_filenames():
 
                 TestHTML(string=html).write_png(bytes_filename)
                 assert read_file(unicode_filename) == png_bytes
+
+
+def wsgi_client(path_info):
+    start_response_calls = []
+    def start_response(status, headers):
+        start_response_calls.append((status, headers))
+    environ = {'PATH_INFO': path_info}
+    response = b''.join(navigator.app(environ, start_response))
+    assert len(start_response_calls) == 1
+    status, headers = start_response_calls[0]
+    return status, dict(headers), response
+
+
+@assert_no_logs
+def test_navigator():
+    with temp_directory() as temp:
+        filename = os.path.join(temp, 'test.html')
+        write_file(filename, b'''
+            <h1 id=foo><a href="http://weasyprint.org">Lorem ipsum</a></h1>
+            <h2><a href="#foo">bar</a></h2>
+        ''')
+        status, headers, body = wsgi_client('/view/file://' + filename)
+        body = body.decode('utf8')
+        assert status == '200 OK'
+        assert headers['Content-Type'].startswith('text/html;')
+        assert '<title>WeasyPrint Navigator</title>' in body
+        assert '<img src="data:image/png;base64,' in body
+        assert ' name="foo"></a>' in body
+        assert ' href="#foo"></a>' in body
+        assert ' href="/view/http://weasyprint.org"></a>' in body
+
+        status, headers, body = wsgi_client('/pdf/file://' + filename)
+        assert status == '200 OK'
+        assert headers['Content-Type'] == 'application/pdf'
+        assert body.startswith(b'%PDF')
+        assert (b'/A << /Type /Action /S /URI /URI '
+                b'(http://weasyprint.org) >>') in body
+        lipsum = '\ufeffLorem ipsum'.encode('utf-16-be')
+        assert (b'<< /Title (' + lipsum +
+                b')\n/A << /Type /Action /S /GoTo') in body
