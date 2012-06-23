@@ -13,8 +13,6 @@
 from __future__ import division, unicode_literals
 import functools
 
-import cairo
-
 from .absolute import absolute_layout, AbsolutePlaceholder
 from .markers import image_marker_layout
 from .percentages import resolve_percentages, resolve_one_percentage
