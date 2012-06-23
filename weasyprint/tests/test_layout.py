@@ -4205,8 +4205,7 @@ def test_floats():
     img_1, = span_1.children
     img_2, img_3 = span_2.children
     assert outer_area(img_1) == (0, 0, 50, 50)
-    # TODO: fix that
-    #assert outer_area(img_2) == (30, 50, 50, 50)
+    assert outer_area(img_2) == (30, 50, 50, 50)
     assert outer_area(img_3) == (0, 50, 30, 30)
 
     # Variant of the above: no <span>
@@ -4226,6 +4225,5 @@ def test_floats():
     img_1, = line_1.children
     img_2, img_3 = line_2.children
     assert outer_area(img_1) == (0, 0, 50, 50)
-    # TODO: fix that
-    #assert outer_area(img_2) == (0, 50, 50, 50)
+    assert outer_area(img_2) == (30, 50, 50, 50)
     assert outer_area(img_3) == (0, 50, 30, 30)
