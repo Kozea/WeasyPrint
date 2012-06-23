@@ -148,7 +148,7 @@ def app(environ, start_response):
         body = '<!doctype html><title>Not Found</title><h1>Not Found</h1>'
 
     start_response(status, [
-        ('Content-type', content_type),
+        ('Content-Type', content_type),
         ('Content-Length', str(len(body))),
     ])
     return [body]
