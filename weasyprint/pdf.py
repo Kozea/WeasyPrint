@@ -436,16 +436,16 @@ def write_pdf_metadata(document, fileobj):
             '/Outlines {0} 0 R /PageMode /UseOutlines', bookmark_root))
         for bookmark in bookmarks:
             content = [pdf_format('<< /Title {0!P}\n', bookmark['label'])]
+            content.append(pdf_format(
+                '/A << /Type /Action /S /GoTo /D [{0} /XYZ {1:f} {2:f} 0] >>',
+                *bookmark['destination']))
             if bookmark['Count']:
                 content.append(pdf_format('/Count {0}\n', bookmark['Count']))
             for key in ['Parent', 'Prev', 'Next', 'First', 'Last']:
                 if bookmark[key]:
                     content.append(pdf_format(
                         '/{0} {1} 0 R\n', key, bookmark[key] + bookmark_root))
-            content.append(pdf_format(
-                '/A << /Type /Action /S /GoTo '
-                    '/D [{0} /XYZ {1:f} {2:f} 0] >>\n>>',
-                *bookmark['destination']))
+            content.append(b'>>')
             pdf.write_new_object(b''.join(content))
 
     for page, page_links in zip(pdf.pages, links):

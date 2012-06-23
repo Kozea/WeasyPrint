@@ -123,7 +123,7 @@ def get_image_from_uri(cache, uri, type_=None):
         finally:
             try:
                 file_like.close()
-            except Exception:
+            except Exception:  # pragma: no cover
                 # May already be closed or something.
                 # This is just cleanup anyway.
                 pass
