@@ -19,7 +19,7 @@ import email
 if sys.version_info[0] >= 3:
     # Python 3
     from urllib.parse import (
-        urljoin, urlsplit, quote, unquote, unquote_to_bytes)
+        urljoin, urlsplit, quote, unquote, unquote_to_bytes, parse_qs)
     from urllib.request import urlopen, Request, pathname2url
     from array import array
 
@@ -46,7 +46,7 @@ if sys.version_info[0] >= 3:
 
 else:
     # Python 2
-    from urlparse import urljoin, urlsplit
+    from urlparse import urljoin, urlsplit, parse_qs
     from urllib2 import urlopen, Request
     from urllib import pathname2url, quote, unquote
     from array import array as _array
