@@ -91,13 +91,16 @@ class Document(object):
     def get_image_from_uri(self, uri, type_=None):
         return images.get_image_from_uri(self._image_cache, uri, type_)
 
-    def get_png_surfaces(self):
+    def get_png_surfaces(self, resolution=None):
         """Yield (width, height, image_surface) tuples, one for each page."""
+        px_resolution = (resolution or 96) / 96
         for page in self.pages:
-            width = int(math.ceil(page.outer_width))
-            height = int(math.ceil(page.outer_height))
+            width = int(math.ceil(page.outer_width * px_resolution))
+            height = int(math.ceil(page.outer_height * px_resolution))
             surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
-            draw.draw_page(self, page, draw.CairoContext(surface))
+            context = draw.CairoContext(surface)
+            context.scale(px_resolution, px_resolution)
+            draw.draw_page(self, page, context)
             yield width, height, surface
 
     def create_block_formatting_context(self):
@@ -116,16 +119,16 @@ class Document(object):
                 if shape_bottom > box_bottom:
                     root_box.height += shape_bottom - box_bottom
 
-    def get_png_pages(self):
+    def get_png_pages(self, resolution=None):
         """Yield (width, height, png_bytes) tuples, one for each page."""
-        for width, height, surface in self.get_png_surfaces():
+        for width, height, surface in self.get_png_surfaces(resolution):
             file_obj = io.BytesIO()
             surface.write_to_png(file_obj)
             yield width, height, file_obj.getvalue()
 
-    def write_png(self, target=None):
+    def write_png(self, target=None, resolution=None):
         """Write a single PNG image."""
-        surfaces = list(self.get_png_surfaces())
+        surfaces = list(self.get_png_surfaces(resolution))
         if len(surfaces) == 1:
             _, _, surface = surfaces[0]
         else:

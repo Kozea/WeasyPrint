@@ -63,7 +63,7 @@ def draw_page(document, page, context):
     draw_box_background(
         document, context, stacking_context.page, stacking_context.box)
     draw_canvas_background(document, context, page)
-    draw_border(context, page)
+    draw_border(document, context, page)
     draw_stacking_context(document, context, stacking_context)
 
 
@@ -85,8 +85,8 @@ def draw_box_background_and_border(document, context, page, box):
         for row_group in box.children:
             for row in row_group.children:
                 for cell in row.children:
-                    draw_border(context, cell)
-    draw_border(context, box)
+                    draw_border(document, context, cell)
+    draw_border(document, context, box)
 
 
 def draw_stacking_context(document, context, stacking_context):
@@ -258,8 +258,9 @@ def draw_background(document, context, style, painting_area, positioning_area):
         return
 
     with context.stacked():
-        # Prefer crisp edges on background rectangles.
-        context.set_antialias(cairo.ANTIALIAS_NONE)
+        if document.enable_hinting:
+            # Prefer crisp edges on background rectangles.
+            context.set_antialias(cairo.ANTIALIAS_NONE)
 
         if painting_area:
             context.rectangle(*painting_area)
@@ -372,7 +373,7 @@ def xy_offset(x, y, offset_x, offset_y, offset):
     return x + offset_x * offset, y + offset_y * offset
 
 
-def draw_border(context, box):
+def draw_border(document, context, box):
     """Draw the box border to a ``cairo.Context``."""
     if box.style.visibility == 'hidden':
         return
@@ -404,9 +405,14 @@ def draw_border(context, box):
         with context.stacked():
             context.set_source_rgba(*color)
 
-            # Avoid an artefact in the corner joining two solid borders
-            # of the same color.
-            context.set_antialias(cairo.ANTIALIAS_NONE)
+            if document.enable_hinting and (
+                    # Borders smaller than device 1 unit would disappear
+                    # without anti-aliasing.
+                    math.hypot(*context.user_to_device(width, 0)) >= 1 and
+                    math.hypot(*context.user_to_device(0, width)) >= 1):
+                # Avoid an artefact in the corner joining two solid borders
+                # of the same color.
+                context.set_antialias(cairo.ANTIALIAS_NONE)
 
             if style not in ('dotted', 'dashed'):
                 # Clip on the trapezoid shape
@@ -581,7 +587,7 @@ def draw_inline_level(document, context, page, box):
         draw_stacking_context(document, context, stacking_context)
     else:
         draw_box_background(document, context, page, box)
-        draw_border(context, box)
+        draw_border(document, context, box)
         if isinstance(box, (boxes.InlineBox, boxes.LineBox)):
             for child in box.children:
                 if isinstance(child, boxes.TextBox):
@@ -609,19 +615,20 @@ def draw_text(document, context, textbox):
     show_first_line(context, textbox.pango_layout, document.enable_hinting)
     values = textbox.style.text_decoration
     if 'overline' in values:
-        draw_text_decoration(context, textbox,
+        draw_text_decoration(document, context, textbox,
             textbox.baseline - 0.15 * textbox.style.font_size)
     elif 'underline' in values:
-        draw_text_decoration(context, textbox,
+        draw_text_decoration(document, context, textbox,
             textbox.baseline + 0.15 * textbox.style.font_size)
     elif 'line-through' in values:
-        draw_text_decoration(context, textbox, textbox.height * 0.5)
+        draw_text_decoration(document, context, textbox, textbox.height * 0.5)
 
 
-def draw_text_decoration(context, textbox, offset_y):
+def draw_text_decoration(document, context, textbox, offset_y):
     """Draw text-decoration of ``textbox`` to a ``cairo.Context``."""
     with context.stacked():
-        context.set_antialias(cairo.ANTIALIAS_NONE)
+        if document.enable_hinting:
+            context.set_antialias(cairo.ANTIALIAS_NONE)
         context.set_source_rgba(*textbox.style.color)
         context.set_line_width(1)  # TODO: make this proportional to font_size?
         context.move_to(textbox.position_x, textbox.position_y + offset_y)

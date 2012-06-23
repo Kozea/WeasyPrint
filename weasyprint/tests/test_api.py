@@ -149,21 +149,45 @@ def test_css_parsing():
     _test_resource(CSS, 'latin1-test.css', check_css, encoding='latin1')
 
 
-def check_png_pattern(png_bytes):
-    with contextlib.closing(pystacia.read_blob(png_bytes)) as image:
-        assert image.size == (8, 8)
-        lines = image.get_raw('rgba')['raw']
+def check_png_pattern(png_bytes, x2=False):
     from .test_draw import _, r, B, assert_pixels_equal
-    assert_pixels_equal('api_png', 8, 8, lines, b''.join([
-        _+_+_+_+_+_+_+_,
-        _+_+_+_+_+_+_+_,
-        _+_+r+B+B+B+_+_,
-        _+_+B+B+B+B+_+_,
-        _+_+B+B+B+B+_+_,
-        _+_+B+B+B+B+_+_,
-        _+_+_+_+_+_+_+_,
-        _+_+_+_+_+_+_+_,
-    ]))
+    if x2:
+        expected_pixels = [
+            _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
+            _+_+_+_+r+r+B+B+B+B+B+B+_+_+_+_,
+            _+_+_+_+r+r+B+B+B+B+B+B+_+_+_+_,
+            _+_+_+_+B+B+B+B+B+B+B+B+_+_+_+_,
+            _+_+_+_+B+B+B+B+B+B+B+B+_+_+_+_,
+            _+_+_+_+B+B+B+B+B+B+B+B+_+_+_+_,
+            _+_+_+_+B+B+B+B+B+B+B+B+_+_+_+_,
+            _+_+_+_+B+B+B+B+B+B+B+B+_+_+_+_,
+            _+_+_+_+B+B+B+B+B+B+B+B+_+_+_+_,
+            _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        ]
+        size = 16
+    else:
+        expected_pixels = [
+            _+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_,
+            _+_+r+B+B+B+_+_,
+            _+_+B+B+B+B+_+_,
+            _+_+B+B+B+B+_+_,
+            _+_+B+B+B+B+_+_,
+            _+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_,
+        ]
+        size = 8
+    with contextlib.closing(pystacia.read_blob(png_bytes)) as image:
+        assert image.size == (size, size)
+        pixels = image.get_raw('rgba')['raw']
+    assert_pixels_equal('api_png', size, size,
+                        pixels, b''.join(expected_pixels))
 
 
 @assert_no_logs
@@ -174,6 +198,7 @@ def test_python_render():
     css = CSS(string='''
         @page { margin: 2px; -weasy-size: 8px; background: #fff }
         body { margin: 0; font-size: 0 }
+        img { -weasy-image-rendering: optimizeSpeed }
     ''')
 
     png_bytes = html.write_png(stylesheets=[css])
@@ -214,6 +239,14 @@ def test_python_render():
             html.write_pdf(pdf_file, stylesheets=[css])
         assert read_file(png_filename) == png_bytes
         assert read_file(pdf_filename) == pdf_bytes
+
+    x2_png_bytes = html.write_png(stylesheets=[css], resolution=192)
+    check_png_pattern(x2_png_bytes, x2=True)
+
+    pages = list(html.get_png_pages(stylesheets=[css]))
+    assert pages == [(8, 8, png_bytes)]
+    pages = list(html.get_png_pages(stylesheets=[css], resolution=192))
+    assert pages == [(16, 16, x2_png_bytes)]
 
 
 @assert_no_logs
