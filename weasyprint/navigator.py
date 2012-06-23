@@ -159,13 +159,16 @@ def run(port=5000):
     try:
         from werkzeug.serving import run_simple
     except ImportError:
-        print('Could not import Werkzeug, running without the reloader '
-              'or debugger.')
-        from wsgiref.simple_server import make_server
-        print('Listening on http://%s:%s/ ...' % (host, port))
-        make_server(host, port, app).serve_forever()
+        pass
     else:
         run_simple(host, port, app, use_reloader=True, use_debugger=True)
+        return
+    print('Could not import Werkzeug, running without the reloader '
+          'or debugger.')
+    from wsgiref.simple_server import make_server
+    server = make_server(host, port, app)
+    print('Listening on http://%s:%s/ ...' % (host, port))
+    server.serve_forever()
 
 
 if __name__ == '__main__':
