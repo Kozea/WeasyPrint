@@ -1819,7 +1819,7 @@ def test_inlinebox_spliting():
         skip = None
         while 1:
             inlinebox.position_y = 0
-            box, skip, _ = split_inline_box(
+            box, skip, _, _ = split_inline_box(
                 document, inlinebox, 0, width, skip, parent, None, [], [], [])
             yield box
             if skip is None:
@@ -1933,7 +1933,7 @@ def test_inlinebox_text_after_spliting():
     skip = None
     while 1:
         inlinebox.position_y = 0
-        box, skip, _ = split_inline_box(
+        box, skip, _, _ = split_inline_box(
             document, inlinebox, 0, 100, skip, paragraph, None, [], [], [])
         parts.append(box)
         if skip is None:
