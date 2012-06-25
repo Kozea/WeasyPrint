@@ -172,8 +172,6 @@ def avoid_collisions(document, box, containing_block, outer=True):
 
     position_x = max_left_bound
     available_width = max_right_bound - max_left_bound
-    if box.style.float == 'right':
-        print(colliding_shapes, position_x, position_y, available_width)
 
     if not outer:
         position_x -= box.margin_left
