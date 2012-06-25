@@ -58,11 +58,11 @@ def block_level_layout(document, box, max_position_y, skip_stack,
             containing_block, device_size, page_is_empty,
             absolute_boxes, fixed_boxes, adjoining_margins)
     elif isinstance(box, boxes.BlockReplacedBox):
+        box = block_replaced_box_layout(box, containing_block, device_size)
         # Don't collide with floats
         # http://www.w3.org/TR/CSS21/visuren.html#floats
         box.position_x, box.position_y, _ = avoid_collisions(
-            document, box, containing_block)
-        box = block_replaced_box_layout(box, containing_block, device_size)
+            document, box, containing_block, outer=False)
         resume_at = None
         next_page = 'any'
         adjoining_margins = []
@@ -79,8 +79,7 @@ def block_box_layout(document, box, max_position_y, skip_stack,
     if box.is_table_wrapper:
         table_wrapper_width(
             document, box, (containing_block.width, containing_block.height))
-    else:
-        block_level_width(box, containing_block)
+    block_level_width(box, containing_block)
 
     new_box, resume_at, next_page, adjoining_margins, collapsing_through = \
         block_container_layout(
@@ -90,10 +89,9 @@ def block_box_layout(document, box, max_position_y, skip_stack,
         # Don't collide with floats
         # http://www.w3.org/TR/CSS21/visuren.html#floats
         position_x, position_y, _ = avoid_collisions(
-            document, new_box, containing_block)
+            document, new_box, containing_block, outer=False)
         new_box.translate(
             position_x - new_box.position_x, position_y - new_box.position_y)
-        block_level_width(new_box, containing_block)
     list_marker_layout(document, new_box)
     return new_box, resume_at, next_page, adjoining_margins, collapsing_through
 

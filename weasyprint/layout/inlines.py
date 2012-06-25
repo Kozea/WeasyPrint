@@ -76,7 +76,7 @@ def get_next_linebox(document, linebox, position_y, skip_stack,
     linebox.height, _ = strut_layout(linebox.style)
     linebox.position_y = position_y
     position_x, position_y, available_width = avoid_collisions(
-        document, linebox, containing_block, outer_width=False)
+        document, linebox, containing_block, outer=False)
     candidate_height = linebox.height
 
     excluded_shapes = document.excluded_shapes[:]
@@ -129,7 +129,7 @@ def get_next_linebox(document, linebox, position_y, skip_stack,
         new_excluded_shapes = document.excluded_shapes
         document.excluded_shapes = excluded_shapes
         position_x, position_y, available_width = avoid_collisions(
-            document, line, containing_block, outer_width=False)
+            document, line, containing_block, outer=False)
         if (position_x, position_y) == (
             linebox.position_x, linebox.position_y):
             document.excluded_shapes = new_excluded_shapes

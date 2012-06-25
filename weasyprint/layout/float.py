@@ -37,6 +37,10 @@ def float_layout(document, box, containing_block, absolute_boxes, fixed_boxes):
         box.margin_left = 0
     if box.margin_right == 'auto':
         box.margin_right = 0
+    if box.margin_top == 'auto':
+        box.margin_top = 0
+    if box.margin_bottom == 'auto':
+        box.margin_bottom = 0
 
     clearance = get_clearance(document, box)
     if clearance is not None:
@@ -85,13 +89,13 @@ def find_float_position(document, box, containing_block):
 
     # Points 1 and 2
     position_x, position_y, available_width = avoid_collisions(
-        document, box, containing_block, outer_height=False)
+        document, box, containing_block)
 
     # Point 9
     # position_y is set now, let's define position_x
     # for float: left elements, it's already done!
     if box.style.float == 'right':
-        position_x = position_x + available_width - box.margin_width()
+        position_x += available_width - box.margin_width()
 
     box.translate(position_x - box.position_x, position_y - box.position_y)
 
@@ -111,21 +115,23 @@ def get_clearance(document, box, collapsed_margin=0):
     return clearance
 
 
-def avoid_collisions(document, box, containing_block, outer_width=True,
-                     outer_height=True):
+def avoid_collisions(document, box, containing_block, outer=True):
     excluded_shapes = document.excluded_shapes
-    position_y = box.position_y
+    position_y = box.position_y if outer else box.border_box_y()
 
-    box_width = box.margin_width() if outer_width else box.width
-    box_height = box.margin_height() if outer_height else box.height
+    box_width = box.margin_width() if outer else box.border_width()
+    box_height = box.margin_height() if outer else box.border_height()
 
     while True:
         colliding_shapes = [
             shape for shape in excluded_shapes
-            if (shape.position_y <= position_y <
+            if (shape.position_y < position_y <
                 shape.position_y + shape.margin_height())
-            or (shape.position_y < position_y + box_height <=
+            or (shape.position_y < position_y + box_height <
                 shape.position_y + shape.margin_height())
+            or (shape.position_y >= position_y and
+                shape.position_y + shape.margin_height() <=
+                position_y + box_height)
         ]
         left_bounds = [
             shape.position_x + shape.margin_width()
@@ -140,6 +146,10 @@ def avoid_collisions(document, box, containing_block, outer_width=True,
         max_left_bound = containing_block.content_box_x()
         max_right_bound = \
             containing_block.content_box_x() + containing_block.width
+
+        if not outer:
+            max_left_bound += box.margin_left
+            max_right_bound += box.margin_right
 
         # Set the real maximum bounds according to sibling float elements
         if left_bounds or right_bounds:
@@ -162,5 +172,11 @@ def avoid_collisions(document, box, containing_block, outer_width=True,
 
     position_x = max_left_bound
     available_width = max_right_bound - max_left_bound
+    if box.style.float == 'right':
+        print(colliding_shapes, position_x, position_y, available_width)
+
+    if not outer:
+        position_x -= box.margin_left
+        position_y -= box.margin_top
 
     return position_x, position_y, available_width
