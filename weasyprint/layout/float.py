@@ -123,7 +123,7 @@ def avoid_collisions(document, box, containing_block, outer=True):
     box_width = box.margin_width() if outer else box.border_width()
     box_height = box.margin_height() if outer else box.border_height()
 
-    if box_height == 0:
+    if box_height == 0 and box.is_floated():
         return 0, 0, containing_block.width
 
     while True:
