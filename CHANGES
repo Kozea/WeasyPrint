@@ -4,12 +4,14 @@ WeasyPrint changelog
 Version 0.10
 ------------
 
-Not released yet.
+Released on 2012-06-25.
 
 * Add ``get_png_pages()`` to the public API. It returns each page as
   a separate PNG image.
+* Add a ``resolution`` parameter for PNG.
 * Add *WeasyPrint Navigator*, a web application that shows WeasyPrint’s
   output with clickable links. Yes, that’s a browser in your browser.
+  Start it with ``python -m weasyprint.navigator``
 * Add support for `vertical-align: top` and `vertical-align: bottom`
 * Add support for `page-break-before: avoid` and `page-break-after: avoid`
 * Bug fixes

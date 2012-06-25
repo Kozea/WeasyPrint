@@ -26,7 +26,7 @@ import pytest
 
 from .testing_utils import (
     resource_filename, assert_no_logs, TEST_UA_STYLESHEET)
-from ..compat import urljoin, quote
+from ..compat import urljoin, urlencode
 from .. import HTML, CSS
 from .. import __main__
 from .. import navigator
@@ -373,11 +373,12 @@ def test_unicode_filenames():
                 assert read_file(unicode_filename) == png_bytes
 
 
-def wsgi_client(path_info, query_string=None):
+def wsgi_client(path_info, qs_args=None):
     start_response_calls = []
     def start_response(status, headers):
         start_response_calls.append((status, headers))
-    environ = {'PATH_INFO': path_info, 'QUERY_STRING': query_string}
+    environ = {'PATH_INFO': path_info,
+               'QUERY_STRING': urlencode(qs_args or {})}
     response = b''.join(navigator.app(environ, start_response))
     assert len(start_response_calls) == 1
     status, headers = start_response_calls[0]
@@ -411,7 +412,7 @@ def test_navigator():
 
         for status, headers, body in [
             wsgi_client('/view/file://' + filename),
-            wsgi_client('/', 'url=' + quote('file://' + filename, safe='')),
+            wsgi_client('/', {'url': 'file://' + filename}),
         ]:
             body = body.decode('utf8')
             assert status == '200 OK'
