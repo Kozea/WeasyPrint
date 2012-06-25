@@ -22,14 +22,14 @@ import cairo
 from weasyprint import HTML, CSS
 from weasyprint.formatting_structure import boxes
 from weasyprint.urls import url_is_absolute
-from weasyprint.compat import izip
+from weasyprint.compat import izip, parse_qs
 
 
 FAVICON = os.path.join(os.path.dirname(__file__),
                        'tests', 'resources', 'icon.png')
 
 STYLESHEET = CSS(string='''
-   :root { font-size: 12px }
+   :root { font-size: 10pt }
 ''')
 
 
@@ -66,93 +66,95 @@ def get_pages(html):
         yield width, height, data_url, links, anchors
 
 
-def render_template(url, pages):
-    parts = []
+def render_template(url):
+    parts = ['''\
+<!doctype html>
+<meta charset=utf-8>
+<title>WeasyPrint Navigator</title>
+<style>
+  form { position: fixed; z-index: 1; top: 8px; left: 16px; right: 0; }
+  input { font: 24px/30px sans-serif }
+  input:not([type]) { background: rgba(255, 255, 255, .9); border-width: 2px;
+                      border-radius: 6px; padding: 0 3px }
+  input:not([type]):focus { outline: none }
+  body { margin-top: 0; padding-top: 50px }
+  section { box-shadow: 0 0 10px 2px #aaa; margin: 25px; position: relative }
+  section a { position: absolute; display: block }
+  section a[href]:hover, a[href]:focus { outline: 1px dotted }
+</style>
+<body onload="var u=document.forms[0].url; u.value || u.focus()">
+<form action="/" onsubmit="
+  window.location.href = '/view/' + this.url.value; return false;">
+<input name=url style="width: 80%" placeholder="Enter an URL to start"
+  value="''']
     write = parts.append
-    write(r'''
-        <!doctype html>
-        <meta charset=utf-8>
-        <title>WeasyPrint Navigator</title>
-        <style>
-            form { position: fixed; z-index: 1;
-                   top: 8px; left: 16px; right: 0; }
-            input { font: 24px/30px sans-serif }
-            input:not([type]) { background: rgba(255, 255, 255, .9);
-                                border-radius: 6px; padding: 0 3px;
-                                border-width: 2px }
-            input:not([type]):focus { outline: none }
-            body { margin-top: 0; padding-top: 50px }
-            section { box-shadow: 0 0 10px 2px #aaa;
-                      margin: 25px; position: relative }
-            section a { position: absolute; display: block }
-            section a[href]:hover, a[href]:focus { outline: 1px dotted }
-        </style>
-        <body>
-        <form onsubmit="window.location.href = '/view/' + this.url.value;
-                        return false;">
-            <input name=url style="width: 80%" value="''')
-    write(url)
-    write('" />\n<input type=submit value=Go />\n<a href="/pdf/')
-    write(url)
-    write('">PDF</a>\n</form>\n')
-    for width, height, data_url, links, anchors in pages:
-        write('<section style="width: {0}px; height: {1}px">\n'
-              '  <img src="{2}">\n'.format(width, height, data_url))
-        for href, pos_x, pos_y, width, height in links:
-            write('  <a style="left: {0}px; top: {1}px; '
-                  'width: {2}px; height: {3}px" href="{4}"></a>\n'
-                  .format(pos_x, pos_y, width, height, href))
-        for anchor, pos_x, pos_y, width, height in anchors:
-            # Remove 60px to pos_y so that the real pos is below
-            # the address bar.
-            write('  <a style="left: {0}px; top: {1}px;" name="{2}"></a>\n'
-                  .format(pos_x, pos_y - 60, anchor))
-        write('</section>\n')
+    if url:
+        html = HTML(url)
+        url = html.base_url
+        write(url)
+    write('" />\n<input type=submit value=Go />\n')
+    if url:
+        write('<a href="/pdf/')
+        write(url)
+        write('">PDF</a>\n')
+    write('</form>\n')
+    if url:
+        for width, height, data_url, links, anchors in get_pages(html):
+            write('<section style="width: {0}px; height: {1}px">\n'
+                  '  <img src="{2}">\n'.format(width, height, data_url))
+            for href, pos_x, pos_y, width, height in links:
+                write('  <a style="left: {0}px; top: {1}px; '
+                      'width: {2}px; height: {3}px" href="{4}"></a>\n'
+                      .format(pos_x, pos_y, width, height, href))
+            for anchor, pos_x, pos_y, width, height in anchors:
+                # Remove 60px to pos_y so that the real pos is below
+                # the address bar.
+                write('  <a style="left: {0}px; top: {1}px;" name="{2}"></a>\n'
+                      .format(pos_x, pos_y - 60, anchor))
+            write('</section>\n')
     return ''.join(parts).encode('utf8')
 
 
-def get_html(environ, url):
-    if environ.get('QUERY_STRING'):
-        url += '?' + environ['QUERY_STRING']
-    if not url_is_absolute(url):
-        # Default to HTTP rather than relative filenames
-        url = 'http://' + url
-    return HTML(url)
+def normalize_url(url, query_string=None):
+    if url:
+        if query_string:
+            url += '?' + query_string
+        if not url_is_absolute(url):
+            # Default to HTTP rather than relative filenames
+            url = 'http://' + url
+        return url
 
 
 def app(environ, start_response):
+    def make_response(body, status='200 OK',
+                      content_type='text/html; charset=UTF-8'):
+        start_response(status, [
+            ('Content-Type', content_type),
+            ('Content-Length', str(len(body))),
+        ])
+        return [body]
+
     path = environ['PATH_INFO']
 
-    content_type = 'text/html; charset=UTF-8'
-    status = '200 OK'
-
     if path == '/favicon.ico':
-        content_type = 'image/x-icon'
         with open(FAVICON, 'rb') as fd:
-            body = fd.read()
+            return make_response(fd.read(), content_type='image/x-icon')
+
+    elif path.startswith('/pdf/') and len(path) > 5: # len('/pdf/') == 5
+        url = normalize_url(path[5:], environ.get('QUERY_STRING'))
+        body = HTML(url=url).write_pdf(stylesheets=[STYLESHEET])
+        return make_response(body, content_type='application/pdf')
 
     elif path.startswith('/view/'):
-        html = get_html(environ, path[6:])  # len('/view/') == 6
-        body = render_template(html.base_url, get_pages(html))
-
-    elif path.startswith('/pdf/'):
-        html = get_html(environ, path[5:])  # len('/pdf/') == 5
-        body = html.write_pdf(stylesheets=[STYLESHEET])
-        content_type = 'application/pdf'
+        url = normalize_url(path[6:], environ.get('QUERY_STRING'))
+        return make_response(render_template(url))
 
     elif path == '/':
-        body = render_template('', [])
+        args = parse_qs(environ.get('QUERY_STRING', ''))
+        url = normalize_url(args.get('url', [''])[0])
+        return make_response(render_template(url))
 
-    else:
-        status = '404 Not Found'
-        body = '<!doctype html><title>Not Found</title><h1>Not Found</h1>'
-
-    start_response(status, [
-        ('Content-Type', content_type),
-        ('Content-Length', str(len(body))),
-    ])
-    return [body]
-
+    return make_response(b'<h1>Not Found</h1>', status='404 Not Found')
 
 def run(port=5000):
     host = '127.0.0.1'

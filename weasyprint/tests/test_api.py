@@ -26,7 +26,7 @@ import pytest
 
 from .testing_utils import (
     resource_filename, assert_no_logs, TEST_UA_STYLESHEET)
-from ..compat import urljoin
+from ..compat import urljoin, quote
 from .. import HTML, CSS
 from .. import __main__
 from .. import navigator
@@ -373,11 +373,11 @@ def test_unicode_filenames():
                 assert read_file(unicode_filename) == png_bytes
 
 
-def wsgi_client(path_info):
+def wsgi_client(path_info, query_string=None):
     start_response_calls = []
     def start_response(status, headers):
         start_response_calls.append((status, headers))
-    environ = {'PATH_INFO': path_info}
+    environ = {'PATH_INFO': path_info, 'QUERY_STRING': query_string}
     response = b''.join(navigator.app(environ, start_response))
     assert len(start_response_calls) == 1
     status, headers = start_response_calls[0]
@@ -387,20 +387,40 @@ def wsgi_client(path_info):
 @assert_no_logs
 def test_navigator():
     with temp_directory() as temp:
+        status, headers, body = wsgi_client('/favicon.ico')
+        assert status == '200 OK'
+        assert headers['Content-Type'] == 'image/x-icon'
+        assert body == read_file(navigator.FAVICON)
+
+        status, headers, body = wsgi_client('/lipsum')
+        assert status == '404 Not Found'
+
+        status, headers, body = wsgi_client('/')
+        body = body.decode('utf8')
+        assert status == '200 OK'
+        assert headers['Content-Type'].startswith('text/html;')
+        assert '<title>WeasyPrint Navigator</title>' in body
+        assert '<img' not in body
+        assert '></a>' not in body
+
         filename = os.path.join(temp, 'test.html')
         write_file(filename, b'''
             <h1 id=foo><a href="http://weasyprint.org">Lorem ipsum</a></h1>
             <h2><a href="#foo">bar</a></h2>
         ''')
-        status, headers, body = wsgi_client('/view/file://' + filename)
-        body = body.decode('utf8')
-        assert status == '200 OK'
-        assert headers['Content-Type'].startswith('text/html;')
-        assert '<title>WeasyPrint Navigator</title>' in body
-        assert '<img src="data:image/png;base64,' in body
-        assert ' name="foo"></a>' in body
-        assert ' href="#foo"></a>' in body
-        assert ' href="/view/http://weasyprint.org"></a>' in body
+
+        for status, headers, body in [
+            wsgi_client('/view/file://' + filename),
+            wsgi_client('/', 'url=' + quote('file://' + filename, safe='')),
+        ]:
+            body = body.decode('utf8')
+            assert status == '200 OK'
+            assert headers['Content-Type'].startswith('text/html;')
+            assert '<title>WeasyPrint Navigator</title>' in body
+            assert '<img src="data:image/png;base64,' in body
+            assert ' name="foo"></a>' in body
+            assert ' href="#foo"></a>' in body
+            assert ' href="/view/http://weasyprint.org"></a>' in body
 
         status, headers, body = wsgi_client('/pdf/file://' + filename)
         assert status == '200 OK'
