@@ -150,11 +150,12 @@ def app(environ, start_response):
         return make_response(render_template(url))
 
     elif path == '/':
-        args = parse_qs(environ.get('QUERY_STRING', ''))
+        args = parse_qs(environ.get('QUERY_STRING') or '')
         url = normalize_url(args.get('url', [''])[0])
         return make_response(render_template(url))
 
     return make_response(b'<h1>Not Found</h1>', status='404 Not Found')
+
 
 def run(port=5000):
     host = '127.0.0.1'
