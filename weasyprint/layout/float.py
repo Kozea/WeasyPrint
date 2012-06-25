@@ -106,6 +106,7 @@ def get_clearance(document, box, collapsed_margin=0):
     """Return None if there is no clearance, otherwise the clearance value."""
     clearance = None
     hypothetical_position = box.position_y + collapsed_margin
+    # Hypothetical position is the position of the top border edge
     for excluded_shape in document.excluded_shapes:
         if box.style.clear in (excluded_shape.style.float, 'both'):
             y, h = excluded_shape.position_y, excluded_shape.margin_height()
