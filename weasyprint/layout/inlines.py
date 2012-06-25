@@ -42,16 +42,27 @@ def iter_line_boxes(document, box, position_y, skip_stack, containing_block,
 
     """
     while 1:
-        line, resume_at = get_next_linebox(
+        line, resume_at, waiting_floats = get_next_linebox(
             document, box, position_y, skip_stack, containing_block,
             device_size, absolute_boxes, fixed_boxes)
+        float_children = []
+        if line:
+            position_y = line.position_y + line.height
+        for waiting_float in waiting_floats:
+            waiting_float.position_y = position_y
+            waiting_float = float_layout(
+                document, waiting_float, containing_block, absolute_boxes,
+                fixed_boxes)
+            float_children.append(waiting_float)
+        if float_children:
+            line = line.copy_with_children(
+                line.children + tuple(float_children))
         if line is None:
             return
         yield line, resume_at
         if resume_at is None:
             return
         skip_stack = resume_at
-        position_y = line.position_y + line.height
 
 
 def get_next_linebox(document, linebox, position_y, skip_stack,
@@ -68,7 +79,7 @@ def get_next_linebox(document, linebox, position_y, skip_stack,
 
     skip_stack = skip_first_whitespace(linebox, skip_stack)
     if skip_stack == 'continue':
-        return None, None
+        return None, None, []
 
     linebox.width = inline_preferred_minimum_width(
         document, linebox, skip_stack=skip_stack, first_line=True)
@@ -91,9 +102,11 @@ def get_next_linebox(document, linebox, position_y, skip_stack,
         line_absolutes = []
         line_fixed = []
 
-        line, resume_at, preserved_line_break = split_inline_box(
-            document, linebox, position_x, max_x, skip_stack, containing_block,
-            device_size, line_absolutes, line_fixed, line_placeholders)
+        line, resume_at, preserved_line_break, waiting_floats = \
+            split_inline_box(
+                document, linebox, position_x, max_x, skip_stack,
+                containing_block, device_size, line_absolutes,
+                line_fixed, line_placeholders)
 
         remove_last_whitespace(document, line)
 
@@ -148,7 +161,7 @@ def get_next_linebox(document, linebox, position_y, skip_stack,
                 line.position_x - placeholder.position_x,
                 position_y + line.height - placeholder.position_y)
 
-    return line, resume_at
+    return line, resume_at, waiting_floats
 
 
 def skip_first_whitespace(box, skip_stack):
@@ -494,7 +507,7 @@ def split_inline_level(document, box, position_x, max_x, skip_stack,
             box.margin_left = 0
         if box.margin_right == 'auto':
             box.margin_right = 0
-        new_box, resume_at, preserved_line_break = split_inline_box(
+        new_box, resume_at, preserved_line_break, _ = split_inline_box(
             document, box, position_x, max_x, skip_stack, containing_block,
             device_size, absolute_boxes, fixed_boxes, line_placeholders)
     elif isinstance(box, boxes.AtomicInlineLevelBox):
@@ -534,6 +547,7 @@ def split_inline_box(document, box, position_x, max_x, skip_stack,
     else:
         skip, skip_stack = skip_stack
 
+    waiting_floats = []
     for index, child in box.enumerate_skip(skip):
         child.position_y = box.position_y
         if child.is_absolutely_positioned():
@@ -549,21 +563,28 @@ def split_inline_box(document, box, position_x, max_x, skip_stack,
             continue
         elif child.is_floated():
             child.position_x = position_x
-            child = float_layout(
-                document, child, containing_block, absolute_boxes, fixed_boxes)
-            children.append(child)
-            # TODO: use the main text direction of the line
-            for old_child in children[:index]:
-                if not old_child.is_in_normal_flow():
-                    continue
-                if child.style.float == 'left':  # and direction is ltr
-                    old_child.translate(dx=child.margin_width())
-                # elif child.style.float == 'right' and direction is rtl:
-                #    old_child.translate(dx=-child.margin_width())
-            if child.style.float == 'left':
-                position_x += child.margin_width()
-            elif child.style.float == 'right':
-                max_x -= child.margin_width()
+            float_width = shrink_to_fit(document, child, containing_block)
+            if float_width > max_x - position_x:
+                # TODO: the absolute and fixed boxes in the floats must be
+                # added here, and not in iter_line_boxes
+                waiting_floats.append(child)
+            else:
+                child = float_layout(
+                    document, child, containing_block, absolute_boxes,
+                    fixed_boxes)
+                children.append(child)
+                # TODO: use the main text direction of the line
+                for old_child in children[:index]:
+                    if not old_child.is_in_normal_flow():
+                        continue
+                    if child.style.float == 'left':  # and direction is ltr
+                        old_child.translate(dx=child.margin_width())
+                    # elif child.style.float == 'right' and direction is rtl:
+                    #    old_child.translate(dx=-child.margin_width())
+                if child.style.float == 'left':
+                    position_x += child.margin_width()
+                elif child.style.float == 'right':
+                    max_x -= child.margin_width()
             continue
 
         new_child, resume_at, preserved = split_inline_level(
@@ -626,7 +647,7 @@ def split_inline_box(document, box, position_x, max_x, skip_stack,
     if new_box.style.position == 'relative':
         for absolute_box in absolute_boxes:
             absolute_layout(document, absolute_box, new_box, fixed_boxes)
-    return new_box, resume_at, preserved_line_break
+    return new_box, resume_at, preserved_line_break, waiting_floats
 
 
 def split_text_box(document, box, available_width, skip):
