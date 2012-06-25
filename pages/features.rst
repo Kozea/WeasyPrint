@@ -9,11 +9,11 @@ Documentation
 Features
 ~~~~~~~~
 
-WeasyPrint 0.9 supports:
-
 (For older versions, see the changelog_.)
 
 .. _changelog: https://github.com/Kozea/WeasyPrint/blob/master/CHANGES
+
+WeasyPrint 0.10 supports:
 
 * HTML documents with:
 
@@ -98,10 +98,9 @@ Namely:
 Missing CSS 2.1 features
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-To the best of our knowledge, everything in CSS 2.1 (selectors aside, see
-above) that applies to the “print” media but is not listed in this section
-is supported by WeasyPrint. Please `report a bug`_ if you find this list
-incomplete.
+To the best of our knowledge, everything in CSS 2.1 that applies to the
+“print” media but is not listed in this section is supported by WeasyPrint.
+Please `report a bug`_ if you find this list incomplete.
 
 .. _report a bug: /community/#issue-bug-tracker
 
@@ -111,32 +110,21 @@ Some CSS 2.1 features are not supported yet but are on the *to do* list:
 * Table `border collapsing`_ and the `empty-cells`_ property.
 * Minimum and maximum width_ and height_ on table-related and page-related
   boxes
-* Avoiding `page breaks`_ before or after an element
-  (avoiding **inside** is supported)
-* `Vertical align`_ ``top`` and ``bottom`` (they are interpreted as
-  ``text-top`` and ``text-bottom``, respectively)
 * Outlines_
 
-Others are not planned for now:
+We have few or no use cases for others, but feel free to ask about them:
 
 * Conforming `font matching algorithm`_. Currently ``font-family``
   is directly passed to Pango.
-* `Bi-directional text`_. (May happen to kind of work in uninterrupted text
-  thanks to Pango)
-* `System colors`_ are deprecated in CSS 3
+* Right-to-left or `bi-directional text`_.
+  (May happen to kind of work in uninterrupted text thanks to Pango)
+* `System colors`_. They are deprecated in CSS 3
 
 .. _Floats: http://www.w3.org/TR/CSS21/visuren.html#floats
-.. _Absolute: http://www.w3.org/TR/CSS21/visuren.html#absolute-positioning
-.. _fixed: http://www.w3.org/TR/CSS21/visuren.html#fixed-positioning
-.. _z-index: http://www.w3.org/TR/CSS21/visuren.html#layers
-.. _relative: http://www.w3.org/TR/CSS21/visuren.html#relative-positioning
-.. _Automatic table layout: http://www.w3.org/TR/CSS21/tables.html#auto-table-layout
 .. _border collapsing: http://www.w3.org/TR/CSS21/tables.html#collapsing-borders
 .. _empty-cells: http://www.w3.org/TR/CSS21/tables.html#empty-cells
 .. _width: http://www.w3.org/TR/CSS21/visudet.html#min-max-widths
 .. _height: http://www.w3.org/TR/CSS21/visudet.html#min-max-heights
-.. _Vertical align: http://www.w3.org/TR/CSS21/visudet.html#propdef-vertical-align
-.. _page breaks: http://www.w3.org/TR/CSS21/page.html#page-breaks
 .. _font matching algorithm: http://www.w3.org/TR/CSS21/fonts.html#algorithm
 .. _Bi-directional text: http://www.w3.org/TR/CSS21/visuren.html#direction
 .. _System colors: http://www.w3.org/TR/CSS21/ui.html#system-colors

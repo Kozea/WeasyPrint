@@ -54,7 +54,7 @@ any other Python library:
     import weasyprint
     weasyprint.HTML('http://weasyprint.org/').write_pdf('/tmp/weasyprint-website.pdf')
 
-The public API for WeasyPrint 0.9 is made of two classes: ``HTML`` and ``CSS``.
+The public API is made of two classes: ``HTML`` and ``CSS``.
 
 
 API stability
@@ -105,7 +105,10 @@ You can also pass optional named arguments:
   If not passed explicitly, try to use the input filename, URL, or
   ``name`` attribute of file objects.
 
-``HTML`` objects have two public methods:
+**Note:** In some cases like ``HTML(string=foo)`` you need to pass ``base_url``
+explicitly, or relative URLs will be invalid.
+
+``HTML`` objects have three public methods:
 
 ``HTML.write_pdf(target=None, stylesheets=None)``
     Render the document with stylesheets from three *origins*:
@@ -127,13 +130,26 @@ You can also pass optional named arguments:
     If ``target`` is not provided, the method returns the PDF content
     as a byte string.
 
-``HTML.write_png(target=None, stylesheets=None)``
-    Like ``write_pdf``, but writes PNG instead of PDF.
+``HTML.write_png(target=None, stylesheets=None, resolution=96)``
+    Like ``write_pdf()``, but writes a single PNG image instead of PDF.
+
+    ``resolution`` is counted in pixels in the PNG output per CSS inch.
+    Note however that CSS pixels are always 1/96 CSS inch.
+    With the default resolution of 96, CSS pixels match PNG pixels.
 
     Pages are painted in order from top to bottom, and horizontally centered.
     The resulting image is a wide as the widest page, and as high as the
     sum of all pages. There is no decoration around pages other than
     specified in CSS.
+
+``HTML.get_png_pages(stylesheets=None, resolution=96)``
+    Render each page to a separate PNG image.
+
+    ``stylesheets`` and ``resolution`` are the same as in ``write_png()``.
+
+    Returns a generator of ``(width, height, png_bytes)`` tuples, one for
+    each page, in order. ``width`` and ``height`` are the size of the page
+    in PNG pixels, ``png_bytes`` is a byte string.
 
 
 .. _user agent stylesheet: https://github.com/Kozea/WeasyPrint/blob/master/weasyprint/css/html5_ua.css
@@ -149,6 +165,9 @@ the ``tree`` parameter is not available.
 
 ``CSS`` objects have no public attribute or method. They are only meant to
 be used in the ``write_pdf`` or ``write_png`` method. (See above.)
+
+The above warning on ``base_url`` and string input applies too: relative
+URLs will be invalid if there is no base URL.
 
 
 Errors
