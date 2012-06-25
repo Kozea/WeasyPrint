@@ -86,7 +86,7 @@ def block_box_layout(document, box, max_position_y, skip_stack,
         block_container_layout(
             document, box, max_position_y, skip_stack, device_size,
             page_is_empty, absolute_boxes, fixed_boxes, adjoining_margins)
-    if new_box.is_table_wrapper:
+    if new_box and new_box.is_table_wrapper:
         # Don't collide with floats
         # http://www.w3.org/TR/CSS21/visuren.html#floats
         position_x, position_y, _ = avoid_collisions(
