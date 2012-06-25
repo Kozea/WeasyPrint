@@ -353,9 +353,11 @@ def block_container_layout(document, box, max_position_y, skip_stack,
             else:
                 page_break = 'auto'
 
+            if not box.is_table_wrapper:
+                resolve_percentages(child, box)
+
             if (child.is_in_normal_flow() and last_in_flow_child is None and
                     collapsing_with_children):
-                resolve_percentages(child, box)
                 # TODO: add the adjoining descendants' margin top to
                 # [child.margin_top]
                 old_collapsed_margin = collapse_margin(adjoining_margins)
