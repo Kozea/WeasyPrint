@@ -227,6 +227,7 @@ def block_container_layout(document, box, max_position_y, skip_stack,
         adjoining_margins = []
 
     adjoining_margins.append(box.margin_top)
+    this_box_adjoining_margins = adjoining_margins
 
     collapsing_with_children = not (box.border_top_width or box.padding_top
         or establishes_formatting_context(box) or box.is_for_root_element)
@@ -353,16 +354,21 @@ def block_container_layout(document, box, max_position_y, skip_stack,
             else:
                 page_break = 'auto'
 
-            # TODO: what happens here if box is a table wrapper?
-            if not box.is_table_wrapper:
-                resolve_percentages(child, box)
+            new_containing_block = box
+            if not new_containing_block.is_table_wrapper:
+                resolve_percentages(child, new_containing_block)
+
             if (child.is_in_normal_flow() and last_in_flow_child is None and
-                    collapsing_with_children) and not box.is_table_wrapper:
+                    collapsing_with_children):
                 # TODO: add the adjoining descendants' margin top to
                 # [child.margin_top]
                 old_collapsed_margin = collapse_margin(adjoining_margins)
+                if child.margin_top == 'auto':
+                    child_margin_top = 0
+                else:
+                    child_margin_top = child.margin_top
                 new_collapsed_margin = collapse_margin(
-                    adjoining_margins + [child.margin_top])
+                    adjoining_margins + [child_margin_top])
                 collapsed_margin_difference = (
                     new_collapsed_margin - old_collapsed_margin)
                 for previous_new_child in new_children:
@@ -385,7 +391,6 @@ def block_container_layout(document, box, max_position_y, skip_stack,
                     # Count box.margin_top as we emptied adjoining_margins
                     position_y = box.content_box_y()
 
-            new_containing_block = box
             (new_child, resume_at, next_page, next_adjoining_margins,
                 collapsing_through) = block_level_layout(
                     document, child, max_position_y, skip_stack,
@@ -476,8 +481,9 @@ def block_container_layout(document, box, max_position_y, skip_stack,
             break
     else:
         last_in_flow_child = None
-    if collapsing_with_children and last_in_flow_child is None:
-        box.position_y += collapse_margin(adjoining_margins) - box.margin_top
+    if collapsing_with_children:
+        box.position_y += (
+            collapse_margin(this_box_adjoining_margins) - box.margin_top)
 
     collapsing_through = False
     if last_in_flow_child is None:
