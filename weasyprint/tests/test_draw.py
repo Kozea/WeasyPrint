@@ -17,6 +17,7 @@ import os.path
 import tempfile
 import shutil
 import itertools
+import socket
 from io import BytesIO
 
 import pytest
@@ -1937,6 +1938,13 @@ def test_acid2():
             'acid2', size, size)
 
     with capture_logs():
-        result = get_pixels('acid2/index.html')
+        # http://www.damowmow.com/404/ sometimes times out on IPv6…
+        previous_timeout = socket.getdefaulttimeout()
+        socket.setdefaulttimeout(1)
+        try:
+            result = get_pixels('acid2/index.html')
+        finally:
+            socket.setdefaulttimeout(previous_timeout)
+
     reference = get_pixels('acid2/reference.html')
     assert_pixels_equal('acid2', size, size, result, reference, tolerance)
