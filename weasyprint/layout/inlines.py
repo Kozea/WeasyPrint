@@ -42,21 +42,11 @@ def iter_line_boxes(document, box, position_y, skip_stack, containing_block,
 
     """
     while 1:
-        line, resume_at, waiting_floats = get_next_linebox(
+        line, resume_at = get_next_linebox(
             document, box, position_y, skip_stack, containing_block,
             device_size, absolute_boxes, fixed_boxes)
-        float_children = []
         if line:
             position_y = line.position_y + line.height
-        for waiting_float in waiting_floats:
-            waiting_float.position_y = position_y
-            waiting_float = float_layout(
-                document, waiting_float, containing_block, absolute_boxes,
-                fixed_boxes)
-            float_children.append(waiting_float)
-        if float_children:
-            line = line.copy_with_children(
-                line.children + tuple(float_children))
         if line is None:
             return
         yield line, resume_at
@@ -79,7 +69,7 @@ def get_next_linebox(document, linebox, position_y, skip_stack,
 
     skip_stack = skip_first_whitespace(linebox, skip_stack)
     if skip_stack == 'continue':
-        return None, None, []
+        return None, None
 
     linebox.width = inline_preferred_minimum_width(
         document, linebox, skip_stack=skip_stack, first_line=True)
@@ -101,12 +91,12 @@ def get_next_linebox(document, linebox, position_y, skip_stack,
         line_placeholders = []
         line_absolutes = []
         line_fixed = []
+        waiting_floats = []
 
-        line, resume_at, preserved_line_break, waiting_floats = \
-            split_inline_box(
-                document, linebox, position_x, max_x, skip_stack,
-                containing_block, device_size, line_absolutes,
-                line_fixed, line_placeholders)
+        line, resume_at, preserved_line_break = split_inline_box(
+            document, linebox, position_x, max_x, skip_stack,
+            containing_block, device_size, line_absolutes,
+            line_fixed, line_placeholders, waiting_floats)
 
         remove_last_whitespace(document, line)
 
@@ -161,7 +151,19 @@ def get_next_linebox(document, linebox, position_y, skip_stack,
                 line.position_x - placeholder.position_x,
                 position_y + line.height - placeholder.position_y)
 
-    return line, resume_at, waiting_floats
+    float_children = []
+    waiting_floats_y = line.position_y + line.height
+    for waiting_float in waiting_floats:
+        waiting_float.position_y = waiting_floats_y
+        waiting_float = float_layout(
+            document, waiting_float, containing_block, absolute_boxes,
+            fixed_boxes)
+        float_children.append(waiting_float)
+    if float_children:
+        line = line.copy_with_children(
+            line.children + tuple(float_children))
+
+    return line, resume_at
 
 
 def skip_first_whitespace(box, skip_stack):
@@ -473,7 +475,7 @@ def inline_block_width(box, document, containing_block):
 
 def split_inline_level(document, box, position_x, max_x, skip_stack,
                        containing_block, device_size, absolute_boxes,
-                       fixed_boxes, line_placeholders):
+                       fixed_boxes, line_placeholders, waiting_floats):
     """Fit as much content as possible from an inline-level box in a width.
 
     Return ``(new_box, resume_at)``. ``resume_at`` is ``None`` if all of the
@@ -507,9 +509,10 @@ def split_inline_level(document, box, position_x, max_x, skip_stack,
             box.margin_left = 0
         if box.margin_right == 'auto':
             box.margin_right = 0
-        new_box, resume_at, preserved_line_break, _ = split_inline_box(
+        new_box, resume_at, preserved_line_break = split_inline_box(
             document, box, position_x, max_x, skip_stack, containing_block,
-            device_size, absolute_boxes, fixed_boxes, line_placeholders)
+            device_size, absolute_boxes, fixed_boxes, line_placeholders,
+            waiting_floats)
     elif isinstance(box, boxes.AtomicInlineLevelBox):
         new_box = atomic_box(
             document, box, position_x, skip_stack, containing_block,
@@ -523,7 +526,7 @@ def split_inline_level(document, box, position_x, max_x, skip_stack,
 
 def split_inline_box(document, box, position_x, max_x, skip_stack,
                      containing_block, device_size, absolute_boxes,
-                     fixed_boxes, line_placeholders):
+                     fixed_boxes, line_placeholders, waiting_floats):
     """Same behavior as split_inline_level."""
     is_start = skip_stack is None
     initial_position_x = position_x
@@ -547,7 +550,6 @@ def split_inline_box(document, box, position_x, max_x, skip_stack,
     else:
         skip, skip_stack = skip_stack
 
-    waiting_floats = []
     for index, child in box.enumerate_skip(skip):
         child.position_y = box.position_y
         if child.is_absolutely_positioned():
@@ -590,7 +592,8 @@ def split_inline_box(document, box, position_x, max_x, skip_stack,
 
         new_child, resume_at, preserved = split_inline_level(
             document, child, position_x, max_x, skip_stack, containing_block,
-            device_size, absolute_boxes, fixed_boxes, line_placeholders)
+            device_size, absolute_boxes, fixed_boxes, line_placeholders,
+            waiting_floats)
         skip_stack = None
         if preserved:
             preserved_line_break = True
@@ -648,7 +651,7 @@ def split_inline_box(document, box, position_x, max_x, skip_stack,
     if new_box.style.position == 'relative':
         for absolute_box in absolute_boxes:
             absolute_layout(document, absolute_box, new_box, fixed_boxes)
-    return new_box, resume_at, preserved_line_break, waiting_floats
+    return new_box, resume_at, preserved_line_break
 
 
 def split_text_box(document, box, available_width, skip):
