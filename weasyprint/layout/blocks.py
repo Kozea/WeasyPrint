@@ -355,41 +355,38 @@ def block_container_layout(document, box, max_position_y, skip_stack,
                 page_break = 'auto'
 
             new_containing_block = box
-            if not new_containing_block.is_table_wrapper:
-                resolve_percentages(child, new_containing_block)
 
-            if (child.is_in_normal_flow() and last_in_flow_child is None and
-                    collapsing_with_children):
-                # TODO: add the adjoining descendants' margin top to
-                # [child.margin_top]
-                old_collapsed_margin = collapse_margin(adjoining_margins)
-                if child.margin_top == 'auto':
-                    child_margin_top = 0
-                else:
-                    child_margin_top = child.margin_top
-                new_collapsed_margin = collapse_margin(
-                    adjoining_margins + [child_margin_top])
-                collapsed_margin_difference = (
-                    new_collapsed_margin - old_collapsed_margin)
-                for previous_new_child in new_children:
-                    previous_new_child.translate(
-                        dy=collapsed_margin_difference)
-                clearance = get_clearance(
-                    document, child, new_collapsed_margin)
-                if clearance is None:
-                    box.position_y += new_collapsed_margin - box.margin_top
-                    # Don’t count box.margin_top as it is in adjoining_margins
-                    position_y = box.position_y
-                else:
+            if not new_containing_block.is_table_wrapper:
+                # TODO: there's no collapsing margins inside tables, right?
+                resolve_percentages(child, new_containing_block)
+                if (child.is_in_normal_flow() and last_in_flow_child is None
+                        and collapsing_with_children):
+                    # TODO: add the adjoining descendants' margin top to
+                    # [child.margin_top]
+                    old_collapsed_margin = collapse_margin(adjoining_margins)
+                    if child.margin_top == 'auto':
+                        child_margin_top = 0
+                    else:
+                        child_margin_top = child.margin_top
+                    new_collapsed_margin = collapse_margin(
+                        adjoining_margins + [child_margin_top])
+                    collapsed_margin_difference = (
+                        new_collapsed_margin - old_collapsed_margin)
                     for previous_new_child in new_children:
                         previous_new_child.translate(
-                            dy=-collapsed_margin_difference)
+                            dy=collapsed_margin_difference)
+                    clearance = get_clearance(
+                        document, child, new_collapsed_margin)
+                    if clearance is not None:
+                        for previous_new_child in new_children:
+                            previous_new_child.translate(
+                                dy=-collapsed_margin_difference)
 
-                    collapsed_margin = collapse_margin(adjoining_margins)
-                    box.position_y += collapsed_margin - box.margin_top
-                    adjoining_margins = []
-                    # Count box.margin_top as we emptied adjoining_margins
-                    position_y = box.content_box_y()
+                        collapsed_margin = collapse_margin(adjoining_margins)
+                        box.position_y += collapsed_margin - box.margin_top
+                        # Count box.margin_top as we emptied adjoining_margins
+                        adjoining_margins = []
+                        position_y = box.content_box_y()
 
             (new_child, resume_at, next_page, next_adjoining_margins,
                 collapsing_through) = block_level_layout(
@@ -475,16 +472,16 @@ def block_container_layout(document, box, max_position_y, skip_stack,
             and not page_is_empty:
         return None, None, 'any', [], False
 
+    if collapsing_with_children:
+        box.position_y += (
+            collapse_margin(this_box_adjoining_margins) - box.margin_top)
+
     for previous_child in reversed(new_children):
         if previous_child.is_in_normal_flow():
             last_in_flow_child = previous_child
             break
     else:
         last_in_flow_child = None
-    if collapsing_with_children:
-        box.position_y += (
-            collapse_margin(this_box_adjoining_margins) - box.margin_top)
-
     collapsing_through = False
     if last_in_flow_child is None:
         collapsed_margin = collapse_margin(adjoining_margins)
