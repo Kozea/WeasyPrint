@@ -125,7 +125,9 @@ def sanity_checks(box):
             break
 
     assert any(
-        all(isinstance(child, acceptable_types) for child in box.children)
+        all(isinstance(child, acceptable_types)
+                or not child.is_in_normal_flow()
+            for child in box.children)
         for acceptable_types in acceptable_types_lists
     ), (box, box.children)
 
@@ -342,7 +344,9 @@ def test_whitespace():
     # http://www.w3.org/TR/CSS21/text.html#white-space-model
     assert_tree(parse_all('''
         <p>Lorem \t\r\n  ipsum\t<strong>  dolor
-            <img src=pattern.png> sit</strong>.</p>
+            <img src=pattern.png> sit
+            <span style="position: absolute"></span> <em> amet </em>
+            consectetur</strong>.</p>
         <pre>\t  foo\n</pre>
         <pre style="white-space: pre-wrap">\t  foo\n</pre>
         <pre style="white-space: pre-line">\t  foo\n</pre>
@@ -353,7 +357,11 @@ def test_whitespace():
                 ('strong', 'Inline', [
                     ('strong', 'Text', 'dolor '),
                     ('img', 'InlineReplaced', '<replaced>'),
-                    ('strong', 'Text', ' sit')]),
+                    ('strong', 'Text', ' sit '),
+                    ('span', 'Block', []),
+                    ('em', 'Inline', [
+                        ('em', 'Text', 'amet ')]),
+                    ('strong', 'Text', 'consectetur')]),
                 ('p', 'Text', '.')])]),
         ('pre', 'Block', [
             ('pre', 'Line', [
@@ -366,7 +374,7 @@ def test_whitespace():
         ('pre', 'Block', [
             ('pre', 'Line', [
                 # pre-line
-                ('pre', 'Text', 'foo\n')])])])
+                ('pre', 'Text', ' foo\n')])])])
 
 
 @assert_no_logs

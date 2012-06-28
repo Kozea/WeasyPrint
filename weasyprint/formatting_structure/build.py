@@ -551,6 +551,7 @@ def process_whitespace(box, following_collapsible_space=False):
     """First part of "The 'white-space' processing model".
 
     See http://www.w3.org/TR/CSS21/text.html#white-space-model
+    http://dev.w3.org/csswg/css3-text/#white-space-rules
 
     """
     if isinstance(box, boxes.TextBox):
@@ -584,27 +585,25 @@ def process_whitespace(box, following_collapsible_space=False):
         if handling in ('normal', 'nowrap', 'pre-line'):
             text = text.replace('\t', ' ')
             text = re.sub(' +', ' ', text)
+            previous_text = text
             if following_collapsible_space and text.startswith(' '):
                 text = text[1:]
-            following_collapsible_space = text.endswith(' ')
+            following_collapsible_space = previous_text.endswith(' ')
         else:
             following_collapsible_space = False
 
         box.text = text
         return following_collapsible_space
 
-    # Don't collapse across starting tag
-    if isinstance(box, boxes.AtomicInlineLevelBox):
-        following_collapsible_space = False
-
     if isinstance(box, boxes.ParentBox):
         for child in box.children:
-            following_collapsible_space = process_whitespace(
-                child, following_collapsible_space)
-
-    # Don't collapse across ending tag
-    if isinstance(box, boxes.AtomicInlineLevelBox):
-        following_collapsible_space = False
+            if isinstance(child, (boxes.TextBox, boxes.InlineBox)):
+                following_collapsible_space = process_whitespace(
+                    child, following_collapsible_space)
+            else:
+                process_whitespace(child)
+                if child.is_in_normal_flow():
+                    following_collapsible_space = False
 
     return following_collapsible_space
 
