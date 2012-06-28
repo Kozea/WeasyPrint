@@ -160,25 +160,18 @@ def inline_preferred_minimum_width(document, box, outer=True, skip_stack=None,
         if child.is_absolutely_positioned():
             continue  # Skip
 
-        if isinstance(child, boxes.InlineReplacedBox):
-            # Images are on their own line
-            current_line = replaced_preferred_width(child)
-        elif isinstance(child, boxes.InlineBlockBox) or child.is_floated():
-            if child.is_table_wrapper:
-                current_line = table_preferred_minimum_width(document, child)
-            else:
-                current_line = block_preferred_minimum_width(document, child)
-        elif isinstance(child, boxes.InlineBox):
+        if isinstance(child, boxes.InlineBox):
             # TODO: handle forced line breaks
             current_line = inline_preferred_minimum_width(
                 document, child, skip_stack=skip_stack, first_line=first_line)
-        else:
-            assert isinstance(child, boxes.TextBox)
+        elif isinstance(child, boxes.TextBox):
             widths = text.line_widths(document, child, width=0, skip=skip)
             if first_line:
                 return next(widths)
             else:
                 current_line = max(widths)
+        else:
+            current_line = preferred_minimum_width(document, child)
         widest_line = max(widest_line, current_line)
     return adjust(box, outer, widest_line)
 
@@ -191,19 +184,10 @@ def inline_preferred_width(document, box, outer=True):
         if child.is_absolutely_positioned():
             continue  # Skip
 
-        if isinstance(child, boxes.InlineReplacedBox):
-            # No line break around images
-            current_line += replaced_preferred_width(child)
-        elif isinstance(child, boxes.InlineBlockBox) or child.is_floated():
-            if child.is_table_wrapper:
-                current_line += table_preferred_width(document, child)
-            else:
-                current_line += block_preferred_width(document, child)
-        elif isinstance(child, boxes.InlineBox):
+        if isinstance(child, boxes.InlineBox):
             # TODO: handle forced line breaks
             current_line += inline_preferred_width(document, child)
-        else:
-            assert isinstance(child, boxes.TextBox)
+        elif isinstance(child, boxes.TextBox):
             lines = list(text.line_widths(document, child, width=None))
             assert lines
             # The first text line goes on the current line
@@ -214,6 +198,8 @@ def inline_preferred_width(document, box, outer=True):
                 if len(lines) > 2:
                     widest_line = max(widest_line, max(lines[1:-1]))
                 current_line = lines[-1]
+        else:
+            current_line += preferred_width(document, child)
     widest_line = max(widest_line, current_line)
 
     return adjust(box, outer, widest_line)
