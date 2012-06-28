@@ -563,8 +563,9 @@ def split_inline_box(document, box, position_x, max_x, skip_stack,
             continue
         elif child.is_floated():
             child.position_x = position_x
-            float_width = shrink_to_fit(document, child, containing_block)
-            if float_width > max_x - position_x:
+            float_width = shrink_to_fit(
+                document, child, containing_block.width)
+            if float_width > max_x - position_x or waiting_floats:
                 # TODO: the absolute and fixed boxes in the floats must be
                 # added here, and not in iter_line_boxes
                 waiting_floats.append(child)
