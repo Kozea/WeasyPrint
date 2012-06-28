@@ -25,7 +25,6 @@ import pystacia
 from ..compat import xrange, ints_from_bytes
 from ..urls import ensure_url
 from .. import HTML, CSS
-from ..backends import PNGBackend
 from .testing_utils import (
     resource_filename, TestPNGDocument, FONTS, assert_no_logs, capture_logs)
 
