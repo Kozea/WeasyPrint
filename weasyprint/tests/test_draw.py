@@ -17,7 +17,7 @@ import os.path
 import tempfile
 import shutil
 import itertools
-import socket
+import operator
 from io import BytesIO
 
 import pytest
@@ -124,9 +124,11 @@ def document_to_pixels(document, name, expected_width, expected_height,
     """
     Render an HTML document to PNG, checks its size and return pixel data.
     """
-    png_bytes = document.write_png()
     assert len(document.pages) == nb_pages
+    return png_to_pixels(document.write_png(), expected_width, expected_height)
 
+
+def png_to_pixels(png_bytes, expected_width, expected_height):
     with contextlib.closing(pystacia.read_blob(png_bytes)) as image:
         assert image.size == (expected_width, expected_height)
         raw = image.get_raw('rgba')['raw']
@@ -1922,29 +1924,19 @@ def test_2d_transform():
 @assert_no_logs
 def test_acid2():
     """A local version of http://acid2.acidtests.org/"""
-    size = 640
-    tolerance = 3
-
-    stylesheet = CSS(string='''
-        @page { -weasy-size: %ipx; margin: 0 }
-
-        /* Remove the introduction from the test, it is not in the reference */
-        .intro { display: none }
-    ''' % size)
-    def get_pixels(filename):
-        return document_to_pixels(
-            HTML(resource_filename(filename))._get_document(
-                [stylesheet], True),
-            'acid2', size, size)
+    def get_png_pages(filename):
+        return HTML(resource_filename(filename)).get_png_pages()
 
     with capture_logs():
-        # http://www.damowmow.com/404/ sometimes times out on IPv6…
-        previous_timeout = socket.getdefaulttimeout()
-        socket.setdefaulttimeout(1)
-        try:
-            result = get_pixels('acid2/index.html')
-        finally:
-            socket.setdefaulttimeout(previous_timeout)
+        # This is a copy of http://www.webstandards.org/files/acid2/test.html
+        intro_page, test_page = get_png_pages('acid2-test.html')
+        # Ignore the intro page: it is not in the reference
+        width, height, test_png = test_page
 
-    reference = get_pixels('acid2/reference.html')
-    assert_pixels_equal('acid2', size, size, result, reference, tolerance)
+    # This is a copy of http://www.webstandards.org/files/acid2/reference.html
+    (ref_width, ref_height, ref_png), = get_png_pages('acid2-reference.html')
+
+    assert (width, height) == (ref_width, ref_height)
+    assert_pixels_equal(
+        'acid2', width, height, png_to_pixels(test_png, width, height),
+        png_to_pixels(ref_png, width, height), tolerance=2)
