@@ -157,13 +157,13 @@ def inline_preferred_minimum_width(document, box, outer=True, skip_stack=None,
     else:
         skip, skip_stack = skip_stack
     for index, child in box.enumerate_skip(skip):
-        if not child.is_in_normal_flow():
+        if child.is_absolutely_positioned():
             continue  # Skip
 
         if isinstance(child, boxes.InlineReplacedBox):
             # Images are on their own line
             current_line = replaced_preferred_width(child)
-        elif isinstance(child, boxes.InlineBlockBox):
+        elif isinstance(child, boxes.InlineBlockBox) or child.is_floated():
             if child.is_table_wrapper:
                 current_line = table_preferred_minimum_width(document, child)
             else:
@@ -188,13 +188,13 @@ def inline_preferred_width(document, box, outer=True):
     widest_line = 0
     current_line = 0
     for child in box.children:
-        if not child.is_in_normal_flow():
+        if child.is_absolutely_positioned():
             continue  # Skip
 
         if isinstance(child, boxes.InlineReplacedBox):
             # No line break around images
             current_line += replaced_preferred_width(child)
-        elif isinstance(child, boxes.InlineBlockBox):
+        elif isinstance(child, boxes.InlineBlockBox) or child.is_floated():
             if child.is_table_wrapper:
                 current_line += table_preferred_width(document, child)
             else:
