@@ -291,6 +291,7 @@ class BlockLevelBox(Box):
     ``table`` generates a block-level box.
 
     """
+    clearance = None
 
 
 class BlockContainerBox(ParentBox):

@@ -38,6 +38,9 @@ class Document(object):
         self._computed_styles = None
         self._formatting_structure = None
         self._pages = None
+        self._excluded_shapes_lists = []
+
+        self.create_block_formatting_context()
 
         # TODO: remove this when Margin boxes variable dimension is correct.
         self._auto_margin_boxes_warning_shown = False
@@ -99,6 +102,22 @@ class Document(object):
             context.scale(px_resolution, px_resolution)
             draw.draw_page(self, page, context)
             yield width, height, surface
+
+    def create_block_formatting_context(self):
+        self.excluded_shapes = []
+        self._excluded_shapes_lists.append(self.excluded_shapes)
+
+    def finish_block_formatting_context(self, root_box):
+        excluded_shapes = self._excluded_shapes_lists.pop()
+        self.excluded_shapes = self._excluded_shapes_lists[-1]
+
+        # See http://www.w3.org/TR/CSS2/visudet.html#root-height
+        if root_box.style.height == 'auto':
+            box_bottom = root_box.content_box_y() + root_box.height
+            for shape in excluded_shapes:
+                shape_bottom = shape.position_y + shape.margin_height()
+                if shape_bottom > box_bottom:
+                    root_box.height += shape_bottom - box_bottom
 
     def get_png_pages(self, resolution=None):
         """Yield (width, height, png_bytes) tuples, one for each page."""

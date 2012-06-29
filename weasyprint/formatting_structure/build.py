@@ -663,7 +663,8 @@ def inline_in_block(box):
         assert not isinstance(child_box, boxes.LineBox)
         if new_line_children and child_box.is_absolutely_positioned():
             new_line_children.append(child_box)
-        elif isinstance(child_box, boxes.InlineLevelBox):
+        elif isinstance(child_box, boxes.InlineLevelBox) or (
+                new_line_children and child_box.is_floated()):
             # Do not append white space at the start of a line:
             # It would be removed during layout.
             if new_line_children or not (
@@ -769,7 +770,8 @@ def block_in_inline(box):
                 'siblings at this stage, got %r.' % box.children)
             stack = None
             while 1:
-                new_line, block, stack = _inner_block_in_inline(child, stack)
+                new_line, block, stack = _inner_block_in_inline(
+                    child, skip_stack=stack)
                 if block is None:
                     break
                 anon = boxes.BlockBox.anonymous_from(box, [new_line])
@@ -833,12 +835,7 @@ def _inner_block_in_inline(box, skip_stack=None):
                 new_child, block_level_box, resume_at = recursion
             else:
                 assert skip_stack is None  # Should not skip here
-                if isinstance(child, boxes.ParentBox):
-                    # inline-block or inline-table.
-                    new_child = block_in_inline(child)
-                else:
-                    # text or replaced box
-                    new_child = child
+                new_child = block_in_inline(child)
                 # block_level_box is still None.
             if new_child is not child:
                 changed = True

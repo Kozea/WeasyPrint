@@ -17,12 +17,15 @@ import os.path
 import tempfile
 import shutil
 import itertools
+import operator
 from io import BytesIO
 
+import pytest
 import pystacia
 
-from ..compat import xrange
+from ..compat import xrange, ints_from_bytes
 from ..urls import ensure_url
+from .. import HTML, CSS
 from .testing_utils import (
     resource_filename, TestPNGDocument, FONTS, assert_no_logs, capture_logs)
 
@@ -34,17 +37,6 @@ _ = b'\xff\xff\xff\xff'  # white
 r = b'\xff\x00\x00\xff'  # red
 B = b'\x00\x00\xff\xff'  # blue
 BYTES_PER_PIXELS = 4
-PIXEL_FORMAT = 'rgba(%i, %i, %i, %i)'
-
-
-def format_pixel(pixels, width, x, y):  # pragma: no cover
-    """Return the pixel color as ``#RRGGBB``."""
-    start = (y * width + x) * BYTES_PER_PIXELS
-    end = start + BYTES_PER_PIXELS
-    pixel_bytes = pixels[start:end]
-    # Py2/3 compat:
-    pixel_ints = tuple(ord(byte) for byte in pixel_bytes.decode('latin1'))
-    return PIXEL_FORMAT % pixel_ints
 
 
 def assert_pixels(name, expected_width, expected_height, expected_lines,
@@ -132,9 +124,11 @@ def document_to_pixels(document, name, expected_width, expected_height,
     """
     Render an HTML document to PNG, checks its size and return pixel data.
     """
-    png_bytes = document.write_png()
     assert len(document.pages) == nb_pages
+    return png_to_pixels(document.write_png(), expected_width, expected_height)
 
+
+def png_to_pixels(png_bytes, expected_width, expected_height):
     with contextlib.closing(pystacia.read_blob(png_bytes)) as image:
         assert image.size == (expected_width, expected_height)
         raw = image.get_raw('rgba')['raw']
@@ -142,21 +136,30 @@ def document_to_pixels(document, name, expected_width, expected_height,
         return raw
 
 
-def assert_pixels_equal(name, width, height, lines, expected_lines):
+def assert_pixels_equal(name, width, height, raw, expected_raw, tolerance=0):
     """
     Take 2 matrices of height by width pixels and assert that they
     are the same.
     """
-    if lines != expected_lines:  # pragma: no cover
-        write_png(name + '.expected', expected_lines, width, height)
-        write_png(name, lines, width, height)
-        for y in xrange(height):
-            for x in xrange(width):
-                pixel = format_pixel(lines, width, x, y)
-                expected_pixel = format_pixel(expected_lines, width, x, y)
-                assert pixel == expected_pixel , (
-                    'Pixel (%i, %i) in %s: expected %s, got %s' % (
-                    x, y, name, expected_pixel, pixel))
+    if raw != expected_raw:  # pragma: no cover
+        for i, (value, expected) in enumerate(zip(
+            ints_from_bytes(raw),
+            ints_from_bytes(expected_raw)
+        )):
+            if abs(value - expected) > tolerance:
+                write_png(name, raw, width, height)
+                write_png(name + '.expected', expected_raw,
+                          width, height)
+                pixel_n = i // BYTES_PER_PIXELS
+                x = pixel_n // width
+                y = pixel_n % width
+                i % BYTES_PER_PIXELS
+                pixel = tuple(ints_from_bytes(raw[i:i + BYTES_PER_PIXELS]))
+                expected_pixel = tuple(ints_from_bytes(
+                    expected_raw[i:i + BYTES_PER_PIXELS]))
+                assert 0, (
+                    'Pixel (%i, %i) in %s: expected rgba%s, got rgab%s'
+                    % (x, y, name, expected_pixel, pixel))
 
 
 @assert_no_logs
@@ -1916,3 +1919,24 @@ def test_2d_transform():
         </style>
         <div><img src="pattern.png"></div>
     ''')
+
+
+@assert_no_logs
+def test_acid2():
+    """A local version of http://acid2.acidtests.org/"""
+    def get_png_pages(filename):
+        return HTML(resource_filename(filename)).get_png_pages()
+
+    with capture_logs():
+        # This is a copy of http://www.webstandards.org/files/acid2/test.html
+        intro_page, test_page = get_png_pages('acid2-test.html')
+        # Ignore the intro page: it is not in the reference
+        width, height, test_png = test_page
+
+    # This is a copy of http://www.webstandards.org/files/acid2/reference.html
+    (ref_width, ref_height, ref_png), = get_png_pages('acid2-reference.html')
+
+    assert (width, height) == (ref_width, ref_height)
+    assert_pixels_equal(
+        'acid2', width, height, png_to_pixels(test_png, width, height),
+        png_to_pixels(ref_png, width, height), tolerance=2)

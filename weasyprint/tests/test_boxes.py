@@ -12,11 +12,8 @@
 
 from __future__ import division, unicode_literals
 
-import contextlib
-
 from .testing_utils import (
     resource_filename, TestPNGDocument, assert_no_logs, capture_logs)
-from ..css import validation
 from ..formatting_structure import boxes, build, counters
 
 
@@ -79,45 +76,13 @@ def to_lists(box_tree):
     return serialize(unwrap_html_body(box_tree))
 
 
-def validate_float(
-        real_non_shorthand, base_url, name, values, required=False):
-    """Fake validator for ``float``."""
-    value = values[0].value
-    if name == 'float' and value == 'left':
-        return [(name, value)]
-    return real_non_shorthand(base_url, name, values, required)
-
-
-@contextlib.contextmanager
-def monkeypatch_validation(replacement):
-    """Create a context manager patching the validation mechanism.
-
-    This is useful to change the behaviour of the validation for one property
-    not yet supported, without affecting the validation for the other
-    properties.
-
-    """
-    real_non_shorthand = validation.validate_non_shorthand
-
-    def patched_non_shorthand(*args, **kwargs):
-        """Wraps the validator into ``replacement``."""
-        return replacement(real_non_shorthand, *args, **kwargs)
-
-    validation.validate_non_shorthand = patched_non_shorthand
-    try:
-        yield
-    finally:
-        validation.validate_non_shorthand = real_non_shorthand
-
-
 def parse(html_content):
     """Parse some HTML, apply stylesheets and transform to boxes."""
-    with monkeypatch_validation(validate_float):
-        document = TestPNGDocument(html_content,
-            # Dummy filename, but in the right directory.
-            base_url=resource_filename('<test>'))
-        box, = build.dom_to_box(document, document.dom)
-        return box
+    document = TestPNGDocument(html_content,
+        # Dummy filename, but in the right directory.
+        base_url=resource_filename('<test>'))
+    box, = build.dom_to_box(document, document.dom)
+    return box
 
 
 def parse_all(html_content, base_url=resource_filename('<test>')):
@@ -251,26 +216,19 @@ def test_inline_in_block():
     box = build.block_in_inline(box)
     assert_tree(box, expected)
 
-    # Floats however  stay out of line boxes
+    # Floats are pull to the top of their containing blocks
     source = '<p>Hello <em style="float: left">World</em>!</p>'
-    expected = [
-        ('p', 'Block', [
-            ('p', 'AnonBlock', [
-                ('p', 'Line', [
-                    ('p', 'Text', 'Hello ')])]),
-            ('em', 'Block', [
-                ('em', 'Line', [
-                    ('em', 'Text', 'World')])]),
-            ('p', 'AnonBlock', [
-                ('p', 'Line', [
-                    ('p', 'Text', '!')])])])]
     box = parse(source)
     box = build.inline_in_block(box)
-    import pprint
-    pprint.pprint(to_lists(box))
-    assert_tree(box, expected)
     box = build.block_in_inline(box)
-    assert_tree(box, expected)
+    assert_tree(box, [
+        ('p', 'Block', [
+            ('p', 'Line', [
+                ('p', 'Text', 'Hello '),
+                ('em', 'Block', [
+                    ('em', 'Line', [
+                        ('em', 'Text', 'World')])]),
+                ('p', 'Text', '!')])])])
 
 
 @assert_no_logs

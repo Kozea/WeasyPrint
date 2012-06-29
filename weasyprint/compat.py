@@ -45,6 +45,11 @@ if sys.version_info[0] >= 3:
             data = data.decode('utf8')
         return email.message_from_string(data)
 
+
+    def ints_from_bytes(byte_string):
+        """Return a list of ints from a byte string"""
+        return list(byte_string)
+
 else:
     # Python 2
     from urlparse import urljoin, urlsplit, parse_qs
@@ -82,3 +87,8 @@ else:
         if isinstance(data, unicode):
             data = data.encode('utf8')
         return email.message_from_string(data)
+
+
+    def ints_from_bytes(byte_string):
+        """Return a list of ints from a byte string"""
+        return map(ord, byte_string)

@@ -13,6 +13,7 @@ from __future__ import division, unicode_literals
 from .percentages import resolve_percentages, resolve_position_percentages
 from .preferred import shrink_to_fit
 from .markers import list_marker_layout
+from .min_max import handle_min_max_width
 from .tables import table_wrapper_width
 from ..formatting_structure import boxes
 
@@ -50,67 +51,27 @@ class AbsolutePlaceholder(object):
         setattr(self._box, name, value)
 
 
-def absolute_layout(document, placeholder, containing_block, fixed_boxes):
-    """Set the width of absolute positioned ``box``."""
-    box = placeholder._box
-
-    cb = containing_block
-    # TODO: handle inline boxes (point 10.1.4.1)
-    # http://www.w3.org/TR/CSS2/visudet.html#containing-block-details
-    if isinstance(containing_block, boxes.PageBox):
-        cb_x = cb.content_box_x()
-        cb_y = cb.content_box_y()
-        cb_width = cb.width
-        cb_height = cb.height
-    else:
-        cb_x = cb.padding_box_x()
-        cb_y = cb.padding_box_y()
-        cb_width = cb.padding_width()
-        cb_height = cb.padding_height()
-    containing_block = cb_x, cb_y, cb_width, cb_height
-
-    resolve_percentages(box, (cb_width, cb_height))
-    resolve_position_percentages(box, (cb_width, cb_height))
-
-    # Absolute tables are wrapped into block boxes
-    if isinstance(box, boxes.BlockBox):
-        new_box = absolute_block(document, box, containing_block, fixed_boxes)
-    else:
-        assert isinstance(box, boxes.BlockReplacedBox)
-        new_box = absolute_replaced(document, box, containing_block)
-
-    placeholder.set_laid_out_box(new_box)
-
-
-def absolute_block(document, box, containing_block, fixed_boxes):
+@handle_min_max_width
+def absolute_width(box, document, containing_block):
     # http://www.w3.org/TR/CSS2/visudet.html#abs-replaced-width
 
     # These names are waaay too long
     margin_l = box.margin_left
     margin_r = box.margin_right
-    margin_t = box.margin_top
-    margin_b = box.margin_bottom
     padding_l = box.padding_left
     padding_r = box.padding_right
-    padding_t = box.padding_top
-    padding_b = box.padding_bottom
     border_l = box.border_left_width
     border_r = box.border_right_width
-    border_t = box.border_top_width
-    border_b = box.border_bottom_width
     width = box.width
-    height = box.height
     left = box.left
     right = box.right
-    top = box.top
-    bottom = box.bottom
 
     cb_x, cb_y, cb_width, cb_height = containing_block
 
     # TODO: handle bidi
     padding_plus_borders_x = padding_l + padding_r + border_l + border_r
-    translate_x = translate_y = 0
-    translate_box_width = translate_box_height = False
+    translate_x = 0
+    translate_box_width = False
     default_translate_x = cb_x - box.position_x
     if left == right == width == 'auto':
         if margin_l == 'auto':
@@ -161,9 +122,28 @@ def absolute_block(document, box, containing_block, fixed_boxes):
         elif right == 'auto':
             translate_x = left + default_translate_x
 
+    return translate_box_width, translate_x
+
+
+def absolute_height(box, document, containing_block):
+    # These names are waaay too long
+    margin_t = box.margin_top
+    margin_b = box.margin_bottom
+    padding_t = box.padding_top
+    padding_b = box.padding_bottom
+    border_t = box.border_top_width
+    border_b = box.border_bottom_width
+    height = box.height
+    top = box.top
+    bottom = box.bottom
+
+    cb_x, cb_y, cb_width, cb_height = containing_block
+
     # http://www.w3.org/TR/CSS2/visudet.html#abs-non-replaced-height
 
     paddings_plus_borders_y = padding_t + padding_b + border_t + border_b
+    translate_y = 0
+    translate_box_height = False
     default_translate_y = cb_y - box.position_y
     if top == bottom == height == 'auto':
         pass  # Keep the static position
@@ -201,6 +181,17 @@ def absolute_block(document, box, containing_block, fixed_boxes):
         elif bottom == 'auto':
             translate_y = top + default_translate_y
 
+    return translate_box_height, translate_y
+
+
+def absolute_block(document, box, containing_block, fixed_boxes):
+    cb_x, cb_y, cb_width, cb_height = containing_block
+
+    translate_box_width, translate_x = absolute_width(
+        box, document, containing_block)
+    translate_box_height, translate_y = absolute_height(
+        box, document, containing_block)
+
     # This box is the containing block for absolute descendants.
     absolute_boxes = []
 
@@ -230,6 +221,40 @@ def absolute_block(document, box, containing_block, fixed_boxes):
     new_box.translate(translate_x, translate_y)
 
     return new_box
+
+
+def absolute_layout(document, placeholder, containing_block, fixed_boxes):
+    """Set the width of absolute positioned ``box``."""
+    box = placeholder._box
+
+    cb = containing_block
+    # TODO: handle inline boxes (point 10.1.4.1)
+    # http://www.w3.org/TR/CSS2/visudet.html#containing-block-details
+    if isinstance(containing_block, boxes.PageBox):
+        cb_x = cb.content_box_x()
+        cb_y = cb.content_box_y()
+        cb_width = cb.width
+        cb_height = cb.height
+    else:
+        cb_x = cb.padding_box_x()
+        cb_y = cb.padding_box_y()
+        cb_width = cb.padding_width()
+        cb_height = cb.padding_height()
+    containing_block = cb_x, cb_y, cb_width, cb_height
+
+    resolve_percentages(box, (cb_width, cb_height))
+    resolve_position_percentages(box, (cb_width, cb_height))
+
+    document.create_block_formatting_context()
+    # Absolute tables are wrapped into block boxes
+    if isinstance(box, boxes.BlockBox):
+        new_box = absolute_block(document, box, containing_block, fixed_boxes)
+    else:
+        assert isinstance(box, boxes.BlockReplacedBox)
+        new_box = absolute_replaced(document, box, containing_block)
+    document.finish_block_formatting_context(new_box)
+
+    placeholder.set_laid_out_box(new_box)
 
 
 def absolute_replaced(document, box, containing_block):

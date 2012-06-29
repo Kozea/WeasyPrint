@@ -84,7 +84,7 @@ def _block_preferred_width(document, box, function, outer):
         # http://dbaron.org/css/intrinsic/#outer-intrinsic
         children_widths = [
             function(document, child, outer=True) for child in box.children
-            if child.is_in_normal_flow()]
+            if not child.is_absolutely_positioned()]
         width = max(children_widths) if children_widths else 0
     else:
         assert width.unit == 'px'
@@ -142,27 +142,36 @@ def block_preferred_width(document, box, outer=True):
     return _block_preferred_width(document, box, preferred_width, outer)
 
 
-def inline_preferred_minimum_width(document, box, outer=True):
-    """Return the preferred minimum width for an ``InlineBox``."""
+def inline_preferred_minimum_width(document, box, outer=True, skip_stack=None,
+                                   first_line=False):
+    """Return the preferred minimum width for an ``InlineBox``.
+
+    The width is calculated from the lines from ``skip_stack``. If
+    ``first_line`` is ``True``, only the first line minimum width is
+    calculated.
+
+    """
     widest_line = 0
-    for child in box.children:
-        if not child.is_in_normal_flow():
+    if skip_stack is None:
+        skip = 0
+    else:
+        skip, skip_stack = skip_stack
+    for index, child in box.enumerate_skip(skip):
+        if child.is_absolutely_positioned():
             continue  # Skip
 
-        if isinstance(child, boxes.InlineReplacedBox):
-            # Images are on their own line
-            current_line = replaced_preferred_width(child)
-        elif isinstance(child, boxes.InlineBlockBox):
-            if child.is_table_wrapper:
-                current_line = table_preferred_minimum_width(document, child)
-            else:
-                current_line = block_preferred_minimum_width(document, child)
-        elif isinstance(child, boxes.InlineBox):
+        if isinstance(child, boxes.InlineBox):
             # TODO: handle forced line breaks
-            current_line = inline_preferred_minimum_width(document, child)
+            current_line = inline_preferred_minimum_width(
+                document, child, skip_stack=skip_stack, first_line=first_line)
+        elif isinstance(child, boxes.TextBox):
+            widths = text.line_widths(document, child, width=0, skip=skip)
+            if first_line:
+                return next(widths)
+            else:
+                current_line = max(widths)
         else:
-            assert isinstance(child, boxes.TextBox)
-            current_line = max(text.line_widths(document, child, width=0))
+            current_line = preferred_minimum_width(document, child)
         widest_line = max(widest_line, current_line)
     return adjust(box, outer, widest_line)
 
@@ -172,22 +181,13 @@ def inline_preferred_width(document, box, outer=True):
     widest_line = 0
     current_line = 0
     for child in box.children:
-        if not child.is_in_normal_flow():
+        if child.is_absolutely_positioned():
             continue  # Skip
 
-        if isinstance(child, boxes.InlineReplacedBox):
-            # No line break around images
-            current_line += replaced_preferred_width(child)
-        elif isinstance(child, boxes.InlineBlockBox):
-            if child.is_table_wrapper:
-                current_line += table_preferred_width(document, child)
-            else:
-                current_line += block_preferred_width(document, child)
-        elif isinstance(child, boxes.InlineBox):
+        if isinstance(child, boxes.InlineBox):
             # TODO: handle forced line breaks
             current_line += inline_preferred_width(document, child)
-        else:
-            assert isinstance(child, boxes.TextBox)
+        elif isinstance(child, boxes.TextBox):
             lines = list(text.line_widths(document, child, width=None))
             assert lines
             # The first text line goes on the current line
@@ -198,6 +198,8 @@ def inline_preferred_width(document, box, outer=True):
                 if len(lines) > 2:
                     widest_line = max(widest_line, max(lines[1:-1]))
                 current_line = lines[-1]
+        else:
+            current_line += preferred_width(document, child)
     widest_line = max(widest_line, current_line)
 
     return adjust(box, outer, widest_line)
@@ -344,7 +346,7 @@ def table_and_columns_preferred_widths(document, box, outer=True,
     table_preferred_width = sum(column_preferred_widths) + total_border_spacing
 
     captions = [child for child in box.children
-                if child is not table and child.is_in_normal_flow()]
+                if child is not table and not child.is_absolutely_positioned()]
 
     if captions:
         caption_width = max(

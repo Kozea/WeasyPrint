@@ -70,7 +70,7 @@ def create_layout(text, style, hinting, max_width):
             ' ', '<span letter_spacing="%i"> </span>' % (
                 word_spacing + letter_spacing,))
         markup = '<span letter_spacing="%i">%s</span>' % (
-            letter_spacing , markup)
+            letter_spacing, markup)
         attributes_list = Pango.parse_markup(markup, -1, '\x00')[1]
         layout.set_attributes(attributes_list)
     return layout
@@ -114,9 +114,13 @@ def show_first_line(cairo_context, pango_layout, hinting):
     PangoCairo.show_layout_line(cairo_context, lines[0])
 
 
-def line_widths(document, box, width):
+def line_widths(document, box, width, skip=None):
     """Return the width for each line."""
-    layout = create_layout(box.text, box.style, document.enable_hinting, width)
+    # TODO: without the lstrip, we get an extra empty line at the beginning. Is
+    # there a better solution to avoid that?
+    layout = create_layout(
+        box.text[(skip or 0):].lstrip(), box.style,
+        document.enable_hinting, width)
     for line in layout.get_lines_readonly():
         _ink_extents, logical_extents = line.get_extents()
         yield Pango.units_to_double(logical_extents.width)

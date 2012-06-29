@@ -15,7 +15,6 @@ from __future__ import division, unicode_literals
 
 from .testing_utils import (
     TestPNGDocument, resource_filename, FONTS, assert_no_logs, capture_logs)
-from .test_boxes import monkeypatch_validation, validate_float
 from ..formatting_structure import boxes
 from ..layout.inlines import split_inline_box
 from ..layout.percentages import resolve_percentages
@@ -39,14 +38,18 @@ def parse_without_layout(html_content):
 
 def parse(html_content, return_document=False):
     """Parse some HTML, apply stylesheets, transform to boxes and lay out."""
-    # TODO: remove this patching when floats are validated
-    with monkeypatch_validation(validate_float):
-        document = TestPNGDocument(html_content,
-            base_url=resource_filename('<inline HTML>'))
-        if return_document:
-            return document
-        else:
-            return document.pages
+    document = TestPNGDocument(html_content,
+        base_url=resource_filename('<inline HTML>'))
+    if return_document:
+        return document
+    else:
+        return document.pages
+
+
+def outer_area(box):
+    """Return the (x, y, w, h) rectangle for the outer area of a box."""
+    return (box.position_x, box.position_y,
+            box.margin_width(), box.margin_height())
 
 
 @assert_no_logs
@@ -1817,7 +1820,8 @@ def test_inlinebox_spliting():
         while 1:
             inlinebox.position_y = 0
             box, skip, _ = split_inline_box(
-                document, inlinebox, 0, width, skip, parent, None, [], [], [])
+                document, inlinebox, 0, width, skip, parent, None,
+                [], [], [], [])
             yield box
             if skip is None:
                 break
@@ -1931,7 +1935,7 @@ def test_inlinebox_text_after_spliting():
     while 1:
         inlinebox.position_y = 0
         box, skip, _ = split_inline_box(
-            document, inlinebox, 0, 100, skip, paragraph, None, [], [], [])
+            document, inlinebox, 0, 100, skip, paragraph, None, [], [], [], [])
         parts.append(box)
         if skip is None:
             break
@@ -4090,3 +4094,137 @@ def test_absolute_images():
     assert (img2.width, img2.height) == (4, 4)
 
     # TODO: test the various cases in absolute_replaced()
+
+
+@assert_no_logs
+def test_floats():
+    # adjacent-floats-001
+    page, = parse('''
+        <style>
+            div { float: left }
+            img { width: 100px; vertical-align: top }
+        </style>
+        <div><img src=pattern.png /></div>
+        <div><img src=pattern.png /></div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div_1, div_2 = body.children
+    assert outer_area(div_1) == (0, 0, 100, 100)
+    assert outer_area(div_2) == (100, 0, 100, 100)
+
+    # c414-flt-fit-000
+    page, = parse('''
+        <style>
+            body { width: 290px }
+            div { float: left; width: 100px;  }
+            img { width: 60px; vertical-align: top }
+        </style>
+        <div><img src=pattern.png /><!-- 1 --></div>
+        <div><img src=pattern.png /><!-- 2 --></div>
+        <div><img src=pattern.png /><!-- 4 --></div>
+        <img src=pattern.png /><!-- 3 -->
+        <img src=pattern.png /><!-- 5 -->
+    ''')
+    html, = page.children
+    body, = html.children
+    div_1, div_2, div_4, anon_block = body.children
+    line_3, line_5 = anon_block.children
+    img_3, = line_3.children
+    img_5, = line_5.children
+    assert outer_area(div_1) == (0, 0, 100, 60)
+    assert outer_area(div_2) == (100, 0, 100, 60)
+    assert outer_area(img_3) == (200, 0, 60, 60)
+
+    assert outer_area(div_4) == (0, 60, 100, 60)
+    assert outer_area(img_5) == (100, 60, 60, 60)
+
+    # c414-flt-fit-002
+    page, = parse('''
+        <style type="text/css">
+            body { width: 200px }
+            p { width: 70px; height: 20px }
+            .left { float: left }
+            .right { float: right }
+        </style>
+        <p class="left"> ⇦ A 1 </p>
+        <p class="left"> ⇦ B 2 </p>
+        <p class="left"> ⇦ A 3 </p>
+        <p class="right"> B 4 ⇨ </p>
+        <p class="left"> ⇦ A 5 </p>
+        <p class="right"> B 6 ⇨ </p>
+        <p class="right"> B 8 ⇨ </p>
+        <p class="left"> ⇦ A 7 </p>
+        <p class="left"> ⇦ A 9 </p>
+        <p class="left"> ⇦ B 10 </p>
+    ''')
+    html, = page.children
+    body, = html.children
+    positions = [(paragraph.position_x, paragraph.position_y)
+                 for paragraph in body.children]
+    assert positions == [
+        (0, 0), (70, 0), (0, 20), (130, 20), (0, 40), (130, 40),
+        (130, 60), (0, 60), (0, 80), (70, 80), ]
+
+    # c414-flt-wrap-000 ... more or less
+    page, = parse('''
+        <style>
+            body { width: 100px }
+            p { float: left; height: 100px }
+            img { width: 60px; vertical-align: top }
+        </style>
+        <p style="width: 20px"></p>
+        <p style="width: 100%"></p>
+        <img src=pattern.png /><img src=pattern.png />
+    ''')
+    html, = page.children
+    body, = html.children
+    p_1, p_2, anon_block = body.children
+    line_1, line_2 = anon_block.children
+    assert anon_block.position_y == 0
+    assert (line_1.position_x, line_1.position_y) == (20, 0)
+    assert (line_2.position_x, line_2.position_y) == (0, 200)
+
+    # floats-placement-vertical-001b
+    page, = parse('''
+        <style>
+            body { width: 90px; font-size: 0 }
+            img { vertical-align: top }
+        </style>
+        <body>
+        <span>
+            <img src=pattern.png style="width: 50px" />
+            <img src=pattern.png style="width: 50px" />
+            <img src=pattern.png style="float: left; width: 30px" />
+        </span>
+    ''')
+    html, = page.children
+    body, = html.children
+    line_1, line_2 = body.children
+    span_1, = line_1.children
+    span_2, = line_2.children
+    img_1, = span_1.children
+    img_2, img_3 = span_2.children
+    assert outer_area(img_1) == (0, 0, 50, 50)
+    assert outer_area(img_2) == (30, 50, 50, 50)
+    assert outer_area(img_3) == (0, 50, 30, 30)
+
+    # Variant of the above: no <span>
+    page, = parse('''
+        <style>
+            body { width: 90px; font-size: 0 }
+            img { vertical-align: top }
+        </style>
+        <body>
+        <img src=pattern.png style="width: 50px" />
+        <img src=pattern.png style="width: 50px" />
+        <img src=pattern.png style="float: left; width: 30px" />
+    ''')
+    html, = page.children
+    body, = html.children
+    line_1, line_2 = body.children
+    img_1, = line_1.children
+    img_2, img_3 = line_2.children
+    assert outer_area(img_1) == (0, 0, 50, 50)
+    assert outer_area(img_2) == (30, 50, 50, 50)
+    assert outer_area(img_3) == (0, 50, 30, 30)

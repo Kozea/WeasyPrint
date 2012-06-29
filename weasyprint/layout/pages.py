@@ -478,6 +478,8 @@ def make_page(document, root_box, page_type, resume_at, content_empty):
     page.width = page.outer_width - page.horizontal_surroundings()
     page.height = page.outer_height - page.vertical_surroundings()
 
+    document.excluded_shapes = []
+
     root_box.position_x = page.content_box_x()
     root_box.position_y = page.content_box_y()
     page_content_bottom = root_box.position_y + page.height

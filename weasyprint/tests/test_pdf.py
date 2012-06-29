@@ -90,16 +90,14 @@ def test_bookmarks():
 
     root, bookmarks = get_bookmarks('''
         <style>
-            * { height: 90pt; margin: 0 0 10pt 0; page-break-inside: auto }
+            * { height: 90pt; margin: 0 0 10pt 0 }
         </style>
         <h1>Title 1</h1>
         <h1>Title 2</h1>
-        <div style="margin-left: 20pt"><h2>Title 3</h2></div>
+        <h2 style="position: relative; left: 20pt">Title 3</h2>
         <h2>Title 4</h2>
-        <h3>
-            Title 5
-            <span style="display: block; page-break-before: always"></span>
-        </h3>
+        <h3>Title 5</h3>
+        <span style="display: block; page-break-before: always"></span>
         <h2>Title 6</h2>
         <h1>Title 7</h1>
         <h2>Title 8</h2>
