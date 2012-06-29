@@ -146,7 +146,11 @@ def absolute_height(box, document, containing_block):
     translate_box_height = False
     default_translate_y = cb_y - box.position_y
     if top == bottom == height == 'auto':
-        pass  # Keep the static position
+        # Keep the static position
+        if margin_t == 'auto':
+            box.margin_top = 0
+        if margin_b == 'auto':
+            box.margin_bottom = 0
     elif top != 'auto' and bottom != 'auto' and height != 'auto':
         height_for_margins = cb_height - (
             top + bottom + paddings_plus_borders_y)

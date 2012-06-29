@@ -516,9 +516,9 @@ def display(keyword):
         'table-row', 'table-column-group', 'table-column', 'table-cell')
 
 
-@validator()
+@validator('float')
 @single_keyword
-def float(keyword):
+def float_(keyword):  # XXX do not hide the "float" builtin
     """``float`` property validation."""
     return keyword in ('left', 'right', 'none')
 

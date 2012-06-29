@@ -494,24 +494,17 @@ def make_page(document, root_box, page_type, resume_at, content_empty):
     assert isinstance(root_box, boxes.BlockBox)
     page_is_empty = True
     adjoining_margins = []
-    absolute_boxes = []
-    fixed_boxes = []
+    positioned_boxes = []  # Mixed absolute and fixed
     root_box, resume_at, next_page, _, _ = block_level_layout(
         document, root_box, page_content_bottom, resume_at,
         initial_containing_block, device_size, page_is_empty,
-        absolute_boxes, fixed_boxes, adjoining_margins)
+        positioned_boxes, positioned_boxes, adjoining_margins)
     assert root_box
 
-    children = [root_box]
+    for absolute_box in positioned_boxes:
+        absolute_layout(document, absolute_box, page, positioned_boxes)
 
-    for absolute_box in absolute_boxes + fixed_boxes:
-        # Use an empty list as last argument because the fixed boxes in the
-        # fixed box has already been added to fixed_boxes, we don't want to get
-        # them again
-        absolute_layout(document, absolute_box, page, [])
-
-    page = page.copy_with_children(children)
-
+    page = page.copy_with_children([root_box])
     if content_empty:
         resume_at = previous_resume_at
     return page, resume_at, next_page
