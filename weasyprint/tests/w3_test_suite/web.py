@@ -144,17 +144,22 @@ def run(suite_directory):
         with open(filename, 'rb') as fd:
             source = fd.read().decode('utf8')
 
-        html = HTML(string=source, base_url=filename)
-        pages = [
-            'data:image/png;base64,' + (
-                png_bytes.encode('base64').replace('\n', ''))
-            for _, _, png_bytes in html.get_png_pages(
-                stylesheets=[default_stylesheet])]
-
         formatter = HtmlFormatter(linenos='inline')
         source = highlight(source, HtmlLexer(), formatter)
         css = formatter.get_style_defs('.highlight')
         return render_template('run_test.html', **locals())
+
+
+    @app.route('/render/<path:test_id>')
+    def render(test_id):
+        pages = [
+            'data:image/png;base64,' + (
+                png_bytes.encode('base64').replace('\n', ''))
+            for _, _, png_bytes in HTML(
+                safe_join(suite_directory, test_id + '.htm'),
+                encoding='utf8',
+            ).get_png_pages(stylesheets=[default_stylesheet])]
+        return render_template('render.html', **locals())
 
 
     @app.route('/test-data/<path:filename>')

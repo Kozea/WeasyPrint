@@ -13,31 +13,26 @@
         display: inline;
         margin-right: 1em;
     }
-    .render {
+    section {
         display: table-cell;
         padding-right: 1em;
     }
     h3 {
         margin: 0;
     }
-    .render div {
+    .weasy iframe {
         width: 720px;
         height: 720px;
-        overflow: auto;
         margin-left: -10px;
+        border: 0;
     }
-    .render img {
-        display: block;
-        margin: 10px 0 20px 10px;
-        box-shadow: 0 0 10px 2px #aaa;
-    }
-    iframe {
+    .browser iframe {
         margin-top: 10px;
         border: 2px inset;
         padding: 0;
         width: 680px;
         height: 680px;
-        box-sizing: content-box
+        box-sizing: content-box;
     }
     pre {
         white-space: pre-wrap;
@@ -69,18 +64,14 @@
 {% if test.flags %}<p>Flags: {{ test.flags|join(', ') }}</p>{% endif %}
 {% if test.assertion %}<p>Assertion: {{ test.assertion }}</p>{% endif %}
 
-<div class=render>
+<section class=weasy>
     <h3>WeasyPrint</h3>
-    <div>
-    {% for page in pages %}
-        <img src="{{ page }} " />
-    {% endfor %}
-    </div>
-</div>
+    <iframe src="{{ url_for('render', test_id=test.test_id) }}"></iframe>
+</section>
 
-<div class=render>
+<section class=browser>
     <h3>This browser</h3>
     <iframe src="{{ url_for('test_data', filename=test.test_id + '.htm') }}"></iframe>
-</div>
+</section>
 
 {{ source|safe }}
