@@ -3428,9 +3428,11 @@ def test_margin_boxes_variable_dimension():
                 margin: 100px;
 
                 @top-left {
+                    content: '';
                     width: 150px;
                 }
                 @top-right {
+                    content: '';
                     width: 250px;
                 }
             }
@@ -3447,6 +3449,7 @@ def test_margin_boxes_variable_dimension():
                 margin: 100px;
 
                 @top-left {
+                    content: '';
                     margin: auto;
                     width: 100px;
                 }
@@ -3454,6 +3457,7 @@ def test_margin_boxes_variable_dimension():
                     margin-left: auto;
                 }
                 @top-right {
+                    content: '';
                     width: 200px;
                 }
             }
@@ -3477,6 +3481,7 @@ def test_margin_boxes_variable_dimension():
                 margin: 100px;
 
                 @top-left {
+                    content: '';
                     margin: auto;
                     width: 500px;
                 }
@@ -3484,6 +3489,7 @@ def test_margin_boxes_variable_dimension():
                     margin-left: auto;
                 }
                 @top-right {
+                    content: '';
                     width: 400px;
                 }
             }

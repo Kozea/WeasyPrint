@@ -184,7 +184,7 @@ def compute_variable_dimension(document, side_boxes, vertical, outer_sum):
         for value in (box.margin_a, box.margin_b)
     )
 
-    if box_b.box.exists:
+    if box_b.box.is_generated:
         # TODO: remove this when Margin boxes variable dimension is correct
         if not document._auto_margin_boxes_warning_shown and (
                 any('auto' in [box.margin_a, box.margin_b]
@@ -328,8 +328,7 @@ def make_margin_boxes(document, page, counter_values):
         resolve_percentages(box, containing_block)
         # Empty boxes should not be generated, but they may be needed for
         # the layout of their neighbors.
-        box.exists = (
-            style.content not in ('normal', 'none') or style.width != 'auto')
+        box.is_generated = style.content not in ('normal', 'none')
         return box
 
     margin_top = page.margin_top
@@ -372,7 +371,7 @@ def make_margin_boxes(document, page, counter_values):
             variable_outer, fixed_outer = containing_block
         side_boxes = [make_box('@%s-%s' % (prefix, suffix), containing_block)
                       for suffix in suffixes]
-        if not any(box.exists for box in side_boxes):
+        if not any(box.is_generated for box in side_boxes):
             continue
         # We need the three boxes together for the variable dimension:
         compute_variable_dimension(
@@ -387,7 +386,7 @@ def make_margin_boxes(document, page, counter_values):
                 position_y += box.margin_height()
             else:
                 position_x += box.margin_width()
-            if not box.exists:
+            if not box.is_generated:
                 continue
             if delay:
                 delayed_boxes.append(box)
@@ -404,7 +403,7 @@ def make_margin_boxes(document, page, counter_values):
             page_end_x, page_end_y),
     ]:
         box = make_box(at_keyword, (cb_width, cb_height))
-        if not box.exists:
+        if not box.is_generated:
             continue
         box.position_x = position_x
         box.position_y = position_y
