@@ -1200,9 +1200,8 @@ def test_margin_boxes():
 
     margin_boxes_1 = [box.at_keyword for box in page_1.children[1:]]
     margin_boxes_2 = [box.at_keyword for box in page_2.children[1:]]
-    # Order matters, see http://dev.w3.org/csswg/css3-page/#painting
-    assert margin_boxes_1 == ['@bottom-left', '@bottom-left-corner',
-                              '@top-center']
+    assert margin_boxes_1 == ['@top-center', '@bottom-left',
+                              '@bottom-left-corner']
     assert margin_boxes_2 == ['@top-center']
 
     html, top_center = page_2.children

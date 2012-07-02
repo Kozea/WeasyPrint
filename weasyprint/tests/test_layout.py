@@ -3266,222 +3266,175 @@ def test_preferred_widths():
 
 @assert_no_logs
 def test_margin_boxes_variable_dimension():
-    page, = parse('''
-        <style>
-            @page {
-                -weasy-size: 800px;
-                margin: 100px;
-                padding: 42px;
-                border: 7px solid;
-                font-size: 50px;
+    def get_widths(css):
+        """Take some CSS to have inside @page
 
-                @top-left {
-                    content: "Lorem ipsum dolor sit amet";
-                }
-                @top-center {
-                    content: "Lorem ipsum dolor sit amet";
-                }
-                @top-right {
-                    content: "Lorem ipsum dolor sit amet";
-                }
-            }
-        </style>
-    ''')
-    html, top_left, top_right, top_center = page.children
-    assert top_left.at_keyword == '@top-left'
-    assert top_center.at_keyword == '@top-center'
-    assert top_right.at_keyword == '@top-right'
+        Return margin-widths of the sub-sequence of the three margin boxes
+        that are generated.
 
-    assert top_left.margin_width() == 200
-    assert top_center.margin_width() == 200
-    assert top_right.margin_width() == 200
+        The containing block’s width is 600px. It starts at x = 100 and ends
+        at x = 700.
 
-    page, = parse('''
-        <style>
-            @page {
-                -weasy-size: 800px;
-                margin: 100px;
-                padding: 42px;
-                border: 7px solid;
-                font-size: 50px;
+        """
+        expected_at_keywords = [
+            at_keyword for at_keyword in [
+                '@top-left', '@top-center', '@top-right']
+            if at_keyword + ' { content: ' in css]
+        page, = parse('''
+            <style>
+                @page {
+                    -weasy-size: 800px;
+                    margin: 100px;
+                    padding: 42px;
+                    border: 7px solid;
+                    %s
+                }
+            </style>
+        ''' % css)
+        assert page.children[0].element_tag == 'html'
+        margin_boxes = page.children[1:]
+        assert [box.at_keyword for box in margin_boxes] == expected_at_keywords
+        offsets = {'@top-left': 0, '@top-center': 0.5, '@top-right': 1}
+        for box in margin_boxes:
+            assert box.position_x == 100 + offsets[box.at_keyword] * (
+                600 - box.margin_width())
+        return [box.margin_width() for box in margin_boxes]
 
-                @top-left {
-                    content: "Lorem ipsum dolor sit amet"
-                             "Lorem ipsum dolor sit amet";
-                }
-                @top-center {
-                    content: "Lorem ipsum dolor sit amet";
-                }
-                @top-right {
-                    content: "";
-                }
-            }
-        </style>
-    ''')
-    html, top_left, top_right, top_center = page.children
-    assert top_left.at_keyword == '@top-left'
-    assert top_center.at_keyword == '@top-center'
-    assert top_right.at_keyword == '@top-right'
+    def images(*widths):
+        return ' '.join(
+            'url(\'data:image/svg+xml,<svg width="%i" height="10"></svg>\')'
+            % width for width in widths)
 
-    # XXX This is not what we want.
-    assert top_left.margin_width() == 400
-    assert top_center.margin_width() == 200
-    assert top_right.margin_width() == 0
+    # Use preferred widths if they fit
+    css = '''
+        @top-left { content: %s }
+        @top-center { content: %s }
+        @top-right { content: %s }
+    ''' % (images(50, 50), images(50, 50), images(50, 50))
+    assert get_widths(css) == [100, 100, 100]
 
-    page, = parse('''
-        <style>
-            @page {
-                -weasy-size: 800px;
-                margin: 100px;
-                padding: 42px;
-                border: 7px solid;
-                font-size: 50px;
+    # 'auto' margins are set to 0
+    css = '''
+        @top-left { content: %s; margin: auto }
+        @top-center { content: %s }
+        @top-right { content: %s }
+    ''' % (images(50, 50), images(50, 50), images(50, 50))
+    assert get_widths(css) == [100, 100, 100]
 
-                @top-left {
-                    content: "Lorem ipsum dolor sit amet";
-                }
-                @top-right {
-                    content: "Lorem ipsum dolor sit amet";
-                }
-            }
-        </style>
-    ''')
-    html, top_left, top_right = page.children
-    assert top_left.at_keyword == '@top-left'
-    assert top_right.at_keyword == '@top-right'
-    assert top_left.position_x == 100
-    assert top_left.margin_width() == 300
-    assert top_right.position_x == 400  # 100 + 300
-    assert top_right.margin_width() == 300
+    # Use at least minimum widths, even if boxes overlap
+    css = '''
+        @top-left { content: %s }
+        @top-center { content: %s }
+        @top-right { content: 'foo'; width: 200px }
+    ''' % (images(100, 50), images(300, 150))
+    # @top-center is 300px wide and centered: this leaves 150 on either side
+    # There is 50px of overlap with @top-right
+    assert get_widths(css) == [150, 300, 200]
 
-    page, = parse('''
-        <style>
-            @page {
-                -weasy-size: 800px;
-                margin: 100px;
-                padding: 42px;
-                border: 7px solid;
-                font-size: 50px;
+    # In the intermediate case, distribute the remaining space proportionally
+    css = '''
+        @top-left { content: %s }
+        @top-center { content: %s }
+        @top-right { content: %s }
+    ''' % (images(150, 150), images(150, 150), images(150, 150))
+    assert get_widths(css) == [200, 200, 200]
 
-                @top-left {
-                    content: "Lorem ipsum dolor sit amet"
-                             "Lorem ipsum dolor sit amet";
-                }
-                @top-right {
-                    content: "Lorem ipsum dolor sit amet";
-                }
-            }
-        </style>
-    ''')
-    html, top_left, top_right = page.children
-    assert top_left.position_x == 100
-    assert top_left.margin_width() == 400
-    assert top_right.position_x == 500
-    assert top_right.margin_width() == 200
+    css = '''
+        @top-left { content: %s }
+        @top-center { content: %s }
+        @top-right { content: %s }
+    ''' % (images(100, 100, 100), images(100, 100), images(10))
+    assert get_widths(css) == [220, 160, 10]
 
-    page, = parse('''
-        <style>
-            @page {
-                -weasy-size: 800px;
-                margin: 100px;
-                padding: 42px;
-                border: 7px solid;
-                font-size: 50px;
+    css = '''
+        @top-left { content: %s; width: 205px }
+        @top-center { content: %s }
+        @top-right { content: %s }
+    ''' % (images(100, 100, 100), images(100, 100), images(10))
+    assert get_widths(css) == [205, 190, 10]
 
-                @top-left {
-                    content: "Lorem ipsum dolor sit amet"
-                             "Lorem ipsum dolor sit amet";
-                }
-                @top-center {
-                    content: "Lorem ipsum dolor sit amet";
-                }
-            }
-        </style>
-    ''')
-    html, top_left, top_center = page.children
-    assert top_left.at_keyword == '@top-left'
-    assert top_center.at_keyword == '@top-center'
-    assert top_left.position_x == 100
-    assert top_left.margin_width() == 400  # XXX this is not what we want
-    assert top_center.position_x == 300
-    assert top_center.margin_width() == 200
-    # ... + 240 for top-right = 600
+    # 'width' and other properties have no effect without 'content'
+    css = '''
+        @top-left { width: 1000px; margin: 1000px; padding: 1000px;
+                    border: 1000px solid }
+        @top-center { content: %s }
+        @top-right { content: %s }
+    ''' % (images(100, 100), images(10))
+    assert get_widths(css) == [200, 10]
 
-    page, = parse('''
-        <style>
-            @page {
-                -weasy-size: 800px;
-                margin: 100px;
-                padding: 42px;
-                border: 7px solid;
+    # This leaves 150px for @top-right’s shrink-to-fit
+    css = '''
+        @top-left { content: ''; width: 200px }
+        @top-center { content: ''; width: 300px }
+        @top-right { content: %s }
+    ''' % images(50, 50)
+    assert get_widths(css) == [200, 300, 100]
 
-                @top-left {
-                    content:
-        url('data:image/svg+xml,<svg width="100" height="10"></svg>')
-        url('data:image/svg+xml,<svg width="100" height="10"></svg>');
-                }
-                @top-right {
-                    content:
-        url('data:image/svg+xml,<svg width="100" height="10"></svg>')
-        url('data:image/svg+xml,<svg width="100" height="10"></svg>')
-        url('data:image/svg+xml,<svg width="100" height="10"></svg>')
-        url('data:image/svg+xml,<svg width="100" height="10"></svg>')
-        url('data:image/svg+xml,<svg width="100" height="10"></svg>')
-        url('data:image/svg+xml,<svg width="100" height="10"></svg>');
-                }
-            }
-        </style>
-    ''')
-    html, top_left, top_right = page.children
-    assert top_left.margin_width() == 150
-    assert top_right.margin_width() == 450
+    css = '''
+        @top-left { content: ''; width: 200px }
+        @top-center { content: ''; width: 300px }
+        @top-right { content: %s }
+    ''' % images(100, 100, 100)
+    assert get_widths(css) == [200, 300, 150]
 
-    page, = parse('''
-        <style>
-            @page {
-                -weasy-size: 800px;
-                margin: 100px;
+    css = '''
+        @top-left { content: ''; width: 200px }
+        @top-center { content: ''; width: 300px }
+        @top-right { content: %s }
+    ''' % images(170, 175)
+    assert get_widths(css) == [200, 300, 175]
 
-                @top-left {
-                    content: '';
-                    width: 150px;
-                }
-                @top-right {
-                    content: '';
-                    width: 250px;
-                }
-            }
-        </style>
-    ''')
-    html, top_left, top_right = page.children
-    assert top_left.margin_width() == 150
-    assert top_right.margin_width() == 250
+    css = '''
+        @top-left { content: ''; width: 200px }
+        @top-center { content: ''; width: 300px }
+        @top-right { content: %s }
+    ''' % images(170, 175)
+    assert get_widths(css) == [200, 300, 175]
 
-    page, = parse('''
-        <style>
-            @page {
-                -weasy-size: 800px;
-                margin: 100px;
-                padding: 42px;
-                border: 7px solid;
+    ##### Without @top-center
 
-                @top-left {
-                    content: url('data:image/svg+xml, \
-                                    <svg width="450" height="10"></svg>');
-                }
-                @top-right {
-                    content: url('data:image/svg+xml, \
-                                    <svg width="350" height="10"></svg>');
-                }
-            }
-        </style>
-    ''')
-    html, top_left, top_right = page.children
-    assert top_left.position_x == 100
-    assert top_left.width == 450
-    # These is overlap:
-    assert top_right.position_x == 350  # 700 - 350
-    assert top_right.width == 350
+    css = '''
+        @top-left { content: ''; width: 200px }
+        @top-right { content: ''; width: 500px }
+    '''
+    assert get_widths(css) == [200, 500]
+
+    css = '''
+        @top-left { content: ''; width: 200px }
+        @top-right { content: %s }
+    ''' % images(150, 50, 150)
+    assert get_widths(css) == [200, 350]
+
+    css = '''
+        @top-left { content: ''; width: 200px }
+        @top-right { content: %s }
+    ''' % images(150, 50, 150, 200)
+    assert get_widths(css) == [200, 400]
+
+    css = '''
+        @top-left { content: %s }
+        @top-right { content: ''; width: 200px }
+    ''' % images(150, 50, 450)
+    assert get_widths(css) == [450, 200]
+
+    css = '''
+        @top-left { content: %s }
+        @top-right { content: %s }
+    ''' % (images(150, 100), images(10, 120))
+    assert get_widths(css) == [250, 130]
+
+    css = '''
+        @top-left { content: %s }
+        @top-right { content: %s }
+    ''' % (images(550, 100), images(10, 120))
+    assert get_widths(css) == [550, 120]
+
+    css = '''
+        @top-left { content: %s }
+        @top-right { content: %s }
+    ''' % (images(250, 60), images(250, 180))
+    # 250 + (100 * 1 / 4), 250 + (100 * 3 / 4)
+    assert get_widths(css) == [275, 325]
 
 
 @assert_no_logs
@@ -3520,7 +3473,7 @@ def test_margin_boxes_vertical_align():
             }
         </style>
     ''')
-    html, top_left, top_right, top_center = page.children
+    html, top_left, top_center, top_right = page.children
     line_1, = top_left.children
     line_2, = top_center.children
     line_3, = top_right.children

@@ -17,7 +17,7 @@ from ..formatting_structure import boxes, build
 from .absolute import absolute_layout
 from .blocks import block_level_layout, block_container_layout
 from .percentages import resolve_percentages
-from .preferred import inline_preferred_minimum_width, inline_preferred_width
+from .preferred import preferred_minimum_width, preferred_width
 
 
 class OrientedBox(object):
@@ -31,11 +31,13 @@ class OrientedBox(object):
 
     @property
     def outer_minimum(self):
-        return self.sugar + self.minimum
+        return self.sugar + (
+            self.minimum if self.inner == 'auto' else self.inner)
 
     @property
     def outer_preferred(self):
-        return self.sugar + self.preferred
+        return self.sugar + (
+            self.preferred if self.inner == 'auto' else self.inner)
 
     def shrink_to_fit(self, available):
         self.inner = min(max(self.minimum, available), self.preferred)
@@ -68,7 +70,7 @@ class VerticalBox(OrientedBox):
 
     @property
     def preferred(self):
-        return float('inf')
+        return 1e6
 
 
 class HorizontalBox(OrientedBox):
@@ -93,14 +95,14 @@ class HorizontalBox(OrientedBox):
     @property
     def minimum(self):
         if self._minimum is None:
-            self._minimum = inline_preferred_minimum_width(
+            self._minimum = preferred_minimum_width(
                 self.document, self.box, outer=False)
         return self._minimum
 
     @property
     def preferred(self):
         if self._preferred is None:
-            self._preferred = inline_preferred_width(
+            self._preferred = preferred_width(
                 self.document, self.box, outer=False)
         return self._preferred
 
@@ -138,6 +140,7 @@ def compute_fixed_dimension(document, box, outer, vertical, top_or_left):
             # XXX this is not in the spec, but without it box.inner
             # would end up with a negative value.
             # Instead, this will trigger rule 3 below.
+            # http://lists.w3.org/Archives/Public/www-style/2012Jul/0006.html
             box.inner = 0
     # Rule 3
     if 'auto' not in [box.margin_a, box.margin_b, box.inner]:
@@ -207,61 +210,57 @@ def compute_variable_dimension(document, side_boxes, vertical, outer_sum):
 
     if box_b.box.is_generated:
         if box_b.inner == 'auto':
-            if box_a.inner != 'auto' and box_c.inner != 'auto':
-                box_b.shrink_to_fit(
-                    outer_sum - max(box_a.outer, box_c.outer) - box_b.sugar)
+            ac_preferred = 2 * max(
+                    box_a.outer_preferred, box_c.outer_preferred)
+            if outer_sum >= box_b.outer_preferred + ac_preferred:
+                box_b.inner = box_b.preferred
             else:
-                if outer_sum <= box_b.outer_minimum + max(
-                        box_a.outer_minimum, box_c.outer_minimum):
-                    box_b.inner = box_b.minimum
-                elif outer_sum >= box_b.outer_preferred + max(
-                        box_a.outer_preferred, box_c.outer_preferred):
-                    box_b.inner = box_b.preferred
-                else:
-                    auto_boxes = []
-                    available = outer_sum
-                    factor = 0
-                    for box in side_boxes:
-                        if box.inner == 'auto':
-                            auto_boxes.append(box)
-                            factor += box.preferred
-                            available -= box.sugar
-                        else:
-                            available -= box.outer
-                    if factor == 0:
-                        result = available / len(auto_boxes)
-                        for box in auto_boxes:
-                            box.inner = result
-                    else:
-                        factor = available / factor
-                        for box in auto_boxes:
-                            box.inner = box.preferred * factor
+                ac_minimum = 2 * max(box_a.outer_minimum, box_c.outer_minimum)
+                box_b.inner = box_b.minimum
+                available = outer_sum - box_b.outer - ac_minimum
+                if available > 0:
+                    weight_ac = ac_preferred - ac_minimum
+                    weight_b = box_b.preferred - box_b.minimum
+                    weight_sum = weight_ac + weight_b
+                    # By definition of preferred and minimum, weights can
+                    # not be negative. weight_sum == 0 implies that
+                    # preferred == minimum for each box, in which case the
+                    # sum can not be both <= and > outer_sum
+                    # Therefore, one of the last two 'if' statements would
+                    # not have lead us here.
+                    assert weight_sum > 0
+                    box_b.inner += available * weight_b / weight_sum
         if box_a.inner == 'auto':
             box_a.shrink_to_fit((outer_sum - box_b.outer) / 2 - box_a.sugar)
         if box_c.inner == 'auto':
             box_c.shrink_to_fit((outer_sum - box_b.outer) / 2 - box_c.sugar)
     else:
-        box_b.inner = 0  # dummy value
+        # Non-generated boxes get zero for every box-model property
+        assert box_b.inner == 0
         if box_a.inner == box_c.inner == 'auto':
-            if box_a.outer_minimum + box_c.outer_minimum >= outer_sum:
-                box_a.inner = box_a.minimum
-                box_c.inner = box_c.minimum
-            elif box_a.outer_preferred + box_c.outer_preferred <= outer_sum:
+            if box_a.outer_preferred + box_c.outer_preferred <= outer_sum:
                 box_a.inner = box_a.preferred
                 box_c.inner = box_c.preferred
             else:
-                # TODO: is this still above the respective minimum?
-                available = outer_sum - box_a.sugar - box_c.sugar
-                factor = box_a.preferred + box_c.preferred
-                if factor == 0:
-                    box_a.inner = box_c.inner = available / 2
-                else:
-                    factor = available / factor
-                    box_a.inner = box_a.preferred * factor
-                    box_c.inner = box_c.preferred * factor
-        if box_a.inner == 'auto':
+                box_a.inner = box_a.minimum
+                box_c.inner = box_c.minimum
+                available = outer_sum - box_a.outer - box_c.outer
+                if available > 0:
+                    weight_a = box_a.preferred - box_a.minimum
+                    weight_c = box_c.preferred - box_c.minimum
+                    weight_sum = weight_a + weight_c
+                    # By definition of preferred and minimum, weights can
+                    # not be negative. weight_sum == 0 implies that
+                    # preferred == minimum for each box, in which case the
+                    # sum can not be both <= and > outer_sum
+                    # Therefore, one of the last two 'if' statements would
+                    # not have lead us here.
+                    assert weight_sum > 0
+                    box_a.inner += available * weight_a / weight_sum
+                    box_c.inner += available * weight_c / weight_sum
+        elif box_a.inner == 'auto':
             box_a.shrink_to_fit(outer_sum - box_c.outer - box_a.sugar)
-        if box_c.inner == 'auto':
+        elif box_c.inner == 'auto':
             box_c.shrink_to_fit(outer_sum - box_a.outer - box_c.sugar)
 
     # And, we’re done!
@@ -294,17 +293,24 @@ def make_margin_boxes(document, page, counter_values):
         if style is None:
             style = page.style.inherit_from()
         box = boxes.MarginBox(at_keyword, style)
-        # TODO: get actual counter values at the time of the last page break
-        quote_depth = [0]
-        if style.content not in ('normal', 'none'):
-            children = build.content_to_boxes(
-                document, box.style, box, quote_depth, counter_values)
-            box = box.copy_with_children(children)
-            build.process_whitespace(box)
-        resolve_percentages(box, containing_block)
         # Empty boxes should not be generated, but they may be needed for
         # the layout of their neighbors.
         box.is_generated = style.content not in ('normal', 'none')
+        # TODO: get actual counter values at the time of the last page break
+        if box.is_generated:
+            quote_depth = [0]
+            children = build.content_to_boxes(
+                document, box.style, box, quote_depth, counter_values)
+            box = box.copy_with_children(children)
+            # content_to_boxes() only produces inline-level boxes, no need to
+            # run other post-processors from build.build_formatting_structure()
+            box = build.inline_in_block(box)
+            build.process_whitespace(box)
+        resolve_percentages(box, containing_block)
+        if not box.is_generated:
+            box.width = box.height = 0
+            for side in ('top', 'right', 'bottom', 'left'):
+                box._reset_spacing(side)
         return box
 
     margin_top = page.margin_top
@@ -320,14 +326,7 @@ def make_margin_boxes(document, page, counter_values):
 
     # Margin box dimensions, described in
     # http://dev.w3.org/csswg/css3-page/#margin-box-dimensions
-
-    # Order recommended on http://dev.w3.org/csswg/css3-page/#painting
-    # center/middle on top (last in tree order), then corner, then others
-
-    # First, boxes that are neither corner nor center/middle
-    # Delay center/middle boxes
     generated_boxes = []
-    delayed_boxes = []
 
     for prefix, vertical, containing_block, position_x, position_y in [
         ('top', False, (max_box_width, margin_top),
@@ -352,26 +351,21 @@ def make_margin_boxes(document, page, counter_values):
         # We need the three boxes together for the variable dimension:
         compute_variable_dimension(
             document, side_boxes, vertical, variable_outer)
-        for box in side_boxes:
+        for box, offset in zip(side_boxes, [0, 0.5, 1]):
+            if not box.is_generated:
+                continue
             box.position_x = position_x
             box.position_y = position_y
-        box_a, box_b, box_c = side_boxes
-        if vertical:
-            box_b.position_y += (variable_outer - box_b.margin_height()) / 2
-            box_c.position_y += variable_outer - box_c.margin_height()
-        else:
-            box_b.position_x += (variable_outer - box_b.margin_width()) / 2
-            box_c.position_x += variable_outer - box_c.margin_width()
-
-        for box, delay in zip(side_boxes, [False, True, False]):
-            if box.is_generated:
-                compute_fixed_dimension(
-                    document, box, fixed_outer, not vertical,
-                    prefix in ['top', 'left'])
-                if delay:
-                    delayed_boxes.append(box)
-                else:
-                    generated_boxes.append(box)
+            if vertical:
+                box.position_y += offset * (
+                    variable_outer - box.margin_height())
+            else:
+                box.position_x += offset * (
+                    variable_outer - box.margin_width())
+            compute_fixed_dimension(
+                document, box, fixed_outer, not vertical,
+                prefix in ['top', 'left'])
+            generated_boxes.append(box)
 
     # Corner boxes
 
@@ -393,17 +387,12 @@ def make_margin_boxes(document, page, counter_values):
             document, box, cb_width, False, 'left' in at_keyword)
         generated_boxes.append(box)
 
-    generated_boxes.extend(delayed_boxes)
-
     for box in generated_boxes:
         yield margin_box_content_layout(document, page, box)
 
 
 def margin_box_content_layout(document, page, box):
     """Layout a margin box’s content once the box has dimensions."""
-    # content_to_boxes() only produces inline-level boxes, no need to
-    # run other post-processors from build.build_formatting_structure()
-    box = build.inline_in_block(box)
     box, resume_at, next_page, _, _ = block_container_layout(
         document, box,
         max_position_y=float('inf'), skip_stack=None,
