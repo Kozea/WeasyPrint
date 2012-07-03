@@ -18,6 +18,7 @@ from .absolute import absolute_layout
 from .blocks import block_level_layout, block_container_layout
 from .percentages import resolve_percentages
 from .preferred import preferred_minimum_width, preferred_width
+from .min_max import handle_min_max_width, handle_min_max_height
 
 
 class OrientedBox(object):
@@ -418,6 +419,47 @@ def margin_box_content_layout(document, page, box):
     return box
 
 
+def page_width_or_height(box, containing_block_size):
+    """Take a :class:`OrientedBox` object and set either width, margin-left
+    and margin-right; or height, margin-top and margin-bottom.
+
+    "The width and horizontal margins of the page box are then calculated
+     exactly as for a non-replaced block element in normal flow. The height
+     and vertical margins of the page box are calculated analogously (instead
+     of using the block height formulas). In both cases if the values are
+     over-constrained, instead of ignoring any margins, the containing block
+     is resized to coincide with the margin edges of the page box."
+
+    http://dev.w3.org/csswg/css3-page/#page-box-page-rule
+    http://www.w3.org/TR/CSS21/visudet.html#blockwidth
+
+    """
+    remaining = containing_block_size - box.padding_plus_border
+    if box.inner == 'auto':
+        if box.margin_a == 'auto':
+            box.margin_a = 0
+        if box.margin_b == 'auto':
+            box.margin_b = 0
+        box.inner = remaining - box.margin_a - box.margin_b
+    elif box.margin_a == box.margin_b == 'auto':
+        box.margin_a = box.margin_b = (remaining - box.inner) / 2
+    elif box.margin_a == 'auto':
+        box.margin_a = remaining - box.inner - box.margin_b
+    elif box.margin_b == 'auto':
+        box.margin_b = remaining - box.inner - box.margin_a
+    box.restore_box_attributes()
+
+
+@handle_min_max_width
+def page_width(box, document, containing_block_width):
+    page_width_or_height(HorizontalBox(document, box), containing_block_width)
+
+
+@handle_min_max_height
+def page_height(box, document, containing_block_height):
+    page_width_or_height(VerticalBox(document, box), containing_block_height)
+
+
 def make_page(document, root_box, page_type, resume_at, content_empty):
     """Take just enough content from the beginning to fill one page.
 
@@ -437,14 +479,14 @@ def make_page(document, root_box, page_type, resume_at, content_empty):
     page = boxes.PageBox(page_type, style)
 
     device_size = page.style.size
-    outer_width, outer_height = device_size
 
     resolve_percentages(page, device_size)
 
     page.position_x = 0
     page.position_y = 0
-    page.width = outer_width - page.horizontal_surroundings()
-    page.height = outer_height - page.vertical_surroundings()
+    cb_width, cb_height = device_size
+    page_width(page, document, cb_width)
+    page_height(page, document, cb_height)
 
     document.excluded_shapes = []
 

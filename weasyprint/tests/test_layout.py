@@ -53,7 +53,7 @@ def outer_area(box):
 
 
 @assert_no_logs
-def test_page():
+def test_page_size():
     """Test the layout for ``@page`` properties."""
     pages = parse('<p>')
     page = pages[0]
@@ -61,31 +61,31 @@ def test_page():
     assert int(page.margin_width()) == 793  # A4: 210 mm in pixels
     assert int(page.margin_height()) == 1122  # A4: 297 mm in pixels
 
-    page, = parse('''<style>@page { -weasy-size: 2in 10in; }</style>''')
+    page, = parse('<style>@page { -weasy-size: 2in 10in; }</style>')
     assert page.margin_width() == 192
     assert page.margin_height() == 960
 
-    page, = parse('''<style>@page { -weasy-size: 242px; }</style>''')
+    page, = parse('<style>@page { -weasy-size: 242px; }</style>')
     assert page.margin_width() == 242
     assert page.margin_height() == 242
 
-    page, = parse('''<style>@page { -weasy-size: letter; }</style>''')
+    page, = parse('<style>@page { -weasy-size: letter; }</style>')
     assert page.margin_width() == 816  # 8.5in
     assert page.margin_height() == 1056  # 11in
 
-    page, = parse('''<style>@page { -weasy-size: letter portrait; }</style>''')
+    page, = parse('<style>@page { -weasy-size: letter portrait; }</style>')
     assert page.margin_width() == 816  # 8.5in
     assert page.margin_height() == 1056  # 11in
 
-    page, = parse('''<style>@page { -weasy-size: letter landscape; }</style>''')
+    page, = parse('<style>@page { -weasy-size: letter landscape; }</style>')
     assert page.margin_width() == 1056  # 11in
     assert page.margin_height() == 816  # 8.5in
 
-    page, = parse('''<style>@page { -weasy-size: portrait; }</style>''')
+    page, = parse('<style>@page { -weasy-size: portrait; }</style>')
     assert int(page.margin_width()) == 793  # A4: 210 mm
     assert int(page.margin_height()) == 1122  # A4: 297 mm
 
-    page, = parse('''<style>@page { -weasy-size: landscape; }</style>''')
+    page, = parse('<style>@page { -weasy-size: landscape; }</style>')
     assert int(page.margin_width()) == 1122  # A4: 297 mm
     assert int(page.margin_height()) == 793  # A4: 210 mm
 
@@ -138,6 +138,46 @@ def test_page():
     assert html.element_tag == 'html'
     assert html.position_x == 42  # 2 + 8 + 32
     assert html.position_y == 21  # 1 + 4 + 16
+
+    page, = parse('''<style>@page {
+        -weasy-size: 106px 206px; width: 80px; height: 170px;
+        padding: 1px; border: 2px solid; margin: auto;
+    }</style>''')
+    assert page.margin_top == 15  # (206 - 2*1 - 2*2 - 170) / 2
+    assert page.margin_right == 10  # (106 - 2*1 - 2*2 - 80) / 2
+    assert page.margin_bottom == 15  # (206 - 2*1 - 2*2 - 170) / 2
+    assert page.margin_left == 10  # (106 - 2*1 - 2*2 - 80) / 2
+
+    page, = parse('''<style>@page {
+        -weasy-size: 106px 206px; width: 80px; height: 170px;
+        padding: 1px; border: 2px solid; margin: 5px 5px auto auto;
+    }</style>''')
+    assert page.margin_top == 5
+    assert page.margin_right == 5
+    assert page.margin_bottom == 25  # 206 - 2*1 - 2*2 - 170 - 5
+    assert page.margin_left == 15  # 106 - 2*1 - 2*2 - 80 - 5
+
+    # Over-constrained: the containing block is resized
+    page, = parse('''<style>@page {
+        -weasy-size: 4px 10000px; width: 100px; height: 100px;
+        padding: 1px; border: 2px solid; margin: 3px;
+    }</style>''')
+    assert page.margin_width() == 112  # 100 + 2*1 + 2*2 + 2*3
+    assert page.margin_height() == 112
+
+    page, = parse('''<style>@page {
+        -weasy-size: 1000px; margin: 100px;
+        max-width: 500px; min-height: 1500px;
+    }</style>''')
+    assert page.margin_width() == 700
+    assert page.margin_height() == 1700
+
+    page, = parse('''<style>@page {
+        -weasy-size: 1000px; margin: 100px;
+        min-width: 1500px; max-height: 500px;
+    }</style>''')
+    assert page.margin_width() == 1700
+    assert page.margin_height() == 700
 
 
 @assert_no_logs

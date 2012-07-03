@@ -150,18 +150,6 @@ class Box(object):
         """Height of the margin box (aka. outer box)."""
         return self.border_height() + self.margin_top + self.margin_bottom
 
-    def horizontal_surroundings(self):
-        """Sum of all horizontal margins, paddings and borders."""
-        return self.margin_left + self.margin_right + \
-               self.padding_left + self.padding_right + \
-               self.border_left_width + self.border_right_width
-
-    def vertical_surroundings(self):
-        """Sum of all vertical margins, paddings and borders."""
-        return self.margin_top + self.margin_bottom + \
-               self.padding_top + self.padding_bottom + \
-               self.border_top_width + self.border_bottom_width
-
     # Corners positions
 
     def content_box_x(self):
