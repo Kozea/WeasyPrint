@@ -78,7 +78,8 @@ def render_template(url):
                       border-radius: 6px; padding: 0 3px }
   input:not([type]):focus { outline: none }
   body { margin-top: 0; padding-top: 50px }
-  section { box-shadow: 0 0 10px 2px #aaa; margin: 25px; position: relative }
+  section { box-shadow: 0 0 10px 2px #aaa; margin: 25px;
+            position: relative; overflow: hidden; }
   section a { position: absolute; display: block }
   section a[href]:hover, a[href]:focus { outline: 1px dotted }
   nav { margin: 25px }
