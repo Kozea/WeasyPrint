@@ -73,7 +73,7 @@ def render_template(url):
 <title>WeasyPrint Navigator</title>
 <style>
   form { position: fixed; z-index: 1; top: 8px; left: 16px; right: 0; }
-  input { font: 24px/30px sans-serif }
+  nav, input { font: 24px/30px sans-serif }
   input:not([type]) { background: rgba(255, 255, 255, .9); border-width: 2px;
                       border-radius: 6px; padding: 0 3px }
   input:not([type]):focus { outline: none }
@@ -81,6 +81,7 @@ def render_template(url):
   section { box-shadow: 0 0 10px 2px #aaa; margin: 25px; position: relative }
   section a { position: absolute; display: block }
   section a[href]:hover, a[href]:focus { outline: 1px dotted }
+  nav { margin: 25px }
 </style>
 <body onload="var u=document.forms[0].url; u.value || u.focus()">
 <form action="/" onsubmit="
@@ -112,6 +113,20 @@ def render_template(url):
                 write('  <a style="left: {0}px; top: {1}px;" name="{2}"></a>\n'
                       .format(pos_x, pos_y - 60, anchor))
             write('</section>\n')
+    else:
+        write('''
+<nav>
+<h2>Examples:</h2>
+<ul>
+  <li><a href="/view/http://www.webstandards.org/files/acid2/test.html">
+      Acid2</a></li>
+  <li><a href="/view/http://www.w3.org/Style/CSS/current-work">
+      CSS specifications</a></li>
+  <li><a href="/view/http://en.wikipedia.org/">
+      English Wikipedia</a></li>
+</ul>
+</nav>
+''')
     return ''.join(parts).encode('utf8')
 
 
