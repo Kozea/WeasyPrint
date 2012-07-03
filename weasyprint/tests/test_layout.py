@@ -58,36 +58,36 @@ def test_page():
     pages = parse('<p>')
     page = pages[0]
     assert isinstance(page, boxes.PageBox)
-    assert int(page.outer_width) == 793  # A4: 210 mm in pixels
-    assert int(page.outer_height) == 1122  # A4: 297 mm in pixels
+    assert int(page.margin_width()) == 793  # A4: 210 mm in pixels
+    assert int(page.margin_height()) == 1122  # A4: 297 mm in pixels
 
     page, = parse('''<style>@page { -weasy-size: 2in 10in; }</style>''')
-    assert page.outer_width == 192
-    assert page.outer_height == 960
+    assert page.margin_width() == 192
+    assert page.margin_height() == 960
 
     page, = parse('''<style>@page { -weasy-size: 242px; }</style>''')
-    assert page.outer_width == 242
-    assert page.outer_height == 242
+    assert page.margin_width() == 242
+    assert page.margin_height() == 242
 
     page, = parse('''<style>@page { -weasy-size: letter; }</style>''')
-    assert page.outer_width == 816  # 8.5in
-    assert page.outer_height == 1056  # 11in
+    assert page.margin_width() == 816  # 8.5in
+    assert page.margin_height() == 1056  # 11in
 
     page, = parse('''<style>@page { -weasy-size: letter portrait; }</style>''')
-    assert page.outer_width == 816  # 8.5in
-    assert page.outer_height == 1056  # 11in
+    assert page.margin_width() == 816  # 8.5in
+    assert page.margin_height() == 1056  # 11in
 
     page, = parse('''<style>@page { -weasy-size: letter landscape; }</style>''')
-    assert page.outer_width == 1056  # 11in
-    assert page.outer_height == 816  # 8.5in
+    assert page.margin_width() == 1056  # 11in
+    assert page.margin_height() == 816  # 8.5in
 
     page, = parse('''<style>@page { -weasy-size: portrait; }</style>''')
-    assert int(page.outer_width) == 793  # A4: 210 mm
-    assert int(page.outer_height) == 1122  # A4: 297 mm
+    assert int(page.margin_width()) == 793  # A4: 210 mm
+    assert int(page.margin_height()) == 1122  # A4: 297 mm
 
     page, = parse('''<style>@page { -weasy-size: landscape; }</style>''')
-    assert int(page.outer_width) == 1122  # A4: 297 mm
-    assert int(page.outer_height) == 793  # A4: 210 mm
+    assert int(page.margin_width()) == 1122  # A4: 297 mm
+    assert int(page.margin_height()) == 793  # A4: 210 mm
 
     page, = parse('''
         <style>@page { -weasy-size: 200px 300px; margin: 10px 10% 20% 1in }
@@ -95,8 +95,8 @@ def test_page():
         </style>
         <p style="margin: 0">
     ''')
-    assert page.outer_width == 200
-    assert page.outer_height == 300
+    assert page.margin_width() == 200
+    assert page.margin_height() == 300
     assert page.position_x == 0
     assert page.position_y == 0
     assert page.width == 84  # 200px - 10% - 1 inch

@@ -437,14 +437,14 @@ def make_page(document, root_box, page_type, resume_at, content_empty):
     page = boxes.PageBox(page_type, style)
 
     device_size = page.style.size
-    page.outer_width, page.outer_height = device_size
+    outer_width, outer_height = device_size
 
     resolve_percentages(page, device_size)
 
     page.position_x = 0
     page.position_y = 0
-    page.width = page.outer_width - page.horizontal_surroundings()
-    page.height = page.outer_height - page.vertical_surroundings()
+    page.width = outer_width - page.horizontal_surroundings()
+    page.height = outer_height - page.vertical_surroundings()
 
     document.excluded_shapes = []
 

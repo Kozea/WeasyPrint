@@ -385,7 +385,7 @@ def gather_metadata(document):
         # cairo coordinates are pixels right and down from the top-left corner
         # PDF coordinates are points right and up from the bottom-left corner
         matrix = cairo.Matrix(
-            PX_TO_PT, 0, 0, -PX_TO_PT, 0, page.outer_height * PX_TO_PT)
+            PX_TO_PT, 0, 0, -PX_TO_PT, 0, page.margin_height() * PX_TO_PT)
         point_to_pdf = matrix.transform_point
         distance_to_pdf = matrix.transform_distance
         page_links = []

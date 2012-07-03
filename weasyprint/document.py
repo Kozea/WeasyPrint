@@ -95,8 +95,8 @@ class Document(object):
         """Yield (width, height, image_surface) tuples, one for each page."""
         px_resolution = (resolution or 96) / 96
         for page in self.pages:
-            width = int(math.ceil(page.outer_width * px_resolution))
-            height = int(math.ceil(page.outer_height * px_resolution))
+            width = int(math.ceil(page.margin_width() * px_resolution))
+            height = int(math.ceil(page.margin_height() * px_resolution))
             surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
             context = draw.CairoContext(surface)
             context.scale(px_resolution, px_resolution)
@@ -160,8 +160,8 @@ class Document(object):
         surface = cairo.PDFSurface(file_obj, 1, 1)
         px_to_pt = pdf.PX_TO_PT
         for page in self.pages:
-            surface.set_size(page.outer_width * px_to_pt,
-                             page.outer_height * px_to_pt)
+            surface.set_size(page.margin_width() * px_to_pt,
+                             page.margin_height() * px_to_pt)
             context = draw.CairoContext(surface)
             context.scale(px_to_pt, px_to_pt)
             draw.draw_page(self, page, context)
