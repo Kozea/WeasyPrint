@@ -142,12 +142,12 @@ def normalize_url(url, query_string=None):
 
 
 def app(environ, start_response):
-    def make_response(body, status='200 OK',
+    def make_response(body, status='200 OK', headers=(),
                       content_type='text/html; charset=UTF-8'):
         start_response(status, [
             ('Content-Type', content_type),
             ('Content-Length', str(len(body))),
-        ])
+        ] + list(headers))
         return [body]
 
     path = environ['PATH_INFO']
@@ -159,7 +159,10 @@ def app(environ, start_response):
     elif path.startswith('/pdf/') and len(path) > 5: # len('/pdf/') == 5
         url = normalize_url(path[5:], environ.get('QUERY_STRING'))
         body = HTML(url=url).write_pdf(stylesheets=[STYLESHEET])
-        return make_response(body, content_type='application/pdf')
+        filename = url.rstrip('/').rsplit('/', 1)[-1] or 'out'
+        return make_response(body, content_type='application/pdf',
+            headers=[('Content-Disposition',
+                      'attachement; filename=%s.pdf' % filename)])
 
     elif path.startswith('/view/'):
         url = normalize_url(path[6:], environ.get('QUERY_STRING'))
