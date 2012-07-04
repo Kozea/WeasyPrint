@@ -22,7 +22,7 @@ from .logger import LOGGER
 # (This reduces the work for eg. 'weasyprint --help')
 
 
-VERSION = '0.11'
+VERSION = '0.12a0'
 __version__ = VERSION
 
 # Used for 'User-Agent' in HTTP and 'Creator' in PDF

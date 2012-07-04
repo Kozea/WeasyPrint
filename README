@@ -1,6 +1,6 @@
 WeasyPrint is a visual rendering engine for HTML and CSS that can export
 to PDF. It aims to support web standards for printing.
-WeasyPrint is free software made available under the ``_
+WeasyPrint is free software made available under the `BSD license
 <https://github.com/Kozea/WeasyPrint/blob/master/LICENSE>`_.
 
 It is based on various libraries **not** on a full rendering engine like
