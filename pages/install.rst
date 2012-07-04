@@ -23,11 +23,14 @@ WeasyPrint has been packaged for some Linux distributions:
   as ``weasyprint2``).
 * Gentoo: in the `Kozea overlay`_
 
+WeasyPrint is also packaged for `PyPM`_.
+
 (Please do `tell us`_ if you make such a package!)
 
 .. _python-weasyprint: https://aur.archlinux.org/packages.php?ID=57205
 .. _python2-weasyprint: https://aur.archlinux.org/packages.php?ID=57201
 .. _Kozea overlay: https://github.com/Kozea/Overlay/blob/master/README
+.. _PyPM: http://code.activestate.com/pypm/weasyprint/
 .. _tell us: /community/
 
 
