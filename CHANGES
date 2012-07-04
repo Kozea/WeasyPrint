@@ -1,6 +1,25 @@
 WeasyPrint changelog
 ====================
 
+Version 0.11
+------------
+
+Released on 2012-07-04.
+
+* Add support for floats and clear.
+  Together with various bug fixes, this enables WeasyPrint to pass the Acid2
+  test! Acid2 is now part of our automated test suite.
+* Add support for the width, min-width, max-width, height, min-height and
+  max-height properties in @page. The size property is now the size of the
+  page’s containing block.
+* Switch the Variable Dimension rules to the new proposal:
+  https://github.com/SimonSapin/css/blob/master/margin-boxes-variable-dimension
+  The previous implementation was broken in many cases.
+* The ``image-rendering``, ``transform``, ``transform-origin`` and ``size``
+  properties are now unprefixed. The prefixed form (eg. -weasy-size) is ignored
+  but gives a specific warning.
+
+
 Version 0.10
 ------------
 
