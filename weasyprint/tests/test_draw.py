@@ -167,7 +167,7 @@ def test_canvas_background():
     """Test the background applied on ``<html>`` and/or ``<body>`` tags."""
     assert_pixels('all_blue', 10, 10, (10 * [10 * B]), '''
         <style>
-            @page { -weasy-size: 10px }
+            @page { size: 10px }
             /* body’s background propagates to the whole canvas */
             body { margin: 2px; background: #00f; height: 5px }
         </style>
@@ -187,7 +187,7 @@ def test_canvas_background():
         r+r+r+r+r+r+r+r+r+r,
      ], '''
         <style>
-            @page { -weasy-size: 10px }
+            @page { size: 10px }
             /* html’s background propagates to the whole canvas */
             html { padding: 1px; background: #f00 }
             /* html has a background, so body’s does not propagate */
@@ -560,7 +560,7 @@ def test_background_image():
     ]:
         assert_pixels('background_' + name, 14, 16, pixels, '''
             <style>
-                @page { -weasy-size: 14px 16px }
+                @page { size: 14px 16px }
                 html { background: #fff }
                 body { margin: 2px; height: 10px;
                        background: url(pattern.png) %s }
@@ -577,7 +577,7 @@ def test_background_origin():
     def test_value(value, pixels, css=None):
         assert_pixels('background_origin_' + value, 12, 12, pixels, '''
             <style>
-                @page { -weasy-size: 12px }
+                @page { size: 12px }
                 html { background: #fff }
                 body { margin: 1px; padding: 1px; height: 6px;
                        border: 1px solid  transparent;
@@ -653,7 +653,7 @@ def test_background_clip():
     def test_value(value, pixels):
         assert_pixels('background_clip_' + value, 8, 8, pixels, '''
             <style>
-                @page { -weasy-size: 8px }
+                @page { size: 8px }
                 html { background: #fff }
                 body { margin: 1px; padding: 1px; height: 2px;
                        border: 1px solid  transparent;
@@ -712,11 +712,11 @@ def test_background_size():
         _+_+_+_+_+_+_+_+_+_+_+_,
     ], '''
         <style>
-            @page { -weasy-size: 12px }
+            @page { size: 12px }
             html { background: #fff }
             body { margin: 1px; height: 10px;
                    /* Use nearest neighbor algorithm for image resizing: */
-                   -weasy-image-rendering: optimizeSpeed;
+                   image-rendering: optimizeSpeed;
                    background: url(pattern.png) bottom right no-repeat;
                    background-size: 8px }
         </style>
@@ -738,11 +738,11 @@ def test_background_size():
         _+_+_+_+_+_+_+_+_+_+_+_,
     ], '''
         <style>
-            @page { -weasy-size: 12px }
+            @page { size: 12px }
             html { background: #fff }
             body { margin: 1px; height: 10px;
                    /* Use nearest neighbor algorithm for image resizing: */
-                   -weasy-image-rendering: optimizeSpeed;
+                   image-rendering: optimizeSpeed;
                    background: url(pattern.png) bottom right no-repeat;
                    background-size: auto }
         </style>
@@ -762,11 +762,11 @@ def test_background_size():
         _+_+_+_+_+_+_+_+_+_+_+_+_+_,
     ], '''
         <style>
-            @page { -weasy-size: 14px 10px }
+            @page { size: 14px 10px }
             html { background: #fff }
             body { margin: 1px; height: 8px;
                    /* Use nearest neighbor algorithm for image resizing: */
-                   -weasy-image-rendering: optimizeSpeed;
+                   image-rendering: optimizeSpeed;
                    background: url(pattern.png) no-repeat;
                    background-size: contain }
         </style>
@@ -786,11 +786,11 @@ def test_background_size():
         _+_+_+_+_+_+_+_+_+_+_+_+_+_,
     ], '''
         <style>
-            @page { -weasy-size: 14px 10px }
+            @page { size: 14px 10px }
             html { background: #fff }
             body { margin: 1px; height: 8px;
                    /* Use nearest neighbor algorithm for image resizing: */
-                   -weasy-image-rendering: optimizeSpeed;
+                   image-rendering: optimizeSpeed;
                    background: url(pattern.png) no-repeat;
                    background-size: auto 8px;
                    clip: auto; /* no-op to cover more validation */ }
@@ -811,11 +811,11 @@ def test_background_size():
         _+_+_+_+_+_+_+_+_+_+_+_+_+_,
     ], '''
         <style>
-            @page { -weasy-size: 14px 10px }
+            @page { size: 14px 10px }
             html { background: #fff }
             body { margin: 1px; height: 8px;
                    /* Use nearest neighbor algorithm for image resizing: */
-                   -weasy-image-rendering: optimizeSpeed;
+                   image-rendering: optimizeSpeed;
                    background: url(pattern.png) no-repeat;
                    background-size: 8px 4px;
                    clip: auto; /* no-op to cover more validation */ }
@@ -836,11 +836,11 @@ def test_background_size():
         _+_+_+_+_+_+_+_+_+_+_+_+_+_,
     ], '''
         <style>
-            @page { -weasy-size: 14px 10px }
+            @page { size: 14px 10px }
             html { background: #fff }
             body { margin: 1px; height: 8px;
                    /* Use nearest neighbor algorithm for image resizing: */
-                   -weasy-image-rendering: optimizeSpeed;
+                   image-rendering: optimizeSpeed;
                    background: url(pattern.png) no-repeat;
                    background-size: cover }
         </style>
@@ -886,7 +886,7 @@ def test_list_style_image():
     ]:
         assert_pixels('list_style_image_' + position, 12, 10, pixels, '''
             <style>
-                @page { -weasy-size: 12px 10px }
+                @page { size: 12px 10px }
                 body { margin: 0; background: white; font-family: %s }
                 ul { margin: 2px 2px 0 7px; list-style: url(pattern.png) %s;
                      font-size: 2px }
@@ -907,7 +907,7 @@ def test_list_style_image():
             _+_+_+_+_+_+_+_+_+_,
         ], '''
             <style>
-                @page { -weasy-size: 10px }
+                @page { size: 10px }
                 body { margin: 0; background: white; font-family: %s }
                 ul { margin: 0 0 0 5px; list-style: none; font-size: 2px; }
             </style>
@@ -958,14 +958,14 @@ def test_images():
             ('blue.jpg', blue_image)]:
         assert_pixels('inline_image_' + filename, 8, 8, image, '''
             <style>
-                @page { -weasy-size: 8px }
+                @page { size: 8px }
                 body { margin: 2px 0 0 2px; background: #fff; font-size: 0 }
             </style>
             <div><img src="%s"></div>
         ''' % filename)
     assert_pixels('block_image', 8, 8, centered_image, '''
         <style>
-            @page { -weasy-size: 8px }
+            @page { size: 8px }
             body { margin: 0; background: #fff; font-size: 0 }
             img { display: block; margin: 2px auto 0 }
         </style>
@@ -974,7 +974,7 @@ def test_images():
     with capture_logs() as logs:
         assert_pixels('image_not_found', 8, 8, no_image, '''
             <style>
-                @page { -weasy-size: 8px }
+                @page { size: 8px }
                 body { margin: 0; background: #fff; font-size: 0 }
                 img { display: block; margin: 2px auto 0 }
             </style>
@@ -985,7 +985,7 @@ def test_images():
     assert 'inexistent1.png' in logs[0]
     assert_pixels('image_no_src', 8, 8, no_image, '''
         <style>
-            @page { -weasy-size: 8px }
+            @page { size: 8px }
             body { margin: 0; background: #fff; font-size: 0 }
             img { display: block; margin: 2px auto 0 }
         </style>
@@ -995,7 +995,7 @@ def test_images():
         assert_same_rendering(200, 30, [
             (name, '''
                 <style>
-                    @page { -weasy-size: 200px 30px }
+                    @page { size: 200px 30px }
                     body { margin: 0; background: #fff; font-size: 0 }
                 </style>
                 <div>%s</div>
@@ -1019,7 +1019,7 @@ def test_images():
 
     assert_pixels('image_0x1', 8, 8, no_image, '''
         <style>
-            @page { -weasy-size: 8px }
+            @page { size: 8px }
             body { margin: 2px; background: #fff; font-size: 0 }
         </style>
         <div><img src="pattern.png" alt="not shown"
@@ -1027,7 +1027,7 @@ def test_images():
     ''')
     assert_pixels('image_1x0', 8, 8, no_image, '''
         <style>
-            @page { -weasy-size: 8px }
+            @page { size: 8px }
             body { margin: 2px; background: #fff; font-size: 0 }
         </style>
         <div><img src="pattern.png" alt="not shown"
@@ -1035,7 +1035,7 @@ def test_images():
     ''')
     assert_pixels('image_0x0', 8, 8, no_image, '''
         <style>
-            @page { -weasy-size: 8px }
+            @page { size: 8px }
             body { margin: 2px; background: #fff; font-size: 0 }
         </style>
         <div><img src="pattern.png" alt="not shown"
@@ -1073,7 +1073,7 @@ def test_images():
     ]
     assert_pixels('image_page_break', 8, 3 * 8, page_break, '''
         <style>
-            @page { -weasy-size: 8px; margin: 2px; background: #fff }
+            @page { size: 8px; margin: 2px; background: #fff }
             body { font-size: 0 }
         </style>
         <div><img src="pattern.png"></div>
@@ -1083,7 +1083,7 @@ def test_images():
     # Regression test: padding used to be ignored on images
     assert_pixels('image_with_padding', 8, 8, centered_image, '''
         <style>
-            @page { -weasy-size: 8px; background: #fff }
+            @page { size: 8px; background: #fff }
             body { font-size: 0 }
         </style>
         <div style="line-height: 1px">
@@ -1094,7 +1094,7 @@ def test_images():
     # Regression test: this used to cause an exception
     assert_pixels('image_in_inline_block', 8, 8, centered_image, '''
         <style>
-            @page { -weasy-size: 8px }
+            @page { size: 8px }
             body { margin: 2px 0 0 2px; background: #fff; font-size: 0 }
         </style>
         <div style="display: inline-block">
@@ -1108,7 +1108,7 @@ def test_images():
 def test_visibility():
     source = '''
         <style>
-            @page { -weasy-size: 12px 7px }
+            @page { size: 12px 7px }
             body { background: #fff; font: 1px/1 serif }
             img { margin: 1px 0 0 1px; }
             %(extra_css)s
@@ -1154,7 +1154,7 @@ def test_visibility():
 def test_tables():
     source = '''
         <style>
-            @page { -weasy-size: 28px }
+            @page { size: 28px }
             html { background: #fff; }
             table { margin: 1px; padding: 1px; border-spacing: 1px;
                     border: 1px solid transparent }
@@ -1335,7 +1335,7 @@ def test_before_after():
     assert_same_rendering(300, 30, [
         ('pseudo_before', '''
             <style>
-                @page { -weasy-size: 300px 30px }
+                @page { size: 300px 30px }
                 body { margin: 0; background: #fff }
                 a[href]:before { content: '[' '' attr(href) '] ' }
             </style>
@@ -1343,7 +1343,7 @@ def test_before_after():
         '''),
         ('pseudo_before_reference', '''
             <style>
-                @page { -weasy-size: 300px 30px }
+                @page { size: 300px 30px }
                 body { margin: 0; background: #fff }
             </style>
             <p><a href="another url">[some url] some content</p>
@@ -1353,7 +1353,7 @@ def test_before_after():
     assert_same_rendering(500, 30, [
         ('pseudo_quotes', '''
             <style>
-                @page { -weasy-size: 500px 30px }
+                @page { size: 500px 30px }
                 body { margin: 0; background: #fff; quotes: '«' '»' '“' '”' }
                 q:before { content: open-quote ' '}
                 q:after { content: ' ' close-quote }
@@ -1362,7 +1362,7 @@ def test_before_after():
         '''),
         ('pseudo_quotes_reference', '''
             <style>
-                @page { -weasy-size: 500px 30px }
+                @page { size: 500px 30px }
                 body { margin: 0; background: #fff }
             </style>
             <p>« Lorem ipsum “ dolor ” sit amet »</p>
@@ -1372,7 +1372,7 @@ def test_before_after():
     assert_same_rendering(100, 30, [
         ('pseudo_url', '''
             <style>
-                @page { -weasy-size: 100px 30px }
+                @page { size: 100px 30px }
                 body { margin: 0; background: #fff; }
                 p:before { content: 'a' url(pattern.png) 'b'}
             </style>
@@ -1380,7 +1380,7 @@ def test_before_after():
         '''),
         ('pseudo_url_reference', '''
             <style>
-                @page { -weasy-size: 100px 30px }
+                @page { size: 100px 30px }
                 body { margin: 0; background: #fff }
             </style>
             <p>a<img src="pattern.png" alt="Missing image">bc</p>
@@ -1393,7 +1393,7 @@ def test_borders():
     """Test the rendering of borders"""
     source = '''
         <style>
-            @page { -weasy-size: 140px 110px }
+            @page { size: 140px 110px }
             html { background: #fff }
             body { margin: 10px; width: 100px; height: 70px;
                    border: 10px %(border_style)s blue }
@@ -1463,7 +1463,7 @@ def test_margin_boxes():
             html { height: 100% }
             body { background: #f00; height: 100% }
             @page {
-                -weasy-size: 15px;
+                size: 15px;
                 margin: 4px 6px 7px 5px;
                 background: white;
 
@@ -1499,7 +1499,7 @@ def test_unicode():
     text = 'I løvë Unicode'
     style = '''
         @page {
-            -weasy-size: 200px 50px;
+            size: 200px 50px;
         }
         p { color: blue }
     '''
@@ -1551,7 +1551,7 @@ def test_overflow():
         _+_+_+_+_+_+_+_,
     ], '''
         <style>
-            @page { -weasy-size: 8px }
+            @page { size: 8px }
             body { margin: 2px 0 0 2px; background: #fff; font-size:0 }
             div { height: 2px; overflow: hidden }
         </style>
@@ -1571,7 +1571,7 @@ def test_overflow():
         _+_+_+_+_+_+_+_,
     ], '''
         <style>
-            @page { -weasy-size: 8px; background: #fff;
+            @page { size: 8px; background: #fff;
                     margin: 2px;
                     padding-bottom: 2px;
                     border-bottom: 1px transparent solid; }
@@ -1590,7 +1590,7 @@ def test_clip():
         name = 'background_repeat_clipped_%s' % num[0]
         assert_pixels(name, 14, 16, pixels, '''
             <style>
-                @page { -weasy-size: 14px 16px; background: #fff }
+                @page { size: 14px 16px; background: #fff }
                 div { margin: 1px; height: 10px;
                       border: 1px green solid;
                       background: url(pattern.png);
@@ -1687,7 +1687,7 @@ def test_opacity():
     """Test the opacity property."""
     template = '''
         <style>
-            @page { -weasy-size: 200px 60px }
+            @page { size: 200px 60px }
             body { margin: 0; background: #fff }
         </style>
         %s
@@ -1740,8 +1740,8 @@ def test_2d_transform():
         _+_+_+_+_+_+_+_,
     ], '''
         <style>
-            @page { -weasy-size: 8px; margin: 2px; background: #fff; }
-            div { -weasy-transform: rotate(90deg); font-size: 0 }
+            @page { size: 8px; margin: 2px; background: #fff; }
+            div { transform: rotate(90deg); font-size: 0 }
         </style>
         <div><img src="pattern.png"></div>
     ''')
@@ -1757,8 +1757,8 @@ def test_2d_transform():
         _+_+_+_+_+_+_+_,
     ], '''
         <style>
-            @page { -weasy-size: 8px; margin: 2px; background: #fff; }
-            div { -weasy-transform: matrix(-1, 0, 0, 1, 0, 0); font-size: 0 }
+            @page { size: 8px; margin: 2px; background: #fff; }
+            div { transform: matrix(-1, 0, 0, 1, 0, 0); font-size: 0 }
         </style>
         <div><img src="pattern.png"></div>
     ''')
@@ -1774,8 +1774,8 @@ def test_2d_transform():
         _+_+_+B+B+B+B+_,
     ], '''
         <style>
-            @page { -weasy-size: 8px; margin: 2px; background: #fff; }
-            div { -weasy-transform: translate(1px, 2px); font-size: 0 }
+            @page { size: 8px; margin: 2px; background: #fff; }
+            div { transform: translate(1px, 2px); font-size: 0 }
         </style>
         <div><img src="pattern.png"></div>
     ''')
@@ -1791,8 +1791,8 @@ def test_2d_transform():
         _+_+_+_+_+_+_+_,
     ], '''
         <style>
-            @page { -weasy-size: 8px; margin: 2px; background: #fff; }
-            div { -weasy-transform: translate(25%, 0); font-size: 0 }
+            @page { size: 8px; margin: 2px; background: #fff; }
+            div { transform: translate(25%, 0); font-size: 0 }
         </style>
         <div><img src="pattern.png"></div>
     ''')
@@ -1808,8 +1808,8 @@ def test_2d_transform():
         _+_+_+_+_+_+_+_,
     ], '''
         <style>
-            @page { -weasy-size: 8px; margin: 2px; background: #fff; }
-            div { -weasy-transform: translateX(0.25em); font-size: 12px }
+            @page { size: 8px; margin: 2px; background: #fff; }
+            div { transform: translateX(0.25em); font-size: 12px }
             div div { font-size: 0 }
         </style>
         <div><div><img src="pattern.png"></div></div>
@@ -1826,8 +1826,8 @@ def test_2d_transform():
         _+_+_+_+_+_+_+_,
     ], '''
         <style>
-            @page { -weasy-size: 8px; margin: 2px; background: #fff; }
-            div { -weasy-transform: translateY(-1px); font-size: 0 }
+            @page { size: 8px; margin: 2px; background: #fff; }
+            div { transform: translateY(-1px); font-size: 0 }
         </style>
         <div><img src="pattern.png"></div>
     ''')
@@ -1845,10 +1845,10 @@ def test_2d_transform():
         _+_+_+_+_+_+_+_+_+_,
     ], '''
         <style>
-            @page { -weasy-size: 10px; margin: 2px; background: #fff; }
-            div { -weasy-transform: scale(2, 2);
-                  -weasy-transform-origin: 1px 1px;
-                  -weasy-image-rendering: optimizeSpeed;
+            @page { size: 10px; margin: 2px; background: #fff; }
+            div { transform: scale(2, 2);
+                  transform-origin: 1px 1px;
+                  image-rendering: optimizeSpeed;
                   font-size: 0 }
         </style>
         <div><img src="pattern.png"></div>
@@ -1867,10 +1867,10 @@ def test_2d_transform():
         _+_+_+_+_+_+_+_+_+_,
     ], '''
         <style>
-            @page { -weasy-size: 10px; margin: 2px; background: #fff; }
-            div { -weasy-transform: scale(1, 2);
-                  -weasy-transform-origin: 1px 1px;
-                  -weasy-image-rendering: optimizeSpeed;
+            @page { size: 10px; margin: 2px; background: #fff; }
+            div { transform: scale(1, 2);
+                  transform-origin: 1px 1px;
+                  image-rendering: optimizeSpeed;
                   font-size: 0 }
         </style>
         <div><img src="pattern.png"></div>
@@ -1889,10 +1889,10 @@ def test_2d_transform():
         _+_+_+_+_+_+_+_+_+_,
     ], '''
         <style>
-            @page { -weasy-size: 10px; margin: 2px; background: #fff; }
-            div { -weasy-transform: scaleY(2);
-                  -weasy-transform-origin: 1px 1px;
-                  -weasy-image-rendering: optimizeSpeed;
+            @page { size: 10px; margin: 2px; background: #fff; }
+            div { transform: scaleY(2);
+                  transform-origin: 1px 1px;
+                  image-rendering: optimizeSpeed;
                   font-size: 0 }
         </style>
         <div><img src="pattern.png"></div>
@@ -1911,10 +1911,10 @@ def test_2d_transform():
         _+_+_+_+_+_+_+_+_+_,
     ], '''
         <style>
-            @page { -weasy-size: 10px; margin: 2px; background: #fff; }
-            div { -weasy-transform: scaleX(2);
-                  -weasy-transform-origin: 1px 1px;
-                  -weasy-image-rendering: optimizeSpeed;
+            @page { size: 10px; margin: 2px; background: #fff; }
+            div { transform: scaleX(2);
+                  transform-origin: 1px 1px;
+                  image-rendering: optimizeSpeed;
                   font-size: 0 }
         </style>
         <div><img src="pattern.png"></div>

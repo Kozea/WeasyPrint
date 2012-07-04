@@ -1183,7 +1183,7 @@ def test_margin_boxes():
             @page {
                 /* Make the page content area only 10px high and wide,
                    so every word in <p> end up on a page of its own. */
-                -weasy-size: 30px;
+                size: 30px;
                 margin: 10px;
                 @top-center { content: "Title" }
             }
@@ -1218,7 +1218,7 @@ def test_page_counters():
             @page {
                 /* Make the page content area only 10px high and wide,
                    so every word in <p> end up on a page of its own. */
-                -weasy-size: 30px;
+                size: 30px;
                 margin: 10px;
                 @bottom-center {
                     content: "Page " counter(page) " of " counter(pages) ".";

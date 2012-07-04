@@ -40,7 +40,7 @@ BASE_URL = 'file://' + BASE_PATH
 RESULTS_DIRECTORY = os.path.join(os.path.dirname(__file__), 'test_results')
 
 PAGE_SIZE_STYLESHEET = CSS(string='''
-    @page { margin: 0; -weasy-size: 640px }
+    @page { margin: 0; size: 640px }
 ''')
 
 IGNORED_FLAGS = {'interact', 'dom'}

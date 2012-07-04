@@ -61,7 +61,7 @@ VALIDATORS = {}
 EXPANDERS = {}
 
 PREFIXED = set()
-# The same replacement was done on property names:
+UNPREFIXED = set()
 PREFIX = '-weasy-'
 
 
@@ -71,14 +71,28 @@ class InvalidValues(ValueError):
 
 # Validators
 
-def validator(property_name=None, prefixed=False, wants_base_url=False):
+def validator(property_name=None, prefixed=False, unprefixed=False,
+              wants_base_url=False):
     """Decorator adding a function to the ``VALIDATORS``.
 
     The name of the property covered by the decorated function is set to
     ``property_name`` if given, or is inferred from the function name
     (replacing underscores by hyphens).
 
+    :param prefixed:
+        Vendor-specific (non-standard) and experimental properties are
+        prefixed: stylesheets need to use eg. ``-weasy-bookmark-level: 2``
+        instead of ``bookmark-level: 2``.
+        See http://wiki.csswg.org/spec/vendor-prefixes
+    :param unprefixed:
+        Mark properties that used to be prefixed. When used with the prefix,
+        they will be ignored be give a specific warning.
+    :param wants_base_url:
+        The function takes the stylesheet’s base URL as an additional
+        parameter.
+
     """
+    assert not (prefixed and unprefixed)
     def decorator(function):
         """Add ``function`` to the ``VALIDATORS``."""
         if property_name is None:
@@ -92,6 +106,8 @@ def validator(property_name=None, prefixed=False, wants_base_url=False):
         VALIDATORS[name] = function
         if prefixed:
             PREFIXED.add(name)
+        if unprefixed:
+            UNPREFIXED.add(name)
         return function
     return decorator
 
@@ -202,7 +218,7 @@ def image(token, base_url):
         return safe_urljoin(base_url, token.value)
 
 
-@validator('transform-origin', prefixed=True)  # Not in CR yet
+@validator('transform-origin', unprefixed=True)
 @validator()
 def background_position(tokens):
     """``background-position`` property validation.
@@ -791,14 +807,14 @@ def white_space(keyword):
     return keyword in ('normal', 'pre', 'nowrap', 'pre-wrap', 'pre-line')
 
 
-@validator(prefixed=True)  # Taken from SVG
+@validator(unprefixed=True)
 @single_keyword
 def image_rendering(keyword):
     """Validation for ``image-rendering``."""
     return keyword in ('auto', 'optimizespeed', 'optimizequality')
 
 
-@validator(prefixed=True)  # Not in CR yet
+@validator(unprefixed=True)
 def size(tokens):
     """``size`` property validation.
 
@@ -838,7 +854,7 @@ def size(tokens):
                 return width, height
 
 
-@validator(prefixed=True)  # Proprietary
+@validator(prefixed=True)  # Non-standard
 @single_token
 def anchor(token):
     """Validation for ``anchor``."""
@@ -853,7 +869,7 @@ def anchor(token):
             return (name, args[0])
 
 
-@validator(prefixed=True, wants_base_url=True)  # Proprietary
+@validator(prefixed=True, wants_base_url=True)  # Non-standard
 @single_token
 def link(token, base_url):
     """Validation for ``link``."""
@@ -873,7 +889,7 @@ def link(token, base_url):
             return (name, args[0])
 
 
-@validator(prefixed=True)  # CSS3 GCPM
+@validator(prefixed=True)  # CSS3 GCPM, experimental
 @single_token
 def bookmark_label(token):
     """Validation for ``bookmark-label``."""
@@ -885,7 +901,7 @@ def bookmark_label(token):
         return ('string', token.value)
 
 
-@validator(prefixed=True)  # CSS3 GCPM
+@validator(prefixed=True)  # CSS3 GCPM, experimental
 @single_token
 def bookmark_level(token):
     """Validation for ``bookmark-level``."""
@@ -897,7 +913,7 @@ def bookmark_level(token):
         return 'none'
 
 
-@validator(prefixed=True)  # Not in CR yet
+@validator(unprefixed=True)
 def transform(tokens):
     if get_single_keyword(tokens) == 'none':
         return []
@@ -1268,7 +1284,8 @@ def preprocess_declarations(base_url, declarations):
 
         if name in PREFIXED and not name.startswith(PREFIX):
             validation_error('warn',
-                'the property is experimental, use ' + PREFIX + name)
+                'the property is experimental or non-standard, use '
+                + PREFIX + name)
             continue
 
         if name in NOT_PRINT_MEDIA:
@@ -1278,6 +1295,10 @@ def preprocess_declarations(base_url, declarations):
 
         if name.startswith(PREFIX):
             unprefixed_name = name[len(PREFIX):]
+            if unprefixed_name in UNPREFIXED:
+                validation_error('warn',
+                    'the property was unprefixed, use ' + unprefixed_name)
+                continue
             if unprefixed_name in PREFIXED:
                 name = unprefixed_name
 

@@ -116,7 +116,7 @@ def run(suite_directory):
 
 
     default_stylesheet = CSS(string='''
-        @page { margin: 20px; -weasy-size: 680px }
+        @page { margin: 20px; size: 680px }
         body { margin: 0 }
     ''')
 

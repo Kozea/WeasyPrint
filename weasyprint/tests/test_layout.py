@@ -61,36 +61,36 @@ def test_page_size():
     assert int(page.margin_width()) == 793  # A4: 210 mm in pixels
     assert int(page.margin_height()) == 1122  # A4: 297 mm in pixels
 
-    page, = parse('<style>@page { -weasy-size: 2in 10in; }</style>')
+    page, = parse('<style>@page { size: 2in 10in; }</style>')
     assert page.margin_width() == 192
     assert page.margin_height() == 960
 
-    page, = parse('<style>@page { -weasy-size: 242px; }</style>')
+    page, = parse('<style>@page { size: 242px; }</style>')
     assert page.margin_width() == 242
     assert page.margin_height() == 242
 
-    page, = parse('<style>@page { -weasy-size: letter; }</style>')
+    page, = parse('<style>@page { size: letter; }</style>')
     assert page.margin_width() == 816  # 8.5in
     assert page.margin_height() == 1056  # 11in
 
-    page, = parse('<style>@page { -weasy-size: letter portrait; }</style>')
+    page, = parse('<style>@page { size: letter portrait; }</style>')
     assert page.margin_width() == 816  # 8.5in
     assert page.margin_height() == 1056  # 11in
 
-    page, = parse('<style>@page { -weasy-size: letter landscape; }</style>')
+    page, = parse('<style>@page { size: letter landscape; }</style>')
     assert page.margin_width() == 1056  # 11in
     assert page.margin_height() == 816  # 8.5in
 
-    page, = parse('<style>@page { -weasy-size: portrait; }</style>')
+    page, = parse('<style>@page { size: portrait; }</style>')
     assert int(page.margin_width()) == 793  # A4: 210 mm
     assert int(page.margin_height()) == 1122  # A4: 297 mm
 
-    page, = parse('<style>@page { -weasy-size: landscape; }</style>')
+    page, = parse('<style>@page { size: landscape; }</style>')
     assert int(page.margin_width()) == 1122  # A4: 297 mm
     assert int(page.margin_height()) == 793  # A4: 210 mm
 
     page, = parse('''
-        <style>@page { -weasy-size: 200px 300px; margin: 10px 10% 20% 1in }
+        <style>@page { size: 200px 300px; margin: 10px 10% 20% 1in }
                body { margin: 8px }
         </style>
         <p style="margin: 0">
@@ -127,7 +127,7 @@ def test_page_size():
 
     page, = parse('''
         <style>
-            @page { -weasy-size: 100px; margin: 1px 2px; padding: 4px 8px;
+            @page { size: 100px; margin: 1px 2px; padding: 4px 8px;
                     border-width: 16px 32px; border-style: solid }
         </style>
         <body>
@@ -140,7 +140,7 @@ def test_page_size():
     assert html.position_y == 21  # 1 + 4 + 16
 
     page, = parse('''<style>@page {
-        -weasy-size: 106px 206px; width: 80px; height: 170px;
+        size: 106px 206px; width: 80px; height: 170px;
         padding: 1px; border: 2px solid; margin: auto;
     }</style>''')
     assert page.margin_top == 15  # (206 - 2*1 - 2*2 - 170) / 2
@@ -149,7 +149,7 @@ def test_page_size():
     assert page.margin_left == 10  # (106 - 2*1 - 2*2 - 80) / 2
 
     page, = parse('''<style>@page {
-        -weasy-size: 106px 206px; width: 80px; height: 170px;
+        size: 106px 206px; width: 80px; height: 170px;
         padding: 1px; border: 2px solid; margin: 5px 5px auto auto;
     }</style>''')
     assert page.margin_top == 5
@@ -159,21 +159,21 @@ def test_page_size():
 
     # Over-constrained: the containing block is resized
     page, = parse('''<style>@page {
-        -weasy-size: 4px 10000px; width: 100px; height: 100px;
+        size: 4px 10000px; width: 100px; height: 100px;
         padding: 1px; border: 2px solid; margin: 3px;
     }</style>''')
     assert page.margin_width() == 112  # 100 + 2*1 + 2*2 + 2*3
     assert page.margin_height() == 112
 
     page, = parse('''<style>@page {
-        -weasy-size: 1000px; margin: 100px;
+        size: 1000px; margin: 100px;
         max-width: 500px; min-height: 1500px;
     }</style>''')
     assert page.margin_width() == 700
     assert page.margin_height() == 1700
 
     page, = parse('''<style>@page {
-        -weasy-size: 1000px; margin: 100px;
+        size: 1000px; margin: 100px;
         min-width: 1500px; max-height: 500px;
     }</style>''')
     assert page.margin_width() == 1700
@@ -185,7 +185,7 @@ def test_block_widths():
     """Test the blocks widths."""
     page, = parse('''
         <style>
-            @page { margin: 0; -weasy-size: 120px 2000px }
+            @page { margin: 0; size: 120px 2000px }
             body { margin: 0 }
             div { margin: 10px }
             p { padding: 2px; border-width: 1px; border-style: solid }
@@ -323,7 +323,7 @@ def test_block_heights():
     """Test the blocks heights."""
     page, = parse('''
         <style>
-            @page { margin: 0; -weasy-size: 100px 20000px }
+            @page { margin: 0; size: 100px 20000px }
             html, body { margin: 0 }
             div { margin: 4px; border-width: 2px; border-style: solid;
                   padding: 4px }
@@ -452,7 +452,7 @@ def test_inline_block_sizes():
     """Test the inline-block elements sizes."""
     page, = parse('''
         <style>
-            @page { margin: 0; -weasy-size: 200px 2000px }
+            @page { margin: 0; size: 200px 2000px }
             body { margin: 0 }
             div { display: inline-block; }
         </style>
@@ -832,7 +832,7 @@ def test_auto_layout_table():
 
     page, = parse('''
         <style>
-            @page { -weasy-size: 100px 1000px; }
+            @page { size: 100px 1000px; }
         </style>
         <table style="border-spacing: 1px; margin-right: 79px; font-size: 0">
             <tr>
@@ -1332,7 +1332,7 @@ def test_page_breaks():
     """Test the page breaks."""
     pages = parse('''
         <style>
-            @page { -weasy-size: 100px; margin: 10px }
+            @page { size: 100px; margin: 10px }
             body { margin: 0 }
             div { height: 30px; font-size: 20px; }
         </style>
@@ -1356,7 +1356,7 @@ def test_page_breaks():
     # TODO: This currently gives no page break. Should it?
 #    pages = parse('''
 #        <style>
-#            @page { -weasy-size: 100px; margin: 10px }
+#            @page { size: 100px; margin: 10px }
 #            body { margin: 0 }
 #            div { height: 30px }
 #        </style>
@@ -1374,7 +1374,7 @@ def test_page_breaks():
 
     pages = parse('''
         <style>
-            @page { -weasy-size: 100px; margin: 10px }
+            @page { size: 100px; margin: 10px }
             img { height: 30px; display: block }
         </style>
         <body>
@@ -1454,7 +1454,7 @@ def test_page_breaks():
     # Without any 'avoid', this breaks after the <div>
     page_1, page_2 = parse('''
         <style>
-            @page { -weasy-size: 140px; margin: 0 }
+            @page { size: 140px; margin: 0 }
             img { height: 25px; vertical-align: top }
             p { orphans: 1; widows: 1 }
         </style>
@@ -1484,7 +1484,7 @@ def test_page_breaks():
     # before the <div>
     page_1, page_2 = parse('''
         <style>
-            @page { -weasy-size: 140px; margin: 0 }
+            @page { size: 140px; margin: 0 }
             img { height: 25px; vertical-align: top }
             p { orphans: 1; widows: 1 }
         </style>
@@ -1515,7 +1515,7 @@ def test_page_breaks():
 
     page_1, page_2 = parse('''
         <style>
-            @page { -weasy-size: 140px; margin: 0 }
+            @page { size: 140px; margin: 0 }
             img { height: 25px; vertical-align: top }
             p { orphans: 1; widows: 1 }
         </style>
@@ -1550,7 +1550,7 @@ def test_page_breaks():
     # Reference for the next test
     page_1, page_2, page_3 = parse('''
         <style>
-            @page { -weasy-size: 100px; margin: 0 }
+            @page { size: 100px; margin: 0 }
             img { height: 30px; display: block; }
             p { orphans: 1; widows: 1 }
         </style>
@@ -1581,7 +1581,7 @@ def test_page_breaks():
 
     page_1, page_2, page_3 = parse('''
         <style>
-            @page { -weasy-size: 100px; margin: 0 }
+            @page { size: 100px; margin: 0 }
             img { height: 30px; display: block; }
             p { orphans: 1; widows: 1 }
         </style>
@@ -1624,7 +1624,7 @@ def test_orphans_widows_avoid():
     def line_distribution(css):
         pages = parse('''
             <style>
-                @page { -weasy-size: 200px }
+                @page { size: 200px }
                 h1 { height: 120px }
                 p { line-height: 20px;
                     width: 1px; /* line break at each word */
@@ -1700,7 +1700,7 @@ def test_table_page_breaks():
 
     rows_per_page, rows_position_y = run('''
         <style>
-            @page { -weasy-size: 120px }
+            @page { size: 120px }
             table { table-layout: fixed; width: 100% }
             h1 { height: 30px }
             td { height: 40px }
@@ -1725,7 +1725,7 @@ def test_table_page_breaks():
 
     rows_per_page, rows_position_y = run('''
         <style>
-            @page { -weasy-size: 120px }
+            @page { size: 120px }
             h1 { height: 30px}
             td { height: 40px }
             table { table-layout: fixed; width: 100%;
@@ -1745,7 +1745,7 @@ def test_table_page_breaks():
 
     rows_per_page, rows_position_y = run('''
         <style>
-            @page { -weasy-size: 120px }
+            @page { size: 120px }
             h1 { height: 30px}
             td { height: 40px }
             table { table-layout: fixed; width: 100%;
@@ -1767,7 +1767,7 @@ def test_table_page_breaks():
 
     rows_per_page, rows_position_y = run('''
         <style>
-            @page { -weasy-size: 120px }
+            @page { size: 120px }
             h1 { height: 30px}
             td { height: 40px }
             table { table-layout: fixed; width: 100% }
@@ -1787,7 +1787,7 @@ def test_table_page_breaks():
 
     pages = parse('''
         <style>
-            @page { -weasy-size: 100px }
+            @page { size: 100px }
         </style>
         <h1 style="margin: 0; height: 30px">Lipsum</h1>
         <!-- Leave 70px on the first page: enough for the header or row1
@@ -1996,7 +1996,7 @@ def test_page_and_linebox_breaking():
     pages = parse('''
         <style>
             div { font-family:%(fonts)s; font-size:22px}
-            @page { -weasy-size: 100px; margin:2px; border:1px solid }
+            @page { size: 100px; margin:2px; border:1px solid }
             body { margin: 0 }
         </style>
         <div><span/>1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15</div>
@@ -2153,7 +2153,7 @@ def test_images():
     # Block-level image:
     page, = parse('''
         <style>
-            @page { -weasy-size: 100px }
+            @page { size: 100px }
             img { width: 40px; margin: 10px auto; display: block }
         </style>
         <body>
@@ -2170,7 +2170,7 @@ def test_images():
 
     page, = parse('''
         <style>
-            @page { -weasy-size: 100px }
+            @page { size: 100px }
             img { min-width: 40%; margin: 10px auto; display: block }
         </style>
         <body>
@@ -2473,7 +2473,7 @@ def test_text_align_left():
     """
     page, = parse('''
         <style>
-            @page { -weasy-size: 200px }
+            @page { size: 200px }
         </style>
         <body>
             <img src="pattern.png" style="width: 40px">
@@ -2505,7 +2505,7 @@ def test_text_align_right():
     """
     page, = parse('''
         <style>
-            @page { -weasy-size: 200px }
+            @page { size: 200px }
             body { text-align: right }
         </style>
         <body>
@@ -2537,7 +2537,7 @@ def test_text_align_center():
     """
     page, = parse('''
         <style>
-            @page { -weasy-size: 200px }
+            @page { size: 200px }
             body { text-align: center }
         </style>
         <body>
@@ -2557,7 +2557,7 @@ def test_text_align_justify():
     """Test justified text."""
     page, = parse('''
         <style>
-            @page { -weasy-size: 300px 1000px }
+            @page { size: 300px 1000px }
             body { text-align: justify }
         </style>
         <p><img src="pattern.png" style="width: 40px"> &#20;
@@ -2663,7 +2663,7 @@ def test_text_indent():
     for indent in ['12px', '6%']:  # 6% of 200px is 12px
         page, = parse('''
             <style>
-                @page { -weasy-size: 220px }
+                @page { size: 220px }
                 body { margin: 10px; text-indent: %(indent)s }
             </style>
             <p>Some text that is long enough that it take at least three line,
@@ -2686,7 +2686,7 @@ def test_inline_replaced_auto_margins():
     """Test that auto margins are ignored for inline replaced boxes."""
     page, = parse('''
         <style>
-            @page { -weasy-size: 200px }
+            @page { size: 200px }
             img { display: inline; margin: auto; width: 50px }
         </style>
         <body>
@@ -2707,7 +2707,7 @@ def test_empty_inline_auto_margins():
     """Test that horizontal auto margins are ignored for empty inline boxes."""
     page, = parse('''
         <style>
-            @page { -weasy-size: 200px }
+            @page { size: 200px }
             span { margin: auto }
         </style>
         <body><span></span>
@@ -2731,7 +2731,7 @@ def test_box_sizing():
     """
     page, = parse('''
         <style>
-            @page { -weasy-size: 100000px }
+            @page { size: 100000px }
             body { width: 10000px; margin: 0 }
             div { width: 10%; height: 1000px;
                   margin: 100px; padding: 10px; border: 1px solid }
@@ -3033,7 +3033,7 @@ def test_table_row_height():
 def test_table_wrapper():
     page, = parse('''
         <style>
-            @page { -weasy-size: 1000px }
+            @page { size: 1000px }
             table { width: 600px; height: 500px; table-layout: fixed;
                     padding: 1px; border: 10px solid; margin: 100px; }
         </style>
@@ -3083,7 +3083,7 @@ def test_margin_boxes_fixed_dimension():
                     padding: 10px;
                 }
 
-                -weasy-size: 1000px;
+                size: 1000px;
                 margin-top: 10%;
                 margin-bottom: 40%;
                 margin-left: 20%;
@@ -3323,7 +3323,7 @@ def test_margin_boxes_variable_dimension():
         page, = parse('''
             <style>
                 @page {
-                    -weasy-size: 800px;
+                    size: 800px;
                     margin: 100px;
                     padding: 42px;
                     border: 7px solid;
@@ -3495,7 +3495,7 @@ def test_margin_boxes_vertical_align():
     page, = parse('''
         <style>
             @page {
-                -weasy-size: 800px;
+                size: 800px;
                 margin: 106px;  /* margin boxes’ content height is 100px */
 
                 @top-left {
@@ -3930,7 +3930,7 @@ def test_absolute_positioning():
 
     page, = parse('''
         <style>
-          @page { -weasy-size: 1000px 2000px }
+          @page { size: 1000px 2000px }
           html { font-size: 0 }
           p { height: 20px }
         </style>

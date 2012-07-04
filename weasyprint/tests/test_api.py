@@ -200,9 +200,9 @@ def test_python_render():
     html = TestHTML(string='<body><img src=pattern.png>',
         base_url=resource_filename('dummy.html'))
     css = CSS(string='''
-        @page { margin: 2px; -weasy-size: 8px; background: #fff }
+        @page { margin: 2px; size: 8px; background: #fff }
         body { margin: 0; font-size: 0 }
-        img { -weasy-image-rendering: optimizeSpeed }
+        img { image-rendering: optimizeSpeed }
     ''')
 
     png_bytes = html.write_png(stylesheets=[css])
@@ -257,7 +257,7 @@ def test_python_render():
 def test_command_line_render():
     """Test rendering with the command-line API."""
     css = b'''
-        @page { margin: 2px; -weasy-size: 8px; background: #fff }
+        @page { margin: 2px; size: 8px; background: #fff }
         body { margin: 0; font-size: 0 }
     '''
     html = b'<body><img src=pattern.png>'
@@ -337,7 +337,7 @@ def test_unicode_filenames():
     # Replicate pattern.png in CSS so that base_url does not matter.
     html = b'''
         <style>
-            @page { margin: 2px; -weasy-size: 8px; background: #fff }
+            @page { margin: 2px; size: 8px; background: #fff }
             html { background: #00f; }
             body { background: #f00; width: 1px; height: 1px; }
         </style>

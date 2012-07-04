@@ -43,7 +43,7 @@ def test_pdf_parser():
 def get_metadata(html, base_url=resource_filename('<inline HTML>')):
     document = TestPDFDocument(html, base_url=base_url,
         user_stylesheets=[CSS(
-            string='@page { -weasy-size: 500pt 1000pt; margin: 50pt }')])
+            string='@page { size: 500pt 1000pt; margin: 50pt }')])
     return pdf.gather_metadata(document)
 
 

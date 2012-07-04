@@ -99,52 +99,52 @@ def test_decoration():
 
 @assert_no_logs
 def test_size():
-    assert expand_to_dict('-weasy-size: 200px') == {
+    assert expand_to_dict('size: 200px') == {
         'size': ((200, 'px'), (200, 'px'))}
-    assert expand_to_dict('-weasy-size: 200px 300pt') == {
+    assert expand_to_dict('size: 200px 300pt') == {
         'size': ((200, 'px'), (300, 'pt'))}
-    assert expand_to_dict('-weasy-size: auto') == {
+    assert expand_to_dict('size: auto') == {
         'size': ((210, 'mm'), (297, 'mm'))}
-    assert expand_to_dict('-weasy-size: portrait') == {
+    assert expand_to_dict('size: portrait') == {
         'size': ((210, 'mm'), (297, 'mm'))}
-    assert expand_to_dict('-weasy-size: landscape') == {
+    assert expand_to_dict('size: landscape') == {
         'size': ((297, 'mm'), (210, 'mm'))}
-    assert expand_to_dict('-weasy-size: A3 portrait') == {
+    assert expand_to_dict('size: A3 portrait') == {
         'size': ((297, 'mm'), (420, 'mm'))}
-    assert expand_to_dict('-weasy-size: A3 landscape') == {
+    assert expand_to_dict('size: A3 landscape') == {
         'size': ((420, 'mm'), (297, 'mm'))}
-    assert expand_to_dict('-weasy-size: portrait A3') == {
+    assert expand_to_dict('size: portrait A3') == {
         'size': ((297, 'mm'), (420, 'mm'))}
-    assert expand_to_dict('-weasy-size: landscape A3') == {
+    assert expand_to_dict('size: landscape A3') == {
         'size': ((420, 'mm'), (297, 'mm'))}
-    assert expand_to_dict('-weasy-size: A3 landscape A3', 'invalid') == {}
-    assert expand_to_dict('-weasy-size: A9', 'invalid') == {}
-    assert expand_to_dict('-weasy-size: foo', 'invalid') == {}
-    assert expand_to_dict('-weasy-size: foo bar', 'invalid') == {}
-    assert expand_to_dict('-weasy-size: 20%', 'invalid') == {}
+    assert expand_to_dict('size: A3 landscape A3', 'invalid') == {}
+    assert expand_to_dict('size: A9', 'invalid') == {}
+    assert expand_to_dict('size: foo', 'invalid') == {}
+    assert expand_to_dict('size: foo bar', 'invalid') == {}
+    assert expand_to_dict('size: 20%', 'invalid') == {}
 
 
 @assert_no_logs
 def test_transforms():
-    assert expand_to_dict('-weasy-transform: none') == {
+    assert expand_to_dict('transform: none') == {
         'transform': []}
-    assert expand_to_dict('-weasy-transform: translate(6px) rotate(90deg)'
+    assert expand_to_dict('transform: translate(6px) rotate(90deg)'
         ) == {'transform': [('translate', ((6, 'px'), (0, 'px'))),
                             ('rotate', (90, 'deg'))]}
-    assert expand_to_dict('-weasy-transform: translate(-4px, 0)'
+    assert expand_to_dict('transform: translate(-4px, 0)'
         ) == {'transform': [('translate', ((-4, 'px'), (0, None)))]}
-    assert expand_to_dict('-weasy-transform: translate(6px, 20%)'
+    assert expand_to_dict('transform: translate(6px, 20%)'
         ) == {'transform': [('translate', ((6, 'px'), (20, '%')))]}
-    assert expand_to_dict('-weasy-transform: scale(2)'
+    assert expand_to_dict('transform: scale(2)'
         ) == {'transform': [('scale', (2, 2))]}
-    assert expand_to_dict('-weasy-transform: translate(6px 20%)',
+    assert expand_to_dict('transform: translate(6px 20%)',
         'invalid') == {}  # missing comma
-    assert expand_to_dict('-weasy-transform: lipsumize(6px)', 'invalid') == {}
-    assert expand_to_dict('-weasy-transform: foo', 'invalid') == {}
-    assert expand_to_dict('-weasy-transform: scale(2) foo', 'invalid') == {}
-    assert expand_to_dict('-weasy-transform: 6px', 'invalid') == {}
-    assert expand_to_dict('transform: none',
-        'the property is experimental, use -weasy-transform') == {}
+    assert expand_to_dict('transform: lipsumize(6px)', 'invalid') == {}
+    assert expand_to_dict('transform: foo', 'invalid') == {}
+    assert expand_to_dict('transform: scale(2) foo', 'invalid') == {}
+    assert expand_to_dict('transform: 6px', 'invalid') == {}
+    assert expand_to_dict('-weasy-transform: none',
+        'the property was unprefixed, use transform') == {}
 
 
 @assert_no_logs
