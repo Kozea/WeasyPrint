@@ -168,6 +168,11 @@ pre{
   white-space: pre-wrap;
 }
 
+.img-right {
+    float: right;
+    margin: 1em;
+}
+
 /*
   ----------
   - Header -
