@@ -13,7 +13,7 @@ Features
 
 .. _changelog: https://github.com/Kozea/WeasyPrint/blob/master/CHANGES
 
-WeasyPrint 0.10 supports:
+WeasyPrint 0.11 supports:
 
 * HTML documents with:
 
@@ -33,13 +33,12 @@ WeasyPrint 0.10 supports:
 
 * Most of `CSS 2.1`_ (see below__)
 * Most `CSS 3 Selectors`_ (see below__)
-* `CSS 3 Colors`_
+* `CSS 3 Paged Media`_ (except for named pages)
 * Bookmarks from `CSS Generated Content for Paged Media`_
-* Experimental: `CSS 2D Transforms`_
+* `CSS 3 Colors`_
+* `CSS Transforms`_ (2D only)
 * From `CSS 3 Backgrounds and Borders`_: ``background-clip``,
   ``background-origin`` and ``background-size``.
-* Experimental: margin boxes, page counter and the ``size`` property
-  from `CSS 3 Paged Media`_
 * `box-sizing`_ from CSS3 Basic User Interface
 
 .. _PDF bookmarks: #pdf-bookmarks
@@ -54,6 +53,8 @@ __ #missing-css-3-selectors
 .. _CSS 3 Selectors: http://www.w3.org/TR/css3-selectors/
 .. _CSS 3 Backgrounds and Borders: http://www.w3.org/TR/css3-background/
 .. _box-sizing: http://www.w3.org/TR/css3-ui/#box-sizing
+.. _CSS 3 Paged Media: http://dev.w3.org/csswg/css3-page/
+.. _CSS Transforms: http://dev.w3.org/csswg/css3-transforms/
 
 Experimental features
 ~~~~~~~~~~~~~~~~~~~~~
@@ -65,18 +66,10 @@ to use them.
 WeasyPrint tries to follow specification changes. Be aware of this if you
 use any experimental feature!
 
-* The ``size`` property from `CSS 3 Paged Media`_ to set the page size.
-  Use ``-weasy-size``.
-
-* `CSS 2D Transforms`_: use ``-weasy-transform`` and
-  ``-weasy-transform-origin``.
-
 * Bookmarks from `CSS Generated Content for Paged Media`_: use
   ``-weasy-bookmark-level`` and ``-weasy-bookmark-level``.
 
 .. _at risk of changing: http://www.w3.org/TR/css-2010/#experimental
-.. _CSS 3 Paged Media: http://www.w3.org/TR/css3-page/
-.. _CSS 2D Transforms: http://www.w3.org/TR/css3-2d-transforms/
 .. _CSS Generated Content for Paged Media: http://dev.w3.org/csswg/css3-gcpm/#bookmarks
 
 
@@ -106,10 +99,9 @@ Please `report a bug`_ if you find this list incomplete.
 
 Some CSS 2.1 features are not supported yet but are on the *to do* list:
 
-* Floats_
 * Table `border collapsing`_ and the `empty-cells`_ property.
-* Minimum and maximum width_ and height_ on table-related and page-related
-  boxes
+* Minimum and maximum width_ and height_ on table-related boxes and
+  page-margin boxes.
 * Outlines_
 
 We have few or no use cases for others, but feel free to ask about them:
@@ -120,7 +112,6 @@ We have few or no use cases for others, but feel free to ask about them:
   (May happen to kind of work in uninterrupted text thanks to Pango)
 * `System colors`_. They are deprecated in CSS 3
 
-.. _Floats: http://www.w3.org/TR/CSS21/visuren.html#floats
 .. _border collapsing: http://www.w3.org/TR/CSS21/tables.html#collapsing-borders
 .. _empty-cells: http://www.w3.org/TR/CSS21/tables.html#empty-cells
 .. _width: http://www.w3.org/TR/CSS21/visudet.html#min-max-widths

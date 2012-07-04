@@ -53,7 +53,7 @@ Here an extract of `CSS21-print.css`_:
         @top-center {
             content: "Introduction to CSS 2.1";
             vertical-align: bottom;
-            border-bottom: thin solid;
+            border-bottom: 0.5pt solid;
         }
         @bottom-right {
             content: "Page " counter(page) " of " counter(pages);
@@ -61,8 +61,8 @@ Here an extract of `CSS21-print.css`_:
         @left-top {
             content: "W3C Recommendation";
             background: #005a9c; color: #fff; text-align: right;
-            -weasy-transform-origin: 100% 0;
-            -weasy-transform: rotate(-90deg);
+            transform-origin: 100% 0;
+            transform: rotate(-90deg);
         }
     }
     body { text-align: justify }
