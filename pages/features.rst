@@ -6,95 +6,74 @@ Documentation
 * `Hacking </hacking/>`_
 * **Features**
 
-Features
-~~~~~~~~
-
-(For older versions, see the changelog_.)
+This page is for WeasyPrint 0.11. For older versions, see the changelog_.
 
 .. _changelog: https://github.com/Kozea/WeasyPrint/blob/master/CHANGES
 
-WeasyPrint 0.11 supports:
 
-* HTML documents with:
+URLs
+----
 
-  * Linked and embedded CSS stylesheets
-  * Images in ``<img>``, ``<embed>`` or ``<object>`` elements:
+WeasyPrint can read normal files, HTTP, FTP and `data URIs`_. It will follow
+HTTP redirects but more advanced features like cookies and authentication
+are currently not supported.
 
-    - Raster images formats supported by ImageMagick_ (includes
-      PNG, JPEG, GIF, ...)
-    - SVG images with CairoSVG_
+.. _data URIs: http://en.wikipedia.org/wiki/Data_URI_scheme
 
-  * Hyperlinks, either internal (with the target in the same document:
-    ``<a href="#foo">``) or external. The links are clickable in PDF viewers
-    that support them.
-  * **Not** supported: HTML `presentational hints`_ (like the ``width``
-    attribute on an ``img`` element). Use CSS in the ``style``
-    attribute instead.
 
-* Most of `CSS 2.1`_ (see below__)
-* Most `CSS 3 Selectors`_ (see below__)
-* `CSS 3 Paged Media`_ (except for named pages)
-* Bookmarks from `CSS Generated Content for Paged Media`_
-* `CSS 3 Colors`_
-* `CSS Transforms`_ (2D only)
-* From `CSS 3 Backgrounds and Borders`_: ``background-clip``,
-  ``background-origin`` and ``background-size``.
-* `box-sizing`_ from CSS3 Basic User Interface
+HTML
+----
 
-.. _PDF bookmarks: #pdf-bookmarks
-__ #missing-css-2-1-features
-__ #missing-css-3-selectors
+Many HTML elements are implemented in CSS through the HTML5
+`User-Agent stylesheet
+<https://github.com/Kozea/WeasyPrint/blob/master/weasyprint/css/html5_ua.css>`_.
+
+Some elements need special treatment:
+
+* CSS stylesheets can be embedded in ``<style>`` elements or linked by
+  ``<link rel=stylesheet>`` elements.
+* ``<img>``, ``<embed>`` or ``<object>`` elements accept images either
+  in raster formats supported by ImageMagick_ (including PNG, JPEG, GIF, ...)
+  or in SVG with CairoSVG_. SVG images are not rasterized but preserved
+  as vectors in the PDF output.
+
+HTML `presentational hints`_ (like the ``width`` attribute on an ``img``
+element) are **not** supported. Use CSS in the ``style`` attribute instead.
 
 .. _CairoSVG: http://cairosvg.org/
 .. _ImageMagick: http://www.imagemagick.org/script/formats.php
 .. _presentational hints: http://www.w3.org/TR/html5/rendering.html#presentational-hints
-.. _CSS 2.1: http://www.w3.org/TR/CSS21/
-.. _CSS 3 Colors: http://www.w3.org/TR/css3-color/
-.. _CSS 3 Selectors: http://www.w3.org/TR/css3-selectors/
-.. _CSS 3 Backgrounds and Borders: http://www.w3.org/TR/css3-background/
-.. _box-sizing: http://www.w3.org/TR/css3-ui/#box-sizing
-.. _CSS 3 Paged Media: http://dev.w3.org/csswg/css3-page/
-.. _CSS Transforms: http://dev.w3.org/csswg/css3-transforms/
-
-Experimental features
-~~~~~~~~~~~~~~~~~~~~~
-
-These features are only described in *Working Draft* specification.
-As they are `at risk of changing`_, you need to use th ``-weasy-`` prefix
-to use them.
-
-WeasyPrint tries to follow specification changes. Be aware of this if you
-use any experimental feature!
-
-* Bookmarks from `CSS Generated Content for Paged Media`_: use
-  ``-weasy-bookmark-level`` and ``-weasy-bookmark-level``.
-
-.. _at risk of changing: http://www.w3.org/TR/css-2010/#experimental
-.. _CSS Generated Content for Paged Media: http://dev.w3.org/csswg/css3-gcpm/#bookmarks
 
 
-Missing CSS 3 selectors
-~~~~~~~~~~~~~~~~~~~~~~~
+PDF
+---
 
-Selectors in WeasyPrint are based on cssselect_ and share its limitations.
-Namely:
+In addition to text, raster and vector graphics, WeasyPrint’s PDF files
+can contain hyperlinks and bookmarks.
 
-* ``*:first-of-type``, ``*:last-of-type``, ``*:nth-of-type``,
-  ``*:nth-last-of-type`` and ``*:only-of-type`` are not supported.
-  They work when you specify an element type but parse as invalid with ``*``.
-* ``:hover``, ``:active``, ``:focus``, ``:target`` and ``:visited``
-  are accepted but never match anything.
+Hyperlinks will be clickable in PDF viewers that support them. They can
+be either internal, to another part of the same document (eg.
+``<a href="#pdf">``) or external, to an URL. External links are resolved
+to absolute URLs: ``<a href="/install/">`` on this page would always point
+to http://weasyprint.org/install/ in PDF files.
 
-.. _cssselect: http://packages.python.org/cssselect/
+PDF bookmarks are also called outlines and are generally shown in a
+sidebar. Clicking on an entry scrolls the matching part of the document
+into view. By default all ``<h1>`` to ``<h6>`` titles generate bookmarks,
+but this can be controlled with CSS (see below.)
 
 
-Missing CSS 2.1 features
-~~~~~~~~~~~~~~~~~~~~~~~~
+CSS
+---
 
-To the best of our knowledge, everything in CSS 2.1 that applies to the
-“print” media but is not listed in this section is supported by WeasyPrint.
+CSS 2.1
+~~~~~~~
+
+To the best of our knowledge, everything in `CSS 2.1`_ that applies to the
+“print” media but is not listed in this section is supported.
 Please `report a bug`_ if you find this list incomplete.
 
+.. _CSS 2.1: http://www.w3.org/TR/CSS21/
 .. _report a bug: /community/#issue-bug-tracker
 
 Some CSS 2.1 features are not supported yet but are on the *to do* list:
@@ -104,19 +83,75 @@ Some CSS 2.1 features are not supported yet but are on the *to do* list:
   page-margin boxes.
 * Outlines_
 
-We have few or no use cases for others, but feel free to ask about them:
-
-* Conforming `font matching algorithm`_. Currently ``font-family``
-  is directly passed to Pango.
-* Right-to-left or `bi-directional text`_.
-  (May happen to kind of work in uninterrupted text thanks to Pango)
-* `System colors`_. They are deprecated in CSS 3
-
 .. _border collapsing: http://www.w3.org/TR/CSS21/tables.html#collapsing-borders
 .. _empty-cells: http://www.w3.org/TR/CSS21/tables.html#empty-cells
 .. _width: http://www.w3.org/TR/CSS21/visudet.html#min-max-widths
 .. _height: http://www.w3.org/TR/CSS21/visudet.html#min-max-heights
+.. _Outlines: http://www.w3.org/TR/CSS21/ui.html#dynamic-outlines
+
+We have few or no use cases for others, but feel free to ask about them:
+
+* Conforming `font matching algorithm`_. Currently ``font-family``
+  is passed as-is to Pango.
+* Right-to-left or `bi-directional text`_.
+  (May happen to kind of work in uninterrupted text thanks to Pango)
+* `System colors`_. They are deprecated in CSS 3
+
 .. _font matching algorithm: http://www.w3.org/TR/CSS21/fonts.html#algorithm
 .. _Bi-directional text: http://www.w3.org/TR/CSS21/visuren.html#direction
 .. _System colors: http://www.w3.org/TR/CSS21/ui.html#system-colors
-.. _Outlines: http://www.w3.org/TR/CSS21/ui.html#dynamic-outlines
+
+
+CSS 3 Selectors
+~~~~~~~~~~~~~~~
+
+With the exceptions noted here, all `CSS 3 Selectors`_ are supported.
+
+PDF is generally not interactive. The ``:hover``, ``:active``, ``:focus``,
+``:target`` and ``:visited`` pseudo-classes are accepted as valid but
+never match anything.
+
+Due to a limitation in cssselect_, ``*:first-of-type``, ``*:last-of-type``,
+``*:nth-of-type``, ``*:nth-last-of-type`` and ``*:only-of-type`` are
+not supported. They work when you specify an element type but parse
+as invalid with ``*``.
+
+.. _CSS 3 Selectors: http://www.w3.org/TR/css3-selectors/
+.. _cssselect: http://packages.python.org/cssselect/
+
+
+CSS GCPM: bookmarks
+~~~~~~~~~~~~~~~~~~~
+
+PDF bookmarks are controlled as described in `CSS Generated Content for
+Paged Media`_. This module is experimental_: the properties need to be
+prefixed: use ``-weasy-bookmark-level`` and ``-weasy-bookmark-level``.
+
+.. _CSS Generated Content for Paged Media: http://dev.w3.org/csswg/css3-gcpm/#bookmarks
+.. _experimental: http://www.w3.org/TR/css-2010/#experimental
+
+For example, if you have only one top-level ``<h1>`` and do not wish to
+include it in the bookmarks, add this in your stylesheet:
+
+.. code-block:: css
+
+    h1 { -weasy-bookmark-level: none }
+
+
+Other CSS 3 modules
+~~~~~~~~~~~~~~~~~~~
+
+Are supported:
+
+* `CSS 3 Colors`_ (except the deprecated System Colors)
+* `CSS 3 Paged Media`_ (except named pages)
+* `CSS Transforms`_ (2D only)
+* From `CSS 3 Backgrounds and Borders`_: ``background-clip``,
+  ``background-origin`` and ``background-size``.
+* From `CSS 3 Basic User Interface`_: ``box-sizing``
+
+.. _CSS 3 Colors: http://www.w3.org/TR/css3-color/
+.. _CSS 3 Paged Media: http://dev.w3.org/csswg/css3-page/
+.. _CSS Transforms: http://dev.w3.org/csswg/css3-transforms/
+.. _CSS 3 Backgrounds and Borders: http://www.w3.org/TR/css3-background/
+.. _CSS 3 Basic User Interface: http://www.w3.org/TR/css3-ui/#box-sizing
