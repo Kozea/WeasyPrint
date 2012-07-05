@@ -3,8 +3,9 @@
     padding-left: 1.5cm;
     @top-center {
         content: "Introduction to CSS 2.1";
+        width: 100%;
         vertical-align: bottom;
-        border-bottom: thin solid;
+        border-bottom: .5pt solid;
         margin-bottom: .7cm;
     }
     @bottom-right {
@@ -15,8 +16,8 @@
         content: "W3C Recommendation"; font: .5cm/1.5 Fontin Sans;
         background: #005a9c; color: #fff; text-align: right;
         padding-right: 2em; height: 1.5em; width: 10cm;
-        -weasy-transform-origin: 100% 0;
-        -weasy-transform: rotate(-90deg);
+        transform-origin: 100% 0;
+        transform: rotate(-90deg);
     }
 }
 html, body { font: 12pt/1.25 Fontin, serif !important; }

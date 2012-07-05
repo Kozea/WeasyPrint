@@ -35,7 +35,7 @@ WeasyPrint is also packaged for `PyPM`_.
 
 
 For other distributions or if you want to install it yourself,
-WeasyPrint 0.9 depends on:
+WeasyPrint 0.11 depends on:
 
 .. Note: keep this in sync with setup.py
 
