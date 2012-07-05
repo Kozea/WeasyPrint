@@ -6,7 +6,7 @@ to PDF. It aims to support web standards for printing.
 WeasyPrint is free software made available under the `BSD license
 <https://github.com/Kozea/WeasyPrint/blob/master/LICENSE>`_.
 
-It is based on various libraries **not** on a full rendering engine like
+It is based on various libraries but **not** on a full rendering engine like
 WebKit on Gecko. The CSS layout engine is written in Python and meant to be
 easy to hack on.
 
