@@ -255,7 +255,6 @@ TABLE_WRAPPER_BOX_PROPERTIES = set('''
     transform_origin
     vertical_align
     z_index
-    clear
 '''.split())
 
 
