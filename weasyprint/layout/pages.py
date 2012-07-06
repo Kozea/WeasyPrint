@@ -488,8 +488,6 @@ def make_page(document, root_box, page_type, resume_at, content_empty):
     page_width(page, document, cb_width)
     page_height(page, document, cb_height)
 
-    document.excluded_shapes = []
-
     root_box.position_x = page.content_box_x()
     root_box.position_y = page.content_box_y()
     page_content_bottom = root_box.position_y + page.height
@@ -498,6 +496,8 @@ def make_page(document, root_box, page_type, resume_at, content_empty):
     if content_empty:
         previous_resume_at = resume_at
         root_box = root_box.copy_with_children([])
+    else:
+        document.create_block_formatting_context()
 
     # TODO: handle cases where the root element is something else.
     # See http://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
@@ -517,6 +517,8 @@ def make_page(document, root_box, page_type, resume_at, content_empty):
     page = page.copy_with_children([root_box])
     if content_empty:
         resume_at = previous_resume_at
+    else:
+        document.finish_block_formatting_context(root_box)
     return page, resume_at, next_page
 
 

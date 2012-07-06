@@ -4146,3 +4146,30 @@ def test_floats():
     assert outer_area(img_1) == (0, 0, 50, 50)
     assert outer_area(img_2) == (30, 50, 50, 50)
     assert outer_area(img_3) == (0, 50, 30, 30)
+
+    # Floats do no affect other pages
+    page_1, page_2 = parse('''
+        <style>
+            body { width: 90px; font-size: 0 }
+            img { vertical-align: top }
+        </style>
+        <body>
+        <img src=pattern.png style="float: left; width: 30px" />
+        <img src=pattern.png style="width: 50px" />
+        <div style="page-break-before: always"></div>
+        <img src=pattern.png style="width: 50px" />
+    ''')
+    html, = page_1.children
+    body, = html.children
+    float_img, anon_block, = body.children
+    line, = anon_block.children
+    img_1, = line.children
+    assert outer_area(float_img) == (0, 0, 30, 30)
+    assert outer_area(img_1) == (30, 0, 50, 50)
+
+    html, = page_2.children
+    body, = html.children
+    div, anon_block = body.children
+    line, = anon_block.children
+    img_2, = line.children
+    assert outer_area(img_2) == (0, 0, 50, 50)
