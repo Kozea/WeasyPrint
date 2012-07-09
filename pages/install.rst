@@ -61,6 +61,10 @@ On Ubuntu 11.10, ``python-gi`` is named ``python-gobject`` instead:
 
     sudo apt-get install gir1.2-pango-1.0 python-gobject python-cairo python-gobject-cairo python-lxml imagemagick
 
+**For OS X** you may have to build Pango with introspection and PyGObject 3
+yourself from source as they are not yet in MacPorts or Homebrew. See the
+`progress on our bug tracker <http://redmine.kozea.fr/issues/823>`_.
+
 Then, create a `virtualenv`_. You’ll need ``--system-site-packages`` or
 some other workaround\ [#]_ as PyGObject and pycairo can not be installed
 with pip. Installing WeasyPrint will also pull other Python dependencies.
