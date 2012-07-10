@@ -49,7 +49,7 @@ def create_layout(text, style, hinting, max_width):
     layout = PangoCairo.create_layout(
         HINTED_DUMMY_CONTEXT if hinting else NON_HINTED_DUMMY_CONTEXT)
     font = Pango.FontDescription()
-    font.set_family(', '.join(style.font_family))
+    font.set_family(','.join(style.font_family))
     font.set_variant(PANGO_VARIANT[style.font_variant])
     font.set_style(PANGO_STYLE[style.font_style])
     font.set_absolute_size(Pango.units_from_double(style.font_size))
