@@ -196,6 +196,12 @@ def other_colors(token):
     return parse_color(token)
 
 
+@validator()
+@single_keyword
+def border_collapse(keyword):
+    return keyword in ('separate', 'collapse')
+
+
 @validator('color')
 @single_token
 def color(token):
