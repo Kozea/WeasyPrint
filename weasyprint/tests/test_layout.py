@@ -711,15 +711,23 @@ def test_fixed_layout_table():
 
     # With border-collapse
     page, = parse('''
-        <table style="table-layout: fixed; border-collapse: collapse;
-                      border: 10px solid;
+        <style>
+          /* Do not apply: */
+          colgroup, col, tbody, tr, td { margin: 1000px }
+        </style>
+        <table style="table-layout: fixed;
+                      border-collapse: collapse; border: 10px solid;
                       /* ignored with collapsed borders: */
-                      border-spacing: 10000px;">
-            <col style="width: 30px" />
-            <tr>
-              <td style="padding: 2px"></td>
-              <td style="width: 34px; padding: 10px; border: 2px solid"></td>
-            </tr>
+                      border-spacing: 10000px; padding: 1000px">
+            <colgroup>
+              <col style="width: 30px" />
+            </colgroup>
+            <tbody>
+              <tr>
+                <td style="padding: 2px"></td>
+                <td style="width: 34px; padding: 10px; border: 2px solid"></td>
+              </tr>
+            </tbody>
         </table>
     ''')
     html, = page.children
@@ -733,11 +741,11 @@ def test_fixed_layout_table():
     assert table.position_x == 0
     assert table.border_left_width == 5  # half of the collapsed 10px border
     assert td_1.position_x == 5  # border-spacing is ignored
-    assert td_1.border_width() == 30  # as <col>
+    assert td_1.margin_width() == 30  # as <col>
     assert td_1.width == 20  # 30 - 5 (border-left) - 1 (border-right) - 2*2
     assert td_2.position_x == 35
     assert td_2.width == 34
-    assert td_2.border_width() == 60  # 34 + 2*10 + 5 + 1
+    assert td_2.margin_width() == 60  # 34 + 2*10 + 5 + 1
     assert table.width == 90  # 30 + 60
     assert table.margin_width() == 100  # 90 + 2*5 (border)
 
@@ -1162,14 +1170,22 @@ def test_auto_layout_table():
 
     # With border-collapse
     page, = parse('''
+        <style>
+          /* Do not apply: */
+          colgroup, col, tbody, tr, td { margin: 1000px }
+        </style>
         <table style="border-collapse: collapse; border: 10px solid;
                       /* ignored with collapsed borders: */
-                      border-spacing: 10000px;">
-            <col style="width: 30px" />
-            <tr>
-              <td style="padding: 2px"></td>
-              <td style="width: 34px; padding: 10px; border: 2px solid"></td>
-            </tr>
+                      border-spacing: 10000px; padding: 1000px">
+            <colgroup>
+              <col style="width: 30px" />
+            </colgroup>
+            <tbody>
+              <tr>
+                <td style="padding: 2px"></td>
+                <td style="width: 34px; padding: 10px; border: 2px solid"></td>
+              </tr>
+            </tbody>
         </table>
     ''')
     html, = page.children
@@ -1183,11 +1199,11 @@ def test_auto_layout_table():
     assert table.position_x == 0
     assert table.border_left_width == 5  # half of the collapsed 10px border
     assert td_1.position_x == 5  # border-spacing is ignored
-    assert td_1.border_width() == 30  # as <col>
+    assert td_1.margin_width() == 30  # as <col>
     assert td_1.width == 20  # 30 - 5 (border-left) - 1 (border-right) - 2*2
     assert td_2.position_x == 35
     assert td_2.width == 34
-    assert td_2.border_width() == 60  # 34 + 2*10 + 5 + 1
+    assert td_2.margin_width() == 60  # 34 + 2*10 + 5 + 1
     assert table.width == 90  # 30 + 60
     assert table.margin_width() == 100  # 90 + 2*5 (border)
 

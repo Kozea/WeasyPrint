@@ -406,7 +406,7 @@ def draw_border(document, context, box):
             context.set_source_rgba(*color)
 
             if document.enable_hinting and (
-                    # Borders smaller than device 1 unit would disappear
+                    # Borders smaller than 1 device unit would disappear
                     # without anti-aliasing.
                     math.hypot(*context.user_to_device(width, 0)) >= 1 and
                     math.hypot(*context.user_to_device(0, width)) >= 1):

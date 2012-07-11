@@ -24,6 +24,7 @@ from tinycss.color3 import COLOR_KEYWORDS
 from . import boxes, counters
 from .. import html
 from ..css import properties
+from ..css.computed_values import ZERO_PIXELS
 from ..compat import basestring, xrange
 
 
@@ -62,6 +63,20 @@ def build_formatting_structure(document, computed_styles):
     return box
 
 
+def make_box(element_tag, sourceline, style, content):
+    if (style.display in ('table', 'inline-table')
+            and style.border_collapse == 'collapse'):
+        # Padding do not apply
+        for side in ['top', 'bottom', 'left', 'right']:
+            style['padding_' + side] = ZERO_PIXELS
+    if style.display.startswith('table-') and style.display != 'table-caption':
+        # Margins do not apply
+        for side in ['top', 'bottom', 'left', 'right']:
+            style['margin_' + side] = ZERO_PIXELS
+
+    return BOX_TYPE_FROM_DISPLAY[style.display](element_tag, sourceline,
+                                                style, content)
+
 def dom_to_box(document, element, state=None):
     """Convert a DOM element and its children into a box with children.
 
@@ -99,8 +114,7 @@ def dom_to_box(document, element, state=None):
     if display == 'none':
         return []
 
-    box = BOX_TYPE_FROM_DISPLAY[display](
-        element.tag, element.sourceline, style, [])
+    box = make_box(element.tag, element.sourceline, style, [])
 
     if state is None:
         # use a list to have a shared mutable object
@@ -160,7 +174,7 @@ def pseudo_to_box(document, state, element, pseudo_type):
     if 'none' in (display, content) or content == 'normal':
         return
 
-    box = BOX_TYPE_FROM_DISPLAY[display](
+    box = make_box(
         '%s:%s' % (element.tag, pseudo_type), element.sourceline, style, [])
 
     quote_depth, counter_values, _counter_scopes = state

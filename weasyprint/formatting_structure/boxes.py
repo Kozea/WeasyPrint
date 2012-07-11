@@ -507,7 +507,7 @@ class TableColumnGroupBox(ParentBox):
     padding_right = 0
 
 
-# Not really a parent box, but pretending to be removes some special cases.
+# Not really a parent box, but pretending to be removes some corner cases.
 class TableColumnBox(ParentBox):
     """Box for elements with ``display: table-column``"""
     proper_table_child = True
