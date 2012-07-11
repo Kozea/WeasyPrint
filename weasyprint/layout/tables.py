@@ -40,7 +40,7 @@ def table_layout(document, table, max_position_y, skip_stack,
         border_spacing_y = 0
 
     # TODO: reverse this for direction: rtl
-    column_positions = []
+    column_positions = table.column_positions = []
     position_x = table.content_box_x()
     rows_x = position_x + border_spacing_x
     for width in column_widths:

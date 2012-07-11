@@ -592,9 +592,10 @@ def collapse_table_borders(table, grid_width, grid_height):
         # Don’t bother with empty tables
         return [], []
 
-    style_scores=dict((v, i) for i, v in enumerate(reversed([
+    style_scores = dict((v, i) for i, v in enumerate(reversed([
         'hidden', 'double', 'solid', 'dashed', 'dotted', 'ridge',
         'outset', 'groove', 'inset', 'none'])))
+    style_map = {'inset': 'ridge', 'outset': 'groove'}
     transparent = COLOR_KEYWORDS['transparent']
     weak_null_border =  (
         (0, 0, style_scores['none']), ('none', 0, transparent))
@@ -607,6 +608,7 @@ def collapse_table_borders(table, grid_width, grid_height):
         style = box_style['border_%s_style' % side]
         width = box_style['border_%s_width' % side]
         color = box_style['border_%s_color' % side]
+        style = style_map.get(style, style)
 
         # http://www.w3.org/TR/CSS21/tables.html#border-conflict-resolution
         score = ((1 if style == 'hidden' else 0), width, style_scores[style])
