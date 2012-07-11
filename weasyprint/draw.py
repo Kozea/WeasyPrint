@@ -579,16 +579,28 @@ def draw_collapsed_borders(document, context, table):
 
     segments = []
 
+    def half_max_width(border_list, yx_pairs, vertical=True):
+        result = 0
+        for y, x in yx_pairs:
+            if (
+                (0 <= y < grid_height and 0 <= x <= grid_width)
+                if vertical else
+                (0 <= y <= grid_height and 0 <= x < grid_width)
+            ):
+                _, (_, width, _) = border_list[skipped_rows + y][x]
+                result = max(result, width)
+        return result / 2
+
     def add_vertical(x, y):
         score, (style, width, color) = vertical_borders[skipped_rows + y][x]
         if width == 0 or color.alpha == 0:
             return
         half_width = width / 2
         pos_x = column_positions[x]
-        # Add half the width on both ends. With 'solid', this is like
-        # a square line cap.
-        pos_y_1 = row_positions[y] - half_width
-        pos_y_2 = row_positions[y + 1] + half_width
+        pos_y_1 = row_positions[y] - half_max_width(horizontal_borders, [
+            (y, x - 1), (y, x)], vertical=False)
+        pos_y_2 = row_positions[y + 1] + half_max_width(horizontal_borders, [
+            (y + 1, x - 1), (y + 1, x)], vertical=False)
         edge_1 = (pos_x - half_width, pos_y_1), (pos_x - half_width, pos_y_2)
         edge_2 = (pos_x + half_width, pos_y_1), (pos_x + half_width, pos_y_2)
         segments.append((score, style, width, color, 'left', edge_1, edge_2))
@@ -599,8 +611,11 @@ def draw_collapsed_borders(document, context, table):
             return
         half_width = width / 2
         pos_y = row_positions[y]
-        pos_x_1 = column_positions[x] - half_width
-        pos_x_2 = column_positions[x + 1] + half_width
+        # TODO: change signs for rtl when we support rtl tables?
+        pos_x_1 = column_positions[x] - half_max_width(vertical_borders, [
+            (y - 1, x), (y, x)])
+        pos_x_2 = column_positions[x + 1] + half_max_width(vertical_borders, [
+            (y - 1, x + 1), (y, x + 1)])
         edge_1 = (pos_x_1, pos_y - half_width), (pos_x_2, pos_y - half_width)
         edge_2 = (pos_x_1, pos_y + half_width), (pos_x_2, pos_y + half_width)
         segments.append((score, style, width, color, 'top', edge_1, edge_2))
@@ -616,7 +631,7 @@ def draw_collapsed_borders(document, context, table):
     # Sort bigger scores last (painted later, on top)
     # Since the number of different scores is expected to be small compared
     # to the number of segments, there should be little changes and Timsort
-    # should take less than O(n * log(n))
+    # should be closer to O(n) than O(n * log(n))
     segments.sort(key=operator.itemgetter(0))
 
     for segment in segments:
