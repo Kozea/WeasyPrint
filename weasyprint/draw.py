@@ -575,11 +575,12 @@ def draw_collapsed_borders(document, context, table):
     # Add the end of the last row. No copy here, we own this list
     row_positions.append(row_positions[-1] + row_heights[-1])
     vertical_borders, horizontal_borders = table.collapsed_border_grid
+    skipped_rows = table.skipped_rows
 
     segments = []
 
     def add_vertical(x, y):
-        score, (style, width, color) = vertical_borders[y][x]
+        score, (style, width, color) = vertical_borders[skipped_rows + y][x]
         if width == 0 or color.alpha == 0:
             return
         half_width = width / 2
@@ -593,7 +594,7 @@ def draw_collapsed_borders(document, context, table):
         segments.append((score, style, width, color, 'left', edge_1, edge_2))
 
     def add_horizontal(x, y):
-        score, (style, width, color) = horizontal_borders[y][x]
+        score, (style, width, color) = horizontal_borders[skipped_rows + y][x]
         if width == 0 or color.alpha == 0:
             return
         half_width = width / 2

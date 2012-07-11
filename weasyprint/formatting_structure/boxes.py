@@ -231,10 +231,10 @@ class ParentBox(Box):
         if end:
             self._reset_spacing('bottom')
 
-    def copy_with_children(self, children, is_start=True, is_end=True):
-        """Create a new equivalent box with given ``children``."""
+    def copy_with_children(self, new_children, is_start=True, is_end=True):
+        """Create a new equivalent box with given ``new_children``."""
         new_box = self.copy()
-        new_box.children = tuple(children)
+        new_box.children = tuple(new_children)
         if not is_start:
             new_box.outside_list_marker = None
             if new_box.bookmark_level:

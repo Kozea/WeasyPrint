@@ -49,6 +49,18 @@ def table_layout(document, table, max_position_y, skip_stack,
         position_x += width
     rows_width = position_x - rows_x
 
+    if table.style.border_collapse == 'collapse':
+        if skip_stack:
+            skipped_groups, group_skip_stack = skip_stack
+            if group_skip_stack:
+                skipped_rows, _ = group_skip_stack
+            else:
+                skipped_rows = 0
+            for group in table.children[:skipped_groups]:
+                skipped_rows += len(group.children)
+        else:
+            skipped_rows = 0
+
     # Make this a sub-function so that many local variables like rows_x
     # need not be passed as parameters.
     def group_layout(group, position_y, max_position_y,
@@ -67,6 +79,7 @@ def table_layout(document, table, max_position_y, skip_stack,
             skip = 0
         else:
             skip, skip_stack = skip_stack
+            assert not skip_stack  # No breaks inside rows for now
         for index_row, row in group.enumerate_skip(skip):
             resolve_percentages(row, containing_block=table)
             row.position_x = rows_x
@@ -323,6 +336,8 @@ def table_layout(document, table, max_position_y, skip_stack,
         new_table_children +
         ([footer] if footer is not None else []),
         is_start=skip_stack is None, is_end=resume_at is None)
+    if table.style.border_collapse == 'collapse':
+        table.skipped_rows = skipped_rows
 
     # If the height property has a bigger value, just add blank space
     # below the last row group.

@@ -1154,8 +1154,7 @@ def test_visibility():
 def test_tables():
     source = '''
         <style>
-            @page { size: 28px }
-            html { background: #fff; }
+            @page { size: 28px; background: #fff }
             table { margin: 1px; padding: 1px; border-spacing: 1px;
                     border: 1px solid transparent }
             td { width: 2px; height: 2px; padding: 1px;
@@ -1187,6 +1186,9 @@ def test_tables():
     '''
     r = b'\xff\x7f\x7f\xff'  # rgba(255, 0, 0, 0.5) above #fff
     R = b'\xff\x3f\x3f\xff'  # r above r above #fff
+    g = b'\x7f\xff\x7f\xff'  # rgba(0, 255, 0, 0.5) above #fff
+    G = b'\x7f\xbf\x3f\xff'  # g above r above #fff
+                             #   Not the same as r above g above #fff
     assert_pixels('table_borders', 28, 28, [
         _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
         _+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+_,
@@ -1256,6 +1258,55 @@ def test_tables():
         td { border-color: #ff7f7f }
     '''})
 
+    assert_pixels('table_collapsed_borders_paged', 28, 40, [
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+_,
+        _+g+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+g+_,
+        _+g+_+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+_+_+_+_+_+g+_,
+        _+g+_+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+_+_+_+_+_+g+_,
+        _+g+_+B+B+_+_+_+_+r+_+_+_+_+r+_+_+_+_+B+B+_+_+_+_+_+g+_,
+        _+g+_+B+B+_+_+_+_+r+_+_+_+_+r+_+_+_+_+B+B+_+_+_+_+_+g+_,
+        _+g+_+B+B+_+_+_+_+r+_+_+_+_+r+_+_+_+_+B+B+_+_+_+_+_+g+_,
+        _+g+_+B+B+_+_+_+_+r+_+_+_+_+r+_+_+_+_+B+B+_+_+_+_+_+g+_,
+        _+g+_+B+B+r+r+r+r+r+_+_+_+_+r+r+r+r+r+B+B+_+_+_+_+_+g+_,
+        _+g+_+B+B+_+_+_+_+_+_+_+_+_+r+_+_+_+_+B+B+_+_+_+_+_+g+_,
+        _+g+_+B+B+_+_+_+_+_+_+_+_+_+r+_+_+_+_+B+B+_+_+_+_+_+g+_,
+        _+g+_+B+B+_+_+_+_+_+_+_+_+_+r+_+_+_+_+B+B+_+_+_+_+_+g+_,
+        _+g+_+B+B+_+_+_+_+_+_+_+_+_+r+_+_+_+_+B+B+_+_+_+_+_+g+_,
+        _+g+_+B+B+r+r+r+r+r+r+r+r+r+r+r+r+r+r+B+B+_+_+_+_+_+g+_,
+        _+g+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+g+_,
+        _+g+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+g+_,
+        _+g+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+g+_,
+        _+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+_,
+        _+g+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+g+_,
+        _+g+_+B+B+r+r+r+r+r+r+r+r+r+r+r+r+r+r+B+B+_+_+_+_+_+g+_,
+        _+g+_+B+B+_+_+_+_+r+_+_+_+_+r+_+_+_+_+B+B+_+_+_+_+_+g+_,
+        _+g+_+B+B+_+_+_+_+r+_+_+_+_+r+_+_+_+_+B+B+_+_+_+_+_+g+_,
+        _+g+_+B+B+_+_+_+_+r+_+_+_+_+r+_+_+_+_+B+B+_+_+_+_+_+g+_,
+        _+g+_+B+B+_+_+_+_+r+_+_+_+_+r+_+_+_+_+B+B+_+_+_+_+_+g+_,
+        _+g+_+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+_+_+_+_+_+g+_,
+        _+g+_+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+_+_+_+_+_+g+_,
+        _+g+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+g+_,
+        _+g+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+g+_,
+        _+g+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+g+_,
+        _+g+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+g+_,
+        _+g+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+g+_,
+        _+g+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+g+_,
+        _+g+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+g+_,
+        _+g+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+g+_,
+        _+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
+    ], source % {'extra_css': '''
+        table { border: 2px solid #00f; table-layout: fixed;
+                border-collapse: collapse }
+        td { border-color: #ff7f7f }
+        @page { size: 28px 20px; margin: 1px;
+                border: 1px solid rgba(0, 255, 0, 0.5); }
+    '''}, nb_pages=2)
+
     assert_pixels('table_td_backgrounds', 28, 28, [
         _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
         _+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+_,
@@ -1290,9 +1341,6 @@ def test_tables():
         td { background: rgba(255, 0, 0, 0.5) }
     '''})
 
-    g = b'\x7f\xff\x7f\xff'  # rgba(0, 255, 0, 0.5) above #fff
-    G = b'\x7f\xbf\x3f\xff'  # g above r above #fff
-                                         # Not the same as r above g above #fff
     assert_pixels('table_column_backgrounds', 28, 28, [
         _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
         _+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+_,
