@@ -618,7 +618,7 @@ def test_fixed_layout_table():
     td_1, td_2 = row.children
     assert table_wrapper.position_x == 0
     assert table.position_x == 5  # 0 + margin-left
-    assert td_1.position_x == 15  # 0 + border-spacing
+    assert td_1.position_x == 15  # 5 + border-spacing
     assert td_1.width == 20
     assert td_2.position_x == 45  # 15 + 20 + border-spacing
     assert td_2.width == 40
@@ -708,6 +708,38 @@ def test_fixed_layout_table():
     assert td_2.position_x == 90  # 10 + 80
     assert td_2.width == 20
     assert table.width == 100
+
+    # With border-collapse
+    page, = parse('''
+        <table style="table-layout: fixed; border-collapse: collapse;
+                      border: 10px solid;
+                      /* ignored with collapsed borders: */
+                      border-spacing: 10000px;">
+            <col style="width: 30px" />
+            <tr>
+              <td style="padding: 2px"></td>
+              <td style="width: 34px; padding: 10px; border: 2px solid"></td>
+            </tr>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2 = row.children
+    assert table_wrapper.position_x == 0
+    assert table.position_x == 0
+    assert table.border_left_width == 5  # half of the collapsed 10px border
+    assert td_1.position_x == 5  # border-spacing is ignored
+    assert td_1.border_width() == 30  # as <col>
+    assert td_1.width == 20  # 30 - 5 (border-left) - 1 (border-right) - 2*2
+    assert td_2.position_x == 35
+    assert td_2.width == 34
+    assert td_2.border_width() == 60  # 34 + 2*10 + 5 + 1
+    assert table.width == 90  # 30 + 60
+    assert table.margin_width() == 100  # 90 + 2*5 (border)
 
 
 @assert_no_logs
@@ -1127,6 +1159,37 @@ def test_auto_layout_table():
     assert td_1.width == 20
     assert td_2.width == 10
     assert table.width == 30
+
+    # With border-collapse
+    page, = parse('''
+        <table style="border-collapse: collapse; border: 10px solid;
+                      /* ignored with collapsed borders: */
+                      border-spacing: 10000px;">
+            <col style="width: 30px" />
+            <tr>
+              <td style="padding: 2px"></td>
+              <td style="width: 34px; padding: 10px; border: 2px solid"></td>
+            </tr>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2 = row.children
+    assert table_wrapper.position_x == 0
+    assert table.position_x == 0
+    assert table.border_left_width == 5  # half of the collapsed 10px border
+    assert td_1.position_x == 5  # border-spacing is ignored
+    assert td_1.border_width() == 30  # as <col>
+    assert td_1.width == 20  # 30 - 5 (border-left) - 1 (border-right) - 2*2
+    assert td_2.position_x == 35
+    assert td_2.width == 34
+    assert td_2.border_width() == 60  # 34 + 2*10 + 5 + 1
+    assert table.width == 90  # 30 + 60
+    assert table.margin_width() == 100  # 90 + 2*5 (border)
 
 
 @assert_no_logs

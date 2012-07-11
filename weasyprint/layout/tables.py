@@ -33,7 +33,12 @@ def table_layout(document, table, max_position_y, skip_stack,
 
     column_widths = table.column_widths
 
-    border_spacing_x, border_spacing_y = table.style.border_spacing
+    if table.style.border_collapse == 'separate':
+        border_spacing_x, border_spacing_y = table.style.border_spacing
+    else:
+        border_spacing_x = 0
+        border_spacing_y = 0
+
     # TODO: reverse this for direction: rtl
     column_positions = []
     position_x = table.content_box_x()
@@ -393,8 +398,12 @@ def fixed_table_layout(box):
         if column.width != 'auto':
             column_widths[i] = column.width
 
+    if table.style.border_collapse == 'separate':
+        border_spacing_x, _ = table.style.border_spacing
+    else:
+        border_spacing_x = 0
+
     # `width` on cells of the first row.
-    border_spacing_x, border_spacing_y = table.style.border_spacing
     i = 0
     for cell in first_row_cells:
         resolve_percentages(cell, table)
@@ -461,8 +470,13 @@ def auto_table_layout(document, box, containing_block):
         table_and_columns_preferred_widths(
             document, box, resolved_table_width=True)
 
+    if table.style.border_collapse == 'separate':
+        border_spacing_x, _ = table.style.border_spacing
+    else:
+        border_spacing_x = 0
+
     all_border_spacing = (
-        table.style.border_spacing[0] * (len(column_preferred_widths) + 1))
+        border_spacing_x * (len(column_preferred_widths) + 1))
 
     margins = 0
     if box.margin_left != 'auto':

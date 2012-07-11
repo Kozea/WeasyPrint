@@ -218,6 +218,10 @@ def table_and_columns_preferred_widths(document, box, outer=True,
 
     """
     table = box.get_wrapped_table()
+    if table.style.border_collapse == 'separate':
+        border_spacing_x, _ = table.style.border_spacing
+    else:
+        border_spacing_x = 0
 
     nb_columns = 0
     if table.column_groups:
@@ -254,7 +258,6 @@ def table_and_columns_preferred_widths(document, box, outer=True,
     for i, row in enumerate(grid):
         for j, cell in enumerate(row):
             if cell:
-                # TODO: when border-collapse: collapse; set outer=False
                 column_preferred_widths[j][i] = \
                     preferred_width(document, cell)
                 column_preferred_minimum_widths[j][i] = \
@@ -291,20 +294,18 @@ def table_and_columns_preferred_widths(document, box, outer=True,
     for cell in colspan_cells:
         column_slice = slice(cell.grid_x, cell.grid_x + cell.colspan)
 
-        # TODO: when border-collapse: collapse; set outer=False
         cell_width = (
             preferred_width(document, cell) -
-            table.style.border_spacing[0] * (cell.colspan - 1))
+            border_spacing_x * (cell.colspan - 1))
         columns_width = sum(column_preferred_widths[column_slice])
         if cell_width > columns_width:
             added_space = (cell_width - columns_width) / cell.colspan
             for i in range(cell.grid_x, cell.grid_x + cell.colspan):
                 column_preferred_widths[i] += added_space
 
-        # TODO: when border-collapse: collapse; set outer=False
         cell_minimum_width = (
             preferred_minimum_width(document, cell) -
-            table.style.border_spacing[0] * (cell.colspan - 1))
+            border_spacing_x * (cell.colspan - 1))
         columns_minimum_width = sum(
             column_preferred_minimum_widths[column_slice])
         if cell_minimum_width > columns_minimum_width:
@@ -340,7 +341,7 @@ def table_and_columns_preferred_widths(document, box, outer=True,
                         column_preferred_widths[i] = \
                             column_preferred_minimum_widths[i]
 
-    total_border_spacing = (nb_columns + 1) * table.style.border_spacing[0]
+    total_border_spacing = (nb_columns + 1) * border_spacing_x
     table_preferred_minimum_width = (
         sum(column_preferred_minimum_widths) + total_border_spacing)
     table_preferred_width = sum(column_preferred_widths) + total_border_spacing
