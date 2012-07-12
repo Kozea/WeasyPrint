@@ -155,13 +155,13 @@ class StyleDict(object):
     anonymous = False
 
 
-def find_stylesheets(document, medium):
-    """Yield the stylesheets of ``document``.
+def find_stylesheets(element_tree, medium):
+    """Yield the stylesheets in ``element_tree``.
 
-    The output order is the same as the order of the dom.
+    The output order is the same as the source order.
 
     """
-    for element in document.dom.iter():
+    for element in element_tree.iter():
         if element.tag not in ('style', 'link'):
             continue
         mime_type = element.get('type', 'text/css').split(';', 1)[0].strip()
@@ -191,13 +191,13 @@ def find_stylesheets(document, medium):
             yield CSS(url=href, _check_mime_type=True)
 
 
-def find_style_attributes(document):
+def find_style_attributes(element_tree):
     """
     Yield ``element, declaration, base_url`` for elements with
     a "style" attribute.
     """
     parser = PARSER
-    for element in document.dom.iter():
+    for element in element_tree.iter():
         style_attribute = element.get('style')
         if style_attribute:
             declarations, errors = parser.parse_style_attr(style_attribute)
@@ -383,7 +383,7 @@ def preprocess_stylesheet(medium, base_url, rules):
             declarations = list(preprocess_declarations(
                 base_url, rule.declarations))
 
-            # The double lambda to have a closure that holds page_types
+            # Use a double lambda to have a closure that holds page_types
             match = (lambda page_types: lambda _document: page_types)(
                 PAGE_PSEUDOCLASS_TARGETS[pseudo_class])
             specificity = rule.specificity
@@ -401,17 +401,18 @@ def preprocess_stylesheet(medium, base_url, rules):
                     yield margin_rule, selector_list, declarations
 
 
-def get_all_computed_styles(document, medium,
+def get_all_computed_styles(element_tree, medium,
                             user_stylesheets=None, ua_stylesheets=None):
-    """Compute all the computed styles of ``document`` for ``medium``.
+    """Compute all the computed styles of all elements in ``element_tree``
+    for the media type ``medium``.
 
     Do everything from finding author stylesheets in the given HTML document
     to parsing and applying them.
 
-    Return a dict of (DOM element, pseudo element type) -> StyleDict instance.
+    Return a dict of (element, pseudo element type) -> StyleDict instance.
 
     """
-    author_stylesheets = list(find_stylesheets(document, medium))
+    author_stylesheets = list(find_stylesheets(element_tree, medium))
 
     # keys: (element, pseudo_element_type)
     #    element: a lxml element object or the '@page' string for @page styles
@@ -437,7 +438,7 @@ def get_all_computed_styles(document, medium,
                 for selector in selector_list:
                     specificity = selector.specificity
                     pseudo_type = selector.pseudo_element
-                    for element in selector.match(document.dom):
+                    for element in selector.match(element_tree):
                         for name, values, importance in declarations:
                             precedence = declaration_precedence(
                                 origin, importance)
@@ -447,7 +448,7 @@ def get_all_computed_styles(document, medium,
                                 element, pseudo_type)
 
     specificity = (1, 0, 0, 0)
-    for element, declarations, base_url in find_style_attributes(document):
+    for element, declarations, base_url in find_style_attributes(element_tree):
         for name, values, importance in preprocess_declarations(
                 base_url, declarations):
             precedence = declaration_precedence('author', importance)
@@ -465,7 +466,7 @@ def get_all_computed_styles(document, medium,
     # their children, for inheritance.
 
     # Iterate on all elements, even if there is no cascaded style for them.
-    for element in document.dom.iter():
+    for element in element_tree.iter():
         set_computed_styles(cascaded_styles, computed_styles, element,
                             parent=element.getparent())
 
@@ -478,7 +479,7 @@ def get_all_computed_styles(document, medium,
         set_computed_styles(cascaded_styles, computed_styles, page_type,
         # @page inherits from the root element:
         # http://lists.w3.org/Archives/Public/www-style/2012Jan/1164.html
-                            parent=document.dom)
+                            parent=element_tree)
 
     # Then computed styles for pseudo elements, in any order.
     # Pseudo-elements inherit from their associated element so they come

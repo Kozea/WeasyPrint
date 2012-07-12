@@ -28,10 +28,10 @@ from . import pdf
 
 class Document(object):
     """Abstract output document."""
-    def __init__(self, dom, enable_hinting, user_stylesheets,
+    def __init__(self, element_tree, enable_hinting, user_stylesheets,
                  user_agent_stylesheets):
         self.enable_hinting = enable_hinting
-        self.dom = dom  #: lxml HtmlElement object
+        self.element_tree = element_tree  #: lxml HtmlElement object
         self.user_stylesheets = user_stylesheets
         self.user_agent_stylesheets = user_agent_stylesheets
         self._image_cache = {}
@@ -58,7 +58,7 @@ class Document(object):
         """
         if self._computed_styles is None:
             self._computed_styles = get_all_computed_styles(
-                self,
+                self.element_tree,
                 user_stylesheets=self.user_stylesheets,
                 ua_stylesheets=self.user_agent_stylesheets,
                 medium='print')

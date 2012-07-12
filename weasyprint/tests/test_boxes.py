@@ -81,7 +81,7 @@ def parse(html_content):
     document = TestPNGDocument(html_content,
         # Dummy filename, but in the right directory.
         base_url=resource_filename('<test>'))
-    box, = build.dom_to_box(document, document.dom)
+    box, = build.dom_to_box(document, document.element_tree)
     return box
 
 

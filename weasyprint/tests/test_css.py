@@ -81,7 +81,7 @@ def test_find_stylesheets():
     """Test if the stylesheets are found in a HTML document."""
     document = parse_html('doc1.html')
 
-    sheets = list(css.find_stylesheets(document, 'print'))
+    sheets = list(css.find_stylesheets(document.element_tree, 'print'))
     assert len(sheets) == 2
     # Also test that stylesheets are in tree order
     assert [s.base_url.rsplit('/', 1)[-1].rsplit(',', 1)[-1] for s in sheets] \
@@ -139,7 +139,7 @@ def test_annotate_document():
     )
 
     # Element objects behave a lists of their children
-    _head, body = document.dom
+    _head, body = document.element_tree
     h1, p, ul = body
     li_0, _li_1 = ul
     a, = li_0
@@ -215,7 +215,7 @@ def test_annotate_document():
 def test_default_stylesheet():
     """Test if the user-agent stylesheet is used and applied."""
     document = parse_html('doc1.html')
-    head_style = document.style_for(document.dom.head)
+    head_style = document.style_for(document.element_tree.head)
     assert head_style.display == 'none', \
         'The HTML4 user-agent stylesheet was not applied'
 
