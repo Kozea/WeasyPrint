@@ -81,14 +81,16 @@ def parse(html_content):
     document = TestPNGDocument(html_content,
         # Dummy filename, but in the right directory.
         base_url=resource_filename('<test>'))
-    box, = build.dom_to_box(document, document.element_tree)
+    box, = build.element_to_box(
+        document.element_tree, document.style_for, document.get_image_from_uri)
     return box
 
 
 def parse_all(html_content, base_url=resource_filename('<test>')):
     """Like parse() but also run all corrections on boxes."""
     document = TestPNGDocument(html_content, base_url=base_url)
-    box = build.build_formatting_structure(document, document.computed_styles)
+    box = build.build_formatting_structure(
+        document.element_tree, document.style_for, document.get_image_from_uri)
     sanity_checks(box)
     return box
 

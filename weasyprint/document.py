@@ -43,6 +43,7 @@ class Document(object):
 
         self.create_block_formatting_context()
 
+    # This is mostly useful to make pseudo_type optional.
     def style_for(self, element, pseudo_type=None):
         """
         Convenience method to get the computed styles for an element.
@@ -72,7 +73,7 @@ class Document(object):
         """
         if self._formatting_structure is None:
             self._formatting_structure = build_formatting_structure(
-                self, self.computed_styles)
+                self.element_tree, self.style_for, self.get_image_from_uri)
         return self._formatting_structure
 
     @property

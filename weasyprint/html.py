@@ -40,13 +40,13 @@ LOGGER.setLevel(level)
 HTML_HANDLERS = {}
 
 
-def handle_element(document, element, box):
+def handle_element(element, box, get_image_from_uri):
     """Handle HTML elements that need special care.
 
     :returns: a (possibly empty) list of boxes.
     """
     if box.element_tag in HTML_HANDLERS:
-        return HTML_HANDLERS[element.tag](document, element, box)
+        return HTML_HANDLERS[element.tag](element, box, get_image_from_uri)
     else:
         return [box]
 
@@ -76,7 +76,7 @@ def make_replaced_box(element, box, image):
 
 
 @handler('img')
-def handle_img(document, element, box):
+def handle_img(element, box, get_image_from_uri):
     """Handle ``<img>`` elements, return either an image or the alt-text.
 
     See: http://www.w3.org/TR/html5/embedded-content-1.html#the-img-element
@@ -85,7 +85,7 @@ def handle_img(document, element, box):
     src = get_url_attribute(element, 'src')
     alt = element.get('alt')
     if src:
-        image = document.get_image_from_uri(src)
+        image = get_image_from_uri(src)
         if image is not None:
             return [make_replaced_box(element, box, image)]
         else:
@@ -110,7 +110,7 @@ def handle_img(document, element, box):
 
 
 @handler('embed')
-def handle_embed(document, element, box):
+def handle_embed(element, box, get_image_from_uri):
     """Handle ``<embed>`` elements, return either an image or nothing.
 
     See: http://www.w3.org/TR/html5/the-iframe-element.html#the-embed-element
@@ -119,7 +119,7 @@ def handle_embed(document, element, box):
     src = get_url_attribute(element, 'src')
     type_ = element.get('type', '').strip()
     if src:
-        image = document.get_image_from_uri(src, type_)
+        image = get_image_from_uri(src, type_)
         if image is not None:
             return [make_replaced_box(element, box, image)]
     # No fallback.
@@ -127,7 +127,7 @@ def handle_embed(document, element, box):
 
 
 @handler('object')
-def handle_object(document, element, box):
+def handle_object(element, box, get_image_from_uri):
     """Handle ``<object>`` elements, return either an image or the fallback
     content.
 
@@ -137,7 +137,7 @@ def handle_object(document, element, box):
     data = get_url_attribute(element, 'data')
     type_ = element.get('type', '').strip()
     if data:
-        image = document.get_image_from_uri(data, type_)
+        image = get_image_from_uri(data, type_)
         if image is not None:
             return [make_replaced_box(element, box, image)]
     # The element’s children are the fallback.
@@ -160,7 +160,7 @@ def integer_attribute(element, box, name, minimum=1):
 
 
 @handler('colgroup')
-def handle_colgroup(_document, element, box):
+def handle_colgroup(element, box, _get_image_from_uri):
     """Handle the ``span`` attribute."""
     if isinstance(box, boxes.TableColumnGroupBox):
         if any(child.tag == 'col' for child in element):
@@ -174,7 +174,7 @@ def handle_colgroup(_document, element, box):
 
 
 @handler('col')
-def handle_col(_document, element, box):
+def handle_col(element, box, _get_image_from_uri):
     """Handle the ``span`` attribute."""
     if isinstance(box, boxes.TableColumnBox):
         integer_attribute(element, box, 'span')
@@ -187,7 +187,7 @@ def handle_col(_document, element, box):
 
 @handler('th')
 @handler('td')
-def handle_td(_document, element, box):
+def handle_td(element, box, _get_image_from_uri):
     """Handle the ``colspan``, ``rowspan`` attributes."""
     if isinstance(box, boxes.TableCellBox):
         # HTML 4.01 gives special meaning to colspan=0

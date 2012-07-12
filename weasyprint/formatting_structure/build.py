@@ -47,10 +47,9 @@ BOX_TYPE_FROM_DISPLAY = {
 }
 
 
-def build_formatting_structure(document, computed_styles):
-    """Build a formatting structure (box tree) from a ``document``."""
-    # TODO: use computed_styles intsead of document.style_for()
-    box, = dom_to_box(document, document.element_tree)
+def build_formatting_structure(element_tree, style_for, get_image_from_uri):
+    """Build a formatting structure (box tree) from an element tree."""
+    box, = element_to_box(element_tree, style_for, get_image_from_uri)
     box.is_for_root_element = True
     # If this is changed, maybe update weasy.layout.pages.make_margin_boxes()
     process_whitespace(box)
@@ -77,8 +76,8 @@ def make_box(element_tag, sourceline, style, content):
     return BOX_TYPE_FROM_DISPLAY[style.display](element_tag, sourceline,
                                                 style, content)
 
-def dom_to_box(document, element, state=None):
-    """Convert a DOM element and its children into a box with children.
+def element_to_box(element, style_for, get_image_from_uri, state=None):
+    """Convert an element and its children into a box with children.
 
     Return a list of boxes. Most of the time the list will have one item but
     may have zero or more than one.
@@ -106,7 +105,7 @@ def dom_to_box(document, element, state=None):
         # Here we ignore comments and XML processing instructions.
         return []
 
-    style = document.style_for(element)
+    style = style_for(element)
 
     # TODO: should be the used value. When does the used value for `display`
     # differ from the computer value?
@@ -122,7 +121,7 @@ def dom_to_box(document, element, state=None):
             # Shared mutable objects:
             [0],  # quote_depth: single integer
             {},  # counter_values: name -> stacked/scoped values
-            [set()]  # counter_scopes: DOM tree depths -> counter names
+            [set()]  # counter_scopes: element tree depths -> counter names
         )
     _quote_depth, counter_values, counter_scopes = state
 
@@ -130,22 +129,26 @@ def dom_to_box(document, element, state=None):
 
     children = []
     if display == 'list-item':
-        children.extend(add_box_marker(document, counter_values, box))
+        children.extend(add_box_marker(
+            box, counter_values, get_image_from_uri))
 
     # If this element’s direct children create new scopes, the counter
     # names will be in this new list
     counter_scopes.append(set())
 
-    children.extend(pseudo_to_box(document, state, element, 'before'))
+    children.extend(pseudo_to_box(
+        element, 'before', state, style_for, get_image_from_uri))
     text = element.text
     if text:
         children.append(boxes.TextBox.anonymous_from(box, text))
     for child_element in element:
-        children.extend(dom_to_box(document, child_element, state))
+        children.extend(element_to_box(
+            child_element, style_for, get_image_from_uri, state))
         text = child_element.tail
         if text:
             children.append(boxes.TextBox.anonymous_from(box, text))
-    children.extend(pseudo_to_box(document, state, element, 'after'))
+    children.extend(pseudo_to_box(
+        element, 'after', state, style_for, get_image_from_uri))
 
     # Scopes created by this element’s children stop here.
     for name in counter_scopes.pop():
@@ -156,12 +159,12 @@ def dom_to_box(document, element, state=None):
     box = box.copy_with_children(children)
 
     # Specific handling for the element. (eg. replaced element)
-    return html.handle_element(document, element, box)
+    return html.handle_element(element, box, get_image_from_uri)
 
 
-def pseudo_to_box(document, state, element, pseudo_type):
+def pseudo_to_box(element, pseudo_type, state, style_for, get_image_from_uri):
     """Yield the box for a :before or :after pseudo-element if there is one."""
-    style = document.style_for(element, pseudo_type)
+    style = style_for(element, pseudo_type)
     if pseudo_type and style is None:
         # Pseudo-elements with no style at all do not get a StyleDict
         # Their initial content property computes to 'none'.
@@ -181,21 +184,23 @@ def pseudo_to_box(document, state, element, pseudo_type):
     update_counters(state, style)
     children = []
     if display == 'list-item':
-        children.extend(add_box_marker(document, counter_values, box))
+        children.extend(add_box_marker(
+            box, counter_values, get_image_from_uri))
     children.extend(content_to_boxes(
-        document, style, box, quote_depth, counter_values))
+        style, box, quote_depth, counter_values, get_image_from_uri))
 
     yield box.copy_with_children(children)
 
 
-def content_to_boxes(document, style, parent_box, quote_depth, counter_values):
+def content_to_boxes(style, parent_box, quote_depth, counter_values,
+                     get_image_from_uri):
     """Takes the value of a ``content`` property and yield boxes."""
     texts = []
     for type_, value in style.content:
         if type_ == 'STRING':
             texts.append(value)
         elif type_ == 'URI':
-            image = document.get_image_from_uri(value)
+            image = get_image_from_uri(value)
             if image is not None:
                 text = ''.join(texts)
                 if text:
@@ -268,7 +273,7 @@ def update_counters(state, style):
         values[-1] += value
 
 
-def add_box_marker(document, counter_values, box):
+def add_box_marker(box, counter_values, get_image_from_uri):
     """Add a list marker to boxes for elements with ``display: list-item``,
     and yield children to add a the start of the box.
 
@@ -279,7 +284,7 @@ def add_box_marker(document, counter_values, box):
     image = style.list_style_image
     if image != 'none':
         # surface may be None here too, in case the image is not available.
-        image = document.get_image_from_uri(image)
+        image = get_image_from_uri(image)
     else:
         image = None
 
