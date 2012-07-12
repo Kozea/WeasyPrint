@@ -19,7 +19,7 @@ from ..text import split_first_line
 from ..formatting_structure import boxes
 
 
-def list_marker_layout(document, box):
+def list_marker_layout(context, box):
     """Lay out the list markers of ``box``."""
     # List markers can be either 'inside' or 'outside'.
     # Inside markers are layed out just like normal inline content, but
@@ -32,7 +32,7 @@ def list_marker_layout(document, box):
         if isinstance(marker, boxes.TextBox):
             (marker.pango_layout, _, _, marker.width, marker.height,
                 marker.baseline) = split_first_line(
-                    marker.text, marker.style, document.enable_hinting,
+                    marker.text, marker.style, context.enable_hinting,
                     max_width=None)
         else:
             # Image marker

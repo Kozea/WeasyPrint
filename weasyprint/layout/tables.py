@@ -20,7 +20,7 @@ from .percentages import resolve_percentages, resolve_one_percentage
 from .preferred import table_and_columns_preferred_widths
 
 
-def table_layout(document, table, max_position_y, skip_stack,
+def table_layout(context, table, max_position_y, skip_stack,
                  containing_block, device_size, page_is_empty, absolute_boxes,
                  fixed_boxes):
     """Layout for a table box.
@@ -123,7 +123,7 @@ def table_layout(document, table, max_position_y, skip_stack,
                 computed_cell_height = cell.height
                 cell.height = 'auto'
                 cell, _, _, _, _ = block_container_layout(
-                    document, cell,
+                    context, cell,
                     max_position_y=float('inf'),
                     skip_stack=None,
                     device_size=device_size,
@@ -477,7 +477,7 @@ def fixed_table_layout(box):
     table.column_widths = column_widths
 
 
-def auto_table_layout(document, box, containing_block):
+def auto_table_layout(context, box, containing_block):
     """Run the auto table layout and return a list of column widths.
 
     http://www.w3.org/TR/CSS21/tables.html#auto-table-layout
@@ -487,7 +487,7 @@ def auto_table_layout(document, box, containing_block):
     (table_preferred_minimum_width, table_preferred_width,
      column_preferred_minimum_widths, column_preferred_widths) = \
         table_and_columns_preferred_widths(
-            document, box, resolved_table_width=True)
+            context, box, resolved_table_width=True)
 
     if table.style.border_collapse == 'separate':
         border_spacing_x, _ = table.style.border_spacing
@@ -539,7 +539,7 @@ def auto_table_layout(document, box, containing_block):
                 for column_width in table.column_widths]
 
 
-def table_wrapper_width(document, wrapper, containing_block):
+def table_wrapper_width(context, wrapper, containing_block):
     """Find the width of each column and derive the wrapper width."""
     table = wrapper.get_wrapped_table()
     resolve_percentages(table, containing_block)
@@ -547,7 +547,7 @@ def table_wrapper_width(document, wrapper, containing_block):
     if table.style.table_layout == 'fixed' and table.width != 'auto':
         fixed_table_layout(wrapper)
     else:
-        auto_table_layout(document, wrapper, containing_block)
+        auto_table_layout(context, wrapper, containing_block)
 
     wrapper.width = table.border_width()
     wrapper.style.width = Dimension(wrapper.width, 'px')

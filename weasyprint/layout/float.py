@@ -19,11 +19,11 @@ from ..formatting_structure import boxes
 
 
 @handle_min_max_width
-def float_width(box, document, containing_block):
-    box.width = shrink_to_fit(document, box, containing_block.width)
+def float_width(box, context, containing_block):
+    box.width = shrink_to_fit(context, box, containing_block.width)
 
 
-def float_layout(document, box, containing_block, absolute_boxes, fixed_boxes):
+def float_layout(context, box, containing_block, absolute_boxes, fixed_boxes):
     """Set the width and position of floating ``box``."""
     # avoid a circular imports
     from .blocks import block_container_layout
@@ -42,39 +42,39 @@ def float_layout(document, box, containing_block, absolute_boxes, fixed_boxes):
     if box.margin_bottom == 'auto':
         box.margin_bottom = 0
 
-    clearance = get_clearance(document, box)
+    clearance = get_clearance(context, box)
     if clearance is not None:
         box.position_y += clearance
 
     if isinstance(box, boxes.BlockReplacedBox):
         inline_replaced_box_width_height(box, device_size=None)
     elif box.width == 'auto':
-        float_width(box, document, containing_block)
+        float_width(box, context, containing_block)
 
     if box.is_table_wrapper:
         table_wrapper_width(
-            document, box, (containing_block.width, containing_block.height))
+            context, box, (containing_block.width, containing_block.height))
 
     if isinstance(box, boxes.BlockBox):
-        document.create_block_formatting_context()
+        context.create_block_formatting_context()
         box, _, _, _, _ = block_container_layout(
-            document, box, max_position_y=float('inf'),
+            context, box, max_position_y=float('inf'),
             skip_stack=None, device_size=None, page_is_empty=False,
             absolute_boxes=absolute_boxes, fixed_boxes=fixed_boxes,
             adjoining_margins=None)
-        list_marker_layout(document, box)
-        document.finish_block_formatting_context(box)
+        list_marker_layout(context, box)
+        context.finish_block_formatting_context(box)
     else:
         assert isinstance(box, boxes.BlockReplacedBox)
 
-    box = find_float_position(document, box, containing_block)
+    box = find_float_position(context, box, containing_block)
 
-    document.excluded_shapes.append(box)
+    context.excluded_shapes.append(box)
 
     return box
 
 
-def find_float_position(document, box, containing_block):
+def find_float_position(context, box, containing_block):
     """Get the right position of the float ``box``."""
     # See http://www.w3.org/TR/CSS2/visuren.html#dis-pos-flo
 
@@ -82,14 +82,14 @@ def find_float_position(document, box, containing_block):
     # containing box top position, with collapsing margins handled
 
     # Points 5 and 6, box.position_y is set to the highest position_y possible
-    if document.excluded_shapes:
-        highest_y = document.excluded_shapes[-1].position_y
+    if context.excluded_shapes:
+        highest_y = context.excluded_shapes[-1].position_y
         if box.position_y < highest_y:
             box.translate(0, highest_y - box.position_y)
 
     # Points 1 and 2
     position_x, position_y, available_width = avoid_collisions(
-        document, box, containing_block)
+        context, box, containing_block)
 
     # Point 9
     # position_y is set now, let's define position_x
@@ -102,12 +102,12 @@ def find_float_position(document, box, containing_block):
     return box
 
 
-def get_clearance(document, box, collapsed_margin=0):
+def get_clearance(context, box, collapsed_margin=0):
     """Return None if there is no clearance, otherwise the clearance value."""
     clearance = None
     hypothetical_position = box.position_y + collapsed_margin
     # Hypothetical position is the position of the top border edge
-    for excluded_shape in document.excluded_shapes:
+    for excluded_shape in context.excluded_shapes:
         if box.style.clear in (excluded_shape.style.float, 'both'):
             y, h = excluded_shape.position_y, excluded_shape.margin_height()
             if hypothetical_position < y + h:
@@ -116,8 +116,8 @@ def get_clearance(document, box, collapsed_margin=0):
     return clearance
 
 
-def avoid_collisions(document, box, containing_block, outer=True):
-    excluded_shapes = document.excluded_shapes
+def avoid_collisions(context, box, containing_block, outer=True):
+    excluded_shapes = context.excluded_shapes
     position_y = box.position_y if outer else box.border_box_y()
 
     box_width = box.margin_width() if outer else box.border_width()

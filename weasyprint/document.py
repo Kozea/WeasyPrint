@@ -38,10 +38,6 @@ class Document(object):
         self._computed_styles = None
         self._formatting_structure = None
         self._pages = None
-        self._excluded_shapes_lists = []
-        self.excluded_shapes = None
-
-        self.create_block_formatting_context()
 
     # This is mostly useful to make pseudo_type optional.
     def style_for(self, element, pseudo_type=None):
@@ -83,8 +79,10 @@ class Document(object):
         for every box.
         """
         if self._pages is None:
+            context = layout.LayoutContext(
+                self.enable_hinting, self.style_for, self.get_image_from_uri)
             self._pages = list(layout.layout_document(
-                self, self.formatting_structure))
+                context, self.formatting_structure))
         return self._pages
 
     def get_image_from_uri(self, uri, type_=None):
@@ -102,21 +100,6 @@ class Document(object):
             context.scale(px_resolution, px_resolution)
             draw.draw_page(page, context)
             yield width, height, surface
-
-    def create_block_formatting_context(self):
-        self.excluded_shapes = []
-        self._excluded_shapes_lists.append(self.excluded_shapes)
-
-    def finish_block_formatting_context(self, root_box):
-        # See http://www.w3.org/TR/CSS2/visudet.html#root-height
-        if root_box.style.height == 'auto':
-            box_bottom = root_box.content_box_y() + root_box.height
-            for shape in self.excluded_shapes:
-                shape_bottom = shape.position_y + shape.margin_height()
-                if shape_bottom > box_bottom:
-                    root_box.height += shape_bottom - box_bottom
-        self._excluded_shapes_lists.pop()
-        self.excluded_shapes = self._excluded_shapes_lists[-1]
 
     def get_png_pages(self, resolution=None):
         """Yield (width, height, png_bytes) tuples, one for each page."""

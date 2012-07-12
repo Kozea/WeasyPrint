@@ -24,7 +24,7 @@ from ..formatting_structure import boxes
 from ..compat import xrange, izip
 
 
-def block_level_layout(document, box, max_position_y, skip_stack,
+def block_level_layout(context, box, max_position_y, skip_stack,
                        containing_block, device_size, page_is_empty,
                        absolute_boxes, fixed_boxes, adjoining_margins):
     """Lay out the block-level ``box``.
@@ -36,7 +36,7 @@ def block_level_layout(document, box, max_position_y, skip_stack,
     """
     if isinstance(box, boxes.TableBox):
         return table_layout(
-            document, box, max_position_y, skip_stack, containing_block,
+            context, box, max_position_y, skip_stack, containing_block,
             device_size, page_is_empty, absolute_boxes, fixed_boxes)
 
     resolve_percentages(box, containing_block)
@@ -47,14 +47,14 @@ def block_level_layout(document, box, max_position_y, skip_stack,
         box.margin_bottom = 0
 
     collapsed_margin = collapse_margin(adjoining_margins + [box.margin_top])
-    box.clearance = get_clearance(document, box, collapsed_margin)
+    box.clearance = get_clearance(context, box, collapsed_margin)
     if box.clearance is not None:
         top_border_edge = box.position_y + collapsed_margin + box.clearance
         box.position_y = top_border_edge - box.margin_top
         adjoining_margins = []
 
     if isinstance(box, boxes.BlockBox):
-        return block_box_layout(document, box, max_position_y, skip_stack,
+        return block_box_layout(context, box, max_position_y, skip_stack,
             containing_block, device_size, page_is_empty,
             absolute_boxes, fixed_boxes, adjoining_margins)
     elif isinstance(box, boxes.BlockReplacedBox):
@@ -62,7 +62,7 @@ def block_level_layout(document, box, max_position_y, skip_stack,
         # Don't collide with floats
         # http://www.w3.org/TR/CSS21/visuren.html#floats
         box.position_x, box.position_y, _ = avoid_collisions(
-            document, box, containing_block, outer=False)
+            context, box, containing_block, outer=False)
         resume_at = None
         next_page = 'any'
         adjoining_margins = []
@@ -72,27 +72,27 @@ def block_level_layout(document, box, max_position_y, skip_stack,
         raise TypeError('Layout for %s not handled yet' % type(box).__name__)
 
 
-def block_box_layout(document, box, max_position_y, skip_stack,
+def block_box_layout(context, box, max_position_y, skip_stack,
                      containing_block, device_size, page_is_empty,
                      absolute_boxes, fixed_boxes, adjoining_margins):
     """Lay out the block ``box``."""
     if box.is_table_wrapper:
         table_wrapper_width(
-            document, box, (containing_block.width, containing_block.height))
+            context, box, (containing_block.width, containing_block.height))
     block_level_width(box, containing_block)
 
     new_box, resume_at, next_page, adjoining_margins, collapsing_through = \
         block_container_layout(
-            document, box, max_position_y, skip_stack, device_size,
+            context, box, max_position_y, skip_stack, device_size,
             page_is_empty, absolute_boxes, fixed_boxes, adjoining_margins)
     if new_box and new_box.is_table_wrapper:
         # Don't collide with floats
         # http://www.w3.org/TR/CSS21/visuren.html#floats
         position_x, position_y, _ = avoid_collisions(
-            document, new_box, containing_block, outer=False)
+            context, new_box, containing_block, outer=False)
         new_box.translate(
             position_x - new_box.position_x, position_y - new_box.position_y)
-    list_marker_layout(document, new_box)
+    list_marker_layout(context, new_box)
     return new_box, resume_at, next_page, adjoining_margins, collapsing_through
 
 
@@ -206,7 +206,7 @@ def relative_positioning(box, containing_block):
             relative_positioning(child, containing_block)
 
 
-def block_container_layout(document, box, max_position_y, skip_stack,
+def block_container_layout(context, box, max_position_y, skip_stack,
                            device_size, page_is_empty, absolute_boxes,
                            fixed_boxes, adjoining_margins=None):
     """Set the ``box`` height."""
@@ -221,7 +221,7 @@ def block_container_layout(document, box, max_position_y, skip_stack,
 
     # See http://www.w3.org/TR/CSS21/visuren.html#block-formatting
     if not isinstance(box, boxes.BlockBox):
-        document.create_block_formatting_context()
+        context.create_block_formatting_context()
 
     if adjoining_margins is None:
         adjoining_margins = []
@@ -271,7 +271,7 @@ def block_container_layout(document, box, max_position_y, skip_stack,
                     fixed_boxes.append(placeholder)
             elif child.is_floated():
                 child = float_layout(
-                    document, child, box, absolute_boxes, fixed_boxes)
+                    context, child, box, absolute_boxes, fixed_boxes)
                 new_children.append(child)
             continue
 
@@ -283,7 +283,7 @@ def block_container_layout(document, box, max_position_y, skip_stack,
                 adjoining_margins = []
             new_containing_block = box
             lines_iterator = iter_line_boxes(
-                document, child, position_y, skip_stack,
+                context, child, position_y, skip_stack,
                 new_containing_block, device_size, absolute_boxes, fixed_boxes)
             is_page_break = False
             for line, resume_at in lines_iterator:
@@ -291,7 +291,7 @@ def block_container_layout(document, box, max_position_y, skip_stack,
                 new_position_y = line.position_y + line.height
                 # Allow overflow if the first line of the page is higher
                 # than the page itself so that we put *something* on this
-                # page and can advance in the document.
+                # page and can advance in the context.
                 if new_position_y > max_position_y and (
                         new_children or not page_is_empty):
                     over_orphans = len(new_children) - box.style.orphans
@@ -376,7 +376,7 @@ def block_container_layout(document, box, max_position_y, skip_stack,
                         previous_new_child.translate(
                             dy=collapsed_margin_difference)
                     clearance = get_clearance(
-                        document, child, new_collapsed_margin)
+                        context, child, new_collapsed_margin)
                     if clearance is not None:
                         for previous_new_child in new_children:
                             previous_new_child.translate(
@@ -390,7 +390,7 @@ def block_container_layout(document, box, max_position_y, skip_stack,
 
             (new_child, resume_at, next_page, next_adjoining_margins,
                 collapsing_through) = block_level_layout(
-                    document, child, max_position_y, skip_stack,
+                    context, child, max_position_y, skip_stack,
                     new_containing_block, device_size,
                     page_is_empty and not new_children,
                     absolute_boxes, fixed_boxes,
@@ -487,7 +487,7 @@ def block_container_layout(document, box, max_position_y, skip_stack,
         collapsed_margin = collapse_margin(adjoining_margins)
         # top and bottom margin of this box
         if (box.height in ('auto', 0) and
-            get_clearance(document, box, collapsed_margin) is None and
+            get_clearance(context, box, collapsed_margin) is None and
             all(v == 0 for v in [
                 box.min_height, box.border_top_width, box.padding_top,
                 box.border_bottom_width, box.padding_bottom])):
@@ -517,13 +517,13 @@ def block_container_layout(document, box, max_position_y, skip_stack,
     if new_box.style.position == 'relative':
         # New containing block, resolve the layout of the absolute descendants
         for absolute_box in absolute_boxes:
-            absolute_layout(document, absolute_box, new_box, fixed_boxes)
+            absolute_layout(context, absolute_box, new_box, fixed_boxes)
 
     for child in new_box.children:
         relative_positioning(child, (new_box.width, new_box.height))
 
     if not isinstance(new_box, boxes.BlockBox):
-        document.finish_block_formatting_context(new_box)
+        context.finish_block_formatting_context(new_box)
 
     # After finish_block_formatting_context which may increment new_box.height
     new_box.height = max(
