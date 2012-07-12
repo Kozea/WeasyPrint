@@ -165,7 +165,7 @@ def inline_preferred_minimum_width(document, box, outer=True, skip_stack=None,
             current_line = inline_preferred_minimum_width(
                 document, child, skip_stack=skip_stack, first_line=first_line)
         elif isinstance(child, boxes.TextBox):
-            widths = text.line_widths(document, child, width=0, skip=skip)
+            widths = text.line_widths(child, document.enable_hinting, width=0)
             if first_line:
                 return next(widths)
             else:
@@ -188,7 +188,8 @@ def inline_preferred_width(document, box, outer=True):
             # TODO: handle forced line breaks
             current_line += inline_preferred_width(document, child)
         elif isinstance(child, boxes.TextBox):
-            lines = list(text.line_widths(document, child, width=None))
+            lines = list(text.line_widths(
+                child, document.enable_hinting, width=None))
             assert lines
             # The first text line goes on the current line
             current_line += lines[0]

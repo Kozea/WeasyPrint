@@ -44,7 +44,7 @@ def get_metadata(html, base_url=resource_filename('<inline HTML>')):
     document = TestPDFDocument(html, base_url=base_url,
         user_stylesheets=[CSS(
             string='@page { size: 500pt 1000pt; margin: 50pt }')])
-    return pdf.gather_metadata(document)
+    return pdf.gather_metadata(document.pages)
 
 
 def get_bookmarks(html, structure_only=False):

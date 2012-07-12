@@ -348,7 +348,7 @@ def process_bookmarks(raw_bookmarks):
     return root, bookmark_list
 
 
-def gather_metadata(document):
+def gather_metadata(pages):
     """Traverse the layout tree (boxes) to find all metadata."""
     def walk(box):
         # "Border area. That's the area that hit-testing is done on."
@@ -381,7 +381,7 @@ def gather_metadata(document):
     bookmarks = []
     links_by_page = []
     anchors = {}
-    for page_index, page in enumerate(document.pages):
+    for page_index, page in enumerate(pages):
         # cairo coordinates are pixels right and down from the top-left corner
         # PDF coordinates are points right and up from the bottom-left corner
         matrix = cairo.Matrix(
@@ -416,8 +416,8 @@ def gather_metadata(document):
     return process_bookmarks(bookmarks), resolved_links_by_page
 
 
-def write_pdf_metadata(document, fileobj):
-    bookmarks, links = gather_metadata(document)
+def write_pdf_metadata(pages, fileobj):
+    bookmarks, links = gather_metadata(pages)
 
     pdf = PDFFile(fileobj)
     pdf.overwrite_object(pdf.info.object_number, pdf_format(

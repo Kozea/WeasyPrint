@@ -114,13 +114,12 @@ def show_first_line(cairo_context, pango_layout, hinting):
     PangoCairo.show_layout_line(cairo_context, lines[0])
 
 
-def line_widths(document, box, width, skip=None):
+def line_widths(box, enable_hinting, width, skip=None):
     """Return the width for each line."""
     # TODO: without the lstrip, we get an extra empty line at the beginning. Is
     # there a better solution to avoid that?
     layout = create_layout(
-        box.text[(skip or 0):].lstrip(), box.style,
-        document.enable_hinting, width)
+        box.text[(skip or 0):].lstrip(), box.style, enable_hinting, width)
     for line in layout.get_lines_readonly():
         _ink_extents, logical_extents = line.get_extents()
         yield Pango.units_to_double(logical_extents.width)
