@@ -43,9 +43,6 @@ class Document(object):
 
         self.create_block_formatting_context()
 
-        # TODO: remove this when Margin boxes variable dimension is correct.
-        self._auto_margin_boxes_warning_shown = False
-
     def style_for(self, element, pseudo_type=None):
         """
         Convenience method to get the computed styles for an element.
@@ -99,9 +96,10 @@ class Document(object):
             width = int(math.ceil(page.margin_width() * px_resolution))
             height = int(math.ceil(page.margin_height() * px_resolution))
             surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
-            context = draw.CairoContext(surface)
+            context = draw.make_cairo_context(
+                surface, self.enable_hinting, self.get_image_from_uri)
             context.scale(px_resolution, px_resolution)
-            draw.draw_page(self, page, context)
+            draw.draw_page(page, context)
             yield width, height, surface
 
     def create_block_formatting_context(self):
@@ -162,9 +160,10 @@ class Document(object):
         for page in self.pages:
             surface.set_size(page.margin_width() * px_to_pt,
                              page.margin_height() * px_to_pt)
-            context = draw.CairoContext(surface)
+            context = draw.make_cairo_context(
+                surface, self.enable_hinting, self.get_image_from_uri)
             context.scale(px_to_pt, px_to_pt)
-            draw.draw_page(self, page, context)
+            draw.draw_page(page, context)
             surface.show_page()
         surface.finish()
 
