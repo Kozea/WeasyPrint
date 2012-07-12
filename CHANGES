@@ -1,6 +1,16 @@
 WeasyPrint changelog
 ====================
 
+Version 0.12
+------------
+
+Not released yet.
+
+* Add support for collapsed borders on tables. This is currently incompatible
+  with repeating header and footer row groups on each page: headers and footers
+  are treated as normal row groups on table with ``border-collapse: collapse``.
+
+
 Version 0.11
 ------------
 
