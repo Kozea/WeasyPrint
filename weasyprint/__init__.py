@@ -217,7 +217,7 @@ class CSS(Resource):
         self.base_url = base_url
         medium = 'print'  # for @media
         self.rules = list(preprocess_stylesheet(
-            medium, base_url, self.stylesheet.rules))
+            medium, base_url, self.stylesheet.rules, url_fetcher))
         for error in self.stylesheet.errors:
             LOGGER.warn(error)
 

@@ -56,7 +56,7 @@ class Document(object):
         """
         if self._computed_styles is None:
             self._computed_styles = get_all_computed_styles(
-                self.element_tree,
+                self.element_tree, url_fetcher=self.url_fetcher,
                 user_stylesheets=self.user_stylesheets,
                 ua_stylesheets=self.user_agent_stylesheets,
                 medium='print')

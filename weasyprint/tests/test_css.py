@@ -21,7 +21,7 @@ from .testing_utils import (
 from .. import css
 from ..css.computed_values import strut_layout
 from ..urls import open_data_url
-from .. import CSS
+from .. import CSS, default_url_fetcher
 
 
 def parse_html(filename, **kwargs):
@@ -80,7 +80,8 @@ def test_find_stylesheets():
     """Test if the stylesheets are found in a HTML document."""
     document = parse_html('doc1.html')
 
-    sheets = list(css.find_stylesheets(document.element_tree, 'print'))
+    sheets = list(css.find_stylesheets(
+        document.element_tree, 'print', default_url_fetcher))
     assert len(sheets) == 2
     # Also test that stylesheets are in tree order
     assert [s.base_url.rsplit('/', 1)[-1].rsplit(',', 1)[-1] for s in sheets] \

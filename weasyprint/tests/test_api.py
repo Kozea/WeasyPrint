@@ -25,9 +25,9 @@ import lxml.html
 import pytest
 
 from .testing_utils import (
-    resource_filename, assert_no_logs, TEST_UA_STYLESHEET)
-from ..compat import urljoin, urlencode
-from .. import HTML, CSS
+    resource_filename, assert_no_logs, capture_logs, TEST_UA_STYLESHEET)
+from ..compat import urljoin, urlencode, urlparse_uses_relative
+from .. import HTML, CSS, default_url_fetcher
 from .. import __main__
 from .. import navigator
 
@@ -266,8 +266,9 @@ def test_command_line_render():
 
     with chdir(resource_filename('')):
         # Reference
-        png_bytes = TestHTML(string=combined, base_url='dummy.html').write_png()
-        pdf_bytes = TestHTML(string=combined, base_url='dummy.html').write_pdf()
+        document = TestHTML(string=combined, base_url='dummy.html')
+        png_bytes = document.write_png()
+        pdf_bytes = document.write_pdf()
     check_png_pattern(png_bytes)
 
     def run(args, stdin=b''):
@@ -432,3 +433,42 @@ def test_navigator():
         lipsum = '\ufeffLorem ipsum'.encode('utf-16-be')
         assert (b'<< /Title (' + lipsum +
                 b')\n/A << /Type /Action /S /GoTo') in body
+
+
+# Make relative URL references work with our custom URL scheme.
+urlparse_uses_relative.append('weasyprint-custom')
+
+@assert_no_logs
+def test_url_fetcher():
+    pattern_png = read_file(resource_filename('pattern.png'))
+    def fetcher(url):
+        if url == 'weasyprint-custom:foo/pattern':
+            return dict(string=pattern_png, mime_type='image/png')
+        elif url == 'weasyprint-custom:foo/css':
+            return dict(string='body { background: url(pattern)',
+                        mime_type='text/css')
+        else:
+            return default_url_fetcher(url)
+
+    base_url = resource_filename('dummy.html')
+    css = CSS(string='''
+        @page { size: 8px; margin: 2px; background: #fff }
+        body { margin: 0; font-size: 0 }
+    ''', base_url=base_url)
+    def test(html):
+        html = TestHTML(string=html, url_fetcher=fetcher, base_url=base_url)
+        check_png_pattern(html.write_png(stylesheets=[css]))
+
+    test('<body><img src="pattern.png">')  # Test a "normal" URL
+    test('<body><img src="weasyprint-custom:foo/pattern">')
+    test('<body style="background: url(weasyprint-custom:foo/pattern)">')
+    test('<body><li style="list-style: inside '
+            'url(weasyprint-custom:foo/pattern)">')
+    test('<link rel=stylesheet href="weasyprint-custom:foo/css"><body>')
+    test('<style>@import "weasyprint-custom:foo/css";</style><body>')
+
+    with capture_logs() as logs:
+        with pytest.raises(AssertionError):
+            test('<body><img src="custom:foo/bar">')
+    assert len(logs) == 1
+    assert logs[0].startswith('WARNING: Error for image at custom:foo/bar')

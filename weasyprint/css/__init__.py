@@ -155,7 +155,7 @@ class StyleDict(object):
     anonymous = False
 
 
-def find_stylesheets(element_tree, medium):
+def find_stylesheets(element_tree, medium, url_fetcher):
     """Yield the stylesheets in ``element_tree``.
 
     The output order is the same as the source order.
@@ -181,14 +181,15 @@ def find_stylesheets(element_tree, medium):
             content = ''.join(content)
             # lxml should give us either unicode or ASCII-only bytestrings, so
             # we don't need `encoding` here.
-            css = CSS(string=content, base_url=element.base_url)
+            css = CSS(string=content, base_url=element.base_url,
+                      url_fetcher=url_fetcher)
             yield css
         elif element.tag == 'link' and element.get('href'):
             rel = element.get('rel', '').split()
             if 'stylesheet' not in rel or 'alternate' in rel:
                 continue
             href = get_url_attribute(element, 'href')
-            yield CSS(url=href, _check_mime_type=True)
+            yield CSS(url=href, url_fetcher=url_fetcher, _check_mime_type=True)
 
 
 def find_style_attributes(element_tree):
@@ -328,7 +329,7 @@ class Selector(object):
         self.match = match
 
 
-def preprocess_stylesheet(medium, base_url, rules):
+def preprocess_stylesheet(medium, base_url, rules, url_fetcher):
     """Do the work that can be done early on stylesheet, before they are
     in a document.
 
@@ -362,14 +363,15 @@ def preprocess_stylesheet(medium, base_url, rules):
         elif rule.at_keyword == '@import':
             if not evaluate_media_query(rule.media, medium):
                 continue
-            for result in CSS(url=urljoin(base_url, rule.uri)).rules:
+            for result in CSS(url=urljoin(base_url, rule.uri),
+                              url_fetcher=url_fetcher).rules:
                 yield result
 
         elif rule.at_keyword == '@media':
             if not evaluate_media_query(rule.media, medium):
                 continue
             for result in preprocess_stylesheet(
-                    medium, base_url, rule.rules):
+                    medium, base_url, rule.rules, url_fetcher):
                 yield result
 
         elif rule.at_keyword == '@page':
@@ -401,7 +403,7 @@ def preprocess_stylesheet(medium, base_url, rules):
                     yield margin_rule, selector_list, declarations
 
 
-def get_all_computed_styles(element_tree, medium,
+def get_all_computed_styles(element_tree, medium, url_fetcher,
                             user_stylesheets=None, ua_stylesheets=None):
     """Compute all the computed styles of all elements in ``element_tree``
     for the media type ``medium``.
@@ -412,7 +414,8 @@ def get_all_computed_styles(element_tree, medium,
     Return a dict of (element, pseudo element type) -> StyleDict instance.
 
     """
-    author_stylesheets = list(find_stylesheets(element_tree, medium))
+    author_stylesheets = list(find_stylesheets(
+        element_tree, medium, url_fetcher))
 
     # keys: (element, pseudo_element_type)
     #    element: a lxml element object or the '@page' string for @page styles
