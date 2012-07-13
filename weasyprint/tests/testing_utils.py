@@ -21,6 +21,7 @@ import functools
 from .. import HTML, CSS
 from ..document import Document
 from ..logger import LOGGER
+from ..urls import default_url_fetcher
 
 
 # TODO: find a way to not depend on a specific font
@@ -44,6 +45,7 @@ class TestPNGDocument(Document):
         super(TestPNGDocument, self).__init__(
             HTML(string=html_source, base_url=base_url).root_element,
             enable_hinting=self.enable_hinting,
+            url_fetcher=default_url_fetcher,
             user_stylesheets=user_stylesheets,
             user_agent_stylesheets=user_agent_stylesheets)
 

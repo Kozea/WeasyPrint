@@ -15,12 +15,6 @@
 
 from __future__ import division, unicode_literals
 
-# Make sure the logger is configured early:
-from .logger import LOGGER
-
-# No other import here. For this module, do them in functions/methods instead.
-# (This reduces the work for eg. 'weasyprint --help')
-
 
 VERSION = '0.12a0'
 __version__ = VERSION
@@ -28,6 +22,13 @@ __version__ = VERSION
 # Used for 'User-Agent' in HTTP and 'Creator' in PDF
 VERSION_STRING = 'WeasyPrint %s (http://weasyprint.org/)' % VERSION
 
+
+from .urls import default_url_fetcher
+# Make sure the logger is configured early:
+from .logger import LOGGER
+
+# No other import here. For this module, do them in functions/methods instead.
+# (This reduces the work for eg. 'weasyprint --help')
 
 
 class Resource(object):
@@ -56,6 +57,28 @@ class Resource(object):
     * ``base_url``: used to resolve relative URLs. If not passed explicitly,
       try to use the input filename, URL, or ``name`` attribute of
       file objects.
+    * ``url_fetcher``: override the URL fetcher.
+
+    The URL fetcher is used for resources with an ``url`` input as well as
+    linked images and stylesheets. It is a function (or any callable) that
+    takes a single parameter (the URL) and should raise any exception to
+    indicate failure or return a dict with the following keys:
+
+    * One of ``string`` (a byte string) or ``file_obj`` (a file-like object)
+    * ``mime_type``, a MIME type extracted eg. from a *Content-Type* header
+    * Optionally: ``encoding``, a character encoding extracted eg.from a
+      *charset* parameter in a *Content-Type* header
+    * Optionally: ``redirected_url``, the actual URL of the ressource in case
+      there were eg. HTTP redirects.
+
+    URL fetchers can defer to the default fetcher::
+
+        def custom_fetcher(url):
+            if url.startswith('dynamic-image:')
+                return dict(string=generate_image(url[14:]),
+                            mime_type='image/png')
+            else:
+                return weasyprint.default_url_fetcher(url)
 
     """
 
@@ -67,12 +90,13 @@ class HTML(Resource):
 
     """
     def __init__(self, guess=None, filename=None, url=None, file_obj=None,
-                 string=None, tree=None, encoding=None, base_url=None):
+                 string=None, tree=None, encoding=None, base_url=None,
+                 url_fetcher=default_url_fetcher):
         import lxml.html
-        from .urls import urlopen
 
         source_type, source, base_url, protocol_encoding = _select_source(
-            guess, filename, url, file_obj, string, tree, base_url)
+            guess, filename, url, file_obj, string, tree, base_url,
+            url_fetcher)
 
         if source_type == 'tree':
             result = source
@@ -94,6 +118,7 @@ class HTML(Resource):
             result.getroottree().docinfo.URL = base_url
         self.root_element = result
         self.base_url = base_url
+        self.url_fetcher = url_fetcher
 
     def _ua_stylesheet(self):
         from .html import HTML5_UA_STYLESHEET
@@ -104,9 +129,9 @@ class HTML(Resource):
             ua_stylesheets = self._ua_stylesheet()
         from .document import Document
         return Document(
-            self.root_element,
-            enable_hinting,
-            user_stylesheets=list(_parse_stylesheets(stylesheets)),
+            self.root_element, enable_hinting, self.url_fetcher,
+            user_stylesheets=[css if isinstance(css, CSS) else CSS(guess=css)
+                              for css in stylesheets or []],
             user_agent_stylesheets=ua_stylesheets)
 
     def write_pdf(self, target=None, stylesheets=None):
@@ -167,13 +192,13 @@ class CSS(Resource):
     """
     def __init__(self, guess=None, filename=None, url=None, file_obj=None,
                  string=None, encoding=None, base_url=None,
-                 _check_mime_type=False):
+                 url_fetcher=default_url_fetcher, _check_mime_type=False):
         from .css import PARSER, preprocess_stylesheet
-        from .urls import urlopen
 
         source_type, source, base_url, protocol_encoding = _select_source(
             guess, filename, url, file_obj, string, tree=None,
-            base_url=base_url, check_css_mime_type=_check_mime_type)
+            base_url=base_url, url_fetcher=url_fetcher,
+            check_css_mime_type=_check_mime_type,)
 
         kwargs = dict(linking_encoding=encoding,
                       protocol_encoding=protocol_encoding)
@@ -200,13 +225,13 @@ class CSS(Resource):
 
 def _select_source(guess=None, filename=None, url=None, file_obj=None,
                    string=None, tree=None, base_url=None,
-                   check_css_mime_type=False):
+                   url_fetcher=default_url_fetcher, check_css_mime_type=False):
     """
     Check that only one input is not None, and return it with the
     normalized ``base_url``.
 
     """
-    from .urls import path2url, ensure_url, url_is_absolute, urlopen
+    from .urls import path2url, ensure_url, url_is_absolute
 
     if base_url is not None:
         base_url = ensure_url(base_url)
@@ -221,23 +246,25 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
         else:
             type_ = 'filename'
         return _select_source(
-            base_url=base_url, check_css_mime_type=check_css_mime_type,
+            base_url=base_url, url_fetcher=url_fetcher,
+            check_css_mime_type=check_css_mime_type,
             **{type_: guess})
     if nones == [True, False, True, True, True, True]:
         if base_url is None:
             base_url = path2url(filename)
         return 'filename', filename, base_url, None
     if nones == [True, True, False, True, True, True]:
-        file_obj, mime_type, protocol_encoding = urlopen(url)
-        if check_css_mime_type and mime_type != 'text/css':
-            LOGGER.warn('Unsupported stylesheet type: %s', mime_type)
+        result = url_fetcher(url)
+        if check_css_mime_type and result['mime_type'] != 'text/css':
+            LOGGER.warn('Unsupported stylesheet type: %s', result['mime_type'])
             return 'string', '', base_url, None
+        protocol_encoding = result.get('encoding')
         if base_url is None:
-            if hasattr(file_obj, 'geturl'):
-                base_url = file_obj.geturl()
-            else:
-                base_url = url
-        return 'file_obj', file_obj, base_url, protocol_encoding
+            base_url = result.get('redirected_url', url)
+        if 'string' in result:
+            return 'string', result['string'], base_url, protocol_encoding
+        else:
+            return 'file_obj', result['file_obj'], base_url, protocol_encoding
     if nones == [True, True, True, False, True, True]:
         if base_url is None:
             # filesystem file objects have a 'name' attribute.
@@ -251,18 +278,3 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
         return 'tree', tree, base_url, None
 
     raise TypeError('Expected exactly one source, got %i' % nones.count(False))
-
-
-def _parse_stylesheets(stylesheets):
-    """Yield parsed stylesheets.
-
-    Accept :obj:`None` or a list of filenames, urls or CSS objects.
-
-    """
-    if stylesheets is None:
-        return
-    for css in stylesheets:
-        if hasattr(css, 'stylesheet'):
-            yield css
-        else:
-            yield CSS(css)

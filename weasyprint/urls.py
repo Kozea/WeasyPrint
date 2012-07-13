@@ -28,27 +28,6 @@ from .compat import (
 UNICODE_SCHEME_RE = re.compile('^([a-z][a-z0-1.+-]*):', re.I)
 BYTES_SCHEME_RE = re.compile(b'^([a-z][a-z0-1.+-]*):', re.I)
 
-OPENER_BY_SCHEME = {}
-
-def register_opener(scheme):
-    """Register globally an opener function for a given URI scheme.
-
-    Expected usage::
-
-        from weasyprint.urls import register_opener
-        @register_opener('foo')
-        def git_urlopen(url):
-            url = urlparse.urlsplit(url)
-            assert url.scheme == 'foo'
-            # ...
-            return fileobj, mimetype, charset
-
-    """
-    def decorator(function):
-        OPENER_BY_SCHEME[scheme] = function
-        return function
-    return decorator
-
 
 def iri_to_uri(url):
     """Turn an IRI that can contain any Unicode character into an ASII-only
@@ -160,7 +139,6 @@ def decode_base64(data):
     return base64.decodestring(data)
 
 
-@register_opener('data')
 def open_data_url(url):
     """Decode URLs with the 'data' scheme. urllib can handle them
     in Python 2, but that is broken in Python 3.
@@ -198,21 +176,30 @@ def open_data_url(url):
     if encoding == 'base64':
         data = decode_base64(data)
 
-    return io.BytesIO(data), mime_type, charset
+    return dict(string=data, mime_type=mime_type, encoding=charset)
 
 
-def urlopen(url):
-    """Fetch an URL and return ``(file_like, mime_type, charset)``.
+def default_url_fetcher(url):
+    """Fetch an URL and return dict with the following keys:
 
-    It is the caller’s responsability to call ``file_like.close()``.
+    * One of ``string`` (a byte string) or ``file_obj`` (a file-like object)
+    * ``mime_type``, a MIME type extracted eg. from a *Content-Type* header
+    * Optionally: ``encoding``, a character encoding extracted eg.from a
+      *charset* parameter in a *Content-Type* header
+    * Optionally: ``redirected_url``, the actual URL of the ressource in case
+      there were eg. HTTP redirects.
+
+    If a ``file_obj`` key is given, it is the caller’s responsability to call
+    ``file_obj.close()``.
+
     """
-    match = UNICODE_SCHEME_RE.match(url)
-    if not match:
-        raise ValueError('Not an absolute URI: %r' % url)
-    opener = OPENER_BY_SCHEME.get(match.group(1))
-    if opener:
-        return opener(url)
-    else:
+    if url.startswith('data:'):
+        return open_data_url(url)
+    elif UNICODE_SCHEME_RE.match(url):
         url = iri_to_uri(url)
-        return urlopen_contenttype(Request(url,
-            headers={'User-Agent': VERSION_STRING}))
+        result, mime_type, charset = urlopen_contenttype(Request(
+            url, headers={'User-Agent': VERSION_STRING}))
+        return dict(file_obj=result, redirected_url=result.geturl(),
+                    mime_type=mime_type, encoding=charset)
+    else:
+        raise ValueError('Not an absolute URI: %r' % url)

@@ -17,7 +17,6 @@ import contextlib
 
 import cairo
 
-from .urls import urlopen
 from .css.computed_values import LENGTHS_TO_PIXELS
 from .logger import LOGGER
 
@@ -44,16 +43,16 @@ def register_format(mime_type):
 
 
 @register_format('image/png')
-def png_handler(file_like, _uri):
+def png_handler(file_obj, string, _uri):
     """Return a cairo Surface from a PNG byte stream."""
-    surface = cairo.ImageSurface.create_from_png(file_like)
+    surface = cairo.ImageSurface.create_from_png(file_obj or BytesIO(string))
     pattern = cairo.SurfacePattern(surface)
     result = pattern, surface.get_width(), surface.get_height()
     return lambda: result
 
 
 @register_format('image/svg+xml')
-def cairosvg_handler(file_like, uri):
+def cairosvg_handler(file_obj, string, uri):
     """Return a cairo Surface from a SVG byte stream.
 
     This handler uses CairoSVG: http://cairosvg.org/
@@ -75,14 +74,15 @@ def cairosvg_handler(file_like, uri):
         # Don’t pass data URIs to CairoSVG.
         # They are useless for relative URIs anyway.
         uri = None
-    bytestring = file_like.read()
+    if file_obj:
+        string = file_obj.read()
 
     # Do not keep a Surface object alive, but regenerate it as needed.
     # If a surface for a SVG image is still alive by the time we call
     # show_page(), cairo will rasterize the image instead writing vectors.
     def draw_svg():
         # Draw to a cairo surface but do not write to a file
-        tree = Tree(bytestring=bytestring, url=uri)
+        tree = Tree(bytestring=string, url=uri)
         surface = ScaledSVGSurface(tree, output=None, dpi=96)
         if not (surface.width > 0 and surface.height > 0):
             raise ValueError(
@@ -93,33 +93,36 @@ def cairosvg_handler(file_like, uri):
     return draw_svg
 
 
-def fallback_handler(file_like, uri):
+def fallback_handler(file_obj, string, uri):
     """
     Parse a byte stream with PIL and return a cairo Surface.
 
     PIL supports many raster image formats and does not take a `format`
     parameter, it guesses the format from the content.
     """
+    if file_obj:
+        string = file_obj.read()
     from pystacia import read_blob
-    with contextlib.closing(read_blob(file_like.read())) as image:
+    with contextlib.closing(read_blob(string)) as image:
         png_bytes = image.get_blob('png')
-    return png_handler(BytesIO(png_bytes), uri)
+    return png_handler(None, png_bytes, uri)
 
 
-def get_image_from_uri(cache, uri, type_=None):
+def get_image_from_uri(cache, url_fetcher, uri, type_=None):
     """Get a :class:`cairo.Surface`` from an image URI."""
     try:
         missing = object()
         function = cache.get(uri, missing)
         if function is not missing:
             return function()
-        file_like, mime_type, _charset = urlopen(uri)
+        result = url_fetcher(uri)
         try:
             if not type_:
-                type_ = mime_type  # Use eg. the HTTP header
+                type_ = result['mime_type']  # Use eg. the HTTP header
             #else: the type was forced by eg. a 'type' attribute on <embed>
             handler = FORMAT_HANDLERS.get(type_, fallback_handler)
-            function = handler(file_like, uri)
+            function = handler(
+                result.get('file_obj'), result.get('string'), uri)
         finally:
             try:
                 file_like.close()

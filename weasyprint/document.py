@@ -28,10 +28,11 @@ from . import pdf
 
 class Document(object):
     """Abstract output document."""
-    def __init__(self, element_tree, enable_hinting, user_stylesheets,
-                 user_agent_stylesheets):
-        self.enable_hinting = enable_hinting
+    def __init__(self, element_tree, enable_hinting, url_fetcher,
+                 user_stylesheets, user_agent_stylesheets):
         self.element_tree = element_tree  #: lxml HtmlElement object
+        self.enable_hinting = enable_hinting
+        self.url_fetcher = url_fetcher
         self.user_stylesheets = user_stylesheets
         self.user_agent_stylesheets = user_agent_stylesheets
         self._image_cache = {}
@@ -86,7 +87,8 @@ class Document(object):
         return self._pages
 
     def get_image_from_uri(self, uri, type_=None):
-        return images.get_image_from_uri(self._image_cache, uri, type_)
+        return images.get_image_from_uri(
+            self._image_cache, self.url_fetcher, uri, type_)
 
     def get_png_surfaces(self, resolution=None):
         """Yield (width, height, image_surface) tuples, one for each page."""
