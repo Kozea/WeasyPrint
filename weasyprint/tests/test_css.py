@@ -300,6 +300,8 @@ def test_warnings():
             ['WARNING: Ignored', 'unknown property']),
         ('<html style="margin-top: red">',
             ['WARNING: Ignored', 'invalid value']),
+        ('<link rel=stylesheet href=relative-uri.css>',
+            ['WARNING: Relative URI reference without a base URI']),
     ]:
         with capture_logs() as logs:
             TestPNGDocument(source).style_for('')

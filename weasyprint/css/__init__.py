@@ -189,7 +189,9 @@ def find_stylesheets(element_tree, medium, url_fetcher):
             if 'stylesheet' not in rel or 'alternate' in rel:
                 continue
             href = get_url_attribute(element, 'href')
-            yield CSS(url=href, url_fetcher=url_fetcher, _check_mime_type=True)
+            if href is not None:
+                yield CSS(url=href, url_fetcher=url_fetcher,
+                          _check_mime_type=True)
 
 
 def find_style_attributes(element_tree):
