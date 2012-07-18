@@ -18,8 +18,10 @@ import tempfile
 import shutil
 import itertools
 import operator
+import functools
 from io import BytesIO
 
+import cairo
 import pytest
 import pystacia
 
@@ -37,6 +39,17 @@ _ = b'\xff\xff\xff\xff'  # white
 r = b'\xff\x00\x00\xff'  # red
 B = b'\x00\x00\xff\xff'  # blue
 BYTES_PER_PIXELS = 4
+
+
+def requires_cairo_1_12(test):
+    @functools.wraps(test)
+    def decorated_test():
+        if cairo.cairo_version() < 11200:
+            print('Running cairo %s but this test requires 1.12+'
+                  % cairo.cairo_version_string())
+            pytest.xfail()
+        test()
+    return decorated_test
 
 
 def assert_pixels(name, expected_width, expected_height, expected_lines,
@@ -1151,6 +1164,7 @@ def test_visibility():
 
 
 @assert_no_logs
+@requires_cairo_1_12
 def test_tables():
     source = '''
         <style>
@@ -1677,6 +1691,7 @@ def test_overflow():
 
 
 @assert_no_logs
+@requires_cairo_1_12
 def test_clip():
     """Test the clip property."""
     num = [0]
@@ -1693,9 +1708,6 @@ def test_clip():
             </style>
             <div>
         ''' % (css,))
-
-    print('test_draw.test_clip() is known to fail with cairo 1.10, '
-          'try with 1.12.')
 
     g = b'\x00\x80\x00\xff'  # green
     clip('5px, 5px, 9px, auto', [
@@ -1715,7 +1727,6 @@ def test_clip():
         _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_+_+_+_+_+_+_,
-
     ])
     clip('5px, 5px, auto, 10px', [
         _+_+_+_+_+_+_+_+_+_+_+_+_+_,
@@ -1734,7 +1745,6 @@ def test_clip():
         _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_+_+_+_+_+_+_,
-
     ])
     clip('5px, auto, 9px, 10px', [
         _+_+_+_+_+_+_+_+_+_+_+_+_+_,
@@ -1753,7 +1763,6 @@ def test_clip():
         _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_+_+_+_+_+_+_,
-
     ])
     clip('auto, 5px, 9px, 10px', [
         _+_+_+_+_+_+_+_+_+_+_+_+_+_,
@@ -1772,9 +1781,7 @@ def test_clip():
         _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_+_+_+_+_+_+_,
-
     ])
-
 
 
 @assert_no_logs
@@ -2017,6 +2024,7 @@ def test_2d_transform():
 
 
 @assert_no_logs
+@requires_cairo_1_12
 def test_acid2():
     """A local version of http://acid2.acidtests.org/"""
     def get_png_pages(filename):
