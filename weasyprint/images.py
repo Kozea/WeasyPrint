@@ -20,9 +20,6 @@ import cairo
 from .css.computed_values import LENGTHS_TO_PIXELS
 from .logger import LOGGER
 
-#import faulthandler
-#faulthandler.enable()
-
 
 # Map MIME types to functions that take a byte stream and return a callable
 # that returns ``(pattern, width, height)`` a cairo Pattern and

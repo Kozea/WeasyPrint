@@ -65,7 +65,9 @@ class Resource(object):
     indicate failure or return a dict with the following keys:
 
     * One of ``string`` (a byte string) or ``file_obj`` (a file-like object)
-    * ``mime_type``, a MIME type extracted eg. from a *Content-Type* header
+    * Optionally: ``mime_type``, a MIME type extracted eg. from a
+      *Content-Type* header. If not provided, the type is guessed from
+      the file extension in the URL.
     * Optionally: ``encoding``, a character encoding extracted eg.from a
       *charset* parameter in a *Content-Type* header
     * Optionally: ``redirected_url``, the actual URL of the ressource in case
@@ -93,6 +95,8 @@ class HTML(Resource):
                  string=None, tree=None, encoding=None, base_url=None,
                  url_fetcher=default_url_fetcher):
         import lxml.html
+        from .urls import wrap_url_fetcher
+        url_fetcher = wrap_url_fetcher(url_fetcher)
 
         source_type, source, base_url, protocol_encoding = _select_source(
             guess, filename, url, file_obj, string, tree, base_url,
@@ -232,6 +236,8 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
 
     """
     from .urls import path2url, ensure_url, url_is_absolute
+    from .urls import wrap_url_fetcher
+    url_fetcher = wrap_url_fetcher(url_fetcher)
 
     if base_url is not None:
         base_url = ensure_url(base_url)
@@ -269,7 +275,8 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
         if base_url is None:
             # filesystem file objects have a 'name' attribute.
             name = getattr(file_obj, 'name', None)
-            if name:
+            # Some streams have a .name like '<stdin>', not a filename.
+            if name and not name.startswith('<'):
                 base_url = ensure_url(name)
         return 'file_obj', file_obj, base_url, None
     if nones == [True, True, True, True, False, True]:

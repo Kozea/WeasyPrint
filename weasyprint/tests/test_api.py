@@ -444,9 +444,8 @@ def test_url_fetcher():
     def fetcher(url):
         if url == 'weasyprint-custom:foo/pattern':
             return dict(string=pattern_png, mime_type='image/png')
-        elif url == 'weasyprint-custom:foo/css':
-            return dict(string='body { background: url(pattern)',
-                        mime_type='text/css')
+        elif url == 'weasyprint-custom:foo/bar.css':
+            return dict(string='body { background: url(pattern)')
         else:
             return default_url_fetcher(url)
 
@@ -464,8 +463,8 @@ def test_url_fetcher():
     test('<body style="background: url(weasyprint-custom:foo/pattern)">')
     test('<body><li style="list-style: inside '
             'url(weasyprint-custom:foo/pattern)">')
-    test('<link rel=stylesheet href="weasyprint-custom:foo/css"><body>')
-    test('<style>@import "weasyprint-custom:foo/css";</style><body>')
+    test('<link rel=stylesheet href="weasyprint-custom:foo/bar.css"><body>')
+    test('<style>@import "weasyprint-custom:foo/bar.css";</style><body>')
 
     with capture_logs() as logs:
         with pytest.raises(AssertionError):

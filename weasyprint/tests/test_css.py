@@ -36,8 +36,10 @@ def test_data_url():
     """Test URLs with the "data:" scheme."""
     def parse(url, expected_content, expected_mime_type, expected_charset):
         assert open_data_url(url) == dict(
-            string=expected_content, mime_type=expected_mime_type,
-            encoding=expected_charset)
+            string=expected_content,
+            mime_type=expected_mime_type,
+            encoding=expected_charset,
+            redirected_url=url)
     parse('data:,foo', b'foo', 'text/plain', 'US-ASCII')
     parse('data:,foo%22bar', b'foo"bar', 'text/plain', 'US-ASCII')
     parse('data:text/plain,foo', b'foo', 'text/plain', None)
