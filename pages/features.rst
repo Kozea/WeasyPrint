@@ -6,7 +6,7 @@ Documentation
 * `Hacking </hacking/>`_
 * **Features**
 
-This page is for WeasyPrint 0.11. For older versions, see the changelog_.
+This page is for WeasyPrint 0.12. See the changelog_ for older versions.
 
 .. _changelog: https://github.com/Kozea/WeasyPrint/blob/master/CHANGES
 
@@ -69,37 +69,33 @@ CSS
 CSS 2.1
 ~~~~~~~
 
-To the best of our knowledge, everything in `CSS 2.1`_ that applies to the
-“print” media but is not listed in this section is supported.
-Please `report a bug`_ if you find this list incomplete.
+The `CSS 2.1`_ features listed here are **not** supported:
 
-.. _CSS 2.1: http://www.w3.org/TR/CSS21/
-.. _report a bug: /community/#issue-bug-tracker
-
-Some CSS 2.1 features are not supported yet but are on the *to do* list:
-
-* Table `border collapsing`_ and the `empty-cells`_ property.
+* Outlines_
+* On tables: `empty-cells`_ and `visibility: collapse`_.
 * Minimum and maximum width_ and height_ on table-related boxes and
   page-margin boxes.
-* Outlines_
-
-.. _border collapsing: http://www.w3.org/TR/CSS21/tables.html#collapsing-borders
-.. _empty-cells: http://www.w3.org/TR/CSS21/tables.html#empty-cells
-.. _width: http://www.w3.org/TR/CSS21/visudet.html#min-max-widths
-.. _height: http://www.w3.org/TR/CSS21/visudet.html#min-max-heights
-.. _Outlines: http://www.w3.org/TR/CSS21/ui.html#dynamic-outlines
-
-We have few or no use cases for others, but feel free to ask about them:
-
 * Conforming `font matching algorithm`_. Currently ``font-family``
   is passed as-is to Pango.
 * Right-to-left or `bi-directional text`_.
-  (May happen to kind of work in uninterrupted text thanks to Pango)
+  (May *kind of* work within uninterrupted text thanks to Pango)
 * `System colors`_. They are deprecated in CSS 3
 
+.. _Outlines: http://www.w3.org/TR/CSS21/ui.html#dynamic-outlines
+.. _CSS 2.1: http://www.w3.org/TR/CSS21/
+.. _empty-cells: http://www.w3.org/TR/CSS21/tables.html#empty-cells
+.. _visibility\: collapse: http://www.w3.org/TR/CSS21/tables.html#dynamic-effects
+.. _width: http://www.w3.org/TR/CSS21/visudet.html#min-max-widths
+.. _height: http://www.w3.org/TR/CSS21/visudet.html#min-max-heights
 .. _font matching algorithm: http://www.w3.org/TR/CSS21/fonts.html#algorithm
 .. _Bi-directional text: http://www.w3.org/TR/CSS21/visuren.html#direction
 .. _System colors: http://www.w3.org/TR/CSS21/ui.html#system-colors
+
+To the best of our knowledge, everything else that applies to the
+print media **is** supported. Please `report a bug`_ if you find this list
+incomplete.
+
+.. _report a bug: /community/#issue-bug-tracker
 
 
 CSS 3 Selectors

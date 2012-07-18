@@ -32,7 +32,7 @@ WeasyPrint has been packaged for some Linux distributions:
 
 
 For other distributions or if you want to install it yourself,
-WeasyPrint 0.11 depends on:
+WeasyPrint 0.12 depends on:
 
 .. Note: keep this in sync with setup.py
 

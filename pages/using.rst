@@ -104,6 +104,7 @@ You can also pass optional named arguments:
   ``<img src="../foo.png">``).
   If not passed explicitly, try to use the input filename, URL, or
   ``name`` attribute of file objects.
+* ``url_fetcher``: override the URL fetcher. (See `below <#url-fetchers>`_.)
 
 **Note:** In some cases like ``HTML(string=foo)`` you need to pass ``base_url``
 explicitly, or relative URLs will be invalid.
@@ -168,6 +169,41 @@ be used in the ``write_pdf`` or ``write_png`` method. (See above.)
 
 The above warning on ``base_url`` and string input applies too: relative
 URLs will be invalid if there is no base URL.
+
+
+URL fetchers
+............
+
+The URL fetcher is used for resources with an ``url`` input as well as
+linked images and stylesheets. It is a function (or any callable) that
+takes a single parameter (the URL) and should raise any exception to
+indicate failure or return a dict with the following keys:
+
+* One of ``string`` (a byte string) or ``file_obj`` (a file-like object)
+* Optionally: ``mime_type``, a MIME type extracted eg. from a *Content-Type*
+  header. If not provided, the type is guessed from the file extension
+  in the URL.
+* Optionally: ``encoding``, a character encoding extracted eg.from a
+  *charset* parameter in a *Content-Type* header
+* Optionally: ``redirected_url``, the actual URL of the ressource in case
+  there were eg. HTTP redirects.
+
+URL fetchers can defer to the default fetcher:
+
+.. code-block:: python
+
+    from weasyprint import default_url_fetcher, HTML
+
+    def my_fetcher(url):
+        if url.startswith('graph:')
+            graph_data = map(float, url[6:].split(','))
+            return dict(string=generate_graph(graph_data),
+                        mime_type='image/png')
+        else:
+            return weasyprint.default_url_fetcher(url)
+
+    source = '<img src="graph:42,10.3,87">'
+    HTML(string=source, url_fetcher=my_fetcher).write_pdf('out.pdf')
 
 
 Errors
