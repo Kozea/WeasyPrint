@@ -4,7 +4,7 @@ WeasyPrint changelog
 Version 0.12
 ------------
 
-Not released yet.
+Released on 2012-07-18.
 
 * Add support for collapsed borders on tables. This is currently incompatible
   with repeating header and footer row groups on each page: headers and footers
@@ -12,6 +12,8 @@ Not released yet.
 * Add ``url_fetcher`` to the public API. This enables users to hook into
   WeasyPrint for fetching linked stylesheets or images, eg. to generate them
   on the fly without going through the network.
+  This enables the creation of `Flask-WeasyPrint
+  <http://packages.python.org/Flask-WeasyPrint/>`.
 
 
 Version 0.11
