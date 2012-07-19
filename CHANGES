@@ -4,7 +4,7 @@ WeasyPrint changelog
 Version 0.12
 ------------
 
-Released on 2012-07-18.
+Released on 2012-07-19.
 
 * Add support for collapsed borders on tables. This is currently incompatible
   with repeating header and footer row groups on each page: headers and footers
