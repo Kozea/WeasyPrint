@@ -9,7 +9,7 @@ separated. This new model is incompatible with table headers and footers:
 with ``border-collapse: collapse``, ``<thead>`` and ``<tfoot>`` elements
 are treated like normal ``<tbody>`` groups and are not repeated on each page.
 
-On an unrelated note, 0.12 also adds the `URL fetcher </using/#url-fetchers>`
+On an unrelated note, 0.12 also adds the `URL fetcher </using/#url-fetchers>`_
 hook to the public API. It allows to control or override how WeasyPrint
 accesses HTTP or other URLs for HTML documents, CSS stylesheets, and images.
 
