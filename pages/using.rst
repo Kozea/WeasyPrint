@@ -174,6 +174,12 @@ URLs will be invalid if there is no base URL.
 URL fetchers
 ............
 
+Flask-WeasyPrint_ makes use of a custom URL fetcher to integrate WeasyPrint
+with a Flask_ application.
+
+.. _Flask-WeasyPrint: http://packages.python.org/Flask-WeasyPrint/
+.. _Flask: http://flask.pocoo.org/
+
 The URL fetcher is used for resources with an ``url`` input as well as
 linked images and stylesheets. It is a function (or any callable) that
 takes a single parameter (the URL) and should raise any exception to
