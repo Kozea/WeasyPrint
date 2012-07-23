@@ -12,6 +12,8 @@
 
 from __future__ import division, unicode_literals
 
+import os
+
 import cairo
 
 from ..css import StyleDict
@@ -91,3 +93,14 @@ def test_text_font_size_zero():
     assert not line.children
     assert line.height == 0
     assert paragraph.height == 0
+
+
+@assert_no_logs
+def test_pygtk():
+    from .. import text
+    if os.environ.get('WEASYPRINT_USE_PYGTK'):
+        import pango
+        assert text.Pango is pango
+    else:
+        from gi.repository import Pango
+        assert text.Pango is Pango

@@ -12,26 +12,108 @@
 
 from __future__ import division, unicode_literals
 
+import os
+from cgi import escape
+
 import cairo
 
-from cgi import escape
-from gi.repository import Pango, PangoCairo  # pylint: disable=E0611
+from .compat import xrange
+from .logger import LOGGER
 
 
-PANGO_VARIANT = {
-    'normal': Pango.Variant.NORMAL,
-    'small-caps': Pango.Variant.SMALL_CAPS,
-}
+USING_PYGTK = True
+if os.environ.get('WEASYPRINT_USE_PYGTK'):
+    LOGGER.info('WEASYPRINT_USE_PYGTK is set, not trying PyGObject.')
+else:
+    try:
+        from gi.repository import Pango, PangoCairo
+        USING_PYGTK = False
+    except ImportError:
+        LOGGER.info('Failed to import PyGObject, falling back on PyGTK.')
 
-PANGO_STYLE = {
-    'normal': Pango.Style.NORMAL,
-    'italic': Pango.Style.ITALIC,
-    'oblique': Pango.Style.OBLIQUE,
-}
+
+if not USING_PYGTK:
+    from gi.repository.PangoCairo import create_layout as create_pango_layout
+
+    PANGO_VARIANT = {
+        'normal': Pango.Variant.NORMAL,
+        'small-caps': Pango.Variant.SMALL_CAPS,
+    }
+    PANGO_STYLE = {
+        'normal': Pango.Style.NORMAL,
+        'italic': Pango.Style.ITALIC,
+        'oblique': Pango.Style.OBLIQUE,
+    }
+    PANGO_WRAP_WORD = Pango.WrapMode.WORD
+
+    def set_text(layout, text):
+        layout.set_text(text, -1)
+
+    def parse_markup(markup):
+        _, attributes_list, _, _ = Pango.parse_markup(markup, -1, '\x00')
+        return attributes_list
+
+    def get_size(line):
+        _ink_extents, logical_extents = line.get_extents()
+        return (units_to_double(logical_extents.width),
+                units_to_double(logical_extents.height))
+
+    def show_first_line(cairo_context, pango_layout, hinting):
+        """Draw the given ``line`` to the Cairo ``context``."""
+        if hinting:
+            PangoCairo.update_layout(cairo_context, pango_layout)
+        lines = pango_layout.get_lines_readonly()
+        PangoCairo.show_layout_line(cairo_context, lines[0])
+
+
+else:
+    import pango as Pango
+    import pangocairo
+
+    PANGO_VARIANT = {
+        'normal': Pango.VARIANT_NORMAL,
+        'small-caps': Pango.VARIANT_SMALL_CAPS,
+    }
+    PANGO_STYLE = {
+        'normal': Pango.STYLE_NORMAL,
+        'italic': Pango.STYLE_ITALIC,
+        'oblique': Pango.STYLE_OBLIQUE,
+    }
+    PANGO_WRAP_WORD = Pango.WRAP_WORD
+    set_text = Pango.Layout.set_text
+
+    def create_pango_layout(context):
+        return pangocairo.CairoContext(context).create_layout()
+
+    def parse_markup(markup):
+        attributes_list, _, _ = Pango.parse_markup(markup, '\x00')
+        return attributes_list
+
+    def get_size(line):
+        _ink_extents, logical_extents = line.get_extents()
+        _x, _y, width, height = logical_extents
+        return units_to_double(width), units_to_double(height)
+
+    def show_first_line(cairo_context, pango_layout, hinting):
+        """Draw the given ``line`` to the Cairo ``context``."""
+        context = pangocairo.CairoContext(cairo_context)
+        if hinting:
+            context.update_layout(pango_layout)
+        context.show_layout_line(pango_layout.get_line(0))
+
 
 NON_HINTED_DUMMY_CONTEXT = cairo.Context(cairo.PDFSurface(None, 1, 1))
 HINTED_DUMMY_CONTEXT = cairo.Context(cairo.ImageSurface(
     cairo.FORMAT_ARGB32, 1, 1))
+
+
+def units_from_double(value):
+    return int(value * Pango.SCALE)
+
+
+def units_to_double(value):
+    # True division, with the __future__ import
+    return value / Pango.SCALE
 
 
 def create_layout(text, style, hinting, max_width):
@@ -46,37 +128,37 @@ def create_layout(text, style, hinting, max_width):
         or ``None`` for unlimited width.
 
     """
-    layout = PangoCairo.create_layout(
+    layout = create_pango_layout(
         HINTED_DUMMY_CONTEXT if hinting else NON_HINTED_DUMMY_CONTEXT)
     font = Pango.FontDescription()
     font.set_family(','.join(style.font_family))
     font.set_variant(PANGO_VARIANT[style.font_variant])
     font.set_style(PANGO_STYLE[style.font_style])
-    font.set_absolute_size(Pango.units_from_double(style.font_size))
+    font.set_absolute_size(units_from_double(style.font_size))
     font.set_weight(style.font_weight)
     layout.set_font_description(font)
-    layout.set_text(text, -1)
-    layout.set_wrap(Pango.WrapMode.WORD)
-    if max_width is not None:
-        layout.set_width(Pango.units_from_double(max_width))
+    layout.set_wrap(PANGO_WRAP_WORD)
+    set_text(layout, text)
+    # Make sure that max_width * Pango.SCALE == max_width * 1024 fits in a
+    # signed integer. Treat bigger values same as None: unconstrained width.
+    if max_width is not None and max_width < 2**21:
+        layout.set_width(units_from_double(max_width))
     word_spacing = style.word_spacing
     letter_spacing = style.letter_spacing
     if letter_spacing == 'normal':
         letter_spacing = 0
     if text and (word_spacing != 0 or letter_spacing != 0):
-        word_spacing = Pango.units_from_double(word_spacing)
-        letter_spacing = Pango.units_from_double(letter_spacing)
+        word_spacing = units_from_double(word_spacing)
+        letter_spacing = units_from_double(letter_spacing)
         markup = escape(text).replace(
             ' ', '<span letter_spacing="%i"> </span>' % (
                 word_spacing + letter_spacing,))
         markup = '<span letter_spacing="%i">%s</span>' % (
             letter_spacing, markup)
-        attributes_list = Pango.parse_markup(markup, -1, '\x00')[1]
-        layout.set_attributes(attributes_list)
+        layout.set_attributes(parse_markup(markup))
     return layout
 
 
-# TODO: use get_line instead of get_lines when it is not broken anymore
 def split_first_line(*args, **kwargs):
     """Fit as much as possible in the available width for one line of text.
 
@@ -95,23 +177,15 @@ def split_first_line(*args, **kwargs):
 
     """
     layout = create_layout(*args, **kwargs)
-    lines = layout.get_lines_readonly()
-    first_line = lines[0]
+    first_line = layout.get_line(0)
     length = first_line.length
-    _ink_extents, logical_extents = first_line.get_extents()
-    width = Pango.units_to_double(logical_extents.width)
-    height = Pango.units_to_double(logical_extents.height)
-    baseline = Pango.units_to_double(layout.get_baseline())
-    resume_at = lines[1].start_index if len(lines) >= 2 else None
+    width, height = get_size(first_line)
+    baseline = units_to_double(layout.get_iter().get_baseline())
+    if layout.get_line_count() >= 2:
+        resume_at = layout.get_line(1).start_index
+    else:
+        resume_at = None
     return layout, length, resume_at, width, height, baseline
-
-
-def show_first_line(cairo_context, pango_layout, hinting):
-    """Draw the given ``line`` to the Cairo ``context``."""
-    if hinting:
-        PangoCairo.update_layout(cairo_context, pango_layout)
-    lines = pango_layout.get_lines_readonly()
-    PangoCairo.show_layout_line(cairo_context, lines[0])
 
 
 def line_widths(box, enable_hinting, width, skip=None):
@@ -120,6 +194,6 @@ def line_widths(box, enable_hinting, width, skip=None):
     # there a better solution to avoid that?
     layout = create_layout(
         box.text[(skip or 0):].lstrip(), box.style, enable_hinting, width)
-    for line in layout.get_lines_readonly():
-        _ink_extents, logical_extents = line.get_extents()
-        yield Pango.units_to_double(logical_extents.width)
+    for i in xrange(layout.get_line_count()):
+        width, _height = get_size(layout.get_line(i))
+        yield width
