@@ -1,0 +1,5 @@
+WeasyPrint 0.13: PyGTK compatibility
+------------------------------------
+
+0.13 will fall back on PyGTK if PyGObject 3 is not available.
+Hopefully this will make WeasyPrint easier to install on various platforms.
