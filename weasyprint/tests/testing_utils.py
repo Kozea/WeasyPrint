@@ -80,7 +80,6 @@ def capture_logs():
     def emit(record):
         message = '%s: %s' % (record.levelname.upper(), record.getMessage())
         messages.append(message)
-        print(message, file=sys.stderr)
 
     previous_handlers = logger.handlers
     logger.handlers = []
@@ -101,7 +100,11 @@ def assert_no_logs(function):
             except Exception:  # pragma: no cover
                 if logs:
                     print('%i errors logged:' % len(logs), file=sys.stderr)
+                    for message in logs:
+                        print(message, file=sys.stderr)
                 raise
             else:
                 assert len(logs) == 0, '%i errors logged:' % len(logs)
+                for message in logs:
+                    print(message, file=sys.stderr)
     return wrapper
