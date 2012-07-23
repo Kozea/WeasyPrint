@@ -50,23 +50,7 @@ WeasyPrint 0.13 depends on:
 * CairoSVG >= 0.4.1
 
 We recommend that you install Pango, PyGObject, pycairo, lxml and ImageMagick
-(used by Pystacia) with your distribution’s packages.
-
-For example, on Debian Wheezy or Ubuntu 12.04:
-
-.. code-block:: sh
-
-    sudo apt-get install gir1.2-pango-1.0 python-gi python-cairo python-gi-cairo python-lxml imagemagick
-
-On Ubuntu 11.10, ``python-gi`` is named ``python-gobject`` instead:
-
-.. code-block:: sh
-
-    sudo apt-get install gir1.2-pango-1.0 python-gobject python-cairo python-gobject-cairo python-lxml imagemagick
-
-**For OS X** you may have to build Pango with introspection and PyGObject 3
-yourself from source as they are not yet in MacPorts or Homebrew. See the
-`progress on our bug tracker <http://redmine.kozea.fr/issues/823>`_.
+(used by Pystacia) with your distribution’s packages. (See below.)
 
 Then, create a `virtualenv`_. You’ll need ``--system-site-packages`` or
 some other workaround\ [#]_ as PyGObject and pycairo can not be installed
@@ -87,3 +71,39 @@ Otherwise, please copy the exact error message and `report the problem
 
 .. [#] Symbolic links to the system packages in the virtualenv’s
        ``site-packages`` directory should work.
+
+Debian Wheezy or Ubuntu 12.04
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: sh
+
+    sudo apt-get install gir1.2-pango-1.0 python-gi python-cairo python-gi-cairo python-lxml imagemagick
+
+
+Ubuntu 11.10
+~~~~~~~~~~~~
+
+``python-gi`` is named ``python-gobject`` instead:
+
+.. code-block:: sh
+
+    sudo apt-get install gir1.2-pango-1.0 python-gobject python-cairo python-gobject-cairo python-lxml imagemagick
+
+Debian Squeeze; Ubuntu 11.04 or older
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+PyGObject 3 is not available or Pango not recent enough for introspection,
+use PyGTK instead:
+
+.. code-block:: sh
+
+    sudo apt-get install python-gtk2 python-cairo python-lxml imagemagick
+
+Mac OS X
+~~~~~~~~
+
+As of this writing, neither MacPorts or Homebrew have packages for PyGObject 3
+and Pango with introspection. PyGTK should work, though we haven’t tried.
+(`Testers wanted! </community/>`_)
+
+See the `progress on our bug tracker <http://redmine.kozea.fr/issues/823>`_.
