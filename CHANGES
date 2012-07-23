@@ -1,6 +1,17 @@
 WeasyPrint changelog
 ====================
 
+Version 0.13
+------------
+
+Released on 2012-07-23.
+
+* Add support for PyGTK, as an alternative to PyGObject + introspection.
+  This should make WeasyPrint easier to run on platforms that not not have
+  packages for PyGObject 3.x yet.
+* Bug fix: crash in PDF outlines for some malformed HTML documents
+
+
 Version 0.12
 ------------
 
