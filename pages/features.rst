@@ -6,7 +6,7 @@ Documentation
 * `Hacking </hacking/>`_
 * **Features**
 
-This page is for WeasyPrint 0.12. See the changelog_ for older versions.
+This page is for WeasyPrint 0.13. See the changelog_ for older versions.
 
 .. _changelog: https://github.com/Kozea/WeasyPrint/blob/master/CHANGES
 

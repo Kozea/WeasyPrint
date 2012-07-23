@@ -32,13 +32,16 @@ WeasyPrint has been packaged for some Linux distributions:
 
 
 For other distributions or if you want to install it yourself,
-WeasyPrint 0.12 depends on:
+WeasyPrint 0.13 depends on:
 
 .. Note: keep this in sync with setup.py
 
 * CPython 2.6, 2.7 or 3.2
-* Pango **>= 1.29.3** with GObject introspection
-* PyGObject 3.x with cairo bindings
+* Either:
+
+  - Pango >= 1.29.3 with introspection and PyGObject 3.x with cairo bindings
+  - Pango and PyGTK (Python 2.x only)
+
 * pycairo
 * lxml
 * Pystacia
