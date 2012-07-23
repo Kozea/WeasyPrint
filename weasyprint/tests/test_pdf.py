@@ -84,6 +84,23 @@ def test_bookmarks():
     Warning: the PDF output of this structure is not tested.
 
     """
+    root, bookmarks = get_bookmarks('''
+        <h1>a</h1>  #
+        <h4>b</h4>  ####
+        <h3>c</h3>  ###
+        <h2>d</h2>  ##
+        <h1>e</h1>  #
+    ''', structure_only=True)
+    assert root == dict(Count=5, First=1, Last=5)
+    import pprint
+    pprint.pprint(bookmarks, width=150)
+    assert bookmarks == [
+        dict(Count=3, First=2, Last=4, Next=5, Parent=0, Prev=None),
+        dict(Count=0, First=None, Last=None, Next=3, Parent=1, Prev=None),
+        dict(Count=0, First=None, Last=None, Next=4, Parent=1, Prev=2),
+        dict(Count=0, First=None, Last=None, Next=None, Parent=1, Prev=3),
+        dict(Count=0, First=None, Last=None, Next=None, Parent=0, Prev=1)]
+
     root, bookmarks = get_bookmarks('<body>')
     assert root == dict(Count=0)
     assert bookmarks == []

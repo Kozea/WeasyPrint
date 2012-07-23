@@ -304,6 +304,11 @@ def process_bookmarks(raw_bookmarks):
     root = {'Count': 0}
     bookmark_list = []
 
+    # At one point in the document, for each "output" level (ie. depth in the
+    # PDF outline tree), how much to add to get the source level (CSS values
+    # of bookmark-level).
+    # Eg. with <h1> then <h3>, level_shifts == [0, 1]
+    # 1 means that <h3> has depth 3 - 1 = 2 in the output.
     level_shifts = []
     last_by_level = [root]
     indices_by_level = [0]
@@ -314,9 +319,12 @@ def process_bookmarks(raw_bookmarks):
         if level > previous_level:
             level_shifts.append(level - previous_level - 1)
         else:
-            k = 0
-            while k < previous_level - level:
-                k += 1 + level_shifts.pop()
+            temp_level = level
+            while temp_level < previous_level:
+                temp_level += 1 + level_shifts.pop()
+            if temp_level > previous_level:
+                # The last pop’d value was too big
+                level_shifts.append(temp_level - previous_level - 1)
 
         # Resolve level inconsistencies
         level -= sum(level_shifts)
