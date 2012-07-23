@@ -153,9 +153,21 @@ def test_css_parsing():
     _test_resource(CSS, 'latin1-test.css', check_css, encoding='latin1')
 
 
-def check_png_pattern(png_bytes, x2=False):
+def check_png_pattern(png_bytes, x2=False, blank=False):
     from .test_draw import _, r, B, assert_pixels_equal
-    if x2:
+    if blank:
+        expected_pixels = [
+            _+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_,
+        ]
+        size = 8
+    elif x2:
         expected_pixels = [
             _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
@@ -454,9 +466,9 @@ def test_url_fetcher():
         @page { size: 8px; margin: 2px; background: #fff }
         body { margin: 0; font-size: 0 }
     ''', base_url=base_url)
-    def test(html):
+    def test(html, blank=False):
         html = TestHTML(string=html, url_fetcher=fetcher, base_url=base_url)
-        check_png_pattern(html.write_png(stylesheets=[css]))
+        check_png_pattern(html.write_png(stylesheets=[css]), blank=blank)
 
     test('<body><img src="pattern.png">')  # Test a "normal" URL
     test('<body><img src="weasyprint-custom:foo/pattern">')
@@ -467,7 +479,6 @@ def test_url_fetcher():
     test('<style>@import "weasyprint-custom:foo/bar.css";</style><body>')
 
     with capture_logs() as logs:
-        with pytest.raises(AssertionError):
-            test('<body><img src="custom:foo/bar">')
+        test('<body><img src="custom:foo/bar">', blank=True)
     assert len(logs) == 1
     assert logs[0].startswith('WARNING: Error for image at custom:foo/bar')
