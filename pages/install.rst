@@ -18,10 +18,10 @@ Installing WeasyPrint
 
 WeasyPrint has been packaged for some Linux distributions:
 
-* Archlinux, in the AUR: `python-weasyprint`_ (for Python 3) or
+* **Archlinux**, in the AUR: `python-weasyprint`_ (for Python 3) or
   `python2-weasyprint`_ (for Python 2, installs the command-line script
   as ``weasyprint2``).
-* Gentoo: in the `Kozea overlay`_
+* **Gentoo**: in the `Kozea overlay`_
 
 (Please do `tell us`_ if you make such a package!)
 
@@ -36,7 +36,7 @@ WeasyPrint 0.13 depends on:
 
 * CPython_ 2.6, 2.7 or 3.2
 * Pango_
-* pycairo_
+* pycairo_ (cairo >= 1.12 works best but older versions are fine)
 * Either:
 
   - PyGObject_ 3.x with cairo bindings.
