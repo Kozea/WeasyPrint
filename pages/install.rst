@@ -82,8 +82,17 @@ pip. Installing WeasyPrint will also pull the remaining dependencies.
     pip install WeasyPrint
     weasyprint --help
 
+Now let’s try it:
+
+.. code-block:: sh
+
+    weasyprint http://weasyprint.org ./weasyprint-website.pdf
+
+You should see warnings about unsupported CSS 3 stuff, this is expected.
+In the PDF you should see the WeasyPrint logo on the first page.
+
 If everything goes well, you’re ready to `start using </using/>`_ WeasyPrint!
-Otherwise, please copy the exact error message and `report the problem
+Otherwise, please copy the full error message and `report the problem
 </community/>`_.
 
 .. [#] Symbolic links to the system packages in the virtualenv’s
