@@ -128,20 +128,15 @@ use PyGTK instead:
 Mac OS X
 ~~~~~~~~
 
-As of this writing, there is no package for PyGObject 3.
-PyGTK should work, though we haven’t tried. (`Testers wanted! </community/>`_)
-
-Macports:
+With Macports:
 
 .. code-block:: sh
 
-    sudo port install ImageMagick py27-gtk
+    sudo port install ImageMagick pango py27-gobject3 py27-cairo
 
-Homebrew:
+`As of this writing <https://github.com/mxcl/homebrew/issues/12901>`_,
+Homebrew has no package for PyGObject 3. Use PyGTK:
 
 .. code-block:: sh
 
     brew install imagemagick pygtk
-
-See the `progress on OS X <http://redmine.kozea.fr/issues/823>`_
-on our bug tracker.
