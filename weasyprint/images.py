@@ -101,7 +101,13 @@ def fallback_handler(file_obj, string, uri):
         string = file_obj.read()
     from pystacia import read_blob
     with contextlib.closing(read_blob(string)) as image:
-        png_bytes = image.get_blob('png')
+        # This 'quality' value disables compression and has been found
+        # faster than the other values in 0-10.
+        # http://www.imagemagick.org/script/command-line-options.php#quality
+        # We don’t care about file size here, only speed.
+        png_bytes = image.get_blob('png', quality=2)
+    # Go through PNG as cairo.ImageSurface.create_for_data is not yet
+    # available on Python 3.
     return png_handler(None, png_bytes, uri)
 
 
