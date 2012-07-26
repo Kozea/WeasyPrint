@@ -31,7 +31,7 @@ level = LOGGER.level
 LOGGER.setLevel(logging.ERROR)
 
 HTML5_UA_STYLESHEET = CSS(
-    os.path.join(os.path.dirname(__file__), 'css', 'html5_ua.css'))
+    filename=os.path.join(os.path.dirname(__file__), 'css', 'html5_ua.css'))
 
 LOGGER.setLevel(level)
 
