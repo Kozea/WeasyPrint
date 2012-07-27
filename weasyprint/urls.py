@@ -51,8 +51,13 @@ def path2url(path):
     path = os.path.abspath(path)
     if isinstance(path, unicode):
         path = path.encode('utf8')
-    # TODO: should this be 'file://' ? Maybe only on Unix?
-    return 'file:' + pathname2url(path)
+    path = pathname2url(path)
+    if path.startswith('///'):
+        # On Windows pathname2url(r'C:\foo') is apparently '///C:/foo'
+        # That enough slashes already.
+        return 'file:' + path
+    else:
+        return 'file://' + path
 
 
 def url_is_absolute(url):
