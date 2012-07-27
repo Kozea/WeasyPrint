@@ -20,7 +20,7 @@ from .testing_utils import (
     resource_filename, assert_no_logs, capture_logs, TestPNGDocument)
 from .. import css
 from ..css.computed_values import strut_layout
-from ..urls import open_data_url
+from ..urls import open_data_url, path2url
 from .. import CSS, default_url_fetcher
 
 
@@ -153,8 +153,8 @@ def test_annotate_document():
     after = document.style_for(a, 'after')
     a = document.style_for(a)
 
-    assert h1.background_image == 'file://' \
-        + os.path.abspath(resource_filename('logo_small.png'))
+    assert h1.background_image == path2url(
+        resource_filename('logo_small.png')))
 
     assert h1.font_weight == 700
     assert h1.font_size == 32  # 4ex

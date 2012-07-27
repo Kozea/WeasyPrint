@@ -27,6 +27,7 @@ import pytest
 from .testing_utils import (
     resource_filename, assert_no_logs, capture_logs, TEST_UA_STYLESHEET)
 from ..compat import urljoin, urlencode, urlparse_uses_relative
+from ..urls import path2url
 from .. import HTML, CSS, default_url_fetcher
 from .. import __main__
 from .. import navigator
@@ -81,12 +82,13 @@ class TestHTML(HTML):
 def _test_resource(class_, basename, check, **kwargs):
     """Common code for testing the HTML and CSS classes."""
     absolute_filename = resource_filename(basename)
+    url = path2url(absolute_filename)
     check(class_(absolute_filename, **kwargs))
     check(class_(guess=absolute_filename, **kwargs))
     check(class_(filename=absolute_filename, **kwargs))
-    check(class_('file://' + absolute_filename, **kwargs))
-    check(class_(guess='file://' + absolute_filename, **kwargs))
-    check(class_(url='file://' + absolute_filename, **kwargs))
+    check(class_(url, **kwargs))
+    check(class_(guess=url, **kwargs))
+    check(class_(url=url, **kwargs))
     with open(absolute_filename, 'rb') as fd:
         check(class_(fd, **kwargs))
     with open(absolute_filename, 'rb') as fd:
@@ -316,7 +318,7 @@ def test_command_line_render():
             run(combined_absolute + ' out4.png')
             assert read_file('out4.png') == png_bytes
 
-            combined_url = 'file://{0}/{1}'.format(temp, 'combined.html')
+            combined_url = path2url(os.path.join(temp, 'combined.html'))
             run(combined_url + ' out5.png')
             assert read_file('out5.png') == png_bytes
 
@@ -423,9 +425,10 @@ def test_navigator():
             <h2><a href="#foo">bar</a></h2>
         ''')
 
+        url = path2url(filename)
         for status, headers, body in [
-            wsgi_client('/view/file://' + filename),
-            wsgi_client('/', {'url': 'file://' + filename}),
+            wsgi_client('/view/' + url),
+            wsgi_client('/', {'url': url}),
         ]:
             body = body.decode('utf8')
             assert status == '200 OK'
@@ -436,7 +439,7 @@ def test_navigator():
             assert ' href="#foo"></a>' in body
             assert ' href="/view/http://weasyprint.org"></a>' in body
 
-        status, headers, body = wsgi_client('/pdf/file://' + filename)
+        status, headers, body = wsgi_client('/pdf/' + url)
         assert status == '200 OK'
         assert headers['Content-Type'] == 'application/pdf'
         assert body.startswith(b'%PDF')
