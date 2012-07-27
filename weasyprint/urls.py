@@ -25,9 +25,10 @@ from .compat import (
     Request, parse_email, pathname2url, unicode)
 
 
+# See http://stackoverflow.com/a/11687993/1162888
 # Both are needed in Python 3 as the re module does not like to mix
-UNICODE_SCHEME_RE = re.compile('^([a-z][a-z0-1.+-]*):', re.I)
-BYTES_SCHEME_RE = re.compile(b'^([a-z][a-z0-1.+-]*):', re.I)
+UNICODE_SCHEME_RE = re.compile('^([a-z][a-z0-1.+-]+):', re.I)
+BYTES_SCHEME_RE = re.compile(b'^([a-z][a-z0-1.+-]+):', re.I)
 
 
 def iri_to_uri(url):
