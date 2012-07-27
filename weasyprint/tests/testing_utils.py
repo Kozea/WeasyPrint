@@ -27,7 +27,7 @@ from ..urls import default_url_fetcher
 # TODO: find a way to not depend on a specific font
 FONTS = 'Liberation Sans, Arial'
 
-TEST_UA_STYLESHEET = CSS(os.path.join(
+TEST_UA_STYLESHEET = CSS(filename=os.path.join(
     os.path.dirname(__file__), '..', 'css', 'tests_ua.css'
 ))
 
