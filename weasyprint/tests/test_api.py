@@ -124,7 +124,8 @@ def test_html_parsing():
         assert url.endswith('weasyprint/tests/resources/pattern.png')
 
     _test_resource(TestHTML, 'doc1.html', check_doc1)
-    _test_resource(TestHTML, 'doc1-utf32.html', check_doc1, encoding='utf32')
+    _test_resource(TestHTML, 'doc1_UTF-16BE.html', check_doc1,
+                   encoding='UTF-16BE')
 
     filename = resource_filename('doc1.html')
     check_doc1(TestHTML(tree=lxml.html.parse(filename), base_url=filename))
@@ -301,8 +302,8 @@ def test_command_line_render():
             write_file('pattern.png', pattern_bytes)
             write_file('no_css.html', html)
             write_file('combined.html', combined)
-            write_file('combined-utf32.html',
-                combined.decode('ascii').encode('utf32'))
+            write_file('combined-UTF-16BE.html',
+                combined.decode('ascii').encode('UTF-16BE'))
             write_file('linked.html', linked)
             write_file('style.css', css)
 
@@ -311,7 +312,7 @@ def test_command_line_render():
             assert read_file('out1.png') == png_bytes
             assert read_file('out2.pdf') == pdf_bytes
 
-            run('combined-utf32.html out3.png --encoding utf32')
+            run('combined-UTF-16BE.html out3.png --encoding UTF-16BE')
             assert read_file('out3.png') == png_bytes
 
             combined_absolute = os.path.join(temp, 'combined.html')
