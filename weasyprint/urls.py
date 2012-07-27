@@ -14,6 +14,7 @@ from __future__ import division, unicode_literals
 
 import io
 import re
+import sys
 import base64
 import os.path
 import mimetypes
@@ -35,8 +36,9 @@ def iri_to_uri(url):
     """Turn an IRI that can contain any Unicode character into an ASII-only
     URI that conforms to RFC 3986.
     """
-    # Use UTF-8 as per RFC 3987 (IRI)
-    url = url.encode('utf8')
+    # Use UTF-8 as per RFC 3987 (IRI), except for file://
+    url = url.encode(sys.getfilesystemencoding()
+                     if url.startswith('file:') else 'utf8')
     # This is a full URI, not just a component. Only %-encode characters
     # that are not allowed at all in URIs. Everthing else is "safe":
     # * Reserved characters: /:?#[]@!$&'()*+,;=
@@ -50,7 +52,7 @@ def path2url(path):
     """Return file URL of `path`"""
     path = os.path.abspath(path)
     if isinstance(path, unicode):
-        path = path.encode('utf8')
+        path = path.encode(sys.getfilesystemencoding())
     path = pathname2url(path)
     if path.startswith('///'):
         # On Windows pathname2url(r'C:\foo') is apparently '///C:/foo'
@@ -121,10 +123,7 @@ def ensure_url(string):
     filename and convert it to a ``file://`` URL.
 
     """
-    if url_is_absolute(string):
-        return string
-    else:
-        return path2url(string.encode('utf8'))
+    return string if url_is_absolute(string) else path2url(string)
 
 
 def decode_base64(data):
