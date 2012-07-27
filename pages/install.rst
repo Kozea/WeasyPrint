@@ -140,3 +140,8 @@ Homebrew has no package for PyGObject 3. Use PyGTK:
 .. code-block:: sh
 
     brew install imagemagick pygtk
+
+Windows
+~~~~~~~
+
+See [Anthony Plunkett’s blog](http://www.thefort.org/a/installing-weasyprint-on-windows/).
