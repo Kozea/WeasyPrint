@@ -23,10 +23,14 @@ from .test_layout import parse, body_children
 from .testing_utils import FONTS, assert_no_logs
 
 
+FONTS = FONTS.split(', ')
+
+
 def make_text(text, width=None, **style):
     """Wrapper for split_first_line() creating a StyleDict."""
     style = StyleDict({
-        'font_family': 'Nimbus Mono L, Liberation Mono, FreeMono, Monospace',
+        'font_family': ['Nimbus Mono L', 'Liberation Mono', 'FreeMono',
+                        'monospace'],
     }, INITIAL_VALUES).updated_copy(style)
     return split_first_line(text, style, hinting=False, max_width=width)
 
@@ -34,7 +38,7 @@ def make_text(text, width=None, **style):
 @assert_no_logs
 def test_line_content():
     """Test the line break for various fixed-width lines."""
-    for width, remaining in [(120, 'text for test'),
+    for width, remaining in [(100, 'text for test'),
                              (45, 'is a text for test')]:
         text = 'This is a text for test'
         _, length, resume_at, _, _, _ = make_text(
@@ -63,7 +67,7 @@ def test_line_breaking():
     _, _, resume_at, _, _, _ = make_text(string, 90, font_size=100)
     assert string[resume_at:] == 'is a text for test'
 
-    _, _, resume_at, _, _, _ = make_text(string, 120, font_family=FONTS,
+    _, _, resume_at, _, _, _ = make_text(string, 100, font_family=FONTS,
                                          font_size=19)
     assert string[resume_at:] == 'text for test'
 

@@ -17,7 +17,7 @@ from cgi import escape
 
 import cairo
 
-from .compat import xrange
+from .compat import xrange, basestring
 from .logger import LOGGER
 
 
@@ -131,6 +131,8 @@ def create_layout(text, style, hinting, max_width):
     layout = create_pango_layout(
         HINTED_DUMMY_CONTEXT if hinting else NON_HINTED_DUMMY_CONTEXT)
     font = Pango.FontDescription()
+    assert not isinstance(style.font_family, basestring), (
+        'font_family should be a list')
     font.set_family(','.join(style.font_family))
     font.set_variant(PANGO_VARIANT[style.font_variant])
     font.set_style(PANGO_STYLE[style.font_style])
