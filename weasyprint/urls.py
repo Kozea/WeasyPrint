@@ -26,6 +26,14 @@ from .compat import (
     Request, parse_email, pathname2url, unicode)
 
 
+# The built-in MIME types are not always reliable...
+mimetypes.add_type('text/html', '.html')
+mimetypes.add_type('text/html', '.htm')
+mimetypes.add_type('text/css', '.css')
+mimetypes.add_type('image/svg+xml', '.svg')
+mimetypes.add_type('image/png', '.png')
+
+
 # See http://stackoverflow.com/a/11687993/1162888
 # Both are needed in Python 3 as the re module does not like to mix
 UNICODE_SCHEME_RE = re.compile('^([a-z][a-z0-1.+-]+):', re.I)
