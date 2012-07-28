@@ -1,6 +1,18 @@
 WeasyPrint changelog
 ====================
 
+Version 0.14
+------------
+
+Not released yet.
+
+* Bug fixes:
+
+  - Handling of filenames and URLs on Windows
+  - Unicode filenames with older version of py2cairo
+  - Make some tests more robust
+
+
 Version 0.13
 ------------
 
