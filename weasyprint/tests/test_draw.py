@@ -64,7 +64,8 @@ def assert_pixels(name, expected_width, expected_height, expected_lines,
                         expected_raw)
 
 
-def assert_same_rendering(expected_width, expected_height, documents):
+def assert_same_rendering(expected_width, expected_height, documents,
+                          tolerance=0):
     """
     Render HTML documents to PNG and check that they render the same,
     pixel-per-pixel.
@@ -81,7 +82,7 @@ def assert_same_rendering(expected_width, expected_height, documents):
     _name, reference = lines_list[0]
     for name, lines in lines_list[1:]:
         assert_pixels_equal(name, expected_width, expected_height,
-                            reference, lines)
+                            reference, lines, tolerance)
 
 
 def assert_different_renderings(expected_width, expected_height, documents):
@@ -1457,7 +1458,7 @@ def test_before_after():
             </style>
             <p><a href="another url">[some url] some content</p>
         ''')
-    ])
+    ], tolerance=10)
 
     assert_same_rendering(500, 30, [
         ('pseudo_quotes', '''
@@ -1476,7 +1477,7 @@ def test_before_after():
             </style>
             <p>« Lorem ipsum “ dolor ” sit amet »</p>
         ''')
-    ])
+    ], tolerance=10)
 
     assert_same_rendering(100, 30, [
         ('pseudo_url', '''
@@ -1494,7 +1495,7 @@ def test_before_after():
             </style>
             <p>a<img src="pattern.png" alt="Missing image">bc</p>
         ''')
-    ])
+    ], tolerance=10)
 
 
 @assert_no_logs
@@ -1789,41 +1790,40 @@ def test_opacity():
     """Test the opacity property."""
     template = '''
         <style>
-            @page { size: 200px 60px }
+            @page { size: 60px 60px }
             body { margin: 0; background: #fff }
+            div { background: #000; width: 20px; height: 20px }
         </style>
         %s
     '''
-    assert_same_rendering(200, 60, [
+    assert_same_rendering(60, 60, [
         ('opacity_0_reference', template % '''
-            <div>Hello, world!</div>
-            <div style="opacity: 0">Lorem ipsum</div>
+            <div></div>
         '''),
         ('opacity_0', template % '''
-            <div>Hello, world!</div>
+            <div></div>
+            <div style="opacity: 0"></div>
         '''),
     ])
-    assert_same_rendering(200, 60, [
+    assert_same_rendering(60, 60, [
         ('opacity_color_reference', template % '''
-            <div style="color: rgb(102, 102, 102)">Hello, world!</div>
+            <div style="background: rgb(102, 102, 102)"></div>
         '''),
         ('opacity_color', template % '''
-            <div style="color: black; opacity: 0.6">Hello, world!</div>
+            <div style="opacity: 0.6"></div>
         '''),
     ])
-    assert_same_rendering(200, 60, [
+    assert_same_rendering(60, 60, [
         ('opacity_multiplied_reference', template % '''
-            <div style="color: transparent;
-                background: rgb(102, 102, 102)">Hello, world!</div>
+            <div style="background: rgb(102, 102, 102)"></div>
         '''),
         ('opacity_multiplied', template % '''
-            <div style="color: transparent;
-                background: black; opacity: 0.6">Hello, world!</div>
+            <div style="opacity: 0.6"></div>
         '''),
         ('opacity_multiplied_2', template % '''
-            <div style="opacity: 0.666666">
-            <div style="color: transparent;
-                background: black; opacity: 0.9">Hello, world!</div>
+            <div style="background: none; opacity: 0.666666">
+                <div style="opacity: 0.9"></div>
+            </div>
         '''),  #  0.9 * 0.666666 == 0.6
     ])
 
