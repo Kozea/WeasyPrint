@@ -35,22 +35,23 @@ For other distributions or if you want to install it yourself,
 WeasyPrint 0.13 depends on:
 
 * CPython_ 2.6, 2.7 or 3.2
-* Pango_
-* pycairo_ (cairo >= 1.12 works best but older versions are fine)
 * Either:
 
-  - PyGObject_ 3.x with cairo bindings.
-    In this case Pango needs to be >= 1.29.3 and have introspection enabled.
-  - PyGTK_. This only work on Python 2.x and installs all of GTK,
-    but is available on more platforms. In this case you don’t need to
-    install Pango or pycairo explicitly as PyGTK depends on them.
+  - PyGTK_ and its dependencies.
+    This is available in more distributions but only works on Python 2.x
+    and requires the whole GTK+ stack.
+  - Pango_ >= 1.29.3, pycairo_ and PyGObject_ 3.x with introspection data
+    for Pango and cairo.
+    This works on all supported Python version and is lighter on dependencies,
+    but requires fairly recent versions.
 
 * lxml_
 * Pystacia_
 * tinycss_ >= 0.2
 * cssselect_ >= 0.6
 * CairoSVG_ >= 0.4.1
-* Optional but recommended: virtualenv_
+
+cairo >= 1.12 is best but older versions should work too.\ [#]_
 
 .. _CPython: http://www.python.org/
 .. _Pango: http://www.pango.org/
@@ -62,13 +63,13 @@ WeasyPrint 0.13 depends on:
 .. _tinycss: http://packages.python.org/tinycss/
 .. _cssselect: http://packages.python.org/cssselect/
 .. _CairoSVG: http://cairosvg.org/
+
+
+We recommend that you install ImageMagick (used by Pystacia), lxml\ [#]_,
+pycairo, Pango and PyGObject/PyGTK with your distribution’s packages
+(see below) and everything else in a virtualenv_ with pip_.
+
 .. _virtualenv: http://www.virtualenv.org/
-
-
-We recommend that you install ImageMagick (used by Pystacia), pycairo, Pango
-and PyGObject/PyGTK with your distribution’s packages (see below) and
-everything else with pip_.
-
 .. _pip: http://pip-installer.org/
 
 With virtualenv you’ll need ``--system-site-packages`` or some other
@@ -95,35 +96,42 @@ If everything goes well, you’re ready to `start using </using/>`_ WeasyPrint!
 Otherwise, please copy the full error message and `report the problem
 </community/>`_.
 
+.. [#] The test suite passes on 1.8 and 1.10 with some tests marked as
+       “expected failures” due to bugs or behavior changes in cairo.
+
+.. [#] Alternatively, install lxml with pip but make sure you have libxml2
+       and libxslt with development headers to compile it. On Debian
+       the package are named `libxml2-dev` and `libxslt1-dev`.
+
 .. [#] Symbolic links to the system packages in the virtualenv’s
        ``site-packages`` directory should work.
 
-Debian Wheezy or Ubuntu 12.04
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Debian Wheezy, Ubuntu 12.04 Precise or more recent
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: sh
 
-    sudo apt-get install imagemagick python-cairo gir1.2-pango-1.0 python-gi python-gi-cairo
+    sudo apt-get install imagemagick python-lxml python-cairo gir1.2-pango-1.0 python-gi python-gi-cairo
 
 
-Ubuntu 11.10
-~~~~~~~~~~~~
+Ubuntu 11.10 Oneiric
+~~~~~~~~~~~~~~~~~~~~
 
 ``python-gi`` is named ``python-gobject`` instead:
 
 .. code-block:: sh
 
-    sudo apt-get install imagemagick python-cairo gir1.2-pango-1.0 python-gobject python-gobject-cairo
+    sudo apt-get install imagemagick python-lxml python-cairo gir1.2-pango-1.0 python-gobject python-gobject-cairo
 
-Debian Squeeze, Ubuntu 11.04 or older
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Debian 6 Squeeze, Ubuntu 11.04 Natty or older
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 PyGObject 3 is not available or Pango not recent enough for introspection,
 use PyGTK instead:
 
 .. code-block:: sh
 
-    sudo apt-get install imagemagick python-gtk2
+    sudo apt-get install imagemagick python-lxml python-gtk2
 
 Mac OS X
 ~~~~~~~~
@@ -132,18 +140,20 @@ With Macports:
 
 .. code-block:: sh
 
-    sudo port install ImageMagick pango py27-gobject3 py27-cairo
+    sudo port install ImageMagick pango py27-gobject3 py27-cairo py27-lxml
 
-`As of this writing <https://github.com/mxcl/homebrew/issues/12901>`_,
-Homebrew has no package for PyGObject 3. Use PyGTK:
+As of this writing Homebrew has no package
+`for PyGObject 3 <https://github.com/mxcl/homebrew/issues/12901>`_ or
+`for lxml <https://github.com/mxcl/homebrew/wiki/Acceptable-Formula>`_.
+Use PyGTK and install lxml’s own dependencies:
 
 .. code-block:: sh
 
-    brew install imagemagick pygtk
+    brew install imagemagick pygtk libxml2 libxslt
 
 Windows
 ~~~~~~~
 
 See `Anthony Plunkett’s blog <http://www.thefort.org/a/installing-weasyprint-on-windows/>`_.
 Note however that 0.13 is buggy and won’t work on Windows. Until 0.14 is out, use the
-`git version <https://github.com/Kozea/WeasyPrint/>`_
+`git version <https://github.com/Kozea/WeasyPrint/>`_.
