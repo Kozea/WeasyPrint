@@ -23,15 +23,12 @@ with open(path.join(path.dirname(__file__), 'README')) as fd:
 
 
 REQUIREMENTS = [
-        # Keep this in sync with the "install" documentation
+        # XXX: Keep this in sync with http://weasyprint.org/install/
         'lxml',
-        'pystacia',
         'tinycss>=0.2',
         'cssselect>=0.6',
         'CairoSVG>=0.4.1',
-        # Not installable by pip:
-        #  PyCairo
-        #  Pango + PyGTK OR Pango>=1.29.3 with introspection + PyGObject 3.x
+        # ... and others, not installable by pip.
 ]
 if sys.version_info < (2, 7) or (3,) <= sys.version_info < (3, 2):
     # In the stdlib from 2.7:

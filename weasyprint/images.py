@@ -19,28 +19,106 @@ import cairo
 
 from .css.computed_values import LENGTHS_TO_PIXELS
 from .logger import LOGGER
-
-
-# Map MIME types to functions that take a byte stream and return a callable
-# that returns ``(pattern, width, height)`` a cairo Pattern and
-# its dimension in pixels.
-FORMAT_HANDLERS = {}
+from .text import USING_PYGTK
 
 # TODO: currently CairoSVG only support images with an explicit
 # width and height. When it supports images with only an intrinsic ratio
 # this API will need to change.
 
 
-def register_format(mime_type):
-    """Register a handler for a give image MIME type."""
-    def _decorator(function):
-        FORMAT_HANDLERS[mime_type] = function
-        return function
-    return _decorator
+# Do not try to import PyGObject 3 if we already have PyGTK
+# that tends to segfault.
+if USING_PYGTK:
+    from gtk import gdk
+
+    def get_pixbuf(file_obj=None, string=None, chunck_size=16 * 1024):
+        """Create a Pixbuf object through PyGTK."""
+        loader = gdk.PixbufLoader()
+        if file_obj:
+            while 1:
+                chunck = file_obj.read(chunck_size)
+                if not chunck:
+                    break
+                loader.write(chunck)
+        else:
+            loader.write(string)
+        loader.close()
+        return loader.get_pixbuf()
+
+    def save_pixels_to_png(pixels, width, height, filename):
+        """Save raw pixels to a PNG file through pixbuf and PyGTK."""
+        gdk.pixbuf_new_from_data(
+            pixels, 'rgb', False, 8, width, height, width * 3
+        ).save(filename, 'png')
+
+    def gdkpixbuf_loader(file_obj, string):
+        """Load raster images with gdk-pixbuf through PyGTK."""
+        pixbuf = get_pixbuf(file_obj, string)
+        dummy_context = gdk.CairoContext(cairo.PDFSurface(None, 1, 1))
+        gdk.CairoContext(dummy_context).set_source_pixbuf(
+            dummy_context, pixbuf, 0, 0)
+        pattern = dummy_context.get_source()
+        result = pattern, pixbuf.get_width(), pixbuf.get_height()
+        return lambda: result
+else:
+    # Use PyGObject introspection
+
+    def get_pixbuf(file_obj=None, string=None, chunck_size=16 * 1024):
+        """Create a Pixbuf object through introspection."""
+        from gi.repository import Gio, GdkPixbuf
+        if file_obj:
+            try:
+                fileno = file_obj.fileno()
+            # Some file-like objects have a fileno method that raise
+            # various exceptions such as io.UnsupportedOperation
+            except Exception:
+                loader = GdkPixbuf.PixbufLoader()
+                while 1:
+                    chunck = file_obj.read(chunck_size)
+                    if not chunck:
+                        loader.close()
+                        return loader.get_pixbuf()
+                    loader.write(chunck)
+            else:
+                stream = Gio.UnixInputStream.new(fileno, close_fd=False)
+        else:
+            stream = Gio.MemoryInputStream.new_from_data(string, destroy=None)
+        return GdkPixbuf.Pixbuf.new_from_stream(stream, cancellable=None)
+
+    def save_pixels_to_png(pixels, width, height, filename):
+        """Save raw pixels to a PNG file through pixbuf and introspection."""
+        from gi.repository import GdkPixbuf
+        GdkPixbuf.Pixbuf.new_from_data(
+            pixels, GdkPixbuf.Colorspace.RGB, False, 8,
+            width, height, width * 3, None, None
+        ).savev(filename, 'png', [], [])
+
+    try:
+        # Unfornately cairo_set_source_pixbuf is not part of Pixbuf itself
+        from gi.repository import Gdk
+
+        def gdkpixbuf_loader(file_obj, string):
+            """Load raster images with gdk-pixbuf through introspection+Gdk."""
+            pixbuf = get_pixbuf(file_obj, string)
+            dummy_context = cairo.Context(cairo.PDFSurface(None, 1, 1))
+            Gdk.cairo_set_source_pixbuf(dummy_context, pixbuf, 0, 0)
+            pattern = dummy_context.get_source()
+            result = pattern, pixbuf.get_width(), pixbuf.get_height()
+            return lambda: result
+
+    except ImportError:
+        # Gdk is not available, go through PNG.
+        def gdkpixbuf_loader(file_obj, string):
+            """Load raster images with gdk-pixbuf through introspection,
+            without Gdk and going through PNG.
+
+            """
+            pixbuf = get_pixbuf(file_obj, string)
+            _, png = pixbuf.save_to_bufferv('png', ['compression'], ['0'])
+            return cairo_png_loader(None, png)
 
 
-@register_format('image/png')
-def png_handler(file_obj, string, _uri):
+def cairo_png_loader(file_obj, string):
     """Return a cairo Surface from a PNG byte stream."""
     surface = cairo.ImageSurface.create_from_png(file_obj or BytesIO(string))
     pattern = cairo.SurfacePattern(surface)
@@ -48,11 +126,10 @@ def png_handler(file_obj, string, _uri):
     return lambda: result
 
 
-@register_format('image/svg+xml')
-def cairosvg_handler(file_obj, string, uri):
+def cairosvg_loader(file_obj, string, uri):
     """Return a cairo Surface from a SVG byte stream.
 
-    This handler uses CairoSVG: http://cairosvg.org/
+    This loader uses CairoSVG: http://cairosvg.org/
     """
     from cairosvg.surface import SVGSurface
     from cairosvg.parser import Tree
@@ -90,27 +167,6 @@ def cairosvg_handler(file_obj, string, uri):
     return draw_svg
 
 
-def fallback_handler(file_obj, string, uri):
-    """
-    Parse a byte stream with PIL and return a cairo Surface.
-
-    PIL supports many raster image formats and does not take a `format`
-    parameter, it guesses the format from the content.
-    """
-    if file_obj:
-        string = file_obj.read()
-    from pystacia import read_blob
-    with contextlib.closing(read_blob(string)) as image:
-        # This 'quality' value disables compression and has been found
-        # faster than the other values in 0-10.
-        # http://www.imagemagick.org/script/command-line-options.php#quality
-        # We don’t care about file size here, only speed.
-        png_bytes = image.get_blob('png', quality=2)
-    # Go through PNG as cairo.ImageSurface.create_for_data is not yet
-    # available on Python 3.
-    return png_handler(None, png_bytes, uri)
-
-
 def get_image_from_uri(cache, url_fetcher, uri, type_=None):
     """Get a :class:`cairo.Surface`` from an image URI."""
     try:
@@ -123,9 +179,15 @@ def get_image_from_uri(cache, url_fetcher, uri, type_=None):
             if not type_:
                 type_ = result['mime_type']  # Use eg. the HTTP header
             #else: the type was forced by eg. a 'type' attribute on <embed>
-            handler = FORMAT_HANDLERS.get(type_, fallback_handler)
-            function = handler(
-                result.get('file_obj'), result.get('string'), uri)
+            if type_ == 'image/svg+xml':
+                function = cairosvg_loader(
+                    result.get('file_obj'), result.get('string'), uri)
+            elif type_ == 'image/png':
+                function = cairo_png_loader(
+                    result.get('file_obj'), result.get('string'))
+            else:
+                function = gdkpixbuf_loader(
+                    result.get('file_obj'), result.get('string'))
         finally:
             try:
                 file_like.close()
