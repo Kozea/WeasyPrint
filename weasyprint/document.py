@@ -13,6 +13,7 @@
 from __future__ import division, unicode_literals
 
 import io
+import sys
 import math
 import shutil
 
@@ -133,6 +134,9 @@ class Document(object):
             surface.write_to_png(target)
             return target.getvalue()
         else:
+            if sys.version_info[0] < 3 and isinstance(target, unicode):
+                # py2cairo 1.8 does not support unicode filenames.
+                target = target.encode(sys.getfilesystemencoding())
             surface.write_to_png(target)
 
     def write_pdf(self, target=None):
