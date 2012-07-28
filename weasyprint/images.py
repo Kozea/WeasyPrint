@@ -67,23 +67,16 @@ else:
         """Create a Pixbuf object through introspection."""
         from gi.repository import Gio, GdkPixbuf
         if file_obj:
-            try:
-                fileno = file_obj.fileno()
-            # Some file-like objects have a fileno method that raise
-            # various exceptions such as io.UnsupportedOperation
-            except Exception:
-                loader = GdkPixbuf.PixbufLoader()
-                while 1:
-                    chunck = file_obj.read(chunck_size)
-                    if not chunck:
-                        loader.close()
-                        return loader.get_pixbuf()
-                    loader.write(chunck)
-            else:
-                stream = Gio.UnixInputStream.new(fileno, close_fd=False)
+            loader = GdkPixbuf.PixbufLoader()
+            while 1:
+                chunck = file_obj.read(chunck_size)
+                if not chunck:
+                    loader.close()
+                    return loader.get_pixbuf()
+                loader.write(chunck)
         else:
             stream = Gio.MemoryInputStream.new_from_data(string, destroy=None)
-        return GdkPixbuf.Pixbuf.new_from_stream(stream, cancellable=None)
+            return GdkPixbuf.Pixbuf.new_from_stream(stream, cancellable=None)
 
     def save_pixels_to_png(pixels, width, height, filename):
         """Save raw pixels to a PNG file through pixbuf and introspection."""
