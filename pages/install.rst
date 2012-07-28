@@ -146,4 +146,4 @@ Windows
 
 See `Anthony Plunkett’s blog <http://www.thefort.org/a/installing-weasyprint-on-windows/>`_.
 Note however that 0.13 is buggy and won’t work on Windows. Until 0.14 is out, use the
-[git version](https://github.com/Kozea/WeasyPrint/)
+`git version <https://github.com/Kozea/WeasyPrint/>`_
