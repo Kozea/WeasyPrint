@@ -30,21 +30,7 @@ from .text import USING_INTROSPECTION
 # that tends to segfault.
 if not USING_INTROSPECTION:
     from gtk import gdk
-
-    def get_pixbuf(file_obj=None, string=None, chunck_size=16 * 1024):
-        """Create a Pixbuf object through PyGTK."""
-        loader = gdk.PixbufLoader()
-        if file_obj:
-            while 1:
-                chunck = file_obj.read(chunck_size)
-                if not chunck:
-                    break
-                loader.write(chunck)
-        else:
-            assert string is not None
-            loader.write(string)
-        loader.close()
-        return loader.get_pixbuf()
+    from gtk.gdk import PixbufLoader
 
     def save_pixels_to_png(pixels, width, height, filename):
         """Save raw pixels to a PNG file through pixbuf and PyGTK."""
@@ -63,28 +49,13 @@ if not USING_INTROSPECTION:
         return lambda: result
 else:
     # Use PyGObject introspection
-
-    def get_pixbuf(file_obj=None, string=None, chunck_size=16 * 1024):
-        """Create a Pixbuf object through introspection."""
-        from gi.repository import Gio, GdkPixbuf
-        if file_obj:
-            loader = GdkPixbuf.PixbufLoader()
-            while 1:
-                chunck = file_obj.read(chunck_size)
-                if not chunck:
-                    loader.close()
-                    return loader.get_pixbuf()
-                loader.write(chunck)
-        else:
-            assert string is not None
-            stream = Gio.MemoryInputStream.new_from_data(string, destroy=None)
-            return GdkPixbuf.Pixbuf.new_from_stream(stream, cancellable=None)
     try:
         from gi.repository import GdkPixbuf
     except ImportError:
         LOGGER.warn('Could not import gdk-pixbuf-introspection: raster '
                     'images formats other than PNG will not be supported.')
     else:
+        from gi.repository.GdkPixbuf import PixbufLoader
         PIXBUF_VERSION = (GdkPixbuf.PIXBUF_MAJOR,
                           GdkPixbuf.PIXBUF_MINOR,
                           GdkPixbuf.PIXBUF_MICRO)
@@ -124,6 +95,21 @@ else:
             pixbuf = get_pixbuf(file_obj, string)
             _, png = pixbuf.save_to_bufferv('png', ['compression'], ['0'])
             return cairo_png_loader(None, png)
+
+
+def get_pixbuf(file_obj=None, string=None, chunck_size=16 * 1024):
+    """Create a Pixbuf object."""
+    loader = PixbufLoader()
+    if file_obj:
+        while 1:
+            chunck = file_obj.read(chunck_size)
+            if not chunck:
+                break
+            loader.write(chunck)
+    elif string:
+        loader.write(string)
+    loader.close()
+    return loader.get_pixbuf()
 
 
 def cairo_png_loader(file_obj, string):
