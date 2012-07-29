@@ -79,6 +79,19 @@ else:
             assert string is not None
             stream = Gio.MemoryInputStream.new_from_data(string, destroy=None)
             return GdkPixbuf.Pixbuf.new_from_stream(stream, cancellable=None)
+    try:
+        from gi.repository import GdkPixbuf
+    except ImportError:
+        LOGGER.warn('Could not import gdk-pixbuf-introspection: raster '
+                    'images formats other than PNG will not be supported.')
+    else:
+        PIXBUF_VERSION = (GdkPixbuf.PIXBUF_MAJOR,
+                          GdkPixbuf.PIXBUF_MINOR,
+                          GdkPixbuf.PIXBUF_MICRO)
+        if PIXBUF_VERSION < (2, 25, 0):
+            LOGGER.warn('Using gdk-pixbuf %s.%s.%s with introspection. '
+                        'Versions before 2.25.0 are known to be buggy.',
+                        *PIXBUF_VERSION)
 
     def save_pixels_to_png(pixels, width, height, filename):
         """Save raw pixels to a PNG file through pixbuf and introspection."""
