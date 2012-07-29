@@ -41,6 +41,7 @@ if not USING_INTROSPECTION:
                     break
                 loader.write(chunck)
         else:
+            assert string is not None
             loader.write(string)
         loader.close()
         return loader.get_pixbuf()
@@ -75,6 +76,7 @@ else:
                     return loader.get_pixbuf()
                 loader.write(chunck)
         else:
+            assert string is not None
             stream = Gio.MemoryInputStream.new_from_data(string, destroy=None)
             return GdkPixbuf.Pixbuf.new_from_stream(stream, cancellable=None)
 
