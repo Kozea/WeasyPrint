@@ -1450,7 +1450,7 @@ def test_before_after():
             <style>
                 @page { size: 300px 30px }
                 body { margin: 0; background: #fff }
-                a[href]:before { content: '[' '' attr(href) '] ' }
+                a[href]:before { content: '[' attr(href) '] ' }
             </style>
             <p><a href="some url">some content</p>
         '''),
@@ -1459,7 +1459,7 @@ def test_before_after():
                 @page { size: 300px 30px }
                 body { margin: 0; background: #fff }
             </style>
-            <p><a href="another url">[some url] some content</p>
+            <p><a href="another url"><span>[some url] </span>some content</p>
         ''')
     ], tolerance=10)
 
@@ -1477,8 +1477,11 @@ def test_before_after():
             <style>
                 @page { size: 500px 30px }
                 body { margin: 0; background: #fff }
+                q:before, q:after { content: none }
             </style>
-            <p>« Lorem ipsum “ dolor ” sit amet »</p>
+            <p><span><span>« </span>Lorem ipsum
+                <span><span>“ </span>dolor<span> ”</span></span>
+                sit amet<span> »</span></span></p>
         ''')
     ], tolerance=10)
 
@@ -1496,7 +1499,7 @@ def test_before_after():
                 @page { size: 100px 30px }
                 body { margin: 0; background: #fff }
             </style>
-            <p>a<img src="pattern.png" alt="Missing image">bc</p>
+            <p><span>a<img src="pattern.png" alt="Missing image">b</span>c</p>
         ''')
     ], tolerance=10)
 

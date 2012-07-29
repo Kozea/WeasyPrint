@@ -19,7 +19,7 @@ import cairo
 
 from .css.computed_values import LENGTHS_TO_PIXELS
 from .logger import LOGGER
-from .text import USING_PYGTK
+from .text import USING_INTROSPECTION
 
 # TODO: currently CairoSVG only support images with an explicit
 # width and height. When it supports images with only an intrinsic ratio
@@ -28,7 +28,7 @@ from .text import USING_PYGTK
 
 # Do not try to import PyGObject 3 if we already have PyGTK
 # that tends to segfault.
-if USING_PYGTK:
+if not USING_INTROSPECTION:
     from gtk import gdk
 
     def get_pixbuf(file_obj=None, string=None, chunck_size=16 * 1024):

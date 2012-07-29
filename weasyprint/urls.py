@@ -26,12 +26,13 @@ from .compat import (
     Request, parse_email, pathname2url, unicode)
 
 
-# The built-in MIME types are not always reliable...
-mimetypes.add_type('text/html', '.html')
-mimetypes.add_type('text/html', '.htm')
-mimetypes.add_type('text/css', '.css')
-mimetypes.add_type('image/svg+xml', '.svg')
-mimetypes.add_type('image/png', '.png')
+# Unlinke HTML, CSS and PNG, the SVG MIME type is not always builtin
+# in some Python version and therefore not reliable.
+if sys.version_info[0] >= 3:
+    mimetypes.add_type('image/svg+xml', '.svg')
+else:
+    # Native strings required.
+    mimetypes.add_type(b'image/svg+xml', b'.svg')
 
 
 # See http://stackoverflow.com/a/11687993/1162888

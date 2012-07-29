@@ -262,7 +262,8 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
     if nones == [True, True, False, True, True, True]:
         result = url_fetcher(url)
         if check_css_mime_type and result['mime_type'] != 'text/css':
-            LOGGER.warn('Unsupported stylesheet type: %s', result['mime_type'])
+            LOGGER.warn('Unsupported stylesheet type %s for %s',
+                result['mime_type'], result['redirected_url'])
             return 'string', '', base_url, None
         protocol_encoding = result.get('encoding')
         if base_url is None:

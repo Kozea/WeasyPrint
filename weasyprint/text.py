@@ -21,19 +21,20 @@ from .compat import xrange, basestring
 from .logger import LOGGER
 
 
-USING_PYGTK = True
-if os.environ.get('WEASYPRINT_USE_PYGTK'):
-    LOGGER.info('WEASYPRINT_USE_PYGTK is set, not trying PyGObject.')
-else:
+USING_INTROSPECTION = bool(os.environ.get('WEASYPRINT_USE_INTROSPECTION'))
+if not USING_INTROSPECTION:
     try:
-        from gi.repository import Pango, PangoCairo
-        USING_PYGTK = False
+        __import__('pango')  # The one from PyGTK
     except ImportError:
-        LOGGER.info('Failed to import PyGObject, falling back on PyGTK.')
+        USING_INTROSPECTION = True
 
-
-if not USING_PYGTK:
+if USING_INTROSPECTION:
+    from gi.repository import Pango, PangoCairo
     from gi.repository.PangoCairo import create_layout as create_pango_layout
+
+    if Pango.version() < 12903:
+        LOGGER.warn('Using Pango-introspection %s. Versions before '
+                    '1.29.3 are known to be buggy.' % Pango.version_string())
 
     PANGO_VARIANT = {
         'normal': Pango.Variant.NORMAL,
@@ -64,7 +65,6 @@ if not USING_PYGTK:
             PangoCairo.update_layout(cairo_context, pango_layout)
         lines = pango_layout.get_lines_readonly()
         PangoCairo.show_layout_line(cairo_context, lines[0])
-
 
 else:
     import pango as Pango
