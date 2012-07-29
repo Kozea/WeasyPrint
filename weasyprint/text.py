@@ -32,6 +32,10 @@ if USING_INTROSPECTION:
     from gi.repository import Pango, PangoCairo
     from gi.repository.PangoCairo import create_layout as create_pango_layout
 
+    if Pango.version() < 12903:
+        LOGGER.warn('Using Pango-introspection %s. Versions before '
+                    '1.29.3 are known to be buggy.' % Pango.version_string())
+
     PANGO_VARIANT = {
         'normal': Pango.Variant.NORMAL,
         'small-caps': Pango.Variant.SMALL_CAPS,
