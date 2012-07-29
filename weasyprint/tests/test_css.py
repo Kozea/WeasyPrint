@@ -292,7 +292,7 @@ def test_warnings():
         ('<style>@page foo { margin: 2cm',
             ['WARNING: Named pages are not supported yet']),
         ('<link rel=stylesheet href=data:image/png,>',
-            ['WARNING: Unsupported stylesheet type: image/png']),
+            ['WARNING: Unsupported stylesheet type', 'image/png']),
         ('<style>foo { margin-color: red',
             ['WARNING: Ignored', 'unknown property']),
         ('<style>foo { margin-top: red',
