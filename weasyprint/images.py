@@ -41,9 +41,8 @@ if not USING_INTROSPECTION:
     def gdkpixbuf_loader(file_obj, string):
         """Load raster images with gdk-pixbuf through PyGTK."""
         pixbuf = get_pixbuf(file_obj, string)
-        dummy_context = gdk.CairoContext(cairo.PDFSurface(None, 1, 1))
-        gdk.CairoContext(dummy_context).set_source_pixbuf(
-            dummy_context, pixbuf, 0, 0)
+        dummy_context = cairo.Context(cairo.PDFSurface(None, 1, 1))
+        gdk.CairoContext(dummy_context).set_source_pixbuf(pixbuf, 0, 0)
         pattern = dummy_context.get_source()
         result = pattern, pixbuf.get_width(), pixbuf.get_height()
         return lambda: result
