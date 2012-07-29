@@ -34,7 +34,7 @@ if USING_INTROSPECTION:
 
     if Pango.version() < 12903:
         LOGGER.warn('Using Pango-introspection %s. Versions before '
-                    '1.29.3 are known to be buggy.' % Pango.version_string())
+                    '1.29.3 are known to be buggy.', Pango.version_string())
 
     PANGO_VARIANT = {
         'normal': Pango.Variant.NORMAL,
