@@ -6,5 +6,6 @@
 /.tox
 /dist
 /env
+/venv
 /weasyprint/tests/test_results
 /weasyprint/tests/w3_test_suite/test_results
