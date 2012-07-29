@@ -23,6 +23,8 @@ if sys.version_info[0] >= 3:
         urlencode, uses_relative as urlparse_uses_relative)
     from urllib.request import urlopen, Request, pathname2url
     from array import array
+    from base64 import (decodebytes as base64_decode,
+                        encodebytes as base64_encode)
 
     unicode = str
     basestring = str
@@ -58,6 +60,8 @@ else:
     from urllib import pathname2url, quote, unquote, urlencode
     from array import array as _array
     from itertools import izip
+    from base64 import (decodestring as base64_decode,
+                        encodestring as base64_encode)
 
     unicode = unicode
     basestring = basestring

@@ -15,7 +15,6 @@ from __future__ import division, unicode_literals
 import io
 import re
 import sys
-import base64
 import os.path
 import mimetypes
 
@@ -23,7 +22,7 @@ from . import VERSION_STRING
 from .logger import LOGGER
 from .compat import (
     urljoin, urlsplit, quote, unquote, unquote_to_bytes, urlopen_contenttype,
-    Request, parse_email, pathname2url, unicode)
+    Request, parse_email, pathname2url, unicode, base64_decode)
 
 
 # Unlinke HTML, CSS and PNG, the SVG MIME type is not always builtin
@@ -135,7 +134,7 @@ def ensure_url(string):
     return string if url_is_absolute(string) else path2url(string)
 
 
-def decode_base64(data):
+def safe_base64_decode(data):
     """Decode base64, padding being optional.
 
     "From a theoretical point of view, the padding character is not needed,
@@ -151,7 +150,7 @@ def decode_base64(data):
     missing_padding = 4 - len(data) % 4
     if missing_padding:
         data += b'='* missing_padding
-    return base64.decodestring(data)
+    return base64_decode(data)
 
 
 def open_data_url(url):
@@ -189,7 +188,7 @@ def open_data_url(url):
 
     data = unquote_to_bytes(data)
     if encoding == 'base64':
-        data = decode_base64(data)
+        data = safe_base64_decode(data)
 
     return dict(string=data, mime_type=mime_type, encoding=charset,
                 redirected_url=url)

@@ -15,14 +15,13 @@ from __future__ import division
 
 import io
 import os.path
-import base64
 
 import cairo
 
 from weasyprint import HTML, CSS
 from weasyprint.formatting_structure import boxes
 from weasyprint.urls import url_is_absolute
-from weasyprint.compat import izip, parse_qs
+from weasyprint.compat import izip, parse_qs, base64_encode
 
 
 FAVICON = os.path.join(os.path.dirname(__file__),
@@ -62,7 +61,7 @@ def get_pages(html):
         anchors = []
         find_links(page, links, anchors)
         data_url = 'data:image/png;base64,' + (
-            base64.encodestring(png_bytes).decode('ascii').replace('\n', ''))
+            base64_encode(png_bytes).decode('ascii').replace('\n', ''))
         yield width, height, data_url, links, anchors
 
 
