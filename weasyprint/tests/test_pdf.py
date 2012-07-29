@@ -92,8 +92,6 @@ def test_bookmarks():
         <h1>e</h1>  #
     ''', structure_only=True)
     assert root == dict(Count=5, First=1, Last=5)
-    import pprint
-    pprint.pprint(bookmarks, width=150)
     assert bookmarks == [
         dict(Count=3, First=2, Last=4, Next=5, Parent=0, Prev=None),
         dict(Count=0, First=None, Last=None, Next=3, Parent=1, Prev=None),

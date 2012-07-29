@@ -17,6 +17,13 @@ from weasyprint.text import USING_INTROSPECTION
 
 
 if __name__ == '__main__':
+    if '-h' in sys.argv or '--help' in sys.argv:
+        print('Usage:')
+        print('    python -m weasyprint.tests.gobject assert_introspection')
+        print('    python -m weasyprint.tests.gobject assert_pygtk')
+        print('The exit code is accordingly.')
+        print('')
+
     if USING_INTROSPECTION:
         print('Using PyGObject introspection.')
     else:
@@ -26,10 +33,3 @@ if __name__ == '__main__':
         sys.exit(0 if USING_INTROSPECTION else 1)
     elif 'assert_pygtk' in sys.argv:
         sys.exit(1 if USING_INTROSPECTION else 0)
-    else:
-        print('')
-        print('Usage:')
-        print('    python -m weasyprint.tests.gobject assert_introspection')
-        print('    python -m weasyprint.tests.gobject assert_pygtk')
-        print('The exit code is set accordingly.')
-        sys.exit(1)
