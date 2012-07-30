@@ -21,6 +21,7 @@ import cairo
 
 from .css import get_all_computed_styles
 from .formatting_structure.build import build_formatting_structure
+from .urls import FILESYSTEM_ENCODING
 from . import layout
 from . import draw
 from . import images
@@ -136,7 +137,7 @@ class Document(object):
         else:
             if sys.version_info[0] < 3 and isinstance(target, unicode):
                 # py2cairo 1.8 does not support unicode filenames.
-                target = target.encode(sys.getfilesystemencoding())
+                target = target.encode(FILESYSTEM_ENCODING)
             surface.write_to_png(target)
 
     def write_pdf(self, target=None):

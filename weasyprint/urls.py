@@ -15,6 +15,7 @@ from __future__ import division, unicode_literals
 import io
 import re
 import sys
+import codecs
 import os.path
 import mimetypes
 
@@ -34,6 +35,15 @@ else:
     mimetypes.add_type(b'image/svg+xml', b'.svg')
 
 
+# getfilesystemencoding() on Linux is sometimes stupid...
+FILESYSTEM_ENCODING = sys.getfilesystemencoding() or 'utf-8'
+try:
+    if codecs.lookup(FILESYSTEM_ENCODING).name == 'ascii':
+        FILESYSTEM_ENCODING = 'utf-8'
+except LookupError:
+    FILESYSTEM_ENCODING = 'utf-8'
+
+
 # See http://stackoverflow.com/a/11687993/1162888
 # Both are needed in Python 3 as the re module does not like to mix
 UNICODE_SCHEME_RE = re.compile('^([a-z][a-z0-1.+-]+):', re.I)
@@ -45,8 +55,8 @@ def iri_to_uri(url):
     URI that conforms to RFC 3986.
     """
     # Use UTF-8 as per RFC 3987 (IRI), except for file://
-    url = url.encode(sys.getfilesystemencoding()
-                     if url.startswith('file:') else 'utf8')
+    url = url.encode(FILESYSTEM_ENCODING
+                     if url.startswith('file:') else 'utf-8')
     # This is a full URI, not just a component. Only %-encode characters
     # that are not allowed at all in URIs. Everthing else is "safe":
     # * Reserved characters: /:?#[]@!$&'()*+,;=
@@ -60,7 +70,7 @@ def path2url(path):
     """Return file URL of `path`"""
     path = os.path.abspath(path)
     if isinstance(path, unicode):
-        path = path.encode(sys.getfilesystemencoding())
+        path = path.encode(FILESYSTEM_ENCODING)
     path = pathname2url(path)
     if path.startswith('///'):
         # On Windows pathname2url(r'C:\foo') is apparently '///C:/foo'
