@@ -38,7 +38,6 @@ from .testing_utils import (
 _ = b'\xff\xff\xff'  # white
 r = b'\xff\x00\x00'  # red
 B = b'\x00\x00\xff'  # blue
-BYTES_PER_PIXELS = 3
 
 
 def requires_cairo_1_12(test):
@@ -56,7 +55,7 @@ def assert_pixels(name, expected_width, expected_height, expected_lines,
                   html, nb_pages=1):
     """Helper testing the size of the image and the pixels values."""
     assert len(expected_lines) == expected_height
-    assert len(expected_lines[0]) == expected_width * BYTES_PER_PIXELS
+    assert len(expected_lines[0]) == expected_width * 3
     expected_raw = b''.join(expected_lines)
     _doc, lines = html_to_pixels(name, expected_width, expected_height,
                                  html, nb_pages=nb_pages)
@@ -141,15 +140,20 @@ def document_to_pixels(document, name, expected_width, expected_height,
 def png_to_pixels(png_bytes, width, height):
     pixbuf = get_pixbuf(string=png_bytes)
     assert (pixbuf.get_width(), pixbuf.get_height()) == (width, height)
-    assert pixbuf.get_n_channels() == BYTES_PER_PIXELS
+    n_channels = pixbuf.get_n_channels()
     pixels = pixbuf.get_pixels()
     stride = pixbuf.get_rowstride()
-    row_bytes = width * BYTES_PER_PIXELS
+    row_bytes = width * n_channels
     if stride != row_bytes:
         assert stride > row_bytes
         pixels = b''.join(pixels[i:i + row_bytes]
                           for i in xrange(0, len(pixels), stride))
-    assert len(pixels) == width * height * BYTES_PER_PIXELS
+    if n_channels == 4:
+        pixels = bytearray(pixels)
+        del pixels[3::4]  # Remove the A from RGBA
+    else:
+        assert n_channels == 3
+    assert len(pixels) == width * height * 3
     return pixels
 
 
@@ -167,13 +171,13 @@ def assert_pixels_equal(name, width, height, raw, expected_raw, tolerance=0):
                 write_png(name, raw, width, height)
                 write_png(name + '.expected', expected_raw,
                           width, height)
-                pixel_n = i // BYTES_PER_PIXELS
+                pixel_n = i // 3
                 x = pixel_n // width
                 y = pixel_n % width
-                i % BYTES_PER_PIXELS
-                pixel = tuple(ints_from_bytes(raw[i:i + BYTES_PER_PIXELS]))
+                i % 3
+                pixel = tuple(ints_from_bytes(raw[i:i + 3]))
                 expected_pixel = tuple(ints_from_bytes(
-                    expected_raw[i:i + BYTES_PER_PIXELS]))
+                    expected_raw[i:i + 3]))
                 assert 0, (
                     'Pixel (%i, %i) in %s: expected rgba%s, got rgab%s'
                     % (x, y, name, expected_pixel, pixel))
@@ -2034,11 +2038,8 @@ def test_2d_transform():
 @requires_cairo_1_12
 def test_acid2():
     """A local version of http://acid2.acidtests.org/"""
-    # The pixel comparaison assumes 24 bit RGB without an alpha channel.
-    # Add a page background to make sure that the page had no transparency.
-    css = [CSS(string='@page { background: #fff }')]
     def get_png_pages(filename):
-        return HTML(resource_filename(filename)).get_png_pages(stylesheets=css)
+        return HTML(resource_filename(filename)).get_png_pages()
 
     with capture_logs():
         # This is a copy of http://www.webstandards.org/files/acid2/test.html
