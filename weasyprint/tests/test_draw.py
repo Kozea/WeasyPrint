@@ -24,7 +24,7 @@ from io import BytesIO
 import cairo
 import pytest
 
-from ..compat import xrange, ints_from_bytes
+from ..compat import xrange, izip, ints_from_bytes
 from ..urls import ensure_url
 from ..images import get_pixbuf, save_pixels_to_png
 from .. import HTML, CSS
@@ -160,7 +160,7 @@ def assert_pixels_equal(name, width, height, raw, expected_raw, tolerance=0):
     are the same.
     """
     if raw != expected_raw:  # pragma: no cover
-        for i, (value, expected) in enumerate(zip(
+        for i, (value, expected) in enumerate(izip(
             ints_from_bytes(raw),
             ints_from_bytes(expected_raw)
         )):

@@ -59,7 +59,7 @@ else:
     from urllib2 import urlopen, Request
     from urllib import pathname2url, quote, unquote, urlencode
     from array import array as _array
-    from itertools import izip
+    from itertools import izip, imap
     from base64 import (decodestring as base64_decode,
                         encodestring as base64_encode)
 
@@ -96,4 +96,4 @@ else:
 
     def ints_from_bytes(byte_string):
         """Return a list of ints from a byte string"""
-        return map(ord, byte_string)
+        return imap(ord, byte_string)
