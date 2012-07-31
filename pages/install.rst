@@ -154,6 +154,14 @@ Use PyGTK and install lxml’s own dependencies:
 Windows
 ~~~~~~~
 
-See `Anthony Plunkett’s blog <http://www.thefort.org/a/installing-weasyprint-on-windows/>`_.
-Note however that 0.13 is buggy and won’t work on Windows. Until 0.14 is out, use the
-`git version <https://github.com/Kozea/WeasyPrint/>`_.
+Assuming you already have `Python <http://www.python.org/download/>`_
+2.6 or 2.7, the easiest is to use the `PyGTK all-in-one
+installer <http://www.pygtk.org/downloads.html>`_\ [#]_ and Christoph Gohlke’s
+`lxml unofficial binaries <http://www.lfd.uci.edu/~gohlke/pythonlibs/#lxml>`_.
+
+Note however that WeasyPrint 0.13 is buggy and won’t work on Windows. Until
+0.14 is out, use the `git version <https://github.com/Kozea/WeasyPrint/>`_.
+
+.. [#] Be careful and see the `README
+       <http://ftp.gnome.org/pub/GNOME/binaries/win32/pygtk/2.24/pygtk-all-in-one.README>`_
+       if you had anything GTK-related already installed.
