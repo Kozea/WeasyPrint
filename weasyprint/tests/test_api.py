@@ -20,12 +20,12 @@ import threading
 import shutil
 import tempfile
 
-import pystacia
 import lxml.html
 import pytest
 
 from .testing_utils import (
     resource_filename, assert_no_logs, capture_logs, TEST_UA_STYLESHEET)
+from .test_draw import png_to_pixels
 from ..compat import urljoin, urlencode, urlparse_uses_relative
 from ..urls import path2url
 from .. import HTML, CSS, default_url_fetcher
@@ -202,11 +202,9 @@ def check_png_pattern(png_bytes, x2=False, blank=False):
             _+_+_+_+_+_+_+_,
         ]
         size = 8
-    with contextlib.closing(pystacia.read_blob(png_bytes)) as image:
-        assert image.size == (size, size)
-        pixels = image.get_raw('rgba')['raw']
     assert_pixels_equal('api_png', size, size,
-                        pixels, b''.join(expected_pixels))
+                        png_to_pixels(png_bytes, size, size),
+                        b''.join(expected_pixels))
 
 
 @assert_no_logs

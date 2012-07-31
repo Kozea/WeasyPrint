@@ -23,10 +23,10 @@ from io import BytesIO
 
 import cairo
 import pytest
-import pystacia
 
 from ..compat import xrange, ints_from_bytes
 from ..urls import ensure_url
+from ..images import get_pixbuf, save_pixels_to_png
 from .. import HTML, CSS
 from .testing_utils import (
     resource_filename, TestPNGDocument, FONTS, assert_no_logs, capture_logs)
@@ -35,10 +35,9 @@ from .testing_utils import (
 # Short variable names are OK here
 # pylint: disable=C0103
 
-_ = b'\xff\xff\xff\xff'  # white
-r = b'\xff\x00\x00\xff'  # red
-B = b'\x00\x00\xff\xff'  # blue
-BYTES_PER_PIXELS = 4
+_ = b'\xff\xff\xff'  # white
+r = b'\xff\x00\x00'  # red
+B = b'\x00\x00\xff'  # blue
 
 
 def requires_cairo_1_12(test):
@@ -56,7 +55,7 @@ def assert_pixels(name, expected_width, expected_height, expected_lines,
                   html, nb_pages=1):
     """Helper testing the size of the image and the pixels values."""
     assert len(expected_lines) == expected_height
-    assert len(expected_lines[0]) == expected_width * BYTES_PER_PIXELS
+    assert len(expected_lines[0]) == expected_width * 3
     expected_raw = b''.join(expected_lines)
     _doc, lines = html_to_pixels(name, expected_width, expected_height,
                                  html, nb_pages=nb_pages)
@@ -106,17 +105,13 @@ def assert_different_renderings(expected_width, expected_height, documents):
                 # the assert hook would be gigantic and useless.
                 assert False, '%s and %s are the same' % (name_1, name_2)
 
-
-def write_png(basename, lines, width, height):  # pragma: no cover
+def write_png(basename, pixels, width, height):  # pragma: no cover
     """Take a pixel matrix and write a PNG file."""
     directory = os.path.join(os.path.dirname(__file__), 'test_results')
     if not os.path.isdir(directory):
         os.mkdir(directory)
     filename = os.path.join(directory, basename + '.png')
-
-    with contextlib.closing(pystacia.read_raw(
-            lines, 'rgba', width, height, depth=8)) as image:
-        image.write(filename)
+    save_pixels_to_png(pixels, width, height, filename)
 
 
 def html_to_pixels(name, expected_width, expected_height, html, nb_pages=1):
@@ -142,12 +137,24 @@ def document_to_pixels(document, name, expected_width, expected_height,
     return png_to_pixels(document.write_png(), expected_width, expected_height)
 
 
-def png_to_pixels(png_bytes, expected_width, expected_height):
-    with contextlib.closing(pystacia.read_blob(png_bytes)) as image:
-        assert image.size == (expected_width, expected_height)
-        raw = image.get_raw('rgba')['raw']
-        assert len(raw) == expected_width * expected_height * BYTES_PER_PIXELS
-        return raw
+def png_to_pixels(png_bytes, width, height):
+    pixbuf = get_pixbuf(string=png_bytes)
+    assert (pixbuf.get_width(), pixbuf.get_height()) == (width, height)
+    n_channels = pixbuf.get_n_channels()
+    pixels = pixbuf.get_pixels()
+    stride = pixbuf.get_rowstride()
+    row_bytes = width * n_channels
+    if stride != row_bytes:
+        assert stride > row_bytes
+        pixels = b''.join(pixels[i:i + row_bytes]
+                          for i in xrange(0, len(pixels), stride))
+    if n_channels == 4:
+        pixels = bytearray(pixels)
+        del pixels[3::4]  # Remove the A from RGBA
+    else:
+        assert n_channels == 3
+    assert len(pixels) == width * height * 3
+    return pixels
 
 
 def assert_pixels_equal(name, width, height, raw, expected_raw, tolerance=0):
@@ -164,13 +171,13 @@ def assert_pixels_equal(name, width, height, raw, expected_raw, tolerance=0):
                 write_png(name, raw, width, height)
                 write_png(name + '.expected', expected_raw,
                           width, height)
-                pixel_n = i // BYTES_PER_PIXELS
+                pixel_n = i // 3
                 x = pixel_n // width
                 y = pixel_n % width
-                i % BYTES_PER_PIXELS
-                pixel = tuple(ints_from_bytes(raw[i:i + BYTES_PER_PIXELS]))
+                i % 3
+                pixel = tuple(ints_from_bytes(raw[i:i + 3]))
                 expected_pixel = tuple(ints_from_bytes(
-                    expected_raw[i:i + BYTES_PER_PIXELS]))
+                    expected_raw[i:i + 3]))
                 assert 0, (
                     'Pixel (%i, %i) in %s: expected rgba%s, got rgab%s'
                     % (x, y, name, expected_pixel, pixel))
@@ -943,7 +950,7 @@ def test_images():
         _+_+_+_+_+_+_+_,
     ]
     # JPG is lossy...
-    b = b'\x00\x00\xfe\xff'
+    b = b'\x00\x00\xfe'
     blue_image = [
         _+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_,
@@ -1199,10 +1206,10 @@ def test_tables():
             </tr>
         </table>
     '''
-    r = b'\xff\x7f\x7f\xff'  # rgba(255, 0, 0, 0.5) above #fff
-    R = b'\xff\x3f\x3f\xff'  # r above r above #fff
-    g = b'\x7f\xff\x7f\xff'  # rgba(0, 255, 0, 0.5) above #fff
-    G = b'\x7f\xbf\x3f\xff'  # g above r above #fff
+    r = b'\xff\x7f\x7f'  # rgba(255, 0, 0, 0.5) above #fff
+    R = b'\xff\x3f\x3f'  # r above r above #fff
+    g = b'\x7f\xff\x7f'  # rgba(0, 255, 0, 0.5) above #fff
+    G = b'\x7f\xbf\x3f'  # g above r above #fff
                              #   Not the same as r above g above #fff
     assert_pixels('table_borders', 28, 28, [
         _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
@@ -1549,12 +1556,12 @@ def test_borders():
 @assert_no_logs
 def test_margin_boxes():
     """Test the rendering of margin boxes"""
-    _ = b'\xff\xff\xff\xff'  # white
-    R = b'\xff\x00\x00\xff'  # red
-    G = b'\x00\xff\x00\xff'  # green
-    B = b'\x00\x00\xff\xff'  # blue
-    g = b'\x00\x80\x00\xff'  # half green
-    b = b'\x00\x00\x80\xff'  # half blue
+    _ = b'\xff\xff\xff'  # white
+    R = b'\xff\x00\x00'  # red
+    G = b'\x00\xff\x00'  # green
+    B = b'\x00\x00\xff'  # blue
+    g = b'\x00\x80\x00'  # half green
+    b = b'\x00\x00\x80'  # half blue
     assert_pixels('margin_boxes', 15, 15, [
         _+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
         _+G+G+G+_+_+_+_+_+_+B+B+B+B+_,
@@ -1612,6 +1619,7 @@ def test_unicode():
     text = 'I løvë Unicode'
     style = '''
         @page {
+            background: #fff;
             size: 200px 50px;
         }
         p { color: blue }
@@ -1713,7 +1721,7 @@ def test_clip():
             <div>
         ''' % (css,))
 
-    g = b'\x00\x80\x00\xff'  # green
+    g = b'\x00\x80\x00'  # green
     clip('5px, 5px, 9px, auto', [
         _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_+_+_+_+_+_+_,

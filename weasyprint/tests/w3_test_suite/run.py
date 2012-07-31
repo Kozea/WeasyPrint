@@ -21,10 +21,9 @@ import logging
 import traceback
 from contextlib import closing
 
-import pystacia
-
 from weasyprint import HTML, CSS
 from weasyprint.compat import urlopen
+from weasyprint.images import get_pixbuf
 
 from .web import read_testinfo
 
@@ -84,8 +83,8 @@ def make_test_suite():
             png_filename = os.path.join(RESULTS_DIRECTORY, basename + '.png')
             HTML(BASE_URL + name).write_png(
                 png_filename, stylesheets=[PAGE_SIZE_STYLESHEET])
-            with closing(pystacia.read(png_filename)) as image:
-                raw = image.get_raw('rgba')
+            with open(png_filename, 'rb') as image:
+                raw = get_pixbuf(file_obj=image).get_pixels()
             rendered[name] = raw
         return raw
 
