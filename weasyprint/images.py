@@ -107,6 +107,8 @@ def get_pixbuf(file_obj=None, string=None, chunck_size=16 * 1024):
             loader.write(chunck)
     elif string:
         loader.write(string)
+    else:
+        raise ValueError('Could not load image: empty content')
     loader.close()
     return loader.get_pixbuf()
 
