@@ -6,6 +6,7 @@ Version 0.14
 
 Not released yet.
 
+* Switch to gdk-pixbuf instead of Pystacia for loading raster images.
 * Bug fixes:
 
   - Handling of filenames and URLs on Windows
