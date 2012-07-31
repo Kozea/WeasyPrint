@@ -99,17 +99,20 @@ else:
 def get_pixbuf(file_obj=None, string=None, chunck_size=16 * 1024):
     """Create a Pixbuf object."""
     loader = PixbufLoader()
-    if file_obj:
-        while 1:
-            chunck = file_obj.read(chunck_size)
-            if not chunck:
-                break
-            loader.write(chunck)
-    elif string:
-        loader.write(string)
-    else:
-        raise ValueError('Could not load image: empty content')
-    loader.close()
+    try:
+        if file_obj:
+            while 1:
+                chunck = file_obj.read(chunck_size)
+                if not chunck:
+                    break
+                loader.write(chunck)
+        elif string:
+            loader.write(string)
+        else:
+            raise ValueError('Could not load image: empty content')
+    finally:
+        # Pixbuf is really unhappy if we don’t do this:
+        loader.close()
     return loader.get_pixbuf()
 
 
