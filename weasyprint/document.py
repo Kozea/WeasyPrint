@@ -30,14 +30,14 @@ from . import pdf
 
 class Document(object):
     """Abstract output document."""
-    def __init__(self, element_tree, enable_hinting, url_fetcher,
-                 user_stylesheets, user_agent_stylesheets, medium):
+    def __init__(self, element_tree, enable_hinting, url_fetcher, media_type,
+                 user_stylesheets, ua_stylesheets):
         self.element_tree = element_tree  #: lxml HtmlElement object
         self.enable_hinting = enable_hinting
         self.url_fetcher = url_fetcher
+        self.media_type = media_type
         self.user_stylesheets = user_stylesheets
-        self.user_agent_stylesheets = user_agent_stylesheets
-        self.medium = medium
+        self.ua_stylesheets = ua_stylesheets
         self._image_cache = {}
         self._computed_styles = None
         self._formatting_structure = None
@@ -59,10 +59,8 @@ class Document(object):
         """
         if self._computed_styles is None:
             self._computed_styles = get_all_computed_styles(
-                self.element_tree, url_fetcher=self.url_fetcher,
-                user_stylesheets=self.user_stylesheets,
-                ua_stylesheets=self.user_agent_stylesheets,
-                medium=self.medium)
+                self.element_tree, self.media_type, self.url_fetcher,
+                self.user_stylesheets, self.ua_stylesheets)
         return self._computed_styles
 
     @property

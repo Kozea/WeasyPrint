@@ -93,7 +93,7 @@ class HTML(Resource):
     """
     def __init__(self, guess=None, filename=None, url=None, file_obj=None,
                  string=None, tree=None, encoding=None, base_url=None,
-                 url_fetcher=default_url_fetcher, medium='print'):
+                 url_fetcher=default_url_fetcher, media_type='print'):
         import lxml.html
         from .urls import wrap_url_fetcher
         url_fetcher = wrap_url_fetcher(url_fetcher)
@@ -123,7 +123,7 @@ class HTML(Resource):
         self.root_element = result
         self.base_url = base_url
         self.url_fetcher = url_fetcher
-        self.medium = medium
+        self.media_type = media_type
 
     def _ua_stylesheet(self):
         from .html import HTML5_UA_STYLESHEET
@@ -132,12 +132,12 @@ class HTML(Resource):
     def _get_document(self, stylesheets, enable_hinting, ua_stylesheets=None):
         if ua_stylesheets is None:
             ua_stylesheets = self._ua_stylesheet()
+        user_stylesheets = [css if hasattr(css, 'rules')
+                            else CSS(guess=css, media_type=self.media_type)
+                            for css in stylesheets or []]
         from .document import Document
-        return Document(
-            self.root_element, enable_hinting, self.url_fetcher,
-            user_stylesheets=[css if isinstance(css, CSS) else CSS(guess=css, medium=self.medium)
-                              for css in stylesheets or []],
-            user_agent_stylesheets=ua_stylesheets, medium=self.medium)
+        return Document(self.root_element, enable_hinting, self.url_fetcher,
+                        self.media_type, user_stylesheets, ua_stylesheets)
 
     def write_pdf(self, target=None, stylesheets=None):
         """Render the document to PDF.
@@ -197,8 +197,8 @@ class CSS(Resource):
     """
     def __init__(self, guess=None, filename=None, url=None, file_obj=None,
                  string=None, encoding=None, base_url=None,
-                 url_fetcher=default_url_fetcher, _check_mime_type=False, 
-                 medium='print'):
+                 url_fetcher=default_url_fetcher, _check_mime_type=False,
+                 media_type='print'):
         from .css import PARSER, preprocess_stylesheet
 
         source_type, source, base_url, protocol_encoding = _select_source(
@@ -222,10 +222,9 @@ class CSS(Resource):
         self.stylesheet = getattr(PARSER, method)(source, **kwargs)
         self.base_url = base_url
         self.rules = list(preprocess_stylesheet(
-            medium, base_url, self.stylesheet.rules, url_fetcher))
+            media_type, base_url, self.stylesheet.rules, url_fetcher))
         for error in self.stylesheet.errors:
             LOGGER.warn(error)
-
 
 
 def _select_source(guess=None, filename=None, url=None, file_obj=None,

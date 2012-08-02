@@ -41,14 +41,11 @@ class TestPNGDocument(Document):
     enable_hinting = True
 
     def __init__(self, html_source, base_url=None, user_stylesheets=(),
-                 user_agent_stylesheets=(TEST_UA_STYLESHEET,), medium='print'):
+                 ua_stylesheets=(TEST_UA_STYLESHEET,), media_type='print'):
         super(TestPNGDocument, self).__init__(
             HTML(string=html_source, base_url=base_url).root_element,
-            enable_hinting=self.enable_hinting,
-            url_fetcher=default_url_fetcher,
-            user_stylesheets=user_stylesheets,
-            user_agent_stylesheets=user_agent_stylesheets,
-            medium=medium)
+            self.enable_hinting, default_url_fetcher, media_type,
+            user_stylesheets, ua_stylesheets)
 
 
 class TestPDFDocument(TestPNGDocument):

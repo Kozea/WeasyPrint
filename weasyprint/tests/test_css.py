@@ -137,7 +137,7 @@ def test_annotate_document():
     document = parse_html(
         'doc1.html',
         user_stylesheets=[CSS(resource_filename('user.css'))],
-        user_agent_stylesheets=[CSS(resource_filename('mini_ua.css'))],
+        ua_stylesheets=[CSS(resource_filename('mini_ua.css'))],
     )
 
     # Element objects behave a lists of their children

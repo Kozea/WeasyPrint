@@ -155,7 +155,7 @@ class StyleDict(object):
     anonymous = False
 
 
-def find_stylesheets(element_tree, medium, url_fetcher):
+def find_stylesheets(element_tree, device_media_type, url_fetcher):
     """Yield the stylesheets in ``element_tree``.
 
     The output order is the same as the source order.
@@ -170,7 +170,7 @@ def find_stylesheets(element_tree, medium, url_fetcher):
             continue
         media_attr = element.get('media', '').strip() or 'all'
         media = [media_type.strip() for media_type in media_attr.split(',')]
-        if not evaluate_media_query(media, medium):
+        if not evaluate_media_query(media, device_media_type):
             continue
         if element.tag == 'style':
             # Content is text that is directly in the <style> element, not its
@@ -182,7 +182,7 @@ def find_stylesheets(element_tree, medium, url_fetcher):
             # lxml should give us either unicode or ASCII-only bytestrings, so
             # we don't need `encoding` here.
             css = CSS(string=content, base_url=element.base_url,
-                      url_fetcher=url_fetcher, medium=medium)
+                      url_fetcher=url_fetcher, media_type=device_media_type)
             yield css
         elif element.tag == 'link' and element.get('href'):
             rel = element.get('rel', '').split()
@@ -191,7 +191,7 @@ def find_stylesheets(element_tree, medium, url_fetcher):
             href = get_url_attribute(element, 'href')
             if href is not None:
                 yield CSS(url=href, url_fetcher=url_fetcher,
-                          _check_mime_type=True, medium=medium)
+                          _check_mime_type=True, media_type=device_media_type)
 
 
 def find_style_attributes(element_tree):
@@ -209,15 +209,16 @@ def find_style_attributes(element_tree):
             yield element, declarations, element.base_url
 
 
-def evaluate_media_query(query_list, medium):
-    """Return the boolean evaluation of `query_list` for the given `medium`.
+def evaluate_media_query(query_list, device_media_type):
+    """Return the boolean evaluation of `query_list` for the given
+    `device_media_type`.
 
     :attr query_list: a cssutilts.stlysheets.MediaList
-    :attr medium: a media type string (for now)
+    :attr device_media_type: a media type string (for now)
 
     """
     # TODO: actual support for media queries, not just media types
-    return 'all' in query_list or medium in query_list
+    return 'all' in query_list or device_media_type in query_list
 
 
 def declaration_precedence(origin, importance):
@@ -331,7 +332,7 @@ class Selector(object):
         self.match = match
 
 
-def preprocess_stylesheet(medium, base_url, rules, url_fetcher):
+def preprocess_stylesheet(device_media_type, base_url, rules, url_fetcher):
     """Do the work that can be done early on stylesheet, before they are
     in a document.
 
@@ -363,17 +364,18 @@ def preprocess_stylesheet(medium, base_url, rules, url_fetcher):
                 yield rule, selector_list, declarations
 
         elif rule.at_keyword == '@import':
-            if not evaluate_media_query(rule.media, medium):
+            if not evaluate_media_query(rule.media, device_media_type):
                 continue
             for result in CSS(url=urljoin(base_url, rule.uri),
-                              url_fetcher=url_fetcher, medium=medium).rules:
+                              url_fetcher=url_fetcher,
+                              media_type=device_media_type).rules:
                 yield result
 
         elif rule.at_keyword == '@media':
-            if not evaluate_media_query(rule.media, medium):
+            if not evaluate_media_query(rule.media, device_media_type):
                 continue
             for result in preprocess_stylesheet(
-                    medium, base_url, rule.rules, url_fetcher):
+                    device_media_type, base_url, rule.rules, url_fetcher):
                 yield result
 
         elif rule.at_keyword == '@page':
@@ -405,10 +407,10 @@ def preprocess_stylesheet(medium, base_url, rules, url_fetcher):
                     yield margin_rule, selector_list, declarations
 
 
-def get_all_computed_styles(element_tree, medium, url_fetcher,
+def get_all_computed_styles(element_tree, device_media_type, url_fetcher,
                             user_stylesheets=None, ua_stylesheets=None):
     """Compute all the computed styles of all elements in ``element_tree``
-    for the media type ``medium``.
+    for the media type ``device_media_type``.
 
     Do everything from finding author stylesheets in the given HTML document
     to parsing and applying them.
@@ -417,7 +419,7 @@ def get_all_computed_styles(element_tree, medium, url_fetcher,
 
     """
     author_stylesheets = list(find_stylesheets(
-        element_tree, medium, url_fetcher))
+        element_tree, device_media_type, url_fetcher))
 
     # keys: (element, pseudo_element_type)
     #    element: a lxml element object or the '@page' string for @page styles
