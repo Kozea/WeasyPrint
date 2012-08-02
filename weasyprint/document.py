@@ -31,12 +31,13 @@ from . import pdf
 class Document(object):
     """Abstract output document."""
     def __init__(self, element_tree, enable_hinting, url_fetcher,
-                 user_stylesheets, user_agent_stylesheets):
+                 user_stylesheets, user_agent_stylesheets, medium):
         self.element_tree = element_tree  #: lxml HtmlElement object
         self.enable_hinting = enable_hinting
         self.url_fetcher = url_fetcher
         self.user_stylesheets = user_stylesheets
         self.user_agent_stylesheets = user_agent_stylesheets
+        self.medium = medium
         self._image_cache = {}
         self._computed_styles = None
         self._formatting_structure = None
@@ -61,7 +62,7 @@ class Document(object):
                 self.element_tree, url_fetcher=self.url_fetcher,
                 user_stylesheets=self.user_stylesheets,
                 ua_stylesheets=self.user_agent_stylesheets,
-                medium='print')
+                medium=self.medium)
         return self._computed_styles
 
     @property
