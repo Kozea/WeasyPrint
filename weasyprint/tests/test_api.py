@@ -311,12 +311,16 @@ def test_command_line_render():
     with chdir(resource_filename('')):
         # Reference
         document = TestHTML(string=combined, base_url='dummy.html')
-        png_bytes = document.write_png()
         pdf_bytes = document.write_pdf()
+        png_bytes = document.write_png()
+        x2_png_bytes = document.write_png(resolution=192)
         rotated_png_bytes = TestHTML(string=combined, base_url='dummy.html',
                                      media_type='screen').write_png()
+        empty_png_bytes = TestHTML(
+            string=b'<style>' + css + b'</style>').write_png()
     check_png_pattern(png_bytes)
     check_png_pattern(rotated_png_bytes, rotated=True)
+    check_png_pattern(empty_png_bytes, blank=True)
 
     def run(args, stdin=b''):
         stdin = io.BytesIO(stdin)
@@ -385,6 +389,22 @@ def test_command_line_render():
             assert read_file('out13.png') == rotated_png_bytes
             assert read_file('out14.png') == rotated_png_bytes
 
+            stdout = run('-f png -r 192 linked.html -')
+            assert stdout == x2_png_bytes
+            stdout = run('-f png --resolution 192 linked.html -')
+            assert run('linked.html - -f png --resolution 192') == x2_png_bytes
+            assert stdout == x2_png_bytes
+
+            os.mkdir('subdirectory')
+            os.chdir('subdirectory')
+            with capture_logs() as logs:
+                stdout = run('--format png - -', stdin=combined)
+            assert len(logs) == 1
+            assert logs[0].startswith('WARNING: Error for image')
+            assert stdout == empty_png_bytes
+
+            stdout = run('--format png --base-url .. - -', stdin=combined)
+            assert stdout == png_bytes
 
 @assert_no_logs
 def test_unicode_filenames():

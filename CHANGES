@@ -8,6 +8,8 @@ Not released yet.
 
 * Add a public API to choose media type used for @media.
  (It still defaults to 'print'). Thanks Chung Lu!
+* Add ``--base-url`` and ``--resolution`` to the command-line API, making it
+  as complete as the Python one.
 * Switch to gdk-pixbuf instead of Pystacia for loading raster images.
 * Bug fixes:
 
