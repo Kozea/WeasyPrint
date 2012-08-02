@@ -13,6 +13,7 @@ Not released yet.
 
   - Handling of filenames and URLs on Windows
   - Unicode filenames with older version of py2cairo
+  - ``base_url`` now behaves as expected when set to a directory name.
   - Make some tests more robust
 
 

@@ -69,6 +69,10 @@ def iri_to_uri(url):
 def path2url(path):
     """Return file URL of `path`"""
     path = os.path.abspath(path)
+    if os.path.isdir(path):
+        # Make sure directory names have a trailing slash.
+        # Otherwise relative URIs are resolved from the parent directory.
+        path += os.path.sep
     if isinstance(path, unicode):
         path = path.encode(FILESYSTEM_ENCODING)
     path = pathname2url(path)
