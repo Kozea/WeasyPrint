@@ -21,12 +21,11 @@ The archives_ are published on the Librelist website.
 .. _Librelist: http://librelist.com/
 .. _archives: http://librelist.com/browser/weasyprint/
 
-Jabber
-------
+IRC
+---
 
-We have a Jabber/XMPP chat-room at community@room.jabber.kozea.fr. It’s not
-just about WeasyPrint though. You may see people writing in French there,
-but English is accepted too.
+Chat with us at `##kozea <irc://chat.freenode.net/##kozea>`_ on 
+`Freenode <http://freenode.net/>`_.
 
 Issue/bug tracker
 -----------------
