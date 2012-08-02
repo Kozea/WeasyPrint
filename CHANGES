@@ -6,6 +6,8 @@ Version 0.14
 
 Not released yet.
 
+* Add a public API to choose media type used for @media.
+ (It still defaults to 'print'). Thanks Chung Lu!
 * Switch to gdk-pixbuf instead of Pystacia for loading raster images.
 * Bug fixes:
 

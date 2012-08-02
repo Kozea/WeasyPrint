@@ -156,7 +156,7 @@ def test_css_parsing():
     _test_resource(CSS, 'latin1-test.css', check_css, encoding='latin1')
 
 
-def check_png_pattern(png_bytes, x2=False, blank=False):
+def check_png_pattern(png_bytes, x2=False, blank=False, rotated=False):
     from .test_draw import _, r, B, assert_pixels_equal
     if blank:
         expected_pixels = [
@@ -190,6 +190,18 @@ def check_png_pattern(png_bytes, x2=False, blank=False):
             _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
         ]
         size = 16
+    elif rotated:
+        expected_pixels = [
+            _+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_,
+            _+_+B+B+B+B+_+_,
+            _+_+B+B+B+B+_+_,
+            _+_+B+B+B+B+_+_,
+            _+_+r+B+B+B+_+_,
+            _+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_,
+        ]
+        size = 8
     else:
         expected_pixels = [
             _+_+_+_+_+_+_+_,
@@ -210,13 +222,17 @@ def check_png_pattern(png_bytes, x2=False, blank=False):
 @assert_no_logs
 def test_python_render():
     """Test rendering with the Python API."""
-    html = TestHTML(string='<body><img src=pattern.png>',
-        base_url=resource_filename('dummy.html'))
-    css = CSS(string='''
+    base_url = resource_filename('dummy.html')
+    html_string = '<body><img src=pattern.png>'
+    css_string = '''
         @page { margin: 2px; size: 8px; background: #fff }
         body { margin: 0; font-size: 0 }
         img { image-rendering: optimizeSpeed }
-    ''')
+
+        @media screen { img { transform: rotate(-90deg) } }
+    '''
+    html = TestHTML(string=html_string, base_url=base_url)
+    css = CSS(string=css_string)
 
     png_bytes = html.write_png(stylesheets=[css])
     pdf_bytes = html.write_pdf(stylesheets=[css])
@@ -265,12 +281,27 @@ def test_python_render():
     pages = list(html.get_png_pages(stylesheets=[css], resolution=192))
     assert pages == [(16, 16, x2_png_bytes)]
 
+    screen_css = CSS(string=css_string, media_type='screen')
+    rotated_png_bytes = html.write_png(stylesheets=[screen_css])
+    check_png_pattern(rotated_png_bytes, rotated=True)
+
+    assert TestHTML(
+        string=html_string, base_url=base_url, media_type='screen'
+    ).write_png(
+        stylesheets=[io.BytesIO(css_string.encode('utf8'))]
+    ) == rotated_png_bytes
+    assert TestHTML(
+        string='<style>%s</style>%s' % (css_string, html_string),
+        base_url=base_url, media_type='screen'
+    ).write_png() == rotated_png_bytes
+
 
 @assert_no_logs
 def test_command_line_render():
     """Test rendering with the command-line API."""
     css = b'''
         @page { margin: 2px; size: 8px; background: #fff }
+        @media screen { img { transform: rotate(-90deg) } }
         body { margin: 0; font-size: 0 }
     '''
     html = b'<body><img src=pattern.png>'
@@ -282,7 +313,10 @@ def test_command_line_render():
         document = TestHTML(string=combined, base_url='dummy.html')
         png_bytes = document.write_png()
         pdf_bytes = document.write_pdf()
+        rotated_png_bytes = TestHTML(string=combined, base_url='dummy.html',
+                                     media_type='screen').write_png()
     check_png_pattern(png_bytes)
+    check_png_pattern(rotated_png_bytes, rotated=True)
 
     def run(args, stdin=b''):
         stdin = io.BytesIO(stdin)
@@ -343,6 +377,13 @@ def test_command_line_render():
 
             stdout = run('--format png - -', stdin=combined)
             assert stdout == png_bytes
+
+            run('combined.html out13.png --media-type screen')
+            run('combined.html out12.png -m screen')
+            run('linked.html out14.png -m screen')
+            assert read_file('out12.png') == rotated_png_bytes
+            assert read_file('out13.png') == rotated_png_bytes
+            assert read_file('out14.png') == rotated_png_bytes
 
 
 @assert_no_logs
