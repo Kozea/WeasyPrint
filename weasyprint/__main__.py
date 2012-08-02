@@ -37,6 +37,8 @@ def main(argv=None, stdout=None, stdin=None):
     parser.add_argument('-s', '--stylesheet', action='append',
                         help='Apply a user stylesheet to the document. '
                              'May be given multiple times.')
+    parser.add_argument('-m', '--medium', default='print',
+                        help='@media medium to use; defaults to print')
     parser.add_argument('input',
         help='URL or filename of the HTML input, or - for stdin')
     parser.add_argument('output',
@@ -75,7 +77,7 @@ def main(argv=None, stdout=None, stdin=None):
     else:
         output = args.output
 
-    html = HTML(source, base_url=base_url, encoding=args.encoding)
+    html = HTML(source, base_url=base_url, encoding=args.encoding, medium=args.medium)
     getattr(html, 'write_' + format_)(output, stylesheets=args.stylesheet)
 
 
