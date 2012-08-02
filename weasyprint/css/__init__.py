@@ -182,7 +182,7 @@ def find_stylesheets(element_tree, medium, url_fetcher):
             # lxml should give us either unicode or ASCII-only bytestrings, so
             # we don't need `encoding` here.
             css = CSS(string=content, base_url=element.base_url,
-                      url_fetcher=url_fetcher)
+                      url_fetcher=url_fetcher, medium=medium)
             yield css
         elif element.tag == 'link' and element.get('href'):
             rel = element.get('rel', '').split()
@@ -191,7 +191,7 @@ def find_stylesheets(element_tree, medium, url_fetcher):
             href = get_url_attribute(element, 'href')
             if href is not None:
                 yield CSS(url=href, url_fetcher=url_fetcher,
-                          _check_mime_type=True)
+                          _check_mime_type=True, medium=medium)
 
 
 def find_style_attributes(element_tree):
@@ -366,7 +366,7 @@ def preprocess_stylesheet(medium, base_url, rules, url_fetcher):
             if not evaluate_media_query(rule.media, medium):
                 continue
             for result in CSS(url=urljoin(base_url, rule.uri),
-                              url_fetcher=url_fetcher).rules:
+                              url_fetcher=url_fetcher, medium=medium).rules:
                 yield result
 
         elif rule.at_keyword == '@media':
