@@ -34,7 +34,7 @@ if not USING_INTROSPECTION:
     def save_pixels_to_png(pixels, width, height, filename):
         """Save raw pixels to a PNG file through pixbuf and PyGTK."""
         gdk.pixbuf_new_from_data(
-            pixels, gdk.COLORSPACE_RGB, False, 8, width, height, width * 3
+            pixels, gdk.COLORSPACE_RGB, True, 8, width, height, width * 4
         ).save(filename, 'png')
 
     def gdkpixbuf_loader(file_obj, string):
@@ -66,8 +66,8 @@ else:
         """Save raw pixels to a PNG file through pixbuf and introspection."""
         from gi.repository import GdkPixbuf
         GdkPixbuf.Pixbuf.new_from_data(
-            pixels, GdkPixbuf.Colorspace.RGB, False, 8,
-            width, height, width * 3, None, None
+            pixels, GdkPixbuf.Colorspace.RGB, True, 8,
+            width, height, width * 4, None, None
         ).savev(filename, 'png', [], [])
 
     try:
