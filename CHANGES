@@ -4,7 +4,7 @@ WeasyPrint changelog
 Version 0.14
 ------------
 
-Not released yet.
+Released on 2012-08-03.
 
 * Add a public API to choose media type used for @media.
  (It still defaults to 'print'). Thanks Chung Lu!
