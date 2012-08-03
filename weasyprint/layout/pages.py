@@ -12,7 +12,6 @@
 
 from __future__ import division, unicode_literals
 
-from ..logger import LOGGER
 from ..formatting_structure import boxes, build
 from .absolute import absolute_layout
 from .blocks import block_level_layout, block_container_layout

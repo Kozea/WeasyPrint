@@ -12,8 +12,6 @@
 
 from __future__ import division, unicode_literals
 
-import cairo
-
 from ..formatting_structure import boxes
 from .. import text
 

@@ -13,10 +13,7 @@
 # Do NOT import unicode_literals here. Raw WSGI requires native strings.
 from __future__ import division
 
-import io
 import os.path
-
-import cairo
 
 from weasyprint import HTML, CSS
 from weasyprint.formatting_structure import boxes

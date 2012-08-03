@@ -12,7 +12,6 @@
 
 from __future__ import division, unicode_literals
 
-import io
 import re
 import sys
 import codecs

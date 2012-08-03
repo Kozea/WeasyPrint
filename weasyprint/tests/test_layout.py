@@ -16,10 +16,6 @@ from __future__ import division, unicode_literals
 from .testing_utils import (
     TestPNGDocument, resource_filename, FONTS, assert_no_logs, capture_logs)
 from ..formatting_structure import boxes
-from ..layout.inlines import split_inline_box
-from ..layout.percentages import resolve_percentages
-from ..layout.preferred import (inline_preferred_width,
-                                inline_preferred_minimum_width)
 
 
 def body_children(page):

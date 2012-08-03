@@ -13,7 +13,6 @@
 from __future__ import division, unicode_literals
 
 from io import BytesIO
-import contextlib
 
 import cairo
 
@@ -187,12 +186,13 @@ def get_image_from_uri(cache, url_fetcher, uri, type_=None):
                 function = gdkpixbuf_loader(
                     result.get('file_obj'), result.get('string'))
         finally:
-            try:
-                file_like.close()
-            except Exception:  # pragma: no cover
-                # May already be closed or something.
-                # This is just cleanup anyway.
-                pass
+            if 'file_obj' in result:
+                try:
+                    result['file_obj'].close()
+                except Exception:  # pragma: no cover
+                    # May already be closed or something.
+                    # This is just cleanup anyway.
+                    pass
 
         cache[uri] = function
         return function()

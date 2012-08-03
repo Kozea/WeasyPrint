@@ -19,7 +19,7 @@ import os.path
 import multiprocessing
 import logging
 
-from weasyprint import HTML, LOGGER, document
+from weasyprint import HTML, LOGGER
 from .web import prepare_test_data
 
 

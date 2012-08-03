@@ -13,8 +13,7 @@ from __future__ import division, unicode_literals
 from ..stacking import StackingContext
 from .test_boxes import serialize
 from .test_layout import parse
-from .testing_utils import (
-    resource_filename, TestPNGDocument, assert_no_logs, capture_logs)
+from .testing_utils import assert_no_logs
 
 
 def to_lists(page):

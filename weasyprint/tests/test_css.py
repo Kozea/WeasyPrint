@@ -12,8 +12,6 @@
 
 from __future__ import division, unicode_literals
 
-import os.path
-
 from pytest import raises
 
 from .testing_utils import (

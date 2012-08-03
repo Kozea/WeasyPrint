@@ -12,14 +12,11 @@
 
 from __future__ import division, unicode_literals
 
-import contextlib
 import os.path
 import tempfile
 import shutil
 import itertools
-import operator
 import functools
-from io import BytesIO
 
 import cairo
 import pytest
@@ -27,7 +24,7 @@ import pytest
 from ..compat import xrange, izip, ints_from_bytes
 from ..urls import ensure_url
 from ..images import get_pixbuf, save_pixels_to_png
-from .. import HTML, CSS
+from .. import HTML
 from .testing_utils import (
     resource_filename, TestPNGDocument, FONTS, assert_no_logs, capture_logs)
 

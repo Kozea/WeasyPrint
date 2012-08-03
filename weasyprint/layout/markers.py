@@ -12,8 +12,6 @@
 
 from __future__ import division, unicode_literals
 
-import cairo
-
 from .percentages import resolve_percentages
 from ..text import split_first_line
 from ..formatting_structure import boxes
