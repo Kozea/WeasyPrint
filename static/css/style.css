@@ -372,3 +372,7 @@ body > footer li a:focus{
   background-color: #E70;
   box-shadow: 0 0 5px #D60;
 }
+
+.ref {
+    font-size: .7em;
+}

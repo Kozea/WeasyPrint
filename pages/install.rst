@@ -32,7 +32,7 @@ WeasyPrint has been packaged for some Linux distributions:
 
 
 For other distributions or if you want to install it yourself,
-WeasyPrint 0.13 depends on:
+WeasyPrint 0.14 depends on:
 
 * CPython_ 2.6, 2.7 or 3.2
 * Either:
@@ -40,8 +40,8 @@ WeasyPrint 0.13 depends on:
   - PyGTK_ and its dependencies.
     This is available in more distributions but only works on Python 2.x
     and requires the whole GTK+ stack.
-  - Pango_ >= 1.29.3, pycairo_ and PyGObject_ 3.x with introspection data
-    for Pango and cairo.
+  - Pango_ >= 1.29.3, pycairo_ and GdkPixbuf_ >= 2.25\ [#]_
+    with introspection data for each, as well as PyGObject_ 3.x.
     This works on all supported Python version and is lighter on dependencies,
     but requires fairly recent versions.
 
@@ -56,6 +56,7 @@ cairo >= 1.12 is best but older versions should work too.\ [#]_
 .. _CPython: http://www.python.org/
 .. _Pango: http://www.pango.org/
 .. _pycairo: http://cairographics.org/pycairo/
+.. _GdkPixbuf: https://live.gnome.org/GdkPixbuf
 .. _PyGObject: https://live.gnome.org/PyGObject
 .. _PyGTK: http://www.pygtk.org/
 .. _lxml: http://lxml.de/
@@ -65,9 +66,9 @@ cairo >= 1.12 is best but older versions should work too.\ [#]_
 .. _CairoSVG: http://cairosvg.org/
 
 
-We recommend that you install ImageMagick (used by Pystacia), lxml\ [#]_,
-pycairo, Pango and PyGObject/PyGTK with your distribution’s packages
-(see below) and everything else in a virtualenv_ with pip_.
+We recommend that you install PyGTK (or Pango, GdkPixbuf, pycairo and
+PyGObject) and lxml\ [#]_ with your distribution’s packages (see below)
+and everything else in a virtualenv_ with pip_.
 
 .. _virtualenv: http://www.virtualenv.org/
 .. _pip: http://pip-installer.org/
@@ -96,7 +97,10 @@ If everything goes well, you’re ready to `start using </using/>`_ WeasyPrint!
 Otherwise, please copy the full error message and `report the problem
 </community/>`_.
 
-.. [#] The test suite passes on 1.8 and 1.10 with some tests marked as
+.. [#] GdkPixbuf is actually optional. Without it, PNG is the only
+       supported raster image format: JPEG, GIF and others are not available.
+
+.. [#] The test suite passes on cairo 1.8 and 1.10 with some tests marked as
        “expected failures” due to bugs or behavior changes in cairo.
 
 .. [#] Alternatively, install lxml with pip but make sure you have libxml2
@@ -106,62 +110,66 @@ Otherwise, please copy the full error message and `report the problem
 .. [#] Symbolic links to the system packages in the virtualenv’s
        ``site-packages`` directory should work.
 
-Debian Wheezy, Ubuntu 12.04 Precise or more recent
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Debian / Ubuntu
+~~~~~~~~~~~~~~~
+
+With PyGTK (Python 2 only):
 
 .. code-block:: sh
 
-    sudo apt-get install imagemagick python-lxml python-cairo gir1.2-pango-1.0 python-gi python-gi-cairo
+    sudo apt-get install python-gtk2 python-lxml
 
-
-Ubuntu 11.10 Oneiric
-~~~~~~~~~~~~~~~~~~~~
-
-``python-gi`` is named ``python-gobject`` instead:
+… or with PyGObject (Debian Wheezy, Ubuntu 12.04 Precise or more recent)
+on Python 2:
 
 .. code-block:: sh
 
-    sudo apt-get install imagemagick python-lxml python-cairo gir1.2-pango-1.0 python-gobject python-gobject-cairo
+    sudo apt-get install gir1.2-pango-1.0 gir1.2-gdkpixbuf-2.0 python-gi-cairo python-lxml
 
-Debian 6 Squeeze, Ubuntu 11.04 Natty or older
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-PyGObject 3 is not available or Pango not recent enough for introspection,
-use PyGTK instead:
+On Python 3:
 
 .. code-block:: sh
 
-    sudo apt-get install imagemagick python-lxml python-gtk2
+    sudo apt-get install gir1.2-pango-1.0 gir1.2-gdkpixbuf-2.0 python3-gi-cairo python3-lxml
+
 
 Mac OS X
 ~~~~~~~~
 
-With Macports:
+With Macports (adjust the ``py27`` part for other Python versions),
+with PyGTK:
 
 .. code-block:: sh
 
-    sudo port install ImageMagick pango py27-gobject3 py27-cairo py27-lxml
+    sudo port install py27-gtk py27-lxml
+
+… or with PyGObject:
+
+.. code-block:: sh
+
+    sudo port install pango gdk-pixbuf2 py27-gobject3 py27-cairo py27-lxml
+
+With Homebrew:
+
+.. code-block:: sh
+
+    brew install pygtk libxml2 libxslt
 
 As of this writing Homebrew has no package
 `for PyGObject 3 <https://github.com/mxcl/homebrew/issues/12901>`_ or
 `for lxml <https://github.com/mxcl/homebrew/wiki/Acceptable-Formula>`_.
 Use PyGTK and install lxml’s own dependencies:
 
-.. code-block:: sh
-
-    brew install imagemagick pygtk libxml2 libxslt
 
 Windows
 ~~~~~~~
 
 Assuming you already have `Python <http://www.python.org/download/>`_
-2.6 or 2.7, the easiest is to use the `PyGTK all-in-one
-installer <http://www.pygtk.org/downloads.html>`_\ [#]_ and Christoph Gohlke’s
-`lxml unofficial binaries <http://www.lfd.uci.edu/~gohlke/pythonlibs/#lxml>`_.
+2.6 or 2.7, the easiest is to use Christoph Gohlke’s
+`lxml unofficial binaries <http://www.lfd.uci.edu/~gohlke/pythonlibs/#lxml>`_
+and the `PyGTK all-in-one installer <http://www.pygtk.org/downloads.html>`_.
 
-Note however that WeasyPrint 0.13 is buggy and won’t work on Windows. Until
-0.14 is out, use the `git version <https://github.com/Kozea/WeasyPrint/>`_.
-
-.. [#] Be careful and see the `README
-       <http://ftp.gnome.org/pub/GNOME/binaries/win32/pygtk/2.24/pygtk-all-in-one.README>`_
-       if you had anything GTK-related already installed.
+Be careful and see the `README
+<http://ftp.gnome.org/pub/GNOME/binaries/win32/pygtk/2.24/pygtk-all-in-one.README>`_
+if you had anything GTK-related already installed.

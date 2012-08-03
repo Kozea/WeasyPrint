@@ -6,7 +6,7 @@ Documentation
 * `Hacking </hacking/>`_
 * **Features**
 
-This page is for WeasyPrint 0.13. See the changelog_ for older versions.
+This page is for WeasyPrint 0.14. See the changelog_ for older versions.
 
 .. _changelog: https://github.com/Kozea/WeasyPrint/blob/master/CHANGES
 
@@ -30,6 +30,7 @@ Many HTML elements are implemented in CSS through the HTML5
 
 Some elements need special treatment:
 
+* The ``<base>`` element, if present, determines the base for relative URLs.
 * CSS stylesheets can be embedded in ``<style>`` elements or linked by
   ``<link rel=stylesheet>`` elements.
 * ``<img>``, ``<embed>`` or ``<object>`` elements accept images either
@@ -71,7 +72,6 @@ CSS 2.1
 
 The `CSS 2.1`_ features listed here are **not** supported:
 
-* Outlines_
 * On tables: `empty-cells`_ and `visibility: collapse`_.
 * Minimum and maximum width_ and height_ on table-related boxes and
   page-margin boxes.
@@ -79,9 +79,8 @@ The `CSS 2.1`_ features listed here are **not** supported:
   is passed as-is to Pango.
 * Right-to-left or `bi-directional text`_.
   (May *kind of* work within uninterrupted text thanks to Pango)
-* `System colors`_. They are deprecated in CSS 3
+* `System colors`_ and `system fonts`_. The former are deprecated in CSS 3
 
-.. _Outlines: http://www.w3.org/TR/CSS21/ui.html#dynamic-outlines
 .. _CSS 2.1: http://www.w3.org/TR/CSS21/
 .. _empty-cells: http://www.w3.org/TR/CSS21/tables.html#empty-cells
 .. _visibility\: collapse: http://www.w3.org/TR/CSS21/tables.html#dynamic-effects
@@ -90,6 +89,7 @@ The `CSS 2.1`_ features listed here are **not** supported:
 .. _font matching algorithm: http://www.w3.org/TR/CSS21/fonts.html#algorithm
 .. _Bi-directional text: http://www.w3.org/TR/CSS21/visuren.html#direction
 .. _System colors: http://www.w3.org/TR/CSS21/ui.html#system-colors
+.. _system fonts: http://www.w3.org/TR/CSS21/fonts.html#propdef-font
 
 To the best of our knowledge, everything else that applies to the
 print media **is** supported. Please `report a bug`_ if you find this list

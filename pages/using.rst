@@ -36,6 +36,17 @@ More options are available:
     Add a user CSS stylesheet to the document. (eg. ``-s print.css``).
     Multiple stylesheets are allowed.
 
+``-m`` or ``--media-type``
+    Set the media type to use for ``@media``. Defaults to ``print``.
+
+``-r`` or ``--resolution``
+    For PNG output only. Set the resolution in PNG pixel per CSS inch.
+    Defaults to 96, which means that PNG pixels match CSS pixels.
+
+``--base-url``
+    Set the base for relative URLs in the HTML input. Defaults to the input’s
+    own URL or the current directory for stdin.
+
 ``--version``
     Show the version number.
 
@@ -105,6 +116,7 @@ You can also pass optional named arguments:
   If not passed explicitly, try to use the input filename, URL, or
   ``name`` attribute of file objects.
 * ``url_fetcher``: override the URL fetcher. (See `below <#url-fetchers>`_.)
+* ``media_type``: the media type to use for ``@media``. Defaults to ``print``.
 
 **Note:** In some cases like ``HTML(string=foo)`` you need to pass ``base_url``
 explicitly, or relative URLs will be invalid.
