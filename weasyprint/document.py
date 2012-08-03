@@ -16,6 +16,7 @@ import io
 import sys
 import math
 import shutil
+import functools
 
 import cairo
 
@@ -34,34 +35,16 @@ class Document(object):
                  user_stylesheets, ua_stylesheets):
         self.element_tree = element_tree  #: lxml HtmlElement object
         self.enable_hinting = enable_hinting
-        self.url_fetcher = url_fetcher
-        self.media_type = media_type
-        self.user_stylesheets = user_stylesheets
-        self.ua_stylesheets = ua_stylesheets
-        self._image_cache = {}
-        self._computed_styles = None
+        self.style_for = get_all_computed_styles(
+            element_tree, media_type, url_fetcher,
+            user_stylesheets, ua_stylesheets)
+        self.get_image_from_uri =  functools.partial(
+            images.get_image_from_uri, {}, url_fetcher)
+        self.draw_page = functools.partial(
+            draw.draw_page, enable_hinting, self.get_image_from_uri)
+
         self._formatting_structure = None
         self._pages = None
-
-    # This is mostly useful to make pseudo_type optional.
-    def style_for(self, element, pseudo_type=None):
-        """
-        Convenience method to get the computed styles for an element.
-        """
-        return self.computed_styles.get((element, pseudo_type))
-
-    @property
-    def computed_styles(self):
-        """
-        dict of (element, pseudo_element_type) -> StyleDict
-        StyleDict: a dict of property_name -> PropertyValue,
-                   also with attribute access
-        """
-        if self._computed_styles is None:
-            self._computed_styles = get_all_computed_styles(
-                self.element_tree, self.media_type, self.url_fetcher,
-                self.user_stylesheets, self.ua_stylesheets)
-        return self._computed_styles
 
     @property
     def formatting_structure(self):
@@ -87,10 +70,6 @@ class Document(object):
                 context, self.formatting_structure))
         return self._pages
 
-    def get_image_from_uri(self, uri, type_=None):
-        return images.get_image_from_uri(
-            self._image_cache, self.url_fetcher, uri, type_)
-
     def get_png_surfaces(self, resolution=None):
         """Yield (width, height, image_surface) tuples, one for each page."""
         px_resolution = (resolution or 96) / 96
@@ -98,10 +77,7 @@ class Document(object):
             width = int(math.ceil(page.margin_width() * px_resolution))
             height = int(math.ceil(page.margin_height() * px_resolution))
             surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
-            context = draw.make_cairo_context(
-                surface, self.enable_hinting, self.get_image_from_uri)
-            context.scale(px_resolution, px_resolution)
-            draw.draw_page(page, context)
+            self.draw_page(page, surface, px_resolution)
             yield width, height, surface
 
     def get_png_pages(self, resolution=None):
@@ -150,10 +126,7 @@ class Document(object):
         for page in self.pages:
             surface.set_size(page.margin_width() * px_to_pt,
                              page.margin_height() * px_to_pt)
-            context = draw.make_cairo_context(
-                surface, self.enable_hinting, self.get_image_from_uri)
-            context.scale(px_to_pt, px_to_pt)
-            draw.draw_page(page, context)
+            self.draw_page(page, surface, px_to_pt)
             surface.show_page()
         surface.finish()
 

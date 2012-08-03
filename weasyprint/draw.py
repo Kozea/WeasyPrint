@@ -32,17 +32,6 @@ IMAGE_RENDERING_TO_FILTER = dict(
 )
 
 
-def make_cairo_context(surface, enable_hinting, get_image_from_uri):
-    """cairo.Context doesn’t like much when we override __init__,
-    and overriding __new__ is ugly.
-
-    """
-    context = CairoContext(surface)
-    context.enable_hinting = enable_hinting
-    context.get_image_from_uri = get_image_from_uri
-    return context
-
-
 class CairoContext(cairo.Context):
     """A ``cairo.Context`` with a few more helper methods."""
     @contextlib.contextmanager
@@ -64,12 +53,15 @@ def lighten(color, offset):
         color.alpha)
 
 
-def draw_page(page, context):
-    """Draw the given PageBox to a Cairo context.
+def draw_page(enable_hinting, get_image_from_uri, page, surface, scale=1):
+    """Draw the given PageBox."""
+    # cairo.Context doesn’t like much when we override __init__,
+    # and overriding __new__ is ugly.
+    context = CairoContext(surface)
+    context.enable_hinting = enable_hinting
+    context.get_image_from_uri = get_image_from_uri
+    context.scale(scale, scale)
 
-    The context should be scaled so that lengths are in CSS pixels.
-
-    """
     stacking_context = StackingContext.from_page(page)
     draw_box_background(
         context, stacking_context.page, stacking_context.box)

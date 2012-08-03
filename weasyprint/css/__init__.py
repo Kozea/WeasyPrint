@@ -503,4 +503,11 @@ def get_all_computed_styles(element_tree, device_media_type, url_fetcher,
                                 # The pseudo-element inherits from the element.
                                 parent=element)
 
-    return computed_styles
+    # This is mostly useful to make pseudo_type optional.
+    def style_for(element, pseudo_type=None, __get=computed_styles.get):
+        """
+        Convenience function to get the computed styles for an element.
+        """
+        return __get((element, pseudo_type))
+
+    return style_for
