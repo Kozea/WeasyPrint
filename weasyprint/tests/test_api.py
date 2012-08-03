@@ -20,7 +20,7 @@ import threading
 import shutil
 import tempfile
 
-import lxml.html
+import lxml.html, lxml.etree
 import pytest
 
 from .testing_utils import (
@@ -111,7 +111,7 @@ def _test_resource(class_, basename, check, **kwargs):
 @assert_no_logs
 def test_html_parsing():
     """Test the constructor for the HTML class."""
-    def check_doc1(html):
+    def check_doc1(html, has_base_url=True):
         """Check that a parsed HTML document looks like resources/doc1.html"""
         assert html.root_element.tag == 'html'
         assert [child.tag for child in html.root_element] == ['head', 'body']
@@ -119,16 +119,26 @@ def test_html_parsing():
         assert [child.tag for child in body] == ['h1', 'p', 'ul']
         h1 = body[0]
         assert h1.text == 'WeasyPrint test document (with Ünicōde)'
-        url = urljoin(h1.base_url, 'pattern.png')
-        assert url.startswith('file:')
-        assert url.endswith('weasyprint/tests/resources/pattern.png')
+        if has_base_url:
+            url = urljoin(h1.base_url, 'pattern.png')
+            assert url.startswith('file:')
+            assert url.endswith('weasyprint/tests/resources/pattern.png')
+        else:
+            assert h1.base_url is None
 
     _test_resource(TestHTML, 'doc1.html', check_doc1)
     _test_resource(TestHTML, 'doc1_UTF-16BE.html', check_doc1,
                    encoding='UTF-16BE')
 
-    filename = resource_filename('doc1.html')
-    check_doc1(TestHTML(tree=lxml.html.parse(filename), base_url=filename))
+    with chdir(os.path.dirname(__file__)):
+        filename = os.path.join('resources', 'doc1.html')
+        tree = lxml.html.parse(filename)
+        check_doc1(TestHTML(tree=tree, base_url=filename))
+        check_doc1(TestHTML(tree=tree), has_base_url=False)
+        head, _body = tree.getroot()
+        assert head.tag == 'head'
+        lxml.etree.SubElement(head, 'base', href='resources/')
+        check_doc1(TestHTML(tree=tree, base_url='.'))
 
 
 @assert_no_logs

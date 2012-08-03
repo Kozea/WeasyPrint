@@ -95,6 +95,7 @@ class HTML(Resource):
                  string=None, tree=None, encoding=None, base_url=None,
                  url_fetcher=default_url_fetcher, media_type='print'):
         import lxml.html
+        from .html import find_base_url
         from .urls import wrap_url_fetcher
         url_fetcher = wrap_url_fetcher(url_fetcher)
 
@@ -115,6 +116,7 @@ class HTML(Resource):
             result = parse(source, parser=parser)
             if result is None:
                 raise ValueError('Error while parsing HTML')
+        base_url = find_base_url(result, base_url)
         if hasattr(result, 'getroot'):
             result.docinfo.URL = base_url
             result = result.getroot()

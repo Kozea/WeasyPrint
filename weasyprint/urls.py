@@ -102,9 +102,6 @@ def get_url_attribute(element, attr_name):
     """
     attr_value = element.get(attr_name, '').strip()
     if attr_value:
-        # TODO: support the <base> HTML element, but do not use
-        # lxml.html.HtmlElement.make_links_absolute() that changes
-        # the tree for content: attr(href)
         if url_is_absolute(attr_value):
             return attr_value
         elif element.base_url:
@@ -127,11 +124,10 @@ def get_link_attribute(element, attr_name):
         return 'internal', unquote(attr_value[1:])
     else:
         uri = get_url_attribute(element, attr_name)
-        if uri is not None:
-            document_uri = urlsplit(element.base_url or '')
+        if uri and element.base_url:
             parsed = urlsplit(uri)
             # Compare with fragments removed
-            if parsed[:-1] == document_uri[:-1]:
+            if parsed[:-1] == urlsplit(element.base_url)[:-1]:
                 return 'internal', unquote(parsed.fragment)
             else:
                 return 'external', uri

@@ -21,7 +21,7 @@ import logging
 
 from .formatting_structure import boxes
 from .urls import get_url_attribute
-from .compat import xrange
+from .compat import xrange, urljoin
 from .logger import LOGGER
 from . import CSS
 
@@ -198,3 +198,17 @@ def handle_td(element, box, _get_image_from_uri):
         integer_attribute(element, box, 'colspan')
         integer_attribute(element, box, 'rowspan', minimum=0)
     return [box]
+
+
+def find_base_url(html_document, fallback_base_url):
+    """Return the base URL for the document.
+
+    See http://www.w3.org/TR/html5/urls.html#document-base-url
+
+    """
+    first_base_element = next(html_document.iter('base'), None)
+    if first_base_element is not None:
+        href = first_base_element.get('href', '').strip()
+        if href:
+            return urljoin(fallback_base_url, href)
+    return fallback_base_url
