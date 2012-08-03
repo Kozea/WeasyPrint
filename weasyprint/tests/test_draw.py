@@ -1710,9 +1710,10 @@ def test_clip():
         assert_pixels(name, 14, 16, pixels, '''
             <style>
                 @page { size: 14px 16px; background: #fff }
-                div { margin: 1px; height: 10px;
-                      border: 1px green solid;
+                div { margin: 1px; border: 1px green solid;
                       background: url(pattern.png);
+                      position: absolute; /* clip only applies on abspos */
+                      top: 0; bottom: 2px; left: 0; right: 0;
                       clip: rect(%s); }
             </style>
             <div>

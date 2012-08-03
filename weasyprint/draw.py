@@ -99,71 +99,69 @@ def draw_stacking_context(context, stacking_context):
     """Draw a ``stacking_context`` on ``context``."""
     # See http://www.w3.org/TR/CSS2/zindex.html
     with context.stacked():
-        if stacking_context.box.style.clip:
-            top, right, bottom, left = stacking_context.box.style.clip
+        box = stacking_context.box
+        if box.is_absolutely_positioned() and box.style.clip:
+            top, right, bottom, left = box.style.clip
             if top == 'auto':
                 top = 0
             if right == 'auto':
                 right = 0
             if bottom == 'auto':
-                bottom = stacking_context.box.border_height()
+                bottom = box.border_height()
             if left == 'auto':
-                left = stacking_context.box.border_width()
+                left = box.border_width()
             context.rectangle(
-                stacking_context.box.border_box_x() + right,
-                stacking_context.box.border_box_y() + top,
+                box.border_box_x() + right,
+                box.border_box_y() + top,
                 left - right,
                 bottom - top)
             context.clip()
 
-        if stacking_context.box.style.overflow != 'visible':
-            context.rectangle(
-                *box_rectangle(stacking_context.box, 'padding-box'))
+        if box.style.overflow != 'visible':
+            context.rectangle(*box_rectangle(box, 'padding-box'))
             context.clip()
 
-        if stacking_context.box.style.opacity < 1:
+        if box.style.opacity < 1:
             context.push_group()
 
-        apply_2d_transforms(context, stacking_context.box)
+        apply_2d_transforms(context, box)
 
         # Point 1 is done in draw_page
 
         # Point 2
-        if isinstance(stacking_context.box,
-                      (boxes.BlockBox, boxes.MarginBox, boxes.InlineBlockBox)):
+        if isinstance(box, (boxes.BlockBox, boxes.MarginBox,
+                            boxes.InlineBlockBox)):
             # The canvas background was removed by set_canvas_background
-            draw_box_background_and_border(
-                context, stacking_context.page, stacking_context.box)
+            draw_box_background_and_border(context, stacking_context.page, box)
 
         # Point 3
         for child_context in stacking_context.negative_z_contexts:
             draw_stacking_context(context, child_context)
 
         # Point 4
-        for box in stacking_context.block_level_boxes:
+        for block in stacking_context.block_level_boxes:
             draw_box_background_and_border(
-                context, stacking_context.page, box)
+                context, stacking_context.page, block)
 
         # Point 5
         for child_context in stacking_context.float_contexts:
             draw_stacking_context(context, child_context)
 
         # Point 6
-        if isinstance(stacking_context.box, boxes.InlineBox):
-            draw_inline_level(
-                context, stacking_context.page, stacking_context.box)
+        if isinstance(box, boxes.InlineBox):
+            draw_inline_level(context, stacking_context.page, box)
 
         # Point 7
-        for box in [stacking_context.box] + stacking_context.blocks_and_cells:
-            marker_box = getattr(box, 'outside_list_marker', None)
+        for block in [box] + stacking_context.blocks_and_cells:
+            marker_box = getattr(block, 'outside_list_marker', None)
             if marker_box:
                 draw_inline_level(
                     context, stacking_context.page, marker_box)
 
-            if isinstance(box, boxes.ReplacedBox):
-                draw_replacedbox(context, box)
+            if isinstance(block, boxes.ReplacedBox):
+                draw_replacedbox(context, block)
             else:
-                for child in box.children:
+                for child in block.children:
                     if isinstance(child, boxes.LineBox):
                         # TODO: draw inline tables
                         draw_inline_level(
@@ -178,11 +176,11 @@ def draw_stacking_context(context, stacking_context):
             draw_stacking_context(context, child_context)
 
         # Point 10
-        draw_outlines(context, stacking_context.box)
+        draw_outlines(context, box)
 
-        if stacking_context.box.style.opacity < 1:
+        if box.style.opacity < 1:
             context.pop_group_to_source()
-            context.paint_with_alpha(stacking_context.box.style.opacity)
+            context.paint_with_alpha(box.style.opacity)
 
 
 def box_rectangle(box, which_rectangle):

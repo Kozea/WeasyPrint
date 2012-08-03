@@ -86,7 +86,6 @@ class StackingContext(object):
                     or box.style.opacity < 1
                     # 'transform: none' gives a "falsy" empty list here
                     or box.style.transform
-                    or box.style.clip
                     or box.style.overflow != 'visible'
                 ):
                 # This box defines a new stacking context, remove it
