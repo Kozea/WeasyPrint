@@ -31,11 +31,6 @@ def body_children(page):
     return body.children
 
 
-def parse_without_layout(html_content):
-    """Parse some HTML, apply stylesheets, transform to boxes."""
-    return TestPNGDocument(html_content)
-
-
 def parse(html_content, return_document=False):
     """Parse some HTML, apply stylesheets, transform to boxes and lay out."""
     document = TestPNGDocument(html_content,
@@ -1919,152 +1914,27 @@ def test_table_page_breaks():
 @assert_no_logs
 def test_inlinebox_spliting():
     """Test the inline boxes spliting."""
-    def get_inlinebox(content):
-        """Helper returning a inlinebox with customizable style."""
-        page = '<style>p { font-family:%(fonts)s;}</style>'
-        page = '%s <p>%s</p>' % (page, content)
-        document = parse_without_layout(page % {'fonts': FONTS})
-        html = document.formatting_structure
+    for width in [10000, 100, 10, 0]:
+        page, = parse('''
+            <style>p { font-family:%(fonts)s; width: %(width)spx; }</style>
+            <p><strong>WeasyPrint is a free software visual rendering engine
+                       for HTML and CSS.</strong></p>
+        ''' % {'fonts': FONTS, 'width': width})
+        html, = page.children
         body, = html.children
         paragraph, = body.children
-        line, = paragraph.children
-        inline, = line.children
-        paragraph.width = 200
-        paragraph.height = 'auto'
-        return document, inline, paragraph
-
-    def get_parts(document, inlinebox, width, parent):
-        """Yield the parts of the splitted ``inlinebox`` of given ``width``."""
-        skip = None
-        while 1:
-            inlinebox.position_y = 0
-            box, skip, _ = split_inline_box(
-                document, inlinebox, 0, width, skip, parent, None,
-                [], [], [], [])
-            yield box
-            if skip is None:
-                break
-
-    def get_joined_text(parts):
-        """Get the joined text from ``parts``."""
-        return ''.join(part.children[0].text for part in parts)
-
-    def test_inlinebox_spacing(inlinebox, value, side):
-        """Test the margin, padding and border-width of ``inlinebox``."""
-        if side in ['left', 'right']:
-            # Vertical margins on inlines are irrelevant.
-            assert getattr(inlinebox, 'margin_%s' % side) == value
-        assert getattr(inlinebox, 'padding_%s' % side) == value
-        assert getattr(inlinebox, 'border_%s_width' % side) == value
-
-    content = '''<strong>WeasyPrint is a free software visual rendering engine
-              for HTML and CSS</strong>'''
-
-    document, inlinebox, parent = get_inlinebox(content)
-    resolve_percentages(inlinebox, parent)
-    original_text = inlinebox.children[0].text
-
-    # test with width = 1000
-    parts = list(get_parts(document, inlinebox, 1000, parent))
-    assert len(parts) == 1
-    assert original_text == get_joined_text(parts)
-
-    document, inlinebox, parent = get_inlinebox(content)
-    resolve_percentages(inlinebox, parent)
-    original_text = inlinebox.children[0].text
-
-    # test with width = 100
-    parts = list(get_parts(document, inlinebox, 100, parent))
-    assert len(parts) > 1
-    assert original_text == get_joined_text(parts)
-
-    document, inlinebox, parent = get_inlinebox(content)
-    resolve_percentages(inlinebox, parent)
-    original_text = inlinebox.children[0].text
-
-    # test with width = 10
-    parts = list(get_parts(document, inlinebox, 10, parent))
-    assert len(parts) > 1
-    assert original_text == get_joined_text(parts)
-
-    # test with width = 0
-    parts = list(get_parts(document, inlinebox, 0, parent))
-    assert len(parts) > 1
-    assert original_text == get_joined_text(parts)
-
-    # with margin-border-padding
-    content = '''<strong style="border:10px solid; margin:10px; padding:10px">
-              WeasyPrint is a free software visual rendering engine
-              for HTML and CSS</strong>'''
-
-    document, inlinebox, parent = get_inlinebox(content)
-    resolve_percentages(inlinebox, parent)
-    original_text = inlinebox.children[0].text
-    # test with width = 1000
-    parts = list(get_parts(document, inlinebox, 1000, parent))
-    assert len(parts) == 1
-    assert original_text == get_joined_text(parts)
-    for side in ('left', 'top', 'bottom', 'right'):
-        test_inlinebox_spacing(parts[0], 10, side)
-
-    document, inlinebox, parent = get_inlinebox(content)
-    resolve_percentages(inlinebox, parent)
-    original_text = inlinebox.children[0].text
-
-    # test with width = 1000
-    parts = list(get_parts(document, inlinebox, 100, parent))
-    assert len(parts) != 1
-    assert original_text == get_joined_text(parts)
-    first_inline_box = parts.pop(0)
-    test_inlinebox_spacing(first_inline_box, 10, 'left')
-    test_inlinebox_spacing(first_inline_box, 0, 'right')
-    last_inline_box = parts.pop()
-    test_inlinebox_spacing(last_inline_box, 10, 'right')
-    test_inlinebox_spacing(last_inline_box, 0, 'left')
-    for part in parts:
-        test_inlinebox_spacing(part, 0, 'right')
-        test_inlinebox_spacing(part, 0, 'left')
-
-
-@assert_no_logs
-def test_inlinebox_text_after_spliting():
-    """Test the inlinebox text after spliting."""
-    document = parse_without_layout('''
-        <style>p { width: 200px; font-family:%(fonts)s;}</style>
-        <p><strong><em><em><em>
-            0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
-        </em></em></em></strong></p>
-    ''' % {'fonts': FONTS})
-    html = document.formatting_structure
-    body, = html.children
-    paragraph, = body.children
-    line, = paragraph.children
-    inlinebox, = line.children
-    paragraph.width = 200
-    paragraph.height = 'auto'
-    resolve_percentages(inlinebox, paragraph)
-
-    original_text = ''.join(
-        part.text for part in inlinebox.descendants()
-        if isinstance(part, boxes.TextBox))
-
-    # test with width = 10
-    parts = []
-    skip = None
-    while 1:
-        inlinebox.position_y = 0
-        box, skip, _ = split_inline_box(
-            document, inlinebox, 0, 100, skip, paragraph, None, [], [], [], [])
-        parts.append(box)
-        if skip is None:
-            break
-    assert len(parts) > 2
-    assert ''.join(
-        child.text
-        for part in parts
-        for child in part.descendants()
-        if isinstance(child, boxes.TextBox)
-    ) == original_text
+        lines = paragraph.children
+        if width == 10000:
+            assert len(lines) == 1
+        else:
+            assert len(lines) > 1
+        text_parts = []
+        for line in lines:
+            strong, = line.children
+            text, = strong.children
+            text_parts.append(text.text)
+        assert ' '.join(text_parts) == ('WeasyPrint is a free software visual '
+                                        'rendering engine for HTML and CSS.')
 
 
 @assert_no_logs
@@ -3362,25 +3232,25 @@ def test_margin_boxes_fixed_dimension():
 @assert_no_logs
 def test_preferred_widths():
     """Unit tests for preferred widths."""
-    document = parse('''
-        <p style="white-space: pre-line">
-            Lorem ipsum dolor sit amet,
-              consectetur elit
-        </p>
-                   <!--  ^  No-break space here  -->
-    ''', return_document=True)
-    # Non-laid-out boxes:
-    body, = document.formatting_structure.children
-    paragraph, = body.children
-    line, = paragraph.children
-    text, = line.children
-    assert text.text == '\nLorem ipsum dolor sit amet,\nconsectetur elit\n'
-
-    minimum = inline_preferred_minimum_width(document, line)
-    preferred = inline_preferred_width(document, line)
+    def get_float_width(body_width):
+        document = parse('''
+            <body style="width: %spx">
+            <p style="white-space: pre-line; float: left">
+                Lorem ipsum dolor sit amet,
+                  consectetur elit
+            </p>
+                       <!--  ^  No-break space here  -->
+        ''' % body_width, return_document=True)
+        page, = document.pages
+        html, = page.children
+        body, = html.children
+        paragraph, = body.children
+        return paragraph.width
     # Not exact, depends on the installed fonts
-    assert 120 < minimum < 140
-    assert 220 < preferred < 240
+    # Preferred minimum width:
+    assert 120 < get_float_width(10) < 140
+    # Preferred width:
+    assert 220 < get_float_width(10000) < 240
 
 
 @assert_no_logs
