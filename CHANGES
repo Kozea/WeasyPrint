@@ -11,6 +11,7 @@ Not released yet.
 * Add ``--base-url`` and ``--resolution`` to the command-line API, making it
   as complete as the Python one.
 * Add support for the ``<base href="...">`` element in HTML.
+* Add support for CSS outlines
 * Switch to gdk-pixbuf instead of Pystacia for loading raster images.
 * Bug fixes:
 

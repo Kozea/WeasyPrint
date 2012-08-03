@@ -76,7 +76,7 @@ PAGE_PSEUDOCLASS_TARGETS = {
 # A test function that returns True if the given property name has an
 # initial value that is not always the same when computed.
 RE_INITIAL_NOT_COMPUTED = re.compile(
-    '^(display|border_[a-z]+_(width|color))$').match
+    '^(display|(border_[a-z]+|outline)_(width|color))$').match
 
 
 class StyleDict(object):
@@ -290,6 +290,7 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None):
         # border-*-color, but they do not apply.
         for side in ('top', 'bottom', 'left', 'right'):
             computed['border_%s_width' % side] = 0
+        computed['outline_width'] = 0
         return computed
 
     # Handle inheritance and initial values

@@ -197,6 +197,15 @@ def other_colors(token):
 
 
 @validator()
+@single_token
+def outline_color(token):
+    if get_keyword(token) == 'invert':
+        return 'currentColor'
+    else:
+        return parse_color(token)
+
+
+@validator()
 @single_keyword
 def border_collapse(keyword):
     return keyword in ('separate', 'collapse')
@@ -327,6 +336,7 @@ def border_spacing(tokens):
 @validator('border-right-style')
 @validator('border-left-style')
 @validator('border-bottom-style')
+@validator('outline-style')
 @single_keyword
 def border_style(keyword):
     """``border-*-style`` properties validation."""
@@ -338,6 +348,7 @@ def border_style(keyword):
 @validator('border-right-width')
 @validator('border-left-width')
 @validator('border-bottom-width')
+@validator('outline-width')
 @single_token
 def border_width(token):
     """``border-*-width`` properties validation."""
@@ -1123,6 +1134,7 @@ def expand_border(base_url, name, tokens):
 @expander('border-right')
 @expander('border-bottom')
 @expander('border-left')
+@expander('outline')
 @generic_expander('-width', '-color', '-style')
 def expand_border_side(name, tokens):
     """Expand the ``border-*`` shorthand properties.

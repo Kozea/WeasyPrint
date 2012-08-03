@@ -48,14 +48,14 @@ def requires_cairo_1_12(test):
     return decorated_test
 
 
-def assert_pixels(name, expected_width, expected_height, expected_lines,
+def assert_pixels(name, expected_width, expected_height, expected_pixels,
                   html):
     """Helper testing the size of the image and the pixels values."""
-    assert len(expected_lines) == expected_height
-    assert len(expected_lines[0]) == expected_width * 4
-    expected_raw = b''.join(expected_lines)
-    _doc, lines = html_to_pixels(name, expected_width, expected_height, html)
-    assert_pixels_equal(name, expected_width, expected_height, lines,
+    assert len(expected_pixels) == expected_height
+    assert len(expected_pixels[0]) == expected_width * 4
+    expected_raw = b''.join(expected_pixels)
+    _doc, pixels = html_to_pixels(name, expected_width, expected_height, html)
+    assert_pixels_equal(name, expected_width, expected_height, pixels,
                         expected_raw)
 
 
@@ -67,17 +67,17 @@ def assert_same_rendering(expected_width, expected_height, documents,
 
     Each document is passed as a (name, html_source) tuple.
     """
-    lines_list = []
+    pixels_list = []
 
     for name, html in documents:
-        _doc, lines = html_to_pixels(
+        _doc, pixels = html_to_pixels(
             name, expected_width, expected_height, html)
-        lines_list.append((name, lines))
+        pixels_list.append((name, pixels))
 
-    _name, reference = lines_list[0]
-    for name, lines in lines_list[1:]:
+    _name, reference = pixels_list[0]
+    for name, pixels in pixels_list[1:]:
         assert_pixels_equal(name, expected_width, expected_height,
-                            reference, lines, tolerance)
+                            reference, pixels, tolerance)
 
 
 def assert_different_renderings(expected_width, expected_height, documents):
@@ -87,17 +87,18 @@ def assert_different_renderings(expected_width, expected_height, documents):
 
     Each document is passed as a (name, html_source) tuple.
     """
-    lines_list = []
+    pixels_list = []
 
     for name, html in documents:
-        _doc, lines = html_to_pixels(
+        _doc, pixels = html_to_pixels(
             name, expected_width, expected_height, html)
-        lines_list.append((name, lines))
+        pixels_list.append((name, pixels))
 
-    for i, (name_1, lines_1) in enumerate(lines_list):
-        for name_2, lines_2 in lines_list[i + 1:]:
-            if lines_1 == lines_2:  # pragma: no cover
-                # Same as "assert lines_1 != lines_2" but the output of
+    for i, (name_1, pixels_1) in enumerate(pixels_list):
+        for name_2, pixels_2 in pixels_list[i + 1:]:
+            if pixels_1 == pixels_2:  # pragma: no cover
+                write_png(name_1, pixels_1, expected_width, expected_height)
+                # Same as "assert pixels_1 != pixels_2" but the output of
                 # the assert hook would be gigantic and useless.
                 assert False, '%s and %s are the same' % (name_1, name_2)
 
@@ -119,9 +120,9 @@ def html_to_pixels(name, expected_width, expected_height, html):
     document = TestPNGDocument(html,
         # Dummy filename, but in the right directory.
         base_url=resource_filename('<test>'))
-    lines = document_to_pixels(document, name, expected_width,
+    pixels = document_to_pixels(document, name, expected_width,
                                expected_height)
-    return document, lines
+    return document, pixels
 
 
 def document_to_pixels(document, name, expected_width, expected_height):
@@ -1500,14 +1501,14 @@ def test_before_after():
 
 
 @assert_no_logs
-def test_borders():
+def test_borders(margin='10px', prop='border'):
     """Test the rendering of borders"""
     source = '''
         <style>
             @page { size: 140px 110px }
             html { background: #fff }
-            body { margin: 10px; width: 100px; height: 70px;
-                   border: 10px %(border_style)s blue }
+            body { width: 100px; height: 70px;
+                   margin: %s; %s: 10px %s blue }
         </style>
         <body>
     '''
@@ -1515,13 +1516,14 @@ def test_borders():
     # Do not test the exact rendering of earch border style but at least
     # check that they do not do the same.
     assert_different_renderings(140, 110, [
-        ('border_' + border_style, source % {'border_style': border_style})
+        ('%s_%s' % (prop, border_style), source % (margin, prop, border_style))
         for border_style in [
             'none', 'solid', 'dashed', 'dotted', 'double',
             'inset', 'outset', 'groove', 'ridge',
         ]
     ])
 
+    css_margin = margin
     width = 140
     height = 110
     margin = 10
@@ -1539,9 +1541,13 @@ def test_borders():
             solid_pixels[y][x] = B
     solid_pixels = [b''.join(line) for line in solid_pixels]
     assert_pixels(
-        'border_solid', 140, 110, solid_pixels,
-        source % {'border_style': 'solid'}
+        prop + '_solid', 140, 110, solid_pixels,
+        source % (css_margin, prop, 'solid')
     )
+
+
+def test_outlines():
+    return test_borders(margin='20px', prop='outline')
 
 
 @assert_no_logs

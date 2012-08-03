@@ -216,6 +216,7 @@ def compute(element, pseudo_type, specified, computed, parent_style):
 @register_computer('border-right-color')
 @register_computer('border-bottom-color')
 @register_computer('border-left-color')
+@register_computer('outline-color')
 def other_color(computer, name, value):
     """Compute the ``*-color`` properties."""
     if value == 'currentColor':
@@ -311,6 +312,7 @@ def background_size(computer, name, value):
 @register_computer('border-right-width')
 @register_computer('border-left-width')
 @register_computer('border-bottom-width')
+@register_computer('outline-width')
 def border_width(computer, name, value):
     """Compute the ``border-*-width`` properties."""
     style = computer.computed[name.replace('width', 'style')]

@@ -177,6 +177,9 @@ def draw_stacking_context(context, stacking_context):
         for child_context in stacking_context.positive_z_contexts:
             draw_stacking_context(context, child_context)
 
+        # Point 10
+        draw_outlines(context, stacking_context.box)
+
         if stacking_context.box.style.opacity < 1:
             context.pop_group_to_source()
             context.paint_with_alpha(stacking_context.box.style.opacity)
@@ -557,6 +560,29 @@ def draw_border_segment(context, style, width, color, side,
             context.line_to(x2, y2)
             context.set_line_width(width)
             context.stroke()
+
+
+def draw_outlines(context, box):
+    width = box.style.outline_width
+    color = box.style.outline_color
+    style = box.style.outline_style
+    if box.style.visibility != 'hidden' and width != 0 and color.alpha != 0:
+        border_box = (box.border_box_x(), box.border_box_y(),
+                      box.border_width(), box.border_height())
+        outline_box = (border_box[0] - width, border_box[1] - width,
+                       border_box[2] + 2 * width,border_box[3] + 2 * width)
+        for side, border_edge, padding_edge in zip(
+            ['top', 'right', 'bottom', 'left'],
+            get_rectangle_edges(*outline_box),
+            get_rectangle_edges(*border_box),
+        ):
+            draw_border_segment(context, style, width, color,
+                                side, border_edge, padding_edge)
+
+    if isinstance(box, boxes.ParentBox):
+        for child in box.children:
+            if isinstance(child, boxes.Box):
+                draw_outlines(context, child)
 
 
 def draw_collapsed_borders(context, table):

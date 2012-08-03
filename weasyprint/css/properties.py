@@ -81,7 +81,7 @@ INITIAL_VALUES = {
     'min_height': Dimension(0, 'px'),
     'min_width': Dimension(0, 'px'),
     'orphans': 2,
-    'outline_color': 'invert',  # or currentColor if invert is not supported
+    'outline_color': 'currentColor',  # invert is not supported
     'outline_style': 'none',
     'outline_width': 3,  # Computed value for 'medium'
     'overflow': 'visible',

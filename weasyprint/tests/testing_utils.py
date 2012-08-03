@@ -91,10 +91,10 @@ def capture_logs():
 def assert_no_logs(function):
     """Decorator that asserts that nothing is logged in a function."""
     @functools.wraps(function)
-    def wrapper():
+    def wrapper(*args, **kwargs):
         with capture_logs() as logs:
             try:
-                function()
+                function(*args, **kwargs)
             except Exception:  # pragma: no cover
                 if logs:
                     print('%i errors logged:' % len(logs), file=sys.stderr)
