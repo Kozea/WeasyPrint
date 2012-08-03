@@ -40,66 +40,52 @@ class Document(object):
             user_stylesheets, ua_stylesheets)
         self.get_image_from_uri =  functools.partial(
             images.get_image_from_uri, {}, url_fetcher)
-        self.draw_page = functools.partial(
-            draw.draw_page, enable_hinting, self.get_image_from_uri)
 
-        self._formatting_structure = None
-        self._pages = None
+    def render_pages(self):
+        """Do the layout and return a list of page boxes."""
+        return list(layout.layout_document(
+            self.enable_hinting, self.style_for, self.get_image_from_uri,
+            build_formatting_structure(
+                self.element_tree, self.style_for, self.get_image_from_uri)))
 
-    @property
-    def formatting_structure(self):
-        """
-        The root of the formatting structure tree, ie. the Box
-        for the root element.
-        """
-        if self._formatting_structure is None:
-            self._formatting_structure = build_formatting_structure(
-                self.element_tree, self.style_for, self.get_image_from_uri)
-        return self._formatting_structure
-
-    @property
-    def pages(self):
-        """
-        List of layed-out pages with an absolute size and postition
-        for every box.
-        """
-        if self._pages is None:
-            context = layout.LayoutContext(
-                self.enable_hinting, self.style_for, self.get_image_from_uri)
-            self._pages = list(layout.layout_document(
-                context, self.formatting_structure))
-        return self._pages
+    def draw_page(self, page, surface, scale):
+        """Draw page on surface at scale cairo device units per CSS pixel."""
+        return draw.draw_page(self.enable_hinting, self.get_image_from_uri,
+                              page, surface, scale)
 
     def get_png_surfaces(self, resolution=None):
         """Yield (width, height, image_surface) tuples, one for each page."""
         px_resolution = (resolution or 96) / 96
-        for page in self.pages:
+        for page in self.render_pages():
             width = int(math.ceil(page.margin_width() * px_resolution))
             height = int(math.ceil(page.margin_height() * px_resolution))
             surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
             self.draw_page(page, surface, px_resolution)
-            yield width, height, surface
+            yield width, height, surface, page
 
-    def get_png_pages(self, resolution=None):
+    def get_png_pages(self, resolution=None, _with_pages=False):
         """Yield (width, height, png_bytes) tuples, one for each page."""
-        for width, height, surface in self.get_png_surfaces(resolution):
+        for width, height, surface, page in self.get_png_surfaces(resolution):
             file_obj = io.BytesIO()
             surface.write_to_png(file_obj)
-            yield width, height, file_obj.getvalue()
+            if _with_pages:
+                yield width, height, file_obj.getvalue(), page
+            else:
+                yield width, height, file_obj.getvalue()
 
     def write_png(self, target=None, resolution=None):
         """Write a single PNG image."""
         surfaces = list(self.get_png_surfaces(resolution))
         if len(surfaces) == 1:
-            _, _, surface = surfaces[0]
+            _, _, surface, _ = surfaces[0]
         else:
-            total_height = sum(height for _, height, _ in surfaces)
-            max_width = max(width for width, _, _ in surfaces)
+            total_height = sum(height for _, height, _, _ in surfaces)
+            max_width = max(width for width, _, _, _ in surfaces)
             surface = cairo.ImageSurface(
                 cairo.FORMAT_ARGB32, max_width, total_height)
             context = cairo.Context(surface)
             pos_y = 0
-            for width, height, page_surface in surfaces:
+            for width, height, page_surface, _ in surfaces:
                 pos_x = (max_width - width) // 2
                 context.set_source_surface(page_surface, pos_x, pos_y)
                 context.paint()
@@ -123,14 +109,15 @@ class Document(object):
         # We’ll change the surface size for each page
         surface = cairo.PDFSurface(file_obj, 1, 1)
         px_to_pt = pdf.PX_TO_PT
-        for page in self.pages:
+        pages = self.render_pages()
+        for page in pages:
             surface.set_size(page.margin_width() * px_to_pt,
                              page.margin_height() * px_to_pt)
             self.draw_page(page, surface, px_to_pt)
             surface.show_page()
         surface.finish()
 
-        pdf.write_pdf_metadata(self.pages, file_obj)
+        pdf.write_pdf_metadata(pages, file_obj)
 
         if target is None:
             return file_obj.getvalue()

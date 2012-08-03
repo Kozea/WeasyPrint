@@ -1196,7 +1196,7 @@ def test_margin_boxes():
         </style>
         <p>lorem ipsum
     ''')
-    page_1, page_2 = document.pages
+    page_1, page_2 = document.render_pages()
     assert page_1.children[0].element_tag == 'html'
     assert page_2.children[0].element_tag == 'html'
 
@@ -1229,7 +1229,7 @@ def test_page_counters():
         </style>
         <p>lorem ipsum dolor
     ''')
-    for page_number, page in enumerate(document.pages, 1):
+    for page_number, page in enumerate(document.render_pages(), 1):
         html, bottom_center = page.children
         line_box, = bottom_center.children
         text_box, = line_box.children

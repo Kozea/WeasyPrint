@@ -53,7 +53,7 @@ def lighten(color, offset):
         color.alpha)
 
 
-def draw_page(enable_hinting, get_image_from_uri, page, surface, scale=1):
+def draw_page(enable_hinting, get_image_from_uri, page, surface, scale):
     """Draw the given PageBox."""
     # cairo.Context doesn’t like much when we override __init__,
     # and overriding __new__ is ugly.

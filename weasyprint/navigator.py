@@ -21,7 +21,7 @@ import cairo
 from weasyprint import HTML, CSS
 from weasyprint.formatting_structure import boxes
 from weasyprint.urls import url_is_absolute
-from weasyprint.compat import izip, parse_qs, base64_encode
+from weasyprint.compat import parse_qs, base64_encode
 
 
 FAVICON = os.path.join(os.path.dirname(__file__),
@@ -55,8 +55,8 @@ def find_links(box, links, anchors):
 
 
 def get_pages(html):
-    document, png_pages = html.get_png_pages([STYLESHEET], _with_document=True)
-    for page, (width, height, png_bytes) in izip(document.pages, png_pages):
+    for width, height, png_bytes, page in html.get_png_pages(
+            [STYLESHEET], _with_pages=True):
         links = []
         anchors = []
         find_links(page, links, anchors)

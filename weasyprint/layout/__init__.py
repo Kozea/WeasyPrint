@@ -37,7 +37,7 @@ def layout_fixed_boxes(context, pages):
             yield fixed_box_for_page
 
 
-def layout_document(context, root_box):
+def layout_document(enable_hinting, style_for, get_image_from_uri, root_box):
     """Lay out the whole document.
 
     This includes line breaks, page breaks, absolute size and position for all
@@ -47,6 +47,7 @@ def layout_document(context, root_box):
     :returns: a list of laid out Page objects.
 
     """
+    context = LayoutContext(enable_hinting, style_for, get_image_from_uri)
     pages = list(make_all_pages(context, root_box))
     page_counter = [1]
     counter_values = {'page': page_counter, 'pages': [len(pages)]}

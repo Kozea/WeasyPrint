@@ -52,13 +52,12 @@ def requires_cairo_1_12(test):
 
 
 def assert_pixels(name, expected_width, expected_height, expected_lines,
-                  html, nb_pages=1):
+                  html):
     """Helper testing the size of the image and the pixels values."""
     assert len(expected_lines) == expected_height
     assert len(expected_lines[0]) == expected_width * 4
     expected_raw = b''.join(expected_lines)
-    _doc, lines = html_to_pixels(name, expected_width, expected_height,
-                                 html, nb_pages=nb_pages)
+    _doc, lines = html_to_pixels(name, expected_width, expected_height, html)
     assert_pixels_equal(name, expected_width, expected_height, lines,
                         expected_raw)
 
@@ -114,7 +113,7 @@ def write_png(basename, pixels, width, height):  # pragma: no cover
     save_pixels_to_png(pixels, width, height, filename)
 
 
-def html_to_pixels(name, expected_width, expected_height, html, nb_pages=1):
+def html_to_pixels(name, expected_width, expected_height, html):
     """
     Render an HTML document to PNG, checks its size and return pixel data.
 
@@ -124,16 +123,14 @@ def html_to_pixels(name, expected_width, expected_height, html, nb_pages=1):
         # Dummy filename, but in the right directory.
         base_url=resource_filename('<test>'))
     lines = document_to_pixels(document, name, expected_width,
-                               expected_height, nb_pages=nb_pages)
+                               expected_height)
     return document, lines
 
 
-def document_to_pixels(document, name, expected_width, expected_height,
-                       nb_pages=1):
+def document_to_pixels(document, name, expected_width, expected_height):
     """
     Render an HTML document to PNG, checks its size and return pixel data.
     """
-    assert len(document.pages) == nb_pages
     return png_to_pixels(document.write_png(), expected_width, expected_height)
 
 
@@ -1096,7 +1093,7 @@ def test_images():
         </style>
         <div><img src="pattern.png"></div>
         <div style="page-break-before: right"><img src="pattern.png"></div>
-    ''', nb_pages=3)
+    ''')
 
     # Regression test: padding used to be ignored on images
     assert_pixels('image_with_padding', 8, 8, centered_image, '''
@@ -1336,7 +1333,7 @@ def test_tables():
         td { border-color: #ff7f7f }
         @page { size: 28px 26px; margin: 1px;
                 border: 1px solid rgba(0, 255, 0, 0.5); }
-    '''}, nb_pages=2)
+    '''})
 
     assert_pixels('table_td_backgrounds', 28, 28, [
         _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,

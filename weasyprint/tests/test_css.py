@@ -317,14 +317,14 @@ def test_error_recovery():
         document = TestPNGDocument('''
             <style> html { color red; color: blue; color
         ''')
-        page, = document.pages
+        page, = document.render_pages()
         html, = page.children
         assert html.style.color == (0, 0, 1, 1)  # blue
 
         document = TestPNGDocument('''
             <html style="color; color: blue; color red">
         ''')
-        page, = document.pages
+        page, = document.render_pages()
         html, = page.children
         assert html.style.color == (0, 0, 1, 1)  # blue
     assert len(logs) == 4
@@ -340,7 +340,7 @@ def test_line_height_inheritance():
         </style>
         <body><div><section><p></p></section></div></body>
     ''')
-    page, = document.pages
+    page, = document.render_pages()
     html, = page.children
     body, = html.children
     div, = body.children
@@ -387,7 +387,7 @@ def test_important():
             p:nth-child(4) { color: lime !important }
             body p:nth-child(4) { color: red }
     ''')])
-    page, = document.pages
+    page, = document.render_pages()
     html, = page.children
     body, = html.children
     for paragraph in body.children:

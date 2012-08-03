@@ -31,14 +31,11 @@ def body_children(page):
     return body.children
 
 
-def parse(html_content, return_document=False):
+def parse(html_content):
     """Parse some HTML, apply stylesheets, transform to boxes and lay out."""
     document = TestPNGDocument(html_content,
         base_url=resource_filename('<inline HTML>'))
-    if return_document:
-        return document
-    else:
-        return document.pages
+    return document.render_pages()
 
 
 def outer_area(box):
@@ -3233,15 +3230,14 @@ def test_margin_boxes_fixed_dimension():
 def test_preferred_widths():
     """Unit tests for preferred widths."""
     def get_float_width(body_width):
-        document = parse('''
+        page, = parse('''
             <body style="width: %spx">
             <p style="white-space: pre-line; float: left">
                 Lorem ipsum dolor sit amet,
                   consectetur elit
             </p>
                        <!--  ^  No-break space here  -->
-        ''' % body_width, return_document=True)
-        page, = document.pages
+        ''' % body_width)
         html, = page.children
         body, = html.children
         paragraph, = body.children
