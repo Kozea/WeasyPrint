@@ -159,7 +159,8 @@ With Homebrew:
 As of this writing Homebrew has no package
 `for PyGObject 3 <https://github.com/mxcl/homebrew/issues/12901>`_ or
 `for lxml <https://github.com/mxcl/homebrew/wiki/Acceptable-Formula>`_.
-Use PyGTK and install lxml’s own dependencies:
+Use PyGTK and install lxml’s own dependencies. lxml itself will be installed
+automatically when you run ``pip install WeasyPrint``.
 
 
 Windows
