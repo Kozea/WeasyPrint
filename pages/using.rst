@@ -250,8 +250,8 @@ for details.
 Navigator
 ---------
 
-WeasyPrint is a very limited web browser, running in your web browser.
-Start it with:
+*WeasyPrint Navigator* is a very limited web browser, running
+in your web browser. Start it with:
 
 .. code-block:: sh
 
