@@ -224,18 +224,8 @@ URL fetchers can defer to the default fetcher:
     HTML(string=source, url_fetcher=my_fetcher).write_pdf('out.pdf')
 
 
-Errors
-------
-
-If you get an exception when running ``write_pdf`` or ``write_png``
-it is probably a bug in WeasyPrint (unless it is about writing to ``target``).
-Please copy the full traceback and report it on our `issue tracker`_.
-
-.. _issue tracker: http://redmine.kozea.fr/projects/weasyprint/issues
-
-
 Logging
--------
+.......
 
 Most errors (syntax error in CSS, unsupported CSS property, missing image, ...)
 are not fatal and will not prevent a document from being rendered.
@@ -255,6 +245,32 @@ configuring the ``weasyprint`` logger object:
 
 See the `logging documentation <http://docs.python.org/library/logging.html>`_
 for details.
+
+
+Navigator
+---------
+
+WeasyPrint is a very limited web browser, running in your web browser.
+Start it with:
+
+.. code-block:: sh
+
+    python -m weasyprint.navigator
+
+… and open your browser at http://127.0.0.1:5000/.
+
+It does not support cookies, forms, or many other things that you would
+expect from a “real” browser. It only shows the PNG output from WeasyPrint
+with overlaid clickable hyperlinks. It is mostly useful for playing and testing.
+
+
+Errors
+------
+
+If you get an exception during rendering, it is probably a bug in WeasyPrint.
+Please copy the full traceback and report it on our `issue tracker`_.
+
+.. _issue tracker: http://redmine.kozea.fr/projects/weasyprint/issues
 
 
 What’s next
