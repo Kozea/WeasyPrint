@@ -93,6 +93,12 @@ Now let’s try it:
 You should see warnings about unsupported CSS 3 stuff, this is expected.
 In the PDF you should see the WeasyPrint logo on the first page.
 
+You can also play with `WeasyPrint Navigator </using/#navigator>`_:
+
+.. code-block:: sh
+
+    python -m weasyprint.navigator
+
 If everything goes well, you’re ready to `start using </using/>`_ WeasyPrint!
 Otherwise, please copy the full error message and `report the problem
 </community/>`_.
