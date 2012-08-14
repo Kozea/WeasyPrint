@@ -64,6 +64,17 @@ into view. By default all ``<h1>`` to ``<h6>`` titles generate bookmarks,
 but this can be controlled with CSS (see below.)
 
 
+Fonts
+-----
+
+Although the CSS3 ``@font-face`` is not supported yet, WeasyPrint can use
+any font installed on the system. Just use it’s name in ``font-family``.
+To install a new font copying the file into the ``~/.fonts`` directory is
+generally enough, depending on your OS.
+
+Fonts are automatically embedded in PDF files.
+
+
 CSS
 ---
 
@@ -78,7 +89,6 @@ The `CSS 2.1`_ features listed here are **not** supported:
 * Conforming `font matching algorithm`_. Currently ``font-family``
   is passed as-is to Pango.
 * Right-to-left or `bi-directional text`_.
-  (May *kind of* work within uninterrupted text thanks to Pango)
 * `System colors`_ and `system fonts`_. The former are deprecated in CSS 3
 
 .. _CSS 2.1: http://www.w3.org/TR/CSS21/
