@@ -598,6 +598,16 @@ def font_style(keyword):
 
 @validator()
 @single_keyword
+def font_stretch(keyword):
+    """Validation for the ``font-stretch`` property."""
+    return keyword in (
+        'ultra-condensed', 'extra-condensed', 'condensed', 'semi-condensed',
+        'normal',
+        'semi-expanded', 'expanded', 'extra-expanded', 'ultra-expanded')
+
+
+@validator()
+@single_keyword
 def font_variant(keyword):
     """``font-variant`` property validation."""
     return keyword in ('normal', 'small-caps')

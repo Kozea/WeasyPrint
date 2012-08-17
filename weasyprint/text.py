@@ -45,6 +45,17 @@ if USING_INTROSPECTION:
         'italic': Pango.Style.ITALIC,
         'oblique': Pango.Style.OBLIQUE,
     }
+    PANGO_STRETCH = {
+        'ultra-condensed': Pango.Stretch.ULTRA_CONDENSED,
+        'extra-condensed': Pango.Stretch.EXTRA_CONDENSED,
+        'condensed': Pango.Stretch.CONDENSED,
+        'semi-condensed': Pango.Stretch.SEMI_CONDENSED,
+        'normal': Pango.Stretch.NORMAL,
+        'semi-expanded': Pango.Stretch.SEMI_EXPANDED,
+        'expanded': Pango.Stretch.EXPANDED,
+        'extra-expanded': Pango.Stretch.EXTRA_EXPANDED,
+        'ultra-expanded': Pango.Stretch.ULTRA_EXPANDED,
+    }
     PANGO_WRAP_WORD = Pango.WrapMode.WORD
 
     def set_text(layout, text):
@@ -78,6 +89,17 @@ else:
         'normal': Pango.STYLE_NORMAL,
         'italic': Pango.STYLE_ITALIC,
         'oblique': Pango.STYLE_OBLIQUE,
+    }
+    PANGO_STRETCH = {
+        'ultra-condensed': Pango.STRETCH_ULTRA_CONDENSED,
+        'extra-condensed': Pango.STRETCH_EXTRA_CONDENSED,
+        'condensed': Pango.STRETCH_CONDENSED,
+        'semi-condensed': Pango.STRETCH_SEMI_CONDENSED,
+        'normal': Pango.STRETCH_NORMAL,
+        'semi-expanded': Pango.STRETCH_SEMI_EXPANDED,
+        'expanded': Pango.STRETCH_EXPANDED,
+        'extra-expanded': Pango.STRETCH_EXTRA_EXPANDED,
+        'ultra-expanded': Pango.STRETCH_ULTRA_EXPANDED,
     }
     PANGO_WRAP_WORD = Pango.WRAP_WORD
     set_text = Pango.Layout.set_text
@@ -136,6 +158,7 @@ def create_layout(text, style, hinting, max_width):
     font.set_family(','.join(style.font_family))
     font.set_variant(PANGO_VARIANT[style.font_variant])
     font.set_style(PANGO_STYLE[style.font_style])
+    font.set_stretch(PANGO_STRETCH[style.font_stretch])
     font.set_absolute_size(units_from_double(style.font_size))
     font.set_weight(style.font_weight)
     layout.set_font_description(font)

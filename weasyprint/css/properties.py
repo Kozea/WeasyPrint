@@ -62,6 +62,7 @@ INITIAL_VALUES = {
     'float': 'none',
     'font_family': ['serif'], # depends on user agent
     'font_size': 16,  # Actually medium, but we define medium from this.
+    'font_stretch': 'normal',  # css3-fonts
     'font_style': 'normal',
     'font_variant': 'normal',
     'font_weight': 400,
@@ -190,6 +191,7 @@ INHERITED = set("""
     font_family
     font_size
     font_style
+    font_stretch
     font_variant
     font_weight
     letter_spacing

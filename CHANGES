@@ -1,6 +1,14 @@
 WeasyPrint changelog
 ====================
 
+Version 0.15
+------------
+
+Not released yet.
+
+Add support for the ``font-stretch`` property.
+
+
 Version 0.14
 ------------
 

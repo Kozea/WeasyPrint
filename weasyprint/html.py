@@ -206,7 +206,7 @@ def find_base_url(html_document, fallback_base_url):
     See http://www.w3.org/TR/html5/urls.html#document-base-url
 
     """
-    first_base_element = next(html_document.iter('base'), None)
+    first_base_element = next(iter(html_document.iter('base')), None)
     if first_base_element is not None:
         href = first_base_element.get('href', '').strip()
         if href:
