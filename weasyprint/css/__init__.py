@@ -63,14 +63,26 @@ PARSER = tinycss.make_parser('page3')
 # Reject anything not in here:
 PSEUDO_ELEMENTS = (None, 'before', 'after', 'first-line', 'first-letter')
 
-# Selectors for @page rules can have a pseudo-class, one of :first, :left
-# or :right. This maps pseudo-classes to lists of "page types" selected.
+# Selectors for @page rules can have a pseudo-class, one of :first, :left,
+# :right or :blank. This maps pseudo-classes to lists of "page types" selected.
 PAGE_PSEUDOCLASS_TARGETS = {
-    'first': ['first_left_page', 'first_right_page'],
-    'left': ['left_page', 'first_left_page'],
-    'right': ['right_page', 'first_right_page'],
+    'first': [
+        'first_left_page', 'first_right_page',
+        'first_blank_left_page', 'first_blank_right_page'],
+    'left': [
+        'left_page', 'first_left_page',
+        'blank_left_page', 'first_blank_left_page'],
+    'right': [
+        'right_page', 'first_right_page',
+        'blank_right_page', 'first_blank_right_page'],
+    'blank': [
+        'blank_left_page', 'first_blank_left_page',
+        'blank_right_page', 'first_blank_right_page'],
     # no pseudo-class: all pages
-    None: ['left_page', 'right_page', 'first_left_page', 'first_right_page'],
+    None: [
+        'left_page', 'right_page', 'first_left_page', 'first_right_page',
+        'blank_left_page', 'blank_right_page',
+        'first_blank_left_page', 'first_blank_right_page'],
 }
 
 # A test function that returns True if the given property name has an

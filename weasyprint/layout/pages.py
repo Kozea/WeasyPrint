@@ -530,9 +530,11 @@ def make_all_pages(context, root_box):
     resume_at = None
     next_page = 'any'
     while True:
-        page_type = prefix + ('right_page' if right_page else 'left_page')
         content_empty = ((next_page == 'left' and right_page) or
                          (next_page == 'right' and not right_page))
+        if content_empty:
+            prefix += 'blank_'
+        page_type = prefix + ('right_page' if right_page else 'left_page')
         page, resume_at, next_page = make_page(
             context, root_box, page_type, resume_at, content_empty)
         assert next_page
