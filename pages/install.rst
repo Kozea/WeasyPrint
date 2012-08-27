@@ -46,7 +46,6 @@ WeasyPrint 0.14 depends on:
     but requires fairly recent versions.
 
 * lxml_
-* Pystacia_
 * tinycss_ >= 0.2
 * cssselect_ >= 0.6
 * CairoSVG_ >= 0.4.1
@@ -60,7 +59,6 @@ cairo >= 1.12 is best but older versions should work too.\ [#]_
 .. _PyGObject: https://live.gnome.org/PyGObject
 .. _PyGTK: http://www.pygtk.org/
 .. _lxml: http://lxml.de/
-.. _Pystacia: http://liquibits.bitbucket.org/
 .. _tinycss: http://packages.python.org/tinycss/
 .. _cssselect: http://packages.python.org/cssselect/
 .. _CairoSVG: http://cairosvg.org/
