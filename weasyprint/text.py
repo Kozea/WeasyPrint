@@ -24,7 +24,7 @@ from .logger import LOGGER
 USING_INTROSPECTION = bool(os.environ.get('WEASYPRINT_USE_INTROSPECTION'))
 if not USING_INTROSPECTION:
     try:
-        __import__('pango')  # The one from PyGTK
+        import pygtk
     except ImportError:
         USING_INTROSPECTION = True
 
@@ -78,6 +78,7 @@ if USING_INTROSPECTION:
         PangoCairo.show_layout_line(cairo_context, lines[0])
 
 else:
+    pygtk.require('2.0')
     import pango as Pango
     import pangocairo
 
