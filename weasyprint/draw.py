@@ -3,7 +3,7 @@
     weasyprint.draw
     ---------------
 
-    Take an "after layout" box tree and draw it onto a cairo surface.
+    Take an "after layout" box tree and draw it onto a cairo context.
 
     :copyright: Copyright 2011-2012 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
@@ -32,16 +32,14 @@ IMAGE_RENDERING_TO_FILTER = dict(
 )
 
 
-class CairoContext(cairo.Context):
-    """A ``cairo.Context`` with a few more helper methods."""
-    @contextlib.contextmanager
-    def stacked(self):
-        """Save and restore the context when used with the ``with`` keyword."""
-        self.save()
-        try:
-            yield
-        finally:
-            self.restore()
+@contextlib.contextmanager
+def stacked(context):
+    """Save and restore the context when used with the ``with`` keyword."""
+    context.save()
+    try:
+        yield
+    finally:
+        context.restore()
 
 
 def lighten(color, offset):
@@ -53,15 +51,26 @@ def lighten(color, offset):
         color.alpha)
 
 
-def draw_page(enable_hinting, get_image_from_uri, page, surface, scale):
-    """Draw the given PageBox."""
-    # cairo.Context doesn’t like much when we override __init__,
-    # and overriding __new__ is ugly.
-    context = CairoContext(surface)
-    context.enable_hinting = enable_hinting
-    context.get_image_from_uri = get_image_from_uri
-    context.scale(scale, scale)
+class ContextProxy:
+    def __init__(self, context):
+        self.ctx = context
+        self.enable_hinting = False
+        self.get_image_from_uri = None
 
+    def __getattr__(self, attr):
+        if attr in self.__dict__:
+            return self.__dict__[attr]
+        return getattr(self.ctx, attr)
+
+
+def draw_page(page, context, enable_hinting=False,
+              get_image_from_uri=None):
+    """Draw the given PageBox."""
+    context = ContextProxy(context)
+    if enable_hinting:
+        context.enable_hinting = True
+    if get_image_from_uri:
+        context.get_image_from_uri = get_image_from_uri
     stacking_context = StackingContext.from_page(page)
     draw_box_background(
         context, stacking_context.page, stacking_context.box)
@@ -98,7 +107,7 @@ def draw_box_background_and_border(context, page, box):
 def draw_stacking_context(context, stacking_context):
     """Draw a ``stacking_context`` on ``context``."""
     # See http://www.w3.org/TR/CSS2/zindex.html
-    with context.stacked():
+    with stacked(context):
         box = stacking_context.box
         if box.is_absolutely_positioned() and box.style.clip:
             top, right, bottom, left = box.style.clip
@@ -264,7 +273,7 @@ def draw_background(context, style, painting_area, positioning_area):
         # No background.
         return
 
-    with context.stacked():
+    with stacked(context):
         if context.enable_hinting:
             # Prefer crisp edges on background rectangles.
             context.set_antialias(cairo.ANTIALIAS_NONE)
@@ -413,7 +422,7 @@ def draw_border(context, box):
 
 def draw_border_segment(context, style, width, color, side,
                         border_edge, padding_edge):
-    with context.stacked():
+    with stacked(context):
         context.set_source_rgba(*color)
         x_offset, y_offset = {
             'top': (0, 1), 'bottom': (0, -1), 'left': (1, 0), 'right': (-1, 0),
@@ -675,7 +684,7 @@ def draw_replacedbox(context, box):
     scale_height = height / intrinsic_height
     # Draw nothing for width:0 or height:0
     if scale_width != 0 and scale_height != 0:
-        with context.stacked():
+        with stacked(context):
             context.translate(x, y)
             context.rectangle(0, 0, width, height)
             context.clip()
@@ -729,7 +738,7 @@ def draw_text(context, textbox):
 
     context.move_to(textbox.position_x, textbox.position_y + textbox.baseline)
     context.set_source_rgba(*textbox.style.color)
-    show_first_line(context, textbox.pango_layout, context.enable_hinting)
+    show_first_line(context.ctx, textbox.pango_layout, context.enable_hinting)
     values = textbox.style.text_decoration
     if 'overline' in values:
         draw_text_decoration(context, textbox,
@@ -743,7 +752,7 @@ def draw_text(context, textbox):
 
 def draw_text_decoration(context, textbox, offset_y):
     """Draw text-decoration of ``textbox`` to a ``cairo.Context``."""
-    with context.stacked():
+    with stacked(context):
         if context.enable_hinting:
             context.set_antialias(cairo.ANTIALIAS_NONE)
         context.set_source_rgba(*textbox.style.color)

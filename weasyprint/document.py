@@ -48,10 +48,11 @@ class Document(object):
             build_formatting_structure(
                 self.element_tree, self.style_for, self.get_image_from_uri)))
 
-    def draw_page(self, page, surface, scale):
-        """Draw page on surface at scale cairo device units per CSS pixel."""
-        return draw.draw_page(self.enable_hinting, self.get_image_from_uri,
-                              page, surface, scale)
+    def draw_page(self, page, context):
+        """Draw page on context at scale cairo device units per CSS pixel."""
+        return draw.draw_page(page, context,
+                              enable_hinting=self.enable_hinting,
+                              get_image_from_uri=self.get_image_from_uri)
 
     def get_png_surfaces(self, resolution=None):
         """Yield (width, height, image_surface) tuples, one for each page."""
@@ -60,7 +61,9 @@ class Document(object):
             width = int(math.ceil(page.margin_width() * px_resolution))
             height = int(math.ceil(page.margin_height() * px_resolution))
             surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
-            self.draw_page(page, surface, px_resolution)
+            context = cairo.Context(surface)
+            context.scale(px_resolution, px_resolution)
+            self.draw_page(page, context)
             yield width, height, surface, page
 
     def get_png_pages(self, resolution=None, _with_pages=False):
@@ -108,12 +111,14 @@ class Document(object):
         file_obj = io.BytesIO()
         # We’ll change the surface size for each page
         surface = cairo.PDFSurface(file_obj, 1, 1)
+        context = cairo.Context(surface)
         px_to_pt = pdf.PX_TO_PT
+        context.scale(px_to_pt, px_to_pt)
         pages = self.render_pages()
         for page in pages:
             surface.set_size(page.margin_width() * px_to_pt,
                              page.margin_height() * px_to_pt)
-            self.draw_page(page, surface, px_to_pt)
+            self.draw_page(page, context)
             surface.show_page()
         surface.finish()
 
