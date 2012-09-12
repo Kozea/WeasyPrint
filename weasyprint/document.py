@@ -50,9 +50,8 @@ class Document(object):
 
     def draw_page(self, page, context):
         """Draw page on context at scale cairo device units per CSS pixel."""
-        return draw.draw_page(page, context,
-                              enable_hinting=self.enable_hinting,
-                              get_image_from_uri=self.get_image_from_uri)
+        return draw.draw_page(page, context, self.enable_hinting,
+                              self.get_image_from_uri)
 
     def get_png_surfaces(self, resolution=None):
         """Yield (width, height, image_surface) tuples, one for each page."""
