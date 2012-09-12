@@ -1684,6 +1684,22 @@ def test_page_breaks():
     assert img_4.height == 30
     assert img_5.height == 30
 
+    page_1, page_2, page_3 = parse('''
+        <style>
+            @page {
+                @bottom-center { content: counter(page) }
+            }
+            @page:blank {
+                @bottom-center { content: none }
+            }
+        </style>
+        <p style="page-break-after: right">foo</p>
+        <p>bar</p
+    ''')
+    assert len(page_1.children) == 2  # content and @bottom-center
+    assert len(page_2.children) == 1  # content only
+    assert len(page_3.children) == 2  # content and @bottom-center
+
 
 @assert_no_logs
 def test_orphans_widows_avoid():
