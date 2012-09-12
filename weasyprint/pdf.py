@@ -32,7 +32,9 @@ r"""
 from __future__ import division, unicode_literals
 
 import os
+import io
 import re
+import shutil
 import string
 
 import cairo
@@ -393,11 +395,11 @@ def gather_metadata(pages):
         # cairo coordinates are pixels right and down from the top-left corner
         # PDF coordinates are points right and up from the bottom-left corner
         matrix = cairo.Matrix(
-            PX_TO_PT, 0, 0, -PX_TO_PT, 0, page.margin_height() * PX_TO_PT)
+            PX_TO_PT, 0, 0, -PX_TO_PT, 0, page.height * PX_TO_PT)
         point_to_pdf = matrix.transform_point
         distance_to_pdf = matrix.transform_distance
         page_links = []
-        walk(page)
+        walk(page._page_box)
         links_by_page.append(page_links)
 
     # A list (by page) of lists of either:
@@ -481,3 +483,31 @@ def write_pdf_metadata(pages, fileobj):
                     '{0} 0 R'.format(n) for n in annotations)))
 
     pdf.finish()
+
+
+def write_pdf(pages, target=None):
+    """Write a PDF file."""
+    # Use an in-memory buffer. We will need to seek for metadata
+    # TODO: avoid this if target can seek? Benchmark first.
+    file_obj = io.BytesIO()
+    # We’ll change the surface size for each page
+    surface = cairo.PDFSurface(file_obj, 1, 1)
+    context = cairo.Context(surface)
+    context.scale(PX_TO_PT, PX_TO_PT)
+    for page in pages:
+        surface.set_size(page.width * PX_TO_PT, page.height * PX_TO_PT)
+        page.paint(context)
+        surface.show_page()
+    surface.finish()
+
+    write_pdf_metadata(pages, file_obj)
+
+    if target is None:
+        return file_obj.getvalue()
+    else:
+        file_obj.seek(0)
+        if hasattr(target, 'write'):
+            shutil.copyfileobj(file_obj, target)
+        else:
+            with open(target, 'wb') as fd:
+                shutil.copyfileobj(file_obj, fd)

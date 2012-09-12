@@ -6,7 +6,11 @@ Version 0.15
 
 Not released yet.
 
-Add support for the ``font-stretch`` property.
+* Add support for the ``font-stretch`` property.
+* Add support for ``@page:blank`` to select blank pages.
+* Bug fixes for importing Pango in some PyGTK installations.
+* Add a low level API the enables painting pages individually on any
+  cairo surface.
 
 
 Version 0.14

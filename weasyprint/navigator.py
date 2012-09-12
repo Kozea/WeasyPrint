@@ -52,11 +52,11 @@ def find_links(box, links, anchors):
 
 
 def get_pages(html):
-    for width, height, png_bytes, page in html.get_png_pages(
-            [STYLESHEET], _with_pages=True):
+    for page in html.render(enable_hinting=True, stylesheets=[STYLESHEET]):
         links = []
         anchors = []
-        find_links(page, links, anchors)
+        find_links(page._page_box, links, anchors)
+        width, height, png_bytes = page.get_png_bytes()
         data_url = 'data:image/png;base64,' + (
             base64_encode(png_bytes).decode('ascii').replace('\n', ''))
         yield width, height, data_url, links, anchors

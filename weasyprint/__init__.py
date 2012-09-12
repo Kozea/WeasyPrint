@@ -23,6 +23,9 @@ __version__ = VERSION
 VERSION_STRING = 'WeasyPrint %s (http://weasyprint.org/)' % VERSION
 
 
+import io
+import math
+
 from .urls import default_url_fetcher
 # Make sure the logger is configured early:
 from .logger import LOGGER
@@ -141,6 +144,15 @@ class HTML(Resource):
         return Document(self.root_element, enable_hinting, self.url_fetcher,
                         self.media_type, user_stylesheets, ua_stylesheets)
 
+    def render(self, enable_hinting, stylesheets=None):
+        """Render the document and return a list of Page objects.
+
+        This is the low-level API.
+
+        """
+        document = self._get_document(stylesheets, enable_hinting)
+        return [Page(p, enable_hinting) for p in document.render_pages()]
+
     def write_pdf(self, target=None, stylesheets=None):
         """Render the document to PDF.
 
@@ -152,8 +164,9 @@ class HTML(Resource):
         :returns:
             If :obj:`target` is :obj:`None`, a PDF byte string.
         """
-        document = self._get_document(stylesheets, enable_hinting=False)
-        return document.write_pdf(target)
+        from .pdf import write_pdf
+        pages = self.render(enable_hinting=False, stylesheets=stylesheets)
+        return write_pdf(pages, target)
 
     def write_png(self, target=None, stylesheets=None, resolution=None):
         """Render the document to a single PNG image.
@@ -166,11 +179,12 @@ class HTML(Resource):
         :returns:
             If :obj:`target` is :obj:`None`, a PNG byte string.
         """
-        document = self._get_document(stylesheets, enable_hinting=True)
-        return document.write_png(target, resolution)
+        from .draw import write_png
+        surfaces = [page.get_image_surface(resolution) for page in
+                    self.render(enable_hinting=True, stylesheets=stylesheets)]
+        return write_png(surfaces, target)
 
-    def get_png_pages(self, stylesheets=None, resolution=None,
-                      _with_pages=False):
+    def get_png_pages(self, stylesheets=None, resolution=None):
         """Render the document to multiple PNG images, one per page.
 
         :param stylesheets:
@@ -181,8 +195,59 @@ class HTML(Resource):
             each page, in order.
 
         """
-        document = self._get_document(stylesheets, enable_hinting=True)
-        return document.get_png_pages(resolution, _with_pages)
+        for page in self.render(enable_hinting=True, stylesheets=stylesheets):
+            yield page.get_png_bytes(resolution)
+
+
+class Page(object):
+    """Represents a single rendered page."""
+    def __init__(self, page, enable_hinting):
+        self._page_box = page
+        self.enable_hinting = enable_hinting
+        #: The page width, including margins, in CSS pixels (float)
+        self.width = page.margin_width()
+        #: The page height, including margins, in CSS pixels (float)
+        self.height = page.margin_height()
+
+    def paint(self, cairo_context):
+        """Paint the surface on any cairo Context object.
+
+        The user units with the current transformation in the context
+        should be in CSS pixels. A CSS inch is always 96 CSS pixels.
+        In other words, a user resolution of 96 dpi will anchor the scale
+        to physical units.
+
+        """
+        from .draw import draw_page
+        draw_page(self._page_box, cairo_context, self.enable_hinting)
+
+    def get_image_surface(self, resolution=None):
+        """Paint the page on an ImageSurface and return the surface.
+
+        The default resolution is 96: image pixels match CSS pixels.
+
+        """
+        import cairo
+        px_resolution = (resolution or 96) / 96
+        width = int(math.ceil(self.width * px_resolution))
+        height = int(math.ceil(self.height * px_resolution))
+        surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
+        context = cairo.Context(surface)
+        context.scale(px_resolution, px_resolution)
+        self.paint(context)
+        return surface
+
+    def get_png_bytes(self, resolution=None):
+        """Paint the page and return a PNG image
+
+        The default resolution is 96: PNG pixels match CSS pixels.
+        Returns the image and its size as ``(width, height, png_bytes)``.
+
+        """
+        file_obj = io.BytesIO()
+        surface = self.get_image_surface(resolution)
+        surface.write_to_png(file_obj)
+        return surface.get_width(), surface.get_height(), file_obj.getvalue()
 
 
 class CSS(Resource):

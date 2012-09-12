@@ -16,7 +16,7 @@ import io
 
 import cairo
 
-from .. import CSS
+from .. import CSS, Page
 from .. import pdf
 from .testing_utils import (
     assert_no_logs, resource_filename, TestPDFDocument, capture_logs)
@@ -44,7 +44,8 @@ def get_metadata(html, base_url=resource_filename('<inline HTML>')):
     document = TestPDFDocument(html, base_url=base_url,
         user_stylesheets=[CSS(
             string='@page { size: 500pt 1000pt; margin: 50pt }')])
-    return pdf.gather_metadata(document.render_pages())
+    return pdf.gather_metadata([
+        Page(s, enable_hinting=False) for s in document.render_pages()])
 
 
 def get_bookmarks(html, structure_only=False):
