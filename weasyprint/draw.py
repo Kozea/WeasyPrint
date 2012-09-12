@@ -51,39 +51,31 @@ def lighten(color, offset):
         color.alpha)
 
 
-def draw_page(page, context, enable_hinting, get_image_from_uri):
+def draw_page(page, context, enable_hinting):
     """Draw the given PageBox."""
     stacking_context = StackingContext.from_page(page)
     draw_box_background(
-        context, stacking_context.page, stacking_context.box, enable_hinting,
-        get_image_from_uri)
-    draw_canvas_background(context, page, enable_hinting, get_image_from_uri)
+        context, stacking_context.page, stacking_context.box, enable_hinting)
+    draw_canvas_background(context, page, enable_hinting)
     draw_border(context, page, enable_hinting)
-    draw_stacking_context(context, stacking_context, enable_hinting,
-                          get_image_from_uri)
+    draw_stacking_context(context, stacking_context, enable_hinting)
 
 
-def draw_box_background_and_border(context, page, box, enable_hinting,
-                                   get_image_from_uri):
-    draw_box_background(context, page, box, enable_hinting, get_image_from_uri)
+def draw_box_background_and_border(context, page, box, enable_hinting):
+    draw_box_background(context, page, box, enable_hinting)
     if not isinstance(box, boxes.TableBox):
         draw_border(context, box, enable_hinting)
     else:
         for column_group in box.column_groups:
-            draw_box_background(context, page, column_group, enable_hinting,
-                                get_image_from_uri)
+            draw_box_background(context, page, column_group, enable_hinting)
             for column in column_group.children:
-                draw_box_background(context, page, column, enable_hinting,
-                                    get_image_from_uri)
+                draw_box_background(context, page, column, enable_hinting)
         for row_group in box.children:
-            draw_box_background(context, page, row_group, enable_hinting,
-                                get_image_from_uri)
+            draw_box_background(context, page, row_group, enable_hinting)
             for row in row_group.children:
-                draw_box_background(context, page, row, enable_hinting,
-                                    get_image_from_uri)
+                draw_box_background(context, page, row, enable_hinting)
                 for cell in row.children:
-                    draw_box_background(context, page, cell, enable_hinting,
-                                        get_image_from_uri)
+                    draw_box_background(context, page, cell, enable_hinting)
         if box.style.border_collapse == 'separate':
             draw_border(context, box, enable_hinting)
             for row_group in box.children:
@@ -94,8 +86,7 @@ def draw_box_background_and_border(context, page, box, enable_hinting,
             draw_collapsed_borders(context, box, enable_hinting)
 
 
-def draw_stacking_context(context, stacking_context, enable_hinting,
-                          get_image_from_uri):
+def draw_stacking_context(context, stacking_context, enable_hinting):
     """Draw a ``stacking_context`` on ``context``."""
     # See http://www.w3.org/TR/CSS2/zindex.html
     with stacked(context):
@@ -133,38 +124,32 @@ def draw_stacking_context(context, stacking_context, enable_hinting,
                             boxes.InlineBlockBox)):
             # The canvas background was removed by set_canvas_background
             draw_box_background_and_border(
-                context, stacking_context.page, box, enable_hinting,
-                get_image_from_uri)
+                context, stacking_context.page, box, enable_hinting)
 
         # Point 3
         for child_context in stacking_context.negative_z_contexts:
-            draw_stacking_context(context, child_context, enable_hinting,
-                                  get_image_from_uri)
+            draw_stacking_context(context, child_context, enable_hinting)
 
         # Point 4
         for block in stacking_context.block_level_boxes:
             draw_box_background_and_border(
-                context, stacking_context.page, block, enable_hinting,
-                get_image_from_uri)
+                context, stacking_context.page, block, enable_hinting)
 
         # Point 5
         for child_context in stacking_context.float_contexts:
-            draw_stacking_context(context, child_context, enable_hinting,
-                                  get_image_from_uri)
+            draw_stacking_context(context, child_context, enable_hinting)
 
         # Point 6
         if isinstance(box, boxes.InlineBox):
             draw_inline_level(
-                context, stacking_context.page, box,
-                enable_hinting, get_image_from_uri)
+                context, stacking_context.page, box, enable_hinting)
 
         # Point 7
         for block in [box] + stacking_context.blocks_and_cells:
             marker_box = getattr(block, 'outside_list_marker', None)
             if marker_box:
                 draw_inline_level(
-                    context, stacking_context.page, marker_box,
-                    enable_hinting, get_image_from_uri)
+                    context, stacking_context.page, marker_box, enable_hinting)
 
             if isinstance(block, boxes.ReplacedBox):
                 draw_replacedbox(context, block)
@@ -174,17 +159,15 @@ def draw_stacking_context(context, stacking_context, enable_hinting,
                         # TODO: draw inline tables
                         draw_inline_level(
                             context, stacking_context.page, child,
-                            enable_hinting, get_image_from_uri)
+                            enable_hinting)
 
         # Point 8
         for child_context in stacking_context.zero_z_contexts:
-            draw_stacking_context(context, child_context, enable_hinting,
-                                  get_image_from_uri)
+            draw_stacking_context(context, child_context, enable_hinting)
 
         # Point 9
         for child_context in stacking_context.positive_z_contexts:
-            draw_stacking_context(context, child_context, enable_hinting,
-                                  get_image_from_uri)
+            draw_stacking_context(context, child_context, enable_hinting)
 
         # Point 10
         draw_outlines(context, box, enable_hinting)
@@ -227,7 +210,7 @@ def background_positioning_area(page, box, style):
         return box_rectangle(box, box.style.background_origin)
 
 
-def draw_canvas_background(context, page, enable_hinting, get_image_from_uri):
+def draw_canvas_background(context, page, enable_hinting):
     if not page.children or isinstance(page.children[0], boxes.MarginBox):
         # Skip the canvas background on content-empty pages
         # TODO: remove this when content empty pages still get boxes
@@ -238,12 +221,10 @@ def draw_canvas_background(context, page, enable_hinting, get_image_from_uri):
     draw_background(context, style,
         painting_area=box_rectangle(page, 'padding-box'),
         positioning_area=background_positioning_area(page, root_box, style),
-        enable_hinting=enable_hinting,
-        get_image_from_uri=get_image_from_uri)
+        enable_hinting=enable_hinting)
 
 
-def draw_box_background(context, page, box, enable_hinting,
-                        get_image_from_uri):
+def draw_box_background(context, page, box, enable_hinting):
     """Draw the box background color and image to a ``cairo.Context``."""
     if box.style.visibility == 'hidden':
         return
@@ -254,8 +235,7 @@ def draw_box_background(context, page, box, enable_hinting,
     draw_background(
         context, box.style, painting_area,
         positioning_area=background_positioning_area(page, box, box.style),
-        enable_hinting=enable_hinting,
-        get_image_from_uri=get_image_from_uri)
+        enable_hinting=enable_hinting)
 
 
 def percentage(value, refer_to):
@@ -268,14 +248,10 @@ def percentage(value, refer_to):
 
 
 def draw_background(context, style, painting_area, positioning_area,
-                    enable_hinting, get_image_from_uri):
+                    enable_hinting):
     """Draw the background color and image to a ``cairo.Context``."""
     bg_color = style.background_color
-    bg_image = style.background_image
-    if bg_image == 'none':
-        image = None
-    else:
-        image = get_image_from_uri(bg_image)
+    image = style._fetched_background_image
     if bg_color.alpha == 0 and image is None:
         # No background.
         return
@@ -713,23 +689,20 @@ def draw_replacedbox(context, box):
     box.replacement = 'Removed to work around cairo’s behavior'
 
 
-def draw_inline_level(context, page, box, enable_hinting, get_image_from_uri):
+def draw_inline_level(context, page, box, enable_hinting):
     if isinstance(box, StackingContext):
         stacking_context = box
         assert isinstance(stacking_context.box, boxes.InlineBlockBox)
-        draw_stacking_context(context, stacking_context, enable_hinting,
-                              get_image_from_uri)
+        draw_stacking_context(context, stacking_context, enable_hinting)
     else:
-        draw_box_background(
-            context, page, box, enable_hinting, get_image_from_uri)
+        draw_box_background(context, page, box, enable_hinting)
         draw_border(context, box, enable_hinting)
         if isinstance(box, (boxes.InlineBox, boxes.LineBox)):
             for child in box.children:
                 if isinstance(child, boxes.TextBox):
                     draw_text(context, child, enable_hinting)
                 else:
-                    draw_inline_level(context, page, child, enable_hinting,
-                                      get_image_from_uri)
+                    draw_inline_level(context, page, child, enable_hinting)
         elif isinstance(box, boxes.InlineReplacedBox):
             draw_replacedbox(context, box)
         else:

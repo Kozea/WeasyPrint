@@ -61,7 +61,7 @@ def build_formatting_structure(element_tree, style_for, get_image_from_uri):
     return box
 
 
-def make_box(element_tag, sourceline, style, content):
+def make_box(element_tag, sourceline, style, content, get_image_from_uri):
     if (style.display in ('table', 'inline-table')
             and style.border_collapse == 'collapse'):
         # Padding do not apply
@@ -72,6 +72,10 @@ def make_box(element_tag, sourceline, style, content):
         for side in ['top', 'bottom', 'left', 'right']:
             style['margin_' + side] = ZERO_PIXELS
 
+    # Do this early so that draw.py does not need a reference to the cache.
+    style._fetched_background_image = (
+        get_image_from_uri(style.background_image)
+        if style.background_image != 'none' else None)
     return BOX_TYPE_FROM_DISPLAY[style.display](element_tag, sourceline,
                                                 style, content)
 
@@ -112,7 +116,8 @@ def element_to_box(element, style_for, get_image_from_uri, state=None):
     if display == 'none':
         return []
 
-    box = make_box(element.tag, element.sourceline, style, [])
+    box = make_box(element.tag, element.sourceline, style, [],
+                   get_image_from_uri)
 
     if state is None:
         # use a list to have a shared mutable object
@@ -177,7 +182,8 @@ def pseudo_to_box(element, pseudo_type, state, style_for, get_image_from_uri):
         return
 
     box = make_box(
-        '%s:%s' % (element.tag, pseudo_type), element.sourceline, style, [])
+        '%s:%s' % (element.tag, pseudo_type), element.sourceline, style, [],
+        get_image_from_uri)
 
     quote_depth, counter_values, _counter_scopes = state
     update_counters(state, style)
