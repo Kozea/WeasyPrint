@@ -56,7 +56,6 @@ def build_formatting_structure(element_tree, style_for, get_image_from_uri):
     box = inline_in_block(box)
     box = block_in_inline(box)
     box = resolve_bookmark_labels(box)
-    box = set_canvas_background(box)
     box = set_viewport_overflow(box)
     return box
 
@@ -72,10 +71,6 @@ def make_box(element_tag, sourceline, style, content, get_image_from_uri):
         for side in ['top', 'bottom', 'left', 'right']:
             style['margin_' + side] = ZERO_PIXELS
 
-    # Do this early so that draw.py does not need a reference to the cache.
-    style._fetched_background_image = (
-        get_image_from_uri(style.background_image)
-        if style.background_image != 'none' else None)
     return BOX_TYPE_FROM_DISPLAY[style.display](element_tag, sourceline,
                                                 style, content)
 
@@ -1044,29 +1039,6 @@ def _inner_block_in_inline(box, skip_stack=None):
                 new_children, is_start=is_start, is_end=True)
 
     return box, block_level_box, resume_at
-
-
-def set_canvas_background(root_box):
-    """
-    Set a ``canvas_background`` attribute on the box for the root element,
-    with style for the canvas background, taken from the root elememt
-    or a <body> child of the root element.
-
-    See http://www.w3.org/TR/CSS21/colors.html#background
-    """
-    chosen_box = root_box
-    if (root_box.element_tag.lower() == 'html' and
-            root_box.style.background_color.alpha == 0 and
-            root_box.style.background_image == 'none'):
-        for child in root_box.children:
-            if child.element_tag.lower() == 'body':
-                chosen_box = child
-                break
-
-    style = chosen_box.style
-    root_box.canvas_background = style
-    chosen_box.style = style.updated_copy(properties.BACKGROUND_INITIAL)
-    return root_box
 
 
 def set_viewport_overflow(root_box):

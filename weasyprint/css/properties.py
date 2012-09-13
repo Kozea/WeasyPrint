@@ -24,7 +24,6 @@ INITIAL_VALUES = {
     'background_attachment': 'scroll',
     'background_color': COLOR_KEYWORDS['transparent'],
     'background_image': 'none',
-    '_fetched_background_image': None,  # internal, image cache
     'background_position': (Dimension(0, '%'), Dimension(0, '%')),
     'background_repeat': 'repeat',
     'background_clip': 'border-box',  # CSS3

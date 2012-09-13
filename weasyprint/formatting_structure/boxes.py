@@ -59,6 +59,8 @@
 
 from __future__ import division, unicode_literals
 
+import itertools
+
 from ..compat import xrange
 from ..css.computed_values import ZERO_PIXELS
 
@@ -79,6 +81,10 @@ class Box(object):
     is_for_root_element = False
     bookmark_label = None
     bookmark_level = None
+
+    # Default, overriden on some subclasses
+    def all_children(self):
+        return ()
 
     def __init__(self, element_tag, sourceline, style):
         self.element_tag = element_tag
@@ -121,6 +127,8 @@ class Box(object):
         # Overridden in ParentBox to also translate children, if any.
         self.position_x += dx
         self.position_y += dy
+        for child in self.all_children():
+            child.translate(dx, dy)
 
     # Heights and widths
 
@@ -206,6 +214,9 @@ class ParentBox(Box):
         super(ParentBox, self).__init__(element_tag, sourceline, style)
         self.children = tuple(children)
 
+    def all_children(self):
+        return self.children
+
     def enumerate_skip(self, skip_num=0):
         """Yield ``(child, child_index)`` tuples for each child.
 
@@ -252,16 +263,6 @@ class ParentBox(Box):
             else:
                 yield child
 
-    def translate(self, dx=0, dy=0):
-        """Change the position of the box.
-
-        Also update the children’s positions accordingly.
-
-        """
-        super(ParentBox, self).translate(dx, dy)
-        for child in self.children:
-            child.translate(dx, dy)
-
     def get_wrapped_table(self):
         """Get the table wrapped by the box."""
         if self.is_table_wrapper:
@@ -303,16 +304,10 @@ class BlockBox(BlockContainerBox, BlockLevelBox):
 
     """
     # TODO: remove this when outside list marker are absolute children
-    def translate(self, dx=0, dy=0):
-        """Change the position of the box.
-
-        Also update the children’s positions accordingly.
-
-        """
-        super(BlockBox, self).translate(dx, dy)
+    def all_children(self):
         marker = getattr(self, 'outside_list_marker', None)
-        if marker:
-            marker.translate(dx, dy)
+        return (itertools.chain(self.children, [marker])
+                if marker else self.children)
 
 
 class LineBox(ParentBox):
@@ -450,16 +445,8 @@ class TableBox(BlockLevelBox, ParentBox):
     # http://www.w3.org/TR/CSS21/tables.html#anonymous-boxes
     tabular_container = True
 
-    def translate(self, dx=0, dy=0):
-        """Change the position of the box.
-
-        Also update the children’s positions accordingly.
-
-        """
-        super(TableBox, self).translate(dx, dy)
-        for child in self.column_groups:
-            # TODO: why did we not put these in .children again?
-            child.translate(dx, dy)
+    def all_children(self):
+        return itertools.chain(self.children, self.column_groups)
 
 
 class InlineTableBox(TableBox):

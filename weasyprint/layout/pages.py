@@ -287,10 +287,6 @@ def make_margin_boxes(context, page, counter_values):
         style = context.style_for(page.page_type, at_keyword)
         if style is None:
             style = page.style.inherit_from()
-        # Do this early so that draw.py does not need a reference to the cache.
-        style._fetched_background_image = (
-            get_image_from_uri(style.background_image)
-            if style.background_image != 'none' else None)
         box = boxes.MarginBox(at_keyword, style)
         # Empty boxes should not be generated, but they may be needed for
         # the layout of their neighbors.
@@ -474,10 +470,6 @@ def make_page(context, root_box, page_type, resume_at, content_empty):
     style = context.style_for(page_type)
     # Propagated from the root or <body>.
     style.overflow = root_box.viewport_overflow
-    # Do this early so that draw.py does not need a reference to the cache.
-    style._fetched_background_image = (
-        get_image_from_uri(style.background_image)
-        if style.background_image != 'none' else None)
     page = boxes.PageBox(page_type, style)
 
     device_size = page.style.size

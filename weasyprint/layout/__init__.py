@@ -21,6 +21,8 @@
 
 from __future__ import division, unicode_literals
 
+from ..css import properties
+from ..formatting_structure import boxes
 from .absolute import absolute_layout
 from .pages import make_all_pages, make_margin_boxes
 
@@ -60,6 +62,8 @@ def layout_document(enable_hinting, style_for, get_image_from_uri, root_box):
         root = root.copy_with_children(root_children)
         page.children = (root,) + tuple(
             make_margin_boxes(context, page, counter_values))
+        layout_backgrounds(page, get_image_from_uri)
+        set_canvas_background(page)
         yield page
         page_counter[0] += 1
 
@@ -89,3 +93,39 @@ class LayoutContext(object):
             self.excluded_shapes = self._excluded_shapes_lists[-1]
         else:
             self.excluded_shapes = None
+
+
+def layout_backgrounds(box, get_image_from_uri):
+    """Fetch and position background images."""
+    style = box.style
+    bg_image = style.background_image
+    box.background_image = (get_image_from_uri(bg_image)
+                            if bg_image != 'none' else None)
+    for child in box.all_children():
+        layout_backgrounds(child, get_image_from_uri)
+
+
+def set_canvas_background(page):
+    """Set a ``canvas_background`` attribute on the PageBox,
+    with style for the canvas background, taken from the root elememt
+    or a <body> child of the root element.
+
+    See http://www.w3.org/TR/CSS21/colors.html#background
+
+    """
+    assert not isinstance(page.children[0], boxes.MarginBox)
+    root_box = page.children[0]
+    chosen_box = root_box
+    if (root_box.element_tag.lower() == 'html' and
+            root_box.style.background_color.alpha == 0 and
+            root_box.style.background_image == 'none'):
+        for child in root_box.children:
+            if child.element_tag.lower() == 'body':
+                chosen_box = child
+                break
+
+    style = chosen_box.style
+    page.canvas_background = style
+    page.canvas_background_image = chosen_box.background_image
+    chosen_box.background_image = None
+    chosen_box.style = style.updated_copy(properties.BACKGROUND_INITIAL)

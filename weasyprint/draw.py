@@ -214,14 +214,10 @@ def background_positioning_area(page, box, style):
 
 
 def draw_canvas_background(context, page, enable_hinting):
-    if not page.children or isinstance(page.children[0], boxes.MarginBox):
-        # Skip the canvas background on content-empty pages
-        # TODO: remove this when content empty pages still get boxes
-        # up to the break point, so that the backgrounds and borders are drawn.
-        return
+    assert not isinstance(page.children[0], boxes.MarginBox)
     root_box = page.children[0]
-    style = root_box.canvas_background
-    draw_background(context, style,
+    style = page.canvas_background
+    draw_background(context, style, page.canvas_background_image,
         painting_area=box_rectangle(page, 'padding-box'),
         positioning_area=background_positioning_area(page, root_box, style),
         enable_hinting=enable_hinting)
@@ -236,7 +232,7 @@ def draw_box_background(context, page, box, enable_hinting):
     else:
         painting_area = box_rectangle(box, box.style.background_clip)
     draw_background(
-        context, box.style, painting_area,
+        context, box.style, box.background_image, painting_area,
         positioning_area=background_positioning_area(page, box, box.style),
         enable_hinting=enable_hinting)
 
@@ -250,11 +246,10 @@ def percentage(value, refer_to):
         return refer_to * value.value / 100
 
 
-def draw_background(context, style, painting_area, positioning_area,
+def draw_background(context, style, image, painting_area, positioning_area,
                     enable_hinting):
     """Draw the background color and image to a ``cairo.Context``."""
     bg_color = style.background_color
-    image = style._fetched_background_image
     if bg_color.alpha == 0 and image is None:
         # No background.
         return
