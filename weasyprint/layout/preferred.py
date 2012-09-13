@@ -12,6 +12,8 @@
 
 from __future__ import division, unicode_literals
 
+import weakref
+
 from ..formatting_structure import boxes
 from .. import text
 
@@ -204,6 +206,8 @@ def inline_preferred_width(context, box, outer=True):
     return adjust(box, outer, widest_line)
 
 
+TABLE_CACHE = weakref.WeakKeyDictionary()
+
 def table_and_columns_preferred_widths(context, box, outer=True,
                                        resolved_table_width=False):
     """Return preferred widths for the table and its columns.
@@ -217,6 +221,10 @@ def table_and_columns_preferred_widths(context, box, outer=True,
 
     """
     table = box.get_wrapped_table()
+    result = TABLE_CACHE.get(table)
+    if result:
+        return result
+
     if table.style.border_collapse == 'separate':
         border_spacing_x, _ = table.style.border_spacing
     else:
@@ -370,9 +378,11 @@ def table_and_columns_preferred_widths(context, box, outer=True,
     if table_preferred_minimum_width > table_preferred_width:
         table_preferred_width = table_preferred_minimum_width
 
-    return (
+    result = (
         table_preferred_minimum_width, table_preferred_width,
         column_preferred_minimum_widths, column_preferred_widths)
+    TABLE_CACHE[table] = result
+    return result
 
 
 def table_preferred_minimum_width(context, box, outer=True):
