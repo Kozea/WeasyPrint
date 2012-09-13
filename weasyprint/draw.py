@@ -22,6 +22,7 @@ import cairo
 
 from .urls import FILESYSTEM_ENCODING
 from .formatting_structure import boxes
+from .layout.backgrounds import box_rectangle
 from .stacking import StackingContext
 from .text import show_first_line
 from .compat import xrange
@@ -57,28 +58,27 @@ def lighten(color, offset):
 def draw_page(page, context, enable_hinting):
     """Draw the given PageBox."""
     stacking_context = StackingContext.from_page(page)
-    draw_box_background(
-        context, stacking_context.page, stacking_context.box, enable_hinting)
-    draw_canvas_background(context, page, enable_hinting)
+    draw_background(context, stacking_context.box.background, enable_hinting)
+    draw_background(context, page.canvas_background, enable_hinting)
     draw_border(context, page, enable_hinting)
     draw_stacking_context(context, stacking_context, enable_hinting)
 
 
 def draw_box_background_and_border(context, page, box, enable_hinting):
-    draw_box_background(context, page, box, enable_hinting)
+    draw_background(context, box.background, enable_hinting)
     if not isinstance(box, boxes.TableBox):
         draw_border(context, box, enable_hinting)
     else:
         for column_group in box.column_groups:
-            draw_box_background(context, page, column_group, enable_hinting)
+            draw_background(context, column_group.background, enable_hinting)
             for column in column_group.children:
-                draw_box_background(context, page, column, enable_hinting)
+                draw_background(context, column.background, enable_hinting)
         for row_group in box.children:
-            draw_box_background(context, page, row_group, enable_hinting)
+            draw_background(context, row_group.background, enable_hinting)
             for row in row_group.children:
-                draw_box_background(context, page, row, enable_hinting)
+                draw_background(context, row.background, enable_hinting)
                 for cell in row.children:
-                    draw_box_background(context, page, cell, enable_hinting)
+                    draw_background(context, cell.background, enable_hinting)
         if box.style.border_collapse == 'separate':
             draw_border(context, box, enable_hinting)
             for row_group in box.children:
@@ -180,63 +180,6 @@ def draw_stacking_context(context, stacking_context, enable_hinting):
             context.paint_with_alpha(box.style.opacity)
 
 
-def box_rectangle(box, which_rectangle):
-    if which_rectangle == 'border-box':
-        return (
-            box.border_box_x(),
-            box.border_box_y(),
-            box.border_width(),
-            box.border_height(),
-        )
-    elif which_rectangle == 'padding-box':
-        return (
-            box.padding_box_x(),
-            box.padding_box_y(),
-            box.padding_width(),
-            box.padding_height(),
-        )
-    else:
-        assert which_rectangle == 'content-box', which_rectangle
-        return (
-            box.content_box_x(),
-            box.content_box_y(),
-            box.width,
-            box.height,
-        )
-
-
-def background_positioning_area(page, box, style):
-    if style.background_attachment == 'fixed' and box is not page:
-        # Initial containing block
-        return box_rectangle(page, 'content-box')
-    else:
-        return box_rectangle(box, box.style.background_origin)
-
-
-def draw_canvas_background(context, page, enable_hinting):
-    assert not isinstance(page.children[0], boxes.MarginBox)
-    root_box = page.children[0]
-    style = page.canvas_background
-    draw_background(context, style, page.canvas_background_image,
-        painting_area=box_rectangle(page, 'padding-box'),
-        positioning_area=background_positioning_area(page, root_box, style),
-        enable_hinting=enable_hinting)
-
-
-def draw_box_background(context, page, box, enable_hinting):
-    """Draw the box background color and image to a ``cairo.Context``."""
-    if box.style.visibility == 'hidden':
-        return
-    if box is page:
-        painting_area = None
-    else:
-        painting_area = box_rectangle(box, box.style.background_clip)
-    draw_background(
-        context, box.style, box.background_image, painting_area,
-        positioning_area=background_positioning_area(page, box, box.style),
-        enable_hinting=enable_hinting)
-
-
 def percentage(value, refer_to):
     """Return the evaluated percentage value, or the value unchanged."""
     if value.unit == 'px':
@@ -246,12 +189,9 @@ def percentage(value, refer_to):
         return refer_to * value.value / 100
 
 
-def draw_background(context, style, image, painting_area, positioning_area,
-                    enable_hinting):
+def draw_background(context, bg, enable_hinting):
     """Draw the background color and image to a ``cairo.Context``."""
-    bg_color = style.background_color
-    if bg_color.alpha == 0 and image is None:
-        # No background.
+    if bg is None:
         return
 
     with stacked(context):
@@ -259,27 +199,27 @@ def draw_background(context, style, image, painting_area, positioning_area,
             # Prefer crisp edges on background rectangles.
             context.set_antialias(cairo.ANTIALIAS_NONE)
 
-        if painting_area:
-            context.rectangle(*painting_area)
+        if bg.painting_area:
+            context.rectangle(*bg.painting_area)
             context.clip()
         #else: unrestricted, whole page box
 
         # Background color
-        if bg_color.alpha > 0:
-            context.set_source_rgba(*bg_color)
+        if bg.color.alpha > 0:
+            context.set_source_rgba(*bg.color)
             context.paint()
 
         # Background image
-        if image is None:
+        if bg.image is None:
             return
 
         (positioning_x, positioning_y,
-            positioning_width, positioning_height) = positioning_area
+            positioning_width, positioning_height) = bg.positioning_area
         context.translate(positioning_x, positioning_y)
 
-        pattern, intrinsic_width, intrinsic_height = image
+        pattern, intrinsic_width, intrinsic_height = bg.image
 
-        bg_size = style.background_size
+        bg_size = bg.size
         if bg_size in ('cover', 'contain'):
             scale_x = scale_y = {'cover': max, 'contain': min}[bg_size](
                 positioning_width / intrinsic_width,
@@ -304,21 +244,20 @@ def draw_background(context, style, image, painting_area, positioning_area,
             scale_x = image_width / intrinsic_width
             scale_y = image_height / intrinsic_height
 
-        bg_position_x, bg_position_y = style.background_position
+        bg_position_x, bg_position_y = bg.position
         context.translate(
             percentage(bg_position_x, positioning_width - image_width),
             percentage(bg_position_y, positioning_height - image_height),
         )
 
-        bg_repeat = style.background_repeat
-        if bg_repeat in ('repeat-x', 'repeat-y'):
+        if bg.repeat in ('repeat-x', 'repeat-y'):
             # Get the current clip rectangle. This is the same as
             # painting_area, but in new coordinates after translate()
             clip_x1, clip_y1, clip_x2, clip_y2 = context.clip_extents()
             clip_width = clip_x2 - clip_x1
             clip_height = clip_y2 - clip_y1
 
-            if bg_repeat == 'repeat-x':
+            if bg.repeat == 'repeat-x':
                 # Limit the drawn area vertically
                 clip_y1 = 0  # because of the last context.translate()
                 clip_height = image_height
@@ -332,14 +271,14 @@ def draw_background(context, style, image, painting_area, positioning_area,
             context.rectangle(clip_x1, clip_y1, clip_width, clip_height)
             context.clip()
 
-        if bg_repeat == 'no-repeat':
+        if bg.repeat == 'no-repeat':
             # The same image/pattern may have been used
             # in a repeating background.
             pattern.set_extend(cairo.EXTEND_NONE)
         else:
             pattern.set_extend(cairo.EXTEND_REPEAT)
         # TODO: de-duplicate this with draw_replacedbox()
-        pattern.set_filter(IMAGE_RENDERING_TO_FILTER[style.image_rendering])
+        pattern.set_filter(IMAGE_RENDERING_TO_FILTER[bg.image_rendering])
         context.scale(scale_x, scale_y)
         context.set_source(pattern)
         context.paint()
@@ -693,7 +632,7 @@ def draw_inline_level(context, page, box, enable_hinting):
         assert isinstance(stacking_context.box, boxes.InlineBlockBox)
         draw_stacking_context(context, stacking_context, enable_hinting)
     else:
-        draw_box_background(context, page, box, enable_hinting)
+        draw_background(context, box.background, enable_hinting)
         draw_border(context, box, enable_hinting)
         if isinstance(box, (boxes.InlineBox, boxes.LineBox)):
             for child in box.children:

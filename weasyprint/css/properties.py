@@ -258,8 +258,3 @@ TABLE_WRAPPER_BOX_PROPERTIES = set('''
     vertical_align
     z_index
 '''.split())
-
-
-BACKGROUND_INITIAL = dict(
-    (name, value) for name, value in INITIAL_VALUES.items()
-    if 'background' in name)
