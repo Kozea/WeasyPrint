@@ -1,6 +1,6 @@
 # coding: utf8
 """
-    weasyprint.bakcgrounds
+    weasyprint.backgrounds
     ----------------------
 
     :copyright: Copyright 2011-2012 Simon Sapin and contributors, see AUTHORS.
