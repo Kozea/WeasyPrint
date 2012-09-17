@@ -485,8 +485,15 @@ def write_pdf_metadata(pages, fileobj):
     pdf.finish()
 
 
-def write_pdf(pages, target=None):
-    """Write a PDF file."""
+def pages_to_pdf(pages, target=None):
+    """Paint pages; write PDF bytes to ``target``, or return them
+    if ``target`` is ``None``.
+
+    :param pages: a list of Page objects
+    :param target: a filename, file object, or ``None``
+    :returns: a bytestring if ``target`` is ``None``.
+
+    """
     # Use an in-memory buffer. We will need to seek for metadata
     # TODO: avoid this if target can seek? Benchmark first.
     file_obj = io.BytesIO()

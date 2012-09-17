@@ -21,7 +21,7 @@ import functools
 import cairo
 import pytest
 
-from .. import draw
+from ..png import pages_to_png
 from ..compat import xrange, izip, ints_from_bytes
 from ..urls import ensure_url
 from ..images import get_pixbuf, save_pixels_to_png
@@ -130,9 +130,8 @@ def document_to_pixels(document, name, expected_width, expected_height):
     """
     Render an HTML document to PNG, checks its size and return pixel data.
     """
-    png_bytes = draw.write_png(
-        [Page(s, enable_hinting=True).get_image_surface()
-         for s in document.render_pages()])
+    png_bytes = pages_to_png([Page(s, enable_hinting=True)
+                              for s in document.render_pages()])
     return png_to_pixels(png_bytes, expected_width, expected_height)
 
 

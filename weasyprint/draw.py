@@ -12,15 +12,12 @@
 
 from __future__ import division, unicode_literals
 
-import io
-import sys
 import contextlib
 import math
 import operator
 
 import cairo
 
-from .urls import FILESYSTEM_ENCODING
 from .formatting_structure import boxes
 from .layout.backgrounds import box_rectangle
 from .stacking import StackingContext
@@ -720,35 +717,3 @@ def apply_2d_transforms(context, box):
                     assert name == 'matrix'
                 context.transform(cairo.Matrix(*args))
         context.translate(-origin_x, -origin_y)
-
-
-def write_png(image_surfaces, target=None):
-    """Concatenate images vertically and write the result as PNG
-
-    :param image_surfaces: a list a cairo ImageSurface objects
-
-    """
-    if len(image_surfaces) == 1:
-        surface = image_surfaces[0]
-    else:
-        total_height = sum(s.get_height() for s in image_surfaces)
-        max_width = max(s.get_width() for s in image_surfaces)
-        surface = cairo.ImageSurface(
-            cairo.FORMAT_ARGB32, max_width, total_height)
-        context = cairo.Context(surface)
-        pos_y = 0
-        for page_surface in image_surfaces:
-            pos_x = (max_width - page_surface.get_width()) // 2
-            context.set_source_surface(page_surface, pos_x, pos_y)
-            context.paint()
-            pos_y += page_surface.get_height()
-
-    if target is None:
-        target = io.BytesIO()
-        surface.write_to_png(target)
-        return target.getvalue()
-    else:
-        if sys.version_info[0] < 3 and isinstance(target, unicode):
-            # py2cairo 1.8 does not support unicode filenames.
-            target = target.encode(FILESYSTEM_ENCODING)
-        surface.write_to_png(target)

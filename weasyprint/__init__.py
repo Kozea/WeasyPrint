@@ -23,9 +23,6 @@ __version__ = VERSION
 VERSION_STRING = 'WeasyPrint %s (http://weasyprint.org/)' % VERSION
 
 
-import io
-import math
-
 from .urls import default_url_fetcher
 # Make sure the logger is configured early:
 from .logger import LOGGER
@@ -164,9 +161,9 @@ class HTML(Resource):
         :returns:
             If :obj:`target` is :obj:`None`, a PDF byte string.
         """
-        from .pdf import write_pdf
+        from .pdf import pages_to_pdf
         pages = self.render(enable_hinting=False, stylesheets=stylesheets)
-        return write_pdf(pages, target)
+        return pages_to_pdf(pages, target)
 
     def write_png(self, target=None, stylesheets=None, resolution=None):
         """Render the document to a single PNG image.
@@ -179,10 +176,9 @@ class HTML(Resource):
         :returns:
             If :obj:`target` is :obj:`None`, a PNG byte string.
         """
-        from .draw import write_png
-        surfaces = [page.get_image_surface(resolution) for page in
-                    self.render(enable_hinting=True, stylesheets=stylesheets)]
-        return write_png(surfaces, target)
+        from .png import pages_to_png
+        pages = self.render(enable_hinting=True, stylesheets=stylesheets)
+        return pages_to_png(pages, resolution, target)
 
     def get_png_pages(self, stylesheets=None, resolution=None):
         """Render the document to multiple PNG images, one per page.
@@ -221,33 +217,17 @@ class Page(object):
         from .draw import draw_page
         draw_page(self._page_box, cairo_context, self.enable_hinting)
 
-    def get_image_surface(self, resolution=None):
-        """Paint the page on an ImageSurface and return the surface.
-
-        The default resolution is 96: image pixels match CSS pixels.
-
-        """
-        import cairo
-        px_resolution = (resolution or 96) / 96
-        width = int(math.ceil(self.width * px_resolution))
-        height = int(math.ceil(self.height * px_resolution))
-        surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
-        context = cairo.Context(surface)
-        context.scale(px_resolution, px_resolution)
-        self.paint(context)
-        return surface
-
     def get_png_bytes(self, resolution=None):
         """Paint the page and return a PNG image
 
-        The default resolution is 96: PNG pixels match CSS pixels.
-        Returns the image and its size as ``(width, height, png_bytes)``.
+        :param resolution: PNG pixels per CSS inch, defaults to 96.
+        :returns: The PNG image with its size: ``(width, height, png_bytes)``
 
         """
-        file_obj = io.BytesIO()
-        surface = self.get_image_surface(resolution)
-        surface.write_to_png(file_obj)
-        return surface.get_width(), surface.get_height(), file_obj.getvalue()
+        from .png import pages_to_surface, surface_to_png
+        surface = pages_to_surface([self], resolution)
+        return (surface.get_width(), surface.get_height(),
+                surface_to_png(surface))
 
 
 class CSS(Resource):
