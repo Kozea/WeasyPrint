@@ -25,7 +25,7 @@ with open(path.join(path.dirname(__file__), 'README')) as fd:
 REQUIREMENTS = [
         # XXX: Keep this in sync with http://weasyprint.org/install/
         'lxml',
-        'tinycss>=0.2',
+        'tinycss==0.3',
         'cssselect>=0.6',
         'CairoSVG>=0.4.1',
         # ... and others, not installable by pip.
