@@ -204,17 +204,25 @@ def open_data_url(url):
 
 
 def default_url_fetcher(url):
-    """Fetch an URL and return dict with the following keys:
+    """Fetch an external resource such as an image or stylesheet.
 
-    * One of ``string`` (a byte string) or ``file_obj`` (a file-like object)
-    * ``mime_type``, a MIME type extracted eg. from a *Content-Type* header
-    * Optionally: ``encoding``, a character encoding extracted eg.from a
-      *charset* parameter in a *Content-Type* header
-    * Optionally: ``redirected_url``, the actual URL of the ressource in case
-      there were eg. HTTP redirects.
+    :param url: The URL of the resource to fetch
+    :raises: any exception to indicate failure. Failures are logged
+        as warnings, with the string representation of the exception
+        in the message.
+    :returns: In case of success, a dict with the following keys:
 
-    If a ``file_obj`` key is given, it is the caller’s responsability to call
-    ``file_obj.close()``.
+        * One of ``string`` (a byte string) or ``file_obj`` (a file-like object)
+        * Optionally: ``mime_type``, a MIME type extracted eg. from a
+          *Content-Type* header. If not provided, the type is guessed from the
+          file extension in the URL.
+        * Optionally: ``encoding``, a character encoding extracted eg. from a
+          *charset* parameter in a *Content-Type* header
+        * Optionally: ``redirected_url``, the actual URL of the ressource in case
+          there were eg. HTTP redirects.
+
+        If a ``file_obj`` key is given, it is the caller’s responsability to call
+        ``file_obj.close()``.
 
     """
     if url.startswith('data:'):

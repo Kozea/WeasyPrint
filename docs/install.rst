@@ -1,15 +1,18 @@
+.. _installing:
+
 Installing WeasyPrint
 =====================
 
 Source code
 -----------
 
-The git repository is :codelink:`on GitHub` and releases tarballs are
+The git repository is `on GitHub <https://github.com/Kozea/WeasyPrint>`_
+and releases tarballs are
 `on PyPI <http://pypi.python.org/pypi/WeasyPrint>`_, but these are not
 the recommended way of installing.
 
-Installing WeasyPrint
----------------------
+Installing
+----------
 
 WeasyPrint has been packaged for some Linux distributions:
 

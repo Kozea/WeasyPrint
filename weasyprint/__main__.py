@@ -19,7 +19,40 @@ from . import VERSION, HTML
 
 
 def main(argv=None, stdout=None, stdin=None):
-    """Parse command-line arguments and convert the given document."""
+    """The ``weasyprint`` command takes two arguments: its input and output.
+    The input is a filename or URL to an HTML document, or ``-`` to read
+    HTML from stdin. The output is a filename, or ``-`` to write to stdout.
+
+    More options are available:
+
+    ``-e`` or ``--encoding``
+        Force the input character encoding (eg. ``-e utf8``).
+
+    ``-f`` or ``--format``
+        Choose the output file format among PDF and PNG (eg. ``-f png``).
+        Required if the output is not a ``.pdf`` or ``.png`` filename.
+
+    ``-s`` or ``--stylesheet``
+        Add a user CSS stylesheet to the document. (eg. ``-s print.css``).
+        Multiple stylesheets are allowed.
+
+    ``-r`` or ``--resolution``
+        For PNG output only. Set the resolution in PNG pixel per CSS inch.
+        Defaults to 96, which means that PNG pixels match CSS pixels.
+
+    ``--base-url``
+        Set the base for relative URLs in the HTML input. Defaults to the input’s
+        own URL or the current directory for stdin.
+
+    ``-m`` or ``--media-type``
+        Set the media type to use for ``@media``. Defaults to ``print``.
+
+    ``--version``
+        Show the version number.
+
+    ``-h`` or ``--help``
+        Show the command-line usage.
+    """
     parser = argparse.ArgumentParser(prog='weasyprint',
         description='Renders web pages to PDF or PNG.')
     parser.add_argument('--version', action='version',

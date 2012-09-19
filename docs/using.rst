@@ -1,63 +1,54 @@
 Using WeasyPrint
 ================
 
+.. _stylesheet-origins:
+
+Stylesheet origins
+------------------
+
+HTML documents are rendered with stylesheets from three *origins*:
+
+* The HTML5 `user agent stylesheet`_;
+* Author stylesheets embedded in the document in ``<style>`` elements
+  or linked by ``<link rel=stylesheet>`` elements;
+* User stylesheets provided in the API.
+
+Keep in mind that *user* stylesheets have a lower priority than *author*
+stylesheets in the cascade_.
+You can use `!important`_ rules to counter-balance this.
+
+.. _user agent stylesheet: https://github.com/Kozea/WeasyPrint/blob/master/weasyprint/css/html5_ua.css
+.. _cascade: http://www.w3.org/TR/CSS21/cascade.html#cascading-order
+.. _!important: http://www.w3.org/TR/CSS21/cascade.html#important-rules
+
+
+.. module:: weasyprint.__main__
+
 As a standalone program
 -----------------------
 
-Once you have WeasyPrint `installed </install/>`_, you should have a
+Once you have WeasyPrint installed (see :ref:`installing`\ ), you should have a
 ``weasyprint`` executable. Using it can be as simple as this::
 
     weasyprint http://weasyprint.org /tmp/weasyprint-website.pdf
 
 You may see warnings on stderr about unsupported CSS.
 
-The ``weasyprint`` command takes two arguments: its input and output.
-The input is a filename or URL to an HTML document, or ``-`` to read
-HTML from stdin. The output is a filename, or ``-`` to write to stdout.
+.. autofunction:: main(argv=sys.argv)
 
-More options are available:
 
-``-e`` or ``--encoding``
-    Force the input character encoding (eg. ``-e utf8``).
-
-``-f`` or ``--format``
-    Choose the output file format among PDF and PNG (eg. ``-f png``).
-    Required if the output is not a ``.pdf`` or ``.png`` filename.
-
-``-s`` or ``--stylesheet``
-    Add a user CSS stylesheet to the document. (eg. ``-s print.css``).
-    Multiple stylesheets are allowed.
-
-``-m`` or ``--media-type``
-    Set the media type to use for ``@media``. Defaults to ``print``.
-
-``-r`` or ``--resolution``
-    For PNG output only. Set the resolution in PNG pixel per CSS inch.
-    Defaults to 96, which means that PNG pixels match CSS pixels.
-
-``--base-url``
-    Set the base for relative URLs in the HTML input. Defaults to the input’s
-    own URL or the current directory for stdin.
-
-``--version``
-    Show the version number.
-
-``-h`` or ``--help``
-    Show the command-line usage.
-
+.. module:: weasyprint
 
 As a Python library
 -------------------
 
 If you’re writing Python code you can import and use WeasyPrint just like
-any other Python library:
-
-.. code-block:: python
+any other Python library::
 
     import weasyprint
     weasyprint.HTML('http://weasyprint.org/').write_pdf('/tmp/weasyprint-website.pdf')
 
-The public API is made of two classes: ``HTML`` and ``CSS``.
+The public API is made of two classes: :class:`HTML` and :class:`CSS`.
 
 
 API stability
@@ -72,133 +63,34 @@ the right to change it or remove it at any point. Please do `tell us`_
 if you feel like something should be in the public API. It can probably
 be added in the next version.
 
-.. _tell us: /community/
+.. _tell us: http://weasyprint.org/community/
 
 
-The ``weasyprint.HTML`` class
-.............................
+API
+...
 
-An ``HTML`` object represents an HTML document parsed by lxml_.
+.. autoclass:: HTML(input, **kwargs)
+    :members:
+    :member-order: bysource
 
-.. _lxml: http://lxml.de/
-
-You can just create an instance with a positional argument:
-``doc = HTML(something)``
-The class will try to guess if the input is a filename, an absolute URL,
-or a file-like object.
-
-Alternatively, you can name the argument so that no guessing is
-involved:
-
-* ``HTML(filename=foo)`` a filename, relative to the current directory
-  or absolute.
-* ``HTML(url=foo)`` an absolute, fully qualified URL.
-* ``HTML(file_obj=foo)`` a file-like: any object with a ``read()`` method.
-* ``HTML(string=foo)`` a string of HTML source. (This argument must be named.)
-* ``HTML(tree=foo)`` a parsed lxml tree. (This argument must be named.)
-
-Specifying multiple inputs is an error: ``HTML(filename=foo, url=bar)``
-will raise.
-
-You can also pass optional named arguments:
-
-* ``encoding``: force the source character encoding
-* ``base_url``: used to resolve relative URLs (eg. in
-  ``<img src="../foo.png">``).
-  If not passed explicitly, try to use the input filename, URL, or
-  ``name`` attribute of file objects.
-* ``url_fetcher``: override the URL fetcher. (See `below <#url-fetchers>`_.)
-* ``media_type``: the media type to use for ``@media``. Defaults to ``print``.
-
-**Note:** In some cases like ``HTML(string=foo)`` you need to pass ``base_url``
-explicitly, or relative URLs will be invalid.
-
-``HTML`` objects have three public methods:
-
-``HTML.write_pdf(target=None, stylesheets=None)``
-    Render the document with stylesheets from three *origins*:
-
-    * The HTML5 `user agent stylesheet`_;
-    * Author stylesheets embedded in the document in ``<style>`` elements or
-      linked by ``<link rel=stylesheet>`` elements;
-    * User stylesheets provided in the ``stylesheets`` parameter to this
-      method. If provided, ``stylesheets`` must be an iterable where elements
-      are ``CSS`` instances (see below) or anything that can be passed
-      as an unnamed argument to ``CSS()``.
-
-    If you use this ``stylesheet`` parameter or the ``-s`` option of the
-    command-line API, keep in mind that *user* stylesheets have a lower
-    priority than *author* stylesheets in the cascade_.
-
-    ``target`` can be a filename or a file-like object (anything with a
-    ``write()`` method) where the PDF output is written.
-    If ``target`` is not provided, the method returns the PDF content
-    as a byte string.
-
-``HTML.write_png(target=None, stylesheets=None, resolution=96)``
-    Like ``write_pdf()``, but writes a single PNG image instead of PDF.
-
-    ``resolution`` is counted in pixels in the PNG output per CSS inch.
-    Note however that CSS pixels are always 1/96 CSS inch.
-    With the default resolution of 96, CSS pixels match PNG pixels.
-
-    Pages are painted in order from top to bottom, and horizontally centered.
-    The resulting image is a wide as the widest page, and as high as the
-    sum of all pages. There is no decoration around pages other than
-    specified in CSS.
-
-``HTML.get_png_pages(stylesheets=None, resolution=96)``
-    Render each page to a separate PNG image.
-
-    ``stylesheets`` and ``resolution`` are the same as in ``write_png()``.
-
-    Returns a generator of ``(width, height, png_bytes)`` tuples, one for
-    each page, in order. ``width`` and ``height`` are the size of the page
-    in PNG pixels, ``png_bytes`` is a byte string.
+.. autoclass:: CSS(input, **kwargs)
 
 
-.. _user agent stylesheet: https://github.com/Kozea/WeasyPrint/blob/master/weasyprint/css/html5_ua.css
-.. _cascade: http://www.w3.org/TR/CSS21/cascade.html#cascading-order
-
-
-The ``weasyprint.CSS`` class
-............................
-
-A ``CSS`` object represents a CSS stylesheet parsed by tinycss.
-An instance is created in the same way as ``HTML``, except that
-the ``tree`` parameter is not available.
-
-``CSS`` objects have no public attribute or method. They are only meant to
-be used in the ``write_pdf`` or ``write_png`` method. (See above.)
-
-The above warning on ``base_url`` and string input applies too: relative
-URLs will be invalid if there is no base URL.
-
+.. _url-fetchers:
 
 URL fetchers
 ............
 
-Flask-WeasyPrint_ makes use of a custom URL fetcher to integrate WeasyPrint
-with a Flask_ application.
+WeasyPrint goes through an *URL fetcher* to fetch external resources such as
+images or CSS stylesheets. The default fetcher can natively open files
+and URLs, but the HTTP client does not support advanced features like cookies
+or authentication. This can be worked-around by passing a custom
+``url_fetcher`` callable to the :class:`HTML` or :class:`CSS` classes.
+It must have the same signature as the default fetcher:
 
-.. _Flask-WeasyPrint: http://packages.python.org/Flask-WeasyPrint/
-.. _Flask: http://flask.pocoo.org/
+.. autofunction:: default_url_fetcher
 
-The URL fetcher is used for resources with an ``url`` input as well as
-linked images and stylesheets. It is a function (or any callable) that
-takes a single parameter (the URL) and should raise any exception to
-indicate failure or return a dict with the following keys:
-
-* One of ``string`` (a byte string) or ``file_obj`` (a file-like object)
-* Optionally: ``mime_type``, a MIME type extracted eg. from a *Content-Type*
-  header. If not provided, the type is guessed from the file extension
-  in the URL.
-* Optionally: ``encoding``, a character encoding extracted eg.from a
-  *charset* parameter in a *Content-Type* header
-* Optionally: ``redirected_url``, the actual URL of the ressource in case
-  there were eg. HTTP redirects.
-
-URL fetchers can defer to the default fetcher:
+Custom fetchers can defer to the default fetcher:
 
 .. code-block:: python
 
@@ -214,6 +106,12 @@ URL fetchers can defer to the default fetcher:
 
     source = '<img src="graph:42,10.3,87">'
     HTML(string=source, url_fetcher=my_fetcher).write_pdf('out.pdf')
+
+Flask-WeasyPrint_ makes use of a custom URL fetcher to integrate WeasyPrint
+with a Flask_ application and short-cut the network.
+
+.. _Flask-WeasyPrint: http://packages.python.org/Flask-WeasyPrint/
+.. _Flask: http://flask.pocoo.org/
 
 
 Logging
