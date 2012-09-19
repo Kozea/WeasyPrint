@@ -1,13 +1,5 @@
-Documentation
-=============
-
-* `Installing </install/>`_
-* `Using </using/>`_
-* **Hacking**
-* `Features </features/>`_
-
 Hacking WeasyPrint
-~~~~~~~~~~~~~~~~~~
+==================
 
 Assuming you already have the dependencies_, install the `development
 version`_ of WeasyPrint:

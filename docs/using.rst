@@ -1,13 +1,5 @@
-Documentation
-=============
-
-* `Installing </install/>`_
-* **Using**
-* `Hacking </hacking/>`_
-* `Features </features/>`_
-
 Using WeasyPrint
-~~~~~~~~~~~~~~~~
+================
 
 As a standalone program
 -----------------------

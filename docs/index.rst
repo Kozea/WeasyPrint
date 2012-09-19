@@ -11,9 +11,13 @@ Welcome to WeasyPrint's documentation!
 Contents:
 
 .. toctree::
-   :maxdepth: 2
+    :maxdepth: 2
 
-   changelog
+    install
+    using
+    features
+    hacking
+    changelog
 
 
 

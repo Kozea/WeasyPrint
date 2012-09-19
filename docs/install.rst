@@ -1,10 +1,5 @@
-Documentation
-=============
-
-* **Installing**
-* `Using </using/>`_
-* `Hacking </hacking/>`_
-* `Features </features/>`_
+Installing WeasyPrint
+=====================
 
 Source code
 -----------

@@ -1,10 +1,5 @@
-Documentation
-=============
-
-* `Installing </install/>`_
-* `Using </using/>`_
-* `Hacking </hacking/>`_
-* **Features**
+Features
+========
 
 This page is for WeasyPrint 0.14. See the changelog_ for older versions.
 
