@@ -15,7 +15,7 @@ WeasyPrint |version| depends on:
     but requires fairly recent versions.
 
 * lxml_
-* tinycss_ ≥ 0.2
+* tinycss_ = 0.3
 * cssselect_ ≥ 0.6
 * CairoSVG_ ≥ 0.4.1\ [#]_
 
