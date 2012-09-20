@@ -32,9 +32,7 @@ r"""
 from __future__ import division, unicode_literals
 
 import os
-import io
 import re
-import shutil
 import string
 
 import cairo
@@ -483,38 +481,3 @@ def write_pdf_metadata(pages, fileobj):
                     '{0} 0 R'.format(n) for n in annotations)))
 
     pdf.finish()
-
-
-def pages_to_pdf(pages, target=None):
-    """Paint pages; write PDF bytes to ``target``, or return them
-    if ``target`` is ``None``.
-
-    :param pages: a list of Page objects
-    :param target: a filename, file object, or ``None``
-    :returns: a bytestring if ``target`` is ``None``.
-
-    """
-    # Use an in-memory buffer. We will need to seek for metadata
-    # TODO: avoid this if target can seek? Benchmark first.
-    file_obj = io.BytesIO()
-    # We’ll change the surface size for each page
-    surface = cairo.PDFSurface(file_obj, 1, 1)
-    context = cairo.Context(surface)
-    context.scale(PX_TO_PT, PX_TO_PT)
-    for page in pages:
-        surface.set_size(page.width * PX_TO_PT, page.height * PX_TO_PT)
-        page.paint(context)
-        surface.show_page()
-    surface.finish()
-
-    write_pdf_metadata(pages, file_obj)
-
-    if target is None:
-        return file_obj.getvalue()
-    else:
-        file_obj.seek(0)
-        if hasattr(target, 'write'):
-            shutil.copyfileobj(file_obj, target)
-        else:
-            with open(target, 'wb') as fd:
-                shutil.copyfileobj(file_obj, fd)

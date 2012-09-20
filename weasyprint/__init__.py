@@ -22,6 +22,9 @@ __version__ = VERSION
 # Used for 'User-Agent' in HTTP and 'Creator' in PDF
 VERSION_STRING = 'WeasyPrint %s (http://weasyprint.org/)' % VERSION
 
+import io
+import sys
+
 
 from .urls import default_url_fetcher
 # Make sure the logger is configured early:
@@ -149,7 +152,6 @@ class HTML(object):
             If :obj:`target` is :obj:`None`, a PDF byte string.
 
         """
-        from .pdf import pages_to_pdf
         pages = self.render(enable_hinting=False, stylesheets=stylesheets)
         return pages_to_pdf(pages, target)
 
@@ -174,7 +176,6 @@ class HTML(object):
             If :obj:`target` is :obj:`None`, a PNG byte string.
 
         """
-        from .png import pages_to_png
         pages = self.render(enable_hinting=True, stylesheets=stylesheets)
         return pages_to_png(pages, resolution, target)
 
@@ -195,45 +196,9 @@ class HTML(object):
 
         """
         for page in self.render(enable_hinting=True, stylesheets=stylesheets):
-            yield page.get_png_bytes(resolution)
-
-
-class Page(object):
-    """Represents a single rendered page."""
-    def __init__(self, page, enable_hinting):
-        self._page_box = page
-        self.enable_hinting = enable_hinting
-        #: The page width, including margins, in CSS pixels (float)
-        self.width = page.margin_width()
-        #: The page height, including margins, in CSS pixels (float)
-        self.height = page.margin_height()
-
-    def paint(self, cairo_context):
-        """Paint the surface on any cairo Context object.
-
-        The user units with the current transformation in the context
-        should be in CSS pixels. A CSS inch is always 96 CSS pixels.
-        In other words, a user resolution of 96 dpi will anchor the scale
-        to physical units.
-
-        """
-        from .draw import draw_page
-        draw_page(self._page_box, cairo_context, self.enable_hinting)
-
-    def get_png_bytes(self, resolution=None):
-        """Paint the page and return a PNG image
-
-        :type resolution: float
-        :param resolution:
-            The output resolution in PNG pixels per CSS inch. At 96 dpi
-            (the default), PNG pixels match the CSS ``px`` unit.
-        :returns: The PNG image with its size: ``(width, height, png_bytes)``
-
-        """
-        from .png import pages_to_surface, surface_to_png
-        surface = pages_to_surface([self], resolution)
-        return (surface.get_width(), surface.get_height(),
-                surface_to_png(surface))
+            surface = pages_to_surface([page], resolution)
+            yield (surface.get_width(), surface.get_height(),
+                    surface_to_png(surface))
 
 
 class CSS(object):
@@ -337,3 +302,135 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
         return 'tree', tree, base_url, None
 
     raise TypeError('Expected exactly one source, got %i' % nones.count(False))
+
+
+class Page(object):
+    """Represents a single rendered page."""
+    def __init__(self, page, enable_hinting):
+        self._page_box = page
+        self.enable_hinting = enable_hinting
+        #: The page width, including margins, in CSS pixels (float)
+        self.width = page.margin_width()
+        #: The page height, including margins, in CSS pixels (float)
+        self.height = page.margin_height()
+
+    def paint(self, cairo_context):
+        """Paint the surface on any cairo Context object.
+
+        The user units with the current transformation in the context
+        should be in CSS pixels. A CSS inch is always 96 CSS pixels.
+        In other words, a user resolution of 96 dpi will anchor the scale
+        to physical units.
+
+        """
+        from .draw import draw_page
+        draw_page(self._page_box, cairo_context, self.enable_hinting)
+
+
+def pages_to_pdf(pages, target=None):
+    """Paint pages; write PDF bytes to ``target``, or return them
+    if ``target`` is ``None``.
+
+    :param pages: a list of Page objects
+    :param target: a filename, file object, or ``None``
+    :returns: a bytestring if ``target`` is ``None``.
+
+    """
+    import shutil
+    import cairo
+    from .pdf import PX_TO_PT, write_pdf_metadata
+
+    # Use an in-memory buffer. We will need to seek for metadata
+    # TODO: avoid this if target can seek? Benchmark first.
+    file_obj = io.BytesIO()
+    # We’ll change the surface size for each page
+    surface = cairo.PDFSurface(file_obj, 1, 1)
+    context = cairo.Context(surface)
+    context.scale(PX_TO_PT, PX_TO_PT)
+    for page in pages:
+        surface.set_size(page.width * PX_TO_PT, page.height * PX_TO_PT)
+        page.paint(context)
+        surface.show_page()
+    surface.finish()
+
+    write_pdf_metadata(pages, file_obj)
+
+    if target is None:
+        return file_obj.getvalue()
+    else:
+        file_obj.seek(0)
+        if hasattr(target, 'write'):
+            shutil.copyfileobj(file_obj, target)
+        else:
+            with open(target, 'wb') as fd:
+                shutil.copyfileobj(file_obj, fd)
+
+
+def pages_to_image_surface(pages, resolution=None):
+    """Paint pages vertically for pixel output.
+
+    :param pages: a list of :class:`~weasyprint.Page` objects
+    :param resolution:
+        The output resolution in PNG pixels per CSS inch. At 96 dpi
+        (the default), PNG pixels match the CSS ``px`` unit.
+    :returns: a :class:`cairo.ImageSurface` object
+
+    """
+    import math
+    import cairo
+    from .draw import stacked
+    from .compat import izip
+
+    px_resolution = (resolution or 96) / 96
+    widths = [int(math.ceil(p.width * px_resolution)) for p in pages]
+    heights = [int(math.ceil(p.height * px_resolution)) for p in pages]
+    max_width = max(widths)
+    surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, max_width, sum(heights))
+    context = cairo.Context(surface)
+
+    pos_y = 0
+    for page, width, height in izip(pages, widths, heights):
+        pos_x = (max_width - width) // 2
+        with stacked(context):
+            # Translate and clip at integer PNG pixel coordinates,
+            # not float CSS px.
+            context.translate(pos_x, pos_y)
+            context.rectangle(0, 0, width, height)
+            context.clip()
+            context.scale(px_resolution, px_resolution)
+            page.paint(context)
+        pos_y += height
+    return surface
+
+
+def surface_to_png(surface, target=None):
+    """Write PNG bytes to ``target``, or return them if ``target`` is ``None``.
+
+    :param surface: a :class:`cairo.ImageSurface` object
+    :param target: a filename, file object, or ``None``
+    :returns: a bytestring if ``target`` is ``None``.
+
+    """
+    from .urls import FILESYSTEM_ENCODING
+
+    if target is None:
+        target = io.BytesIO()
+        surface.write_to_png(target)
+        return target.getvalue()
+    else:
+        if sys.version_info[0] < 3 and isinstance(target, unicode):
+            # py2cairo 1.8 does not support unicode filenames.
+            target = target.encode(FILESYSTEM_ENCODING)
+        surface.write_to_png(target)
+
+
+def pages_to_png(pages, resolution=None, target=None):
+    """Paint pages vertically; write PNG bytes to ``target``, or return them
+    if ``target`` is ``None``.
+
+    :param pages: a list of :class:`~weasyprint.Page` objects
+    :param target: a filename, file object, or ``None``
+    :returns: a bytestring if ``target`` is ``None``.
+
+    """
+    return surface_to_png(pages_to_image_surface(pages, resolution), target)

@@ -21,11 +21,10 @@ import functools
 import cairo
 import pytest
 
-from ..png import pages_to_png
 from ..compat import xrange, izip, ints_from_bytes
 from ..urls import ensure_url
 from ..images import get_pixbuf, save_pixels_to_png
-from .. import HTML, Page
+from .. import HTML, Page, pages_to_png
 from .testing_utils import (
     resource_filename, TestPNGDocument, FONTS, assert_no_logs, capture_logs)
 
