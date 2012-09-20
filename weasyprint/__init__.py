@@ -118,6 +118,18 @@ class HTML(object):
 
         This is the low-level API.
 
+        :type enable_hinting: bool
+        :param enable_hinting:
+            Whether text, borders and background should be *hinted* to fall
+            at device pixel boundaries. Should be enabled for pixel-based
+            output (like PNG) but not vector based output (like PDF).
+        :param stylesheets:
+            An optional list of user stylesheets. (See
+            :ref:`stylesheet-origins`\.) List elements are :class:`CSS`
+            objects, filenames, URLs, or file-like objects.
+        :returns: A list of :class:`Page` objects.
+
+
         """
         document = self._get_document(stylesheets, enable_hinting)
         return [Page(p, enable_hinting) for p in document.render_pages()]
@@ -154,6 +166,7 @@ class HTML(object):
             An optional list of user stylesheets. (See
             :ref:`stylesheet-origins`\.) The list’s elements are
             :class:`CSS` objects, filenames, URLs, or file-like objects.
+        :type resolution: float
         :param resolution:
             The output resolution in PNG pixels per CSS inch. At 96 dpi
             (the default), PNG pixels match the CSS ``px`` unit.
@@ -172,6 +185,7 @@ class HTML(object):
             An optional list of user stylesheets. (See
             :ref:`stylesheet-origins`\.) The list’s elements are
             :class:`CSS` objects, filenames, URLs, or file-like objects.
+        :type resolution: float
         :param resolution:
             The output resolution in PNG pixels per CSS inch. At 96 dpi
             (the default), PNG pixels match the CSS ``px`` unit.
@@ -209,6 +223,7 @@ class Page(object):
     def get_png_bytes(self, resolution=None):
         """Paint the page and return a PNG image
 
+        :type resolution: float
         :param resolution:
             The output resolution in PNG pixels per CSS inch. At 96 dpi
             (the default), PNG pixels match the CSS ``px`` unit.

@@ -78,6 +78,7 @@ High-level API
 Low-level API
 .............
 
+.. versionadded:: 0.15
 .. automethod:: HTML.render
 .. autoclass:: Page
     :members:
