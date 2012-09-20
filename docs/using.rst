@@ -66,14 +66,22 @@ be added in the next version.
 .. _tell us: http://weasyprint.org/community/
 
 
-API
-...
+High-level API
+..............
 
 .. autoclass:: HTML(input, **kwargs)
-    :members:
-    :member-order: bysource
+    :members: write_pdf, write_png, get_png_pages
 
 .. autoclass:: CSS(input, **kwargs)
+
+
+Low-level API
+.............
+
+.. automethod:: HTML.render
+.. autoclass:: Page
+    :members:
+    :member-order: bysource
 
 
 .. _url-fetchers:

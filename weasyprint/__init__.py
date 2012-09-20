@@ -16,7 +16,7 @@
 from __future__ import division, unicode_literals
 
 
-VERSION = '0.14'
+VERSION = '0.15'
 __version__ = VERSION
 
 # Used for 'User-Agent' in HTTP and 'Creator' in PDF
@@ -209,7 +209,9 @@ class Page(object):
     def get_png_bytes(self, resolution=None):
         """Paint the page and return a PNG image
 
-        :param resolution: PNG pixels per CSS inch, defaults to 96.
+        :param resolution:
+            The output resolution in PNG pixels per CSS inch. At 96 dpi
+            (the default), PNG pixels match the CSS ``px`` unit.
         :returns: The PNG image with its size: ``(width, height, png_bytes)``
 
         """
