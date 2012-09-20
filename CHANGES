@@ -20,7 +20,7 @@ Version 0.14
 Released on 2012-08-03.
 
 * Add a public API to choose media type used for @media.
- (It still defaults to 'print'). Thanks Chung Lu!
+  (It still defaults to ``print``). Thanks Chung Lu!
 * Add ``--base-url`` and ``--resolution`` to the command-line API, making it
   as complete as the Python one.
 * Add support for the ``<base href="...">`` element in HTML.
@@ -57,7 +57,7 @@ Released on 2012-07-19.
   WeasyPrint for fetching linked stylesheets or images, eg. to generate them
   on the fly without going through the network.
   This enables the creation of `Flask-WeasyPrint
-  <http://packages.python.org/Flask-WeasyPrint/>`.
+  <http://packages.python.org/Flask-WeasyPrint/>`_.
 
 
 Version 0.11
@@ -71,8 +71,8 @@ Released on 2012-07-04.
 * Add support for the width, min-width, max-width, height, min-height and
   max-height properties in @page. The size property is now the size of the
   page’s containing block.
-* Switch the Variable Dimension rules to the new proposal:
-  https://github.com/SimonSapin/css/blob/master/margin-boxes-variable-dimension
+* Switch the Variable Dimension rules to `the new proposal
+  <https://github.com/SimonSapin/css/blob/master/margin-boxes-variable-dimension>`_.
   The previous implementation was broken in many cases.
 * The ``image-rendering``, ``transform``, ``transform-origin`` and ``size``
   properties are now unprefixed. The prefixed form (eg. -weasy-size) is ignored
@@ -211,7 +211,7 @@ Released on 2012-02-07.
 
 
 Version 0.3.1
------------
+-------------
 
 Released on 2011-12-14.
 

@@ -1,0 +1,156 @@
+Features
+========
+
+This page is for WeasyPrint |version|. See :doc:`changelog </changelog>`
+for older versions.
+
+
+URLs
+----
+
+WeasyPrint can read normal files, HTTP, FTP and `data URIs`_. It will follow
+HTTP redirects but more advanced features like cookies and authentication
+are currently not supported, although a custom :ref:`url fetcher
+<url-fetchers>` can help.
+
+.. _data URIs: http://en.wikipedia.org/wiki/Data_URI_scheme
+
+
+HTML
+----
+
+Many HTML elements are implemented in CSS through the HTML5
+`User-Agent stylesheet
+<https://github.com/Kozea/WeasyPrint/blob/master/weasyprint/css/html5_ua.css>`_.
+
+Some elements need special treatment:
+
+* The ``<base>`` element, if present, determines the base for relative URLs.
+* CSS stylesheets can be embedded in ``<style>`` elements or linked by
+  ``<link rel=stylesheet>`` elements.
+* ``<img>``, ``<embed>`` or ``<object>`` elements accept images either
+  in raster formats supported by GdkPixbuf_ (including PNG, JPEG, GIF, ...)
+  or in SVG with CairoSVG_. SVG images are not rasterized but rendered
+  as vectors in the PDF output.
+
+HTML `presentational hints`_ (like the ``width`` attribute on an ``img``
+element) are **not** supported. Use CSS in the ``style`` attribute instead.
+
+.. _CairoSVG: http://cairosvg.org/
+.. _GdkPixbuf: https://live.gnome.org/GdkPixbuf
+.. _presentational hints: http://www.w3.org/TR/html5/rendering.html#presentational-hints
+
+
+PDF
+---
+
+In addition to text, raster and vector graphics, WeasyPrint’s PDF files
+can contain hyperlinks and bookmarks.
+
+Hyperlinks will be clickable in PDF viewers that support them. They can
+be either internal, to another part of the same document (eg.
+``<a href="#pdf">``) or external, to an URL. External links are resolved
+to absolute URLs: ``<a href="/news/">`` on the WeasyPrint website would always
+point to http://weasyprint.org/news/ in PDF files.
+
+PDF bookmarks are also called outlines and are generally shown in a
+sidebar. Clicking on an entry scrolls the matching part of the document
+into view. By default all ``<h1>`` to ``<h6>`` titles generate bookmarks,
+but this can be controlled with CSS (see below.)
+
+
+Fonts
+-----
+
+Although the CSS3 ``@font-face`` is not supported yet, WeasyPrint can use
+any font installed on the system. Just use it’s name in ``font-family``.
+To install a new font copying the file into the ``~/.fonts`` directory is
+generally enough, depending on your OS.
+
+Fonts are automatically embedded in PDF files.
+
+
+CSS
+---
+
+CSS 2.1
+~~~~~~~
+
+The `CSS 2.1`_ features listed here are **not** supported:
+
+* On tables: `empty-cells`_ and `visibility: collapse`_.
+* Minimum and maximum width_ and height_ on table-related boxes and
+  page-margin boxes.
+* Conforming `font matching algorithm`_. Currently ``font-family``
+  is passed as-is to Pango.
+* Right-to-left or `bi-directional text`_.
+* `System colors`_ and `system fonts`_. The former are deprecated in CSS 3
+
+.. _CSS 2.1: http://www.w3.org/TR/CSS21/
+.. _empty-cells: http://www.w3.org/TR/CSS21/tables.html#empty-cells
+.. _visibility\: collapse: http://www.w3.org/TR/CSS21/tables.html#dynamic-effects
+.. _width: http://www.w3.org/TR/CSS21/visudet.html#min-max-widths
+.. _height: http://www.w3.org/TR/CSS21/visudet.html#min-max-heights
+.. _font matching algorithm: http://www.w3.org/TR/CSS21/fonts.html#algorithm
+.. _Bi-directional text: http://www.w3.org/TR/CSS21/visuren.html#direction
+.. _System colors: http://www.w3.org/TR/CSS21/ui.html#system-colors
+.. _system fonts: http://www.w3.org/TR/CSS21/fonts.html#propdef-font
+
+To the best of our knowledge, everything else that applies to the
+print media **is** supported. Please report a bug if you find this list
+incomplete.
+
+
+CSS 3 Selectors
+~~~~~~~~~~~~~~~
+
+With the exceptions noted here, all `CSS 3 Selectors`_ are supported.
+
+PDF is generally not interactive. The ``:hover``, ``:active``, ``:focus``,
+``:target`` and ``:visited`` pseudo-classes are accepted as valid but
+never match anything.
+
+Due to a limitation in cssselect_, ``*:first-of-type``, ``*:last-of-type``,
+``*:nth-of-type``, ``*:nth-last-of-type`` and ``*:only-of-type`` are
+not supported. They work when you specify an element type but parse
+as invalid with ``*``.
+
+.. _CSS 3 Selectors: http://www.w3.org/TR/css3-selectors/
+.. _cssselect: http://packages.python.org/cssselect/
+
+
+CSS GCPM: bookmarks
+~~~~~~~~~~~~~~~~~~~
+
+PDF bookmarks are controlled as described in `CSS Generated Content for
+Paged Media`_. This module is experimental_: the properties need to be
+prefixed: use ``-weasy-bookmark-level`` and ``-weasy-bookmark-level``.
+
+.. _CSS Generated Content for Paged Media: http://dev.w3.org/csswg/css3-gcpm/#bookmarks
+.. _experimental: http://www.w3.org/TR/css-2010/#experimental
+
+For example, if you have only one top-level ``<h1>`` and do not wish to
+include it in the bookmarks, add this in your stylesheet:
+
+.. code-block:: css
+
+    h1 { -weasy-bookmark-level: none }
+
+
+Other CSS 3 modules
+~~~~~~~~~~~~~~~~~~~
+
+Are supported:
+
+* `CSS 3 Colors`_ (except the deprecated System Colors)
+* `CSS 3 Paged Media`_ (except named pages)
+* `CSS Transforms`_ (2D only)
+* From `CSS 3 Backgrounds and Borders`_: ``background-clip``,
+  ``background-origin`` and ``background-size``.
+* From `CSS 3 Basic User Interface`_: ``box-sizing``
+
+.. _CSS 3 Colors: http://www.w3.org/TR/css3-color/
+.. _CSS 3 Paged Media: http://dev.w3.org/csswg/css3-page/
+.. _CSS Transforms: http://dev.w3.org/csswg/css3-transforms/
+.. _CSS 3 Backgrounds and Borders: http://www.w3.org/TR/css3-background/
+.. _CSS 3 Basic User Interface: http://www.w3.org/TR/css3-ui/#box-sizing

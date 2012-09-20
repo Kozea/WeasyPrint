@@ -15,15 +15,15 @@ import sys
 from os import path
 from setuptools import setup, find_packages
 
-with open(path.join(path.dirname(__file__), 'weasyprint', '__init__.py')) as fd:
-    VERSION = re.search("VERSION = '([^']+)'", fd.read().strip()).group(1)
+VERSION = re.search("VERSION = '([^']+)'", open(
+    path.join(path.dirname(__file__), 'weasyprint', '__init__.py')
+).read().strip()).group(1)
 
-with open(path.join(path.dirname(__file__), 'README')) as fd:
-    LONG_DESCRIPTION = fd.read()
+LONG_DESCRIPTION = open(path.join(path.dirname(__file__), 'README')).read()
 
 
 REQUIREMENTS = [
-        # XXX: Keep this in sync with http://weasyprint.org/install/
+        # XXX: Keep this in sync with docs/install.rst
         'lxml',
         'tinycss==0.3',
         'cssselect>=0.6',
@@ -31,7 +31,7 @@ REQUIREMENTS = [
         # ... and others, not installable by pip.
 ]
 if sys.version_info < (2, 7) or (3,) <= sys.version_info < (3, 2):
-    # In the stdlib from 2.7:
+    # In the stdlib from 2.7 and 3.2:
     REQUIREMENTS.append('argparse')
 
 setup(
@@ -51,6 +51,7 @@ setup(
         'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.1',
         'Programming Language :: Python :: 3.2',
         'Topic :: Internet :: WWW/HTTP',
         'Topic :: Text Processing :: Markup :: HTML',
