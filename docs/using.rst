@@ -14,8 +14,8 @@ HTML documents are rendered with stylesheets from three *origins*:
 * User stylesheets provided in the API.
 
 Keep in mind that *user* stylesheets have a lower priority than *author*
-stylesheets in the cascade_.
-You can use `!important`_ rules to counter-balance this.
+stylesheets in the cascade_, unless you use `!important`_ in declarations
+to raise their priority.
 
 .. _user agent stylesheet: https://github.com/Kozea/WeasyPrint/blob/master/weasyprint/css/html5_ua.css
 .. _cascade: http://www.w3.org/TR/CSS21/cascade.html#cascading-order
@@ -27,12 +27,12 @@ You can use `!important`_ rules to counter-balance this.
 As a standalone program
 -----------------------
 
-Once you have WeasyPrint installed (see :ref:`installing`\ ), you should have a
+Once you have WeasyPrint :doc:`installed </install>`, you should have a
 ``weasyprint`` executable. Using it can be as simple as this::
 
     weasyprint http://weasyprint.org /tmp/weasyprint-website.pdf
 
-You may see warnings on stderr about unsupported CSS.
+You may see warnings on *stderr* about unsupported CSS.
 
 .. autofunction:: main(argv=sys.argv)
 
@@ -90,7 +90,8 @@ It must have the same signature as the default fetcher:
 
 .. autofunction:: default_url_fetcher
 
-Custom fetchers can defer to the default fetcher:
+Custom fetchers can choose to handle some URLs and defer others
+to the default fetcher:
 
 .. code-block:: python
 
@@ -123,7 +124,7 @@ are not fatal and will not prevent a document from being rendered.
 WeasyPrint uses the ``logging`` module from the Python standard library
 to log these errors and let you know about them.
 
-Logged messaged will go to stderr by default. You can change that by
+Logged messaged will go to *stderr* by default. You can change that by
 configuring the ``weasyprint`` logger object:
 
 .. code-block:: python
@@ -137,8 +138,10 @@ See the `logging documentation <http://docs.python.org/library/logging.html>`_
 for details.
 
 
-Navigator
----------
+.. _navigator:
+
+WeasyPrint Navigator
+--------------------
 
 *WeasyPrint Navigator* is a very limited web browser, running
 in your web browser. Start it with:
@@ -160,11 +163,4 @@ Errors
 If you get an exception during rendering, it is probably a bug in WeasyPrint.
 Please copy the full traceback and report it on our `issue tracker`_.
 
-.. _issue tracker: http://redmine.kozea.fr/projects/weasyprint/issues
-
-
-What’s next
------------
-
-If you want to change something in WeasyPrint or just see how it works,
-it’s time to `start hacking </hacking>`_!
+.. _issue tracker: https://github.com/Kozea/WeasyPrint/issues

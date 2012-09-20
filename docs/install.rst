@@ -1,36 +1,7 @@
-.. _installing:
-
-Installing WeasyPrint
-=====================
-
-Source code
------------
-
-The git repository is `on GitHub <https://github.com/Kozea/WeasyPrint>`_
-and releases tarballs are
-`on PyPI <http://pypi.python.org/pypi/WeasyPrint>`_, but these are not
-the recommended way of installing.
-
 Installing
-----------
+==========
 
-WeasyPrint has been packaged for some Linux distributions:
-
-* **Archlinux**, in the AUR: `python-weasyprint`_ (for Python 3) or
-  `python2-weasyprint`_ (for Python 2, installs the command-line script
-  as ``weasyprint2``).
-* **Gentoo**: in the `Kozea overlay`_
-
-(Please do `tell us`_ if you make such a package!)
-
-.. _python-weasyprint: https://aur.archlinux.org/packages.php?ID=57205
-.. _python2-weasyprint: https://aur.archlinux.org/packages.php?ID=57201
-.. _Kozea overlay: https://github.com/Kozea/Overlay/blob/master/README
-.. _tell us: /community/
-
-
-For other distributions or if you want to install it yourself,
-WeasyPrint 0.14 depends on:
+WeasyPrint |version| depends on:
 
 * CPython_ 2.6, 2.7 or 3.2
 * Either:
@@ -38,17 +9,15 @@ WeasyPrint 0.14 depends on:
   - PyGTK_ and its dependencies.
     This is available in more distributions but only works on Python 2.x
     and requires the whole GTK+ stack.
-  - Pango_ >= 1.29.3, pycairo_ and GdkPixbuf_ >= 2.25\ [#]_
+  - Pango_ ≥ 1.29.3, pycairo_\ [#]_ and GdkPixbuf_ ≥ 2.25\ [#]_
     with introspection data for each, as well as PyGObject_ 3.x.
     This works on all supported Python version and is lighter on dependencies,
     but requires fairly recent versions.
 
 * lxml_
-* tinycss_ >= 0.2
-* cssselect_ >= 0.6
-* CairoSVG_ >= 0.4.1
-
-cairo >= 1.12 is best but older versions should work too.\ [#]_
+* tinycss_ ≥ 0.2
+* cssselect_ ≥ 0.6
+* CairoSVG_ ≥ 0.4.1\ [#]_
 
 .. _CPython: http://www.python.org/
 .. _Pango: http://www.pango.org/
@@ -62,16 +31,14 @@ cairo >= 1.12 is best but older versions should work too.\ [#]_
 .. _CairoSVG: http://cairosvg.org/
 
 
-We recommend that you install PyGTK (or Pango, GdkPixbuf, pycairo and
-PyGObject) and lxml\ [#]_ with your distribution’s packages (see below)
-and everything else in a virtualenv_ with pip_.
+**First**, install C dependencies with your platform’s packages
+(:ref:`see below  <platforms>`). Then install WeasyPrint with pip_
+in a virtualenv_. This will automatically install the remaining dependencies.
+With virtualenv you’ll need ``--system-site-packages``\ [#]_ since pycairo
+and some others can not be installed with pip.
 
 .. _virtualenv: http://www.virtualenv.org/
 .. _pip: http://pip-installer.org/
-
-With virtualenv you’ll need ``--system-site-packages`` or some other
-workaround\ [#]_ as pycairo and some others can not be installed with
-pip. Installing WeasyPrint will also pull the remaining dependencies.
 
 .. code-block:: sh
 
@@ -86,31 +53,45 @@ Now let’s try it:
 
     weasyprint http://weasyprint.org ./weasyprint-website.pdf
 
-You should see warnings about unsupported CSS 3 stuff, this is expected.
+You should see warnings about unsupported CSS 3 stuff; this is expected.
 In the PDF you should see the WeasyPrint logo on the first page.
 
-You can also play with `WeasyPrint Navigator </using/#navigator>`_:
+You can also play with :ref:`navigator`:
 
 .. code-block:: sh
 
     python -m weasyprint.navigator
 
-If everything goes well, you’re ready to `start using </using/>`_ WeasyPrint!
-Otherwise, please copy the full error message and `report the problem
-</community/>`_.
+If everything goes well, you’re ready to :doc:`start using </using>`
+WeasyPrint! Otherwise, please copy the full error message and
+`report the problem <http://weasyprint.org/community/>`_.
+
+.. [#] cairo ≥ 1.12 is best but older versions should work too.
+       The test suite passes on cairo 1.8 and 1.10 with some tests marked as
+       “expected failures” due to bugs or behavior changes in cairo.
 
 .. [#] GdkPixbuf is actually optional. Without it, PNG is the only
        supported raster image format: JPEG, GIF and others are not available.
 
-.. [#] The test suite passes on cairo 1.8 and 1.10 with some tests marked as
-       “expected failures” due to bugs or behavior changes in cairo.
+.. [#] CairoSVG is actually optional. Without it, SVG images are not supported.
 
-.. [#] Alternatively, install lxml with pip but make sure you have libxml2
-       and libxslt with development headers to compile it. On Debian
-       the package are named `libxml2-dev` and `libxslt1-dev`.
+.. [#] … or some other workaround. Symbolic links to the system packages
+       in the virtualenv’s ``site-packages`` directory should work.
 
-.. [#] Symbolic links to the system packages in the virtualenv’s
-       ``site-packages`` directory should work.
+
+.. _platforms:
+
+By platform
+-----------
+
+PyGTK (or Pango, GdkPixbuf, pycairo and PyGObject) can not be installed
+with pip and need to be installed from your platform’s packages.
+lxml can\ [#]_, but pre-compiled packages are often easier.
+
+
+.. [#] In this case you additionally need libxml2 and libxslt with
+       development headers to compile lxml. On Debian the package are named
+       ``libxml2-dev`` and ``libxslt1-dev``.
 
 
 Debian / Ubuntu
@@ -134,6 +115,24 @@ On Python 3:
 .. code-block:: sh
 
     sudo apt-get install gir1.2-pango-1.0 gir1.2-gdkpixbuf-2.0 python3-gi-cairo python3-lxml
+
+
+Archlinux
+~~~~~~~~~
+
+WeasyPrint itself is packaged in the AUR: `python-weasyprint`_ (for Python 3)
+or `python2-weasyprint`_ (for Python 2, installs the command-line script
+as ``weasyprint2``).
+
+.. _python-weasyprint: https://aur.archlinux.org/packages.php?ID=57205
+.. _python2-weasyprint: https://aur.archlinux.org/packages.php?ID=57201
+
+
+Gentoo
+~~~~~~
+
+WeasyPrint itself is packaged in the `Kozea overlay
+<https://github.com/Kozea/Overlay/blob/master/README>`_.
 
 
 Mac OS X

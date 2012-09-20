@@ -1,9 +1,11 @@
-Welcome to WeasyPrint's documentation!
-######################################
+WeasyPrint documentation
+########################
 
 .. include:: ../README
+.. include:: ../AUTHORS
 
-Contents:
+Documentation contents
+----------------------
 
 .. toctree::
     :maxdepth: 2

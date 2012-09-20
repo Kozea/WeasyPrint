@@ -1,9 +1,8 @@
 Features
 ========
 
-This page is for WeasyPrint 0.14. See the changelog_ for older versions.
-
-.. _changelog: https://github.com/Kozea/WeasyPrint/blob/master/CHANGES
+This page is for WeasyPrint |version|. See :doc:`changelog </changelog>`
+for older versions.
 
 
 URLs
@@ -11,7 +10,8 @@ URLs
 
 WeasyPrint can read normal files, HTTP, FTP and `data URIs`_. It will follow
 HTTP redirects but more advanced features like cookies and authentication
-are currently not supported.
+are currently not supported, although a custom :ref:`url fetcher
+<url-fetchers>` can help.
 
 .. _data URIs: http://en.wikipedia.org/wiki/Data_URI_scheme
 
@@ -29,15 +29,15 @@ Some elements need special treatment:
 * CSS stylesheets can be embedded in ``<style>`` elements or linked by
   ``<link rel=stylesheet>`` elements.
 * ``<img>``, ``<embed>`` or ``<object>`` elements accept images either
-  in raster formats supported by ImageMagick_ (including PNG, JPEG, GIF, ...)
-  or in SVG with CairoSVG_. SVG images are not rasterized but preserved
+  in raster formats supported by GdkPixbuf_ (including PNG, JPEG, GIF, ...)
+  or in SVG with CairoSVG_. SVG images are not rasterized but rendered
   as vectors in the PDF output.
 
 HTML `presentational hints`_ (like the ``width`` attribute on an ``img``
 element) are **not** supported. Use CSS in the ``style`` attribute instead.
 
 .. _CairoSVG: http://cairosvg.org/
-.. _ImageMagick: http://www.imagemagick.org/script/formats.php
+.. _GdkPixbuf: https://live.gnome.org/GdkPixbuf
 .. _presentational hints: http://www.w3.org/TR/html5/rendering.html#presentational-hints
 
 
@@ -50,8 +50,8 @@ can contain hyperlinks and bookmarks.
 Hyperlinks will be clickable in PDF viewers that support them. They can
 be either internal, to another part of the same document (eg.
 ``<a href="#pdf">``) or external, to an URL. External links are resolved
-to absolute URLs: ``<a href="/install/">`` on this page would always point
-to http://weasyprint.org/install/ in PDF files.
+to absolute URLs: ``<a href="/news/">`` on the WeasyPrint website would always
+point to http://weasyprint.org/news/ in PDF files.
 
 PDF bookmarks are also called outlines and are generally shown in a
 sidebar. Clicking on an entry scrolls the matching part of the document
@@ -97,10 +97,8 @@ The `CSS 2.1`_ features listed here are **not** supported:
 .. _system fonts: http://www.w3.org/TR/CSS21/fonts.html#propdef-font
 
 To the best of our knowledge, everything else that applies to the
-print media **is** supported. Please `report a bug`_ if you find this list
+print media **is** supported. Please report a bug if you find this list
 incomplete.
-
-.. _report a bug: /community/#issue-bug-tracker
 
 
 CSS 3 Selectors

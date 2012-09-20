@@ -1,10 +1,9 @@
 Hacking WeasyPrint
 ==================
 
-Assuming you already have the dependencies_, install the `development
-version`_ of WeasyPrint:
+Assuming you already have the :doc:`dependencies </install>`,
+install the `development version`_ of WeasyPrint:
 
-.. _dependencies: /install/
 .. _development version: https://github.com/Kozea/WeasyPrint
 
 .. code-block:: sh
@@ -19,17 +18,14 @@ version`_ of WeasyPrint:
 
 This will install WeasyPrint in “editable” mode (which means that you don’t
 need to re-install it every time you make a change in the source code) as
-well as `py.test`_.
+well as `py.test <http://pytest.org/>`_.
 
 Use the ``py.test`` command from the ``WeasyPrint`` directory to run the
 test suite.
 
-Please report any bug or feature request on Redmine_ and submit
-patches/pull requests on Github_.
+Please report any bugs/feature requests and submit patches/pull requests
+`on Github <https://github.com/Kozea/WeasyPrint>`_.
 
-.. _py.test: http://pytest.org/
-.. _Redmine: http://redmine.kozea.fr/projects/weasyprint/issues
-.. _Github: https://github.com/Kozea/WeasyPrint
 
 Dive into the source
 --------------------
