@@ -42,10 +42,9 @@ from .logger import LOGGER
 from .compat import xrange, iteritems
 from .urls import iri_to_uri
 from .formatting_structure import boxes
-from .css.computed_values import LENGTHS_TO_PIXELS
 
 
-PX_TO_PT = 1 / LENGTHS_TO_PIXELS['pt']
+PX_TO_PT = 0.75  # 72dpi (PoscSript points) / 96dpi (CSS pixels)
 
 
 class PDFFormatter(string.Formatter):

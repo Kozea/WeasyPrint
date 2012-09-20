@@ -116,10 +116,11 @@ class HTML(object):
         return Document(self.root_element, enable_hinting, self.url_fetcher,
                         self.media_type, user_stylesheets, ua_stylesheets)
 
-    def render(self, enable_hinting, stylesheets=None):
+    def render(self, enable_hinting, stylesheets=None, resolution=96):
         """Render the document and return a list of Page objects.
 
-        This is the low-level API.
+        This is the low-level API. It provides individual pages that can
+        paint to any type of cairo surface.
 
         :type enable_hinting: bool
         :param enable_hinting:
@@ -130,12 +131,20 @@ class HTML(object):
             An optional list of user stylesheets. (See
             :ref:`stylesheet-origins`\.) List elements are :class:`CSS`
             objects, filenames, URLs, or file-like objects.
+        :type resolution: float
+        :param resolution:
+            The output resolution in cairo user units per CSS inch. At 96 dpi
+            (the default), user units match the CSS ``px`` unit.
+            For example, :class:`cairo.PDFSurface`’s device units are
+            in PostScript points (72dpi), so ``resolution=72`` will set
+            the right scale for physical units.
         :returns: A list of :class:`Page` objects.
 
 
         """
         document = self._get_document(stylesheets, enable_hinting)
-        return [Page(p, enable_hinting) for p in document.render_pages()]
+        return [Page(p, enable_hinting, resolution)
+                for p in document.render_pages()]
 
     def write_pdf(self, target=None, stylesheets=None):
         """Render the document to PDF.
@@ -152,10 +161,11 @@ class HTML(object):
             If :obj:`target` is :obj:`None`, a PDF byte string.
 
         """
-        pages = self.render(enable_hinting=False, stylesheets=stylesheets)
+        pages = self.render(enable_hinting=False, stylesheets=stylesheets,
+                            resolution=72)
         return pages_to_pdf(pages, target)
 
-    def write_png(self, target=None, stylesheets=None, resolution=None):
+    def write_png(self, target=None, stylesheets=None, resolution=96):
         """Render the document to a single PNG image.
 
         Pages are arranged vertically without any decoration.
@@ -176,10 +186,11 @@ class HTML(object):
             If :obj:`target` is :obj:`None`, a PNG byte string.
 
         """
-        pages = self.render(enable_hinting=True, stylesheets=stylesheets)
-        return pages_to_png(pages, resolution, target)
+        pages = self.render(enable_hinting=True, stylesheets=stylesheets,
+                            resolution=resolution)
+        return pages_to_png(pages, target)
 
-    def get_png_pages(self, stylesheets=None, resolution=None):
+    def get_png_pages(self, stylesheets=None, resolution=96):
         """Render the document to multiple PNG images, one per page.
 
         :param stylesheets:
@@ -195,8 +206,9 @@ class HTML(object):
             each page, in order.
 
         """
-        for page in self.render(enable_hinting=True, stylesheets=stylesheets):
-            surface = pages_to_surface([page], resolution)
+        for page in self.render(enable_hinting=True, stylesheets=stylesheets,
+                                resolution=resolution):
+            surface = pages_to_image_surface([page])
             yield (surface.get_width(), surface.get_height(),
                     surface_to_png(surface))
 
@@ -306,30 +318,65 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
 
 class Page(object):
     """Represents a single rendered page."""
-    def __init__(self, page, enable_hinting):
+    def __init__(self, page, enable_hinting, resolution=96):
         self._page_box = page
-        self.enable_hinting = enable_hinting
-        #: The page width, including margins, in CSS pixels (float)
-        self.width = page.margin_width()
-        #: The page height, including margins, in CSS pixels (float)
-        self.height = page.margin_height()
+        self._enable_hinting = enable_hinting
+        self._dppx = resolution / 96
+        #: The page width, including margins, in cairo user units.
+        self.width = page.margin_width() * self._dppx
+        #: The page height, including margins, in cairo user units.
+        self.height = page.margin_height() * self._dppx
 
-    def paint(self, cairo_context):
+    def paint(self, cairo_context, left_x=0, top_y=0, clip=False):
         """Paint the surface on any cairo Context object.
 
-        The user units with the current transformation in the context
-        should be in CSS pixels. A CSS inch is always 96 CSS pixels.
-        In other words, a user resolution of 96 dpi will anchor the scale
-        to physical units.
+        :type left_x: float
+        :param left_x:
+            X coordinate of the left of the page, in user units.
+        :type top_y: float
+        :param top_y:
+            Y coordinate of the top of the page, in user units.
+        :type clip: bool
+        :param clip:
+            Whether to clip/cut content outside the page. If false or
+            not provided, content can overflow.
 
         """
-        from .draw import draw_page
-        draw_page(self._page_box, cairo_context, self.enable_hinting)
+        from .draw import draw_page, stacked
+        with stacked(cairo_context):
+            if self._enable_hinting:
+                from math import ceil
+                left_x, top_y = cairo_context.user_to_device(left_x, top_y)
+                width, height = cairo_context.user_to_device_distance(
+                    self.width, self.height)
+                # Hint in device space
+                left_x = int(left_x)
+                top_y = int(top_y)
+                width = int(ceil(width))
+                height = int(ceil(height))
+                left_x, top_y = cairo_context.device_to_user(left_x, top_y)
+                width, height = cairo_context.device_to_user_distance(
+                    width, height)
+            else:
+                width = self.width
+                height = self.height
+            cairo_context.translate(left_x, top_y)
+            # The top-left corner is now (0, 0)
+            if clip:
+                cairo_context.rectangle(0, 0, width, height)
+                cairo_context.clip()
+            cairo_context.scale(self._dppx, self._dppx)
+            # User units are now CSS pixels
+            draw_page(self._page_box, cairo_context, self._enable_hinting)
 
 
 def pages_to_pdf(pages, target=None):
     """Paint pages; write PDF bytes to ``target``, or return them
     if ``target`` is ``None``.
+
+    This function also adds PDF metadata (bookmarks/outlines, hyperlinks, …).
+    PDF files coming straight from :class:`cairo.PDFSurface` do not have
+    such metadata.
 
     :param pages: a list of Page objects
     :param target: a filename, file object, or ``None``
@@ -338,17 +385,16 @@ def pages_to_pdf(pages, target=None):
     """
     import shutil
     import cairo
-    from .pdf import PX_TO_PT, write_pdf_metadata
+    from .pdf import write_pdf_metadata
 
     # Use an in-memory buffer. We will need to seek for metadata
     # TODO: avoid this if target can seek? Benchmark first.
     file_obj = io.BytesIO()
-    # We’ll change the surface size for each page
+    # (1, 1) is overridden by .set_size() below.
     surface = cairo.PDFSurface(file_obj, 1, 1)
     context = cairo.Context(surface)
-    context.scale(PX_TO_PT, PX_TO_PT)
     for page in pages:
-        surface.set_size(page.width * PX_TO_PT, page.height * PX_TO_PT)
+        surface.set_size(page.width, page.height)
         page.paint(context)
         surface.show_page()
     surface.finish()
@@ -366,13 +412,10 @@ def pages_to_pdf(pages, target=None):
                 shutil.copyfileobj(file_obj, fd)
 
 
-def pages_to_image_surface(pages, resolution=None):
+def pages_to_image_surface(pages):
     """Paint pages vertically for pixel output.
 
     :param pages: a list of :class:`~weasyprint.Page` objects
-    :param resolution:
-        The output resolution in PNG pixels per CSS inch. At 96 dpi
-        (the default), PNG pixels match the CSS ``px`` unit.
     :returns: a :class:`cairo.ImageSurface` object
 
     """
@@ -381,9 +424,12 @@ def pages_to_image_surface(pages, resolution=None):
     from .draw import stacked
     from .compat import izip
 
-    px_resolution = (resolution or 96) / 96
-    widths = [int(math.ceil(p.width * px_resolution)) for p in pages]
-    heights = [int(math.ceil(p.height * px_resolution)) for p in pages]
+    # This duplicates the hinting logic in Page.paint. There is a dependency
+    # cycle otherwise: this → hinting logic → context → surface → this
+    # But since we do no transform here, cairo_context.user_to_device and
+    # friends are identity functions.
+    widths = [int(math.ceil(p.width)) for p in pages]
+    heights = [int(math.ceil(p.height)) for p in pages]
     max_width = max(widths)
     surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, max_width, sum(heights))
     context = cairo.Context(surface)
@@ -392,13 +438,7 @@ def pages_to_image_surface(pages, resolution=None):
     for page, width, height in izip(pages, widths, heights):
         pos_x = (max_width - width) // 2
         with stacked(context):
-            # Translate and clip at integer PNG pixel coordinates,
-            # not float CSS px.
-            context.translate(pos_x, pos_y)
-            context.rectangle(0, 0, width, height)
-            context.clip()
-            context.scale(px_resolution, px_resolution)
-            page.paint(context)
+            page.paint(context, pos_x, pos_y, clip=True)
         pos_y += height
     return surface
 
@@ -424,7 +464,7 @@ def surface_to_png(surface, target=None):
         surface.write_to_png(target)
 
 
-def pages_to_png(pages, resolution=None, target=None):
+def pages_to_png(pages, target=None):
     """Paint pages vertically; write PNG bytes to ``target``, or return them
     if ``target`` is ``None``.
 
@@ -433,4 +473,4 @@ def pages_to_png(pages, resolution=None, target=None):
     :returns: a bytestring if ``target`` is ``None``.
 
     """
-    return surface_to_png(pages_to_image_surface(pages, resolution), target)
+    return surface_to_png(pages_to_image_surface(pages), target)
