@@ -220,7 +220,7 @@ class CSS(object):
     the ``tree`` parameter is not available. All other parameters are the same.
 
     ``CSS`` objects have no public attribute or method. They are only meant to
-    be used in the ``write_pdf`` or ``write_png`` method. (See above.)
+    be used in methods such as ``write_pdf`` or ``write_png``. (See above.)
 
     """
     def __init__(self, guess=None, filename=None, url=None, file_obj=None,
@@ -328,8 +328,9 @@ class Page(object):
         self.height = page.margin_height() * self._dppx
 
     def paint(self, cairo_context, left_x=0, top_y=0, clip=False):
-        """Paint the surface on any cairo Context object.
+        """Paint the surface in cairo, on any type of surface.
 
+        :param cairo_context: any :class:`cairo.Context` object.
         :type left_x: float
         :param left_x:
             X coordinate of the left of the page, in user units.

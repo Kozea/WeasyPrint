@@ -33,8 +33,9 @@ def main(argv=None, stdout=None, stdin=None):
         Required if the output is not a ``.pdf`` or ``.png`` filename.
 
     ``-s`` or ``--stylesheet``
-        Add a user CSS stylesheet to the document. (eg. ``-s print.css``).
-        Multiple stylesheets are allowed.
+        Filename or URL of a user CSS stylesheet (see
+        :ref:`stylesheet-origins`\.) to add to the document.
+        (eg. ``-s print.css``). Multiple stylesheets are allowed.
 
     ``-r`` or ``--resolution``
         For PNG output only. Set the resolution in PNG pixel per CSS inch.

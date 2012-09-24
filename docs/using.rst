@@ -83,8 +83,7 @@ Low-level API
 This low-level API gives you access to each page and their size (which may
 vary within the same document!). You can then paint just a subset of the
 pages, each page separately, or even use any type of cairo surface for ouput
-other than PDF and PNG.
-
+other than PDF or PNG.
 
 .. automethod:: HTML.render
 .. autoclass:: Page
