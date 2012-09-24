@@ -389,10 +389,12 @@ def gather_metadata(pages):
     links_by_page = []
     anchors = {}
     for page_index, page in enumerate(pages):
-        # cairo coordinates are pixels right and down from the top-left corner
-        # PDF coordinates are points right and up from the bottom-left corner
+        # Internal WeasyPrint coordinates are pixels right and down from
+        # the top-left corner.
+        # PDF coordinates are points right and up from the bottom-left corner.
+        # page.height is already in points.
         matrix = cairo.Matrix(
-            PX_TO_PT, 0, 0, -PX_TO_PT, 0, page.height * PX_TO_PT)
+            PX_TO_PT, 0, 0, -PX_TO_PT, 0, page.height * PX_TO_PT / page._dppx)
         point_to_pdf = matrix.transform_point
         distance_to_pdf = matrix.transform_distance
         page_links = []
