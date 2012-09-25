@@ -19,7 +19,6 @@ import contextlib
 import functools
 
 from .. import HTML, CSS
-from ..document import Document
 from ..logger import LOGGER
 from ..urls import default_url_fetcher
 
@@ -32,29 +31,10 @@ TEST_UA_STYLESHEET = CSS(filename=os.path.join(
 ))
 
 
-class TestPNGDocument(Document):
-    """A Document with a PNG backend and a different user-agent stylesheet.
-
-    This stylesheet is shorter, which makes tests faster.
-
-    """
-    enable_hinting = True
-
-    def __init__(self, html_source, base_url=None, user_stylesheets=(),
-                 ua_stylesheets=(TEST_UA_STYLESHEET,), media_type='print'):
-        super(TestPNGDocument, self).__init__(
-            HTML(string=html_source, base_url=base_url).root_element,
-            self.enable_hinting, default_url_fetcher, media_type,
-            user_stylesheets, ua_stylesheets)
-
-
-class TestPDFDocument(TestPNGDocument):
-    """A Document with a PDF backend and a different user-agent stylesheet.
-
-    This stylesheet is shorter, which makes tests faster.
-
-    """
-    enable_hinting = False
+class TestHTML(HTML):
+    """Like weasyprint.HTML, but with a lighter UA stylesheet."""
+    def _ua_stylesheets(self):
+        return [TEST_UA_STYLESHEET]
 
 
 def resource_filename(basename):

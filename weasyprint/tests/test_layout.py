@@ -14,8 +14,9 @@
 from __future__ import division, unicode_literals
 
 from .testing_utils import (
-    TestPNGDocument, resource_filename, FONTS, assert_no_logs, capture_logs)
+    TestHTML, resource_filename, FONTS, assert_no_logs, capture_logs)
 from ..formatting_structure import boxes
+from .test_boxes import render_pages as parse
 
 
 def body_children(page):
@@ -25,13 +26,6 @@ def body_children(page):
     body, = html.children
     assert body.element_tag == 'body'
     return body.children
-
-
-def parse(html_content):
-    """Parse some HTML, apply stylesheets, transform to boxes and lay out."""
-    document = TestPNGDocument(html_content,
-        base_url=resource_filename('<inline HTML>'))
-    return document.render_pages()
 
 
 def outer_area(box):

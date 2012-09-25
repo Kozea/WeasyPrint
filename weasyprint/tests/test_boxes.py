@@ -12,8 +12,12 @@
 
 from __future__ import division, unicode_literals
 
+import functools
+
 from .testing_utils import (
-    resource_filename, TestPNGDocument, assert_no_logs, capture_logs)
+    resource_filename, TestHTML, assert_no_logs, capture_logs)
+from ..css import get_all_computed_styles
+from .. import images
 from ..formatting_structure import boxes, build, counters
 
 
@@ -76,23 +80,34 @@ def to_lists(box_tree):
     return serialize(unwrap_html_body(box_tree))
 
 
+def _parse_base(html_content,
+        # Dummy filename, but in the right directory.
+        base_url=resource_filename('<test>')):
+    document = TestHTML(string=html_content, base_url=base_url)
+    style_for = get_all_computed_styles(document)
+    get_image_from_uri =  functools.partial(
+        images.get_image_from_uri, {}, document.url_fetcher)
+    return document.root_element, style_for, get_image_from_uri
+
 def parse(html_content):
     """Parse some HTML, apply stylesheets and transform to boxes."""
-    document = TestPNGDocument(html_content,
-        # Dummy filename, but in the right directory.
-        base_url=resource_filename('<test>'))
-    box, = build.element_to_box(
-        document.element_tree, document.style_for, document.get_image_from_uri)
+    box, = build.element_to_box(*_parse_base(html_content))
     return box
 
 
 def parse_all(html_content, base_url=resource_filename('<test>')):
     """Like parse() but also run all corrections on boxes."""
-    document = TestPNGDocument(html_content, base_url=base_url)
-    box = build.build_formatting_structure(
-        document.element_tree, document.style_for, document.get_image_from_uri)
+    box = build.build_formatting_structure(*_parse_base(
+        html_content, base_url))
     sanity_checks(box)
     return box
+
+
+def render_pages(html_content):
+    """Lay out a document and return a list of PageBox objects."""
+    return [p._page_box for p in TestHTML(
+            string=html_content, base_url=resource_filename('<test>')
+        ).render(enable_hinting=True)]
 
 
 def assert_tree(box, expected):
@@ -382,18 +397,18 @@ def test_whitespace():
 @assert_no_logs
 def test_page_style():
     """Test the management of page styles."""
-    document = TestPNGDocument('''
+    style_for = get_all_computed_styles(TestHTML(string='''
         <style>
             @page { margin: 3px }
             @page :first { margin-top: 20px }
             @page :right { margin-right: 10px; margin-top: 10px }
             @page :left { margin-left: 10px; margin-top: 10px }
         </style>
-    ''')
+    '''))
 
     def assert_page_margins(page_type, top, right, bottom, left):
         """Check the page margin values."""
-        style = document.style_for(page_type)
+        style = style_for(page_type)
         assert style.margin_top == (top, 'px')
         assert style.margin_right == (right, 'px')
         assert style.margin_bottom == (bottom, 'px')
@@ -1180,7 +1195,7 @@ def test_margin_boxes():
     """
     Test that the correct margin boxes are created.
     """
-    document = TestPNGDocument('''
+    page_1, page_2 = render_pages('''
         <style>
             @page {
                 /* Make the page content area only 10px high and wide,
@@ -1196,7 +1211,6 @@ def test_margin_boxes():
         </style>
         <p>lorem ipsum
     ''')
-    page_1, page_2 = document.render_pages()
     assert page_1.children[0].element_tag == 'html'
     assert page_2.children[0].element_tag == 'html'
 
@@ -1215,7 +1229,7 @@ def test_margin_boxes():
 @assert_no_logs
 def test_page_counters():
     """Test page-based counters."""
-    document = TestPNGDocument('''
+    pages = render_pages('''
         <style>
             @page {
                 /* Make the page content area only 10px high and wide,
@@ -1229,7 +1243,7 @@ def test_page_counters():
         </style>
         <p>lorem ipsum dolor
     ''')
-    for page_number, page in enumerate(document.render_pages(), 1):
+    for page_number, page in enumerate(pages, 1):
         html, bottom_center = page.children
         line_box, = bottom_center.children
         text_box, = line_box.children

@@ -15,18 +15,12 @@ from __future__ import division, unicode_literals
 from pytest import raises
 
 from .testing_utils import (
-    resource_filename, assert_no_logs, capture_logs, TestPNGDocument)
+    resource_filename, assert_no_logs, capture_logs, TestHTML)
 from .. import css
+from ..css import get_all_computed_styles
 from ..css.computed_values import strut_layout
 from ..urls import open_data_url, path2url
 from .. import CSS, default_url_fetcher
-
-
-def parse_html(filename, **kwargs):
-    """Parse an HTML file from the test resources and resolve relative URL."""
-    filename = resource_filename(filename)
-    with open(filename, 'rb') as fd:
-        return TestPNGDocument(fd.read(), base_url=filename, **kwargs)
 
 
 @assert_no_logs
@@ -78,10 +72,10 @@ def test_style_dict():
 @assert_no_logs
 def test_find_stylesheets():
     """Test if the stylesheets are found in a HTML document."""
-    document = parse_html('doc1.html')
+    document = TestHTML(resource_filename('doc1.html'))
 
     sheets = list(css.find_stylesheets(
-        document.element_tree, 'print', default_url_fetcher))
+        document.root_element, 'print', default_url_fetcher))
     assert len(sheets) == 2
     # Also test that stylesheets are in tree order
     assert [s.base_url.rsplit('/', 1)[-1].rsplit(',', 1)[-1] for s in sheets] \
@@ -131,25 +125,23 @@ def test_annotate_document():
     """Test a document with inline style."""
     # Short names for variables are OK here
     # pylint: disable=C0103
-
-    document = parse_html(
-        'doc1.html',
-        user_stylesheets=[CSS(resource_filename('user.css'))],
-        ua_stylesheets=[CSS(resource_filename('mini_ua.css'))],
-    )
+    document = TestHTML(resource_filename('doc1.html'))
+    document._ua_stylesheets = lambda: [CSS(resource_filename('mini_ua.css'))]
+    style_for = get_all_computed_styles(document,
+        user_stylesheets=[CSS(resource_filename('user.css'))])
 
     # Element objects behave a lists of their children
-    _head, body = document.element_tree
+    _head, body = document.root_element
     h1, p, ul = body
     li_0, _li_1 = ul
     a, = li_0
 
-    h1 = document.style_for(h1)
-    p = document.style_for(p)
-    ul = document.style_for(ul)
-    li_0 = document.style_for(li_0)
-    after = document.style_for(a, 'after')
-    a = document.style_for(a)
+    h1 = style_for(h1)
+    p = style_for(p)
+    ul = style_for(ul)
+    li_0 = style_for(li_0)
+    after = style_for(a, 'after')
+    a = style_for(a)
 
     assert h1.background_image == path2url(resource_filename('logo_small.png'))
 
@@ -211,19 +203,11 @@ def test_annotate_document():
 
 
 @assert_no_logs
-def test_default_stylesheet():
-    """Test if the user-agent stylesheet is used and applied."""
-    document = parse_html('doc1.html')
-    head_style = document.style_for(document.element_tree.head)
-    assert head_style.display == 'none', \
-        'The HTML4 user-agent stylesheet was not applied'
-
-
-@assert_no_logs
 def test_page():
     """Test the ``@page`` properties."""
-    document = parse_html('doc1.html', user_stylesheets=[
-        CSS(string='''
+    document = TestHTML(resource_filename('doc1.html'))
+    style_for = get_all_computed_styles(document,
+        user_stylesheets=[CSS(string='''
             html {
                 color: red;
             }
@@ -241,41 +225,40 @@ def test_page():
                     font-size: 10px;
                 }
             }
-        ''')
-    ])
+        ''')])
 
-    style = document.style_for('first_left_page')
+    style = style_for('first_left_page')
     assert style.margin_top == (5, 'px')
     assert style.margin_left == (10, 'px')
     assert style.margin_bottom == (10, 'px')
     assert style.color == (1, 0, 0, 1)  # red, inherited from html
 
-    style = document.style_for('first_right_page')
+    style = style_for('first_right_page')
     assert style.margin_top == (5, 'px')
     assert style.margin_left == (10, 'px')
     assert style.margin_bottom == (16, 'px')
     assert style.color == (0, 0, 1, 1)  # blue
 
-    style = document.style_for('left_page')
+    style = style_for('left_page')
     assert style.margin_top == (10, 'px')
     assert style.margin_left == (10, 'px')
     assert style.margin_bottom == (10, 'px')
     assert style.color == (1, 0, 0, 1)  # red, inherited from html
 
-    style = document.style_for('right_page')
+    style = style_for('right_page')
     assert style.margin_top == (10, 'px')
     assert style.margin_left == (10, 'px')
     assert style.margin_bottom == (16, 'px')
     assert style.color == (0, 0, 1, 1)  # blue
 
-    style = document.style_for('first_left_page', '@top-left')
+    style = style_for('first_left_page', '@top-left')
     assert style is None
 
-    style = document.style_for('first_right_page', '@top-left')
+    style = style_for('first_right_page', '@top-left')
     assert style.font_size == 20  # inherited from @page
     assert style.width == (200, 'px')
 
-    style = document.style_for('first_right_page', '@top-right')
+    style = style_for('first_right_page', '@top-right')
     assert style.font_size == 10
 
 
@@ -283,27 +266,23 @@ def test_page():
 def test_warnings():
     """Check that appropriate warnings are logged."""
     for source, messages in [
-        ('<style>:lipsum { margin: 2cm',
+        (':lipsum { margin: 2cm',
             ['WARNING: Invalid or unsupported selector']),
-        ('<style>::lipsum { margin: 2cm',
+        ('::lipsum { margin: 2cm',
             ['WARNING: Invalid or unsupported selector']),
-        ('<style>@page foo { margin: 2cm',
+        ('@page foo { margin: 2cm',
             ['WARNING: Named pages are not supported yet']),
-        ('<link rel=stylesheet href=data:image/png,>',
-            ['WARNING: Unsupported stylesheet type', 'image/png']),
-        ('<style>foo { margin-color: red',
+        ('foo { margin-color: red',
             ['WARNING: Ignored', 'unknown property']),
-        ('<style>foo { margin-top: red',
+        ('foo { margin-top: red',
             ['WARNING: Ignored', 'invalid value']),
-        ('<html style="margin-color: red">',
-            ['WARNING: Ignored', 'unknown property']),
-        ('<html style="margin-top: red">',
-            ['WARNING: Ignored', 'invalid value']),
-        ('<link rel=stylesheet href=relative-uri.css>',
+        ('@import "relative-uri.css',
             ['WARNING: Relative URI reference without a base URI']),
+#        ('@import "data:image/png,',
+#            ['WARNING: Unsupported stylesheet type', 'image/png']),
     ]:
         with capture_logs() as logs:
-            TestPNGDocument(source).style_for('')
+            CSS(string=source)
         assert len(logs) == 1
         for message in messages:
             assert message in logs[0]
@@ -312,25 +291,25 @@ def test_warnings():
 @assert_no_logs
 def test_error_recovery():
     with capture_logs() as logs:
-        document = TestPNGDocument('''
+        document = TestHTML(string='''
             <style> html { color red; color: blue; color
         ''')
-        page, = document.render_pages()
-        html, = page.children
+        page, = document.render()
+        html, = page._page_box.children
         assert html.style.color == (0, 0, 1, 1)  # blue
 
-        document = TestPNGDocument('''
+        document = TestHTML(string='''
             <html style="color; color: blue; color red">
         ''')
-        page, = document.render_pages()
-        html, = page.children
+        page, = document.render()
+        html, = page._page_box.children
         assert html.style.color == (0, 0, 1, 1)  # blue
     assert len(logs) == 4
 
 
 @assert_no_logs
 def test_line_height_inheritance():
-    document = TestPNGDocument('''
+    document = TestHTML(string='''
         <style>
             html { font-size: 10px; line-height: 140% }
             section { font-size: 10px; line-height: 1.4 }
@@ -338,8 +317,8 @@ def test_line_height_inheritance():
         </style>
         <body><div><section><p></p></section></div></body>
     ''')
-    page, = document.render_pages()
-    html, = page.children
+    page, = document.render()
+    html, = page._page_box.children
     body, = html.children
     div, = body.children
     section, = div.children
@@ -358,7 +337,7 @@ def test_line_height_inheritance():
 
 @assert_no_logs
 def test_important():
-    document = TestPNGDocument('''
+    document = TestHTML(string='''
         <style>
             p:nth-child(1) { color: lime }
             body p:nth-child(2) { color: red }
@@ -378,15 +357,15 @@ def test_important():
         <p></p>
         <p></p>
         <p></p>
-    ''', user_stylesheets=[CSS(string='''
-            body p:nth-child(1) { color: red }
-            p:nth-child(2) { color: lime !important }
+    ''')
+    page, = document.render(stylesheets=[CSS(string='''
+        body p:nth-child(1) { color: red }
+        p:nth-child(2) { color: lime !important }
 
-            p:nth-child(4) { color: lime !important }
-            body p:nth-child(4) { color: red }
+        p:nth-child(4) { color: lime !important }
+        body p:nth-child(4) { color: red }
     ''')])
-    page, = document.render_pages()
-    html, = page.children
+    html, = page._page_box.children
     body, = html.children
     for paragraph in body.children:
         assert paragraph.style.color == (0, 1, 0, 1)  # lime (light green)

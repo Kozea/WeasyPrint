@@ -102,35 +102,25 @@ class HTML(object):
         self.url_fetcher = url_fetcher
         self.media_type = media_type
 
-    def _ua_stylesheet(self):
+    def _ua_stylesheets(self):
         from .html import HTML5_UA_STYLESHEET
         return [HTML5_UA_STYLESHEET]
 
-    def _get_document(self, stylesheets, enable_hinting, ua_stylesheets=None):
-        if ua_stylesheets is None:
-            ua_stylesheets = self._ua_stylesheet()
-        user_stylesheets = [css if hasattr(css, 'rules')
-                            else CSS(guess=css, media_type=self.media_type)
-                            for css in stylesheets or []]
-        from .document import Document
-        return Document(self.root_element, enable_hinting, self.url_fetcher,
-                        self.media_type, user_stylesheets, ua_stylesheets)
-
-    def render(self, enable_hinting, stylesheets=None, resolution=96):
+    def render(self, stylesheets=None, enable_hinting=False, resolution=96):
         """Render the document and return a list of Page objects.
 
         This is the low-level API. It provides individual pages that can
         paint to any type of cairo surface.
 
+        :param stylesheets:
+            An optional list of user stylesheets. (See
+            :ref:`stylesheet-origins`\.) List elements are :class:`CSS`
+            objects, filenames, URLs, or file-like objects.
         :type enable_hinting: bool
         :param enable_hinting:
             Whether text, borders and background should be *hinted* to fall
             at device pixel boundaries. Should be enabled for pixel-based
             output (like PNG) but not vector based output (like PDF).
-        :param stylesheets:
-            An optional list of user stylesheets. (See
-            :ref:`stylesheet-origins`\.) List elements are :class:`CSS`
-            objects, filenames, URLs, or file-like objects.
         :type resolution: float
         :param resolution:
             The output resolution in cairo user units per CSS inch. At 96 dpi
@@ -140,11 +130,24 @@ class HTML(object):
             the right scale for physical units.
         :returns: A list of :class:`Page` objects.
 
-
         """
-        document = self._get_document(stylesheets, enable_hinting)
-        return [Page(p, enable_hinting, resolution)
-                for p in document.render_pages()]
+        import functools
+        from .css import get_all_computed_styles
+        from .formatting_structure.build import build_formatting_structure
+        from .layout import layout_document
+        from . import images
+
+        style_for = get_all_computed_styles(self, user_stylesheets=[
+            css if hasattr(css, 'rules')
+            else CSS(guess=css, media_type=self.media_type)
+            for css in stylesheets or []])
+        get_image_from_uri =  functools.partial(
+            images.get_image_from_uri, {}, self.url_fetcher)
+        page_boxes = layout_document(
+            enable_hinting, style_for, get_image_from_uri,
+            build_formatting_structure(
+                self.root_element, style_for, get_image_from_uri))
+        return [Page(p, enable_hinting, resolution) for p in page_boxes]
 
     def write_pdf(self, target=None, stylesheets=None):
         """Render the document to PDF.
@@ -161,8 +164,7 @@ class HTML(object):
             If :obj:`target` is :obj:`None`, a PDF byte string.
 
         """
-        pages = self.render(enable_hinting=False, stylesheets=stylesheets,
-                            resolution=72)
+        pages = self.render(stylesheets, enable_hinting=False, resolution=72)
         return pages_to_pdf(pages, target)
 
     def write_png(self, target=None, stylesheets=None, resolution=96):
@@ -186,7 +188,7 @@ class HTML(object):
             If :obj:`target` is :obj:`None`, a PNG byte string.
 
         """
-        pages = self.render(enable_hinting=True, stylesheets=stylesheets,
+        pages = self.render(stylesheets, enable_hinting=True,
                             resolution=resolution)
         return pages_to_png(pages, target)
 
@@ -206,7 +208,7 @@ class HTML(object):
             each page, in order.
 
         """
-        for page in self.render(enable_hinting=True, stylesheets=stylesheets,
+        for page in self.render(stylesheets, enable_hinting=True,
                                 resolution=resolution):
             surface = pages_to_image_surface([page])
             yield (surface.get_width(), surface.get_height(),
@@ -318,7 +320,7 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
 
 class Page(object):
     """Represents a single rendered page."""
-    def __init__(self, page, enable_hinting, resolution=96):
+    def __init__(self, page, enable_hinting=False, resolution=96):
         self._page_box = page
         self._enable_hinting = enable_hinting
         self._dppx = resolution / 96
@@ -437,7 +439,7 @@ def pages_to_image_surface(pages):
 
     pos_y = 0
     for page, width, height in izip(pages, widths, heights):
-        pos_x = (max_width - width) // 2
+        pos_x = (max_width - width) / 2
         with stacked(context):
             page.paint(context, pos_x, pos_y, clip=True)
         pos_y += height

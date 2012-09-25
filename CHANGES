@@ -6,12 +6,12 @@ Version 0.15
 
 Not released yet.
 
+* Add a low level API that enables painting pages individually on any
+  cairo surface.
 * Add support for the ``font-stretch`` property.
 * Add support for ``@page:blank`` to select blank pages.
-* Add a low level API the enables painting pages individually on any
-  cairo surface.
 * Bug fixes for importing Pango in some PyGTK installations.
-* Fix a performance problem with large table split across many pages.
+* Fix a performance problem with large tables split across many pages.
 
 
 Version 0.14

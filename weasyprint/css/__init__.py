@@ -423,17 +423,20 @@ def preprocess_stylesheet(device_media_type, base_url, rules, url_fetcher):
                     yield margin_rule, selector_list, declarations
 
 
-def get_all_computed_styles(element_tree, device_media_type, url_fetcher,
-                            user_stylesheets=None, ua_stylesheets=None):
-    """Compute all the computed styles of all elements in ``element_tree``
-    for the media type ``device_media_type``.
+def get_all_computed_styles(html, user_stylesheets=None):
+    """Compute all the computed styles of all elements
+    in the given ``html`` document.
 
-    Do everything from finding author stylesheets in the given HTML document
-    to parsing and applying them.
+    Do everything from finding author stylesheets to parsing and applying them.
 
-    Return a dict of (element, pseudo element type) -> StyleDict instance.
+    Return a ``style_for`` function that takes an element and an optional
+    pseudo-element type, and return a StyleDict object.
 
     """
+    element_tree = html.root_element
+    device_media_type = html.media_type
+    url_fetcher = html.url_fetcher
+    ua_stylesheets = html._ua_stylesheets()
     author_stylesheets = list(find_stylesheets(
         element_tree, device_media_type, url_fetcher))
 

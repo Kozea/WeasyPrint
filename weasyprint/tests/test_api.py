@@ -24,7 +24,7 @@ import lxml.html, lxml.etree
 import pytest
 
 from .testing_utils import (
-    resource_filename, assert_no_logs, capture_logs, TEST_UA_STYLESHEET)
+    resource_filename, assert_no_logs, capture_logs, TestHTML)
 from .test_draw import png_to_pixels
 from ..compat import urljoin, urlencode, urlparse_uses_relative
 from ..urls import path2url
@@ -71,12 +71,6 @@ def write_file(filename, content):
     """Shortcut for reading a file."""
     with open(filename, 'wb') as fd:
         fd.write(content)
-
-
-class TestHTML(HTML):
-    """Like HTML, but with the testing (smaller) UA stylesheet"""
-    def _ua_stylesheet(self):
-        return [TEST_UA_STYLESHEET]
 
 
 def _test_resource(class_, basename, check, **kwargs):
@@ -424,7 +418,7 @@ def test_unicode_filenames():
         <style>
             @page { margin: 2px; size: 8px; background: #fff }
             html { background: #00f; }
-            body { background: #f00; width: 1px; height: 1px; }
+            body { background: #f00; width: 1px; height: 1px }
         </style>
         <body>
     '''

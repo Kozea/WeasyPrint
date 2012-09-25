@@ -26,7 +26,7 @@ from ..urls import ensure_url
 from ..images import get_pixbuf, save_pixels_to_png
 from .. import HTML, Page, pages_to_png
 from .testing_utils import (
-    resource_filename, TestPNGDocument, FONTS, assert_no_logs, capture_logs)
+    resource_filename, TestHTML, FONTS, assert_no_logs, capture_logs)
 
 
 # Short variable names are OK here
@@ -117,7 +117,7 @@ def html_to_pixels(name, expected_width, expected_height, html):
 
     Also return the document to aid debugging.
     """
-    document = TestPNGDocument(html,
+    document = TestHTML(string=html,
         # Dummy filename, but in the right directory.
         base_url=resource_filename('<test>'))
     pixels = document_to_pixels(document, name, expected_width,
@@ -129,8 +129,7 @@ def document_to_pixels(document, name, expected_width, expected_height):
     """
     Render an HTML document to PNG, checks its size and return pixel data.
     """
-    png_bytes = pages_to_png([Page(s, enable_hinting=True)
-                              for s in document.render_pages()])
+    png_bytes = pages_to_png(document.render(enable_hinting=True))
     return png_to_pixels(png_bytes, expected_width, expected_height)
 
 
@@ -1649,7 +1648,7 @@ def test_unicode():
             fd.write(html_content.encode('utf8'))
 
         # TODO: change this back to actually read from a file
-        document = TestPNGDocument(html_content)
+        document = TestHTML(html, encoding='utf8')
         lines = document_to_pixels(document, 'unicode', 200, 50)
         assert_pixels_equal('unicode', 200, 50, lines, expected_lines)
     finally:
