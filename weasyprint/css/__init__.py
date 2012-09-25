@@ -51,9 +51,9 @@ import lxml.etree
 from . import properties
 from . import computed_values
 from .validation import preprocess_declarations
-from ..urls import get_url_attribute
+from ..urls import get_url_attribute, url_join
 from ..logger import LOGGER
-from ..compat import iteritems, urljoin
+from ..compat import iteritems
 from .. import CSS
 
 
@@ -379,10 +379,13 @@ def preprocess_stylesheet(device_media_type, base_url, rules, url_fetcher):
         elif rule.at_keyword == '@import':
             if not evaluate_media_query(rule.media, device_media_type):
                 continue
-            for result in CSS(url=urljoin(base_url, rule.uri),
-                              url_fetcher=url_fetcher,
-                              media_type=device_media_type).rules:
-                yield result
+            url = url_join(base_url, rule.uri, '@import at %s:%s',
+                           rule.line, rule.column)
+            if url is not None:
+                for result in CSS(url=url,
+                                  url_fetcher=url_fetcher,
+                                  media_type=device_media_type).rules:
+                    yield result
 
         elif rule.at_keyword == '@media':
             if not evaluate_media_query(rule.media, device_media_type):

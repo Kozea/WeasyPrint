@@ -100,17 +100,25 @@ def get_url_attribute(element, attr_name):
     Otherwise, return an absolute URI.
 
     """
-    attr_value = element.get(attr_name, '').strip()
-    if attr_value:
-        if url_is_absolute(attr_value):
-            return attr_value
-        elif element.base_url:
-            return urljoin(element.base_url, attr_value)
-        else:
-            LOGGER.warn(
-                'Relative URI reference without a base URI: '
-                '<%s %s="%s"> at line %d',
-                element.tag, attr_name, attr_value, element.sourceline)
+    value = element.get(attr_name, '').strip()
+    if value:
+        return url_join(element.base_url, value, '<%s %s="%s"> at line %d',
+            element.tag, attr_name, value, element.sourceline)
+
+
+def url_join(base_url, url, context, *args):
+    """Like urllib.urljoin, but issue a warning and return None if base_url
+    is required but missing.
+
+    """
+    if url_is_absolute(url):
+        return url
+    elif base_url:
+        return urljoin(base_url, url)
+    else:
+        LOGGER.warn('Relative URI reference without a base URI: ' + context,
+                    *args)
+        return None
 
 
 def get_link_attribute(element, attr_name):
