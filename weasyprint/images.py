@@ -34,8 +34,14 @@ DUMMY_SURFACE = cairo.PDFSurface(_DUMMY_FILE, 1, 1)
 # Do not try to import PyGObject 3 if we already have PyGTK
 # that tends to segfault.
 if not USING_INTROSPECTION:
-    from gtk import gdk
-    from gtk.gdk import PixbufLoader
+    # Use PyGObject introspection
+    try:
+        from gtk import gdk
+        from gtk.gdk import PixbufLoader
+    # Old version of PyGTK raise RuntimeError when there is not X server.
+    except (ImportError, RuntimeError):
+        LOGGER.warn('Could not import gdk-pixbuf: raster '
+                    'images formats other than PNG will not be supported.')
 
     def save_pixels_to_png(pixels, width, height, filename):
         """Save raw pixels to a PNG file through pixbuf and PyGTK."""
@@ -65,7 +71,8 @@ else:
                           GdkPixbuf.PIXBUF_MICRO)
         if PIXBUF_VERSION < (2, 25, 0):
             LOGGER.warn('Using gdk-pixbuf %s.%s.%s with introspection. '
-                        'Versions before 2.25.0 are known to be buggy.',
+                        'Versions before 2.25.0 are known to be buggy. '
+                        'Images formats other than PNG may not be supported.',
                         *PIXBUF_VERSION)
 
     def save_pixels_to_png(pixels, width, height, filename):
