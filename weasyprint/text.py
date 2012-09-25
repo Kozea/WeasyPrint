@@ -13,6 +13,7 @@
 from __future__ import division, unicode_literals
 
 import os
+from io import BytesIO
 from cgi import escape
 
 import cairo
@@ -125,7 +126,10 @@ else:
         context.show_layout_line(pango_layout.get_line(0))
 
 
-NON_HINTED_DUMMY_CONTEXT = cairo.Context(cairo.PDFSurface(None, 1, 1))
+# None as a the target for PDFSurface is new in pycairo 1.8.8.
+# This helps with compat with earlier versions:
+_DUMMY_FILE = BytesIO()
+NON_HINTED_DUMMY_CONTEXT = cairo.Context(cairo.PDFSurface(_DUMMY_FILE, 1, 1))
 HINTED_DUMMY_CONTEXT = cairo.Context(cairo.ImageSurface(
     cairo.FORMAT_ARGB32, 1, 1))
 
