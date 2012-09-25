@@ -10,7 +10,8 @@
 
 """
 
-from __future__ import division, unicode_literals
+# No __future__.unicode_literals here.
+# Native strings are fine with argparse, unicode makes --help crash on 2.6.
 
 import sys
 import argparse
