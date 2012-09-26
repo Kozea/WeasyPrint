@@ -206,8 +206,8 @@ def get_image_from_uri(cache, url_fetcher, uri, type_=None):
                     # May already be closed or something.
                     # This is just cleanup anyway.
                     pass
-
         cache[uri] = function
         return function()
     except Exception as exc:
         LOGGER.warn('Error for image at %s : %r', uri, exc)
+        cache[uri] = lambda: None

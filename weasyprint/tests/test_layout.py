@@ -2037,7 +2037,7 @@ def test_images():
 
     # Invalid images
     for url in [
-        'inexistant.png',
+        'nonexistent.png',
         'unknownprotocol://weasyprint.org/foo.png',
         'data:image/unknowntype,Not an image',
         # zero-byte images
@@ -2057,6 +2057,12 @@ def test_images():
         assert isinstance(img, boxes.InlineBox)  # not a replaced box
         text, = img.children
         assert text.text == 'invalid image', url
+
+    with capture_logs() as logs:
+        parse('<img src=nonexistent.png><img src=nonexistent.png>')
+    # Failures are cached too: only one warning
+    assert len(logs) == 1
+    assert 'WARNING: Error for image' in logs[0]
 
     # Layout rules try to preserve the ratio, so the height should be 40px too:
     body, img = get_img('''<body style="font-size: 0">
