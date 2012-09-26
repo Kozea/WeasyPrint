@@ -214,7 +214,7 @@ def draw_background(context, bg, enable_hinting):
             positioning_width, positioning_height) = bg.positioning_area
         context.translate(positioning_x, positioning_y)
 
-        pattern, intrinsic_width, intrinsic_height = bg.image
+        get_pattern, intrinsic_width, intrinsic_height = bg.image
 
         bg_size = bg.size
         if bg_size in ('cover', 'contain'):
@@ -268,13 +268,9 @@ def draw_background(context, bg, enable_hinting):
             context.rectangle(clip_x1, clip_y1, clip_width, clip_height)
             context.clip()
 
-        if bg.repeat == 'no-repeat':
-            # The same image/pattern may have been used
-            # in a repeating background.
-            pattern.set_extend(cairo.EXTEND_NONE)
-        else:
+        pattern = get_pattern()
+        if bg.repeat != 'no-repeat':
             pattern.set_extend(cairo.EXTEND_REPEAT)
-        # TODO: de-duplicate this with draw_replacedbox()
         pattern.set_filter(IMAGE_RENDERING_TO_FILTER[bg.image_rendering])
         context.scale(scale_x, scale_y)
         context.set_source(pattern)
@@ -596,7 +592,7 @@ def draw_replacedbox(context, box):
 
     x, y = box.content_box_x(), box.content_box_y()
     width, height = box.width, box.height
-    pattern, intrinsic_width, intrinsic_height = box.replacement
+    get_pattern, intrinsic_width, intrinsic_height = box.replacement
     scale_width = width / intrinsic_width
     scale_height = height / intrinsic_height
     # Draw nothing for width:0 or height:0
@@ -606,21 +602,11 @@ def draw_replacedbox(context, box):
             context.rectangle(0, 0, width, height)
             context.clip()
             context.scale(scale_width, scale_height)
-            # The same image/pattern may have been used in a
-            # repeating background.
-            pattern.set_extend(cairo.EXTEND_NONE)
+            pattern = get_pattern()
             pattern.set_filter(IMAGE_RENDERING_TO_FILTER[
                 box.style.image_rendering])
             context.set_source(pattern)
             context.paint()
-    # Make sure `pattern` is garbage collected. If a surface for a SVG image
-    # is still alive by the time we call show_page(), cairo will rasterize
-    # the image instead writing vectors.
-    # Use a unique string that can be traced back here.
-    # Replaced boxes are atomic, so they should only ever be drawn once.
-    # Use an object incompatible with the usual 3-tuple to cause an exception
-    # if this box is used more than that.
-    box.replacement = 'Removed to work around cairo’s behavior'
 
 
 def draw_inline_level(context, page, box, enable_hinting):

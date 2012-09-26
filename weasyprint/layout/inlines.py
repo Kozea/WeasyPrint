@@ -252,7 +252,7 @@ def replaced_box_width(box, device_size):
     Compute and set the used width for replaced boxes (inline- or block-level)
     """
     # http://www.w3.org/TR/CSS21/visudet.html#inline-replaced-width
-    _surface, intrinsic_width, _intrinsic_height = box.replacement
+    _, intrinsic_width, _intrinsic_height = box.replacement
     # TODO: update this when we have replaced elements that do not
     # always have an intrinsic width. (See commented code below.)
     assert intrinsic_width is not None
@@ -294,7 +294,7 @@ def replaced_box_height(box, device_size):
     Compute and set the used height for replaced boxes (inline- or block-level)
     """
     # http://www.w3.org/TR/CSS21/visudet.html#inline-replaced-height
-    _surface, intrinsic_width, intrinsic_height = box.replacement
+    _, intrinsic_width, intrinsic_height = box.replacement
     # TODO: update this when we have replaced elements that do not
     # always have intrinsic dimensions. (See commented code below.)
     assert intrinsic_width is not None

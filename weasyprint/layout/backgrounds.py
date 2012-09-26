@@ -45,16 +45,6 @@ def box_rectangle(box, which_rectangle):
         )
 
 
-def draw_canvas_background(context, page, enable_hinting):
-    assert not isinstance(page.children[0], boxes.MarginBox)
-    root_box = page.children[0]
-    style = page.canvas_background
-    draw_background(context, style, page.canvas_background_image,
-        painting_area=box_rectangle(page, 'padding-box'),
-        positioning_area=background_positioning_area(page, root_box, style),
-        enable_hinting=enable_hinting)
-
-
 def layout_box_backgrounds(page, box, get_image_from_uri):
     """Fetch and position background images."""
     for child in box.all_children():
