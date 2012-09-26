@@ -15,12 +15,14 @@ from __future__ import division, unicode_literals
 import os
 import io
 import sys
+import math
 import contextlib
 import threading
 import shutil
 import tempfile
 
 import lxml.html, lxml.etree
+import cairo
 import pytest
 
 from .testing_utils import (
@@ -28,7 +30,8 @@ from .testing_utils import (
 from .test_draw import png_to_pixels
 from ..compat import urljoin, urlencode, urlparse_uses_relative
 from ..urls import path2url
-from .. import HTML, CSS, default_url_fetcher
+from .. import (HTML, CSS, default_url_fetcher, pages_to_pdf, pages_to_png,
+                pages_to_image_surface, surface_to_png)
 from .. import __main__
 from .. import navigator
 
@@ -410,6 +413,7 @@ def test_command_line_render():
             stdout = run('--format png --base-url .. - -', stdin=combined)
             assert stdout == png_bytes
 
+
 @assert_no_logs
 def test_unicode_filenames():
     """Test non-ASCII filenames both in Unicode or bytes form."""
@@ -450,6 +454,71 @@ def test_unicode_filenames():
 
                 TestHTML(string=html).write_png(bytes_filename)
                 assert read_file(unicode_filename) == png_bytes
+
+
+@assert_no_logs
+def test_low_level_api():
+    html = TestHTML(string='<body>')
+    css = CSS(string='''
+        @page { margin: 2px; size: 8px; background: #fff }
+        html { background: #00f; }
+        body { background: #f00; width: 1px; height: 1px }
+    ''')
+    pdf_bytes = html.write_pdf(stylesheets=[css])
+    assert pdf_bytes.startswith(b'%PDF')
+    assert pages_to_pdf(html.render([css], resolution=72)) == pdf_bytes
+
+    page, = html.render([css], enable_hinting=True)
+    assert page.width == 8
+    assert page.height == 8
+    surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, 8, 8)
+    context = cairo.Context(surface)
+    page.paint(context)
+    file_obj = io.BytesIO()
+    surface.write_to_png(file_obj)
+    png_bytes = file_obj.getvalue()
+    check_png_pattern(png_bytes)
+
+    assert surface_to_png(surface) == png_bytes
+    assert pages_to_png([page]) == png_bytes
+
+    surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, 8, 8)
+    context = cairo.Context(surface)
+    # Rotate at the center
+    context.translate(4, 4)
+    context.rotate(-math.pi / 2)
+    context.translate(-4, -4)
+    page.paint(context)
+    check_png_pattern(surface_to_png(surface), rotated=True)
+
+    surface = pages_to_image_surface([page])
+    file_obj = io.BytesIO()
+    surface.write_to_png(file_obj)
+    assert file_obj.getvalue() == png_bytes
+
+    page, = html.render([css], enable_hinting=True, resolution=192)
+    assert page.width == 16
+    assert page.height == 16
+    check_png_pattern(pages_to_png([page]), x2=True)
+
+    page_1, page_2 = TestHTML(string='''
+        <style>
+            @page:first { size: 5px 10px } @page { size: 6px 4px }
+            p { page-break-before: always }
+        </style>
+        <p></p>
+        <p></p>
+    ''').render()
+    assert page_1.width == 5
+    assert page_1.height == 10
+    assert page_2.width == 6
+    assert page_2.height == 4
+    file_obj = io.BytesIO()
+    pages_to_png([page_1, page_2], file_obj)
+    file_obj.seek(0)
+    surface = cairo.ImageSurface.create_from_png(file_obj)
+    assert surface.get_width() == 6  # Max of both widths
+    assert surface.get_height() == 14  # Sum of both heights
 
 
 def wsgi_client(path_info, qs_args=None):
