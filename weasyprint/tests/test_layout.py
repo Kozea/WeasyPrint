@@ -2415,6 +2415,36 @@ def test_vertical_align():
     assert img_1.position_y == 96
     assert img_2.position_y == 0
 
+    # Reference for the next test
+    page, = parse('''
+        <span style="font-size: 0; vertical-align: top">
+            <img src="pattern.png">
+        </span>
+    ''')
+    html, = page.children
+    body, = html.children
+    line, = body.children
+    span, = line.children
+    img_1, = span.children
+    assert img_1.position_y == 0
+
+    # Should be the same as above
+    page, = parse('''
+        <span style="font-size: 0; vertical-align: top; display: inline-block">
+            <img src="pattern.png">
+        </span>
+    ''')
+    html, = page.children
+    body, = html.children
+    line_1, = body.children
+    span, = line_1.children
+    line_2, = span.children
+    img_1, = line_2.children
+    assert img_1.element_tag == 'img'
+    assert img_1.position_y == 0
+
+
+
 @assert_no_logs
 def test_text_align_left():
     """Test the left text alignment."""

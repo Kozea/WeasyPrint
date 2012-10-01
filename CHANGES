@@ -10,8 +10,11 @@ Not released yet.
   cairo surface.
 * Add support for the ``font-stretch`` property.
 * Add support for ``@page:blank`` to select blank pages.
-* Bug fixes for importing Pango in some PyGTK installations.
-* Fix a performance problem with large tables split across many pages.
+* Bug fixes:
+
+  - Importing Pango in some PyGTK installations.
+  - Layout of inline-blocks with `vertical-align: top` or `bottom`.
+  - Performance problem with large tables split across many pages.
 
 
 Version 0.14

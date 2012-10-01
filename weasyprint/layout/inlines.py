@@ -838,15 +838,14 @@ def inline_box_verticality(box, top_bottom_subtrees, baseline_y):
                       box.border_top_width + box.padding_top + box.height)
             child_baseline_y = bottom - child.margin_height() + child.baseline
         elif vertical_align in ('top', 'bottom'):
-            top_bottom_subtrees.append(child)
             # Later, we will assume for this subtree that its baseline
             # is at y=0.
-            child.position_y = -child.baseline
-            continue
+            child_baseline_y = 0
         else:
             # Numeric value: The child’s baseline is `vertical_align` above
             # (lower y) the parent’s baseline.
             child_baseline_y = baseline_y - vertical_align
+
         # the child’s `top` is `child.baseline` above (lower y) its baseline.
         top = child_baseline_y - child.baseline
         if isinstance(child, boxes.InlineBlockBox):
@@ -855,6 +854,13 @@ def inline_box_verticality(box, top_bottom_subtrees, baseline_y):
         else:
             child.position_y = top
             # grand-children for inline boxes are handled below
+
+        if vertical_align in ('top', 'bottom'):
+            # top or bottom are special, they need to be handled in
+            # a later pass.
+            top_bottom_subtrees.append(child)
+            continue
+
         bottom = top + child.margin_height()
         if min_y is None or top < min_y:
             min_y = top
