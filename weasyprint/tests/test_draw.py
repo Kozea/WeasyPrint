@@ -24,7 +24,7 @@ import pytest
 from ..compat import xrange, izip, ints_from_bytes
 from ..urls import ensure_url
 from ..images import get_pixbuf, save_pixels_to_png
-from .. import HTML, Page, pages_to_png
+from .. import HTML
 from .testing_utils import (
     resource_filename, TestHTML, FONTS, assert_no_logs, capture_logs)
 
@@ -129,7 +129,7 @@ def document_to_pixels(document, name, expected_width, expected_height):
     """
     Render an HTML document to PNG, checks its size and return pixel data.
     """
-    png_bytes = pages_to_png(document.render(enable_hinting=True))
+    png_bytes = document.write_png()
     return png_to_pixels(png_bytes, expected_width, expected_height)
 
 
@@ -2037,17 +2037,20 @@ def test_2d_transform():
 @requires_cairo_1_12
 def test_acid2():
     """A local version of http://acid2.acidtests.org/"""
-    def get_png_pages(filename):
-        return HTML(resource_filename(filename)).get_png_pages()
+    def render(filename):
+        return HTML(resource_filename(filename)).render(enable_hinting=True)
 
     with capture_logs():
         # This is a copy of http://www.webstandards.org/files/acid2/test.html
-        intro_page, test_page = get_png_pages('acid2-test.html')
+        document = render('acid2-test.html')
+        intro_page, test_page = document.pages
         # Ignore the intro page: it is not in the reference
-        width, height, test_png = test_page
+        test_png, width, height = document.copy(
+            [test_page]).write_png(with_size=True)
 
     # This is a copy of http://www.webstandards.org/files/acid2/reference.html
-    (ref_width, ref_height, ref_png), = get_png_pages('acid2-reference.html')
+    ref_png, ref_width, ref_height = render(
+        'acid2-reference.html').write_png(with_size=True)
 
     assert (width, height) == (ref_width, ref_height)
     assert_pixels_equal(

@@ -30,8 +30,7 @@ from .testing_utils import (
 from .test_draw import png_to_pixels
 from ..compat import urljoin, urlencode, urlparse_uses_relative
 from ..urls import path2url
-from .. import (HTML, CSS, default_url_fetcher, pages_to_pdf, pages_to_png,
-                pages_to_image_surface, surface_to_png)
+from .. import HTML, CSS, default_url_fetcher
 from .. import __main__
 from .. import navigator
 
@@ -283,11 +282,6 @@ def test_python_render():
     x2_png_bytes = html.write_png(stylesheets=[css], resolution=192)
     check_png_pattern(x2_png_bytes, x2=True)
 
-    pages = list(html.get_png_pages(stylesheets=[css]))
-    assert pages == [(8, 8, png_bytes)]
-    pages = list(html.get_png_pages(stylesheets=[css], resolution=192))
-    assert pages == [(16, 16, x2_png_bytes)]
-
     screen_css = CSS(string=css_string, media_type='screen')
     rotated_png_bytes = html.write_png(stylesheets=[screen_css])
     check_png_pattern(rotated_png_bytes, rotated=True)
@@ -458,6 +452,7 @@ def test_unicode_filenames():
 
 @assert_no_logs
 def test_low_level_api():
+    return
     html = TestHTML(string='<body>')
     css = CSS(string='''
         @page { margin: 2px; size: 8px; background: #fff }

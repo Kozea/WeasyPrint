@@ -152,13 +152,14 @@ def run(suite_directory):
 
     @app.route('/render/<path:test_id>')
     def render(test_id):
+        document = HTML(
+            safe_join(suite_directory, test_id + '.htm'),
+            encoding='utf8',
+        ).render(stylesheets=[default_stylesheet], enable_hinting=True)
         pages = [
-            'data:image/png;base64,' + (
-                png_bytes.encode('base64').replace('\n', ''))
-            for _, _, png_bytes in HTML(
-                safe_join(suite_directory, test_id + '.htm'),
-                encoding='utf8',
-            ).get_png_pages(stylesheets=[default_stylesheet])]
+            'data:image/png;base64,' + document.copy([page]).write_png(
+                ).encode('base64').replace('\n', '')
+            for page in document.pages]
         return render_template('render.html', **locals())
 
 

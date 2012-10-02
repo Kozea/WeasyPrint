@@ -107,7 +107,7 @@ def render_pages(html_content):
     """Lay out a document and return a list of PageBox objects."""
     return [p._page_box for p in TestHTML(
             string=html_content, base_url=resource_filename('<test>')
-        ).render(enable_hinting=True)]
+        ).render(enable_hinting=True).pages]
 
 
 def assert_tree(box, expected):

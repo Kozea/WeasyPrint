@@ -22,9 +22,6 @@ __version__ = VERSION
 # Used for 'User-Agent' in HTTP and 'Creator' in PDF
 VERSION_STRING = 'WeasyPrint %s (http://weasyprint.org/)' % VERSION
 
-import io
-import sys
-
 
 from .urls import default_url_fetcher
 # Make sure the logger is configured early:
@@ -106,7 +103,7 @@ class HTML(object):
         from .html import HTML5_UA_STYLESHEET
         return [HTML5_UA_STYLESHEET]
 
-    def render(self, stylesheets=None, enable_hinting=False, resolution=96):
+    def render(self, stylesheets=None, resolution=96, enable_hinting=False):
         """Render the document and return a list of Page objects.
 
         This is the low-level API. It provides individual pages that can
@@ -131,23 +128,9 @@ class HTML(object):
         :returns: A list of :class:`Page` objects.
 
         """
-        import functools
-        from .css import get_all_computed_styles
-        from .formatting_structure.build import build_formatting_structure
-        from .layout import layout_document
-        from . import images
+        from .document import Document
+        return Document.render(self, stylesheets, resolution, enable_hinting)
 
-        style_for = get_all_computed_styles(self, user_stylesheets=[
-            css if hasattr(css, 'rules')
-            else CSS(guess=css, media_type=self.media_type)
-            for css in stylesheets or []])
-        get_image_from_uri =  functools.partial(
-            images.get_image_from_uri, {}, self.url_fetcher)
-        page_boxes = layout_document(
-            enable_hinting, style_for, get_image_from_uri,
-            build_formatting_structure(
-                self.root_element, style_for, get_image_from_uri))
-        return [Page(p, enable_hinting, resolution) for p in page_boxes]
 
     def write_pdf(self, target=None, stylesheets=None):
         """Render the document to PDF.
@@ -164,8 +147,8 @@ class HTML(object):
             If :obj:`target` is :obj:`None`, a PDF byte string.
 
         """
-        pages = self.render(stylesheets, enable_hinting=False, resolution=72)
-        return pages_to_pdf(pages, target)
+        return self.render(
+            stylesheets, resolution=72, enable_hinting=False).write_pdf(target)
 
     def write_png(self, target=None, stylesheets=None, resolution=96):
         """Render the document to a single PNG image.
@@ -188,9 +171,8 @@ class HTML(object):
             If :obj:`target` is :obj:`None`, a PNG byte string.
 
         """
-        pages = self.render(stylesheets, enable_hinting=True,
-                            resolution=resolution)
-        return pages_to_png(pages, target)
+        return (self.render(stylesheets, resolution, enable_hinting=True)
+                .write_png(target))
 
 
 class CSS(object):
@@ -294,164 +276,3 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
         return 'tree', tree, base_url, None
 
     raise TypeError('Expected exactly one source, got %i' % nones.count(False))
-
-
-class Page(object):
-    """Represents a single rendered page."""
-    def __init__(self, page, enable_hinting=False, resolution=96):
-        self._page_box = page
-        self._enable_hinting = enable_hinting
-        self._dppx = resolution / 96
-        #: The page width, including margins, in cairo user units.
-        self.width = page.margin_width() * self._dppx
-        #: The page height, including margins, in cairo user units.
-        self.height = page.margin_height() * self._dppx
-
-    def paint(self, cairo_context, left_x=0, top_y=0, clip=False):
-        """Paint the surface in cairo, on any type of surface.
-
-        :param cairo_context: any :class:`cairo.Context` object.
-        :type left_x: float
-        :param left_x:
-            X coordinate of the left of the page, in user units.
-        :type top_y: float
-        :param top_y:
-            Y coordinate of the top of the page, in user units.
-        :type clip: bool
-        :param clip:
-            Whether to clip/cut content outside the page. If false or
-            not provided, content can overflow.
-
-        """
-        from .draw import draw_page, stacked
-        with stacked(cairo_context):
-            if self._enable_hinting:
-                from math import ceil
-                left_x, top_y = cairo_context.user_to_device(left_x, top_y)
-                width, height = cairo_context.user_to_device_distance(
-                    self.width, self.height)
-                # Hint in device space
-                left_x = int(left_x)
-                top_y = int(top_y)
-                width = int(ceil(width))
-                height = int(ceil(height))
-                left_x, top_y = cairo_context.device_to_user(left_x, top_y)
-                width, height = cairo_context.device_to_user_distance(
-                    width, height)
-            else:
-                width = self.width
-                height = self.height
-            cairo_context.translate(left_x, top_y)
-            # The top-left corner is now (0, 0)
-            if clip:
-                cairo_context.rectangle(0, 0, width, height)
-                cairo_context.clip()
-            cairo_context.scale(self._dppx, self._dppx)
-            # User units are now CSS pixels
-            draw_page(self._page_box, cairo_context, self._enable_hinting)
-
-
-def pages_to_pdf(pages, target=None):
-    """Paint pages; write PDF bytes to ``target``, or return them
-    if ``target`` is ``None``.
-
-    This function also adds PDF metadata (bookmarks/outlines, hyperlinks, …).
-    PDF files coming straight from :class:`cairo.PDFSurface` do not have
-    such metadata.
-
-    :param pages: a list of Page objects
-    :param target: a filename, file object, or ``None``
-    :returns: a bytestring if ``target`` is ``None``.
-
-    """
-    import shutil
-    import cairo
-    from .pdf import write_pdf_metadata
-
-    # Use an in-memory buffer. We will need to seek for metadata
-    # TODO: avoid this if target can seek? Benchmark first.
-    file_obj = io.BytesIO()
-    # (1, 1) is overridden by .set_size() below.
-    surface = cairo.PDFSurface(file_obj, 1, 1)
-    context = cairo.Context(surface)
-    for page in pages:
-        surface.set_size(page.width, page.height)
-        page.paint(context)
-        surface.show_page()
-    surface.finish()
-
-    write_pdf_metadata(pages, file_obj)
-
-    if target is None:
-        return file_obj.getvalue()
-    else:
-        file_obj.seek(0)
-        if hasattr(target, 'write'):
-            shutil.copyfileobj(file_obj, target)
-        else:
-            with open(target, 'wb') as fd:
-                shutil.copyfileobj(file_obj, fd)
-
-
-def pages_to_image_surface(pages):
-    """Paint pages vertically for pixel output.
-
-    :param pages: a list of :class:`~weasyprint.Page` objects
-    :returns: a :class:`cairo.ImageSurface` object
-
-    """
-    import math
-    import cairo
-    from .draw import stacked
-    from .compat import izip
-
-    # This duplicates the hinting logic in Page.paint. There is a dependency
-    # cycle otherwise: this → hinting logic → context → surface → this
-    # But since we do no transform here, cairo_context.user_to_device and
-    # friends are identity functions.
-    widths = [int(math.ceil(p.width)) for p in pages]
-    heights = [int(math.ceil(p.height)) for p in pages]
-    max_width = max(widths)
-    surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, max_width, sum(heights))
-    context = cairo.Context(surface)
-
-    pos_y = 0
-    for page, width, height in izip(pages, widths, heights):
-        pos_x = (max_width - width) / 2
-        with stacked(context):
-            page.paint(context, pos_x, pos_y, clip=True)
-        pos_y += height
-    return surface
-
-
-def surface_to_png(surface, target=None):
-    """Write PNG bytes to ``target``, or return them if ``target`` is ``None``.
-
-    :param surface: a :class:`cairo.ImageSurface` object
-    :param target: a filename, file object, or ``None``
-    :returns: a bytestring if ``target`` is ``None``.
-
-    """
-    from .urls import FILESYSTEM_ENCODING
-
-    if target is None:
-        target = io.BytesIO()
-        surface.write_to_png(target)
-        return target.getvalue()
-    else:
-        if sys.version_info[0] < 3 and isinstance(target, unicode):
-            # py2cairo 1.8 does not support unicode filenames.
-            target = target.encode(FILESYSTEM_ENCODING)
-        surface.write_to_png(target)
-
-
-def pages_to_png(pages, target=None):
-    """Paint pages vertically; write PNG bytes to ``target``, or return them
-    if ``target`` is ``None``.
-
-    :param pages: a list of :class:`~weasyprint.Page` objects
-    :param target: a filename, file object, or ``None``
-    :returns: a bytestring if ``target`` is ``None``.
-
-    """
-    return surface_to_png(pages_to_image_surface(pages), target)

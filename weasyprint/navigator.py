@@ -15,7 +15,7 @@ from __future__ import division
 
 import os.path
 
-from weasyprint import HTML, CSS, pages_to_image_surface, surface_to_png
+from weasyprint import HTML, CSS
 from weasyprint.formatting_structure import boxes
 from weasyprint.urls import url_is_absolute
 from weasyprint.compat import parse_qs, base64_encode
@@ -52,14 +52,13 @@ def find_links(box, links, anchors):
 
 
 def get_pages(html):
-    for page in html.render(enable_hinting=True, stylesheets=[STYLESHEET]):
+    document = html.render(enable_hinting=True, stylesheets=[STYLESHEET])
+    for page in document.pages:
         links = []
         anchors = []
         find_links(page._page_box, links, anchors)
-        surface = pages_to_image_surface([page])
-        width = surface.get_width()
-        height = surface.get_height()
-        png_bytes = surface_to_png(surface)
+        png_bytes, width, height = (
+            document.copy([page]).write_png(with_size=True))
         data_url = 'data:image/png;base64,' + (
             base64_encode(png_bytes).decode('ascii').replace('\n', ''))
         yield width, height, data_url, links, anchors

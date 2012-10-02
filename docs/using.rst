@@ -70,7 +70,8 @@ High-level API
 ..............
 
 .. autoclass:: HTML(input, **kwargs)
-    :members: write_pdf, write_png, get_png_pages
+    :members:
+    :member-order: bysource
 
 .. autoclass:: CSS(input, **kwargs)
 
@@ -86,17 +87,16 @@ pages, each page separately, or even use any type of cairo surface for ouput
 other than PDF or PNG.
 
 .. automethod:: HTML.render
+.. module:: weasyprint.document
+.. autoclass:: Document
+    :members:
+    :member-order: bysource
 .. autoclass:: Page
     :members:
     :member-order: bysource
 
-.. autofunction:: pages_to_pdf
 
-.. autofunction:: pages_to_png
-.. autofunction:: pages_to_image_surface
-.. autofunction:: surface_to_png
-
-
+.. currentmodule:: weasyprint
 .. _url-fetchers:
 
 URL fetchers
