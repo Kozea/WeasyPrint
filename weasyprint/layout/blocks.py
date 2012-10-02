@@ -223,6 +223,11 @@ def block_container_layout(context, box, max_position_y, skip_stack,
     if not isinstance(box, boxes.BlockBox):
         context.create_block_formatting_context()
 
+    is_start = skip_stack is None
+    if not is_start:
+        # Remove top margin, border and padding:
+        box = box.copy_with_children(box.children, is_start=False)
+
     if adjoining_margins is None:
         adjoining_margins = []
 
@@ -233,6 +238,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
         or establishes_formatting_context(box) or box.is_for_root_element)
     if collapsing_with_children:
         # XXX not counting margins in adjoining_margins, if any
+        # (There are not padding or borders, see above.)
         position_y = box.position_y
     else:
         box.position_y += collapse_margin(adjoining_margins) - box.margin_top
@@ -250,7 +256,6 @@ def block_container_layout(context, box, max_position_y, skip_stack,
 
     last_in_flow_child = None
 
-    is_start = skip_stack is None
     if is_start:
         skip = 0
     else:

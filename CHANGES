@@ -14,6 +14,7 @@ Not released yet.
 
   - Importing Pango in some PyGTK installations.
   - Layout of inline-blocks with `vertical-align: top` or `bottom`.
+  - Do not repeat a block’s margin-top or padding-top after a page break.
   - Performance problem with large tables split across many pages.
 
 

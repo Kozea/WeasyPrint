@@ -4179,3 +4179,54 @@ def test_font_stretch():
     assert condensed < normal
     # TODO: when @font-face is supported use a font with an expanded variant.
 #    assert normal < expanded
+
+
+@assert_no_logs
+def test_box_decoration_break():
+    # http://www.w3.org/TR/css3-background/#the-box-decoration-break
+    # Property not implemented yet, always "slice".
+    page_1, page_2 = parse('''
+        <style>
+            @page { size: 100px }
+            p { padding: 2px; border: 3px solid; margin: 5px }
+            img { height: 40px; vertical-align: top }
+        </style>
+        <p>
+            <img src=pattern.png><br>
+            <img src=pattern.png><br>
+            <img src=pattern.png><br>
+            <img src=pattern.png><br>
+    ''')
+    html, = page_1.children
+    body, = html.children
+    paragraph, = body.children
+    line_1, line_2 = paragraph.children
+    assert paragraph.position_y == 0
+    assert paragraph.margin_top == 5
+    assert paragraph.border_top_width == 3
+    assert paragraph.padding_top == 2
+    assert paragraph.content_box_y() == 10
+    assert line_1.position_y == 10
+    assert line_2.position_y == 50
+    assert paragraph.height == 80
+    assert paragraph.margin_bottom == 0
+    assert paragraph.border_bottom_width == 0
+    assert paragraph.padding_bottom == 0
+    assert paragraph.margin_height() == 90
+
+    html, = page_2.children
+    body, = html.children
+    paragraph, = body.children
+    line_1, line_2 = paragraph.children
+    assert paragraph.position_y == 0
+    assert paragraph.margin_top == 0
+    assert paragraph.border_top_width == 0
+    assert paragraph.padding_top == 0
+    assert paragraph.content_box_y() == 0
+    assert line_1.position_y == 0
+    assert line_2.position_y == 40
+    assert paragraph.height == 80
+    assert paragraph.padding_bottom == 2
+    assert paragraph.border_bottom_width == 3
+    assert paragraph.margin_bottom == 5
+    assert paragraph.margin_height() == 90
