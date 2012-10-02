@@ -192,28 +192,6 @@ class HTML(object):
                             resolution=resolution)
         return pages_to_png(pages, target)
 
-    def get_png_pages(self, stylesheets=None, resolution=96):
-        """Render the document to multiple PNG images, one per page.
-
-        :param stylesheets:
-            An optional list of user stylesheets. (See
-            :ref:`stylesheet-origins`\.) The list’s elements are
-            :class:`CSS` objects, filenames, URLs, or file-like objects.
-        :type resolution: float
-        :param resolution:
-            The output resolution in PNG pixels per CSS inch. At 96 dpi
-            (the default), PNG pixels match the CSS ``px`` unit.
-        :returns:
-            A generator of ``(width, height, png_bytes)`` tuples, one for
-            each page, in order.
-
-        """
-        for page in self.render(stylesheets, enable_hinting=True,
-                                resolution=resolution):
-            surface = pages_to_image_surface([page])
-            yield (surface.get_width(), surface.get_height(),
-                    surface_to_png(surface))
-
 
 class CSS(object):
     """Represents a CSS stylesheet parsed by tinycss.

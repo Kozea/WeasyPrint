@@ -6,8 +6,10 @@ Version 0.15
 
 Not released yet.
 
-* Add a low level API that enables painting pages individually on any
+* Add a low-level API that enables painting pages individually on any
   cairo surface.
+* **Backward-incompatible change**: remove the ``HTML.get_png_pages`` method.
+  The new low-level API covers this functionality and more.
 * Add support for the ``font-stretch`` property.
 * Add support for ``@page:blank`` to select blank pages.
 * Bug fixes:
