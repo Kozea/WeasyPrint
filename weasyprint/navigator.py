@@ -16,9 +16,8 @@ from __future__ import division
 import os.path
 
 from weasyprint import HTML, CSS
-from weasyprint.formatting_structure import boxes
 from weasyprint.urls import url_is_absolute
-from weasyprint.compat import parse_qs, base64_encode
+from weasyprint.compat import parse_qs, base64_encode, iteritems
 
 
 FAVICON = os.path.join(os.path.dirname(__file__),
@@ -29,39 +28,14 @@ STYLESHEET = CSS(string='''
 ''')
 
 
-def find_links(box, links, anchors):
-    link = box.style.link
-    # 'link' is inherited but redundant on text boxes
-    if link and not isinstance(box, boxes.TextBox):
-        type_, href = box.style.link
-        if type_ == 'internal':
-            href = '#' + href
-        else:
-            href = '/view/' + href
-        # "Border area.  That's the area that hit-testing is done on."
-        # http://lists.w3.org/Archives/Public/www-style/2012Jun/0318.html
-        links.append((href,) + box.hit_area())
-
-    anchor = box.style.anchor
-    if anchor:
-        anchors.append((anchor,) + box.hit_area())
-
-    if isinstance(box, boxes.ParentBox):
-        for child in box.children:
-            find_links(child, links, anchors)
-
-
 def get_pages(html):
     document = html.render(enable_hinting=True, stylesheets=[STYLESHEET])
     for page in document.pages:
-        links = []
-        anchors = []
-        find_links(page._page_box, links, anchors)
         png_bytes, width, height = (
             document.copy([page]).write_png(with_size=True))
         data_url = 'data:image/png;base64,' + (
             base64_encode(png_bytes).decode('ascii').replace('\n', ''))
-        yield width, height, data_url, links, anchors
+        yield width, height, data_url, page.links, page.anchors
 
 
 def render_template(url):
@@ -102,15 +76,17 @@ def render_template(url):
         for width, height, data_url, links, anchors in get_pages(html):
             write('<section style="width: {0}px; height: {1}px">\n'
                   '  <img src="{2}">\n'.format(width, height, data_url))
-            for href, pos_x, pos_y, width, height in links:
+            for link_type, target, (pos_x, pos_y, width, height) in links:
+                href = ('#' + target if link_type == 'internal'
+                        else '/view/' + target)
                 write('  <a style="left: {0}px; top: {1}px; '
                       'width: {2}px; height: {3}px" href="{4}"></a>\n'
                       .format(pos_x, pos_y, width, height, href))
-            for anchor, pos_x, pos_y, width, height in anchors:
+            for anchor_name, (pos_x, pos_y) in iteritems(anchors):
                 # Remove 60px to pos_y so that the real pos is below
                 # the address bar.
                 write('  <a style="left: {0}px; top: {1}px;" name="{2}"></a>\n'
-                      .format(pos_x, pos_y - 60, anchor))
+                      .format(pos_x, pos_y - 60, anchor_name))
             write('</section>\n')
     else:
         write('''
