@@ -452,7 +452,6 @@ def test_unicode_filenames():
 
 @assert_no_logs
 def test_low_level_api():
-    return
     html = TestHTML(string='<body>')
     css = CSS(string='''
         @page { margin: 2px; size: 8px; background: #fff }
@@ -461,21 +460,22 @@ def test_low_level_api():
     ''')
     pdf_bytes = html.write_pdf(stylesheets=[css])
     assert pdf_bytes.startswith(b'%PDF')
-    assert pages_to_pdf(html.render([css], resolution=72)) == pdf_bytes
+    assert html.render([css], resolution=72).write_pdf() == pdf_bytes
+    assert html.render([css]).write_pdf() != pdf_bytes  # Beware of resolution
 
-    page, = html.render([css], enable_hinting=True)
+    png_bytes = html.write_png(stylesheets=[css])
+    document = html.render([css], enable_hinting=True)
+    page, = document.pages
     assert page.width == 8
     assert page.height == 8
+    assert document.write_png() == png_bytes
+    assert document.copy([page]).write_png() == png_bytes
+
     surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, 8, 8)
-    context = cairo.Context(surface)
-    page.paint(context)
+    page.paint(cairo.Context(surface))
     file_obj = io.BytesIO()
     surface.write_to_png(file_obj)
-    png_bytes = file_obj.getvalue()
-    check_png_pattern(png_bytes)
-
-    assert surface_to_png(surface) == png_bytes
-    assert pages_to_png([page]) == png_bytes
+    check_png_pattern(file_obj.getvalue())
 
     surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, 8, 8)
     context = cairo.Context(surface)
@@ -484,19 +484,17 @@ def test_low_level_api():
     context.rotate(-math.pi / 2)
     context.translate(-4, -4)
     page.paint(context)
-    check_png_pattern(surface_to_png(surface), rotated=True)
-
-    surface = pages_to_image_surface([page])
     file_obj = io.BytesIO()
     surface.write_to_png(file_obj)
-    assert file_obj.getvalue() == png_bytes
+    check_png_pattern(file_obj.getvalue(), rotated=True)
 
-    page, = html.render([css], enable_hinting=True, resolution=192)
+    document = html.render([css], enable_hinting=True, resolution=192)
+    page, = document.pages
     assert page.width == 16
     assert page.height == 16
-    check_png_pattern(pages_to_png([page]), x2=True)
+    check_png_pattern(document.write_png(), x2=True)
 
-    page_1, page_2 = TestHTML(string='''
+    document = TestHTML(string='''
         <style>
             @page:first { size: 5px 10px } @page { size: 6px 4px }
             p { page-break-before: always }
@@ -504,16 +502,22 @@ def test_low_level_api():
         <p></p>
         <p></p>
     ''').render()
+    page_1, page_2 = document.pages
     assert page_1.width == 5
     assert page_1.height == 10
     assert page_2.width == 6
     assert page_2.height == 4
-    file_obj = io.BytesIO()
-    pages_to_png([page_1, page_2], file_obj)
-    file_obj.seek(0)
-    surface = cairo.ImageSurface.create_from_png(file_obj)
-    assert surface.get_width() == 6  # Max of both widths
-    assert surface.get_height() == 14  # Sum of both heights
+
+    def png_size(png_bytes):
+        surface = cairo.ImageSurface.create_from_png(io.BytesIO(png_bytes))
+        return surface.get_width(), surface.get_height()
+
+    png_bytes = document.write_png()
+    assert document.copy([page_1, page_2]).write_png() == png_bytes
+    # (Max of both widths, Sum of both heights)
+    assert png_size(png_bytes) == (6, 14)
+    assert png_size(document.copy([page_1]).write_png()) == (5, 10)
+    assert png_size(document.copy([page_2]).write_png()) == (6, 4)
 
 
 def wsgi_client(path_info, qs_args=None):
