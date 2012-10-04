@@ -53,6 +53,9 @@ def iri_to_uri(url):
     """Turn an IRI that can contain any Unicode character into an ASII-only
     URI that conforms to RFC 3986.
     """
+    if url.startswith('data:'):
+        # Data URIs can be huge, but don’t need this anyway.
+        return url
     # Use UTF-8 as per RFC 3987 (IRI), except for file://
     url = url.encode(FILESYSTEM_ENCODING
                      if url.startswith('file:') else 'utf-8')
@@ -112,9 +115,9 @@ def url_join(base_url, url, context, *args):
 
     """
     if url_is_absolute(url):
-        return url
+        return iri_to_uri(url)
     elif base_url:
-        return urljoin(base_url, url)
+        return iri_to_uri(urljoin(base_url, url))
     else:
         LOGGER.warn('Relative URI reference without a base URI: ' + context,
                     *args)

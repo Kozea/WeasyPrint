@@ -21,7 +21,7 @@ from tinycss.parsing import split_on_comma, remove_whitespace
 from ..logger import LOGGER
 from ..formatting_structure import counters
 from ..compat import urljoin, unquote
-from ..urls import url_is_absolute
+from ..urls import url_is_absolute, iri_to_uri
 from .properties import (INITIAL_VALUES, KNOWN_PROPERTIES, NOT_PRINT_MEDIA,
                          Dimension)
 from . import computed_values
@@ -906,7 +906,7 @@ def link(token, base_url):
         if token.value.startswith('#'):
             return 'internal', unquote(token.value[1:])
         else:
-            return 'external', safe_urljoin(base_url, token.value)
+            return 'external', iri_to_uri(safe_urljoin(base_url, token.value))
     function = parse_function(token)
     if function:
         name, args = function

@@ -189,6 +189,8 @@ class CSS(object):
                  url_fetcher=default_url_fetcher, _check_mime_type=False,
                  media_type='print'):
         from .css import PARSER, preprocess_stylesheet
+        from .urls import wrap_url_fetcher
+        url_fetcher = wrap_url_fetcher(url_fetcher)
 
         source_type, source, base_url, protocol_encoding = _select_source(
             guess, filename, url, file_obj, string, tree=None,
@@ -225,8 +227,6 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
 
     """
     from .urls import path2url, ensure_url, url_is_absolute
-    from .urls import wrap_url_fetcher
-    url_fetcher = wrap_url_fetcher(url_fetcher)
 
     if base_url is not None:
         base_url = ensure_url(base_url)

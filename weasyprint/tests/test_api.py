@@ -695,11 +695,25 @@ def test_links():
 
     assert_links('''
         <body style="width: 200px">
-        <a href="../lipsum" style="display: block; margin: 10px 5px">
+        <a href="../lipsum/é_%E9" style="display: block; margin: 10px 5px">
     ''', [[
-        ('external', 'http://weasyprint.org/foo/lipsum', (5, 10, 190, 0)),
+        ('external', 'http://weasyprint.org/foo/lipsum/%C3%A9_%E9',
+            (5, 10, 190, 0)),
     ]], [{}], [[
-        ('external', 'http://weasyprint.org/foo/lipsum', (5, 10, 190, 0)),
+        ('external', 'http://weasyprint.org/foo/lipsum/%C3%A9_%E9',
+            (5, 10, 190, 0)),
+    ]],
+    base_url='http://weasyprint.org/foo/bar/')
+    assert_links('''
+        <body style="width: 200px">
+        <div style="display: block; margin: 10px 5px;
+                    -weasy-link: url(../lipsum/é_%E9)">
+    ''', [[
+        ('external', 'http://weasyprint.org/foo/lipsum/%C3%A9_%E9',
+            (5, 10, 190, 0)),
+    ]], [{}], [[
+        ('external', 'http://weasyprint.org/foo/lipsum/%C3%A9_%E9',
+            (5, 10, 190, 0)),
     ]],
     base_url='http://weasyprint.org/foo/bar/')
 
@@ -848,3 +862,9 @@ def test_url_fetcher():
         test('<body><img src="custom:foo/bar">', blank=True)
     assert len(logs) == 1
     assert logs[0].startswith('WARNING: Error for image at custom:foo/bar')
+
+    def fetcher(url):
+        assert url == 'weasyprint-custom:%C3%A9_%e9.css'
+        return dict(string='')
+    TestHTML(string='<link rel=stylesheet href="weasyprint-custom:'
+        'é_%e9.css"><body>', url_fetcher=fetcher).render()
