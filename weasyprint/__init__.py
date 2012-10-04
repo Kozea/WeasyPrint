@@ -147,8 +147,7 @@ class HTML(object):
             If :obj:`target` is :obj:`None`, a PDF byte string.
 
         """
-        return self.render(
-            stylesheets, resolution=72, enable_hinting=False).write_pdf(target)
+        return self.render(stylesheets, resolution=72).write_pdf(target)
 
     def write_png(self, target=None, stylesheets=None, resolution=96):
         """Render the document to a single PNG image.

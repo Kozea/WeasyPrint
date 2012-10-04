@@ -3,7 +3,7 @@
     weasyprint.tests.test_metadata
     ------------------------------
 
-    Test metadata of the document (bookmarks, links and destinations).
+    Test metadata of the document (bookmarks and hyperlinks).
 
     :copyright: Copyright 2011-2012 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
@@ -41,27 +41,29 @@ def test_pdf_parser():
 
 
 def get_metadata(html, base_url=resource_filename('<inline HTML>')):
-    return pdf.gather_metadata(TestHTML(string=html, base_url=base_url).render(
-        resolution=72, stylesheets=[
-            CSS(string='@page { size: 500pt 1000pt; margin: 50pt }')]).pages)
+    return pdf.prepare_metadata(
+        TestHTML(string=html, base_url=base_url).render(
+            resolution=72, stylesheets=[
+                CSS(string='@page { size: 500pt 1000pt; margin: 50pt }')]),
+        bookmark_root_id=0)
 
 
 def get_bookmarks(html, structure_only=False):
-    (root, bookmarks), _links = get_metadata(html)
+    root, bookmarks, _links = get_metadata(html)
     for bookmark in bookmarks:
         if structure_only:
-            bookmark.pop('destination')
+            bookmark.pop('target')
             bookmark.pop('label')
         else:
             # Eliminate errors of floating point arithmetic
             # (eg. 499.99999999999994 instead of 500)
-            p, x, y = bookmark['destination']
-            bookmark['destination'] = p, round(x, 6), round(y, 6)
+            p, x, y = bookmark['target']
+            bookmark['target'] = p, round(x, 6), round(y, 6)
     return root, bookmarks
 
 
 def get_links(html, **kwargs):
-    _bookmarks, links = get_metadata(html, **kwargs)
+    _root, _bookmarks, links = get_metadata(html, **kwargs)
     return [
         [
             (
@@ -122,27 +124,27 @@ def test_bookmarks():
     assert root == dict(Count=11, First=1, Last=10)
     assert bookmarks == [
         dict(Count=0, First=None, Last=None, Next=2, Parent=0, Prev=None,
-             label='Title 1', destination=(0, 50, 950)),
+             label='Title 1', target=(0, 50, 950)),
         dict(Count=4, First=3, Last=6, Next=7, Parent=0, Prev=1,
-             label='Title 2', destination=(0, 50, 850)),
+             label='Title 2', target=(0, 50, 850)),
         dict(Count=0, First=None, Last=None, Next=4, Parent=2, Prev=None,
-             label='Title 3', destination=(0, 70, 750)),
+             label='Title 3', target=(0, 70, 750)),
         dict(Count=1, First=5, Last=5, Next=6, Parent=2, Prev=3,
-             label='Title 4', destination=(0, 50, 650)),
+             label='Title 4', target=(0, 50, 650)),
         dict(Count=0, First=None, Last=None, Next=None, Parent=4, Prev=None,
-             label='Title 5', destination=(0, 50, 550)),
+             label='Title 5', target=(0, 50, 550)),
         dict(Count=0, First=None, Last=None, Next=None, Parent=2, Prev=4,
-             label='Title 6', destination=(1, 50, 850)),
+             label='Title 6', target=(1, 50, 850)),
         dict(Count=2, First=8, Last=8, Next=10, Parent=0, Prev=2,
-             label='Title 7', destination=(1, 50, 750)),
+             label='Title 7', target=(1, 50, 750)),
         dict(Count=1, First=9, Last=9, Next=None, Parent=7, Prev=None,
-             label='Title 8', destination=(1, 50, 650)),
+             label='Title 8', target=(1, 50, 650)),
         dict(Count=0, First=None, Last=None, Next=None, Parent=8, Prev=None,
-             label='Title 9', destination=(1, 50, 550)),
+             label='Title 9', target=(1, 50, 550)),
         dict(Count=1, First=11, Last=11, Next=None, Parent=0, Prev=7,
-             label='Title 10', destination=(1, 50, 450)),
+             label='Title 10', target=(1, 50, 450)),
         dict(Count=0, First=None, Last=None, Next=None, Parent=10, Prev=None,
-             label='Title 11', destination=(1, 50, 350))]
+             label='Title 11', target=(1, 50, 350))]
 
     root, bookmarks = get_bookmarks('''
         <h2>1</h2> level 1

@@ -520,6 +520,237 @@ def test_low_level_api():
     assert png_size(document.copy([page_2]).write_png()) == (6, 4)
 
 
+@assert_no_logs
+def test_bookmarks():
+    def assert_bookmarks(html, expected_by_page, expected_tree):
+        document = TestHTML(string=html).render()
+        assert [p.bookmarks for p in document.pages] == expected_by_page
+        assert document.make_bookmark_tree() == expected_tree
+    assert_bookmarks('''
+        <style>* { height: 10px }</style>
+        <h1>a</h1>
+        <h4 style="page-break-after: always">b</h4>
+        <h3 style="position: relative; top: 2px; left: 3px">c</h3>
+        <h2>d</h2>
+        <h1>e</h1>
+    ''', [
+        [(1, 'a', (0, 0)), (4, 'b', (0, 10))],
+        [(3, 'c', (3, 2)), (2, 'd', (0, 10)), (1, 'e', (0, 20))],
+    ], [
+        ('a', (0, 0, 0), [
+            ('b', (0, 0, 10), []),
+            ('c', (1, 3, 2), []),
+            ('d', (1, 0, 10), [])]),
+        ('e', (1, 0, 20), []),
+    ])
+    assert_bookmarks('''
+        <style>
+            * { height: 90px; margin: 0 0 10px 0 }
+        </style>
+        <h1>Title 1</h1>
+        <h1>Title 2</h1>
+        <h2 style="position: relative; left: 20px">Title 3</h2>
+        <h2>Title 4</h2>
+        <h3>Title 5</h3>
+        <span style="display: block; page-break-before: always"></span>
+        <h2>Title 6</h2>
+        <h1>Title 7</h1>
+        <h2>Title 8</h2>
+        <h3>Title 9</h3>
+        <h1>Title 10</h1>
+        <h2>Title 11</h2>
+    ''', [
+        [
+            (1, 'Title 1', (0, 0)),
+            (1, 'Title 2', (0, 100)),
+            (2, 'Title 3', (20, 200)),
+            (2, 'Title 4', (0, 300)),
+            (3, 'Title 5', (0, 400))
+        ], [
+            (2, 'Title 6', (0, 100)),
+            (1, 'Title 7', (0, 200)),
+            (2, 'Title 8', (0, 300)),
+            (3, 'Title 9', (0, 400)),
+            (1, 'Title 10', (0, 500)),
+            (2, 'Title 11', (0, 600))
+        ],
+    ], [
+        ('Title 1', (0, 0, 0), []),
+        ('Title 2', (0, 0, 100), [
+            ('Title 3', (0, 20, 200), []),
+            ('Title 4', (0, 0, 300), [
+                ('Title 5', (0, 0, 400), [])]),
+            ('Title 6', (1, 0, 100), [])]),
+        ('Title 7', (1, 0, 200), [
+            ('Title 8', (1, 0, 300), [
+                ('Title 9', (1, 0, 400), [])])]),
+        ('Title 10', (1, 0, 500), [
+            ('Title 11', (1, 0, 600), [])]),
+    ])
+    assert_bookmarks('''
+        <style>* { height: 10px }</style>
+        <h2>A</h2> <p>depth 1</p>
+        <h4>B</h4> <p>depth 2</p>
+        <h2>C</h2> <p>depth 1</p>
+        <h3>D</h3> <p>depth 2</p>
+        <h4>E</h4> <p>depth 3</p>
+    ''', [[
+        (2, 'A', (0, 0)),
+        (4, 'B', (0, 20)),
+        (2, 'C', (0, 40)),
+        (3, 'D', (0, 60)),
+        (4, 'E', (0, 80)),
+    ]], [
+        ('A', (0, 0, 0), [
+            ('B', (0, 0, 20), [])]),
+        ('C', (0, 0, 40), [
+            ('D', (0, 0, 60), [
+                ('E', (0, 0, 80), [])])]),
+    ])
+    assert_bookmarks('''
+        <style>* { height: 10px; font-size: 0 }</style>
+        <h2>A</h2> <p>h2 depth 1</p>
+        <h4>B</h4> <p>h4 depth 2</p>
+        <h3>C</h3> <p>h3 depth 2</p>
+        <h5>D</h5> <p>h5 depth 3</p>
+        <h1>E</h1> <p>h1 depth 1</p>
+        <h2>F</h2> <p>h2 depth 2</p>
+        <h2>G</h2> <p>h2 depth 2</p>
+        <h4>H</h4> <p>h4 depth 3</p>
+        <h1>I</h1> <p>h1 depth 1</p>
+    ''', [[
+        (2, 'A', (0, 0)),
+        (4, 'B', (0, 20)),
+        (3, 'C', (0, 40)),
+        (5, 'D', (0, 60)),
+        (1, 'E', (0, 70)),
+        (2, 'F', (0, 90)),
+        (2, 'G', (0, 110)),
+        (4, 'H', (0, 130)),
+        (1, 'I', (0, 150)),
+    ]], [
+        ('A', (0, 0, 0), [
+            ('B', (0, 0, 20), []),
+            ('C', (0, 0, 40), [
+                ('D', (0, 0, 60), [])])]),
+        ('E', (0, 0, 70), [
+            ('F', (0, 0, 90), []),
+            ('G', (0, 0, 110), [
+                ('H', (0, 0, 130), [])])]),
+        ('I', (0, 0, 150), []),
+    ])
+
+
+
+@assert_no_logs
+def test_links():
+    def assert_links(html, expected_links_by_page, expected_anchors_by_page,
+                     expected_resolved_links,
+                     base_url=resource_filename('<inline HTML>'), warnings=()):
+        with capture_logs() as logs:
+            document = TestHTML(string=html, base_url=base_url).render()
+            resolved_links = list(document.resolve_links())
+        assert len(logs) == len(warnings)
+        for message, expected in zip(logs, warnings):
+            assert expected in message
+        assert [p.links for p in document.pages] == expected_links_by_page
+        assert [p.anchors for p in document.pages] == expected_anchors_by_page
+        assert resolved_links == expected_resolved_links
+
+    assert_links('''
+        <style>
+            body { font-size: 10px; line-height: 2; width: 200px }
+            p { height: 90px; margin: 0 0 10px 0 }
+            img { width: 30px; vertical-align: top }
+        </style>
+        <p><a href="http://weasyprint.org"><img src=pattern.png></a></p>
+        <p style="padding: 0 10px"><a
+            href="#lipsum"><img style="border: solid 1px"
+                                src=pattern.png></a></p>
+        <p id=hello>Hello, World</p>
+        <p id=lipsum>
+            <a style="display: block; page-break-before: always; height: 30px"
+               href="#hel%6Co"></a>
+        </p>
+    ''', [
+        [
+            ('external', 'http://weasyprint.org', (0, 0, 30, 20)),
+            ('external', 'http://weasyprint.org', (0, 0, 30, 30)),
+            ('internal', 'lipsum', (10, 100, 32, 20)),
+            ('internal', 'lipsum', (10, 100, 32, 32))
+        ],
+        [('internal', 'hello', (0, 0, 200, 30))],
+    ], [
+        {'hello': (0, 200)},
+        {'lipsum': (0, 0)}
+    ], [
+        [
+            ('external', 'http://weasyprint.org', (0, 0, 30, 20)),
+            ('external', 'http://weasyprint.org', (0, 0, 30, 30)),
+            ('internal', (1, 0, 0), (10, 100, 32, 20)),
+            ('internal', (1, 0, 0), (10, 100, 32, 32))
+        ],
+        [('internal', (0, 0, 200), (0, 0, 200, 30))],
+    ])
+
+    assert_links('''
+        <body style="width: 200px">
+        <a href="../lipsum" style="display: block; margin: 10px 5px">
+    ''', [[
+        ('external', 'http://weasyprint.org/foo/lipsum', (5, 10, 190, 0)),
+    ]], [{}], [[
+        ('external', 'http://weasyprint.org/foo/lipsum', (5, 10, 190, 0)),
+    ]],
+    base_url='http://weasyprint.org/foo/bar/')
+
+    # Relative URI reference without a base URI: not allowed
+    assert_links('<a href="../lipsum">',
+        [[]], [{}], [[]], base_url=None, warnings=[
+            'WARNING: Relative URI reference without a base URI'])
+    assert_links('<div style="-weasy-link: url(../lipsum)">',
+        [[]], [{}], [[]], base_url=None, warnings=[
+            "WARNING: Ignored `-weasy-link: url(../lipsum)` at 1:1, "
+            "Relative URI reference without a base URI: '../lipsum'."])
+
+    # Internal URI reference without a base URI: OK
+    assert_links('''
+        <body style="width: 200px">
+        <a href="#lipsum" id="lipsum" style="display: block; margin: 10px 5px">
+    ''', [[
+        ('internal', 'lipsum', (5, 10, 190, 0)),
+    ]], [
+        {'lipsum': (5, 10)}
+    ], [[
+        ('internal', (0, 5, 10), (5, 10, 190, 0)),
+    ]], base_url=None)
+
+    assert_links('''
+        <body style="width: 200px">
+        <div style="-weasy-link: url(#lipsum); margin: 10px 5px" id="lipsum">
+    ''', [[
+        ('internal', 'lipsum', (5, 10, 190, 0)),
+    ]], [
+        {'lipsum': (5, 10)}
+    ], [[
+        ('internal', (0, 5, 10), (5, 10, 190, 0)),
+    ]], base_url=None)
+
+    assert_links('''
+        <style> a { display: block; height: 15px } </style>
+        <body style="width: 200px">
+            <a href="#lipsum"></a>
+            <a href="#missing" id="lipsum"></a>
+    ''', [[
+        ('internal', 'lipsum', (0, 0, 200, 15)),
+        ('internal', 'missing', (0, 15, 200, 15)),
+    ]], [
+        {'lipsum': (0, 15)}
+    ], [[
+        ('internal', (0, 0, 15), (0, 0, 200, 15)),
+    ]], base_url=None, warnings=[
+        'WARNING: No anchor #missing for internal URI reference'])
+
+
 def wsgi_client(path_info, qs_args=None):
     start_response_calls = []
     def start_response(status, headers):

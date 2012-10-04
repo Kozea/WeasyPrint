@@ -295,165 +295,99 @@ class PDFFile(object):
         return fileobj.tell(), fileobj.write
 
 
-def process_bookmarks(raw_bookmarks):
-    """Transform a list of bookmarks as found in the document
-    to a data structure ready for PDF.
+def flatten_bookmarks(bookmarks, depth=1):
+    for label, target, children in bookmarks:
+        yield label, target, depth
+        for result in flatten_bookmarks(children, depth + 1):
+            yield result
+
+
+def prepare_metadata(document, bookmark_root_id):
+    """Change metadata into data structures closer to the PDF objects.
+
+    In particulare, convert from cairo units (origin a the top-left corner)
+    to PDF units (origin at the bottom-left corner.)
 
     """
-    root = {'Count': 0}
+    # X and width unchanged;  Y’ = page_height - Y;  height’ = -height
+    page_heights = [page.height for page in document.pages]
+    links = []
+    for page_number, page_links in enumerate(document.resolve_links()):
+        new_page_links = []
+        for link_type, target, rectangle in page_links:
+            if link_type == 'internal':
+                target_page, target_x, target_y = target
+                target = (target_page, target_x,
+                          page_heights[target_page] - target_y)
+            # x, y, w, h => x0, y0, x1, y1
+            rect_x, rect_y, width, height = rectangle
+            pdf_y1 = page_heights[page_number] - rect_y
+            rectangle = rect_x, pdf_y1, rect_x + width, pdf_y1 - height
+            new_page_links.append((link_type, target, rectangle))
+        links.append(new_page_links)
+
+    bookmark_root = {'Count': 0}
     bookmark_list = []
-
-    # At one point in the document, for each "output" level (ie. depth in the
-    # PDF outline tree), how much to add to get the source level (CSS values
-    # of bookmark-level).
-    # Eg. with <h1> then <h3>, level_shifts == [0, 1]
-    # 1 means that <h3> has depth 3 - 1 = 2 in the output.
-    level_shifts = []
-    last_by_level = [root]
-    indices_by_level = [0]
-
-    for i, (level, label, destination) in enumerate(raw_bookmarks, start=1):
-        # Calculate the real level of the bookmark
-        previous_level = len(last_by_level) - 1 + sum(level_shifts)
-        if level > previous_level:
-            level_shifts.append(level - previous_level - 1)
-        else:
-            temp_level = level
-            while temp_level < previous_level:
-                temp_level += 1 + level_shifts.pop()
-            if temp_level > previous_level:
-                # The last pop’d value was too big
-                level_shifts.append(temp_level - previous_level - 1)
-
-        # Resolve level inconsistencies
-        level -= sum(level_shifts)
-
+    last_id_by_depth = [bookmark_root_id]
+    last_by_depth = [bookmark_root]
+    for bookmark_id, (label, target, depth) in enumerate(
+            flatten_bookmarks(document.make_bookmark_tree()),
+            bookmark_root_id + 1):
+        target_page, target_x, target_y = target
+        target = target_page, target_x, page_heights[target_page] - target_y
         bookmark = {
             'Count': 0, 'First': None, 'Last': None, 'Prev': None,
-            'Next': None, 'Parent': indices_by_level[level - 1],
-            'label': label, 'destination': destination}
+            'Next': None, 'Parent': last_id_by_depth[depth - 1],
+            'label': label, 'target': target}
 
-        if level > len(last_by_level) - 1:
-            last_by_level[level - 1]['First'] = i
+        if depth > len(last_by_depth) - 1:
+            last_by_depth[depth - 1]['First'] = bookmark_id
         else:
-            # The bookmark is sibling of indices_by_level[level]
-            bookmark['Prev'] = indices_by_level[level]
-            last_by_level[level]['Next'] = i
+            # The bookmark is sibling of last_id_by_depth[depth]
+            bookmark['Prev'] = last_id_by_depth[depth]
+            last_by_depth[depth]['Next'] = bookmark_id
 
-            # Remove the bookmarks with a level higher than the current one
-            del last_by_level[level:]
-            del indices_by_level[level:]
+            # Remove the bookmarks with a depth higher than the current one
+            del last_by_depth[depth:]
+            del last_id_by_depth[depth:]
 
-        for count_level in range(level):
-            last_by_level[count_level]['Count'] += 1
-        last_by_level[level - 1]['Last'] = i
+        for i in range(depth):
+            last_by_depth[i]['Count'] += 1
+        last_by_depth[depth - 1]['Last'] = bookmark_id
 
-        last_by_level.append(bookmark)
-        indices_by_level.append(i)
+        last_by_depth.append(bookmark)
+        last_id_by_depth.append(bookmark_id)
         bookmark_list.append(bookmark)
-
-    return root, bookmark_list
-
-
-def gather_metadata(pages):
-    """Traverse the layout tree (boxes) to find all metadata."""
-    def walk(box):
-        # "Border area. That's the area that hit-testing is done on."
-        # http://lists.w3.org/Archives/Public/www-style/2012Jun/0318.html
-        if box.bookmark_label and box.bookmark_level:
-            pos_x, pos_y, _, _ = box.hit_area()
-            pos_x, pos_y = point_to_pdf(pos_x, pos_y)
-            bookmarks.append((
-                box.bookmark_level,
-                box.bookmark_label,
-                (page_index, pos_x, pos_y)))
-
-        # 'link' is inherited but redundant on text boxes
-        if box.style.link and not isinstance(box, boxes.TextBox):
-            pos_x, pos_y, width, height = box.hit_area()
-            pos_x, pos_y = point_to_pdf(pos_x, pos_y)
-            width, height = distance_to_pdf(width, height)
-            page_links.append(
-                (box, (pos_x, pos_y, pos_x + width, pos_y + height)))
-
-        if box.style.anchor and box.style.anchor not in anchors:
-            pos_x, pos_y, _, _ = box.hit_area()
-            pos_x, pos_y = point_to_pdf(pos_x, pos_y)
-            anchors[box.style.anchor] = (page_index, pos_x, pos_y)
-
-        if isinstance(box, boxes.ParentBox):
-            for child in box.children:
-                walk(child)
-
-    bookmarks = []
-    links_by_page = []
-    anchors = {}
-    for page_index, page in enumerate(pages):
-        # Internal WeasyPrint coordinates are pixels right and down from
-        # the top-left corner.
-        # PDF coordinates are points right and up from the bottom-left corner.
-        # page.height is already in points.
-        matrix = cairo.Matrix(
-            PX_TO_PT, 0, 0, -PX_TO_PT, 0, page.height * PX_TO_PT / page._dppx)
-        point_to_pdf = matrix.transform_point
-        distance_to_pdf = matrix.transform_distance
-        page_links = []
-        walk(page._page_box)
-        links_by_page.append(page_links)
-
-    # A list (by page) of lists of either:
-    # ('external', uri, rectangle) or
-    # ('internal', (page_index, target_x, target_y), rectangle)
-    resolved_links_by_page = []
-    for page_links in links_by_page:
-        resolved_page_links = []
-        for box, rectangle in page_links:
-            type_, href = box.style.link
-            if type_ == 'internal':
-                target = anchors.get(href)
-                if target is None:
-                    LOGGER.warn(
-                        'No anchor #%s for internal URI reference at line %s'
-                        % (href, box.sourceline))
-                else:
-                    resolved_page_links.append((type_, target, rectangle))
-            else:
-                # external link:
-                resolved_page_links.append((type_, href, rectangle))
-        resolved_links_by_page.append(resolved_page_links)
-
-    return process_bookmarks(bookmarks), resolved_links_by_page
+    return bookmark_root, bookmark_list, links
 
 
-def write_pdf_metadata(pages, fileobj):
-    bookmarks, links = gather_metadata(pages)
-
+def write_pdf_metadata(document, fileobj):
+    """Append to a seekable file-like object to add PDF metadata."""
     pdf = PDFFile(fileobj)
-    pdf.overwrite_object(pdf.info.object_number, pdf_format(
-        '<< /Producer {producer!P} >>',
-        producer=VERSION_STRING))
+    bookmark_root_id = pdf.next_object_number()
+    bookmark_root, bookmarks, links = prepare_metadata(
+        document, bookmark_root_id)
 
-    root, bookmarks = bookmarks
     if bookmarks:
-        bookmark_root = pdf.next_object_number()
         pdf.write_new_object(pdf_format(
             '<< /Type /Outlines /Count {0} /First {1} 0 R /Last {2} 0 R\n>>',
-            root['Count'],
-            root['First'] + bookmark_root,
-            root['Last'] + bookmark_root))
+            bookmark_root['Count'],
+            bookmark_root['First'] + bookmark_root_id,
+            bookmark_root['Last'] + bookmark_root_id))
         pdf.extend_dict(pdf.catalog, pdf_format(
-            '/Outlines {0} 0 R /PageMode /UseOutlines', bookmark_root))
+            '/Outlines {0} 0 R /PageMode /UseOutlines', bookmark_root_id))
         for bookmark in bookmarks:
             content = [pdf_format('<< /Title {0!P}\n', bookmark['label'])]
             content.append(pdf_format(
                 '/A << /Type /Action /S /GoTo /D [{0} /XYZ {1:f} {2:f} 0] >>',
-                *bookmark['destination']))
+                *bookmark['target']))
             if bookmark['Count']:
                 content.append(pdf_format('/Count {0}\n', bookmark['Count']))
             for key in ['Parent', 'Prev', 'Next', 'First', 'Last']:
                 if bookmark[key]:
                     content.append(pdf_format(
-                        '/{0} {1} 0 R\n', key, bookmark[key] + bookmark_root))
+                        '/{0} {1} 0 R\n', key,
+                        bookmark[key] + bookmark_root_id))
             content.append(b'>>')
             pdf.write_new_object(b''.join(content))
 
@@ -480,5 +414,9 @@ def write_pdf_metadata(pages, fileobj):
             pdf.extend_dict(page, pdf_format(
                 '/Annots [{0}]', ' '.join(
                     '{0} 0 R'.format(n) for n in annotations)))
+
+    pdf.overwrite_object(pdf.info.object_number, pdf_format(
+        '<< /Producer {producer!P} >>',
+        producer=VERSION_STRING))
 
     pdf.finish()
