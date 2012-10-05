@@ -382,7 +382,6 @@ def write_pdf_metadata(document, fileobj):
         pdf.extend_dict(pdf.catalog, pdf_format(
             '/Outlines {0} 0 R /PageMode /UseOutlines', bookmark_root_id))
         for bookmark in bookmarks:
-            print(bookmark)
             content = [pdf_format('<< /Title {0!P}\n', bookmark['label'])]
             content.append(pdf_format(
                 '/A << /Type /Action /S /GoTo /D [{0} /XYZ {1:f} {2:f} 0] >>',
