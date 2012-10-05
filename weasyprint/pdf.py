@@ -200,10 +200,12 @@ class PDFFile(object):
         assert int(line[:-7]) == object_number  # len(b' 0 obj\n') == 7
         object_lines = []
         for line in fileobj:
-            object_lines.append(line)
             if line == b'>>\n':
                 assert next(fileobj) == b'endobj\n'
+                # No newline, we’ll add it when writing.
+                object_lines.append(b'>>')
                 return b''.join(object_lines)
+            object_lines.append(line)
 
     def overwrite_object(self, object_number, byte_string):
         """Write the new content for an existing object at the end of the file.
@@ -222,10 +224,10 @@ class PDFFile(object):
         the << >> delimiters.
 
         """
-        assert dictionary.byte_string.endswith(b'>>\n')
+        assert dictionary.byte_string.endswith(b'>>')
         self.overwrite_object(
             dictionary.object_number,
-            dictionary.byte_string[:-3] + new_content + b'\n>>\n')
+            dictionary.byte_string[:-2] + new_content + b'\n>>')
 
     def next_object_number(self):
         """Return the object number that would be used by write_new_object().
@@ -384,7 +386,8 @@ def write_pdf_metadata(document, fileobj):
         for bookmark in bookmarks:
             content = [pdf_format('<< /Title {0!P}\n', bookmark['label'])]
             content.append(pdf_format(
-                '/A << /Type /Action /S /GoTo /D [{0} /XYZ {1:f} {2:f} 0] >>',
+                '/A << /Type /Action /S /GoTo '
+                '/D [{0} /XYZ {1:f} {2:f} 0] >>\n',
                 *bookmark['target']))
             if bookmark['Count']:
                 content.append(pdf_format('/Count {0}\n', bookmark['Count']))
