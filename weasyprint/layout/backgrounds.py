@@ -12,7 +12,6 @@ from __future__ import division, unicode_literals
 
 from collections import namedtuple
 
-from ..css import properties
 from ..formatting_structure import boxes
 
 

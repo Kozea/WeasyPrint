@@ -20,7 +20,6 @@ import functools
 
 from .. import HTML, CSS
 from ..logger import LOGGER
-from ..urls import default_url_fetcher
 
 
 # TODO: find a way to not depend on a specific font

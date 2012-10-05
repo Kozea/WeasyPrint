@@ -38,10 +38,8 @@ import string
 import cairo
 
 from . import VERSION_STRING
-from .logger import LOGGER
 from .compat import xrange, iteritems, izip
 from .urls import iri_to_uri
-from .formatting_structure import boxes
 
 
 PX_TO_PT = 0.75  # 72dpi (PoscSript points) / 96dpi (CSS pixels)
@@ -315,7 +313,6 @@ def prepare_metadata(document, bookmark_root_id):
     # Overall * 0.75 for CSS pixels to PDF points:
     matrices = [cairo.Matrix(xx=0.75, yy=-0.75, y0=page.height * 0.75)
                 for page in document.pages]
-    page_heights = [page.height for page in document.pages]
     links = []
     for page_links, matrix in izip(document.resolve_links(), matrices):
         new_page_links = []

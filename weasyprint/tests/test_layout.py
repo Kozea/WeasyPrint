@@ -13,8 +13,7 @@
 
 from __future__ import division, unicode_literals
 
-from .testing_utils import (
-    TestHTML, resource_filename, FONTS, assert_no_logs, capture_logs)
+from .testing_utils import FONTS, assert_no_logs, capture_logs
 from ..formatting_structure import boxes
 from .test_boxes import render_pages as parse
 

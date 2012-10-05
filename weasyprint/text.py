@@ -27,7 +27,7 @@ if not USING_INTROSPECTION:
     try:
         import pygtk
         pygtk.require('2.0')
-        import pango
+        import pango as Pango
     except ImportError:
         USING_INTROSPECTION = True
 
