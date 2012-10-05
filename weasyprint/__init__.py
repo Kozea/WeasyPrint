@@ -55,7 +55,7 @@ class HTML(object):
     :param encoding: Force the source character encoding.
     :param base_url: The base used to resolve relative URLs
         (eg. in ``<img src="../foo.png">``). If not provided, try to use
-        the input filename, URL, or ``name`` attribute of file objects.
+        the input filename, URL, or ``name`` attribute of file-like objects.
     :param url_fetcher: The URL fetcher function. (See :ref:`url-fetchers`.)
     :param media_type: The media type to use for ``@media``.
         Defaults to ``'print'``. **Note:** In some cases like
@@ -104,9 +104,10 @@ class HTML(object):
         return [HTML5_UA_STYLESHEET]
 
     def render(self, stylesheets=None, resolution=96, enable_hinting=False):
-        """Render the document and return a list of Page objects.
+        """Lay out and paginate the document, but do not (yet) export it
+        to PDF or another format.
 
-        This is the low-level API. It provides individual pages that can
+        This is the low-level API. It provides individual pages and can
         paint to any type of cairo surface.
 
         :param stylesheets:
@@ -125,39 +126,38 @@ class HTML(object):
             For example, :class:`cairo.PDFSurface`’s device units are
             in PostScript points (72dpi), so ``resolution=72`` will set
             the right scale for physical units.
-        :returns: A list of :class:`Page` objects.
+        :returns: A :class:`Document` object.
 
         """
         from .document import Document
-        return Document.render(self, stylesheets, resolution, enable_hinting)
+        return Document._render(self, stylesheets, resolution, enable_hinting)
 
 
     def write_pdf(self, target=None, stylesheets=None):
-        """Render the document to PDF.
+        """Render the document to a PDF file, with meta-data.
 
         :param target:
-            Where the PDF output is written.
-            A filename or a file-like object (anything with a
-            :meth:`~file.write` method) or :obj:`None`.
+            A filename, file-like object, or ``None``.
         :param stylesheets:
             An optional list of user stylesheets. (See
             :ref:`stylesheet-origins`\.) The list’s elements are
             :class:`CSS` objects, filenames, URLs, or file-like objects.
         :returns:
-            If :obj:`target` is :obj:`None`, a PDF byte string.
+            The PDF as byte string if :obj:`target` is ``None``, otherwise
+            ``None`` (the PDF is written to :obj:`target`.)
 
         """
         return self.render(stylesheets, resolution=72).write_pdf(target)
 
     def write_png(self, target=None, stylesheets=None, resolution=96):
-        """Render the document to a single PNG image.
+        """Paint the pages vertically to a single PNG image.
 
-        Pages are arranged vertically without any decoration.
+        There is no decoration around pages other than those specified in CSS
+        with ``@page`` rules. The final image is as wide as the widest page.
+        Each page is below the previous one, centered horizontally.
 
         :param target:
-            Where the PNG output is written.
-            A filename or a file-like object (anything with a
-            :meth:`~file.write` method) or :obj:`None`.
+            A filename, file-like object, or ``None``.
         :param stylesheets:
             An optional list of user stylesheets. (See
             :ref:`stylesheet-origins`\.) The list’s elements are
@@ -183,7 +183,8 @@ class CSS(object):
     the ``tree`` parameter is not available. All other parameters are the same.
 
     ``CSS`` objects have no public attribute or method. They are only meant to
-    be used in methods such as ``write_pdf`` or ``write_png``. (See above.)
+    be used in the :meth:`~HTML.write_pdf`, :meth:`~HTML.write_png` and
+    :meth:`~HTML.render` methods of :class:`HTML` objects.
 
     """
     def __init__(self, guess=None, filename=None, url=None, file_obj=None,
@@ -265,7 +266,7 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
             return 'file_obj', result['file_obj'], base_url, protocol_encoding
     if nones == [True, True, True, False, True, True]:
         if base_url is None:
-            # filesystem file objects have a 'name' attribute.
+            # filesystem file-like objects have a 'name' attribute.
             name = getattr(file_obj, 'name', None)
             # Some streams have a .name like '<stdin>', not a filename.
             if name and not name.startswith('<'):
@@ -276,4 +277,7 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
     if nones == [True, True, True, True, True, False]:
         return 'tree', tree, base_url, None
 
-    raise TypeError('Expected exactly one source, got %i' % nones.count(False))
+    raise TypeError('Expected exactly one source, got ' + (
+        ', '.join(name for i, name in enumerate(
+            'guess filename url file_obj string tree'.split()) if not nones[i]
+        ) or 'nothing'))

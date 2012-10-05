@@ -84,11 +84,11 @@ class Page(object):
         #: The page height, including margins, in cairo user units.
         self.height = page.margin_height() * dppx
 
-        #: A list of ``(bookmark_level, bookmark_label, point)``.
+        #: A list of ``(bookmark_level, bookmark_label, point)`` tuples.
         #: A point is ``(x, y)`` in cairo units from the top-left of the page.
         self.bookmarks = []
 
-        #: A list of ``(link_type, target, rectangle)``.
+        #: A list of ``(link_type, target, rectangle)`` tuples.
         #: A rectangle is ``(x, y, width, height)``, in cairo units
         #: form the top-left of the page.
         #: The link type one of two strings:
@@ -160,12 +160,12 @@ class Document(object):
 
     """
     @classmethod
-    def render(cls, html, stylesheets, resolution, enable_hinting):
+    def _render(cls, html, stylesheets, resolution, enable_hinting):
         style_for = get_all_computed_styles(html, user_stylesheets=[
             css if hasattr(css, 'rules')
             else CSS(guess=css, media_type=html.media_type)
             for css in stylesheets or []])
-        get_image_from_uri =  functools.partial(
+        get_image_from_uri = functools.partial(
             images.get_image_from_uri, {}, html.url_fetcher)
         page_boxes = layout_document(
             enable_hinting, style_for, get_image_from_uri,
@@ -178,9 +178,28 @@ class Document(object):
         self.pages = pages
 
     def copy(self, pages='all'):
-        """Return a new :class:`Document` with a subset of the pages."""
+        """Take a subset of the pages.
+
+        :param pages:
+            An iterable of :class:`Page` objects from :attr:`pages`.
+        :return:
+            A new :class:`Document` object.
+
+        Examples::
+
+            # Lists count from 0 but page numbers usually from 1
+            # [::2] is a slice of even list indexes but odd-numbered pages.
+            document.copy(document.pages[::2]).write_pdf('odd_pages.pdf')
+            document.copy(document.pages[1::2]).write_pdf('even_pages.pdf')
+
+            for i, page in enumerate(document.pages):
+                document.copy(page).write_png('page_%s.png' % i)
+
+        """
         if pages == 'all':
             pages = self.pages
+        elif not isinstance(pages, list):
+            pages = list(pages)
         return type(self)(pages)
 
     def resolve_links(self):
@@ -264,15 +283,16 @@ class Document(object):
         return root
 
     def write_pdf(self, target=None):
-        """Paint pages; write PDF bytes to ``target``, or return them
-        if ``target`` is ``None``.
+        """Paint the pages in a PDF file, with meta-data.
 
-        This function also adds PDF metadata (bookmarks, hyperlinks, …).
-        PDF files coming straight from :class:`cairo.PDFSurface` do not have
-        such metadata.
+        PDF files written directly by cairo do not have meta-data such as
+        bookmarks/outlines and hyperlinks.
 
-        :param target: a filename, file object, or ``None``
-        :returns: a bytestring if ``target`` is ``None``.
+        :param target:
+            A filename, file-like object, or ``None``.
+        :returns:
+            The PDF as byte string if :obj:`target` is ``None``, otherwise
+            ``None`` (the PDF is written to :obj:`target`.)
 
         """
         # Use an in-memory buffer. We will need to seek for metadata
@@ -300,10 +320,14 @@ class Document(object):
                     shutil.copyfileobj(file_obj, fd)
 
     def write_png(self, target=None):
-        """Paint pages vertically; write PNG bytes to ``target``, or return them
-        if ``target`` is ``None``.
+        """Paint the pages vertically to a single PNG image.
 
-        :param target: a filename, file object, or ``None``
+        There is no decoration around pages other than those specified in CSS
+        with ``@page`` rules. The final image is as wide as the widest page.
+        Each page is below the previous one, centered horizontally.
+
+        :param target:
+            A filename, file-like object, or ``None``.
         :returns:
             A ``(png_bytes, png_width, png_height)`` tuple. :obj:`png_bytes`
             is a byte string if :obj:`target` is ``None``, otherwise ``None``
