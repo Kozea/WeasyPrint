@@ -311,10 +311,10 @@ def test_command_line_render():
 
     with chdir(resource_filename('')):
         # Reference
-        document = TestHTML(string=combined, base_url='dummy.html')
-        pdf_bytes = document.write_pdf()
-        png_bytes = document.write_png()
-        x2_png_bytes = document.write_png(resolution=192)
+        html_obj = TestHTML(string=combined, base_url='dummy.html')
+        pdf_bytes = html_obj.write_pdf()
+        png_bytes = html_obj.write_png()
+        x2_png_bytes = html_obj.write_png(resolution=192)
         rotated_png_bytes = TestHTML(string=combined, base_url='dummy.html',
                                      media_type='screen').write_png()
         empty_png_bytes = TestHTML(
@@ -468,8 +468,8 @@ def test_low_level_api():
     page, = document.pages
     assert page.width == 8
     assert page.height == 8
-    assert document.write_png() == png_bytes
-    assert document.copy([page]).write_png() == png_bytes
+    assert document.write_png() == (png_bytes, 8, 8)
+    assert document.copy([page]).write_png() == (png_bytes, 8, 8)
 
     surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, 8, 8)
     page.paint(cairo.Context(surface))
@@ -490,9 +490,10 @@ def test_low_level_api():
 
     document = html.render([css], enable_hinting=True, resolution=192)
     page, = document.pages
-    assert page.width == 16
-    assert page.height == 16
-    check_png_pattern(document.write_png(), x2=True)
+    assert (page.width, page.height) == (16, 16)
+    png_bytes, width, height = document.write_png()
+    assert (width, height) == (16, 16)
+    check_png_pattern(png_bytes, x2=True)
 
     document = TestHTML(string='''
         <style>
@@ -503,19 +504,19 @@ def test_low_level_api():
         <p></p>
     ''').render()
     page_1, page_2 = document.pages
-    assert page_1.width == 5
-    assert page_1.height == 10
-    assert page_2.width == 6
-    assert page_2.height == 4
+    assert (page_1.width, page_1.height) == (5, 10)
+    assert (page_2.width, page_2.height) == (6, 4)
 
-    def png_size(png_bytes):
+    def png_size(result):
+        png_bytes, width, height = result
         surface = cairo.ImageSurface.create_from_png(io.BytesIO(png_bytes))
-        return surface.get_width(), surface.get_height()
+        assert (surface.get_width(), surface.get_height()) == (width, height)
+        return width, height
 
-    png_bytes = document.write_png()
-    assert document.copy([page_1, page_2]).write_png() == png_bytes
+    result = document.write_png()
     # (Max of both widths, Sum of both heights)
-    assert png_size(png_bytes) == (6, 14)
+    assert png_size(result) == (6, 14)
+    assert document.copy([page_1, page_2]).write_png() == result
     assert png_size(document.copy([page_1]).write_png()) == (5, 10)
     assert png_size(document.copy([page_2]).write_png()) == (6, 4)
 

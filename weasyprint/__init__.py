@@ -170,8 +170,10 @@ class HTML(object):
             If :obj:`target` is :obj:`None`, a PNG byte string.
 
         """
-        return (self.render(stylesheets, resolution, enable_hinting=True)
-                .write_png(target))
+        png_bytes, _width, _height = (
+            self.render(stylesheets, resolution, enable_hinting=True)
+            .write_png(target))
+        return png_bytes
 
 
 class CSS(object):

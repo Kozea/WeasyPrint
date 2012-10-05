@@ -2045,12 +2045,10 @@ def test_acid2():
         document = render('acid2-test.html')
         intro_page, test_page = document.pages
         # Ignore the intro page: it is not in the reference
-        test_png, width, height = document.copy(
-            [test_page]).write_png(with_size=True)
+        test_png, width, height = document.copy([test_page]).write_png()
 
     # This is a copy of http://www.webstandards.org/files/acid2/reference.html
-    ref_png, ref_width, ref_height = render(
-        'acid2-reference.html').write_png(with_size=True)
+    ref_png, ref_width, ref_height = render('acid2-reference.html').write_png()
 
     assert (width, height) == (ref_width, ref_height)
     assert_pixels_equal(

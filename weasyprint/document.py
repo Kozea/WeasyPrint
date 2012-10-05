@@ -299,16 +299,17 @@ class Document(object):
                 with open(target, 'wb') as fd:
                     shutil.copyfileobj(file_obj, fd)
 
-    def write_png(self, target=None, with_size=False):
+    def write_png(self, target=None):
         """Paint pages vertically; write PNG bytes to ``target``, or return them
         if ``target`` is ``None``.
 
         :param target: a filename, file object, or ``None``
-        :param with_size: if true, also return the size of the PNG image.
         :returns:
-            ``output`` or ``(output, png_width, png_height)`` (depending
-            on ``with_size``). ``output`` is a byte string (if ``target``
-            is ``None``) or ``None``.
+            A ``(png_bytes, png_width, png_height)`` tuple. :obj:`png_bytes`
+            is a byte string if :obj:`target` is ``None``, otherwise ``None``
+            (the image is written to :obj:`target`.)
+            :obj:`png_width` and :obj:`png_height` are the size of the
+            final image, in PNG pixels.
 
         """
         # This duplicates the hinting logic in Page.paint. There is a
@@ -340,7 +341,4 @@ class Document(object):
                 target = target.encode(FILESYSTEM_ENCODING)
             surface.write_to_png(target)
             png_bytes = None
-        if with_size:
-            return png_bytes, max_width, sum_heights
-        else:
-            return png_bytes
+        return png_bytes, max_width, sum_heights

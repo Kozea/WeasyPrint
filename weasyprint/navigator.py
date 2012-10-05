@@ -31,8 +31,7 @@ STYLESHEET = CSS(string='''
 def get_pages(html):
     document = html.render(enable_hinting=True, stylesheets=[STYLESHEET])
     for page in document.pages:
-        png_bytes, width, height = (
-            document.copy([page]).write_png(with_size=True))
+        png_bytes, width, height = document.copy([page]).write_png()
         data_url = 'data:image/png;base64,' + (
             base64_encode(png_bytes).decode('ascii').replace('\n', ''))
         yield width, height, data_url, page.links, page.anchors
