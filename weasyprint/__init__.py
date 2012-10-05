@@ -103,7 +103,7 @@ class HTML(object):
         from .html import HTML5_UA_STYLESHEET
         return [HTML5_UA_STYLESHEET]
 
-    def render(self, stylesheets=None, resolution=96, enable_hinting=False):
+    def render(self, stylesheets=None, enable_hinting=False):
         """Lay out and paginate the document, but do not (yet) export it
         to PDF or another format.
 
@@ -119,18 +119,11 @@ class HTML(object):
             Whether text, borders and background should be *hinted* to fall
             at device pixel boundaries. Should be enabled for pixel-based
             output (like PNG) but not vector based output (like PDF).
-        :type resolution: float
-        :param resolution:
-            The output resolution in cairo user units per CSS inch. At 96 dpi
-            (the default), user units match the CSS ``px`` unit.
-            For example, :class:`cairo.PDFSurface`’s device units are
-            in PostScript points (72dpi), so ``resolution=72`` will set
-            the right scale for physical units.
         :returns: A :class:`Document` object.
 
         """
         from .document import Document
-        return Document._render(self, stylesheets, resolution, enable_hinting)
+        return Document._render(self, stylesheets, enable_hinting)
 
 
     def write_pdf(self, target=None, stylesheets=None):
@@ -147,7 +140,7 @@ class HTML(object):
             ``None`` (the PDF is written to :obj:`target`.)
 
         """
-        return self.render(stylesheets, resolution=72).write_pdf(target)
+        return self.render(stylesheets).write_pdf(target)
 
     def write_png(self, target=None, stylesheets=None, resolution=96):
         """Paint the pages vertically to a single PNG image.
@@ -171,8 +164,8 @@ class HTML(object):
 
         """
         png_bytes, _width, _height = (
-            self.render(stylesheets, resolution, enable_hinting=True)
-            .write_png(target))
+            self.render(stylesheets, enable_hinting=True)
+            .write_png(target, resolution))
         return png_bytes
 
 

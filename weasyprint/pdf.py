@@ -39,7 +39,7 @@ import cairo
 
 from . import VERSION_STRING
 from .logger import LOGGER
-from .compat import xrange, iteritems
+from .compat import xrange, iteritems, izip
 from .urls import iri_to_uri
 from .formatting_structure import boxes
 
@@ -310,19 +310,23 @@ def prepare_metadata(document, bookmark_root_id):
 
     """
     # X and width unchanged;  Y’ = page_height - Y;  height’ = -height
+    # Overall * 0.75 for CSS pixels to PDF points:
+    matrices = [cairo.Matrix(xx=0.75, yy=-0.75, y0=page.height * 0.75)
+                for page in document.pages]
     page_heights = [page.height for page in document.pages]
     links = []
-    for page_number, page_links in enumerate(document.resolve_links()):
+    for page_links, matrix in izip(document.resolve_links(), matrices):
         new_page_links = []
         for link_type, target, rectangle in page_links:
             if link_type == 'internal':
                 target_page, target_x, target_y = target
-                target = (target_page, target_x,
-                          page_heights[target_page] - target_y)
-            # x, y, w, h => x0, y0, x1, y1
+                target = ((target_page,) +
+                    matrices[target_page].transform_point(target_x, target_y))
             rect_x, rect_y, width, height = rectangle
-            pdf_y1 = page_heights[page_number] - rect_y
-            rectangle = rect_x, pdf_y1, rect_x + width, pdf_y1 - height
+            rect_x, rect_y = matrix.transform_point(rect_x, rect_y)
+            width, height = matrix.transform_distance(width, height)
+            # x, y, w, h => x0, y0, x1, y1
+            rectangle = rect_x, rect_y, rect_x + width, rect_y + height
             new_page_links.append((link_type, target, rectangle))
         links.append(new_page_links)
 
@@ -334,7 +338,8 @@ def prepare_metadata(document, bookmark_root_id):
             flatten_bookmarks(document.make_bookmark_tree()),
             bookmark_root_id + 1):
         target_page, target_x, target_y = target
-        target = target_page, target_x, page_heights[target_page] - target_y
+        target = (target_page,) + matrices[target_page].transform_point(
+            target_x, target_y)
         bookmark = {
             'Count': 0, 'First': None, 'Last': None, 'Prev': None,
             'Next': None, 'Parent': last_id_by_depth[depth - 1],
@@ -377,6 +382,7 @@ def write_pdf_metadata(document, fileobj):
         pdf.extend_dict(pdf.catalog, pdf_format(
             '/Outlines {0} 0 R /PageMode /UseOutlines', bookmark_root_id))
         for bookmark in bookmarks:
+            print(bookmark)
             content = [pdf_format('<< /Title {0!P}\n', bookmark['label'])]
             content.append(pdf_format(
                 '/A << /Type /Action /S /GoTo /D [{0} /XYZ {1:f} {2:f} 0] >>',

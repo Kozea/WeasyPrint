@@ -460,8 +460,7 @@ def test_low_level_api():
     ''')
     pdf_bytes = html.write_pdf(stylesheets=[css])
     assert pdf_bytes.startswith(b'%PDF')
-    assert html.render([css], resolution=72).write_pdf() == pdf_bytes
-    assert html.render([css]).write_pdf() != pdf_bytes  # Beware of resolution
+    assert html.render([css]).write_pdf() == pdf_bytes
 
     png_bytes = html.write_png(stylesheets=[css])
     document = html.render([css], enable_hinting=True)
@@ -488,12 +487,24 @@ def test_low_level_api():
     surface.write_to_png(file_obj)
     check_png_pattern(file_obj.getvalue(), rotated=True)
 
-    document = html.render([css], enable_hinting=True, resolution=192)
+    document = html.render([css], enable_hinting=True)
     page, = document.pages
-    assert (page.width, page.height) == (16, 16)
-    png_bytes, width, height = document.write_png()
+    assert (page.width, page.height) == (8, 8)
+    png_bytes, width, height = document.write_png(resolution=192)
     assert (width, height) == (16, 16)
     check_png_pattern(png_bytes, x2=True)
+
+    def png_size(result):
+        png_bytes, width, height = result
+        surface = cairo.ImageSurface.create_from_png(io.BytesIO(png_bytes))
+        assert (surface.get_width(), surface.get_height()) == (width, height)
+        return width, height
+
+    document = html.render([css], enable_hinting=True)
+    page, = document.pages
+    assert (page.width, page.height) == (8, 8)
+    # A resolution that is not multiple of 96:
+    assert png_size(document.write_png(resolution=145.2)) == (13, 13)
 
     document = TestHTML(string='''
         <style>
@@ -506,12 +517,6 @@ def test_low_level_api():
     page_1, page_2 = document.pages
     assert (page_1.width, page_1.height) == (5, 10)
     assert (page_2.width, page_2.height) == (6, 4)
-
-    def png_size(result):
-        png_bytes, width, height = result
-        surface = cairo.ImageSurface.create_from_png(io.BytesIO(png_bytes))
-        assert (surface.get_width(), surface.get_height()) == (width, height)
-        return width, height
 
     result = document.write_png()
     # (Max of both widths, Sum of both heights)

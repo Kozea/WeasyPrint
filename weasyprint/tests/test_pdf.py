@@ -42,9 +42,8 @@ def test_pdf_parser():
 
 def get_metadata(html, base_url=resource_filename('<inline HTML>')):
     return pdf.prepare_metadata(
-        TestHTML(string=html, base_url=base_url).render(
-            resolution=72, stylesheets=[
-                CSS(string='@page { size: 500pt 1000pt; margin: 50pt }')]),
+        TestHTML(string=html, base_url=base_url).render(stylesheets=[
+            CSS(string='@page { size: 500pt 1000pt; margin: 50pt }')]),
         bookmark_root_id=0)
 
 

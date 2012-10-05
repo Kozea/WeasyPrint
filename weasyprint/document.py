@@ -49,10 +49,14 @@ def _get_metadata(box, bookmarks, links, anchors, matrix):
     # In case of duplicate IDs, only the first is an anchor.
     has_anchor = anchor_name and anchor_name not in anchors
 
+    # TODO: account for CSS transforms
+#    matrix *= …
+
     if has_bookmark or has_link or has_anchor:
         pos_x, pos_y, width, height = box.hit_area()
-        pos_x, pos_y = matrix.transform_point(pos_x, pos_y)
-        width, height = matrix.transform_distance(width, height)
+        if matrix:
+            pos_x, pos_y = matrix.transform_point(pos_x, pos_y)
+            width, height = matrix.transform_distance(width, height)
         if has_bookmark:
             bookmarks.append((bookmark_level, bookmark_label, (pos_x, pos_y)))
         if has_link:
@@ -75,14 +79,12 @@ class Page(object):
     instantiated directly.
 
     """
-    def __init__(self, page, enable_hinting=False, resolution=96):
-        dppx = resolution / 96
-
+    def __init__(self, page_box, enable_hinting=False):
         #: The page width, including margins, in cairo user units.
-        self.width = page.margin_width() * dppx
+        self.width = page_box.margin_width()
 
         #: The page height, including margins, in cairo user units.
-        self.height = page.margin_height() * dppx
+        self.height = page_box.margin_height()
 
         #: A list of ``(bookmark_level, bookmark_label, point)`` tuples.
         #: A point is ``(x, y)`` in cairo units from the top-left of the page.
@@ -103,22 +105,24 @@ class Page(object):
         #: form the top-left of the page.)
         self.anchors = {}
 
-        _get_metadata(page, self.bookmarks, self.links, self.anchors,
-                      cairo.Matrix(xx=dppx, yy=dppx))
-        self._page_box = page
+        _get_metadata(
+            page_box, self.bookmarks, self.links, self.anchors, matrix=None)
+        self._page_box = page_box
         self._enable_hinting = enable_hinting
-        self._dppx = dppx
 
-    def paint(self, cairo_context, left_x=0, top_y=0, clip=False):
+    def paint(self, cairo_context, left_x=0, top_y=0, scale=1, clip=False):
         """Paint the surface in cairo, on any type of surface.
 
         :param cairo_context: any :class:`cairo.Context` object.
         :type left_x: float
         :param left_x:
-            X coordinate of the left of the page, in user units.
+            X coordinate of the left of the page, in cairo user units.
         :type top_y: float
         :param top_y:
-            Y coordinate of the top of the page, in user units.
+            Y coordinate of the top of the page, in cairo user units.
+        :type scale: float
+        :param scale:
+            Zoom scale in CSS pixels per cairo user unit.
         :type clip: bool
         :param clip:
             Whether to clip/cut content outside the page. If false or
@@ -128,26 +132,27 @@ class Page(object):
         with stacked(cairo_context):
             if self._enable_hinting:
                 left_x, top_y = cairo_context.user_to_device(left_x, top_y)
-                width, height = cairo_context.user_to_device_distance(
-                    self.width, self.height)
                 # Hint in device space
                 left_x = int(left_x)
                 top_y = int(top_y)
-                width = int(math.ceil(width))
-                height = int(math.ceil(height))
                 left_x, top_y = cairo_context.device_to_user(left_x, top_y)
-                width, height = cairo_context.device_to_user_distance(
-                    width, height)
-            else:
+            # Make (0, 0) the top-left corner:
+            cairo_context.translate(left_x, top_y)
+            # Make user units CSS pixels:
+            cairo_context.scale(scale, scale)
+            if clip:
                 width = self.width
                 height = self.height
-            cairo_context.translate(left_x, top_y)
-            # The top-left corner is now (0, 0)
-            if clip:
+                if self._enable_hinting:
+                    width, height = (
+                        cairo_context.user_to_device_distance(width, height))
+                    # Hint in device space
+                    width = int(math.ceil(width))
+                    height = int(math.ceil(height))
+                    width, height = (
+                        cairo_context.device_to_user_distance(width, height))
                 cairo_context.rectangle(0, 0, width, height)
                 cairo_context.clip()
-            cairo_context.scale(self._dppx, self._dppx)
-            # User units are now CSS pixels
             draw_page(self._page_box, cairo_context, self._enable_hinting)
 
 
@@ -160,7 +165,7 @@ class Document(object):
 
     """
     @classmethod
-    def _render(cls, html, stylesheets, resolution, enable_hinting):
+    def _render(cls, html, stylesheets, enable_hinting):
         style_for = get_all_computed_styles(html, user_stylesheets=[
             css if hasattr(css, 'rules')
             else CSS(guess=css, media_type=html.media_type)
@@ -171,7 +176,7 @@ class Document(object):
             enable_hinting, style_for, get_image_from_uri,
             build_formatting_structure(
                 html.root_element, style_for, get_image_from_uri))
-        return cls([Page(p, enable_hinting, resolution) for p in page_boxes])
+        return cls([Page(p, enable_hinting) for p in page_boxes])
 
     def __init__(self, pages):
         #: A list of :class:`Page` objects.
@@ -301,8 +306,10 @@ class Document(object):
         # (1, 1) is overridden by .set_size() below.
         surface = cairo.PDFSurface(file_obj, 1, 1)
         context = cairo.Context(surface)
+        context.scale(0.75, 0.75)
         for page in self.pages:
-            surface.set_size(page.width, page.height)
+            surface.set_size(page.width * 0.75, page.height * 0.75)
+            # 0.75 = 72 PDF point per inch / 96 CSS pixel per inch
             page.paint(context)
             surface.show_page()
         surface.finish()
@@ -319,7 +326,7 @@ class Document(object):
                 with open(target, 'wb') as fd:
                     shutil.copyfileobj(file_obj, fd)
 
-    def write_png(self, target=None):
+    def write_png(self, target=None, resolution=96):
         """Paint the pages vertically to a single PNG image.
 
         There is no decoration around pages other than those specified in CSS
@@ -328,6 +335,10 @@ class Document(object):
 
         :param target:
             A filename, file-like object, or ``None``.
+        :type resolution: float
+        :param resolution:
+            The output resolution in PNG pixels per CSS inch. At 96 dpi
+            (the default), PNG pixels match the CSS ``px`` unit.
         :returns:
             A ``(png_bytes, png_width, png_height)`` tuple. :obj:`png_bytes`
             is a byte string if :obj:`target` is ``None``, otherwise ``None``
@@ -336,23 +347,25 @@ class Document(object):
             final image, in PNG pixels.
 
         """
+        dppx = resolution / 96
+
         # This duplicates the hinting logic in Page.paint. There is a
         # dependency cycle otherwise:
         #   this → hinting logic → context → surface → this
         # But since we do no transform here, cairo_context.user_to_device and
         # friends are identity functions.
-        widths = [int(math.ceil(p.width)) for p in self.pages]
-        heights = [int(math.ceil(p.height)) for p in self.pages]
+        widths = [int(math.ceil(p.width * dppx)) for p in self.pages]
+        heights = [int(math.ceil(p.height * dppx)) for p in self.pages]
+
         max_width = max(widths)
         sum_heights = sum(heights)
-        surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, max_width, sum_heights)
+        surface = cairo.ImageSurface(
+            cairo.FORMAT_ARGB32, max_width, sum_heights)
         context = cairo.Context(surface)
-
         pos_y = 0
         for page, width, height in izip(self.pages, widths, heights):
             pos_x = (max_width - width) / 2
-            with stacked(context):
-                page.paint(context, pos_x, pos_y, clip=True)
+            page.paint(context, pos_x, pos_y, scale=dppx, clip=True)
             pos_y += height
 
         if target is None:
