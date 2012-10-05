@@ -374,13 +374,13 @@ def write_pdf_metadata(document, fileobj):
         document, bookmark_root_id)
 
     if bookmarks:
+        pdf.extend_dict(pdf.catalog, pdf_format(
+            '/Outlines {0} 0 R /PageMode /UseOutlines', bookmark_root_id))
         pdf.write_new_object(pdf_format(
             '<< /Type /Outlines /Count {0} /First {1} 0 R /Last {2} 0 R\n>>',
             bookmark_root['Count'],
-            bookmark_root['First'] + bookmark_root_id,
-            bookmark_root['Last'] + bookmark_root_id))
-        pdf.extend_dict(pdf.catalog, pdf_format(
-            '/Outlines {0} 0 R /PageMode /UseOutlines', bookmark_root_id))
+            bookmark_root['First'],
+            bookmark_root['Last']))
         for bookmark in bookmarks:
             content = [pdf_format('<< /Title {0!P}\n', bookmark['label'])]
             content.append(pdf_format(
@@ -391,8 +391,7 @@ def write_pdf_metadata(document, fileobj):
             for key in ['Parent', 'Prev', 'Next', 'First', 'Last']:
                 if bookmark[key]:
                     content.append(pdf_format(
-                        '/{0} {1} 0 R\n', key,
-                        bookmark[key] + bookmark_root_id))
+                        '/{0} {1} 0 R\n', key, bookmark[key]))
             content.append(b'>>')
             pdf.write_new_object(b''.join(content))
 
