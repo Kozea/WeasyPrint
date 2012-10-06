@@ -81,6 +81,7 @@ class Box(object):
     is_for_root_element = False
     bookmark_label = None
     bookmark_level = None
+    transformation_matrix = None
 
     # Default, overriden on some subclasses
     def all_children(self):

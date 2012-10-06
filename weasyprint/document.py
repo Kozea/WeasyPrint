@@ -25,10 +25,53 @@ from .css import get_all_computed_styles
 from .formatting_structure import boxes
 from .formatting_structure.build import build_formatting_structure
 from .layout import layout_document
-from .draw import draw_page, stacked
+from .draw import draw_page, stacked, percentage
 from .pdf import write_pdf_metadata
 from .compat import izip, iteritems
 from .urls import FILESYSTEM_ENCODING
+
+
+def _get_matrix(box):
+    """Return the matrix for the CSS transforms on this box.
+
+    :returns: a :class:`cairo.Matrix` object or ``None``.
+
+    """
+    # "Transforms apply to block-level and atomic inline-level elements,
+    #  but do not apply to elements which may be split into
+    #  multiple inline-level boxes."
+    # http://www.w3.org/TR/css3-2d-transforms/#introduction
+    if box.style.transform and not isinstance(box, boxes.InlineBox):
+        border_width = box.border_width()
+        border_height = box.border_height()
+        origin_x, origin_y = box.style.transform_origin
+        origin_x = box.border_box_x() + percentage(origin_x, border_width)
+        origin_y = box.border_box_y() + percentage(origin_y, border_height)
+
+        matrix = cairo.Matrix()
+        matrix.translate(origin_x, origin_y)
+        for name, args in box.style.transform:
+            if name == 'scale':
+                matrix.scale(*args)
+            elif name == 'rotate':
+                matrix.rotate(args)
+            elif name == 'translate':
+                translate_x, translate_y = args
+                matrix.translate(
+                    percentage(translate_x, border_width),
+                    percentage(translate_y, border_height),
+                )
+            else:
+                if name == 'skewx':
+                    args = (1, 0, math.tan(args), 1, 0, 0)
+                elif name == 'skewy':
+                    args = (1, math.tan(args), 0, 1, 0, 0)
+                else:
+                    assert name == 'matrix'
+                matrix = cairo.Matrix(*args) * matrix
+        matrix.translate(-origin_x, -origin_y)
+        box.transformation_matrix = matrix
+        return matrix
 
 
 class _TaggedTuple(tuple):
@@ -36,7 +79,6 @@ class _TaggedTuple(tuple):
     The line number in the HTML source for whatever the tuple represents.
 
     """
-
 
 def _get_metadata(box, bookmarks, links, anchors, matrix):
     bookmark_label = box.bookmark_label
@@ -48,9 +90,6 @@ def _get_metadata(box, bookmarks, links, anchors, matrix):
     has_link = link and not isinstance(box, boxes.TextBox)
     # In case of duplicate IDs, only the first is an anchor.
     has_anchor = anchor_name and anchor_name not in anchors
-
-    # TODO: account for CSS transforms
-#    matrix *= …
 
     if has_bookmark or has_link or has_anchor:
         pos_x, pos_y, width, height = box.hit_area()
@@ -68,8 +107,13 @@ def _get_metadata(box, bookmarks, links, anchors, matrix):
         if has_anchor:
             anchors[anchor_name] = pos_x, pos_y
 
+def _prepare(box, bookmarks, links, anchors, matrix):
+    transform = _get_matrix(box)
+    # TODO: account for CSS transforms
+#    matrix *= …
+    _get_metadata(box, bookmarks, links, anchors, matrix)
     for child in box.all_children():
-        _get_metadata(child, bookmarks, links, anchors, matrix)
+        _prepare(child, bookmarks, links, anchors, matrix)
 
 
 class Page(object):
@@ -88,7 +132,7 @@ class Page(object):
 
         #: A list of ``(bookmark_level, bookmark_label, point)`` tuples.
         #: A point is ``(x, y)`` in cairo units from the top-left of the page.
-        self.bookmarks = []
+        self.bookmarks = bookmarks = []
 
         #: A list of ``(link_type, target, rectangle)`` tuples.
         #: A rectangle is ``(x, y, width, height)``, in cairo units
@@ -99,14 +143,13 @@ class Page(object):
         #: * ``'internal'``: :obj:`target` is an anchor name (see
         #:   :attr:`Page.anchors` and :meth:`Document.all_anchors`).
         #:   An anchor might be defined in another page, or not at all.
-        self.links = []
+        self.links = links = []
 
         #: A dict mapping anchor names to points (``(x, y)`` in cairo units
         #: form the top-left of the page.)
-        self.anchors = {}
+        self.anchors = anchors = {}
 
-        _get_metadata(
-            page_box, self.bookmarks, self.links, self.anchors, matrix=None)
+        _prepare(page_box, bookmarks, links, anchors, matrix=None)
         self._page_box = page_box
         self._enable_hinting = enable_hinting
 

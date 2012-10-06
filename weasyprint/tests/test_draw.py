@@ -1858,6 +1858,50 @@ def test_2d_transform():
         <div><img src="pattern.png"></div>
     ''')
 
+    assert_pixels('image_translateX_rotate90', 12, 12, [
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+B+B+B+r+_+_+_,
+        _+_+_+_+_+B+B+B+B+_+_+_,
+        _+_+_+_+_+B+B+B+B+_+_+_,
+        _+_+_+_+_+B+B+B+B+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { size: 12px; margin: 2px; background: #fff; }
+            div { transform: translateX(3px) rotate(90deg);
+                  font-size: 0; width: 4px }
+        </style>
+        <div><img src="pattern.png"></div>
+    ''')
+    # A translateX after the rotation is actually a translateY
+    assert_pixels('image_rotate90_translateX', 12, 12, [
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+B+B+B+r+_+_+_+_+_+_,
+        _+_+B+B+B+B+_+_+_+_+_+_,
+        _+_+B+B+B+B+_+_+_+_+_+_,
+        _+_+B+B+B+B+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { size: 12px; margin: 2px; background: #fff; }
+            div { transform: rotate(90deg) translateX(3px);
+                  font-size: 0; width: 4px }
+        </style>
+        <div><img src="pattern.png"></div>
+    ''')
+
     assert_pixels('image_reflection', 8, 8, [
         _+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_,

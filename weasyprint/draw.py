@@ -115,7 +115,8 @@ def draw_stacking_context(context, stacking_context, enable_hinting):
         if box.style.opacity < 1:
             context.push_group()
 
-        apply_2d_transforms(context, box)
+        if box.transformation_matrix:
+            context.transform(box.transformation_matrix)
 
         # Point 1 is done in draw_page
 
@@ -666,40 +667,3 @@ def draw_text_decoration(context, textbox, offset_y, enable_hinting):
         context.move_to(textbox.position_x, textbox.position_y + offset_y)
         context.rel_line_to(textbox.width, 0)
         context.stroke()
-
-
-def apply_2d_transforms(context, box):
-    # "Transforms apply to block-level and atomic inline-level elements,
-    #  but do not apply to elements which may be split into
-    #  multiple inline-level boxes."
-    # http://www.w3.org/TR/css3-2d-transforms/#introduction
-    if box.style.transform and not isinstance(box, boxes.InlineBox):
-        border_width = box.border_width()
-        border_height = box.border_height()
-        origin_x, origin_y = box.style.transform_origin
-        origin_x = percentage(origin_x, border_width)
-        origin_y = percentage(origin_y, border_height)
-        origin_x += box.border_box_x()
-        origin_y += box.border_box_y()
-
-        context.translate(origin_x, origin_y)
-        for name, args in box.style.transform:
-            if name == 'scale':
-                context.scale(*args)
-            elif name == 'rotate':
-                context.rotate(args)
-            elif name == 'translate':
-                translate_x, translate_y = args
-                context.translate(
-                    percentage(translate_x, border_width),
-                    percentage(translate_y, border_height),
-                )
-            else:
-                if name == 'skewx':
-                    args = (1, 0, math.tan(args), 1, 0, 0)
-                elif name == 'skewy':
-                    args = (1, math.tan(args), 0, 1, 0, 0)
-                else:
-                    assert name == 'matrix'
-                context.transform(cairo.Matrix(*args))
-        context.translate(-origin_x, -origin_y)
