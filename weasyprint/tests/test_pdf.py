@@ -63,18 +63,14 @@ def get_bookmarks(html, structure_only=False):
 
 def get_links(html, **kwargs):
     _root, _bookmarks, links = get_metadata(html, **kwargs)
-    return [
-        [
-            (
-                type_,
-                (target if type_ == 'external' else
-                    (lambda page, x, y: (page, round(x, 6), round(y, 6)))
-                        (*target)),
-                tuple(round(v, 6) for v in rect)
-            )
-            for type_, target, rect in page_links
-        ]
-        for page_links in links]
+    for page_links in links:
+        for i, (link_type, target, rectangle) in enumerate(page_links):
+            if link_type == 'internal':
+                page, x, y = target
+                target = page, round(x, 6), round(y, 6)
+            rectangle = tuple(round(v, 6) for v in rectangle)
+            page_links[i] = link_type, target, rectangle
+    return links
 
 
 @assert_no_logs

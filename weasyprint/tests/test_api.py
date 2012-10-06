@@ -28,11 +28,12 @@ import pytest
 from .testing_utils import (
     resource_filename, assert_no_logs, capture_logs, TestHTML)
 from .test_draw import png_to_pixels
-from ..compat import urljoin, urlencode, urlparse_uses_relative
+from ..compat import urljoin, urlencode, urlparse_uses_relative, iteritems
 from ..urls import path2url
 from .. import HTML, CSS, default_url_fetcher
 from .. import __main__
 from .. import navigator
+from ..document import _TaggedTuple
 
 
 CHDIR_LOCK = threading.Lock()
@@ -526,10 +527,35 @@ def test_low_level_api():
     assert png_size(document.copy([page_2]).write_png()) == (6, 4)
 
 
+def round_meta(pages):
+    """Eliminate errors of floating point arithmetic for metadata.
+    (eg. 49.99999999999994 instead of 50)
+
+    """
+    for page in pages:
+        anchors = page.anchors
+        for anchor_name, (pos_x, pos_y) in iteritems(anchors):
+            anchors[anchor_name] = round(pos_x, 6), round(pos_y, 6)
+        links = page.links
+        for i, link in enumerate(links):
+            sourceline = link.sourceline
+            link_type, target, (pos_x, pos_y, width, height) = link
+            link = _TaggedTuple((
+                link_type, target, (round(pos_x, 6), round(pos_y, 6),
+                                    round(width, 6), round(height, 6))))
+            link.sourceline = sourceline
+            links[i] = link
+        bookmarks = page.bookmarks
+        for i, (level, label, (pos_x, pos_y)) in enumerate(bookmarks):
+            bookmarks[i] = level, label, (round(pos_x, 6), round(pos_y, 6))
+
+
 @assert_no_logs
 def test_bookmarks():
-    def assert_bookmarks(html, expected_by_page, expected_tree):
+    def assert_bookmarks(html, expected_by_page, expected_tree, round=False):
         document = TestHTML(string=html).render()
+        if round:
+            round_meta(document.pages)
         assert [p.bookmarks for p in document.pages] == expected_by_page
         assert document.make_bookmark_tree() == expected_tree
     assert_bookmarks('''
@@ -645,16 +671,30 @@ def test_bookmarks():
                 ('H', (0, 0, 130), [])])]),
         ('I', (0, 0, 150), []),
     ])
-
+    assert_bookmarks('<h1>é', [[(1, 'é', (0, 0))]], [('é', (0, 0, 0), [])])
+    assert_bookmarks('''
+        <h1 style="transform: translateX(50px)">!
+    ''', [[(1, '!', (50, 0))]], [('!', (0, 50, 0), [])])
+    assert_bookmarks('''
+        <h1 style="transform-origin: 0 0;
+                   transform: rotate(90deg) translateX(50px)">!
+    ''', [[(1, '!', (0, 50))]], [('!', (0, 0, 50), [])], round=True)
+    assert_bookmarks('''
+        <body style="transform-origin: 0 0; transform: rotate(90deg)">
+        <h1 style="transform: translateX(50px)">!
+    ''', [[(1, '!', (0, 50))]], [('!', (0, 0, 50), [])], round=True)
 
 
 @assert_no_logs
 def test_links():
     def assert_links(html, expected_links_by_page, expected_anchors_by_page,
                      expected_resolved_links,
-                     base_url=resource_filename('<inline HTML>'), warnings=()):
+                     base_url=resource_filename('<inline HTML>'),
+                     warnings=(), round=False):
         with capture_logs() as logs:
             document = TestHTML(string=html, base_url=base_url).render()
+            if round:
+                round_meta(document.pages)
             resolved_links = list(document.resolve_links())
         assert len(logs) == len(warnings)
         for message, expected in zip(logs, warnings):
@@ -769,6 +809,18 @@ def test_links():
         ('internal', (0, 0, 15), (0, 0, 200, 15)),
     ]], base_url=None, warnings=[
         'WARNING: No anchor #missing for internal URI reference'])
+
+    assert_links('''
+        <body style="width: 100px; transform: translateY(100px)">
+        <a href="#lipsum" id="lipsum" style="display: block; height: 20px;
+            transform: rotate(90deg) scale(2)">
+    ''', [[
+        ('internal', 'lipsum', (30, 10, 40, 200)),
+    ]], [
+        {'lipsum': (70, 10)}
+    ], [[
+        ('internal', (0, 70, 10), (30, 10, 40, 200)),
+    ]], round=True)
 
 
 def wsgi_client(path_info, qs_args=None):

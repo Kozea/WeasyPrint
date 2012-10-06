@@ -18,6 +18,10 @@ Not released yet.
   - Layout of inline-blocks with `vertical-align: top` or `bottom`.
   - Do not repeat a block’s margin-top or padding-top after a page break.
   - Performance problem with large tables split across many pages.
+  - Anchors and hyperlinks areas now follow CSS transforms.
+    Since PDF links have to be axis-aligned rectangles, the bounding box
+    is used. This may be larger than expected with rotations that are
+    not a multiple of 90 degrees.
 
 
 Version 0.14

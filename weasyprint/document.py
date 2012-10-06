@@ -74,6 +74,23 @@ def _get_matrix(box):
         return matrix
 
 
+def rectangle_aabb(matrix, pos_x, pos_y, width, height):
+    """Apply a transformation matrix to an axis-aligned rectangle
+    and return its axis-aligned bounding box as ``(x, y, width, height)``
+
+    """
+    transform_point = matrix.transform_point
+    x1, y1 = transform_point(pos_x, pos_y)
+    x2, y2 = transform_point(pos_x + width, pos_y)
+    x3, y3 = transform_point(pos_x, pos_y + height)
+    x4, y4 = transform_point(pos_x + width, pos_y + height)
+    box_x1 = min(x1, x2, x3, x4)
+    box_y1 = min(y1, y2, y3, y4)
+    box_x2 = max(x1, x2, x3, x4)
+    box_y2 = max(y1, y2, y3, y4)
+    return box_x1, box_y1, box_x2 - box_x1, box_y2 - box_y1
+
+
 class _TaggedTuple(tuple):
     """A tuple with a :attr:`sourceline` attribute,
     The line number in the HTML source for whatever the tuple represents.
@@ -93,24 +110,28 @@ def _get_metadata(box, bookmarks, links, anchors, matrix):
 
     if has_bookmark or has_link or has_anchor:
         pos_x, pos_y, width, height = box.hit_area()
-        if matrix:
-            pos_x, pos_y = matrix.transform_point(pos_x, pos_y)
-            width, height = matrix.transform_distance(width, height)
-        if has_bookmark:
-            bookmarks.append((bookmark_level, bookmark_label, (pos_x, pos_y)))
         if has_link:
             link_type, target = link
-            link = _TaggedTuple(
-                (link_type, target, (pos_x, pos_y, width, height)))
+            if matrix:
+                link = _TaggedTuple(
+                    (link_type, target, rectangle_aabb(
+                        matrix, pos_x, pos_y, width, height)))
+            else:
+                link = _TaggedTuple(
+                    (link_type, target, (pos_x, pos_y, width, height)))
             link.sourceline = box.sourceline
             links.append(link)
+        if matrix and (has_bookmark or has_anchor):
+            pos_x, pos_y = matrix.transform_point(pos_x, pos_y)
+        if has_bookmark:
+            bookmarks.append((bookmark_level, bookmark_label, (pos_x, pos_y)))
         if has_anchor:
             anchors[anchor_name] = pos_x, pos_y
 
 def _prepare(box, bookmarks, links, anchors, matrix):
     transform = _get_matrix(box)
-    # TODO: account for CSS transforms
-#    matrix *= …
+    if transform:
+        matrix = transform * matrix if matrix else transform
     _get_metadata(box, bookmarks, links, anchors, matrix)
     for child in box.all_children():
         _prepare(child, bookmarks, links, anchors, matrix)
