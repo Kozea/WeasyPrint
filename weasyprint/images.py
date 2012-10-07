@@ -38,27 +38,27 @@ if not USING_INTROSPECTION:
         from gtk import gdk
         from gtk.gdk import PixbufLoader
     # Old version of PyGTK raise RuntimeError when there is not X server.
-    except (ImportError, RuntimeError):
-        LOGGER.warn('Could not import gdk-pixbuf: raster '
-                    'images formats other than PNG will not be supported.')
-
-    def gdkpixbuf_loader(file_obj, string):
-        """Load raster images with gdk-pixbuf through PyGTK."""
-        pixbuf = get_pixbuf(file_obj, string)
-        dummy_context = cairo.Context(DUMMY_SURFACE)
-        gdk.CairoContext(dummy_context).set_source_pixbuf(pixbuf, 0, 0)
-        surface = dummy_context.get_source().get_surface()
-        get_pattern = lambda: cairo.SurfacePattern(surface)
-        return get_pattern, pixbuf.get_width(), pixbuf.get_height()
+    except (ImportError, RuntimeError) as exception:
+        def gdkpixbuf_loader(file_obj, string, pixbuf_error=exception):
+            raise pixbuf_error
+    else:
+        def gdkpixbuf_loader(file_obj, string):
+            """Load raster images with gdk-pixbuf through PyGTK."""
+            pixbuf = get_pixbuf(file_obj, string)
+            dummy_context = cairo.Context(DUMMY_SURFACE)
+            gdk.CairoContext(dummy_context).set_source_pixbuf(pixbuf, 0, 0)
+            surface = dummy_context.get_source().get_surface()
+            get_pattern = lambda: cairo.SurfacePattern(surface)
+            return get_pattern, pixbuf.get_width(), pixbuf.get_height()
 else:
     # Use PyGObject introspection
     try:
         from gi.repository import GdkPixbuf
-    except ImportError:
-        LOGGER.warn('Could not import gdk-pixbuf-introspection: raster '
-                    'images formats other than PNG will not be supported.')
-    else:
         from gi.repository.GdkPixbuf import PixbufLoader
+    except ImportError as exception:
+        def gdkpixbuf_loader(file_obj, string, pixbuf_error=exception):
+            raise pixbuf_error
+    else:
         PIXBUF_VERSION = (GdkPixbuf.PIXBUF_MAJOR,
                           GdkPixbuf.PIXBUF_MINOR,
                           GdkPixbuf.PIXBUF_MICRO)
@@ -67,30 +67,32 @@ else:
                         'Versions before 2.25.0 are known to be buggy. '
                         'Images formats other than PNG may not be supported.',
                         *PIXBUF_VERSION)
+        try:
+            # Unfornately cairo_set_source_pixbuf is not part of Pixbuf itself
+            from gi.repository import Gdk
 
-    try:
-        # Unfornately cairo_set_source_pixbuf is not part of Pixbuf itself
-        from gi.repository import Gdk
+            def gdkpixbuf_loader(file_obj, string):
+                """Load raster images with gdk-pixbuf through introspection
+                and Gdk.
 
-        def gdkpixbuf_loader(file_obj, string):
-            """Load raster images with gdk-pixbuf through introspection+Gdk."""
-            pixbuf = get_pixbuf(file_obj, string)
-            dummy_context = cairo.Context(DUMMY_SURFACE)
-            Gdk.cairo_set_source_pixbuf(dummy_context, pixbuf, 0, 0)
-            surface = dummy_context.get_source().get_surface()
-            get_pattern = lambda: cairo.SurfacePattern(surface)
-            return get_pattern, pixbuf.get_width(), pixbuf.get_height()
+                """
+                pixbuf = get_pixbuf(file_obj, string)
+                dummy_context = cairo.Context(DUMMY_SURFACE)
+                Gdk.cairo_set_source_pixbuf(dummy_context, pixbuf, 0, 0)
+                surface = dummy_context.get_source().get_surface()
+                get_pattern = lambda: cairo.SurfacePattern(surface)
+                return get_pattern, pixbuf.get_width(), pixbuf.get_height()
 
-    except ImportError:
-        # Gdk is not available, go through PNG.
-        def gdkpixbuf_loader(file_obj, string):
-            """Load raster images with gdk-pixbuf through introspection,
-            without Gdk and going through PNG.
+        except ImportError:
+            # Gdk is not available, go through PNG.
+            def gdkpixbuf_loader(file_obj, string):
+                """Load raster images with gdk-pixbuf through introspection,
+                without Gdk and going through PNG.
 
-            """
-            pixbuf = get_pixbuf(file_obj, string)
-            _, png = pixbuf.save_to_bufferv('png', ['compression'], ['0'])
-            return cairo_png_loader(None, png)
+                """
+                pixbuf = get_pixbuf(file_obj, string)
+                _, png = pixbuf.save_to_bufferv('png', ['compression'], ['0'])
+                return cairo_png_loader(None, png)
 
 
 def get_pixbuf(file_obj=None, string=None, chunck_size=16 * 1024):
