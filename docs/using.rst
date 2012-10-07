@@ -8,7 +8,8 @@ Stylesheet origins
 
 HTML documents are rendered with stylesheets from three *origins*:
 
-* The HTML5 `user agent stylesheet`_;
+* The HTML5 `user agent stylesheet`_ (defines the default appearance
+  of HTML elements);
 * Author stylesheets embedded in the document in ``<style>`` elements
   or linked by ``<link rel=stylesheet>`` elements;
 * User stylesheets provided in the API.
@@ -70,7 +71,7 @@ High-level API
 ..............
 
 .. autoclass:: HTML(input, **kwargs)
-    :members:
+    :members: write_pdf, write_png
 
 .. autoclass:: CSS(input, **kwargs)
 
