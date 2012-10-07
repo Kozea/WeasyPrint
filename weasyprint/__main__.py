@@ -26,34 +26,43 @@ def main(argv=None, stdout=None, stdin=None):
 
     More options are available:
 
-    ``-e`` or ``--encoding``
+    .. option:: -e <input_encoding>, --encoding <input_encoding>
+
         Force the input character encoding (eg. ``-e utf8``).
 
-    ``-f`` or ``--format``
+    .. option:: -f <output_format>, --format <output_format>
+
         Choose the output file format among PDF and PNG (eg. ``-f png``).
         Required if the output is not a ``.pdf`` or ``.png`` filename.
 
-    ``-s`` or ``--stylesheet``
+    .. option:: -s <filename_or_URL>, --stylesheet <filename_or_URL>
+
         Filename or URL of a user CSS stylesheet (see
         :ref:`stylesheet-origins`\.) to add to the document.
         (eg. ``-s print.css``). Multiple stylesheets are allowed.
 
-    ``-r`` or ``--resolution``
+    .. option:: -r <dpi>, --resolution <dpi>
+
         For PNG output only. Set the resolution in PNG pixel per CSS inch.
         Defaults to 96, which means that PNG pixels match CSS pixels.
 
-    ``--base-url``
-        Set the base for relative URLs in the HTML input. Defaults to the input’s
-        own URL or the current directory for stdin.
+    .. option:: --base-url <URL>
 
-    ``-m`` or ``--media-type``
+        Set the base for relative URLs in the HTML input.
+        Defaults to the input’s own URL, or the current directory for stdin.
+
+    .. option:: -m <type>, --media-type <type>
+
         Set the media type to use for ``@media``. Defaults to ``print``.
 
-    ``--version``
+    .. option:: --version
+
         Show the version number.
 
-    ``-h`` or ``--help``
+    .. option:: -h, --help
+
         Show the command-line usage.
+
     """
     parser = argparse.ArgumentParser(prog='weasyprint',
         description='Renders web pages to PDF or PNG.')
