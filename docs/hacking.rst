@@ -158,7 +158,7 @@ padding and content areas:
 
 .. _box model: http://www.w3.org/TR/CSS21/box.html
 
-.. image:: http://www.w3.org/TR/CSS21/images/boxdim.png
+.. image:: _static/box_model.png
     :align: center
 
 While ``box.style`` contains computed values, the `used values`_ are set
