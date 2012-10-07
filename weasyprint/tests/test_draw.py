@@ -23,7 +23,7 @@ import pytest
 
 from ..compat import xrange, izip, ints_from_bytes
 from ..urls import ensure_url
-from ..images import get_pixbuf, save_pixels_to_png
+from ..images import get_pixbuf, USING_INTROSPECTION
 from .. import HTML
 from .testing_utils import (
     resource_filename, TestHTML, FONTS, assert_no_logs, capture_logs)
@@ -35,6 +35,23 @@ from .testing_utils import (
 _ = b'\xff\xff\xff\xff'  # white
 r = b'\xff\x00\x00\xff'  # red
 B = b'\x00\x00\xff\xff'  # blue
+
+
+if USING_INTROSPECTION:
+    from gi.repository import GdkPixbuf
+    def save_pixels_to_png(pixels, width, height, filename):
+        """Save raw pixels to a PNG file through pixbuf and introspection."""
+        GdkPixbuf.Pixbuf.new_from_data(
+            pixels, GdkPixbuf.Colorspace.RGB, True, 8,
+            width, height, width * 4, None, None
+        ).savev(filename, 'png', [], [])
+else:
+    from gtk import gdk
+    def save_pixels_to_png(pixels, width, height, filename):
+        """Save raw pixels to a PNG file through pixbuf and PyGTK."""
+        gdk.pixbuf_new_from_data(
+            pixels, gdk.COLORSPACE_RGB, True, 8, width, height, width * 4
+        ).save(filename, 'png')
 
 
 def requires_cairo_1_12(test):

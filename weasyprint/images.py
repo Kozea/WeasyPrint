@@ -42,12 +42,6 @@ if not USING_INTROSPECTION:
         LOGGER.warn('Could not import gdk-pixbuf: raster '
                     'images formats other than PNG will not be supported.')
 
-    def save_pixels_to_png(pixels, width, height, filename):
-        """Save raw pixels to a PNG file through pixbuf and PyGTK."""
-        gdk.pixbuf_new_from_data(
-            pixels, gdk.COLORSPACE_RGB, True, 8, width, height, width * 4
-        ).save(filename, 'png')
-
     def gdkpixbuf_loader(file_obj, string):
         """Load raster images with gdk-pixbuf through PyGTK."""
         pixbuf = get_pixbuf(file_obj, string)
@@ -73,14 +67,6 @@ else:
                         'Versions before 2.25.0 are known to be buggy. '
                         'Images formats other than PNG may not be supported.',
                         *PIXBUF_VERSION)
-
-    def save_pixels_to_png(pixels, width, height, filename):
-        """Save raw pixels to a PNG file through pixbuf and introspection."""
-        from gi.repository import GdkPixbuf
-        GdkPixbuf.Pixbuf.new_from_data(
-            pixels, GdkPixbuf.Colorspace.RGB, True, 8,
-            width, height, width * 4, None, None
-        ).savev(filename, 'png', [], [])
 
     try:
         # Unfornately cairo_set_source_pixbuf is not part of Pixbuf itself
