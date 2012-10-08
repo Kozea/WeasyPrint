@@ -1,5 +1,5 @@
-Using WeasyPrint
-================
+Tutorial
+========
 
 .. _stylesheet-origins:
 
@@ -35,10 +35,6 @@ Once you have WeasyPrint :doc:`installed </install>`, you should have a
 
 You may see warnings on *stderr* about unsupported CSS.
 
-.. autofunction:: main(argv=sys.argv)
-
-
-.. module:: weasyprint
 
 As a Python library
 -------------------
@@ -51,51 +47,6 @@ any other Python library::
 
 The public API is made of two classes: :class:`HTML` and :class:`CSS`.
 
-
-API stability
-.............
-
-Everything described here is considered “public”: this is what you can rely
-on. We will try to maintain backward-compatibility, although there is no
-hard promise until version 1.0.
-
-Anything else should not be used outside of WeasyPrint itself: we reserve
-the right to change it or remove it at any point. Please do `tell us`_
-if you feel like something should be in the public API. It can probably
-be added in the next version.
-
-.. _tell us: http://weasyprint.org/community/
-
-
-High-level API
-..............
-
-.. autoclass:: HTML(input, **kwargs)
-    :members: write_pdf, write_png
-
-.. autoclass:: CSS(input, **kwargs)
-
-
-Low-level API
-.............
-
-.. versionadded:: 0.15
-
-This low-level API gives you access to each page and their size (which may
-vary within the same document!). You can then paint just a subset of the
-pages, each page separately, or even use any type of cairo surface for ouput
-other than PDF or PNG.
-
-.. automethod:: HTML.render
-
-.. module:: weasyprint.document
-.. autoclass:: Page()
-    :members:
-.. autoclass:: Document()
-    :members:
-
-
-.. currentmodule:: weasyprint
 .. _url-fetchers:
 
 URL fetchers
@@ -106,9 +57,8 @@ images or CSS stylesheets. The default fetcher can natively open files
 and URLs, but the HTTP client does not support advanced features like cookies
 or authentication. This can be worked-around by passing a custom
 ``url_fetcher`` callable to the :class:`HTML` or :class:`CSS` classes.
-It must have the same signature as the default fetcher:
-
-.. autofunction:: default_url_fetcher
+It must have the same signature as :func:`the default fetcher
+<weasyprint.default_url_fetcher>`.
 
 Custom fetchers can choose to handle some URLs and defer others
 to the default fetcher:

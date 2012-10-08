@@ -10,7 +10,8 @@ Documentation contents
     :maxdepth: 2
 
     install
-    using
+    tutorial
+    api
     features
     hacking
     changelog
