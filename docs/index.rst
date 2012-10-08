@@ -2,7 +2,6 @@ WeasyPrint documentation
 ########################
 
 .. include:: ../README
-.. include:: ../AUTHORS
 
 Documentation contents
 ----------------------
@@ -15,3 +14,5 @@ Documentation contents
     features
     hacking
     changelog
+
+.. include:: ../AUTHORS
