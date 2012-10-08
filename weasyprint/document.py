@@ -34,7 +34,7 @@ from .urls import FILESYSTEM_ENCODING
 def _get_matrix(box):
     """Return the matrix for the CSS transforms on this box.
 
-    :returns: a :class:`cairo.Matrix` object or ``None``.
+    :returns: a :class:`cairo.Matrix` object or :obj:`None`.
 
     """
     # "Transforms apply to block-level and atomic inline-level elements,
@@ -140,34 +140,38 @@ def _prepare(box, bookmarks, links, anchors, matrix):
 class Page(object):
     """Represents a single rendered page.
 
+    .. versionadded:: 0.15
+
     Should be obtained from :attr:`Document.pages` but not
     instantiated directly.
 
     """
     def __init__(self, page_box, enable_hinting=False):
-        #: The page width, including margins, in cairo user units.
+        #: The page width, including margins, in CSS pixels.
         self.width = page_box.margin_width()
 
-        #: The page height, including margins, in cairo user units.
+        #: The page height, including margins, in CSS pixels.
         self.height = page_box.margin_height()
 
-        #: A list of ``(bookmark_level, bookmark_label, point)`` tuples.
-        #: A point is ``(x, y)`` in cairo units from the top-left of the page.
+        #: A list of ``(bookmark_level, bookmark_label, target)`` tuples.
+        #: :obj:`bookmark_level` and :obj:`bookmark_label` are respectively
+        #: an integer and an Unicode string, based on the CSS properties
+        #: of the same names. :obj:`target` is a ``(x, y)`` point
+        #: in CSS pixels from the top-left of the page.
         self.bookmarks = bookmarks = []
 
         #: A list of ``(link_type, target, rectangle)`` tuples.
-        #: A rectangle is ``(x, y, width, height)``, in cairo units
-        #: form the top-left of the page.
-        #: The link type one of two strings:
+        #: A rectangle is ``(x, y, width, height)``, in CSS pixels from
+        #: the top-left of the page. :obj:`link_type` is one of two strings:
         #:
         #: * ``'external'``: :obj:`target` is an absolute URL
         #: * ``'internal'``: :obj:`target` is an anchor name (see
-        #:   :attr:`Page.anchors` and :meth:`Document.all_anchors`).
-        #:   An anchor might be defined in another page, or not at all.
+        #:   :attr:`Page.anchors`). The anchor might be defined in
+        #:   another page, in multiple pages, or not at all.
         self.links = links = []
 
-        #: A dict mapping anchor names to points (``(x, y)`` in cairo units
-        #: form the top-left of the page.)
+        #: A dict mapping anchor names to their target, ``(x, y)`` points
+        #: in CSS pixels form the top-left of the page.)
         self.anchors = anchors = {}
 
         _prepare(page_box, bookmarks, links, anchors, matrix=None)
@@ -186,7 +190,7 @@ class Page(object):
             Y coordinate of the top of the page, in cairo user units.
         :type scale: float
         :param scale:
-            Zoom scale in CSS pixels per cairo user unit.
+            Zoom scale in cairo user units per CSS pixel.
         :type clip: bool
         :param clip:
             Whether to clip/cut content outside the page. If false or
@@ -223,6 +227,8 @@ class Page(object):
 class Document(object):
     """A rendered document, with access to individual pages
     ready to be painted on any cairo surfaces.
+
+    .. versionadded:: 0.15
 
     Should be obtained from :meth:`HTML.render() <weasyprint.HTML.render>`
     but not instantiated directly.
@@ -282,7 +288,7 @@ class Document(object):
             except that :obj:`target` for internal hyperlinks is
             ``(page_number, x, y)`` instead of an anchor name.
             The page number is an index (0-based) in the :attr:`pages` list,
-            ``x, y`` are in cairo units from the top-left of the page.
+            ``x, y`` are in CSS pixels from the top-left of the page.
 
         """
         anchors = {}
@@ -358,10 +364,10 @@ class Document(object):
         bookmarks/outlines and hyperlinks.
 
         :param target:
-            A filename, file-like object, or ``None``.
+            A filename, file-like object, or :obj:`None`.
         :returns:
-            The PDF as byte string if :obj:`target` is ``None``, otherwise
-            ``None`` (the PDF is written to :obj:`target`.)
+            The PDF as byte string if :obj:`target` is :obj:`None`, otherwise
+            :obj:`None` (the PDF is written to :obj:`target`.)
 
         """
         # Use an in-memory buffer. We will need to seek for metadata
@@ -370,11 +376,10 @@ class Document(object):
         # (1, 1) is overridden by .set_size() below.
         surface = cairo.PDFSurface(file_obj, 1, 1)
         context = cairo.Context(surface)
-        context.scale(0.75, 0.75)
         for page in self.pages:
             surface.set_size(page.width * 0.75, page.height * 0.75)
             # 0.75 = 72 PDF point per inch / 96 CSS pixel per inch
-            page.paint(context)
+            page.paint(context, scale=0.75)
             surface.show_page()
         surface.finish()
 
@@ -398,15 +403,15 @@ class Document(object):
         Each page is below the previous one, centered horizontally.
 
         :param target:
-            A filename, file-like object, or ``None``.
+            A filename, file-like object, or :obj:`None`.
         :type resolution: float
         :param resolution:
             The output resolution in PNG pixels per CSS inch. At 96 dpi
             (the default), PNG pixels match the CSS ``px`` unit.
         :returns:
             A ``(png_bytes, png_width, png_height)`` tuple. :obj:`png_bytes`
-            is a byte string if :obj:`target` is ``None``, otherwise ``None``
-            (the image is written to :obj:`target`.)
+            is a byte string if :obj:`target` is :obj:`None`, otherwise
+            :obj:`None` (the image is written to :obj:`target`.)
             :obj:`png_width` and :obj:`png_height` are the size of the
             final image, in PNG pixels.
 

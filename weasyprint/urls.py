@@ -217,6 +217,11 @@ def open_data_url(url):
 def default_url_fetcher(url):
     """Fetch an external resource such as an image or stylesheet.
 
+    Another callable with the same signature can be given as the
+    :obj:`url_fetcher` argument to :class:`HTML` or :class:`CSS`.
+    (See :ref:`url-fetchers`.)
+
+    :type url: Unicode string
     :param url: The URL of the resource to fetch
     :raises: any exception to indicate failure. Failures are logged
         as warnings, with the string representation of the exception

@@ -20,11 +20,17 @@ from . import VERSION, HTML
 
 
 def main(argv=None, stdout=None, stdin=None):
-    """The ``weasyprint`` command takes two arguments: its input and output.
+    """The ``weasyprint`` program takes at least two arguments:
+
+    .. code-block:: sh
+
+        weasyprint [options] <input> <output>
+
     The input is a filename or URL to an HTML document, or ``-`` to read
     HTML from stdin. The output is a filename, or ``-`` to write to stdout.
 
-    More options are available:
+    Options can be mixed anywhere before, between or after the input and
+    output:
 
     .. option:: -e <input_encoding>, --encoding <input_encoding>
 
@@ -57,11 +63,11 @@ def main(argv=None, stdout=None, stdin=None):
 
     .. option:: --version
 
-        Show the version number.
+        Show the version number. Other options and arguments are ignored.
 
     .. option:: -h, --help
 
-        Show the command-line usage.
+        Show the command-line usage. Other options and arguments are ignored.
 
     """
     parser = argparse.ArgumentParser(prog='weasyprint',

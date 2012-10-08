@@ -56,7 +56,10 @@ class HTML(object):
     :param base_url: The base used to resolve relative URLs
         (eg. in ``<img src="../foo.png">``). If not provided, try to use
         the input filename, URL, or ``name`` attribute of file-like objects.
-    :param url_fetcher: The URL fetcher function. (See :ref:`url-fetchers`.)
+    :param url_fetcher: a function or other callable
+        with the same signature as :func:`default_url_fetcher` called to
+        fetch external resources such as stylesheets and images.
+        (See :ref:`url-fetchers`.)
     :param media_type: The media type to use for ``@media``.
         Defaults to ``'print'``. **Note:** In some cases like
         ``HTML(string=foo)`` relative URLs will be invalid if ``base_url``
@@ -107,8 +110,11 @@ class HTML(object):
         """Lay out and paginate the document, but do not (yet) export it
         to PDF or another format.
 
-        This is the low-level API. It provides individual pages and can
-        paint to any type of cairo surface.
+        This returns a :class:`~document.Document` object which provides
+        access to individual pages and various meta-data.
+        See :meth:`write_pdf` to get a PDF directly.
+
+        .. versionadded:: 0.15
 
         :param stylesheets:
             An optional list of user stylesheets. (See
@@ -119,7 +125,7 @@ class HTML(object):
             Whether text, borders and background should be *hinted* to fall
             at device pixel boundaries. Should be enabled for pixel-based
             output (like PNG) but not vector based output (like PDF).
-        :returns: A :class:`Document` object.
+        :returns: A :class:`~document.Document` object.
 
         """
         from .document import Document
@@ -127,17 +133,21 @@ class HTML(object):
 
 
     def write_pdf(self, target=None, stylesheets=None):
-        """Render the document to a PDF file, with meta-data.
+        """Render the document to a PDF file.
+
+        This is a shortcut for calling :meth:`render`, then
+        :meth:`Document.write_pdf() <document.Document.write_pdf>`.
 
         :param target:
-            A filename, file-like object, or ``None``.
+            A filename, file-like object, or :obj:`None`.
         :param stylesheets:
             An optional list of user stylesheets. (See
             :ref:`stylesheet-origins`\.) The list’s elements are
             :class:`CSS` objects, filenames, URLs, or file-like objects.
         :returns:
-            The PDF as byte string if :obj:`target` is ``None``, otherwise
-            ``None`` (the PDF is written to :obj:`target`.)
+            The PDF as byte string if :obj:`target` is not provided or
+            :obj:`None`, otherwise :obj:`None` (the PDF is written to
+            :obj:`target`.)
 
         """
         return self.render(stylesheets).write_pdf(target)
@@ -149,8 +159,11 @@ class HTML(object):
         with ``@page`` rules. The final image is as wide as the widest page.
         Each page is below the previous one, centered horizontally.
 
+        This is a shortcut for calling :meth:`render`, then
+        :meth:`Document.write_png() <document.Document.write_png>`.
+
         :param target:
-            A filename, file-like object, or ``None``.
+            A filename, file-like object, or :obj:`None`.
         :param stylesheets:
             An optional list of user stylesheets. (See
             :ref:`stylesheet-origins`\.) The list’s elements are
@@ -160,7 +173,9 @@ class HTML(object):
             The output resolution in PNG pixels per CSS inch. At 96 dpi
             (the default), PNG pixels match the CSS ``px`` unit.
         :returns:
-            If :obj:`target` is :obj:`None`, a PNG byte string.
+            The image as byte string if :obj:`target` is not provided or
+            :obj:`None`, otherwise :obj:`None` (the image is written to
+            :obj:`target`.)
 
         """
         png_bytes, _width, _height = (

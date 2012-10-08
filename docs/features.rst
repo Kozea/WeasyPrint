@@ -56,16 +56,17 @@ point to http://weasyprint.org/news/ in PDF files.
 PDF bookmarks are also called outlines and are generally shown in a
 sidebar. Clicking on an entry scrolls the matching part of the document
 into view. By default all ``<h1>`` to ``<h6>`` titles generate bookmarks,
-but this can be controlled with CSS (see below.)
+but this can be controlled with CSS (see :ref:`bookmarks`.)
 
 
 Fonts
 -----
 
 Although the CSS3 ``@font-face`` is not supported yet, WeasyPrint can use
-any font installed on the system. Just use it’s name in ``font-family``.
-To install a new font copying the file into the ``~/.fonts`` directory is
-generally enough, depending on your OS.
+any font that Pango can find installed on the system. If you can use a font
+in a GTK+ application, just use it’s name in ``font-family``.
+Copying a file into the ``~/.fonts`` directory is generally enough to install
+a new font, depending on the OS.
 
 Fonts are automatically embedded in PDF files.
 
@@ -84,7 +85,7 @@ The `CSS 2.1`_ features listed here are **not** supported:
 * Conforming `font matching algorithm`_. Currently ``font-family``
   is passed as-is to Pango.
 * Right-to-left or `bi-directional text`_.
-* `System colors`_ and `system fonts`_. The former are deprecated in CSS 3
+* `System colors`_ and `system fonts`_. The former are deprecated in CSS 3.
 
 .. _CSS 2.1: http://www.w3.org/TR/CSS21/
 .. _empty-cells: http://www.w3.org/TR/CSS21/tables.html#empty-cells
@@ -118,6 +119,8 @@ as invalid with ``*``.
 .. _CSS 3 Selectors: http://www.w3.org/TR/css3-selectors/
 .. _cssselect: http://packages.python.org/cssselect/
 
+
+.. _bookmarks:
 
 CSS GCPM: bookmarks
 ~~~~~~~~~~~~~~~~~~~

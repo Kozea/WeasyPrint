@@ -14,6 +14,8 @@ or have dependency to a specific WeasyPrint version in your ``setup.py``
 or ``requirements.txt`` file.
 
 
+.. _command-line-api:
+
 Command-line API
 ----------------
 
@@ -21,6 +23,7 @@ Command-line API
 
 
 .. module:: weasyprint
+.. _python-api:
 
 Python API
 ----------
