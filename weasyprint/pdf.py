@@ -42,7 +42,7 @@ from .compat import xrange, iteritems, izip
 from .urls import iri_to_uri
 
 
-PX_TO_PT = 0.75  # 72dpi (PoscSript points) / 96dpi (CSS pixels)
+PX_TO_PT = 0.75  # 72dpi (PostSript points) / 96dpi (CSS pixels)
 
 
 class PDFFormatter(string.Formatter):
