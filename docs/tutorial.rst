@@ -74,14 +74,14 @@ you can also pass that, although the argument must be named:
 
 .. code-block:: python
 
-    # The argument must be named: HTML('<h1>foo') is a filename
+    # HTML('<h1>foo') would be filename
     HTML(string='''
         <h1>The title</h1>
         <p>Content goes here
     ''')
     CSS(string='@page { size: A3; margin: 1cm }')
 
-    # The argument must be named
+    # Use a different lxml parser:
     HTML(tree=lxml.html.html5parser.parse('../foo.html'))
 
 

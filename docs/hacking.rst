@@ -38,7 +38,7 @@ Much like `in web browsers
 <http://www.html5rocks.com/en/tutorials/internals/howbrowserswork/#The_main_flow>`_,
 the rendering of a document in WeasyPrint goes like this:
 
-1. The HTML document is fetched and parsed into a DOM tree
+1. The HTML document is fetched and parsed into a tree of elements (like DOM)
 2. CSS stylesheets (either found in the HTML or supplied by the user) are
    fetched and parsed
 3. The stylesheets are applied to the DOM tree
@@ -48,100 +48,109 @@ the rendering of a document in WeasyPrint goes like this:
 7. The pages are drawn in a PDF file through a cairo surface.
 8. Cairo’s PDF is modified to add metadata such as bookmarks and hyperlinks.
 
-Documents
-.........
-
-WeasyPrint’s “entry point” is the ``Document`` class. An instance handles
-a document for all of its lifetime. It is responsible of calling other parts
-of the code for each step listed above.
-
-The document is lazy: the various steps of the rendering are only done
-when required (ie. when relevant attributes are accessed.)
 
 HTML
 ....
 
-Not much to see here. lxml.html_ handles step 1 and gives a *DOM tree*.
-The lxml API is not actually DOM, but we’ll call it that anyway. The lxml
-object for the root element (usually ``<html>``) is stored as the ``dom``
-attribute of the document.
+Not much to see here. The :class:`weasyprint.HTML` class is a thin wrapper
+around lxml.html_ which handles step 1 and gives a tree of HTML *elements*.
+Although the actual API is different, this tree is conceptually the same
+as what web browsers call *the DOM*.
 
 .. _lxml.html: http://lxml.de/lxmlhtml.html
+
 
 CSS
 ...
 
-Steps 2 and 3 happen in the ``weasyprint.css`` package. CSS stylesheets are
-parsed with cssutils_. ``@import`` and ``@media`` rules are resolved to find
-applicable rule sets. Then the ``weasyprint.css.validation`` module filters out
-declarations with properties unknown to or unsupported by WeasyPrint or with
-illegal or unsupported values.
+As with HTML, CSS stylesheets are parsed in the :class:`weasyprint.CSS` class
+with an external library, tinycss_.
+After the In addition to the actual parsing, the :mod:`weasyprint.css` and
+:mod:`weasyprint.css.validation` modules do some pre-processing:
 
-
-.. _cssutils: http://cthedot.de/cssutils/
-.. _lxml.cssselect: http://lxml.de/cssselect.html
-
-As well as validation, several transformations are made at or around
-this point:
-
-* Shorthand properties are expanded. For example, ``margin`` is replaced by
+* Unknown and unsupported declarations are ignored with warnings.
+  Remaining property values are parsed in a property-specific way
+  from raw tinycss tokens into a higher-level form.
+* Shorthand properties are expanded. For example, ``margin`` becomes
   ``margin-top``, ``margin-right``, ``margin-bottom`` and ``margin-left``.
-* Some values are simplified. They come as a list as a list of cssutils
-  `Value objects`_. For example, keyword values are replaced by simple
-  strings and the list is dropped when its length is always one for a given
-  property.
 * Hyphens in property names are replaced by underscores (``margin-top``
   becomes ``margin_top``) so that they can be used as Python attribute names
-  later on.
+  later on. This transformation is safe since none for the know (not ignored)
+  properties have an underscore character.
+* Selectors are pre-compiled with cssselect_.
 
-.. _Value objects: http://packages.python.org/cssutils/docs/css.html#values
+.. _tinycss: http://packages.python.org/tinycss/
+.. _cssselect: http://packages.python.org/cssselect/
 
-After that, the cascade_ (that’s the C in CSS!), together with inhertance
-and initial values, assigns a value for each property to each DOM element.
-These values are *computed* in ``weasyprint.css.computed_values``: lengths
-are converted to pixels, etc. The objects representing the values are
-simplified further: pixel length are simple floating points numbers.
-Some values however are still cssutils objects to avoid ambiguities (eg.
-percentages.)
+
+The cascade
+...........
+
+After that and still in the :mod:`weasyprint.css` package, the cascade_
+(that’s the C in CSS!) applies the stylesheets to the element tree.
+Selectors associate property declarations to elements. In case of conflicting
+declarations (different values for the same property on the same element),
+the one with the highest *weight* wins. Weights are based on the stylesheet’s
+:ref:`origin <stylesheet-origins>`, ``!important`` markers, selector
+specificity and source order. Missing values are filled in through
+*inheritance* (from the parent element) or the property’s *initial value*,
+so that every element has a *specified value* for every property.
 
 .. _cascade: http://www.w3.org/TR/CSS21/cascade.html
 
-Finally, the computed style for all DOM elements is stored in the
-``computed_styles`` attribute of the document object.
+These *specified values* are turned into *computed values* in the
+``weasyprint.css.computed_values`` module. Keywords and lengths in various
+units are converted to pixels, etc. At this point the value for some
+properties can be represented by a single number or string, but some require
+more complex objects. For example, a :class:`Dimension` object can be either
+an absolute length or a percentage.
+
+The final result of the :func:`~weasyprint.css.get_all_computed_styles`
+function is a big dict where keys are ``(element, pseudo_element_type)``
+tuples, and keys are :obj:``StyleDict`` objects. Elements are lxml objects,
+while the type of pseudo-element is a string for eg. ``::first-line``
+selectors, or :obj:`None` for “normal” elements. :obj:`StyleDict` objects
+are dicts with attribute access mapping property names to the computed values.
+(The return value is not the dict itself, but a convenience :func:`style_for`
+function for accessing it.)
+
 
 Formatting structure
 ....................
 
-The `visual formatting model`_ explains how *elements* (from the DOM tree)
+The `visual formatting model`_ explains how *elements* (from the lxml tree)
 generate *boxes* (in the formatting structure). This is step 4 above.
 Boxes may have children and thus form a tree, much like elements. This tree
-is generally close but not identical to the DOM tree: some elements generate
-no or more than one box.
+is generally close but not identical to the lxml tree: some elements generate
+more than one box or none.
 
 .. _visual formatting model: http://www.w3.org/TR/CSS21/visuren.html
 
 Boxes are of a lot of different kinds. For example you should not confuse
 *block-level boxes* and *block containers*, though *block boxes* are both.
-The ``weasyprint.formatting_structure.boxes`` module has a whole hierarchy of
-classes to represent all these boxes. We won’t go into the details here, see
-the module and class docstrings.
+The :mod:`weasyprint.formatting_structure.boxes` module has a whole hierarchy
+of classes to represent all these boxes. We won’t go into the details here,
+see the module and class docstrings.
 
-The ``weasyprint.formatting_structure.build`` module takes a DOM tree with
+The :mod:`weasyprint.formatting_structure.build` module takes an lxml tree with
 associated computed styles, and builds a formatting structure. It generates
 the right boxes for each element and ensures they conform to the models rules.
-(Eg. an inline box can not contain a block.) Each box has a ``some_box.style``
-attribute containing computed values for each known CSS property.
+(Eg. an inline box can not contain a block.) Each box has a :attr:`.style`
+attribute containing the :class:`StyleDict` of computed values.
 
-The main logic is based on the ``display`` property, but it can be overridden for some elements by adding a handler in the ``weasyprint.html`` module.
+The main logic is based on the ``display`` property, but it can be overridden
+for some elements by adding a handler in the ``weasyprint.html`` module.
 This is how ``<img>`` and ``<td colspan=3>`` are currently implemented,
 for example.
 This module is rather short as most of HTML is defined in CSS rather than
 in Python, in the `user agent stylesheet`_.
 
-The box for the root element (and, through its ``children`` attribute, the
-whole tree) is set to the ``formatting_structure`` attribute of the document.
+The :func:`~weasyprint.formatting_structure.build.build_formatting_structure`
+function returns the box for the root element (and, through its
+:attr:`children` attribute, the whole tree).
 
 .. _user agent stylesheet: https://github.com/Kozea/WeasyPrint/blob/master/weasyprint/css/html5_ua.css
+
 
 Layout
 ......
@@ -149,9 +158,10 @@ Layout
 Step 5 is the layout. You could say the everything else is glue code and
 this is where the magic happens.
 
-During the layout the document’s content is … laid out on pages. This is when
-we decide where to do line breaks and page breaks. If a break happens inside
-of a box, that box is split into two (or more) boxes in the layout result.
+During the layout the document’s content is, well, laid out on pages.
+This is when we decide where to do line breaks and page breaks. If a break
+happens inside of a box, that box is split into two (or more) boxes in the
+layout result.
 
 According to the `box model`_, each box has rectangular margin, border,
 padding and content areas:
@@ -161,32 +171,38 @@ padding and content areas:
 .. image:: _static/box_model.png
     :align: center
 
-While ``box.style`` contains computed values, the `used values`_ are set
-as attributes of the ``Box`` object itself during the layout. This
+While :obj:`box.style` contains computed values, the `used values`_ are set
+as attributes of the :class:`Box` object itself during the layout. This
 include resolving percentages and especially ``auto`` values into absolute,
 pixel lengths. Once the layout done, each box has used values for
-margins, border width, padding of each four sides, as well as the ``width``
-and ``height`` of the content area. They also have ``position_x`` and
-``position_y``, the absolute coordinates of the top-left corner of the
-margin box (**not** the content box) from the top-left corner of the page.
+margins, border width, padding of each four sides, as well as the
+:attr:`width` and :attr:`height` of the content area. They also have
+:attr:`position_x`` and :attr:`position_y``, the absolute coordinates of the
+top-left corner of the margin box (**not** the content box) from the top-left
+corner of the page.\ [#]_
 
-.. _used values: http://www.w3.org/TR/CSS21/cascade.html#used-value
-
-Boxes also have helpers methods such as ``content_box_y()`` and
-``margin_width()`` that give other metrics that can be useful in various
+Boxes also have helpers methods such as :meth:`content_box_y` and
+:meth:`margin_width` that give other metrics that can be useful in various
 parts of the code.
 
-When the layout is done, a list of ``PageBox`` objects is set to the
-``pages`` attribute of the document.
+The final result of the layout is a list of :class:`PageBox` objects.
+
+.. [#] These are the coordinates *if* no `CSS transform`_ applies.
+       Transforms change the actual location of boxes, but they are applies
+       later during drawing and do not affect layout.
+.. _used values: http://www.w3.org/TR/CSS21/cascade.html#used-value
+.. _CSS transform: http://www.w3.org/TR/css3-transforms/
+
 
 Stacking
 ........
 
-In step 6, the boxes are reorder by the ``weasyprint.stacking`` module
+In step 6, the boxes are reorder by the :mod:`weasyprint.stacking` module
 to observe `stacking rules`_ such as the ``z-index`` property.
-The result is a tree of `stacking contexts`.
+The result is a tree of *stacking contexts*.
 
 .. _stacking rules: http://www.w3.org/TR/CSS21/zindex.html
+
 
 Drawing
 .......
@@ -196,14 +212,14 @@ Since each box has absolute coordinates on the page from the layout step,
 the logic here should be minimal. If you find yourself adding a lot of logic
 here, maybe it should go in the layout or stacking instead.
 
-The code lives in the ``weasyprint.draw`` module and is called by the
-``write_to`` method of the document.
+The code lives in the :mod:`weasyprint.draw` module.
 
 .. _cairo: http://cairographics.org/pycairo/
+
 
 Metadata
 ........
 
-Finally (step 8), the ``weasyprint.pdf`` parses the PDF file produced by cairo
-and makes an *incremental update* to add internal and external hyperlinks,
-as well as outlines / bookmarks.
+Finally (step 8), the :mod:`weasyprint.pdf` module parses the PDF file
+produced by cairo and makes appends to it to add meta-data:
+internal and external hyperlinks, as well as outlines / bookmarks.
