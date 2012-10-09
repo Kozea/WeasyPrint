@@ -10,30 +10,8 @@
     http://www.w3.org/TR/CSS21/intro.html#processing-model
 
     This module does this in more than two steps. The
-    :func:`get_all_computed_styles` function does everything, but it itsef
-    calls a function for each step:
-
-    ``find_stylesheets``
-        Find and parse all author stylesheets in a document.
-
-    ``effective_rules``
-        Resolve @media and @import rules.
-
-    ``match_selectors``
-        Find elements in a document that match a selector list.
-
-    ``find_style_attributes``
-        Find and parse all `style` HTML attributes.
-
-    ``effective_declarations``
-        Remove ignored properties and expand shorthands.
-
-    ``add_property``
-        Take applicable properties and only keep those with highest weight.
-
-    ``set_computed_styles``
-        Handle initial values, inheritance and computed values for one element.
-
+    :func:`get_all_computed_styles` function does everything, but it is itsef
+    based on other functions in this module.
 
     :copyright: Copyright 2011-2012 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
