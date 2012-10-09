@@ -9,5 +9,5 @@ pagination, and meant to be easy to hack on.
 * Free software: BSD licensed
 * Python 2.6+ or 3.x
 * Website: http://weasyprint.org/
-* Latest documentation: http://docs.weasyprint.org/
+* Latest documentation: http://weasyprint.org/docs/
 * Source code and issue tracker: https://github.com/Kozea/WeasyPrint

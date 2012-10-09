@@ -4,14 +4,15 @@ WeasyPrint changelog
 Version 0.15
 ------------
 
-Not released yet.
+Released on 2012-10-09
 
 * Add a low-level API that enables painting pages individually on any
   cairo surface.
-* **Backward-incompatible change**: remove the ``HTML.get_png_pages`` method.
-  The new low-level API covers this functionality and more.
+* **Backward-incompatible change**: remove the :meth:`HTML.get_png_pages`
+  method. The new low-level API covers this functionality and more.
 * Add support for the ``font-stretch`` property.
 * Add support for ``@page:blank`` to select blank pages.
+* New Sphinx-based and improved docs
 * Bug fixes:
 
   - Importing Pango in some PyGTK installations.
