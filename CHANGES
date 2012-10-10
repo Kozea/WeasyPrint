@@ -4,7 +4,7 @@ WeasyPrint changelog
 Version 0.15
 ------------
 
-Released on 2012-10-09
+Released on 2012-10-09.
 
 * Add a low-level API that enables painting pages individually on any
   cairo surface.

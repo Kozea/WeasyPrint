@@ -62,7 +62,7 @@ You can also play with :ref:`navigator`:
 
     python -m weasyprint.navigator
 
-If everything goes well, you’re ready to :doc:`start using </using>`
+If everything goes well, you’re ready to :doc:`start using </tutorial>`
 WeasyPrint! Otherwise, please copy the full error message and
 `report the problem <http://weasyprint.org/community/>`_.
 
