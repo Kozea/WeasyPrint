@@ -127,16 +127,15 @@ See the :ref:`python-api` for details. A few random example:
 
     # Write one PNG image per page:
     for i, page in enumerate(document.pages):
-        document.copy(page).write_png('page_%s.png' % i)
+        document.copy([page]).write_png('page_%s.png' % i)
 
+    # Some previous versions of WeasyPrint had a method like this:
+    def get_png_pages(document):
+        """Yield (png_bytes, width, height) tuples."""
+        for page in document.pages:
+            yield document.copy([page]).write_png()
 
-    # Print the outline of the document
-    def print_outline(bookmarks, indent=0):
-        for i, (label, (page, _, _), children) in enumerate(bookmarks, 1):
-            print('%s%d. %s (page %d)' % (
-                ' ' * indent, i, label.lstrip('0123456789. '), page))
-            print_outline(children, indent + 2)
-    print_outline(document.make_bookmark_tree())
+    # Print the outline of the document.
     # Output on http://www.w3.org/TR/CSS21/intro.html
     #     1. Introduction to CSS 2.1 (page 2)
     #       1. A brief CSS 2.1 tutorial for HTML (page 2)
@@ -145,6 +144,12 @@ See the :ref:`python-api` for details. A few random example:
     #         1. The canvas (page 7)
     #         2. CSS 2.1 addressing model (page 7)
     #       4. CSS design principles (page 8)
+    def print_outline(bookmarks, indent=0):
+        for i, (label, (page, _, _), children) in enumerate(bookmarks, 1):
+            print('%s%d. %s (page %d)' % (
+                ' ' * indent, i, label.lstrip('0123456789. '), page))
+            print_outline(children, indent + 2)
+    print_outline(document.make_bookmark_tree())
 
 
     # PostScript on standard output:
