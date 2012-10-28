@@ -236,6 +236,8 @@ in your web browser. Start it with:
 
 … and open your browser at http://127.0.0.1:5000/.
 
+.. image:: weasyprint-navigator.png
+
 It does not support cookies, forms, or many other things that you would
 expect from a “real” browser. It only shows the PNG output from WeasyPrint
 with overlaid clickable hyperlinks. It is mostly useful for playing and testing.
