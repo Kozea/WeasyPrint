@@ -33,6 +33,8 @@ REQUIREMENTS = [
 if sys.version_info < (2, 7) or (3,) <= sys.version_info < (3, 2):
     # In the stdlib from 2.7 and 3.2:
     REQUIREMENTS.append('argparse')
+if sys.version_info[0] < 3:
+    REQUIREMENTS.append('html5lib')
 
 setup(
     name='WeasyPrint',

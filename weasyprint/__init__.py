@@ -69,7 +69,14 @@ class HTML(object):
     def __init__(self, guess=None, filename=None, url=None, file_obj=None,
                  string=None, tree=None, encoding=None, base_url=None,
                  url_fetcher=default_url_fetcher, media_type='print'):
-        import lxml.html
+        import sys
+        html5parser = None
+        try:
+            from lxml.html import html5parser, html_parser
+            import lxml.etree
+            import io
+        except ImportError:
+            import lxml.html
         from .html import find_base_url
         from .urls import wrap_url_fetcher
         url_fetcher = wrap_url_fetcher(url_fetcher)
@@ -78,19 +85,47 @@ class HTML(object):
             guess, filename, url, file_obj, string, tree, base_url,
             url_fetcher)
 
+        if not encoding:
+            encoding = protocol_encoding
+
         if source_type == 'tree':
             result = source
+        elif html5parser:
+            if source_type != 'string' and isinstance(source, basestring):
+                source = open(source, 'rb')
+
+            parser = html5parser.HTMLParser()
+            result = parser.parse(source, encoding=encoding)
+
+            # XXX Since XPath support in lxml doesn't handle elements
+            # with the XHTML namespace well, remove namespaces of the whole
+            # tree. Remove this kludge when lxml/cssselect + WeasyPrint 
+            # support XHTML namespace.
+
+            def clone(child, parent):
+                new_child = lxml.etree.SubElement(parent, child.tag[30:],
+                                                  child.attrib)
+                new_child.text = child.text
+                new_child.tail = child.tail
+                for next_level_child in child:
+                    clone(next_level_child, new_child)
+                    
+            html = html_parser.makeelement(result.getroot().tag[30:], 
+                                           result.getroot().attrib)
+            for next_level_child in result.getroot():
+                clone(next_level_child, html)
+            result = html
         else:
             if source_type == 'string':
                 parse = lxml.html.document_fromstring
             else:
                 parse = lxml.html.parse
-            if not encoding:
-                encoding = protocol_encoding
+                
             parser = lxml.html.HTMLParser(encoding=encoding)
             result = parse(source, parser=parser)
-            if result is None:
-                raise ValueError('Error while parsing HTML')
+
+        if result is None:
+            raise ValueError('Error while parsing HTML')
         base_url = find_base_url(result, base_url)
         if hasattr(result, 'getroot'):
             result.docinfo.URL = base_url
