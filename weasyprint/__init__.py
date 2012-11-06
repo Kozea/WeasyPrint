@@ -69,7 +69,7 @@ class HTML(object):
     def __init__(self, guess=None, filename=None, url=None, file_obj=None,
                  string=None, tree=None, encoding=None, base_url=None,
                  url_fetcher=default_url_fetcher, media_type='print'):
-        import lxml.html
+        import lxml.etree
         from .html import find_base_url
         from .urls import wrap_url_fetcher
         url_fetcher = wrap_url_fetcher(url_fetcher)
@@ -82,12 +82,12 @@ class HTML(object):
             result = source
         else:
             if source_type == 'string':
-                parse = lxml.html.document_fromstring
+                parse = lxml.etree.fromstring
             else:
-                parse = lxml.html.parse
+                parse = lxml.etree.parse
             if not encoding:
                 encoding = protocol_encoding
-            parser = lxml.html.HTMLParser(encoding=encoding)
+            parser = lxml.etree.HTMLParser(encoding=encoding)
             result = parse(source, parser=parser)
             if result is None:
                 raise ValueError('Error while parsing HTML')

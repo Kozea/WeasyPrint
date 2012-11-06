@@ -21,7 +21,8 @@ import threading
 import shutil
 import tempfile
 
-import lxml.html, lxml.etree
+import lxml.html
+import lxml.etree
 import cairo
 import pytest
 
@@ -37,6 +38,7 @@ from ..document import _TaggedTuple
 
 
 CHDIR_LOCK = threading.Lock()
+
 
 @contextlib.contextmanager
 def chdir(path):
@@ -100,7 +102,7 @@ def _test_resource(class_, basename, check, **kwargs):
         check(class_(string=content, base_url=relative_filename, **kwargs))
         encoding = kwargs.get('encoding') or 'utf8'
         check(class_(string=content.decode(encoding),  # unicode
-                        base_url=relative_filename, **kwargs))
+                     base_url=relative_filename, **kwargs))
     with pytest.raises(TypeError):
         class_(filename='foo', url='bar')
 
@@ -117,11 +119,11 @@ def test_html_parsing():
         h1 = body[0]
         assert h1.text == 'WeasyPrint test document (with Ünicōde)'
         if has_base_url:
-            url = urljoin(h1.base_url, 'pattern.png')
+            url = urljoin(html.base_url, 'pattern.png')
             assert url.startswith('file:')
             assert url.endswith('weasyprint/tests/resources/pattern.png')
         else:
-            assert h1.base_url is None
+            assert html.base_url is None
 
     _test_resource(TestHTML, 'doc1.html', check_doc1)
     _test_resource(TestHTML, 'doc1_UTF-16BE.html', check_doc1,

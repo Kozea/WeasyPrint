@@ -29,7 +29,7 @@ import lxml.etree
 from . import properties
 from . import computed_values
 from .validation import preprocess_declarations
-from ..urls import get_url_attribute, url_join
+from ..urls import element_base_url, get_url_attribute, url_join
 from ..logger import LOGGER
 from ..compat import iteritems
 from .. import CSS
@@ -171,7 +171,7 @@ def find_stylesheets(element_tree, device_media_type, url_fetcher):
             content = ''.join(content)
             # lxml should give us either unicode or ASCII-only bytestrings, so
             # we don't need `encoding` here.
-            css = CSS(string=content, base_url=element.base_url,
+            css = CSS(string=content, base_url=element_base_url(element),
                       url_fetcher=url_fetcher, media_type=device_media_type)
             yield css
         elif element.tag == 'link' and element.get('href'):
@@ -196,7 +196,7 @@ def find_style_attributes(element_tree):
             declarations, errors = parser.parse_style_attr(style_attribute)
             for error in errors:
                 LOGGER.warn(error)
-            yield element, declarations, element.base_url
+            yield element, declarations, element_base_url(element)
 
 
 def evaluate_media_query(query_list, device_media_type):

@@ -92,6 +92,16 @@ def url_is_absolute(url):
         .match(url))
 
 
+def element_base_url(element):
+    """Return the URL associated with a lxml document.
+
+    This is the same as the HtmlElement.base_url property, but dont’t want
+    to require HtmlElement.
+
+    """
+    return element.getroottree().docinfo.URL
+
+
 def get_url_attribute(element, attr_name):
     """Get the URI corresponding to the ``attr_name`` attribute.
 
@@ -105,8 +115,9 @@ def get_url_attribute(element, attr_name):
     """
     value = element.get(attr_name, '').strip()
     if value:
-        return url_join(element.base_url, value, '<%s %s="%s"> at line %d',
-            element.tag, attr_name, value, element.sourceline)
+        return url_join(element_base_url(element), value,
+                        '<%s %s="%s"> at line %s', element.tag, attr_name,
+                        value, element.sourceline)
 
 
 def url_join(base_url, url, context, *args):
@@ -135,10 +146,11 @@ def get_link_attribute(element, attr_name):
         return 'internal', unquote(attr_value[1:])
     else:
         uri = get_url_attribute(element, attr_name)
-        if uri and element.base_url:
+        document_url = element_base_url(element)
+        if uri and document_url:
             parsed = urlsplit(uri)
             # Compare with fragments removed
-            if parsed[:-1] == urlsplit(element.base_url)[:-1]:
+            if parsed[:-1] == urlsplit(document_url)[:-1]:
                 return 'internal', unquote(parsed.fragment)
             else:
                 return 'external', uri
@@ -169,7 +181,7 @@ def safe_base64_decode(data):
     """
     missing_padding = 4 - len(data) % 4
     if missing_padding:
-        data += b'='* missing_padding
+        data += b'=' * missing_padding
     return base64_decode(data)
 
 
@@ -194,7 +206,7 @@ def open_data_url(url):
         semi = header.rfind(';')
         if semi >= 0 and '=' not in header[semi:]:
             content_type = header[:semi]
-            encoding = header[semi+1:]
+            encoding = header[semi + 1:]
         else:
             content_type = header
             encoding = ''
@@ -228,17 +240,18 @@ def default_url_fetcher(url):
         in the message.
     :returns: In case of success, a dict with the following keys:
 
-        * One of ``string`` (a byte string) or ``file_obj`` (a file-like object)
+        * One of ``string`` (a byte string) or ``file_obj``
+          (a file-like object)
         * Optionally: ``mime_type``, a MIME type extracted eg. from a
           *Content-Type* header. If not provided, the type is guessed from the
           file extension in the URL.
         * Optionally: ``encoding``, a character encoding extracted eg. from a
           *charset* parameter in a *Content-Type* header
-        * Optionally: ``redirected_url``, the actual URL of the ressource in case
-          there were eg. HTTP redirects.
+        * Optionally: ``redirected_url``, the actual URL of the ressource
+          in case there were eg. HTTP redirects.
 
-        If a ``file_obj`` key is given, it is the caller’s responsability to call
-        ``file_obj.close()``.
+        If a ``file_obj`` key is given, it is the caller’s responsability
+        to call ``file_obj.close()``.
 
     """
     if url.startswith('data:'):
