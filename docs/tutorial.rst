@@ -39,14 +39,14 @@ The Python version of the above example goes like this:
 
 .. code-block:: python
 
-    from weasyprint import import HTML
+    from weasyprint import HTML
     HTML('http://weasyprint.org/').write_pdf('/tmp/weasyprint-website.pdf')
 
 … or with the inline stylesheet:
 
 .. code-block:: python
 
-    from weasyprint import import HTML, CSS
+    from weasyprint import HTML, CSS
     HTML('http://weasyprint.org/').write_pdf('/tmp/weasyprint-website.pdf',
         stylesheets=[CSS(string='body { font-family: serif !important }')])
 
