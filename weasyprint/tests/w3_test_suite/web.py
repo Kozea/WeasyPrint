@@ -158,7 +158,7 @@ def run(suite_directory):
         ).render(stylesheets=[default_stylesheet], enable_hinting=True)
         pages = [
             'data:image/png;base64,' + document.copy([page]).write_png(
-                ).encode('base64').replace('\n', '')
+                )[0].encode('base64').replace('\n', '')
             for page in document.pages]
         return render_template('render.html', **locals())
 
