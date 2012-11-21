@@ -724,6 +724,9 @@ def split_text_box(context, box, available_width, skip):
                 'Expected nothing or a preserved line break' % (between,))
         resume_at += skip
 
+    if box and not preserved_line_break and not new_text.strip():
+        box.width = 0
+
     return box, resume_at, preserved_line_break
 
 
