@@ -719,7 +719,9 @@ def split_text_box(context, box, available_width, skip):
         if preserved_line_break:
             # See http://unicode.org/reports/tr14/
             # TODO: are there others? Find Pango docs on this
-            assert between in ('\n', '\u2029'), (
+            # The space is in this list, as it may have been removed by the
+            # Step #2 of split_first_line
+            assert between in (' ', '\n', '\u2029'), (
                 'Got %r between two lines. '
                 'Expected nothing or a preserved line break' % (between,))
         resume_at += skip

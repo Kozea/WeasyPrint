@@ -205,6 +205,7 @@ def split_first_line(text, style, hinting, max_width):
     ``baseline``: baseline in pixels of the first line
 
     """
+    # Step #1: Get a draft layout with the first line
     layout = None
     if max_width:
         expected_length = int(max_width / style.font_size * 2.5)
@@ -217,14 +218,32 @@ def split_first_line(text, style, hinting, max_width):
                 # the whole text
                 layout = None
     layout = layout or create_layout(text, style, hinting, max_width)
+
+    if layout.get_line_count() > 1:
+        resume_at = layout.get_line(1).start_index
+    else:
+        resume_at = None
+
+    # Step #2: Build the final layout
+    if max_width and layout.get_line_count() > 1:
+        # The first line may have been cut too early by pango
+        second_line_index = layout.get_line(1).start_index
+        first_part = text.encode('utf-8')[:second_line_index].decode('utf-8')
+        second_part = text.encode('utf-8')[second_line_index:].decode('utf-8')
+        next_word = second_part.split(' ', 1)[0]
+        if next_word:
+            new_first_line = first_part + next_word
+            set_text(layout, new_first_line)
+            if layout.get_line_count() <= 1:
+                resume_at = len(new_first_line.encode('utf-8')) + 1
+
+    # Step #3: We have the right layout, find metrics
     first_line = layout.get_line(0)
     length = first_line.length
     width, height = get_size(first_line)
     baseline = units_to_double(layout.get_iter().get_baseline())
-    if layout.get_line_count() >= 2:
-        resume_at = layout.get_line(1).start_index
-    else:
-        resume_at = None
+
+    # Step #4: Return the layout and the metrics
     return layout, length, resume_at, width, height, baseline
 
 
