@@ -357,7 +357,7 @@ class Document(object):
                 last_by_depth.append(children)
         return root
 
-    def write_pdf(self, target=None):
+    def write_pdf(self, target=None, scale=0.75):
         """Paint the pages in a PDF file, with meta-data.
 
         PDF files written directly by cairo do not have meta-data such as
@@ -365,6 +365,9 @@ class Document(object):
 
         :param target:
             A filename, file-like object, or :obj:`None`.
+        :param scale:
+            A scale factor, float, to control page sizes
+            default is 0.75 (72 PDF point per inch / 96 CSS pixel per inch)
         :returns:
             The PDF as byte string if :obj:`target` is :obj:`None`, otherwise
             :obj:`None` (the PDF is written to :obj:`target`.)
@@ -377,9 +380,8 @@ class Document(object):
         surface = cairo.PDFSurface(file_obj, 1, 1)
         context = cairo.Context(surface)
         for page in self.pages:
-            surface.set_size(page.width * 0.75, page.height * 0.75)
-            # 0.75 = 72 PDF point per inch / 96 CSS pixel per inch
-            page.paint(context, scale=0.75)
+            surface.set_size(page.width * scale, page.height * scale)
+            page.paint(context, scale=scale)
             surface.show_page()
         surface.finish()
 
