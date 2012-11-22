@@ -50,15 +50,15 @@ def test_page_size():
     assert b'/MediaBox [ 0 0 324 432 ]' in pdf_bytes
 
 
-def get_metadata(html, base_url=resource_filename('<inline HTML>')):
+def get_metadata(html, base_url=resource_filename('<inline HTML>'), zoom=1):
     return pdf.prepare_metadata(
         TestHTML(string=html, base_url=base_url).render(stylesheets=[
             CSS(string='@page { size: 500pt 1000pt; margin: 50pt }')]),
-        bookmark_root_id=0)
+        bookmark_root_id=0, scale=zoom * 0.75)
 
 
-def get_bookmarks(html, structure_only=False):
-    root, bookmarks, _links = get_metadata(html)
+def get_bookmarks(html, structure_only=False, **kwargs):
+    root, bookmarks, _links = get_metadata(html, **kwargs)
     for bookmark in bookmarks:
         if structure_only:
             bookmark.pop('target')
@@ -188,6 +188,20 @@ def test_bookmarks():
         dict(Count=1, First=8, Last=8, Next=None, Parent=5, Prev=6),
         dict(Count=0, First=None, Last=None, Next=None, Parent=7, Prev=None),
         dict(Count=0, First=None, Last=None, Next=None, Parent=0, Prev=5)]
+
+    # Reference for the next test. zoom=1
+    root, bookmarks = get_bookmarks('<h2>a</h2>')
+    assert root == dict(Count=1, First=1, Last=1)
+    assert bookmarks == [
+        dict(Count=0, First=None, Last=None, Next=None, Parent=0, Prev=None,
+             label='a', target=(0, 50, 950))]
+
+    root, bookmarks = get_bookmarks('<h2>a</h2>', zoom=1.5)
+    assert root == dict(Count=1, First=1, Last=1)
+    assert bookmarks == [
+        dict(Count=0, First=None, Last=None, Next=None, Parent=0, Prev=None,
+             label='a', target=(0, 75, 1425))]
+
 
 
 @assert_no_logs

@@ -392,7 +392,7 @@ class Document(object):
             surface.show_page()
         surface.finish()
 
-        write_pdf_metadata(self, file_obj)
+        write_pdf_metadata(self, file_obj, scale)
 
         if target is None:
             return file_obj.getvalue()
