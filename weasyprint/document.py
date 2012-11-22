@@ -357,7 +357,7 @@ class Document(object):
                 last_by_depth.append(children)
         return root
 
-    def write_pdf(self, target=None, scale=0.75):
+    def write_pdf(self, target=None, zoom=1):
         """Paint the pages in a PDF file, with meta-data.
 
         PDF files written directly by cairo do not have meta-data such as
@@ -365,14 +365,21 @@ class Document(object):
 
         :param target:
             A filename, file-like object, or :obj:`None`.
-        :param scale:
-            A scale factor, float, to control page sizes
-            default is 0.75 (72 PDF point per inch / 96 CSS pixel per inch)
+        :type zoom: float
+        :param zoom:
+            The zoom factor in PDF units per CSS units.
+            **Warning**: All CSS units (even physical, like ``cm``)
+            are affected.
+            For values other than 1, physical CSS units will thus be “wrong”.
+            Page size declarations are affected too, even with keyword values
+            like ``@page { size: A3 landscape; }``
         :returns:
             The PDF as byte string if :obj:`target` is :obj:`None`, otherwise
             :obj:`None` (the PDF is written to :obj:`target`.)
 
         """
+        # 0.75 = 72 PDF point (cairo units) per inch / 96 CSS pixel per inch
+        scale = zoom * 0.75
         # Use an in-memory buffer. We will need to seek for metadata
         # TODO: avoid this if target can seek? Benchmark first.
         file_obj = io.BytesIO()

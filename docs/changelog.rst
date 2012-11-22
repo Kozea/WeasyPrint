@@ -1,1 +1,2 @@
+.. currentmodule:: weasyprint
 .. include:: ../CHANGES

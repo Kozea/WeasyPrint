@@ -1,6 +1,15 @@
 WeasyPrint changelog
 ====================
 
+Version 0.16
+------------
+
+Not released yet.
+
+* Add the :obj:`zoom` parameter to :meth:`HTML.write_pdf` and 
+  :meth:`Document.write_pdf() <weasyprint.document.Document.write_pdf>`
+
+
 Version 0.15
 ------------
 
