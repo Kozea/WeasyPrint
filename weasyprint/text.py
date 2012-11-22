@@ -240,6 +240,14 @@ def split_first_line(text, style, hinting, max_width):
     # Step #3: We have the right layout, find metrics
     first_line = layout.get_line(0)
     length = first_line.length
+
+    first_line_text = text.encode('utf-8')[:length].decode('utf-8')
+    if first_line_text.endswith(' ') and resume_at:
+        # Remove trailing spaces
+        set_text(layout, first_line_text.rstrip(' '))
+        first_line = layout.get_line(0)
+        length = first_line.length
+
     width, height = get_size(first_line)
     baseline = units_to_double(layout.get_iter().get_baseline())
 

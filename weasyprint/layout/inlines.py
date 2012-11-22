@@ -715,7 +715,7 @@ def split_text_box(context, box, available_width, skip):
     if resume_at is None:
         preserved_line_break = False
     else:
-        preserved_line_break = (length != resume_at)
+        preserved_line_break = (length != resume_at) and between != ' '
         if preserved_line_break:
             # See http://unicode.org/reports/tr14/
             # TODO: are there others? Find Pango docs on this

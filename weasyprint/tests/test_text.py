@@ -40,7 +40,7 @@ def test_line_content():
         _, length, resume_at, _, _, _ = make_text(
             text, width, font_family=FONTS, font_size=19)
         assert text[resume_at:] == remaining
-        assert length == resume_at
+        assert length + 1 == resume_at  # +1 is for the removed trailing space
 
 
 @assert_no_logs
