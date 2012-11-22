@@ -40,6 +40,16 @@ def test_pdf_parser():
     assert sizes == [b'0 0 100 100', b'0 0 200 10', b'0 0 3.14 987654321']
 
 
+@assert_no_logs
+def test_page_size():
+    pdf_bytes = TestHTML(string='<style>@page{size:3in 4in').write_pdf()
+    assert b'/MediaBox [ 0 0 216 288 ]' in pdf_bytes
+
+    pdf_bytes = TestHTML(string='<style>@page{size:3in 4in').write_pdf(
+        zoom=1.5)
+    assert b'/MediaBox [ 0 0 324 432 ]' in pdf_bytes
+
+
 def get_metadata(html, base_url=resource_filename('<inline HTML>')):
     return pdf.prepare_metadata(
         TestHTML(string=html, base_url=base_url).render(stylesheets=[
