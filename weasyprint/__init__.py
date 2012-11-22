@@ -132,7 +132,7 @@ class HTML(object):
         return Document._render(self, stylesheets, enable_hinting)
 
 
-    def write_pdf(self, target=None, stylesheets=None):
+    def write_pdf(self, target=None, stylesheets=None, scale=0.75):
         """Render the document to a PDF file.
 
         This is a shortcut for calling :meth:`render`, then
@@ -144,13 +144,16 @@ class HTML(object):
             An optional list of user stylesheets. (See
             :ref:`stylesheet-origins`\.) The list’s elements are
             :class:`CSS` objects, filenames, URLs, or file-like objects.
+        :param scale:
+            A scale factor, float, to control page sizes
+            default is 0.75 (72 PDF point per inch / 96 CSS pixel per inch)
         :returns:
             The PDF as byte string if :obj:`target` is not provided or
             :obj:`None`, otherwise :obj:`None` (the PDF is written to
             :obj:`target`.)
 
         """
-        return self.render(stylesheets).write_pdf(target)
+        return self.render(stylesheets).write_pdf(target, scale)
 
     def write_png(self, target=None, stylesheets=None, resolution=96):
         """Paint the pages vertically to a single PNG image.
