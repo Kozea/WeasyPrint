@@ -224,7 +224,8 @@ def remove_last_whitespace(context, box):
     if new_text:
         if len(new_text) == len(box.text):
             return
-        new_box, resume, _ = split_text_box(context, box, box.width * 2, 0)
+        new_box, resume, _ = split_text_box(
+            context, box, box.width * 2, None, 0)
         assert new_box is not None
         assert resume is None
         space_width = box.width - new_box.width
@@ -498,7 +499,7 @@ def split_inline_level(context, box, position_x, max_x, skip_stack,
             assert skip_stack is None
 
         new_box, skip, preserved_line_break = split_text_box(
-            context, box, max_x - position_x, skip)
+            context, box, max_x - position_x, max_x, skip)
 
         if skip is None:
             resume_at = None
@@ -654,7 +655,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
     return new_box, resume_at, preserved_line_break
 
 
-def split_text_box(context, box, available_width, skip):
+def split_text_box(context, box, available_width, line_width, skip):
     """Keep as much text as possible from a TextBox in a limitied width.
     Try not to overflow but always have some text in ``new_box``
 
@@ -672,7 +673,7 @@ def split_text_box(context, box, available_width, skip):
         return None, None, False
     # XXX ``resume_at`` is an index in UTF-8 bytes, not unicode codepoints.
     layout, length, resume_at, width, height, baseline = split_first_line(
-        text, box.style, context.enable_hinting, available_width)
+        text, box.style, context.enable_hinting, available_width, line_width)
 
     # Convert ``length`` and ``resume_at`` from UTF-8 indexes in text
     # to Unicode indexes.
@@ -947,7 +948,7 @@ def add_word_spacing(context, box, extra_word_spacing, x_advance):
         nb_spaces = count_spaces(box)
         if nb_spaces > 0:
             new_box, resume_at, _ = split_text_box(
-                context, box, 1e10, 0)
+                context, box, 1e10, None, 0)
             assert new_box is not None
             assert resume_at is None
             # XXX new_box.width - box.width is always 0???

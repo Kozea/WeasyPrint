@@ -28,7 +28,8 @@ def make_text(text, width=None, **style):
         'font_family': ['Nimbus Mono L', 'Liberation Mono', 'FreeMono',
                         'monospace'],
     }, INITIAL_VALUES).updated_copy(style)
-    return split_first_line(text, style, hinting=False, max_width=width)
+    return split_first_line(
+        text, style, hinting=False, max_width=width, line_width=None)
 
 
 @assert_no_logs

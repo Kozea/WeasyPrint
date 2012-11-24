@@ -189,7 +189,7 @@ def create_layout(text, style, hinting, max_width):
     return layout
 
 
-def split_first_line(text, style, hinting, max_width):
+def split_first_line(text, style, hinting, max_width, line_width):
     """Fit as much as possible in the available width for one line of text.
 
     Return ``(layout, length, resume_at, width, height, baseline)``.

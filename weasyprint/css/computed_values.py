@@ -497,7 +497,7 @@ def strut_layout(style):
     else:
         # TODO: get the real value for `hinting`? (if we really care…)
         _, _, _, _, pango_height, baseline = text.split_first_line(
-            '', style, hinting=True, max_width=None)
+            '', style, hinting=True, max_width=None, line_width=None)
     if line_height == 'normal':
         return pango_height, baseline
     type_, value = line_height
