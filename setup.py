@@ -61,6 +61,7 @@ setup(
     ],
     packages=find_packages(),
     package_data={
+        'weasyprint.hyphenation': ['*.dic'],
         'weasyprint.tests': ['resources/*.*', 'resources/*/*'],
         'weasyprint.css': ['*.css']},
     zip_safe=False,

@@ -20,6 +20,7 @@ import cairo
 
 from .compat import xrange, basestring
 from .logger import LOGGER
+from .hyphenation import hyphenize
 
 
 USING_INTROSPECTION = bool(os.environ.get('WEASYPRINT_USE_INTROSPECTION'))
@@ -225,6 +226,7 @@ def split_first_line(text, style, hinting, max_width, line_width):
         resume_at = None
 
     # Step #2: Build the final layout
+    hyphenated = False
     if max_width and layout.get_line_count() > 1:
         # The first line may have been cut too early by pango
         second_line_index = layout.get_line(1).start_index
@@ -234,19 +236,46 @@ def split_first_line(text, style, hinting, max_width, line_width):
         if next_word:
             new_first_line = first_part + next_word
             set_text(layout, new_first_line)
+
+            # TODO: find another way to avoid very long lines, hyphenize may
+            # only keep the first word by splitting not only with simple spaces
+            max_long_line = 50
+            # TODO: get the max_ratio from style
+            max_ratio = 0
+            if max_ratio:
+                first_line_width = get_size(layout.get_line(0))[0]
+                ratio = (
+                    (first_line_width + line_width - max_width) / line_width)
+            else:
+                ratio = 1
+
             if layout.get_line_count() <= 1:
+                # The next word fits in the first line, keep the layout
                 resume_at = len(new_first_line.encode('utf-8')) + 1
+            elif len(next_word) < max_long_line and ratio < max_ratio:
+                # The next word does not fit, try hyphenation
+                for first_word_part, _ in hyphenize(next_word, style):
+                    new_first_line = first_part + first_word_part + '-'
+                    testing_layout = create_layout(
+                        new_first_line, style, hinting, max_width)
+                    if testing_layout.get_line_count() <= 1:
+                        hyphenated = True
+                        # TODO: find why there's no need to .encode
+                        resume_at = len(new_first_line) - 1
+                        layout = testing_layout
+                        break
 
     # Step #3: We have the right layout, find metrics
     first_line = layout.get_line(0)
     length = first_line.length
 
-    first_line_text = text.encode('utf-8')[:length].decode('utf-8')
-    if first_line_text.endswith(' ') and resume_at:
-        # Remove trailing spaces
-        set_text(layout, first_line_text.rstrip(' '))
-        first_line = layout.get_line(0)
-        length = first_line.length
+    if not hyphenated:
+        first_line_text = text.encode('utf-8')[:length].decode('utf-8')
+        if first_line_text.endswith(' ') and resume_at:
+            # Remove trailing spaces
+            set_text(layout, first_line_text.rstrip(' '))
+            first_line = layout.get_line(0)
+            length = first_line.length
 
     width, height = get_size(first_line)
     baseline = units_to_double(layout.get_iter().get_baseline())

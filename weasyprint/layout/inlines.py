@@ -685,8 +685,13 @@ def split_text_box(context, box, available_width, line_width, skip):
     new_text = utf8_text[:length].decode('utf8')
     new_length = len(new_text)
     if resume_at is not None:
-        between = utf8_text[length:resume_at].decode('utf8')
-        resume_at = new_length + len(between)
+        if length > resume_at:
+            # Text has been hyphenated
+            new_text += '-'
+            between = ''
+        else:
+            between = utf8_text[length:resume_at].decode('utf8')
+            resume_at = new_length + len(between)
     length = new_length
 
     if length > 0:
@@ -716,7 +721,7 @@ def split_text_box(context, box, available_width, line_width, skip):
     if resume_at is None:
         preserved_line_break = False
     else:
-        preserved_line_break = (length != resume_at) and between != ' '
+        preserved_line_break = (length != resume_at) and between.strip(' ')
         if preserved_line_break:
             # See http://unicode.org/reports/tr14/
             # TODO: are there others? Find Pango docs on this
