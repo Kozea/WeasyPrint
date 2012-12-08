@@ -916,6 +916,17 @@ def link(token, base_url):
             return (name, args[0])
 
 
+@validator(prefixed=True)  # Non-standard
+@single_token
+def hyphens(token):
+    """Validation for ``hyphens``."""
+    keyword = get_keyword(token)
+    if keyword in ('none', 'manual', 'auto'):
+        return ('keyword', keyword)
+    elif token.type in ('NUMBER', 'INTEGER'):
+        return token.value
+
+
 @validator(prefixed=True)  # CSS3 GCPM, experimental
 @single_token
 def bookmark_label(token):

@@ -138,6 +138,10 @@ INITIAL_VALUES = {
     'bookmark_label': ('keyword', 'none'),  # computed value of 'none'
     'bookmark_level': 'none',
 
+    # CSS3 Text
+    # http://www.w3.org/TR/css3-text/#hyphenation
+    'hyphens': 'manual',
+
     # Internal, to implement the "static position" for absolute boxes.
     '_weasy_specified_display': 'inline',
 }
@@ -210,6 +214,7 @@ INHERITED = set("""
     widows
     word_spacing
 
+    hyphens
     image_rendering
     link
 """.split())

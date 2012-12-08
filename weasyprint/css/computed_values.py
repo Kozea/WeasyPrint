@@ -443,6 +443,30 @@ def link(computer, name, values):
             return values
 
 
+@register_computer('hyphens')
+def hyphens(computer, name, value):
+    """Compute the ``hyphens`` property.
+
+    http://www.w3.org/TR/css3-text/#hyphenation
+
+    Moreover, a value between 0 and 1 can be given, it corresponds to the
+    text-width/max-line-width ratio under which we try to use hyphens.
+
+    """
+    if value == 'none':
+        return 0
+    elif value == 'manual':
+        # The 'manual' value is not supported yet, but could be supported by
+        # Pango (the idea was first given in 2003).
+        # https://mail.gnome.org/archives/gtk-i18n-list/2003-January/msg00057
+        return 0
+    elif value == 'auto':
+        # Auto is arbitrary set to 0.9
+        return 0.9
+    else:
+        return value
+
+
 @register_computer('transform')
 def transform(computer, name, value):
     """Compute the ``transform`` property."""

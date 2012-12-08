@@ -240,9 +240,7 @@ def split_first_line(text, style, hinting, max_width, line_width):
             # TODO: find another way to avoid very long lines, hyphenize may
             # only keep the first word by splitting not only with simple spaces
             max_long_line = 50
-            # TODO: get the max_ratio from style
-            max_ratio = 0
-            if max_ratio:
+            if style.hyphens:
                 first_line_width = get_size(layout.get_line(0))[0]
                 ratio = (
                     (first_line_width + line_width - max_width) / line_width)
@@ -252,7 +250,7 @@ def split_first_line(text, style, hinting, max_width, line_width):
             if layout.get_line_count() <= 1:
                 # The next word fits in the first line, keep the layout
                 resume_at = len(new_first_line.encode('utf-8')) + 1
-            elif len(next_word) < max_long_line and ratio < max_ratio:
+            elif len(next_word) < max_long_line and ratio < style.hyphens:
                 # The next word does not fit, try hyphenation
                 for first_word_part, _ in hyphenize(next_word, style):
                     new_first_line = first_part + first_word_part + '-'
