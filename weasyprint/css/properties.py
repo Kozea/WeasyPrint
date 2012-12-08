@@ -132,6 +132,7 @@ INITIAL_VALUES = {
     # Proprietary
     'anchor': None,  # computed value of 'none'
     'link': None,  # computed value of 'none'
+    'lang': None,  # computed value of 'none'
 
     # CSS3 Generated Content for Paged Media
     # http://dev.w3.org/csswg/css3-gcpm/
@@ -216,6 +217,7 @@ INHERITED = set("""
 
     hyphens
     image_rendering
+    lang
     link
 """.split())
 

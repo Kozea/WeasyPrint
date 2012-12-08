@@ -19,6 +19,7 @@ a[name] { -weasy-anchor: attr(name); }
 :dir(ltr) { direction: ltr; }
 :dir(rtl) { direction: rtl; }
 :root { quotes: '\201c' '\201d' '\2018' '\2019'; }
+*[lang] { -weasy-lang: attr(lang); }
 [lang|=af] { quotes: '\201c' '\201d' '\2018' '\201d'; }
 [lang|=agq] { quotes: '\0027' '\0027' '\201e' '\201d'; }
 [lang|=ak] { quotes: '\2018' '\2019' '\201c' '\201d'; }

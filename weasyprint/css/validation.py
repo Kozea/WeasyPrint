@@ -922,9 +922,26 @@ def hyphens(token):
     """Validation for ``hyphens``."""
     keyword = get_keyword(token)
     if keyword in ('none', 'manual', 'auto'):
-        return ('keyword', keyword)
+        return keyword
     elif token.type in ('NUMBER', 'INTEGER'):
         return token.value
+
+
+@validator(prefixed=True)  # Non-standard
+@single_token
+def lang(token):
+    """Validation for ``lang``."""
+    if get_keyword(token) == 'none':
+        return 'none'
+    function = parse_function(token)
+    if function:
+        name, args = function
+        prototype = (name, [a.type for a in args])
+        args = [a.value for a in args]
+        if prototype == ('attr', ['IDENT']):
+            return (name, args[0])
+    elif token.type == 'STRING':
+        return ('string', token.value)
 
 
 @validator(prefixed=True)  # CSS3 GCPM, experimental

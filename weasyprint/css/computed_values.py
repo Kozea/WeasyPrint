@@ -443,6 +443,19 @@ def link(computer, name, values):
             return values
 
 
+@register_computer('lang')
+def lang(computer, name, values):
+    """Compute the ``lang`` property."""
+    if values == 'none':
+        return None
+    else:
+        type_, key = values
+        if type_ == 'attr':
+            return computer.element.get(key) or None
+        elif type_ == 'string':
+            return key
+
+
 @register_computer('hyphens')
 def hyphens(computer, name, value):
     """Compute the ``hyphens`` property.

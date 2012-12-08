@@ -25,17 +25,27 @@ else:
 
     def hyphenize(word, style):
         """Return an iterator of possible (start, end) couples for word."""
-        # TODO: get lang from style
-        lang = 'en'
-        if lang not in HYPHENATORS:
-            HYPHENATORS[lang] = None
-            if DICTIONARIES_FOLDER:
-                for filename in os.listdir(DICTIONARIES_FOLDER):
-                    if filename.startswith('hyph_' + lang):
-                        HYPHENATORS[lang] = Hyphenator(os.path.join(
-                            DICTIONARIES_FOLDER, filename))
-                        break
-        if HYPHENATORS[lang]:
-            return HYPHENATORS[lang].iterate(word)
+        if not style.lang:
+            langs = []
+        elif '_' in style.lang:
+            langs = [style.lang, style.lang.split('_', 1)[0]]
         else:
-            return ((word, ''),)
+            langs = [style.lang]
+
+        for lang in langs[:]:
+            if lang not in HYPHENATORS:
+                HYPHENATORS[lang] = None
+                if DICTIONARIES_FOLDER:
+                    for filename in os.listdir(DICTIONARIES_FOLDER):
+                        if filename.startswith('hyph_' + lang):
+                            HYPHENATORS[lang] = Hyphenator(os.path.join(
+                                DICTIONARIES_FOLDER, filename))
+                            break
+                    else:
+                        langs.pop(0)
+
+        for lang in langs:
+            if HYPHENATORS[lang]:
+                return HYPHENATORS[lang].iterate(word)
+
+        return ((word, ''),)
