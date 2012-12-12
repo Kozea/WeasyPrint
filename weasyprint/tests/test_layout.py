@@ -492,7 +492,7 @@ def test_inline_block_sizes():
     assert div_4.margin_width() == 30
 
     # Second line:
-    div_5, = line_2.children
+    div_5, _ = line_2.children
 
     # Fifth div, long text, full-width div
     assert div_5.element_tag == 'div'

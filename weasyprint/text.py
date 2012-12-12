@@ -137,8 +137,7 @@ def units_to_double(value):
 
 
 def create_layout(text, style, hinting, max_width):
-    """Return an opaque Pango object to be passed to other functions
-    in this module.
+    """Return an opaque Pango layout with default Pango line-breaks.
 
     :param text: Unicode
     :param style: a :class:`StyleDict` of computed values
@@ -171,7 +170,7 @@ def create_layout(text, style, hinting, max_width):
     set_text(layout, text)
     # Make sure that max_width * Pango.SCALE == max_width * 1024 fits in a
     # signed integer. Treat bigger values same as None: unconstrained width.
-    if max_width is not None and max_width < 2**21:
+    if max_width is not None and max_width < 2 ** 21:
         layout.set_width(units_from_double(max_width))
     word_spacing = style.word_spacing
     letter_spacing = style.letter_spacing
@@ -189,32 +188,69 @@ def create_layout(text, style, hinting, max_width):
     return layout
 
 
-def split_first_line(*args, **kwargs):
+def split_first_line(text, style, hinting, max_width):
     """Fit as much as possible in the available width for one line of text.
 
-    Return ``(length, width, height, resume_at)``.
+    Return ``(layout, length, resume_at, width, height, baseline)``.
 
-    ``show_line``: a closure that takes a cairo Context and draws the
-                   first line.
+    ``layout``: a pango Layout with the first line
     ``length``: length in UTF-8 bytes of the first line
-    ``width``: width in pixels of the first line
-    ``height``: height in pixels of the first line
-    ``baseline``: baseline in pixels of the first line
     ``resume_at``: The number of UTF-8 bytes to skip for the next line.
                    May be ``None`` if the whole text fits in one line.
                    This may be greater than ``length`` in case of preserved
                    newline characters.
+    ``width``: width in pixels of the first line
+    ``height``: height in pixels of the first line
+    ``baseline``: baseline in pixels of the first line
 
     """
-    layout = create_layout(*args, **kwargs)
-    first_line = layout.get_line(0)
-    length = first_line.length
-    width, height = get_size(first_line)
-    baseline = units_to_double(layout.get_iter().get_baseline())
-    if layout.get_line_count() >= 2:
+    # Step #1: Get a draft layout with the first line
+    layout = None
+    if max_width:
+        expected_length = int(max_width / style.font_size * 2.5)
+        if expected_length < len(text):
+            # Try to use a small amount of text instead of the whole text
+            layout = create_layout(
+                text[:expected_length], style, hinting, max_width)
+            if layout.get_line_count() <= 1:
+                # The small amount of text fits in one line, give up and use
+                # the whole text
+                layout = None
+    layout = layout or create_layout(text, style, hinting, max_width)
+
+    if layout.get_line_count() > 1:
         resume_at = layout.get_line(1).start_index
     else:
         resume_at = None
+
+    # Step #2: Build the final layout
+    if max_width and layout.get_line_count() > 1:
+        # The first line may have been cut too early by pango
+        second_line_index = layout.get_line(1).start_index
+        first_part = text.encode('utf-8')[:second_line_index].decode('utf-8')
+        second_part = text.encode('utf-8')[second_line_index:].decode('utf-8')
+        next_word = second_part.split(' ', 1)[0]
+        if next_word:
+            new_first_line = first_part + next_word
+            set_text(layout, new_first_line)
+            if layout.get_line_count() <= 1:
+                resume_at = len(new_first_line.encode('utf-8')) + 1
+
+    # Step #3: We have the right layout, find metrics
+    first_line = layout.get_line(0)
+    length = first_line.length
+
+    first_line_text = text.encode('utf-8')[:length].decode('utf-8')
+    if first_line_text.endswith(' ') and resume_at:
+        # Remove trailing spaces
+        set_text(layout, first_line_text.rstrip(' '))
+        first_line = layout.get_line(0)
+        length = first_line.length
+
+    width, height = get_size(first_line)
+    baseline = units_to_double(layout.get_iter().get_baseline())
+
+    # Step #4: Return the layout and the metrics
     return layout, length, resume_at, width, height, baseline
 
 
