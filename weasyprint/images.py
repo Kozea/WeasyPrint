@@ -24,12 +24,6 @@ from .text import USING_INTROSPECTION
 # this API will need to change.
 
 
-# None as a the target for PDFSurface is new in pycairo 1.8.8.
-# This helps with compat with earlier versions:
-_DUMMY_FILE = BytesIO()
-DUMMY_SURFACE = cairo.PDFSurface(_DUMMY_FILE, 1, 1)
-
-
 # Do not try to import PyGObject 3 if we already have PyGTK
 # that tends to segfault.
 if not USING_INTROSPECTION:
@@ -45,7 +39,8 @@ if not USING_INTROSPECTION:
         def gdkpixbuf_loader(file_obj, string):
             """Load raster images with gdk-pixbuf through PyGTK."""
             pixbuf = get_pixbuf(file_obj, string)
-            dummy_context = cairo.Context(DUMMY_SURFACE)
+            dummy_context = cairo.Context(cairo.ImageSurface(
+                cairo.FORMAT_ARGB32, 1, 1))
             gdk.CairoContext(dummy_context).set_source_pixbuf(pixbuf, 0, 0)
             # XXX SurfacePattern.get_surface is buggy in py2cairo < 1.10.0
             # so we’re re-using the same pattern here. This Pattern object
@@ -81,7 +76,8 @@ else:
 
                 """
                 pixbuf = get_pixbuf(file_obj, string)
-                dummy_context = cairo.Context(DUMMY_SURFACE)
+                dummy_context = cairo.Context(cairo.ImageSurface(
+                    cairo.FORMAT_ARGB32, 1, 1))
                 Gdk.cairo_set_source_pixbuf(dummy_context, pixbuf, 0, 0)
                 # XXX SurfacePattern.get_surface is buggy in py2cairo < 1.10.0
                 # so we’re re-using the same pattern here. This Pattern object

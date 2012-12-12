@@ -127,14 +127,6 @@ else:
         context.show_layout_line(pango_layout.get_line(0))
 
 
-# None as a the target for PDFSurface is new in pycairo 1.8.8.
-# This helps with compat with earlier versions:
-_DUMMY_FILE = BytesIO()
-NON_HINTED_DUMMY_CONTEXT = cairo.Context(cairo.PDFSurface(_DUMMY_FILE, 1, 1))
-HINTED_DUMMY_CONTEXT = cairo.Context(cairo.ImageSurface(
-    cairo.FORMAT_ARGB32, 1, 1))
-
-
 def units_from_double(value):
     return int(value * Pango.SCALE)
 
@@ -156,8 +148,15 @@ def create_layout(text, style, hinting, max_width):
         or ``None`` for unlimited width.
 
     """
-    layout = create_pango_layout(
-        HINTED_DUMMY_CONTEXT if hinting else NON_HINTED_DUMMY_CONTEXT)
+    if hinting:
+        dummy_context = cairo.Context(cairo.ImageSurface(
+            cairo.FORMAT_ARGB32, 1, 1))
+    else:
+        # None as a the target for PDFSurface is new in pycairo 1.8.8.
+        # BytesIO() helps with compat with earlier versions:
+        dummy_file = BytesIO()
+        dummy_context = cairo.Context(cairo.PDFSurface(dummy_file, 1, 1))
+    layout = create_pango_layout(dummy_context)
     font = Pango.FontDescription()
     assert not isinstance(style.font_family, basestring), (
         'font_family should be a list')
