@@ -47,8 +47,12 @@ if not USING_INTROSPECTION:
             pixbuf = get_pixbuf(file_obj, string)
             dummy_context = cairo.Context(DUMMY_SURFACE)
             gdk.CairoContext(dummy_context).set_source_pixbuf(pixbuf, 0, 0)
-            surface = dummy_context.get_source().get_surface()
-            get_pattern = lambda: cairo.SurfacePattern(surface)
+            # XXX SurfacePattern.get_surface is buggy in py2cairo < 1.10.0
+            # so we’re re-using the same pattern here. This Pattern object
+            # has shared state through set_filter and set_extend.
+            # It is therefore not thread-safe and state must be reset
+            # before any use.
+            get_pattern = dummy_context.get_source
             return get_pattern, pixbuf.get_width(), pixbuf.get_height()
 else:
     # Use PyGObject introspection
@@ -79,8 +83,12 @@ else:
                 pixbuf = get_pixbuf(file_obj, string)
                 dummy_context = cairo.Context(DUMMY_SURFACE)
                 Gdk.cairo_set_source_pixbuf(dummy_context, pixbuf, 0, 0)
-                surface = dummy_context.get_source().get_surface()
-                get_pattern = lambda: cairo.SurfacePattern(surface)
+                # XXX SurfacePattern.get_surface is buggy in py2cairo < 1.10.0
+                # so we’re re-using the same pattern here. This Pattern object
+                # has shared state through set_filter and set_extend.
+                # It is therefore not thread-safe and state must be reset
+                # before any use.
+                get_pattern = dummy_context.get_source
                 return get_pattern, pixbuf.get_width(), pixbuf.get_height()
 
         except ImportError:
