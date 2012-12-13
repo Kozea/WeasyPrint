@@ -4,10 +4,13 @@ WeasyPrint changelog
 Version 0.16
 ------------
 
-Not released yet.
+Released on 2012-12-13.
 
-* Add the :obj:`zoom` parameter to :meth:`HTML.write_pdf` and 
+* Add the :obj:`zoom` parameter to :meth:`HTML.write_pdf` and
   :meth:`Document.write_pdf() <weasyprint.document.Document.write_pdf>`
+* Fix compatibility with old (and buggy) pycairo versions.
+  WeasyPrint is now tested on 1.8.8 in addition to the latest.
+* Fix layout bugs related to line trailing spaces.
 
 
 Version 0.15
