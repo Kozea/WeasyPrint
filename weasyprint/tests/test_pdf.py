@@ -15,6 +15,7 @@ from __future__ import division, unicode_literals
 import io
 
 import cairo
+import pytest
 
 from .. import CSS
 from .. import pdf
@@ -203,7 +204,6 @@ def test_bookmarks():
              label='a', target=(0, 75, 1425))]
 
 
-
 @assert_no_logs
 def test_links():
     links = get_links('<body>')
@@ -294,3 +294,15 @@ def test_missing_links():
     assert links == [[('internal', (0, 50, 935), (50, 950, 450, 935))]]
     assert len(logs) == 1
     assert 'WARNING: No anchor #missing for internal URI reference' in logs[0]
+
+
+@assert_no_logs
+def test_jpeg():
+    if not hasattr(cairo.ImageSurface, 'set_mime_data'):
+        pytest.xfail()
+    def render(html):
+        return TestHTML(base_url=resource_filename('dummy.html'),
+                        string=html).write_pdf()
+    assert b'/Filter /DCTDecode' not in render('<img src="pattern.gif">')
+    # JPEG-encoded image, embedded in PDF:
+    assert b'/Filter /DCTDecode' in render('<img src="blue.jpg">')

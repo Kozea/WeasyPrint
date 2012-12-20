@@ -97,6 +97,7 @@ class _TaggedTuple(tuple):
 
     """
 
+
 def _get_metadata(box, bookmarks, links, anchors, matrix):
     bookmark_label = box.bookmark_label
     bookmark_level = box.bookmark_level
@@ -127,6 +128,7 @@ def _get_metadata(box, bookmarks, links, anchors, matrix):
             bookmarks.append((bookmark_level, bookmark_label, (pos_x, pos_y)))
         if has_anchor:
             anchors[anchor_name] = pos_x, pos_y
+
 
 def _prepare(box, bookmarks, links, anchors, matrix):
     transform = _get_matrix(box)

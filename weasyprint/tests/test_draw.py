@@ -151,7 +151,7 @@ def document_to_pixels(document, name, expected_width, expected_height):
 
 
 def png_to_pixels(png_bytes, width, height):
-    pixbuf = get_pixbuf(string=png_bytes)
+    pixbuf, _ = get_pixbuf(string=png_bytes)
     assert (pixbuf.get_width(), pixbuf.get_height()) == (width, height)
     if not pixbuf.get_has_alpha():
         pixbuf = pixbuf.add_alpha(False, 0, 0, 0)  # no substitute color
