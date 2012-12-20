@@ -1,6 +1,18 @@
 WeasyPrint changelog
 ====================
 
+Version 0.17
+------------
+
+Not released yet.
+
+* For JPEG images, embed them as JPEG in PDF. This often results in smaller
+  PDF file size compared to the default *deflate* compression.
+  Requires a [patched pycairo](
+  http://lists.cairographics.org/archives/cairo/2012-December/023839.html).
+  (Without the patch *deflate* is always used, as before.)
+
+
 Version 0.16
 ------------
 
