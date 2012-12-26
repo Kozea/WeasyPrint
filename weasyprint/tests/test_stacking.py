@@ -63,9 +63,8 @@ def test_nested():
 
 @assert_no_logs
 def test_image_contexts():
-    page, = parse('''\
-        <body>Some text: <img style="position: relative" src=pattern.png>
-    ''')
+    page, = parse('''
+        <body>Some text: <img style="position: relative" src=pattern.png>''')
     html, = page.children
     context = StackingContext.from_box(html, page)
     # The image is *not* in this context:

@@ -151,7 +151,7 @@ def document_to_pixels(document, name, expected_width, expected_height):
 
 
 def png_to_pixels(png_bytes, width, height):
-    pixbuf = get_pixbuf(string=png_bytes)
+    pixbuf, _ = get_pixbuf(string=png_bytes)
     assert (pixbuf.get_width(), pixbuf.get_height()) == (width, height)
     if not pixbuf.get_has_alpha():
         pixbuf = pixbuf.add_alpha(False, 0, 0, 0)  # no substitute color
@@ -1131,6 +1131,32 @@ def test_images():
         <div style="display: inline-block">
             <p><img src=pattern.png></p>
         </div>
+    ''')
+
+    # The same image is used in a repeating background,
+    # then in a non-repating <img>.
+    # If Pattern objects are shared carelessly, the image will be repeated.
+    assert_pixels('image_shared_pattern', 12, 12, [
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+b+b+b+b+b+b+b+b+_+_,
+        _+_+b+b+b+b+b+b+b+b+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+b+b+b+b+_+_+_+_+_+_,
+        _+_+b+b+b+b+_+_+_+_+_+_,
+        _+_+b+b+b+b+_+_+_+_+_+_,
+        _+_+b+b+b+b+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { size: 12px }
+            body { margin: 2px; background: #fff; font-size: 0 }
+        </style>
+        <div style="background: url(blue.jpg);
+                    height: 2px; margin-bottom: 1px"></div>
+        <img src=blue.jpg>
     ''')
 
 

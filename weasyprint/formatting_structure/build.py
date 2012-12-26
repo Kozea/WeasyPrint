@@ -82,7 +82,7 @@ def element_to_box(element, style_for, get_image_from_uri, state=None):
 
     Eg.::
 
-        <p>Some <em>emphasised</em> text.<p>
+        <p>Some <em>emphasised</em> text.</p>
 
     gives (not actual syntax)::
 
@@ -145,7 +145,11 @@ def element_to_box(element, style_for, get_image_from_uri, state=None):
             child_element, style_for, get_image_from_uri, state))
         text = child_element.tail
         if text:
-            children.append(boxes.TextBox.anonymous_from(box, text))
+            text_box = boxes.TextBox.anonymous_from(box, text)
+            if children and isinstance(children[-1], boxes.TextBox):
+                children[-1].text += text_box.text
+            else:
+                children.append(text_box)
     children.extend(pseudo_to_box(
         element, 'after', state, style_for, get_image_from_uri))
 

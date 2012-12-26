@@ -84,7 +84,7 @@ def make_test_suite():
             HTML(BASE_URL + name).write_png(
                 png_filename, stylesheets=[PAGE_SIZE_STYLESHEET])
             with open(png_filename, 'rb') as image:
-                raw = get_pixbuf(file_obj=image).get_pixels()
+                raw, _ = get_pixbuf(file_obj=image).get_pixels()
             rendered[name] = raw
         return raw
 

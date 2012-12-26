@@ -16,7 +16,7 @@
 from __future__ import division, unicode_literals
 
 
-VERSION = '0.15'
+VERSION = '0.17'
 __version__ = VERSION
 
 # Used for 'User-Agent' in HTTP and 'Creator' in PDF
@@ -132,7 +132,7 @@ class HTML(object):
         return Document._render(self, stylesheets, enable_hinting)
 
 
-    def write_pdf(self, target=None, stylesheets=None):
+    def write_pdf(self, target=None, stylesheets=None, zoom=1):
         """Render the document to a PDF file.
 
         This is a shortcut for calling :meth:`render`, then
@@ -144,13 +144,21 @@ class HTML(object):
             An optional list of user stylesheets. (See
             :ref:`stylesheet-origins`\.) The list’s elements are
             :class:`CSS` objects, filenames, URLs, or file-like objects.
+        :type zoom: float
+        :param zoom:
+            The zoom factor in PDF units per CSS units.
+            **Warning**: All CSS units (even physical, like ``cm``)
+            are affected.
+            For values other than 1, physical CSS units will thus be “wrong”.
+            Page size declarations are affected too, even with keyword values
+            like ``@page { size: A3 landscape; }``
         :returns:
             The PDF as byte string if :obj:`target` is not provided or
             :obj:`None`, otherwise :obj:`None` (the PDF is written to
             :obj:`target`.)
 
         """
-        return self.render(stylesheets).write_pdf(target)
+        return self.render(stylesheets).write_pdf(target, zoom)
 
     def write_png(self, target=None, stylesheets=None, resolution=96):
         """Paint the pages vertically to a single PNG image.

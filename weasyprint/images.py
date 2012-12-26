@@ -24,16 +24,10 @@ from .text import USING_INTROSPECTION
 # this API will need to change.
 
 
-# None as a the target for PDFSurface is new in pycairo 1.8.8.
-# This helps with compat with earlier versions:
-_DUMMY_FILE = BytesIO()
-DUMMY_SURFACE = cairo.PDFSurface(_DUMMY_FILE, 1, 1)
-
-
 # Do not try to import PyGObject 3 if we already have PyGTK
 # that tends to segfault.
 if not USING_INTROSPECTION:
-    # Use PyGObject introspection
+    # Use PyGTK
     try:
         from gtk import gdk
         from gtk.gdk import PixbufLoader
@@ -44,12 +38,24 @@ if not USING_INTROSPECTION:
     else:
         def gdkpixbuf_loader(file_obj, string):
             """Load raster images with gdk-pixbuf through PyGTK."""
-            pixbuf = get_pixbuf(file_obj, string)
-            dummy_context = cairo.Context(DUMMY_SURFACE)
+            pixbuf, jpeg_data = get_pixbuf(file_obj, string)
+            dummy_context = cairo.Context(cairo.ImageSurface(
+                cairo.FORMAT_ARGB32, 1, 1))
             gdk.CairoContext(dummy_context).set_source_pixbuf(pixbuf, 0, 0)
-            surface = dummy_context.get_source().get_surface()
-            get_pattern = lambda: cairo.SurfacePattern(surface)
+            # XXX SurfacePattern.get_surface is buggy in py2cairo < 1.10.0
+            # so we’re re-using the same pattern here. This Pattern object
+            # has shared state through set_filter and set_extend.
+            # It is therefore not thread-safe and state must be reset
+            # before any use.
+            get_pattern = dummy_context.get_source
+            if cairo.version_info >= (1, 10, 0):
+                add_jpeg_data(get_pattern().get_surface(), jpeg_data)
             return get_pattern, pixbuf.get_width(), pixbuf.get_height()
+
+        def pixbuf_format(loader):
+            format_ = loader.get_format()
+            if format_:
+                return format_['name']
 else:
     # Use PyGObject introspection
     try:
@@ -59,6 +65,11 @@ else:
         def gdkpixbuf_loader(file_obj, string, pixbuf_error=exception):
             raise pixbuf_error
     else:
+        def pixbuf_format(loader):
+            format_ = loader.get_format()
+            if format_:
+                return format_.get_name()
+
         PIXBUF_VERSION = (GdkPixbuf.PIXBUF_MAJOR,
                           GdkPixbuf.PIXBUF_MINOR,
                           GdkPixbuf.PIXBUF_MICRO)
@@ -76,11 +87,18 @@ else:
                 and Gdk.
 
                 """
-                pixbuf = get_pixbuf(file_obj, string)
-                dummy_context = cairo.Context(DUMMY_SURFACE)
+                pixbuf, jpeg_data = get_pixbuf(file_obj, string)
+                dummy_context = cairo.Context(cairo.ImageSurface(
+                    cairo.FORMAT_ARGB32, 1, 1))
                 Gdk.cairo_set_source_pixbuf(dummy_context, pixbuf, 0, 0)
-                surface = dummy_context.get_source().get_surface()
-                get_pattern = lambda: cairo.SurfacePattern(surface)
+                # XXX SurfacePattern.get_surface is buggy in py2cairo < 1.10.0
+                # so we’re re-using the same pattern here. This Pattern object
+                # has shared state through set_filter and set_extend.
+                # It is therefore not thread-safe and state must be reset
+                # before any use.
+                get_pattern = dummy_context.get_source
+                if cairo.version_info >= (1, 10, 0):
+                    add_jpeg_data(get_pattern().get_surface(), jpeg_data)
                 return get_pattern, pixbuf.get_width(), pixbuf.get_height()
 
         except ImportError:
@@ -90,36 +108,38 @@ else:
                 without Gdk and going through PNG.
 
                 """
-                pixbuf = get_pixbuf(file_obj, string)
+                pixbuf, jpeg_data = get_pixbuf(file_obj, string)
                 _, png = pixbuf.save_to_bufferv('png', ['compression'], ['0'])
-                return cairo_png_loader(None, png)
+                return cairo_png_loader(None, png, jpeg_data)
 
 
 def get_pixbuf(file_obj=None, string=None, chunck_size=16 * 1024):
     """Create a Pixbuf object."""
+    if file_obj:
+        string = file_obj.read()
+    if not string:
+        raise ValueError('Could not load image: empty content')
     loader = PixbufLoader()
     try:
-        if file_obj:
-            while 1:
-                chunck = file_obj.read(chunck_size)
-                if not chunck:
-                    break
-                loader.write(chunck)
-        elif string:
-            loader.write(string)
-        else:
-            raise ValueError('Could not load image: empty content')
+        loader.write(string)
     finally:
         # Pixbuf is really unhappy if we don’t do this:
         loader.close()
-    return loader.get_pixbuf()
+    jpeg_data = string if pixbuf_format(loader) == 'jpeg' else None
+    return loader.get_pixbuf(), jpeg_data
 
 
-def cairo_png_loader(file_obj, string):
+def cairo_png_loader(file_obj, string, jpeg_data=None):
     """Return a cairo Surface from a PNG byte stream."""
     surface = cairo.ImageSurface.create_from_png(file_obj or BytesIO(string))
+    add_jpeg_data(surface, jpeg_data)
     get_pattern = lambda: cairo.SurfacePattern(surface)
     return get_pattern, surface.get_width(), surface.get_height()
+
+
+def add_jpeg_data(surface, jpeg_data):
+    if jpeg_data and hasattr(surface, 'set_mime_data'):
+        surface.set_mime_data('image/jpeg', jpeg_data)
 
 
 def cairosvg_loader(file_obj, string, uri):

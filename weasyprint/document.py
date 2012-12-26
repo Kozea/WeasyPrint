@@ -97,6 +97,7 @@ class _TaggedTuple(tuple):
 
     """
 
+
 def _get_metadata(box, bookmarks, links, anchors, matrix):
     bookmark_label = box.bookmark_label
     bookmark_level = box.bookmark_level
@@ -127,6 +128,7 @@ def _get_metadata(box, bookmarks, links, anchors, matrix):
             bookmarks.append((bookmark_level, bookmark_label, (pos_x, pos_y)))
         if has_anchor:
             anchors[anchor_name] = pos_x, pos_y
+
 
 def _prepare(box, bookmarks, links, anchors, matrix):
     transform = _get_matrix(box)
@@ -357,7 +359,7 @@ class Document(object):
                 last_by_depth.append(children)
         return root
 
-    def write_pdf(self, target=None):
+    def write_pdf(self, target=None, zoom=1):
         """Paint the pages in a PDF file, with meta-data.
 
         PDF files written directly by cairo do not have meta-data such as
@@ -365,11 +367,21 @@ class Document(object):
 
         :param target:
             A filename, file-like object, or :obj:`None`.
+        :type zoom: float
+        :param zoom:
+            The zoom factor in PDF units per CSS units.
+            **Warning**: All CSS units (even physical, like ``cm``)
+            are affected.
+            For values other than 1, physical CSS units will thus be “wrong”.
+            Page size declarations are affected too, even with keyword values
+            like ``@page { size: A3 landscape; }``
         :returns:
             The PDF as byte string if :obj:`target` is :obj:`None`, otherwise
             :obj:`None` (the PDF is written to :obj:`target`.)
 
         """
+        # 0.75 = 72 PDF point (cairo units) per inch / 96 CSS pixel per inch
+        scale = zoom * 0.75
         # Use an in-memory buffer. We will need to seek for metadata
         # TODO: avoid this if target can seek? Benchmark first.
         file_obj = io.BytesIO()
@@ -377,13 +389,12 @@ class Document(object):
         surface = cairo.PDFSurface(file_obj, 1, 1)
         context = cairo.Context(surface)
         for page in self.pages:
-            surface.set_size(page.width * 0.75, page.height * 0.75)
-            # 0.75 = 72 PDF point per inch / 96 CSS pixel per inch
-            page.paint(context, scale=0.75)
+            surface.set_size(page.width * scale, page.height * scale)
+            page.paint(context, scale=scale)
             surface.show_page()
         surface.finish()
 
-        write_pdf_metadata(self, file_obj)
+        write_pdf_metadata(self, file_obj, scale)
 
         if target is None:
             return file_obj.getvalue()

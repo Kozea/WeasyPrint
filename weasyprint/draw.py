@@ -270,8 +270,8 @@ def draw_background(context, bg, enable_hinting):
             context.clip()
 
         pattern = get_pattern()
-        if bg.repeat != 'no-repeat':
-            pattern.set_extend(cairo.EXTEND_REPEAT)
+        pattern.set_extend(cairo.EXTEND_NONE if bg.repeat == 'no-repeat'
+                           else cairo.EXTEND_REPEAT)
         pattern.set_filter(IMAGE_RENDERING_TO_FILTER[bg.image_rendering])
         context.scale(scale_x, scale_y)
         context.set_source(pattern)
@@ -604,6 +604,9 @@ def draw_replacedbox(context, box):
             context.clip()
             context.scale(scale_width, scale_height)
             pattern = get_pattern()
+            # We might get a shared Pattern that was previously used
+            # in a repeating background.
+            pattern.set_extend(cairo.EXTEND_NONE)
             pattern.set_filter(IMAGE_RENDERING_TO_FILTER[
                 box.style.image_rendering])
             context.set_source(pattern)

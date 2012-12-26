@@ -42,9 +42,6 @@ from .compat import xrange, iteritems, izip
 from .urls import iri_to_uri
 
 
-PX_TO_PT = 0.75  # 72dpi (PostSript points) / 96dpi (CSS pixels)
-
-
 class PDFFormatter(string.Formatter):
     """Like str.format except:
 
@@ -302,16 +299,20 @@ def flatten_bookmarks(bookmarks, depth=1):
             yield result
 
 
-def prepare_metadata(document, bookmark_root_id):
+def prepare_metadata(document, bookmark_root_id, scale):
     """Change metadata into data structures closer to the PDF objects.
 
-    In particulare, convert from cairo units (origin a the top-left corner)
-    to PDF units (origin at the bottom-left corner.)
+    In particular, convert from WeasyPrint units (CSS pixels from
+    the top-left corner) to PDF units (points from the bottom-left corner.)
+    
+    :param scale:
+        PDF points per CSS pixels.
+        Defaults to 0.75, but is affected by `zoom` in 
+        :meth:`weasyprint.document.Document.write_pdf`.
 
     """
     # X and width unchanged;  Y’ = page_height - Y;  height’ = -height
-    # Overall * 0.75 for CSS pixels to PDF points:
-    matrices = [cairo.Matrix(xx=0.75, yy=-0.75, y0=page.height * 0.75)
+    matrices = [cairo.Matrix(xx=scale, yy=-scale, y0=page.height * scale)
                 for page in document.pages]
     links = []
     for page_links, matrix in izip(document.resolve_links(), matrices):
@@ -365,12 +366,12 @@ def prepare_metadata(document, bookmark_root_id):
     return bookmark_root, bookmark_list, links
 
 
-def write_pdf_metadata(document, fileobj):
+def write_pdf_metadata(document, fileobj, scale):
     """Append to a seekable file-like object to add PDF metadata."""
     pdf = PDFFile(fileobj)
     bookmark_root_id = pdf.next_object_number()
     bookmark_root, bookmarks, links = prepare_metadata(
-        document, bookmark_root_id)
+        document, bookmark_root_id, scale)
 
     if bookmarks:
         pdf.extend_dict(pdf.catalog, pdf_format(
