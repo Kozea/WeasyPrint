@@ -160,15 +160,15 @@ def test_box_tree():
         <style>
             span { display: inline-block }
         </style>
-        <p>Hello <em>World <img src="pattern.png"><span>Lipsum</span></em>!</p>
-    '''), [
+        <p>Hello <em>World <img src="pattern.png"><span>Lip</span></em>!</p>'''
+    ), [
         ('p', 'Block', [
             ('p', 'Text', 'Hello '),
             ('em', 'Inline', [
                 ('em', 'Text', 'World '),
                 ('img', 'InlineReplaced', '<replaced>'),
                 ('span', 'InlineBlock', [
-                    ('span', 'Text', 'Lipsum')])]),
+                    ('span', 'Text', 'Lip')])]),
             ('p', 'Text', '!')])])
 
 
@@ -257,8 +257,7 @@ def test_block_in_inline():
     span { display: block; }
 </style>
 <p>Lorem <em>ipsum <strong>dolor <span>sit</span>
-    <span>amet,</span></strong><span><em>consectetur<div/></em></span></em></p>
-    ''')
+    <span>amet,</span></strong><span><em>conse<div/></em></span></em></p>''')
     box = build.inline_in_block(box)
     assert_tree(box, [
         ('body', 'Line', [
@@ -280,7 +279,7 @@ def test_block_in_inline():
                         ('span', 'Block', [  # This block is "pulled up"
                             ('span', 'Line', [
                                 ('em', 'Inline', [
-                                    ('em', 'Text', 'consectetur'),
+                                    ('em', 'Text', 'conse'),
                                     ('div', 'Block', []),
                                     ])])])])])])])])
 
@@ -316,7 +315,7 @@ def test_block_in_inline():
                     ('span', 'AnonBlock', [
                         ('span', 'Line', [
                             ('em', 'Inline', [
-                                ('em', 'Text', 'consectetur')])])]),
+                                ('em', 'Text', 'conse')])])]),
                     ('div', 'Block', []),
                     ('span', 'AnonBlock', [
                         ('span', 'Line', [
@@ -454,7 +453,7 @@ def test_images():
         result = parse_all('''
             <p><img src=pattern.png
                 /><img alt="No src"
-                /><img src=inexistent.jpg alt="Inexistent src" />
+                /><img src=inexistent.jpg alt="Inexistent src" /></p>
         ''')
     assert len(logs) == 1
     assert 'WARNING: Error for image' in logs[0]
@@ -892,8 +891,7 @@ def test_counters():
         <p></p>
         <p style="counter-reset: p 42"></p>
         <p></p>
-        <p></p>
-    '''), [
+        <p></p>'''), [
         ('p', 'Block', [
             ('p', 'Line', [
                 ('p:before', 'Inline', [
@@ -911,8 +909,7 @@ def test_counters():
                 <li></li>
             </ol></li>
             <li></li>
-        </ol>
-    '''), [
+        </ol>'''), [
         ('ol', 'Block', [
             ('li', 'Block', [
                 ('li', 'Line', [
@@ -950,8 +947,7 @@ def test_counters():
             <p></p>
             <p style="counter-reset: list-item 7 list-item -56"></p>
         </div>
-        <p></p>
-    '''), [
+        <p></p>'''), [
         ('div', 'Block', [
             ('p', 'Block', [
                 ('p', 'Line', [
@@ -972,17 +968,14 @@ def test_counters():
             h1:before { counter-increment: h; content: counters(h, '.') }
         </style>
         <body>
-            <section>
+            <section><h1></h1>
                 <h1></h1>
-                <h1></h1>
-                <section>
-                    <h1></h1>
+                <section><h1></h1>
                     <h1></h1>
                 </section>
                 <h1></h1>
             </section>
-        </body>
-    '''), [
+        </body>'''), [
         ('section', 'Block', [
             ('section', 'AnonBlock', [
                 ('section', 'Line', [
@@ -1021,8 +1014,7 @@ def test_counters():
                 Scope created now, deleted after the div
             </span>
         </div>
-        <p>
-    '''), [
+        <p></p>'''), [
         ('div', 'Block', [
             ('div', 'Line', [
                 ('span', 'Inline', [
@@ -1036,8 +1028,7 @@ def test_counters():
     # counter-increment may interfere with display: list-item
     assert_tree(parse_all('''
         <p style="counter-increment: c;
-                  display: list-item; list-style: inside decimal">
-    '''), [
+                  display: list-item; list-style: inside decimal">'''), [
         ('p', 'Block', [
             ('p', 'Line', [
                     ('p::marker', 'Text', '0.')])])])
