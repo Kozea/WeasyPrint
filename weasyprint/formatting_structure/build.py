@@ -82,7 +82,7 @@ def element_to_box(element, style_for, get_image_from_uri, state=None):
 
     Eg.::
 
-        <p>Some <em>emphasised</em> text.<p>
+        <p>Some <em>emphasised</em> text.</p>
 
     gives (not actual syntax)::
 
