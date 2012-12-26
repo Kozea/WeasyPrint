@@ -2159,13 +2159,14 @@ def test_vertical_align():
     """
     page, = parse('''
         <span>
-            <img src="pattern.png" style="width: 40px">
-            <img src="pattern.png" style="width: 60px"></span>''')
+            <img src="pattern.png" style="width: 40px"
+            ><img src="pattern.png" style="width: 60px"
+        ></span>''')
     html, = page.children
     body, = html.children
     line, = body.children
     span, = line.children
-    img_1, _, img_2 = span.children
+    img_1, img_2 = span.children
     assert img_1.height == 40
     assert img_2.height == 60
     assert img_1.position_y == 20
@@ -2185,13 +2186,13 @@ def test_vertical_align():
     """
     page, = parse('''
         <span>
-            <img src="pattern.png" style="width: 40px; vertical-align: -15px">
-            <img src="pattern.png" style="width: 60px"></span>''')
+            <img src="pattern.png" style="width: 40px; vertical-align: -15px"
+            ><img src="pattern.png" style="width: 60px"></span>''')
     html, = page.children
     body, = html.children
     line, = body.children
     span, = line.children
-    img_1, _, img_2 = span.children
+    img_1, img_2 = span.children
     assert img_1.height == 40
     assert img_2.height == 60
     assert img_1.position_y == 35
@@ -2202,13 +2203,13 @@ def test_vertical_align():
     # Same as previously, but with percentages
     page, = parse('''
         <span style="line-height: 10px">
-            <img src="pattern.png" style="width: 40px; vertical-align: -150%">
-            <img src="pattern.png" style="width: 60px"></span>''')
+            <img src="pattern.png" style="width: 40px; vertical-align: -150%"
+            ><img src="pattern.png" style="width: 60px"></span>''')
     html, = page.children
     body, = html.children
     line, = body.children
     span, = line.children
-    img_1, _, img_2 = span.children
+    img_1, img_2 = span.children
     assert img_1.height == 40
     assert img_2.height == 60
     assert img_1.position_y == 35
@@ -2238,13 +2239,13 @@ def test_vertical_align():
     # Same as previously, but with percentages
     page, = parse('''
         <span style="line-height: 12px; font-size: 12px">
-            <img src="pattern.png" style="width: 40px; vertical-align: middle">
-            <img src="pattern.png" style="width: 60px"></span>''')
+            <img src="pattern.png" style="width: 40px; vertical-align: middle"
+            ><img src="pattern.png" style="width: 60px"></span>''')
     html, = page.children
     body, = html.children
     line, = body.children
     span, = line.children
-    img_1, _, img_2 = span.children
+    img_1, img_2 = span.children
     assert img_1.height == 40
     assert img_2.height == 60
     # middle of the image (position_y + 20) is at half the ex-height above
@@ -2259,15 +2260,15 @@ def test_vertical_align():
     # With the initial 16px font-size, that’s 8px.
     page, = parse('''
         <span style="line-height: 10px">
-            <img src="pattern.png" style="width: 60px">
-            <img src="pattern.png" style="width: 40px; vertical-align: super">
-            <img src="pattern.png" style="width: 40px; vertical-align: sub
-                "></span>''')
+            <img src="pattern.png" style="width: 60px"
+            ><img src="pattern.png" style="width: 40px; vertical-align: super"
+            ><img src="pattern.png" style="width: 40px; vertical-align: sub"
+        ></span>''')
     html, = page.children
     body, = html.children
     line, = body.children
     span, = line.children
-    img_1, _, img_2, _, img_3 = span.children
+    img_1, img_2, img_3 = span.children
     assert img_1.height == 60
     assert img_2.height == 40
     assert img_3.height == 40
@@ -2280,14 +2281,14 @@ def test_vertical_align():
     page, = parse('''
         <body style="line-height: 10px">
             <span>
-                <img src="pattern.png" style="vertical-align: text-top">
-                <img src="pattern.png" style="vertical-align: text-bottom
-                    "></span>''')
+                <img src="pattern.png" style="vertical-align: text-top"
+                ><img src="pattern.png" style="vertical-align: text-bottom"
+            ></span>''')
     html, = page.children
     body, = html.children
     line, = body.children
     span, = line.children
-    img_1, _, img_2 = span.children
+    img_1, img_2 = span.children
     assert img_1.height == 4
     assert img_2.height == 4
     assert img_1.position_y == 0
@@ -2315,28 +2316,27 @@ def test_vertical_align():
 
     page, = parse('''
         <span>
-            <img src="pattern.png" style="width: 40px; vertical-align: -15px">
-            <img src="pattern.png" style="width: 60px">
-        </span>
-        <div style="display: inline-block; vertical-align: 3px">
+            <img src="pattern.png" style="width: 40px; vertical-align: -15px"
+            ><img src="pattern.png" style="width: 60px"
+        ></span><div style="display: inline-block; vertical-align: 3px">
             <div>
                 <div style="height: 100px">foo</div>
                 <div>
                     <img src="pattern.png" style="
-                        width: 40px; vertical-align: -15px">
-                    <img src="pattern.png" style="width: 60px">
-                </div>
+                        width: 40px; vertical-align: -15px"
+                    ><img src="pattern.png" style="width: 60px"
+                ></div>
             </div>
         </div>''')
     html, = page.children
     body, = html.children
     line, = body.children
-    span, div_1 = line.children  # _ is white space
+    span, div_1 = line.children
     assert line.height == 178
     assert body.height == line.height
 
     # Same as earlier
-    img_1, _, img_2, _ = span.children
+    img_1, img_2 = span.children
     assert img_1.height == 40
     assert img_2.height == 60
     assert img_1.position_y == 138
@@ -2345,7 +2345,7 @@ def test_vertical_align():
     div_2, = div_1.children
     div_3, div_4 = div_2.children
     div_line, = div_4.children
-    div_img_1, _, div_img_2, _ = div_line.children
+    div_img_1, div_img_2 = div_line.children
     assert div_1.position_y == 0
     assert div_1.height == 175
     assert div_3.height == 100
@@ -2450,12 +2450,12 @@ def test_text_align_left():
             @page { size: 200px }
         </style>
         <body>
-            <img src="pattern.png" style="width: 40px">
-            <img src="pattern.png" style="width: 60px">''')
+            <img src="pattern.png" style="width: 40px"
+            ><img src="pattern.png" style="width: 60px">''')
     html, = page.children
     body, = html.children
     line, = body.children
-    img_1, _, img_2 = line.children
+    img_1, img_2 = line.children
     # initial value for text-align: left (in ltr text)
     assert img_1.position_x == 0
     assert img_2.position_x == 40
@@ -2482,12 +2482,12 @@ def test_text_align_right():
             body { text-align: right }
         </style>
         <body>
-            <img src="pattern.png" style="width: 40px">
-            <img src="pattern.png" style="width: 60px">''')
+            <img src="pattern.png" style="width: 40px"
+            ><img src="pattern.png" style="width: 60px">''')
     html, = page.children
     body, = html.children
     line, = body.children
-    img_1, _, img_2 = line.children
+    img_1, img_2 = line.children
     assert img_1.position_x == 100  # 200 - 60 - 40
     assert img_2.position_x == 140  # 200 - 60
 
@@ -2513,12 +2513,12 @@ def test_text_align_center():
             body { text-align: center }
         </style>
         <body>
-            <img src="pattern.png" style="width: 40px">
-            <img src="pattern.png" style="width: 60px">''')
+            <img src="pattern.png" style="width: 40px"
+            ><img src="pattern.png" style="width: 60px">''')
     html, = page.children
     body, = html.children
     line, = body.children
-    img_1, _, img_2 = line.children
+    img_1, img_2 = line.children
     assert img_1.position_x == 50
     assert img_2.position_x == 90
 
@@ -2532,20 +2532,19 @@ def test_text_align_justify():
             body { text-align: justify }
         </style>
         <p><img src="pattern.png" style="width: 40px"> &#20;
-           <strong>
+            <strong>
                 <img src="pattern.png" style="width: 60px"> &#20;
                 <img src="pattern.png" style="width: 10px"> &#20;
-                <img src="pattern.png" style="width: 100px">
-           </strong><img src="pattern.png" style="width: 290px">
-            <!-- Last image will be on its own line. -->
-    ''')
+                <img src="pattern.png" style="width: 100px"
+            ></strong><img src="pattern.png" style="width: 290px"
+            ><!-- Last image will be on its own line. -->''')
     html, = page.children
     body, = html.children
     paragraph, = body.children
     line_1, line_2 = paragraph.children
     image_1, space_1, strong = line_1.children
-    image_2, space_2, image_3, space_3, image_4, space_4 = strong.children
-    image_5, _ = line_2.children
+    image_2, space_2, image_3, space_3, image_4 = strong.children
+    image_5, = line_2.children
     assert space_1.text == ' '
     assert space_2.text == ' '
     assert space_3.text == ' '
@@ -2558,7 +2557,6 @@ def test_text_align_justify():
     assert image_3.position_x == 160
     assert space_3.position_x == 170
     assert image_4.position_x == 200
-    assert space_4.position_x == 300
     assert strong.width == 230
 
     assert image_5.position_x == 0
