@@ -472,6 +472,7 @@ def hyphens(computer, name, value):
         # The 'manual' value is not supported yet, but could be supported by
         # Pango (the idea was first given in 2003).
         # https://mail.gnome.org/archives/gtk-i18n-list/2003-January/msg00057
+        # Change the initial value when this is fixed
         return 0
     elif value == 'auto':
         # Auto is arbitrary set to 0.9
