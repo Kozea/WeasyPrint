@@ -20,8 +20,6 @@ import cairo
 
 from .compat import xrange, basestring
 from .logger import LOGGER
-from .hyphenation import hyphenize
-
 
 USING_INTROSPECTION = bool(os.environ.get('WEASYPRINT_USE_INTROSPECTION'))
 if not USING_INTROSPECTION:
@@ -126,6 +124,19 @@ else:
         if hinting:
             context.update_layout(pango_layout)
         context.show_layout_line(pango_layout.get_line(0))
+
+
+try:
+    import pyphen
+except ImportError:
+    hyphenize = lambda word, style: ((word, ''),)
+else:
+    def hyphenize(word, style):
+        """Return an iterator of possible (start, end) couples for word."""
+        if style.lang in pyphen.LANGUAGES:
+            return pyphen.Pyphen(lang=style.lang).iterate(word)
+        else:
+            return ((word, ''),)
 
 
 # None as a the target for PDFSurface is new in pycairo 1.8.8.
