@@ -17,54 +17,16 @@ from io import BytesIO
 import cairo
 
 from .logger import LOGGER
-from .text import USING_INTROSPECTION
 
 # TODO: currently CairoSVG only support images with an explicit
 # width and height. When it supports images with only an intrinsic ratio
 # this API will need to change.
 
 
-# Do not try to import PyGObject 3 if we already have PyGTK
-# that tends to segfault.
-if not USING_INTROSPECTION:
-    # Use PyGTK
-    try:
-        from gtk import gdk
-        from gtk.gdk import PixbufLoader
-    # Old version of PyGTK raise RuntimeError when there is not X server.
-    except (ImportError, RuntimeError) as exception:
-        def gdkpixbuf_loader(file_obj, string, pixbuf_error=exception):
-            raise pixbuf_error
-    else:
-        def gdkpixbuf_loader(file_obj, string):
-            """Load raster images with gdk-pixbuf through PyGTK."""
-            pixbuf, jpeg_data = get_pixbuf(file_obj, string)
-            dummy_context = cairo.Context(cairo.ImageSurface(
-                cairo.FORMAT_ARGB32, 1, 1))
-            gdk.CairoContext(dummy_context).set_source_pixbuf(pixbuf, 0, 0)
-            # XXX SurfacePattern.get_surface is buggy in py2cairo < 1.10.0
-            # so we’re re-using the same pattern here. This Pattern object
-            # has shared state through set_filter and set_extend.
-            # It is therefore not thread-safe and state must be reset
-            # before any use.
-            get_pattern = dummy_context.get_source
-            if cairo.version_info >= (1, 10, 0):
-                add_jpeg_data(get_pattern().get_surface(), jpeg_data)
-            return get_pattern, pixbuf.get_width(), pixbuf.get_height()
-
-        def pixbuf_format(loader):
-            format_ = loader.get_format()
-            if format_:
-                return format_['name']
+if 1:
+    def gdkpixbuf_loader(file_obj, string):
+        1/0
 else:
-    # Use PyGObject introspection
-    try:
-        from gi.repository import GdkPixbuf
-        from gi.repository.GdkPixbuf import PixbufLoader
-    except ImportError as exception:
-        def gdkpixbuf_loader(file_obj, string, pixbuf_error=exception):
-            raise pixbuf_error
-    else:
         def pixbuf_format(loader):
             format_ = loader.get_format()
             if format_:

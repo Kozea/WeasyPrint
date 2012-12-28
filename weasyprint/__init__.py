@@ -16,6 +16,10 @@
 from __future__ import division, unicode_literals
 
 
+import cairocffi
+cairocffi.install_as_pycairo()
+
+
 VERSION = '0.17'
 __version__ = VERSION
 
