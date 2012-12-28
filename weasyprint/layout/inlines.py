@@ -224,6 +224,7 @@ def remove_last_whitespace(context, box):
     if new_text:
         if len(new_text) == len(box.text):
             return
+        box.text = new_text
         new_box, resume, _ = split_text_box(context, box, box.width * 2, 0)
         assert new_box is not None
         assert resume is None
@@ -232,7 +233,7 @@ def remove_last_whitespace(context, box):
     else:
         space_width = box.width
         box.width = 0
-    box.text = new_text
+        box.text = ''
 
     for ancestor in ancestors:
         ancestor.width -= space_width
