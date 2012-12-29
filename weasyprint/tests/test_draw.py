@@ -32,9 +32,9 @@ from .testing_utils import (
 
 
 as_pixel = (
-    lambda x: x[:-1][::-1] + x[-1]
+    lambda x: x[:-1][::-1] + x[-1:]
     if sys.byteorder == 'little' else
-    lambda x: x[-1] + x[:-1])
+    lambda x: x[-1:] + x[:-1])
 
 # Short variable names are OK here
 # pylint: disable=C0103

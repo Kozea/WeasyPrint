@@ -131,7 +131,6 @@ class HTML(object):
         from .document import Document
         return Document._render(self, stylesheets, enable_hinting)
 
-
     def write_pdf(self, target=None, stylesheets=None, zoom=1):
         """Render the document to a PDF file.
 

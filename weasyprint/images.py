@@ -78,12 +78,14 @@ ffi.cdef('''
     void              g_object_ref                   (gpointer object);
     void              g_object_unref                 (gpointer object);
     void              g_error_free                   (GError *error);
+    void              g_type_init                    (void);
 
 ''')
 
 gobject = ffi.dlopen('gobject-2.0')
 gdk_pixbuf = ffi.dlopen('gdk_pixbuf-2.0')
 
+gobject.g_type_init()
 cairo.install_as_pycairo()  # for CairoSVG
 
 
@@ -128,15 +130,14 @@ def get_pixbuf(file_obj=None, string=None):
     if close_exception is not None:
         raise close_exception
 
+    format_ = gdk_pixbuf.gdk_pixbuf_loader_get_format(loader)
+    is_jpeg = format_ != ffi.NULL and ffi.string(format_.name) == b'jpeg'
+    jpeg_data = string if is_jpeg else None
+
     pixbuf = gdk_pixbuf.gdk_pixbuf_loader_get_pixbuf(loader)
     assert pixbuf != ffi.NULL
-    gobject.g_object_ref(ffi.cast('gpointer', pixbuf))
-    pixbuf = Pixbuf(pixbuf)
-
-    format_ = gdk_pixbuf.gdk_pixbuf_loader_get_format(loader)
-    is_jpeg = format_ != ffi.NULL and ffi.string(format_.name) == 'jpeg'
-    jpeg_data = string if is_jpeg else None
-    return pixbuf, jpeg_data
+    gobject.g_object_ref(pixbuf)
+    return Pixbuf(pixbuf), jpeg_data
 
 
 def gdkpixbuf_loader(file_obj, string):
@@ -197,7 +198,7 @@ def cairo_png_loader(file_obj, string, jpeg_data=None):
 
 
 def add_jpeg_data(surface, jpeg_data):
-    if jpeg_data and hasattr(surface, 'set_mime_data'):
+    if jpeg_data:
         # TODO: remove this when cffi/cairocffi support byte string as buffers.
         jpeg_data = bytearray(jpeg_data)
         surface.set_mime_data('image/jpeg', jpeg_data)

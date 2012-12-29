@@ -66,6 +66,7 @@ ffi.cdef('''
         WRAP_WORD_CHAR
     } PangoWrapMode;
 
+    typedef unsigned int guint;
     typedef int gint;
     typedef gint gboolean;
     typedef void* gpointer;
@@ -73,6 +74,13 @@ ffi.cdef('''
     typedef ... PangoLayout;
     typedef ... PangoFontDescription;
     typedef ... PangoLayoutIter;
+    typedef ... PangoAttrList;
+    typedef ... PangoAttrClass;
+    typedef struct {
+        const PangoAttrClass *klass;
+        guint start_index;
+        guint end_index;
+    } PangoAttribute;
     typedef struct {
         PangoLayout *layout;
         gint         start_index;
@@ -82,19 +90,17 @@ ffi.cdef('''
 
     double              pango_units_to_double               (int i);
     int                 pango_units_from_double             (double d);
+    void                g_object_unref                      (gpointer object);
+
 
     PangoLayout * pango_cairo_create_layout (cairo_t *cr);
-    void g_object_unref (gpointer object);
-
-    void pango_layout_set_font_description (
-        PangoLayout *layout, const PangoFontDescription *desc);
-
     void pango_layout_set_wrap (PangoLayout *layout, PangoWrapMode wrap);
-
+    void pango_layout_set_width (PangoLayout *layout, int width);
+    void pango_layout_set_attributes(PangoLayout *layout, PangoAttrList *attrs);
     void pango_layout_set_text (
         PangoLayout *layout, const char *text, int length);
-
-    void pango_layout_set_width (PangoLayout *layout, int width);
+    void pango_layout_set_font_description (
+        PangoLayout *layout, const PangoFontDescription *desc);
 
 
     PangoFontDescription * pango_font_description_new (void);
@@ -118,6 +124,15 @@ ffi.cdef('''
 
     void pango_font_description_set_absolute_size (
         PangoFontDescription *desc, double size);
+
+
+    PangoAttrList *     pango_attr_list_new              (void);
+    void                pango_attr_list_unref            (PangoAttrList *list);
+    void                pango_attr_list_insert           (
+        PangoAttrList *list, PangoAttribute *attr);
+
+    PangoAttribute *    pango_attr_letter_spacing_new    (int letter_spacing);
+    void                pango_attribute_destroy          (PangoAttribute *attr);
 
 
     PangoLayoutIter * pango_layout_get_iter (PangoLayout *layout);
@@ -159,7 +174,8 @@ def to_enum(string):
 
 
 def unicode_to_char_p(string):
-    return ffi.new('char[]', string.encode('utf8').replace(b'\x00', b''))
+    bytestring = string.encode('utf8').replace(b'\x00', b'')
+    return ffi.new('char[]', bytestring), bytestring
 
 
 def get_size(line):
@@ -181,7 +197,9 @@ class Layout(object):
                 return
 
     def set_text(self, text):
-        text = self.text = unicode_to_char_p(text)
+        text, bytestring = unicode_to_char_p(text)
+        self.text = text
+        self.text_bytes = bytestring
         pango.pango_layout_set_text(self.layout, text, -1)
 
 
@@ -211,7 +229,7 @@ def create_layout(text, style, hinting, max_width):
     assert not isinstance(style.font_family, basestring), (
         'font_family should be a list')
     font_family = layout_obj.font_family = unicode_to_char_p(
-        ','.join(style.font_family))
+        ','.join(style.font_family))[0]
     pango.pango_font_description_set_family(font, font_family)
     pango.pango_font_description_set_variant(font, to_enum(style.font_variant))
     pango.pango_font_description_set_style(font, to_enum(style.font_style))
@@ -222,8 +240,6 @@ def create_layout(text, style, hinting, max_width):
     pango.pango_layout_set_font_description(layout, font)
     pango.pango_layout_set_wrap(layout, 'WRAP_WORD')
     layout_obj.set_text(text)
-    text_pointer = layout_obj.text = unicode_to_char_p(text)
-    pango.pango_layout_set_text(layout, text_pointer, -1)
     # Make sure that max_width * Pango.SCALE == max_width * 1024 fits in a
     # signed integer. Treat bigger values same as None: unconstrained width.
     if max_width is not None and max_width < 2 ** 21:
@@ -233,15 +249,24 @@ def create_layout(text, style, hinting, max_width):
     if letter_spacing == 'normal':
         letter_spacing = 0
     if text and (word_spacing != 0 or letter_spacing != 0):
-        word_spacing = units_from_double(word_spacing)
         letter_spacing = units_from_double(letter_spacing)
-        markup = escape(text).replace(
-            ' ', '<span letter_spacing="%i"> </span>' % (
-                word_spacing + letter_spacing,))
-        markup = '<span letter_spacing="%i">%s</span>' % (
-            letter_spacing, markup)
-        _, attributes_list, _, _ = Pango.parse_markup(markup, -1, '\x00')
-        layout.layout.set_attributes(attributes_list)
+        space_spacing = units_from_double(word_spacing) + letter_spacing
+        attr_list = pango.pango_attr_list_new()
+
+        def add_attr(start, end, spacing):
+            attr = pango.pango_attr_letter_spacing_new(spacing)
+            attr.start_index = start
+            attr.end_index = end
+            pango.pango_attr_list_insert(attr_list, attr)
+
+        text_bytes = layout_obj.text_bytes
+        add_attr(0, len(text_bytes) + 1, letter_spacing)
+        position = text_bytes.find(b' ')
+        while position != -1:
+            add_attr(position, position + 1, space_spacing)
+            position = text_bytes.find(b' ', position + 1)
+        pango.pango_layout_set_attributes(layout, attr_list)
+        pango.pango_attr_list_unref(attr_list)
     return layout_obj
 
 
