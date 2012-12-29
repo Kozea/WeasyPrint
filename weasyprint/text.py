@@ -68,10 +68,9 @@ ffi.cdef('''
 
     typedef int gint;
     typedef gint gboolean;
+    typedef void* gpointer;
     typedef ... cairo_t;
     typedef ... PangoLayout;
-    /* Actually less specific, but this is our only usage: */
-    typedef PangoLayout *gpointer;
     typedef ... PangoFontDescription;
     typedef ... PangoLayoutIter;
     typedef struct {
@@ -298,6 +297,9 @@ def split_first_line(text, style, hinting, max_width):
         if next_word:
             new_first_line = first_part + next_word
             layout.set_text(new_first_line)
+            lines = layout.iter_lines()
+            first_line = next(lines, None)
+            second_line = next(lines, None)
             if second_line is None:  # XXX never reached?
                 resume_at = len(new_first_line.encode('utf-8')) + 1
 

@@ -151,7 +151,7 @@ def image_to_pixels(surface, width, height):
     assert (surface.get_width(), surface.get_height()) == (width, height)
     # RGB24 is actually the same as ARGB32, with A unused.
     assert surface.get_format() in ('ARGB32', 'RGB24')
-    pixels = surface.get_data()
+    pixels = surface.get_data()[:]
     stride = surface.get_stride()
     row_bytes = width * 4
     if stride != row_bytes:
