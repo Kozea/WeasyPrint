@@ -50,6 +50,7 @@ ffi.cdef('''
     } GdkColorspace;
     typedef ...         GdkPixbufLoader;
     typedef ...         GdkPixbuf;
+    typedef ...         cairo_t;
 
 
     GdkPixbufLoader * gdk_pixbuf_loader_new          (void);
@@ -75,6 +76,10 @@ ffi.cdef('''
         const GdkPixbuf *pixbuf, gboolean substitute_color,
         guchar r, guchar g, guchar b);
 
+    void              gdk_cairo_set_source_pixbuf    (
+        cairo_t *cr, const GdkPixbuf *pixbuf, double pixbuf_x, double pixbuf_y);
+
+
     void              g_object_ref                   (gpointer object);
     void              g_object_unref                 (gpointer object);
     void              g_error_free                   (GError *error);
@@ -84,6 +89,13 @@ ffi.cdef('''
 
 gobject = ffi.dlopen('gobject-2.0')
 gdk_pixbuf = ffi.dlopen('gdk_pixbuf-2.0')
+try:
+    gdk = ffi.dlopen('gdk-3')
+except OSError:
+    try:
+        gdk = ffi.dlopen('gdk-x11-2.0')
+    except OSError:
+        gdk = None
 
 gobject.g_type_init()
 cairo.install_as_pycairo()  # for CairoSVG
@@ -96,10 +108,9 @@ cairo.install_as_pycairo()  # for CairoSVG
 
 def handle_g_error(error):
     if error != ffi.NULL:
-        error_message = error.message
+        error_message = ffi.string(error.message).decode('utf8', 'replace')
         gobject.g_error_free(error)
-        return ValueError(
-            'Pixbuf error: ' + error_message.decode('utf8', 'replace'))
+        return ValueError('Pixbuf error: ' + error_message)
 
 
 class Pixbuf(object):
@@ -146,6 +157,21 @@ def gdkpixbuf_loader(file_obj, string):
 
     """
     pixbuf, jpeg_data = get_pixbuf(file_obj, string)
+    if gdk is not None:
+        # Gdk is faster but not always available:
+        dummy_context = cairo.Context(cairo.PDFSurface(None, 1, 1))
+        gdk.gdk_cairo_set_source_pixbuf(
+            ffi.cast('cairo_t *', dummy_context._handle), pixbuf._handle, 0, 0)
+        surface = dummy_context.get_source().get_surface()
+    else:
+        surface = pixbuf_to_cairo(pixbuf)
+    add_jpeg_data(surface, jpeg_data)
+    get_pattern = lambda: cairo.SurfacePattern(surface)
+    return get_pattern, surface.get_width(), surface.get_height()
+
+
+def pixbuf_to_cairo(pixbuf):
+    """Convert a Pixbuf to a cairo.ImageSurface without Gdk."""
     if not pixbuf.get_has_alpha():
         # False means: no "substitute" color that becomes transparent.
         pixbuf = Pixbuf(pixbuf.add_alpha(False, 0, 0, 0))
@@ -183,10 +209,7 @@ def gdkpixbuf_loader(file_obj, string):
             data[offset + 1:end:4] = green
             data[offset:end:4] = blue
 
-    surface = cairo.ImageSurface('ARGB32', width, height, data, cairo_stride)
-    add_jpeg_data(surface, jpeg_data)
-    get_pattern = lambda: cairo.SurfacePattern(surface)
-    return get_pattern, width, height
+    return cairo.ImageSurface('ARGB32', width, height, data, cairo_stride)
 
 
 def cairo_png_loader(file_obj, string, jpeg_data=None):
