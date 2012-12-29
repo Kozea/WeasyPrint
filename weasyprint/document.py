@@ -16,7 +16,7 @@ import math
 import shutil
 import functools
 
-import cairo
+import cairocffi as cairo
 
 from . import CSS
 from . import images
@@ -406,6 +406,29 @@ class Document(object):
                 with open(target, 'wb') as fd:
                     shutil.copyfileobj(file_obj, fd)
 
+    def write_image_surface(self, resolution=96):
+        dppx = resolution / 96
+
+        # This duplicates the hinting logic in Page.paint. There is a
+        # dependency cycle otherwise:
+        #   this → hinting logic → context → surface → this
+        # But since we do no transform here, cairo_context.user_to_device and
+        # friends are identity functions.
+        widths = [int(math.ceil(p.width * dppx)) for p in self.pages]
+        heights = [int(math.ceil(p.height * dppx)) for p in self.pages]
+
+        max_width = max(widths)
+        sum_heights = sum(heights)
+        surface = cairo.ImageSurface(
+            cairo.FORMAT_ARGB32, max_width, sum_heights)
+        context = cairo.Context(surface)
+        pos_y = 0
+        for page, width, height in izip(self.pages, widths, heights):
+            pos_x = (max_width - width) / 2
+            page.paint(context, pos_x, pos_y, scale=dppx, clip=True)
+            pos_y += height
+        return surface, max_width, sum_heights
+
     def write_png(self, target=None, resolution=96):
         """Paint the pages vertically to a single PNG image.
 
@@ -427,27 +450,7 @@ class Document(object):
             final image, in PNG pixels.
 
         """
-        dppx = resolution / 96
-
-        # This duplicates the hinting logic in Page.paint. There is a
-        # dependency cycle otherwise:
-        #   this → hinting logic → context → surface → this
-        # But since we do no transform here, cairo_context.user_to_device and
-        # friends are identity functions.
-        widths = [int(math.ceil(p.width * dppx)) for p in self.pages]
-        heights = [int(math.ceil(p.height * dppx)) for p in self.pages]
-
-        max_width = max(widths)
-        sum_heights = sum(heights)
-        surface = cairo.ImageSurface(
-            cairo.FORMAT_ARGB32, max_width, sum_heights)
-        context = cairo.Context(surface)
-        pos_y = 0
-        for page, width, height in izip(self.pages, widths, heights):
-            pos_x = (max_width - width) / 2
-            page.paint(context, pos_x, pos_y, scale=dppx, clip=True)
-            pos_y += height
-
+        surface, max_width, sum_heights = self.write_image_surface(resolution)
         if target is None:
             target = io.BytesIO()
             surface.write_to_png(target)

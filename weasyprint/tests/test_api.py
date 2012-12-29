@@ -23,12 +23,12 @@ import tempfile
 
 import lxml.html
 import lxml.etree
-import cairo
+import cairocffi as cairo
 import pytest
 
 from .testing_utils import (
     resource_filename, assert_no_logs, capture_logs, TestHTML)
-from .test_draw import png_to_pixels
+from .test_draw import image_to_pixels
 from ..compat import urljoin, urlencode, urlparse_uses_relative, iteritems
 from ..urls import path2url
 from .. import HTML, CSS, default_url_fetcher
@@ -223,8 +223,9 @@ def check_png_pattern(png_bytes, x2=False, blank=False, rotated=False):
             _+_+_+_+_+_+_+_,
         ]
         size = 8
+    surface = cairo.ImageSurface.create_from_png(io.BytesIO(png_bytes))
     assert_pixels_equal('api_png', size, size,
-                        png_to_pixels(png_bytes, size, size),
+                        image_to_pixels(surface, size, size),
                         b''.join(expected_pixels))
 
 
@@ -254,7 +255,9 @@ def test_python_render():
     class fake_file(object):
         def __init__(self):
             self.chunks = []
-            self.write = self.chunks.append
+
+        def write(self, data):
+            self.chunks.append(bytes(data[:]))
 
         def getvalue(self):
             return b''.join(self.chunks)

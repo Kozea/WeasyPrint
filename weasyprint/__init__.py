@@ -16,10 +16,6 @@
 from __future__ import division, unicode_literals
 
 
-import cairocffi
-cairocffi.install_as_pycairo()
-
-
 VERSION = '0.17'
 __version__ = VERSION
 
@@ -163,6 +159,12 @@ class HTML(object):
 
         """
         return self.render(stylesheets).write_pdf(target, zoom)
+
+    def write_image_surface(self, stylesheets=None, resolution=96):
+        surface, _width, _height = (
+            self.render(stylesheets, enable_hinting=True)
+            .write_image_surface(resolution))
+        return surface
 
     def write_png(self, target=None, stylesheets=None, resolution=96):
         """Paint the pages vertically to a single PNG image.

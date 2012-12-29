@@ -12,13 +12,15 @@
 
 from __future__ import division, unicode_literals
 
+import io
+import sys
 import os.path
 import tempfile
 import shutil
 import itertools
 import functools
 
-import cairo
+import cairocffi as cairo
 import pytest
 
 from ..compat import xrange, izip, ints_from_bytes
@@ -29,20 +31,24 @@ from .testing_utils import (
     resource_filename, TestHTML, FONTS, assert_no_logs, capture_logs)
 
 
+as_pixel = (
+    lambda x: x[:-1][::-1] + x[-1]
+    if sys.byteorder == 'little' else
+    lambda x: x[-1] + x[:-1])
+
 # Short variable names are OK here
 # pylint: disable=C0103
 
-_ = b'\xff\xff\xff\xff'  # white
-r = b'\xff\x00\x00\xff'  # red
-B = b'\x00\x00\xff\xff'  # blue
+_ = as_pixel(b'\xff\xff\xff\xff')  # white
+r = as_pixel(b'\xff\x00\x00\xff')  # red
+B = as_pixel(b'\x00\x00\xff\xff')  # blue
 
 
 def save_pixels_to_png(pixels, width, height, filename):
     """Save raw pixels to a PNG file through pixbuf and introspection."""
-    GdkPixbuf.Pixbuf.new_from_data(
-        pixels, GdkPixbuf.Colorspace.RGB, True, 8,
-        width, height, width * 4, None, None
-    ).savev(filename, 'png', [], [])
+    cairo.ImageSurface(
+        str('ARGB32'), width, height, data=bytearray(pixels), stride=width * 4
+    ).write_to_png(filename)
 
 
 def requires_cairo_1_12(test):
@@ -137,18 +143,16 @@ def document_to_pixels(document, name, expected_width, expected_height):
     """
     Render an HTML document to PNG, checks its size and return pixel data.
     """
-    png_bytes = document.write_png()
-    return png_to_pixels(png_bytes, expected_width, expected_height)
+    surface = document.write_image_surface()
+    return image_to_pixels(surface, expected_width, expected_height)
 
 
-def png_to_pixels(png_bytes, width, height):
-    pixbuf, _ = get_pixbuf(string=png_bytes)
-    assert (pixbuf.get_width(), pixbuf.get_height()) == (width, height)
-    if not pixbuf.get_has_alpha():
-        pixbuf = pixbuf.add_alpha(False, 0, 0, 0)  # no substitute color
-    assert pixbuf.get_n_channels() == 4
-    pixels = pixbuf.get_pixels()
-    stride = pixbuf.get_rowstride()
+def image_to_pixels(surface, width, height):
+    assert (surface.get_width(), surface.get_height()) == (width, height)
+    # RGB24 is actually the same as ARGB32, with A unused.
+    assert surface.get_format() in ('ARGB32', 'RGB24')
+    pixels = surface.get_data()
+    stride = surface.get_stride()
     row_bytes = width * 4
     if stride != row_bytes:
         assert stride > row_bytes
@@ -180,7 +184,7 @@ def assert_pixels_equal(name, width, height, raw, expected_raw, tolerance=0):
                 expected_pixel = tuple(ints_from_bytes(
                     expected_raw[i:i + 4]))
                 assert 0, (
-                    'Pixel (%i, %i) in %s: expected rgba%s, got rgab%s'
+                    'Pixel (%i, %i) in %s: expected rgba%s, got rgba%s'
                     % (x, y, name, expected_pixel, pixel))
 
 
@@ -951,7 +955,7 @@ def test_images():
         _+_+_+_+_+_+_+_,
     ]
     # JPG is lossy...
-    b = b'\x00\x00\xfe\xff'
+    b = as_pixel(b'\x00\x00\xfe\xff')
     blue_image = [
         _+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_,
@@ -1233,11 +1237,11 @@ def test_tables():
             </tr>
         </table>
     '''
-    r = b'\xff\x7f\x7f\xff'  # rgba(255, 0, 0, 0.5) above #fff
-    R = b'\xff\x3f\x3f\xff'  # r above r above #fff
-    g = b'\x7f\xff\x7f\xff'  # rgba(0, 255, 0, 0.5) above #fff
-    G = b'\x7f\xbf\x3f\xff'  # g above r above #fff
-                             #   Not the same as r above g above #fff
+    r = as_pixel(b'\xff\x7f\x7f\xff')  # rgba(255, 0, 0, 0.5) above #fff
+    R = as_pixel(b'\xff\x3f\x3f\xff')  # r above r above #fff
+    g = as_pixel(b'\x7f\xff\x7f\xff')  # rgba(0, 255, 0, 0.5) above #fff
+    G = as_pixel(b'\x7f\xbf\x3f\xff')  # g above r above #fff
+                                       #   Not the same as r above g above #fff
     assert_pixels('table_borders', 28, 28, [
         _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
         _+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+_,
@@ -1588,12 +1592,12 @@ def test_outlines():
 @assert_no_logs
 def test_margin_boxes():
     """Test the rendering of margin boxes"""
-    _ = b'\xff\xff\xff\xff'  # white
-    R = b'\xff\x00\x00\xff'  # red
-    G = b'\x00\xff\x00\xff'  # green
-    B = b'\x00\x00\xff\xff'  # blue
-    g = b'\x00\x80\x00\xff'  # half green
-    b = b'\x00\x00\x80\xff'  # half blue
+    _ = as_pixel(b'\xff\xff\xff\xff')  # white
+    R = as_pixel(b'\xff\x00\x00\xff')  # red
+    G = as_pixel(b'\x00\xff\x00\xff')  # green
+    B = as_pixel(b'\x00\x00\xff\xff')  # blue
+    g = as_pixel(b'\x00\x80\x00\xff')  # half green
+    b = as_pixel(b'\x00\x00\x80\xff')  # half blue
     assert_pixels('margin_boxes', 15, 15, [
         _+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
         _+G+G+G+_+_+_+_+_+_+B+B+B+B+_,
@@ -1754,7 +1758,7 @@ def test_clip():
             <div>
         ''' % (css,))
 
-    g = b'\x00\x80\x00\xff'  # green
+    g = as_pixel(b'\x00\x80\x00\xff')  # green
     clip('5px, 5px, 9px, auto', [
         _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_+_+_+_+_+_+_,
@@ -2144,12 +2148,14 @@ def test_acid2():
         document = render('acid2-test.html')
         intro_page, test_page = document.pages
         # Ignore the intro page: it is not in the reference
-        test_png, width, height = document.copy([test_page]).write_png()
+        test_image, width, height = document.copy(
+            [test_page]).write_image_surface()
 
     # This is a copy of http://www.webstandards.org/files/acid2/reference.html
-    ref_png, ref_width, ref_height = render('acid2-reference.html').write_png()
+    ref_image, ref_width, ref_height = render(
+        'acid2-reference.html').write_image_surface()
 
     assert (width, height) == (ref_width, ref_height)
     assert_pixels_equal(
-        'acid2', width, height, png_to_pixels(test_png, width, height),
-        png_to_pixels(ref_png, width, height), tolerance=2)
+        'acid2', width, height, image_to_pixels(test_image, width, height),
+        image_to_pixels(ref_image, width, height), tolerance=2)

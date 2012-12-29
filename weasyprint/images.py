@@ -14,7 +14,7 @@ from __future__ import division, unicode_literals
 
 from io import BytesIO
 
-import cairo
+import cairocffi as cairo
 
 from .logger import LOGGER
 

@@ -143,6 +143,9 @@ ffi.cdef('''
         PangoLayoutLine *line,
         PangoRectangle *ink_rect, PangoRectangle *logical_rect);
 
+    void pango_cairo_update_layout (cairo_t *cr, PangoLayout *layout);
+    void pango_cairo_show_layout_line (cairo_t *cr, PangoLayoutLine *line);
+
 ''')
 gobject = ffi.dlopen('gobject-2.0')
 pango = ffi.dlopen('pango-1.0')
@@ -267,15 +270,19 @@ def split_first_line(text, style, hinting, max_width):
             # Try to use a small amount of text instead of the whole text
             layout = create_layout(
                 text[:expected_length], style, hinting, max_width)
-            if layout.get_line_count() <= 1:
+            lines = layout.iter_lines()
+            first_line = next(lines, None)
+            second_line = next(lines, None)
+            if second_line is None:
                 # The small amount of text fits in one line, give up and use
                 # the whole text
                 layout = None
-    layout = layout or create_layout(text, style, hinting, max_width)
+    if layout is None:
+        layout = create_layout(text, style, hinting, max_width)
+        lines = layout.iter_lines()
+        first_line = next(lines, None)
+        second_line = next(lines, None)
 
-    lines = layout.iter_lines()
-    first_line = next(lines, None)
-    second_line = next(lines, None)
     if second_line is not None:
         resume_at = second_line.start_index
     else:
@@ -327,7 +334,8 @@ def line_widths(box, enable_hinting, width, skip=None):
 
 def show_first_line(cairo_context, pango_layout, hinting):
     """Draw the given ``line`` to the Cairo ``context``."""
+    cairo_context = ffi.cast('cairo_t *', cairo_context._handle)
     if hinting:
-        PangoCairo.update_layout(cairo_context, pango_layout)
-    lines = pango_layout.get_lines_readonly()
-    PangoCairo.show_layout_line(cairo_context, lines[0])
+        pangocairo.pango_cairo_update_layout(cairo_context, pango_layout.layout)
+    pangocairo.pango_cairo_show_layout_line(
+        cairo_context, next(pango_layout.iter_lines()))

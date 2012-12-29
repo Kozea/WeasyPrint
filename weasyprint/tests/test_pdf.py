@@ -14,7 +14,7 @@ from __future__ import division, unicode_literals
 
 import io
 
-import cairo
+import cairocffi as cairo
 import pytest
 
 from .. import CSS
