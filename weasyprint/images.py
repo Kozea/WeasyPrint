@@ -153,9 +153,9 @@ def gdkpixbuf_loader(file_obj, string):
     assert pixbuf.get_n_channels() == 4
     width = pixbuf.get_width()
     height = pixbuf.get_height()
-    rowstride = pixbuf.get_width()
+    rowstride = pixbuf.get_rowstride()
     pixels = ffi.buffer(pixbuf.get_pixels(), pixbuf.get_byte_length())
-    # TODO: remove this when cffi buffers support slicing.
+    # TODO: remove this when cffi buffers support slicing with a stride.
     pixels = pixels[:]
 
     # Convert GdkPixbuf’s big-endian RGBA to cairo’s native-endian ARGB

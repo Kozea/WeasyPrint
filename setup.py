@@ -28,7 +28,9 @@ REQUIREMENTS = [
         'tinycss==0.3',
         'cssselect>=0.6',
         'CairoSVG>=0.4.1',
-        # ... and others, not installable by pip.
+        'cffi',
+        'cairocffi',
+        # C dependencies: Pango, cairo, Gdk-Pixbuf
 ]
 if sys.version_info < (2, 7) or (3,) <= sys.version_info < (3, 2):
     # In the stdlib from 2.7 and 3.2:
