@@ -115,10 +115,10 @@ def handle_g_error(error):
 
 class Pixbuf(object):
     def __init__(self, handle):
-        self._handle = ffi.gc(handle, gobject.g_object_unref)
+        self._pointer = ffi.gc(handle, gobject.g_object_unref)
 
     def __getattr__(self, name):
-        return partial(getattr(gdk_pixbuf, 'gdk_pixbuf_' + name), self._handle)
+        return partial(getattr(gdk_pixbuf, 'gdk_pixbuf_' + name), self._pointer)
 
 
 def get_pixbuf(file_obj=None, string=None):
@@ -161,7 +161,7 @@ def gdkpixbuf_loader(file_obj, string):
         # Gdk is faster but not always available:
         dummy_context = cairo.Context(cairo.PDFSurface(None, 1, 1))
         gdk.gdk_cairo_set_source_pixbuf(
-            ffi.cast('cairo_t *', dummy_context._handle), pixbuf._handle, 0, 0)
+            ffi.cast('cairo_t *', dummy_context._pointer), pixbuf._pointer, 0, 0)
         surface = dummy_context.get_source().get_surface()
     else:
         surface = pixbuf_to_cairo(pixbuf)

@@ -221,7 +221,7 @@ def create_layout(text, style, hinting, max_width):
         cairo.Context(cairo.PDFSurface(None, 1, 1)))
     layout = layout_obj.layout = ffi.gc(
         pangocairo.pango_cairo_create_layout(ffi.cast(
-            'cairo_t *', dummy_context._handle)),
+            'cairo_t *', dummy_context._pointer)),
         gobject.g_object_unref)
     font = layout_obj.font = ffi.gc(
         pango.pango_font_description_new(),
@@ -361,7 +361,7 @@ def line_widths(box, enable_hinting, width, skip=None):
 
 def show_first_line(cairo_context, pango_layout, hinting):
     """Draw the given ``line`` to the Cairo ``context``."""
-    cairo_context = ffi.cast('cairo_t *', cairo_context._handle)
+    cairo_context = ffi.cast('cairo_t *', cairo_context._pointer)
     if hinting:
         pangocairo.pango_cairo_update_layout(cairo_context, pango_layout.layout)
     pangocairo.pango_cairo_show_layout_line(
