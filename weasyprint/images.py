@@ -165,7 +165,8 @@ def gdkpixbuf_loader(file_obj, string):
         surface = dummy_context.get_source().get_surface()
     else:
         surface = pixbuf_to_cairo(pixbuf)
-    add_jpeg_data(surface, jpeg_data)
+    if jpeg_data:
+        surface.set_mime_data('image/jpeg', jpeg_data)
     get_pattern = lambda: cairo.SurfacePattern(surface)
     return get_pattern, surface.get_width(), surface.get_height()
 
@@ -212,19 +213,11 @@ def pixbuf_to_cairo(pixbuf):
     return cairo.ImageSurface('ARGB32', width, height, data, cairo_stride)
 
 
-def cairo_png_loader(file_obj, string, jpeg_data=None):
+def cairo_png_loader(file_obj, string):
     """Return a cairo Surface from a PNG byte stream."""
     surface = cairo.ImageSurface.create_from_png(file_obj or BytesIO(string))
-    add_jpeg_data(surface, jpeg_data)
     get_pattern = lambda: cairo.SurfacePattern(surface)
     return get_pattern, surface.get_width(), surface.get_height()
-
-
-def add_jpeg_data(surface, jpeg_data):
-    if jpeg_data:
-        # TODO: remove this when cffi/cairocffi support byte string as buffers.
-        jpeg_data = bytearray(jpeg_data)
-        surface.set_mime_data('image/jpeg', jpeg_data)
 
 
 def cairosvg_loader(file_obj, string, uri):
