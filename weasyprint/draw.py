@@ -463,7 +463,7 @@ def draw_border_segment(context, enable_hinting, style, width, color, side,
                      \         /
                       +-------+
                 """
-            length = ((x2 - x1)**2 + (y2 - y1)**2) ** 0.5
+            length = ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
             dash = 2 * width
             if style == 'dotted':
                 if context.user_to_device_distance(width, 0)[0] > 3:
@@ -491,7 +491,7 @@ def draw_outlines(context, box, enable_hinting):
         border_box = (box.border_box_x(), box.border_box_y(),
                       box.border_width(), box.border_height())
         outline_box = (border_box[0] - width, border_box[1] - width,
-                       border_box[2] + 2 * width,border_box[3] + 2 * width)
+                       border_box[2] + 2 * width, border_box[3] + 2 * width)
         for side, border_edge, padding_edge in zip(
             ['top', 'right', 'bottom', 'left'],
             get_rectangle_edges(*outline_box),

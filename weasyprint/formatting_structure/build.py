@@ -606,7 +606,7 @@ def collapse_table_borders(table, grid_width, grid_height):
         'outset', 'groove', 'inset', 'none'])))
     style_map = {'inset': 'ridge', 'outset': 'groove'}
     transparent = COLOR_KEYWORDS['transparent']
-    weak_null_border =  (
+    weak_null_border = (
         (0, 0, style_scores['none']), ('none', 0, transparent))
     vertical_borders = [[weak_null_border for x in xrange(grid_width + 1)]
                         for y in xrange(grid_height)]
@@ -640,7 +640,7 @@ def collapse_table_borders(table, grid_width, grid_height):
     # "A style set on a cell wins over one on a row, which wins over a
     #  row group, column, column group and, lastly, table"
     # See http://www.w3.org/TR/CSS21/tables.html#border-conflict-resolution
-    strong_null_border =  (
+    strong_null_border = (
         (1, 0, style_scores['hidden']), ('hidden', 0, transparent))
     grid_y = 0
     for row_group in table.children:
