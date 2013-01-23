@@ -616,7 +616,7 @@ def collapse_table_borders(table, grid_width, grid_height):
     def set_one_border(border_grid, box_style, side, grid_x, grid_y):
         style = box_style['border_%s_style' % side]
         width = box_style['border_%s_width' % side]
-        color = box_style['border_%s_color' % side]
+        color = box_style.get_color('border_%s_color' % side)
         style = style_map.get(style, style)
 
         # http://www.w3.org/TR/CSS21/tables.html#border-conflict-resolution

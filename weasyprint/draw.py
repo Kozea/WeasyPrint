@@ -326,7 +326,7 @@ def draw_border(context, box, enable_hinting):
         width = getattr(box, 'border_%s_width' % side)
         if width == 0:
             continue
-        color = box.style['border_%s_color' % side]
+        color = box.style.get_color('border_%s_color' % side)
         if color.alpha == 0:
             continue
         style = box.style['border_%s_style' % side]
@@ -485,7 +485,7 @@ def draw_border_segment(context, enable_hinting, style, width, color, side,
 
 def draw_outlines(context, box, enable_hinting):
     width = box.style.outline_width
-    color = box.style.outline_color
+    color = box.style.get_color('outline_color')
     style = box.style.outline_style
     if box.style.visibility != 'hidden' and width != 0 and color.alpha != 0:
         border_box = (box.border_box_x(), box.border_box_y(),

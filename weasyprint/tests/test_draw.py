@@ -1882,6 +1882,49 @@ def test_opacity():
 
 
 @assert_no_logs
+def test_current_color():
+    """Test inheritance of the currentColor keyword."""
+    G = b'\x00\xff\x00\xff'  # lime (light green)
+    assert_pixels('background_current_color', 2, 2, [G+G, G+G], '''
+        <style>
+            @page { size: 2px }
+            html, body { height: 100%; margin: 0 }
+            html { color: red; background: currentColor }
+            body { color: lime; background: inherit }
+        </style>
+        <body>
+    ''')
+    assert_pixels('border_current_color', 2, 2, [G+G, G+G], '''
+        <style>
+            @page { size: 2px }
+            html { color: red; border-color: currentColor }
+            body { color: lime; border: 1px solid; border-color: inherit;
+                   margin: 0 }
+        </style>
+        <body>
+    ''')
+    assert_pixels('outline_current_color', 2, 2, [G+G, G+G], '''
+        <style>
+            @page { size: 2px }
+            html { color: red; outline-color: currentColor }
+            body { color: lime; outline: 1px solid; outline-color: inherit;
+                   margin: 1px }
+        </style>
+        <body>
+    ''')
+    assert_pixels('border_collapse_current_color', 2, 2, [G+G, G+G], '''
+        <style>
+            @page { size: 2px }
+            html { color: red; border-color: currentColor; }
+            body { margin: 0 }
+            table { border-collapse: collapse;
+                    color: lime; border: 1px solid; border-color: inherit }
+        </style>
+        <table><td>
+    ''')
+
+
+@assert_no_logs
 def test_2d_transform():
     """Test 2D transformations."""
     assert_pixels('image_rotate90', 8, 8, [

@@ -143,7 +143,7 @@ INITIAL_VALUES['size'] = tuple(
 
 def _computing_order():
     """Some computed values are required by others, so order matters."""
-    first = ['font_size', 'line_height', 'color']
+    first = ['font_size', 'line_height']
     order = sorted(INITIAL_VALUES)
     for name in first:
         order.remove(name)
@@ -210,20 +210,6 @@ def compute(element, pseudo_type, specified, computed, parent_style):
 # Let's be consistent, always use ``name`` as an argument even when
 # it is useless.
 # pylint: disable=W0613
-
-@register_computer('background-color')
-@register_computer('border-top-color')
-@register_computer('border-right-color')
-@register_computer('border-bottom-color')
-@register_computer('border-left-color')
-@register_computer('outline-color')
-def other_color(computer, name, value):
-    """Compute the ``*-color`` properties."""
-    if value == 'currentColor':
-        return computer.computed.color
-    else:
-        # As specified
-        return value
 
 
 @register_computer('background-position')
