@@ -259,7 +259,7 @@ def line_widths(box, enable_hinting, width, skip=None):
     # TODO: without the lstrip, we get an extra empty line at the beginning. Is
     # there a better solution to avoid that?
     layout = create_layout(
-        box.text[(skip or 0):].lstrip(), box.style, enable_hinting, width)
+        box.text[(skip or 0):].lstrip(' '), box.style, enable_hinting, width)
     for i in xrange(layout.get_line_count()):
         width, _height = get_size(layout.get_line(i))
         yield width
