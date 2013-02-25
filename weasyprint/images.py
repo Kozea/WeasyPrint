@@ -80,9 +80,9 @@ ffi.cdef('''
     int               gdk_pixbuf_get_rowstride       (const GdkPixbuf *pixbuf);
     guchar *          gdk_pixbuf_get_pixels          (const GdkPixbuf *pixbuf);
     gsize             gdk_pixbuf_get_byte_length     (const GdkPixbuf *pixbuf);
-    GdkPixbuf *       gdk_pixbuf_add_alpha           (
-        const GdkPixbuf *pixbuf, gboolean substitute_color,
-        guchar r, guchar g, guchar b);
+    gboolean          gdk_pixbuf_save_to_buffer      (
+        GdkPixbuf *pixbuf, gchar **buffer, gsize *buffer_size,
+        const char *type, GError **error, ...);
 
     void              gdk_cairo_set_source_pixbuf    (
         cairo_t *cr, const GdkPixbuf *pixbuf, double pixbuf_x, double pixbuf_y);
@@ -113,11 +113,15 @@ gobject.g_type_init()
 # this API will need to change.
 
 
-def handle_g_error(error):
+def handle_g_error(error, raise_=False):
     if error != ffi.NULL:
         error_message = ffi.string(error.message).decode('utf8', 'replace')
         gobject.g_error_free(error)
-        return ValueError('Pixbuf error: ' + error_message)
+        exception = ValueError('Pixbuf error: ' + error_message)
+        if raise_:
+            raise exception
+        else:
+            return exception
 
 
 class Pixbuf(object):
@@ -164,27 +168,38 @@ def gdkpixbuf_loader(file_obj, string):
 
     """
     pixbuf, jpeg_data = get_pixbuf(file_obj, string)
-    if gdk is not None:
-        # Gdk is faster but not always available:
-        dummy_context = cairo.Context(cairo.PDFSurface(None, 1, 1))
-        gdk.gdk_cairo_set_source_pixbuf(
-            ffi.cast('cairo_t *', dummy_context._pointer), pixbuf._pointer, 0, 0)
-        surface = dummy_context.get_source().get_surface()
-    else:
-        surface = pixbuf_to_cairo(pixbuf)
+    surface = (
+        pixbuf_to_cairo_gdk(pixbuf) if gdk is not None
+        else pixbuf_to_cairo_slices(pixbuf) if not pixbuf.get_has_alpha()
+        else pixbuf_to_cairo_png(pixbuf))
     if jpeg_data:
         surface.set_mime_data('image/jpeg', jpeg_data)
     get_pattern = lambda: cairo.SurfacePattern(surface)
     return get_pattern, surface.get_width(), surface.get_height()
 
 
-def pixbuf_to_cairo(pixbuf):
-    """Convert a Pixbuf to a cairo.ImageSurface without Gdk."""
-    if not pixbuf.get_has_alpha():
-        # False means: no "substitute" color that becomes transparent.
-        pixbuf = Pixbuf(pixbuf.add_alpha(False, 0, 0, 0))
+def pixbuf_to_cairo_gdk(pixbuf):
+    """Convert with GDK.
+
+    This method is fastest but GDK is not always available.
+
+    """
+    dummy_context = cairo.Context(cairo.PDFSurface(None, 1, 1))
+    gdk.gdk_cairo_set_source_pixbuf(
+        ffi.cast('cairo_t *', dummy_context._pointer), pixbuf._pointer, 0, 0)
+    return dummy_context.get_source().get_surface()
+
+
+def pixbuf_to_cairo_slices(pixbuf):
+    """Slice-based byte swapping.
+
+    This method is 2~5x slower than GDK but does not support an alpha channel.
+    (cairo uses pre-multiplied alpha, but not Pixbuf.)
+
+    """
     assert pixbuf.get_colorspace() == 'GDK_COLORSPACE_RGB'
-    assert pixbuf.get_n_channels() == 4
+    assert pixbuf.get_n_channels() == 3
+    assert pixbuf.get_bits_per_sample() == 8
     width = pixbuf.get_width()
     height = pixbuf.get_height()
     rowstride = pixbuf.get_rowstride()
@@ -193,31 +208,50 @@ def pixbuf_to_cairo(pixbuf):
     pixels = pixels[:]
 
     # Convert GdkPixbuf’s big-endian RGBA to cairo’s native-endian ARGB
-    cairo_stride = cairo.ImageSurface.format_stride_for_width('ARGB32', width)
+    cairo_stride = cairo.ImageSurface.format_stride_for_width('RGB24', width)
     data = bytearray(cairo_stride * height)
     big_endian = sys.byteorder == 'big'
-    row_length = width * 4  # stride == row_length + padding
+    pixbuf_row_length = width * 3  # stride == row_length + padding
+    cairo_row_length = width * 4  # stride == row_length + padding
     for y in xrange(height):
         offset = rowstride * y
-        end = offset + row_length
-        red = pixels[offset:end:4]
-        green = pixels[offset + 1:end:4]
-        blue = pixels[offset + 2:end:4]
-        alpha = pixels[offset + 3:end:4]
+        end = offset + pixbuf_row_length
+        red = pixels[offset:end:3]
+        green = pixels[offset + 1:end:3]
+        blue = pixels[offset + 2:end:3]
+
         offset = cairo_stride * y
-        end = offset + row_length
+        end = offset + cairo_row_length
         if big_endian:
-            data[offset:end:4] = alpha
+            # data[offset:end:4] is left un-initialized
             data[offset + 1:end:4] = red
             data[offset + 2:end:4] = green
             data[offset + 3:end:4] = blue
         else:
-            data[offset + 3:end:4] = alpha
+            # data[offset + 3:end:4] is left un-initialized
             data[offset + 2:end:4] = red
             data[offset + 1:end:4] = green
             data[offset:end:4] = blue
 
     return cairo.ImageSurface('ARGB32', width, height, data, cairo_stride)
+
+
+def pixbuf_to_cairo_png(pixbuf):
+    """Going through PNG.
+
+    This method is 20~30x slower than GDK but always works.
+
+    """
+    buffer_pointer = ffi.new('gchar **')
+    buffer_size = ffi.new('gsize *')
+    error = ffi.new('GError **')
+    pixbuf.save_to_buffer(
+        buffer_pointer, buffer_size, ffi.new('char[]', b'png'), error,
+        ffi.new('char[]', b'compression'), ffi.new('char[]', b'0'),
+        ffi.NULL)
+    handle_g_error(error[0], raise_=True)
+    png_bytes = ffi.buffer(buffer_pointer[0], buffer_size[0])
+    return cairo.ImageSurface.create_from_png(BytesIO(png_bytes))
 
 
 def cairo_png_loader(file_obj, string):
