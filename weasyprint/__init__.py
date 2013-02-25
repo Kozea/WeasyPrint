@@ -22,13 +22,17 @@ __version__ = VERSION
 # Used for 'User-Agent' in HTTP and 'Creator' in PDF
 VERSION_STRING = 'WeasyPrint %s (http://weasyprint.org/)' % VERSION
 
+__all__ = ['HTML', 'CSS', 'Document', 'Page', 'default_url_fetcher',
+           'VERSION']
 
-from .urls import default_url_fetcher
-# Make sure the logger is configured early:
+
+import lxml.etree
+
+from .urls import (default_url_fetcher, wrap_url_fetcher,
+                   path2url, ensure_url, url_is_absolute)
 from .logger import LOGGER
-
-# No other import here. For this module, do them in functions/methods instead.
-# (This reduces the work for eg. 'weasyprint --help')
+# Some import are at the end of the file (after the CSS class) is defined
+# to work around circular imports.
 
 
 class HTML(object):
@@ -69,9 +73,6 @@ class HTML(object):
     def __init__(self, guess=None, filename=None, url=None, file_obj=None,
                  string=None, tree=None, encoding=None, base_url=None,
                  url_fetcher=default_url_fetcher, media_type='print'):
-        import lxml.etree
-        from .html import find_base_url
-        from .urls import wrap_url_fetcher
         url_fetcher = wrap_url_fetcher(url_fetcher)
 
         source_type, source, base_url, protocol_encoding = _select_source(
@@ -103,7 +104,6 @@ class HTML(object):
         self.media_type = media_type
 
     def _ua_stylesheets(self):
-        from .html import HTML5_UA_STYLESHEET
         return [HTML5_UA_STYLESHEET]
 
     def render(self, stylesheets=None, enable_hinting=False):
@@ -128,7 +128,6 @@ class HTML(object):
         :returns: A :class:`~document.Document` object.
 
         """
-        from .document import Document
         return Document._render(self, stylesheets, enable_hinting)
 
     def write_pdf(self, target=None, stylesheets=None, zoom=1):
@@ -212,8 +211,6 @@ class CSS(object):
                  string=None, encoding=None, base_url=None,
                  url_fetcher=default_url_fetcher, _check_mime_type=False,
                  media_type='print'):
-        from .css import PARSER, preprocess_stylesheet
-        from .urls import wrap_url_fetcher
         url_fetcher = wrap_url_fetcher(url_fetcher)
 
         source_type, source, base_url, protocol_encoding = _select_source(
@@ -250,8 +247,6 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
     normalized ``base_url``.
 
     """
-    from .urls import path2url, ensure_url, url_is_absolute
-
     if base_url is not None:
         base_url = ensure_url(base_url)
 
@@ -275,7 +270,8 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
     if nones == [True, True, False, True, True, True]:
         result = url_fetcher(url)
         if check_css_mime_type and result['mime_type'] != 'text/css':
-            LOGGER.warn('Unsupported stylesheet type %s for %s',
+            LOGGER.warn(
+                'Unsupported stylesheet type %s for %s',
                 result['mime_type'], result['redirected_url'])
             return 'string', '', base_url, None
         protocol_encoding = result.get('encoding')
@@ -302,3 +298,9 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
         ', '.join(name for i, name in enumerate(
             'guess filename url file_obj string tree'.split()) if not nones[i]
         ) or 'nothing'))
+
+
+# Work around circular imports.
+from .css import PARSER, preprocess_stylesheet
+from .html import find_base_url, HTML5_UA_STYLESHEET
+from .document import Document, Page
