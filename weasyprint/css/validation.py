@@ -93,6 +93,7 @@ def validator(property_name=None, prefixed=False, unprefixed=False,
 
     """
     assert not (prefixed and unprefixed)
+
     def decorator(function):
         """Add ``function`` to the ``VALIDATORS``."""
         if property_name is None:
@@ -487,7 +488,7 @@ def counter(tokens, default_integer):
         if counter_name is None:
             return  # expected a keyword here
         if counter_name in ('none', 'initial', 'inherit'):
-            raise InvalidValues('Invalid counter name: '+ counter_name)
+            raise InvalidValues('Invalid counter name: ' + counter_name)
         token = next(tokens, None)
         if token is not None and token.type == 'INTEGER':
             # Found an integer. Use it and get the next token
