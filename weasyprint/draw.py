@@ -16,7 +16,7 @@ import contextlib
 import math
 import operator
 
-import cairo
+import cairocffi as cairo
 
 from .formatting_structure import boxes
 from .layout.backgrounds import box_rectangle

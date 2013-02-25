@@ -10,130 +10,197 @@
 
 """
 
-from __future__ import division, unicode_literals
+from __future__ import division
+# XXX No unicode_literals, cffi likes native strings
 
-import os
-from io import BytesIO
 from cgi import escape
 
-import cairo
+import cffi
+import cairocffi as cairo
 
 from .compat import xrange, basestring
-from .logger import LOGGER
 
 
-USING_INTROSPECTION = bool(os.environ.get('WEASYPRINT_USE_INTROSPECTION'))
-if not USING_INTROSPECTION:
-    try:
-        import pygtk
-        pygtk.require('2.0')
-        import pango as Pango
-    except ImportError:
-        USING_INTROSPECTION = True
+ffi = cffi.FFI()
+ffi.cdef('''
+    typedef enum {
+        NORMAL,
+        OBLIQUE,
+        ITALIC
+    } PangoStyle;
 
-if USING_INTROSPECTION:
-    from gi.repository import Pango, PangoCairo
-    from gi.repository.PangoCairo import create_layout as create_pango_layout
+    typedef enum {
+        THIN = 100,
+        ULTRALIGHT = 200,
+        LIGHT = 300,
+        BOOK = 380,
+        NORMAL = 400,
+        MEDIUM = 500,
+        SEMIBOLD = 600,
+        BOLD = 700,
+        ULTRABOLD = 800,
+        HEAVY = 900,
+        ULTRAHEAVY = 1000
+    } PangoWeight;
 
-    if Pango.version() < 12903:
-        LOGGER.warn('Using Pango-introspection %s. Versions before '
-                    '1.29.3 are known to be buggy.', Pango.version_string())
+    typedef enum {
+        NORMAL,
+        SMALL_CAPS
+    } PangoVariant;
 
-    PANGO_VARIANT = {
-        'normal': Pango.Variant.NORMAL,
-        'small-caps': Pango.Variant.SMALL_CAPS,
-    }
-    PANGO_STYLE = {
-        'normal': Pango.Style.NORMAL,
-        'italic': Pango.Style.ITALIC,
-        'oblique': Pango.Style.OBLIQUE,
-    }
-    PANGO_STRETCH = {
-        'ultra-condensed': Pango.Stretch.ULTRA_CONDENSED,
-        'extra-condensed': Pango.Stretch.EXTRA_CONDENSED,
-        'condensed': Pango.Stretch.CONDENSED,
-        'semi-condensed': Pango.Stretch.SEMI_CONDENSED,
-        'normal': Pango.Stretch.NORMAL,
-        'semi-expanded': Pango.Stretch.SEMI_EXPANDED,
-        'expanded': Pango.Stretch.EXPANDED,
-        'extra-expanded': Pango.Stretch.EXTRA_EXPANDED,
-        'ultra-expanded': Pango.Stretch.ULTRA_EXPANDED,
-    }
-    PANGO_WRAP_WORD = Pango.WrapMode.WORD
+    typedef enum {
+        ULTRA_CONDENSED,
+        EXTRA_CONDENSED,
+        CONDENSED,
+        SEMI_CONDENSED,
+        NORMAL,
+        SEMI_EXPANDED,
+        EXPANDED,
+        EXTRA_EXPANDED,
+        ULTRA_EXPANDED
+    } PangoStretch;
 
-    def set_text(layout, text):
-        layout.set_text(text, -1)
+      typedef enum {
+        WRAP_WORD,
+        WRAP_CHAR,
+        WRAP_WORD_CHAR
+    } PangoWrapMode;
 
-    def parse_markup(markup):
-        _, attributes_list, _, _ = Pango.parse_markup(markup, -1, '\x00')
-        return attributes_list
+    typedef unsigned int guint;
+    typedef int gint;
+    typedef gint gboolean;
+    typedef void* gpointer;
+    typedef ... cairo_t;
+    typedef ... PangoLayout;
+    typedef ... PangoFontDescription;
+    typedef ... PangoLayoutIter;
+    typedef ... PangoAttrList;
+    typedef ... PangoAttrClass;
+    typedef struct {
+        const PangoAttrClass *klass;
+        guint start_index;
+        guint end_index;
+    } PangoAttribute;
+    typedef struct {
+        PangoLayout *layout;
+        gint         start_index;
+        gint         length;
+        /* ... */
+    } PangoLayoutLine;
 
-    def get_size(line):
-        _ink_extents, logical_extents = line.get_extents()
-        return (units_to_double(logical_extents.width),
-                units_to_double(logical_extents.height))
-
-    def show_first_line(cairo_context, pango_layout, hinting):
-        """Draw the given ``line`` to the Cairo ``context``."""
-        if hinting:
-            PangoCairo.update_layout(cairo_context, pango_layout)
-        lines = pango_layout.get_lines_readonly()
-        PangoCairo.show_layout_line(cairo_context, lines[0])
-
-else:
-    import pango as Pango
-    import pangocairo
-
-    PANGO_VARIANT = {
-        'normal': Pango.VARIANT_NORMAL,
-        'small-caps': Pango.VARIANT_SMALL_CAPS,
-    }
-    PANGO_STYLE = {
-        'normal': Pango.STYLE_NORMAL,
-        'italic': Pango.STYLE_ITALIC,
-        'oblique': Pango.STYLE_OBLIQUE,
-    }
-    PANGO_STRETCH = {
-        'ultra-condensed': Pango.STRETCH_ULTRA_CONDENSED,
-        'extra-condensed': Pango.STRETCH_EXTRA_CONDENSED,
-        'condensed': Pango.STRETCH_CONDENSED,
-        'semi-condensed': Pango.STRETCH_SEMI_CONDENSED,
-        'normal': Pango.STRETCH_NORMAL,
-        'semi-expanded': Pango.STRETCH_SEMI_EXPANDED,
-        'expanded': Pango.STRETCH_EXPANDED,
-        'extra-expanded': Pango.STRETCH_EXTRA_EXPANDED,
-        'ultra-expanded': Pango.STRETCH_ULTRA_EXPANDED,
-    }
-    PANGO_WRAP_WORD = Pango.WRAP_WORD
-    set_text = Pango.Layout.set_text
-
-    def create_pango_layout(context):
-        return pangocairo.CairoContext(context).create_layout()
-
-    def parse_markup(markup):
-        attributes_list, _, _ = Pango.parse_markup(markup, '\x00')
-        return attributes_list
-
-    def get_size(line):
-        _ink_extents, logical_extents = line.get_extents()
-        _x, _y, width, height = logical_extents
-        return units_to_double(width), units_to_double(height)
-
-    def show_first_line(cairo_context, pango_layout, hinting):
-        """Draw the given ``line`` to the Cairo ``context``."""
-        context = pangocairo.CairoContext(cairo_context)
-        if hinting:
-            context.update_layout(pango_layout)
-        context.show_layout_line(pango_layout.get_line(0))
+    double              pango_units_to_double               (int i);
+    int                 pango_units_from_double             (double d);
+    void                g_object_unref                      (gpointer object);
 
 
-def units_from_double(value):
-    return int(value * Pango.SCALE)
+    PangoLayout * pango_cairo_create_layout (cairo_t *cr);
+    void pango_layout_set_wrap (PangoLayout *layout, PangoWrapMode wrap);
+    void pango_layout_set_width (PangoLayout *layout, int width);
+    void pango_layout_set_attributes(PangoLayout *layout, PangoAttrList *attrs);
+    void pango_layout_set_text (
+        PangoLayout *layout, const char *text, int length);
+    void pango_layout_set_font_description (
+        PangoLayout *layout, const PangoFontDescription *desc);
 
 
-def units_to_double(value):
-    # True division, with the __future__ import
-    return value / Pango.SCALE
+    PangoFontDescription * pango_font_description_new (void);
+
+    void pango_font_description_free (PangoFontDescription *desc);
+
+    void pango_font_description_set_family (
+        PangoFontDescription *desc, const char *family);
+
+    void pango_font_description_set_variant (
+        PangoFontDescription *desc, PangoVariant variant);
+
+    void pango_font_description_set_style (
+        PangoFontDescription *desc, PangoStyle style);
+
+    void pango_font_description_set_stretch (
+        PangoFontDescription *desc, PangoStretch stretch);
+
+    void pango_font_description_set_weight (
+        PangoFontDescription *desc, PangoWeight weight);
+
+    void pango_font_description_set_absolute_size (
+        PangoFontDescription *desc, double size);
+
+
+    PangoAttrList *     pango_attr_list_new              (void);
+    void                pango_attr_list_unref            (PangoAttrList *list);
+    void                pango_attr_list_insert           (
+        PangoAttrList *list, PangoAttribute *attr);
+
+    PangoAttribute *    pango_attr_letter_spacing_new    (int letter_spacing);
+    void                pango_attribute_destroy          (PangoAttribute *attr);
+
+
+    PangoLayoutIter * pango_layout_get_iter (PangoLayout *layout);
+    void pango_layout_iter_free (PangoLayoutIter *iter);
+
+    gboolean pango_layout_iter_next_line (PangoLayoutIter *iter);
+
+    PangoLayoutLine * pango_layout_iter_get_line_readonly (
+        PangoLayoutIter *iter);
+
+    int pango_layout_iter_get_baseline (PangoLayoutIter *iter);
+
+
+    typedef struct  {
+        int x;
+        int y;
+        int width;
+        int height;
+    } PangoRectangle;
+
+    void pango_layout_line_get_extents (
+        PangoLayoutLine *line,
+        PangoRectangle *ink_rect, PangoRectangle *logical_rect);
+
+    void pango_cairo_update_layout (cairo_t *cr, PangoLayout *layout);
+    void pango_cairo_show_layout_line (cairo_t *cr, PangoLayoutLine *line);
+
+''')
+gobject = ffi.dlopen('gobject-2.0')
+pango = ffi.dlopen('pango-1.0')
+pangocairo = ffi.dlopen('pangocairo-1.0')
+
+units_to_double = pango.pango_units_to_double
+units_from_double = pango.pango_units_from_double
+
+
+def to_enum(string):
+    return str(string.replace('-', '_').upper())
+
+
+def unicode_to_char_p(string):
+    bytestring = string.encode('utf8').replace(b'\x00', b'')
+    return ffi.new('char[]', bytestring), bytestring
+
+
+def get_size(line):
+    logical_extents = ffi.new('PangoRectangle *')
+    pango.pango_layout_line_get_extents(line, ffi.NULL, logical_extents)
+    return (units_to_double(logical_extents.width),
+            units_to_double(logical_extents.height))
+
+
+class Layout(object):
+    """Object holding PangoLayout-related cdata pointers."""
+    def iter_lines(self):
+        layout_iter = ffi.gc(
+            pango.pango_layout_get_iter(self.layout),
+            pango.pango_layout_iter_free)
+        while 1:
+            yield pango.pango_layout_iter_get_line_readonly(layout_iter)
+            if not pango.pango_layout_iter_next_line(layout_iter):
+                return
+
+    def set_text(self, text):
+        text, bytestring = unicode_to_char_p(text)
+        self.text = text
+        self.text_bytes = bytestring
+        pango.pango_layout_set_text(self.layout, text, -1)
 
 
 def create_layout(text, style, hinting, max_width):
@@ -147,45 +214,60 @@ def create_layout(text, style, hinting, max_width):
         or ``None`` for unlimited width.
 
     """
-    if hinting:
-        dummy_context = cairo.Context(cairo.ImageSurface(
-            cairo.FORMAT_ARGB32, 1, 1))
-    else:
-        # None as a the target for PDFSurface is new in pycairo 1.8.8.
-        # BytesIO() helps with compat with earlier versions:
-        dummy_file = BytesIO()
-        dummy_context = cairo.Context(cairo.PDFSurface(dummy_file, 1, 1))
-    layout = create_pango_layout(dummy_context)
-    font = Pango.FontDescription()
+    layout_obj = Layout()
+    dummy_context = layout_obj.dummy_context = (
+        cairo.Context(cairo.ImageSurface('ARGB32', 1, 1))
+        if hinting else
+        cairo.Context(cairo.PDFSurface(None, 1, 1)))
+    layout = layout_obj.layout = ffi.gc(
+        pangocairo.pango_cairo_create_layout(ffi.cast(
+            'cairo_t *', dummy_context._pointer)),
+        gobject.g_object_unref)
+    font = layout_obj.font = ffi.gc(
+        pango.pango_font_description_new(),
+        pango.pango_font_description_free)
     assert not isinstance(style.font_family, basestring), (
         'font_family should be a list')
-    font.set_family(','.join(style.font_family))
-    font.set_variant(PANGO_VARIANT[style.font_variant])
-    font.set_style(PANGO_STYLE[style.font_style])
-    font.set_stretch(PANGO_STRETCH[style.font_stretch])
-    font.set_absolute_size(units_from_double(style.font_size))
-    font.set_weight(style.font_weight)
-    layout.set_font_description(font)
-    layout.set_wrap(PANGO_WRAP_WORD)
-    set_text(layout, text)
+    font_family = layout_obj.font_family = unicode_to_char_p(
+        ','.join(style.font_family))[0]
+    pango.pango_font_description_set_family(font, font_family)
+    pango.pango_font_description_set_variant(font, to_enum(style.font_variant))
+    pango.pango_font_description_set_style(font, to_enum(style.font_style))
+    pango.pango_font_description_set_stretch(font, to_enum(style.font_stretch))
+    pango.pango_font_description_set_weight(font, style.font_weight)
+    pango.pango_font_description_set_absolute_size(
+        font, units_from_double(style.font_size))
+    pango.pango_layout_set_font_description(layout, font)
+    pango.pango_layout_set_wrap(layout, 'WRAP_WORD')
+    layout_obj.set_text(text)
     # Make sure that max_width * Pango.SCALE == max_width * 1024 fits in a
     # signed integer. Treat bigger values same as None: unconstrained width.
     if max_width is not None and max_width < 2 ** 21:
-        layout.set_width(units_from_double(max_width))
+        pango.pango_layout_set_width(layout, units_from_double(max_width))
     word_spacing = style.word_spacing
     letter_spacing = style.letter_spacing
     if letter_spacing == 'normal':
         letter_spacing = 0
     if text and (word_spacing != 0 or letter_spacing != 0):
-        word_spacing = units_from_double(word_spacing)
         letter_spacing = units_from_double(letter_spacing)
-        markup = escape(text).replace(
-            ' ', '<span letter_spacing="%i"> </span>' % (
-                word_spacing + letter_spacing,))
-        markup = '<span letter_spacing="%i">%s</span>' % (
-            letter_spacing, markup)
-        layout.set_attributes(parse_markup(markup))
-    return layout
+        space_spacing = units_from_double(word_spacing) + letter_spacing
+        attr_list = pango.pango_attr_list_new()
+
+        def add_attr(start, end, spacing):
+            attr = pango.pango_attr_letter_spacing_new(spacing)
+            attr.start_index = start
+            attr.end_index = end
+            pango.pango_attr_list_insert(attr_list, attr)
+
+        text_bytes = layout_obj.text_bytes
+        add_attr(0, len(text_bytes) + 1, letter_spacing)
+        position = text_bytes.find(b' ')
+        while position != -1:
+            add_attr(position, position + 1, space_spacing)
+            position = text_bytes.find(b' ', position + 1)
+        pango.pango_layout_set_attributes(layout, attr_list)
+        pango.pango_attr_list_unref(attr_list)
+    return layout_obj
 
 
 def split_first_line(text, style, hinting, max_width):
@@ -212,43 +294,55 @@ def split_first_line(text, style, hinting, max_width):
             # Try to use a small amount of text instead of the whole text
             layout = create_layout(
                 text[:expected_length], style, hinting, max_width)
-            if layout.get_line_count() <= 1:
+            lines = layout.iter_lines()
+            first_line = next(lines, None)
+            second_line = next(lines, None)
+            if second_line is None:
                 # The small amount of text fits in one line, give up and use
                 # the whole text
                 layout = None
-    layout = layout or create_layout(text, style, hinting, max_width)
+    if layout is None:
+        layout = create_layout(text, style, hinting, max_width)
+        lines = layout.iter_lines()
+        first_line = next(lines, None)
+        second_line = next(lines, None)
 
-    if layout.get_line_count() > 1:
-        resume_at = layout.get_line(1).start_index
+    if second_line is not None:
+        resume_at = second_line.start_index
     else:
         resume_at = None
 
     # Step #2: Build the final layout
-    if max_width and layout.get_line_count() > 1:
+    if max_width and second_line is not None:
         # The first line may have been cut too early by pango
-        second_line_index = layout.get_line(1).start_index
+        second_line_index = second_line.start_index
         first_part = text.encode('utf-8')[:second_line_index].decode('utf-8')
         second_part = text.encode('utf-8')[second_line_index:].decode('utf-8')
         next_word = second_part.split(' ', 1)[0]
         if next_word:
             new_first_line = first_part + next_word
-            set_text(layout, new_first_line)
-            if layout.get_line_count() <= 1:
+            layout.set_text(new_first_line)
+            lines = layout.iter_lines()
+            first_line = next(lines, None)
+            second_line = next(lines, None)
+            if second_line is None:  # XXX never reached?
                 resume_at = len(new_first_line.encode('utf-8')) + 1
 
     # Step #3: We have the right layout, find metrics
-    first_line = layout.get_line(0)
     length = first_line.length
 
     first_line_text = text.encode('utf-8')[:length].decode('utf-8')
     if first_line_text.endswith(' ') and resume_at:
         # Remove trailing spaces
-        set_text(layout, first_line_text.rstrip(' '))
-        first_line = layout.get_line(0)
-        length = first_line.length
+        layout.set_text(first_line_text.rstrip(' '))
+        first_line = next(layout.iter_lines(), None)
+        length = first_line.length if first_line is not None else 0
 
     width, height = get_size(first_line)
-    baseline = units_to_double(layout.get_iter().get_baseline())
+
+    baseline = units_to_double(pango.pango_layout_iter_get_baseline(ffi.gc(
+            pango.pango_layout_get_iter(layout.layout),
+            pango.pango_layout_iter_free)))
 
     # Step #4: Return the layout and the metrics
     return layout, length, resume_at, width, height, baseline
@@ -260,6 +354,15 @@ def line_widths(box, enable_hinting, width, skip=None):
     # there a better solution to avoid that?
     layout = create_layout(
         box.text[(skip or 0):].lstrip(' '), box.style, enable_hinting, width)
-    for i in xrange(layout.get_line_count()):
-        width, _height = get_size(layout.get_line(i))
+    for line in layout.iter_lines():
+        width, _height = get_size(line)
         yield width
+
+
+def show_first_line(cairo_context, pango_layout, hinting):
+    """Draw the given ``line`` to the Cairo ``context``."""
+    cairo_context = ffi.cast('cairo_t *', cairo_context._pointer)
+    if hinting:
+        pangocairo.pango_cairo_update_layout(cairo_context, pango_layout.layout)
+    pangocairo.pango_cairo_show_layout_line(
+        cairo_context, next(pango_layout.iter_lines()))
