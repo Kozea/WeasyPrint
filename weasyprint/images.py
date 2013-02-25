@@ -227,6 +227,11 @@ def cairosvg_loader(file_obj, string, uri):
     """
     from cairosvg.surface import SVGSurface
     from cairosvg.parser import Tree
+    import cairosvg.surface
+    import cairocffi
+    assert cairosvg.surface.cairo is cairocffi, (
+        'CairoSVG is using pycairo instead of cairocffi. '
+        'Make sure it is not imported before WeasyPrint.')
 
     class ScaledSVGSurface(SVGSurface):
         """
