@@ -4,53 +4,54 @@ Installing
 WeasyPrint |version| depends on:
 
 * CPython_ 2.6, 2.7 or ≥ 3.1
-* Either:
-
-  - PyGTK_ and its dependencies.
-    This is available in more distributions but only works on Python 2.x
-    and requires the whole GTK+ stack.
-  - Pango_ ≥ 1.29.3, pycairo_\ [#]_ and GdkPixbuf_ ≥ 2.25\ [#]_
-    with introspection data for each, as well as PyGObject_ 3.x.
-    This works on all supported Python version and is lighter on dependencies,
-    but requires fairly recent versions.
-
+* cairo_ [#]_
+* Pango_
+* CFFI_ ≥ 0.5
 * lxml_
+* cairocffi_
 * tinycss_ = 0.3
 * cssselect_ ≥ 0.6
 * CairoSVG_ ≥ 0.4.1
+* Optional: GDK-PixBuf_ [#]_
 
 .. _CPython: http://www.python.org/
+.. _cairo: http://cairographics.org/
 .. _Pango: http://www.pango.org/
-.. _pycairo: http://cairographics.org/pycairo/
-.. _GdkPixbuf: https://live.gnome.org/GdkPixbuf
-.. _PyGObject: https://live.gnome.org/PyGObject
-.. _PyGTK: http://www.pygtk.org/
+.. _CFFI: https://cffi.readthedocs.org/
+.. _cairocffi: http://packages.python.org/cairocffi/
+.. _GTK: http://www.gtk.org/
 .. _lxml: http://lxml.de/
 .. _tinycss: http://packages.python.org/tinycss/
 .. _cssselect: http://packages.python.org/cssselect/
 .. _CairoSVG: http://cairosvg.org/
+.. _GDK-PixBuf: https://live.gnome.org/GdkPixbuf
 
 
-**First**, install C dependencies with your platform’s packages
-(:ref:`see below  <platforms>`). Then install WeasyPrint with pip_
-in a virtualenv_. This will automatically install the remaining dependencies.
-With virtualenv you’ll need ``--system-site-packages``\ [#]_ since pycairo
-and some others can not be installed with pip.
+Python, cairo, Pango and GDK-PixBuf need to be installed separately.
+See :ref:`platform-specific instructions <platforms>` below.
+
+CFFI and lxml can be installed by pip automatically
+if your system has a C compiler and all the relevant development files,
+but using a system package might be easier.
+
+Install WeasyPrint with pip_.
+This will automatically install most of dependencies.
+You probably need either virtualenv_ [#]_ (recommended) or using ``sudo``.
 
 .. _virtualenv: http://www.virtualenv.org/
 .. _pip: http://pip-installer.org/
 
 .. code-block:: sh
 
-    virtualenv --system-site-packages ./venv
+    virtualenv ./venv
     . ./venv/bin/activate
     pip install WeasyPrint
-    weasyprint --help
 
 Now let’s try it:
 
 .. code-block:: sh
 
+    weasyprint --help
     weasyprint http://weasyprint.org ./weasyprint-website.pdf
 
 You should see warnings about unsupported CSS 3 stuff; this is expected.
@@ -68,13 +69,16 @@ WeasyPrint! Otherwise, please copy the full error message and
 
 .. [#] cairo ≥ 1.12 is best but older versions should work too.
        The test suite passes on cairo 1.8 and 1.10 with some tests marked as
-       “expected failures” due to bugs or behavior changes in cairo.
+       “expected failures” due to behavior changes or bugs in cairo.
 
-.. [#] GdkPixbuf is actually optional. Without it, PNG is the only
-       supported raster image format: JPEG, GIF and others are not available.
+.. [#] Without it, PNG and SVG are the only supported image format:
+       JPEG, GIF and others are not available.
+       Versions before 0.22 were part of GTK_.
 
-.. [#] … or some other workaround. Symbolic links to the system packages
-       in the virtualenv’s ``site-packages`` directory should work.
+.. [#] If you installed CFFI or lxml with a system package,
+       you need to pass the `--system-site-packages` to virtualenv
+       for pip and WeasyPrint to find them.
+       Otherwise, pip will try to install them inside the isolated virtualenv.
 
 
 .. _platforms:
@@ -82,7 +86,7 @@ WeasyPrint! Otherwise, please copy the full error message and
 By platform
 -----------
 
-PyGTK (or Pango, GdkPixbuf, pycairo and PyGObject) can not be installed
+Pango, GdkPixbuf, and cairo can not be installed
 with pip and need to be installed from your platform’s packages.
 lxml can\ [#]_, but pre-compiled packages are often easier.
 
@@ -95,35 +99,27 @@ lxml can\ [#]_, but pre-compiled packages are often easier.
 Debian / Ubuntu
 ~~~~~~~~~~~~~~~
 
-With PyGTK (Python 2 only):
+Debian 7.0 Wheezy or newer, Ubuntu 11.10 Oneiric or newer:
 
 .. code-block:: sh
 
-    sudo apt-get install python-gtk2 python-lxml
+    sudo apt-get install python-pip python-lxml libcairo2 libpango1.0-0 libgdk-pixbuf2.0-0
 
-… or with PyGObject (Debian Wheezy, Ubuntu 12.04 Precise or more recent)
-on Python 2:
 
-.. code-block:: sh
-
-    sudo apt-get install gir1.2-pango-1.0 gir1.2-gdkpixbuf-2.0 python-gi-cairo python-lxml
-
-On Python 3:
+Debian 6.0 Squeeze, Ubuntu 10.04 Lucid:
+GDK-PixBuf is part of GTK, which also depends on cairo and Pango.
 
 .. code-block:: sh
 
-    sudo apt-get install gir1.2-pango-1.0 gir1.2-gdkpixbuf-2.0 python3-gi-cairo python3-lxml
+    sudo apt-get install python-pip python-lxml libgtk2.0-0
 
 
 Archlinux
 ~~~~~~~~~
 
-WeasyPrint itself is packaged in the AUR: `python-weasyprint`_ (for Python 3)
-or `python2-weasyprint`_ (for Python 2, installs the command-line script
-as ``weasyprint2``).
+.. code-block:: sh
 
-.. _python-weasyprint: https://aur.archlinux.org/packages.php?ID=57205
-.. _python2-weasyprint: https://aur.archlinux.org/packages.php?ID=57201
+    sudo pacman -S python-pip python-lxml cairo pango gdk-pixbuf2
 
 
 Gentoo
@@ -136,40 +132,31 @@ WeasyPrint itself is packaged in the `Kozea overlay
 Mac OS X
 ~~~~~~~~
 
-With Macports (adjust the ``py27`` part for other Python versions),
-with PyGTK:
+With Macports
 
 .. code-block:: sh
 
-    sudo port install py27-gtk py27-lxml
-
-… or with PyGObject:
-
-.. code-block:: sh
-
-    sudo port install pango gdk-pixbuf2 py27-gobject3 py27-cairo py27-lxml
+    sudo port install py27-pip py27-lxml cairo pango gdk-pixbuf2
 
 With Homebrew:
 
 .. code-block:: sh
 
-    brew install pygtk libxml2 libxslt
+    brew install python cairo pango gdk-pixbuf libxml2 libxslt
 
-As of this writing Homebrew has no package
-`for PyGObject 3 <https://github.com/mxcl/homebrew/issues/12901>`_ or
+Note that Homebrew has no package
 `for lxml <https://github.com/mxcl/homebrew/wiki/Acceptable-Formula>`_.
-Use PyGTK and install lxml’s own dependencies. lxml itself will be installed
-automatically when you run ``pip install WeasyPrint``.
+So we’re installing its own dependencies.
+lxml itself will be installed automatically
+when you run ``pip install WeasyPrint``.
 
 
 Windows
 ~~~~~~~
 
-Assuming you already have `Python <http://www.python.org/download/>`_
-2.6 or 2.7, the easiest is to use Christoph Gohlke’s
-`lxml unofficial binaries <http://www.lfd.uci.edu/~gohlke/pythonlibs/#lxml>`_
-and the `PyGTK all-in-one installer <http://www.pygtk.org/downloads.html>`_.
-
-Be careful and see the `README
-<http://ftp.gnome.org/pub/GNOME/binaries/win32/pygtk/2.24/pygtk-all-in-one.README>`_
-if you had anything GTK-related already installed.
+* Get CPython 2.7 `from python.org <http://www.python.org/download/>`_,
+* `Christoph Gohlke’s unofficial binaries
+  <http://www.lfd.uci.edu/~gohlke/pythonlibs/#lxml>`_ for CFFI and lxml,
+* and `Alexander Shaduri’s GTK installer
+  <http://gtk-win.sourceforge.net/home/index.php/Main/Downloads>`_.
+  Make sure the *Set up PATH environment variable* checkbox is checked.
