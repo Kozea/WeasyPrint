@@ -95,17 +95,21 @@ ffi.cdef('''
 
 ''')
 
-gobject = ffi.dlopen('gobject-2.0')
-gdk_pixbuf = ffi.dlopen('gdk_pixbuf-2.0')
 try:
-    gdk = ffi.dlopen('gdk-3')
+    gobject = ffi.dlopen('gobject-2.0')
+    gdk_pixbuf = ffi.dlopen('gdk_pixbuf-2.0')
 except OSError:
+    gdk_pixbuf = gobject = gdk = None
+else:
     try:
-        gdk = ffi.dlopen('gdk-x11-2.0')
+        gdk = ffi.dlopen('gdk-3')
     except OSError:
-        gdk = None
+        try:
+            gdk = ffi.dlopen('gdk-x11-2.0')
+        except OSError:
+            gdk = None
 
-gobject.g_type_init()
+    gobject.g_type_init()
 
 
 # TODO: currently CairoSVG only support images with an explicit
@@ -167,6 +171,10 @@ def gdkpixbuf_loader(file_obj, string):
     and Gdk.
 
     """
+    if gdk_pixbuf is None:
+        raise OSError(
+            'Could not load GDK-Pixbuf. '
+            'PNG and SVG are the only image formats available.')
     pixbuf, jpeg_data = get_pixbuf(file_obj, string)
     surface = (
         pixbuf_to_cairo_gdk(pixbuf) if gdk is not None
