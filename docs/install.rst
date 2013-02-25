@@ -17,7 +17,7 @@ WeasyPrint |version| depends on:
 * lxml_
 * tinycss_ = 0.3
 * cssselect_ ≥ 0.6
-* CairoSVG_ ≥ 0.4.1\ [#]_
+* CairoSVG_ ≥ 0.4.1
 
 .. _CPython: http://www.python.org/
 .. _Pango: http://www.pango.org/
@@ -72,8 +72,6 @@ WeasyPrint! Otherwise, please copy the full error message and
 
 .. [#] GdkPixbuf is actually optional. Without it, PNG is the only
        supported raster image format: JPEG, GIF and others are not available.
-
-.. [#] CairoSVG is actually optional. Without it, SVG images are not supported.
 
 .. [#] … or some other workaround. Symbolic links to the system packages
        in the virtualenv’s ``site-packages`` directory should work.

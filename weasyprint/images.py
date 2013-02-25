@@ -19,6 +19,14 @@ from functools import partial
 
 import cffi
 import cairocffi as cairo
+cairo.install_as_pycairo()  # for CairoSVG
+
+import cairosvg.parser
+import cairosvg.surface
+assert cairosvg.surface.cairo is cairo, (
+    'CairoSVG is using pycairo instead of cairocffi. '
+    'Make sure it is not imported before WeasyPrint.')
+
 
 from .logger import LOGGER
 from .compat import xrange
@@ -98,7 +106,6 @@ except OSError:
         gdk = None
 
 gobject.g_type_init()
-cairo.install_as_pycairo()  # for CairoSVG
 
 
 # TODO: currently CairoSVG only support images with an explicit
@@ -220,29 +227,22 @@ def cairo_png_loader(file_obj, string):
     return get_pattern, surface.get_width(), surface.get_height()
 
 
+class ScaledSVGSurface(cairosvg.surface.SVGSurface):
+    """
+    Have the cairo Surface object have intrinsic dimension
+    in pixels instead of points.
+    """
+    @property
+    def device_units_per_user_units(self):
+        scale = super(ScaledSVGSurface, self).device_units_per_user_units
+        return scale / 0.75
+
+
 def cairosvg_loader(file_obj, string, uri):
     """Return a cairo Surface from a SVG byte stream.
 
     This loader uses CairoSVG: http://cairosvg.org/
     """
-    from cairosvg.surface import SVGSurface
-    from cairosvg.parser import Tree
-    import cairosvg.surface
-    import cairocffi
-    assert cairosvg.surface.cairo is cairocffi, (
-        'CairoSVG is using pycairo instead of cairocffi. '
-        'Make sure it is not imported before WeasyPrint.')
-
-    class ScaledSVGSurface(SVGSurface):
-        """
-        Have the cairo Surface object have intrinsic dimension
-        in pixels instead of points.
-        """
-        @property
-        def device_units_per_user_units(self):
-            scale = super(ScaledSVGSurface, self).device_units_per_user_units
-            return scale / 0.75
-
     if uri.startswith('data:'):
         # Don’t pass data URIs to CairoSVG.
         # They are useless for relative URIs anyway.
@@ -251,7 +251,7 @@ def cairosvg_loader(file_obj, string, uri):
         string = file_obj.read()
 
     def get_surface():
-        tree = Tree(bytestring=string, url=uri)
+        tree = cairosvg.parser.Tree(bytestring=string, url=uri)
         # Draw to a cairo surface but do not write to a file
         surface = ScaledSVGSurface(tree, output=None, dpi=96)
         return surface.cairo, surface.width, surface.height
@@ -304,8 +304,6 @@ def get_image_from_uri(cache, url_fetcher, uri, type_=None):
                     pass
     except Exception as exc:
         LOGGER.warn('Error for image at %s : %r', uri, exc)
-#        import traceback
-#        traceback.print_exc()
         image = None
     cache[uri] = image
     return image
