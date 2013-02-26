@@ -10,7 +10,8 @@
 
 """
 
-from __future__ import division, unicode_literals
+from __future__ import division
+# XXX No unicode_literals, cffi likes native strings
 
 from cgi import escape
 
