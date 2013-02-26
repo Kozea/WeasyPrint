@@ -25,7 +25,6 @@ import pytest
 
 from ..compat import xrange, izip, ints_from_bytes
 from ..urls import ensure_url
-from ..images import get_pixbuf
 from .. import HTML
 from .testing_utils import (
     resource_filename, TestHTML, FONTS, assert_no_logs, capture_logs)
@@ -45,7 +44,7 @@ B = as_pixel(b'\x00\x00\xff\xff')  # blue
 
 
 def save_pixels_to_png(pixels, width, height, filename):
-    """Save raw pixels to a PNG file through pixbuf and introspection."""
+    """Save raw pixels to a PNG file."""
     cairo.ImageSurface(
         str('ARGB32'), width, height, data=bytearray(pixels), stride=width * 4
     ).write_to_png(filename)

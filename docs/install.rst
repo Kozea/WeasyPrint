@@ -8,7 +8,7 @@ WeasyPrint |version| depends on:
 * Pango_
 * CFFI_ ≥ 0.5
 * lxml_
-* cairocffi_
+* cairocffi_ ≥ 0.3
 * tinycss_ = 0.3
 * cssselect_ ≥ 0.6
 * CairoSVG_ ≥ 0.4.1

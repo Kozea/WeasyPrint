@@ -29,7 +29,7 @@ REQUIREMENTS = [
         'cssselect>=0.6',
         'CairoSVG>=0.4.1',
         'cffi>=0.5',
-        'cairocffi',
+        'cairocffi>=0.3',
         # C dependencies: Gdk-Pixbuf (optional), Pango, cairo.
 ]
 if sys.version_info < (2, 7) or (3,) <= sys.version_info < (3, 2):
