@@ -328,13 +328,20 @@ def split_first_line(text, style, hinting, max_width, line_width):
 
     # Step #2: Build the final layout
     hyphenated = False
-    if max_width and second_line is not None:
-        # The first line may have been cut too early by pango
-        second_line_index = second_line.start_index
-        first_part = text.encode('utf-8')[:second_line_index].decode('utf-8')
-        second_part = text.encode('utf-8')[second_line_index:].decode('utf-8')
+    first_line_width, _height = get_size(first_line)
+    if max_width and (second_line is not None or first_line_width > max_width):
+        if first_line_width <= max_width:
+            # The first line may have been cut too early by pango
+            second_line_index = second_line.start_index
+            first_part = text.encode('u8')[:second_line_index].decode('u8')
+            second_part = text.encode('u8')[second_line_index:].decode('u8')
+        else:
+            first_part = ''
+            second_part = text
         next_word = second_part.split(' ', 1)[0]
         if next_word:
+            # next_word might fit without a space afterwards.
+            # Pango previously counted that space’s advance width.
             new_first_line = first_part + next_word
             layout.set_text(new_first_line)
             lines = layout.iter_lines()
@@ -351,21 +358,29 @@ def split_first_line(text, style, hinting, max_width, line_width):
             else:
                 ratio = 1
 
-            if second_line is None:
+            if second_line is None and ratio <= 1:
                 # The next word fits in the first line, keep the layout
                 resume_at = len(new_first_line.encode('utf-8')) + 1
-            elif len(next_word) < max_long_line and ratio < style.hyphens:
+            elif len(next_word) < max_long_line and (
+                    ratio < style.hyphens or ratio > 1):
                 # The next word does not fit, try hyphenation
                 for first_word_part, _ in hyphenize(next_word, style):
                     new_first_line = first_part + first_word_part + '-'
-                    testing_layout = create_layout(
+                    temp_layout = create_layout(
                         new_first_line, style, hinting, max_width)
-                    if second_line is None:
+                    temp_lines = temp_layout.iter_lines()
+                    temp_first_line = next(temp_lines, None)
+                    temp_second_line = next(temp_lines, None)
+                    temp_first_line_width, _height = get_size(temp_first_line)
+                    if (temp_second_line is None and ratio <= 1) or ratio > 1:
                         hyphenated = True
                         # TODO: find why there's no need to .encode
                         resume_at = len(new_first_line) - 1
-                        layout = testing_layout
-                        break
+                        layout = temp_layout
+                        first_line = temp_first_line
+                        second_line = temp_second_line
+                        if temp_first_line_width <= max_width:
+                            break
 
     # Step #3: We have the right layout, find metrics
     length = first_line.length
@@ -393,7 +408,7 @@ def hyphenize(word, style):
     if style.lang in pyphen.LANGUAGES:
         return pyphen.Pyphen(lang=style.lang).iterate(word)
     else:
-        return ((word, ''),)
+        return ()
 
 
 def line_widths(box, enable_hinting, width, skip=None):
