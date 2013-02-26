@@ -14,132 +14,55 @@ from __future__ import division, unicode_literals
 
 from io import BytesIO
 
-import cairo
+import cairocffi
+cairocffi.install_as_pycairo()  # for CairoSVG
+
+import cairosvg.parser
+import cairosvg.surface
+assert cairosvg.surface.cairo is cairocffi, (
+    'CairoSVG is using pycairo instead of cairocffi. '
+    'Make sure it is not imported before WeasyPrint.')
+
+try:
+    from cairocffi import pixbuf
+except OSError:
+    pixbuf = None
 
 from .logger import LOGGER
-from .text import USING_INTROSPECTION
-
-# TODO: currently CairoSVG only support images with an explicit
-# width and height. When it supports images with only an intrinsic ratio
-# this API will need to change.
 
 
-# Do not try to import PyGObject 3 if we already have PyGTK
-# that tends to segfault.
-if not USING_INTROSPECTION:
-    # Use PyGTK
-    try:
-        from gtk import gdk
-        from gtk.gdk import PixbufLoader
-    # Old version of PyGTK raise RuntimeError when there is not X server.
-    except (ImportError, RuntimeError) as exception:
-        def gdkpixbuf_loader(file_obj, string, pixbuf_error=exception):
-            raise pixbuf_error
-    else:
-        def gdkpixbuf_loader(file_obj, string):
-            """Load raster images with gdk-pixbuf through PyGTK."""
-            pixbuf, jpeg_data = get_pixbuf(file_obj, string)
-            dummy_context = cairo.Context(cairo.ImageSurface(
-                cairo.FORMAT_ARGB32, 1, 1))
-            gdk.CairoContext(dummy_context).set_source_pixbuf(pixbuf, 0, 0)
-            # XXX SurfacePattern.get_surface is buggy in py2cairo < 1.10.0
-            # so we’re re-using the same pattern here. This Pattern object
-            # has shared state through set_filter and set_extend.
-            # It is therefore not thread-safe and state must be reset
-            # before any use.
-            get_pattern = dummy_context.get_source
-            if cairo.version_info >= (1, 10, 0):
-                add_jpeg_data(get_pattern().get_surface(), jpeg_data)
-            return get_pattern, pixbuf.get_width(), pixbuf.get_height()
-
-        def pixbuf_format(loader):
-            format_ = loader.get_format()
-            if format_:
-                return format_['name']
-else:
-    # Use PyGObject introspection
-    try:
-        from gi.repository import GdkPixbuf
-        from gi.repository.GdkPixbuf import PixbufLoader
-    except ImportError as exception:
-        def gdkpixbuf_loader(file_obj, string, pixbuf_error=exception):
-            raise pixbuf_error
-    else:
-        def pixbuf_format(loader):
-            format_ = loader.get_format()
-            if format_:
-                return format_.get_name()
-
-        PIXBUF_VERSION = (GdkPixbuf.PIXBUF_MAJOR,
-                          GdkPixbuf.PIXBUF_MINOR,
-                          GdkPixbuf.PIXBUF_MICRO)
-        if PIXBUF_VERSION < (2, 25, 0):
-            LOGGER.warn('Using gdk-pixbuf %s.%s.%s with introspection. '
-                        'Versions before 2.25.0 are known to be buggy. '
-                        'Images formats other than PNG may not be supported.',
-                        *PIXBUF_VERSION)
-        try:
-            # Unfornately cairo_set_source_pixbuf is not part of Pixbuf itself
-            from gi.repository import Gdk
-
-            def gdkpixbuf_loader(file_obj, string):
-                """Load raster images with gdk-pixbuf through introspection
-                and Gdk.
-
-                """
-                pixbuf, jpeg_data = get_pixbuf(file_obj, string)
-                dummy_context = cairo.Context(cairo.ImageSurface(
-                    cairo.FORMAT_ARGB32, 1, 1))
-                Gdk.cairo_set_source_pixbuf(dummy_context, pixbuf, 0, 0)
-                # XXX SurfacePattern.get_surface is buggy in py2cairo < 1.10.0
-                # so we’re re-using the same pattern here. This Pattern object
-                # has shared state through set_filter and set_extend.
-                # It is therefore not thread-safe and state must be reset
-                # before any use.
-                get_pattern = dummy_context.get_source
-                if cairo.version_info >= (1, 10, 0):
-                    add_jpeg_data(get_pattern().get_surface(), jpeg_data)
-                return get_pattern, pixbuf.get_width(), pixbuf.get_height()
-
-        except ImportError:
-            # Gdk is not available, go through PNG.
-            def gdkpixbuf_loader(file_obj, string):
-                """Load raster images with gdk-pixbuf through introspection,
-                without Gdk and going through PNG.
-
-                """
-                pixbuf, jpeg_data = get_pixbuf(file_obj, string)
-                _, png = pixbuf.save_to_bufferv('png', ['compression'], ['0'])
-                return cairo_png_loader(None, png, jpeg_data)
-
-
-def get_pixbuf(file_obj=None, string=None, chunck_size=16 * 1024):
-    """Create a Pixbuf object."""
-    if file_obj:
+def gdkpixbuf_loader(file_obj, string):
+    """Load raster images with GDK-PixBuf."""
+    if pixbuf is None:
+        raise OSError(
+            'Could not load GDK-Pixbuf. '
+            'PNG and SVG are the only image formats available.')
+    if string is None:
         string = file_obj.read()
-    if not string:
-        raise ValueError('Could not load image: empty content')
-    loader = PixbufLoader()
-    try:
-        loader.write(string)
-    finally:
-        # Pixbuf is really unhappy if we don’t do this:
-        loader.close()
-    jpeg_data = string if pixbuf_format(loader) == 'jpeg' else None
-    return loader.get_pixbuf(), jpeg_data
-
-
-def cairo_png_loader(file_obj, string, jpeg_data=None):
-    """Return a cairo Surface from a PNG byte stream."""
-    surface = cairo.ImageSurface.create_from_png(file_obj or BytesIO(string))
-    add_jpeg_data(surface, jpeg_data)
-    get_pattern = lambda: cairo.SurfacePattern(surface)
+    surface, format_name = pixbuf.decode_to_image_surface(string)
+    if format_name == 'jpeg':
+        surface.set_mime_data('image/jpeg', string)
+    get_pattern = lambda: cairocffi.SurfacePattern(surface)
     return get_pattern, surface.get_width(), surface.get_height()
 
 
-def add_jpeg_data(surface, jpeg_data):
-    if jpeg_data and hasattr(surface, 'set_mime_data'):
-        surface.set_mime_data('image/jpeg', jpeg_data)
+def cairo_png_loader(file_obj, string):
+    """Return a cairo Surface from a PNG byte stream."""
+    surface = cairocffi.ImageSurface.create_from_png(
+        file_obj or BytesIO(string))
+    get_pattern = lambda: cairocffi.SurfacePattern(surface)
+    return get_pattern, surface.get_width(), surface.get_height()
+
+
+class ScaledSVGSurface(cairosvg.surface.SVGSurface):
+    """
+    Have the cairo Surface object have intrinsic dimension
+    in pixels instead of points.
+    """
+    @property
+    def device_units_per_user_units(self):
+        scale = super(ScaledSVGSurface, self).device_units_per_user_units
+        return scale / 0.75
 
 
 def cairosvg_loader(file_obj, string, uri):
@@ -147,19 +70,6 @@ def cairosvg_loader(file_obj, string, uri):
 
     This loader uses CairoSVG: http://cairosvg.org/
     """
-    from cairosvg.surface import SVGSurface
-    from cairosvg.parser import Tree
-
-    class ScaledSVGSurface(SVGSurface):
-        """
-        Have the cairo Surface object have intrinsic dimension
-        in pixels instead of points.
-        """
-        @property
-        def device_units_per_user_units(self):
-            scale = super(ScaledSVGSurface, self).device_units_per_user_units
-            return scale / 0.75
-
     if uri.startswith('data:'):
         # Don’t pass data URIs to CairoSVG.
         # They are useless for relative URIs anyway.
@@ -168,7 +78,7 @@ def cairosvg_loader(file_obj, string, uri):
         string = file_obj.read()
 
     def get_surface():
-        tree = Tree(bytestring=string, url=uri)
+        tree = cairosvg.parser.Tree(bytestring=string, url=uri)
         # Draw to a cairo surface but do not write to a file
         surface = ScaledSVGSurface(tree, output=None, dpi=96)
         return surface.cairo, surface.width, surface.height
@@ -178,7 +88,7 @@ def cairosvg_loader(file_obj, string, uri):
         # If a surface for a SVG image is still alive by the time we call
         # show_page(), cairo will rasterize the image instead writing vectors.
         surface, _, _ = get_surface()
-        return cairo.SurfacePattern(surface)
+        return cairocffi.SurfacePattern(surface)
 
     # Render once to get the size and trigger any exception.
     # If this does not raise, future calls to get_pattern() will hopefully
@@ -190,7 +100,7 @@ def cairosvg_loader(file_obj, string, uri):
 
 
 def get_image_from_uri(cache, url_fetcher, uri, type_=None):
-    """Get a :class:`cairo.Surface`` from an image URI."""
+    """Get a cairo Pattern from an image URI."""
     try:
         missing = object()
         image = cache.get(uri, missing)

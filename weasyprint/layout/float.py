@@ -158,9 +158,9 @@ def avoid_collisions(context, box, containing_block, outer=True):
         # Set the real maximum bounds according to sibling float elements
         if left_bounds or right_bounds:
             if left_bounds:
-                max_left_bound = max(left_bounds)
+                max_left_bound = max(max(left_bounds), max_left_bound)
             if right_bounds:
-                max_right_bound = min(right_bounds)
+                max_right_bound = min(min(right_bounds), max_right_bound)
             # Points 3, 7 and 8
             if box_width > max_right_bound - max_left_bound:
                 # The box does not fit here

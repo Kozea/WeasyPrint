@@ -16,7 +16,7 @@ import contextlib
 import math
 import operator
 
-import cairo
+import cairocffi as cairo
 
 from .formatting_structure import boxes
 from .layout.backgrounds import box_rectangle
@@ -326,7 +326,7 @@ def draw_border(context, box, enable_hinting):
         width = getattr(box, 'border_%s_width' % side)
         if width == 0:
             continue
-        color = box.style['border_%s_color' % side]
+        color = box.style.get_color('border_%s_color' % side)
         if color.alpha == 0:
             continue
         style = box.style['border_%s_style' % side]
@@ -463,7 +463,7 @@ def draw_border_segment(context, enable_hinting, style, width, color, side,
                      \         /
                       +-------+
                 """
-            length = ((x2 - x1)**2 + (y2 - y1)**2) ** 0.5
+            length = ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
             dash = 2 * width
             if style == 'dotted':
                 if context.user_to_device_distance(width, 0)[0] > 3:
@@ -485,13 +485,13 @@ def draw_border_segment(context, enable_hinting, style, width, color, side,
 
 def draw_outlines(context, box, enable_hinting):
     width = box.style.outline_width
-    color = box.style.outline_color
+    color = box.style.get_color('outline_color')
     style = box.style.outline_style
     if box.style.visibility != 'hidden' and width != 0 and color.alpha != 0:
         border_box = (box.border_box_x(), box.border_box_y(),
                       box.border_width(), box.border_height())
         outline_box = (border_box[0] - width, border_box[1] - width,
-                       border_box[2] + 2 * width,border_box[3] + 2 * width)
+                       border_box[2] + 2 * width, border_box[3] + 2 * width)
         for side, border_edge, padding_edge in zip(
             ['top', 'right', 'bottom', 'left'],
             get_rectangle_edges(*outline_box),

@@ -56,7 +56,7 @@ def layout_box_backgrounds(page, box, get_image_from_uri):
 
     image = (get_image_from_uri(style.background_image)
              if style.background_image != 'none' else None)
-    color = style.background_color
+    color = style.get_color('background_color')
     if image is None and color.alpha == 0:
         box.background = None
         return
@@ -89,7 +89,7 @@ def set_canvas_background(page):
     root_box = page.children[0]
     chosen_box = root_box
     if (root_box.element_tag.lower() == 'html' and
-            root_box.style.background_color.alpha == 0 and
+            root_box.style.get_color('background_color').alpha == 0 and
             root_box.style.background_image == 'none'):
         for child in root_box.children:
             if child.element_tag.lower() == 'body':

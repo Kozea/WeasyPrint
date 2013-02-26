@@ -11,17 +11,7 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys, os, re, types
-
-class Mock(types.ModuleType):
-    def __call__(self, *args, **kwargs):
-        return self
-    __getattr__ = __call__
-    __getitem__ = __call__
-# Mock some dependencies:
-for name in ['cairo', 'pygtk', 'gtk', 'pango', 'pangocairo',
-             'lxml', 'lxml.etree']:
-    sys.modules[name] = Mock(name)
+import sys, os, re
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the

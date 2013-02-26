@@ -35,7 +35,7 @@ import os
 import re
 import string
 
-import cairo
+import cairocffi as cairo
 
 from . import VERSION_STRING
 from .compat import xrange, iteritems, izip
@@ -304,10 +304,10 @@ def prepare_metadata(document, bookmark_root_id, scale):
 
     In particular, convert from WeasyPrint units (CSS pixels from
     the top-left corner) to PDF units (points from the bottom-left corner.)
-    
+
     :param scale:
         PDF points per CSS pixels.
-        Defaults to 0.75, but is affected by `zoom` in 
+        Defaults to 0.75, but is affected by `zoom` in
         :meth:`weasyprint.document.Document.write_pdf`.
 
     """

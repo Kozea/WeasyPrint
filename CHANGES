@@ -8,9 +8,11 @@ Not released yet.
 
 * For JPEG images, embed them as JPEG in PDF. This often results in smaller
   PDF file size compared to the default *deflate* compression.
-  Requires a [patched pycairo](
-  http://lists.cairographics.org/archives/cairo/2012-December/023839.html).
-  (Without the patch *deflate* is always used, as before.)
+* Switched to using CFFI instead of PyGTK or PyGObject-introspection.
+* Layout bug fixes:
+
+  - Correctly trim whitespace at the end of lines.
+  - Fix some cases with floats within inline content.
 
 
 Version 0.16

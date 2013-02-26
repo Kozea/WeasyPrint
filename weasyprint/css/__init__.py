@@ -100,6 +100,10 @@ class StyleDict(object):
     def __setitem__(self, key, value):
         self._storage[key] = value
 
+    def get_color(self, key):
+        value = self[key]
+        return value if value != 'currentColor' else self.color
+
     def updated_copy(self, other):
         copy = self.copy()
         copy._storage.update(other)

@@ -153,7 +153,7 @@ def test_annotate_document():
     assert p.margin_right == (0, 'px')
     assert p.margin_bottom == (24, 'px')
     assert p.margin_left == (0, 'px')
-    assert p.background_color == (0, 0, 1, 1)  # blue
+    assert p.background_color == 'currentColor'  # resolved at use-value time.
 
     # 80px = 2em * 5ex = 10 * half of initial 16px
     assert ul.margin_top == (80, 'px')
@@ -186,8 +186,7 @@ def test_annotate_document():
 
 
     assert a.color == (1, 0, 0, 1)
-    # Test the initial border-color: currentColor
-    assert a.border_top_color == (1, 0, 0, 1)
+    assert a.border_top_color == 'currentColor'
 
     # The href attr should be as in the source, not made absolute.
     assert after.content == [

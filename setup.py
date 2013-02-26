@@ -23,12 +23,14 @@ LONG_DESCRIPTION = open(path.join(path.dirname(__file__), 'README')).read()
 
 
 REQUIREMENTS = [
-        # XXX: Keep this in sync with docs/install.rst
-        'lxml',
-        'tinycss==0.3',
-        'cssselect>=0.6',
-        'CairoSVG>=0.4.1',
-        # ... and others, not installable by pip.
+    # XXX: Keep this in sync with docs/install.rst
+    'lxml',
+    'tinycss==0.3',
+    'cssselect>=0.6',
+    'CairoSVG>=0.4.1',
+    'cffi>=0.5',
+    'cairocffi>=0.3',
+    # C dependencies: Gdk-Pixbuf (optional), Pango, cairo.
 ]
 if sys.version_info < (2, 7) or (3,) <= sys.version_info < (3, 2):
     # In the stdlib from 2.7 and 3.2:
