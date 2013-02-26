@@ -15,22 +15,11 @@ from __future__ import division
 
 from cgi import escape
 
+import pyphen
 import cffi
 import cairocffi as cairo
 
 from .compat import xrange, basestring
-
-try:
-    import pyphen
-except ImportError:
-    hyphenize = lambda word, style: ((word, ''),)
-else:
-    def hyphenize(word, style):
-        """Return an iterator of possible (start, end) couples for word."""
-        if style.lang in pyphen.LANGUAGES:
-            return pyphen.Pyphen(lang=style.lang).iterate(word)
-        else:
-            return ((word, ''),)
 
 
 ffi = cffi.FFI()
@@ -397,6 +386,14 @@ def split_first_line(text, style, hinting, max_width, line_width):
 
     # Step #4: Return the layout and the metrics
     return layout, length, resume_at, width, height, baseline
+
+
+def hyphenize(word, style):
+    """Return an iterator of possible (start, end) couples for word."""
+    if style.lang in pyphen.LANGUAGES:
+        return pyphen.Pyphen(lang=style.lang).iterate(word)
+    else:
+        return ((word, ''),)
 
 
 def line_widths(box, enable_hinting, width, skip=None):
