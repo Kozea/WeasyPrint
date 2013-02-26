@@ -8,6 +8,11 @@ Not released yet.
 
 * For JPEG images, embed them as JPEG in PDF. This often results in smaller
   PDF file size compared to the default *deflate* compression.
+* Switched to using CFFI instead of PyGTK or PyGObject-introspection.
+* Layout bug fixes:
+
+  - Correctly trim whitespace at the end of lines.
+  - Fix some cases with floats within inline content.
 
 
 Version 0.16
