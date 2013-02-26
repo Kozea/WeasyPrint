@@ -160,9 +160,22 @@ ffi.cdef('''
     void pango_cairo_show_layout_line (cairo_t *cr, PangoLayoutLine *line);
 
 ''')
-gobject = ffi.dlopen('gobject-2.0')
-pango = ffi.dlopen('pango-1.0')
-pangocairo = ffi.dlopen('pangocairo-1.0')
+
+
+def dlopen(ffi, *names):
+    """Try various names for the same libraries, for different platforms."""
+    for name in names:
+        try:
+            return ffi.dlopen(name)
+        except OSError:
+            pass
+    # Re-raise the exception.
+    return ffi.dlopen(names[0])  # pragma: no cover
+
+
+gobject = dlopen(ffi, 'gobject-2.0', 'libgobject-2.0-0')
+pango = dlopen(ffi, 'pango-1.0', 'libpango-1.0-0')
+pangocairo = dlopen(ffi, 'pangocairo-1.0', 'libpangocairo-1.0-0')
 
 units_to_double = pango.pango_units_to_double
 units_from_double = pango.pango_units_from_double
