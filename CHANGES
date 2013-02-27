@@ -4,7 +4,7 @@ WeasyPrint changelog
 Version 0.17
 ------------
 
-Not released yet.
+Released on 2013-02-27.
 
 * Added `text hyphenation`_ with the ``-weasy-hyphens`` property.
 * When a document includes JPEG images, embed them as JPEG in the PDF output.
