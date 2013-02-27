@@ -127,7 +127,7 @@ CSS 3 Text: hyphenation
 
 
 The experimental_ ``-weasy-hyphens`` property controls hyphenation
-as described in `CSS 3 Text`.
+as described in `CSS 3 Text`_.
 To get automatic hyphenation, you to set it to ``auto``
 *and* have the ``lang`` HTML attribute set to one of the languages
 `supported by Pyphen
