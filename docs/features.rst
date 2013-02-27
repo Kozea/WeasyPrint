@@ -120,6 +120,32 @@ as invalid with ``*``.
 .. _cssselect: http://packages.python.org/cssselect/
 
 
+.. _hyphenation:
+
+CSS 3 Text: hyphenation
+~~~~~~~~~~~~~~~~~~~~~~~
+
+
+The experimental_ ``-weasy-hyphens`` property controls hyphenation
+as described in `CSS 3 Text`.
+To get automatic hyphenation, you to set it to ``auto``
+*and* have the ``lang`` HTML attribute set to one of the languages
+`supported by Pyphen
+<https://github.com/Kozea/Pyphen/tree/master/pyphen/dictionaries>`_.
+
+.. _CSS 3 Text: http://www.w3.org/TR/css3-text/#hyphens
+
+.. code-block:: html
+
+    <!doctype html>
+    <html lang=en>
+    <style>
+      html { -weasy-hyphens: auto }
+    </style>
+    …
+
+
+
 .. _bookmarks:
 
 CSS GCPM: bookmarks

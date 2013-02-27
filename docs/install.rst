@@ -12,6 +12,7 @@ WeasyPrint |version| depends on:
 * tinycss_ = 0.3
 * cssselect_ ≥ 0.6
 * CairoSVG_ ≥ 0.4.1
+* Pyphen_
 * Optional: GDK-PixBuf_ [#]_
 
 .. _CPython: http://www.python.org/
@@ -24,6 +25,7 @@ WeasyPrint |version| depends on:
 .. _tinycss: http://packages.python.org/tinycss/
 .. _cssselect: http://packages.python.org/cssselect/
 .. _CairoSVG: http://cairosvg.org/
+.. _Pyphen: https://github.com/Kozea/Pyphen
 .. _GDK-PixBuf: https://live.gnome.org/GdkPixbuf
 
 

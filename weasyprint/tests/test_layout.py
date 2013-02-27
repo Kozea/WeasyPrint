@@ -4206,3 +4206,31 @@ def test_box_decoration_break():
     assert paragraph.border_bottom_width == 3
     assert paragraph.margin_bottom == 5
     assert paragraph.margin_height() == 90
+
+
+@assert_no_logs
+def test_hyphenation():
+    def line_count(source):
+        page, = parse('<html style="width: 5em">' + source)
+        html, = page.children
+        body, = html.children
+        lines = body.children
+        return len(lines)
+
+    # Default: no hyphenation
+    assert line_count('<body>hyphenation') == 1
+    # lang only: no hyphenation
+    assert line_count(
+        '<body lang=en>hyphenation') == 1
+    # `hyphens: auto` only : no hyphenation
+    assert line_count(
+        '<body style="-weasy-hyphens: auto">hyphenation') == 1
+    # lang + `hyphens: auto` : hyphenation
+    assert line_count(
+        '<body style="-weasy-hyphens: auto" lang=en>hyphenation') > 1
+
+    # Hyphenation with soft hyphens
+    assert line_count('<body>hyp&shy;henation') == 2
+    # … unless disabled
+    assert line_count(
+        '<body style="-weasy-hyphens: none">hyp&shy;henation') == 1

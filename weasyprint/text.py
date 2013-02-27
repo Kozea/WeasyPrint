@@ -15,6 +15,7 @@ from __future__ import division
 
 from cgi import escape
 
+import pyphen
 import cffi
 import cairocffi as cairo
 
@@ -181,6 +182,8 @@ pangocairo = dlopen(ffi, 'pangocairo-1.0', 'libpangocairo-1.0-0')
 units_to_double = pango.pango_units_to_double
 units_from_double = pango.pango_units_from_double
 
+PYPHEN_DICTIONARY_CACHE = {}
+
 
 def to_enum(string):
     return str(string.replace('-', '_').upper())
@@ -283,7 +286,7 @@ def create_layout(text, style, hinting, max_width):
     return layout_obj
 
 
-def split_first_line(text, style, hinting, max_width):
+def split_first_line(text, style, hinting, max_width, line_width):
     """Fit as much as possible in the available width for one line of text.
 
     Return ``(layout, length, resume_at, width, height, baseline)``.
@@ -326,30 +329,82 @@ def split_first_line(text, style, hinting, max_width):
         resume_at = None
 
     # Step #2: Build the final layout
-    if max_width and second_line is not None:
-        # The first line may have been cut too early by pango
-        second_line_index = second_line.start_index
-        first_part = text.encode('utf-8')[:second_line_index].decode('utf-8')
-        second_part = text.encode('utf-8')[second_line_index:].decode('utf-8')
+    hyphenated = False
+    first_line_width, _height = get_size(first_line)
+    if max_width and (second_line is not None or first_line_width > max_width):
+        if first_line_width <= max_width:
+            # The first line may have been cut too early by pango
+            second_line_index = second_line.start_index
+            first_part = text.encode('u8')[:second_line_index].decode('u8')
+            second_part = text.encode('u8')[second_line_index:].decode('u8')
+        else:
+            first_part = ''
+            second_part = text
         next_word = second_part.split(' ', 1)[0]
         if next_word:
+            # next_word might fit without a space afterwards.
+            # Pango previously counted that space’s advance width.
             new_first_line = first_part + next_word
             layout.set_text(new_first_line)
             lines = layout.iter_lines()
             first_line = next(lines, None)
             second_line = next(lines, None)
-            if second_line is None:  # XXX never reached?
+
+            # TODO: find another way to avoid very long lines, hyphenize may
+            # only keep the first word by splitting not only with simple spaces
+            max_long_line = 50
+            hyphens = style.hyphens
+            lang = style.lang
+            if hyphens in ('none', 'manual') or lang not in pyphen.LANGUAGES:
+                hyphens = 0  # No automatic hyphenation
+            elif hyphens == 'auto':
+                hyphens = 0.9  # Default threshold
+
+            if hyphens > 0:
+                first_line_width, _height = get_size(first_line)
+                ratio = (
+                    (first_line_width + line_width - max_width) / line_width)
+            else:
+                ratio = 1
+
+            if second_line is None and ratio <= 1:
+                # The next word fits in the first line, keep the layout
                 resume_at = len(new_first_line.encode('utf-8')) + 1
+            elif len(next_word) < max_long_line and (
+                    ratio < hyphens or ratio > 1):
+                # The next word does not fit, try hyphenation
+                dictionary = PYPHEN_DICTIONARY_CACHE.get(lang)
+                if dictionary is None:
+                    dictionary = pyphen.Pyphen(lang=lang)
+                    PYPHEN_DICTIONARY_CACHE[lang] = dictionary
+                for first_word_part, _ in dictionary.iterate(next_word):
+                    new_first_line = first_part + first_word_part + '-'
+                    temp_layout = create_layout(
+                        new_first_line, style, hinting, max_width)
+                    temp_lines = temp_layout.iter_lines()
+                    temp_first_line = next(temp_lines, None)
+                    temp_second_line = next(temp_lines, None)
+                    temp_first_line_width, _height = get_size(temp_first_line)
+                    if (temp_second_line is None and ratio <= 1) or ratio > 1:
+                        hyphenated = True
+                        # TODO: find why there's no need to .encode
+                        resume_at = len(new_first_line) - 1
+                        layout = temp_layout
+                        first_line = temp_first_line
+                        second_line = temp_second_line
+                        if temp_first_line_width <= max_width:
+                            break
 
     # Step #3: We have the right layout, find metrics
     length = first_line.length
 
-    first_line_text = text.encode('utf-8')[:length].decode('utf-8')
-    if first_line_text.endswith(' ') and resume_at:
-        # Remove trailing spaces
-        layout.set_text(first_line_text.rstrip(' '))
-        first_line = next(layout.iter_lines(), None)
-        length = first_line.length if first_line is not None else 0
+    if not hyphenated:
+        first_line_text = text.encode('utf-8')[:length].decode('utf-8')
+        if first_line_text.endswith(' ') and resume_at:
+            # Remove trailing spaces
+            layout.set_text(first_line_text.rstrip(' '))
+            first_line = next(layout.iter_lines(), None)
+            length = first_line.length if first_line is not None else 0
 
     width, height = get_size(first_line)
 

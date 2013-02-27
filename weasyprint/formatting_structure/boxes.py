@@ -380,6 +380,8 @@ class TextBox(InlineLevelBox):
                 # Python’s unicode.captitalize is not the same.
                 'capitalize': lambda t: t.title(),
             }[text_transform](text)
+        if style.hyphens == 'none':
+            text = text.replace('\u00AD', '')  # U+00AD SOFT HYPHEN (SHY)
         self.text = text
 
     def copy_with_text(self, text):

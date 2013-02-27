@@ -21,6 +21,7 @@ colgroup        { display: table-column-group }
 td, th          { display: table-cell }
 caption         { display: table-caption }
 
+*[lang] { -weasy-lang: attr(lang); }
 a[href] { -weasy-link: attr(href); }
 a[name] { -weasy-anchor: attr(name); }
 *[id] { -weasy-anchor: attr(id); }

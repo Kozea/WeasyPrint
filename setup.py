@@ -30,6 +30,7 @@ REQUIREMENTS = [
     'CairoSVG>=0.4.1',
     'cffi>=0.5',
     'cairocffi>=0.3',
+    'Pyphen'
     # C dependencies: Gdk-Pixbuf (optional), Pango, cairo.
 ]
 if sys.version_info < (2, 7) or (3,) <= sys.version_info < (3, 2):
@@ -63,6 +64,7 @@ setup(
     ],
     packages=find_packages(),
     package_data={
+        'weasyprint.hyphenation': ['*.dic'],
         'weasyprint.tests': ['resources/*.*', 'resources/*/*'],
         'weasyprint.css': ['*.css']},
     zip_safe=False,

@@ -31,7 +31,7 @@ def list_marker_layout(context, box):
             (marker.pango_layout, _, _, marker.width, marker.height,
                 marker.baseline) = split_first_line(
                     marker.text, marker.style, context.enable_hinting,
-                    max_width=None)
+                    max_width=None, line_width=None)
         else:
             # Image marker
             image_marker_layout(marker)
