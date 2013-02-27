@@ -141,7 +141,7 @@ INITIAL_VALUES = {
 
     # CSS3 Text
     # http://www.w3.org/TR/css3-text/#hyphenation
-    'hyphens': 0,  # FIXME: computed value of 'manual'
+    'hyphens': 'manual',
 
     # Internal, to implement the "static position" for absolute boxes.
     '_weasy_specified_display': 'inline',

@@ -182,6 +182,8 @@ pangocairo = dlopen(ffi, 'pangocairo-1.0', 'libpangocairo-1.0-0')
 units_to_double = pango.pango_units_to_double
 units_from_double = pango.pango_units_from_double
 
+PYPHEN_DICTIONARY_CACHE = {}
+
 
 def to_enum(string):
     return str(string.replace('-', '_').upper())
@@ -351,7 +353,14 @@ def split_first_line(text, style, hinting, max_width, line_width):
             # TODO: find another way to avoid very long lines, hyphenize may
             # only keep the first word by splitting not only with simple spaces
             max_long_line = 50
-            if style.hyphens:
+            hyphens = style.hyphens
+            lang = style.lang
+            if hyphens in ('none', 'manual') or lang not in pyphen.LANGUAGES:
+                hyphens = 0  # No automatic hyphenation
+            elif hyphens == 'auto':
+                hyphens = 0.9  # Default threshold
+
+            if hyphens > 0:
                 first_line_width, _height = get_size(first_line)
                 ratio = (
                     (first_line_width + line_width - max_width) / line_width)
@@ -362,9 +371,13 @@ def split_first_line(text, style, hinting, max_width, line_width):
                 # The next word fits in the first line, keep the layout
                 resume_at = len(new_first_line.encode('utf-8')) + 1
             elif len(next_word) < max_long_line and (
-                    ratio < style.hyphens or ratio > 1):
+                    ratio < hyphens or ratio > 1):
                 # The next word does not fit, try hyphenation
-                for first_word_part, _ in hyphenize(next_word, style):
+                dictionary = PYPHEN_DICTIONARY_CACHE.get(lang)
+                if dictionary is None:
+                    dictionary = pyphen.Pyphen(lang=lang)
+                    PYPHEN_DICTIONARY_CACHE[lang] = dictionary
+                for first_word_part, _ in dictionary.iterate(next_word):
                     new_first_line = first_part + first_word_part + '-'
                     temp_layout = create_layout(
                         new_first_line, style, hinting, max_width)
@@ -401,14 +414,6 @@ def split_first_line(text, style, hinting, max_width, line_width):
 
     # Step #4: Return the layout and the metrics
     return layout, length, resume_at, width, height, baseline
-
-
-def hyphenize(word, style):
-    """Return an iterator of possible (start, end) couples for word."""
-    if style.lang in pyphen.LANGUAGES:
-        return pyphen.Pyphen(lang=style.lang).iterate(word)
-    else:
-        return ()
 
 
 def line_widths(box, enable_hinting, width, skip=None):

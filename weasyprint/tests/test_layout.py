@@ -4215,7 +4215,6 @@ def test_hyphenation():
         html, = page.children
         body, = html.children
         lines = body.children
-        print(lines)
         return len(lines)
 
     # Default: no hyphenation
@@ -4229,3 +4228,9 @@ def test_hyphenation():
     # lang + `hyphens: auto` : hyphenation
     assert line_count(
         '<body style="-weasy-hyphens: auto" lang=en>hyphenation') > 1
+
+    # Hyphenation with soft hyphens
+    assert line_count('<body>hyp&shy;henation') == 2
+    # … unless disabled
+    assert line_count(
+        '<body style="-weasy-hyphens: none">hyp&shy;henation') == 1

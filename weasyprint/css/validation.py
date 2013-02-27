@@ -924,7 +924,7 @@ def hyphens(token):
     keyword = get_keyword(token)
     if keyword in ('none', 'manual', 'auto'):
         return keyword
-    elif token.type in ('NUMBER', 'INTEGER'):
+    elif token.type in ('NUMBER', 'INTEGER') and 0 <= token.value <= 1:
         return token.value
 
 
