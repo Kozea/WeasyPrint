@@ -20,7 +20,7 @@ WeasyPrint |version| depends on:
 .. _Pango: http://www.pango.org/
 .. _CFFI: https://cffi.readthedocs.org/
 .. _cairocffi: http://packages.python.org/cairocffi/
-.. _GTK: http://www.gtk.org/
+.. _GTK+: http://www.gtk.org/
 .. _lxml: http://lxml.de/
 .. _tinycss: http://packages.python.org/tinycss/
 .. _cssselect: http://packages.python.org/cssselect/
@@ -75,7 +75,7 @@ WeasyPrint! Otherwise, please copy the full error message and
 
 .. [#] Without it, PNG and SVG are the only supported image format:
        JPEG, GIF and others are not available.
-       Versions before 0.22 were part of GTK_.
+       Versions before 0.22 were part of `GTK+`_.
 
 .. [#] If you installed CFFI or lxml with a system package,
        you need to pass the `--system-site-packages` to virtualenv
@@ -109,7 +109,7 @@ Debian 7.0 Wheezy or newer, Ubuntu 11.10 Oneiric or newer:
 
 
 Debian 6.0 Squeeze, Ubuntu 10.04 Lucid:
-GDK-PixBuf is part of GTK, which also depends on cairo and Pango.
+GDK-PixBuf is part of GTK+, which also depends on cairo and Pango.
 
 .. code-block:: sh
 
@@ -159,6 +159,6 @@ Windows
 * Get CPython 2.7 `from python.org <http://www.python.org/download/>`_,
 * `Christoph Gohlke’s unofficial binaries
   <http://www.lfd.uci.edu/~gohlke/pythonlibs/#lxml>`_ for CFFI and lxml,
-* and `Alexander Shaduri’s GTK installer
+* and `Alexander Shaduri’s GTK+ installer
   <http://gtk-win.sourceforge.net/home/index.php/Main/Downloads>`_.
   Make sure the *Set up PATH environment variable* checkbox is checked.
