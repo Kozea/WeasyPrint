@@ -13,13 +13,11 @@
 from __future__ import division
 # XXX No unicode_literals, cffi likes native strings
 
-from cgi import escape
-
 import pyphen
 import cffi
 import cairocffi as cairo
 
-from .compat import xrange, basestring
+from .compat import basestring
 
 
 ffi = cffi.FFI()
@@ -189,6 +187,10 @@ def to_enum(string):
     return str(string.replace('-', '_').upper())
 
 
+def utf8_slice(string, slice_):
+    return string.encode('utf-8')[slice_].decode('utf-8')
+
+
 def unicode_to_char_p(string):
     bytestring = string.encode('utf8').replace(b'\x00', b'')
     return ffi.new('char[]', bytestring), bytestring
@@ -199,6 +201,22 @@ def get_size(line):
     pango.pango_layout_line_get_extents(line, ffi.NULL, logical_extents)
     return (units_to_double(logical_extents.width),
             units_to_double(logical_extents.height))
+
+
+def first_line_metrics(first_line, text, layout, resume_at, hyphenated=False):
+    length = first_line.length
+    if not hyphenated:
+        first_line_text = utf8_slice(text, slice(length))
+        if first_line_text.endswith(' ') and resume_at:
+            # Remove trailing spaces
+            layout.set_text(first_line_text.rstrip(' '))
+            first_line = next(layout.iter_lines(), None)
+            length = first_line.length if first_line is not None else 0
+    width, height = get_size(first_line)
+    baseline = units_to_double(pango.pango_layout_iter_get_baseline(ffi.gc(
+        pango.pango_layout_get_iter(layout.layout),
+        pango.pango_layout_iter_free)))
+    return layout, length, resume_at, width, height, baseline
 
 
 class Layout(object):
@@ -322,98 +340,85 @@ def split_first_line(text, style, hinting, max_width, line_width):
         lines = layout.iter_lines()
         first_line = next(lines, None)
         second_line = next(lines, None)
+    resume_at = None if second_line is None else second_line.start_index
 
-    if second_line is not None:
-        resume_at = second_line.start_index
-    else:
-        resume_at = None
-
-    # Step #2: Build the final layout
-    hyphenated = False
+    # Step #2: Don't hyphenize when it's not needed
+    if max_width is None:
+        # The first line can take all the place needed
+        return first_line_metrics(first_line, text, layout, resume_at)
     first_line_width, _height = get_size(first_line)
-    if max_width and (second_line is not None or first_line_width > max_width):
-        if first_line_width <= max_width:
-            # The first line may have been cut too early by pango
-            second_line_index = second_line.start_index
-            first_part = text.encode('u8')[:second_line_index].decode('u8')
-            second_part = text.encode('u8')[second_line_index:].decode('u8')
-        else:
-            first_part = ''
-            second_part = text
-        next_word = second_part.split(' ', 1)[0]
-        if next_word:
-            # next_word might fit without a space afterwards.
-            # Pango previously counted that space’s advance width.
-            new_first_line = first_part + next_word
-            layout.set_text(new_first_line)
-            lines = layout.iter_lines()
-            first_line = next(lines, None)
-            second_line = next(lines, None)
+    if second_line is None and first_line_width <= max_width:
+        # The first line fits in the available width
+        return first_line_metrics(first_line, text, layout, resume_at)
 
-            # TODO: find another way to avoid very long lines, hyphenize may
-            # only keep the first word by splitting not only with simple spaces
-            max_long_line = 50
-            hyphens = style.hyphens
-            lang = style.lang
-            if hyphens in ('none', 'manual') or lang not in pyphen.LANGUAGES:
-                hyphens = 0  # No automatic hyphenation
-            elif hyphens == 'auto':
-                hyphens = 0.9  # Default threshold
+    # Step #3: Try to put the first word of the second line on the first line
+    if first_line_width <= max_width:
+        # The first line may have been cut too early by Pango
+        second_line_index = second_line.start_index
+        first_part = utf8_slice(text, slice(second_line_index))
+        second_part = utf8_slice(text, slice(second_line_index, None))
+    else:
+        # The first word is longer than the line, try to hyphenize it
+        first_part = ''
+        second_part = text
+    next_word = second_part.split(' ', 1)[0]
 
-            if hyphens > 0:
-                first_line_width, _height = get_size(first_line)
-                ratio = (
-                    (first_line_width + line_width - max_width) / line_width)
-            else:
-                ratio = 1
+    if not next_word:
+        # We did not find a word on the next line
+        return first_line_metrics(first_line, text, layout, resume_at)
 
-            if second_line is None and ratio <= 1:
-                # The next word fits in the first line, keep the layout
-                resume_at = len(new_first_line.encode('utf-8')) + 1
-            elif len(next_word) < max_long_line and (
-                    ratio < hyphens or ratio > 1):
-                # The next word does not fit, try hyphenation
-                dictionary = PYPHEN_DICTIONARY_CACHE.get(lang)
-                if dictionary is None:
-                    dictionary = pyphen.Pyphen(lang=lang)
-                    PYPHEN_DICTIONARY_CACHE[lang] = dictionary
-                for first_word_part, _ in dictionary.iterate(next_word):
-                    new_first_line = first_part + first_word_part + '-'
-                    temp_layout = create_layout(
-                        new_first_line, style, hinting, max_width)
-                    temp_lines = temp_layout.iter_lines()
-                    temp_first_line = next(temp_lines, None)
-                    temp_second_line = next(temp_lines, None)
-                    temp_first_line_width, _height = get_size(temp_first_line)
-                    if (temp_second_line is None and ratio <= 1) or ratio > 1:
-                        hyphenated = True
-                        # TODO: find why there's no need to .encode
-                        resume_at = len(new_first_line) - 1
-                        layout = temp_layout
-                        first_line = temp_first_line
-                        second_line = temp_second_line
-                        if temp_first_line_width <= max_width:
-                            break
+    # next_word might fit without a space afterwards.
+    # Pango previously counted that space’s advance width.
+    new_first_line = first_part + next_word
+    layout.set_text(new_first_line)
+    lines = layout.iter_lines()
+    first_line = next(lines, None)
+    second_line = next(lines, None)
+    first_line_width, _height = get_size(first_line)
+    if second_line is None and first_line_width <= max_width:
+        # The next word fits in the first line, keep the layout
+        resume_at = len(new_first_line.encode('utf-8')) + 1
+        return first_line_metrics(first_line, text, layout, resume_at)
 
-    # Step #3: We have the right layout, find metrics
-    length = first_line.length
+    # Step #4: Try to hyphenize
+    hyphens = style.hyphens
+    lang = style.lang
+    if hyphens in ('none', 'manual') or lang not in pyphen.LANGUAGES:
+        hyphens = 0  # No automatic hyphenation
+    elif hyphens == 'auto':
+        hyphens = 0.9  # Default threshold
 
-    if not hyphenated:
-        first_line_text = text.encode('utf-8')[:length].decode('utf-8')
-        if first_line_text.endswith(' ') and resume_at:
-            # Remove trailing spaces
-            layout.set_text(first_line_text.rstrip(' '))
-            first_line = next(layout.iter_lines(), None)
-            length = first_line.length if first_line is not None else 0
+    if hyphens > 0:
+        first_line_width, _height = get_size(first_line)
+        ratio = ((first_line_width + line_width - max_width) / line_width)
+    else:
+        ratio = 1
 
-    width, height = get_size(first_line)
-
-    baseline = units_to_double(pango.pango_layout_iter_get_baseline(ffi.gc(
-            pango.pango_layout_get_iter(layout.layout),
-            pango.pango_layout_iter_free)))
-
-    # Step #4: Return the layout and the metrics
-    return layout, length, resume_at, width, height, baseline
+    hyphenated = False
+    if ratio < hyphens or ratio > 1:
+        # The next word does not fit, try hyphenation
+        dictionary = PYPHEN_DICTIONARY_CACHE.get(lang)
+        if dictionary is None:
+            dictionary = pyphen.Pyphen(lang=lang)
+            PYPHEN_DICTIONARY_CACHE[lang] = dictionary
+        for first_word_part, _ in dictionary.iterate(next_word):
+            new_first_line = first_part + first_word_part + '-'
+            temp_layout = create_layout(
+                new_first_line, style, hinting, max_width)
+            temp_lines = temp_layout.iter_lines()
+            temp_first_line = next(temp_lines, None)
+            temp_second_line = next(temp_lines, None)
+            temp_first_line_width, _height = get_size(temp_first_line)
+            if (temp_second_line is None and ratio <= 1) or ratio > 1:
+                hyphenated = True
+                # TODO: find why there's no need to .encode
+                resume_at = len(new_first_line) - 1
+                layout = temp_layout
+                first_line = temp_first_line
+                second_line = temp_second_line
+                if temp_first_line_width <= max_width:
+                    break
+    return first_line_metrics(first_line, text, layout, resume_at, hyphenated)
 
 
 def line_widths(box, enable_hinting, width, skip=None):
