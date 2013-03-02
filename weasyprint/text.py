@@ -402,20 +402,21 @@ def split_first_line(text, style, hinting, max_width, line_width):
             dictionary = pyphen.Pyphen(lang=lang)
             PYPHEN_DICTIONARY_CACHE[lang] = dictionary
         for first_word_part, _ in dictionary.iterate(next_word):
-            new_first_line = first_part + first_word_part + '-'
+            new_first_line = (
+                first_part + first_word_part + style.hyphenate_character)
             temp_layout = create_layout(
                 new_first_line, style, hinting, max_width)
             temp_lines = temp_layout.iter_lines()
             temp_first_line = next(temp_lines, None)
             temp_second_line = next(temp_lines, None)
-            temp_first_line_width, _height = get_size(temp_first_line)
             if (temp_second_line is None and ratio <= 1) or ratio > 1:
                 hyphenated = True
                 # TODO: find why there's no need to .encode
-                resume_at = len(new_first_line) - 1
+                resume_at = len(first_part + first_word_part)
                 layout = temp_layout
                 first_line = temp_first_line
                 second_line = temp_second_line
+                temp_first_line_width, _height = get_size(temp_first_line)
                 if temp_first_line_width <= max_width:
                     break
     return first_line_metrics(first_line, text, layout, resume_at, hyphenated)

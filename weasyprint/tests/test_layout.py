@@ -4222,10 +4222,10 @@ def test_hyphenation():
     # lang only: no hyphenation
     assert line_count(
         '<body lang=en>hyphenation') == 1
-    # `hyphens: auto` only : no hyphenation
+    # `hyphens: auto` only: no hyphenation
     assert line_count(
         '<body style="-weasy-hyphens: auto">hyphenation') == 1
-    # lang + `hyphens: auto` : hyphenation
+    # lang + `hyphens: auto`: hyphenation
     assert line_count(
         '<body style="-weasy-hyphens: auto" lang=en>hyphenation') > 1
 
@@ -4234,3 +4234,70 @@ def test_hyphenation():
     # … unless disabled
     assert line_count(
         '<body style="-weasy-hyphens: none">hyp&shy;henation') == 1
+
+
+def test_hyphenate_character():
+    page, = parse(
+        '<html style="width: 5em">'
+        '<body style="-weasy-hyphens: auto;'
+        '-weasy-hyphenate-character: \'!\'" lang=en>'
+        'hyphenation')
+    html, = page.children
+    body, = html.children
+    lines = body.children
+    assert len(lines) > 1
+    assert lines[0].children[0].text.endswith('!')
+    full_text = ''.join(line.children[0].text for line in lines)
+    assert full_text.replace('!', '') == 'hyphenation'
+
+    page, = parse(
+        '<html style="width: 5em">'
+        '<body style="-weasy-hyphens: auto;'
+        '-weasy-hyphenate-character: \'é\'" lang=en>'
+        'hyphenation')
+    html, = page.children
+    body, = html.children
+    lines = body.children
+    assert len(lines) > 1
+    assert lines[0].children[0].text.endswith('é')
+    full_text = ''.join(line.children[0].text for line in lines)
+    assert full_text.replace('é', '') == 'hyphenation'
+
+    page, = parse(
+        '<html style="width: 5em">'
+        '<body style="-weasy-hyphens: auto;'
+        '-weasy-hyphenate-character: \'ù ù\'" lang=en>'
+        'hyphenation')
+    html, = page.children
+    body, = html.children
+    lines = body.children
+    assert len(lines) > 1
+    assert lines[0].children[0].text.endswith('ù ù')
+    full_text = ''.join(line.children[0].text for line in lines)
+    assert full_text.replace(' ', '').replace('ù', '') == 'hyphenation'
+
+    page, = parse(
+        '<html style="width: 5em">'
+        '<body style="-weasy-hyphens: auto;'
+        '-weasy-hyphenate-character: \'\'" lang=en>'
+        'hyphenation')
+    html, = page.children
+    body, = html.children
+    lines = body.children
+    assert len(lines) > 1
+    full_text = ''.join(line.children[0].text for line in lines)
+    assert full_text == 'hyphenation'
+
+    # TODO: strange error with some characters
+    # page, = parse(
+    #     '<html style="width: 5em">'
+    #     '<body style="-weasy-hyphens: auto;'
+    #     '-weasy-hyphenate-character: \'———\'" lang=en>'
+    #     'hyphenation')
+    # html, = page.children
+    # body, = html.children
+    # lines = body.children
+    # assert len(lines) > 1
+    # assert lines[0].children[0].text.endswith('———')
+    # full_text = ''.join(line.children[0].text for line in lines)
+    # assert full_text.replace('—', '') == 'hyphenation'

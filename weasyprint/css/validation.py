@@ -930,6 +930,17 @@ def hyphens(token):
 
 @validator(prefixed=True)  # Non-standard
 @single_token
+def hyphenate_character(token):
+    """Validation for ``hyphenate-character``."""
+    keyword = get_keyword(token)
+    if keyword == 'auto':
+        return '‐'
+    elif token.type == 'STRING':
+        return token.value
+
+
+@validator(prefixed=True)  # Non-standard
+@single_token
 def lang(token):
     """Validation for ``lang``."""
     if get_keyword(token) == 'none':
