@@ -384,18 +384,18 @@ def split_first_line(text, style, hinting, max_width, line_width):
     hyphens = style.hyphens
     lang = style.lang
     if hyphens in ('none', 'manual') or lang not in pyphen.LANGUAGES:
-        hyphens = 0  # No automatic hyphenation
-    elif hyphens == 'auto':
-        hyphens = 0.9  # Default threshold
+        # No automatic hyphenation
+        return first_line_metrics(first_line, text, layout, resume_at)
 
-    if hyphens > 0:
-        first_line_width, _height = get_size(first_line)
-        ratio = ((first_line_width + line_width - max_width) / line_width)
+    first_line_width, _height = get_size(first_line)
+    space = max_width - first_line_width
+    if style.hyphenate_limit_zone.unit == '%':
+        limit_zone = max_width * style.hyphenate_limit_zone.value / 100.
     else:
-        ratio = 1
+        limit_zone = style.hyphenate_limit_zone.value
 
     hyphenated = False
-    if ratio < hyphens or ratio > 1:
+    if space > limit_zone or space < 0:
         # The next word does not fit, try hyphenation
         dictionary = PYPHEN_DICTIONARY_CACHE.get(lang)
         if dictionary is None:
@@ -409,7 +409,7 @@ def split_first_line(text, style, hinting, max_width, line_width):
             temp_lines = temp_layout.iter_lines()
             temp_first_line = next(temp_lines, None)
             temp_second_line = next(temp_lines, None)
-            if (temp_second_line is None and ratio <= 1) or ratio > 1:
+            if (temp_second_line is None and space >= 0) or space < 0:
                 hyphenated = True
                 # TODO: find why there's no need to .encode
                 resume_at = len(first_part + first_word_part)

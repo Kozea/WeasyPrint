@@ -4301,3 +4301,57 @@ def test_hyphenate_character():
     # assert lines[0].children[0].text.endswith('———')
     # full_text = ''.join(line.children[0].text for line in lines)
     # assert full_text.replace('—', '') == 'hyphenation'
+
+
+def test_hyphenate_limit_zone():
+    page, = parse(
+        '<html style="width: 10em">'
+        '<body style="-weasy-hyphens: auto;'
+        '-weasy-hyphenate-limit-zone: 0" lang=en>'
+        'llllllllll hyphenation')
+    html, = page.children
+    body, = html.children
+    lines = body.children
+    assert len(lines) == 2
+    assert lines[0].children[0].text.endswith('‐')
+    full_text = ''.join(line.children[0].text for line in lines)
+    assert full_text.replace('‐', '') == 'llllllllll hyphenation'
+
+    page, = parse(
+        '<html style="width: 10em">'
+        '<body style="-weasy-hyphens: auto;'
+        '-weasy-hyphenate-limit-zone: 9em" lang=en>'
+        'llllllllll hyphenation')
+    html, = page.children
+    body, = html.children
+    lines = body.children
+    assert len(lines) > 1
+    assert lines[0].children[0].text.endswith('ll')
+    full_text = ''.join(line.children[0].text for line in lines)
+    assert full_text == 'llllllllllhyphenation'
+
+    page, = parse(
+        '<html style="width: 10em">'
+        '<body style="-weasy-hyphens: auto;'
+        '-weasy-hyphenate-limit-zone: 5%" lang=en>'
+        'llllllllll hyphenation')
+    html, = page.children
+    body, = html.children
+    lines = body.children
+    assert len(lines) == 2
+    assert lines[0].children[0].text.endswith('‐')
+    full_text = ''.join(line.children[0].text for line in lines)
+    assert full_text.replace('‐', '') == 'llllllllll hyphenation'
+
+    page, = parse(
+        '<html style="width: 10em">'
+        '<body style="-weasy-hyphens: auto;'
+        '-weasy-hyphenate-limit-zone: 95%" lang=en>'
+        'llllllllll hyphenation')
+    html, = page.children
+    body, = html.children
+    lines = body.children
+    assert len(lines) > 1
+    assert lines[0].children[0].text.endswith('ll')
+    full_text = ''.join(line.children[0].text for line in lines)
+    assert full_text == 'llllllllllhyphenation'

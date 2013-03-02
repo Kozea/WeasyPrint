@@ -924,8 +924,6 @@ def hyphens(token):
     keyword = get_keyword(token)
     if keyword in ('none', 'manual', 'auto'):
         return keyword
-    elif token.type in ('NUMBER', 'INTEGER') and 0 <= token.value <= 1:
-        return token.value
 
 
 @validator(prefixed=True)  # Non-standard
@@ -937,6 +935,13 @@ def hyphenate_character(token):
         return '‐'
     elif token.type == 'STRING':
         return token.value
+
+
+@validator(prefixed=True)  # Non-standard
+@single_token
+def hyphenate_limit_zone(token):
+    """Validation for ``hyphenate-limit-zone``."""
+    return get_length(token, negative=False, percentage=True)
 
 
 @validator(prefixed=True)  # Non-standard
