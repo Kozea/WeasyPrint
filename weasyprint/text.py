@@ -383,8 +383,13 @@ def split_first_line(text, style, hinting, max_width, line_width):
     # Step #4: Try to hyphenize
     hyphens = style.hyphens
     lang = style.lang
+    total, left, right = style.hyphenate_limit_chars
+    print(style.hyphenate_limit_chars)
     if hyphens in ('none', 'manual') or lang not in pyphen.LANGUAGES:
         # No automatic hyphenation
+        return first_line_metrics(first_line, text, layout, resume_at)
+    elif len(next_word) < total:
+        # Next word is too small
         return first_line_metrics(first_line, text, layout, resume_at)
 
     first_line_width, _height = get_size(first_line)
@@ -397,10 +402,11 @@ def split_first_line(text, style, hinting, max_width, line_width):
     hyphenated = False
     if space > limit_zone or space < 0:
         # The next word does not fit, try hyphenation
-        dictionary = PYPHEN_DICTIONARY_CACHE.get(lang)
+        dictionary_key = (lang, left, right, total)
+        dictionary = PYPHEN_DICTIONARY_CACHE.get(dictionary_key)
         if dictionary is None:
-            dictionary = pyphen.Pyphen(lang=lang)
-            PYPHEN_DICTIONARY_CACHE[lang] = dictionary
+            dictionary = pyphen.Pyphen(lang=lang, left=left, right=right)
+            PYPHEN_DICTIONARY_CACHE[dictionary_key] = dictionary
         for first_word_part, _ in dictionary.iterate(next_word):
             new_first_line = (
                 first_part + first_word_part + style.hyphenate_character)

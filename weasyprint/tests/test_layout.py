@@ -4355,3 +4355,30 @@ def test_hyphenate_limit_zone():
     assert lines[0].children[0].text.endswith('ll')
     full_text = ''.join(line.children[0].text for line in lines)
     assert full_text == 'llllllllllhyphenation'
+
+
+def test_hyphenate_limit_chars():
+    def line_count(limit_chars):
+        page, = parse((
+            '<html style="width: 1em">'
+            '<body style="-weasy-hyphens: auto;'
+            '-weasy-hyphenate-limit-chars: %s" lang=en>'
+            'hyphen') % limit_chars)
+        html, = page.children
+        body, = html.children
+        lines = body.children
+        return len(lines)
+
+    assert line_count('auto') == 2
+    assert line_count('auto auto 0') == 2
+    assert line_count('0 0 0') == 2
+    assert line_count('4 4 auto') == 1
+    assert line_count('6 2 4') == 2
+    assert line_count('auto 1 auto') == 2
+    assert line_count('7 auto auto') == 1
+    assert line_count('6 auto auto') == 2
+    assert line_count('5 2') == 2
+    assert line_count('3') == 2
+    assert line_count('2 4 6') == 1
+    assert line_count('auto 4') == 1
+    assert line_count('auto 2') == 2

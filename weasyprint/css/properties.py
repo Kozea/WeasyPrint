@@ -143,6 +143,7 @@ INITIAL_VALUES = {
     # http://dev.w3.org/csswg/css4-text/#hyphenation
     'hyphens': 'manual',
     'hyphenate_character': '‐',
+    'hyphenate_limit_chars': (5, 2, 2),
     'hyphenate_limit_zone': Dimension(0, 'px'),
 
     # Internal, to implement the "static position" for absolute boxes.
@@ -219,6 +220,7 @@ INHERITED = set("""
 
     hyphens
     hyphenate_character
+    hyphenate_limit_chars
     hyphenate_limit_zone
     image_rendering
     lang

@@ -945,6 +945,41 @@ def hyphenate_limit_zone(token):
 
 
 @validator(prefixed=True)  # Non-standard
+def hyphenate_limit_chars(tokens):
+    """Validation for ``hyphenate-limit-chars``."""
+    if len(tokens) == 1:
+        token, = tokens
+        keyword = get_keyword(token)
+        if keyword == 'auto':
+            return (5, 2, 2)
+        elif token.type == 'INTEGER':
+            return (token.value, 2, 2)
+    elif len(tokens) == 2:
+        total, left = tokens
+        total_keyword = get_keyword(total)
+        left_keyword = get_keyword(left)
+        if total.type == 'INTEGER':
+            if left.type == 'INTEGER':
+                return (total.value, left.value, left.value)
+            elif left_keyword == 'auto':
+                return (total.value, 2, 2)
+        elif total_keyword == 'auto':
+            if left.type == 'INTEGER':
+                return (5, left.value, left.value)
+            elif left_keyword == 'auto':
+                return (5, 2, 2)
+    elif len(tokens) == 3:
+        total, left, right = tokens
+        if ((get_keyword(total) == 'auto' or total.type == 'INTEGER') and
+            (get_keyword(left) == 'auto' or left.type == 'INTEGER') and
+            (get_keyword(right) == 'auto' or right.type == 'INTEGER')):
+            total = total.value if total.type == 'INTEGER' else 5
+            left = left.value if left.type == 'INTEGER' else 2
+            right = right.value if right.type == 'INTEGER' else 2
+            return (total, left, right)
+
+
+@validator(prefixed=True)  # Non-standard
 @single_token
 def lang(token):
     """Validation for ``lang``."""
