@@ -384,7 +384,6 @@ def split_first_line(text, style, hinting, max_width, line_width):
     hyphens = style.hyphens
     lang = style.lang
     total, left, right = style.hyphenate_limit_chars
-    print(style.hyphenate_limit_chars)
     if hyphens in ('none', 'manual') or lang not in pyphen.LANGUAGES:
         # No automatic hyphenation
         return first_line_metrics(first_line, text, layout, resume_at)
