@@ -92,6 +92,7 @@ ffi.cdef('''
     double              pango_units_to_double               (int i);
     int                 pango_units_from_double             (double d);
     void                g_object_unref                      (gpointer object);
+    void                g_type_init                         (void);
 
 
     PangoLayout * pango_cairo_create_layout (cairo_t *cr);
