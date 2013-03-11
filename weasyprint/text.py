@@ -90,6 +90,7 @@ ffi.cdef('''
     double              pango_units_to_double               (int i);
     int                 pango_units_from_double             (double d);
     void                g_object_unref                      (gpointer object);
+    void                g_type_init                         (void);
 
 
     PangoLayout * pango_cairo_create_layout (cairo_t *cr);
@@ -163,7 +164,7 @@ ffi.cdef('''
 
 
 def dlopen(ffi, *names):
-    """Try various names for the same libraries, for different platforms."""
+    """Try various names for the same library, for different platforms."""
     for name in names:
         try:
             return ffi.dlopen(name)
@@ -176,6 +177,8 @@ def dlopen(ffi, *names):
 gobject = dlopen(ffi, 'gobject-2.0', 'libgobject-2.0-0')
 pango = dlopen(ffi, 'pango-1.0', 'libpango-1.0-0')
 pangocairo = dlopen(ffi, 'pangocairo-1.0', 'libpangocairo-1.0-0')
+
+gobject.g_type_init()
 
 units_to_double = pango.pango_units_to_double
 units_from_double = pango.pango_units_from_double
