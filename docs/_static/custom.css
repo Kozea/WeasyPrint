@@ -27,6 +27,10 @@
     display: none;
   }
 
+  div.documentwrapper {
+    float: none;
+  }
+
   h1 {
     font-size: 26pt !important;
     margin: 5em 1em !important;
