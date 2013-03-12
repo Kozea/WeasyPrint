@@ -124,6 +124,7 @@ See the :ref:`python-api` for details. A few random example:
     document.copy(document.pages[::2]).write_pdf('odd_pages.pdf')
     document.copy(document.pages[1::2]).write_pdf('even_pages.pdf')
 
+.. code-block:: python
 
     # Write one PNG image per page:
     for i, page in enumerate(document.pages):
@@ -134,6 +135,8 @@ See the :ref:`python-api` for details. A few random example:
         """Yield (png_bytes, width, height) tuples."""
         for page in document.pages:
             yield document.copy([page]).write_png()
+
+.. code-block:: python
 
     # Print the outline of the document.
     # Output on http://www.w3.org/TR/CSS21/intro.html
@@ -151,6 +154,7 @@ See the :ref:`python-api` for details. A few random example:
             print_outline(children, indent + 2)
     print_outline(document.make_bookmark_tree())
 
+.. code-block:: python
 
     # PostScript on standard output:
     surface = cairo.PSSurface(sys.stdout, 1, 1)

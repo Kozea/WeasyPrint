@@ -1,3 +1,83 @@
 @import 'default.css';
 
 .footnote-reference { vertical-align: super; font-size: 75% }
+
+@media print {
+  @page {
+    @bottom-center {
+       content: counter(page);
+       font-size: 75%;
+     }
+  }
+
+  @page:first {
+    @bottom-center {
+       content: '';
+     }
+    font-size: 90%;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    background: transparent !important;
+    border-bottom: none !important;
+    font-family: "Fontin" !important;
+  }
+
+  .headerlink {
+    display: none;
+  }
+
+  h1 {
+    font-size: 26pt !important;
+    margin: 5em 1em !important;
+    text-align: center;
+  }
+
+  h2 {
+    font-size: 20pt !important;
+    page-break-before: always;
+  }
+
+  body, div.document {
+    background: transparent;
+    font-family: "Fontin Sans" !important;
+  }
+
+  div.highlight {
+    background: transparent !important;
+  }
+
+  pre, span.pre {
+    border: 0 !important;
+    font-family: "DejaVu Sans Mono";
+  }
+
+  pre {
+    background: #f8f8f8;
+    font-size: 10pt;
+    page-break-before: avoid;
+    page-break-inside: avoid;
+  }
+
+  pre + pre {
+    page-break-before: auto;
+  }
+
+  span.pre, tt.docutils.literal {
+    background: transparent !important;
+    font-size: 10.5pt;
+  }
+
+  .footnote-reference {
+    margin-left: 0.3em;
+    vertical-align: middle;
+  }
+
+  img {
+    max-width: 100%;
+  }
+
+  dl.method, dl.function {
+    page-break-inside: avoid;
+  }
+}
