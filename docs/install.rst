@@ -33,7 +33,7 @@ Python, cairo, Pango and GDK-PixBuf need to be installed separately.
 See :ref:`platform-specific instructions <platforms>` below.
 
 CFFI and lxml can be installed by pip automatically
-if your system has a C compiler and all the relevant development files,
+if your system has a C compiler and the recursive dependencies,
 but using a system package might be easier.
 
 Install WeasyPrint with pip_.
@@ -90,12 +90,15 @@ By platform
 
 Pango, GdkPixbuf, and cairo can not be installed
 with pip and need to be installed from your platform’s packages.
-lxml can\ [#]_, but pre-compiled packages are often easier.
+lxml and CFFI can, but you’d still need their own dependencies.
+This section lists system packages for lxml or CFFI when available,
+the dependencies otherwise.
+lxml needs *libxml2* and *libxslt*, CFFI needs *libffi*.
+On Debian, the package names with development files are
+``libxml2-dev``, ``libxslt1-dev`` and ``libffi-dev``.
 
-
-.. [#] In this case you additionally need libxml2 and libxslt with
-       development headers to compile lxml. On Debian the package are named
-       ``libxml2-dev`` and ``libxslt1-dev``.
+If your favorite system is not listed here but you know the package names,
+`tell us <http://weasyprint.org/community/>`_ so we can add it here.
 
 
 Debian / Ubuntu
@@ -105,7 +108,7 @@ Debian 7.0 Wheezy or newer, Ubuntu 11.10 Oneiric or newer:
 
 .. code-block:: sh
 
-    sudo apt-get install python-dev python-pip python-lxml libcairo2 libpango1.0-0 libgdk-pixbuf2.0-0
+    sudo apt-get install python-dev python-pip python-lxml libcairo2 libpango1.0-0 libgdk-pixbuf2.0-0 libffi-dev
 
 
 Debian 6.0 Squeeze, Ubuntu 10.04 Lucid:
@@ -113,7 +116,7 @@ GDK-PixBuf is part of GTK+, which also depends on cairo and Pango.
 
 .. code-block:: sh
 
-    sudo apt-get install python-dev python-pip python-lxml libgtk2.0-0
+    sudo apt-get install python-dev python-pip python-lxml libgtk2.0-0 libffi-dev
 
 
 Archlinux
@@ -138,19 +141,13 @@ With Macports
 
 .. code-block:: sh
 
-    sudo port install py27-pip py27-lxml cairo pango gdk-pixbuf2
+    sudo port install py27-pip py27-lxml cairo pango gdk-pixbuf2 libffi
 
 With Homebrew:
 
 .. code-block:: sh
 
-    brew install python cairo pango gdk-pixbuf libxml2 libxslt
-
-Note that Homebrew has no package
-`for lxml <https://github.com/mxcl/homebrew/wiki/Acceptable-Formula>`_.
-So we’re installing its own dependencies.
-lxml itself will be installed automatically
-when you run ``pip install WeasyPrint``.
+    brew install python cairo pango gdk-pixbuf libxml2 libxslt libffi
 
 
 Windows
@@ -161,4 +158,4 @@ Windows
   <http://www.lfd.uci.edu/~gohlke/pythonlibs/#lxml>`_ for CFFI and lxml,
 * and `Alexander Shaduri’s GTK+ installer
   <http://gtk-win.sourceforge.net/home/index.php/Main/Downloads>`_.
-  Make sure the *Set up PATH environment variable* checkbox is checked.
+  Make sure that *Set up PATH environment variable* checked.

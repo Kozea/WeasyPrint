@@ -777,16 +777,20 @@ def test_links():
             "WARNING: Ignored `-weasy-link: url(../lipsum)` at 1:1, "
             "Relative URI reference without a base URI: '../lipsum'."])
 
-    # Internal URI reference without a base URI: OK
+    # Internal or absolute URI reference without a base URI: OK
     assert_links('''
         <body style="width: 200px">
-        <a href="#lipsum" id="lipsum" style="display: block; margin: 10px 5px">
+        <a href="#lipsum" id="lipsum"
+            style="display: block; margin: 10px 5px"></a>
+        <a href="http://weasyprint.org/" style="display: block"></a>
     ''', [[
         ('internal', 'lipsum', (5, 10, 190, 0)),
+        ('external', 'http://weasyprint.org/', (0, 10, 200, 0)),
     ]], [
         {'lipsum': (5, 10)}
     ], [[
         ('internal', (0, 5, 10), (5, 10, 190, 0)),
+        ('external', 'http://weasyprint.org/', (0, 10, 200, 0)),
     ]], base_url=None)
 
     assert_links('''
