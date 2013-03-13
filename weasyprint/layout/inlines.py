@@ -205,6 +205,29 @@ def skip_first_whitespace(box, skip_stack):
     return None
 
 
+def trailing_whitespace_size(context, box):
+    """Return the size of the trailing whitespace of ``box``."""
+    while isinstance(box, boxes.InlineBox):
+        if not box.children:
+            return 0
+        box = box.children[-1]
+    if not (isinstance(box, boxes.TextBox) and
+            box.style.white_space in ('normal', 'nowrap', 'pre-line')):
+        return 0
+    stripped_text = box.text.rstrip(' ')
+    if stripped_text:
+        if len(stripped_text) == len(box.text):
+            return 0
+        stripped_box = box.copy_with_text(stripped_text)
+        stripped_box, resume, _ = split_text_box(
+            context, stripped_box, None, None, 0)
+        assert stripped_box is not None
+        assert resume is None
+        return box.width - stripped_box.width
+    else:
+        return box.width
+
+
 def remove_last_whitespace(context, box):
     """Remove in place space characters at the end of a line.
 
@@ -225,8 +248,7 @@ def remove_last_whitespace(context, box):
         if len(new_text) == len(box.text):
             return
         box.text = new_text
-        new_box, resume, _ = split_text_box(
-            context, box, box.width * 2, None, 0)
+        new_box, resume, _ = split_text_box(context, box, None, None, 0)
         assert new_box is not None
         assert resume is None
         space_width = box.width - new_box.width
@@ -569,6 +591,15 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
             child.position_x = position_x
             float_width = shrink_to_fit(
                 context, child, containing_block.width)
+
+            # To retrieve the real available space for floats, we must remove
+            # the trailing whitespaces from the line
+            non_floating_children = [
+                child_ for child_ in children if not child_.is_floated()]
+            if non_floating_children:
+                float_width -= trailing_whitespace_size(
+                    context, non_floating_children[-1])
+
             if float_width > max_x - position_x or waiting_floats:
                 # TODO: the absolute and fixed boxes in the floats must be
                 # added here, and not in iter_line_boxes
@@ -732,9 +763,6 @@ def split_text_box(context, box, available_width, line_width, skip):
                 'Got %r between two lines. '
                 'Expected nothing or a preserved line break' % (between,))
         resume_at += skip
-
-    if box and not preserved_line_break and not new_text.strip(' '):
-        box.width = 0
 
     return box, resume_at, preserved_line_break
 
