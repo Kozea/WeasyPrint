@@ -581,7 +581,6 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
             placeholder = AbsolutePlaceholder(child)
             line_placeholders.append(placeholder)
             children.append(placeholder)
-            absolute_boxes.append(placeholder)
             if child.style.position == 'absolute':
                 absolute_boxes.append(placeholder)
             else:

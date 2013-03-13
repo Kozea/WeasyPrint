@@ -229,6 +229,7 @@ def absolute_block(context, box, containing_block, fixed_boxes):
 
 def absolute_layout(context, placeholder, containing_block, fixed_boxes):
     """Set the width of absolute positioned ``box``."""
+    assert not placeholder._layout_done
     box = placeholder._box
 
     cb = containing_block
