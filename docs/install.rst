@@ -105,7 +105,7 @@ Debian 7.0 Wheezy or newer, Ubuntu 11.10 Oneiric or newer:
 
 .. code-block:: sh
 
-    sudo apt-get install python-dev python-pip python-lxml libcairo2 libpango1.0-0 libgdk-pixbuf2.0-0
+    sudo apt-get install python-dev python-pip python-lxml libcairo2 libpango1.0-0 libgdk-pixbuf2.0-0 libffi-dev
 
 
 Debian 6.0 Squeeze, Ubuntu 10.04 Lucid:
