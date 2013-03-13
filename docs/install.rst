@@ -158,4 +158,4 @@ Windows
   <http://www.lfd.uci.edu/~gohlke/pythonlibs/#lxml>`_ for CFFI and lxml,
 * and `Alexander Shaduri’s GTK+ installer
   <http://gtk-win.sourceforge.net/home/index.php/Main/Downloads>`_.
-  Make sure the *Set up PATH environment variable* checkbox is checked.
+  Make sure that *Set up PATH environment variable* checked.
