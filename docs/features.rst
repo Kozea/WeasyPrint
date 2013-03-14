@@ -131,7 +131,7 @@ as described in `CSS 3 Text`_.
 To get automatic hyphenation, you to set it to ``auto``
 *and* have the ``lang`` HTML attribute set to one of the languages
 `supported by Pyphen
-<https://github.com/Kozea/Pyphen/tree/master/pyphen/dictionaries>`_.
+<https://github.com/Kozea/Pyphen/tree/master/dictionaries>`_.
 
 .. _CSS 3 Text: http://www.w3.org/TR/css3-text/#hyphens
 
