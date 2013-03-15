@@ -144,6 +144,12 @@ To get automatic hyphenation, you to set it to ``auto``
     </style>
     …
 
+Automatic hyphenation can be disabled again with the ``manual`` value:
+
+.. code-block:: css
+
+    html { -weasy-hyphens: auto }
+    a[href]::after { content: ' [' attr(href) ']'; -weasy-hyphens: manual }
 
 
 .. _bookmarks:
