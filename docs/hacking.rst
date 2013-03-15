@@ -12,13 +12,28 @@ install the `development version`_ of WeasyPrint:
     cd WeasyPrint
     virtualenv --system-site-packages env
     . env/bin/activate
-    pip install pytest
-    pip install -e .
+    pip install pytest Sphinx -e .
     weasyprint --help
 
-This will install WeasyPrint in “editable” mode (which means that you don’t
-need to re-install it every time you make a change in the source code) as
-well as `py.test <http://pytest.org/>`_.
+This will install WeasyPrint in “editable” mode
+(which means that you don’t need to re-install it
+every time you make a change in the source code)
+as well as `py.test <http://pytest.org/>`_
+and `Sphinx <http://sphinx.pocoo.org/>`_.
+
+
+Documentation changes
+---------------------
+
+The documentation lives in the ``docs`` directory,
+but API section references docstrings in the source code.
+Run ``python setup.py build_sphinx`` to rebuild the documentation
+and get the output in ``docs/_build/html``.
+The website version is updated automatically when we push to master on GitHub.
+
+
+Code changes
+------------
 
 Use the ``py.test`` command from the ``WeasyPrint`` directory to run the
 test suite.
