@@ -269,15 +269,17 @@ def block_container_layout(context, box, max_position_y, skip_stack,
             child.position_y += collapse_margin(adjoining_margins)
             if child.is_absolutely_positioned():
                 placeholder = AbsolutePlaceholder(child)
+                placeholder.index = index
                 new_children.append(placeholder)
                 if child.style.position == 'absolute':
                     absolute_boxes.append(placeholder)
                 else:
                     fixed_boxes.append(placeholder)
             elif child.is_floated():
-                child = float_layout(
+                new_child = float_layout(
                     context, child, box, absolute_boxes, fixed_boxes)
-                new_children.append(child)
+                new_child.index = index
+                new_children.append(new_child)
             continue
 
         if isinstance(child, boxes.LineBox):
