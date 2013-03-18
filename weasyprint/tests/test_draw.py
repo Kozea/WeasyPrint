@@ -1589,6 +1589,26 @@ def test_outlines():
 
 
 @assert_no_logs
+def test_small_borders():
+    # Regression test for ZeroDivisionError on dashed or dotted borders
+    # smaller than a dash/dot.
+    # https://github.com/Kozea/WeasyPrint/issues/49
+
+    # Do not test the exact rendering of earch border style but at least
+    # check that they do not do the same.
+    assert_different_renderings(50, 50, [('small_border_%s'  % border_style, '''
+        <style>
+            @page { size: 50px 50px }
+            html { background: #fff }
+            body { margin: 5px; height: 0; border: 10px %s blue }
+        </style>
+        <body>''' % border_style)
+        for border_style in ['none', 'solid', 'dashed', 'dotted']
+    ])
+
+
+
+@assert_no_logs
 def test_margin_boxes():
     """Test the rendering of margin boxes"""
     _ = as_pixel(b'\xff\xff\xff\xff')  # white

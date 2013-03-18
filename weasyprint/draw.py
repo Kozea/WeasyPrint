@@ -469,12 +469,12 @@ def draw_border_segment(context, enable_hinting, style, width, color, side,
                 if context.user_to_device_distance(width, 0)[0] > 3:
                     # Round so that dash is a divisor of length,
                     # but not in the dots are too small.
-                    dash = length / round(length / dash)
+                    dash = length / max(1, round(length / dash))
                 context.set_line_cap(cairo.LINE_CAP_ROUND)
                 context.set_dash([0, dash])
             else:  # dashed
                 # Round so that 2*dash is a divisor of length
-                dash = length / (2 * round(length / (2 * dash)))
+                dash = length / (2 * max(1, round(length / (2 * dash))))
                 context.set_dash([dash])
             # Stroke along the line in === above, as wide as the border
             context.move_to(x1, y1)
