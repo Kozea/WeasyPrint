@@ -901,10 +901,10 @@ urlparse_uses_relative.append('weasyprint-custom')
 def test_url_fetcher():
     pattern_png = read_file(resource_filename('pattern.png'))
     def fetcher(url):
-        if url == 'weasyprint-custom:foo/pattern':
+        if url == 'weasyprint-custom:foo/%C3%A9_%e9_pattern':
             return dict(string=pattern_png, mime_type='image/png')
         elif url == 'weasyprint-custom:foo/bar.css':
-            return dict(string='body { background: url(pattern)')
+            return dict(string='body { background: url(é_%e9_pattern)')
         else:
             return default_url_fetcher(url)
 
@@ -918,10 +918,10 @@ def test_url_fetcher():
         check_png_pattern(html.write_png(stylesheets=[css]), blank=blank)
 
     test('<body><img src="pattern.png">')  # Test a "normal" URL
-    test('<body><img src="weasyprint-custom:foo/pattern">')
-    test('<body style="background: url(weasyprint-custom:foo/pattern)">')
+    test('<body><img src="weasyprint-custom:foo/é_%e9_pattern">')
+    test('<body style="background: url(weasyprint-custom:foo/é_%e9_pattern)">')
     test('<body><li style="list-style: inside '
-            'url(weasyprint-custom:foo/pattern)">')
+            'url(weasyprint-custom:foo/é_%e9_pattern)">')
     test('<link rel=stylesheet href="weasyprint-custom:foo/bar.css"><body>')
     test('<style>@import "weasyprint-custom:foo/bar.css";</style><body>')
 

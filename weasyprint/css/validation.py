@@ -172,9 +172,9 @@ def get_angle(token):
 
 def safe_urljoin(base_url, url):
     if url_is_absolute(url):
-        return url
+        return iri_to_uri(url)
     elif base_url:
-        return urljoin(base_url, url)
+        return iri_to_uri(urljoin(base_url, url))
     else:
         raise InvalidValues(
             'Relative URI reference without a base URI: %r' % url)
@@ -907,7 +907,7 @@ def link(token, base_url):
         if token.value.startswith('#'):
             return 'internal', unquote(token.value[1:])
         else:
-            return 'external', iri_to_uri(safe_urljoin(base_url, token.value))
+            return 'external', safe_urljoin(base_url, token.value)
     function = parse_function(token)
     if function:
         name, args = function
