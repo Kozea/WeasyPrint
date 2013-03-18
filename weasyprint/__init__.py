@@ -16,7 +16,7 @@
 from __future__ import division, unicode_literals
 
 
-VERSION = '0.17'
+VERSION = '0.17.1'
 __version__ = VERSION
 
 # Used for 'User-Agent' in HTTP and 'Creator' in PDF

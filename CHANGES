@@ -1,6 +1,26 @@
 WeasyPrint changelog
 ====================
 
+Version 0.17.1
+--------------
+
+Released on 2013-03-18.
+
+Bug fixes:
+
+* Fix `#41 <https://github.com/Kozea/WeasyPrint/issues/41>`_:
+  GObject initialization when GDK-PixBuf is not installed.
+* Fix `#42 <https://github.com/Kozea/WeasyPrint/issues/42>`_:
+  absolute URLs without a base URL (ie. document parsed from a string.)
+* Fix some whitespace collapsing bugs.
+* Fix absolutely-positioned elements inside inline elements.
+* Fix URL escaping of image references from CSS.
+* Fix `#49 <https://github.com/Kozea/WeasyPrint/issues/49>`_:
+  Division by 0 on dashed or dotted border smaller than one dot/dash.
+* Fix `#44 <https://github.com/Kozea/WeasyPrint/issues/44>`_:
+  bad interaction of ``page-break-before/after: avoid`` and floats.
+
+
 Version 0.17
 ------------
 
