@@ -197,8 +197,9 @@ def draw_background(context, bg, enable_hinting):
             # Prefer crisp edges on background rectangles.
             context.set_antialias(cairo.ANTIALIAS_NONE)
 
-        if bg.painting_area:
-            context.rectangle(*bg.painting_area)
+        painting_area = bg.layers[-1].painting_area
+        if painting_area:
+            context.rectangle(*painting_area)
             context.clip()
         #else: unrestricted, whole page box
 
@@ -207,17 +208,23 @@ def draw_background(context, bg, enable_hinting):
             context.set_source_rgba(*bg.color)
             context.paint()
 
-        # Background image
-        if bg.image is None:
-            return
+        # Paint in reversed order: first layer is "closest" to the viewer.
+        for layer in reversed(bg.layers):
+            draw_background_image(context, layer, enable_hinting)
 
+def draw_background_image(context, layer, enable_hinting):
+    # Background image
+    if layer.image is None:
+        return
+
+    with stacked(context):
         (positioning_x, positioning_y,
-            positioning_width, positioning_height) = bg.positioning_area
+            positioning_width, positioning_height) = layer.positioning_area
         context.translate(positioning_x, positioning_y)
 
-        get_pattern, intrinsic_width, intrinsic_height = bg.image
+        get_pattern, intrinsic_width, intrinsic_height = layer.image
 
-        bg_size = bg.size
+        bg_size = layer.size
         if bg_size in ('cover', 'contain'):
             scale_x = scale_y = {'cover': max, 'contain': min}[bg_size](
                 positioning_width / intrinsic_width,
@@ -242,20 +249,20 @@ def draw_background(context, bg, enable_hinting):
             scale_x = image_width / intrinsic_width
             scale_y = image_height / intrinsic_height
 
-        bg_position_x, bg_position_y = bg.position
+        bg_position_x, bg_position_y = layer.position
         context.translate(
             percentage(bg_position_x, positioning_width - image_width),
             percentage(bg_position_y, positioning_height - image_height),
         )
 
-        if bg.repeat in ('repeat-x', 'repeat-y'):
+        if layer.repeat in ('repeat-x', 'repeat-y'):
             # Get the current clip rectangle. This is the same as
             # painting_area, but in new coordinates after translate()
             clip_x1, clip_y1, clip_x2, clip_y2 = context.clip_extents()
             clip_width = clip_x2 - clip_x1
             clip_height = clip_y2 - clip_y1
 
-            if bg.repeat == 'repeat-x':
+            if layer.repeat == 'repeat-x':
                 # Limit the drawn area vertically
                 clip_y1 = 0  # because of the last context.translate()
                 clip_height = image_height
@@ -270,9 +277,9 @@ def draw_background(context, bg, enable_hinting):
             context.clip()
 
         pattern = get_pattern()
-        pattern.set_extend(cairo.EXTEND_NONE if bg.repeat == 'no-repeat'
+        pattern.set_extend(cairo.EXTEND_NONE if layer.repeat == 'no-repeat'
                            else cairo.EXTEND_REPEAT)
-        pattern.set_filter(IMAGE_RENDERING_TO_FILTER[bg.image_rendering])
+        pattern.set_filter(IMAGE_RENDERING_TO_FILTER[layer.image_rendering])
         context.scale(scale_x, scale_y)
         context.set_source(pattern)
         context.paint()

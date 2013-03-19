@@ -81,7 +81,9 @@ def assert_no_logs(function):
                         print(message, file=sys.stderr)
                 raise
             else:
-                assert len(logs) == 0, '%i errors logged:' % len(logs)
-                for message in logs:
-                    print(message, file=sys.stderr)
+                if logs:
+                    print('%i errors logged:' % len(logs))
+                    for message in logs:
+                        print(message, file=sys.stderr)
+                    assert 0
     return wrapper

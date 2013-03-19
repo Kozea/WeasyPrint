@@ -213,6 +213,12 @@ def compute(element, pseudo_type, specified, computed, parent_style):
 
 
 @register_computer('background-position')
+def length_or_percentage_tuple_list(computer, name, values):
+    """Compute the lists of lengths that can be percentages."""
+    return [length_or_percentage_tuple(computer, name, value)
+            for value in values]
+
+
 @register_computer('transform-origin')
 def length_or_percentage_tuple(computer, name, values):
     """Compute the lists of lengths that can be percentages."""
@@ -286,12 +292,11 @@ def pixel_length(computer, name, value):
 
 
 @register_computer('background-size')
-def background_size(computer, name, value):
+def background_size(computer, name, values):
     """Compute the ``background-size`` properties."""
-    if value in ('contain', 'cover'):
-        return value
-    else:
-        return length_or_percentage_tuple(computer, name, value)
+    return [value if value in ('contain', 'cover') else
+            length_or_percentage_tuple(computer, name, value)
+            for value in values]
 
 
 @register_computer('border-top-width')

@@ -233,7 +233,7 @@ def test_background_image():
     #    B+B+B+B,
 
     for name, css, pixels in [
-        ('repeat', '', [
+        ('repeat', 'url(pattern.png)', [
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+r+B+B+B+r+B+B+B+r+B+_+_,
@@ -251,7 +251,7 @@ def test_background_image():
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         ]),
-        ('repeat_x', 'repeat-x', [
+        ('repeat_x', 'url(pattern.png) repeat-x', [
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+r+B+B+B+r+B+B+B+r+B+_+_,
@@ -269,7 +269,7 @@ def test_background_image():
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         ]),
-        ('repeat_y', 'repeat-y', [
+        ('repeat_y', 'url(pattern.png) repeat-y', [
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+r+B+B+B+_+_+_+_+_+_+_+_,
@@ -288,7 +288,7 @@ def test_background_image():
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         ]),
 
-        ('left_top', 'no-repeat 0 0%', [
+        ('left_top', 'url(pattern.png) no-repeat 0 0%', [
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+r+B+B+B+_+_+_+_+_+_+_+_,
@@ -306,7 +306,7 @@ def test_background_image():
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         ]),
-        ('center_top', 'no-repeat 50% 0px', [
+        ('center_top', 'url(pattern.png) no-repeat 50% 0px', [
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+r+B+B+B+_+_+_+_+_,
@@ -324,7 +324,7 @@ def test_background_image():
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         ]),
-        ('right_top', 'no-repeat 6px top', [
+        ('right_top', 'url(pattern.png) no-repeat 6px top', [
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+r+B+B+B+_+_,
@@ -342,7 +342,7 @@ def test_background_image():
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         ]),
-        ('left_center', 'no-repeat left center', [
+        ('left_center', 'url(pattern.png) no-repeat left center', [
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
@@ -360,7 +360,7 @@ def test_background_image():
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         ]),
-        ('center_left', 'no-repeat center left', [
+        ('center_left', 'url(pattern.png) no-repeat center left', [
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
@@ -378,7 +378,7 @@ def test_background_image():
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         ]),
-        ('center_center', 'no-repeat 3px 3px', [
+        ('center_center', 'url(pattern.png) no-repeat 3px 3px', [
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
@@ -396,7 +396,7 @@ def test_background_image():
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         ]),
-        ('right_center', 'no-repeat 100% 50%', [
+        ('right_center', 'url(pattern.png) no-repeat 100% 50%', [
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
@@ -415,7 +415,7 @@ def test_background_image():
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         ]),
 
-        ('left_bottom', 'no-repeat 0% bottom', [
+        ('left_bottom', 'url(pattern.png) no-repeat 0% bottom', [
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
@@ -433,7 +433,7 @@ def test_background_image():
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         ]),
-        ('center_bottom', 'no-repeat center 6px', [
+        ('center_bottom', 'url(pattern.png) no-repeat center 6px', [
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
@@ -451,7 +451,7 @@ def test_background_image():
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         ]),
-        ('bottom_center', 'no-repeat bottom center', [
+        ('bottom_center', 'url(pattern.png) no-repeat bottom center', [
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
@@ -469,7 +469,7 @@ def test_background_image():
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         ]),
-        ('right_bottom', 'no-repeat 6px 100%', [
+        ('right_bottom', 'url(pattern.png) no-repeat 6px 100%', [
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
@@ -488,7 +488,7 @@ def test_background_image():
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         ]),
 
-        ('repeat_x_1px_2px', 'repeat-x 1px 2px', [
+        ('repeat_x_1px_2px', 'url(pattern.png) repeat-x 1px 2px', [
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
@@ -506,7 +506,7 @@ def test_background_image():
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         ]),
-        ('repeat_y_2px_1px', 'repeat-y 2px 1px', [
+        ('repeat_y_2px_1px', 'url(pattern.png) repeat-y 2px 1px', [
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+B+B+B+B+_+_+_+_+_+_,
@@ -525,7 +525,7 @@ def test_background_image():
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         ]),
 
-        ('fixed', 'no-repeat fixed', [
+        ('fixed', 'url(pattern.png) no-repeat fixed', [
             # The image is actually here:
             #######
             _+_+_+_+_+_+_+_+_+_+_+_+_+_, #
@@ -545,7 +545,7 @@ def test_background_image():
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         ]),
-        ('fixed_right', 'no-repeat fixed right 3px', [
+        ('fixed_right', 'url(pattern.png) no-repeat fixed right 3px', [
                                 #######
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
@@ -564,7 +564,7 @@ def test_background_image():
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         ]),
-        ('fixed_center_center', 'no-repeat fixed 50% center', [
+        ('fixed_center_center', 'url(pattern.png) no-repeat fixed 50% center', [
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
@@ -582,13 +582,57 @@ def test_background_image():
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         ]),
+        ('multi_over', '''
+            no-repeat;
+            background-image: url(pattern.png), url(pattern.png);
+            background-position: 0 0, 2px 1px
+        ''', [
+            _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+            _+_+r+B+B+B+_+_+_+_+_+_+_+_,
+            _+_+B+B+B+B+B+B+_+_+_+_+_+_,
+            _+_+B+B+B+B+B+B+_+_+_+_+_+_,
+            _+_+B+B+B+B+B+B+_+_+_+_+_+_,
+            _+_+_+_+B+B+B+B+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        ]),
+        ('multi_under', '''
+            no-repeat;
+            background-image: url(pattern.png), url(pattern.png);
+            background-position: 2px 1px, 0 0
+        ''', [
+            _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+            _+_+r+B+B+B+_+_+_+_+_+_+_+_,
+            _+_+B+B+r+B+B+B+_+_+_+_+_+_,
+            _+_+B+B+B+B+B+B+_+_+_+_+_+_,
+            _+_+B+B+B+B+B+B+_+_+_+_+_+_,
+            _+_+_+_+B+B+B+B+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+            _+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        ]),
     ]:
         assert_pixels('background_' + name, 14, 16, pixels, '''
             <style>
                 @page { size: 14px 16px }
                 html { background: #fff }
                 body { margin: 2px; height: 10px;
-                       background: url(pattern.png) %s }
+                       background: %s }
                 p { background: none }
             </style>
             <body>

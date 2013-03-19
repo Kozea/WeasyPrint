@@ -290,86 +290,86 @@ def test_expand_background():
     """Test the ``background`` property."""
     assert_background(
         'red',
-        color=(1, 0, 0, 1), ## red
-        image='none',
-        repeat='repeat',
-        attachment='scroll',
-        position=((0, '%'), (0, '%')),
+        color=(1, 0, 0, 1),  ## red
+        image=['none'],
+        repeat=['repeat'],
+        attachment=['scroll'],
+        position=[((0, '%'), (0, '%'))],
 
     )
     assert_background(
         'url(lipsum.png)',
         color=(0, 0, 0, 0), # transparent
-        image='http://weasyprint.org/foo/lipsum.png', ##
-        repeat='repeat',
-        attachment='scroll',
-        position=((0, '%'), (0, '%')),
+        image=['http://weasyprint.org/foo/lipsum.png'],  ##
+        repeat=['repeat'],
+        attachment=['scroll'],
+        position=[((0, '%'), (0, '%'))],
     )
     assert_background(
         'no-repeat',
         color=(0, 0, 0, 0), # transparent
-        image='none',
-        repeat='no-repeat', ##
-        attachment='scroll',
-        position=((0, '%'), (0, '%')),
+        image=['none'],
+        repeat=['no-repeat'],  ##
+        attachment=['scroll'],
+        position=[((0, '%'), (0, '%'))],
     )
     assert_background(
         'fixed',
         color=(0, 0, 0, 0), # transparent
-        image='none',
-        repeat='repeat',
-        attachment='fixed', ##
-        position=((0, '%'), (0, '%')),
+        image=['none'],
+        repeat=['repeat'],
+        attachment=['fixed'],  ##
+        position=[((0, '%'), (0, '%'))],
     )
     assert_background(
         'top right',
         color=(0, 0, 0, 0), # transparent
-        image='none',
-        repeat='repeat',
-        attachment='scroll',
+        image=['none'],
+        repeat=['repeat'],
+        attachment=['scroll'],
         # Order swapped to be in (horizontal, vertical) order.
-        position=((100, '%'), (0, '%')), ##
+        position=[((100, '%'), (0, '%'))],  ##
     )
     assert_background(
         'top no-repeat',
         color=(0, 0, 0, 0), # transparent
-        image='none',
-        repeat='no-repeat',  ##
-        attachment='scroll',
-        position=((0, '%'), (50, '%')), ##
+        image=['none'],
+        repeat=['no-repeat'],  ##
+        attachment=['scroll'],
+        position=[((0, '%'), (50, '%'))],  ##
     )
     assert_background(
         'top',
         color=(0, 0, 0, 0), # transparent
-        image='none',
-        repeat='repeat',
-        attachment='scroll',
-        position=((0, '%'), (50, '%')), ##
+        image=['none'],
+        repeat=['repeat'],
+        attachment=['scroll'],
+        position=[((0, '%'), (50, '%'))],  ##
     )
     assert_background(
         'url(bar) #f00 repeat-y center left fixed',
-        color=(1, 0, 0, 1), ## #f00
-        image='http://weasyprint.org/foo/bar', ##
-        repeat='repeat-y', ##
-        attachment='fixed', ##
+        color=(1, 0, 0, 1),  ## #f00
+        image=['http://weasyprint.org/foo/bar'],  ##
+        repeat=['repeat-y'],  ##
+        attachment=['fixed'],  ##
         # Order swapped to be in (horizontal, vertical) order.
-        position=((0, '%'), (50, '%')), ##
+        position=[((0, '%'), (50, '%'))],  ##
     )
     assert_background(
         '#00f 10% 200px',
-        color=(0, 0, 1, 1), ## #00f
-        image='none',
-        repeat='repeat',
-        attachment='scroll',
-        position=((10, '%'), (200, 'px')),  ##
+        color=(0, 0, 1, 1),  ## #00f
+        image=['none'],
+        repeat=['repeat'],
+        attachment=['scroll'],
+        position=[((10, '%'), (200, 'px'))],  ##
     )
     assert_background(
         'right 78px fixed',
         color=(0, 0, 0, 0), # transparent
-        image='none',
-        repeat='repeat',
-        attachment='fixed', ##
-        position=((100, '%'), (78, 'px')), ##
+        image=['none'],
+        repeat=['repeat'],
+        attachment=['fixed'],  ##
+        position=[((100, '%'), (78, 'px'))],  ##
     )
     assert expand_to_dict('background: 10px lipsum', 'invalid') == {}
     assert expand_to_dict('background-position: 10px lipsum', 'invalid') == {}

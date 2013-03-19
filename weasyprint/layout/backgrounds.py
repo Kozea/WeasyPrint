@@ -15,7 +15,9 @@ from collections import namedtuple
 from ..formatting_structure import boxes
 
 
-Background = namedtuple('Background', 'color, image, size, position, repeat, '
+Background = namedtuple('Background', 'color, layers')
+BackgroundLayer = namedtuple('BackgroundLayer',
+    'image, size, position, repeat, '
     'image_rendering, painting_area, positioning_area')
 
 
@@ -54,27 +56,40 @@ def layout_box_backgrounds(page, box, get_image_from_uri):
         box.background = None
         return
 
-    image = (get_image_from_uri(style.background_image)
-             if style.background_image != 'none' else None)
+    images = [get_image_from_uri(image) if image != 'none' else None
+              for image in style.background_image]
     color = style.get_color('background_color')
-    if image is None and color.alpha == 0:
+    if color.alpha == 0 and not any(images):
         box.background = None
         return
 
-    box.background = Background(
-        color=color,
-        image=image,
-        size=style.background_size,
-        position=style.background_position,
-        repeat=style.background_repeat,
-        image_rendering=style.image_rendering,
-        painting_area=(box_rectangle(box, box.style.background_clip)
-                       if box is not page else None),
-        positioning_area=(
-            # Initial containing block
-            box_rectangle(page, 'content-box')
-            if style.background_attachment == 'fixed' and box is not page
-            else box_rectangle(box, box.style.background_origin)))
+    size = style.background_size
+    clip = style.background_clip
+    repeat = style.background_repeat
+    origin = style.background_origin
+    position = style.background_position
+    attachment = style.background_attachment
+    image_rendering = style.image_rendering
+    layers = []
+    def get(some_list):
+        return some_list[i % len(some_list)]
+
+    for i, image in enumerate(images):
+        layers.append(BackgroundLayer(
+            image=image,
+            size=get(size),
+            position=get(position),
+            repeat=get(repeat),
+            image_rendering=image_rendering,
+            painting_area=(box_rectangle(box, get(clip))
+                           if box is not page else None),
+            positioning_area=(
+                # Initial containing block
+                box_rectangle(page, 'content-box')
+                if get(attachment) == 'fixed' and box is not page
+                else box_rectangle(box, get(origin)))))
+
+    box.background = Background(color=color, layers=layers)
 
 
 def set_canvas_background(page):
@@ -88,9 +103,7 @@ def set_canvas_background(page):
     assert not isinstance(page.children[0], boxes.MarginBox)
     root_box = page.children[0]
     chosen_box = root_box
-    if (root_box.element_tag.lower() == 'html' and
-            root_box.style.get_color('background_color').alpha == 0 and
-            root_box.style.background_image == 'none'):
+    if root_box.element_tag.lower() == 'html' and root_box.background is None:
         for child in root_box.children:
             if child.element_tag.lower() == 'body':
                 chosen_box = child
@@ -98,7 +111,9 @@ def set_canvas_background(page):
 
     if chosen_box.background:
         page.canvas_background = chosen_box.background._replace(
-            painting_area=box_rectangle(page, 'padding-box'))
+            # TODO: shouldn’t background-clip be considered here?
+            layers=[l._replace(painting_area=box_rectangle(page, 'padding-box'))
+                    for l in chosen_box.background.layers])
         chosen_box.background = None
     else:
         page.canvas_background = None

@@ -157,6 +157,21 @@ def single_token(function):
     return single_token_validator
 
 
+def comma_separated_list(function):
+    """Decorator for validators that accept a comma separated list."""
+    @functools.wraps(function)
+    def wrapper(tokens, *args):
+        results = []
+        for part in split_on_comma(tokens):
+            result = function(remove_whitespace(part), *args)
+            if result is None:
+                return None
+            results.append(result)
+        return results
+    wrapper.single_value = function
+    return wrapper
+
+
 def get_length(token, negative=True, percentage=False):
     if (token.unit in LENGTH_UNITS or (percentage and token.unit == '%')
                 or (token.type in ('INTEGER', 'NUMBER') and token.value == 0)
@@ -181,6 +196,7 @@ def safe_urljoin(base_url, url):
 
 
 @validator()
+@comma_separated_list
 @single_keyword
 def background_attachment(keyword):
     """``background-attachment`` property validation."""
@@ -224,6 +240,7 @@ def color(token):
 
 
 @validator('background-image', wants_base_url=True)
+@comma_separated_list
 @validator('list-style-image', wants_base_url=True)
 @single_token
 def image(token, base_url):
@@ -234,8 +251,9 @@ def image(token, base_url):
         return safe_urljoin(base_url, token.value)
 
 
-@validator('transform-origin', unprefixed=True)
 @validator()
+@comma_separated_list
+@validator('transform-origin', unprefixed=True)
 def background_position(tokens):
     """``background-position`` property validation.
 
@@ -281,6 +299,7 @@ def background_position(tokens):
 
 
 @validator()
+@comma_separated_list
 @single_keyword
 def background_repeat(keyword):
     """``background-repeat`` property validation."""
@@ -288,6 +307,7 @@ def background_repeat(keyword):
 
 
 @validator()
+@comma_separated_list
 def background_size(tokens):
     """Validation for ``background-size``."""
     if len(tokens) == 1:
@@ -315,6 +335,7 @@ def background_size(tokens):
 
 @validator('background-clip')
 @validator('background-origin')
+@comma_separated_list
 @single_keyword
 def box(keyword):
     """Validation for the ``<box>`` type used in ``background-clip``
@@ -558,19 +579,13 @@ def float_(keyword):  # XXX do not hide the "float" builtin
 
 
 @validator()
+@comma_separated_list
 def font_family(tokens):
     """``font-family`` property validation."""
-    parts = split_on_comma(tokens)
-    families = []
-    for part in parts:
-        if len(part) == 1 and part[0].type == 'STRING':
-            families.append(part[0].value)
-        elif part and all(token.type == 'IDENT' for token in part):
-            families.append(' '.join(token.value for token in part))
-        else:
-            break
-    else:
-        return families
+    if len(tokens) == 1 and tokens[0].type == 'STRING':
+        return tokens[0].value
+    elif tokens and all(token.type == 'IDENT' for token in tokens):
+        return ' '.join(token.value for token in tokens)
 
 
 @validator()
@@ -1196,10 +1211,10 @@ def expand_border_side(name, tokens):
 @expander('background')
 @generic_expander('-color', '-image', '-repeat', '-attachment', '-position',
                   wants_base_url=True)
-def expand_background(name, tokens, base_url):
+def expand_background(name, tokens, base_url):#def expand_background(base_url, name, tokens):
     """Expand the ``background`` shorthand property.
 
-    See http://www.w3.org/TR/CSS21/colors.html#propdef-background
+    See http://dev.w3.org/csswg/css3-background/#the-background
 
     """
     # Make `tokens` a stack
@@ -1208,16 +1223,16 @@ def expand_background(name, tokens, base_url):
         token = tokens.pop()
         if parse_color(token) is not None:
             suffix = '-color'
-        elif image([token], base_url) is not None:
+        elif image.single_value([token], base_url) is not None:
             suffix = '-image'
-        elif background_repeat([token]) is not None:
+        elif background_repeat.single_value([token]) is not None:
             suffix = '-repeat'
-        elif background_attachment([token]) is not None:
+        elif background_attachment.single_value([token]) is not None:
             suffix = '-attachment'
-        elif background_position([token]):
+        elif background_position.single_value([token]):
             if tokens:
                 next_token = tokens.pop()
-                if background_position([token, next_token]):
+                if background_position.single_value([token, next_token]):
                     # Two consecutive '-position' tokens, yield them together
                     yield '-position', [token, next_token]
                     continue
