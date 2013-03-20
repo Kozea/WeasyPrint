@@ -1225,7 +1225,7 @@ def expand_background(base_url, name, tokens):
             yield name, keyword
         return
 
-    def parse_layer(tokens, can_have_color=False):
+    def parse_layer(tokens, final_layer=False):
         results = {}
         def add(name, value):
             if value is None:
@@ -1237,28 +1237,37 @@ def expand_background(base_url, name, tokens):
             return True
 
         # Make `tokens` a stack
-        tokens = list(reversed(tokens))
+        tokens = tokens[::-1]
         while tokens:
-            token = tokens.pop()
-            if can_have_color and add('color', parse_color(token)):
+            token1 = [tokens.pop()]
+            if (
+                final_layer and add('color', other_colors(token1))
+                or add('image', image.single_value(token1, base_url))
+                or add('repeat', background_repeat.single_value(token1))
+                or add('attachment', background_attachment.single_value(token1))
+            ):
                 continue
-            if add('image', image.single_value([token], base_url)):
+            # TODO: 2-token repeat
+            if add('origin', box.single_value(token1)):
+                token2 = tokens[-1:]
+                if add('clip', box.single_value(token2)):
+                    tokens.pop()
+                    continue
+                # The same keyword sets both:
+                assert add('clip', box.single_value(token1))
                 continue
-            if add('repeat', background_repeat.single_value([token])):
-                continue
-            if add('attachment', background_attachment.single_value([token])):
-                continue
-            position = background_position.single_value([token])
+            position = background_position.single_value(token1)
             if position is not None:
+                # TODO: 3- and 4-token position
                 if tokens:
-                    next_token = tokens.pop()
-                    if add('position', background_position.single_value(
-                            [token, next_token])):
+                    token2 = token1 + tokens[-1:]
+                    if add('position',
+                           background_position.single_value(token2)):
+                        tokens.pop()
                         continue  # A two-token position.
-                    # Put the unused token back for the next loop iteration
-                    tokens.append(next_token)
                 assert add('position', position)
                 continue
+            # TODO: parse background-size
             raise InvalidValues
 
         color = results.pop(
@@ -1269,7 +1278,7 @@ def expand_background(base_url, name, tokens):
         return color, results
 
     layers = reversed(split_on_comma(tokens))
-    color, last_layer = parse_layer(next(layers), can_have_color=True)
+    color, last_layer = parse_layer(next(layers), final_layer=True)
     results = dict((k, [v]) for k, v in last_layer.items())
     for tokens in layers:
         _, layer = parse_layer(tokens)

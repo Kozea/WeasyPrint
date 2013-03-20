@@ -312,9 +312,18 @@ def test_expand_background():
         background_position=[((10, '%'), (200, 'px'))])
     assert_background(
         'right 78px fixed',
-        background_color=(0, 0, 0, 0),
         background_attachment=['fixed'],
         background_position=[((100, '%'), (78, 'px'))])
+    assert_background(
+        'red content-box',
+        background_color=(1, 0, 0, 1),
+        background_origin=['content-box'],
+        background_clip=['content-box'])
+    assert_background(
+        'red border-box content-box',
+        background_color=(1, 0, 0, 1),
+        background_origin=['border-box'],
+        background_clip=['content-box'])
     assert_background(
         'url(bar) center, no-repeat',
         background_color=(0, 0, 0, 0),
@@ -325,6 +334,8 @@ def test_expand_background():
     assert expand_to_dict('background-position: 10px lipsum', 'invalid') == {}
     # Color must be last:
     assert expand_to_dict('background: red, url(foo)', 'invalid') == {}
+    assert expand_to_dict(
+        'background: content-box red content-box', 'invalid') == {}
 
 
 @assert_no_logs
