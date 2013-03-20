@@ -200,7 +200,7 @@ def safe_urljoin(base_url, url):
 @single_keyword
 def background_attachment(keyword):
     """``background-attachment`` property validation."""
-    return keyword in ('scroll', 'fixed')
+    return keyword in ('scroll', 'fixed', 'local')
 
 
 @validator('background-color')

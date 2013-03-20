@@ -506,7 +506,7 @@ def test_background_image():
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         ]),
-        ('repeat_y_2px_1px', 'url(pattern.png) repeat-y 2px 1px', [
+        ('repeat_y_local_2px_1px', 'url(pattern.png) repeat-y local 2px 1px', [
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+B+B+B+B+_+_+_+_+_+_,
