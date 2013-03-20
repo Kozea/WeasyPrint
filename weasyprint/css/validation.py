@@ -281,7 +281,7 @@ def background_position(tokens):
             length_2 = get_length(token_2, percentage=True)
             if length_2:
                 return length_1, length_2
-            raise InvalidValues
+            return None  # invalid
         length_2 = get_length(token_2, percentage=True)
         if length_2:
             if keyword_1 in ('left', 'center', 'right'):
@@ -1122,7 +1122,7 @@ def generic_expander(*expanded_names, **kwargs):
                         (actual_new_name, value), = validate_non_shorthand(
                             base_url, actual_new_name, value, required=True)
                 else:
-                    value = INITIAL_VALUES[actual_new_name.replace('-', '_')]
+                    value = 'initial'
 
                 yield actual_new_name, value
         return generic_expander_wrapper
@@ -1209,42 +1209,75 @@ def expand_border_side(name, tokens):
 
 
 @expander('background')
-@generic_expander('-color', '-image', '-repeat', '-attachment', '-position',
-                  wants_base_url=True)
-def expand_background(name, tokens, base_url):#def expand_background(base_url, name, tokens):
+def expand_background(base_url, name, tokens):
     """Expand the ``background`` shorthand property.
 
     See http://dev.w3.org/csswg/css3-background/#the-background
 
     """
-    # Make `tokens` a stack
-    tokens = list(reversed(tokens))
-    while tokens:
-        token = tokens.pop()
-        if parse_color(token) is not None:
-            suffix = '-color'
-        elif image.single_value([token], base_url) is not None:
-            suffix = '-image'
-        elif background_repeat.single_value([token]) is not None:
-            suffix = '-repeat'
-        elif background_attachment.single_value([token]) is not None:
-            suffix = '-attachment'
-        elif background_position.single_value([token]):
-            if tokens:
-                next_token = tokens.pop()
-                if background_position.single_value([token, next_token]):
-                    # Two consecutive '-position' tokens, yield them together
-                    yield '-position', [token, next_token]
-                    continue
-                else:
-                    # The next token is not a '-position', put it back
-                    # for the next loop iteration
+    properties = [
+        'background_color', 'background_image', 'background_repeat',
+        'background_attachment', 'background_position', 'background_size',
+        'background_clip', 'background_origin']
+    keyword = get_single_keyword(tokens)
+    if keyword in ('initial', 'inherit'):
+        for name in properties:
+            yield name, keyword
+        return
+
+    def parse_layer(tokens, can_have_color=False):
+        results = {}
+        def add(name, value):
+            if value is None:
+                return False
+            name = 'background_' + name
+            if name in results:
+                raise InvalidValues
+            results[name] = value
+            return True
+
+        # Make `tokens` a stack
+        tokens = list(reversed(tokens))
+        while tokens:
+            token = tokens.pop()
+            if can_have_color and add('color', parse_color(token)):
+                continue
+            if add('image', image.single_value([token], base_url)):
+                continue
+            if add('repeat', background_repeat.single_value([token])):
+                continue
+            if add('attachment', background_attachment.single_value([token])):
+                continue
+            position = background_position.single_value([token])
+            if position is not None:
+                if tokens:
+                    next_token = tokens.pop()
+                    if add('position', background_position.single_value(
+                            [token, next_token])):
+                        continue  # A two-token position.
+                    # Put the unused token back for the next loop iteration
                     tokens.append(next_token)
-            # A single '-position' token
-            suffix = '-position'
-        else:
+                assert add('position', position)
+                continue
             raise InvalidValues
-        yield suffix, [token]
+
+        color = results.pop(
+            'background_color', INITIAL_VALUES['background_color'])
+        for name in properties:
+            if name not in results:
+                results[name] = INITIAL_VALUES[name][0]
+        return color, results
+
+    layers = reversed(split_on_comma(tokens))
+    color, last_layer = parse_layer(next(layers), can_have_color=True)
+    results = dict((k, [v]) for k, v in last_layer.items())
+    for tokens in layers:
+        _, layer = parse_layer(tokens)
+        for name, value in layer.items():
+            results[name].append(value)
+    for name, values in results.items():
+        yield name, values[::-1]  # "Un-reverse"
+    yield 'background-color', color
 
 
 @expander('font')

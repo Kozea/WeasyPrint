@@ -14,6 +14,7 @@ from __future__ import division, unicode_literals
 
 from .testing_utils import assert_no_logs, capture_logs
 from ..css import PARSER, preprocess_declarations
+from ..css.properties import INITIAL_VALUES
 
 
 def expand_to_dict(css, expected_error=None):
@@ -31,7 +32,8 @@ def expand_to_dict(css, expected_error=None):
     else:
         assert not logs
 
-    return dict((name, value) for name, value, _priority in declarations)
+    return dict((name, value) for name, value, _priority in declarations
+                 if value != 'initial')
 
 
 @assert_no_logs
@@ -206,17 +208,13 @@ def test_expand_borders():
     assert expand_to_dict('border-top: 3px dotted') == {
         'border_top_width': (3, 'px'),
         'border_top_style': 'dotted',
-        'border_top_color': 'currentColor',
     }
     assert expand_to_dict('border-top: 3px red') == {
         'border_top_width': (3, 'px'),
-        'border_top_style': 'none',
         'border_top_color': (1, 0, 0, 1),  # red
     }
     assert expand_to_dict('border-top: solid') == {
-        'border_top_width': 3,  # initial value
         'border_top_style': 'solid',
-        'border_top_color': 'currentColor',
     }
     assert expand_to_dict('border: 6px dashed lime') == {
         'border_top_width': (6, 'px'),
@@ -247,18 +245,13 @@ def test_expand_list_style():
         'list_style_type': 'inherit',
     }
     assert expand_to_dict('list-style: url(../bar/lipsum.png)') == {
-        'list_style_position': 'outside',
         'list_style_image': 'http://weasyprint.org/bar/lipsum.png',
-        'list_style_type': 'disc',
     }
     assert expand_to_dict('list-style: square') == {
-        'list_style_position': 'outside',
-        'list_style_image': 'none',
         'list_style_type': 'square',
     }
     assert expand_to_dict('list-style: circle inside') == {
         'list_style_position': 'inside',
-        'list_style_image': 'none',
         'list_style_type': 'circle',
     }
     assert expand_to_dict('list-style: none circle inside') == {
@@ -277,138 +270,88 @@ def test_expand_list_style():
         'got multiple type values in a list-style shorthand') == {}
 
 
-def assert_background(css, **kwargs):
+def assert_background(css, **expected):
     """Helper checking the background properties."""
-    expanded = expand_to_dict('background: '+ css).items()
-    expected = [('background_' + key, value)
-                for key, value in kwargs.items()]
-    assert sorted(expanded) == sorted(expected)
+    expanded = expand_to_dict('background: '+ css)
+    assert expanded.pop('background_color') == expected.pop(
+        'background_color', INITIAL_VALUES['background_color'])
+    nb_layers = len(expanded['background_image'])
+    for name, value in expected.items():
+        assert expanded.pop(name) == value
+    for name, value in expanded.items():
+        assert value == INITIAL_VALUES[name] * nb_layers
 
 
 @assert_no_logs
 def test_expand_background():
     """Test the ``background`` property."""
-    assert_background(
-        'red',
-        color=(1, 0, 0, 1),  ## red
-        image=['none'],
-        repeat=['repeat'],
-        attachment=['scroll'],
-        position=[((0, '%'), (0, '%'))],
-
-    )
+    assert_background('red', background_color=(1, 0, 0, 1))
     assert_background(
         'url(lipsum.png)',
-        color=(0, 0, 0, 0), # transparent
-        image=['http://weasyprint.org/foo/lipsum.png'],  ##
-        repeat=['repeat'],
-        attachment=['scroll'],
-        position=[((0, '%'), (0, '%'))],
-    )
-    assert_background(
-        'no-repeat',
-        color=(0, 0, 0, 0), # transparent
-        image=['none'],
-        repeat=['no-repeat'],  ##
-        attachment=['scroll'],
-        position=[((0, '%'), (0, '%'))],
-    )
-    assert_background(
-        'fixed',
-        color=(0, 0, 0, 0), # transparent
-        image=['none'],
-        repeat=['repeat'],
-        attachment=['fixed'],  ##
-        position=[((0, '%'), (0, '%'))],
-    )
-    assert_background(
-        'top right',
-        color=(0, 0, 0, 0), # transparent
-        image=['none'],
-        repeat=['repeat'],
-        attachment=['scroll'],
-        # Order swapped to be in (horizontal, vertical) order.
-        position=[((100, '%'), (0, '%'))],  ##
-    )
+        background_image=['http://weasyprint.org/foo/lipsum.png'])
+    assert_background('no-repeat', background_repeat=['no-repeat'])
+    assert_background('fixed', background_attachment=['fixed'])
+    # Order swapped to be in (horizontal, vertical) order.
+    assert_background('top right', background_position=[((100, '%'), (0, '%'))])
     assert_background(
         'top no-repeat',
-        color=(0, 0, 0, 0), # transparent
-        image=['none'],
-        repeat=['no-repeat'],  ##
-        attachment=['scroll'],
-        position=[((0, '%'), (50, '%'))],  ##
-    )
-    assert_background(
-        'top',
-        color=(0, 0, 0, 0), # transparent
-        image=['none'],
-        repeat=['repeat'],
-        attachment=['scroll'],
-        position=[((0, '%'), (50, '%'))],  ##
-    )
+        background_repeat=['no-repeat'],
+        background_position=[((0, '%'), (50, '%'))])
+    assert_background('top', background_position=[((0, '%'), (50, '%'))])
+    # Order swapped to be in (horizontal, vertical) order.
     assert_background(
         'url(bar) #f00 repeat-y center left fixed',
-        color=(1, 0, 0, 1),  ## #f00
-        image=['http://weasyprint.org/foo/bar'],  ##
-        repeat=['repeat-y'],  ##
-        attachment=['fixed'],  ##
-        # Order swapped to be in (horizontal, vertical) order.
-        position=[((0, '%'), (50, '%'))],  ##
-    )
+        background_color=(1, 0, 0, 1),
+        background_image=['http://weasyprint.org/foo/bar'],
+        background_repeat=['repeat-y'],
+        background_attachment=['fixed'],
+        background_position=[((0, '%'), (50, '%'))])
     assert_background(
         '#00f 10% 200px',
-        color=(0, 0, 1, 1),  ## #00f
-        image=['none'],
-        repeat=['repeat'],
-        attachment=['scroll'],
-        position=[((10, '%'), (200, 'px'))],  ##
-    )
+        background_color=(0, 0, 1, 1),
+        background_position=[((10, '%'), (200, 'px'))])
     assert_background(
         'right 78px fixed',
-        color=(0, 0, 0, 0), # transparent
-        image=['none'],
-        repeat=['repeat'],
-        attachment=['fixed'],  ##
-        position=[((100, '%'), (78, 'px'))],  ##
-    )
+        background_color=(0, 0, 0, 0),
+        background_attachment=['fixed'],
+        background_position=[((100, '%'), (78, 'px'))])
+    assert_background(
+        'url(bar) center, no-repeat',
+        background_color=(0, 0, 0, 0),
+        background_image=['http://weasyprint.org/foo/bar', 'none'],
+        background_position=[((50, '%'), (50, '%')), ((0, '%'), (0, '%'))],
+        background_repeat=['repeat', 'no-repeat'])
     assert expand_to_dict('background: 10px lipsum', 'invalid') == {}
     assert expand_to_dict('background-position: 10px lipsum', 'invalid') == {}
+    # Color must be last:
+    assert expand_to_dict('background: red, url(foo)', 'invalid') == {}
 
 
 @assert_no_logs
 def test_font():
     """Test the ``font`` property."""
     assert expand_to_dict('font: 12px My Fancy Font, serif') == {
-        'font_style': 'normal',
-        'font_variant': 'normal',
-        'font_weight': 400,
-        'font_size': (12, 'px'), ##
-        'line_height': 'normal',
-        'font_family': ['My Fancy Font', 'serif'], ##
+        'font_size': (12, 'px'),
+        'font_family': ['My Fancy Font', 'serif'],
     }
     assert expand_to_dict('font: small/1.2 "Some Font", serif') == {
-        'font_style': 'normal',
-        'font_variant': 'normal',
-        'font_weight': 400,
-        'font_size': 'small', ##
-        'line_height': (1.2, None), ##
-        'font_family': ['Some Font', 'serif'], ##
+        'font_size': 'small',
+        'line_height': (1.2, None),
+        'font_family': ['Some Font', 'serif'],
     }
     assert expand_to_dict('font: small-caps italic 700 large serif') == {
-        'font_style': 'italic', ##
-        'font_variant': 'small-caps', ##
-        'font_weight': 700, ##
-        'font_size': 'large', ##
-        'line_height': 'normal',
-        'font_family': ['serif'], ##
+        'font_style': 'italic',
+        'font_variant': 'small-caps',
+        'font_weight': 700,
+        'font_size': 'large',
+        'font_family': ['serif'],
     }
     assert expand_to_dict('font: small-caps normal 700 large serif') == {
-        'font_style': 'normal', ##
-        'font_variant': 'small-caps', ##
-        'font_weight': 700, ##
-        'font_size': 'large', ##
-        'line_height': 'normal',
-        'font_family': ['serif'], ##
+        #'font_style': 'normal',  XXX shouldn’t this be here?
+        'font_variant': 'small-caps',
+        'font_weight': 700,
+        'font_size': 'large',
+        'font_family': ['serif'],
     }
     assert expand_to_dict('font-family: "My" Font, serif', 'invalid') == {}
     assert expand_to_dict('font-family: "My" "Font", serif', 'invalid') == {}

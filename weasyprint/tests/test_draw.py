@@ -582,11 +582,8 @@ def test_background_image():
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         ]),
-        ('multi_over', '''
-            no-repeat;
-            background-image: url(pattern.png), url(pattern.png);
-            background-position: 0 0, 2px 1px
-        ''', [
+        ('multi_under', 'url(pattern.png) no-repeat, '
+                        'url(pattern.png) no-repeat 2px 1px', [
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+r+B+B+B+_+_+_+_+_+_+_+_,
@@ -604,11 +601,8 @@ def test_background_image():
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         ]),
-        ('multi_under', '''
-            no-repeat;
-            background-image: url(pattern.png), url(pattern.png);
-            background-position: 2px 1px, 0 0
-        ''', [
+        ('multi_over', 'url(pattern.png) no-repeat 2px 1px, '
+                       'url(pattern.png) no-repeat', [
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+r+B+B+B+_+_+_+_+_+_+_+_,
