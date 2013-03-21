@@ -781,7 +781,7 @@ def test_background_size():
                    /* Use nearest neighbor algorithm for image resizing: */
                    image-rendering: optimizeSpeed;
                    background: url(pattern.png) bottom right no-repeat;
-                   background-size: 8px }
+                   background-size: 80% 8px }
         </style>
         <body>
     ''')

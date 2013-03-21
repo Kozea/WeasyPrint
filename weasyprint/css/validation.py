@@ -317,7 +317,7 @@ def background_size(tokens):
             return keyword
         if keyword == 'auto':
             return ('auto', 'auto')
-        length = get_length(token, negative=False)
+        length = get_length(token, negative=False, percentage=True)
         if length:
             return (length, 'auto')
     elif len(tokens) == 2:
@@ -326,7 +326,7 @@ def background_size(tokens):
             if get_keyword(token) == 'auto':
                 values.append('auto')
             else:
-                length = get_length(token, negative=False)
+                length = get_length(token, negative=False, percentage=True)
                 if length:
                     values.append(token)
         if len(values) == 2:
