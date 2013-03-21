@@ -213,10 +213,12 @@ def compute(element, pseudo_type, specified, computed, parent_style):
 
 
 @register_computer('background-position')
-def length_or_percentage_tuple_list(computer, name, values):
+def background_position(computer, name, values):
     """Compute the lists of lengths that can be percentages."""
-    return [length_or_percentage_tuple(computer, name, value)
-            for value in values]
+    return [
+        (origin_x, length(computer, name, pos_x),
+         origin_y, length(computer, name, pos_y))
+        for origin_x, pos_x, origin_y, pos_y in values]
 
 
 @register_computer('transform-origin')

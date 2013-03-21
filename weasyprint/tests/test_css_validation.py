@@ -291,29 +291,31 @@ def test_expand_background():
         background_image=['http://weasyprint.org/foo/lipsum.png'])
     assert_background('no-repeat', background_repeat=['no-repeat'])
     assert_background('fixed', background_attachment=['fixed'])
-    # Order swapped to be in (horizontal, vertical) order.
-    assert_background('top right', background_position=[((100, '%'), (0, '%'))])
+    assert_background(
+        'top right',
+        background_position=[('left', (100, '%'), 'top', (0, '%'))])
     assert_background(
         'top no-repeat',
         background_repeat=['no-repeat'],
-        background_position=[((0, '%'), (50, '%'))])
-    assert_background('top', background_position=[((0, '%'), (50, '%'))])
-    # Order swapped to be in (horizontal, vertical) order.
+        background_position=[('left', (50, '%'), 'top', (0, '%'))])
+    assert_background(
+        'top',
+        background_position=[('left', (50, '%'), 'top', (0, '%'))])
     assert_background(
         'url(bar) #f00 repeat-y center left fixed',
         background_color=(1, 0, 0, 1),
         background_image=['http://weasyprint.org/foo/bar'],
         background_repeat=['repeat-y'],
         background_attachment=['fixed'],
-        background_position=[((0, '%'), (50, '%'))])
+        background_position=[('left', (0, '%'), 'top', (50, '%'))])
     assert_background(
         '#00f 10% 200px',
         background_color=(0, 0, 1, 1),
-        background_position=[((10, '%'), (200, 'px'))])
+        background_position=[('left', (10, '%'), 'top', (200, 'px'))])
     assert_background(
         'right 78px fixed',
         background_attachment=['fixed'],
-        background_position=[((100, '%'), (78, 'px'))])
+        background_position=[('left', (100, '%'), 'top', (78, 'px'))])
     assert_background(
         'red content-box',
         background_color=(1, 0, 0, 1),
@@ -328,7 +330,8 @@ def test_expand_background():
         'url(bar) center, no-repeat',
         background_color=(0, 0, 0, 0),
         background_image=['http://weasyprint.org/foo/bar', 'none'],
-        background_position=[((50, '%'), (50, '%')), ((0, '%'), (0, '%'))],
+        background_position=[('left', (50, '%'), 'top', (50, '%')),
+                             ('left', (0, '%'), 'top', (0, '%'))],
         background_repeat=['repeat', 'no-repeat'])
     assert expand_to_dict('background: 10px lipsum', 'invalid') == {}
     assert expand_to_dict('background-position: 10px lipsum', 'invalid') == {}

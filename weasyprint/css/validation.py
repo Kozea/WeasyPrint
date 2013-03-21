@@ -41,10 +41,11 @@ CONTENT_QUOTE_KEYWORDS = {
     'no-close-quote': (False, False),
 }
 
+FIFTY_PERCENT = Dimension(50, '%')
 BACKGROUND_POSITION_PERCENTAGES = {
     'top': Dimension(0, '%'),
     'left': Dimension(0, '%'),
-    'center': Dimension(50, '%'),
+    'center': FIFTY_PERCENT,
     'bottom': Dimension(100, '%'),
     'right': Dimension(100, '%'),
 }
@@ -251,21 +252,16 @@ def image(token, base_url):
         return safe_urljoin(base_url, token.value)
 
 
-@validator()
-@comma_separated_list
-@validator('transform-origin', unprefixed=True)
-def background_position(tokens):
-    """``background-position`` property validation.
-
-    See http://www.w3.org/TR/CSS21/colors.html#propdef-background-position
-
-    """
+@validator(unprefixed=True)
+def transform_origin(tokens):
+    # TODO: parse (and ignore) a third value for Z.
     if len(tokens) == 1:
-        center = BACKGROUND_POSITION_PERCENTAGES['center']
         token = tokens[0]
         keyword = get_keyword(token)
-        if keyword in BACKGROUND_POSITION_PERCENTAGES:
-            return BACKGROUND_POSITION_PERCENTAGES[keyword], center
+        if keyword in ('left', 'right'):
+            return BACKGROUND_POSITION_PERCENTAGES[keyword], FIFTY_PERCENT
+        elif keyword in BACKGROUND_POSITION_PERCENTAGES:
+            return FIFTY_PERCENT, BACKGROUND_POSITION_PERCENTAGES[keyword]
         else:
             length = get_length(token, percentage=True)
             if length:
@@ -295,6 +291,57 @@ def background_position(tokens):
             # Swap tokens. They need to be in (horizontal, vertical) order.
             return (BACKGROUND_POSITION_PERCENTAGES[keyword_2],
                     BACKGROUND_POSITION_PERCENTAGES[keyword_1])
+    #else: invalid
+
+
+@validator()
+@comma_separated_list
+def background_position(tokens):
+    """``background-position`` property validation.
+
+    See http://www.w3.org/TR/CSS21/colors.html#propdef-background-position
+
+    """
+    if len(tokens) == 1:
+        token = tokens[0]
+        keyword = get_keyword(token)
+        if keyword in ('left', 'right'):
+            return ('left', BACKGROUND_POSITION_PERCENTAGES[keyword],
+                    'top', FIFTY_PERCENT)
+        elif keyword in BACKGROUND_POSITION_PERCENTAGES:
+            return ('left', FIFTY_PERCENT,
+                    'top', BACKGROUND_POSITION_PERCENTAGES[keyword])
+        else:
+            length = get_length(token, percentage=True)
+            if length:
+                return 'left', length, 'top', FIFTY_PERCENT
+
+    elif len(tokens) == 2:
+        token_1, token_2 = tokens
+        keyword_1, keyword_2 = map(get_keyword, tokens)
+        length_1 = get_length(token_1, percentage=True)
+        if length_1:
+            if keyword_2 in ('top', 'center', 'bottom'):
+                return ('left', length_1,
+                        'top', BACKGROUND_POSITION_PERCENTAGES[keyword_2])
+            length_2 = get_length(token_2, percentage=True)
+            if length_2:
+                return 'left', length_1, 'top', length_2
+            return None  # invalid
+        length_2 = get_length(token_2, percentage=True)
+        if length_2:
+            if keyword_1 in ('left', 'center', 'right'):
+                return ('left', BACKGROUND_POSITION_PERCENTAGES[keyword_1],
+                        'top', length_2)
+        elif (keyword_1 in ('left', 'center', 'right') and
+              keyword_2 in ('top', 'center', 'bottom')):
+            return ('left', BACKGROUND_POSITION_PERCENTAGES[keyword_1],
+                    'top', BACKGROUND_POSITION_PERCENTAGES[keyword_2])
+        elif (keyword_1 in ('top', 'center', 'bottom') and
+              keyword_2 in ('left', 'center', 'right')):
+            # Swap tokens. They need to be in (horizontal, vertical) order.
+            return ('left', BACKGROUND_POSITION_PERCENTAGES[keyword_2],
+                    'top', BACKGROUND_POSITION_PERCENTAGES[keyword_1])
     #else: invalid
 
 

@@ -249,11 +249,16 @@ def draw_background_image(context, layer, enable_hinting):
             scale_x = image_width / intrinsic_width
             scale_y = image_height / intrinsic_height
 
-        bg_position_x, bg_position_y = layer.position
-        context.translate(
-            percentage(bg_position_x, positioning_width - image_width),
-            percentage(bg_position_y, positioning_height - image_height),
-        )
+        origin_x, position_x, origin_y, position_y = layer.position
+        ref_x = positioning_width - image_width
+        ref_y = positioning_height - image_height
+        position_x = percentage(position_x, ref_x)
+        position_y = percentage(position_y, ref_y)
+        if origin_x == 'right':
+            position_x = ref_x - position_x
+        if origin_y == 'bottom':
+            position_y = ref_y - position_y
+        context.translate(position_x, position_y)
 
         if layer.repeat in ('repeat-x', 'repeat-y'):
             # Get the current clip rectangle. This is the same as
