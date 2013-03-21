@@ -262,6 +262,13 @@ def create_layout(text, style, hinting, max_width):
     # Make sure that max_width * Pango.SCALE == max_width * 1024 fits in a
     # signed integer. Treat bigger values same as None: unconstrained width.
     if max_width is not None and max_width < 2 ** 21:
+        # In some cases (shrink-to-fit result being the preferred width)
+        # this value is coming from Pango itself,
+        # but floating point errors have accumulated:
+        #   width2 = (width + X) - X   # in some cases, width2 < width
+        # Increase the value a bit to compensate and not introduce
+        # an unexpected line break.
+        max_width *= 1.00001
         pango.pango_layout_set_width(layout, units_from_double(max_width))
     word_spacing = style.word_spacing
     letter_spacing = style.letter_spacing
