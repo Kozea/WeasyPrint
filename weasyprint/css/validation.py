@@ -369,12 +369,11 @@ def background_size(tokens):
     elif len(tokens) == 2:
         values = []
         for token in tokens:
-            if get_keyword(token) == 'auto':
+            length = get_length(token, negative=False, percentage=True)
+            if length:
+                values.append(length)
+            elif get_keyword(token) == 'auto':
                 values.append('auto')
-            else:
-                length = get_length(token, negative=False, percentage=True)
-                if length:
-                    values.append(token)
         if len(values) == 2:
             return tuple(values)
 
@@ -1300,6 +1299,15 @@ def expand_background(base_url, name, tokens):
                 if position is not None:
                     assert add('position', position)
                     del tokens[-n:]
+                    if (tokens and tokens[-1].type == 'DELIM'
+                            and tokens[-1].value == '/'):
+                        for n in (3, 2)[-len(tokens):]:
+                            # n includes the '/' delimiter.
+                            n_tokens = tokens[-n:-1][::-1]
+                            size = background_size.single_value(n_tokens)
+                            if size is not None:
+                                assert add('size', size)
+                                del tokens[-n:]
                     break
             if position is not None:
                 continue
@@ -1313,7 +1321,6 @@ def expand_background(base_url, name, tokens):
                     # The same keyword sets both:
                     assert add('clip', box.single_value(token))
                 continue
-            # TODO: parse background-size
             raise InvalidValues
 
         color = results.pop(

@@ -337,6 +337,24 @@ def test_expand_background():
         background_attachment=['fixed'],
         background_position=[('left', (100, '%'), 'top', (78, 'px'))])
     assert_background(
+        'center / cover red',
+        background_size=['cover'],
+        background_position=[('left', (50, '%'), 'top', (50, '%'))],
+        background_color=(1, 0, 0, 1))
+    assert_background(
+        'center / auto red',
+        background_size=[('auto', 'auto')],
+        background_position=[('left', (50, '%'), 'top', (50, '%'))],
+        background_color=(1, 0, 0, 1))
+    assert_background(
+        'center / 42px',
+        background_size=[((42, 'px'), 'auto')],
+        background_position=[('left', (50, '%'), 'top', (50, '%'))])
+    assert_background(
+        'center / 7% 4em',
+        background_size=[((7, '%'), (4, 'em'))],
+        background_position=[('left', (50, '%'), 'top', (50, '%'))])
+    assert_background(
         'red content-box',
         background_color=(1, 0, 0, 1),
         background_origin=['content-box'],

@@ -798,8 +798,8 @@ def test_background_size():
             body { margin: 1px; height: 10px;
                    /* Use nearest neighbor algorithm for image resizing: */
                    image-rendering: optimizeSpeed;
-                   background: url(pattern.png) bottom right no-repeat;
-                   background-size: 80% 8px }
+                   background: url(pattern.png) no-repeat
+                               bottom right / 80% 8px; }
         </style>
         <body>
     ''')
@@ -824,8 +824,7 @@ def test_background_size():
             body { margin: 1px; height: 10px;
                    /* Use nearest neighbor algorithm for image resizing: */
                    image-rendering: optimizeSpeed;
-                   background: url(pattern.png) bottom right no-repeat;
-                   background-size: auto }
+                   background: url(pattern.png) bottom right/auto no-repeat }
         </style>
         <body>
     ''')
@@ -872,8 +871,7 @@ def test_background_size():
             body { margin: 1px; height: 8px;
                    /* Use nearest neighbor algorithm for image resizing: */
                    image-rendering: optimizeSpeed;
-                   background: url(pattern.png) no-repeat;
-                   background-size: auto 8px;
+                   background: url(pattern.png) no-repeat left / auto 8px;
                    clip: auto; /* no-op to cover more validation */ }
         </style>
         <body>
@@ -897,8 +895,7 @@ def test_background_size():
             body { margin: 1px; height: 8px;
                    /* Use nearest neighbor algorithm for image resizing: */
                    image-rendering: optimizeSpeed;
-                   background: url(pattern.png) no-repeat;
-                   background-size: 8px 4px;
+                   background: url(pattern.png) no-repeat 0 0 / 8px 4px;
                    clip: auto; /* no-op to cover more validation */ }
         </style>
         <body>
@@ -922,8 +919,7 @@ def test_background_size():
             body { margin: 1px; height: 8px;
                    /* Use nearest neighbor algorithm for image resizing: */
                    image-rendering: optimizeSpeed;
-                   background: url(pattern.png) no-repeat;
-                   background-size: cover }
+                   background: url(pattern.png) no-repeat right 0/cover }
         </style>
         <body>
     ''')
