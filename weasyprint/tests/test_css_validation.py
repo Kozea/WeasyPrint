@@ -36,6 +36,10 @@ def expand_to_dict(css, expected_error=None):
                  if value != 'initial')
 
 
+def assert_invalid(css, message='invalid'):
+    assert expand_to_dict(css, message) == {}
+
+
 @assert_no_logs
 def test_not_print():
     assert expand_to_dict('volume: 42',
@@ -46,11 +50,10 @@ def test_not_print():
 def test_function():
     assert expand_to_dict('clip: rect(1px, 3em, auto, auto)') == {
         'clip': [(1, 'px'), (3, 'em'), 'auto', 'auto']}
-    assert expand_to_dict('clip: square(1px, 3em, auto, auto)',
-        'invalid') == {}
-    assert expand_to_dict('clip: rect(1px, 3em, auto auto)', 'invalid') == {}
-    assert expand_to_dict('clip: rect(1px, 3em, auto)', 'invalid') == {}
-    assert expand_to_dict('clip: rect(1px, 3em / auto)', 'invalid') == {}
+    assert_invalid('clip: square(1px, 3em, auto, auto)')
+    assert_invalid('clip: rect(1px, 3em, auto auto)', 'invalid')
+    assert_invalid('clip: rect(1px, 3em, auto)')
+    assert_invalid('clip: rect(1px, 3em / auto)')
 
 
 @assert_no_logs
@@ -67,8 +70,8 @@ def test_counters():
         'Invalid counter name') == {}
     assert expand_to_dict('counter-reset: foo initial',
         'Invalid counter name') == {}
-    assert expand_to_dict('counter-reset: foo 3px', 'invalid') == {}
-    assert expand_to_dict('counter-reset: 3', 'invalid') == {}
+    assert_invalid('counter-reset: foo 3px')
+    assert_invalid('counter-reset: 3')
 
 
 @assert_no_logs
@@ -77,7 +80,7 @@ def test_spacing():
         'letter_spacing': 'normal'}
     assert expand_to_dict('letter-spacing: 3px') == {
         'letter_spacing': (3, 'px')}
-    assert expand_to_dict('letter-spacing: 3', 'invalid') == {}
+    assert_invalid('letter-spacing: 3')
     assert expand_to_dict('letter_spacing: normal',
         'did you mean letter-spacing') == {}
 
@@ -85,7 +88,7 @@ def test_spacing():
         'word_spacing': 'normal'}
     assert expand_to_dict('word-spacing: 3px') == {
         'word_spacing': (3, 'px')}
-    assert expand_to_dict('word-spacing: 3', 'invalid') == {}
+    assert_invalid('word-spacing: 3')
 
 
 @assert_no_logs
@@ -119,11 +122,11 @@ def test_size():
         'size': ((297, 'mm'), (420, 'mm'))}
     assert expand_to_dict('size: landscape A3') == {
         'size': ((420, 'mm'), (297, 'mm'))}
-    assert expand_to_dict('size: A3 landscape A3', 'invalid') == {}
-    assert expand_to_dict('size: A9', 'invalid') == {}
-    assert expand_to_dict('size: foo', 'invalid') == {}
-    assert expand_to_dict('size: foo bar', 'invalid') == {}
-    assert expand_to_dict('size: 20%', 'invalid') == {}
+    assert_invalid('size: A3 landscape A3')
+    assert_invalid('size: A9')
+    assert_invalid('size: foo')
+    assert_invalid('size: foo bar')
+    assert_invalid('size: 20%')
 
 
 @assert_no_logs
@@ -139,14 +142,13 @@ def test_transforms():
         ) == {'transform': [('translate', ((6, 'px'), (20, '%')))]}
     assert expand_to_dict('transform: scale(2)'
         ) == {'transform': [('scale', (2, 2))]}
-    assert expand_to_dict('transform: translate(6px 20%)',
-        'invalid') == {}  # missing comma
-    assert expand_to_dict('transform: lipsumize(6px)', 'invalid') == {}
-    assert expand_to_dict('transform: foo', 'invalid') == {}
-    assert expand_to_dict('transform: scale(2) foo', 'invalid') == {}
-    assert expand_to_dict('transform: 6px', 'invalid') == {}
-    assert expand_to_dict('-weasy-transform: none',
-        'the property was unprefixed, use transform') == {}
+    assert_invalid('transform: translate(6px 20%)')  # missing comma
+    assert_invalid('transform: lipsumize(6px)')
+    assert_invalid('transform: foo')
+    assert_invalid('transform: scale(2) foo')
+    assert_invalid('transform: 6px')
+    assert_invalid('-weasy-transform: none',
+                   'the property was unprefixed, use transform')
 
 
 @assert_no_logs
@@ -190,11 +192,11 @@ def test_expand_four_sides():
     }
     assert expand_to_dict('padding: 1 2 3 4 5',
         'Expected 1 to 4 token components got 5') == {}
-    assert expand_to_dict('margin: rgb(0, 0, 0)', 'invalid') == {}
-    assert expand_to_dict('padding: auto', 'invalid') == {}
-    assert expand_to_dict('padding: -12px', 'invalid') == {}
-    assert expand_to_dict('border-width: -3em', 'invalid') == {}
-    assert expand_to_dict('border-width: 12%', 'invalid') == {}
+    assert_invalid('margin: rgb(0, 0, 0)')
+    assert_invalid('padding: auto')
+    assert_invalid('padding: -12px')
+    assert_invalid('border-width: -3em')
+    assert_invalid('border-width: 12%')
 
 
 @assert_no_logs
@@ -233,7 +235,7 @@ def test_expand_borders():
         'border_right_style': 'dashed',
         'border_right_color': (0, 1, 0, 1),  # lime
     }
-    assert expand_to_dict('border: 6px dashed left', 'invalid') == {}
+    assert_invalid('border: 6px dashed left')
 
 
 @assert_no_logs
@@ -264,15 +266,15 @@ def test_expand_list_style():
         'list_style_image': 'none',
         'list_style_type': 'none',
     }
-    assert expand_to_dict('list-style: none inside none none', 'invalid') == {}
-    assert expand_to_dict('list-style: red', 'invalid') == {}
-    assert expand_to_dict('list-style: circle disc',
-        'got multiple type values in a list-style shorthand') == {}
+    assert_invalid('list-style: none inside none none')
+    assert_invalid('list-style: red')
+    assert_invalid('list-style: circle disc',
+                   'got multiple type values in a list-style shorthand')
 
 
 def assert_background(css, **expected):
     """Helper checking the background properties."""
-    expanded = expand_to_dict('background: '+ css)
+    expanded = expand_to_dict('background: ' + css)
     assert expanded.pop('background_color') == expected.pop(
         'background_color', INITIAL_VALUES['background_color'])
     nb_layers = len(expanded['background_image'])
@@ -292,15 +294,33 @@ def test_expand_background():
     assert_background('no-repeat', background_repeat=['no-repeat'])
     assert_background('fixed', background_attachment=['fixed'])
     assert_background(
+        'top',
+        background_position=[('left', (50, '%'), 'top', (0, '%'))])
+    assert_background(
         'top right',
         background_position=[('left', (100, '%'), 'top', (0, '%'))])
+    assert_background(
+        'top right 20px',
+        background_position=[('right', (20, 'px'), 'top', (0, '%'))])
+    assert_background(
+        'top 1% right 20px',
+        background_position=[('right', (20, 'px'), 'top', (1, '%'))])
     assert_background(
         'top no-repeat',
         background_repeat=['no-repeat'],
         background_position=[('left', (50, '%'), 'top', (0, '%'))])
     assert_background(
-        'top',
-        background_position=[('left', (50, '%'), 'top', (0, '%'))])
+        'top right no-repeat',
+        background_repeat=['no-repeat'],
+        background_position=[('left', (100, '%'), 'top', (0, '%'))])
+    assert_background(
+        'top right 20px no-repeat',
+        background_repeat=['no-repeat'],
+        background_position=[('right', (20, 'px'), 'top', (0, '%'))])
+    assert_background(
+        'top 1% right 20px no-repeat',
+        background_repeat=['no-repeat'],
+        background_position=[('right', (20, 'px'), 'top', (1, '%'))])
     assert_background(
         'url(bar) #f00 repeat-y center left fixed',
         background_color=(1, 0, 0, 1),
@@ -333,12 +353,67 @@ def test_expand_background():
         background_position=[('left', (50, '%'), 'top', (50, '%')),
                              ('left', (0, '%'), 'top', (0, '%'))],
         background_repeat=['repeat', 'no-repeat'])
-    assert expand_to_dict('background: 10px lipsum', 'invalid') == {}
-    assert expand_to_dict('background-position: 10px lipsum', 'invalid') == {}
-    # Color must be last:
-    assert expand_to_dict('background: red, url(foo)', 'invalid') == {}
-    assert expand_to_dict(
-        'background: content-box red content-box', 'invalid') == {}
+    assert_invalid('background: 10px lipsum')
+    assert_invalid('background-position: 10px lipsum')
+    assert_invalid('background: content-box red content-box')
+    # Color must be in the last layer:
+    assert_invalid('background: red, url(foo)')
+
+
+@assert_no_logs
+def test_expand_background_position():
+    """Test the ``background-position`` property."""
+    def position(css, *expected):
+        [(name, [value])] = expand_to_dict('background-position:' + css).items()
+        assert name == 'background_position'
+        assert value == expected
+    for css_x, val_x in [
+        ('left', (0, '%')), ('center', (50, '%')), ('right', (100, '%')),
+        ('4.5%', (4.5, '%')), ('12px', (12, 'px'))
+    ]:
+        for css_y, val_y in [
+            ('top', (0, '%')), ('center', (50, '%')), ('bottom', (100, '%')),
+            ('7%', (7, '%')), ('1.5px', (1.5, 'px'))
+        ]:
+            # Two tokens:
+            position('%s %s' % (css_x, css_y), 'left', val_x, 'top', val_y)
+        # One token:
+        position(css_x, 'left', val_x, 'top', (50, '%'))
+    # One token, vertical
+    position('top', 'left', (50, '%'), 'top', (0, '%'))
+    position('bottom', 'left', (50, '%'), 'top', (100, '%'))
+
+    # Three tokens:
+    position('center top 10%', 'left', (50, '%'), 'top', (10, '%'))
+    position('top 10% center', 'left', (50, '%'), 'top', (10, '%'))
+    position('center bottom 10%', 'left', (50, '%'), 'bottom', (10, '%'))
+    position('bottom 10% center', 'left', (50, '%'), 'bottom', (10, '%'))
+
+    position('right top 10%', 'right', (0, '%'), 'top', (10, '%'))
+    position('top 10% right', 'right', (0, '%'), 'top', (10, '%'))
+    position('right bottom 10%', 'right', (0, '%'), 'bottom', (10, '%'))
+    position('bottom 10% right', 'right', (0, '%'), 'bottom', (10, '%'))
+
+    position('center left 10%', 'left', (10, '%'), 'top', (50, '%'))
+    position('left 10% center', 'left', (10, '%'), 'top', (50, '%'))
+    position('center right 10%', 'right', (10, '%'), 'top', (50, '%'))
+    position('right 10% center', 'right', (10, '%'), 'top', (50, '%'))
+
+    position('bottom left 10%', 'left', (10, '%'), 'bottom', (0, '%'))
+    position('left 10% bottom', 'left', (10, '%'), 'bottom', (0, '%'))
+    position('bottom right 10%', 'right', (10, '%'), 'bottom', (0, '%'))
+    position('right 10% bottom', 'right', (10, '%'), 'bottom', (0, '%'))
+
+    # Four tokens:
+    position('left 10% bottom 3px', 'left', (10, '%'), 'bottom', (3, 'px'))
+    position('bottom 3px left 10%', 'left', (10, '%'), 'bottom', (3, 'px'))
+    position('right 10% top 3px', 'right', (10, '%'), 'top', (3, 'px'))
+    position('top 3px right 10%', 'right', (10, '%'), 'top', (3, 'px'))
+
+    assert_invalid('background-position: left center 3px')
+    assert_invalid('background-position: 3px left')
+    assert_invalid('background-position: bottom 4%')
+    assert_invalid('background-position: bottom top')
 
 
 @assert_no_logs
@@ -367,11 +442,11 @@ def test_font():
         'font_size': 'large',
         'font_family': ['serif'],
     }
-    assert expand_to_dict('font-family: "My" Font, serif', 'invalid') == {}
-    assert expand_to_dict('font-family: "My" "Font", serif', 'invalid') == {}
-    assert expand_to_dict('font-family: "My", 12pt, serif', 'invalid') == {}
-    assert expand_to_dict('font: menu', 'System fonts are not supported') == {}
-    assert expand_to_dict('font: 12deg My Fancy Font, serif', 'invalid') == {}
-    assert expand_to_dict('font: 12px', 'invalid') == {}
-    assert expand_to_dict('font: 12px/foo serif', 'invalid') == {}
-    assert expand_to_dict('font: 12px "Invalid" family', 'invalid') == {}
+    assert_invalid('font-family: "My" Font, serif')
+    assert_invalid('font-family: "My" "Font", serif')
+    assert_invalid('font-family: "My", 12pt, serif')
+    assert_invalid('font: menu', 'System fonts are not supported')
+    assert_invalid('font: 12deg My Fancy Font, serif')
+    assert_invalid('font: 12px')
+    assert_invalid('font: 12px/foo serif')
+    assert_invalid('font: 12px "Invalid" family')

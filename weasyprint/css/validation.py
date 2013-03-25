@@ -41,13 +41,15 @@ CONTENT_QUOTE_KEYWORDS = {
     'no-close-quote': (False, False),
 }
 
+ZERO_PERCENT = Dimension(0, '%')
 FIFTY_PERCENT = Dimension(50, '%')
+HUNDRED_PERCENT = Dimension(100, '%')
 BACKGROUND_POSITION_PERCENTAGES = {
-    'top': Dimension(0, '%'),
-    'left': Dimension(0, '%'),
+    'top': ZERO_PERCENT,
+    'left': ZERO_PERCENT,
     'center': FIFTY_PERCENT,
-    'bottom': Dimension(100, '%'),
-    'right': Dimension(100, '%'),
+    'bottom': HUNDRED_PERCENT,
+    'right': HUNDRED_PERCENT,
 }
 
 
@@ -252,46 +254,16 @@ def image(token, base_url):
         return safe_urljoin(base_url, token.value)
 
 
+class CenterKeywordFakeToken(object):
+    type = 'IDENT'
+    value = 'center'
+    unit = None
+
+
 @validator(unprefixed=True)
 def transform_origin(tokens):
     # TODO: parse (and ignore) a third value for Z.
-    if len(tokens) == 1:
-        token = tokens[0]
-        keyword = get_keyword(token)
-        if keyword in ('left', 'right'):
-            return BACKGROUND_POSITION_PERCENTAGES[keyword], FIFTY_PERCENT
-        elif keyword in BACKGROUND_POSITION_PERCENTAGES:
-            return FIFTY_PERCENT, BACKGROUND_POSITION_PERCENTAGES[keyword]
-        else:
-            length = get_length(token, percentage=True)
-            if length:
-                return length, center
-
-    elif len(tokens) == 2:
-        token_1, token_2 = tokens
-        keyword_1, keyword_2 = map(get_keyword, tokens)
-        length_1 = get_length(token_1, percentage=True)
-        if length_1:
-            if keyword_2 in ('top', 'center', 'bottom'):
-                return length_1, BACKGROUND_POSITION_PERCENTAGES[keyword_2]
-            length_2 = get_length(token_2, percentage=True)
-            if length_2:
-                return length_1, length_2
-            return None  # invalid
-        length_2 = get_length(token_2, percentage=True)
-        if length_2:
-            if keyword_1 in ('left', 'center', 'right'):
-                return BACKGROUND_POSITION_PERCENTAGES[keyword_1], length_2
-        elif (keyword_1 in ('left', 'center', 'right') and
-              keyword_2 in ('top', 'center', 'bottom')):
-            return (BACKGROUND_POSITION_PERCENTAGES[keyword_1],
-                    BACKGROUND_POSITION_PERCENTAGES[keyword_2])
-        elif (keyword_1 in ('top', 'center', 'bottom') and
-              keyword_2 in ('left', 'center', 'right')):
-            # Swap tokens. They need to be in (horizontal, vertical) order.
-            return (BACKGROUND_POSITION_PERCENTAGES[keyword_2],
-                    BACKGROUND_POSITION_PERCENTAGES[keyword_1])
-    #else: invalid
+    return simple_2d_position(tokens)
 
 
 @validator()
@@ -299,50 +271,77 @@ def transform_origin(tokens):
 def background_position(tokens):
     """``background-position`` property validation.
 
-    See http://www.w3.org/TR/CSS21/colors.html#propdef-background-position
+    See http://dev.w3.org/csswg/css3-background/#the-background-position
 
     """
-    if len(tokens) == 1:
-        token = tokens[0]
-        keyword = get_keyword(token)
-        if keyword in ('left', 'right'):
-            return ('left', BACKGROUND_POSITION_PERCENTAGES[keyword],
-                    'top', FIFTY_PERCENT)
-        elif keyword in BACKGROUND_POSITION_PERCENTAGES:
-            return ('left', FIFTY_PERCENT,
-                    'top', BACKGROUND_POSITION_PERCENTAGES[keyword])
-        else:
-            length = get_length(token, percentage=True)
-            if length:
-                return 'left', length, 'top', FIFTY_PERCENT
+    result = simple_2d_position(tokens)
+    if result is not None:
+        pos_x, pos_y = result
+        return 'left', pos_x, 'top', pos_y
 
-    elif len(tokens) == 2:
-        token_1, token_2 = tokens
-        keyword_1, keyword_2 = map(get_keyword, tokens)
-        length_1 = get_length(token_1, percentage=True)
-        if length_1:
-            if keyword_2 in ('top', 'center', 'bottom'):
-                return ('left', length_1,
-                        'top', BACKGROUND_POSITION_PERCENTAGES[keyword_2])
-            length_2 = get_length(token_2, percentage=True)
-            if length_2:
-                return 'left', length_1, 'top', length_2
-            return None  # invalid
-        length_2 = get_length(token_2, percentage=True)
-        if length_2:
-            if keyword_1 in ('left', 'center', 'right'):
-                return ('left', BACKGROUND_POSITION_PERCENTAGES[keyword_1],
-                        'top', length_2)
-        elif (keyword_1 in ('left', 'center', 'right') and
-              keyword_2 in ('top', 'center', 'bottom')):
-            return ('left', BACKGROUND_POSITION_PERCENTAGES[keyword_1],
-                    'top', BACKGROUND_POSITION_PERCENTAGES[keyword_2])
-        elif (keyword_1 in ('top', 'center', 'bottom') and
-              keyword_2 in ('left', 'center', 'right')):
-            # Swap tokens. They need to be in (horizontal, vertical) order.
-            return ('left', BACKGROUND_POSITION_PERCENTAGES[keyword_2],
-                    'top', BACKGROUND_POSITION_PERCENTAGES[keyword_1])
-    #else: invalid
+    if len(tokens) == 4:
+        keyword_1 = get_keyword(tokens[0])
+        keyword_2 = get_keyword(tokens[2])
+        length_1 = get_length(tokens[1], percentage=True)
+        length_2 = get_length(tokens[3], percentage=True)
+        if length_1 and length_2:
+            if (keyword_1 in ('left', 'right') and
+                keyword_2 in ('top', 'bottom')):
+                return keyword_1, length_1, keyword_2, length_2
+            if (keyword_2 in ('left', 'right') and
+                keyword_1 in ('top', 'bottom')):
+                return keyword_2, length_2, keyword_1, length_1
+
+    if len(tokens) == 3:
+        length = get_length(tokens[2], percentage=True)
+        if length is not None:
+            keyword = get_keyword(tokens[1])
+            other_keyword = get_keyword(tokens[0])
+        else:
+            length = get_length(tokens[1], percentage=True)
+            other_keyword = get_keyword(tokens[2])
+            keyword = get_keyword(tokens[0])
+
+        if length is not None:
+            if other_keyword == 'center':
+                if keyword in ('top', 'bottom'):
+                    return 'left', FIFTY_PERCENT, keyword, length
+                if keyword in ('left', 'right'):
+                    return keyword, length, 'top', FIFTY_PERCENT
+            elif (keyword in ('left', 'right') and
+                    other_keyword in ('top', 'bottom')):
+                return keyword, length, other_keyword, ZERO_PERCENT
+            elif (keyword in ('top', 'bottom') and
+                    other_keyword in ('left', 'right')):
+                return other_keyword, ZERO_PERCENT, keyword, length
+
+
+def simple_2d_position(tokens):
+    """Common syntax of background-position and transform-origin."""
+    if len(tokens) == 1:
+        tokens = [tokens[0], CenterKeywordFakeToken]
+    elif len(tokens) != 2:
+        return None
+
+    token_1, token_2 = tokens
+    length_1 = get_length(token_1, percentage=True)
+    length_2 = get_length(token_2, percentage=True)
+    if length_1 and length_2:
+        return length_1, length_2
+    keyword_1, keyword_2 = map(get_keyword, tokens)
+    if length_1 and keyword_2 in ('top', 'center', 'bottom'):
+        return length_1, BACKGROUND_POSITION_PERCENTAGES[keyword_2]
+    elif length_2 and keyword_1 in ('left', 'center', 'right'):
+            return BACKGROUND_POSITION_PERCENTAGES[keyword_1], length_2
+    elif (keyword_1 in ('left', 'center', 'right') and
+          keyword_2 in ('top', 'center', 'bottom')):
+        return (BACKGROUND_POSITION_PERCENTAGES[keyword_1],
+                BACKGROUND_POSITION_PERCENTAGES[keyword_2])
+    elif (keyword_1 in ('top', 'center', 'bottom') and
+          keyword_2 in ('left', 'center', 'right')):
+        # Swap tokens. They need to be in (horizontal, vertical) order.
+        return (BACKGROUND_POSITION_PERCENTAGES[keyword_2],
+                BACKGROUND_POSITION_PERCENTAGES[keyword_1])
 
 
 @validator()
@@ -1286,33 +1285,33 @@ def expand_background(base_url, name, tokens):
         # Make `tokens` a stack
         tokens = tokens[::-1]
         while tokens:
-            token1 = [tokens.pop()]
+            token = tokens[-1:]
             if (
-                final_layer and add('color', other_colors(token1))
-                or add('image', image.single_value(token1, base_url))
-                or add('repeat', background_repeat.single_value(token1))
-                or add('attachment', background_attachment.single_value(token1))
+                (final_layer and add('color', other_colors(token)))
+                or add('image', image.single_value(token, base_url))
+                or add('repeat', background_repeat.single_value(token))
+                or add('attachment', background_attachment.single_value(token))
             ):
+                tokens.pop()
+                continue
+            for n in (4, 3, 2, 1)[-len(tokens):]:
+                n_tokens = tokens[-n:][::-1]
+                position = background_position.single_value(n_tokens)
+                if position is not None:
+                    assert add('position', position)
+                    del tokens[-n:]
+                    break
+            if position is not None:
                 continue
             # TODO: 2-token repeat
-            if add('origin', box.single_value(token1)):
-                token2 = tokens[-1:]
-                if add('clip', box.single_value(token2)):
+            if add('origin', box.single_value(token)):
+                tokens.pop()
+                next_token = tokens[-1:]
+                if add('clip', box.single_value(next_token)):
                     tokens.pop()
-                    continue
-                # The same keyword sets both:
-                assert add('clip', box.single_value(token1))
-                continue
-            position = background_position.single_value(token1)
-            if position is not None:
-                # TODO: 3- and 4-token position
-                if tokens:
-                    token2 = token1 + tokens[-1:]
-                    if add('position',
-                           background_position.single_value(token2)):
-                        tokens.pop()
-                        continue  # A two-token position.
-                assert add('position', position)
+                else:
+                    # The same keyword sets both:
+                    assert add('clip', box.single_value(token))
                 continue
             # TODO: parse background-size
             raise InvalidValues
