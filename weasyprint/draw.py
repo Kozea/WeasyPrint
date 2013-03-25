@@ -260,14 +260,15 @@ def draw_background_image(context, layer, enable_hinting):
             position_y = ref_y - position_y
         context.translate(position_x, position_y)
 
-        if layer.repeat in ('repeat-x', 'repeat-y'):
+        repeat_x, repeat_y = layer.repeat
+        if (repeat_x == 'no-repeat') ^ (repeat_y == 'no-repeat'):
             # Get the current clip rectangle. This is the same as
             # painting_area, but in new coordinates after translate()
             clip_x1, clip_y1, clip_x2, clip_y2 = context.clip_extents()
             clip_width = clip_x2 - clip_x1
             clip_height = clip_y2 - clip_y1
 
-            if layer.repeat == 'repeat-x':
+            if repeat_y == 'no-repeat':
                 # Limit the drawn area vertically
                 clip_y1 = 0  # because of the last context.translate()
                 clip_height = image_height
@@ -282,7 +283,8 @@ def draw_background_image(context, layer, enable_hinting):
             context.clip()
 
         pattern = get_pattern()
-        pattern.set_extend(cairo.EXTEND_NONE if layer.repeat == 'no-repeat'
+        pattern.set_extend(cairo.EXTEND_NONE
+                           if layer.repeat == ('no-repeat', 'no-repeat')
                            else cairo.EXTEND_REPEAT)
         pattern.set_filter(IMAGE_RENDERING_TO_FILTER[layer.image_rendering])
         context.scale(scale_x, scale_y)

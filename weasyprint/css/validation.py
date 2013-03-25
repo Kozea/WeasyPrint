@@ -346,10 +346,15 @@ def simple_2d_position(tokens):
 
 @validator()
 @comma_separated_list
-@single_keyword
-def background_repeat(keyword):
+@single_token
+def background_repeat(token):
     """``background-repeat`` property validation."""
-    return keyword in ('repeat', 'repeat-x', 'repeat-y', 'no-repeat')
+    return {
+        'repeat': ('repeat', 'repeat'),
+        'repeat-x': ('repeat', 'no-repeat'),
+        'repeat-y': ('no-repeat', 'repeat'),
+        'no-repeat': ('no-repeat', 'no-repeat'),
+    }.get(get_keyword(token))
 
 
 @validator()

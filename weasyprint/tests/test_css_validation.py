@@ -291,7 +291,9 @@ def test_expand_background():
     assert_background(
         'url(lipsum.png)',
         background_image=['http://weasyprint.org/foo/lipsum.png'])
-    assert_background('no-repeat', background_repeat=['no-repeat'])
+    assert_background(
+        'no-repeat',
+        background_repeat=[('no-repeat', 'no-repeat')])
     assert_background('fixed', background_attachment=['fixed'])
     assert_background(
         'top',
@@ -307,25 +309,25 @@ def test_expand_background():
         background_position=[('right', (20, 'px'), 'top', (1, '%'))])
     assert_background(
         'top no-repeat',
-        background_repeat=['no-repeat'],
+        background_repeat=[('no-repeat', 'no-repeat')],
         background_position=[('left', (50, '%'), 'top', (0, '%'))])
     assert_background(
         'top right no-repeat',
-        background_repeat=['no-repeat'],
+        background_repeat=[('no-repeat', 'no-repeat')],
         background_position=[('left', (100, '%'), 'top', (0, '%'))])
     assert_background(
         'top right 20px no-repeat',
-        background_repeat=['no-repeat'],
+        background_repeat=[('no-repeat', 'no-repeat')],
         background_position=[('right', (20, 'px'), 'top', (0, '%'))])
     assert_background(
         'top 1% right 20px no-repeat',
-        background_repeat=['no-repeat'],
+        background_repeat=[('no-repeat', 'no-repeat')],
         background_position=[('right', (20, 'px'), 'top', (1, '%'))])
     assert_background(
         'url(bar) #f00 repeat-y center left fixed',
         background_color=(1, 0, 0, 1),
         background_image=['http://weasyprint.org/foo/bar'],
-        background_repeat=['repeat-y'],
+        background_repeat=[('no-repeat', 'repeat')],
         background_attachment=['fixed'],
         background_position=[('left', (0, '%'), 'top', (50, '%'))])
     assert_background(
@@ -370,7 +372,7 @@ def test_expand_background():
         background_image=['http://weasyprint.org/foo/bar', 'none'],
         background_position=[('left', (50, '%'), 'top', (50, '%')),
                              ('left', (0, '%'), 'top', (0, '%'))],
-        background_repeat=['repeat', 'no-repeat'])
+        background_repeat=[('repeat', 'repeat'), ('no-repeat', 'no-repeat')])
     assert_invalid('background: 10px lipsum')
     assert_invalid('background-position: 10px lipsum')
     assert_invalid('background: content-box red content-box')

@@ -26,7 +26,7 @@ INITIAL_VALUES = {
     'background_image': ['none'],
     'background_position': [('left', Dimension(0, '%'),
                              'top', Dimension(0, '%'))],
-    'background_repeat': ['repeat'],
+    'background_repeat': [('repeat', 'repeat')],
     'background_clip': ['border-box'],  # CSS3
     'background_origin': ['padding-box'],  # CSS3
     'background_size': [('auto', 'auto')],  # CSS3
