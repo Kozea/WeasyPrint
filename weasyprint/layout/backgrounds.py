@@ -56,8 +56,8 @@ def layout_box_backgrounds(page, box, get_image_from_uri):
         box.background = None
         return
 
-    images = [get_image_from_uri(image) if image != 'none' else None
-              for image in style.background_image]
+    images = [get_image_from_uri(url) if url != 'none' else None
+              for url in style.background_image]
     color = style.get_color('background_color')
     if color.alpha == 0 and not any(images):
         box.background = None

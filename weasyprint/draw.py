@@ -210,55 +210,59 @@ def draw_background(context, bg, enable_hinting):
 
         # Paint in reversed order: first layer is "closest" to the viewer.
         for layer in reversed(bg.layers):
-            draw_background_image(context, layer, enable_hinting)
+            draw_background_image(context, layer)
 
-def draw_background_image(context, layer, enable_hinting):
+
+def draw_background_image(context, layer):
     # Background image
     if layer.image is None:
         return
 
+    get_pattern, intrinsic_width, intrinsic_height = layer.image
+    if intrinsic_width == 0 or intrinsic_height == 0:
+        return
+
+    (positioning_x, positioning_y,
+        positioning_width, positioning_height) = layer.positioning_area
+
+    bg_size = layer.size
+    if bg_size in ('cover', 'contain'):
+        scale_x = scale_y = {'cover': max, 'contain': min}[bg_size](
+            positioning_width / intrinsic_width,
+            positioning_height / intrinsic_height)
+        image_width = intrinsic_width * scale_x
+        image_height = intrinsic_height * scale_y
+    elif bg_size == ('auto', 'auto'):
+        scale_x = scale_y = 1
+        image_width = intrinsic_width
+        image_height = intrinsic_height
+    elif bg_size[0] == 'auto':
+        image_height = percentage(bg_size[1], positioning_height)
+        scale_x = scale_y = image_height / intrinsic_height
+        image_width = intrinsic_width * scale_x
+    elif bg_size[1] == 'auto':
+        image_width = percentage(bg_size[0], positioning_width)
+        scale_x = scale_y = image_width / intrinsic_width
+        image_height = intrinsic_height * scale_y
+    else:
+        image_width = percentage(bg_size[0], positioning_width)
+        image_height = percentage(bg_size[1], positioning_height)
+        scale_x = image_width / intrinsic_width
+        scale_y = image_height / intrinsic_height
+
+    origin_x, position_x, origin_y, position_y = layer.position
+    ref_x = positioning_width - image_width
+    ref_y = positioning_height - image_height
+    position_x = percentage(position_x, ref_x)
+    position_y = percentage(position_y, ref_y)
+    if origin_x == 'right':
+        position_x = ref_x - position_x
+    if origin_y == 'bottom':
+        position_y = ref_y - position_y
+
     with stacked(context):
-        (positioning_x, positioning_y,
-            positioning_width, positioning_height) = layer.positioning_area
-        context.translate(positioning_x, positioning_y)
-
-        get_pattern, intrinsic_width, intrinsic_height = layer.image
-
-        bg_size = layer.size
-        if bg_size in ('cover', 'contain'):
-            scale_x = scale_y = {'cover': max, 'contain': min}[bg_size](
-                positioning_width / intrinsic_width,
-                positioning_height / intrinsic_height)
-            image_width = intrinsic_width * scale_x
-            image_height = intrinsic_height * scale_y
-        elif bg_size == ('auto', 'auto'):
-            scale_x = scale_y = 1
-            image_width = intrinsic_width
-            image_height = intrinsic_height
-        elif bg_size[0] == 'auto':
-            image_height = percentage(bg_size[1], positioning_height)
-            scale_x = scale_y = image_height / intrinsic_height
-            image_width = intrinsic_width * scale_x
-        elif bg_size[1] == 'auto':
-            image_width = percentage(bg_size[0], positioning_width)
-            scale_x = scale_y = image_width / intrinsic_width
-            image_height = intrinsic_height * scale_y
-        else:
-            image_width = percentage(bg_size[0], positioning_width)
-            image_height = percentage(bg_size[1], positioning_height)
-            scale_x = image_width / intrinsic_width
-            scale_y = image_height / intrinsic_height
-
-        origin_x, position_x, origin_y, position_y = layer.position
-        ref_x = positioning_width - image_width
-        ref_y = positioning_height - image_height
-        position_x = percentage(position_x, ref_x)
-        position_y = percentage(position_y, ref_y)
-        if origin_x == 'right':
-            position_x = ref_x - position_x
-        if origin_y == 'bottom':
-            position_y = ref_y - position_y
-        context.translate(position_x, position_y)
+        context.translate(positioning_x + position_x,
+                          positioning_y + position_y)
 
         repeat_x, repeat_y = layer.repeat
         if (repeat_x == 'no-repeat') ^ (repeat_y == 'no-repeat'):
