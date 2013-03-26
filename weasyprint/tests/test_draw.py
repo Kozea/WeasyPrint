@@ -738,12 +738,12 @@ def test_background_clip():
                 html { background: #fff }
                 body { margin: 1px; padding: 1px; height: 2px;
                        border: 1px solid  transparent;
-                       background: #00f; background-clip : %s }
+                       background: %s }
             </style>
             <body>
         ''' % (value,))
 
-    test_value('border-box', [
+    test_value('#00f border-box', [
         _+_+_+_+_+_+_+_,
         _+B+B+B+B+B+B+_,
         _+B+B+B+B+B+B+_,
@@ -753,7 +753,7 @@ def test_background_clip():
         _+B+B+B+B+B+B+_,
         _+_+_+_+_+_+_+_,
     ])
-    test_value('padding-box', [
+    test_value('#00f padding-box', [
         _+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_,
         _+_+B+B+B+B+_+_,
@@ -763,7 +763,7 @@ def test_background_clip():
         _+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_,
     ])
-    test_value('content-box', [
+    test_value('#00f content-box', [
         _+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_,
@@ -771,6 +771,17 @@ def test_background_clip():
         _+_+_+B+B+_+_+_,
         _+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+    ])
+    G = as_pixel(b'\x00\xff\x00\xff')  # lime green
+    test_value('url(pattern.png) padding-box, #0f0', [
+        _+_+_+_+_+_+_+_,
+        _+G+G+G+G+G+G+_,
+        _+G+r+B+B+B+G+_,
+        _+G+B+B+B+B+G+_,
+        _+G+B+B+B+B+G+_,
+        _+G+B+B+B+B+G+_,
+        _+G+G+G+G+G+G+_,
         _+_+_+_+_+_+_+_,
     ])
 

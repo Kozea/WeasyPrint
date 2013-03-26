@@ -192,25 +192,25 @@ def draw_background(context, bg, enable_hinting):
     if bg is None:
         return
 
-    with stacked(context):
-        if enable_hinting:
-            # Prefer crisp edges on background rectangles.
-            context.set_antialias(cairo.ANTIALIAS_NONE)
+    # Background color
+    if bg.color.alpha > 0:
+        with stacked(context):
+            if enable_hinting:
+                # Prefer crisp edges on background rectangles.
+                context.set_antialias(cairo.ANTIALIAS_NONE)
 
-        painting_area = bg.layers[-1].painting_area
-        if painting_area:
-            context.rectangle(*painting_area)
-            context.clip()
-        #else: unrestricted, whole page box
+            painting_area = bg.layers[-1].painting_area
+            if painting_area:
+                context.rectangle(*painting_area)
+                context.clip()
+            #else: unrestricted, whole page box
 
-        # Background color
-        if bg.color.alpha > 0:
             context.set_source_rgba(*bg.color)
             context.paint()
 
-        # Paint in reversed order: first layer is "closest" to the viewer.
-        for layer in reversed(bg.layers):
-            draw_background_image(context, layer)
+    # Paint in reversed order: first layer is "closest" to the viewer.
+    for layer in reversed(bg.layers):
+        draw_background_image(context, layer)
 
 
 def draw_background_image(context, layer):
@@ -261,6 +261,12 @@ def draw_background_image(context, layer):
         position_y = ref_y - position_y
 
     with stacked(context):
+        painting_area = layer.painting_area
+        if painting_area:
+            context.rectangle(*painting_area)
+            context.clip()
+        #else: unrestricted, whole page box
+
         context.translate(positioning_x + position_x,
                           positioning_y + position_y)
 
