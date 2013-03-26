@@ -296,6 +296,10 @@ def test_expand_background():
         background_repeat=[('no-repeat', 'no-repeat')])
     assert_background('fixed', background_attachment=['fixed'])
     assert_background(
+        'repeat no-repeat fixed',
+        background_repeat=[('repeat', 'no-repeat')],
+        background_attachment=['fixed'])
+    assert_background(
         'top',
         background_position=[('left', (50, '%'), 'top', (0, '%'))])
     assert_background(

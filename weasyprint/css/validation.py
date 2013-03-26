@@ -346,15 +346,19 @@ def simple_2d_position(tokens):
 
 @validator()
 @comma_separated_list
-@single_token
-def background_repeat(token):
+def background_repeat(tokens):
     """``background-repeat`` property validation."""
-    return {
-        'repeat': ('repeat', 'repeat'),
-        'repeat-x': ('repeat', 'no-repeat'),
-        'repeat-y': ('no-repeat', 'repeat'),
-        'no-repeat': ('no-repeat', 'no-repeat'),
-    }.get(get_keyword(token))
+    keywords = tuple(map(get_keyword, tokens))
+    if keywords == ('repeat-x',):
+        return ('repeat', 'no-repeat')
+    if keywords == ('repeat-y',):
+        return ('no-repeat', 'repeat')
+    if keywords in (('no-repeat',), ('repeat',)):#, ('space',), ('round',)):
+        return keywords * 2
+    if len(keywords) == 2 and all(
+            k in ('no-repeat', 'repeat')#, 'space', 'round')
+            for k in keywords):
+        return keywords
 
 
 @validator()
@@ -1289,6 +1293,9 @@ def expand_background(base_url, name, tokens):
         # Make `tokens` a stack
         tokens = tokens[::-1]
         while tokens:
+            if add('repeat', background_repeat.single_value(tokens[-2:][::-1])):
+                del tokens[-2:]
+                continue
             token = tokens[-1:]
             if (
                 (final_layer and add('color', other_colors(token)))
@@ -1316,7 +1323,6 @@ def expand_background(base_url, name, tokens):
                     break
             if position is not None:
                 continue
-            # TODO: 2-token repeat
             if add('origin', box.single_value(token)):
                 tokens.pop()
                 next_token = tokens[-1:]
