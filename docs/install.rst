@@ -118,6 +118,14 @@ GDK-PixBuf is part of GTK+, which also depends on cairo and Pango.
 
     sudo apt-get install python-dev python-pip python-lxml libgtk2.0-0 libffi-dev
 
+If you're using Pyhton 2.6, pip can't be used to install Pyphen (because `its
+package contains symlinks <http://bugs.python.org/issue10292>`_), so install it
+with easy_install first:
+
+.. code-block:: sh
+
+    sudo easy_install Pyphen
+
 
 Archlinux
 ~~~~~~~~~
