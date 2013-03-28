@@ -34,7 +34,7 @@ from .urls import FILESYSTEM_ENCODING
 def _get_matrix(box):
     """Return the matrix for the CSS transforms on this box.
 
-    :returns: a :class:`cairo.Matrix` object or :obj:`None`.
+    :returns: a :class:`cairocffi.Matrix` object or :obj:`None`.
 
     """
     # "Transforms apply to block-level and atomic inline-level elements,
@@ -183,20 +183,28 @@ class Page(object):
     def paint(self, cairo_context, left_x=0, top_y=0, scale=1, clip=False):
         """Paint the page in cairo, on any type of surface.
 
-        :param cairo_context: any :class:`cairo.Context` object.
-        :type left_x: float
+        :param cairo_context:
+            Any :class:`cairocffi.Context` object.
+
+            .. note::
+
+                In case you get a :class:`cairo.Context` object
+                (eg. form PyGTK),
+                it is possible to :ref:`convert it to cairocffi
+                <converting_pycairo>`.
         :param left_x:
             X coordinate of the left of the page, in cairo user units.
-        :type top_y: float
         :param top_y:
             Y coordinate of the top of the page, in cairo user units.
-        :type scale: float
         :param scale:
             Zoom scale in cairo user units per CSS pixel.
-        :type clip: bool
         :param clip:
             Whether to clip/cut content outside the page. If false or
             not provided, content can overflow.
+        :type left_x: float
+        :type top_y: float
+        :type scale: float
+        :type clip: bool
 
         """
         with stacked(cairo_context):
