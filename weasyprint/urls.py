@@ -253,7 +253,7 @@ def default_url_fetcher(url):
         to call ``file_obj.close()``.
 
     """
-    if url.startswith('data:'):
+    if url.lower().startswith('data:'):
         return open_data_url(url)
     elif UNICODE_SCHEME_RE.match(url):
         url = iri_to_uri(url)

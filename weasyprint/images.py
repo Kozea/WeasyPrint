@@ -70,7 +70,7 @@ def cairosvg_loader(file_obj, string, uri):
 
     This loader uses CairoSVG: http://cairosvg.org/
     """
-    if uri.startswith('data:'):
+    if uri.lower().startswith('data:'):
         # Don’t pass data URIs to CairoSVG.
         # They are useless for relative URIs anyway.
         uri = None

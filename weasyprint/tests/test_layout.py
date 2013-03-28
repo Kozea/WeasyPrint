@@ -2014,7 +2014,7 @@ def test_images():
         '<img src="%s">' % url for url in [
             'pattern.png', 'pattern.gif', 'blue.jpg', 'pattern.svg',
             "data:image/svg+xml,<svg width='4' height='4'></svg>",
-            "data:image/svg+xml,<svg width='4px' height='4px'></svg>",
+            "DatA:image/svg+xml,<svg width='4px' height='4px'></svg>",
         ]
     ] + [
         '<embed src=pattern.png>',
@@ -2042,6 +2042,8 @@ def test_images():
         'nonexistent.png',
         'unknownprotocol://weasyprint.org/foo.png',
         'data:image/unknowntype,Not an image',
+        # Invalid protocol
+        'datå:image/svg+xml,<svg width="4" height="4"></svg>',
         # zero-byte images
         'data:image/png,',
         'data:image/jpeg,',
