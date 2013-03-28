@@ -648,6 +648,7 @@ def find_earlier_page_break(children, absolute_boxes, fixed_boxes):
                     new_children = list(children[:index]) + [new_child]
                     # Index in the original parent
                     resume_at = (new_child.index, resume_at)
+                    index += 1  # Remove placeholders after child
                     break
             elif isinstance(child, boxes.TableBox):
                 pass  # TODO: find an earlier break between table rows.

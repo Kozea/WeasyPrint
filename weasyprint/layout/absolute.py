@@ -50,6 +50,9 @@ class AbsolutePlaceholder(object):
     def __setattr__(self, name, value):
         setattr(self._box, name, value)
 
+    def __repr__(self):
+        return '<Placeholder %r>' % self._box
+
 
 @handle_min_max_width
 def absolute_width(box, context, containing_block):

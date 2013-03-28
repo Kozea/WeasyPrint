@@ -1690,11 +1690,45 @@ def test_page_breaks():
             }
         </style>
         <p style="page-break-after: right">foo</p>
-        <p>bar</p
+        <p>bar</p>
     ''')
     assert len(page_1.children) == 2  # content and @bottom-center
     assert len(page_2.children) == 1  # content only
     assert len(page_3.children) == 2  # content and @bottom-center
+
+    page_1, page_2 = parse('''
+        <style>
+          @page { size: 75px; margin: 0 }
+          div { height: 20px }
+        </style>
+        <body>
+          <div></div>
+          <section>
+            <div></div>
+            <div style="page-break-after: avoid">
+              <div style="position: absolute"></div>
+              <div style="position: fixed"></div>
+            </div>
+          </section>
+          <div></div>
+    ''')
+    html, = page_1.children
+    body, = html.children
+    div_1, section = body.children
+    div_2, = section.children
+    assert div_1.position_y == 0
+    assert div_2.position_y == 20
+    assert div_1.height == 20
+    assert div_2.height == 20
+    html, = page_2.children
+    body, = html.children
+    section, div_4 = body.children
+    div_3, = section.children
+    absolute, fixed = div_3.children
+    assert div_3.position_y == 0
+    assert div_4.position_y == 20
+    assert div_3.height == 20
+    assert div_4.height == 20
 
 
 @assert_no_logs
