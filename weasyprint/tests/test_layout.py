@@ -1416,24 +1416,24 @@ def test_page_breaks():
     assert positions_y == [[10, 40], [10, 40], [10]]
 
     # Same as above, but no content inside each <div>.
-    # TODO: This currently gives no page break. Should it?
-#    pages = parse('''
-#        <style>
-#            @page { size: 100px; margin: 10px }
-#            body { margin: 0 }
-#            div { height: 30px }
-#        </style>
-#        <div/><div/><div/><div/><div/>
-#    ''')
-#    page_divs = []
-#    for page in pages:
-#        divs = body_children(page)
-#        assert all([div.element_tag == 'div' for div in divs])
-#        assert all([div.position_x == 10 for div in divs])
-#        page_divs.append(divs)
+    # This used to produce no page break.
+    pages = parse('''
+        <style>
+            @page { size: 100px; margin: 10px }
+            body { margin: 0 }
+            div { height: 30px }
+        </style>
+        <div/><div/><div/><div/><div/>
+    ''')
+    page_divs = []
+    for page in pages:
+        divs = body_children(page)
+        assert all([div.element_tag == 'div' for div in divs])
+        assert all([div.position_x == 10 for div in divs])
+        page_divs.append(divs)
 
-#    positions_y = [[div.position_y for div in divs] for divs in page_divs]
-#    assert positions_y == [[10, 40], [10, 40], [10]]
+    positions_y = [[div.position_y for div in divs] for divs in page_divs]
+    assert positions_y == [[10, 40], [10, 40], [10]]
 
     pages = parse('''
         <style>
