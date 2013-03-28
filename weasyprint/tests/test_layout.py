@@ -2074,6 +2074,13 @@ def test_images():
     assert img.width == 40
     assert img.height == 40
 
+    body, img = get_img('''<body style="font-size: 0">
+        <img src="pattern.png" style="height: 40px">''')
+    assert body.height == 40
+    assert img.position_y == 0
+    assert img.width == 40
+    assert img.height == 40
+
     # Same with percentages
     body, img = get_img('''<body style="font-size: 0"><p style="width: 200px">
         <img src="pattern.png" style="width: 20%">''')
@@ -2093,7 +2100,7 @@ def test_images():
     assert img.width == 2
     assert img.height == 2
 
-    # display: table-cell is ignored
+    # display: table-cell is ignored. XXX Should it?
     page, = parse('''<body style="font-size: 0">
         <img src="pattern.png" style="width: 40px">
         <img src="pattern.png" style="width: 60px; display: table-cell">

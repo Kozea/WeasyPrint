@@ -276,16 +276,20 @@ def replaced_box_width(box, device_size):
     Compute and set the used width for replaced boxes (inline- or block-level)
     """
     # http://www.w3.org/TR/CSS21/visudet.html#inline-replaced-width
-    _, intrinsic_width, _intrinsic_height = box.replacement
+    _, intrinsic_width, intrinsic_height = box.replacement
     # TODO: update this when we have replaced elements that do not
     # always have an intrinsic width. (See commented code below.)
     assert intrinsic_width is not None
+    assert intrinsic_height is not None
 
     if box.width == 'auto':
-        box.width = intrinsic_width
+        if box.height == 'auto':
+            box.width = intrinsic_width
+        else:
+            intrinsic_ratio = intrinsic_width / intrinsic_height
+            box.width = box.height * intrinsic_ratio
 
     # Untested code for when we do not always have an intrinsic width.
-#    intrinsic_ratio = intrinsic_width / intrinsic_height
 #    if box.height == 'auto' and box.width == 'auto':
 #        if intrinsic_width is not None:
 #            box.width = intrinsic_width

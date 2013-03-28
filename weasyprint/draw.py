@@ -217,14 +217,12 @@ def draw_background_image(context, layer):
     # Background image
     if layer.image is None:
         return
-
     get_pattern, intrinsic_width, intrinsic_height = layer.image
     if intrinsic_width == 0 or intrinsic_height == 0:
         return
 
     (positioning_x, positioning_y,
         positioning_width, positioning_height) = layer.positioning_area
-
     bg_size = layer.size
     if bg_size in ('cover', 'contain'):
         scale_x = scale_y = {'cover': max, 'contain': min}[bg_size](

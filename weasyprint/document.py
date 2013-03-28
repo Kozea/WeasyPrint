@@ -181,7 +181,7 @@ class Page(object):
         self._enable_hinting = enable_hinting
 
     def paint(self, cairo_context, left_x=0, top_y=0, scale=1, clip=False):
-        """Paint the surface in cairo, on any type of surface.
+        """Paint the page in cairo, on any type of surface.
 
         :param cairo_context: any :class:`cairo.Context` object.
         :type left_x: float
