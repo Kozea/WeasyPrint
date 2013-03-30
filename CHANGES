@@ -1,6 +1,27 @@
 WeasyPrint changelog
 ====================
 
+Version 0.18
+------------
+
+Released on 2013-03-30.
+
+* Add support for Level 3 backgrounds,
+  including multiple background layers per element/box.
+* Forward-compatibility with (future releases of) cairocffi 0.4+ and CFFI 0.6+.
+* Bug fixes:
+  * Avoid some unnecessary line breaks
+    for elements sized based on their content (aka. “shrink-to-fit”)
+    such as floats and page headers.
+  * Allow page breaks between empty blocks.
+  * Fix `#66 <https://github.com/Kozea/WeasyPrint/issues/66>`_:
+    Resolve images’ auto width from non-auto height and intrinsic ratio.
+  * Fix `#21 <https://github.com/Kozea/WeasyPrint/issues/21>`_:
+    The ``data:`` URL scheme is case-insensitive.
+  * Fix `#53 <https://github.com/Kozea/WeasyPrint/issues/53>`_:
+    Crash when backtracking for ``break-before/after: avoid``.
+
+
 Version 0.17.1
 --------------
 

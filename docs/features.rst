@@ -180,8 +180,8 @@ Are supported:
 * `CSS 3 Colors`_ (except the deprecated System Colors)
 * `CSS 3 Paged Media`_ (except named pages)
 * `CSS Transforms`_ (2D only)
-* From `CSS 3 Backgrounds and Borders`_: ``background-clip``,
-  ``background-origin`` and ``background-size``.
+* The background part of `CSS 3 Backgrounds and Borders`_,
+  including multiple background layers per element/box.
 * From `CSS 3 Basic User Interface`_: ``box-sizing``
 
 .. _CSS 3 Colors: http://www.w3.org/TR/css3-color/
