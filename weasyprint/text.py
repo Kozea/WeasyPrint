@@ -13,13 +13,11 @@
 from __future__ import division
 # XXX No unicode_literals, cffi likes native strings
 
-from cgi import escape
-
 import pyphen
 import cffi
 import cairocffi as cairo
 
-from .compat import xrange, basestring
+from .compat import basestring
 
 
 ffi = cffi.FFI()
@@ -61,12 +59,6 @@ ffi.cdef('''
         ULTRA_EXPANDED
     } PangoStretch;
 
-      typedef enum {
-        WRAP_WORD,
-        WRAP_CHAR,
-        WRAP_WORD_CHAR
-    } PangoWrapMode;
-
     typedef unsigned int guint;
     typedef int gint;
     typedef gint gboolean;
@@ -96,9 +88,9 @@ ffi.cdef('''
 
 
     PangoLayout * pango_cairo_create_layout (cairo_t *cr);
-    void pango_layout_set_wrap (PangoLayout *layout, PangoWrapMode wrap);
     void pango_layout_set_width (PangoLayout *layout, int width);
-    void pango_layout_set_attributes(PangoLayout *layout, PangoAttrList *attrs);
+    void pango_layout_set_attributes(
+        PangoLayout *layout, PangoAttrList *attrs);
     void pango_layout_set_text (
         PangoLayout *layout, const char *text, int length);
     void pango_layout_set_font_description (
@@ -128,13 +120,13 @@ ffi.cdef('''
         PangoFontDescription *desc, double size);
 
 
-    PangoAttrList *     pango_attr_list_new              (void);
-    void                pango_attr_list_unref            (PangoAttrList *list);
-    void                pango_attr_list_insert           (
+    PangoAttrList *     pango_attr_list_new             (void);
+    void                pango_attr_list_unref           (PangoAttrList *list);
+    void                pango_attr_list_insert          (
         PangoAttrList *list, PangoAttribute *attr);
 
-    PangoAttribute *    pango_attr_letter_spacing_new    (int letter_spacing);
-    void                pango_attribute_destroy          (PangoAttribute *attr);
+    PangoAttribute *    pango_attr_letter_spacing_new   (int letter_spacing);
+    void                pango_attribute_destroy         (PangoAttribute *attr);
 
 
     PangoLayoutIter * pango_layout_get_iter (PangoLayout *layout);
@@ -188,8 +180,10 @@ units_from_double = pango.pango_units_from_double
 PYPHEN_DICTIONARY_CACHE = {}
 
 
-def to_enum(string):
-    return str(string.replace('-', '_').upper())
+PANGO_STYLE, PANGO_STRETCH, PANGO_VARIANT = [
+    dict((k.replace('_', '-').lower(), v)
+         for k, v in ffi.typeof(enum).relements.items())
+    for enum in ('PangoStyle', 'PangoStretch', 'PangoVariant')]
 
 
 def unicode_to_char_p(string):
@@ -235,7 +229,7 @@ def create_layout(text, style, hinting, max_width):
     """
     layout_obj = Layout()
     dummy_context = layout_obj.dummy_context = (
-        cairo.Context(cairo.ImageSurface('ARGB32', 1, 1))
+        cairo.Context(cairo.ImageSurface(cairo.FORMAT_ARGB32, 1, 1))
         if hinting else
         cairo.Context(cairo.PDFSurface(None, 1, 1)))
     layout = layout_obj.layout = ffi.gc(
@@ -250,14 +244,16 @@ def create_layout(text, style, hinting, max_width):
     font_family = layout_obj.font_family = unicode_to_char_p(
         ','.join(style.font_family))[0]
     pango.pango_font_description_set_family(font, font_family)
-    pango.pango_font_description_set_variant(font, to_enum(style.font_variant))
-    pango.pango_font_description_set_style(font, to_enum(style.font_style))
-    pango.pango_font_description_set_stretch(font, to_enum(style.font_stretch))
+    pango.pango_font_description_set_variant(
+        font, PANGO_VARIANT[style.font_variant])
+    pango.pango_font_description_set_style(
+        font, PANGO_STYLE[style.font_style])
+    pango.pango_font_description_set_stretch(
+        font, PANGO_STRETCH[style.font_stretch])
     pango.pango_font_description_set_weight(font, style.font_weight)
     pango.pango_font_description_set_absolute_size(
         font, units_from_double(style.font_size))
     pango.pango_layout_set_font_description(layout, font)
-    pango.pango_layout_set_wrap(layout, 'WRAP_WORD')
     layout_obj.set_text(text)
     # Make sure that max_width * Pango.SCALE == max_width * 1024 fits in a
     # signed integer. Treat bigger values same as None: unconstrained width.

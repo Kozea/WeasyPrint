@@ -46,7 +46,8 @@ B = as_pixel(b'\x00\x00\xff\xff')  # blue
 def save_pixels_to_png(pixels, width, height, filename):
     """Save raw pixels to a PNG file."""
     cairo.ImageSurface(
-        str('ARGB32'), width, height, data=bytearray(pixels), stride=width * 4
+        cairo.FORMAT_ARGB32, width, height,
+        data=bytearray(pixels), stride=width * 4
     ).write_to_png(filename)
 
 
@@ -130,11 +131,12 @@ def html_to_pixels(name, expected_width, expected_height, html):
 
     Also return the document to aid debugging.
     """
-    document = TestHTML(string=html,
+    document = TestHTML(
+        string=html,
         # Dummy filename, but in the right directory.
         base_url=resource_filename('<test>'))
-    pixels = document_to_pixels(document, name, expected_width,
-                               expected_height)
+    pixels = document_to_pixels(
+        document, name, expected_width, expected_height)
     return document, pixels
 
 
@@ -149,7 +151,7 @@ def document_to_pixels(document, name, expected_width, expected_height):
 def image_to_pixels(surface, width, height):
     assert (surface.get_width(), surface.get_height()) == (width, height)
     # RGB24 is actually the same as ARGB32, with A unused.
-    assert surface.get_format() in ('ARGB32', 'RGB24')
+    assert surface.get_format() in (cairo.FORMAT_ARGB32, cairo.FORMAT_RGB24)
     pixels = surface.get_data()[:]
     stride = surface.get_stride()
     row_bytes = width * 4
