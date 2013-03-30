@@ -10,6 +10,7 @@ Released on 2013-03-30.
   including multiple background layers per element/box.
 * Forward-compatibility with (future releases of) cairocffi 0.4+ and CFFI 0.6+.
 * Bug fixes:
+
   * Avoid some unnecessary line breaks
     for elements sized based on their content (aka. “shrink-to-fit”)
     such as floats and page headers.
