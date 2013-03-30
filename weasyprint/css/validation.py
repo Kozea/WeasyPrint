@@ -353,10 +353,10 @@ def background_repeat(tokens):
         return ('repeat', 'no-repeat')
     if keywords == ('repeat-y',):
         return ('no-repeat', 'repeat')
-    if keywords in (('no-repeat',), ('repeat',)):#, ('space',), ('round',)):
+    if keywords in (('no-repeat',), ('repeat',), ('space',)):  # , ('round',)):
         return keywords * 2
     if len(keywords) == 2 and all(
-            k in ('no-repeat', 'repeat')#, 'space', 'round')
+            k in ('no-repeat', 'repeat', 'space')  # , 'round')
             for k in keywords):
         return keywords
 

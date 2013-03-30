@@ -12,7 +12,6 @@
 
 from __future__ import division, unicode_literals
 
-import io
 import sys
 import os.path
 import tempfile
@@ -115,6 +114,7 @@ def assert_different_renderings(expected_width, expected_height, documents):
                 # Same as "assert pixels_1 != pixels_2" but the output of
                 # the assert hook would be gigantic and useless.
                 assert False, '%s and %s are the same' % (name_1, name_2)
+
 
 def write_png(basename, pixels, width, height):  # pragma: no cover
     """Take a pixel matrix and write a PNG file."""
@@ -584,7 +584,7 @@ def test_background_image():
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         ]),
-        ('fixed_center_center', 'url(pattern.png) no-repeat fixed 50% center', [
+        ('fixed_center_center', 'url(pattern.png)no-repeat fixed 50%center', [
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
@@ -728,6 +728,85 @@ def test_background_origin():
         _+_+_+_+_+_+_+_+_+_+_+_,
     ], css='border-box; background-clip: content-box')
 
+
+@assert_no_logs
+def test_background_repeat_level3():
+    """Test Level 3 for the background-repeat property."""
+    assert_pixels('background_repeat_space', 12, 16, [
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+r+B+B+B+_+_+r+B+B+B+_,
+        _+B+B+B+B+_+_+B+B+B+B+_,
+        _+B+B+B+B+_+_+B+B+B+B+_,
+        _+B+B+B+B+_+_+B+B+B+B+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+r+B+B+B+_+_+r+B+B+B+_,
+        _+B+B+B+B+_+_+B+B+B+B+_,
+        _+B+B+B+B+_+_+B+B+B+B+_,
+        _+B+B+B+B+_+_+B+B+B+B+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+r+B+B+B+_+_+r+B+B+B+_,
+        _+B+B+B+B+_+_+B+B+B+B+_,
+        _+B+B+B+B+_+_+B+B+B+B+_,
+        _+B+B+B+B+_+_+B+B+B+B+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { size: 12px 16px }
+            html { background: #fff }
+            body { margin: 1px; height: 14px;
+                   background: url(pattern.png) space; }
+        </style>
+        <body>
+    ''')
+
+    assert_pixels('background_repeat_space', 12, 14, [
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+r+B+B+B+_+_+r+B+B+B+_,
+        _+B+B+B+B+_+_+B+B+B+B+_,
+        _+B+B+B+B+_+_+B+B+B+B+_,
+        _+B+B+B+B+_+_+B+B+B+B+_,
+        _+r+B+B+B+_+_+r+B+B+B+_,
+        _+B+B+B+B+_+_+B+B+B+B+_,
+        _+B+B+B+B+_+_+B+B+B+B+_,
+        _+B+B+B+B+_+_+B+B+B+B+_,
+        _+r+B+B+B+_+_+r+B+B+B+_,
+        _+B+B+B+B+_+_+B+B+B+B+_,
+        _+B+B+B+B+_+_+B+B+B+B+_,
+        _+B+B+B+B+_+_+B+B+B+B+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { size: 12px 14px }
+            html { background: #fff }
+            body { margin: 1px; height: 12px;
+                   background: url(pattern.png) space; }
+        </style>
+        <body>
+    ''')
+
+    assert_pixels('background_repeat_space', 12, 13, [
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+r+B+B+B+r+B+B+B+r+B+_,
+        _+B+B+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+B+B+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+        _+r+B+B+B+r+B+B+B+r+B+_,
+        _+B+B+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+B+B+_,
+        _+_+_+_+_+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { size: 12px 13px }
+            html { background: #fff }
+            body { margin: 1px; height: 11px;
+                   background: url(pattern.png) repeat space; }
+        </style>
+        <body>
+    ''')
 
 
 @assert_no_logs
@@ -1132,7 +1211,6 @@ def test_images():
                   style="width: 0; height: 0"></div>
     ''')
 
-
     page_break = [
         _+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_,
@@ -1217,7 +1295,6 @@ def test_images():
                     height: 2px; margin-bottom: 1px"></div>
         <img src=blue.jpg>
     ''')
-
 
 
 @assert_no_logs
@@ -1541,7 +1618,6 @@ def test_tables():
     '''})
 
 
-
 @assert_no_logs
 def test_before_after():
     assert_same_rendering(300, 30, [
@@ -1661,16 +1737,15 @@ def test_small_borders():
 
     # Do not test the exact rendering of earch border style but at least
     # check that they do not do the same.
-    assert_different_renderings(50, 50, [('small_border_%s'  % border_style, '''
+    assert_different_renderings(50, 50, [
+        ('small_border_%s' % border_style, '''
         <style>
             @page { size: 50px 50px }
             html { background: #fff }
             body { margin: 5px; height: 0; border: 10px %s blue }
         </style>
         <body>''' % border_style)
-        for border_style in ['none', 'solid', 'dashed', 'dotted']
-    ])
-
+        for border_style in ['none', 'solid', 'dashed', 'dotted']])
 
 
 @assert_no_logs
@@ -1827,6 +1902,7 @@ def test_overflow():
 def test_clip():
     """Test the clip property."""
     num = [0]
+
     def clip(css, pixels):
         num[0] += 1
         name = 'background_repeat_clipped_%s' % num[0]
@@ -1956,7 +2032,7 @@ def test_opacity():
             <div style="background: none; opacity: 0.666666">
                 <div style="opacity: 0.9"></div>
             </div>
-        '''),  #  0.9 * 0.666666 == 0.6
+        '''),  # 0.9 * 0.666666 == 0.6
     ])
 
 

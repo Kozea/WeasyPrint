@@ -258,43 +258,55 @@ def draw_background_image(context, layer):
     if origin_y == 'bottom':
         position_y = ref_y - position_y
 
+    painting_x, painting_y, painting_width, painting_height = (
+        layer.painting_area)
+    repeat_x, repeat_y = layer.repeat
+
+    if repeat_x == 'no-repeat':
+        repeat_width = painting_width * 2
+    elif repeat_x == 'repeat':
+        repeat_width = image_width
+    else:
+        assert repeat_x == 'space'
+        n_repeats = math.floor(positioning_width / image_width)
+        if n_repeats >= 2:
+            repeat_width = (positioning_width - image_width) / (n_repeats - 1)
+            position_x = 0  # Ignore background-position for this dimension
+        else:
+            repeat_width = image_width
+
+    if repeat_y == 'no-repeat':
+        repeat_height = painting_height * 2
+    elif repeat_y == 'repeat':
+        repeat_height = image_height
+    else:
+        assert repeat_y == 'space'
+        n_repeats = math.floor(positioning_height / image_height)
+        if n_repeats >= 2:
+            repeat_height = (
+                positioning_height - image_height) / (n_repeats - 1)
+            position_x = 0  # Ignore background-position for this dimension
+        else:
+            repeat_height = image_height
+
+    sub_surface = cairo.PDFSurface(None, repeat_width, repeat_height)
+    sub_context = cairo.Context(sub_surface)
+    sub_context.set_source(get_pattern())
+    sub_context.rectangle(0, 0, image_width, image_height)
+    sub_context.fill()
+    pattern = cairo.SurfacePattern(sub_surface)
+    pattern.set_filter(IMAGE_RENDERING_TO_FILTER[layer.image_rendering])
+    pattern.set_extend(cairo.EXTEND_REPEAT)
+
     with stacked(context):
-        painting_area = layer.painting_area
-        if painting_area:
-            context.rectangle(*painting_area)
+        if not layer.unbounded:
+            context.rectangle(painting_x, painting_y,
+                              painting_width, painting_height)
             context.clip()
         #else: unrestricted, whole page box
 
         context.translate(positioning_x + position_x,
                           positioning_y + position_y)
-
-        repeat_x, repeat_y = layer.repeat
-        if (repeat_x == 'no-repeat') ^ (repeat_y == 'no-repeat'):
-            # Get the current clip rectangle. This is the same as
-            # painting_area, but in new coordinates after translate()
-            clip_x1, clip_y1, clip_x2, clip_y2 = context.clip_extents()
-            clip_width = clip_x2 - clip_x1
-            clip_height = clip_y2 - clip_y1
-
-            if repeat_y == 'no-repeat':
-                # Limit the drawn area vertically
-                clip_y1 = 0  # because of the last context.translate()
-                clip_height = image_height
-            else:
-                # repeat-y
-                # Limit the drawn area horizontally
-                clip_x1 = 0  # because of the last context.translate()
-                clip_width = image_width
-
-            # Second clip for the background image
-            context.rectangle(clip_x1, clip_y1, clip_width, clip_height)
-            context.clip()
-
-        pattern = get_pattern()
-        pattern.set_extend(cairo.EXTEND_NONE
-                           if layer.repeat == ('no-repeat', 'no-repeat')
-                           else cairo.EXTEND_REPEAT)
-        pattern.set_filter(IMAGE_RENDERING_TO_FILTER[layer.image_rendering])
         context.scale(scale_x, scale_y)
         context.set_source(pattern)
         context.paint()
@@ -608,6 +620,7 @@ def draw_collapsed_borders(context, table, enable_hinting):
     for segment in segments:
         draw_border_segment(context, enable_hinting, *segment[1:])
 
+
 def draw_replacedbox(context, box):
     """Draw the given :class:`boxes.ReplacedBox` to a ``cairo.context``."""
     if box.style.visibility == 'hidden':
@@ -628,7 +641,6 @@ def draw_replacedbox(context, box):
             pattern = get_pattern()
             # We might get a shared Pattern that was previously used
             # in a repeating background.
-            pattern.set_extend(cairo.EXTEND_NONE)
             pattern.set_filter(IMAGE_RENDERING_TO_FILTER[
                 box.style.image_rendering])
             context.set_source(pattern)
