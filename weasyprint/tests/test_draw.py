@@ -730,8 +730,8 @@ def test_background_origin():
 
 
 @assert_no_logs
-def test_background_repeat_level3():
-    """Test Level 3 for the background-repeat property."""
+def test_background_repeat_space():
+    """Test for background-repeat: space"""
     assert_pixels('background_repeat_space', 12, 16, [
         _+_+_+_+_+_+_+_+_+_+_+_,
         _+r+B+B+B+_+_+r+B+B+B+_,
@@ -804,6 +804,118 @@ def test_background_repeat_level3():
             html { background: #fff }
             body { margin: 1px; height: 11px;
                    background: url(pattern.png) repeat space; }
+        </style>
+        <body>
+    ''')
+
+
+@assert_no_logs
+def test_background_repeat_round():
+    """Test for background-repeat: round"""
+    assert_pixels('background_repeat_round', 10, 14, [
+        _+_+_+_+_+_+_+_+_+_,
+        _+r+r+B+B+B+B+B+B+_,
+        _+r+r+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+r+r+B+B+B+B+B+B+_,
+        _+r+r+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+_+_+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { size: 10px 14px }
+            html { background: #fff }
+            body { margin: 1px; height: 12px;
+                   image-rendering: optimizeSpeed;
+                   background: url(pattern.png) top/6px round repeat; }
+        </style>
+        <body>
+    ''')
+
+    assert_pixels('background_repeat_round', 10, 18, [
+        _+_+_+_+_+_+_+_+_+_,
+        _+r+r+B+B+B+B+B+B+_,
+        _+r+r+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+r+r+B+B+B+B+B+B+_,
+        _+r+r+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+_+_+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { size: 10px 18px }
+            html { background: #fff }
+            body { margin: 1px; height: 16px;
+                   image-rendering: optimizeSpeed;
+                   background: url(pattern.png) center/auto 8px repeat round; }
+        </style>
+        <body>
+    ''')
+
+    assert_pixels('background_repeat_round', 10, 14, [
+        _+_+_+_+_+_+_+_+_+_,
+        _+r+r+B+B+B+B+B+B+_,
+        _+r+r+B+B+B+B+B+B+_,
+        _+r+r+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+_+_+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { size: 10px 14px }
+            html { background: #fff }
+            body { margin: 1px; height: 12px;
+                   image-rendering: optimizeSpeed;
+                   background: url(pattern.png) center/6px 9px round; }
+        </style>
+        <body>
+    ''')
+
+    assert_pixels('background_repeat_round', 10, 14, [
+        _+_+_+_+_+_+_+_+_+_,
+        _+r+B+B+B+r+B+B+B+_,
+        _+r+B+B+B+r+B+B+B+_,
+        _+r+B+B+B+r+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+_+_+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { size: 10px 14px }
+            html { background: #fff }
+            body { margin: 1px; height: 12px;
+                   image-rendering: optimizeSpeed;
+                   background: url(pattern.png) center/5px 9px round; }
         </style>
         <body>
     ''')

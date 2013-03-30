@@ -221,32 +221,30 @@ def draw_background_image(context, layer):
     if intrinsic_width == 0 or intrinsic_height == 0:
         return
 
-    (positioning_x, positioning_y,
-        positioning_width, positioning_height) = layer.positioning_area
+    positioning_x, positioning_y, positioning_width, positioning_height = (
+        layer.positioning_area)
+    painting_x, painting_y, painting_width, painting_height = (
+        layer.painting_area)
+
     bg_size = layer.size
     if bg_size in ('cover', 'contain'):
-        scale_x = scale_y = {'cover': max, 'contain': min}[bg_size](
+        scale = {'cover': max, 'contain': min}[bg_size](
             positioning_width / intrinsic_width,
             positioning_height / intrinsic_height)
-        image_width = intrinsic_width * scale_x
-        image_height = intrinsic_height * scale_y
+        image_width = intrinsic_width * scale
+        image_height = intrinsic_height * scale
     elif bg_size == ('auto', 'auto'):
-        scale_x = scale_y = 1
         image_width = intrinsic_width
         image_height = intrinsic_height
     elif bg_size[0] == 'auto':
         image_height = percentage(bg_size[1], positioning_height)
-        scale_x = scale_y = image_height / intrinsic_height
-        image_width = intrinsic_width * scale_x
+        image_width = intrinsic_width * image_height / intrinsic_height
     elif bg_size[1] == 'auto':
         image_width = percentage(bg_size[0], positioning_width)
-        scale_x = scale_y = image_width / intrinsic_width
-        image_height = intrinsic_height * scale_y
+        image_height = intrinsic_height * image_width / intrinsic_width
     else:
         image_width = percentage(bg_size[0], positioning_width)
         image_height = percentage(bg_size[1], positioning_height)
-        scale_x = image_width / intrinsic_width
-        scale_y = image_height / intrinsic_height
 
     origin_x, position_x, origin_y, position_y = layer.position
     ref_x = positioning_width - image_width
@@ -258,13 +256,26 @@ def draw_background_image(context, layer):
     if origin_y == 'bottom':
         position_y = ref_y - position_y
 
-    painting_x, painting_y, painting_width, painting_height = (
-        layer.painting_area)
     repeat_x, repeat_y = layer.repeat
+
+    if repeat_x == 'round':
+        n_repeats = max(1, round(positioning_width / image_width))
+        new_width = positioning_width / n_repeats
+        position_x = 0  # Ignore background-position for this dimension
+        if repeat_y != 'round' and bg_size[1] == 'auto':
+            image_height *= new_width / image_width
+        image_width = new_width
+    if repeat_y == 'round':
+        n_repeats = max(1, round(positioning_height / image_height))
+        new_height = positioning_height / n_repeats
+        position_y = 0  # Ignore background-position for this dimension
+        if repeat_x != 'round' and bg_size[0] == 'auto':
+            image_width *= new_height / image_height
+        image_height = new_height
 
     if repeat_x == 'no-repeat':
         repeat_width = painting_width * 2
-    elif repeat_x == 'repeat':
+    elif repeat_x in ('repeat', 'round'):
         repeat_width = image_width
     else:
         assert repeat_x == 'space'
@@ -277,7 +288,7 @@ def draw_background_image(context, layer):
 
     if repeat_y == 'no-repeat':
         repeat_height = painting_height * 2
-    elif repeat_y == 'repeat':
+    elif repeat_y in ('repeat', 'round'):
         repeat_height = image_height
     else:
         assert repeat_y == 'space'
@@ -285,17 +296,20 @@ def draw_background_image(context, layer):
         if n_repeats >= 2:
             repeat_height = (
                 positioning_height - image_height) / (n_repeats - 1)
-            position_x = 0  # Ignore background-position for this dimension
+            position_y = 0  # Ignore background-position for this dimension
         else:
             repeat_height = image_height
 
     sub_surface = cairo.PDFSurface(None, repeat_width, repeat_height)
     sub_context = cairo.Context(sub_surface)
-    sub_context.set_source(get_pattern())
     sub_context.rectangle(0, 0, image_width, image_height)
+    sub_context.scale(image_width / intrinsic_width,
+                      image_height / intrinsic_height)
+    sub_pattern = get_pattern()
+    sub_pattern.set_filter(IMAGE_RENDERING_TO_FILTER[layer.image_rendering])
+    sub_context.set_source(sub_pattern)
     sub_context.fill()
     pattern = cairo.SurfacePattern(sub_surface)
-    pattern.set_filter(IMAGE_RENDERING_TO_FILTER[layer.image_rendering])
     pattern.set_extend(cairo.EXTEND_REPEAT)
 
     with stacked(context):
@@ -307,7 +321,6 @@ def draw_background_image(context, layer):
 
         context.translate(positioning_x + position_x,
                           positioning_y + position_y)
-        context.scale(scale_x, scale_y)
         context.set_source(pattern)
         context.paint()
 
