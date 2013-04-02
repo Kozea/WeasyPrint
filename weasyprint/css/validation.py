@@ -646,7 +646,7 @@ def font_family(tokens):
 @single_token
 def font_size(token):
     """``font-size`` property validation."""
-    length = get_length(token, percentage=True)
+    length = get_length(token, negative=False, percentage=True)
     if length:
         return length
     font_size_keyword = get_keyword(token)
