@@ -89,8 +89,8 @@ The `CSS 2.1`_ features listed here are **not** supported:
 * `System colors`_ and `system fonts`_. The former are deprecated in CSS 3.
 
 .. _CSS 2.1: http://www.w3.org/TR/CSS21/
-.. _first-line: http://www.w3.org/TR/CSS21/selector.html#first-line-pseudo
-.. _first-letter: http://www.w3.org/TR/CSS21/selector.html#first-letter
+.. _::first-line: http://www.w3.org/TR/CSS21/selector.html#first-line-pseudo
+.. _::first-letter: http://www.w3.org/TR/CSS21/selector.html#first-letter
 .. _empty-cells: http://www.w3.org/TR/CSS21/tables.html#empty-cells
 .. _visibility\: collapse: http://www.w3.org/TR/CSS21/tables.html#dynamic-effects
 .. _width: http://www.w3.org/TR/CSS21/visudet.html#min-max-widths
