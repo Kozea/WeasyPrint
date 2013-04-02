@@ -271,6 +271,7 @@ def remove_last_whitespace(context, box):
     # 'white-space' set to 'pre-wrap', UAs may visually collapse them.
 
 
+@handle_min_max_width
 def replaced_box_width(box, device_size):
     """
     Compute and set the used width for replaced boxes (inline- or block-level)
@@ -288,6 +289,7 @@ def replaced_box_width(box, device_size):
         else:
             intrinsic_ratio = intrinsic_width / intrinsic_height
             box.width = box.height * intrinsic_ratio
+
 
     # Untested code for when we do not always have an intrinsic width.
 #    if box.height == 'auto' and box.width == 'auto':
@@ -317,6 +319,7 @@ def replaced_box_width(box, device_size):
 #            box.width = min(300, device_width)
 
 
+@handle_min_max_height
 def replaced_box_height(box, device_size):
     """
     Compute and set the used height for replaced boxes (inline- or block-level)
@@ -353,10 +356,6 @@ def replaced_box_height(box, device_size):
 #        box.height = min(150, device_width / 2)
 
 
-min_max_replaced_width = handle_min_max_width(replaced_box_width)
-min_max_replaced_height = handle_min_max_height(replaced_box_height)
-
-
 def inline_replaced_box_layout(box, device_size):
     """Lay out an inline :class:`boxes.ReplacedBox` ``box``."""
     for side in ['top', 'right', 'bottom', 'left']:
@@ -367,12 +366,12 @@ def inline_replaced_box_layout(box, device_size):
 
 def inline_replaced_box_width_height(box, device_size):
     if box.style.width == 'auto' and box.style.height == 'auto':
-        replaced_box_width(box, device_size)
-        replaced_box_height(box, device_size)
+        replaced_box_width.without_min_max(box, device_size)
+        replaced_box_height.without_min_max(box, device_size)
         min_max_auto_replaced(box)
     else:
-        min_max_replaced_width(box, device_size)
-        min_max_replaced_height(box, device_size)
+        replaced_box_width(box, device_size)
+        replaced_box_height(box, device_size)
 
 
 def min_max_auto_replaced(box):
@@ -392,6 +391,7 @@ def min_max_auto_replaced(box):
         'min' if height < min_height else 'max' if height > max_height else '')
 
     # Work around divisions by zero. These are pathological cases anyway.
+    # TODO: is there a cleaner way?
     if width == 0:
         width = 1e-6
     if height == 0:

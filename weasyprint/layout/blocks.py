@@ -15,7 +15,7 @@ from __future__ import division, unicode_literals
 from .absolute import absolute_layout, AbsolutePlaceholder
 from .float import float_layout, get_clearance, avoid_collisions
 from .inlines import (iter_line_boxes, replaced_box_width, replaced_box_height,
-                      min_max_replaced_height, min_max_auto_replaced)
+                      min_max_auto_replaced)
 from .markers import list_marker_layout
 from .min_max import handle_min_max_width
 from .tables import table_layout, table_wrapper_width
@@ -96,23 +96,25 @@ def block_box_layout(context, box, max_position_y, skip_stack,
     return new_box, resume_at, next_page, adjoining_margins, collapsing_through
 
 
+@handle_min_max_width
 def block_replaced_width(box, containing_block, device_size):
     # http://www.w3.org/TR/CSS21/visudet.html#block-replaced-width
-    replaced_box_width(box, device_size)
-    block_level_width(box, containing_block)
-
-min_max_block_replaced_width = handle_min_max_width(block_replaced_width)
+    replaced_box_width.without_min_max(box, device_size)
+    block_level_width.without_min_max(box, containing_block)
 
 
 def block_replaced_box_layout(box, containing_block, device_size):
     """Lay out the block :class:`boxes.ReplacedBox` ``box``."""
     if box.style.width == 'auto' and box.style.height == 'auto':
+        computed_margins = box.margin_left, box.margin_right
+        block_replaced_width.without_min_max(box, containing_block, device_size)
+        replaced_box_height.without_min_max(box, device_size)
+        min_max_auto_replaced(box)
+        box.margin_left, box.margin_right = computed_margins
+        block_level_width.without_min_max(box, containing_block)
+    else:
         block_replaced_width(box, containing_block, device_size)
         replaced_box_height(box, device_size)
-        min_max_auto_replaced(box)
-    else:
-        min_max_block_replaced_width(box, containing_block, device_size)
-        min_max_replaced_height(box, device_size)
 
     return box
 

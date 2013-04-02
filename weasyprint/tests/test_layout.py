@@ -2168,6 +2168,8 @@ def test_images():
     assert img.element_tag == 'img'
     assert img.position_x == 0
     assert img.position_y == 0
+    assert img.width == 40
+    assert img.height == 40
     assert img.content_box_x() == 30  # (100 - 40) / 2 == 30px for margin-left
     assert img.content_box_y() == 10
 
@@ -2185,9 +2187,49 @@ def test_images():
     assert img.element_tag == 'img'
     assert img.position_x == 0
     assert img.position_y == 0
+    assert img.width == 40
+    assert img.height == 40
     assert img.content_box_x() == 30  # (100 - 40) / 2 == 30px for margin-left
     assert img.content_box_y() == 10
 
+    page, = parse('''
+        <style>
+            @page { size: 100px }
+            img { min-width: 40px; margin: 10px auto; display: block }
+        </style>
+        <body>
+            <img src="pattern.png">
+    ''')
+    html, = page.children
+    body, = html.children
+    img, = body.children
+    assert img.element_tag == 'img'
+    assert img.position_x == 0
+    assert img.position_y == 0
+    assert img.width == 40
+    assert img.height == 40
+    assert img.content_box_x() == 30  # (100 - 40) / 2 == 30px for margin-left
+    assert img.content_box_y() == 10
+
+    page, = parse('''
+        <style>
+            @page { size: 100px }
+            img { min-height: 30px; max-width: 2px;
+                  margin: 10px auto; display: block }
+        </style>
+        <body>
+            <img src="pattern.png">
+    ''')
+    html, = page.children
+    body, = html.children
+    img, = body.children
+    assert img.element_tag == 'img'
+    assert img.position_x == 0
+    assert img.position_y == 0
+    assert img.width == 2
+    assert img.height == 30
+    assert img.content_box_x() == 49  # (100 - 2) / 2 == 49px for margin-left
+    assert img.content_box_y() == 10
 
 
 @assert_no_logs

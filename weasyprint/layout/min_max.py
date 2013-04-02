@@ -29,6 +29,7 @@ def handle_min_max_width(function):
             box.margin_left, box.margin_right = computed_margins
             result = function(box, *args)
         return result
+    wrapper.without_min_max = function
     return wrapper
 
 
@@ -49,4 +50,5 @@ def handle_min_max_height(function):
             box.margin_top, box.margin_bottom = computed_margins
             result = function(box, *args)
         return result
+    wrapper.without_min_max = function
     return wrapper
