@@ -7,7 +7,7 @@
     close to the element tree is it built from, or "after layout", with
     line breaks and page breaks.
 
-    :copyright: Copyright 2011-2012 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2013 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
