@@ -11,15 +11,16 @@
 from __future__ import division, unicode_literals
 
 from collections import namedtuple
+from itertools import cycle
 
 from ..formatting_structure import boxes
 
 
-Background = namedtuple('Background', 'color, layers')
+Background = namedtuple('Background', 'color, layers, image_rendering')
 BackgroundLayer = namedtuple(
     'BackgroundLayer',
     'image, size, position, repeat, unbounded, '
-    'image_rendering, painting_area, positioning_area')
+    'painting_area, positioning_area')
 
 
 def box_rectangle(box, which_rectangle):
@@ -64,36 +65,34 @@ def layout_box_backgrounds(page, box, get_image_from_uri):
         box.background = None
         return
 
-    size = style.background_size
-    clip = style.background_clip
-    repeat = style.background_repeat
-    origin = style.background_origin
-    position = style.background_position
-    attachment = style.background_attachment
-    image_rendering = style.image_rendering
-    layers = []
+    box.background = Background(
+        color=color, image_rendering=style.image_rendering, layers=[
+            layout_background_layer(box, page, *layer)
+            for layer in zip(images, *map(cycle, [
+                style.background_size,
+                style.background_clip,
+                style.background_repeat,
+                style.background_origin,
+                style.background_position,
+                style.background_attachment]))])
 
-    def get(some_list):
-        return some_list[i % len(some_list)]
 
-    for i, image in enumerate(images):
-        layers.append(BackgroundLayer(
-            image=image,
-            size=get(size),
-            position=get(position),
-            repeat=get(repeat),
-            image_rendering=image_rendering,
-            unbounded=(box is page),
-            painting_area=(
-                box_rectangle(box, get(clip)) if box is not page
-                else (0, 0, page.margin_width(), page.margin_height())),
-            positioning_area=(
-                # Initial containing block
-                box_rectangle(page, 'content-box')
-                if get(attachment) == 'fixed' and box is not page
-                else box_rectangle(box, get(origin)))))
-
-    box.background = Background(color=color, layers=layers)
+def layout_background_layer(box, page, image, size, clip, repeat, origin,
+                            position, attachment):
+    return BackgroundLayer(
+        image=image,
+        size=size,
+        position=position,
+        repeat=repeat,
+        unbounded=(box is page),
+        painting_area=(
+            box_rectangle(box, clip) if box is not page
+            else (0, 0, page.margin_width(), page.margin_height())),
+        positioning_area=(
+            # Initial containing block
+            box_rectangle(page, 'content-box')
+            if attachment == 'fixed' and box is not page
+            else box_rectangle(box, origin)))
 
 
 def set_canvas_background(page):

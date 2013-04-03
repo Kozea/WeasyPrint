@@ -202,10 +202,10 @@ def draw_background(context, bg, enable_hinting):
 
     # Paint in reversed order: first layer is "closest" to the viewer.
     for layer in reversed(bg.layers):
-        draw_background_image(context, layer)
+        draw_background_image(context, layer, bg.image_rendering)
 
 
-def draw_background_image(context, layer):
+def draw_background_image(context, layer, image_rendering):
     # Background image
     if layer.image is None:
         return
@@ -297,8 +297,7 @@ def draw_background_image(context, layer):
     sub_context = cairo.Context(sub_surface)
     sub_context.rectangle(0, 0, image_width, image_height)
     sub_context.clip()
-    layer.image.draw(
-        sub_context, image_width, image_height, layer.image_rendering)
+    layer.image.draw(sub_context, image_width, image_height, image_rendering)
     pattern = cairo.SurfacePattern(sub_surface)
     pattern.set_extend(cairo.EXTEND_REPEAT)
 
