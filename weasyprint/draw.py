@@ -24,14 +24,6 @@ from .stacking import StackingContext
 from .text import show_first_line
 from .compat import xrange
 
-# Map values of the image-rendering property to cairo FILTER values:
-# Values are normalized to lower case.
-IMAGE_RENDERING_TO_FILTER = dict(
-    optimizespeed=cairo.FILTER_FAST,
-    auto=cairo.FILTER_GOOD,
-    optimizequality=cairo.FILTER_BEST,
-)
-
 
 @contextlib.contextmanager
 def stacked(context):
@@ -304,12 +296,9 @@ def draw_background_image(context, layer):
     sub_surface = cairo.PDFSurface(None, repeat_width, repeat_height)
     sub_context = cairo.Context(sub_surface)
     sub_context.rectangle(0, 0, image_width, image_height)
-    sub_context.scale(image_width / intrinsic_width,
-                      image_height / intrinsic_height)
-    sub_pattern = layer.image.get_pattern()
-    sub_pattern.set_filter(IMAGE_RENDERING_TO_FILTER[layer.image_rendering])
-    sub_context.set_source(sub_pattern)
-    sub_context.fill()
+    sub_context.clip()
+    layer.image.draw(
+        sub_context, image_width, image_height, layer.image_rendering)
     pattern = cairo.SurfacePattern(sub_surface)
     pattern.set_extend(cairo.EXTEND_REPEAT)
 
@@ -637,27 +626,15 @@ def draw_collapsed_borders(context, table, enable_hinting):
 
 def draw_replacedbox(context, box):
     """Draw the given :class:`boxes.ReplacedBox` to a ``cairo.context``."""
-    if box.style.visibility == 'hidden':
+    if box.style.visibility == 'hidden' or box.width == 0 or box.height == 0:
         return
 
-    x, y = box.content_box_x(), box.content_box_y()
-    width, height = box.width, box.height
-    scale_width = width / box.replacement.intrinsic_width
-    scale_height = height / box.replacement.intrinsic_height
-    # Draw nothing for width:0 or height:0
-    if scale_width != 0 and scale_height != 0:
-        with stacked(context):
-            context.translate(x, y)
-            context.rectangle(0, 0, width, height)
-            context.clip()
-            context.scale(scale_width, scale_height)
-            pattern = box.replacement.get_pattern()
-            # We might get a shared Pattern that was previously used
-            # in a repeating background.
-            pattern.set_filter(IMAGE_RENDERING_TO_FILTER[
-                box.style.image_rendering])
-            context.set_source(pattern)
-            context.paint()
+    with stacked(context):
+        context.translate(box.content_box_x(), box.content_box_y())
+        context.rectangle(0, 0, box.width, box.height)
+        context.clip()
+        box.replacement.draw(
+            context, box.width, box.height, box.style.image_rendering)
 
 
 def draw_inline_level(context, page, box, enable_hinting):

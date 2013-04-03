@@ -31,6 +31,15 @@ except OSError:
 from .logger import LOGGER
 
 
+# Map values of the image-rendering property to cairo FILTER values:
+# Values are normalized to lower case.
+IMAGE_RENDERING_TO_FILTER = dict(
+    optimizespeed=cairocffi.FILTER_FAST,
+    auto=cairocffi.FILTER_GOOD,
+    optimizequality=cairocffi.FILTER_BEST,
+)
+
+
 class RasterImage(object):
     def __init__(self, image_surface):
         self.image_surface = image_surface
@@ -38,8 +47,14 @@ class RasterImage(object):
         self.intrinsic_height = image_surface.get_height()
         self.intrinsic_ratio = self.intrinsic_width / self.intrinsic_height
 
-    def get_pattern(self):
-        return cairocffi.SurfacePattern(self.image_surface)
+    def draw(self, context, concrete_width, concrete_height, image_rendering):
+        if self.intrinsic_width > 0 and self.intrinsic_height > 0:
+            context.scale(concrete_width / self.intrinsic_width,
+                          concrete_height / self.intrinsic_height)
+            context.set_source_surface(self.image_surface)
+            context.get_source().set_filter(
+                IMAGE_RENDERING_TO_FILTER[image_rendering])
+            context.paint()
 
 
 class ScaledSVGSurface(cairosvg.surface.SVGSurface):
@@ -62,14 +77,14 @@ class SVGImage(object):
         self._svg_data = svg_data
 
         # TODO: find a way of not doing twice the whole rendering.
-        cairosvg_result = self._render()
+        svg = self._render()
         # TODO: support SVG images with none or only one of intrinsic
         #       width, height and ratio.
-        if not (cairosvg_result.width > 0 and cairosvg_result.height > 0):
+        if not (svg.width > 0 and svg.height > 0):
             raise ValueError(
                 'SVG Images without an intrinsic size are not supported.')
-        self.intrinsic_width = cairosvg_result.width
-        self.intrinsic_height = cairosvg_result.height
+        self.intrinsic_width = svg.width
+        self.intrinsic_height = svg.height
         self.intrinsic_ratio = self.intrinsic_width / self.intrinsic_height
 
     def _render(self):
@@ -79,11 +94,14 @@ class SVGImage(object):
             cairosvg.parser.Tree(bytestring=self._svg_data, url=self._base_url),
             output=None, dpi=96)
 
-    def get_pattern(self):
-        # Do not re-use the Surface object, but regenerate it as needed.
+    def draw(self, context, concrete_width, concrete_height, image_rendering):
+        # Do not re-use the rendered Surface object, but regenerate it as needed.
         # If a surface for a SVG image is still alive by the time we call
         # show_page(), cairo will rasterize the image instead writing vectors.
-        return cairocffi.SurfacePattern(self._render().cairo)
+        svg = self._render()
+        context.scale(concrete_width / svg.width, concrete_height / svg.height)
+        context.set_source_surface(svg.cairo)
+        context.paint()
 
 
 def get_image_from_uri(cache, url_fetcher, uri, forced_mime_type=None):
