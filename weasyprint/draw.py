@@ -170,15 +170,6 @@ def draw_stacking_context(context, stacking_context, enable_hinting):
             context.paint_with_alpha(box.style.opacity)
 
 
-def percentage(value, refer_to):
-    """Return the evaluated percentage value, or the value unchanged."""
-    if value.unit == 'px':
-        return value.value
-    else:
-        assert value.unit == '%'
-        return refer_to * value.value / 100
-
-
 def draw_background(context, bg, enable_hinting):
     """Draw the background color and image to a ``cairo.Context``."""
     if bg is None:
@@ -209,62 +200,14 @@ def draw_background_image(context, layer, image_rendering):
     # Background image
     if layer.image is None:
         return
-    intrinsic_width = layer.image.intrinsic_width
-    intrinsic_height = layer.image.intrinsic_height
-    if intrinsic_width == 0 or intrinsic_height == 0:
-        return
 
-    positioning_x, positioning_y, positioning_width, positioning_height = (
-        layer.positioning_area)
     painting_x, painting_y, painting_width, painting_height = (
         layer.painting_area)
-
-    bg_size = layer.size
-    if bg_size in ('cover', 'contain'):
-        scale = {'cover': max, 'contain': min}[bg_size](
-            positioning_width / intrinsic_width,
-            positioning_height / intrinsic_height)
-        image_width = intrinsic_width * scale
-        image_height = intrinsic_height * scale
-    elif bg_size == ('auto', 'auto'):
-        image_width = intrinsic_width
-        image_height = intrinsic_height
-    elif bg_size[0] == 'auto':
-        image_height = percentage(bg_size[1], positioning_height)
-        image_width = intrinsic_width * image_height / intrinsic_height
-    elif bg_size[1] == 'auto':
-        image_width = percentage(bg_size[0], positioning_width)
-        image_height = intrinsic_height * image_width / intrinsic_width
-    else:
-        image_width = percentage(bg_size[0], positioning_width)
-        image_height = percentage(bg_size[1], positioning_height)
-
-    origin_x, position_x, origin_y, position_y = layer.position
-    ref_x = positioning_width - image_width
-    ref_y = positioning_height - image_height
-    position_x = percentage(position_x, ref_x)
-    position_y = percentage(position_y, ref_y)
-    if origin_x == 'right':
-        position_x = ref_x - position_x
-    if origin_y == 'bottom':
-        position_y = ref_y - position_y
-
+    positioning_x, positioning_y, positioning_width, positioning_height = (
+        layer.positioning_area)
+    position_x, position_y = layer.position
     repeat_x, repeat_y = layer.repeat
-
-    if repeat_x == 'round':
-        n_repeats = max(1, round(positioning_width / image_width))
-        new_width = positioning_width / n_repeats
-        position_x = 0  # Ignore background-position for this dimension
-        if repeat_y != 'round' and bg_size[1] == 'auto':
-            image_height *= new_width / image_width
-        image_width = new_width
-    if repeat_y == 'round':
-        n_repeats = max(1, round(positioning_height / image_height))
-        new_height = positioning_height / n_repeats
-        position_y = 0  # Ignore background-position for this dimension
-        if repeat_x != 'round' and bg_size[0] == 'auto':
-            image_width *= new_height / image_height
-        image_height = new_height
+    image_width, image_height = layer.size
 
     if repeat_x == 'no-repeat':
         repeat_width = painting_width * 2

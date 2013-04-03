@@ -25,7 +25,8 @@ from .css import get_all_computed_styles
 from .formatting_structure import boxes
 from .formatting_structure.build import build_formatting_structure
 from .layout import layout_document
-from .draw import draw_page, stacked, percentage
+from .layout.backgrounds import percentage
+from .draw import draw_page, stacked
 from .pdf import write_pdf_metadata
 from .compat import izip, iteritems
 from .urls import FILESYSTEM_ENCODING

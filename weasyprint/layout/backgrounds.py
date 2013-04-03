@@ -77,22 +77,97 @@ def layout_box_backgrounds(page, box, get_image_from_uri):
                 style.background_attachment]))])
 
 
+def percentage(value, refer_to):
+    """Return the evaluated percentage value, or the value unchanged."""
+    if value.unit == 'px':
+        return value.value
+    else:
+        assert value.unit == '%'
+        return refer_to * value.value / 100
+
+
 def layout_background_layer(box, page, image, size, clip, repeat, origin,
                             position, attachment):
+
+    if box is not page:
+        painting_area = box_rectangle(box, clip)
+    else:
+        painting_area = 0, 0, page.margin_width(), page.margin_height()
+
+    if (image is None or image.intrinsic_width == 0
+            or image.intrinsic_height == 0):
+        return BackgroundLayer(
+            image=None, unbounded=(box is page), painting_area=painting_area,
+            size='unused', position='unused', repeat='unused',
+            positioning_area='unused')
+
+    if attachment == 'fixed':
+        # Initial containing block
+        positioning_area = box_rectangle(page, 'content-box')
+    else:
+        positioning_area = box_rectangle(box, origin)
+
+    positioning_x, positioning_y, positioning_width, positioning_height = (
+        positioning_area)
+    painting_x, painting_y, painting_width, painting_height = (
+        painting_area)
+    intrinsic_width = image.intrinsic_width
+    intrinsic_height = image.intrinsic_height
+
+    if size in ('cover', 'contain'):
+        scale = {'cover': max, 'contain': min}[size](
+            positioning_width / intrinsic_width,
+            positioning_height / intrinsic_height)
+        image_width = intrinsic_width * scale
+        image_height = intrinsic_height * scale
+    elif size == ('auto', 'auto'):
+        image_width = intrinsic_width
+        image_height = intrinsic_height
+    elif size[0] == 'auto':
+        image_height = percentage(size[1], positioning_height)
+        image_width = intrinsic_width * image_height / intrinsic_height
+    elif size[1] == 'auto':
+        image_width = percentage(size[0], positioning_width)
+        image_height = intrinsic_height * image_width / intrinsic_width
+    else:
+        image_width = percentage(size[0], positioning_width)
+        image_height = percentage(size[1], positioning_height)
+
+    origin_x, position_x, origin_y, position_y = position
+    ref_x = positioning_width - image_width
+    ref_y = positioning_height - image_height
+    position_x = percentage(position_x, ref_x)
+    position_y = percentage(position_y, ref_y)
+    if origin_x == 'right':
+        position_x = ref_x - position_x
+    if origin_y == 'bottom':
+        position_y = ref_y - position_y
+
+    repeat_x, repeat_y = repeat
+
+    if repeat_x == 'round':
+        n_repeats = max(1, round(positioning_width / image_width))
+        new_width = positioning_width / n_repeats
+        position_x = 0  # Ignore background-position for this dimension
+        if repeat_y != 'round' and size[1] == 'auto':
+            image_height *= new_width / image_width
+        image_width = new_width
+    if repeat_y == 'round':
+        n_repeats = max(1, round(positioning_height / image_height))
+        new_height = positioning_height / n_repeats
+        position_y = 0  # Ignore background-position for this dimension
+        if repeat_x != 'round' and size[0] == 'auto':
+            image_width *= new_height / image_height
+        image_height = new_height
+
     return BackgroundLayer(
         image=image,
-        size=size,
-        position=position,
+        size=(image_width, image_height),
+        position=(position_x, position_y),
         repeat=repeat,
         unbounded=(box is page),
-        painting_area=(
-            box_rectangle(box, clip) if box is not page
-            else (0, 0, page.margin_width(), page.margin_height())),
-        positioning_area=(
-            # Initial containing block
-            box_rectangle(page, 'content-box')
-            if attachment == 'fixed' and box is not page
-            else box_rectangle(box, origin)))
+        painting_area=painting_area,
+        positioning_area=positioning_area)
 
 
 def set_canvas_background(page):
