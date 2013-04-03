@@ -217,7 +217,8 @@ def draw_background_image(context, layer):
     # Background image
     if layer.image is None:
         return
-    get_pattern, intrinsic_width, intrinsic_height = layer.image
+    intrinsic_width = layer.image.intrinsic_width
+    intrinsic_height = layer.image.intrinsic_height
     if intrinsic_width == 0 or intrinsic_height == 0:
         return
 
@@ -305,7 +306,7 @@ def draw_background_image(context, layer):
     sub_context.rectangle(0, 0, image_width, image_height)
     sub_context.scale(image_width / intrinsic_width,
                       image_height / intrinsic_height)
-    sub_pattern = get_pattern()
+    sub_pattern = layer.image.get_pattern()
     sub_pattern.set_filter(IMAGE_RENDERING_TO_FILTER[layer.image_rendering])
     sub_context.set_source(sub_pattern)
     sub_context.fill()
@@ -641,9 +642,8 @@ def draw_replacedbox(context, box):
 
     x, y = box.content_box_x(), box.content_box_y()
     width, height = box.width, box.height
-    get_pattern, intrinsic_width, intrinsic_height = box.replacement
-    scale_width = width / intrinsic_width
-    scale_height = height / intrinsic_height
+    scale_width = width / box.replacement.intrinsic_width
+    scale_height = height / box.replacement.intrinsic_height
     # Draw nothing for width:0 or height:0
     if scale_width != 0 and scale_height != 0:
         with stacked(context):
@@ -651,7 +651,7 @@ def draw_replacedbox(context, box):
             context.rectangle(0, 0, width, height)
             context.clip()
             context.scale(scale_width, scale_height)
-            pattern = get_pattern()
+            pattern = box.replacement.get_pattern()
             # We might get a shared Pattern that was previously used
             # in a repeating background.
             pattern.set_filter(IMAGE_RENDERING_TO_FILTER[

@@ -31,27 +31,15 @@ except OSError:
 from .logger import LOGGER
 
 
-def gdkpixbuf_loader(file_obj, string):
-    """Load raster images with GDK-PixBuf."""
-    if pixbuf is None:
-        raise OSError(
-            'Could not load GDK-Pixbuf. '
-            'PNG and SVG are the only image formats available.')
-    if string is None:
-        string = file_obj.read()
-    surface, format_name = pixbuf.decode_to_image_surface(string)
-    if format_name == 'jpeg':
-        surface.set_mime_data('image/jpeg', string)
-    get_pattern = lambda: cairocffi.SurfacePattern(surface)
-    return get_pattern, surface.get_width(), surface.get_height()
+class RasterImage(object):
+    def __init__(self, image_surface):
+        self.image_surface = image_surface
+        self.intrinsic_width = image_surface.get_width()
+        self.intrinsic_height = image_surface.get_height()
+        self.intrinsic_ratio = self.intrinsic_width / self.intrinsic_height
 
-
-def cairo_png_loader(file_obj, string):
-    """Return a cairo Surface from a PNG byte stream."""
-    surface = cairocffi.ImageSurface.create_from_png(
-        file_obj or BytesIO(string))
-    get_pattern = lambda: cairocffi.SurfacePattern(surface)
-    return get_pattern, surface.get_width(), surface.get_height()
+    def get_pattern(self):
+        return cairocffi.SurfacePattern(self.image_surface)
 
 
 class ScaledSVGSurface(cairosvg.surface.SVGSurface):
@@ -65,41 +53,40 @@ class ScaledSVGSurface(cairosvg.surface.SVGSurface):
         return scale / 0.75
 
 
-def cairosvg_loader(file_obj, string, uri):
-    """Return a cairo Surface from a SVG byte stream.
-
-    This loader uses CairoSVG: http://cairosvg.org/
-    """
-    if uri.lower().startswith('data:'):
+class SVGImage(object):
+    def __init__(self, svg_data, base_url):
         # Don’t pass data URIs to CairoSVG.
         # They are useless for relative URIs anyway.
-        uri = None
-    if file_obj:
-        string = file_obj.read()
+        self._base_url = (
+            base_url if not base_url.lower().startswith('data:')  else None)
+        self._svg_data = svg_data
 
-    def get_surface():
-        tree = cairosvg.parser.Tree(bytestring=string, url=uri)
-        # Draw to a cairo surface but do not write to a file
-        surface = ScaledSVGSurface(tree, output=None, dpi=96)
-        return surface.cairo, surface.width, surface.height
+        # TODO: find a way of not doing twice the whole rendering.
+        cairosvg_result = self._render()
+        # TODO: support SVG images with none or only one of intrinsic
+        #       width, height and ratio.
+        if not (cairosvg_result.width > 0 and cairosvg_result.height > 0):
+            raise ValueError(
+                'SVG Images without an intrinsic size are not supported.')
+        self.intrinsic_width = cairosvg_result.width
+        self.intrinsic_height = cairosvg_result.height
+        self.intrinsic_ratio = self.intrinsic_width / self.intrinsic_height
 
-    def get_pattern():
+    def _render(self):
+        # Draw to a cairo surface but do not write to a file.
+        # This is a CairoSVG surface, not a cairo surface.
+        return ScaledSVGSurface(
+            cairosvg.parser.Tree(bytestring=self._svg_data, url=self._base_url),
+            output=None, dpi=96)
+
+    def get_pattern(self):
         # Do not re-use the Surface object, but regenerate it as needed.
         # If a surface for a SVG image is still alive by the time we call
         # show_page(), cairo will rasterize the image instead writing vectors.
-        surface, _, _ = get_surface()
-        return cairocffi.SurfacePattern(surface)
-
-    # Render once to get the size and trigger any exception.
-    # If this does not raise, future calls to get_pattern() will hopefully
-    # not raise either.
-    _, width, height = get_surface()
-    if not (width > 0 and height > 0):
-        raise ValueError('Images without an intrinsic size are not supported.')
-    return get_pattern, width, height
+        return cairocffi.SurfacePattern(self._render().cairo)
 
 
-def get_image_from_uri(cache, url_fetcher, uri, type_=None):
+def get_image_from_uri(cache, url_fetcher, uri, forced_mime_type=None):
     """Get a cairo Pattern from an image URI."""
     try:
         missing = object()
@@ -107,20 +94,24 @@ def get_image_from_uri(cache, url_fetcher, uri, type_=None):
         if image is not missing:
             return image
         result = url_fetcher(uri)
+        mime_type = forced_mime_type or result['mime_type']
         try:
-            if not type_:
-                type_ = result['mime_type']  # Use eg. the HTTP header
-            #else: the type was forced by eg. a 'type' attribute on <embed>
-
-            if type_ == 'image/svg+xml':
-                image = cairosvg_loader(
-                    result.get('file_obj'), result.get('string'), uri)
-            elif type_ == 'image/png':
-                image = cairo_png_loader(
-                    result.get('file_obj'), result.get('string'))
+            if mime_type == 'image/svg+xml':
+                image = SVGImage(
+                    result.get('string') or result['file_obj'].read(), uri)
+            elif mime_type == 'image/png':
+                image = RasterImage(cairocffi.ImageSurface.create_from_png(
+                    result.get('file_obj') or BytesIO(result.get('string'))))
             else:
-                image = gdkpixbuf_loader(
-                    result.get('file_obj'), result.get('string'))
+                if pixbuf is None:
+                    raise OSError(
+                        'Could not load GDK-Pixbuf. '
+                        'PNG and SVG are the only image formats available.')
+                string = result.get('string') or result['file_obj'].read()
+                surface, format_name = pixbuf.decode_to_image_surface(string)
+                if format_name == 'jpeg':
+                    surface.set_mime_data('image/jpeg', string)
+                image = RasterImage(surface)
         finally:
             if 'file_obj' in result:
                 try:

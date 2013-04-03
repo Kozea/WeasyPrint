@@ -61,8 +61,9 @@ def image_marker_layout(box):
     objects, but their used size is computed differently.
 
     """
-    _, width, height = box.replacement
-    ratio = width / height
+    width = box.replacement.intrinsic_width
+    height = box.replacement.intrinsic_height
+    ratio = box.replacement.intrinsic_ratio
     one_em = box.style.font_size
     if width is not None and height is not None:
         box.width = width
