@@ -14,6 +14,7 @@ from collections import namedtuple
 from itertools import cycle
 
 from ..formatting_structure import boxes
+from . import replaced
 
 
 Background = namedtuple('Background', 'color, layers, image_rendering')
@@ -79,7 +80,9 @@ def layout_box_backgrounds(page, box, get_image_from_uri):
 
 def percentage(value, refer_to):
     """Return the evaluated percentage value, or the value unchanged."""
-    if value.unit == 'px':
+    if value == 'auto':
+        return value
+    elif value.unit == 'px':
         return value.value
     else:
         assert value.unit == '%'
@@ -114,24 +117,20 @@ def layout_background_layer(box, page, image, size, clip, repeat, origin,
     intrinsic_width = image.intrinsic_width
     intrinsic_height = image.intrinsic_height
 
-    if size in ('cover', 'contain'):
-        scale = {'cover': max, 'contain': min}[size](
-            positioning_width / intrinsic_width,
-            positioning_height / intrinsic_height)
-        image_width = intrinsic_width * scale
-        image_height = intrinsic_height * scale
-    elif size == ('auto', 'auto'):
-        image_width = intrinsic_width
-        image_height = intrinsic_height
-    elif size[0] == 'auto':
-        image_height = percentage(size[1], positioning_height)
-        image_width = intrinsic_width * image_height / intrinsic_height
-    elif size[1] == 'auto':
-        image_width = percentage(size[0], positioning_width)
-        image_height = intrinsic_height * image_width / intrinsic_width
+    if size == 'cover':
+        image_width, image_height = replaced.cover_constraint_image_sizing(
+            positioning_width, positioning_height, image.intrinsic_ratio)
+    elif size == 'contain':
+        image_width, image_height = replaced.contain_constraint_image_sizing(
+            positioning_width, positioning_height, image.intrinsic_ratio)
     else:
-        image_width = percentage(size[0], positioning_width)
-        image_height = percentage(size[1], positioning_height)
+        size_width, size_height = size
+        image_width, image_height = replaced.default_image_sizing(
+            image.intrinsic_width, image.intrinsic_height,
+            image.intrinsic_ratio,
+            percentage(size_width, positioning_width),
+            percentage(size_height, positioning_height),
+            positioning_width, positioning_height)
 
     origin_x, position_x, origin_y, position_y = position
     ref_x = positioning_width - image_width

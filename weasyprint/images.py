@@ -45,7 +45,9 @@ class RasterImage(object):
         self.image_surface = image_surface
         self.intrinsic_width = image_surface.get_width()
         self.intrinsic_height = image_surface.get_height()
-        self.intrinsic_ratio = self.intrinsic_width / self.intrinsic_height
+        self.intrinsic_ratio = (
+            self.intrinsic_width / self.intrinsic_height
+            if self.intrinsic_height != 0 else float('inf'))
 
     def draw(self, context, concrete_width, concrete_height, image_rendering):
         if self.intrinsic_width > 0 and self.intrinsic_height > 0:
@@ -82,7 +84,7 @@ class SVGImage(object):
         #       width, height and ratio.
         if not (svg.width > 0 and svg.height > 0):
             raise ValueError(
-                'SVG Images without an intrinsic size are not supported.')
+                'SVG images without an intrinsic size are not supported.')
         self.intrinsic_width = svg.width
         self.intrinsic_height = svg.height
         self.intrinsic_ratio = self.intrinsic_width / self.intrinsic_height
