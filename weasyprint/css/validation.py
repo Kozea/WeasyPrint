@@ -14,6 +14,7 @@
 from __future__ import division, unicode_literals
 
 import functools
+import math
 
 from tinycss.color3 import parse_color
 from tinycss.parsing import split_on_comma, remove_whitespace
@@ -31,7 +32,7 @@ from . import computed_values
 
 # get the sets of keys
 LENGTH_UNITS = set(computed_values.LENGTHS_TO_PIXELS) | set(['ex', 'em', 'ch'])
-ANGLE_UNITS = set(computed_values.ANGLE_TO_RADIANS)
+
 
 # keyword -> (open, insert)
 CONTENT_QUOTE_KEYWORDS = {
@@ -182,10 +183,21 @@ def get_length(token, negative=True, percentage=False):
         return Dimension(token.value, token.unit)
 
 
+# http://dev.w3.org/csswg/css3-values/#angles
+# 1<unit> is this many radians.
+ANGLE_TO_RADIANS = {
+    'rad': 1,
+    'turn': 2 * math.pi,
+    'deg': math.pi / 180,
+    'grad': math.pi / 200,
+}
+
+
 def get_angle(token):
     """Return whether the argument is an angle token."""
-    if token.unit in ANGLE_UNITS:
-        return Dimension(token.value, token.unit)
+    factor = ANGLE_TO_RADIANS.get(token.unit)
+    if factor is not None:
+        return token.value * factor
 
 
 def safe_urljoin(base_url, url):

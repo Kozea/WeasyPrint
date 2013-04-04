@@ -12,6 +12,8 @@
 
 from __future__ import division, unicode_literals
 
+import math
+
 from .testing_utils import assert_no_logs, capture_logs
 from ..css import PARSER, preprocess_declarations
 from ..css.properties import INITIAL_VALUES
@@ -135,7 +137,7 @@ def test_transforms():
         'transform': []}
     assert expand_to_dict('transform: translate(6px) rotate(90deg)'
         ) == {'transform': [('translate', ((6, 'px'), (0, 'px'))),
-                            ('rotate', (90, 'deg'))]}
+                            ('rotate', math.pi / 2)]}
     assert expand_to_dict('transform: translate(-4px, 0)'
         ) == {'transform': [('translate', ((-4, 'px'), (0, None)))]}
     assert expand_to_dict('transform: translate(6px, 20%)'

@@ -13,8 +13,6 @@
 
 from __future__ import division, unicode_literals
 
-import math
-
 from .properties import INITIAL_VALUES, Dimension
 from ..urls import get_link_attribute
 from .. import text
@@ -34,14 +32,6 @@ LENGTHS_TO_PIXELS = {
     'mm': 96. / 25.4,  # LENGTHS_TO_PIXELS['in'] / 25.4
 }
 
-# http://dev.w3.org/csswg/css3-values/#angles
-# How many radians is one <unit>?
-ANGLE_TO_RADIANS = {
-    'rad': 1,
-    'turn': 2 * math.pi,
-    'deg': math.pi / 180,
-    'grad': math.pi / 200,
-}
 
 # Value in pixels of font-size for <absolute-size> keywords: 12pt (16px) for
 # medium, and scaling factors given in CSS3 for others:
@@ -466,9 +456,7 @@ def transform(computer, name, value):
     """Compute the ``transform`` property."""
     result = []
     for function, args in value:
-        if function in ('rotate', 'skewx', 'skewy'):
-            args = args.value * ANGLE_TO_RADIANS[args.unit]
-        elif function == 'translate':
+        if function == 'translate':
             args = length_or_percentage_tuple(computer, name, args)
         result.append((function, args))
     return result
