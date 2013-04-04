@@ -23,7 +23,7 @@ Dimension = collections.namedtuple('Dimension', ['value', 'unit'])
 INITIAL_VALUES = {
     'background_attachment': ['scroll'],
     'background_color': COLOR_KEYWORDS['transparent'],
-    'background_image': ['none'],
+    'background_image': [('none', None)],
     'background_position': [('left', Dimension(0, '%'),
                              'top', Dimension(0, '%'))],
     'background_repeat': [('repeat', 'repeat')],
@@ -71,7 +71,7 @@ INITIAL_VALUES = {
     'left': 'auto',
     'letter_spacing': 'normal',
     'line_height': 'normal',
-    'list_style_image': 'none',
+    'list_style_image': ('none', None),
     'list_style_position': 'outside',
     'list_style_type': 'disc',
     'margin_top': Dimension(0, 'px'),

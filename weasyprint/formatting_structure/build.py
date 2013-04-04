@@ -285,12 +285,10 @@ def add_box_marker(box, counter_values, get_image_from_uri):
 
     """
     style = box.style
-    image = style.list_style_image
-    if image != 'none':
+    image_type, image = style.list_style_image
+    if image_type == 'url':
         # surface may be None here too, in case the image is not available.
         image = get_image_from_uri(image)
-    else:
-        image = None
 
     if image is None:
         type_ = style.list_style_type

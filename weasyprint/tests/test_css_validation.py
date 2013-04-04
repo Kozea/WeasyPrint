@@ -249,7 +249,7 @@ def test_expand_list_style():
         'list_style_type': 'inherit',
     }
     assert expand_to_dict('list-style: url(../bar/lipsum.png)') == {
-        'list_style_image': 'http://weasyprint.org/bar/lipsum.png',
+        'list_style_image': ('url', 'http://weasyprint.org/bar/lipsum.png'),
     }
     assert expand_to_dict('list-style: square') == {
         'list_style_type': 'square',
@@ -260,12 +260,12 @@ def test_expand_list_style():
     }
     assert expand_to_dict('list-style: none circle inside') == {
         'list_style_position': 'inside',
-        'list_style_image': 'none',
+        'list_style_image': ('none', None),
         'list_style_type': 'circle',
     }
     assert expand_to_dict('list-style: none inside none') == {
         'list_style_position': 'inside',
-        'list_style_image': 'none',
+        'list_style_image': ('none', None),
         'list_style_type': 'none',
     }
     assert_invalid('list-style: none inside none none')
@@ -292,7 +292,7 @@ def test_expand_background():
     assert_background('red', background_color=(1, 0, 0, 1))
     assert_background(
         'url(lipsum.png)',
-        background_image=['http://weasyprint.org/foo/lipsum.png'])
+        background_image=[('url', 'http://weasyprint.org/foo/lipsum.png')])
     assert_background(
         'no-repeat',
         background_repeat=[('no-repeat', 'no-repeat')])
@@ -332,7 +332,7 @@ def test_expand_background():
     assert_background(
         'url(bar) #f00 repeat-y center left fixed',
         background_color=(1, 0, 0, 1),
-        background_image=['http://weasyprint.org/foo/bar'],
+        background_image=[('url', 'http://weasyprint.org/foo/bar')],
         background_repeat=[('no-repeat', 'repeat')],
         background_attachment=['fixed'],
         background_position=[('left', (0, '%'), 'top', (50, '%'))])
@@ -375,7 +375,8 @@ def test_expand_background():
     assert_background(
         'url(bar) center, no-repeat',
         background_color=(0, 0, 0, 0),
-        background_image=['http://weasyprint.org/foo/bar', 'none'],
+        background_image=[('url', 'http://weasyprint.org/foo/bar'),
+                          ('none', None)],
         background_position=[('left', (50, '%'), 'top', (50, '%')),
                              ('left', (0, '%'), 'top', (0, '%'))],
         background_repeat=[('repeat', 'repeat'), ('no-repeat', 'no-repeat')])

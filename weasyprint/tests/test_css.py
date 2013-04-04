@@ -144,7 +144,7 @@ def test_annotate_document():
     a = style_for(a)
 
     assert h1.background_image == [
-        path2url(resource_filename('logo_small.png'))]
+        ('url', path2url(resource_filename('logo_small.png')))]
 
     assert h1.font_weight == 700
     assert h1.font_size == 40  # 2em

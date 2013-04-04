@@ -261,9 +261,9 @@ def color(token):
 def image(token, base_url):
     """``*-image`` properties validation."""
     if get_keyword(token) == 'none':
-        return 'none'
+        return 'none', None
     if token.type == 'URI':
-        return safe_urljoin(base_url, token.value)
+        return 'url', safe_urljoin(base_url, token.value)
 
 
 class CenterKeywordFakeToken(object):
