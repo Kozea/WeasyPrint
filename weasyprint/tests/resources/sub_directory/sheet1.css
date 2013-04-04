@@ -5,8 +5,8 @@ p {
 
 @media print {
     ul {
-        /* Currently, 1ex == 0.5em exactly. */
-        margin: 2em 4ex;
+        /* 1ex == 0.8em for ahem. */
+        margin: 2em 2.5ex;
     }
 }
 @media screen {

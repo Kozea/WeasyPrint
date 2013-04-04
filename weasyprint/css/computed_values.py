@@ -145,7 +145,9 @@ INITIAL_VALUES['size'] = tuple(
 
 def _computing_order():
     """Some computed values are required by others, so order matters."""
-    first = ['font_size', 'line_height']
+    first = [
+        'font_stretch', 'font_weight', 'font_family', 'font_variant',
+        'font_style', 'font_size', 'line_height']
     order = sorted(INITIAL_VALUES)
     for name in first:
         order.remove(name)
@@ -275,38 +277,16 @@ def length(computer, name, value, font_size=None, pixels_only=False):
             font_size = computer.computed.font_size
         if unit in ('ex', 'ch'):
             # TODO: cache
-            layout_obj = text.Layout()
-            dummy_context = layout_obj.dummy_context = (
-                cairo.Context(cairo.PDFSurface(None, 1, 1)))
-            layout = layout_obj.layout = text.ffi.gc(
-                text.pangocairo.pango_cairo_create_layout(text.ffi.cast(
-                    'cairo_t *', dummy_context._pointer)),
-                text.gobject.g_object_unref)
-            font_family = layout_obj.font_family = text.unicode_to_char_p(
-                ','.join(computer.computed.font_family))[0]
-            font = layout_obj.font = text.ffi.gc(
-                text.pango.pango_font_description_new(),
-                text.pango.pango_font_description_free)
-            text.pango.pango_font_description_set_family(font, font_family)
-            text.pango.pango_font_description_set_variant(
-                font, text.PANGO_VARIANT[computer.computed.font_variant])
-            text.pango.pango_font_description_set_style(
-                font, text.PANGO_STYLE[computer.computed.font_style])
-            text.pango.pango_font_description_set_stretch(
-                font, text.PANGO_STRETCH[computer.computed.font_stretch])
-            text.pango.pango_font_description_set_weight(
-                font, computer.computed.font_weight)
-            text.pango.pango_font_description_set_absolute_size(
-                font, text.units_from_double(font_size))
-            text.pango.pango_layout_set_font_description(layout, font)
+            layout = text.Layout(
+                hinting=False, font_size=font_size, style=computer.computed)
             if unit == 'ex':
-                layout_obj.set_text('x')
-                line, = layout_obj.iter_lines()
+                layout.set_text('x')
+                line, = layout.iter_lines()
                 position = text.get_ink_position(line)
                 result = value.value * -position[1]
             elif unit == 'ch':
-                layout_obj.set_text('0')
-                line, = layout_obj.iter_lines()
+                layout.set_text('0')
+                line, = layout.iter_lines()
                 size = text.get_size(line)
                 position = text.get_logical_position(line)
                 assert position[0] == 0

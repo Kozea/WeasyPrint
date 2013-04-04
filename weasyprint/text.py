@@ -213,6 +213,34 @@ def get_ink_position(line):
 
 class Layout(object):
     """Object holding PangoLayout-related cdata pointers."""
+    def __init__(self, hinting, font_size, style):
+        self.dummy_context = (
+            cairo.Context(cairo.ImageSurface(cairo.FORMAT_ARGB32, 1, 1))
+            if hinting else
+            cairo.Context(cairo.PDFSurface(None, 1, 1)))
+        self.layout = ffi.gc(
+            pangocairo.pango_cairo_create_layout(ffi.cast(
+                'cairo_t *', self.dummy_context._pointer)),
+            gobject.g_object_unref)
+        self.font = ffi.gc(
+            pango.pango_font_description_new(),
+            pango.pango_font_description_free)
+        assert not isinstance(style.font_family, basestring), (
+            'font_family should be a list')
+        self.font_family = unicode_to_char_p(
+            ','.join(style.font_family))[0]
+        pango.pango_font_description_set_family(self.font, self.font_family)
+        pango.pango_font_description_set_variant(
+            self.font, PANGO_VARIANT[style.font_variant])
+        pango.pango_font_description_set_style(
+            self.font, PANGO_STYLE[style.font_style])
+        pango.pango_font_description_set_stretch(
+            self.font, PANGO_STRETCH[style.font_stretch])
+        pango.pango_font_description_set_weight(self.font, style.font_weight)
+        pango.pango_font_description_set_absolute_size(
+            self.font, units_from_double(font_size))
+        pango.pango_layout_set_font_description(self.layout, self.font)
+
     def iter_lines(self):
         layout_iter = ffi.gc(
             pango.pango_layout_get_iter(self.layout),
@@ -240,34 +268,8 @@ def create_layout(text, style, hinting, max_width):
         or ``None`` for unlimited width.
 
     """
-    layout_obj = Layout()
-    dummy_context = layout_obj.dummy_context = (
-        cairo.Context(cairo.ImageSurface(cairo.FORMAT_ARGB32, 1, 1))
-        if hinting else
-        cairo.Context(cairo.PDFSurface(None, 1, 1)))
-    layout = layout_obj.layout = ffi.gc(
-        pangocairo.pango_cairo_create_layout(ffi.cast(
-            'cairo_t *', dummy_context._pointer)),
-        gobject.g_object_unref)
-    font = layout_obj.font = ffi.gc(
-        pango.pango_font_description_new(),
-        pango.pango_font_description_free)
-    assert not isinstance(style.font_family, basestring), (
-        'font_family should be a list')
-    font_family = layout_obj.font_family = unicode_to_char_p(
-        ','.join(style.font_family))[0]
-    pango.pango_font_description_set_family(font, font_family)
-    pango.pango_font_description_set_variant(
-        font, PANGO_VARIANT[style.font_variant])
-    pango.pango_font_description_set_style(
-        font, PANGO_STYLE[style.font_style])
-    pango.pango_font_description_set_stretch(
-        font, PANGO_STRETCH[style.font_stretch])
-    pango.pango_font_description_set_weight(font, style.font_weight)
-    pango.pango_font_description_set_absolute_size(
-        font, units_from_double(style.font_size))
-    pango.pango_layout_set_font_description(layout, font)
-    layout_obj.set_text(text)
+    layout = Layout(hinting, style.font_size, style)
+    layout.set_text(text)
     # Make sure that max_width * Pango.SCALE == max_width * 1024 fits in a
     # signed integer. Treat bigger values same as None: unconstrained width.
     if max_width is not None and max_width < 2 ** 21:
@@ -278,7 +280,7 @@ def create_layout(text, style, hinting, max_width):
         # Increase the value a bit to compensate and not introduce
         # an unexpected line break.
         max_width *= 1.00001
-        pango.pango_layout_set_width(layout, units_from_double(max_width))
+        pango.pango_layout_set_width(layout.layout, units_from_double(max_width))
     word_spacing = style.word_spacing
     letter_spacing = style.letter_spacing
     if letter_spacing == 'normal':
@@ -294,15 +296,15 @@ def create_layout(text, style, hinting, max_width):
             attr.end_index = end
             pango.pango_attr_list_insert(attr_list, attr)
 
-        text_bytes = layout_obj.text_bytes
+        text_bytes = layout.text_bytes
         add_attr(0, len(text_bytes) + 1, letter_spacing)
         position = text_bytes.find(b' ')
         while position != -1:
             add_attr(position, position + 1, space_spacing)
             position = text_bytes.find(b' ', position + 1)
-        pango.pango_layout_set_attributes(layout, attr_list)
+        pango.pango_layout_set_attributes(layout.layout, attr_list)
         pango.pango_attr_list_unref(attr_list)
-    return layout_obj
+    return layout
 
 
 def split_first_line(text, style, hinting, max_width, line_width):
