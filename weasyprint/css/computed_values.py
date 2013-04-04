@@ -204,9 +204,20 @@ def compute(element, pseudo_type, specified, computed, parent_style):
 # pylint: disable=W0613
 
 
+@register_computer('background-image')
+def background_image(computer, name, values):
+    """Compute lenghts in gradient background-image."""
+    for type_, value in values:
+        if type_ == 'gradient':
+            value.color_stops = [
+                (color, length(computer, name, p) if p is not None else None)
+                for color, p in value.color_stops]
+    return values
+
+
 @register_computer('background-position')
 def background_position(computer, name, values):
-    """Compute the lists of lengths that can be percentages."""
+    """Compute lengths in background-position."""
     return [
         (origin_x, length(computer, name, pos_x),
          origin_y, length(computer, name, pos_y))

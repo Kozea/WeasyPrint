@@ -23,6 +23,7 @@ from ..logger import LOGGER
 from ..formatting_structure import counters
 from ..compat import urljoin, unquote
 from ..urls import url_is_absolute, iri_to_uri
+from ..images import LinearGradient
 from .properties import (INITIAL_VALUES, KNOWN_PROPERTIES, NOT_PRINT_MEDIA,
                          Dimension)
 from . import computed_values
@@ -256,9 +257,67 @@ def color(token):
 
 @validator('background-image', wants_base_url=True)
 @comma_separated_list
+@single_token
+def background_image(token, base_url):
+    if token.type != 'FUNCTION':
+        return image_url([token], base_url)
+    name = token.function_name.lower()
+    if name in ('linear-gradient', 'repeating-linear-gradient'):
+        arguments = split_on_comma(t for t in token.content if t.type != 'S')
+        direction, color_stops = parse_linear_gradient_parameters(arguments)
+        if color_stops:
+            return 'gradient', LinearGradient(
+                [parse_color_stop(stop) for stop in color_stops],
+                direction, 'repeating' in name)
+
+
+DIRECTION_KEYWORDS = {
+    # ('angle', radians)  0 upwards, then clockwise
+    ('to', 'top'): ('angle', 0),
+    ('to', 'right'): ('angle', math.pi / 2),
+    ('to', 'bottom'): ('angle', math.pi),
+    ('to', 'left'): ('angle', math.pi * 3 / 2),
+    # ('corner', keyword)
+    ('to', 'top', 'left'): ('corner', 'top_left'),
+    ('to', 'left', 'top'): ('corner', 'top_left'),
+    ('to', 'top', 'right'): ('corner', 'top_right'),
+    ('to', 'right', 'top'): ('corner', 'top_right'),
+    ('to', 'bottom', 'left'): ('corner', 'bottom_left'),
+    ('to', 'left', 'bottom'): ('corner', 'bottom_left'),
+    ('to', 'bottom', 'right'): ('corner', 'bottom_right'),
+    ('to', 'right', 'bottom'): ('corner', 'bottom_right'),
+}
+
+
+def parse_linear_gradient_parameters(arguments):
+    first_arg = arguments[0]
+    if len(first_arg) == 1:
+        angle = get_angle(first_arg[0])
+        if angle is not None:
+            return ('angle', angle), arguments[1:]
+    else:
+        result = DIRECTION_KEYWORDS.get(tuple(map(get_keyword, first_arg)))
+        if result is not None:
+            return result, arguments[1:]
+    return ('angle', 180), arguments  # Default direction is 'to bottom'
+
+
+def parse_color_stop(tokens):
+    if len(tokens) == 1:
+        color = parse_color(tokens[0])
+        if color is not None:
+            return color, None
+    elif len(tokens) == 2:
+        color = parse_color(tokens[0])
+        position = get_length(tokens[1], negative=True, percentage=True)
+        if color is not None and position is not None:
+            return color, position
+    raise InvalidValues
+
+
 @validator('list-style-image', wants_base_url=True)
 @single_token
-def image(token, base_url):
+def image_url(token, base_url):
     """``*-image`` properties validation."""
     if get_keyword(token) == 'none':
         return 'none', None
@@ -1218,7 +1277,7 @@ def expand_list_style(name, tokens, base_url):
             type_specified = True
         elif list_style_position([token]) is not None:
             suffix = '-position'
-        elif image([token], base_url) is not None:
+        elif image_url([token], base_url) is not None:
             suffix = '-image'
             image_specified = True
         else:
@@ -1311,7 +1370,7 @@ def expand_background(base_url, name, tokens):
             token = tokens[-1:]
             if (
                 (final_layer and add('color', other_colors(token)))
-                or add('image', image.single_value(token, base_url))
+                or add('image', background_image.single_value(token, base_url))
                 or add('repeat', background_repeat.single_value(token))
                 or add('attachment', background_attachment.single_value(token))
             ):
