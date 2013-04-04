@@ -14,7 +14,7 @@ from __future__ import division, unicode_literals
 
 from .absolute import absolute_layout, AbsolutePlaceholder
 from .float import avoid_collisions, float_layout
-from .markers import image_marker_layout
+from .replaced import image_marker_layout
 from .min_max import handle_min_max_width, handle_min_max_height
 from .percentages import resolve_percentages, resolve_one_percentage
 from .preferred import shrink_to_fit, inline_preferred_minimum_width

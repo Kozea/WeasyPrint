@@ -13,6 +13,7 @@
 from __future__ import division, unicode_literals
 
 from .percentages import resolve_percentages
+from .replaced import image_marker_layout
 from ..text import split_first_line
 from ..formatting_structure import boxes
 
@@ -52,36 +53,3 @@ def list_marker_layout(context, box):
         else:
             marker.margin_left = half_em
             marker.position_x += box.border_width()
-
-
-def image_marker_layout(box):
-    """Layout the :class:`boxes.ImageMarkerBox` ``box``.
-
-    :class:`boxes.ImageMarkerBox` objects are :class:`boxes.ReplacedBox`
-    objects, but their used size is computed differently.
-
-    """
-    width = box.replacement.intrinsic_width
-    height = box.replacement.intrinsic_height
-    ratio = box.replacement.intrinsic_ratio
-    one_em = box.style.font_size
-    if width is not None and height is not None:
-        box.width = width
-        box.height = height
-    elif width is not None and ratio is not None:
-        box.width = width
-        box.height = width / ratio
-    elif height is not None and ratio is not None:
-        box.width = height * ratio
-        box.height = height
-    elif ratio is not None:
-        # ratio >= 1 : width >= height
-        if ratio >= 1:
-            box.width = one_em
-            box.height = one_em / ratio
-        else:
-            box.width = one_em * ratio
-            box.height = one_em
-    else:
-        box.width = width if width is not None else one_em
-        box.height = height if height is not None else one_em
