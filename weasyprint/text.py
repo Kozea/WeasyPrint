@@ -198,6 +198,19 @@ def get_size(line):
             units_to_double(logical_extents.height))
 
 
+def get_logical_position(line):
+    logical_extents = ffi.new('PangoRectangle *')
+    pango.pango_layout_line_get_extents(line, ffi.NULL, logical_extents)
+    return (units_to_double(logical_extents.x),
+            units_to_double(logical_extents.y))
+
+
+def get_ink_position(line):
+    ink_extents = ffi.new('PangoRectangle *')
+    pango.pango_layout_line_get_extents(line, ink_extents, ffi.NULL)
+    return (units_to_double(ink_extents.x), units_to_double(ink_extents.y))
+
+
 class Layout(object):
     """Object holding PangoLayout-related cdata pointers."""
     def iter_lines(self):
