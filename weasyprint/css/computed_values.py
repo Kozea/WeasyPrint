@@ -15,8 +15,6 @@ from __future__ import division, unicode_literals
 
 import math
 
-import cairocffi as cairo
-
 from .properties import INITIAL_VALUES, Dimension
 from ..urls import get_link_attribute
 from .. import text
@@ -282,15 +280,14 @@ def length(computer, name, value, font_size=None, pixels_only=False):
             if unit == 'ex':
                 layout.set_text('x')
                 line, = layout.iter_lines()
-                position = text.get_ink_position(line)
-                result = value.value * -position[1]
+                _, ink_height_above_baseline = text.get_ink_position(line)
+                # zero means some kind of failure
+                result = value.value * ((-ink_height_above_baseline) or 0.5)
             elif unit == 'ch':
                 layout.set_text('0')
                 line, = layout.iter_lines()
-                size = text.get_size(line)
-                position = text.get_logical_position(line)
-                assert position[0] == 0
-                result = value.value * size[0]
+                logical_width, _ = text.get_size(line)
+                result = value.value * logical_width
         elif unit == 'em':
             result = value.value * font_size
     else:

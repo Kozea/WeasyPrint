@@ -186,7 +186,6 @@ def test_annotate_document():
     assert a.border_top_width == 42
     assert a.border_bottom_width == 42
 
-
     assert a.color == (1, 0, 0, 1)
     assert a.border_top_color == 'currentColor'
 
@@ -370,3 +369,27 @@ def test_important():
     body, = html.children
     for paragraph in body.children:
         assert paragraph.style.color == (0, 1, 0, 1)  # lime (light green)
+
+
+@assert_no_logs
+def test_units():
+    document = TestHTML(string='''
+        <p style="margin-left: 96px"></p>
+        <p style="margin-left: 1in"></p>
+        <p style="margin-left: 72pt"></p>
+        <p style="margin-left: 6pc"></p>
+        <p style="margin-left: 2.54cm"></p>
+        <p style="margin-left: 25.4mm"></p>
+        <p style="margin-left: 1.1em"></p>
+        <p style="margin-left: 1.1ch; font: 14px Ahem"></p>
+        <p style="margin-left: 1.5ex; font: 10px Ahem"></p>
+        <p style="margin-left: 1.1ch"></p>
+    ''')
+    page, = document.render().pages
+    html, = page._page_box.children
+    body, = html.children
+    margins = [round(p.margin_left, 6) for p in body.children]
+    default_font_ch = margins.pop()
+    # Ahem: 1ex is 0.8em, 1ch is 1em
+    assert margins == [96, 96, 96, 96, 96, 96, 17.6, 15.4, 12]
+    assert 4 < default_font_ch < 12  # for 1em = 16px

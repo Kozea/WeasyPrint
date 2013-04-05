@@ -198,13 +198,6 @@ def get_size(line):
             units_to_double(logical_extents.height))
 
 
-def get_logical_position(line):
-    logical_extents = ffi.new('PangoRectangle *')
-    pango.pango_layout_line_get_extents(line, ffi.NULL, logical_extents)
-    return (units_to_double(logical_extents.x),
-            units_to_double(logical_extents.y))
-
-
 def get_ink_position(line):
     ink_extents = ffi.new('PangoRectangle *')
     pango.pango_layout_line_get_extents(line, ink_extents, ffi.NULL)
@@ -227,8 +220,7 @@ class Layout(object):
             pango.pango_font_description_free)
         assert not isinstance(style.font_family, basestring), (
             'font_family should be a list')
-        self.font_family = unicode_to_char_p(
-            ','.join(style.font_family))[0]
+        self.font_family = unicode_to_char_p(','.join(style.font_family))[0]
         pango.pango_font_description_set_family(self.font, self.font_family)
         pango.pango_font_description_set_variant(
             self.font, PANGO_VARIANT[style.font_variant])
