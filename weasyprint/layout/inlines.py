@@ -207,25 +207,30 @@ def skip_first_whitespace(box, skip_stack):
 
 def trailing_whitespace_size(context, box):
     """Return the size of the trailing whitespace of ``box``."""
-    while isinstance(box, boxes.InlineBox):
+    while isinstance(box, (boxes.InlineBox, boxes.LineBox)):
         if not box.children:
             return 0
         box = box.children[-1]
-    if not (isinstance(box, boxes.TextBox) and
+    if not (isinstance(box, boxes.TextBox) and box.text and
             box.style.white_space in ('normal', 'nowrap', 'pre-line')):
         return 0
     stripped_text = box.text.rstrip(' ')
+    if len(stripped_text) == len(box.text):
+        return 0
     if stripped_text:
-        if len(stripped_text) == len(box.text):
-            return 0
+        old_box, _, _ = split_text_box(context, box, None, None, 0)
+        assert old_box
         stripped_box = box.copy_with_text(stripped_text)
         stripped_box, resume, _ = split_text_box(
             context, stripped_box, None, None, 0)
         assert stripped_box is not None
         assert resume is None
-        return box.width - stripped_box.width
+        return old_box.width - stripped_box.width
     else:
-        return box.width
+        _, _, _, width, _, _ = split_first_line(
+            box.text, box.style, context.enable_hinting,
+            None, None)
+        return width
 
 
 def remove_last_whitespace(context, box):
@@ -751,7 +756,6 @@ def split_text_box(context, box, available_width, line_width, skip):
         box.baseline = baseline
         # form the top of the margin box
         box.baseline += box.margin_top
-        assert box.border_top_width == box.padding_top == 0
     else:
         box = None
 

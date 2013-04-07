@@ -117,6 +117,8 @@ def get_clearance(context, box, collapsed_margin=0):
 
 
 def avoid_collisions(context, box, containing_block, outer=True):
+    from .inlines import trailing_whitespace_size
+
     excluded_shapes = context.excluded_shapes
     position_y = box.position_y if outer else box.border_box_y()
 
@@ -125,6 +127,8 @@ def avoid_collisions(context, box, containing_block, outer=True):
 
     if box.border_height() == 0 and box.is_floated():
         return 0, 0, containing_block.width
+
+    box_width -= trailing_whitespace_size(context, box)
 
     while True:
         colliding_shapes = [
