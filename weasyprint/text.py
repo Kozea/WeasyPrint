@@ -23,40 +23,40 @@ from .compat import basestring
 ffi = cffi.FFI()
 ffi.cdef('''
     typedef enum {
-        NORMAL,
-        OBLIQUE,
-        ITALIC
+        PANGO_STYLE_NORMAL,
+        PANGO_STYLE_OBLIQUE,
+        PANGO_STYLE_ITALIC
     } PangoStyle;
 
     typedef enum {
-        THIN = 100,
-        ULTRALIGHT = 200,
-        LIGHT = 300,
-        BOOK = 380,
-        NORMAL = 400,
-        MEDIUM = 500,
-        SEMIBOLD = 600,
-        BOLD = 700,
-        ULTRABOLD = 800,
-        HEAVY = 900,
-        ULTRAHEAVY = 1000
+        PANGO_WEIGHT_THIN = 100,
+        PANGO_WEIGHT_ULTRALIGHT = 200,
+        PANGO_WEIGHT_LIGHT = 300,
+        PANGO_WEIGHT_BOOK = 380,
+        PANGO_WEIGHT_NORMAL = 400,
+        PANGO_WEIGHT_MEDIUM = 500,
+        PANGO_WEIGHT_SEMIBOLD = 600,
+        PANGO_WEIGHT_BOLD = 700,
+        PANGO_WEIGHT_ULTRABOLD = 800,
+        PANGO_WEIGHT_HEAVY = 900,
+        PANGO_WEIGHT_ULTRAHEAVY = 1000
     } PangoWeight;
 
     typedef enum {
-        NORMAL,
-        SMALL_CAPS
+        PANGO_VARIANT_NORMAL,
+        PANGO_VARIANT_SMALL_CAPS
     } PangoVariant;
 
     typedef enum {
-        ULTRA_CONDENSED,
-        EXTRA_CONDENSED,
-        CONDENSED,
-        SEMI_CONDENSED,
-        NORMAL,
-        SEMI_EXPANDED,
-        EXPANDED,
-        EXTRA_EXPANDED,
-        ULTRA_EXPANDED
+        PANGO_STRETCH_ULTRA_CONDENSED,
+        PANGO_STRETCH_EXTRA_CONDENSED,
+        PANGO_STRETCH_CONDENSED,
+        PANGO_STRETCH_SEMI_CONDENSED,
+        PANGO_STRETCH_NORMAL,
+        PANGO_STRETCH_SEMI_EXPANDED,
+        PANGO_STRETCH_EXPANDED,
+        PANGO_STRETCH_EXTRA_EXPANDED,
+        PANGO_STRETCH_ULTRA_EXPANDED
     } PangoStretch;
 
     typedef unsigned int guint;
@@ -180,10 +180,28 @@ units_from_double = pango.pango_units_from_double
 PYPHEN_DICTIONARY_CACHE = {}
 
 
-PANGO_STYLE, PANGO_STRETCH, PANGO_VARIANT = [
-    dict((k.replace('_', '-').lower(), v)
-         for k, v in ffi.typeof(enum).relements.items())
-    for enum in ('PangoStyle', 'PangoStretch', 'PangoVariant')]
+PANGO_STYLE = {
+    'normal': pango.PANGO_STYLE_NORMAL,
+    'oblique': pango.PANGO_STYLE_OBLIQUE,
+    'italic': pango.PANGO_STYLE_ITALIC,
+}
+
+PANGO_VARIANT = {
+    'normal': pango.PANGO_VARIANT_NORMAL,
+    'small-caps': pango.PANGO_VARIANT_SMALL_CAPS,
+}
+
+PANGO_STRETCH = {
+    'ultra-condensed': pango.PANGO_STRETCH_ULTRA_CONDENSED,
+    'extra-condensed': pango.PANGO_STRETCH_EXTRA_CONDENSED,
+    'condensed': pango.PANGO_STRETCH_CONDENSED,
+    'semi-condensed': pango.PANGO_STRETCH_SEMI_CONDENSED,
+    'normal': pango.PANGO_STRETCH_NORMAL,
+    'semi-expanded': pango.PANGO_STRETCH_SEMI_EXPANDED,
+    'expanded': pango.PANGO_STRETCH_EXPANDED,
+    'extra-expanded': pango.PANGO_STRETCH_EXTRA_EXPANDED,
+    'ultra-expanded': pango.PANGO_STRETCH_ULTRA_EXPANDED,
+}
 
 
 def utf8_slice(string, slice_):
