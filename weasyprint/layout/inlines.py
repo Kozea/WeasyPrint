@@ -74,7 +74,7 @@ def get_next_linebox(context, linebox, position_y, skip_stack,
     linebox.width = inline_preferred_minimum_width(
         context, linebox, skip_stack=skip_stack, first_line=True)
 
-    linebox.height, _ = strut_layout(linebox.style)
+    linebox.height, _ = strut_layout(linebox.style, context.enable_hinting)
     linebox.position_y = position_y
     position_x, position_y, available_width = avoid_collisions(
         context, linebox, containing_block, outer=False)
@@ -100,23 +100,16 @@ def get_next_linebox(context, linebox, position_y, skip_stack,
 
         remove_last_whitespace(context, line)
 
+        if not line.children and not preserved_line_break:
+            return None, None
+
         bottom, top = line_box_verticality(line)
-        if bottom is None:
-            # No children at all
-            offset_y = 0
-            if preserved_line_break:
-                # Only the strut.
-                line.baseline = line.margin_top
-                line.height += line.margin_top + line.margin_bottom
-            else:
-                line.height = 0
-                line.baseline = 0
-        else:
-            assert top is not None
-            line.baseline = -top
-            line.position_y = top
-            line.height = bottom - top
-            offset_y = position_y - top
+        assert top is not None
+        assert bottom is not None
+        line.baseline = -top
+        line.position_y = top
+        line.height = bottom - top
+        offset_y = position_y - top
         line.margin_top = 0
         line.margin_bottom = 0
 
@@ -681,7 +674,8 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
         new_box.position_x = initial_position_x
         new_box.width = position_x - content_box_left
 
-    line_height, new_box.baseline = strut_layout(box.style)
+    line_height, new_box.baseline = strut_layout(
+        box.style, context.enable_hinting)
     new_box.height = box.style.font_size
     half_leading = (line_height - new_box.height) / 2.
     # Set margins to the half leading but also compensate for borders and
@@ -748,7 +742,7 @@ def split_text_box(context, box, available_width, line_width, skip):
         # "only the 'line-height' is used when calculating the height
         #  of the line box."
         # Set margins so that margin_height() == line_height
-        line_height, _ = strut_layout(box.style)
+        line_height, _ = strut_layout(box.style, context.enable_hinting)
         half_leading = (line_height - height) / 2.
         box.margin_top = half_leading
         box.margin_bottom = half_leading

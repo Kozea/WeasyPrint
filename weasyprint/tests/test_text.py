@@ -90,9 +90,7 @@ def test_text_font_size_zero():
     ''')
     paragraph, = body_children(page)
     # zero-sized text boxes are removed
-    line, = paragraph.children
-    assert not line.children
-    assert line.height == 0
+    assert not paragraph.children
     assert paragraph.height == 0
 
 

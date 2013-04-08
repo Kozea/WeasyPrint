@@ -502,7 +502,7 @@ def word_spacing(computer, name, value):
         return length(computer, name, value, pixels_only=True)
 
 
-def strut_layout(style):
+def strut_layout(style, hinting=True):
     """Return a tuple of the used value of ``line-height`` and the baseline.
 
     The baseline is given from the top edge of line height.
@@ -515,7 +515,7 @@ def strut_layout(style):
     else:
         # TODO: get the real value for `hinting`? (if we really care…)
         _, _, _, _, pango_height, baseline = text.split_first_line(
-            '', style, hinting=True, max_width=None, line_width=None)
+            '', style, hinting=hinting, max_width=None, line_width=None)
     if line_height == 'normal':
         return pango_height, baseline
     type_, value = line_height
