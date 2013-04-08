@@ -729,7 +729,7 @@ def split_text_box(context, box, available_width, line_width, skip):
     if resume_at is not None:
         if length > resume_at:
             # Text has been hyphenated
-            new_text += '-'
+            new_text += box.style.hyphenate_character
             between = ''
         else:
             between = utf8_text[length:resume_at].decode('utf8')

@@ -1064,8 +1064,59 @@ def hyphens(token):
     keyword = get_keyword(token)
     if keyword in ('none', 'manual', 'auto'):
         return keyword
-    elif token.type in ('NUMBER', 'INTEGER') and 0 <= token.value <= 1:
+
+
+@validator(prefixed=True)  # Non-standard
+@single_token
+def hyphenate_character(token):
+    """Validation for ``hyphenate-character``."""
+    keyword = get_keyword(token)
+    if keyword == 'auto':
+        return '‐'
+    elif token.type == 'STRING':
         return token.value
+
+
+@validator(prefixed=True)  # Non-standard
+@single_token
+def hyphenate_limit_zone(token):
+    """Validation for ``hyphenate-limit-zone``."""
+    return get_length(token, negative=False, percentage=True)
+
+
+@validator(prefixed=True)  # Non-standard
+def hyphenate_limit_chars(tokens):
+    """Validation for ``hyphenate-limit-chars``."""
+    if len(tokens) == 1:
+        token, = tokens
+        keyword = get_keyword(token)
+        if keyword == 'auto':
+            return (5, 2, 2)
+        elif token.type == 'INTEGER':
+            return (token.value, 2, 2)
+    elif len(tokens) == 2:
+        total, left = tokens
+        total_keyword = get_keyword(total)
+        left_keyword = get_keyword(left)
+        if total.type == 'INTEGER':
+            if left.type == 'INTEGER':
+                return (total.value, left.value, left.value)
+            elif left_keyword == 'auto':
+                return (total.value, 2, 2)
+        elif total_keyword == 'auto':
+            if left.type == 'INTEGER':
+                return (5, left.value, left.value)
+            elif left_keyword == 'auto':
+                return (5, 2, 2)
+    elif len(tokens) == 3:
+        total, left, right = tokens
+        if ((get_keyword(total) == 'auto' or total.type == 'INTEGER') and
+            (get_keyword(left) == 'auto' or left.type == 'INTEGER') and
+            (get_keyword(right) == 'auto' or right.type == 'INTEGER')):
+            total = total.value if total.type == 'INTEGER' else 5
+            left = left.value if left.type == 'INTEGER' else 2
+            right = right.value if right.type == 'INTEGER' else 2
+            return (total, left, right)
 
 
 @validator(prefixed=True)  # Non-standard

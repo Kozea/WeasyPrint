@@ -258,6 +258,7 @@ def length_tuple(computer, name, values):
 @register_computer('padding-bottom')
 @register_computer('padding-left')
 @register_computer('text-indent')
+@register_computer('hyphenate-limit-zone')
 def length(computer, name, value, font_size=None, pixels_only=False):
     """Compute a length ``value``."""
     if value == 'auto':

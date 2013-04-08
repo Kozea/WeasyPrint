@@ -140,9 +140,12 @@ INITIAL_VALUES = {
     'bookmark_label': ('keyword', 'none'),  # computed value of 'none'
     'bookmark_level': 'none',
 
-    # CSS3 Text
-    # http://www.w3.org/TR/css3-text/#hyphenation
+    # CSS4 Text
+    # http://dev.w3.org/csswg/css4-text/#hyphenation
     'hyphens': 'manual',
+    'hyphenate_character': '‐',
+    'hyphenate_limit_chars': (5, 2, 2),
+    'hyphenate_limit_zone': Dimension(0, 'px'),
 
     # Internal, to implement the "static position" for absolute boxes.
     '_weasy_specified_display': 'inline',
@@ -217,6 +220,9 @@ INHERITED = set("""
     word_spacing
 
     hyphens
+    hyphenate_character
+    hyphenate_limit_chars
+    hyphenate_limit_zone
     image_rendering
     lang
     link
