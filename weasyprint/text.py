@@ -265,14 +265,8 @@ def create_layout(text, style, hinting, max_width):
     # Make sure that max_width * Pango.SCALE == max_width * 1024 fits in a
     # signed integer. Treat bigger values same as None: unconstrained width.
     if max_width is not None and max_width < 2 ** 21:
-        # In some cases (shrink-to-fit result being the preferred width)
-        # this value is coming from Pango itself,
-        # but floating point errors have accumulated:
-        #   width2 = (width + X) - X   # in some cases, width2 < width
-        # Increase the value a bit to compensate and not introduce
-        # an unexpected line break.
-        max_width *= 1.00001
-        pango.pango_layout_set_width(layout.layout, units_from_double(max_width))
+        pango.pango_layout_set_width(
+            layout.layout, units_from_double(max_width))
     word_spacing = style.word_spacing
     letter_spacing = style.letter_spacing
     if letter_spacing == 'normal':
@@ -315,6 +309,14 @@ def split_first_line(text, style, hinting, max_width, line_width):
     ``baseline``: baseline in pixels of the first line
 
     """
+    # In some cases (shrink-to-fit result being the preferred width)
+    # this value is coming from Pango itself,
+    # but floating point errors have accumulated:
+    #   width2 = (width + X) - X   # in some cases, width2 < width
+    # Increase the value a bit to compensate and not introduce
+    # an unexpected line break.
+    if max_width is not None:
+        max_width *= 1.0001
     # Step #1: Get a draft layout with the first line
     layout = None
     if max_width:
@@ -422,8 +424,8 @@ def split_first_line(text, style, hinting, max_width, line_width):
     width, height = get_size(first_line)
 
     baseline = units_to_double(pango.pango_layout_iter_get_baseline(ffi.gc(
-            pango.pango_layout_get_iter(layout.layout),
-            pango.pango_layout_iter_free)))
+        pango.pango_layout_get_iter(layout.layout),
+        pango.pango_layout_iter_free)))
 
     # Step #4: Return the layout and the metrics
     return layout, length, resume_at, width, height, baseline
@@ -440,10 +442,10 @@ def line_widths(box, enable_hinting, width, skip=None):
         yield width
 
 
-def show_first_line(cairo_context, pango_layout, hinting):
+def show_first_line(context, pango_layout, hinting):
     """Draw the given ``line`` to the Cairo ``context``."""
-    cairo_context = ffi.cast('cairo_t *', cairo_context._pointer)
+    context = ffi.cast('cairo_t *', context._pointer)
     if hinting:
-        pangocairo.pango_cairo_update_layout(cairo_context, pango_layout.layout)
+        pangocairo.pango_cairo_update_layout(context, pango_layout.layout)
     pangocairo.pango_cairo_show_layout_line(
-        cairo_context, next(pango_layout.iter_lines()))
+        context, next(pango_layout.iter_lines()))
