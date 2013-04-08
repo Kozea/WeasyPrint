@@ -80,14 +80,16 @@ def to_lists(box_tree):
     return serialize(unwrap_html_body(box_tree))
 
 
-def _parse_base(html_content,
+def _parse_base(
+        html_content,
         # Dummy filename, but in the right directory.
         base_url=resource_filename('<test>')):
     document = TestHTML(string=html_content, base_url=base_url)
     style_for = get_all_computed_styles(document)
-    get_image_from_uri =  functools.partial(
+    get_image_from_uri = functools.partial(
         images.get_image_from_uri, {}, document.url_fetcher)
     return document.root_element, style_for, get_image_from_uri
+
 
 def parse(html_content):
     """Parse some HTML, apply stylesheets and transform to boxes."""
@@ -107,7 +109,7 @@ def render_pages(html_content):
     """Lay out a document and return a list of PageBox objects."""
     return [p._page_box for p in TestHTML(
             string=html_content, base_url=resource_filename('<test>')
-        ).render(enable_hinting=True).pages]
+            ).render(enable_hinting=True).pages]
 
 
 def assert_tree(box, expected):
@@ -854,20 +856,29 @@ def test_before_after():
                     ('q', 'Text', ' sit amet'),
                     ('q:after', 'Inline', [
                         ('q:after', 'Text', ' »')])])])])])
+    with capture_logs() as logs:
+        assert_tree(parse_all('''
+            <style>
+                p:before {
+                    content: 'a' url(pattern.png) 'b';
 
-    assert_tree(parse_all('''
-        <style>
-            p:before { content: 'a' url(pattern.png) 'b'}
-        </style>
-        <p>c</p>
-    '''), [
-        ('p', 'Block', [
-            ('p', 'Line', [
-                ('p:before', 'Inline', [
-                    ('p:before', 'Text', 'a'),
-                    ('p:before', 'AnonInlineReplaced', '<replaced>'),
-                    ('p:before', 'Text', 'b')]),
-                ('p', 'Text', 'c')])])])
+                    /* Invalid, ignored in favor of the one above.
+                       Regression test: this used to crash: */
+                    content: some-function(nested-function(something));
+                }
+            </style>
+            <p>c</p>
+        '''), [
+            ('p', 'Block', [
+                ('p', 'Line', [
+                    ('p:before', 'Inline', [
+                        ('p:before', 'Text', 'a'),
+                        ('p:before', 'AnonInlineReplaced', '<replaced>'),
+                        ('p:before', 'Text', 'b')]),
+                    ('p', 'Text', 'c')])])])
+    assert len(logs) == 1
+    assert 'nested-function(' in logs[0]
+    assert 'invalid value' in logs[0]
 
 
 @assert_no_logs

@@ -580,7 +580,7 @@ def validate_content_token(base_url, token):
     if function:
         name, args = function
         prototype = (name, [a.type for a in args])
-        args = [a.value for a in args]
+        args = [getattr(a, 'value', a) for a in args]
         if prototype == ('attr', ['IDENT']):
             return (name, args[0])
         elif prototype in (('counter', ['IDENT']),
@@ -1032,7 +1032,7 @@ def anchor(token):
     if function:
         name, args = function
         prototype = (name, [a.type for a in args])
-        args = [a.value for a in args]
+        args = [getattr(a, 'value', a) for a in args]
         if prototype == ('attr', ['IDENT']):
             return (name, args[0])
 
@@ -1052,7 +1052,7 @@ def link(token, base_url):
     if function:
         name, args = function
         prototype = (name, [a.type for a in args])
-        args = [a.value for a in args]
+        args = [getattr(a, 'value', a) for a in args]
         if prototype == ('attr', ['IDENT']):
             return (name, args[0])
 
@@ -1078,7 +1078,7 @@ def lang(token):
     if function:
         name, args = function
         prototype = (name, [a.type for a in args])
-        args = [a.value for a in args]
+        args = [getattr(a, 'value', a) for a in args]
         if prototype == ('attr', ['IDENT']):
             return (name, args[0])
     elif token.type == 'STRING':
