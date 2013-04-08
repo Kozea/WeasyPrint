@@ -61,9 +61,10 @@ def table_layout(context, table, max_position_y, skip_stack,
         else:
             skipped_rows = 0
         _, horizontal_borders = table.collapsed_border_grid
-        table.style.border_top_width = table.border_top_width = max(
-            width for _, (_, width, _) in horizontal_borders[skipped_rows]
-        ) / 2
+        if horizontal_borders:
+            table.style.border_top_width = table.border_top_width = max(
+                width for _, (_, width, _)
+                in horizontal_borders[skipped_rows]) / 2
 
     # Make this a sub-function so that many local variables like rows_x
     # need not be passed as parameters.
