@@ -340,13 +340,20 @@ def preprocess_stylesheet(device_media_type, base_url, rules, url_fetcher):
             if declarations:
                 selector_string = rule.selector.as_css()
                 try:
-                    selector_list = [
-                        Selector(
+                    selector_list = []
+                    for selector in cssselect.parse(selector_string):
+                        xpath = selector_to_xpath(selector)
+                        try:
+                            lxml_xpath = lxml.etree.XPath(xpath)
+                        except ValueError as exc:
+                            # TODO: Some characters are not supported by lxml's
+                            # XPath implementation (including control
+                            # characters), but these characters are valid in
+                            # the CSS2.1 specification.
+                            raise cssselect.SelectorError(str(exc))
+                        selector_list.append(Selector(
                             (0,) + selector.specificity(),
-                            selector.pseudo_element,
-                            lxml.etree.XPath(selector_to_xpath(selector)))
-                        for selector in cssselect.parse(selector_string)
-                    ]
+                            selector.pseudo_element, lxml_xpath))
                     for selector in selector_list:
                         if selector.pseudo_element not in PSEUDO_ELEMENTS:
                             raise cssselect.ExpressionError(
