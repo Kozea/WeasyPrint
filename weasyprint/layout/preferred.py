@@ -165,7 +165,9 @@ def inline_preferred_minimum_width(context, box, outer=True, skip_stack=None,
             current_line = inline_preferred_minimum_width(
                 context, child, skip_stack=skip_stack, first_line=first_line)
         elif isinstance(child, boxes.TextBox):
-            widths = text.line_widths(child, context.enable_hinting, width=0)
+            widths = text.line_widths(
+                child, context.enable_hinting, width=0,
+                skip=(skip_stack[0] if skip_stack else None))
             if first_line:
                 return next(widths)
             else:
