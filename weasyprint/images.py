@@ -162,21 +162,17 @@ def percentage(value, refer_to):
         return refer_to * value.value / 100
 
 
-def process_color_stops(gradient_line_size, color_stops):
+def process_color_stops(gradient_line_size, positions):
     """
     Gradient line size: distance between the starting point and ending point.
-    Color stop: list of (color, positions).
-    Position: None, or Dimension in px or %.
-              0 is the starting point, 1 the ending point.
+    Positions: list of None, or Dimension in px or %.
+               0 is the starting point, 1 the ending point.
 
     http://dev.w3.org/csswg/css-images-3/#color-stop-syntax
 
     Return processed color stops, as a list of floats in px.
 
     """
-    positions = [percentage(position, gradient_line_size)
-                 for _color, position in color_stops]
-
     # First and last default to 100%
     if positions[0] is None:
         positions[0] = 0
@@ -192,6 +188,11 @@ def process_color_stops(gradient_line_size, color_stops):
             else:
                 previous_pos = position
 
+    first = positions[0]
+    last = positions[-1]
+    if first == last:
+        return 0, 0, [0 for _ in positions]
+
     # Assign missing values
     previous_i = -1
     for i, position in enumerate(positions):
@@ -203,23 +204,91 @@ def process_color_stops(gradient_line_size, color_stops):
             previous_i = i
 
     # Normalize to [0..1]
-    first = positions[0]
-    last = positions[-1]
-    if last != first:
-        diff = last - first
-        color_stops = [
-            ((pos - first) / diff, r, g, b, a)
-            for ((r, g, b, a), _), pos in zip(color_stops, positions)]
-    else:
-        color_stops = [(0, r, g, b, a) for (r, g, b, a), _ in color_stops]
-    return first, last, color_stops
+    total_length = last - first
+    return first, last, [
+        (pos - first) / total_length for pos in positions]
 
 
-class LinearGradient(object):
+def gradient_average_color(colors, positions):
+    """
+    http://dev.w3.org/csswg/css-images-3/#find-the-average-color-of-a-gradient
+    """
+    assert positions
+    nb_stops = len(positions)
+    assert nb_stops == len(colors)
+    if nb_stops == 1:
+        return colors[0]
+    total_length = positions[-1] - positions[0]
+    if total_length == 0:
+        positions = range(nb_stops)
+        total_length = nb_stops - 1
+    premul_r = [r * a for r, g, b, a in colors]
+    premul_g = [g * a for r, g, b, a in colors]
+    premul_b = [b * a for r, g, b, a in colors]
+    alpha = [a for r, g, b, a in colors]
+    result_r = result_g = result_b = result_a = 0
+    total_weight = 2 * total_length
+    for i, position in enumerate(positions[1:], 1):
+        weight = (position - positions[i - 1]) / total_weight
+        for j in (i - 1, i):
+            result_r += premul_r[j] * weight
+            result_g += premul_g[j] * weight
+            result_b += premul_b[j] * weight
+            result_a += alpha[j] * weight
+    # Un-premultiply:
+    return (result_r / result_a, result_g / result_a,
+            result_b / result_a, result_a)
+
+
+PATTERN_TYPES = dict(
+    linear=cairocffi.LinearGradient,
+    solid=cairocffi.SolidPattern)
+
+
+class Gradient(object):
     intrinsic_width = None
     intrinsic_height = None
     intrinsic_ratio = None
 
+    def draw(self, context, concrete_width, concrete_height, _image_rendering):
+        dx, dy = self._get_direction(concrete_width, concrete_height)
+        scale_y, type_, init, stop_positions, stop_colors = self.layout(
+            concrete_width, concrete_height, dx, dy, math.hypot(
+                context.user_to_device_distance(dx, dy)))
+        context.scale(1, scale_y)
+        pattern = PATTERN_TYPES[type_](*init)
+        for position, color in zip(stop_positions, stop_colors):
+            pattern.add_color_stop_rgba(position, *color)
+        pattern.set_extend(cairocffi.EXTEND_REPEAT if self.repeating
+                           else cairocffi.EXTEND_PAD)
+        context.set_source(pattern)
+        context.paint()
+
+    def _get_direction(self, width, height):
+        """width, height: Gradient box.
+        Return a unit vector (dx, dy). Positive dx: right, positive dy: down.
+
+        """
+        raise NotImplementedError
+
+    def layout(self, width, height):
+        """width, height: Gradient box. Top-left is at coordinates (0, 0).
+
+        Returns (scale_y, type_, init, positions, colors).
+        scale_y: float, used for ellipses radial gradients. 1 otherwise.
+        positions: list of floats in [0..1].
+                   0 at the starting point, 1 at the ending point.
+        colors: list of (r, g, b, a)
+        type_ is either:
+            'solid': init is (r, g, b, a). positions and colors are empty.
+            'linear': init is (x0, y0, x1, y1)
+                      coordinates of the start and ending points.
+
+        """
+        raise NotImplementedError
+
+
+class LinearGradient(Gradient):
     def __init__(self, color_stops, direction, repeating):
         # ('corner', keyword) or ('angle', radians)
         self.direction_type, self.direction = direction
@@ -228,44 +297,43 @@ class LinearGradient(object):
         # bool
         self.repeating = repeating
 
-    def layout(self, width, height):
-        """Gradient box: (width, height). Top-left is coordinates (0, 0)
-
-        Returns (points, color_stops)
-        points: (x0, y0, x1, y1), coordinates of the start and ending points.
-        color_stops: list of (offset, red, green, blue, alpha), all in [0..1]
-        offset 0 is the starting point, offset 1 the ending point.
-
-        """
-        # (dy, dy) is an unit vector pointing to the desired direction.
-        # positive dx: right, positive dy: down
+    def _get_direction(self, width, height):
         if self.direction_type == 'corner':
             factor_x, factor_y = {
                 'top_left': (-1, -1), 'top_right': (1, -1),
                 'bottom_left': (-1, 1), 'bottom_right': (1, 1)}[self.direction]
-            diagonal = math.sqrt(width ** 2 + height ** 2)
-            dx = factor_x * height / diagonal
-            dy = factor_y * width / diagonal
+            diagonal = math.hypot(width, height)
+            return factor_x * height / diagonal, factor_y * width / diagonal
         else:
-            # 0 upwards, then clockwise
-            angle = self.direction
-            dx = math.sin(angle)
-            dy = -math.cos(angle)
+            angle = self.direction  # 0 upwards, then clockwise
+            return math.sin(angle), -math.cos(angle)
 
+    def layout(self, width, height, dx, dy, device_units_per_user_units=1):
+        """width, height: Gradient box. Top-left is at coordinates (0, 0).
+
+        Returns either ('solid', (r, g, b, a), [], []) or
+        ('linear', (x0, y0, x1, y1), [position, …], [(r, g, b, a), …]).
+
+        r, g, b, a: non-premultiplied color components, in [0..1]
+        position: in [0..1], 0 at the starting point, 1 at the ending point.
+        x0, y0, x1, y1: coordinates of the start and ending points.
+
+        """
         # Distance between starting and ending point:
-        distance = width * dx + height * dy
-        first, last, stops = process_color_stops(distance, self.color_stops)
-        return (width / 2 + dx * (first - distance / 2),
-                height / 2 + dy * (first - distance / 2),
-                width / 2 + dx * (last - distance / 2),
-                height / 2 + dy * (last - distance / 2)), stops
+        distance = math.hypot(width * dx, height * dy)
+        colors, positions = zip(*self.color_stops)
+        if distance * device_units_per_user_units < len(positions):
+            color = gradient_average_color(colors, positions)
+            return 1, 'solid', color, [], []
+        first, last, positions = process_color_stops(distance, positions)
+        points = (
+            width / 2 + dx * (first - distance / 2),
+            height / 2 + dy * (first - distance / 2),
+            width / 2 + dx * (last - distance / 2),
+            height / 2 + dy * (last - distance / 2))
+        return 1, 'linear', points, positions, colors
 
-    def draw(self, context, concrete_width, concrete_height, _image_rendering):
-        points, color_stops = self.layout(concrete_width, concrete_height)
-        gradient = cairocffi.LinearGradient(*points)
-        for color_stop in color_stops:
-            gradient.add_color_stop_rgba(*color_stop)
-        gradient.set_extend(cairocffi.EXTEND_REPEAT if self.repeating
-                            else cairocffi.EXTEND_PAD)
-        context.set_source(gradient)
-        context.paint()
+
+class RadialGradient(Gradient):
+    def _get_direction(self, _width, _height):
+        return -1, 0  # The gradient line is always horizontal.

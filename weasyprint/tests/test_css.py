@@ -127,8 +127,8 @@ def test_annotate_document():
     # pylint: disable=C0103
     document = TestHTML(resource_filename('doc1.html'))
     document._ua_stylesheets = lambda: [CSS(resource_filename('mini_ua.css'))]
-    style_for = get_all_computed_styles(document,
-        user_stylesheets=[CSS(resource_filename('user.css'))])
+    style_for = get_all_computed_styles(
+        document, user_stylesheets=[CSS(resource_filename('user.css'))])
 
     # Element objects behave a lists of their children
     _head, body = document.root_element
