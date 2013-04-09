@@ -232,73 +232,59 @@ def test_block_widths():
     # 'margin-right: 0' was ignored.
     assert paragraphs[1].width == 50
     assert paragraphs[1].margin_left == 0
-    assert paragraphs[1].margin_right == 44
 
-    # No 'auto', over-constrained equation with ltr, the initial
-    # 'margin-right: 0' was ignored.
+    # No 'auto', over-constrained equation with rtl, the initial
+    # 'margin-left: 0' was ignored.
     assert paragraphs[2].width == 50
-    assert paragraphs[2].margin_left == 44
     assert paragraphs[2].margin_right == 0
 
     # width is 'auto'
     assert paragraphs[3].width == 64
     assert paragraphs[3].margin_left == 20
-    assert paragraphs[3].margin_right == 10
 
     # margin-right is 'auto'
     assert paragraphs[4].width == 50
     assert paragraphs[4].margin_left == 20
-    assert paragraphs[4].margin_right == 24
 
     # margin-left is 'auto'
     assert paragraphs[5].width == 50
     assert paragraphs[5].margin_left == 24
-    assert paragraphs[5].margin_right == 20
 
     # Both margins are 'auto', remaining space is split in half
     assert paragraphs[6].width == 50
     assert paragraphs[6].margin_left == 22
-    assert paragraphs[6].margin_right == 22
 
     # width is 'auto', other 'auto' are set to 0
     assert paragraphs[7].width == 74
     assert paragraphs[7].margin_left == 20
-    assert paragraphs[7].margin_right == 0
 
     # width is 'auto', other 'auto' are set to 0
     assert paragraphs[8].width == 74
     assert paragraphs[8].margin_left == 0
-    assert paragraphs[8].margin_right == 20
 
     # width is 'auto', other 'auto' are set to 0
     assert paragraphs[9].width == 94
     assert paragraphs[9].margin_left == 0
-    assert paragraphs[9].margin_right == 0
 
     # sum of non-auto initially is too wide, set auto values to 0
     assert paragraphs[10].width == 200
     assert paragraphs[10].margin_left == 0
-    assert paragraphs[10].margin_right == -106
 
     # Constrained by min-width, same as above
     assert paragraphs[11].width == 200
     assert paragraphs[11].margin_left == 0
-    assert paragraphs[11].margin_right == -106
 
     # Constrained by max-width, same as paragraphs[6]
     assert paragraphs[12].width == 50
     assert paragraphs[12].margin_left == 22
-    assert paragraphs[12].margin_right == 22
 
     # NOT constrained by min-width
     assert paragraphs[13].width == 94
     assert paragraphs[13].margin_left == 0
-    assert paragraphs[13].margin_right == 0
 
     # 70%
     assert paragraphs[14].width == 70
     assert paragraphs[14].margin_left == 0
-    assert paragraphs[14].margin_right == 24
 
 
 @assert_no_logs
@@ -3098,7 +3084,6 @@ def test_table_wrapper():
     assert body.width == 1000
     assert wrapper.width == 600  # Not counting borders or padding
     assert wrapper.margin_left == 100
-    assert wrapper.margin_right == 300  # To fill the 1000px of the container
     assert table.margin_width() == 600
     assert table.width == 578  # 600 - 2*10 - 2*1, no margin
     # box-sizing in the UA stylesheet  makes `height: 500px` set this
