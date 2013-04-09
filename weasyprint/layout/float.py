@@ -155,15 +155,16 @@ def avoid_collisions(context, box, containing_block, outer=True):
         max_right_bound = \
             containing_block.content_box_x() + containing_block.width
 
+        if not outer:
+            max_left_bound += box.margin_left
+            max_right_bound -= box.margin_right
+
         # Set the real maximum bounds according to sibling float elements
         if left_bounds or right_bounds:
             if left_bounds:
                 max_left_bound = max(max(left_bounds), max_left_bound)
             if right_bounds:
                 max_right_bound = min(min(right_bounds), max_right_bound)
-            if not outer:
-                max_left_bound += box.margin_left
-                max_right_bound -= box.margin_right
 
             # Points 3, 7 and 8
             if box_width > max_right_bound - max_left_bound:
@@ -176,10 +177,6 @@ def avoid_collisions(context, box, containing_block, outer=True):
                     position_y = new_positon_y
                     continue
                 # No solution, we must put the box here
-        elif not outer:
-            max_left_bound += box.margin_left
-            max_right_bound -= box.margin_right
-
         break
 
     position_x = max_left_bound
