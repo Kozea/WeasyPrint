@@ -483,12 +483,19 @@ def border_spacing(tokens):
 @validator('border-right-style')
 @validator('border-left-style')
 @validator('border-bottom-style')
-@validator('outline-style')
 @single_keyword
 def border_style(keyword):
     """``border-*-style`` properties validation."""
     return keyword in ('none', 'hidden', 'dotted', 'dashed', 'double',
                        'inset', 'outset', 'groove', 'ridge', 'solid')
+
+
+@validator('outline-style')
+@single_keyword
+def outline_style(keyword):
+    """``outline-style`` properties validation."""
+    return keyword in ('none', 'dotted', 'dashed', 'double', 'inset',
+                       'outset', 'groove', 'ridge', 'solid')
 
 
 @validator('border-top-width')
