@@ -179,8 +179,8 @@ def comma_separated_list(function):
 
 def get_length(token, negative=True, percentage=False):
     if (token.unit in LENGTH_UNITS or (percentage and token.unit == '%')
-            or (token.type in ('INTEGER', 'NUMBER') and token.value == 0)
-            and (negative or token.value >= 0)):
+            or (token.type in ('INTEGER', 'NUMBER')
+                and token.value == 0)) and (negative or token.value >= 0):
         return Dimension(token.value, token.unit)
 
 
