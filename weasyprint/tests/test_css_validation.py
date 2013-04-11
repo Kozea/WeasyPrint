@@ -17,6 +17,7 @@ import math
 from .testing_utils import assert_no_logs, capture_logs
 from ..css import PARSER, preprocess_declarations
 from ..css.properties import INITIAL_VALUES
+from ..images import LinearGradient, RadialGradient
 
 
 def expand_to_dict(css, expected_error=None):
@@ -389,6 +390,7 @@ def test_expand_background():
     assert_invalid('background: 10px lipsum')
     assert_invalid('background-position: 10px lipsum')
     assert_invalid('background: content-box red content-box')
+    assert_invalid('background-image: inexistent-gradient(blue, green)')
     # Color must be in the last layer:
     assert_invalid('background: red, url(foo)')
 
@@ -484,3 +486,162 @@ def test_font():
     assert_invalid('font: 12px')
     assert_invalid('font: 12px/foo serif')
     assert_invalid('font: 12px "Invalid" family')
+
+
+def almost_equal(a, b):
+    if (isinstance(a, list) and isinstance(b, list)
+            or isinstance(a, tuple) and isinstance(b, tuple)):
+        return len(a) == len(b) and all(
+            almost_equal(aa, bb) for aa, bb in zip(a, b))
+    if isinstance(a, float):
+        a = round(a, 6)
+    if isinstance(b, float):
+        b = round(b, 6)
+    return a == b
+
+
+@assert_no_logs
+def test_linear_gradient():
+    red = (1, 0, 0, 1)
+    lime = (0, 1, 0, 1)
+    blue = (0, 0, 1, 1)
+    pi = math.pi
+
+    def gradient(css, direction, colors=[blue], stop_positions=[None]):
+        for repeating, prefix in ((False, ''), (True, 'repeating-')):
+            expanded = expand_to_dict(
+                'background-image: %slinear-gradient(%s)' % (prefix, css))
+            [(_, [(type_, image)])] = expanded.items()
+            assert type_ == 'linear-gradient'
+            assert isinstance(image, LinearGradient)
+            assert image.repeating == repeating
+            assert almost_equal((image.direction_type, image.direction),
+                                direction)
+            assert almost_equal(image.colors, colors)
+            assert almost_equal(image.stop_positions, stop_positions)
+
+    def invalid(css):
+        assert_invalid('background-image: linear-gradient(%s)' % css)
+        assert_invalid('background-image: repeating-linear-gradient(%s)' % css)
+
+    invalid(' ')
+    invalid('1% blue')
+    invalid('blue 10deg')
+    invalid('blue 4')
+    invalid('soylent-green 4px')
+    invalid('red 4px 2px')
+    gradient('blue', ('angle', pi))
+    gradient('red', ('angle', pi), [red], [None])
+    gradient('blue 1%, lime,red 2em ', ('angle', pi),
+             [blue, lime, red], [(1, '%'), None, (2, 'em')])
+    gradient('18deg, blue', ('angle', pi / 10))
+    gradient('4rad, blue', ('angle', 4))
+    gradient('.25turn, blue', ('angle', pi / 2))
+    gradient('100grad, blue', ('angle', pi / 2))
+    gradient('12rad, blue 1%, lime,red 2em ', ('angle', 12),
+             [blue, lime, red], [(1, '%'), None, (2, 'em')])
+    invalid('10arc-minutes, blue')
+    invalid('10px, blue')
+    invalid('to 90deg, blue')
+    gradient('to top, blue', ('angle', 0))
+    gradient('to right, blue', ('angle', pi / 2))
+    gradient('to bottom, blue', ('angle', pi))
+    gradient('to left, blue', ('angle', pi * 3 / 2))
+    gradient('to right, blue 1%, lime,red 2em ', ('angle', pi / 2),
+             [blue, lime, red], [(1, '%'), None, (2, 'em')])
+    invalid('to the top, blue')
+    invalid('to up, blue')
+    invalid('into top, blue')
+    invalid('top, blue')
+    gradient('to top left, blue', ('corner', 'top_left'))
+    gradient('to left top, blue', ('corner', 'top_left'))
+    gradient('to top right, blue', ('corner', 'top_right'))
+    gradient('to right top, blue', ('corner', 'top_right'))
+    gradient('to bottom left, blue', ('corner', 'bottom_left'))
+    gradient('to left bottom, blue', ('corner', 'bottom_left'))
+    gradient('to bottom right, blue', ('corner', 'bottom_right'))
+    gradient('to right bottom, blue', ('corner', 'bottom_right'))
+    invalid('to bottom up, blue')
+    invalid('bottom left, blue')
+
+
+@assert_no_logs
+def test_radial_gradient():
+    red = (1, 0, 0, 1)
+    lime = (0, 1, 0, 1)
+    blue = (0, 0, 1, 1)
+
+    def gradient(css, shape='ellipse', size=('keyword', 'farthest-corner'),
+                 center=('left', (50, '%'), 'top', (50, '%')),
+                 colors=[blue], stop_positions=[None]):
+        for repeating, prefix in ((False, ''), (True, 'repeating-')):
+            expanded = expand_to_dict(
+                'background-image: %sradial-gradient(%s)' % (prefix, css))
+            [(_, [(type_, image)])] = expanded.items()
+            assert type_ == 'radial-gradient'
+            assert isinstance(image, RadialGradient)
+            assert image.repeating == repeating
+            assert image.shape == shape
+            assert almost_equal((image.size_type, image.size), size)
+            assert almost_equal(image.center, center)
+            assert almost_equal(image.colors, colors)
+            assert almost_equal(image.stop_positions, stop_positions)
+
+    def invalid(css):
+        assert_invalid('background-image: radial-gradient(%s)' % css)
+        assert_invalid('background-image: repeating-radial-gradient(%s)' % css)
+
+    invalid(' ')
+    invalid('1% blue')
+    invalid('blue 10deg')
+    invalid('blue 4')
+    invalid('soylent-green 4px')
+    invalid('red 4px 2px')
+    gradient('blue')
+    gradient('red', colors=[red])
+    gradient('blue 1%, lime,red 2em ', colors=[blue, lime, red],
+             stop_positions=[(1, '%'), None, (2, 'em')])
+    gradient('circle, blue', 'circle')
+    gradient('ellipse, blue', 'ellipse')
+    invalid('square, blue')
+    invalid('closest-triangle, blue')
+    invalid('center, blue')
+    gradient('ellipse closest-corner, blue',
+             'ellipse', ('keyword', 'closest-corner'))
+    gradient('circle closest-side, blue',
+             'circle', ('keyword', 'closest-side'))
+    gradient('farthest-corner circle, blue',
+             'circle', ('keyword', 'farthest-corner'))
+    gradient('farthest-side, blue',
+             'ellipse', ('keyword', 'farthest-side'))
+    gradient('5ch, blue',
+             'circle', ('explicit', ((5, 'ch'), (5, 'ch'))))
+    gradient('5ch circle, blue',
+             'circle', ('explicit', ((5, 'ch'), (5, 'ch'))))
+    gradient('circle 5ch, blue',
+             'circle', ('explicit', ((5, 'ch'), (5, 'ch'))))
+    invalid('ellipse 5ch')
+    invalid('5ch ellipse')
+    gradient('10px 50px, blue',
+             'ellipse', ('explicit', ((10, 'px'), (50, 'px'))))
+    gradient('10px 50px ellipse, blue',
+             'ellipse', ('explicit', ((10, 'px'), (50, 'px'))))
+    gradient('ellipse 10px 50px, blue',
+             'ellipse', ('explicit', ((10, 'px'), (50, 'px'))))
+    invalid('circle 10px 50px, blue')
+    invalid('10px 50px circle, blue')
+    invalid('10%, blue')
+    invalid('10% circle, blue')
+    invalid('circle 10%, blue')
+    gradient('10px 50px, blue',
+             'ellipse', ('explicit', ((10, 'px'), (50, 'px'))))
+    invalid('at appex, blue')
+    gradient('at top 10% right, blue',
+             center=('right', (0, '%'), 'top', (10, '%')))
+    gradient('circle at bottom, blue', shape='circle',
+             center=('left', (50, '%'), 'top', (100, '%')))
+    gradient('circle at 10px, blue', shape='circle',
+             center=('left', (10, 'px'), 'top', (50, '%')))
+    gradient('closest-side circle at right 5em, blue',
+             shape='circle', size=('keyword', 'closest-side'),
+             center=('left', (100, '%'), 'top', (5, 'em')))

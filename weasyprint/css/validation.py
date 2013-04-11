@@ -312,7 +312,7 @@ def parse_linear_gradient_parameters(arguments):
         result = DIRECTION_KEYWORDS.get(tuple(map(get_keyword, first_arg)))
         if result is not None:
             return result, arguments[1:]
-    return ('angle', 180), arguments  # Default direction is 'to bottom'
+    return ('angle', math.pi), arguments  # Default direction is 'to bottom'
 
 
 def parse_radial_gradient_parameters(arguments):
@@ -326,6 +326,8 @@ def parse_radial_gradient_parameters(arguments):
         keyword = get_keyword(token)
         if keyword == 'at':
             position = background_position.single_value(stack[::-1])
+            if position is None:
+                return
             break
         elif keyword in ('circle', 'ellipse') and shape is None:
             shape = keyword
@@ -351,7 +353,7 @@ def parse_radial_gradient_parameters(arguments):
         return
     return (
         shape or size_shape or 'ellipse',
-        size or 'farthest-corner',
+        size or ('keyword', 'farthest-corner'),
         position or ('left', FIFTY_PERCENT, 'top', FIFTY_PERCENT),
         arguments[1:])
 

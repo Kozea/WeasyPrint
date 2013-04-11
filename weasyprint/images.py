@@ -255,7 +255,8 @@ class Gradient(object):
 
     def __init__(self, color_stops, repeating):
         #: List of (r, g, b, a), list of Dimension
-        self.colors, self.stop_positions = zip(*color_stops)
+        self.colors = [color for color, position in color_stops]
+        self.stop_positions = [position for color, position in color_stops]
         #: bool
         self.repeating = repeating
 
@@ -271,8 +272,9 @@ class Gradient(object):
         context.set_source(pattern)
         context.paint()
 
-    def layout(self, width, height):
+    def layout(self, width, height, user_to_device_distance):
         """width, height: Gradient box. Top-left is at coordinates (0, 0).
+        user_to_device_distance: a (dx, dy) -> (ddx, ddy) function
 
         Returns (scale_y, type_, init, positions, colors).
         scale_y: float, used for ellipses radial gradients. 1 otherwise.
@@ -292,7 +294,7 @@ class Gradient(object):
 
 class LinearGradient(Gradient):
     def __init__(self, color_stops, direction, repeating):
-        Gradient.__init__(color_stops, repeating)
+        Gradient.__init__(self, color_stops, repeating)
         #: ('corner', keyword) or ('angle', radians)
         self.direction_type, self.direction = direction
 
@@ -312,7 +314,8 @@ class LinearGradient(Gradient):
             dy = -math.cos(angle)
         # Distance between starting and ending point:
         distance = math.hypot(width * dx, height * dy)
-        first, last, positions = process_color_stops(distance, self.positions)
+        first, last, positions = process_color_stops(
+            distance, self.stop_positions)
         if self.repeating and (last - first) * math.hypot(
                 *user_to_device_distance(dx, dy)) < len(positions):
             color = gradient_average_color(self.colors, positions)
@@ -326,10 +329,10 @@ class LinearGradient(Gradient):
 
 
 class RadialGradient(Gradient):
-    def __init__(self, color_stops, shape, size, position, repeating):
-        Gradient.__init__(color_stops, repeating)
+    def __init__(self, color_stops, shape, size, center, repeating):
+        Gradient.__init__(self, color_stops, repeating)
         # Center of the ending shape. (origin_x, pos_x, origin_y, pos_y)
-        self.position = position
+        self.center = center
         #: Type of ending shape: 'circle' or 'ellipse'
         self.shape = shape
         # size_type: 'keyword'
@@ -340,15 +343,15 @@ class RadialGradient(Gradient):
         self.size_type, self.size = size
 
     def layout(self, width, height, dx, dy, user_to_device_distance):
-        origin_x, position_x, origin_y, position_y = self.position
-        position_x = percentage(position_x, width)
-        position_y = percentage(position_y, height)
+        origin_x, center_x, origin_y, center_y = self.center
+        center_x = percentage(center_x, width)
+        center_y = percentage(center_y, height)
         if origin_x == 'right':
-            position_x = width - position_x
+            center_x = width - center_x
         if origin_y == 'bottom':
-            position_y = height - position_y
+            center_y = height - center_y
 
-        size_x, size_y = self._resolve_size(width, position_x, position_y)
+        size_x, size_y = self._resolve_size(width, center_x, center_y)
         # http://dev.w3.org/csswg/css-images-3/#degenerate-radials
         if size_x == size_y == 0:
             size_x = size_y = 1e-10
@@ -361,7 +364,8 @@ class RadialGradient(Gradient):
         scale_y = size_y / size_x
 
         colors = self.colors
-        first, last, positions = process_color_stops(size_x, self.positions)
+        first, last, positions = process_color_stops(
+            size_x, self.stop_positions)
         gradient_line_size = last - first
         if self.repeating and any(
                 gradient_line_size * unit < len(positions)
@@ -397,16 +401,16 @@ class RadialGradient(Gradient):
                 else:
                     return 1, 'solid', self.colors[-1], [], []
 
-        circles = position_x, position_y, first, position_x, position_y, last
+        circles = center_x, center_y, first, center_x, center_y, last
         return scale_y, 'radial', circles, positions, colors
 
-    def _resolve_size(self, width, height, position_x, position_y):
+    def _resolve_size(self, width, height, center_x, center_y):
         if self.size_type == 'explicit':
             return self.size
-        left = abs(position_x)
-        right = abs(width - position_x)
-        top = abs(position_y)
-        bottom = abs(height - position_y)
+        left = abs(center_x)
+        right = abs(width - center_x)
+        top = abs(center_y)
+        bottom = abs(height - center_y)
         if self.size == 'closest-side':
             if self.shape == 'circle':
                 size_xy = min(left, right, top, bottom)

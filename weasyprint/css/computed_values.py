@@ -210,9 +210,9 @@ def background_image(computer, name, values):
     """Compute lenghts in gradient background-image."""
     for type_, value in values:
         if type_ in ('linear-gradient', 'radial-gradient'):
-            value.color_stops = [
-                (color, length(computer, name, p) if p is not None else None)
-                for color, p in value.color_stops]
+            value.stop_positions = [
+                length(computer, name, pos) if pos is not None else None
+                for pos in value.stop_positions]
         if type_ == 'radial-gradient':
             value.position, = background_position(
                 computer, name, [value.position])
