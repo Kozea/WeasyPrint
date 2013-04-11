@@ -158,15 +158,14 @@ def test_box_tree():
         <style>
             span { display: inline-block }
         </style>
-        <p>Hello <em>World <img src="pattern.png"><span>Lip</span></em>!</p>
-        '''),
+        <p>Hello <em>World <img src="pattern.png"><span>L</span></em>!</p>'''),
         [('p', 'Block', [
             ('p', 'Text', 'Hello '),
             ('em', 'Inline', [
                 ('em', 'Text', 'World '),
                 ('img', 'InlineReplaced', '<replaced>'),
                 ('span', 'InlineBlock', [
-                    ('span', 'Text', 'Lip')])]),
+                    ('span', 'Text', 'L')])]),
             ('p', 'Text', '!')])])
 
 
