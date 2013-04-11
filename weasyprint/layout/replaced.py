@@ -57,9 +57,9 @@ def default_image_sizing(intrinsic_width, intrinsic_height, intrinsic_ratio,
         ), specified_height
     else:
         return (intrinsic_width if intrinsic_width is not None
-                    else default_width,
+                else default_width,
                 intrinsic_height if intrinsic_height is not None
-                    else default_height)
+                else default_height)
 
 
 def contain_constraint_image_sizing(

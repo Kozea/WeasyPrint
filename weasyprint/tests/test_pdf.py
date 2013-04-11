@@ -300,6 +300,7 @@ def test_missing_links():
 def test_jpeg():
     if not hasattr(cairo.ImageSurface, 'set_mime_data'):
         pytest.xfail()
+
     def render(html):
         return TestHTML(base_url=resource_filename('dummy.html'),
                         string=html).write_pdf()

@@ -4222,9 +4222,9 @@ def test_font_stretch():
     p_1, p_2, p_3 = body.children
     normal = p_1.width
     condensed = p_2.width
-    expanded = p_3.width
     assert condensed < normal
     # TODO: when @font-face is supported use a font with an expanded variant.
+#    expanded = p_3.width
 #    assert normal < expanded
 
 

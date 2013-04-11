@@ -127,7 +127,7 @@ def get_next_linebox(context, linebox, position_y, skip_stack,
         position_x, position_y, available_width = avoid_collisions(
             context, line, containing_block, outer=False)
         if (position_x, position_y) == (
-            linebox.position_x, linebox.position_y):
+                linebox.position_x, linebox.position_y):
             context.excluded_shapes = new_excluded_shapes
             break
 
@@ -921,7 +921,8 @@ def inline_box_verticality(box, top_bottom_subtrees, baseline_y):
                     and child.margin_right == 0
                 ):
                     # No content, ignore this box’s line-height.
-                    # See http://www.w3.org/TR/CSS21/visuren.html#phantom-line-box
+                    # See
+                    # http://www.w3.org/TR/CSS21/visuren.html#phantom-line-box
                     child.position_y = child_baseline_y
                     child.height = 0
                     continue

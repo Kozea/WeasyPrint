@@ -41,20 +41,15 @@ PROPER_CHILDREN = dict((key, tuple(map(tuple, value))) for key, value in {
 def serialize(box_list):
     """Transform a box list into a structure easier to compare for testing."""
     return [
-        (
-            box.element_tag,
-            ('Anon'
-                 if box.style.anonymous and
-                       type(box) not in (boxes.TextBox, boxes.LineBox)
-                 else ''
-             ) + type(box).__name__[:-3],
-            (
-            # All concrete boxes are either text, replaced, column or parent.
-            box.text if isinstance(box, boxes.TextBox)
-            else '<replaced>' if isinstance(box, boxes.ReplacedBox)
-            else serialize(getattr(box, 'column_groups', ()) + box.children)))
-        for box in box_list
-    ]
+        (box.element_tag,
+         ('Anon' if (box.style.anonymous and
+                     type(box) not in (boxes.TextBox, boxes.LineBox))
+          else '') + type(box).__name__[:-3],
+         # All concrete boxes are either text, replaced, column or parent.
+         (box.text if isinstance(box, boxes.TextBox)
+          else '<replaced>' if isinstance(box, boxes.ReplacedBox)
+          else serialize(getattr(box, 'column_groups', ()) + box.children)))
+        for box in box_list]
 
 
 def unwrap_html_body(box):
@@ -145,7 +140,7 @@ def sanity_checks(box):
 
     assert any(
         all(isinstance(child, acceptable_types)
-                or not child.is_in_normal_flow()
+            or not child.is_in_normal_flow()
             for child in box.children)
         for acceptable_types in acceptable_types_lists
     ), (box, box.children)
@@ -158,13 +153,14 @@ def sanity_checks(box):
 def test_box_tree():
     """Test the creation of trees from HTML strings."""
     assert_tree(parse('<p>'), [('p', 'Block', [])])
-    assert_tree(parse('''
+    assert_tree(parse(
+        '''
         <style>
             span { display: inline-block }
         </style>
-        <p>Hello <em>World <img src="pattern.png"><span>Lip</span></em>!</p>'''
-    ), [
-        ('p', 'Block', [
+        <p>Hello <em>World <img src="pattern.png"><span>Lip</span></em>!</p>
+        '''),
+        [('p', 'Block', [
             ('p', 'Text', 'Hello '),
             ('em', 'Inline', [
                 ('em', 'Text', 'World '),
@@ -282,8 +278,7 @@ def test_block_in_inline():
                             ('span', 'Line', [
                                 ('em', 'Inline', [
                                     ('em', 'Text', 'conse'),
-                                    ('div', 'Block', []),
-                                    ])])])])])])])])
+                                    ('div', 'Block', [])])])])])])])])])
 
     box = build.block_in_inline(box)
     assert_tree(box, [
@@ -467,8 +462,7 @@ def test_images():
                 ('img', 'Inline', [
                     ('img', 'Text', 'No src')]),
                 ('img', 'Inline', [
-                    ('img', 'Text', 'Inexistent src')]),
-            ])])])
+                    ('img', 'Text', 'Inexistent src')])])])])
 
     with capture_logs() as logs:
         result = parse_all('<p><img src=pattern.png alt="No base_url">',
@@ -753,7 +747,6 @@ def test_colspan_rowspan():
         [1],
         [1, 1],
     ]
-
 
     # A cell box cannot extend beyond the last row box of a table.
     html = parse_all('''
@@ -1042,7 +1035,7 @@ def test_counters():
                   display: list-item; list-style: inside decimal">'''), [
         ('p', 'Block', [
             ('p', 'Line', [
-                    ('p::marker', 'Text', '0.')])])])
+                ('p::marker', 'Text', '0.')])])])
 
 
 @assert_no_logs
@@ -1268,8 +1261,8 @@ def test_border_collapse():
         table, = table_wrapper.children
         return tuple(
             [[(style, width, color) if width else None
-                    for _score, (style, width, color) in column]
-                for column in grid]
+              for _score, (style, width, color) in column]
+             for column in grid]
             for grid in table.collapsed_border_grid)
 
     grid = get_grid('<table style="border-collapse: collapse"></table>')
@@ -1317,7 +1310,6 @@ def test_border_collapse():
         [black_3, None],
         [black_3, black_3],
     ]
-
 
     yellow_5 = ('solid', 5, yellow)
     green_5 = ('solid', 5, green)

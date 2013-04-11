@@ -312,7 +312,6 @@ def absolute_replaced(context, box, containing_block):
         else:
             box.left = cb_width - (box.margin_width() + box.right)
 
-
     # http://www.w3.org/TR/CSS21/visudet.html#abs-replaced-height
     if box.top == box.bottom == 'auto':
         box.top = box.position_y - cb_y

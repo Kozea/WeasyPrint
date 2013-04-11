@@ -206,8 +206,8 @@ def test_annotate_document():
 def test_page():
     """Test the ``@page`` properties."""
     document = TestHTML(resource_filename('doc1.html'))
-    style_for = get_all_computed_styles(document,
-        user_stylesheets=[CSS(string='''
+    style_for = get_all_computed_styles(
+        document, user_stylesheets=[CSS(string='''
             html {
                 color: red;
             }

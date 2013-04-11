@@ -346,7 +346,7 @@ def test_command_line_render():
             write_file('no_css.html', html)
             write_file('combined.html', combined)
             write_file('combined-UTF-16BE.html',
-                combined.decode('ascii').encode('UTF-16BE'))
+                       combined.decode('ascii').encode('UTF-16BE'))
             write_file('linked.html', linked)
             write_file('style.css', css)
 
@@ -744,96 +744,92 @@ def test_links():
         [('internal', (0, 0, 200), (0, 0, 200, 30))],
     ])
 
-    assert_links('''
-        <body style="width: 200px">
-        <a href="../lipsum/é_%E9" style="display: block; margin: 10px 5px">
-    ''', [[
-        ('external', 'http://weasyprint.org/foo/lipsum/%C3%A9_%E9',
-            (5, 10, 190, 0)),
-    ]], [{}], [[
-        ('external', 'http://weasyprint.org/foo/lipsum/%C3%A9_%E9',
-            (5, 10, 190, 0)),
-    ]],
-    base_url='http://weasyprint.org/foo/bar/')
-    assert_links('''
-        <body style="width: 200px">
-        <div style="display: block; margin: 10px 5px;
-                    -weasy-link: url(../lipsum/é_%E9)">
-    ''', [[
-        ('external', 'http://weasyprint.org/foo/lipsum/%C3%A9_%E9',
-            (5, 10, 190, 0)),
-    ]], [{}], [[
-        ('external', 'http://weasyprint.org/foo/lipsum/%C3%A9_%E9',
-            (5, 10, 190, 0)),
-    ]],
-    base_url='http://weasyprint.org/foo/bar/')
+    assert_links(
+        '''
+            <body style="width: 200px">
+            <a href="../lipsum/é_%E9" style="display: block; margin: 10px 5px">
+        ''', [[('external', 'http://weasyprint.org/foo/lipsum/%C3%A9_%E9',
+                (5, 10, 190, 0))]],
+        [{}], [[('external', 'http://weasyprint.org/foo/lipsum/%C3%A9_%E9',
+                 (5, 10, 190, 0))]],
+        base_url='http://weasyprint.org/foo/bar/')
+    assert_links(
+        '''
+            <body style="width: 200px">
+            <div style="display: block; margin: 10px 5px;
+                        -weasy-link: url(../lipsum/é_%E9)">
+        ''', [[('external', 'http://weasyprint.org/foo/lipsum/%C3%A9_%E9',
+                (5, 10, 190, 0))]],
+        [{}], [[('external', 'http://weasyprint.org/foo/lipsum/%C3%A9_%E9',
+                 (5, 10, 190, 0))]],
+        base_url='http://weasyprint.org/foo/bar/')
 
     # Relative URI reference without a base URI: not allowed
-    assert_links('<a href="../lipsum">',
+    assert_links(
+        '<a href="../lipsum">',
         [[]], [{}], [[]], base_url=None, warnings=[
             'WARNING: Relative URI reference without a base URI'])
-    assert_links('<div style="-weasy-link: url(../lipsum)">',
+    assert_links(
+        '<div style="-weasy-link: url(../lipsum)">',
         [[]], [{}], [[]], base_url=None, warnings=[
             "WARNING: Ignored `-weasy-link: url(../lipsum)` at 1:1, "
             "Relative URI reference without a base URI: '../lipsum'."])
 
     # Internal or absolute URI reference without a base URI: OK
-    assert_links('''
-        <body style="width: 200px">
-        <a href="#lipsum" id="lipsum"
-            style="display: block; margin: 10px 5px"></a>
-        <a href="http://weasyprint.org/" style="display: block"></a>
-    ''', [[
-        ('internal', 'lipsum', (5, 10, 190, 0)),
-        ('external', 'http://weasyprint.org/', (0, 10, 200, 0)),
-    ]], [
-        {'lipsum': (5, 10)}
-    ], [[
-        ('internal', (0, 5, 10), (5, 10, 190, 0)),
-        ('external', 'http://weasyprint.org/', (0, 10, 200, 0)),
-    ]], base_url=None)
+    assert_links(
+        '''
+            <body style="width: 200px">
+            <a href="#lipsum" id="lipsum"
+                style="display: block; margin: 10px 5px"></a>
+            <a href="http://weasyprint.org/" style="display: block"></a>
+        ''', [[('internal', 'lipsum', (5, 10, 190, 0)),
+               ('external', 'http://weasyprint.org/', (0, 10, 200, 0))]],
+        [{'lipsum': (5, 10)}],
+        [[('internal', (0, 5, 10), (5, 10, 190, 0)),
+          ('external', 'http://weasyprint.org/', (0, 10, 200, 0))]],
+        base_url=None)
 
-    assert_links('''
-        <body style="width: 200px">
-        <div style="-weasy-link: url(#lipsum); margin: 10px 5px" id="lipsum">
-    ''', [[
-        ('internal', 'lipsum', (5, 10, 190, 0)),
-    ]], [
-        {'lipsum': (5, 10)}
-    ], [[
-        ('internal', (0, 5, 10), (5, 10, 190, 0)),
-    ]], base_url=None)
+    assert_links(
+        '''
+            <body style="width: 200px">
+            <div style="-weasy-link: url(#lipsum);
+                        margin: 10px 5px" id="lipsum">
+        ''',
+        [[('internal', 'lipsum', (5, 10, 190, 0))]],
+        [{'lipsum': (5, 10)}],
+        [[('internal', (0, 5, 10), (5, 10, 190, 0))]],
+        base_url=None)
 
-    assert_links('''
-        <style> a { display: block; height: 15px } </style>
-        <body style="width: 200px">
-            <a href="#lipsum"></a>
-            <a href="#missing" id="lipsum"></a>
-    ''', [[
-        ('internal', 'lipsum', (0, 0, 200, 15)),
-        ('internal', 'missing', (0, 15, 200, 15)),
-    ]], [
-        {'lipsum': (0, 15)}
-    ], [[
-        ('internal', (0, 0, 15), (0, 0, 200, 15)),
-    ]], base_url=None, warnings=[
-        'WARNING: No anchor #missing for internal URI reference'])
+    assert_links(
+        '''
+            <style> a { display: block; height: 15px } </style>
+            <body style="width: 200px">
+                <a href="#lipsum"></a>
+                <a href="#missing" id="lipsum"></a>
+        ''',
+        [[('internal', 'lipsum', (0, 0, 200, 15)),
+          ('internal', 'missing', (0, 15, 200, 15))]],
+        [{'lipsum': (0, 15)}],
+        [[('internal', (0, 0, 15), (0, 0, 200, 15))]],
+        base_url=None,
+        warnings=[
+            'WARNING: No anchor #missing for internal URI reference'])
 
-    assert_links('''
-        <body style="width: 100px; transform: translateY(100px)">
-        <a href="#lipsum" id="lipsum" style="display: block; height: 20px;
-            transform: rotate(90deg) scale(2)">
-    ''', [[
-        ('internal', 'lipsum', (30, 10, 40, 200)),
-    ]], [
-        {'lipsum': (70, 10)}
-    ], [[
-        ('internal', (0, 70, 10), (30, 10, 40, 200)),
-    ]], round=True)
+    assert_links(
+        '''
+            <body style="width: 100px; transform: translateY(100px)">
+            <a href="#lipsum" id="lipsum" style="display: block; height: 20px;
+                transform: rotate(90deg) scale(2)">
+        ''',
+        [[('internal', 'lipsum', (30, 10, 40, 200))]],
+        [{'lipsum': (70, 10)}],
+        [[('internal', (0, 70, 10), (30, 10, 40, 200))]],
+        round=True)
 
 
 def wsgi_client(path_info, qs_args=None):
     start_response_calls = []
+
     def start_response(status, headers):
         start_response_calls.append((status, headers))
     environ = {'PATH_INFO': path_info,
@@ -897,9 +893,11 @@ def test_navigator():
 # Make relative URL references work with our custom URL scheme.
 urlparse_uses_relative.append('weasyprint-custom')
 
+
 @assert_no_logs
 def test_url_fetcher():
     pattern_png = read_file(resource_filename('pattern.png'))
+
     def fetcher(url):
         if url == 'weasyprint-custom:foo/%C3%A9_%e9_pattern':
             return dict(string=pattern_png, mime_type='image/png')
@@ -913,6 +911,7 @@ def test_url_fetcher():
         @page { size: 8px; margin: 2px; background: #fff }
         body { margin: 0; font-size: 0 }
     ''', base_url=base_url)
+
     def test(html, blank=False):
         html = TestHTML(string=html, url_fetcher=fetcher, base_url=base_url)
         check_png_pattern(html.write_png(stylesheets=[css]), blank=blank)
@@ -921,7 +920,7 @@ def test_url_fetcher():
     test('<body><img src="weasyprint-custom:foo/é_%e9_pattern">')
     test('<body style="background: url(weasyprint-custom:foo/é_%e9_pattern)">')
     test('<body><li style="list-style: inside '
-            'url(weasyprint-custom:foo/é_%e9_pattern)">')
+         'url(weasyprint-custom:foo/é_%e9_pattern)">')
     test('<link rel=stylesheet href="weasyprint-custom:foo/bar.css"><body>')
     test('<style>@import "weasyprint-custom:foo/bar.css";</style><body>')
 
@@ -930,8 +929,8 @@ def test_url_fetcher():
     assert len(logs) == 1
     assert logs[0].startswith('WARNING: Error for image at custom:foo/bar')
 
-    def fetcher(url):
+    def fetcher_2(url):
         assert url == 'weasyprint-custom:%C3%A9_%e9.css'
         return dict(string='')
     TestHTML(string='<link rel=stylesheet href="weasyprint-custom:'
-        'é_%e9.css"><body>', url_fetcher=fetcher).render()
+                    'é_%e9.css"><body>', url_fetcher=fetcher_2).render()

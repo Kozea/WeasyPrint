@@ -61,7 +61,7 @@ INITIAL_VALUES = {
     'display': 'inline',
     'empty_cells': 'show',
     'float': 'none',
-    'font_family': ['serif'], # depends on user agent
+    'font_family': ['serif'],  # depends on user agent
     'font_size': 16,  # Actually medium, but we define medium from this.
     'font_stretch': 'normal',  # css3-fonts
     'font_style': 'normal',
@@ -98,8 +98,9 @@ INITIAL_VALUES = {
     'position': 'static',
     'right': 'auto',
     'table_layout': 'auto',
-    'text_align': '-weasy-start',  # Taken from CSS3 Text.
-                   # The only other supported value form CSS3 is -weasy-end.
+    # Taken from CSS3 Text.
+    # The only other supported value form CSS3 is -weasy-end.
+    'text_align': '-weasy-start',
     'text_decoration': 'none',
     'text_indent': Dimension(0, 'px'),
     'text_transform': 'none',

@@ -16,6 +16,13 @@ import sys
 import email
 
 
+__all__ = ['Request', 'base64_decode', 'base64_encode', 'basestring',
+           'ints_from_bytes', 'iteritems', 'izip', 'parse_email', 'parse_qs',
+           'pathname2url', 'quote', 'unicode', 'unquote', 'unquote_to_bytes',
+           'urlencode', 'urljoin', 'urlopen', 'urlopen_contenttype',
+           'urlparse_uses_relative', 'urlsplit', 'xrange']
+
+
 if sys.version_info[0] >= 3:
     # Python 3
     from urllib.parse import (
@@ -32,7 +39,6 @@ if sys.version_info[0] >= 3:
     iteritems = dict.items
     izip = zip
 
-
     def urlopen_contenttype(url):
         """Return (file_obj, mime_type, encoding)"""
         result = urlopen(url)
@@ -41,12 +47,10 @@ if sys.version_info[0] >= 3:
         charset = info.get_param('charset')
         return result, mime_type, charset
 
-
     def parse_email(data):
         if isinstance(data, bytes):
             data = data.decode('utf8')
         return email.message_from_string(data)
-
 
     def ints_from_bytes(byte_string):
         """Return a list of ints from a byte string"""
@@ -68,10 +72,8 @@ else:
     xrange = xrange
     iteritems = dict.iteritems
 
-
     def array(typecode, initializer):
         return _array(typecode.encode('ascii'), initializer)
-
 
     def urlopen_contenttype(url):
         """Return (file_obj, mime_type, encoding)"""
@@ -81,18 +83,15 @@ else:
         charset = info.getparam('charset')
         return result, mime_type, charset
 
-
     def unquote_to_bytes(data):
         if isinstance(data, unicode):
             data = data.encode('ascii')
         return unquote(data)
 
-
     def parse_email(data):
         if isinstance(data, unicode):
             data = data.encode('utf8')
         return email.message_from_string(data)
-
 
     def ints_from_bytes(byte_string):
         """Return a list of ints from a byte string"""

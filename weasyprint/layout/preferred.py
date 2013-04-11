@@ -210,6 +210,7 @@ def inline_preferred_width(context, box, outer=True):
 
 TABLE_CACHE = weakref.WeakKeyDictionary()
 
+
 def table_and_columns_preferred_widths(context, box, outer=True,
                                        resolved_table_width=False):
     """Return preferred widths for the table and its columns.
@@ -296,7 +297,7 @@ def table_and_columns_preferred_widths(context, box, outer=True,
             for i, width in enumerate(widths):
                 column_width = column_widths[i]
                 if (column_width and column_width != 'auto' and
-                    column_width.unit != '%'):
+                        column_width.unit != '%'):
                     widths[i] = max(column_width.value, widths[i])
 
     # Point #3
@@ -327,7 +328,7 @@ def table_and_columns_preferred_widths(context, box, outer=True,
     for column_group, column_group_width in column_groups_widths:
         # TODO: handle percentages for column group widths
         if (column_group_width and column_group_width != 'auto' and
-            column_group_width.unit != '%'):
+                column_group_width.unit != '%'):
             column_indexes = [
                 column.grid_x for column in column_group.children]
             columns_width = sum(
@@ -346,7 +347,7 @@ def table_and_columns_preferred_widths(context, box, outer=True,
                     # don't follow the hint. These lines make the preferred
                     # width equal or greater than the minimum preferred width.
                     if (column_preferred_widths[i] <
-                        column_preferred_minimum_widths[i]):
+                            column_preferred_minimum_widths[i]):
                         column_preferred_widths[i] = \
                             column_preferred_minimum_widths[i]
 
@@ -371,7 +372,7 @@ def table_and_columns_preferred_widths(context, box, outer=True,
                 table_preferred_minimum_width = table.width
         else:
             if (table.style.width.unit != '%' and
-                table.style.width.value > table_preferred_minimum_width):
+                    table.style.width.value > table_preferred_minimum_width):
                 table_preferred_minimum_width = table.style.width.value
 
     if table_preferred_minimum_width < caption_width:

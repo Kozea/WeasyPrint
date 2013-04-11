@@ -34,8 +34,9 @@ def expand_to_dict(css, expected_error=None):
     else:
         assert not logs
 
-    return dict((name, value) for name, value, _priority in declarations
-                 if value != 'initial')
+    return dict(
+        (name, value) for name, value, _priority in declarations
+        if value != 'initial')
 
 
 def assert_invalid(css, message='invalid'):
@@ -44,8 +45,8 @@ def assert_invalid(css, message='invalid'):
 
 @assert_no_logs
 def test_not_print():
-    assert expand_to_dict('volume: 42',
-        'the property does not apply for the print media') == {}
+    assert expand_to_dict(
+        'volume: 42', 'the property does not apply for the print media') == {}
 
 
 @assert_no_logs
@@ -68,10 +69,10 @@ def test_counters():
         'counter_reset': [('foo', 0)]}
     assert expand_to_dict('counter-reset: none') == {
         'counter_reset': []}
-    assert expand_to_dict('counter-reset: foo none',
-        'Invalid counter name') == {}
-    assert expand_to_dict('counter-reset: foo initial',
-        'Invalid counter name') == {}
+    assert expand_to_dict(
+        'counter-reset: foo none', 'Invalid counter name') == {}
+    assert expand_to_dict(
+        'counter-reset: foo initial', 'Invalid counter name') == {}
     assert_invalid('counter-reset: foo 3px')
     assert_invalid('counter-reset: 3')
 
@@ -83,8 +84,8 @@ def test_spacing():
     assert expand_to_dict('letter-spacing: 3px') == {
         'letter_spacing': (3, 'px')}
     assert_invalid('letter-spacing: 3')
-    assert expand_to_dict('letter_spacing: normal',
-        'did you mean letter-spacing') == {}
+    assert expand_to_dict(
+        'letter_spacing: normal', 'did you mean letter-spacing') == {}
 
     assert expand_to_dict('word-spacing: normal') == {
         'word_spacing': 'normal'}
@@ -135,15 +136,19 @@ def test_size():
 def test_transforms():
     assert expand_to_dict('transform: none') == {
         'transform': []}
-    assert expand_to_dict('transform: translate(6px) rotate(90deg)'
-        ) == {'transform': [('translate', ((6, 'px'), (0, 'px'))),
-                            ('rotate', math.pi / 2)]}
-    assert expand_to_dict('transform: translate(-4px, 0)'
-        ) == {'transform': [('translate', ((-4, 'px'), (0, None)))]}
-    assert expand_to_dict('transform: translate(6px, 20%)'
-        ) == {'transform': [('translate', ((6, 'px'), (20, '%')))]}
-    assert expand_to_dict('transform: scale(2)'
-        ) == {'transform': [('scale', (2, 2))]}
+    assert expand_to_dict(
+        'transform: translate(6px) rotate(90deg)'
+    ) == {'transform': [('translate', ((6, 'px'), (0, 'px'))),
+                        ('rotate', math.pi / 2)]}
+    assert expand_to_dict(
+        'transform: translate(-4px, 0)'
+    ) == {'transform': [('translate', ((-4, 'px'), (0, None)))]}
+    assert expand_to_dict(
+        'transform: translate(6px, 20%)'
+    ) == {'transform': [('translate', ((6, 'px'), (20, '%')))]}
+    assert expand_to_dict(
+        'transform: scale(2)'
+    ) == {'transform': [('scale', (2, 2))]}
     assert_invalid('transform: translate(6px 20%)')  # missing comma
     assert_invalid('transform: lipsumize(6px)')
     assert_invalid('transform: foo')
@@ -192,7 +197,8 @@ def test_expand_four_sides():
         'padding_bottom': (2, 'em'),
         'padding_left': (5, 'px'),
     }
-    assert expand_to_dict('padding: 1 2 3 4 5',
+    assert expand_to_dict(
+        'padding: 1 2 3 4 5',
         'Expected 1 to 4 token components got 5') == {}
     assert_invalid('margin: rgb(0, 0, 0)')
     assert_invalid('padding: auto')
@@ -391,7 +397,8 @@ def test_expand_background():
 def test_expand_background_position():
     """Test the ``background-position`` property."""
     def position(css, *expected):
-        [(name, [value])] = expand_to_dict('background-position:' + css).items()
+        [(name, [value])] = expand_to_dict(
+            'background-position:' + css).items()
         assert name == 'background_position'
         assert value == expected
     for css_x, val_x in [

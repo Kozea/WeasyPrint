@@ -149,6 +149,7 @@ COMPUTER_FUNCTIONS = {}
 def register_computer(name):
     """Decorator registering a property ``name`` for a function."""
     name = name.replace('-', '_')
+
     def decorator(function):
         """Register the property ``name`` for ``function``."""
         COMPUTER_FUNCTIONS[name] = function

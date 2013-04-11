@@ -320,7 +320,8 @@ def prepare_metadata(document, bookmark_root_id, scale):
         for link_type, target, rectangle in page_links:
             if link_type == 'internal':
                 target_page, target_x, target_y = target
-                target = ((target_page,) +
+                target = (
+                    (target_page,) +
                     matrices[target_page].transform_point(target_x, target_y))
             rect_x, rect_y, width, height = rectangle
             rect_x, rect_y = matrix.transform_point(rect_x, rect_y)
@@ -401,12 +402,12 @@ def write_pdf_metadata(document, fileobj, scale):
         for is_internal, target, rectangle in page_links:
             content = [pdf_format(
                 '<< /Type /Annot /Subtype /Link '
-                    '/Rect [{0:f} {1:f} {2:f} {3:f}] /Border [0 0 0]\n',
+                '/Rect [{0:f} {1:f} {2:f} {3:f}] /Border [0 0 0]\n',
                 *rectangle)]
             if is_internal == 'internal':
                 content.append(pdf_format(
                     '/A << /Type /Action /S /GoTo '
-                        '/D [{0} /XYZ {1:f} {2:f} 0] >>\n',
+                    '/D [{0} /XYZ {1:f} {2:f} 0] >>\n',
                     *target))
             else:
                 content.append(pdf_format(

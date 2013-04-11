@@ -179,8 +179,8 @@ def comma_separated_list(function):
 
 def get_length(token, negative=True, percentage=False):
     if (token.unit in LENGTH_UNITS or (percentage and token.unit == '%')
-                or (token.type in ('INTEGER', 'NUMBER') and token.value == 0)
-            ) and (negative or token.value >= 0):
+            or (token.type in ('INTEGER', 'NUMBER') and token.value == 0)
+            and (negative or token.value >= 0)):
         return Dimension(token.value, token.unit)
 
 
@@ -784,10 +784,8 @@ def font_size(token):
     font_size_keyword = get_keyword(token)
     if font_size_keyword in ('smaller', 'larger'):
         raise InvalidValues('value not supported yet')
-    if (
-        font_size_keyword in computed_values.FONT_SIZE_KEYWORDS #or
-        #keyword in ('smaller', 'larger')
-    ):
+    if font_size_keyword in computed_values.FONT_SIZE_KEYWORDS:
+        # or keyword in ('smaller', 'larger')
         return font_size_keyword
 
 
@@ -956,7 +954,7 @@ def quotes(tokens):
     """``quotes`` property validation."""
     if (tokens and len(tokens) % 2 == 0
             and all(v.type == 'STRING' for v in tokens)):
-        strings = [v.value for v in tokens]
+        strings = [token.value for token in tokens]
         # Separate open and close quotes.
         # eg.  ['«', '»', '“', '”']  -> (['«', '“'], ['»', '”'])
         return strings[::2], strings[1::2]
@@ -1171,9 +1169,11 @@ def hyphenate_limit_chars(tokens):
                 return (5, 2, 2)
     elif len(tokens) == 3:
         total, left, right = tokens
-        if ((get_keyword(total) == 'auto' or total.type == 'INTEGER') and
+        if (
+            (get_keyword(total) == 'auto' or total.type == 'INTEGER') and
             (get_keyword(left) == 'auto' or left.type == 'INTEGER') and
-            (get_keyword(right) == 'auto' or right.type == 'INTEGER')):
+            (get_keyword(right) == 'auto' or right.type == 'INTEGER')
+        ):
             total = total.value if total.type == 'INTEGER' else 5
             left = left.value if left.type == 'INTEGER' else 2
             right = right.value if right.type == 'INTEGER' else 2
@@ -1321,6 +1321,7 @@ def generic_expander(*expanded_names, **kwargs):
     """
     wants_base_url = kwargs.pop('wants_base_url', False)
     assert not kwargs
+
     def generic_expander_decorator(wrapped):
         """Decorate the ``wrapped`` expander."""
         @functools.wraps(wrapped)
@@ -1464,6 +1465,7 @@ def expand_background(base_url, name, tokens):
 
     def parse_layer(tokens, final_layer=False):
         results = {}
+
         def add(name, value):
             if value is None:
                 return False
@@ -1476,7 +1478,8 @@ def expand_background(base_url, name, tokens):
         # Make `tokens` a stack
         tokens = tokens[::-1]
         while tokens:
-            if add('repeat', background_repeat.single_value(tokens[-2:][::-1])):
+            if add('repeat',
+                   background_repeat.single_value(tokens[-2:][::-1])):
                 del tokens[-2:]
                 continue
             token = tokens[-1:]
@@ -1636,7 +1639,8 @@ def preprocess_declarations(base_url, declarations):
 
     """
     def validation_error(level, reason):
-        getattr(LOGGER, level)('Ignored `%s: %s` at %i:%i, %s.',
+        getattr(LOGGER, level)(
+            'Ignored `%s: %s` at %i:%i, %s.',
             declaration.name, declaration.value.as_css(),
             declaration.line, declaration.column, reason)
 
@@ -1644,20 +1648,22 @@ def preprocess_declarations(base_url, declarations):
         name = declaration.name
 
         if name in PREFIXED and not name.startswith(PREFIX):
-            validation_error('warn',
+            validation_error(
+                'warn',
                 'the property is experimental or non-standard, use '
                 + PREFIX + name)
             continue
 
         if name in NOT_PRINT_MEDIA:
-            validation_error('info',
-                'the property does not apply for the print media')
+            validation_error(
+                'info', 'the property does not apply for the print media')
             continue
 
         if name.startswith(PREFIX):
             unprefixed_name = name[len(PREFIX):]
             if unprefixed_name in UNPREFIXED:
-                validation_error('warn',
+                validation_error(
+                    'warn',
                     'the property was unprefixed, use ' + unprefixed_name)
                 continue
             if unprefixed_name in PREFIXED:
@@ -1669,7 +1675,8 @@ def preprocess_declarations(base_url, declarations):
             # Use list() to consume generators now and catch any error.
             result = list(expander_(base_url, name, tokens))
         except InvalidValues as exc:
-            validation_error('warn',
+            validation_error(
+                'warn',
                 exc.args[0] if exc.args and exc.args[0] else 'invalid value')
             continue
 

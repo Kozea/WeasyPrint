@@ -70,8 +70,8 @@ def main(argv=None, stdout=None, stdin=None):
         Show the command-line usage. Other options and arguments are ignored.
 
     """
-    parser = argparse.ArgumentParser(prog='weasyprint',
-        description='Renders web pages to PDF or PNG.')
+    parser = argparse.ArgumentParser(
+        prog='weasyprint', description='Renders web pages to PDF or PNG.')
     parser.add_argument('--version', action='version',
                         version='WeasyPrint version %s' % VERSION,
                         help='Print WeasyPrint’s version number and exit.')
@@ -92,10 +92,10 @@ def main(argv=None, stdout=None, stdin=None):
                         help='Base for relative URLs in the HTML input. '
                              "Defaults to the input's own filename or URL "
                              'or the current directory for stdin.')
-    parser.add_argument('input',
-        help='URL or filename of the HTML input, or - for stdin')
-    parser.add_argument('output',
-        help='Filename where output is written, or - for stdout')
+    parser.add_argument(
+        'input', help='URL or filename of the HTML input, or - for stdin')
+    parser.add_argument(
+        'output', help='Filename where output is written, or - for stdout')
 
     args = parser.parse_args(argv)
 

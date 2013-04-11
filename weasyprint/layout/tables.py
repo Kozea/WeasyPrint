@@ -249,9 +249,7 @@ def table_layout(context, table, max_position_y, skip_stack,
             if resume_at:
                 resume_at = (index_group, resume_at)
                 break
-
         return new_table_children, resume_at, position_y
-
 
     # Layout for row groups, rows and cells
     position_y = table.content_box_y() + border_spacing_y
@@ -333,7 +331,6 @@ def table_layout(context, table, max_position_y, skip_stack,
             skip_stack, position_y, max_position_y, page_is_empty)
         return header, new_table_children, footer, end_position_y, resume_at
 
-
     header, new_table_children, footer, position_y, resume_at = \
         all_groups_layout()
     table = table.copy_with_children(
@@ -399,7 +396,7 @@ def fixed_table_layout(box):
     assert table.width != 'auto'
 
     all_columns = [column for column_group in table.column_groups
-                          for column in column_group.children]
+                   for column in column_group.children]
     if table.children and table.children[0].children:
         first_rowgroup = table.children[0]
         first_row_cells = first_rowgroup.children[0].children
@@ -451,7 +448,7 @@ def fixed_table_layout(box):
     min_table_width = (sum(w for w in column_widths if w is not None)
                        + all_border_spacing)
     columns_without_width = [i for i, width in enumerate(column_widths)
-                               if width is None]
+                             if width is None]
     if columns_without_width and table.width >= min_table_width:
         remaining_width = table.width - min_table_width
         width_per_column = remaining_width / len(columns_without_width)
@@ -561,8 +558,8 @@ def cell_baseline(cell):
     See http://www.w3.org/TR/CSS21/tables.html#height-layout
 
     """
-    result = find_in_flow_baseline(cell,
-        baseline_types=(boxes.LineBox, boxes.TableRowBox))
+    result = find_in_flow_baseline(
+        cell, baseline_types=(boxes.LineBox, boxes.TableRowBox))
     if result is not None:
         return result - cell.position_y
     else:

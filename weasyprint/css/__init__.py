@@ -139,7 +139,8 @@ class StyleDict(object):
         Non-inherited properties get their initial values.
         This is the styles for an anonymous box.
         """
-        style = computed_from_cascaded(cascaded={}, parent_style=self,
+        style = computed_from_cascaded(
+            cascaded={}, parent_style=self,
             # Only used by non-inherited properties. eg `content: attr(href)`
             element=None)
         object.__setattr__(style, 'anonymous', True)
@@ -485,16 +486,16 @@ def get_all_computed_styles(html, user_stylesheets=None):
         set_computed_styles(cascaded_styles, computed_styles, element,
                             parent=element.getparent())
 
-
     # Then computed styles for @page.
 
     # Iterate on all possible page types, even if there is no cascaded style
     # for them.
     for page_type in PAGE_PSEUDOCLASS_TARGETS[None]:
-        set_computed_styles(cascaded_styles, computed_styles, page_type,
-        # @page inherits from the root element:
-        # http://lists.w3.org/Archives/Public/www-style/2012Jan/1164.html
-                            parent=element_tree)
+        set_computed_styles(
+            cascaded_styles, computed_styles, page_type,
+            # @page inherits from the root element:
+            # http://lists.w3.org/Archives/Public/www-style/2012Jan/1164.html
+            parent=element_tree)
 
     # Then computed styles for pseudo elements, in any order.
     # Pseudo-elements inherit from their associated element so they come

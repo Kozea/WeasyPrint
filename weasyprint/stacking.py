@@ -80,21 +80,19 @@ class StackingContext(object):
         def dispatch(box):
             if isinstance(box, AbsolutePlaceholder):
                 box = box._box
-
-            if ((box.style.position != 'static' and
-                        box.style.z_index != 'auto')
-                    or box.style.opacity < 1
+            style = box.style
+            if ((style.position != 'static' and style.z_index != 'auto')
+                    or style.opacity < 1
                     # 'transform: none' gives a "falsy" empty list here
-                    or box.style.transform
-                    or box.style.overflow != 'visible'
-                ):
+                    or style.transform
+                    or style.overflow != 'visible'):
                 # This box defines a new stacking context, remove it
                 # from the "normal" children list.
                 child_contexts.append(
                     StackingContext.from_box(box, page))
             else:
-                if box.style.position != 'static':
-                    assert box.style.z_index == 'auto'
+                if style.position != 'static':
+                    assert style.z_index == 'auto'
                     # "Fake" context: sub-contexts will go in this
                     # `child_contexts` list.
                     # Insert at the position before creating the sub-context.

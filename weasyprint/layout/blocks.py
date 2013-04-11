@@ -54,7 +54,8 @@ def block_level_layout(context, box, max_position_y, skip_stack,
         adjoining_margins = []
 
     if isinstance(box, boxes.BlockBox):
-        return block_box_layout(context, box, max_position_y, skip_stack,
+        return block_box_layout(
+            context, box, max_position_y, skip_stack,
             containing_block, device_size, page_is_empty,
             absolute_boxes, fixed_boxes, adjoining_margins)
     elif isinstance(box, boxes.BlockReplacedBox):
@@ -107,7 +108,8 @@ def block_replaced_box_layout(box, containing_block, device_size):
     """Lay out the block :class:`boxes.ReplacedBox` ``box``."""
     if box.style.width == 'auto' and box.style.height == 'auto':
         computed_margins = box.margin_left, box.margin_right
-        block_replaced_width.without_min_max(box, containing_block, device_size)
+        block_replaced_width.without_min_max(
+            box, containing_block, device_size)
         replaced_box_height.without_min_max(box, device_size)
         min_max_auto_replaced(box)
         box.margin_left, box.margin_right = computed_margins
@@ -235,7 +237,8 @@ def block_container_layout(context, box, max_position_y, skip_stack,
     adjoining_margins.append(box.margin_top)
     this_box_adjoining_margins = adjoining_margins
 
-    collapsing_with_children = not (box.border_top_width or box.padding_top
+    collapsing_with_children = not (
+        box.border_top_width or box.padding_top
         or establishes_formatting_context(box) or box.is_for_root_element)
     if collapsing_with_children:
         # XXX not counting margins in adjoining_margins, if any
@@ -415,7 +418,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                 if not isinstance(new_child, boxes.BlockBox):
                     adjoining_margins.append(new_child.margin_top)
                     offset_y = (collapse_margin(adjoining_margins)
-                                 - new_child.margin_top)
+                                - new_child.margin_top)
                     new_child.translate(0, offset_y)
                     adjoining_margins = []
                 #else: blocks handle that themselves.

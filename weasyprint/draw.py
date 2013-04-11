@@ -487,13 +487,13 @@ def draw_outlines(context, box, enable_hinting):
 
 def draw_collapsed_borders(context, table, enable_hinting):
     row_heights = [row.height for row_group in table.children
-                              for row in row_group.children]
+                   for row in row_group.children]
     column_widths = table.column_widths
     if not (row_heights and column_widths):
         # One of the list is empty: don’t bother with empty tables
         return
     row_positions = [row.position_y for row_group in table.children
-                                    for row in row_group.children]
+                     for row in row_group.children]
     column_positions = table.column_positions
     grid_height = len(row_heights)
     grid_width = len(column_widths)
@@ -614,11 +614,13 @@ def draw_text(context, textbox, enable_hinting):
     show_first_line(context, textbox.pango_layout, enable_hinting)
     values = textbox.style.text_decoration
     if 'overline' in values:
-        draw_text_decoration(context, textbox,
+        draw_text_decoration(
+            context, textbox,
             textbox.baseline - 0.15 * textbox.style.font_size,
             enable_hinting)
     elif 'underline' in values:
-        draw_text_decoration(context, textbox,
+        draw_text_decoration(
+            context, textbox,
             textbox.baseline + 0.15 * textbox.style.font_size,
             enable_hinting)
     elif 'line-through' in values:

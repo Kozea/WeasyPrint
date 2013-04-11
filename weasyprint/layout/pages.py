@@ -43,7 +43,6 @@ class OrientedBox(object):
         self.inner = min(max(self.minimum, available), self.preferred)
 
 
-
 class VerticalBox(OrientedBox):
     def __init__(self, context, box):
         self.context = context
@@ -211,7 +210,7 @@ def compute_variable_dimension(context, side_boxes, vertical, outer_sum):
     if box_b.box.is_generated:
         if box_b.inner == 'auto':
             ac_preferred = 2 * max(
-                    box_a.outer_preferred, box_c.outer_preferred)
+                box_a.outer_preferred, box_c.outer_preferred)
             if outer_sum >= box_b.outer_preferred + ac_preferred:
                 box_b.inner = box_b.preferred
             else:

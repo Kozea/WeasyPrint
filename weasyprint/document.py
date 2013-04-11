@@ -28,7 +28,7 @@ from .layout import layout_document
 from .layout.backgrounds import percentage
 from .draw import draw_page, stacked
 from .pdf import write_pdf_metadata
-from .compat import izip, iteritems
+from .compat import izip, iteritems, unicode
 from .urls import FILESYSTEM_ENCODING
 
 
