@@ -208,10 +208,16 @@ def compute(element, pseudo_type, specified, computed, parent_style):
 def background_image(computer, name, values):
     """Compute lenghts in gradient background-image."""
     for type_, value in values:
-        if type_ == 'gradient':
+        if type_ in ('linear-gradient', 'radial-gradient'):
             value.color_stops = [
                 (color, length(computer, name, p) if p is not None else None)
                 for color, p in value.color_stops]
+        if type_ == 'radial-gradient':
+            value.position, = background_position(
+                computer, name, [value.position])
+            if value.size_type == 'explicit':
+                value.size = length_or_percentage_tuple(
+                    computer, name, value.size)
     return values
 
 

@@ -23,7 +23,7 @@ from ..logger import LOGGER
 from ..formatting_structure import counters
 from ..compat import urljoin, unquote
 from ..urls import url_is_absolute, iri_to_uri
-from ..images import LinearGradient
+from ..images import LinearGradient, RadialGradient
 from .properties import (INITIAL_VALUES, KNOWN_PROPERTIES, NOT_PRINT_MEDIA,
                          Dimension)
 from . import computed_values
@@ -261,14 +261,27 @@ def color(token):
 def background_image(token, base_url):
     if token.type != 'FUNCTION':
         return image_url([token], base_url)
+    arguments = split_on_comma(t for t in token.content if t.type != 'S')
     name = token.function_name.lower()
     if name in ('linear-gradient', 'repeating-linear-gradient'):
-        arguments = split_on_comma(t for t in token.content if t.type != 'S')
         direction, color_stops = parse_linear_gradient_parameters(arguments)
         if color_stops:
-            return 'gradient', LinearGradient(
+            return 'linear-gradient', LinearGradient(
                 [parse_color_stop(stop) for stop in color_stops],
                 direction, 'repeating' in name)
+    elif name in ('radial-gradient', 'repeating-radial-gradient'):
+        result = parse_radial_gradient_parameters(arguments)
+        if result is not None:
+            shape, size, position, color_stops = result
+        else:
+            shape = 'ellipse'
+            size = 'keyword', 'farthest-corner'
+            position = 'left', FIFTY_PERCENT, 'top', FIFTY_PERCENT
+            color_stops = arguments
+        if color_stops:
+            return 'radial-gradient', RadialGradient(
+                [parse_color_stop(stop) for stop in color_stops],
+                shape, size, position, 'repeating' in name)
 
 
 DIRECTION_KEYWORDS = {
@@ -300,6 +313,47 @@ def parse_linear_gradient_parameters(arguments):
         if result is not None:
             return result, arguments[1:]
     return ('angle', 180), arguments  # Default direction is 'to bottom'
+
+
+def parse_radial_gradient_parameters(arguments):
+    shape = None
+    position = None
+    size = None
+    size_shape = None
+    stack = arguments[0][::-1]
+    while stack:
+        token = stack.pop()
+        keyword = get_keyword(token)
+        if keyword == 'at':
+            position = background_position.single_value(stack[::-1])
+            break
+        elif keyword in ('circle', 'ellipse') and shape is None:
+            shape = keyword
+        elif keyword in ('closest-corner', 'farthest-corner',
+                         'closest-side', 'farthest-side') and size is None:
+            size = 'keyword', keyword
+        else:
+            if stack and size is None:
+                length_1 = get_length(token, percentage=True)
+                length_2 = get_length(stack[-1], percentage=True)
+                if None not in (length_1, length_2):
+                    size = 'explicit', (length_1, length_2)
+                    size_shape = 'ellipse'
+                    stack.pop()
+            if size is None:
+                length_1 = get_length(token)
+                if length_1 is not None:
+                    size = 'explicit', (length_1, length_1)
+                    size_shape = 'circle'
+            if size is None:
+                return
+    if (shape, size_shape) in (('circle', 'ellipse'), ('circle', 'ellipse')):
+        return
+    return (
+        shape or size_shape or 'ellipse',
+        size or 'farthest-corner',
+        position or ('left', FIFTY_PERCENT, 'top', FIFTY_PERCENT),
+        arguments[1:])
 
 
 def parse_color_stop(tokens):
@@ -357,10 +411,10 @@ def background_position(tokens):
         length_2 = get_length(tokens[3], percentage=True)
         if length_1 and length_2:
             if (keyword_1 in ('left', 'right') and
-                keyword_2 in ('top', 'bottom')):
+                    keyword_2 in ('top', 'bottom')):
                 return keyword_1, length_1, keyword_2, length_2
             if (keyword_2 in ('left', 'right') and
-                keyword_1 in ('top', 'bottom')):
+                    keyword_1 in ('top', 'bottom')):
                 return keyword_2, length_2, keyword_1, length_1
 
     if len(tokens) == 3:

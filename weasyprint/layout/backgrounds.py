@@ -114,8 +114,6 @@ def layout_background_layer(box, page, image, size, clip, repeat, origin,
         positioning_area)
     painting_x, painting_y, painting_width, painting_height = (
         painting_area)
-    intrinsic_width = image.intrinsic_width
-    intrinsic_height = image.intrinsic_height
 
     if size == 'cover':
         image_width, image_height = replaced.cover_constraint_image_sizing(
