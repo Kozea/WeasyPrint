@@ -783,6 +783,8 @@ def process_whitespace(box, following_collapsible_space=False):
             if following_collapsible_space and text.startswith(' '):
                 text = text[1:]
             following_collapsible_space = previous_text.endswith(' ')
+            if handling == 'nowrap':
+                text = text.replace(' ', '\xA0')
         else:
             following_collapsible_space = False
 

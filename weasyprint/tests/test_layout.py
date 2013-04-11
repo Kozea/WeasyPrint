@@ -4452,3 +4452,101 @@ def test_hyphenate_limit_chars():
     assert line_count('2 4 6') == 1
     assert line_count('auto 4') == 1
     assert line_count('auto 2') == 2
+
+
+@assert_no_logs
+def test_white_space():
+    """Test the white-space property."""
+    def lines(width, space):
+        page, = parse('''
+            <style>
+              body { font-size: 100px; width: %ipx }
+              span { white-space: %s }
+            </style>
+            <body><span>This    \n    is text''' % (width, space))
+        html, = page.children
+        body, = html.children
+        return body.children
+
+    line1, line2, line3 = lines(1, 'normal')
+    box1, = line1.children
+    text1, = box1.children
+    assert text1.text == 'This'
+    box2, = line2.children
+    text2, = box2.children
+    assert text2.text == 'is'
+    box3, = line3.children
+    text3, = box3.children
+    assert text3.text == 'text'
+
+    line1, line2 = lines(1, 'pre')
+    box1, = line1.children
+    text1, = box1.children
+    assert text1.text == 'This\xA0\xA0\xA0\xA0'
+    box2, = line2.children
+    text2, = box2.children
+    assert text2.text == '\xA0\xA0\xA0\xA0is\xA0text'
+
+    line1, = lines(1, 'nowrap')
+    box1, = line1.children
+    text1, = box1.children
+    assert text1.text == 'This\xA0is\xA0text'
+
+    line1, line2, line3, line4 = lines(1, 'pre-wrap')
+    box1, = line1.children
+    text1, = box1.children
+    assert text1.text == 'This\xA0\xA0\xA0\xA0\u200b'
+    box2, = line2.children
+    text2, = box2.children
+    assert text2.text == '\xA0\xA0\xA0\xA0\u200b'
+    box3, = line3.children
+    text3, = box3.children
+    assert text3.text == 'is\xA0\u200b'
+    box4, = line4.children
+    text4, = box4.children
+    assert text4.text == 'text'
+
+    line1, line2, line3 = lines(1, 'pre-line')
+    box1, = line1.children
+    text1, = box1.children
+    assert text1.text == 'This'
+    box2, = line2.children
+    text2, = box2.children
+    assert text2.text == 'is'
+    box3, = line3.children
+    text3, = box3.children
+    assert text3.text == 'text'
+
+    line1, = lines(1000000, 'normal')
+    box1, = line1.children
+    text1, = box1.children
+    assert text1.text == 'This is text'
+
+    line1, line2 = lines(1000000, 'pre')
+    box1, = line1.children
+    text1, = box1.children
+    assert text1.text == 'This\xA0\xA0\xA0\xA0'
+    box2, = line2.children
+    text2, = box2.children
+    assert text2.text == '\xA0\xA0\xA0\xA0is\xA0text'
+
+    line1, = lines(1000000, 'nowrap')
+    box1, = line1.children
+    text1, = box1.children
+    assert text1.text == 'This\xA0is\xA0text'
+
+    line1, line2 = lines(1000000, 'pre-wrap')
+    box1, = line1.children
+    text1, = box1.children
+    assert text1.text == 'This\xA0\xA0\xA0\xA0\u200b'
+    box2, = line2.children
+    text2, = box2.children
+    assert text2.text == '\xA0\xA0\xA0\xA0\u200bis\xA0\u200btext'
+
+    line1, line2 = lines(1000000, 'pre-line')
+    box1, = line1.children
+    text1, = box1.children
+    assert text1.text == 'This'
+    box2, = line2.children
+    text2, = box2.children
+    assert text2.text == 'is text'
