@@ -176,12 +176,12 @@ def skip_first_whitespace(box, skip_stack):
         assert next_skip_stack is None
         white_space = box.style.white_space
         length = len(box.text)
-        if white_space in ('normal', 'nowrap', 'pre-line'):
-            while index < length and box.text[index] == ' ':
-                index += 1
         if index == length:
             # Starting a the end of the TextBox, no text to see: Continue
             return 'continue'
+        if white_space in ('normal', 'nowrap', 'pre-line'):
+            while index < length and box.text[index] == ' ':
+                index += 1
         return (index, None) if index else None
 
     if isinstance(box, (boxes.LineBox, boxes.InlineBox)):
@@ -913,9 +913,9 @@ def inline_box_verticality(box, top_bottom_subtrees, baseline_y):
         if isinstance(child, boxes.InlineBox):
             children_max_y, children_min_y = inline_box_verticality(
                 child, top_bottom_subtrees, child_baseline_y)
-            if children_min_y < min_y:
+            if children_min_y is not None and children_min_y < min_y:
                 min_y = children_min_y
-            if children_max_y > max_y:
+            if children_max_y is not None and children_max_y > max_y:
                 max_y = children_max_y
     return max_y, min_y
 
