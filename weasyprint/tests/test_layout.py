@@ -15,7 +15,7 @@ from __future__ import division, unicode_literals
 
 import pytest
 
-from .testing_utils import FONTS, assert_no_logs, capture_logs
+from .testing_utils import FONTS, assert_no_logs, capture_logs, almost_equal
 from ..formatting_structure import boxes
 from .test_boxes import render_pages as parse
 
@@ -4305,6 +4305,7 @@ def test_hyphenation():
         '<body style="-weasy-hyphens: none">hyp&shy;henation') == 1
 
 
+@assert_no_logs
 def test_hyphenate_character():
     page, = parse(
         '<html style="width: 5em">'
@@ -4372,6 +4373,7 @@ def test_hyphenate_character():
     # assert full_text.replace('—', '') == 'hyphenation'
 
 
+@assert_no_logs
 def test_hyphenate_limit_zone():
     page, = parse(
         '<html style="width: 10em">'
@@ -4426,6 +4428,7 @@ def test_hyphenate_limit_zone():
     assert full_text == 'llllllllllhyphenation'
 
 
+@assert_no_logs
 def test_hyphenate_limit_chars():
     def line_count(limit_chars):
         page, = parse((
@@ -4549,3 +4552,65 @@ def test_white_space():
     box2, = line2.children
     text2, = box2.children
     assert text2.text == 'is text'
+
+
+@assert_no_logs
+def test_linear_gradient():
+    red = (1, 0, 0, 1)
+    lime = (0, 1, 0, 1)
+    blue = (0, 0, 1, 1)
+
+    def layout(gradient_css, type_='linear', init=(200, 0, 200, 300),
+               positions=[0, 1], colors=[blue, lime], scale=(1, 1)):
+        page, = parse('<style>@page { background: ' + gradient_css)
+        layer, = page.background.layers
+        scale_x, scale_y = scale
+        result = layer.image.layout(
+            400, 300, lambda dx, dy: (dx * scale_x, dy * scale_y))
+        expected = 1, type_, init, positions, colors
+        assert almost_equal(result, expected), result
+
+    layout('linear-gradient(blue)', 'solid', blue, [], [])
+    layout('repeating-linear-gradient(blue)', 'solid', blue, [], [])
+    layout('repeating-linear-gradient(blue, lime 1.5px)',
+           'solid', (0, .5, .5, 1), [], [])
+    layout('linear-gradient(blue, lime)', init=(200, 0, 200, 300))
+    layout('repeating-linear-gradient(blue, lime)', init=(200, 0, 200, 300))
+    layout('repeating-linear-gradient(blue, lime 20px)', init=(200, 0, 200, 20))
+    layout('repeating-linear-gradient(blue, lime 20px)',
+           'solid', (0, .5, .5, 1), [], [], scale=(1/20, 1/20))
+
+    layout('linear-gradient(to bottom, blue, lime)', init=(200, 0, 200, 300))
+    layout('linear-gradient(to top, blue, lime)', init=(200, 300, 200, 0))
+    layout('linear-gradient(to right, blue, lime)', init=(0, 150, 400, 150))
+    layout('linear-gradient(to left, blue, lime)', init=(400, 150, 0, 150))
+
+    layout('linear-gradient(to top left, blue, lime)',
+           init=(344, 342, 56, -42))
+    layout('linear-gradient(to top right, blue, lime)',
+           init=(56, 342, 344, -42))
+    layout('linear-gradient(to bottom left, blue, lime)',
+           init=(344, -42, 56, 342))
+    layout('linear-gradient(to bottom right, blue, lime)',
+           init=(56, -42, 344, 342))
+
+    layout('linear-gradient(270deg, blue, lime)', init=(400, 150, 0, 150))
+    layout('linear-gradient(.75turn, blue, lime)', init=(400, 150, 0, 150))
+    layout('linear-gradient(45deg, blue, lime)', init=(25, 325, 375, -25))
+    layout('linear-gradient(.125turn, blue, lime)', init=(25, 325, 375, -25))
+    layout('linear-gradient(.375turn, blue, lime)', init=(25, -25, 375, 325))
+    layout('linear-gradient(.625turn, blue, lime)', init=(375, -25, 25, 325))
+    layout('linear-gradient(.875turn, blue, lime)', init=(375, 325, 25, -25))
+
+    layout('linear-gradient(blue 2em, lime 20%)', init=(200, 32, 200, 60))
+    layout('linear-gradient(blue 100px, red, blue, red 160px, lime)',
+           init=(200, 100, 200, 300), colors=[blue, red, blue, red, lime],
+           positions=[0, .1, .2, .3, 1])
+    layout('linear-gradient(blue -100px, blue 0, red -12px, lime 50%)',
+           init=(200, -100, 200, 150), colors=[blue, blue, red, lime],
+           positions=[0, .4, .4, 1])
+    layout('linear-gradient(blue, blue, red, lime -7px)',
+           init=(200, 0, 200, 0), colors=[blue, blue, red, lime],
+           positions=[0, 0, 0, 0])
+    layout('repeating-linear-gradient(blue, blue, lime, lime -7px)',
+           'solid', (0, .5, .5, 1), [], [])

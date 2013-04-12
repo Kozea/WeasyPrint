@@ -190,11 +190,6 @@ def process_color_stops(gradient_line_size, positions):
             else:
                 previous_pos = position
 
-    first = positions[0]
-    last = positions[-1]
-    if first == last:
-        return 0, 0, [0 for _ in positions]
-
     # Assign missing values
     previous_i = -1
     for i, position in enumerate(positions):
@@ -204,8 +199,16 @@ def process_color_stops(gradient_line_size, positions):
             for j in xrange(previous_i + 1, i):
                 positions[j] = base + j * increment
             previous_i = i
+    return positions
 
-    # Normalize to [0..1]
+
+def normalize_stop_postions(positions):
+    """Normalize to [0..1]."""
+    first = positions[0]
+    last = positions[-1]
+    if first == last:
+        return 0, 0, [0 for _ in positions]
+
     total_length = last - first
     return first, last, [
         (pos - first) / total_length for pos in positions]
@@ -215,11 +218,9 @@ def gradient_average_color(colors, positions):
     """
     http://dev.w3.org/csswg/css-images-3/#find-the-average-color-of-a-gradient
     """
-    assert positions
     nb_stops = len(positions)
+    assert nb_stops > 1
     assert nb_stops == len(colors)
-    if nb_stops == 1:
-        return colors[0]
     total_length = positions[-1] - positions[0]
     if total_length == 0:
         positions = range(nb_stops)
@@ -254,6 +255,7 @@ class Gradient(object):
     intrinsic_ratio = None
 
     def __init__(self, color_stops, repeating):
+        assert color_stops
         #: List of (r, g, b, a), list of Dimension
         self.colors = [color for color, position in color_stops]
         self.stop_positions = [position for color, position in color_stops]
@@ -299,6 +301,8 @@ class LinearGradient(Gradient):
         self.direction_type, self.direction = direction
 
     def layout(self, width, height, user_to_device_distance):
+        if len(self.colors) == 1:
+            return 1, 'solid', self.colors[0], [], []
         # (dx, dy) is the unit vector giving the direction of the gradient.
         # Positive dx: right, positive dy: down.
         if self.direction_type == 'corner':
@@ -306,25 +310,27 @@ class LinearGradient(Gradient):
                 'top_left': (-1, -1), 'top_right': (1, -1),
                 'bottom_left': (-1, 1), 'bottom_right': (1, 1)}[self.direction]
             diagonal = math.hypot(width, height)
+            # Note the direction swap: dx based on height, dy based on width
+            # The gradient line is perpendicular to a diagonal.
             dx = factor_x * height / diagonal
             dy = factor_y * width / diagonal
         else:
             angle = self.direction  # 0 upwards, then clockwise
             dx = math.sin(angle)
             dy = -math.cos(angle)
-        # Distance between starting and ending point:
-        distance = math.hypot(width * dx, height * dy)
-        first, last, positions = process_color_stops(
-            distance, self.stop_positions)
+        # Distance between center and ending point,
+        # ie. half of between the starting point and ending point:
+        distance = abs(width * dx) + abs(height * dy)
+        first, last, positions = normalize_stop_postions(
+            process_color_stops(distance, self.stop_positions))
         if self.repeating and (last - first) * math.hypot(
                 *user_to_device_distance(dx, dy)) < len(positions):
             color = gradient_average_color(self.colors, positions)
             return 1, 'solid', color, [], []
-        points = (
-            width / 2 + dx * (first - distance / 2),
-            height / 2 + dy * (first - distance / 2),
-            width / 2 + dx * (last - distance / 2),
-            height / 2 + dy * (last - distance / 2))
+        start_x = (width - dx * distance) / 2
+        start_y = (height - dy * distance) / 2
+        points = (start_x + dx * first, start_y + dy * first,
+                  start_x + dx * last, start_y + dy * last)
         return 1, 'linear', points, positions, self.colors
 
 
@@ -343,6 +349,8 @@ class RadialGradient(Gradient):
         self.size_type, self.size = size
 
     def layout(self, width, height, dx, dy, user_to_device_distance):
+        if len(self.colors) == 1:
+            return 1, 'solid', self.colors[0], [], []
         origin_x, center_x, origin_y, center_y = self.center
         center_x = percentage(center_x, width)
         center_y = percentage(center_y, height)
@@ -364,9 +372,8 @@ class RadialGradient(Gradient):
         scale_y = size_y / size_x
 
         colors = self.colors
-        first, last, positions = process_color_stops(
-            size_x, self.stop_positions)
-        gradient_line_size = last - first
+        positions = process_color_stops(size_x, self.stop_positions)
+        gradient_line_size = positions[-1] - positions[0]
         if self.repeating and any(
                 gradient_line_size * unit < len(positions)
                 for unit in (
@@ -375,22 +382,22 @@ class RadialGradient(Gradient):
             color = gradient_average_color(colors, positions)
             return 1, 'solid', color, [], []
 
-        if first < 0:
+        if positions[0] < 0:
             # Cairo does not like negative radiuses,
             # shift into the positive realm.
             if self.repeating:
                 offset = gradient_line_size * math.ceil(
-                    -first / gradient_line_size)
-                first += offset
-                last += offset
+                    -positions[0] / gradient_line_size)
                 positions = [p + offset for p in positions]
             else:
                 for i, position in enumerate(positions):
                     if position >= 0:
+                        # `i` is the first positive stop.
+                        # Interpolate with the previous to get the color at 0.
+                        assert i > 0
                         color = colors[i]
                         neg_color = colors[i - 1]
                         neg_position = positions[i - 1]
-                        assert i > 0
                         assert neg_position < 0
                         intermediate_color = gradient_average_color(
                             [neg_color, neg_color, position, position],
@@ -399,8 +406,11 @@ class RadialGradient(Gradient):
                         positions = [0] + positions[i:]
                         break
                 else:
+                    # All stops are negatives,
+                    # everything is "padded" with the last color.
                     return 1, 'solid', self.colors[-1], [], []
 
+        first, last, positions = normalize_stop_postions(positions)
         circles = center_x, center_y, first, center_x, center_y, last
         return scale_y, 'radial', circles, positions, colors
 

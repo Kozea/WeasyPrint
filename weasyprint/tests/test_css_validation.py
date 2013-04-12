@@ -14,7 +14,7 @@ from __future__ import division, unicode_literals
 
 import math
 
-from .testing_utils import assert_no_logs, capture_logs
+from .testing_utils import assert_no_logs, capture_logs, almost_equal
 from ..css import PARSER, preprocess_declarations
 from ..css.properties import INITIAL_VALUES
 from ..images import LinearGradient, RadialGradient
@@ -488,18 +488,6 @@ def test_font():
     assert_invalid('font: 12px "Invalid" family')
 
 
-def almost_equal(a, b):
-    if (isinstance(a, list) and isinstance(b, list)
-            or isinstance(a, tuple) and isinstance(b, tuple)):
-        return len(a) == len(b) and all(
-            almost_equal(aa, bb) for aa, bb in zip(a, b))
-    if isinstance(a, float):
-        a = round(a, 6)
-    if isinstance(b, float):
-        b = round(b, 6)
-    return a == b
-
-
 @assert_no_logs
 def test_linear_gradient():
     red = (1, 0, 0, 1)
@@ -534,6 +522,7 @@ def test_linear_gradient():
     gradient('red', ('angle', pi), [red], [None])
     gradient('blue 1%, lime,red 2em ', ('angle', pi),
              [blue, lime, red], [(1, '%'), None, (2, 'em')])
+    invalid('18deg')
     gradient('18deg, blue', ('angle', pi / 10))
     gradient('4rad, blue', ('angle', 4))
     gradient('.25turn, blue', ('angle', pi / 2))
@@ -603,6 +592,7 @@ def test_radial_gradient():
              stop_positions=[(1, '%'), None, (2, 'em')])
     gradient('circle, blue', 'circle')
     gradient('ellipse, blue', 'ellipse')
+    invalid('circle')
     invalid('square, blue')
     invalid('closest-triangle, blue')
     invalid('center, blue')

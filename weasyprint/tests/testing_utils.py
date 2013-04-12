@@ -87,3 +87,15 @@ def assert_no_logs(function):
                         print(message, file=sys.stderr)
                     assert 0
     return wrapper
+
+
+def almost_equal(a, b):
+    if (isinstance(a, list) and isinstance(b, list)
+            or isinstance(a, tuple) and isinstance(b, tuple)):
+        return len(a) == len(b) and all(
+            almost_equal(aa, bb) for aa, bb in zip(a, b))
+    if isinstance(a, float):
+        a = round(a, 6)
+    if isinstance(b, float):
+        b = round(b, 6)
+    return a == b
