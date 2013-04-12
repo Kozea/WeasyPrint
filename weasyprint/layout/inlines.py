@@ -21,7 +21,7 @@ from .preferred import shrink_to_fit, inline_preferred_minimum_width
 from .tables import find_in_flow_baseline, table_wrapper_width
 from ..text import split_first_line
 from ..formatting_structure import boxes
-from ..css.computed_values import strut_layout
+from ..css.computed_values import strut_layout, ex_ratio
 
 
 def iter_line_boxes(context, box, position_y, skip_stack, containing_block,
@@ -830,7 +830,6 @@ def translate_subtree(box, dy):
 
 def aligned_subtree_verticality(box, top_bottom_subtrees, baseline_y):
     max_y, min_y = inline_box_verticality(box, top_bottom_subtrees, baseline_y)
-
     # Account for the line box itself:
     top = baseline_y - box.baseline
     bottom = top + box.margin_height()
@@ -866,8 +865,7 @@ def inline_box_verticality(box, top_bottom_subtrees, baseline_y):
         if vertical_align == 'baseline':
             child_baseline_y = baseline_y
         elif vertical_align == 'middle':
-            # TODO: find ex from font metrics
-            one_ex = box.style.font_size * 0.5
+            one_ex = box.style.font_size * ex_ratio(box.style)
             top = baseline_y - (one_ex + child.margin_height()) / 2.
             child_baseline_y = top + child.baseline
         # TODO: actually implement vertical-align: top and bottom

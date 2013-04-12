@@ -2309,7 +2309,7 @@ def test_vertical_align():
 
     # Same as previously, but with percentages
     page, = parse('''
-        <span style="line-height: 12px; font-size: 12px">
+        <span style="line-height: 12px; font-size: 12px; font-family: 'ahem'">
             <img src="pattern.png" style="width: 40px; vertical-align: middle"
             ><img src="pattern.png" style="width: 60px"></span>''')
     html, = page.children
@@ -2320,11 +2320,10 @@ def test_vertical_align():
     assert img_1.height == 40
     assert img_2.height == 60
     # middle of the image (position_y + 20) is at half the ex-height above
-    # the baseline of the parent. Currently the ex-height is 0.5em
-    # TODO: update this when we actually get ex form the font metrics
-    assert img_1.position_y == 37  # 60 - 0.5 * 0.5 * font-size - 40/2
+    # the baseline of the parent. The ex-height of Ahem is something like 0.8em
+    assert img_1.position_y == 35.2  # 60 - 0.5 * 0.8 * font-size - 40/2
     assert img_2.position_y == 0
-    assert line.height == 77
+    assert line.height == 75.2
     assert body.height == line.height
 
     # sup and sub currently mean +/- 0.5 em

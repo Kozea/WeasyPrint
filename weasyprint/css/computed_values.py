@@ -284,15 +284,12 @@ def length(computer, name, value, font_size=None, pixels_only=False):
             font_size = computer.computed.font_size
         if unit in ('ex', 'ch'):
             # TODO: cache
-            layout = text.Layout(
-                hinting=False, font_size=font_size, style=computer.computed)
             if unit == 'ex':
-                layout.set_text('x')
-                line, = layout.iter_lines()
-                _, ink_height_above_baseline = text.get_ink_position(line)
-                # zero means some kind of failure
-                result = value.value * ((-ink_height_above_baseline) or 0.5)
+                result = value.value * font_size * ex_ratio(computer.computed)
             elif unit == 'ch':
+                layout = text.Layout(
+                    hinting=False, font_size=font_size,
+                    style=computer.computed)
                 layout.set_text('0')
                 line, = layout.iter_lines()
                 logical_width, _ = text.get_size(line)
@@ -529,3 +526,15 @@ def strut_layout(style, hinting=True):
     if type_ == 'NUMBER':
         value *= style.font_size
     return value, baseline + (value - pango_height) / 2
+
+
+def ex_ratio(style):
+    """Return the ratio 1ex/font_size, according to given style."""
+    font_size = 1000  # big value
+    layout = text.Layout(hinting=False, font_size=font_size, style=style)
+    layout.set_text('x')
+    line, = layout.iter_lines()
+    _, ink_height_above_baseline = text.get_ink_position(line)
+    # Zero means some kind of failure, fallback is 0.5.
+    # We round to try keeping exact values that were altered by Pango.
+    return round(-ink_height_above_baseline / font_size, 5) or 0.5
