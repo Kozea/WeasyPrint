@@ -45,8 +45,9 @@ except LookupError:
 
 # See http://stackoverflow.com/a/11687993/1162888
 # Both are needed in Python 3 as the re module does not like to mix
-UNICODE_SCHEME_RE = re.compile('^([a-z][a-z0-1.+-]+):', re.I)
-BYTES_SCHEME_RE = re.compile(b'^([a-z][a-z0-1.+-]+):', re.I)
+# http://tools.ietf.org/html/rfc3986#section-3.1
+UNICODE_SCHEME_RE = re.compile('^([a-zA-Z][a-zA-Z0-9.+-]+):')
+BYTES_SCHEME_RE = re.compile(b'^([a-zA-Z][a-zA-Z0-9.+-]+):')
 
 
 def iri_to_uri(url):
