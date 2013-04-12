@@ -98,10 +98,11 @@ def get_next_linebox(context, linebox, position_y, skip_stack,
             containing_block, device_size, line_absolutes,
             line_fixed, line_placeholders, waiting_floats)
 
-        remove_last_whitespace(context, line)
+        if is_phantom_linebox(line) and not preserved_line_break:
+            line.height = 0
+            return line, resume_at
 
-        if not line.children and not preserved_line_break:
-            return None, None
+        remove_last_whitespace(context, line)
 
         bottom, top = line_box_verticality(line)
         assert top is not None
@@ -175,12 +176,12 @@ def skip_first_whitespace(box, skip_stack):
         assert next_skip_stack is None
         white_space = box.style.white_space
         length = len(box.text)
-        if index == length:
-            # Starting a the end of the TextBox, no text to see: Continue
-            return 'continue'
         if white_space in ('normal', 'nowrap', 'pre-line'):
             while index < length and box.text[index] == ' ':
                 index += 1
+        if index == length:
+            # Starting a the end of the TextBox, no text to see: Continue
+            return 'continue'
         return (index, None) if index else None
 
     if isinstance(box, (boxes.LineBox, boxes.InlineBox)):
@@ -912,26 +913,10 @@ def inline_box_verticality(box, top_bottom_subtrees, baseline_y):
         if isinstance(child, boxes.InlineBox):
             children_max_y, children_min_y = inline_box_verticality(
                 child, top_bottom_subtrees, child_baseline_y)
-            if children_max_y is None:
-                if (
-                    child.margin_width() == 0
-                    # Guard against the case where a negative margin
-                    # compensates something else.
-                    and child.margin_left == 0
-                    and child.margin_right == 0
-                ):
-                    # No content, ignore this box’s line-height.
-                    # See
-                    # http://www.w3.org/TR/CSS21/visuren.html#phantom-line-box
-                    child.position_y = child_baseline_y
-                    child.height = 0
-                    continue
-            else:
-                assert children_min_y is not None
-                if children_min_y < min_y:
-                    min_y = children_min_y
-                if children_max_y > max_y:
-                    max_y = children_max_y
+            if children_min_y < min_y:
+                min_y = children_min_y
+            if children_max_y > max_y:
+                max_y = children_max_y
     return max_y, min_y
 
 
@@ -1005,3 +990,19 @@ def add_word_spacing(context, box, extra_word_spacing, x_advance):
         # Atomic inline-level box
         box.translate(x_advance, 0)
     return x_advance
+
+
+def is_phantom_linebox(linebox):
+    """http://www.w3.org/TR/CSS21/visuren.html#phantom-line-box"""
+    for child in linebox.children:
+        if isinstance(child, boxes.InlineBox):
+            if not is_phantom_linebox(child):
+                return False
+            for side in ('top', 'right', 'bottom', 'left'):
+                if (getattr(child.style['margin_%s' % side], 'value', None) or
+                        child.style['border_%s_width' % side] or
+                        child.style['padding_%s' % side].value):
+                    return False
+        elif child.is_in_normal_flow():
+            return False
+    return True
