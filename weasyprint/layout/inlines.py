@@ -100,7 +100,7 @@ def get_next_linebox(context, linebox, position_y, skip_stack,
 
         if is_phantom_linebox(line) and not preserved_line_break:
             line.height = 0
-            return line, resume_at
+            break
 
         remove_last_whitespace(context, line)
 
