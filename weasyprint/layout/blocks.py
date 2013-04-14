@@ -159,7 +159,7 @@ def block_level_width(box, containing_block):
         # The equation is over-constrained.
         if containing_block.style.direction == 'rtl':
             box.position_x += (
-                cb_width - paddings_plus_borders - width - margin_r)
+                cb_width - paddings_plus_borders - width - margin_r - margin_l)
         # Do nothing in ltr.
     if width == 'auto':
         if margin_l == 'auto':
