@@ -682,7 +682,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
     # Set margins to the half leading but also compensate for borders and
     # paddings. We want margin_height() == line_height
     new_box.margin_top = (half_leading - new_box.border_top_width -
-                          new_box.padding_bottom)
+                          new_box.padding_top)
     new_box.margin_bottom = (half_leading - new_box.border_bottom_width -
                              new_box.padding_bottom)
 
