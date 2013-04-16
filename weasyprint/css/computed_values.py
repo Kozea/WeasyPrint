@@ -214,8 +214,7 @@ def background_image(computer, name, values):
                 length(computer, name, pos) if pos is not None else None
                 for pos in value.stop_positions]
         if type_ == 'radial-gradient':
-            value.position, = background_position(
-                computer, name, [value.position])
+            value.center, = background_position(computer, name, [value.center])
             if value.size_type == 'explicit':
                 value.size = length_or_percentage_tuple(
                     computer, name, value.size)

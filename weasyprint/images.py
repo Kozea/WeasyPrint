@@ -348,7 +348,7 @@ class RadialGradient(Gradient):
         #   size: (radius_x, radius_y)
         self.size_type, self.size = size
 
-    def layout(self, width, height, dx, dy, user_to_device_distance):
+    def layout(self, width, height, user_to_device_distance):
         if len(self.colors) == 1:
             return 1, 'solid', self.colors[0], [], []
         origin_x, center_x, origin_y, center_y = self.center
@@ -359,16 +359,16 @@ class RadialGradient(Gradient):
         if origin_y == 'bottom':
             center_y = height - center_y
 
-        size_x, size_y = self._resolve_size(width, center_x, center_y)
+        size_x, size_y = self._resolve_size(width, height, center_x, center_y)
         # http://dev.w3.org/csswg/css-images-3/#degenerate-radials
         if size_x == size_y == 0:
-            size_x = size_y = 1e-10
+            size_x = size_y = 1e-7
         elif size_x == 0:
-            size_x = 1e-10
-            size_y = 1e10
+            size_x = 1e-7
+            size_y = 1e7
         elif size_y == 0:
-            size_x = 1e10
-            size_y = 1e-10
+            size_x = 1e7
+            size_y = 1e-7
         scale_y = size_y / size_x
 
         colors = self.colors
@@ -391,7 +391,7 @@ class RadialGradient(Gradient):
                 positions = [p + offset for p in positions]
             else:
                 for i, position in enumerate(positions):
-                    if position >= 0:
+                    if position > 0:
                         # `i` is the first positive stop.
                         # Interpolate with the previous to get the color at 0.
                         assert i > 0
@@ -400,7 +400,7 @@ class RadialGradient(Gradient):
                         neg_position = positions[i - 1]
                         assert neg_position < 0
                         intermediate_color = gradient_average_color(
-                            [neg_color, neg_color, position, position],
+                            [neg_color, neg_color, color, color],
                             [neg_position, 0, 0, position])
                         colors = [intermediate_color] + colors[i:]
                         positions = [0] + positions[i:]
@@ -411,56 +411,32 @@ class RadialGradient(Gradient):
                     return 1, 'solid', self.colors[-1], [], []
 
         first, last, positions = normalize_stop_postions(positions)
-        circles = center_x, center_y, first, center_x, center_y, last
+        circles = (center_x, center_y / scale_y, first,
+                   center_x, center_y / scale_y, last)
         return scale_y, 'radial', circles, positions, colors
 
     def _resolve_size(self, width, height, center_x, center_y):
         if self.size_type == 'explicit':
-            return self.size
+            size_x, size_y = self.size
+            return percentage(size_x, width), percentage(size_y, height)
         left = abs(center_x)
         right = abs(width - center_x)
         top = abs(center_y)
         bottom = abs(height - center_y)
-        if self.size == 'closest-side':
+        pick = min if self.size.startswith('closest') else max
+        if self.size.endswith('side'):
             if self.shape == 'circle':
-                size_xy = min(left, right, top, bottom)
-                return size_xy, size_xy
-            return min(left, right), min(top, bottom)  # ellipse
-        elif self.size == 'farthest-side':
-            if self.shape == 'circle':
-                size_xy = max(left, right, top, bottom)
-                return size_xy, size_xy
-            return max(left, right), max(top, bottom)  # ellipse
-        top_left = math.hypot(top, left)
-        top_right = math.hypot(top, right)
-        bottom_left = math.hypot(bottom, left)
-        bottom_right = math.hypot(bottom, right)
-        if self.size == 'closest-corner':
-            if self.shape == 'circle':
-                size_xy = min(top_left, top_right, bottom_left, bottom_right)
+                size_xy = pick(left, right, top, bottom)
                 return size_xy, size_xy
             # else: ellipse
-            # Coordinates of the closest corner:
-            _, corner_x, corner_y = min(
-                (top_left, top, left), (top_right, top, right),
-                (bottom_left, bottom, left),
-                (bottom_right, bottom, left))
-            if 0 in (top, bottom):
-                return 0, corner_y
-            ratio = min(left, right) / min(top, bottom)
-            size_x = math.hypot(corner_x, corner_y * ratio)
-            return size_x, size_x * ratio
-        if self.size == 'farthest-corner':
-            if self.shape == 'circle':
-                return max(top_left, top_right, bottom_left, bottom_right)
-            # else: ellipse
-            # Coordinates of the farthest corner:
-            _, corner_x, corner_y = max(
-                (top_left, top, left), (top_right, top, right),
-                (bottom_left, bottom, left),
-                (bottom_right, bottom, left))
-            if top == bottom == 0:
-                return 0, corner_y
-            ratio = max(left, right) / max(top, bottom)
-            size_x = math.hypot(corner_x, corner_y * ratio)
-            return size_x, size_x * ratio
+            return pick(left, right), pick(top, bottom)
+        # else: corner
+        if self.shape == 'circle':
+            size_xy = pick(math.hypot(left, top), math.hypot(left, bottom),
+                           math.hypot(right, top), math.hypot(right, bottom))
+            return size_xy, size_xy
+        # else: ellipse
+        corner_x, corner_y = pick(
+            (left, top), (left, bottom), (right, top), (right, bottom),
+            key=lambda a: math.hypot(*a))
+        return corner_x * math.sqrt(2), corner_y * math.sqrt(2)

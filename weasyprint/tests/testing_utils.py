@@ -17,6 +17,7 @@ import os.path
 import logging
 import contextlib
 import functools
+import math
 
 from .. import HTML, CSS
 from ..logger import LOGGER
@@ -94,8 +95,6 @@ def almost_equal(a, b):
             or isinstance(a, tuple) and isinstance(b, tuple)):
         return len(a) == len(b) and all(
             almost_equal(aa, bb) for aa, bb in zip(a, b))
-    if isinstance(a, float):
-        a = round(a, 6)
-    if isinstance(b, float):
-        b = round(b, 6)
+    if isinstance(a, float) or isinstance(b, float):
+        return round(abs(a - b), 6) == 0
     return a == b
