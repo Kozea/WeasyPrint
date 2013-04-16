@@ -784,12 +784,7 @@ def process_whitespace(box, following_collapsible_space=False):
                 text = text[1:]
             following_collapsible_space = previous_text.endswith(' ')
             if handling == 'nowrap':
-                leading_spaces = len(text) - len(text.lstrip(' '))
-                trailing_spaces = len(text) - len(text.rstrip(' '))
-                text = (leading_spaces * ' ' +
-                        text.replace(' ', '\xA0')[
-                            leading_spaces:len(text) - trailing_spaces] +
-                        trailing_spaces * ' ')
+                text = re.sub('(?!^) (?!$)', '\xA0', text)
         else:
             following_collapsible_space = False
 
