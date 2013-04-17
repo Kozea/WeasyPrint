@@ -223,7 +223,7 @@ def gradient_average_color(colors, positions):
     assert nb_stops == len(colors)
     total_length = positions[-1] - positions[0]
     if total_length == 0:
-        positions = range(nb_stops)
+        positions = list(range(nb_stops))
         total_length = nb_stops - 1
     premul_r = [r * a for r, g, b, a in colors]
     premul_g = [g * a for r, g, b, a in colors]
