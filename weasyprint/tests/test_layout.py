@@ -4570,7 +4570,7 @@ def test_linear_gradient():
         result = layer.image.layout(
             400, 300, lambda dx, dy: (dx * scale_x, dy * scale_y))
         expected = 1, type_, init, positions, colors
-        assert almost_equal(result, expected), result
+        assert almost_equal(result, expected), (result, expected)
 
     layout('linear-gradient(blue)', 'solid', blue, [], [])
     layout('repeating-linear-gradient(blue)', 'solid', blue, [], [])
@@ -4612,7 +4612,7 @@ def test_linear_gradient():
            init=(200, -100, 200, 150), colors=[blue, blue, red, lime],
            positions=[0, .4, .4, 1])
     layout('linear-gradient(blue, blue, red, lime -7px)',
-           init=(200, 0, 200, 0), colors=[blue, blue, red, lime],
+           init=(200, 0, 200, 100), colors=[blue, blue, red, lime],
            positions=[0, 0, 0, 0])
     layout('repeating-linear-gradient(blue, blue, lime, lime -7px)',
            'solid', (0, .5, .5, 1), [], [])

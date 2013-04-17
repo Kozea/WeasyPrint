@@ -206,12 +206,12 @@ def normalize_stop_postions(positions):
     """Normalize to [0..1]."""
     first = positions[0]
     last = positions[-1]
-    if first == last:
-        return 0, 0, [0 for _ in positions]
-
     total_length = last - first
-    return first, last, [
-        (pos - first) / total_length for pos in positions]
+    if total_length != 0:
+        positions = [(pos - first) / total_length for pos in positions]
+    else:
+        positions = [0 for _ in positions]
+    return first, last, positions
 
 
 def gradient_average_color(colors, positions):
@@ -240,7 +240,7 @@ def gradient_average_color(colors, positions):
             result_a += alpha[j] * weight
     # Un-premultiply:
     return (result_r / result_a, result_g / result_a,
-            result_b / result_a, result_a)
+            result_b / result_a, result_a) if result_a != 0 else (0, 0, 0, 0)
 
 
 PATTERN_TYPES = dict(
@@ -321,12 +321,20 @@ class LinearGradient(Gradient):
         # Distance between center and ending point,
         # ie. half of between the starting point and ending point:
         distance = abs(width * dx) + abs(height * dy)
-        first, last, positions = normalize_stop_postions(
-            process_color_stops(distance, self.stop_positions))
-        if self.repeating and (last - first) * math.hypot(
-                *user_to_device_distance(dx, dy)) < len(positions):
-            color = gradient_average_color(self.colors, positions)
-            return 1, 'solid', color, [], []
+        positions = process_color_stops(distance, self.stop_positions)
+        first, last, positions = normalize_stop_postions(positions)
+        device_per_user_units = math.hypot(*user_to_device_distance(dx, dy))
+        if (last - first) * device_per_user_units < len(positions):
+            if self.repeating:
+                color = gradient_average_color(self.colors, positions)
+                return 1, 'solid', color, [], []
+            else:
+                # 100 is an Arbitrary non-zero number of device units.
+                offset = 100 / device_per_user_units
+                if first != last:
+                    factor = (offset + last - first) / (last - first)
+                    positions = [pos / factor for pos in positions]
+                last += offset
         start_x = (width - dx * distance) / 2
         start_y = (height - dy * distance) / 2
         points = (start_x + dx * first, start_y + dy * first,
@@ -375,10 +383,9 @@ class RadialGradient(Gradient):
         positions = process_color_stops(size_x, self.stop_positions)
         gradient_line_size = positions[-1] - positions[0]
         if self.repeating and any(
-                gradient_line_size * unit < len(positions)
-                for unit in (
-                    math.hypot(*user_to_device_distance(1, 0)),
-                    math.hypot(*user_to_device_distance(0, scale_y)))):
+            gradient_line_size * unit < len(positions)
+            for unit in (math.hypot(*user_to_device_distance(1, 0)),
+                         math.hypot(*user_to_device_distance(0, scale_y)))):
             color = gradient_average_color(colors, positions)
             return 1, 'solid', color, [], []
 
@@ -411,6 +418,9 @@ class RadialGradient(Gradient):
                     return 1, 'solid', self.colors[-1], [], []
 
         first, last, positions = normalize_stop_postions(positions)
+        if last == first:
+            last += 100  # Arbitrary non-zero
+
         circles = (center_x, center_y / scale_y, first,
                    center_x, center_y / scale_y, last)
         return scale_y, 'radial', circles, positions, colors
