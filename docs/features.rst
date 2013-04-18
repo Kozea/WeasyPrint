@@ -105,10 +105,10 @@ print media **is** supported. Please report a bug if you find this list
 incomplete.
 
 
-CSS 3 Selectors
-~~~~~~~~~~~~~~~
+CSS Selectors
+~~~~~~~~~~~~~
 
-With the exceptions noted here, all `CSS 3 Selectors`_ are supported.
+With the exceptions noted here, all `Level 3 selectors`_ are supported.
 
 PDF is generally not interactive. The ``:hover``, ``:active``, ``:focus``,
 ``:target`` and ``:visited`` pseudo-classes are accepted as valid but
@@ -119,13 +119,13 @@ Due to a limitation in cssselect_, ``*:first-of-type``, ``*:last-of-type``,
 not supported. They work when you specify an element type but parse
 as invalid with ``*``.
 
-.. _CSS 3 Selectors: http://www.w3.org/TR/css3-selectors/
+.. _Level 3 selectors: http://www.w3.org/TR/css3-selectors/
 .. _cssselect: http://packages.python.org/cssselect/
 
 
 .. _hyphenation:
 
-CSS 3 Text: hyphenation
+CSS Text: hyphenation
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -175,20 +175,23 @@ include it in the bookmarks, add this in your stylesheet:
     h1 { -weasy-bookmark-level: none }
 
 
-Other CSS 3 modules
-~~~~~~~~~~~~~~~~~~~
+Other CSS modules
+~~~~~~~~~~~~~~~~~
 
-Are supported:
+The following features are supported:
 
-* `CSS 3 Colors`_ (except the deprecated System Colors)
-* `CSS 3 Paged Media`_ (except named pages)
+* `CSS Colors Level 3`_ (except the deprecated System Colors)
+* `CSS Paged Media`_ (except named pages)
 * `CSS Transforms`_ (2D only)
-* The background part of `CSS 3 Backgrounds and Borders`_,
+* The background part of `CSS Backgrounds and Borders Level 3`_,
   including multiple background layers per element/box.
-* From `CSS 3 Basic User Interface`_: ``box-sizing``
+* ``linear-gradient()`` and ``radial-gradient()`` (as background images)
+  from `CSS Images Level 3`_
+* The ``box-sizing`` property from `CSS Basic User Interface`_:
 
-.. _CSS 3 Colors: http://www.w3.org/TR/css3-color/
-.. _CSS 3 Paged Media: http://dev.w3.org/csswg/css3-page/
+.. _CSS Colors Level 3: http://www.w3.org/TR/css3-color/
+.. _CSS Paged Media: http://dev.w3.org/csswg/css3-page/
 .. _CSS Transforms: http://dev.w3.org/csswg/css3-transforms/
-.. _CSS 3 Backgrounds and Borders: http://www.w3.org/TR/css3-background/
-.. _CSS 3 Basic User Interface: http://www.w3.org/TR/css3-ui/#box-sizing
+.. _CSS Backgrounds and Borders Level 3: http://www.w3.org/TR/css3-background/
+.. _CSS Images Level 3: http://www.w3.org/TR/css3-images/
+.. _CSS Basic User Interface: http://www.w3.org/TR/css3-ui/#box-sizing

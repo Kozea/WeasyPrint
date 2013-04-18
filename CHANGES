@@ -1,6 +1,25 @@
 WeasyPrint changelog
 ====================
 
+Version 0.19
+------------
+
+Released on 2013-04-18.
+
+* Add support for ``linear-gradient()`` and ``radial-gradient``
+  in background images.
+* Add support for the ``ex`` and ``ch`` length units.
+  (``1ex`` is based on the font instead of being always ``0.5em`` as before.)
+* Add experimental support for Level 4 hyphenation properties.
+* Drop support for CFFI < 0.6 and cairocffi < 0.4.
+* Many bug fixes, including:
+
+ * Fix `#54 <https://github.com/Kozea/WeasyPrint/issues/54>`_:
+   min/max-width/height on block-level images.
+ * Fix `#71 <https://github.com/Kozea/WeasyPrint/issues/71>`_:
+   Crash when parsing nested functional notation.
+
+
 Version 0.18
 ------------
 
