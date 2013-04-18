@@ -45,7 +45,7 @@ You probably need either virtualenv_ [#]_ (recommended) or using ``sudo``.
 
 .. code-block:: sh
 
-    virtualenv ./venv
+    virtualenv --system-site-packages ./venv
     . ./venv/bin/activate
     pip install WeasyPrint
 
@@ -77,10 +77,9 @@ WeasyPrint! Otherwise, please copy the full error message and
        JPEG, GIF and others are not available.
        Versions before 0.22 were part of `GTK+`_.
 
-.. [#] If you installed CFFI or lxml with a system package,
-       you need to pass the `--system-site-packages` to virtualenv
-       for pip and WeasyPrint to find them.
-       Otherwise, pip will try to install them inside the isolated virtualenv.
+.. [#] Passing the ``--system-site-packages`` option to virtualenv
+       allows the environment to use the system packages for lxml or CFFI,
+       but this is not necessary if you install them with pip.
 
 
 .. _platforms:
