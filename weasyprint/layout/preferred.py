@@ -46,7 +46,8 @@ def preferred_minimum_width(context, box, outer=True):
         else:
             return block_preferred_minimum_width(context, box, outer)
     elif isinstance(box, (boxes.InlineBox, boxes.LineBox)):
-        return inline_preferred_minimum_width(context, box, outer)
+        return inline_preferred_minimum_width(
+            context, box, outer, is_line_start=True)
     elif isinstance(box, boxes.ReplacedBox):
         return replaced_preferred_width(box, outer)
     else:
@@ -143,7 +144,7 @@ def block_preferred_width(context, box, outer=True):
 
 
 def inline_preferred_minimum_width(context, box, outer=True, skip_stack=None,
-                                   first_line=False):
+                                   first_line=False, is_line_start=False):
     """Return the preferred minimum width for an ``InlineBox``.
 
     The width is calculated from the lines from ``skip_stack``. If
@@ -165,9 +166,16 @@ def inline_preferred_minimum_width(context, box, outer=True, skip_stack=None,
             current_line = inline_preferred_minimum_width(
                 context, child, skip_stack=skip_stack, first_line=first_line)
         elif isinstance(child, boxes.TextBox):
-            widths = text.line_widths(
-                child, context.enable_hinting, width=0,
-                skip=(skip_stack[0] if skip_stack else None))
+            if skip_stack is None:
+                skip = 0
+            else:
+                skip, skip_stack = skip_stack
+                assert skip_stack is None
+            child_text = child.text[(skip or 0):]
+            if is_line_start:
+                child_text = child_text.lstrip(' ')
+            widths = text.line_widths(child_text, child.style,
+                                      context.enable_hinting, width=0)
             if first_line:
                 return next(widths)
             else:
@@ -175,6 +183,8 @@ def inline_preferred_minimum_width(context, box, outer=True, skip_stack=None,
         else:
             current_line = preferred_minimum_width(context, child)
         widest_line = max(widest_line, current_line)
+        skip_stack = None
+        is_line_start = False
     return adjust(box, outer, widest_line)
 
 
@@ -190,8 +200,8 @@ def inline_preferred_width(context, box, outer=True):
             # TODO: handle forced line breaks
             current_line += inline_preferred_width(context, child)
         elif isinstance(child, boxes.TextBox):
-            lines = list(text.line_widths(
-                child, context.enable_hinting, width=None))
+            lines = list(text.line_widths(child.text, child.style,
+                                          context.enable_hinting, width=None))
             assert lines
             # The first text line goes on the current line
             current_line += lines[0]

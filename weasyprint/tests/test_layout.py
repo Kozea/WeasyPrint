@@ -3340,6 +3340,18 @@ def test_preferred_widths():
     # Preferred width:
     assert 220 < get_float_width(10000) < 240
 
+    # Non-regression test:
+    # Incorrect whitespace handling in preferred width used to cause
+    # unnecessary line break.
+    page, = parse('''
+        <p style="float: left">Lorem <em>ipsum</em> dolor.</p>
+    ''')
+    html, = page.children
+    body, = html.children
+    paragraph, = body.children
+    assert len(paragraph.children) == 1
+    assert isinstance(paragraph.children[0], boxes.LineBox)
+
 
 @assert_no_logs
 def test_margin_boxes_variable_dimension():

@@ -462,12 +462,9 @@ def split_first_line(text, style, hinting, max_width, line_width):
     return first_line_metrics(first_line, text, layout, resume_at, hyphenated)
 
 
-def line_widths(box, enable_hinting, width, skip=None):
+def line_widths(text, style, enable_hinting, width):
     """Return the width for each line."""
-    # TODO: without the lstrip, we get an extra empty line at the beginning. Is
-    # there a better solution to avoid that?
-    layout = create_layout(
-        box.text[(skip or 0):].lstrip(' '), box.style, enable_hinting, width)
+    layout = create_layout(text, style, enable_hinting, width)
     for line in layout.iter_lines():
         width, _height = get_size(line)
         yield width
