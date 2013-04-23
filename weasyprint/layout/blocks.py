@@ -433,12 +433,10 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                     if (
                         new_position_y > max_position_y
                         and (new_children or not page_is_empty)
-                        and not (
+                        and not (isinstance(child, boxes.TableBox) or (
                             # For blocks with children do this per child.
                             isinstance(child, boxes.BlockBox)
-                            and child.children
-                        )
-                    ):
+                            and child.children))):
                         # The child overflows the page area, put it on the
                         # next page. (But don’t delay whole blocks if eg.
                         # only the bottom border overflows.)
