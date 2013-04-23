@@ -21,7 +21,7 @@
 
 from __future__ import division, unicode_literals
 
-from .absolute import absolute_layout
+from .absolute import absolute_box_layout
 from .pages import make_all_pages, make_margin_boxes
 from .backgrounds import layout_backgrounds
 
@@ -29,13 +29,11 @@ from .backgrounds import layout_backgrounds
 def layout_fixed_boxes(context, pages):
     """Lay out and yield the fixed boxes of ``pages``."""
     for page in pages:
-        for fixed_box in page.fixed_boxes:
-            fixed_box_for_page = fixed_box.copy()
+        for box in page.fixed_boxes:
             # Use an empty list as last argument because the fixed boxes in the
             # fixed box has already been added to page.fixed_boxes, we don't
             # want to get them again
-            absolute_layout(context, fixed_box_for_page, page, [])
-            yield fixed_box_for_page
+            yield absolute_box_layout(context, box, page, [])
 
 
 def layout_document(enable_hinting, style_for, get_image_from_uri, root_box):

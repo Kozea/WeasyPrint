@@ -503,6 +503,9 @@ def make_page(context, root_box, page_type, resume_at, content_empty):
         positioned_boxes, positioned_boxes, adjoining_margins)
     assert root_box
 
+    page.fixed_boxes = [
+        placeholder._box for placeholder in positioned_boxes
+        if placeholder._box.style.position == 'fixed']
     for absolute_box in positioned_boxes:
         absolute_layout(context, absolute_box, page, positioned_boxes)
     context.finish_block_formatting_context(root_box)

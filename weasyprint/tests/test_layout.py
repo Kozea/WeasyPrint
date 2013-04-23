@@ -1701,7 +1701,7 @@ def test_page_breaks():
           <div></div>
     ''')
     html, = page_1.children
-    body, = html.children
+    body, _div = html.children
     div_1, section = body.children
     div_2, = section.children
     assert div_1.position_y == 0
@@ -4061,6 +4061,26 @@ def test_absolute_images():
     assert (img2.width, img2.height) == (4, 4)
 
     # TODO: test the various cases in absolute_replaced()
+
+
+@assert_no_logs
+def test_fixed_positioning():
+    # TODO:test page-break-before: left/right
+    page_1, page_2, page_3 = parse('''
+        a
+        <div style="page-break-before: always; page-break-after: always">
+            <p style="position: fixed">b</p>
+        </div>
+        c
+    ''')
+    html, = page_1.children
+    assert [c.element_tag for c in html.children] == ['body', 'p']
+    html, = page_2.children
+    body, = html.children
+    div, = body.children
+    assert [c.element_tag for c in div.children] == ['p']
+    html, = page_3.children
+    assert [c.element_tag for c in html.children] == ['p', 'body']
 
 
 @assert_no_logs

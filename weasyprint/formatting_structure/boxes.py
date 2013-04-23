@@ -545,7 +545,6 @@ class PageBox(ParentBox):
     def __init__(self, page_type, style):
         self.page_type = page_type
         # Page boxes are not linked to any element.
-        self.fixed_boxes = []
         super(PageBox, self).__init__(
             element_tag=None, sourceline=None, style=style, children=[])
 

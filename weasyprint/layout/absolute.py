@@ -234,7 +234,11 @@ def absolute_layout(context, placeholder, containing_block, fixed_boxes):
     """Set the width of absolute positioned ``box``."""
     assert not placeholder._layout_done
     box = placeholder._box
+    placeholder.set_laid_out_box(
+        absolute_box_layout(context, box, containing_block, fixed_boxes))
 
+
+def absolute_box_layout(context, box, containing_block, fixed_boxes):
     cb = containing_block
     # TODO: handle inline boxes (point 10.1.4.1)
     # http://www.w3.org/TR/CSS2/visudet.html#containing-block-details
@@ -261,8 +265,7 @@ def absolute_layout(context, placeholder, containing_block, fixed_boxes):
         assert isinstance(box, boxes.BlockReplacedBox)
         new_box = absolute_replaced(context, box, containing_block)
     context.finish_block_formatting_context(new_box)
-
-    placeholder.set_laid_out_box(new_box)
+    return new_box
 
 
 def absolute_replaced(context, box, containing_block):
