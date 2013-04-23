@@ -157,7 +157,20 @@ def inline_preferred_minimum_width(context, box, outer=True, skip_stack=None,
     calculated.
 
     """
-    widest_line = 0
+    return adjust(box, outer, max(inline_line_widths(
+        context, box, outer, is_line_start,
+        width=0, skip_stack=skip_stack, first_line=first_line)))
+
+
+def inline_preferred_width(context, box, outer=True, is_line_start=False):
+    """Return the preferred width for an ``InlineBox``."""
+    return adjust(box, outer, max(
+        inline_line_widths(context, box, outer, is_line_start, width=None)))
+
+
+def inline_line_widths(context, box, outer, is_line_start, width,
+                       skip_stack=None, first_line=False):
+    current_line = 0
     if skip_stack is None:
         skip = 0
     else:
@@ -167,9 +180,14 @@ def inline_preferred_minimum_width(context, box, outer=True, skip_stack=None,
             continue  # Skip
 
         if isinstance(child, boxes.InlineBox):
-            # TODO: handle forced line breaks
-            current_line = inline_preferred_minimum_width(
-                context, child, skip_stack=skip_stack, first_line=first_line)
+            lines = list(inline_line_widths(
+                context, child, outer, is_line_start,
+                width, skip_stack, first_line))
+            if len(lines) == 1:
+                lines[0] = adjust(child, outer, lines[0])
+            else:
+                lines[0] = adjust(child, outer, lines[0], right=False)
+                lines[-1] = adjust(child, outer, lines[-1], left=False)
         elif isinstance(child, boxes.TextBox):
             if skip_stack is None:
                 skip = 0
@@ -179,44 +197,11 @@ def inline_preferred_minimum_width(context, box, outer=True, skip_stack=None,
             child_text = child.text[(skip or 0):]
             if is_line_start:
                 child_text = child_text.lstrip(' ')
-            widths = text.line_widths(child_text, child.style,
-                                      context.enable_hinting, width=0)
-            if first_line:
-                return next(widths)
+            if width == 0 and child_text == ' ':
+                lines = [0, 0]
             else:
-                current_line = max(widths)
-        else:
-            current_line = preferred_minimum_width(context, child)
-        widest_line = max(widest_line, current_line)
-        skip_stack = None
-        is_line_start = False
-    return adjust(box, outer, widest_line)
-
-
-def inline_preferred_width(context, box, outer=True, is_line_start=False):
-    """Return the preferred width for an ``InlineBox``."""
-    return adjust(box, outer, max(
-        inline_line_widths(context, box, outer, is_line_start)))
-
-
-def inline_line_widths(context, box, outer=True, is_line_start=False):
-    current_line = 0
-    for child in box.children:
-        if child.is_absolutely_positioned():
-            continue  # Skip
-
-        if isinstance(child, boxes.InlineBox):
-            lines = list(inline_line_widths(
-                context, child, outer, is_line_start))
-            if len(lines) == 1:
-                lines[0] = adjust(child, outer, lines[0])
-            else:
-                lines[0] = adjust(child, outer, lines[0], right=False)
-                lines[-1] = adjust(child, outer, lines[-1], left=False)
-        elif isinstance(child, boxes.TextBox):
-            lines = list(text.line_widths(
-                child.text.lstrip(' ') if is_line_start else child.text,
-                child.style, context.enable_hinting, width=None))
+                lines = list(text.line_widths(
+                    child_text, child.style, context.enable_hinting, width))
         else:
             lines = [preferred_width(context, child)]
         # The first text line goes on the current line
@@ -224,10 +209,13 @@ def inline_line_widths(context, box, outer=True, is_line_start=False):
         if len(lines) > 1:
             # Forced line break
             yield current_line
+            if first_line:
+                return
             if len(lines) > 2:
                 yield max(lines[1:-1])
             current_line = lines[-1]
         is_line_start = lines[-1] == 0
+        skip_stack = None
     yield current_line
 
 
