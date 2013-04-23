@@ -333,32 +333,54 @@ def draw_border_segment(context, enable_hinting, style, width, color, side,
         if style not in ('dotted', 'dashed'):
             # Clip on the trapezoid shape
             """
-            Clip on the trapezoid formed by the border edge (longer)
+            Clip the angles the trapezoid formed by the border edge (longer)
             and the padding edge (shorter).
 
             This is on the top side:
 
-              +---------------+    <= border edge      ^
-               \             /                         |
-                \           /                          |  top border width
-                 \         /                           |
-                  +-------+        <= padding edge     v
+                +---------------+    <= border edge      ^
+                 \             /                         |
+                  \           /                          |  top border width
+                   \         /                           |
+                    +-------+        <= padding edge     v
 
-              <-->         <-->    <=  left and right border widths
+                <-->         <-->    <=  left and right border widths
+
+            The clip shape is:
+
+            1---------------------------2
+             \                         /
+              \                       /
+               \                     /
+                +...................+
+                 \                 /
+                  \               /
+                   \             /
+                    +...........+
+                     \         /
+                      \       /
+                       \     /
+                        4---3
 
             """
+
+            def double_vector(p1, p2):
+                x1, y1 = p1
+                x2, y2 = p2
+                return 5 * x2 - 4 * x1, 5 * y2 - 4 * y1
+
             border_start, border_stop = border_edge
             padding_start, padding_stop = padding_edge
-            context.move_to(*border_start)
-            for point in [border_stop, padding_stop,
-                          padding_start, border_start]:
+            points = [double_vector(padding_start, border_start),
+                      double_vector(padding_stop, border_stop),
+                      double_vector(border_stop, padding_stop),
+                      double_vector(border_start, padding_start)]
+            context.move_to(*points[-1])
+            for point in points:
                 context.line_to(*point)
             context.clip()
 
-        if style == 'solid':
-            # Fill the whole trapezoid
-            context.paint()
-        elif style in ('inset', 'outset'):
+        if style in ('inset', 'outset'):
             do_lighten = (side in ('top', 'left')) ^ (style == 'inset')
             factor = 1 if do_lighten else -1
             context.set_source_rgba(*lighten(color, 0.5 * factor))
@@ -414,7 +436,7 @@ def draw_border_segment(context, enable_hinting, style, width, color, side,
             context.line_to(x2, y2)
             context.stroke()
         else:
-            assert style in ('dotted', 'dashed')
+            assert style in ('solid', 'dotted', 'dashed')
             (x1, y1), (x2, y2) = border_edge
             if style == 'dotted':
                 # Half-way from the extremities of the border and padding
@@ -431,7 +453,7 @@ def draw_border_segment(context, enable_hinting, style, width, color, side,
                      \         /
                       +-------+
                 """
-            else:  # dashed
+            else:  # solid, dashed
                 # From the border edge to the middle:
                 x1, y1 = xy_offset(x1, y1, x_offset, y_offset, width / 2)
                 x2, y2 = xy_offset(x2, y2, x_offset, y_offset, width / 2)
@@ -451,7 +473,7 @@ def draw_border_segment(context, enable_hinting, style, width, color, side,
                     dash = length / max(1, round(length / dash))
                 context.set_line_cap(cairo.LINE_CAP_ROUND)
                 context.set_dash([0, dash])
-            else:  # dashed
+            elif style == 'dashed':
                 # Round so that 2*dash is a divisor of length
                 dash = length / (2 * max(1, round(length / (2 * dash))))
                 context.set_dash([dash])
