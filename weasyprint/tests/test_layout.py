@@ -3352,6 +3352,32 @@ def test_preferred_widths():
     assert len(paragraph.children) == 1
     assert isinstance(paragraph.children[0], boxes.LineBox)
 
+    page, = parse('''
+        <style>img { width: 20px }</style>
+        <p style="float: left">
+            <img src=pattern.png><img src=pattern.png><br>
+            <img src=pattern.png></p>
+    ''')
+    html, = page.children
+    body, = html.children
+    paragraph, = body.children
+    assert paragraph.width == 40
+
+    page, = parse('''<style>p { font: 20px Ahem }</style>
+                     <p style="float: left">XX<br>XX<br>X</p>''')
+    html, = page.children
+    body, = html.children
+    paragraph, = body.children
+    assert paragraph.width == 40
+
+    # The space is the start of the line is collapsed.
+    page, = parse('''<style>p { font: 20px Ahem }</style>
+                     <p style="float: left">XX<br> XX<br>X</p>''')
+    html, = page.children
+    body, = html.children
+    paragraph, = body.children
+    assert paragraph.width == 40
+
 
 @assert_no_logs
 def test_margin_boxes_variable_dimension():

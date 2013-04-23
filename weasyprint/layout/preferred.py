@@ -68,7 +68,7 @@ def preferred_width(context, box, outer=True):
         else:
             return block_preferred_width(context, box, outer)
     elif isinstance(box, (boxes.InlineBox, boxes.LineBox)):
-        return inline_preferred_width(context, box, outer)
+        return inline_preferred_width(context, box, outer, is_line_start=True)
     elif isinstance(box, boxes.ReplacedBox):
         return replaced_preferred_width(box, outer)
     else:
@@ -94,7 +94,7 @@ def _block_preferred_width(context, box, function, outer):
     return adjust(box, outer, width)
 
 
-def adjust(box, outer, width):
+def adjust(box, outer, width, left=True, right=True):
     """Add paddings, borders and margins to ``width`` when ``outer`` is set."""
     if not outer:
         return width
@@ -107,8 +107,10 @@ def adjust(box, outer, width):
     fixed = max(min_width, min(width, max_width))
     percentages = 0
 
-    for value in ('margin_left', 'margin_right',
-                  'padding_left', 'padding_right'):
+    for value in (
+        (['margin_left', 'padding_left'] if left else []) +
+        (['margin_right', 'padding_right'] if right else [])
+    ):
         # Padding and border are set on the table, not on the wrapper
         # http://www.w3.org/TR/CSS21/tables.html#model
         # TODO: clean this horrible hack!
@@ -123,7 +125,10 @@ def adjust(box, outer, width):
                 assert style_value.unit == '%'
                 percentages += style_value.value
 
-    fixed += box.style.border_left_width + box.style.border_right_width
+    if left:
+        fixed += box.style.border_left_width
+    if right:
+        fixed += box.style.border_right_width
 
     if percentages < 100:
         return fixed / (1 - percentages / 100.)
@@ -188,34 +193,42 @@ def inline_preferred_minimum_width(context, box, outer=True, skip_stack=None,
     return adjust(box, outer, widest_line)
 
 
-def inline_preferred_width(context, box, outer=True):
+def inline_preferred_width(context, box, outer=True, is_line_start=False):
     """Return the preferred width for an ``InlineBox``."""
-    widest_line = 0
+    return adjust(box, outer, max(
+        inline_line_widths(context, box, outer, is_line_start)))
+
+
+def inline_line_widths(context, box, outer=True, is_line_start=False):
     current_line = 0
     for child in box.children:
         if child.is_absolutely_positioned():
             continue  # Skip
 
         if isinstance(child, boxes.InlineBox):
-            # TODO: handle forced line breaks
-            current_line += inline_preferred_width(context, child)
+            lines = list(inline_line_widths(
+                context, child, outer, is_line_start))
+            if len(lines) == 1:
+                lines[0] = adjust(child, outer, lines[0])
+            else:
+                lines[0] = adjust(child, outer, lines[0], right=False)
+                lines[-1] = adjust(child, outer, lines[-1], left=False)
         elif isinstance(child, boxes.TextBox):
-            lines = list(text.line_widths(child.text, child.style,
-                                          context.enable_hinting, width=None))
-            assert lines
-            # The first text line goes on the current line
-            current_line += lines[0]
-            if len(lines) > 1:
-                # Forced line break
-                widest_line = max(widest_line, current_line)
-                if len(lines) > 2:
-                    widest_line = max(widest_line, max(lines[1:-1]))
-                current_line = lines[-1]
+            lines = list(text.line_widths(
+                child.text.lstrip(' ') if is_line_start else child.text,
+                child.style, context.enable_hinting, width=None))
         else:
-            current_line += preferred_width(context, child)
-    widest_line = max(widest_line, current_line)
-
-    return adjust(box, outer, widest_line)
+            lines = [preferred_width(context, child)]
+        # The first text line goes on the current line
+        current_line += lines[0]
+        if len(lines) > 1:
+            # Forced line break
+            yield current_line
+            if len(lines) > 2:
+                yield max(lines[1:-1])
+            current_line = lines[-1]
+        is_line_start = lines[-1] == 0
+    yield current_line
 
 
 TABLE_CACHE = weakref.WeakKeyDictionary()
