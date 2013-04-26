@@ -777,7 +777,7 @@ def test_auto_layout_table():
     assert table.width == 27  # 3 * spacing + 4 + 8 + 4 * border
 
     page, = parse('''
-        <table style="border-spacing: 1px; margin: 5px">
+        <table style="border-spacing: 1px; margin: 5px; font-size: 0">
             <tr>
                 <td></td>
                 <td><img src=pattern.png><img src=pattern.png></td>
