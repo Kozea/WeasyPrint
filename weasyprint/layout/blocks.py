@@ -399,6 +399,12 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                         adjoining_margins = []
                         position_y = box.content_box_y()
 
+            if adjoining_margins and isinstance(child, boxes.TableBox):
+                collapsed_margin = collapse_margin(adjoining_margins)
+                child.position_y += collapsed_margin
+                position_y += collapsed_margin
+                adjoining_margins = []
+
             (new_child, resume_at, next_page, next_adjoining_margins,
                 collapsing_through) = block_level_layout(
                     context, child, max_position_y, skip_stack,
@@ -415,7 +421,8 @@ def block_container_layout(context, box, max_position_y, skip_stack,
 
                 # We need to do this after the child layout to have the
                 # used value for margin_top (eg. it might be a percentage.)
-                if not isinstance(new_child, boxes.BlockBox):
+                if not isinstance(
+                        new_child, (boxes.BlockBox, boxes.TableBox)):
                     adjoining_margins.append(new_child.margin_top)
                     offset_y = (collapse_margin(adjoining_margins)
                                 - new_child.margin_top)
