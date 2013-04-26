@@ -844,10 +844,16 @@ def test_auto_layout_table():
         <style>
             @page { size: 100px 1000px; }
         </style>
-        <table style="border-spacing: 1px; margin-right: 79px; font: 4px Ahem">
+        <table style="border-spacing: 1px; margin-right: 79px; font-size: 0">
             <tr>
-                <td>X</td>
-                <td>X X X X X</td>
+                <td><img src=pattern.png></td>
+                <td>
+                    <img src=pattern.png> <img src=pattern.png>
+                    <img src=pattern.png> <img src=pattern.png>
+                    <img src=pattern.png> <img src=pattern.png>
+                    <img src=pattern.png> <img src=pattern.png>
+                    <img src=pattern.png>
+                </td>
             </tr>
             <tr>
                 <td></td>
@@ -954,14 +960,13 @@ def test_auto_layout_table():
     assert table.width == 120  # 60 + 30 + 3 * border-spacing
 
     page, = parse('''
-        <table style="border-spacing: 0; width: 14px;
-                      margin: 10px; font: 2px Ahem">
+        <table style="border-spacing: 0; width: 14px; margin: 10px">
             <colgroup>
               <col />
               <col style="width: 6px" />
             </colgroup>
             <tr>
-                <td>XX X</td>
+                <td><img src=pattern.png><img src=pattern.png></td>
                 <td style="width: 8px"></td>
             </tr>
         </table>
@@ -3397,7 +3402,6 @@ def test_margin_boxes_variable_dimension():
                     margin: 100px;
                     padding: 42px;
                     border: 7px solid;
-                    font-size: 0;
                     %s
                 }
             </style>
@@ -3412,7 +3416,7 @@ def test_margin_boxes_variable_dimension():
         return [box.margin_width() for box in margin_boxes]
 
     def images(*widths):
-        return ' " " '.join(
+        return ' '.join(
             'url(\'data:image/svg+xml,<svg width="%i" height="10"></svg>\')'
             % width for width in widths)
 
@@ -4124,26 +4128,27 @@ def test_floats():
     # c414-flt-fit-000
     page, = parse('''
         <style>
-            body { width: 290px; font: 60px Ahem; }
+            body { width: 290px }
             div { float: left; width: 100px;  }
             img { width: 60px; vertical-align: top }
         </style>
         <div><img src=pattern.png /><!-- 1 --></div>
         <div><img src=pattern.png /><!-- 2 --></div>
         <div><img src=pattern.png /><!-- 4 --></div>
-        3 5''')
+        <img src=pattern.png /><!-- 3
+        --><img src=pattern.png /><!-- 5 -->''')
     html, = page.children
     body, = html.children
     div_1, div_2, div_4, anon_block = body.children
     line_3, line_5 = anon_block.children
-    text_3, = line_3.children
-    text_5, = line_5.children
+    img_3, = line_3.children
+    img_5, = line_5.children
     assert outer_area(div_1) == (0, 0, 100, 60)
     assert outer_area(div_2) == (100, 0, 100, 60)
-    assert outer_area(text_3) == (200, 0, 60, 60)
+    assert outer_area(img_3) == (200, 0, 60, 60)
 
     assert outer_area(div_4) == (0, 60, 100, 60)
-    assert outer_area(text_5) == (100, 60, 60, 60)
+    assert outer_area(img_5) == (100, 60, 60, 60)
 
     # c414-flt-fit-002
     page, = parse('''
@@ -4175,12 +4180,13 @@ def test_floats():
     # c414-flt-wrap-000 ... more or less
     page, = parse('''
         <style>
-            body { width: 100px; font: 60px Ahem }
+            body { width: 100px }
             p { float: left; height: 100px }
+            img { width: 60px; vertical-align: top }
         </style>
         <p style="width: 20px"></p>
         <p style="width: 100%"></p>
-        A B
+        <img src=pattern.png /><img src=pattern.png />
     ''')
     html, = page.children
     body, = html.children

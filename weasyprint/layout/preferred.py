@@ -159,16 +159,16 @@ def inline_preferred_minimum_width(context, box, outer=True, skip_stack=None,
     """
     return adjust(box, outer, max(inline_line_widths(
         context, box, outer, is_line_start,
-        width=0, skip_stack=skip_stack, first_line=first_line)))
+        minimum=True, skip_stack=skip_stack, first_line=first_line)))
 
 
 def inline_preferred_width(context, box, outer=True, is_line_start=False):
     """Return the preferred width for an ``InlineBox``."""
     return adjust(box, outer, max(
-        inline_line_widths(context, box, outer, is_line_start, width=None)))
+        inline_line_widths(context, box, outer, is_line_start, minimum=False)))
 
 
-def inline_line_widths(context, box, outer, is_line_start, width,
+def inline_line_widths(context, box, outer, is_line_start, minimum,
                        skip_stack=None, first_line=False):
     current_line = 0
     if skip_stack is None:
@@ -182,7 +182,7 @@ def inline_line_widths(context, box, outer, is_line_start, width,
         if isinstance(child, boxes.InlineBox):
             lines = list(inline_line_widths(
                 context, child, outer, is_line_start,
-                width, skip_stack, first_line))
+                minimum, skip_stack, first_line))
             if len(lines) == 1:
                 lines[0] = adjust(child, outer, lines[0])
             else:
@@ -197,13 +197,24 @@ def inline_line_widths(context, box, outer, is_line_start, width,
             child_text = child.text[(skip or 0):]
             if is_line_start:
                 child_text = child_text.lstrip(' ')
-            if width == 0 and child_text == ' ':
+            if minimum and child_text == ' ':
                 lines = [0, 0]
             else:
                 lines = list(text.line_widths(
-                    child_text, child.style, context.enable_hinting, width))
+                    child_text, child.style, context.enable_hinting,
+                    width=0 if minimum else None))
         else:
-            lines = [preferred_width(context, child)]
+            # http://www.w3.org/TR/css3-text/#line-break-details
+            # "The line breaking behavior of a replaced element
+            #  or other atomic inline is equivalent to that
+            #  of the Object Replacement Character (U+FFFC)."
+            # http://www.unicode.org/reports/tr14/#DescriptionOfProperties
+            # "By default, there is a break opportunity
+            #  both before and after any inline object."
+            if minimum:
+                lines = [0, preferred_width(context, child), 0]
+            else:
+                lines = [preferred_width(context, child)]
         # The first text line goes on the current line
         current_line += lines[0]
         if len(lines) > 1:
