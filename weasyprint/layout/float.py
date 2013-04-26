@@ -13,7 +13,7 @@ from __future__ import division, unicode_literals
 from .markers import list_marker_layout
 from .min_max import handle_min_max_width
 from .percentages import resolve_percentages, resolve_position_percentages
-from .preferred import shrink_to_fit
+from .preferred import shrink_to_fit, trailing_whitespace_size
 from .tables import table_wrapper_width
 from ..formatting_structure import boxes
 
@@ -117,8 +117,6 @@ def get_clearance(context, box, collapsed_margin=0):
 
 
 def avoid_collisions(context, box, containing_block, outer=True):
-    from .inlines import trailing_whitespace_size
-
     excluded_shapes = context.excluded_shapes
     position_y = box.position_y if outer else box.border_box_y()
 
@@ -127,8 +125,6 @@ def avoid_collisions(context, box, containing_block, outer=True):
 
     if box.border_height() == 0 and box.is_floated():
         return 0, 0, containing_block.width
-
-    box_width -= trailing_whitespace_size(context, box)
 
     while True:
         colliding_shapes = [

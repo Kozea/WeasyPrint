@@ -4196,6 +4196,25 @@ def test_floats():
     assert (line_1.position_x, line_1.position_y) == (20, 0)
     assert (line_2.position_x, line_2.position_y) == (0, 200)
 
+    # c414-flt-wrap-000 with text ... more or less
+    page, = parse('''
+        <style>
+            body { width: 100px; font: 60px Ahem; }
+            p { float: left; height: 100px }
+            img { width: 60px; vertical-align: top }
+        </style>
+        <p style="width: 20px"></p>
+        <p style="width: 100%"></p>
+        A B
+    ''')
+    html, = page.children
+    body, = html.children
+    p_1, p_2, anon_block = body.children
+    line_1, line_2 = anon_block.children
+    assert anon_block.position_y == 0
+    assert (line_1.position_x, line_1.position_y) == (20, 0)
+    assert (line_2.position_x, line_2.position_y) == (0, 200)
+
     # floats-placement-vertical-001b
     page, = parse('''
         <style>

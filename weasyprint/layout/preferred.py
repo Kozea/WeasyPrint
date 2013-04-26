@@ -157,19 +157,27 @@ def inline_preferred_minimum_width(context, box, outer=True, skip_stack=None,
     calculated.
 
     """
-    return adjust(box, outer, max(inline_line_widths(
-        context, box, outer, is_line_start,
-        minimum=True, skip_stack=skip_stack, first_line=first_line)))
+    widths = list(inline_line_widths(
+        context, box, outer, is_line_start, minimum=True,
+        skip_stack=skip_stack))
+
+    if first_line and len(widths) > 1:
+        del widths[1:]
+    else:
+        widths[-1] -= trailing_whitespace_size(context, box)
+    return adjust(box, outer, max(widths))
 
 
 def inline_preferred_width(context, box, outer=True, is_line_start=False):
     """Return the preferred width for an ``InlineBox``."""
-    return adjust(box, outer, max(
-        inline_line_widths(context, box, outer, is_line_start, minimum=False)))
+    widths = list(
+        inline_line_widths(context, box, outer, is_line_start, minimum=False))
+    widths[-1] -= trailing_whitespace_size(context, box)
+    return adjust(box, outer, max(widths))
 
 
 def inline_line_widths(context, box, outer, is_line_start, minimum,
-                       skip_stack=None, first_line=False):
+                       skip_stack=None):
     current_line = 0
     if skip_stack is None:
         skip = 0
@@ -181,8 +189,7 @@ def inline_line_widths(context, box, outer, is_line_start, minimum,
 
         if isinstance(child, boxes.InlineBox):
             lines = list(inline_line_widths(
-                context, child, outer, is_line_start,
-                minimum, skip_stack, first_line))
+                context, child, outer, is_line_start, minimum, skip_stack))
             if len(lines) == 1:
                 lines[0] = adjust(child, outer, lines[0])
             else:
@@ -220,10 +227,9 @@ def inline_line_widths(context, box, outer, is_line_start, minimum,
         if len(lines) > 1:
             # Forced line break
             yield current_line
-            if first_line:
-                return
             if len(lines) > 2:
-                yield max(lines[1:-1])
+                for line in lines[1:-1]:
+                    yield line
             current_line = lines[-1]
         is_line_start = lines[-1] == 0
         skip_stack = None
@@ -433,3 +439,33 @@ def replaced_preferred_width(box, outer=True):
         assert width.unit == 'px'
         width = width.value
     return adjust(box, outer, width)
+
+
+def trailing_whitespace_size(context, box):
+    """Return the size of the trailing whitespace of ``box``."""
+    from .inlines import split_text_box, split_first_line
+
+    while isinstance(box, (boxes.InlineBox, boxes.LineBox)):
+        if not box.children:
+            return 0
+        box = box.children[-1]
+    if not (isinstance(box, boxes.TextBox) and box.text and
+            box.style.white_space in ('normal', 'nowrap', 'pre-line')):
+        return 0
+    stripped_text = box.text.rstrip(' ')
+    if len(stripped_text) == len(box.text):
+        return 0
+    if stripped_text:
+        old_box, _, _ = split_text_box(context, box, None, None, 0)
+        assert old_box
+        stripped_box = box.copy_with_text(stripped_text)
+        stripped_box, resume, _ = split_text_box(
+            context, stripped_box, None, None, 0)
+        assert stripped_box is not None
+        assert resume is None
+        return old_box.width - stripped_box.width
+    else:
+        _, _, _, width, _, _ = split_first_line(
+            box.text, box.style, context.enable_hinting,
+            None, None)
+        return width

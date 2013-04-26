@@ -17,7 +17,7 @@ from .float import avoid_collisions, float_layout
 from .replaced import image_marker_layout
 from .min_max import handle_min_max_width, handle_min_max_height
 from .percentages import resolve_percentages, resolve_one_percentage
-from .preferred import shrink_to_fit, inline_preferred_minimum_width
+from .preferred import shrink_to_fit, inline_preferred_minimum_width, trailing_whitespace_size
 from .tables import find_in_flow_baseline, table_wrapper_width
 from ..text import split_first_line
 from ..formatting_structure import boxes
@@ -197,34 +197,6 @@ def skip_first_whitespace(box, skip_stack):
 
     assert skip_stack is None, 'unexpected skip inside %s' % box
     return None
-
-
-def trailing_whitespace_size(context, box):
-    """Return the size of the trailing whitespace of ``box``."""
-    while isinstance(box, (boxes.InlineBox, boxes.LineBox)):
-        if not box.children:
-            return 0
-        box = box.children[-1]
-    if not (isinstance(box, boxes.TextBox) and box.text and
-            box.style.white_space in ('normal', 'nowrap', 'pre-line')):
-        return 0
-    stripped_text = box.text.rstrip(' ')
-    if len(stripped_text) == len(box.text):
-        return 0
-    if stripped_text:
-        old_box, _, _ = split_text_box(context, box, None, None, 0)
-        assert old_box
-        stripped_box = box.copy_with_text(stripped_text)
-        stripped_box, resume, _ = split_text_box(
-            context, stripped_box, None, None, 0)
-        assert stripped_box is not None
-        assert resume is None
-        return old_box.width - stripped_box.width
-    else:
-        _, _, _, width, _, _ = split_first_line(
-            box.text, box.style, context.enable_hinting,
-            None, None)
-        return width
 
 
 def remove_last_whitespace(context, box):
