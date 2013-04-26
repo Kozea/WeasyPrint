@@ -316,11 +316,6 @@ def draw_border(context, box, enable_hinting):
 def draw_border_segment(context, enable_hinting, style, width, color, side,
                         border_edge, padding_edge):
     with stacked(context):
-        context.set_source_rgba(*color)
-        x_offset, y_offset = {
-            'top': (0, 1), 'bottom': (0, -1), 'left': (1, 0), 'right': (-1, 0),
-        }[side]
-
         if enable_hinting and (
                 # Borders smaller than 1 device unit would disappear
                 # without anti-aliasing.
@@ -329,6 +324,17 @@ def draw_border_segment(context, enable_hinting, style, width, color, side,
             # Avoid an artefact in the corner joining two solid borders
             # of the same color.
             context.set_antialias(cairo.ANTIALIAS_NONE)
+
+        if style in ('inset', 'outset'):
+            do_lighten = (side in ('top', 'left')) ^ (style == 'inset')
+            factor = 0.5 if do_lighten else -0.5
+            print(color, lighten(color, factor))
+            context.set_source_rgba(*lighten(color, factor))
+        else:
+            context.set_source_rgba(*color)
+
+        x_offset, y_offset = {'top': (0, 1), 'bottom': (0, -1),
+                              'left': (1, 0), 'right': (-1, 0)}[side]
 
         if style not in ('dotted', 'dashed'):
             # Clip on the trapezoid shape
@@ -367,7 +373,7 @@ def draw_border_segment(context, enable_hinting, style, width, color, side,
             def double_vector(p1, p2):
                 x1, y1 = p1
                 x2, y2 = p2
-                return 5 * x2 - 4 * x1, 5 * y2 - 4 * y1
+                return 2 * x2 - x1, 2 * y2 - y1
 
             border_start, border_stop = border_edge
             padding_start, padding_stop = padding_edge
@@ -380,12 +386,7 @@ def draw_border_segment(context, enable_hinting, style, width, color, side,
                 context.line_to(*point)
             context.clip()
 
-        if style in ('inset', 'outset'):
-            do_lighten = (side in ('top', 'left')) ^ (style == 'inset')
-            factor = 1 if do_lighten else -1
-            context.set_source_rgba(*lighten(color, 0.5 * factor))
-            context.paint()
-        elif style in ('groove', 'ridge'):
+        if style in ('groove', 'ridge'):
             # TODO: these would look better with more color stops
             """
             Divide the width in 2 and stroke lines in different colors
@@ -436,7 +437,6 @@ def draw_border_segment(context, enable_hinting, style, width, color, side,
             context.line_to(x2, y2)
             context.stroke()
         else:
-            assert style in ('solid', 'dotted', 'dashed')
             (x1, y1), (x2, y2) = border_edge
             if style == 'dotted':
                 # Half-way from the extremities of the border and padding
@@ -464,6 +464,7 @@ def draw_border_segment(context, enable_hinting, style, width, color, side,
                      \         /
                       +-------+
                 """
+
             length = ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
             dash = 2 * width
             if style == 'dotted':
