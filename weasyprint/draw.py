@@ -316,7 +316,7 @@ def draw_border(context, box, enable_hinting):
 def draw_border_segment(context, enable_hinting, style, width, color, side,
                         border_edge, padding_edge):
     with stacked(context):
-        if enable_hinting and (
+        if enable_hinting and style != 'dotted' and (
                 # Borders smaller than 1 device unit would disappear
                 # without anti-aliasing.
                 math.hypot(*context.user_to_device(width, 0)) >= 1 and
