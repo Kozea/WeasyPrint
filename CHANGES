@@ -1,6 +1,25 @@
 WeasyPrint changelog
 ====================
 
+Version 0.19.1
+--------------
+
+Released on 2013-04-30.
+
+Bug fix release:
+
+* Fix incorrect intrinsic width calculation
+  leading to unnecessary line breaks in floats, tables, etc.
+* Tweak border painting to look better
+* Fix unnecessary page break before big tables.
+* Fix table row overflowing at the bottom of the page
+  when there are margins above the table.
+* Fix ``position: fixed`` to actually repeat on every page.
+* Fix `#76 <https://github.com/Kozea/WeasyPrint/issues/76>`_:
+  repeat ``<thead>`` and ``<tfoot>`` elements on every page,
+  even with table border collapsing.
+
+
 Version 0.19
 ------------
 

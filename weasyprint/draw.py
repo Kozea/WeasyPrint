@@ -321,7 +321,7 @@ def draw_border_segment(context, enable_hinting, style, width, color, side,
                 # without anti-aliasing.
                 math.hypot(*context.user_to_device(width, 0)) >= 1 and
                 math.hypot(*context.user_to_device(0, width)) >= 1):
-            # Avoid an artefact in the corner joining two solid borders
+            # Avoid an artifact in the corner joining two solid borders
             # of the same color.
             context.set_antialias(cairo.ANTIALIAS_NONE)
 
