@@ -328,7 +328,6 @@ def draw_border_segment(context, enable_hinting, style, width, color, side,
         if style in ('inset', 'outset'):
             do_lighten = (side in ('top', 'left')) ^ (style == 'inset')
             factor = 0.5 if do_lighten else -0.5
-            print(color, lighten(color, factor))
             context.set_source_rgba(*lighten(color, factor))
         else:
             context.set_source_rgba(*color)
@@ -526,7 +525,35 @@ def draw_collapsed_borders(context, table, enable_hinting):
     # Add the end of the last row. No copy here, we own this list
     row_positions.append(row_positions[-1] + row_heights[-1])
     vertical_borders, horizontal_borders = table.collapsed_border_grid
+    if table.children[0].is_header:
+        header_rows = len(table.children[0].children)
+    else:
+        header_rows = 0
+    if table.children[-1].is_footer:
+        footer_rows = len(table.children[-1].children)
+    else:
+        footer_rows = 0
     skipped_rows = table.skipped_rows
+    if skipped_rows:
+        body_rows_offset = skipped_rows - header_rows
+    else:
+        body_rows_offset = 0
+    if header_rows == 0:
+        header_rows = -1
+    if footer_rows:
+        first_footer_row = grid_height - footer_rows - 1
+    else:
+        first_footer_row = grid_height + 1
+    original_grid_height = len(vertical_borders)
+    footer_rows_offset = original_grid_height - grid_height
+
+    def row_number(y, horizontal):
+        if y < (header_rows + int(horizontal)):
+            return y
+        elif y >= (first_footer_row + int(horizontal)):
+            return y + footer_rows_offset
+        else:
+            return y + body_rows_offset
 
     segments = []
 
@@ -538,12 +565,14 @@ def draw_collapsed_borders(context, table, enable_hinting):
                 if vertical else
                 (0 <= y <= grid_height and 0 <= x < grid_width)
             ):
-                _, (_, width, _) = border_list[skipped_rows + y][x]
+                yy = row_number(y, horizontal=not vertical)
+                _, (_, width, _) = border_list[yy][x]
                 result = max(result, width)
         return result / 2
 
     def add_vertical(x, y):
-        score, (style, width, color) = vertical_borders[skipped_rows + y][x]
+        yy = row_number(y, horizontal=False)
+        score, (style, width, color) = vertical_borders[yy][x]
         if width == 0 or color.alpha == 0:
             return
         half_width = width / 2
@@ -557,7 +586,8 @@ def draw_collapsed_borders(context, table, enable_hinting):
         segments.append((score, style, width, color, 'left', edge_1, edge_2))
 
     def add_horizontal(x, y):
-        score, (style, width, color) = horizontal_borders[skipped_rows + y][x]
+        yy = row_number(y, horizontal=True)
+        score, (style, width, color) = horizontal_borders[yy][x]
         if width == 0 or color.alpha == 0:
             return
         half_width = width / 2

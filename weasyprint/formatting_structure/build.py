@@ -503,29 +503,24 @@ def wrap_table(box, children):
     grid_width = grid_x
 
     row_groups = wrap_improper(box, rows, boxes.TableRowGroupBox)
-    if box.style.border_collapse == 'collapse':
-        # XXX For now table headers and footers in the collapsing border model
-        # are not repeated on every page.
-        row_groups = list(row_groups)
-    else:
-        # Extract the optional header and footer groups.
-        body_row_groups = []
-        header = None
-        footer = None
-        for group in row_groups:
-            display = group.style.display
-            if display == 'table-header-group' and header is None:
-                group.is_header = True
-                header = group
-            elif display == 'table-footer-group' and footer is None:
-                group.is_footer = True
-                footer = group
-            else:
-                body_row_groups.append(group)
-        row_groups = (
-            ([header] if header is not None else []) +
-            body_row_groups +
-            ([footer] if footer is not None else []))
+    # Extract the optional header and footer groups.
+    body_row_groups = []
+    header = None
+    footer = None
+    for group in row_groups:
+        display = group.style.display
+        if display == 'table-header-group' and header is None:
+            group.is_header = True
+            header = group
+        elif display == 'table-footer-group' and footer is None:
+            group.is_footer = True
+            footer = group
+        else:
+            body_row_groups.append(group)
+    row_groups = (
+        ([header] if header is not None else []) +
+        body_row_groups +
+        ([footer] if footer is not None else []))
 
     # Assign a (x,y) position in the grid to each cell.
     # rowspan can not extend beyond a row group, so each row group
