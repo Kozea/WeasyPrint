@@ -91,6 +91,6 @@ def _constraint_image_sizing(
     if intrinsic_ratio is None:
         return constraint_width, constraint_height
     elif cover ^ (constraint_width > constraint_height * intrinsic_ratio):
-        return constraint_height / intrinsic_ratio, constraint_height
+        return constraint_height * intrinsic_ratio, constraint_height
     else:
-        return constraint_width, constraint_width * intrinsic_ratio
+        return constraint_width, constraint_width / intrinsic_ratio
