@@ -693,9 +693,9 @@ def counter(tokens, default_integer):
     assert token, 'got an empty token list'
     results = []
     while token is not None:
-        counter_name = get_keyword(token)
-        if counter_name is None:
+        if token.type != 'IDENT':
             return  # expected a keyword here
+        counter_name = token.value
         if counter_name in ('none', 'initial', 'inherit'):
             raise InvalidValues('Invalid counter name: ' + counter_name)
         token = next(tokens, None)

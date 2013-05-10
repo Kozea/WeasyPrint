@@ -68,6 +68,10 @@ def test_counters():
         'counter_increment': [('foo', 1), ('bar', 2), ('baz', 1)]}
     assert expand_to_dict('counter-reset: foo') == {
         'counter_reset': [('foo', 0)]}
+    assert expand_to_dict('counter-reset: FoO') == {
+        'counter_reset': [('FoO', 0)]}
+    assert expand_to_dict('counter-increment: foo bAr 2 Bar') == {
+        'counter_increment': [('foo', 1), ('bAr', 2), ('Bar', 1)]}
     assert expand_to_dict('counter-reset: none') == {
         'counter_reset': []}
     assert expand_to_dict(
