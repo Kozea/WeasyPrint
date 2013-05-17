@@ -117,6 +117,12 @@ GDK-PixBuf is part of GTK+, which also depends on cairo and Pango.
 
     sudo apt-get install python-dev python-pip python-lxml libgtk2.0-0 libffi-dev
 
+Fedora
+~~~~~~
+
+.. code-block:: sh
+
+    sudo yum install python-devel python-pip python-lxml cairo pango gdk-pixbuf2 libffi-devel
 
 Archlinux
 ~~~~~~~~~
