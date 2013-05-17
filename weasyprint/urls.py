@@ -260,7 +260,12 @@ def default_url_fetcher(url):
         url = iri_to_uri(url)
         result, mime_type, charset = urlopen_contenttype(Request(
             url, headers={'User-Agent': VERSION_STRING}))
-        return dict(file_obj=result, redirected_url=result.geturl(),
+        redirected_url = result.geturl()
+
+        if charset:
+            result = codecs.EncodedFile(result, charset, errors="replace")
+
+        return dict(file_obj=result, redirected_url=redirected_url,
                     mime_type=mime_type, encoding=charset)
     else:
         raise ValueError('Not an absolute URI: %r' % url)
