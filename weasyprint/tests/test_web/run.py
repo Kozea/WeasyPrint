@@ -57,7 +57,7 @@ def render():
         assert 'fuu' not in html
         # Save the input HTML
         with open(INPUT, 'w') as fd:
-            fd.write(html)
+            fd.write(html.encode('utf-8'))
 
     html = HTML(INPUT, encoding='utf8')
     html.write_pdf(PDF_OUTPUT)
