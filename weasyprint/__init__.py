@@ -29,7 +29,7 @@ __all__ = ['HTML', 'CSS', 'Document', 'Page', 'default_url_fetcher',
 import lxml.etree
 
 from .urls import (default_url_fetcher, wrap_url_fetcher,
-                   path2url, ensure_url, url_is_absolute)
+                   path2url, ensure_url, url_is_absolute, URLError)
 from .logger import LOGGER
 # Some import are at the end of the file (after the CSS class) is defined
 # to work around circular imports.
@@ -268,19 +268,24 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
             base_url = path2url(filename)
         return 'filename', filename, base_url, None
     if nones == [True, True, False, True, True, True]:
-        result = url_fetcher(url)
-        if check_css_mime_type and result['mime_type'] != 'text/css':
-            LOGGER.warn(
-                'Unsupported stylesheet type %s for %s',
-                result['mime_type'], result['redirected_url'])
-            return 'string', '', base_url, None
-        protocol_encoding = result.get('encoding')
-        if base_url is None:
-            base_url = result.get('redirected_url', url)
-        if 'string' in result:
-            return 'string', result['string'], base_url, protocol_encoding
+        try:
+            result = url_fetcher(url)
+        except URLError as e:
+          LOGGER.warn('Failed to load stylesheet %s: %s', url, e)
+          return 'string', '', base_url, None
         else:
-            return 'file_obj', result['file_obj'], base_url, protocol_encoding
+          if check_css_mime_type and result['mime_type'] != 'text/css':
+              LOGGER.warn(
+                  'Unsupported stylesheet type %s for %s',
+                  result['mime_type'], result['redirected_url'])
+              return 'string', '', base_url, None
+          protocol_encoding = result.get('encoding')
+          if base_url is None:
+              base_url = result.get('redirected_url', url)
+          if 'string' in result:
+              return 'string', result['string'], base_url, protocol_encoding
+          else:
+              return 'file_obj', result['file_obj'], base_url, protocol_encoding
     if nones == [True, True, True, False, True, True]:
         if base_url is None:
             # filesystem file-like objects have a 'name' attribute.
