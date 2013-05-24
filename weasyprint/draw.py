@@ -668,12 +668,12 @@ def draw_text(context, textbox, enable_hinting):
     values = textbox.style.text_decoration
     if 'overline' in values:
         draw_text_decoration(context, textbox, 0, enable_hinting)
-    elif 'underline' in values:
+    if 'underline' in values:
         draw_text_decoration(
             context, textbox,
             textbox.baseline + 0.15 * textbox.style.font_size,
             enable_hinting)
-    elif 'line-through' in values:
+    if 'line-through' in values:
         draw_text_decoration(context, textbox, textbox.height * 0.5,
                              enable_hinting)
 
