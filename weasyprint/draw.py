@@ -667,10 +667,7 @@ def draw_text(context, textbox, enable_hinting):
     show_first_line(context, textbox.pango_layout, enable_hinting)
     values = textbox.style.text_decoration
     if 'overline' in values:
-        draw_text_decoration(
-            context, textbox,
-            textbox.baseline - 0.15 * textbox.style.font_size,
-            enable_hinting)
+        draw_text_decoration(context, textbox, 0, enable_hinting)
     elif 'underline' in values:
         draw_text_decoration(
             context, textbox,
