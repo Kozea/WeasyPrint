@@ -42,7 +42,7 @@ div { border: 10px solid; background: #ddd; }
 def index():
     if os.path.isfile(INPUT):
         with open(INPUT) as fd:
-            content = fd.read()
+            content = fd.read().decode('utf-8') or DEFAULT_CONTENT
     else:
         content = DEFAULT_CONTENT
     return render_template('index.html.jinja2', content=content)
