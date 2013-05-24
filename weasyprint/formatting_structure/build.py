@@ -1107,7 +1107,7 @@ TEXT_CONTENT_EXTRACTORS = {
     'contents': box_text_contents,
     'content-element': box_text_content_element,
     'content-before': box_text_content_before,
-    'content-before': box_text_content_after}
+    'content-after': box_text_content_after}
 
 
 def resolve_bookmark_labels(box):
