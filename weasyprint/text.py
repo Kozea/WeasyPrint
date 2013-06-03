@@ -65,6 +65,9 @@ ffi.cdef('''
     typedef void* gpointer;
     typedef ... cairo_t;
     typedef ... PangoLayout;
+    typedef ... PangoContext;
+    typedef ... PangoFontMetrics;
+    typedef ... PangoLanguage;
     typedef ... PangoFontDescription;
     typedef ... PangoLayoutIter;
     typedef ... PangoAttrList;
@@ -150,6 +153,27 @@ ffi.cdef('''
     void pango_layout_line_get_extents (
         PangoLayoutLine *line,
         PangoRectangle *ink_rect, PangoRectangle *logical_rect);
+
+    PangoContext *      pango_layout_get_context    (PangoLayout *layout);
+    PangoFontMetrics *  pango_context_get_metrics   (PangoContext *context,
+                                                     const PangoFontDescription *desc,
+                                                     PangoLanguage *language);
+
+    void    pango_font_metrics_unref            (PangoFontMetrics *metrics);
+    int     pango_font_metrics_get_ascent       (PangoFontMetrics *metrics);
+    int     pango_font_metrics_get_descent      (PangoFontMetrics *metrics);
+    int     pango_font_metrics_get_approximate_char_width
+                                                (PangoFontMetrics *metrics);
+    int     pango_font_metrics_get_approximate_digit_width
+                                                (PangoFontMetrics *metrics);
+    int     pango_font_metrics_get_underline_thickness
+                                                (PangoFontMetrics *metrics);
+    int     pango_font_metrics_get_underline_position
+                                                (PangoFontMetrics *metrics);
+    int     pango_font_metrics_get_strikethrough_thickness
+                                                (PangoFontMetrics *metrics);
+    int     pango_font_metrics_get_strikethrough_position
+                                                (PangoFontMetrics *metrics);
 
     void pango_cairo_update_layout (cairo_t *cr, PangoLayout *layout);
     void pango_cairo_show_layout_line (cairo_t *cr, PangoLayoutLine *line);
@@ -286,6 +310,28 @@ class Layout(object):
         self.text_bytes = bytestring
         pango.pango_layout_set_text(self.layout, text, -1)
 
+    def get_font_metrics(self):
+        context = pango.pango_layout_get_context(self.layout)
+        return FontMetrics(context, self.font)
+
+
+class FontMetrics(object):
+    def __init__(self, context, font):
+        self.metrics = ffi.gc(
+                pango.pango_context_get_metrics(context, font, ffi.NULL),
+                pango.pango_font_metrics_unref)
+
+    def __dir__(self):
+        return ['ascent', 'descent',
+                'approximate_char_width', 'approximate_digit_width',
+                'underline_thickness', 'underline_position',
+                'strikethrough_thickness', 'strikethrough_position']
+
+    def __getattr__(self, key):
+        if key in dir(self):
+            return units_to_double(
+                getattr(pango, 'pango_font_metrics_get_' + key)(self.metrics))
+    
 
 def create_layout(text, style, hinting, max_width):
     """Return an opaque Pango layout with default Pango line-breaks.
