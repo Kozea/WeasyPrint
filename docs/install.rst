@@ -59,11 +59,13 @@ Now let’s try it:
 You should see warnings about unsupported CSS 3 stuff; this is expected.
 In the PDF you should see the WeasyPrint logo on the first page.
 
-You can also play with :ref:`navigator`:
+You can also play with :ref:`navigator`:. Start it with:
 
 .. code-block:: sh
 
     python -m weasyprint.navigator
+
+… and open your browser at http://127.0.0.1:5000/. Read more :ref:`in the tutorial <navigator>`.
 
 If everything goes well, you’re ready to :doc:`start using </tutorial>`
 WeasyPrint! Otherwise, please copy the full error message and
