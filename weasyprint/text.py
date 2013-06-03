@@ -155,9 +155,9 @@ ffi.cdef('''
         PangoRectangle *ink_rect, PangoRectangle *logical_rect);
 
     PangoContext *      pango_layout_get_context    (PangoLayout *layout);
-    PangoFontMetrics *  pango_context_get_metrics   (PangoContext *context,
-                                                     const PangoFontDescription *desc,
-                                                     PangoLanguage *language);
+    PangoFontMetrics *  pango_context_get_metrics   (
+        PangoContext *context, const PangoFontDescription *desc,
+        PangoLanguage *language);
 
     void    pango_font_metrics_unref            (PangoFontMetrics *metrics);
     int     pango_font_metrics_get_ascent       (PangoFontMetrics *metrics);
@@ -318,8 +318,8 @@ class Layout(object):
 class FontMetrics(object):
     def __init__(self, context, font):
         self.metrics = ffi.gc(
-                pango.pango_context_get_metrics(context, font, ffi.NULL),
-                pango.pango_font_metrics_unref)
+            pango.pango_context_get_metrics(context, font, ffi.NULL),
+            pango.pango_font_metrics_unref)
 
     def __dir__(self):
         return ['ascent', 'descent',
@@ -331,7 +331,7 @@ class FontMetrics(object):
         if key in dir(self):
             return units_to_double(
                 getattr(pango, 'pango_font_metrics_get_' + key)(self.metrics))
-    
+
 
 def create_layout(text, style, hinting, max_width):
     """Return an opaque Pango layout with default Pango line-breaks.
