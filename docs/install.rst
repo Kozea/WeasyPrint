@@ -59,7 +59,7 @@ Now let’s try it:
 You should see warnings about unsupported CSS 3 stuff; this is expected.
 In the PDF you should see the WeasyPrint logo on the first page.
 
-You can also play with :ref:`navigator`:. Start it with:
+You can also play with :ref:`navigator`:\ . Start it with:
 
 .. code-block:: sh
 
