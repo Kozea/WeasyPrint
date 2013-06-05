@@ -100,10 +100,6 @@ def draw_stacking_context(context, stacking_context, enable_hinting):
                 bottom - top)
             context.clip()
 
-        if box.style.overflow != 'visible':
-            context.rectangle(*box_rectangle(box, 'padding-box'))
-            context.clip()
-
         if box.style.opacity < 1:
             context.push_group()
 
@@ -118,6 +114,13 @@ def draw_stacking_context(context, stacking_context, enable_hinting):
             # The canvas background was removed by set_canvas_background
             draw_box_background_and_border(
                 context, stacking_context.page, box, enable_hinting)
+
+        if box.style.overflow != 'visible':
+            # Only clip the content and the children:
+            # - the background is already clipped
+            # - the border must *not* be clipped
+            context.rectangle(*box_rectangle(box, 'padding-box'))
+            context.clip()
 
         # Point 3
         for child_context in stacking_context.negative_z_contexts:

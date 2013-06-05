@@ -2106,9 +2106,28 @@ def test_overflow():
                     margin: 2px;
                     padding-bottom: 2px;
                     border-bottom: 1px transparent solid; }
-            body { height: 1px; overflow: hidden; font-size:0 }
+            body { height: 1px; overflow: hidden; font-size: 0 }
         </style>
         <div><img src="pattern.png"></div>
+    ''')
+
+    # Assert that the border is not clipped by overflow: hidden
+    assert_pixels('border_box_overflow', 8, 8, [
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+B+B+B+B+_+_,
+        _+_+B+_+_+B+_+_,
+        _+_+B+_+_+B+_+_,
+        _+_+B+B+B+B+_+_,
+        _+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { size: 8px; background: #fff; margin: 2px; }
+            div { width: 2px; height: 2px; overflow: hidden;
+                  border: 1px solid blue; }
+        </style>
+        <div></div>
     ''')
 
 
