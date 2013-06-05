@@ -15,6 +15,23 @@ from __future__ import division, unicode_literals
 from ..formatting_structure import boxes
 
 
+def _percentage(value, refer_to):
+    """Get the value corresponding to the value/percentage and the reference
+
+    ``refer_to`` is the length for 100%. If ``refer_to`` is not a number, it
+    just replaces percentages.
+
+    """
+    if value == 'auto':
+        result = value
+    elif value.unit == 'px':
+        result = value.value
+    else:
+        assert value.unit == '%'
+        result = value.value * refer_to / 100.
+    return result
+
+
 def resolve_one_percentage(box, property_name, refer_to):
     """Set a used length value from a computed length value.
 
@@ -24,15 +41,8 @@ def resolve_one_percentage(box, property_name, refer_to):
     """
     # box.style has computed values
     value = box.style[property_name]
-    if value == 'auto':
-        result = value
-    elif value.unit == 'px':
-        result = value.value
-    else:
-        assert value.unit == '%'
-        result = value.value * refer_to / 100.
     # box attributes are used values
-    setattr(box, property_name, result)
+    setattr(box, property_name, _percentage(value, refer_to))
 
 
 def resolve_position_percentages(box, containing_block):
@@ -104,3 +114,13 @@ def resolve_percentages(box, containing_block):
             box.height -= box.padding_top + box.padding_bottom
     else:
         assert box.style.box_sizing == 'content-box'
+
+
+def resolve_radiii_percentages(box):
+    corners = ('top_left', 'top_right', 'bottom_right', 'bottom_left')
+    for corner in corners:
+        property_name = 'border_%s_radius' % corner
+        rx, ry = box.style[property_name]
+        rx = _percentage(rx, box.border_width())
+        ry = _percentage(ry, box.border_height())
+        setattr(box, property_name, (rx, ry))

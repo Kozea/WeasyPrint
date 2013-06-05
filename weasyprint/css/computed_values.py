@@ -340,6 +340,15 @@ def border_width(computer, name, value):
     return length(computer, name, value, pixels_only=True)
 
 
+@register_computer('border-top-left-radius')
+@register_computer('border-top-right-radius')
+@register_computer('border-bottom-left-radius')
+@register_computer('border-bottom-right-radius')
+def border_radius(computer, name, values):
+    """Compute the ``border-*-radius`` properties."""
+    return [length(computer, name, value) for value in values]
+
+
 @register_computer('content')
 def content(computer, name, values):
     """Compute the ``content`` property."""

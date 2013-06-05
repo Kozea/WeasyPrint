@@ -20,9 +20,13 @@ import cairocffi as cairo
 
 from .formatting_structure import boxes
 from .layout.backgrounds import box_rectangle
+from .layout.percentages import resolve_radiii_percentages
 from .stacking import StackingContext
 from .text import show_first_line
 from .compat import xrange
+
+
+ARC_TO_BEZIER = 4 * (2 ** .5 - 1) / 3
 
 
 @contextlib.contextmanager
@@ -121,6 +125,8 @@ def draw_stacking_context(context, stacking_context, enable_hinting):
             # - the border must *not* be clipped
             context.rectangle(*box_rectangle(box, 'padding-box'))
             context.clip()
+            resolve_radiii_percentages(box)
+            clip_border_radii(context, box.border_radii())
 
         # Point 3
         for child_context in stacking_context.negative_z_contexts:
@@ -173,30 +179,74 @@ def draw_stacking_context(context, stacking_context, enable_hinting):
             context.paint_with_alpha(box.style.opacity)
 
 
+def clip_border_radii(context, radii):
+    """Clip the border radius box.
+
+    Inspired by Cairo Cookbook
+    http://cairographics.org/cookbook/roundedrectangles/
+
+    """
+    x, y, width, height, tl, tr, br, bl = radii
+
+    if 0 in tl:
+        tl = (0, 0)
+    if 0 in tr:
+        tr = (0, 0)
+    if 0 in br:
+        br = (0, 0)
+    if 0 in bl:
+        bl = (0, 0)
+
+    if (tl, tr, br, bl) == 4 * ((0, 0),):
+        # Don't clip if the radii are 0
+        return
+
+    (tlh, tlv), (trh, trv), (brh, brv), (blh, blv) = tl, tr, br, bl
+
+    context.new_path()
+    context.move_to(x + tlh, y)
+    context.rel_line_to(width - 2 * trh, 0)
+    context.rel_curve_to(
+        ARC_TO_BEZIER * trh, 0, trh, ARC_TO_BEZIER * trv, trh, trv)
+    context.rel_line_to(0, height - trv - brv)
+    context.rel_curve_to(
+        0, ARC_TO_BEZIER * brv, ARC_TO_BEZIER * brh - brh, brv, -brh, brv)
+    context.rel_line_to(-width + blh + brh, 0)
+    context.rel_curve_to(
+        -ARC_TO_BEZIER * blh, 0, -blh, -ARC_TO_BEZIER * blv, -blh, -blv)
+    context.rel_line_to(0, -height + tlv + blv)
+    context.rel_curve_to(
+        0, -ARC_TO_BEZIER * tlv, tlh - ARC_TO_BEZIER * tlh, -tlv, tlh, -tlv)
+    context.close_path()
+
+    context.clip()
+
+
 def draw_background(context, bg, enable_hinting):
     """Draw the background color and image to a ``cairo.Context``."""
     if bg is None:
         return
 
-    # Background color
-    if bg.color.alpha > 0:
-        with stacked(context):
-            if enable_hinting:
-                # Prefer crisp edges on background rectangles.
-                context.set_antialias(cairo.ANTIALIAS_NONE)
+    with stacked(context):
+        clip_border_radii(context, bg.layers[-1].border_radii)
 
-            painting_area = bg.layers[-1].painting_area
-            if painting_area:
-                context.rectangle(*painting_area)
-                context.clip()
-            #else: unrestricted, whole page box
+        # Background color
+        if bg.color.alpha > 0:
+            with stacked(context):
+                if enable_hinting:
+                    # Prefer crisp edges on background rectangles.
+                    context.set_antialias(cairo.ANTIALIAS_NONE)
 
-            context.set_source_rgba(*bg.color)
-            context.paint()
+                painting_area = bg.layers[-1].painting_area
+                if painting_area:
+                    context.rectangle(*painting_area)
+                    context.clip()
+                context.set_source_rgba(*bg.color)
+                context.paint()
 
-    # Paint in reversed order: first layer is "closest" to the viewer.
-    for layer in reversed(bg.layers):
-        draw_background_image(context, layer, bg.image_rendering)
+        # Paint in reversed order: first layer is "closest" to the viewer.
+        for layer in reversed(bg.layers):
+            draw_background_image(context, layer, bg.image_rendering)
 
 
 def draw_background_image(context, layer, image_rendering):

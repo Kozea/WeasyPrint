@@ -194,6 +194,14 @@ class Box(object):
         return (self.border_box_x(), self.border_box_y(),
                 self.border_width(), self.border_height())
 
+    def border_radii(self):
+        """Return the corner radii of the border box."""
+        return self.hit_area() + (
+            self.border_top_left_radius,
+            self.border_top_right_radius,
+            self.border_bottom_right_radius,
+            self.border_bottom_left_radius)
+
     # Positioning schemes
 
     def is_floated(self):

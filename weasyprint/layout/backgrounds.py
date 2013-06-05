@@ -15,13 +15,14 @@ from itertools import cycle
 
 from ..formatting_structure import boxes
 from . import replaced
+from .percentages import resolve_radiii_percentages
 
 
 Background = namedtuple('Background', 'color, layers, image_rendering')
 BackgroundLayer = namedtuple(
     'BackgroundLayer',
     'image, size, position, repeat, unbounded, '
-    'painting_area, positioning_area')
+    'painting_area, positioning_area, border_radii')
 
 
 def box_rectangle(box, which_rectangle):
@@ -92,6 +93,9 @@ def percentage(value, refer_to):
 def layout_background_layer(box, page, image, size, clip, repeat, origin,
                             position, attachment):
 
+    # Resolve percentages in border-radius properties
+    resolve_radiii_percentages(box)
+
     if box is not page:
         painting_area = box_rectangle(box, clip)
     else:
@@ -102,7 +106,7 @@ def layout_background_layer(box, page, image, size, clip, repeat, origin,
         return BackgroundLayer(
             image=None, unbounded=(box is page), painting_area=painting_area,
             size='unused', position='unused', repeat='unused',
-            positioning_area='unused')
+            positioning_area='unused', border_radii=box.border_radii())
 
     if attachment == 'fixed':
         # Initial containing block
@@ -164,7 +168,8 @@ def layout_background_layer(box, page, image, size, clip, repeat, origin,
         repeat=repeat,
         unbounded=(box is page),
         painting_area=painting_area,
-        positioning_area=positioning_area)
+        positioning_area=positioning_area,
+        border_radii=box.border_radii())
 
 
 def set_canvas_background(page):

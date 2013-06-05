@@ -535,6 +535,21 @@ def border_spacing(tokens):
             return tuple(lengths)
 
 
+@validator('border-top-right-radius')
+@validator('border-bottom-right-radius')
+@validator('border-bottom-left-radius')
+@validator('border-top-left-radius')
+def border_corner_radius(tokens):
+    """Validator for the `border-*-radius` properties."""
+    lengths = [
+        get_length(token, negative=False, percentage=True) for token in tokens]
+    if all(lengths):
+        if len(lengths) == 1:
+            return (lengths[0], lengths[0])
+        elif len(lengths) == 2:
+            return tuple(lengths)
+
+
 @validator('border-top-style')
 @validator('border-right-style')
 @validator('border-left-style')
@@ -1310,6 +1325,51 @@ def expand_four_sides(base_url, name, tokens):
         # to yield (name, value)
         result, = validate_non_shorthand(
             base_url, new_name, [token], required=True)
+        yield result
+
+
+@expander('border-radius')
+def border_radius(base_url, name, tokens):
+    """Validator for the `border-radius` property."""
+    current = horizontal = []
+    vertical = []
+    for token in tokens:
+        if token.type == 'DELIM' and token.value == '/':
+            if current is horizontal:
+                if token == tokens[-1]:
+                    raise InvalidValues('Expected value after "/" separator')
+                else:
+                    current = vertical
+            else:
+                raise InvalidValues('Expected only one "/" separator')
+        else:
+            length = get_length(token, negative=False, percentage=True)
+            if length is None:
+                raise InvalidValues('Expected length, got %s' % token.as_css())
+            else:
+                current.append(length)
+
+    if not vertical:
+        vertical = horizontal[:]
+
+    for values in horizontal, vertical:
+        # Make sure we have 4 tokens
+        if len(values) == 1:
+            values *= 4
+        elif len(values) == 2:
+            values *= 2  # (br, bl) defaults to (tl, tr)
+        elif len(values) == 3:
+            values.append(values[1])  # bl defaults to tr
+        elif len(values) != 4:
+            raise InvalidValues(
+                'Expected 1 to 4 token components got %i' % len(values))
+    corners = ('top-left', 'top-right', 'bottom-right', 'bottom-left')
+    for corner, tokens in zip(corners, zip(horizontal, vertical)):
+        new_name = 'border-%s-radius' % corner
+        # validate_non_shorthand returns [(name, value)], we want
+        # to yield (name, value)
+        result, = validate_non_shorthand(
+            base_url, new_name, tokens, required=True)
         yield result
 
 

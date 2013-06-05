@@ -120,6 +120,12 @@ INITIAL_VALUES = {
     # CSS3 User Interface: http://www.w3.org/TR/css3-ui/#box-sizing
     'box_sizing': 'content-box',
 
+    # CSS3 Backgrounds and Borders: http://www.w3.org/TR/css3-background/
+    'border_top_left_radius': (Dimension(0, 'px'), Dimension(0, 'px')),
+    'border_top_right_radius': (Dimension(0, 'px'), Dimension(0, 'px')),
+    'border_bottom_left_radius': (Dimension(0, 'px'), Dimension(0, 'px')),
+    'border_bottom_right_radius': (Dimension(0, 'px'), Dimension(0, 'px')),
+
     # CSS3 Color: http://www.w3.org/TR/css3-color/#transparency
     'opacity': 1,
 
