@@ -191,16 +191,40 @@ class Box(object):
         """Return the (x, y, w, h) rectangle where the box is clickable."""
         # "Border area. That's the area that hit-testing is done on."
         # http://lists.w3.org/Archives/Public/www-style/2012Jun/0318.html
+        # TODO: manage the border radii, use outer_border_radii instead
         return (self.border_box_x(), self.border_box_y(),
                 self.border_width(), self.border_height())
 
-    def border_radii(self):
-        """Return the corner radii of the border box."""
-        return self.hit_area() + (
-            self.border_top_left_radius,
-            self.border_top_right_radius,
-            self.border_bottom_right_radius,
-            self.border_bottom_left_radius)
+    def border_radii(self, ratio):
+        """Position, size and radii of a box inside the outer border box.
+
+        ``ratio`` is the percentage of the position from the outer border
+        box. 0 is equivalent to border box, 1 to padding box.
+
+        """
+        bt = self.border_top_width * ratio
+        br = self.border_right_width * ratio
+        bb = self.border_bottom_width * ratio
+        bl = self.border_left_width * ratio
+        return (
+            self.border_box_x() + bl, self.border_box_y() + bt,
+            self.border_width() - bl - br, self.border_height() - bt - bb,
+            (max(0, self.border_top_left_radius[0] - bl),
+             max(0, self.border_top_left_radius[1] - bt)),
+            (max(0, self.border_top_right_radius[0] - br),
+             max(0, self.border_top_right_radius[1] - bt)),
+            (max(0, self.border_bottom_right_radius[0] - br),
+             max(0, self.border_bottom_right_radius[1] - bb)),
+            (max(0, self.border_bottom_left_radius[0] - bl),
+             max(0, self.border_bottom_left_radius[1] - bb)))
+
+    def inner_border_radii(self):
+        """Return the position, size and radii of the inner border box."""
+        return self.border_radii(ratio=1)
+
+    def outer_border_radii(self):
+        """Return the position, size and radii of the outer border box."""
+        return self.border_radii(ratio=0)
 
     # Positioning schemes
 

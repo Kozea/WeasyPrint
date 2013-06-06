@@ -52,6 +52,9 @@ def box_rectangle(box, which_rectangle):
 
 def layout_box_backgrounds(page, box, get_image_from_uri):
     """Fetch and position background images."""
+    # Resolve percentages in border-radius properties
+    resolve_radiii_percentages(box)
+
     for child in box.all_children():
         layout_box_backgrounds(page, child, get_image_from_uri)
 
@@ -93,9 +96,6 @@ def percentage(value, refer_to):
 def layout_background_layer(box, page, image, size, clip, repeat, origin,
                             position, attachment):
 
-    # Resolve percentages in border-radius properties
-    resolve_radiii_percentages(box)
-
     if box is not page:
         painting_area = box_rectangle(box, clip)
     else:
@@ -106,7 +106,7 @@ def layout_background_layer(box, page, image, size, clip, repeat, origin,
         return BackgroundLayer(
             image=None, unbounded=(box is page), painting_area=painting_area,
             size='unused', position='unused', repeat='unused',
-            positioning_area='unused', border_radii=box.border_radii())
+            positioning_area='unused', border_radii=box.outer_border_radii())
 
     if attachment == 'fixed':
         # Initial containing block
@@ -169,7 +169,7 @@ def layout_background_layer(box, page, image, size, clip, repeat, origin,
         unbounded=(box is page),
         painting_area=painting_area,
         positioning_area=positioning_area,
-        border_radii=box.border_radii())
+        border_radii=box.outer_border_radii())
 
 
 def set_canvas_background(page):
@@ -190,10 +190,11 @@ def set_canvas_background(page):
                 break
 
     if chosen_box.background:
+        painting_area = box_rectangle(page, 'padding-box')
         page.canvas_background = chosen_box.background._replace(
             # TODO: shouldn’t background-clip be considered here?
             layers=[
-                l._replace(painting_area=box_rectangle(page, 'padding-box'))
+                l._replace(painting_area=painting_area)
                 for l in chosen_box.background.layers])
         chosen_box.background = None
     else:

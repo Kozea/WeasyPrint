@@ -19,8 +19,6 @@ import operator
 import cairocffi as cairo
 
 from .formatting_structure import boxes
-from .layout.backgrounds import box_rectangle
-from .layout.percentages import resolve_radiii_percentages
 from .stacking import StackingContext
 from .text import show_first_line
 from .compat import xrange
@@ -51,8 +49,11 @@ def lighten(color, offset):
 def draw_page(page, context, enable_hinting):
     """Draw the given PageBox."""
     stacking_context = StackingContext.from_page(page)
-    draw_background(context, stacking_context.box.background, enable_hinting)
-    draw_background(context, page.canvas_background, enable_hinting)
+    draw_background(
+        context, stacking_context.box.background, enable_hinting,
+        clip_box=False)
+    draw_background(context, page.canvas_background, enable_hinting,
+        clip_box=False)
     draw_border(context, page, enable_hinting)
     draw_stacking_context(context, stacking_context, enable_hinting)
 
@@ -123,10 +124,7 @@ def draw_stacking_context(context, stacking_context, enable_hinting):
             # Only clip the content and the children:
             # - the background is already clipped
             # - the border must *not* be clipped
-            context.rectangle(*box_rectangle(box, 'padding-box'))
-            context.clip()
-            resolve_radiii_percentages(box)
-            clip_border_radii(context, box.border_radii())
+            clip_rounded_box(context, box.inner_border_radii())
 
         # Point 3
         for child_context in stacking_context.negative_z_contexts:
@@ -179,14 +177,26 @@ def draw_stacking_context(context, stacking_context, enable_hinting):
             context.paint_with_alpha(box.style.opacity)
 
 
-def clip_border_radii(context, radii):
-    """Clip the border radius box.
+def clip_rounded_box(context, radii):
+    """Clip the border radius box."""
+    context.new_path()
+    border_radii_path(context, radii)
+    context.close_path()
+    context.clip()
+
+
+def border_radii_path(context, radii):
+    """Draw the path of the border radius box.
+
+    ``widths`` is a tuple of the inner widths (top, right, bottom, left) from
+    the border box. Radii are adjusted from these values. Default is (0, 0, 0,
+    0).
 
     Inspired by Cairo Cookbook
     http://cairographics.org/cookbook/roundedrectangles/
 
     """
-    x, y, width, height, tl, tr, br, bl = radii
+    x, y, w, h, tl, tr, br, bl = radii
 
     if 0 in tl:
         tl = (0, 0)
@@ -198,37 +208,40 @@ def clip_border_radii(context, radii):
         bl = (0, 0)
 
     if (tl, tr, br, bl) == 4 * ((0, 0),):
-        # Don't clip if the radii are 0
+        # No radius, draw a rectangle
+        context.rectangle(x, y, w, h)
         return
 
     (tlh, tlv), (trh, trv), (brh, brv), (blh, blv) = tl, tr, br, bl
 
-    context.new_path()
     context.move_to(x + tlh, y)
-    context.rel_line_to(width - 2 * trh, 0)
+    context.rel_line_to(w - tlh - trh, 0)
     context.rel_curve_to(
         ARC_TO_BEZIER * trh, 0, trh, ARC_TO_BEZIER * trv, trh, trv)
-    context.rel_line_to(0, height - trv - brv)
+    context.rel_line_to(0, h - trv - brv)
     context.rel_curve_to(
-        0, ARC_TO_BEZIER * brv, ARC_TO_BEZIER * brh - brh, brv, -brh, brv)
-    context.rel_line_to(-width + blh + brh, 0)
+        0, ARC_TO_BEZIER * brv, -ARC_TO_BEZIER * brh, brv, -brh, brv)
+    context.rel_line_to(-w + blh + brh, 0)
     context.rel_curve_to(
         -ARC_TO_BEZIER * blh, 0, -blh, -ARC_TO_BEZIER * blv, -blh, -blv)
-    context.rel_line_to(0, -height + tlv + blv)
+    context.rel_line_to(0, -h + tlv + blv)
     context.rel_curve_to(
-        0, -ARC_TO_BEZIER * tlv, tlh - ARC_TO_BEZIER * tlh, -tlv, tlh, -tlv)
-    context.close_path()
-
-    context.clip()
+        0, -ARC_TO_BEZIER * tlv, ARC_TO_BEZIER * tlh, -tlv, tlh, -tlv)
 
 
-def draw_background(context, bg, enable_hinting):
-    """Draw the background color and image to a ``cairo.Context``."""
+def draw_background(context, bg, enable_hinting, clip_box=True):
+    """Draw the background color and image to a ``cairo.Context``.
+
+    If ``clip_box`` is set to ``False``, the background is not clipped to the
+    border box of the background, but only to the painting area.
+
+    """
     if bg is None:
         return
 
     with stacked(context):
-        clip_border_radii(context, bg.layers[-1].border_radii)
+        if clip_box:
+            clip_rounded_box(context, bg.layers[-1].border_radii)
 
         # Background color
         if bg.color.alpha > 0:
@@ -337,13 +350,44 @@ def xy_offset(x, y, offset_x, offset_y, offset):
 
 def draw_border(context, box, enable_hinting):
     """Draw the box border to a ``cairo.Context``."""
+    # We need a plan to draw beautiful borders, and that's difficult, no need
+    # to lie. Let's try to find the cases that we can handle in a smart way.
+
+    # The box is hidden, easy.
     if box.style.visibility == 'hidden':
         return
-    if all(getattr(box, 'border_%s_width' % side) == 0
-           for side in ['top', 'right', 'bottom', 'left']):
-        # No border, return early.
+
+    sides = ('top', 'right', 'bottom', 'left')
+    widths = [getattr(box, 'border_%s_width' % side) for side in sides]
+
+    # No border, return early.
+    if all(width == 0 for width in widths):
         return
 
+    colors = [box.style.get_color('border_%s_color' % side) for side in sides]
+    styles = [
+        colors[i].alpha and box.style['border_%s_style' % side]
+        for (i, side) in enumerate(sides)]
+
+    # The 4 sides are solid or double, and they have the same color. Oh yeah!
+    # We can draw them so easily!
+    if set(styles) in ({'solid'}, {'double'}) and len(set(colors)) == 1:
+        style = styles[0]
+        color = colors[0]
+        context.new_path()
+        border_radii_path(context, box.outer_border_radii())
+        if style == 'double':
+            border_radii_path(context, box.border_radii(1 / 3))
+            border_radii_path(context, box.border_radii(2 / 3))
+        border_radii_path(context, box.inner_border_radii())
+        context.set_fill_rule(cairo.FILL_RULE_EVEN_ODD)
+        context.set_source_rgba(*color)
+        context.close_path()
+        context.fill()
+        return
+
+    # We're not smart enough to find a good way to draw the borders :/. We must
+    # draw them side by side.
     for side, border_edge, padding_edge in zip(
         ['top', 'right', 'bottom', 'left'],
         get_rectangle_edges(
@@ -362,8 +406,9 @@ def draw_border(context, box, enable_hinting):
         if color.alpha == 0:
             continue
         style = box.style['border_%s_style' % side]
-        draw_border_segment(context, enable_hinting, style, width, color,
-                            side, border_edge, padding_edge)
+        draw_border_segment(
+            context, enable_hinting, style, width, color, side, border_edge,
+            padding_edge)
 
 
 def draw_border_segment(context, enable_hinting, style, width, color, side,
