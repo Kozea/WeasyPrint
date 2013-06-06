@@ -22,7 +22,7 @@ Background = namedtuple('Background', 'color, layers, image_rendering')
 BackgroundLayer = namedtuple(
     'BackgroundLayer',
     'image, size, position, repeat, unbounded, '
-    'painting_area, positioning_area, border_radii')
+    'painting_area, positioning_area, rounded_box')
 
 
 def box_rectangle(box, which_rectangle):
@@ -106,7 +106,7 @@ def layout_background_layer(box, page, image, size, clip, repeat, origin,
         return BackgroundLayer(
             image=None, unbounded=(box is page), painting_area=painting_area,
             size='unused', position='unused', repeat='unused',
-            positioning_area='unused', border_radii=box.outer_border_radii())
+            positioning_area='unused', rounded_box=box.rounded_border_box())
 
     if attachment == 'fixed':
         # Initial containing block
@@ -169,7 +169,7 @@ def layout_background_layer(box, page, image, size, clip, repeat, origin,
         unbounded=(box is page),
         painting_area=painting_area,
         positioning_area=positioning_area,
-        border_radii=box.outer_border_radii())
+        rounded_box=box.rounded_border_box())
 
 
 def set_canvas_background(page):

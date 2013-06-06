@@ -52,8 +52,8 @@ def draw_page(page, context, enable_hinting):
     draw_background(
         context, stacking_context.box.background, enable_hinting,
         clip_box=False)
-    draw_background(context, page.canvas_background, enable_hinting,
-        clip_box=False)
+    draw_background(
+        context, page.canvas_background, enable_hinting, clip_box=False)
     draw_border(context, page, enable_hinting)
     draw_stacking_context(context, stacking_context, enable_hinting)
 
@@ -124,7 +124,8 @@ def draw_stacking_context(context, stacking_context, enable_hinting):
             # Only clip the content and the children:
             # - the background is already clipped
             # - the border must *not* be clipped
-            clip_rounded_box(context, box.inner_border_radii())
+            rounded_box_path(context, box.rounded_padding_box())
+            context.clip()
 
         # Point 3
         for child_context in stacking_context.negative_z_contexts:
@@ -177,15 +178,7 @@ def draw_stacking_context(context, stacking_context, enable_hinting):
             context.paint_with_alpha(box.style.opacity)
 
 
-def clip_rounded_box(context, radii):
-    """Clip the border radius box."""
-    context.new_path()
-    border_radii_path(context, radii)
-    context.close_path()
-    context.clip()
-
-
-def border_radii_path(context, radii):
+def rounded_box_path(context, radii):
     """Draw the path of the border radius box.
 
     ``widths`` is a tuple of the inner widths (top, right, bottom, left) from
@@ -241,7 +234,8 @@ def draw_background(context, bg, enable_hinting, clip_box=True):
 
     with stacked(context):
         if clip_box:
-            clip_rounded_box(context, bg.layers[-1].border_radii)
+            rounded_box_path(context, bg.layers[-1].rounded_box)
+            context.clip()
 
         # Background color
         if bg.color.alpha > 0:
@@ -375,11 +369,11 @@ def draw_border(context, box, enable_hinting):
         style = styles[0]
         color = colors[0]
         context.new_path()
-        border_radii_path(context, box.outer_border_radii())
+        rounded_box_path(context, box.rounded_padding_box())
         if style == 'double':
-            border_radii_path(context, box.border_radii(1 / 3))
-            border_radii_path(context, box.border_radii(2 / 3))
-        border_radii_path(context, box.inner_border_radii())
+            rounded_box_path(context, box.rounded_box(1 / 3))
+            rounded_box_path(context, box.rounded_box(2 / 3))
+        rounded_box_path(context, box.rounded_border_box())
         context.set_fill_rule(cairo.FILL_RULE_EVEN_ODD)
         context.set_source_rgba(*color)
         context.close_path()

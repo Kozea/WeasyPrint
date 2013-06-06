@@ -195,7 +195,7 @@ class Box(object):
         return (self.border_box_x(), self.border_box_y(),
                 self.border_width(), self.border_height())
 
-    def border_radii(self, ratio):
+    def rounded_box(self, ratio):
         """Position, size and radii of a box inside the outer border box.
 
         ``ratio`` is the percentage of the position from the outer border
@@ -218,13 +218,13 @@ class Box(object):
             (max(0, self.border_bottom_left_radius[0] - bl),
              max(0, self.border_bottom_left_radius[1] - bb)))
 
-    def inner_border_radii(self):
-        """Return the position, size and radii of the inner border box."""
-        return self.border_radii(ratio=1)
+    def rounded_padding_box(self):
+        """Return the position, size and radii of the rounded padding box."""
+        return self.rounded_box(ratio=1)
 
-    def outer_border_radii(self):
-        """Return the position, size and radii of the outer border box."""
-        return self.border_radii(ratio=0)
+    def rounded_border_box(self):
+        """Return the position, size and radii of the rounded border box."""
+        return self.rounded_box(ratio=0)
 
     # Positioning schemes
 
