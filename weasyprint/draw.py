@@ -317,26 +317,6 @@ def draw_background_image(context, layer, image_rendering):
         context.paint()
 
 
-def get_rectangle_edges(x, y, width, height):
-    """Return the 4 edges of a rectangle as a list.
-
-    Edges are in clock-wise order, starting from the top.
-
-    Each edge is returned as ``(start_point, end_point)`` and each point
-    as ``(x, y)`` coordinates.
-
-    """
-    # In clock-wise order, starting on top left
-    corners = [
-        (x, y),
-        (x + width, y),
-        (x + width, y + height),
-        (x, y + height)]
-    # clock-wise order, starting on top right
-    shifted_corners = corners[1:] + corners[:1]
-    return zip(corners, shifted_corners)
-
-
 def xy_offset(x, y, offset_x, offset_y, offset):
     """Increment X and Y coordinates by the given offsets."""
     return x + offset_x * offset, y + offset_y * offset
@@ -368,7 +348,6 @@ def draw_border(context, box, enable_hinting):
     if set(styles) in ({'solid'}, {'double'}) and len(set(colors)) == 1:
         style = styles[0]
         color = colors[0]
-        context.new_path()
         rounded_box_path(context, box.rounded_padding_box())
         if style == 'double':
             rounded_box_path(context, box.rounded_box(1 / 3))
@@ -376,207 +355,101 @@ def draw_border(context, box, enable_hinting):
         rounded_box_path(context, box.rounded_border_box())
         context.set_fill_rule(cairo.FILL_RULE_EVEN_ODD)
         context.set_source_rgba(*color)
-        context.close_path()
         context.fill()
         return
 
     # We're not smart enough to find a good way to draw the borders :/. We must
     # draw them side by side.
-    for side, border_edge, padding_edge in zip(
-        ['top', 'right', 'bottom', 'left'],
-        get_rectangle_edges(
-            box.border_box_x(), box.border_box_y(),
-            box.border_width(), box.border_height(),
-        ),
-        get_rectangle_edges(
-            box.padding_box_x(), box.padding_box_y(),
-            box.padding_width(), box.padding_height(),
-        ),
-    ):
-        width = getattr(box, 'border_%s_width' % side)
-        if width == 0:
+    for side, width, color, style in zip(sides, widths, colors, styles):
+        if width == 0 or not color:
             continue
-        color = box.style.get_color('border_%s_color' % side)
-        if color.alpha == 0:
-            continue
-        style = box.style['border_%s_style' % side]
         draw_border_segment(
-            context, enable_hinting, style, width, color, side, border_edge,
-            padding_edge)
+            context, enable_hinting, style, width, color, side, box)
 
 
 def draw_border_segment(context, enable_hinting, style, width, color, side,
-                        border_edge, padding_edge):
+                        box):
+    """Draw one segment of box border.
+
+    The strategy is to draw the whole border, to remove the zones not needed
+    because of the style or the side, and then to paint.
+
+    """
+    _, _, _, _, (tlh, tlv), (trh, trv), (brh, brv), (blh, blv) = (
+        box.rounded_border_box())
+
+    def transition_point(x1, y1, x2, y2):
+        """Get the point use for border transition.
+
+        This point is not specified. We must be sure to be inside the rounded
+        padding box, and in the zone defined in the "transition zone" allowed
+        by the specification. We chose the corner of the transition zone. It's
+        easy to get and gives quite good results, but it seems to be different
+        from what other browsers do.
+
+        """
+        return (
+            (x1, y1) if abs(x1) > abs(x2) and abs(y1) > abs(y2) else (x2, y2))
+
     with stacked(context):
-        if enable_hinting and style != 'dotted' and (
-                # Borders smaller than 1 device unit would disappear
-                # without anti-aliasing.
-                math.hypot(*context.user_to_device(width, 0)) >= 1 and
-                math.hypot(*context.user_to_device(0, width)) >= 1):
-            # Avoid an artifact in the corner joining two solid borders
-            # of the same color.
-            context.set_antialias(cairo.ANTIALIAS_NONE)
-
-        if style in ('inset', 'outset'):
-            do_lighten = (side in ('top', 'left')) ^ (style == 'inset')
-            factor = 0.5 if do_lighten else -0.5
-            context.set_source_rgba(*lighten(color, factor))
-        else:
-            context.set_source_rgba(*color)
-
-        x_offset, y_offset = {'top': (0, 1), 'bottom': (0, -1),
-                              'left': (1, 0), 'right': (-1, 0)}[side]
-
-        if style not in ('dotted', 'dashed'):
-            # Clip on the trapezoid shape
-            """
-            Clip the angles the trapezoid formed by the border edge (longer)
-            and the padding edge (shorter).
-
-            This is on the top side:
-
-                +---------------+    <= border edge      ^
-                 \             /                         |
-                  \           /                          |  top border width
-                   \         /                           |
-                    +-------+        <= padding edge     v
-
-                <-->         <-->    <=  left and right border widths
-
-            The clip shape is:
-
-            1---------------------------2
-             \                         /
-              \                       /
-               \                     /
-                +...................+
-                 \                 /
-                  \               /
-                   \             /
-                    +...........+
-                     \         /
-                      \       /
-                       \     /
-                        4---3
-
-            """
-
-            def double_vector(p1, p2):
-                x1, y1 = p1
-                x2, y2 = p2
-                return 2 * x2 - x1, 2 * y2 - y1
-
-            border_start, border_stop = border_edge
-            padding_start, padding_stop = padding_edge
-            points = [double_vector(padding_start, border_start),
-                      double_vector(padding_stop, border_stop),
-                      double_vector(border_stop, padding_stop),
-                      double_vector(border_start, padding_start)]
-            context.move_to(*points[-1])
-            for point in points:
-                context.line_to(*point)
-            context.clip()
-
-        if style in ('groove', 'ridge'):
-            # TODO: these would look better with more color stops
-            """
-            Divide the width in 2 and stroke lines in different colors
-              +-------------+
-              1\           /2
-              1'\         / 2'
-                 +-------+
-            """
-            do_lighten = (side in ('top', 'left')) ^ (style == 'groove')
-            factor = 1 if do_lighten else -1
-            context.set_line_width(width / 2)
-            (x1, y1), (x2, y2) = border_edge
-            # from the border edge to the center of the first line
-            x1, y1 = xy_offset(x1, y1, x_offset, y_offset, width / 4)
-            x2, y2 = xy_offset(x2, y2, x_offset, y_offset, width / 4)
-            context.move_to(x1, y1)
-            context.line_to(x2, y2)
-            context.set_source_rgba(*lighten(color, 0.5 * factor))
-            context.stroke()
-            # Between the centers of both lines. 1/4 + 1/4 = 1/2
-            x1, y1 = xy_offset(x1, y1, x_offset, y_offset, width / 2)
-            x2, y2 = xy_offset(x2, y2, x_offset, y_offset, width / 2)
-            context.move_to(x1, y1)
-            context.line_to(x2, y2)
-            context.set_source_rgba(*lighten(color, -0.5 * factor))
-            context.stroke()
-        elif style == 'double':
-            """
-            Divide the width in 3 and stroke both outer lines
-              +---------------+
-              1\             /2
-                \           /
-              1' \         /  2'
-                  +-------+
-            """
-            context.set_line_width(width / 3)
-            (x1, y1), (x2, y2) = border_edge
-            # from the border edge to the center of the first line
-            x1, y1 = xy_offset(x1, y1, x_offset, y_offset, width / 6)
-            x2, y2 = xy_offset(x2, y2, x_offset, y_offset, width / 6)
-            context.move_to(x1, y1)
-            context.line_to(x2, y2)
-            context.stroke()
-            # Between the centers of both lines. 1/6 + 1/3 + 1/6 = 2/3
-            x1, y1 = xy_offset(x1, y1, x_offset, y_offset, 2 * width / 3)
-            x2, y2 = xy_offset(x2, y2, x_offset, y_offset, 2 * width / 3)
-            context.move_to(x1, y1)
-            context.line_to(x2, y2)
-            context.stroke()
-        else:
-            (x1, y1), (x2, y2) = border_edge
-            if style == 'dotted':
-                # Half-way from the extremities of the border and padding
-                # edges.
-                (px1, py1), (px2, py2) = padding_edge
-                x1 = (x1 + px1) / 2
-                x2 = (x2 + px2) / 2
-                y1 = (y1 + py1) / 2
-                y2 = (y2 + py2) / 2
-                """
-                  +---------------+
-                   \             /
-                    1           2
-                     \         /
-                      +-------+
-                """
-            else:  # solid, dashed
-                # From the border edge to the middle:
-                x1, y1 = xy_offset(x1, y1, x_offset, y_offset, width / 2)
-                x2, y2 = xy_offset(x2, y2, x_offset, y_offset, width / 2)
-                """
-                  +---------------+
-                   \             /
-                  1 \           / 2
-                     \         /
-                      +-------+
-                """
-
-            length = ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
-            dash = 2 * width
-            if style == 'dotted':
-                if context.user_to_device_distance(width, 0)[0] > 3:
-                    # Round so that dash is a divisor of length,
-                    # but not in the dots are too small.
-                    dash = length / max(1, round(length / dash))
-                context.set_line_cap(cairo.LINE_CAP_ROUND)
-                context.set_dash([0, dash])
-            elif style == 'dashed':
-                # Round so that 2*dash is a divisor of length
-                dash = length / (2 * max(1, round(length / (2 * dash))))
-                context.set_dash([dash])
-            # Stroke along the line in === above, as wide as the border
-            context.move_to(x1, y1)
-            context.line_to(x2, y2)
-            context.set_line_width(width)
-            context.stroke()
+        if side == 'top':
+            context.move_to(
+                box.border_box_x() + box.border_width(),
+                box.border_box_y())
+            context.rel_line_to(-box.border_width(), 0)
+            px1, py1 = transition_point(
+                tlh, tlv, box.border_left_width, box.border_top_width)
+            px2, py2 = transition_point(
+                -trh, trv, -box.border_right_width, box.border_top_width)
+            context.rel_line_to(px1, py1)
+            context.rel_line_to(-px1 + box.border_width() + px2, -py1 + py2)
+        elif side == 'right':
+            context.move_to(
+                box.border_box_x() + box.border_width(),
+                box.border_box_y() + box.border_height())
+            context.rel_line_to(0, -box.border_height())
+            px1, py1 = transition_point(
+                -trh, trv, -box.border_right_width, box.border_top_width)
+            px2, py2 = transition_point(
+                -brh, -brv, -box.border_right_width, -box.border_bottom_width)
+            context.rel_line_to(px1, py1)
+            context.rel_line_to(-px1 + px2, -py1 + box.border_height() + py2)
+        elif side == 'bottom':
+            context.move_to(
+                box.border_box_x(),
+                box.border_box_y() + box.border_height())
+            context.rel_line_to(box.border_width(), 0)
+            px1, py1 = transition_point(
+                -brh, -brv, -box.border_right_width, -box.border_bottom_width)
+            px2, py2 = transition_point(
+                blh, -blv, box.border_left_width, -box.border_bottom_width)
+            context.rel_line_to(px1, py1)
+            context.rel_line_to(-px1 - box.border_width() + px2, -py1 + py2)
+        elif side == 'left':
+            context.move_to(
+                box.border_box_x(),
+                box.border_box_y())
+            context.rel_line_to(0, box.border_height())
+            px1, py1 = transition_point(
+                blh, -blv, box.border_left_width, -box.border_bottom_width)
+            px2, py2 = transition_point(
+                tlh, tlv, box.border_left_width, box.border_top_width)
+            context.rel_line_to(px1, py1)
+            context.rel_line_to(-px1 + px2, -py1 - box.border_height() + py2)
+        context.clip()
+        rounded_box_path(context, box.rounded_padding_box())
+        if style == 'double':
+            rounded_box_path(context, box.rounded_box(1 / 3))
+            rounded_box_path(context, box.rounded_box(2 / 3))
+        rounded_box_path(context, box.rounded_border_box())
+        context.set_fill_rule(cairo.FILL_RULE_EVEN_ODD)
+        context.set_source_rgba(*color)
+        context.fill()
 
 
 def draw_outlines(context, box, enable_hinting):
+    # TODO: fix this
+    return
     width = box.style.outline_width
     color = box.style.get_color('outline_color')
     style = box.style.outline_style
@@ -600,6 +473,8 @@ def draw_outlines(context, box, enable_hinting):
 
 
 def draw_collapsed_borders(context, table, enable_hinting):
+    # TODO: fix this
+    return
     row_heights = [row.height for row_group in table.children
                    for row in row_group.children]
     column_widths = table.column_widths
