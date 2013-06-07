@@ -370,8 +370,7 @@ def draw_border(context, box, enable_hinting):
                 context, enable_hinting, style, width, side,
                 box.rounded_border_box()[:4], widths,
                 box.rounded_border_box()[4:])
-            draw_rounded_border(context, box, style)
-            paint_border(context, color)
+            draw_rounded_border(context, box, style, color)
 
 
 def clip_border_segment(context, enable_hinting, style, width, side,
@@ -439,16 +438,18 @@ def clip_border_segment(context, enable_hinting, style, width, side,
     context.clip()
 
 
-def draw_rounded_border(context, box, style):
+def draw_rounded_border(context, box, style, color):
     rounded_box_path(context, box.rounded_padding_box())
     if style == 'double':
         rounded_box_path(context, box.rounded_box(1 / 3))
         rounded_box_path(context, box.rounded_box(2 / 3))
     rounded_box_path(context, box.rounded_border_box())
     context.set_fill_rule(cairo.FILL_RULE_EVEN_ODD)
+    context.set_source_rgba(*color)
+    context.fill()
 
 
-def draw_rect_border(context, box, widths, style):
+def draw_rect_border(context, box, widths, style, color):
     bbx, bby, bbw, bbh = box
     bt, br, bb, bl = widths
     context.rectangle(*box)
@@ -461,9 +462,6 @@ def draw_rect_border(context, box, widths, style):
             bbw - (bl + br) * 2 / 3, bbh - (bt + bb) * 2 / 3)
     context.rectangle(bbx + bl, bby + bt, bbw - bl - br, bbh - bt - bb)
     context.set_fill_rule(cairo.FILL_RULE_EVEN_ODD)
-
-
-def paint_border(context, color):
     context.set_source_rgba(*color)
     context.fill()
 
@@ -480,8 +478,8 @@ def draw_outlines(context, box, enable_hinting):
             with stacked(context):
                 clip_border_segment(
                     context, enable_hinting, style, width, side, outline_box)
-                draw_rect_border(context, outline_box, 4 * (width,), style)
-                paint_border(context, color)
+                draw_rect_border(
+                    context, outline_box, 4 * (width,), style, color)
 
     if isinstance(box, boxes.ParentBox):
         for child in box.children:
@@ -606,8 +604,7 @@ def draw_collapsed_borders(context, table, enable_hinting):
             clip_border_segment(
                 context, enable_hinting, style, width, side, border_box,
                 widths)
-            draw_rect_border(context, border_box, widths, style)
-            paint_border(context, color)
+            draw_rect_border(context, border_box, widths, style, color)
 
 
 def draw_replacedbox(context, box):

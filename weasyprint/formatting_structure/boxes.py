@@ -215,8 +215,10 @@ class Box(object):
         # See http://www.w3.org/TR/css3-background/#corner-overlap
         ratio = min(
             1,
-            self.border_width() / max(tlrx + trrx, blrx + brrx),
-            self.border_height() / max(tlry + blry, trry + brry))
+            self.border_width() / max(
+                tlrx + trrx, blrx + brrx, self.border_width()),
+            self.border_height() / max(
+                tlry + blry, trry + brry, self.border_height()))
 
         return (
             self.border_box_x() + bl, self.border_box_y() + bt,
