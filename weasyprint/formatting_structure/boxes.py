@@ -215,19 +215,19 @@ class Box(object):
         # See http://www.w3.org/TR/css3-background/#corner-overlap
         ratio = 1
         if tlrx + trrx or blrx + brrx:
-            ratio = min(
-                ratio, self.border_width() / max(tlrx + trrx, blrx + brrx))
+            ratio = min((
+                ratio, self.border_width() / max((tlrx + trrx, blrx + brrx))))
         if tlry + blry or trry + brry:
-            ratio = min(
-                ratio, self.border_height() / max(tlry + blry or trry + brry))
+            ratio = min((
+                ratio, self.border_height() / max((tlry + blry, trry + brry))))
 
         return (
             self.border_box_x() + bl, self.border_box_y() + bt,
             self.border_width() - bl - br, self.border_height() - bt - bb,
-            (max(0, tlrx * ratio - bl), max(0, tlry * ratio - bt)),
-            (max(0, trrx * ratio - br), max(0, trry * ratio - bt)),
-            (max(0, brrx * ratio - br), max(0, brry * ratio - bb)),
-            (max(0, blrx * ratio - bl), max(0, blry * ratio - bb)))
+            (max((0, tlrx * ratio - bl)), max((0, tlry * ratio - bt))),
+            (max((0, trrx * ratio - br)), max((0, trry * ratio - bt))),
+            (max((0, brrx * ratio - br)), max((0, brry * ratio - bb))),
+            (max((0, blrx * ratio - bl)), max((0, blry * ratio - bb))))
 
     def rounded_padding_box(self):
         """Return the position, size and radii of the rounded padding box."""
