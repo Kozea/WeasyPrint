@@ -25,6 +25,7 @@ from .compat import xrange
 
 
 ARC_TO_BEZIER = 4 * (2 ** .5 - 1) / 3
+SIDES = ('top', 'right', 'bottom', 'left')
 
 
 @contextlib.contextmanager
@@ -120,55 +121,57 @@ def draw_stacking_context(context, stacking_context, enable_hinting):
             draw_box_background_and_border(
                 context, stacking_context.page, box, enable_hinting)
 
-        if box.style.overflow != 'visible':
-            # Only clip the content and the children:
-            # - the background is already clipped
-            # - the border must *not* be clipped
-            rounded_box_path(context, box.rounded_padding_box())
-            context.clip()
+        with stacked(context):
+            if box.style.overflow != 'visible':
+                # Only clip the content and the children:
+                # - the background is already clipped
+                # - the border must *not* be clipped
+                rounded_box_path(context, box.rounded_padding_box())
+                context.clip()
 
-        # Point 3
-        for child_context in stacking_context.negative_z_contexts:
-            draw_stacking_context(context, child_context, enable_hinting)
+            # Point 3
+            for child_context in stacking_context.negative_z_contexts:
+                draw_stacking_context(context, child_context, enable_hinting)
 
-        # Point 4
-        for block in stacking_context.block_level_boxes:
-            draw_box_background_and_border(
-                context, stacking_context.page, block, enable_hinting)
+            # Point 4
+            for block in stacking_context.block_level_boxes:
+                draw_box_background_and_border(
+                    context, stacking_context.page, block, enable_hinting)
 
-        # Point 5
-        for child_context in stacking_context.float_contexts:
-            draw_stacking_context(context, child_context, enable_hinting)
+            # Point 5
+            for child_context in stacking_context.float_contexts:
+                draw_stacking_context(context, child_context, enable_hinting)
 
-        # Point 6
-        if isinstance(box, boxes.InlineBox):
-            draw_inline_level(
-                context, stacking_context.page, box, enable_hinting)
-
-        # Point 7
-        for block in [box] + stacking_context.blocks_and_cells:
-            marker_box = getattr(block, 'outside_list_marker', None)
-            if marker_box:
+            # Point 6
+            if isinstance(box, boxes.InlineBox):
                 draw_inline_level(
-                    context, stacking_context.page, marker_box, enable_hinting)
+                    context, stacking_context.page, box, enable_hinting)
 
-            if isinstance(block, boxes.ReplacedBox):
-                draw_replacedbox(context, block)
-            else:
-                for child in block.children:
-                    if isinstance(child, boxes.LineBox):
-                        # TODO: draw inline tables
-                        draw_inline_level(
-                            context, stacking_context.page, child,
-                            enable_hinting)
+            # Point 7
+            for block in [box] + stacking_context.blocks_and_cells:
+                marker_box = getattr(block, 'outside_list_marker', None)
+                if marker_box:
+                    draw_inline_level(
+                        context, stacking_context.page, marker_box,
+                        enable_hinting)
 
-        # Point 8
-        for child_context in stacking_context.zero_z_contexts:
-            draw_stacking_context(context, child_context, enable_hinting)
+                if isinstance(block, boxes.ReplacedBox):
+                    draw_replacedbox(context, block)
+                else:
+                    for child in block.children:
+                        if isinstance(child, boxes.LineBox):
+                            # TODO: draw inline tables
+                            draw_inline_level(
+                                context, stacking_context.page, child,
+                                enable_hinting)
 
-        # Point 9
-        for child_context in stacking_context.positive_z_contexts:
-            draw_stacking_context(context, child_context, enable_hinting)
+            # Point 8
+            for child_context in stacking_context.zero_z_contexts:
+                draw_stacking_context(context, child_context, enable_hinting)
+
+            # Point 9
+            for child_context in stacking_context.positive_z_contexts:
+                draw_stacking_context(context, child_context, enable_hinting)
 
         # Point 10
         draw_outlines(context, box, enable_hinting)
@@ -233,6 +236,10 @@ def draw_background(context, bg, enable_hinting, clip_box=True):
         return
 
     with stacked(context):
+        if enable_hinting:
+            # Prefer crisp edges on background rectangles.
+            context.set_antialias(cairo.ANTIALIAS_NONE)
+
         if clip_box:
             rounded_box_path(context, bg.layers[-1].rounded_box)
             context.clip()
@@ -240,10 +247,6 @@ def draw_background(context, bg, enable_hinting, clip_box=True):
         # Background color
         if bg.color.alpha > 0:
             with stacked(context):
-                if enable_hinting:
-                    # Prefer crisp edges on background rectangles.
-                    context.set_antialias(cairo.ANTIALIAS_NONE)
-
                 painting_area = bg.layers[-1].painting_area
                 if painting_area:
                     context.rectangle(*painting_area)
@@ -331,17 +334,16 @@ def draw_border(context, box, enable_hinting):
     if box.style.visibility == 'hidden':
         return
 
-    sides = ('top', 'right', 'bottom', 'left')
-    widths = [getattr(box, 'border_%s_width' % side) for side in sides]
+    widths = [getattr(box, 'border_%s_width' % side) for side in SIDES]
 
     # No border, return early.
     if all(width == 0 for width in widths):
         return
 
-    colors = [box.style.get_color('border_%s_color' % side) for side in sides]
+    colors = [box.style.get_color('border_%s_color' % side) for side in SIDES]
     styles = [
         colors[i].alpha and box.style['border_%s_style' % side]
-        for (i, side) in enumerate(sides)]
+        for (i, side) in enumerate(SIDES)]
 
     # The 4 sides are solid or double, and they have the same color. Oh yeah!
     # We can draw them so easily!
@@ -360,23 +362,38 @@ def draw_border(context, box, enable_hinting):
 
     # We're not smart enough to find a good way to draw the borders :/. We must
     # draw them side by side.
-    for side, width, color, style in zip(sides, widths, colors, styles):
+    for side, width, color, style in zip(SIDES, widths, colors, styles):
         if width == 0 or not color:
             continue
-        draw_border_segment(
-            context, enable_hinting, style, width, color, side, box)
+        with stacked(context):
+            clip_border_segment(
+                context, enable_hinting, style, width, side,
+                box.rounded_border_box()[:4], widths,
+                box.rounded_border_box()[4:])
+            draw_rounded_border(context, box, style)
+            paint_border(context, color)
 
 
-def draw_border_segment(context, enable_hinting, style, width, color, side,
-                        box):
-    """Draw one segment of box border.
+def clip_border_segment(context, enable_hinting, style, width, side,
+                        border_box, border_widths=None, radii=None):
+    """Clip one segment of box border.
 
-    The strategy is to draw the whole border, to remove the zones not needed
-    because of the style or the side, and then to paint.
+    The strategy is to remove the zones not needed because of the style or the
+    side before painting.
 
     """
-    _, _, _, _, (tlh, tlv), (trh, trv), (brh, brv), (blh, blv) = (
-        box.rounded_border_box())
+    if enable_hinting and style != 'dotted' and (
+            # Borders smaller than 1 device unit would disappear
+            # without anti-aliasing.
+            math.hypot(*context.user_to_device(width, 0)) >= 1 and
+            math.hypot(*context.user_to_device(0, width)) >= 1):
+        # Avoid an artifact in the corner joining two solid borders
+        # of the same color.
+        context.set_antialias(cairo.ANTIALIAS_NONE)
+
+    bbx, bby, bbw, bbh = border_box
+    (tlh, tlv), (trh, trv), (brh, brv), (blh, blv) = radii or 4 * ((0, 0),)
+    bt, br, bb, bl = border_widths or 4 * (width,)
 
     def transition_point(x1, y1, x2, y2):
         """Get the point use for border transition.
@@ -391,80 +408,80 @@ def draw_border_segment(context, enable_hinting, style, width, color, side,
         return (
             (x1, y1) if abs(x1) > abs(x2) and abs(y1) > abs(y2) else (x2, y2))
 
-    with stacked(context):
-        if side == 'top':
-            context.move_to(
-                box.border_box_x() + box.border_width(),
-                box.border_box_y())
-            context.rel_line_to(-box.border_width(), 0)
-            px1, py1 = transition_point(
-                tlh, tlv, box.border_left_width, box.border_top_width)
-            px2, py2 = transition_point(
-                -trh, trv, -box.border_right_width, box.border_top_width)
-            context.rel_line_to(px1, py1)
-            context.rel_line_to(-px1 + box.border_width() + px2, -py1 + py2)
-        elif side == 'right':
-            context.move_to(
-                box.border_box_x() + box.border_width(),
-                box.border_box_y() + box.border_height())
-            context.rel_line_to(0, -box.border_height())
-            px1, py1 = transition_point(
-                -trh, trv, -box.border_right_width, box.border_top_width)
-            px2, py2 = transition_point(
-                -brh, -brv, -box.border_right_width, -box.border_bottom_width)
-            context.rel_line_to(px1, py1)
-            context.rel_line_to(-px1 + px2, -py1 + box.border_height() + py2)
-        elif side == 'bottom':
-            context.move_to(
-                box.border_box_x(),
-                box.border_box_y() + box.border_height())
-            context.rel_line_to(box.border_width(), 0)
-            px1, py1 = transition_point(
-                -brh, -brv, -box.border_right_width, -box.border_bottom_width)
-            px2, py2 = transition_point(
-                blh, -blv, box.border_left_width, -box.border_bottom_width)
-            context.rel_line_to(px1, py1)
-            context.rel_line_to(-px1 - box.border_width() + px2, -py1 + py2)
-        elif side == 'left':
-            context.move_to(
-                box.border_box_x(),
-                box.border_box_y())
-            context.rel_line_to(0, box.border_height())
-            px1, py1 = transition_point(
-                blh, -blv, box.border_left_width, -box.border_bottom_width)
-            px2, py2 = transition_point(
-                tlh, tlv, box.border_left_width, box.border_top_width)
-            context.rel_line_to(px1, py1)
-            context.rel_line_to(-px1 + px2, -py1 - box.border_height() + py2)
-        context.clip()
-        rounded_box_path(context, box.rounded_padding_box())
-        if style == 'double':
-            rounded_box_path(context, box.rounded_box(1 / 3))
-            rounded_box_path(context, box.rounded_box(2 / 3))
-        rounded_box_path(context, box.rounded_border_box())
-        context.set_fill_rule(cairo.FILL_RULE_EVEN_ODD)
-        context.set_source_rgba(*color)
-        context.fill()
+    if side == 'top':
+        context.move_to(bbx + bbw, bby)
+        context.rel_line_to(-bbw, 0)
+        px1, py1 = transition_point(tlh, tlv, bl, bt)
+        px2, py2 = transition_point(-trh, trv, -br, bt)
+        context.rel_line_to(px1, py1)
+        context.rel_line_to(-px1 + bbw + px2, -py1 + py2)
+    elif side == 'right':
+        context.move_to(bbx + bbw, bby + bbh)
+        context.rel_line_to(0, -bbh)
+        px1, py1 = transition_point(-trh, trv, -br, bt)
+        px2, py2 = transition_point(-brh, -brv, -br, -bb)
+        context.rel_line_to(px1, py1)
+        context.rel_line_to(-px1 + px2, -py1 + bbh + py2)
+    elif side == 'bottom':
+        context.move_to(bbx, bby + bbh)
+        context.rel_line_to(bbw, 0)
+        px1, py1 = transition_point(-brh, -brv, -br, -bb)
+        px2, py2 = transition_point(blh, -blv, bl, -bb)
+        context.rel_line_to(px1, py1)
+        context.rel_line_to(-px1 - bbw + px2, -py1 + py2)
+    elif side == 'left':
+        context.move_to(bbx, bby)
+        context.rel_line_to(0, bbh)
+        px1, py1 = transition_point(blh, -blv, bl, -bb)
+        px2, py2 = transition_point(tlh, tlv, bl, bt)
+        context.rel_line_to(px1, py1)
+        context.rel_line_to(-px1 + px2, -py1 - bbh + py2)
+    context.clip()
+
+
+def draw_rounded_border(context, box, style):
+    rounded_box_path(context, box.rounded_padding_box())
+    if style == 'double':
+        rounded_box_path(context, box.rounded_box(1 / 3))
+        rounded_box_path(context, box.rounded_box(2 / 3))
+    rounded_box_path(context, box.rounded_border_box())
+    context.set_fill_rule(cairo.FILL_RULE_EVEN_ODD)
+
+
+def draw_rect_border(context, box, widths, style):
+    bbx, bby, bbw, bbh = box
+    bt, br, bb, bl = widths
+    context.rectangle(*box)
+    if style == 'double':
+        context.rectangle(
+            bbx + bl / 3, bby + bt / 3,
+            bbw - (bl + br) / 3, bbh - (bt + bb) / 3)
+        context.rectangle(
+            bbx + bl * 2 / 3, bby + bt * 2 / 3,
+            bbw - (bl + br) * 2 / 3, bbh - (bt + bb) * 2 / 3)
+    context.rectangle(bbx + bl, bby + bt, bbw - bl - br, bbh - bt - bb)
+    context.set_fill_rule(cairo.FILL_RULE_EVEN_ODD)
+
+
+def paint_border(context, color):
+    context.set_source_rgba(*color)
+    context.fill()
 
 
 def draw_outlines(context, box, enable_hinting):
-    # TODO: fix this
-    return
     width = box.style.outline_width
     color = box.style.get_color('outline_color')
     style = box.style.outline_style
     if box.style.visibility != 'hidden' and width != 0 and color.alpha != 0:
-        border_box = (box.border_box_x(), box.border_box_y(),
-                      box.border_width(), box.border_height())
-        outline_box = (border_box[0] - width, border_box[1] - width,
-                       border_box[2] + 2 * width, border_box[3] + 2 * width)
-        for side, border_edge, padding_edge in zip(
-            ['top', 'right', 'bottom', 'left'],
-            get_rectangle_edges(*outline_box),
-            get_rectangle_edges(*border_box),
-        ):
-            draw_border_segment(context, enable_hinting, style, width, color,
-                                side, border_edge, padding_edge)
+        outline_box = (
+            box.border_box_x() - width, box.border_box_y() - width,
+            box.border_width() + 2 * width, box.border_height() + 2 * width)
+        for side in SIDES:
+            with stacked(context):
+                clip_border_segment(
+                    context, enable_hinting, style, width, side, outline_box)
+                draw_rect_border(context, outline_box, 4 * (width,), style)
+                paint_border(context, color)
 
     if isinstance(box, boxes.ParentBox):
         for child in box.children:
@@ -473,8 +490,7 @@ def draw_outlines(context, box, enable_hinting):
 
 
 def draw_collapsed_borders(context, table, enable_hinting):
-    # TODO: fix this
-    return
+    """Draw borders of table cells when they collapse."""
     row_heights = [row.height for row_group in table.children
                    for row in row_group.children]
     column_widths = table.column_widths
@@ -542,31 +558,29 @@ def draw_collapsed_borders(context, table, enable_hinting):
         score, (style, width, color) = vertical_borders[yy][x]
         if width == 0 or color.alpha == 0:
             return
-        half_width = width / 2
         pos_x = column_positions[x]
-        pos_y_1 = row_positions[y] - half_max_width(horizontal_borders, [
+        pos_y1 = row_positions[y] - half_max_width(horizontal_borders, [
             (y, x - 1), (y, x)], vertical=False)
-        pos_y_2 = row_positions[y + 1] + half_max_width(horizontal_borders, [
+        pos_y2 = row_positions[y + 1] + half_max_width(horizontal_borders, [
             (y + 1, x - 1), (y + 1, x)], vertical=False)
-        edge_1 = (pos_x - half_width, pos_y_1), (pos_x - half_width, pos_y_2)
-        edge_2 = (pos_x + half_width, pos_y_1), (pos_x + half_width, pos_y_2)
-        segments.append((score, style, width, color, 'left', edge_1, edge_2))
+        segments.append((
+            score, style, width, color, 'left',
+            (pos_x - width / 2, pos_y1, 0, pos_y2 - pos_y1)))
 
     def add_horizontal(x, y):
         yy = row_number(y, horizontal=True)
         score, (style, width, color) = horizontal_borders[yy][x]
         if width == 0 or color.alpha == 0:
             return
-        half_width = width / 2
         pos_y = row_positions[y]
         # TODO: change signs for rtl when we support rtl tables?
-        pos_x_1 = column_positions[x] - half_max_width(vertical_borders, [
+        pos_x1 = column_positions[x] - half_max_width(vertical_borders, [
             (y - 1, x), (y, x)])
-        pos_x_2 = column_positions[x + 1] + half_max_width(vertical_borders, [
+        pos_x2 = column_positions[x + 1] + half_max_width(vertical_borders, [
             (y - 1, x + 1), (y, x + 1)])
-        edge_1 = (pos_x_1, pos_y - half_width), (pos_x_2, pos_y - half_width)
-        edge_2 = (pos_x_1, pos_y + half_width), (pos_x_2, pos_y + half_width)
-        segments.append((score, style, width, color, 'top', edge_1, edge_2))
+        segments.append((
+            score, style, width, color, 'top',
+            (pos_x1, pos_y - width / 2, pos_x2 - pos_x1, 0)))
 
     for x in xrange(grid_width):
         add_horizontal(x, 0)
@@ -583,7 +597,17 @@ def draw_collapsed_borders(context, table, enable_hinting):
     segments.sort(key=operator.itemgetter(0))
 
     for segment in segments:
-        draw_border_segment(context, enable_hinting, *segment[1:])
+        _, style, width, color, side, border_box = segment
+        if side == 'top':
+            widths = (width, 0, 0, 0)
+        else:
+            widths = (0, 0, 0, width)
+        with stacked(context):
+            clip_border_segment(
+                context, enable_hinting, style, width, side, border_box,
+                widths)
+            draw_rect_border(context, border_box, widths, style)
+            paint_border(context, color)
 
 
 def draw_replacedbox(context, box):
