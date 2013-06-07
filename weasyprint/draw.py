@@ -325,6 +325,14 @@ def xy_offset(x, y, offset_x, offset_y, offset):
     return x + offset_x * offset, y + offset_y * offset
 
 
+def styled_color(style, color, side):
+    if style in ('inset', 'outset'):
+        do_lighten = (side in ('top', 'left')) ^ (style == 'inset')
+        factor = 0.5 if do_lighten else -0.5
+        return lighten(color, factor)
+    return color
+
+
 def draw_border(context, box, enable_hinting):
     """Draw the box border to a ``cairo.Context``."""
     # We need a plan to draw beautiful borders, and that's difficult, no need
@@ -361,7 +369,8 @@ def draw_border(context, box, enable_hinting):
                 context, enable_hinting, style, width, side,
                 box.rounded_border_box()[:4], widths,
                 box.rounded_border_box()[4:])
-            draw_rounded_border(context, box, style, color)
+            draw_rounded_border(
+                context, box, style, styled_color(style, color, side))
 
 
 def clip_border_segment(context, enable_hinting, style, width, side,
@@ -470,7 +479,8 @@ def draw_outlines(context, box, enable_hinting):
                 clip_border_segment(
                     context, enable_hinting, style, width, side, outline_box)
                 draw_rect_border(
-                    context, outline_box, 4 * (width,), style, color)
+                    context, outline_box, 4 * (width,), style,
+                    styled_color(style, color, side))
 
     if isinstance(box, boxes.ParentBox):
         for child in box.children:
@@ -595,7 +605,9 @@ def draw_collapsed_borders(context, table, enable_hinting):
             clip_border_segment(
                 context, enable_hinting, style, width, side, border_box,
                 widths)
-            draw_rect_border(context, border_box, widths, style, color)
+            draw_rect_border(
+                context, border_box, widths, style,
+                styled_color(style, color, side))
 
 
 def draw_replacedbox(context, box):
