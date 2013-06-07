@@ -330,6 +330,10 @@ def styled_color(style, color, side):
         do_lighten = (side in ('top', 'left')) ^ (style == 'inset')
         factor = 0.5 if do_lighten else -0.5
         return lighten(color, factor)
+    elif style in ('ridge', 'groove'):
+        do_lighten = (side in ('top', 'left')) ^ (style == 'ridge')
+        factor = 0.5 if do_lighten else -0.5
+        return lighten(color, factor), lighten(color, -factor)
     return color
 
 
@@ -439,20 +443,44 @@ def clip_border_segment(context, enable_hinting, style, width, side,
 
 
 def draw_rounded_border(context, box, style, color):
+    context.set_fill_rule(cairo.FILL_RULE_EVEN_ODD)
     rounded_box_path(context, box.rounded_padding_box())
+    if style in ('ridge', 'groove'):
+        rounded_box_path(context, box.rounded_box(1 / 2))
+        context.set_source_rgba(*color[0])
+        context.fill()
+        rounded_box_path(context, box.rounded_box(1 / 2))
+        rounded_box_path(context, box.rounded_border_box())
+        context.set_source_rgba(*color[1])
+        context.fill()
+        return
     if style == 'double':
         rounded_box_path(context, box.rounded_box(1 / 3))
         rounded_box_path(context, box.rounded_box(2 / 3))
     rounded_box_path(context, box.rounded_border_box())
-    context.set_fill_rule(cairo.FILL_RULE_EVEN_ODD)
     context.set_source_rgba(*color)
     context.fill()
 
 
 def draw_rect_border(context, box, widths, style, color):
+    context.set_fill_rule(cairo.FILL_RULE_EVEN_ODD)
     bbx, bby, bbw, bbh = box
     bt, br, bb, bl = widths
     context.rectangle(*box)
+    if style in ('ridge', 'groove'):
+        context.rectangle(
+            bbx + bl / 2, bby + bt / 2,
+            bbw - (bl + br) / 2, bbh - (bt + bb) / 2)
+        context.set_source_rgba(*color[0])
+        context.fill()
+        context.rectangle(
+            bbx + bl / 2, bby + bt / 2,
+            bbw - (bl + br) / 2, bbh - (bt + bb) / 2)
+        context.rectangle(
+            bbx + bl, bby + bt, bbw - bl - br, bbh - bt - bb)
+        context.set_source_rgba(*color[1])
+        context.fill()
+        return
     if style == 'double':
         context.rectangle(
             bbx + bl / 3, bby + bt / 3,
@@ -461,7 +489,6 @@ def draw_rect_border(context, box, widths, style, color):
             bbx + bl * 2 / 3, bby + bt * 2 / 3,
             bbw - (bl + br) * 2 / 3, bbh - (bt + bb) * 2 / 3)
     context.rectangle(bbx + bl, bby + bt, bbw - bl - br, bbh - bt - bb)
-    context.set_fill_rule(cairo.FILL_RULE_EVEN_ODD)
     context.set_source_rgba(*color)
     context.fill()
 
