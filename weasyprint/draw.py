@@ -348,16 +348,7 @@ def draw_border(context, box, enable_hinting):
     # The 4 sides are solid or double, and they have the same color. Oh yeah!
     # We can draw them so easily!
     if set(styles) in ({'solid'}, {'double'}) and len(set(colors)) == 1:
-        style = styles[0]
-        color = colors[0]
-        rounded_box_path(context, box.rounded_padding_box())
-        if style == 'double':
-            rounded_box_path(context, box.rounded_box(1 / 3))
-            rounded_box_path(context, box.rounded_box(2 / 3))
-        rounded_box_path(context, box.rounded_border_box())
-        context.set_fill_rule(cairo.FILL_RULE_EVEN_ODD)
-        context.set_source_rgba(*color)
-        context.fill()
+        draw_rounded_border(context, box, styles[0], colors[0])
         return
 
     # We're not smart enough to find a good way to draw the borders :/. We must
