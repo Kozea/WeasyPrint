@@ -418,6 +418,8 @@ def clip_border_segment(context, enable_hinting, style, width, side,
         px2, py2 = transition_point(-trh, trv, -br, bt)
         context.rel_line_to(px1, py1)
         context.rel_line_to(-px1 + bbw + px2, -py1 + py2)
+        length = bbw
+        width = bt
     elif side == 'right':
         context.move_to(bbx + bbw, bby + bbh)
         context.rel_line_to(0, -bbh)
@@ -425,6 +427,8 @@ def clip_border_segment(context, enable_hinting, style, width, side,
         px2, py2 = transition_point(-brh, -brv, -br, -bb)
         context.rel_line_to(px1, py1)
         context.rel_line_to(-px1 + px2, -py1 + bbh + py2)
+        length = bbh
+        width = br
     elif side == 'bottom':
         context.move_to(bbx, bby + bbh)
         context.rel_line_to(bbw, 0)
@@ -432,6 +436,8 @@ def clip_border_segment(context, enable_hinting, style, width, side,
         px2, py2 = transition_point(blh, -blv, bl, -bb)
         context.rel_line_to(px1, py1)
         context.rel_line_to(-px1 - bbw + px2, -py1 + py2)
+        length = bbw
+        width = bb
     elif side == 'left':
         context.move_to(bbx, bby)
         context.rel_line_to(0, bbh)
@@ -439,6 +445,30 @@ def clip_border_segment(context, enable_hinting, style, width, side,
         px2, py2 = transition_point(tlh, tlv, bl, bt)
         context.rel_line_to(px1, py1)
         context.rel_line_to(-px1 + px2, -py1 - bbh + py2)
+        length = bbh
+        width = bl
+
+    if style in ('dotted', 'dashed'):
+        dash = width if style == 'dotted' else 3 * width
+        if context.user_to_device_distance(width, 0)[0] > 1:
+            # Round so that dash is a divisor of length,
+            # but not if the dashes are too small.
+            dash = length / (
+                round(length / dash) + (round(length / dash) + 1) % 2)
+        for i in range(0, round(length / dash), 2):
+            if side == 'top':
+                context.rectangle(
+                    bbx + i * dash, bby, dash, width)
+            elif side == 'right':
+                context.rectangle(
+                    bbx + bbw - width, bby + i * dash, width, dash)
+            elif side == 'bottom':
+                context.rectangle(
+                    bbx + i * dash, bby + bbh - width, dash, width)
+            elif side == 'left':
+                context.rectangle(
+                    bbx, bby + i * dash, width, dash)
+
     context.clip()
 
 
