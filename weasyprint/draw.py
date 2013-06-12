@@ -455,7 +455,7 @@ def clip_border_segment(context, enable_hinting, style, width, side,
             # but not if the dashes are too small.
             dash = length / (
                 round(length / dash) + (round(length / dash) + 1) % 2)
-        for i in range(0, round(length / dash), 2):
+        for i in range(0, int(round(length / dash)), 2):
             if side == 'top':
                 context.rectangle(
                     bbx + i * dash, bby, dash, width)
