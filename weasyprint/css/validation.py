@@ -1343,11 +1343,7 @@ def border_radius(base_url, name, tokens):
             else:
                 raise InvalidValues('Expected only one "/" separator')
         else:
-            length = get_length(token, negative=False, percentage=True)
-            if length is None:
-                raise InvalidValues('Expected length, got %s' % token.as_css())
-            else:
-                current.append(length)
+            current.append(token)
 
     if not vertical:
         vertical = horizontal[:]
