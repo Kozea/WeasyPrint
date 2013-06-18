@@ -17,6 +17,7 @@ import math
 
 import cairocffi
 cairocffi.install_as_pycairo()  # for CairoSVG
+CAIRO_HAS_MIME_DATA = cairocffi.cairo_version() >= 11000
 
 import cairosvg.parser
 import cairosvg.surface
@@ -133,7 +134,7 @@ def get_image_from_uri(cache, url_fetcher, uri, forced_mime_type=None):
                         'PNG and SVG are the only image formats available.')
                 string = result.get('string') or result['file_obj'].read()
                 surface, format_name = pixbuf.decode_to_image_surface(string)
-                if format_name == 'jpeg':
+                if format_name == 'jpeg' and CAIRO_HAS_MIME_DATA:
                     surface.set_mime_data('image/jpeg', string)
                 image = RasterImage(surface)
         finally:

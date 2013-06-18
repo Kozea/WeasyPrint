@@ -14,7 +14,7 @@ from __future__ import division, unicode_literals
 
 import io
 
-import cairocffi as cairo
+import cairocffi
 import pytest
 
 from .. import CSS
@@ -26,7 +26,7 @@ from .testing_utils import (
 @assert_no_logs
 def test_pdf_parser():
     fileobj = io.BytesIO()
-    surface = cairo.PDFSurface(fileobj, 1, 1)
+    surface = cairocffi.PDFSurface(fileobj, 1, 1)
     for width, height in [
         (100, 100),
         (200, 10),
@@ -298,7 +298,7 @@ def test_missing_links():
 
 @assert_no_logs
 def test_jpeg():
-    if not hasattr(cairo.ImageSurface, 'set_mime_data'):
+    if cairocffi.cairo_version() < 11000:
         pytest.xfail()
 
     def render(html):
