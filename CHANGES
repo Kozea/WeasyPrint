@@ -1,6 +1,23 @@
 WeasyPrint changelog
 ====================
 
+Version 0.19.2
+--------------
+
+Released on 2013-06-18.
+
+Bug fix release:
+
+* Fix `#88 <https://github.com/Kozea/WeasyPrint/issues/88>`_:
+  ``text-decoration: overline`` not being drawn above the text
+* Bug fix: Actually draw multiple lines when multiple values are given
+  to ``text-decoration``.
+* Use the font metrics for text decoration positioning.
+* Bug fix: Don't clip the border with ``overflow: hidden``.
+* Fix `#99 <https://github.com/Kozea/WeasyPrint/issues/00>`_:
+  Regression: JPEG images not loading with cairo 1.8.x.
+
+
 Version 0.19.1
 --------------
 
