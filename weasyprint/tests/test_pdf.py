@@ -19,6 +19,7 @@ import pytest
 
 from .. import CSS
 from .. import pdf
+from ..images import CAIRO_HAS_MIME_DATA
 from .testing_utils import (
     assert_no_logs, resource_filename, TestHTML, capture_logs)
 
@@ -298,7 +299,7 @@ def test_missing_links():
 
 @assert_no_logs
 def test_jpeg():
-    if cairocffi.cairo_version() < 11000:
+    if not CAIRO_HAS_MIME_DATA:
         pytest.xfail()
 
     def render(html):
