@@ -156,9 +156,7 @@ def find_stylesheets(element_tree, device_media_type, url_fetcher):
     The output order is the same as the source order.
 
     """
-    for element in element_tree.iter():
-        if element.tag not in ('style', 'link'):
-            continue
+    for element in element_tree.iter('style', 'link'):
         mime_type = element.get('type', 'text/css').split(';', 1)[0].strip()
         # Only keep 'type/subtype' from 'type/subtype ; param1; param2'.
         if mime_type != 'text/css':

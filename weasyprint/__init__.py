@@ -218,16 +218,16 @@ class CSS(object):
                       protocol_encoding=protocol_encoding)
         if source_type == 'string':
             if isinstance(source, bytes):
-                method = 'parse_stylesheet_bytes'
+                parse = PARSER.parse_stylesheet_bytes
             else:
                 # unicode, no encoding
-                method = 'parse_stylesheet'
+                parse = PARSER.parse_stylesheet
                 kwargs.clear()
         else:
             # file_obj or filename
-            method = 'parse_stylesheet_file'
+            parse = PARSER.parse_stylesheet_file
         # TODO: do not keep this?
-        self.stylesheet = getattr(PARSER, method)(source, **kwargs)
+        self.stylesheet = parse(source, **kwargs)
         self.base_url = base_url
         self.rules = list(preprocess_stylesheet(
             media_type, base_url, self.stylesheet.rules, url_fetcher))
