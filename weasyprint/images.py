@@ -114,14 +114,14 @@ class SVGImage(object):
 
 def get_image_from_uri(cache, url_fetcher, uri, forced_mime_type=None):
     """Get a cairo Pattern from an image URI."""
+    missing = object()
+    image = cache.get(uri, missing)
+    if image is not missing:
+        return image
+
     try:
-        missing = object()
-        image = cache.get(uri, missing)
-        if image is not missing:
-            return image
-        result = fetch(url_fetcher, uri)
-        mime_type = forced_mime_type or result['mime_type']
-        try:
+        with fetch(url_fetcher, uri) as result:
+            mime_type = forced_mime_type or result['mime_type']
             if mime_type == 'image/svg+xml':
                 image = SVGImage(
                     result.get('string') or result['file_obj'].read(), uri)
@@ -138,14 +138,6 @@ def get_image_from_uri(cache, url_fetcher, uri, forced_mime_type=None):
                 if format_name == 'jpeg' and CAIRO_HAS_MIME_DATA:
                     surface.set_mime_data('image/jpeg', string)
                 image = RasterImage(surface)
-        finally:
-            if 'file_obj' in result:
-                try:
-                    result['file_obj'].close()
-                except Exception:  # pragma: no cover
-                    # May already be closed or something.
-                    # This is just cleanup anyway.
-                    pass
     except Exception as exc:
         LOGGER.warn('Error for image at %s : %r', uri, exc)
         image = None

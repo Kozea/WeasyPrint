@@ -17,6 +17,7 @@ import sys
 import codecs
 import os.path
 import mimetypes
+import contextlib
 
 from . import VERSION_STRING
 from .logger import LOGGER
@@ -266,14 +267,21 @@ def default_url_fetcher(url):
         raise ValueError('Not an absolute URI: %r' % url)
 
 
+@contextlib.contextmanager
 def fetch(url_fetcher, url):
-    """Call an url_fetcher and fill in optional data.
-
-    In a result dict, redirected_url defaults to the original URL. If not
-    provided, mime_type is guessed from the path extension in the URL.
-
-    """
+    """Call an url_fetcher, fill in optional data, and clean up."""
     result = url_fetcher(url)
     result.setdefault('redirected_url', url)
     result.setdefault('mime_type', None)
-    return result
+    if result.get('file_obj'):
+        try:
+            yield result
+        finally:
+            try:
+                result['file_obj'].close()
+            except Exception:  # pragma: no cover
+                # May already be closed or something.
+                # This is just cleanup anyway.
+                pass
+    else:
+        yield result
