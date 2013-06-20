@@ -22,7 +22,7 @@ from . import VERSION_STRING
 from .logger import LOGGER
 from .compat import (
     urljoin, urlsplit, quote, unquote, unquote_to_bytes, urlopen_contenttype,
-    Request, parse_email, pathname2url, unicode, base64_decode)
+    Request, parse_email, pathname2url, unicode, base64_decode, URLError)
 
 
 # Unlinke HTML, CSS and PNG, the SVG MIME type is not always builtin

@@ -16,7 +16,7 @@ import sys
 import email
 
 
-__all__ = ['Request', 'base64_decode', 'base64_encode', 'basestring',
+__all__ = ['Request', 'URLError', 'base64_decode', 'base64_encode', 'basestring',
            'ints_from_bytes', 'iteritems', 'izip', 'parse_email', 'parse_qs',
            'pathname2url', 'quote', 'unicode', 'unquote', 'unquote_to_bytes',
            'urlencode', 'urljoin', 'urlopen', 'urlopen_contenttype',
@@ -29,6 +29,7 @@ if sys.version_info[0] >= 3:
         urljoin, urlsplit, quote, unquote, unquote_to_bytes, parse_qs,
         urlencode, uses_relative as urlparse_uses_relative)
     from urllib.request import urlopen, Request, pathname2url
+    from urllib.error import URLError
     from array import array
     from base64 import (decodebytes as base64_decode,
                         encodebytes as base64_encode)
@@ -60,7 +61,7 @@ else:
     # Python 2
     from urlparse import (urljoin, urlsplit, parse_qs,
                           uses_relative as urlparse_uses_relative)
-    from urllib2 import urlopen, Request
+    from urllib2 import urlopen, Request, URLError
     from urllib import pathname2url, quote, unquote, urlencode
     from array import array as _array
     from itertools import izip, imap
