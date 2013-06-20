@@ -30,7 +30,7 @@ try:
 except OSError:
     pixbuf = None
 
-from .urls import fetch
+from .urls import fetch, URLFetchingError
 from .logger import LOGGER
 from .compat import xrange
 
@@ -42,6 +42,20 @@ IMAGE_RENDERING_TO_FILTER = dict(
     auto=cairocffi.FILTER_GOOD,
     optimizequality=cairocffi.FILTER_BEST,
 )
+
+
+class ImageLoadingError(ValueError):
+    """An error occured when loading an image.
+
+    The image data is probably corrupted or in an invalid format.
+
+    """
+
+    @classmethod
+    def from_exception(cls, exception):
+        name = type(exception).__name__
+        value = str(exception)
+        return cls('%s: %s' % (name, value) if value else name)
 
 
 class RasterImage(object):
@@ -83,11 +97,14 @@ class SVGImage(object):
         self._svg_data = svg_data
 
         # TODO: find a way of not doing twice the whole rendering.
-        svg = self._render()
+        try:
+            svg = self._render()
+        except Exception as e:
+            raise ImageLoadingError.from_exception(e)
         # TODO: support SVG images with none or only one of intrinsic
         #       width, height and ratio.
         if not (svg.width > 0 and svg.height > 0):
-            raise ValueError(
+            raise ImageLoadingError(
                 'SVG images without an intrinsic size are not supported.')
         self.intrinsic_width = svg.width
         self.intrinsic_height = svg.height
@@ -112,36 +129,46 @@ class SVGImage(object):
         context.paint()
 
 
-def get_image_from_uri(cache, url_fetcher, uri, forced_mime_type=None):
+def get_image_from_uri(cache, url_fetcher, url, forced_mime_type=None):
     """Get a cairo Pattern from an image URI."""
     missing = object()
-    image = cache.get(uri, missing)
+    image = cache.get(url, missing)
     if image is not missing:
         return image
 
     try:
-        with fetch(url_fetcher, uri) as result:
+        with fetch(url_fetcher, url) as result:
             mime_type = forced_mime_type or result['mime_type']
             if mime_type == 'image/svg+xml':
-                image = SVGImage(
-                    result.get('string') or result['file_obj'].read(), uri)
+                string = (result['string'] if 'string' in result
+                          else result['file_obj'].read())
+                image = SVGImage(string, url)
             elif mime_type == 'image/png':
-                image = RasterImage(cairocffi.ImageSurface.create_from_png(
-                    result.get('file_obj') or BytesIO(result.get('string'))))
+                obj = result.get('file_obj') or BytesIO(result.get('string'))
+                try:
+                    surface = cairocffi.ImageSurface.create_from_png(obj)
+                except Exception as exc:
+                    raise ImageLoadingError.from_exception(exc)
+                image = RasterImage(surface)
             else:
                 if pixbuf is None:
-                    raise OSError(
+                    raise ImageLoadingError(
                         'Could not load GDK-Pixbuf. '
                         'PNG and SVG are the only image formats available.')
-                string = result.get('string') or result['file_obj'].read()
-                surface, format_name = pixbuf.decode_to_image_surface(string)
+                string = (result['string'] if 'string' in result
+                          else result['file_obj'].read())
+                try:
+                    surface, format_name = (
+                        pixbuf.decode_to_image_surface(string))
+                except pixbuf.ImageLoadingError as exc:
+                    raise ImageLoadingError(str(exc))
                 if format_name == 'jpeg' and CAIRO_HAS_MIME_DATA:
                     surface.set_mime_data('image/jpeg', string)
                 image = RasterImage(surface)
-    except Exception as exc:
-        LOGGER.warn('Error for image at %s : %r', uri, exc)
+    except (URLFetchingError, ImageLoadingError) as exc:
+        LOGGER.warn('Error for image at %s : %r', url, exc)
         image = None
-    cache[uri] = image
+    cache[url] = image
     return image
 
 

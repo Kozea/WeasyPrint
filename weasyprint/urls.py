@@ -267,10 +267,19 @@ def default_url_fetcher(url):
         raise ValueError('Not an absolute URI: %r' % url)
 
 
+class URLFetchingError(IOError):
+    """Some error happened when fetching an URL."""
+
+
 @contextlib.contextmanager
 def fetch(url_fetcher, url):
     """Call an url_fetcher, fill in optional data, and clean up."""
-    result = url_fetcher(url)
+    try:
+        result = url_fetcher(url)
+    except Exception as exc:
+        name = type(exc).__name__
+        value = str(exc)
+        raise URLFetchingError('%s: %s' % (name, value) if value else name)
     result.setdefault('redirected_url', url)
     result.setdefault('mime_type', None)
     if result.get('file_obj'):
