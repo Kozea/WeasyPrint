@@ -902,7 +902,8 @@ def test_url_fetcher():
         if url == 'weasyprint-custom:foo/%C3%A9_%e9_pattern':
             return dict(string=pattern_png, mime_type='image/png')
         elif url == 'weasyprint-custom:foo/bar.css':
-            return dict(string='body { background: url(é_%e9_pattern)')
+            return dict(string='body { background: url(é_%e9_pattern)',
+                        mime_type='text/css')
         else:
             return default_url_fetcher(url)
 
@@ -931,6 +932,6 @@ def test_url_fetcher():
 
     def fetcher_2(url):
         assert url == 'weasyprint-custom:%C3%A9_%e9.css'
-        return dict(string='')
+        return dict(string='', mime_type='text/css')
     TestHTML(string='<link rel=stylesheet href="weasyprint-custom:'
                     'é_%e9.css"><body>', url_fetcher=fetcher_2).render()

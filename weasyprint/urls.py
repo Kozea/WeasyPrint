@@ -275,8 +275,5 @@ def fetch(url_fetcher, url):
     """
     result = url_fetcher(url)
     result.setdefault('redirected_url', url)
-    if 'mime_type' not in result:
-        path = urlsplit(result['redirected_url']).path
-        mime_type, _ = mimetypes.guess_type(path)
-        result['mime_type'] = mime_type or 'application/octet-stream'
+    result.setdefault('mime_type', None)
     return result
