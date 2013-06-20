@@ -166,7 +166,7 @@ def get_image_from_uri(cache, url_fetcher, url, forced_mime_type=None):
                     surface.set_mime_data('image/jpeg', string)
                 image = RasterImage(surface)
     except (URLFetchingError, ImageLoadingError) as exc:
-        LOGGER.warn('Error for image at %s : %r', url, exc)
+        LOGGER.warn('Failed to load image at %s : %s', url, exc)
         image = None
     cache[url] = image
     return image

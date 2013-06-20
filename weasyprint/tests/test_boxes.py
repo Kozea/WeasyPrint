@@ -452,7 +452,7 @@ def test_images():
                 /><img src=inexistent.jpg alt="Inexistent src" /></p>
         ''')
     assert len(logs) == 1
-    assert 'WARNING: Error for image' in logs[0]
+    assert 'WARNING: Failed to load image' in logs[0]
     assert 'inexistent.jpg' in logs[0]
     assert_tree(result, [
         ('p', 'Block', [

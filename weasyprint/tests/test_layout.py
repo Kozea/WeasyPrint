@@ -2079,7 +2079,7 @@ def test_images():
         with capture_logs() as logs:
             body, img = get_img("<img src='%s' alt='invalid image'>" % url)
         assert len(logs) == 1
-        assert 'WARNING: Error for image' in logs[0]
+        assert 'WARNING: Failed to load image' in logs[0]
         assert isinstance(img, boxes.InlineBox)  # not a replaced box
         text, = img.children
         assert text.text == 'invalid image', url
@@ -2088,7 +2088,7 @@ def test_images():
         parse('<img src=nonexistent.png><img src=nonexistent.png>')
     # Failures are cached too: only one warning
     assert len(logs) == 1
-    assert 'WARNING: Error for image' in logs[0]
+    assert 'WARNING: Failed to load image' in logs[0]
 
     # Layout rules try to preserve the ratio, so the height should be 40px too:
     body, img = get_img('''<body style="font-size: 0">

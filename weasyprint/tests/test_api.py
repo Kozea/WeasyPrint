@@ -407,7 +407,7 @@ def test_command_line_render():
             with capture_logs() as logs:
                 stdout = run('--format png - -', stdin=combined)
             assert len(logs) == 1
-            assert logs[0].startswith('WARNING: Error for image')
+            assert logs[0].startswith('WARNING: Failed to load image')
             assert stdout == empty_png_bytes
 
             stdout = run('--format png --base-url .. - -', stdin=combined)
@@ -928,7 +928,7 @@ def test_url_fetcher():
     with capture_logs() as logs:
         test('<body><img src="custom:foo/bar">', blank=True)
     assert len(logs) == 1
-    assert logs[0].startswith('WARNING: Error for image at custom:foo/bar')
+    assert logs[0].startswith('WARNING: Failed to load image at custom:foo/bar')
 
     def fetcher_2(url):
         assert url == 'weasyprint-custom:%C3%A9_%e9.css'

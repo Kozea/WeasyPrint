@@ -280,12 +280,20 @@ def test_warnings():
             ['WARNING: Relative URI reference without a base URI']),
 #        ('@import "data:image/png,',
 #            ['WARNING: Unsupported stylesheet type', 'image/png']),
+        ('@import "invalid-protocol://absolute-URL',
+            ['WARNING: Failed to load stylesheet at']),
     ]:
         with capture_logs() as logs:
             CSS(string=source)
         assert len(logs) == 1
         for message in messages:
             assert message in logs[0]
+
+    html = '<link rel=stylesheet href=invalid-protocol://absolute>'
+    with capture_logs() as logs:
+        TestHTML(string=html).render()
+    assert len(logs) == 1
+    assert 'WARNING: Failed to load stylesheet at' in logs[0]
 
 
 @assert_no_logs

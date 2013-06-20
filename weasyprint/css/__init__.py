@@ -29,7 +29,8 @@ import lxml.etree
 from . import properties
 from . import computed_values
 from .validation import preprocess_declarations
-from ..urls import element_base_url, get_url_attribute, url_join
+from ..urls import (element_base_url, get_url_attribute, url_join,
+                    URLFetchingError)
 from ..logger import LOGGER
 from ..compat import iteritems
 from .. import CSS
@@ -183,8 +184,13 @@ def find_stylesheets(element_tree, device_media_type, url_fetcher):
                 continue
             href = get_url_attribute(element, 'href')
             if href is not None:
-                yield CSS(url=href, url_fetcher=url_fetcher,
-                          _check_mime_type=True, media_type=device_media_type)
+                try:
+                    yield CSS(url=href, url_fetcher=url_fetcher,
+                              _check_mime_type=True,
+                              media_type=device_media_type)
+                except URLFetchingError as exc:
+                    LOGGER.warn('Failed to load stylesheet at %s : %s',
+                                href, exc)
 
 
 def find_style_attributes(element_tree):
@@ -370,10 +376,15 @@ def preprocess_stylesheet(device_media_type, base_url, rules, url_fetcher):
             url = url_join(base_url, rule.uri, '@import at %s:%s',
                            rule.line, rule.column)
             if url is not None:
-                for result in CSS(url=url,
-                                  url_fetcher=url_fetcher,
-                                  media_type=device_media_type).rules:
-                    yield result
+                try:
+                    stylesheet = CSS(url=url, url_fetcher=url_fetcher,
+                                     media_type=device_media_type)
+                except URLFetchingError as exc:
+                    LOGGER.warn('Failed to load stylesheet at %s : %s',
+                                url, exc)
+                else:
+                    for result in stylesheet.rules:
+                        yield result
 
         elif rule.at_keyword == '@media':
             if not evaluate_media_query(rule.media, device_media_type):
