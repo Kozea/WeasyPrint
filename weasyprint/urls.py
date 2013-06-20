@@ -266,23 +266,17 @@ def default_url_fetcher(url):
         raise ValueError('Not an absolute URI: %r' % url)
 
 
-def wrap_url_fetcher(url_fetcher):
-    """Decorate an url_fetcher to fill in optional data.
+def fetch(url_fetcher, url):
+    """Call an url_fetcher and fill in optional data.
 
-    url_fetcher itself can be None, in which case the default fetcher is used.
     In a result dict, redirected_url defaults to the original URL. If not
     provided, mime_type is guessed from the path extension in the URL.
 
     """
-    if url_fetcher is None:
-        return default_url_fetcher
-
-    def wrapped_fetcher(url):
-        result = url_fetcher(url)
-        result.setdefault('redirected_url', url)
-        if 'mime_type' not in result:
-            path = urlsplit(result['redirected_url']).path
-            mime_type, _ = mimetypes.guess_type(path)
-            result['mime_type'] = mime_type or 'application/octet-stream'
-        return result
-    return wrapped_fetcher
+    result = url_fetcher(url)
+    result.setdefault('redirected_url', url)
+    if 'mime_type' not in result:
+        path = urlsplit(result['redirected_url']).path
+        mime_type, _ = mimetypes.guess_type(path)
+        result['mime_type'] = mime_type or 'application/octet-stream'
+    return result

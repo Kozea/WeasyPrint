@@ -30,6 +30,7 @@ try:
 except OSError:
     pixbuf = None
 
+from .urls import fetch
 from .logger import LOGGER
 from .compat import xrange
 
@@ -118,7 +119,7 @@ def get_image_from_uri(cache, url_fetcher, uri, forced_mime_type=None):
         image = cache.get(uri, missing)
         if image is not missing:
             return image
-        result = url_fetcher(uri)
+        result = fetch(url_fetcher, uri)
         mime_type = forced_mime_type or result['mime_type']
         try:
             if mime_type == 'image/svg+xml':

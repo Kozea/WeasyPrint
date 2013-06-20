@@ -28,8 +28,8 @@ __all__ = ['HTML', 'CSS', 'Document', 'Page', 'default_url_fetcher',
 
 import lxml.etree
 
-from .urls import (default_url_fetcher, wrap_url_fetcher,
-                   path2url, ensure_url, url_is_absolute)
+from .urls import (fetch, default_url_fetcher, path2url, ensure_url,
+                   url_is_absolute)
 from .logger import LOGGER
 # Some import are at the end of the file (after the CSS class) is defined
 # to work around circular imports.
@@ -73,8 +73,6 @@ class HTML(object):
     def __init__(self, guess=None, filename=None, url=None, file_obj=None,
                  string=None, tree=None, encoding=None, base_url=None,
                  url_fetcher=default_url_fetcher, media_type='print'):
-        url_fetcher = wrap_url_fetcher(url_fetcher)
-
         source_type, source, base_url, protocol_encoding = _select_source(
             guess, filename, url, file_obj, string, tree, base_url,
             url_fetcher)
@@ -211,8 +209,6 @@ class CSS(object):
                  string=None, encoding=None, base_url=None,
                  url_fetcher=default_url_fetcher, _check_mime_type=False,
                  media_type='print'):
-        url_fetcher = wrap_url_fetcher(url_fetcher)
-
         source_type, source, base_url, protocol_encoding = _select_source(
             guess, filename, url, file_obj, string, tree=None,
             base_url=base_url, url_fetcher=url_fetcher,
@@ -268,7 +264,7 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
             base_url = path2url(filename)
         return 'filename', filename, base_url, None
     if nones == [True, True, False, True, True, True]:
-        result = url_fetcher(url)
+        result = fetch(url_fetcher, url)
         if check_css_mime_type and result['mime_type'] != 'text/css':
             LOGGER.warn(
                 'Unsupported stylesheet type %s for %s',
