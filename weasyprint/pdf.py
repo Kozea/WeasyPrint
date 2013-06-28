@@ -384,10 +384,11 @@ def write_pdf_metadata(document, fileobj, scale):
             bookmark_root['Last']))
         for bookmark in bookmarks:
             content = [pdf_format('<< /Title {0!P}\n', bookmark['label'])]
+            page_num, pos_x, pos_y = bookmark['target']
             content.append(pdf_format(
                 '/A << /Type /Action /S /GoTo '
-                '/D [{0} /XYZ {1:f} {2:f} 0] >>\n',
-                *bookmark['target']))
+                '/D [{0} 0 R /XYZ {1:f} {2:f} 0] >>\n',
+                pdf.pages[page_num].object_number, pos_x, pos_y))
             if bookmark['Count']:
                 content.append(pdf_format('/Count {0}\n', bookmark['Count']))
             for key in ['Parent', 'Prev', 'Next', 'First', 'Last']:
