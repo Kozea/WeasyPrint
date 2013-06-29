@@ -678,7 +678,8 @@ def split_text_box(context, box, available_width, line_width, skip):
     assert isinstance(box, boxes.TextBox)
     font_size = box.style.font_size
     text = box.text[skip:]
-    if font_size == 0 or not text:
+    no_space_left = available_width is not None and int(available_width) == 0
+    if font_size == 0 or not text or no_space_left:
         return None, None, False
     # XXX ``resume_at`` is an index in UTF-8 bytes, not unicode codepoints.
     layout, length, resume_at, width, height, baseline = split_first_line(
