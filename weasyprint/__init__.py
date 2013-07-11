@@ -257,7 +257,9 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
         result = _select_source(
             base_url=base_url, url_fetcher=url_fetcher,
             check_css_mime_type=check_css_mime_type,
-            **{type_: guess})
+            # Use str() to work around http://bugs.python.org/issue4978
+            # See https://github.com/Kozea/WeasyPrint/issues/97
+            **{str(type_): guess})
         with result as result:
             yield result
     elif nones == [True, False, True, True, True, True]:
