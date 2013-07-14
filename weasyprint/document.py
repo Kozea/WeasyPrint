@@ -271,15 +271,25 @@ class Document(object):
         :return:
             A new :class:`Document` object.
 
-        Examples::
+        Examples:
 
-            # Lists count from 0 but page numbers usually from 1
+        Write two PDF files for odd-numbered and even-numbered pages::
+
+            # Python lists count from 0 but pages are numbered from 1.
             # [::2] is a slice of even list indexes but odd-numbered pages.
             document.copy(document.pages[::2]).write_pdf('odd_pages.pdf')
             document.copy(document.pages[1::2]).write_pdf('even_pages.pdf')
 
+        Write each page to a numbred PNG file::
+
             for i, page in enumerate(document.pages):
                 document.copy(page).write_png('page_%s.png' % i)
+
+        Combine multiple documents into one PDF file,
+        using metadata from the first::
+
+            all_pages = [p for p in doc.pages for doc in documents]
+            documents[0].copy(all_pages).write_pdf('combined.pdf')
 
         """
         if pages == 'all':

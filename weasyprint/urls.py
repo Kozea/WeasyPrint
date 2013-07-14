@@ -282,7 +282,7 @@ def fetch(url_fetcher, url):
         raise URLFetchingError('%s: %s' % (name, value) if value else name)
     result.setdefault('redirected_url', url)
     result.setdefault('mime_type', None)
-    if result.get('file_obj'):
+    if 'file_obj' in result:
         try:
             yield result
         finally:
