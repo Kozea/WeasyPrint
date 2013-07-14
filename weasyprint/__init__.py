@@ -105,6 +105,9 @@ class HTML(object):
     def _ua_stylesheets(self):
         return [HTML5_UA_STYLESHEET]
 
+    def _get_metadata(self):
+        return get_html_metadata(self.root_element)
+
     def render(self, stylesheets=None, enable_hinting=False):
         """Lay out and paginate the document, but do not (yet) export it
         to PDF or another format.
@@ -305,5 +308,5 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
 
 # Work around circular imports.
 from .css import PARSER, preprocess_stylesheet
-from .html import find_base_url, HTML5_UA_STYLESHEET
+from .html import find_base_url, HTML5_UA_STYLESHEET, get_html_metadata
 from .document import Document, Page

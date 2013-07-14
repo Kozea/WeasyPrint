@@ -151,6 +151,15 @@ class StyleDict(object):
     anonymous = False
 
 
+def get_child_text(element):
+    """Return the text directly in the element, not descendants."""
+    content = [element.text] if element.text else []
+    for child in element:
+        if child.tail:
+            content.append(child.tail)
+    return ''.join(content)
+
+
 def find_stylesheets(element_tree, device_media_type, url_fetcher):
     """Yield the stylesheets in ``element_tree``.
 
@@ -169,10 +178,7 @@ def find_stylesheets(element_tree, device_media_type, url_fetcher):
         if element.tag == 'style':
             # Content is text that is directly in the <style> element, not its
             # descendants
-            content = [element.text or '']
-            for child in element:
-                content.append(child.tail or '')
-            content = ''.join(content)
+            content = get_child_text(element)
             # lxml should give us either unicode or ASCII-only bytestrings, so
             # we don't need `encoding` here.
             css = CSS(string=content, base_url=element_base_url(element),

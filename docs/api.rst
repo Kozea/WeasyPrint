@@ -34,7 +34,9 @@ Python API
 .. autofunction:: default_url_fetcher
 
 .. module:: weasyprint.document
-.. autoclass:: Document()
+.. autoclass:: Document
+    :members:
+.. autoclass:: DocumentMetadata
     :members:
 .. autoclass:: Page()
     :members:
