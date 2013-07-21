@@ -24,6 +24,7 @@ import pytest
 
 from ..compat import xrange, izip, ints_from_bytes
 from ..urls import ensure_url
+from ..html import HTML_HANDLERS
 from .. import HTML
 from .testing_utils import (
     resource_filename, TestHTML, FONTS, assert_no_logs, capture_logs)
@@ -1459,37 +1460,42 @@ def test_visibility():
 @assert_no_logs
 @requires_cairo_1_12
 def test_tables():
+    # TODO: refactor colspan/rowspan into CSS:
+    # td, th { column-span: attr(colspan integer) }
+    HTML_HANDLERS['x-td'] = HTML_HANDLERS['td']
+    HTML_HANDLERS['x-th'] = HTML_HANDLERS['th']
+
     source = '''
         <style>
             @page { size: 28px; background: #fff }
-            table { margin: 1px; padding: 1px; border-spacing: 1px;
-                    border: 1px solid transparent }
-            td { width: 2px; height: 2px; padding: 1px;
-                 border: 1px solid transparent }
+            x-table { margin: 1px; padding: 1px; border-spacing: 1px;
+                      border: 1px solid transparent }
+            x-td { width: 2px; height: 2px; padding: 1px;
+                   border: 1px solid transparent }
             %(extra_css)s
         </style>
-        <table>
-            <colgroup>
-                <col>
-                <col>
-            </colgroup>
-            <col>
-            <tbody>
-                <tr>
-                    <td></td>
-                    <td rowspan=2></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td colspan=2></td>
-                    <td></td>
-                </tr>
-            </tbody>
-            <tr>
-                <td></td>
-                <td></td>
-            </tr>
-        </table>
+        <x-table>
+            <x-colgroup>
+                <x-col></x-col>
+                <x-col></x-col>
+            </x-colgroup>
+            <x-col></x-col>
+            <x-tbody>
+                <x-tr>
+                    <x-td></x-td>
+                    <x-td rowspan=2></x-td>
+                    <x-td></x-td>
+                </x-tr>
+                <x-tr>
+                    <x-td colspan=2></x-td>
+                    <x-td></x-td>
+                </x-tr>
+            </x-tbody>
+            <x-tr>
+                <x-td></x-td>
+                <x-td></x-td>
+            </x-tr>
+        </x-table>
     '''
     r = as_pixel(b'\xff\x7f\x7f\xff')  # rgba(255, 0, 0, 0.5) above #fff
     R = as_pixel(b'\xff\x3f\x3f\xff')  # r above r above #fff
@@ -1526,8 +1532,8 @@ def test_tables():
         _+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+_,
         _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
     ], source % {'extra_css': '''
-        table { border-color: #00f; table-layout: fixed }
-        td { border-color: rgba(255, 0, 0, 0.5) }
+        x-table { border-color: #00f; table-layout: fixed }
+        x-td { border-color: rgba(255, 0, 0, 0.5) }
     '''})
 
     assert_pixels('table_collapsed_borders', 28, 28, [
@@ -1560,9 +1566,9 @@ def test_tables():
         _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
         _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
     ], source % {'extra_css': '''
-        table { border: 2px solid #00f; table-layout: fixed;
-                border-collapse: collapse }
-        td { border-color: #ff7f7f }
+        x-table { border: 2px solid #00f; table-layout: fixed;
+                  border-collapse: collapse }
+        x-td { border-color: #ff7f7f }
     '''})
 
     assert_pixels('table_collapsed_borders_paged', 28, 52, [
@@ -1619,9 +1625,9 @@ def test_tables():
         _+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+_,
         _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
     ], source % {'extra_css': '''
-        table { border: solid #00f; border-width: 8px 2px;
-                table-layout: fixed; border-collapse: collapse }
-        td { border-color: #ff7f7f }
+        x-table { border: solid #00f; border-width: 8px 2px;
+                  table-layout: fixed; border-collapse: collapse }
+        x-td { border-color: #ff7f7f }
         @page { size: 28px 26px; margin: 1px;
                 border: 1px solid rgba(0, 255, 0, 0.5); }
     '''})
@@ -1656,8 +1662,8 @@ def test_tables():
         _+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+_,
         _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
     ], source % {'extra_css': '''
-        table { border-color: #00f; table-layout: fixed }
-        td { background: rgba(255, 0, 0, 0.5) }
+        x-table { border-color: #00f; table-layout: fixed }
+        x-td { background: rgba(255, 0, 0, 0.5) }
     '''})
 
     assert_pixels('table_column_backgrounds', 28, 28, [
@@ -1690,9 +1696,9 @@ def test_tables():
         _+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+_,
         _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
     ], source % {'extra_css': '''
-        table { border-color: #00f; table-layout: fixed }
-        colgroup { background: rgba(255, 0, 0, 0.5) }
-        col { background: rgba(0, 255, 0, 0.5) }
+        x-table { border-color: #00f; table-layout: fixed }
+        x-colgroup { background: rgba(255, 0, 0, 0.5) }
+        x-col { background: rgba(0, 255, 0, 0.5) }
     '''})
 
     assert_pixels('table_row_backgrounds', 28, 28, [
@@ -1725,9 +1731,9 @@ def test_tables():
         _+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+_,
         _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
     ], source % {'extra_css': '''
-        table { border-color: #00f; table-layout: fixed }
-        tbody { background: rgba(255, 0, 0, 0.5) }
-        tr { background: rgba(0, 255, 0, 0.5) }
+        x-table { border-color: #00f; table-layout: fixed }
+        x-tbody { background: rgba(255, 0, 0, 0.5) }
+        x-tr { background: rgba(0, 255, 0, 0.5) }
     '''})
 
     r = as_pixel(b'\xff\x00\x00\xff')
@@ -1842,7 +1848,7 @@ def test_before_after():
                 body { margin: 0; background: #fff }
                 a[href]:before { content: '[' attr(href) '] ' }
             </style>
-            <p><a href="some url">some content</p>
+            <p><a href="some url">some content</a></p>
         '''),
         ('pseudo_before_reference', '''
             <style>
