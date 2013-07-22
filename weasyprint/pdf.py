@@ -40,6 +40,8 @@ import cairocffi as cairo
 from . import VERSION_STRING
 from .compat import xrange, iteritems, izip
 from .urls import iri_to_uri
+from .html import W3C_DATE_RE
+from .logger import LOGGER
 
 
 class PDFFormatter(string.Formatter):
@@ -367,7 +369,7 @@ def prepare_metadata(document, bookmark_root_id, scale):
     return bookmark_root, bookmark_list, links
 
 
-def write_pdf_metadata(document, fileobj, scale):
+def write_pdf_metadata(document, fileobj, scale, metadata):
     """Append to a seekable file-like object to add PDF metadata."""
     pdf = PDFFile(fileobj)
     bookmark_root_id = pdf.next_object_number()
@@ -422,8 +424,53 @@ def write_pdf_metadata(document, fileobj, scale):
                 '/Annots [{0}]', ' '.join(
                     '{0} 0 R'.format(n) for n in annotations)))
 
-    pdf.overwrite_object(pdf.info.object_number, pdf_format(
-        '<< /Producer {producer!P} >>',
-        producer=VERSION_STRING))
+    info = [pdf_format('<< /Producer {0!P}\n', VERSION_STRING)]
+    for attr, key in (('title', 'Title'), ('description', 'Subject'),
+                      ('generator', 'Creator')):
+        value = getattr(metadata, attr)
+        if value is not None:
+            info.append(pdf_format('/{0} {1!P}', key, value))
+    for attr, key in (('authors', 'Author'), ('keywords', 'Keywords')):
+        value = getattr(metadata, attr)
+        if value is not None:
+            info.append(pdf_format('/{0} {1!P}', key, ', '.join(value)))
+    for attr, key in (('created', 'CreationDate'), ('modified', 'ModDate')):
+        value = w3c_date_to_pdf(getattr(metadata, attr), attr)
+        if value is not None:
+            info.append(pdf_format('/{0} (D:{1})', key, value))
+    # TODO: write metadata['CreationDate'] and metadata['ModDate'] as dates.
+    info.append(b' >>')
+    pdf.overwrite_object(pdf.info.object_number, b''.join(info))
 
     pdf.finish()
+
+
+def w3c_date_to_pdf(string, attr_name):
+    """
+    YYYYMMDDHHmmSSOHH'mm'
+
+    """
+    if string is None:
+        return None
+    match = W3C_DATE_RE.match(string)
+    if match is None:
+        LOGGER.warn('Invalid %s date: %r', attr_name, string)
+        return None
+    groups = match.groupdict()
+    pdf_date = (groups['year']
+                + (groups['month'] or '')
+                + (groups['day'] or '')
+                + (groups['hour'] or '')
+                + (groups['minute'] or '')
+                + (groups['second'] or ''))
+    if groups['hour']:
+        assert groups['minute']
+        if not groups['second']:
+            pdf_date += '00'
+        if groups['tz_hour']:
+            assert groups['tz_hour'].startswith(('+', '-'))
+            assert groups['tz_minute']
+            pdf_date += "%s'%s'" % (groups['tz_hour'], groups['tz_minute'])
+        else:
+            pdf_date += 'Z'  # UTC
+    return pdf_date
