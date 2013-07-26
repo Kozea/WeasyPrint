@@ -61,16 +61,23 @@ class ImageLoadingError(ValueError):
 class RasterImage(object):
     def __init__(self, image_surface):
         self.image_surface = image_surface
-        self.intrinsic_width = image_surface.get_width()
-        self.intrinsic_height = image_surface.get_height()
+        self._intrinsic_width = image_surface.get_width()
+        self._intrinsic_height = image_surface.get_height()
         self.intrinsic_ratio = (
-            self.intrinsic_width / self.intrinsic_height
-            if self.intrinsic_height != 0 else float('inf'))
+            self._intrinsic_width / self._intrinsic_height
+            if self._intrinsic_height != 0 else float('inf'))
+
+    def get_intrinsic_size(self, image_resolution):
+        # Raster images are affected by the 'image-resolution' property.
+        return (self._intrinsic_width / image_resolution,
+                self._intrinsic_height / image_resolution)
 
     def draw(self, context, concrete_width, concrete_height, image_rendering):
-        if self.intrinsic_width > 0 and self.intrinsic_height > 0:
-            context.scale(concrete_width / self.intrinsic_width,
-                          concrete_height / self.intrinsic_height)
+        if self._intrinsic_width > 0 and self._intrinsic_height > 0:
+            # Use the real intrinsic size here,
+            # not affected by 'image-resolution'.
+            context.scale(concrete_width / self._intrinsic_width,
+                          concrete_height / self._intrinsic_height)
             context.set_source_surface(self.image_surface)
             context.get_source().set_filter(
                 IMAGE_RENDERING_TO_FILTER[image_rendering])
@@ -106,9 +113,13 @@ class SVGImage(object):
         if not (svg.width > 0 and svg.height > 0):
             raise ImageLoadingError(
                 'SVG images without an intrinsic size are not supported.')
-        self.intrinsic_width = svg.width
-        self.intrinsic_height = svg.height
-        self.intrinsic_ratio = self.intrinsic_width / self.intrinsic_height
+        self._intrinsic_width = svg.width
+        self._intrinsic_height = svg.height
+        self.intrinsic_ratio = self._intrinsic_width / self._intrinsic_height
+
+    def get_intrinsic_size(self, _image_resolution):
+        # Vector images are affected by the 'image-resolution' property.
+        return self._intrinsic_width, self._intrinsic_height
 
     def _render(self):
         # Draw to a cairo surface but do not write to a file.
@@ -271,10 +282,6 @@ PATTERN_TYPES = dict(
 
 
 class Gradient(object):
-    intrinsic_width = None
-    intrinsic_height = None
-    intrinsic_ratio = None
-
     def __init__(self, color_stops, repeating):
         assert color_stops
         #: List of (r, g, b, a), list of Dimension
@@ -282,6 +289,12 @@ class Gradient(object):
         self.stop_positions = [position for color, position in color_stops]
         #: bool
         self.repeating = repeating
+
+    def get_intrinsic_size(self, _image_resolution):
+        # Raster images are affected by the 'image-resolution' property.
+        return None, None
+
+    intrinsic_ratio = None
 
     def draw(self, context, concrete_width, concrete_height, _image_rendering):
         scale_y, type_, init, stop_positions, stop_colors = self.layout(

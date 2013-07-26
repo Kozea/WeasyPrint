@@ -72,7 +72,7 @@ def layout_box_backgrounds(page, box, get_image_from_uri):
 
     box.background = Background(
         color=color, image_rendering=style.image_rendering, layers=[
-            layout_background_layer(box, page, *layer)
+            layout_background_layer(box, page, style.image_resolution, *layer)
             for layer in zip(images, *map(cycle, [
                 style.background_size,
                 style.background_clip,
@@ -93,8 +93,8 @@ def percentage(value, refer_to):
         return refer_to * value.value / 100
 
 
-def layout_background_layer(box, page, image, size, clip, repeat, origin,
-                            position, attachment):
+def layout_background_layer(box, page, resolution, image, size, clip, repeat,
+                            origin, position, attachment):
 
     if box is not page:
         painting_area = box_rectangle(box, clip)
@@ -110,8 +110,7 @@ def layout_background_layer(box, page, image, size, clip, repeat, origin,
         # XXX: how does border-radius work on pages?
         rounded_box = box.rounded_border_box()
 
-    if (image is None or image.intrinsic_width == 0
-            or image.intrinsic_height == 0):
+    if image is None or 0 in image.get_intrinsic_size(1):
         return BackgroundLayer(
             image=None, unbounded=(box is page), painting_area=painting_area,
             size='unused', position='unused', repeat='unused',
@@ -136,9 +135,9 @@ def layout_background_layer(box, page, image, size, clip, repeat, origin,
             positioning_width, positioning_height, image.intrinsic_ratio)
     else:
         size_width, size_height = size
+        iwidth, iheight = image.get_intrinsic_size(resolution)
         image_width, image_height = replaced.default_image_sizing(
-            image.intrinsic_width, image.intrinsic_height,
-            image.intrinsic_ratio,
+            iwidth, iheight, image.intrinsic_ratio,
             percentage(size_width, positioning_width),
             percentage(size_height, positioning_height),
             positioning_width, positioning_height)

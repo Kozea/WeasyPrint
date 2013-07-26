@@ -1411,6 +1411,33 @@ def test_images():
     ''')
 
 
+def test_image_resolution():
+    assert_same_rendering(20, 20, [
+        ('image_resolution_ref', '''
+            <style>@page { size: 20px; margin: 2px; background: #fff }</style>
+            <div style="font-size: 0">
+                <img src="pattern.png" style="width: 8px"></div>
+        '''),
+        ('image_resolution_img', '''
+            <style>@page { size: 20px; margin: 2px; background: #fff }</style>
+            <div style="image-resolution: .5dppx; font-size: 0">
+                <img src="pattern.png"></div>
+        '''),
+        ('image_resolution_content', '''
+            <style>@page { size: 20px; margin: 2px; background: #fff }
+                   div::before { content: url(pattern.png) }
+            </style>
+            <div style="image-resolution: .5dppx; font-size: 0"></div>
+        '''),
+        ('image_resolution_background', '''
+            <style>@page { size: 20px; margin: 2px; background: #fff }
+            </style>
+            <div style="height: 16px; image-resolution: .5dppx;
+                        background: url(pattern.png) no-repeat"></div>
+        '''),
+    ])
+
+
 @assert_no_logs
 def test_visibility():
     source = '''

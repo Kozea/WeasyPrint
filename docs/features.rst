@@ -126,7 +126,7 @@ as invalid with ``*``.
 .. _hyphenation:
 
 CSS Text: hyphenation
-~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 
 
 The experimental_ ``-weasy-hyphens`` property controls hyphenation
@@ -185,8 +185,11 @@ The following features are supported:
 * `CSS Transforms`_ (2D only)
 * The background part of `CSS Backgrounds and Borders Level 3`_,
   including multiple background layers per element/box.
-* ``linear-gradient()`` and ``radial-gradient()`` (as background images)
-  from `CSS Images Level 3`_
+* ``linear-gradient()`` and ``radial-gradient()`` (as background images),
+  from `CSS Images Level 3`_.
+* The ``image-resolution`` property from `CSS Images Level 3`_.
+  The ``snap`` and ``from-image`` values are not supported yet,
+  so the property only takes a single ``<resolution>`` value.
 * The ``box-sizing`` property from `CSS Basic User Interface`_:
 
 .. _CSS Colors Level 3: http://www.w3.org/TR/css3-color/

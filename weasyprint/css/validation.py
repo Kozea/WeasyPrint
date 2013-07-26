@@ -195,8 +195,23 @@ ANGLE_TO_RADIANS = {
 
 
 def get_angle(token):
-    """Return whether the argument is an angle token."""
+    """Return the value in radians of an <angle> token, or None."""
     factor = ANGLE_TO_RADIANS.get(token.unit)
+    if factor is not None:
+        return token.value * factor
+
+
+# http://dev.w3.org/csswg/css-values/#resolution
+RESOLUTION_TO_DPPX = {
+    'dppx': 1,
+    'dpi': 1 / computed_values.LENGTHS_TO_PIXELS['in'],
+    'dpcm': 1 / computed_values.LENGTHS_TO_PIXELS['cm'],
+}
+
+
+def get_resolution(token):
+    """Return the value in dppx of a <resolution> token, or None."""
+    factor = RESOLUTION_TO_DPPX.get(token.unit)
     if factor is not None:
         return token.value * factor
 
@@ -840,6 +855,13 @@ def font_weight(token):
     if token.type == 'INTEGER':
         if token.value in [100, 200, 300, 400, 500, 600, 700, 800, 900]:
             return token.value
+
+
+@validator()
+@single_token
+def image_resolution(token):
+    # TODO: support 'snap' and 'from-image'
+    return get_resolution(token)
 
 
 @validator('letter-spacing')
