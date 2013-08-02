@@ -1177,6 +1177,87 @@ def test_auto_layout_table():
     assert table.width == 90  # 30 + 60
     assert table.margin_width() == 100  # 90 + 2*5 (border)
 
+    # Column widths as percentage
+    page, = parse('''
+        <table style="width: 200px">
+            <colgroup>
+              <col style="width: 70%" />
+              <col style="width: 30%" />
+            </colgroup>
+            <tbody>
+              <tr>
+                <td>a</td>
+                <td>abc</td>
+              </tr>
+            </tbody>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2 = row.children
+    assert td_1.width == 140
+    assert td_2.width == 60
+    assert table.width == 200
+
+    # Column width as percentage and cell width in pixels
+    page, = parse('''
+        <table style="width: 200px">
+            <colgroup>
+              <col style="width: 70%" />
+              <col />
+            </colgroup>
+            <tbody>
+              <tr>
+                <td>a</td>
+                <td style="width: 60px">abc</td>
+              </tr>
+            </tbody>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2 = row.children
+    assert td_1.width == 140
+    assert td_2.width == 60
+    assert table.width == 200
+
+    # Column width and cell width as percentage
+    page, = parse('''
+        <div style="width: 400px">
+            <table style="width: 50%">
+                <colgroup>
+                    <col style="width: 70%" />
+                    <col />
+                </colgroup>
+                <tbody>
+                    <tr>
+                        <td>a</td>
+                        <td style="width: 30%">abc</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    table_wrapper, = div.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2 = row.children
+    assert td_1.width == 140
+    assert td_2.width == 60
+    assert table.width == 200
+
 
 @assert_no_logs
 def test_lists():

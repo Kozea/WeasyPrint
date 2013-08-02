@@ -148,6 +148,31 @@ def block_preferred_width(context, box, outer=True):
     return _block_preferred_width(context, box, preferred_width, outer)
 
 
+def table_cell_preferred_minimum_width(context, box, table,
+                                       resolved_table_width, outer=True):
+    """Return the preferred minimum width for a ``TableCellBox``."""
+    # Try to solve the cell's width if it is a percentage
+    width = box.style.width
+    if resolved_table_width and width != 'auto' and width.unit == '%':
+        return width.value / 100. * table.width
+
+    # Else return standard block's preferred minimum width
+    return _block_preferred_width(
+        context, box, preferred_minimum_width, outer)
+
+
+def table_cell_preferred_width(context, box, table, resolved_table_width,
+                               outer=True):
+    """Return the preferred width for a ``TableCellBox``."""
+    # Try to solve the cell's width if it is a percentage
+    width = box.style.width
+    if resolved_table_width and width != 'auto' and width.unit == '%':
+        return width.value / 100. * table.width
+
+    # Else return standard block's preferred width
+    return _block_preferred_width(context, box, preferred_width, outer)
+
+
 def inline_preferred_minimum_width(context, box, outer=True, skip_stack=None,
                                    first_line=False, is_line_start=False):
     """Return the preferred minimum width for an ``InlineBox``.
@@ -250,6 +275,8 @@ def table_and_columns_preferred_widths(context, box, outer=True,
     ``(table_preferred_minimum_width, table_preferred_width,
     column_preferred_minimum_widths, column_preferred_widths)``
 
+    http://www.w3.org/TR/CSS21/tables.html#auto-table-layout
+
     """
     table = box.get_wrapped_table()
     result = TABLE_CACHE.get(table)
@@ -297,9 +324,11 @@ def table_and_columns_preferred_widths(context, box, outer=True,
         for j, cell in enumerate(row):
             if cell:
                 column_preferred_widths[j][i] = \
-                    preferred_width(context, cell)
+                    table_cell_preferred_width(
+                        context, cell, table, resolved_table_width)
                 column_preferred_minimum_widths[j][i] = \
-                    preferred_minimum_width(context, cell)
+                    table_cell_preferred_minimum_width(
+                        context, cell, table, resolved_table_width)
 
     column_preferred_widths = [
         max(widths) if widths else 0
@@ -318,22 +347,25 @@ def table_and_columns_preferred_widths(context, box, outer=True,
             assert isinstance(column, boxes.TableColumnBox)
             column_widths[column.grid_x] = column.style.width
 
-    # TODO: handle percentages for column widths
     if column_widths:
         for widths in (column_preferred_widths,
                        column_preferred_minimum_widths):
             for i, width in enumerate(widths):
                 column_width = column_widths[i]
-                if (column_width and column_width != 'auto' and
-                        column_width.unit != '%'):
-                    widths[i] = max(column_width.value, widths[i])
+                if column_width and column_width != 'auto':
+                    if column_width.unit == '%' and resolved_table_width:
+                        widths[i] = max(
+                            column_width.value / 100. * table.width, widths[i])
+                    elif column_width.unit != '%':
+                        widths[i] = max(column_width.value, widths[i])
 
     # Point #3
     for cell in colspan_cells:
         column_slice = slice(cell.grid_x, cell.grid_x + cell.colspan)
 
         cell_width = (
-            preferred_width(context, cell) -
+            table_cell_preferred_width(
+                context, cell, table, resolved_table_width) -
             border_spacing_x * (cell.colspan - 1))
         columns_width = sum(column_preferred_widths[column_slice])
         if cell_width > columns_width:
@@ -342,7 +374,8 @@ def table_and_columns_preferred_widths(context, box, outer=True,
                 column_preferred_widths[i] += added_space
 
         cell_minimum_width = (
-            preferred_minimum_width(context, cell) -
+            table_cell_preferred_minimum_width(
+                context, cell, table, resolved_table_width) -
             border_spacing_x * (cell.colspan - 1))
         columns_minimum_width = sum(
             column_preferred_minimum_widths[column_slice])
@@ -418,13 +451,17 @@ def table_and_columns_preferred_widths(context, box, outer=True,
 
 def table_preferred_minimum_width(context, box, outer=True):
     """Return the preferred minimum width for a ``TableBox``. wrapper"""
-    minimum_width, _, _, _ = table_and_columns_preferred_widths(context, box)
+    resolved_table_width = box.style.width != 'auto'
+    minimum_width, _, _, _ = table_and_columns_preferred_widths(
+        context, box, resolved_table_width)
     return adjust(box, outer, minimum_width)
 
 
 def table_preferred_width(context, box, outer=True):
     """Return the preferred width for a ``TableBox`` wrapper."""
-    _, width, _, _ = table_and_columns_preferred_widths(context, box)
+    resolved_table_width = box.style.width != 'auto'
+    _, width, _, _ = table_and_columns_preferred_widths(
+        context, box, resolved_table_width)
     return adjust(box, outer, width)
 
 
