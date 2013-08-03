@@ -1203,6 +1203,95 @@ def test_auto_layout_table():
     assert td_2.width == 60
     assert table.width == 200
 
+    # Column group width
+    page, = parse('''
+        <table style="width: 200px">
+            <colgroup style="width: 100px">
+              <col />
+              <col />
+            </colgroup>
+            <col style="width: 100px" />
+            <tbody>
+              <tr>
+                <td>a</td>
+                <td>a</td>
+                <td>abc</td>
+              </tr>
+            </tbody>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2, td_3 = row.children
+    assert td_1.width == 50
+    assert td_2.width == 50
+    assert td_3.width == 100
+    assert table.width == 200
+
+    # Column group width as percentage
+    page, = parse('''
+        <table style="width: 200px">
+            <colgroup style="width: 100px">
+              <col />
+              <col />
+            </colgroup>
+            <colgroup style="width: 50%">
+              <col />
+              <col />
+            </colgroup>
+            <tbody>
+              <tr>
+                <td>a</td>
+                <td>a</td>
+                <td>abc</td>
+                <td>abc</td>
+              </tr>
+            </tbody>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2, td_3, td_4 = row.children
+    assert td_1.width == 50
+    assert td_2.width == 50
+    assert td_3.width == 50
+    assert td_4.width == 50
+    assert table.width == 200
+
+    # Wrong column group width
+    page, = parse('''
+        <table style="width: 200px">
+            <colgroup style="width: 80%">
+              <col />
+              <col />
+            </colgroup>
+            <tbody>
+              <tr>
+                <td>a</td>
+                <td>a</td>
+              </tr>
+            </tbody>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2 = row.children
+    assert td_1.width == 100
+    assert td_2.width == 100
+    assert table.width == 200
+
     # Column width as percentage and cell width in pixels
     page, = parse('''
         <table style="width: 200px">

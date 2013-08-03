@@ -387,15 +387,18 @@ def table_and_columns_preferred_widths(context, box, outer=True,
 
     # Point #4
     for column_group, column_group_width in column_groups_widths:
-        # TODO: handle percentages for column group widths
         if (column_group_width and column_group_width != 'auto' and
-                column_group_width.unit != '%'):
+                (column_group_width.unit != '%' or resolved_table_width)):
             column_indexes = [
                 column.grid_x for column in column_group.children]
             columns_width = sum(
                 column_preferred_minimum_widths[index]
                 for index in column_indexes)
-            column_group_width = column_group_width.value
+            if column_group_width.unit == '%':
+                column_group_width = (
+                    column_group_width.value / 100. * table.width)
+            else:
+                column_group_width = column_group_width.value
             if column_group_width > columns_width:
                 added_space = (
                     (column_group_width - columns_width) / len(column_indexes))
