@@ -48,7 +48,20 @@ BOX_TYPE_FROM_DISPLAY = {
 
 def build_formatting_structure(element_tree, style_for, get_image_from_uri):
     """Build a formatting structure (box tree) from an element tree."""
-    box, = element_to_box(element_tree, style_for, get_image_from_uri)
+    box_list = element_to_box(element_tree, style_for, get_image_from_uri)
+    if box_list:
+        box, = box_list
+    else:
+        # No root element
+        def root_style_for(element, pseudo_type=None):
+            style = style_for(element, pseudo_type)
+            if style:
+                if element.getparent() is None:
+                    style.display = 'block'
+                else:
+                    style.display = 'none'
+            return style
+        box, = element_to_box(element_tree, root_style_for, get_image_from_uri)
     box.is_for_root_element = True
     # If this is changed, maybe update weasy.layout.pages.make_margin_boxes()
     process_whitespace(box)
