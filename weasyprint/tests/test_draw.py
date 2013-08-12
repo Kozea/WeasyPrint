@@ -2711,7 +2711,6 @@ def test_radial_gradients():
             'radial_gradient_' + gradient, 10, 16,
             '<style>@page { size: 10px 16px; background: radial-gradient(%s)'
             % gradient)
-        save_pixels_to_png(pixels, 10, 16, '/tmp/a.png')
         def pixel(x, y):
             i = (x + 10 * y) * 4
             return pixels[i:i + 4]
