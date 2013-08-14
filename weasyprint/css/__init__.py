@@ -29,7 +29,8 @@ import lxml.etree
 from . import properties
 from . import computed_values
 from .validation import preprocess_declarations
-from ..urls import element_base_url, get_url_attribute, url_join
+from ..urls import (element_base_url, get_url_attribute, url_join,
+                    URLFetchingError)
 from ..logger import LOGGER
 from ..compat import iteritems
 from .. import CSS
@@ -150,15 +151,22 @@ class StyleDict(object):
     anonymous = False
 
 
+def get_child_text(element):
+    """Return the text directly in the element, not descendants."""
+    content = [element.text] if element.text else []
+    for child in element:
+        if child.tail:
+            content.append(child.tail)
+    return ''.join(content)
+
+
 def find_stylesheets(element_tree, device_media_type, url_fetcher):
     """Yield the stylesheets in ``element_tree``.
 
     The output order is the same as the source order.
 
     """
-    for element in element_tree.iter():
-        if element.tag not in ('style', 'link'):
-            continue
+    for element in element_tree.iter('style', 'link'):
         mime_type = element.get('type', 'text/css').split(';', 1)[0].strip()
         # Only keep 'type/subtype' from 'type/subtype ; param1; param2'.
         if mime_type != 'text/css':
@@ -170,10 +178,7 @@ def find_stylesheets(element_tree, device_media_type, url_fetcher):
         if element.tag == 'style':
             # Content is text that is directly in the <style> element, not its
             # descendants
-            content = [element.text or '']
-            for child in element:
-                content.append(child.tail or '')
-            content = ''.join(content)
+            content = get_child_text(element)
             # lxml should give us either unicode or ASCII-only bytestrings, so
             # we don't need `encoding` here.
             css = CSS(string=content, base_url=element_base_url(element),
@@ -185,8 +190,13 @@ def find_stylesheets(element_tree, device_media_type, url_fetcher):
                 continue
             href = get_url_attribute(element, 'href')
             if href is not None:
-                yield CSS(url=href, url_fetcher=url_fetcher,
-                          _check_mime_type=True, media_type=device_media_type)
+                try:
+                    yield CSS(url=href, url_fetcher=url_fetcher,
+                              _check_mime_type=True,
+                              media_type=device_media_type)
+                except URLFetchingError as exc:
+                    LOGGER.warn('Failed to load stylesheet at %s : %s',
+                                href, exc)
 
 
 def find_style_attributes(element_tree):
@@ -372,10 +382,15 @@ def preprocess_stylesheet(device_media_type, base_url, rules, url_fetcher):
             url = url_join(base_url, rule.uri, '@import at %s:%s',
                            rule.line, rule.column)
             if url is not None:
-                for result in CSS(url=url,
-                                  url_fetcher=url_fetcher,
-                                  media_type=device_media_type).rules:
-                    yield result
+                try:
+                    stylesheet = CSS(url=url, url_fetcher=url_fetcher,
+                                     media_type=device_media_type)
+                except URLFetchingError as exc:
+                    LOGGER.warn('Failed to load stylesheet at %s : %s',
+                                url, exc)
+                else:
+                    for result in stylesheet.rules:
+                        yield result
 
         elif rule.at_keyword == '@media':
             if not evaluate_media_query(rule.media, device_media_type):

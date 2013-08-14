@@ -130,6 +130,8 @@ See the :ref:`python-api` for details. A few random example:
     for i, page in enumerate(document.pages):
         document.copy([page]).write_png('page_%s.png' % i)
 
+.. code-block:: python
+
     # Some previous versions of WeasyPrint had a method like this:
     def get_png_pages(document):
         """Yield (png_bytes, width, height) tuples."""

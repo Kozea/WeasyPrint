@@ -29,7 +29,7 @@ REQUIREMENTS = [
     'cssselect>=0.6',
     'CairoSVG>=0.4.1',
     'cffi>=0.6',
-    'cairocffi>=0.4',
+    'cairocffi>=0.5',
     'Pyphen'
     # C dependencies: Gdk-Pixbuf (optional), Pango, cairo.
 ]

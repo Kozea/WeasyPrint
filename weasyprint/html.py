@@ -1,3 +1,4 @@
+
 # coding: utf8
 """
     weasyprint.html
@@ -18,7 +19,9 @@
 from __future__ import division, unicode_literals
 import os.path
 import logging
+import re
 
+from .css import get_child_text
 from .formatting_structure import boxes
 from .urls import get_url_attribute
 from .compat import xrange, urljoin
@@ -212,3 +215,108 @@ def find_base_url(html_document, fallback_base_url):
         if href:
             return urljoin(fallback_base_url, href)
     return fallback_base_url
+
+
+def get_html_metadata(html_document):
+    """
+    Relevant specs:
+
+    http://www.whatwg.org/html#the-title-element
+    http://www.whatwg.org/html#standard-metadata-names
+    http://wiki.whatwg.org/wiki/MetaExtensions
+
+    """
+    title = None
+    description = None
+    generator = None
+    keywords = []
+    authors = []
+    created = None
+    modified = None
+    for element in html_document.iter('title', 'meta'):
+        if element.tag == 'title' and title is None:
+            title = get_child_text(element)
+        elif element.tag == 'meta':
+            name = ascii_lower(element.get('name', ''))
+            content = element.get('content', '')
+            if name == 'keywords':
+                for keyword in map(strip_whitespace, content.split(',')):
+                    if keyword not in keywords:
+                        keywords.append(keyword)
+            elif name == 'author':
+                authors.append(content)
+            elif name == 'description' and description is None:
+                description = content
+            elif name == 'generator' and generator is None:
+                generator = content
+            elif name == 'dcterms.created' and created is None:
+                created = parse_w3c_date(name, element.sourceline, content)
+            elif name == 'dcterms.modified' and modified is None:
+                modified = parse_w3c_date(name, element.sourceline, content)
+    return dict(title=title, description=description, generator=generator,
+                keywords=keywords, authors=authors,
+                created=created, modified=modified)
+
+
+def ascii_lower(string):
+    """Return :obj:`string` with ASCII letters in lower-case.
+
+    http://www.whatwg.org/html#ascii-case-insensitive
+
+    """
+    return string.encode('utf8').lower().decode('utf8')
+
+
+def strip_whitespace(string):
+    """Use the HTML definition of "space character",
+    not all Unicode Whitespace.
+
+    http://www.whatwg.org/html#strip-leading-and-trailing-whitespace
+    http://www.whatwg.org/html#space-character
+
+    """
+    return string.strip(' \t\n\f\r')
+
+
+# YYYY (eg 1997)
+# YYYY-MM (eg 1997-07)
+# YYYY-MM-DD (eg 1997-07-16)
+# YYYY-MM-DDThh:mmTZD (eg 1997-07-16T19:20+01:00)
+# YYYY-MM-DDThh:mm:ssTZD (eg 1997-07-16T19:20:30+01:00)
+# YYYY-MM-DDThh:mm:ss.sTZD (eg 1997-07-16T19:20:30.45+01:00)
+
+W3C_DATE_RE = re.compile('''
+    ^
+    [ \t\n\f\r]*
+    (?P<year>\d\d\d\d)
+    (?:
+        -(?P<month>0\d|1[012])
+        (?:
+            -(?P<day>[012]\d|3[01])
+            (?:
+                T(?P<hour>[01]\d|2[0-3])
+                :(?P<minute>[0-5]\d)
+                (?:
+                    :(?P<second>[0-5]\d)
+                    (?:\.\d+)?  # Second fraction, ignored
+                )?
+                (?:
+                    Z |  # UTC
+                    (?P<tz_hour>[+-](?:[01]\d|2[0-3]))
+                    :(?P<tz_minute>[0-5]\d)
+                )
+            )?
+        )?
+    )?
+    [ \t\n\f\r]*
+    $
+''', re.VERBOSE)
+
+
+def parse_w3c_date(meta_name, source_line, string):
+    """http://www.w3.org/TR/NOTE-datetime"""
+    if W3C_DATE_RE.match(string):
+        return string
+    else:
+        LOGGER.warn('Invalid date in <meta name="%s"> line %i: %r',
+                    meta_name, source_line, string)

@@ -1263,7 +1263,7 @@ def test_images():
             <div><img src="inexistent1.png" alt=""></div>
         ''')
     assert len(logs) == 1
-    assert 'WARNING: Error for image' in logs[0]
+    assert 'WARNING: Failed to load image' in logs[0]
     assert 'inexistent1.png' in logs[0]
     assert_pixels('image_no_src', 8, 8, no_image, '''
         <style>
@@ -1294,9 +1294,9 @@ def test_images():
             ]
         ])
     assert len(logs) == 2
-    assert 'WARNING: Error for image' in logs[0]
+    assert 'WARNING: Failed to load image' in logs[0]
     assert 'inexistent2.png' in logs[0]
-    assert 'WARNING: Error for image at data:image/svg+xml' in logs[1]
+    assert 'WARNING: Failed to load image at data:image/svg+xml' in logs[1]
     assert 'intrinsic size' in logs[1]
 
     assert_pixels('image_0x1', 8, 8, no_image, '''
@@ -2711,7 +2711,6 @@ def test_radial_gradients():
             'radial_gradient_' + gradient, 10, 16,
             '<style>@page { size: 10px 16px; background: radial-gradient(%s)'
             % gradient)
-        save_pixels_to_png(pixels, 10, 16, '/tmp/a.png')
         def pixel(x, y):
             i = (x + 10 * y) * 4
             return pixels[i:i + 4]

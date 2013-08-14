@@ -407,7 +407,7 @@ def test_command_line_render():
             with capture_logs() as logs:
                 stdout = run('--format png - -', stdin=combined)
             assert len(logs) == 1
-            assert logs[0].startswith('WARNING: Error for image')
+            assert logs[0].startswith('WARNING: Failed to load image')
             assert stdout == empty_png_bytes
 
             stdout = run('--format png --base-url .. - -', stdin=combined)
@@ -902,7 +902,8 @@ def test_url_fetcher():
         if url == 'weasyprint-custom:foo/%C3%A9_%e9_pattern':
             return dict(string=pattern_png, mime_type='image/png')
         elif url == 'weasyprint-custom:foo/bar.css':
-            return dict(string='body { background: url(é_%e9_pattern)')
+            return dict(string='body { background: url(é_%e9_pattern)',
+                        mime_type='text/css')
         else:
             return default_url_fetcher(url)
 
@@ -927,10 +928,63 @@ def test_url_fetcher():
     with capture_logs() as logs:
         test('<body><img src="custom:foo/bar">', blank=True)
     assert len(logs) == 1
-    assert logs[0].startswith('WARNING: Error for image at custom:foo/bar')
+    assert logs[0].startswith(
+        'WARNING: Failed to load image at custom:foo/bar')
 
     def fetcher_2(url):
         assert url == 'weasyprint-custom:%C3%A9_%e9.css'
-        return dict(string='')
+        return dict(string='', mime_type='text/css')
     TestHTML(string='<link rel=stylesheet href="weasyprint-custom:'
                     'é_%e9.css"><body>', url_fetcher=fetcher_2).render()
+
+
+@assert_no_logs
+def test_html_meta():
+    def assert_meta(html, **meta):
+        meta.setdefault('title', None)
+        meta.setdefault('authors', [])
+        meta.setdefault('keywords', [])
+        meta.setdefault('generator', None)
+        meta.setdefault('description', None)
+        meta.setdefault('created', None)
+        meta.setdefault('modified', None)
+        assert vars(TestHTML(string=html).render().metadata) == meta
+
+    assert_meta('<body>')
+    assert_meta(
+        '''
+            <meta name=author content="I Me &amp; Myself">
+            <meta name=author content="Smith, John">
+            <title>Test document</title>
+            <h1>Another title</h1>
+            <meta name=generator content="Human after all">
+            <meta name=dummy content=ignored>
+            <meta name=dummy>
+            <meta content=ignored>
+            <meta>
+            <meta name=keywords content="html ,	css,
+                                         pdf,css">
+            <meta name=dcterms.created content=2011-04>
+            <meta name=dcterms.created content=2011-05>
+            <meta name=dcterms.modified content=2013>
+            <meta name=keywords content="Python; cairo">
+            <meta name=description content="Blah… ">
+        ''',
+        authors=['I Me & Myself', 'Smith, John'],
+        title='Test document',
+        generator='Human after all',
+        keywords=['html', 'css', 'pdf', 'Python; cairo'],
+        description="Blah… ",
+        created='2011-04',
+        modified='2013')
+    assert_meta(
+        '''
+            <title>One</title>
+            <meta name=Author>
+            <title>Two</title>
+            <title>Three</title>
+            <meta name=author content=Me>
+        ''',
+        title='One',
+        authors=['', 'Me'])
+

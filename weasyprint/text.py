@@ -233,6 +233,11 @@ def utf8_slice(string, slice_):
 
 
 def unicode_to_char_p(string):
+    """Return ``(pointer, bytestring)``.
+
+    The byte string must live at least as long as the pointer is used.
+
+    """
     bytestring = string.encode('utf8').replace(b'\x00', b'')
     return ffi.new('char[]', bytestring), bytestring
 
@@ -277,23 +282,23 @@ class Layout(object):
             pangocairo.pango_cairo_create_layout(ffi.cast(
                 'cairo_t *', self.dummy_context._pointer)),
             gobject.g_object_unref)
-        self.font = ffi.gc(
+        self.font = font = ffi.gc(
             pango.pango_font_description_new(),
             pango.pango_font_description_free)
         assert not isinstance(style.font_family, basestring), (
             'font_family should be a list')
-        self.font_family = unicode_to_char_p(','.join(style.font_family))[0]
-        pango.pango_font_description_set_family(self.font, self.font_family)
+        family_p, family = unicode_to_char_p(','.join(style.font_family))
+        pango.pango_font_description_set_family(font, family_p)
         pango.pango_font_description_set_variant(
-            self.font, PANGO_VARIANT[style.font_variant])
+            font, PANGO_VARIANT[style.font_variant])
         pango.pango_font_description_set_style(
-            self.font, PANGO_STYLE[style.font_style])
+            font, PANGO_STYLE[style.font_style])
         pango.pango_font_description_set_stretch(
-            self.font, PANGO_STRETCH[style.font_stretch])
-        pango.pango_font_description_set_weight(self.font, style.font_weight)
+            font, PANGO_STRETCH[style.font_stretch])
+        pango.pango_font_description_set_weight(font, style.font_weight)
         pango.pango_font_description_set_absolute_size(
-            self.font, units_from_double(font_size))
-        pango.pango_layout_set_font_description(self.layout, self.font)
+            font, units_from_double(font_size))
+        pango.pango_layout_set_font_description(self.layout, font)
 
     def iter_lines(self):
         layout_iter = ffi.gc(

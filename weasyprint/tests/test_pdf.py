@@ -1,9 +1,9 @@
 # coding: utf8
 """
-    weasyprint.tests.test_metadata
-    ------------------------------
+    weasyprint.tests.test_pdf
+    -------------------------
 
-    Test metadata of the document (bookmarks and hyperlinks).
+    Test PDF-related code, including metadata, bookmarks and hyperlinks.
 
     :copyright: Copyright 2011-2013 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
@@ -14,11 +14,12 @@ from __future__ import division, unicode_literals
 
 import io
 
-import cairocffi as cairo
+import cairocffi
 import pytest
 
 from .. import CSS
 from .. import pdf
+from ..images import CAIRO_HAS_MIME_DATA
 from .testing_utils import (
     assert_no_logs, resource_filename, TestHTML, capture_logs)
 
@@ -26,7 +27,7 @@ from .testing_utils import (
 @assert_no_logs
 def test_pdf_parser():
     fileobj = io.BytesIO()
-    surface = cairo.PDFSurface(fileobj, 1, 1)
+    surface = cairocffi.PDFSurface(fileobj, 1, 1)
     for width, height in [
         (100, 100),
         (200, 10),
@@ -298,7 +299,7 @@ def test_missing_links():
 
 @assert_no_logs
 def test_jpeg():
-    if not hasattr(cairo.ImageSurface, 'set_mime_data'):
+    if not CAIRO_HAS_MIME_DATA:
         pytest.xfail()
 
     def render(html):
@@ -307,3 +308,29 @@ def test_jpeg():
     assert b'/Filter /DCTDecode' not in render('<img src="pattern.gif">')
     # JPEG-encoded image, embedded in PDF:
     assert b'/Filter /DCTDecode' in render('<img src="blue.jpg">')
+
+
+@assert_no_logs
+def test_document_info():
+    pdf_bytes = TestHTML(string='''
+        <meta name=author content="I Me &amp; Myself">
+        <title>Test document</title>
+        <h1>Another title</h1>
+        <meta name=generator content="Human after all">
+        <meta name=keywords content="html ,	css,
+                                     pdf,css">
+        <meta name=description content="Blah… ">
+        <meta name=dcterms.created content=2011-04>
+        <meta name=dcterms.modified content=2013-07-21T23:46+01:00>
+    ''').write_pdf()
+    assert (b'/Author (\xfe\xff\x00I\x00 \x00M\x00e\x00 \x00&\x00 \x00'
+            b'M\x00y\x00s\x00e\x00l\x00f)' in pdf_bytes)
+    assert (b'/Title (\xfe\xff\x00T\x00e\x00s\x00t\x00 \x00d\x00o\x00c'
+            b'\x00u\x00m\x00e\x00n\x00t)' in pdf_bytes)
+    assert (b'/Creator (\xfe\xff\x00H\x00u\x00m\x00a\x00n\x00\xa0\x00a'
+            b'\x00f\x00t\x00e\x00r\x00\xa0\x00a\x00l\x00l)' in pdf_bytes)
+    assert (b'/Keywords (\xfe\xff\x00h\x00t\x00m\x00l\x00,\x00 '
+            b'\x00c\x00s\x00s\x00,\x00 \x00p\x00d\x00f)' in pdf_bytes)
+    assert b'/Subject (\xfe\xff\x00B\x00l\x00a\x00h &\x00 )' in pdf_bytes
+    assert b'/CreationDate (D:201104)' in pdf_bytes
+    assert b"/ModDate (D:20130721234600+01'00')" in pdf_bytes

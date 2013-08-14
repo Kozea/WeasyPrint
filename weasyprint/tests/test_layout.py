@@ -1177,6 +1177,176 @@ def test_auto_layout_table():
     assert table.width == 90  # 30 + 60
     assert table.margin_width() == 100  # 90 + 2*5 (border)
 
+    # Column widths as percentage
+    page, = parse('''
+        <table style="width: 200px">
+            <colgroup>
+              <col style="width: 70%" />
+              <col style="width: 30%" />
+            </colgroup>
+            <tbody>
+              <tr>
+                <td>a</td>
+                <td>abc</td>
+              </tr>
+            </tbody>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2 = row.children
+    assert td_1.width == 140
+    assert td_2.width == 60
+    assert table.width == 200
+
+    # Column group width
+    page, = parse('''
+        <table style="width: 200px">
+            <colgroup style="width: 100px">
+              <col />
+              <col />
+            </colgroup>
+            <col style="width: 100px" />
+            <tbody>
+              <tr>
+                <td>a</td>
+                <td>a</td>
+                <td>abc</td>
+              </tr>
+            </tbody>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2, td_3 = row.children
+    assert td_1.width == 50
+    assert td_2.width == 50
+    assert td_3.width == 100
+    assert table.width == 200
+
+    # Column group width as percentage
+    page, = parse('''
+        <table style="width: 200px">
+            <colgroup style="width: 100px">
+              <col />
+              <col />
+            </colgroup>
+            <colgroup style="width: 50%">
+              <col />
+              <col />
+            </colgroup>
+            <tbody>
+              <tr>
+                <td>a</td>
+                <td>a</td>
+                <td>abc</td>
+                <td>abc</td>
+              </tr>
+            </tbody>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2, td_3, td_4 = row.children
+    assert td_1.width == 50
+    assert td_2.width == 50
+    assert td_3.width == 50
+    assert td_4.width == 50
+    assert table.width == 200
+
+    # Wrong column group width
+    page, = parse('''
+        <table style="width: 200px">
+            <colgroup style="width: 80%">
+              <col />
+              <col />
+            </colgroup>
+            <tbody>
+              <tr>
+                <td>a</td>
+                <td>a</td>
+              </tr>
+            </tbody>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2 = row.children
+    assert td_1.width == 100
+    assert td_2.width == 100
+    assert table.width == 200
+
+    # Column width as percentage and cell width in pixels
+    page, = parse('''
+        <table style="width: 200px">
+            <colgroup>
+              <col style="width: 70%" />
+              <col />
+            </colgroup>
+            <tbody>
+              <tr>
+                <td>a</td>
+                <td style="width: 60px">abc</td>
+              </tr>
+            </tbody>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2 = row.children
+    assert td_1.width == 140
+    assert td_2.width == 60
+    assert table.width == 200
+
+    # Column width and cell width as percentage
+    page, = parse('''
+        <div style="width: 400px">
+            <table style="width: 50%">
+                <colgroup>
+                    <col style="width: 70%" />
+                    <col />
+                </colgroup>
+                <tbody>
+                    <tr>
+                        <td>a</td>
+                        <td style="width: 30%">abc</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    table_wrapper, = div.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2 = row.children
+    assert td_1.width == 140
+    assert td_2.width == 60
+    assert table.width == 200
+
 
 @assert_no_logs
 def test_lists():
@@ -2079,7 +2249,7 @@ def test_images():
         with capture_logs() as logs:
             body, img = get_img("<img src='%s' alt='invalid image'>" % url)
         assert len(logs) == 1
-        assert 'WARNING: Error for image' in logs[0]
+        assert 'WARNING: Failed to load image' in logs[0]
         assert isinstance(img, boxes.InlineBox)  # not a replaced box
         text, = img.children
         assert text.text == 'invalid image', url
@@ -2088,7 +2258,7 @@ def test_images():
         parse('<img src=nonexistent.png><img src=nonexistent.png>')
     # Failures are cached too: only one warning
     assert len(logs) == 1
-    assert 'WARNING: Error for image' in logs[0]
+    assert 'WARNING: Failed to load image' in logs[0]
 
     # Layout rules try to preserve the ratio, so the height should be 40px too:
     body, img = get_img('''<body style="font-size: 0">
@@ -4458,53 +4628,53 @@ def test_hyphenate_limit_zone():
         '<html style="width: 10em">'
         '<body style="-weasy-hyphens: auto;'
         '-weasy-hyphenate-limit-zone: 0" lang=en>'
-        'llllllllll hyphenation')
+        'mmmmm hyphenation')
     html, = page.children
     body, = html.children
     lines = body.children
     assert len(lines) == 2
     assert lines[0].children[0].text.endswith('‐')
     full_text = ''.join(line.children[0].text for line in lines)
-    assert full_text.replace('‐', '') == 'llllllllll hyphenation'
+    assert full_text.replace('‐', '') == 'mmmmm hyphenation'
 
     page, = parse(
         '<html style="width: 10em">'
         '<body style="-weasy-hyphens: auto;'
         '-weasy-hyphenate-limit-zone: 9em" lang=en>'
-        'llllllllll hyphenation')
+        'mmmmm hyphenation')
     html, = page.children
     body, = html.children
     lines = body.children
     assert len(lines) > 1
-    assert lines[0].children[0].text.endswith('ll')
+    assert lines[0].children[0].text.endswith('mm')
     full_text = ''.join(line.children[0].text for line in lines)
-    assert full_text == 'llllllllllhyphenation'
+    assert full_text == 'mmmmmhyphenation'
 
     page, = parse(
         '<html style="width: 10em">'
         '<body style="-weasy-hyphens: auto;'
         '-weasy-hyphenate-limit-zone: 5%" lang=en>'
-        'llllllllll hyphenation')
+        'mmmmm hyphenation')
     html, = page.children
     body, = html.children
     lines = body.children
     assert len(lines) == 2
     assert lines[0].children[0].text.endswith('‐')
     full_text = ''.join(line.children[0].text for line in lines)
-    assert full_text.replace('‐', '') == 'llllllllll hyphenation'
+    assert full_text.replace('‐', '') == 'mmmmm hyphenation'
 
     page, = parse(
         '<html style="width: 10em">'
         '<body style="-weasy-hyphens: auto;'
         '-weasy-hyphenate-limit-zone: 95%" lang=en>'
-        'llllllllll hyphenation')
+        'mmmmm hyphenation')
     html, = page.children
     body, = html.children
     lines = body.children
     assert len(lines) > 1
-    assert lines[0].children[0].text.endswith('ll')
+    assert lines[0].children[0].text.endswith('mm')
     full_text = ''.join(line.children[0].text for line in lines)
-    assert full_text == 'llllllllllhyphenation'
+    assert full_text == 'mmmmmhyphenation'
 
 
 @assert_no_logs

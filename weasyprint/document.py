@@ -99,7 +99,11 @@ class _TaggedTuple(tuple):
     """
 
 
-def _get_metadata(box, bookmarks, links, anchors, matrix):
+def _gather_links_and_bookmarks(box, bookmarks, links, anchors, matrix):
+    transform = _get_matrix(box)
+    if transform:
+        matrix = transform * matrix if matrix else transform
+
     bookmark_label = box.bookmark_label
     bookmark_level = box.bookmark_level
     link = box.style.link
@@ -130,14 +134,8 @@ def _get_metadata(box, bookmarks, links, anchors, matrix):
         if has_anchor:
             anchors[anchor_name] = pos_x, pos_y
 
-
-def _prepare(box, bookmarks, links, anchors, matrix):
-    transform = _get_matrix(box)
-    if transform:
-        matrix = transform * matrix if matrix else transform
-    _get_metadata(box, bookmarks, links, anchors, matrix)
     for child in box.all_children():
-        _prepare(child, bookmarks, links, anchors, matrix)
+        _gather_links_and_bookmarks(child, bookmarks, links, anchors, matrix)
 
 
 class Page(object):
@@ -169,15 +167,18 @@ class Page(object):
         #:
         #: * ``'external'``: :obj:`target` is an absolute URL
         #: * ``'internal'``: :obj:`target` is an anchor name (see
-        #:   :attr:`Page.anchors`). The anchor might be defined in
-        #:   another page, in multiple pages, or not at all.
+        #:   :attr:`Page.anchors`).
+        #    The anchor might be defined in another page,
+        #    in multiple pages (in which case the first occurence is used),
+        #    or not at all.
         self.links = links = []
 
         #: A dict mapping anchor names to their target, ``(x, y)`` points
         #: in CSS pixels form the top-left of the page.)
         self.anchors = anchors = {}
 
-        _prepare(page_box, bookmarks, links, anchors, matrix=None)
+        _gather_links_and_bookmarks(
+            page_box, bookmarks, links, anchors, matrix=None)
         self._page_box = page_box
         self._enable_hinting = enable_hinting
 
@@ -235,14 +236,61 @@ class Page(object):
             draw_page(self._page_box, cairo_context, self._enable_hinting)
 
 
+class DocumentMetadata(object):
+    """Contains meta-information about a :class:`Document`
+    that do not belong to specific pages but to the whole document.
+
+    New attributes may be added in future versions of WeasyPrint.
+
+    .. _W3C’s profile of ISO 8601: http://www.w3.org/TR/NOTE-datetime
+
+    """
+    def __init__(self, title=None, authors=None, description=None,
+                 keywords=None, generator=None, created=None, modified=None):
+        #: The title of the document, as a string or :obj:`None`.
+        #: Extracted from the ``<title>`` element in HTML
+        #: and written to the ``/Title`` info field in PDF.
+        self.title = title
+        #: The authors of the document as a list of strings.
+        #: Extracted from the ``<meta name=author>`` elements in HTML
+        #: and written to the ``/Author`` info field in PDF.
+        self.authors = authors or []
+        #: The description of the document, as a string or :obj:`None`.
+        #: Extracted from the ``<meta name=description>`` element in HTML
+        #: and written to the ``/Subject`` info field in PDF.
+        self.description = description
+        #: Keywords associated with the document, as a list of strings.
+        #: (Defaults to the empty list.)
+        #: Extracted from ``<meta name=keywords>`` elements in HTML
+        #: and written to the ``/Keywords`` info field in PDF.
+        self.keywords = keywords or []
+        #: The name of one of the software packages
+        #: used to generate the document, as a string or :obj:`None`.
+        #: Extracted from the ``<meta name=generator>`` element in HTML
+        #: and written to the ``/Creator`` info field in PDF.
+        self.generator = generator
+        #: The creation date of the document, as a string or :obj:`None`.
+        #: Dates are in one of the six formats specified in
+        #: `W3C’s profile of ISO 8601`_.
+        #: Extracted from the ``<meta name=dcterms.created>`` element in HTML
+        #: and written to the ``/CreationDate`` info field in PDF.
+        self.created = created
+        #: The modification date of the document, as a string or :obj:`None`.
+        #: Dates are in one of the six formats specified in
+        #: `W3C’s profile of ISO 8601`_.
+        #: Extracted from the ``<meta name=dcterms.modified>`` element in HTML
+        #: and written to the ``/ModDate`` info field in PDF.
+        self.modified = modified
+
+
 class Document(object):
     """A rendered document, with access to individual pages
     ready to be painted on any cairo surfaces.
 
-    .. versionadded:: 0.15
-
-    Should be obtained from :meth:`HTML.render() <weasyprint.HTML.render>`
-    but not instantiated directly.
+    Typically obtained from :meth:`HTML.render() <weasyprint.HTML.render>`,
+    but can also be instantiated directly
+    with a list of :class:`pages <Page>`
+    and a set of :class:`metadata <DocumentMetadata>`.
 
     """
     @classmethod
@@ -257,11 +305,16 @@ class Document(object):
             enable_hinting, style_for, get_image_from_uri,
             build_formatting_structure(
                 html.root_element, style_for, get_image_from_uri))
-        return cls([Page(p, enable_hinting) for p in page_boxes])
+        return cls([Page(p, enable_hinting) for p in page_boxes],
+                   DocumentMetadata(**html._get_metadata()))
 
-    def __init__(self, pages):
+    def __init__(self, pages, metadata):
         #: A list of :class:`Page` objects.
         self.pages = pages
+        #: A :class:`DocumentMetadata` object.
+        #: Contains information that does not belong to a specific page
+        #: but to the whole document.
+        self.metadata = metadata
 
     def copy(self, pages='all'):
         """Take a subset of the pages.
@@ -271,22 +324,32 @@ class Document(object):
         :return:
             A new :class:`Document` object.
 
-        Examples::
+        Examples:
 
-            # Lists count from 0 but page numbers usually from 1
+        Write two PDF files for odd-numbered and even-numbered pages::
+
+            # Python lists count from 0 but pages are numbered from 1.
             # [::2] is a slice of even list indexes but odd-numbered pages.
             document.copy(document.pages[::2]).write_pdf('odd_pages.pdf')
             document.copy(document.pages[1::2]).write_pdf('even_pages.pdf')
 
+        Write each page to a numbred PNG file::
+
             for i, page in enumerate(document.pages):
                 document.copy(page).write_png('page_%s.png' % i)
+
+        Combine multiple documents into one PDF file,
+        using metadata from the first::
+
+            all_pages = [p for p in doc.pages for doc in documents]
+            documents[0].copy(all_pages).write_pdf('combined.pdf')
 
         """
         if pages == 'all':
             pages = self.pages
         elif not isinstance(pages, list):
             pages = list(pages)
-        return type(self)(pages)
+        return type(self)(pages, self.metadata)
 
     def resolve_links(self):
         """Resolve internal hyperlinks.
@@ -403,7 +466,7 @@ class Document(object):
             surface.show_page()
         surface.finish()
 
-        write_pdf_metadata(self, file_obj, scale)
+        write_pdf_metadata(self, file_obj, scale, self.metadata)
 
         if target is None:
             return file_obj.getvalue()

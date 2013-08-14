@@ -656,7 +656,7 @@ def draw_collapsed_borders(context, table, enable_hinting):
         return
     row_positions = [row.position_y for row_group in table.children
                      for row in row_group.children]
-    column_positions = table.column_positions
+    column_positions = list(table.column_positions)
     grid_height = len(row_heights)
     grid_width = len(column_widths)
     assert grid_width == len(column_positions)
