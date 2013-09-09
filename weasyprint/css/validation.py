@@ -1542,7 +1542,7 @@ def expand_background(base_url, name, tokens):
 
 
 @expander('font')
-@generic_expander('-style', '-variant', '-weight', '-size',
+@generic_expander('-style', '-variant', '-weight', '-stretch', '-size',
                   'line-height', '-family')  # line-height is not a suffix
 def expand_font(name, tokens):
     """Expand the ``font`` shorthand property.
@@ -1572,6 +1572,8 @@ def expand_font(name, tokens):
             suffix = '-variant'
         elif font_weight([token]) is not None:
             suffix = '-weight'
+        elif font_stretch([token]) is not None:
+            suffix = '-stretch'
         else:
             # We’re done with these three, continue with font-size
             break
