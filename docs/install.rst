@@ -137,8 +137,9 @@ Archlinux
 Gentoo
 ~~~~~~
 
-WeasyPrint itself is packaged in the `Kozea overlay
-<https://github.com/Kozea/Overlay/blob/master/README>`_.
+.. code-block:: sh
+
+    emerge weasyprint
 
 
 Mac OS X
