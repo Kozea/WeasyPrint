@@ -105,7 +105,7 @@ def table_layout(context, table, max_position_y, skip_stack,
                     # grid_x, so they are beyond too.
                     cell_index = row.children.index(cell)
                     ignored_cells = row.children[cell_index:]
-                    LOGGER.warn('This table row has more columns than '
+                    LOGGER.warning('This table row has more columns than '
                                 'the table, ignored %i cells: %r',
                                 len(ignored_cells), ignored_cells)
                     break

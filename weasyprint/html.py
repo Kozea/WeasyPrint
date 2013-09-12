@@ -318,5 +318,5 @@ def parse_w3c_date(meta_name, source_line, string):
     if W3C_DATE_RE.match(string):
         return string
     else:
-        LOGGER.warn('Invalid date in <meta name="%s"> line %i: %r',
+        LOGGER.warning('Invalid date in <meta name="%s"> line %i: %r',
                     meta_name, source_line, string)
