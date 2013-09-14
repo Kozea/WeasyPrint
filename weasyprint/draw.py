@@ -501,7 +501,9 @@ def clip_border_segment(context, enable_hinting, style, width, side,
                         if a1 >= b1:
                             c1 = math.sqrt(a1 ** 2 - b1 ** 2)
                             x1 = px1 - (dashes1 - i) / dashes1 * c1 / 2
-                            x2 = px1 - (dashes1 - min(i + 1, dashes1)) / dashes1 * c1 / 2
+                            x2 = (
+                                px1 - (dashes1 - min(i + 1, dashes1)) /
+                                dashes1 * c1 / 2)
                             context.move_to(bbx + x1, bby + py1)
                             context.line_to(bbx + x2, bby + py1)
                             context.line_to(
@@ -537,7 +539,9 @@ def clip_border_segment(context, enable_hinting, style, width, side,
                         if a2 >= b2:
                             c2 = math.sqrt(a2 ** 2 - b2 ** 2)
                             x1 = bbw + px2 + c2 / 2 - i / dashes2 * c2 / 2
-                            x2 = bbw + px2 + c2 / 2 - min(i + 1, dashes2) / dashes2 * c2 / 2
+                            x2 = (
+                                bbw + px2 + c2 / 2 - min(i + 1, dashes2) /
+                                dashes2 * c2 / 2)
                             context.move_to(bbx + x1, bby + py2)
                             context.line_to(bbx + x2, bby + py2)
                             context.line_to(
@@ -580,7 +584,28 @@ def clip_border_segment(context, enable_hinting, style, width, side,
                 elif side == 'left':
                     context.rectangle(
                         bbx, bby + i * dash, width, dash)
+    context.clip()
 
+    if side == 'top':
+        context.move_to(bbx + bbw, bby)
+        context.rel_line_to(-bbw, 0)
+        context.rel_line_to(px1, py1)
+        context.rel_line_to(-px1 + bbw + px2, -py1 + py2)
+    elif side == 'right':
+        context.move_to(bbx + bbw, bby + bbh)
+        context.rel_line_to(0, -bbh)
+        context.rel_line_to(px1, py1)
+        context.rel_line_to(-px1 + px2, -py1 + bbh + py2)
+    elif side == 'bottom':
+        context.move_to(bbx, bby + bbh)
+        context.rel_line_to(bbw, 0)
+        context.rel_line_to(px1, py1)
+        context.rel_line_to(-px1 - bbw + px2, -py1 + py2)
+    elif side == 'left':
+        context.move_to(bbx, bby)
+        context.rel_line_to(0, bbh)
+        context.rel_line_to(px1, py1)
+        context.rel_line_to(-px1 + px2, -py1 - bbh + py2)
     context.clip()
 
 
