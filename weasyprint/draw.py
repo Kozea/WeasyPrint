@@ -519,7 +519,7 @@ def clip_border_segment(context, enable_hinting, style, width, side,
                             offset = (angle1 - angle2) / (
                                 (1 + (i + 1) * dash / chl1) / 4 *
                                 math.pi - angle1)
-                            line += 2
+                            line += 1
                             break
                     else:
                         offset = 1 - (
