@@ -14,7 +14,7 @@ Bug fix release:
   to ``text-decoration``.
 * Use the font metrics for text decoration positioning.
 * Bug fix: Don't clip the border with ``overflow: hidden``.
-* Fix `#99 <https://github.com/Kozea/WeasyPrint/issues/00>`_:
+* Fix `#99 <https://github.com/Kozea/WeasyPrint/issues/99>`_:
   Regression: JPEG images not loading with cairo 1.8.x.
 
 
