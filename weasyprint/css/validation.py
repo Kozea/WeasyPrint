@@ -1598,7 +1598,7 @@ def expand_background(base_url, name, tokens):
 
 
 @expander('font')
-@generic_expander('-style', '-variant', '-weight', '-size',
+@generic_expander('-style', '-variant', '-weight', '-stretch', '-size',
                   'line-height', '-family')  # line-height is not a suffix
 def expand_font(name, tokens):
     """Expand the ``font`` shorthand property.
@@ -1628,6 +1628,8 @@ def expand_font(name, tokens):
             suffix = '-variant'
         elif font_weight([token]) is not None:
             suffix = '-weight'
+        elif font_stretch([token]) is not None:
+            suffix = '-stretch'
         else:
             # We’re done with these three, continue with font-size
             break
@@ -1707,7 +1709,7 @@ def preprocess_declarations(base_url, declarations):
 
         if name in PREFIXED and not name.startswith(PREFIX):
             validation_error(
-                'warn',
+                'warning',
                 'the property is experimental or non-standard, use '
                 + PREFIX + name)
             continue
@@ -1721,7 +1723,7 @@ def preprocess_declarations(base_url, declarations):
             unprefixed_name = name[len(PREFIX):]
             if unprefixed_name in UNPREFIXED:
                 validation_error(
-                    'warn',
+                    'warning',
                     'the property was unprefixed, use ' + unprefixed_name)
                 continue
             if unprefixed_name in PREFIXED:
@@ -1734,7 +1736,7 @@ def preprocess_declarations(base_url, declarations):
             result = list(expander_(base_url, name, tokens))
         except InvalidValues as exc:
             validation_error(
-                'warn',
+                'warning',
                 exc.args[0] if exc.args and exc.args[0] else 'invalid value')
             continue
 

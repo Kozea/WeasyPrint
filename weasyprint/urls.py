@@ -132,7 +132,7 @@ def url_join(base_url, url, context, *args):
     elif base_url:
         return iri_to_uri(urljoin(base_url, url))
     else:
-        LOGGER.warn('Relative URI reference without a base URI: ' + context,
+        LOGGER.warning('Relative URI reference without a base URI: ' + context,
                     *args)
         return None
 

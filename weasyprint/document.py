@@ -376,7 +376,7 @@ class Document(object):
                 if link_type == 'internal':
                     target = anchors.get(anchor_name)
                     if target is None:
-                        LOGGER.warn(
+                        LOGGER.warning(
                             'No anchor #%s for internal URI reference '
                             'at line %s' % (anchor_name, link.sourceline))
                     else:
