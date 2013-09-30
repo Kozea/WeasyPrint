@@ -119,6 +119,7 @@ INITIAL_VALUES = {
 
     # CSS3 User Interface: http://www.w3.org/TR/css3-ui/#box-sizing
     'box_sizing': 'content-box',
+    'overflow_wrap': 'normal',
 
     # CSS3 Color: http://www.w3.org/TR/css3-color/#transparency
     'opacity': 1,
@@ -210,6 +211,7 @@ INHERITED = set("""
     list_style_position
     list_style_type
     orphans
+    overflow_wrap
     quotes
     text_align
     text_decoration

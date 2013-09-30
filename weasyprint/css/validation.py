@@ -1035,6 +1035,12 @@ def white_space(keyword):
     """``white-space`` property validation."""
     return keyword in ('normal', 'pre', 'nowrap', 'pre-wrap', 'pre-line')
 
+@validator()
+@single_keyword
+def overflow_wrap(keyword):
+    """``overflow-wrap`` property validation."""
+    return keyword in ('normal', 'break-word')
+
 
 @validator(unprefixed=True)
 @single_keyword

@@ -4706,6 +4706,52 @@ def test_hyphenate_limit_chars():
 
 
 @assert_no_logs
+def test_overflow_wrap():
+    def get_lines(wrap, text):
+        page, = parse('''
+            <style>
+                body {width: 30px; overflow: hidden; }
+                span {overflow-wrap: %s; white-space: normal; }
+            </style>
+            <body style="-weasy-hyphens: auto;" lang="en">
+                <span>%s
+        ''' % (wrap, text))
+        html, = page.children
+        body, = html.children
+        body_lines = [];
+        for line in body.children:
+            box, = line.children
+            textBox, = box.children
+            body_lines.append(textBox.text)
+            
+        return body_lines
+        
+    # break-word
+    lines = get_lines('break-word', 'aaaaaaaa')
+    assert len(lines) == 3
+    full_text = ''.join(line for line in lines)
+    assert full_text == 'aaaaaaaa'
+    
+    # normal
+    lines = get_lines('normal', 'aaaaaaaa')
+    assert len(lines) == 1
+    full_text = ''.join(line for line in lines)
+    assert full_text == 'aaaaaaaa'
+    
+    # break-word after hyphenation
+    lines = get_lines('break-word', 'hyphenation')
+    assert len(lines) == 5
+    full_text = ''.join(line for line in lines)
+    assert full_text == "hy\u2010phenation"
+    
+    # break word after normal white-space wrap and hyphenation
+    lines = get_lines('break-word', 'I am a splitted word.  I am an hyphenated word.')
+    assert len(lines) == 18
+    full_text = ''.join(line for line in lines)
+    assert full_text == "Iamasplittedword.Iamanhy\u2010phenatedword."
+
+
+@assert_no_logs
 def test_white_space():
     """Test the white-space property."""
     def lines(width, space):
