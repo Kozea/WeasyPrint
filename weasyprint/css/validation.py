@@ -1611,6 +1611,24 @@ def expand_font(name, tokens):
     if font_family(tokens) is None:
         raise InvalidValues
     yield '-family', tokens
+    
+
+@expander('word-wrap')
+def expand_word_wrap(base_url, name, tokens):
+    """Expand the ``word-wrap`` legacy property.
+
+    See http://http://www.w3.org/TR/css3-text/#overflow-wrap
+
+    """
+    if len(tokens) != 1:
+        raise InvalidValues
+    
+    token = tokens.pop()
+    value = get_keyword(token)
+    if value not in ('normal', 'break-word'):
+        raise InvalidValues
+    
+    yield 'overflow-wrap', value
 
 
 def validate_non_shorthand(base_url, name, tokens, required=False):

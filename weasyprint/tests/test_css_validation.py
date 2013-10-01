@@ -570,6 +570,16 @@ def test_overflow_wrap():
 
 
 @assert_no_logs
+def test_expand_word_wrap():
+    assert expand_to_dict('word-wrap: normal') == {
+        'overflow_wrap': 'normal'}
+    assert expand_to_dict('word-wrap: break-word') == {
+        'overflow_wrap': 'break-word'}
+    assert_invalid('word-wrap: none')
+    assert_invalid('word-wrap: normal, break-word')
+
+
+@assert_no_logs
 def test_radial_gradient():
     red = (1, 0, 0, 1)
     lime = (0, 1, 0, 1)
