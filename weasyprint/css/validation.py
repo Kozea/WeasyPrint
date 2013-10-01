@@ -1620,15 +1620,11 @@ def expand_word_wrap(base_url, name, tokens):
     See http://http://www.w3.org/TR/css3-text/#overflow-wrap
 
     """
-    if len(tokens) != 1:
+    keyword = overflow_wrap(tokens)
+    if keyword is None:
         raise InvalidValues
-    
-    token = tokens.pop()
-    value = get_keyword(token)
-    if value not in ('normal', 'break-word'):
-        raise InvalidValues
-    
-    yield 'overflow-wrap', value
+
+    yield 'overflow-wrap', keyword
 
 
 def validate_non_shorthand(base_url, name, tokens, required=False):
