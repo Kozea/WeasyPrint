@@ -13,6 +13,8 @@
 from __future__ import division, unicode_literals
 
 import functools
+import pprint
+import difflib
 
 from .testing_utils import (
     resource_filename, TestHTML, assert_no_logs, capture_logs)
@@ -116,7 +118,13 @@ def assert_tree(box, expected):
     expected: a list of serialized <body> children as returned by to_lists().
 
     """
-    assert to_lists(box) == expected
+    lists = to_lists(box)
+    if lists != expected:
+        print(''.join(difflib.unified_diff(
+            *(pprint.pformat(v).splitlines(keepends=True)
+              for v in [lists, expected]),
+            n=9999)))
+        assert lists == expected
 
 
 def sanity_checks(box):
@@ -251,10 +259,10 @@ def test_block_in_inline():
     box = parse('''
 <style>
     p { display: inline-block; }
-    span { display: block; }
+    span, i { display: block; }
 </style>
 <p>Lorem <em>ipsum <strong>dolor <span>sit</span>
-    <span>amet,</span></strong><span><em>conse<div/></em></span></em></p>''')
+    <span>amet,</span></strong><span><em>conse<i></i></em></span></em></p>''')
     box = build.inline_in_block(box)
     assert_tree(box, [
         ('body', 'Line', [
@@ -277,7 +285,7 @@ def test_block_in_inline():
                             ('span', 'Line', [
                                 ('em', 'Inline', [
                                     ('em', 'Text', 'conse'),
-                                    ('div', 'Block', [])])])])])])])])])
+                                    ('i', 'Block', [])])])])])])])])])
 
     box = build.block_in_inline(box)
     assert_tree(box, [
@@ -312,7 +320,7 @@ def test_block_in_inline():
                         ('span', 'Line', [
                             ('em', 'Inline', [
                                 ('em', 'Text', 'conse')])])]),
-                    ('div', 'Block', []),
+                    ('i', 'Block', []),
                     ('span', 'AnonBlock', [
                         ('span', 'Line', [
                             ('em', 'Inline', [])])])]),
@@ -481,48 +489,48 @@ def test_tables():
     # Rule 1.3
     # Also table model: http://www.w3.org/TR/CSS21/tables.html#model
     assert_tree(parse_all('''
-        <table>
-            <tr>
-                <th>foo</th>
-                <th>bar</th>
-            </tr>
-            <tfoot></tfoot>
-            <thead><th></th></thead>
-            <caption style="caption-side: bottom"></caption>
-            <thead></thead>
-            <col></col>
-            <caption>top caption</caption>
-            <tr>
-                <td>baz</td>
-            </tr>
-        </table>
+        <x-table>
+            <x-tr>
+                <x-th>foo</x-th>
+                <x-th>bar</x-th>
+            </x-tr>
+            <x-tfoot></x-tfoot>
+            <x-thead><x-th></x-th></x-thead>
+            <x-caption style="caption-side: bottom"></x-caption>
+            <x-thead></x-thead>
+            <x-col></x-col>
+            <x-caption>top caption</x-caption>
+            <x-tr>
+                <x-td>baz</x-td>
+            </x-tr>
+        </x-table>
     '''), [
-        ('table', 'AnonBlock', [
-            ('caption', 'TableCaption', [
-                ('caption', 'Line', [
-                    ('caption', 'Text', 'top caption')])]),
-            ('table', 'Table', [
-                ('table', 'AnonTableColumnGroup', [
-                    ('col', 'TableColumn', [])]),
-                ('thead', 'TableRowGroup', [
-                    ('thead', 'AnonTableRow', [
-                        ('th', 'TableCell', [])])]),
-                ('table', 'AnonTableRowGroup', [
-                    ('tr', 'TableRow', [
-                        ('th', 'TableCell', [
-                            ('th', 'Line', [
-                                ('th', 'Text', 'foo')])]),
-                        ('th', 'TableCell', [
-                            ('th', 'Line', [
-                                ('th', 'Text', 'bar')])])])]),
-                ('thead', 'TableRowGroup', []),
-                ('table', 'AnonTableRowGroup', [
-                    ('tr', 'TableRow', [
-                        ('td', 'TableCell', [
-                            ('td', 'Line', [
-                                ('td', 'Text', 'baz')])])])]),
-                ('tfoot', 'TableRowGroup', [])]),
-            ('caption', 'TableCaption', [])])])
+        ('x-table', 'AnonBlock', [
+            ('x-caption', 'TableCaption', [
+                ('x-caption', 'Line', [
+                    ('x-caption', 'Text', 'top caption')])]),
+            ('x-table', 'Table', [
+                ('x-table', 'AnonTableColumnGroup', [
+                    ('x-col', 'TableColumn', [])]),
+                ('x-thead', 'TableRowGroup', [
+                    ('x-thead', 'AnonTableRow', [
+                        ('x-th', 'TableCell', [])])]),
+                ('x-table', 'AnonTableRowGroup', [
+                    ('x-tr', 'TableRow', [
+                        ('x-th', 'TableCell', [
+                            ('x-th', 'Line', [
+                                ('x-th', 'Text', 'foo')])]),
+                        ('x-th', 'TableCell', [
+                            ('x-th', 'Line', [
+                                ('x-th', 'Text', 'bar')])])])]),
+                ('x-thead', 'TableRowGroup', []),
+                ('x-table', 'AnonTableRowGroup', [
+                    ('x-tr', 'TableRow', [
+                        ('x-td', 'TableCell', [
+                            ('x-td', 'Line', [
+                                ('x-td', 'Text', 'baz')])])])]),
+                ('x-tfoot', 'TableRowGroup', [])]),
+            ('x-caption', 'TableCaption', [])])])
 
     # Rules 1.4 and 3.1
     assert_tree(parse_all('''
@@ -562,72 +570,74 @@ def test_tables():
                     ('ins', 'AnonTableColumn', [])])])])])
 
     # Rules 2.1 then 2.3
-    assert_tree(parse_all('<table>foo <div></div></table>'), [
-        ('table', 'AnonBlock', [
-            ('table', 'Table', [
-                ('table', 'AnonTableRowGroup', [
-                    ('table', 'AnonTableRow', [
-                        ('table', 'AnonTableCell', [
-                            ('table', 'AnonBlock', [
-                                ('table', 'Line', [
-                                    ('table', 'Text', 'foo ')])]),
+    assert_tree(parse_all('<x-table>foo <div></div></x-table>'), [
+        ('x-table', 'AnonBlock', [
+            ('x-table', 'Table', [
+                ('x-table', 'AnonTableRowGroup', [
+                    ('x-table', 'AnonTableRow', [
+                        ('x-table', 'AnonTableCell', [
+                            ('x-table', 'AnonBlock', [
+                                ('x-table', 'Line', [
+                                    ('x-table', 'Text', 'foo ')])]),
                             ('div', 'Block', [])])])])])])])
 
     # Rule 2.2
-    assert_tree(parse_all('<thead><div></div><td></td></thead>'), [
+    assert_tree(parse_all('<x-thead style="display: table-header-group">'
+                          '<div></div><x-td></x-td></x-thead>'), [
         ('body', 'AnonBlock', [
             ('body', 'AnonTable', [
-                ('thead', 'TableRowGroup', [
-                    ('thead', 'AnonTableRow', [
-                        ('thead', 'AnonTableCell', [
+                ('x-thead', 'TableRowGroup', [
+                    ('x-thead', 'AnonTableRow', [
+                        ('x-thead', 'AnonTableCell', [
                             ('div', 'Block', [])]),
-                        ('td', 'TableCell', [])])])])])])
+                        ('x-td', 'TableCell', [])])])])])])
 
     # TODO: re-enable this once we support inline-table
-#    # Rule 3.2
-#    assert_tree(parse_all('<span><tr></tr></span>'), [
-#        ('body', 'Line', [
-#            ('span', 'Inline', [
-#                ('span', 'AnonInlineBlock', [
-#                    ('span', 'AnonInlineTable', [
-#                        ('span', 'AnonTableRowGroup', [
-#                            ('tr', 'TableRow', [])])])])])])])
+    # Rule 3.2
+    assert_tree(parse_all('<span><x-tr></x-tr></span>'), [
+        ('body', 'Line', [
+            ('span', 'Inline', [
+                ('span', 'AnonInlineBlock', [
+                    ('span', 'AnonInlineTable', [
+                        ('span', 'AnonTableRowGroup', [
+                            ('x-tr', 'TableRow', [])])])])])])])
 
-#    # Rule 3.1
-#    # Also, rule 1.3 does not apply: whitespace before and after is preserved
-#    assert_tree(parse_all('''
-#        <span>
-#            <em style="display: table-cell"></em>
-#            <em style="display: table-cell"></em>
-#        </span>
-#    '''), [
-#        ('body', 'Line', [
-#            ('span', 'Inline', [
-#                # Whitespace is preserved in table handling, then collapsed
-#                # into a single space.
-#                ('span', 'Text', ' '),
-#                ('span', 'AnonInlineBlock', [
-#                    ('span', 'AnonInlineTable', [
-#                        ('span', 'AnonTableRowGroup', [
-#                            ('span', 'AnonTableRow', [
-#                                ('em', 'TableCell', []),
-#                                ('em', 'TableCell', [])])])])]),
-#                ('span', 'Text', ' ')])])])
+    # Rule 3.1
+    # Also, rule 1.3 does not apply: whitespace before and after is preserved
+    assert_tree(parse_all('''
+        <span>
+            <em style="display: table-cell"></em>
+            <em style="display: table-cell"></em>
+        </span>
+    '''), [
+        ('body', 'Line', [
+            ('span', 'Inline', [
+                # Whitespace is preserved in table handling, then collapsed
+                # into a single space.
+                ('span', 'Text', ' '),
+                ('span', 'AnonInlineBlock', [
+                    ('span', 'AnonInlineTable', [
+                        ('span', 'AnonTableRowGroup', [
+                            ('span', 'AnonTableRow', [
+                                ('em', 'TableCell', []),
+                                ('em', 'TableCell', [])])])])]),
+                ('span', 'Text', ' ')])])])
 
     # Rule 3.2
-    assert_tree(parse_all('<tr></tr>\t<tr></tr>'), [
+    assert_tree(parse_all('<x-tr></x-tr>\t<x-tr></x-tr>'), [
         ('body', 'AnonBlock', [
             ('body', 'AnonTable', [
                 ('body', 'AnonTableRowGroup', [
-                    ('tr', 'TableRow', []),
-                    ('tr', 'TableRow', [])])])])])
-    assert_tree(parse_all('<col></col>\n<colgroup></colgroup>'), [
+                    ('x-tr', 'TableRow', []),
+                    ('x-tr', 'TableRow', [])])])])])
+
+    assert_tree(parse_all('<x-col></x-col>\n<x-colgroup></x-colgroup>'), [
         ('body', 'AnonBlock', [
             ('body', 'AnonTable', [
                 ('body', 'AnonTableColumnGroup', [
-                    ('col', 'TableColumn', [])]),
-                ('colgroup', 'TableColumnGroup', [
-                    ('colgroup', 'AnonTableColumn', [])])])])])
+                    ('x-col', 'TableColumn', [])]),
+                ('x-colgroup', 'TableColumnGroup', [
+                    ('x-colgroup', 'AnonTableColumn', [])])])])])
 
 
 @assert_no_logs
