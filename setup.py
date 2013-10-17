@@ -25,6 +25,7 @@ LONG_DESCRIPTION = open(path.join(path.dirname(__file__), 'README')).read()
 REQUIREMENTS = [
     # XXX: Keep this in sync with docs/install.rst
     'lxml',
+    'html5lib>=1.0b3',
     'tinycss==0.3',
     'cssselect>=0.6',
     'CairoSVG>=0.4.1',
