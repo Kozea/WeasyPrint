@@ -451,7 +451,8 @@ def clip_border_segment(context, enable_hinting, style, width, side,
         length = bbh
         width = br
         way = 1
-        angle = 1
+        angle = 2
+        main_offset = bbx + bbw
     elif side == 'bottom':
         context.move_to(bbx + bbw, bby + bbh)
         context.rel_line_to(-bbw, 0)
@@ -467,16 +468,17 @@ def clip_border_segment(context, enable_hinting, style, width, side,
         angle = 3
         main_offset = bby + bbh
     elif side == 'left':
-        context.move_to(bbx, bby)
-        context.rel_line_to(0, bbh)
-        (px1, py1), rounded1 = transition_point(blh, -blv, bl, -bb)
-        (px2, py2), rounded2 = transition_point(tlh, tlv, bl, bt)
+        context.move_to(bbx, bby + bbh)
+        context.rel_line_to(0, -bbh)
+        (px1, py1), rounded1 = transition_point(tlh, tlv, bl, bt)
+        (px2, py2), rounded2 = transition_point(blh, -blv, bl, -bb)
         context.rel_line_to(px1, py1)
-        context.rel_line_to(-px1 + px2, -py1 - bbh + py2)
+        context.rel_line_to(-px1 + px2, -py1 + bbh + py2)
         length = bbh
         width = bl
         way = -1
-        angle = 3
+        angle = 4
+        main_offset = bbx
     context.close_path()
 
     context.set_fill_rule(cairo.FILL_RULE_EVEN_ODD)
@@ -485,7 +487,6 @@ def clip_border_segment(context, enable_hinting, style, width, side,
         if rounded1 or rounded2:
             # At least one of the two corners is rounded
             if side in ('top', 'bottom'):
-                # Left corner
                 a1, b1 = px1 - bl / 2, way * py1 - width / 2
                 a2, b2 = -px2 - br / 2, way * py2 - width / 2
                 line_length = bbw - px1 + px2
@@ -566,9 +567,12 @@ def clip_border_segment(context, enable_hinting, style, width, side,
                 if dashes2:
                     for i in range(0, dashes2, 2):
                         i += 0.5  # half dash
-                        angle1 = ((2 * angle + way) - (way * i * dash / chl2)) / 4 * math.pi
+                        angle1 = (
+                            ((2 * angle + way) - (way * i * dash / chl2))
+                            / 4 * math.pi)
                         angle2 = (min if way < 0 else max)(
-                            ((2 * angle + way) - (way * (i + 1) * dash / chl2)) / 4 * math.pi,
+                            ((2 * angle + way) - (way * (i + 1) * dash / chl2))
+                            / 4 * math.pi,
                             angle * math.pi / 2)
                         if a2 >= b2:
                             c2 = math.sqrt(a2 ** 2 - b2 ** 2)
@@ -618,6 +622,144 @@ def clip_border_segment(context, enable_hinting, style, width, side,
                     x2 = min(bbx + px1 + (i + 1) * dash, bbx + bbw + px2)
                     y1 = main_offset - (width if way < 0 else 0)
                     y2 = y1 + width
+                    context.rectangle(x1, y1, x2 - x1, y2 - y1)
+
+            elif side in ('left', 'right'):
+                a1, b1 = -way * px1 - width / 2, py1 - bt / 2
+                a2, b2 = -way * px2 - width / 2, -py2 - bb / 2
+                line_length = bbh - py1 + py2
+                chl1 = corner_half_length(a1, b1)
+                chl2 = corner_half_length(a2, b2)
+                length = line_length + chl1 + chl2
+                dash_length = round(length / dash)
+                if rounded1 and rounded2:
+                    # 2x dashes
+                    dash = length / (dash_length + dash_length % 2)
+                else:
+                    # 2x - 1/2 dashes
+                    dash = length / (dash_length + dash_length % 2 - 0.5)
+                dashes1 = int(math.ceil((chl1 - dash / 2) / dash))
+                dashes2 = int(math.ceil((chl2 - dash / 2) / dash))
+                line = int(math.floor(line_length / dash))
+
+                if dashes1:
+                    for i in range(0, dashes1, 2):
+                        i += 0.5  # half dash
+                        angle1 = (
+                            ((2 * angle - way) + i * way * dash / chl1)
+                            / 4 * math.pi)
+                        angle2 = (min if way > 0 else max)(
+                            ((2 * angle - way) + (i + 1) * way * dash / chl1)
+                            / 4 * math.pi,
+                            angle * math.pi / 2)
+                        if a1 >= b1:
+                            c1 = math.sqrt(a1 ** 2 - b1 ** 2)
+                            y1 = py1 - (dashes1 - i) / dashes1 * c1 / 2
+                            y2 = (
+                                py1 - (dashes1 - min(i + 1, dashes1)) /
+                                dashes1 * c1 / 2)
+                            context.move_to(main_offset + px1, bby + y1)
+                            context.line_to(main_offset + px1, bby + y2)
+                            context.line_to(
+                                main_offset + px1 -
+                                a1 * math.sqrt(2) * math.cos(angle2),
+                                bby + y2 -
+                                a1 * math.sqrt(2) * math.sin(angle2))
+                            context.line_to(
+                                main_offset + px1 -
+                                a1 * math.sqrt(2) * math.cos(angle1),
+                                bby + y1 -
+                                a1 * math.sqrt(2) * math.sin(angle1))
+                            context.close_path()
+                        else:
+                            c1 = math.sqrt(b1 ** 2 - a1 ** 2)
+                            x1 = c1 - i / dashes1 * c1 / 2
+                            x2 = (
+                                c1 - min(i + 1, dashes1) /
+                                dashes1 * c1 / 2)
+                            context.move_to(main_offset + x1, bby + py1)
+                            context.line_to(main_offset + x2, bby + py1)
+                            context.line_to(
+                                main_offset + x2 -
+                                b1 * math.sqrt(2) * math.cos(angle2),
+                                bby + py1 -
+                                b1 * math.sqrt(2) * math.sin(angle2))
+                            context.line_to(
+                                main_offset + x1 -
+                                b1 * math.sqrt(2) * math.cos(angle1),
+                                bby + py1 -
+                                b1 * math.sqrt(2) * math.sin(angle1))
+                            context.close_path()
+                        if angle2 == angle * math.pi / 2:
+                            offset = way * (angle1 - angle2) / (
+                                (1 + (i + 1) * dash / chl1) / 4 *
+                                angle * math.pi - angle1)
+                            line += 1
+                            break
+                    else:
+                        offset = 1 - (
+                            (angle * math.pi / 2 - angle2) / (angle2 - angle1))
+                else:
+                    offset = 0
+
+                if dashes2:
+                    for i in range(0, dashes2, 2):
+                        i += 0.5  # half dash
+                        angle1 = (
+                            ((2 * angle + way) - (way * i * dash / chl2))
+                            / 4 * math.pi)
+                        angle2 = (min if way < 0 else max)(
+                            ((2 * angle + way) - (way * (i + 1) * dash / chl2))
+                            / 4 * math.pi,
+                            angle * math.pi / 2)
+                        if a2 >= b2:
+                            c2 = math.sqrt(a2 ** 2 - b2 ** 2)
+                            y1 = bbh + py2 + c2 / 2 - i / dashes2 * c2 / 2
+                            y2 = (
+                                bbh + py2 + c2 / 2 - min(i + 1, dashes2) /
+                                dashes2 * c2 / 2)
+                            context.move_to(main_offset + px2, bby + y1)
+                            context.line_to(main_offset + px2, bby + y2)
+                            context.line_to(
+                                main_offset + px2 -
+                                a2 * math.sqrt(2) * math.cos(angle2),
+                                bby + y2 -
+                                a2 * math.sqrt(2) * math.sin(angle2))
+                            context.line_to(
+                                main_offset + px2 -
+                                a2 * math.sqrt(2) * math.cos(angle1),
+                                bby + y1 -
+                                a2 * math.sqrt(2) * math.sin(angle1))
+                            context.close_path()
+                        else:
+                            c2 = math.sqrt(b2 ** 2 - a2 ** 2)
+                            x1 = c2 - i / dashes2 * c2 / 2
+                            x2 = (
+                                c2 - min(i + 1, dashes2) /
+                                dashes2 * c2 / 2)
+                            context.move_to(main_offset + x1, bby + bbh + py2)
+                            context.line_to(main_offset + x2, bby + bbh + py2)
+                            context.line_to(
+                                main_offset + x2 -
+                                b2 * math.sqrt(2) * math.cos(angle2),
+                                bby + bbh + py2 -
+                                b2 * math.sqrt(2) * math.sin(angle2))
+                            context.line_to(
+                                main_offset + x1 -
+                                b2 * math.sqrt(2) * math.cos(angle1),
+                                bby + bbh + py2 -
+                                b2 * math.sqrt(2) * math.sin(angle1))
+                            context.close_path()
+                        if angle2 == angle * math.pi / 2:
+                            line += 1
+                            break
+
+                for i in range(0, line, 2):
+                    i += offset
+                    y1 = max(bby + py1 + i * dash, bby + py1)
+                    y2 = min(bby + py1 + (i + 1) * dash, bby + bbh + py2)
+                    x1 = main_offset - (width if way > 0 else 0)
+                    x2 = x1 + width
                     context.rectangle(x1, y1, x2 - x1, y2 - y1)
         else:
             # 2x + 1 dashes
