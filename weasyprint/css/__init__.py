@@ -195,7 +195,7 @@ def find_stylesheets(element_tree, device_media_type, url_fetcher):
                               _check_mime_type=True,
                               media_type=device_media_type)
                 except URLFetchingError as exc:
-                    LOGGER.warn('Failed to load stylesheet at %s : %s',
+                    LOGGER.warning('Failed to load stylesheet at %s : %s',
                                 href, exc)
 
 
@@ -210,7 +210,7 @@ def find_style_attributes(element_tree):
         if style_attribute:
             declarations, errors = parser.parse_style_attr(style_attribute)
             for error in errors:
-                LOGGER.warn(error)
+                LOGGER.warning(error)
             yield element, declarations, element_base_url(element)
 
 
@@ -371,7 +371,7 @@ def preprocess_stylesheet(device_media_type, base_url, rules, url_fetcher):
                                 'Unknown pseudo-element: %s'
                                 % selector.pseudo_element)
                 except cssselect.SelectorError as exc:
-                    LOGGER.warn("Invalid or unsupported selector '%s', %s",
+                    LOGGER.warning("Invalid or unsupported selector '%s', %s",
                                 selector_string, exc)
                     continue
                 yield rule, selector_list, declarations
@@ -386,7 +386,7 @@ def preprocess_stylesheet(device_media_type, base_url, rules, url_fetcher):
                     stylesheet = CSS(url=url, url_fetcher=url_fetcher,
                                      media_type=device_media_type)
                 except URLFetchingError as exc:
-                    LOGGER.warn('Failed to load stylesheet at %s : %s',
+                    LOGGER.warning('Failed to load stylesheet at %s : %s',
                                 url, exc)
                 else:
                     for result in stylesheet.rules:
@@ -403,7 +403,7 @@ def preprocess_stylesheet(device_media_type, base_url, rules, url_fetcher):
             page_name, pseudo_class = rule.selector
             # TODO: support named pages (see CSS3 Paged Media)
             if page_name is not None:
-                LOGGER.warn('Named pages are not supported yet, the whole '
+                LOGGER.warning('Named pages are not supported yet, the whole '
                             '@page %s rule was ignored.', page_name + (
                                 ':' + pseudo_class if pseudo_class else ''))
                 continue

@@ -12,11 +12,13 @@
 
 import re
 import sys
+import codecs
 from os import path
 from setuptools import setup, find_packages
 
-VERSION = re.search("VERSION = '([^']+)'", open(
-    path.join(path.dirname(__file__), 'weasyprint', '__init__.py')
+VERSION = re.search("VERSION = '([^']+)'", codecs.open(
+    path.join(path.dirname(__file__), 'weasyprint', '__init__.py'),
+    encoding="utf-8",
 ).read().strip()).group(1)
 
 LONG_DESCRIPTION = open(path.join(path.dirname(__file__), 'README')).read()
@@ -25,6 +27,7 @@ LONG_DESCRIPTION = open(path.join(path.dirname(__file__), 'README')).read()
 REQUIREMENTS = [
     # XXX: Keep this in sync with docs/install.rst
     'lxml',
+    'html5lib>=1.0b3',
     'tinycss==0.3',
     'cssselect>=0.6',
     'CairoSVG>=0.4.1',

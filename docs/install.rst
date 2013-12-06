@@ -8,6 +8,7 @@ WeasyPrint |version| depends on:
 * Pango_
 * CFFI_ ≥ 0.5
 * lxml_
+* html5lib ≥ 1.0b3
 * cairocffi_ ≥ 0.3
 * tinycss_ = 0.3
 * cssselect_ ≥ 0.6
@@ -109,7 +110,7 @@ Debian 7.0 Wheezy or newer, Ubuntu 11.10 Oneiric or newer:
 
 .. code-block:: sh
 
-    sudo apt-get install python-dev python-pip python-lxml libcairo2 libpango1.0-0 libgdk-pixbuf2.0-0 libffi-dev
+    sudo apt-get install python-dev python-pip python-lxml libcairo2 libpango1.0-0 libgdk-pixbuf2.0-0 libffi-dev shared-mime-data
 
 
 Debian 6.0 Squeeze, Ubuntu 10.04 Lucid:
@@ -137,8 +138,9 @@ Archlinux
 Gentoo
 ~~~~~~
 
-WeasyPrint itself is packaged in the `Kozea overlay
-<https://github.com/Kozea/Overlay/blob/master/README>`_.
+.. code-block:: sh
+
+    emerge weasyprint
 
 
 Mac OS X

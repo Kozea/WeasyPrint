@@ -27,10 +27,11 @@ __all__ = ['HTML', 'CSS', 'Document', 'Page', 'default_url_fetcher',
 
 
 import contextlib
-import lxml.etree
+import html5lib
 
 from .urls import (fetch, default_url_fetcher, path2url, ensure_url,
                    url_is_absolute)
+from .compat import unicode
 from .logger import LOGGER
 # Some import are at the end of the file (after the CSS class) is defined
 # to work around circular imports.
@@ -81,16 +82,14 @@ class HTML(object):
             if source_type == 'tree':
                 result = source
             else:
-                if source_type == 'string':
-                    parse = lxml.etree.fromstring
-                else:
-                    parse = lxml.etree.parse
                 if not encoding:
                     encoding = protocol_encoding
-                parser = lxml.etree.HTMLParser(encoding=encoding)
-                result = parse(source, parser=parser)
-                if result is None:
-                    raise ValueError('Error while parsing HTML')
+                if isinstance(source, unicode):
+                    encoding = None
+                result = html5lib.parse(
+                    source, treebuilder='lxml', encoding=encoding,
+                    namespaceHTMLElements=False)
+                assert result
         base_url = find_base_url(result, base_url)
         if hasattr(result, 'getroot'):
             result.docinfo.URL = base_url
@@ -233,7 +232,7 @@ class CSS(object):
         # TODO: do not keep this self.stylesheet around?
         self.stylesheet = stylesheet
         for error in self.stylesheet.errors:
-            LOGGER.warn(error)
+            LOGGER.warning(error)
 
 
 @contextlib.contextmanager
@@ -273,7 +272,7 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
     elif nones == [True, True, False, True, True, True]:
         with fetch(url_fetcher, url) as result:
             if check_css_mime_type and result['mime_type'] != 'text/css':
-                LOGGER.warn(
+                LOGGER.warning(
                     'Unsupported stylesheet type %s for %s',
                     result['mime_type'], result['redirected_url'])
                 yield 'string', '', base_url, None

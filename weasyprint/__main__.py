@@ -74,7 +74,7 @@ def main(argv=None, stdout=None, stdin=None):
         prog='weasyprint', description='Renders web pages to PDF or PNG.')
     parser.add_argument('--version', action='version',
                         version='WeasyPrint version %s' % VERSION,
-                        help='Print WeasyPrint’s version number and exit.')
+                        help="Print WeasyPrint's version number and exit.")
     parser.add_argument('-e', '--encoding',
                         help='Character encoding of the input')
     parser.add_argument('-f', '--format', choices=['pdf', 'png'],

@@ -1581,7 +1581,7 @@ def test_page_breaks():
             body { margin: 0 }
             div { height: 30px }
         </style>
-        <div/><div/><div/><div/><div/>
+        <div></div><div></div><div></div><div></div><div></div>
     ''')
     page_divs = []
     for page in pages:
@@ -2773,10 +2773,10 @@ def test_text_align_justify():
             @page { size: 300px 1000px }
             body { text-align: justify }
         </style>
-        <p><img src="pattern.png" style="width: 40px"> &#20;
+        <p><img src="pattern.png" style="width: 40px">
             <strong>
-                <img src="pattern.png" style="width: 60px"> &#20;
-                <img src="pattern.png" style="width: 10px"> &#20;
+                <img src="pattern.png" style="width: 60px">
+                <img src="pattern.png" style="width: 10px">
                 <img src="pattern.png" style="width: 100px"
             ></strong><img src="pattern.png" style="width: 290px"
             ><!-- Last image will be on its own line. -->''')
@@ -2825,8 +2825,7 @@ def test_word_spacing():
     # (Not a string.)
     page, = parse('''
         <style></style>
-        <body><strong>Lorem ipsum dolor<em>sit amet</em></strong></body>
-    ''')
+        <body><strong>Lorem ipsum dolor<em>sit amet</em></strong>''')
     html, = page.children
     body, = html.children
     line, = body.children
@@ -2837,8 +2836,7 @@ def test_word_spacing():
     # of a TextBox. Is this what we want?
     page, = parse('''
         <style>strong { word-spacing: 11px }</style>
-        <body><strong>Lorem ipsum dolor<em>sit amet</em></strong></body>
-    ''')
+        <body><strong>Lorem ipsum dolor<em>sit amet</em></strong>''')
     html, = page.children
     body, = html.children
     line, = body.children
@@ -2850,8 +2848,7 @@ def test_word_spacing():
 def test_letter_spacing():
     """Test letter-spacing."""
     page, = parse('''
-        <body><strong>Supercalifragilisticexpialidocious</strong></body>
-    ''')
+        <body><strong>Supercalifragilisticexpialidocious</strong>''')
     html, = page.children
     body, = html.children
     line, = body.children
@@ -2860,8 +2857,7 @@ def test_letter_spacing():
 
     page, = parse('''
         <style>strong { letter-spacing: 11px }</style>
-        <body><strong>Supercalifragilisticexpialidocious</strong></body>
-    ''')
+        <body><strong>Supercalifragilisticexpialidocious</strong>''')
     html, = page.children
     body, = html.children
     line, = body.children
@@ -3021,8 +3017,8 @@ def test_table_column_width():
     with capture_logs() as logs:
         page, = parse(source)
     assert len(logs) == 1
-    assert logs[0] == ('WARNING: This table row has more columns than '
-                       'the table, ignored 1 cells: (<TableCellBox td 25>,)')
+    assert logs[0].startswith('WARNING: This table row has more columns than '
+                              'the table, ignored 1 cell')
     html, = page.children
     body, = html.children
     wrapper, = body.children
@@ -3145,8 +3141,8 @@ def test_table_row_height():
             <tr>
                 <td rowspan=0 style="height: 420px; vertical-align: top"></td>
                 <td>X<br>X<br>X</td>
-                <td><table style="margin-top: 20px;
-                                  border-spacing: 0">X</table></td>
+                <td><table style="margin-top: 20px; border-spacing: 0">
+                    <tr><td>X</td></tr></table></td>
                 <td style="vertical-align: top">X</td>
                 <td style="vertical-align: middle">X</td>
                 <td style="vertical-align: bottom">X</td>

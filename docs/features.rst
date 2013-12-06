@@ -164,7 +164,7 @@ PDF bookmarks are controlled as described in `CSS Generated Content for
 Paged Media`_. This module is experimental_: the properties need to be
 prefixed: use ``-weasy-bookmark-level`` and ``-weasy-bookmark-level``.
 
-.. _CSS Generated Content for Paged Media: http://dev.w3.org/csswg/css3-gcpm/#bookmarks
+.. _CSS Generated Content for Paged Media: https://dvcs.w3.org/hg/csswg/raw-file/f7490857b4eb/css-gcpm/Overview.html#bookmarks
 .. _experimental: http://www.w3.org/TR/css-2010/#experimental
 
 For example, if you have only one top-level ``<h1>`` and do not wish to
