@@ -398,7 +398,8 @@ def clip_border_segment(context, enable_hinting, style, width, side,
     (tlh, tlv), (trh, trv), (brh, brv), (blh, blv) = radii or 4 * ((0, 0),)
     bt, br, bb, bl = border_widths or 4 * (width,)
 
-    def transition_point(x1, y1, x2, y2):
+    def transition_points(x1, y1, x2, y2):
+        #TODO: Update doc
         """Get the point use for border transition.
 
         The extra boolean returned is ``True`` if the point is in the padding
@@ -411,9 +412,19 @@ def clip_border_segment(context, enable_hinting, style, width, side,
         from what other browsers do.
 
         """
-        return (
-            ((x1, y1), True) if abs(x1) > abs(x2) and abs(y1) > abs(y2)
-            else ((x2, y2), False))
+        if abs(x1) > abs(x2) and abs(y1) > abs(y2):
+            px, py = x1, y1
+            rounded = True
+        else:
+            px, py = x2, y2
+            rounded = False
+        if rounded:
+            tx = ty = min(abs(px), abs(py))
+            tx *= -1 if px < 0 else 1
+            ty *= -1 if py < 0 else 1
+        else:
+            tx, ty = px, py
+        return (px, py), (tx, ty), rounded
 
     def corner_half_length(a, b):
         """Return the length of the half of one ellipsis corner.
@@ -432,10 +443,10 @@ def clip_border_segment(context, enable_hinting, style, width, side,
     if side == 'top':
         context.move_to(bbx + bbw, bby)
         context.rel_line_to(-bbw, 0)
-        (px1, py1), rounded1 = transition_point(tlh, tlv, bl, bt)
-        (px2, py2), rounded2 = transition_point(-trh, trv, -br, bt)
-        context.rel_line_to(px1, py1)
-        context.rel_line_to(-px1 + bbw + px2, -py1 + py2)
+        (px1, py1), (tx1, ty1), rounded1 = transition_points(tlh, tlv, bl, bt)
+        (px2, py2), (tx2, ty2), rounded2 = transition_points(-trh, trv, -br, bt)
+        context.rel_line_to(tx1, ty1)
+        context.rel_line_to(-tx1 + bbw + tx2, -ty1 + ty2)
         length = bbw
         width = bt
         way = 1
@@ -444,10 +455,10 @@ def clip_border_segment(context, enable_hinting, style, width, side,
     elif side == 'right':
         context.move_to(bbx + bbw, bby + bbh)
         context.rel_line_to(0, -bbh)
-        (px1, py1), rounded1 = transition_point(-trh, trv, -br, bt)
-        (px2, py2), rounded2 = transition_point(-brh, -brv, -br, -bb)
-        context.rel_line_to(px1, py1)
-        context.rel_line_to(-px1 + px2, -py1 + bbh + py2)
+        (px1, py1), (tx1, ty1), rounded1 = transition_points(-trh, trv, -br, bt)
+        (px2, py2), (tx2, ty2), rounded2 = transition_points(-brh, -brv, -br, -bb)
+        context.rel_line_to(tx1, ty1)
+        context.rel_line_to(-tx1 + tx2, -ty1 + bbh + ty2)
         length = bbh
         width = br
         way = 1
@@ -456,10 +467,10 @@ def clip_border_segment(context, enable_hinting, style, width, side,
     elif side == 'bottom':
         context.move_to(bbx + bbw, bby + bbh)
         context.rel_line_to(-bbw, 0)
-        (px1, py1), rounded1 = transition_point(blh, -blv, bl, -bb)
-        (px2, py2), rounded2 = transition_point(-brh, -brv, -br, -bb)
-        context.rel_line_to(px1, py1)
-        context.rel_line_to(-px1 + bbw + px2, -py1 + py2)
+        (px1, py1), (tx1, ty1), rounded1 = transition_points(blh, -blv, bl, -bb)
+        (px2, py2), (tx2, ty2), rounded2 = transition_points(-brh, -brv, -br, -bb)
+        context.rel_line_to(tx1, ty1)
+        context.rel_line_to(-tx1 + bbw + tx2, -ty1 + ty2)
         length = bbw
         width = bb
         way = -1
@@ -468,10 +479,10 @@ def clip_border_segment(context, enable_hinting, style, width, side,
     elif side == 'left':
         context.move_to(bbx, bby + bbh)
         context.rel_line_to(0, -bbh)
-        (px1, py1), rounded1 = transition_point(tlh, tlv, bl, bt)
-        (px2, py2), rounded2 = transition_point(blh, -blv, bl, -bb)
-        context.rel_line_to(px1, py1)
-        context.rel_line_to(-px1 + px2, -py1 + bbh + py2)
+        (px1, py1), (tx1, ty1), rounded1 = transition_points(tlh, tlv, bl, bt)
+        (px2, py2), (tx2, ty2), rounded2 = transition_points(blh, -blv, bl, -bb)
+        context.rel_line_to(tx1, ty1)
+        context.rel_line_to(-tx1 + tx2, -ty1 + bbh + ty2)
         length = bbh
         width = bl
         way = -1
