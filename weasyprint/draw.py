@@ -456,10 +456,8 @@ def clip_border_segment(context, enable_hinting, style, width, side,
     elif side == 'bottom':
         context.move_to(bbx + bbw, bby + bbh)
         context.rel_line_to(-bbw, 0)
-        (px1, py1), rounded1 = transition_point(blh, blv, bl, bb)
-        (px2, py2), rounded2 = transition_point(-brh, brv, -br, bb)
-        py1 *= -1
-        py2 *= -1
+        (px1, py1), rounded1 = transition_point(blh, -blv, bl, -bb)
+        (px2, py2), rounded2 = transition_point(-brh, -brv, -br, -bb)
         context.rel_line_to(px1, py1)
         context.rel_line_to(-px1 + bbw + px2, -py1 + py2)
         length = bbw
@@ -778,28 +776,6 @@ def clip_border_segment(context, enable_hinting, style, width, side,
                 elif side == 'left':
                     context.rectangle(
                         bbx, bby + i * dash, width, dash)
-    context.clip()
-
-    if side == 'top':
-        context.move_to(bbx + bbw, bby)
-        context.rel_line_to(-bbw, 0)
-        context.rel_line_to(px1, py1)
-        context.rel_line_to(-px1 + bbw + px2, -py1 + py2)
-    elif side == 'right':
-        context.move_to(bbx + bbw, bby + bbh)
-        context.rel_line_to(0, -bbh)
-        context.rel_line_to(px1, py1)
-        context.rel_line_to(-px1 + px2, -py1 + bbh + py2)
-    elif side == 'bottom':
-        context.move_to(bbx, bby + bbh)
-        context.rel_line_to(bbw, 0)
-        context.rel_line_to(px1, py1)
-        context.rel_line_to(-px1 - bbw + px2, -py1 + py2)
-    elif side == 'left':
-        context.move_to(bbx, bby)
-        context.rel_line_to(0, bbh)
-        context.rel_line_to(px1, py1)
-        context.rel_line_to(-px1 + px2, -py1 - bbh + py2)
     context.clip()
 
 
