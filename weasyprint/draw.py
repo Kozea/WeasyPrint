@@ -562,9 +562,9 @@ def clip_border_segment(context, enable_hinting, style, width, side,
                                 b1 * math.sqrt(2) * math.sin(angle1))
                             context.close_path()
                         if angle2 == angle * math.pi / 2:
-                            offset = way * (angle1 - angle2) / (
-                                (1 + (i + 1) * dash / chl1) / 4 *
-                                angle * math.pi - angle1)
+                            offset = way * (angle2 - angle1) / ((
+                                ((2 * angle - way) + (i + 1) * way * dash / chl1)
+                                / 4 * math.pi) - angle1)
                             line += 1
                             break
                     else:
@@ -700,9 +700,9 @@ def clip_border_segment(context, enable_hinting, style, width, side,
                                 b1 * math.sqrt(2) * math.sin(angle1))
                             context.close_path()
                         if angle2 == angle * math.pi / 2:
-                            offset = way * (angle1 - angle2) / (
-                                (1 + (i + 1) * dash / chl1) / 4 *
-                                angle * math.pi - angle1)
+                            offset = way * (angle2 - angle1) / ((
+                                ((2 * angle - way) + (i + 1) * way * dash / chl1)
+                                / 4 * math.pi) - angle1)
                             line += 1
                             break
                     else:
