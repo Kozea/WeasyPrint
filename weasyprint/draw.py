@@ -24,7 +24,6 @@ from .text import show_first_line
 from .compat import xrange
 
 
-ARC_TO_BEZIER = 4 * (2 ** .5 - 1) / 3
 SIDES = ('top', 'right', 'bottom', 'left')
 
 
@@ -208,21 +207,18 @@ def rounded_box_path(context, radii):
         context.rectangle(x, y, w, h)
         return
 
-    (tlh, tlv), (trh, trv), (brh, brv), (blh, blv) = tl, tr, br, bl
-
-    context.move_to(x + tlh, y)
-    context.rel_line_to(w - tlh - trh, 0)
-    context.rel_curve_to(
-        ARC_TO_BEZIER * trh, 0, trh, ARC_TO_BEZIER * trv, trh, trv)
-    context.rel_line_to(0, h - trv - brv)
-    context.rel_curve_to(
-        0, ARC_TO_BEZIER * brv, -ARC_TO_BEZIER * brh, brv, -brh, brv)
-    context.rel_line_to(-w + blh + brh, 0)
-    context.rel_curve_to(
-        -ARC_TO_BEZIER * blh, 0, -blh, -ARC_TO_BEZIER * blv, -blh, -blv)
-    context.rel_line_to(0, -h + tlv + blv)
-    context.rel_curve_to(
-        0, -ARC_TO_BEZIER * tlv, ARC_TO_BEZIER * tlh, -tlv, tlh, -tlv)
+    context.move_to(x, y)
+    for i, (w, h, (rx, ry)) in enumerate((
+            (0, 0, tl), (w, 0, tr), (w, h, br), (0, h, bl))):
+        context.save()
+        context.translate(x + w, y + h)
+        radius = max(rx, ry)
+        if radius:
+            context.scale(min(rx / ry, 1), min(ry / rx, 1))
+        context.arc(
+            (-1 if w else 1) * radius, (-1 if h else 1) * radius, radius,
+            (2 + i) * math.pi / 2, (3 + i) * math.pi / 2)
+        context.restore()
 
 
 def draw_background(context, bg, enable_hinting, clip_box=True):
