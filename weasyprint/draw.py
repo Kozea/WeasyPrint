@@ -503,74 +503,50 @@ def clip_border_segment(context, enable_hinting, style, width, side,
             dashes2 = int(math.ceil((chl2 - dash / 2) / dash))
             line = int(math.floor(line_length / dash))
 
-            if dashes1:
-                for i in range(0, dashes1, 2):
+            def draw_dots(dashes, line, way, x, y, px, py, chl):
+                if not dashes:
+                    return line, 0
+                for i in range(0, dashes, 2):
                     i += 0.5  # half dash
                     angle1 = (
-                        ((2 * angle - way) + i * way * dash / chl1)
+                        ((2 * angle - way) + i * way * dash / chl)
                         / 4 * math.pi)
                     angle2 = (min if way > 0 else max)(
-                        ((2 * angle - way) + (i + 1) * way * dash / chl1)
+                        ((2 * angle - way) + (i + 1) * way * dash / chl)
                         / 4 * math.pi,
                         angle * math.pi / 2)
                     if side in ('top', 'bottom'):
-                        context.move_to(bbx + px1, main_offset + py1)
+                        context.move_to(x + px, main_offset + py)
                         context.line_to(
-                            bbx + px1 - way * px1 * 1 / math.tan(angle2),
+                            x + px - way * px * 1 / math.tan(angle2),
                             main_offset)
                         context.line_to(
-                            bbx + px1 - way * px1 * 1 / math.tan(angle1),
+                            x + px - way * px * 1 / math.tan(angle1),
                             main_offset)
                     elif side in ('left', 'right'):
-                        context.move_to(main_offset + px1, bby + py1)
+                        context.move_to(main_offset + px, y + py)
                         context.line_to(
                             main_offset,
-                            bby + py1 + way * py1 * math.tan(angle2))
+                            y + py + way * py * math.tan(angle2))
                         context.line_to(
                             main_offset,
-                            bby + py1 + way * py1 * math.tan(angle1))
+                            y + py + way * py * math.tan(angle1))
                     context.close_path()
                     if angle2 == angle * math.pi / 2:
                         offset = (angle1 - angle2) / ((
-                            ((2 * angle - way) + (i + 1) * way * dash / chl1)
+                            ((2 * angle - way) + (i + 1) * way * dash / chl)
                             / 4 * math.pi) - angle1)
                         line += 1
                         break
                 else:
                     offset = 1 - (
                         (angle * math.pi / 2 - angle2) / (angle2 - angle1))
-            else:
-                offset = 0
+                return line, offset
 
-            for i in range(0, dashes2, 2):
-                i += 0.5  # half dash
-                angle1 = (
-                    ((2 * angle + way) - (way * i * dash / chl2))
-                    / 4 * math.pi)
-                angle2 = (min if way < 0 else max)(
-                    ((2 * angle + way) - (way * (i + 1) * dash / chl2))
-                    / 4 * math.pi,
-                    angle * math.pi / 2)
-                if side in ('top', 'bottom'):
-                    context.move_to(bbx + bbw + px2, main_offset + py2)
-                    context.line_to(
-                        bbx + bbw + px2 + way * px2 * 1 / math.tan(angle2),
-                        main_offset)
-                    context.line_to(
-                        bbx + bbw + px2 + way * px2 * 1 / math.tan(angle1),
-                        main_offset)
-                elif side in ('left', 'right'):
-                    context.move_to(main_offset + px2, bby + bbh + py2)
-                    context.line_to(
-                        main_offset,
-                        bby + bbh + py2 - way * py2 * math.tan(angle2))
-                    context.line_to(
-                        main_offset,
-                        bby + bbh + py2 - way * py2 * math.tan(angle1))
-                context.close_path()
-                if angle2 == angle * math.pi / 2:
-                    line += 1
-                    break
+            line, offset = draw_dots(
+                dashes1, line, way, bbx, bby, px1, py1, chl1)
+            line = draw_dots(
+                dashes2, line, -way, bbx + bbw, bby + bbh, px2, py2, chl2)[0]
 
             if line_length > 1e-6:
                 for i in range(0, line, 2):
