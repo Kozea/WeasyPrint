@@ -429,7 +429,7 @@ def clip_border_segment(context, enable_hinting, style, width, side,
         pi" Quart. J. Pure. Appl. Math., vol. 45 (1913-1914), pp. 350-372],
         wonderfully explained by Dr Rob.
 
-        http://mathforum.org/dr.math/faq/formulas/faq.ellipse.circumference.html
+        http://mathforum.org/dr.math/faq/formulas/
 
         """
         x = (a - b) / (a + b)
@@ -558,7 +558,7 @@ def clip_border_segment(context, enable_hinting, style, width, side,
                                 b1 * math.sqrt(2) * math.sin(angle1))
                             context.close_path()
                         if angle2 == angle * math.pi / 2:
-                            offset = way * (angle2 - angle1) / ((
+                            offset = way * (angle1 - angle2) / ((
                                 ((2 * angle - way) + (i + 1) * way * dash / chl1)
                                 / 4 * math.pi) - angle1)
                             line += 1
