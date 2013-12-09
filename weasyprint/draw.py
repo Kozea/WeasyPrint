@@ -426,69 +426,59 @@ def clip_border_segment(context, enable_hinting, style, width, side,
             1 + 3 * x ** 2 / (10 + math.sqrt(4 - 3 * x ** 2)))
 
     if side == 'top':
-        context.move_to(bbx + bbw, bby)
-        context.rel_line_to(-bbw, 0)
         (px1, py1), rounded1 = transition_point(tlh, tlv, bl, bt)
         (px2, py2), rounded2 = transition_point(-trh, trv, -br, bt)
-        context.rel_line_to(px1, py1)
-        context.rel_line_to(-px1 + bbw + px2, -py1 + py2)
-        length = bbw
         width = bt
         way = 1
         angle = 1
         main_offset = bby
     elif side == 'right':
-        context.move_to(bbx + bbw, bby + bbh)
-        context.rel_line_to(0, -bbh)
         (px1, py1), rounded1 = transition_point(-trh, trv, -br, bt)
         (px2, py2), rounded2 = transition_point(-brh, -brv, -br, -bb)
-        context.rel_line_to(px1, py1)
-        context.rel_line_to(-px1 + px2, -py1 + bbh + py2)
-        length = bbh
         width = br
         way = 1
         angle = 2
         main_offset = bbx + bbw
     elif side == 'bottom':
-        context.move_to(bbx + bbw, bby + bbh)
-        context.rel_line_to(-bbw, 0)
         (px1, py1), rounded1 = transition_point(blh, -blv, bl, -bb)
         (px2, py2), rounded2 = transition_point(-brh, -brv, -br, -bb)
-        context.rel_line_to(px1, py1)
-        context.rel_line_to(-px1 + bbw + px2, -py1 + py2)
-        length = bbw
         width = bb
         way = -1
         angle = 3
         main_offset = bby + bbh
     elif side == 'left':
-        context.move_to(bbx, bby + bbh)
-        context.rel_line_to(0, -bbh)
         (px1, py1), rounded1 = transition_point(tlh, tlv, bl, bt)
         (px2, py2), rounded2 = transition_point(blh, -blv, bl, -bb)
-        context.rel_line_to(px1, py1)
-        context.rel_line_to(-px1 + px2, -py1 + bbh + py2)
-        length = bbh
         width = bl
         way = -1
         angle = 4
         main_offset = bbx
     context.close_path()
 
+    if side in ('top', 'bottom'):
+        a1, b1 = px1 - bl / 2, way * py1 - width / 2
+        a2, b2 = -px2 - br / 2, way * py2 - width / 2
+        line_length = bbw - px1 + px2
+        length = bbw
+        context.move_to(bbx + bbw, main_offset)
+        context.rel_line_to(-bbw, 0)
+        context.rel_line_to(px1, py1)
+        context.rel_line_to(-px1 + bbw + px2, -py1 + py2)
+    elif side in ('left', 'right'):
+        a1, b1 = -way * px1 - width / 2, py1 - bt / 2
+        a2, b2 = -way * px2 - width / 2, -py2 - bb / 2
+        line_length = bbh - py1 + py2
+        length = bbh
+        context.move_to(main_offset, bby + bbh)
+        context.rel_line_to(0, -bbh)
+        context.rel_line_to(px1, py1)
+        context.rel_line_to(-px1 + px2, -py1 + bbh + py2)
+
     context.set_fill_rule(cairo.FILL_RULE_EVEN_ODD)
     if style in ('dotted', 'dashed'):
         dash = width if style == 'dotted' else 3 * width
         if rounded1 or rounded2:
             # At least one of the two corners is rounded
-            if side in ('top', 'bottom'):
-                a1, b1 = px1 - bl / 2, way * py1 - width / 2
-                a2, b2 = -px2 - br / 2, way * py2 - width / 2
-                line_length = bbw - px1 + px2
-            elif side in ('left', 'right'):
-                a1, b1 = -way * px1 - width / 2, py1 - bt / 2
-                a2, b2 = -way * px2 - width / 2, -py2 - bb / 2
-                line_length = bbh - py1 + py2
-
             chl1 = corner_half_length(a1, b1)
             chl2 = corner_half_length(a2, b2)
             length = line_length + chl1 + chl2
