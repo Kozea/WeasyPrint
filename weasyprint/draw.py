@@ -519,7 +519,7 @@ def clip_border_segment(context, enable_hinting, style, width, side,
                             main_offset)
                         context.close_path()
                         if angle2 == angle * math.pi / 2:
-                            offset = way * (angle1 - angle2) / ((
+                            offset = (angle1 - angle2) / ((
                                 ((2 * angle - way) + (i + 1) * way * dash / chl1)
                                 / 4 * math.pi) - angle1)
                             line += 1
