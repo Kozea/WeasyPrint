@@ -17,7 +17,6 @@ import os.path
 import logging
 import contextlib
 import functools
-import math
 
 from .. import HTML, CSS
 from ..logger import LOGGER
