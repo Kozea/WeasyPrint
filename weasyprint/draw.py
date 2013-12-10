@@ -576,17 +576,17 @@ def draw_rounded_border(context, box, style, color):
     context.set_fill_rule(cairo.FILL_RULE_EVEN_ODD)
     rounded_box_path(context, box.rounded_padding_box())
     if style in ('ridge', 'groove'):
-        rounded_box_path(context, box.rounded_box(1 / 2))
+        rounded_box_path(context, box.rounded_box_ratio(1 / 2))
         context.set_source_rgba(*color[0])
         context.fill()
-        rounded_box_path(context, box.rounded_box(1 / 2))
+        rounded_box_path(context, box.rounded_box_ratio(1 / 2))
         rounded_box_path(context, box.rounded_border_box())
         context.set_source_rgba(*color[1])
         context.fill()
         return
     if style == 'double':
-        rounded_box_path(context, box.rounded_box(1 / 3))
-        rounded_box_path(context, box.rounded_box(2 / 3))
+        rounded_box_path(context, box.rounded_box_ratio(1 / 3))
+        rounded_box_path(context, box.rounded_box_ratio(2 / 3))
     rounded_box_path(context, box.rounded_border_box())
     context.set_source_rgba(*color)
     context.fill()

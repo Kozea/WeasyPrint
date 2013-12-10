@@ -195,62 +195,77 @@ class Box(object):
         return (self.border_box_x(), self.border_box_y(),
                 self.border_width(), self.border_height())
 
-    def rounded_box(self, ratio):
+    def rounded_box(self, bt, br, bb, bl):
         """Position, size and radii of a box inside the outer border box.
 
-        ``ratio`` is the percentage of the position from the outer border
-        box. 0 is equivalent to border box, 1 to padding box.
+        bt, br, bb, and bl are distances from the outer border box,
+        defining a rectangle to be rounded.
 
         """
-        bt = self.border_top_width * ratio
-        br = self.border_right_width * ratio
-        bb = self.border_bottom_width * ratio
-        bl = self.border_left_width * ratio
         tlrx, tlry = self.border_top_left_radius
         trrx, trry = self.border_top_right_radius
         brrx, brry = self.border_bottom_right_radius
         blrx, blry = self.border_bottom_left_radius
 
+        tlrx = max(0, tlrx - bl)
+        tlry = max(0, tlry - bt)
+        trrx = max(0, trrx - br)
+        trry = max(0, trry - bt)
+        brrx = max(0, brrx - br)
+        brry = max(0, brry - bb)
+        blrx = max(0, blrx - bl)
+        blry = max(0, blry - bb)
+
+        x = self.border_box_x() + bl
+        y = self.border_box_y() + bt
+        width = self.border_width() - bl - br
+        height = self.border_height() - bt - bb
+
         # Fix overlapping curves
         # See http://www.w3.org/TR/css3-background/#corner-overlap
-        ratio = 1
-        if any((tlrx, trrx, blrx, brrx)):
-            ratio = min((
-                ratio, self.border_width() / max((tlrx + trrx, blrx + brrx))))
-        if any((tlry, blry, trry, brry)):
-            ratio = min((
-                ratio, self.border_height() / max((tlry + blry, trry + brry))))
-
+        ratio = min([1] + [
+            extent / sum_radii
+            for extent, sum_radii in [
+                (width, tlrx + trrx),
+                (width, blrx + brrx),
+                (height, tlry + blry),
+                (height, trry + brry),
+            ]
+            if sum_radii > 0
+        ])
         return (
-            self.border_box_x() + bl, self.border_box_y() + bt,
-            self.border_width() - bl - br, self.border_height() - bt - bb,
-            (max((0, tlrx * ratio - bl)), max((0, tlry * ratio - bt))),
-            (max((0, trrx * ratio - br)), max((0, trry * ratio - bt))),
-            (max((0, brrx * ratio - br)), max((0, brry * ratio - bb))),
-            (max((0, blrx * ratio - bl)), max((0, blry * ratio - bb))))
+            x, y, width, height,
+            (tlrx * ratio, tlry * ratio),
+            (trrx * ratio, trry * ratio),
+            (brrx * ratio, brry * ratio),
+            (blrx * ratio, blry * ratio))
+
+    def rounded_box_ratio(self, ratio):
+        return self.rounded_box(
+            self.border_top_width * ratio,
+            self.border_right_width * ratio,
+            self.border_bottom_width * ratio,
+            self.border_left_width * ratio)
 
     def rounded_padding_box(self):
         """Return the position, size and radii of the rounded padding box."""
-        return self.rounded_box(ratio=1)
+        return self.rounded_box(
+            self.border_top_width,
+            self.border_right_width,
+            self.border_bottom_width,
+            self.border_left_width)
 
     def rounded_border_box(self):
         """Return the position, size and radii of the rounded border box."""
-        return self.rounded_box(ratio=0)
+        return self.rounded_box(0, 0, 0, 0)
 
     def rounded_content_box(self):
         """Return the position, size and radii of the rounded content box."""
-        _, _, _, _, tl, tr, br, bl = self.rounded_padding_box()
-        return (
-            self.content_box_x(), self.content_box_y(),
-            self.width, self.height,
-            (max((0, tl[0] - self.padding_left)),
-             max(0, tl[1] - self.padding_top)),
-            (max((0, tr[0] - self.padding_right)),
-             max(0, tr[1] - self.padding_top)),
-            (max((0, br[0] - self.padding_right)),
-             max(0, br[1] - self.padding_bottom)),
-            (max((0, bl[0] - self.padding_left)),
-             max(0, bl[1] - self.padding_bottom)))
+        return self.rounded_box(
+            self.border_top_width - self.padding_top,
+            self.border_right_width - self.padding_right,
+            self.border_bottom_width - self.padding_bottom,
+            self.border_left_width - self.padding_left)
 
     # Positioning schemes
 
