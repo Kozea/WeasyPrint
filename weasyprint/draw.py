@@ -355,7 +355,8 @@ def draw_border(context, box, enable_hinting):
 
     # The 4 sides are solid or double, and they have the same color. Oh yeah!
     # We can draw them so easily!
-    if set(styles) in ({'solid'}, {'double'}) and len(set(colors)) == 1:
+    if set(styles) in (set(('solid',)), set(('double',))) and (
+            len(set(colors)) == 1):
         draw_rounded_border(context, box, styles[0], colors[0])
         return
 
