@@ -167,7 +167,11 @@ def table_layout(context, table, max_position_y, skip_stack,
                 row_bottom_y = max(
                     cell.position_y + cell.border_height()
                     for cell in ending_cells)
-                row.height = row_bottom_y - row.position_y
+                if row.height == 'auto':
+                    row.height = row_bottom_y - row.position_y
+                else:
+                    row.height = max(row.height, max(
+                        row_cell.height for row_cell in ending_cells))
             else:
                 row_bottom_y = row.position_y
                 row.height = 0
@@ -574,7 +578,8 @@ def find_in_flow_baseline(box, last=False, baseline_types=(boxes.LineBox,)):
     """
     if isinstance(box, baseline_types):
         return box.position_y + box.baseline
-    if isinstance(box, boxes.ParentBox):
+    if isinstance(box, boxes.ParentBox) and not isinstance(
+            box, boxes.TableCaptionBox):
         children = reversed(box.children) if last else box.children
         for child in children:
             if child.is_in_normal_flow():
