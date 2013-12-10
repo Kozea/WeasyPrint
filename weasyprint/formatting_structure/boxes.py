@@ -239,6 +239,7 @@ class Box(object):
 
     def rounded_content_box(self):
         """Return the position, size and radii of the rounded content box."""
+        # XXX: is that what we really want?
         _, _, _, _, tl, tr, br, bl = self.rounded_padding_box()
         return (
             self.padding_box_x(), self.padding_box_y(),
