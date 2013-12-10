@@ -50,6 +50,16 @@ def box_rectangle(box, which_rectangle):
         )
 
 
+def box_rounded_box(box, which_rectangle):
+    if which_rectangle == 'border-box':
+        return box.rounded_border_box()
+    elif which_rectangle == 'padding-box':
+        return box.rounded_padding_box()
+    else:
+        assert which_rectangle == 'content-box', which_rectangle
+        return box.rounded_content_box()
+
+
 def layout_box_backgrounds(page, box, get_image_from_uri):
     """Fetch and position background images."""
     # Resolve percentages in border-radius properties
@@ -98,8 +108,10 @@ def layout_background_layer(box, page, image, size, clip, repeat, origin,
 
     if box is not page:
         painting_area = box_rectangle(box, clip)
+        rounded_box = box_rounded_box(box, clip)
     else:
         painting_area = 0, 0, page.margin_width(), page.margin_height()
+        rounded_box = box.rounded_border_box()
 
     if (image is None or image.intrinsic_width == 0
             or image.intrinsic_height == 0):
@@ -169,7 +181,7 @@ def layout_background_layer(box, page, image, size, clip, repeat, origin,
         unbounded=(box is page),
         painting_area=painting_area,
         positioning_area=positioning_area,
-        rounded_box=box.rounded_border_box())
+        rounded_box=rounded_box)
 
 
 def set_canvas_background(page):

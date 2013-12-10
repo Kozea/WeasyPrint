@@ -237,6 +237,14 @@ class Box(object):
         """Return the position, size and radii of the rounded border box."""
         return self.rounded_box(ratio=0)
 
+    def rounded_content_box(self):
+        """Return the position, size and radii of the rounded content box."""
+        _, _, _, _, tl, tr, br, bl = self.rounded_padding_box()
+        return (
+            self.padding_box_x(), self.padding_box_y(),
+            self.padding_width(), self.padding_height(),
+            tl, tr, br, bl)
+
     # Positioning schemes
 
     def is_floated(self):
