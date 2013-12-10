@@ -453,7 +453,6 @@ def clip_border_segment(context, enable_hinting, style, width, side,
         way = -1
         angle = 4
         main_offset = bbx
-    context.close_path()
 
     if side in ('top', 'bottom'):
         a1, b1 = px1 - bl / 2, way * py1 - width / 2
@@ -521,7 +520,6 @@ def clip_border_segment(context, enable_hinting, style, width, side,
                         context.line_to(
                             main_offset,
                             y + py + way * py * math.tan(angle1))
-                    context.close_path()
                     if angle2 == angle * math.pi / 2:
                         offset = (angle1 - angle2) / ((
                             ((2 * angle - way) + (i + 1) * way * dash / chl)
@@ -554,9 +552,10 @@ def clip_border_segment(context, enable_hinting, style, width, side,
                     context.rectangle(x1, y1, x2 - x1, y2 - y1)
         else:
             # 2x + 1 dashes
+            context.clip()
             dash = length / (
                 round(length / dash) - (round(length / dash) + 1) % 2)
-            for i in range(1, int(round(length / dash)), 2):
+            for i in range(0, int(round(length / dash)), 2):
                 if side == 'top':
                     context.rectangle(
                         bbx + i * dash, bby, dash, width)
