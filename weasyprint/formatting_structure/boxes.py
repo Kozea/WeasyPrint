@@ -214,10 +214,10 @@ class Box(object):
         # Fix overlapping curves
         # See http://www.w3.org/TR/css3-background/#corner-overlap
         ratio = 1
-        if tlrx + trrx or blrx + brrx:
+        if any((tlrx, trrx, blrx, brrx)):
             ratio = min((
                 ratio, self.border_width() / max((tlrx + trrx, blrx + brrx))))
-        if tlry + blry or trry + brry:
+        if any((tlry, blry, trry, brry)):
             ratio = min((
                 ratio, self.border_height() / max((tlry + blry, trry + brry))))
 
