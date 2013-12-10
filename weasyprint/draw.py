@@ -495,7 +495,7 @@ def clip_border_segment(context, enable_hinting, style, width, side,
 
             def draw_dots(dashes, line, way, x, y, px, py, chl):
                 if not dashes:
-                    return line, 0
+                    return line + 1, 0
                 for i in range(0, dashes, 2):
                     i += 0.5  # half dash
                     angle1 = (
