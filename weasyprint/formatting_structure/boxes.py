@@ -262,10 +262,10 @@ class Box(object):
     def rounded_content_box(self):
         """Return the position, size and radii of the rounded content box."""
         return self.rounded_box(
-            self.border_top_width - self.padding_top,
-            self.border_right_width - self.padding_right,
-            self.border_bottom_width - self.padding_bottom,
-            self.border_left_width - self.padding_left)
+            self.border_top_width + self.padding_top,
+            self.border_right_width + self.padding_right,
+            self.border_bottom_width + self.padding_bottom,
+            self.border_left_width + self.padding_left)
 
     # Positioning schemes
 
