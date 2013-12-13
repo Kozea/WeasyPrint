@@ -60,13 +60,10 @@ def draw_page(page, context, enable_hinting):
 
 def draw_box_background_and_border(context, page, box, enable_hinting):
     draw_background(context, box.background, enable_hinting)
-    if not isinstance(box, boxes.TableBox):
-        draw_border(context, box, enable_hinting)
-    else:
+    if isinstance(box, boxes.TableBox):
         for column_group in box.column_groups:
-            draw_background(context, column_group.background, enable_hinting)
-            for column in column_group.children:
-                draw_background(context, column.background, enable_hinting)
+            draw_box_background_and_border(
+                context, page, column_group, enable_hinting)
         for row_group in box.children:
             draw_background(context, row_group.background, enable_hinting)
             for row in row_group.children:
@@ -81,6 +78,28 @@ def draw_box_background_and_border(context, page, box, enable_hinting):
                         draw_border(context, cell, enable_hinting)
         else:
             draw_collapsed_borders(context, box, enable_hinting)
+    elif isinstance(box, boxes.TableColumnGroupBox):
+        draw_background(context, box.background, enable_hinting)
+        for column in box.children:
+            draw_box_background_and_border(
+                context, page, column, enable_hinting)
+    elif isinstance(box, boxes.TableColumnBox):
+        draw_background(context, box.background, enable_hinting)
+    elif isinstance(box, boxes.TableRowGroupBox):
+        draw_background(context, box.background, enable_hinting)
+        for row in box.children:
+            draw_box_background_and_border(
+                context, page, row, enable_hinting)
+    elif isinstance(box, boxes.TableRowBox):
+        draw_background(context, box.background, enable_hinting)
+        for cell in box.children:
+            draw_box_background_and_border(
+                context, page, cell, enable_hinting)
+    elif isinstance(box, boxes.TableCellBox):
+        draw_background(context, box.background, enable_hinting)
+        draw_border(context, box, enable_hinting)
+    else:
+        draw_border(context, box, enable_hinting)
 
 
 def draw_stacking_context(context, stacking_context, enable_hinting):
@@ -115,7 +134,7 @@ def draw_stacking_context(context, stacking_context, enable_hinting):
 
         # Point 2
         if isinstance(box, (boxes.BlockBox, boxes.MarginBox,
-                            boxes.InlineBlockBox)):
+                            boxes.InlineBlockBox, boxes.TableCellBox)):
             # The canvas background was removed by set_canvas_background
             draw_box_background_and_border(
                 context, stacking_context.page, box, enable_hinting)
