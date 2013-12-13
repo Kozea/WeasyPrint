@@ -276,13 +276,16 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
                     'Unsupported stylesheet type %s for %s',
                     result['mime_type'], result['redirected_url'])
                 yield 'string', '', base_url, None
-            proto_encoding = result.get('encoding')
-            if base_url is None:
-                base_url = result.get('redirected_url', url)
-            if 'string' in result:
-                yield 'string', result['string'], base_url, proto_encoding
             else:
-                yield 'file_obj', result['file_obj'], base_url, proto_encoding
+                proto_encoding = result.get('encoding')
+                if base_url is None:
+                    base_url = result.get('redirected_url', url)
+                if 'string' in result:
+                    yield 'string', result['string'], base_url, proto_encoding
+                else:
+                    yield (
+                        'file_obj', result['file_obj'], base_url,
+                        proto_encoding)
     elif nones == [True, True, True, False, True, True]:
         if base_url is None:
             # filesystem file-like objects have a 'name' attribute.
