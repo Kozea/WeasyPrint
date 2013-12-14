@@ -4,7 +4,7 @@ WeasyPrint changelog
 Version 0.20
 ------------
 
-Not released yet.
+Released on 2013-12-14.
 
 * Add support for ``border-radius``.
 * Feature `#77 <https://github.com/Kozea/WeasyPrint/issues/77>`_: Add PDF
