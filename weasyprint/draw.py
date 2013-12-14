@@ -37,13 +37,57 @@ def stacked(context):
         context.restore()
 
 
-def lighten(color, offset):
-    """Return a lighter color (or darker, for negative offsets)."""
-    return (
-        color.red + offset,
-        color.green + offset,
-        color.blue + offset,
-        color.alpha)
+def hsv2rgb(hue, saturation, value):
+    """Transform a HSV color to a RGB color."""
+    c = value * saturation
+    x = c * (1 - abs((hue / 60) % 2 - 1))
+    m = value - c
+    if 0 <= hue < 60:
+        return c + m, x + m, m
+    elif 60 <= hue < 120:
+        return x + m, c + m, m
+    elif 120 <= hue < 180:
+        return m, c + m, x + m
+    elif 180 <= hue < 240:
+        return m, x + m, c + m
+    elif 240 <= hue < 300:
+        return x + m, m, c + m
+    elif 300 <= hue < 360:
+        return c + m, m, x + m
+
+
+def rgb2hsv(red, green, blue):
+    """Transform a RGB color to a HSV color."""
+    cmax = max(red, green, blue)
+    cmin = min(red, green, blue)
+    delta = cmax - cmin
+    if delta == 0:
+        hue = 0
+    elif cmax == red:
+        hue = 60 * ((green - blue) / delta % 6)
+    elif cmax == green:
+        hue = 60 * ((blue - red) / delta + 2)
+    elif cmax == blue:
+        hue = 60 * ((red - green) / delta + 4)
+    saturation = 0 if delta == 0 else delta / cmax
+    return hue, saturation, cmax
+
+
+def darken(color):
+    """Return a darker color."""
+    hue, saturation, value = rgb2hsv(color.red, color.green, color.blue)
+    value /= 1.5
+    saturation /= 1.25
+    return hsv2rgb(hue, saturation, value) + (color.alpha,)
+
+
+def lighten(color):
+    """Return a lighter color."""
+    hue, saturation, value = rgb2hsv(color.red, color.green, color.blue)
+    value = 1 - (1 - value) / 1.5
+    if saturation:
+        saturation = 1 - (1 - saturation) / 1.25
+    return hsv2rgb(hue, saturation, value) + (color.alpha,)
 
 
 def draw_page(page, context, enable_hinting):
@@ -343,12 +387,12 @@ def xy_offset(x, y, offset_x, offset_y, offset):
 def styled_color(style, color, side):
     if style in ('inset', 'outset'):
         do_lighten = (side in ('top', 'left')) ^ (style == 'inset')
-        factor = 0.5 if do_lighten else -0.5
-        return lighten(color, factor)
+        return (lighten if do_lighten else darken)(color)
     elif style in ('ridge', 'groove'):
-        do_lighten = (side in ('top', 'left')) ^ (style == 'ridge')
-        factor = 0.5 if do_lighten else -0.5
-        return lighten(color, factor), lighten(color, -factor)
+        if (side in ('top', 'left')) ^ (style == 'ridge'):
+            return lighten(color), darken(color)
+        else:
+            return darken(color), lighten(color)
     return color
 
 
