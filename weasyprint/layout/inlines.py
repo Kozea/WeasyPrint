@@ -702,7 +702,7 @@ def split_text_box(context, box, available_width, line_width, skip):
             between = utf8_text[length:resume_at].decode('utf8')
             if width > available_width:
                 if between.strip(' ') not in ('', '\n', '\u2029'):
-                    # replace bad cutting value (from pango ?)
+                    # Replace bad cutting value from Pango
                     between = utf8_text[length:new_length].decode('utf8')
             resume_at = new_length + len(between)
     length = new_length
