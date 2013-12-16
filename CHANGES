@@ -1,6 +1,14 @@
 WeasyPrint changelog
 ====================
 
+Version 0.20.1
+--------------
+
+Released on 2013-12-16.
+
+* Depend on html5lib >= 0.99 instead of 1.0b3 to fix pip 1.4 support.
+
+
 Version 0.20
 ------------
 
