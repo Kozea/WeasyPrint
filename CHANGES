@@ -7,6 +7,10 @@ Version 0.20.1
 Released on 2013-12-16.
 
 * Depend on html5lib >= 0.99 instead of 1.0b3 to fix pip 1.4 support.
+* Fix `#74 <https://github.com/Kozea/WeasyPrint/issues/74>`_: don't crash on
+  space followed by dot at line break.
+* Fix `#78 <https://github.com/Kozea/WeasyPrint/issues/78>`_: nicer colors for
+  border-style: ridge/groove/inset/outset.
 
 
 Version 0.20
