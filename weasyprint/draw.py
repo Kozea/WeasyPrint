@@ -122,26 +122,10 @@ def draw_box_background_and_border(context, page, box, enable_hinting):
                         draw_border(context, cell, enable_hinting)
         else:
             draw_collapsed_borders(context, box, enable_hinting)
-    elif isinstance(box, boxes.TableColumnGroupBox):
-        draw_background(context, box.background, enable_hinting)
-        for column in box.children:
+    elif isinstance(box, (boxes.TableColumnGroupBox, boxes.TableRowGroupBox)):
+        for child in box.children:
             draw_box_background_and_border(
-                context, page, column, enable_hinting)
-    elif isinstance(box, boxes.TableColumnBox):
-        draw_background(context, box.background, enable_hinting)
-    elif isinstance(box, boxes.TableRowGroupBox):
-        draw_background(context, box.background, enable_hinting)
-        for row in box.children:
-            draw_box_background_and_border(
-                context, page, row, enable_hinting)
-    elif isinstance(box, boxes.TableRowBox):
-        draw_background(context, box.background, enable_hinting)
-        for cell in box.children:
-            draw_box_background_and_border(
-                context, page, cell, enable_hinting)
-    elif isinstance(box, boxes.TableCellBox):
-        draw_background(context, box.background, enable_hinting)
-        draw_border(context, box, enable_hinting)
+                context, page, child, enable_hinting)
     else:
         draw_border(context, box, enable_hinting)
 
