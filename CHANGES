@@ -1,6 +1,15 @@
 WeasyPrint changelog
 ====================
 
+Version 0.20.2
+--------------
+
+Released on 2013-12-18.
+
+* Fix `#146 <https://github.com/Kozea/WeasyPrint/issues/146>`_: don't crash
+  when drawing really small boxes with dotted/dashed borders
+
+
 Version 0.20.1
 --------------
 
