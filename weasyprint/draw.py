@@ -618,7 +618,7 @@ def clip_border_segment(context, enable_hinting, style, width, side,
             # 2x + 1 dashes
             context.clip()
             dash = length / (
-                round(length / dash) - (round(length / dash) + 1) % 2)
+                round(length / dash) - (round(length / dash) + 1) % 2) or 1
             for i in range(0, int(round(length / dash)), 2):
                 if side == 'top':
                     context.rectangle(

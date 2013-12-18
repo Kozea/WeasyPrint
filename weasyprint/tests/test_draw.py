@@ -1963,7 +1963,21 @@ def test_small_borders():
         </style>
         <body>'''
     for style in ['none', 'solid', 'dashed', 'dotted']:
-        HTML(string=html % style).render()
+        HTML(string=html % style).write_image_surface()
+
+    # Regression test for ZeroDivisionError on dashed or dotted borders
+    # smaller than a dash/dot.
+    # https://github.com/Kozea/WeasyPrint/issues/146
+    html = '''
+        <style>
+            @page { size: 50px 50px }
+            html { background: #fff }
+            body { height: 0; width: 0; border-width: 1px 0; border-style: %s }
+        </style>
+        <body>'''
+    for style in ['none', 'solid', 'dashed', 'dotted']:
+        print(html % style)
+        HTML(string=html % style).write_image_surface()
 
 
 @assert_no_logs
