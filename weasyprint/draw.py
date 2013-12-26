@@ -348,7 +348,7 @@ def draw_background(context, bg, enable_hinting, clip_box=True, bleed=None,
             if not inset:
                 offset = blur + spread
                 bx, by, bw, bh = bg.layers[-1].rounded_box[:4]
-                size = round(bw + 2 * offset), round(bh + 2 * offset)
+                size = int(round(bw + 2 * offset)), int(round(bh + 2 * offset))
                 shadow_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, *size)
                 shadow_context = cairo.Context(shadow_surface)
                 shadow_context.translate(size[0] / 2, size[1] / 2)
@@ -452,7 +452,7 @@ def draw_background(context, bg, enable_hinting, clip_box=True, bleed=None,
             x, y, blur, spread, inset, color = shadow
             if inset:
                 bx, by, bw, bh = bg.layers[-1].rounded_box[:4]
-                size = round(bw), round(bh)
+                size = int(round(bw)), int(round(bh))
                 shadow_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, *size)
                 shadow_context = cairo.Context(shadow_surface)
                 rounded_box_path(
