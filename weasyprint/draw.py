@@ -307,7 +307,7 @@ def draw_background(context, bg, enable_hinting, clip_box=True):
                     0, 1)
                 shadow_image = shadow_image.filter(
                     ImageFilter.GaussianBlur(blur))
-                data = array('B', shadow_image.tobytes('raw', 'BGRA'))
+                data = array(b'B', shadow_image.tobytes('raw', 'BGRA'))
                 shadow_surface = cairo.ImageSurface.create_for_data(
                     data, cairo.FORMAT_ARGB32, *size)
                 shadow_context = cairo.Context(shadow_surface)
@@ -370,7 +370,7 @@ def draw_background(context, bg, enable_hinting, clip_box=True):
                     0, 1)
                 shadow_image = shadow_image.filter(
                     ImageFilter.GaussianBlur(blur))
-                data = array('B', shadow_image.tobytes('raw', 'BGRA'))
+                data = array(b'B', shadow_image.tobytes('raw', 'BGRA'))
                 shadow_surface = cairo.ImageSurface.create_for_data(
                     data, cairo.FORMAT_ARGB32, *size)
 
