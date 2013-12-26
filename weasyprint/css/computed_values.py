@@ -354,9 +354,9 @@ def box_shadow(computer, name, values):
     """Compute the ``box-shadow`` property."""
     shadows = []
     for value in values:
-        print(value)
-        shadows.append(
-            [length(computer, name, i) for i in value[:4]] + value[4:])
+        shadows.append([
+            length(computer, name, i, pixels_only=True)
+            for i in value[:4]] + value[4:])
     return shadows
 
 
