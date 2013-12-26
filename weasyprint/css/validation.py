@@ -559,10 +559,12 @@ def box_shadow(tokens):
         color = None
         inset = None
         while tokens:
-            if tokens[0].type == 'DIMENSION':
+            if tokens[0].type in (
+                    'NUMBER', 'INTEGER', 'DIMENSION', 'PERCENTAGE'):
                 if lengths:
                     raise InvalidValues('Non consecutive lengths')
-                while tokens and tokens[0].type == 'DIMENSION':
+                while tokens and tokens[0].type in (
+                        'NUMBER', 'INTEGER', 'DIMENSION', 'PERCENTAGE'):
                     lengths.append(tokens.pop(0))
                 continue
             token = tokens.pop(0)
