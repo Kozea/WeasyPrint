@@ -14,7 +14,8 @@ from . import replaced
 from ..formatting_structure import boxes
 from .percentages import resolve_radii_percentages
 
-Background = namedtuple('Background', 'color, layers, image_rendering')
+Background = namedtuple(
+    'Background', 'color, layers, image_rendering, shadows')
 BackgroundLayer = namedtuple(
     'BackgroundLayer',
     'image, size, position, repeat, unbounded, '
@@ -65,7 +66,7 @@ def layout_box_backgrounds(page, box, get_image_from_uri):
     images = [get_image_from_uri(value) if type_ == 'url' else value
               for type_, value in style['background_image']]
     color = get_color(style, 'background_color')
-    if color.alpha == 0 and not any(images):
+    if color.alpha == 0 and not any(images) and style['box_shadow'] == 'none':
         box.background = None
         if page != box:  # Pages need a background for bleed box
             return
@@ -80,7 +81,20 @@ def layout_box_backgrounds(page, box, get_image_from_uri):
             style['background_position'],
             style['background_attachment']]))]
     box.background = Background(
+<<<<<<< HEAD
         color=color, image_rendering=style['image_rendering'], layers=layers)
+=======
+        color=color, image_rendering=style.image_rendering, layers=[
+            layout_background_layer(box, page, *layer)
+            for layer in zip(images, *map(cycle, [
+                style.background_size,
+                style.background_clip,
+                style.background_repeat,
+                style.background_origin,
+                style.background_position,
+                style.background_attachment]))],
+        shadows=style.box_shadow)
+>>>>>>> 7737e091... Add simple support of outer box shadows
 
 
 def percentage(value, refer_to):
