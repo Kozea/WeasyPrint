@@ -74,7 +74,6 @@ INITIAL_VALUES = {
     'border_bottom_color': 'currentColor',
     'border_bottom_left_radius': (Dimension(0, 'px'), Dimension(0, 'px')),
     'border_bottom_right_radius': (Dimension(0, 'px'), Dimension(0, 'px')),
-<<<<<<< HEAD
     'border_bottom_style': 'none',
     'border_bottom_width': 3,
     'border_collapse': 'separate',
@@ -90,7 +89,7 @@ INITIAL_VALUES = {
     'border_top_right_radius': (Dimension(0, 'px'), Dimension(0, 'px')),
     'border_top_style': 'none',
     'border_top_width': 3,  # computed value for 'medium'
-    'box_shadow': 'none',
+    'box_shadow': [],  # computed value for 'none'
 
     # Color 3 (REC): https://www.w3.org/TR/css3-color/
     'opacity': 1,

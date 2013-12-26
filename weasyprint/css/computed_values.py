@@ -485,6 +485,17 @@ def string_set(computer, name, values):
         for string_set in values)
 
 
+@register_computer('box-shadow')
+def box_shadow(computer, name, values):
+    """Compute the ``box-shadow`` property."""
+    shadows = []
+    for value in values:
+        print(value)
+        shadows.append(
+            [length(computer, name, i) for i in value[:4]] + value[4:])
+    return shadows
+
+
 @register_computer('content')
 def content(computer, name, values):
     """Compute the ``content`` property."""
