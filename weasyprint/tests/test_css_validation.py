@@ -901,19 +901,17 @@ def test_box_shadow():
         (1, 'px'), (10, 'px'), (2, 'px'), (5, 'cm'), True, (0, 0, 0, 1)]])
     assert_box_shadow('black 1px 10px 2px 5cm', [[
         (1, 'px'), (10, 'px'), (2, 'px'), (5, 'cm'), False, (0, 0, 0, 1)]])
-    assert_box_shadow('red 1px 10px 2px 5cm', [[
-        (1, 'px'), (10, 'px'), (2, 'px'), (5, 'cm'), False, (1, 0, 0, 1)]])
     assert_box_shadow('red 1px 10px inset, red 1px 10px inset', [
         [(1, 'px'), (10, 'px'), (0, 'px'), (0, 'px'), True, (1, 0, 0, 1)],
         [(1, 'px'), (10, 'px'), (0, 'px'), (0, 'px'), True, (1, 0, 0, 1)]])
     assert_box_shadow('red 1px 10px 2px 5cm', [[
-        (1, 'px'), (10, 'px'), (2, 'px'), (5, 'cm'), False, 'red']])
+        (1, 'px'), (10, 'px'), (2, 'px'), (5, 'cm'), False, (1, 0, 0, 1)]])
     assert_box_shadow('inset red 1px 10px 2px 5cm', [[
         (1, 'px'), (10, 'px'), (2, 'px'), (5, 'cm'), True, (1, 0, 0, 1)]])
     assert_box_shadow('1px 10px 2px 5cm red inset', [[
         (1, 'px'), (10, 'px'), (2, 'px'), (5, 'cm'), True, (1, 0, 0, 1)]])
-    assert_box_shadow('1px 10px, 2px 4px red', [
-        [(1, 'px'), (10, 'px'), (0, 'px'), (0, 'px'), False, 'red'],
+    assert_box_shadow('1px 10px, 2px 4px #ff0000', [
+        [(1, 'px'), (10, 'px'), (0, 'px'), (0, 'px'), False, (0, 0, 0, 1)],
         [(2, 'px'), (4, 'px'), (0, 'px'), (0, 'px'), False, (1, 0, 0, 1)]])
 
     def assert_invalid(css, message='invalid'):
