@@ -295,7 +295,7 @@ def draw_background(context, bg, enable_hinting, clip_box=True):
         if enable_hinting:
             # Prefer crisp edges on background rectangles.
             context.set_antialias(cairo.ANTIALIAS_NONE)
-        for shadow in bg.shadows:
+        for shadow in reversed(bg.shadows):
             x, y, blur, spread, inset, color = shadow
             if not inset:
                 x = percentage(x, 0)
