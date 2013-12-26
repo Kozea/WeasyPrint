@@ -559,12 +559,11 @@ def box_shadow(tokens):
         color = None
         inset = None
         while tokens:
-            if tokens[0].type in (
-                    'NUMBER', 'INTEGER', 'DIMENSION', 'PERCENTAGE'):
+            if tokens[0].type in ('NUMBER', 'INTEGER', 'DIMENSION'):
                 if lengths:
                     raise InvalidValues('Non consecutive lengths')
                 while tokens and tokens[0].type in (
-                        'NUMBER', 'INTEGER', 'DIMENSION', 'PERCENTAGE'):
+                        'NUMBER', 'INTEGER', 'DIMENSION'):
                     lengths.append(tokens.pop(0))
                 continue
             token = tokens.pop(0)
@@ -595,13 +594,13 @@ def box_shadow(tokens):
             raise InvalidValues('Less than 2 lengths in box-shadow value')
         elif len(lengths) > 4:
             raise InvalidValues('More than 4 lengths in box-shadow value')
-        x = get_length(lengths.pop(0), negative=True, percentage=True)
-        y = get_length(lengths.pop(0), negative=True, percentage=True)
+        x = get_length(lengths.pop(0))
+        y = get_length(lengths.pop(0))
         blur = (
-            get_length(lengths.pop(0), negative=False, percentage=True)
+            get_length(lengths.pop(0), negative=False)
             if lengths else Dimension(0, 'px'))
         spread = (
-            get_length(lengths.pop(0), negative=True, percentage=True)
+            get_length(lengths.pop(0))
             if lengths else Dimension(0, 'px'))
         shadows.append([
             x, y, blur, spread, inset or False, color or RGBA(0, 0, 0, 1)])
