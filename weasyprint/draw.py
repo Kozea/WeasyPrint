@@ -348,7 +348,7 @@ def draw_background(context, bg, enable_hinting, clip_box=True, bleed=None,
             if not inset:
                 offset = blur + spread
                 bx, by, bw, bh = bg.layers[-1].rounded_box[:4]
-                size = bw + 2 * offset, bh + 2 * offset
+                size = round(bw + 2 * offset), round(bh + 2 * offset)
                 shadow_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, *size)
                 shadow_context = cairo.Context(shadow_surface)
                 shadow_context.translate(size[0] / 2, size[1] / 2)
@@ -366,7 +366,7 @@ def draw_background(context, bg, enable_hinting, clip_box=True, bleed=None,
                     0, 1)
                 shadow_image = shadow_image.filter(
                     ImageFilter.GaussianBlur(blur))
-                data = array(b'B', shadow_image.tobytes('raw', 'BGRA'))
+                data = array(str('B'), shadow_image.tobytes('raw', 'BGRA'))
                 shadow_surface = cairo.ImageSurface.create_for_data(
                     data, cairo.FORMAT_ARGB32, *size)
                 shadow_context = cairo.Context(shadow_surface)
@@ -452,7 +452,7 @@ def draw_background(context, bg, enable_hinting, clip_box=True, bleed=None,
             x, y, blur, spread, inset, color = shadow
             if inset:
                 bx, by, bw, bh = bg.layers[-1].rounded_box[:4]
-                size = bw, bh
+                size = round(bw), round(bh)
                 shadow_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, *size)
                 shadow_context = cairo.Context(shadow_surface)
                 rounded_box_path(
@@ -476,7 +476,7 @@ def draw_background(context, bg, enable_hinting, clip_box=True, bleed=None,
                     0, 1)
                 shadow_image = shadow_image.filter(
                     ImageFilter.GaussianBlur(blur))
-                data = array(b'B', shadow_image.tobytes('raw', 'BGRA'))
+                data = array(str('B'), shadow_image.tobytes('raw', 'BGRA'))
                 shadow_surface = cairo.ImageSurface.create_for_data(
                     data, cairo.FORMAT_ARGB32, *size)
 
