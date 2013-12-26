@@ -550,6 +550,36 @@ def border_corner_radius(tokens):
             return tuple(lengths)
 
 
+@validator('box-shadow')
+def box_shadow(tokens):
+    """Validator for the `box-shadow` property."""
+    shadows = []
+    while tokens:
+        lengths = []
+        color = 'inherit'
+        inset = False
+        while tokens:
+            token = tokens.pop(0)
+            if token.type == 'IDENT' and token.value == 'none':
+                continue
+            if token.type == 'DELIM' and token.value == ',':
+                break
+            elif token.type == 'IDENT' and token.value == 'inset':
+                inset = True
+            elif token.type == 'DIMENSION':
+                lengths.append(token)
+            else:
+                color = parse_color(token)
+        if len(lengths) < 2 or len(lengths) > 4:
+            raise InvalidValues('More than 4 lengths in box-shadow value')
+        else:
+            while len(lengths) < 4:
+                lengths.append(Dimension(0, 'px'))
+        x, y, blur, spread = lengths
+        shadows.append([x, y, blur, spread, inset, color])
+    return shadows
+
+
 @validator('border-top-style')
 @validator('border-right-style')
 @validator('border-left-style')

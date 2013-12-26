@@ -125,6 +125,7 @@ INITIAL_VALUES = {
     'border_top_right_radius': (Dimension(0, 'px'), Dimension(0, 'px')),
     'border_bottom_left_radius': (Dimension(0, 'px'), Dimension(0, 'px')),
     'border_bottom_right_radius': (Dimension(0, 'px'), Dimension(0, 'px')),
+    'box_shadow': 'none',
 
     # CSS3 Color: http://www.w3.org/TR/css3-color/#transparency
     'opacity': 1,
