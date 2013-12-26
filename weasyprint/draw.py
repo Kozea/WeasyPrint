@@ -328,6 +328,62 @@ def rounded_box_path(context, radii):
         context.restore()
 
 
+def draw_box_shadows(context, box, shadows, inset):
+    for shadow in reversed(shadows):
+        x, y, blur, spread, shadow_inset, color = shadow
+        if inset != shadow_inset:
+            continue
+        offset = 0 if inset else blur + spread
+        bx, by, bw, bh = box[:4]
+        size = int(round(bw + 2 * offset)), int(round(bh + 2 * offset))
+        shadow_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, *size)
+        shadow_context = cairo.Context(shadow_surface)
+        if inset:
+            rounded_box_path(shadow_context, (0, 0) + box[2:])
+            shadow_context.set_source_rgba(*color)
+            shadow_context.fill()
+            shadow_context.translate(size[0] / 2, size[1] / 2)
+            shadow_context.scale(
+                (bw - 2 * spread) / bw, (bh - 2 * spread) / bh)
+            shadow_context.translate(
+                -size[0] / 2 - spread / bw, -size[1] / 2 - spread / bh)
+            rounded_box_path(shadow_context, (x, y) + box[2:])
+            shadow_context.set_source_rgb(0, 0, 0)
+            shadow_context.set_operator(cairo.OPERATOR_DEST_OUT)
+        else:
+            shadow_context.translate(size[0] / 2, size[1] / 2)
+            shadow_context.scale(
+                (bw + 2 * spread) / bw, (bh + 2 * spread) / bh)
+            shadow_context.translate(
+                -size[0] / 2 + spread / bw, -size[1] / 2 + spread / bh)
+            rounded_box_path(shadow_context, (offset, offset) + box[2:])
+            shadow_context.set_source_rgba(*color)
+
+        shadow_context.fill()
+        shadow_image = Image.frombuffer(
+            'RGBA', size, shadow_surface.get_data(), 'raw', 'BGRA', 0, 1)
+        shadow_image = shadow_image.filter(ImageFilter.GaussianBlur(blur))
+        data = array(str('B'), shadow_image.tobytes('raw', 'BGRA'))
+        shadow_surface = cairo.ImageSurface.create_for_data(
+            data, cairo.FORMAT_ARGB32, *size)
+
+        if not inset:
+            shadow_context = cairo.Context(shadow_surface)
+            rounded_box_path(
+                shadow_context, (offset - x, offset - y) + box[2:])
+            shadow_context.set_source_rgb(0, 0, 0)
+            shadow_context.set_operator(cairo.OPERATOR_DEST_OUT)
+            shadow_context.fill()
+
+        context.save()
+        context.translate(
+            bx if inset else x + bx - offset,
+            by if inset else y + by - offset)
+        context.set_source_surface(shadow_surface)
+        context.paint()
+        context.restore()
+
+
 def draw_background(context, bg, enable_hinting, clip_box=True, bleed=None,
                     marks=()):
     """Draw the background color and image to a ``cairo.Context``.
@@ -343,45 +399,9 @@ def draw_background(context, bg, enable_hinting, clip_box=True, bleed=None,
         if enable_hinting:
             # Prefer crisp edges on background rectangles.
             context.set_antialias(cairo.ANTIALIAS_NONE)
-        for shadow in reversed(bg.shadows):
-            x, y, blur, spread, inset, color = shadow
-            if not inset:
-                offset = blur + spread
-                bx, by, bw, bh = bg.layers[-1].rounded_box[:4]
-                size = int(round(bw + 2 * offset)), int(round(bh + 2 * offset))
-                shadow_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, *size)
-                shadow_context = cairo.Context(shadow_surface)
-                shadow_context.translate(size[0] / 2, size[1] / 2)
-                shadow_context.scale(
-                    (bw + 2 * spread) / bw, (bh + 2 * spread) / bh)
-                shadow_context.translate(
-                    -size[0] / 2 + spread / bw, -size[1] / 2 + spread / bh)
-                rounded_box_path(
-                    shadow_context,
-                    (offset, offset) + bg.layers[-1].rounded_box[2:])
-                shadow_context.set_source_rgba(*color)
-                shadow_context.fill()
-                shadow_image = Image.frombuffer(
-                    'RGBA', size, shadow_surface.get_data(), 'raw', 'BGRA',
-                    0, 1)
-                shadow_image = shadow_image.filter(
-                    ImageFilter.GaussianBlur(blur))
-                data = array(str('B'), shadow_image.tobytes('raw', 'BGRA'))
-                shadow_surface = cairo.ImageSurface.create_for_data(
-                    data, cairo.FORMAT_ARGB32, *size)
-                shadow_context = cairo.Context(shadow_surface)
-                rounded_box_path(
-                    shadow_context,
-                    (offset - x, offset - y) + bg.layers[-1].rounded_box[2:])
-                shadow_context.set_source_rgb(0, 0, 0)
-                shadow_context.set_operator(cairo.OPERATOR_DEST_OUT)
-                shadow_context.fill()
 
-                context.save()
-                context.translate(x + bx - offset, y + by - offset)
-                context.set_source_surface(shadow_surface)
-                context.paint()
-                context.restore()
+        draw_box_shadows(
+            context, bg.layers[-1].rounded_box, bg.shadows, inset=False)
 
         if clip_box:
             for box in bg.layers[-1].clipped_boxes:
@@ -448,43 +468,8 @@ def draw_background(context, bg, enable_hinting, clip_box=True, bleed=None,
         for layer in reversed(bg.layers):
             draw_background_image(context, layer, bg.image_rendering)
 
-        for shadow in reversed(bg.shadows):
-            x, y, blur, spread, inset, color = shadow
-            if inset:
-                bx, by, bw, bh = bg.layers[-1].rounded_box[:4]
-                size = int(round(bw)), int(round(bh))
-                shadow_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, *size)
-                shadow_context = cairo.Context(shadow_surface)
-                rounded_box_path(
-                    shadow_context,
-                    (0, 0) + bg.layers[-1].rounded_box[2:])
-                shadow_context.set_source_rgba(*color)
-                shadow_context.fill()
-                shadow_context.translate(size[0] / 2, size[1] / 2)
-                shadow_context.scale(
-                    (bw - 2 * spread) / bw, (bh - 2 * spread) / bh)
-                shadow_context.translate(
-                    -size[0] / 2 - spread / bw, -size[1] / 2 - spread / bh)
-                rounded_box_path(
-                    shadow_context,
-                    (x, y) + bg.layers[-1].rounded_box[2:])
-                shadow_context.set_source_rgb(0, 0, 0)
-                shadow_context.set_operator(cairo.OPERATOR_DEST_OUT)
-                shadow_context.fill()
-                shadow_image = Image.frombuffer(
-                    'RGBA', size, shadow_surface.get_data(), 'raw', 'BGRA',
-                    0, 1)
-                shadow_image = shadow_image.filter(
-                    ImageFilter.GaussianBlur(blur))
-                data = array(str('B'), shadow_image.tobytes('raw', 'BGRA'))
-                shadow_surface = cairo.ImageSurface.create_for_data(
-                    data, cairo.FORMAT_ARGB32, *size)
-
-                context.save()
-                context.translate(bx, by)
-                context.set_source_surface(shadow_surface)
-                context.paint()
-                context.restore()
+        draw_box_shadows(
+            context, bg.layers[-1].rounded_box, bg.shadows, inset=True)
 
 
 def draw_table_backgrounds(context, page, table, enable_hinting):
