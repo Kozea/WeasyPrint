@@ -885,3 +885,48 @@ def test_radial_gradient():
 def test_flex(rule, result):
     """Test the ``flex`` property."""
     assert expand_to_dict(rule) == result
+
+
+def test_box_shadow():
+    """Test the box-shadow property."""
+    def assert_box_shadow(css, expected):
+        assert expand_to_dict('box-shadow: %s' % css) == {
+            'box_shadow': expected}
+
+    assert_box_shadow('1px 10px', [[
+        (1, 'px'), (10, 'px'), (0, 'px'), (0, 'px'), False, 'inherit']])
+    assert_box_shadow('1px 10px inset', [[
+        (1, 'px'), (10, 'px'), (0, 'px'), (0, 'px'), True, 'inherit']])
+    assert_box_shadow('1px 10px 2px 5cm inset', [[
+        (1, 'px'), (10, 'px'), (2, 'px'), (5, 'cm'), True, 'inherit']])
+    assert_box_shadow('black 1px 10px 2px 5cm', [[
+        (1, 'px'), (10, 'px'), (2, 'px'), (5, 'cm'), False, (0, 0, 0, 1)]])
+    assert_box_shadow('inherit 1px 10px 2px 5cm', [[
+        (1, 'px'), (10, 'px'), (2, 'px'), (5, 'cm'), False, 'inherit']])
+    assert_box_shadow('inherit 1px 10px inset, inherit 1px 10px inset', [
+        [(1, 'px'), (10, 'px'), (0, 'px'), (0, 'px'), True, 'inherit'],
+        [(1, 'px'), (10, 'px'), (0, 'px'), (0, 'px'), True, 'inherit']])
+    assert_box_shadow('inherit 1px 10px 2px 5cm', [[
+        (1, 'px'), (10, 'px'), (2, 'px'), (5, 'cm'), False, 'inherit']])
+    assert_box_shadow('inset red 1px 10px 2px 5cm', [[
+        (1, 'px'), (10, 'px'), (2, 'px'), (5, 'cm'), True, (1, 0, 0, 1)]])
+    assert_box_shadow('1px 10px 2px 5cm red inset', [[
+        (1, 'px'), (10, 'px'), (2, 'px'), (5, 'cm'), True, (1, 0, 0, 1)]])
+    assert_box_shadow('1px 10px, 2px 4px red', [
+        [(1, 'px'), (10, 'px'), (0, 'px'), (0, 'px'), False, 'inherit'],
+        [(2, 'px'), (4, 'px'), (0, 'px'), (0, 'px'), False, (1, 0, 0, 1)]])
+
+    def assert_invalid(css, message='invalid'):
+        assert expand_to_dict('box-shadow: %s' % css, message) == {}
+
+    assert_invalid('1px 10px,', 'comma')
+    assert_invalid('1px 10px,,1px', '2 lengths')
+    assert_invalid('1px red inset', '2 lengths')
+    assert_invalid('1px 1px red blue inset', 'Color')
+    assert_invalid('blue 1px 1px red', 'Color')
+    assert_invalid('inset 1px 1px 1px blue inset', 'Inset')
+    assert_invalid('1px 1px 1px inset blue')
+    assert_invalid('blue inset 1px 1px 1px')
+    assert_invalid('1px 10px red 3px', 'lengths')
+    assert_invalid('1px 10px inset 3px', 'lengths')
+    assert_invalid('1px 1px 1px inset inset')

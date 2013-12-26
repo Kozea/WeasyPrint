@@ -556,27 +556,56 @@ def box_shadow(tokens):
     shadows = []
     while tokens:
         lengths = []
-        color = 'inherit'
-        inset = False
+        color = None
+        inset = None
         while tokens:
+            if tokens[0].type == 'DIMENSION':
+                if lengths:
+                    raise InvalidValues('Non consecutive lengths')
+                while tokens and tokens[0].type == 'DIMENSION':
+                    lengths.append(tokens.pop(0))
+                continue
             token = tokens.pop(0)
             if token.type == 'IDENT' and token.value == 'none':
                 continue
             if token.type == 'DELIM' and token.value == ',':
+                if not tokens:
+                    raise InvalidValues('Trailing comma')
                 break
-            elif token.type == 'IDENT' and token.value == 'inset':
-                inset = True
+            elif token.type == 'IDENT':
+                if token.value == 'inset':
+                    if inset is not None:
+                        raise InvalidValues('Inset declared twice')
+                    inset = True
+                    if lengths and tokens and tokens[0].type == 'IDENT':
+                        raise InvalidValues()
+                else:
+                    if color:
+                        raise InvalidValues('Color defined twice')
+                    if token.value == 'inherit':
+                        color = 'inherit'
+                    else:
+                        color = parse_color(token)
+                    if not lengths and tokens and tokens[0].type == 'IDENT':
+                        raise InvalidValues()
             elif token.type == 'DIMENSION':
                 lengths.append(token)
             else:
-                color = parse_color(token)
-        if len(lengths) < 2 or len(lengths) > 4:
+                InvalidValues()
+        if len(lengths) < 2:
+            raise InvalidValues('Less than 2 lengths in box-shadow value')
+        elif len(lengths) > 4:
             raise InvalidValues('More than 4 lengths in box-shadow value')
-        else:
-            while len(lengths) < 4:
-                lengths.append(Dimension(0, 'px'))
-        x, y, blur, spread = lengths
-        shadows.append([x, y, blur, spread, inset, color])
+        x = get_length(lengths.pop(0), negative=True, percentage=True)
+        y = get_length(lengths.pop(0), negative=True, percentage=True)
+        blur = (
+            get_length(lengths.pop(0), negative=False, percentage=True)
+            if lengths else Dimension(0, 'px'))
+        spread = (
+            get_length(lengths.pop(0), negative=True, percentage=True)
+            if lengths else Dimension(0, 'px'))
+        shadows.append(
+            [x, y, blur, spread, inset or False, color or 'inherit'])
     return shadows
 
 
