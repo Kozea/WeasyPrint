@@ -16,7 +16,7 @@ from __future__ import division, unicode_literals
 import functools
 import math
 
-from tinycss.color3 import parse_color
+from tinycss.color3 import parse_color, RGBA
 from tinycss.parsing import split_on_comma, remove_whitespace
 
 from ..logger import LOGGER
@@ -582,9 +582,6 @@ def box_shadow(tokens):
                 else:
                     if color:
                         raise InvalidValues('Color defined twice')
-                    if token.value == 'inherit':
-                        color = 'inherit'
-                    else:
                         color = parse_color(token)
                     if not lengths and tokens and tokens[0].type == 'IDENT':
                         raise InvalidValues()
@@ -604,8 +601,8 @@ def box_shadow(tokens):
         spread = (
             get_length(lengths.pop(0), negative=True, percentage=True)
             if lengths else Dimension(0, 'px'))
-        shadows.append(
-            [x, y, blur, spread, inset or False, color or 'inherit'])
+        shadows.append([
+            x, y, blur, spread, inset or False, color or RGBA(0, 0, 0, 1)])
     return shadows
 
 
