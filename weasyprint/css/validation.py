@@ -572,22 +572,22 @@ def box_shadow(tokens):
                 if not tokens:
                     raise InvalidValues('Trailing comma')
                 break
-            elif token.type == 'IDENT':
-                if token.value == 'inset':
-                    if inset is not None:
-                        raise InvalidValues('Inset declared twice')
-                    inset = True
-                    if lengths and tokens and tokens[0].type == 'IDENT':
-                        raise InvalidValues()
-                else:
-                    if color:
-                        raise InvalidValues('Color defined twice')
-                        color = parse_color(token)
-                    if not lengths and tokens and tokens[0].type == 'IDENT':
-                        raise InvalidValues()
+            elif token.type == 'IDENT' and token.value == 'inset':
+                if inset is not None:
+                    raise InvalidValues('Inset declared twice')
+                inset = True
+                if lengths and tokens and tokens[0].type == 'IDENT':
+                    raise InvalidValues()
             elif token.type == 'DIMENSION':
                 lengths.append(token)
             else:
+                if color:
+                    raise InvalidValues('Color defined twice')
+                color = parse_color(token)
+                if color is None:
+                    raise InvalidValues()
+                if not lengths and tokens and tokens[0].type == 'IDENT':
+                    raise InvalidValues()
                 InvalidValues()
         if len(lengths) < 2:
             raise InvalidValues('Less than 2 lengths in box-shadow value')
