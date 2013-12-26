@@ -14,6 +14,7 @@ from . import replaced
 from ..formatting_structure import boxes
 from .percentages import resolve_radii_percentages
 
+
 Background = namedtuple(
     'Background', 'color, layers, image_rendering, shadows')
 BackgroundLayer = namedtuple(
@@ -81,10 +82,7 @@ def layout_box_backgrounds(page, box, get_image_from_uri):
             style['background_position'],
             style['background_attachment']]))]
     box.background = Background(
-<<<<<<< HEAD
-        color=color, image_rendering=style['image_rendering'], layers=layers)
-=======
-        color=color, image_rendering=style.image_rendering, layers=[
+        color=color, image_rendering=style['image_rendering'], layers=[
             layout_background_layer(box, page, *layer)
             for layer in zip(images, *map(cycle, [
                 style.background_size,
@@ -94,7 +92,6 @@ def layout_box_backgrounds(page, box, get_image_from_uri):
                 style.background_position,
                 style.background_attachment]))],
         shadows=style.box_shadow)
->>>>>>> 7737e091... Add simple support of outer box shadows
 
 
 def percentage(value, refer_to):
