@@ -651,6 +651,8 @@ def test_box_shadow():
 
     assert_box_shadow('1px 10px', [[
         (1, 'px'), (10, 'px'), (0, 'px'), (0, 'px'), False, (0, 0, 0, 1)]])
+    assert_box_shadow('1px 10px 0 3%', [[
+        (1, 'px'), (10, 'px'), (0, None), (3, '%'), False, (0, 0, 0, 1)]])
     assert_box_shadow('1px 10px inset', [[
         (1, 'px'), (10, 'px'), (0, 'px'), (0, 'px'), True, (0, 0, 0, 1)]])
     assert_box_shadow('1px 10px 2px 5cm inset', [[
