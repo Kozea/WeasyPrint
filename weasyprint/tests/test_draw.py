@@ -1838,6 +1838,31 @@ def test_tables():
                 "><td></td><td></td><td></td></tfoot>
     ''')
 
+    # Regression test for inline table with collapsed border and alignment
+    # rendering borders incorrectly
+    # https://github.com/Kozea/WeasyPrint/issues/82
+    assert_pixels('inline_text_align', 20, 10, [
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+r+r+r+r+r+r+r+r+r+r+r+_,
+        _+_+_+_+_+_+_+_+r+_+_+_+_+r+_+_+_+_+r+_,
+        _+_+_+_+_+_+_+_+r+_+_+_+_+r+_+_+_+_+r+_,
+        _+_+_+_+_+_+_+_+r+_+_+_+_+r+_+_+_+_+r+_,
+        _+_+_+_+_+_+_+_+r+r+r+r+r+r+r+r+r+r+r+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { size: 20px 10px; margin: 1px; background: #fff }
+            body { text-align: right; font-size: 0 }
+            table { display: inline-table; width: 11px }
+            td { border: 1px red solid; width: 4px; height: 3px }
+        </style>
+        <table style="table-layout: fixed; border-collapse: collapse">
+            <tr><td></td><td></td></tr>
+    ''')
+
 
 @assert_no_logs
 def test_before_after():

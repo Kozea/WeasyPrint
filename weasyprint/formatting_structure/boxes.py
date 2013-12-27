@@ -524,6 +524,11 @@ class TableBox(BlockLevelBox, ParentBox):
     def all_children(self):
         return itertools.chain(self.children, self.column_groups)
 
+    def translate(self, dx=0, dy=0):
+        self.column_positions = [
+            position + dx for position in self.column_positions]
+        return super(TableBox, self).translate(dx, dy)
+
 
 class InlineTableBox(TableBox):
     """Box for elements with ``display: inline-table``"""
