@@ -493,7 +493,7 @@ def trailing_whitespace_size(context, box):
             box.style.white_space in ('normal', 'nowrap', 'pre-line')):
         return 0
     stripped_text = box.text.rstrip(' ')
-    if len(stripped_text) == len(box.text):
+    if box.style.font_size == 0 or len(stripped_text) == len(box.text):
         return 0
     if stripped_text:
         old_box, _, _ = split_text_box(context, box, None, None, 0)
