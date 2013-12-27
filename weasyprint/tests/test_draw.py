@@ -2001,7 +2001,6 @@ def test_small_borders():
         </style>
         <body>'''
     for style in ['none', 'solid', 'dashed', 'dotted']:
-        print(html % style)
         HTML(string=html % style).write_image_surface()
 
 
