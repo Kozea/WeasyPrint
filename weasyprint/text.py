@@ -468,9 +468,9 @@ def split_first_line(text, style, hinting, max_width, line_width):
 
     # Step #4: Try to hyphenize
     hyphens = style.hyphens
-    lang = style.lang
+    lang = pyphen.language_fallback(style.lang)
     total, left, right = style.hyphenate_limit_chars
-    if hyphens in ('none', 'manual') or lang not in pyphen.LANGUAGES:
+    if hyphens in ('none', 'manual') or not lang:
         # No automatic hyphenation
         return first_line_metrics(first_line, text, layout, resume_at)
     elif len(next_word) < total:
