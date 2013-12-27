@@ -290,9 +290,9 @@ def absolute_replaced(context, box, containing_block):
             box.margin_right = 0
         remaining = cb_width - box.margin_width()
         if box.left == 'auto':
-            box.left = remaining
+            box.left = remaining - box.right
         if box.right == 'auto':
-            box.right = remaining
+            box.right = remaining - box.left
     elif 'auto' in (box.margin_left, box.margin_right):
         remaining = cb_width - (box.border_width() + box.left + box.right)
         if box.margin_left == box.margin_right == 'auto':
