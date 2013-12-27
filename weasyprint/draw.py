@@ -278,27 +278,25 @@ def draw_box_shadows(context, box, shadows, inset):
         offset = 0 if inset else blur + spread
         bx, by, bw, bh = box[:4]
         size = int(round(bw + 2 * offset)), int(round(bh + 2 * offset))
+        if size[0] < 1 or size[1] < 1:
+            continue
         shadow_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, *size)
         shadow_context = cairo.Context(shadow_surface)
         if inset:
             rounded_box_path(shadow_context, (0, 0) + box[2:])
             shadow_context.set_source_rgba(*color)
             shadow_context.fill()
-            shadow_context.translate(size[0] / 2, size[1] / 2)
+            shadow_context.translate(x + spread, y + spread)
             shadow_context.scale(
                 (bw - 2 * spread) / bw, (bh - 2 * spread) / bh)
-            shadow_context.translate(
-                -size[0] / 2 - spread / bw, -size[1] / 2 - spread / bh)
-            rounded_box_path(shadow_context, (x, y) + box[2:])
+            rounded_box_path(shadow_context, (0, 0) + box[2:])
             shadow_context.set_source_rgb(0, 0, 0)
             shadow_context.set_operator(cairo.OPERATOR_DEST_OUT)
         else:
-            shadow_context.translate(size[0] / 2, size[1] / 2)
+            shadow_context.translate(blur, blur)
             shadow_context.scale(
                 (bw + 2 * spread) / bw, (bh + 2 * spread) / bh)
-            shadow_context.translate(
-                -size[0] / 2 + spread / bw, -size[1] / 2 + spread / bh)
-            rounded_box_path(shadow_context, (offset, offset) + box[2:])
+            rounded_box_path(shadow_context, (0, 0) + box[2:])
             shadow_context.set_source_rgba(*color)
 
         shadow_context.fill()
