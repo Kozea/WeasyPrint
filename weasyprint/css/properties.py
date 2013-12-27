@@ -91,7 +91,10 @@ INITIAL_VALUES = {
     'border_top_width': 3,  # computed value for 'medium'
     'box_shadow': [],  # computed value for 'none'
 
-    # Color 3 (REC): https://www.w3.org/TR/css3-color/
+    # CSS3 Text decoration: http://www.w3.org/TR/css-text-decor-3/
+    'text_shadow': [],  # computed value for 'none'
+
+    # CSS3 Color: http://www.w3.org/TR/css3-color/#transparency
     'opacity': 1,
 
     # Multi-column Layout (CR): https://www.w3.org/TR/css3-multicol/
@@ -217,8 +220,8 @@ INHERITED = {
     'font_kerning',
     'font_language_override',
     'font_size',
-    'font_style',
     'font_stretch',
+    'font_style',
     'font_variant',
     'font_variant_alternates',
     'font_variant_caps',
@@ -227,10 +230,10 @@ INHERITED = {
     'font_variant_numeric',
     'font_variant_position',
     'font_weight',
-    'hyphens',
     'hyphenate_character',
     'hyphenate_limit_chars',
     'hyphenate_limit_zone',
+    'hyphens',
     'image_rendering',
     'image_resolution',
     'lang',
@@ -247,6 +250,7 @@ INHERITED = {
     'text_align',
     'text_decoration',
     'text_indent',
+    'text_shadow',
     'text_transform',
     'visibility',
     'white_space',

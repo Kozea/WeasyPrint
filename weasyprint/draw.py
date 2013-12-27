@@ -1079,15 +1079,37 @@ def draw_text(context, textbox, enable_hinting):
     context.set_source_rgba(*textbox.style['color'])
     show_first_line(context, textbox.pango_layout, enable_hinting)
     values = textbox.style['text_decoration']
-
+    metrics = textbox.pango_layout.get_font_metrics()
     thickness = textbox.style['font_size'] / 18  # Like other browsers do
+
     if enable_hinting and thickness < 1:
         thickness = 1
+
+    for x, y, blur, color in reversed(textbox.style.text_shadow):
+        # TODO: fix this 4/3 ratio
+        size = (
+            int(round(4 / 3 * textbox.width + 2 * blur)),
+            int(round(4 / 3 * (
+                textbox.height + metrics.ascent - metrics.underline_position) +
+                2 * blur + thickness)))
+        shadow_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, *size)
+        shadow_context = cairo.Context(shadow_surface)
+        paint_text(shadow_context, color or textbox.style.color)
+        shadow_image = Image.frombuffer(
+            'RGBA', size, shadow_surface.get_data(), 'raw', 'BGRA', 0, 1)
+        shadow_image = shadow_image.filter(ImageFilter.GaussianBlur(blur))
+        data = array(str('B'), shadow_image.tobytes('raw', 'BGRA'))
+        shadow_surface = cairo.ImageSurface.create_for_data(
+            data, cairo.FORMAT_ARGB32, *size)
+        context.save()
+        context.translate(x, y)
+        context.set_source_surface(shadow_surface)
+        context.paint()
+        context.restore()
 
     if ('overline' in values or
             'line-through' in values or
             'underline' in values):
-        metrics = textbox.pango_layout.get_font_metrics()
     if 'overline' in values:
         draw_text_decoration(
             context, textbox,
@@ -1111,7 +1133,10 @@ def draw_text_decoration(context, textbox, offset_y, thickness,
     with stacked(context):
         if enable_hinting:
             context.set_antialias(cairo.ANTIALIAS_NONE)
+<<<<<<< HEAD
         context.set_source_rgba(*textbox.style['color'])
+=======
+>>>>>>> 40fea33d... Add support for text-shadow
         context.set_line_width(thickness)
         context.move_to(textbox.position_x, textbox.position_y + offset_y)
         context.rel_line_to(textbox.width, 0)

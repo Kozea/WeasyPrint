@@ -554,6 +554,9 @@ def border_corner_radius(tokens):
 def box_shadow(tokens):
     """Validator for the `box-shadow` property."""
     shadows = []
+    if (len(tokens) == 1 and tokens[0].type == 'IDENT' and
+            tokens[0].value == 'none'):
+        return shadows
     while tokens:
         lengths = []
         color = None
@@ -567,8 +570,6 @@ def box_shadow(tokens):
                     lengths.append(tokens.pop(0))
                 continue
             token = tokens.pop(0)
-            if token.type == 'IDENT' and token.value == 'none':
-                continue
             if token.type == 'DELIM' and token.value == ',':
                 if not tokens:
                     raise InvalidValues('Trailing comma')
@@ -589,7 +590,6 @@ def box_shadow(tokens):
                     raise InvalidValues()
                 if not lengths and tokens and tokens[0].type == 'IDENT':
                     raise InvalidValues()
-                InvalidValues()
         if len(lengths) < 2:
             raise InvalidValues('Less than 2 lengths in box-shadow value')
         elif len(lengths) > 4:
@@ -604,6 +604,50 @@ def box_shadow(tokens):
             if lengths else Dimension(0, 'px'))
         shadows.append([
             x, y, blur, spread, inset or False, color or RGBA(0, 0, 0, 1)])
+    return shadows
+
+
+@validator('text-shadow')
+def text_shadow(tokens):
+    """Validator for the `text-shadow` property."""
+    shadows = []
+    if (len(tokens) == 1 and tokens[0].type == 'IDENT' and
+            tokens[0].value == 'none'):
+        return shadows
+    while tokens:
+        lengths = []
+        color = None
+        while tokens:
+            if tokens[0].type in ('NUMBER', 'INTEGER', 'DIMENSION'):
+                if lengths:
+                    raise InvalidValues('Non consecutive lengths')
+                while tokens and tokens[0].type in (
+                        'NUMBER', 'INTEGER', 'DIMENSION'):
+                    lengths.append(tokens.pop(0))
+                continue
+            token = tokens.pop(0)
+            if token.type == 'DELIM' and token.value == ',':
+                if not tokens:
+                    raise InvalidValues('Trailing comma')
+                break
+            elif token.type == 'DIMENSION':
+                lengths.append(token)
+            else:
+                if color:
+                    raise InvalidValues('Color defined twice')
+                color = parse_color(token)
+                if color is None:
+                    raise InvalidValues()
+        if len(lengths) < 2:
+            raise InvalidValues('Less than 2 lengths in box-shadow value')
+        elif len(lengths) > 3:
+            raise InvalidValues('More than 3 lengths in box-shadow value')
+        x = get_length(lengths.pop(0))
+        y = get_length(lengths.pop(0))
+        blur = (
+            get_length(lengths.pop(0), negative=False)
+            if lengths else Dimension(0, 'px'))
+        shadows.append([x, y, blur, color])
     return shadows
 
 
