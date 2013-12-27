@@ -13,14 +13,17 @@ from __future__ import division, unicode_literals
 from .markers import list_marker_layout
 from .min_max import handle_min_max_width
 from .percentages import resolve_percentages, resolve_position_percentages
-from .preferred import shrink_to_fit, trailing_whitespace_size
+from .preferred import shrink_to_fit
 from .tables import table_wrapper_width
 from ..formatting_structure import boxes
 
 
 @handle_min_max_width
 def float_width(box, context, containing_block):
-    box.width = shrink_to_fit(context, box, containing_block.width)
+    # Check that box.width is auto even if the caller does it too, because
+    # the handle_min_max_width decorator can change the value
+    if box.width == 'auto':
+        box.width = shrink_to_fit(context, box, containing_block.width)
 
 
 def float_layout(context, box, containing_block, absolute_boxes, fixed_boxes):
