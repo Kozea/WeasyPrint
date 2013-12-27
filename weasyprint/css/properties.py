@@ -127,6 +127,9 @@ INITIAL_VALUES = {
     'border_bottom_right_radius': (Dimension(0, 'px'), Dimension(0, 'px')),
     'box_shadow': [],  # computed value for 'none'
 
+    # CSS3 Text decoration: http://www.w3.org/TR/css-text-decor-3/
+    'text_shadow': [],  # computed value for 'none'
+
     # CSS3 Color: http://www.w3.org/TR/css3-color/#transparency
     'opacity': 1,
 
@@ -222,6 +225,7 @@ INHERITED = set("""
     text_decoration
     text_indent
     text_transform
+    text_shadow
     visibility
     white_space
     widows
