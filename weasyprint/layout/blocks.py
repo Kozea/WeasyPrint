@@ -691,7 +691,8 @@ def remove_placeholders(box_list, absolute_boxes, fixed_boxes):
     for box in box_list:
         if isinstance(box, boxes.ParentBox):
             remove_placeholders(box.children, absolute_boxes, fixed_boxes)
-        if box.style.position == 'absolute':
+        if box.style.position == 'absolute' and box in absolute_boxes:
+            # box is not in absolute_boxes if its parent has position: relative
             absolute_boxes.remove(box)
         elif box.style.position == 'fixed':
             fixed_boxes.remove(box)
