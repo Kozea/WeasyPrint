@@ -386,7 +386,7 @@ def draw_border(context, box, enable_hinting):
     # to lie. Let's try to find the cases that we can handle in a smart way.
 
     # The box is hidden, easy.
-    if box.style.visibility == 'hidden':
+    if box.style.visibility != 'visible':
         return
 
     widths = [getattr(box, 'border_%s_width' % side) for side in SIDES]
@@ -674,7 +674,7 @@ def draw_outlines(context, box, enable_hinting):
     width = box.style.outline_width
     color = box.style.get_color('outline_color')
     style = box.style.outline_style
-    if box.style.visibility != 'hidden' and width != 0 and color.alpha != 0:
+    if box.style.visibility == 'visible' and width != 0 and color.alpha != 0:
         outline_box = (
             box.border_box_x() - width, box.border_box_y() - width,
             box.border_width() + 2 * width, box.border_height() + 2 * width)
@@ -816,7 +816,7 @@ def draw_collapsed_borders(context, table, enable_hinting):
 
 def draw_replacedbox(context, box):
     """Draw the given :class:`boxes.ReplacedBox` to a ``cairo.context``."""
-    if box.style.visibility == 'hidden' or box.width == 0 or box.height == 0:
+    if box.style.visibility != 'visible' or box.width == 0 or box.height == 0:
         return
 
     with stacked(context):
@@ -854,7 +854,7 @@ def draw_text(context, textbox, enable_hinting):
     # Pango crashes with font-size: 0
     assert textbox.style.font_size
 
-    if textbox.style.visibility == 'hidden':
+    if textbox.style.visibility != 'visible':
         return
 
     context.move_to(textbox.position_x, textbox.position_y + textbox.baseline)
