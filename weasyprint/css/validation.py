@@ -244,6 +244,13 @@ def border_collapse(keyword):
     return keyword in ('separate', 'collapse')
 
 
+@validator()
+@single_keyword
+def empty_cells(keyword):
+    """``empty-cells`` property validation."""
+    return keyword in ('show', 'hide')
+
+
 @validator('color')
 @single_token
 def color(token):

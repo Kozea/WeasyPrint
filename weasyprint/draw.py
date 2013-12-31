@@ -103,31 +103,50 @@ def draw_page(page, context, enable_hinting):
 
 
 def draw_box_background_and_border(context, page, box, enable_hinting):
+    clipped_parts = []
     draw_background(context, box.background, enable_hinting)
     if isinstance(box, boxes.TableBox):
         for column_group in box.column_groups:
-            draw_box_background_and_border(
-                context, page, column_group, enable_hinting)
+            if column_group.style.visibility == 'collapse':
+                clipped_parts.append(column_group)
+                continue
+            draw_background(context, column_group.background, enable_hinting)
+            for column in column_group.children:
+                if column.style.visibility == 'collapse':
+                    clipped_parts.append(column)
+                    continue
+                draw_box_background_and_border(
+                    context, page, column, enable_hinting)
         for row_group in box.children:
+            if row_group.style.visibility == 'collapse':
+                clipped_parts.append(row_group)
+                continue
             draw_background(context, row_group.background, enable_hinting)
             for row in row_group.children:
+                if row.style.visibility == 'collapse':
+                    clipped_parts.append(row)
+                    continue
                 draw_background(context, row.background, enable_hinting)
                 for cell in row.children:
-                    draw_background(context, cell.background, enable_hinting)
+                    if (box.style.border_collapse == 'collapse' or
+                            cell.style.empty_cells == 'show' or
+                            not cell.empty):
+                        draw_background(
+                            context, cell.background, enable_hinting)
         if box.style.border_collapse == 'separate':
             draw_border(context, box, enable_hinting)
             for row_group in box.children:
                 for row in row_group.children:
                     for cell in row.children:
-                        draw_border(context, cell, enable_hinting)
+                        if (box.style.border_collapse == 'collapse' or
+                                cell.style.empty_cells == 'show' or
+                                not cell.empty):
+                            draw_border(context, cell, enable_hinting)
         else:
             draw_collapsed_borders(context, box, enable_hinting)
-    elif isinstance(box, (boxes.TableColumnGroupBox, boxes.TableRowGroupBox)):
-        for child in box.children:
-            draw_box_background_and_border(
-                context, page, child, enable_hinting)
     else:
         draw_border(context, box, enable_hinting)
+    return clipped_parts
 
 
 def draw_stacking_context(context, stacking_context, enable_hinting):
@@ -164,8 +183,10 @@ def draw_stacking_context(context, stacking_context, enable_hinting):
         if isinstance(box, (boxes.BlockBox, boxes.MarginBox,
                             boxes.InlineBlockBox, boxes.TableCellBox)):
             # The canvas background was removed by set_canvas_background
-            draw_box_background_and_border(
+            clipped_parts = draw_box_background_and_border(
                 context, stacking_context.page, box, enable_hinting)
+        else:
+            clipped_parts = []
 
         with stacked(context):
             if box.style.overflow != 'visible':
@@ -181,8 +202,8 @@ def draw_stacking_context(context, stacking_context, enable_hinting):
 
             # Point 4
             for block in stacking_context.block_level_boxes:
-                draw_box_background_and_border(
-                    context, stacking_context.page, block, enable_hinting)
+                clipped_parts.extend(draw_box_background_and_border(
+                    context, stacking_context.page, block, enable_hinting))
 
             # Point 5
             for child_context in stacking_context.float_contexts:
@@ -218,6 +239,11 @@ def draw_stacking_context(context, stacking_context, enable_hinting):
             # Point 9
             for child_context in stacking_context.positive_z_contexts:
                 draw_stacking_context(context, child_context, enable_hinting)
+
+            # Clip collapsed parts of table
+            # http://www.w3.org/TR/CSS21/tables.html#dynamic-effects
+            for part in clipped_parts:
+                clip_table_part(context, part, enable_hinting)
 
         # Point 10
         draw_outlines(context, box, enable_hinting)
@@ -266,6 +292,19 @@ def rounded_box_path(context, radii):
             (-1 if w else 1) * radius, (-1 if h else 1) * radius, radius,
             (2 + i) * math.pi / 2, (3 + i) * math.pi / 2)
         context.restore()
+
+
+def clip_table_part(context, box, enable_hinting):
+    """Clip a column, row or group from a table."""
+    context.save()
+    if enable_hinting:
+        # Prefer crisp edges on background rectangles.
+        context.set_antialias(cairo.ANTIALIAS_NONE)
+    context.set_source_rgb(0, 0, 0)
+    context.rectangle(box.position_x, box.position_y, box.width, box.height)
+    context.set_operator(cairo.OPERATOR_DEST_OUT)
+    context.fill()
+    context.restore()
 
 
 def draw_background(context, bg, enable_hinting, clip_box=True):

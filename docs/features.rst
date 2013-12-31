@@ -80,7 +80,6 @@ CSS 2.1
 The `CSS 2.1`_ features listed here are **not** supported:
 
 * The `::first-line`_ and `::first-letter`_ pseudo-elements.
-* On tables: `empty-cells`_ and `visibility: collapse`_.
 * Minimum and maximum width_ and height_ on table-related boxes and
   page-margin boxes.
 * Conforming `font matching algorithm`_. Currently ``font-family``

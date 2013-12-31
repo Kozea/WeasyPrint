@@ -20,6 +20,14 @@ from .percentages import resolve_percentages, resolve_one_percentage
 from .preferred import table_and_columns_preferred_widths
 
 
+def clear_border(box):
+    """Remove borders from box."""
+    box.border_top_width = 0
+    box.border_bottom_width = 0
+    box.border_left_width = 0
+    box.border_right_width = 0
+
+
 def table_layout(context, table, max_position_y, skip_stack,
                  containing_block, device_size, page_is_empty, absolute_boxes,
                  fixed_boxes):
@@ -72,6 +80,10 @@ def table_layout(context, table, max_position_y, skip_stack,
                      page_is_empty, skip_stack):
         resume_at = None
         resolve_percentages(group, containing_block=table)
+        if table.style.border_collapse == 'separate':
+            # Remove borders from rows, columns and groups
+            # See http://www.w3.org/TR/CSS21/tables.html#separated-borders
+            clear_border(group)
         group.position_x = rows_x
         group.position_y = position_y
         group.width = rows_width
@@ -87,6 +99,8 @@ def table_layout(context, table, max_position_y, skip_stack,
             assert not skip_stack  # No breaks inside rows for now
         for index_row, row in group.enumerate_skip(skip):
             resolve_percentages(row, containing_block=table)
+            if table.style.border_collapse == 'separate':
+                clear_border(row)
             row.position_x = rows_x
             row.position_y = position_y
             row.width = rows_width
@@ -131,6 +145,9 @@ def table_layout(context, table, max_position_y, skip_stack,
                     page_is_empty=True,
                     absolute_boxes=absolute_boxes,
                     fixed_boxes=fixed_boxes)
+                cell.empty = not any(
+                    child.is_floated() or child.is_in_normal_flow()
+                    for child in cell.children)
                 if computed_cell_height != 'auto':
                     cell.height = max(cell.height, computed_cell_height)
                 new_row_children.append(cell)
@@ -359,11 +376,15 @@ def table_layout(context, table, max_position_y, skip_stack,
     for group in table.column_groups:
         for column in group.children:
             resolve_percentages(column, containing_block=table)
+            if table.style.border_collapse == 'separate':
+                clear_border(column)
             column.position_x = column_positions[column.grid_x]
             column.position_y = initial_position_y
             column.width = column_widths[column.grid_x]
             column.height = columns_height
         resolve_percentages(group, containing_block=table)
+        if table.style.border_collapse == 'separate':
+            clear_border(group)
         first = group.children[0]
         last = group.children[-1]
         group.position_x = first.position_x
