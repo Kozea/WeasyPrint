@@ -58,6 +58,12 @@ ffi.cdef('''
         PANGO_STRETCH_EXTRA_EXPANDED,
         PANGO_STRETCH_ULTRA_EXPANDED
     } PangoStretch;
+    
+    typedef enum {
+        PANGO_WRAP_WORD,
+        PANGO_WRAP_CHAR,
+        PANGO_WRAP_WORD_CHAR
+    } PangoWrapMode;
 
     typedef unsigned int guint;
     typedef int gint;
@@ -98,6 +104,8 @@ ffi.cdef('''
         PangoLayout *layout, const char *text, int length);
     void pango_layout_set_font_description (
         PangoLayout *layout, const PangoFontDescription *desc);
+    void pango_layout_set_wrap (
+        PangoLayout *layout, PangoWrapMode wrap);
 
 
     PangoFontDescription * pango_font_description_new (void);
@@ -227,6 +235,12 @@ PANGO_STRETCH = {
     'ultra-expanded': pango.PANGO_STRETCH_ULTRA_EXPANDED,
 }
 
+PANGO_WRAP_MODE = {
+    'WRAP_WORD' : pango.PANGO_WRAP_WORD,
+    'WRAP_CHAR' : pango.PANGO_WRAP_CHAR,
+    'WRAP_WORD_CHAR' : pango.PANGO_WRAP_WORD_CHAR
+}
+
 
 def utf8_slice(string, slice_):
     return string.encode('utf-8')[slice_].decode('utf-8')
@@ -318,6 +332,9 @@ class Layout(object):
     def get_font_metrics(self):
         context = pango.pango_layout_get_context(self.layout)
         return FontMetrics(context, self.font)
+    
+    def set_wrap(self, wrap_mode):
+        pango.pango_layout_set_wrap(self.layout, wrap_mode)
 
 
 class FontMetrics(object):
@@ -470,46 +487,81 @@ def split_first_line(text, style, hinting, max_width, line_width):
     hyphens = style.hyphens
     lang = style.lang and pyphen.language_fallback(style.lang)
     total, left, right = style.hyphenate_limit_chars
-    if hyphens in ('none', 'manual') or not lang:
-        # No automatic hyphenation
-        return first_line_metrics(first_line, text, layout, resume_at)
-    elif len(next_word) < total:
-        # Next word is too small
-        return first_line_metrics(first_line, text, layout, resume_at)
-
-    first_line_width, _height = get_size(first_line)
-    space = max_width - first_line_width
-    if style.hyphenate_limit_zone.unit == '%':
-        limit_zone = max_width * style.hyphenate_limit_zone.value / 100.
-    else:
-        limit_zone = style.hyphenate_limit_zone.value
 
     hyphenated = False
-    if space > limit_zone or space < 0:
-        # The next word does not fit, try hyphenation
-        dictionary_key = (lang, left, right, total)
-        dictionary = PYPHEN_DICTIONARY_CACHE.get(dictionary_key)
-        if dictionary is None:
-            dictionary = pyphen.Pyphen(lang=lang, left=left, right=right)
-            PYPHEN_DICTIONARY_CACHE[dictionary_key] = dictionary
-        for first_word_part, _ in dictionary.iterate(next_word):
-            new_first_line = (
-                first_part + first_word_part + style.hyphenate_character)
-            temp_layout = create_layout(
-                new_first_line, style, hinting, max_width)
-            temp_lines = temp_layout.iter_lines()
-            temp_first_line = next(temp_lines, None)
-            temp_second_line = next(temp_lines, None)
-            if (temp_second_line is None and space >= 0) or space < 0:
-                hyphenated = True
-                # TODO: find why there's no need to .encode
-                resume_at = len(first_part + first_word_part)
-                layout = temp_layout
-                first_line = temp_first_line
-                second_line = temp_second_line
-                temp_first_line_width, _height = get_size(temp_first_line)
-                if temp_first_line_width <= max_width:
-                    break
+
+    # Automatic hyphenation possible and next word is long enough
+    if hyphens not in ('none', 'manual') and lang and len(next_word) >= total:
+        first_line_width, _height = get_size(first_line)
+        space = max_width - first_line_width
+        if style.hyphenate_limit_zone.unit == '%':
+            limit_zone = max_width * style.hyphenate_limit_zone.value / 100.
+        else:
+            limit_zone = style.hyphenate_limit_zone.value
+
+        if space > limit_zone or space < 0:
+            # The next word does not fit, try hyphenation
+            dictionary_key = (lang, left, right, total)
+            dictionary = PYPHEN_DICTIONARY_CACHE.get(dictionary_key)
+            if dictionary is None:
+                dictionary = pyphen.Pyphen(lang=lang, left=left, right=right)
+                PYPHEN_DICTIONARY_CACHE[dictionary_key] = dictionary
+            for first_word_part, _ in dictionary.iterate(next_word):
+                new_first_line = (
+                    first_part + first_word_part + style.hyphenate_character)
+                temp_layout = create_layout(
+                    new_first_line, style, hinting, max_width)
+                temp_lines = temp_layout.iter_lines()
+                temp_first_line = next(temp_lines, None)
+                temp_second_line = next(temp_lines, None)
+
+                if (temp_second_line is None and space >= 0) or space < 0:
+                    hyphenated = True
+                    # TODO: find why there's no need to .encode
+                    resume_at = len(first_part + first_word_part)
+                    layout = temp_layout
+                    first_line = temp_first_line
+                    second_line = temp_second_line
+                    temp_first_line_width, _height = get_size(temp_first_line)
+                    if temp_first_line_width <= max_width:
+                        break
+
+    # Step 5: Try to break word if it's too long for the line
+    overflow_wrap = style.overflow_wrap
+    first_line_width, _height = get_size(first_line)
+    space = max_width - first_line_width
+    # If we can break words and the first line is too long
+    if overflow_wrap == 'break-word' and space < 0:
+        if hyphenated:
+            # Is it really OK to remove hyphenation for word-break ?
+            new_first_line = new_first_line.rstrip(
+                new_first_line[-(len(style.hyphenate_character)):])
+            if second_line is not None:
+                second_line_index = second_line.start_index
+                second_part = utf8_slice(text, slice(second_line_index, None))
+                new_first_line += second_part
+            hyphenated = False
+
+        # TODO: Modify code to preserve W3C condition:
+        # "Shaping characters are still shaped as if the word were not broken"
+        # The way new lines are processed in this function (one by one with no
+        # memory of the last) prevents shaping characters (arabic, for
+        # instance) from keeping their shape when wrapped on the next line with
+        # pango layout.  Maybe insert Unicode shaping characters in text ?
+        temp_layout = create_layout(new_first_line, style, hinting, max_width)
+        temp_layout.set_wrap(PANGO_WRAP_MODE['WRAP_WORD_CHAR'])
+        temp_lines = temp_layout.iter_lines()
+        temp_first_line = next(temp_lines, None)
+        temp_second_line = next(temp_lines, None)
+        temp_second_line_index = (
+            len(new_first_line) if temp_second_line is None
+            else temp_second_line.start_index)
+        resume_at = temp_second_line_index
+        first_part = utf8_slice(text, slice(temp_second_line_index))
+        layout = create_layout(first_part, style, hinting, max_width)
+        lines = layout.iter_lines()
+        first_line = next(lines, None)
+
     return first_line_metrics(first_line, text, layout, resume_at, hyphenated)
 
 

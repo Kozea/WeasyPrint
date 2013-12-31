@@ -1050,6 +1050,12 @@ def white_space(keyword):
     """``white-space`` property validation."""
     return keyword in ('normal', 'pre', 'nowrap', 'pre-wrap', 'pre-line')
 
+@validator()
+@single_keyword
+def overflow_wrap(keyword):
+    """``overflow-wrap`` property validation."""
+    return keyword in ('normal', 'break-word')
+
 
 @validator(unprefixed=True)
 @single_keyword
@@ -1661,6 +1667,20 @@ def expand_font(name, tokens):
     if font_family(tokens) is None:
         raise InvalidValues
     yield '-family', tokens
+    
+
+@expander('word-wrap')
+def expand_word_wrap(base_url, name, tokens):
+    """Expand the ``word-wrap`` legacy property.
+
+    See http://http://www.w3.org/TR/css3-text/#overflow-wrap
+
+    """
+    keyword = overflow_wrap(tokens)
+    if keyword is None:
+        raise InvalidValues
+
+    yield 'overflow-wrap', keyword
 
 
 def validate_non_shorthand(base_url, name, tokens, required=False):

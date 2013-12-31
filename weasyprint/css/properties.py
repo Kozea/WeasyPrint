@@ -119,6 +119,7 @@ INITIAL_VALUES = {
 
     # CSS3 User Interface: http://www.w3.org/TR/css3-ui/#box-sizing
     'box_sizing': 'content-box',
+    'overflow_wrap': 'normal',
 
     # CSS3 Backgrounds and Borders: http://www.w3.org/TR/css3-background/
     'border_top_left_radius': (Dimension(0, 'px'), Dimension(0, 'px')),
@@ -216,6 +217,7 @@ INHERITED = set("""
     list_style_position
     list_style_type
     orphans
+    overflow_wrap
     quotes
     text_align
     text_decoration
