@@ -472,7 +472,8 @@ def replaced_preferred_width(box, outer=True):
     """Return the preferred minimum width for an ``InlineReplacedBox``."""
     width = box.style.width
     if width == 'auto' or width.unit == '%':
-        width = box.replacement.intrinsic_width
+        width, _ = box.replacement.get_intrinsic_size(
+            box.style.image_resolution)
         # TODO: handle the images with no intinsic width
         assert width is not None
     else:

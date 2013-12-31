@@ -138,6 +138,9 @@ INITIAL_VALUES = {
     # http://www.w3.org/TR/SVG/painting.html#ImageRenderingProperty
     'image_rendering': 'auto',
 
+    # http://www.w3.org/TR/css3-images/#the-image-resolution
+    'image_resolution': 1,  # dppx
+
     # Proprietary
     'anchor': None,  # computed value of 'none'
     'link': None,  # computed value of 'none'
@@ -233,6 +236,7 @@ INHERITED = set("""
     hyphenate_limit_chars
     hyphenate_limit_zone
     image_rendering
+    image_resolution
     lang
     link
 """.split())
