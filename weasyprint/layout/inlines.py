@@ -17,7 +17,8 @@ from .float import avoid_collisions, float_layout
 from .replaced import image_marker_layout
 from .min_max import handle_min_max_width, handle_min_max_height
 from .percentages import resolve_percentages, resolve_one_percentage
-from .preferred import shrink_to_fit, inline_preferred_minimum_width, trailing_whitespace_size
+from .preferred import (shrink_to_fit, inline_preferred_minimum_width,
+                        trailing_whitespace_size)
 from .tables import find_in_flow_baseline, table_wrapper_width
 from ..text import split_first_line
 from ..formatting_structure import boxes
@@ -248,8 +249,8 @@ def replaced_box_width(box, device_size):
     Compute and set the used width for replaced boxes (inline- or block-level)
     """
     # http://www.w3.org/TR/CSS21/visudet.html#inline-replaced-width
-    intrinsic_width = box.replacement.intrinsic_width
-    intrinsic_height = box.replacement.intrinsic_height
+    intrinsic_width, intrinsic_height = box.replacement.get_intrinsic_size(
+        box.style.image_resolution)
     # TODO: update this when we have replaced elements that do not
     # always have an intrinsic width. (See commented code below.)
     assert intrinsic_width is not None
@@ -297,8 +298,8 @@ def replaced_box_height(box, device_size):
     Compute and set the used height for replaced boxes (inline- or block-level)
     """
     # http://www.w3.org/TR/CSS21/visudet.html#inline-replaced-height
-    intrinsic_width = box.replacement.intrinsic_width
-    intrinsic_height = box.replacement.intrinsic_height
+    intrinsic_width, intrinsic_height = box.replacement.get_intrinsic_size(
+        box.style.image_resolution)
     # TODO: update this when we have replaced elements that do not
     # always have intrinsic dimensions. (See commented code below.)
     assert intrinsic_width is not None

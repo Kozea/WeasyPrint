@@ -23,9 +23,10 @@ def image_marker_layout(box):
     """
     image = box.replacement
     one_em = box.style.font_size
+    iwidth, iheight = image.get_intrinsic_size(box.style.image_resolution)
     box.width, box.height = default_image_sizing(
-        image.intrinsic_width, image.intrinsic_height, image.intrinsic_ratio,
-        box.width, box.height, default_width=one_em, default_height=one_em)
+        iwidth, iheight, image.intrinsic_ratio, box.width, box.height,
+        default_width=one_em, default_height=one_em)
 
 
 def default_image_sizing(intrinsic_width, intrinsic_height, intrinsic_ratio,
