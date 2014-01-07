@@ -721,7 +721,7 @@ def test_fixed_layout_table():
 
 
 @assert_no_logs
-def test_auto_layout_table():
+def test_auto_laoyut_table():
     """Test the auto layout table elements sizes."""
     page, = parse('''
         <body style="width: 100px">
@@ -1346,6 +1346,29 @@ def test_auto_layout_table():
     assert td_1.width == 140
     assert td_2.width == 60
     assert table.width == 200
+
+    # Cell width as percentage
+    page, = parse('''
+        <style>
+            td { width: 49%;}
+        </style>
+        <table>
+            <tr>
+                <td>
+            </tr>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    table_wrapper, = div.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2 = row.children
+    assert td_1.width == 140
+    assert td_2.width == 60
+    assert table.width == 200    
 
 
 @assert_no_logs
