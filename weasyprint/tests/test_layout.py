@@ -1347,6 +1347,13 @@ def test_auto_layout_table():
     assert td_2.width == 60
     assert table.width == 200
 
+    # Test regression on a crash: https://github.com/Kozea/WeasyPrint/pull/152
+    page, = parse('''
+        <table>
+            <td style="width: 50%">
+        </table>
+    ''')
+
 
 @assert_no_logs
 def test_lists():
