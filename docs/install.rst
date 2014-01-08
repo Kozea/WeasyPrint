@@ -8,7 +8,7 @@ WeasyPrint |version| depends on:
 * Pango_
 * CFFI_ ≥ 0.5
 * lxml_ ≥ 3.0
-* html5lib ≥ 0.99
+* html5lib_ ≥ 0.99
 * cairocffi_ ≥ 0.3
 * tinycss_ = 0.3
 * cssselect_ ≥ 0.6
@@ -20,7 +20,8 @@ WeasyPrint |version| depends on:
 .. _cairo: http://cairographics.org/
 .. _Pango: http://www.pango.org/
 .. _CFFI: https://cffi.readthedocs.org/
-.. _cairocffi: http://packages.python.org/cairocffi/
+.. _html5lib: http://html5lib.readthedocs.org/
+.. _cairocffi: http://pythonhosted.org/cairocffi/
 .. _GTK+: http://www.gtk.org/
 .. _lxml: http://lxml.de/
 .. _tinycss: http://packages.python.org/tinycss/
