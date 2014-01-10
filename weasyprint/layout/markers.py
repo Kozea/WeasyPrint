@@ -5,7 +5,7 @@
 
     Layout for list markers (for ``display: list-item``).
 
-    :copyright: Copyright 2011-2013 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2014 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
