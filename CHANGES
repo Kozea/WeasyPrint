@@ -1,6 +1,55 @@
 WeasyPrint changelog
 ====================
 
+
+Version 0.21
+------------
+
+Released on 2014-01-11.
+
+
+New features:
+
+* Add the `overflow-wrap <http://dev.w3.org/csswg/css-text/#overflow-wrap>`_
+  property, allowing line breaks inside otherwise-unbreakable words.
+  Thanks Frédérick Deslandes!
+* Add the `image-resolution
+  <http://dev.w3.org/csswg/css-images-3/#the-image-resolution>`_ property,
+  allowing images to be sized proportionally to their intrinsic size
+  at a resolution other than 96 image pixels per CSS ``in``
+  (ie. one image pixel per CSS ``px``)
+
+
+Bug fixes:
+
+* `#145 <https://github.com/Kozea/WeasyPrint/issues/145>`_:
+  Fix parsing HTML from an HTTP URL on Python 3.x
+* `#40 <https://github.com/Kozea/WeasyPrint/issues/40>`_:
+  Use more general hyphenation dictionnaries for specific document languages.
+  (E.g. use ``hyph_fr.dic`` for ``lang="fr_FR"``.)
+* `#26 <https://github.com/Kozea/WeasyPrint/issues/26>`_:
+  Fix ``min-width`` and ``max-width`` on floats.
+* `#100 <https://github.com/Kozea/WeasyPrint/issues/100>`_:
+  Fix a crash on trailing whitespace with ``font-size: 0``
+* `#82 <https://github.com/Kozea/WeasyPrint/issues/82>`_:
+  Borders on tables with ``border-collapse: collapse`` were sometimes
+  drawn at an incorrect position.
+* `#30 <https://github.com/Kozea/WeasyPrint/issues/30>`_:
+  Fix positioning of images with ``position: absolute``.
+* `#118 <https://github.com/Kozea/WeasyPrint/issues/118>`_:
+  Fix a crash when using ``position: absolute``
+  inside a ``position: relative`` element.
+* Fix ``visibility: collapse`` to behave like ``visibility: hidden``
+  on elements other than table rows and table columns.
+* `#147 <https://github.com/Kozea/WeasyPrint/issues/147>`_ and
+  `#153 <https://github.com/Kozea/WeasyPrint/issues/153>`_:
+  Fix dependencies to require lxml 3.0 or a more recent version.
+  Thanks gizmonerd and Thomas Grainger!
+* `#152 <https://github.com/Kozea/WeasyPrint/issues/152>`_:
+  Fix a crash on percentage-sized table cells in auto-sized tables.
+  Thanks Johannes Duschl!
+
+
 Version 0.20.2
 --------------
 

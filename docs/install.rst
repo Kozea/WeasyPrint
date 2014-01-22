@@ -7,8 +7,8 @@ WeasyPrint |version| depends on:
 * cairo_ [#]_
 * Pango_
 * CFFI_ ≥ 0.5
-* lxml_
-* html5lib ≥ 0.99
+* lxml_ ≥ 3.0
+* html5lib_ ≥ 0.99
 * cairocffi_ ≥ 0.3
 * tinycss_ = 0.3
 * cssselect_ ≥ 0.6
@@ -20,7 +20,8 @@ WeasyPrint |version| depends on:
 .. _cairo: http://cairographics.org/
 .. _Pango: http://www.pango.org/
 .. _CFFI: https://cffi.readthedocs.org/
-.. _cairocffi: http://packages.python.org/cairocffi/
+.. _html5lib: http://html5lib.readthedocs.org/
+.. _cairocffi: http://pythonhosted.org/cairocffi/
 .. _GTK+: http://www.gtk.org/
 .. _lxml: http://lxml.de/
 .. _tinycss: http://packages.python.org/tinycss/
@@ -110,7 +111,7 @@ Debian 7.0 Wheezy or newer, Ubuntu 11.10 Oneiric or newer:
 
 .. code-block:: sh
 
-    sudo apt-get install python-dev python-pip python-lxml libcairo2 libpango1.0-0 libgdk-pixbuf2.0-0 libffi-dev shared-mime-data
+    sudo apt-get install python-dev python-pip python-lxml libcairo2 libpango1.0-0 libgdk-pixbuf2.0-0 libffi-dev shared-mime-info
 
 
 Debian 6.0 Squeeze, Ubuntu 10.04 Lucid:

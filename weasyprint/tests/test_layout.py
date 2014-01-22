@@ -6,7 +6,7 @@
     Tests for layout, ie. positioning and dimensioning of boxes,
     line breaks, page breaks.
 
-    :copyright: Copyright 2011-2013 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2014 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -1346,6 +1346,13 @@ def test_auto_layout_table():
     assert td_1.width == 140
     assert td_2.width == 60
     assert table.width == 200
+
+    # Test regression on a crash: https://github.com/Kozea/WeasyPrint/pull/152
+    page, = parse('''
+        <table>
+            <td style="width: 50%">
+        </table>
+    ''')
 
 
 @assert_no_logs

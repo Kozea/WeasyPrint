@@ -5,7 +5,7 @@
 
     Preferred and minimum preferred width, aka. the shrink-to-fit algorithm.
 
-    :copyright: Copyright 2011-2013 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2014 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -153,7 +153,7 @@ def table_cell_preferred_minimum_width(context, box, table,
     """Return the preferred minimum width for a ``TableCellBox``."""
     # Try to solve the cell's width if it is a percentage
     width = box.style.width
-    if resolved_table_width and width != 'auto' and width.unit == '%':
+    if resolved_table_width and table.width != 'auto' and width != 'auto' and width.unit == '%':
         return width.value / 100. * table.width
 
     # Else return standard block's preferred minimum width
@@ -166,7 +166,7 @@ def table_cell_preferred_width(context, box, table, resolved_table_width,
     """Return the preferred width for a ``TableCellBox``."""
     # Try to solve the cell's width if it is a percentage
     width = box.style.width
-    if resolved_table_width and width != 'auto' and width.unit == '%':
+    if resolved_table_width and table.width!= 'auto' and width != 'auto' and width.unit == '%':
         return width.value / 100. * table.width
 
     # Else return standard block's preferred width

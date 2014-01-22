@@ -42,7 +42,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'WeasyPrint'
-copyright = u'2011-2013, Simon Sapin and contributors, see AUTHORs'
+copyright = u'2011-2014, Simon Sapin and contributors, see AUTHORs'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

@@ -11,7 +11,7 @@
     have intrinsic dimensions. But the only replaced elements currently
     supported in WeasyPrint are images with intrinsic dimensions.
 
-    :copyright: Copyright 2011-2013 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2014 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """

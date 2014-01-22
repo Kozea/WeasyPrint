@@ -6,7 +6,7 @@
     Layout for images and other replaced elements.
     http://dev.w3.org/csswg/css-images-3/#sizing
 
-    :copyright: Copyright 2011-2013 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2014 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
