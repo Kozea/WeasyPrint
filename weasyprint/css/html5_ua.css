@@ -289,7 +289,7 @@ ol, ul { counter-reset: list-item }
 
 dt { display: block; unicode-bidi: isolate; }
 em { font-style: italic; }
-fieldset { border-style: groove; border-width: 2px; margin-left: 2px; margin-right: 2px; padding: .35em .625em .75em .625em; }
+fieldset { display: block; border-style: groove; border-width: 2px; margin-left: 2px; margin-right: 2px; padding: .35em .625em .75em .625em; }
 figcaption { display: block; unicode-bidi: isolate; }
 figure { display: block; margin: 1em 40px; unicode-bidi: isolate; }
 footer { display: block; unicode-bidi: isolate; }
