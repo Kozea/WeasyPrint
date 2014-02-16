@@ -565,6 +565,45 @@ def test_inline_table():
 
 
 @assert_no_logs
+def test_implicit_width_table():
+    """Test table with implicit width."""
+    # See https://github.com/Kozea/WeasyPrint/issues/169
+    page, = parse('''
+        <table>
+            <col style="width:25%"></col>
+            <col></col>
+            <tr>
+                <td></td>
+                <td></td>
+            </tr>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2 = row.children
+
+    page, = parse('''
+        <table>
+            <tr>
+                <td style="width:25%"></td>
+                <td></td>
+            </tr>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2 = row.children
+
+
+@assert_no_logs
 def test_fixed_layout_table():
     """Test the fixed layout table elements sizes."""
     page, = parse('''

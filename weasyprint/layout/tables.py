@@ -489,7 +489,7 @@ def auto_table_layout(context, box, containing_block):
     (table_preferred_minimum_width, table_preferred_width,
      column_preferred_minimum_widths, column_preferred_widths) = \
         table_and_columns_preferred_widths(
-            context, box, resolved_table_width=True)
+            context, box, resolved_table_width=table.width != 'auto')
 
     if table.style.border_collapse == 'separate':
         border_spacing_x, _ = table.style.border_spacing

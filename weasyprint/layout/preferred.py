@@ -354,6 +354,8 @@ def table_and_columns_preferred_widths(context, box, outer=True,
                 column_width = column_widths[i]
                 if column_width and column_width != 'auto':
                     if column_width.unit == '%' and resolved_table_width:
+                        # TODO: If resolved_table_width is false, we should try
+                        # to use this percentage as a constraint
                         widths[i] = max(
                             column_width.value / 100. * table.width, widths[i])
                     elif column_width.unit != '%':
