@@ -377,7 +377,7 @@ def test_embedded_files():
             pdf_bytes)
     assert (b'/F ()' in pdf_bytes)
     assert (b'/UF (\xfe\xff\x00a\x00t\x00t\x00a\x00c\x00h\x00m\x00e\x00n'
-            b'\x00t\x000\x00.\x00b\x00i\x00n)' in pdf_bytes)
+            b'\x00t\x00.\x00b\x00i\x00n)' in pdf_bytes)
     assert (b'/Desc (\xfe\xff\x00s\x00o\x00m\x00e\x00 \x00f\x00i\x00l\x00e'
             b'\x00 \x00a\x00t\x00t\x00a\x00c\x00h\x00m\x00e\x00n\x00t\x00 '
             b'\x00\xe4\x00\xf6\x00\xfc)' in pdf_bytes)
@@ -392,8 +392,6 @@ def test_embedded_files():
 
     assert (binascii.hexlify(hashlib.md5(b'oob attachment').digest()) in
             pdf_bytes)
-    assert (b'/UF (\xfe\xff\x00a\x00t\x00t\x00a\x00c\x00h\x00m\x00e\x00n'
-            b'\x00t\x001\x00.\x00b\x00i\x00n)' in pdf_bytes)
 
     assert (b'/EmbeddedFiles' in pdf_bytes)
     assert (b'/Outlines' in pdf_bytes)
@@ -427,4 +425,23 @@ def test_embedded_files():
 
     assert (not b'/EmbeddedFiles' in pdf_bytes)
     assert (not b'/Outlines' in pdf_bytes)
+
+@assert_no_logs
+def test_annotation_files():
+    import binascii
+    import hashlib
+
+    pdf_bytes = TestHTML(string='''
+        <title>Test document</title>
+        <meta charset="utf-8">
+        <a
+            rel="attachment"
+            href="data:,some data"
+            download>A link that lets you download an attachment</a>
+    ''').write_pdf()
+
+    assert (binascii.hexlify(hashlib.md5(b'some data').digest()) in
+            pdf_bytes)
+    assert (b'/FileAttachment' in pdf_bytes)
+    assert (not b'/EmbeddedFiles' in pdf_bytes)
 

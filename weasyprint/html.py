@@ -203,6 +203,14 @@ def handle_td(element, box, _get_image_from_uri):
     return [box]
 
 
+@handler('a')
+def handle_a(element, box, _get_image_from_uri):
+    """Handle the ``rel`` attribute."""
+    rel = element.get('rel', '').strip().lower()
+    setattr(box, 'rel', rel)
+    return [box]
+
+
 def find_base_url(html_document, fallback_base_url):
     """Return the base URL for the document.
 

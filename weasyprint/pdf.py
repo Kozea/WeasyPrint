@@ -440,6 +440,21 @@ def prepare_metadata(document, bookmark_root_id, scale):
     return bookmark_root, bookmark_list, links
 
 
+def _get_filename_from_url(url):
+    """
+    Derives a filename from an URL or returns a synthetic name if the URL has
+    no path component
+    """
+    split = urlsplit(url)
+    filename = split.path.split("/")[-1]
+    if split.scheme == 'data' or filename == '':
+        filename = 'attachment.bin'
+    else:
+        filename = unquote(filename)
+
+    return filename
+
+
 def _write_pdf_embedded_files(pdf, attachments, url_fetcher):
     """
     Writes attachments as embedded files (document attachments).
@@ -449,18 +464,8 @@ def _write_pdf_embedded_files(pdf, attachments, url_fetcher):
     """
 
     file_spec_ids = []
-    n = 0
     for url, description in attachments:
-        # We derive the filename from the URLs path if available, or generate a
-        # synthetic name
-        split = urlsplit(url)
-        filename = split.path.split("/")[-1]
-        if split.scheme == 'data' or filename == '':
-            filename = 'attachment{}.bin'.format(n)
-            n += 1
-        else:
-            filename = unquote(filename)
-
+        filename = _get_filename_from_url(url)
         file_spec_id = _write_pdf_attachment(pdf, filename, url, description,
                                              url_fetcher)
         if not file_spec_id is None:
@@ -508,6 +513,27 @@ def _write_pdf_attachment(pdf, filename, url, description, url_fetcher):
 
     return None
 
+
+def _write_pdf_annotation_files(pdf, links, url_fetcher):
+    """
+    Write all annotation attachments to the PDF file.
+
+    :return:
+        a dictionary that maps URLs to PDF object numbers, which can be
+        :obj:`None` if the resource failed to load.
+    """
+    annot_files = {}
+    for page_links in links:
+        for is_internal, target, rectangle in page_links:
+            if is_internal == 'attachment' and not target in annot_files:
+                annot_files[target] = None
+                filename = _get_filename_from_url(target)
+                # TODO: use the title attribute as description
+                annot_files[target] = _write_pdf_attachment(pdf, filename,
+                                      target, None, url_fetcher)
+    return annot_files
+
+
 def write_pdf_metadata(document, fileobj, scale, metadata, url_fetcher=None):
     """Append to a seekable file-like object to add PDF metadata."""
     pdf = PDFFile(fileobj)
@@ -550,22 +576,50 @@ def write_pdf_metadata(document, fileobj, scale, metadata, url_fetcher=None):
                                  embedded_files_id)
         pdf.extend_dict(pdf.catalog, params)
 
+    # A single link can be split in multiple regions. We don't want to embedded
+    # a file multiple times of course, so keep a reference to every embedded
+    # URL and reuse the object number.
+    # TODO: If we add support for descriptions this won't always be correct,
+    # because two links might have the same href, but different titles.
+    annot_files = _write_pdf_annotation_files(pdf, links, url_fetcher)
+
+    # TODO: splitting a link into multiple independent rectangular annotations
+    # works well for pure links, but rather mediocre for other annotations and
+    # fails completely for transformed (CSS) or complex link shapes (area).
+    # It would be better to use /AP for all links and coalesce link shapes that
+    # originate from the same HTML link. This would give a feeling similiar to
+    # what browsers do with links that span multiple lines.
     for page, page_links in zip(pdf.pages, links):
         annotations = []
         for is_internal, target, rectangle in page_links:
-            content = [pdf_format(
-                '<< /Type /Annot /Subtype /Link '
+            content = [pdf_format('<< /Type /Annot '
                 '/Rect [{0:f} {1:f} {2:f} {3:f}] /Border [0 0 0]\n',
                 *rectangle)]
-            if is_internal == 'internal':
-                content.append(pdf_format(
-                    '/A << /Type /Action /S /GoTo '
-                    '/D [{0} /XYZ {1:f} {2:f} 0] >>\n',
-                    *target))
+            if is_internal != 'attachment' and not annot_files[target] is None:
+                content.append(b'/Subtype /Link ')
+                if is_internal == 'internal':
+                    content.append(pdf_format(
+                        '/A << /Type /Action /S /GoTo '
+                        '/D [{0} /XYZ {1:f} {2:f} 0] >>\n',
+                        *target))
+                else:
+                    content.append(pdf_format(
+                        '/A << /Type /Action /S /URI /URI ({0}) >>\n',
+                        iri_to_uri(target)))
             else:
-                content.append(pdf_format(
-                    '/A << /Type /Action /S /URI /URI ({0}) >>\n',
-                    iri_to_uri(target)))
+                assert not annot_files[target] is None
+
+                link_ap = pdf.write_new_object(pdf_format(
+                    '<< /Type /XObject /Subtype /Form '
+                    '/BBox [{0:f} {1:f} {2:f} {3:f}] /Length 0 >>\n'
+                    'stream\n'
+                    'endstream',
+                    *rectangle))
+                content.append(b'/Subtype /FileAttachment ')
+                # evince needs /T or fails on an internal assertion. PDF
+                # doesn't require it.
+                content.append(pdf_format('/T () /FS {0} 0 R '
+                    '/AP << /N {1} 0 R >>', annot_files[target], link_ap))
             content.append(b'>>')
             annotations.append(pdf.write_new_object(b''.join(content)))
 

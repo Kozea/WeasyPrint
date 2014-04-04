@@ -113,11 +113,14 @@ def _gather_links_and_bookmarks(box, bookmarks, links, anchors, matrix):
     has_link = link and not isinstance(box, boxes.TextBox)
     # In case of duplicate IDs, only the first is an anchor.
     has_anchor = anchor_name and anchor_name not in anchors
+    is_attachment = hasattr(box, 'rel') and box.rel == 'attachment'
 
     if has_bookmark or has_link or has_anchor:
         pos_x, pos_y, width, height = box.hit_area()
         if has_link:
             link_type, target = link
+            if link_type == 'external' and is_attachment:
+                link_type = 'attachment'
             if matrix:
                 link = _TaggedTuple(
                     (link_type, target, rectangle_aabb(
@@ -171,6 +174,8 @@ class Page(object):
         #    The anchor might be defined in another page,
         #    in multiple pages (in which case the first occurence is used),
         #    or not at all.
+        #: * ``'attachment'``: :obj:`target` is an absolute URL and points
+        #:   to a resource to attach to the document.
         self.links = links = []
 
         #: A dict mapping anchor names to their target, ``(x, y)`` points
