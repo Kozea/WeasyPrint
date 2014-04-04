@@ -246,7 +246,8 @@ class DocumentMetadata(object):
 
     """
     def __init__(self, title=None, authors=None, description=None,
-                 keywords=None, generator=None, created=None, modified=None):
+                 keywords=None, generator=None, created=None, modified=None,
+                 attachments=None):
         #: The title of the document, as a string or :obj:`None`.
         #: Extracted from the ``<title>`` element in HTML
         #: and written to the ``/Title`` info field in PDF.
@@ -281,6 +282,11 @@ class DocumentMetadata(object):
         #: Extracted from the ``<meta name=dcterms.modified>`` element in HTML
         #: and written to the ``/ModDate`` info field in PDF.
         self.modified = modified
+        #: File attachments as a list of tuples of URL and a description or
+        #: :obj:`None`.
+        #: Extracted from the ``<link rel=attachment>`` elements in HTML
+        #: and written to the ``/EmbeddedFiles`` dictionary in PDF.
+        self.attachments = attachments or []
 
 
 class Document(object):
@@ -431,7 +437,7 @@ class Document(object):
                 last_by_depth.append(children)
         return root
 
-    def write_pdf(self, target=None, zoom=1):
+    def write_pdf(self, target=None, zoom=1, url_fetcher=None):
         """Paint the pages in a PDF file, with meta-data.
 
         PDF files written directly by cairo do not have meta-data such as
@@ -447,6 +453,8 @@ class Document(object):
             For values other than 1, physical CSS units will thus be “wrong”.
             Page size declarations are affected too, even with keyword values
             like ``@page { size: A3 landscape; }``
+        :param url_fetcher:
+            The URL fetcher to use to retrieve attachments or :obj:`None`
         :returns:
             The PDF as byte string if :obj:`target` is :obj:`None`, otherwise
             :obj:`None` (the PDF is written to :obj:`target`.)
@@ -466,7 +474,7 @@ class Document(object):
             surface.show_page()
         surface.finish()
 
-        write_pdf_metadata(self, file_obj, scale, self.metadata)
+        write_pdf_metadata(self, file_obj, scale, self.metadata, url_fetcher)
 
         if target is None:
             return file_obj.getvalue()

@@ -17,6 +17,7 @@ import sys
 import argparse
 
 from . import VERSION, HTML
+from .urls import path2url, urlsplit
 
 
 def main(argv=None, stdout=None, stdin=None):
@@ -61,6 +62,11 @@ def main(argv=None, stdout=None, stdin=None):
 
         Set the media type to use for ``@media``. Defaults to ``print``.
 
+    .. option:: -a <file>, --attachment <file>
+
+        Adds an attachment to the document which is included in the PDF output.
+        This option can be added multiple times to attach more files.
+
     .. option:: --version
 
         Show the version number. Other options and arguments are ignored.
@@ -92,6 +98,8 @@ def main(argv=None, stdout=None, stdin=None):
                         help='Base for relative URLs in the HTML input. '
                              "Defaults to the input's own filename or URL "
                              'or the current directory for stdin.')
+    parser.add_argument('-a', '--attachment', action='append',
+                        help='URL or filename of a file to attach to the document')
     parser.add_argument(
         'input', help='URL or filename of the HTML input, or - for stdin')
     parser.add_argument(
@@ -136,8 +144,23 @@ def main(argv=None, stdout=None, stdin=None):
             kwargs['resolution'] = args.resolution
         else:
             parser.error('--resolution only applies for the PNG format.')
+
+    attachments = []
+    if args.attachment:
+        if format_ == 'pdf':
+            for a in args.attachment:
+                # Convert passed file names into absolute file: URLs, because
+                # we don't want to resolve them relative to the document, but
+                # relative to the current working directory.
+                if urlsplit(a).scheme == '':
+                    # should be a file path
+                    a = path2url(a)
+                attachments.append((a, None))
+        else:
+            parser.error('--attachment only applies for the PDF format.')
+
     html = HTML(source, base_url=args.base_url, encoding=args.encoding,
-                media_type=args.media_type)
+                media_type=args.media_type, attachments=attachments)
     getattr(html, 'write_' + format_)(output, **kwargs)
 
 

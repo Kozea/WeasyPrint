@@ -61,7 +61,7 @@ else:
     from urlparse import (urljoin, urlsplit, parse_qs,
                           uses_relative as urlparse_uses_relative)
     from urllib2 import urlopen, Request
-    from urllib import pathname2url, quote, unquote, urlencode
+    from urllib import pathname2url, quote, unquote as _unquote, urlencode
     from array import array as _array
     from itertools import izip, imap
     from base64 import (decodestring as base64_decode,
@@ -83,10 +83,13 @@ else:
         charset = info.getparam('charset')
         return result, mime_type, charset
 
+    def unquote(data, encoding='utf-8', errors='replace'):
+        return _unquote(data).encode('latin1').decode(encoding, errors)
+
     def unquote_to_bytes(data):
         if isinstance(data, unicode):
             data = data.encode('ascii')
-        return unquote(data)
+        return _unquote(data)
 
     def parse_email(data):
         if isinstance(data, unicode):

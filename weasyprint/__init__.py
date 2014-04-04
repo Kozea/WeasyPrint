@@ -30,7 +30,7 @@ import contextlib
 import html5lib
 
 from .urls import (fetch, default_url_fetcher, path2url, ensure_url,
-                   url_is_absolute)
+                   url_is_absolute, url_join)
 from .compat import unicode
 from .logger import LOGGER
 # Some import are at the end of the file (after the CSS class) is defined
@@ -70,11 +70,15 @@ class HTML(object):
         Defaults to ``'print'``. **Note:** In some cases like
         ``HTML(string=foo)`` relative URLs will be invalid if ``base_url``
         is not provided.
+    :param attachments: A list of tuples, where each element describes an
+        attachment to the document. The tuple contains a URL and a description,
+        which can be :obj:`None`.
 
     """
     def __init__(self, guess=None, filename=None, url=None, file_obj=None,
                  string=None, tree=None, encoding=None, base_url=None,
-                 url_fetcher=default_url_fetcher, media_type='print'):
+                 url_fetcher=default_url_fetcher, media_type='print',
+                 attachments=None):
         result = _select_source(
             guess, filename, url, file_obj, string, tree, base_url,
             url_fetcher)
@@ -100,12 +104,16 @@ class HTML(object):
         self.base_url = base_url
         self.url_fetcher = url_fetcher
         self.media_type = media_type
+        self.attachments = []
+        self.attachments.extend(attachments or [])
 
     def _ua_stylesheets(self):
         return [HTML5_UA_STYLESHEET]
 
     def _get_metadata(self):
-        return get_html_metadata(self.root_element)
+        metadata = get_html_metadata(self.root_element)
+        metadata["attachments"].extend(self.attachments)
+        return metadata
 
     def render(self, stylesheets=None, enable_hinting=False):
         """Lay out and paginate the document, but do not (yet) export it
@@ -157,7 +165,8 @@ class HTML(object):
             :obj:`target`.)
 
         """
-        return self.render(stylesheets).write_pdf(target, zoom)
+        return self.render(stylesheets).write_pdf(target, zoom,
+                           self.url_fetcher)
 
     def write_image_surface(self, stylesheets=None, resolution=96):
         surface, _width, _height = (

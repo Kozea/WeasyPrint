@@ -31,6 +31,8 @@ r"""
 
 from __future__ import division, unicode_literals
 
+import binascii
+import io
 import os
 import re
 import string
@@ -39,7 +41,7 @@ import cairocffi as cairo
 
 from . import VERSION_STRING
 from .compat import xrange, iteritems, izip
-from .urls import iri_to_uri
+from .urls import iri_to_uri, fetch, unquote, urlsplit, URLFetchingError
 from .html import W3C_DATE_RE
 from .logger import LOGGER
 
@@ -50,18 +52,26 @@ class PDFFormatter(string.Formatter):
     * Results are byte strings
     * The new !P conversion flags encodes a PDF string.
       (UTF-16 BE with a BOM, then backslash-escape parentheses.)
+    * The new !H conversion flags encodes a PDF string in the hexadecimal
+      format.
 
-    Except for fields marked !P, everything should be ASCII-only.
+    Except for fields marked !P or !H, everything should be ASCII-only.
 
     """
     def convert_field(self, value, conversion):
         if conversion == 'P':
+            # Skip the BOM if the value is empty
+            if len(value) == 0:
+                return '()'
+
             # Make a round-trip back through Unicode for the .translate()
             # method. (bytes.translate only maps to single bytes.)
             # Use latin1 to map all byte values.
             return '({0})'.format(
                 ('\ufeff' + value).encode('utf-16-be').decode('latin1')
                 .translate({40: r'\(', 41: r'\)', 92: r'\\'}))
+        elif conversion == 'H':
+            return '<{0}>'.format(binascii.hexlify(value).decode('ascii'))
         else:
             return super(PDFFormatter, self).convert_field(value, conversion)
 
@@ -245,6 +255,67 @@ class PDFFile(object):
             self._write_object(object_number, byte_string))
         return object_number
 
+    def write_compressed_file_object(self, file):
+        """
+        Write a file like object as ``/EmbeddedFile``, compressing it with
+        deflate. In fact, this method writes multiple PDF objects to include
+        length, compressed length and MD5 checksum.
+
+        :return:
+            the object number of the compressed file stream object
+        """
+        import hashlib, zlib
+
+        object_number = self.next_object_number()
+        length_number = object_number + 1
+        md5_number = object_number + 2
+        uncompressed_length_number = object_number + 3
+
+        offset, write = self._start_writing()
+        write(pdf_format('{0} 0 obj\n', object_number))
+        write(pdf_format('<< /Type /EmbeddedFile /Length {0} 0 R /Filter '
+            '/FlateDecode /Params << /CheckSum {1} 0 R /Size {2} 0 R >> >>\n',
+            length_number, md5_number, uncompressed_length_number))
+        write(b'stream\n')
+
+        uncompressed_length = 0
+        compressed_length = 0
+
+        md5 = hashlib.md5()
+        compress = zlib.compressobj()
+        for data in iter(lambda: file.read(4096), b''):
+            uncompressed_length += len(data)
+
+            md5.update(data)
+
+            compressed = compress.compress(data)
+            compressed_length += len(compressed)
+
+            write(compressed)
+
+        compressed = compress.flush(zlib.Z_FINISH)
+        compressed_length += len(compressed)
+        write(compressed)
+
+        write(b'\nendstream\n')
+        write(b'endobj\n')
+
+        self.new_objects_offsets.append(offset)
+        self.new_objects_offsets.append(
+            self._write_object(
+                length_number,
+                pdf_format("{0}", compressed_length)))
+        self.new_objects_offsets.append(
+            self._write_object(
+                md5_number,
+                pdf_format("{0!H}", md5.digest())))
+        self.new_objects_offsets.append(
+            self._write_object(
+                uncompressed_length_number,
+                pdf_format("{0}", uncompressed_length)))
+
+        return object_number
+
     def finish(self):
         """
         Write the cross-reference table and the trailer for the new and
@@ -369,7 +440,75 @@ def prepare_metadata(document, bookmark_root_id, scale):
     return bookmark_root, bookmark_list, links
 
 
-def write_pdf_metadata(document, fileobj, scale, metadata):
+def _write_pdf_embedded_files(pdf, attachments, url_fetcher):
+    """
+    Writes attachments as embedded files (document attachments).
+
+    :return:
+        the object number of the name dictionary or :obj:`None`
+    """
+
+    file_spec_ids = []
+    n = 0
+    for url, description in attachments:
+        # We derive the filename from the URLs path if available, or generate a
+        # synthetic name
+        split = urlsplit(url)
+        filename = split.path.split("/")[-1]
+        if split.scheme == 'data' or filename == '':
+            filename = 'attachment{}.bin'.format(n)
+            n += 1
+        else:
+            filename = unquote(filename)
+
+        file_spec_id = _write_pdf_attachment(pdf, filename, url, description,
+                                             url_fetcher)
+        if not file_spec_id is None:
+            file_spec_ids.append(file_spec_id)
+
+    # We might have failed to write any attachment at all
+    if len(file_spec_ids) == 0:
+        return None
+
+    content = [b'<< /Names [']
+    for fs in file_spec_ids:
+        content.append(pdf_format('\n(attachment{0}) {0} 0 R ',
+                       fs))
+    content.append(b'\n] >>')
+    return pdf.write_new_object(b''.join(content))
+
+
+def _write_pdf_attachment(pdf, filename, url, description, url_fetcher):
+    """
+    Writes an attachment to the PDF stream
+
+    :return:
+        the object number of the ``/Filespec`` object or :obj:`None` if the
+        attachment couldn't be read.
+    """
+    if url_fetcher == None:
+        LOGGER.warning('Can\'t write attachments without an url_fetcher')
+        return None
+
+    try:
+        file_stream_id = None
+        with fetch(url_fetcher, url) as result:
+            stream = result.get('file_obj') or \
+                     io.BytesIO(result.get('string'))
+            file_stream_id = pdf.write_compressed_file_object(stream)
+
+        return pdf.write_new_object(pdf_format(
+            '<< /Type /Filespec /F () /UF {0!P} /EF << /F {1} 0 R >> '
+            '/Desc {2!P}\n>>',
+            filename,
+            file_stream_id,
+            description or ''))
+    except URLFetchingError as exc:
+        LOGGER.warning('Failed to load attachment at %s : %s', url, exc)
+
+    return None
+
+def write_pdf_metadata(document, fileobj, scale, metadata, url_fetcher=None):
     """Append to a seekable file-like object to add PDF metadata."""
     pdf = PDFFile(fileobj)
     bookmark_root_id = pdf.next_object_number()
@@ -377,8 +516,6 @@ def write_pdf_metadata(document, fileobj, scale, metadata):
         document, bookmark_root_id, scale)
 
     if bookmarks:
-        pdf.extend_dict(pdf.catalog, pdf_format(
-            '/Outlines {0} 0 R /PageMode /UseOutlines', bookmark_root_id))
         pdf.write_new_object(pdf_format(
             '<< /Type /Outlines /Count {0} /First {1} 0 R /Last {2} 0 R\n>>',
             bookmark_root['Count'],
@@ -399,6 +536,19 @@ def write_pdf_metadata(document, fileobj, scale, metadata):
                         '/{0} {1} 0 R\n', key, bookmark[key]))
             content.append(b'>>')
             pdf.write_new_object(b''.join(content))
+
+    embedded_files_id = _write_pdf_embedded_files(pdf, metadata.attachments,
+                                                  url_fetcher)
+
+    if bookmarks or embedded_files_id is not None:
+        params = b''
+        if bookmarks:
+            params += pdf_format(' /Outlines {0} 0 R /PageMode /UseOutlines',
+                                 bookmark_root_id)
+        if embedded_files_id is not None:
+            params += pdf_format(' /Names << /EmbeddedFiles {0} 0 R >>',
+                                 embedded_files_id)
+        pdf.extend_dict(pdf.catalog, params)
 
     for page, page_links in zip(pdf.pages, links):
         annotations = []
