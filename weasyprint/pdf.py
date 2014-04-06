@@ -595,7 +595,7 @@ def write_pdf_metadata(document, fileobj, scale, metadata, url_fetcher=None):
             content = [pdf_format('<< /Type /Annot '
                 '/Rect [{0:f} {1:f} {2:f} {3:f}] /Border [0 0 0]\n',
                 *rectangle)]
-            if is_internal != 'attachment' and not annot_files[target] is None:
+            if is_internal != 'attachment' or annot_files[target] is None:
                 content.append(b'/Subtype /Link ')
                 if is_internal == 'internal':
                     content.append(pdf_format(
