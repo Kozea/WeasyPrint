@@ -60,10 +60,6 @@ class PDFFormatter(string.Formatter):
     """
     def convert_field(self, value, conversion):
         if conversion == 'P':
-            # Skip the BOM if the value is empty
-            if len(value) == 0:
-                return '()'
-
             # Make a round-trip back through Unicode for the .translate()
             # method. (bytes.translate only maps to single bytes.)
             # Use latin1 to map all byte values.
