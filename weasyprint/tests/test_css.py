@@ -163,14 +163,14 @@ def test_annotate_document():
     assert ul.margin_bottom == (40, 'px')
     assert ul.margin_left == (40, 'px')
 
-    assert ul.font_weight == 700
+    assert ul.font_weight == 400
     # thick = 5px, 0.25 inches = 96*.25 = 24px
     assert ul.border_top_width == 0
     assert ul.border_right_width == 5
     assert ul.border_bottom_width == 0
     assert ul.border_left_width == 24
 
-    assert li_0.font_weight == 900
+    assert li_0.font_weight == 700
     assert li_0.font_size == 8  # 6pt
     assert li_0.margin_top == (16, 'px')  # 2em
     assert li_0.margin_right == (0, 'px')
@@ -178,6 +178,7 @@ def test_annotate_document():
     assert li_0.margin_left == (32, 'px')  # 4em
 
     assert a.text_decoration == frozenset(['underline'])
+    assert a.font_weight == 900
     assert a.font_size == 24  # 300% of 8px
     assert a.padding_top == (1, 'px')
     assert a.padding_right == (2, 'px')
