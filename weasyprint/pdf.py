@@ -388,6 +388,9 @@ def _write_compressed_file_object(pdf, file):
     """
 
     object_number = pdf.next_object_number()
+    # Make sure we stay in sync with our object numbers
+    expected_next_object_number = object_number + 4
+
     length_number = object_number + 1
     md5_number = object_number + 2
     uncompressed_length_number = object_number + 3
@@ -422,18 +425,12 @@ def _write_compressed_file_object(pdf, file):
     write(b'endobj\n')
 
     pdf.new_objects_offsets.append(offset)
-    pdf.new_objects_offsets.append(
-        pdf._write_object(
-            length_number,
-            pdf_format("{0}", compressed_length)))
-    pdf.new_objects_offsets.append(
-        pdf._write_object(
-            md5_number,
-            pdf_format("{0!H}", md5.digest())))
-    pdf.new_objects_offsets.append(
-        pdf._write_object(
-            uncompressed_length_number,
-            pdf_format("{0}", uncompressed_length)))
+
+    pdf.write_new_object(pdf_format("{0}", compressed_length))
+    pdf.write_new_object(pdf_format("{0!H}", md5.digest()))
+    pdf.write_new_object(pdf_format("{0}", uncompressed_length))
+
+    assert pdf.next_object_number() == expected_next_object_number
 
     return object_number
 
