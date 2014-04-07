@@ -348,7 +348,7 @@ def test_embedded_files():
     with os.fdopen(afd, 'wb') as afile:
         afile.write(adata)
 
-    rfd, relative_tmp_file = tempfile.mkstemp(suffix='äöü', dir=os.getcwd())
+    rfd, relative_tmp_file = tempfile.mkstemp(suffix='äöü')
     rdata = b'abcdefgh'
     with os.fdopen(rfd, 'wb') as rfile:
         rfile.write(rdata)
@@ -366,7 +366,7 @@ def test_embedded_files():
         <h2>Heading 2</h2>
     '''.format(path2url(absolute_tmp_file),
                os.path.basename(relative_tmp_file)),
-               base_url='.', attachments=[('data:,oob attachment', None)]
+               base_url=os.path.dirname(relative_tmp_file), attachments=[('data:,oob attachment', None)]
               ).write_pdf()
 
     os.remove(absolute_tmp_file)
