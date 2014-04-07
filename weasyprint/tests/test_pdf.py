@@ -12,7 +12,11 @@
 
 from __future__ import division, unicode_literals
 
+import binascii
+import hashlib
 import io
+import os
+import tempfile
 
 import cairocffi
 import pytest
@@ -20,6 +24,7 @@ import pytest
 from .. import CSS
 from .. import pdf
 from ..images import CAIRO_HAS_MIME_DATA
+from ..urls import path2url
 from .testing_utils import (
     assert_no_logs, resource_filename, TestHTML, capture_logs)
 
@@ -338,12 +343,6 @@ def test_document_info():
 
 @assert_no_logs
 def test_embedded_files():
-    import binascii
-    import hashlib
-    import os
-    import tempfile
-    from ..urls import path2url
-
     afd, absolute_tmp_file = tempfile.mkstemp()
     adata = b'12345678'
     with os.fdopen(afd, 'wb') as afile:
@@ -428,9 +427,6 @@ def test_embedded_files():
 
 @assert_no_logs
 def test_annotation_files():
-    import binascii
-    import hashlib
-
     pdf_bytes = TestHTML(string='''
         <title>Test document</title>
         <meta charset="utf-8">
