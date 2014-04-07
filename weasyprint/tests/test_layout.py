@@ -4784,7 +4784,7 @@ def test_overflow_wrap():
     lines = get_lines('break-word', 'hyphenation')
     assert len(lines) > 3
     full_text = ''.join(line for line in lines)
-    assert full_text == "hy\u2010phena\u2010tion"
+    assert full_text == "hy\u2010phenation"
 
     # break word after normal white-space wrap and hyphenation
     lines = get_lines(
