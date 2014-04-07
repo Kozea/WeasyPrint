@@ -4749,11 +4749,10 @@ def test_hyphenate_limit_chars():
 
 @assert_no_logs
 def test_overflow_wrap():
-    # TODO: these tests should use ahem
     def get_lines(wrap, text):
         page, = parse('''
             <style>
-                body {width: 30px; overflow: hidden; }
+                body {width: 80px; overflow: hidden; font-family: ahem; }
                 span {overflow-wrap: %s; white-space: normal; }
             </style>
             <body style="-weasy-hyphens: auto;" lang="en">
@@ -4781,17 +4780,17 @@ def test_overflow_wrap():
     assert full_text == 'aaaaaaaa'
 
     # break-word after hyphenation
-    lines = get_lines('break-word', 'hyphenation')
+    lines = get_lines('break-word', 'hyphenations')
     assert len(lines) > 3
     full_text = ''.join(line for line in lines)
-    assert full_text == "hy\u2010phena\u2010tion"
+    assert full_text == "hy\u2010phen\u2010ations"
 
     # break word after normal white-space wrap and hyphenation
     lines = get_lines(
-        'break-word', 'I am a splitted word.  I am an hyphenated word.')
-    assert len(lines) > 10
+        'break-word', "A splitted word.  An hyphenated word.")
+    assert len(lines) > 8
     full_text = ''.join(line for line in lines)
-    assert full_text == "Iamasplittedword.Iamanhy\u2010phenatedword."
+    assert full_text == "Asplittedword.Anhy\u2010phen\u2010atedword."
 
 
 @assert_no_logs
