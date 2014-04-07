@@ -207,7 +207,7 @@ def handle_td(element, box, _get_image_from_uri):
 def handle_a(element, box, _get_image_from_uri):
     """Handle the ``rel`` attribute."""
     rel = element.get('rel', '').strip().lower()
-    setattr(box, 'rel', rel)
+    box.rel = rel
     return [box]
 
 
