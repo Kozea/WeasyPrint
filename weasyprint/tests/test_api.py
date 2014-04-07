@@ -948,6 +948,7 @@ def test_html_meta():
         meta.setdefault('description', None)
         meta.setdefault('created', None)
         meta.setdefault('modified', None)
+        meta.setdefault('attachments', [])
         assert vars(TestHTML(string=html).render().metadata) == meta
 
     assert_meta('<body>')
