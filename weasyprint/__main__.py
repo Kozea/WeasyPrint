@@ -99,7 +99,7 @@ def main(argv=None, stdout=None, stdin=None):
                              "Defaults to the input's own filename or URL "
                              'or the current directory for stdin.')
     parser.add_argument('-a', '--attachment', action='append',
-                        help='URL or filename of a file to attach to the document')
+                        help='URL or filename of a file to attach to the PDF document')
     parser.add_argument(
         'input', help='URL or filename of the HTML input, or - for stdin')
     parser.add_argument(

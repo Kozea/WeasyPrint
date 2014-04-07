@@ -71,8 +71,8 @@ class HTML(object):
         ``HTML(string=foo)`` relative URLs will be invalid if ``base_url``
         is not provided.
     :param attachments: A list of tuples, where each element describes an
-        attachment to the document. The tuple contains a URL and a description,
-        which can be :obj:`None`.
+        attachment to the PDF document. The tuple contains a URL and a
+        description, which can be :obj:`None`.
 
     """
     def __init__(self, guess=None, filename=None, url=None, file_obj=None,
