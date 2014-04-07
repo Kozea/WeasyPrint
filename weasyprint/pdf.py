@@ -32,10 +32,12 @@ r"""
 from __future__ import division, unicode_literals
 
 import binascii
+import hashlib
 import io
 import os
 import re
 import string
+import zlib
 
 import cairocffi as cairo
 
@@ -251,67 +253,6 @@ class PDFFile(object):
             self._write_object(object_number, byte_string))
         return object_number
 
-    def write_compressed_file_object(self, file):
-        """
-        Write a file like object as ``/EmbeddedFile``, compressing it with
-        deflate. In fact, this method writes multiple PDF objects to include
-        length, compressed length and MD5 checksum.
-
-        :return:
-            the object number of the compressed file stream object
-        """
-        import hashlib, zlib
-
-        object_number = self.next_object_number()
-        length_number = object_number + 1
-        md5_number = object_number + 2
-        uncompressed_length_number = object_number + 3
-
-        offset, write = self._start_writing()
-        write(pdf_format('{0} 0 obj\n', object_number))
-        write(pdf_format('<< /Type /EmbeddedFile /Length {0} 0 R /Filter '
-            '/FlateDecode /Params << /CheckSum {1} 0 R /Size {2} 0 R >> >>\n',
-            length_number, md5_number, uncompressed_length_number))
-        write(b'stream\n')
-
-        uncompressed_length = 0
-        compressed_length = 0
-
-        md5 = hashlib.md5()
-        compress = zlib.compressobj()
-        for data in iter(lambda: file.read(4096), b''):
-            uncompressed_length += len(data)
-
-            md5.update(data)
-
-            compressed = compress.compress(data)
-            compressed_length += len(compressed)
-
-            write(compressed)
-
-        compressed = compress.flush(zlib.Z_FINISH)
-        compressed_length += len(compressed)
-        write(compressed)
-
-        write(b'\nendstream\n')
-        write(b'endobj\n')
-
-        self.new_objects_offsets.append(offset)
-        self.new_objects_offsets.append(
-            self._write_object(
-                length_number,
-                pdf_format("{0}", compressed_length)))
-        self.new_objects_offsets.append(
-            self._write_object(
-                md5_number,
-                pdf_format("{0!H}", md5.digest())))
-        self.new_objects_offsets.append(
-            self._write_object(
-                uncompressed_length_number,
-                pdf_format("{0}", uncompressed_length)))
-
-        return object_number
-
     def finish(self):
         """
         Write the cross-reference table and the trailer for the new and
@@ -436,6 +377,67 @@ def prepare_metadata(document, bookmark_root_id, scale):
     return bookmark_root, bookmark_list, links
 
 
+def _write_compressed_file_object(pdf, file):
+    """
+    Write a file like object as ``/EmbeddedFile``, compressing it with deflate.
+    In fact, this method writes multiple PDF objects to include length, compressed
+    length and MD5 checksum.
+
+    :return:
+        the object number of the compressed file stream object
+    """
+
+    object_number = pdf.next_object_number()
+    length_number = object_number + 1
+    md5_number = object_number + 2
+    uncompressed_length_number = object_number + 3
+
+    offset, write = pdf._start_writing()
+    write(pdf_format('{0} 0 obj\n', object_number))
+    write(pdf_format('<< /Type /EmbeddedFile /Length {0} 0 R /Filter '
+        '/FlateDecode /Params << /CheckSum {1} 0 R /Size {2} 0 R >> >>\n',
+        length_number, md5_number, uncompressed_length_number))
+    write(b'stream\n')
+
+    uncompressed_length = 0
+    compressed_length = 0
+
+    md5 = hashlib.md5()
+    compress = zlib.compressobj()
+    for data in iter(lambda: file.read(4096), b''):
+        uncompressed_length += len(data)
+
+        md5.update(data)
+
+        compressed = compress.compress(data)
+        compressed_length += len(compressed)
+
+        write(compressed)
+
+    compressed = compress.flush(zlib.Z_FINISH)
+    compressed_length += len(compressed)
+    write(compressed)
+
+    write(b'\nendstream\n')
+    write(b'endobj\n')
+
+    pdf.new_objects_offsets.append(offset)
+    pdf.new_objects_offsets.append(
+        pdf._write_object(
+            length_number,
+            pdf_format("{0}", compressed_length)))
+    pdf.new_objects_offsets.append(
+        pdf._write_object(
+            md5_number,
+            pdf_format("{0!H}", md5.digest())))
+    pdf.new_objects_offsets.append(
+        pdf._write_object(
+            uncompressed_length_number,
+            pdf_format("{0}", uncompressed_length)))
+
+    return object_number
+
+
 def _get_filename_from_url(url):
     """
     Derives a filename from an URL or returns a synthetic name if the URL has
@@ -496,7 +498,7 @@ def _write_pdf_attachment(pdf, filename, url, description, url_fetcher):
         with fetch(url_fetcher, url) as result:
             stream = result.get('file_obj') or \
                      io.BytesIO(result.get('string'))
-            file_stream_id = pdf.write_compressed_file_object(stream)
+            file_stream_id = _write_compressed_file_object(pdf, stream)
 
         return pdf.write_new_object(pdf_format(
             '<< /Type /Filespec /F () /UF {0!P} /EF << /F {1} 0 R >> '
