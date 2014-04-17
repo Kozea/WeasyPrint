@@ -282,8 +282,13 @@ def block_container_layout(context, box, max_position_y, skip_stack,
             elif child.is_floated():
                 new_child = float_layout(
                     context, child, box, absolute_boxes, fixed_boxes)
-                new_child.index = index
-                new_children.append(new_child)
+                # ABP: New page if overflow
+                if not (new_child.position_y + new_child.height > max_position_y):
+                    new_child.index = index
+                    new_children.append(new_child)
+                else:
+                    resume_at = (index, None)
+                    break                    
             continue
 
         if isinstance(child, boxes.LineBox):
