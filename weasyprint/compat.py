@@ -16,11 +16,14 @@ import sys
 import email
 
 
-__all__ = ['Request', 'base64_decode', 'base64_encode', 'basestring',
-           'ints_from_bytes', 'iteritems', 'izip', 'parse_email', 'parse_qs',
-           'pathname2url', 'quote', 'unicode', 'unquote', 'unquote_to_bytes',
-           'urlencode', 'urljoin', 'urlopen', 'urlopen_contenttype',
-           'urlparse_uses_relative', 'urlsplit', 'xrange']
+__all__ = ['BaseHTTPRequestHandler', 'HTTPBasicAuthHandler',
+           'HTTPDigestAuthHandler', 'Request', 'ThreadingMixIn', 'HTTPServer',
+           'base64_decode', 'base64_encode', 'basestring', 'build_opener',
+           'install_opener', 'ints_from_bytes', 'iteritems', 'izip',
+           'parse_email', 'parse_qs', 'pathname2url', 'quote', 'unicode',
+           'unquote', 'unquote_to_bytes', 'urlencode', 'urljoin', 'urlopen',
+           'urlopen_contenttype', 'urlparse_uses_relative', 'urlsplit',
+           'xrange']
 
 
 if sys.version_info[0] >= 3:
@@ -28,10 +31,14 @@ if sys.version_info[0] >= 3:
     from urllib.parse import (
         urljoin, urlsplit, quote, unquote, unquote_to_bytes, parse_qs,
         urlencode, uses_relative as urlparse_uses_relative)
-    from urllib.request import urlopen, Request, pathname2url
+    from urllib.request import (
+        build_opener, install_opener, HTTPBasicAuthHandler,
+        HTTPDigestAuthHandler, urlopen, Request, pathname2url)
     from array import array
     from base64 import (decodebytes as base64_decode,
                         encodebytes as base64_encode)
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+    from socketserver import ThreadingMixIn
 
     unicode = str
     basestring = str
@@ -60,12 +67,16 @@ else:
     # Python 2
     from urlparse import (urljoin, urlsplit, parse_qs,
                           uses_relative as urlparse_uses_relative)
-    from urllib2 import urlopen, Request
+    from urllib2 import (
+        build_opener, install_opener, HTTPBasicAuthHandler,
+        HTTPDigestAuthHandler, urlopen, Request)
     from urllib import pathname2url, quote, unquote, urlencode
     from array import array as _array
     from itertools import izip, imap
     from base64 import (decodestring as base64_decode,
                         encodestring as base64_encode)
+    from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+    from SocketServer import ThreadingMixIn
 
     unicode = unicode
     basestring = basestring

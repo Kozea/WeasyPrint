@@ -17,7 +17,8 @@ import sys
 import argparse
 
 from . import VERSION, HTML
-
+from .compat import (
+    build_opener, install_opener, HTTPBasicAuthHandler, HTTPDigestAuthHandler)
 
 def main(argv=None, stdout=None, stdin=None):
     """The ``weasyprint`` program takes at least two arguments:
@@ -57,6 +58,14 @@ def main(argv=None, stdout=None, stdin=None):
         Set the base for relative URLs in the HTML input.
         Defaults to the input’s own URL, or the current directory for stdin.
 
+    .. option:: --http-username <username>
+
+        Set the username for HTTP authentication.
+
+    .. option:: --http-password <password>
+
+        Set the password for HTTP authentication.
+
     .. option:: -m <type>, --media-type <type>
 
         Set the media type to use for ``@media``. Defaults to ``print``.
@@ -92,6 +101,10 @@ def main(argv=None, stdout=None, stdin=None):
                         help='Base for relative URLs in the HTML input. '
                              "Defaults to the input's own filename or URL "
                              'or the current directory for stdin.')
+    parser.add_argument('--http-username',
+                        help='Username for HTTP authentication.')
+    parser.add_argument('--http-password',
+                        help='Password for HTTP authentication.')
     parser.add_argument(
         'input', help='URL or filename of the HTML input, or - for stdin')
     parser.add_argument(
@@ -136,6 +149,21 @@ def main(argv=None, stdout=None, stdin=None):
             kwargs['resolution'] = args.resolution
         else:
             parser.error('--resolution only applies for the PNG format.')
+
+    if not args.http_username is None:
+        class PasswordMgr(object):
+            def add_password(self, realm, uri, user, passwd):
+                pass
+            def find_user_password(self, realm, authuri):
+                return args.http_username, args.http_password or ''
+
+        mgr = PasswordMgr()
+        basic_handler = HTTPBasicAuthHandler(mgr)
+        digest_handler = HTTPDigestAuthHandler(mgr)
+        install_opener(build_opener(basic_handler, digest_handler))
+    elif not args.http_password is None:
+        parser.error('--http-password needs --http-username.')
+
     html = HTML(source, base_url=args.base_url, encoding=args.encoding,
                 media_type=args.media_type)
     getattr(html, 'write_' + format_)(output, **kwargs)
