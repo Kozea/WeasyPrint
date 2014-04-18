@@ -12,12 +12,15 @@
 
 from __future__ import division, unicode_literals
 
+import base64
 import os
+import hashlib
 import io
 import sys
 import math
 import contextlib
 import threading
+import random
 import shutil
 import tempfile
 
@@ -29,8 +32,10 @@ import pytest
 from .testing_utils import (
     resource_filename, assert_no_logs, capture_logs, TestHTML)
 from .test_draw import image_to_pixels
-from ..compat import urljoin, urlencode, urlparse_uses_relative, iteritems
-from ..urls import path2url
+from ..compat import (
+    BaseHTTPRequestHandler, HTTPServer, ThreadingMixIn, urljoin, urlencode,
+    urlparse_uses_relative, iteritems)
+from ..urls import path2url, URLFetchingError
 from .. import HTML, CSS, default_url_fetcher
 from .. import __main__
 from .. import navigator
@@ -76,6 +81,41 @@ def write_file(filename, content):
     """Shortcut for reading a file."""
     with open(filename, 'wb') as fd:
         fd.write(content)
+
+
+def run(args, stdin=b''):
+    """
+    Runs the WeasyPrint application and returns the standard output of that
+    call.
+    """
+    stdin = io.BytesIO(stdin)
+    stdout = io.BytesIO()
+    try:
+        __main__.HTML = TestHTML
+        __main__.main(args.split(), stdin=stdin, stdout=stdout)
+    finally:
+        __main__.HTML = HTML
+    return stdout.getvalue()
+
+
+@contextlib.contextmanager
+def http_server(request_handler):
+    """
+    Starts a HTTP server in a separate thread, passing requests to the given
+    ``request_handler``.
+    """
+    class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
+        pass
+
+    server = ThreadingHTTPServer(('127.0.0.1', 0), request_handler)
+    server_thread = threading.Thread(target=server.serve_forever)
+
+    server_thread.start()
+    try:
+        yield server
+    finally:
+        server.shutdown()
+        server_thread.join()
 
 
 def _test_resource(class_, basename, check, **kwargs):
@@ -328,16 +368,6 @@ def test_command_line_render():
     check_png_pattern(png_bytes)
     check_png_pattern(rotated_png_bytes, rotated=True)
     check_png_pattern(empty_png_bytes, blank=True)
-
-    def run(args, stdin=b''):
-        stdin = io.BytesIO(stdin)
-        stdout = io.BytesIO()
-        try:
-            __main__.HTML = TestHTML
-            __main__.main(args.split(), stdin=stdin, stdout=stdout)
-        finally:
-            __main__.HTML = HTML
-        return stdout.getvalue()
 
     with temp_directory() as temp:
         with chdir(temp):
@@ -987,4 +1017,99 @@ def test_html_meta():
         ''',
         title='One',
         authors=['', 'Me'])
+
+
+@assert_no_logs
+def test_command_line_http_auth():
+    """Test the HTTP authentication support of the command line interface."""
+
+    # Start a webserver that provides resources, each with a different
+    # authentication method (/basic and /digest)
+    class AuthenticatingRequestHandler(BaseHTTPRequestHandler):
+        def log_message(self, format, *args):
+            pass
+
+        def do_GET(self):
+            authorization = self.headers['Authorization'] or ''
+
+            if self.path == '/basic':
+                authorization = authorization.encode('ascii')
+                if authorization.startswith(b'Basic ') and \
+                    base64.b64decode(authorization[6:]) == b'weasy:print':
+                    self.send_response(200)
+                    self.send_header('Content-type', 'text/html')
+                    self.end_headers()
+                    # Returning some data in the title is beneficial for our
+                    # assertion later on, that checks if indeed this resource
+                    # has been rendered
+                    self.wfile.write(b'<title>Basic OK!</title>')
+                    return
+
+                self.send_response(401)
+                self.send_header('WWW-Authenticate',
+                    'Basic realm="TestServer"')
+                self.end_headers()
+                self.wfile.write(b'No access')
+
+            elif self.path == '/digest':
+                if authorization.startswith('Digest '):
+                    parts = {}
+                    for a in authorization[7:].split(','):
+                        key, value = a.strip().split('=', 1)
+                        parts[key] = value.strip('"')
+
+                    ha1 = hashlib.md5(b'print:TestServer:weasy').hexdigest()
+                    ha2 = hashlib.md5(b'GET:/digest').hexdigest()
+                    response_data = ha1 + ':' + parts['nonce'] + ':' + ha2
+
+                    response = hashlib.md5(response_data.encode('ascii')) \
+                        .hexdigest()
+
+                    if parts['response'] == response and \
+                        parts['opaque'] == 'some_stateful_data':
+                        self.send_response(200)
+                        self.send_header('Content-type', 'text/html')
+                        self.end_headers()
+                        self.wfile.write(b'<title>Digest OK!</title>')
+                        return
+
+                self.send_response(401)
+                self.send_header('WWW-Authenticate',
+                    'Digest realm="TestServer",'
+                    'opaque="some_stateful_data",'
+                    'nonce="{}"'.format(random.randint(0, 1000)))
+                self.end_headers()
+                self.wfile.write(b'No access')
+
+            else:
+                self.send_error(404)
+
+    with http_server(AuthenticatingRequestHandler) as server:
+        base_url = 'http://{}:{}'.format(*server.server_address)
+
+        with temp_directory() as temp:
+            with chdir(temp):
+                # Basic auth
+                with pytest.raises(URLFetchingError):
+                    run('{}/{} output.pdf'.format(base_url, 'basic'))
+                with pytest.raises(URLFetchingError):
+                    run('{}/{} output.pdf --http-username {} --http-password' \
+                        ' {}'.format(base_url, 'basic', 'weasy', 'wrong'))
+
+                run('{}/{} output.pdf --http-username {} --http-password {}' \
+                    .format(base_url, 'basic', 'weasy', 'print'))
+                assert b'\xfe\xff\x00B\x00a\x00s\x00i\x00c\x00 \x00O\x00K' \
+                    b'\x00!' in read_file('output.pdf')
+
+                # Digest auth
+                with pytest.raises(URLFetchingError):
+                    run('{}/{} output.pdf'.format(base_url, 'digest'))
+                with pytest.raises(URLFetchingError):
+                    run('{}/{} output.pdf --http-username {} --http-password' \
+                        ' {}'.format(base_url, 'digest', 'print', 'wrong'))
+
+                run('{}/{} output.pdf --http-username {} --http-password {}' \
+                    .format(base_url, 'digest', 'print', 'weasy'))
+                assert b'\xfe\xff\x00D\x00i\x00g\x00e\x00s\x00t\x00 \x00O' \
+                    b'\x00K\x00!' in read_file('output.pdf')
 
