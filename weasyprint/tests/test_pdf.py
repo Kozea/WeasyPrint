@@ -376,7 +376,7 @@ def test_embedded_files():
             pdf_bytes)
     assert (b'/F ()' in pdf_bytes)
     assert (b'/UF (\xfe\xff\x00a\x00t\x00t\x00a\x00c\x00h\x00m\x00e\x00n'
-            b'\x00t\x00.\x00b\x00i\x00n)' in pdf_bytes)
+            b'\x00t\x00.\x00t\x00x\x00t)' in pdf_bytes)
     assert (b'/Desc (\xfe\xff\x00s\x00o\x00m\x00e\x00 \x00f\x00i\x00l\x00e'
             b'\x00 \x00a\x00t\x00t\x00a\x00c\x00h\x00m\x00e\x00n\x00t\x00 '
             b'\x00\xe4\x00\xf6\x00\xfc)' in pdf_bytes)

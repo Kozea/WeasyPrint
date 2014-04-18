@@ -34,6 +34,7 @@ from __future__ import division, unicode_literals
 import binascii
 import hashlib
 import io
+import mimetypes
 import os
 import re
 import string
@@ -435,15 +436,40 @@ def _write_compressed_file_object(pdf, file):
     return object_number
 
 
-def _get_filename_from_url(url):
+def _get_filename_from_result(url, result):
     """
-    Derives a filename from an URL or returns a synthetic name if the URL has
-    no path component
+    Derives a filename from a fetched resource. This is either the filename
+    returned by the URL fetcher, the last URL path component or a synthetic
+    name if the URL has no path
     """
+
+    # A given filename will always take precedence
+    filename = result.get('filename')
+    if filename:
+        return filename
+
+    # The URL path likely contains a filename, which is a good second guess
     split = urlsplit(url)
     filename = split.path.split("/")[-1]
     if split.scheme == 'data' or filename == '':
-        filename = 'attachment.bin'
+        # The URL lacks a path altogether. Use a synthetic name.
+
+        # Using guess_extension is a great idea, but sadly the extension is
+        # probably random, depending on the alignment of the stars, which car
+        # you're driving and which software has been installed on your machine.
+        #
+        # Unfortuneatly this isn't even imdepodent on one machine, because the
+        # extension can depend on PYTHONHASHSEED if mimetypes has multiple
+        # extensions to offer
+        extension = None
+        mime_type = result.get('mime_type')
+        if mime_type == 'text/plain':
+            # text/plain has a phletora of extensions - all garbage
+            extension = '.txt'
+        else:
+            extension = mimetypes.guess_extension(mime_type) or '.bin'
+
+        filename = 'attachment' + extension
     else:
         filename = unquote(filename)
 
@@ -460,9 +486,8 @@ def _write_pdf_embedded_files(pdf, attachments, url_fetcher):
 
     file_spec_ids = []
     for url, description in attachments:
-        filename = _get_filename_from_url(url)
-        file_spec_id = _write_pdf_attachment(pdf, filename, url, description,
-                                             url_fetcher)
+        file_spec_id = _write_pdf_attachment(pdf, url, description,
+            url_fetcher)
         if not file_spec_id is None:
             file_spec_ids.append(file_spec_id)
 
@@ -478,7 +503,7 @@ def _write_pdf_embedded_files(pdf, attachments, url_fetcher):
     return pdf.write_new_object(b''.join(content))
 
 
-def _write_pdf_attachment(pdf, filename, url, description, url_fetcher):
+def _write_pdf_attachment(pdf, url, description, url_fetcher):
     """
     Writes an attachment to the PDF stream
 
@@ -492,6 +517,8 @@ def _write_pdf_attachment(pdf, filename, url, description, url_fetcher):
             stream = result.get('file_obj') or \
                      io.BytesIO(result.get('string'))
             file_stream_id = _write_compressed_file_object(pdf, stream)
+
+        filename = _get_filename_from_result(url, result)
 
         return pdf.write_new_object(pdf_format(
             '<< /Type /Filespec /F () /UF {0!P} /EF << /F {1} 0 R >> '
@@ -518,10 +545,9 @@ def _write_pdf_annotation_files(pdf, links, url_fetcher):
         for is_internal, target, rectangle in page_links:
             if is_internal == 'attachment' and not target in annot_files:
                 annot_files[target] = None
-                filename = _get_filename_from_url(target)
                 # TODO: use the title attribute as description
-                annot_files[target] = _write_pdf_attachment(pdf, filename,
-                                      target, None, url_fetcher)
+                annot_files[target] = _write_pdf_attachment(pdf, target, None,
+                    url_fetcher)
     return annot_files
 
 
