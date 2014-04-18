@@ -113,11 +113,14 @@ def _gather_links_and_bookmarks(box, bookmarks, links, anchors, matrix):
     has_link = link and not isinstance(box, boxes.TextBox)
     # In case of duplicate IDs, only the first is an anchor.
     has_anchor = anchor_name and anchor_name not in anchors
+    is_attachment = hasattr(box, 'rel') and box.rel == 'attachment'
 
     if has_bookmark or has_link or has_anchor:
         pos_x, pos_y, width, height = box.hit_area()
         if has_link:
             link_type, target = link
+            if link_type == 'external' and is_attachment:
+                link_type = 'attachment'
             if matrix:
                 link = _TaggedTuple(
                     (link_type, target, rectangle_aabb(
@@ -171,6 +174,8 @@ class Page(object):
         #    The anchor might be defined in another page,
         #    in multiple pages (in which case the first occurence is used),
         #    or not at all.
+        #: * ``'attachment'``: :obj:`target` is an absolute URL and points
+        #:   to a resource to attach to the document.
         self.links = links = []
 
         #: A dict mapping anchor names to their target, ``(x, y)`` points
@@ -246,7 +251,8 @@ class DocumentMetadata(object):
 
     """
     def __init__(self, title=None, authors=None, description=None,
-                 keywords=None, generator=None, created=None, modified=None):
+                 keywords=None, generator=None, created=None, modified=None,
+                 attachments=None):
         #: The title of the document, as a string or :obj:`None`.
         #: Extracted from the ``<title>`` element in HTML
         #: and written to the ``/Title`` info field in PDF.
@@ -281,6 +287,11 @@ class DocumentMetadata(object):
         #: Extracted from the ``<meta name=dcterms.modified>`` element in HTML
         #: and written to the ``/ModDate`` info field in PDF.
         self.modified = modified
+        #: File attachments as a list of tuples of URL and a description or
+        #: :obj:`None`.
+        #: Extracted from the ``<link rel=attachment>`` elements in HTML
+        #: and written to the ``/EmbeddedFiles`` dictionary in PDF.
+        self.attachments = attachments or []
 
 
 class Document(object):
@@ -289,8 +300,8 @@ class Document(object):
 
     Typically obtained from :meth:`HTML.render() <weasyprint.HTML.render>`,
     but can also be instantiated directly
-    with a list of :class:`pages <Page>`
-    and a set of :class:`metadata <DocumentMetadata>`.
+    with a list of :class:`pages <Page>`,
+    a set of :class:`metadata <DocumentMetadata>` and a ``url_fetcher``.
 
     """
     @classmethod
@@ -306,15 +317,18 @@ class Document(object):
             build_formatting_structure(
                 html.root_element, style_for, get_image_from_uri))
         return cls([Page(p, enable_hinting) for p in page_boxes],
-                   DocumentMetadata(**html._get_metadata()))
+                   DocumentMetadata(**html._get_metadata()), html.url_fetcher)
 
-    def __init__(self, pages, metadata):
+    def __init__(self, pages, metadata, url_fetcher):
         #: A list of :class:`Page` objects.
         self.pages = pages
         #: A :class:`DocumentMetadata` object.
         #: Contains information that does not belong to a specific page
         #: but to the whole document.
         self.metadata = metadata
+        #: A ``url_fetcher`` for resources that have to be read when writing
+        #: the output.
+        self.url_fetcher = url_fetcher
 
     def copy(self, pages='all'):
         """Take a subset of the pages.
@@ -349,7 +363,7 @@ class Document(object):
             pages = self.pages
         elif not isinstance(pages, list):
             pages = list(pages)
-        return type(self)(pages, self.metadata)
+        return type(self)(pages, self.metadata, self.url_fetcher)
 
     def resolve_links(self):
         """Resolve internal hyperlinks.
@@ -466,7 +480,8 @@ class Document(object):
             surface.show_page()
         surface.finish()
 
-        write_pdf_metadata(self, file_obj, scale, self.metadata)
+        write_pdf_metadata(self, file_obj, scale, self.metadata,
+            self.url_fetcher)
 
         if target is None:
             return file_obj.getvalue()

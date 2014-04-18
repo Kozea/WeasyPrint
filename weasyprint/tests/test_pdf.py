@@ -12,7 +12,11 @@
 
 from __future__ import division, unicode_literals
 
+import binascii
+import hashlib
 import io
+import os
+import tempfile
 
 import cairocffi
 import pytest
@@ -20,6 +24,7 @@ import pytest
 from .. import CSS
 from .. import pdf
 from ..images import CAIRO_HAS_MIME_DATA
+from ..urls import path2url
 from .testing_utils import (
     assert_no_logs, resource_filename, TestHTML, capture_logs)
 
@@ -334,3 +339,105 @@ def test_document_info():
     assert b'/Subject (\xfe\xff\x00B\x00l\x00a\x00h &\x00 )' in pdf_bytes
     assert b'/CreationDate (D:201104)' in pdf_bytes
     assert b"/ModDate (D:20130721234600+01'00')" in pdf_bytes
+
+
+@assert_no_logs
+def test_embedded_files():
+    afd, absolute_tmp_file = tempfile.mkstemp()
+    adata = b'12345678'
+    with os.fdopen(afd, 'wb') as afile:
+        afile.write(adata)
+
+    rfd, relative_tmp_file = tempfile.mkstemp(suffix='äöü')
+    rdata = b'abcdefgh'
+    with os.fdopen(rfd, 'wb') as rfile:
+        rfile.write(rdata)
+
+    pdf_bytes = TestHTML(string='''
+        <title>Test document</title>
+        <meta charset="utf-8">
+        <link
+            rel="attachment"
+            title="some file attachment äöü"
+            href="data:,hi%20there">
+        <link rel="attachment" href="{0}">
+        <link rel="attachment" href="{1}">
+        <h1>Heading 1</h1>
+        <h2>Heading 2</h2>
+    '''.format(path2url(absolute_tmp_file),
+               os.path.basename(relative_tmp_file)),
+               base_url=os.path.dirname(relative_tmp_file), attachments=[('data:,oob attachment', None)]
+              ).write_pdf()
+
+    os.remove(absolute_tmp_file)
+    os.remove(relative_tmp_file)
+
+    assert (binascii.hexlify(hashlib.md5(b'hi there').digest()) in
+            pdf_bytes)
+    assert (b'/F ()' in pdf_bytes)
+    assert (b'/UF (\xfe\xff\x00a\x00t\x00t\x00a\x00c\x00h\x00m\x00e\x00n'
+            b'\x00t\x00.\x00t\x00x\x00t)' in pdf_bytes)
+    assert (b'/Desc (\xfe\xff\x00s\x00o\x00m\x00e\x00 \x00f\x00i\x00l\x00e'
+            b'\x00 \x00a\x00t\x00t\x00a\x00c\x00h\x00m\x00e\x00n\x00t\x00 '
+            b'\x00\xe4\x00\xf6\x00\xfc)' in pdf_bytes)
+
+    assert (binascii.hexlify(hashlib.md5(adata).digest()) in pdf_bytes)
+    assert (os.path.basename(absolute_tmp_file).encode('utf-16-be')
+            in pdf_bytes)
+
+    assert (binascii.hexlify(hashlib.md5(rdata).digest()) in pdf_bytes)
+    assert (os.path.basename(relative_tmp_file).encode('utf-16-be')
+            in pdf_bytes)
+
+    assert (binascii.hexlify(hashlib.md5(b'oob attachment').digest()) in
+            pdf_bytes)
+
+    assert (b'/EmbeddedFiles' in pdf_bytes)
+    assert (b'/Outlines' in pdf_bytes)
+
+    pdf_bytes = TestHTML(string='''
+        <title>Test document 2</title>
+        <meta charset="utf-8">
+        <link
+            rel="attachment"
+            href="data:,some data">
+    ''').write_pdf()
+
+    assert (binascii.hexlify(hashlib.md5(b'some data').digest()) in
+            pdf_bytes)
+    assert (b'/EmbeddedFiles' in pdf_bytes)
+    assert (not b'/Outlines' in pdf_bytes)
+
+    pdf_bytes = TestHTML(string='''
+        <title>Test document 3</title>
+        <meta charset="utf-8">
+        <h1>Heading</h1>
+    ''').write_pdf()
+
+    assert (not b'/EmbeddedFiles' in pdf_bytes)
+    assert (b'/Outlines' in pdf_bytes)
+
+    pdf_bytes = TestHTML(string='''
+        <title>Test document 4</title>
+        <meta charset="utf-8">
+    ''').write_pdf()
+
+    assert (not b'/EmbeddedFiles' in pdf_bytes)
+    assert (not b'/Outlines' in pdf_bytes)
+
+@assert_no_logs
+def test_annotation_files():
+    pdf_bytes = TestHTML(string='''
+        <title>Test document</title>
+        <meta charset="utf-8">
+        <a
+            rel="attachment"
+            href="data:,some data"
+            download>A link that lets you download an attachment</a>
+    ''').write_pdf()
+
+    assert (binascii.hexlify(hashlib.md5(b'some data').digest()) in
+            pdf_bytes)
+    assert (b'/FileAttachment' in pdf_bytes)
+    assert (not b'/EmbeddedFiles' in pdf_bytes)
+

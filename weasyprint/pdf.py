@@ -31,15 +31,20 @@ r"""
 
 from __future__ import division, unicode_literals
 
+import binascii
+import hashlib
+import io
+import mimetypes
 import os
 import re
 import string
+import zlib
 
 import cairocffi as cairo
 
 from . import VERSION_STRING
 from .compat import xrange, iteritems, izip
-from .urls import iri_to_uri
+from .urls import iri_to_uri, fetch, unquote, urlsplit, URLFetchingError
 from .html import W3C_DATE_RE
 from .logger import LOGGER
 
@@ -50,8 +55,10 @@ class PDFFormatter(string.Formatter):
     * Results are byte strings
     * The new !P conversion flags encodes a PDF string.
       (UTF-16 BE with a BOM, then backslash-escape parentheses.)
+    * The new !H conversion flags encodes a PDF string in the hexadecimal
+      format.
 
-    Except for fields marked !P, everything should be ASCII-only.
+    Except for fields marked !P or !H, everything should be ASCII-only.
 
     """
     def convert_field(self, value, conversion):
@@ -62,6 +69,8 @@ class PDFFormatter(string.Formatter):
             return '({0})'.format(
                 ('\ufeff' + value).encode('utf-16-be').decode('latin1')
                 .translate({40: r'\(', 41: r'\)', 92: r'\\'}))
+        elif conversion == 'H':
+            return '<{0}>'.format(binascii.hexlify(value).decode('ascii'))
         else:
             return super(PDFFormatter, self).convert_field(value, conversion)
 
@@ -369,7 +378,180 @@ def prepare_metadata(document, bookmark_root_id, scale):
     return bookmark_root, bookmark_list, links
 
 
-def write_pdf_metadata(document, fileobj, scale, metadata):
+def _write_compressed_file_object(pdf, file):
+    """
+    Write a file like object as ``/EmbeddedFile``, compressing it with deflate.
+    In fact, this method writes multiple PDF objects to include length, compressed
+    length and MD5 checksum.
+
+    :return:
+        the object number of the compressed file stream object
+    """
+
+    object_number = pdf.next_object_number()
+    # Make sure we stay in sync with our object numbers
+    expected_next_object_number = object_number + 4
+
+    length_number = object_number + 1
+    md5_number = object_number + 2
+    uncompressed_length_number = object_number + 3
+
+    offset, write = pdf._start_writing()
+    write(pdf_format('{0} 0 obj\n', object_number))
+    write(pdf_format('<< /Type /EmbeddedFile /Length {0} 0 R /Filter '
+        '/FlateDecode /Params << /CheckSum {1} 0 R /Size {2} 0 R >> >>\n',
+        length_number, md5_number, uncompressed_length_number))
+    write(b'stream\n')
+
+    uncompressed_length = 0
+    compressed_length = 0
+
+    md5 = hashlib.md5()
+    compress = zlib.compressobj()
+    for data in iter(lambda: file.read(4096), b''):
+        uncompressed_length += len(data)
+
+        md5.update(data)
+
+        compressed = compress.compress(data)
+        compressed_length += len(compressed)
+
+        write(compressed)
+
+    compressed = compress.flush(zlib.Z_FINISH)
+    compressed_length += len(compressed)
+    write(compressed)
+
+    write(b'\nendstream\n')
+    write(b'endobj\n')
+
+    pdf.new_objects_offsets.append(offset)
+
+    pdf.write_new_object(pdf_format("{0}", compressed_length))
+    pdf.write_new_object(pdf_format("{0!H}", md5.digest()))
+    pdf.write_new_object(pdf_format("{0}", uncompressed_length))
+
+    assert pdf.next_object_number() == expected_next_object_number
+
+    return object_number
+
+
+def _get_filename_from_result(url, result):
+    """
+    Derives a filename from a fetched resource. This is either the filename
+    returned by the URL fetcher, the last URL path component or a synthetic
+    name if the URL has no path
+    """
+
+    # A given filename will always take precedence
+    filename = result.get('filename')
+    if filename:
+        return filename
+
+    # The URL path likely contains a filename, which is a good second guess
+    split = urlsplit(url)
+    filename = split.path.split("/")[-1]
+    if split.scheme == 'data' or filename == '':
+        # The URL lacks a path altogether. Use a synthetic name.
+
+        # Using guess_extension is a great idea, but sadly the extension is
+        # probably random, depending on the alignment of the stars, which car
+        # you're driving and which software has been installed on your machine.
+        #
+        # Unfortuneatly this isn't even imdepodent on one machine, because the
+        # extension can depend on PYTHONHASHSEED if mimetypes has multiple
+        # extensions to offer
+        extension = None
+        mime_type = result.get('mime_type')
+        if mime_type == 'text/plain':
+            # text/plain has a phletora of extensions - all garbage
+            extension = '.txt'
+        else:
+            extension = mimetypes.guess_extension(mime_type) or '.bin'
+
+        filename = 'attachment' + extension
+    else:
+        filename = unquote(filename)
+
+    return filename
+
+
+def _write_pdf_embedded_files(pdf, attachments, url_fetcher):
+    """
+    Writes attachments as embedded files (document attachments).
+
+    :return:
+        the object number of the name dictionary or :obj:`None`
+    """
+
+    file_spec_ids = []
+    for url, description in attachments:
+        file_spec_id = _write_pdf_attachment(pdf, url, description,
+            url_fetcher)
+        if not file_spec_id is None:
+            file_spec_ids.append(file_spec_id)
+
+    # We might have failed to write any attachment at all
+    if len(file_spec_ids) == 0:
+        return None
+
+    content = [b'<< /Names [']
+    for fs in file_spec_ids:
+        content.append(pdf_format('\n(attachment{0}) {0} 0 R ',
+                       fs))
+    content.append(b'\n] >>')
+    return pdf.write_new_object(b''.join(content))
+
+
+def _write_pdf_attachment(pdf, url, description, url_fetcher):
+    """
+    Writes an attachment to the PDF stream
+
+    :return:
+        the object number of the ``/Filespec`` object or :obj:`None` if the
+        attachment couldn't be read.
+    """
+    try:
+        file_stream_id = None
+        with fetch(url_fetcher, url) as result:
+            stream = result.get('file_obj') or \
+                     io.BytesIO(result.get('string'))
+            file_stream_id = _write_compressed_file_object(pdf, stream)
+
+        filename = _get_filename_from_result(url, result)
+
+        return pdf.write_new_object(pdf_format(
+            '<< /Type /Filespec /F () /UF {0!P} /EF << /F {1} 0 R >> '
+            '/Desc {2!P}\n>>',
+            filename,
+            file_stream_id,
+            description or ''))
+    except URLFetchingError as exc:
+        LOGGER.warning('Failed to load attachment at %s : %s', url, exc)
+
+    return None
+
+
+def _write_pdf_annotation_files(pdf, links, url_fetcher):
+    """
+    Write all annotation attachments to the PDF file.
+
+    :return:
+        a dictionary that maps URLs to PDF object numbers, which can be
+        :obj:`None` if the resource failed to load.
+    """
+    annot_files = {}
+    for page_links in links:
+        for is_internal, target, rectangle in page_links:
+            if is_internal == 'attachment' and not target in annot_files:
+                annot_files[target] = None
+                # TODO: use the title attribute as description
+                annot_files[target] = _write_pdf_attachment(pdf, target, None,
+                    url_fetcher)
+    return annot_files
+
+
+def write_pdf_metadata(document, fileobj, scale, metadata, url_fetcher):
     """Append to a seekable file-like object to add PDF metadata."""
     pdf = PDFFile(fileobj)
     bookmark_root_id = pdf.next_object_number()
@@ -377,8 +559,6 @@ def write_pdf_metadata(document, fileobj, scale, metadata):
         document, bookmark_root_id, scale)
 
     if bookmarks:
-        pdf.extend_dict(pdf.catalog, pdf_format(
-            '/Outlines {0} 0 R /PageMode /UseOutlines', bookmark_root_id))
         pdf.write_new_object(pdf_format(
             '<< /Type /Outlines /Count {0} /First {1} 0 R /Last {2} 0 R\n>>',
             bookmark_root['Count'],
@@ -400,22 +580,63 @@ def write_pdf_metadata(document, fileobj, scale, metadata):
             content.append(b'>>')
             pdf.write_new_object(b''.join(content))
 
+    embedded_files_id = _write_pdf_embedded_files(pdf, metadata.attachments,
+                                                  url_fetcher)
+
+    if bookmarks or embedded_files_id is not None:
+        params = b''
+        if bookmarks:
+            params += pdf_format(' /Outlines {0} 0 R /PageMode /UseOutlines',
+                                 bookmark_root_id)
+        if embedded_files_id is not None:
+            params += pdf_format(' /Names << /EmbeddedFiles {0} 0 R >>',
+                                 embedded_files_id)
+        pdf.extend_dict(pdf.catalog, params)
+
+    # A single link can be split in multiple regions. We don't want to embedded
+    # a file multiple times of course, so keep a reference to every embedded
+    # URL and reuse the object number.
+    # TODO: If we add support for descriptions this won't always be correct,
+    # because two links might have the same href, but different titles.
+    annot_files = _write_pdf_annotation_files(pdf, links, url_fetcher)
+
+    # TODO: splitting a link into multiple independent rectangular annotations
+    # works well for pure links, but rather mediocre for other annotations and
+    # fails completely for transformed (CSS) or complex link shapes (area).
+    # It would be better to use /AP for all links and coalesce link shapes that
+    # originate from the same HTML link. This would give a feeling similiar to
+    # what browsers do with links that span multiple lines.
     for page, page_links in zip(pdf.pages, links):
         annotations = []
         for is_internal, target, rectangle in page_links:
-            content = [pdf_format(
-                '<< /Type /Annot /Subtype /Link '
+            content = [pdf_format('<< /Type /Annot '
                 '/Rect [{0:f} {1:f} {2:f} {3:f}] /Border [0 0 0]\n',
                 *rectangle)]
-            if is_internal == 'internal':
-                content.append(pdf_format(
-                    '/A << /Type /Action /S /GoTo '
-                    '/D [{0} /XYZ {1:f} {2:f} 0] >>\n',
-                    *target))
+            if is_internal != 'attachment' or annot_files[target] is None:
+                content.append(b'/Subtype /Link ')
+                if is_internal == 'internal':
+                    content.append(pdf_format(
+                        '/A << /Type /Action /S /GoTo '
+                        '/D [{0} /XYZ {1:f} {2:f} 0] >>\n',
+                        *target))
+                else:
+                    content.append(pdf_format(
+                        '/A << /Type /Action /S /URI /URI ({0}) >>\n',
+                        iri_to_uri(target)))
             else:
-                content.append(pdf_format(
-                    '/A << /Type /Action /S /URI /URI ({0}) >>\n',
-                    iri_to_uri(target)))
+                assert not annot_files[target] is None
+
+                link_ap = pdf.write_new_object(pdf_format(
+                    '<< /Type /XObject /Subtype /Form '
+                    '/BBox [{0:f} {1:f} {2:f} {3:f}] /Length 0 >>\n'
+                    'stream\n'
+                    'endstream',
+                    *rectangle))
+                content.append(b'/Subtype /FileAttachment ')
+                # evince needs /T or fails on an internal assertion. PDF
+                # doesn't require it.
+                content.append(pdf_format('/T () /FS {0} 0 R '
+                    '/AP << /N {1} 0 R >>', annot_files[target], link_ap))
             content.append(b'>>')
             annotations.append(pdf.write_new_object(b''.join(content)))
 

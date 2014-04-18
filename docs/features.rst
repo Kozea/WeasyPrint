@@ -45,7 +45,7 @@ PDF
 ---
 
 In addition to text, raster and vector graphics, WeasyPrint’s PDF files
-can contain hyperlinks and bookmarks.
+can contain hyperlinks, bookmarks and attachments.
 
 Hyperlinks will be clickable in PDF viewers that support them. They can
 be either internal, to another part of the same document (eg.
@@ -57,6 +57,10 @@ PDF bookmarks are also called outlines and are generally shown in a
 sidebar. Clicking on an entry scrolls the matching part of the document
 into view. By default all ``<h1>`` to ``<h6>`` titles generate bookmarks,
 but this can be controlled with CSS (see :ref:`bookmarks`.)
+
+Attachments are related files, embedded in the PDF itself. They can be
+specified through ``<link rel=attachment>`` elements. The ``title`` attribute
+can be used as description of the attachment.
 
 
 Fonts
