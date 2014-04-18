@@ -250,6 +250,9 @@ def default_url_fetcher(url):
           *charset* parameter in a *Content-Type* header
         * Optionally: ``redirected_url``, the actual URL of the ressource
           in case there were eg. HTTP redirects.
+        * Optionally: ``filename``, the filename of the resource. Usually
+          derived from the *filename* parameter in a *Content-Disposition*
+          header
 
         If a ``file_obj`` key is given, it is the caller’s responsability
         to call ``file_obj.close()``.
@@ -261,8 +264,9 @@ def default_url_fetcher(url):
         url = iri_to_uri(url)
         result, mime_type, charset = urlopen_contenttype(Request(
             url, headers={'User-Agent': VERSION_STRING}))
+        filename = result.info().get_filename()
         return dict(file_obj=result, redirected_url=result.geturl(),
-                    mime_type=mime_type, encoding=charset)
+                    mime_type=mime_type, encoding=charset, filename=filename)
     else:
         raise ValueError('Not an absolute URI: %r' % url)
 
