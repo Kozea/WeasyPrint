@@ -165,8 +165,7 @@ class HTML(object):
             :obj:`target`.)
 
         """
-        return self.render(stylesheets).write_pdf(target, zoom,
-                           self.url_fetcher)
+        return self.render(stylesheets).write_pdf(target, zoom)
 
     def write_image_surface(self, stylesheets=None, resolution=96):
         surface, _width, _height = (

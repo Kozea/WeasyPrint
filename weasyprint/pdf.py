@@ -486,10 +486,6 @@ def _write_pdf_attachment(pdf, filename, url, description, url_fetcher):
         the object number of the ``/Filespec`` object or :obj:`None` if the
         attachment couldn't be read.
     """
-    if url_fetcher == None:
-        LOGGER.warning('Can\'t write attachments without an url_fetcher')
-        return None
-
     try:
         file_stream_id = None
         with fetch(url_fetcher, url) as result:
@@ -529,7 +525,7 @@ def _write_pdf_annotation_files(pdf, links, url_fetcher):
     return annot_files
 
 
-def write_pdf_metadata(document, fileobj, scale, metadata, url_fetcher=None):
+def write_pdf_metadata(document, fileobj, scale, metadata, url_fetcher):
     """Append to a seekable file-like object to add PDF metadata."""
     pdf = PDFFile(fileobj)
     bookmark_root_id = pdf.next_object_number()
