@@ -23,7 +23,7 @@ from . import VERSION_STRING
 from .logger import LOGGER
 from .compat import (
     urljoin, urlsplit, quote, unquote, unquote_to_bytes, urlopen_contenttype,
-    Request, parse_email, pathname2url, unicode, base64_decode)
+    Request, ClosingGzipFile, parse_email, pathname2url, unicode, base64_decode)
 
 
 # Unlinke HTML, CSS and PNG, the SVG MIME type is not always builtin
@@ -259,9 +259,15 @@ def default_url_fetcher(url):
         return open_data_url(url)
     elif UNICODE_SCHEME_RE.match(url):
         url = iri_to_uri(url)
-        result, mime_type, charset = urlopen_contenttype(Request(
-            url, headers={'User-Agent': VERSION_STRING}))
-        return dict(file_obj=result, redirected_url=result.geturl(),
+        headers = {'User-Agent': VERSION_STRING, 'Accept-Encoding': 'gzip'}
+        result, mime_type, charset = urlopen_contenttype(
+            Request(url, headers=headers))
+        redirected_url = result.geturl()
+
+        if result.info().get('Content-Encoding') == 'gzip':
+            result = ClosingGzipFile(fileobj=result)
+       
+        return dict(file_obj=result, redirected_url=redirected_url,
                     mime_type=mime_type, encoding=charset)
     else:
         raise ValueError('Not an absolute URI: %r' % url)
