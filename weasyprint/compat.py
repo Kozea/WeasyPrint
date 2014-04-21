@@ -115,4 +115,5 @@ if sys.version_info >= (3, 2):
 else:
     # On older Python versions, GzipFile requires .seek() and .tell()
     # which file-like objects for HTTP response do not have.
+    # http://bugs.python.org/issue11608
     StreamingGzipFile = None
