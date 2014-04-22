@@ -31,7 +31,6 @@ r"""
 
 from __future__ import division, unicode_literals
 
-import binascii
 import hashlib
 import io
 import mimetypes
@@ -55,10 +54,8 @@ class PDFFormatter(string.Formatter):
     * Results are byte strings
     * The new !P conversion flags encodes a PDF string.
       (UTF-16 BE with a BOM, then backslash-escape parentheses.)
-    * The new !H conversion flags encodes a PDF string in the hexadecimal
-      format.
 
-    Except for fields marked !P or !H, everything should be ASCII-only.
+    Except for fields marked !P, everything should be ASCII-only.
 
     """
     def convert_field(self, value, conversion):
@@ -69,8 +66,6 @@ class PDFFormatter(string.Formatter):
             return '({0})'.format(
                 ('\ufeff' + value).encode('utf-16-be').decode('latin1')
                 .translate({40: r'\(', 41: r'\)', 92: r'\\'}))
-        elif conversion == 'H':
-            return '<{0}>'.format(binascii.hexlify(value).decode('ascii'))
         else:
             return super(PDFFormatter, self).convert_field(value, conversion)
 
@@ -428,7 +423,7 @@ def _write_compressed_file_object(pdf, file):
     pdf.new_objects_offsets.append(offset)
 
     pdf.write_new_object(pdf_format("{0}", compressed_length))
-    pdf.write_new_object(pdf_format("{0!H}", md5.digest()))
+    pdf.write_new_object(pdf_format("<{0}>", md5.hexdigest()))
     pdf.write_new_object(pdf_format("{0}", uncompressed_length))
 
     assert pdf.next_object_number() == expected_next_object_number

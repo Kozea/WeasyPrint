@@ -12,7 +12,6 @@
 
 from __future__ import division, unicode_literals
 
-import binascii
 import hashlib
 import io
 import os
@@ -372,8 +371,8 @@ def test_embedded_files():
     os.remove(absolute_tmp_file)
     os.remove(relative_tmp_file)
 
-    assert (binascii.hexlify(hashlib.md5(b'hi there').digest()) in
-            pdf_bytes)
+    assert ((b'<' + hashlib.md5(b'hi there').hexdigest().encode('ascii')
+            + b'>') in pdf_bytes)
     assert (b'/F ()' in pdf_bytes)
     assert (b'/UF (\xfe\xff\x00a\x00t\x00t\x00a\x00c\x00h\x00m\x00e\x00n'
             b'\x00t\x00.\x00t\x00x\x00t)' in pdf_bytes)
@@ -381,16 +380,16 @@ def test_embedded_files():
             b'\x00 \x00a\x00t\x00t\x00a\x00c\x00h\x00m\x00e\x00n\x00t\x00 '
             b'\x00\xe4\x00\xf6\x00\xfc)' in pdf_bytes)
 
-    assert (binascii.hexlify(hashlib.md5(adata).digest()) in pdf_bytes)
+    assert (hashlib.md5(adata).hexdigest().encode('ascii') in pdf_bytes)
     assert (os.path.basename(absolute_tmp_file).encode('utf-16-be')
             in pdf_bytes)
 
-    assert (binascii.hexlify(hashlib.md5(rdata).digest()) in pdf_bytes)
+    assert (hashlib.md5(rdata).hexdigest().encode('ascii') in pdf_bytes)
     assert (os.path.basename(relative_tmp_file).encode('utf-16-be')
             in pdf_bytes)
 
-    assert (binascii.hexlify(hashlib.md5(b'oob attachment').digest()) in
-            pdf_bytes)
+    assert (hashlib.md5(b'oob attachment').hexdigest().encode('ascii')
+            in pdf_bytes)
 
     assert (b'/EmbeddedFiles' in pdf_bytes)
     assert (b'/Outlines' in pdf_bytes)
@@ -403,8 +402,7 @@ def test_embedded_files():
             href="data:,some data">
     ''').write_pdf()
 
-    assert (binascii.hexlify(hashlib.md5(b'some data').digest()) in
-            pdf_bytes)
+    assert (hashlib.md5(b'some data').hexdigest().encode('ascii') in pdf_bytes)
     assert (b'/EmbeddedFiles' in pdf_bytes)
     assert (not b'/Outlines' in pdf_bytes)
 
@@ -436,8 +434,7 @@ def test_annotation_files():
             download>A link that lets you download an attachment</a>
     ''').write_pdf()
 
-    assert (binascii.hexlify(hashlib.md5(b'some data').digest()) in
-            pdf_bytes)
+    assert (hashlib.md5(b'some data').hexdigest().encode('ascii') in pdf_bytes)
     assert (b'/FileAttachment' in pdf_bytes)
     assert (not b'/EmbeddedFiles' in pdf_bytes)
 
