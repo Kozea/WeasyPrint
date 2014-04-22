@@ -37,6 +37,7 @@ import mimetypes
 import os
 import re
 import string
+import sys
 import zlib
 
 import cairocffi as cairo
@@ -466,7 +467,15 @@ def _get_filename_from_result(url, result):
 
         filename = 'attachment' + extension
     else:
-        filename = unquote(filename)
+        if sys.version_info[0] < 3:
+            # Python 3 unquotes with UTF-8 per default, here we have to do it
+            # manually
+            # TODO: this assumes that the filename has been quoted as UTF-8.
+            # I'm not sure if this assumption holds, as there is some magic
+            # involved with filesystem encoding in other parts of the code
+            filename = unquote(filename).encode('latin1').decode('utf-8')
+        else:
+            filename = unquote(filename)
 
     return filename
 
