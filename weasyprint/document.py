@@ -445,7 +445,7 @@ class Document(object):
                 last_by_depth.append(children)
         return root
 
-    def write_pdf(self, target=None, zoom=1):
+    def write_pdf(self, target=None, zoom=1, attachments=None):
         """Paint the pages in a PDF file, with meta-data.
 
         PDF files written directly by cairo do not have meta-data such as
@@ -461,6 +461,10 @@ class Document(object):
             For values other than 1, physical CSS units will thus be “wrong”.
             Page size declarations are affected too, even with keyword values
             like ``@page { size: A3 landscape; }``
+        :param attachments: A list of additional file attachments for the
+            generated PDF document or :obj:`None`. The list contains tuples,
+            where each element describes an attachment to the PDF document. The
+            tuple contains a URL and a description, which can be :obj:`None`.
         :returns:
             The PDF as byte string if :obj:`target` is :obj:`None`, otherwise
             :obj:`None` (the PDF is written to :obj:`target`.)
@@ -480,7 +484,7 @@ class Document(object):
             surface.show_page()
         surface.finish()
 
-        write_pdf_metadata(self, file_obj, scale, self.metadata,
+        write_pdf_metadata(self, file_obj, scale, self.metadata, attachments,
             self.url_fetcher)
 
         if target is None:

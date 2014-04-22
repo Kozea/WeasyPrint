@@ -145,9 +145,9 @@ def main(argv=None, stdout=None, stdin=None):
         else:
             parser.error('--resolution only applies for the PNG format.')
 
-    attachments = []
     if args.attachment:
         if format_ == 'pdf':
+            attachments = []
             for a in args.attachment:
                 # Convert passed file names into absolute file: URLs, because
                 # we don't want to resolve them relative to the document, but
@@ -156,11 +156,12 @@ def main(argv=None, stdout=None, stdin=None):
                     # should be a file path
                     a = path2url(a)
                 attachments.append((a, None))
+            kwargs['attachments'] = attachments
         else:
             parser.error('--attachment only applies for the PDF format.')
 
     html = HTML(source, base_url=args.base_url, encoding=args.encoding,
-                media_type=args.media_type, attachments=attachments)
+                media_type=args.media_type)
     getattr(html, 'write_' + format_)(output, **kwargs)
 
 

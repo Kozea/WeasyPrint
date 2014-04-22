@@ -546,7 +546,8 @@ def _write_pdf_annotation_files(pdf, links, url_fetcher):
     return annot_files
 
 
-def write_pdf_metadata(document, fileobj, scale, metadata, url_fetcher):
+def write_pdf_metadata(document, fileobj, scale, metadata, attachments,
+    url_fetcher):
     """Append to a seekable file-like object to add PDF metadata."""
     pdf = PDFFile(fileobj)
     bookmark_root_id = pdf.next_object_number()
@@ -575,8 +576,8 @@ def write_pdf_metadata(document, fileobj, scale, metadata, url_fetcher):
             content.append(b'>>')
             pdf.write_new_object(b''.join(content))
 
-    embedded_files_id = _write_pdf_embedded_files(pdf, metadata.attachments,
-                                                  url_fetcher)
+    embedded_files_id = _write_pdf_embedded_files(pdf, metadata.attachments +
+        (attachments or []), url_fetcher)
 
     if bookmarks or embedded_files_id is not None:
         params = b''

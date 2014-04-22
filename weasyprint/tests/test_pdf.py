@@ -365,8 +365,8 @@ def test_embedded_files():
         <h2>Heading 2</h2>
     '''.format(path2url(absolute_tmp_file),
                os.path.basename(relative_tmp_file)),
-               base_url=os.path.dirname(relative_tmp_file),
-               attachments=[('data:,oob attachment', None)]).write_pdf()
+               base_url=os.path.dirname(relative_tmp_file)).write_pdf(
+                    attachments=[('data:,oob attachment', None)])
 
     os.remove(absolute_tmp_file)
     os.remove(relative_tmp_file)
