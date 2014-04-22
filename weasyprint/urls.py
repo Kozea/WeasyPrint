@@ -264,7 +264,12 @@ def default_url_fetcher(url):
         url = iri_to_uri(url)
         result, mime_type, charset = urlopen_contenttype(Request(
             url, headers={'User-Agent': VERSION_STRING}))
-        filename = result.info().get_filename()
+        filename = None
+        try:
+            filename = result.info().get_filename()
+        except AttributeError:
+            # Python 2 doesn't return a message with the get_filename method
+            pass
         return dict(file_obj=result, redirected_url=result.geturl(),
                     mime_type=mime_type, encoding=charset, filename=filename)
     else:
