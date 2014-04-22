@@ -166,6 +166,8 @@ def find_stylesheets(element_tree, device_media_type, url_fetcher):
     The output order is the same as the source order.
 
     """
+    from ..html import element_has_link_type  # Work around circular imports.
+
     for element in element_tree.iter('style', 'link'):
         mime_type = element.get('type', 'text/css').split(';', 1)[0].strip()
         # Only keep 'type/subtype' from 'type/subtype ; param1; param2'.
@@ -185,8 +187,8 @@ def find_stylesheets(element_tree, device_media_type, url_fetcher):
                       url_fetcher=url_fetcher, media_type=device_media_type)
             yield css
         elif element.tag == 'link' and element.get('href'):
-            rel = element.get('rel', '').split()
-            if 'stylesheet' not in rel or 'alternate' in rel:
+            if not element_has_link_type(element, 'stylesheet') or \
+                    element_has_link_type(element, 'alternate'):
                 continue
             href = get_url_attribute(element, 'href')
             if href is not None:
