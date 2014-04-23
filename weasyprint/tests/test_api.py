@@ -18,8 +18,6 @@ import sys
 import math
 import contextlib
 import threading
-import shutil
-import tempfile
 
 import lxml.html
 import lxml.etree
@@ -27,7 +25,7 @@ import cairocffi as cairo
 import pytest
 
 from .testing_utils import (
-    resource_filename, assert_no_logs, capture_logs, TestHTML)
+    resource_filename, assert_no_logs, capture_logs, TestHTML, temp_directory)
 from .test_draw import image_to_pixels
 from ..compat import urljoin, urlencode, urlparse_uses_relative, iteritems
 from ..urls import path2url
@@ -50,20 +48,6 @@ def chdir(path):
             yield
         finally:
             os.chdir(old_dir)
-
-
-@contextlib.contextmanager
-def temp_directory():
-    """Context manager that gives the path to a new temporary directory.
-
-    Remove everything on exiting the context.
-
-    """
-    directory = tempfile.mkdtemp()
-    try:
-        yield directory
-    finally:
-        shutil.rmtree(directory)
 
 
 def read_file(filename):
