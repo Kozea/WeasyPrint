@@ -302,15 +302,14 @@ def get_html_metadata(html_document):
                 created = parse_w3c_date(name, element.sourceline, content)
             elif name == 'dcterms.modified' and modified is None:
                 modified = parse_w3c_date(name, element.sourceline, content)
-        elif element.tag == 'link':
-            rel = ascii_lower(element.get('rel', ''))
+        elif element.tag == 'link' and element_has_link_type(element,
+            'attachment'):
             url = get_url_attribute(element, 'href')
             title = element.get('title', None)
-            if rel == 'attachment':
-                if url is None:
-                    LOGGER.warning('Missing href in <link rel="%s">', rel)
-                else:
-                    attachments.append((url, title))
+            if url is None:
+                LOGGER.warning('Missing href in <link rel="%s">', rel)
+            else:
+                attachments.append((url, title))
     return dict(title=title, description=description, generator=generator,
                 keywords=keywords, authors=authors,
                 created=created, modified=modified,
