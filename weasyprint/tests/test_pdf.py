@@ -15,7 +15,6 @@ from __future__ import division, unicode_literals
 import hashlib
 import io
 import os
-import tempfile
 
 import cairocffi
 import pytest
@@ -25,7 +24,7 @@ from .. import pdf
 from ..images import CAIRO_HAS_MIME_DATA
 from ..urls import path2url
 from .testing_utils import (
-    assert_no_logs, resource_filename, TestHTML, capture_logs)
+    assert_no_logs, resource_filename, TestHTML, capture_logs, temp_directory)
 
 
 @assert_no_logs
@@ -342,34 +341,35 @@ def test_document_info():
 
 @assert_no_logs
 def test_embedded_files():
-    afd, absolute_tmp_file = tempfile.mkstemp()
-    adata = b'12345678'
-    with os.fdopen(afd, 'wb') as afile:
-        afile.write(adata)
 
-    rfd, relative_tmp_file = tempfile.mkstemp(suffix='äöü')
-    rdata = b'abcdefgh'
-    with os.fdopen(rfd, 'wb') as rfile:
-        rfile.write(rdata)
+    pdf_bytes = None
+    with temp_directory() as absolute_tmp_dir:
+        absolute_tmp_file = os.path.join(absolute_tmp_dir, 'some_file.txt')
+        adata = b'12345678'
+        with open(absolute_tmp_file, 'wb') as afile:
+            afile.write(adata)
 
-    pdf_bytes = TestHTML(string='''
-        <title>Test document</title>
-        <meta charset="utf-8">
-        <link
-            rel="attachment"
-            title="some file attachment äöü"
-            href="data:,hi%20there">
-        <link rel="attachment" href="{0}">
-        <link rel="attachment" href="{1}">
-        <h1>Heading 1</h1>
-        <h2>Heading 2</h2>
-    '''.format(path2url(absolute_tmp_file),
-               os.path.basename(relative_tmp_file)),
-               base_url=os.path.dirname(relative_tmp_file)).write_pdf(
+        with temp_directory() as relative_tmp_dir:
+            relative_tmp_file = os.path.join(absolute_tmp_dir, 'äöü.txt')
+            rdata = b'abcdefgh'
+            with open(relative_tmp_file, 'wb') as rfile:
+                rfile.write(rdata)
+
+            pdf_bytes = TestHTML(string='''
+                <title>Test document</title>
+                <meta charset="utf-8">
+                <link
+                    rel="attachment"
+                    title="some file attachment äöü"
+                    href="data:,hi%20there">
+                <link rel="attachment" href="{0}">
+                <link rel="attachment" href="{1}">
+                <h1>Heading 1</h1>
+                <h2>Heading 2</h2>
+            '''.format(path2url(absolute_tmp_file),
+                os.path.basename(relative_tmp_file)),
+                base_url=os.path.dirname(relative_tmp_file)).write_pdf(
                     attachments=[('data:,oob attachment', None)])
-
-    os.remove(absolute_tmp_file)
-    os.remove(relative_tmp_file)
 
     assert ((b'<' + hashlib.md5(b'hi there').hexdigest().encode('ascii')
             + b'>') in pdf_bytes)
