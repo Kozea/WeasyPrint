@@ -546,8 +546,8 @@ def _write_pdf_annotation_files(pdf, links, url_fetcher):
     """
     annot_files = {}
     for page_links in links:
-        for is_internal, target, rectangle in page_links:
-            if is_internal == 'attachment' and not target in annot_files:
+        for link_type, target, rectangle in page_links:
+            if link_type == 'attachment' and not target in annot_files:
                 annot_files[target] = None
                 # TODO: use the title attribute as description
                 annot_files[target] = _write_pdf_attachment(pdf, target, None,
@@ -613,13 +613,13 @@ def write_pdf_metadata(document, fileobj, scale, metadata, attachments,
     # what browsers do with links that span multiple lines.
     for page, page_links in zip(pdf.pages, links):
         annotations = []
-        for is_internal, target, rectangle in page_links:
+        for link_type, target, rectangle in page_links:
             content = [pdf_format('<< /Type /Annot '
                 '/Rect [{0:f} {1:f} {2:f} {3:f}] /Border [0 0 0]\n',
                 *rectangle)]
-            if is_internal != 'attachment' or annot_files[target] is None:
+            if link_type != 'attachment' or annot_files[target] is None:
                 content.append(b'/Subtype /Link ')
-                if is_internal == 'internal':
+                if link_type == 'internal':
                     content.append(pdf_format(
                         '/A << /Type /Action /S /GoTo '
                         '/D [{0} /XYZ {1:f} {2:f} 0] >>\n',
