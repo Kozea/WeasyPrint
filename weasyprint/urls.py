@@ -22,8 +22,9 @@ import contextlib
 from . import VERSION_STRING
 from .logger import LOGGER
 from .compat import (
-    urljoin, urlsplit, quote, unquote, unquote_to_bytes, urlopen_contenttype,
-    Request, parse_email, pathname2url, unicode, base64_decode)
+    urljoin, urlsplit, quote, unquote, unquote_to_bytes, urlopen,
+    urllib_get_content_type, urllib_get_charset, urllib_get_filename, Request,
+    parse_email, pathname2url, unicode, base64_decode)
 
 
 # Unlinke HTML, CSS and PNG, the SVG MIME type is not always builtin
@@ -262,16 +263,12 @@ def default_url_fetcher(url):
         return open_data_url(url)
     elif UNICODE_SCHEME_RE.match(url):
         url = iri_to_uri(url)
-        result, mime_type, charset = urlopen_contenttype(Request(
-            url, headers={'User-Agent': VERSION_STRING}))
-        filename = None
-        try:
-            filename = result.info().get_filename()
-        except AttributeError:
-            # Python 2 doesn't return a message with the get_filename method
-            pass
-        return dict(file_obj=result, redirected_url=result.geturl(),
-                    mime_type=mime_type, encoding=charset, filename=filename)
+        result = urlopen(Request(url, headers={'User-Agent': VERSION_STRING}))
+        return dict(file_obj=result,
+                    redirected_url=result.geturl(),
+                    mime_type=urllib_get_content_type(result),
+                    encoding=urllib_get_charset(result),
+                    filename=urllib_get_filename(result))
     else:
         raise ValueError('Not an absolute URI: %r' % url)
 
