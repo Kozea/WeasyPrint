@@ -246,8 +246,7 @@ def handle_td(element, box, _get_image_from_uri):
 @handler('a')
 def handle_a(element, box, _get_image_from_uri):
     """Handle the ``rel`` attribute."""
-    rel = element.get('rel', '').strip().lower()
-    box.rel = rel
+    box.is_attachment = element_has_link_type(element, 'attachment')
     return [box]
 
 
