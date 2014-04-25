@@ -16,8 +16,7 @@
 import sys
 import argparse
 
-from . import VERSION, HTML
-from .urls import path2url, urlsplit
+from . import VERSION, HTML, Attachment
 
 
 def main(argv=None, stdout=None, stdin=None):
@@ -147,16 +146,7 @@ def main(argv=None, stdout=None, stdin=None):
 
     if args.attachment:
         if format_ == 'pdf':
-            attachments = []
-            for a in args.attachment:
-                # Convert passed file names into absolute file: URLs, because
-                # we don't want to resolve them relative to the document, but
-                # relative to the current working directory.
-                if urlsplit(a).scheme == '':
-                    # should be a file path
-                    a = path2url(a)
-                attachments.append((a, None))
-            kwargs['attachments'] = attachments
+            kwargs['attachments'] = args.attachments
         else:
             parser.error('--attachment only applies for the PDF format.')
 

@@ -22,7 +22,7 @@ __version__ = VERSION
 # Used for 'User-Agent' in HTTP and 'Creator' in PDF
 VERSION_STRING = 'WeasyPrint %s (http://weasyprint.org/)' % VERSION
 
-__all__ = ['HTML', 'CSS', 'Document', 'Page', 'default_url_fetcher',
+__all__ = ['HTML', 'CSS', 'Attachment', 'Document', 'Page', 'default_url_fetcher',
            'VERSION']
 
 
@@ -153,9 +153,8 @@ class HTML(object):
             Page size declarations are affected too, even with keyword values
             like ``@page { size: A3 landscape; }``
         :param attachments: A list of additional file attachments for the
-            generated PDF document or :obj:`None`. The list contains tuples,
-            where each element describes an attachment to the PDF document. The
-            tuple contains a URL and a description, which can be :obj:`None`.
+            generated PDF document or :obj:`None`. The list's elements are
+            :class:`Attachment` objects, filenames, URLs or file-like objects.
         :returns:
             The PDF as byte string if :obj:`target` is not provided or
             :obj:`None`, otherwise :obj:`None` (the PDF is written to
@@ -238,6 +237,25 @@ class CSS(object):
         self.stylesheet = stylesheet
         for error in self.stylesheet.errors:
             LOGGER.warning(error)
+
+class Attachment(object):
+    """Represents a file attachment for a PDF document.
+
+    An instance is created in the same way as :class:`HTML`, except that
+    the HTML specific parameters are not supported. An optional description can
+    be provided with the ``description`` parameter.
+
+    :param description: A description of the attachment to be included in the
+        PDF document. May be :obj:`None`
+
+    """
+    def __init__(self, guess=None, filename=None, url=None, file_obj=None,
+                 string=None, base_url=None, url_fetcher=default_url_fetcher,
+                 description=None):
+        self.source = _select_source(
+            guess, filename, url, file_obj, string, tree=None,
+            base_url=base_url, url_fetcher=url_fetcher)
+        self.description = description
 
 
 @contextlib.contextmanager

@@ -19,7 +19,7 @@ import os
 import cairocffi
 import pytest
 
-from .. import CSS
+from .. import CSS, Attachment
 from .. import pdf
 from ..images import CAIRO_HAS_MIME_DATA
 from ..urls import path2url
@@ -369,13 +369,16 @@ def test_embedded_files():
             '''.format(path2url(absolute_tmp_file),
                 os.path.basename(relative_tmp_file)),
                 base_url=os.path.dirname(relative_tmp_file)).write_pdf(
-                    attachments=[('data:,oob attachment', None)])
+                    attachments=[Attachment('data:,oob attachment',
+                        description='Hello'),
+                        'data:,raw URL',
+                        io.BytesIO(b'file like obj')])
 
     assert ((b'<' + hashlib.md5(b'hi there').hexdigest().encode('ascii')
             + b'>') in pdf_bytes)
     assert (b'/F ()' in pdf_bytes)
     assert (b'/UF (\xfe\xff\x00a\x00t\x00t\x00a\x00c\x00h\x00m\x00e\x00n'
-            b'\x00t\x00.\x00t\x00x\x00t)' in pdf_bytes)
+            b'\x00t\x00.\x00b\x00i\x00n)' in pdf_bytes)
     assert (b'/Desc (\xfe\xff\x00s\x00o\x00m\x00e\x00 \x00f\x00i\x00l\x00e'
             b'\x00 \x00a\x00t\x00t\x00a\x00c\x00h\x00m\x00e\x00n\x00t\x00 '
             b'\x00\xe4\x00\xf6\x00\xfc)' in pdf_bytes)
@@ -389,6 +392,11 @@ def test_embedded_files():
             in pdf_bytes)
 
     assert (hashlib.md5(b'oob attachment').hexdigest().encode('ascii')
+            in pdf_bytes)
+    assert (b'/Desc (\xfe\xff\x00H\x00e\x00l\x00l\x00o)' in pdf_bytes)
+    assert (hashlib.md5(b'raw URL').hexdigest().encode('ascii')
+            in pdf_bytes)
+    assert (hashlib.md5(b'file like obj').hexdigest().encode('ascii')
             in pdf_bytes)
 
     assert (b'/EmbeddedFiles' in pdf_bytes)

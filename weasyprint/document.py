@@ -462,9 +462,8 @@ class Document(object):
             Page size declarations are affected too, even with keyword values
             like ``@page { size: A3 landscape; }``
         :param attachments: A list of additional file attachments for the
-            generated PDF document or :obj:`None`. The list contains tuples,
-            where each element describes an attachment to the PDF document. The
-            tuple contains a URL and a description, which can be :obj:`None`.
+            generated PDF document or :obj:`None`. The list's elements are
+            :class:`Attachment` objects, filenames, URLs or file-like objects.
         :returns:
             The PDF as byte string if :obj:`target` is :obj:`None`, otherwise
             :obj:`None` (the PDF is written to :obj:`target`.)

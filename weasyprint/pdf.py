@@ -42,7 +42,7 @@ import zlib
 
 import cairocffi as cairo
 
-from . import VERSION_STRING
+from . import VERSION_STRING, Attachment
 from .compat import xrange, iteritems, izip
 from .urls import iri_to_uri, fetch, unquote, urlsplit, URLFetchingError
 from .html import W3C_DATE_RE
@@ -439,15 +439,23 @@ def _get_filename_from_result(url, result):
     name if the URL has no path
     """
 
+    filename = None
+
     # A given filename will always take precedence
-    filename = result.get('filename')
-    if filename:
-        return filename
+    if result:
+        filename = result.get('filename')
+        if filename:
+            return filename
 
     # The URL path likely contains a filename, which is a good second guess
-    split = urlsplit(url)
-    filename = split.path.split("/")[-1]
-    if split.scheme == 'data' or filename == '':
+    if url:
+        split = urlsplit(url)
+        if split.scheme != 'data':
+            filename = split.path.split("/")[-1]
+            if filename == '':
+                filename = None
+
+    if filename is None:
         # The URL lacks a path altogether. Use a synthetic name.
 
         # Using guess_extension is a great idea, but sadly the extension is
@@ -458,12 +466,15 @@ def _get_filename_from_result(url, result):
         # extension can depend on PYTHONHASHSEED if mimetypes has multiple
         # extensions to offer
         extension = None
-        mime_type = result.get('mime_type')
-        if mime_type == 'text/plain':
-            # text/plain has a phletora of extensions - all garbage
-            extension = '.txt'
+        if result:
+            mime_type = result.get('mime_type')
+            if mime_type == 'text/plain':
+                # text/plain has a phletora of extensions - all garbage
+                extension = '.txt'
+            else:
+                extension = mimetypes.guess_extension(mime_type) or '.bin'
         else:
-            extension = mimetypes.guess_extension(mime_type) or '.bin'
+            extension = '.bin'
 
         filename = 'attachment' + extension
     else:
@@ -489,9 +500,8 @@ def _write_pdf_embedded_files(pdf, attachments, url_fetcher):
     """
 
     file_spec_ids = []
-    for url, description in attachments:
-        file_spec_id = _write_pdf_attachment(pdf, url, description,
-            url_fetcher)
+    for attachment in attachments:
+        file_spec_id = _write_pdf_attachment(pdf, attachment, url_fetcher)
         if not file_spec_id is None:
             file_spec_ids.append(file_spec_id)
 
@@ -507,7 +517,7 @@ def _write_pdf_embedded_files(pdf, attachments, url_fetcher):
     return pdf.write_new_object(b''.join(content))
 
 
-def _write_pdf_attachment(pdf, url, description, url_fetcher):
+def _write_pdf_attachment(pdf, attachment, url_fetcher):
     """
     Writes an attachment to the PDF stream
 
@@ -516,24 +526,33 @@ def _write_pdf_attachment(pdf, url, description, url_fetcher):
         attachment couldn't be read.
     """
     try:
-        file_stream_id = None
-        with fetch(url_fetcher, url) as result:
-            stream = result.get('file_obj') or \
-                     io.BytesIO(result.get('string'))
-            file_stream_id = _write_compressed_file_object(pdf, stream)
-
-        filename = _get_filename_from_result(url, result)
-
-        return pdf.write_new_object(pdf_format(
-            '<< /Type /Filespec /F () /UF {0!P} /EF << /F {1} 0 R >> '
-            '/Desc {2!P}\n>>',
-            filename,
-            file_stream_id,
-            description or ''))
+        # Attachments from document links like <link> or <a> can only be URLs.
+        # They're passed in as tuples
+        if isinstance(attachment, tuple):
+            attachment = Attachment(url=attachment[0], url_fetcher=url_fetcher,
+                description=attachment[1])
+        elif not isinstance(attachment, Attachment):
+            attachment = Attachment(guess=attachment, url_fetcher=url_fetcher)
     except URLFetchingError as exc:
-        LOGGER.warning('Failed to load attachment at %s : %s', url, exc)
+        LOGGER.warning('Failed to load attachment: %s', exc)
+        return None
 
-    return None
+    with attachment.source as (source_type, source, url, _):
+        if isinstance(source, bytes):
+            source = io.BytesIO(source)
+
+        file_stream_id = _write_compressed_file_object(pdf, source)
+
+    # TODO: Use the result object from a URL fetch operation to provide more
+    # details on the possible filename
+    filename = _get_filename_from_result(url, None)
+
+    return pdf.write_new_object(pdf_format(
+        '<< /Type /Filespec /F () /UF {0!P} /EF << /F {1} 0 R >> '
+        '/Desc {2!P}\n>>',
+        filename,
+        file_stream_id,
+        attachment.description or ''))
 
 
 def _write_pdf_annotation_files(pdf, links, url_fetcher):
@@ -550,8 +569,8 @@ def _write_pdf_annotation_files(pdf, links, url_fetcher):
             if link_type == 'attachment' and not target in annot_files:
                 annot_files[target] = None
                 # TODO: use the title attribute as description
-                annot_files[target] = _write_pdf_attachment(pdf, target, None,
-                    url_fetcher)
+                annot_files[target] = _write_pdf_attachment(pdf,
+                    (target, None), url_fetcher)
     return annot_files
 
 
