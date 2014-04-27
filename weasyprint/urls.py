@@ -21,6 +21,7 @@ import mimetypes
 import contextlib
 import gzip
 import zlib
+import traceback
 
 from . import VERSION_STRING
 from .logger import LOGGER
@@ -315,9 +316,10 @@ def fetch(url_fetcher, url):
         finally:
             try:
                 result['file_obj'].close()
-            except Exception:  # pragma: no cover
+            except Exception:
                 # May already be closed or something.
-                # This is just cleanup anyway.
-                pass
+                # This is just cleanup anyway: log but make it non-fatal.
+                LOGGER.warning('Error when closing stream for %s:\n%s',
+                               url, traceback.format_exc())
     else:
         yield result

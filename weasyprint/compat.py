@@ -106,7 +106,7 @@ if sys.version_info >= (3, 2):
             GzipFile.__init__(self, fileobj=fileobj)
             self.fileobj_to_close = fileobj
 
-        def close():
+        def close(self):
             GzipFile.close(self)
             self.fileobj_to_close.close()
 
