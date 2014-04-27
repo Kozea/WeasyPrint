@@ -22,8 +22,8 @@ __version__ = VERSION
 # Used for 'User-Agent' in HTTP and 'Creator' in PDF
 VERSION_STRING = 'WeasyPrint %s (http://weasyprint.org/)' % VERSION
 
-__all__ = ['HTML', 'CSS', 'Attachment', 'Document', 'Page', 'default_url_fetcher',
-           'VERSION']
+__all__ = ['HTML', 'CSS', 'Attachment', 'Document', 'Page',
+           'default_url_fetcher', 'VERSION']
 
 
 import contextlib
@@ -132,7 +132,7 @@ class HTML(object):
         return Document._render(self, stylesheets, enable_hinting)
 
     def write_pdf(self, target=None, stylesheets=None, zoom=1,
-        attachments=None):
+                  attachments=None):
         """Render the document to a PDF file.
 
         This is a shortcut for calling :meth:`render`, then
@@ -237,6 +237,7 @@ class CSS(object):
         self.stylesheet = stylesheet
         for error in self.stylesheet.errors:
             LOGGER.warning(error)
+
 
 class Attachment(object):
     """Represents a file attachment for a PDF document.

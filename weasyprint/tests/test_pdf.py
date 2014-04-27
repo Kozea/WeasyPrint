@@ -355,24 +355,28 @@ def test_embedded_files():
             with open(relative_tmp_file, 'wb') as rfile:
                 rfile.write(rdata)
 
-            pdf_bytes = TestHTML(string='''
-                <title>Test document</title>
-                <meta charset="utf-8">
-                <link
-                    rel="attachment"
-                    title="some file attachment äöü"
-                    href="data:,hi%20there">
-                <link rel="attachment" href="{0}">
-                <link rel="attachment" href="{1}">
-                <h1>Heading 1</h1>
-                <h2>Heading 2</h2>
-            '''.format(path2url(absolute_tmp_file),
-                os.path.basename(relative_tmp_file)),
-                base_url=os.path.dirname(relative_tmp_file)).write_pdf(
-                    attachments=[Attachment('data:,oob attachment',
-                        description='Hello'),
-                        'data:,raw URL',
-                        io.BytesIO(b'file like obj')])
+            pdf_bytes = TestHTML(
+                string='''
+                    <title>Test document</title>
+                    <meta charset="utf-8">
+                    <link
+                        rel="attachment"
+                        title="some file attachment äöü"
+                        href="data:,hi%20there">
+                    <link rel="attachment" href="{0}">
+                    <link rel="attachment" href="{1}">
+                    <h1>Heading 1</h1>
+                    <h2>Heading 2</h2>
+                '''.format(path2url(absolute_tmp_file),
+                           os.path.basename(relative_tmp_file)),
+                base_url=os.path.dirname(relative_tmp_file)
+            ).write_pdf(
+                attachments=[
+                    Attachment('data:,oob attachment', description='Hello'),
+                    'data:,raw URL',
+                    io.BytesIO(b'file like obj')
+                ]
+            )
 
     assert ((b'<' + hashlib.md5(b'hi there').hexdigest().encode('ascii')
             + b'>') in pdf_bytes)
@@ -383,24 +387,24 @@ def test_embedded_files():
             b'\x00 \x00a\x00t\x00t\x00a\x00c\x00h\x00m\x00e\x00n\x00t\x00 '
             b'\x00\xe4\x00\xf6\x00\xfc)' in pdf_bytes)
 
-    assert (hashlib.md5(adata).hexdigest().encode('ascii') in pdf_bytes)
+    assert hashlib.md5(adata).hexdigest().encode('ascii') in pdf_bytes
     assert (os.path.basename(absolute_tmp_file).encode('utf-16-be')
             in pdf_bytes)
 
-    assert (hashlib.md5(rdata).hexdigest().encode('ascii') in pdf_bytes)
+    assert hashlib.md5(rdata).hexdigest().encode('ascii') in pdf_bytes
     assert (os.path.basename(relative_tmp_file).encode('utf-16-be')
             in pdf_bytes)
 
     assert (hashlib.md5(b'oob attachment').hexdigest().encode('ascii')
             in pdf_bytes)
-    assert (b'/Desc (\xfe\xff\x00H\x00e\x00l\x00l\x00o)' in pdf_bytes)
+    assert b'/Desc (\xfe\xff\x00H\x00e\x00l\x00l\x00o)' in pdf_bytes
     assert (hashlib.md5(b'raw URL').hexdigest().encode('ascii')
             in pdf_bytes)
     assert (hashlib.md5(b'file like obj').hexdigest().encode('ascii')
             in pdf_bytes)
 
-    assert (b'/EmbeddedFiles' in pdf_bytes)
-    assert (b'/Outlines' in pdf_bytes)
+    assert b'/EmbeddedFiles' in pdf_bytes
+    assert b'/Outlines' in pdf_bytes
 
     pdf_bytes = TestHTML(string='''
         <title>Test document 2</title>
@@ -410,9 +414,9 @@ def test_embedded_files():
             href="data:,some data">
     ''').write_pdf()
 
-    assert (hashlib.md5(b'some data').hexdigest().encode('ascii') in pdf_bytes)
-    assert (b'/EmbeddedFiles' in pdf_bytes)
-    assert (not b'/Outlines' in pdf_bytes)
+    assert hashlib.md5(b'some data').hexdigest().encode('ascii') in pdf_bytes
+    assert b'/EmbeddedFiles' in pdf_bytes
+    assert b'/Outlines' not in pdf_bytes
 
     pdf_bytes = TestHTML(string='''
         <title>Test document 3</title>
@@ -420,16 +424,17 @@ def test_embedded_files():
         <h1>Heading</h1>
     ''').write_pdf()
 
-    assert (not b'/EmbeddedFiles' in pdf_bytes)
-    assert (b'/Outlines' in pdf_bytes)
+    assert b'/EmbeddedFiles' not in pdf_bytes
+    assert b'/Outlines' in pdf_bytes
 
     pdf_bytes = TestHTML(string='''
         <title>Test document 4</title>
         <meta charset="utf-8">
     ''').write_pdf()
 
-    assert (not b'/EmbeddedFiles' in pdf_bytes)
-    assert (not b'/Outlines' in pdf_bytes)
+    assert b'/EmbeddedFiles' not in pdf_bytes
+    assert b'/Outlines' not in pdf_bytes
+
 
 @assert_no_logs
 def test_annotation_files():
@@ -442,7 +447,6 @@ def test_annotation_files():
             download>A link that lets you download an attachment</a>
     ''').write_pdf()
 
-    assert (hashlib.md5(b'some data').hexdigest().encode('ascii') in pdf_bytes)
-    assert (b'/FileAttachment' in pdf_bytes)
-    assert (not b'/EmbeddedFiles' in pdf_bytes)
-
+    assert hashlib.md5(b'some data').hexdigest().encode('ascii') in pdf_bytes
+    assert b'/FileAttachment' in pdf_bytes
+    assert b'/EmbeddedFiles' not in pdf_bytes

@@ -484,7 +484,7 @@ class Document(object):
         surface.finish()
 
         write_pdf_metadata(self, file_obj, scale, self.metadata, attachments,
-            self.url_fetcher)
+                           self.url_fetcher)
 
         if target is None:
             return file_obj.getvalue()

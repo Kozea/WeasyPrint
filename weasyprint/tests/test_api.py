@@ -27,7 +27,7 @@ import cairocffi as cairo
 import pytest
 
 from .testing_utils import (
-    resource_filename, assert_no_logs, capture_logs, TestHTML, 
+    resource_filename, assert_no_logs, capture_logs, TestHTML,
     http_server, temp_directory)
 from .test_draw import image_to_pixels
 from ..compat import urljoin, urlencode, urlparse_uses_relative, iteritems

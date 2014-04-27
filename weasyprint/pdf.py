@@ -44,7 +44,7 @@ import cairocffi as cairo
 
 from . import VERSION_STRING, Attachment
 from .compat import xrange, iteritems, izip
-from .urls import iri_to_uri, fetch, unquote, urlsplit, URLFetchingError
+from .urls import iri_to_uri, unquote, urlsplit, URLFetchingError
 from .html import W3C_DATE_RE
 from .logger import LOGGER
 
@@ -377,8 +377,8 @@ def prepare_metadata(document, bookmark_root_id, scale):
 def _write_compressed_file_object(pdf, file):
     """
     Write a file like object as ``/EmbeddedFile``, compressing it with deflate.
-    In fact, this method writes multiple PDF objects to include length, compressed
-    length and MD5 checksum.
+    In fact, this method writes multiple PDF objects to include length,
+    compressed length and MD5 checksum.
 
     :return:
         the object number of the compressed file stream object
@@ -394,7 +394,8 @@ def _write_compressed_file_object(pdf, file):
 
     offset, write = pdf._start_writing()
     write(pdf_format('{0} 0 obj\n', object_number))
-    write(pdf_format('<< /Type /EmbeddedFile /Length {0} 0 R /Filter '
+    write(pdf_format(
+        '<< /Type /EmbeddedFile /Length {0} 0 R /Filter '
         '/FlateDecode /Params << /CheckSum {1} 0 R /Size {2} 0 R >> >>\n',
         length_number, md5_number, uncompressed_length_number))
     write(b'stream\n')
@@ -502,7 +503,7 @@ def _write_pdf_embedded_files(pdf, attachments, url_fetcher):
     file_spec_ids = []
     for attachment in attachments:
         file_spec_id = _write_pdf_attachment(pdf, attachment, url_fetcher)
-        if not file_spec_id is None:
+        if file_spec_id is not None:
             file_spec_ids.append(file_spec_id)
 
     # We might have failed to write any attachment at all
@@ -529,8 +530,9 @@ def _write_pdf_attachment(pdf, attachment, url_fetcher):
         # Attachments from document links like <link> or <a> can only be URLs.
         # They're passed in as tuples
         if isinstance(attachment, tuple):
-            attachment = Attachment(url=attachment[0], url_fetcher=url_fetcher,
-                description=attachment[1])
+            url, description = attachment
+            attachment = Attachment(
+                url=url, url_fetcher=url_fetcher, description=description)
         elif not isinstance(attachment, Attachment):
             attachment = Attachment(guess=attachment, url_fetcher=url_fetcher)
     except URLFetchingError as exc:
@@ -566,16 +568,16 @@ def _write_pdf_annotation_files(pdf, links, url_fetcher):
     annot_files = {}
     for page_links in links:
         for link_type, target, rectangle in page_links:
-            if link_type == 'attachment' and not target in annot_files:
+            if link_type == 'attachment' and target not in annot_files:
                 annot_files[target] = None
                 # TODO: use the title attribute as description
-                annot_files[target] = _write_pdf_attachment(pdf,
-                    (target, None), url_fetcher)
+                annot_files[target] = _write_pdf_attachment(
+                    pdf, (target, None), url_fetcher)
     return annot_files
 
 
 def write_pdf_metadata(document, fileobj, scale, metadata, attachments,
-    url_fetcher):
+                       url_fetcher):
     """Append to a seekable file-like object to add PDF metadata."""
     pdf = PDFFile(fileobj)
     bookmark_root_id = pdf.next_object_number()
@@ -604,8 +606,8 @@ def write_pdf_metadata(document, fileobj, scale, metadata, attachments,
             content.append(b'>>')
             pdf.write_new_object(b''.join(content))
 
-    embedded_files_id = _write_pdf_embedded_files(pdf, metadata.attachments +
-        (attachments or []), url_fetcher)
+    embedded_files_id = _write_pdf_embedded_files(
+        pdf, metadata.attachments + (attachments or []), url_fetcher)
 
     if bookmarks or embedded_files_id is not None:
         params = b''
@@ -633,7 +635,8 @@ def write_pdf_metadata(document, fileobj, scale, metadata, attachments,
     for page, page_links in zip(pdf.pages, links):
         annotations = []
         for link_type, target, rectangle in page_links:
-            content = [pdf_format('<< /Type /Annot '
+            content = [pdf_format(
+                '<< /Type /Annot '
                 '/Rect [{0:f} {1:f} {2:f} {3:f}] /Border [0 0 0]\n',
                 *rectangle)]
             if link_type != 'attachment' or annot_files[target] is None:
@@ -659,8 +662,9 @@ def write_pdf_metadata(document, fileobj, scale, metadata, attachments,
                 content.append(b'/Subtype /FileAttachment ')
                 # evince needs /T or fails on an internal assertion. PDF
                 # doesn't require it.
-                content.append(pdf_format('/T () /FS {0} 0 R '
-                    '/AP << /N {1} 0 R >>', annot_files[target], link_ap))
+                content.append(pdf_format(
+                    '/T () /FS {0} 0 R /AP << /N {1} 0 R >>',
+                    annot_files[target], link_ap))
             content.append(b'>>')
             annotations.append(pdf.write_new_object(b''.join(content)))
 
