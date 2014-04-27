@@ -96,3 +96,24 @@ else:
     def ints_from_bytes(byte_string):
         """Return a list of ints from a byte string"""
         return imap(ord, byte_string)
+
+
+if sys.version_info >= (3, 2):
+    from gzip import GzipFile
+
+    class StreamingGzipFile(GzipFile):
+        def __init__(self, fileobj):
+            GzipFile.__init__(self, fileobj=fileobj)
+            self.fileobj_to_close = fileobj
+
+        def close():
+            GzipFile.close(self)
+            self.fileobj_to_close.close()
+
+        # Inform html5lib to not rely on these:
+        seek = tell = None
+else:
+    # On older Python versions, GzipFile requires .seek() and .tell()
+    # which file-like objects for HTTP response do not have.
+    # http://bugs.python.org/issue11608
+    StreamingGzipFile = None

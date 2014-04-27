@@ -20,6 +20,8 @@ import contextlib
 import threading
 import shutil
 import tempfile
+import gzip
+import zlib
 
 import lxml.html
 import lxml.etree
@@ -27,7 +29,7 @@ import cairocffi as cairo
 import pytest
 
 from .testing_utils import (
-    resource_filename, assert_no_logs, capture_logs, TestHTML)
+    resource_filename, assert_no_logs, capture_logs, TestHTML, http_server)
 from .test_draw import image_to_pixels
 from ..compat import urljoin, urlencode, urlparse_uses_relative, iteritems
 from ..urls import path2url
@@ -988,3 +990,36 @@ def test_html_meta():
         title='One',
         authors=['', 'Me'])
 
+
+@assert_no_logs
+def test_http():
+    def gzip_compress(data):
+        file_obj = io.BytesIO()
+        gzip_file = gzip.GzipFile(fileobj=file_obj, mode='wb')
+        gzip_file.write(data)
+        gzip_file.close()
+        return file_obj.getvalue()
+
+    with http_server({
+        '/gzip': lambda env: (
+            (gzip_compress(b'<html test=ok>'), [('Content-Encoding', 'gzip')])
+            if 'gzip' in env.get('HTTP_ACCEPT_ENCODING', '') else
+            (b'<html test=accept-encoding-header-fail>', [])
+        ),
+        '/deflate': lambda env: (
+            (zlib.compress(b'<html test=ok>'),
+             [('Content-Encoding', 'deflate')])
+            if 'deflate' in env.get('HTTP_ACCEPT_ENCODING', '') else
+            (b'<html test=accept-encoding-header-fail>', [])
+        ),
+        '/raw-deflate': lambda env: (
+            # Remove zlib header and checksum
+            (zlib.compress(b'<html test=ok>')[2:-4],
+             [('Content-Encoding', 'deflate')])
+            if 'deflate' in env.get('HTTP_ACCEPT_ENCODING', '') else
+            (b'<html test=accept-encoding-header-fail>', [])
+        ),
+    }) as root_url:
+        assert HTML(root_url + '/gzip').root_element.get('test') == 'ok'
+        assert HTML(root_url + '/deflate').root_element.get('test') == 'ok'
+        assert HTML(root_url + '/raw-deflate').root_element.get('test') == 'ok'

@@ -12,18 +12,22 @@
 
 from __future__ import division, unicode_literals
 
+import io
 import re
 import sys
 import codecs
 import os.path
 import mimetypes
 import contextlib
+import gzip
+import zlib
 
 from . import VERSION_STRING
 from .logger import LOGGER
 from .compat import (
     urljoin, urlsplit, quote, unquote, unquote_to_bytes, urlopen_contenttype,
-    Request, parse_email, pathname2url, unicode, base64_decode)
+    Request, parse_email, pathname2url, unicode, base64_decode,
+    StreamingGzipFile)
 
 
 # Unlinke HTML, CSS and PNG, the SVG MIME type is not always builtin
@@ -227,6 +231,11 @@ def open_data_url(url):
                 redirected_url=url)
 
 
+HTTP_HEADERS = {
+    'User-Agent': VERSION_STRING,
+    'Accept-Encoding': 'gzip, deflate',
+}
+
 def default_url_fetcher(url):
     """Fetch an external resource such as an image or stylesheet.
 
@@ -259,10 +268,28 @@ def default_url_fetcher(url):
         return open_data_url(url)
     elif UNICODE_SCHEME_RE.match(url):
         url = iri_to_uri(url)
-        result, mime_type, charset = urlopen_contenttype(Request(
-            url, headers={'User-Agent': VERSION_STRING}))
-        return dict(file_obj=result, redirected_url=result.geturl(),
-                    mime_type=mime_type, encoding=charset)
+        response, mime_type, charset = urlopen_contenttype(Request(
+            url, headers=HTTP_HEADERS))
+        result = dict(redirected_url=response.geturl(),
+                      mime_type=mime_type, encoding=charset)
+        content_encoding = response.info().get('Content-Encoding')
+        if content_encoding == 'gzip':
+            if StreamingGzipFile is None:
+                result['string'] = gzip.GzipFile(
+                    fileobj=io.BytesIO(response.read())).read()
+                response.close()
+            else:
+                result['file_obj'] = StreamingGzipFile(fileobj=response)
+        elif content_encoding == 'deflate':
+            data = response.read()
+            try:
+                result['string'] = zlib.decompress(data)
+            except zlib.error:
+                # Try without zlib header or checksum
+                result['string'] = zlib.decompress(data, -15)
+        else:
+            result['file_obj'] = response
+        return result
     else:
         raise ValueError('Not an absolute URI: %r' % url)
 
