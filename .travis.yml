@@ -1,0 +1,15 @@
+language: python
+python:
+  - "2.6"
+  - "2.7"
+  - "3.2"
+  - "3.3"
+  - "pypy"
+install:
+  - pip install pytest flake8 -e .
+  - mkdir -p ~/.fonts
+  - wget http://www.w3.org/Style/CSS/Test/Fonts/Ahem/AHEM____.TTF -O ~/.fonts/Ahem.ttf
+  - sudo apt-get install ttf-dejavu
+script:
+  - py.test -s
+  - flake8 weasyprint
