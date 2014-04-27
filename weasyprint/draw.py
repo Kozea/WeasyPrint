@@ -355,7 +355,7 @@ def draw_background_image(context, layer, image_rendering):
             context.rectangle(painting_x, painting_y,
                               painting_width, painting_height)
             context.clip()
-        #else: unrestricted, whole page box
+        # else: unrestricted, whole page box
 
         context.translate(positioning_x + position_x,
                           positioning_y + position_y)

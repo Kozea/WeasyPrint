@@ -1615,6 +1615,7 @@ def test_page_breaks():
         assert all([div.element_tag == 'div' for div in divs])
         assert all([div.position_x == 10 for div in divs])
         page_divs.append(divs)
+        del divs
 
     positions_y = [[div.position_y for div in divs] for divs in page_divs]
     assert positions_y == [[10, 40], [10, 40], [10]]
@@ -1635,6 +1636,7 @@ def test_page_breaks():
         assert all([div.element_tag == 'div' for div in divs])
         assert all([div.position_x == 10 for div in divs])
         page_divs.append(divs)
+        del divs
 
     positions_y = [[div.position_y for div in divs] for divs in page_divs]
     assert positions_y == [[10, 40], [10, 40], [10]]
@@ -1657,10 +1659,10 @@ def test_page_breaks():
         assert all([img.element_tag == 'img' for img in images])
         assert all([img.position_x == 10 for img in images])
         page_images.append(images)
+        del images
     positions_y = [[img.position_y for img in images]
                    for images in page_images]
     assert positions_y == [[10, 40], [10, 40], [10]]
-
 
     page_1, page_2, page_3, page_4 = parse('''
         <style>
@@ -1715,7 +1717,6 @@ def test_page_breaks():
     section, = article.children
     ulist, = section.children
     assert ulist.element_tag == 'ul'
-
 
     # Reference for the following test:
     # Without any 'avoid', this breaks after the <div>
@@ -1792,7 +1793,8 @@ def test_page_breaks():
                 <div>
                     <p style="page-break-inside: avoid">
                         ><img src=pattern.png><br/><img src=pattern.png></p>
-                    <p style="page-break-before: avoid; page-break-after: avoid;
+                    <p style="page-break-before: avoid;
+                              page-break-after: avoid;
                               widows: 2"
                         ><img src=pattern.png><br/><img src=pattern.png></p>
                 </div>
@@ -1876,7 +1878,7 @@ def test_page_breaks():
     # TODO: currently this is 60: we do not decrease the used height of
     # blocks with 'height: auto' when we remove children from them for
     # some page-break-*: avoid.
-    #assert div.height == 30
+    # assert div.height == 30
     html, = page_3.children
     body, = html.children
     div, img_4, img_5, = body.children
@@ -2226,7 +2228,7 @@ def test_whitespace_processing():
         assert text.text == 'a', 'source was %r' % (source,)
 
         page, = parse('<p style="white-space: pre-line">\n\n<em>%s</em></pre>'
-            % source.replace('\n', ' '))
+                      % source.replace('\n', ' '))
         html, = page.children
         body, = html.children
         p, = body.children
@@ -2718,7 +2720,6 @@ def test_vertical_align():
     assert img_1.position_y == 0
 
 
-
 @assert_no_logs
 def test_text_align_left():
     """Test the left text alignment."""
@@ -3149,8 +3150,7 @@ def test_table_column_width():
     assert row.children[0].width == 500
     assert row.children[1].width == 600
     assert row.children[2].width == 0
-    assert table.width == 1500 # 500 + 600 + 4 * border-spacing
-
+    assert table.width == 1500  # 500 + 600 + 4 * border-spacing
 
     # Sum of columns width larger that the table width:
     # increase the table width
@@ -3387,7 +3387,7 @@ def test_margin_boxes_fixed_dimension():
     assert margin_box.margin_width() == 200
     assert margin_box.margin_left == 60
     assert margin_box.margin_right == 60
-    assert margin_box.width == 80 # 200 - 60 - 60
+    assert margin_box.width == 80  # 200 - 60 - 60
 
     assert margin_box.margin_height() == 100
     # total was too big, the outside margin was ignored:
@@ -3718,7 +3718,7 @@ def test_margin_boxes_variable_dimension():
     ''' % images(170, 175)
     assert get_widths(css) == [200, 300, 175]
 
-    ##### Without @top-center
+    # Without @top-center
 
     css = '''
         @top-left { content: ''; width: 200px }
@@ -4515,15 +4515,16 @@ def test_floats_page_breaks():
                     <!-- page break should be here !!! -->
             <img src=pattern.png>
     ''')
-    
+
     assert len(pages) == 2
 
     page_images = []
     for page in pages:
-        images = [_d for _d in page.descendants() if _d.element_tag=='img']
+        images = [d for d in page.descendants() if d.element_tag == 'img']
         assert all([img.element_tag == 'img' for img in images])
         assert all([img.position_x == 10 for img in images])
         page_images.append(images)
+        del images
     positions_y = [[img.position_y for img in images]
                    for images in page_images]
     assert positions_y == [[10], [10]]
@@ -4539,15 +4540,16 @@ def test_floats_page_breaks():
                     <!-- page break should be here !!! -->
             <img src=pattern.png>
     ''')
-    
+
     assert len(pages) == 2
 
     page_images = []
     for page in pages:
-        images = [_d for _d in page.descendants() if _d.element_tag=='img']
+        images = [d for d in page.descendants() if d.element_tag == 'img']
         assert all([img.element_tag == 'img' for img in images])
         assert all([img.position_x == 10 for img in images])
         page_images.append(images)
+        del images
     positions_y = [[img.position_y for img in images]
                    for images in page_images]
     assert positions_y == [[10], [10]]
@@ -4567,15 +4569,16 @@ def test_floats_page_breaks():
                     <!-- page break should be here !!! -->
             <img src=pattern.png>
     ''')
-    
+
     assert len(pages) == 3
 
     page_images = []
     for page in pages:
-        images = [_d for _d in page.descendants() if _d.element_tag=='img']
+        images = [d for d in page.descendants() if d.element_tag == 'img']
         assert all([img.element_tag == 'img' for img in images])
         assert all([img.position_x == 10 for img in images])
         page_images.append(images)
+        del images
     positions_y = [[img.position_y for img in images]
                    for images in page_images]
     assert positions_y == [[10, 40], [10, 40], [10]]
@@ -4995,7 +4998,8 @@ def test_linear_gradient():
            'solid', (0, .5, .5, 1), [], [])
     layout('linear-gradient(blue, lime)', init=(200, 0, 200, 300))
     layout('repeating-linear-gradient(blue, lime)', init=(200, 0, 200, 300))
-    layout('repeating-linear-gradient(blue, lime 20px)', init=(200, 0, 200, 20))
+    layout('repeating-linear-gradient(blue, lime 20px)',
+           init=(200, 0, 200, 20))
     layout('repeating-linear-gradient(blue, lime 20px)',
            'solid', (0, .5, .5, 1), [], [], scale=(1/20, 1/20))
 
@@ -5061,8 +5065,8 @@ def test_radial_gradient():
     layout('radial-gradient(100px, blue, lime)',
            init=(200, 150, 0, 100))
 
-    layout('radial-gradient(100px at right 20px bottom 30px, blue, lime)',
-           init=(380, 270, 0, 100))
+    layout('radial-gradient(100px at right 20px bottom 30px, lime, red)',
+           init=(380, 270, 0, 100), colors=[lime, red])
     layout('radial-gradient(0 0, blue, lime)',
            init=(200, 150, 0, 1e-7))
     layout('radial-gradient(1px 0, blue, lime)',

@@ -214,7 +214,8 @@ def test_canvas_background():
         r+r+r+r+r+r+r+r+r+r,
         r+r+r+r+r+r+r+r+r+r,
         r+r+r+r+r+r+r+r+r+r,
-     ], '''
+
+    ], '''
         <style>
             @page { size: 10px }
             /* html’s background propagates to the whole canvas */
@@ -550,10 +551,10 @@ def test_background_image():
         ('fixed', 'url(pattern.png) no-repeat fixed', [
             # The image is actually here:
             #######
-            _+_+_+_+_+_+_+_+_+_+_+_+_+_, #
-            _+_+_+_+_+_+_+_+_+_+_+_+_+_, #
-            _+_+B+B+_+_+_+_+_+_+_+_+_+_, #
-            _+_+B+B+_+_+_+_+_+_+_+_+_+_, #
+            _+_+_+_+_+_+_+_+_+_+_+_+_+_,  #
+            _+_+_+_+_+_+_+_+_+_+_+_+_+_,  #
+            _+_+B+B+_+_+_+_+_+_+_+_+_+_,  #
+            _+_+B+B+_+_+_+_+_+_+_+_+_+_,  #
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
@@ -568,14 +569,14 @@ def test_background_image():
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         ]),
         ('fixed_right', 'url(pattern.png) no-repeat fixed right 3px', [
-                                #######
+            #                   x x x x
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
-            _+_+_+_+_+_+_+_+_+_+r+B+_+_, #
-            _+_+_+_+_+_+_+_+_+_+B+B+_+_, #
-            _+_+_+_+_+_+_+_+_+_+B+B+_+_, #
-            _+_+_+_+_+_+_+_+_+_+B+B+_+_, #
+            _+_+_+_+_+_+_+_+_+_+r+B+_+_,  # x
+            _+_+_+_+_+_+_+_+_+_+B+B+_+_,  # x
+            _+_+_+_+_+_+_+_+_+_+B+B+_+_,  # x
+            _+_+_+_+_+_+_+_+_+_+B+B+_+_,  # x
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
@@ -604,8 +605,8 @@ def test_background_image():
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         ]),
-        ('multi_under', 'url(pattern.png) no-repeat, '
-                        'url(pattern.png) no-repeat 2px 1px', [
+        ('multi_under', '''url(pattern.png) no-repeat,
+                           url(pattern.png) no-repeat 2px 1px''', [
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+r+B+B+B+_+_+_+_+_+_+_+_,
@@ -623,8 +624,8 @@ def test_background_image():
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
         ]),
-        ('multi_over', 'url(pattern.png) no-repeat 2px 1px, '
-                       'url(pattern.png) no-repeat', [
+        ('multi_over', '''url(pattern.png) no-repeat 2px 1px,
+                          url(pattern.png) no-repeat''', [
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_+_+_,
             _+_+r+B+B+B+_+_+_+_+_+_+_+_,
@@ -1135,11 +1136,12 @@ def test_background_size():
 def test_list_style_image():
     """Test images as list markers."""
     for position, pixels in [
-        ('outside', [
-        #   ++++++++++++++      ++++  <li> horizontal margins: 7px 2px
-        #                 ######      <li> width: 12 - 7 - 2 = 3px
-        #               --            list marker margin: 0.5em = 2px
-        #       ********              list marker image is 4px wide
+        ('outside',
+         #  ++++++++++++++      ++++  <li> horizontal margins: 7px 2px
+         #                ######      <li> width: 12 - 7 - 2 = 3px
+         #              --            list marker margin: 0.5em = 2px
+         #      ********              list marker image is 4px wide
+         [
             _+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_,
             _+_+r+B+B+B+_+_+_+_+_+_,
@@ -1150,11 +1152,12 @@ def test_list_style_image():
             _+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_,
-        ]),
-        ('inside', [
-        #   ++++++++++++++      ++++  <li> horizontal margins: 7px 2px
-        #                 ######      <li> width: 12 - 7 - 2 = 3px
-        #                 ********    list marker image is 4px wide: overflow
+         ]),
+        ('inside',
+         #  ++++++++++++++      ++++  <li> horizontal margins: 7px 2px
+         #                ######      <li> width: 12 - 7 - 2 = 3px
+         #                ********    list marker image is 4px wide: overflow
+         [
             _+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+r+B+B+B+_,
@@ -1165,7 +1168,7 @@ def test_list_style_image():
             _+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_,
             _+_+_+_+_+_+_+_+_+_+_+_,
-        ])
+         ])
     ]:
         assert_pixels('list_style_image_' + position, 12, 10, pixels, '''
             <style>
@@ -1178,24 +1181,24 @@ def test_list_style_image():
         ''' % (FONTS, position))
 
     assert_pixels('list_style_none', 10, 10, [
-            _+_+_+_+_+_+_+_+_+_,
-            _+_+_+_+_+_+_+_+_+_,
-            _+_+_+_+_+_+_+_+_+_,
-            _+_+_+_+_+_+_+_+_+_,
-            _+_+_+_+_+_+_+_+_+_,
-            _+_+_+_+_+_+_+_+_+_,
-            _+_+_+_+_+_+_+_+_+_,
-            _+_+_+_+_+_+_+_+_+_,
-            _+_+_+_+_+_+_+_+_+_,
-            _+_+_+_+_+_+_+_+_+_,
-        ], '''
-            <style>
-                @page { size: 10px }
-                body { margin: 0; background: white; font-family: %s }
-                ul { margin: 0 0 0 5px; list-style: none; font-size: 2px; }
-            </style>
-            <ul><li>
-        ''' % (FONTS,))
+        _+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { size: 10px }
+            body { margin: 0; background: white; font-family: %s }
+            ul { margin: 0 0 0 5px; list-style: none; font-size: 2px; }
+        </style>
+        <ul><li>
+    ''' % (FONTS,))
 
 
 @assert_no_logs
@@ -1524,11 +1527,14 @@ def test_tables():
             </x-tr>
         </x-table>
     '''
-    r = as_pixel(b'\xff\x7f\x7f\xff')  # rgba(255, 0, 0, 0.5) above #fff
-    R = as_pixel(b'\xff\x3f\x3f\xff')  # r above r above #fff
-    g = as_pixel(b'\x7f\xff\x7f\xff')  # rgba(0, 255, 0, 0.5) above #fff
-    G = as_pixel(b'\x7f\xbf\x3f\xff')  # g above r above #fff
-                                       #   Not the same as r above g above #fff
+    # rgba(255, 0, 0, 0.5) above #fff
+    r = as_pixel(b'\xff\x7f\x7f\xff')
+    # r above r above #fff
+    R = as_pixel(b'\xff\x3f\x3f\xff')
+    # rgba(0, 255, 0, 0.5) above #fff
+    g = as_pixel(b'\x7f\xff\x7f\xff')
+    # g above r above #fff. Not the same as r above g above #fff
+    G = as_pixel(b'\x7f\xbf\x3f\xff')
     assert_pixels('table_borders', 28, 28, [
         _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
         _+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+_,
@@ -2779,6 +2785,7 @@ def test_radial_gradients():
             'radial_gradient_' + gradient, 10, 16,
             '<style>@page { size: 10px 16px; background: radial-gradient(%s)'
             % gradient)
+
         def pixel(x, y):
             i = (x + 10 * y) * 4
             return pixels[i:i + 4]

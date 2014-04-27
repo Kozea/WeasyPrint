@@ -1072,6 +1072,7 @@ def white_space(keyword):
     """``white-space`` property validation."""
     return keyword in ('normal', 'pre', 'nowrap', 'pre-wrap', 'pre-line')
 
+
 @validator()
 @single_keyword
 def overflow_wrap(keyword):
@@ -1689,7 +1690,7 @@ def expand_font(name, tokens):
     if font_family(tokens) is None:
         raise InvalidValues
     yield '-family', tokens
-    
+
 
 @expander('word-wrap')
 def expand_word_wrap(base_url, name, tokens):

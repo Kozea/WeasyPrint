@@ -219,8 +219,8 @@ def block_container_layout(context, box, max_position_y, skip_stack,
     # See http://www.w3.org/TR/CSS21/visudet.html#normal-block
     #     http://www.w3.org/TR/CSS21/visudet.html#root-height
 
-    #if box.style.overflow != 'visible':
-    #    ...
+    # if box.style.overflow != 'visible':
+    #     ...
 
     # See http://www.w3.org/TR/CSS21/visuren.html#block-formatting
     if not isinstance(box, boxes.BlockBox):
@@ -283,13 +283,14 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                 new_child = float_layout(
                     context, child, box, absolute_boxes, fixed_boxes)
                 # New page if overflow
-                if (page_is_empty and not new_children) or \
-                    not (new_child.position_y + new_child.height > max_position_y):
+                if (page_is_empty and not new_children) or not (
+                        new_child.position_y + new_child.height
+                        > max_position_y):
                     new_child.index = index
                     new_children.append(new_child)
                 else:
                     resume_at = (index, None)
-                    break                    
+                    break
             continue
 
         if isinstance(child, boxes.LineBox):
@@ -434,7 +435,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                                 - new_child.margin_top)
                     new_child.translate(0, offset_y)
                     adjoining_margins = []
-                #else: blocks handle that themselves.
+                # else: blocks handle that themselves.
 
                 adjoining_margins = next_adjoining_margins
                 adjoining_margins.append(new_child.margin_bottom)

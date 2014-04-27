@@ -279,8 +279,6 @@ def test_warnings():
             ['WARNING: Ignored', 'invalid value']),
         ('@import "relative-uri.css',
             ['WARNING: Relative URI reference without a base URI']),
-#        ('@import "data:image/png,',
-#            ['WARNING: Unsupported stylesheet type', 'image/png']),
         ('@import "invalid-protocol://absolute-URL',
             ['WARNING: Failed to load stylesheet at']),
     ]:

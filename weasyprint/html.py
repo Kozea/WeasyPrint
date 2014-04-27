@@ -298,15 +298,6 @@ def get_html_metadata(html_document):
                 created=created, modified=modified)
 
 
-def ascii_lower(string):
-    """Return :obj:`string` with ASCII letters in lower-case.
-
-    http://www.whatwg.org/html#ascii-case-insensitive
-
-    """
-    return string.encode('utf8').lower().decode('utf8')
-
-
 def strip_whitespace(string):
     """Use the HTML definition of "space character",
     not all Unicode Whitespace.
@@ -359,4 +350,4 @@ def parse_w3c_date(meta_name, source_line, string):
         return string
     else:
         LOGGER.warning('Invalid date in <meta name="%s"> line %i: %r',
-                    meta_name, source_line, string)
+                       meta_name, source_line, string)

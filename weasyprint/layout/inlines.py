@@ -263,7 +263,6 @@ def replaced_box_width(box, device_size):
             intrinsic_ratio = intrinsic_width / intrinsic_height
             box.width = box.height * intrinsic_ratio
 
-
     # Untested code for when we do not always have an intrinsic width.
 #    if box.height == 'auto' and box.width == 'auto':
 #        if intrinsic_width is not None:
@@ -522,7 +521,7 @@ def split_inline_level(context, box, position_x, max_x, skip_stack,
         new_box.position_x = position_x
         resume_at = None
         preserved_line_break = False
-    #else: unexpected box type here
+    # else: unexpected box type here
     return new_box, resume_at, preserved_line_break
 
 
@@ -535,8 +534,8 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
     assert isinstance(box, (boxes.LineBox, boxes.InlineBox))
     left_spacing = (box.padding_left + box.margin_left +
                     box.border_left_width)
-    right_spacing = (box.padding_right + box.margin_right +
-                     box.border_right_width)
+#    right_spacing = (box.padding_right + box.margin_right +
+#                     box.border_right_width)
     if is_start:
         position_x += left_spacing
     content_box_left = position_x
@@ -760,18 +759,17 @@ def line_box_verticality(box):
 
     """
     top_bottom_subtrees = []
-    subtrees_with_min_max = []
     max_y, min_y = aligned_subtree_verticality(
         box, top_bottom_subtrees, baseline_y=0)
-    for subtree in top_bottom_subtrees:
-        if subtree.is_floated():
-            sub_min_y = None
-            sub_max_y = None
-        else:
-            sub_max_y, sub_min_y = aligned_subtree_verticality(
+    subtrees_with_min_max = [
+        (subtree, sub_max_y, sub_min_y)
+        for subtree in top_bottom_subtrees
+        for sub_max_y, sub_min_y in [
+            (None, None) if subtree.is_floated()
+            else aligned_subtree_verticality(
                 subtree, top_bottom_subtrees, baseline_y=0)
-        subtrees_with_min_max.append(
-            (subtree, sub_max_y, sub_min_y))
+        ]
+    ]
 
     if subtrees_with_min_max:
         sub_positions = [
@@ -950,7 +948,7 @@ def add_word_spacing(context, box, extra_word_spacing, x_advance):
             assert new_box is not None
             assert resume_at is None
             # XXX new_box.width - box.width is always 0???
-            #x_advance +=  new_box.width - box.width
+            # x_advance +=  new_box.width - box.width
             x_advance += extra_word_spacing * nb_spaces
             box.width = new_box.width
             box.pango_layout = new_box.pango_layout
