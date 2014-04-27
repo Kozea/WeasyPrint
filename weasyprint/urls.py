@@ -26,9 +26,9 @@ import traceback
 from . import VERSION_STRING
 from .logger import LOGGER
 from .compat import (
-    urljoin, urlsplit, quote, unquote, unquote_to_bytes, urlopen_contenttype,
-    Request, parse_email, pathname2url, unicode, base64_decode,
-    StreamingGzipFile)
+    urljoin, urlsplit, quote, unquote, unquote_to_bytes, urlopen,
+    urllib_get_content_type, urllib_get_charset, urllib_get_filename, Request,
+    parse_email, pathname2url, unicode, base64_decode, StreamingGzipFile)
 
 
 # Unlinke HTML, CSS and PNG, the SVG MIME type is not always builtin
@@ -261,6 +261,9 @@ def default_url_fetcher(url):
           *charset* parameter in a *Content-Type* header
         * Optionally: ``redirected_url``, the actual URL of the ressource
           in case there were eg. HTTP redirects.
+        * Optionally: ``filename``, the filename of the resource. Usually
+          derived from the *filename* parameter in a *Content-Disposition*
+          header
 
         If a ``file_obj`` key is given, it is the caller’s responsability
         to call ``file_obj.close()``.
@@ -270,10 +273,11 @@ def default_url_fetcher(url):
         return open_data_url(url)
     elif UNICODE_SCHEME_RE.match(url):
         url = iri_to_uri(url)
-        response, mime_type, charset = urlopen_contenttype(Request(
-            url, headers=HTTP_HEADERS))
+        response = urlopen(Request(url, headers=HTTP_HEADERS))
         result = dict(redirected_url=response.geturl(),
-                      mime_type=mime_type, encoding=charset)
+                      mime_type=urllib_get_content_type(response),
+                      encoding=urllib_get_charset(response),
+                      filename=urllib_get_filename(response))
         content_encoding = response.info().get('Content-Encoding')
         if content_encoding == 'gzip':
             if StreamingGzipFile is None:

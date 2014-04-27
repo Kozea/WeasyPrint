@@ -243,6 +243,13 @@ def handle_td(element, box, _get_image_from_uri):
     return [box]
 
 
+@handler('a')
+def handle_a(element, box, _get_image_from_uri):
+    """Handle the ``rel`` attribute."""
+    box.is_attachment = element_has_link_type(element, 'attachment')
+    return [box]
+
+
 def find_base_url(html_document, fallback_base_url):
     """Return the base URL for the document.
 
@@ -264,6 +271,7 @@ def get_html_metadata(html_document):
     http://www.whatwg.org/html#the-title-element
     http://www.whatwg.org/html#standard-metadata-names
     http://wiki.whatwg.org/wiki/MetaExtensions
+    http://microformats.org/wiki/existing-rel-values#HTML5_link_type_extensions
 
     """
     title = None
@@ -273,7 +281,8 @@ def get_html_metadata(html_document):
     authors = []
     created = None
     modified = None
-    for element in html_document.iter('title', 'meta'):
+    attachments = []
+    for element in html_document.iter('title', 'meta', 'link'):
         if element.tag == 'title' and title is None:
             title = get_child_text(element)
         elif element.tag == 'meta':
@@ -293,9 +302,18 @@ def get_html_metadata(html_document):
                 created = parse_w3c_date(name, element.sourceline, content)
             elif name == 'dcterms.modified' and modified is None:
                 modified = parse_w3c_date(name, element.sourceline, content)
+        elif element.tag == 'link' and element_has_link_type(element,
+            'attachment'):
+            url = get_url_attribute(element, 'href')
+            title = element.get('title', None)
+            if url is None:
+                LOGGER.warning('Missing href in <link rel="%s">', rel)
+            else:
+                attachments.append((url, title))
     return dict(title=title, description=description, generator=generator,
                 keywords=keywords, authors=authors,
-                created=created, modified=modified)
+                created=created, modified=modified,
+                attachments=attachments)
 
 
 def strip_whitespace(string):

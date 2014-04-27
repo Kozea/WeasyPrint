@@ -19,6 +19,8 @@ import contextlib
 import functools
 import wsgiref.simple_server
 import threading
+import shutil
+import tempfile
 
 from .. import HTML, CSS
 from ..logger import LOGGER
@@ -126,3 +128,17 @@ def http_server(handlers):
     finally:
         server.shutdown()
         thread.join()
+
+
+@contextlib.contextmanager
+def temp_directory():
+    """Context manager that gives the path to a new temporary directory.
+
+    Remove everything on exiting the context.
+
+    """
+    directory = tempfile.mkdtemp()
+    try:
+        yield directory
+    finally:
+        shutil.rmtree(directory)
