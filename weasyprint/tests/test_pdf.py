@@ -341,16 +341,16 @@ def test_document_info():
 
 @assert_no_logs
 def test_embedded_files():
-
-    pdf_bytes = None
     with temp_directory() as absolute_tmp_dir:
         absolute_tmp_file = os.path.join(absolute_tmp_dir, 'some_file.txt')
         adata = b'12345678'
         with open(absolute_tmp_file, 'wb') as afile:
             afile.write(adata)
+        absolute_url = path2url(absolute_tmp_file)
+        assert absolute_url.startswith('file://')
 
         with temp_directory() as relative_tmp_dir:
-            relative_tmp_file = os.path.join(absolute_tmp_dir, 'äöü.txt')
+            relative_tmp_file = os.path.join(relative_tmp_dir, 'äöü.txt')
             rdata = b'abcdefgh'
             with open(relative_tmp_file, 'wb') as rfile:
                 rfile.write(rdata)
@@ -367,9 +367,8 @@ def test_embedded_files():
                     <link rel="attachment" href="{1}">
                     <h1>Heading 1</h1>
                     <h2>Heading 2</h2>
-                '''.format(path2url(absolute_tmp_file),
-                           os.path.basename(relative_tmp_file)),
-                base_url=os.path.dirname(relative_tmp_file)
+                '''.format(absolute_url, os.path.basename(relative_tmp_file)),
+                base_url=relative_tmp_dir,
             ).write_pdf(
                 attachments=[
                     Attachment('data:,oob attachment', description='Hello'),
