@@ -33,7 +33,7 @@ REQUIREMENTS = [
     'CairoSVG>=0.4.1',
     'cffi>=0.6',
     'cairocffi>=0.5',
-    'Pyphen'
+    'Pyphen>=0.8'
     # C dependencies: Gdk-Pixbuf (optional), Pango, cairo.
 ]
 if sys.version_info < (2, 7) or (3,) <= sys.version_info < (3, 2):
