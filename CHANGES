@@ -5,12 +5,36 @@ WeasyPrint changelog
 Version 0.22
 ------------
 
-Not released yet.
+Released on 2014-05-05.
 
 New features:
 
 * `#86 <https://github.com/Kozea/WeasyPrint/pull/86>`_:
   Support gzip and deflate encoding in HTTP responses
+* `#177 <https://github.com/Kozea/WeasyPrint/pull/177>`_:
+  Support for PDF attachments.
+
+Bug fixes:
+
+* `#169 <https://github.com/Kozea/WeasyPrint/issues/169>`_:
+  Fix a crash on percentage-width columns in an auto-width table.
+* `#168 <https://github.com/Kozea/WeasyPrint/issues/168>`_:
+  Make ``<fieldset>`` a block in the user-agent stylesheet.
+* `#175 <https://github.com/Kozea/WeasyPrint/issues/175>`_:
+  Fix some ``dlopen()`` library loading issues on OS X.
+* `#183 <https://github.com/Kozea/WeasyPrint/issues/183>`_:
+  Break to the next page before a float that would overflow the page.
+  (It might still overflow if it’s bigger than the page.)
+* `#188 <https://github.com/Kozea/WeasyPrint/issues/188>`_:
+  Require a recent enough version of Pyphen
+
+
+Release process:
+
+* Drop Python 3.1 support.
+* Set up [Travis CI](http://travis-ci.org/)
+  to automatically test all pushes and pull requests.
+* Start testing on Python 3.4 locally. (Travis does not support 3.4 yet.)
 
 
 Version 0.21
