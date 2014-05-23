@@ -507,11 +507,12 @@ def split_first_line(text, style, hinting, max_width, line_width):
 
             # manual hyphenation, check for missing hyphen
             if hyphens == 'manual':
-                if (len(first_part) 
+                if (len(first_part)
                     and first_part[len(first_part)-1] == u'\u00AD'):
                     new_first_line = (
-                        first_part[:len(first_part)-1] 
-                        + style.hyphenate_character)
+                        first_part[:len(first_part)-1]
+                        + style.hyphenate_character
+                    )
                     temp_layout = create_layout(
                         new_first_line, style, hinting, None)
                     temp_lines = temp_layout.iter_lines()
@@ -528,21 +529,27 @@ def split_first_line(text, style, hinting, max_width, line_width):
 
                     # the hyphen does not fit, break earlier
                     else:
-                        prev_hyphen = first_part.rfind(u'\u00AD', 
-                            0, len(first_part)-2)
-                        prev_blank = first_part.rfind(' ', 
-                            0, len(first_part)-2)
+                        prev_hyphen = first_part.rfind(
+                            u'\u00AD',
+                            0,
+                            len(first_part)-2
+                        )
+                        prev_blank = first_part.rfind(
+                            ' ',
+                            0,
+                            len(first_part)-2
+                        )
 
                         if (prev_hyphen > -1) or (prev_blank > -1):
                             if prev_hyphen > prev_blank:
                                 new_first_line = (
-                                    first_part[:prev_hyphen] 
+                                    first_part[:prev_hyphen]
                                     + style.hyphenate_character)
                             else:
                                 new_first_line = (first_part[:prev_blank])
 
                             temp_layout = create_layout(
-                                new_first_line, 
+                                new_first_line,
                                 style, hinting, max_width)
                             temp_lines = temp_layout.iter_lines()
                             temp_first_line = next(temp_lines, None)
@@ -553,7 +560,7 @@ def split_first_line(text, style, hinting, max_width, line_width):
                             layout = temp_layout
                             resume_at = len(new_first_line)
 
-            elif hyphens =='auto' and lang:
+            elif hyphens == 'auto' and lang:
                 dictionary_key = (lang, left, right, total)
                 dictionary = PYPHEN_DICTIONARY_CACHE.get(dictionary_key)
                 if dictionary is None:
