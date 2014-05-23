@@ -2437,6 +2437,22 @@ def test_images():
     assert img.content_box_x() == 49  # (100 - 2) / 2 == 49px for margin-left
     assert img.content_box_y() == 10
 
+    page, = parse('''
+        <body style="float: left">
+        <img style="height: 200px; margin: 10px; display: block" src="
+            data:image/svg+xml,
+            <svg width='150' height='100'></svg>
+        ">
+    ''')
+    html, = page.children
+    body, = html.children
+    img, = body.children
+    assert body.width == 320
+    assert body.height == 220
+    assert img.element_tag == 'img'
+    assert img.width == 300
+    assert img.height == 200
+
 
 @assert_no_logs
 def test_vertical_align():
