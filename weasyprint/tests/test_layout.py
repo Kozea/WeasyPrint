@@ -4583,7 +4583,6 @@ def test_floats_page_breaks():
                    for images in page_images]
     assert positions_y == [[10, 40], [10, 40], [10]]
 
-
     # last float does not fit, pushed to next page
     pages = parse('''
         <style>
@@ -4617,10 +4616,9 @@ def test_floats_page_breaks():
         page_divs.append(divs)
         del divs
     
-    positions_y = [[div.position_y for div in divs] 
+    positions_y = [[div.position_y for div in divs]
                     for divs in page_divs]
     assert positions_y == [[10, 70], [10]]
-
 
     # last float does not fit, pushed to next page
     # center div must not 
@@ -4657,7 +4655,7 @@ def test_floats_page_breaks():
         page_divs.append(divs)
         del divs
     
-    positions_y = [[div.position_y for div in divs] 
+    positions_y = [[div.position_y for div in divs]
                     for divs in page_divs]
     assert positions_y == [[10], [10, 30]]
 
@@ -4696,11 +4694,9 @@ def test_floats_page_breaks():
         page_divs.append(divs)
         del divs
     
-    positions_y = [[div.position_y for div in divs] 
+    positions_y = [[div.position_y for div in divs]
                     for divs in page_divs]
     assert positions_y == [[10], [10], [10]]       
-
-
 
 
 @assert_no_logs
