@@ -297,7 +297,6 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                         if result:
                             new_children, resume_at = result
                             break
-
                     resume_at = (index, None)
                     break
             continue
