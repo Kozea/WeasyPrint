@@ -289,6 +289,15 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                     new_child.index = index
                     new_children.append(new_child)
                 else:
+                    if new_children \
+                            and new_children[-1].style.page_break_after \
+                            == 'avoid':
+                        result = find_earlier_page_break(
+                            new_children, absolute_boxes, fixed_boxes)
+                        if result:
+                            new_children, resume_at = result
+                            break
+
                     resume_at = (index, None)
                     break
             continue
