@@ -468,7 +468,7 @@ def split_first_line(text, style, hinting, max_width, line_width):
         first_part = ''
         second_part = text
 
-    next_word = second_part.split(u'\u0020', 1)[0]
+    next_word = second_part.split(' ', 1)[0]
 
     if not next_word:
         # We did not find a word on the next line
