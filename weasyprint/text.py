@@ -507,8 +507,8 @@ def split_first_line(text, style, hinting, max_width, line_width):
 
             # manual hyphenation, check for missing hyphen
             if hyphens == 'manual':
-                if (len(first_part)
-                    and first_part[len(first_part)-1] == u'\u00AD'):
+                if len(first_part) \
+                        and first_part[len(first_part)-1] == u'\u00AD':
                     new_first_line = (
                         first_part[:len(first_part)-1]
                         + style.hyphenate_character
@@ -564,11 +564,18 @@ def split_first_line(text, style, hinting, max_width, line_width):
                 dictionary_key = (lang, left, right, total)
                 dictionary = PYPHEN_DICTIONARY_CACHE.get(dictionary_key)
                 if dictionary is None:
-                    dictionary = pyphen.Pyphen(lang=lang, left=left, right=right)
+                    dictionary = pyphen.Pyphen(
+                        lang=lang,
+                        left=left,
+                        right=right
+                    )
                     PYPHEN_DICTIONARY_CACHE[dictionary_key] = dictionary
                 for first_word_part, _ in dictionary.iterate(next_word):
                     new_first_line = (
-                        first_part + first_word_part + style.hyphenate_character)
+                        first_part +
+                        first_word_part +
+                        style.hyphenate_character
+                    )
                     temp_layout = create_layout(
                         new_first_line, style, hinting, max_width)
                     temp_lines = temp_layout.iter_lines()
@@ -582,7 +589,8 @@ def split_first_line(text, style, hinting, max_width, line_width):
                         layout = temp_layout
                         first_line = temp_first_line
                         second_line = temp_second_line
-                        temp_first_line_width, _height = get_size(temp_first_line)
+                        temp_first_line_width, \
+                            _height = get_size(temp_first_line)
                         if temp_first_line_width <= max_width:
                             break
 
