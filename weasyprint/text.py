@@ -508,7 +508,8 @@ def split_first_line(text, style, hinting, max_width, line_width):
             # manual hyphenation, check for missing hyphen
             if hyphens == 'manual':
                 if len(first_part) \
-                        and first_part[len(first_part)-1] == u'\u00AD':
+                    and first_part[len(first_part)-1] \
+                        == '\xc2\xad'.decode('utf-8'):
                     new_first_line = (
                         first_part[:len(first_part)-1]
                         + style.hyphenate_character
@@ -530,7 +531,7 @@ def split_first_line(text, style, hinting, max_width, line_width):
                     # the hyphen does not fit, break earlier
                     else:
                         prev_hyphen = first_part.rfind(
-                            u'\u00AD',
+                            '\xc2\xad'.decode('utf-8'),
                             0,
                             len(first_part)-2
                         )
