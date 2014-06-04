@@ -297,7 +297,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                     if new_children and block_level_page_break(
                             last_in_flow_child,
                             child
-                        ) == 'avoid':
+                            ) == 'avoid':
                         result = find_earlier_page_break(
                             new_children, absolute_boxes, fixed_boxes)
                         if result:

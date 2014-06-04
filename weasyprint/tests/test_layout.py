@@ -4588,15 +4588,13 @@ def test_floats_page_breaks():
         <style>
             @page{
                 size: 110px;
-                margin: 10px;  
+                margin: 10px;
                 padding: 0;
             }
-
             .large {
                 width: 10px;
                 height: 60px;
             }
-
             .small {
                 width: 10px;
                 height: 20px;
@@ -4615,26 +4613,23 @@ def test_floats_page_breaks():
         assert all([div.element_tag == 'div' for div in divs])
         page_divs.append(divs)
         del divs
-    
-    positions_y = [[div.position_y for div in divs]
-                    for divs in page_divs]
+
+    positions_y = [[div.position_y for div in divs] for divs in page_divs]
     assert positions_y == [[10, 70], [10]]
 
     # last float does not fit, pushed to next page
-    # center div must not 
+    # center div must not
     pages = parse('''
         <style>
             @page{
                 size: 110px;
-                margin: 10px;  
+                margin: 10px;
                 padding: 0;
             }
-
             .large {
                 width: 10px;
                 height: 60px;
             }
-
             .small {
                 width: 10px;
                 height: 20px;
@@ -4654,9 +4649,8 @@ def test_floats_page_breaks():
         assert all([div.element_tag == 'div' for div in divs])
         page_divs.append(divs)
         del divs
-    
-    positions_y = [[div.position_y for div in divs]
-                    for divs in page_divs]
+
+    positions_y = [[div.position_y for div in divs] for divs in page_divs]
     assert positions_y == [[10], [10, 30]]
 
     # center div must be the last element,
@@ -4665,15 +4659,13 @@ def test_floats_page_breaks():
         <style>
             @page{
                 size: 110px;
-                margin: 10px;  
+                margin: 10px;
                 padding: 0;
             }
-
             .large {
                 width: 10px;
                 height: 80px;
             }
-
             .small {
                 width: 10px;
                 height: 20px;
@@ -4693,10 +4685,9 @@ def test_floats_page_breaks():
         assert all([div.element_tag == 'div' for div in divs])
         page_divs.append(divs)
         del divs
-    
-    positions_y = [[div.position_y for div in divs]
-                    for divs in page_divs]
-    assert positions_y == [[10], [10], [10]]       
+
+    positions_y = [[div.position_y for div in divs] for divs in page_divs]
+    assert positions_y == [[10], [10], [10]]
 
 
 @assert_no_logs
