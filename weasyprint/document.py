@@ -478,7 +478,7 @@ class Document(object):
         surface = cairo.PDFSurface(file_obj, 1, 1)
         context = cairo.Context(surface)
         for page in self.pages:
-            surface.set_size(page.width * scale, page.height * scale)
+            surface.set_size(math.floor(page.width * scale), math.floor(page.height * scale))
             page.paint(context, scale=scale)
             surface.show_page()
         surface.finish()
