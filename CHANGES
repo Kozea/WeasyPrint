@@ -1,6 +1,26 @@
 WeasyPrint changelog
 ====================
 
+Version 0.23
+------------
+
+Released on 2014-09-16.
+
+Bug fixes:
+
+* `#196: <https://github.com/Kozea/WeasyPrint/issues/196>`_:
+  Use the default image sizing algorithm for images’s preferred size.
+* `#194: <https://github.com/Kozea/WeasyPrint/pull/194>`_:
+  Try more library aliases with ``dlopen()``.
+* `#201: <https://github.com/Kozea/WeasyPrint/pull/201>`_:
+  Consider ``page-break-after-avoid`` when pushing floats to the next page.
+* `#217: <https://github.com/Kozea/WeasyPrint/issues/217>`_:
+  Avoid a crash on zero-sized background images.
+
+Release process:
+
+* Start testing on Python 3.4 on Travis-CI.
+
 
 Version 0.22
 ------------
