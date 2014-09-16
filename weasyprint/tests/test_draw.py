@@ -656,6 +656,29 @@ def test_background_image():
             <p>&nbsp;
         ''' % (css,))
 
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/217
+    assert_pixels('zero_size_background', 10, 10, [
+        _+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { size: 10px }
+            html { background: #fff }
+            body { background: url(pattern.png);
+                   background-size: cover;
+                   display: inline-block }
+        </style>
+        <body>
+    ''')
+
 
 @assert_no_logs
 def test_background_origin():
