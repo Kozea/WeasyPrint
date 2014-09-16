@@ -43,8 +43,8 @@ import zlib
 import cairocffi as cairo
 
 from . import VERSION_STRING, Attachment
-from .compat import xrange, iteritems, izip
-from .urls import iri_to_uri, unquote, urlsplit, URLFetchingError
+from .compat import xrange, iteritems, izip, unquote
+from .urls import iri_to_uri, urlsplit, URLFetchingError
 from .html import W3C_DATE_RE
 from .logger import LOGGER
 
@@ -485,7 +485,10 @@ def _get_filename_from_result(url, result):
             # TODO: this assumes that the filename has been quoted as UTF-8.
             # I'm not sure if this assumption holds, as there is some magic
             # involved with filesystem encoding in other parts of the code
-            filename = unquote(filename).encode('latin1').decode('utf-8')
+            filename = unquote(filename)
+            if not isinstance(filename, bytes):
+                filename = filename.encode('latin1')
+            filename = filename.decode('utf-8')
         else:
             filename = unquote(filename)
 
