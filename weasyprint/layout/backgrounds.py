@@ -15,7 +15,7 @@ from itertools import cycle
 
 from ..formatting_structure import boxes
 from . import replaced
-from .percentages import resolve_radiii_percentages
+from .percentages import resolve_radii_percentages
 
 
 Background = namedtuple('Background', 'color, layers, image_rendering')
@@ -53,7 +53,7 @@ def box_rectangle(box, which_rectangle):
 def layout_box_backgrounds(page, box, get_image_from_uri):
     """Fetch and position background images."""
     # Resolve percentages in border-radius properties
-    resolve_radiii_percentages(box)
+    resolve_radii_percentages(box)
 
     for child in box.all_children():
         layout_box_backgrounds(page, child, get_image_from_uri)

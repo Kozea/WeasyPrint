@@ -116,7 +116,7 @@ def resolve_percentages(box, containing_block):
         assert box.style.box_sizing == 'content-box'
 
 
-def resolve_radiii_percentages(box):
+def resolve_radii_percentages(box):
     corners = ('top_left', 'top_right', 'bottom_right', 'bottom_left')
     for corner in corners:
         property_name = 'border_%s_radius' % corner
