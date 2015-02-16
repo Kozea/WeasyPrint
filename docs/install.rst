@@ -107,6 +107,14 @@ If your favorite system is not listed here but you know the package names,
 Debian / Ubuntu
 ~~~~~~~~~~~~~~~
 
+Ubuntu 14.04 Trusty:
+
+.. code-block:: sh
+
+    sudo apt-get install libxml2-dev libxslt-dev
+    sudo apt-get install python-dev python-pip python-lxml libcairo2 libpango1.0-0 libgdk-pixbuf2.0-0 libffi-dev shared-mime-info
+
+
 Debian 7.0 Wheezy or newer, Ubuntu 11.10 Oneiric or newer:
 
 .. code-block:: sh
