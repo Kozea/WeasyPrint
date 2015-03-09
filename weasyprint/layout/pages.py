@@ -283,6 +283,7 @@ def make_margin_boxes(context, page, counter_values):
         :param containing_block: as expected by :func:`resolve_percentages`.
 
         """
+
         style = context.style_for(page.page_type, at_keyword)
         if style is None:
             style = page.style.inherit_from()
@@ -295,7 +296,7 @@ def make_margin_boxes(context, page, counter_values):
             quote_depth = [0]
             children = build.content_to_boxes(
                 box.style, box, quote_depth, counter_values,
-                context.get_image_from_uri)
+                context.get_image_from_uri, context)
             box = box.copy_with_children(children)
             # content_to_boxes() only produces inline-level boxes, no need to
             # run other post-processors from build.build_formatting_structure()
@@ -453,8 +454,19 @@ def page_width(box, context, containing_block_width):
 def page_height(box, context, containing_block_height):
     page_width_or_height(VerticalBox(context, box), containing_block_height)
 
-
-def make_page(context, root_box, page_type, resume_at, content_empty):
+def box_text_contents(box):
+    if isinstance(box, boxes.TextBox):
+        return box.text
+    elif isinstance(box, boxes.ParentBox):
+        return ''.join(box_text_contents(child) for child in box.children)
+    else:
+        return ''
+TEXT_CONTENT_EXTRACTORS = {
+    'text': build.box_text_contents,
+    # 'content-element': build.box_text_content_element,
+    'before': build.box_text_content_before,
+    'after': build.box_text_content_after}
+def make_page(context, root_box, page_type, resume_at, content_empty, page_number=None):
     """Take just enough content from the beginning to fill one page.
 
     Return ``(page, finished)``. ``page`` is a laid out PageBox object
@@ -511,6 +523,13 @@ def make_page(context, root_box, page_type, resume_at, content_empty):
     context.finish_block_formatting_context(root_box)
 
     page = page.copy_with_children([root_box])
+    descendants = list(page.descendants())
+    for child in descendants:
+        if child.style.string_set:
+            name = child.style.string_set[3]
+            keyword = child.style.string_set[1]
+            text = TEXT_CONTENT_EXTRACTORS[keyword](child)
+            context.string_set[name][page_number].append(text)
     if content_empty:
         resume_at = previous_resume_at
     return page, resume_at, next_page
@@ -531,14 +550,16 @@ def make_all_pages(context, root_box):
 
     resume_at = None
     next_page = 'any'
+    page_number = 0
     while True:
+        page_number += 1
         content_empty = ((next_page == 'left' and right_page) or
                          (next_page == 'right' and not right_page))
         if content_empty:
             prefix += 'blank_'
         page_type = prefix + ('right_page' if right_page else 'left_page')
         page, resume_at, next_page = make_page(
-            context, root_box, page_type, resume_at, content_empty)
+            context, root_box, page_type, resume_at, content_empty, page_number)
         assert next_page
         yield page
         if resume_at is None:

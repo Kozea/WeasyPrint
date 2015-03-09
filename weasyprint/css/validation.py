@@ -685,6 +685,8 @@ def validate_content_token(base_url, token):
             style = args[-1]
             if style in ('none', 'decimal') or style in counters.STYLES:
                 return (name, args)
+        elif prototype in (('string', ['IDENT']),('string', ['IDENT', 'IDENT'])):
+            return (name, args)
 
 
 def parse_function(function_token):
@@ -1265,6 +1267,16 @@ def bookmark_level(token):
             return value
     elif get_keyword(token) == 'none':
         return 'none'
+
+
+@validator(prefixed=True)  # CSS3 GCPM, experimental
+def string_set(tokens):
+    """Validation for ``string-set``."""
+    function = parse_function(tokens[1])
+    keyword = function[1][0].value
+    name = get_keyword(tokens[0])
+    if len(tokens) == 2 and tokens[0].type == "IDENT" and keyword in ('text', 'before', 'after'):
+        return ('keyword', keyword, 'name', name)
 
 
 @validator(unprefixed=True)

@@ -154,6 +154,7 @@ def element_to_box(element, style_for, get_image_from_uri, state=None):
     text = element.text
     if text:
         children.append(boxes.TextBox.anonymous_from(box, text))
+
     for child_element in element:
         children.extend(element_to_box(
             child_element, style_for, get_image_from_uri, state))
@@ -211,7 +212,7 @@ def pseudo_to_box(element, pseudo_type, state, style_for, get_image_from_uri):
 
 
 def content_to_boxes(style, parent_box, quote_depth, counter_values,
-                     get_image_from_uri):
+                     get_image_from_uri, context=None):
     """Takes the value of a ``content`` property and yield boxes."""
     texts = []
     for type_, value in style.content:
@@ -235,6 +236,10 @@ def content_to_boxes(style, parent_box, quote_depth, counter_values,
                 counters.format(counter_value, counter_style)
                 for counter_value in counter_values.get(counter_name, [0])
             ))
+        elif type_ == 'string':
+            text = context.get_string_set_for(*tuple(value))
+            texts.append(text)
+            string_set = value
         else:
             assert type_ == 'QUOTE'
             is_open, insert = value

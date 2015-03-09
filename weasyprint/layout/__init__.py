@@ -18,13 +18,12 @@
     :license: BSD, see LICENSE for details.
 
 """
-
 from __future__ import division, unicode_literals
+from collections import defaultdict
 
 from .absolute import absolute_box_layout
 from .pages import make_all_pages, make_margin_boxes
 from .backgrounds import layout_backgrounds
-
 
 def layout_fixed_boxes(context, pages):
     """Lay out and yield the fixed boxes of ``pages``."""
@@ -34,7 +33,6 @@ def layout_fixed_boxes(context, pages):
             # fixed box has already been added to page.fixed_boxes, we don't
             # want to get them again
             yield absolute_box_layout(context, box, page, [])
-
 
 def layout_document(enable_hinting, style_for, get_image_from_uri, root_box):
     """Lay out the whole document.
@@ -57,6 +55,7 @@ def layout_document(enable_hinting, style_for, get_image_from_uri, root_box):
         root_children.extend(root.children)
         root_children.extend(layout_fixed_boxes(context, pages[i+1:]))
         root = root.copy_with_children(root_children)
+        context.current_page = page_counter[0]
         page.children = (root,) + tuple(
             make_margin_boxes(context, page, counter_values))
         layout_backgrounds(page, get_image_from_uri)
@@ -71,6 +70,8 @@ class LayoutContext(object):
         self.get_image_from_uri = get_image_from_uri
         self._excluded_shapes_lists = []
         self.excluded_shapes = None  # Not initialized yet
+        self.string_set = defaultdict(lambda:defaultdict(lambda:[]))
+        self.current_page = None
 
     def create_block_formatting_context(self):
         self.excluded_shapes = []
@@ -89,3 +90,16 @@ class LayoutContext(object):
             self.excluded_shapes = self._excluded_shapes_lists[-1]
         else:
             self.excluded_shapes = None
+    def get_string_set_for(self, name, keyword=None):
+        last = keyword == "last"
+        if self.current_page in self.string_set[name]:
+            if keyword == "first-except":
+                return ""
+            elif last:
+                return self.string_set[name][self.current_page][-1]
+            return self.string_set[name][self.current_page][0]
+        else:
+            for lower_page in xrange(self.current_page, 0, -1):
+                if lower_page in self.string_set[name]:
+                    return self.string_set[name][lower_page][-1]
+        return ""

@@ -1228,6 +1228,116 @@ def test_margin_boxes():
     text_box, = line_box.children
     assert text_box.text == 'Title'
 
+@assert_no_logs
+def test_margin_box_string_set():
+    """
+    Test string-set / string() in margin boxes
+    """
+    page_1, page_2 = render_pages('''
+        <style>
+            @page {
+                @top-center { content: string(header); }
+            }
+            p{
+                -weasy-string-set: header content(text);
+            }
+            .page{
+                page-break-before: always;
+            }
+        </style>
+        <p>first assignment</p>
+        <div class="page"></div>
+    ''')
+
+    html, top_center = page_2.children[:2]
+    line_box, = top_center.children
+    text_box, = line_box.children
+    assert text_box.text == 'first assignment'
+
+@assert_no_logs
+def test_margin_box_string_set_after():
+    """
+    Test string-set / string() in margin boxes
+     using after
+    """
+    page_1, page_2 = render_pages('''
+        <style>
+            @page {
+                @top-center { content: string(header); }
+            }
+            p{
+                -weasy-string-set: header content(after);
+            }
+            .page{
+                page-break-before: always;
+            }
+            .page:after{
+                content: "empire";
+            }
+        </style>
+        <p>first assignment</p>
+        <div class="page"></div>
+    ''')
+
+    html, top_center = page_2.children[:2]
+    assert len(top_center.children) >= 1
+    line_box, = top_center.children
+    text_box, = line_box.children
+    assert text_box.text == 'empire'
+
+@assert_no_logs
+def test_margin_box_string_set_except_first():
+    """
+    Test string-set / string() first-except in margin boxes
+     - exclude from page on which value is assigned
+    """
+    page_1, page_2 = render_pages('''
+        <style>
+            @page {
+                @top-center { content: string(header_nofirst, first-except); }
+            }
+            p{
+                -weasy-string-set: header_nofirst content(text);
+            }
+            .page{
+                page-break-before: always;
+            }
+        </style>
+        <p>first_excepted</p>
+        <div class="page"></div>
+    ''')
+    html, top_center = page_1.children
+    assert len(top_center.children) == 0
+
+    html, top_center = page_2.children
+    line_box, = top_center.children
+    text_box, = line_box.children
+    assert text_box.text == "first_excepted"
+
+@assert_no_logs
+def test_margin_box_string_set_last():
+    """
+    Test string-set / string() last in margin boxes
+     - use the last assignment
+    """
+    page_1, = render_pages('''
+        <style>
+            @page {
+                @top-center { content: string(header_last, last); }
+            }
+            p{
+                -weasy-string-set: header_last content(text);
+            }
+        </style>
+        <p>String set</p>
+        <p>Second assignment</p>
+    ''')
+
+    html, top_center = page_1.children[:2]
+    line_box, = top_center.children
+
+    text_box, = line_box.children
+    assert text_box.text == "Second assignment"
 
 @assert_no_logs
 def test_page_counters():
