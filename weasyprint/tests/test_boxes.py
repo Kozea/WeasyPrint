@@ -1239,7 +1239,7 @@ def test_margin_box_string_set():
                 @top-center { content: string(header); }
             }
             p{
-                -weasy-string-set: header content(text);
+                -weasy-string-set: header content();
             }
             .page{
                 page-break-before: always;
@@ -1255,10 +1255,37 @@ def test_margin_box_string_set():
     assert text_box.text == 'first assignment'
 
 @assert_no_logs
+def test_margin_box_string_set_text():
+    """
+    Test string-set / string() in margin boxes with 'text' (default value)
+    """
+    page_1, page_2 = render_pages('''
+        <style>
+            @page {
+                @top-center { content: string(header); }
+            }
+            p{
+                -weasy-string-set: header content(text);
+            }
+            .page{
+                page-break-before: always;
+            }
+        </style>
+        <p>first assignment</p>
+        <div class="page"></div>
+    ''')
+
+    html, top_center = page_2.children[:2]
+    print top_center.children
+    line_box, = top_center.children
+    text_box, = line_box.children
+    assert text_box.text == 'first assignment'
+
+@assert_no_logs
 def test_margin_box_string_set_after():
     """
     Test string-set / string() in margin boxes
-     using after
+     using ::after
     """
     page_1, page_2 = render_pages('''
         <style>
@@ -1271,7 +1298,7 @@ def test_margin_box_string_set_after():
             .page{
                 page-break-before: always;
             }
-            .page:after{
+            p:after{
                 content: "empire";
             }
         </style>
@@ -1289,7 +1316,7 @@ def test_margin_box_string_set_after():
 def test_margin_box_string_set_except_first():
     """
     Test string-set / string() first-except in margin boxes
-     - exclude from page on which value is assigned
+     ie. exclude from page on which value is assigned
     """
     page_1, page_2 = render_pages('''
         <style>
@@ -1318,7 +1345,7 @@ def test_margin_box_string_set_except_first():
 def test_margin_box_string_set_last():
     """
     Test string-set / string() last in margin boxes
-     - use the last assignment
+     ie. use the most-recent assignment
     """
     page_1, = render_pages('''
         <style>

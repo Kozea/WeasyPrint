@@ -91,15 +91,32 @@ class LayoutContext(object):
         else:
             self.excluded_shapes = None
     def get_string_set_for(self, name, keyword=None):
+        """ Resolve value of string function (as set by string set)
+
+            We'll have something like this that represents all assignments on a given page
+            {1: [u'First Header'], 3: [u'Second Header'], 4: [u'Third Header', u'3.5th Header']}
+
+            Value depends on current page - http://dev.w3.org/csswg/css-gcpm/#funcdef-string
+
+            :param name: the name of the named string.
+            :param name: indicates which value of the named string should be used.
+                         Default is the first assignment on the current page else the most recent assignment (entry value)
+            :returns: text
+
+        """
         last = keyword == "last"
         if self.current_page in self.string_set[name]:
-            if keyword == "first-except":
+            # a value was assigned on this page
+            if keyword == 'first-except':
+                # 'first-except' excludes the page it was assinged on
                 return ""
             elif last:
+                # most recent assignment
                 return self.string_set[name][self.current_page][-1]
             return self.string_set[name][self.current_page][0]
         else:
-            for lower_page in xrange(self.current_page, 0, -1):
-                if lower_page in self.string_set[name]:
-                    return self.string_set[name][lower_page][-1]
+            # no assignment on this page - search backwards; through previous page
+            for previous_page in xrange(self.current_page, 0, -1):
+                if previous_page in self.string_set[name]:
+                    return self.string_set[name][previous_page][-1]
         return ""

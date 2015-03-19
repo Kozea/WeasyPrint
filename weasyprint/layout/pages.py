@@ -529,7 +529,8 @@ def make_page(context, root_box, page_type, resume_at, content_empty, page_numbe
             name = child.style.string_set[3]
             keyword = child.style.string_set[1]
             text = TEXT_CONTENT_EXTRACTORS[keyword](child)
-            context.string_set[name][page_number].append(text)
+            if text:
+                context.string_set[name][page_number].append(text)
     if content_empty:
         resume_at = previous_resume_at
     return page, resume_at, next_page

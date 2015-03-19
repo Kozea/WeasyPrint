@@ -1272,11 +1272,18 @@ def bookmark_level(token):
 @validator(prefixed=True)  # CSS3 GCPM, experimental
 def string_set(tokens):
     """Validation for ``string-set``."""
+    if len(tokens) != 2:
+        raise InvalidValues("Only one value is supported. Received %s" %len(tokens)-1)
     function = parse_function(tokens[1])
-    keyword = function[1][0].value
-    name = get_keyword(tokens[0])
-    if len(tokens) == 2 and tokens[0].type == "IDENT" and keyword in ('text', 'before', 'after'):
-        return ('keyword', keyword, 'name', name)
+    if function is None:
+        keyword = 'text'
+    else:
+        name, args = function
+        keyword = args[0].value
+    var_name = get_keyword(tokens[0])
+    if tokens[0].type == "IDENT" and keyword in ('text', 'before', 'after'):
+        return ('keyword', keyword, 'name', var_name)
+    raise InvalidValues
 
 
 @validator(unprefixed=True)

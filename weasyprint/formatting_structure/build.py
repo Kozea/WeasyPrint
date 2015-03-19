@@ -239,7 +239,6 @@ def content_to_boxes(style, parent_box, quote_depth, counter_values,
         elif type_ == 'string':
             text = context.get_string_set_for(*tuple(value))
             texts.append(text)
-            string_set = value
         else:
             assert type_ == 'QUOTE'
             is_open, insert = value
@@ -1115,8 +1114,8 @@ def box_text_content_before(box):
 def box_text_content_after(box):
     if isinstance(box, boxes.ParentBox):
         return ''.join(
-            box_text_contents(child) for child in box.children
-            if child.element_tag.endswith(':after'))
+            box_text_contents(child) for child in box.descendants()
+            if child.element_tag.endswith(':after') and not isinstance(child, boxes.ParentBox))
     else:
         return ''
 
