@@ -1233,6 +1233,7 @@ def test_margin_box_string_set():
     """
     Test string-set / string() in margin boxes
     """
+    # Test that both pages get string
     page_1, page_2 = render_pages('''
         <style>
             @page {
@@ -1249,75 +1250,36 @@ def test_margin_box_string_set():
         <div class="page"></div>
     ''')
 
-    html, top_center = page_2.children[:2]
+    html, top_center = page_2.children
     line_box, = top_center.children
     text_box, = line_box.children
     assert text_box.text == 'first assignment'
 
-@assert_no_logs
-def test_margin_box_string_set_text():
-    """
-    Test string-set / string() in margin boxes with 'text' (default value)
-    """
-    page_1, page_2 = render_pages('''
+    html, top_center = page_1.children
+    line_box, = top_center.children
+    text_box, = line_box.children
+    assert text_box.text == 'first assignment'
+
+    # Test `text` (default value)
+    page_1, = render_pages('''
         <style>
             @page {
-                @top-center { content: string(header); }
+                @top-center { content: string(text_header); }
             }
             p{
-                -weasy-string-set: header content(text);
-            }
-            .page{
-                page-break-before: always;
+                -weasy-string-set: text_header content(text);
             }
         </style>
         <p>first assignment</p>
         <div class="page"></div>
     ''')
 
-    html, top_center = page_2.children[:2]
-    print top_center.children
+    html, top_center = page_1.children
     line_box, = top_center.children
     text_box, = line_box.children
     assert text_box.text == 'first assignment'
 
-@assert_no_logs
-def test_margin_box_string_set_after():
-    """
-    Test string-set / string() in margin boxes
-     using ::after
-    """
-    page_1, page_2 = render_pages('''
-        <style>
-            @page {
-                @top-center { content: string(header); }
-            }
-            p{
-                -weasy-string-set: header content(after);
-            }
-            .page{
-                page-break-before: always;
-            }
-            p:after{
-                content: "empire";
-            }
-        </style>
-        <p>first assignment</p>
-        <div class="page"></div>
-    ''')
-
-    html, top_center = page_2.children[:2]
-    assert len(top_center.children) >= 1
-    line_box, = top_center.children
-    text_box, = line_box.children
-    assert text_box.text == 'empire'
-
-@assert_no_logs
-def test_margin_box_string_set_except_first():
-    """
-    Test string-set / string() first-except in margin boxes
-     ie. exclude from page on which value is assigned
-    """
+    # test `first-except` ie. exclude from page on which value is assigned
     page_1, page_2 = render_pages('''
         <style>
             @page {
@@ -1341,12 +1303,7 @@ def test_margin_box_string_set_except_first():
     text_box, = line_box.children
     assert text_box.text == "first_excepted"
 
-@assert_no_logs
-def test_margin_box_string_set_last():
-    """
-    Test string-set / string() last in margin boxes
-     ie. use the most-recent assignment
-    """
+    #Test `last` ie. use the most-recent assignment
     page_1, = render_pages('''
         <style>
             @page {

@@ -1114,8 +1114,8 @@ def box_text_content_before(box):
 def box_text_content_after(box):
     if isinstance(box, boxes.ParentBox):
         return ''.join(
-            box_text_contents(child) for child in box.descendants()
-            if child.element_tag.endswith(':after') and not isinstance(child, boxes.ParentBox))
+            box_text_contents(child) for child in box.children
+            if child.element_tag.endswith(':after'))
     else:
         return ''
 
