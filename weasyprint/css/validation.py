@@ -1291,7 +1291,7 @@ def string_set(tokens):
             keyword = args[0].value.lower()
         if name != 'content':
             raise InvalidValues
-        if tokens[0].type == "IDENT" and keyword in ('none', 'text'):
+        if tokens[0].type == "IDENT" and keyword in ('none', 'text', 'after', 'before'):
             return (var_name, keyword)
     elif len(tokens) and tokens[0].value == 'none':
         return 'none'

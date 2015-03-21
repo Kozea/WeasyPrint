@@ -1107,8 +1107,9 @@ def box_text_content_element(box):
 def box_text_content_before(box):
     if isinstance(box, boxes.ParentBox):
         return ''.join(
-            box_text_contents(child) for child in box.children
-            if child.element_tag.endswith(':before'))
+            box_text_contents(child) for child in box.descendants()
+            if child.element_tag.endswith(':before')
+            and not isinstance(child, boxes.ParentBox))
     else:
         return ''
 
@@ -1116,8 +1117,9 @@ def box_text_content_before(box):
 def box_text_content_after(box):
     if isinstance(box, boxes.ParentBox):
         return ''.join(
-            box_text_contents(child) for child in box.children
-            if child.element_tag.endswith(':after'))
+            box_text_contents(child) for child in box.descendants()
+            if child.element_tag.endswith(':after')
+            and not isinstance(child, boxes.ParentBox))
     else:
         return ''
 
@@ -1127,7 +1129,9 @@ TEXT_CONTENT_EXTRACTORS = {
     'content-element': box_text_content_element,
     'content-before': box_text_content_before,
     'content-after': box_text_content_after,
-    'text': box_text_contents}
+    'text': box_text_contents,
+    'before': box_text_content_before,
+    'after': box_text_content_after}
 
 
 def resolve_bookmark_labels(box):

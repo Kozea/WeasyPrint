@@ -1261,6 +1261,36 @@ def test_margin_box_string_set():
     text_box, = line_box.children
     assert text_box.text == 'first assignment'
 
+    def simple_string_set_test(content_val, extra_style=""):
+        page_1, = render_pages('''
+            <style>
+                @page {
+                    @top-center { content: string(text_header); }
+                }
+                p{
+                    -weasy-string-set: text_header content(%(content_val)s);
+                }
+                %(extra_style)s
+            </style>
+            <p>first assignment</p>
+        '''% dict(content_val=content_val, extra_style=extra_style))
+
+        html, top_center = page_1.children
+        line_box, = top_center.children
+        text_box, = line_box.children
+        if content_val in ('before','after'):
+            assert text_box.text == 'psuedo'
+        else:
+            assert text_box.text == 'first assignment'
+
+    # Test each accepted value of `content()` as an arguemnt to `string-set`
+    for value in ('', 'text', 'before', 'after'):
+        if value in ('before','after'):
+            extra_style = "p:%s{content:'psuedo'}" % value
+            simple_string_set_test(value, extra_style)
+        else:
+            simple_string_set_test(value)
+
     # Test `first` (default value) ie. use the first assignment on the page
     page_1, = render_pages('''
         <style>
@@ -1268,7 +1298,7 @@ def test_margin_box_string_set():
                 @top-center { content: string(text_header, first); }
             }
             p{
-                -weasy-string-set: text_header content(text);
+                -weasy-string-set: text_header content();
             }
         </style>
         <p>first assignment</p>
@@ -1287,7 +1317,7 @@ def test_margin_box_string_set():
                 @top-center { content: string(header_nofirst, first-except); }
             }
             p{
-                -weasy-string-set: header_nofirst content(text);
+                -weasy-string-set: header_nofirst content();
             }
             .page{
                 page-break-before: always;
@@ -1311,7 +1341,7 @@ def test_margin_box_string_set():
                 @top-center { content: string(header_last, last); }
             }
             p{
-                -weasy-string-set: header_last content(text);
+                -weasy-string-set: header_last content();
             }
         </style>
         <p>String set</p>
