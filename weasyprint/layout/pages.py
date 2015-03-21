@@ -454,18 +454,6 @@ def page_width(box, context, containing_block_width):
 def page_height(box, context, containing_block_height):
     page_width_or_height(VerticalBox(context, box), containing_block_height)
 
-def box_text_contents(box):
-    if isinstance(box, boxes.TextBox):
-        return box.text
-    elif isinstance(box, boxes.ParentBox):
-        return ''.join(box_text_contents(child) for child in box.children)
-    else:
-        return ''
-TEXT_CONTENT_EXTRACTORS = {
-    'text': build.box_text_contents,
-    # 'content-element': build.box_text_content_element,
-    'before': build.box_text_content_before,
-    'after': build.box_text_content_after}
 def make_page(context, root_box, page_type, resume_at, content_empty, page_number=None):
     """Take just enough content from the beginning to fill one page.
 
@@ -523,17 +511,20 @@ def make_page(context, root_box, page_type, resume_at, content_empty, page_numbe
     context.finish_block_formatting_context(root_box)
 
     page = page.copy_with_children([root_box])
-    descendants = list(page.descendants())
+    descendants = page.descendants()
     for child in descendants:
-        if child.style.string_set:
-            name = child.style.string_set[3]
-            keyword = child.style.string_set[1]
-            text = TEXT_CONTENT_EXTRACTORS[keyword](child)
-            context.string_set[name][page_number].append(text)
+        string_set = child.style.string_set
+        if string_set and string_set != "none":
+            name = string_set[0]
+            keyword = string_set[1]
+            if keyword == "none":
+                context.string_set[name][page_number].append("")
+            else:
+                text = build.TEXT_CONTENT_EXTRACTORS[keyword](child)
+                context.string_set[name][page_number].append(text)
     if content_empty:
         resume_at = previous_resume_at
     return page, resume_at, next_page
-
 
 def make_all_pages(context, root_box):
     """Return a list of laid out pages without margin boxes."""

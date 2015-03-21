@@ -1233,14 +1233,14 @@ def test_margin_box_string_set():
     """
     Test string-set / string() in margin boxes
     """
-    # Test that both pages get string
+    # Test that both pages get string in the `bottom-center` margin box
     page_1, page_2 = render_pages('''
         <style>
             @page {
-                @top-center { content: string(header); }
+                @bottom-center { content: string(text_header); }
             }
             p{
-                -weasy-string-set: header content();
+                -weasy-string-set: text_header content();
             }
             .page{
                 page-break-before: always;
@@ -1250,28 +1250,28 @@ def test_margin_box_string_set():
         <div class="page"></div>
     ''')
 
-    html, top_center = page_2.children
-    line_box, = top_center.children
+    html, bottom_center = page_2.children
+    line_box, = bottom_center.children
     text_box, = line_box.children
     assert text_box.text == 'first assignment'
 
-    html, top_center = page_1.children
-    line_box, = top_center.children
+    html, bottom_center = page_1.children
+    line_box, = bottom_center.children
     text_box, = line_box.children
     assert text_box.text == 'first assignment'
 
-    # Test `text` (default value)
+    # Test `first` (default value) ie. use the first assignment on the page
     page_1, = render_pages('''
         <style>
             @page {
-                @top-center { content: string(text_header); }
+                @top-center { content: string(text_header, first); }
             }
             p{
                 -weasy-string-set: text_header content(text);
             }
         </style>
         <p>first assignment</p>
-        <div class="page"></div>
+        <p>Second assignment</p>
     ''')
 
     html, top_center = page_1.children
@@ -1345,7 +1345,6 @@ def test_page_counters():
         line_box, = bottom_center.children
         text_box, = line_box.children
         assert text_box.text == 'Page {0} of 3.'.format(page_number)
-
 
 @assert_no_logs
 def test_border_collapse():

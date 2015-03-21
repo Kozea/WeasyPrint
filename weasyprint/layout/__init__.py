@@ -20,6 +20,7 @@
 """
 from __future__ import division, unicode_literals
 from collections import defaultdict
+from ..compat import xrange
 
 from .absolute import absolute_box_layout
 from .pages import make_all_pages, make_margin_boxes
@@ -70,7 +71,7 @@ class LayoutContext(object):
         self.get_image_from_uri = get_image_from_uri
         self._excluded_shapes_lists = []
         self.excluded_shapes = None  # Not initialized yet
-        self.string_set = defaultdict(lambda:defaultdict(lambda:[]))
+        self.string_set = defaultdict(lambda:defaultdict(lambda:list()))
         self.current_page = None
 
     def create_block_formatting_context(self):
@@ -99,8 +100,9 @@ class LayoutContext(object):
             Value depends on current page - http://dev.w3.org/csswg/css-gcpm/#funcdef-string
 
             :param name: the name of the named string.
-            :param name: indicates which value of the named string should be used.
-                         Default is the first assignment on the current page else the most recent assignment (entry value)
+            :param keyword: indicates which value of the named string should be used.
+                            Default is the first assignment on the current page else the most
+                            recent assignment (entry value)
             :returns: text
 
         """

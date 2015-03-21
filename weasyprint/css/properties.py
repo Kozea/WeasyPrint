@@ -97,8 +97,8 @@ INITIAL_VALUES = {
     'quotes': list('“”‘’'),  # depends on user agent
     'position': 'static',
     'right': 'auto',
-    #default not defined in spec http://dev.w3.org/csswg/css-gcpm/#named-strings
-    'string_set': '',
+    # http://dev.w3.org/csswg/css-gcpm/#named-strings
+    'string_set': 'none',
     'table_layout': 'auto',
     # Taken from CSS3 Text.
     # The only other supported value form CSS3 is -weasy-end.

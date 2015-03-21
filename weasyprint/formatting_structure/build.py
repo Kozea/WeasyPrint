@@ -236,8 +236,8 @@ def content_to_boxes(style, parent_box, quote_depth, counter_values,
                 counters.format(counter_value, counter_style)
                 for counter_value in counter_values.get(counter_name, [0])
             ))
-        elif type_ == 'string':
-            text = context.get_string_set_for(*tuple(value))
+        elif type_ == 'string' and context is not None:
+            text = context.get_string_set_for(*value)
             texts.append(text)
         else:
             assert type_ == 'QUOTE'
@@ -1088,7 +1088,9 @@ def box_text_contents(box):
     if isinstance(box, boxes.TextBox):
         return box.text
     elif isinstance(box, boxes.ParentBox):
-        return ''.join(box_text_contents(child) for child in box.children)
+        return ''.join(
+            child.text for child in box.descendants()
+            if isinstance(child, boxes.TextBox))
     else:
         return ''
 
@@ -1124,7 +1126,8 @@ TEXT_CONTENT_EXTRACTORS = {
     'contents': box_text_contents,
     'content-element': box_text_content_element,
     'content-before': box_text_content_before,
-    'content-after': box_text_content_after}
+    'content-after': box_text_content_after,
+    'text': box_text_contents}
 
 
 def resolve_bookmark_labels(box):
