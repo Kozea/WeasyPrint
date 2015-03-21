@@ -454,7 +454,9 @@ def page_width(box, context, containing_block_width):
 def page_height(box, context, containing_block_height):
     page_width_or_height(VerticalBox(context, box), containing_block_height)
 
-def make_page(context, root_box, page_type, resume_at, content_empty, page_number=None):
+
+def make_page(context, root_box, page_type, resume_at, content_empty,
+              page_number=None):
     """Take just enough content from the beginning to fill one page.
 
     Return ``(page, finished)``. ``page`` is a laid out PageBox object
@@ -526,6 +528,7 @@ def make_page(context, root_box, page_type, resume_at, content_empty, page_numbe
         resume_at = previous_resume_at
     return page, resume_at, next_page
 
+
 def make_all_pages(context, root_box):
     """Return a list of laid out pages without margin boxes."""
     prefix = 'first_'
@@ -550,7 +553,8 @@ def make_all_pages(context, root_box):
             prefix += 'blank_'
         page_type = prefix + ('right_page' if right_page else 'left_page')
         page, resume_at, next_page = make_page(
-            context, root_box, page_type, resume_at, content_empty, page_number)
+            context, root_box, page_type, resume_at, content_empty,
+            page_number)
         assert next_page
         yield page
         if resume_at is None:

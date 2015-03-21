@@ -686,7 +686,8 @@ def validate_content_token(base_url, token):
             style = args[-1]
             if style in ('none', 'decimal') or style in counters.STYLES:
                 return (name, args)
-        elif prototype in (('string', ['IDENT']),('string', ['IDENT', 'IDENT'])):
+        elif prototype in (('string', ['IDENT']),
+                           ('string', ['IDENT', 'IDENT'])):
             if len(args) > 1:
                 args[1] = args[1].lower()
                 if args[1] not in ('first', 'start', 'last', 'first-except'):

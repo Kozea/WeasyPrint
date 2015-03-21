@@ -1228,6 +1228,7 @@ def test_margin_boxes():
     text_box, = line_box.children
     assert text_box.text == 'Title'
 
+
 @assert_no_logs
 def test_margin_box_string_set():
     """
@@ -1303,7 +1304,7 @@ def test_margin_box_string_set():
     text_box, = line_box.children
     assert text_box.text == "first_excepted"
 
-    #Test `last` ie. use the most-recent assignment
+    # Test `last` ie. use the most-recent assignment
     page_1, = render_pages('''
         <style>
             @page {
@@ -1322,6 +1323,7 @@ def test_margin_box_string_set():
 
     text_box, = line_box.children
     assert text_box.text == "Second assignment"
+
 
 @assert_no_logs
 def test_page_counters():
@@ -1345,6 +1347,7 @@ def test_page_counters():
         line_box, = bottom_center.children
         text_box, = line_box.children
         assert text_box.text == 'Page {0} of 3.'.format(page_number)
+
 
 @assert_no_logs
 def test_border_collapse():

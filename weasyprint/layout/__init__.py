@@ -26,6 +26,7 @@ from .absolute import absolute_box_layout
 from .pages import make_all_pages, make_margin_boxes
 from .backgrounds import layout_backgrounds
 
+
 def layout_fixed_boxes(context, pages):
     """Lay out and yield the fixed boxes of ``pages``."""
     for page in pages:
@@ -34,6 +35,7 @@ def layout_fixed_boxes(context, pages):
             # fixed box has already been added to page.fixed_boxes, we don't
             # want to get them again
             yield absolute_box_layout(context, box, page, [])
+
 
 def layout_document(enable_hinting, style_for, get_image_from_uri, root_box):
     """Lay out the whole document.
@@ -71,7 +73,7 @@ class LayoutContext(object):
         self.get_image_from_uri = get_image_from_uri
         self._excluded_shapes_lists = []
         self.excluded_shapes = None  # Not initialized yet
-        self.string_set = defaultdict(lambda:defaultdict(lambda:list()))
+        self.string_set = defaultdict(lambda: defaultdict(lambda: list()))
         self.current_page = None
 
     def create_block_formatting_context(self):
@@ -91,18 +93,22 @@ class LayoutContext(object):
             self.excluded_shapes = self._excluded_shapes_lists[-1]
         else:
             self.excluded_shapes = None
+
     def get_string_set_for(self, name, keyword=None):
         """ Resolve value of string function (as set by string set)
 
-            We'll have something like this that represents all assignments on a given page
-            {1: [u'First Header'], 3: [u'Second Header'], 4: [u'Third Header', u'3.5th Header']}
+            We'll have something like this that represents all assignments
+            on a given page
+            {1: [u'First Header'], 3: [u'Second Header'],
+             4: [u'Third Header', u'3.5th Header']}
 
-            Value depends on current page - http://dev.w3.org/csswg/css-gcpm/#funcdef-string
+            Value depends on current page
+            http://dev.w3.org/csswg/css-gcpm/#funcdef-string
 
             :param name: the name of the named string.
-            :param keyword: indicates which value of the named string should be used.
-                            Default is the first assignment on the current page else the most
-                            recent assignment (entry value)
+            :param keyword: indicates which value of the named string to use.
+                            Default is the first assignment on the current page
+                            else the most recent assignment (entry value)
             :returns: text
 
         """
@@ -113,11 +119,11 @@ class LayoutContext(object):
                 # 'first-except' excludes the page it was assinged on
                 return ""
             elif last:
-                # most recent assignment
+                # use the most recent assignment
                 return self.string_set[name][self.current_page][-1]
             return self.string_set[name][self.current_page][0]
         else:
-            # no assignment on this page - search backwards; through previous page
+            # search backwards through previous pages
             for previous_page in xrange(self.current_page, 0, -1):
                 if previous_page in self.string_set[name]:
                     return self.string_set[name][previous_page][-1]
