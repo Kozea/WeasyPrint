@@ -1273,19 +1273,19 @@ def test_margin_box_string_set():
                 %(extra_style)s
             </style>
             <p>first assignment</p>
-        '''% dict(content_val=content_val, extra_style=extra_style))
+        '''% dict(content_val = content_val, extra_style = extra_style))
 
         html, top_center = page_1.children
         line_box, = top_center.children
         text_box, = line_box.children
-        if content_val in ('before','after'):
+        if content_val in ('before', 'after'):
             assert text_box.text == 'psuedo'
         else:
             assert text_box.text == 'first assignment'
 
     # Test each accepted value of `content()` as an arguemnt to `string-set`
     for value in ('', 'text', 'before', 'after'):
-        if value in ('before','after'):
+        if value in ('before', 'after'):
             extra_style = "p:%s{content:'psuedo'}" % value
             simple_string_set_test(value, extra_style)
         else:
