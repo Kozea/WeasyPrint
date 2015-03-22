@@ -1273,7 +1273,7 @@ def test_margin_box_string_set():
                 %(extra_style)s
             </style>
             <p>first assignment</p>
-        '''% dict(content_val = content_val, extra_style = extra_style))
+        ''' % dict(content_val=content_val, extra_style=extra_style))
 
         html, top_center = page_1.children
         line_box, = top_center.children
