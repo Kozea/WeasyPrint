@@ -2740,7 +2740,7 @@ def test_linear_gradients():
     ], '''<style>@page { size: 9px 5px; background: repeating-linear-gradient(
         to right, blue 3px, blue 3px, red 3px, red 3px
     )''')
-    V = as_pixel(b'\xC0\x00\x3f\xff')  # Average of 1*B and 3*r.
+    V = as_pixel(b'\xBF\x00\x40\xff')  # Average of 1*B and 3*r.
     assert_pixels('linear_gradient', 9, 5, [
         V+V+V+V+V+V+V+V+V,
         V+V+V+V+V+V+V+V+V,
