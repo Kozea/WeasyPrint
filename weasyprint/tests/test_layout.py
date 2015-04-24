@@ -2876,7 +2876,6 @@ def test_word_spacing():
     body, = html.children
     line, = body.children
     strong_1, = line.children
-    assert 200 <= strong_1.width <= 250
 
     # TODO: Pango gives only half of word-spacing to a space at the end
     # of a TextBox. Is this what we want?
@@ -2899,7 +2898,6 @@ def test_letter_spacing():
     body, = html.children
     line, = body.children
     strong_1, = line.children
-    assert 250 <= strong_1.width <= 300
 
     page, = parse('''
         <style>strong { letter-spacing: 11px }</style>
@@ -3535,7 +3533,7 @@ def test_preferred_widths():
     """Unit tests for preferred widths."""
     def get_float_width(body_width):
         page, = parse('''
-            <body style="width: %spx">
+            <body style="width: %spx; font-family: ahem">
             <p style="white-space: pre-line; float: left">
                 Lorem ipsum dolor sit amet,
                   consectetur elit
@@ -3546,11 +3544,10 @@ def test_preferred_widths():
         body, = html.children
         paragraph, = body.children
         return paragraph.width
-    # Not exact, depends on the installed fonts
     # Preferred minimum width:
-    assert 120 < get_float_width(10) < 140
+    assert get_float_width(10) == len('consectetur elit') * 16
     # Preferred width:
-    assert 220 < get_float_width(10000) < 240
+    assert get_float_width(1000000) == len('Lorem ipsum dolor sit amet,') * 16
 
     # Non-regression test:
     # Incorrect whitespace handling in preferred width used to cause
