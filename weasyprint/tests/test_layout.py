@@ -4571,7 +4571,7 @@ def test_box_decoration_break():
 @assert_no_logs
 def test_hyphenation():
     def line_count(source):
-        page, = parse('<html style="width: 5em">' + source)
+        page, = parse('<html style="width: 5em; font-family: ahem">' + source)
         html, = page.children
         body, = html.children
         lines = body.children
@@ -4599,7 +4599,7 @@ def test_hyphenation():
 @assert_no_logs
 def test_hyphenate_character():
     page, = parse(
-        '<html style="width: 5em">'
+        '<html style="width: 5em; font-family: ahem">'
         '<body style="-weasy-hyphens: auto;'
         '-weasy-hyphenate-character: \'!\'" lang=en>'
         'hyphenation')
@@ -4612,7 +4612,7 @@ def test_hyphenate_character():
     assert full_text.replace('!', '') == 'hyphenation'
 
     page, = parse(
-        '<html style="width: 5em">'
+        '<html style="width: 5em; font-family: ahem">'
         '<body style="-weasy-hyphens: auto;'
         '-weasy-hyphenate-character: \'é\'" lang=en>'
         'hyphenation')
@@ -4625,7 +4625,7 @@ def test_hyphenate_character():
     assert full_text.replace('é', '') == 'hyphenation'
 
     page, = parse(
-        '<html style="width: 5em">'
+        '<html style="width: 5em; font-family: ahem">'
         '<body style="-weasy-hyphens: auto;'
         '-weasy-hyphenate-character: \'ù ù\'" lang=en>'
         'hyphenation')
@@ -4638,7 +4638,7 @@ def test_hyphenate_character():
     assert full_text.replace(' ', '').replace('ù', '') == 'hyphenation'
 
     page, = parse(
-        '<html style="width: 5em">'
+        '<html style="width: 5em; font-family: ahem">'
         '<body style="-weasy-hyphens: auto;'
         '-weasy-hyphenate-character: \'\'" lang=en>'
         'hyphenation')
@@ -4667,7 +4667,7 @@ def test_hyphenate_character():
 @assert_no_logs
 def test_hyphenate_limit_zone():
     page, = parse(
-        '<html style="width: 10em">'
+        '<html style="width: 12em; font-family: ahem">'
         '<body style="-weasy-hyphens: auto;'
         '-weasy-hyphenate-limit-zone: 0" lang=en>'
         'mmmmm hyphenation')
@@ -4680,7 +4680,7 @@ def test_hyphenate_limit_zone():
     assert full_text.replace('‐', '') == 'mmmmm hyphenation'
 
     page, = parse(
-        '<html style="width: 10em">'
+        '<html style="width: 12em; font-family: ahem">'
         '<body style="-weasy-hyphens: auto;'
         '-weasy-hyphenate-limit-zone: 9em" lang=en>'
         'mmmmm hyphenation')
@@ -4693,7 +4693,7 @@ def test_hyphenate_limit_zone():
     assert full_text == 'mmmmmhyphenation'
 
     page, = parse(
-        '<html style="width: 10em">'
+        '<html style="width: 12em; font-family: ahem">'
         '<body style="-weasy-hyphens: auto;'
         '-weasy-hyphenate-limit-zone: 5%" lang=en>'
         'mmmmm hyphenation')
@@ -4706,7 +4706,7 @@ def test_hyphenate_limit_zone():
     assert full_text.replace('‐', '') == 'mmmmm hyphenation'
 
     page, = parse(
-        '<html style="width: 10em">'
+        '<html style="width: 12em; font-family: ahem">'
         '<body style="-weasy-hyphens: auto;'
         '-weasy-hyphenate-limit-zone: 95%" lang=en>'
         'mmmmm hyphenation')
@@ -4723,7 +4723,7 @@ def test_hyphenate_limit_zone():
 def test_hyphenate_limit_chars():
     def line_count(limit_chars):
         page, = parse((
-            '<html style="width: 1em">'
+            '<html style="width: 1em; font-family: ahem">'
             '<body style="-weasy-hyphens: auto;'
             '-weasy-hyphenate-limit-chars: %s" lang=en>'
             'hyphen') % limit_chars)
