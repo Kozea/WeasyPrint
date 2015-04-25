@@ -198,7 +198,6 @@ def table_layout(context, table, max_position_y, skip_stack,
                     elif cell.vertical_align == 'bottom':
                         vertical_align_shift = (
                             cell.computed_height - cell.content_height)
-                    # TODO: elif cell.vertical_align == 'baseline':
                     if vertical_align_shift > 0:
                         for child in cell.children:
                             child.translate(dy=vertical_align_shift)

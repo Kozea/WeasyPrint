@@ -3279,6 +3279,76 @@ def test_table_row_height():
 
 
 @assert_no_logs
+def test_table_vertical_align():
+    from .test_draw import _, r, B, assert_pixels
+    assert_pixels('table_vertical_align', 40, 14, [
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+_,
+        _+B+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+_+B+B+B+_+B+B+B+_+B+B+B+_+B+B+B+_+B+B+B+_+B+B+B+B+_+B+B+B+B+_+B+B+B+B+_+B+_,
+        _+B+_+B+r+B+_+B+_+B+_+B+_+B+_+B+_+B+_+B+_+B+_+B+r+r+B+_+B+r+r+B+_+B+_+_+B+_+B+_,
+        _+B+_+B+r+B+_+B+_+B+_+B+_+B+_+B+r+B+_+B+r+B+_+B+r+r+B+_+B+r+r+B+_+B+r+r+B+_+B+_,
+        _+B+_+B+_+B+_+B+r+B+_+B+_+B+_+B+r+B+_+B+r+B+_+B+r+r+B+_+B+r+r+B+_+B+r+r+B+_+B+_,
+        _+B+_+B+_+B+_+B+r+B+_+B+_+B+_+B+_+B+_+B+_+B+_+B+r+r+B+_+B+r+r+B+_+B+r+r+B+_+B+_,
+        _+B+_+B+_+B+_+B+_+B+_+B+r+B+_+B+_+B+_+B+_+B+_+B+_+_+B+_+B+_+_+B+_+B+r+r+B+_+B+_,
+        _+B+_+B+_+B+_+B+_+B+_+B+r+B+_+B+_+B+_+B+_+B+_+B+_+_+B+_+B+_+_+B+_+B+_+_+B+_+B+_,
+        _+B+_+B+B+B+_+B+B+B+_+B+B+B+_+B+B+B+_+B+B+B+_+B+B+B+B+_+B+B+B+B+_+B+B+B+B+_+B+_,
+        _+B+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
+    ], '''
+      <style>
+        @page { size: 40px 14px }
+        html { background: #fff; font-size: 1px; color: red }
+        body { margin: 1px; width: 40px; height: 14px }
+        td {
+          width: 1em;
+          padding: 0 !important;
+          border: 1px solid blue;
+          line-height: 1em;
+          font-family: ahem;
+        }
+      </style>
+      <table style="border: 1px solid blue; border-spacing: 1px">
+        <tr>
+          <!-- Test vertical-align: top, auto height -->
+          <td style="vertical-align: top">o o</td>
+
+          <!-- Test vertical-align: middle, auto height -->
+          <td style="vertical-align: middle">o o</td>
+
+          <!-- Test vertical-align: bottom, fixed useless height -->
+          <td style="vertical-align: bottom; height: 2em">o o</td>
+
+          <!-- Test default vertical-align value (baseline),
+               fixed useless height -->
+          <td style="height: 5em">o o</td>
+
+          <!-- Test vertical-align: baseline with baseline set by next cell,
+               auto height -->
+          <td style="vertical-align: baseline">o o</td>
+
+          <!-- Set baseline height to 2px, auto height -->
+          <td style="vertical-align: baseline; font-size: 2em">o o</td>
+
+          <!-- Test padding-bottom, fixed useless height,
+               set the height of the cells to 2 lines * 2em + 2px = 6px -->
+          <td style="vertical-align: baseline; height: 1em;
+                     font-size: 2em; padding-bottom: 2px !important">
+            o o
+          </td>
+
+          <!-- Test padding-top, auto height -->
+          <td style="vertical-align: top; padding-top: 0.25em !important;
+                     font-size: 2em">
+            o o
+          </td>
+        </tr>
+      </table>
+    ''')
+
+
+@assert_no_logs
 def test_table_wrapper():
     page, = parse('''
         <style>
