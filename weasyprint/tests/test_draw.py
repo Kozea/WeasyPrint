@@ -52,15 +52,23 @@ def save_pixels_to_png(pixels, width, height, filename):
     ).write_to_png(filename)
 
 
-def requires_cairo_1_12(test):
-    @functools.wraps(test)
-    def decorated_test():
-        if cairo.cairo_version() < 11200:
-            print('Running cairo %s but this test requires 1.12+'
-                  % cairo.cairo_version_string())
-            pytest.xfail()
-        test()
-    return decorated_test
+def requires_cairo(version):
+    tuple_version = [0, 0, 0]
+    for i, number in enumerate(version.split('.')):
+        tuple_version[i] = int(number)
+    version_number = int(''.join('%02i' % number for number in tuple_version))
+
+    def require_cairo_version(test):
+        @functools.wraps(test)
+        def decorated_test():
+            if cairo.cairo_version() < version_number:
+                print('Running cairo %s but this test requires %s+' % (
+                    cairo.cairo_version_string(), version))
+                pytest.xfail()
+            test()
+        return decorated_test
+
+    return require_cairo_version
 
 
 def assert_pixels(name, expected_width, expected_height, expected_pixels,
@@ -1511,7 +1519,7 @@ def test_visibility():
 
 
 @assert_no_logs
-@requires_cairo_1_12
+@requires_cairo('1.12')
 def test_tables():
     # TODO: refactor colspan/rowspan into CSS:
     # td, th { column-span: attr(colspan integer) }
@@ -2229,7 +2237,7 @@ def test_overflow():
 
 
 @assert_no_logs
-@requires_cairo_1_12
+@requires_cairo('1.12')
 def test_clip():
     """Test the clip property."""
     num = [0]
@@ -2671,7 +2679,7 @@ def test_2d_transform():
 
 
 @assert_no_logs
-@requires_cairo_1_12
+@requires_cairo('1.12')
 def test_acid2():
     """A local version of http://acid2.acidtests.org/"""
     def render(filename):
@@ -2696,6 +2704,7 @@ def test_acid2():
 
 
 @assert_no_logs
+@requires_cairo('1.14')
 def test_linear_gradients():
     assert_pixels('linear_gradient', 5, 9, [
         _+_+_+_+_,

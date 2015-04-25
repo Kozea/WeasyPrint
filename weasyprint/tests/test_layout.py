@@ -20,6 +20,7 @@ import pytest
 from .testing_utils import FONTS, assert_no_logs, capture_logs, almost_equal
 from ..formatting_structure import boxes
 from .test_boxes import render_pages as parse
+from .test_draw import requires_cairo, assert_pixels
 
 
 def body_children(page):
@@ -3295,28 +3296,29 @@ def test_table_row_height():
 
 
 @assert_no_logs
+@requires_cairo('1.12')
 def test_table_vertical_align():
-    from .test_draw import _, r, B, assert_pixels
-    assert_pixels('table_vertical_align', 40, 14, [
-        _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
-        _+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+_,
-        _+B+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+B+_,
-        _+B+_+B+B+B+_+B+B+B+_+B+B+B+_+B+B+B+_+B+B+B+_+B+B+B+B+_+B+B+B+B+_+B+B+B+B+_+B+_,
-        _+B+_+B+r+B+_+B+_+B+_+B+_+B+_+B+_+B+_+B+_+B+_+B+r+r+B+_+B+r+r+B+_+B+_+_+B+_+B+_,
-        _+B+_+B+r+B+_+B+_+B+_+B+_+B+_+B+r+B+_+B+r+B+_+B+r+r+B+_+B+r+r+B+_+B+r+r+B+_+B+_,
-        _+B+_+B+_+B+_+B+r+B+_+B+_+B+_+B+r+B+_+B+r+B+_+B+r+r+B+_+B+r+r+B+_+B+r+r+B+_+B+_,
-        _+B+_+B+_+B+_+B+r+B+_+B+_+B+_+B+_+B+_+B+_+B+_+B+r+r+B+_+B+r+r+B+_+B+r+r+B+_+B+_,
-        _+B+_+B+_+B+_+B+_+B+_+B+r+B+_+B+_+B+_+B+_+B+_+B+_+_+B+_+B+_+_+B+_+B+r+r+B+_+B+_,
-        _+B+_+B+_+B+_+B+_+B+_+B+r+B+_+B+_+B+_+B+_+B+_+B+_+_+B+_+B+_+_+B+_+B+_+_+B+_+B+_,
-        _+B+_+B+B+B+_+B+B+B+_+B+B+B+_+B+B+B+_+B+B+B+_+B+B+B+B+_+B+B+B+B+_+B+B+B+B+_+B+_,
-        _+B+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+B+_,
-        _+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+_,
-        _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
+    from .test_draw import _, r, B
+    assert_pixels('table_vertical_align', 39, 14, [
+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
+_+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+_,
+_+B+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+B+_,
+_+B+_+B+B+B+_+B+B+B+_+B+B+B+_+B+B+B+_+B+B+B+_+B+B+B+B+_+B+B+B+B+_+B+B+B+_+B+_,
+_+B+_+B+r+B+_+B+_+B+_+B+_+B+_+B+_+B+_+B+_+B+_+B+r+r+B+_+B+r+r+B+_+B+_+B+_+B+_,
+_+B+_+B+r+B+_+B+_+B+_+B+_+B+_+B+r+B+_+B+r+B+_+B+r+r+B+_+B+r+r+B+_+B+r+B+_+B+_,
+_+B+_+B+_+B+_+B+r+B+_+B+_+B+_+B+r+B+_+B+r+B+_+B+r+r+B+_+B+r+r+B+_+B+r+B+_+B+_,
+_+B+_+B+_+B+_+B+r+B+_+B+_+B+_+B+_+B+_+B+_+B+_+B+r+r+B+_+B+r+r+B+_+B+_+B+_+B+_,
+_+B+_+B+_+B+_+B+_+B+_+B+r+B+_+B+_+B+_+B+_+B+_+B+_+_+B+_+B+_+_+B+_+B+_+B+_+B+_,
+_+B+_+B+_+B+_+B+_+B+_+B+r+B+_+B+_+B+_+B+_+B+_+B+_+_+B+_+B+_+_+B+_+B+_+B+_+B+_,
+_+B+_+B+B+B+_+B+B+B+_+B+B+B+_+B+B+B+_+B+B+B+_+B+B+B+B+_+B+B+B+B+_+B+B+B+_+B+_,
+_+B+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+B+_,
+_+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+_,
+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
     ], '''
       <style>
-        @page { size: 40px 14px }
+        @page { size: 39px 14px }
         html { background: #fff; font-size: 1px; color: red }
-        body { margin: 1px; width: 40px; height: 14px }
+        body { margin: 1px; width: 39px; height: 14px }
         td {
           width: 1em;
           padding: 0 !important;
@@ -3355,8 +3357,7 @@ def test_table_vertical_align():
           </td>
 
           <!-- Test padding-top, auto height -->
-          <td style="vertical-align: top; padding-top: 0.25em !important;
-                     font-size: 2em">
+          <td style="vertical-align: top; padding-top: 0.5em !important">
             o o
           </td>
         </tr>
