@@ -1,6 +1,21 @@
 WeasyPrint changelog
 ====================
 
+Version 0.24
+------------
+
+Not released yet.
+
+Bug fixes:
+
+* `#207: <https://github.com/Kozea/WeasyPrint/issues/207>`_:
+  Draw rounded corners on replaced boxes.
+* `#224: <https://github.com/Kozea/WeasyPrint/pull/224>`_:
+  Rely on the font size for rounding bug workaround.
+* `#31: <https://github.com/Kozea/WeasyPrint/issues/31>`_:
+  Honor the vertical-align property in fixed-height cells.
+
+
 Version 0.23
 ------------
 
