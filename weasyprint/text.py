@@ -425,7 +425,7 @@ def split_first_line(text, style, hinting, max_width, line_width):
     # Increase the value a bit to compensate and not introduce
     # an unexpected line break.
     if max_width is not None:
-        max_width *= 1.0001
+        max_width += style.font_size * 0.2
     # Step #1: Get a draft layout with the first line
     layout = None
     if max_width:
