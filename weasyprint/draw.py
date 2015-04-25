@@ -820,9 +820,9 @@ def draw_replacedbox(context, box):
         return
 
     with stacked(context):
-        context.translate(box.content_box_x(), box.content_box_y())
-        context.rectangle(0, 0, box.width, box.height)
+        rounded_box_path(context, box.rounded_content_box())
         context.clip()
+        context.translate(box.content_box_x(), box.content_box_y())
         box.replacement.draw(
             context, box.width, box.height, box.style.image_rendering)
 
