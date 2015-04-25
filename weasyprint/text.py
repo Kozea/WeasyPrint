@@ -58,7 +58,7 @@ ffi.cdef('''
         PANGO_STRETCH_EXTRA_EXPANDED,
         PANGO_STRETCH_ULTRA_EXPANDED
     } PangoStretch;
-    
+
     typedef enum {
         PANGO_WRAP_WORD,
         PANGO_WRAP_CHAR,
@@ -200,9 +200,12 @@ def dlopen(ffi, *names):
     return ffi.dlopen(names[0])  # pragma: no cover
 
 
-gobject = dlopen(ffi, 'gobject-2.0', 'libgobject-2.0-0', 'libgobject-2.0.dylib')
-pango = dlopen(ffi, 'pango-1.0', 'libpango-1.0-0', 'libpango-1.0.dylib')
-pangocairo = dlopen(ffi, 'pangocairo-1.0', 'libpangocairo-1.0-0', 'libpangocairo-1.0.dylib')
+gobject = dlopen(ffi, 'gobject-2.0', 'libgobject-2.0-0', 'libgobject-2.0.so',
+                 'libgobject-2.0.dylib')
+pango = dlopen(ffi, 'pango-1.0', 'libpango-1.0-0', 'libpango-1.0.so',
+               'libpango-1.0.dylib')
+pangocairo = dlopen(ffi, 'pangocairo-1.0', 'libpangocairo-1.0-0',
+                    'libpangocairo-1.0.so', 'libpangocairo-1.0.dylib')
 
 gobject.g_type_init()
 
@@ -236,9 +239,9 @@ PANGO_STRETCH = {
 }
 
 PANGO_WRAP_MODE = {
-    'WRAP_WORD' : pango.PANGO_WRAP_WORD,
-    'WRAP_CHAR' : pango.PANGO_WRAP_CHAR,
-    'WRAP_WORD_CHAR' : pango.PANGO_WRAP_WORD_CHAR
+    'WRAP_WORD': pango.PANGO_WRAP_WORD,
+    'WRAP_CHAR': pango.PANGO_WRAP_CHAR,
+    'WRAP_WORD_CHAR': pango.PANGO_WRAP_WORD_CHAR
 }
 
 
@@ -332,7 +335,7 @@ class Layout(object):
     def get_font_metrics(self):
         context = pango.pango_layout_get_context(self.layout)
         return FontMetrics(context, self.font)
-    
+
     def set_wrap(self, wrap_mode):
         pango.pango_layout_set_wrap(self.layout, wrap_mode)
 

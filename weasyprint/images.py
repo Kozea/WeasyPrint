@@ -73,7 +73,8 @@ class RasterImage(object):
                 self._intrinsic_height / image_resolution)
 
     def draw(self, context, concrete_width, concrete_height, image_rendering):
-        if self._intrinsic_width > 0 and self._intrinsic_height > 0:
+        if concrete_width > 0 and concrete_height > 0 and \
+                self._intrinsic_width > 0 and self._intrinsic_height > 0:
             # Use the real intrinsic size here,
             # not affected by 'image-resolution'.
             context.scale(concrete_width / self._intrinsic_width,

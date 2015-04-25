@@ -154,11 +154,11 @@ def additive(symbols, negative, value):
 
 # 'decimal' behaves the same as this, but defining it this way is silly.
 # We’ll special-case it and just use str().
-#register_style(
-#    'decimal',
-#    type='numeric',
-#    symbols='0 1 2 3 4 5 6 7 8 9'.split(),
-#)
+# register_style(
+#     'decimal',
+#     type='numeric',
+#     symbols='0 1 2 3 4 5 6 7 8 9'.split(),
+# )
 register_style(
     'decimal-leading-zero',
     type='non-repeating',

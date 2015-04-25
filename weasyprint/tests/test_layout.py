@@ -1615,6 +1615,7 @@ def test_page_breaks():
         assert all([div.element_tag == 'div' for div in divs])
         assert all([div.position_x == 10 for div in divs])
         page_divs.append(divs)
+        del divs
 
     positions_y = [[div.position_y for div in divs] for divs in page_divs]
     assert positions_y == [[10, 40], [10, 40], [10]]
@@ -1635,6 +1636,7 @@ def test_page_breaks():
         assert all([div.element_tag == 'div' for div in divs])
         assert all([div.position_x == 10 for div in divs])
         page_divs.append(divs)
+        del divs
 
     positions_y = [[div.position_y for div in divs] for divs in page_divs]
     assert positions_y == [[10, 40], [10, 40], [10]]
@@ -1657,10 +1659,10 @@ def test_page_breaks():
         assert all([img.element_tag == 'img' for img in images])
         assert all([img.position_x == 10 for img in images])
         page_images.append(images)
+        del images
     positions_y = [[img.position_y for img in images]
                    for images in page_images]
     assert positions_y == [[10, 40], [10, 40], [10]]
-
 
     page_1, page_2, page_3, page_4 = parse('''
         <style>
@@ -1715,7 +1717,6 @@ def test_page_breaks():
     section, = article.children
     ulist, = section.children
     assert ulist.element_tag == 'ul'
-
 
     # Reference for the following test:
     # Without any 'avoid', this breaks after the <div>
@@ -1792,7 +1793,8 @@ def test_page_breaks():
                 <div>
                     <p style="page-break-inside: avoid">
                         ><img src=pattern.png><br/><img src=pattern.png></p>
-                    <p style="page-break-before: avoid; page-break-after: avoid;
+                    <p style="page-break-before: avoid;
+                              page-break-after: avoid;
                               widows: 2"
                         ><img src=pattern.png><br/><img src=pattern.png></p>
                 </div>
@@ -1876,7 +1878,7 @@ def test_page_breaks():
     # TODO: currently this is 60: we do not decrease the used height of
     # blocks with 'height: auto' when we remove children from them for
     # some page-break-*: avoid.
-    #assert div.height == 30
+    # assert div.height == 30
     html, = page_3.children
     body, = html.children
     div, img_4, img_5, = body.children
@@ -2226,7 +2228,7 @@ def test_whitespace_processing():
         assert text.text == 'a', 'source was %r' % (source,)
 
         page, = parse('<p style="white-space: pre-line">\n\n<em>%s</em></pre>'
-            % source.replace('\n', ' '))
+                      % source.replace('\n', ' '))
         html, = page.children
         body, = html.children
         p, = body.children
@@ -2434,6 +2436,22 @@ def test_images():
     assert img.height == 30
     assert img.content_box_x() == 49  # (100 - 2) / 2 == 49px for margin-left
     assert img.content_box_y() == 10
+
+    page, = parse('''
+        <body style="float: left">
+        <img style="height: 200px; margin: 10px; display: block" src="
+            data:image/svg+xml,
+            <svg width='150' height='100'></svg>
+        ">
+    ''')
+    html, = page.children
+    body, = html.children
+    img, = body.children
+    assert body.width == 320
+    assert body.height == 220
+    assert img.element_tag == 'img'
+    assert img.width == 300
+    assert img.height == 200
 
 
 @assert_no_logs
@@ -2716,7 +2734,6 @@ def test_vertical_align():
     img_1, = line_2.children
     assert img_1.element_tag == 'img'
     assert img_1.position_y == 0
-
 
 
 @assert_no_logs
@@ -3147,8 +3164,7 @@ def test_table_column_width():
     assert row.children[0].width == 500
     assert row.children[1].width == 600
     assert row.children[2].width == 0
-    assert table.width == 1500 # 500 + 600 + 4 * border-spacing
-
+    assert table.width == 1500  # 500 + 600 + 4 * border-spacing
 
     # Sum of columns width larger that the table width:
     # increase the table width
@@ -3455,7 +3471,7 @@ def test_margin_boxes_fixed_dimension():
     assert margin_box.margin_width() == 200
     assert margin_box.margin_left == 60
     assert margin_box.margin_right == 60
-    assert margin_box.width == 80 # 200 - 60 - 60
+    assert margin_box.width == 80  # 200 - 60 - 60
 
     assert margin_box.margin_height() == 100
     # total was too big, the outside margin was ignored:
@@ -3785,7 +3801,7 @@ def test_margin_boxes_variable_dimension():
     ''' % images(170, 175)
     assert get_widths(css) == [200, 300, 175]
 
-    ##### Without @top-center
+    # Without @top-center
 
     css = '''
         @top-left { content: ''; width: 200px }
@@ -4567,6 +4583,197 @@ def test_floats():
 
 
 @assert_no_logs
+def test_floats_page_breaks():
+    """Tests the page breaks when floated boxes
+    do not fit the page."""
+
+    # Tests floated images shorter than the page
+    pages = parse('''
+        <style>
+            @page { size: 100px; margin: 10px }
+            img { height: 45px; width:70px; float: left;}
+        </style>
+        <body>
+            <img src=pattern.png>
+                    <!-- page break should be here !!! -->
+            <img src=pattern.png>
+    ''')
+
+    assert len(pages) == 2
+
+    page_images = []
+    for page in pages:
+        images = [d for d in page.descendants() if d.element_tag == 'img']
+        assert all([img.element_tag == 'img' for img in images])
+        assert all([img.position_x == 10 for img in images])
+        page_images.append(images)
+        del images
+    positions_y = [[img.position_y for img in images]
+                   for images in page_images]
+    assert positions_y == [[10], [10]]
+
+    # Tests floated images taller than the page
+    pages = parse('''
+        <style>
+            @page { size: 100px; margin: 10px }
+            img { height: 81px; width:70px; float: left;}
+        </style>
+        <body>
+            <img src=pattern.png>
+                    <!-- page break should be here !!! -->
+            <img src=pattern.png>
+    ''')
+
+    assert len(pages) == 2
+
+    page_images = []
+    for page in pages:
+        images = [d for d in page.descendants() if d.element_tag == 'img']
+        assert all([img.element_tag == 'img' for img in images])
+        assert all([img.position_x == 10 for img in images])
+        page_images.append(images)
+        del images
+    positions_y = [[img.position_y for img in images]
+                   for images in page_images]
+    assert positions_y == [[10], [10]]
+
+    # Tests floated images shorter than the page
+    pages = parse('''
+        <style>
+            @page { size: 100px; margin: 10px }
+            img { height: 30px; width:70px; float: left;}
+        </style>
+        <body>
+            <img src=pattern.png>
+            <img src=pattern.png>
+                    <!-- page break should be here !!! -->
+            <img src=pattern.png>
+            <img src=pattern.png>
+                    <!-- page break should be here !!! -->
+            <img src=pattern.png>
+    ''')
+
+    assert len(pages) == 3
+
+    page_images = []
+    for page in pages:
+        images = [d for d in page.descendants() if d.element_tag == 'img']
+        assert all([img.element_tag == 'img' for img in images])
+        assert all([img.position_x == 10 for img in images])
+        page_images.append(images)
+        del images
+    positions_y = [[img.position_y for img in images]
+                   for images in page_images]
+    assert positions_y == [[10, 40], [10, 40], [10]]
+
+    # last float does not fit, pushed to next page
+    pages = parse('''
+        <style>
+            @page{
+                size: 110px;
+                margin: 10px;
+                padding: 0;
+            }
+            .large {
+                width: 10px;
+                height: 60px;
+            }
+            .small {
+                width: 10px;
+                height: 20px;
+            }
+        </style>
+        <body>
+            <div class="large"></div>
+            <div class="small"></div>
+            <div class="large"></div>
+    ''')
+
+    assert len(pages) == 2
+    page_divs = []
+    for page in pages:
+        divs = [div for div in page.descendants() if div.element_tag == 'div']
+        assert all([div.element_tag == 'div' for div in divs])
+        page_divs.append(divs)
+        del divs
+
+    positions_y = [[div.position_y for div in divs] for divs in page_divs]
+    assert positions_y == [[10, 70], [10]]
+
+    # last float does not fit, pushed to next page
+    # center div must not
+    pages = parse('''
+        <style>
+            @page{
+                size: 110px;
+                margin: 10px;
+                padding: 0;
+            }
+            .large {
+                width: 10px;
+                height: 60px;
+            }
+            .small {
+                width: 10px;
+                height: 20px;
+                page-break-after: avoid;
+            }
+        </style>
+        <body>
+            <div class="large"></div>
+            <div class="small"></div>
+            <div class="large"></div>
+    ''')
+
+    assert len(pages) == 2
+    page_divs = []
+    for page in pages:
+        divs = [div for div in page.descendants() if div.element_tag == 'div']
+        assert all([div.element_tag == 'div' for div in divs])
+        page_divs.append(divs)
+        del divs
+
+    positions_y = [[div.position_y for div in divs] for divs in page_divs]
+    assert positions_y == [[10], [10, 30]]
+
+    # center div must be the last element,
+    # but float won't fit and will get pushed anyway
+    pages = parse('''
+        <style>
+            @page{
+                size: 110px;
+                margin: 10px;
+                padding: 0;
+            }
+            .large {
+                width: 10px;
+                height: 80px;
+            }
+            .small {
+                width: 10px;
+                height: 20px;
+                page-break-after: avoid;
+            }
+        </style>
+        <body>
+            <div class="large"></div>
+            <div class="small"></div>
+            <div class="large"></div>
+    ''')
+
+    assert len(pages) == 3
+    page_divs = []
+    for page in pages:
+        divs = [div for div in page.descendants() if div.element_tag == 'div']
+        assert all([div.element_tag == 'div' for div in divs])
+        page_divs.append(divs)
+        del divs
+
+    positions_y = [[div.position_y for div in divs] for divs in page_divs]
+    assert positions_y == [[10], [10], [10]]
+
+
+@assert_no_logs
 def test_font_stretch():
     page, = parse('''
         <style>p { float: left }</style>
@@ -4980,7 +5187,8 @@ def test_linear_gradient():
            'solid', (0, .5, .5, 1), [], [])
     layout('linear-gradient(blue, lime)', init=(200, 0, 200, 300))
     layout('repeating-linear-gradient(blue, lime)', init=(200, 0, 200, 300))
-    layout('repeating-linear-gradient(blue, lime 20px)', init=(200, 0, 200, 20))
+    layout('repeating-linear-gradient(blue, lime 20px)',
+           init=(200, 0, 200, 20))
     layout('repeating-linear-gradient(blue, lime 20px)',
            'solid', (0, .5, .5, 1), [], [], scale=(1/20, 1/20))
 
@@ -5046,8 +5254,8 @@ def test_radial_gradient():
     layout('radial-gradient(100px, blue, lime)',
            init=(200, 150, 0, 100))
 
-    layout('radial-gradient(100px at right 20px bottom 30px, blue, lime)',
-           init=(380, 270, 0, 100))
+    layout('radial-gradient(100px at right 20px bottom 30px, lime, red)',
+           init=(380, 270, 0, 100), colors=[lime, red])
     layout('radial-gradient(0 0, blue, lime)',
            init=(200, 150, 0, 1e-7))
     layout('radial-gradient(1px 0, blue, lime)',

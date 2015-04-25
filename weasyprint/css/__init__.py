@@ -166,6 +166,8 @@ def find_stylesheets(element_tree, device_media_type, url_fetcher):
     The output order is the same as the source order.
 
     """
+    from ..html import element_has_link_type  # Work around circular imports.
+
     for element in element_tree.iter('style', 'link'):
         mime_type = element.get('type', 'text/css').split(';', 1)[0].strip()
         # Only keep 'type/subtype' from 'type/subtype ; param1; param2'.
@@ -185,8 +187,8 @@ def find_stylesheets(element_tree, device_media_type, url_fetcher):
                       url_fetcher=url_fetcher, media_type=device_media_type)
             yield css
         elif element.tag == 'link' and element.get('href'):
-            rel = element.get('rel', '').split()
-            if 'stylesheet' not in rel or 'alternate' in rel:
+            if not element_has_link_type(element, 'stylesheet') or \
+                    element_has_link_type(element, 'alternate'):
                 continue
             href = get_url_attribute(element, 'href')
             if href is not None:
@@ -196,7 +198,7 @@ def find_stylesheets(element_tree, device_media_type, url_fetcher):
                               media_type=device_media_type)
                 except URLFetchingError as exc:
                     LOGGER.warning('Failed to load stylesheet at %s : %s',
-                                href, exc)
+                                   href, exc)
 
 
 def find_style_attributes(element_tree):
@@ -372,7 +374,7 @@ def preprocess_stylesheet(device_media_type, base_url, rules, url_fetcher):
                                 % selector.pseudo_element)
                 except cssselect.SelectorError as exc:
                     LOGGER.warning("Invalid or unsupported selector '%s', %s",
-                                selector_string, exc)
+                                   selector_string, exc)
                     continue
                 yield rule, selector_list, declarations
 
@@ -387,7 +389,7 @@ def preprocess_stylesheet(device_media_type, base_url, rules, url_fetcher):
                                      media_type=device_media_type)
                 except URLFetchingError as exc:
                     LOGGER.warning('Failed to load stylesheet at %s : %s',
-                                url, exc)
+                                   url, exc)
                 else:
                     for result in stylesheet.rules:
                         yield result
@@ -404,8 +406,8 @@ def preprocess_stylesheet(device_media_type, base_url, rules, url_fetcher):
             # TODO: support named pages (see CSS3 Paged Media)
             if page_name is not None:
                 LOGGER.warning('Named pages are not supported yet, the whole '
-                            '@page %s rule was ignored.', page_name + (
-                                ':' + pseudo_class if pseudo_class else ''))
+                               '@page %s rule was ignored.', page_name + (
+                                   ':' + pseudo_class if pseudo_class else ''))
                 continue
             declarations = list(preprocess_declarations(
                 base_url, rule.declarations))

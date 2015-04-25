@@ -39,6 +39,46 @@ HTML5_UA_STYLESHEET = CSS(
 LOGGER.setLevel(level)
 
 
+# http://whatwg.org/C#space-character
+HTML_WHITESPACE = ' \t\n\f\r'
+HTML_SPACE_SEPARATED_TOKENS_RE = re.compile('[^%s]+' % HTML_WHITESPACE)
+
+
+def ascii_lower(string):
+    r"""Transform (only) ASCII letters to lower case: A-Z is mapped to a-z.
+
+    :param string: An Unicode string.
+    :returns: A new Unicode string.
+
+    This is used for `ASCII case-insensitive
+    <http://whatwg.org/C#ascii-case-insensitive>`_ matching.
+
+    This is different from the :meth:`~py:str.lower` method of Unicode strings
+    which also affect non-ASCII characters,
+    sometimes mapping them into the ASCII range:
+
+    >>> keyword = u'Bac\N{KELVIN SIGN}ground'
+    >>> assert keyword.lower() == u'background'
+    >>> assert ascii_lower(keyword) != keyword.lower()
+    >>> assert ascii_lower(keyword) == u'bac\N{KELVIN SIGN}ground'
+
+    """
+    # This turns out to be faster than unicode.translate()
+    return string.encode('utf8').lower().decode('utf8')
+
+
+def element_has_link_type(element, link_type):
+    """
+    Return whether the given element has a ``rel`` attribute with the
+    given link type.
+
+    :param link_type: Must be a lower-case string.
+
+    """
+    return any(ascii_lower(token) == link_type for token in
+               HTML_SPACE_SEPARATED_TOKENS_RE.findall(element.get('rel', '')))
+
+
 # Maps HTML tag names to function taking an HTML element and returning a Box.
 HTML_HANDLERS = {}
 
@@ -203,6 +243,13 @@ def handle_td(element, box, _get_image_from_uri):
     return [box]
 
 
+@handler('a')
+def handle_a(element, box, _get_image_from_uri):
+    """Handle the ``rel`` attribute."""
+    box.is_attachment = element_has_link_type(element, 'attachment')
+    return [box]
+
+
 def find_base_url(html_document, fallback_base_url):
     """Return the base URL for the document.
 
@@ -224,6 +271,7 @@ def get_html_metadata(html_document):
     http://www.whatwg.org/html#the-title-element
     http://www.whatwg.org/html#standard-metadata-names
     http://wiki.whatwg.org/wiki/MetaExtensions
+    http://microformats.org/wiki/existing-rel-values#HTML5_link_type_extensions
 
     """
     title = None
@@ -233,7 +281,8 @@ def get_html_metadata(html_document):
     authors = []
     created = None
     modified = None
-    for element in html_document.iter('title', 'meta'):
+    attachments = []
+    for element in html_document.iter('title', 'meta', 'link'):
         if element.tag == 'title' and title is None:
             title = get_child_text(element)
         elif element.tag == 'meta':
@@ -253,18 +302,18 @@ def get_html_metadata(html_document):
                 created = parse_w3c_date(name, element.sourceline, content)
             elif name == 'dcterms.modified' and modified is None:
                 modified = parse_w3c_date(name, element.sourceline, content)
+        elif element.tag == 'link' and element_has_link_type(
+                element, 'attachment'):
+            url = get_url_attribute(element, 'href')
+            title = element.get('title', None)
+            if url is None:
+                LOGGER.warning('Missing href in <link rel="attachment">')
+            else:
+                attachments.append((url, title))
     return dict(title=title, description=description, generator=generator,
                 keywords=keywords, authors=authors,
-                created=created, modified=modified)
-
-
-def ascii_lower(string):
-    """Return :obj:`string` with ASCII letters in lower-case.
-
-    http://www.whatwg.org/html#ascii-case-insensitive
-
-    """
-    return string.encode('utf8').lower().decode('utf8')
+                created=created, modified=modified,
+                attachments=attachments)
 
 
 def strip_whitespace(string):
@@ -319,4 +368,4 @@ def parse_w3c_date(meta_name, source_line, string):
         return string
     else:
         LOGGER.warning('Invalid date in <meta name="%s"> line %i: %r',
-                    meta_name, source_line, string)
+                       meta_name, source_line, string)

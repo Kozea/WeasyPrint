@@ -475,8 +475,10 @@ def test_font():
         'font_size': 'large',
         'font_family': ['serif'],
     }
-    assert expand_to_dict('font: small-caps condensed normal 700 large serif') == {
-        #'font_style': 'normal',  XXX shouldn’t this be here?
+    assert expand_to_dict(
+        'font: small-caps condensed normal 700 large serif'
+    ) == {
+        # 'font_style': 'normal',  XXX shouldn’t this be here?
         'font_stretch': 'condensed',
         'font_variant': 'small-caps',
         'font_weight': 700,

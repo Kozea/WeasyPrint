@@ -56,7 +56,7 @@ INITIAL_VALUES = {
     # computed values (JavaScript?), this value should serialize to 'none'.
     'counter_increment': 'auto',
     'counter_reset': [],  # parsed value for 'none'
-#    'counter_set': [],  # parsed value for 'none'
+    # 'counter_set': [],  # parsed value for 'none'
     'direction': 'ltr',
     'display': 'inline',
     'empty_cells': 'show',

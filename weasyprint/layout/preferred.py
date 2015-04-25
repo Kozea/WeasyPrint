@@ -16,6 +16,7 @@ import weakref
 
 from ..formatting_structure import boxes
 from .. import text
+from .replaced import default_image_sizing
 
 
 def shrink_to_fit(context, box, available_width):
@@ -153,7 +154,8 @@ def table_cell_preferred_minimum_width(context, box, table,
     """Return the preferred minimum width for a ``TableCellBox``."""
     # Try to solve the cell's width if it is a percentage
     width = box.style.width
-    if resolved_table_width and table.width != 'auto' and width != 'auto' and width.unit == '%':
+    if (resolved_table_width and table.width != 'auto' and
+            width != 'auto' and width.unit == '%'):
         return width.value / 100. * table.width
 
     # Else return standard block's preferred minimum width
@@ -166,7 +168,8 @@ def table_cell_preferred_width(context, box, table, resolved_table_width,
     """Return the preferred width for a ``TableCellBox``."""
     # Try to solve the cell's width if it is a percentage
     width = box.style.width
-    if resolved_table_width and table.width!= 'auto' and width != 'auto' and width.unit == '%':
+    if (resolved_table_width and table.width != 'auto' and
+            width != 'auto' and width.unit == '%'):
         return width.value / 100. * table.width
 
     # Else return standard block's preferred width
@@ -474,10 +477,17 @@ def replaced_preferred_width(box, outer=True):
     """Return the preferred minimum width for an ``InlineReplacedBox``."""
     width = box.style.width
     if width == 'auto' or width.unit == '%':
-        width, _ = box.replacement.get_intrinsic_size(
-            box.style.image_resolution)
-        # TODO: handle the images with no intinsic width
-        assert width is not None
+        height = box.style.height
+        if height == 'auto' or height.unit == '%':
+            height = 'auto'
+        else:
+            assert height.unit == 'px'
+            height = height.value
+        image = box.replacement
+        iwidth, iheight = image.get_intrinsic_size(box.style.image_resolution)
+        width, _ = default_image_sizing(
+            iwidth, iheight, image.intrinsic_ratio, 'auto', height,
+            default_width=300, default_height=150)
     else:
         assert width.unit == 'px'
         width = width.value

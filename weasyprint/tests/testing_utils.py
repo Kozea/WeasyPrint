@@ -17,6 +17,10 @@ import os.path
 import logging
 import contextlib
 import functools
+import wsgiref.simple_server
+import threading
+import shutil
+import tempfile
 
 from .. import HTML, CSS
 from ..logger import LOGGER
@@ -82,10 +86,9 @@ def assert_no_logs(function):
                 raise
             else:
                 if logs:
-                    print('%i errors logged:' % len(logs))
                     for message in logs:
                         print(message, file=sys.stderr)
-                    assert 0
+                    raise AssertionError('%i errors logged' % len(logs))
     return wrapper
 
 
@@ -97,3 +100,45 @@ def almost_equal(a, b):
     if isinstance(a, float) or isinstance(b, float):
         return round(abs(a - b), 6) == 0
     return a == b
+
+
+@contextlib.contextmanager
+def http_server(handlers):
+    def wsgi_app(environ, start_response):
+        handler = handlers.get(environ['PATH_INFO'])
+        if handler:
+            status = str('200 OK')
+            response, headers = handler(environ)
+            headers = [(str(name), str(value)) for name, value in headers]
+        else:
+            status = str('404 Not Found')
+            response = b''
+            headers = []
+        start_response(status, headers)
+        return [response]
+
+    # Port 0: let the OS pick an available port number
+    # http://stackoverflow.com/a/1365284/1162888
+    server = wsgiref.simple_server.make_server('127.0.0.1', 0, wsgi_app)
+    _host, port = server.socket.getsockname()
+    thread = threading.Thread(target=server.serve_forever)
+    thread.start()
+    try:
+        yield 'http://127.0.0.1:%s' % port
+    finally:
+        server.shutdown()
+        thread.join()
+
+
+@contextlib.contextmanager
+def temp_directory():
+    """Context manager that gives the path to a new temporary directory.
+
+    Remove everything on exiting the context.
+
+    """
+    directory = tempfile.mkdtemp()
+    try:
+        yield directory
+    finally:
+        shutil.rmtree(directory)

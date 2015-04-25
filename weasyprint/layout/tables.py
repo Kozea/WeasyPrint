@@ -106,8 +106,8 @@ def table_layout(context, table, max_position_y, skip_stack,
                     cell_index = row.children.index(cell)
                     ignored_cells = row.children[cell_index:]
                     LOGGER.warning('This table row has more columns than '
-                                'the table, ignored %i cells: %r',
-                                len(ignored_cells), ignored_cells)
+                                   'the table, ignored %i cells: %r',
+                                   len(ignored_cells), ignored_cells)
                     break
                 resolve_percentages(cell, containing_block=table)
                 cell.position_x = column_positions[cell.grid_x]
@@ -445,7 +445,7 @@ def fixed_table_layout(box):
             width = cell.border_width()
             width -= border_spacing_x * (cell.colspan - 1)
             # In the general case, this width affects several columns (through
-            # colspan) some of which already have a width. Subscract these
+            # colspan) some of which already have a width. Subtract these
             # known widths and divide among remaining columns.
             columns_without_width = []  # and occupied by this cell
             for j in xrange(i, i + cell.colspan):
@@ -457,7 +457,9 @@ def fixed_table_layout(box):
                 width_per_column = width / len(columns_without_width)
                 for j in columns_without_width:
                     column_widths[j] = width_per_column
+            del width
         i += cell.colspan
+    del i
 
     # Distribute the remaining space equally on columns that do not have
     # a width yet.

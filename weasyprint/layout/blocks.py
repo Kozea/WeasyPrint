@@ -219,8 +219,8 @@ def block_container_layout(context, box, max_position_y, skip_stack,
     # See http://www.w3.org/TR/CSS21/visudet.html#normal-block
     #     http://www.w3.org/TR/CSS21/visudet.html#root-height
 
-    #if box.style.overflow != 'visible':
-    #    ...
+    # if box.style.overflow != 'visible':
+    #     ...
 
     # See http://www.w3.org/TR/CSS21/visuren.html#block-formatting
     if not isinstance(box, boxes.BlockBox):
@@ -282,8 +282,29 @@ def block_container_layout(context, box, max_position_y, skip_stack,
             elif child.is_floated():
                 new_child = float_layout(
                     context, child, box, absolute_boxes, fixed_boxes)
-                new_child.index = index
-                new_children.append(new_child)
+                # New page if overflow
+                if (page_is_empty and not new_children) or not (
+                        new_child.position_y + new_child.height
+                        > max_position_y):
+                    new_child.index = index
+                    new_children.append(new_child)
+                else:
+
+                    for previous_child in reversed(new_children):
+                        if previous_child.is_in_normal_flow():
+                            last_in_flow_child = previous_child
+                            break
+                    if new_children and block_level_page_break(
+                            last_in_flow_child,
+                            child
+                            ) == 'avoid':
+                        result = find_earlier_page_break(
+                            new_children, absolute_boxes, fixed_boxes)
+                        if result:
+                            new_children, resume_at = result
+                            break
+                    resume_at = (index, None)
+                    break
             continue
 
         if isinstance(child, boxes.LineBox):
@@ -428,7 +449,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                                 - new_child.margin_top)
                     new_child.translate(0, offset_y)
                     adjoining_margins = []
-                #else: blocks handle that themselves.
+                # else: blocks handle that themselves.
 
                 adjoining_margins = next_adjoining_margins
                 adjoining_margins.append(new_child.margin_bottom)

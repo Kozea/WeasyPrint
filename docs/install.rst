@@ -13,7 +13,7 @@ WeasyPrint |version| depends on:
 * tinycss_ = 0.3
 * cssselect_ ≥ 0.6
 * CairoSVG_ ≥ 0.5
-* Pyphen_
+* Pyphen_ ≥ 0.8
 * Optional: GDK-PixBuf_ [#]_
 
 .. _CPython: http://www.python.org/
