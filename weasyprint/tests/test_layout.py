@@ -3299,26 +3299,22 @@ def test_table_row_height():
 @requires_cairo('1.12')
 def test_table_vertical_align():
     from .test_draw import _, r, B
-    assert_pixels('table_vertical_align', 39, 14, [
-_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
-_+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+_,
-_+B+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+B+_,
-_+B+_+B+B+B+_+B+B+B+_+B+B+B+_+B+B+B+_+B+B+B+_+B+B+B+B+_+B+B+B+B+_+B+B+B+_+B+_,
-_+B+_+B+r+B+_+B+_+B+_+B+_+B+_+B+_+B+_+B+_+B+_+B+r+r+B+_+B+r+r+B+_+B+_+B+_+B+_,
-_+B+_+B+r+B+_+B+_+B+_+B+_+B+_+B+r+B+_+B+r+B+_+B+r+r+B+_+B+r+r+B+_+B+r+B+_+B+_,
-_+B+_+B+_+B+_+B+r+B+_+B+_+B+_+B+r+B+_+B+r+B+_+B+r+r+B+_+B+r+r+B+_+B+r+B+_+B+_,
-_+B+_+B+_+B+_+B+r+B+_+B+_+B+_+B+_+B+_+B+_+B+_+B+r+r+B+_+B+r+r+B+_+B+_+B+_+B+_,
-_+B+_+B+_+B+_+B+_+B+_+B+r+B+_+B+_+B+_+B+_+B+_+B+_+_+B+_+B+_+_+B+_+B+_+B+_+B+_,
-_+B+_+B+_+B+_+B+_+B+_+B+r+B+_+B+_+B+_+B+_+B+_+B+_+_+B+_+B+_+_+B+_+B+_+B+_+B+_,
-_+B+_+B+B+B+_+B+B+B+_+B+B+B+_+B+B+B+_+B+B+B+_+B+B+B+B+_+B+B+B+B+_+B+B+B+_+B+_,
-_+B+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+B+_,
-_+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+_,
-_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
+    assert_pixels('table_vertical_align', 28, 10, [
+        r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r,
+        r+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+r,
+        r+B+r+B+B+_+B+B+_+B+B+_+B+B+_+B+B+r+r+B+B+r+r+B+B+_+B+r,
+        r+B+r+B+B+_+B+B+_+B+B+r+B+B+r+B+B+r+r+B+B+r+r+B+B+r+B+r,
+        r+B+_+B+B+r+B+B+_+B+B+r+B+B+r+B+B+r+r+B+B+r+r+B+B+r+B+r,
+        r+B+_+B+B+r+B+B+_+B+B+_+B+B+_+B+B+r+r+B+B+r+r+B+B+_+B+r,
+        r+B+_+B+B+_+B+B+r+B+B+_+B+B+_+B+B+_+_+B+B+_+_+B+B+_+B+r,
+        r+B+_+B+B+_+B+B+r+B+B+_+B+B+_+B+B+_+_+B+B+_+_+B+B+_+B+r,
+        r+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+r,
+        r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r,
     ], '''
       <style>
-        @page { size: 39px 14px }
+        @page { size: 28px 10px }
         html { background: #fff; font-size: 1px; color: red }
-        body { margin: 1px; width: 39px; height: 14px }
+        body { margin: 0; width: 28px; height: 10px }
         td {
           width: 1em;
           padding: 0 !important;
@@ -3327,7 +3323,7 @@ _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
           font-family: ahem;
         }
       </style>
-      <table style="border: 1px solid blue; border-spacing: 1px">
+      <table style="border: 1px solid red; border-spacing: 0">
         <tr>
           <!-- Test vertical-align: top, auto height -->
           <td style="vertical-align: top">o o</td>
