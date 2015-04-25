@@ -121,7 +121,7 @@ def table_layout(context, table, max_position_y, skip_stack,
                     + border_spacing_x * (cell.colspan - 1)
                     - borders_plus_padding)
                 # The computed height is a minimum
-                computed_cell_height = cell.height
+                cell.computed_height = cell.height
                 cell.height = 'auto'
                 cell, _, _, _, _ = block_container_layout(
                     context, cell,
@@ -131,8 +131,9 @@ def table_layout(context, table, max_position_y, skip_stack,
                     page_is_empty=True,
                     absolute_boxes=absolute_boxes,
                     fixed_boxes=fixed_boxes)
-                if computed_cell_height != 'auto':
-                    cell.height = max(cell.height, computed_cell_height)
+                cell.content_height = cell.height
+                if cell.computed_height != 'auto':
+                    cell.height = max(cell.height, cell.computed_height)
                 new_row_children.append(cell)
 
             row = row.copy_with_children(new_row_children)
@@ -177,6 +178,7 @@ def table_layout(context, table, max_position_y, skip_stack,
                 row.height = 0
 
             # Add extra padding to make the cells the same height as the row
+            # and honor vertical-align
             for cell in ending_cells:
                 cell_bottom_y = cell.position_y + cell.border_height()
                 extra = row_bottom_y - cell_bottom_y
@@ -188,6 +190,18 @@ def table_layout(context, table, max_position_y, skip_stack,
                     cell.padding_bottom += extra
                 else:
                     cell.padding_bottom += extra
+                if cell.computed_height != 'auto':
+                    vertical_align_shift = 0
+                    if cell.vertical_align == 'middle':
+                        vertical_align_shift = (
+                            cell.computed_height - cell.content_height) / 2
+                    elif cell.vertical_align == 'bottom':
+                        vertical_align_shift = (
+                            cell.computed_height - cell.content_height)
+                    # TODO: elif cell.vertical_align == 'baseline':
+                    if vertical_align_shift > 0:
+                        for child in cell.children:
+                            child.translate(dy=vertical_align_shift)
 
             next_position_y = position_y + row.height + border_spacing_y
             # Break if this row overflows the page, unless there is no
