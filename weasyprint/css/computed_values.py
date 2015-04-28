@@ -281,18 +281,18 @@ def length(computer, name, value, font_size=None, pixels_only=False):
     elif unit in ('em', 'ex', 'ch'):
         if font_size is None:
             font_size = computer.computed.font_size
-        if unit in ('ex', 'ch'):
+        if unit == 'ex':
             # TODO: cache
-            if unit == 'ex':
-                result = value.value * font_size * ex_ratio(computer.computed)
-            elif unit == 'ch':
-                layout = text.Layout(
-                    hinting=False, font_size=font_size,
-                    style=computer.computed)
-                layout.set_text('0')
-                line, = layout.iter_lines()
-                logical_width, _ = text.get_size(line)
-                result = value.value * logical_width
+            result = value.value * font_size * ex_ratio(computer.computed)
+        elif unit == 'ch':
+            # TODO: cache
+            layout = text.Layout(
+                hinting=False, font_size=font_size,
+                style=computer.computed)
+            layout.set_text('0')
+            line, = layout.iter_lines()
+            logical_width, _ = text.get_size(line)
+            result = value.value * logical_width
         elif unit == 'em':
             result = value.value * font_size
     else:
