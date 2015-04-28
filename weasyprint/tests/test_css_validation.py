@@ -496,6 +496,23 @@ def test_font():
 
 
 @assert_no_logs
+def test_line_height():
+    """Test the ``line-height`` property."""
+    assert expand_to_dict('line-height: 1px') == {'line_height': (1, 'px')}
+    assert expand_to_dict('line-height: 1.1%') == {'line_height': (1.1, '%')}
+    assert expand_to_dict('line-height: 1em') == {'line_height': (1, 'em')}
+    assert expand_to_dict('line-height: 1') == {'line_height': (1, None)}
+    assert expand_to_dict('line-height: 1.3') == {'line_height': (1.3, None)}
+    assert expand_to_dict('line-height: -0') == {'line_height': (0, None)}
+    assert expand_to_dict('line-height: 0px') == {'line_height': (0, 'px')}
+    assert_invalid('line-height: 1deg')
+    assert_invalid('line-height: -1px')
+    assert_invalid('line-height: -1')
+    assert_invalid('line-height: -0.5%')
+    assert_invalid('line-height: 1px 1px')
+
+
+@assert_no_logs
 def test_linear_gradient():
     red = (1, 0, 0, 1)
     lime = (0, 1, 0, 1)

@@ -882,9 +882,12 @@ def line_height(token):
     """``line-height`` property validation."""
     if get_keyword(token) == 'normal':
         return 'normal'
-    if (token.type in ('NUMBER', 'INTEGER', 'DIMENSION', 'PERCENTAGE') and
-            token.value >= 0):
+    if token.type in ('NUMBER', 'INTEGER', 'PERCENTAGE') and token.value >= 0:
         return Dimension(token.value, token.unit)
+    elif token.type == 'DIMENSION' and token.value >= 0:
+        length = get_length(token)
+        if length:
+            return length
 
 
 @validator()
