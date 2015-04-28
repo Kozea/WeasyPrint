@@ -14,6 +14,8 @@ Bug fixes:
   Rely on the font size for rounding bug workaround.
 * `#31: <https://github.com/Kozea/WeasyPrint/issues/31>`_:
   Honor the vertical-align property in fixed-height cells.
+* `#202: <https://github.com/Kozea/WeasyPrint/issues/202>`_:
+  Remove unreachable area/border at bottom of page.
 
 
 Version 0.23
