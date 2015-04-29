@@ -885,9 +885,7 @@ def line_height(token):
     if token.type in ('NUMBER', 'INTEGER', 'PERCENTAGE') and token.value >= 0:
         return Dimension(token.value, token.unit)
     elif token.type == 'DIMENSION' and token.value >= 0:
-        length = get_length(token)
-        if length:
-            return length
+        return get_length(token)
 
 
 @validator()
