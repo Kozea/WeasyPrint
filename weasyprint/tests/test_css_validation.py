@@ -516,15 +516,22 @@ def test_line_height():
 def test_string_set():
     """Test the ``string-set`` property."""
     assert expand_to_dict('-weasy-string-set: test content(text)') == {
-        'string_set': ('test', 'text')}
+        'string_set': [('test', [('content', 'text')])]}
     assert expand_to_dict('-weasy-string-set: test content(before)') == {
-        'string_set': ('test', 'before')}
+        'string_set': [('test', [('content', 'before')])]}
+    assert expand_to_dict(
+        '-weasy-string-set: test "string"') == {
+            'string_set': [('test', [('STRING', 'string')])]}
+    assert expand_to_dict(
+        '-weasy-string-set: test1 "string", test2 "string"') == {
+            'string_set': [
+                ('test1', [('STRING', 'string')]),
+                ('test2', [('STRING', 'string')])]}
     assert_invalid('-weasy-string-set: test')
     assert_invalid('-weasy-string-set: test content(test)')
     assert_invalid('-weasy-string-set: test unknown()')
 
     # These syntaxes are not handled yet, but may work in the future
-    assert_invalid('-weasy-string-set: test "string"')
     assert_invalid('-weasy-string-set: test attr(title)')
     assert_invalid('-weasy-string-set: test counter(count)')
     assert_invalid('-weasy-string-set: test counter(count, upper-roman)')

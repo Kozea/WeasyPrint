@@ -657,7 +657,7 @@ def content(tokens, base_url):
 
 
 def validate_content_token(base_url, token):
-    """Validation for a signle token for the ``content`` property.
+    """Validation for a single token for the ``content`` property.
 
     Return (type, content) or False for invalid tokens.
 
@@ -703,7 +703,7 @@ def parse_function(function_token):
     """
     if function_token.type == 'FUNCTION':
         content = [t for t in function_token.content if t.type != 'S']
-        if len(content) % 2:
+        if not content or len(content) % 2:
             for token in content[1::2]:
                 if token.type != 'DELIM' or token.value != ',':
                     break
@@ -1254,15 +1254,11 @@ def lang(token):
 
 
 @validator(prefixed=True)  # CSS3 GCPM, experimental
-@single_token
-def bookmark_label(token):
+def bookmark_label(tokens):
     """Validation for ``bookmark-label``."""
-    keyword = get_keyword(token)
-    if keyword in ('none', 'contents', 'content-before',
-                   'content-element', 'content-after'):
-        return ('keyword', keyword)
-    elif token.type == 'STRING':
-        return ('string', token.value)
+    parsed_tokens = [validate_content_list_token(v) for v in tokens]
+    if None not in parsed_tokens:
+        return parsed_tokens
 
 
 @validator(prefixed=True)  # CSS3 GCPM, experimental
@@ -1278,27 +1274,55 @@ def bookmark_level(token):
 
 
 @validator(prefixed=True)  # CSS3 GCPM, experimental
+@comma_separated_list
 def string_set(tokens):
     """Validation for ``string-set``."""
-    if len(tokens) == 2:
+    if len(tokens) >= 2:
         var_name = get_keyword(tokens[0])
-        function = parse_function(tokens[1])
-        if function is None:
-            if not isinstance(tokens[1], FunctionToken):
-                raise InvalidValues
-            keyword = 'text'
-            name = tokens[1].function_name
-        else:
-            name, args = function
-            keyword = args[0].value.lower()
-        if name != 'content':
-            raise InvalidValues
-        if tokens[0].type == 'IDENT' and keyword in (
-                'none', 'text', 'after', 'before'):
-            return (var_name, keyword)
+        parsed_tokens = [validate_content_list_token(v) for v in tokens[1:]]
+        if None not in parsed_tokens:
+            return (var_name, parsed_tokens)
     elif tokens and tokens[0].value == 'none':
         return 'none'
-    raise InvalidValues
+
+
+def validate_content_list_token(token):
+    """Validation for a single token of <content-list> used in GCPM.
+
+    Return (type, content) or False for invalid tokens.
+
+    """
+    type_ = token.type
+    if type_ == 'STRING':
+        return ('STRING', token.value)
+    function = parse_function(token)
+    if function:
+        name, args = function
+        prototype = (name, [a.type for a in args])
+        args = [getattr(a, 'value', a) for a in args]
+        if prototype == ('attr', ['IDENT']):
+            # TODO: remove this line when attr is supported in pages.py
+            raise InvalidValues
+            return (name, args[0])
+        elif prototype in (('content', []), ('content', ['IDENT'])):
+            if not args:
+                return (name, 'text')
+            elif args[0] in ('text', 'after', 'before'):
+                # TODO: first-letter should be allowed here too
+                return (name, args[0])
+        elif prototype in (('counter', ['IDENT']),
+                           ('counters', ['IDENT', 'STRING'])):
+            # TODO: remove this line when counters are supported in pages.py
+            raise InvalidValues
+            args.append('decimal')
+            return (name, args)
+        elif prototype in (('counter', ['IDENT', 'IDENT']),
+                           ('counters', ['IDENT', 'STRING', 'IDENT'])):
+            # TODO: remove this line when counters are supported in pages.py
+            raise InvalidValues
+            style = args[-1]
+            if style in ('none', 'decimal') or style in counters.STYLES:
+                return (name, args)
 
 
 @validator(unprefixed=True)

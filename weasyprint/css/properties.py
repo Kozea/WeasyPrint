@@ -150,7 +150,7 @@ INITIAL_VALUES = {
 
     # CSS3 Generated Content for Paged Media
     # http://dev.w3.org/csswg/css3-gcpm/
-    'bookmark_label': ('keyword', 'none'),  # computed value of 'none'
+    'bookmark_label': [('content', 'text')],
     'bookmark_level': 'none',
 
     # CSS4 Text

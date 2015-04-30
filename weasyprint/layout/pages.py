@@ -515,15 +515,12 @@ def make_page(context, root_box, page_type, resume_at, content_empty,
     page = page.copy_with_children([root_box])
     descendants = page.descendants()
     for child in descendants:
-        string_set = child.style.string_set
-        if string_set and string_set != "none":
-            name = string_set[0]
-            keyword = string_set[1]
-            if keyword == "none":
-                context.string_set[name][page_number].append("")
-            else:
-                text = build.TEXT_CONTENT_EXTRACTORS[keyword](child)
-                context.string_set[name][page_number].append(text)
+        string_sets = child.style.string_set
+        if string_sets and string_sets != 'none':
+            for string_set in string_sets:
+                string_name, content_list = string_set
+                text = build.compute_content_list(child, content_list)
+                context.string_set[string_name][page_number].append(text)
     if content_empty:
         resume_at = previous_resume_at
     return page, resume_at, next_page

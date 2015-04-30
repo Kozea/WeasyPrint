@@ -1084,54 +1084,68 @@ def set_viewport_overflow(root_box):
     return root_box
 
 
-def box_text_contents(box):
+def box_text(box):
     if isinstance(box, boxes.TextBox):
         return box.text
     elif isinstance(box, boxes.ParentBox):
         return ''.join(
             child.text for child in box.descendants()
-            if isinstance(child, boxes.TextBox))
+            if not child.element_tag.endswith(':before') and
+            not child.element_tag.endswith(':after') and
+            isinstance(child, boxes.TextBox))
     else:
         return ''
 
 
-def box_text_content_element(box):
+def box_text_before(box):
     if isinstance(box, boxes.ParentBox):
         return ''.join(
-            box_text_contents(child) for child in box.children
-            if not child.element_tag.endswith((':after', ':before')))
+            box_text(child) for child in box.descendants()
+            if child.element_tag.endswith(':before') and
+            not isinstance(child, boxes.ParentBox))
     else:
         return ''
 
 
-def box_text_content_before(box):
+def box_text_after(box):
     if isinstance(box, boxes.ParentBox):
         return ''.join(
-            box_text_contents(child) for child in box.descendants()
-            if child.element_tag.endswith(':before')
-            and not isinstance(child, boxes.ParentBox))
-    else:
-        return ''
-
-
-def box_text_content_after(box):
-    if isinstance(box, boxes.ParentBox):
-        return ''.join(
-            box_text_contents(child) for child in box.descendants()
-            if child.element_tag.endswith(':after')
-            and not isinstance(child, boxes.ParentBox))
+            box_text(child) for child in box.descendants()
+            if child.element_tag.endswith(':after') and
+            not isinstance(child, boxes.ParentBox))
     else:
         return ''
 
 
 TEXT_CONTENT_EXTRACTORS = {
-    'contents': box_text_contents,
-    'content-element': box_text_content_element,
-    'content-before': box_text_content_before,
-    'content-after': box_text_content_after,
-    'text': box_text_contents,
-    'before': box_text_content_before,
-    'after': box_text_content_after}
+    'text': box_text,
+    'before': box_text_before,
+    'after': box_text_after}
+
+
+def compute_content_list(box, content_list):
+    """Get the computed string resolved from content_list.
+
+    See http://dev.w3.org/csswg/css-gcpm/#content-function-header
+
+    """
+    text = ''
+    for keyword, value in content_list:
+        if keyword == 'STRING':
+            text += value
+        elif keyword == 'content':
+            added_text = TEXT_CONTENT_EXTRACTORS[value](box)
+            # Simulate the step of white space processing
+            # (normally done during the layout)
+            added_text = added_text.strip()
+            text += added_text
+        elif keyword == 'attr':
+            # TODO: support attr, see validation.py
+            pass
+        elif keyword in ('counter', 'counters'):
+            # TODO: support counters, see validation.py
+            pass
+    return text
 
 
 def resolve_bookmark_labels(box):
@@ -1140,16 +1154,7 @@ def resolve_bookmark_labels(box):
     See http://dev.w3.org/csswg/css3-gcpm/#bookmarks
 
     """
-    value_type, value = box.style.bookmark_label
-    if value_type == 'string':
-        box.bookmark_label = value
-    else:
-        assert value_type == 'keyword'
-        if value != 'none':
-            text = TEXT_CONTENT_EXTRACTORS[value](box)
-            # Simulate the step of white space processing
-            # (normally done during the layout)
-            box.bookmark_label = text.strip()
+    box.bookmark_label = compute_content_list(box, box.style.bookmark_label)
 
     if isinstance(box, boxes.ParentBox):
         for child in box.children:

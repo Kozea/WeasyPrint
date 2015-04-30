@@ -1279,14 +1279,14 @@ def test_margin_box_string_set():
         line_box, = top_center.children
         text_box, = line_box.children
         if content_val in ('before', 'after'):
-            assert text_box.text == 'psuedo'
+            assert text_box.text == 'pseudo'
         else:
             assert text_box.text == 'first assignment'
 
     # Test each accepted value of `content()` as an arguemnt to `string-set`
     for value in ('', 'text', 'before', 'after'):
         if value in ('before', 'after'):
-            extra_style = "p:%s{content:'psuedo'}" % value
+            extra_style = "p:%s{content: 'pseudo'}" % value
             simple_string_set_test(value, extra_style)
         else:
             simple_string_set_test(value)
@@ -1353,6 +1353,37 @@ def test_margin_box_string_set():
 
     text_box, = line_box.children
     assert text_box.text == "Second assignment"
+
+    # Test multiple complex string-set values
+    page_1, = render_pages('''
+        <style>
+            @page {
+                @top-center { content: string(text_header); }
+                @bottom-center { content: string(text_footer); }
+            }
+            p {
+                -weasy-string-set:
+                    text_header content(before) "-" content(),
+                    text_footer '-' content(after);
+            }
+            p:before {
+              content: 'before!';
+            }
+            p:after {
+              content: 'after!';
+            }
+        </style>
+        <p>first</p>
+        <p>second</p>
+    ''')
+
+    html, top_center, bottom_center = page_1.children
+    top_line_box, = top_center.children
+    top_text_box, = top_line_box.children
+    assert top_text_box.text == 'before!-first'
+    bottom_line_box, = bottom_center.children
+    bottom_text_box, = bottom_line_box.children
+    assert bottom_text_box.text == '-after!'
 
 
 @assert_no_logs
