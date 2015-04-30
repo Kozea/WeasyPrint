@@ -6,6 +6,11 @@ Version 0.24
 
 Not released yet.
 
+New features:
+
+* `#174: <https://github.com/Kozea/WeasyPrint/issues/174>`_:
+  Basic support for Named strings.
+
 Bug fixes:
 
 * `#207: <https://github.com/Kozea/WeasyPrint/issues/207>`_:
