@@ -513,6 +513,29 @@ def test_line_height():
 
 
 @assert_no_logs
+def test_string_set():
+    """Test the ``string-set`` property."""
+    assert expand_to_dict('-weasy-string-set: test content(text)') == {
+        'string_set': ('test', 'text')}
+    assert expand_to_dict('-weasy-string-set: test content(before)') == {
+        'string_set': ('test', 'before')}
+    assert_invalid('-weasy-string-set: test')
+    assert_invalid('-weasy-string-set: test content(test)')
+    assert_invalid('-weasy-string-set: test unknown()')
+
+    # These syntaxes are not handled yet, but may work in the future
+    assert_invalid('-weasy-string-set: test "string"')
+    assert_invalid('-weasy-string-set: test attr(title)')
+    assert_invalid('-weasy-string-set: test counter(count)')
+    assert_invalid('-weasy-string-set: test counter(count, upper-roman)')
+    assert_invalid('-weasy-string-set: test counters(count, ".")')
+    assert_invalid('-weasy-string-set: test counters(count, ".", upper-roman)')
+    assert_invalid(
+        '-weasy-string-set: '
+        'test content(text) "string" attr(title) attr(title) counter(count)')
+
+
+@assert_no_logs
 def test_linear_gradient():
     red = (1, 0, 0, 1)
     lime = (0, 1, 0, 1)
