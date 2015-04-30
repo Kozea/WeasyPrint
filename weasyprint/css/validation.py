@@ -179,10 +179,11 @@ def comma_separated_list(function):
 
 
 def get_length(token, negative=True, percentage=False):
-    if (token.unit in LENGTH_UNITS or (percentage and token.unit == '%')
-            or (token.type in ('INTEGER', 'NUMBER')
-                and token.value == 0)) and (negative or token.value >= 0):
-        return Dimension(token.value, token.unit)
+    if (token.unit in LENGTH_UNITS or
+            (percentage and token.unit == '%') or
+            (token.type in ('INTEGER', 'NUMBER') and token.value == 0)):
+        if negative or token.value >= 0:
+            return Dimension(token.value, token.unit)
 
 
 # http://dev.w3.org/csswg/css3-values/#angles
@@ -1000,8 +1001,8 @@ def position(keyword):
 @validator()
 def quotes(tokens):
     """``quotes`` property validation."""
-    if (tokens and len(tokens) % 2 == 0
-            and all(v.type == 'STRING' for v in tokens)):
+    if (tokens and len(tokens) % 2 == 0 and
+            all(v.type == 'STRING' for v in tokens)):
         strings = [token.value for token in tokens]
         # Separate open and close quotes.
         # eg.  ['«', '»', '“', '”']  -> (['«', '“'], ['»', '”'])
@@ -1292,10 +1293,10 @@ def string_set(tokens):
             keyword = args[0].value.lower()
         if name != 'content':
             raise InvalidValues
-        if (tokens[0].type == "IDENT"
-                and keyword in ('none', 'text', 'after', 'before')):
+        if tokens[0].type == 'IDENT' and keyword in (
+                'none', 'text', 'after', 'before'):
             return (var_name, keyword)
-    elif len(tokens) and tokens[0].value == 'none':
+    elif tokens and tokens[0].value == 'none':
         return 'none'
     raise InvalidValues
 
@@ -1603,12 +1604,16 @@ def expand_background(base_url, name, tokens):
                 del tokens[-2:]
                 continue
             token = tokens[-1:]
-            if (
-                (final_layer and add('color', other_colors(token)))
-                or add('image', background_image.single_value(token, base_url))
-                or add('repeat', background_repeat.single_value(token))
-                or add('attachment', background_attachment.single_value(token))
-            ):
+            if final_layer and add('color', other_colors(token)):
+                tokens.pop()
+                continue
+            if add('image', background_image.single_value(token, base_url)):
+                tokens.pop()
+                continue
+            if add('repeat', background_repeat.single_value(token)):
+                tokens.pop()
+                continue
+            if add('attachment', background_attachment.single_value(token)):
                 tokens.pop()
                 continue
             for n in (4, 3, 2, 1)[-len(tokens):]:
@@ -1617,8 +1622,8 @@ def expand_background(base_url, name, tokens):
                 if position is not None:
                     assert add('position', position)
                     del tokens[-n:]
-                    if (tokens and tokens[-1].type == 'DELIM'
-                            and tokens[-1].value == '/'):
+                    if (tokens and tokens[-1].type == 'DELIM' and
+                            tokens[-1].value == '/'):
                         for n in (3, 2)[-len(tokens):]:
                             # n includes the '/' delimiter.
                             n_tokens = tokens[-n:-1][::-1]
@@ -1786,8 +1791,8 @@ def preprocess_declarations(base_url, declarations):
         if name in PREFIXED and not name.startswith(PREFIX):
             validation_error(
                 'warning',
-                'the property is experimental or non-standard, use '
-                + PREFIX + name)
+                'the property is experimental or non-standard, use %s' %
+                PREFIX + name)
             continue
 
         if name in NOT_PRINT_MEDIA:
