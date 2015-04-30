@@ -1301,7 +1301,7 @@ def validate_content_list_token(token):
         prototype = (name, [a.type for a in args])
         args = [getattr(a, 'value', a) for a in args]
         if prototype == ('attr', ['IDENT']):
-            # TODO: remove this line when attr is supported in pages.py
+            # TODO: remove this line when attr is supported in build.py
             raise InvalidValues
             return (name, args[0])
         elif prototype in (('content', []), ('content', ['IDENT'])):
@@ -1312,13 +1312,13 @@ def validate_content_list_token(token):
                 return (name, args[0])
         elif prototype in (('counter', ['IDENT']),
                            ('counters', ['IDENT', 'STRING'])):
-            # TODO: remove this line when counters are supported in pages.py
+            # TODO: remove this line when counters are supported in build.py
             raise InvalidValues
             args.append('decimal')
             return (name, args)
         elif prototype in (('counter', ['IDENT', 'IDENT']),
                            ('counters', ['IDENT', 'STRING', 'IDENT'])):
-            # TODO: remove this line when counters are supported in pages.py
+            # TODO: remove this line when counters are supported in build.py
             raise InvalidValues
             style = args[-1]
             if style in ('none', 'decimal') or style in counters.STYLES:

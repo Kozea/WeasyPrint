@@ -95,21 +95,22 @@ class LayoutContext(object):
             self.excluded_shapes = None
 
     def get_string_set_for(self, name, keyword=None):
-        """ Resolve value of string function (as set by string set)
+        """Resolve value of string function (as set by string set).
 
-            We'll have something like this that represents all assignments
-            on a given page
-            {1: [u'First Header'], 3: [u'Second Header'],
-             4: [u'Third Header', u'3.5th Header']}
+        We'll have something like this that represents all assignments on a
+        given page:
 
-            Value depends on current page
-            http://dev.w3.org/csswg/css-gcpm/#funcdef-string
+        {1: [u'First Header'], 3: [u'Second Header'],
+         4: [u'Third Header', u'3.5th Header']}
 
-            :param name: the name of the named string.
-            :param keyword: indicates which value of the named string to use.
-                            Default is the first assignment on the current page
-                            else the most recent assignment (entry value)
-            :returns: text
+        Value depends on current page.
+        http://dev.w3.org/csswg/css-gcpm/#funcdef-string
+
+        :param name: the name of the named string.
+        :param keyword: indicates which value of the named string to use.
+                        Default is the first assignment on the current page
+                        else the most recent assignment (entry value)
+        :returns: text
 
         """
         last = keyword == "last"
