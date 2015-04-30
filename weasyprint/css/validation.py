@@ -18,7 +18,6 @@ import math
 
 from tinycss.color3 import parse_color
 from tinycss.parsing import split_on_comma, remove_whitespace
-from tinycss.token_data import FunctionToken
 
 from ..logger import LOGGER
 from ..formatting_structure import counters
