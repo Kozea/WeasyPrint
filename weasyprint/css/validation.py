@@ -18,6 +18,7 @@ import math
 
 from tinycss.color3 import parse_color
 from tinycss.parsing import split_on_comma, remove_whitespace
+from tinycss.token_data import FunctionToken
 
 from ..logger import LOGGER
 from ..formatting_structure import counters
@@ -685,6 +686,13 @@ def validate_content_token(base_url, token):
             style = args[-1]
             if style in ('none', 'decimal') or style in counters.STYLES:
                 return (name, args)
+        elif prototype in (('string', ['IDENT']),
+                           ('string', ['IDENT', 'IDENT'])):
+            if len(args) > 1:
+                args[1] = args[1].lower()
+                if args[1] not in ('first', 'start', 'last', 'first-except'):
+                    raise InvalidValues()
+            return (name, args)
 
 
 def parse_function(function_token):
@@ -1266,6 +1274,30 @@ def bookmark_level(token):
             return value
     elif get_keyword(token) == 'none':
         return 'none'
+
+
+@validator(prefixed=True)  # CSS3 GCPM, experimental
+def string_set(tokens):
+    """Validation for ``string-set``."""
+    if len(tokens) == 2:
+        var_name = get_keyword(tokens[0])
+        function = parse_function(tokens[1])
+        if function is None:
+            if not isinstance(tokens[1], FunctionToken):
+                raise InvalidValues
+            keyword = 'text'
+            name = tokens[1].function_name
+        else:
+            name, args = function
+            keyword = args[0].value.lower()
+        if name != 'content':
+            raise InvalidValues
+        if (tokens[0].type == "IDENT"
+                and keyword in ('none', 'text', 'after', 'before')):
+            return (var_name, keyword)
+    elif len(tokens) and tokens[0].value == 'none':
+        return 'none'
+    raise InvalidValues
 
 
 @validator(unprefixed=True)

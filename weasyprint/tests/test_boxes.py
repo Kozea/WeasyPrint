@@ -1230,6 +1230,132 @@ def test_margin_boxes():
 
 
 @assert_no_logs
+def test_margin_box_string_set():
+    """
+    Test string-set / string() in margin boxes
+    """
+    # Test that both pages get string in the `bottom-center` margin box
+    page_1, page_2 = render_pages('''
+        <style>
+            @page {
+                @bottom-center { content: string(text_header); }
+            }
+            p{
+                -weasy-string-set: text_header content();
+            }
+            .page{
+                page-break-before: always;
+            }
+        </style>
+        <p>first assignment</p>
+        <div class="page"></div>
+    ''')
+
+    html, bottom_center = page_2.children
+    line_box, = bottom_center.children
+    text_box, = line_box.children
+    assert text_box.text == 'first assignment'
+
+    html, bottom_center = page_1.children
+    line_box, = bottom_center.children
+    text_box, = line_box.children
+    assert text_box.text == 'first assignment'
+
+    def simple_string_set_test(content_val, extra_style=""):
+        page_1, = render_pages('''
+            <style>
+                @page {
+                    @top-center { content: string(text_header); }
+                }
+                p{
+                    -weasy-string-set: text_header content(%(content_val)s);
+                }
+                %(extra_style)s
+            </style>
+            <p>first assignment</p>
+        ''' % dict(content_val=content_val, extra_style=extra_style))
+
+        html, top_center = page_1.children
+        line_box, = top_center.children
+        text_box, = line_box.children
+        if content_val in ('before', 'after'):
+            assert text_box.text == 'psuedo'
+        else:
+            assert text_box.text == 'first assignment'
+
+    # Test each accepted value of `content()` as an arguemnt to `string-set`
+    for value in ('', 'text', 'before', 'after'):
+        if value in ('before', 'after'):
+            extra_style = "p:%s{content:'psuedo'}" % value
+            simple_string_set_test(value, extra_style)
+        else:
+            simple_string_set_test(value)
+
+    # Test `first` (default value) ie. use the first assignment on the page
+    page_1, = render_pages('''
+        <style>
+            @page {
+                @top-center { content: string(text_header, first); }
+            }
+            p{
+                -weasy-string-set: text_header content();
+            }
+        </style>
+        <p>first assignment</p>
+        <p>Second assignment</p>
+    ''')
+
+    html, top_center = page_1.children
+    line_box, = top_center.children
+    text_box, = line_box.children
+    assert text_box.text == 'first assignment'
+
+    # test `first-except` ie. exclude from page on which value is assigned
+    page_1, page_2 = render_pages('''
+        <style>
+            @page {
+                @top-center { content: string(header_nofirst, first-except); }
+            }
+            p{
+                -weasy-string-set: header_nofirst content();
+            }
+            .page{
+                page-break-before: always;
+            }
+        </style>
+        <p>first_excepted</p>
+        <div class="page"></div>
+    ''')
+    html, top_center = page_1.children
+    assert len(top_center.children) == 0
+
+    html, top_center = page_2.children
+    line_box, = top_center.children
+    text_box, = line_box.children
+    assert text_box.text == "first_excepted"
+
+    # Test `last` ie. use the most-recent assignment
+    page_1, = render_pages('''
+        <style>
+            @page {
+                @top-center { content: string(header_last, last); }
+            }
+            p{
+                -weasy-string-set: header_last content();
+            }
+        </style>
+        <p>String set</p>
+        <p>Second assignment</p>
+    ''')
+
+    html, top_center = page_1.children[:2]
+    line_box, = top_center.children
+
+    text_box, = line_box.children
+    assert text_box.text == "Second assignment"
+
+
+@assert_no_logs
 def test_page_counters():
     """Test page-based counters."""
     pages = render_pages('''

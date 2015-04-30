@@ -154,6 +154,7 @@ def element_to_box(element, style_for, get_image_from_uri, state=None):
     text = element.text
     if text:
         children.append(boxes.TextBox.anonymous_from(box, text))
+
     for child_element in element:
         children.extend(element_to_box(
             child_element, style_for, get_image_from_uri, state))
@@ -211,7 +212,7 @@ def pseudo_to_box(element, pseudo_type, state, style_for, get_image_from_uri):
 
 
 def content_to_boxes(style, parent_box, quote_depth, counter_values,
-                     get_image_from_uri):
+                     get_image_from_uri, context=None):
     """Takes the value of a ``content`` property and yield boxes."""
     texts = []
     for type_, value in style.content:
@@ -235,6 +236,9 @@ def content_to_boxes(style, parent_box, quote_depth, counter_values,
                 counters.format(counter_value, counter_style)
                 for counter_value in counter_values.get(counter_name, [0])
             ))
+        elif type_ == 'string' and context is not None:
+            text = context.get_string_set_for(*value)
+            texts.append(text)
         else:
             assert type_ == 'QUOTE'
             is_open, insert = value
@@ -1084,7 +1088,9 @@ def box_text_contents(box):
     if isinstance(box, boxes.TextBox):
         return box.text
     elif isinstance(box, boxes.ParentBox):
-        return ''.join(box_text_contents(child) for child in box.children)
+        return ''.join(
+            child.text for child in box.descendants()
+            if isinstance(child, boxes.TextBox))
     else:
         return ''
 
@@ -1101,8 +1107,9 @@ def box_text_content_element(box):
 def box_text_content_before(box):
     if isinstance(box, boxes.ParentBox):
         return ''.join(
-            box_text_contents(child) for child in box.children
-            if child.element_tag.endswith(':before'))
+            box_text_contents(child) for child in box.descendants()
+            if child.element_tag.endswith(':before')
+            and not isinstance(child, boxes.ParentBox))
     else:
         return ''
 
@@ -1110,8 +1117,9 @@ def box_text_content_before(box):
 def box_text_content_after(box):
     if isinstance(box, boxes.ParentBox):
         return ''.join(
-            box_text_contents(child) for child in box.children
-            if child.element_tag.endswith(':after'))
+            box_text_contents(child) for child in box.descendants()
+            if child.element_tag.endswith(':after')
+            and not isinstance(child, boxes.ParentBox))
     else:
         return ''
 
@@ -1120,7 +1128,10 @@ TEXT_CONTENT_EXTRACTORS = {
     'contents': box_text_contents,
     'content-element': box_text_content_element,
     'content-before': box_text_content_before,
-    'content-after': box_text_content_after}
+    'content-after': box_text_content_after,
+    'text': box_text_contents,
+    'before': box_text_content_before,
+    'after': box_text_content_after}
 
 
 def resolve_bookmark_labels(box):
