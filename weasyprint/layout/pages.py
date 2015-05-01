@@ -518,8 +518,7 @@ def make_page(context, root_box, page_type, resume_at, content_empty,
         string_sets = child.style.string_set
         if string_sets and string_sets != 'none':
             for string_set in string_sets:
-                string_name, content_list = string_set
-                text = build.compute_content_list(child, content_list)
+                string_name, text = string_set
                 context.string_set[string_name][page_number].append(text)
     if content_empty:
         resume_at = previous_resume_at

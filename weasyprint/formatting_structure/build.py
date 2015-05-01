@@ -17,7 +17,6 @@
 from __future__ import division, unicode_literals
 
 import re
-from copy import deepcopy
 
 from tinycss.color3 import COLOR_KEYWORDS
 
@@ -69,7 +68,6 @@ def build_formatting_structure(element_tree, style_for, get_image_from_uri):
     box = anonymous_table_boxes(box)
     box = inline_in_block(box)
     box = block_in_inline(box)
-    box = resolve_bookmark_labels(box)
     box = set_viewport_overflow(box)
     return box
 
@@ -140,7 +138,6 @@ def element_to_box(element, style_for, get_image_from_uri, state=None):
     _quote_depth, counter_values, counter_scopes = state
 
     update_counters(state, style)
-    replace_content_list_counters(element, style, counter_values)
 
     children = []
     if display == 'list-item':
@@ -177,6 +174,7 @@ def element_to_box(element, style_for, get_image_from_uri, state=None):
             counter_values.pop(name)
 
     box = box.copy_with_children(children)
+    replace_content_lists(element, box, style, counter_values)
 
     # Specific handling for the element. (eg. replaced element)
     return html.handle_element(element, box, get_image_from_uri)
@@ -257,51 +255,52 @@ def content_to_boxes(style, parent_box, quote_depth, counter_values,
         yield boxes.TextBox.anonymous_from(parent_box, text)
 
 
-def replace_content_list_counters(element, style, counter_values):
-    """Replace the counters in content-lists by strings.
+def compute_content_list_string(element, box, counter_values, content_list):
+    """Compute the string corresponding to the content-list."""
+    string = ''
+    for type_, value in content_list:
+        if type_ == 'STRING':
+            string += value
+        elif type_ == 'content':
+            added_text = TEXT_CONTENT_EXTRACTORS[value](box)
+            # Simulate the step of white space processing
+            # (normally done during the layout)
+            added_text = added_text.strip()
+            string += added_text
+        elif type_ == 'counter':
+            counter_name, counter_style = value
+            counter_value = counter_values.get(counter_name, [0])[-1]
+            string += counters.format(counter_value, counter_style)
+        elif type_ == 'counters':
+            counter_name, separator, counter_style = value
+            string += separator.join(
+                counters.format(counter_value, counter_style)
+                for counter_value
+                in counter_values.get(counter_name, [0]))
+        elif type_ == 'attr':
+            string += element.get(value, '')
+    return string
+
+
+def replace_content_lists(element, box, style, counter_values):
+    """Replace the content-lists by strings.
 
     These content-lists are used in GCPM properties like ``string-set`` and
     ``bookmark-label``.
 
     """
+    string_set = []
     if style.string_set != 'none':
-        style.string_set = deepcopy(style.string_set)
-        for i, (string, string_values) in enumerate(style.string_set):
-            for j, (type_, value) in enumerate(string_values):
-                if type_ == 'counter':
-                    counter_name, counter_style = value
-                    counter_value = counter_values.get(counter_name, [0])[-1]
-                    style.string_set[i][1][j] = (
-                        'STRING',
-                        counters.format(counter_value, counter_style))
-                elif type_ == 'counters':
-                    counter_name, separator, counter_style = value
-                    style.string_set[i][1][j] = (
-                        'STRING', separator.join(
-                            counters.format(counter_value, counter_style)
-                            for counter_value
-                            in counter_values.get(counter_name, [0])))
-                elif type_ == 'attr':
-                    style.string_set[i][1][j] = (
-                        'STRING', element.get(value, ''))
+        for i, (string_name, string_values) in enumerate(style.string_set):
+            string_set.append((string_name, compute_content_list_string(
+                element, box, counter_values, string_values)))
+    style.string_set = string_set
 
-    if style.bookmark_label != 'none':
-        style.string_set = deepcopy(style.string_set)
-        for i, (type_, value) in enumerate(style.bookmark_label):
-            if type_ == 'counter':
-                counter_name, counter_style = value
-                counter_value = counter_values.get(counter_name, [0])[-1]
-                style.bookmark_label[i] = (
-                    'STRING', counters.format(counter_value, counter_style))
-            elif type_ == 'counters':
-                counter_name, separator, counter_style = value
-                style.bookmark_label[i] = (
-                    'STRING', separator.join(
-                        counters.format(counter_value, counter_style)
-                        for counter_value
-                        in counter_values.get(counter_name, [0])))
-            elif type_ == 'attr':
-                style.bookmark_label[i] = ('STRING', element.get(value, ''))
+    if style.bookmark_label == 'none':
+        style.bookmark_label = ''
+    else:
+        style.bookmark_label = compute_content_list_string(
+            element, box, counter_values, style.bookmark_label)
 
 
 def update_counters(state, style):
@@ -1167,38 +1166,3 @@ TEXT_CONTENT_EXTRACTORS = {
     'text': box_text,
     'before': box_text_before,
     'after': box_text_after}
-
-
-def compute_content_list(box, content_list):
-    """Get the computed string resolved from content_list.
-
-    See http://dev.w3.org/csswg/css-gcpm/#content-function-header
-
-    """
-    text = ''
-    for keyword, value in content_list:
-        # Counters and attr() are already replaced by strings
-        if keyword == 'STRING':
-            text += value
-        elif keyword == 'content':
-            added_text = TEXT_CONTENT_EXTRACTORS[value](box)
-            # Simulate the step of white space processing
-            # (normally done during the layout)
-            added_text = added_text.strip()
-            text += added_text
-    return text
-
-
-def resolve_bookmark_labels(box):
-    """Set the used value of the bookmark-label.
-
-    See http://dev.w3.org/csswg/css3-gcpm/#bookmarks
-
-    """
-    box.bookmark_label = compute_content_list(box, box.style.bookmark_label)
-
-    if isinstance(box, boxes.ParentBox):
-        for child in box.children:
-            resolve_bookmark_labels(child)
-
-    return box

@@ -79,8 +79,6 @@ class Box(object):
     # Default, may be overriden on instances.
     is_table_wrapper = False
     is_for_root_element = False
-    bookmark_label = None
-    bookmark_level = None
     transformation_matrix = None
 
     # Default, overriden on some subclasses
@@ -93,9 +91,6 @@ class Box(object):
         # Copying might not be needed, but let’s be careful with mutable
         # objects.
         self.style = style.copy()
-        bookmark_level = style.bookmark_level
-        if bookmark_level != 'none':
-            self.bookmark_level = bookmark_level
 
     def __repr__(self):
         return '<%s %s %s>' % (
@@ -322,8 +317,6 @@ class ParentBox(Box):
         new_box.children = tuple(new_children)
         if not is_start:
             new_box.outside_list_marker = None
-            if new_box.bookmark_level:
-                del new_box.bookmark_level
         new_box._remove_decoration(not is_start, not is_end)
         return new_box
 

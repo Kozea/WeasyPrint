@@ -104,8 +104,11 @@ def _gather_links_and_bookmarks(box, bookmarks, links, anchors, matrix):
     if transform:
         matrix = transform * matrix if matrix else transform
 
-    bookmark_label = box.bookmark_label
-    bookmark_level = box.bookmark_level
+    bookmark_label = box.style.bookmark_label
+    if box.style.bookmark_level == 'none':
+        bookmark_level = None
+    else:
+        bookmark_level = box.style.bookmark_level
     link = box.style.link
     anchor_name = box.style.anchor
     has_bookmark = bookmark_label and bookmark_level
