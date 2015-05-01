@@ -1128,6 +1128,7 @@ def compute_content_list(box, content_list):
     """
     text = ''
     for keyword, value in content_list:
+        # The 'attr' keyword is already replaced in computed_values
         if keyword == 'STRING':
             text += value
         elif keyword == 'content':
@@ -1136,9 +1137,6 @@ def compute_content_list(box, content_list):
             # (normally done during the layout)
             added_text = added_text.strip()
             text += added_text
-        elif keyword == 'attr':
-            # TODO: support attr, see validation.py
-            pass
         elif keyword in ('counter', 'counters'):
             # TODO: support counters, see validation.py
             pass
