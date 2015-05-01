@@ -1309,14 +1309,10 @@ def validate_content_list_token(token):
                 return (name, args[0])
         elif prototype in (('counter', ['IDENT']),
                            ('counters', ['IDENT', 'STRING'])):
-            # TODO: remove this line when counters are supported in build.py
-            raise InvalidValues
             args.append('decimal')
             return (name, args)
         elif prototype in (('counter', ['IDENT', 'IDENT']),
                            ('counters', ['IDENT', 'STRING', 'IDENT'])):
-            # TODO: remove this line when counters are supported in build.py
-            raise InvalidValues
             style = args[-1]
             if style in ('none', 'decimal') or style in counters.STYLES:
                 return (name, args)

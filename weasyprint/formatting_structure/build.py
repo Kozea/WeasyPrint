@@ -17,6 +17,7 @@
 from __future__ import division, unicode_literals
 
 import re
+from copy import deepcopy
 
 from tinycss.color3 import COLOR_KEYWORDS
 
@@ -139,6 +140,7 @@ def element_to_box(element, style_for, get_image_from_uri, state=None):
     _quote_depth, counter_values, counter_scopes = state
 
     update_counters(state, style)
+    replace_content_list_counters(element, style, counter_values)
 
     children = []
     if display == 'list-item':
@@ -253,6 +255,53 @@ def content_to_boxes(style, parent_box, quote_depth, counter_values,
     text = ''.join(texts)
     if text:
         yield boxes.TextBox.anonymous_from(parent_box, text)
+
+
+def replace_content_list_counters(element, style, counter_values):
+    """Replace the counters in content-lists by strings.
+
+    These content-lists are used in GCPM properties like ``string-set`` and
+    ``bookmark-label``.
+
+    """
+    if style.string_set != 'none':
+        style.string_set = deepcopy(style.string_set)
+        for i, (string, string_values) in enumerate(style.string_set):
+            for j, (type_, value) in enumerate(string_values):
+                if type_ == 'counter':
+                    counter_name, counter_style = value
+                    counter_value = counter_values.get(counter_name, [0])[-1]
+                    style.string_set[i][1][j] = (
+                        'STRING',
+                        counters.format(counter_value, counter_style))
+                elif type_ == 'counters':
+                    counter_name, separator, counter_style = value
+                    style.string_set[i][1][j] = (
+                        'STRING', separator.join(
+                            counters.format(counter_value, counter_style)
+                            for counter_value
+                            in counter_values.get(counter_name, [0])))
+                elif type_ == 'attr':
+                    style.string_set[i][1][j] = (
+                        'STRING', element.get(value, ''))
+
+    if style.bookmark_label != 'none':
+        style.string_set = deepcopy(style.string_set)
+        for i, (type_, value) in enumerate(style.bookmark_label):
+            if type_ == 'counter':
+                counter_name, counter_style = value
+                counter_value = counter_values.get(counter_name, [0])[-1]
+                style.bookmark_label[i] = (
+                    'STRING', counters.format(counter_value, counter_style))
+            elif type_ == 'counters':
+                counter_name, separator, counter_style = value
+                style.bookmark_label[i] = (
+                    'STRING', separator.join(
+                        counters.format(counter_value, counter_style)
+                        for counter_value
+                        in counter_values.get(counter_name, [0])))
+            elif type_ == 'attr':
+                style.bookmark_label[i] = ('STRING', element.get(value, ''))
 
 
 def update_counters(state, style):
@@ -1128,7 +1177,7 @@ def compute_content_list(box, content_list):
     """
     text = ''
     for keyword, value in content_list:
-        # The 'attr' keyword is already replaced in computed_values
+        # Counters and attr() are already replaced by strings
         if keyword == 'STRING':
             text += value
         elif keyword == 'content':
@@ -1137,9 +1186,6 @@ def compute_content_list(box, content_list):
             # (normally done during the layout)
             added_text = added_text.strip()
             text += added_text
-        elif keyword in ('counter', 'counters'):
-            # TODO: support counters, see validation.py
-            pass
     return text
 
 

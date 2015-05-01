@@ -1330,7 +1330,7 @@ def test_margin_box_string_set():
     html, top_center = page_2.children
     line_box, = top_center.children
     text_box, = line_box.children
-    assert text_box.text == "first_excepted"
+    assert text_box.text == 'first_excepted'
 
     # Test `last` ie. use the most-recent assignment
     page_1, = render_pages('''
@@ -1350,38 +1350,45 @@ def test_margin_box_string_set():
     line_box, = top_center.children
 
     text_box, = line_box.children
-    assert text_box.text == "Second assignment"
+    assert text_box.text == 'Second assignment'
 
     # Test multiple complex string-set values
     page_1, = render_pages('''
         <style>
             @page {
-                @top-center { content: string(text_header); }
-                @bottom-center { content: string(text_footer); }
+              @top-center { content: string(text_header, first); }
+              @bottom-center { content: string(text_footer, last); }
             }
-            p {
-                -weasy-string-set:
-                    text_header content(before) "-" content(),
-                    text_footer '-' attr(class);
+            html { counter-reset: a }
+            body { counter-increment: a }
+            ul { counter-reset: b }
+            li {
+              counter-increment: b;
+              -weasy-string-set:
+                text_header content(before) "-" content() "-" content(after)
+                            counter(a, upper-roman) '.' counters(b, '|'),
+                text_footer content(before) '-' attr(class)
+                            counters(b, '|') "/" counter(a, upper-roman);
             }
-            p:before {
-              content: 'before!';
-            }
-            p:after {
-              content: 'after!';
-            }
+            li:before { content: 'before!' }
+            li:after { content: 'after!' }
+            li:last-child:before { content: 'before!last' }
+            li:last-child:after { content: 'after!last' }
         </style>
-        <p class="firstclass">first</p>
-        <p class="secondclass">second</p>
+        <ul>
+          <li class="firstclass">first
+          <li>
+            <ul>
+              <li class="secondclass">second
     ''')
 
     html, top_center, bottom_center = page_1.children
     top_line_box, = top_center.children
     top_text_box, = top_line_box.children
-    assert top_text_box.text == 'before!-first'
+    assert top_text_box.text == 'before!-first-after!I.1'
     bottom_line_box, = bottom_center.children
     bottom_text_box, = bottom_line_box.children
-    assert bottom_text_box.text == '-firstclass'
+    assert bottom_text_box.text == 'before!last-secondclass2|1/I'
 
 
 @assert_no_logs
