@@ -527,12 +527,16 @@ def test_string_set():
             'string_set': [
                 ('test1', [('STRING', 'string')]),
                 ('test2', [('STRING', 'string')])]}
+    assert expand_to_dict(
+        '-weasy-string-set: test attr(class)') == {
+            'string_set': [('test', [('attr', 'class')])]}
     assert_invalid('-weasy-string-set: test')
+    assert_invalid('-weasy-string-set: test test1')
     assert_invalid('-weasy-string-set: test content(test)')
     assert_invalid('-weasy-string-set: test unknown()')
+    assert_invalid('-weasy-string-set: test attr(id, class)')
 
     # These syntaxes are not handled yet, but may work in the future
-    assert_invalid('-weasy-string-set: test attr(title)')
     assert_invalid('-weasy-string-set: test counter(count)')
     assert_invalid('-weasy-string-set: test counter(count, upper-roman)')
     assert_invalid('-weasy-string-set: test counters(count, ".")')

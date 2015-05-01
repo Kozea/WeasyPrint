@@ -1300,8 +1300,6 @@ def validate_content_list_token(token):
         prototype = (name, [a.type for a in args])
         args = [getattr(a, 'value', a) for a in args]
         if prototype == ('attr', ['IDENT']):
-            # TODO: remove this line when attr is supported in build.py
-            raise InvalidValues
             return (name, args[0])
         elif prototype in (('content', []), ('content', ['IDENT'])):
             if not args:

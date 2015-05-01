@@ -1231,9 +1231,7 @@ def test_margin_boxes():
 
 @assert_no_logs
 def test_margin_box_string_set():
-    """
-    Test string-set / string() in margin boxes
-    """
+    """Test string-set / string() in margin boxes."""
     # Test that both pages get string in the `bottom-center` margin box
     page_1, page_2 = render_pages('''
         <style>
@@ -1364,7 +1362,7 @@ def test_margin_box_string_set():
             p {
                 -weasy-string-set:
                     text_header content(before) "-" content(),
-                    text_footer '-' content(after);
+                    text_footer '-' attr(class);
             }
             p:before {
               content: 'before!';
@@ -1373,8 +1371,8 @@ def test_margin_box_string_set():
               content: 'after!';
             }
         </style>
-        <p>first</p>
-        <p>second</p>
+        <p class="firstclass">first</p>
+        <p class="secondclass">second</p>
     ''')
 
     html, top_center, bottom_center = page_1.children
@@ -1383,7 +1381,7 @@ def test_margin_box_string_set():
     assert top_text_box.text == 'before!-first'
     bottom_line_box, = bottom_center.children
     bottom_text_box, = bottom_line_box.children
-    assert bottom_text_box.text == '-after!'
+    assert bottom_text_box.text == '-firstclass'
 
 
 @assert_no_logs

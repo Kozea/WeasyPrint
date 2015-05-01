@@ -349,6 +349,16 @@ def border_radius(computer, name, values):
     return [length(computer, name, value) for value in values]
 
 
+@register_computer('bookmark-label')
+def bookmark_label(computer, name, values):
+    """Compute the ``bookmark-label`` property."""
+    if values:
+        for i, (type_, key) in enumerate(values):
+            if type_ == 'attr':
+                values[i] = ('STRING', computer.element.get(key))
+        return values
+
+
 @register_computer('content')
 def content(computer, name, values):
     """Compute the ``content`` property."""
@@ -473,6 +483,17 @@ def lang(computer, name, values):
             return computer.element.get(key) or None
         elif type_ == 'string':
             return key
+
+
+@register_computer('string-set')
+def string_set(computer, name, values):
+    """Compute the ``string-set`` property."""
+    if values:
+        for i, (string, string_values) in enumerate(values):
+            for j, (type_, key) in enumerate(string_values):
+                if type_ == 'attr':
+                    values[i][1][j] = ('STRING', computer.element.get(key))
+        return values
 
 
 @register_computer('transform')
