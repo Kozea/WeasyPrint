@@ -23,6 +23,8 @@ Bug fixes:
   Remove unreachable area/border at bottom of page.
 * `#225: <https://github.com/Kozea/WeasyPrint/issues/225>`_:
   Don't allow unknown units during line-height validation.
+* Fix some wrong conflict resolutions for table borders with inset
+  and outset styles.
 
 
 Version 0.23

@@ -675,11 +675,11 @@ def collapse_table_borders(table, grid_width, grid_height):
         style = box_style['border_%s_style' % side]
         width = box_style['border_%s_width' % side]
         color = box_style.get_color('border_%s_color' % side)
-        style = style_map.get(style, style)
 
         # http://www.w3.org/TR/CSS21/tables.html#border-conflict-resolution
         score = ((1 if style == 'hidden' else 0), width, style_scores[style])
 
+        style = style_map.get(style, style)
         previous_score, _ = border_grid[grid_y][grid_x]
         # Strict < so that the earlier call wins in case of a tie.
         if previous_score < score:
