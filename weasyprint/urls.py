@@ -259,7 +259,7 @@ def default_url_fetcher(url):
           file extension in the URL.
         * Optionally: ``encoding``, a character encoding extracted eg. from a
           *charset* parameter in a *Content-Type* header
-        * Optionally: ``redirected_url``, the actual URL of the ressource
+        * Optionally: ``redirected_url``, the actual URL of the resource
           in case there were eg. HTTP redirects.
         * Optionally: ``filename``, the filename of the resource. Usually
           derived from the *filename* parameter in a *Content-Disposition*
