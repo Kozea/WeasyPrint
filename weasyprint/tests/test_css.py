@@ -387,6 +387,7 @@ def test_units():
         <p style="margin-left: 6pc"></p>
         <p style="margin-left: 2.54cm"></p>
         <p style="margin-left: 25.4mm"></p>
+        <p style="margin-left: 101.6q"></p>
         <p style="margin-left: 1.1em"></p>
         <p style="margin-left: 1.1ch; font: 14px Ahem"></p>
         <p style="margin-left: 1.5ex; font: 10px Ahem"></p>
@@ -398,5 +399,5 @@ def test_units():
     margins = [round(p.margin_left, 6) for p in body.children]
     default_font_ch = margins.pop()
     # Ahem: 1ex is 0.8em, 1ch is 1em
-    assert margins == [96, 96, 96, 96, 96, 96, 17.6, 15.4, 12]
+    assert margins == [96, 96, 96, 96, 96, 96, 96, 17.6, 15.4, 12]
     assert 4 < default_font_ch < 12  # for 1em = 16px
