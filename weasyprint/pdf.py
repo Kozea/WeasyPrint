@@ -538,15 +538,14 @@ def _write_pdf_attachment(pdf, attachment, url_fetcher):
                 url=url, url_fetcher=url_fetcher, description=description)
         elif not isinstance(attachment, Attachment):
             attachment = Attachment(guess=attachment, url_fetcher=url_fetcher)
+
+        with attachment.source as (source_type, source, url, _):
+            if isinstance(source, bytes):
+                source = io.BytesIO(source)
+            file_stream_id = _write_compressed_file_object(pdf, source)
     except URLFetchingError as exc:
         LOGGER.warning('Failed to load attachment: %s', exc)
         return None
-
-    with attachment.source as (source_type, source, url, _):
-        if isinstance(source, bytes):
-            source = io.BytesIO(source)
-
-        file_stream_id = _write_compressed_file_object(pdf, source)
 
     # TODO: Use the result object from a URL fetch operation to provide more
     # details on the possible filename
@@ -572,7 +571,6 @@ def _write_pdf_annotation_files(pdf, links, url_fetcher):
     for page_links in links:
         for link_type, target, rectangle in page_links:
             if link_type == 'attachment' and target not in annot_files:
-                annot_files[target] = None
                 # TODO: use the title attribute as description
                 annot_files[target] = _write_pdf_attachment(
                     pdf, (target, None), url_fetcher)
