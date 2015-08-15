@@ -60,11 +60,12 @@ def get_next_linebox(context, linebox, position_y, skip_stack,
                      containing_block, device_size, absolute_boxes,
                      fixed_boxes):
     """Return ``(line, resume_at)``."""
-    resolve_percentages(linebox, containing_block)
+    resolve_percentages(linebox, containing_block, context)
     if skip_stack is None:
         # text-indent only at the start of the first line
         # Other percentages (margins, width, ...) do not apply.
-        resolve_one_percentage(linebox, 'text_indent', containing_block.width)
+        resolve_one_percentage(
+            linebox, 'text_indent', containing_block.width, context)
     else:
         linebox.text_indent = 0
 
@@ -433,7 +434,7 @@ def inline_block_box_layout(context, box, position_x, skip_stack,
     # Avoid a circular import
     from .blocks import block_container_layout
 
-    resolve_percentages(box, containing_block)
+    resolve_percentages(box, containing_block, context)
 
     # http://www.w3.org/TR/CSS21/visudet.html#inlineblock-width
     if box.margin_left == 'auto':
@@ -488,7 +489,7 @@ def split_inline_level(context, box, position_x, max_x, skip_stack,
     is no split is possible.)
 
     """
-    resolve_percentages(box, containing_block)
+    resolve_percentages(box, containing_block, context)
     if isinstance(box, boxes.TextBox):
         box.position_x = position_x
         if skip_stack is None:

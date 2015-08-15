@@ -296,6 +296,13 @@ def length(computer, name, value, font_size=None, pixels_only=False):
             result = value.value * logical_width
         elif unit == 'em':
             result = value.value * font_size
+    elif unit in ('vh', 'vw', 'vmin', 'vmax'):
+        if pixels_only:
+            # TODO: remove the pixels_only attribute from this function and
+            # resolve these values during layout as it's done for percentages
+            return 0
+        else:
+            return value
     else:
         # A percentage or 'auto': no conversion needed.
         return value

@@ -71,7 +71,7 @@ def table_layout(context, table, max_position_y, skip_stack,
     def group_layout(group, position_y, max_position_y,
                      page_is_empty, skip_stack):
         resume_at = None
-        resolve_percentages(group, containing_block=table)
+        resolve_percentages(group, table, context)
         group.position_x = rows_x
         group.position_y = position_y
         group.width = rows_width
@@ -86,7 +86,7 @@ def table_layout(context, table, max_position_y, skip_stack,
             skip, skip_stack = skip_stack
             assert not skip_stack  # No breaks inside rows for now
         for index_row, row in group.enumerate_skip(skip):
-            resolve_percentages(row, containing_block=table)
+            resolve_percentages(row, table, context)
             row.position_x = rows_x
             row.position_y = position_y
             row.width = rows_width
@@ -109,7 +109,7 @@ def table_layout(context, table, max_position_y, skip_stack,
                                    'the table, ignored %i cells: %r',
                                    len(ignored_cells), ignored_cells)
                     break
-                resolve_percentages(cell, containing_block=table)
+                resolve_percentages(cell, table, context)
                 cell.position_x = column_positions[cell.grid_x]
                 cell.position_y = row.position_y
                 cell.margin_top = 0
@@ -371,12 +371,12 @@ def table_layout(context, table, max_position_y, skip_stack,
         columns_height -= border_spacing_y
     for group in table.column_groups:
         for column in group.children:
-            resolve_percentages(column, containing_block=table)
+            resolve_percentages(column, table, context)
             column.position_x = column_positions[column.grid_x]
             column.position_y = initial_position_y
             column.width = column_widths[column.grid_x]
             column.height = columns_height
-        resolve_percentages(group, containing_block=table)
+        resolve_percentages(group, table, context)
         first = group.children[0]
         last = group.children[-1]
         group.position_x = first.position_x
@@ -403,7 +403,7 @@ def add_top_padding(box, extra_padding):
         child.translate(dy=extra_padding)
 
 
-def fixed_table_layout(box):
+def fixed_table_layout(context, box):
     """Run the fixed table layout and return a list of column widths
 
     http://www.w3.org/TR/CSS21/tables.html#fixed-table-layout
@@ -428,7 +428,7 @@ def fixed_table_layout(box):
 
     # `width` on column boxes
     for i, column in enumerate(all_columns):
-        resolve_one_percentage(column, 'width', table.width)
+        resolve_one_percentage(column, 'width', table.width, context)
         if column.width != 'auto':
             column_widths[i] = column.width
 
@@ -440,7 +440,7 @@ def fixed_table_layout(box):
     # `width` on cells of the first row.
     i = 0
     for cell in first_row_cells:
-        resolve_percentages(cell, table)
+        resolve_percentages(cell, table, context)
         if cell.width != 'auto':
             width = cell.border_width()
             width -= border_spacing_x * (cell.colspan - 1)
@@ -559,10 +559,10 @@ def auto_table_layout(context, box, containing_block):
 def table_wrapper_width(context, wrapper, containing_block):
     """Find the width of each column and derive the wrapper width."""
     table = wrapper.get_wrapped_table()
-    resolve_percentages(table, containing_block)
+    resolve_percentages(table, containing_block, context)
 
     if table.style.table_layout == 'fixed' and table.width != 'auto':
-        fixed_table_layout(wrapper)
+        fixed_table_layout(context, wrapper)
     else:
         auto_table_layout(context, wrapper, containing_block)
 

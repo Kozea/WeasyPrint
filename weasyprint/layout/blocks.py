@@ -39,7 +39,7 @@ def block_level_layout(context, box, max_position_y, skip_stack,
             context, box, max_position_y, skip_stack, containing_block,
             device_size, page_is_empty, absolute_boxes, fixed_boxes)
 
-    resolve_percentages(box, containing_block)
+    resolve_percentages(box, containing_block, context)
 
     if box.margin_top == 'auto':
         box.margin_top = 0
@@ -178,10 +178,10 @@ def block_level_width(box, containing_block):
         box.margin_right = margin_sum - margin_l
 
 
-def relative_positioning(box, containing_block):
+def relative_positioning(box, containing_block, context):
     """Translate the ``box`` if it is relatively positioned."""
     if box.style.position == 'relative':
-        resolve_position_percentages(box, containing_block)
+        resolve_position_percentages(box, containing_block, context)
 
         if box.left != 'auto' and box.right != 'auto':
             if box.style.direction == 'ltr':
@@ -206,7 +206,7 @@ def relative_positioning(box, containing_block):
 
     if isinstance(box, (boxes.InlineBox, boxes.LineBox)):
         for child in box.children:
-            relative_positioning(child, containing_block)
+            relative_positioning(child, containing_block, context)
 
 
 def block_container_layout(context, box, max_position_y, skip_stack,
@@ -390,7 +390,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
 
             if not new_containing_block.is_table_wrapper:
                 # TODO: there's no collapsing margins inside tables, right?
-                resolve_percentages(child, new_containing_block)
+                resolve_percentages(child, new_containing_block, context)
                 if (child.is_in_normal_flow() and last_in_flow_child is None
                         and collapsing_with_children):
                     # TODO: add the adjoining descendants' margin top to
@@ -563,7 +563,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
             absolute_layout(context, absolute_box, new_box, fixed_boxes)
 
     for child in new_box.children:
-        relative_positioning(child, (new_box.width, new_box.height))
+        relative_positioning(child, (new_box.width, new_box.height), context)
 
     if not isinstance(new_box, boxes.BlockBox):
         context.finish_block_formatting_context(new_box)

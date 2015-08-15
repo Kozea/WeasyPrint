@@ -27,7 +27,7 @@ def list_marker_layout(context, box):
     # see CSS3 lists.
     marker = getattr(box, 'outside_list_marker', None)
     if marker:
-        resolve_percentages(marker, containing_block=box)
+        resolve_percentages(marker, box, context)
         if isinstance(marker, boxes.TextBox):
             (marker.pango_layout, _, _, marker.width, marker.height,
                 marker.baseline) = split_first_line(

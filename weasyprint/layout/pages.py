@@ -302,7 +302,7 @@ def make_margin_boxes(context, page, counter_values):
             # run other post-processors from build.build_formatting_structure()
             box = build.inline_in_block(box)
             build.process_whitespace(box)
-        resolve_percentages(box, containing_block)
+        resolve_percentages(box, containing_block, context)
         if not box.is_generated:
             box.width = box.height = 0
             for side in ('top', 'right', 'bottom', 'left'):
@@ -475,13 +475,16 @@ def make_page(context, root_box, page_type, resume_at, content_empty,
 
     device_size = page.style.size
 
-    resolve_percentages(page, device_size)
+    resolve_percentages(page, device_size, context)
 
     page.position_x = 0
     page.position_y = 0
     cb_width, cb_height = device_size
     page_width(page, context, cb_width)
     page_height(page, context, cb_height)
+
+    if page_number == 1:
+        context.viewport_size = (page.width, page.height)
 
     root_box.position_x = page.content_box_x()
     root_box.position_y = page.content_box_y()
