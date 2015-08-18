@@ -3,7 +3,7 @@
     weasyprint.layout.percentages
     -----------------------------
 
-, context    Resolve percentages into fixed values.
+    Resolve percentages into fixed values.
 
     :copyright: Copyright 2011-2014 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
