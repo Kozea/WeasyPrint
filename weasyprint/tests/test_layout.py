@@ -2924,7 +2924,29 @@ def test_letter_spacing():
     body, = html.children
     line, = body.children
     strong_2, = line.children
-    assert strong_2.width - strong_1.width == 33 * 11
+    assert strong_2.width - strong_1.width == 34 * 11
+
+    # an embedded tag should not affect the single-line letter spacing
+    page, = parse('''
+        <style>strong { letter-spacing: 11px }</style>
+        <body><strong>Supercali<span>fragilistic</span>expialidocious</strong>''')
+    html, = page.children
+    body, = html.children
+    line, = body.children
+    strong_3, = line.children
+    assert strong_3.width == strong_2.width
+
+    # duplicate wrapped lines should also have same overall width
+    # Note work-around for word-wrap bug (issue #163) by marking word
+    # as an inline-block
+    page, = parse('''
+        <style>strong { letter-spacing: 11px; max-width: %dpx } span { display: inline-block }</style>
+        <body><strong><span>Supercali<i>fragilistic</i>expialidocious</span> <span>Supercali<i>fragilistic</i>expialidocious</span></strong>''' % (strong_3.width * 1.5))
+    html, = page.children
+    body, = html.children
+    line1, line2 = body.children
+    assert line1.children[0].width == line2.children[0].width
+    assert line1.children[0].width == strong_2.width
 
 
 @assert_no_logs
