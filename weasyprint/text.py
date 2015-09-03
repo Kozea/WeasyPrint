@@ -316,7 +316,7 @@ class Layout(object):
         pango.pango_font_description_set_absolute_size(
             font, units_from_double(font_size))
         pango.pango_layout_set_font_description(self.layout, font)
-        self.is_spaced_letter_workaround_enabled = (style.letter_spacing != 'normal')
+        self.is_letter_space_fix_enabled = (style.letter_spacing != 'normal')
 
     def iter_lines(self):
         layout_iter = ffi.gc(
@@ -328,7 +328,7 @@ class Layout(object):
                 return
 
     def set_text(self, text):
-        if self.is_spaced_letter_workaround_enabled and len(text) > 0:
+        if self.is_letter_space_fix_enabled and len(text) > 0:
             # add zero-length-space so that pango letter-spacing will
             # adjust space following the last letter in the box
             text = text + u'\u200b'
