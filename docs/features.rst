@@ -70,7 +70,7 @@ Fonts
 
 Although the CSS3 ``@font-face`` is not supported yet, WeasyPrint can use
 any font that Pango can find installed on the system. If you can use a font
-in a GTK+ application, just use it’s name in ``font-family``.
+in a GTK+ application, just use its name in ``font-family``.
 Copying a file into the ``~/.fonts`` directory is generally enough to install
 a new font, depending on the OS.
 
