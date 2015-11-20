@@ -466,8 +466,8 @@ def fixed_table_layout(box):
     all_border_spacing = border_spacing_x * (num_columns + 1)
     min_table_width = (sum(w for w in column_widths if w is not None)
                        + all_border_spacing)
-    columns_without_width = [i for i, width in enumerate(column_widths)
-                             if width is None]
+    columns_without_width = [i for i, w in enumerate(column_widths)
+                             if w is None]
     if columns_without_width and table.width >= min_table_width:
         remaining_width = table.width - min_table_width
         width_per_column = remaining_width / len(columns_without_width)
