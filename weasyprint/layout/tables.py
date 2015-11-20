@@ -486,7 +486,7 @@ def fixed_table_layout(box):
         table.width -= extra_width
     elif num_columns:
         extra_per_column = extra_width / num_columns
-        column_widths = [width + extra_per_column for width in column_widths]
+        column_widths = [w + extra_per_column for w in column_widths]
 
     # Now we have table.width == sum(column_widths) + all_border_spacing
     # with possible floating point rounding errors.
