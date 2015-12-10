@@ -463,10 +463,12 @@ def split_first_line(text, style, hinting, max_width, line_width):
         second_line_index = second_line.start_index
         first_part = utf8_slice(text, slice(second_line_index))
         second_part = utf8_slice(text, slice(second_line_index, None))
+
     else:
         # The first word is longer than the line, try to hyphenize it
         first_part = ''
         second_part = text
+
     next_word = second_part.split(' ', 1)[0]
 
     if not next_word:
@@ -494,7 +496,7 @@ def split_first_line(text, style, hinting, max_width, line_width):
     hyphenated = False
 
     # Automatic hyphenation possible and next word is long enough
-    if hyphens not in ('none', 'manual') and lang and len(next_word) >= total:
+    if hyphens != 'none' and len(next_word) >= total:
         first_line_width, _height = get_size(first_line)
         space = max_width - first_line_width
         if style.hyphenate_limit_zone.unit == '%':
@@ -503,31 +505,96 @@ def split_first_line(text, style, hinting, max_width, line_width):
             limit_zone = style.hyphenate_limit_zone.value
 
         if space > limit_zone or space < 0:
-            # The next word does not fit, try hyphenation
-            dictionary_key = (lang, left, right, total)
-            dictionary = PYPHEN_DICTIONARY_CACHE.get(dictionary_key)
-            if dictionary is None:
-                dictionary = pyphen.Pyphen(lang=lang, left=left, right=right)
-                PYPHEN_DICTIONARY_CACHE[dictionary_key] = dictionary
-            for first_word_part, _ in dictionary.iterate(next_word):
-                new_first_line = (
-                    first_part + first_word_part + style.hyphenate_character)
-                temp_layout = create_layout(
-                    new_first_line, style, hinting, max_width)
-                temp_lines = temp_layout.iter_lines()
-                temp_first_line = next(temp_lines, None)
-                temp_second_line = next(temp_lines, None)
 
-                if (temp_second_line is None and space >= 0) or space < 0:
-                    hyphenated = True
-                    # TODO: find why there's no need to .encode
-                    resume_at = len(first_part + first_word_part)
-                    layout = temp_layout
-                    first_line = temp_first_line
-                    second_line = temp_second_line
+            # manual hyphenation, check for missing hyphen
+            if hyphens == 'manual':
+                if len(first_part) \
+                    and first_part[len(first_part)-1] \
+                        == '\xc2\xad'.decode('utf-8'):
+                    new_first_line = (
+                        first_part[:len(first_part)-1]
+                        + style.hyphenate_character
+                    )
+                    temp_layout = create_layout(
+                        new_first_line, style, hinting, None)
+                    temp_lines = temp_layout.iter_lines()
+                    temp_first_line = next(temp_lines, None)
+                    temp_second_line = next(temp_lines, None)
                     temp_first_line_width, _height = get_size(temp_first_line)
+
+                    # there is still enough space for the hyphen character
                     if temp_first_line_width <= max_width:
-                        break
+                        first_line = temp_first_line
+                        second_line = temp_second_line
+                        layout = temp_layout
+                        resume_at = len(first_part)
+
+                    # the hyphen does not fit, break earlier
+                    else:
+                        prev_hyphen = first_part.rfind(
+                            '\xc2\xad'.decode('utf-8'),
+                            0,
+                            len(first_part)-2
+                        )
+                        prev_blank = first_part.rfind(
+                            ' ',
+                            0,
+                            len(first_part)-2
+                        )
+
+                        if (prev_hyphen > -1) or (prev_blank > -1):
+                            if prev_hyphen > prev_blank:
+                                new_first_line = (
+                                    first_part[:prev_hyphen]
+                                    + style.hyphenate_character)
+                            else:
+                                new_first_line = (first_part[:prev_blank])
+
+                            temp_layout = create_layout(
+                                new_first_line,
+                                style, hinting, max_width)
+                            temp_lines = temp_layout.iter_lines()
+                            temp_first_line = next(temp_lines, None)
+                            temp_second_line = next(temp_lines, None)
+
+                            first_line = temp_first_line
+                            second_line = temp_second_line
+                            layout = temp_layout
+                            resume_at = len(new_first_line)
+
+            elif hyphens == 'auto' and lang:
+                dictionary_key = (lang, left, right, total)
+                dictionary = PYPHEN_DICTIONARY_CACHE.get(dictionary_key)
+                if dictionary is None:
+                    dictionary = pyphen.Pyphen(
+                        lang=lang,
+                        left=left,
+                        right=right
+                    )
+                    PYPHEN_DICTIONARY_CACHE[dictionary_key] = dictionary
+                for first_word_part, _ in dictionary.iterate(next_word):
+                    new_first_line = (
+                        first_part +
+                        first_word_part +
+                        style.hyphenate_character
+                    )
+                    temp_layout = create_layout(
+                        new_first_line, style, hinting, max_width)
+                    temp_lines = temp_layout.iter_lines()
+                    temp_first_line = next(temp_lines, None)
+                    temp_second_line = next(temp_lines, None)
+
+                    if (temp_second_line is None and space >= 0) or space < 0:
+                        hyphenated = True
+                        # TODO: find why there's no need to .encode
+                        resume_at = len(first_part + first_word_part)
+                        layout = temp_layout
+                        first_line = temp_first_line
+                        second_line = temp_second_line
+                        temp_first_line_width, \
+                            _height = get_size(temp_first_line)
+                        if temp_first_line_width <= max_width:
+                            break
 
     # Step 5: Try to break word if it's too long for the line
     overflow_wrap = style.overflow_wrap
