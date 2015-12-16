@@ -57,7 +57,7 @@ BYTES_SCHEME_RE = re.compile(b'^([a-zA-Z][a-zA-Z0-9.+-]+):')
 
 
 def iri_to_uri(url):
-    """Turn an IRI that can contain any Unicode character into an ASII-only
+    """Turn an IRI that can contain any Unicode character into an ASCII-only
     URI that conforms to RFC 3986.
     """
     if url.startswith('data:'):
