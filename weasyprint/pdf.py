@@ -49,7 +49,13 @@ from .html import W3C_DATE_RE
 from .logger import LOGGER
 
 
-pdf_escape = lambda value: value.translate({40: r'\(', 41: r'\)', 92: r'\\'})
+def pdf_escape(value):
+    """Escape parentheses and backslashes in ``value``.
+
+    ``value`` must be of type str (bytes in Python 2, unicode in Python 3).
+
+    """
+    return value.translate({40: str(r'\('), 41: str(r'\)'), 92: str(r'\\')})
 
 
 class PDFFormatter(string.Formatter):
