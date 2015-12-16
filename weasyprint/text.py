@@ -557,7 +557,7 @@ def split_first_line(text, style, hinting, max_width, line_width):
         temp_first_line = next(temp_lines, None)
         temp_second_line = next(temp_lines, None)
         temp_second_line_index = (
-            len(new_first_line) if temp_second_line is None
+            len(new_first_line.encode('utf-8')) if temp_second_line is None
             else temp_second_line.start_index)
         resume_at = temp_second_line_index
         first_part = utf8_slice(text, slice(temp_second_line_index))
