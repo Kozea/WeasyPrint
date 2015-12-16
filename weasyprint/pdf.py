@@ -49,6 +49,9 @@ from .html import W3C_DATE_RE
 from .logger import LOGGER
 
 
+pdf_escape = lambda value: value.translate({40: r'\(', 41: r'\)', 92: r'\\'})
+
+
 class PDFFormatter(string.Formatter):
     """Like str.format except:
 
@@ -64,15 +67,15 @@ class PDFFormatter(string.Formatter):
             # Make a round-trip back through Unicode for the .translate()
             # method. (bytes.translate only maps to single bytes.)
             # Use latin1 to map all byte values.
-            return '({0})'.format(
-                ('\ufeff' + value).encode('utf-16-be').decode('latin1')
-                .translate({40: r'\(', 41: r'\)', 92: r'\\'}))
+            return '({0})'.format(pdf_escape(
+                ('\ufeff' + value).encode('utf-16-be').decode('latin1')))
         else:
             return super(PDFFormatter, self).convert_field(value, conversion)
 
     def vformat(self, format_string, args, kwargs):
         result = super(PDFFormatter, self).vformat(format_string, args, kwargs)
         return result.encode('latin1')
+
 
 pdf_format = PDFFormatter().format
 
@@ -650,7 +653,7 @@ def write_pdf_metadata(document, fileobj, scale, metadata, attachments,
                 else:
                     content.append(pdf_format(
                         '/A << /Type /Action /S /URI /URI ({0}) >>\n',
-                        iri_to_uri(target)))
+                        pdf_escape(iri_to_uri(target))))
             else:
                 assert not annot_files[target] is None
 
