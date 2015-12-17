@@ -1,6 +1,29 @@
 WeasyPrint changelog
 ====================
 
+Version 0.25
+------------
+
+Released on 2015-12-17.
+
+New features:
+
+* Support the 'q' unit.
+
+Bug fixes:
+
+* `#285: <https://github.com/Kozea/WeasyPrint/issues/285>`_:
+  Fix a crash happening when splitting lines.
+* `#284: <https://github.com/Kozea/WeasyPrint/issues/284>`_:
+  Escape parenthesis in PDF links.
+* `#280: <https://github.com/Kozea/WeasyPrint/pull/280>`_:
+  Replace utf8 with utf-8 for gettext/django compatibility.
+* `#269: <https://github.com/Kozea/WeasyPrint/pull/269>`_:
+  Add support for use when frozen.
+* `#250: <https://github.com/Kozea/WeasyPrint/issues/250>`_:
+  Don't crash when attachments are not available.
+
+
 Version 0.24
 ------------
 
