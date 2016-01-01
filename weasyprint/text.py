@@ -274,13 +274,12 @@ def get_ink_position(line):
 
 def first_line_metrics(first_line, text, layout, resume_at, hyphenated=False):
     length = first_line.length
-    if not hyphenated:
-        first_line_text = utf8_slice(text, slice(length))
-        if first_line_text.endswith(' ') and resume_at:
-            # Remove trailing spaces
-            layout.set_text(first_line_text.rstrip(' '))
-            first_line = next(layout.iter_lines(), None)
-            length = first_line.length if first_line is not None else 0
+    if not hyphenated and resume_at:
+        # Create layout with final text, remove trailing spaces if needed
+        first_line_text = utf8_slice(text, slice(length)).rstrip(' ')
+        layout.set_text(first_line_text)
+        first_line = next(layout.iter_lines(), None)
+        length = first_line.length if first_line is not None else 0
     width, height = get_size(first_line)
     baseline = units_to_double(pango.pango_layout_iter_get_baseline(ffi.gc(
         pango.pango_layout_get_iter(layout.layout),
@@ -418,14 +417,6 @@ def split_first_line(text, style, hinting, max_width, line_width):
     ``baseline``: baseline in pixels of the first line
 
     """
-    # In some cases (shrink-to-fit result being the preferred width)
-    # this value is coming from Pango itself,
-    # but floating point errors have accumulated:
-    #   width2 = (width + X) - X   # in some cases, width2 < width
-    # Increase the value a bit to compensate and not introduce
-    # an unexpected line break.
-    if max_width is not None:
-        max_width += style.font_size * 0.2
     # Step #1: Get a draft layout with the first line
     layout = None
     if max_width:
@@ -467,24 +458,26 @@ def split_first_line(text, style, hinting, max_width, line_width):
         # The first word is longer than the line, try to hyphenize it
         first_part = ''
         second_part = text
+
     next_word = second_part.split(' ', 1)[0]
-
-    if not next_word:
+    if next_word:
+        # next_word might fit without a space afterwards
+        new_first_line = first_part + next_word
+        layout.set_text(new_first_line)
+        lines = layout.iter_lines()
+        first_line = next(lines, None)
+        second_line = next(lines, None)
+        first_line_width, _height = get_size(first_line)
+        if second_line is None and first_line_width <= max_width:
+            # The next word fits in the first line, keep the layout
+            resume_at = len(new_first_line.encode('utf-8')) + 1
+            if resume_at == len(text.encode('utf-8')):
+                resume_at = None
+            return first_line_metrics(first_line, text, layout, resume_at)
+    else:
         # We did not find a word on the next line
-        return first_line_metrics(first_line, text, layout, resume_at)
-
-    # next_word might fit without a space afterwards.
-    # Pango previously counted that space’s advance width.
-    new_first_line = first_part + next_word
-    layout.set_text(new_first_line)
-    lines = layout.iter_lines()
-    first_line = next(lines, None)
-    second_line = next(lines, None)
-    first_line_width, _height = get_size(first_line)
-    if second_line is None and first_line_width <= max_width:
-        # The next word fits in the first line, keep the layout
-        resume_at = len(new_first_line.encode('utf-8')) + 1
-        return first_line_metrics(first_line, text, layout, resume_at)
+        if first_part:
+            return first_line_metrics(first_line, text, layout, resume_at)
 
     # Step #4: Try to hyphenize
     hyphens = style.hyphens
@@ -581,5 +574,9 @@ def show_first_line(context, pango_layout, hinting):
     context = ffi.cast('cairo_t *', context._pointer)
     if hinting:
         pangocairo.pango_cairo_update_layout(context, pango_layout.layout)
+    # Set an infinite width as we don't want to break lines when drawing, the
+    # lines have already been split and the size may differ for example because
+    # of hinting.
+    pango.pango_layout_set_width(pango_layout.layout, -1)
     pangocairo.pango_cairo_show_layout_line(
         context, next(pango_layout.iter_lines()))
