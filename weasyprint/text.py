@@ -452,32 +452,32 @@ def split_first_line(text, style, hinting, max_width, line_width):
     if first_line_width <= max_width:
         # The first line may have been cut too early by Pango
         second_line_index = second_line.start_index
-        first_part = utf8_slice(text, slice(second_line_index))
-        second_part = utf8_slice(text, slice(second_line_index, None))
+        first_line_text = utf8_slice(text, slice(second_line_index))
+        second_line_text = utf8_slice(text, slice(second_line_index, None))
     else:
         # The first word is longer than the line, try to hyphenize it
-        first_part = ''
-        second_part = text
+        first_line_text = ''
+        second_line_text = text
 
-    next_word = second_part.split(' ', 1)[0]
+    next_word = second_line_text.split(' ', 1)[0]
     if next_word:
         # next_word might fit without a space afterwards
-        new_first_line = first_part + next_word
-        layout.set_text(new_first_line)
+        new_first_line_text = first_line_text + next_word
+        layout.set_text(new_first_line_text)
         lines = layout.iter_lines()
         first_line = next(lines, None)
         second_line = next(lines, None)
         first_line_width, _height = get_size(first_line)
         if second_line is None and first_line_width <= max_width:
             # The next word fits in the first line, keep the layout
-            resume_at = len(new_first_line.encode('utf-8')) + 1
+            resume_at = len(new_first_line_text.encode('utf-8')) + 1
             if resume_at == len(text.encode('utf-8')):
                 resume_at = None
             return first_line_metrics(first_line, text, layout, resume_at)
-    else:
-        # We did not find a word on the next line
-        if first_part:
-            return first_line_metrics(first_line, text, layout, resume_at)
+    elif first_line_text:
+        # We found something on the first line but we did not find a word on
+        # the next line, no need to hyphenate, we can keep the current layout
+        return first_line_metrics(first_line, text, layout, resume_at)
 
     # Step #4: Try to hyphenize
     hyphens = style.hyphens
@@ -503,18 +503,19 @@ def split_first_line(text, style, hinting, max_width, line_width):
                 dictionary = pyphen.Pyphen(lang=lang, left=left, right=right)
                 PYPHEN_DICTIONARY_CACHE[dictionary_key] = dictionary
             for first_word_part, _ in dictionary.iterate(next_word):
-                new_first_line = (
-                    first_part + first_word_part + style.hyphenate_character)
+                hyphenated_first_line_text = (
+                    first_line_text + first_word_part +
+                    style.hyphenate_character)
                 temp_layout = create_layout(
-                    new_first_line, style, hinting, max_width)
+                    hyphenated_first_line_text, style, hinting, max_width)
                 temp_lines = temp_layout.iter_lines()
                 temp_first_line = next(temp_lines, None)
                 temp_second_line = next(temp_lines, None)
 
                 if (temp_second_line is None and space >= 0) or space < 0:
                     hyphenated = True
-                    # TODO: find why there's no need to .encode
-                    resume_at = len(first_part + first_word_part)
+                    resume_at = len(
+                        (first_line_text + first_word_part).encode('utf8'))
                     layout = temp_layout
                     first_line = temp_first_line
                     second_line = temp_second_line
@@ -528,33 +529,25 @@ def split_first_line(text, style, hinting, max_width, line_width):
     space = max_width - first_line_width
     # If we can break words and the first line is too long
     if overflow_wrap == 'break-word' and space < 0:
-        if hyphenated:
-            # Is it really OK to remove hyphenation for word-break ?
-            new_first_line = new_first_line.rstrip(
-                new_first_line[-(len(style.hyphenate_character)):])
-            if second_line is not None:
-                second_line_index = second_line.start_index
-                second_part = utf8_slice(text, slice(second_line_index, None))
-                new_first_line += second_part
-            hyphenated = False
-
+        # Is it really OK to remove hyphenation for word-break ?
+        hyphenated = False
         # TODO: Modify code to preserve W3C condition:
         # "Shaping characters are still shaped as if the word were not broken"
         # The way new lines are processed in this function (one by one with no
         # memory of the last) prevents shaping characters (arabic, for
         # instance) from keeping their shape when wrapped on the next line with
         # pango layout.  Maybe insert Unicode shaping characters in text ?
-        temp_layout = create_layout(new_first_line, style, hinting, max_width)
+        temp_layout = create_layout(text, style, hinting, max_width)
         temp_layout.set_wrap(PANGO_WRAP_MODE['WRAP_WORD_CHAR'])
         temp_lines = temp_layout.iter_lines()
         temp_first_line = next(temp_lines, None)
         temp_second_line = next(temp_lines, None)
         temp_second_line_index = (
-            len(new_first_line.encode('utf-8')) if temp_second_line is None
+            len(text.encode('utf-8')) if temp_second_line is None
             else temp_second_line.start_index)
         resume_at = temp_second_line_index
-        first_part = utf8_slice(text, slice(temp_second_line_index))
-        layout = create_layout(first_part, style, hinting, max_width)
+        first_line_text = utf8_slice(text, slice(temp_second_line_index))
+        layout = create_layout(first_line_text, style, hinting, max_width)
         lines = layout.iter_lines()
         first_line = next(lines, None)
 

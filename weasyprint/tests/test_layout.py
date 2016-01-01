@@ -4849,22 +4849,22 @@ def test_hyphenation():
         return len(lines)
 
     # Default: no hyphenation
-    assert line_count('<body>hyphenation') == 1
+    assert line_count('<body>hyphénation') == 1
     # lang only: no hyphenation
     assert line_count(
-        '<body lang=en>hyphenation') == 1
+        '<body lang=fr>hyphénation') == 1
     # `hyphens: auto` only: no hyphenation
     assert line_count(
-        '<body style="-weasy-hyphens: auto">hyphenation') == 1
+        '<body style="-weasy-hyphens: auto">hyphénation') == 1
     # lang + `hyphens: auto`: hyphenation
     assert line_count(
-        '<body style="-weasy-hyphens: auto" lang=en>hyphenation') > 1
+        '<body style="-weasy-hyphens: auto" lang=fr>hyphénation') > 1
 
     # Hyphenation with soft hyphens
-    assert line_count('<body>hyp&shy;henation') == 2
+    assert line_count('<body>hyp&shy;hénation') == 2
     # … unless disabled
     assert line_count(
-        '<body style="-weasy-hyphens: none">hyp&shy;henation') == 1
+        '<body style="-weasy-hyphens: none">hyp&shy;hénation') == 1
 
 
 @assert_no_logs
@@ -4872,53 +4872,53 @@ def test_hyphenate_character():
     page, = parse(
         '<html style="width: 5em; font-family: ahem">'
         '<body style="-weasy-hyphens: auto;'
-        '-weasy-hyphenate-character: \'!\'" lang=en>'
-        'hyphenation')
+        '-weasy-hyphenate-character: \'!\'" lang=fr>'
+        'hyphénation')
     html, = page.children
     body, = html.children
     lines = body.children
     assert len(lines) > 1
     assert lines[0].children[0].text.endswith('!')
     full_text = ''.join(line.children[0].text for line in lines)
-    assert full_text.replace('!', '') == 'hyphenation'
+    assert full_text.replace('!', '') == 'hyphénation'
 
     page, = parse(
         '<html style="width: 5em; font-family: ahem">'
         '<body style="-weasy-hyphens: auto;'
-        '-weasy-hyphenate-character: \'é\'" lang=en>'
-        'hyphenation')
+        '-weasy-hyphenate-character: \'à\'" lang=fr>'
+        'hyphénation')
     html, = page.children
     body, = html.children
     lines = body.children
     assert len(lines) > 1
-    assert lines[0].children[0].text.endswith('é')
+    assert lines[0].children[0].text.endswith('à')
     full_text = ''.join(line.children[0].text for line in lines)
-    assert full_text.replace('é', '') == 'hyphenation'
+    assert full_text.replace('à', '') == 'hyphénation'
 
     page, = parse(
         '<html style="width: 5em; font-family: ahem">'
         '<body style="-weasy-hyphens: auto;'
-        '-weasy-hyphenate-character: \'ù ù\'" lang=en>'
-        'hyphenation')
+        '-weasy-hyphenate-character: \'ù ù\'" lang=fr>'
+        'hyphénation')
     html, = page.children
     body, = html.children
     lines = body.children
     assert len(lines) > 1
     assert lines[0].children[0].text.endswith('ù ù')
     full_text = ''.join(line.children[0].text for line in lines)
-    assert full_text.replace(' ', '').replace('ù', '') == 'hyphenation'
+    assert full_text.replace(' ', '').replace('ù', '') == 'hyphénation'
 
     page, = parse(
         '<html style="width: 5em; font-family: ahem">'
         '<body style="-weasy-hyphens: auto;'
-        '-weasy-hyphenate-character: \'\'" lang=en>'
-        'hyphenation')
+        '-weasy-hyphenate-character: \'\'" lang=fr>'
+        'hyphénation')
     html, = page.children
     body, = html.children
     lines = body.children
     assert len(lines) > 1
     full_text = ''.join(line.children[0].text for line in lines)
-    assert full_text == 'hyphenation'
+    assert full_text == 'hyphénation'
 
     # TODO: strange error with some characters
     # page, = parse(
@@ -4940,54 +4940,54 @@ def test_hyphenate_limit_zone():
     page, = parse(
         '<html style="width: 12em; font-family: ahem">'
         '<body style="-weasy-hyphens: auto;'
-        '-weasy-hyphenate-limit-zone: 0" lang=en>'
-        'mmmmm hyphenation')
+        '-weasy-hyphenate-limit-zone: 0" lang=fr>'
+        'mmmmm hyphénation')
     html, = page.children
     body, = html.children
     lines = body.children
     assert len(lines) == 2
     assert lines[0].children[0].text.endswith('‐')
     full_text = ''.join(line.children[0].text for line in lines)
-    assert full_text.replace('‐', '') == 'mmmmm hyphenation'
+    assert full_text.replace('‐', '') == 'mmmmm hyphénation'
 
     page, = parse(
         '<html style="width: 12em; font-family: ahem">'
         '<body style="-weasy-hyphens: auto;'
-        '-weasy-hyphenate-limit-zone: 9em" lang=en>'
-        'mmmmm hyphenation')
+        '-weasy-hyphenate-limit-zone: 9em" lang=fr>'
+        'mmmmm hyphénation')
     html, = page.children
     body, = html.children
     lines = body.children
     assert len(lines) > 1
     assert lines[0].children[0].text.endswith('mm')
     full_text = ''.join(line.children[0].text for line in lines)
-    assert full_text == 'mmmmmhyphenation'
+    assert full_text == 'mmmmmhyphénation'
 
     page, = parse(
         '<html style="width: 12em; font-family: ahem">'
         '<body style="-weasy-hyphens: auto;'
-        '-weasy-hyphenate-limit-zone: 5%" lang=en>'
-        'mmmmm hyphenation')
+        '-weasy-hyphenate-limit-zone: 5%" lang=fr>'
+        'mmmmm hyphénation')
     html, = page.children
     body, = html.children
     lines = body.children
     assert len(lines) == 2
     assert lines[0].children[0].text.endswith('‐')
     full_text = ''.join(line.children[0].text for line in lines)
-    assert full_text.replace('‐', '') == 'mmmmm hyphenation'
+    assert full_text.replace('‐', '') == 'mmmmm hyphénation'
 
     page, = parse(
         '<html style="width: 12em; font-family: ahem">'
         '<body style="-weasy-hyphens: auto;'
-        '-weasy-hyphenate-limit-zone: 95%" lang=en>'
-        'mmmmm hyphenation')
+        '-weasy-hyphenate-limit-zone: 95%" lang=fr>'
+        'mmmmm hyphénation')
     html, = page.children
     body, = html.children
     lines = body.children
     assert len(lines) > 1
     assert lines[0].children[0].text.endswith('mm')
     full_text = ''.join(line.children[0].text for line in lines)
-    assert full_text == 'mmmmmhyphenation'
+    assert full_text == 'mmmmmhyphénation'
 
 
 @assert_no_logs

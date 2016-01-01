@@ -680,7 +680,6 @@ def split_text_box(context, box, available_width, line_width, skip):
     text = box.text[skip:]
     if font_size == 0 or not text:
         return None, None, False
-    # XXX ``resume_at`` is an index in UTF-8 bytes, not unicode codepoints.
     layout, length, resume_at, width, height, baseline = split_first_line(
         text, box.style, context.enable_hinting, available_width, line_width)
 
@@ -689,8 +688,7 @@ def split_text_box(context, box, available_width, line_width, skip):
     # No need to encode what’s after resume_at (if set) or length (if
     # resume_at is not set). One code point is one or more byte, so
     # UTF-8 indexes are always bigger or equal to Unicode indexes.
-    partial_text = text[:resume_at or length]
-    utf8_text = partial_text.encode('utf8')
+    utf8_text = text.encode('utf8')[:resume_at or length]
     new_text = utf8_text[:length].decode('utf8')
     new_length = len(new_text)
     if resume_at is not None:
@@ -704,7 +702,7 @@ def split_text_box(context, box, available_width, line_width, skip):
                 if between.strip(' ') not in ('', '\n', '\u2029'):
                     # Replace bad cutting value from Pango
                     between = utf8_text[length:new_length].decode('utf8')
-            resume_at = new_length + len(between)
+        resume_at = new_length + len(between)
     length = new_length
 
     if length > 0:
@@ -737,9 +735,7 @@ def split_text_box(context, box, available_width, line_width, skip):
         if preserved_line_break:
             # See http://unicode.org/reports/tr14/
             # TODO: are there others? Find Pango docs on this
-            # The space is in this list, as it may have been removed by the
-            # Step #2 of split_first_line
-            assert between in (' ', '\n', '\u2029'), (
+            assert between in ('\n', '\u2029'), (
                 'Got %r between two lines. '
                 'Expected nothing or a preserved line break' % (between,))
         resume_at += skip
