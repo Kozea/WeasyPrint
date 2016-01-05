@@ -50,13 +50,13 @@ def box_rectangle(box, which_rectangle):
         )
 
 
-def layout_box_backgrounds(page, box, get_image_from_uri):
+def layout_box_backgrounds(page, box, get_image_from_uri, context):
     """Fetch and position background images."""
     # Resolve percentages in border-radius properties
-    resolve_radii_percentages(box)
+    resolve_radii_percentages(box, context)
 
     for child in box.all_children():
-        layout_box_backgrounds(page, child, get_image_from_uri)
+        layout_box_backgrounds(page, child, get_image_from_uri, context)
 
     style = box.style
     if style.visibility == 'hidden':
@@ -209,6 +209,6 @@ def set_canvas_background(page):
         page.canvas_background = None
 
 
-def layout_backgrounds(page, get_image_from_uri):
-    layout_box_backgrounds(page, page, get_image_from_uri)
+def layout_backgrounds(page, get_image_from_uri, context):
+    layout_box_backgrounds(page, page, get_image_from_uri, context)
     set_canvas_background(page)

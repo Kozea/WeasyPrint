@@ -254,8 +254,8 @@ def absolute_box_layout(context, box, containing_block, fixed_boxes):
         cb_height = cb.padding_height()
     containing_block = cb_x, cb_y, cb_width, cb_height
 
-    resolve_percentages(box, (cb_width, cb_height))
-    resolve_position_percentages(box, (cb_width, cb_height))
+    resolve_percentages(box, (cb_width, cb_height), context)
+    resolve_position_percentages(box, (cb_width, cb_height), context)
 
     context.create_block_formatting_context()
     # Absolute tables are wrapped into block boxes

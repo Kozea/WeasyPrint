@@ -32,9 +32,10 @@ def float_layout(context, box, containing_block, absolute_boxes, fixed_boxes):
     from .blocks import block_container_layout
     from .inlines import inline_replaced_box_width_height
 
-    resolve_percentages(box, (containing_block.width, containing_block.height))
+    resolve_percentages(
+        box, (containing_block.width, containing_block.height), context)
     resolve_position_percentages(
-        box, (containing_block.width, containing_block.height))
+        box, (containing_block.width, containing_block.height), context)
 
     if box.margin_left == 'auto':
         box.margin_left = 0

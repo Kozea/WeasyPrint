@@ -401,3 +401,23 @@ def test_units():
     # Ahem: 1ex is 0.8em, 1ch is 1em
     assert margins == [96, 96, 96, 96, 96, 96, 96, 17.6, 15.4, 12]
     assert 4 < default_font_ch < 12  # for 1em = 16px
+
+
+@assert_no_logs
+def test_viewport_units():
+    document = TestHTML(string='''
+        <style>
+          @page {
+            size: 520px 240px;
+            margin: 30px 20px 10px 0;
+          }
+        </style>
+        <p style="width: 0.2vw"></p>
+        <p style="width: 0.6vh"></p>
+        <p style="width: 1vmin"></p>
+        <p style="width: 2vmax"></p>
+    ''')
+    page, = document.render().pages
+    html, = page._page_box.children
+    body, = html.children
+    assert [p.width for p in body.children] == [100, 120, 200, 1000]

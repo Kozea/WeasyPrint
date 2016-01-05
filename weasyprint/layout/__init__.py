@@ -61,7 +61,7 @@ def layout_document(enable_hinting, style_for, get_image_from_uri, root_box):
         context.current_page = page_counter[0]
         page.children = (root,) + tuple(
             make_margin_boxes(context, page, counter_values))
-        layout_backgrounds(page, get_image_from_uri)
+        layout_backgrounds(page, get_image_from_uri, context)
         yield page
         page_counter[0] += 1
 
@@ -75,6 +75,7 @@ class LayoutContext(object):
         self.excluded_shapes = None  # Not initialized yet
         self.string_set = defaultdict(lambda: defaultdict(lambda: list()))
         self.current_page = None
+        self.viewport_size = None
 
     def create_block_formatting_context(self):
         self.excluded_shapes = []
