@@ -16,7 +16,7 @@ from ..formatting_structure import boxes, build
 from .absolute import absolute_layout
 from .blocks import block_level_layout, block_container_layout
 from .percentages import resolve_percentages
-from .preferred import preferred_minimum_width, preferred_width
+from .preferred import min_content_width, max_content_width
 from .min_max import handle_min_max_width, handle_min_max_height
 
 
@@ -30,17 +30,18 @@ class OrientedBox(object):
         return self.sugar + self.inner
 
     @property
-    def outer_minimum(self):
+    def outer_min_content_size(self):
         return self.sugar + (
-            self.minimum if self.inner == 'auto' else self.inner)
+            self.min_content_size if self.inner == 'auto' else self.inner)
 
     @property
-    def outer_preferred(self):
+    def outer_max_content_size(self):
         return self.sugar + (
-            self.preferred if self.inner == 'auto' else self.inner)
+            self.max_content_size if self.inner == 'auto' else self.inner)
 
     def shrink_to_fit(self, available):
-        self.inner = min(max(self.minimum, available), self.preferred)
+        self.inner = min(
+            max(self.min_content_size, available), self.max_content_size)
 
 
 class VerticalBox(OrientedBox):
@@ -62,13 +63,13 @@ class VerticalBox(OrientedBox):
         box.margin_top = self.margin_a
         box.margin_bottom = self.margin_b
 
-    # TODO: preferred (minimum) height???
+    # TODO: Define what are the min-content and max-content heights
     @property
-    def minimum(self):
+    def min_content_size(self):
         return 0
 
     @property
-    def preferred(self):
+    def max_content_size(self):
         return 1e6
 
 
@@ -82,8 +83,8 @@ class HorizontalBox(OrientedBox):
         self.padding_plus_border = (
             box.padding_left + box.padding_right +
             box.border_left_width + box.border_right_width)
-        self._minimum = None
-        self._preferred = None
+        self._min_content_size = None
+        self._max_content_size = None
 
     def restore_box_attributes(self):
         box = self.box
@@ -92,18 +93,18 @@ class HorizontalBox(OrientedBox):
         box.margin_right = self.margin_b
 
     @property
-    def minimum(self):
-        if self._minimum is None:
-            self._minimum = preferred_minimum_width(
+    def min_content_size(self):
+        if self._min_content_size is None:
+            self._min_content_size = min_content_width(
                 self.context, self.box, outer=False)
-        return self._minimum
+        return self._min_content_size
 
     @property
-    def preferred(self):
-        if self._preferred is None:
-            self._preferred = preferred_width(
+    def max_content_size(self):
+        if self._max_content_size is None:
+            self._max_content_size = max_content_width(
                 self.context, self.box, outer=False)
-        return self._preferred
+        return self._max_content_size
 
 
 def compute_fixed_dimension(context, box, outer, vertical, top_or_left):
@@ -209,24 +210,28 @@ def compute_variable_dimension(context, side_boxes, vertical, outer_sum):
 
     if box_b.box.is_generated:
         if box_b.inner == 'auto':
-            ac_preferred = 2 * max(
-                box_a.outer_preferred, box_c.outer_preferred)
-            if outer_sum >= box_b.outer_preferred + ac_preferred:
-                box_b.inner = box_b.preferred
+            ac_max_content_size = 2 * max(
+                box_a.outer_max_content_size, box_c.outer_max_content_size)
+            if outer_sum >= (
+                    box_b.outer_max_content_size + ac_max_content_size):
+                box_b.inner = box_b.max_content_size
             else:
-                ac_minimum = 2 * max(box_a.outer_minimum, box_c.outer_minimum)
-                box_b.inner = box_b.minimum
-                available = outer_sum - box_b.outer - ac_minimum
+                ac_min_content_size = 2 * max(
+                    box_a.outer_min_content_size,
+                    box_c.outer_min_content_size)
+                box_b.inner = box_b.min_content_size
+                available = outer_sum - box_b.outer - ac_min_content_size
                 if available > 0:
-                    weight_ac = ac_preferred - ac_minimum
-                    weight_b = box_b.preferred - box_b.minimum
+                    weight_ac = ac_max_content_size - ac_min_content_size
+                    weight_b = (
+                        box_b.max_content_size - box_b.min_content_size)
                     weight_sum = weight_ac + weight_b
-                    # By definition of preferred and minimum, weights can
-                    # not be negative. weight_sum == 0 implies that
-                    # preferred == minimum for each box, in which case the
-                    # sum can not be both <= and > outer_sum
-                    # Therefore, one of the last two 'if' statements would
-                    # not have lead us here.
+                    # By definition of max_content_size and min_content_size,
+                    # weights can not be negative. weight_sum == 0 implies that
+                    # max_content_size == min_content_size for each box, in
+                    # which case the sum can not be both <= and > outer_sum
+                    # Therefore, one of the last two 'if' statements would not
+                    # have lead us here.
                     assert weight_sum > 0
                     box_b.inner += available * weight_b / weight_sum
         if box_a.inner == 'auto':
@@ -237,23 +242,27 @@ def compute_variable_dimension(context, side_boxes, vertical, outer_sum):
         # Non-generated boxes get zero for every box-model property
         assert box_b.inner == 0
         if box_a.inner == box_c.inner == 'auto':
-            if box_a.outer_preferred + box_c.outer_preferred <= outer_sum:
-                box_a.inner = box_a.preferred
-                box_c.inner = box_c.preferred
+            if outer_sum >= (
+                    box_a.outer_max_content_size +
+                    box_c.outer_max_content_size):
+                box_a.inner = box_a.max_content_size
+                box_c.inner = box_c.max_content_size
             else:
-                box_a.inner = box_a.minimum
-                box_c.inner = box_c.minimum
+                box_a.inner = box_a.min_content_size
+                box_c.inner = box_c.min_content_size
                 available = outer_sum - box_a.outer - box_c.outer
                 if available > 0:
-                    weight_a = box_a.preferred - box_a.minimum
-                    weight_c = box_c.preferred - box_c.minimum
+                    weight_a = (
+                        box_a.max_content_size - box_a.min_content_size)
+                    weight_c = (
+                        box_c.max_content_size - box_c.min_content_size)
                     weight_sum = weight_a + weight_c
-                    # By definition of preferred and minimum, weights can
-                    # not be negative. weight_sum == 0 implies that
-                    # preferred == minimum for each box, in which case the
-                    # sum can not be both <= and > outer_sum
-                    # Therefore, one of the last two 'if' statements would
-                    # not have lead us here.
+                    # By definition of max_content_size and min_content_size,
+                    # weights can not be negative. weight_sum == 0 implies that
+                    # max_content_size == min_content_size for each box, in
+                    # which case the sum can not be both <= and > outer_sum
+                    # Therefore, one of the last two 'if' statements would not
+                    # have lead us here.
                     assert weight_sum > 0
                     box_a.inner += available * weight_a / weight_sum
                     box_c.inner += available * weight_c / weight_sum

@@ -17,7 +17,7 @@ from .float import avoid_collisions, float_layout
 from .replaced import image_marker_layout
 from .min_max import handle_min_max_width, handle_min_max_height
 from .percentages import resolve_percentages, resolve_one_percentage
-from .preferred import (shrink_to_fit, inline_preferred_minimum_width,
+from .preferred import (shrink_to_fit, inline_min_content_width,
                         trailing_whitespace_size)
 from .tables import find_in_flow_baseline, table_wrapper_width
 from ..text import split_first_line
@@ -72,7 +72,7 @@ def get_next_linebox(context, linebox, position_y, skip_stack,
     if skip_stack == 'continue':
         return None, None
 
-    linebox.width = inline_preferred_minimum_width(
+    linebox.width = inline_min_content_width(
         context, linebox, skip_stack=skip_stack, first_line=True)
 
     linebox.height, _ = strut_layout(linebox.style, context.enable_hinting)

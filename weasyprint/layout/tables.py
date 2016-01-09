@@ -5,7 +5,7 @@
 
     Layout for tables and internal table boxes.
 
-    :copyright: Copyright 2011-2014 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2016 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -23,11 +23,7 @@ from .preferred import table_and_columns_preferred_widths
 def table_layout(context, table, max_position_y, skip_stack,
                  containing_block, device_size, page_is_empty, absolute_boxes,
                  fixed_boxes):
-    """Layout for a table box.
-
-    For now only the fixed layout and separate border model are supported.
-
-    """
+    """Layout for a table box."""
     # Avoid a circular import
     from .blocks import block_container_layout
 
@@ -501,8 +497,8 @@ def auto_table_layout(context, box, containing_block):
 
     """
     table = box.get_wrapped_table()
-    (table_preferred_minimum_width, table_preferred_width,
-     column_preferred_minimum_widths, column_preferred_widths) = \
+    (table_min_content_width, table_max_content_width,
+     column_min_content_widths, column_max_content_widths) = \
         table_and_columns_preferred_widths(
             context, box, resolved_table_width=table.width != 'auto')
 
@@ -512,7 +508,7 @@ def auto_table_layout(context, box, containing_block):
         border_spacing_x = 0
 
     all_border_spacing = (
-        border_spacing_x * (len(column_preferred_widths) + 1))
+        border_spacing_x * (len(column_max_content_widths) + 1))
 
     margins = 0
     if box.margin_left != 'auto':
@@ -523,33 +519,33 @@ def auto_table_layout(context, box, containing_block):
     cb_width, cb_height = containing_block
     available_width = cb_width - margins
     if table.width == 'auto':
-        if available_width < table_preferred_minimum_width:
-            table.width = table_preferred_minimum_width
-            table.column_widths = column_preferred_minimum_widths
-        elif available_width < table_preferred_width:
+        if available_width < table_min_content_width:
+            table.width = table_min_content_width
+            table.column_widths = column_min_content_widths
+        elif available_width < table_max_content_width:
             table.width = available_width
-            table.column_widths = column_preferred_minimum_widths
+            table.column_widths = column_min_content_widths
         else:
-            table.width = table_preferred_width
-            table.column_widths = column_preferred_widths
+            table.width = table_max_content_width
+            table.column_widths = column_max_content_widths
     else:
-        if table.width < table_preferred_minimum_width:
-            table.width = table_preferred_minimum_width
-            table.column_widths = column_preferred_minimum_widths
-        elif table.width < table_preferred_width:
-            table.column_widths = column_preferred_minimum_widths
+        if table.width < table_min_content_width:
+            table.width = table_min_content_width
+            table.column_widths = column_min_content_widths
+        elif table.width < table_max_content_width:
+            table.column_widths = column_min_content_widths
         else:
-            table.column_widths = column_preferred_widths
+            table.column_widths = column_max_content_widths
 
     lost_width = table.width - sum(table.column_widths) - all_border_spacing
     if lost_width > 0:
-        sum_column_preferred_widths = sum(column_preferred_widths)
-        if sum_column_preferred_widths:
+        sum_column_max_content_widths = sum(column_max_content_widths)
+        if sum_column_max_content_widths:
             table.column_widths = [
-                (column_width + lost_width * preferred_column_width /
-                 sum_column_preferred_widths)
-                for (preferred_column_width, column_width)
-                in zip(column_preferred_widths, table.column_widths)]
+                (column_width + lost_width * max_content_column_width /
+                 sum_column_max_content_widths)
+                for (max_content_column_width, column_width)
+                in zip(column_max_content_widths, table.column_widths)]
         else:
             table.column_widths = [
                 column_width + lost_width / len(table.column_widths)
