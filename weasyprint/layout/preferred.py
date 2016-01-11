@@ -305,7 +305,7 @@ def table_and_columns_preferred_widths(context, box, outer=True):
     if grid_width == 0 or grid_height == 0:
         min_width = block_min_content_width(context, table)
         max_width = block_max_content_width(context, table)
-        TABLE_CACHE[table] = result = (min_width, max_width, [], [], [], [], [])
+        TABLE_CACHE[table] = result = min_width, max_width, [], [], [], [], []
         return result
 
     zipped_grid = list(zip(*grid))
@@ -377,10 +377,12 @@ def table_and_columns_preferred_widths(context, box, outer=True):
                     origin_cell = grid[j][origin]
                     cell_slice = slice(origin, origin + origin_cell.colspan)
                     baseline_border_spacing = (
-                        (origin_cell.colspan - 1) * table.style.border_spacing[0])
+                        (origin_cell.colspan - 1) *
+                        table.style.border_spacing[0])
                     baseline_min_content = sum(min_content_widths[cell_slice])
                     baseline_max_content = sum(max_content_widths[cell_slice])
-                    baseline_percentage = sum(intrinsic_percentages[cell_slice])
+                    baseline_percentage = sum(
+                        intrinsic_percentages[cell_slice])
 
                     # Cell contributiion to min- and max-content widths
                     content_width_diff = (
@@ -428,7 +430,8 @@ def table_and_columns_preferred_widths(context, box, outer=True):
                             baseline_percentage)
                         other_columns_contributions = [
                             max_content_widths[j]
-                            for j in range(origin, origin + origin_cell.colspan)
+                            for j in range(
+                                origin, origin + origin_cell.colspan)
                             if intrinsic_percentages[j] == 0]
                         other_columns_contributions_sum = sum(
                             other_columns_contributions)
