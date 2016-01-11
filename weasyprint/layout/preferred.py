@@ -312,13 +312,13 @@ def table_and_columns_preferred_widths(context, box, outer=True):
 
     column_groups = [None] * grid_width
     columns = [None] * grid_width
-    i = 0
+    column_number = 0
     for column_group in table.column_groups:
         for column in column_group.children:
-            column_groups[i] = column_group
-            columns[i] = column
-            i += 1
-            if i == grid_width:
+            column_groups[column_number] = column_group
+            columns[column_number] = column
+            column_number += 1
+            if column_number == grid_width:
                 break
         else:
             continue
