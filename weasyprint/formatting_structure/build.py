@@ -557,6 +557,7 @@ def wrap_table(box, children):
         group.grid_x = grid_x
         if group.children:
             for column in group.children:
+                # TODO: what about column spans?
                 column.grid_x = grid_x
                 grid_x += 1
             group.span = len(group.children)
