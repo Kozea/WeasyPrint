@@ -964,7 +964,7 @@ def test_auto_layout_table():
     assert td_1.position_x == 15  # 5 + border-spacing
     assert td_1.width == 20  # fixed
     assert td_2.position_x == 45  # 15 + 20 + border-spacing
-    assert td_2.width ==  70  # 120 - 3 * border-spacing - 20
+    assert td_2.width == 70  # 120 - 3 * border-spacing - 20
     assert table.width == 120
 
     page, = parse('''
