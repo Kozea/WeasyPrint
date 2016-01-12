@@ -553,7 +553,7 @@ def auto_table_layout(context, box, containing_block):
     for i in range(len(grid)):
         if column_intrinsic_percentages[i]:
             min_content_percentage_guess[i] = max(
-                column_intrinsic_percentages[i] * assignatable_width / 100,
+                column_intrinsic_percentages[i] * assignatable_width / 100.,
                 column_min_content_widths[i])
             min_content_specified_guess[i] = min_content_percentage_guess[i]
             max_content_guess[i] = min_content_percentage_guess[i]
@@ -618,8 +618,7 @@ def auto_table_layout(context, box, containing_block):
         columns = [
             i for i, column in enumerate(grid)
             if not constrainedness[i] and
-            column_intrinsic_percentages[i] == 0 and
-            not any(cell.style.max_width for cell in column if cell)]
+            column_intrinsic_percentages[i] == 0]
         if columns:
             for i in columns:
                 table.column_widths[i] += excess_width / len(columns)
@@ -656,13 +655,29 @@ def auto_table_layout(context, box, containing_block):
             (i, column) for i, column in enumerate(grid)
             if column_intrinsic_percentages[i] > 0]
         if columns:
+            fixed_width = sum(
+                table.column_widths[j] for j in range(len(grid))
+                if j not in [i for i, column in columns])
+            percentage_width = sum(
+                column_intrinsic_percentages[i]
+                for i, column in columns)
+            if fixed_width and percentage_width >= 100:
+                # Sum of the percentages are greater than 100%
+                ratio = excess_width
+            elif fixed_width == 0:
+                # No fixed width, let's take the whole excess width
+                ratio = excess_width
+            else:
+                ratio = fixed_width / (100 - percentage_width)
+
             widths = [
-                column_intrinsic_percentages[i] * assignatable_width
+                column_intrinsic_percentages[i] * ratio
                 for i, column in columns]
             current_widths = [
                 table.column_widths[i] for i, column in columns]
+            # Allow to reduce the size of the columns to respect the percentage
             differences = [
-                max(0, width[0] - width[1])
+                width[0] - width[1]
                 for width in zip(widths, current_widths)]
             if sum(differences) > excess_width:
                 differences = [
@@ -674,12 +689,34 @@ def auto_table_layout(context, box, containing_block):
         if excess_width <= 0:
             return
 
-        # Fifth group
-        columns = [i for i, column in enumerate(grid) if any(column)]
+        # Bonus: we've tried our best to distribute the extra size, but we
+        # failed. Instead of blindly distributing the size among all the colums
+        # and breaking all the rules (as said in the draft), let's try to
+        # change the columns with no constraint at all, then resize the table,
+        # and at least break the rules to make the columns fill the table.
+
+        # Fifth group, part 1
+        columns = [
+            i for i, column in enumerate(grid)
+            if any(column) and
+            column_intrinsic_percentages[i] == 0 and
+            not any(
+                max_content_width(context, cell)
+                for cell in column if cell)]
         if columns:
             for i in columns:
                 table.column_widths[i] += excess_width / len(columns)
             return
+
+        if table_min_content_width <= table.width - excess_width:
+            # Reduce the width of the size from the excess width that has not
+            # been distributed.
+            table.width -= excess_width
+        else:
+            # Fifth group, part 2, aka desperately break the rules
+            columns = [i for i, column in enumerate(grid) if any(column)]
+            for i in columns:
+                table.column_widths[i] += excess_width / len(columns)
 
 
 def table_wrapper_width(context, wrapper, containing_block):
