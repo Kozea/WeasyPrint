@@ -117,9 +117,9 @@ def table_layout(context, table, max_position_y, skip_stack,
                 cell.width = 0
                 borders_plus_padding = cell.border_width()  # with width==0
                 cell.width = (
-                    sum(spanned_widths)
-                    + border_spacing_x * (cell.colspan - 1)
-                    - borders_plus_padding)
+                    sum(spanned_widths) +
+                    border_spacing_x * (cell.colspan - 1) -
+                    borders_plus_padding)
                 # The computed height is a minimum
                 cell.computed_height = cell.height
                 cell.height = 'auto'
@@ -215,8 +215,9 @@ def table_layout(context, table, max_position_y, skip_stack,
 
         # Do not keep the row group if we made a page break
         # before any of its rows or with 'avoid'
-        if resume_at and (group.style.page_break_inside == 'avoid'
-                          or not new_group_children):
+        if resume_at and (
+                group.style.page_break_inside == 'avoid' or
+                not new_group_children):
             return None, None
 
         group = group.copy_with_children(
@@ -385,8 +386,8 @@ def table_layout(context, table, max_position_y, skip_stack,
         group.height = columns_height
 
     if resume_at and not page_is_empty and (
-            table.style.page_break_inside == 'avoid'
-            or not new_table_children):
+            table.style.page_break_inside == 'avoid' or
+            not new_table_children):
         table = None
         resume_at = None
     next_page = 'any'
@@ -464,8 +465,8 @@ def fixed_table_layout(box):
     # Distribute the remaining space equally on columns that do not have
     # a width yet.
     all_border_spacing = border_spacing_x * (num_columns + 1)
-    min_table_width = (sum(w for w in column_widths if w is not None)
-                       + all_border_spacing)
+    min_table_width = (sum(w for w in column_widths if w is not None) +
+                       all_border_spacing)
     columns_without_width = [i for i, w in enumerate(column_widths)
                              if w is None]
     if columns_without_width and table.width >= min_table_width:

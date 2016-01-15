@@ -175,7 +175,10 @@ def compute(element, pseudo_type, specified, computed, parent_style):
     if parent_style is None:
         parent_style = INITIAL_VALUES
 
-    computer = lambda: 0  # Dummy object that holds attributes
+    def computer():
+        """Dummy object that holds attributes."""
+        return 0
+
     computer.element = element
     computer.pseudo_type = pseudo_type
     computer.specified = specified

@@ -15,6 +15,9 @@
 
 from __future__ import division, unicode_literals
 
+import contextlib  # noqa
+import html5lib  # noqa
+
 
 VERSION = '0.25'
 __version__ = VERSION
@@ -26,14 +29,12 @@ __all__ = ['HTML', 'CSS', 'Attachment', 'Document', 'Page',
            'default_url_fetcher', 'VERSION']
 
 
-import contextlib
-import html5lib
-
+# Import after setting the version, as the version is used in other modules
 from .urls import (fetch, default_url_fetcher, path2url, ensure_url,
-                   url_is_absolute)
-from .compat import unicode
-from .logger import LOGGER
-# Some import are at the end of the file (after the CSS class) is defined
+                   url_is_absolute)  # noqa
+from .compat import unicode  # noqa
+from .logger import LOGGER  # noqa
+# Some imports are at the end of the file (after the CSS class)
 # to work around circular imports.
 
 
@@ -331,8 +332,7 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
             ) or 'nothing'
         ))
 
-
 # Work around circular imports.
-from .css import PARSER, preprocess_stylesheet
-from .html import find_base_url, HTML5_UA_STYLESHEET, get_html_metadata
-from .document import Document, Page
+from .css import PARSER, preprocess_stylesheet  # noqa
+from .html import find_base_url, HTML5_UA_STYLESHEET, get_html_metadata  # noqa
+from .document import Document, Page  # noqa

@@ -73,8 +73,8 @@ def build_formatting_structure(element_tree, style_for, get_image_from_uri):
 
 
 def make_box(element_tag, sourceline, style, content, get_image_from_uri):
-    if (style.display in ('table', 'inline-table')
-            and style.border_collapse == 'collapse'):
+    if (style.display in ('table', 'inline-table') and
+            style.border_collapse == 'collapse'):
         # Padding do not apply
         for side in ['top', 'bottom', 'left', 'right']:
             style['padding_' + side] = ZERO_PIXELS
@@ -392,7 +392,8 @@ def wrap_improper(box, children, wrapper_type, test=None):
 
     """
     if test is None:
-        test = lambda child: isinstance(child, wrapper_type)
+        def test(child):
+            return isinstance(child, wrapper_type)
     improper = []
     for child in children:
         if test(child):
