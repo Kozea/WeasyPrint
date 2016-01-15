@@ -146,8 +146,8 @@ def sanity_checks(box):
             break
 
     assert any(
-        all(isinstance(child, acceptable_types)
-            or not child.is_in_normal_flow()
+        all(isinstance(child, acceptable_types) or
+            not child.is_in_normal_flow()
             for child in box.children)
         for acceptable_types in acceptable_types_lists
     ), (box, box.children)

@@ -546,11 +546,11 @@ def clip_border_segment(context, enable_hinting, style, width, side,
                 for i in range(0, dashes, 2):
                     i += 0.5  # half dash
                     angle1 = (
-                        ((2 * angle - way) + i * way * dash / chl)
-                        / 4 * math.pi)
+                        ((2 * angle - way) + i * way * dash / chl) /
+                        4 * math.pi)
                     angle2 = (min if way > 0 else max)(
-                        ((2 * angle - way) + (i + 1) * way * dash / chl)
-                        / 4 * math.pi,
+                        ((2 * angle - way) + (i + 1) * way * dash / chl) /
+                        4 * math.pi,
                         angle * math.pi / 2)
                     if side in ('top', 'bottom'):
                         context.move_to(x + px, main_offset + py)
@@ -570,8 +570,8 @@ def clip_border_segment(context, enable_hinting, style, width, side,
                             y + py + way * py * math.tan(angle1))
                     if angle2 == angle * math.pi / 2:
                         offset = (angle1 - angle2) / ((
-                            ((2 * angle - way) + (i + 1) * way * dash / chl)
-                            / 4 * math.pi) - angle1)
+                            ((2 * angle - way) + (i + 1) * way * dash / chl) /
+                            4 * math.pi) - angle1)
                         line += 1
                         break
                 else:

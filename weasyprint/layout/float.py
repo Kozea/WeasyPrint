@@ -133,10 +133,10 @@ def avoid_collisions(context, box, containing_block, outer=True):
         colliding_shapes = [
             shape for shape in excluded_shapes
             if (shape.position_y < position_y <
-                shape.position_y + shape.margin_height())
-            or (shape.position_y < position_y + box_height <
-                shape.position_y + shape.margin_height())
-            or (shape.position_y >= position_y and
+                shape.position_y + shape.margin_height()) or
+            (shape.position_y < position_y + box_height <
+                shape.position_y + shape.margin_height()) or
+            (shape.position_y >= position_y and
                 shape.position_y + shape.margin_height() <=
                 position_y + box_height)
         ]

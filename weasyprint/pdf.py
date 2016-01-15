@@ -718,12 +718,12 @@ def w3c_date_to_pdf(string, attr_name):
         LOGGER.warning('Invalid %s date: %r', attr_name, string)
         return None
     groups = match.groupdict()
-    pdf_date = (groups['year']
-                + (groups['month'] or '')
-                + (groups['day'] or '')
-                + (groups['hour'] or '')
-                + (groups['minute'] or '')
-                + (groups['second'] or ''))
+    pdf_date = (groups['year'] +
+                (groups['month'] or '') +
+                (groups['day'] or '') +
+                (groups['hour'] or '') +
+                (groups['minute'] or '') +
+                (groups['second'] or ''))
     if groups['hour']:
         assert groups['minute']
         if not groups['second']:
