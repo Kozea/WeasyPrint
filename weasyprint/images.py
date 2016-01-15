@@ -16,24 +16,24 @@ from io import BytesIO
 import math
 
 import cairocffi
-cairocffi.install_as_pycairo()  # for CairoSVG
-CAIRO_HAS_MIME_DATA = cairocffi.cairo_version() >= 11000
-
 import cairosvg.parser
 import cairosvg.surface
-assert cairosvg.surface.cairo is cairocffi, (
-    'CairoSVG is using pycairo instead of cairocffi. '
-    'Make sure it is not imported before WeasyPrint.')
+
+from .urls import fetch, URLFetchingError
+from .logger import LOGGER
+from .compat import xrange
 
 try:
     from cairocffi import pixbuf
 except OSError:
     pixbuf = None
 
-from .urls import fetch, URLFetchingError
-from .logger import LOGGER
-from .compat import xrange
+assert cairosvg.surface.cairo is cairocffi, (
+    'CairoSVG is using pycairo instead of cairocffi. '
+    'Make sure it is not imported before WeasyPrint.')
 
+
+CAIRO_HAS_MIME_DATA = cairocffi.cairo_version() >= 11000
 
 # Map values of the image-rendering property to cairo FILTER values:
 # Values are normalized to lower case.
