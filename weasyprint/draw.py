@@ -105,15 +105,7 @@ def draw_page(page, context, enable_hinting):
 def draw_box_background_and_border(context, page, box, enable_hinting):
     draw_background(context, box.background, enable_hinting)
     if isinstance(box, boxes.TableBox):
-        for column_group in box.column_groups:
-            draw_box_background_and_border(
-                context, page, column_group, enable_hinting)
-        for row_group in box.children:
-            draw_background(context, row_group.background, enable_hinting)
-            for row in row_group.children:
-                draw_background(context, row.background, enable_hinting)
-                for cell in row.children:
-                    draw_background(context, cell.background, enable_hinting)
+        draw_table_backgrounds(context, page, box, enable_hinting)
         if box.style.border_collapse == 'separate':
             draw_border(context, box, enable_hinting)
             for row_group in box.children:
@@ -122,10 +114,6 @@ def draw_box_background_and_border(context, page, box, enable_hinting):
                         draw_border(context, cell, enable_hinting)
         else:
             draw_collapsed_borders(context, box, enable_hinting)
-    elif isinstance(box, (boxes.TableColumnGroupBox, boxes.TableRowGroupBox)):
-        for child in box.children:
-            draw_box_background_and_border(
-                context, page, child, enable_hinting)
     else:
         draw_border(context, box, enable_hinting)
 
@@ -284,7 +272,8 @@ def draw_background(context, bg, enable_hinting, clip_box=True):
             context.set_antialias(cairo.ANTIALIAS_NONE)
 
         if clip_box:
-            rounded_box_path(context, bg.layers[-1].rounded_box)
+            for box in bg.layers[-1].clipped_boxes:
+                rounded_box_path(context, box)
             context.clip()
 
         # Background color
@@ -300,6 +289,20 @@ def draw_background(context, bg, enable_hinting, clip_box=True):
         # Paint in reversed order: first layer is "closest" to the viewer.
         for layer in reversed(bg.layers):
             draw_background_image(context, layer, bg.image_rendering)
+
+
+def draw_table_backgrounds(context, page, table, enable_hinting):
+    """Draw the background color and image of the table children."""
+    for column_group in table.column_groups:
+        draw_background(context, column_group.background, enable_hinting)
+        for column in column_group.children:
+            draw_background(context, column.background, enable_hinting)
+    for row_group in table.children:
+        draw_background(context, row_group.background, enable_hinting)
+        for row in row_group.children:
+            draw_background(context, row.background, enable_hinting)
+            for cell in row.children:
+                draw_background(context, cell.background, enable_hinting)
 
 
 def draw_background_image(context, layer, image_rendering):

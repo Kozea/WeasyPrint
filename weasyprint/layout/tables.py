@@ -346,6 +346,15 @@ def table_layout(context, table, max_position_y, skip_stack,
             skip_stack, position_y, max_position_y, page_is_empty)
         return header, new_table_children, footer, end_position_y, resume_at
 
+    def get_column_cells(table, column):
+        """Closure getting the column cells."""
+        return lambda: [
+            cell
+            for row_group in table.children
+            for row in row_group.children
+            for cell in row.children
+            if cell.grid_x == column.grid_x]
+
     header, new_table_children, footer, position_y, resume_at = \
         all_groups_layout()
     table = table.copy_with_children(
@@ -382,6 +391,7 @@ def table_layout(context, table, max_position_y, skip_stack,
                 column.width = 0
                 column.height = 0
             resolve_percentages(group, containing_block=table)
+            column.get_cells = get_column_cells(table, column)
         first = group.children[0]
         last = group.children[-1]
         group.position_x = first.position_x

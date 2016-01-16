@@ -1564,8 +1564,11 @@ def test_tables():
     R = as_pixel(b'\xff\x3f\x3f\xff')
     # rgba(0, 255, 0, 0.5) above #fff
     g = as_pixel(b'\x7f\xff\x7f\xff')
-    # g above r above #fff. Not the same as r above g above #fff
-    G = as_pixel(b'\x7f\xbf\x3f\xff')
+    # r above B above #fff.
+    b = as_pixel(b'\x80\x00\x7f\xff')
+    # r above r above B above #fff.
+    p = as_pixel(b'\xc0\x00\x3f\xff')
+
     assert_pixels('table_borders', 28, 28, [
         _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
         _+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+_,
@@ -1730,74 +1733,144 @@ def test_tables():
         x-td { background: rgba(255, 0, 0, 0.5) }
     '''})
 
-    assert_pixels('table_column_backgrounds', 28, 28, [
-        _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
-        _+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+_,
-        _+B+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+B+_,
-        _+B+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+B+_,
-        _+B+_+_+G+G+G+G+G+G+r+G+G+G+G+G+G+_+g+g+g+g+g+g+_+_+B+_,
-        _+B+_+_+G+G+G+G+G+G+r+G+G+G+G+G+G+_+g+g+g+g+g+g+_+_+B+_,
-        _+B+_+_+G+G+G+G+G+G+r+G+G+G+G+G+G+_+g+g+g+g+g+g+_+_+B+_,
-        _+B+_+_+G+G+G+G+G+G+r+G+G+G+G+G+G+_+g+g+g+g+g+g+_+_+B+_,
-        _+B+_+_+G+G+G+G+G+G+r+G+G+G+G+G+G+_+g+g+g+g+g+g+_+_+B+_,
-        _+B+_+_+G+G+G+G+G+G+r+G+G+G+G+G+G+_+g+g+g+g+g+g+_+_+B+_,
-        _+B+_+_+G+G+G+G+G+G+r+G+G+G+G+G+G+_+g+g+g+g+g+g+_+_+B+_,
-        _+B+_+_+G+G+G+G+G+G+r+G+G+G+G+G+G+_+g+g+g+g+g+g+_+_+B+_,
-        _+B+_+_+G+G+G+G+G+G+r+G+G+G+G+G+G+_+g+g+g+g+g+g+_+_+B+_,
-        _+B+_+_+G+G+G+G+G+G+r+G+G+G+G+G+G+_+g+g+g+g+g+g+_+_+B+_,
-        _+B+_+_+G+G+G+G+G+G+r+G+G+G+G+G+G+_+g+g+g+g+g+g+_+_+B+_,
-        _+B+_+_+G+G+G+G+G+G+r+G+G+G+G+G+G+_+g+g+g+g+g+g+_+_+B+_,
-        _+B+_+_+G+G+G+G+G+G+r+G+G+G+G+G+G+_+g+g+g+g+g+g+_+_+B+_,
-        _+B+_+_+G+G+G+G+G+G+r+G+G+G+G+G+G+_+g+g+g+g+g+g+_+_+B+_,
-        _+B+_+_+G+G+G+G+G+G+r+G+G+G+G+G+G+_+g+g+g+g+g+g+_+_+B+_,
-        _+B+_+_+G+G+G+G+G+G+r+G+G+G+G+G+G+_+g+g+g+g+g+g+_+_+B+_,
-        _+B+_+_+G+G+G+G+G+G+r+G+G+G+G+G+G+_+g+g+g+g+g+g+_+_+B+_,
-        _+B+_+_+G+G+G+G+G+G+r+G+G+G+G+G+G+_+g+g+g+g+g+g+_+_+B+_,
-        _+B+_+_+G+G+G+G+G+G+r+G+G+G+G+G+G+_+g+g+g+g+g+g+_+_+B+_,
-        _+B+_+_+G+G+G+G+G+G+r+G+G+G+G+G+G+_+g+g+g+g+g+g+_+_+B+_,
-        _+B+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+B+_,
-        _+B+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+B+_,
-        _+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+_,
-        _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
-    ], source % {'extra_css': '''
-        x-table { border-color: #00f; table-layout: fixed }
-        x-colgroup { background: rgba(255, 0, 0, 0.5) }
-        x-col { background: rgba(0, 255, 0, 0.5) }
-    '''})
-
     assert_pixels('table_row_backgrounds', 28, 28, [
         _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
         _+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+_,
         _+B+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+B+_,
         _+B+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+B+_,
-        _+B+_+_+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+_+_+B+_,
-        _+B+_+_+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+_+_+B+_,
-        _+B+_+_+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+_+_+B+_,
-        _+B+_+_+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+_+_+B+_,
-        _+B+_+_+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+_+_+B+_,
-        _+B+_+_+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+_+_+B+_,
-        _+B+_+_+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+_+_+B+_,
-        _+B+_+_+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+_+_+B+_,
-        _+B+_+_+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+_+_+B+_,
-        _+B+_+_+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+_+_+B+_,
-        _+B+_+_+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+_+_+B+_,
-        _+B+_+_+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+_+_+B+_,
-        _+B+_+_+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+G+_+_+B+_,
+        _+B+_+_+b+b+b+b+b+b+_+b+b+b+b+b+b+_+b+b+b+b+b+b+_+_+B+_,
+        _+B+_+_+b+b+b+b+b+b+_+b+b+b+b+b+b+_+b+b+b+b+b+b+_+_+B+_,
+        _+B+_+_+b+b+b+b+b+b+_+b+b+b+b+b+b+_+b+b+b+b+b+b+_+_+B+_,
+        _+B+_+_+b+b+b+b+b+b+_+b+b+b+b+b+b+_+b+b+b+b+b+b+_+_+B+_,
+        _+B+_+_+b+b+b+b+b+b+_+b+b+b+b+b+b+_+b+b+b+b+b+b+_+_+B+_,
+        _+B+_+_+b+b+b+b+b+b+_+b+b+b+b+b+b+_+b+b+b+b+b+b+_+_+B+_,
+        _+B+_+_+_+_+_+_+_+_+_+b+b+b+b+b+b+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+_+_+b+b+b+b+b+b+b+p+p+p+p+p+p+_+b+b+b+b+b+b+_+_+B+_,
+        _+B+_+_+b+b+b+b+b+b+b+p+p+p+p+p+p+_+b+b+b+b+b+b+_+_+B+_,
+        _+B+_+_+b+b+b+b+b+b+b+p+p+p+p+p+p+_+b+b+b+b+b+b+_+_+B+_,
+        _+B+_+_+b+b+b+b+b+b+b+p+p+p+p+p+p+_+b+b+b+b+b+b+_+_+B+_,
+        _+B+_+_+b+b+b+b+b+b+b+p+p+p+p+p+p+_+b+b+b+b+b+b+_+_+B+_,
+        _+B+_+_+b+b+b+b+b+b+b+p+p+p+p+p+p+_+b+b+b+b+b+b+_+_+B+_,
         _+B+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+B+_,
-        _+B+_+_+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+_+_+B+_,
-        _+B+_+_+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+_+_+B+_,
-        _+B+_+_+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+_+_+B+_,
-        _+B+_+_+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+_+_+B+_,
-        _+B+_+_+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+_+_+B+_,
-        _+B+_+_+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+g+_+_+B+_,
+        _+B+_+_+r+r+r+r+r+r+_+r+r+r+r+r+r+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+_+_+r+r+r+r+r+r+_+r+r+r+r+r+r+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+_+_+r+r+r+r+r+r+_+r+r+r+r+r+r+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+_+_+r+r+r+r+r+r+_+r+r+r+r+r+r+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+_+_+r+r+r+r+r+r+_+r+r+r+r+r+r+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+_+_+r+r+r+r+r+r+_+r+r+r+r+r+r+_+_+_+_+_+_+_+_+_+B+_,
         _+B+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+B+_,
         _+B+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+B+_,
         _+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+_,
         _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
     ], source % {'extra_css': '''
         x-table { border-color: #00f; table-layout: fixed }
-        x-tbody { background: rgba(255, 0, 0, 0.5) }
-        x-tr { background: rgba(0, 255, 0, 0.5) }
+        x-tbody { background: rgba(0, 0, 255, 1) }
+        x-tr { background: rgba(255, 0, 0, 0.5) }
+    '''})
+
+    assert_pixels('table_column_backgrounds', 28, 28, [
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+_,
+        _+B+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+_+_+b+b+b+b+b+b+_+b+b+b+b+b+b+_+r+r+r+r+r+r+_+_+B+_,
+        _+B+_+_+b+b+b+b+b+b+_+b+b+b+b+b+b+_+r+r+r+r+r+r+_+_+B+_,
+        _+B+_+_+b+b+b+b+b+b+_+b+b+b+b+b+b+_+r+r+r+r+r+r+_+_+B+_,
+        _+B+_+_+b+b+b+b+b+b+_+b+b+b+b+b+b+_+r+r+r+r+r+r+_+_+B+_,
+        _+B+_+_+b+b+b+b+b+b+_+b+b+b+b+b+b+_+r+r+r+r+r+r+_+_+B+_,
+        _+B+_+_+b+b+b+b+b+b+_+b+b+b+b+b+b+_+r+r+r+r+r+r+_+_+B+_,
+        _+B+_+_+_+_+_+_+_+_+_+b+b+b+b+b+b+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+_+_+b+b+b+b+b+b+b+p+p+p+p+p+p+_+r+r+r+r+r+r+_+_+B+_,
+        _+B+_+_+b+b+b+b+b+b+b+p+p+p+p+p+p+_+r+r+r+r+r+r+_+_+B+_,
+        _+B+_+_+b+b+b+b+b+b+b+p+p+p+p+p+p+_+r+r+r+r+r+r+_+_+B+_,
+        _+B+_+_+b+b+b+b+b+b+b+p+p+p+p+p+p+_+r+r+r+r+r+r+_+_+B+_,
+        _+B+_+_+b+b+b+b+b+b+b+p+p+p+p+p+p+_+r+r+r+r+r+r+_+_+B+_,
+        _+B+_+_+b+b+b+b+b+b+b+p+p+p+p+p+p+_+r+r+r+r+r+r+_+_+B+_,
+        _+B+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+_+_+b+b+b+b+b+b+_+b+b+b+b+b+b+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+_+_+b+b+b+b+b+b+_+b+b+b+b+b+b+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+_+_+b+b+b+b+b+b+_+b+b+b+b+b+b+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+_+_+b+b+b+b+b+b+_+b+b+b+b+b+b+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+_+_+b+b+b+b+b+b+_+b+b+b+b+b+b+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+_+_+b+b+b+b+b+b+_+b+b+b+b+b+b+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
+    ], source % {'extra_css': '''
+        x-table { border-color: #00f; table-layout: fixed }
+        x-colgroup { background: rgba(0, 0, 255, 1) }
+        x-col { background: rgba(255, 0, 0, 0.5) }
+    '''})
+
+    assert_pixels('table_borders_and_row_backgrounds', 28, 28, [
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+_,
+        _+B+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+_+_+b+b+b+b+b+b+_+b+b+b+b+b+b+_+b+b+b+b+b+b+_+_+B+_,
+        _+B+_+_+b+B+B+B+B+b+_+b+B+B+B+B+b+_+b+B+B+B+B+b+_+_+B+_,
+        _+B+_+_+b+B+B+B+B+b+_+b+B+B+B+B+b+_+b+B+B+B+B+b+_+_+B+_,
+        _+B+_+_+b+B+B+B+B+b+_+b+B+B+B+B+b+_+b+B+B+B+B+b+_+_+B+_,
+        _+B+_+_+b+B+B+B+B+b+_+b+B+B+B+B+b+_+b+B+B+B+B+b+_+_+B+_,
+        _+B+_+_+b+b+b+b+b+b+_+b+B+B+B+B+b+_+b+b+b+b+b+b+_+_+B+_,
+        _+B+_+_+_+_+_+_+_+_+_+b+B+B+B+B+b+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+_+_+r+r+r+r+r+r+r+p+b+b+b+b+p+_+r+r+r+r+r+r+_+_+B+_,
+        _+B+_+_+r+_+_+_+_+_+_+b+B+B+B+B+p+_+r+_+_+_+_+r+_+_+B+_,
+        _+B+_+_+r+_+_+_+_+_+_+b+B+B+B+B+p+_+r+_+_+_+_+r+_+_+B+_,
+        _+B+_+_+r+_+_+_+_+_+_+b+B+B+B+B+p+_+r+_+_+_+_+r+_+_+B+_,
+        _+B+_+_+r+_+_+_+_+_+_+b+B+B+B+B+p+_+r+_+_+_+_+r+_+_+B+_,
+        _+B+_+_+r+r+r+r+r+r+r+p+p+p+p+p+p+_+r+r+r+r+r+r+_+_+B+_,
+        _+B+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+_+_+r+r+r+r+r+r+_+r+r+r+r+r+r+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+_+_+r+_+_+_+_+r+_+r+_+_+_+_+r+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+_+_+r+_+_+_+_+r+_+r+_+_+_+_+r+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+_+_+r+_+_+_+_+r+_+r+_+_+_+_+r+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+_+_+r+_+_+_+_+r+_+r+_+_+_+_+r+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+_+_+r+r+r+r+r+r+_+r+r+r+r+r+r+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
+    ], source % {'extra_css': '''
+        x-table { border-color: #00f; table-layout: fixed }
+        x-tr:first-child { background: blue }
+        x-td { border-color: rgba(255, 0, 0, 0.5) }
+    '''})
+
+    assert_pixels('table_borders_and_column_backgrounds', 28, 28, [
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
+        _+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+_,
+        _+B+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+_+_+b+b+b+b+b+b+_+r+r+r+r+r+r+_+r+r+r+r+r+r+_+_+B+_,
+        _+B+_+_+b+B+B+B+B+b+_+r+_+_+_+_+r+_+r+_+_+_+_+r+_+_+B+_,
+        _+B+_+_+b+B+B+B+B+b+_+r+_+_+_+_+r+_+r+_+_+_+_+r+_+_+B+_,
+        _+B+_+_+b+B+B+B+B+b+_+r+_+_+_+_+r+_+r+_+_+_+_+r+_+_+B+_,
+        _+B+_+_+b+B+B+B+B+b+_+r+_+_+_+_+r+_+r+_+_+_+_+r+_+_+B+_,
+        _+B+_+_+b+b+b+b+b+b+_+r+_+_+_+_+r+_+r+r+r+r+r+r+_+_+B+_,
+        _+B+_+_+_+_+_+_+_+_+_+r+_+_+_+_+r+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+_+_+b+b+b+b+b+b+b+p+b+b+b+b+p+_+r+r+r+r+r+r+_+_+B+_,
+        _+B+_+_+b+B+B+B+B+B+B+b+B+B+B+B+p+_+r+_+_+_+_+r+_+_+B+_,
+        _+B+_+_+b+B+B+B+B+B+B+b+B+B+B+B+p+_+r+_+_+_+_+r+_+_+B+_,
+        _+B+_+_+b+B+B+B+B+B+B+b+B+B+B+B+p+_+r+_+_+_+_+r+_+_+B+_,
+        _+B+_+_+b+B+B+B+B+B+B+b+B+B+B+B+p+_+r+_+_+_+_+r+_+_+B+_,
+        _+B+_+_+b+b+b+b+b+b+b+p+p+p+p+p+p+_+r+r+r+r+r+r+_+_+B+_,
+        _+B+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+_+_+b+b+b+b+b+b+_+r+r+r+r+r+r+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+_+_+b+B+B+B+B+b+_+r+_+_+_+_+r+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+_+_+b+B+B+B+B+b+_+r+_+_+_+_+r+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+_+_+b+B+B+B+B+b+_+r+_+_+_+_+r+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+_+_+b+B+B+B+B+b+_+r+_+_+_+_+r+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+_+_+b+b+b+b+b+b+_+r+r+r+r+r+r+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+B+_,
+        _+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+_,
+        _+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_,
+    ], source % {'extra_css': '''
+        x-table { border-color: #00f; table-layout: fixed }
+        x-col:first-child { background: blue }
+        x-td { border-color: rgba(255, 0, 0, 0.5) }
     '''})
 
     r = as_pixel(b'\xff\x00\x00\xff')
