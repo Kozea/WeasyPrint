@@ -128,15 +128,15 @@ def layout_background_layer(box, page, resolution, image, size, clip, repeat,
                 box.border_box_y() + height]
     elif isinstance(box, (boxes.TableColumnGroupBox, boxes.TableColumnBox)):
         cells = box.get_cells()
-        print(cells)
         if cells:
             clipped_boxes = [cell.rounded_border_box() for cell in cells]
-            total_width = max(
-                cell.border_box_y() + cell.border_height()
+            max_x = max(
+                cell.border_box_x() + cell.border_width()
                 for cell in cells)
             painting_area = [
                 box.border_box_x(), box.border_box_y(),
-                total_width, box.border_box_y() + box.border_height()]
+                max_x - box.border_box_x(),
+                box.border_box_y() + box.border_height()]
     else:
         painting_area = box_rectangle(box, clip)
         if clip == 'border-box':
