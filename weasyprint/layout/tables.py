@@ -536,21 +536,25 @@ def auto_table_layout(context, box, containing_block):
 
     cb_width, _ = containing_block
     available_width = cb_width - margins
-    adjusted_table_min_content_width = adjust(
-        table, outer=True, width=table_min_content_width)
-    adjusted_table_max_content_width = adjust(
-        table, outer=True, width=table_max_content_width)
 
     if table.width == 'auto':
-        if available_width <= adjusted_table_min_content_width:
+        adjusted_table_min_outer_width = adjust(
+            table, outer=True, width=table_min_content_width)
+        adjusted_table_max_outer_width = adjust(
+            table, outer=True, width=table_max_content_width)
+        if available_width <= adjusted_table_min_outer_width:
             table.width = table_min_content_width
-        elif available_width < adjusted_table_max_content_width:
+        elif available_width < adjusted_table_max_outer_width:
             table.width = available_width
         else:
             table.width = table_max_content_width
     else:
-        if table.width < adjusted_table_min_content_width:
+        if table.width < table_min_content_width:
             table.width = table_min_content_width
+
+    if not grid:
+        table.column_widths = []
+        return
 
     assignatable_width = table.width - total_horizontal_border_spacing
     min_content_guess = column_min_content_widths[:]
@@ -560,7 +564,6 @@ def auto_table_layout(context, box, containing_block):
     guesses = (
         min_content_guess, min_content_percentage_guess,
         min_content_specified_guess, max_content_guess)
-
     for i in range(len(grid)):
         if column_intrinsic_percentages[i]:
             min_content_percentage_guess[i] = max(
@@ -719,7 +722,7 @@ def auto_table_layout(context, box, containing_block):
                 table.column_widths[i] += excess_width / len(columns)
             return
 
-        if table_min_content_width <= table.width - excess_width:
+        if table_min_content_width < table.width - excess_width:
             # Reduce the width of the size from the excess width that has not
             # been distributed.
             table.width -= excess_width
