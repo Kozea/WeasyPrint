@@ -440,6 +440,11 @@ def inline_block_box_layout(context, box, position_x, skip_stack,
         box.margin_left = 0
     if box.margin_right == 'auto':
         box.margin_right = 0
+    # http://www.w3.org/TR/CSS21/visudet.html#block-root-margin
+    if box.margin_top == 'auto':
+        box.margin_top = 0
+    if box.margin_bottom == 'auto':
+        box.margin_bottom = 0
 
     inline_block_width(box, context, containing_block)
 
