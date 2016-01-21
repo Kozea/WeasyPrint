@@ -108,15 +108,16 @@ def _block_content_width(context, box, function, outer):
 
 def adjust(box, outer, width, left=True, right=True):
     """Add paddings, borders and margins to ``width`` when ``outer`` is set."""
-    if not outer:
-        return width
-
     min_width = box.style.min_width
     max_width = box.style.max_width
     min_width = min_width.value if min_width.unit != '%' else 0
     max_width = max_width.value if max_width.unit != '%' else float('inf')
 
     fixed = max(min_width, min(width, max_width))
+
+    if not outer:
+        return fixed
+
     percentages = 0
 
     for value in (
