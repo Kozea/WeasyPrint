@@ -1313,7 +1313,7 @@ def test_auto_layout_table():
               <col />
               <col />
             </colgroup>
-            <colgroup style="width: 400px">
+            <colgroup style="width: 200px">
               <col />
               <col />
             </colgroup>
@@ -1334,11 +1334,11 @@ def test_auto_layout_table():
     row_group, = table.children
     row, = row_group.children
     td_1, td_2, td_3, td_4 = row.children
-    assert td_1.width == 100
-    assert td_2.width == 100
-    assert td_3.width == 400
-    assert td_4.width == 400
-    assert table.width == 1000
+    assert td_1.width == 50
+    assert td_2.width == 50
+    assert td_3.width == 200
+    assert td_4.width == 200
+    assert table.width == 500
 
     # Wrong column group width
     page, = parse('''
