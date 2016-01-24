@@ -521,15 +521,9 @@ def auto_table_layout(context, box, containing_block):
     table = box.get_wrapped_table()
     (table_min_content_width, table_max_content_width,
      column_min_content_widths, column_max_content_widths,
-     column_intrinsic_percentages, constrainedness, grid) = \
+     column_intrinsic_percentages, constrainedness,
+     total_horizontal_border_spacing, grid) = \
         table_and_columns_preferred_widths(context, box)
-
-    if table.style.border_collapse == 'separate':
-        total_horizontal_border_spacing = (
-            table.style.border_spacing[0] *
-            (len(column_max_content_widths) + 1))
-    else:
-        total_horizontal_border_spacing = 0
 
     margins = 0
     if box.margin_left != 'auto':

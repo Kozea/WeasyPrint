@@ -276,7 +276,8 @@ def table_and_columns_preferred_widths(context, box, outer=True):
     The tuple returned is
     ``(table_min_content_width, table_max_content_width,
        column_min_content_widths, column_max_content_widths,
-       column_intrinsic_percentages, constrainedness, grid)``
+       column_intrinsic_percentages, constrainedness,
+       total_horizontal_border_spacing, grid)``
 
     http://dbaron.org/css/intrinsic/
 
@@ -292,7 +293,7 @@ def table_and_columns_preferred_widths(context, box, outer=True):
     for row_group in table.children:
         for row in row_group.children:
             for cell in row.children:
-                grid_width = max(cell.grid_x + 1, grid_width)
+                grid_width = max(cell.grid_x + cell.colspan, grid_width)
                 grid_height = max(row_number + cell.rowspan, grid_height)
             row_number += 1
     grid = [[None] * grid_width for i in range(grid_height)]
@@ -303,14 +304,24 @@ def table_and_columns_preferred_widths(context, box, outer=True):
                 grid[row_number][cell.grid_x] = cell
             row_number += 1
 
+    zipped_grid = list(zip(*grid))
+
+    # Define the total horizontal border spacing
+    if table.style.border_collapse == 'separate' and grid_width > 0:
+        total_horizontal_border_spacing = (
+            table.style.border_spacing[0] *
+            (1 + len([column for column in zipped_grid if any(column)])))
+    else:
+        total_horizontal_border_spacing = 0
+
     if grid_width == 0 or grid_height == 0:
         table.children = []
         min_width = block_min_content_width(context, table)
         max_width = block_max_content_width(context, table)
-        TABLE_CACHE[table] = result = min_width, max_width, [], [], [], [], []
+        TABLE_CACHE[table] = result = (
+            min_width, max_width, [], [], [], [],
+            total_horizontal_border_spacing, [])
         return result
-
-    zipped_grid = list(zip(*grid))
 
     column_groups = [None] * grid_width
     columns = [None] * grid_width
@@ -325,14 +336,6 @@ def table_and_columns_preferred_widths(context, box, outer=True):
         else:
             continue
         break
-
-    # Define the total horizontal border spacing
-    if table.style.border_collapse == 'separate' and grid_width > 0:
-        total_horizontal_border_spacing = (
-            table.style.border_spacing[0] *
-            (1 + len([column for column in zipped_grid if any(column)])))
-    else:
-        total_horizontal_border_spacing = 0
 
     # Define the intermediate content widths
     min_content_widths = [0 for i in range(grid_width)]
@@ -507,7 +510,7 @@ def table_and_columns_preferred_widths(context, box, outer=True):
     result = (
         table_min_content_width, table_max_content_width,
         min_content_widths, max_content_widths, intrinsic_percentages,
-        constrainedness, zipped_grid)
+        constrainedness, total_horizontal_border_spacing, zipped_grid)
     TABLE_CACHE[table] = result
     return result
 
