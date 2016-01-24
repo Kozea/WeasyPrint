@@ -111,7 +111,8 @@ def draw_box_background_and_border(context, page, box, enable_hinting):
             for row_group in box.children:
                 for row in row_group.children:
                     for cell in row.children:
-                        draw_border(context, cell, enable_hinting)
+                        if cell.style.empty_cells == 'show' or not cell.empty:
+                            draw_border(context, cell, enable_hinting)
         else:
             draw_collapsed_borders(context, box, enable_hinting)
     else:
@@ -302,7 +303,9 @@ def draw_table_backgrounds(context, page, table, enable_hinting):
         for row in row_group.children:
             draw_background(context, row.background, enable_hinting)
             for cell in row.children:
-                draw_background(context, cell.background, enable_hinting)
+                if table.style.border_collapse == 'collapse' or (
+                        cell.style.empty_cells == 'show' or not cell.empty):
+                    draw_background(context, cell.background, enable_hinting)
 
 
 def draw_background_image(context, layer, image_rendering):

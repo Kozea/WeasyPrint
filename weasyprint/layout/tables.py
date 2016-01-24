@@ -128,6 +128,9 @@ def table_layout(context, table, max_position_y, skip_stack,
                     page_is_empty=True,
                     absolute_boxes=absolute_boxes,
                     fixed_boxes=fixed_boxes)
+                cell.empty = not any(
+                    child.is_floated() or child.is_in_normal_flow()
+                    for child in cell.children)
                 cell.content_height = cell.height
                 if cell.computed_height != 'auto':
                     cell.height = max(cell.height, cell.computed_height)
