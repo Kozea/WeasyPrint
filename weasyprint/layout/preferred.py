@@ -304,6 +304,7 @@ def table_and_columns_preferred_widths(context, box, outer=True):
             row_number += 1
 
     if grid_width == 0 or grid_height == 0:
+        table.children = []
         min_width = block_min_content_width(context, table)
         max_width = block_max_content_width(context, table)
         TABLE_CACHE[table] = result = min_width, max_width, [], [], [], [], []
