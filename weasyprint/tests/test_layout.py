@@ -912,9 +912,9 @@ def test_auto_layout_table():
     assert table_wrapper.position_x == 0
     assert table.position_x == 0
     assert td_11.position_x == td_21.position_x == 1  # spacing
-    assert td_11.width == td_21.width == 5  # 4 + (width - pmw) * 1 / 10
-    assert td_12.position_x == 7  # 1 + 5 + sp
-    assert td_12.width == 13  # 4 + (width - pmw) * 9 / 10
+    assert td_11.width == td_21.width == 4  # minimum width
+    assert td_12.position_x == 6  # 1 + 5 + sp
+    assert td_12.width == 14  # available width
     assert table.width == 21
 
     page, = parse('''
@@ -962,9 +962,9 @@ def test_auto_layout_table():
     assert table_wrapper.position_x == 0
     assert table.position_x == 5  # 0 + margin-left
     assert td_1.position_x == 15  # 5 + border-spacing
-    assert td_1.width == 30  # 20 + ((120 - 20 - 40 - 3 * sp) * 1 / 3)
-    assert td_2.position_x == 55  # 15 + 30 + border-spacing
-    assert td_2.width == 60  # 40 + ((120 - 20 - 40 - 3 * sp) * 2 / 3)
+    assert td_1.width == 20  # fixed
+    assert td_2.position_x == 45  # 15 + 20 + border-spacing
+    assert td_2.width == 70  # 120 - 3 * border-spacing - 20
     assert table.width == 120
 
     page, = parse('''
@@ -1021,9 +1021,9 @@ def test_auto_layout_table():
     assert table_wrapper.position_x == 0
     assert table.position_x == 10  # 0 + margin-left
     assert td_1.position_x == 10
-    assert td_1.width == 5  # 4 + ((14 - 4 - 8) * 8 / 16)
-    assert td_2.position_x == 15  # 10 + 5
-    assert td_2.width == 9  # 8 + ((14 - 4 - 8) * 8 / 16)
+    assert td_1.width == 6  # 14 - 8
+    assert td_2.position_x == 16  # 10 + 6
+    assert td_2.width == 8  # maximum of the minimum widths for the column
     assert table.width == 14
 
     page, = parse('''
@@ -1055,14 +1055,14 @@ def test_auto_layout_table():
     td_31, td_32, td_33 = row3.children
     assert table_wrapper.position_x == 0
     assert table.position_x == 0
-    assert td_11.width == 16  # 10 + (22 - 10) / 2
-    assert td_12.width == 22  # (0 + (22 - 10) / 2) + 8 + 8
-    assert td_21.width == 22
-    assert td_22.width == 8
-    assert td_23.width == 8
-    assert td_31.width == 16
-    assert td_32.width == 6
-    assert td_33.width == 16
+    assert td_11.width == 10  # fixed
+    assert td_12.width == 28  # 38 - 10
+    assert td_21.width == 22  # fixed
+    assert td_22.width == 8  # fixed
+    assert td_23.width == 8  # fixed
+    assert td_31.width == 10  # same as first line
+    assert td_32.width == 12  # 22 - 10
+    assert td_33.width == 16  # 8 + 8 from second line
     assert table.width == 38
 
     page, = parse('''
@@ -1094,14 +1094,14 @@ def test_auto_layout_table():
     td_31, td_32, td_33 = row3.children
     assert table_wrapper.position_x == 0
     assert table.position_x == 0
-    assert td_11.width == 16  # 10 + (22 - 10) / 2
-    assert td_12.width == 42  # (0 + (22 - 10) / 2) + 8 + 8
-    assert td_21.width == 32
-    assert td_22.width == 8
-    assert td_23.width == 8
-    assert td_31.width == 16
-    assert td_32.width == 6
-    assert td_33.width == 26
+    assert td_11.width == 10  # fixed
+    assert td_12.width == 48  # 32 - 10 - sp + 2 * 8 + 2 * sp
+    assert td_21.width == 32  # fixed
+    assert td_22.width == 8  # fixed
+    assert td_23.width == 8  # fixed
+    assert td_31.width == 10  # same as first line
+    assert td_32.width == 12  # 32 - 10 - sp
+    assert td_33.width == 26  # 2 * 8 + sp
     assert table.width == 88
 
     # Regression tests: these used to crash
@@ -1120,8 +1120,8 @@ def test_auto_layout_table():
     row_group, = table.children
     row, = row_group.children
     td_1, td_2 = row.children
-    assert td_1.width == 20
-    assert td_2.width == 10
+    assert td_1.width == 20  # 2 / 3 * 30
+    assert td_2.width == 10  # 1 / 3 * 30
     assert table.width == 30
 
     page, = parse('''
@@ -1140,7 +1140,7 @@ def test_auto_layout_table():
     row_group, = table.children
     row, = row_group.children
     td_1, = row.children
-    assert td_1.width == 10  # TODO: should this be 20?
+    assert td_1.width == 20
     assert table.width == 20
 
     page, = parse('''
@@ -1155,8 +1155,8 @@ def test_auto_layout_table():
     table, = table_wrapper.children
     column_group, = table.column_groups
     column_1, column_2 = column_group.children
-    assert column_1.width == 10
-    assert column_2.width == 10
+    assert column_1.width == 0
+    assert column_2.width == 0
 
     # Absolute table
     page, = parse('''
@@ -1174,8 +1174,8 @@ def test_auto_layout_table():
     row_group, = table.children
     row, = row_group.children
     td_1, td_2 = row.children
-    assert td_1.width == 20
-    assert td_2.width == 10
+    assert td_1.width == 20  # 2 / 3 * 30
+    assert td_2.width == 10  # 1 / 3 * 30
     assert table.width == 30
 
     # With border-collapse
@@ -1267,19 +1267,19 @@ def test_auto_layout_table():
     row_group, = table.children
     row, = row_group.children
     td_1, td_2, td_3 = row.children
-    assert td_1.width == 50
-    assert td_2.width == 50
+    assert td_1.width == 100
+    assert td_2.width == 100
     assert td_3.width == 100
-    assert table.width == 200
+    assert table.width == 300
 
-    # Column group width as percentage
+    # Fixed-width table with column group with widths as percentages and pixels
     page, = parse('''
-        <table style="width: 200px">
+        <table style="width: 500px">
             <colgroup style="width: 100px">
               <col />
               <col />
             </colgroup>
-            <colgroup style="width: 50%">
+            <colgroup style="width: 30%">
               <col />
               <col />
             </colgroup>
@@ -1300,16 +1300,50 @@ def test_auto_layout_table():
     row_group, = table.children
     row, = row_group.children
     td_1, td_2, td_3, td_4 = row.children
+    assert td_1.width == 100
+    assert td_2.width == 100
+    assert td_3.width == 150
+    assert td_4.width == 150
+    assert table.width == 500
+
+    # Auto-width table with column group with widths as percentages and pixels
+    page, = parse('''
+        <table>
+            <colgroup style="width: 10%">
+              <col />
+              <col />
+            </colgroup>
+            <colgroup style="width: 200px">
+              <col />
+              <col />
+            </colgroup>
+            <tbody>
+              <tr>
+                <td>a a</td>
+                <td>a b</td>
+                <td>a c</td>
+                <td>a d</td>
+              </tr>
+            </tbody>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2, td_3, td_4 = row.children
     assert td_1.width == 50
     assert td_2.width == 50
-    assert td_3.width == 50
-    assert td_4.width == 50
-    assert table.width == 200
+    assert td_3.width == 200
+    assert td_4.width == 200
+    assert table.width == 500
 
     # Wrong column group width
     page, = parse('''
         <table style="width: 200px">
-            <colgroup style="width: 80%">
+            <colgroup style="width: 20%">
               <col />
               <col />
             </colgroup>
@@ -1393,6 +1427,151 @@ def test_auto_layout_table():
             <td style="width: 50%">
         </table>
     ''')
+
+    # Cell width as percentage in auto-width table
+    page, = parse('''
+        <div style="width: 100px">
+            <table>
+                <tbody>
+                    <tr>
+                        <td>a a a a a a a a</td>
+                        <td style="width: 30%">a a a a a a a a</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    table_wrapper, = div.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2 = row.children
+    assert td_1.width == 70
+    assert td_2.width == 30
+    assert table.width == 100
+
+    # Cell width as percentage in auto-width table
+    page, = parse('''
+        <table>
+            <tbody>
+                <tr>
+                    <td style="width: 70px">a a a a a a a a</td>
+                    <td style="width: 30%">a a a a a a a a</td>
+                </tr>
+            </tbody>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2 = row.children
+    assert td_1.width == 70
+    assert td_2.width == 30
+    assert table.width == 100
+
+    # Cell width as percentage on colspan cell in auto-width table
+    page, = parse('''
+        <div style="width: 100px">
+            <table>
+                <tbody>
+                    <tr>
+                        <td>a a a a a a a a</td>
+                        <td style="width: 30%" colspan=2>a a a a a a a a</td>
+                        <td>a a a a a a a a</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    table_wrapper, = div.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2, td_3 = row.children
+    assert td_1.width == 35
+    assert td_2.width == 30
+    assert td_3.width == 35
+    assert table.width == 100
+
+    # Cells widths as percentages on normal and colspan cells
+    page, = parse('''
+        <div style="width: 100px">
+            <table>
+                <tbody>
+                    <tr>
+                        <td>a a a a a a a a</td>
+                        <td style="width: 30%" colspan=2>a a a a a a a a</td>
+                        <td>a a a a a a a a</td>
+                        <td style="width: 40%">a a a a a a a a</td>
+                        <td>a a a a a a a a</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    table_wrapper, = div.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2, td_3, td_4, td_5 = row.children
+    assert td_1.width == 10
+    assert td_2.width == 30
+    assert td_3.width == 10
+    assert td_4.width == 40
+    assert td_5.width == 10
+    assert table.width == 100
+
+    # Cells widths as percentage on multiple lines
+    page, = parse('''
+        <div style="width: 1000px">
+            <table>
+                <tbody>
+                    <tr>
+                        <td>a a a a a a a a</td>
+                        <td style="width: 30%">a a a a a a a a</td>
+                        <td>a a a a a a a a</td>
+                        <td style="width: 40%">a a a a a a a a</td>
+                        <td>a a a a a a a a</td>
+                    </tr>
+                    <tr>
+                        <td style="width: 31%" colspan=2>a a a a a a a a</td>
+                        <td>a a a a a a a a</td>
+                        <td style="width: 42%" colspan=2>a a a a a a a a</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    table_wrapper, = div.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row_1, row_2 = row_group.children
+    td_11, td_12, td_13, td_14, td_15 = row_1.children
+    td_21, td_22, td_23 = row_2.children
+    assert td_11.width == 10  # 31% - 30%
+    assert td_12.width == 300  # 30%
+    assert td_13.width == 270  # 1000 - 31% - 42%
+    assert td_14.width == 400  # 40%
+    assert td_15.width == 20  # 42% - 2%
+    assert td_21.width == 310  # 31%
+    assert td_22.width == 270  # 1000 - 31% - 42%
+    assert td_23.width == 420  # 42%
+    assert table.width == 1000
 
 
 @assert_no_logs

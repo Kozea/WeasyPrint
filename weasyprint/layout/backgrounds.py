@@ -22,7 +22,7 @@ Background = namedtuple('Background', 'color, layers, image_rendering')
 BackgroundLayer = namedtuple(
     'BackgroundLayer',
     'image, size, position, repeat, unbounded, '
-    'painting_area, positioning_area, rounded_box')
+    'painting_area, positioning_area, clipped_boxes')
 
 
 def box_rectangle(box, which_rectangle):
@@ -96,25 +96,62 @@ def percentage(value, refer_to):
 def layout_background_layer(box, page, resolution, image, size, clip, repeat,
                             origin, position, attachment):
 
-    if box is not page:
-        painting_area = box_rectangle(box, clip)
-        if clip == 'border-box':
-            rounded_box = box.rounded_border_box()
-        elif clip == 'padding-box':
-            rounded_box = box.rounded_padding_box()
-        else:
-            assert clip == 'content-box', clip
-            rounded_box = box.rounded_content_box()
-    else:
+    # TODO: respect box-sizing for table cells?
+    clipped_boxes = []
+    painting_area = 0, 0, 0, 0
+    if box is page:
         painting_area = 0, 0, page.margin_width(), page.margin_height()
         # XXX: how does border-radius work on pages?
-        rounded_box = box.rounded_border_box()
+        clipped_boxes = [box.rounded_border_box()]
+    elif isinstance(box, boxes.TableRowGroupBox):
+        clipped_boxes = []
+        total_height = 0
+        for row in box.children:
+            if row.children:
+                clipped_boxes += [
+                    cell.rounded_border_box() for cell in row.children]
+                total_height = max(total_height, max(
+                    cell.border_box_y() + cell.border_height()
+                    for cell in row.children))
+        painting_area = [
+            box.border_box_x(), box.border_box_y(),
+            box.border_box_x() + box.border_width(), total_height]
+    elif isinstance(box, boxes.TableRowBox):
+        if box.children:
+            clipped_boxes = [
+                cell.rounded_border_box() for cell in box.children]
+            height = max(
+                cell.border_height() for cell in box.children)
+            painting_area = [
+                box.border_box_x(), box.border_box_y(),
+                box.border_box_x() + box.border_width(),
+                box.border_box_y() + height]
+    elif isinstance(box, (boxes.TableColumnGroupBox, boxes.TableColumnBox)):
+        cells = box.get_cells()
+        if cells:
+            clipped_boxes = [cell.rounded_border_box() for cell in cells]
+            max_x = max(
+                cell.border_box_x() + cell.border_width()
+                for cell in cells)
+            painting_area = [
+                box.border_box_x(), box.border_box_y(),
+                max_x - box.border_box_x(),
+                box.border_box_y() + box.border_height()]
+    else:
+        painting_area = box_rectangle(box, clip)
+        if clip == 'border-box':
+            clipped_boxes = [box.rounded_border_box()]
+        elif clip == 'padding-box':
+            clipped_boxes = [box.rounded_padding_box()]
+        else:
+            assert clip == 'content-box', clip
+            clipped_boxes = [box.rounded_content_box()]
 
     if image is None or 0 in image.get_intrinsic_size(1):
         return BackgroundLayer(
             image=None, unbounded=(box is page), painting_area=painting_area,
             size='unused', position='unused', repeat='unused',
-            positioning_area='unused', rounded_box=box.rounded_border_box())
+            positioning_area='unused', clipped_boxes=clipped_boxes)
 
     if attachment == 'fixed':
         # Initial containing block
@@ -177,7 +214,7 @@ def layout_background_layer(box, page, resolution, image, size, clip, repeat,
         unbounded=(box is page),
         painting_area=painting_area,
         positioning_area=positioning_area,
-        rounded_box=rounded_box)
+        clipped_boxes=clipped_boxes)
 
 
 def set_canvas_background(page):
