@@ -523,7 +523,7 @@ def auto_table_layout(context, box, containing_block):
      column_min_content_widths, column_max_content_widths,
      column_intrinsic_percentages, constrainedness,
      total_horizontal_border_spacing, grid) = \
-        table_and_columns_preferred_widths(context, box)
+        table_and_columns_preferred_widths(context, box, outer=False)
 
     margins = 0
     if box.margin_left != 'auto':
@@ -535,13 +535,9 @@ def auto_table_layout(context, box, containing_block):
     available_width = cb_width - margins
 
     if table.width == 'auto':
-        adjusted_table_min_outer_width = adjust(
-            table, outer=True, width=table_min_content_width)
-        adjusted_table_max_outer_width = adjust(
-            table, outer=True, width=table_max_content_width)
-        if available_width <= adjusted_table_min_outer_width:
+        if available_width <= table_min_content_width:
             table.width = table_min_content_width
-        elif available_width < adjusted_table_max_outer_width:
+        elif available_width < table_max_content_width:
             table.width = available_width
         else:
             table.width = table_max_content_width

@@ -49,8 +49,7 @@ def min_content_width(context, box, outer=True):
             boxes.BlockContainerBox, boxes.TableColumnBox,
             boxes.TableColumnGroupBox)):
         if box.is_table_wrapper:
-            return table_and_columns_preferred_widths(
-                context, box, outer)[0]
+            return table_and_columns_preferred_widths(context, box, outer)[1]
         else:
             return block_min_content_width(context, box, outer)
     elif isinstance(box, (boxes.InlineBox, boxes.LineBox)):
@@ -74,8 +73,7 @@ def max_content_width(context, box, outer=True):
             boxes.BlockContainerBox, boxes.TableColumnBox,
             boxes.TableColumnGroupBox)):
         if box.is_table_wrapper:
-            return table_and_columns_preferred_widths(
-                context, box, outer)[1]
+            return table_and_columns_preferred_widths(context, box, outer)[1]
         else:
             return block_max_content_width(context, box, outer)
     elif isinstance(box, (boxes.InlineBox, boxes.LineBox)):
@@ -93,7 +91,7 @@ def _block_content_width(context, box, function, outer):
     width = box.style.width
     if width == 'auto' or width.unit == '%':
         # "percentages on the following properties are treated instead as
-        #  though they were the following: width: auto"
+        # though they were the following: width: auto"
         # http://dbaron.org/css/intrinsic/#outer-intrinsic
         children_widths = [
             function(context, child, outer=True) for child in box.children
@@ -124,12 +122,6 @@ def adjust(box, outer, width, left=True, right=True):
         (['margin_left', 'padding_left'] if left else []) +
         (['margin_right', 'padding_right'] if right else [])
     ):
-        # Padding and border are set on the table, not on the wrapper
-        # http://www.w3.org/TR/CSS21/tables.html#model
-        # TODO: clean this horrible hack!
-        if box.is_table_wrapper and value == 'padding_left':
-            box = box.get_wrapped_table()
-
         style_value = box.style[value]
         if style_value != 'auto':
             if style_value.unit == 'px':
@@ -506,6 +498,19 @@ def table_and_columns_preferred_widths(context, box, outer=True):
                     cell.style.width.unit != '%'):
                 constrainedness[i] = True
                 break
+
+    if table.style.width != 'auto' and table.style.width.unit == 'px':
+        # "percentages on the following properties are treated instead as
+        # though they were the following: width: auto"
+        # http://dbaron.org/css/intrinsic/#outer-intrinsic
+        table_min_width = table_max_width = table.style.width.value
+    else:
+        table_min_width = table_min_content_width
+        table_max_width = table_max_content_width
+    table_min_content_width = max(
+        adjust(table, outer, table_min_width), table_min_content_width)
+    table_max_content_width = max(
+        adjust(table, outer, table_max_width), table_max_content_width)
 
     result = (
         table_min_content_width, table_max_content_width,
