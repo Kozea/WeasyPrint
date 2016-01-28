@@ -17,8 +17,7 @@ from ..logger import LOGGER
 from ..formatting_structure import boxes
 from ..css.properties import Dimension
 from .percentages import resolve_percentages, resolve_one_percentage
-from .preferred import (
-    adjust, table_and_columns_preferred_widths, max_content_width)
+from .preferred import table_and_columns_preferred_widths, max_content_width
 
 
 def table_layout(context, table, max_position_y, skip_stack,
