@@ -592,7 +592,9 @@ def auto_table_layout(context, box, containing_block):
         # Distribute available width to columns
         # http://dbaron.org/css/intrinsic/#distributetocols
         table.column_widths = max_content_guess
-        excess_width = assignable_width - sum(max_content_guess)
+        excess_width = (
+            assignable_width - sum(max_content_guess) -
+            table.padding_left - table.padding_right)
 
         # First group
         columns = [
