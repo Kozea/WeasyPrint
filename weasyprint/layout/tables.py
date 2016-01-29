@@ -202,7 +202,7 @@ def table_layout(context, table, max_position_y, skip_stack,
                         for child in cell.children:
                             child.translate(dy=vertical_align_shift)
 
-            next_position_y = position_y + row.height + border_spacing_y
+            next_position_y = row.position_y + row.height + border_spacing_y
             # Break if this row overflows the page, unless there is no
             # other content on the page.
             if next_position_y > max_position_y and not page_is_empty:
@@ -530,9 +530,10 @@ def auto_table_layout(context, box, containing_block):
         margins += box.margin_left
     if box.margin_right != 'auto':
         margins += box.margin_right
+    paddings = table.padding_left + table.padding_right
 
     cb_width, _ = containing_block
-    available_width = cb_width - margins
+    available_width = cb_width - margins - paddings
 
     if table.width == 'auto':
         if available_width <= table_min_content_width:
@@ -593,9 +594,7 @@ def auto_table_layout(context, box, containing_block):
         # Distribute available width to columns
         # http://dbaron.org/css/intrinsic/#distributetocols
         table.column_widths = max_content_guess
-        excess_width = (
-            assignable_width - sum(max_content_guess) -
-            table.padding_left - table.padding_right)
+        excess_width = assignable_width - sum(max_content_guess)
 
         # First group
         columns = [

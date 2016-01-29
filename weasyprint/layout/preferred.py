@@ -49,7 +49,7 @@ def min_content_width(context, box, outer=True):
             boxes.BlockContainerBox, boxes.TableColumnBox,
             boxes.TableColumnGroupBox)):
         if box.is_table_wrapper:
-            return table_and_columns_preferred_widths(context, box, outer)[1]
+            return table_and_columns_preferred_widths(context, box, outer)[0]
         else:
             return block_min_content_width(context, box, outer)
     elif isinstance(box, (boxes.InlineBox, boxes.LineBox)):
@@ -277,7 +277,7 @@ def table_and_columns_preferred_widths(context, box, outer=True):
     table = box.get_wrapped_table()
     result = TABLE_CACHE.get(table)
     if result:
-        return result
+        return result[outer]
 
     # Create the grid
     grid_width, grid_height = 0, 0
@@ -308,12 +308,20 @@ def table_and_columns_preferred_widths(context, box, outer=True):
 
     if grid_width == 0 or grid_height == 0:
         table.children = []
-        min_width = block_min_content_width(context, table)
-        max_width = block_max_content_width(context, table)
-        TABLE_CACHE[table] = result = (
-            min_width, max_width, [], [], [], [],
-            total_horizontal_border_spacing, [])
-        return result
+        min_width = block_min_content_width(context, table, outer=False)
+        max_width = block_max_content_width(context, table, outer=False)
+        outer_min_width = adjust(
+            box, outer=True, width=block_min_content_width(
+                context, table, outer=True))
+        outer_max_width = adjust(
+            box, outer=True, width=block_max_content_width(
+                context, table, outer=True))
+        result = ([], [], [], [], total_horizontal_border_spacing, [])
+        TABLE_CACHE[table] = result = {
+            False: (min_width, max_width) + result,
+            True: (outer_min_width, outer_max_width) + result,
+        }
+        return result[outer]
 
     column_groups = [None] * grid_width
     columns = [None] * grid_width
@@ -507,17 +515,32 @@ def table_and_columns_preferred_widths(context, box, outer=True):
     else:
         table_min_width = table_min_content_width
         table_max_width = table_max_content_width
-    table_min_content_width = max(
-        adjust(table, outer, table_min_width), table_min_content_width)
-    table_max_content_width = max(
-        adjust(table, outer, table_max_width), table_max_content_width)
+
+    table_min_content_width = adjust(
+        table, outer=False,
+        width=max(table_min_width, table_min_content_width))
+    table_max_content_width = adjust(
+        table, outer=False,
+        width=max(table_max_width, table_max_content_width))
+    table_outer_min_content_width = adjust(
+        box, outer=True, width=adjust(
+            table, outer=True,
+            width=max(table_min_width, table_min_content_width)))
+    table_outer_max_content_width = adjust(
+        box, outer=True, width=adjust(
+            table, outer=True,
+            width=max(table_max_width, table_max_content_width)))
 
     result = (
-        table_min_content_width, table_max_content_width,
         min_content_widths, max_content_widths, intrinsic_percentages,
         constrainedness, total_horizontal_border_spacing, zipped_grid)
-    TABLE_CACHE[table] = result
-    return result
+    TABLE_CACHE[table] = result = {
+        False: (table_min_content_width, table_max_content_width) + result,
+        True: (
+            (table_outer_min_content_width, table_outer_max_content_width) +
+            result),
+    }
+    return result[outer]
 
 
 def replaced_min_content_width(box, outer=True):
