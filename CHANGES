@@ -1,6 +1,30 @@
 WeasyPrint changelog
 ====================
 
+Version 0.26
+------------
+
+Released on 2016-01-29.
+
+New features:
+
+* Support the `empty-cells` attribute.
+* Respect table, column and cell widths.
+
+Bug fixes:
+
+* `#172: <https://github.com/Kozea/WeasyPrint/issues/172>`_:
+  Unable to set table column width on tables td's.
+* `#151: <https://github.com/Kozea/WeasyPrint/issues/151>`_:
+  Table background colour bleeds beyond table cell boundaries.
+* `#260: <https://github.com/Kozea/WeasyPrint/issues/260>`_:
+  TypeError: unsupported operand type(s) for +: 'float' and 'str'.
+* `#288: <https://github.com/Kozea/WeasyPrint/issues/288>`_:
+  Unwanted line-breaks in bold text.
+* `#286: <https://github.com/Kozea/WeasyPrint/issues/286>`_:
+  AttributeError: 'Namespace' object has no attribute 'attachments'.
+
+
 Version 0.25
 ------------
 
