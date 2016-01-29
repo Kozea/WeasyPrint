@@ -164,14 +164,15 @@ def table_layout(context, table, max_position_y, skip_stack,
                 ending_cells_by_row[cell.rowspan - 1].append(cell)
             ending_cells = ending_cells_by_row.pop(0)
             if ending_cells:  # in this row
-                row_bottom_y = max(
-                    cell.position_y + cell.border_height()
-                    for cell in ending_cells)
                 if row.height == 'auto':
+                    row_bottom_y = max(
+                        cell.position_y + cell.border_height()
+                        for cell in ending_cells)
                     row.height = row_bottom_y - row.position_y
                 else:
                     row.height = max(row.height, max(
                         row_cell.height for row_cell in ending_cells))
+                    row_bottom_y = cell.position_y + row.height
             else:
                 row_bottom_y = row.position_y
                 row.height = 0
