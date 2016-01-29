@@ -548,7 +548,7 @@ def auto_table_layout(context, box, containing_block):
         table.column_widths = []
         return
 
-    assignatable_width = table.width - total_horizontal_border_spacing
+    assignable_width = table.width - total_horizontal_border_spacing
     min_content_guess = column_min_content_widths[:]
     min_content_percentage_guess = column_min_content_widths[:]
     min_content_specified_guess = column_min_content_widths[:]
@@ -559,32 +559,32 @@ def auto_table_layout(context, box, containing_block):
     for i in range(len(grid)):
         if column_intrinsic_percentages[i]:
             min_content_percentage_guess[i] = max(
-                column_intrinsic_percentages[i] * assignatable_width / 100.,
+                column_intrinsic_percentages[i] * assignable_width / 100.,
                 column_min_content_widths[i])
             min_content_specified_guess[i] = min_content_percentage_guess[i]
             max_content_guess[i] = min_content_percentage_guess[i]
         elif constrainedness[i]:
             min_content_specified_guess[i] = column_min_content_widths[i]
 
-    if assignatable_width <= sum(max_content_guess):
+    if assignable_width <= sum(max_content_guess):
         for guess in guesses:
-            if sum(guess) <= assignatable_width:
+            if sum(guess) <= assignable_width:
                 lower_guess = guess
             else:
                 break
         for guess in guesses[::-1]:
-            if sum(guess) >= assignatable_width:
+            if sum(guess) >= assignable_width:
                 upper_guess = guess
             else:
                 break
         if upper_guess == lower_guess:
-            assert assignatable_width == sum(upper_guess)
+            assert assignable_width == sum(upper_guess)
             table.column_widths = upper_guess
         else:
             added_widths = [
                 upper_guess[i] - lower_guess[i] for i in range(len(grid))]
             available_ratio = (
-                (assignatable_width - sum(lower_guess)) / sum(added_widths))
+                (assignable_width - sum(lower_guess)) / sum(added_widths))
             table.column_widths = [
                 lower_guess[i] + added_widths[i] * available_ratio
                 for i in range(len(grid))]
@@ -592,7 +592,7 @@ def auto_table_layout(context, box, containing_block):
         # Distribute available width to columns
         # http://dbaron.org/css/intrinsic/#distributetocols
         table.column_widths = max_content_guess
-        excess_width = assignatable_width - sum(max_content_guess)
+        excess_width = assignable_width - sum(max_content_guess)
 
         # First group
         columns = [
