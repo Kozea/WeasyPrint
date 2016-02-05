@@ -21,7 +21,7 @@ VERSION = re.search("VERSION = '([^']+)'", codecs.open(
     encoding="utf-8",
 ).read().strip()).group(1)
 
-LONG_DESCRIPTION = open(path.join(path.dirname(__file__), 'README')).read()
+LONG_DESCRIPTION = open(path.join(path.dirname(__file__), 'README.rst')).read()
 
 
 REQUIREMENTS = [
