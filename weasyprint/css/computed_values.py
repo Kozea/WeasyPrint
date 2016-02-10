@@ -283,7 +283,7 @@ def length(computer, name, value, font_size=None, pixels_only=False):
     elif unit in LENGTHS_TO_PIXELS:
         # Convert absolute lengths to pixels
         result = value.value * LENGTHS_TO_PIXELS[unit]
-    elif unit in ('em', 'ex', 'ch'):
+    elif unit in ('em', 'ex', 'ch', 'rem'):
         if font_size is None:
             font_size = computer.computed.font_size
         if unit == 'ex':
@@ -300,6 +300,8 @@ def length(computer, name, value, font_size=None, pixels_only=False):
             result = value.value * logical_width
         elif unit == 'em':
             result = value.value * font_size
+        elif unit == 'rem':
+            result = value.value * computer.root_style.font_size
     else:
         # A percentage or 'auto': no conversion needed.
         return value
