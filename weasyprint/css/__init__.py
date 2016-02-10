@@ -273,7 +273,8 @@ def set_computed_styles(cascaded_styles, computed_styles, element, parent,
     declaration priority (ie. ``!important``) and selector specificity.
 
     """
-    parent_style = computed_styles[parent, None] if parent is not None else None
+    parent_style = computed_styles[parent, None] \
+        if parent is not None else None
     root_style = computed_styles.get((root, None), {})
     cascaded = cascaded_styles.get((element, pseudo_type), {})
 
@@ -282,7 +283,8 @@ def set_computed_styles(cascaded_styles, computed_styles, element, parent,
     )
 
 
-def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None, root_style=None):
+def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
+                           root_style=None):
     """Get a dict of computed style mixed from parent and cascaded styles."""
     if not cascaded and parent_style is not None:
         # Fast path for anonymous boxes:
