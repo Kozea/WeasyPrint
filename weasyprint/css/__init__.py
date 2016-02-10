@@ -264,8 +264,8 @@ def add_declaration(cascaded_styles, prop_name, prop_values, weight, element,
         style[prop_name] = prop_values, weight
 
 
-def set_computed_styles(cascaded_styles, computed_styles,
-                        element, parent, pseudo_type=None):
+def set_computed_styles(cascaded_styles, computed_styles, element, parent,
+                        root=None, pseudo_type=None):
     """Set the computed values of styles to ``element``.
 
     Take the properties left by ``apply_style_rule`` on an element or
@@ -495,9 +495,12 @@ def get_all_computed_styles(html, user_stylesheets=None):
     # their children, for inheritance.
 
     # Iterate on all elements, even if there is no cascaded style for them.
+    root = None
     for element in element_tree.iter():
+        if element.tag == 'body':
+            root = element
         set_computed_styles(cascaded_styles, computed_styles, element,
-                            parent=element.getparent())
+                            root=root, parent=element.getparent())
 
     # Then computed styles for @page.
 
