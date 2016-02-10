@@ -273,11 +273,7 @@ def set_computed_styles(cascaded_styles, computed_styles,
     declaration priority (ie. ``!important``) and selector specificity.
 
     """
-    if parent is None:
-        parent_style = None
-    else:
-        parent_style = computed_styles[parent, None]
-
+    parent_style = computed_styles[parent, None] if parent is not None else None
     cascaded = cascaded_styles.get((element, pseudo_type), {})
     style = computed_from_cascaded(
         element, cascaded, parent_style, pseudo_type)
