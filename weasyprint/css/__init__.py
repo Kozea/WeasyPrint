@@ -280,7 +280,8 @@ def set_computed_styles(cascaded_styles, computed_styles, element, parent,
     computed_styles[element, pseudo_type] = style
 
 
-def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None):
+
+def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None, root_style=None):
     """Get a dict of computed style mixed from parent and cascaded styles."""
     if not cascaded and parent_style is not None:
         # Fast path for anonymous boxes:
@@ -326,7 +327,8 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None):
         specified[name] = value
 
     return computed_values.compute(
-        element, pseudo_type, specified, computed, parent_style)
+        element, pseudo_type, specified, computed, parent_style, root_style
+    )
 
 
 class Selector(object):
