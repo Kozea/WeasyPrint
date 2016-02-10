@@ -158,7 +158,7 @@ def register_computer(name):
     return decorator
 
 
-def compute(element, pseudo_type, specified, computed, parent_style):
+def compute(element, pseudo_type, specified, computed, parent_style, root_style):
     """
     Return a StyleDict of computed values.
 
@@ -184,6 +184,7 @@ def compute(element, pseudo_type, specified, computed, parent_style):
     computer.specified = specified
     computer.computed = computed
     computer.parent_style = parent_style
+    computer.root_style = root_style
 
     getter = COMPUTER_FUNCTIONS.get
 
