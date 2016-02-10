@@ -274,11 +274,12 @@ def set_computed_styles(cascaded_styles, computed_styles, element, parent,
 
     """
     parent_style = computed_styles[parent, None] if parent is not None else None
+    root_style = computed_styles.get((root, None), {})
     cascaded = cascaded_styles.get((element, pseudo_type), {})
-    style = computed_from_cascaded(
-        element, cascaded, parent_style, pseudo_type)
-    computed_styles[element, pseudo_type] = style
 
+    computed_styles[element, pseudo_type] = computed_from_cascaded(
+        element, cascaded, parent_style, pseudo_type, root_style
+    )
 
 
 def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None, root_style=None):
