@@ -275,7 +275,10 @@ def set_computed_styles(cascaded_styles, computed_styles, element, parent,
     """
     parent_style = computed_styles[parent, None] \
         if parent is not None else None
-    root_style = computed_styles.get((root, None), {})
+    # When specified on the font-size property of the root element, the rem
+    # units refer to the property’s initial value.
+    root_style = {'font_size': properties.INITIAL_VALUES['font_size']} \
+        if element is root else computed_styles[root, None]
     cascaded = cascaded_styles.get((element, pseudo_type), {})
 
     computed_styles[element, pseudo_type] = computed_from_cascaded(
