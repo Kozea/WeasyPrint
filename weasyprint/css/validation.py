@@ -33,7 +33,7 @@ from . import computed_values
 
 # get the sets of keys
 LENGTH_UNITS = set(computed_values.LENGTHS_TO_PIXELS) | \
-               {'ex', 'em', 'ch', 'rem'}
+               set(['ex', 'em', 'ch', 'rem'])
 
 
 # keyword -> (open, insert)
