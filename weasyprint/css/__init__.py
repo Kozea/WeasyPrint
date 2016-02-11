@@ -500,12 +500,9 @@ def get_all_computed_styles(html, user_stylesheets=None):
     # their children, for inheritance.
 
     # Iterate on all elements, even if there is no cascaded style for them.
-    root = None
     for element in element_tree.iter():
-        if element.tag == 'body':
-            root = element
         set_computed_styles(cascaded_styles, computed_styles, element,
-                            root=root, parent=element.getparent())
+                            root=element_tree, parent=element.getparent())
 
     # Then computed styles for @page.
 
