@@ -264,8 +264,8 @@ def add_declaration(cascaded_styles, prop_name, prop_values, weight, element,
         style[prop_name] = prop_values, weight
 
 
-def set_computed_styles(cascaded_styles, computed_styles,
-                        element, parent, pseudo_type=None):
+def set_computed_styles(cascaded_styles, computed_styles, element, parent,
+                        root=None, pseudo_type=None):
     """Set the computed values of styles to ``element``.
 
     Take the properties left by ``apply_style_rule`` on an element or
@@ -273,18 +273,21 @@ def set_computed_styles(cascaded_styles, computed_styles,
     declaration priority (ie. ``!important``) and selector specificity.
 
     """
-    if parent is None:
-        parent_style = None
-    else:
-        parent_style = computed_styles[parent, None]
-
+    parent_style = computed_styles[parent, None] \
+        if parent is not None else None
+    # When specified on the font-size property of the root element, the rem
+    # units refer to the property’s initial value.
+    root_style = {'font_size': properties.INITIAL_VALUES['font_size']} \
+        if element is root else computed_styles[root, None]
     cascaded = cascaded_styles.get((element, pseudo_type), {})
-    style = computed_from_cascaded(
-        element, cascaded, parent_style, pseudo_type)
-    computed_styles[element, pseudo_type] = style
+
+    computed_styles[element, pseudo_type] = computed_from_cascaded(
+        element, cascaded, parent_style, pseudo_type, root_style
+    )
 
 
-def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None):
+def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
+                           root_style=None):
     """Get a dict of computed style mixed from parent and cascaded styles."""
     if not cascaded and parent_style is not None:
         # Fast path for anonymous boxes:
@@ -330,7 +333,8 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None):
         specified[name] = value
 
     return computed_values.compute(
-        element, pseudo_type, specified, computed, parent_style)
+        element, pseudo_type, specified, computed, parent_style, root_style
+    )
 
 
 class Selector(object):
@@ -501,7 +505,7 @@ def get_all_computed_styles(html, user_stylesheets=None):
     # Iterate on all elements, even if there is no cascaded style for them.
     for element in element_tree.iter():
         set_computed_styles(cascaded_styles, computed_styles, element,
-                            parent=element.getparent())
+                            root=element_tree, parent=element.getparent())
 
     # Then computed styles for @page.
 
@@ -512,7 +516,7 @@ def get_all_computed_styles(html, user_stylesheets=None):
             cascaded_styles, computed_styles, page_type,
             # @page inherits from the root element:
             # http://lists.w3.org/Archives/Public/www-style/2012Jan/1164.html
-            parent=element_tree)
+            root=element_tree, parent=element_tree)
 
     # Then computed styles for pseudo elements, in any order.
     # Pseudo-elements inherit from their associated element so they come
@@ -527,7 +531,7 @@ def get_all_computed_styles(html, user_stylesheets=None):
             set_computed_styles(cascaded_styles, computed_styles,
                                 element, pseudo_type=pseudo_type,
                                 # The pseudo-element inherits from the element.
-                                parent=element)
+                                root=element_tree, parent=element)
 
     # This is mostly useful to make pseudo_type optional.
     def style_for(element, pseudo_type=None, __get=computed_styles.get):
