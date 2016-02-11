@@ -102,7 +102,7 @@ def test_html_parsing():
         assert html.root_element.tag == 'html'
         assert [child.tag for child in html.root_element] == ['head', 'body']
         _head, body = html.root_element
-        assert [child.tag for child in body] == ['h1', 'p', 'ul']
+        assert [child.tag for child in body] == ['h1', 'p', 'ul', 'div']
         h1 = body[0]
         assert h1.text == 'WeasyPrint test document (with Ünicōde)'
         if has_base_url:
