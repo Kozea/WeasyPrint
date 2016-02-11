@@ -516,7 +516,7 @@ def get_all_computed_styles(html, user_stylesheets=None):
             cascaded_styles, computed_styles, page_type,
             # @page inherits from the root element:
             # http://lists.w3.org/Archives/Public/www-style/2012Jan/1164.html
-            parent=element_tree)
+            root=element_tree, parent=element_tree)
 
     # Then computed styles for pseudo elements, in any order.
     # Pseudo-elements inherit from their associated element so they come
@@ -531,7 +531,7 @@ def get_all_computed_styles(html, user_stylesheets=None):
             set_computed_styles(cascaded_styles, computed_styles,
                                 element, pseudo_type=pseudo_type,
                                 # The pseudo-element inherits from the element.
-                                parent=element)
+                                root=element_tree, parent=element)
 
     # This is mostly useful to make pseudo_type optional.
     def style_for(element, pseudo_type=None, __get=computed_styles.get):
