@@ -1,6 +1,17 @@
 WeasyPrint changelog
 ====================
 
+Version 0.27
+------------
+
+Not released yet.
+
+New features:
+
+* `#295: <https://github.com/Kozea/WeasyPrint/pull/295>`_:
+  Support the 'rem' unit.
+
+
 Version 0.26
 ------------
 
