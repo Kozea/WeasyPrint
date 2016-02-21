@@ -227,6 +227,8 @@ other features are available, including:
 .. _#289: https://github.com/Kozea/WeasyPrint/issues/289
 
 
+.. _bookmarks:
+
 CSS Generated Content for Paged Media Module
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -235,8 +237,6 @@ defining "new properties and values, so that authors may bring new techniques
 (running headers and footers, footnotes, leaders, bookmarks) to paged media".
 
 Two features from this module have been implemented in WeasyPrint.
-
-.. _bookmarks:
 
 The first feature is `PDF bookmarks`_.  Using the experimental_
 ``-weasy-bookmark-level`` and ``-weasy-bookmark-level`` properties, you can add
