@@ -236,6 +236,8 @@ defining "new properties and values, so that authors may bring new techniques
 
 Two features from this module have been implemented in WeasyPrint.
 
+.. _bookmarks:
+
 The first feature is `PDF bookmarks`_.  Using the experimental_
 ``-weasy-bookmark-level`` and ``-weasy-bookmark-level`` properties, you can add
 bookmarks that will be available in your PDF reader.
