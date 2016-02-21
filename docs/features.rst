@@ -96,9 +96,9 @@ can be useful if you want to implement new features in WeasyPrint.
 CSS Level 2 Revision 1
 ~~~~~~~~~~~~~~~~~~~~~~
 
-The famous `CSS Level 2 Revision 1`_ specification, best known as CSS 2.1, is
-pretty well supported by WeasyPrint. Since version 0.11, it passes the famous
-`Acid2 Test`_.
+The `CSS Level 2 Revision 1`_ specification, best known as CSS 2.1, is pretty
+well supported by WeasyPrint. Since version 0.11, it passes the famous `Acid2
+Test`_.
 
 The CSS 2.1 features listed here are **not** supported:
 
