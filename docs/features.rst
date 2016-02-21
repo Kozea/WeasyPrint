@@ -230,14 +230,15 @@ other features are available, including:
 CSS Generated Content for Paged Media Module
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The `CSS Generated Content for Paged Media Module`_ is a working draft defining
-"new properties and values, so that authors may bring new techniques (running
-headers and footers, footnotes, leaders, bookmarks) to paged media".
+The `CSS Generated Content for Paged Media Module`_ (GCPM) is a working draft
+defining "new properties and values, so that authors may bring new techniques
+(running headers and footers, footnotes, leaders, bookmarks) to paged media".
 
-One feature from this module has been implemented in WeasyPrint: `PDF
-bookmarks`_.  Using the experimental_ ``-weasy-bookmark-level`` and
-``-weasy-bookmark-level`` properties, you can add bookmarks that will be
-available in your PDF reader.
+Two features from this module have been implemented in WeasyPrint.
+
+The first feature is `PDF bookmarks`_.  Using the experimental_
+``-weasy-bookmark-level`` and ``-weasy-bookmark-level`` properties, you can add
+bookmarks that will be available in your PDF reader.
 
 Bookmarks have already been added in the WeasyPrint's `user agent stylesheet`_,
 so your generated documents will automatically have bookmarks on headers (from
@@ -248,8 +249,34 @@ and do not wish to include it in the bookmarks, add this in your stylesheet:
 
     h1 { -weasy-bookmark-level: none }
 
+The second feature is `Named strings`_. You can define strings related to the
+first or last element of a type present on a page, and display these strings in
+page borders. This feature is really useful to add the title of the current
+chapter at the top of the pages of a book for example.
+
+The named strings can embed static strings, counters, tag contents and tag
+attributes.
+
+.. code-block:: css
+
+    @top-center { content: string(chapter); }
+    h2 { -weasy-string-set: chapter "Current chapter: " content() }
+
+The other features of GCPM are **not** implemented:
+
+- running elements (``running()`` and ``element()``);
+- footnotes (``float: footnote``, ``footnote-display``, ``footnote`` counter,
+  ``::footnote-call``, ``::footnote-marker``, ``@footnote`` rule,
+  ``footnote-policy``);
+- page selectors and page groups (``:nth()`` pseudo-class);
+- leaders (``content: leader()``);
+- cross-references (``target-counter()``, ``target-counters()`` and
+  ``target-text()``);
+- bookmark states (``bookmark-state``).
+
 .. _CSS Generated Content for Paged Media Module: http://www.w3.org/TR/css-gcpm-3/
 .. _PDF bookmarks: http://www.w3.org/TR/css-gcpm-3/#bookmarks
+.. _Named strings: http://www.w3.org/TR/css-gcpm-3/#named-strings
 .. _experimental: http://www.w3.org/TR/css-2010/#experimental
 .. _user agent stylesheet: https://github.com/Kozea/WeasyPrint/blob/master/weasyprint/css/html5_ua.css
 
@@ -338,9 +365,6 @@ example as a list of URIs denoting fallbacks, or as a gradient", defining
 positioning replaced elements" and "generic sizing algorithm for replaced
 elements".
 
-The ``dpi``, ``dpcm`` and ``dppx`` resolution units are supported and can be
-used in the ``image-resolution`` property.
-
 The ``linear-gradient()``, ``radial-gradient()`` and
 ``repeating-radial-gradient()`` properties are supported as background images.
 
@@ -348,7 +372,7 @@ The the ``url()`` notation is supported, but the ``image()`` notation is
 **not** supported for background images.
 
 The ``from-image`` and ``snap`` values of the ``image-resolution`` property are
-**not** supported.
+**not** supported, but the ``resolution`` value is supported.
 
 The ``image-orientation``, ``object-fit`` and ``object-position`` are **not**
 supported.
@@ -373,3 +397,28 @@ The other properties are **not** implemented: ``outline-offset`` and
 ``text-overflow``.
 
 .. _CSS Basic User Interface Module Level 3: http://www.w3.org/TR/css-ui-3/
+
+
+CSS Values and Units Module Level 3
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The `CSS Basic User Interface Module Level 3`_ defines various units and
+keywords used in "value definition field of each CSS property".
+
+The ``initial`` and ``inherit`` CSS-wide keywords are supported, but the
+``unset`` keyword is **not** supported.
+
+Quoted strings, URLs and numeric data types are supported.
+
+Font-related lengths (``em``, ``ex``, ``ch``, ``rem``), absolute lengths
+(``cm``, ``mm``, ``q``, ``in``, ``pt``, ``pc``, ``px``), angles (``rad``,
+``grad``, ``turn``, ``deg``), resolutions (``dpi``, ``dpcm``, ``dppx``) are
+supported.
+
+The ``attr()`` functional notation is allowed in the ``content`` and
+``string-set`` properties.
+
+Viewport-percentage lengths (``vw``, ``vh``, ``vmin``, ``vmax``) are **not**
+supported.
+
+.. _CSS Values and Units Module Level 3: https://www.w3.org/TR/css3-values/#common-keywords
