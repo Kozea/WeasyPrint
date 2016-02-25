@@ -404,7 +404,7 @@ The other properties are **not** implemented: ``outline-offset`` and
 CSS Values and Units Module Level 3
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The `CSS Basic User Interface Module Level 3`_ defines various units and
+The `CSS Values and Units Module Level 3`_ defines various units and
 keywords used in "value definition field of each CSS property".
 
 The ``initial`` and ``inherit`` CSS-wide keywords are supported, but the
