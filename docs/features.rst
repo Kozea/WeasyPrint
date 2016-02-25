@@ -423,4 +423,4 @@ The ``attr()`` functional notation is allowed in the ``content`` and
 Viewport-percentage lengths (``vw``, ``vh``, ``vmin``, ``vmax``) are **not**
 supported.
 
-.. _CSS Values and Units Module Level 3: https://www.w3.org/TR/css3-values/#common-keywords
+.. _CSS Values and Units Module Level 3: https://www.w3.org/TR/css3-values/
