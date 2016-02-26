@@ -17,3 +17,4 @@ install:
 script:
   - py.test -s
   - flake8 weasyprint
+sudo: false
