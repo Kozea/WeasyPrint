@@ -149,21 +149,25 @@ class SVGImage(object):
             self.intrinsic_ratio = self._width / self._height
         return self._intrinsic_width, self._intrinsic_height
 
-    def _render(self, width=None, height=None):
-        # Draw to a cairo surface but do not write to a file.
-        # This is a CairoSVG surface, not a cairo surface.
-        return ScaledSVGSurface(
-            cairosvg.parser.Tree(
-                bytestring=self._svg_data, url=self._base_url),
-            output=None, dpi=96, parent_width=width, parent_height=height)
-
     def draw(self, context, concrete_width, concrete_height, _image_rendering):
-        svg = self._render(concrete_width, concrete_height)
-        if svg.width and svg.height:
-            context.scale(
-                concrete_width / svg.width, concrete_height / svg.height)
-            context.set_source_surface(svg.cairo)
-            context.paint()
+        try:
+            svg = ScaledSVGSurface(
+                cairosvg.parser.Tree(
+                    bytestring=self._svg_data, url=self._base_url),
+                output=None, dpi=96, parent_width=concrete_width,
+                parent_height=concrete_height)
+            if svg.width and svg.height:
+                context.scale(
+                    concrete_width / svg.width, concrete_height / svg.height)
+                context.set_source_surface(svg.cairo)
+                context.paint()
+            else:
+                LOGGER.warning(
+                    'Trying to draw an SVG image at %s'
+                    'with width or height equal to 0' % self._base_url)
+        except Exception as e:
+            LOGGER.warning(
+                'Failed to draw an SVG image at %s : %s', self._base_url, e)
 
 
 def get_image_from_uri(cache, url_fetcher, url, forced_mime_type=None):
