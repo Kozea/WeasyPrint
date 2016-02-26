@@ -158,7 +158,8 @@ class SVGImage(object):
     def draw(self, context, concrete_width, concrete_height, _image_rendering):
         svg = self._render(concrete_width, concrete_height)
         if svg.width and svg.height:
-            context.scale(concrete_width / svg.width, concrete_height / svg.height)
+            context.scale(
+                concrete_width / svg.width, concrete_height / svg.height)
             context.set_source_surface(svg.cairo)
             context.paint()
 
