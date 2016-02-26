@@ -248,47 +248,42 @@ def replaced_box_width(box, device_size):
     """
     Compute and set the used width for replaced boxes (inline- or block-level)
     """
-    # http://www.w3.org/TR/CSS21/visudet.html#inline-replaced-width
     intrinsic_width, intrinsic_height = box.replacement.get_intrinsic_size(
-        box.style.image_resolution)
-    # TODO: update this when we have replaced elements that do not
-    # always have an intrinsic width. (See commented code below.)
-    assert intrinsic_width is not None
-    assert intrinsic_height is not None
+        box.style.image_resolution, box.style.font_size)
+
+    # This algorithm simply follows the different points of the specification:
+    # http://www.w3.org/TR/CSS21/visudet.html#inline-replaced-width
+    if box.height == 'auto' and box.width == 'auto':
+        if intrinsic_width is not None:
+            # Point #1
+            box.width = intrinsic_width
+        elif box.replacement.intrinsic_ratio is not None:
+            if intrinsic_height is not None:
+                # Point #2 first part
+                box.width = intrinsic_height * box.replacement.intrinsic_ratio
+            else:
+                # Point #3
+                # " It is suggested that, if the containing block's width does
+                #   not itself depend on the replaced element's width, then the
+                #   used value of 'width' is calculated from the constraint
+                #   equation used for block-level, non-replaced elements in
+                #   normal flow. "
+                # Whaaaaat? Let's not do this and use a value that may work
+                # well at least with inline blocks.
+                box.width = (
+                    box.style.font_size * box.replacement.intrinsic_ratio)
 
     if box.width == 'auto':
-        if box.height == 'auto':
+        if box.replacement.intrinsic_ratio is not None:
+            # Point #2 second part
+            box.width = box.height * box.replacement.intrinsic_ratio
+        elif intrinsic_width is not None:
+            # Point #4
             box.width = intrinsic_width
         else:
-            intrinsic_ratio = intrinsic_width / intrinsic_height
-            box.width = box.height * intrinsic_ratio
-
-    # Untested code for when we do not always have an intrinsic width.
-#    if box.height == 'auto' and box.width == 'auto':
-#        if intrinsic_width is not None:
-#            box.width = intrinsic_width
-#        elif intrinsic_height is not None and intrinsic_ratio is not None:
-#            box.width = intrinsic_ratio * intrinsic_height
-#        elif box.height != 'auto' and intrinsic_ratio is not None:
-#            box.width = intrinsic_ratio * box.height
-#        elif intrinsic_ratio is not None:
-#            pass
-#            # TODO: Intrinsic ratio only: undefined in CSS 2.1.
-#            # " It is suggested that, if the containing block's width does not
-#            #   itself depend on the replaced element's width, then the used
-#            #   value of 'width' is calculated from the constraint equation
-#            #   used for block-level, non-replaced elements in normal flow. "
-
-#    # Still no value
-#    if box.width == 'auto':
-#        if intrinsic_width is not None:
-#            box.width = intrinsic_width
-#        else:
-#            # Then the used value of 'width' becomes 300px. If 300px is too
-#            # wide to fit the device, UAs should use the width of the largest
-#            # rectangle that has a 2:1 ratio and fits the device instead.
-#            device_width, _device_height = device_size
-#            box.width = min(300, device_width)
+            # Point #5
+            device_width, _device_height = device_size
+            box.width = min(300, device_width)
 
 
 @handle_min_max_height
@@ -298,35 +293,33 @@ def replaced_box_height(box, device_size):
     """
     # http://www.w3.org/TR/CSS21/visudet.html#inline-replaced-height
     intrinsic_width, intrinsic_height = box.replacement.get_intrinsic_size(
-        box.style.image_resolution)
-    # TODO: update this when we have replaced elements that do not
-    # always have intrinsic dimensions. (See commented code below.)
-    assert intrinsic_width is not None
-    assert intrinsic_height is not None
+        box.style.image_resolution, box.style.font_size)
+
     if intrinsic_height == 0:
         # Results in box.height == 0 if used, whatever the used width
         # or intrinsic width.
         intrinsic_ratio = float('inf')
-    else:
+    elif intrinsic_width and intrinsic_height:
         intrinsic_ratio = intrinsic_width / intrinsic_height
+    else:
+        intrinsic_ratio = None
 
     # Test 'auto' on the computed width, not the used width
     if box.style.height == 'auto' and box.style.width == 'auto':
         box.height = intrinsic_height
-    elif box.style.height == 'auto':
+    elif box.style.height == 'auto' and intrinsic_ratio:
         box.height = box.width / intrinsic_ratio
 
-    # Untested code for when we do not always have intrinsic dimensions.
-#    if box.style.height == 'auto' and box.style.width == 'auto':
-#        if intrinsic_height is not None:
-#            box.height = intrinsic_height
-#    elif intrinsic_ratio is not None and box.style.height == 'auto':
-#        box.height = box.width / intrinsic_ratio
-#    elif box.style.height == 'auto' and intrinsic_height is not None:
-#        box.height = intrinsic_height
-#    elif box.style.height == 'auto':
-#        device_width, _device_height = device_size
-#        box.height = min(150, device_width / 2)
+    if (box.style.height == 'auto' and box.style.width == 'auto' and
+            intrinsic_height is not None):
+        box.height = intrinsic_height
+    elif intrinsic_ratio is not None and box.style.height == 'auto':
+        box.height = box.width / intrinsic_ratio
+    elif box.style.height == 'auto' and intrinsic_height is not None:
+        box.height = intrinsic_height
+    elif box.style.height == 'auto':
+        device_width, _device_height = device_size
+        box.height = min(150, device_width / 2)
 
 
 def inline_replaced_box_layout(box, device_size):

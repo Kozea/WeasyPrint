@@ -554,7 +554,8 @@ def replaced_min_content_width(box, outer=True):
             assert height.unit == 'px'
             height = height.value
         image = box.replacement
-        iwidth, iheight = image.get_intrinsic_size(box.style.image_resolution)
+        iwidth, iheight = image.get_intrinsic_size(
+            box.style.image_resolution, box.style.font_size)
         width, _ = default_image_sizing(
             iwidth, iheight, image.intrinsic_ratio, 'auto', height,
             default_width=300, default_height=150)
