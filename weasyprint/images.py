@@ -161,10 +161,6 @@ class SVGImage(object):
                     concrete_width / svg.width, concrete_height / svg.height)
                 context.set_source_surface(svg.cairo)
                 context.paint()
-            else:
-                LOGGER.warning(
-                    'Trying to draw an SVG image at %s'
-                    'with width or height equal to 0' % self._base_url)
         except Exception as e:
             LOGGER.warning(
                 'Failed to draw an SVG image at %s : %s', self._base_url, e)
