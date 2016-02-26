@@ -137,12 +137,14 @@ class SVGImage(object):
             if self._width and self._height:
                 self.intrinsic_ratio = self._width / self._height
             else:
-                self.intrinsic_ratio = (
-                    (viewbox[2] - viewbox[0]) / (viewbox[3] - viewbox[1]))
-                if self._width:
-                    self._intrinsic_height = self._width / self.intrinsic_ratio
-                elif self._height:
-                    self._intrinsic_width = self._height * self.intrinsic_ratio
+                if viewbox[2] and viewbox[3]:
+                    self.intrinsic_ratio = viewbox[2] / viewbox[3]
+                    if self._width:
+                        self._intrinsic_height = (
+                            self._width / self.intrinsic_ratio)
+                    elif self._height:
+                        self._intrinsic_width = (
+                            self._height * self.intrinsic_ratio)
         elif self._width and self._height:
             self.intrinsic_ratio = self._width / self._height
         return self._intrinsic_width, self._intrinsic_height
