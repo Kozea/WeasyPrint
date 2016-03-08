@@ -30,7 +30,7 @@ REQUIREMENTS = [
     'html5lib>=0.999',
     'tinycss==0.3',
     'cssselect>=0.6',
-    'CairoSVG>=0.4.1',
+    'CairoSVG>=1.0.20',
     'cffi>=0.6',
     'cairocffi>=0.5',
     'Pyphen>=0.8'

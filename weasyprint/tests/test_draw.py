@@ -1328,11 +1328,9 @@ def test_images():
                             alt="Hello, world!">'''),
             ]
         ])
-    assert len(logs) == 2
+    assert len(logs) == 1
     assert 'WARNING: Failed to load image' in logs[0]
     assert 'inexistent2.png' in logs[0]
-    assert 'WARNING: Failed to load image at data:image/svg+xml' in logs[1]
-    assert 'intrinsic size' in logs[1]
 
     assert_pixels('image_0x1', 8, 8, no_image, '''
         <style>
