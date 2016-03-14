@@ -80,7 +80,7 @@ use the tools provided by your OS to know which fonts are available.
 On Linux, Pango uses fontconfig to access fonts. You can list the available
 fonts thanks to the ``fc-list`` command, and know which font is matched by a
 given pattern thanks to ``fc-match``. Copying a font file into the
-``~/local/share/fonts`` or ``~/.fonts`` directory is generally enough to
+``~/.local/share/fonts`` or ``~/.fonts`` directory is generally enough to
 install a new font.
 
 
