@@ -126,7 +126,7 @@ Fedora
 
 .. code-block:: sh
 
-    sudo yum install python-devel python-pip python-lxml cairo pango gdk-pixbuf2 libffi-devel
+    sudo yum install redhat-rpm-configrpm python-devel python-pip python-lxml cairo pango gdk-pixbuf2 libffi-devel
 
 Archlinux
 ~~~~~~~~~
