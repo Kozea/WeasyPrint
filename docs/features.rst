@@ -71,10 +71,17 @@ Fonts
 Although the CSS3 ``@font-face`` is not supported yet, WeasyPrint can use
 any font that Pango can find installed on the system. If you can use a font
 in a GTK+ application, just use its name in ``font-family``.
-Copying a file into the ``~/.fonts`` directory is generally enough to install
-a new font, depending on the OS.
 
 Fonts are automatically embedded in PDF files.
+
+On Windows and MacOS X, Pango uses the native font-managing libraries. You can
+use the tools provided by your OS to know which fonts are available.
+
+On Linux, Pango uses fontconfig to access fonts. You can list the available
+fonts thanks to the ``fc-list`` command, and know which font is matched by a
+given pattern thanks to ``fc-match``. Copying a font file into the
+``~/local/share/fonts`` or ``~/.fonts`` directory is generally enough to
+install a new font.
 
 
 CSS
