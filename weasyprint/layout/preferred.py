@@ -104,18 +104,17 @@ def _block_content_width(context, box, function, outer):
     return adjust(box, outer, width)
 
 
-def adjust(box, outer, width, left=True, right=True):
-    """Add paddings, borders and margins to ``width`` when ``outer`` is set."""
+def min_max(box, width):
+    """Get box width from given width and box min- and max-widths."""
     min_width = box.style.min_width
     max_width = box.style.max_width
     min_width = min_width.value if min_width.unit != '%' else 0
     max_width = max_width.value if max_width.unit != '%' else float('inf')
+    return max(min_width, min(width, max_width))
 
-    fixed = max(min_width, min(width, max_width))
 
-    if not outer:
-        return fixed
-
+def margin_width(box, width, left=True, right=True):
+    """Add box paddings, borders and margins to ``width``."""
     percentages = 0
 
     for value in (
@@ -125,21 +124,36 @@ def adjust(box, outer, width, left=True, right=True):
         style_value = box.style[value]
         if style_value != 'auto':
             if style_value.unit == 'px':
-                fixed += style_value.value
+                width += style_value.value
             else:
                 assert style_value.unit == '%'
                 percentages += style_value.value
 
     if left:
-        fixed += box.style.border_left_width
+        width += box.style.border_left_width
     if right:
-        fixed += box.style.border_right_width
+        width += box.style.border_right_width
 
     if percentages < 100:
-        return fixed / (1 - percentages / 100.)
+        return width / (1 - percentages / 100.)
     else:
         # Pathological case, ignore
         return 0
+
+
+def adjust(box, outer, width, left=True, right=True):
+    """Respect min/max and adjust width depending on ``outer``.
+
+    If ``outer`` is set to ``True``, return margin width, else return content
+    width.
+
+    """
+    fixed = min_max(box, width)
+
+    if outer:
+        return margin_width(box, fixed, left, right)
+    else:
+        return fixed
 
 
 def block_min_content_width(context, box, outer=True):
@@ -516,20 +530,14 @@ def table_and_columns_preferred_widths(context, box, outer=True):
         table_min_width = table_min_content_width
         table_max_width = table_max_content_width
 
-    table_min_content_width = adjust(
-        table, outer=False,
-        width=max(table_min_width, table_min_content_width))
-    table_max_content_width = adjust(
-        table, outer=False,
-        width=max(table_max_width, table_max_content_width))
-    table_outer_min_content_width = adjust(
-        box, outer=True, width=adjust(
-            table, outer=True,
-            width=max(table_min_width, table_min_content_width)))
-    table_outer_max_content_width = adjust(
-        box, outer=True, width=adjust(
-            table, outer=True,
-            width=max(table_max_width, table_max_content_width)))
+    table_min_content_width = max(
+        table_min_content_width, adjust(
+            table, outer=False, width=table_min_width))
+    table_max_content_width = max(
+        table_max_content_width, adjust(
+            table, outer=False, width=table_max_width))
+    table_outer_min_content_width = margin_width(box, table_min_content_width)
+    table_outer_max_content_width = margin_width(box, table_max_content_width)
 
     result = (
         min_content_widths, max_content_widths, intrinsic_percentages,

@@ -1421,6 +1421,106 @@ def test_auto_layout_table():
     assert td_2.width == 60
     assert table.width == 200
 
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/307
+    # Table with a cell larger than the table's max-width
+    page, = parse('''
+        <table style="max-width: 300px">
+            <td style="width: 400px"></td>
+        </table>
+    ''')
+
+    # Table with a cell larger than the table's width
+    page, = parse('''
+        <table style="width: 300px">
+            <td style="width: 400px"></td>
+        </table>
+    ''')
+
+    # Table with a cell larger than the table's width and max-width
+    page, = parse('''
+        <table style="width: 300px; max-width: 350px">
+            <td style="width: 400px"></td>
+        </table>
+    ''')
+
+    # Table with a cell larger than the table's width and max-width
+    page, = parse('''
+        <table style="width: 300px; max-width: 350px">
+            <td style="padding: 50px">
+                <div style="width: 300px"></div>
+            </td>
+        </table>
+    ''')
+
+    # Table with a cell larger than the table's max-width
+    page, = parse('''
+        <table style="max-width: 300px; margin: 100px">
+            <td style="width: 400px"></td>
+        </table>
+    ''')
+
+    # Test a table with column widths < table width < column width + spacing
+    page, = parse('''
+        <table style="width: 300px; border-spacing: 2px">
+            <td style="width: 299px"></td>
+        </table>
+    ''')
+
+    # Table with a cell larger than the table's width
+    page, = parse('''
+        <table style="width: 300px; margin: 100px">
+            <td style="width: 400px"></td>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    assert table_wrapper.margin_width() == 600  # 400 + 2 * 100
+
+    # Div with auto width containing a table with a min-width
+    page, = parse('''
+        <div style="float: left">
+            <table style="min-width: 400px; margin: 100px">
+                <td></td>
+            </table>
+        </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    table_wrapper, = div.children
+    assert div.margin_width() == 600  # 400 + 2 * 100
+    assert table_wrapper.margin_width() == 600  # 400 + 2 * 100
+
+    # Div with auto width containing an empty table with a min-width
+    page, = parse('''
+        <div style="float: left">
+            <table style="min-width: 400px; margin: 100px"></table>
+        </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    table_wrapper, = div.children
+    assert div.margin_width() == 600  # 400 + 2 * 100
+    assert table_wrapper.margin_width() == 600  # 400 + 2 * 100
+
+    # Div with auto width containing a table with a cell larger than the
+    # table's max-width
+    page, = parse('''
+        <div style="float: left">
+            <table style="max-width: 300px; margin: 100px">
+                <td style="width: 400px"></td>
+            </table>
+        </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    table_wrapper, = div.children
+    assert div.margin_width() == 600  # 400 + 2 * 100
+    assert table_wrapper.margin_width() == 600  # 400 + 2 * 100
+
     # Test regression on a crash: https://github.com/Kozea/WeasyPrint/pull/152
     page, = parse('''
         <table>
