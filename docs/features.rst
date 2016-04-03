@@ -171,7 +171,7 @@ One new property is supported by WeasyPrint: the experimental_
 To get automatic hyphenation, you to set it to ``auto``
 *and* have the ``lang`` HTML attribute set to one of the languages
 `supported by Pyphen
-<https://github.com/Kozea/Pyphen/tree/master/dictionaries>`_.
+<https://github.com/Kozea/Pyphen/tree/master/pyphen/dictionaries>`_.
 
 .. code-block:: html
 
