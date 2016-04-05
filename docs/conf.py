@@ -12,8 +12,8 @@
 # serve to show the default.
 
 import codecs
+import os
 import re
-from os import path
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -52,7 +52,8 @@ copyright = u'2011-2014, Simon Sapin and contributors, see AUTHORs'
 #
 # The full version, including alpha/beta/rc tags.
 release = re.search("VERSION = '([^']+)'", codecs.open(
-    path.join(path.dirname(__file__), 'weasyprint', '__init__.py'),
+    path.join(os.path.join(
+        os.path.dirname(__file__), os.pardir, 'weasyprint', '__init__.py'),
     encoding="utf-8",
 ).read().strip()).group(1)
 
