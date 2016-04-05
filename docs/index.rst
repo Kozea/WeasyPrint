@@ -1,6 +1,3 @@
-WeasyPrint documentation
-########################
-
 .. include:: ../README.rst
 
 Documentation contents
