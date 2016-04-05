@@ -52,7 +52,7 @@ copyright = u'2011-2014, Simon Sapin and contributors, see AUTHORs'
 #
 # The full version, including alpha/beta/rc tags.
 release = re.search("VERSION = '([^']+)'", codecs.open(
-    path.join(os.path.join(
+    os.path.join(
         os.path.dirname(__file__), os.pardir, 'weasyprint', '__init__.py'),
     encoding="utf-8",
 ).read().strip()).group(1)
