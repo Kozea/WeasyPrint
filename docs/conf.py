@@ -11,7 +11,9 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys, os, re
+import codecs
+import re
+from os import path
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -49,10 +51,10 @@ copyright = u'2011-2014, Simon Sapin and contributors, see AUTHORs'
 # built documents.
 #
 # The full version, including alpha/beta/rc tags.
-release = re.search("VERSION = '([^']+)'",
-    open(os.path.join(os.path.dirname(__file__), os.pardir,
-         'weasyprint', '__init__.py')).read().strip()
-).group(1)
+release = re.search("VERSION = '([^']+)'", codecs.open(
+    path.join(path.dirname(__file__), 'weasyprint', '__init__.py'),
+    encoding="utf-8",
+).read().strip()).group(1)
 
 # The short X.Y version.
 version = '.'.join(release.split('.')[:2])
