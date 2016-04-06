@@ -1,0 +1,222 @@
+---
+# Scss for WeasyPrint
+---
+
+@charset "utf-8";
+
+@import url(https:\//fonts.googleapis.com/css?family=Oswald);
+@import url(https:\//fonts.googleapis.com/css?family=Alegreya+Sans:400,400italic,700);
+@import url(https:\//fonts.googleapis.com/css?family=Cousine);
+
+
+@media screen {
+  html {
+    background: black;
+    color: #2e3436;
+    margin: 0;
+    min-height: 100%;
+    padding: 0;
+  }
+
+  body {
+    background: url(img/logo.png) no-repeat center 3em,
+                url(img/top.jpg) repeat-x 25% top,
+                url(img/footer.jpg) repeat-x left bottom,
+                url(img/background.jpg) repeat;
+    margin: 0 auto;
+    max-width: 1920px;
+    min-height: 100%;
+    padding: 260px 2% 2em 2%;
+    position: relative;
+    width: 96%;
+  }
+}
+
+body {
+  font-family: "Alegreya Sans", sans-serif;
+  line-height: 1.3em;
+}
+
+
+/* Titles */
+
+h1, h2, h3 {
+  font-family: "Oswald", sans-serif;
+  font-weight: normal;
+}
+
+h1, h2 {
+  margin: 2em 0 1.3em 0;
+}
+
+h2 {
+  font-size: 1em;
+}
+
+h3 {
+  margin-top: 1.5em;
+
+  a {
+    border-bottom: 3px solid;
+    color: #35c6c7;
+    padding: 5px 0 0 15px;
+    text-transform: uppercase;
+    width: 100%;
+
+    &:hover,
+    &:visited {
+      color: #35c6c7;
+    }
+  }
+}
+
+
+/* Common */
+
+a {
+  color: #870;
+  transition: color 0.25s;
+
+  &:hover,
+  &:focus {
+    background: none;
+    color: #258089;
+  }
+
+  &:visited {
+    background: none;
+  }
+}
+
+pre {
+  background: #2e3436;
+  color: #f8f8f2;
+  margin: 0 1em;
+  padding: 1em;
+  text-shadow: 1px 1px 1px #111;
+  white-space: pre-wrap;
+}
+
+pre, code {
+  border-radius: 0.2em;
+  font-family: "Cousine";
+  font-size: 0.9em;
+}
+
+img {
+  float: right;
+  margin: 1em;
+}
+
+
+/* Navigation */
+
+nav {
+  background: black;
+  display: block;
+  font-family: "Oswald", sans-serif;
+  left: 0;
+  position: absolute;
+  right: 0;
+  text-align: center;
+  top: 0;
+
+  ul {
+    padding: 0;
+    text-transform: uppercase;
+
+    li {
+      display: inline;
+      padding: 0 0.5em;
+      vertical-align: middle;
+
+      a {
+        color: white;
+        display: inline-block;
+        padding: 0 1em;
+        text-decoration: none;
+
+        &:hover,
+        &:focus {
+          color: red;
+        }
+      }
+    }
+  }
+}
+
+
+/* Sections */
+
+section {
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 0.2em;
+  box-shadow: 0 0 2px #b7b7b7;
+  font-size: 1.2em;
+  margin: 0 auto 2em;
+  max-width: 40em;
+  padding: 1em 3em;
+
+  aside {
+    font-style: italic;
+  }
+}
+
+
+/* Footer */
+
+footer {
+  background: black;
+  bottom: 0;
+  height: 2em;
+  left: 0;
+  line-height: 2em;
+  position: absolute;
+  right: 0;
+  text-align: center;
+
+  ul {
+    color: #babdb6;
+    font-size: .9em;
+    margin: 0;
+
+    li {
+      display: inline;
+
+      a {
+        color: white;
+        padding: 0 1em;
+        text-decoration: none;
+
+        &:hover,
+        &:focus{
+          color: red;
+        }
+      }
+    }
+  }
+}
+
+
+/* Syntax Highlighting */
+
+.highlight {
+  .hll { background-color: #49483e }
+  .c { color: #75715e } /* Comment */
+  .err { color: #960050; background-color: #1e0010 } /* Error */
+  .k { color: #66d9ef } /* Keyword */
+  .l { color: #ae81ff } /* Literal */
+  .cm, .cp, .c1, .cs { color: #75715e } /* Comments */
+  .ge { font-style: italic } /* Emph */
+  .gs { font-weight: bold } /* Strong */
+  .kn, .nt, .o, .ow { color: #f92672 } /* Namespace, Tag, Operator */
+  .kc, .kd, .kp, .kr, .kt { color: #66d9ef } /* Keyword */
+  .na, .nc, .nd, .ne, .nf, .nx, .no { color: #a6e22e } /* Name */
+  .n, .nb, .ni, .nl, .nn, .nv, .p, .py, .w { color: #f8f8f2 } /* Name, Punctuation, Whitespace */
+  .m, .mf, .mh, .mi, .mo, .il { color: #ae81ff } /* Number */
+  .ld, .s, .sb, .sc, .sd, .s2, .sh, .si, .sx, .sr, .s1, .ss { color: #e6db74 } /* String, Date */
+  .bp, .vc, .vg, .vi { color: #f8f8f2 } /* Builtin, Variable */
+  .gu { color: #75715e; } /* Generic.Subheading & Diff Unified/Comment? */
+  .gd { color: #f92672; } /* Generic.Deleted & Diff Deleted */
+  .gi { color: #a6e22e; } /* Generic.Inserted & Diff Inserted */
+}

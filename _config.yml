@@ -1,0 +1,9 @@
+# Site settings
+title: WeasyPrint
+email: contact@kozea.fr
+description: Convert HTML + CSS to PDF.
+baseurl: ""
+url: "http://weasyprint.org"
+
+gems:
+  - jekyll-redirect-from

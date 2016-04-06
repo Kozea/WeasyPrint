@@ -1,0 +1,22 @@
+---
+layout: page
+title: News
+permalink: /news/
+---
+
+<main>
+  {% assign releases = site.github.releases | where:"draft",false | reverse %}
+  <p>
+    Latest version of {{ site.title }} is {{ releases[0].tag_name }},
+    released on {{ releases[0].created_at | date: "%B %-d, %Y" }}
+    (<a href="https://github.com/Kozea/{{ site.title }}/blob/master/CHANGES">changelog</a>).
+  </p>
+
+  {% for post in site.posts %}
+  <article>
+    <h2>{{ post.title }}</h2>
+    <aside>{{ post.date | date: "%B %-d, %Y" }}</aside>
+    {{ post.content }}
+  </article>
+  {% endfor %}
+</main>

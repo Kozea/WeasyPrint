@@ -1,0 +1,30 @@
+<!doctype html>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<link href="/css/img/icon.png" type="image/png" rel="shortcut icon">
+<link href="/css/main.css" media="screen" rel="stylesheet">
+<link href="/feed.xml" type="application/rss+xml" rel="alternate" title="RSS feed">
+
+<title>{% if page.title %}{{ page.title }} - {% endif %}{{ site.title }}</title>
+<meta name="description" content="{{ site.description }}">
+
+<nav>
+  <ul>
+    <li><a href="/">Overview</a></h1>
+    <li><a href="/news/">News</a>
+    <li><a href="http://weasyprint.readthedocs.org/en/latest/">Documentation</a>
+    <li><a href="http://weasyprint.readthedocs.org/en/latest/install.html">Install</a>
+    <li><a href="/community/">Community</a>
+  </ul>
+</nav>
+
+{{ content }}
+
+<footer>
+  <ul>
+    <li><a href="http://kozea.fr">A Kozea Project</a></li>
+    <li><a href="{{ site.github.repository_url }}">Fork me on GitHub</a></li>
+  </ul>
+</footer>
