@@ -9,30 +9,9 @@
 @import url(https:\//fonts.googleapis.com/css?family=Cousine);
 
 
-@media screen {
-  html {
-    background: black;
-    color: #2e3436;
-    margin: 0;
-    min-height: 100%;
-    padding: 0;
-  }
-
-  body {
-    background: url(img/logo.png) no-repeat center 3em,
-                url(img/top.jpg) repeat-x 25% top,
-                url(img/footer.jpg) repeat-x left bottom,
-                url(img/background.jpg) repeat;
-    margin: 0 auto;
-    max-width: 1920px;
-    min-height: 100%;
-    padding: 260px 2% 2em 2%;
-    position: relative;
-    width: 96%;
-  }
-}
-
 body {
+  background-color: rgba(255, 255, 255, 0.8);
+  color: #2e3436;
   font-family: "Alegreya Sans", sans-serif;
   line-height: 1.3em;
 }
@@ -40,34 +19,18 @@ body {
 
 /* Titles */
 
-h1, h2, h3 {
+h1, h2 {
   font-family: "Oswald", sans-serif;
   font-weight: normal;
+  line-height: 1.3em;
 }
 
 h1, h2 {
-  margin: 2em 0 1.3em 0;
+  margin: 2em 0 1em 0;
 }
 
 h2 {
-  font-size: 1em;
-}
-
-h3 {
-  margin-top: 1.5em;
-
-  a {
-    border-bottom: 3px solid;
-    color: #35c6c7;
-    padding: 5px 0 0 15px;
-    text-transform: uppercase;
-    width: 100%;
-
-    &:hover,
-    &:visited {
-      color: #35c6c7;
-    }
-  }
+  font-size: 1.2em;
 }
 
 
@@ -93,6 +56,8 @@ pre {
   color: #f8f8f2;
   margin: 0 1em;
   padding: 1em;
+  page-break-inside: avoid;
+  page-break-before: avoid;
   text-shadow: 1px 1px 1px #111;
   white-space: pre-wrap;
 }
@@ -112,8 +77,7 @@ img {
 /* Navigation */
 
 nav {
-  background: black;
-  display: block;
+  background: rgba(0, 0, 0, 0.9);
   font-family: "Oswald", sans-serif;
   left: 0;
   position: absolute;
@@ -146,16 +110,10 @@ nav {
 }
 
 
-/* Sections */
+/* Articles */
 
-section {
-  background-color: rgba(255, 255, 255, 0.8);
-  border-radius: 0.2em;
-  box-shadow: 0 0 2px #b7b7b7;
-  font-size: 1.2em;
-  margin: 0 auto 2em;
-  max-width: 40em;
-  padding: 1em 3em;
+article {
+  page-break-inside: avoid;
 
   aside {
     font-style: italic;
@@ -166,7 +124,7 @@ section {
 /* Footer */
 
 footer {
-  background: black;
+  background: rgba(0, 0, 0, 0.9);
   bottom: 0;
   height: 2em;
   left: 0;
@@ -179,6 +137,7 @@ footer {
     color: #babdb6;
     font-size: .9em;
     margin: 0;
+    padding: 0;
 
     li {
       display: inline;
@@ -219,4 +178,41 @@ footer {
   .gu { color: #75715e; } /* Generic.Subheading & Diff Unified/Comment? */
   .gd { color: #f92672; } /* Generic.Deleted & Diff Deleted */
   .gi { color: #a6e22e; } /* Generic.Inserted & Diff Inserted */
+}
+
+
+/* Media-related rules */
+
+@media screen {
+  html {
+    background: url(img/logo.png) no-repeat center 3em,
+                url(img/top.jpg) repeat-x 25% top,
+                url(img/footer.jpg) repeat-x left bottom,
+                url(img/background.jpg) repeat;
+    margin: 0;
+    padding: 0;
+    position: relative;
+  }
+
+  body {
+    border-radius: 0.2em;
+    box-shadow: 0 0 2px #b7b7b7;
+    font-size: 1.2em;
+    margin: 0 auto 2em;
+    box-sizing: border-box;
+    margin: 260px auto 3em;
+    max-width: 40em;
+    min-height: 100vh;
+    padding: 1em 3em;
+  }
+}
+
+@media print {
+  body {
+    font-family: serif;
+  }
+
+  nav, footer {
+    display: none;
+  }
 }
