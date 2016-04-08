@@ -4,12 +4,25 @@ WeasyPrint changelog
 Version 0.27
 ------------
 
-Not released yet.
+Released on 2016-04-08.
 
 New features:
 
 * `#295: <https://github.com/Kozea/WeasyPrint/pull/295>`_:
   Support the 'rem' unit.
+* `#299: <https://github.com/Kozea/WeasyPrint/pull/299>`_:
+  Enhance the support of SVG images.
+
+Bug fixes:
+
+* `#307: <https://github.com/Kozea/WeasyPrint/issues/307>`_:
+  Fix the layout of cells larger than their tables.
+
+Documentation:
+
+* The website is now on GitHub Pages, the documentation is on Read the Docs.
+* `#297: <https://github.com/Kozea/WeasyPrint/issues/297>`_:
+  Rewrite the CSS chapter of the documentation.
 
 
 Version 0.26
