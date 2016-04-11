@@ -16,6 +16,7 @@
 
 from __future__ import division, unicode_literals
 
+import sys
 import weakref
 
 from ..formatting_structure import boxes
@@ -491,7 +492,16 @@ def table_and_columns_preferred_widths(context, box, outer=True):
         if large_percentage_contribution_numerator == 0:
             large_percentage_contribution = 0
         else:
-            large_percentage_contribution = float('inf')
+            # "the large percentage contribution of the table [is] an
+            # infinitely large number if the numerator is nonzero [and] the
+            # denominator of that ratio is 0."
+            #
+            # http://dbaron.org/css/intrinsic/#autotableintrinsic
+            #
+            # Please note that "an infinitely large number" is not "infinite",
+            # and that's probably not a coincindence: putting 'inf' here breaks
+            # some cases (see #305).
+            large_percentage_contribution = sys.maxsize
     else:
         large_percentage_contribution = (
             large_percentage_contribution_numerator /

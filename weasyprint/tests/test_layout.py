@@ -1528,6 +1528,55 @@ def test_auto_layout_table():
         </table>
     ''')
 
+    # Other crashes: https://github.com/Kozea/WeasyPrint/issues/305
+    page, = parse('''
+        <table>
+          <tr>
+            <td>
+              <table>
+                <tr>
+                  <th>Test</th>
+                </tr>
+                <tr>
+                  <td style="min-width: 100%;"></td>
+                  <td style="width: 48px;"></td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+    ''')
+    page, = parse('''
+        <table>
+          <tr>
+            <td>
+              <table>
+                <tr>
+                  <td style="width: 100%;"></td>
+                  <td style="width: 48px;">
+                    <img src="http://weasyprint.org/samples/acid2-small.png">
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+    ''')
+    page, = parse('''
+        <table>
+          <tr>
+            <td>
+              <table style="display: inline-table">
+                <tr>
+                  <td style="width: 100%;"></td>
+                  <td></td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+    ''')
+
     # Cell width as percentage in auto-width table
     page, = parse('''
         <div style="width: 100px">
