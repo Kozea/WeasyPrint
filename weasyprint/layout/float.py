@@ -26,7 +26,8 @@ def float_width(box, context, containing_block):
         box.width = shrink_to_fit(context, box, containing_block.width)
 
 
-def float_layout(context, box, containing_block, absolute_boxes, fixed_boxes):
+def float_layout(context, box, containing_block, device_size, absolute_boxes,
+                 fixed_boxes):
     """Set the width and position of floating ``box``."""
     # avoid a circular imports
     from .blocks import block_container_layout
@@ -62,7 +63,7 @@ def float_layout(context, box, containing_block, absolute_boxes, fixed_boxes):
         context.create_block_formatting_context()
         box, _, _, _, _ = block_container_layout(
             context, box, max_position_y=float('inf'),
-            skip_stack=None, device_size=None, page_is_empty=False,
+            skip_stack=None, device_size=device_size, page_is_empty=False,
             absolute_boxes=absolute_boxes, fixed_boxes=fixed_boxes,
             adjoining_margins=None)
         list_marker_layout(context, box)

@@ -151,8 +151,8 @@ def get_next_linebox(context, linebox, position_y, skip_stack,
     for waiting_float in waiting_floats:
         waiting_float.position_y = waiting_floats_y
         waiting_float = float_layout(
-            context, waiting_float, containing_block, absolute_boxes,
-            fixed_boxes)
+            context, waiting_float, containing_block, device_size,
+            absolute_boxes, fixed_boxes)
         float_children.append(waiting_float)
     if float_children:
         line = line.copy_with_children(
@@ -580,8 +580,8 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                 waiting_floats.append(child)
             else:
                 child = float_layout(
-                    context, child, containing_block, absolute_boxes,
-                    fixed_boxes)
+                    context, child, containing_block, device_size,
+                    absolute_boxes, fixed_boxes)
                 children.append(child)
                 # TODO: use the main text direction of the line
                 for old_child in children[:index]:

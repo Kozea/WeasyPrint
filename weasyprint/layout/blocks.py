@@ -281,7 +281,8 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                     fixed_boxes.append(placeholder)
             elif child.is_floated():
                 new_child = float_layout(
-                    context, child, box, absolute_boxes, fixed_boxes)
+                    context, child, box, device_size, absolute_boxes,
+                    fixed_boxes)
                 # New page if overflow
                 if (page_is_empty and not new_children) or not (
                         new_child.position_y + new_child.height >
