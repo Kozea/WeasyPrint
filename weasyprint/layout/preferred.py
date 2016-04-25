@@ -546,8 +546,10 @@ def table_and_columns_preferred_widths(context, box, outer=True):
     table_max_content_width = max(
         table_max_content_width, adjust(
             table, outer=False, width=table_max_width))
-    table_outer_min_content_width = margin_width(box, table_min_content_width)
-    table_outer_max_content_width = margin_width(box, table_max_content_width)
+    table_outer_min_content_width = margin_width(
+        table, margin_width(box, table_min_content_width))
+    table_outer_max_content_width = margin_width(
+        table, margin_width(box, table_max_content_width))
 
     result = (
         min_content_widths, max_content_widths, intrinsic_percentages,

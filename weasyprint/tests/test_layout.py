@@ -1722,6 +1722,29 @@ def test_auto_layout_table():
     assert td_23.width == 420  # 42%
     assert table.width == 1000
 
+    # Test regression:
+    # http://test.weasyprint.org/suite-css21/chapter8/section2/test56/
+    page, = parse('''
+        <div style="position: absolute">
+            <table style="margin: 50px; border: 20px solid black">
+                <tr>
+                    <td style="width: 200px; height: 200px"></td>
+                </tr>
+            </table>
+        </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    table_wrapper, = div.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td, = row.children
+    assert td.width == 200
+    assert table.width == 200
+    assert div.width == 340  # 200 + 2 * 50 + 2 * 20
+
 
 @assert_no_logs
 def test_lists():
