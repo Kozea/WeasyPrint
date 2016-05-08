@@ -152,7 +152,6 @@ def draw_stacking_context(context, stacking_context, enable_hinting):
             else:
                 context.transform(box.transformation_matrix)
 
-
         # Point 1 is done in draw_page
 
         # Point 2
