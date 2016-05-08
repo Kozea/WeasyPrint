@@ -145,7 +145,13 @@ def draw_stacking_context(context, stacking_context, enable_hinting):
             context.push_group()
 
         if box.transformation_matrix:
-            context.transform(box.transformation_matrix)
+            try:
+                box.transformation_matrix.copy().invert()
+            except cairo.CairoError:
+                return
+            else:
+                context.transform(box.transformation_matrix)
+
 
         # Point 1 is done in draw_page
 
