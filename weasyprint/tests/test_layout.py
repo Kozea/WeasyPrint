@@ -5424,90 +5424,99 @@ def test_white_space():
               body { font-size: 100px; width: %ipx }
               span { white-space: %s }
             </style>
-            <body><span>This    \n    is text''' % (width, space))
+            <body><span>This +    \n    is text''' % (width, space))
         html, = page.children
         body, = html.children
         return body.children
 
-    line1, line2, line3 = lines(1, 'normal')
+    line1, line2, line3, line4 = lines(1, 'normal')
     box1, = line1.children
     text1, = box1.children
     assert text1.text == 'This'
     box2, = line2.children
     text2, = box2.children
-    assert text2.text == 'is'
+    assert text2.text == '+'
     box3, = line3.children
     text3, = box3.children
-    assert text3.text == 'text'
-
-    line1, line2 = lines(1, 'pre')
-    box1, = line1.children
-    text1, = box1.children
-    assert text1.text == 'This\xA0\xA0\xA0\xA0'
-    box2, = line2.children
-    text2, = box2.children
-    assert text2.text == '\xA0\xA0\xA0\xA0is\xA0text'
-
-    line1, = lines(1, 'nowrap')
-    box1, = line1.children
-    text1, = box1.children
-    assert text1.text == 'This\xA0is\xA0text'
-
-    line1, line2, line3, line4 = lines(1, 'pre-wrap')
-    box1, = line1.children
-    text1, = box1.children
-    assert text1.text == 'This\xA0\xA0\xA0\xA0\u200b'
-    box2, = line2.children
-    text2, = box2.children
-    assert text2.text == '\xA0\xA0\xA0\xA0\u200b'
-    box3, = line3.children
-    text3, = box3.children
-    assert text3.text == 'is\xA0\u200b'
+    assert text3.text == 'is'
     box4, = line4.children
     text4, = box4.children
     assert text4.text == 'text'
 
-    line1, line2, line3 = lines(1, 'pre-line')
+    line1, line2 = lines(1, 'pre')
+    box1, = line1.children
+    text1, = box1.children
+    assert text1.text == 'This +    '
+    box2, = line2.children
+    text2, = box2.children
+    assert text2.text == '    is text'
+
+    line1, = lines(1, 'nowrap')
+    box1, = line1.children
+    text1, = box1.children
+    assert text1.text == 'This + is text'
+
+    line1, line2, line3, line4, line5 = lines(1, 'pre-wrap')
+    box1, = line1.children
+    text1, = box1.children
+    assert text1.text == 'This '
+    box2, = line2.children
+    text2, = box2.children
+    assert text2.text == '+    '
+    box3, = line3.children
+    text3, = box3.children
+    assert text3.text == '    '
+    box4, = line4.children
+    text4, = box4.children
+    assert text4.text == 'is '
+    box5, = line5.children
+    text5, = box5.children
+    assert text5.text == 'text'
+
+    line1, line2, line3, line4 = lines(1, 'pre-line')
     box1, = line1.children
     text1, = box1.children
     assert text1.text == 'This'
     box2, = line2.children
     text2, = box2.children
-    assert text2.text == 'is'
+    assert text2.text == '+'
     box3, = line3.children
     text3, = box3.children
-    assert text3.text == 'text'
+    assert text3.text == 'is'
+    box4, = line4.children
+    text4, = box4.children
+    assert text4.text == 'text'
 
     line1, = lines(1000000, 'normal')
     box1, = line1.children
     text1, = box1.children
-    assert text1.text == 'This is text'
+    assert text1.text == 'This + is text'
 
     line1, line2 = lines(1000000, 'pre')
     box1, = line1.children
     text1, = box1.children
-    assert text1.text == 'This\xA0\xA0\xA0\xA0'
+    assert text1.text == 'This +    '
     box2, = line2.children
     text2, = box2.children
-    assert text2.text == '\xA0\xA0\xA0\xA0is\xA0text'
+    assert text2.text == '    is text'
 
     line1, = lines(1000000, 'nowrap')
     box1, = line1.children
     text1, = box1.children
-    assert text1.text == 'This\xA0is\xA0text'
+    assert text1.text == 'This + is text'
 
     line1, line2 = lines(1000000, 'pre-wrap')
     box1, = line1.children
     text1, = box1.children
-    assert text1.text == 'This\xA0\xA0\xA0\xA0\u200b'
+    assert text1.text == 'This +    '
     box2, = line2.children
     text2, = box2.children
-    assert text2.text == '\xA0\xA0\xA0\xA0\u200bis\xA0\u200btext'
+    assert text2.text == '    is text'
 
     line1, line2 = lines(1000000, 'pre-line')
     box1, = line1.children
     text1, = box1.children
-    assert text1.text == 'This'
+    assert text1.text == 'This +'
     box2, = line2.children
     text2, = box2.children
     assert text2.text == 'is text'

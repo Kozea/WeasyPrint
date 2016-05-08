@@ -385,11 +385,11 @@ def test_whitespace():
         ('pre', 'Block', [
             ('pre', 'Line', [
                 # pre
-                ('pre', 'Text', '\t\xA0\xA0foo\n')])]),
+                ('pre', 'Text', '\t  foo\n')])]),
         ('pre', 'Block', [
             ('pre', 'Line', [
                 # pre-wrap
-                ('pre', 'Text', '\t\xA0\xA0\u200Bfoo\n')])]),
+                ('pre', 'Text', '\t  foo\n')])]),
         ('pre', 'Block', [
             ('pre', 'Line', [
                 # pre-line

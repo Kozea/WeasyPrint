@@ -1,6 +1,18 @@
 WeasyPrint changelog
 ====================
 
+Version 0.28
+------------
+
+*Not released yet.*
+
+Bug fixes:
+
+* `#189: <https://github.com/Kozea/WeasyPrint/issues/189>`_:
+  ``white-space: nowrap`` still wraps on hyphens
+* Don't crash when transform matrix isn't invertible
+
+
 Version 0.27
 ------------
 

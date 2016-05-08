@@ -272,11 +272,15 @@ def get_ink_position(line):
     return (units_to_double(ink_extents.x), units_to_double(ink_extents.y))
 
 
-def first_line_metrics(first_line, text, layout, resume_at, hyphenated=False):
+def first_line_metrics(first_line, text, layout, resume_at, space_collapse,
+                       hyphenated=False):
     length = first_line.length
     if not hyphenated and resume_at:
-        # Create layout with final text, remove trailing spaces if needed
-        first_line_text = utf8_slice(text, slice(length)).rstrip(' ')
+        # Create layout with final text
+        first_line_text = utf8_slice(text, slice(length))
+        # Remove trailing spaces if spaces collapse
+        if space_collapse:
+            first_line_text = first_line_text.rstrip(' ')
         layout.set_text(first_line_text)
         first_line = next(layout.iter_lines(), None)
         length = first_line.length if first_line is not None else 0
@@ -417,6 +421,12 @@ def split_first_line(text, style, hinting, max_width, line_width):
     ``baseline``: baseline in pixels of the first line
 
     """
+    text_wrap = style.white_space in ('pre', 'nowrap')
+    space_collapse = style.white_space in ('normal', 'nowrap', 'pre-line')
+
+    if text_wrap:
+        max_width = None
+
     # Step #1: Get a draft layout with the first line
     layout = None
     if max_width:
@@ -442,11 +452,13 @@ def split_first_line(text, style, hinting, max_width, line_width):
     # Step #2: Don't hyphenize when it's not needed
     if max_width is None:
         # The first line can take all the place needed
-        return first_line_metrics(first_line, text, layout, resume_at)
+        return first_line_metrics(
+            first_line, text, layout, resume_at, space_collapse)
     first_line_width, _height = get_size(first_line)
     if second_line is None and first_line_width <= max_width:
         # The first line fits in the available width
-        return first_line_metrics(first_line, text, layout, resume_at)
+        return first_line_metrics(
+            first_line, text, layout, resume_at, space_collapse)
 
     # Step #3: Try to put the first word of the second line on the first line
     if first_line_width <= max_width:
@@ -461,23 +473,27 @@ def split_first_line(text, style, hinting, max_width, line_width):
 
     next_word = second_line_text.split(' ', 1)[0]
     if next_word:
-        # next_word might fit without a space afterwards
-        new_first_line_text = first_line_text + next_word
-        layout.set_text(new_first_line_text)
-        lines = layout.iter_lines()
-        first_line = next(lines, None)
-        second_line = next(lines, None)
-        first_line_width, _height = get_size(first_line)
-        if second_line is None and first_line_width <= max_width:
-            # The next word fits in the first line, keep the layout
-            resume_at = len(new_first_line_text.encode('utf-8')) + 1
-            if resume_at == len(text.encode('utf-8')):
-                resume_at = None
-            return first_line_metrics(first_line, text, layout, resume_at)
+        if space_collapse:
+            # next_word might fit without a space afterwards
+            # only try when space collapsing is allowed
+            new_first_line_text = first_line_text + next_word
+            layout.set_text(new_first_line_text)
+            lines = layout.iter_lines()
+            first_line = next(lines, None)
+            second_line = next(lines, None)
+            first_line_width, _height = get_size(first_line)
+            if second_line is None and first_line_width <= max_width:
+                # The next word fits in the first line, keep the layout
+                resume_at = len(new_first_line_text.encode('utf-8')) + 1
+                if resume_at == len(text.encode('utf-8')):
+                    resume_at = None
+                return first_line_metrics(
+                    first_line, text, layout, resume_at, space_collapse)
     elif first_line_text:
         # We found something on the first line but we did not find a word on
         # the next line, no need to hyphenate, we can keep the current layout
-        return first_line_metrics(first_line, text, layout, resume_at)
+        return first_line_metrics(
+            first_line, text, layout, resume_at, space_collapse)
 
     # Step #4: Try to hyphenize
     hyphens = style.hyphens
@@ -551,7 +567,8 @@ def split_first_line(text, style, hinting, max_width, line_width):
         lines = layout.iter_lines()
         first_line = next(lines, None)
 
-    return first_line_metrics(first_line, text, layout, resume_at, hyphenated)
+    return first_line_metrics(
+        first_line, text, layout, resume_at, space_collapse, hyphenated)
 
 
 def line_widths(text, style, enable_hinting, width):
