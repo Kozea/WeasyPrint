@@ -216,13 +216,15 @@ def inline_line_widths(context, box, outer, is_line_start, minimum,
                 lines[0] = adjust(child, outer, lines[0], right=False)
                 lines[-1] = adjust(child, outer, lines[-1], left=False)
         elif isinstance(child, boxes.TextBox):
+            space_collapse = child.style.white_space in (
+                'normal', 'nowrap', 'pre-line')
             if skip_stack is None:
                 skip = 0
             else:
                 skip, skip_stack = skip_stack
                 assert skip_stack is None
             child_text = child.text[(skip or 0):]
-            if is_line_start:
+            if is_line_start and space_collapse:
                 child_text = child_text.lstrip(' ')
             if minimum and child_text == ' ':
                 lines = [0, 0]
