@@ -893,6 +893,7 @@ def text_align(context, line, available_width, last):
 
     """
     align = line.style.text_align
+    space_collapse = line.style.white_space in ('normal', 'nowrap', 'pre-line')
     if align in ('-weasy-start', '-weasy-end'):
         if (align == '-weasy-start') ^ (line.style.direction == 'rtl'):
             align = 'left'
@@ -904,7 +905,11 @@ def text_align(context, line, available_width, last):
         return 0
     offset = available_width - line.width
     if align == 'justify':
-        justify_line(context, line, offset)
+        if space_collapse:
+            # Justification of texts where white space is not collapsing is
+            # - forbidden by CSS 2, and
+            # - not required by CSS 3 Text.
+            justify_line(context, line, offset)
         return 0
     if align == 'center':
         offset /= 2.
