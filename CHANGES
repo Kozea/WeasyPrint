@@ -11,6 +11,9 @@ Bug fixes:
 * `#189: <https://github.com/Kozea/WeasyPrint/issues/189>`_:
   ``white-space: nowrap`` still wraps on hyphens
 * Don't crash when transform matrix isn't invertible
+* Don't crash when rendering ratio-only SVG images
+* Fix margins and borders on some tables
+* Fix crashes on some tables
 
 
 Version 0.27
