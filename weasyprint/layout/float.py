@@ -33,9 +33,15 @@ def float_layout(context, box, containing_block, device_size, absolute_boxes,
     from .blocks import block_container_layout
     from .inlines import inline_replaced_box_width_height
 
-    resolve_percentages(box, (containing_block.width, containing_block.height))
-    resolve_position_percentages(
-        box, (containing_block.width, containing_block.height))
+    cb_width, cb_height = (containing_block.width, containing_block.height)
+    # TODO: This is only handled later in blocks.block_container_layout
+    # http://www.w3.org/TR/CSS21/visudet.html#normal-block
+    if cb_height == 'auto':
+        cb_height = (
+            containing_block.position_y - containing_block.content_box_y())
+
+    resolve_percentages(box, (cb_width, cb_height))
+    resolve_position_percentages(box, (cb_width, cb_height))
 
     if box.margin_left == 'auto':
         box.margin_left = 0
@@ -56,8 +62,7 @@ def float_layout(context, box, containing_block, device_size, absolute_boxes,
         float_width(box, context, containing_block)
 
     if box.is_table_wrapper:
-        table_wrapper_width(
-            context, box, (containing_block.width, containing_block.height))
+        table_wrapper_width(context, box, (cb_width, cb_height))
 
     if isinstance(box, boxes.BlockBox):
         context.create_block_formatting_context()

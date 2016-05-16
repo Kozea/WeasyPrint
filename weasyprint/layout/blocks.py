@@ -556,6 +556,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
 
     # TODO: See corner cases in
     # http://www.w3.org/TR/CSS21/visudet.html#normal-block
+    # TODO: See float.float_layout
     if new_box.height == 'auto':
         new_box.height = position_y - new_box.content_box_y()
 
