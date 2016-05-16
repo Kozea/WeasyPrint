@@ -190,6 +190,7 @@ footer {
                 url(img/footer.jpg) repeat-x left bottom,
                 url(img/background.jpg) repeat;
     margin: 0;
+    min-height: 100vh;
     padding: 0;
     position: relative;
   }
@@ -202,7 +203,6 @@ footer {
     box-sizing: border-box;
     margin: 260px auto 3em;
     max-width: 40em;
-    min-height: 100vh;
     padding: 1em 3em;
   }
 }
