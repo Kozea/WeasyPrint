@@ -39,13 +39,18 @@ Here is an extract of [CSS21-print.css](/samples/CSS21-print.css):
     margin: 3cm 2cm; padding-left: 1.5cm;
     @top-center {
         content: "Introduction to CSS 2.1";
-        vertical-align: bottom; border-bottom: 0.5pt solid }
+        vertical-align: bottom;
+        border-bottom: 0.5pt solid }
     @bottom-right {
-        content: "Page " counter(page) " of " counter(pages) }
+        content: "Page " counter(page)
+                 " of " counter(pages) }
     @left-top {
         content: "W3C Recommendation";
-        background: #005a9c; color: #fff; text-align: right;
-        transform-origin: 100% 0; transform: rotate(-90deg) }}
+        background: #005a9c;
+        color: #fff;
+        text-align: right;
+        transform-origin: 100% 0;
+        transform: rotate(-90deg) }}
 body { text-align: justify }
 h1 { -weasy-bookmark-level: none }
 ```
