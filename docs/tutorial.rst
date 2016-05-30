@@ -189,7 +189,7 @@ to the default fetcher:
     from weasyprint import default_url_fetcher, HTML
 
     def my_fetcher(url):
-        if url.startswith('graph:')
+        if url.startswith('graph:'):
             graph_data = map(float, url[6:].split(','))
             return dict(string=generate_graph(graph_data),
                         mime_type='image/png')
