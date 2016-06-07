@@ -133,7 +133,7 @@ Archlinux
 
 .. code-block:: sh
 
-    sudo pacman -S python-pip python-lxml cairo pango gdk-pixbuf2
+    sudo pacman -S python-pip python-lxml cairo pango gdk-pixbuf2 libffi pkg-config
 
 
 Gentoo
