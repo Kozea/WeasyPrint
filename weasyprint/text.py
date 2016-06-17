@@ -1,4 +1,4 @@
-# coding: utf8
+# coding: utf-8
 """
     weasyprint.text
     ---------------
@@ -272,15 +272,18 @@ def get_ink_position(line):
     return (units_to_double(ink_extents.x), units_to_double(ink_extents.y))
 
 
-def first_line_metrics(first_line, text, layout, resume_at, hyphenated=False):
+def first_line_metrics(first_line, text, layout, resume_at, space_collapse,
+                       hyphenated=False):
     length = first_line.length
-    if not hyphenated:
+    if not hyphenated and resume_at:
+        # Create layout with final text
         first_line_text = utf8_slice(text, slice(length))
-        if first_line_text.endswith(' ') and resume_at:
-            # Remove trailing spaces
-            layout.set_text(first_line_text.rstrip(' '))
-            first_line = next(layout.iter_lines(), None)
-            length = first_line.length if first_line is not None else 0
+        # Remove trailing spaces if spaces collapse
+        if space_collapse:
+            first_line_text = first_line_text.rstrip(' ')
+        layout.set_text(first_line_text)
+        first_line = next(layout.iter_lines(), None)
+        length = first_line.length if first_line is not None else 0
     width, height = get_size(first_line)
     baseline = units_to_double(pango.pango_layout_iter_get_baseline(ffi.gc(
         pango.pango_layout_get_iter(layout.layout),
@@ -423,14 +426,12 @@ def split_first_line(text, style, hinting, max_width, line_width):
     ``baseline``: baseline in pixels of the first line
 
     """
-    # In some cases (shrink-to-fit result being the preferred width)
-    # this value is coming from Pango itself,
-    # but floating point errors have accumulated:
-    #   width2 = (width + X) - X   # in some cases, width2 < width
-    # Increase the value a bit to compensate and not introduce
-    # an unexpected line break.
-    if max_width is not None:
-        max_width += style.font_size * 0.2
+    text_wrap = style.white_space in ('pre', 'nowrap')
+    space_collapse = style.white_space in ('normal', 'nowrap', 'pre-line')
+
+    if text_wrap:
+        max_width = None
+
     # Step #1: Get a draft layout with the first line
     layout = None
     if max_width:
@@ -456,40 +457,48 @@ def split_first_line(text, style, hinting, max_width, line_width):
     # Step #2: Don't hyphenize when it's not needed
     if max_width is None:
         # The first line can take all the place needed
-        return first_line_metrics(first_line, text, layout, resume_at)
+        return first_line_metrics(
+            first_line, text, layout, resume_at, space_collapse)
     first_line_width, _height = get_size(first_line)
     if second_line is None and first_line_width <= max_width:
         # The first line fits in the available width
-        return first_line_metrics(first_line, text, layout, resume_at)
+        return first_line_metrics(
+            first_line, text, layout, resume_at, space_collapse)
 
     # Step #3: Try to put the first word of the second line on the first line
     if first_line_width <= max_width:
         # The first line may have been cut too early by Pango
         second_line_index = second_line.start_index
-        first_part = utf8_slice(text, slice(second_line_index))
-        second_part = utf8_slice(text, slice(second_line_index, None))
+        first_line_text = utf8_slice(text, slice(second_line_index))
+        second_line_text = utf8_slice(text, slice(second_line_index, None))
     else:
         # The first word is longer than the line, try to hyphenize it
-        first_part = ''
-        second_part = text
-    next_word = second_part.split(' ', 1)[0]
+        first_line_text = ''
+        second_line_text = text
 
-    if not next_word:
-        # We did not find a word on the next line
-        return first_line_metrics(first_line, text, layout, resume_at)
-
-    # next_word might fit without a space afterwards.
-    # Pango previously counted that space’s advance width.
-    new_first_line = first_part + next_word
-    layout.set_text(new_first_line)
-    lines = layout.iter_lines()
-    first_line = next(lines, None)
-    second_line = next(lines, None)
-    first_line_width, _height = get_size(first_line)
-    if second_line is None and first_line_width <= max_width:
-        # The next word fits in the first line, keep the layout
-        resume_at = len(new_first_line.encode('utf-8')) + 1
-        return first_line_metrics(first_line, text, layout, resume_at)
+    next_word = second_line_text.split(' ', 1)[0]
+    if next_word:
+        if space_collapse:
+            # next_word might fit without a space afterwards
+            # only try when space collapsing is allowed
+            new_first_line_text = first_line_text + next_word
+            layout.set_text(new_first_line_text)
+            lines = layout.iter_lines()
+            first_line = next(lines, None)
+            second_line = next(lines, None)
+            first_line_width, _height = get_size(first_line)
+            if second_line is None and first_line_width <= max_width:
+                # The next word fits in the first line, keep the layout
+                resume_at = len(new_first_line_text.encode('utf-8')) + 1
+                if resume_at == len(text.encode('utf-8')):
+                    resume_at = None
+                return first_line_metrics(
+                    first_line, text, layout, resume_at, space_collapse)
+    elif first_line_text:
+        # We found something on the first line but we did not find a word on
+        # the next line, no need to hyphenate, we can keep the current layout
+        return first_line_metrics(
+            first_line, text, layout, resume_at, space_collapse)
 
     # Step #4: Try to hyphenize
     hyphens = style.hyphens
@@ -515,18 +524,19 @@ def split_first_line(text, style, hinting, max_width, line_width):
                 dictionary = pyphen.Pyphen(lang=lang, left=left, right=right)
                 PYPHEN_DICTIONARY_CACHE[dictionary_key] = dictionary
             for first_word_part, _ in dictionary.iterate(next_word):
-                new_first_line = (
-                    first_part + first_word_part + style.hyphenate_character)
+                hyphenated_first_line_text = (
+                    first_line_text + first_word_part +
+                    style.hyphenate_character)
                 temp_layout = create_layout(
-                    new_first_line, style, hinting, max_width)
+                    hyphenated_first_line_text, style, hinting, max_width)
                 temp_lines = temp_layout.iter_lines()
                 temp_first_line = next(temp_lines, None)
                 temp_second_line = next(temp_lines, None)
 
                 if (temp_second_line is None and space >= 0) or space < 0:
                     hyphenated = True
-                    # TODO: find why there's no need to .encode
-                    resume_at = len(first_part + first_word_part)
+                    resume_at = len(
+                        (first_line_text + first_word_part).encode('utf8'))
                     layout = temp_layout
                     first_line = temp_first_line
                     second_line = temp_second_line
@@ -540,37 +550,30 @@ def split_first_line(text, style, hinting, max_width, line_width):
     space = max_width - first_line_width
     # If we can break words and the first line is too long
     if overflow_wrap == 'break-word' and space < 0:
-        if hyphenated:
-            # Is it really OK to remove hyphenation for word-break ?
-            new_first_line = new_first_line.rstrip(
-                new_first_line[-(len(style.hyphenate_character)):])
-            if second_line is not None:
-                second_line_index = second_line.start_index
-                second_part = utf8_slice(text, slice(second_line_index, None))
-                new_first_line += second_part
-            hyphenated = False
-
+        # Is it really OK to remove hyphenation for word-break ?
+        hyphenated = False
         # TODO: Modify code to preserve W3C condition:
         # "Shaping characters are still shaped as if the word were not broken"
         # The way new lines are processed in this function (one by one with no
         # memory of the last) prevents shaping characters (arabic, for
         # instance) from keeping their shape when wrapped on the next line with
         # pango layout.  Maybe insert Unicode shaping characters in text ?
-        temp_layout = create_layout(new_first_line, style, hinting, max_width)
+        temp_layout = create_layout(text, style, hinting, max_width)
         temp_layout.set_wrap(PANGO_WRAP_MODE['WRAP_WORD_CHAR'])
         temp_lines = temp_layout.iter_lines()
         temp_first_line = next(temp_lines, None)
         temp_second_line = next(temp_lines, None)
         temp_second_line_index = (
-            len(new_first_line) if temp_second_line is None
+            len(text.encode('utf-8')) if temp_second_line is None
             else temp_second_line.start_index)
         resume_at = temp_second_line_index
-        first_part = utf8_slice(text, slice(temp_second_line_index))
-        layout = create_layout(first_part, style, hinting, max_width)
+        first_line_text = utf8_slice(text, slice(temp_second_line_index))
+        layout = create_layout(first_line_text, style, hinting, max_width)
         lines = layout.iter_lines()
         first_line = next(lines, None)
 
-    return first_line_metrics(first_line, text, layout, resume_at, hyphenated)
+    return first_line_metrics(
+        first_line, text, layout, resume_at, space_collapse, hyphenated)
 
 
 def line_widths(text, style, enable_hinting, width):
@@ -586,5 +589,9 @@ def show_first_line(context, pango_layout, hinting):
     context = ffi.cast('cairo_t *', context._pointer)
     if hinting:
         pangocairo.pango_cairo_update_layout(context, pango_layout.layout)
+    # Set an infinite width as we don't want to break lines when drawing, the
+    # lines have already been split and the size may differ for example because
+    # of hinting.
+    pango.pango_layout_set_width(pango_layout.layout, -1)
     pangocairo.pango_cairo_show_layout_line(
         context, next(pango_layout.iter_lines()))

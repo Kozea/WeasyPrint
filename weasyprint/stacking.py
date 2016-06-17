@@ -1,4 +1,4 @@
-# coding: utf8
+# coding: utf-8
 """
     weasyprint.stacking
     -------------------
@@ -81,11 +81,11 @@ class StackingContext(object):
             if isinstance(box, AbsolutePlaceholder):
                 box = box._box
             style = box.style
-            if ((style.position != 'static' and style.z_index != 'auto')
-                    or style.opacity < 1
+            if ((style.position != 'static' and style.z_index != 'auto') or
+                    style.opacity < 1 or
                     # 'transform: none' gives a "falsy" empty list here
-                    or style.transform
-                    or style.overflow != 'visible'):
+                    style.transform or
+                    style.overflow != 'visible'):
                 # This box defines a new stacking context, remove it
                 # from the "normal" children list.
                 child_contexts.append(

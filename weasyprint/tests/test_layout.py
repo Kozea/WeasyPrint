@@ -1,4 +1,4 @@
-# coding: utf8
+# coding: utf-8
 """
     weasyprint.tests.layout
     -----------------------
@@ -912,9 +912,9 @@ def test_auto_layout_table():
     assert table_wrapper.position_x == 0
     assert table.position_x == 0
     assert td_11.position_x == td_21.position_x == 1  # spacing
-    assert td_11.width == td_21.width == 5  # 4 + (width - pmw) * 1 / 10
-    assert td_12.position_x == 7  # 1 + 5 + sp
-    assert td_12.width == 13  # 4 + (width - pmw) * 9 / 10
+    assert td_11.width == td_21.width == 4  # minimum width
+    assert td_12.position_x == 6  # 1 + 5 + sp
+    assert td_12.width == 14  # available width
     assert table.width == 21
 
     page, = parse('''
@@ -962,9 +962,9 @@ def test_auto_layout_table():
     assert table_wrapper.position_x == 0
     assert table.position_x == 5  # 0 + margin-left
     assert td_1.position_x == 15  # 5 + border-spacing
-    assert td_1.width == 30  # 20 + ((120 - 20 - 40 - 3 * sp) * 1 / 3)
-    assert td_2.position_x == 55  # 15 + 30 + border-spacing
-    assert td_2.width == 60  # 40 + ((120 - 20 - 40 - 3 * sp) * 2 / 3)
+    assert td_1.width == 20  # fixed
+    assert td_2.position_x == 45  # 15 + 20 + border-spacing
+    assert td_2.width == 70  # 120 - 3 * border-spacing - 20
     assert table.width == 120
 
     page, = parse('''
@@ -1021,9 +1021,9 @@ def test_auto_layout_table():
     assert table_wrapper.position_x == 0
     assert table.position_x == 10  # 0 + margin-left
     assert td_1.position_x == 10
-    assert td_1.width == 5  # 4 + ((14 - 4 - 8) * 8 / 16)
-    assert td_2.position_x == 15  # 10 + 5
-    assert td_2.width == 9  # 8 + ((14 - 4 - 8) * 8 / 16)
+    assert td_1.width == 6  # 14 - 8
+    assert td_2.position_x == 16  # 10 + 6
+    assert td_2.width == 8  # maximum of the minimum widths for the column
     assert table.width == 14
 
     page, = parse('''
@@ -1055,14 +1055,14 @@ def test_auto_layout_table():
     td_31, td_32, td_33 = row3.children
     assert table_wrapper.position_x == 0
     assert table.position_x == 0
-    assert td_11.width == 16  # 10 + (22 - 10) / 2
-    assert td_12.width == 22  # (0 + (22 - 10) / 2) + 8 + 8
-    assert td_21.width == 22
-    assert td_22.width == 8
-    assert td_23.width == 8
-    assert td_31.width == 16
-    assert td_32.width == 6
-    assert td_33.width == 16
+    assert td_11.width == 10  # fixed
+    assert td_12.width == 28  # 38 - 10
+    assert td_21.width == 22  # fixed
+    assert td_22.width == 8  # fixed
+    assert td_23.width == 8  # fixed
+    assert td_31.width == 10  # same as first line
+    assert td_32.width == 12  # 22 - 10
+    assert td_33.width == 16  # 8 + 8 from second line
     assert table.width == 38
 
     page, = parse('''
@@ -1094,14 +1094,14 @@ def test_auto_layout_table():
     td_31, td_32, td_33 = row3.children
     assert table_wrapper.position_x == 0
     assert table.position_x == 0
-    assert td_11.width == 16  # 10 + (22 - 10) / 2
-    assert td_12.width == 42  # (0 + (22 - 10) / 2) + 8 + 8
-    assert td_21.width == 32
-    assert td_22.width == 8
-    assert td_23.width == 8
-    assert td_31.width == 16
-    assert td_32.width == 6
-    assert td_33.width == 26
+    assert td_11.width == 10  # fixed
+    assert td_12.width == 48  # 32 - 10 - sp + 2 * 8 + 2 * sp
+    assert td_21.width == 32  # fixed
+    assert td_22.width == 8  # fixed
+    assert td_23.width == 8  # fixed
+    assert td_31.width == 10  # same as first line
+    assert td_32.width == 12  # 32 - 10 - sp
+    assert td_33.width == 26  # 2 * 8 + sp
     assert table.width == 88
 
     # Regression tests: these used to crash
@@ -1120,8 +1120,8 @@ def test_auto_layout_table():
     row_group, = table.children
     row, = row_group.children
     td_1, td_2 = row.children
-    assert td_1.width == 20
-    assert td_2.width == 10
+    assert td_1.width == 20  # 2 / 3 * 30
+    assert td_2.width == 10  # 1 / 3 * 30
     assert table.width == 30
 
     page, = parse('''
@@ -1140,7 +1140,7 @@ def test_auto_layout_table():
     row_group, = table.children
     row, = row_group.children
     td_1, = row.children
-    assert td_1.width == 10  # TODO: should this be 20?
+    assert td_1.width == 20
     assert table.width == 20
 
     page, = parse('''
@@ -1155,8 +1155,8 @@ def test_auto_layout_table():
     table, = table_wrapper.children
     column_group, = table.column_groups
     column_1, column_2 = column_group.children
-    assert column_1.width == 10
-    assert column_2.width == 10
+    assert column_1.width == 0
+    assert column_2.width == 0
 
     # Absolute table
     page, = parse('''
@@ -1174,8 +1174,8 @@ def test_auto_layout_table():
     row_group, = table.children
     row, = row_group.children
     td_1, td_2 = row.children
-    assert td_1.width == 20
-    assert td_2.width == 10
+    assert td_1.width == 20  # 2 / 3 * 30
+    assert td_2.width == 10  # 1 / 3 * 30
     assert table.width == 30
 
     # With border-collapse
@@ -1267,19 +1267,19 @@ def test_auto_layout_table():
     row_group, = table.children
     row, = row_group.children
     td_1, td_2, td_3 = row.children
-    assert td_1.width == 50
-    assert td_2.width == 50
+    assert td_1.width == 100
+    assert td_2.width == 100
     assert td_3.width == 100
-    assert table.width == 200
+    assert table.width == 300
 
-    # Column group width as percentage
+    # Fixed-width table with column group with widths as percentages and pixels
     page, = parse('''
-        <table style="width: 200px">
+        <table style="width: 500px">
             <colgroup style="width: 100px">
               <col />
               <col />
             </colgroup>
-            <colgroup style="width: 50%">
+            <colgroup style="width: 30%">
               <col />
               <col />
             </colgroup>
@@ -1300,16 +1300,50 @@ def test_auto_layout_table():
     row_group, = table.children
     row, = row_group.children
     td_1, td_2, td_3, td_4 = row.children
+    assert td_1.width == 100
+    assert td_2.width == 100
+    assert td_3.width == 150
+    assert td_4.width == 150
+    assert table.width == 500
+
+    # Auto-width table with column group with widths as percentages and pixels
+    page, = parse('''
+        <table>
+            <colgroup style="width: 10%">
+              <col />
+              <col />
+            </colgroup>
+            <colgroup style="width: 200px">
+              <col />
+              <col />
+            </colgroup>
+            <tbody>
+              <tr>
+                <td>a a</td>
+                <td>a b</td>
+                <td>a c</td>
+                <td>a d</td>
+              </tr>
+            </tbody>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2, td_3, td_4 = row.children
     assert td_1.width == 50
     assert td_2.width == 50
-    assert td_3.width == 50
-    assert td_4.width == 50
-    assert table.width == 200
+    assert td_3.width == 200
+    assert td_4.width == 200
+    assert table.width == 500
 
     # Wrong column group width
     page, = parse('''
         <table style="width: 200px">
-            <colgroup style="width: 80%">
+            <colgroup style="width: 20%">
               <col />
               <col />
             </colgroup>
@@ -1387,12 +1421,329 @@ def test_auto_layout_table():
     assert td_2.width == 60
     assert table.width == 200
 
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/307
+    # Table with a cell larger than the table's max-width
+    page, = parse('''
+        <table style="max-width: 300px">
+            <td style="width: 400px"></td>
+        </table>
+    ''')
+
+    # Table with a cell larger than the table's width
+    page, = parse('''
+        <table style="width: 300px">
+            <td style="width: 400px"></td>
+        </table>
+    ''')
+
+    # Table with a cell larger than the table's width and max-width
+    page, = parse('''
+        <table style="width: 300px; max-width: 350px">
+            <td style="width: 400px"></td>
+        </table>
+    ''')
+
+    # Table with a cell larger than the table's width and max-width
+    page, = parse('''
+        <table style="width: 300px; max-width: 350px">
+            <td style="padding: 50px">
+                <div style="width: 300px"></div>
+            </td>
+        </table>
+    ''')
+
+    # Table with a cell larger than the table's max-width
+    page, = parse('''
+        <table style="max-width: 300px; margin: 100px">
+            <td style="width: 400px"></td>
+        </table>
+    ''')
+
+    # Test a table with column widths < table width < column width + spacing
+    page, = parse('''
+        <table style="width: 300px; border-spacing: 2px">
+            <td style="width: 299px"></td>
+        </table>
+    ''')
+
+    # Table with a cell larger than the table's width
+    page, = parse('''
+        <table style="width: 300px; margin: 100px">
+            <td style="width: 400px"></td>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    assert table_wrapper.margin_width() == 600  # 400 + 2 * 100
+
+    # Div with auto width containing a table with a min-width
+    page, = parse('''
+        <div style="float: left">
+            <table style="min-width: 400px; margin: 100px">
+                <td></td>
+            </table>
+        </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    table_wrapper, = div.children
+    assert div.margin_width() == 600  # 400 + 2 * 100
+    assert table_wrapper.margin_width() == 600  # 400 + 2 * 100
+
+    # Div with auto width containing an empty table with a min-width
+    page, = parse('''
+        <div style="float: left">
+            <table style="min-width: 400px; margin: 100px"></table>
+        </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    table_wrapper, = div.children
+    assert div.margin_width() == 600  # 400 + 2 * 100
+    assert table_wrapper.margin_width() == 600  # 400 + 2 * 100
+
+    # Div with auto width containing a table with a cell larger than the
+    # table's max-width
+    page, = parse('''
+        <div style="float: left">
+            <table style="max-width: 300px; margin: 100px">
+                <td style="width: 400px"></td>
+            </table>
+        </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    table_wrapper, = div.children
+    assert div.margin_width() == 600  # 400 + 2 * 100
+    assert table_wrapper.margin_width() == 600  # 400 + 2 * 100
+
     # Test regression on a crash: https://github.com/Kozea/WeasyPrint/pull/152
     page, = parse('''
         <table>
             <td style="width: 50%">
         </table>
     ''')
+
+    # Other crashes: https://github.com/Kozea/WeasyPrint/issues/305
+    page, = parse('''
+        <table>
+          <tr>
+            <td>
+              <table>
+                <tr>
+                  <th>Test</th>
+                </tr>
+                <tr>
+                  <td style="min-width: 100%;"></td>
+                  <td style="width: 48px;"></td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+    ''')
+    page, = parse('''
+        <table>
+          <tr>
+            <td>
+              <table>
+                <tr>
+                  <td style="width: 100%;"></td>
+                  <td style="width: 48px;">
+                    <img src="http://weasyprint.org/samples/acid2-small.png">
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+    ''')
+    page, = parse('''
+        <table>
+          <tr>
+            <td>
+              <table style="display: inline-table">
+                <tr>
+                  <td style="width: 100%;"></td>
+                  <td></td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+    ''')
+
+    # Cell width as percentage in auto-width table
+    page, = parse('''
+        <div style="width: 100px">
+            <table>
+                <tbody>
+                    <tr>
+                        <td>a a a a a a a a</td>
+                        <td style="width: 30%">a a a a a a a a</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    table_wrapper, = div.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2 = row.children
+    assert td_1.width == 70
+    assert td_2.width == 30
+    assert table.width == 100
+
+    # Cell width as percentage in auto-width table
+    page, = parse('''
+        <table>
+            <tbody>
+                <tr>
+                    <td style="width: 70px">a a a a a a a a</td>
+                    <td style="width: 30%">a a a a a a a a</td>
+                </tr>
+            </tbody>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2 = row.children
+    assert td_1.width == 70
+    assert td_2.width == 30
+    assert table.width == 100
+
+    # Cell width as percentage on colspan cell in auto-width table
+    page, = parse('''
+        <div style="width: 100px">
+            <table>
+                <tbody>
+                    <tr>
+                        <td>a a a a a a a a</td>
+                        <td style="width: 30%" colspan=2>a a a a a a a a</td>
+                        <td>a a a a a a a a</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    table_wrapper, = div.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2, td_3 = row.children
+    assert td_1.width == 35
+    assert td_2.width == 30
+    assert td_3.width == 35
+    assert table.width == 100
+
+    # Cells widths as percentages on normal and colspan cells
+    page, = parse('''
+        <div style="width: 100px">
+            <table>
+                <tbody>
+                    <tr>
+                        <td>a a a a a a a a</td>
+                        <td style="width: 30%" colspan=2>a a a a a a a a</td>
+                        <td>a a a a a a a a</td>
+                        <td style="width: 40%">a a a a a a a a</td>
+                        <td>a a a a a a a a</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    table_wrapper, = div.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2, td_3, td_4, td_5 = row.children
+    assert td_1.width == 10
+    assert td_2.width == 30
+    assert td_3.width == 10
+    assert td_4.width == 40
+    assert td_5.width == 10
+    assert table.width == 100
+
+    # Cells widths as percentage on multiple lines
+    page, = parse('''
+        <div style="width: 1000px">
+            <table>
+                <tbody>
+                    <tr>
+                        <td>a a a a a a a a</td>
+                        <td style="width: 30%">a a a a a a a a</td>
+                        <td>a a a a a a a a</td>
+                        <td style="width: 40%">a a a a a a a a</td>
+                        <td>a a a a a a a a</td>
+                    </tr>
+                    <tr>
+                        <td style="width: 31%" colspan=2>a a a a a a a a</td>
+                        <td>a a a a a a a a</td>
+                        <td style="width: 42%" colspan=2>a a a a a a a a</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    table_wrapper, = div.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row_1, row_2 = row_group.children
+    td_11, td_12, td_13, td_14, td_15 = row_1.children
+    td_21, td_22, td_23 = row_2.children
+    assert td_11.width == 10  # 31% - 30%
+    assert td_12.width == 300  # 30%
+    assert td_13.width == 270  # 1000 - 31% - 42%
+    assert td_14.width == 400  # 40%
+    assert td_15.width == 20  # 42% - 2%
+    assert td_21.width == 310  # 31%
+    assert td_22.width == 270  # 1000 - 31% - 42%
+    assert td_23.width == 420  # 42%
+    assert table.width == 1000
+
+    # Test regression:
+    # http://test.weasyprint.org/suite-css21/chapter8/section2/test56/
+    page, = parse('''
+        <div style="position: absolute">
+            <table style="margin: 50px; border: 20px solid black">
+                <tr>
+                    <td style="width: 200px; height: 200px"></td>
+                </tr>
+            </table>
+        </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    table_wrapper, = div.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td, = row.children
+    assert td.width == 200
+    assert table.width == 200
+    assert div.width == 340  # 200 + 2 * 50 + 2 * 20
 
 
 @assert_no_logs
@@ -4876,22 +5227,22 @@ def test_hyphenation():
         return len(lines)
 
     # Default: no hyphenation
-    assert line_count('<body>hyphenation') == 1
+    assert line_count('<body>hyphénation') == 1
     # lang only: no hyphenation
     assert line_count(
-        '<body lang=en>hyphenation') == 1
+        '<body lang=fr>hyphénation') == 1
     # `hyphens: auto` only: no hyphenation
     assert line_count(
-        '<body style="-weasy-hyphens: auto">hyphenation') == 1
+        '<body style="-weasy-hyphens: auto">hyphénation') == 1
     # lang + `hyphens: auto`: hyphenation
     assert line_count(
-        '<body style="-weasy-hyphens: auto" lang=en>hyphenation') > 1
+        '<body style="-weasy-hyphens: auto" lang=fr>hyphénation') > 1
 
     # Hyphenation with soft hyphens
-    assert line_count('<body>hyp&shy;henation') == 2
+    assert line_count('<body>hyp&shy;hénation') == 2
     # … unless disabled
     assert line_count(
-        '<body style="-weasy-hyphens: none">hyp&shy;henation') == 1
+        '<body style="-weasy-hyphens: none">hyp&shy;hénation') == 1
 
 
 @assert_no_logs
@@ -4899,53 +5250,53 @@ def test_hyphenate_character():
     page, = parse(
         '<html style="width: 5em; font-family: ahem">'
         '<body style="-weasy-hyphens: auto;'
-        '-weasy-hyphenate-character: \'!\'" lang=en>'
-        'hyphenation')
+        '-weasy-hyphenate-character: \'!\'" lang=fr>'
+        'hyphénation')
     html, = page.children
     body, = html.children
     lines = body.children
     assert len(lines) > 1
     assert lines[0].children[0].text.endswith('!')
     full_text = ''.join(line.children[0].text for line in lines)
-    assert full_text.replace('!', '') == 'hyphenation'
+    assert full_text.replace('!', '') == 'hyphénation'
 
     page, = parse(
         '<html style="width: 5em; font-family: ahem">'
         '<body style="-weasy-hyphens: auto;'
-        '-weasy-hyphenate-character: \'é\'" lang=en>'
-        'hyphenation')
+        '-weasy-hyphenate-character: \'à\'" lang=fr>'
+        'hyphénation')
     html, = page.children
     body, = html.children
     lines = body.children
     assert len(lines) > 1
-    assert lines[0].children[0].text.endswith('é')
+    assert lines[0].children[0].text.endswith('à')
     full_text = ''.join(line.children[0].text for line in lines)
-    assert full_text.replace('é', '') == 'hyphenation'
+    assert full_text.replace('à', '') == 'hyphénation'
 
     page, = parse(
         '<html style="width: 5em; font-family: ahem">'
         '<body style="-weasy-hyphens: auto;'
-        '-weasy-hyphenate-character: \'ù ù\'" lang=en>'
-        'hyphenation')
+        '-weasy-hyphenate-character: \'ù ù\'" lang=fr>'
+        'hyphénation')
     html, = page.children
     body, = html.children
     lines = body.children
     assert len(lines) > 1
     assert lines[0].children[0].text.endswith('ù ù')
     full_text = ''.join(line.children[0].text for line in lines)
-    assert full_text.replace(' ', '').replace('ù', '') == 'hyphenation'
+    assert full_text.replace(' ', '').replace('ù', '') == 'hyphénation'
 
     page, = parse(
         '<html style="width: 5em; font-family: ahem">'
         '<body style="-weasy-hyphens: auto;'
-        '-weasy-hyphenate-character: \'\'" lang=en>'
-        'hyphenation')
+        '-weasy-hyphenate-character: \'\'" lang=fr>'
+        'hyphénation')
     html, = page.children
     body, = html.children
     lines = body.children
     assert len(lines) > 1
     full_text = ''.join(line.children[0].text for line in lines)
-    assert full_text == 'hyphenation'
+    assert full_text == 'hyphénation'
 
     # TODO: strange error with some characters
     # page, = parse(
@@ -4967,54 +5318,54 @@ def test_hyphenate_limit_zone():
     page, = parse(
         '<html style="width: 12em; font-family: ahem">'
         '<body style="-weasy-hyphens: auto;'
-        '-weasy-hyphenate-limit-zone: 0" lang=en>'
-        'mmmmm hyphenation')
+        '-weasy-hyphenate-limit-zone: 0" lang=fr>'
+        'mmmmm hyphénation')
     html, = page.children
     body, = html.children
     lines = body.children
     assert len(lines) == 2
     assert lines[0].children[0].text.endswith('‐')
     full_text = ''.join(line.children[0].text for line in lines)
-    assert full_text.replace('‐', '') == 'mmmmm hyphenation'
+    assert full_text.replace('‐', '') == 'mmmmm hyphénation'
 
     page, = parse(
         '<html style="width: 12em; font-family: ahem">'
         '<body style="-weasy-hyphens: auto;'
-        '-weasy-hyphenate-limit-zone: 9em" lang=en>'
-        'mmmmm hyphenation')
+        '-weasy-hyphenate-limit-zone: 9em" lang=fr>'
+        'mmmmm hyphénation')
     html, = page.children
     body, = html.children
     lines = body.children
     assert len(lines) > 1
     assert lines[0].children[0].text.endswith('mm')
     full_text = ''.join(line.children[0].text for line in lines)
-    assert full_text == 'mmmmmhyphenation'
+    assert full_text == 'mmmmmhyphénation'
 
     page, = parse(
         '<html style="width: 12em; font-family: ahem">'
         '<body style="-weasy-hyphens: auto;'
-        '-weasy-hyphenate-limit-zone: 5%" lang=en>'
-        'mmmmm hyphenation')
+        '-weasy-hyphenate-limit-zone: 5%" lang=fr>'
+        'mmmmm hyphénation')
     html, = page.children
     body, = html.children
     lines = body.children
     assert len(lines) == 2
     assert lines[0].children[0].text.endswith('‐')
     full_text = ''.join(line.children[0].text for line in lines)
-    assert full_text.replace('‐', '') == 'mmmmm hyphenation'
+    assert full_text.replace('‐', '') == 'mmmmm hyphénation'
 
     page, = parse(
         '<html style="width: 12em; font-family: ahem">'
         '<body style="-weasy-hyphens: auto;'
-        '-weasy-hyphenate-limit-zone: 95%" lang=en>'
-        'mmmmm hyphenation')
+        '-weasy-hyphenate-limit-zone: 95%" lang=fr>'
+        'mmmmm hyphénation')
     html, = page.children
     body, = html.children
     lines = body.children
     assert len(lines) > 1
     assert lines[0].children[0].text.endswith('mm')
     full_text = ''.join(line.children[0].text for line in lines)
-    assert full_text == 'mmmmmhyphenation'
+    assert full_text == 'mmmmmhyphénation'
 
 
 @assert_no_logs
@@ -5100,90 +5451,99 @@ def test_white_space():
               body { font-size: 100px; width: %ipx }
               span { white-space: %s }
             </style>
-            <body><span>This    \n    is text''' % (width, space))
+            <body><span>This +    \n    is text''' % (width, space))
         html, = page.children
         body, = html.children
         return body.children
 
-    line1, line2, line3 = lines(1, 'normal')
+    line1, line2, line3, line4 = lines(1, 'normal')
     box1, = line1.children
     text1, = box1.children
     assert text1.text == 'This'
     box2, = line2.children
     text2, = box2.children
-    assert text2.text == 'is'
+    assert text2.text == '+'
     box3, = line3.children
     text3, = box3.children
-    assert text3.text == 'text'
-
-    line1, line2 = lines(1, 'pre')
-    box1, = line1.children
-    text1, = box1.children
-    assert text1.text == 'This\xA0\xA0\xA0\xA0'
-    box2, = line2.children
-    text2, = box2.children
-    assert text2.text == '\xA0\xA0\xA0\xA0is\xA0text'
-
-    line1, = lines(1, 'nowrap')
-    box1, = line1.children
-    text1, = box1.children
-    assert text1.text == 'This\xA0is\xA0text'
-
-    line1, line2, line3, line4 = lines(1, 'pre-wrap')
-    box1, = line1.children
-    text1, = box1.children
-    assert text1.text == 'This\xA0\xA0\xA0\xA0\u200b'
-    box2, = line2.children
-    text2, = box2.children
-    assert text2.text == '\xA0\xA0\xA0\xA0\u200b'
-    box3, = line3.children
-    text3, = box3.children
-    assert text3.text == 'is\xA0\u200b'
+    assert text3.text == 'is'
     box4, = line4.children
     text4, = box4.children
     assert text4.text == 'text'
 
-    line1, line2, line3 = lines(1, 'pre-line')
+    line1, line2 = lines(1, 'pre')
+    box1, = line1.children
+    text1, = box1.children
+    assert text1.text == 'This +    '
+    box2, = line2.children
+    text2, = box2.children
+    assert text2.text == '    is text'
+
+    line1, = lines(1, 'nowrap')
+    box1, = line1.children
+    text1, = box1.children
+    assert text1.text == 'This + is text'
+
+    line1, line2, line3, line4, line5 = lines(1, 'pre-wrap')
+    box1, = line1.children
+    text1, = box1.children
+    assert text1.text == 'This '
+    box2, = line2.children
+    text2, = box2.children
+    assert text2.text == '+    '
+    box3, = line3.children
+    text3, = box3.children
+    assert text3.text == '    '
+    box4, = line4.children
+    text4, = box4.children
+    assert text4.text == 'is '
+    box5, = line5.children
+    text5, = box5.children
+    assert text5.text == 'text'
+
+    line1, line2, line3, line4 = lines(1, 'pre-line')
     box1, = line1.children
     text1, = box1.children
     assert text1.text == 'This'
     box2, = line2.children
     text2, = box2.children
-    assert text2.text == 'is'
+    assert text2.text == '+'
     box3, = line3.children
     text3, = box3.children
-    assert text3.text == 'text'
+    assert text3.text == 'is'
+    box4, = line4.children
+    text4, = box4.children
+    assert text4.text == 'text'
 
     line1, = lines(1000000, 'normal')
     box1, = line1.children
     text1, = box1.children
-    assert text1.text == 'This is text'
+    assert text1.text == 'This + is text'
 
     line1, line2 = lines(1000000, 'pre')
     box1, = line1.children
     text1, = box1.children
-    assert text1.text == 'This\xA0\xA0\xA0\xA0'
+    assert text1.text == 'This +    '
     box2, = line2.children
     text2, = box2.children
-    assert text2.text == '\xA0\xA0\xA0\xA0is\xA0text'
+    assert text2.text == '    is text'
 
     line1, = lines(1000000, 'nowrap')
     box1, = line1.children
     text1, = box1.children
-    assert text1.text == 'This\xA0is\xA0text'
+    assert text1.text == 'This + is text'
 
     line1, line2 = lines(1000000, 'pre-wrap')
     box1, = line1.children
     text1, = box1.children
-    assert text1.text == 'This\xA0\xA0\xA0\xA0\u200b'
+    assert text1.text == 'This +    '
     box2, = line2.children
     text2, = box2.children
-    assert text2.text == '\xA0\xA0\xA0\xA0\u200bis\xA0\u200btext'
+    assert text2.text == '    is text'
 
     line1, line2 = lines(1000000, 'pre-line')
     box1, = line1.children
     text1, = box1.children
-    assert text1.text == 'This'
+    assert text1.text == 'This +'
     box2, = line2.children
     text2, = box2.children
     assert text2.text == 'is text'

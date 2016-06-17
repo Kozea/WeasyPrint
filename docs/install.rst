@@ -12,7 +12,7 @@ WeasyPrint |version| depends on:
 * cairocffi_ ≥ 0.3
 * tinycss_ = 0.3
 * cssselect_ ≥ 0.6
-* CairoSVG_ ≥ 0.5
+* CairoSVG_ ≥ 1.0.20
 * Pyphen_ ≥ 0.8
 * Optional: GDK-PixBuf_ [#]_
 
@@ -126,14 +126,14 @@ Fedora
 
 .. code-block:: sh
 
-    sudo yum install python-devel python-pip python-lxml cairo pango gdk-pixbuf2 libffi-devel
+    sudo yum install redhat-rpm-config python-devel python-pip python-lxml cairo pango gdk-pixbuf2 libffi-devel
 
 Archlinux
 ~~~~~~~~~
 
 .. code-block:: sh
 
-    sudo pacman -S python-pip python-lxml cairo pango gdk-pixbuf2
+    sudo pacman -S python-pip python-lxml cairo pango gdk-pixbuf2 libffi pkg-config
 
 
 Gentoo

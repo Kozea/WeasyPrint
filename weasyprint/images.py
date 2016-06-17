@@ -1,4 +1,4 @@
-# coding: utf8
+# coding: utf-8
 """
     weasyprint.images
     -----------------
@@ -13,27 +13,28 @@
 from __future__ import division, unicode_literals
 
 from io import BytesIO
+from xml.etree import ElementTree
 import math
 
 import cairocffi
-cairocffi.install_as_pycairo()  # for CairoSVG
-CAIRO_HAS_MIME_DATA = cairocffi.cairo_version() >= 11000
-
 import cairosvg.parser
 import cairosvg.surface
-assert cairosvg.surface.cairo is cairocffi, (
-    'CairoSVG is using pycairo instead of cairocffi. '
-    'Make sure it is not imported before WeasyPrint.')
+
+from .urls import fetch, URLFetchingError
+from .logger import LOGGER
+from .compat import xrange
 
 try:
     from cairocffi import pixbuf
 except OSError:
     pixbuf = None
 
-from .urls import fetch, URLFetchingError
-from .logger import LOGGER
-from .compat import xrange
+assert cairosvg.surface.cairo is cairocffi, (
+    'CairoSVG is using pycairo instead of cairocffi. '
+    'Make sure it is not imported before WeasyPrint.')
 
+
+CAIRO_HAS_MIME_DATA = cairocffi.cairo_version() >= 11000
 
 # Map values of the image-rendering property to cairo FILTER values:
 # Values are normalized to lower case.
@@ -67,7 +68,7 @@ class RasterImage(object):
             self._intrinsic_width / self._intrinsic_height
             if self._intrinsic_height != 0 else float('inf'))
 
-    def get_intrinsic_size(self, image_resolution):
+    def get_intrinsic_size(self, image_resolution, _font_size):
         # Raster images are affected by the 'image-resolution' property.
         return (self._intrinsic_width / image_resolution,
                 self._intrinsic_height / image_resolution)
@@ -96,6 +97,14 @@ class ScaledSVGSurface(cairosvg.surface.SVGSurface):
         return scale / 0.75
 
 
+class FakeSurface(object):
+    """Fake CairoSVG surface used to get SVG attributes."""
+    context_height = 0
+    context_width = 0
+    font_size = 12
+    dpi = 96
+
+
 class SVGImage(object):
     def __init__(self, svg_data, base_url):
         # Don’t pass data URIs to CairoSVG.
@@ -104,41 +113,57 @@ class SVGImage(object):
             base_url if not base_url.lower().startswith('data:') else None)
         self._svg_data = svg_data
 
-        # TODO: find a way of not doing twice the whole rendering.
         try:
-            svg = self._render()
+            self._tree = ElementTree.fromstring(self._svg_data)
         except Exception as e:
             raise ImageLoadingError.from_exception(e)
-        # TODO: support SVG images with none or only one of intrinsic
-        #       width, height and ratio.
-        if not (svg.width > 0 and svg.height > 0):
-            raise ImageLoadingError(
-                'SVG images without an intrinsic size are not supported.')
-        self._intrinsic_width = svg.width
-        self._intrinsic_height = svg.height
-        self.intrinsic_ratio = self._intrinsic_width / self._intrinsic_height
 
-    def get_intrinsic_size(self, _image_resolution):
-        # Vector images are affected by the 'image-resolution' property.
+    def get_intrinsic_size(self, _image_resolution, font_size):
+        # Vector images may be affected by the font size.
+        fake_surface = FakeSurface()
+        fake_surface.font_size = font_size
+        # Percentages don't provide an intrinsic size, we transform percentages
+        # into 0 using a (0, 0) context size:
+        # http://www.w3.org/TR/SVG/coords.html#IntrinsicSizing
+        self._width = cairosvg.surface.size(
+            fake_surface, self._tree.get('width'))
+        self._height = cairosvg.surface.size(
+            fake_surface, self._tree.get('height'))
+        _, _, viewbox = cairosvg.surface.node_format(fake_surface, self._tree)
+        self._intrinsic_width = self._width or None
+        self._intrinsic_height = self._height or None
+        self.intrinsic_ratio = None
+        if viewbox:
+            if self._width and self._height:
+                self.intrinsic_ratio = self._width / self._height
+            else:
+                if viewbox[2] and viewbox[3]:
+                    self.intrinsic_ratio = viewbox[2] / viewbox[3]
+                    if self._width:
+                        self._intrinsic_height = (
+                            self._width / self.intrinsic_ratio)
+                    elif self._height:
+                        self._intrinsic_width = (
+                            self._height * self.intrinsic_ratio)
+        elif self._width and self._height:
+            self.intrinsic_ratio = self._width / self._height
         return self._intrinsic_width, self._intrinsic_height
 
-    def _render(self):
-        # Draw to a cairo surface but do not write to a file.
-        # This is a CairoSVG surface, not a cairo surface.
-        return ScaledSVGSurface(
-            cairosvg.parser.Tree(
-                bytestring=self._svg_data, url=self._base_url),
-            output=None, dpi=96)
-
     def draw(self, context, concrete_width, concrete_height, _image_rendering):
-        # Do not re-use the rendered Surface object,
-        # but regenerate it as needed.
-        # If a surface for a SVG image is still alive by the time we call
-        # show_page(), cairo will rasterize the image instead writing vectors.
-        svg = self._render()
-        context.scale(concrete_width / svg.width, concrete_height / svg.height)
-        context.set_source_surface(svg.cairo)
-        context.paint()
+        try:
+            svg = ScaledSVGSurface(
+                cairosvg.parser.Tree(
+                    bytestring=self._svg_data, url=self._base_url),
+                output=None, dpi=96, parent_width=concrete_width,
+                parent_height=concrete_height)
+            if svg.width and svg.height:
+                context.scale(
+                    concrete_width / svg.width, concrete_height / svg.height)
+                context.set_source_surface(svg.cairo)
+                context.paint()
+        except Exception as e:
+            LOGGER.warning(
+                'Failed to draw an SVG image at %s : %s', self._base_url, e)
 
 
 def get_image_from_uri(cache, url_fetcher, url, forced_mime_type=None):
@@ -291,8 +316,8 @@ class Gradient(object):
         #: bool
         self.repeating = repeating
 
-    def get_intrinsic_size(self, _image_resolution):
-        # Raster images are affected by the 'image-resolution' property.
+    def get_intrinsic_size(self, _image_resolution, _font_size):
+        # Gradients are not affected by image resolution, parent or font size.
         return None, None
 
     intrinsic_ratio = None

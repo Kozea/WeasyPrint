@@ -1,4 +1,4 @@
-# coding: utf8
+# coding: utf-8
 """
     weasyprint.css.validation
     -------------------------
@@ -32,7 +32,8 @@ from . import computed_values
 
 
 # get the sets of keys
-LENGTH_UNITS = set(computed_values.LENGTHS_TO_PIXELS) | set(['ex', 'em', 'ch'])
+LENGTH_UNITS = set(computed_values.LENGTHS_TO_PIXELS) | \
+               set(['ex', 'em', 'ch', 'rem'])
 
 
 # keyword -> (open, insert)
@@ -258,6 +259,13 @@ def outline_color(token):
 @single_keyword
 def border_collapse(keyword):
     return keyword in ('separate', 'collapse')
+
+
+@validator()
+@single_keyword
+def empty_cells(keyword):
+    """``empty-cells`` property validation."""
+    return keyword in ('show', 'hide')
 
 
 @validator('color')

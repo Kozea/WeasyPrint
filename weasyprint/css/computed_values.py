@@ -1,4 +1,4 @@
-# coding: utf8
+# coding: utf-8
 """
     weasyprint.css.computed_values
     ------------------------------
@@ -30,6 +30,7 @@ LENGTHS_TO_PIXELS = {
     'in': 96.,  # LENGTHS_TO_PIXELS['pt'] * 72
     'cm': 96. / 2.54,  # LENGTHS_TO_PIXELS['in'] / 2.54
     'mm': 96. / 25.4,  # LENGTHS_TO_PIXELS['in'] / 25.4
+    'q': 96. / 25.4 / 4.,  # LENGTHS_TO_PIXELS['mm'] / 4
 }
 
 
@@ -157,7 +158,8 @@ def register_computer(name):
     return decorator
 
 
-def compute(element, pseudo_type, specified, computed, parent_style):
+def compute(element, pseudo_type, specified, computed, parent_style,
+            root_style):
     """
     Return a StyleDict of computed values.
 
@@ -174,12 +176,16 @@ def compute(element, pseudo_type, specified, computed, parent_style):
     if parent_style is None:
         parent_style = INITIAL_VALUES
 
-    computer = lambda: 0  # Dummy object that holds attributes
+    def computer():
+        """Dummy object that holds attributes."""
+        return 0
+
     computer.element = element
     computer.pseudo_type = pseudo_type
     computer.specified = specified
     computer.computed = computed
     computer.parent_style = parent_style
+    computer.root_style = root_style
 
     getter = COMPUTER_FUNCTIONS.get
 
@@ -278,7 +284,7 @@ def length(computer, name, value, font_size=None, pixels_only=False):
     elif unit in LENGTHS_TO_PIXELS:
         # Convert absolute lengths to pixels
         result = value.value * LENGTHS_TO_PIXELS[unit]
-    elif unit in ('em', 'ex', 'ch'):
+    elif unit in ('em', 'ex', 'ch', 'rem'):
         if font_size is None:
             font_size = computer.computed.font_size
         if unit == 'ex':
@@ -295,6 +301,8 @@ def length(computer, name, value, font_size=None, pixels_only=False):
             result = value.value * logical_width
         elif unit == 'em':
             result = value.value * font_size
+        elif unit == 'rem':
+            result = value.value * computer.root_style.font_size
     else:
         # A percentage or 'auto': no conversion needed.
         return value

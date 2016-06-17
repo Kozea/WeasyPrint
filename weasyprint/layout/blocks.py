@@ -1,4 +1,4 @@
-# coding: utf8
+# coding: utf-8
 """
     weasyprint.layout.blocks
     ------------------------
@@ -238,8 +238,8 @@ def block_container_layout(context, box, max_position_y, skip_stack,
     this_box_adjoining_margins = adjoining_margins
 
     collapsing_with_children = not (
-        box.border_top_width or box.padding_top
-        or establishes_formatting_context(box) or box.is_for_root_element)
+        box.border_top_width or box.padding_top or
+        establishes_formatting_context(box) or box.is_for_root_element)
     if collapsing_with_children:
         # XXX not counting margins in adjoining_margins, if any
         # (There are not padding or borders, see above.)
@@ -281,11 +281,12 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                     fixed_boxes.append(placeholder)
             elif child.is_floated():
                 new_child = float_layout(
-                    context, child, box, absolute_boxes, fixed_boxes)
+                    context, child, box, device_size, absolute_boxes,
+                    fixed_boxes)
                 # New page if overflow
                 if (page_is_empty and not new_children) or not (
-                        new_child.position_y + new_child.height
-                        > max_position_y):
+                        new_child.position_y + new_child.height >
+                        max_position_y):
                     new_child.index = index
                     new_children.append(new_child)
                 else:
@@ -391,8 +392,9 @@ def block_container_layout(context, box, max_position_y, skip_stack,
             if not new_containing_block.is_table_wrapper:
                 # TODO: there's no collapsing margins inside tables, right?
                 resolve_percentages(child, new_containing_block)
-                if (child.is_in_normal_flow() and last_in_flow_child is None
-                        and collapsing_with_children):
+                if (child.is_in_normal_flow() and
+                        last_in_flow_child is None and
+                        collapsing_with_children):
                     # TODO: add the adjoining descendants' margin top to
                     # [child.margin_top]
                     old_collapsed_margin = collapse_margin(adjoining_margins)
@@ -445,8 +447,9 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                 if not isinstance(
                         new_child, (boxes.BlockBox, boxes.TableBox)):
                     adjoining_margins.append(new_child.margin_top)
-                    offset_y = (collapse_margin(adjoining_margins)
-                                - new_child.margin_top)
+                    offset_y = (
+                        collapse_margin(adjoining_margins) -
+                        new_child.margin_top)
                     new_child.translate(0, offset_y)
                     adjoining_margins = []
                 # else: blocks handle that themselves.
@@ -458,13 +461,12 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                     new_position_y = (
                         new_child.border_box_y() + new_child.border_height())
 
-                    if (
-                        new_position_y > max_position_y
-                        and (new_children or not page_is_empty)
-                        and not (isinstance(child, boxes.TableBox) or (
-                            # For blocks with children do this per child.
-                            isinstance(child, boxes.BlockBox)
-                            and child.children))):
+                    if (new_position_y > max_position_y and
+                            (new_children or not page_is_empty) and
+                            not (isinstance(child, boxes.TableBox) or (
+                                # For blocks with children do this per child.
+                                isinstance(child, boxes.BlockBox) and
+                                child.children))):
                         # The child overflows the page area, put it on the
                         # next page. (But don’t delay whole blocks if eg.
                         # only the bottom border overflows.)
@@ -554,6 +556,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
 
     # TODO: See corner cases in
     # http://www.w3.org/TR/CSS21/visudet.html#normal-block
+    # TODO: See float.float_layout
     if new_box.height == 'auto':
         new_box.height = position_y - new_box.content_box_y()
 
@@ -594,8 +597,8 @@ def establishes_formatting_context(box):
 
     """
     return box.is_floated() or box.is_absolutely_positioned() or (
-        isinstance(box, boxes.BlockContainerBox)
-        and not isinstance(box, boxes.BlockBox)
+        isinstance(box, boxes.BlockContainerBox) and
+        not isinstance(box, boxes.BlockBox)
     ) or (
         isinstance(box, boxes.BlockBox) and box.style.overflow != 'visible'
     )
@@ -684,8 +687,8 @@ def find_earlier_page_break(children, absolute_boxes, fixed_boxes):
                 pass  # TODO: find an earlier break between table rows.
         if child.is_in_normal_flow():
             if previous_in_flow is not None and (
-                    block_level_page_break(child, previous_in_flow)
-                    != 'avoid'):
+                    block_level_page_break(child, previous_in_flow) !=
+                    'avoid'):
                 index += 1  # break after child
                 new_children = children[:index]
                 # Get the index in the original parent

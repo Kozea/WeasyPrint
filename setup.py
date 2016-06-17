@@ -1,4 +1,4 @@
-# coding: utf8
+# coding: utf-8
 """
     WeasyPrint
     ==========
@@ -21,7 +21,7 @@ VERSION = re.search("VERSION = '([^']+)'", codecs.open(
     encoding="utf-8",
 ).read().strip()).group(1)
 
-LONG_DESCRIPTION = open(path.join(path.dirname(__file__), 'README')).read()
+LONG_DESCRIPTION = open(path.join(path.dirname(__file__), 'README.rst')).read()
 
 
 REQUIREMENTS = [
@@ -30,7 +30,6 @@ REQUIREMENTS = [
     'html5lib>=0.999',
     'tinycss==0.3',
     'cssselect>=0.6',
-    'CairoSVG>=0.4.1',
     'cffi>=0.6',
     'cairocffi>=0.5',
     'Pyphen>=0.8'
@@ -39,6 +38,11 @@ REQUIREMENTS = [
 if sys.version_info < (2, 7) or (3,) <= sys.version_info < (3, 2):
     # In the stdlib from 2.7 and 3.2:
     REQUIREMENTS.append('argparse')
+
+if sys.version_info < (3,):
+    REQUIREMENTS.append('CairoSVG >= 1.0.20, < 2')
+else:
+    REQUIREMENTS.append('CairoSVG >= 1.0.20')
 
 setup(
     name='WeasyPrint',

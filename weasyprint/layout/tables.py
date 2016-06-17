@@ -1,11 +1,11 @@
-# coding: utf8
+# coding: utf-8
 """
     weasyprint.layout.tables
     ------------------------
 
     Layout for tables and internal table boxes.
 
-    :copyright: Copyright 2011-2014 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2016 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -17,17 +17,13 @@ from ..logger import LOGGER
 from ..formatting_structure import boxes
 from ..css.properties import Dimension
 from .percentages import resolve_percentages, resolve_one_percentage
-from .preferred import table_and_columns_preferred_widths
+from .preferred import table_and_columns_preferred_widths, max_content_width
 
 
 def table_layout(context, table, max_position_y, skip_stack,
                  containing_block, device_size, page_is_empty, absolute_boxes,
                  fixed_boxes):
-    """Layout for a table box.
-
-    For now only the fixed layout and separate border model are supported.
-
-    """
+    """Layout for a table box."""
     # Avoid a circular import
     from .blocks import block_container_layout
 
@@ -117,9 +113,9 @@ def table_layout(context, table, max_position_y, skip_stack,
                 cell.width = 0
                 borders_plus_padding = cell.border_width()  # with width==0
                 cell.width = (
-                    sum(spanned_widths)
-                    + border_spacing_x * (cell.colspan - 1)
-                    - borders_plus_padding)
+                    sum(spanned_widths) +
+                    border_spacing_x * (cell.colspan - 1) -
+                    borders_plus_padding)
                 # The computed height is a minimum
                 cell.computed_height = cell.height
                 cell.height = 'auto'
@@ -131,6 +127,9 @@ def table_layout(context, table, max_position_y, skip_stack,
                     page_is_empty=True,
                     absolute_boxes=absolute_boxes,
                     fixed_boxes=fixed_boxes)
+                cell.empty = not any(
+                    child.is_floated() or child.is_in_normal_flow()
+                    for child in cell.children)
                 cell.content_height = cell.height
                 if cell.computed_height != 'auto':
                     cell.height = max(cell.height, cell.computed_height)
@@ -165,14 +164,15 @@ def table_layout(context, table, max_position_y, skip_stack,
                 ending_cells_by_row[cell.rowspan - 1].append(cell)
             ending_cells = ending_cells_by_row.pop(0)
             if ending_cells:  # in this row
-                row_bottom_y = max(
-                    cell.position_y + cell.border_height()
-                    for cell in ending_cells)
                 if row.height == 'auto':
+                    row_bottom_y = max(
+                        cell.position_y + cell.border_height()
+                        for cell in ending_cells)
                     row.height = row_bottom_y - row.position_y
                 else:
                     row.height = max(row.height, max(
                         row_cell.height for row_cell in ending_cells))
+                    row_bottom_y = cell.position_y + row.height
             else:
                 row_bottom_y = row.position_y
                 row.height = 0
@@ -202,7 +202,7 @@ def table_layout(context, table, max_position_y, skip_stack,
                         for child in cell.children:
                             child.translate(dy=vertical_align_shift)
 
-            next_position_y = position_y + row.height + border_spacing_y
+            next_position_y = row.position_y + row.height + border_spacing_y
             # Break if this row overflows the page, unless there is no
             # other content on the page.
             if next_position_y > max_position_y and not page_is_empty:
@@ -215,8 +215,9 @@ def table_layout(context, table, max_position_y, skip_stack,
 
         # Do not keep the row group if we made a page break
         # before any of its rows or with 'avoid'
-        if resume_at and (group.style.page_break_inside == 'avoid'
-                          or not new_group_children):
+        if resume_at and (
+                group.style.page_break_inside == 'avoid' or
+                not new_group_children):
             return None, None
 
         group = group.copy_with_children(
@@ -348,6 +349,15 @@ def table_layout(context, table, max_position_y, skip_stack,
             skip_stack, position_y, max_position_y, page_is_empty)
         return header, new_table_children, footer, end_position_y, resume_at
 
+    def get_column_cells(table, column):
+        """Closure getting the column cells."""
+        return lambda: [
+            cell
+            for row_group in table.children
+            for row in row_group.children
+            for cell in row.children
+            if cell.grid_x == column.grid_x]
+
     header, new_table_children, footer, position_y, resume_at = \
         all_groups_layout()
     table = table.copy_with_children(
@@ -372,11 +382,19 @@ def table_layout(context, table, max_position_y, skip_stack,
     for group in table.column_groups:
         for column in group.children:
             resolve_percentages(column, containing_block=table)
-            column.position_x = column_positions[column.grid_x]
-            column.position_y = initial_position_y
-            column.width = column_widths[column.grid_x]
-            column.height = columns_height
-        resolve_percentages(group, containing_block=table)
+            if column.grid_x < len(column_positions):
+                column.position_x = column_positions[column.grid_x]
+                column.position_y = initial_position_y
+                column.width = column_widths[column.grid_x]
+                column.height = columns_height
+            else:
+                # Ignore extra empty columns
+                column.position_x = 0
+                column.position_y = 0
+                column.width = 0
+                column.height = 0
+            resolve_percentages(group, containing_block=table)
+            column.get_cells = get_column_cells(table, column)
         first = group.children[0]
         last = group.children[-1]
         group.position_x = first.position_x
@@ -385,8 +403,8 @@ def table_layout(context, table, max_position_y, skip_stack,
         group.height = columns_height
 
     if resume_at and not page_is_empty and (
-            table.style.page_break_inside == 'avoid'
-            or not new_table_children):
+            table.style.page_break_inside == 'avoid' or
+            not new_table_children):
         table = None
         resume_at = None
     next_page = 'any'
@@ -464,10 +482,10 @@ def fixed_table_layout(box):
     # Distribute the remaining space equally on columns that do not have
     # a width yet.
     all_border_spacing = border_spacing_x * (num_columns + 1)
-    min_table_width = (sum(w for w in column_widths if w is not None)
-                       + all_border_spacing)
-    columns_without_width = [i for i, width in enumerate(column_widths)
-                             if width is None]
+    min_table_width = (sum(w for w in column_widths if w is not None) +
+                       all_border_spacing)
+    columns_without_width = [i for i, w in enumerate(column_widths)
+                             if w is None]
     if columns_without_width and table.width >= min_table_width:
         remaining_width = table.width - min_table_width
         width_per_column = remaining_width / len(columns_without_width)
@@ -486,7 +504,7 @@ def fixed_table_layout(box):
         table.width -= extra_width
     elif num_columns:
         extra_per_column = extra_width / num_columns
-        column_widths = [width + extra_per_column for width in column_widths]
+        column_widths = [w + extra_per_column for w in column_widths]
 
     # Now we have table.width == sum(column_widths) + all_border_spacing
     # with possible floating point rounding errors.
@@ -501,59 +519,212 @@ def auto_table_layout(context, box, containing_block):
 
     """
     table = box.get_wrapped_table()
-    (table_preferred_minimum_width, table_preferred_width,
-     column_preferred_minimum_widths, column_preferred_widths) = \
-        table_and_columns_preferred_widths(
-            context, box, resolved_table_width=table.width != 'auto')
-
-    if table.style.border_collapse == 'separate':
-        border_spacing_x, _ = table.style.border_spacing
-    else:
-        border_spacing_x = 0
-
-    all_border_spacing = (
-        border_spacing_x * (len(column_preferred_widths) + 1))
+    (table_min_content_width, table_max_content_width,
+     column_min_content_widths, column_max_content_widths,
+     column_intrinsic_percentages, constrainedness,
+     total_horizontal_border_spacing, grid) = \
+        table_and_columns_preferred_widths(context, box, outer=False)
 
     margins = 0
     if box.margin_left != 'auto':
         margins += box.margin_left
     if box.margin_right != 'auto':
         margins += box.margin_right
+    paddings = table.padding_left + table.padding_right
 
-    cb_width, cb_height = containing_block
-    available_width = cb_width - margins
+    cb_width, _ = containing_block
+    available_width = cb_width - margins - paddings
+
     if table.width == 'auto':
-        if available_width < table_preferred_minimum_width:
-            table.width = table_preferred_minimum_width
-            table.column_widths = column_preferred_minimum_widths
-        elif available_width < table_preferred_width:
+        if available_width <= table_min_content_width:
+            table.width = table_min_content_width
+        elif available_width < table_max_content_width:
             table.width = available_width
-            table.column_widths = column_preferred_minimum_widths
         else:
-            table.width = table_preferred_width
-            table.column_widths = column_preferred_widths
+            table.width = table_max_content_width
     else:
-        if table.width < table_preferred_minimum_width:
-            table.width = table_preferred_minimum_width
-            table.column_widths = column_preferred_minimum_widths
-        elif table.width < table_preferred_width:
-            table.column_widths = column_preferred_minimum_widths
-        else:
-            table.column_widths = column_preferred_widths
+        if table.width < table_min_content_width:
+            table.width = table_min_content_width
 
-    lost_width = table.width - sum(table.column_widths) - all_border_spacing
-    if lost_width > 0:
-        sum_column_preferred_widths = sum(column_preferred_widths)
-        if sum_column_preferred_widths:
-            table.column_widths = [
-                (column_width + lost_width * preferred_column_width /
-                 sum_column_preferred_widths)
-                for (preferred_column_width, column_width)
-                in zip(column_preferred_widths, table.column_widths)]
+    if not grid:
+        table.column_widths = []
+        return
+
+    assignable_width = table.width - total_horizontal_border_spacing
+    min_content_guess = column_min_content_widths[:]
+    min_content_percentage_guess = column_min_content_widths[:]
+    min_content_specified_guess = column_min_content_widths[:]
+    max_content_guess = column_max_content_widths[:]
+    guesses = (
+        min_content_guess, min_content_percentage_guess,
+        min_content_specified_guess, max_content_guess)
+    for i in range(len(grid)):
+        if column_intrinsic_percentages[i]:
+            min_content_percentage_guess[i] = max(
+                column_intrinsic_percentages[i] * assignable_width / 100.,
+                column_min_content_widths[i])
+            min_content_specified_guess[i] = min_content_percentage_guess[i]
+            max_content_guess[i] = min_content_percentage_guess[i]
+        elif constrainedness[i]:
+            min_content_specified_guess[i] = column_min_content_widths[i]
+
+    if assignable_width <= sum(max_content_guess):
+        for guess in guesses:
+            if sum(guess) <= assignable_width:
+                lower_guess = guess
+            else:
+                break
+        for guess in guesses[::-1]:
+            if sum(guess) >= assignable_width:
+                upper_guess = guess
+            else:
+                break
+        if upper_guess == lower_guess:
+            assert assignable_width == sum(upper_guess)
+            table.column_widths = upper_guess
         else:
+            added_widths = [
+                upper_guess[i] - lower_guess[i] for i in range(len(grid))]
+            available_ratio = (
+                (assignable_width - sum(lower_guess)) / sum(added_widths))
             table.column_widths = [
-                column_width + lost_width / len(table.column_widths)
-                for column_width in table.column_widths]
+                lower_guess[i] + added_widths[i] * available_ratio
+                for i in range(len(grid))]
+    else:
+        # Distribute available width to columns
+        # http://dbaron.org/css/intrinsic/#distributetocols
+        table.column_widths = max_content_guess
+        excess_width = assignable_width - sum(max_content_guess)
+
+        # First group
+        columns = [
+            (i, column) for i, column in enumerate(grid)
+            if not constrainedness[i] and
+            column_intrinsic_percentages[i] == 0 and
+            any(max_content_width(context, cell) for cell in column if cell)]
+        if columns:
+            widths = [
+                max(max_content_width(context, cell)
+                    for cell in column if cell)
+                for i, column in columns]
+            current_widths = [
+                table.column_widths[i] for i, column in columns]
+            differences = [
+                max(0, width[0] - width[1])
+                for width in zip(widths, current_widths)]
+            if sum(differences) > excess_width:
+                differences = [
+                    difference / sum(differences) * excess_width
+                    for difference in differences]
+            excess_width -= sum(differences)
+            for i, difference in enumerate(differences):
+                table.column_widths[columns[i][0]] += difference
+        if excess_width <= 0:
+            return
+
+        # Second group
+        columns = [
+            i for i, column in enumerate(grid)
+            if not constrainedness[i] and
+            column_intrinsic_percentages[i] == 0]
+        if columns:
+            for i in columns:
+                table.column_widths[i] += excess_width / len(columns)
+            return
+
+        # Third group
+        columns = [
+            (i, column) for i, column in enumerate(grid)
+            if constrainedness[i] and
+            column_intrinsic_percentages[i] == 0 and
+            any(max_content_width(context, cell) for cell in column if cell)]
+        if columns:
+            widths = [
+                max(max_content_width(context, cell)
+                    for cell in column if cell)
+                for i, column in columns]
+            current_widths = [
+                table.column_widths[i] for i, column in columns]
+            differences = [
+                max(0, width[0] - width[1])
+                for width in zip(widths, current_widths)]
+            if sum(differences) > excess_width:
+                differences = [
+                    difference / sum(differences) * excess_width
+                    for difference in differences]
+            excess_width -= sum(differences)
+            for i, difference in enumerate(differences):
+                table.column_widths[columns[i][0]] += difference
+        if excess_width <= 0:
+            return
+
+        # Fourth group
+        columns = [
+            (i, column) for i, column in enumerate(grid)
+            if column_intrinsic_percentages[i] > 0]
+        if columns:
+            fixed_width = sum(
+                table.column_widths[j] for j in range(len(grid))
+                if j not in [i for i, column in columns])
+            percentage_width = sum(
+                column_intrinsic_percentages[i]
+                for i, column in columns)
+            if fixed_width and percentage_width >= 100:
+                # Sum of the percentages are greater than 100%
+                ratio = excess_width
+            elif fixed_width == 0:
+                # No fixed width, let's take the whole excess width
+                ratio = excess_width
+            else:
+                ratio = fixed_width / (100 - percentage_width)
+
+            widths = [
+                column_intrinsic_percentages[i] * ratio
+                for i, column in columns]
+            current_widths = [
+                table.column_widths[i] for i, column in columns]
+            # Allow to reduce the size of the columns to respect the percentage
+            differences = [
+                width[0] - width[1]
+                for width in zip(widths, current_widths)]
+            if sum(differences) > excess_width:
+                differences = [
+                    difference / sum(differences) * excess_width
+                    for difference in differences]
+            excess_width -= sum(differences)
+            for i, difference in enumerate(differences):
+                table.column_widths[columns[i][0]] += difference
+        if excess_width <= 0:
+            return
+
+        # Bonus: we've tried our best to distribute the extra size, but we
+        # failed. Instead of blindly distributing the size among all the colums
+        # and breaking all the rules (as said in the draft), let's try to
+        # change the columns with no constraint at all, then resize the table,
+        # and at least break the rules to make the columns fill the table.
+
+        # Fifth group, part 1
+        columns = [
+            i for i, column in enumerate(grid)
+            if any(column) and
+            column_intrinsic_percentages[i] == 0 and
+            not any(
+                max_content_width(context, cell)
+                for cell in column if cell)]
+        if columns:
+            for i in columns:
+                table.column_widths[i] += excess_width / len(columns)
+            return
+
+        if table_min_content_width < table.width - excess_width:
+            # Reduce the width of the size from the excess width that has not
+            # been distributed.
+            table.width -= excess_width
+        else:
+            # Fifth group, part 2, aka desperately break the rules
+            columns = [i for i, column in enumerate(grid) if any(column)]
+            for i in columns:
+                table.column_widths[i] += excess_width / len(columns)
 
 
 def table_wrapper_width(context, wrapper, containing_block):

@@ -1,5 +1,5 @@
 
-# coding: utf8
+# coding: utf-8
 """
     weasyprint.html
     ---------------
@@ -19,6 +19,7 @@
 from __future__ import division, unicode_literals
 import os.path
 import logging
+import sys
 import re
 
 from .css import get_child_text
@@ -33,8 +34,11 @@ from . import CSS
 level = LOGGER.level
 LOGGER.setLevel(logging.ERROR)
 
-HTML5_UA_STYLESHEET = CSS(
-    filename=os.path.join(os.path.dirname(__file__), 'css', 'html5_ua.css'))
+if hasattr(sys, "frozen"):
+    root = os.path.dirname(sys.executable)
+else:
+    root = os.path.dirname(__file__)
+HTML5_UA_STYLESHEET = CSS(filename=os.path.join(root, 'css', 'html5_ua.css'))
 
 LOGGER.setLevel(level)
 

@@ -1,4 +1,4 @@
-# coding: utf8
+# coding: utf-8
 """
     weasyprint.tests.test_boxes
     ---------------------------
@@ -146,8 +146,8 @@ def sanity_checks(box):
             break
 
     assert any(
-        all(isinstance(child, acceptable_types)
-            or not child.is_in_normal_flow()
+        all(isinstance(child, acceptable_types) or
+            not child.is_in_normal_flow()
             for child in box.children)
         for acceptable_types in acceptable_types_lists
     ), (box, box.children)
@@ -385,11 +385,11 @@ def test_whitespace():
         ('pre', 'Block', [
             ('pre', 'Line', [
                 # pre
-                ('pre', 'Text', '\t\xA0\xA0foo\n')])]),
+                ('pre', 'Text', '\t  foo\n')])]),
         ('pre', 'Block', [
             ('pre', 'Line', [
                 # pre-wrap
-                ('pre', 'Text', '\t\xA0\xA0\u200Bfoo\n')])]),
+                ('pre', 'Text', '\t  foo\n')])]),
         ('pre', 'Block', [
             ('pre', 'Line', [
                 # pre-line

@@ -1,12 +1,111 @@
 WeasyPrint changelog
 ====================
 
+
+Version 0.29
+------------
+
+Released on 2016-06-17.
+
+Bug fixes:
+
+* `#263: <https://github.com/Kozea/WeasyPrint/pull/263>`_:
+  Don't crash with floats with percents in positions.
+* `#323: <https://github.com/Kozea/WeasyPrint/pull/323>`_:
+  Fix CairoSVG 2.0 pre-release dependency in Python 2.x.
+
+
+Version 0.28
+------------
+
+Released on 2016-05-16.
+
+Bug fixes:
+
+* `#189: <https://github.com/Kozea/WeasyPrint/issues/189>`_:
+  ``white-space: nowrap`` still wraps on hyphens
+* `#305: <https://github.com/Kozea/WeasyPrint/issues/305>`_:
+  Fix crashes on some tables
+* Don't crash when transform matrix isn't invertible
+* Don't crash when rendering ratio-only SVG images
+* Fix margins and borders on some tables
+
+
+Version 0.27
+------------
+
+Released on 2016-04-08.
+
+New features:
+
+* `#295: <https://github.com/Kozea/WeasyPrint/pull/295>`_:
+  Support the 'rem' unit.
+* `#299: <https://github.com/Kozea/WeasyPrint/pull/299>`_:
+  Enhance the support of SVG images.
+
+Bug fixes:
+
+* `#307: <https://github.com/Kozea/WeasyPrint/issues/307>`_:
+  Fix the layout of cells larger than their tables.
+
+Documentation:
+
+* The website is now on GitHub Pages, the documentation is on Read the Docs.
+* `#297: <https://github.com/Kozea/WeasyPrint/issues/297>`_:
+  Rewrite the CSS chapter of the documentation.
+
+
+Version 0.26
+------------
+
+Released on 2016-01-29.
+
+New features:
+
+* Support the `empty-cells` attribute.
+* Respect table, column and cell widths.
+
+Bug fixes:
+
+* `#172: <https://github.com/Kozea/WeasyPrint/issues/172>`_:
+  Unable to set table column width on tables td's.
+* `#151: <https://github.com/Kozea/WeasyPrint/issues/151>`_:
+  Table background colour bleeds beyond table cell boundaries.
+* `#260: <https://github.com/Kozea/WeasyPrint/issues/260>`_:
+  TypeError: unsupported operand type(s) for +: 'float' and 'str'.
+* `#288: <https://github.com/Kozea/WeasyPrint/issues/288>`_:
+  Unwanted line-breaks in bold text.
+* `#286: <https://github.com/Kozea/WeasyPrint/issues/286>`_:
+  AttributeError: 'Namespace' object has no attribute 'attachments'.
+
+
+Version 0.25
+------------
+
+Released on 2015-12-17.
+
+New features:
+
+* Support the 'q' unit.
+
+Bug fixes:
+
+* `#285: <https://github.com/Kozea/WeasyPrint/issues/285>`_:
+  Fix a crash happening when splitting lines.
+* `#284: <https://github.com/Kozea/WeasyPrint/issues/284>`_:
+  Escape parenthesis in PDF links.
+* `#280: <https://github.com/Kozea/WeasyPrint/pull/280>`_:
+  Replace utf8 with utf-8 for gettext/django compatibility.
+* `#269: <https://github.com/Kozea/WeasyPrint/pull/269>`_:
+  Add support for use when frozen.
+* `#250: <https://github.com/Kozea/WeasyPrint/issues/250>`_:
+  Don't crash when attachments are not available.
+
+
 Version 0.24
 ------------
 
 Released on 2015-08-04.
-
-FIXME: complete this. See https://github.com/Kozea/WeasyPrint/compare/v0.23...v0.24
 
 New features:
 

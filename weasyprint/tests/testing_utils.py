@@ -1,4 +1,4 @@
-# coding: utf8
+# coding: utf-8
 """
     weasyprint.tests.testing_utils
     ------------------------------
@@ -93,8 +93,8 @@ def assert_no_logs(function):
 
 
 def almost_equal(a, b):
-    if (isinstance(a, list) and isinstance(b, list)
-            or isinstance(a, tuple) and isinstance(b, tuple)):
+    if (isinstance(a, list) and isinstance(b, list) or
+            isinstance(a, tuple) and isinstance(b, tuple)):
         return len(a) == len(b) and all(
             almost_equal(aa, bb) for aa, bb in zip(a, b))
     if isinstance(a, float) or isinstance(b, float):

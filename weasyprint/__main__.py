@@ -1,4 +1,4 @@
-# coding: utf8
+# coding: utf-8
 """
     weasyprint.__main__
     -------------------
@@ -147,7 +147,7 @@ def main(argv=None, stdout=None, stdin=None):
 
     if args.attachment:
         if format_ == 'pdf':
-            kwargs['attachments'] = args.attachments
+            kwargs['attachments'] = args.attachment
         else:
             parser.error('--attachment only applies for the PDF format.')
 

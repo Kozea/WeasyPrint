@@ -1,4 +1,4 @@
-# coding: utf8
+# coding: utf-8
 """
     weasyprint.tests.test_pdf
     -------------------------
@@ -377,8 +377,8 @@ def test_embedded_files():
                 ]
             )
 
-    assert ((b'<' + hashlib.md5(b'hi there').hexdigest().encode('ascii')
-            + b'>') in pdf_bytes)
+    assert ((b'<' + hashlib.md5(b'hi there').hexdigest().encode('ascii') +
+             b'>') in pdf_bytes)
     assert (b'/F ()' in pdf_bytes)
     assert (b'/UF (\xfe\xff\x00a\x00t\x00t\x00a\x00c\x00h\x00m\x00e\x00n'
             b'\x00t\x00.\x00b\x00i\x00n)' in pdf_bytes)

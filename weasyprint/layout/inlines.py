@@ -1,4 +1,4 @@
-# coding: utf8
+# coding: utf-8
 """
     weasyprint.layout.inline
     ------------------------
@@ -17,7 +17,7 @@ from .float import avoid_collisions, float_layout
 from .replaced import image_marker_layout
 from .min_max import handle_min_max_width, handle_min_max_height
 from .percentages import resolve_percentages, resolve_one_percentage
-from .preferred import (shrink_to_fit, inline_preferred_minimum_width,
+from .preferred import (shrink_to_fit, inline_min_content_width,
                         trailing_whitespace_size)
 from .tables import find_in_flow_baseline, table_wrapper_width
 from ..text import split_first_line
@@ -72,7 +72,7 @@ def get_next_linebox(context, linebox, position_y, skip_stack,
     if skip_stack == 'continue':
         return None, None
 
-    linebox.width = inline_preferred_minimum_width(
+    linebox.width = inline_min_content_width(
         context, linebox, skip_stack=skip_stack, first_line=True)
 
     linebox.height, _ = strut_layout(linebox.style, context.enable_hinting)
@@ -151,8 +151,8 @@ def get_next_linebox(context, linebox, position_y, skip_stack,
     for waiting_float in waiting_floats:
         waiting_float.position_y = waiting_floats_y
         waiting_float = float_layout(
-            context, waiting_float, containing_block, absolute_boxes,
-            fixed_boxes)
+            context, waiting_float, containing_block, device_size,
+            absolute_boxes, fixed_boxes)
         float_children.append(waiting_float)
     if float_children:
         line = line.copy_with_children(
@@ -248,47 +248,42 @@ def replaced_box_width(box, device_size):
     """
     Compute and set the used width for replaced boxes (inline- or block-level)
     """
-    # http://www.w3.org/TR/CSS21/visudet.html#inline-replaced-width
     intrinsic_width, intrinsic_height = box.replacement.get_intrinsic_size(
-        box.style.image_resolution)
-    # TODO: update this when we have replaced elements that do not
-    # always have an intrinsic width. (See commented code below.)
-    assert intrinsic_width is not None
-    assert intrinsic_height is not None
+        box.style.image_resolution, box.style.font_size)
+
+    # This algorithm simply follows the different points of the specification:
+    # http://www.w3.org/TR/CSS21/visudet.html#inline-replaced-width
+    if box.height == 'auto' and box.width == 'auto':
+        if intrinsic_width is not None:
+            # Point #1
+            box.width = intrinsic_width
+        elif box.replacement.intrinsic_ratio is not None:
+            if intrinsic_height is not None:
+                # Point #2 first part
+                box.width = intrinsic_height * box.replacement.intrinsic_ratio
+            else:
+                # Point #3
+                # " It is suggested that, if the containing block's width does
+                #   not itself depend on the replaced element's width, then the
+                #   used value of 'width' is calculated from the constraint
+                #   equation used for block-level, non-replaced elements in
+                #   normal flow. "
+                # Whaaaaat? Let's not do this and use a value that may work
+                # well at least with inline blocks.
+                box.width = (
+                    box.style.font_size * box.replacement.intrinsic_ratio)
 
     if box.width == 'auto':
-        if box.height == 'auto':
+        if box.replacement.intrinsic_ratio is not None:
+            # Point #2 second part
+            box.width = box.height * box.replacement.intrinsic_ratio
+        elif intrinsic_width is not None:
+            # Point #4
             box.width = intrinsic_width
         else:
-            intrinsic_ratio = intrinsic_width / intrinsic_height
-            box.width = box.height * intrinsic_ratio
-
-    # Untested code for when we do not always have an intrinsic width.
-#    if box.height == 'auto' and box.width == 'auto':
-#        if intrinsic_width is not None:
-#            box.width = intrinsic_width
-#        elif intrinsic_height is not None and intrinsic_ratio is not None:
-#            box.width = intrinsic_ratio * intrinsic_height
-#        elif box.height != 'auto' and intrinsic_ratio is not None:
-#            box.width = intrinsic_ratio * box.height
-#        elif intrinsic_ratio is not None:
-#            pass
-#            # TODO: Intrinsic ratio only: undefined in CSS 2.1.
-#            # " It is suggested that, if the containing block's width does not
-#            #   itself depend on the replaced element's width, then the used
-#            #   value of 'width' is calculated from the constraint equation
-#            #   used for block-level, non-replaced elements in normal flow. "
-
-#    # Still no value
-#    if box.width == 'auto':
-#        if intrinsic_width is not None:
-#            box.width = intrinsic_width
-#        else:
-#            # Then the used value of 'width' becomes 300px. If 300px is too
-#            # wide to fit the device, UAs should use the width of the largest
-#            # rectangle that has a 2:1 ratio and fits the device instead.
-#            device_width, _device_height = device_size
-#            box.width = min(300, device_width)
+            # Point #5
+            device_width, _device_height = device_size
+            box.width = min(300, device_width)
 
 
 @handle_min_max_height
@@ -298,35 +293,33 @@ def replaced_box_height(box, device_size):
     """
     # http://www.w3.org/TR/CSS21/visudet.html#inline-replaced-height
     intrinsic_width, intrinsic_height = box.replacement.get_intrinsic_size(
-        box.style.image_resolution)
-    # TODO: update this when we have replaced elements that do not
-    # always have intrinsic dimensions. (See commented code below.)
-    assert intrinsic_width is not None
-    assert intrinsic_height is not None
+        box.style.image_resolution, box.style.font_size)
+
     if intrinsic_height == 0:
         # Results in box.height == 0 if used, whatever the used width
         # or intrinsic width.
         intrinsic_ratio = float('inf')
-    else:
+    elif intrinsic_width and intrinsic_height:
         intrinsic_ratio = intrinsic_width / intrinsic_height
+    else:
+        intrinsic_ratio = None
 
     # Test 'auto' on the computed width, not the used width
     if box.style.height == 'auto' and box.style.width == 'auto':
         box.height = intrinsic_height
-    elif box.style.height == 'auto':
+    elif box.style.height == 'auto' and intrinsic_ratio:
         box.height = box.width / intrinsic_ratio
 
-    # Untested code for when we do not always have intrinsic dimensions.
-#    if box.style.height == 'auto' and box.style.width == 'auto':
-#        if intrinsic_height is not None:
-#            box.height = intrinsic_height
-#    elif intrinsic_ratio is not None and box.style.height == 'auto':
-#        box.height = box.width / intrinsic_ratio
-#    elif box.style.height == 'auto' and intrinsic_height is not None:
-#        box.height = intrinsic_height
-#    elif box.style.height == 'auto':
-#        device_width, _device_height = device_size
-#        box.height = min(150, device_width / 2)
+    if (box.style.height == 'auto' and box.style.width == 'auto' and
+            intrinsic_height is not None):
+        box.height = intrinsic_height
+    elif intrinsic_ratio is not None and box.style.height == 'auto':
+        box.height = box.width / intrinsic_ratio
+    elif box.style.height == 'auto' and intrinsic_height is not None:
+        box.height = intrinsic_height
+    elif box.style.height == 'auto':
+        device_width, _device_height = device_size
+        box.height = min(150, device_width / 2)
 
 
 def inline_replaced_box_layout(box, device_size):
@@ -440,6 +433,11 @@ def inline_block_box_layout(context, box, position_x, skip_stack,
         box.margin_left = 0
     if box.margin_right == 'auto':
         box.margin_right = 0
+    # http://www.w3.org/TR/CSS21/visudet.html#block-root-margin
+    if box.margin_top == 'auto':
+        box.margin_top = 0
+    if box.margin_bottom == 'auto':
+        box.margin_bottom = 0
 
     inline_block_width(box, context, containing_block)
 
@@ -582,8 +580,8 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                 waiting_floats.append(child)
             else:
                 child = float_layout(
-                    context, child, containing_block, absolute_boxes,
-                    fixed_boxes)
+                    context, child, containing_block, device_size,
+                    absolute_boxes, fixed_boxes)
                 children.append(child)
                 # TODO: use the main text direction of the line
                 for old_child in children[:index]:
@@ -680,7 +678,6 @@ def split_text_box(context, box, available_width, line_width, skip):
     text = box.text[skip:]
     if font_size == 0 or not text:
         return None, None, False
-    # XXX ``resume_at`` is an index in UTF-8 bytes, not unicode codepoints.
     layout, length, resume_at, width, height, baseline = split_first_line(
         text, box.style, context.enable_hinting, available_width, line_width)
 
@@ -689,8 +686,7 @@ def split_text_box(context, box, available_width, line_width, skip):
     # No need to encode what’s after resume_at (if set) or length (if
     # resume_at is not set). One code point is one or more byte, so
     # UTF-8 indexes are always bigger or equal to Unicode indexes.
-    partial_text = text[:resume_at or length]
-    utf8_text = partial_text.encode('utf8')
+    utf8_text = text.encode('utf8')[:resume_at or length]
     new_text = utf8_text[:length].decode('utf8')
     new_length = len(new_text)
     if resume_at is not None:
@@ -704,7 +700,7 @@ def split_text_box(context, box, available_width, line_width, skip):
                 if between.strip(' ') not in ('', '\n', '\u2029'):
                     # Replace bad cutting value from Pango
                     between = utf8_text[length:new_length].decode('utf8')
-            resume_at = new_length + len(between)
+        resume_at = new_length + len(between)
     length = new_length
 
     if length > 0:
@@ -737,9 +733,7 @@ def split_text_box(context, box, available_width, line_width, skip):
         if preserved_line_break:
             # See http://unicode.org/reports/tr14/
             # TODO: are there others? Find Pango docs on this
-            # The space is in this list, as it may have been removed by the
-            # Step #2 of split_first_line
-            assert between in (' ', '\n', '\u2029'), (
+            assert between in ('\n', '\u2029'), (
                 'Got %r between two lines. '
                 'Expected nothing or a preserved line break' % (between,))
         resume_at += skip
@@ -899,6 +893,7 @@ def text_align(context, line, available_width, last):
 
     """
     align = line.style.text_align
+    space_collapse = line.style.white_space in ('normal', 'nowrap', 'pre-line')
     if align in ('-weasy-start', '-weasy-end'):
         if (align == '-weasy-start') ^ (line.style.direction == 'rtl'):
             align = 'left'
@@ -910,7 +905,11 @@ def text_align(context, line, available_width, last):
         return 0
     offset = available_width - line.width
     if align == 'justify':
-        justify_line(context, line, offset)
+        if space_collapse:
+            # Justification of texts where white space is not collapsing is
+            # - forbidden by CSS 2, and
+            # - not required by CSS 3 Text.
+            justify_line(context, line, offset)
         return 0
     if align == 'center':
         offset /= 2.

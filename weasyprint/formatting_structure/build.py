@@ -1,4 +1,4 @@
-# coding: utf8
+# coding: utf-8
 """
     weasyprint.formatting_structure.build
     -------------------------------------
@@ -73,8 +73,8 @@ def build_formatting_structure(element_tree, style_for, get_image_from_uri):
 
 
 def make_box(element_tag, sourceline, style, content, get_image_from_uri):
-    if (style.display in ('table', 'inline-table')
-            and style.border_collapse == 'collapse'):
+    if (style.display in ('table', 'inline-table') and
+            style.border_collapse == 'collapse'):
         # Padding do not apply
         for side in ['top', 'bottom', 'left', 'right']:
             style['padding_' + side] = ZERO_PIXELS
@@ -392,7 +392,8 @@ def wrap_improper(box, children, wrapper_type, test=None):
 
     """
     if test is None:
-        test = lambda child: isinstance(child, wrapper_type)
+        def test(child):
+            return isinstance(child, wrapper_type)
     improper = []
     for child in children:
         if test(child):
@@ -557,6 +558,8 @@ def wrap_table(box, children):
         group.grid_x = grid_x
         if group.children:
             for column in group.children:
+                # There's no need to take care of group's span, as "span=x"
+                # already generates x TableColumnBox children
                 column.grid_x = grid_x
                 grid_x += 1
             group.span = len(group.children)
@@ -813,35 +816,28 @@ def process_whitespace(box, following_collapsible_space=False):
         # Normalize line feeds
         text = re.sub('\r\n?', '\n', text)
 
-        handling = box.style.white_space
+        new_line_collapse = box.style.white_space in ('normal', 'nowrap')
+        space_collapse = box.style.white_space in (
+            'normal', 'nowrap', 'pre-line')
 
-        if handling in ('normal', 'nowrap', 'pre-line'):
+        if space_collapse:
             # \r characters were removed/converted earlier
             text = re.sub('[\t ]*\n[\t ]*', '\n', text)
-        if handling in ('pre', 'pre-wrap'):
-            # \xA0 is the non-breaking space
-            text = text.replace(' ', '\xA0')
-            if handling == 'pre-wrap':
-                # "a line break opportunity at the end of the sequence"
-                # \u200B is the zero-width space, marks a line break
-                # opportunity.
-                text = re.sub('\xA0([^\xA0]|$)', '\xA0\u200B\\1', text)
-        elif handling in ('normal', 'nowrap'):
+
+        if new_line_collapse:
             # TODO: this should be language-specific
             # Could also replace with a zero width space character (U+200B),
             # or no character
             # CSS3: http://www.w3.org/TR/css3-text/#line-break-transform
             text = text.replace('\n', ' ')
 
-        if handling in ('normal', 'nowrap', 'pre-line'):
+        if space_collapse:
             text = text.replace('\t', ' ')
             text = re.sub(' +', ' ', text)
             previous_text = text
             if following_collapsible_space and text.startswith(' '):
                 text = text[1:]
             following_collapsible_space = previous_text.endswith(' ')
-            if handling == 'nowrap':
-                text = re.sub('(?!^) (?!$)', '\xA0', text)
         else:
             following_collapsible_space = False
 

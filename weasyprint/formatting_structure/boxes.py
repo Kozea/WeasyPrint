@@ -1,4 +1,4 @@
-# coding: utf8
+# coding: utf-8
 """
     weasyprint.formatting_structure.boxes
     -------------------------------------
@@ -567,6 +567,11 @@ class TableColumnGroupBox(ParentBox):
     padding_left = 0
     padding_right = 0
 
+    def get_cells(self):
+        """Return cells that originate in the group's columns."""
+        return [
+            cell for column in self.children for cell in column.get_cells()]
+
 
 # Not really a parent box, but pretending to be removes some corner cases.
 class TableColumnBox(ParentBox):
@@ -588,6 +593,14 @@ class TableColumnBox(ParentBox):
     padding_bottom = 0
     padding_left = 0
     padding_right = 0
+
+    def get_cells(self):
+        """Return cells that originate in the column.
+
+        May be overriden on instances.
+
+        """
+        return []
 
 
 class TableCellBox(BlockContainerBox):

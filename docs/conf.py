@@ -11,7 +11,9 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys, os, re
+import codecs
+import os
+import re
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -49,10 +51,11 @@ copyright = u'2011-2014, Simon Sapin and contributors, see AUTHORs'
 # built documents.
 #
 # The full version, including alpha/beta/rc tags.
-release = re.search("VERSION = '([^']+)'",
-    open(os.path.join(os.path.dirname(__file__), os.pardir,
-         'weasyprint', '__init__.py')).read().strip()
-).group(1)
+release = re.search("VERSION = '([^']+)'", codecs.open(
+    os.path.join(
+        os.path.dirname(__file__), os.pardir, 'weasyprint', '__init__.py'),
+    encoding="utf-8",
+).read().strip()).group(1)
 
 # The short X.Y version.
 version = '.'.join(release.split('.')[:2])
@@ -96,7 +99,7 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'default'
+html_theme = 'sphinx_rtd_theme'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -104,7 +107,7 @@ html_theme = 'default'
 #html_theme_options = {}
 
 # Add any paths that contain custom themes here, relative to this directory.
-#html_theme_path = []
+html_theme_path = ['_themes']
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
@@ -127,7 +130,7 @@ html_favicon = 'icon.ico'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-html_style = 'custom.css'
+#html_style = 'custom.css'
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.

@@ -1,4 +1,4 @@
-# coding: utf8
+# coding: utf-8
 r"""
     weasyprint.pdf
     --------------
@@ -49,6 +49,17 @@ from .html import W3C_DATE_RE
 from .logger import LOGGER
 
 
+def pdf_escape(value):
+    """Escape parentheses and backslashes in ``value``.
+
+    ``value`` must be unicode, or latin1 bytestring.
+
+    """
+    if isinstance(value, bytes):
+        value = value.decode('latin1')
+    return value.translate({40: r'\(', 41: r'\)', 92: r'\\'})
+
+
 class PDFFormatter(string.Formatter):
     """Like str.format except:
 
@@ -64,15 +75,15 @@ class PDFFormatter(string.Formatter):
             # Make a round-trip back through Unicode for the .translate()
             # method. (bytes.translate only maps to single bytes.)
             # Use latin1 to map all byte values.
-            return '({0})'.format(
-                ('\ufeff' + value).encode('utf-16-be').decode('latin1')
-                .translate({40: r'\(', 41: r'\)', 92: r'\\'}))
+            return '({0})'.format(pdf_escape(
+                ('\ufeff' + value).encode('utf-16-be').decode('latin1')))
         else:
             return super(PDFFormatter, self).convert_field(value, conversion)
 
     def vformat(self, format_string, args, kwargs):
         result = super(PDFFormatter, self).vformat(format_string, args, kwargs)
         return result.encode('latin1')
+
 
 pdf_format = PDFFormatter().format
 
@@ -538,15 +549,14 @@ def _write_pdf_attachment(pdf, attachment, url_fetcher):
                 url=url, url_fetcher=url_fetcher, description=description)
         elif not isinstance(attachment, Attachment):
             attachment = Attachment(guess=attachment, url_fetcher=url_fetcher)
+
+        with attachment.source as (source_type, source, url, _):
+            if isinstance(source, bytes):
+                source = io.BytesIO(source)
+            file_stream_id = _write_compressed_file_object(pdf, source)
     except URLFetchingError as exc:
         LOGGER.warning('Failed to load attachment: %s', exc)
         return None
-
-    with attachment.source as (source_type, source, url, _):
-        if isinstance(source, bytes):
-            source = io.BytesIO(source)
-
-        file_stream_id = _write_compressed_file_object(pdf, source)
 
     # TODO: Use the result object from a URL fetch operation to provide more
     # details on the possible filename
@@ -572,7 +582,6 @@ def _write_pdf_annotation_files(pdf, links, url_fetcher):
     for page_links in links:
         for link_type, target, rectangle in page_links:
             if link_type == 'attachment' and target not in annot_files:
-                annot_files[target] = None
                 # TODO: use the title attribute as description
                 annot_files[target] = _write_pdf_attachment(
                     pdf, (target, None), url_fetcher)
@@ -652,7 +661,7 @@ def write_pdf_metadata(document, fileobj, scale, metadata, attachments,
                 else:
                     content.append(pdf_format(
                         '/A << /Type /Action /S /URI /URI ({0}) >>\n',
-                        iri_to_uri(target)))
+                        pdf_escape(iri_to_uri(target))))
             else:
                 assert not annot_files[target] is None
 
@@ -709,12 +718,12 @@ def w3c_date_to_pdf(string, attr_name):
         LOGGER.warning('Invalid %s date: %r', attr_name, string)
         return None
     groups = match.groupdict()
-    pdf_date = (groups['year']
-                + (groups['month'] or '')
-                + (groups['day'] or '')
-                + (groups['hour'] or '')
-                + (groups['minute'] or '')
-                + (groups['second'] or ''))
+    pdf_date = (groups['year'] +
+                (groups['month'] or '') +
+                (groups['day'] or '') +
+                (groups['hour'] or '') +
+                (groups['minute'] or '') +
+                (groups['second'] or ''))
     if groups['hour']:
         assert groups['minute']
         if not groups['second']:

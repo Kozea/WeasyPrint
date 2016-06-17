@@ -1,4 +1,4 @@
-# coding: utf8
+# coding: utf-8
 """
     weasyprint.tests.test_api
     -------------------------
@@ -102,7 +102,7 @@ def test_html_parsing():
         assert html.root_element.tag == 'html'
         assert [child.tag for child in html.root_element] == ['head', 'body']
         _head, body = html.root_element
-        assert [child.tag for child in body] == ['h1', 'p', 'ul']
+        assert [child.tag for child in body] == ['h1', 'p', 'ul', 'div']
         h1 = body[0]
         assert h1.text == 'WeasyPrint test document (with Ünicōde)'
         if has_base_url:
@@ -382,6 +382,13 @@ def test_command_line_render():
             assert read_file('out12.png') == rotated_png_bytes
             assert read_file('out13.png') == rotated_png_bytes
             assert read_file('out14.png') == rotated_png_bytes
+
+            stdout = run('-f pdf combined.html -')
+            assert stdout.count(b'attachment') == 0
+            stdout = run('-f pdf -a pattern.png combined.html -')
+            assert stdout.count(b'attachment') == 1
+            stdout = run('-f pdf -a style.css -a pattern.png combined.html -')
+            assert stdout.count(b'attachment') == 2
 
             stdout = run('-f png -r 192 linked.html -')
             assert stdout == x2_png_bytes
