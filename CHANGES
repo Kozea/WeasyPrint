@@ -1,6 +1,17 @@
 WeasyPrint changelog
 ====================
 
+
+Version 0.29
+------------
+
+*Not released yet.*
+
+Bug fixes:
+* `#323: <https://github.com/Kozea/WeasyPrint/pull/323>`_:
+  Fix CairoSVG 2.0 pre-release dependency in Python 2.x.
+
+
 Version 0.28
 ------------
 
