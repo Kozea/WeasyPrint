@@ -5,9 +5,12 @@ WeasyPrint changelog
 Version 0.29
 ------------
 
-*Not released yet.*
+Released on 2016-06-17.
 
 Bug fixes:
+
+* `#263: <https://github.com/Kozea/WeasyPrint/pull/263>`_:
+  Don't crash with floats with percents in positions.
 * `#323: <https://github.com/Kozea/WeasyPrint/pull/323>`_:
   Fix CairoSVG 2.0 pre-release dependency in Python 2.x.
 
