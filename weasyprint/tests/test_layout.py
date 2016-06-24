@@ -4927,7 +4927,10 @@ def test_floats():
     div, anon_block = body.children
     line, = anon_block.children
     img_2, = line.children
-    assert outer_area(img_2) == (0, 0, 50, 50)
+
+    # Regression test
+    # https://github.com/Kozea/WeasyPrint/issues/263
+    page, = parse('''<div style="top:100%; float:left">''')
 
 
 @assert_no_logs
