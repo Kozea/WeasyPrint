@@ -2,3 +2,10 @@
   height: auto;
   min-height: 100%;
 }
+
+@media print {
+  .wy-grid-for-nav {
+    height: auto;
+    position: static;
+  }
+}
