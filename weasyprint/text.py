@@ -426,6 +426,14 @@ def split_first_line(text, style, hinting, max_width, line_width):
 
     if text_wrap:
         max_width = None
+    elif max_width is not None:
+        # In some cases (shrink-to-fit result being the preferred width)
+        # this value is coming from Pango itself,
+        # but floating point errors have accumulated:
+        #   width2 = (width + X) - X   # in some cases, width2 < width
+        # Increase the value a bit to compensate and not introduce
+        # an unexpected line break. The 1e-9 value comes from PEP 485.
+        max_width *= 1 + 1e-9
 
     # Step #1: Get a draft layout with the first line
     layout = None

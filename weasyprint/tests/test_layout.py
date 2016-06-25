@@ -5713,3 +5713,50 @@ def test_radial_gradient():
            init=(450, 100, 0, 450 * sqrt2), scale_y=200/450)
     layout('radial-gradient(farthest-corner at 40px 210px, blue, lime)',
            init=(40, 210, 0, 360 * sqrt2), scale_y=210/360)
+
+
+@assert_no_logs
+def test_shrink_to_fit_floating_point_error():
+    """Test that no floating point error occurs during shrink to fit.
+
+    See bugs #325 and #288, see commit fac5ee9.
+
+    """
+    for margin_left in range(1, 10):
+        for font_size in range(1, 10):
+            page, = parse('''
+                <style>
+                    @page { size: 100000px 100px }
+                    p { float: left; margin-left: 0.%iin; font-size: 0.%iem;
+                        font-family: "ahem" }
+                </style>
+                <p>this parrot is dead</p>
+            ''' % (margin_left, font_size))
+            html, = page.children
+            body, = html.children
+            p, = body.children
+            assert len(p.children) == 1
+
+    letters = 1
+    for font_size in (1, 5, 10, 50, 100, 1000, 10000):
+        while True:
+            page, = parse('''
+                <style>
+                    @page { size: %i0pt %i0px }
+                    p { font-size: %ipt; font-family: "ahem" }
+                </style>
+                <p>mmm <b>%s a</b></p>
+            ''' % (font_size, font_size, font_size, 'i' * letters))
+            html, = page.children
+            body, = html.children
+            p, = body.children
+            assert len(p.children) in (1, 2)
+            assert len(p.children[0].children) == 2
+            text = p.children[0].children[1].children[0].text
+            print(font_size, text, letters)
+            assert text
+            if text.endswith('i'):
+                letters = 1
+                break
+            else:
+                letters += 1
