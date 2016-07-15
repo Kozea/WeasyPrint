@@ -83,13 +83,15 @@ class HTML(object):
             if source_type == 'tree':
                 result = source
             else:
-                if not encoding:
-                    encoding = protocol_encoding
                 if isinstance(source, unicode):
-                    encoding = None
-                result = html5lib.parse(
-                    source, treebuilder='lxml', likely_encoding=encoding,
-                    namespaceHTMLElements=False)
+                    result = html5lib.parse(
+                        source, treebuilder='lxml',
+                        namespaceHTMLElements=False)
+                else:
+                    result = html5lib.parse(
+                        source, treebuilder='lxml', override_encoding=encoding,
+                        transport_encoding=protocol_encoding,
+                        namespaceHTMLElements=False)
                 assert result
         base_url = find_base_url(result, base_url)
         if hasattr(result, 'getroot'):
