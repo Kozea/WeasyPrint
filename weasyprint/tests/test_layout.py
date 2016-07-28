@@ -5753,7 +5753,6 @@ def test_shrink_to_fit_floating_point_error():
             assert len(p.children) in (1, 2)
             assert len(p.children[0].children) == 2
             text = p.children[0].children[1].children[0].text
-            print(font_size, text, letters)
             assert text
             if text.endswith('i'):
                 letters = 1
