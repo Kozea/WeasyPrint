@@ -170,14 +170,18 @@ Windows
 
 - Install `Python 2.7.x <https://www.python.org/downloads/windows/>`_ **with
   "Add python.exe to Path" checked**:
+
   - "Windows x86 MSI installer" on Windows 32 bit,
   - "Windows x86-64 MSI installer" on Windows 64 bit,
+
 - install GTK **with "Set up PATH environment variable to include GTK+"
   checked**:
+
   - on Windows 32 bit: `gtk2-runtime-x.x.x-x-x-x-ash.exe
     <http://gtk-win.sourceforge.net/home/index.php/Main/Downloads>`_,
   - on Windows 64 bit: `gtk3-runtime-x.x.x-x-x-x-ts-win64.exe
     <https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer>`_,
+
 - reboot,
 - install [Visual C++ compiler for Python 2.7](http://aka.ms/vcpython27),
 - install WeasyPrint with `python -m pip install weasyprint`,
