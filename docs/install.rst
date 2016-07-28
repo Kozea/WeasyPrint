@@ -183,6 +183,6 @@ Windows
     <https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer>`_,
 
 - reboot,
-- install [Visual C++ compiler for Python 2.7](http://aka.ms/vcpython27),
-- install WeasyPrint with `python -m pip install weasyprint`,
-- test with `python -m weasyprint http://weasyprint.org weasyprint.pdf`.
+- install `Visual C++ compiler for Python 2.7 <http://aka.ms/vcpython27>`_,
+- install WeasyPrint with ``python -m pip install weasyprint``,
+- test with ``python -m weasyprint http://weasyprint.org weasyprint.pdf``.
