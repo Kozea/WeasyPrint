@@ -357,6 +357,28 @@ def border_radius(computer, name, values):
     return [length(computer, name, value) for value in values]
 
 
+@register_computer('box-shadow')
+def box_shadow(computer, name, values):
+    """Compute the ``box-shadow`` property."""
+    shadows = []
+    for value in values:
+        shadows.append([
+            length(computer, name, i, pixels_only=True)
+            for i in value[:4]] + value[4:])
+    return shadows
+
+
+@register_computer('text-shadow')
+def text_shadow(computer, name, values):
+    """Compute the ``text-shadow`` property."""
+    shadows = []
+    for value in values:
+        shadows.append([
+            length(computer, name, i, pixels_only=True)
+            for i in value[:3]] + [value[3]])
+    return shadows
+
+
 @register_computer('content')
 def content(computer, name, values):
     """Compute the ``content`` property."""

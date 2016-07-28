@@ -16,7 +16,7 @@ from __future__ import division, unicode_literals
 import functools
 import math
 
-from tinycss.color3 import parse_color
+from tinycss.color3 import parse_color, RGBA
 from tinycss.parsing import split_on_comma, remove_whitespace
 
 from ..logger import LOGGER
@@ -572,6 +572,107 @@ def border_corner_radius(tokens):
             return (lengths[0], lengths[0])
         elif len(lengths) == 2:
             return tuple(lengths)
+
+
+@validator('box-shadow')
+def box_shadow(tokens):
+    """Validator for the `box-shadow` property."""
+    shadows = []
+    if (len(tokens) == 1 and tokens[0].type == 'IDENT' and
+            tokens[0].value == 'none'):
+        return shadows
+    while tokens:
+        lengths = []
+        color = None
+        inset = None
+        while tokens:
+            if tokens[0].type in ('NUMBER', 'INTEGER', 'DIMENSION'):
+                if lengths:
+                    raise InvalidValues('Non consecutive lengths')
+                while tokens and tokens[0].type in (
+                        'NUMBER', 'INTEGER', 'DIMENSION'):
+                    lengths.append(tokens.pop(0))
+                continue
+            token = tokens.pop(0)
+            if token.type == 'DELIM' and token.value == ',':
+                if not tokens:
+                    raise InvalidValues('Trailing comma')
+                break
+            elif token.type == 'IDENT' and token.value == 'inset':
+                if inset is not None:
+                    raise InvalidValues('Inset declared twice')
+                inset = True
+                if lengths and tokens and tokens[0].type == 'IDENT':
+                    raise InvalidValues()
+            elif token.type == 'DIMENSION':
+                lengths.append(token)
+            else:
+                if color:
+                    raise InvalidValues('Color defined twice')
+                color = parse_color(token)
+                if color is None:
+                    raise InvalidValues()
+                if not lengths and tokens and tokens[0].type == 'IDENT':
+                    raise InvalidValues()
+        if len(lengths) < 2:
+            raise InvalidValues('Less than 2 lengths in box-shadow value')
+        elif len(lengths) > 4:
+            raise InvalidValues('More than 4 lengths in box-shadow value')
+        x = get_length(lengths.pop(0))
+        y = get_length(lengths.pop(0))
+        blur = (
+            get_length(lengths.pop(0), negative=False)
+            if lengths else Dimension(0, 'px'))
+        spread = (
+            get_length(lengths.pop(0))
+            if lengths else Dimension(0, 'px'))
+        shadows.append([
+            x, y, blur, spread, inset or False, color or RGBA(0, 0, 0, 1)])
+    return shadows
+
+
+@validator('text-shadow')
+def text_shadow(tokens):
+    """Validator for the `text-shadow` property."""
+    shadows = []
+    if (len(tokens) == 1 and tokens[0].type == 'IDENT' and
+            tokens[0].value == 'none'):
+        return shadows
+    while tokens:
+        lengths = []
+        color = None
+        while tokens:
+            if tokens[0].type in ('NUMBER', 'INTEGER', 'DIMENSION'):
+                if lengths:
+                    raise InvalidValues('Non consecutive lengths')
+                while tokens and tokens[0].type in (
+                        'NUMBER', 'INTEGER', 'DIMENSION'):
+                    lengths.append(tokens.pop(0))
+                continue
+            token = tokens.pop(0)
+            if token.type == 'DELIM' and token.value == ',':
+                if not tokens:
+                    raise InvalidValues('Trailing comma')
+                break
+            elif token.type == 'DIMENSION':
+                lengths.append(token)
+            else:
+                if color:
+                    raise InvalidValues('Color defined twice')
+                color = parse_color(token)
+                if color is None:
+                    raise InvalidValues()
+        if len(lengths) < 2:
+            raise InvalidValues('Less than 2 lengths in box-shadow value')
+        elif len(lengths) > 3:
+            raise InvalidValues('More than 3 lengths in box-shadow value')
+        x = get_length(lengths.pop(0))
+        y = get_length(lengths.pop(0))
+        blur = (
+            get_length(lengths.pop(0), negative=False)
+            if lengths else Dimension(0, 'px'))
+        shadows.append([x, y, blur, color])
+    return shadows
 
 
 @validator('border-top-style')

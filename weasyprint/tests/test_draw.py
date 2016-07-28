@@ -2904,3 +2904,237 @@ def test_radial_gradients():
         assert (pixel(3, 9) not in (B, r)) ^ thin
         assert (pixel(7, 5) not in (B, r)) ^ thin
         assert (pixel(7, 9) not in (B, r)) ^ thin
+
+
+@assert_no_logs
+def test_box_shadow():
+    """Test the ``box-shadow`` property."""
+    assert_pixels('box_shadow_outset', 10, 10, [
+        _+_+_+_+_+_+_+_+_+_,
+        _+B+B+B+B+B+_+_+_+_,
+        _+B+B+B+B+B+_+_+_+_,
+        _+B+B+B+B+B+_+_+_+_,
+        _+B+B+B+B+B+r+r+r+_,
+        _+B+B+B+B+B+r+r+r+_,
+        _+_+_+_+r+r+r+r+r+_,
+        _+_+_+_+r+r+r+r+r+_,
+        _+_+_+_+r+r+r+r+r+_,
+        _+_+_+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { size: 10px; background: white; margin: 1px }
+            div { width: 5px; height: 5px; background: blue;
+                  box-shadow: 3px 3px red }
+        </style>
+        <body><div>
+    ''')
+    assert_pixels('box_shadow_outset_spread', 10, 10, [
+        _+_+_+_+_+_+_+_+_+_,
+        _+B+B+B+_+_+_+_+_+_,
+        _+B+B+B+r+r+r+r+r+_,
+        _+B+B+B+r+r+r+r+r+_,
+        _+_+r+r+r+r+r+r+r+_,
+        _+_+r+r+r+r+r+r+r+_,
+        _+_+r+r+r+r+r+r+r+_,
+        _+_+r+r+r+r+r+r+r+_,
+        _+_+r+r+r+r+r+r+r+_,
+        _+_+_+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { size: 10px; background: white; margin: 1px }
+            div { width: 3px; height: 3px; background: blue;
+                  box-shadow: 3px 3px 0 2px red }
+        </style>
+        <body><div>
+    ''')
+    assert_pixels('box_shadow_outset_negative_spread', 10, 10, [
+        _+_+_+_+_+_+_+_+_+_,
+        _+B+B+B+_+_+_+_+_+_,
+        _+B+B+B+_+_+_+_+_+_,
+        _+B+B+B+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+r+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { size: 10px; background: white; margin: 1px }
+            div { width: 3px; height: 3px; background: blue;
+                  box-shadow: 3px 3px 0 -1px red }
+        </style>
+        <body><div>
+    ''')
+    assert_pixels('box_shadow_outset_big_negative_spread', 10, 10, [
+        _+_+_+_+_+_+_+_+_+_,
+        _+B+B+B+_+_+_+_+_+_,
+        _+B+B+B+_+_+_+_+_+_,
+        _+B+B+B+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { size: 10px; background: white; margin: 1px }
+            div { width: 3px; height: 3px; background: blue;
+                  box-shadow: 3px 3px 0 -2px red }
+        </style>
+        <body><div>
+    ''')
+    assert_pixels('box_shadow_inset', 10, 10, [
+        _+_+_+_+_+_+_+_+_+_,
+        _+r+r+r+r+r+r+r+r+_,
+        _+r+r+r+r+r+r+r+r+_,
+        _+r+r+r+r+r+r+r+r+_,
+        _+r+r+r+B+B+B+B+B+_,
+        _+r+r+r+B+B+B+B+B+_,
+        _+r+r+r+B+B+B+B+B+_,
+        _+r+r+r+B+B+B+B+B+_,
+        _+r+r+r+B+B+B+B+B+_,
+        _+_+_+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { size: 10px; background: white; margin: 1px }
+            div { width: 8px; height: 8px; background: blue;
+                  box-shadow: 3px 3px red inset }
+        </style>
+        <body><div>
+    ''')
+    assert_pixels('box_shadow_inset_spread', 10, 10, [
+        _+_+_+_+_+_+_+_+_+_,
+        _+r+r+r+r+r+r+r+r+_,
+        _+r+r+r+r+r+r+r+r+_,
+        _+r+r+r+r+r+r+r+r+_,
+        _+r+r+r+r+r+r+r+r+_,
+        _+r+r+r+r+B+B+B+B+_,
+        _+r+r+r+r+B+B+B+B+_,
+        _+r+r+r+r+B+B+B+B+_,
+        _+r+r+r+r+B+B+B+B+_,
+        _+_+_+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { size: 10px; background: white; margin: 1px }
+            div { width: 8px; height: 8px; background: blue;
+                  box-shadow: 3px 3px 0 1px red inset }
+        </style>
+        <body><div>
+    ''')
+    assert_pixels('box_shadow_inset_negative_spread', 10, 10, [
+        _+_+_+_+_+_+_+_+_+_,
+        _+r+r+r+r+r+r+r+r+_,
+        _+r+r+r+r+r+r+r+r+_,
+        _+r+r+r+r+r+r+r+r+_,
+        _+B+B+B+B+B+B+B+r+_,
+        _+B+B+B+B+B+B+B+r+_,
+        _+B+B+B+B+B+B+B+r+_,
+        _+B+B+B+B+B+B+B+r+_,
+        _+B+B+B+B+B+B+B+r+_,
+        _+_+_+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { size: 10px; background: white; margin: 1px }
+            div { width: 8px; height: 8px; background: blue;
+                  box-shadow: -2px 4px 0 -1px red inset }
+        </style>
+        <body><div>
+    ''')
+    assert_pixels('box_shadow_inset_big_negative_spread', 10, 10, [
+        _+_+_+_+_+_+_+_+_+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+B+B+B+B+B+B+B+B+_,
+        _+_+_+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { size: 10px; background: white; margin: 1px }
+            div { width: 8px; height: 8px; background: blue;
+                  box-shadow: -2px 4px 0 -5px red inset }
+        </style>
+        <body><div>
+    ''')
+    assert_pixels('box_shadow_transparent_background', 10, 10, [
+        _+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+r+r+r+_,
+        _+_+_+_+_+_+r+r+r+_,
+        _+_+_+_+r+r+r+r+r+_,
+        _+_+_+_+r+r+r+r+r+_,
+        _+_+_+_+r+r+r+r+r+_,
+        _+_+_+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { size: 10px; background: white; margin: 1px }
+            div { width: 5px; height: 5px; background: transparent;
+                  box-shadow: 3px 3px red }
+        </style>
+        <body><div>
+    ''')
+    g = as_pixel(b'\x00\x80\x00\xff')  # green
+    assert_pixels('box_shadow_inset_outset', 10, 10, [
+        r+r+r+r+r+r+r+r+_+_,
+        r+g+g+g+g+g+g+g+g+_,
+        r+g+B+B+B+B+B+B+B+_,
+        r+g+B+B+B+B+B+B+B+_,
+        r+g+B+B+B+B+B+B+B+_,
+        r+g+B+B+B+B+B+B+B+_,
+        r+g+B+B+B+B+B+B+B+_,
+        r+g+B+B+B+B+B+B+B+_,
+        _+g+B+B+B+B+B+B+B+_,
+        _+_+_+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { size: 10px; background: white; margin: 1px }
+            div { width: 8px; height: 8px; background: blue;
+                  box-shadow: -1px -1px red, 1px 1px green inset }
+        </style>
+        <body><div>
+    ''')
+    assert_pixels('box_shadow_multiple_outset', 10, 10, [
+        _+_+_+_+_+_+_+_+_+_,
+        _+B+B+B+B+B+_+_+_+_,
+        _+B+B+B+B+B+r+_+_+_,
+        _+B+B+B+B+B+r+g+_+_,
+        _+B+B+B+B+B+r+g+_+_,
+        _+B+B+B+B+B+r+g+_+_,
+        _+_+r+r+r+r+r+g+_+_,
+        _+_+_+g+g+g+g+g+_+_,
+        _+_+_+_+_+_+_+_+_+_,
+        _+_+_+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { size: 10px; background: white; margin: 1px }
+            div { width: 5px; height: 5px; background: blue;
+                  box-shadow: 1px 1px red, 2px 2px green }
+        </style>
+        <body><div>
+    ''')
+    assert_pixels('box_shadow_multiple_inset', 10, 10, [
+        _+_+_+_+_+_+_+_+_+_,
+        _+r+r+r+r+r+r+r+r+_,
+        _+r+r+r+r+r+r+r+r+_,
+        _+r+r+r+r+r+r+r+r+_,
+        _+r+r+r+B+B+B+B+g+_,
+        _+r+r+r+B+B+B+B+g+_,
+        _+r+r+r+B+B+B+B+g+_,
+        _+r+r+r+B+B+B+B+g+_,
+        _+r+r+r+g+g+g+g+g+_,
+        _+_+_+_+_+_+_+_+_+_,
+    ], '''
+        <style>
+            @page { size: 10px; background: white; margin: 1px }
+            div { width: 8px; height: 8px; background: blue;
+                  box-shadow: 3px 3px red inset, -1px -1px green inset }
+        </style>
+        <body><div>
+    ''')

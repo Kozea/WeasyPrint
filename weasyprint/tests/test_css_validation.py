@@ -721,3 +721,88 @@ def test_radial_gradient():
     gradient('closest-side circle at right 5em, blue',
              shape='circle', size=('keyword', 'closest-side'),
              center=('left', (100, '%'), 'top', (5, 'em')))
+
+
+@assert_no_logs
+def test_box_shadow():
+    """Test the box-shadow property."""
+    def assert_box_shadow(css, expected):
+        assert expand_to_dict('box-shadow: %s' % css) == {
+            'box_shadow': expected}
+
+    assert_box_shadow('none', [])
+    assert_box_shadow('1px 10px', [[
+        (1, 'px'), (10, 'px'), (0, 'px'), (0, 'px'), False, (0, 0, 0, 1)]])
+    assert_box_shadow('1px 10px 0 3cm', [[
+        (1, 'px'), (10, 'px'), (0, None), (3, 'cm'), False, (0, 0, 0, 1)]])
+    assert_box_shadow('1px 10px inset', [[
+        (1, 'px'), (10, 'px'), (0, 'px'), (0, 'px'), True, (0, 0, 0, 1)]])
+    assert_box_shadow('1px 10px 2px 5cm inset', [[
+        (1, 'px'), (10, 'px'), (2, 'px'), (5, 'cm'), True, (0, 0, 0, 1)]])
+    assert_box_shadow('black 1px 10px 2px 5cm', [[
+        (1, 'px'), (10, 'px'), (2, 'px'), (5, 'cm'), False, (0, 0, 0, 1)]])
+    assert_box_shadow('red 1px 10px inset, red 1px 10px inset', [
+        [(1, 'px'), (10, 'px'), (0, 'px'), (0, 'px'), True, (1, 0, 0, 1)],
+        [(1, 'px'), (10, 'px'), (0, 'px'), (0, 'px'), True, (1, 0, 0, 1)]])
+    assert_box_shadow('red 1px 10px 2px 5cm', [[
+        (1, 'px'), (10, 'px'), (2, 'px'), (5, 'cm'), False, (1, 0, 0, 1)]])
+    assert_box_shadow('inset red 1px 10px 2px 5cm', [[
+        (1, 'px'), (10, 'px'), (2, 'px'), (5, 'cm'), True, (1, 0, 0, 1)]])
+    assert_box_shadow('1px 10px 2px 5cm red inset', [[
+        (1, 'px'), (10, 'px'), (2, 'px'), (5, 'cm'), True, (1, 0, 0, 1)]])
+    assert_box_shadow('1px 10px, 2px 4px #ff0000', [
+        [(1, 'px'), (10, 'px'), (0, 'px'), (0, 'px'), False, (0, 0, 0, 1)],
+        [(2, 'px'), (4, 'px'), (0, 'px'), (0, 'px'), False, (1, 0, 0, 1)]])
+
+    def assert_invalid(css, message='invalid'):
+        assert expand_to_dict('box-shadow: %s' % css, message) == {}
+
+    assert_invalid('1px 10px,', 'comma')
+    assert_invalid('1px 10px,,1px', '2 lengths')
+    assert_invalid('1px red inset', '2 lengths')
+    assert_invalid('1px 1px red blue inset', 'Color')
+    assert_invalid('blue 1px 1px red', 'Color')
+    assert_invalid('inset 1px 1px 1px blue inset', 'Inset')
+    assert_invalid('1px 1px 1px inset blue')
+    assert_invalid('blue inset 1px 1px 1px')
+    assert_invalid('1px 10px red 3px', 'lengths')
+    assert_invalid('1px 10px inset 3px', 'lengths')
+    assert_invalid('1px 1px 1px inset inset')
+    assert_invalid('1px 0 0 3%')
+    assert_invalid('1px 0, none')
+    assert_invalid('none, none')
+
+
+@assert_no_logs
+def test_text_shadow():
+    """Test the text-shadow property."""
+    def assert_text_shadow(css, expected):
+        assert expand_to_dict('text-shadow: %s' % css) == {
+            'text_shadow': expected}
+
+    assert_text_shadow('none', [])
+    assert_text_shadow('1px 10px', [[
+        (1, 'px'), (10, 'px'), (0, 'px'), None]])
+    assert_text_shadow('1px 10px 3cm', [[
+        (1, 'px'), (10, 'px'), (3, 'cm'), None]])
+    assert_text_shadow('black 1px 10px 2px', [[
+        (1, 'px'), (10, 'px'), (2, 'px'), (0, 0, 0, 1)]])
+    assert_text_shadow('red 1px 10px, red 1px 10px', [
+        [(1, 'px'), (10, 'px'), (0, 'px'), (1, 0, 0, 1)],
+        [(1, 'px'), (10, 'px'), (0, 'px'), (1, 0, 0, 1)]])
+    assert_text_shadow('1px 10px 2px, 2px 4px #ff0000', [
+        [(1, 'px'), (10, 'px'), (2, 'px'), None],
+        [(2, 'px'), (4, 'px'), (0, 'px'), (1, 0, 0, 1)]])
+
+    def assert_invalid(css, message='invalid'):
+        assert expand_to_dict('text-shadow: %s' % css, message) == {}
+
+    assert_invalid('1px 10px,', 'comma')
+    assert_invalid('1px 10px,,1px', '2 lengths')
+    assert_invalid('1px red', '2 lengths')
+    assert_invalid('1px 1px red blue', 'Color')
+    assert_invalid('blue 1px 1px red', 'Color')
+    assert_invalid('1px 10px red 3px', 'lengths')
+    assert_invalid('1px 0 3%')
+    assert_invalid('1px 0, none')
+    assert_invalid('none, none')
