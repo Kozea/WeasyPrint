@@ -35,9 +35,6 @@ REQUIREMENTS = [
     'Pyphen>=0.8'
     # C dependencies: Gdk-Pixbuf (optional), Pango, cairo.
 ]
-if sys.version_info < (2, 7) or (3,) <= sys.version_info < (3, 2):
-    # In the stdlib from 2.7 and 3.2:
-    REQUIREMENTS.append('argparse')
 
 if sys.version_info < (3,):
     REQUIREMENTS.append('CairoSVG >= 1.0.20, < 2')
@@ -58,10 +55,8 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
         'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.2',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
