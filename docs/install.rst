@@ -6,10 +6,10 @@ WeasyPrint |version| depends on:
 * CPython_ 2.6, 2.7 or ≥ 3.2
 * cairo_ [#]_
 * Pango_
-* CFFI_ ≥ 0.5
+* CFFI_ ≥ 0.6
 * lxml_ ≥ 3.0
-* html5lib_ ≥ 0.99
-* cairocffi_ ≥ 0.3
+* html5lib_ ≥ 0.999999999
+* cairocffi_ ≥ 0.5
 * tinycss_ = 0.3
 * cssselect_ ≥ 0.6
 * CairoSVG_ ≥ 1.0.20
@@ -31,12 +31,12 @@ WeasyPrint |version| depends on:
 .. _GDK-PixBuf: https://live.gnome.org/GdkPixbuf
 
 
-Python, cairo, Pango and GDK-PixBuf need to be installed separately.
-See :ref:`platform-specific instructions <platforms>` below.
+Python, cairo, Pango and GDK-PixBuf need to be installed separately. See
+platform-specific instructions for :ref:`Linux <linux>`, :ref:`OS X <os-x>` and
+:ref:`Windows <windows>` below.
 
-CFFI and lxml can be installed by pip automatically
-if your system has a C compiler and the recursive dependencies,
-but using a system package might be easier.
+lxml can be installed by pip automatically if your system has a C compiler and
+the recursive dependencies, but using a system package might be easier.
 
 Install WeasyPrint with pip_.
 This will automatically install most of dependencies.
@@ -61,13 +61,13 @@ Now let’s try it:
 You should see warnings about unsupported CSS 3 stuff; this is expected.
 In the PDF you should see the WeasyPrint logo on the first page.
 
-You can also play with :ref:`navigator`:\ . Start it with:
+You can also play with :ref:`navigator`. Start it with
 
 .. code-block:: sh
 
     python -m weasyprint.navigator
 
-… and open your browser at http://127.0.0.1:5000/. Read more :ref:`in the tutorial <navigator>`.
+and open your browser at http://127.0.0.1:5000/. Read more :ref:`in the tutorial <navigator>`.
 
 If everything goes well, you’re ready to :doc:`start using </tutorial>`
 WeasyPrint! Otherwise, please copy the full error message and
@@ -79,22 +79,19 @@ WeasyPrint! Otherwise, please copy the full error message and
 
 .. [#] Without it, PNG and SVG are the only supported image format:
        JPEG, GIF and others are not available.
-       Versions before 0.22 were part of `GTK+`_.
 
 .. [#] Passing the ``--system-site-packages`` option to virtualenv
-       allows the environment to use the system packages for lxml or CFFI,
+       allows the environment to use the system packages for lxml,
        but this is not necessary if you install them with pip.
 
 
-.. _platforms:
-
-By platform
------------
+Linux
+-----
 
 Pango, GdkPixbuf, and cairo can not be installed
 with pip and need to be installed from your platform’s packages.
 lxml and CFFI can, but you’d still need their own dependencies.
-This section lists system packages for lxml or CFFI when available,
+This section lists system packages for lxml and CFFI when available,
 the dependencies otherwise.
 lxml needs *libxml2* and *libxslt*, CFFI needs *libffi*.
 On Debian, the package names with development files are
@@ -103,55 +100,63 @@ On Debian, the package names with development files are
 If your favorite system is not listed here but you know the package names,
 `tell us <http://weasyprint.org/community/>`_ so we can add it here.
 
-
 Debian / Ubuntu
 ~~~~~~~~~~~~~~~
 
-Debian 7.0 Wheezy or newer, Ubuntu 11.10 Oneiric or newer:
+Debian 8.0 Jessie or newer, Ubuntu 14.04 Trusty or newer:
+
+.. code-block:: sh
+
+    sudo apt-get install python-dev python-pip python-lxml python-cffi libcairo2 libpango1.0-0 libgdk-pixbuf2.0-0 shared-mime-info
+
+Debian 7.0 Wheezy or newer, Ubuntu 12.04 Precise or newer:
 
 .. code-block:: sh
 
     sudo apt-get install python-dev python-pip python-lxml libcairo2 libpango1.0-0 libgdk-pixbuf2.0-0 libffi-dev shared-mime-info
 
-
-Debian 6.0 Squeeze, Ubuntu 10.04 Lucid:
-GDK-PixBuf is part of GTK+, which also depends on cairo and Pango.
-
-.. code-block:: sh
-
-    sudo apt-get install python-dev python-pip python-lxml libgtk2.0-0 libffi-dev
-
 Fedora
 ~~~~~~
 
+WeasyPrint is `packaged for Fedora
+<https://apps.fedoraproject.org/packages/weasyprint>`_, but you can install it
+with pip after installing the following packages:
+
 .. code-block:: sh
 
-    sudo yum install redhat-rpm-config python-devel python-pip python-lxml cairo pango gdk-pixbuf2 libffi-devel
+    sudo yum install redhat-rpm-config python-devel python-pip python-lxml python-cffi cairo pango gdk-pixbuf2
 
 Archlinux
 ~~~~~~~~~
+
+WeasyPrint is `available in the AUR
+<https://aur.archlinux.org/packages/python-weasyprint/>`_, but you can install
+it with pip after installing the following packages:
 
 .. code-block:: sh
 
     sudo pacman -S python-pip python-lxml cairo pango gdk-pixbuf2 libffi pkg-config
 
-
 Gentoo
 ~~~~~~
 
-.. code-block:: sh
-
-    emerge weasyprint
-
-
-Mac OS X
-~~~~~~~~
-
-With Macports
+WeasyPrint is `packaged in Gentoo
+<https://packages.gentoo.org/packages/dev-python/weasyprint>`_, but you can
+install it with pip after installing the following packages:
 
 .. code-block:: sh
 
-    sudo port install py27-pip py27-lxml cairo pango gdk-pixbuf2 libffi
+    emerge pip cairo pango gdk-pixbuf cffi lxml
+
+
+OS X
+----
+
+With Macports:
+
+.. code-block:: sh
+
+    sudo port install py-pip py-lxml cairo pango gdk-pixbuf2 libffi
 
 With Homebrew:
 
@@ -161,11 +166,19 @@ With Homebrew:
 
 
 Windows
-~~~~~~~
+-------
 
-* Get CPython 2.7 `from python.org <http://www.python.org/download/>`_,
-* `Christoph Gohlke’s unofficial binaries
-  <http://www.lfd.uci.edu/~gohlke/pythonlibs/#lxml>`_ for CFFI and lxml,
-* and `Alexander Shaduri’s GTK+ installer
-  <http://gtk-win.sourceforge.net/home/index.php/Main/Downloads>`_.
-  Make sure that *Set up PATH environment variable* checked.
+- Install `Python 2.7.x <https://www.python.org/downloads/windows/>`_ **with
+  "Add python.exe to Path" checked**:
+  - "Windows x86 MSI installer" on Windows 32 bit,
+  - "Windows x86-64 MSI installer" on Windows 64 bit,
+- install GTK **with "Set up PATH environment variable to include GTK+"
+  checked**:
+  - on Windows 32 bit: `gtk2-runtime-x.x.x-x-x-x-ash.exe
+    <http://gtk-win.sourceforge.net/home/index.php/Main/Downloads>`_,
+  - on Windows 64 bit: `gtk3-runtime-x.x.x-x-x-x-ts-win64.exe
+    <https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer>`_,
+- reboot,
+- install [Visual C++ compiler for Python 2.7](http://aka.ms/vcpython27),
+- install WeasyPrint with `python -m pip install weasyprint`,
+- test with `python -m weasyprint http://weasyprint.org weasyprint.pdf`.
