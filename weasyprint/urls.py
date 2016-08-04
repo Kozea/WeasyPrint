@@ -82,7 +82,7 @@ def path2url(path):
         # Make sure directory names have a trailing slash.
         # Otherwise relative URIs are resolved from the parent directory.
         path += os.path.sep
-    if isinstance(path, unicode):
+    if isinstance(path, unicode) and sys.version_info[0] < 3:
         path = path.encode(FILESYSTEM_ENCODING)
     path = pathname2url(path)
     if path.startswith('///'):
