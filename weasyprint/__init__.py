@@ -19,7 +19,7 @@ import contextlib  # noqa
 import html5lib  # noqa
 
 
-VERSION = '0.29'
+VERSION = '0.30'
 __version__ = VERSION
 
 # Used for 'User-Agent' in HTTP and 'Creator' in PDF
@@ -83,13 +83,15 @@ class HTML(object):
             if source_type == 'tree':
                 result = source
             else:
-                if not encoding:
-                    encoding = protocol_encoding
                 if isinstance(source, unicode):
-                    encoding = None
-                result = html5lib.parse(
-                    source, treebuilder='lxml', encoding=encoding,
-                    namespaceHTMLElements=False)
+                    result = html5lib.parse(
+                        source, treebuilder='lxml',
+                        namespaceHTMLElements=False)
+                else:
+                    result = html5lib.parse(
+                        source, treebuilder='lxml', override_encoding=encoding,
+                        transport_encoding=protocol_encoding,
+                        namespaceHTMLElements=False)
                 assert result
         base_url = find_base_url(result, base_url)
         if hasattr(result, 'getroot'):

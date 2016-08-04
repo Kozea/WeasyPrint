@@ -11,6 +11,7 @@ addons:
     packages:
     - ttf-dejavu
 install:
+  - pip install --upgrade setuptools
   - pip install pytest flake8 -e .
   - mkdir -p ~/.fonts
   - wget "https://github.com/Kozea/Ahem/blob/master/Ahem.ttf?raw=true" -O ~/.fonts/Ahem.ttf

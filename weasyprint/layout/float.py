@@ -34,13 +34,14 @@ def float_layout(context, box, containing_block, device_size, absolute_boxes,
     from .inlines import inline_replaced_box_width_height
 
     cb_width, cb_height = (containing_block.width, containing_block.height)
+    resolve_percentages(box, (cb_width, cb_height))
+
     # TODO: This is only handled later in blocks.block_container_layout
     # http://www.w3.org/TR/CSS21/visudet.html#normal-block
     if cb_height == 'auto':
         cb_height = (
             containing_block.position_y - containing_block.content_box_y())
 
-    resolve_percentages(box, (cb_width, cb_height))
     resolve_position_percentages(box, (cb_width, cb_height))
 
     if box.margin_left == 'auto':

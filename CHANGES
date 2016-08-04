@@ -2,6 +2,22 @@ WeasyPrint changelog
 ====================
 
 
+Version 0.30
+------------
+
+Released on 2016-07-18.
+
+WeasyPrint now depends on html5lib-0.999999999.
+
+Bux fixes:
+
+* Fix Acid2
+* `#325: <https://github.com/Kozea/WeasyPrint/issues/325>`_:
+  Cutting lines is broken in page margin boxes.
+* `#334: <https://github.com/Kozea/WeasyPrint/issues/334>`_:
+  Newest html5lib 0.999999999 breaks rendering.
+
+
 Version 0.29
 ------------
 
