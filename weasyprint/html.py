@@ -160,7 +160,7 @@ def handle_img(element, box, get_image_from_uri):
 def handle_embed(element, box, get_image_from_uri):
     """Handle ``<embed>`` elements, return either an image or nothing.
 
-    See: http://www.w3.org/TR/html5/the-iframe-element.html#the-embed-element
+    See: https://www.w3.org/TR/html5/embedded-content-0.html#the-embed-element
 
     """
     src = get_url_attribute(element, 'src')
@@ -178,7 +178,7 @@ def handle_object(element, box, get_image_from_uri):
     """Handle ``<object>`` elements, return either an image or the fallback
     content.
 
-    See: http://www.w3.org/TR/html5/the-iframe-element.html#the-object-element
+    See: https://www.w3.org/TR/html5/embedded-content-0.html#the-object-element
 
     """
     data = get_url_attribute(element, 'data')
