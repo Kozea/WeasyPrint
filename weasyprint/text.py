@@ -13,6 +13,7 @@
 from __future__ import division
 # XXX No unicode_literals, cffi likes native strings
 
+import math
 import pyphen
 import cffi
 import cairocffi as cairo
@@ -437,7 +438,7 @@ def split_first_line(text, style, hinting, max_width, line_width):
 
     # Step #1: Get a draft layout with the first line
     layout = None
-    if max_width:
+    if max_width and math.isnan(max_width) is False:
         expected_length = int(max_width / style.font_size * 2.5)
         if expected_length < len(text):
             # Try to use a small amount of text instead of the whole text
