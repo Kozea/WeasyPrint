@@ -330,6 +330,7 @@ def background_size(computer, name, values):
 @register_computer('border-right-width')
 @register_computer('border-left-width')
 @register_computer('border-bottom-width')
+@register_computer('column-rule-width')
 @register_computer('outline-width')
 def border_width(computer, name, value):
     """Compute the ``border-*-width`` properties."""
@@ -348,6 +349,12 @@ def border_width(computer, name, value):
     return length(computer, name, value, pixels_only=True)
 
 
+@register_computer('column-width')
+def column_width(computer, name, value):
+    """Compute the ``column-width`` property."""
+    return length(computer, name, value, pixels_only=True)
+
+
 @register_computer('border-top-left-radius')
 @register_computer('border-top-right-radius')
 @register_computer('border-bottom-left-radius')
@@ -355,6 +362,14 @@ def border_width(computer, name, value):
 def border_radius(computer, name, values):
     """Compute the ``border-*-radius`` properties."""
     return [length(computer, name, value) for value in values]
+
+
+@register_computer('column-gap')
+def column_gap(computer, name, value):
+    """Compute the ``column-gap`` property."""
+    if value == 'normal':
+        value = Dimension(1, 'em')
+    return length(computer, name, value, pixels_only=True)
 
 
 @register_computer('content')

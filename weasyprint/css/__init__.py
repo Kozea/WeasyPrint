@@ -67,7 +67,7 @@ PAGE_PSEUDOCLASS_TARGETS = {
 # A test function that returns True if the given property name has an
 # initial value that is not always the same when computed.
 RE_INITIAL_NOT_COMPUTED = re.compile(
-    '^(display|(border_[a-z]+|outline)_(width|color))$').match
+    '^(display|column_gap|(border_[a-z]+|outline)_(width|color))$').match
 
 
 class StyleDict(object):

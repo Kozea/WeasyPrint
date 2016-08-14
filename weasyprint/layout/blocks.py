@@ -12,6 +12,8 @@
 
 from __future__ import division, unicode_literals
 
+from math import floor
+
 from .absolute import absolute_layout, AbsolutePlaceholder
 from .float import float_layout, get_clearance, avoid_collisions
 from .inlines import (iter_line_boxes, replaced_box_width, replaced_box_height,
@@ -20,6 +22,7 @@ from .markers import list_marker_layout
 from .min_max import handle_min_max_width
 from .tables import table_layout, table_wrapper_width
 from .percentages import resolve_percentages, resolve_position_percentages
+from .preferred import shrink_to_fit
 from ..formatting_structure import boxes
 from ..compat import xrange, izip
 
@@ -54,10 +57,16 @@ def block_level_layout(context, box, max_position_y, skip_stack,
         adjoining_margins = []
 
     if isinstance(box, boxes.BlockBox):
-        return block_box_layout(
-            context, box, max_position_y, skip_stack,
-            containing_block, device_size, page_is_empty,
-            absolute_boxes, fixed_boxes, adjoining_margins)
+        style = box.style
+        if style.column_width != 'auto' or style.column_count != 'auto':
+            return columns_layout(
+                context, box, max_position_y, skip_stack, containing_block,
+                device_size, page_is_empty, absolute_boxes, fixed_boxes)
+        else:
+            return block_box_layout(
+                context, box, max_position_y, skip_stack, containing_block,
+                device_size, page_is_empty, absolute_boxes, fixed_boxes,
+                adjoining_margins)
     elif isinstance(box, boxes.BlockReplacedBox):
         box = block_replaced_box_layout(box, containing_block, device_size)
         # Don't collide with floats
@@ -95,6 +104,90 @@ def block_box_layout(context, box, max_position_y, skip_stack,
             position_x - new_box.position_x, position_y - new_box.position_y)
     list_marker_layout(context, new_box)
     return new_box, resume_at, next_page, adjoining_margins, collapsing_through
+
+
+def columns_layout(context, box, max_position_y, skip_stack, containing_block,
+                   device_size, page_is_empty, absolute_boxes, fixed_boxes):
+    """Lay out a multi-column ``box``."""
+    # Implementation of the multi-column pseudo-algorithm:
+    # https://www.w3.org/TR/css3-multicol/#pseudo-algorithm
+    count = None
+    width = None
+    style = box.style
+    available_width = containing_block.width
+    if available_width == 'auto':
+        if style.column_count == 'auto':
+            count = 1
+            width = containing_block.content_width()
+        elif style.column_width != 'auto':
+            count = style.column_count
+            width = style.column_width
+        else:
+            # TODO: replace with real shrink-to-fit
+            available_width = shrink_to_fit(context, box, float('inf'))
+    if count is None:
+        if style.column_width == 'auto' and style.column_count != 'auto':
+            count = style.column_count
+            width = max(
+                0, available_width - (count - 1) * style.column_gap) / count
+        elif style.column_width != 'auto' and style.column_count == 'auto':
+            count = max(1, floor(
+                (available_width + style.column_gap) /
+                (style.column_width + style.column_gap)))
+            width = (
+                (available_width + style.column_gap) / count -
+                style.column_gap)
+        else:
+            count = min(style.column_count, floor(
+                (available_width + style.column_gap) /
+                (style.column_width + style.column_gap)))
+            width = (
+                (available_width + style.column_gap) / count -
+                style.column_gap)
+
+    block_level_width(box, containing_block)
+
+    # Really stupid balance algorithm
+    original_max_position_y = max_position_y
+    if style.column_fill == 'balance':
+        # Find the total height of the content
+        column_box = box.copy()
+        column_box.width = width
+        new_child, _, _, _, _ = block_box_layout(
+             context, column_box, float('inf'), skip_stack, containing_block,
+             device_size, page_is_empty, absolute_boxes, fixed_boxes, [])
+        # TODO: We add a 1em extra size to the maximum height of each column,
+        # we should change this later.
+        max_position_y = min(
+            max_position_y,
+            box.position_y + new_child.height / count + style.font_size)
+
+    # Replace the current box children with columns
+    old_box = box.copy()
+    old_box.children = []
+    for i in range(count):
+        if i == count - 1:
+            max_position_y = original_max_position_y
+        column_box = box.copy()
+        column_box.width = width
+        column_box.position_x = box.position_x + i * width
+        (new_child, skip_stack, next_page, next_adjoining_margins,
+         collapsing_through) = block_box_layout(
+             context, column_box, max_position_y, skip_stack, containing_block,
+             device_size, page_is_empty, absolute_boxes, fixed_boxes, [])
+        if new_child:
+            old_box.children.append(new_child)
+            if skip_stack is None:
+                break
+
+    if old_box.children:
+        old_box.height = max(child.height for child in old_box.children)
+    else:
+        old_box.height = 0
+
+    return (old_box, skip_stack, next_page, next_adjoining_margins,
+         collapsing_through)
+
 
 
 @handle_min_max_width

@@ -153,6 +153,16 @@ INITIAL_VALUES = {
     'bookmark_label': [('content', 'text')],
     'bookmark_level': 'none',
 
+    # CSS Multi-column Layout Module
+    'column_width': 'auto',
+    'column_count': 'auto',
+    'column_gap': Dimension(1, 'em'),
+    'column_rule_color': 'currentColor',
+    'column_rule_style': 'none',
+    'column_rule_width': 'medium',
+    'column_fill': 'balance',
+    'column_span': 'none',
+
     # CSS4 Text
     # http://dev.w3.org/csswg/css4-text/#hyphenation
     'hyphens': 'manual',

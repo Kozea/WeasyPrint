@@ -241,6 +241,7 @@ def background_attachment(keyword):
 @validator('border-right-color')
 @validator('border-bottom-color')
 @validator('border-left-color')
+@validator('column-rule-color')
 @single_token
 def other_colors(token):
     return parse_color(token)
@@ -578,6 +579,7 @@ def border_corner_radius(tokens):
 @validator('border-right-style')
 @validator('border-left-style')
 @validator('border-bottom-style')
+@validator('column-rule-style')
 @single_keyword
 def border_style(keyword):
     """``border-*-style`` properties validation."""
@@ -597,16 +599,37 @@ def outline_style(keyword):
 @validator('border-right-width')
 @validator('border-left-width')
 @validator('border-bottom-width')
+@validator('column-rule-width')
 @validator('outline-width')
 @single_token
 def border_width(token):
-    """``border-*-width`` properties validation."""
+    """Border, column rule and outline widths properties validation."""
     length = get_length(token, negative=False)
     if length:
         return length
     keyword = get_keyword(token)
     if keyword in ('thin', 'medium', 'thick'):
         return keyword
+
+
+@validator()
+@single_token
+def column_width(token):
+    """``column-width`` property validation."""
+    length = get_length(token, negative=False)
+    if length:
+        return length
+    keyword = get_keyword(token)
+    if keyword == 'auto':
+        return keyword
+
+
+@validator()
+@single_keyword
+def column_span(keyword):
+    """``column-span`` property validation."""
+    # TODO: uncomment this when it is supported
+    # return keyword in ('all', 'none')
 
 
 @validator()
@@ -788,6 +811,25 @@ def width_height(token):
 
 
 @validator()
+@single_token
+def column_gap(token):
+    """Validation for the ``column-gap`` property."""
+    length = get_length(token, negative=False)
+    if length:
+        return length
+    keyword = get_keyword(token)
+    if keyword == 'normal':
+        return keyword
+
+
+@validator()
+@single_keyword
+def column_fill(keyword):
+    """``column-fill`` property validation."""
+    return keyword in ('auto', 'balance')
+
+
+@validator()
 @single_keyword
 def direction(keyword):
     """``direction`` property validation."""
@@ -966,11 +1008,22 @@ def z_index(token):
 @validator('widows')
 @single_token
 def orphans_widows(token):
-    """Validation for the ``orphans`` or ``widows`` properties."""
+    """Validation for the ``orphans`` and ``widows`` properties."""
     if token.type == 'INTEGER':
         value = token.value
         if value >= 1:
             return value
+
+@validator()
+@single_token
+def column_count(token):
+    """Validation for the ``column-count`` property."""
+    if token.type == 'INTEGER':
+        value = token.value
+        if value >= 1:
+            return value
+    if get_keyword(token) == 'auto':
+        return 'auto'
 
 
 @validator()
@@ -1572,6 +1625,7 @@ def expand_border(base_url, name, tokens):
 @expander('border-right')
 @expander('border-bottom')
 @expander('border-left')
+@expander('column-rule')
 @expander('outline')
 @generic_expander('-width', '-color', '-style')
 def expand_border_side(name, tokens):
@@ -1687,6 +1741,20 @@ def expand_background(base_url, name, tokens):
     for name, values in results.items():
         yield name, values[::-1]  # "Un-reverse"
     yield 'background-color', color
+
+
+@expander('columns')
+@generic_expander('column-width', 'column-count')
+def expand_columns(name, tokens):
+    """Expand the ``columns`` shorthand property."""
+    for token in tokens:
+        if column_width([token]) is not None:
+            name = 'column-width'
+        elif column_count([token]) is not None:
+            name = 'column-count'
+        else:
+            raise InvalidValues
+        yield name, [token]
 
 
 @expander('font')
