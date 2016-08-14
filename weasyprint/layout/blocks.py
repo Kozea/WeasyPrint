@@ -182,6 +182,8 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
 
     if old_box.children:
         old_box.height = max(child.height for child in old_box.children)
+        for child in old_box.children:
+            child.height = old_box.height
     else:
         old_box.height = 0
 
