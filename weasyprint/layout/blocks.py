@@ -187,9 +187,9 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
     else:
         old_box.height = 0
 
-    return (old_box, skip_stack, next_page, next_adjoining_margins,
-         collapsing_through)
-
+    return (
+        old_box, skip_stack, next_page, next_adjoining_margins,
+        collapsing_through)
 
 
 @handle_min_max_width

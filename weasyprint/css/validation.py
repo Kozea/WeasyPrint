@@ -1014,6 +1014,7 @@ def orphans_widows(token):
         if value >= 1:
             return value
 
+
 @validator()
 @single_token
 def column_count(token):
