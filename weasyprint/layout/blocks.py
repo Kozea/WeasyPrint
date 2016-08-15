@@ -115,7 +115,7 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
     width = None
     style = box.style
     # TODO: the available width can be unknown if the containing block needs
-    # the size of this block to know its own size
+    # the size of this block to know its own size.
     block_level_width(box, containing_block)
     available_width = box.width
     if available_width == 'auto':
@@ -157,6 +157,20 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
         column_box.position_y = box.content_box_y()
         return column_box
 
+    def column_descendants(box):
+        yield box
+        for child in box.children:
+            if not (
+                isinstance(child, (
+                    boxes.TableBox, boxes.LineBox, boxes.ReplacedBox)) and
+                    child.is_in_normal_flow()):
+                continue
+            if hasattr(child, 'descendants'):
+                for grand_child in column_descendants(child):
+                    yield grand_child
+            else:
+                yield child
+
     # Balance.
     #
     # The current algorithm starts from the ideal height (the total height
@@ -178,6 +192,7 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
         new_child, _, _, _, _ = block_box_layout(
              context, column_box, float('inf'), skip_stack, containing_block,
              device_size, page_is_empty, absolute_boxes, fixed_boxes, [])
+        box_column_descendants = column_descendants(new_child)
 
         # Ideal height
         height = new_child.height / count
@@ -187,11 +202,12 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
             i = 0
             lost_spaces = []
             column_top = new_child.content_box_y()
-            for child in new_child.descendants():
+            for child in box_column_descendants:
                 # TODO: this filtering condition is probably wrong
-                # TODO: we should skip the lines and tables children
-                if not isinstance(child, (
-                        boxes.TableBox, boxes.LineBox, boxes.ReplacedBox)):
+                if not (
+                    isinstance(child, (
+                        boxes.TableBox, boxes.LineBox, boxes.ReplacedBox)) and
+                        child.is_in_normal_flow()):
                     continue
                 child_height = child.margin_height()
                 child_bottom = child.position_y + child_height - column_top
@@ -214,8 +230,7 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
             max_position_y = original_max_position_y
         column_box = create_column_box()
         column_box.position_x += i * (width + style.column_gap)
-        (new_child, skip_stack, next_page, next_adjoining_margins,
-         collapsing_through) = block_box_layout(
+        new_child, skip_stack, next_page, _, _ = block_box_layout(
              context, column_box, max_position_y, skip_stack, containing_block,
              device_size, page_is_empty, absolute_boxes, fixed_boxes, [])
         if new_child is None:
@@ -232,9 +247,10 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
     else:
         box.height = 0
 
-    # TODO: next_adjoining_margins and collapsing_through are probably wrong
-    return (
-        box, skip_stack, next_page, next_adjoining_margins, collapsing_through)
+    # TODO: fix the position of the children out of the flow. See
+    # multicol-fill-auto for example.
+
+    return box, skip_stack, next_page, [0], False
 
 
 @handle_min_max_width
