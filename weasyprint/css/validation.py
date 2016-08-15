@@ -1748,8 +1748,11 @@ def expand_background(base_url, name, tokens):
 @generic_expander('column-width', 'column-count')
 def expand_columns(name, tokens):
     """Expand the ``columns`` shorthand property."""
+    name = None
+    if len(tokens) == 2 and get_keyword(tokens[0]) == 'auto':
+        tokens = tokens[::-1]
     for token in tokens:
-        if column_width([token]) is not None:
+        if column_width([token]) is not None and name != 'column-width':
             name = 'column-width'
         elif column_count([token]) is not None:
             name = 'column-count'
