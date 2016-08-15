@@ -187,7 +187,7 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
             i = 0
             lost_spaces = []
             column_top = new_child.content_box_y()
-            for a, child in enumerate(new_child.descendants()):
+            for child in new_child.descendants():
                 # TODO: this filtering condition is probably wrong
                 # TODO: we should skip the lines and tables children
                 if not isinstance(child, (
