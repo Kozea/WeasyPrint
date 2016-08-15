@@ -396,6 +396,26 @@ def draw_border(context, box, enable_hinting):
     # We need a plan to draw beautiful borders, and that's difficult, no need
     # to lie. Let's try to find the cases that we can handle in a smart way.
 
+    # Draw column borders
+    columns = (
+        box.style.column_width != 'auto' or
+        box.style.column_count != 'auto')
+    if columns and box.style.column_rule_width:
+        for child in box.children[1:]:
+            with stacked(context):
+                position_x = (child.position_x - (
+                    box.style.column_rule_width + box.style.column_gap) / 2)
+                border_box = (
+                    position_x, child.position_y, box.style.column_rule_width,
+                    box.height)
+                clip_border_segment(
+                    context, enable_hinting, box.style.column_rule_style,
+                    box.style.column_rule_width, 'left', border_box)
+                draw_rect_border(
+                    context, border_box,
+                    (0, 0, 0, box.style.column_rule_width),
+                    box.style.column_rule_style, box.style.column_rule_color)
+
     # The box is hidden, easy.
     if box.style.visibility != 'visible':
         return
