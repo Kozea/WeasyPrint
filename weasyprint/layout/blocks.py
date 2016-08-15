@@ -114,11 +114,14 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
     count = None
     width = None
     style = box.style
-    available_width = containing_block.width
+    # TODO: the available width can be unknown if the containing block needs
+    # the size of this block to know its own size
+    block_level_width(box, containing_block)
+    available_width = box.width
     if available_width == 'auto':
         if style.column_count == 'auto':
             count = 1
-            width = containing_block.content_width()
+            width = box.width
         elif style.column_width != 'auto':
             count = style.column_count
             width = style.column_width
@@ -145,51 +148,55 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
                 (available_width + style.column_gap) / count -
                 style.column_gap)
 
-    block_level_width(box, containing_block)
+    def create_column_box():
+        column_box = box.anonymous_from(
+            box, children=[child.copy() for child in box.children])
+        resolve_percentages(column_box, containing_block)
+        column_box.width = width
+        column_box.position_x = box.content_box_x()
+        column_box.position_y = box.content_box_y()
+        return column_box
 
     # Really stupid balance algorithm
     original_max_position_y = max_position_y
     if style.column_fill == 'balance':
         # Find the total height of the content
-        column_box = box.copy()
-        column_box.width = width
+        column_box = create_column_box()
         new_child, _, _, _, _ = block_box_layout(
              context, column_box, float('inf'), skip_stack, containing_block,
              device_size, page_is_empty, absolute_boxes, fixed_boxes, [])
-        # TODO: We add a 1em extra size to the maximum height of each column,
-        # we should change this later.
+        # TODO: We add a random 2em extra size to the maximum height of each
+        # column, we should change this later.
         max_position_y = min(
             max_position_y,
-            box.position_y + new_child.height / count + style.font_size)
+            box.position_y + new_child.height / count + style.font_size * 2)
 
     # Replace the current box children with columns
-    old_box = box.copy()
-    old_box.children = []
+    children = []
     for i in range(count):
         if i == count - 1:
             max_position_y = original_max_position_y
-        column_box = box.copy()
-        column_box.width = width
-        column_box.position_x = box.position_x + i * width
+        column_box = create_column_box()
+        column_box.position_x += i * (width + style.column_gap)
         (new_child, skip_stack, next_page, next_adjoining_margins,
          collapsing_through) = block_box_layout(
              context, column_box, max_position_y, skip_stack, containing_block,
              device_size, page_is_empty, absolute_boxes, fixed_boxes, [])
-        if new_child:
-            old_box.children.append(new_child)
-            if skip_stack is None:
-                break
+        children.append(new_child)
+        if skip_stack is None:
+            break
 
-    if old_box.children:
-        old_box.height = max(child.height for child in old_box.children)
-        for child in old_box.children:
-            child.height = old_box.height
+    box.children = children
+    if box.children:
+        box.height = max(child.height for child in box.children)
+        for child in box.children:
+            child.height = box.height
     else:
-        old_box.height = 0
+        box.height = 0
 
+    # TODO: next_adjoining_margins and collapsing_through are probably wrong
     return (
-        old_box, skip_stack, next_page, next_adjoining_margins,
-        collapsing_through)
+        box, skip_stack, next_page, next_adjoining_margins, collapsing_through)
 
 
 @handle_min_max_width
