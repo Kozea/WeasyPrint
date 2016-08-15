@@ -157,7 +157,20 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
         column_box.position_y = box.content_box_y()
         return column_box
 
-    # Really stupid balance algorithm
+    # Balance.
+    #
+    # The current algorithm starts from the ideal height (the total height
+    # divided by the number of columns). We then iterate until the last column
+    # is not the highest one. At the end of each loop, we add the minimal
+    # height needed to make one direct child at the top of one column go to the
+    # end of the previous column.
+    #
+    # We must probably rely on a real rendering for each loop, but with a
+    # stupid algorithm like this it can last minutes.
+    #
+    # TODO: Rewrite this!
+    # - We assume that the children are normal lines or blocks.
+    # - We ignore the forced and avoided column breaks.
     original_max_position_y = max_position_y
     if style.column_fill == 'balance':
         # Find the total height of the content
@@ -165,11 +178,34 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
         new_child, _, _, _, _ = block_box_layout(
              context, column_box, float('inf'), skip_stack, containing_block,
              device_size, page_is_empty, absolute_boxes, fixed_boxes, [])
-        # TODO: We add a random 2em extra size to the maximum height of each
-        # column, we should change this later.
-        max_position_y = min(
-            max_position_y,
-            box.position_y + new_child.height / count + style.font_size * 2)
+
+        # Ideal height
+        height = new_child.height / count
+
+        # Increase the column height step by step.
+        while True:
+            i = 0
+            lost_spaces = []
+            column_top = new_child.content_box_y()
+            for a, child in enumerate(new_child.descendants()):
+                # TODO: this filtering condition is probably wrong
+                # TODO: we should skip the lines and tables children
+                if not isinstance(child, (
+                        boxes.TableBox, boxes.LineBox, boxes.ReplacedBox)):
+                    continue
+                child_height = child.margin_height()
+                child_bottom = child.position_y + child_height - column_top
+                if child_bottom > height:
+                    if i < count - 1:
+                        lost_spaces.append(child_bottom - height)
+                        i += 1
+                        column_top = child.position_y
+                    else:
+                        break
+            else:
+                break
+            height += min(lost_spaces)
+        max_position_y = min(max_position_y, box.content_box_y() + height)
 
     # Replace the current box children with columns
     children = []
@@ -182,6 +218,8 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
          collapsing_through) = block_box_layout(
              context, column_box, max_position_y, skip_stack, containing_block,
              device_size, page_is_empty, absolute_boxes, fixed_boxes, [])
+        if new_child is None:
+            break
         children.append(new_child)
         if skip_stack is None:
             break
