@@ -158,18 +158,13 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
         return column_box
 
     def column_descendants(box):
-        yield box
-        for child in box.children:
-            if not (
-                isinstance(child, (
-                    boxes.TableBox, boxes.LineBox, boxes.ReplacedBox)) and
-                    child.is_in_normal_flow()):
-                continue
-            if hasattr(child, 'descendants'):
+        # TODO: this filtering condition is probably wrong
+        if isinstance(box, (boxes.TableBox, boxes.LineBox, boxes.ReplacedBox)):
+            yield box
+        if hasattr(box, 'descendants') and box.is_in_normal_flow():
+            for child in box.children:
                 for grand_child in column_descendants(child):
                     yield grand_child
-            else:
-                yield child
 
     # Balance.
     #
@@ -192,7 +187,7 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
         new_child, _, _, _, _ = block_box_layout(
              context, column_box, float('inf'), skip_stack, containing_block,
              device_size, page_is_empty, absolute_boxes, fixed_boxes, [])
-        box_column_descendants = column_descendants(new_child)
+        box_column_descendants = list(column_descendants(new_child))
 
         # Ideal height
         height = new_child.height / count
@@ -203,12 +198,6 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
             lost_spaces = []
             column_top = new_child.content_box_y()
             for child in box_column_descendants:
-                # TODO: this filtering condition is probably wrong
-                if not (
-                    isinstance(child, (
-                        boxes.TableBox, boxes.LineBox, boxes.ReplacedBox)) and
-                        child.is_in_normal_flow()):
-                    continue
                 child_height = child.margin_height()
                 child_bottom = child.position_y + child_height - column_top
                 if child_bottom > height:
