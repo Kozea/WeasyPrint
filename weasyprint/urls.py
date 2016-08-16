@@ -27,7 +27,8 @@ from .logger import LOGGER
 from .compat import (
     urljoin, urlsplit, quote, unquote, unquote_to_bytes, urlopen,
     urllib_get_content_type, urllib_get_charset, urllib_get_filename, Request,
-    parse_email, pathname2url, unicode, base64_decode, StreamingGzipFile)
+    parse_email, pathname2url, unicode, base64_decode, StreamingGzipFile,
+    FILESYSTEM_ENCODING)
 
 
 # Unlinke HTML, CSS and PNG, the SVG MIME type is not always builtin
@@ -54,7 +55,8 @@ def iri_to_uri(url):
         # Data URIs can be huge, but don’t need this anyway.
         return url
     # Use UTF-8 as per RFC 3987 (IRI), except for file://
-    url = url.encode('utf-8')
+    url = url.encode(FILESYSTEM_ENCODING
+                     if url.startswith('file:') else 'utf-8')
     # This is a full URI, not just a component. Only %-encode characters
     # that are not allowed at all in URIs. Everthing else is "safe":
     # * Reserved characters: /:?#[]@!$&'()*+,;=
