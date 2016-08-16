@@ -15,7 +15,6 @@ from __future__ import division, unicode_literals
 import io
 import re
 import sys
-import codecs
 import os.path
 import mimetypes
 import contextlib
@@ -40,15 +39,6 @@ else:
     mimetypes.add_type(b'image/svg+xml', b'.svg')
 
 
-# getfilesystemencoding() on Linux is sometimes stupid...
-FILESYSTEM_ENCODING = sys.getfilesystemencoding() or 'utf-8'
-try:
-    if codecs.lookup(FILESYSTEM_ENCODING).name == 'ascii':
-        FILESYSTEM_ENCODING = 'utf-8'
-except LookupError:
-    FILESYSTEM_ENCODING = 'utf-8'
-
-
 # See http://stackoverflow.com/a/11687993/1162888
 # Both are needed in Python 3 as the re module does not like to mix
 # http://tools.ietf.org/html/rfc3986#section-3.1
@@ -64,8 +54,7 @@ def iri_to_uri(url):
         # Data URIs can be huge, but don’t need this anyway.
         return url
     # Use UTF-8 as per RFC 3987 (IRI), except for file://
-    url = url.encode(FILESYSTEM_ENCODING
-                     if url.startswith('file:') else 'utf-8')
+    url = url.encode('utf-8')
     # This is a full URI, not just a component. Only %-encode characters
     # that are not allowed at all in URIs. Everthing else is "safe":
     # * Reserved characters: /:?#[]@!$&'()*+,;=
@@ -82,8 +71,6 @@ def path2url(path):
         # Make sure directory names have a trailing slash.
         # Otherwise relative URIs are resolved from the parent directory.
         path += os.path.sep
-    if isinstance(path, unicode):
-        path = path.encode(FILESYSTEM_ENCODING)
     path = pathname2url(path)
     if path.startswith('///'):
         # On Windows pathname2url(r'C:\foo') is apparently '///C:/foo'
@@ -271,6 +258,12 @@ def default_url_fetcher(url):
     """
     if url.lower().startswith('data:'):
         return open_data_url(url)
+    elif url.lower().startswith('file:'):
+        filename = unquote(url[7:])  # len('file://') == 7
+        mime_type = mimetypes.guess_type(filename)[0]
+        with open(filename, 'rb') as fd:
+            return dict(filename=filename, string=fd.read(),
+                        mime_type=mime_type, redirected_url=url)
     elif UNICODE_SCHEME_RE.match(url):
         url = iri_to_uri(url)
         response = urlopen(Request(url, headers=HTTP_HEADERS))
