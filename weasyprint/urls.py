@@ -258,12 +258,6 @@ def default_url_fetcher(url):
     """
     if url.lower().startswith('data:'):
         return open_data_url(url)
-    elif url.lower().startswith('file:'):
-        filename = unquote(url[7:])  # len('file://') == 7
-        mime_type = mimetypes.guess_type(filename)[0]
-        with open(filename, 'rb') as fd:
-            return dict(filename=filename, string=fd.read(),
-                        mime_type=mime_type, redirected_url=url)
     elif UNICODE_SCHEME_RE.match(url):
         url = iri_to_uri(url)
         response = urlopen(Request(url, headers=HTTP_HEADERS))
