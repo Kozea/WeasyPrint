@@ -27,7 +27,7 @@ from .layout import layout_document
 from .layout.backgrounds import percentage
 from .draw import draw_page, stacked
 from .pdf import write_pdf_metadata
-from .compat import izip, iteritems
+from .compat import izip, iteritems, FILESYSTEM_ENCODING
 
 
 def _get_matrix(box):
@@ -120,6 +120,13 @@ def _gather_links_and_bookmarks(box, bookmarks, links, anchors, matrix):
         pos_x, pos_y, width, height = box.hit_area()
         if has_link:
             link_type, target = link
+            if isinstance(target, bytes):
+                # Links are filesystem_encoding/utf-8 bytestrings in Python 2
+                # and ASCII unicode in Python 3. See ``iri_to_uri`` and
+                # standard library's ``quote`` source.
+                target = target.decode(
+                    FILESYSTEM_ENCODING if target.startswith('file:')
+                    else 'utf-8')
             if link_type == 'external' and is_attachment:
                 link_type = 'attachment'
             if matrix:
