@@ -294,15 +294,7 @@ def replaced_box_height(box, device_size):
     # http://www.w3.org/TR/CSS21/visudet.html#inline-replaced-height
     intrinsic_width, intrinsic_height = box.replacement.get_intrinsic_size(
         box.style.image_resolution, box.style.font_size)
-
-    if intrinsic_height == 0:
-        # Results in box.height == 0 if used, whatever the used width
-        # or intrinsic width.
-        intrinsic_ratio = float('inf')
-    elif intrinsic_width and intrinsic_height:
-        intrinsic_ratio = intrinsic_width / intrinsic_height
-    else:
-        intrinsic_ratio = None
+    intrinsic_ratio = box.replacement.intrinsic_ratio
 
     # Test 'auto' on the computed width, not the used width
     if box.style.height == 'auto' and box.style.width == 'auto':
