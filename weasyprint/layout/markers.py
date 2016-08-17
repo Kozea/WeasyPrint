@@ -14,9 +14,9 @@ from __future__ import division, unicode_literals
 
 from .percentages import resolve_percentages
 from .replaced import image_marker_layout
+from .tables import find_in_flow_baseline
 from ..text import split_first_line
 from ..formatting_structure import boxes
-from ..css.computed_values import strut_layout
 
 
 def list_marker_layout(context, box):
@@ -38,16 +38,15 @@ def list_marker_layout(context, box):
             # Image marker
             image_marker_layout(marker)
 
-        # Align the top of the marker box with the top of its list-item’s
-        # content-box.
-        # TODO: align the baselines of the first lines instead?
-        marker.position_y = box.content_box_y()
-
-        # Adjust y position taking into account line_height
-        line_height, baseline = strut_layout(box.style, context.enable_hinting)
-        height = box.style.font_size
-        half_leading = (line_height - height) / 2.
-        marker.position_y += half_leading - 1.0
+        baseline = find_in_flow_baseline(box)
+        if baseline:
+            # Align the baseline of the marker box with the baseline of the
+            # first line of its list-item’s content-box.
+            marker.position_y = baseline - marker.baseline
+        else:
+            # Align the top of the marker box with the top of its list-item’s
+            # content-box.
+            marker.position_y = box.content_box_y()
 
         # ... and its right with the left of its list-item’s padding box.
         # (Swap left and right for right-to-left text.)
