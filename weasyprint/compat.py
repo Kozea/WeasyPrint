@@ -12,6 +12,7 @@
 
 from __future__ import division, unicode_literals
 
+import codecs
 import sys
 import email
 
@@ -22,6 +23,15 @@ __all__ = ['Request', 'base64_decode', 'base64_encode', 'basestring',
            'urlencode', 'urljoin', 'urlopen', 'urllib_get_content_type',
            'urllib_get_charset', 'urllib_get_filename',
            'urlparse_uses_relative', 'urlsplit', 'xrange']
+
+
+# getfilesystemencoding() on Linux is sometimes stupid...
+FILESYSTEM_ENCODING = sys.getfilesystemencoding() or 'utf-8'
+try:
+    if codecs.lookup(FILESYSTEM_ENCODING).name == 'ascii':
+        FILESYSTEM_ENCODING = 'utf-8'
+except LookupError:
+    FILESYSTEM_ENCODING = 'utf-8'
 
 
 if sys.version_info[0] >= 3:
@@ -63,7 +73,7 @@ else:
     from urlparse import (urljoin, urlsplit, parse_qs,
                           uses_relative as urlparse_uses_relative)
     from urllib2 import urlopen, Request
-    from urllib import pathname2url, quote, unquote, urlencode
+    from urllib import pathname2url as _pathname2url, quote, unquote, urlencode
     from array import array as _array
     from itertools import izip, imap
     from base64 import (decodestring as base64_decode,
@@ -76,6 +86,11 @@ else:
 
     def array(typecode, initializer):
         return _array(typecode.encode('ascii'), initializer)
+
+    def pathname2url(path):
+        if isinstance(path, unicode):
+            path = path.encode(FILESYSTEM_ENCODING)
+        return _pathname2url(path)
 
     def urllib_get_content_type(urlobj):
         return urlobj.info().gettype()

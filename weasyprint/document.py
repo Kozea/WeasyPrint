@@ -11,7 +11,6 @@
 from __future__ import division, unicode_literals
 
 import io
-import sys
 import math
 import shutil
 import functools
@@ -28,8 +27,7 @@ from .layout import layout_document
 from .layout.backgrounds import percentage
 from .draw import draw_page, stacked
 from .pdf import write_pdf_metadata
-from .compat import izip, iteritems, unicode
-from .urls import FILESYSTEM_ENCODING
+from .compat import izip, iteritems
 
 
 def _get_matrix(box):
@@ -551,9 +549,6 @@ class Document(object):
             surface.write_to_png(target)
             png_bytes = target.getvalue()
         else:
-            if sys.version_info[0] < 3 and isinstance(target, unicode):
-                # py2cairo 1.8 does not support unicode filenames.
-                target = target.encode(FILESYSTEM_ENCODING)
             surface.write_to_png(target)
             png_bytes = None
         return png_bytes, max_width, sum_heights
