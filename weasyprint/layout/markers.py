@@ -34,12 +34,12 @@ def list_marker_layout(context, box):
                 marker.baseline) = split_first_line(
                     marker.text, marker.style, context.enable_hinting,
                     max_width=None, line_width=None)
+            baseline = find_in_flow_baseline(box)
         else:
             # Image marker
             image_marker_layout(marker)
 
-        baseline = find_in_flow_baseline(box)
-        if baseline:
+        if isinstance(marker, boxes.TextBox) and baseline:
             # Align the baseline of the marker box with the baseline of the
             # first line of its list-item’s content-box.
             marker.position_y = baseline - marker.baseline
