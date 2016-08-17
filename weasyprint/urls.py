@@ -15,7 +15,6 @@ from __future__ import division, unicode_literals
 import io
 import re
 import sys
-import codecs
 import os.path
 import mimetypes
 import contextlib
@@ -28,7 +27,8 @@ from .logger import LOGGER
 from .compat import (
     urljoin, urlsplit, quote, unquote, unquote_to_bytes, urlopen,
     urllib_get_content_type, urllib_get_charset, urllib_get_filename, Request,
-    parse_email, pathname2url, unicode, base64_decode, StreamingGzipFile)
+    parse_email, pathname2url, unicode, base64_decode, StreamingGzipFile,
+    FILESYSTEM_ENCODING)
 
 
 # Unlinke HTML, CSS and PNG, the SVG MIME type is not always builtin
@@ -38,15 +38,6 @@ if sys.version_info[0] >= 3:
 else:
     # Native strings required.
     mimetypes.add_type(b'image/svg+xml', b'.svg')
-
-
-# getfilesystemencoding() on Linux is sometimes stupid...
-FILESYSTEM_ENCODING = sys.getfilesystemencoding() or 'utf-8'
-try:
-    if codecs.lookup(FILESYSTEM_ENCODING).name == 'ascii':
-        FILESYSTEM_ENCODING = 'utf-8'
-except LookupError:
-    FILESYSTEM_ENCODING = 'utf-8'
 
 
 # See http://stackoverflow.com/a/11687993/1162888
@@ -82,8 +73,6 @@ def path2url(path):
         # Make sure directory names have a trailing slash.
         # Otherwise relative URIs are resolved from the parent directory.
         path += os.path.sep
-    if isinstance(path, unicode):
-        path = path.encode(FILESYSTEM_ENCODING)
     path = pathname2url(path)
     if path.startswith('///'):
         # On Windows pathname2url(r'C:\foo') is apparently '///C:/foo'
