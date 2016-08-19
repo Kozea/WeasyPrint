@@ -672,28 +672,18 @@ def split_text_box(context, box, available_width, line_width, skip):
         return None, None, False
     layout, length, resume_at, width, height, baseline = split_first_line(
         text, box.style, context.enable_hinting, available_width, line_width)
+    assert resume_at != 0
 
     # Convert ``length`` and ``resume_at`` from UTF-8 indexes in text
     # to Unicode indexes.
     # No need to encode what’s after resume_at (if set) or length (if
     # resume_at is not set). One code point is one or more byte, so
     # UTF-8 indexes are always bigger or equal to Unicode indexes.
-    utf8_text = text.encode('utf8')[:resume_at or length]
-    new_text = utf8_text[:length].decode('utf8')
-    new_length = len(new_text)
+    new_text = layout.text_bytes.decode('utf8')
     if resume_at is not None:
-        if length > resume_at:
-            # Text has been hyphenated
-            new_text += box.style.hyphenate_character
-            between = ''
-        else:
-            between = utf8_text[length:resume_at].decode('utf8')
-            if width > available_width:
-                if between.strip(' ') not in ('', '\n', '\u2029'):
-                    # Replace bad cutting value from Pango
-                    between = utf8_text[length:new_length].decode('utf8')
-        resume_at = new_length + len(between)
-    length = new_length
+        between = text.encode('utf8')[length:resume_at].decode('utf8')
+        resume_at = len(text.encode('utf8')[:resume_at].decode('utf8'))
+    length = len(text.encode('utf8')[:length].decode('utf8'))
 
     if length > 0:
         box = box.copy_with_text(new_text)

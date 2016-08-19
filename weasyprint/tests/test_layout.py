@@ -5274,19 +5274,60 @@ def test_hyphenate_character():
     full_text = ''.join(line.children[0].text for line in lines)
     assert full_text == 'hyphénation'
 
-    # TODO: strange error with some characters
-    # page, = parse(
-    #     '<html style="width: 5em">'
-    #     '<body style="-weasy-hyphens: auto;'
-    #     '-weasy-hyphenate-character: \'———\'" lang=en>'
-    #     'hyphenation')
-    # html, = page.children
-    # body, = html.children
-    # lines = body.children
-    # assert len(lines) > 1
-    # assert lines[0].children[0].text.endswith('———')
-    # full_text = ''.join(line.children[0].text for line in lines)
-    # assert full_text.replace('—', '') == 'hyphenation'
+    page, = parse(
+        '<html style="width: 5em; font-family: ahem">'
+        '<body style="-weasy-hyphens: auto;'
+        '-weasy-hyphenate-character: \'———\'" lang=fr>'
+        'hyphénation')
+    html, = page.children
+    body, = html.children
+    lines = body.children
+    assert len(lines) > 1
+    assert lines[0].children[0].text.endswith('———')
+    full_text = ''.join(line.children[0].text for line in lines)
+    assert full_text.replace('—', '') == 'hyphénation'
+
+
+@assert_no_logs
+def test_manual_hyphenation():
+    for i in range(1, len('hyphénation')):
+        for hyphenate_character in ('!', 'ù ù'):
+            word = 'hyphénation'[:i] + '\u00ad' + 'hyphénation'[i:]
+            page, = parse(
+                '<html style="width: 5em; font-family: ahem">'
+                '<body style="-weasy-hyphens: manual;'
+                '-weasy-hyphenate-character: \'%s\'"'
+                'lang=fr>%s' % (hyphenate_character, word))
+            html, = page.children
+            body, = html.children
+            lines = body.children
+            assert len(lines) == 2
+            assert lines[0].children[0].text.endswith(hyphenate_character)
+            full_text = ''.join(
+                child.text for line in lines for child in line.children)
+            assert full_text.replace(hyphenate_character, '') == word
+
+    for i in range(1, len('hy phénation')):
+        for hyphenate_character in ('!', 'ù ù'):
+            word = 'hy phénation'[:i] + '\u00ad' + 'hy phénation'[i:]
+            page, = parse(
+                '<html style="width: 5em; font-family: ahem">'
+                '<body style="-weasy-hyphens: manual;'
+                '-weasy-hyphenate-character: \'%s\'"'
+                'lang=fr>%s' % (hyphenate_character, word))
+            html, = page.children
+            body, = html.children
+            lines = body.children
+            assert len(lines) in (2, 3)
+            full_text = ''.join(
+                child.text for line in lines for child in line.children)
+            full_text = full_text.replace(hyphenate_character, '')
+            if lines[0].children[0].text.endswith(hyphenate_character):
+                assert full_text == word
+            else:
+                assert lines[0].children[0].text.endswith('y')
+                if len(lines) == 3:
+                    assert lines[1].children[0].text.endswith(hyphenate_character)
 
 
 @assert_no_logs

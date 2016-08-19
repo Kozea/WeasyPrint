@@ -16,6 +16,7 @@ from __future__ import division
 import pyphen
 import cffi
 import cairocffi as cairo
+import re
 
 from .compat import basestring
 
@@ -273,17 +274,29 @@ def get_ink_position(line):
 
 
 def first_line_metrics(first_line, text, layout, resume_at, space_collapse,
-                       hyphenated=False):
+                       hyphenated=False, hyphenation_character=None):
     length = first_line.length
-    if not hyphenated and resume_at:
+    if hyphenated:
+        length -= len(hyphenation_character.encode('utf8'))
+    elif resume_at:
         # Create layout with final text
         first_line_text = utf8_slice(text, slice(length))
         # Remove trailing spaces if spaces collapse
         if space_collapse:
             first_line_text = first_line_text.rstrip(' ')
-        layout.set_text(first_line_text)
+        # Remove soft hyphens
+        layout.set_text(first_line_text.replace('\u00ad', ''))
         first_line = next(layout.iter_lines(), None)
         length = first_line.length if first_line is not None else 0
+        soft_hyphens = 0
+        if '\u00ad' in first_line_text:
+            for i in range(len(layout.text_bytes.decode('utf8'))):
+                while i + soft_hyphens + 1 < len(first_line_text):
+                    if first_line_text[i + soft_hyphens + 1] == '\u00ad':
+                        soft_hyphens += 1
+                    else:
+                        break
+        length += soft_hyphens * 2  # len('\u00ad'.encode('utf8'))
     width, height = get_size(first_line)
     baseline = units_to_double(pango.pango_layout_iter_get_baseline(ffi.gc(
         pango.pango_layout_get_iter(layout.layout),
@@ -462,7 +475,7 @@ def split_first_line(text, style, hinting, max_width, line_width):
         # The first line can take all the place needed
         return first_line_metrics(
             first_line, text, layout, resume_at, space_collapse)
-    first_line_width, _height = get_size(first_line)
+    first_line_width, _ = get_size(first_line)
     if second_line is None and first_line_width <= max_width:
         # The first line fits in the available width
         return first_line_metrics(
@@ -489,7 +502,7 @@ def split_first_line(text, style, hinting, max_width, line_width):
             lines = layout.iter_lines()
             first_line = next(lines, None)
             second_line = next(lines, None)
-            first_line_width, _height = get_size(first_line)
+            first_line_width, _ = get_size(first_line)
             if second_line is None and first_line_width <= max_width:
                 # The next word fits in the first line, keep the layout
                 resume_at = len(new_first_line_text.encode('utf-8')) + 1
@@ -507,12 +520,12 @@ def split_first_line(text, style, hinting, max_width, line_width):
     hyphens = style.hyphens
     lang = style.lang and pyphen.language_fallback(style.lang)
     total, left, right = style.hyphenate_limit_chars
-
     hyphenated = False
+    soft_hyphen = '\u00ad'
 
     # Automatic hyphenation possible and next word is long enough
-    if hyphens not in ('none', 'manual') and lang and len(next_word) >= total:
-        first_line_width, _height = get_size(first_line)
+    if hyphens != 'none' and len(next_word) >= total:
+        first_line_width, _ = get_size(first_line)
         space = max_width - first_line_width
         if style.hyphenate_limit_zone.unit == '%':
             limit_zone = max_width * style.hyphenate_limit_zone.value / 100.
@@ -520,36 +533,94 @@ def split_first_line(text, style, hinting, max_width, line_width):
             limit_zone = style.hyphenate_limit_zone.value
 
         if space > limit_zone or space < 0:
-            # The next word does not fit, try hyphenation
-            dictionary_key = (lang, left, right, total)
-            dictionary = PYPHEN_DICTIONARY_CACHE.get(dictionary_key)
-            if dictionary is None:
-                dictionary = pyphen.Pyphen(lang=lang, left=left, right=right)
-                PYPHEN_DICTIONARY_CACHE[dictionary_key] = dictionary
-            for first_word_part, _ in dictionary.iterate(next_word):
-                hyphenated_first_line_text = (
-                    first_line_text + first_word_part +
-                    style.hyphenate_character)
-                temp_layout = create_layout(
-                    hyphenated_first_line_text, style, hinting, max_width)
-                temp_lines = temp_layout.iter_lines()
-                temp_first_line = next(temp_lines, None)
-                temp_second_line = next(temp_lines, None)
+            # Manual hyphenation: check that the line ends with a soft hyphen
+            # and add the missing hyphen
+            if hyphens == 'manual':
+                if first_line_text.endswith(soft_hyphen):
+                    # The first line has been split on a soft hyphen
+                    if ' ' in first_line_text:
+                        first_line_text, next_word = (
+                            first_line_text.rsplit(' ', 1))
+                        next_word = ' ' + next_word
+                        layout = create_layout(
+                            first_line_text, style, hinting, max_width)
+                        lines = layout.iter_lines()
+                        first_line = next(lines, None)
+                        second_line = next(lines, None)
+                        resume_at = len((first_line_text + ' ').encode('utf8'))
+                    else:
+                        first_line_text, next_word = '', first_line_text
+                soft_hyphen_indexes = [
+                    match.start() for match in
+                    re.finditer(soft_hyphen, next_word)]
+                soft_hyphen_indexes.reverse()
+                dictionary_iterations = [
+                    next_word[:i + 1] for i in soft_hyphen_indexes]
+            elif hyphens == 'auto' and lang:
+                # The next word does not fit, try hyphenation
+                dictionary_key = (lang, left, right, total)
+                dictionary = PYPHEN_DICTIONARY_CACHE.get(dictionary_key)
+                if dictionary is None:
+                    dictionary = pyphen.Pyphen(lang=lang, left=left, right=right)
+                    PYPHEN_DICTIONARY_CACHE[dictionary_key] = dictionary
+                dictionary_iterations = [
+                    start for start, end in dictionary.iterate(next_word)]
+            else:
+                dictionary_iterations = []
 
-                if (temp_second_line is None and space >= 0) or space < 0:
-                    hyphenated = True
-                    resume_at = len(
-                        (first_line_text + first_word_part).encode('utf8'))
-                    layout = temp_layout
-                    first_line = temp_first_line
-                    second_line = temp_second_line
-                    temp_first_line_width, _height = get_size(temp_first_line)
-                    if temp_first_line_width <= max_width:
+            if dictionary_iterations:
+                for first_word_part in dictionary_iterations:
+                    new_first_line_text = first_line_text + first_word_part
+                    hyphenated_first_line_text = (
+                        new_first_line_text + style.hyphenate_character)
+                    new_layout = create_layout(
+                        hyphenated_first_line_text, style, hinting, max_width)
+                    new_lines = new_layout.iter_lines()
+                    new_first_line = next(new_lines, None)
+                    new_second_line = next(new_lines, None)
+                    new_first_line_width, _ = get_size(new_first_line)
+                    new_space = max_width - new_first_line_width
+                    if new_second_line is None and (
+                            new_space >= 0 or
+                            first_word_part == dictionary_iterations[-1]):
+                        hyphenated = True
+                        layout = new_layout
+                        first_line = new_first_line
+                        second_line = new_second_line
+                        resume_at = len(new_first_line_text.encode('utf8'))
+                        if text[len(new_first_line_text)] == soft_hyphen:
+                            resume_at += len(soft_hyphen.encode('utf8'))
                         break
+
+                if not hyphenated and not first_line_text:
+                    # Recreate the layout with no max_width to be sure that
+                    # we don't break inside the hyphenate-character string
+                    hyphenated = True
+                    layout = create_layout(
+                        hyphenated_first_line_text, style, hinting, None)
+                    lines = layout.iter_lines()
+                    first_line = next(lines, None)
+                    second_line = next(lines, None)
+                    resume_at = len(new_first_line_text.encode('utf8'))
+                    if text[len(first_line_text)] == soft_hyphen:
+                        resume_at += len(soft_hyphen.encode('utf8'))
+
+    if not hyphenated and first_line_text.endswith(soft_hyphen):
+        # Recreate the layout with no max_width to be sure that
+        # we don't break inside the hyphenate-character string
+        hyphenated = True
+        hyphenated_first_line_text = (
+            first_line_text + style.hyphenate_character)
+        layout = create_layout(
+            hyphenated_first_line_text, style, hinting, None)
+        lines = layout.iter_lines()
+        first_line = next(lines, None)
+        second_line = next(lines, None)
+        resume_at = len(first_line_text.encode('utf8'))
 
     # Step 5: Try to break word if it's too long for the line
     overflow_wrap = style.overflow_wrap
-    first_line_width, _height = get_size(first_line)
+    first_line_width, _ = get_size(first_line)
     space = max_width - first_line_width
     # If we can break words and the first line is too long
     if overflow_wrap == 'break-word' and space < 0:
@@ -576,7 +647,8 @@ def split_first_line(text, style, hinting, max_width, line_width):
         first_line = next(lines, None)
 
     return first_line_metrics(
-        first_line, text, layout, resume_at, space_collapse, hyphenated)
+        first_line, text, layout, resume_at, space_collapse, hyphenated,
+        style.hyphenate_character)
 
 
 def line_widths(text, style, enable_hinting, width):
