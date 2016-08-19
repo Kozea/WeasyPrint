@@ -283,20 +283,20 @@ def first_line_metrics(first_line, text, layout, resume_at, space_collapse,
         first_line_text = utf8_slice(text, slice(length))
         # Remove trailing spaces if spaces collapse
         if space_collapse:
-            first_line_text = first_line_text.rstrip(' ')
+            first_line_text = first_line_text.rstrip(u' ')
         # Remove soft hyphens
-        layout.set_text(first_line_text.replace('\u00ad', ''))
+        layout.set_text(first_line_text.replace(u'\u00ad', u''))
         first_line = next(layout.iter_lines(), None)
         length = first_line.length if first_line is not None else 0
         soft_hyphens = 0
-        if '\u00ad' in first_line_text:
+        if u'\u00ad' in first_line_text:
             for i in range(len(layout.text_bytes.decode('utf8'))):
                 while i + soft_hyphens + 1 < len(first_line_text):
-                    if first_line_text[i + soft_hyphens + 1] == '\u00ad':
+                    if first_line_text[i + soft_hyphens + 1] == u'\u00ad':
                         soft_hyphens += 1
                     else:
                         break
-        length += soft_hyphens * 2  # len('\u00ad'.encode('utf8'))
+        length += soft_hyphens * 2  # len(u'\u00ad'.encode('utf8'))
     width, height = get_size(first_line)
     baseline = units_to_double(pango.pango_layout_iter_get_baseline(ffi.gc(
         pango.pango_layout_get_iter(layout.layout),
@@ -521,7 +521,7 @@ def split_first_line(text, style, hinting, max_width, line_width):
     lang = style.lang and pyphen.language_fallback(style.lang)
     total, left, right = style.hyphenate_limit_chars
     hyphenated = False
-    soft_hyphen = '\u00ad'
+    soft_hyphen = u'\u00ad'
 
     # Automatic hyphenation possible and next word is long enough
     if hyphens != 'none' and len(next_word) >= total:
@@ -550,7 +550,7 @@ def split_first_line(text, style, hinting, max_width, line_width):
                         resume_at = len(
                             (first_line_text + u' ').encode('utf8'))
                     else:
-                        first_line_text, next_word = '', first_line_text
+                        first_line_text, next_word = u'', first_line_text
                 soft_hyphen_indexes = [
                     match.start() for match in
                     re.finditer(soft_hyphen, next_word)]
