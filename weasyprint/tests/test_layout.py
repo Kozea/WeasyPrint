@@ -5327,7 +5327,8 @@ def test_manual_hyphenation():
             else:
                 assert lines[0].children[0].text.endswith('y')
                 if len(lines) == 3:
-                    assert lines[1].children[0].text.endswith(hyphenate_character)
+                    assert lines[1].children[0].text.endswith(
+                        hyphenate_character)
 
 
 @assert_no_logs

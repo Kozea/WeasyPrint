@@ -561,7 +561,8 @@ def split_first_line(text, style, hinting, max_width, line_width):
                 dictionary_key = (lang, left, right, total)
                 dictionary = PYPHEN_DICTIONARY_CACHE.get(dictionary_key)
                 if dictionary is None:
-                    dictionary = pyphen.Pyphen(lang=lang, left=left, right=right)
+                    dictionary = pyphen.Pyphen(
+                        lang=lang, left=left, right=right)
                     PYPHEN_DICTIONARY_CACHE[dictionary_key] = dictionary
                 dictionary_iterations = [
                     start for start, end in dictionary.iterate(next_word)]
@@ -635,7 +636,7 @@ def split_first_line(text, style, hinting, max_width, line_width):
         temp_layout = create_layout(text, style, hinting, max_width)
         temp_layout.set_wrap(PANGO_WRAP_MODE['WRAP_WORD_CHAR'])
         temp_lines = temp_layout.iter_lines()
-        temp_first_line = next(temp_lines, None)
+        next(temp_lines, None)
         temp_second_line = next(temp_lines, None)
         temp_second_line_index = (
             len(text.encode('utf-8')) if temp_second_line is None
