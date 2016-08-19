@@ -538,16 +538,17 @@ def split_first_line(text, style, hinting, max_width, line_width):
             if hyphens == 'manual':
                 if first_line_text.endswith(soft_hyphen):
                     # The first line has been split on a soft hyphen
-                    if ' ' in first_line_text:
+                    if u' ' in first_line_text:
                         first_line_text, next_word = (
-                            first_line_text.rsplit(' ', 1))
-                        next_word = ' ' + next_word
+                            first_line_text.rsplit(u' ', 1))
+                        next_word = u' ' + next_word
                         layout = create_layout(
                             first_line_text, style, hinting, max_width)
                         lines = layout.iter_lines()
                         first_line = next(lines, None)
                         second_line = next(lines, None)
-                        resume_at = len((first_line_text + ' ').encode('utf8'))
+                        resume_at = len(
+                            (first_line_text + u' ').encode('utf8'))
                     else:
                         first_line_text, next_word = '', first_line_text
                 soft_hyphen_indexes = [
