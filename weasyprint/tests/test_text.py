@@ -728,3 +728,34 @@ def test_tab_size():
         paragraph, = body_children(page)
         line, = paragraph.children
         assert line.width == width
+
+
+@assert_no_logs
+def test_text_transform():
+    """Test the text-transform property."""
+    page, = parse('''
+        <style>
+            p { text-transform: capitalize }
+            p+p { text-transform: uppercase }
+            p+p+p { text-transform: lowercase }
+            p+p+p+p { text-transform: full-width }
+            p+p+p+p+p { text-transform: none }
+        </style>
+<p>hé lO1</p><p>hé lO1</p><p>hé lO1</p><p>hé lO1</p><p>hé lO1</p>
+    ''')
+    p1, p2, p3, p4, p5 = body_children(page)
+    line1, = p1.children
+    text1, = line1.children
+    assert text1.text == 'Hé Lo1'
+    line2, = p2.children
+    text2, = line2.children
+    assert text2.text == 'HÉ LO1'
+    line3, = p3.children
+    text3, = line3.children
+    assert text3.text == 'hé lo1'
+    line4, = p4.children
+    text4, = line4.children
+    assert text4.text == '\uff48é\u3000\uff4c\uff2f\uff11'
+    line5, = p5.children
+    text5, = line5.children
+    assert text5.text == 'hé lO1'

@@ -61,7 +61,7 @@ from __future__ import division, unicode_literals
 
 import itertools
 
-from ..compat import xrange
+from ..compat import unichr, xrange
 from ..css.computed_values import ZERO_PIXELS
 
 
@@ -434,6 +434,10 @@ class TextBox(InlineLevelBox):
     inline boxes" are also text boxes.
 
     """
+    # http://stackoverflow.com/questions/16317534/
+    ascii_to_wide = dict((i, unichr(i + 0xfee0)) for i in range(0x21, 0x7f))
+    ascii_to_wide.update({0x20: '\u3000', 0x2D: '\u2212'})
+
     def __init__(self, element_tag, sourceline, style, text):
         assert style.anonymous
         assert text
@@ -445,6 +449,7 @@ class TextBox(InlineLevelBox):
                 'lowercase': lambda t: t.lower(),
                 # Python’s unicode.captitalize is not the same.
                 'capitalize': lambda t: t.title(),
+                'full-width': lambda t: t.translate(self.ascii_to_wide),
             }[text_transform](text)
         if style.hyphens == 'none':
             text = text.replace('\u00AD', '')  # U+00AD SOFT HYPHEN (SHY)

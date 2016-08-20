@@ -423,33 +423,6 @@ def test_page_style():
 
 
 @assert_no_logs
-def test_text_transform():
-    """Test the text-transform property."""
-    assert_tree(parse_all('''
-        <style>
-            p { text-transform: capitalize }
-            p+p { text-transform: uppercase }
-            p+p+p { text-transform: lowercase }
-            p+p+p+p { text-transform: none }
-        </style>
-<p>heLLo wOrlD!</p><p>heLLo wOrlD!</p><p>heLLo wOrlD!</p><p>heLLo wOrlD!</p>
-    '''), [
-        ('p', 'Block', [
-            ('p', 'Line', [
-                ('p', 'Text', 'Hello World!')])]),
-        ('p', 'Block', [
-            ('p', 'Line', [
-                ('p', 'Text', 'HELLO WORLD!')])]),
-        ('p', 'Block', [
-            ('p', 'Line', [
-                ('p', 'Text', 'hello world!')])]),
-        ('p', 'Block', [
-            ('p', 'Line', [
-                ('p', 'Text', 'heLLo wOrlD!')])]),
-    ])
-
-
-@assert_no_logs
 def test_images():
     """Test images that may or may not be available."""
     with capture_logs() as logs:

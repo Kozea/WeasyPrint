@@ -19,10 +19,11 @@ import email
 
 __all__ = ['Request', 'base64_decode', 'base64_encode', 'basestring',
            'ints_from_bytes', 'iteritems', 'izip', 'parse_email', 'parse_qs',
-           'pathname2url', 'quote', 'unicode', 'unquote', 'unquote_to_bytes',
-           'urlencode', 'urljoin', 'urlopen', 'urllib_get_content_type',
-           'urllib_get_charset', 'urllib_get_filename',
-           'urlparse_uses_relative', 'urlsplit', 'xrange']
+           'pathname2url', 'quote', 'unicode', 'unichr', 'unquote',
+           'unquote_to_bytes', 'urlencode', 'urljoin', 'urlopen',
+           'urllib_get_content_type', 'urllib_get_charset',
+           'urllib_get_filename', 'urlparse_uses_relative', 'urlsplit',
+           'xrange']
 
 
 # getfilesystemencoding() on Linux is sometimes stupid...
@@ -49,6 +50,7 @@ if sys.version_info[0] >= 3:
     xrange = range
     iteritems = dict.items
     izip = zip
+    unichr = chr
 
     def urllib_get_content_type(urlobj):
         return urlobj.info().get_content_type()
@@ -83,6 +85,7 @@ else:
     basestring = basestring
     xrange = xrange
     iteritems = dict.iteritems
+    unichr = unichr
 
     def array(typecode, initializer):
         return _array(typecode.encode('ascii'), initializer)

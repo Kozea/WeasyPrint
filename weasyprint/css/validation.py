@@ -1060,7 +1060,8 @@ def text_indent(token):
 @single_keyword
 def text_transform(keyword):
     """``text-align`` property validation."""
-    return keyword in ('none', 'uppercase', 'lowercase', 'capitalize')
+    return keyword in (
+        'none', 'uppercase', 'lowercase', 'capitalize', 'full-width')
 
 
 @validator()
