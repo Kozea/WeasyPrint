@@ -66,6 +66,10 @@ ffi.cdef('''
         PANGO_WRAP_WORD_CHAR
     } PangoWrapMode;
 
+    typedef enum {
+        PANGO_TAB_LEFT
+    } PangoTabAlign;
+
     typedef unsigned int guint;
     typedef int gint;
     typedef gint gboolean;
@@ -75,6 +79,7 @@ ffi.cdef('''
     typedef ... PangoContext;
     typedef ... PangoFontMetrics;
     typedef ... PangoLanguage;
+    typedef ... PangoTabArray;
     typedef ... PangoFontDescription;
     typedef ... PangoLayoutIter;
     typedef ... PangoAttrList;
@@ -103,6 +108,8 @@ ffi.cdef('''
         PangoLayout *layout, PangoAttrList *attrs);
     void pango_layout_set_text (
         PangoLayout *layout, const char *text, int length);
+    void pango_layout_set_tabs (
+        PangoLayout *layout, PangoTabArray *tabs);
     void pango_layout_set_font_description (
         PangoLayout *layout, const PangoFontDescription *desc);
     void pango_layout_set_wrap (
@@ -140,6 +147,10 @@ ffi.cdef('''
     PangoAttribute *    pango_attr_letter_spacing_new   (int letter_spacing);
     void                pango_attribute_destroy         (PangoAttribute *attr);
 
+    PangoTabArray *     pango_tab_array_new_with_positions (
+        gint size, gboolean positions_in_pixels, PangoTabAlign first_alignment,
+        gint first_position, ...);
+    void pango_tab_array_free (PangoTabArray *tab_array);
 
     PangoLayoutIter * pango_layout_get_iter (PangoLayout *layout);
     void pango_layout_iter_free (PangoLayoutIter *iter);
@@ -358,6 +369,24 @@ class Layout(object):
     def set_wrap(self, wrap_mode):
         pango.pango_layout_set_wrap(self.layout, wrap_mode)
 
+    def set_tabs(self, style):
+        if isinstance(style.tab_size, int):
+            layout = Layout(
+                hinting=False, font_size=style.font_size,
+                style=style)
+            layout.set_text(' ' * style.tab_size)
+            line, = layout.iter_lines()
+            width, _ = get_size(line, style)
+            width = int(round(width)) or 1
+        else:
+            width = style.tab_size.value or 1
+        # TODO: 0 is not handled correctly by Pango
+        array = ffi.gc(
+            pango.pango_tab_array_new_with_positions(
+                1, True, pango.PANGO_TAB_LEFT, width or 1),
+            pango.pango_tab_array_free)
+        pango.pango_layout_set_tabs(self.layout, array)
+
 
 class FontMetrics(object):
     def __init__(self, context, font):
@@ -390,11 +419,14 @@ def create_layout(text, style, hinting, max_width):
     """
     layout = Layout(hinting, style.font_size, style)
     layout.set_text(text)
+
     # Make sure that max_width * Pango.SCALE == max_width * 1024 fits in a
     # signed integer. Treat bigger values same as None: unconstrained width.
     if max_width is not None and max_width < 2 ** 21:
         pango.pango_layout_set_width(
             layout.layout, units_from_double(max_width))
+
+    # Word and letter spacings
     word_spacing = style.word_spacing
     letter_spacing = style.letter_spacing
     if letter_spacing == 'normal':
@@ -418,6 +450,11 @@ def create_layout(text, style, hinting, max_width):
             position = text_bytes.find(b' ', position + 1)
         pango.pango_layout_set_attributes(layout.layout, attr_list)
         pango.pango_attr_list_unref(attr_list)
+
+    # Tabs width
+    if style.tab_size != 8:  # Default Pango value is 8
+        layout.set_tabs(style)
+
     return layout
 
 

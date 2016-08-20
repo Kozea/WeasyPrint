@@ -483,6 +483,15 @@ def lang(computer, name, values):
             return key
 
 
+@register_computer('tab-size')
+def tab_size(computer, name, value):
+    """Compute the ``tab-size`` property."""
+    if isinstance(value, int):
+        return value
+    else:
+        return length(computer, name, value)
+
+
 @register_computer('transform')
 def transform(computer, name, value):
     """Compute the ``transform`` property."""

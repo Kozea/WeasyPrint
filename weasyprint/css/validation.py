@@ -1179,6 +1179,21 @@ def link(token, base_url):
             return (name, args[0])
 
 
+@validator()
+@single_token
+def tab_size(token):
+    """Validation for ``tab-size``.
+
+    See https://www.w3.org/TR/css-text-3/#tab-size
+
+    """
+    if token.type == 'INTEGER':
+        value = token.value
+        if value >= 0:
+            return value
+    return get_length(token, negative=False)
+
+
 @validator(prefixed=True)  # Non-standard
 @single_token
 def hyphens(token):

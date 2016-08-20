@@ -153,9 +153,13 @@ INITIAL_VALUES = {
     'bookmark_label': [('content', 'text')],
     'bookmark_level': 'none',
 
+    # CSS3 Text
+    # https://www.w3.org/TR/css-text-3/
+    'hyphens': 'manual',
+    'tab_size': 8,
+
     # CSS4 Text
     # http://dev.w3.org/csswg/css4-text/#hyphenation
-    'hyphens': 'manual',
     'hyphenate_character': '‐',
     'hyphenate_limit_chars': (5, 2, 2),
     'hyphenate_limit_zone': Dimension(0, 'px'),
@@ -224,6 +228,7 @@ INHERITED = set("""
     orphans
     overflow_wrap
     quotes
+    tab_size
     text_align
     text_decoration
     text_indent
