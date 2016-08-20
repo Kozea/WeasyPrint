@@ -260,11 +260,14 @@ def unicode_to_char_p(string):
     return ffi.new('char[]', bytestring), bytestring
 
 
-def get_size(line):
+def get_size(line, style):
     logical_extents = ffi.new('PangoRectangle *')
     pango.pango_layout_line_get_extents(line, ffi.NULL, logical_extents)
-    return (units_to_double(logical_extents.width),
-            units_to_double(logical_extents.height))
+    width, height = (units_to_double(logical_extents.width),
+                     units_to_double(logical_extents.height))
+    if style.letter_spacing != 'normal':
+        width += style.letter_spacing
+    return width, height
 
 
 def get_ink_position(line):
@@ -297,12 +300,10 @@ def first_line_metrics(first_line, text, layout, resume_at, space_collapse,
                     else:
                         break
         length += soft_hyphens * 2  # len(u'\u00ad'.encode('utf8'))
-    width, height = get_size(first_line)
+    width, height = get_size(first_line, style)
     baseline = units_to_double(pango.pango_layout_iter_get_baseline(ffi.gc(
         pango.pango_layout_get_iter(layout.layout),
         pango.pango_layout_iter_free)))
-    if style.letter_spacing != 'normal':
-        width += style.letter_spacing
     return layout, length, resume_at, width, height, baseline
 
 
@@ -477,7 +478,7 @@ def split_first_line(text, style, hinting, max_width, line_width):
         # The first line can take all the place needed
         return first_line_metrics(
             first_line, text, layout, resume_at, space_collapse, style)
-    first_line_width, _ = get_size(first_line)
+    first_line_width, _ = get_size(first_line, style)
     if second_line is None and first_line_width <= max_width:
         # The first line fits in the available width
         return first_line_metrics(
@@ -504,7 +505,7 @@ def split_first_line(text, style, hinting, max_width, line_width):
             lines = layout.iter_lines()
             first_line = next(lines, None)
             second_line = next(lines, None)
-            first_line_width, _ = get_size(first_line)
+            first_line_width, _ = get_size(first_line, style)
             if second_line is None and first_line_width <= max_width:
                 # The next word fits in the first line, keep the layout
                 resume_at = len(new_first_line_text.encode('utf-8')) + 1
@@ -527,7 +528,7 @@ def split_first_line(text, style, hinting, max_width, line_width):
 
     # Automatic hyphenation possible and next word is long enough
     if hyphens != 'none' and len(next_word) >= total:
-        first_line_width, _ = get_size(first_line)
+        first_line_width, _ = get_size(first_line, style)
         space = max_width - first_line_width
         if style.hyphenate_limit_zone.unit == '%':
             limit_zone = max_width * style.hyphenate_limit_zone.value / 100.
@@ -582,7 +583,7 @@ def split_first_line(text, style, hinting, max_width, line_width):
                     new_lines = new_layout.iter_lines()
                     new_first_line = next(new_lines, None)
                     new_second_line = next(new_lines, None)
-                    new_first_line_width, _ = get_size(new_first_line)
+                    new_first_line_width, _ = get_size(new_first_line, style)
                     new_space = max_width - new_first_line_width
                     if new_second_line is None and (
                             new_space >= 0 or
@@ -624,7 +625,7 @@ def split_first_line(text, style, hinting, max_width, line_width):
 
     # Step 5: Try to break word if it's too long for the line
     overflow_wrap = style.overflow_wrap
-    first_line_width, _ = get_size(first_line)
+    first_line_width, _ = get_size(first_line, style)
     space = max_width - first_line_width
     # If we can break words and the first line is too long
     if overflow_wrap == 'break-word' and space < 0:
@@ -659,7 +660,7 @@ def line_widths(text, style, enable_hinting, width):
     """Return the width for each line."""
     layout = create_layout(text, style, enable_hinting, width)
     for line in layout.iter_lines():
-        width, _height = get_size(line)
+        width, _height = get_size(line, style)
         yield width
 
 

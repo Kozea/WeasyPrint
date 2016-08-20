@@ -297,7 +297,7 @@ def length(computer, name, value, font_size=None, pixels_only=False):
                 style=computer.computed)
             layout.set_text('0')
             line, = layout.iter_lines()
-            logical_width, _ = text.get_size(line)
+            logical_width, _ = text.get_size(line, computer.computed)
             result = value.value * logical_width
         elif unit == 'em':
             result = value.value * font_size
