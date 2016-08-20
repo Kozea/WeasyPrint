@@ -217,8 +217,8 @@ supported:
 - the ``pre-wrap-auto`` value of the ``white-space`` property; and
 - the ``text-spacing`` property.
 
-.. _CSS Text Module Level 3: http://www.w3.org/TR/css3-text/
-.. _CSS Text Module Level 4: http://www.w3.org/TR/css4-text/
+.. _CSS Text Module Level 3: https://www.w3.org/TR/css-text-3/
+.. _CSS Text Module Level 4: https://www.w3.org/TR/css-text-4/
 .. _hyphenation: http://www.w3.org/TR/css3-text/#hyphenation
 
 
