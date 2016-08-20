@@ -155,18 +155,28 @@ as invalid with ``*``.
 .. _cssselect: http://packages.python.org/cssselect/
 
 
-CSS Text Module Level 3
-~~~~~~~~~~~~~~~~~~~~~~~
+CSS Text Module Level 3 / 4
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The `CSS Text Module Level 3`_ is a working draft defining "properties for text
-manipulation" and covering "line breaking, justification and alignment, white
-space handling, and text transformation".
+The `CSS Text Module Level 3`_ and `CSS Text Module Level 4`_ are working
+drafts defining "properties for text manipulation" and covering "line breaking,
+justification and alignment, white space handling, and text transformation".
 
-Among its features, some are already included in CSS 2.1 (``line-break``,
+Among their features, some are already included in CSS 2.1 (``line-break``,
 ``word-break``).
 
-One new property is supported by WeasyPrint: the experimental_
-``-weasy-hyphens`` property controling hyphenation_.
+New properties defined in Level 3 are supported:
+
+- the ``overflow-wrap`` property replacing ``word-wrap``;
+- the ``full-width`` value of the ``text-transform`` property; and
+- the ``tab-space`` property.
+
+Experimental_ properties controling hyphenation_ are supported by WeasyPrint:
+
+- ``-weasy-hyphens``,
+- ``-weasy-hyphenate-character``,
+- ``-weasy-hyphenate-limit-chars``, and
+- ``-weasy-hyphenate-limit-zone``.
 
 To get automatic hyphenation, you to set it to ``auto``
 *and* have the ``lang`` HTML attribute set to one of the languages
@@ -192,16 +202,23 @@ Automatic hyphenation can be disabled again with the ``manual`` value:
 The other features provided by `CSS Text Module Level 3`_ are **not**
 supported:
 
-- the ``full-width`` value of the ``text-transform`` property;
-- the ``tab-size`` property;
 - the ``line-break`` and ``word-break`` properties;
-- the ``overflow-wrap`` property replacing ``word-wrap``.
 - the ``start``, ``end``, ``match-parent`` and ``start end`` values of the
   ``text-align`` property;
-- the ``text-align-last`` and ``text-justify`` properties;
+- the ``text-align-last`` and ``text-justify`` properties; and
 - the ``text-indent`` and ``hanging-punctuation`` properties.
 
+The other features provided by `CSS Text Module Level 4`_ are **not**
+supported:
+
+- the ``text-space-collapse`` and ``text-space-trim`` properties;
+- the ``text-wrap``, ``wrap-before``, ``wrap-after`` and ``wrap-inside``
+  properties;
+- the ``pre-wrap-auto`` value of the ``white-space`` property; and
+- the ``text-spacing`` property.
+
 .. _CSS Text Module Level 3: http://www.w3.org/TR/css3-text/
+.. _CSS Text Module Level 4: http://www.w3.org/TR/css4-text/
 .. _hyphenation: http://www.w3.org/TR/css3-text/#hyphenation
 
 
