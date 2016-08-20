@@ -717,7 +717,7 @@ def test_tab_size():
             (4, 80),  # (2 + (4 - 1)) * 16
             ('3em', 64),  # (2 + (3 - 1)) * 16
             ('25px', 41),  # 2 * 16 + 25 - 1 * 16
-            #(0, 32),  # See Layout.set_tabs
+            # (0, 32),  # See Layout.set_tabs
             ):
         page, = parse('''
             <style>
