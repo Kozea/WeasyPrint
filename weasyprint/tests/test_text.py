@@ -707,3 +707,23 @@ def test_white_space():
     box2, = line2.children
     text2, = box2.children
     assert text2.text == 'is text'
+
+
+@assert_no_logs
+def test_tab_size():
+    """Test the ``tab-size`` property."""
+    for value, width in (
+            (8, 144),  # (2 + (8 - 1)) * 16
+            (4, 80),  # (2 + (4 - 1)) * 16
+            ('3em', 64),  # (2 + (3 - 1)) * 16
+            ('25px', 41),  # 2 * 16 + 25 - 1 * 16
+            ):
+        page, = parse('''
+            <style>
+                pre { tab-size: %s; font-family: ahem }
+            </style>
+            <pre>a&#9;a</pre>
+        ''' % value)
+        paragraph, = body_children(page)
+        line, = paragraph.children
+        assert line.width == width
