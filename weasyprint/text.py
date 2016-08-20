@@ -274,7 +274,7 @@ def get_ink_position(line):
 
 
 def first_line_metrics(first_line, text, layout, resume_at, space_collapse,
-                       hyphenated=False, hyphenation_character=None):
+                       style, hyphenated=False, hyphenation_character=None):
     length = first_line.length
     if hyphenated:
         length -= len(hyphenation_character.encode('utf8'))
@@ -301,6 +301,8 @@ def first_line_metrics(first_line, text, layout, resume_at, space_collapse,
     baseline = units_to_double(pango.pango_layout_iter_get_baseline(ffi.gc(
         pango.pango_layout_get_iter(layout.layout),
         pango.pango_layout_iter_free)))
+    if style.letter_spacing != 'normal':
+        width += style.letter_spacing
     return layout, length, resume_at, width, height, baseline
 
 
@@ -474,12 +476,12 @@ def split_first_line(text, style, hinting, max_width, line_width):
     if max_width is None:
         # The first line can take all the place needed
         return first_line_metrics(
-            first_line, text, layout, resume_at, space_collapse)
+            first_line, text, layout, resume_at, space_collapse, style)
     first_line_width, _ = get_size(first_line)
     if second_line is None and first_line_width <= max_width:
         # The first line fits in the available width
         return first_line_metrics(
-            first_line, text, layout, resume_at, space_collapse)
+            first_line, text, layout, resume_at, space_collapse, style)
 
     # Step #3: Try to put the first word of the second line on the first line
     if first_line_width <= max_width:
@@ -509,12 +511,12 @@ def split_first_line(text, style, hinting, max_width, line_width):
                 if resume_at == len(text.encode('utf-8')):
                     resume_at = None
                 return first_line_metrics(
-                    first_line, text, layout, resume_at, space_collapse)
+                    first_line, text, layout, resume_at, space_collapse, style)
     elif first_line_text:
         # We found something on the first line but we did not find a word on
         # the next line, no need to hyphenate, we can keep the current layout
         return first_line_metrics(
-            first_line, text, layout, resume_at, space_collapse)
+            first_line, text, layout, resume_at, space_collapse, style)
 
     # Step #4: Try to hyphenize
     hyphens = style.hyphens
@@ -649,7 +651,7 @@ def split_first_line(text, style, hinting, max_width, line_width):
         first_line = next(lines, None)
 
     return first_line_metrics(
-        first_line, text, layout, resume_at, space_collapse, hyphenated,
+        first_line, text, layout, resume_at, space_collapse, style, hyphenated,
         style.hyphenate_character)
 
 
