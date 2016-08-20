@@ -11,3 +11,4 @@
 /weasyprint/tests/w3_test_suite/test_results
 /.vagrant
 /docs/_build
+/.cache
