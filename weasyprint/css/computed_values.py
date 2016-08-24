@@ -302,7 +302,7 @@ def length(computer, name, value, font_size=None, pixels_only=False):
         elif unit == 'em':
             result = value.value * font_size
         elif unit == 'rem':
-            result = value.value * computer.root_style.font_size
+            result = value.value * computer.root_style['font_size']
     else:
         # A percentage or 'auto': no conversion needed.
         return value
