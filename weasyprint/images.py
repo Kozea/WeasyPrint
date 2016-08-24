@@ -38,11 +38,11 @@ CAIRO_HAS_MIME_DATA = cairocffi.cairo_version() >= 11000
 
 # Map values of the image-rendering property to cairo FILTER values:
 # Values are normalized to lower case.
-IMAGE_RENDERING_TO_FILTER = dict(
-    optimizespeed=cairocffi.FILTER_FAST,
-    auto=cairocffi.FILTER_GOOD,
-    optimizequality=cairocffi.FILTER_BEST,
-)
+IMAGE_RENDERING_TO_FILTER = {
+    'auto': cairocffi.FILTER_BILINEAR,
+    'crisp-edges': cairocffi.FILTER_BEST,
+    'pixelated': cairocffi.FILTER_NEAREST,
+}
 
 
 class ImageLoadingError(ValueError):

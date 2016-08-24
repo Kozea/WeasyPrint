@@ -866,7 +866,7 @@ def test_background_repeat_round():
             @page { size: 10px 14px }
             html { background: #fff }
             body { margin: 1px; height: 12px;
-                   image-rendering: optimizeSpeed;
+                   image-rendering: pixelated;
                    background: url(pattern.png) top/6px round repeat; }
         </style>
         <body>
@@ -896,7 +896,7 @@ def test_background_repeat_round():
             @page { size: 10px 18px }
             html { background: #fff }
             body { margin: 1px; height: 16px;
-                   image-rendering: optimizeSpeed;
+                   image-rendering: pixelated;
                    background: url(pattern.png) center/auto 8px repeat round; }
         </style>
         <body>
@@ -922,7 +922,7 @@ def test_background_repeat_round():
             @page { size: 10px 14px }
             html { background: #fff }
             body { margin: 1px; height: 12px;
-                   image-rendering: optimizeSpeed;
+                   image-rendering: pixelated;
                    background: url(pattern.png) center/6px 9px round; }
         </style>
         <body>
@@ -948,7 +948,7 @@ def test_background_repeat_round():
             @page { size: 10px 14px }
             html { background: #fff }
             body { margin: 1px; height: 12px;
-                   image-rendering: optimizeSpeed;
+                   image-rendering: pixelated;
                    background: url(pattern.png) center/5px 9px round; }
         </style>
         <body>
@@ -1035,7 +1035,7 @@ def test_background_size():
             html { background: #fff }
             body { margin: 1px; height: 10px;
                    /* Use nearest neighbor algorithm for image resizing: */
-                   image-rendering: optimizeSpeed;
+                   image-rendering: pixelated;
                    background: url(pattern.png) no-repeat
                                bottom right / 80% 8px; }
         </style>
@@ -1061,7 +1061,7 @@ def test_background_size():
             html { background: #fff }
             body { margin: 1px; height: 10px;
                    /* Use nearest neighbor algorithm for image resizing: */
-                   image-rendering: optimizeSpeed;
+                   image-rendering: pixelated;
                    background: url(pattern.png) bottom right/auto no-repeat }
         </style>
         <body>
@@ -1084,7 +1084,7 @@ def test_background_size():
             html { background: #fff }
             body { margin: 1px; height: 8px;
                    /* Use nearest neighbor algorithm for image resizing: */
-                   image-rendering: optimizeSpeed;
+                   image-rendering: pixelated;
                    background: url(pattern.png) no-repeat;
                    background-size: contain }
         </style>
@@ -1108,7 +1108,7 @@ def test_background_size():
             html { background: #fff }
             body { margin: 1px; height: 8px;
                    /* Use nearest neighbor algorithm for image resizing: */
-                   image-rendering: optimizeSpeed;
+                   image-rendering: pixelated;
                    background: url(pattern.png) no-repeat left / auto 8px;
                    clip: auto; /* no-op to cover more validation */ }
         </style>
@@ -1132,7 +1132,7 @@ def test_background_size():
             html { background: #fff }
             body { margin: 1px; height: 8px;
                    /* Use nearest neighbor algorithm for image resizing: */
-                   image-rendering: optimizeSpeed;
+                   image-rendering: pixelated;
                    background: url(pattern.png) no-repeat 0 0 / 8px 4px;
                    clip: auto; /* no-op to cover more validation */ }
         </style>
@@ -1156,7 +1156,7 @@ def test_background_size():
             html { background: #fff }
             body { margin: 1px; height: 8px;
                    /* Use nearest neighbor algorithm for image resizing: */
-                   image-rendering: optimizeSpeed;
+                   image-rendering: pixelated;
                    background: url(pattern.png) no-repeat right 0/cover }
         </style>
         <body>
@@ -2676,7 +2676,7 @@ def test_2d_transform():
             @page { size: 10px; margin: 2px; background: #fff; }
             div { transform: scale(2, 2);
                   transform-origin: 1px 1px;
-                  image-rendering: optimizeSpeed;
+                  image-rendering: pixelated;
                   font-size: 0 }
         </style>
         <div><img src="pattern.png"></div>
@@ -2698,7 +2698,7 @@ def test_2d_transform():
             @page { size: 10px; margin: 2px; background: #fff; }
             div { transform: scale(1, 2);
                   transform-origin: 1px 1px;
-                  image-rendering: optimizeSpeed;
+                  image-rendering: pixelated;
                   font-size: 0 }
         </style>
         <div><img src="pattern.png"></div>
@@ -2720,7 +2720,7 @@ def test_2d_transform():
             @page { size: 10px; margin: 2px; background: #fff; }
             div { transform: scaleY(2);
                   transform-origin: 1px 1px;
-                  image-rendering: optimizeSpeed;
+                  image-rendering: pixelated;
                   font-size: 0 }
         </style>
         <div><img src="pattern.png"></div>
@@ -2742,7 +2742,7 @@ def test_2d_transform():
             @page { size: 10px; margin: 2px; background: #fff; }
             div { transform: scaleX(2);
                   transform-origin: 1px 1px;
-                  image-rendering: optimizeSpeed;
+                  image-rendering: pixelated;
                   font-size: 0 }
         </style>
         <div><img src="pattern.png"></div>

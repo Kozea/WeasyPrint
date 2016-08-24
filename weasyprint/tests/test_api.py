@@ -224,7 +224,7 @@ def test_python_render():
     css_string = '''
         @page { margin: 2px; size: 8px; background: #fff }
         body { margin: 0; font-size: 0 }
-        img { image-rendering: optimizeSpeed }
+        img { image-rendering: pixelated }
 
         @media screen { img { transform: rotate(-90deg) } }
     '''

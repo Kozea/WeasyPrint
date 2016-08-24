@@ -1102,7 +1102,7 @@ def overflow_wrap(keyword):
 @single_keyword
 def image_rendering(keyword):
     """Validation for ``image-rendering``."""
-    return keyword in ('auto', 'optimizespeed', 'optimizequality')
+    return keyword in ('auto', 'crisp-edges', 'pixelated')
 
 
 @validator(unprefixed=True)
