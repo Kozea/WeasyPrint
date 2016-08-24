@@ -68,11 +68,8 @@ description of the attachment.
 Fonts
 -----
 
-Although the CSS3 ``@font-face`` is not supported yet, WeasyPrint can use
-any font that Pango can find installed on the system. If you can use a font
-in a GTK+ application, just use its name in ``font-family``.
-
-Fonts are automatically embedded in PDF files.
+WeasyPrint can use any font that Pango can find installed on the system. Fonts
+are automatically embedded in PDF files.
 
 On Windows and MacOS X, Pango uses the native font-managing libraries. You can
 use the tools provided by your OS to know which fonts are available.
@@ -222,6 +219,41 @@ supported:
 .. _hyphenation: http://www.w3.org/TR/css3-text/#hyphenation
 
 
+CSS Fonts Module Level 3
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+The `CSS Fonts Module Level 3`_ is a candidate recommendation describing "how
+font properties are specified and how font resources are loaded dynamically".
+
+WeasyPrint supports the ``font-size``, ``font-stretch``, ``font-style`` and
+``font-weight`` properties.
+
+``font-family`` is supported. The string is given to Pango that tries to find a
+matching font in a way different from what is defined in the recommendation,
+but that should not be a problem for common use.
+
+The shorthand ``font`` property is supported.
+
+WeasyPrint does **not** support the ``@font-face`` rule, the fonts need to be
+installed on the system.
+
+WeasyPrint does **not** support the following font features:
+- ``font-kerning``,
+- ``font-variant-ligatures``,
+- ``font-variant-position``,
+- ``font-variant-caps``,
+- ``font-variant-numeric``,
+- ``font-variant-alternates``,
+- ``font-variant-east-asian``,
+- ``@font-feature-values``,
+- ``font-feature-settings``, and
+- ``font-language-override``.
+
+  ``font-variant`` only supports the ``small-caps`` value and needs the
+small-caps variant of the font to be installed. WeasyPrint does **not**
+simulate missing small-caps fonts.
+
+
 CSS Paged Media Module Level 3
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -250,8 +282,6 @@ other features are available, including:
 .. _#93: https://github.com/Kozea/WeasyPrint/issues/93
 .. _#289: https://github.com/Kozea/WeasyPrint/issues/289
 
-
-.. _bookmarks:
 
 CSS Generated Content for Paged Media Module
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -381,8 +411,8 @@ shadows.
 .. _git branch: https://github.com/Kozea/WeasyPrint/pull/149
 
 
-CSS Image Values and Replaced Content Module Level 3
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+CSS Image Values and Replaced Content Module Level 3 / 4
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The `Image Values and Replaced Content Module Level 3`_ is a candidate
 recommandation introducing "additional ways of representing 2D images, for
@@ -390,6 +420,9 @@ example as a list of URIs denoting fallbacks, or as a gradient", defining
 "several properties for manipulating raster images and for sizing or
 positioning replaced elements" and "generic sizing algorithm for replaced
 elements".
+
+The `Image Values and Replaced Content Module Level 4`_ is a working draft on
+the same subject.
 
 The ``linear-gradient()``, ``radial-gradient()`` and
 ``repeating-radial-gradient()`` properties are supported as background images.
@@ -400,10 +433,13 @@ The the ``url()`` notation is supported, but the ``image()`` notation is
 The ``from-image`` and ``snap`` values of the ``image-resolution`` property are
 **not** supported, but the ``resolution`` value is supported.
 
+The ``image-rendering`` property is supported.
+
 The ``image-orientation``, ``object-fit`` and ``object-position`` are **not**
 supported.
 
 .. _Image Values and Replaced Content Module Level 3: http://www.w3.org/TR/css3-images/
+.. _Image Values and Replaced Content Module Level 4: http://www.w3.org/TR/css4-images/
 
 
 CSS Basic User Interface Module Level 3
