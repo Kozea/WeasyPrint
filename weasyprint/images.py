@@ -204,8 +204,8 @@ def get_image_from_uri(cache, url_fetcher, url, forced_mime_type=None):
                 if not image:
                     if pixbuf is None:
                         raise ImageLoadingError(
-                            'Could not load GDK-Pixbuf. '
-                            'PNG and SVG are the only image formats available.')
+                            'Could not load GDK-Pixbuf. PNG and SVG are '
+                            'the only image formats available.')
                     try:
                         surface, format_name = (
                             pixbuf.decode_to_image_surface(string))
