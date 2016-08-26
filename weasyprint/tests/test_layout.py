@@ -1259,7 +1259,10 @@ def test_images():
         'data:image/png,Not a PNG',
         'data:image/jpeg,Not a JPEG',
         'data:image/svg+xml,<svg>invalid xml',
-        'really-a-svg.png',
+        # Explicit SVG, no sniffing
+        'data:image/svg+xml;base64,'
+        'R0lGODlhAQABAIABAP///wAAACwAAAAAAQABAAACAkQBADs=',
+        'really-a-png.svg',
     ]:
         with capture_logs() as logs:
             body, img = get_img("<img src='%s' alt='invalid image'>" % url)
@@ -1268,6 +1271,26 @@ def test_images():
         assert isinstance(img, boxes.InlineBox)  # not a replaced box
         text, = img.children
         assert text.text == 'invalid image', url
+
+    # Format sniffing
+    for url in [
+        # GIF with JPEG mimetype
+        'data:image/jpeg;base64,'
+        'R0lGODlhAQABAIABAP///wAAACwAAAAAAQABAAACAkQBADs=',
+        # GIF with PNG mimetype
+        'data:image/png;base64,'
+        'R0lGODlhAQABAIABAP///wAAACwAAAAAAQABAAACAkQBADs=',
+        # PNG with JPEG mimetype
+        'data:image/jpeg;base64,'
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC'
+        '0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
+        # SVG with PNG mimetype
+        'data:image/png;<svg></svg>',
+        'really-a-svg.png',
+    ]:
+        with capture_logs() as logs:
+            body, img = get_img("<img src='%s'>" % url)
+        assert len(logs) == 0
 
     with capture_logs() as logs:
         parse('<img src=nonexistent.png><img src=nonexistent.png>')

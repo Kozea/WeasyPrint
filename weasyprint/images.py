@@ -175,35 +175,47 @@ def get_image_from_uri(cache, url_fetcher, url, forced_mime_type=None):
 
     try:
         with fetch(url_fetcher, url) as result:
+            if 'string' in result:
+                string = result['string']
+            else:
+                string = result['file_obj'].read()
             mime_type = forced_mime_type or result['mime_type']
             if mime_type == 'image/svg+xml':
-                string = (result['string'] if 'string' in result
-                          else result['file_obj'].read())
+                # No fallback for XML-based mimetypes as defined by MIME
+                # Sniffing Standard, see https://mimesniff.spec.whatwg.org/
                 image = SVGImage(string, url)
-            elif mime_type == 'image/png':
-                obj = result.get('file_obj') or BytesIO(result.get('string'))
-                try:
-                    surface = cairocffi.ImageSurface.create_from_png(obj)
-                except Exception as exc:
-                    raise ImageLoadingError.from_exception(exc)
-                image = RasterImage(surface)
             else:
-                if pixbuf is None:
-                    raise ImageLoadingError(
-                        'Could not load GDK-Pixbuf. '
-                        'PNG and SVG are the only image formats available.')
-                string = (result['string'] if 'string' in result
-                          else result['file_obj'].read())
+                # Try to rely on given mimetype
                 try:
-                    surface, format_name = (
-                        pixbuf.decode_to_image_surface(string))
-                except pixbuf.ImageLoadingError as exc:
-                    raise ImageLoadingError(str(exc))
-                if format_name == 'jpeg' and CAIRO_HAS_MIME_DATA:
-                    surface.set_mime_data('image/jpeg', string)
-                image = RasterImage(surface)
+                    if mime_type == 'image/png':
+                        try:
+                            surface = cairocffi.ImageSurface.create_from_png(
+                                BytesIO(string))
+                        except Exception as exception:
+                            raise ImageLoadingError.from_exception(exception)
+                        else:
+                            image = RasterImage(surface)
+                    else:
+                        image = None
+                except ImageLoadingError:
+                    image = None
+
+                # Relying on mimetype didn't work, give the image to GDK-Pixbuf
+                if not image:
+                    if pixbuf is None:
+                        raise ImageLoadingError(
+                            'Could not load GDK-Pixbuf. '
+                            'PNG and SVG are the only image formats available.')
+                    try:
+                        surface, format_name = (
+                            pixbuf.decode_to_image_surface(string))
+                    except pixbuf.ImageLoadingError as exception:
+                        raise ImageLoadingError(str(exception))
+                    if format_name == 'jpeg' and CAIRO_HAS_MIME_DATA:
+                        surface.set_mime_data('image/jpeg', string)
+                    image = RasterImage(surface)
     except (URLFetchingError, ImageLoadingError) as exc:
-        LOGGER.warning('Failed to load image at %s : %s', url, exc)
+        LOGGER.warning('Failed to load image at "%s" (%s)', url, exc)
         image = None
     cache[url] = image
     return image
