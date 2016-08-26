@@ -100,6 +100,16 @@ INITIAL_VALUES = {
     # Color 3: https://www.w3.org/TR/css3-color/
     'opacity': 1,
 
+    # Multi-column Layout: https://www.w3.org/TR/css3-multicol/
+    'column_width': 'auto',
+    'column_count': 'auto',
+    'column_gap': Dimension(1, 'em'),
+    'column_rule_color': 'currentColor',
+    'column_rule_style': 'none',
+    'column_rule_width': 'medium',
+    'column_fill': 'balance',
+    'column_span': 'none',
+
     # Fonts 3: https://www.w3.org/TR/css-fonts-3/
     'font_family': ['serif'],  # depends on user agent
     'font_size': 16,  # actually medium, but we define medium from this

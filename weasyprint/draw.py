@@ -396,14 +396,41 @@ def draw_border(context, box, enable_hinting):
     # We need a plan to draw beautiful borders, and that's difficult, no need
     # to lie. Let's try to find the cases that we can handle in a smart way.
 
+    def draw_column_border():
+        """Draw column borders."""
+        columns = (
+            box.style.column_width != 'auto' or
+            box.style.column_count != 'auto')
+        if columns and box.style.column_rule_width:
+            border_widths = (0, 0, 0, box.style.column_rule_width)
+            for child in box.children[1:]:
+                with stacked(context):
+                    position_x = (child.position_x - (
+                        box.style.column_rule_width +
+                        box.style.column_gap) / 2)
+                    border_box = (
+                        position_x, child.position_y,
+                        box.style.column_rule_width, box.height)
+                    clip_border_segment(
+                        context, enable_hinting, box.style.column_rule_style,
+                        box.style.column_rule_width, 'left', border_box,
+                        border_widths)
+                    draw_rect_border(
+                        context, border_box, border_widths,
+                        box.style.column_rule_style, styled_color(
+                            box.style.column_rule_style,
+                            box.style.get_color('column_rule_color'), 'left'))
+
     # The box is hidden, easy.
     if box.style.visibility != 'visible':
+        draw_column_border()
         return
 
     widths = [getattr(box, 'border_%s_width' % side) for side in SIDES]
 
     # No border, return early.
     if all(width == 0 for width in widths):
+        draw_column_border()
         return
 
     colors = [box.style.get_color('border_%s_color' % side) for side in SIDES]
@@ -416,6 +443,7 @@ def draw_border(context, box, enable_hinting):
     if set(styles) in (set(('solid',)), set(('double',))) and (
             len(set(colors)) == 1):
         draw_rounded_border(context, box, styles[0], colors[0])
+        draw_column_border()
         return
 
     # We're not smart enough to find a good way to draw the borders :/. We must
@@ -430,6 +458,8 @@ def draw_border(context, box, enable_hinting):
                 box.rounded_border_box()[4:])
             draw_rounded_border(
                 context, box, style, styled_color(style, color, side))
+
+    draw_column_border()
 
 
 def clip_border_segment(context, enable_hinting, style, width, side,
