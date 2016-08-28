@@ -2,6 +2,31 @@ WeasyPrint changelog
 ====================
 
 
+Version 0.31
+------------
+
+Released on 2016-08-28.
+
+New features:
+
+* `#124 <https://github.com/Kozea/WeasyPrint/issues/124>`_:
+  Add MIME sniffing for images.
+* `#60 <https://github.com/Kozea/WeasyPrint/issues/60>`_:
+  CSS Multi-column Layout.
+* `#197 <https://github.com/Kozea/WeasyPrint/pull/197>`_:
+  Add hyphens at line breaks activated by a soft hyphen.
+
+Bux fixes:
+
+* `#132 <https://github.com/Kozea/WeasyPrint/pull/132>`_:
+  Fix Python 3 compatibility on Windows.
+
+Documentation:
+
+* `#329 <https://github.com/Kozea/WeasyPrint/issues/329>`_:
+  Add documentation about installation on Windows.
+
+
 Version 0.30
 ------------
 
@@ -12,9 +37,9 @@ WeasyPrint now depends on html5lib-0.999999999.
 Bux fixes:
 
 * Fix Acid2
-* `#325: <https://github.com/Kozea/WeasyPrint/issues/325>`_:
+* `#325 <https://github.com/Kozea/WeasyPrint/issues/325>`_:
   Cutting lines is broken in page margin boxes.
-* `#334: <https://github.com/Kozea/WeasyPrint/issues/334>`_:
+* `#334 <https://github.com/Kozea/WeasyPrint/issues/334>`_:
   Newest html5lib 0.999999999 breaks rendering.
 
 
@@ -25,9 +50,9 @@ Released on 2016-06-17.
 
 Bug fixes:
 
-* `#263: <https://github.com/Kozea/WeasyPrint/pull/263>`_:
+* `#263 <https://github.com/Kozea/WeasyPrint/pull/263>`_:
   Don't crash with floats with percents in positions.
-* `#323: <https://github.com/Kozea/WeasyPrint/pull/323>`_:
+* `#323 <https://github.com/Kozea/WeasyPrint/pull/323>`_:
   Fix CairoSVG 2.0 pre-release dependency in Python 2.x.
 
 
@@ -38,9 +63,9 @@ Released on 2016-05-16.
 
 Bug fixes:
 
-* `#189: <https://github.com/Kozea/WeasyPrint/issues/189>`_:
+* `#189 <https://github.com/Kozea/WeasyPrint/issues/189>`_:
   ``white-space: nowrap`` still wraps on hyphens
-* `#305: <https://github.com/Kozea/WeasyPrint/issues/305>`_:
+* `#305 <https://github.com/Kozea/WeasyPrint/issues/305>`_:
   Fix crashes on some tables
 * Don't crash when transform matrix isn't invertible
 * Don't crash when rendering ratio-only SVG images
@@ -54,20 +79,20 @@ Released on 2016-04-08.
 
 New features:
 
-* `#295: <https://github.com/Kozea/WeasyPrint/pull/295>`_:
+* `#295 <https://github.com/Kozea/WeasyPrint/pull/295>`_:
   Support the 'rem' unit.
-* `#299: <https://github.com/Kozea/WeasyPrint/pull/299>`_:
+* `#299 <https://github.com/Kozea/WeasyPrint/pull/299>`_:
   Enhance the support of SVG images.
 
 Bug fixes:
 
-* `#307: <https://github.com/Kozea/WeasyPrint/issues/307>`_:
+* `#307 <https://github.com/Kozea/WeasyPrint/issues/307>`_:
   Fix the layout of cells larger than their tables.
 
 Documentation:
 
 * The website is now on GitHub Pages, the documentation is on Read the Docs.
-* `#297: <https://github.com/Kozea/WeasyPrint/issues/297>`_:
+* `#297 <https://github.com/Kozea/WeasyPrint/issues/297>`_:
   Rewrite the CSS chapter of the documentation.
 
 
@@ -83,15 +108,15 @@ New features:
 
 Bug fixes:
 
-* `#172: <https://github.com/Kozea/WeasyPrint/issues/172>`_:
+* `#172 <https://github.com/Kozea/WeasyPrint/issues/172>`_:
   Unable to set table column width on tables td's.
-* `#151: <https://github.com/Kozea/WeasyPrint/issues/151>`_:
+* `#151 <https://github.com/Kozea/WeasyPrint/issues/151>`_:
   Table background colour bleeds beyond table cell boundaries.
-* `#260: <https://github.com/Kozea/WeasyPrint/issues/260>`_:
+* `#260 <https://github.com/Kozea/WeasyPrint/issues/260>`_:
   TypeError: unsupported operand type(s) for +: 'float' and 'str'.
-* `#288: <https://github.com/Kozea/WeasyPrint/issues/288>`_:
+* `#288 <https://github.com/Kozea/WeasyPrint/issues/288>`_:
   Unwanted line-breaks in bold text.
-* `#286: <https://github.com/Kozea/WeasyPrint/issues/286>`_:
+* `#286 <https://github.com/Kozea/WeasyPrint/issues/286>`_:
   AttributeError: 'Namespace' object has no attribute 'attachments'.
 
 
@@ -106,15 +131,15 @@ New features:
 
 Bug fixes:
 
-* `#285: <https://github.com/Kozea/WeasyPrint/issues/285>`_:
+* `#285 <https://github.com/Kozea/WeasyPrint/issues/285>`_:
   Fix a crash happening when splitting lines.
-* `#284: <https://github.com/Kozea/WeasyPrint/issues/284>`_:
+* `#284 <https://github.com/Kozea/WeasyPrint/issues/284>`_:
   Escape parenthesis in PDF links.
-* `#280: <https://github.com/Kozea/WeasyPrint/pull/280>`_:
+* `#280 <https://github.com/Kozea/WeasyPrint/pull/280>`_:
   Replace utf8 with utf-8 for gettext/django compatibility.
-* `#269: <https://github.com/Kozea/WeasyPrint/pull/269>`_:
+* `#269 <https://github.com/Kozea/WeasyPrint/pull/269>`_:
   Add support for use when frozen.
-* `#250: <https://github.com/Kozea/WeasyPrint/issues/250>`_:
+* `#250 <https://github.com/Kozea/WeasyPrint/issues/250>`_:
   Don't crash when attachments are not available.
 
 
@@ -125,20 +150,20 @@ Released on 2015-08-04.
 
 New features:
 
-* `#174: <https://github.com/Kozea/WeasyPrint/issues/174>`_:
+* `#174 <https://github.com/Kozea/WeasyPrint/issues/174>`_:
   Basic support for Named strings.
 
 Bug fixes:
 
-* `#207: <https://github.com/Kozea/WeasyPrint/issues/207>`_:
+* `#207 <https://github.com/Kozea/WeasyPrint/issues/207>`_:
   Draw rounded corners on replaced boxes.
-* `#224: <https://github.com/Kozea/WeasyPrint/pull/224>`_:
+* `#224 <https://github.com/Kozea/WeasyPrint/pull/224>`_:
   Rely on the font size for rounding bug workaround.
-* `#31: <https://github.com/Kozea/WeasyPrint/issues/31>`_:
+* `#31 <https://github.com/Kozea/WeasyPrint/issues/31>`_:
   Honor the vertical-align property in fixed-height cells.
-* `#202: <https://github.com/Kozea/WeasyPrint/issues/202>`_:
+* `#202 <https://github.com/Kozea/WeasyPrint/issues/202>`_:
   Remove unreachable area/border at bottom of page.
-* `#225: <https://github.com/Kozea/WeasyPrint/issues/225>`_:
+* `#225 <https://github.com/Kozea/WeasyPrint/issues/225>`_:
   Don't allow unknown units during line-height validation.
 * Fix some wrong conflict resolutions for table borders with inset
   and outset styles.
@@ -151,13 +176,13 @@ Released on 2014-09-16.
 
 Bug fixes:
 
-* `#196: <https://github.com/Kozea/WeasyPrint/issues/196>`_:
+* `#196 <https://github.com/Kozea/WeasyPrint/issues/196>`_:
   Use the default image sizing algorithm for images’s preferred size.
-* `#194: <https://github.com/Kozea/WeasyPrint/pull/194>`_:
+* `#194 <https://github.com/Kozea/WeasyPrint/pull/194>`_:
   Try more library aliases with ``dlopen()``.
-* `#201: <https://github.com/Kozea/WeasyPrint/pull/201>`_:
+* `#201 <https://github.com/Kozea/WeasyPrint/pull/201>`_:
   Consider ``page-break-after-avoid`` when pushing floats to the next page.
-* `#217: <https://github.com/Kozea/WeasyPrint/issues/217>`_:
+* `#217 <https://github.com/Kozea/WeasyPrint/issues/217>`_:
   Avoid a crash on zero-sized background images.
 
 Release process:
@@ -191,7 +216,6 @@ Bug fixes:
 * `#188 <https://github.com/Kozea/WeasyPrint/issues/188>`_:
   Require a recent enough version of Pyphen
 
-
 Release process:
 
 * Drop Python 3.1 support.
@@ -205,7 +229,6 @@ Version 0.21
 
 Released on 2014-01-11.
 
-
 New features:
 
 * Add the `overflow-wrap <http://dev.w3.org/csswg/css-text/#overflow-wrap>`_
@@ -216,7 +239,6 @@ New features:
   allowing images to be sized proportionally to their intrinsic size
   at a resolution other than 96 image pixels per CSS ``in``
   (ie. one image pixel per CSS ``px``)
-
 
 Bug fixes:
 
