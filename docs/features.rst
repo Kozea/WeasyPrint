@@ -484,3 +484,33 @@ Viewport-percentage lengths (``vw``, ``vh``, ``vmin``, ``vmax``) are **not**
 supported.
 
 .. _CSS Values and Units Module Level 3: https://www.w3.org/TR/css3-values/
+
+
+CSS Multi-column Layout Module
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The `CSS Multi-column Layout Module`_ "describes multi-column layouts in CSS, a
+style sheet language for the web. Using functionality described in the
+specification, content can be flowed into multiple columns with a gap and a
+rule between them."
+
+Simple multi-column layouts are supported in WeasyPrint. Features such as
+constrained height, spanning columns or column breaks are **not**
+supported. Pagination and overflow are not seriously tested.
+
+The ``column-width`` and ``column-count`` properties, and the ``columns``
+shorthand property are supported.
+
+The ``column-gap``, ``column-rule-color``, ``column-rule-style`` and
+``column-rule-width`` properties, and the ``column-rule`` shorthand property
+are supported.
+
+The ``break-before``, ``break-after`` and ``break-inside`` properties are
+**not** supported.
+
+The ``column-span`` property is **not** supported.
+
+The ``column-fill`` property is supported, with a column balancing algorithm
+that should be efficient with simple cases.
+
+.. _CSS Multi-column Layout Module: https://www.w3.org/TR/css3-multicol/
