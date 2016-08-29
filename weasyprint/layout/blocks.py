@@ -114,6 +114,11 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
     count = None
     width = None
     style = box.style
+
+    if box.style.position == 'relative':
+        # New containing block, use a new absolute list
+        absolute_boxes = []
+
     # TODO: the available width can be unknown if the containing block needs
     # the size of this block to know its own size.
     block_level_width(box, containing_block)
@@ -149,8 +154,8 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
                 style.column_gap)
 
     def create_column_box():
-        column_box = box.anonymous_from(
-            box, children=[child.copy() for child in box.children])
+        column_box = box.anonymous_from(box, children=[
+            child.copy() for child in box.children])
         resolve_percentages(column_box, containing_block)
         column_box.width = width
         column_box.position_x = box.content_box_x()
@@ -186,7 +191,7 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
         column_box = create_column_box()
         new_child, _, _, _, _ = block_box_layout(
              context, column_box, float('inf'), skip_stack, containing_block,
-             device_size, page_is_empty, absolute_boxes, fixed_boxes, [])
+             device_size, page_is_empty, [], [], [])
         box_column_descendants = list(column_descendants(new_child))
 
         # Ideal height
@@ -220,14 +225,15 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
         column_box = create_column_box()
         column_box.position_x += i * (width + style.column_gap)
         new_child, skip_stack, next_page, _, _ = block_box_layout(
-             context, column_box, max_position_y, skip_stack, containing_block,
-             device_size, page_is_empty, absolute_boxes, fixed_boxes, [])
+            context, column_box, max_position_y, skip_stack, containing_block,
+            device_size, page_is_empty, absolute_boxes, fixed_boxes, None)
         if new_child is None:
             break
         children.append(new_child)
         if skip_stack is None:
             break
 
+    # Set the height of box and the columns
     box.children = children
     if box.children:
         box.height = max(child.height for child in box.children)
@@ -236,8 +242,10 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
     else:
         box.height = 0
 
-    # TODO: fix the position of the children out of the flow. See
-    # multicol-fill-auto for example.
+    if box.style.position == 'relative':
+        # New containing block, resolve the layout of the absolute descendants
+        for absolute_box in absolute_boxes:
+            absolute_layout(context, absolute_box, box, fixed_boxes)
 
     return box, skip_stack, next_page, [0], False
 
