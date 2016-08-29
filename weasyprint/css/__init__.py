@@ -242,10 +242,12 @@ def find_presentational_hints(element_tree):
                     yield check_style_attribute(
                         parser, element, style_attribute)
             if element.get('background'):
-                style_attribute = 'background-image:%s' % element.get('background')
+                style_attribute = 'background-image:%s' % (
+                    element.get('background'))
                 yield check_style_attribute(parser, element, style_attribute)
             if element.get('bgcolor'):
-                style_attribute = 'background-color:%s' % element.get('bgcolor')
+                style_attribute = 'background-color:%s' % (
+                    element.get('bgcolor'))
                 yield check_style_attribute(parser, element, style_attribute)
             if element.get('text'):
                 style_attribute = 'color:%s' % element.get('text')
@@ -326,7 +328,8 @@ def find_presentational_hints(element_tree):
                         yield check_style_attribute(
                             parser, element, 'list-style-type:upper-roman')
                 elif element.tag in ('ul', 'li'):
-                    if element.get('type').lower() in ('disc', 'circle', 'square'):
+                    if element.get('type').lower() in (
+                            'disc', 'circle', 'square'):
                         yield check_style_attribute(
                             parser, element,
                             'list-style-type:%s' % element.get('type').lower())
