@@ -592,8 +592,10 @@ def border_style(keyword):
 @single_keyword
 def break_before_after(keyword):
     """``break-before`` and ``break-after`` properties validation."""
+    # 'always' is defined as an alias to 'page' in multi-column
+    # https://www.w3.org/TR/css3-multicol/#column-breaks
     return keyword in ('auto', 'avoid', 'avoid-page', 'page', 'left', 'right',
-                       'recto', 'verso', 'avoid-column', 'column')
+                       'recto', 'verso', 'avoid-column', 'column', 'always')
 
 
 @validator()

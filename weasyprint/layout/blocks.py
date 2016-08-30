@@ -187,37 +187,37 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
     # TODO: Rewrite this!
     # - We assume that the children are normal lines or blocks.
     # - We ignore the forced and avoided column breaks.
+
+    # Find the total height of the content
     original_max_position_y = max_position_y
+    column_box = create_column_box()
+    new_child, new_skip_stack, _, _, _ = block_box_layout(
+        context, column_box, float('inf'), skip_stack, containing_block,
+        device_size, page_is_empty, [], [], [])
+    height = new_child.margin_height()
     if style.column_fill == 'balance':
-        # Find the total height of the content
-        column_box = create_column_box()
-        new_child, _, _, _, _ = block_box_layout(
-             context, column_box, float('inf'), skip_stack, containing_block,
-             device_size, page_is_empty, [], [], [])
-        box_column_descendants = list(column_descendants(new_child))
-
-        # Ideal height
-        height = new_child.margin_height() / count
-
-        # Increase the column height step by step.
-        while True:
-            i = 0
-            lost_spaces = []
-            column_top = new_child.content_box_y()
-            for child in box_column_descendants:
-                child_height = child.margin_height()
-                child_bottom = child.position_y + child_height - column_top
-                if child_bottom > height:
-                    if i < count - 1:
-                        lost_spaces.append(child_bottom - height)
-                        i += 1
-                        column_top = child.position_y
-                    else:
-                        break
-            else:
-                break
-            height += min(lost_spaces)
-        max_position_y = min(max_position_y, box.content_box_y() + height)
+        height /= count
+    box_column_descendants = list(column_descendants(new_child))
+    # Increase the column height step by step.
+    while True:
+        i = 0
+        lost_spaces = []
+        column_top = new_child.content_box_y()
+        for child in box_column_descendants:
+            child_height = child.margin_height()
+            child_bottom = child.position_y + child_height - column_top
+            if child_bottom > height:
+                if i < count - 1:
+                    lost_spaces.append(child_bottom - height)
+                    i += 1
+                    column_top = child.position_y
+                else:
+                    break
+        else:
+            break
+        height += min(lost_spaces)
+    # TODO: check box.style.max-height
+    max_position_y = min(max_position_y, box.content_box_y() + height)
 
     # Replace the current box children with columns
     children = []
@@ -238,7 +238,12 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
     # Set the height of box and the columns
     box.children = children
     if box.children:
-        box.height = max(child.margin_height() for child in box.children)
+        heights = [child.margin_height() for child in box.children]
+        if box.height != 'auto':
+            heights.append(box.height)
+        if box.min_height != 'auto':
+            heights.append(box.min_height)
+        box.height = max(heights)
         for child in box.children:
             child.height = box.margin_height()
     else:
@@ -249,7 +254,7 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
         for absolute_box in absolute_boxes:
             absolute_layout(context, absolute_box, box, fixed_boxes)
 
-    return box, skip_stack, next_page, [0], False
+    return box, new_skip_stack, next_page, [0], False
 
 
 @handle_min_max_width

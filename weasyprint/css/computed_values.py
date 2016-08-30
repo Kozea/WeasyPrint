@@ -251,6 +251,18 @@ def length_tuple(computer, name, values):
                  for value in values)
 
 
+@register_computer('break-after')
+@register_computer('break-before')
+def break_before_after(computer, name, value):
+    """Compute the ``break-before`` and ``break-after`` properties."""
+    # 'always' is defined as an alias to 'page' in multi-column
+    # https://www.w3.org/TR/css3-multicol/#column-breaks
+    if value == 'always':
+        return 'page'
+    else:
+        return value
+
+
 @register_computer('top')
 @register_computer('right')
 @register_computer('left')
