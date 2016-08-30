@@ -209,25 +209,26 @@ def check_style_attribute(parser, element, style_attribute):
     return element, declarations, element_base_url(element)
 
 
-def find_style_attributes(element_tree):
-    """
-    Yield ``element, declaration, base_url`` for elements with
-    a "style" attribute.
+def find_style_attributes(element_tree, presentational_hints=False):
+    """Yield ``specificity, (element, declaration, base_url)`` rules.
+
+    Rules from "style" attribute are returned with specificity
+    ``(1, 0, 0, 0)``.
+
+    If ``presentational_hints`` is ``True``, rules from presentational hints
+    are returned with specificity ``(0, 0, 0, 0)``.
+
     """
     parser = PARSER
     for element in element_tree.iter():
+        specificity = (1, 0, 0, 0)
         style_attribute = element.get('style')
         if style_attribute:
-            yield check_style_attribute(parser, element, style_attribute)
-
-
-def find_presentational_hints(element_tree):
-    """
-    Yield ``element, declaration, base_url`` for elements with
-    presentational hints.
-    """
-    parser = PARSER
-    for element in element_tree.iter():
+            yield specificity, check_style_attribute(
+                parser, element, style_attribute)
+        if not presentational_hints:
+            continue
+        specificity = (0, 0, 0, 0)
         if element.tag == 'body':
             for prop, position in (
                     ('height', 'top'), ('height', 'bottom'),
@@ -239,48 +240,55 @@ def find_presentational_hints(element_tree):
                             position, element.get('margin%r' % prop))
                         break
                 if style_attribute:
-                    yield check_style_attribute(
+                    yield specificity, check_style_attribute(
                         parser, element, style_attribute)
             if element.get('background'):
                 style_attribute = 'background-image:%s' % (
                     element.get('background'))
-                yield check_style_attribute(parser, element, style_attribute)
+                yield specificity, check_style_attribute(
+                    parser, element, style_attribute)
             if element.get('bgcolor'):
                 style_attribute = 'background-color:%s' % (
                     element.get('bgcolor'))
-                yield check_style_attribute(parser, element, style_attribute)
+                yield specificity, check_style_attribute(
+                    parser, element, style_attribute)
             if element.get('text'):
                 style_attribute = 'color:%s' % element.get('text')
-                yield check_style_attribute(parser, element, style_attribute)
+                yield check_style_attribute(
+                    parser, element, style_attribute)
         elif element.tag == 'pre':
             if 'wrap' in element:
-                yield check_style_attribute(
+                yield specificity, check_style_attribute(
                     parser, element, 'white-space:pre-wrap')
         elif element.tag == 'center':
-            yield check_style_attribute(parser, element, 'text-align:center')
+            yield specificity, check_style_attribute(
+                parser, element, 'text-align:center')
         elif element.tag == 'div':
             align = element.get('align', '').lower()
             if align == 'middle':
-                yield check_style_attribute(
+                yield specificity, check_style_attribute(
                     parser, element, 'text-align:center')
             elif align in ('center', 'left', 'right', 'justify'):
-                yield check_style_attribute(
+                yield specificity, check_style_attribute(
                     parser, element, 'text-align:%s' % align)
         elif element.tag == 'br':
             clear = element.get('clear', '').lower()
             if clear:
                 if clear == 'left':
-                    yield check_style_attribute(parser, element, 'clear:left')
+                    yield specificity, check_style_attribute(
+                        parser, element, 'clear:left')
                 elif clear == 'right':
-                    yield check_style_attribute(parser, element, 'clear:right')
+                    yield specificity, check_style_attribute(
+                        parser, element, 'clear:right')
                 elif clear in ('all', 'both'):
-                    yield check_style_attribute(parser, element, 'clear:both')
+                    yield specificity, check_style_attribute(
+                        parser, element, 'clear:both')
         elif element.tag == 'font':
             if element.get('color'):
-                yield check_style_attribute(
+                yield specificity, check_style_attribute(
                     parser, element, 'color:%s' % element.get('color'))
             if element.get('face'):
-                yield check_style_attribute(
+                yield specificity, check_style_attribute(
                     parser, element, 'font-family:%s' % element.get('face'))
             if element.get('size'):
                 size = element.get('size').strip()
@@ -307,195 +315,206 @@ def find_presentational_hints(element_tree):
                     elif relative_minus:
                         size -= 3
                     size = min(1, max(7, size))
-                    yield check_style_attribute(
+                    yield specificity, check_style_attribute(
                         parser, element, 'font-size:%s' % font_sizes[size])
         elif element.tag in ('ol', 'ul', 'li'):
             if element.get('type'):
                 if element.tag in ('ol', 'li'):
                     if element.get('type') == '1':
-                        yield check_style_attribute(
+                        yield specificity, check_style_attribute(
                             parser, element, 'list-style-type:decimal')
                     elif element.get('type') == 'a':
-                        yield check_style_attribute(
+                        yield specificity, check_style_attribute(
                             parser, element, 'list-style-type:lower-alpha')
                     elif element.get('type') == 'A':
-                        yield check_style_attribute(
+                        yield specificity, check_style_attribute(
                             parser, element, 'list-style-type:upper-alpha')
                     elif element.get('type') == 'i':
-                        yield check_style_attribute(
+                        yield specificity, check_style_attribute(
                             parser, element, 'list-style-type:lower-roman')
                     elif element.get('type') == 'I':
-                        yield check_style_attribute(
+                        yield specificity, check_style_attribute(
                             parser, element, 'list-style-type:upper-roman')
                 elif element.tag in ('ul', 'li'):
                     if element.get('type').lower() in (
                             'disc', 'circle', 'square'):
-                        yield check_style_attribute(
+                        yield specificity, check_style_attribute(
                             parser, element,
                             'list-style-type:%s' % element.get('type').lower())
         elif element.tag == 'table':
             # TODO: Rules for children are not handled
             align = element.get('align', '').lower()
             if align == 'left':
-                yield check_style_attribute(parser, element, 'float:left')
+                yield specificity, check_style_attribute(
+                    parser, element, 'float:left')
             elif align == 'right':
-                yield check_style_attribute(parser, element, 'float:right')
+                yield specificity, check_style_attribute(
+                    parser, element, 'float:right')
             elif align == 'center':
-                yield check_style_attribute(
+                yield specificity, check_style_attribute(
                     parser, element, 'margin-left:auto;margin-right:auto')
             rules = element.get('rules', '').lower()
             if rules in ('none', 'groups', 'rows', 'cols', 'all'):
-                yield check_style_attribute(
+                yield specificity, check_style_attribute(
                     parser, element,
                     'border-style:hidden;border-collapse:collapse')
             if 'border' in element:
-                yield check_style_attribute(
+                yield specificity, check_style_attribute(
                     parser, element, 'border-style:outset')
             frame = element.get('frame', '').lower()
             if frame == 'void':
-                yield check_style_attribute(
+                yield specificity, check_style_attribute(
                     parser, element, 'border-style:hidden')
             elif frame == 'above':
-                yield check_style_attribute(
+                yield specificity, check_style_attribute(
                     parser, element,
                     'border-style:outset hidden hidden hidden')
             elif frame == 'below':
-                yield check_style_attribute(
+                yield specificity, check_style_attribute(
                     parser, element,
                     'border-style:hidden hidden outset hidden')
             elif frame == 'hsides':
-                yield check_style_attribute(
+                yield specificity, check_style_attribute(
                     parser, element,
                     'border-style:outset hidden outset hidden')
             elif frame == 'lhs':
-                yield check_style_attribute(
+                yield specificity, check_style_attribute(
                     parser, element,
                     'border-style:hidden hidden hidden outset')
             elif frame == 'rhs':
-                yield check_style_attribute(
+                yield specificity, check_style_attribute(
                     parser, element,
                     'border-style:hidden outset hidden hidden')
             elif frame == 'vslides':
-                yield check_style_attribute(
+                yield specificity, check_style_attribute(
                     parser, element,
                     'border-style:hidden outset')
             elif frame in ('box', 'border'):
-                yield check_style_attribute(
+                yield specificity, check_style_attribute(
                     parser, element, 'border-style:outset')
             if element.get('cellspacing'):
-                yield check_style_attribute(
+                yield specificity, check_style_attribute(
                     parser, element,
                     'border-spacing:%spx' % element.get('cellspacing'))
             if element.get('hspace'):
                 hspace = element.get('hspace')
                 if hspace.isdigit():
                     hspace += 'px'
-                yield check_style_attribute(
+                yield specificity, check_style_attribute(
                     parser, element,
                     'margin-left:%s;margin-right:%s' % (hspace, hspace))
             if element.get('vspace'):
                 vspace = element.get('vspace')
                 if vspace.isdigit():
                     vspace += 'px'
-                yield check_style_attribute(
+                yield specificity, check_style_attribute(
                     parser, element,
                     'margin-top:%s;margin-bottom:%s' % (vspace, vspace))
             if element.get('width'):
                 style_attribute = 'width:%s' % element.get('width')
                 if element.get('width').isdigit():
                     style_attribute += 'px'
-                yield check_style_attribute(parser, element, style_attribute)
+                yield specificity, check_style_attribute(
+                    parser, element, style_attribute)
             if element.get('height'):
                 style_attribute = 'height:%s' % element.get('height')
                 if element.get('height').isdigit():
                     style_attribute += 'px'
-                yield check_style_attribute(parser, element, style_attribute)
+                yield specificity, check_style_attribute(
+                    parser, element, style_attribute)
             if element.get('background'):
                 style_attribute = 'background-image:%s' % (
                     element.get('background'))
-                yield check_style_attribute(parser, element, style_attribute)
+                yield specificity, check_style_attribute(
+                    parser, element, style_attribute)
             if element.get('bgcolor'):
                 style_attribute = 'background-color:%s' % (
                     element.get('bgcolor'))
-                yield check_style_attribute(parser, element, style_attribute)
+                yield specificity, check_style_attribute(
+                    parser, element, style_attribute)
             if element.get('bordercolor'):
                 style_attribute = 'border-color:%s' % (
                     element.get('bordercolor'))
-                yield check_style_attribute(parser, element, style_attribute)
+                yield specificity, check_style_attribute(
+                    parser, element, style_attribute)
             if element.get('border'):
                 style_attribute = 'border-width:%spx' % (
                     element.get('border'))
-                yield check_style_attribute(parser, element, style_attribute)
+                yield specificity, check_style_attribute(
+                    parser, element, style_attribute)
         elif element.tag in ('tr', 'td', 'th', 'thead', 'tbody', 'tfoot'):
             align = element.get('align', '').lower()
             if align == 'absmiddle':
-                yield check_style_attribute(
+                yield specificity, check_style_attribute(
                     parser, element, 'text-align:center')
             if align in ('left', 'right', 'justify'):
-                yield check_style_attribute(
+                yield specificity, check_style_attribute(
                     parser, element, 'text-align:%s' % align)
             valign = element.get('valign', '').lower()
             if valign in ('top', 'middle', 'bottom', 'baseline'):
-                yield check_style_attribute(
+                yield specificity, check_style_attribute(
                     parser, element, 'vertical-align:%s' % valign)
             if element.tag in ('td', 'th'):
                 if 'nowrap' in element:
-                    yield check_style_attribute(
+                    yield specificity, check_style_attribute(
                         parser, element, 'white-space:nowrap')
                 if element.get('cellpadding'):
-                    yield check_style_attribute(
+                    yield specificity, check_style_attribute(
                         parser, element,
                         'padding:%spx' % element.get('cellpadding'))
                 if element.get('width'):
                     style_attribute = 'width:%s' % element.get('width')
                     if element.get('width').isdigit():
                         style_attribute += 'px'
-                    yield check_style_attribute(
+                    yield specificity, check_style_attribute(
                         parser, element, style_attribute)
             if element.tag in ('tr', 'td', 'th'):
                 if element.get('height'):
                     style_attribute = 'height:%s' % element.get('height')
                     if element.get('height').isdigit():
                         style_attribute += 'px'
-                    yield check_style_attribute(
+                    yield specificity, check_style_attribute(
                         parser, element, style_attribute)
             if element.get('background'):
                 style_attribute = 'background-image:%s' % (
                     element.get('background'))
-                yield check_style_attribute(parser, element, style_attribute)
+                yield specificity, check_style_attribute(
+                    parser, element, style_attribute)
             if element.get('bgcolor'):
                 style_attribute = 'background-color:%s' % (
                     element.get('bgcolor'))
-                yield check_style_attribute(parser, element, style_attribute)
+                yield specificity, check_style_attribute(
+                    parser, element, style_attribute)
         elif element.tag == 'caption':
             align = element.get('align', '').lower()
             if align == 'bottom':
-                yield check_style_attribute(
+                yield specificity, check_style_attribute(
                     parser, element, 'caption-side:bottom')
             if align in ('left', 'right', 'justify'):
-                yield check_style_attribute(
+                yield specificity, check_style_attribute(
                     parser, element, 'text-align:%s' % align)
         elif element.tag == 'col':
             if element.get('width'):
                 style_attribute = 'width:%s' % element.get('width')
                 if element.get('width').isdigit():
                     style_attribute += 'px'
-                yield check_style_attribute(parser, element, style_attribute)
+                yield specificity, check_style_attribute(
+                    parser, element, style_attribute)
         elif element.tag in ('p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'):
             align = element.get('align', '').lower()
             if align in ('center', 'left', 'right', 'justify'):
-                yield check_style_attribute(
+                yield specificity, check_style_attribute(
                     parser, element, 'text-align:%s' % align)
         elif element.tag == 'hr':
             align = element.get('align', '').lower()
             if align == 'left':
-                yield check_style_attribute(
+                yield specificity, check_style_attribute(
                     parser, element, 'margin-left:0;margin-right:auto')
             elif align == 'right':
-                yield check_style_attribute(
+                yield specificity, check_style_attribute(
                     parser, element, 'margin-left:auto;margin-right:0')
             elif align == 'center':
-                yield check_style_attribute(
+                yield specificity, check_style_attribute(
                     parser, element, 'margin-left:auto;margin-right:auto')
             size = 0
             if element.get('size'):
@@ -504,24 +523,25 @@ def find_presentational_hints(element_tree):
                 except ValueError:
                     LOGGER.warning('Invalid value for size: %s' % size)
             if 'color' in element or 'noshade' in element:
-                yield check_style_attribute(
+                yield specificity, check_style_attribute(
                     parser, element, 'border-style:solid')
                 if size >= 1:
-                    yield check_style_attribute(
+                    yield specificity, check_style_attribute(
                         parser, element, 'border-width:%spx' % size / 2)
             elif size == 1:
-                yield check_style_attribute(
+                yield specificity, check_style_attribute(
                     parser, element, 'border-bottom-width:0')
             elif size > 1:
-                yield check_style_attribute(
+                yield specificity, check_style_attribute(
                     parser, element, 'height:%spx' % (size - 2))
             if element.get('width'):
                 style_attribute = 'width:%s' % element.get('width')
                 if element.get('width').isdigit():
                     style_attribute += 'px'
-                yield check_style_attribute(parser, element, style_attribute)
+                yield specificity, check_style_attribute(
+                    parser, element, style_attribute)
             if element.get('color'):
-                yield check_style_attribute(
+                yield specificity, check_style_attribute(
                     parser, element, 'color:%s' % element.get('color'))
         elif element.tag in (
                 'iframe', 'applet', 'embed', 'img', 'input', 'object'):
@@ -529,30 +549,30 @@ def find_presentational_hints(element_tree):
                     element.get('type', '').lower() == 'image'):
                 align = element.get('align', '').lower()
                 if align in ('left', 'right'):
-                    yield check_style_attribute(
+                    yield specificity, check_style_attribute(
                         parser, element, 'float:%s' % align)
                 elif align in ('top', 'baseline', 'bottom'):
-                    yield check_style_attribute(
+                    yield specificity, check_style_attribute(
                         parser, element, 'vertical-align:%s' % align)
                 elif align == 'texttop':
-                    yield check_style_attribute(
+                    yield specificity, check_style_attribute(
                         parser, element, 'vertical-align:text-top')
                 elif align in ('absmiddle', 'abscenter', 'middle', 'center'):
                     # TODO: middle and center values are wrong
-                    yield check_style_attribute(
+                    yield specificity, check_style_attribute(
                         parser, element, 'vertical-align:middle')
                 if element.get('hspace'):
                     hspace = element.get('hspace')
                     if hspace.isdigit():
                         hspace += 'px'
-                    yield check_style_attribute(
+                    yield specificity, check_style_attribute(
                         parser, element,
                         'margin-left:%s;margin-right:%s' % (hspace, hspace))
                 if element.get('vspace'):
                     vspace = element.get('vspace')
                     if vspace.isdigit():
                         vspace += 'px'
-                    yield check_style_attribute(
+                    yield specificity, check_style_attribute(
                         parser, element,
                         'margin-top:%s;margin-bottom:%s' % (vspace, vspace))
                 # TODO: img seems to be excluded for width and height, but a
@@ -561,23 +581,24 @@ def find_presentational_hints(element_tree):
                     style_attribute = 'width:%s' % element.get('width')
                     if element.get('width').isdigit():
                         style_attribute += 'px'
-                    yield check_style_attribute(
+                    yield specificity, check_style_attribute(
                         parser, element, style_attribute)
                 if element.get('height'):
                     style_attribute = 'height:%s' % element.get('height')
                     if element.get('height').isdigit():
                         style_attribute += 'px'
-                    yield check_style_attribute(
+                    yield specificity, check_style_attribute(
                         parser, element, style_attribute)
                 if element.tag in ('img', 'object', 'input'):
                     if element.get('border'):
-                        yield check_style_attribute(
+                        yield specificity, check_style_attribute(
                             parser, element,
                             'border-width:%spx;border-style:solid' %
                             element.get('border'))
             if element.tag == 'iframe':
                 if element.get('frameborder', '').lower() in ('0', 'no'):
-                    yield check_style_attribute(parser, element, 'border:none')
+                    yield specificity, check_style_attribute(
+                        parser, element, 'border:none')
 
 
 def evaluate_media_query(query_list, device_media_type):
@@ -848,18 +869,9 @@ def get_all_computed_styles(html, user_stylesheets=None,
                                 cascaded_styles, name, values, weight,
                                 element, pseudo_type)
 
-    if presentational_hints:
-        specificity = (0, 0, 0, 0)
-        for element, declarations, base_url in find_presentational_hints(
-                element_tree):
-            for name, values, importance in preprocess_declarations(
-                    base_url, declarations):
-                precedence = declaration_precedence('author', importance)
-                weight = (precedence, specificity)
-                add_declaration(cascaded_styles, name, values, weight, element)
-
-    specificity = (1, 0, 0, 0)
-    for element, declarations, base_url in find_style_attributes(element_tree):
+    for specificity, attributes in find_style_attributes(
+            element_tree, presentational_hints):
+        element, declarations, base_url = attributes
         for name, values, importance in preprocess_declarations(
                 base_url, declarations):
             precedence = declaration_precedence('author', importance)

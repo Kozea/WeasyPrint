@@ -144,7 +144,9 @@ def main(argv=None, stdout=None, stdin=None):
     else:
         output = args.output
 
-    kwargs = {'stylesheets': args.stylesheet}
+    kwargs = {
+        'stylesheets': args.stylesheet,
+        'presentational_hints': args.presentational_hints}
     if args.resolution:
         if format_ == 'png':
             kwargs['resolution'] = args.resolution
@@ -158,8 +160,7 @@ def main(argv=None, stdout=None, stdin=None):
             parser.error('--attachment only applies for the PDF format.')
 
     html = HTML(source, base_url=args.base_url, encoding=args.encoding,
-                media_type=args.media_type,
-                presentational_hints=args.presentational_hints)
+                media_type=args.media_type)
     getattr(html, 'write_' + format_)(output, **kwargs)
 
 
