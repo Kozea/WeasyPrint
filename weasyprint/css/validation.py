@@ -587,6 +587,22 @@ def border_style(keyword):
                        'inset', 'outset', 'groove', 'ridge', 'solid')
 
 
+@validator('break-before')
+@validator('break-after')
+@single_keyword
+def break_before_after(keyword):
+    """``break-before`` and ``break-after`` properties validation."""
+    return keyword in ('auto', 'avoid', 'avoid-page', 'page', 'left', 'right',
+                       'recto', 'verso', 'avoid-column', 'column')
+
+
+@validator()
+@single_keyword
+def break_inside(keyword):
+    """``break-inside`` property validation."""
+    return keyword in ('auto', 'avoid', 'avoid-page', 'avoid-column')
+
+
 @validator('outline-style')
 @single_keyword
 def outline_style(keyword):
@@ -1032,24 +1048,6 @@ def column_count(token):
 def overflow(keyword):
     """Validation for the ``overflow`` property."""
     return keyword in ('auto', 'visible', 'hidden', 'scroll')
-
-
-@validator('page-break-before')
-@validator('page-break-after')
-@single_keyword
-def page_break(keyword):
-    """Validation for the ``page-break-before`` and ``page-break-after``
-    properties.
-
-    """
-    return keyword in ('auto', 'always', 'left', 'right', 'avoid')
-
-
-@validator()
-@single_keyword
-def page_break_inside(keyword):
-    """Validation for the ``page-break-inside`` property."""
-    return keyword in ('auto', 'avoid')
 
 
 @validator()
@@ -1758,6 +1756,34 @@ def expand_background(base_url, name, tokens):
     for name, values in results.items():
         yield name, values[::-1]  # "Un-reverse"
     yield 'background-color', color
+
+
+@expander('page-break-after')
+@expander('page-break-before')
+def expand_page_break_before_after(base_url, name, tokens):
+    """Expand legacy ``page-break-before`` and ``page-break-after`` properties.
+
+    See https://www.w3.org/TR/css-break-3/#page-break-properties
+
+    """
+    keyword = get_single_keyword(tokens)
+    new_name = name.split('-', 1)[1]
+    if keyword in ('auto', 'left', 'right', 'avoid'):
+        yield new_name, keyword
+    elif keyword == 'always':
+        yield new_name, 'page'
+
+
+@expander('page-break-inside')
+def expand_page_break_inside(base_url, name, tokens):
+    """Expand the legacy ``page-break-inside`` property.
+
+    See https://www.w3.org/TR/css-break-3/#page-break-properties
+
+    """
+    keyword = get_single_keyword(tokens)
+    if keyword in ('auto', 'avoid'):
+        yield 'break-inside', keyword
 
 
 @expander('columns')

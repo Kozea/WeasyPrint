@@ -216,7 +216,7 @@ def table_layout(context, table, max_position_y, skip_stack,
         # Do not keep the row group if we made a page break
         # before any of its rows or with 'avoid'
         if resume_at and (
-                group.style.page_break_inside == 'avoid' or
+                group.style.break_inside in ('avoid', 'avoid-page') or
                 not new_group_children):
             return None, None
 
@@ -403,7 +403,7 @@ def table_layout(context, table, max_position_y, skip_stack,
         group.height = columns_height
 
     if resume_at and not page_is_empty and (
-            table.style.page_break_inside == 'avoid' or
+            table.style.break_inside in ('avoid', 'avoid-page') or
             not new_table_children):
         table = None
         resume_at = None

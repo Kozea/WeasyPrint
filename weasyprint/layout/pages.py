@@ -539,11 +539,17 @@ def make_all_pages(context, root_box):
     prefix = 'first_'
 
     # Special case the root box
-    page_break = root_box.style.page_break_before
-    if page_break == 'right':
+    page_break = root_box.style.break_before
+    # TODO: take care of text direction and writing mode
+    # https://www.w3.org/TR/css3-page/#progression
+    if page_break in 'right':
         right_page = True
-    if page_break == 'left':
+    elif page_break == 'left':
         right_page = False
+    elif page_break in 'recto':
+        right_page = root_box.style.direction == 'ltr'
+    elif page_break == 'verso':
+        right_page = root_box.style.direction == 'rtl'
     else:
         right_page = root_box.style.direction == 'ltr'
 

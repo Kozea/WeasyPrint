@@ -119,10 +119,10 @@ INITIAL_VALUES = {
     'font_weight': 400,
 
     # Fragmentation 3: https://www.w3.org/TR/css-break-3/
+    'break_after': 'auto',
+    'break_before': 'auto',
+    'break_inside': 'auto',
     'orphans': 2,
-    'page_break_after': 'auto',
-    'page_break_before': 'auto',
-    'page_break_inside': 'auto',
     'widows': 2,
 
     # Generated Content for Paged Media: https://www.w3.org/TR/css-gcpm-3/
@@ -271,6 +271,9 @@ INHERITED = set("""
 # Only non-inherited properties need to be included here.
 TABLE_WRAPPER_BOX_PROPERTIES = set('''
     bottom
+    break_after
+    break_before
+    break_inside
     clear
     counter_increment
     counter_reset
@@ -281,9 +284,6 @@ TABLE_WRAPPER_BOX_PROPERTIES = set('''
     margin_left
     margin_right
     opacity
-    page_break_after
-    page_break_before
-    page_break_inside
     position
     right
     top
