@@ -61,7 +61,8 @@ def block_level_layout(context, box, max_position_y, skip_stack,
         if style.column_width != 'auto' or style.column_count != 'auto':
             return columns_layout(
                 context, box, max_position_y, skip_stack, containing_block,
-                device_size, page_is_empty, absolute_boxes, fixed_boxes)
+                device_size, page_is_empty, absolute_boxes, fixed_boxes,
+                adjoining_margins)
         else:
             return block_box_layout(
                 context, box, max_position_y, skip_stack, containing_block,
@@ -107,7 +108,8 @@ def block_box_layout(context, box, max_position_y, skip_stack,
 
 
 def columns_layout(context, box, max_position_y, skip_stack, containing_block,
-                   device_size, page_is_empty, absolute_boxes, fixed_boxes):
+                   device_size, page_is_empty, absolute_boxes, fixed_boxes,
+                   adjoining_margins):
     """Lay out a multi-column ``box``."""
     # Implementation of the multi-column pseudo-algorithm:
     # https://www.w3.org/TR/css3-multicol/#pseudo-algorithm
@@ -195,7 +197,7 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
         box_column_descendants = list(column_descendants(new_child))
 
         # Ideal height
-        height = new_child.height / count
+        height = new_child.margin_height() / count
 
         # Increase the column height step by step.
         while True:
@@ -236,9 +238,9 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
     # Set the height of box and the columns
     box.children = children
     if box.children:
-        box.height = max(child.height for child in box.children)
+        box.height = max(child.margin_height() for child in box.children)
         for child in box.children:
-            child.height = box.height
+            child.height = box.margin_height()
     else:
         box.height = 0
 
@@ -530,7 +532,13 @@ def block_container_layout(context, box, max_position_y, skip_stack,
             if last_in_flow_child is not None:
                 # Between in-flow siblings
                 page_break = block_level_page_break(last_in_flow_child, child)
-                if page_break in ('always', 'left', 'right'):
+                # TODO: take care of text direction and writing mode
+                # https://www.w3.org/TR/css3-page/#progression
+                if page_break == 'recto':
+                    page_break = 'right'
+                elif page_break == 'verso':
+                    page_break = 'left'
+                if page_break in ('page', 'left', 'right'):
                     if page_break in ('left', 'right'):
                         next_page = page_break
                     else:
@@ -633,7 +641,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
 
             if new_child is None:
                 # Nothing fits in the remaining space of this page: break
-                if page_break == 'avoid':
+                if page_break in ('avoid', 'avoid-page'):
                     result = find_earlier_page_break(
                         new_children, absolute_boxes, fixed_boxes)
                     if result:
@@ -666,8 +674,9 @@ def block_container_layout(context, box, max_position_y, skip_stack,
     else:
         resume_at = None
 
-    if resume_at is not None and box.style.page_break_inside == 'avoid' \
-            and not page_is_empty:
+    if (resume_at is not None and
+            box.style.break_inside in ('avoid', 'avoid-page') and
+            not page_is_empty):
         return None, None, 'any', [], False
 
     if collapsing_with_children:
@@ -765,7 +774,7 @@ def block_level_page_break(sibling_before, sibling_after):
     for boxes after the margin the 'page-break-before' value is considered.
 
     * 'avoid' takes priority over 'auto'
-    * 'always' takes priority over 'avoid' or 'auto'
+    * 'page' takes priority over 'avoid' or 'auto'
     * 'left' or 'right' take priority over 'always', 'avoid' or 'auto'
     * Among 'left' and 'right', later values in the tree take priority.
 
@@ -775,7 +784,7 @@ def block_level_page_break(sibling_before, sibling_after):
     values = []
     box = sibling_before
     while isinstance(box, boxes.BlockLevelBox):
-        values.append(box.style.page_break_after)
+        values.append(box.style.break_after)
         if not (isinstance(box, boxes.ParentBox) and box.children):
             break
         box = box.children[-1]
@@ -783,17 +792,19 @@ def block_level_page_break(sibling_before, sibling_after):
 
     box = sibling_after
     while isinstance(box, boxes.BlockLevelBox):
-        values.append(box.style.page_break_before)
+        values.append(box.style.break_before)
         if not (isinstance(box, boxes.ParentBox) and box.children):
             break
         box = box.children[0]
 
     result = 'auto'
     for value in values:
-        if value in ('left', 'right') or (value, result) in [
-                ('always', 'auto'),
-                ('always', 'avoid'),
-                ('avoid', 'auto')]:
+        if value in ('left', 'right', 'recto', 'verso') or (value, result) in (
+                ('page', 'auto'),
+                ('page', 'avoid'),
+                ('avoid', 'auto'),
+                ('page', 'avoid-page'),
+                ('avoid-page', 'auto')):
             result = value
     return result
 
@@ -824,7 +835,7 @@ def find_earlier_page_break(children, absolute_boxes, fixed_boxes):
     previous_in_flow = None
     for index, child in reversed_enumerate(children):
         if child.is_in_normal_flow() and (
-                child.style.page_break_inside != 'avoid'):
+                child.style.break_inside not in ('avoid', 'avoid-page')):
             if isinstance(child, boxes.BlockBox):
                 result = find_earlier_page_break(
                     child.children, absolute_boxes, fixed_boxes)
