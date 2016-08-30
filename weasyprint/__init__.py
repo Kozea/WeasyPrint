@@ -110,7 +110,8 @@ class HTML(object):
     def _get_metadata(self):
         return get_html_metadata(self.root_element)
 
-    def render(self, stylesheets=None, enable_hinting=False):
+    def render(self, stylesheets=None, enable_hinting=False,
+               presentational_hints=False):
         """Lay out and paginate the document, but do not (yet) export it
         to PDF or another format.
 
@@ -129,10 +130,14 @@ class HTML(object):
             Whether text, borders and background should be *hinted* to fall
             at device pixel boundaries. Should be enabled for pixel-based
             output (like PNG) but not vector based output (like PDF).
+        :type presentational_hints: bool
+        :param presentational_hints: Whether HTML presentational hints are
+            followed.
         :returns: A :class:`~document.Document` object.
 
         """
-        return Document._render(self, stylesheets, enable_hinting)
+        return Document._render(
+            self, stylesheets, enable_hinting, presentational_hints)
 
     def write_pdf(self, target=None, stylesheets=None, zoom=1,
                   attachments=None):

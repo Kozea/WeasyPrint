@@ -66,6 +66,10 @@ def main(argv=None, stdout=None, stdin=None):
         Adds an attachment to the document which is included in the PDF output.
         This option can be added multiple times to attach more files.
 
+    .. option:: -p, --presentational-hints
+
+        Follow HTML presentational hints.
+
     .. option:: --version
 
         Show the version number. Other options and arguments are ignored.
@@ -100,6 +104,8 @@ def main(argv=None, stdout=None, stdin=None):
     parser.add_argument('-a', '--attachment', action='append',
                         help='URL or filename of a file '
                              'to attach to the PDF document')
+    parser.add_argument('-p', '--presentational-hints', action='store_true',
+                        help='Follow HTML presentational hints.')
     parser.add_argument(
         'input', help='URL or filename of the HTML input, or - for stdin')
     parser.add_argument(
@@ -152,7 +158,8 @@ def main(argv=None, stdout=None, stdin=None):
             parser.error('--attachment only applies for the PDF format.')
 
     html = HTML(source, base_url=args.base_url, encoding=args.encoding,
-                media_type=args.media_type)
+                media_type=args.media_type,
+                presentational_hints=args.presentational_hints)
     getattr(html, 'write_' + format_)(output, **kwargs)
 
 
