@@ -107,6 +107,9 @@ class HTML(object):
     def _ua_stylesheets(self):
         return [HTML5_UA_STYLESHEET]
 
+    def _ph_stylesheets(self):
+        return [HTML5_PH_STYLESHEET]
+
     def _get_metadata(self):
         return get_html_metadata(self.root_element)
 
@@ -352,5 +355,7 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
 
 # Work around circular imports.
 from .css import PARSER, preprocess_stylesheet  # noqa
-from .html import find_base_url, HTML5_UA_STYLESHEET, get_html_metadata  # noqa
+from .html import (
+    find_base_url, HTML5_UA_STYLESHEET, HTML5_PH_STYLESHEET,
+    get_html_metadata)  # noqa
 from .document import Document, Page  # noqa
