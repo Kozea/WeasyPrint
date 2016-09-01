@@ -33,8 +33,11 @@ Some elements need special treatment:
   or in SVG with CairoSVG_. SVG images are not rasterized but rendered
   as vectors in the PDF output.
 
-HTML `presentational hints`_ (like the ``width`` attribute on an ``img``
-element) are **not** supported. Use CSS in the ``style`` attribute instead.
+HTML `presentational hints`_ are not supported by default, but can be supported:
+
+* by using the ``--presentational-hints`` CLI parameter, or
+* by setting the ``presentational_hints`` parameter of the ``HTML.render`` or
+  ``HTML.write_*`` methods to ``True``.
 
 .. _CairoSVG: http://cairosvg.org/
 .. _GdkPixbuf: https://live.gnome.org/GdkPixbuf
