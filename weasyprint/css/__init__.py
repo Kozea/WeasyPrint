@@ -230,20 +230,21 @@ def find_style_attributes(element_tree, presentational_hints=False):
             continue
         specificity = (0, 0, 0, 0)
         if element.tag == 'body':
-            for prop, position in (
+            # TODO: we should check the container frame element
+            for part, position in (
                     ('height', 'top'), ('height', 'bottom'),
                     ('width', 'left'), ('width', 'right')):
                 style_attribute = None
-                for prop in ('margin%s' % prop, '%smargin' % prop):
+                for prop in ('margin%s' % part, '%smargin' % position):
                     if element.get(prop):
                         style_attribute = 'margin-%s:%spx' % (
-                            position, element.get('margin%s' % prop))
+                            position, element.get(prop))
                         break
                 if style_attribute:
                     yield specificity, check_style_attribute(
                         parser, element, style_attribute)
             if element.get('background'):
-                style_attribute = 'background-image:%s' % (
+                style_attribute = 'background-image:url(%s)' % (
                     element.get('background'))
                 yield specificity, check_style_attribute(
                     parser, element, style_attribute)
@@ -254,8 +255,9 @@ def find_style_attributes(element_tree, presentational_hints=False):
                     parser, element, style_attribute)
             if element.get('text'):
                 style_attribute = 'color:%s' % element.get('text')
-                yield check_style_attribute(
+                yield specificity, check_style_attribute(
                     parser, element, style_attribute)
+            # TODO: we should support link, vlink, alink
         elif element.tag == 'center':
             yield specificity, check_style_attribute(
                 parser, element, 'text-align:center')
@@ -292,16 +294,17 @@ def find_style_attributes(element_tree, presentational_hints=False):
                         4: 'large',
                         5: 'x-large',
                         6: 'xx-large',
-                        7: '48px',
+                        7: '48px',  # 1.5 * xx-large
                     }
                     if relative_plus:
                         size += 3
                     elif relative_minus:
                         size -= 3
-                    size = min(1, max(7, size))
+                    size = max(1, min(7, size))
                     yield specificity, check_style_attribute(
                         parser, element, 'font-size:%s' % font_sizes[size])
         elif element.tag == 'table':
+            # TODO: we should support cellpadding
             if element.get('cellspacing'):
                 yield specificity, check_style_attribute(
                     parser, element,
@@ -333,7 +336,7 @@ def find_style_attributes(element_tree, presentational_hints=False):
                 yield specificity, check_style_attribute(
                     parser, element, style_attribute)
             if element.get('background'):
-                style_attribute = 'background-image:%s' % (
+                style_attribute = 'background-image:url(%s)' % (
                     element.get('background'))
                 yield specificity, check_style_attribute(
                     parser, element, style_attribute)
@@ -359,7 +362,7 @@ def find_style_attributes(element_tree, presentational_hints=False):
                 yield specificity, check_style_attribute(
                     parser, element, 'text-align:%s' % align)
             if element.get('background'):
-                style_attribute = 'background-image:%s' % (
+                style_attribute = 'background-image:url(%s)' % (
                     element.get('background'))
                 yield specificity, check_style_attribute(
                     parser, element, style_attribute)
@@ -376,10 +379,6 @@ def find_style_attributes(element_tree, presentational_hints=False):
                     yield specificity, check_style_attribute(
                         parser, element, style_attribute)
                 if element.tag in ('td', 'th'):
-                    if element.get('cellpadding'):
-                        yield specificity, check_style_attribute(
-                            parser, element,
-                            'padding:%spx' % element.get('cellpadding'))
                     if element.get('width'):
                         style_attribute = 'width:%s' % element.get('width')
                         if element.get('width').isdigit():
@@ -406,10 +405,10 @@ def find_style_attributes(element_tree, presentational_hints=False):
                     size = int(element.get('size'))
                 except ValueError:
                     LOGGER.warning('Invalid value for size: %s' % size)
-            if 'color' in element or 'noshade' in element:
+            if (element.get('color'), element.get('noshade')) != (None, None):
                 if size >= 1:
                     yield specificity, check_style_attribute(
-                        parser, element, 'border-width:%spx' % size / 2)
+                        parser, element, 'border-width:%spx' % (size / 2))
             elif size == 1:
                 yield specificity, check_style_attribute(
                     parser, element, 'border-bottom-width:0')
