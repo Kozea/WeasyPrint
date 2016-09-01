@@ -279,7 +279,6 @@ def test_ph_embedded():
     body, = html.children
     line, = body.children
     object_, text1, img, embed, text2 = line.children
-    print(line.children)
     assert embed.style.vertical_align == 'text-top'
     assert object_.style.vertical_align == 'top'
     assert object_.margin_top == 20
