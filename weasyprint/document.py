@@ -313,11 +313,13 @@ class Document(object):
 
     """
     @classmethod
-    def _render(cls, html, stylesheets, enable_hinting):
-        style_for = get_all_computed_styles(html, user_stylesheets=[
-            css if hasattr(css, 'rules')
-            else CSS(guess=css, media_type=html.media_type)
-            for css in stylesheets or []])
+    def _render(cls, html, stylesheets, enable_hinting,
+                presentational_hints=False):
+        style_for = get_all_computed_styles(
+            html, presentational_hints=presentational_hints, user_stylesheets=[
+                css if hasattr(css, 'rules')
+                else CSS(guess=css, media_type=html.media_type)
+                for css in stylesheets or []])
         get_image_from_uri = functools.partial(
             images.get_image_from_uri, {}, html.url_fetcher)
         page_boxes = layout_document(

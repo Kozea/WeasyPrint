@@ -107,10 +107,14 @@ class HTML(object):
     def _ua_stylesheets(self):
         return [HTML5_UA_STYLESHEET]
 
+    def _ph_stylesheets(self):
+        return [HTML5_PH_STYLESHEET]
+
     def _get_metadata(self):
         return get_html_metadata(self.root_element)
 
-    def render(self, stylesheets=None, enable_hinting=False):
+    def render(self, stylesheets=None, enable_hinting=False,
+               presentational_hints=False):
         """Lay out and paginate the document, but do not (yet) export it
         to PDF or another format.
 
@@ -129,13 +133,17 @@ class HTML(object):
             Whether text, borders and background should be *hinted* to fall
             at device pixel boundaries. Should be enabled for pixel-based
             output (like PNG) but not vector based output (like PDF).
+        :type presentational_hints: bool
+        :param presentational_hints: Whether HTML presentational hints are
+            followed.
         :returns: A :class:`~document.Document` object.
 
         """
-        return Document._render(self, stylesheets, enable_hinting)
+        return Document._render(
+            self, stylesheets, enable_hinting, presentational_hints)
 
     def write_pdf(self, target=None, stylesheets=None, zoom=1,
-                  attachments=None):
+                  attachments=None, presentational_hints=False):
         """Render the document to a PDF file.
 
         This is a shortcut for calling :meth:`render`, then
@@ -158,21 +166,28 @@ class HTML(object):
         :param attachments: A list of additional file attachments for the
             generated PDF document or :obj:`None`. The list's elements are
             :class:`Attachment` objects, filenames, URLs or file-like objects.
+        :type presentational_hints: bool
+        :param presentational_hints: Whether HTML presentational hints are
+            followed.
         :returns:
             The PDF as byte string if :obj:`target` is not provided or
             :obj:`None`, otherwise :obj:`None` (the PDF is written to
             :obj:`target`.)
 
         """
-        return self.render(stylesheets).write_pdf(target, zoom, attachments)
+        return self.render(stylesheets, presentational_hints).write_pdf(
+            target, zoom, attachments)
 
-    def write_image_surface(self, stylesheets=None, resolution=96):
+    def write_image_surface(self, stylesheets=None, resolution=96,
+                            presentational_hints=False):
         surface, _width, _height = (
-            self.render(stylesheets, enable_hinting=True)
+            self.render(stylesheets, enable_hinting=True,
+                        presentational_hints=presentational_hints)
             .write_image_surface(resolution))
         return surface
 
-    def write_png(self, target=None, stylesheets=None, resolution=96):
+    def write_png(self, target=None, stylesheets=None, resolution=96,
+                  presentational_hints=False):
         """Paint the pages vertically to a single PNG image.
 
         There is no decoration around pages other than those specified in CSS
@@ -192,6 +207,9 @@ class HTML(object):
         :param resolution:
             The output resolution in PNG pixels per CSS inch. At 96 dpi
             (the default), PNG pixels match the CSS ``px`` unit.
+        :type presentational_hints: bool
+        :param presentational_hints: Whether HTML presentational hints are
+            followed.
         :returns:
             The image as byte string if :obj:`target` is not provided or
             :obj:`None`, otherwise :obj:`None` (the image is written to
@@ -199,7 +217,8 @@ class HTML(object):
 
         """
         png_bytes, _width, _height = (
-            self.render(stylesheets, enable_hinting=True)
+            self.render(stylesheets, enable_hinting=True,
+                        presentational_hints=presentational_hints)
             .write_png(target, resolution))
         return png_bytes
 
@@ -336,5 +355,7 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
 
 # Work around circular imports.
 from .css import PARSER, preprocess_stylesheet  # noqa
-from .html import find_base_url, HTML5_UA_STYLESHEET, get_html_metadata  # noqa
+from .html import (
+    find_base_url, HTML5_UA_STYLESHEET, HTML5_PH_STYLESHEET,
+    get_html_metadata)  # noqa
 from .document import Document, Page  # noqa

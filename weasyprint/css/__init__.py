@@ -202,19 +202,271 @@ def find_stylesheets(element_tree, device_media_type, url_fetcher):
                                    href, exc)
 
 
-def find_style_attributes(element_tree):
-    """
-    Yield ``element, declaration, base_url`` for elements with
-    a "style" attribute.
+def check_style_attribute(parser, element, style_attribute):
+    declarations, errors = parser.parse_style_attr(style_attribute)
+    for error in errors:
+        LOGGER.warning(error)
+    return element, declarations, element_base_url(element)
+
+
+def find_style_attributes(element_tree, presentational_hints=False):
+    """Yield ``specificity, (element, declaration, base_url)`` rules.
+
+    Rules from "style" attribute are returned with specificity
+    ``(1, 0, 0, 0)``.
+
+    If ``presentational_hints`` is ``True``, rules from presentational hints
+    are returned with specificity ``(0, 0, 0, 0)``.
+
     """
     parser = PARSER
     for element in element_tree.iter():
+        specificity = (1, 0, 0, 0)
         style_attribute = element.get('style')
         if style_attribute:
-            declarations, errors = parser.parse_style_attr(style_attribute)
-            for error in errors:
-                LOGGER.warning(error)
-            yield element, declarations, element_base_url(element)
+            yield specificity, check_style_attribute(
+                parser, element, style_attribute)
+        if not presentational_hints:
+            continue
+        specificity = (0, 0, 0, 0)
+        if element.tag == 'body':
+            # TODO: we should check the container frame element
+            for part, position in (
+                    ('height', 'top'), ('height', 'bottom'),
+                    ('width', 'left'), ('width', 'right')):
+                style_attribute = None
+                for prop in ('margin%s' % part, '%smargin' % position):
+                    if element.get(prop):
+                        style_attribute = 'margin-%s:%spx' % (
+                            position, element.get(prop))
+                        break
+                if style_attribute:
+                    yield specificity, check_style_attribute(
+                        parser, element, style_attribute)
+            if element.get('background'):
+                style_attribute = 'background-image:url(%s)' % (
+                    element.get('background'))
+                yield specificity, check_style_attribute(
+                    parser, element, style_attribute)
+            if element.get('bgcolor'):
+                style_attribute = 'background-color:%s' % (
+                    element.get('bgcolor'))
+                yield specificity, check_style_attribute(
+                    parser, element, style_attribute)
+            if element.get('text'):
+                style_attribute = 'color:%s' % element.get('text')
+                yield specificity, check_style_attribute(
+                    parser, element, style_attribute)
+            # TODO: we should support link, vlink, alink
+        elif element.tag == 'center':
+            yield specificity, check_style_attribute(
+                parser, element, 'text-align:center')
+        elif element.tag == 'div':
+            align = element.get('align', '').lower()
+            if align == 'middle':
+                yield specificity, check_style_attribute(
+                    parser, element, 'text-align:center')
+            elif align in ('center', 'left', 'right', 'justify'):
+                yield specificity, check_style_attribute(
+                    parser, element, 'text-align:%s' % align)
+        elif element.tag == 'font':
+            if element.get('color'):
+                yield specificity, check_style_attribute(
+                    parser, element, 'color:%s' % element.get('color'))
+            if element.get('face'):
+                yield specificity, check_style_attribute(
+                    parser, element, 'font-family:%s' % element.get('face'))
+            if element.get('size'):
+                size = element.get('size').strip()
+                relative_plus = size.startswith('+')
+                relative_minus = size.startswith('-')
+                if relative_plus or relative_minus:
+                    size = size[1:].strip()
+                try:
+                    size = int(size)
+                except ValueError:
+                    LOGGER.warning('Invalid value for size: %s' % size)
+                else:
+                    font_sizes = {
+                        1: 'x-small',
+                        2: 'small',
+                        3: 'medium',
+                        4: 'large',
+                        5: 'x-large',
+                        6: 'xx-large',
+                        7: '48px',  # 1.5 * xx-large
+                    }
+                    if relative_plus:
+                        size += 3
+                    elif relative_minus:
+                        size -= 3
+                    size = max(1, min(7, size))
+                    yield specificity, check_style_attribute(
+                        parser, element, 'font-size:%s' % font_sizes[size])
+        elif element.tag == 'table':
+            # TODO: we should support cellpadding
+            if element.get('cellspacing'):
+                yield specificity, check_style_attribute(
+                    parser, element,
+                    'border-spacing:%spx' % element.get('cellspacing'))
+            if element.get('hspace'):
+                hspace = element.get('hspace')
+                if hspace.isdigit():
+                    hspace += 'px'
+                yield specificity, check_style_attribute(
+                    parser, element,
+                    'margin-left:%s;margin-right:%s' % (hspace, hspace))
+            if element.get('vspace'):
+                vspace = element.get('vspace')
+                if vspace.isdigit():
+                    vspace += 'px'
+                yield specificity, check_style_attribute(
+                    parser, element,
+                    'margin-top:%s;margin-bottom:%s' % (vspace, vspace))
+            if element.get('width'):
+                style_attribute = 'width:%s' % element.get('width')
+                if element.get('width').isdigit():
+                    style_attribute += 'px'
+                yield specificity, check_style_attribute(
+                    parser, element, style_attribute)
+            if element.get('height'):
+                style_attribute = 'height:%s' % element.get('height')
+                if element.get('height').isdigit():
+                    style_attribute += 'px'
+                yield specificity, check_style_attribute(
+                    parser, element, style_attribute)
+            if element.get('background'):
+                style_attribute = 'background-image:url(%s)' % (
+                    element.get('background'))
+                yield specificity, check_style_attribute(
+                    parser, element, style_attribute)
+            if element.get('bgcolor'):
+                style_attribute = 'background-color:%s' % (
+                    element.get('bgcolor'))
+                yield specificity, check_style_attribute(
+                    parser, element, style_attribute)
+            if element.get('bordercolor'):
+                style_attribute = 'border-color:%s' % (
+                    element.get('bordercolor'))
+                yield specificity, check_style_attribute(
+                    parser, element, style_attribute)
+            if element.get('border'):
+                style_attribute = 'border-width:%spx' % (
+                    element.get('border'))
+                yield specificity, check_style_attribute(
+                    parser, element, style_attribute)
+        elif element.tag in ('tr', 'td', 'th', 'thead', 'tbody', 'tfoot'):
+            align = element.get('align', '').lower()
+            if align in ('left', 'right', 'justify'):
+                # TODO: we should align descendants too
+                yield specificity, check_style_attribute(
+                    parser, element, 'text-align:%s' % align)
+            if element.get('background'):
+                style_attribute = 'background-image:url(%s)' % (
+                    element.get('background'))
+                yield specificity, check_style_attribute(
+                    parser, element, style_attribute)
+            if element.get('bgcolor'):
+                style_attribute = 'background-color:%s' % (
+                    element.get('bgcolor'))
+                yield specificity, check_style_attribute(
+                    parser, element, style_attribute)
+            if element.tag in ('tr', 'td', 'th'):
+                if element.get('height'):
+                    style_attribute = 'height:%s' % element.get('height')
+                    if element.get('height').isdigit():
+                        style_attribute += 'px'
+                    yield specificity, check_style_attribute(
+                        parser, element, style_attribute)
+                if element.tag in ('td', 'th'):
+                    if element.get('width'):
+                        style_attribute = 'width:%s' % element.get('width')
+                        if element.get('width').isdigit():
+                            style_attribute += 'px'
+                        yield specificity, check_style_attribute(
+                            parser, element, style_attribute)
+        elif element.tag == 'caption':
+            align = element.get('align', '').lower()
+            # TODO: we should align descendants too
+            if align in ('left', 'right', 'justify'):
+                yield specificity, check_style_attribute(
+                    parser, element, 'text-align:%s' % align)
+        elif element.tag == 'col':
+            if element.get('width'):
+                style_attribute = 'width:%s' % element.get('width')
+                if element.get('width').isdigit():
+                    style_attribute += 'px'
+                yield specificity, check_style_attribute(
+                    parser, element, style_attribute)
+        elif element.tag == 'hr':
+            size = 0
+            if element.get('size'):
+                try:
+                    size = int(element.get('size'))
+                except ValueError:
+                    LOGGER.warning('Invalid value for size: %s' % size)
+            if (element.get('color'), element.get('noshade')) != (None, None):
+                if size >= 1:
+                    yield specificity, check_style_attribute(
+                        parser, element, 'border-width:%spx' % (size / 2))
+            elif size == 1:
+                yield specificity, check_style_attribute(
+                    parser, element, 'border-bottom-width:0')
+            elif size > 1:
+                yield specificity, check_style_attribute(
+                    parser, element, 'height:%spx' % (size - 2))
+            if element.get('width'):
+                style_attribute = 'width:%s' % element.get('width')
+                if element.get('width').isdigit():
+                    style_attribute += 'px'
+                yield specificity, check_style_attribute(
+                    parser, element, style_attribute)
+            if element.get('color'):
+                yield specificity, check_style_attribute(
+                    parser, element, 'color:%s' % element.get('color'))
+        elif element.tag in (
+                'iframe', 'applet', 'embed', 'img', 'input', 'object'):
+            if (element.tag != 'input' or
+                    element.get('type', '').lower() == 'image'):
+                align = element.get('align', '').lower()
+                if align in ('middle', 'center'):
+                    # TODO: middle and center values are wrong
+                    yield specificity, check_style_attribute(
+                        parser, element, 'vertical-align:middle')
+                if element.get('hspace'):
+                    hspace = element.get('hspace')
+                    if hspace.isdigit():
+                        hspace += 'px'
+                    yield specificity, check_style_attribute(
+                        parser, element,
+                        'margin-left:%s;margin-right:%s' % (hspace, hspace))
+                if element.get('vspace'):
+                    vspace = element.get('vspace')
+                    if vspace.isdigit():
+                        vspace += 'px'
+                    yield specificity, check_style_attribute(
+                        parser, element,
+                        'margin-top:%s;margin-bottom:%s' % (vspace, vspace))
+                # TODO: img seems to be excluded for width and height, but a
+                # lot of W3C tests rely on this attribute being applied to img
+                if element.get('width'):
+                    style_attribute = 'width:%s' % element.get('width')
+                    if element.get('width').isdigit():
+                        style_attribute += 'px'
+                    yield specificity, check_style_attribute(
+                        parser, element, style_attribute)
+                if element.get('height'):
+                    style_attribute = 'height:%s' % element.get('height')
+                    if element.get('height').isdigit():
+                        style_attribute += 'px'
+                    yield specificity, check_style_attribute(
+                        parser, element, style_attribute)
+                if element.tag in ('img', 'object', 'input'):
+                    if element.get('border'):
+                        yield specificity, check_style_attribute(
+                            parser, element,
+                            'border-width:%spx;border-style:solid' %
+                            element.get('border'))
 
 
 def evaluate_media_query(query_list, device_media_type):
@@ -435,9 +687,9 @@ def preprocess_stylesheet(device_media_type, base_url, rules, url_fetcher):
                     yield margin_rule, selector_list, declarations
 
 
-def get_all_computed_styles(html, user_stylesheets=None):
-    """Compute all the computed styles of all elements
-    in the given ``html`` document.
+def get_all_computed_styles(html, user_stylesheets=None,
+                            presentational_hints=False):
+    """Compute all the computed styles of all elements in ``html`` document.
 
     Do everything from finding author stylesheets to parsing and applying them.
 
@@ -451,6 +703,10 @@ def get_all_computed_styles(html, user_stylesheets=None):
     ua_stylesheets = html._ua_stylesheets()
     author_stylesheets = list(find_stylesheets(
         element_tree, device_media_type, url_fetcher))
+    if presentational_hints:
+        ph_stylesheets = html._ph_stylesheets()
+    else:
+        ph_stylesheets = []
 
     # keys: (element, pseudo_element_type)
     #    element: a lxml element object or the '@page' string for @page styles
@@ -464,17 +720,18 @@ def get_all_computed_styles(html, user_stylesheets=None):
     #             http://www.w3.org/TR/CSS21/cascade.html#cascading-order
     cascaded_styles = {}
 
-    for sheets, origin in (
+    for sheets, origin, sheet_specificity in (
         # Order here is not important ('origin' is).
         # Use this order for a regression test
-        (ua_stylesheets or [], 'user agent'),
-        (author_stylesheets, 'author'),
-        (user_stylesheets or [], 'user'),
+        (ua_stylesheets or [], 'user agent', None),
+        (ph_stylesheets, 'author', (0, 0, 0, 0)),
+        (author_stylesheets, 'author', None),
+        (user_stylesheets or [], 'user', None),
     ):
         for sheet in sheets:
             for _rule, selector_list, declarations in sheet.rules:
                 for selector in selector_list:
-                    specificity = selector.specificity
+                    specificity = sheet_specificity or selector.specificity
                     pseudo_type = selector.pseudo_element
                     for element in selector.match(element_tree):
                         for name, values, importance in declarations:
@@ -485,8 +742,9 @@ def get_all_computed_styles(html, user_stylesheets=None):
                                 cascaded_styles, name, values, weight,
                                 element, pseudo_type)
 
-    specificity = (1, 0, 0, 0)
-    for element, declarations, base_url in find_style_attributes(element_tree):
+    for specificity, attributes in find_style_attributes(
+            element_tree, presentational_hints):
+        element, declarations, base_url = attributes
         for name, values, importance in preprocess_declarations(
                 base_url, declarations):
             precedence = declaration_precedence('author', importance)

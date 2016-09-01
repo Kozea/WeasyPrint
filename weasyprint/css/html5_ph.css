@@ -1,0 +1,193 @@
+/*
+
+Presentational hints stylsheet for HTML.
+
+This stylesheet contains all the presentational hints rules that can be
+expressed as CSS.
+
+See https://www.w3.org/TR/html5/rendering.html#rendering
+
+TODO: Attribute values are not case-insensitive, but they should be. We can add
+a "i" flag when CSS Selectors Level 4 is supported.
+
+*/
+
+pre[wrap] { white-space: pre-wrap; }
+
+br[clear=left] { clear: left; }
+br[clear=right] { clear: right; }
+br[clear=all], br[clear=both] { clear: both; }
+
+ol[type=1], li[type=1] { list-style-type: decimal; }
+ol[type=a], li[type=a] { list-style-type: lower-alpha; }
+ol[type=A], li[type=A] { list-style-type: upper-alpha; }
+ol[type=i], li[type=i] { list-style-type: lower-roman; }
+ol[type=I], li[type=I] { list-style-type: upper-roman; }
+ul[type=disc], li[type=disc] { list-style-type: disc; }
+ul[type=circle], li[type=circle] { list-style-type: circle; }
+ul[type=square], li[type=square] { list-style-type: square; }
+
+table[align=left] { float: left; }
+table[align=right] { float: right; }
+table[align=center] { margin-left: auto; margin-right: auto; }
+thead[align=absmiddle], tbody[align=absmiddle], tfoot[align=absmiddle],
+tr[align=absmiddle], td[align=absmiddle], th[align=absmiddle] {
+  text-align: center;
+}
+
+caption[align=bottom] { caption-side: bottom; }
+p[align=left], h1[align=left], h2[align=left], h3[align=left],
+h4[align=left], h5[align=left], h6[align=left] {
+  text-align: left;
+}
+p[align=right], h1[align=right], h2[align=right], h3[align=right],
+h4[align=right], h5[align=right], h6[align=right] {
+  text-align: right;
+}
+p[align=center], h1[align=center], h2[align=center], h3[align=center],
+h4[align=center], h5[align=center], h6[align=center] {
+  text-align: center;
+}
+p[align=justify], h1[align=justify], h2[align=justify], h3[align=justify],
+h4[align=justify], h5[align=justify], h6[align=justify] {
+  text-align: justify;
+}
+thead[valign=top], tbody[valign=top], tfoot[valign=top],
+tr[valign=top], td[valign=top], th[valign=top] {
+  vertical-align: top;
+}
+thead[valign=middle], tbody[valign=middle], tfoot[valign=middle],
+tr[valign=middle], td[valign=middle], th[valign=middle] {
+  vertical-align: middle;
+}
+thead[valign=bottom], tbody[valign=bottom], tfoot[valign=bottom],
+tr[valign=bottom], td[valign=bottom], th[valign=bottom] {
+  vertical-align: bottom;
+}
+thead[valign=baseline], tbody[valign=baseline], tfoot[valign=baseline],
+tr[valign=baseline], td[valign=baseline], th[valign=baseline] {
+  vertical-align: baseline;
+}
+
+td[nowrap], th[nowrap] { white-space: nowrap; }
+
+table[rules=none], table[rules=groups], table[rules=rows],
+table[rules=cols], table[rules=all] {
+  border-style: hidden;
+  border-collapse: collapse;
+}
+table[border] { border-style: outset; } /* only if border is not equivalent to zero */
+table[frame=void] { border-style: hidden; }
+table[frame=above] { border-style: outset hidden hidden hidden; }
+table[frame=below] { border-style: hidden hidden outset hidden; }
+table[frame=hsides] { border-style: outset hidden outset hidden; }
+table[frame=lhs] { border-style: hidden hidden hidden outset; }
+table[frame=rhs] { border-style: hidden outset hidden hidden; }
+table[frame=vsides] { border-style: hidden outset; }
+table[frame=box], table[frame=border] { border-style: outset; }
+
+table[border] > tr > td, table[border] > tr > th,
+table[border] > thead > tr > td, table[border] > thead > tr > th,
+table[border] > tbody > tr > td, table[border] > tbody > tr > th,
+table[border] > tfoot > tr > td, table[border] > tfoot > tr > th {
+  /* only if border is not equivalent to zero */
+  border-width: 1px;
+  border-style: inset;
+}
+table[rules=none] > tr > td, table[rules=none] > tr > th,
+table[rules=none] > thead > tr > td, table[rules=none] > thead > tr > th,
+table[rules=none] > tbody > tr > td, table[rules=none] > tbody > tr > th,
+table[rules=none] > tfoot > tr > td, table[rules=none] > tfoot > tr > th,
+table[rules=groups] > tr > td, table[rules=groups] > tr > th,
+table[rules=groups] > thead > tr > td, table[rules=groups] > thead > tr > th,
+table[rules=groups] > tbody > tr > td, table[rules=groups] > tbody > tr > th,
+table[rules=groups] > tfoot > tr > td, table[rules=groups] > tfoot > tr > th,
+table[rules=rows] > tr > td, table[rules=rows] > tr > th,
+table[rules=rows] > thead > tr > td, table[rules=rows] > thead > tr > th,
+table[rules=rows] > tbody > tr > td, table[rules=rows] > tbody > tr > th,
+table[rules=rows] > tfoot > tr > td, table[rules=rows] > tfoot > tr > th {
+  border-width: 1px;
+  border-style: none;
+}
+table[rules=cols] > tr > td, table[rules=cols] > tr > th,
+table[rules=cols] > thead > tr > td, table[rules=cols] > thead > tr > th,
+table[rules=cols] > tbody > tr > td, table[rules=cols] > tbody > tr > th,
+table[rules=cols] > tfoot > tr > td, table[rules=cols] > tfoot > tr > th {
+  border-width: 1px;
+  border-style: none solid;
+}
+table[rules=all] > tr > td, table[rules=all] > tr > th,
+table[rules=all] > thead > tr > td, table[rules=all] > thead > tr > th,
+table[rules=all] > tbody > tr > td, table[rules=all] > tbody > tr > th,
+table[rules=all] > tfoot > tr > td, table[rules=all] > tfoot > tr > th {
+  border-width: 1px;
+  border-style: solid;
+}
+
+table[rules=groups] > colgroup {
+  border-left-width: 1px;
+  border-left-style: solid;
+  border-right-width: 1px;
+  border-right-style: solid;
+}
+table[rules=groups] > thead,
+table[rules=groups] > tbody,
+table[rules=groups] > tfoot {
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+}
+
+table[rules=rows] > tr, table[rules=rows] > thead > tr,
+table[rules=rows] > tbody > tr, table[rules=rows] > tfoot > tr {
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+}
+
+hr[align=left] { margin-left: 0; margin-right: auto; }
+hr[align=right] { margin-left: auto; margin-right: 0; }
+hr[align=center] { margin-left: auto; margin-right: auto; }
+hr[color], hr[noshade] { border-style: solid; }
+
+iframe[frameborder=0], iframe[frameborder=no] { border: none; }
+
+applet[align=left], embed[align=left], iframe[align=left],
+img[align=left], input[type=image][align=left], object[align=left] {
+  float: left;
+}
+
+applet[align=right], embed[align=right], iframe[align=right],
+img[align=right], input[type=image][align=right], object[align=right] {
+  float: right;
+}
+
+applet[align=top], embed[align=top], iframe[align=top],
+img[align=top], input[type=image][align=top], object[align=top] {
+  vertical-align: top;
+}
+
+applet[align=baseline], embed[align=baseline], iframe[align=baseline],
+img[align=baseline], input[type=image][align=baseline], object[align=baseline] {
+  vertical-align: baseline;
+}
+
+applet[align=texttop], embed[align=texttop], iframe[align=texttop],
+img[align=texttop], input[type=image][align=texttop], object[align=texttop] {
+  vertical-align: text-top;
+}
+
+applet[align=absmiddle], embed[align=absmiddle], iframe[align=absmiddle],
+img[align=absmiddle], input[type=image][align=absmiddle], object[align=absmiddle],
+applet[align=abscenter], embed[align=abscenter], iframe[align=abscenter],
+img[align=abscenter], input[type=image][align=abscenter], object[align=abscenter] {
+  vertical-align: middle;
+}
+
+applet[align=bottom], embed[align=bottom], iframe[align=bottom],
+img[align=bottom], input[type=image][align=bottom],
+object[align=bottom] {
+  vertical-align: bottom;
+}

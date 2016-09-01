@@ -39,6 +39,7 @@ if hasattr(sys, "frozen"):
 else:
     root = os.path.dirname(__file__)
 HTML5_UA_STYLESHEET = CSS(filename=os.path.join(root, 'css', 'html5_ua.css'))
+HTML5_PH_STYLESHEET = CSS(filename=os.path.join(root, 'css', 'html5_ph.css'))
 
 LOGGER.setLevel(level)
 
