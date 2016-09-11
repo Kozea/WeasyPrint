@@ -27,7 +27,7 @@ import cairocffi as cairo
 import pytest
 
 from .testing_utils import (
-    resource_filename, assert_no_logs, capture_logs, TestHTML,
+    resource_filename, assert_no_logs, capture_logs, FakeHTML,
     http_server, temp_directory)
 from .test_draw import image_to_pixels
 from ..compat import urljoin, urlencode, urlparse_uses_relative, iteritems
@@ -112,19 +112,19 @@ def test_html_parsing():
         else:
             assert html.base_url is None
 
-    _test_resource(TestHTML, 'doc1.html', check_doc1)
-    _test_resource(TestHTML, 'doc1_UTF-16BE.html', check_doc1,
+    _test_resource(FakeHTML, 'doc1.html', check_doc1)
+    _test_resource(FakeHTML, 'doc1_UTF-16BE.html', check_doc1,
                    encoding='UTF-16BE')
 
     with chdir(os.path.dirname(__file__)):
         filename = os.path.join('resources', 'doc1.html')
         tree = lxml.html.parse(filename)
-        check_doc1(TestHTML(tree=tree, base_url=filename))
-        check_doc1(TestHTML(tree=tree), has_base_url=False)
+        check_doc1(FakeHTML(tree=tree, base_url=filename))
+        check_doc1(FakeHTML(tree=tree), has_base_url=False)
         head, _body = tree.getroot()
         assert head.tag == 'head'
         lxml.etree.SubElement(head, 'base', href='resources/')
-        check_doc1(TestHTML(tree=tree, base_url='.'))
+        check_doc1(FakeHTML(tree=tree, base_url='.'))
 
 
 @assert_no_logs
@@ -228,7 +228,7 @@ def test_python_render():
 
         @media screen { img { transform: rotate(-90deg) } }
     '''
-    html = TestHTML(string=html_string, base_url=base_url)
+    html = FakeHTML(string=html_string, base_url=base_url)
     css = CSS(string=css_string)
 
     png_bytes = html.write_png(stylesheets=[css])
@@ -279,12 +279,12 @@ def test_python_render():
     rotated_png_bytes = html.write_png(stylesheets=[screen_css])
     check_png_pattern(rotated_png_bytes, rotated=True)
 
-    assert TestHTML(
+    assert FakeHTML(
         string=html_string, base_url=base_url, media_type='screen'
     ).write_png(
         stylesheets=[io.BytesIO(css_string.encode('utf8'))]
     ) == rotated_png_bytes
-    assert TestHTML(
+    assert FakeHTML(
         string='<style>%s</style>%s' % (css_string, html_string),
         base_url=base_url, media_type='screen'
     ).write_png() == rotated_png_bytes
@@ -304,13 +304,13 @@ def test_command_line_render():
 
     with chdir(resource_filename('')):
         # Reference
-        html_obj = TestHTML(string=combined, base_url='dummy.html')
+        html_obj = FakeHTML(string=combined, base_url='dummy.html')
         pdf_bytes = html_obj.write_pdf()
         png_bytes = html_obj.write_png()
         x2_png_bytes = html_obj.write_png(resolution=192)
-        rotated_png_bytes = TestHTML(string=combined, base_url='dummy.html',
+        rotated_png_bytes = FakeHTML(string=combined, base_url='dummy.html',
                                      media_type='screen').write_png()
-        empty_png_bytes = TestHTML(
+        empty_png_bytes = FakeHTML(
             string=b'<style>' + css + b'</style>').write_png()
     check_png_pattern(png_bytes)
     check_png_pattern(rotated_png_bytes, rotated=True)
@@ -320,7 +320,7 @@ def test_command_line_render():
         stdin = io.BytesIO(stdin)
         stdout = io.BytesIO()
         try:
-            __main__.HTML = TestHTML
+            __main__.HTML = FakeHTML
             __main__.main(args.split(), stdin=stdin, stdout=stdout)
         finally:
             __main__.HTML = HTML
@@ -420,7 +420,7 @@ def test_unicode_filenames():
         </style>
         <body>
     '''
-    png_bytes = TestHTML(string=html).write_png()
+    png_bytes = FakeHTML(string=html).write_png()
     check_png_pattern(png_bytes)
     # Remember we have __future__.unicode_literals
     unicode_filename = 'Unicödé'
@@ -431,13 +431,13 @@ def test_unicode_filenames():
             # This should be independent of the encoding used by the filesystem
             bytes_filename, = os.listdir(b'.')
 
-            assert TestHTML(unicode_filename).write_png() == png_bytes
-            assert TestHTML(bytes_filename).write_png() == png_bytes
+            assert FakeHTML(unicode_filename).write_png() == png_bytes
+            assert FakeHTML(bytes_filename).write_png() == png_bytes
 
             os.remove(unicode_filename)
             assert os.listdir('.') == []
 
-            TestHTML(string=html).write_png(unicode_filename)
+            FakeHTML(string=html).write_png(unicode_filename)
             assert read_file(bytes_filename) == png_bytes
 
             # Surface.write_to_png does not accept bytes filenames
@@ -446,13 +446,13 @@ def test_unicode_filenames():
                 os.remove(unicode_filename)
                 assert os.listdir('.') == []
 
-                TestHTML(string=html).write_png(bytes_filename)
+                FakeHTML(string=html).write_png(bytes_filename)
                 assert read_file(unicode_filename) == png_bytes
 
 
 @assert_no_logs
 def test_low_level_api():
-    html = TestHTML(string='<body>')
+    html = FakeHTML(string='<body>')
     css = CSS(string='''
         @page { margin: 2px; size: 8px; background: #fff }
         html { background: #00f; }
@@ -506,7 +506,7 @@ def test_low_level_api():
     # A resolution that is not multiple of 96:
     assert png_size(document.write_png(resolution=145.2)) == (13, 13)
 
-    document = TestHTML(string='''
+    document = FakeHTML(string='''
         <style>
             @page:first { size: 5px 10px } @page { size: 6px 4px }
             p { page-break-before: always }
@@ -552,7 +552,7 @@ def round_meta(pages):
 @assert_no_logs
 def test_bookmarks():
     def assert_bookmarks(html, expected_by_page, expected_tree, round=False):
-        document = TestHTML(string=html).render()
+        document = FakeHTML(string=html).render()
         if round:
             round_meta(document.pages)
         assert [p.bookmarks for p in document.pages] == expected_by_page
@@ -691,7 +691,7 @@ def test_links():
                      base_url=resource_filename('<inline HTML>'),
                      warnings=(), round=False):
         with capture_logs() as logs:
-            document = TestHTML(string=html, base_url=base_url).render()
+            document = FakeHTML(string=html, base_url=base_url).render()
             if round:
                 round_meta(document.pages)
             resolved_links = list(document.resolve_links())
@@ -908,7 +908,7 @@ def test_url_fetcher():
     ''', base_url=base_url)
 
     def test(html, blank=False):
-        html = TestHTML(string=html, url_fetcher=fetcher, base_url=base_url)
+        html = FakeHTML(string=html, url_fetcher=fetcher, base_url=base_url)
         check_png_pattern(html.write_png(stylesheets=[css]), blank=blank)
 
     test('<body><img src="pattern.png">')  # Test a "normal" URL
@@ -928,7 +928,7 @@ def test_url_fetcher():
     def fetcher_2(url):
         assert url == 'weasyprint-custom:%C3%A9_%e9.css'
         return dict(string='', mime_type='text/css')
-    TestHTML(string='<link rel=stylesheet href="weasyprint-custom:'
+    FakeHTML(string='<link rel=stylesheet href="weasyprint-custom:'
                     'é_%e9.css"><body>', url_fetcher=fetcher_2).render()
 
 
@@ -943,7 +943,7 @@ def test_html_meta():
         meta.setdefault('created', None)
         meta.setdefault('modified', None)
         meta.setdefault('attachments', [])
-        assert vars(TestHTML(string=html).render().metadata) == meta
+        assert vars(FakeHTML(string=html).render().metadata) == meta
 
     assert_meta('<body>')
     assert_meta(

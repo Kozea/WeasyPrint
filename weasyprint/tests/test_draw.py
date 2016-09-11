@@ -27,7 +27,7 @@ from ..urls import ensure_url
 from ..html import HTML_HANDLERS
 from .. import HTML
 from .testing_utils import (
-    resource_filename, TestHTML, FONTS, assert_no_logs, capture_logs)
+    resource_filename, FakeHTML, FONTS, assert_no_logs, capture_logs)
 
 
 # RGBA to native-endian ARGB
@@ -141,7 +141,7 @@ def html_to_pixels(name, expected_width, expected_height, html):
 
     Also return the document to aid debugging.
     """
-    document = TestHTML(
+    document = FakeHTML(
         string=html,
         # Dummy filename, but in the right directory.
         base_url=resource_filename('<test>'))
@@ -2236,7 +2236,7 @@ def test_unicode():
             fd.write(html_content.encode('utf8'))
 
         # TODO: change this back to actually read from a file
-        document = TestHTML(html, encoding='utf8')
+        document = FakeHTML(html, encoding='utf8')
         lines = document_to_pixels(document, 'unicode', 200, 50)
         assert_pixels_equal('unicode', 200, 50, lines, expected_lines)
     finally:

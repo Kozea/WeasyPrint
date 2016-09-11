@@ -24,7 +24,7 @@ from .. import pdf
 from ..images import CAIRO_HAS_MIME_DATA
 from ..urls import path2url
 from .testing_utils import (
-    assert_no_logs, resource_filename, TestHTML, capture_logs, temp_directory)
+    assert_no_logs, resource_filename, FakeHTML, capture_logs, temp_directory)
 
 
 @assert_no_logs
@@ -47,17 +47,17 @@ def test_pdf_parser():
 
 @assert_no_logs
 def test_page_size():
-    pdf_bytes = TestHTML(string='<style>@page{size:3in 4in').write_pdf()
+    pdf_bytes = FakeHTML(string='<style>@page{size:3in 4in').write_pdf()
     assert b'/MediaBox [ 0 0 216 288 ]' in pdf_bytes
 
-    pdf_bytes = TestHTML(string='<style>@page{size:3in 4in').write_pdf(
+    pdf_bytes = FakeHTML(string='<style>@page{size:3in 4in').write_pdf(
         zoom=1.5)
     assert b'/MediaBox [ 0 0 324 432 ]' in pdf_bytes
 
 
 def get_metadata(html, base_url=resource_filename('<inline HTML>'), zoom=1):
     return pdf.prepare_metadata(
-        TestHTML(string=html, base_url=base_url).render(stylesheets=[
+        FakeHTML(string=html, base_url=base_url).render(stylesheets=[
             CSS(string='@page { size: 500pt 1000pt; margin: 50pt }')]),
         bookmark_root_id=0, scale=zoom * 0.75)
 
@@ -306,7 +306,7 @@ def test_jpeg():
         pytest.xfail()
 
     def render(html):
-        return TestHTML(base_url=resource_filename('dummy.html'),
+        return FakeHTML(base_url=resource_filename('dummy.html'),
                         string=html).write_pdf()
     assert b'/Filter /DCTDecode' not in render('<img src="pattern.gif">')
     # JPEG-encoded image, embedded in PDF:
@@ -315,7 +315,7 @@ def test_jpeg():
 
 @assert_no_logs
 def test_document_info():
-    pdf_bytes = TestHTML(string='''
+    pdf_bytes = FakeHTML(string='''
         <meta name=author content="I Me &amp; Myself">
         <title>Test document</title>
         <h1>Another title</h1>
@@ -355,7 +355,7 @@ def test_embedded_files():
             with open(relative_tmp_file, 'wb') as rfile:
                 rfile.write(rdata)
 
-            pdf_bytes = TestHTML(
+            pdf_bytes = FakeHTML(
                 string='''
                     <title>Test document</title>
                     <meta charset="utf-8">
@@ -405,7 +405,7 @@ def test_embedded_files():
     assert b'/EmbeddedFiles' in pdf_bytes
     assert b'/Outlines' in pdf_bytes
 
-    pdf_bytes = TestHTML(string='''
+    pdf_bytes = FakeHTML(string='''
         <title>Test document 2</title>
         <meta charset="utf-8">
         <link
@@ -417,7 +417,7 @@ def test_embedded_files():
     assert b'/EmbeddedFiles' in pdf_bytes
     assert b'/Outlines' not in pdf_bytes
 
-    pdf_bytes = TestHTML(string='''
+    pdf_bytes = FakeHTML(string='''
         <title>Test document 3</title>
         <meta charset="utf-8">
         <h1>Heading</h1>
@@ -426,7 +426,7 @@ def test_embedded_files():
     assert b'/EmbeddedFiles' not in pdf_bytes
     assert b'/Outlines' in pdf_bytes
 
-    pdf_bytes = TestHTML(string='''
+    pdf_bytes = FakeHTML(string='''
         <title>Test document 4</title>
         <meta charset="utf-8">
     ''').write_pdf()
@@ -437,7 +437,7 @@ def test_embedded_files():
 
 @assert_no_logs
 def test_annotation_files():
-    pdf_bytes = TestHTML(string='''
+    pdf_bytes = FakeHTML(string='''
         <title>Test document</title>
         <meta charset="utf-8">
         <a

@@ -17,7 +17,7 @@ import pprint
 import difflib
 
 from .testing_utils import (
-    resource_filename, TestHTML, assert_no_logs, capture_logs)
+    resource_filename, FakeHTML, assert_no_logs, capture_logs)
 from ..css import get_all_computed_styles
 from .. import images
 from ..formatting_structure import boxes, build, counters
@@ -81,7 +81,7 @@ def _parse_base(
         html_content,
         # Dummy filename, but in the right directory.
         base_url=resource_filename('<test>')):
-    document = TestHTML(string=html_content, base_url=base_url)
+    document = FakeHTML(string=html_content, base_url=base_url)
     style_for = get_all_computed_styles(document)
     get_image_from_uri = functools.partial(
         images.get_image_from_uri, {}, document.url_fetcher)
@@ -104,7 +104,7 @@ def parse_all(html_content, base_url=resource_filename('<test>')):
 
 def render_pages(html_content):
     """Lay out a document and return a list of PageBox objects."""
-    return [p._page_box for p in TestHTML(
+    return [p._page_box for p in FakeHTML(
             string=html_content, base_url=resource_filename('<test>')
             ).render(enable_hinting=True).pages]
 
@@ -399,7 +399,7 @@ def test_whitespace():
 @assert_no_logs
 def test_page_style():
     """Test the management of page styles."""
-    style_for = get_all_computed_styles(TestHTML(string='''
+    style_for = get_all_computed_styles(FakeHTML(string='''
         <style>
             @page { margin: 3px }
             @page :first { margin-top: 20px }

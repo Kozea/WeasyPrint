@@ -15,7 +15,7 @@ from __future__ import division, unicode_literals
 from pytest import raises
 
 from .testing_utils import (
-    resource_filename, assert_no_logs, capture_logs, TestHTML)
+    resource_filename, assert_no_logs, capture_logs, FakeHTML)
 from .. import css
 from ..css import get_all_computed_styles
 from ..css.computed_values import strut_layout
@@ -72,7 +72,7 @@ def test_style_dict():
 @assert_no_logs
 def test_find_stylesheets():
     """Test if the stylesheets are found in a HTML document."""
-    document = TestHTML(resource_filename('doc1.html'))
+    document = FakeHTML(resource_filename('doc1.html'))
 
     sheets = list(css.find_stylesheets(
         document.root_element, 'print', default_url_fetcher))
@@ -125,7 +125,7 @@ def test_annotate_document():
     """Test a document with inline style."""
     # Short names for variables are OK here
     # pylint: disable=C0103
-    document = TestHTML(resource_filename('doc1.html'))
+    document = FakeHTML(resource_filename('doc1.html'))
     document._ua_stylesheets = lambda: [CSS(resource_filename('mini_ua.css'))]
     style_for = get_all_computed_styles(
         document, user_stylesheets=[CSS(resource_filename('user.css'))])
@@ -216,7 +216,7 @@ def test_annotate_document():
 @assert_no_logs
 def test_page():
     """Test the ``@page`` properties."""
-    document = TestHTML(resource_filename('doc1.html'))
+    document = FakeHTML(resource_filename('doc1.html'))
     style_for = get_all_computed_styles(
         document, user_stylesheets=[CSS(string='''
             html {
@@ -300,7 +300,7 @@ def test_warnings():
 
     html = '<link rel=stylesheet href=invalid-protocol://absolute>'
     with capture_logs() as logs:
-        TestHTML(string=html).render()
+        FakeHTML(string=html).render()
     assert len(logs) == 1
     assert 'WARNING: Failed to load stylesheet at' in logs[0]
 
@@ -308,14 +308,14 @@ def test_warnings():
 @assert_no_logs
 def test_error_recovery():
     with capture_logs() as logs:
-        document = TestHTML(string='''
+        document = FakeHTML(string='''
             <style> html { color red; color: blue; color
         ''')
         page, = document.render().pages
         html, = page._page_box.children
         assert html.style.color == (0, 0, 1, 1)  # blue
 
-        document = TestHTML(string='''
+        document = FakeHTML(string='''
             <html style="color; color: blue; color red">
         ''')
         page, = document.render().pages
@@ -326,7 +326,7 @@ def test_error_recovery():
 
 @assert_no_logs
 def test_line_height_inheritance():
-    document = TestHTML(string='''
+    document = FakeHTML(string='''
         <style>
             html { font-size: 10px; line-height: 140% }
             section { font-size: 10px; line-height: 1.4 }
@@ -354,7 +354,7 @@ def test_line_height_inheritance():
 
 @assert_no_logs
 def test_important():
-    document = TestHTML(string='''
+    document = FakeHTML(string='''
         <style>
             p:nth-child(1) { color: lime }
             body p:nth-child(2) { color: red }
@@ -390,7 +390,7 @@ def test_important():
 
 @assert_no_logs
 def test_units():
-    document = TestHTML(string='''
+    document = FakeHTML(string='''
         <p style="margin-left: 96px"></p>
         <p style="margin-left: 1in"></p>
         <p style="margin-left: 72pt"></p>

@@ -34,7 +34,7 @@ TEST_UA_STYLESHEET = CSS(filename=os.path.join(
 ))
 
 
-class TestHTML(HTML):
+class FakeHTML(HTML):
     """Like weasyprint.HTML, but with a lighter UA stylesheet."""
     def _ua_stylesheets(self):
         return [TEST_UA_STYLESHEET]
