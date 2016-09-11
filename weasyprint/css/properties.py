@@ -112,10 +112,18 @@ INITIAL_VALUES = {
 
     # Fonts 3: https://www.w3.org/TR/css-fonts-3/
     'font_family': ['serif'],  # depends on user agent
+    'font_feature_settings': (),  # computed value for 'none'
+    'font_kerning': 'auto',
     'font_size': 16,  # actually medium, but we define medium from this
     'font_stretch': 'normal',
     'font_style': 'normal',
     'font_variant': 'normal',
+    'font_variant_alternates': 'normal',
+    'font_variant_caps': 'normal',
+    'font_variant_east_asian': 'normal',
+    'font_variant_ligatures': 'normal',
+    'font_variant_numeric': 'normal',
+    'font_variant_position': 'normal',
     'font_weight': 400,
 
     # Fragmentation 3: https://www.w3.org/TR/css-break-3/
@@ -217,10 +225,18 @@ INHERITED = set("""
     direction
     empty_cells
     font_family
+    font_feature_settings
+    font_kerning
     font_size
     font_style
     font_stretch
     font_variant
+    font_variant_alternates
+    font_variant_caps
+    font_variant_east_asian
+    font_variant_ligatures
+    font_variant_numeric
+    font_variant_position
     font_weight
     hyphens
     hyphenate_character

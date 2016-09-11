@@ -470,7 +470,7 @@ def test_font():
     }
     assert expand_to_dict('font: small-caps italic 700 large serif') == {
         'font_style': 'italic',
-        'font_variant': 'small-caps',
+        'font_variant_caps': 'small-caps',
         'font_weight': 700,
         'font_size': 'large',
         'font_family': ['serif'],
@@ -480,7 +480,7 @@ def test_font():
     ) == {
         # 'font_style': 'normal',  XXX shouldn’t this be here?
         'font_stretch': 'condensed',
-        'font_variant': 'small-caps',
+        'font_variant_caps': 'small-caps',
         'font_weight': 700,
         'font_size': 'large',
         'font_family': ['serif'],
@@ -493,6 +493,57 @@ def test_font():
     assert_invalid('font: 12px')
     assert_invalid('font: 12px/foo serif')
     assert_invalid('font: 12px "Invalid" family')
+
+
+@assert_no_logs
+def test_font_variant():
+    """Test the ``font-variant`` property."""
+    assert expand_to_dict('font-variant: normal') == {
+        'font_variant_alternates': 'normal',
+        'font_variant_caps': 'normal',
+        'font_variant_east_asian': 'normal',
+        'font_variant_ligatures': 'normal',
+        'font_variant_numeric': 'normal',
+        'font_variant_position': 'normal',
+    }
+    assert expand_to_dict('font-variant: none') == {
+        'font_variant_alternates': 'normal',
+        'font_variant_caps': 'normal',
+        'font_variant_east_asian': 'normal',
+        'font_variant_ligatures': 'none',
+        'font_variant_numeric': 'normal',
+        'font_variant_position': 'normal',
+    }
+    assert expand_to_dict('font-variant: historical-forms petite-caps') == {
+        'font_variant_alternates': 'historical-forms',
+        'font_variant_caps': 'petite-caps',
+    }
+    assert expand_to_dict('font-variant: lining-nums '
+                          'contextual small-caps common-ligatures') == {
+            'font_variant_ligatures': ['contextual', 'common-ligatures'],
+            'font_variant_numeric': ['lining-nums'],
+            'font_variant_caps': 'small-caps',
+        }
+    assert expand_to_dict(
+        'font-variant: jis78 ruby proportional-width') == {
+            'font_variant_east_asian': ['jis78', 'ruby', 'proportional-width'],
+        }
+    # CSS2-style font-variant
+    assert expand_to_dict(
+        'font-variant: small-caps') == {
+            'font_variant_caps': 'small-caps',
+        }
+    assert_invalid('font-variant: normal normal')
+    assert_invalid('font-variant: 2')
+    assert_invalid('font-variant: ""')
+    assert_invalid('font-variant: extra')
+    assert_invalid('font-variant: jis78 jis04')
+    assert_invalid('font-variant: full-width lining-nums ordinal normal')
+    assert_invalid('font-variant: diagonal-fractions stacked-fractions')
+    assert_invalid(
+        'font-variant: common-ligatures contextual no-common-ligatures')
+    assert_invalid('font-variant: sub super')
+    assert_invalid('font-variant: slashed-zero slashed-zero')
 
 
 @assert_no_logs

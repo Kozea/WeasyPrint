@@ -19,6 +19,7 @@ import cairocffi as cairo
 import re
 
 from .compat import basestring
+from .logger import LOGGER
 
 
 ffi = cffi.FFI()
@@ -42,11 +43,6 @@ ffi.cdef('''
         PANGO_WEIGHT_HEAVY = 900,
         PANGO_WEIGHT_ULTRAHEAVY = 1000
     } PangoWeight;
-
-    typedef enum {
-        PANGO_VARIANT_NORMAL,
-        PANGO_VARIANT_SMALL_CAPS
-    } PangoVariant;
 
     typedef enum {
         PANGO_STRETCH_ULTRA_CONDENSED,
@@ -95,6 +91,7 @@ ffi.cdef('''
         gint         length;
         /* ... */
     } PangoLayoutLine;
+    typedef char gchar;
 
     double              pango_units_to_double               (int i);
     int                 pango_units_from_double             (double d);
@@ -123,9 +120,6 @@ ffi.cdef('''
     void pango_font_description_set_family (
         PangoFontDescription *desc, const char *family);
 
-    void pango_font_description_set_variant (
-        PangoFontDescription *desc, PangoVariant variant);
-
     void pango_font_description_set_style (
         PangoFontDescription *desc, PangoStyle style);
 
@@ -144,6 +138,8 @@ ffi.cdef('''
     void                pango_attr_list_insert          (
         PangoAttrList *list, PangoAttribute *attr);
 
+    PangoAttribute *    pango_attr_font_features_new    (
+        const gchar *features);
     PangoAttribute *    pango_attr_letter_spacing_new   (int letter_spacing);
     void                pango_attribute_destroy         (PangoAttribute *attr);
 
@@ -231,11 +227,6 @@ PANGO_STYLE = {
     'normal': pango.PANGO_STYLE_NORMAL,
     'oblique': pango.PANGO_STYLE_OBLIQUE,
     'italic': pango.PANGO_STYLE_ITALIC,
-}
-
-PANGO_VARIANT = {
-    'normal': pango.PANGO_VARIANT_NORMAL,
-    'small-caps': pango.PANGO_VARIANT_SMALL_CAPS,
 }
 
 PANGO_STRETCH = {
@@ -336,8 +327,6 @@ class Layout(object):
             'font_family should be a list')
         family_p, family = unicode_to_char_p(','.join(style.font_family))
         pango.pango_font_description_set_family(font, family_p)
-        pango.pango_font_description_set_variant(
-            font, PANGO_VARIANT[style.font_variant])
         pango.pango_font_description_set_style(
             font, PANGO_STYLE[style.font_style])
         pango.pango_font_description_set_stretch(
@@ -406,6 +395,103 @@ class FontMetrics(object):
                 getattr(pango, 'pango_font_metrics_get_' + key)(self.metrics))
 
 
+def get_font_features_from_style(style):
+    """Get the font features from the different properties in style.
+
+    See https://www.w3.org/TR/css-fonts-3/#feature-precedence
+
+    """
+    features = {}
+    ligature_keys = {
+        'common-ligatures': ['liga', 'clig'],
+        'historical-ligatures': ['hlig'],
+        'discretionary-ligatures': ['dlig'],
+        'contextual': ['calt']}
+    caps_keys = {
+        'small-caps': ['smcp'],
+        'all-small-caps': ['c2sc', 'smcp'],
+        'petite-caps': ['pcap'],
+        'all-petite-caps': ['c2pc', 'pcap'],
+        'unicase': ['unic'],
+        'titling-caps': ['titl']}
+    numeric_keys = {
+        'lining-nums': 'lnum',
+        'oldstyle-nums': 'onum',
+        'proportional-nums': 'pnum',
+        'tabular-nums': 'tnum',
+        'diagonal-fractions': 'frac',
+        'stacked-fractions': 'afrc',
+        'ordinal': 'ordn',
+        'slashed-zero': 'zero'}
+    east_asian_keys = {
+        'jis78': 'jp78',
+        'jis83': 'jp83',
+        'jis90': 'jp90',
+        'jis04': 'jp04',
+        'simplified': 'smpl',
+        'traditional': 'trad',
+        'full-width': 'fwid',
+        'proportional-width': 'pwid',
+        'ruby': 'ruby'}
+
+    # Step 1 is getting the default, we rely on Pango for this
+    # Steps 2 and 3 are related to the unsupported @font-face rule
+
+    # Step 4: font-variant and OpenType features
+
+    if style.font_kerning != 'auto':
+        features['kern'] = int(style.font_kerning == 'normal')
+
+    if style.font_variant_ligatures == 'none':
+        for keys in ligature_keys.values():
+            for key in keys:
+                features[key] = 0
+    elif style.font_variant_ligatures != 'normal':
+        for ligature_type in style.font_variant_ligatures:
+            value = 1
+            if ligature_type.startswith('no-'):
+                value = 0
+                ligature_type = ligature_type[3:]
+            for key in ligature_keys[ligature_type]:
+                features[key] = value
+
+    if style.font_variant_position == 'sub':
+        # TODO: the specification asks for additional checks
+        # https://www.w3.org/TR/css-fonts-3/#font-variant-position-prop
+        features['subs'] = 1
+    elif style.font_variant_position == 'super':
+        features['sups'] = 1
+
+    if style.font_variant_caps != 'normal':
+        # TODO: the specification asks for additional checks
+        # https://www.w3.org/TR/css-fonts-3/#font-variant-caps-prop
+        for key in caps_keys[style.font_variant_caps]:
+            features[key] = 1
+
+    if style.font_variant_numeric != 'normal':
+        for key in style.font_variant_numeric:
+            features[numeric_keys[key]] = 1
+
+    if style.font_variant_alternates != 'normal':
+        # TODO: support other values
+        # See https://www.w3.org/TR/css-fonts-3/#font-variant-caps-prop
+        if style.font_variant_alternates == 'historical-forms':
+            features['hist'] = 1
+
+    if style.font_variant_east_asian != 'normal':
+        for key in style.font_variant_east_asian:
+            features[east_asian_keys[key]] = 1
+
+    # Step 5 is alread handled by Pango
+
+    # Step 6: font-feature-settings
+
+    if style.font_feature_settings:
+        features.update(dict(style.font_feature_settings))
+
+    return features
+
+
 def create_layout(text, style, hinting, max_width):
     """Return an opaque Pango layout with default Pango line-breaks.
 
@@ -426,6 +512,8 @@ def create_layout(text, style, hinting, max_width):
         pango.pango_layout_set_width(
             layout.layout, units_from_double(max_width))
 
+    text_bytes = layout.text_bytes
+
     # Word and letter spacings
     word_spacing = style.word_spacing
     letter_spacing = style.letter_spacing
@@ -442,7 +530,6 @@ def create_layout(text, style, hinting, max_width):
             attr.end_index = end
             pango.pango_attr_list_insert(attr_list, attr)
 
-        text_bytes = layout.text_bytes
         add_attr(0, len(text_bytes) + 1, letter_spacing)
         position = text_bytes.find(b' ')
         while position != -1:
@@ -450,6 +537,21 @@ def create_layout(text, style, hinting, max_width):
             position = text_bytes.find(b' ', position + 1)
         pango.pango_layout_set_attributes(layout.layout, attr_list)
         pango.pango_attr_list_unref(attr_list)
+
+    features = get_font_features_from_style(style)
+    if features:
+        features = ','.join(
+            ('%s %i' % (key, value)) for key, value in features.items())
+        try:
+            attr = pango.pango_attr_font_features_new(features.encode('ascii'))
+        except AttributeError:
+            LOGGER.warning(
+                'OpenType features are not available with Pango < 1.38')
+        else:
+            attr_list = pango.pango_attr_list_new()
+            pango.pango_attr_list_insert(attr_list, attr)
+            pango.pango_layout_set_attributes(layout.layout, attr_list)
+            pango.pango_attr_list_unref(attr_list)
 
     # Tabs width
     if style.tab_size != 8:  # Default Pango value is 8

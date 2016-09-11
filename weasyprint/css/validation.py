@@ -883,6 +883,153 @@ def font_family(tokens):
 
 
 @validator()
+@single_keyword
+def font_kerning(keyword):
+    return keyword in ('auto', 'normal', 'none')
+
+
+@validator()
+def font_variant_ligatures(tokens):
+    if len(tokens) == 1:
+        keyword = get_keyword(tokens[0])
+        if keyword in ('normal', 'none'):
+            return keyword
+    values = []
+    couples = (
+        ('common-ligatures', 'no-common-ligatures'),
+        ('historical-ligatures', 'no-historical-ligatures'),
+        ('discretionary-ligatures', 'no-discretionary-ligatures'),
+        ('contextual', 'no-contextual'))
+    all_values = []
+    for couple in couples:
+        all_values.extend(couple)
+    for token in tokens:
+        if token.type != 'IDENT':
+            return None
+        if token.value in all_values:
+            concurrent_values = [
+                couple for couple in couples if token.value in couple][0]
+            if any(value in values for value in concurrent_values):
+                return None
+            else:
+                values.append(token.value)
+        else:
+            return None
+    if values:
+        return values
+
+
+@validator()
+@single_keyword
+def font_variant_position(keyword):
+    return keyword in ('normal', 'sub', 'super')
+
+
+@validator()
+@single_keyword
+def font_variant_caps(keyword):
+    return keyword in (
+        'normal', 'small-caps', 'all-small-caps', 'petite-caps',
+        'all-petite-caps', 'unicase', 'titling-caps')
+
+
+@validator()
+def font_variant_numeric(tokens):
+    if len(tokens) == 1:
+        keyword = get_keyword(tokens[0])
+        if keyword == 'normal':
+            return keyword
+    values = []
+    couples = (
+        ('lining-nums', 'oldstyle-nums'),
+        ('proportional-nums', 'tabular-nums'),
+        ('diagonal-fractions', 'stacked-fractions'),
+        ('ordinal',), ('slashed-zero',))
+    all_values = []
+    for couple in couples:
+        all_values.extend(couple)
+    for token in tokens:
+        if token.type != 'IDENT':
+            return None
+        if token.value in all_values:
+            concurrent_values = [
+                couple for couple in couples if token.value in couple][0]
+            if any(value in values for value in concurrent_values):
+                return None
+            else:
+                values.append(token.value)
+        else:
+            return None
+    if values:
+        return values
+
+
+@validator()
+@comma_separated_list
+def font_feature_settings(tokens):
+    """``font-feature-settings`` property validation."""
+    # TODO: because of comma_separated_list, this validator allows
+    # erratic values like "normal, normal", or "normal, 'kern'"
+    feature, value = None, None
+
+    if len(tokens) == 2:
+        token = tokens.pop()
+        if token.type == 'IDENT':
+            value = {'on': 1, 'off': 0}.get(token.value)
+        elif token.type == 'INTEGER' and token.value >= 0:
+            value = token.value
+    elif len(tokens) == 1:
+        value = 1
+
+    if len(tokens) == 1:
+        token = tokens.pop()
+        if token.type == 'STRING' and len(token.value) == 4:
+            if all(0x20 <= ord(letter) <= 0x7f for letter in token.value):
+                feature = token.value
+
+    if feature is not None and value is not None:
+        return feature, value
+
+
+@validator()
+@single_keyword
+def font_variant_alternates(keyword):
+    # TODO: support other values
+    # See https://www.w3.org/TR/css-fonts-3/#font-variant-caps-prop
+    return keyword in ('normal', 'historical-forms')
+
+
+@validator()
+def font_variant_east_asian(tokens):
+    if len(tokens) == 1:
+        keyword = get_keyword(tokens[0])
+        if keyword == 'normal':
+            return keyword
+    values = []
+    couples = (
+        ('jis78', 'jis83', 'jis90', 'jis04', 'simplified', 'traditional'),
+        ('full-width', 'proportional-width'),
+        ('ruby',))
+    all_values = []
+    for couple in couples:
+        all_values.extend(couple)
+    for token in tokens:
+        if token.type != 'IDENT':
+            return None
+        if token.value in all_values:
+            concurrent_values = [
+                couple for couple in couples if token.value in couple][0]
+            if any(value in values for value in concurrent_values):
+                return None
+            else:
+                values.append(token.value)
+        else:
+            return None
+    if values:
+        return values
+
+
+@validator()
 @single_token
 def font_size(token):
     """``font-size`` property validation."""
@@ -912,13 +1059,6 @@ def font_stretch(keyword):
         'ultra-condensed', 'extra-condensed', 'condensed', 'semi-condensed',
         'normal',
         'semi-expanded', 'expanded', 'extra-expanded', 'ultra-expanded')
-
-
-@validator()
-@single_keyword
-def font_variant(keyword):
-    """``font-variant`` property validation."""
-    return keyword in ('normal', 'small-caps')
 
 
 @validator()
@@ -1805,13 +1945,66 @@ def expand_columns(name, tokens):
         yield name, [token]
 
 
+class NoneFakeToken(object):
+    type = 'IDENT'
+    value = 'none'
+
+
+class NormalFakeToken(object):
+    type = 'IDENT'
+    value = 'normal'
+
+
+@expander('font-variant')
+@generic_expander('-alternates', '-caps', '-east-asian', '-ligatures',
+                  '-numeric', '-position')
+def expand_font_variant(name, tokens):
+    """Expand the ``font-variant`` shorthand property.
+
+    https://www.w3.org/TR/css-fonts-3/#font-variant-prop
+
+    """
+    keyword = get_single_keyword(tokens)
+    if keyword in ('normal', 'none'):
+        for suffix in (
+                '-alternates', '-caps', '-east-asian', '-numeric',
+                '-position'):
+            yield suffix, [NormalFakeToken]
+        token = NormalFakeToken if keyword == 'normal' else NoneFakeToken
+        yield '-ligatures', [token]
+    else:
+        features = {
+            'alternates': [],
+            'caps': [],
+            'east-asian': [],
+            'ligatures': [],
+            'numeric': [],
+            'position': []}
+        for token in tokens:
+            keyword = get_keyword(token)
+            if keyword == 'normal':
+                # We don't allow 'normal', only the specific values
+                raise InvalidValues
+            for feature in features:
+                function_name = 'font_variant_%s' % feature.replace('-', '_')
+                if globals()[function_name]([token]):
+                    features[feature].append(token)
+                    break
+            else:
+                raise InvalidValues
+        for feature, tokens in features.items():
+            if tokens:
+                yield '-%s' % feature, tokens
+
+
 @expander('font')
-@generic_expander('-style', '-variant', '-weight', '-stretch', '-size',
+@generic_expander('-style', '-variant-caps', '-weight', '-stretch', '-size',
                   'line-height', '-family')  # line-height is not a suffix
 def expand_font(name, tokens):
     """Expand the ``font`` shorthand property.
 
-    http://www.w3.org/TR/CSS21/fonts.html#font-shorthand
+    https://www.w3.org/TR/css-fonts-3/#font-prop
+
     """
     expand_font_keyword = get_single_keyword(tokens)
     if expand_font_keyword in ('caption', 'icon', 'menu', 'message-box',
@@ -1832,8 +2025,8 @@ def expand_font(name, tokens):
 
         if font_style([token]) is not None:
             suffix = '-style'
-        elif font_variant([token]) is not None:
-            suffix = '-variant'
+        elif get_keyword(token) in ('normal', 'small-caps'):
+            suffix = '-variant-caps'
         elif font_weight([token]) is not None:
             suffix = '-weight'
         elif font_stretch([token]) is not None:
