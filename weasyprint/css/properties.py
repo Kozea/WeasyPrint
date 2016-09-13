@@ -114,6 +114,7 @@ INITIAL_VALUES = {
     'font_family': ['serif'],  # depends on user agent
     'font_feature_settings': (),  # computed value for 'none'
     'font_kerning': 'auto',
+    'font_language_override': 'normal',
     'font_size': 16,  # actually medium, but we define medium from this
     'font_stretch': 'normal',
     'font_style': 'normal',
@@ -227,6 +228,7 @@ INHERITED = set("""
     font_family
     font_feature_settings
     font_kerning
+    font_language_override
     font_size
     font_style
     font_stretch

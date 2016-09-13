@@ -889,6 +889,16 @@ def font_kerning(keyword):
 
 
 @validator()
+@single_token
+def font_language_override(token):
+    keyword = get_keyword(token)
+    if keyword == 'normal':
+        return keyword
+    elif token.type == 'STRING':
+        return token.value
+
+
+@validator()
 def font_variant_ligatures(tokens):
     if len(tokens) == 1:
         keyword = get_keyword(tokens[0])

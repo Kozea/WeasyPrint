@@ -148,16 +148,20 @@ ffi.cdef('''
         gint first_position, ...);
     void pango_tab_array_free (PangoTabArray *tab_array);
 
-    PangoLayoutIter * pango_layout_get_iter (PangoLayout *layout);
+    PangoLayoutIter *   pango_layout_get_iter (PangoLayout *layout);
     void pango_layout_iter_free (PangoLayoutIter *iter);
 
     gboolean pango_layout_iter_next_line (PangoLayoutIter *iter);
 
-    PangoLayoutLine * pango_layout_iter_get_line_readonly (
+    PangoLayoutLine *   pango_layout_iter_get_line_readonly (
         PangoLayoutIter *iter);
 
     int pango_layout_iter_get_baseline (PangoLayoutIter *iter);
 
+    PangoLanguage *     pango_language_from_string (const char *language);
+    PangoLanguage *     pango_language_get_default (void);
+    void                pango_context_set_language (
+        PangoContext *context, PangoLanguage *language);
 
     typedef struct  {
         int x;
@@ -170,8 +174,9 @@ ffi.cdef('''
         PangoLayoutLine *line,
         PangoRectangle *ink_rect, PangoRectangle *logical_rect);
 
-    PangoContext *      pango_layout_get_context    (PangoLayout *layout);
-    PangoFontMetrics *  pango_context_get_metrics   (
+    PangoContext *      pango_layout_get_context     (PangoLayout *layout);
+    void                pango_layout_context_changed (PangoLayout *layout);
+    PangoFontMetrics *  pango_context_get_metrics    (
         PangoContext *context, const PangoFontDescription *desc,
         PangoLanguage *language);
 
@@ -245,6 +250,286 @@ PANGO_WRAP_MODE = {
     'WRAP_WORD': pango.PANGO_WRAP_WORD,
     'WRAP_CHAR': pango.PANGO_WRAP_CHAR,
     'WRAP_WORD_CHAR': pango.PANGO_WRAP_WORD_CHAR
+}
+
+# From http://www.microsoft.com/typography/otspec/languagetags.htm
+LST_TO_ISO = {
+    'aba': 'abq',
+    'afk': 'afr',
+    'afr': 'aar',
+    'agw': 'ahg',
+    'als': 'gsw',
+    'alt': 'atv',
+    'ari': 'aiw',
+    'ark': 'mhv',
+    'ath': 'apk',
+    'avr': 'ava',
+    'bad': 'bfq',
+    'bad0': 'bad',
+    'bag': 'bfy',
+    'bal': 'krc',
+    'bau': 'bci',
+    'bch': 'bcq',
+    'bgr': 'bul',
+    'bil': 'byn',
+    'bkf': 'bla',
+    'bli': 'bal',
+    'bln': 'bjt',
+    'blt': 'bft',
+    'bmb': 'bam',
+    'bri': 'bra',
+    'brm': 'mya',
+    'bsh': 'bak',
+    'bti': 'btb',
+    'chg': 'sgw',
+    'chh': 'hne',
+    'chi': 'nya',
+    'chk': 'ckt',
+    'chk0': 'chk',
+    'chu': 'chv',
+    'chy': 'chy',
+    'cmr': 'swb',
+    'crr': 'crx',
+    'crt': 'crh',
+    'csl': 'chu',
+    'csy': 'ces',
+    'dcr': 'cwd',
+    'dgr': 'doi',
+    'djr': 'dje',
+    'djr0': 'djr',
+    'dng': 'ada',
+    'dnk': 'din',
+    'dri': 'prs',
+    'dun': 'dng',
+    'dzn': 'dzo',
+    'ebi': 'igb',
+    'ecr': 'crj',
+    'edo': 'bin',
+    'erz': 'myv',
+    'esp': 'spa',
+    'eti': 'est',
+    'euq': 'eus',
+    'evk': 'evn',
+    'evn': 'eve',
+    'fan': 'acf',
+    'fan0': 'fan',
+    'far': 'fas',
+    'fji': 'fij',
+    'fle': 'vls',
+    'fne': 'enf',
+    'fos': 'fao',
+    'fri': 'fry',
+    'frl': 'fur',
+    'frp': 'frp',
+    'fta': 'fuf',
+    'gad': 'gaa',
+    'gae': 'gla',
+    'gal': 'glg',
+    'gaw': 'gbm',
+    'gil': 'niv',
+    'gil0': 'gil',
+    'gmz': 'guk',
+    'grn': 'kal',
+    'gro': 'grt',
+    'gua': 'grn',
+    'hai': 'hat',
+    'hal': 'flm',
+    'har': 'hoj',
+    'hbn': 'amf',
+    'hma': 'mrj',
+    'hnd': 'hno',
+    'ho': 'hoc',
+    'hri': 'har',
+    'hye0': 'hye',
+    'ijo': 'ijc',
+    'ing': 'inh',
+    'inu': 'iku',
+    'iri': 'gle',
+    'irt': 'gle',
+    'ism': 'smn',
+    'iwr': 'heb',
+    'jan': 'jpn',
+    'jii': 'yid',
+    'jud': 'lad',
+    'jul': 'dyu',
+    'kab': 'kbd',
+    'kab0': 'kab',
+    'kac': 'kfr',
+    'kal': 'kln',
+    'kar': 'krc',
+    'keb': 'ktb',
+    'kge': 'kat',
+    'kha': 'kjh',
+    'khk': 'kca',
+    'khs': 'kca',
+    'khv': 'kca',
+    'kis': 'kqs',
+    'kkn': 'kex',
+    'klm': 'xal',
+    'kmb': 'kam',
+    'kmn': 'kfy',
+    'kmo': 'kmw',
+    'kms': 'kxc',
+    'knr': 'kau',
+    'kod': 'kfa',
+    'koh': 'okm',
+    'kon': 'ktu',
+    'kon0': 'kon',
+    'kop': 'koi',
+    'koz': 'kpv',
+    'kpl': 'kpe',
+    'krk': 'kaa',
+    'krm': 'kdr',
+    'krn': 'kar',
+    'krt': 'kqy',
+    'ksh': 'kas',
+    'ksh0': 'ksh',
+    'ksi': 'kha',
+    'ksm': 'sjd',
+    'kui': 'kxu',
+    'kul': 'kfx',
+    'kuu': 'kru',
+    'kuy': 'kdt',
+    'kyk': 'kpy',
+    'lad': 'lld',
+    'lah': 'bfu',
+    'lak': 'lbe',
+    'lam': 'lmn',
+    'laz': 'lzz',
+    'lcr': 'crm',
+    'ldk': 'lbj',
+    'lma': 'mhr',
+    'lmb': 'lif',
+    'lmw': 'ngl',
+    'lsb': 'dsb',
+    'lsm': 'smj',
+    'lth': 'lit',
+    'luh': 'luy',
+    'lvi': 'lav',
+    'maj': 'mpe',
+    'mak': 'vmw',
+    'man': 'mns',
+    'map': 'arn',
+    'maw': 'mwr',
+    'mbn': 'kmb',
+    'mch': 'mnc',
+    'mcr': 'crm',
+    'mde': 'men',
+    'men': 'mym',
+    'miz': 'lus',
+    'mkr': 'mak',
+    'mle': 'mdy',
+    'mln': 'mlq',
+    'mlr': 'mal',
+    'mly': 'msa',
+    'mnd': 'mnk',
+    'mng': 'mon',
+    'mnk': 'man',
+    'mnx': 'glv',
+    'mok': 'mdf',
+    'mon': 'mnw',
+    'mth': 'mai',
+    'mts': 'mlt',
+    'mun': 'unr',
+    'nan': 'gld',
+    'nas': 'nsk',
+    'ncr': 'csw',
+    'ndg': 'ndo',
+    'nhc': 'csw',
+    'nis': 'dap',
+    'nkl': 'nyn',
+    'nko': 'nqo',
+    'nor': 'nob',
+    'nsm': 'sme',
+    'nta': 'nod',
+    'nto': 'epo',
+    'nyn': 'nno',
+    'ocr': 'ojs',
+    'ojb': 'oji',
+    'oro': 'orm',
+    'paa': 'sam',
+    'pal': 'pli',
+    'pap': 'plp',
+    'pap0': 'pap',
+    'pas': 'pus',
+    'pgr': 'ell',
+    'pil': 'fil',
+    'plg': 'pce',
+    'plk': 'pol',
+    'ptg': 'por',
+    'qin': 'bgr',
+    'rbu': 'bxr',
+    'rcr': 'atj',
+    'rms': 'roh',
+    'rom': 'ron',
+    'roy': 'rom',
+    'rsy': 'rue',
+    'rua': 'kin',
+    'sad': 'sck',
+    'say': 'chp',
+    'sek': 'xan',
+    'sel': 'sel',
+    'sgo': 'sag',
+    'sgs': 'sgs',
+    'sib': 'sjo',
+    'sig': 'xst',
+    'sks': 'sms',
+    'sky': 'slk',
+    'sla': 'scs',
+    'sml': 'som',
+    'sna': 'seh',
+    'sna0': 'sna',
+    'snh': 'sin',
+    'sog': 'gru',
+    'srb': 'srp',
+    'ssl': 'xsl',
+    'ssm': 'sma',
+    'sur': 'suq',
+    'sve': 'swe',
+    'swa': 'aii',
+    'swk': 'swa',
+    'swz': 'ssw',
+    'sxt': 'ngo',
+    'taj': 'tgk',
+    'tcr': 'cwd',
+    'tgn': 'ton',
+    'tgr': 'tig',
+    'tgy': 'tir',
+    'tht': 'tah',
+    'tib': 'bod',
+    'tkm': 'tuk',
+    'tmn': 'tem',
+    'tna': 'tsn',
+    'tne': 'enh',
+    'tng': 'toi',
+    'tod': 'xal',
+    'tod0': 'tod',
+    'trk': 'tur',
+    'tsg': 'tso',
+    'tua': 'tru',
+    'tul': 'tcy',
+    'tuv': 'tyv',
+    'twi': 'aka',
+    'usb': 'hsb',
+    'uyg': 'uig',
+    'vit': 'vie',
+    'vro': 'vro',
+    'wa': 'wbm',
+    'wag': 'wbr',
+    'wcr': 'crk',
+    'wel': 'cym',
+    'wlf': 'wol',
+    'xbd': 'khb',
+    'xhs': 'xho',
+    'yak': 'sah',
+    'yba': 'yor',
+    'ycr': 'cre',
+    'yim': 'iii',
+    'zhh': 'zho',
+    'zhp': 'zho',
+    'zhs': 'zho',
+    'zht': 'zho',
+    'znd': 'zne',
 }
 
 
@@ -323,6 +608,20 @@ class Layout(object):
         self.font = font = ffi.gc(
             pango.pango_font_description_new(),
             pango.pango_font_description_free)
+        if style.font_language_override != 'normal':
+            lang_p, lang = unicode_to_char_p(LST_TO_ISO.get(
+                style.font_language_override.lower(),
+                style.font_language_override))
+        elif style.lang:
+            lang_p, lang = unicode_to_char_p(style.lang)
+        else:
+            lang = None
+            self.language = pango.pango_language_get_default()
+        if lang:
+            self.language = pango.pango_language_from_string(lang_p)
+            context = pango.pango_layout_get_context(self.layout)
+            pango.pango_context_set_language(context, self.language)
+
         assert not isinstance(style.font_family, basestring), (
             'font_family should be a list')
         family_p, family = unicode_to_char_p(','.join(style.font_family))
@@ -353,7 +652,7 @@ class Layout(object):
 
     def get_font_metrics(self):
         context = pango.pango_layout_get_context(self.layout)
-        return FontMetrics(context, self.font)
+        return FontMetrics(context, self.font, self.language)
 
     def set_wrap(self, wrap_mode):
         pango.pango_layout_set_wrap(self.layout, wrap_mode)
@@ -378,9 +677,9 @@ class Layout(object):
 
 
 class FontMetrics(object):
-    def __init__(self, context, font):
+    def __init__(self, context, font, language):
         self.metrics = ffi.gc(
-            pango.pango_context_get_metrics(context, font, ffi.NULL),
+            pango.pango_context_get_metrics(context, font, language),
             pango.pango_font_metrics_unref)
 
     def __dir__(self):
