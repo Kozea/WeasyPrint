@@ -229,32 +229,33 @@ The `CSS Fonts Module Level 3`_ is a candidate recommendation describing "how
 font properties are specified and how font resources are loaded dynamically".
 
 WeasyPrint supports the ``font-size``, ``font-stretch``, ``font-style`` and
-``font-weight`` properties.
+``font-weight`` properties, coming from CSS 2.1.
 
-``font-family`` is supported. The string is given to Pango that tries to find a
-matching font in a way different from what is defined in the recommendation,
-but that should not be a problem for common use.
-
-The shorthand ``font`` property is supported.
-
-WeasyPrint does **not** support the ``@font-face`` rule, the fonts need to be
-installed on the system.
-
-WeasyPrint does **not** support the following font features:
+WeasyPrint also supports the following font features added in Level 3:
 - ``font-kerning``,
 - ``font-variant-ligatures``,
 - ``font-variant-position``,
 - ``font-variant-caps``,
 - ``font-variant-numeric``,
-- ``font-variant-alternates``,
 - ``font-variant-east-asian``,
-- ``@font-feature-values``,
 - ``font-feature-settings``, and
 - ``font-language-override``.
 
-  ``font-variant`` only supports the ``small-caps`` value and needs the
-small-caps variant of the font to be installed. WeasyPrint does **not**
-simulate missing small-caps fonts.
+``font-family`` is supported. The string is given to Pango that tries to find a
+matching font in a way different from what is defined in the recommendation,
+but that should not be a problem for common use.
+
+The shorthand ``font`` and ``font-variant`` properties are supported.
+
+WeasyPrint does **not** support the ``@font-face`` rule, the fonts need to be
+installed on the system.
+
+WeasyPrint does **not** support the ``@font-feature-values`` rule and the
+values of ``font-variant-alternates`` other than ``historical-forms``.
+
+The ``font-variant-caps`` property is supported but needs the small-caps variant of
+the font to be installed. WeasyPrint does **not** simulate missing small-caps
+fonts.
 
 
 CSS Paged Media Module Level 3
