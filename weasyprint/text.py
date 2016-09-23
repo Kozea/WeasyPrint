@@ -199,6 +199,14 @@ ffi.cdef('''
     void pango_cairo_update_layout (cairo_t *cr, PangoLayout *layout);
     void pango_cairo_show_layout_line (cairo_t *cr, PangoLayoutLine *line);
 
+
+    typedef unsigned char FcChar8;
+    typedef struct _FcConfig    FcConfig;
+    typedef int FcBool;
+
+    FcBool     FcConfigAppFontAddFile (FcConfig *config, const FcChar8 *file);
+    FcConfig * FcConfigGetCurrent (void);
+
 ''')
 
 
@@ -219,6 +227,8 @@ pango = dlopen(ffi, 'pango-1.0', 'libpango-1.0-0', 'libpango-1.0.so',
                'libpango-1.0.dylib')
 pangocairo = dlopen(ffi, 'pangocairo-1.0', 'libpangocairo-1.0-0',
                     'libpangocairo-1.0.so', 'libpangocairo-1.0.dylib')
+fontconfig = dlopen(ffi, 'fontconfig', 'libfontconfig',
+                    'libfontconfig.so.1', 'libfontconfig-1.dylib')
 
 gobject.g_type_init()
 

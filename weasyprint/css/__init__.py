@@ -28,6 +28,7 @@ import lxml.etree
 
 from . import properties
 from . import computed_values
+from .descriptors import preprocess_descriptors
 from .validation import preprocess_declarations
 from ..urls import (element_base_url, get_url_attribute, url_join,
                     URLFetchingError)
@@ -36,7 +37,7 @@ from ..compat import iteritems
 from .. import CSS
 
 
-PARSER = tinycss.make_parser('page3')
+PARSER = tinycss.make_parser('page3', 'fonts3')
 
 
 # Reject anything not in here:
@@ -685,6 +686,19 @@ def preprocess_stylesheet(device_media_type, base_url, rules, url_fetcher):
                     selector_list = [Selector(
                         specificity, margin_rule.at_keyword, match)]
                     yield margin_rule, selector_list, declarations
+
+        elif rule.at_keyword == '@font-face':
+            descriptors = list(preprocess_descriptors(
+                base_url, rule.declarations))
+            keys = list(dict(descriptors).keys())
+            for key in ('src', 'font_family'):
+                if key not in keys:
+                    LOGGER.warning(
+                        "Missing %s descriptor in '@font-face' rule at %s:%s",
+                        key.replace('_', '-'), rule.line, rule.column)
+                    break
+            else:
+                yield rule, [], descriptors
 
 
 def get_all_computed_styles(html, user_stylesheets=None,
