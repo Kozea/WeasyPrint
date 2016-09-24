@@ -258,9 +258,7 @@ class CSS(object):
         preprocess_stylesheet(
             media_type, base_url, stylesheet.rules, url_fetcher, self.rules,
             self.descriptors)
-        # TODO: do not keep this self.stylesheet around?
-        self.stylesheet = stylesheet
-        for error in self.stylesheet.errors:
+        for error in stylesheet.errors:
             LOGGER.warning(error)
 
 
