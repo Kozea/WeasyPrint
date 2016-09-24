@@ -253,8 +253,11 @@ class CSS(object):
                     source, linking_encoding=encoding,
                     protocol_encoding=protocol_encoding)
         self.base_url = base_url
-        self.rules = list(preprocess_stylesheet(
-            media_type, base_url, stylesheet.rules, url_fetcher))
+        self.rules = []
+        self.descriptors = []
+        preprocess_stylesheet(
+            media_type, base_url, stylesheet.rules, url_fetcher, self.rules,
+            self.descriptors)
         # TODO: do not keep this self.stylesheet around?
         self.stylesheet = stylesheet
         for error in self.stylesheet.errors:

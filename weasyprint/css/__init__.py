@@ -598,13 +598,14 @@ class Selector(object):
         self.match = match
 
 
-def preprocess_stylesheet(device_media_type, base_url, rules, url_fetcher):
+def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
+                          url_fetcher, rules, descriptors):
     """Do the work that can be done early on stylesheet, before they are
     in a document.
 
     """
     selector_to_xpath = cssselect.HTMLTranslator().selector_to_xpath
-    for rule in rules:
+    for rule in stylesheet_rules:
         if not rule.at_keyword:
             declarations = list(preprocess_declarations(
                 base_url, rule.declarations))
@@ -634,7 +635,7 @@ def preprocess_stylesheet(device_media_type, base_url, rules, url_fetcher):
                     LOGGER.warning("Invalid or unsupported selector '%s', %s",
                                    selector_string, exc)
                     continue
-                yield rule, selector_list, declarations
+                rules.append((rule, selector_list, declarations))
 
         elif rule.at_keyword == '@import':
             if not evaluate_media_query(rule.media, device_media_type):
@@ -650,14 +651,14 @@ def preprocess_stylesheet(device_media_type, base_url, rules, url_fetcher):
                                    url, exc)
                 else:
                     for result in stylesheet.rules:
-                        yield result
+                        rules.append(result)
 
         elif rule.at_keyword == '@media':
             if not evaluate_media_query(rule.media, device_media_type):
                 continue
-            for result in preprocess_stylesheet(
-                    device_media_type, base_url, rule.rules, url_fetcher):
-                yield result
+            preprocess_stylesheet(
+                device_media_type, base_url, rule.rules, url_fetcher, rules,
+                descriptors)
 
         elif rule.at_keyword == '@page':
             page_name, pseudo_class = rule.selector
@@ -677,7 +678,7 @@ def preprocess_stylesheet(device_media_type, base_url, rules, url_fetcher):
 
             if declarations:
                 selector_list = [Selector(specificity, None, match)]
-                yield rule, selector_list, declarations
+                rules.append((rule, selector_list, declarations))
 
             for margin_rule in rule.at_rules:
                 declarations = list(preprocess_declarations(
@@ -685,12 +686,12 @@ def preprocess_stylesheet(device_media_type, base_url, rules, url_fetcher):
                 if declarations:
                     selector_list = [Selector(
                         specificity, margin_rule.at_keyword, match)]
-                    yield margin_rule, selector_list, declarations
+                    rules.append((margin_rule, selector_list, declarations))
 
         elif rule.at_keyword == '@font-face':
-            descriptors = list(preprocess_descriptors(
+            rule_descriptors = list(preprocess_descriptors(
                 base_url, rule.declarations))
-            keys = list(dict(descriptors).keys())
+            keys = list(dict(rule_descriptors).keys())
             for key in ('src', 'font_family'):
                 if key not in keys:
                     LOGGER.warning(
@@ -698,7 +699,7 @@ def preprocess_stylesheet(device_media_type, base_url, rules, url_fetcher):
                         key.replace('_', '-'), rule.line, rule.column)
                     break
             else:
-                yield rule, [], descriptors
+                descriptors.append((rule, rule_descriptors))
 
 
 def get_all_computed_styles(html, user_stylesheets=None,

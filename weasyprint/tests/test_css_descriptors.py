@@ -81,30 +81,42 @@ def test_bad_font_face():
 
     stylesheet = PARSER.parse_stylesheet('@font-face{}')
     with capture_logs() as logs:
-        assert not list(preprocess_stylesheet(
-            'print', 'http://wp.org/foo/', stylesheet.rules, None))
+        rules, descriptors = [], []
+        preprocess_stylesheet(
+            'print', 'http://wp.org/foo/', stylesheet.rules, None, rules,
+            descriptors)
+        assert not descriptors
     assert logs == [
         "WARNING: Missing src descriptor in '@font-face' rule at 1:1"]
 
     stylesheet = PARSER.parse_stylesheet('@font-face{src: url(test.woff)}')
     with capture_logs() as logs:
-        assert not list(preprocess_stylesheet(
-            'print', 'http://wp.org/foo/', stylesheet.rules, None))
+        rules, descriptors = [], []
+        preprocess_stylesheet(
+            'print', 'http://wp.org/foo/', stylesheet.rules, None, rules,
+            descriptors)
+        assert not descriptors
     assert logs == [
         "WARNING: Missing font-family descriptor in '@font-face' rule at 1:1"]
 
     stylesheet = PARSER.parse_stylesheet('@font-face{font-family: test}')
     with capture_logs() as logs:
-        assert not list(preprocess_stylesheet(
-            'print', 'http://wp.org/foo/', stylesheet.rules, None))
+        rules, descriptors = [], []
+        preprocess_stylesheet(
+            'print', 'http://wp.org/foo/', stylesheet.rules, None, rules,
+            descriptors)
+        assert not descriptors
     assert logs == [
         "WARNING: Missing src descriptor in '@font-face' rule at 1:1"]
 
     stylesheet = PARSER.parse_stylesheet(
         '@font-face { font-family: test; src: wrong }')
     with capture_logs() as logs:
-        assert not list(preprocess_stylesheet(
-            'print', 'http://wp.org/foo/', stylesheet.rules, None))
+        rules, descriptors = [], []
+        preprocess_stylesheet(
+            'print', 'http://wp.org/foo/', stylesheet.rules, None, rules,
+            descriptors)
+        assert not descriptors
     assert logs == [
         'WARNING: Ignored `src: wrong` at 1:33, invalid value.',
         "WARNING: Missing src descriptor in '@font-face' rule at 1:1"]
@@ -112,8 +124,11 @@ def test_bad_font_face():
     stylesheet = PARSER.parse_stylesheet(
         '@font-face { font-family: good, bad; src: url(test.woff) }')
     with capture_logs() as logs:
-        assert not list(preprocess_stylesheet(
-            'print', 'http://wp.org/foo/', stylesheet.rules, None))
+        rules, descriptors = [], []
+        preprocess_stylesheet(
+            'print', 'http://wp.org/foo/', stylesheet.rules, None, rules,
+            descriptors)
+        assert not descriptors
     assert logs == [
         'WARNING: Ignored `font-family: good, bad` at 1:14, invalid value.',
         "WARNING: Missing font-family descriptor in '@font-face' rule at 1:1"]
@@ -121,8 +136,11 @@ def test_bad_font_face():
     stylesheet = PARSER.parse_stylesheet(
         '@font-face { font-family: good, bad; src: really bad }')
     with capture_logs() as logs:
-        assert not list(preprocess_stylesheet(
-            'print', 'http://wp.org/foo/', stylesheet.rules, None))
+        rules, descriptors = [], []
+        preprocess_stylesheet(
+            'print', 'http://wp.org/foo/', stylesheet.rules, None, rules,
+            descriptors)
+        assert not descriptors
     assert logs == [
         'WARNING: Ignored `font-family: good, bad` at 1:14, invalid value.',
         'WARNING: Ignored `src: really bad` at 1:38, invalid value.',
