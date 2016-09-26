@@ -1164,7 +1164,8 @@ def add_font_face(rule_descriptors):
             # TODO: Change the real font features into the wanted description
             pattern = fontconfig.FcPatternCreate()
             fontconfig.FcPatternAddString(pattern, b'file', filename)
-            fontconfig.FcConfigSubstitute(config, pattern, fontconfig.FcMatchFont)
+            fontconfig.FcConfigSubstitute(
+                config, pattern, fontconfig.FcMatchFont)
             fontconfig.FcDefaultSubstitute(pattern)
             new_pattern = fontconfig.FcFontMatch(config, pattern)
             fontconfig.FcPatternDel(new_pattern, b'family')
