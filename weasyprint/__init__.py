@@ -254,10 +254,11 @@ class CSS(object):
                     protocol_encoding=protocol_encoding)
         self.base_url = base_url
         self.rules = []
-        self.descriptors = []
+        # TODO: fonts are stored here and should be cleaned after rendering
+        self.fonts = []
         preprocess_stylesheet(
             media_type, base_url, stylesheet.rules, url_fetcher, self.rules,
-            self.descriptors)
+            self.fonts)
         for error in stylesheet.errors:
             LOGGER.warning(error)
 

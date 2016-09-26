@@ -13,12 +13,14 @@
 from __future__ import division
 # XXX No unicode_literals, cffi likes native strings
 
+import re
+import tempfile
+
 import pyphen
 import cffi
 import cairocffi as cairo
-import re
 
-from .compat import basestring
+from .compat import FILESYSTEM_ENCODING, basestring, urlopen
 from .logger import LOGGER
 
 
@@ -200,12 +202,30 @@ ffi.cdef('''
     void pango_cairo_show_layout_line (cairo_t *cr, PangoLayoutLine *line);
 
 
+    typedef enum _FcMatchKind {
+        FcMatchPattern, FcMatchFont, FcMatchScan
+    } FcMatchKind;
+    typedef enum _FcResult {
+        FcResultMatch, FcResultNoMatch, FcResultTypeMismatch, FcResultNoId,
+        FcResultOutOfMemory
+    } FcResult;
     typedef unsigned char FcChar8;
-    typedef struct _FcConfig    FcConfig;
     typedef int FcBool;
+    typedef struct _FcConfig FcConfig;
+    typedef struct _FcPattern FcPattern;
 
-    FcBool     FcConfigAppFontAddFile (FcConfig *config, const FcChar8 *file);
-    FcConfig * FcConfigGetCurrent (void);
+    FcBool      FcConfigAppFontAddFile (FcConfig *config, const FcChar8 *file);
+    FcPattern * FcPatternCreate (void);
+    FcConfig *  FcConfigGetCurrent (void);
+    FcBool      FcPatternAddString
+        (FcPattern *p, const char *object, const FcChar8 *s);
+    FcBool      FcConfigSubstitute
+        (FcConfig *config, FcPattern *p, FcMatchKind kind);
+    void        FcDefaultSubstitute (FcPattern *pattern);
+    FcPattern * FcFontMatch(FcConfig *config, FcPattern *p);
+    FcBool      FcPatternDel(FcPattern *p, const char *object);
+
+    void FcPatternPrint(const FcPattern *p);
 
 ''')
 
@@ -1123,3 +1143,40 @@ def show_first_line(context, pango_layout, hinting):
     pango.pango_layout_set_width(pango_layout.layout, -1)
     pangocairo.pango_cairo_show_layout_line(
         context, next(pango_layout.iter_lines()))
+
+
+def add_font_face(rule_descriptors):
+    """Add a font into the Fontconfig application."""
+    if not fontconfig:
+        LOGGER.warning('@font-face is currently supported only on Linux')
+        return
+    config = fontconfig.FcConfigGetCurrent()
+    for font in rule_descriptors['src']:
+        if font[0] == 'external':
+            _, filename = tempfile.mkstemp()
+            with open(filename, 'wb') as fd:
+                fd.write(urlopen(font[1]).read())
+        else:
+            filename = font[1]
+        filename = filename.encode(FILESYSTEM_ENCODING)
+        font_added = fontconfig.FcConfigAppFontAddFile(config, filename)
+        if font_added:
+            # TODO: Change the real font features into the wanted description
+            pattern = fontconfig.FcPatternCreate()
+            fontconfig.FcPatternAddString(pattern, b'file', filename)
+            fontconfig.FcConfigSubstitute(config, pattern, fontconfig.FcMatchFont)
+            fontconfig.FcDefaultSubstitute(pattern)
+            new_pattern = fontconfig.FcFontMatch(config, pattern)
+            fontconfig.FcPatternDel(new_pattern, b'family')
+            fontconfig.FcPatternDel(new_pattern, b'familylang')
+            fontconfig.FcPatternDel(new_pattern, b'fullname')
+            fontconfig.FcPatternDel(new_pattern, b'fullnamelang')
+            fontconfig.FcPatternDel(new_pattern, b'postscriptname')
+            fontconfig.FcPatternAddString(
+                new_pattern, b'family',
+                rule_descriptors['font_family'].encode('utf-8'))
+            # fontconfig.FcPatternPrint(new_pattern)
+            # TODO: we should mask the local fonts with the same name too
+            return filename
+    LOGGER.warning(
+        'Font-face "%s" cannot be loaded' % rule_descriptors['font_family'])

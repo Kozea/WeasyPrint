@@ -30,6 +30,7 @@ from . import properties
 from . import computed_values
 from .descriptors import preprocess_descriptors
 from .validation import preprocess_declarations
+from ..text import add_font_face
 from ..urls import (element_base_url, get_url_attribute, url_join,
                     URLFetchingError)
 from ..logger import LOGGER
@@ -599,7 +600,7 @@ class Selector(object):
 
 
 def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
-                          url_fetcher, rules, descriptors):
+                          url_fetcher, rules, fonts):
     """Do the work that can be done early on stylesheet, before they are
     in a document.
 
@@ -658,7 +659,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                 continue
             preprocess_stylesheet(
                 device_media_type, base_url, rule.rules, url_fetcher, rules,
-                descriptors)
+                fonts)
 
         elif rule.at_keyword == '@page':
             page_name, pseudo_class = rule.selector
@@ -689,17 +690,18 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                     rules.append((margin_rule, selector_list, declarations))
 
         elif rule.at_keyword == '@font-face':
-            rule_descriptors = list(preprocess_descriptors(
-                base_url, rule.declarations))
-            keys = list(dict(rule_descriptors).keys())
+            rule_descriptors = dict(list(preprocess_descriptors(
+                base_url, rule.declarations)))
             for key in ('src', 'font_family'):
-                if key not in keys:
+                if key not in rule_descriptors:
                     LOGGER.warning(
                         "Missing %s descriptor in '@font-face' rule at %s:%s",
                         key.replace('_', '-'), rule.line, rule.column)
                     break
             else:
-                descriptors.append((rule, rule_descriptors))
+                font_filename = add_font_face(rule_descriptors)
+                if font_filename:
+                    fonts.append(font_filename)
 
 
 def get_all_computed_styles(html, user_stylesheets=None,
