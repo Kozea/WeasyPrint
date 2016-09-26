@@ -13,6 +13,7 @@
 from __future__ import division
 # XXX No unicode_literals, cffi likes native strings
 
+import os
 import re
 import tempfile
 
@@ -202,30 +203,14 @@ ffi.cdef('''
     void pango_cairo_show_layout_line (cairo_t *cr, PangoLayoutLine *line);
 
 
-    typedef enum _FcMatchKind {
-        FcMatchPattern, FcMatchFont, FcMatchScan
-    } FcMatchKind;
-    typedef enum _FcResult {
-        FcResultMatch, FcResultNoMatch, FcResultTypeMismatch, FcResultNoId,
-        FcResultOutOfMemory
-    } FcResult;
-    typedef unsigned char FcChar8;
-    typedef int FcBool;
-    typedef struct _FcConfig FcConfig;
-    typedef struct _FcPattern FcPattern;
+    typedef     unsigned char FcChar8;
+    typedef     int FcBool;
+    typedef     struct _FcConfig FcConfig;
 
     FcBool      FcConfigAppFontAddFile (FcConfig *config, const FcChar8 *file);
-    FcPattern * FcPatternCreate (void);
     FcConfig *  FcConfigGetCurrent (void);
-    FcBool      FcPatternAddString
-        (FcPattern *p, const char *object, const FcChar8 *s);
-    FcBool      FcConfigSubstitute
-        (FcConfig *config, FcPattern *p, FcMatchKind kind);
-    void        FcDefaultSubstitute (FcPattern *pattern);
-    FcPattern * FcFontMatch(FcConfig *config, FcPattern *p);
-    FcBool      FcPatternDel(FcPattern *p, const char *object);
-
-    void FcPatternPrint(const FcPattern *p);
+    FcBool      FcConfigParseAndLoad
+        (FcConfig *config, const FcChar8 *file, FcBool complain);
 
 ''')
 
@@ -560,6 +545,38 @@ LST_TO_ISO = {
     'zhs': 'zho',
     'zht': 'zho',
     'znd': 'zne',
+}
+
+FONTCONFIG_WEIGHT_CONSTANTS = {
+    'normal': 'normal',
+    'bold': 'bold',
+    100: 'thin',
+    200: 'extralight',
+    300: 'light',
+    400: 'normal',
+    500: 'medium',
+    600: 'demibold',
+    700: 'bold',
+    800: 'extrabold',
+    900: 'black',
+}
+
+FONTCONFIG_STYLE_CONSTANTS = {
+    'normal': 'roman',
+    'italic': 'italic',
+    'oblique': 'oblique',
+}
+
+FONTCONFIG_STRETCH_CONSTANTS = {
+    'normal': 'normal',
+    'ultra-condensed': 'ultracondensed',
+    'extra-condensed': 'extracondensed',
+    'condensed': 'condensed',
+    'semi-condensed': 'semicondensed',
+    'semi-expanded': 'semiexpanded',
+    'expanded': 'expanded',
+    'extra-expanded': 'extraexpanded',
+    'ultra-expanded': 'ultraexpanded',
 }
 
 
@@ -1158,25 +1175,44 @@ def add_font_face(rule_descriptors):
                 fd.write(urlopen(font[1]).read())
         else:
             filename = font[1]
-        filename = filename.encode(FILESYSTEM_ENCODING)
-        font_added = fontconfig.FcConfigAppFontAddFile(config, filename)
+        xml = '''<?xml version="1.0"?>
+            <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+            <fontconfig>
+              <match target="scan">
+                <test name="file" compare="eq"><string>%s</string></test>
+                <edit name="family" mode="assign_replace">
+                  <string>%s</string>
+                </edit>
+                <edit name="slant" mode="assign_replace">
+                  <const>%s</const>
+                </edit>
+                <edit name="weight" mode="assign_replace">
+                  <const>%s</const>
+                </edit>
+                <edit name="width" mode="assign_replace">
+                  <const>%s</const>
+                </edit>
+              </match>
+            </fontconfig>''' % (
+                filename,
+                rule_descriptors['font_family'],
+                FONTCONFIG_STYLE_CONSTANTS[
+                    rule_descriptors.get('font_style', 'normal')],
+                FONTCONFIG_WEIGHT_CONSTANTS[
+                    rule_descriptors.get('font_weight', 'normal')],
+                FONTCONFIG_STRETCH_CONSTANTS[
+                    rule_descriptors.get('font_stretch', 'normal')],
+            )
+        _, conf_filename = tempfile.mkstemp()
+        with open(conf_filename, 'wb') as fd:
+            # TODO: encoding is OK for <test>, but what about <edit>s?
+            fd.write(xml.encode(FILESYSTEM_ENCODING))
+        fontconfig.FcConfigParseAndLoad(
+            config, conf_filename.encode(FILESYSTEM_ENCODING), True)
+        os.remove(conf_filename)
+        font_added = fontconfig.FcConfigAppFontAddFile(
+            config, filename.encode(FILESYSTEM_ENCODING))
         if font_added:
-            # TODO: Change the real font features into the wanted description
-            pattern = fontconfig.FcPatternCreate()
-            fontconfig.FcPatternAddString(pattern, b'file', filename)
-            fontconfig.FcConfigSubstitute(
-                config, pattern, fontconfig.FcMatchFont)
-            fontconfig.FcDefaultSubstitute(pattern)
-            new_pattern = fontconfig.FcFontMatch(config, pattern)
-            fontconfig.FcPatternDel(new_pattern, b'family')
-            fontconfig.FcPatternDel(new_pattern, b'familylang')
-            fontconfig.FcPatternDel(new_pattern, b'fullname')
-            fontconfig.FcPatternDel(new_pattern, b'fullnamelang')
-            fontconfig.FcPatternDel(new_pattern, b'postscriptname')
-            fontconfig.FcPatternAddString(
-                new_pattern, b'family',
-                rule_descriptors['font_family'].encode('utf-8'))
-            # fontconfig.FcPatternPrint(new_pattern)
             # TODO: we should mask the local fonts with the same name too
             return filename
     LOGGER.warning(
