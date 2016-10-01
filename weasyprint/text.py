@@ -15,6 +15,7 @@ from __future__ import division
 
 import os
 import re
+import sys
 import tempfile
 
 import pyphen
@@ -27,6 +28,8 @@ from .logger import LOGGER
 
 ffi = cffi.FFI()
 ffi.cdef('''
+    // Pango
+
     typedef enum {
         PANGO_STYLE_NORMAL,
         PANGO_STYLE_OBLIQUE,
@@ -203,6 +206,18 @@ ffi.cdef('''
     void pango_cairo_show_layout_line (cairo_t *cr, PangoLayoutLine *line);
 
 
+    // FontConfig
+
+    typedef enum _FcResult {
+        FcResultMatch, FcResultNoMatch, FcResultTypeMismatch, FcResultNoId,
+        FcResultOutOfMemory
+    } FcResult;
+    typedef enum _FcMatchKind {
+        FcMatchPattern, FcMatchFont, FcMatchScan
+    } FcMatchKind;
+
+    typedef     struct _FcConfig FcConfig;
+    typedef     struct _FcPattern FcPattern;
     typedef     unsigned char FcChar8;
     typedef     int FcBool;
     typedef     struct _FcConfig FcConfig;
@@ -211,6 +226,15 @@ ffi.cdef('''
     FcConfig *  FcConfigGetCurrent (void);
     FcBool      FcConfigParseAndLoad
         (FcConfig *config, const FcChar8 *file, FcBool complain);
+    FcPattern * FcPatternCreate (void);
+    FcPattern * FcFontMatch (FcConfig *config, FcPattern *p);
+    FcBool      FcPatternAddString
+        (FcPattern *p, const char *object, const FcChar8 *s);
+    FcBool      FcConfigSubstitute
+        (FcConfig *config, FcPattern *p, FcMatchKind kind);
+    void        FcDefaultSubstitute (FcPattern *pattern);
+    FcResult    FcPatternGetString
+        (FcPattern *p, const char *object, int n, FcChar8 **s);
 
 ''')
 
@@ -1164,56 +1188,93 @@ def show_first_line(context, pango_layout, hinting):
 
 def add_font_face(rule_descriptors):
     """Add a font into the Fontconfig application."""
-    if not fontconfig:
-        LOGGER.warning('@font-face is currently supported only on Linux')
+    if not fontconfig or (
+            sys.platform.startswith('win') or
+            sys.platform.startswith('darwin')):
+        LOGGER.warning(
+            '@font-face is currently not supported on Windows and OSX')
         return
-    config = fontconfig.FcConfigGetCurrent()
-    for font in rule_descriptors['src']:
-        if font[0] == 'external':
+    for font_type, url in rule_descriptors['src']:
+        config = fontconfig.FcConfigGetCurrent()
+        if font_type in ('external', 'local'):
+            if font_type == 'local':
+                font_name = url.encode('utf-8')
+                pattern = fontconfig.FcPatternCreate()
+                fontconfig.FcConfigSubstitute(
+                    config, pattern, fontconfig.FcMatchFont)
+                fontconfig.FcDefaultSubstitute(pattern)
+                fontconfig.FcPatternAddString(
+                    pattern, b'fullname', font_name)
+                fontconfig.FcPatternAddString(
+                    pattern, b'postscriptname', font_name)
+                family = ffi.new('FcChar8 **')
+                postscript = ffi.new('FcChar8 **')
+                matching_pattern = fontconfig.FcFontMatch(config, pattern)
+                # TODO: do many fonts have multiple family values?
+                fontconfig.FcPatternGetString(
+                    matching_pattern, b'fullname', 0, family)
+                fontconfig.FcPatternGetString(
+                    matching_pattern, b'postscriptname', 0, postscript)
+                family = ffi.string(family[0])
+                postscript = ffi.string(postscript[0])
+                if font_name.lower() in (family.lower(), postscript.lower()):
+                    filename = ffi.new('FcChar8 **')
+                    matching_pattern = fontconfig.FcFontMatch(
+                        ffi.NULL, pattern)
+                    fontconfig.FcPatternGetString(
+                        matching_pattern, b'file', 0, filename)
+                    url = u'file://' + ffi.string(filename[0]).decode('utf-8')
+                else:
+                    LOGGER.warning(
+                        'Failed to load local font "%s"',
+                        font_name.decode('utf-8'))
+                    continue
+            try:
+                font = urlopen(url).read()
+            except Exception as exc:
+                LOGGER.warning('Failed to load font at "%s" (%s)', url, exc)
+                continue
             _, filename = tempfile.mkstemp()
             with open(filename, 'wb') as fd:
-                fd.write(urlopen(font[1]).read())
-        else:
-            filename = font[1]
-        xml = '''<?xml version="1.0"?>
-            <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
-            <fontconfig>
-              <match target="scan">
-                <test name="file" compare="eq"><string>%s</string></test>
-                <edit name="family" mode="assign_replace">
-                  <string>%s</string>
-                </edit>
-                <edit name="slant" mode="assign_replace">
-                  <const>%s</const>
-                </edit>
-                <edit name="weight" mode="assign_replace">
-                  <const>%s</const>
-                </edit>
-                <edit name="width" mode="assign_replace">
-                  <const>%s</const>
-                </edit>
-              </match>
-            </fontconfig>''' % (
-                filename,
-                rule_descriptors['font_family'],
-                FONTCONFIG_STYLE_CONSTANTS[
-                    rule_descriptors.get('font_style', 'normal')],
-                FONTCONFIG_WEIGHT_CONSTANTS[
-                    rule_descriptors.get('font_weight', 'normal')],
-                FONTCONFIG_STRETCH_CONSTANTS[
-                    rule_descriptors.get('font_stretch', 'normal')],
-            )
-        _, conf_filename = tempfile.mkstemp()
-        with open(conf_filename, 'wb') as fd:
-            # TODO: encoding is OK for <test>, but what about <edit>s?
-            fd.write(xml.encode(FILESYSTEM_ENCODING))
-        fontconfig.FcConfigParseAndLoad(
-            config, conf_filename.encode(FILESYSTEM_ENCODING), True)
-        os.remove(conf_filename)
-        font_added = fontconfig.FcConfigAppFontAddFile(
-            config, filename.encode(FILESYSTEM_ENCODING))
-        if font_added:
-            # TODO: we should mask the local fonts with the same name too
-            return filename
+                fd.write(font)
+            xml = '''<?xml version="1.0"?>
+                <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+                <fontconfig>
+                  <match target="scan">
+                    <test name="file" compare="eq"><string>%s</string></test>
+                    <edit name="family" mode="assign_replace">
+                      <string>%s</string>
+                    </edit>
+                    <edit name="slant" mode="assign_replace">
+                      <const>%s</const>
+                    </edit>
+                    <edit name="weight" mode="assign_replace">
+                      <const>%s</const>
+                    </edit>
+                    <edit name="width" mode="assign_replace">
+                      <const>%s</const>
+                    </edit>
+                  </match>
+                </fontconfig>''' % (
+                    filename,
+                    rule_descriptors['font_family'],
+                    FONTCONFIG_STYLE_CONSTANTS[
+                        rule_descriptors.get('font_style', 'normal')],
+                    FONTCONFIG_WEIGHT_CONSTANTS[
+                        rule_descriptors.get('font_weight', 'normal')],
+                    FONTCONFIG_STRETCH_CONSTANTS[
+                        rule_descriptors.get('font_stretch', 'normal')])
+            _, conf_filename = tempfile.mkstemp()
+            with open(conf_filename, 'wb') as fd:
+                # TODO: encoding is OK for <test>, but what about <edit>s?
+                fd.write(xml.encode(FILESYSTEM_ENCODING))
+            fontconfig.FcConfigParseAndLoad(
+                config, conf_filename.encode(FILESYSTEM_ENCODING), True)
+            os.remove(conf_filename)
+            font_added = fontconfig.FcConfigAppFontAddFile(
+                config, filename.encode(FILESYSTEM_ENCODING))
+            if font_added:
+                # TODO: we should mask the local fonts with the same name too
+                return filename
     LOGGER.warning(
         'Font-face "%s" cannot be loaded' % rule_descriptors['font_family'])

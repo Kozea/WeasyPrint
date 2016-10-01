@@ -52,24 +52,33 @@ def descriptor(descriptor_name=None, wants_base_url=False):
 
 
 @descriptor()
-def font_family(tokens):
+def font_family(tokens, allow_spaces=False):
     """``font-family`` descriptor validation."""
+    allowed_types = ['IDENT']
+    if allow_spaces:
+        allowed_types.append('S')
     if len(tokens) == 1 and tokens[0].type == 'STRING':
         return tokens[0].value
-    elif tokens and all(token.type == 'IDENT' for token in tokens):
-        return ' '.join(token.value for token in tokens)
+    if tokens and all(token.type in allowed_types for token in tokens):
+        return ' '.join(
+            token.value for token in tokens if token.type == 'IDENT')
 
 
 @descriptor(wants_base_url=True)
 @comma_separated_list
 def src(tokens, base_url):
     """``src`` descriptor validation."""
-    token = tokens.pop()
-    if token.type == 'URI':
-        if token.value.startswith('#'):
-            return 'internal', unquote(token.value[1:])
-        else:
-            return 'external', safe_urljoin(base_url, token.value)
+    if len(tokens) <= 2:
+        token = tokens.pop()
+        if token.type == 'FUNCTION' and token.function_name == 'format':
+            token = tokens.pop()
+        if token.type == 'FUNCTION' and token.function_name == 'local':
+            return 'local', font_family(token.content, allow_spaces=True)
+        if token.type == 'URI':
+            if token.value.startswith('#'):
+                return 'internal', unquote(token.value[1:])
+            else:
+                return 'external', safe_urljoin(base_url, token.value)
 
 
 @descriptor()
