@@ -802,6 +802,10 @@ def create_layout(text, style, hinting, max_width):
         or ``None`` for unlimited width.
 
     """
+    text_wrap = style.white_space in ('pre', 'nowrap')
+    if text_wrap:
+        max_width = None
+
     layout = Layout(hinting, style.font_size, style)
     layout.set_text(text)
 
