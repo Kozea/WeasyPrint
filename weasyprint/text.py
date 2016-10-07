@@ -22,7 +22,7 @@ import pyphen
 import cffi
 import cairocffi as cairo
 
-from .compat import FILESYSTEM_ENCODING, basestring, urlopen
+from .compat import FILESYSTEM_ENCODING, basestring
 from .logger import LOGGER
 from .urls import fetch
 
