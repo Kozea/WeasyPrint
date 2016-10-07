@@ -24,6 +24,7 @@ import cairocffi as cairo
 
 from .compat import FILESYSTEM_ENCODING, basestring, urlopen
 from .logger import LOGGER
+from .urls import fetch
 
 
 ffi = cffi.FFI()
@@ -1195,7 +1196,7 @@ def show_first_line(context, pango_layout, hinting):
         context, next(pango_layout.iter_lines()))
 
 
-def add_font_face(rule_descriptors):
+def add_font_face(rule_descriptors, url_fetcher):
     """Add a font into the Fontconfig application."""
     if not fontconfig or (
             sys.platform.startswith('win') or
@@ -1239,7 +1240,11 @@ def add_font_face(rule_descriptors):
                         font_name.decode('utf-8'))
                     continue
             try:
-                font = urlopen(url).read()
+                with fetch(url_fetcher, url) as result:
+                    if 'string' in result:
+                        font = result['string']
+                    else:
+                        font = result['file_obj'].read()
             except Exception as exc:
                 LOGGER.warning('Failed to load font at "%s" (%s)', url, exc)
                 continue

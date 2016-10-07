@@ -699,7 +699,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                         key.replace('_', '-'), rule.line, rule.column)
                     break
             else:
-                font_filename = add_font_face(rule_descriptors)
+                font_filename = add_font_face(rule_descriptors, url_fetcher)
                 if font_filename:
                     fonts.append(font_filename)
 
