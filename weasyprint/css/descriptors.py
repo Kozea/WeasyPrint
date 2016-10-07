@@ -18,8 +18,9 @@ from tinycss.parsing import remove_whitespace
 from ..compat import unquote
 from ..logger import LOGGER
 from .validation import (
-    InvalidValues, comma_separated_list, get_keyword, safe_urljoin,
-    single_keyword, single_token)
+    InvalidValues, comma_separated_list, expand_font_variant,
+    font_feature_settings, get_keyword, safe_urljoin, single_keyword,
+    single_token, validate_non_shorthand)
 
 
 DESCRIPTORS = {}
@@ -108,6 +109,29 @@ def font_stretch(keyword):
         'ultra-condensed', 'extra-condensed', 'condensed', 'semi-condensed',
         'normal',
         'semi-expanded', 'expanded', 'extra-expanded', 'ultra-expanded')
+
+
+@descriptor('font-feature-settings')
+def font_feature_settings_descriptor(tokens):
+    """``font-feature-settings`` descriptor validation."""
+    return font_feature_settings(tokens)
+
+
+@descriptor()
+def font_variant(tokens):
+    """``font-variant`` descriptor validation."""
+    if len(tokens) == 1:
+        keyword = get_keyword(tokens[0])
+        if keyword in ('normal', 'none', 'inherit'):
+            return []
+    values = []
+    for name, sub_tokens in expand_font_variant(tokens):
+        try:
+            values.append(validate_non_shorthand(
+                None, 'font-variant' + name, sub_tokens, required=True))
+        except InvalidValues as exc:
+            return None
+    return values
 
 
 def validate(base_url, name, tokens):

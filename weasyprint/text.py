@@ -765,7 +765,11 @@ class FontMetrics(object):
                 getattr(pango, 'pango_font_metrics_get_' + key)(self.metrics))
 
 
-def get_font_features_from_style(style):
+def get_font_features(
+        font_kerning='normal', font_variant_ligatures='normal',
+        font_variant_position='normal', font_variant_caps='normal',
+        font_variant_numeric='normal', font_variant_alternates='normal',
+        font_variant_east_asian='normal', font_feature_settings='normal'):
     """Get the font features from the different properties in style.
 
     See https://www.w3.org/TR/css-fonts-3/#feature-precedence
@@ -804,20 +808,21 @@ def get_font_features_from_style(style):
         'proportional-width': 'pwid',
         'ruby': 'ruby'}
 
-    # Step 1 is getting the default, we rely on Pango for this
-    # Steps 2 and 3 are related to the unsupported @font-face rule
+    # Step 1: getting the default, we rely on Pango for this
+    # Step 2: @font-face font-variant, done in text.add_font_face
+    # Step 3: @font-face font-feature-settings, done in text.add_font_face
 
     # Step 4: font-variant and OpenType features
 
-    if style.font_kerning != 'auto':
-        features['kern'] = int(style.font_kerning == 'normal')
+    if font_kerning != 'auto':
+        features['kern'] = int(font_kerning == 'normal')
 
-    if style.font_variant_ligatures == 'none':
+    if font_variant_ligatures == 'none':
         for keys in ligature_keys.values():
             for key in keys:
                 features[key] = 0
-    elif style.font_variant_ligatures != 'normal':
-        for ligature_type in style.font_variant_ligatures:
+    elif font_variant_ligatures != 'normal':
+        for ligature_type in font_variant_ligatures:
             value = 1
             if ligature_type.startswith('no-'):
                 value = 0
@@ -825,39 +830,39 @@ def get_font_features_from_style(style):
             for key in ligature_keys[ligature_type]:
                 features[key] = value
 
-    if style.font_variant_position == 'sub':
+    if font_variant_position == 'sub':
         # TODO: the specification asks for additional checks
         # https://www.w3.org/TR/css-fonts-3/#font-variant-position-prop
         features['subs'] = 1
-    elif style.font_variant_position == 'super':
+    elif font_variant_position == 'super':
         features['sups'] = 1
 
-    if style.font_variant_caps != 'normal':
+    if font_variant_caps != 'normal':
         # TODO: the specification asks for additional checks
         # https://www.w3.org/TR/css-fonts-3/#font-variant-caps-prop
-        for key in caps_keys[style.font_variant_caps]:
+        for key in caps_keys[font_variant_caps]:
             features[key] = 1
 
-    if style.font_variant_numeric != 'normal':
-        for key in style.font_variant_numeric:
+    if font_variant_numeric != 'normal':
+        for key in font_variant_numeric:
             features[numeric_keys[key]] = 1
 
-    if style.font_variant_alternates != 'normal':
+    if font_variant_alternates != 'normal':
         # TODO: support other values
         # See https://www.w3.org/TR/css-fonts-3/#font-variant-caps-prop
-        if style.font_variant_alternates == 'historical-forms':
+        if font_variant_alternates == 'historical-forms':
             features['hist'] = 1
 
-    if style.font_variant_east_asian != 'normal':
-        for key in style.font_variant_east_asian:
+    if font_variant_east_asian != 'normal':
+        for key in font_variant_east_asian:
             features[east_asian_keys[key]] = 1
 
-    # Step 5 is alread handled by Pango
+    # Step 5: incompatible features, already handled by Pango
 
     # Step 6: font-feature-settings
 
-    if style.font_feature_settings:
-        features.update(dict(style.font_feature_settings))
+    if font_feature_settings != 'normal':
+        features.update(dict(font_feature_settings))
 
     return features
 
@@ -908,7 +913,11 @@ def create_layout(text, style, hinting, max_width):
         pango.pango_layout_set_attributes(layout.layout, attr_list)
         pango.pango_attr_list_unref(attr_list)
 
-    features = get_font_features_from_style(style)
+    features = get_font_features(
+        style.font_kerning, style.font_variant_ligatures,
+        style.font_variant_position, style.font_variant_caps,
+        style.font_variant_numeric, style.font_variant_alternates,
+        style.font_variant_east_asian, style.font_feature_settings)
     if features:
         features = ','.join(
             ('%s %i' % (key, value)) for key, value in features.items())
@@ -1234,6 +1243,15 @@ def add_font_face(rule_descriptors):
             except Exception as exc:
                 LOGGER.warning('Failed to load font at "%s" (%s)', url, exc)
                 continue
+            font_features = {
+                rules[0][0].replace('-', '_'): rules[0][1] for rules in
+                rule_descriptors.get('font_variant', [])}
+            if 'font_feature_settings' in rule_descriptors:
+                font_features['font_feature_settings'] = (
+                    rule_descriptors['font_feature_settings'])
+            features_string = ''
+            for key, value in get_font_features(**font_features).items():
+                features_string += '<string>%s %s</string>' % (key, value)
             _, filename = tempfile.mkstemp()
             with open(filename, 'wb') as fd:
                 fd.write(font)
@@ -1255,15 +1273,22 @@ def add_font_face(rule_descriptors):
                       <const>%s</const>
                     </edit>
                   </match>
-                </fontconfig>''' % (
-                    filename,
-                    rule_descriptors['font_family'],
-                    FONTCONFIG_STYLE_CONSTANTS[
-                        rule_descriptors.get('font_style', 'normal')],
-                    FONTCONFIG_WEIGHT_CONSTANTS[
-                        rule_descriptors.get('font_weight', 'normal')],
-                    FONTCONFIG_STRETCH_CONSTANTS[
-                        rule_descriptors.get('font_stretch', 'normal')])
+                  <match target="font">
+                    <test name="file" compare="eq"><string>%s</string></test>
+                    <edit name="fontfeatures" mode="assign_replace">
+                      %s
+                    </edit>
+                  </match>
+              </fontconfig>''' % (
+                  filename,
+                  rule_descriptors['font_family'],
+                  FONTCONFIG_STYLE_CONSTANTS[
+                      rule_descriptors.get('font_style', 'normal')],
+                  FONTCONFIG_WEIGHT_CONSTANTS[
+                      rule_descriptors.get('font_weight', 'normal')],
+                  FONTCONFIG_STRETCH_CONSTANTS[
+                      rule_descriptors.get('font_stretch', 'normal')],
+                  filename, features_string)
             _, conf_filename = tempfile.mkstemp()
             with open(conf_filename, 'wb') as fd:
                 # TODO: encoding is OK for <test>, but what about <edit>s?
