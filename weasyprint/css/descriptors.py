@@ -129,7 +129,7 @@ def font_variant(tokens):
         try:
             values.append(validate_non_shorthand(
                 None, 'font-variant' + name, sub_tokens, required=True))
-        except InvalidValues as exc:
+        except InvalidValues:
             return None
     return values
 
