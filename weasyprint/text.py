@@ -1306,5 +1306,7 @@ def add_font_face(rule_descriptors, url_fetcher):
             if font_added:
                 # TODO: we should mask the local fonts with the same name too
                 return filename
+            else:
+                LOGGER.warning('Failed to load font at "%s"', url)
     LOGGER.warning(
         'Font-face "%s" cannot be loaded' % rule_descriptors['font_family'])
