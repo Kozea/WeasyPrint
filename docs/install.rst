@@ -123,7 +123,7 @@ with pip after installing the following packages:
 
 .. code-block:: sh
 
-    sudo yum install redhat-rpm-config python-devel python-pip python-lxml python-cffi cairo pango gdk-pixbuf2
+    sudo yum install redhat-rpm-config python-devel python-pip python-lxml python-cffi libffi-devel cairo pango gdk-pixbuf2
 
 Archlinux
 ~~~~~~~~~
