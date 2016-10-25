@@ -183,7 +183,7 @@ Windows
 
 - reboot,
 - install `Visual C++ compiler for Python 2.7 <http://aka.ms/vcpython27>`_,
-- download `lxml <http://www.lfd.uci.edu/~gohlke/pythonlibs/#lxml>`_:
+- download `lxml for Windows <http://www.lfd.uci.edu/~gohlke/pythonlibs/#lxml>`_:
 
   - "lxml-x.x.x-cp27-cp27m-win32.whl" on Windows 32 bit,
   - "lxml-x.x.x-cp27-cp27m-win_amd64.whl" on Windows 64 bit,
