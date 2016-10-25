@@ -22,7 +22,6 @@ WeasyPrint |version| depends on:
 .. _CFFI: https://cffi.readthedocs.org/
 .. _html5lib: http://html5lib.readthedocs.org/
 .. _cairocffi: http://pythonhosted.org/cairocffi/
-.. _GTK+: http://www.gtk.org/
 .. _lxml: http://lxml.de/
 .. _tinycss: http://packages.python.org/tinycss/
 .. _cssselect: http://packages.python.org/cssselect/
