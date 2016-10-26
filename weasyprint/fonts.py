@@ -245,12 +245,15 @@ else:
         # multiple documents at the same time. We need to have the document's
         # font config when creating Cairo contexts.
         font_config = fontconfig.FcInitLoadConfigAndFonts()
+        # TODO: we'll need to remove that and return the font config to the
+        # document.
         fontconfig.FcConfigSetCurrent(font_config)
         font_map = ffi.gc(
             pangocairo.pango_cairo_font_map_new_for_font_type(
                 cairo.FONT_TYPE_FT),
             gobject.g_object_unref)
-        pangoft2.pango_fc_font_map_set_config(
-            ffi.cast('PangoFcFontMap *', font_map), font_config)
+        # TODO: we'll need that when we'll remove font_map_set_default.
+        # pangoft2.pango_fc_font_map_set_config(
+        #    ffi.cast('PangoFcFontMap *', font_map), font_config)
         pangocairo.pango_cairo_font_map_set_default(
             ffi.cast('PangoCairoFontMap *', font_map))
