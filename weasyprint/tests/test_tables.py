@@ -12,9 +12,8 @@
 
 from __future__ import division, unicode_literals
 
-from .testing_utils import assert_no_logs, capture_logs
+from .testing_utils import assert_no_logs, capture_logs, requires
 from .test_boxes import render_pages as parse
-from .test_draw import requires, assert_pixels
 
 
 @assert_no_logs

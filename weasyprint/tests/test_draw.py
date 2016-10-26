@@ -17,17 +17,15 @@ import os.path
 import tempfile
 import shutil
 import itertools
-import functools
 
 import cairocffi as cairo
-import pytest
 
 from ..compat import xrange, izip, ints_from_bytes
 from ..urls import ensure_url
 from ..html import HTML_HANDLERS
 from .. import HTML
 from .testing_utils import (
-    resource_filename, FakeHTML, FONTS, assert_no_logs, capture_logs)
+    resource_filename, FakeHTML, FONTS, assert_no_logs, capture_logs, requires)
 
 
 # RGBA to native-endian ARGB
@@ -50,27 +48,6 @@ def save_pixels_to_png(pixels, width, height, filename):
         cairo.FORMAT_ARGB32, width, height,
         data=bytearray(pixels), stride=width * 4
     ).write_to_png(filename)
-
-
-def requires(library, version):
-    tuple_version = [0, 0, 0]
-    for i, number in enumerate(version.split('.')):
-        tuple_version[i] = int(number)
-    version_number = int(''.join('%02i' % number for number in tuple_version))
-
-    def require_version(test):
-        @functools.wraps(test)
-        def decorated_test():
-            library_version = getattr(
-                globals()[library], '%s_version' % library)()
-            if library_version < version_number:
-                print('Running cairo %s but this test requires %s+' % (
-                    cairo.cairo_version_string(), version))
-                pytest.xfail()
-            test()
-        return decorated_test
-
-    return require_version
 
 
 def assert_pixels(name, expected_width, expected_height, expected_pixels,
