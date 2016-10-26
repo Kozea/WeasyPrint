@@ -10,6 +10,7 @@
 
 """
 
+from .test_draw import requires
 from .test_layout import parse
 from .testing_utils import assert_no_logs
 
@@ -29,6 +30,7 @@ def test_font_face():
 
 
 @assert_no_logs
+@requires('pango', '1.38')
 def test_default():
     # Kerning and ligatures are on by default
     page, = parse('''
@@ -93,6 +95,7 @@ def test_default():
 
 
 @assert_no_logs
+@requires('pango', '1.38')
 def test_font_face_descriptors():
     page, = parse(
         '''

@@ -14,7 +14,7 @@ from __future__ import division, unicode_literals
 
 from .testing_utils import assert_no_logs, capture_logs
 from .test_boxes import render_pages as parse
-from .test_draw import requires_cairo, assert_pixels
+from .test_draw import requires, assert_pixels
 
 
 @assert_no_logs
@@ -1480,7 +1480,7 @@ def test_table_row_height():
 
 
 @assert_no_logs
-@requires_cairo('1.12')
+@requires('cairo', '1.12')
 def test_table_vertical_align():
     from .test_draw import _, r, B
     assert_pixels('table_vertical_align', 28, 10, [
