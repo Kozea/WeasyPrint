@@ -38,6 +38,23 @@ ffi.cdef('''
 
     // Pango
 
+    typedef unsigned int guint;
+    typedef int gint;
+    typedef char gchar;
+    typedef gint gboolean;
+    typedef void* gpointer;
+    typedef ... cairo_t;
+    typedef ... PangoLayout;
+    typedef ... PangoContext;
+    typedef ... PangoFontMap;
+    typedef ... PangoFontMetrics;
+    typedef ... PangoLanguage;
+    typedef ... PangoTabArray;
+    typedef ... PangoFontDescription;
+    typedef ... PangoLayoutIter;
+    typedef ... PangoAttrList;
+    typedef ... PangoAttrClass;
+
     typedef enum {
         PANGO_STYLE_NORMAL,
         PANGO_STYLE_OBLIQUE,
@@ -80,41 +97,33 @@ ffi.cdef('''
         PANGO_TAB_LEFT
     } PangoTabAlign;
 
-    typedef unsigned int guint;
-    typedef int gint;
-    typedef gint gboolean;
-    typedef void* gpointer;
-    typedef ... cairo_t;
-    typedef ... PangoLayout;
-    typedef ... PangoContext;
-    typedef ... PangoFontMap;
-    typedef ... PangoFontMetrics;
-    typedef ... PangoLanguage;
-    typedef ... PangoTabArray;
-    typedef ... PangoFontDescription;
-    typedef ... PangoLayoutIter;
-    typedef ... PangoAttrList;
-    typedef ... PangoAttrClass;
     typedef struct {
         const PangoAttrClass *klass;
         guint start_index;
         guint end_index;
     } PangoAttribute;
+
     typedef struct {
         PangoLayout *layout;
         gint         start_index;
         gint         length;
         /* ... */
     } PangoLayoutLine;
-    typedef char gchar;
 
-    double              pango_units_to_double               (int i);
-    int                 pango_units_from_double             (double d);
-    void                g_object_unref                      (gpointer object);
-    void                g_type_init                         (void);
+    typedef struct  {
+        int x;
+        int y;
+        int width;
+        int height;
+    } PangoRectangle;
+
+    double pango_units_to_double (int i);
+    int pango_units_from_double (double d);
+    void g_object_unref (gpointer object);
+    void g_type_init (void);
 
     void pango_layout_set_width (PangoLayout *layout, int width);
-    void pango_layout_set_attributes(
+    void pango_layout_set_attributes (
         PangoLayout *layout, PangoAttrList *attrs);
     void pango_layout_set_text (
         PangoLayout *layout, const char *text, int length);
@@ -125,100 +134,75 @@ ffi.cdef('''
     void pango_layout_set_wrap (
         PangoLayout *layout, PangoWrapMode wrap);
 
+    PangoLayoutIter * pango_layout_get_iter (PangoLayout *layout);
+    void pango_layout_iter_free (PangoLayoutIter *iter);
+    gboolean pango_layout_iter_next_line (PangoLayoutIter *iter);
+    PangoLayoutLine * pango_layout_iter_get_line_readonly (
+        PangoLayoutIter *iter);
+    int pango_layout_iter_get_baseline (PangoLayoutIter *iter);
+
     PangoFontDescription * pango_font_description_new (void);
-
     void pango_font_description_free (PangoFontDescription *desc);
-
     void pango_font_description_set_family (
         PangoFontDescription *desc, const char *family);
-
     void pango_font_description_set_style (
         PangoFontDescription *desc, PangoStyle style);
-
     void pango_font_description_set_stretch (
         PangoFontDescription *desc, PangoStretch stretch);
-
     void pango_font_description_set_weight (
         PangoFontDescription *desc, PangoWeight weight);
-
     void pango_font_description_set_absolute_size (
         PangoFontDescription *desc, double size);
 
-    PangoAttrList *     pango_attr_list_new             (void);
-    void                pango_attr_list_unref           (PangoAttrList *list);
-    void                pango_attr_list_insert          (
+    PangoFontMetrics * pango_context_get_metrics (
+        PangoContext *context, const PangoFontDescription *desc,
+        PangoLanguage *language);
+    void pango_font_metrics_unref (PangoFontMetrics *metrics);
+    int pango_font_metrics_get_ascent (PangoFontMetrics *metrics);
+    int pango_font_metrics_get_descent (PangoFontMetrics *metrics);
+    int pango_font_metrics_get_approximate_char_width (
+        PangoFontMetrics *metrics);
+    int pango_font_metrics_get_approximate_digit_width (
+        PangoFontMetrics *metrics);
+    int pango_font_metrics_get_underline_thickness (
+        PangoFontMetrics *metrics);
+    int pango_font_metrics_get_underline_position (
+        PangoFontMetrics *metrics);
+    int pango_font_metrics_get_strikethrough_thickness (
+        PangoFontMetrics *metrics);
+    int pango_font_metrics_get_strikethrough_position (
+        PangoFontMetrics *metrics);
+
+    PangoAttrList * pango_attr_list_new (void);
+    void pango_attr_list_unref (PangoAttrList *list);
+    void pango_attr_list_insert (
         PangoAttrList *list, PangoAttribute *attr);
+    PangoAttribute * pango_attr_font_features_new (const gchar *features);
+    PangoAttribute * pango_attr_letter_spacing_new (int letter_spacing);
+    void pango_attribute_destroy (PangoAttribute *attr);
 
-    PangoAttribute *    pango_attr_font_features_new    (
-        const gchar *features);
-    PangoAttribute *    pango_attr_letter_spacing_new   (int letter_spacing);
-    void                pango_attribute_destroy         (PangoAttribute *attr);
-
-    PangoTabArray *     pango_tab_array_new_with_positions (
+    PangoTabArray * pango_tab_array_new_with_positions (
         gint size, gboolean positions_in_pixels, PangoTabAlign first_alignment,
         gint first_position, ...);
     void pango_tab_array_free (PangoTabArray *tab_array);
 
-    PangoLayoutIter *   pango_layout_get_iter (PangoLayout *layout);
-    void pango_layout_iter_free (PangoLayoutIter *iter);
-
-    gboolean pango_layout_iter_next_line (PangoLayoutIter *iter);
-
-    PangoLayoutLine *   pango_layout_iter_get_line_readonly (
-        PangoLayoutIter *iter);
-
-    int pango_layout_iter_get_baseline (PangoLayoutIter *iter);
-
-    PangoLanguage *     pango_language_from_string (const char *language);
-    PangoLanguage *     pango_language_get_default (void);
-    void                pango_context_set_language (
+    PangoLanguage * pango_language_from_string (const char *language);
+    PangoLanguage * pango_language_get_default (void);
+    void pango_context_set_language (
         PangoContext *context, PangoLanguage *language);
-
-    typedef struct  {
-        int x;
-        int y;
-        int width;
-        int height;
-    } PangoRectangle;
 
     void pango_layout_line_get_extents (
         PangoLayoutLine *line,
         PangoRectangle *ink_rect, PangoRectangle *logical_rect);
 
-    PangoContext *      pango_layout_get_context     (PangoLayout *layout);
-    void                pango_layout_context_changed (PangoLayout *layout);
-    PangoFontMetrics *  pango_context_get_metrics    (
-        PangoContext *context, const PangoFontDescription *desc,
-        PangoLanguage *language);
-
-    void    pango_font_metrics_unref            (PangoFontMetrics *metrics);
-    int     pango_font_metrics_get_ascent       (PangoFontMetrics *metrics);
-    int     pango_font_metrics_get_descent      (PangoFontMetrics *metrics);
-    int     pango_font_metrics_get_approximate_char_width
-                                                (PangoFontMetrics *metrics);
-    int     pango_font_metrics_get_approximate_digit_width
-                                                (PangoFontMetrics *metrics);
-    int     pango_font_metrics_get_underline_thickness
-                                                (PangoFontMetrics *metrics);
-    int     pango_font_metrics_get_underline_position
-                                                (PangoFontMetrics *metrics);
-    int     pango_font_metrics_get_strikethrough_thickness
-                                                (PangoFontMetrics *metrics);
-    int     pango_font_metrics_get_strikethrough_position
-                                                (PangoFontMetrics *metrics);
+    PangoContext * pango_layout_get_context (PangoLayout *layout);
 
 
     // PangoCairo
 
-    typedef ... PangoCairoFontMap;
-
     PangoLayout * pango_cairo_create_layout (cairo_t *cr);
     void pango_cairo_update_layout (cairo_t *cr, PangoLayout *layout);
     void pango_cairo_show_layout_line (cairo_t *cr, PangoLayoutLine *line);
-    PangoFontMap * pango_cairo_font_map_get_default (void);
-    void pango_cairo_font_map_set_default (PangoCairoFontMap *fontmap);
-    PangoFontMap * pango_cairo_font_map_new_for_font_type
-        (cairo_font_type_t fonttype);
 ''')
 
 
@@ -849,9 +833,10 @@ def create_layout(text, style, hinting, max_width):
         attr_list = pango.pango_attr_list_new()
 
         def add_attr(start, end, spacing):
+            # TODO: letter spacing attributes should be freed (as it's done for
+            # font features), but it crashes Python for unknown reasons.
             attr = pango.pango_attr_letter_spacing_new(spacing)
-            attr.start_index = start
-            attr.end_index = end
+            attr.start_index, attr.end_index = start, end
             pango.pango_attr_list_insert(attr_list, attr)
 
         add_attr(0, len(text_bytes) + 1, letter_spacing)
@@ -859,6 +844,7 @@ def create_layout(text, style, hinting, max_width):
         while position != -1:
             add_attr(position, position + 1, space_spacing)
             position = text_bytes.find(b' ', position + 1)
+
         pango.pango_layout_set_attributes(layout.layout, attr_list)
         pango.pango_attr_list_unref(attr_list)
 
@@ -871,7 +857,9 @@ def create_layout(text, style, hinting, max_width):
         features = ','.join(
             ('%s %i' % (key, value)) for key, value in features.items())
         try:
-            attr = pango.pango_attr_font_features_new(features.encode('ascii'))
+            attr = ffi.gc(
+                pango.pango_attr_font_features_new(features.encode('ascii')),
+                pango.pango_attribute_destroy)
         except AttributeError:
             LOGGER.warning(
                 'OpenType features are not available with Pango < 1.38')

@@ -19,7 +19,7 @@ import tempfile
 
 from .compat import FILESYSTEM_ENCODING
 from .logger import LOGGER
-from .text import cairo, dlopen, ffi, get_font_features, pangocairo
+from .text import cairo, dlopen, ffi, get_font_features, gobject, pangocairo
 from .urls import fetch
 
 
@@ -37,43 +37,51 @@ else:
         typedef struct _FcConfig FcConfig;
         typedef struct _FcPattern FcPattern;
         typedef unsigned char FcChar8;
-        typedef int FcBool;
+
         typedef enum {
             FcResultMatch, FcResultNoMatch, FcResultTypeMismatch, FcResultNoId,
             FcResultOutOfMemory
         } FcResult;
+
         typedef enum {
             FcMatchPattern, FcMatchFont, FcMatchScan
         } FcMatchKind;
 
-        FcBool      FcConfigAppFontAddFile
-            (FcConfig *config, const FcChar8 *file);
-        FcConfig *  FcConfigGetCurrent (void);
-        FcBool      FcConfigParseAndLoad
-            (FcConfig *config, const FcChar8 *file, FcBool complain);
+        FcConfig * FcInitLoadConfigAndFonts (void);
+        FcBool FcConfigAppFontAddFile (
+            FcConfig *config, const FcChar8 *file);
+        FcConfig * FcConfigGetCurrent (void);
+        FcBool FcConfigSetCurrent (FcConfig *config);
+        FcBool FcConfigParseAndLoad (
+            FcConfig *config, const FcChar8 *file, FcBool complain);
+
+        void FcDefaultSubstitute (FcPattern *pattern);
+        FcBool FcConfigSubstitute (
+            FcConfig *config, FcPattern *p, FcMatchKind kind);
+
         FcPattern * FcPatternCreate (void);
+        FcBool FcPatternAddString (
+            FcPattern *p, const char *object, const FcChar8 *s);
+        FcResult FcPatternGetString (
+            FcPattern *p, const char *object, int n, FcChar8 **s);
         FcPattern * FcFontMatch (FcConfig *config, FcPattern *p);
-        FcBool      FcPatternAddString
-            (FcPattern *p, const char *object, const FcChar8 *s);
-        FcBool      FcConfigSubstitute
-            (FcConfig *config, FcPattern *p, FcMatchKind kind);
-        void        FcDefaultSubstitute (FcPattern *pattern);
-        FcResult    FcPatternGetString
-            (FcPattern *p, const char *object, int n, FcChar8 **s);
-        FcConfig *  FcInitLoadConfigAndFonts (void);
-        FcBool      FcConfigSetCurrent (FcConfig *config);
-        FcBool      FcInitReinitialize (void);
-        void        FcConfigAppFontClear (FcConfig *config);
 
 
         // PangoFT2
 
-        typedef ...    PangoFcFontMap;
+        typedef ... PangoFcFontMap;
 
-        void           pango_fc_font_map_set_config
-            (PangoFcFontMap *fcfontmap, FcConfig *fcconfig);
-        void           pango_fc_font_map_config_changed
-            (PangoFcFontMap *fcfontmap);
+        void pango_fc_font_map_set_config (
+            PangoFcFontMap *fcfontmap, FcConfig *fcconfig);
+
+
+        // PangoCairo
+
+        typedef ... PangoCairoFontMap;
+
+        void pango_cairo_font_map_set_default (PangoCairoFontMap *fontmap);
+        PangoFontMap * pango_cairo_font_map_new_for_font_type (
+            cairo_font_type_t fonttype);
     ''')
 
     fontconfig = dlopen(ffi, 'fontconfig', 'libfontconfig',
@@ -227,14 +235,21 @@ else:
             rule_descriptors['font_family'])
 
     def create_font_config():
-        """Create a font configuration for a document."""
+        """Create a font configuration for a document.
+
+        See https://mces.blogspot.fr/2015/05/
+                    how-to-use-custom-application-fonts.html
+
+        """
         # TODO: This is not thread-safe, expect random results when rendering
         # multiple documents at the same time. We need to have the document's
         # font config when creating Cairo contexts.
         font_config = fontconfig.FcInitLoadConfigAndFonts()
         fontconfig.FcConfigSetCurrent(font_config)
-        font_map = pangocairo.pango_cairo_font_map_new_for_font_type(
-            cairo.FONT_TYPE_FT)
+        font_map = ffi.gc(
+            pangocairo.pango_cairo_font_map_new_for_font_type(
+                cairo.FONT_TYPE_FT),
+            gobject.g_object_unref)
         pangoft2.pango_fc_font_map_set_config(
             ffi.cast('PangoFcFontMap *', font_map), font_config)
         pangocairo.pango_cairo_font_map_set_default(
