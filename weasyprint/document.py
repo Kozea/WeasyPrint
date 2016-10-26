@@ -21,6 +21,7 @@ from . import CSS
 from . import images
 from .logger import LOGGER
 from .css import get_all_computed_styles
+from .fonts import create_font_config
 from .formatting_structure import boxes
 from .formatting_structure.build import build_formatting_structure
 from .layout import layout_document
@@ -315,6 +316,7 @@ class Document(object):
     @classmethod
     def _render(cls, html, stylesheets, enable_hinting,
                 presentational_hints=False):
+        create_font_config()
         style_for = get_all_computed_styles(
             html, presentational_hints=presentational_hints, user_stylesheets=[
                 css if hasattr(css, 'rules')

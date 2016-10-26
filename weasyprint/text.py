@@ -13,22 +13,29 @@
 from __future__ import division
 # XXX No unicode_literals, cffi likes native strings
 
-import os
 import re
-import sys
-import tempfile
 
 import pyphen
 import cffi
 import cairocffi as cairo
 
-from .compat import FILESYSTEM_ENCODING, basestring
+from .compat import basestring
 from .logger import LOGGER
-from .urls import fetch
 
 
 ffi = cffi.FFI()
 ffi.cdef('''
+    // Cairo
+
+    typedef enum {
+        CAIRO_FONT_TYPE_TOY,
+        CAIRO_FONT_TYPE_FT,
+        CAIRO_FONT_TYPE_WIN32,
+        CAIRO_FONT_TYPE_QUARTZ,
+        CAIRO_FONT_TYPE_USER
+    } cairo_font_type_t;
+
+
     // Pango
 
     typedef enum {
@@ -80,6 +87,7 @@ ffi.cdef('''
     typedef ... cairo_t;
     typedef ... PangoLayout;
     typedef ... PangoContext;
+    typedef ... PangoFontMap;
     typedef ... PangoFontMetrics;
     typedef ... PangoLanguage;
     typedef ... PangoTabArray;
@@ -105,8 +113,6 @@ ffi.cdef('''
     void                g_object_unref                      (gpointer object);
     void                g_type_init                         (void);
 
-
-    PangoLayout * pango_cairo_create_layout (cairo_t *cr);
     void pango_layout_set_width (PangoLayout *layout, int width);
     void pango_layout_set_attributes(
         PangoLayout *layout, PangoAttrList *attrs);
@@ -118,7 +124,6 @@ ffi.cdef('''
         PangoLayout *layout, const PangoFontDescription *desc);
     void pango_layout_set_wrap (
         PangoLayout *layout, PangoWrapMode wrap);
-
 
     PangoFontDescription * pango_font_description_new (void);
 
@@ -138,7 +143,6 @@ ffi.cdef('''
 
     void pango_font_description_set_absolute_size (
         PangoFontDescription *desc, double size);
-
 
     PangoAttrList *     pango_attr_list_new             (void);
     void                pango_attr_list_unref           (PangoAttrList *list);
@@ -203,40 +207,18 @@ ffi.cdef('''
     int     pango_font_metrics_get_strikethrough_position
                                                 (PangoFontMetrics *metrics);
 
+
+    // PangoCairo
+
+    typedef ... PangoCairoFontMap;
+
+    PangoLayout * pango_cairo_create_layout (cairo_t *cr);
     void pango_cairo_update_layout (cairo_t *cr, PangoLayout *layout);
     void pango_cairo_show_layout_line (cairo_t *cr, PangoLayoutLine *line);
-
-
-    // FontConfig
-
-    typedef enum _FcResult {
-        FcResultMatch, FcResultNoMatch, FcResultTypeMismatch, FcResultNoId,
-        FcResultOutOfMemory
-    } FcResult;
-    typedef enum _FcMatchKind {
-        FcMatchPattern, FcMatchFont, FcMatchScan
-    } FcMatchKind;
-
-    typedef     struct _FcConfig FcConfig;
-    typedef     struct _FcPattern FcPattern;
-    typedef     unsigned char FcChar8;
-    typedef     int FcBool;
-    typedef     struct _FcConfig FcConfig;
-
-    FcBool      FcConfigAppFontAddFile (FcConfig *config, const FcChar8 *file);
-    FcConfig *  FcConfigGetCurrent (void);
-    FcBool      FcConfigParseAndLoad
-        (FcConfig *config, const FcChar8 *file, FcBool complain);
-    FcPattern * FcPatternCreate (void);
-    FcPattern * FcFontMatch (FcConfig *config, FcPattern *p);
-    FcBool      FcPatternAddString
-        (FcPattern *p, const char *object, const FcChar8 *s);
-    FcBool      FcConfigSubstitute
-        (FcConfig *config, FcPattern *p, FcMatchKind kind);
-    void        FcDefaultSubstitute (FcPattern *pattern);
-    FcResult    FcPatternGetString
-        (FcPattern *p, const char *object, int n, FcChar8 **s);
-
+    PangoFontMap * pango_cairo_font_map_get_default (void);
+    void pango_cairo_font_map_set_default (PangoCairoFontMap *fontmap);
+    PangoFontMap * pango_cairo_font_map_new_for_font_type
+        (cairo_font_type_t fonttype);
 ''')
 
 
@@ -257,8 +239,6 @@ pango = dlopen(ffi, 'pango-1.0', 'libpango-1.0-0', 'libpango-1.0.so',
                'libpango-1.0.dylib')
 pangocairo = dlopen(ffi, 'pangocairo-1.0', 'libpangocairo-1.0-0',
                     'libpangocairo-1.0.so', 'libpangocairo-1.0.dylib')
-fontconfig = dlopen(ffi, 'fontconfig', 'libfontconfig',
-                    'libfontconfig.so.1', 'libfontconfig-1.dylib')
 
 gobject.g_type_init()
 
@@ -572,38 +552,6 @@ LST_TO_ISO = {
     'znd': 'zne',
 }
 
-FONTCONFIG_WEIGHT_CONSTANTS = {
-    'normal': 'normal',
-    'bold': 'bold',
-    100: 'thin',
-    200: 'extralight',
-    300: 'light',
-    400: 'normal',
-    500: 'medium',
-    600: 'demibold',
-    700: 'bold',
-    800: 'extrabold',
-    900: 'black',
-}
-
-FONTCONFIG_STYLE_CONSTANTS = {
-    'normal': 'roman',
-    'italic': 'italic',
-    'oblique': 'oblique',
-}
-
-FONTCONFIG_STRETCH_CONSTANTS = {
-    'normal': 'normal',
-    'ultra-condensed': 'ultracondensed',
-    'extra-condensed': 'extracondensed',
-    'condensed': 'condensed',
-    'semi-condensed': 'semicondensed',
-    'semi-expanded': 'semiexpanded',
-    'expanded': 'expanded',
-    'extra-expanded': 'extraexpanded',
-    'ultra-expanded': 'ultraexpanded',
-}
-
 
 def utf8_slice(string, slice_):
     return string.encode('utf-8')[slice_].decode('utf-8')
@@ -810,8 +758,8 @@ def get_font_features(
         'ruby': 'ruby'}
 
     # Step 1: getting the default, we rely on Pango for this
-    # Step 2: @font-face font-variant, done in text.add_font_face
-    # Step 3: @font-face font-feature-settings, done in text.add_font_face
+    # Step 2: @font-face font-variant, done in fonts.add_font_face
+    # Step 3: @font-face font-feature-settings, done in fonts.add_font_face
 
     # Step 4: font-variant and OpenType features
 
@@ -858,7 +806,7 @@ def get_font_features(
         for key in font_variant_east_asian:
             features[east_asian_keys[key]] = 1
 
-    # Step 5: incompatible features, already handled by Pango
+    # Step 5: incompatible non-OpenType features, already handled by Pango
 
     # Step 6: font-feature-settings
 
@@ -1194,119 +1142,3 @@ def show_first_line(context, pango_layout, hinting):
     pango.pango_layout_set_width(pango_layout.layout, -1)
     pangocairo.pango_cairo_show_layout_line(
         context, next(pango_layout.iter_lines()))
-
-
-def add_font_face(rule_descriptors, url_fetcher):
-    """Add a font into the Fontconfig application."""
-    if not fontconfig or (
-            sys.platform.startswith('win') or
-            sys.platform.startswith('darwin')):
-        LOGGER.warning(
-            '@font-face is currently not supported on Windows and OSX')
-        return
-    for font_type, url in rule_descriptors['src']:
-        config = fontconfig.FcConfigGetCurrent()
-        if font_type in ('external', 'local'):
-            if font_type == 'local':
-                font_name = url.encode('utf-8')
-                pattern = fontconfig.FcPatternCreate()
-                fontconfig.FcConfigSubstitute(
-                    config, pattern, fontconfig.FcMatchFont)
-                fontconfig.FcDefaultSubstitute(pattern)
-                fontconfig.FcPatternAddString(
-                    pattern, b'fullname', font_name)
-                fontconfig.FcPatternAddString(
-                    pattern, b'postscriptname', font_name)
-                family = ffi.new('FcChar8 **')
-                postscript = ffi.new('FcChar8 **')
-                matching_pattern = fontconfig.FcFontMatch(config, pattern)
-                # TODO: do many fonts have multiple family values?
-                fontconfig.FcPatternGetString(
-                    matching_pattern, b'fullname', 0, family)
-                fontconfig.FcPatternGetString(
-                    matching_pattern, b'postscriptname', 0, postscript)
-                family = ffi.string(family[0])
-                postscript = ffi.string(postscript[0])
-                if font_name.lower() in (family.lower(), postscript.lower()):
-                    filename = ffi.new('FcChar8 **')
-                    matching_pattern = fontconfig.FcFontMatch(
-                        ffi.NULL, pattern)
-                    fontconfig.FcPatternGetString(
-                        matching_pattern, b'file', 0, filename)
-                    url = u'file://' + ffi.string(filename[0]).decode('utf-8')
-                else:
-                    LOGGER.warning(
-                        'Failed to load local font "%s"',
-                        font_name.decode('utf-8'))
-                    continue
-            try:
-                with fetch(url_fetcher, url) as result:
-                    if 'string' in result:
-                        font = result['string']
-                    else:
-                        font = result['file_obj'].read()
-            except Exception as exc:
-                LOGGER.warning('Failed to load font at "%s" (%s)', url, exc)
-                continue
-            font_features = {
-                rules[0][0].replace('-', '_'): rules[0][1] for rules in
-                rule_descriptors.get('font_variant', [])}
-            if 'font_feature_settings' in rule_descriptors:
-                font_features['font_feature_settings'] = (
-                    rule_descriptors['font_feature_settings'])
-            features_string = ''
-            for key, value in get_font_features(**font_features).items():
-                features_string += '<string>%s %s</string>' % (key, value)
-            _, filename = tempfile.mkstemp()
-            with open(filename, 'wb') as fd:
-                fd.write(font)
-            xml = '''<?xml version="1.0"?>
-                <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
-                <fontconfig>
-                  <match target="scan">
-                    <test name="file" compare="eq"><string>%s</string></test>
-                    <edit name="family" mode="assign_replace">
-                      <string>%s</string>
-                    </edit>
-                    <edit name="slant" mode="assign_replace">
-                      <const>%s</const>
-                    </edit>
-                    <edit name="weight" mode="assign_replace">
-                      <const>%s</const>
-                    </edit>
-                    <edit name="width" mode="assign_replace">
-                      <const>%s</const>
-                    </edit>
-                  </match>
-                  <match target="font">
-                    <test name="file" compare="eq"><string>%s</string></test>
-                    <edit name="fontfeatures" mode="assign_replace">
-                      %s
-                    </edit>
-                  </match>
-              </fontconfig>''' % (
-                  filename,
-                  rule_descriptors['font_family'],
-                  FONTCONFIG_STYLE_CONSTANTS[
-                      rule_descriptors.get('font_style', 'normal')],
-                  FONTCONFIG_WEIGHT_CONSTANTS[
-                      rule_descriptors.get('font_weight', 'normal')],
-                  FONTCONFIG_STRETCH_CONSTANTS[
-                      rule_descriptors.get('font_stretch', 'normal')],
-                  filename, features_string)
-            _, conf_filename = tempfile.mkstemp()
-            with open(conf_filename, 'wb') as fd:
-                # TODO: encoding is OK for <test>, but what about <edit>s?
-                fd.write(xml.encode(FILESYSTEM_ENCODING))
-            fontconfig.FcConfigParseAndLoad(
-                config, conf_filename.encode(FILESYSTEM_ENCODING), True)
-            os.remove(conf_filename)
-            font_added = fontconfig.FcConfigAppFontAddFile(
-                config, filename.encode(FILESYSTEM_ENCODING))
-            if font_added:
-                # TODO: we should mask the local fonts with the same name too
-                return filename
-            else:
-                LOGGER.warning('Failed to load font at "%s"', url)
-    LOGGER.warning(
-        'Font-face "%s" cannot be loaded' % rule_descriptors['font_family'])
