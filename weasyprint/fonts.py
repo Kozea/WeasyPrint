@@ -25,10 +25,12 @@ from .urls import fetch
 
 if sys.platform.startswith('win'):
     LOGGER.warning('@font-face is currently not supported on Windows')
-    add_font_face = create_font_config = lambda *args, **kwargs: None
+    add_font_face = create_font_config = clean_font_config = (
+        lambda *args, **kwargs: None)
 elif sys.platform.startswith('darwin'):
     LOGGER.warning('@font-face is currently not supported on OSX')
-    add_font_face = create_font_config = lambda *args, **kwargs: None
+    add_font_face = create_font_config = clean_font_config = (
+        lambda *args, **kwargs: None)
 else:
     ffi.cdef('''
         // FontConfig
@@ -121,7 +123,7 @@ else:
         'ultra-expanded': 'ultraexpanded',
     }
 
-    def add_font_face(rule_descriptors, url_fetcher):
+    def add_font_face(rule_descriptors, url_fetcher, font_config):
         """Add a font into the Fontconfig application."""
         for font_type, url in rule_descriptors['src']:
             if font_type in ('external', 'local'):
@@ -184,6 +186,7 @@ else:
                 _, filename = tempfile.mkstemp()
                 with open(filename, 'wb') as fd:
                     fd.write(font)
+                font_config['filenames'].append(filename)
                 xml = '''<?xml version="1.0"?>
                 <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
                 <fontconfig>
@@ -220,9 +223,9 @@ else:
                 with open(conf_filename, 'wb') as fd:
                     # TODO: encoding is OK for <test>, but what about <edit>s?
                     fd.write(xml.encode(FILESYSTEM_ENCODING))
+                font_config['filenames'].append(conf_filename)
                 fontconfig.FcConfigParseAndLoad(
                     config, conf_filename.encode(FILESYSTEM_ENCODING), True)
-                os.remove(conf_filename)
                 font_added = fontconfig.FcConfigAppFontAddFile(
                     config, filename.encode(FILESYSTEM_ENCODING))
                 if font_added:
@@ -240,14 +243,17 @@ else:
         See https://mces.blogspot.fr/2015/05/
                     how-to-use-custom-application-fonts.html
 
+        The font configuration is an opaque object only used by the functions
+        of this module, it can be different for different implementations.
+
         """
         # TODO: This is not thread-safe, expect random results when rendering
         # multiple documents at the same time. We need to have the document's
         # font config when creating Cairo contexts.
-        font_config = fontconfig.FcInitLoadConfigAndFonts()
+        fontconfig_config = fontconfig.FcInitLoadConfigAndFonts()
         # TODO: we'll need to remove that and return the font config to the
         # document.
-        fontconfig.FcConfigSetCurrent(font_config)
+        fontconfig.FcConfigSetCurrent(fontconfig_config)
         font_map = ffi.gc(
             pangocairo.pango_cairo_font_map_new_for_font_type(
                 cairo.FONT_TYPE_FT),
@@ -257,3 +263,9 @@ else:
         #    ffi.cast('PangoFcFontMap *', font_map), font_config)
         pangocairo.pango_cairo_font_map_set_default(
             ffi.cast('PangoCairoFontMap *', font_map))
+        return {'config': fontconfig_config, 'filenames': []}
+
+    def clean_font_config(font_config):
+        """Clean a font configuration for a document."""
+        for filename in font_config['filenames']:
+            os.remove(filename)

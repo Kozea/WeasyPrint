@@ -163,7 +163,8 @@ def get_child_text(element):
     return ''.join(content)
 
 
-def find_stylesheets(element_tree, device_media_type, url_fetcher):
+def find_stylesheets(element_tree, device_media_type, url_fetcher,
+                     font_config):
     """Yield the stylesheets in ``element_tree``.
 
     The output order is the same as the source order.
@@ -186,8 +187,10 @@ def find_stylesheets(element_tree, device_media_type, url_fetcher):
             content = get_child_text(element)
             # lxml should give us either unicode or ASCII-only bytestrings, so
             # we don't need `encoding` here.
-            css = CSS(string=content, base_url=element_base_url(element),
-                      url_fetcher=url_fetcher, media_type=device_media_type)
+            css = CSS(
+                string=content, base_url=element_base_url(element),
+                url_fetcher=url_fetcher, media_type=device_media_type,
+                font_config=font_config)
             yield css
         elif element.tag == 'link' and element.get('href'):
             if not element_has_link_type(element, 'stylesheet') or \
@@ -196,9 +199,10 @@ def find_stylesheets(element_tree, device_media_type, url_fetcher):
             href = get_url_attribute(element, 'href')
             if href is not None:
                 try:
-                    yield CSS(url=href, url_fetcher=url_fetcher,
-                              _check_mime_type=True,
-                              media_type=device_media_type)
+                    yield CSS(
+                        url=href, url_fetcher=url_fetcher,
+                        _check_mime_type=True, media_type=device_media_type,
+                        font_config=font_config)
                 except URLFetchingError as exc:
                     LOGGER.warning('Failed to load stylesheet at %s : %s',
                                    href, exc)
@@ -600,7 +604,7 @@ class Selector(object):
 
 
 def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
-                          url_fetcher, rules, fonts):
+                          url_fetcher, rules, fonts, font_config):
     """Do the work that can be done early on stylesheet, before they are
     in a document.
 
@@ -659,7 +663,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                 continue
             preprocess_stylesheet(
                 device_media_type, base_url, rule.rules, url_fetcher, rules,
-                fonts)
+                fonts, font_config)
 
         elif rule.at_keyword == '@page':
             page_name, pseudo_class = rule.selector
@@ -699,13 +703,14 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                         key.replace('_', '-'), rule.line, rule.column)
                     break
             else:
-                font_filename = add_font_face(rule_descriptors, url_fetcher)
+                font_filename = add_font_face(
+                    rule_descriptors, url_fetcher, font_config)
                 if font_filename:
                     fonts.append(font_filename)
 
 
 def get_all_computed_styles(html, user_stylesheets=None,
-                            presentational_hints=False):
+                            presentational_hints=False, font_config=None):
     """Compute all the computed styles of all elements in ``html`` document.
 
     Do everything from finding author stylesheets to parsing and applying them.
@@ -719,7 +724,7 @@ def get_all_computed_styles(html, user_stylesheets=None,
     url_fetcher = html.url_fetcher
     ua_stylesheets = html._ua_stylesheets()
     author_stylesheets = list(find_stylesheets(
-        element_tree, device_media_type, url_fetcher))
+        element_tree, device_media_type, url_fetcher, font_config))
     if presentational_hints:
         ph_stylesheets = html._ph_stylesheets()
     else:

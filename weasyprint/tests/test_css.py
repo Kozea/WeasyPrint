@@ -75,7 +75,7 @@ def test_find_stylesheets():
     document = FakeHTML(resource_filename('doc1.html'))
 
     sheets = list(css.find_stylesheets(
-        document.root_element, 'print', default_url_fetcher))
+        document.root_element, 'print', default_url_fetcher, None))
     assert len(sheets) == 2
     # Also test that stylesheets are in tree order
     assert [s.base_url.rsplit('/', 1)[-1].rsplit(',', 1)[-1] for s in sheets] \

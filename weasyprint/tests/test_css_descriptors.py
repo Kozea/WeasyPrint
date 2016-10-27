@@ -84,7 +84,7 @@ def test_bad_font_face():
         rules, descriptors = [], []
         preprocess_stylesheet(
             'print', 'http://wp.org/foo/', stylesheet.rules, None, rules,
-            descriptors)
+            descriptors, None)
         assert not descriptors
     assert logs == [
         "WARNING: Missing src descriptor in '@font-face' rule at 1:1"]
@@ -94,7 +94,7 @@ def test_bad_font_face():
         rules, descriptors = [], []
         preprocess_stylesheet(
             'print', 'http://wp.org/foo/', stylesheet.rules, None, rules,
-            descriptors)
+            descriptors, None)
         assert not descriptors
     assert logs == [
         "WARNING: Missing font-family descriptor in '@font-face' rule at 1:1"]
@@ -104,7 +104,7 @@ def test_bad_font_face():
         rules, descriptors = [], []
         preprocess_stylesheet(
             'print', 'http://wp.org/foo/', stylesheet.rules, None, rules,
-            descriptors)
+            descriptors, None)
         assert not descriptors
     assert logs == [
         "WARNING: Missing src descriptor in '@font-face' rule at 1:1"]
@@ -115,7 +115,7 @@ def test_bad_font_face():
         rules, descriptors = [], []
         preprocess_stylesheet(
             'print', 'http://wp.org/foo/', stylesheet.rules, None, rules,
-            descriptors)
+            descriptors, None)
         assert not descriptors
     assert logs == [
         'WARNING: Ignored `src: wrong` at 1:33, invalid value.',
@@ -127,7 +127,7 @@ def test_bad_font_face():
         rules, descriptors = [], []
         preprocess_stylesheet(
             'print', 'http://wp.org/foo/', stylesheet.rules, None, rules,
-            descriptors)
+            descriptors, None)
         assert not descriptors
     assert logs == [
         'WARNING: Ignored `font-family: good, bad` at 1:14, invalid value.',
@@ -139,7 +139,7 @@ def test_bad_font_face():
         rules, descriptors = [], []
         preprocess_stylesheet(
             'print', 'http://wp.org/foo/', stylesheet.rules, None, rules,
-            descriptors)
+            descriptors, None)
         assert not descriptors
     assert logs == [
         'WARNING: Ignored `font-family: good, bad` at 1:14, invalid value.',
