@@ -16,6 +16,7 @@ from .testing_utils import assert_no_logs
 
 
 @assert_no_logs
+@requires('pango', '1.38')
 def test_font_face():
     page, = parse('''
         <style>

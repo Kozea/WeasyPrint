@@ -29,7 +29,7 @@ def make_text(text, width=None, **style):
                         'monospace'],
     }, INITIAL_VALUES).updated_copy(style)
     return split_first_line(
-        text, style, hinting=False, max_width=width, line_width=None)
+        text, style, context=None, max_width=width, line_width=None)
 
 
 @assert_no_logs

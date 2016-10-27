@@ -30,7 +30,6 @@ from . import properties
 from . import computed_values
 from .descriptors import preprocess_descriptors
 from .validation import preprocess_declarations
-from ..fonts import add_font_face
 from ..urls import (element_base_url, get_url_attribute, url_join,
                     URLFetchingError)
 from ..logger import LOGGER
@@ -703,8 +702,8 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                         key.replace('_', '-'), rule.line, rule.column)
                     break
             else:
-                font_filename = add_font_face(
-                    rule_descriptors, url_fetcher, font_config)
+                font_filename = font_config.add_font_face(
+                    rule_descriptors, url_fetcher)
                 if font_filename:
                     fonts.append(font_filename)
 

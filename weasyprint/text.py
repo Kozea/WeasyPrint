@@ -192,6 +192,8 @@ ffi.cdef('''
     PangoLanguage * pango_language_get_default (void);
     void pango_context_set_language (
         PangoContext *context, PangoLanguage *language);
+    void pango_context_set_font_map (
+        PangoContext *context, PangoFontMap *font_map);
 
     void pango_layout_line_get_extents (
         PangoLayoutLine *line,
@@ -602,16 +604,22 @@ def first_line_metrics(first_line, text, layout, resume_at, space_collapse,
 
 class Layout(object):
     """Object holding PangoLayout-related cdata pointers."""
-    def __init__(self, hinting, font_size, style):
-        self.dummy_context = (
+    def __init__(self, context, font_size, style):
+        self.context = context
+        hinting = context.enable_hinting if context else False
+        cairo_dummy_context = (
             cairo.Context(cairo.ImageSurface(cairo.FORMAT_ARGB32, 1, 1))
             if hinting else
             cairo.Context(cairo.PDFSurface(None, 1, 1)))
         self.layout = ffi.gc(
             pangocairo.pango_cairo_create_layout(ffi.cast(
-                'cairo_t *', self.dummy_context._pointer)),
+                'cairo_t *', cairo_dummy_context._pointer)),
             gobject.g_object_unref)
-        self.font = font = ffi.gc(
+        pango_context = pango.pango_layout_get_context(self.layout)
+        if context and context.font_config.font_map:
+            pango.pango_context_set_font_map(
+                pango_context, context.font_config.font_map)
+        self.font = ffi.gc(
             pango.pango_font_description_new(),
             pango.pango_font_description_free)
         if style.font_language_override != 'normal':
@@ -625,21 +633,20 @@ class Layout(object):
             self.language = pango.pango_language_get_default()
         if lang:
             self.language = pango.pango_language_from_string(lang_p)
-            context = pango.pango_layout_get_context(self.layout)
-            pango.pango_context_set_language(context, self.language)
+            pango.pango_context_set_language(pango_context, self.language)
 
         assert not isinstance(style.font_family, basestring), (
             'font_family should be a list')
         family_p, family = unicode_to_char_p(','.join(style.font_family))
-        pango.pango_font_description_set_family(font, family_p)
+        pango.pango_font_description_set_family(self.font, family_p)
         pango.pango_font_description_set_style(
-            font, PANGO_STYLE[style.font_style])
+            self.font, PANGO_STYLE[style.font_style])
         pango.pango_font_description_set_stretch(
-            font, PANGO_STRETCH[style.font_stretch])
-        pango.pango_font_description_set_weight(font, style.font_weight)
+            self.font, PANGO_STRETCH[style.font_stretch])
+        pango.pango_font_description_set_weight(self.font, style.font_weight)
         pango.pango_font_description_set_absolute_size(
-            font, units_from_double(font_size))
-        pango.pango_layout_set_font_description(self.layout, font)
+            self.font, units_from_double(font_size))
+        pango.pango_layout_set_font_description(self.layout, self.font)
 
     def iter_lines(self):
         layout_iter = ffi.gc(
@@ -666,7 +673,7 @@ class Layout(object):
     def set_tabs(self, style):
         if isinstance(style.tab_size, int):
             layout = Layout(
-                hinting=False, font_size=style.font_size,
+                context=self.context, font_size=style.font_size,
                 style=style)
             layout.set_text(' ' * style.tab_size)
             line, = layout.iter_lines()
@@ -802,7 +809,7 @@ def get_font_features(
     return features
 
 
-def create_layout(text, style, hinting, max_width):
+def create_layout(text, style, context, max_width):
     """Return an opaque Pango layout with default Pango line-breaks.
 
     :param text: Unicode
@@ -813,7 +820,7 @@ def create_layout(text, style, hinting, max_width):
         or ``None`` for unlimited width.
 
     """
-    layout = Layout(hinting, style.font_size, style)
+    layout = Layout(context, style.font_size, style)
     layout.set_text(text)
 
     # Make sure that max_width * Pango.SCALE == max_width * 1024 fits in a
@@ -878,7 +885,7 @@ def create_layout(text, style, hinting, max_width):
     return layout
 
 
-def split_first_line(text, style, hinting, max_width, line_width):
+def split_first_line(text, style, context, max_width, line_width):
     """Fit as much as possible in the available width for one line of text.
 
     Return ``(layout, length, resume_at, width, height, baseline)``.
@@ -915,7 +922,7 @@ def split_first_line(text, style, hinting, max_width, line_width):
         if expected_length < len(text):
             # Try to use a small amount of text instead of the whole text
             layout = create_layout(
-                text[:expected_length], style, hinting, max_width)
+                text[:expected_length], style, context, max_width)
             lines = layout.iter_lines()
             first_line = next(lines, None)
             second_line = next(lines, None)
@@ -924,7 +931,7 @@ def split_first_line(text, style, hinting, max_width, line_width):
                 # the whole text
                 layout = None
     if layout is None:
-        layout = create_layout(text, style, hinting, max_width)
+        layout = create_layout(text, style, context, max_width)
         lines = layout.iter_lines()
         first_line = next(lines, None)
         second_line = next(lines, None)
@@ -1003,7 +1010,7 @@ def split_first_line(text, style, hinting, max_width, line_width):
                             first_line_text.rsplit(u' ', 1))
                         next_word = u' ' + next_word
                         layout = create_layout(
-                            first_line_text, style, hinting, max_width)
+                            first_line_text, style, context, max_width)
                         lines = layout.iter_lines()
                         first_line = next(lines, None)
                         second_line = next(lines, None)
@@ -1036,7 +1043,7 @@ def split_first_line(text, style, hinting, max_width, line_width):
                     hyphenated_first_line_text = (
                         new_first_line_text + style.hyphenate_character)
                     new_layout = create_layout(
-                        hyphenated_first_line_text, style, hinting, max_width)
+                        hyphenated_first_line_text, style, context, max_width)
                     new_lines = new_layout.iter_lines()
                     new_first_line = next(new_lines, None)
                     new_second_line = next(new_lines, None)
@@ -1059,7 +1066,7 @@ def split_first_line(text, style, hinting, max_width, line_width):
                     # we don't break inside the hyphenate-character string
                     hyphenated = True
                     layout = create_layout(
-                        hyphenated_first_line_text, style, hinting, None)
+                        hyphenated_first_line_text, style, context, None)
                     lines = layout.iter_lines()
                     first_line = next(lines, None)
                     second_line = next(lines, None)
@@ -1074,7 +1081,7 @@ def split_first_line(text, style, hinting, max_width, line_width):
         hyphenated_first_line_text = (
             first_line_text + style.hyphenate_character)
         layout = create_layout(
-            hyphenated_first_line_text, style, hinting, None)
+            hyphenated_first_line_text, style, context, None)
         lines = layout.iter_lines()
         first_line = next(lines, None)
         second_line = next(lines, None)
@@ -1094,7 +1101,7 @@ def split_first_line(text, style, hinting, max_width, line_width):
         # memory of the last) prevents shaping characters (arabic, for
         # instance) from keeping their shape when wrapped on the next line with
         # pango layout.  Maybe insert Unicode shaping characters in text ?
-        temp_layout = create_layout(text, style, hinting, max_width)
+        temp_layout = create_layout(text, style, context, max_width)
         temp_layout.set_wrap(PANGO_WRAP_MODE['WRAP_WORD_CHAR'])
         temp_lines = temp_layout.iter_lines()
         next(temp_lines, None)
@@ -1104,7 +1111,7 @@ def split_first_line(text, style, hinting, max_width, line_width):
             else temp_second_line.start_index)
         resume_at = temp_second_line_index
         first_line_text = utf8_slice(text, slice(temp_second_line_index))
-        layout = create_layout(first_line_text, style, hinting, max_width)
+        layout = create_layout(first_line_text, style, context, max_width)
         lines = layout.iter_lines()
         first_line = next(lines, None)
 
@@ -1113,9 +1120,9 @@ def split_first_line(text, style, hinting, max_width, line_width):
         style.hyphenate_character)
 
 
-def line_widths(text, style, enable_hinting, width):
+def line_widths(text, style, context, width):
     """Return the width for each line."""
-    layout = create_layout(text, style, enable_hinting, width)
+    layout = create_layout(text, style, context, width)
     for line in layout.iter_lines():
         width, _height = get_size(line, style)
         yield width

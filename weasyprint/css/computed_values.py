@@ -305,7 +305,7 @@ def length(computer, name, value, font_size=None, pixels_only=False):
         elif unit == 'ch':
             # TODO: cache
             layout = text.Layout(
-                hinting=False, font_size=font_size,
+                context=None, font_size=font_size,
                 style=computer.computed)
             layout.set_text('0')
             line, = layout.iter_lines()
@@ -558,7 +558,7 @@ def word_spacing(computer, name, value):
         return length(computer, name, value, pixels_only=True)
 
 
-def strut_layout(style, hinting=True):
+def strut_layout(style, context=None):
     """Return a tuple of the used value of ``line-height`` and the baseline.
 
     The baseline is given from the top edge of line height.
@@ -569,9 +569,9 @@ def strut_layout(style, hinting=True):
     if style.font_size == 0:
         pango_height = baseline = 0
     else:
-        # TODO: get the real value for `hinting`? (if we really care…)
+        # TODO: get the real value for `context`? (if we really care…)
         _, _, _, _, pango_height, baseline = text.split_first_line(
-            '', style, hinting=hinting, max_width=None, line_width=None)
+            '', style, context=context, max_width=None, line_width=None)
     if line_height == 'normal':
         return pango_height, baseline
     type_, value = line_height
@@ -583,7 +583,7 @@ def strut_layout(style, hinting=True):
 def ex_ratio(style):
     """Return the ratio 1ex/font_size, according to given style."""
     font_size = 1000  # big value
-    layout = text.Layout(hinting=False, font_size=font_size, style=style)
+    layout = text.Layout(context=None, font_size=font_size, style=style)
     layout.set_text('x')
     line, = layout.iter_lines()
     _, ink_height_above_baseline = text.get_ink_position(line)

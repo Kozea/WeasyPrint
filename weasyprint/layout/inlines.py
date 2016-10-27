@@ -75,7 +75,7 @@ def get_next_linebox(context, linebox, position_y, skip_stack,
     linebox.width = inline_min_content_width(
         context, linebox, skip_stack=skip_stack, first_line=True)
 
-    linebox.height, _ = strut_layout(linebox.style, context.enable_hinting)
+    linebox.height, _ = strut_layout(linebox.style, context)
     linebox.position_y = position_y
     position_x, position_y, available_width = avoid_collisions(
         context, linebox, containing_block, outer=False)
@@ -637,8 +637,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
         new_box.position_x = initial_position_x
         new_box.width = position_x - content_box_left
 
-    line_height, new_box.baseline = strut_layout(
-        box.style, context.enable_hinting)
+    line_height, new_box.baseline = strut_layout(box.style, context)
     new_box.height = box.style.font_size
     half_leading = (line_height - new_box.height) / 2.
     # Set margins to the half leading but also compensate for borders and
@@ -671,7 +670,7 @@ def split_text_box(context, box, available_width, line_width, skip):
     if font_size == 0 or not text:
         return None, None, False
     layout, length, resume_at, width, height, baseline = split_first_line(
-        text, box.style, context.enable_hinting, available_width, line_width)
+        text, box.style, context, available_width, line_width)
     assert resume_at != 0
 
     # Convert ``length`` and ``resume_at`` from UTF-8 indexes in text
@@ -697,7 +696,7 @@ def split_text_box(context, box, available_width, line_width, skip):
         # "only the 'line-height' is used when calculating the height
         #  of the line box."
         # Set margins so that margin_height() == line_height
-        line_height, _ = strut_layout(box.style, context.enable_hinting)
+        line_height, _ = strut_layout(box.style, context)
         half_leading = (line_height - height) / 2.
         box.margin_top = half_leading
         box.margin_bottom = half_leading
