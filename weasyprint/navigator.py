@@ -136,7 +136,7 @@ def app(environ, start_response):
         return make_response(
             body, content_type='application/pdf',
             headers=[('Content-Disposition',
-                      'attachement; filename=%s.pdf' % filename)])
+                      'attachment; filename=%s.pdf' % filename)])
 
     elif path.startswith('/view/'):
         url = normalize_url(path[6:], environ.get('QUERY_STRING'))

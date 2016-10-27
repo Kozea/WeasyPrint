@@ -22,7 +22,6 @@ WeasyPrint |version| depends on:
 .. _CFFI: https://cffi.readthedocs.org/
 .. _html5lib: http://html5lib.readthedocs.org/
 .. _cairocffi: http://pythonhosted.org/cairocffi/
-.. _GTK+: http://www.gtk.org/
 .. _lxml: http://lxml.de/
 .. _tinycss: http://packages.python.org/tinycss/
 .. _cssselect: http://packages.python.org/cssselect/
@@ -124,7 +123,7 @@ with pip after installing the following packages:
 
 .. code-block:: sh
 
-    sudo yum install redhat-rpm-config python-devel python-pip python-lxml python-cffi cairo pango gdk-pixbuf2
+    sudo yum install redhat-rpm-config python-devel python-pip python-lxml python-cffi libffi-devel cairo pango gdk-pixbuf2
 
 Archlinux
 ~~~~~~~~~
@@ -184,5 +183,11 @@ Windows
 
 - reboot,
 - install `Visual C++ compiler for Python 2.7 <http://aka.ms/vcpython27>`_,
+- download `lxml <http://www.lfd.uci.edu/~gohlke/pythonlibs/#lxml>`_:
+
+  - "lxml-x.x.x-cp27-cp27m-win32.whl" on Windows 32 bit,
+  - "lxml-x.x.x-cp27-cp27m-win_amd64.whl" on Windows 64 bit,
+
+- install lxml with ``python -m pip install path/to/lxml-xxx.whl``
 - install WeasyPrint with ``python -m pip install weasyprint``,
 - test with ``python -m weasyprint http://weasyprint.org weasyprint.pdf``.

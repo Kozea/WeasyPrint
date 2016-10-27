@@ -1061,6 +1061,21 @@ def test_auto_layout_table():
         </table>
     ''')
 
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/368
+    # Check that white-space is used for the shrink-to-fit algorithm
+    page, = parse('''
+        <table style="width: 0">
+            <td style="font-family: ahem;
+                       white-space: nowrap">a a</td>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    table_wrapper, = div.children
+    table, = table_wrapper.children
+    assert table.width == 16 * 3
+
     # Cell width as percentage in auto-width table
     page, = parse('''
         <div style="width: 100px">
