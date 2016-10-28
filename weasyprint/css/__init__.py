@@ -648,8 +648,9 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                            rule.line, rule.column)
             if url is not None:
                 try:
-                    stylesheet = CSS(url=url, url_fetcher=url_fetcher,
-                                     media_type=device_media_type)
+                    stylesheet = CSS(
+                        url=url, url_fetcher=url_fetcher,
+                        media_type=device_media_type, font_config=font_config)
                 except URLFetchingError as exc:
                     LOGGER.warning('Failed to load stylesheet at %s : %s',
                                    url, exc)
