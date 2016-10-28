@@ -846,8 +846,7 @@ def create_layout(text, style, context, max_width):
         attr_list = pango.pango_attr_list_new()
 
         def add_attr(start, end, spacing):
-            # TODO: letter spacing attributes should be freed (as it's done for
-            # font features), but it crashes Python for unknown reasons.
+            # TODO: attributes should be freed
             attr = pango.pango_attr_letter_spacing_new(spacing)
             attr.start_index, attr.end_index = start, end
             pango.pango_attr_list_insert(attr_list, attr)
@@ -870,9 +869,8 @@ def create_layout(text, style, context, max_width):
         features = ','.join(
             ('%s %i' % (key, value)) for key, value in features.items())
         try:
-            attr = ffi.gc(
-                pango.pango_attr_font_features_new(features.encode('ascii')),
-                pango.pango_attribute_destroy)
+            # TODO: attributes should be freed
+            attr = pango.pango_attr_font_features_new(features.encode('ascii'))
         except AttributeError:
             LOGGER.warning(
                 'OpenType features are not available with Pango < 1.38')
