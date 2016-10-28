@@ -241,7 +241,7 @@ class CSS(object):
         result = _select_source(
             guess, filename, url, file_obj, string, tree=None,
             base_url=base_url, url_fetcher=url_fetcher,
-            check_css_mime_type=_check_mime_type,)
+            check_css_mime_type=_check_mime_type)
         with result as (source_type, source, base_url, protocol_encoding):
             if source_type == 'string' and not isinstance(source, bytes):
                 # unicode, no encoding
