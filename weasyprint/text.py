@@ -877,7 +877,8 @@ def create_layout(text, style, context, max_width):
         attr = PANGO_ATTR_FONT_FEATURES_CACHE.get(features)
         if attr is None:
             try:
-                attr = pango.pango_attr_font_features_new(features.encode('ascii'))
+                attr = pango.pango_attr_font_features_new(
+                    features.encode('ascii'))
             except AttributeError:
                 LOGGER.warning(
                     'OpenType features are not available with Pango < 1.38')
