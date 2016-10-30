@@ -23,6 +23,9 @@ from .compat import basestring
 from .logger import LOGGER
 
 
+PANGO_ATTR_FONT_FEATURES_CACHE = {}
+
+
 ffi = cffi.FFI()
 ffi.cdef('''
     // Cairo
@@ -868,13 +871,19 @@ def create_layout(text, style, context, max_width):
     if features:
         features = ','.join(
             ('%s %i' % (key, value)) for key, value in features.items())
-        try:
-            # TODO: attributes should be freed
-            attr = pango.pango_attr_font_features_new(features.encode('ascii'))
-        except AttributeError:
-            LOGGER.warning(
-                'OpenType features are not available with Pango < 1.38')
-        else:
+
+        # TODO: attributes should be freed.
+        # In the meantime, keep a cache to avoid leaking too many of them.
+        attr = PANGO_ATTR_FONT_FEATURES_CACHE.get(features)
+        if attr is None:
+            try:
+                attr = pango.pango_attr_font_features_new(features.encode('ascii'))
+            except AttributeError:
+                LOGGER.warning(
+                    'OpenType features are not available with Pango < 1.38')
+            else:
+                PANGO_ATTR_FONT_FEATURES_CACHE[features] = attr
+        if attr is not None:
             attr_list = pango.pango_attr_list_new()
             pango.pango_attr_list_insert(attr_list, attr)
             pango.pango_layout_set_attributes(layout.layout, attr_list)
