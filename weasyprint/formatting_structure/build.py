@@ -294,12 +294,12 @@ def replace_content_lists(element, box, style, counter_values):
         for i, (string_name, string_values) in enumerate(style.string_set):
             string_set.append((string_name, compute_content_list_string(
                 element, box, counter_values, string_values)))
-    style.string_set = string_set
+    box.style['string_set'] = string_set
 
     if style.bookmark_label == 'none':
-        style.bookmark_label = ''
+        box.style['bookmark_label'] = ''
     else:
-        style.bookmark_label = compute_content_list_string(
+        box.style['bookmark_label'] = compute_content_list_string(
             element, box, counter_values, style.bookmark_label)
 
 
@@ -1121,7 +1121,8 @@ def set_viewport_overflow(root_box):
                 break
 
     root_box.viewport_overflow = chosen_box.style.overflow
-    chosen_box.style = chosen_box.style.updated_copy({'overflow': 'visible'})
+    chosen_box.style = chosen_box.style.copy()
+    chosen_box.style.update({'overflow': 'visible'})
     return root_box
 
 
