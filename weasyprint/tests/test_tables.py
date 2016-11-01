@@ -756,6 +756,35 @@ def test_auto_layout_table():
     assert td_3.width == 100
     assert table.width == 300
 
+    # Multiple column width
+    page, = parse('''
+        <table style="width: 200px">
+            <colgroup>
+              <col style="width: 50px" />
+              <col style="width: 30px" />
+              <col />
+            </colgroup>
+            <tbody>
+              <tr>
+                <td>a</td>
+                <td>a</td>
+                <td>abc</td>
+              </tr>
+            </tbody>
+        </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2, td_3 = row.children
+    assert td_1.width == 50
+    assert td_2.width == 30
+    assert td_3.width == 120
+    assert table.width == 200
+
     # Fixed-width table with column group with widths as percentages and pixels
     page, = parse('''
         <table style="width: 500px">
