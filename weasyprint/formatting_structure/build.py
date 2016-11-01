@@ -173,8 +173,7 @@ def element_to_box(element, style_for, get_image_from_uri, state=None):
         if not counter_values[name]:
             counter_values.pop(name)
 
-    if children:
-        box = box.copy_with_children(children)
+    box.children = children
     replace_content_lists(element, box, style, counter_values)
 
     # Specific handling for the element. (eg. replaced element)
@@ -209,7 +208,8 @@ def pseudo_to_box(element, pseudo_type, state, style_for, get_image_from_uri):
     children.extend(content_to_boxes(
         style, box, quote_depth, counter_values, get_image_from_uri))
 
-    yield box.copy_with_children(children, copy_style=True)
+    box.children = children
+    yield box
 
 
 def content_to_boxes(style, parent_box, quote_depth, counter_values,
@@ -517,7 +517,8 @@ def table_boxes_children(box, children):
     if isinstance(box, boxes.TableBox):
         return wrap_table(box, children)
     else:
-        return box.copy_with_children(children)
+        box.children = list(children)
+        return box
 
 
 def wrap_table(box, children):
@@ -626,7 +627,7 @@ def wrap_table(box, children):
                 grid_width = max(grid_width, grid_x)
         grid_height += len(group.children)
 
-    table = box.copy_with_children(row_groups, copy_style=True)
+    table = box.copy_with_children(row_groups)
     table.column_groups = tuple(column_groups)
     if table.style.border_collapse == 'collapse':
         table.collapsed_border_grid = collapse_table_borders(
@@ -905,7 +906,8 @@ def inline_in_block(box):
                 if not (isinstance(child, boxes.TextBox) and not child.text)]
 
     if not isinstance(box, boxes.BlockContainerBox):
-        return box.copy_with_children(children)
+        box.children = children
+        return box
 
     new_line_children = []
     new_children = []
@@ -944,7 +946,8 @@ def inline_in_block(box):
             # Only inline-level children: one line box
             new_children.append(line_box)
 
-    return box.copy_with_children(new_children)
+    box.children = new_children
+    return box
 
 
 def block_in_inline(box):
@@ -1045,9 +1048,8 @@ def block_in_inline(box):
         new_children.append(new_child)
 
     if changed:
-        return box.copy_with_children(new_children)
-    else:
-        return box
+        box.children = new_children
+    return box
 
 
 def _inner_block_in_inline(box, skip_stack=None):
@@ -1099,7 +1101,7 @@ def _inner_block_in_inline(box, skip_stack=None):
     else:
         if changed or skip:
             box = box.copy_with_children(
-                new_children, is_start=is_start, is_end=True, copy_style=False)
+                new_children, is_start=is_start, is_end=True)
 
     return box, block_level_box, resume_at
 

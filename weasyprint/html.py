@@ -138,8 +138,8 @@ def handle_img(element, box, get_image_from_uri):
         else:
             # Invalid image, use the alt-text.
             if alt:
-                return [box.copy_with_children(
-                    [boxes.TextBox.anonymous_from(box, alt)])]
+                box.children = [boxes.TextBox.anonymous_from(box, alt)]
+                return [box]
             elif alt == '':
                 # The element represents nothing
                 return []
@@ -150,8 +150,8 @@ def handle_img(element, box, get_image_from_uri):
                 return []
     else:
         if alt:
-            return [box.copy_with_children(
-                [boxes.TextBox.anonymous_from(box, alt)])]
+            box.children = [boxes.TextBox.anonymous_from(box, alt)]
+            return [box]
         else:
             return []
 
