@@ -209,7 +209,7 @@ def pseudo_to_box(element, pseudo_type, state, style_for, get_image_from_uri):
     children.extend(content_to_boxes(
         style, box, quote_depth, counter_values, get_image_from_uri))
 
-    yield box.copy_with_children(children)
+    yield box.copy_with_children(children, copy_style=True)
 
 
 def content_to_boxes(style, parent_box, quote_depth, counter_values,
@@ -626,7 +626,7 @@ def wrap_table(box, children):
                 grid_width = max(grid_width, grid_x)
         grid_height += len(group.children)
 
-    table = box.copy_with_children(row_groups)
+    table = box.copy_with_children(row_groups, copy_style=True)
     table.column_groups = tuple(column_groups)
     if table.style.border_collapse == 'collapse':
         table.collapsed_border_grid = collapse_table_borders(
@@ -1099,7 +1099,7 @@ def _inner_block_in_inline(box, skip_stack=None):
     else:
         if changed or skip:
             box = box.copy_with_children(
-                new_children, is_start=is_start, is_end=True)
+                new_children, is_start=is_start, is_end=True, copy_style=False)
 
     return box, block_level_box, resume_at
 

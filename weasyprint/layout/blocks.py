@@ -719,7 +719,8 @@ def block_container_layout(context, box, max_position_y, skip_stack,
         adjoining_margins = []
 
     new_box = box.copy_with_children(
-        new_children, is_start=is_start, is_end=resume_at is None)
+        new_children, is_start=is_start, is_end=resume_at is None,
+        copy_style=True)
 
     # TODO: See corner cases in
     # http://www.w3.org/TR/CSS21/visudet.html#normal-block
@@ -846,7 +847,8 @@ def find_earlier_page_break(children, absolute_boxes, fixed_boxes):
                     child.children, absolute_boxes, fixed_boxes)
                 if result:
                     new_grand_children, resume_at = result
-                    new_child = child.copy_with_children(new_grand_children)
+                    new_child = child.copy_with_children(
+                        new_grand_children, copy_style=True)
                     new_children = list(children[:index]) + [new_child]
                     # Index in the original parent
                     resume_at = (new_child.index, resume_at)

@@ -101,7 +101,7 @@ class Box(object):
                    parent.style.inherit_from(),
                    *args, **kwargs)
 
-    def copy(self):
+    def copy(self, copy_style=True):
         """Return shallow copy of the box."""
         cls = type(self)
         # Create a new instance without calling __init__: initializing
@@ -109,7 +109,10 @@ class Box(object):
         new_box = cls.__new__(cls)
         # Copy attributes
         new_box.__dict__.update(self.__dict__)
-        new_box.style = self.style.copy()
+        if copy_style:
+            new_box.style = self.style.copy()
+        else:
+            new_box.style = self.style
         return new_box
 
     def translate(self, dx=0, dy=0):
@@ -309,9 +312,10 @@ class ParentBox(Box):
         if end:
             self._reset_spacing('bottom')
 
-    def copy_with_children(self, new_children, is_start=True, is_end=True):
+    def copy_with_children(self, new_children, is_start=True, is_end=True,
+                           copy_style=False):
         """Create a new equivalent box with given ``new_children``."""
-        new_box = self.copy()
+        new_box = self.copy(copy_style=copy_style)
         new_box.children = tuple(new_children)
         if not is_start:
             new_box.outside_list_marker = None
@@ -456,7 +460,7 @@ class TextBox(InlineLevelBox):
     def copy_with_text(self, text):
         """Return a new TextBox identical to this one except for the text."""
         assert text
-        new_box = self.copy()
+        new_box = self.copy(copy_style=False)
         new_box.text = text
         return new_box
 

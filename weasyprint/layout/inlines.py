@@ -627,7 +627,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
         resume_at = None
 
     new_box = box.copy_with_children(
-        children, is_start=is_start, is_end=resume_at is None)
+        children, is_start=is_start, is_end=resume_at is None, copy_style=True)
     if isinstance(box, boxes.LineBox):
         # Line boxes already have a position_x which may not be the same
         # as content_box_left when text-indent is non-zero.
