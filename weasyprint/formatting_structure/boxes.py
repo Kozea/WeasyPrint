@@ -88,9 +88,7 @@ class Box(object):
     def __init__(self, element_tag, sourceline, style):
         self.element_tag = element_tag
         self.sourceline = sourceline  # for debugging only
-        # Copying might not be needed, but let’s be careful with mutable
-        # objects.
-        self.style = style.copy()
+        self.style = style
 
     def __repr__(self):
         return '<%s %s %s>' % (
