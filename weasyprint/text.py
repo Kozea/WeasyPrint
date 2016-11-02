@@ -597,13 +597,12 @@ def first_line_metrics(first_line, text, layout, resume_at, space_collapse,
 class Layout(object):
     """Object holding PangoLayout-related cdata pointers."""
     def __init__(self, hinting, font_size, style):
-        self.dummy_context = (
+        dummy_context = (
             cairo.Context(cairo.ImageSurface(cairo.FORMAT_ARGB32, 1, 1))
-            if hinting else
-            cairo.Context(cairo.PDFSurface(None, 1, 1)))
+            if hinting else cairo.Context(cairo.PDFSurface(None, 1, 1)))
         self.layout = ffi.gc(
             pangocairo.pango_cairo_create_layout(ffi.cast(
-                'cairo_t *', self.dummy_context._pointer)),
+                'cairo_t *', dummy_context._pointer)),
             gobject.g_object_unref)
         self.font = font = ffi.gc(
             pango.pango_font_description_new(),
