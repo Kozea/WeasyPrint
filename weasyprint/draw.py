@@ -903,11 +903,14 @@ def draw_text(context, textbox, enable_hinting):
     show_first_line(context, textbox.pango_layout, enable_hinting)
     values = textbox.style.text_decoration
 
-    metrics = textbox.pango_layout.get_font_metrics()
     thickness = textbox.style.font_size / 18  # That's what other browsers do
     if enable_hinting and thickness < 1:
         thickness = 1
 
+    if ('overline' in values or
+            'line-through' in values or
+            'underline' in values):
+        metrics = textbox.pango_layout.get_font_metrics()
     if 'overline' in values:
         draw_text_decoration(
             context, textbox,

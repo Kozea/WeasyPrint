@@ -565,19 +565,22 @@ def strut_layout(style, hinting=True):
 
     """
     # TODO: cache these results for a given set of styles?
-    line_height = style.line_height
+    # TODO: get the real value for `hinting`? (if we really care…)
+
     if style.font_size == 0:
-        pango_height = baseline = 0
-    else:
-        # TODO: get the real value for `hinting`? (if we really care…)
-        _, _, _, _, pango_height, baseline = text.split_first_line(
-            '', style, hinting=hinting, max_width=None, line_width=None)
-    if line_height == 'normal':
-        return pango_height, baseline
-    type_, value = line_height
+        return 0, 0
+
+    layout = text.Layout(
+        hinting=hinting, font_size=style.font_size, style=style)
+    metrics = layout.get_font_metrics()
+    baseline = metrics.ascent
+    text_height = baseline + metrics.descent
+    if style['line_height'] == 'normal':
+        return text_height, baseline
+    type_, line_height = style['line_height']
     if type_ == 'NUMBER':
-        value *= style.font_size
-    return value, baseline + (value - pango_height) / 2
+        line_height *= style['font_size']
+    return line_height, baseline + (line_height - text_height) / 2
 
 
 def ex_ratio(style):
