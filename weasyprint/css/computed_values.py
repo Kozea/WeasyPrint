@@ -18,6 +18,7 @@ from ..urls import get_link_attribute
 from .. import text
 
 
+STRUT_LAYOUTS = {}
 ZERO_PIXELS = Dimension(0, 'px')
 
 
@@ -564,11 +565,21 @@ def strut_layout(style, hinting=True):
     The baseline is given from the top edge of line height.
 
     """
-    # TODO: cache these results for a given set of styles?
     # TODO: get the real value for `hinting`? (if we really care…)
 
     if style.font_size == 0:
         return 0, 0
+
+    # TODO: this key is not reliable when (1) the installed fonts change and
+    # (2) we use different web fonts with the same attributes. A solution would
+    # be to put the cache in the context, but it also implies that the context
+    # must be given to computed-value functions (same problem as hinting).
+    key = (
+        hinting, style['font_size'], style['font_language_override'],
+        style['lang'], tuple(style['font_family']), style['font_style'],
+        style['font_stretch'], style['font_weight'], style['line_height'])
+    if key in STRUT_LAYOUTS:
+        return STRUT_LAYOUTS[key]
 
     layout = text.Layout(
         hinting=hinting, font_size=style.font_size, style=style)
@@ -576,11 +587,15 @@ def strut_layout(style, hinting=True):
     baseline = metrics.ascent
     text_height = baseline + metrics.descent
     if style['line_height'] == 'normal':
-        return text_height, baseline
+        result = text_height, baseline
+        STRUT_LAYOUTS[key] = result
+        return result
     type_, line_height = style['line_height']
     if type_ == 'NUMBER':
         line_height *= style['font_size']
-    return line_height, baseline + (line_height - text_height) / 2
+    result = line_height, baseline + (line_height - text_height) / 2
+    STRUT_LAYOUTS[key] = result
+    return result
 
 
 def ex_ratio(style):
