@@ -28,7 +28,7 @@ REQUIREMENTS = [
     # XXX: Keep this in sync with docs/install.rst
     'lxml>=3.0',
     'html5lib>=0.999999999',
-    'tinycss==0.3',
+    'tinycss>=0.4',
     'cssselect>=0.6',
     'cffi>=0.6',
     'cairocffi>=0.5',

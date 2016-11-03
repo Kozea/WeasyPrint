@@ -75,7 +75,7 @@ def test_find_stylesheets():
     document = FakeHTML(resource_filename('doc1.html'))
 
     sheets = list(css.find_stylesheets(
-        document.root_element, 'print', default_url_fetcher))
+        document.root_element, 'print', default_url_fetcher, None))
     assert len(sheets) == 2
     # Also test that stylesheets are in tree order
     assert [s.base_url.rsplit('/', 1)[-1].rsplit(',', 1)[-1] for s in sheets] \
@@ -97,10 +97,10 @@ def test_find_stylesheets():
 def test_expand_shorthands():
     """Test the expand shorthands."""
     sheet = CSS(resource_filename('sheet2.css'))
-    assert sheet.stylesheet.rules[0].selector.as_css() == 'li'
+    assert sheet.rules[0][0].selector.as_css() == 'li'
 
     style = dict((d.name, d.value.as_css())
-                 for d in sheet.stylesheet.rules[0].declarations)
+                 for d in sheet.rules[0][0].declarations)
     assert style['margin'] == '2em 0'
     assert style['margin-bottom'] == '3em'
     assert style['margin-left'] == '4em'

@@ -21,6 +21,7 @@ from . import CSS
 from . import images
 from .logger import LOGGER
 from .css import get_all_computed_styles
+from .fonts import FontConfiguration
 from .formatting_structure import boxes
 from .formatting_structure.build import build_formatting_structure
 from .layout import layout_document
@@ -315,19 +316,25 @@ class Document(object):
     @classmethod
     def _render(cls, html, stylesheets, enable_hinting,
                 presentational_hints=False):
+        font_config = FontConfiguration()
         style_for = get_all_computed_styles(
             html, presentational_hints=presentational_hints, user_stylesheets=[
                 css if hasattr(css, 'rules')
                 else CSS(guess=css, media_type=html.media_type)
-                for css in stylesheets or []])
+                for css in stylesheets or []],
+            font_config=font_config)
         get_image_from_uri = functools.partial(
             images.get_image_from_uri, {}, html.url_fetcher)
         page_boxes = layout_document(
             enable_hinting, style_for, get_image_from_uri,
             build_formatting_structure(
-                html.root_element, style_for, get_image_from_uri))
-        return cls([Page(p, enable_hinting) for p in page_boxes],
-                   DocumentMetadata(**html._get_metadata()), html.url_fetcher)
+                html.root_element, style_for, get_image_from_uri),
+            font_config)
+        rendering = cls(
+            [Page(p, enable_hinting) for p in page_boxes],
+            DocumentMetadata(**html._get_metadata()), html.url_fetcher)
+        font_config.clean()
+        return rendering
 
     def __init__(self, pages, metadata, url_fetcher):
         #: A list of :class:`Page` objects.

@@ -37,7 +37,8 @@ def layout_fixed_boxes(context, pages):
             yield absolute_box_layout(context, box, page, [])
 
 
-def layout_document(enable_hinting, style_for, get_image_from_uri, root_box):
+def layout_document(enable_hinting, style_for, get_image_from_uri, root_box,
+                    font_config):
     """Lay out the whole document.
 
     This includes line breaks, page breaks, absolute size and position for all
@@ -47,7 +48,8 @@ def layout_document(enable_hinting, style_for, get_image_from_uri, root_box):
     :returns: a list of laid out Page objects.
 
     """
-    context = LayoutContext(enable_hinting, style_for, get_image_from_uri)
+    context = LayoutContext(
+        enable_hinting, style_for, get_image_from_uri, font_config)
     pages = list(make_all_pages(context, root_box))
     page_counter = [1]
     counter_values = {'page': page_counter, 'pages': [len(pages)]}
@@ -67,14 +69,17 @@ def layout_document(enable_hinting, style_for, get_image_from_uri, root_box):
 
 
 class LayoutContext(object):
-    def __init__(self, enable_hinting, style_for, get_image_from_uri):
+    def __init__(self, enable_hinting, style_for, get_image_from_uri,
+                 font_config):
         self.enable_hinting = enable_hinting
         self.style_for = style_for
         self.get_image_from_uri = get_image_from_uri
+        self.font_config = font_config
         self._excluded_shapes_lists = []
         self.excluded_shapes = None  # Not initialized yet
         self.string_set = defaultdict(lambda: defaultdict(lambda: list()))
         self.current_page = None
+        self.strut_layouts = {}
 
     def create_block_formatting_context(self):
         self.excluded_shapes = []

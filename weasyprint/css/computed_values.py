@@ -18,7 +18,6 @@ from ..urls import get_link_attribute
 from .. import text
 
 
-STRUT_LAYOUTS = {}
 ZERO_PIXELS = Dimension(0, 'px')
 
 
@@ -306,7 +305,7 @@ def length(computer, name, value, font_size=None, pixels_only=False):
         elif unit == 'ch':
             # TODO: cache
             layout = text.Layout(
-                hinting=False, font_size=font_size,
+                context=None, font_size=font_size,
                 style=computer.computed)
             layout.set_text('0')
             line, = layout.iter_lines()
@@ -559,49 +558,48 @@ def word_spacing(computer, name, value):
         return length(computer, name, value, pixels_only=True)
 
 
-def strut_layout(style, hinting=True):
+def strut_layout(style, context=None):
     """Return a tuple of the used value of ``line-height`` and the baseline.
 
     The baseline is given from the top edge of line height.
 
     """
-    # TODO: get the real value for `hinting`? (if we really care…)
+    # TODO: always get the real value for `context`? (if we really care…)
 
     if style.font_size == 0:
         return 0, 0
 
-    # TODO: this key is not reliable when (1) the installed fonts change and
-    # (2) we use different web fonts with the same attributes. A solution would
-    # be to put the cache in the context, but it also implies that the context
-    # must be given to computed-value functions (same problem as hinting).
-    key = (
-        hinting, style['font_size'], style['font_language_override'],
-        style['lang'], tuple(style['font_family']), style['font_style'],
-        style['font_stretch'], style['font_weight'], style['line_height'])
-    if key in STRUT_LAYOUTS:
-        return STRUT_LAYOUTS[key]
+    if context:
+        key = (
+            style['font_size'], style['font_language_override'], style['lang'],
+            tuple(style['font_family']), style['font_style'],
+            style['font_stretch'], style['font_weight'], style['line_height'])
+        if key in context.strut_layouts:
+            return context.strut_layouts[key]
 
     layout = text.Layout(
-        hinting=hinting, font_size=style.font_size, style=style)
+        context=context, font_size=style.font_size, style=style)
     metrics = layout.get_font_metrics()
     baseline = metrics.ascent
     text_height = baseline + metrics.descent
     if style['line_height'] == 'normal':
         result = text_height, baseline
-        STRUT_LAYOUTS[key] = result
+        if context:
+            context.strut_layouts[key] = result
         return result
     type_, line_height = style['line_height']
     if type_ == 'NUMBER':
         line_height *= style['font_size']
     result = line_height, baseline + (line_height - text_height) / 2
-    STRUT_LAYOUTS[key] = result
+    if context:
+        context.strut_layouts[key] = result
     return result
 
 
 def ex_ratio(style):
     """Return the ratio 1ex/font_size, according to given style."""
     font_size = 1000  # big value
-    layout = text.Layout(hinting=False, font_size=font_size, style=style)
+    layout = text.Layout(context=None, font_size=font_size, style=style)
     layout.set_text('x')
     line, = layout.iter_lines()
     _, ink_height_above_baseline = text.get_ink_position(line)

@@ -237,11 +237,11 @@ class CSS(object):
     def __init__(self, guess=None, filename=None, url=None, file_obj=None,
                  string=None, encoding=None, base_url=None,
                  url_fetcher=default_url_fetcher, _check_mime_type=False,
-                 media_type='print'):
+                 media_type='print', font_config=None):
         result = _select_source(
             guess, filename, url, file_obj, string, tree=None,
             base_url=base_url, url_fetcher=url_fetcher,
-            check_css_mime_type=_check_mime_type,)
+            check_css_mime_type=_check_mime_type)
         with result as (source_type, source, base_url, protocol_encoding):
             if source_type == 'string' and not isinstance(source, bytes):
                 # unicode, no encoding
@@ -253,11 +253,13 @@ class CSS(object):
                     source, linking_encoding=encoding,
                     protocol_encoding=protocol_encoding)
         self.base_url = base_url
-        self.rules = list(preprocess_stylesheet(
-            media_type, base_url, stylesheet.rules, url_fetcher))
-        # TODO: do not keep this self.stylesheet around?
-        self.stylesheet = stylesheet
-        for error in self.stylesheet.errors:
+        self.rules = []
+        # TODO: fonts are stored here and should be cleaned after rendering
+        self.fonts = []
+        preprocess_stylesheet(
+            media_type, base_url, stylesheet.rules, url_fetcher, self.rules,
+            self.fonts, font_config)
+        for error in stylesheet.errors:
             LOGGER.warning(error)
 
 

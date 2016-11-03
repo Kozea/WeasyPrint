@@ -46,13 +46,13 @@ def min_content_width(context, box, outer=True):
     This is the width by breaking at every line-break opportunity.
 
     """
-    if isinstance(box, (
-            boxes.BlockContainerBox, boxes.TableColumnBox,
-            boxes.TableColumnGroupBox)):
+    if isinstance(box, (boxes.BlockContainerBox, boxes.TableColumnBox)):
         if box.is_table_wrapper:
             return table_and_columns_preferred_widths(context, box, outer)[0]
         else:
             return block_min_content_width(context, box, outer)
+    elif isinstance(box, boxes.TableColumnGroupBox):
+        return column_group_content_width(context, box)
     elif isinstance(box, (boxes.InlineBox, boxes.LineBox)):
         return inline_min_content_width(
             context, box, outer, is_line_start=True)
@@ -70,13 +70,13 @@ def max_content_width(context, box, outer=True):
     This is the width by only breaking at forced line breaks.
 
     """
-    if isinstance(box, (
-            boxes.BlockContainerBox, boxes.TableColumnBox,
-            boxes.TableColumnGroupBox)):
+    if isinstance(box, (boxes.BlockContainerBox, boxes.TableColumnBox)):
         if box.is_table_wrapper:
             return table_and_columns_preferred_widths(context, box, outer)[1]
         else:
             return block_max_content_width(context, box, outer)
+    elif isinstance(box, boxes.TableColumnGroupBox):
+        return column_group_content_width(context, box)
     elif isinstance(box, (boxes.InlineBox, boxes.LineBox)):
         return inline_max_content_width(
             context, box, outer, is_line_start=True)
@@ -196,6 +196,18 @@ def inline_max_content_width(context, box, outer=True, is_line_start=False):
     return adjust(box, outer, max(widths))
 
 
+def column_group_content_width(context, box):
+    """Return the *-content width for an ``TableColumnGroupBox``."""
+    width = box.style.width
+    if width == 'auto' or width.unit == '%':
+        width = 0
+    else:
+        assert width.unit == 'px'
+        width = width.value
+
+    return adjust(box, False, width)
+
+
 def inline_line_widths(context, box, outer, is_line_start, minimum,
                        skip_stack=None):
     current_line = 0
@@ -230,7 +242,7 @@ def inline_line_widths(context, box, outer, is_line_start, minimum,
                 lines = [0, 0]
             else:
                 lines = list(text.line_widths(
-                    child_text, child.style, context.enable_hinting,
+                    child_text, child.style, context,
                     width=0 if minimum else None))
         else:
             # http://www.w3.org/TR/css3-text/#line-break-details
@@ -612,6 +624,5 @@ def trailing_whitespace_size(context, box):
         return old_box.width - stripped_box.width
     else:
         _, _, _, width, _, _ = split_first_line(
-            box.text, box.style, context.enable_hinting,
-            None, None)
+            box.text, box.style, context, None, None)
         return width

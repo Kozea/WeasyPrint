@@ -29,7 +29,7 @@ def make_text(text, width=None, **style):
         'Nimbus Mono L', 'Liberation Mono', 'FreeMono', 'monospace']
     new_style.update(style)
     return split_first_line(
-        text, new_style, hinting=False, max_width=width, line_width=None)
+        text, new_style, context=None, max_width=width, line_width=None)
 
 
 @assert_no_logs

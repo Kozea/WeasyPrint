@@ -975,30 +975,34 @@ def font_variant_numeric(tokens):
 
 
 @validator()
-@comma_separated_list
 def font_feature_settings(tokens):
     """``font-feature-settings`` property validation."""
-    # TODO: because of comma_separated_list, this validator allows
-    # erratic values like "normal, normal", or "normal, 'kern'"
-    feature, value = None, None
+    if len(tokens) == 1 and get_keyword(tokens[0]) == 'normal':
+        return 'normal'
 
-    if len(tokens) == 2:
-        token = tokens.pop()
-        if token.type == 'IDENT':
-            value = {'on': 1, 'off': 0}.get(token.value)
-        elif token.type == 'INTEGER' and token.value >= 0:
-            value = token.value
-    elif len(tokens) == 1:
-        value = 1
+    @comma_separated_list
+    def font_feature_settings_list(tokens):
+        feature, value = None, None
 
-    if len(tokens) == 1:
-        token = tokens.pop()
-        if token.type == 'STRING' and len(token.value) == 4:
-            if all(0x20 <= ord(letter) <= 0x7f for letter in token.value):
-                feature = token.value
+        if len(tokens) == 2:
+            token = tokens.pop()
+            if token.type == 'IDENT':
+                value = {'on': 1, 'off': 0}.get(token.value)
+            elif token.type == 'INTEGER' and token.value >= 0:
+                value = token.value
+        elif len(tokens) == 1:
+            value = 1
 
-    if feature is not None and value is not None:
-        return feature, value
+        if len(tokens) == 1:
+            token = tokens.pop()
+            if token.type == 'STRING' and len(token.value) == 4:
+                if all(0x20 <= ord(letter) <= 0x7f for letter in token.value):
+                    feature = token.value
+
+        if feature is not None and value is not None:
+            return feature, value
+
+    return font_feature_settings_list(tokens)
 
 
 @validator()
@@ -1968,12 +1972,16 @@ class NormalFakeToken(object):
 @expander('font-variant')
 @generic_expander('-alternates', '-caps', '-east-asian', '-ligatures',
                   '-numeric', '-position')
-def expand_font_variant(name, tokens):
+def font_variant(name, tokens):
     """Expand the ``font-variant`` shorthand property.
 
     https://www.w3.org/TR/css-fonts-3/#font-variant-prop
 
     """
+    return expand_font_variant(tokens)
+
+
+def expand_font_variant(tokens):
     keyword = get_single_keyword(tokens)
     if keyword in ('normal', 'none'):
         for suffix in (
@@ -2123,13 +2131,13 @@ def preprocess_declarations(base_url, declarations):
     Return a iterable of ``(name, value, priority)`` tuples.
 
     """
-    def validation_error(level, reason):
-        getattr(LOGGER, level)(
-            'Ignored `%s: %s` at %i:%i, %s.',
-            declaration.name, declaration.value.as_css(),
-            declaration.line, declaration.column, reason)
-
     for declaration in declarations:
+        def validation_error(level, reason):
+            getattr(LOGGER, level)(
+                'Ignored `%s: %s` at %i:%i, %s.',
+                declaration.name, declaration.value.as_css(),
+                declaration.line, declaration.column, reason)
+
         name = declaration.name
 
         if name in PREFIXED and not name.startswith(PREFIX):
