@@ -28,6 +28,7 @@ import lxml.etree
 
 from . import properties
 from . import computed_values
+from .descriptors import preprocess_descriptors
 from .validation import preprocess_declarations
 from ..urls import (element_base_url, get_url_attribute, url_join,
                     URLFetchingError)
@@ -36,7 +37,7 @@ from ..compat import iteritems
 from .. import CSS
 
 
-PARSER = tinycss.make_parser('page3')
+PARSER = tinycss.make_parser('page3', 'fonts3')
 
 
 # Reject anything not in here:
@@ -161,7 +162,8 @@ def get_child_text(element):
     return ''.join(content)
 
 
-def find_stylesheets(element_tree, device_media_type, url_fetcher):
+def find_stylesheets(element_tree, device_media_type, url_fetcher,
+                     font_config):
     """Yield the stylesheets in ``element_tree``.
 
     The output order is the same as the source order.
@@ -184,8 +186,10 @@ def find_stylesheets(element_tree, device_media_type, url_fetcher):
             content = get_child_text(element)
             # lxml should give us either unicode or ASCII-only bytestrings, so
             # we don't need `encoding` here.
-            css = CSS(string=content, base_url=element_base_url(element),
-                      url_fetcher=url_fetcher, media_type=device_media_type)
+            css = CSS(
+                string=content, base_url=element_base_url(element),
+                url_fetcher=url_fetcher, media_type=device_media_type,
+                font_config=font_config)
             yield css
         elif element.tag == 'link' and element.get('href'):
             if not element_has_link_type(element, 'stylesheet') or \
@@ -194,9 +198,10 @@ def find_stylesheets(element_tree, device_media_type, url_fetcher):
             href = get_url_attribute(element, 'href')
             if href is not None:
                 try:
-                    yield CSS(url=href, url_fetcher=url_fetcher,
-                              _check_mime_type=True,
-                              media_type=device_media_type)
+                    yield CSS(
+                        url=href, url_fetcher=url_fetcher,
+                        _check_mime_type=True, media_type=device_media_type,
+                        font_config=font_config)
                 except URLFetchingError as exc:
                     LOGGER.warning('Failed to load stylesheet at %s : %s',
                                    href, exc)
@@ -597,13 +602,14 @@ class Selector(object):
         self.match = match
 
 
-def preprocess_stylesheet(device_media_type, base_url, rules, url_fetcher):
+def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
+                          url_fetcher, rules, fonts, font_config):
     """Do the work that can be done early on stylesheet, before they are
     in a document.
 
     """
     selector_to_xpath = cssselect.HTMLTranslator().selector_to_xpath
-    for rule in rules:
+    for rule in stylesheet_rules:
         if not rule.at_keyword:
             declarations = list(preprocess_declarations(
                 base_url, rule.declarations))
@@ -633,7 +639,7 @@ def preprocess_stylesheet(device_media_type, base_url, rules, url_fetcher):
                     LOGGER.warning("Invalid or unsupported selector '%s', %s",
                                    selector_string, exc)
                     continue
-                yield rule, selector_list, declarations
+                rules.append((rule, selector_list, declarations))
 
         elif rule.at_keyword == '@import':
             if not evaluate_media_query(rule.media, device_media_type):
@@ -642,21 +648,22 @@ def preprocess_stylesheet(device_media_type, base_url, rules, url_fetcher):
                            rule.line, rule.column)
             if url is not None:
                 try:
-                    stylesheet = CSS(url=url, url_fetcher=url_fetcher,
-                                     media_type=device_media_type)
+                    stylesheet = CSS(
+                        url=url, url_fetcher=url_fetcher,
+                        media_type=device_media_type, font_config=font_config)
                 except URLFetchingError as exc:
                     LOGGER.warning('Failed to load stylesheet at %s : %s',
                                    url, exc)
                 else:
                     for result in stylesheet.rules:
-                        yield result
+                        rules.append(result)
 
         elif rule.at_keyword == '@media':
             if not evaluate_media_query(rule.media, device_media_type):
                 continue
-            for result in preprocess_stylesheet(
-                    device_media_type, base_url, rule.rules, url_fetcher):
-                yield result
+            preprocess_stylesheet(
+                device_media_type, base_url, rule.rules, url_fetcher, rules,
+                fonts, font_config)
 
         elif rule.at_keyword == '@page':
             page_name, pseudo_class = rule.selector
@@ -676,7 +683,7 @@ def preprocess_stylesheet(device_media_type, base_url, rules, url_fetcher):
 
             if declarations:
                 selector_list = [Selector(specificity, None, match)]
-                yield rule, selector_list, declarations
+                rules.append((rule, selector_list, declarations))
 
             for margin_rule in rule.at_rules:
                 declarations = list(preprocess_declarations(
@@ -684,11 +691,26 @@ def preprocess_stylesheet(device_media_type, base_url, rules, url_fetcher):
                 if declarations:
                     selector_list = [Selector(
                         specificity, margin_rule.at_keyword, match)]
-                    yield margin_rule, selector_list, declarations
+                    rules.append((margin_rule, selector_list, declarations))
+
+        elif rule.at_keyword == '@font-face':
+            rule_descriptors = dict(list(preprocess_descriptors(
+                base_url, rule.declarations)))
+            for key in ('src', 'font_family'):
+                if key not in rule_descriptors:
+                    LOGGER.warning(
+                        "Missing %s descriptor in '@font-face' rule at %s:%s",
+                        key.replace('_', '-'), rule.line, rule.column)
+                    break
+            else:
+                font_filename = font_config.add_font_face(
+                    rule_descriptors, url_fetcher)
+                if font_filename:
+                    fonts.append(font_filename)
 
 
 def get_all_computed_styles(html, user_stylesheets=None,
-                            presentational_hints=False):
+                            presentational_hints=False, font_config=None):
     """Compute all the computed styles of all elements in ``html`` document.
 
     Do everything from finding author stylesheets to parsing and applying them.
@@ -702,7 +724,7 @@ def get_all_computed_styles(html, user_stylesheets=None,
     url_fetcher = html.url_fetcher
     ua_stylesheets = html._ua_stylesheets()
     author_stylesheets = list(find_stylesheets(
-        element_tree, device_media_type, url_fetcher))
+        element_tree, device_media_type, url_fetcher, font_config))
     if presentational_hints:
         ph_stylesheets = html._ph_stylesheets()
     else:

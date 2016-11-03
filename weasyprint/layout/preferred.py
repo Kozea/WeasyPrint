@@ -242,7 +242,7 @@ def inline_line_widths(context, box, outer, is_line_start, minimum,
                 lines = [0, 0]
             else:
                 lines = list(text.line_widths(
-                    child_text, child.style, context.enable_hinting,
+                    child_text, child.style, context,
                     width=0 if minimum else None))
         else:
             # http://www.w3.org/TR/css3-text/#line-break-details
@@ -624,6 +624,5 @@ def trailing_whitespace_size(context, box):
         return old_box.width - stripped_box.width
     else:
         _, _, _, width, _, _ = split_first_line(
-            box.text, box.style, context.enable_hinting,
-            None, None)
+            box.text, box.style, context, None, None)
         return width

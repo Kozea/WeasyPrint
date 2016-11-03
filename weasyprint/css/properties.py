@@ -112,7 +112,7 @@ INITIAL_VALUES = {
 
     # Fonts 3: https://www.w3.org/TR/css-fonts-3/
     'font_family': ['serif'],  # depends on user agent
-    'font_feature_settings': (),  # computed value for 'none'
+    'font_feature_settings': 'normal',
     'font_kerning': 'auto',
     'font_language_override': 'normal',
     'font_size': 16,  # actually medium, but we define medium from this

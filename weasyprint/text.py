@@ -13,17 +13,51 @@
 from __future__ import division
 # XXX No unicode_literals, cffi likes native strings
 
+import re
+
 import pyphen
 import cffi
 import cairocffi as cairo
-import re
 
 from .compat import basestring
 from .logger import LOGGER
 
 
+PANGO_ATTR_FONT_FEATURES_CACHE = {}
+
+
 ffi = cffi.FFI()
 ffi.cdef('''
+    // Cairo
+
+    typedef enum {
+        CAIRO_FONT_TYPE_TOY,
+        CAIRO_FONT_TYPE_FT,
+        CAIRO_FONT_TYPE_WIN32,
+        CAIRO_FONT_TYPE_QUARTZ,
+        CAIRO_FONT_TYPE_USER
+    } cairo_font_type_t;
+
+
+    // Pango
+
+    typedef unsigned int guint;
+    typedef int gint;
+    typedef char gchar;
+    typedef gint gboolean;
+    typedef void* gpointer;
+    typedef ... cairo_t;
+    typedef ... PangoLayout;
+    typedef ... PangoContext;
+    typedef ... PangoFontMap;
+    typedef ... PangoFontMetrics;
+    typedef ... PangoLanguage;
+    typedef ... PangoTabArray;
+    typedef ... PangoFontDescription;
+    typedef ... PangoLayoutIter;
+    typedef ... PangoAttrList;
+    typedef ... PangoAttrClass;
+
     typedef enum {
         PANGO_STYLE_NORMAL,
         PANGO_STYLE_OBLIQUE,
@@ -66,42 +100,35 @@ ffi.cdef('''
         PANGO_TAB_LEFT
     } PangoTabAlign;
 
-    typedef unsigned int guint;
-    typedef int gint;
-    typedef gint gboolean;
-    typedef void* gpointer;
-    typedef ... cairo_t;
-    typedef ... PangoLayout;
-    typedef ... PangoContext;
-    typedef ... PangoFontMetrics;
-    typedef ... PangoLanguage;
-    typedef ... PangoTabArray;
-    typedef ... PangoFontDescription;
-    typedef ... PangoLayoutIter;
-    typedef ... PangoAttrList;
-    typedef ... PangoAttrClass;
     typedef struct {
         const PangoAttrClass *klass;
         guint start_index;
         guint end_index;
     } PangoAttribute;
+
     typedef struct {
         PangoLayout *layout;
         gint         start_index;
         gint         length;
         /* ... */
     } PangoLayoutLine;
-    typedef char gchar;
 
-    double              pango_units_to_double               (int i);
-    int                 pango_units_from_double             (double d);
-    void                g_object_unref                      (gpointer object);
-    void                g_type_init                         (void);
+    typedef struct  {
+        int x;
+        int y;
+        int width;
+        int height;
+    } PangoRectangle;
 
+    int pango_version (void);
 
-    PangoLayout * pango_cairo_create_layout (cairo_t *cr);
+    double pango_units_to_double (int i);
+    int pango_units_from_double (double d);
+    void g_object_unref (gpointer object);
+    void g_type_init (void);
+
     void pango_layout_set_width (PangoLayout *layout, int width);
-    void pango_layout_set_attributes(
+    void pango_layout_set_attributes (
         PangoLayout *layout, PangoAttrList *attrs);
     void pango_layout_set_text (
         PangoLayout *layout, const char *text, int length);
@@ -112,93 +139,77 @@ ffi.cdef('''
     void pango_layout_set_wrap (
         PangoLayout *layout, PangoWrapMode wrap);
 
+    PangoLayoutIter * pango_layout_get_iter (PangoLayout *layout);
+    void pango_layout_iter_free (PangoLayoutIter *iter);
+    gboolean pango_layout_iter_next_line (PangoLayoutIter *iter);
+    PangoLayoutLine * pango_layout_iter_get_line_readonly (
+        PangoLayoutIter *iter);
+    int pango_layout_iter_get_baseline (PangoLayoutIter *iter);
 
     PangoFontDescription * pango_font_description_new (void);
-
     void pango_font_description_free (PangoFontDescription *desc);
-
     void pango_font_description_set_family (
         PangoFontDescription *desc, const char *family);
-
     void pango_font_description_set_style (
         PangoFontDescription *desc, PangoStyle style);
-
     void pango_font_description_set_stretch (
         PangoFontDescription *desc, PangoStretch stretch);
-
     void pango_font_description_set_weight (
         PangoFontDescription *desc, PangoWeight weight);
-
     void pango_font_description_set_absolute_size (
         PangoFontDescription *desc, double size);
 
+    PangoFontMetrics * pango_context_get_metrics (
+        PangoContext *context, const PangoFontDescription *desc,
+        PangoLanguage *language);
+    void pango_font_metrics_unref (PangoFontMetrics *metrics);
+    int pango_font_metrics_get_ascent (PangoFontMetrics *metrics);
+    int pango_font_metrics_get_descent (PangoFontMetrics *metrics);
+    int pango_font_metrics_get_approximate_char_width (
+        PangoFontMetrics *metrics);
+    int pango_font_metrics_get_approximate_digit_width (
+        PangoFontMetrics *metrics);
+    int pango_font_metrics_get_underline_thickness (
+        PangoFontMetrics *metrics);
+    int pango_font_metrics_get_underline_position (
+        PangoFontMetrics *metrics);
+    int pango_font_metrics_get_strikethrough_thickness (
+        PangoFontMetrics *metrics);
+    int pango_font_metrics_get_strikethrough_position (
+        PangoFontMetrics *metrics);
 
-    PangoAttrList *     pango_attr_list_new             (void);
-    void                pango_attr_list_unref           (PangoAttrList *list);
-    void                pango_attr_list_insert          (
+    PangoAttrList * pango_attr_list_new (void);
+    void pango_attr_list_unref (PangoAttrList *list);
+    void pango_attr_list_insert (
         PangoAttrList *list, PangoAttribute *attr);
+    PangoAttribute * pango_attr_font_features_new (const gchar *features);
+    PangoAttribute * pango_attr_letter_spacing_new (int letter_spacing);
+    void pango_attribute_destroy (PangoAttribute *attr);
 
-    PangoAttribute *    pango_attr_font_features_new    (
-        const gchar *features);
-    PangoAttribute *    pango_attr_letter_spacing_new   (int letter_spacing);
-    void                pango_attribute_destroy         (PangoAttribute *attr);
-
-    PangoTabArray *     pango_tab_array_new_with_positions (
+    PangoTabArray * pango_tab_array_new_with_positions (
         gint size, gboolean positions_in_pixels, PangoTabAlign first_alignment,
         gint first_position, ...);
     void pango_tab_array_free (PangoTabArray *tab_array);
 
-    PangoLayoutIter *   pango_layout_get_iter (PangoLayout *layout);
-    void pango_layout_iter_free (PangoLayoutIter *iter);
-
-    gboolean pango_layout_iter_next_line (PangoLayoutIter *iter);
-
-    PangoLayoutLine *   pango_layout_iter_get_line_readonly (
-        PangoLayoutIter *iter);
-
-    int pango_layout_iter_get_baseline (PangoLayoutIter *iter);
-
-    PangoLanguage *     pango_language_from_string (const char *language);
-    PangoLanguage *     pango_language_get_default (void);
-    void                pango_context_set_language (
+    PangoLanguage * pango_language_from_string (const char *language);
+    PangoLanguage * pango_language_get_default (void);
+    void pango_context_set_language (
         PangoContext *context, PangoLanguage *language);
-
-    typedef struct  {
-        int x;
-        int y;
-        int width;
-        int height;
-    } PangoRectangle;
+    void pango_context_set_font_map (
+        PangoContext *context, PangoFontMap *font_map);
 
     void pango_layout_line_get_extents (
         PangoLayoutLine *line,
         PangoRectangle *ink_rect, PangoRectangle *logical_rect);
 
-    PangoContext *      pango_layout_get_context     (PangoLayout *layout);
-    void                pango_layout_context_changed (PangoLayout *layout);
-    PangoFontMetrics *  pango_context_get_metrics    (
-        PangoContext *context, const PangoFontDescription *desc,
-        PangoLanguage *language);
+    PangoContext * pango_layout_get_context (PangoLayout *layout);
 
-    void    pango_font_metrics_unref            (PangoFontMetrics *metrics);
-    int     pango_font_metrics_get_ascent       (PangoFontMetrics *metrics);
-    int     pango_font_metrics_get_descent      (PangoFontMetrics *metrics);
-    int     pango_font_metrics_get_approximate_char_width
-                                                (PangoFontMetrics *metrics);
-    int     pango_font_metrics_get_approximate_digit_width
-                                                (PangoFontMetrics *metrics);
-    int     pango_font_metrics_get_underline_thickness
-                                                (PangoFontMetrics *metrics);
-    int     pango_font_metrics_get_underline_position
-                                                (PangoFontMetrics *metrics);
-    int     pango_font_metrics_get_strikethrough_thickness
-                                                (PangoFontMetrics *metrics);
-    int     pango_font_metrics_get_strikethrough_position
-                                                (PangoFontMetrics *metrics);
 
+    // PangoCairo
+
+    PangoLayout * pango_cairo_create_layout (cairo_t *cr);
     void pango_cairo_update_layout (cairo_t *cr, PangoLayout *layout);
     void pango_cairo_show_layout_line (cairo_t *cr, PangoLayoutLine *line);
-
 ''')
 
 
@@ -596,16 +607,22 @@ def first_line_metrics(first_line, text, layout, resume_at, space_collapse,
 
 class Layout(object):
     """Object holding PangoLayout-related cdata pointers."""
-    def __init__(self, hinting, font_size, style):
-        self.dummy_context = (
+    def __init__(self, context, font_size, style):
+        self.context = context
+        hinting = context.enable_hinting if context else False
+        cairo_dummy_context = (
             cairo.Context(cairo.ImageSurface(cairo.FORMAT_ARGB32, 1, 1))
             if hinting else
             cairo.Context(cairo.PDFSurface(None, 1, 1)))
         self.layout = ffi.gc(
             pangocairo.pango_cairo_create_layout(ffi.cast(
-                'cairo_t *', self.dummy_context._pointer)),
+                'cairo_t *', cairo_dummy_context._pointer)),
             gobject.g_object_unref)
-        self.font = font = ffi.gc(
+        pango_context = pango.pango_layout_get_context(self.layout)
+        if context and context.font_config.font_map:
+            pango.pango_context_set_font_map(
+                pango_context, context.font_config.font_map)
+        self.font = ffi.gc(
             pango.pango_font_description_new(),
             pango.pango_font_description_free)
         if style.font_language_override != 'normal':
@@ -619,21 +636,20 @@ class Layout(object):
             self.language = pango.pango_language_get_default()
         if lang:
             self.language = pango.pango_language_from_string(lang_p)
-            context = pango.pango_layout_get_context(self.layout)
-            pango.pango_context_set_language(context, self.language)
+            pango.pango_context_set_language(pango_context, self.language)
 
         assert not isinstance(style.font_family, basestring), (
             'font_family should be a list')
         family_p, family = unicode_to_char_p(','.join(style.font_family))
-        pango.pango_font_description_set_family(font, family_p)
+        pango.pango_font_description_set_family(self.font, family_p)
         pango.pango_font_description_set_style(
-            font, PANGO_STYLE[style.font_style])
+            self.font, PANGO_STYLE[style.font_style])
         pango.pango_font_description_set_stretch(
-            font, PANGO_STRETCH[style.font_stretch])
-        pango.pango_font_description_set_weight(font, style.font_weight)
+            self.font, PANGO_STRETCH[style.font_stretch])
+        pango.pango_font_description_set_weight(self.font, style.font_weight)
         pango.pango_font_description_set_absolute_size(
-            font, units_from_double(font_size))
-        pango.pango_layout_set_font_description(self.layout, font)
+            self.font, units_from_double(font_size))
+        pango.pango_layout_set_font_description(self.layout, self.font)
 
     def iter_lines(self):
         layout_iter = ffi.gc(
@@ -660,7 +676,7 @@ class Layout(object):
     def set_tabs(self, style):
         if isinstance(style.tab_size, int):
             layout = Layout(
-                hinting=False, font_size=style.font_size,
+                context=self.context, font_size=style.font_size,
                 style=style)
             layout.set_text(' ' * style.tab_size)
             line, = layout.iter_lines()
@@ -694,7 +710,11 @@ class FontMetrics(object):
                 getattr(pango, 'pango_font_metrics_get_' + key)(self.metrics))
 
 
-def get_font_features_from_style(style):
+def get_font_features(
+        font_kerning='normal', font_variant_ligatures='normal',
+        font_variant_position='normal', font_variant_caps='normal',
+        font_variant_numeric='normal', font_variant_alternates='normal',
+        font_variant_east_asian='normal', font_feature_settings='normal'):
     """Get the font features from the different properties in style.
 
     See https://www.w3.org/TR/css-fonts-3/#feature-precedence
@@ -733,20 +753,21 @@ def get_font_features_from_style(style):
         'proportional-width': 'pwid',
         'ruby': 'ruby'}
 
-    # Step 1 is getting the default, we rely on Pango for this
-    # Steps 2 and 3 are related to the unsupported @font-face rule
+    # Step 1: getting the default, we rely on Pango for this
+    # Step 2: @font-face font-variant, done in fonts.add_font_face
+    # Step 3: @font-face font-feature-settings, done in fonts.add_font_face
 
     # Step 4: font-variant and OpenType features
 
-    if style.font_kerning != 'auto':
-        features['kern'] = int(style.font_kerning == 'normal')
+    if font_kerning != 'auto':
+        features['kern'] = int(font_kerning == 'normal')
 
-    if style.font_variant_ligatures == 'none':
+    if font_variant_ligatures == 'none':
         for keys in ligature_keys.values():
             for key in keys:
                 features[key] = 0
-    elif style.font_variant_ligatures != 'normal':
-        for ligature_type in style.font_variant_ligatures:
+    elif font_variant_ligatures != 'normal':
+        for ligature_type in font_variant_ligatures:
             value = 1
             if ligature_type.startswith('no-'):
                 value = 0
@@ -754,44 +775,44 @@ def get_font_features_from_style(style):
             for key in ligature_keys[ligature_type]:
                 features[key] = value
 
-    if style.font_variant_position == 'sub':
+    if font_variant_position == 'sub':
         # TODO: the specification asks for additional checks
         # https://www.w3.org/TR/css-fonts-3/#font-variant-position-prop
         features['subs'] = 1
-    elif style.font_variant_position == 'super':
+    elif font_variant_position == 'super':
         features['sups'] = 1
 
-    if style.font_variant_caps != 'normal':
+    if font_variant_caps != 'normal':
         # TODO: the specification asks for additional checks
         # https://www.w3.org/TR/css-fonts-3/#font-variant-caps-prop
-        for key in caps_keys[style.font_variant_caps]:
+        for key in caps_keys[font_variant_caps]:
             features[key] = 1
 
-    if style.font_variant_numeric != 'normal':
-        for key in style.font_variant_numeric:
+    if font_variant_numeric != 'normal':
+        for key in font_variant_numeric:
             features[numeric_keys[key]] = 1
 
-    if style.font_variant_alternates != 'normal':
+    if font_variant_alternates != 'normal':
         # TODO: support other values
         # See https://www.w3.org/TR/css-fonts-3/#font-variant-caps-prop
-        if style.font_variant_alternates == 'historical-forms':
+        if font_variant_alternates == 'historical-forms':
             features['hist'] = 1
 
-    if style.font_variant_east_asian != 'normal':
-        for key in style.font_variant_east_asian:
+    if font_variant_east_asian != 'normal':
+        for key in font_variant_east_asian:
             features[east_asian_keys[key]] = 1
 
-    # Step 5 is alread handled by Pango
+    # Step 5: incompatible non-OpenType features, already handled by Pango
 
     # Step 6: font-feature-settings
 
-    if style.font_feature_settings:
-        features.update(dict(style.font_feature_settings))
+    if font_feature_settings != 'normal':
+        features.update(dict(font_feature_settings))
 
     return features
 
 
-def create_layout(text, style, hinting, max_width):
+def create_layout(text, style, context, max_width):
     """Return an opaque Pango layout with default Pango line-breaks.
 
     :param text: Unicode
@@ -806,7 +827,7 @@ def create_layout(text, style, hinting, max_width):
     if text_wrap:
         max_width = None
 
-    layout = Layout(hinting, style.font_size, style)
+    layout = Layout(context, style.font_size, style)
     layout.set_text(text)
 
     # Make sure that max_width * Pango.SCALE == max_width * 1024 fits in a
@@ -828,9 +849,9 @@ def create_layout(text, style, hinting, max_width):
         attr_list = pango.pango_attr_list_new()
 
         def add_attr(start, end, spacing):
+            # TODO: attributes should be freed
             attr = pango.pango_attr_letter_spacing_new(spacing)
-            attr.start_index = start
-            attr.end_index = end
+            attr.start_index, attr.end_index = start, end
             pango.pango_attr_list_insert(attr_list, attr)
 
         add_attr(0, len(text_bytes) + 1, letter_spacing)
@@ -838,19 +859,32 @@ def create_layout(text, style, hinting, max_width):
         while position != -1:
             add_attr(position, position + 1, space_spacing)
             position = text_bytes.find(b' ', position + 1)
+
         pango.pango_layout_set_attributes(layout.layout, attr_list)
         pango.pango_attr_list_unref(attr_list)
 
-    features = get_font_features_from_style(style)
+    features = get_font_features(
+        style.font_kerning, style.font_variant_ligatures,
+        style.font_variant_position, style.font_variant_caps,
+        style.font_variant_numeric, style.font_variant_alternates,
+        style.font_variant_east_asian, style.font_feature_settings)
     if features:
         features = ','.join(
             ('%s %i' % (key, value)) for key, value in features.items())
-        try:
-            attr = pango.pango_attr_font_features_new(features.encode('ascii'))
-        except AttributeError:
-            LOGGER.warning(
-                'OpenType features are not available with Pango < 1.38')
-        else:
+
+        # TODO: attributes should be freed.
+        # In the meantime, keep a cache to avoid leaking too many of them.
+        attr = PANGO_ATTR_FONT_FEATURES_CACHE.get(features)
+        if attr is None:
+            try:
+                attr = pango.pango_attr_font_features_new(
+                    features.encode('ascii'))
+            except AttributeError:
+                LOGGER.warning(
+                    'OpenType features are not available with Pango < 1.38')
+            else:
+                PANGO_ATTR_FONT_FEATURES_CACHE[features] = attr
+        if attr is not None:
             attr_list = pango.pango_attr_list_new()
             pango.pango_attr_list_insert(attr_list, attr)
             pango.pango_layout_set_attributes(layout.layout, attr_list)
@@ -863,7 +897,7 @@ def create_layout(text, style, hinting, max_width):
     return layout
 
 
-def split_first_line(text, style, hinting, max_width, line_width):
+def split_first_line(text, style, context, max_width, line_width):
     """Fit as much as possible in the available width for one line of text.
 
     Return ``(layout, length, resume_at, width, height, baseline)``.
@@ -900,7 +934,7 @@ def split_first_line(text, style, hinting, max_width, line_width):
         if expected_length < len(text):
             # Try to use a small amount of text instead of the whole text
             layout = create_layout(
-                text[:expected_length], style, hinting, max_width)
+                text[:expected_length], style, context, max_width)
             lines = layout.iter_lines()
             first_line = next(lines, None)
             second_line = next(lines, None)
@@ -909,7 +943,7 @@ def split_first_line(text, style, hinting, max_width, line_width):
                 # the whole text
                 layout = None
     if layout is None:
-        layout = create_layout(text, style, hinting, max_width)
+        layout = create_layout(text, style, context, max_width)
         lines = layout.iter_lines()
         first_line = next(lines, None)
         second_line = next(lines, None)
@@ -988,7 +1022,7 @@ def split_first_line(text, style, hinting, max_width, line_width):
                             first_line_text.rsplit(u' ', 1))
                         next_word = u' ' + next_word
                         layout = create_layout(
-                            first_line_text, style, hinting, max_width)
+                            first_line_text, style, context, max_width)
                         lines = layout.iter_lines()
                         first_line = next(lines, None)
                         second_line = next(lines, None)
@@ -1021,7 +1055,7 @@ def split_first_line(text, style, hinting, max_width, line_width):
                     hyphenated_first_line_text = (
                         new_first_line_text + style.hyphenate_character)
                     new_layout = create_layout(
-                        hyphenated_first_line_text, style, hinting, max_width)
+                        hyphenated_first_line_text, style, context, max_width)
                     new_lines = new_layout.iter_lines()
                     new_first_line = next(new_lines, None)
                     new_second_line = next(new_lines, None)
@@ -1044,7 +1078,7 @@ def split_first_line(text, style, hinting, max_width, line_width):
                     # we don't break inside the hyphenate-character string
                     hyphenated = True
                     layout = create_layout(
-                        hyphenated_first_line_text, style, hinting, None)
+                        hyphenated_first_line_text, style, context, None)
                     lines = layout.iter_lines()
                     first_line = next(lines, None)
                     second_line = next(lines, None)
@@ -1059,7 +1093,7 @@ def split_first_line(text, style, hinting, max_width, line_width):
         hyphenated_first_line_text = (
             first_line_text + style.hyphenate_character)
         layout = create_layout(
-            hyphenated_first_line_text, style, hinting, None)
+            hyphenated_first_line_text, style, context, None)
         lines = layout.iter_lines()
         first_line = next(lines, None)
         second_line = next(lines, None)
@@ -1079,7 +1113,7 @@ def split_first_line(text, style, hinting, max_width, line_width):
         # memory of the last) prevents shaping characters (arabic, for
         # instance) from keeping their shape when wrapped on the next line with
         # pango layout.  Maybe insert Unicode shaping characters in text ?
-        temp_layout = create_layout(text, style, hinting, max_width)
+        temp_layout = create_layout(text, style, context, max_width)
         temp_layout.set_wrap(PANGO_WRAP_MODE['WRAP_WORD_CHAR'])
         temp_lines = temp_layout.iter_lines()
         next(temp_lines, None)
@@ -1089,7 +1123,7 @@ def split_first_line(text, style, hinting, max_width, line_width):
             else temp_second_line.start_index)
         resume_at = temp_second_line_index
         first_line_text = utf8_slice(text, slice(temp_second_line_index))
-        layout = create_layout(first_line_text, style, hinting, max_width)
+        layout = create_layout(first_line_text, style, context, max_width)
         lines = layout.iter_lines()
         first_line = next(lines, None)
 
@@ -1098,9 +1132,9 @@ def split_first_line(text, style, hinting, max_width, line_width):
         style.hyphenate_character)
 
 
-def line_widths(text, style, enable_hinting, width):
+def line_widths(text, style, context, width):
     """Return the width for each line."""
-    layout = create_layout(text, style, enable_hinting, width)
+    layout = create_layout(text, style, context, width)
     for line in layout.iter_lines():
         width, _height = get_size(line, style)
         yield width
