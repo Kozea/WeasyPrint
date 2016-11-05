@@ -887,7 +887,6 @@ def create_layout(text, style, context, max_width):
             attr_list = pango.pango_attr_list_new()
             pango.pango_attr_list_insert(attr_list, attr)
             pango.pango_layout_set_attributes(layout.layout, attr_list)
-            pango.pango_attr_list_unref(attr_list)
 
     # Tabs width
     if style.tab_size != 8:  # Default Pango value is 8
