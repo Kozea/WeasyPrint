@@ -63,6 +63,7 @@ else:
         } FcMatchKind;
 
         FcConfig * FcInitLoadConfigAndFonts (void);
+        FcPattern * FcConfigDestroy (FcConfig *config);
         FcBool FcConfigAppFontAddFile (
             FcConfig *config, const FcChar8 *file);
         FcConfig * FcConfigGetCurrent (void);
@@ -75,6 +76,7 @@ else:
             FcConfig *config, FcPattern *p, FcMatchKind kind);
 
         FcPattern * FcPatternCreate (void);
+        FcPattern * FcPatternDestroy (FcPattern *p);
         FcBool FcPatternAddString (
             FcPattern *p, const char *object, const FcChar8 *s);
         FcResult FcPatternGetString (
@@ -88,6 +90,7 @@ else:
 
         void pango_fc_font_map_set_config (
             PangoFcFontMap *fcfontmap, FcConfig *fcconfig);
+        void pango_fc_font_map_shutdown (PangoFcFontMap *fcfontmap);
 
 
         // PangoCairo
@@ -145,7 +148,9 @@ else:
                     how-to-use-custom-application-fonts.html
 
             """
-            self._fontconfig_config = fontconfig.FcInitLoadConfigAndFonts()
+            self._fontconfig_config = ffi.gc(
+                fontconfig.FcInitLoadConfigAndFonts(),
+                fontconfig.FcConfigDestroy)
             self.font_map = ffi.gc(
                 pangocairo.pango_cairo_font_map_new_for_font_type(
                     cairo.FONT_TYPE_FT),
@@ -153,6 +158,8 @@ else:
             pangoft2.pango_fc_font_map_set_config(
                 ffi.cast('PangoFcFontMap *', self.font_map),
                 self._fontconfig_config)
+            # pango_fc_font_map_set_config keeps a reference to config
+            fontconfig.FcConfigDestroy(self._fontconfig_config)
             self._filenames = []
 
         def add_font_face(self, rule_descriptors, url_fetcher):
@@ -161,7 +168,9 @@ else:
                     config = self._fontconfig_config
                     if font_type == 'local':
                         font_name = url.encode('utf-8')
-                        pattern = fontconfig.FcPatternCreate()
+                        pattern = ffi.gc(
+                            fontconfig.FcPatternCreate(),
+                            fontconfig.FcPatternDestroy)
                         fontconfig.FcConfigSubstitute(
                             config, pattern, fontconfig.FcMatchFont)
                         fontconfig.FcDefaultSubstitute(pattern)
