@@ -579,9 +579,9 @@ def strut_layout(style, context=None):
 
     layout = text.Layout(
         context=context, font_size=style.font_size, style=style)
-    metrics = layout.get_font_metrics()
-    baseline = metrics.ascent
-    text_height = baseline + metrics.descent
+    line, = layout.iter_lines()
+    _, _, _, _, text_height, baseline = text.first_line_metrics(
+        line, '', layout, resume_at=None, space_collapse=False, style=style)
     if style['line_height'] == 'normal':
         result = text_height, baseline
         if context:
