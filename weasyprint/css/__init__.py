@@ -700,6 +700,15 @@ def get_all_computed_styles(html, user_stylesheets=None,
     #             http://www.w3.org/TR/CSS21/cascade.html#cascading-order
     cascaded_styles = {}
 
+    for specificity, attributes in find_style_attributes(
+            element_tree, presentational_hints):
+        element, declarations, base_url = attributes
+        for name, values, importance in preprocess_declarations(
+                base_url, declarations):
+            precedence = declaration_precedence('author', importance)
+            weight = (precedence, specificity)
+            add_declaration(cascaded_styles, name, values, weight, element)
+
     for sheets, origin, sheet_specificity in (
         # Order here is not important ('origin' is).
         # Use this order for a regression test
@@ -721,15 +730,6 @@ def get_all_computed_styles(html, user_stylesheets=None,
                             add_declaration(
                                 cascaded_styles, name, values, weight,
                                 element, pseudo_type)
-
-    for specificity, attributes in find_style_attributes(
-            element_tree, presentational_hints):
-        element, declarations, base_url = attributes
-        for name, values, importance in preprocess_declarations(
-                base_url, declarations):
-            precedence = declaration_precedence('author', importance)
-            weight = (precedence, specificity)
-            add_declaration(cascaded_styles, name, values, weight, element)
 
     # keys: (element, pseudo_element_type), like cascaded_styles
     # values: StyleDict objects:
