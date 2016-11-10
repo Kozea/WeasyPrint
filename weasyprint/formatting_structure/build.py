@@ -173,7 +173,7 @@ def element_to_box(element, style_for, get_image_from_uri, state=None):
         if not counter_values[name]:
             counter_values.pop(name)
 
-    box = box.copy_with_children(children)
+    box.children = children
     replace_content_lists(element, box, style, counter_values)
 
     # Specific handling for the element. (eg. replaced element)
@@ -208,7 +208,8 @@ def pseudo_to_box(element, pseudo_type, state, style_for, get_image_from_uri):
     children.extend(content_to_boxes(
         style, box, quote_depth, counter_values, get_image_from_uri))
 
-    yield box.copy_with_children(children)
+    box.children = children
+    yield box
 
 
 def content_to_boxes(style, parent_box, quote_depth, counter_values,
@@ -294,12 +295,12 @@ def replace_content_lists(element, box, style, counter_values):
         for i, (string_name, string_values) in enumerate(style.string_set):
             string_set.append((string_name, compute_content_list_string(
                 element, box, counter_values, string_values)))
-    style.string_set = string_set
+    box.style['string_set'] = string_set
 
     if style.bookmark_label == 'none':
-        style.bookmark_label = ''
+        box.style['bookmark_label'] = ''
     else:
-        style.bookmark_label = compute_content_list_string(
+        box.style['bookmark_label'] = compute_content_list_string(
             element, box, counter_values, style.bookmark_label)
 
 
@@ -516,7 +517,8 @@ def table_boxes_children(box, children):
     if isinstance(box, boxes.TableBox):
         return wrap_table(box, children)
     else:
-        return box.copy_with_children(children)
+        box.children = list(children)
+        return box
 
 
 def wrap_table(box, children):
@@ -904,7 +906,8 @@ def inline_in_block(box):
                 if not (isinstance(child, boxes.TextBox) and not child.text)]
 
     if not isinstance(box, boxes.BlockContainerBox):
-        return box.copy_with_children(children)
+        box.children = children
+        return box
 
     new_line_children = []
     new_children = []
@@ -943,7 +946,8 @@ def inline_in_block(box):
             # Only inline-level children: one line box
             new_children.append(line_box)
 
-    return box.copy_with_children(new_children)
+    box.children = new_children
+    return box
 
 
 def block_in_inline(box):
@@ -1044,9 +1048,8 @@ def block_in_inline(box):
         new_children.append(new_child)
 
     if changed:
-        return box.copy_with_children(new_children)
-    else:
-        return box
+        box.children = new_children
+    return box
 
 
 def _inner_block_in_inline(box, skip_stack=None):
@@ -1121,7 +1124,8 @@ def set_viewport_overflow(root_box):
                 break
 
     root_box.viewport_overflow = chosen_box.style.overflow
-    chosen_box.style = chosen_box.style.updated_copy({'overflow': 'visible'})
+    chosen_box.style = chosen_box.style.copy()
+    chosen_box.style.update({'overflow': 'visible'})
     return root_box
 
 

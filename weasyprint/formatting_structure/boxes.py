@@ -88,9 +88,7 @@ class Box(object):
     def __init__(self, element_tag, sourceline, style):
         self.element_tag = element_tag
         self.sourceline = sourceline  # for debugging only
-        # Copying might not be needed, but let’s be careful with mutable
-        # objects.
-        self.style = style.copy()
+        self.style = style
 
     def __repr__(self):
         return '<%s %s %s>' % (
@@ -103,7 +101,7 @@ class Box(object):
                    parent.style.inherit_from(),
                    *args, **kwargs)
 
-    def copy(self):
+    def copy(self, copy_style=True):
         """Return shallow copy of the box."""
         cls = type(self)
         # Create a new instance without calling __init__: initializing
@@ -111,7 +109,10 @@ class Box(object):
         new_box = cls.__new__(cls)
         # Copy attributes
         new_box.__dict__.update(self.__dict__)
-        new_box.style = self.style.copy()
+        if copy_style:
+            new_box.style = self.style.copy()
+        else:
+            new_box.style = self.style
         return new_box
 
     def translate(self, dx=0, dy=0):
@@ -458,7 +459,7 @@ class TextBox(InlineLevelBox):
     def copy_with_text(self, text):
         """Return a new TextBox identical to this one except for the text."""
         assert text
-        new_box = self.copy()
+        new_box = self.copy(copy_style=False)
         new_box.text = text
         return new_box
 

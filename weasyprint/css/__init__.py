@@ -72,81 +72,39 @@ RE_INITIAL_NOT_COMPUTED = re.compile(
     '(border_[a-z]+|outline|column_rule)_(width|color))$').match
 
 
-class StyleDict(object):
+class StyleDict(dict):
     """A mapping (dict-like) that allows attribute access to values.
 
     Allow eg. ``style.font_size`` instead of ``style['font-size']``.
 
-    :param parent: if given, should be a mapping. Values missing from this
-                   dict will be looked up in the parent dict. Setting a value
-                   in this dict masks any value in the parent.
-
     """
-    def __init__(self, data=None, parent=None):
-        if data is None:
-            data = {}
-        else:
-            data = dict(data)
-        if parent is None:
-            parent = {}
-        # work around our own __setattr__
-        object.__setattr__(self, '_storage', data)
-        object.__setattr__(self, '_parent', parent)
 
-    def __getitem__(self, key):
-        storage = self._storage
-        if key in storage:
-            return storage[key]
-        else:
-            return self._parent[key]
-
-    def __setitem__(self, key, value):
-        self._storage[key] = value
+    # TODO: We should remove that. Some attributes (eg. "clear") exist as
+    # dict methods and can only be accessed with getitem.
+    __getattr__ = dict.__getitem__
 
     def get_color(self, key):
         value = self[key]
-        return value if value != 'currentColor' else self.color
-
-    def updated_copy(self, other):
-        copy = self.copy()
-        copy._storage.update(other)
-        return copy
-
-    def __contains__(self, key):
-        return key in self._parent or key in self._storage
-
-    __getattr__ = __getitem__  # May raise KeyError instead of AttributeError
-    __setattr__ = __setitem__
+        return value if value != 'currentColor' else self['color']
 
     def copy(self):
-        """Copy the ``StyleDict``.
-
-        Create a new StyleDict with this one as the parent. This is a cheap
-        "copy-on-write". Modifications in the copy will not affect
-        the original, but modifications in the original *may* affect the
-        copy.
-
-        """
-        if self._storage:
-            parent = self
-        else:
-            parent = self._parent
-        style = type(self)(parent=parent)
-        if self.anonymous:
-            object.__setattr__(style, 'anonymous', True)
+        """Copy the ``StyleDict``."""
+        style = type(self)(self)
+        style.anonymous = self.anonymous
         return style
 
     def inherit_from(self):
         """Return a new StyleDict with inherited properties from this one.
 
         Non-inherited properties get their initial values.
-        This is the styles for an anonymous box.
+        This is the method used for an anonymous box.
+
         """
         style = computed_from_cascaded(
             cascaded={}, parent_style=self,
             # Only used by non-inherited properties. eg `content: attr(href)`
             element=None)
-        object.__setattr__(style, 'anonymous', True)
+        style.anonymous = True
         return style
 
     # Default values, may be overriden on instances
@@ -550,7 +508,7 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
     if not cascaded and parent_style is not None:
         # Fast path for anonymous boxes:
         # no cascaded style, only implicitly initial or inherited values.
-        computed = StyleDict(parent=properties.INITIAL_VALUES)
+        computed = StyleDict(properties.INITIAL_VALUES)
         for name in properties.INHERITED:
             computed[name] = parent_style[name]
         # border-*-style is none, so border-width computes to zero.

@@ -50,7 +50,8 @@ def serialize(box_list):
          # All concrete boxes are either text, replaced, column or parent.
          (box.text if isinstance(box, boxes.TextBox)
           else '<replaced>' if isinstance(box, boxes.ReplacedBox)
-          else serialize(getattr(box, 'column_groups', ()) + box.children)))
+          else serialize(
+            getattr(box, 'column_groups', ()) + tuple(box.children))))
         for box in box_list]
 
 

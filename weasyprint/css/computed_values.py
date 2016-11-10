@@ -564,20 +564,36 @@ def strut_layout(style, context=None):
     The baseline is given from the top edge of line height.
 
     """
-    # TODO: cache these results for a given set of styles?
-    line_height = style.line_height
+    # TODO: always get the real value for `context`? (if we really care…)
+
     if style.font_size == 0:
-        pango_height = baseline = 0
-    else:
-        # TODO: get the real value for `context`? (if we really care…)
-        _, _, _, _, pango_height, baseline = text.split_first_line(
-            '', style, context=context, max_width=None, line_width=None)
-    if line_height == 'normal':
-        return pango_height, baseline
-    type_, value = line_height
+        return 0, 0
+
+    if context:
+        key = (
+            style['font_size'], style['font_language_override'], style['lang'],
+            tuple(style['font_family']), style['font_style'],
+            style['font_stretch'], style['font_weight'], style['line_height'])
+        if key in context.strut_layouts:
+            return context.strut_layouts[key]
+
+    layout = text.Layout(
+        context=context, font_size=style.font_size, style=style)
+    metrics = layout.get_font_metrics()
+    baseline = metrics.ascent
+    text_height = baseline + metrics.descent
+    if style['line_height'] == 'normal':
+        result = text_height, baseline
+        if context:
+            context.strut_layouts[key] = result
+        return result
+    type_, line_height = style['line_height']
     if type_ == 'NUMBER':
-        value *= style.font_size
-    return value, baseline + (value - pango_height) / 2
+        line_height *= style['font_size']
+    result = line_height, baseline + (line_height - text_height) / 2
+    if context:
+        context.strut_layouts[key] = result
+    return result
 
 
 def ex_ratio(style):

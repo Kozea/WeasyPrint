@@ -303,10 +303,9 @@ def make_margin_boxes(context, page, counter_values):
         # TODO: get actual counter values at the time of the last page break
         if box.is_generated:
             quote_depth = [0]
-            children = build.content_to_boxes(
+            box.children = build.content_to_boxes(
                 box.style, box, quote_depth, counter_values,
                 context.get_image_from_uri, context)
-            box = box.copy_with_children(children)
             # content_to_boxes() only produces inline-level boxes, no need to
             # run other post-processors from build.build_formatting_structure()
             box = build.inline_in_block(box)
@@ -479,7 +478,7 @@ def make_page(context, root_box, page_type, resume_at, content_empty,
     """
     style = context.style_for(page_type)
     # Propagated from the root or <body>.
-    style.overflow = root_box.viewport_overflow
+    style['overflow'] = root_box.viewport_overflow
     page = boxes.PageBox(page_type, style)
 
     device_size = page.style.size
@@ -521,7 +520,7 @@ def make_page(context, root_box, page_type, resume_at, content_empty,
         absolute_layout(context, absolute_box, page, positioned_boxes)
     context.finish_block_formatting_context(root_box)
 
-    page = page.copy_with_children([root_box])
+    page.children = [root_box]
     descendants = page.descendants()
     for child in descendants:
         string_sets = child.style.string_set

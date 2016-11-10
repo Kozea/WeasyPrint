@@ -118,7 +118,7 @@ def get_clearance(context, box, collapsed_margin=0):
     hypothetical_position = box.position_y + collapsed_margin
     # Hypothetical position is the position of the top border edge
     for excluded_shape in context.excluded_shapes:
-        if box.style.clear in (excluded_shape.style.float, 'both'):
+        if box.style['clear'] in (excluded_shape.style.float, 'both'):
             y, h = excluded_shape.position_y, excluded_shape.margin_height()
             if hypothetical_position < y + h:
                 clearance = max(

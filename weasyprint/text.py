@@ -612,8 +612,7 @@ class Layout(object):
         hinting = context.enable_hinting if context else False
         cairo_dummy_context = (
             cairo.Context(cairo.ImageSurface(cairo.FORMAT_ARGB32, 1, 1))
-            if hinting else
-            cairo.Context(cairo.PDFSurface(None, 1, 1)))
+            if hinting else cairo.Context(cairo.PDFSurface(None, 1, 1)))
         self.layout = ffi.gc(
             pangocairo.pango_cairo_create_layout(ffi.cast(
                 'cairo_t *', cairo_dummy_context._pointer)),
@@ -888,7 +887,6 @@ def create_layout(text, style, context, max_width):
             attr_list = pango.pango_attr_list_new()
             pango.pango_attr_list_insert(attr_list, attr)
             pango.pango_layout_set_attributes(layout.layout, attr_list)
-            pango.pango_attr_list_unref(attr_list)
 
     # Tabs width
     if style.tab_size != 8:  # Default Pango value is 8
@@ -928,25 +926,10 @@ def split_first_line(text, style, context, max_width, line_width):
         max_width *= 1 + 1e-9
 
     # Step #1: Get a draft layout with the first line
-    layout = None
-    if max_width:
-        expected_length = int(max_width / style.font_size * 2.5)
-        if expected_length < len(text):
-            # Try to use a small amount of text instead of the whole text
-            layout = create_layout(
-                text[:expected_length], style, context, max_width)
-            lines = layout.iter_lines()
-            first_line = next(lines, None)
-            second_line = next(lines, None)
-            if second_line is None:
-                # The small amount of text fits in one line, give up and use
-                # the whole text
-                layout = None
-    if layout is None:
-        layout = create_layout(text, style, context, max_width)
-        lines = layout.iter_lines()
-        first_line = next(lines, None)
-        second_line = next(lines, None)
+    layout = create_layout(text, style, context, max_width)
+    lines = layout.iter_lines()
+    first_line = next(lines, None)
+    second_line = next(lines, None)
     resume_at = None if second_line is None else second_line.start_index
 
     # Step #2: Don't hyphenize when it's not needed
@@ -1021,8 +1004,7 @@ def split_first_line(text, style, context, max_width, line_width):
                         first_line_text, next_word = (
                             first_line_text.rsplit(u' ', 1))
                         next_word = u' ' + next_word
-                        layout = create_layout(
-                            first_line_text, style, context, max_width)
+                        layout.set_text(first_line_text)
                         lines = layout.iter_lines()
                         first_line = next(lines, None)
                         second_line = next(lines, None)
@@ -1077,8 +1059,9 @@ def split_first_line(text, style, context, max_width, line_width):
                     # Recreate the layout with no max_width to be sure that
                     # we don't break inside the hyphenate-character string
                     hyphenated = True
-                    layout = create_layout(
-                        hyphenated_first_line_text, style, context, None)
+                    layout.set_text(hyphenated_first_line_text)
+                    pango.pango_layout_set_width(
+                        layout.layout, units_from_double(-1))
                     lines = layout.iter_lines()
                     first_line = next(lines, None)
                     second_line = next(lines, None)
@@ -1092,8 +1075,9 @@ def split_first_line(text, style, context, max_width, line_width):
         hyphenated = True
         hyphenated_first_line_text = (
             first_line_text + style.hyphenate_character)
-        layout = create_layout(
-            hyphenated_first_line_text, style, context, None)
+        layout.set_text(hyphenated_first_line_text)
+        pango.pango_layout_set_width(
+            layout.layout, units_from_double(-1))
         lines = layout.iter_lines()
         first_line = next(lines, None)
         second_line = next(lines, None)
@@ -1113,9 +1097,11 @@ def split_first_line(text, style, context, max_width, line_width):
         # memory of the last) prevents shaping characters (arabic, for
         # instance) from keeping their shape when wrapped on the next line with
         # pango layout.  Maybe insert Unicode shaping characters in text ?
-        temp_layout = create_layout(text, style, context, max_width)
-        temp_layout.set_wrap(PANGO_WRAP_MODE['WRAP_WORD_CHAR'])
-        temp_lines = temp_layout.iter_lines()
+        layout.set_text(text)
+        pango.pango_layout_set_width(
+            layout.layout, units_from_double(max_width))
+        layout.set_wrap(PANGO_WRAP_MODE['WRAP_WORD_CHAR'])
+        temp_lines = layout.iter_lines()
         next(temp_lines, None)
         temp_second_line = next(temp_lines, None)
         temp_second_line_index = (
@@ -1123,7 +1109,7 @@ def split_first_line(text, style, context, max_width, line_width):
             else temp_second_line.start_index)
         resume_at = temp_second_line_index
         first_line_text = utf8_slice(text, slice(temp_second_line_index))
-        layout = create_layout(first_line_text, style, context, max_width)
+        layout.set_text(first_line_text)
         lines = layout.iter_lines()
         first_line = next(lines, None)
 

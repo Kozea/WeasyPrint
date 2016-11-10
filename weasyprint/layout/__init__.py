@@ -59,7 +59,7 @@ def layout_document(enable_hinting, style_for, get_image_from_uri, root_box,
         root_children.extend(layout_fixed_boxes(context, pages[:i]))
         root_children.extend(root.children)
         root_children.extend(layout_fixed_boxes(context, pages[i+1:]))
-        root = root.copy_with_children(root_children)
+        root.children = root_children
         context.current_page = page_counter[0]
         page.children = (root,) + tuple(
             make_margin_boxes(context, page, counter_values))
@@ -79,6 +79,7 @@ class LayoutContext(object):
         self.excluded_shapes = None  # Not initialized yet
         self.string_set = defaultdict(lambda: defaultdict(lambda: list()))
         self.current_page = None
+        self.strut_layouts = {}
 
     def create_block_formatting_context(self):
         self.excluded_shapes = []

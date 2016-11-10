@@ -155,8 +155,7 @@ def get_next_linebox(context, linebox, position_y, skip_stack,
             absolute_boxes, fixed_boxes)
         float_children.append(waiting_float)
     if float_children:
-        line = line.copy_with_children(
-            line.children + tuple(float_children))
+        line.children += tuple(float_children)
 
     return line, resume_at
 
@@ -920,18 +919,18 @@ def count_spaces(box):
 def add_word_spacing(context, box, extra_word_spacing, x_advance):
     if isinstance(box, boxes.TextBox):
         box.position_x += x_advance
-        box.style.word_spacing += extra_word_spacing
+        style = box.style.copy()
+        style.word_spacing += extra_word_spacing
         nb_spaces = count_spaces(box)
         if nb_spaces > 0:
-            new_box, resume_at, _ = split_text_box(
-                context, box, 1e10, None, 0)
-            assert new_box is not None
+            layout, _, resume_at, width, _, _ = split_first_line(
+                box.text, style, context, float('inf'), None)
             assert resume_at is None
             # XXX new_box.width - box.width is always 0???
             # x_advance +=  new_box.width - box.width
             x_advance += extra_word_spacing * nb_spaces
-            box.width = new_box.width
-            box.pango_layout = new_box.pango_layout
+            box.width = width
+            box.pango_layout = layout
     elif isinstance(box, (boxes.LineBox, boxes.InlineBox)):
         box.position_x += x_advance
         previous_x_advance = x_advance

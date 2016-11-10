@@ -389,7 +389,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
     is_start = skip_stack is None
     if not is_start:
         # Remove top margin, border and padding:
-        box = box.copy_with_children(box.children, is_start=False)
+        box._remove_decoration(start=True, end=False)
 
     if adjoining_margins is None:
         adjoining_margins = []
