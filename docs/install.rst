@@ -167,6 +167,14 @@ With Homebrew:
 Windows
 -------
 
+Dear Windows user, please follow these steps carefully.
+
+Really carefully. Don't cheat.
+
+**If you decide to install Python, GTK or lxml 32 bit on Windows 64 bit, you're
+on your own, don't even try to report an issue, kittens will die because of
+you.**
+
 - Install `Python 2.7.x <https://www.python.org/downloads/windows/>`_ **with
   "Add python.exe to Path" checked**:
 
