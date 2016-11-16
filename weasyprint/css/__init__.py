@@ -430,6 +430,20 @@ def find_style_attributes(element_tree, presentational_hints=False):
                             parser, element,
                             'border-width:%spx;border-style:solid' %
                             element.get('border'))
+        elif element.tag == 'ol':
+            # From https://www.w3.org/TR/css-lists-3/
+            if element.get('start'):
+                yield specificity, check_style_attribute(
+                    parser, element,
+                    'counter-reset:list-item %s;'
+                    'counter-increment:list-item -1' % element.get('start'))
+        elif element.tag == 'ul':
+            # From https://www.w3.org/TR/css-lists-3/
+            if element.get('value'):
+                yield specificity, check_style_attribute(
+                    parser, element,
+                    'counter-reset:list-item %s;'
+                    'counter-increment:none' % element.get('value'))
 
 
 def evaluate_media_query(query_list, device_media_type):
