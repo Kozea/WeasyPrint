@@ -130,11 +130,11 @@ an absolute length or a percentage.
 
 The final result of the :func:`~weasyprint.css.get_all_computed_styles`
 function is a big dict where keys are ``(element, pseudo_element_type)``
-tuples, and keys are :obj:``StyleDict`` objects. Elements are lxml objects,
-while the type of pseudo-element is a string for eg. ``::first-line``
-selectors, or :obj:`None` for “normal” elements. :obj:`StyleDict` objects
-are dicts with attribute access mapping property names to the computed values.
-(The return value is not the dict itself, but a convenience :func:`style_for`
+tuples, and keys are :class:`StyleDict` objects. Elements are lxml objects, while
+the type of pseudo-element is a string for eg. ``::first-line`` selectors, or
+:obj:`None` for “normal” elements. :class:`StyleDict` objects are dicts with
+attribute read-only access mapping property names to the computed values.  (The
+return value is not the dict itself, but a convenience :func:`style_for`
 function for accessing it.)
 
 
