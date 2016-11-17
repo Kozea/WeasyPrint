@@ -19,14 +19,15 @@ New features:
   Major performance boost.
 
 Bux fixes:
+
 * `#368 <https://github.com/Kozea/WeasyPrint/issues/368>`_:
   Respect white-space for shrink-to-fit.
 * `#382 <https://github.com/Kozea/WeasyPrint/issues/382>`_:
   Fix the preferred width for column groups.
 * Handle relative boxes in column-layout boxes.
 
-
 Documentation:
+
 * Add more and more documentation about Windows installation.
 * `#355 <https://github.com/Kozea/WeasyPrint/issues/355>`_:
   Add fonts requirements for tests.
