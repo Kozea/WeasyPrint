@@ -141,6 +141,8 @@ def _computing_order():
     for name in first:
         order.remove(name)
     return tuple(first + order)
+
+
 COMPUTING_ORDER = _computing_order()
 
 # Maps property names to functions returning the computed values
