@@ -272,6 +272,18 @@ def find_style_attributes(element_tree, presentational_hints=False):
                 yield specificity, check_style_attribute(
                     parser, element,
                     'border-spacing:%spx' % element.get('cellspacing'))
+            if element.get('cellpadding'):
+                cellpadding = element.get('cellpadding')
+                if cellpadding.isdigit():
+                    cellpadding += 'px'
+                # TODO: don't match subtables cells
+                for subelement in element.iter():
+                    if subelement.tag in ('td', 'th'):
+                        yield specificity, check_style_attribute(
+                            parser, subelement,
+                            'padding-left:%s;padding-right:%s;'
+                            'padding-top:%s;padding-bottom:%s;' % (
+                                4 * (cellpadding,)))
             if element.get('hspace'):
                 hspace = element.get('hspace')
                 if hspace.isdigit():
