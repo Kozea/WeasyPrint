@@ -687,10 +687,11 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                         key.replace('_', '-'), rule.line, rule.column)
                     break
             else:
-                font_filename = font_config.add_font_face(
-                    rule_descriptors, url_fetcher)
-                if font_filename:
-                    fonts.append(font_filename)
+                if font_config is not None:
+                    font_filename = font_config.add_font_face(
+                        rule_descriptors, url_fetcher)
+                    if font_filename:
+                        fonts.append(font_filename)
 
 
 def get_all_computed_styles(html, user_stylesheets=None,
