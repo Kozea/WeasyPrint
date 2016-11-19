@@ -13,7 +13,7 @@ matrix:
       python: 3.5
     - os: osx
       language: generic
-      env PYTHON_VERSION=3
+      env: PYTHON_VERSION=3
 
 addons:
   apt:
