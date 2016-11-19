@@ -13,6 +13,7 @@ matrix:
       python: 3.5
     - os: osx
       language: generic
+      env PYTHON_VERSION=3
 
 addons:
   apt:
@@ -24,11 +25,11 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install python3 cairo pango gdk-pixbuf libxml2 libxslt libffi; fi
 
 install:
-  - pip install --upgrade setuptools
-  - pip install --upgrade pytest flake8 -e .
+  - pip$PYTHON_VERSION install --upgrade setuptools pytest flake8
+  - pip$PYTHON_VERSION install -e .
   - mkdir -p ~/.fonts
   - wget "https://github.com/Kozea/Ahem/blob/master/Ahem.ttf?raw=true" -O ~/.fonts/Ahem.ttf
 
 script:
-  - pytest -s
-  - flake8 weasyprint
+  - python$PYTHON_VERSION -m pytest -s
+  - python$PYTHON_VERSION -m flake8 weasyprint
