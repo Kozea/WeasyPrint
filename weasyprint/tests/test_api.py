@@ -13,7 +13,6 @@
 from __future__ import division, unicode_literals
 
 import os
-import sys
 import io
 import sys
 import math
