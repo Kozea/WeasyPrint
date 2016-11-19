@@ -40,8 +40,6 @@ class FontConfiguration:
 
 if sys.platform.startswith('win'):
     LOGGER.warning('@font-face is currently not supported on Windows')
-elif sys.platform.startswith('darwin'):
-    LOGGER.warning('@font-face is currently not supported on OSX')
 elif pango.pango_version() < 13800:
     LOGGER.warning('@font-face support needs Pango >= 1.38')
 else:
