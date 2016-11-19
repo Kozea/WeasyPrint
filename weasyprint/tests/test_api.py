@@ -13,12 +13,14 @@
 from __future__ import division, unicode_literals
 
 import os
+import sys
 import io
 import sys
 import math
 import contextlib
 import threading
 import gzip
+import unicodedata
 import zlib
 
 import lxml.html
@@ -424,6 +426,8 @@ def test_unicode_filenames():
     check_png_pattern(png_bytes)
     # Remember we have __future__.unicode_literals
     unicode_filename = 'Unicödé'
+    if sys.platform.startswith('darwin'):
+        unicode_filename = unicodedata.normalize('NFD', unicode_filename)
     with temp_directory() as temp:
         with chdir(temp):
             write_file(unicode_filename, html)
