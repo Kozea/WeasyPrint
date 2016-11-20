@@ -3210,7 +3210,7 @@ def test_font_stretch():
         <style>
           p {
             float: left;
-            font-family: American Typewriter, DejaVu Sans;
+            font-family: Futura, DejaVu Sans;
           }
         </style>
         <p>Hello, world!</p>
