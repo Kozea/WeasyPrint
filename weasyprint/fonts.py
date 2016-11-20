@@ -81,7 +81,8 @@ else:
             FcPattern *p, const char *object, const FcChar8 *s);
         FcResult FcPatternGetString (
             FcPattern *p, const char *object, int n, FcChar8 **s);
-        FcPattern * FcFontMatch (FcConfig *config, FcPattern *p);
+        FcPattern * FcFontMatch (
+            FcConfig *config, FcPattern *p, FcResult *result);
 
 
         // PangoFT2
@@ -180,8 +181,9 @@ else:
                             pattern, b'postscriptname', font_name)
                         family = ffi.new('FcChar8 **')
                         postscript = ffi.new('FcChar8 **')
+                        result = ffi.new('FcResult *')
                         matching_pattern = fontconfig.FcFontMatch(
-                            config, pattern)
+                            config, pattern, result)
                         # TODO: do many fonts have multiple family values?
                         fontconfig.FcPatternGetString(
                             matching_pattern, b'fullname', 0, family)
