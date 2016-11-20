@@ -1285,7 +1285,7 @@ def test_images():
         'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC'
         '0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
         # SVG with PNG mimetype
-        'data:image/png;<svg></svg>',
+        'data:image/png;<svg width="1" height="1"></svg>',
         'really-a-svg.png',
     ]:
         with capture_logs() as logs:
