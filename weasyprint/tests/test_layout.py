@@ -3208,10 +3208,7 @@ def test_floats_page_breaks():
 def test_font_stretch():
     page, = parse('''
         <style>
-          p {
-            float: left;
-            font-family: Futura, DejaVu Sans;
-          }
+          p { float: left; font-family: DejaVu Sans }
         </style>
         <p>Hello, world!</p>
         <p style="font-stretch: condensed">Hello, world!</p>
