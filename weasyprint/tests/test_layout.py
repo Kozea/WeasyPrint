@@ -3207,12 +3207,15 @@ def test_floats_page_breaks():
 @assert_no_logs
 def test_font_stretch():
     page, = parse('''
-        <style>p { float: left; font-family: %s }</style>
+        <style>
+          p {
+            float: left;
+            font-family: American Typewriter, DejaVu Sans;
+          }
+        </style>
         <p>Hello, world!</p>
         <p style="font-stretch: condensed">Hello, world!</p>
-    ''' % ('DejaVu Sans' if sys.platform.startswith('linux') else 'Arial'))
-    # TODO: we need different fonts for different OSes because we don't have a
-    # real fallback system for font-family, we should be able to fix that
+    ''')
     html, = page.children
     body, = html.children
     p_1, p_2 = body.children
