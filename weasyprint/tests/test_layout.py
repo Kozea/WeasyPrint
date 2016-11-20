@@ -14,7 +14,6 @@
 from __future__ import division, unicode_literals
 
 import math
-import sys
 
 import pytest
 
