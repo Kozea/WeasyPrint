@@ -1283,7 +1283,7 @@ def test_images():
         # PNG with JPEG mimetype
         'data:image/jpeg;base64,'
         'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC'
-        '0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
+        '0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
         # SVG with PNG mimetype
         'data:image/png;<svg></svg>',
         'really-a-svg.png',
