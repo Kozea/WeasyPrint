@@ -1283,9 +1283,9 @@ def test_images():
         # PNG with JPEG mimetype
         'data:image/jpeg;base64,'
         'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC'
-        '0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
+        '0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
         # SVG with PNG mimetype
-        'data:image/png;<svg></svg>',
+        'data:image/png,<svg width="1" height="1"></svg>',
         'really-a-svg.png',
     ]:
         with capture_logs() as logs:
@@ -3206,20 +3206,18 @@ def test_floats_page_breaks():
 @assert_no_logs
 def test_font_stretch():
     page, = parse('''
-        <style>p { float: left }</style>
+        <style>
+          p { float: left; font-family: DejaVu Sans }
+        </style>
         <p>Hello, world!</p>
-        <p style="font-stretch: semi-condensed">Hello, world!</p>
-        <p style="font-stretch: semi-expanded">Hello, world!</p>
+        <p style="font-stretch: condensed">Hello, world!</p>
     ''')
     html, = page.children
     body, = html.children
-    p_1, p_2, p_3 = body.children
+    p_1, p_2 = body.children
     normal = p_1.width
     condensed = p_2.width
     assert condensed < normal
-    # TODO: when @font-face is supported use a font with an expanded variant.
-#    expanded = p_3.width
-#    assert normal < expanded
 
 
 @assert_no_logs
