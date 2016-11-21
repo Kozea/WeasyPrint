@@ -207,13 +207,16 @@ def get_image_from_uri(cache, url_fetcher, url, forced_mime_type=None):
                             'Could not load GDK-Pixbuf. PNG and SVG are '
                             'the only image formats available.')
                     try:
-                        surface, format_name = (
-                            pixbuf.decode_to_image_surface(string))
-                    except pixbuf.ImageLoadingError as exception:
-                        raise ImageLoadingError(str(exception))
-                    if format_name == 'jpeg' and CAIRO_HAS_MIME_DATA:
-                        surface.set_mime_data('image/jpeg', string)
-                    image = RasterImage(surface)
+                        image = SVGImage(string, url)
+                    except:
+                        try:
+                            surface, format_name = (
+                                pixbuf.decode_to_image_surface(string))
+                        except pixbuf.ImageLoadingError as exception:
+                            raise ImageLoadingError(str(exception))
+                        if format_name == 'jpeg' and CAIRO_HAS_MIME_DATA:
+                            surface.set_mime_data('image/jpeg', string)
+                        image = RasterImage(surface)
     except (URLFetchingError, ImageLoadingError) as exc:
         LOGGER.warning('Failed to load image at "%s" (%s)', url, exc)
         image = None
