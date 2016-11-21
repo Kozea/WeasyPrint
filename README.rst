@@ -9,10 +9,6 @@ WeasyPrint
     :target: https://pypi.python.org/pypi/WeasyPrint/
     :alt: Latest Version
 
-.. image:: http://img.shields.io/pypi/dm/WeasyPrint.svg?style=flat-square
-    :target: https://pypi.python.org/pypi/WeasyPrint/
-    :alt: Download
-
 .. image:: http://img.shields.io/travis/Kozea/WeasyPrint.svg?style=flat-square
     :target: http://travis-ci.org/Kozea/WeasyPrint
     :alt: Build status
