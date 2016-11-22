@@ -965,13 +965,16 @@ def split_first_line(text, style, context, max_width, line_width):
             first_line = next(lines, None)
             second_line = next(lines, None)
             first_line_width, _ = get_size(first_line, style)
-            if second_line is None and first_line_width <= max_width:
+            if second_line is None and first_line_text:
                 # The next word fits in the first line, keep the layout
                 resume_at = len(new_first_line_text.encode('utf-8')) + 1
                 if resume_at == len(text.encode('utf-8')):
                     resume_at = None
                 return first_line_metrics(
                     first_line, text, layout, resume_at, space_collapse, style)
+            else:
+                # Text may have been split elsewhere by Pango earlier
+                resume_at = first_line.length
     elif first_line_text:
         # We found something on the first line but we did not find a word on
         # the next line, no need to hyphenate, we can keep the current layout

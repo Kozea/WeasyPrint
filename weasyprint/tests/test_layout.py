@@ -1124,13 +1124,15 @@ def test_orphans_widows_avoid():
 
 
 @assert_no_logs
-def test_inlinebox_spliting():
-    """Test the inline boxes spliting."""
+def test_inlinebox_splitting():
+    """Test the inline boxes splitting."""
+    # The text is strange to test some corner cases
+    # See https://github.com/Kozea/WeasyPrint/issues/389
     for width in [10000, 100, 10, 0]:
         page, = parse('''
             <style>p { font-family:%(fonts)s; width: %(width)spx; }</style>
-            <p><strong>WeasyPrint is a free software visual rendering engine
-                       for HTML and CSS.</strong></p>
+            <p><strong>WeasyPrint is a frée softwäre ./ visual rendèring enginè
+                       for HTML !!! and CSS.</strong></p>
         ''' % {'fonts': FONTS, 'width': width})
         html, = page.children
         body, = html.children
@@ -1145,8 +1147,9 @@ def test_inlinebox_spliting():
             strong, = line.children
             text, = strong.children
             text_parts.append(text.text)
-        assert ' '.join(text_parts) == ('WeasyPrint is a free software visual '
-                                        'rendering engine for HTML and CSS.')
+        assert ' '.join(text_parts) == (
+            'WeasyPrint is a frée softwäre ./ visual '
+            'rendèring enginè for HTML !!! and CSS.')
 
 
 @assert_no_logs
