@@ -972,9 +972,11 @@ def split_first_line(text, style, context, max_width, line_width):
                     resume_at = None
                 return first_line_metrics(
                     first_line, text, layout, resume_at, space_collapse, style)
-            else:
+            elif second_line:
                 # Text may have been split elsewhere by Pango earlier
-                resume_at = first_line.length
+                resume_at = second_line.start_index
+            else:
+                resume_at = first_line.length + 1
     elif first_line_text:
         # We found something on the first line but we did not find a word on
         # the next line, no need to hyphenate, we can keep the current layout
