@@ -87,12 +87,12 @@ class LayoutContext(object):
 
     def finish_block_formatting_context(self, root_box):
         # See http://www.w3.org/TR/CSS2/visudet.html#root-height
-        if root_box.style.height == 'auto':
+        if root_box.style.height == 'auto' and self.excluded_shapes:
             box_bottom = root_box.content_box_y() + root_box.height
-            for shape in self.excluded_shapes:
-                shape_bottom = shape.position_y + shape.margin_height()
-                if shape_bottom > box_bottom:
-                    root_box.height += shape_bottom - box_bottom
+            max_shape_bottom = max([
+                shape.position_y + shape.margin_height()
+                for shape in self.excluded_shapes] + [box_bottom])
+            root_box.height += max_shape_bottom - box_bottom
         self._excluded_shapes_lists.pop()
         if self._excluded_shapes_lists:
             self.excluded_shapes = self._excluded_shapes_lists[-1]
