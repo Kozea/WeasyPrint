@@ -154,8 +154,9 @@ def table_layout(context, table, max_position_y, skip_stack,
             if baseline_cells:
                 row.baseline = max(cell.baseline for cell in baseline_cells)
                 for cell in baseline_cells:
-                    if cell.baseline != row.baseline:
-                        add_top_padding(cell, row.baseline - cell.baseline)
+                    extra = row.baseline - cell.baseline
+                    if cell.baseline != row.baseline and extra:
+                        add_top_padding(cell, extra)
             else:
                 row.baseline = None
 
@@ -182,14 +183,15 @@ def table_layout(context, table, max_position_y, skip_stack,
             for cell in ending_cells:
                 cell_bottom_y = cell.position_y + cell.border_height()
                 extra = row_bottom_y - cell_bottom_y
-                if cell.vertical_align == 'bottom':
-                    add_top_padding(cell, extra)
-                elif cell.vertical_align == 'middle':
-                    extra /= 2.
-                    add_top_padding(cell, extra)
-                    cell.padding_bottom += extra
-                else:
-                    cell.padding_bottom += extra
+                if extra:
+                    if cell.vertical_align == 'bottom':
+                        add_top_padding(cell, extra)
+                    elif cell.vertical_align == 'middle':
+                        extra /= 2.
+                        add_top_padding(cell, extra)
+                        cell.padding_bottom += extra
+                    else:
+                        cell.padding_bottom += extra
                 if cell.computed_height != 'auto':
                     vertical_align_shift = 0
                     if cell.vertical_align == 'middle':
