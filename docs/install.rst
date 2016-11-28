@@ -151,17 +151,23 @@ install it with pip after installing the following packages:
 OS X
 ----
 
-With Macports:
+WeasyPrint is automatically installed and tested on virtual MacOS machines. The
+official installation method relies on Homebrew:
+
+.. code-block:: sh
+
+    brew install python3 cairo pango gdk-pixbuf libxml2 libxslt libffi
+
+Don't forget to use the `pip3` command to install WeasyPrint, as `pip` may be
+using the version of Python installed with MacOS.
+
+You can also try with Macports, but please notice that this solution is not
+tested and thus not recommended (**also known as "you're on your own and may
+end up crying blood with sad dolphins for eternity"**):
 
 .. code-block:: sh
 
     sudo port install py-pip py-lxml cairo pango gdk-pixbuf2 libffi
-
-With Homebrew:
-
-.. code-block:: sh
-
-    brew install python cairo pango gdk-pixbuf libxml2 libxslt libffi
 
 
 Windows
@@ -175,11 +181,11 @@ Really carefully. Don't cheat.
 on your own, don't even try to report an issue, kittens will die because of
 you.**
 
-- Install `Python 2.7.x <https://www.python.org/downloads/windows/>`_ **with
-  "Add python.exe to Path" checked**:
+- Install `Python 3.5.x <https://www.python.org/downloads/release/python>`_
+  **with "Add Python 3.5 to PATH" checked**:
 
-  - "Windows x86 MSI installer" on Windows 32 bit,
-  - "Windows x86-64 MSI installer" on Windows 64 bit,
+  - "Windows x86 executable installer" on Windows 32 bit,
+  - "Windows x86-64 executable installer" on Windows 64 bit,
 
 - install GTK **with "Set up PATH environment variable to include GTK+"
   checked**:
@@ -190,11 +196,13 @@ you.**
     <https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer>`_,
 
 - reboot,
-- install `Visual C++ compiler for Python 2.7 <http://aka.ms/vcpython27>`_,
+- install `Visual C++ Build Tools
+  <https://landinghub.visualstudio.com/visual-cpp-build-tools>`_ as explained
+  in `Python's wiki <https://wiki.python.org/moin/WindowsCompilers>`_,
 - download `lxml for Windows <http://www.lfd.uci.edu/~gohlke/pythonlibs/#lxml>`_:
 
-  - "lxml-x.x.x-cp27-cp27m-win32.whl" on Windows 32 bit,
-  - "lxml-x.x.x-cp27-cp27m-win_amd64.whl" on Windows 64 bit,
+  - "lxml-x.x.x-cp35-cp35m-win32.whl" on Windows 32 bit,
+  - "lxml-x.x.x-cp35-cp35m-win_amd64.whl" on Windows 64 bit,
 
 - install lxml with ``python -m pip install path/to/lxml-xxx.whl``
 - install WeasyPrint with ``python -m pip install weasyprint``,
