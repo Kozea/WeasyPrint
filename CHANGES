@@ -2,6 +2,28 @@ WeasyPrint changelog
 ====================
 
 
+Version 0.33
+------------
+
+Released on 2016-11-28.
+
+New features:
+
+* `#393 <https://github.com/Kozea/WeasyPrint/issues/393>`_:
+  Add tests on MacOS.
+* `#370 <https://github.com/Kozea/WeasyPrint/issues/370>`_:
+  Enable @font-face on MacOS.
+
+Bug fixes:
+
+* `#389 <https://github.com/Kozea/WeasyPrint/issues/389>`_:
+  Always update resume_at when splitting lines.
+* `#394 <https://github.com/Kozea/WeasyPrint/issues/394>`_:
+  Don't build universal wheels.
+* `#388 <https://github.com/Kozea/WeasyPrint/issues/388>`_:
+  Fix logic when finishing block formatting context.
+
+
 Version 0.32
 ------------
 
