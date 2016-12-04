@@ -1163,7 +1163,7 @@ def insert_first_letter(box, style_for, letter_style=None, skip_stack=None):
                     while child.text:
                         next_letter = child.text[0]
                         category = unicodedata.category(next_letter)
-                        if not category.startswith('P'):
+                        if category not in ('Ps', 'Pe', 'Pi', 'Pf', 'Po'):
                             if character_found:
                                 break
                             character_found = True
