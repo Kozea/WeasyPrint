@@ -762,12 +762,12 @@ def test_colspan_rowspan():
 
 @assert_no_logs
 def test_before_after():
-    """Test the :before and :after pseudo-elements."""
+    """Test the ::before and ::after pseudo-elements."""
     assert_tree(parse_all('''
         <style>
             p:before { content: normal }
             div:before { content: none }
-            section:before { color: black }
+            section::before { color: black }
         </style>
         <p></p>
         <div></div>
@@ -781,7 +781,7 @@ def test_before_after():
     assert_tree(parse_all('''
         <style>
             p:before { content: 'a' 'b' }
-            p:after { content: 'd' 'e' }
+            p::after { content: 'd' 'e' }
         </style>
         <p>
             c
@@ -789,11 +789,11 @@ def test_before_after():
     '''), [
         ('p', 'Block', [
             ('p', 'Line', [
-                ('p:before', 'Inline', [
-                    ('p:before', 'Text', 'ab')]),
+                ('p::before', 'Inline', [
+                    ('p::before', 'Text', 'ab')]),
                 ('p', 'Text', ' c '),
-                ('p:after', 'Inline', [
-                    ('p:after', 'Text', 'de')])])])])
+                ('p::after', 'Inline', [
+                    ('p::after', 'Text', 'de')])])])])
 
     assert_tree(parse_all('''
         <style>
@@ -804,8 +804,8 @@ def test_before_after():
         ('p', 'Block', [
             ('p', 'Line', [
                 ('a', 'Inline', [
-                    ('a:before', 'Inline', [
-                        ('a:before', 'Text', '[some url] ')]),
+                    ('a::before', 'Inline', [
+                        ('a::before', 'Text', '[some url] ')]),
                     ('a', 'Text', 'some text')])])])])
 
     assert_tree(parse_all('''
@@ -819,18 +819,18 @@ def test_before_after():
         ('p', 'Block', [
             ('p', 'Line', [
                 ('q', 'Inline', [
-                    ('q:before', 'Inline', [
-                        ('q:before', 'Text', '« ')]),
+                    ('q::before', 'Inline', [
+                        ('q::before', 'Text', '« ')]),
                     ('q', 'Text', 'Lorem ipsum '),
                     ('q', 'Inline', [
-                        ('q:before', 'Inline', [
-                            ('q:before', 'Text', '“ ')]),
+                        ('q::before', 'Inline', [
+                            ('q::before', 'Text', '“ ')]),
                         ('q', 'Text', 'dolor'),
-                        ('q:after', 'Inline', [
-                            ('q:after', 'Text', ' ”')])]),
+                        ('q::after', 'Inline', [
+                            ('q::after', 'Text', ' ”')])]),
                     ('q', 'Text', ' sit amet'),
-                    ('q:after', 'Inline', [
-                        ('q:after', 'Text', ' »')])])])])])
+                    ('q::after', 'Inline', [
+                        ('q::after', 'Text', ' »')])])])])])
     with capture_logs() as logs:
         assert_tree(parse_all('''
             <style>
@@ -846,10 +846,10 @@ def test_before_after():
         '''), [
             ('p', 'Block', [
                 ('p', 'Line', [
-                    ('p:before', 'Inline', [
-                        ('p:before', 'Text', 'a'),
-                        ('p:before', 'AnonInlineReplaced', '<replaced>'),
-                        ('p:before', 'Text', 'b')]),
+                    ('p::before', 'Inline', [
+                        ('p::before', 'Text', 'a'),
+                        ('p::before', 'AnonInlineReplaced', '<replaced>'),
+                        ('p::before', 'Text', 'b')]),
                     ('p', 'Text', 'c')])])])
     assert len(logs) == 1
     assert 'nested-function(' in logs[0]
@@ -880,8 +880,8 @@ def test_counters():
         <p></p>'''), [
         ('p', 'Block', [
             ('p', 'Line', [
-                ('p:before', 'Inline', [
-                    ('p:before', 'Text', counter)])])])
+                ('p::before', 'Inline', [
+                    ('p::before', 'Text', counter)])])])
         for counter in '0 1 3  2 4 6  -11 -9 -7  44 46 48'.split()])
 
     assert_tree(parse_all('''
@@ -965,31 +965,31 @@ def test_counters():
         ('section', 'Block', [
             ('section', 'AnonBlock', [
                 ('section', 'Line', [
-                    ('section:before', 'Inline', [])])]),
+                    ('section::before', 'Inline', [])])]),
             ('h1', 'Block', [
                 ('h1', 'Line', [
-                    ('h1:before', 'Inline', [
-                        ('h1:before', 'Text', '1')])])]),
+                    ('h1::before', 'Inline', [
+                        ('h1::before', 'Text', '1')])])]),
             ('h1', 'Block', [
                 ('h1', 'Line', [
-                    ('h1:before', 'Inline', [
-                        ('h1:before', 'Text', '2')])])]),
+                    ('h1::before', 'Inline', [
+                        ('h1::before', 'Text', '2')])])]),
             ('section', 'Block', [
                 ('section', 'AnonBlock', [
                     ('section', 'Line', [
-                        ('section:before', 'Inline', [])])]),
+                        ('section::before', 'Inline', [])])]),
                 ('h1', 'Block', [
                     ('h1', 'Line', [
-                        ('h1:before', 'Inline', [
-                            ('h1:before', 'Text', '2.1')])])]),
+                        ('h1::before', 'Inline', [
+                            ('h1::before', 'Text', '2.1')])])]),
                 ('h1', 'Block', [
                     ('h1', 'Line', [
-                        ('h1:before', 'Inline', [
-                            ('h1:before', 'Text', '2.2')])])])]),
+                        ('h1::before', 'Inline', [
+                            ('h1::before', 'Text', '2.2')])])])]),
             ('h1', 'Block', [
                 ('h1', 'Line', [
-                    ('h1:before', 'Inline', [
-                        ('h1:before', 'Text', '3')])])])])])
+                    ('h1::before', 'Inline', [
+                        ('h1::before', 'Text', '3')])])])])])
 
     assert_tree(parse_all('''
         <style>
@@ -1008,8 +1008,8 @@ def test_counters():
                      'Scope created now, deleted after the div ')])])]),
         ('p', 'Block', [
             ('p', 'Line', [
-                ('p:before', 'Inline', [
-                    ('p:before', 'Text', '0')])])])])
+                ('p::before', 'Inline', [
+                    ('p::before', 'Text', '0')])])])])
 
     # counter-increment may interfere with display: list-item
     assert_tree(parse_all('''
@@ -1041,14 +1041,14 @@ def test_counter_styles():
     '''), [
         ('p', 'Block', [
             ('p', 'Line', [
-                ('p:before', 'Inline', [
-                    ('p:before', 'Text', counter)])])])
+                ('p::before', 'Inline', [
+                    ('p::before', 'Text', counter)])])])
         for counter in '--  •  ◦  ▪  -7'.split()])
 
     assert_tree(parse_all('''
         <style>
             p { counter-increment: p }
-            p:before { content: counter(p, decimal-leading-zero); }
+            p::before { content: counter(p, decimal-leading-zero); }
         </style>
         <p style="counter-reset: p -1987"></p>
         <p></p>
@@ -1071,8 +1071,8 @@ def test_counter_styles():
     '''), [
         ('p', 'Block', [
             ('p', 'Line', [
-                ('p:before', 'Inline', [
-                    ('p:before', 'Text', counter)])])])
+                ('p::before', 'Inline', [
+                    ('p::before', 'Text', counter)])])])
         for counter in '''-1986 -1985  -11 -10 -09 -08  -01 00 01 02  09 10 11
                             99 100 101  4135 4136'''.split()])
 

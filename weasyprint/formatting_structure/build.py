@@ -188,7 +188,7 @@ def element_to_box(element, style_for, get_image_from_uri, state=None):
 
 def before_after_to_box(element, pseudo_type, state, style_for,
                         get_image_from_uri):
-    """Yield the box for a :before or :after pseudo-element if there is one."""
+    """Yield the box for ::before or ::after pseudo-element if there is one."""
     style = style_for(element, pseudo_type)
     if pseudo_type and style is None:
         # Pseudo-elements with no style at all do not get a StyleDict
@@ -203,7 +203,7 @@ def before_after_to_box(element, pseudo_type, state, style_for,
         return
 
     box = make_box(
-        '%s:%s' % (element.tag, pseudo_type), element.sourceline, style, [],
+        '%s::%s' % (element.tag, pseudo_type), element.sourceline, style, [],
         get_image_from_uri)
 
     quote_depth, counter_values, _counter_scopes = state
@@ -1150,9 +1150,9 @@ def insert_first_letter(box, style_for, letter_style=None, skip_stack=None):
             child = box.children[0]
             if isinstance(child, boxes.TextBox):
                 skip_stack = skip_first_whitespace(child, None)
-                if child.element_tag.endswith(':first-letter'):
+                if child.element_tag.endswith('::first-letter'):
                     letter_box = boxes.InlineBox(
-                        '%s:first-letter' % box.element_tag,
+                        '%s::first-letter' % box.element_tag,
                         box.sourceline, letter_style.inherit_from(), [child])
                     box.children = (letter_box,) + tuple(box.children[1:])
                     return
@@ -1185,8 +1185,8 @@ def box_text(box):
     elif isinstance(box, boxes.ParentBox):
         return ''.join(
             child.text for child in box.descendants()
-            if not child.element_tag.endswith(':before') and
-            not child.element_tag.endswith(':after') and
+            if not child.element_tag.endswith('::before') and
+            not child.element_tag.endswith('::after') and
             isinstance(child, boxes.TextBox))
     else:
         return ''
@@ -1196,7 +1196,7 @@ def box_text_before(box):
     if isinstance(box, boxes.ParentBox):
         return ''.join(
             box_text(child) for child in box.descendants()
-            if child.element_tag.endswith(':before') and
+            if child.element_tag.endswith('::before') and
             not isinstance(child, boxes.ParentBox))
     else:
         return ''
@@ -1206,7 +1206,7 @@ def box_text_after(box):
     if isinstance(box, boxes.ParentBox):
         return ''.join(
             box_text(child) for child in box.descendants()
-            if child.element_tag.endswith(':after') and
+            if child.element_tag.endswith('::after') and
             not isinstance(child, boxes.ParentBox))
     else:
         return ''

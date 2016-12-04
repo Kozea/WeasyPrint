@@ -213,7 +213,7 @@ big { font-size: larger; }
 blink { text-decoration: blink; }
 blockquote { display: block; margin: 1em 40px; unicode-bidi: isolate; }
 body { display: block; margin: 8px; }
-br:before { content: '\A'; white-space: pre-line; }
+br::before { content: '\A'; white-space: pre-line; }
 button { display: inline-block; text-align: center; text-indent: 0; }
 caption { display: table-caption; unicode-bidi: isolate; }
 center { display: block; text-align: center; unicode-bidi: isolate; }
@@ -419,8 +419,8 @@ p { display: block; margin-bottom: 1em; margin-top: 1em; unicode-bidi: isolate; 
 param { display: none; }
 plaintext { display: block; font-family: monospace; margin-bottom: 1em; margin-top: 1em; unicode-bidi: isolate; white-space: pre; }
 pre { display: block; font-family: monospace; margin-bottom: 1em; margin-top: 1em; unicode-bidi: isolate; white-space: pre; }
-q:after { content: close-quote; }
-q:before { content: open-quote; }
+q::after { content: close-quote; }
+q::before { content: open-quote; }
 rp { display: none; }
 rt { display: ruby-text; }
 ruby { display: ruby; }
