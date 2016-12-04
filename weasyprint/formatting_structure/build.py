@@ -17,6 +17,7 @@
 from __future__ import division, unicode_literals
 
 import re
+import unicodedata
 
 from tinycss.color3 import COLOR_KEYWORDS
 
@@ -25,6 +26,7 @@ from .. import html
 from ..css import properties
 from ..css.computed_values import ZERO_PIXELS
 from ..compat import basestring, xrange
+from ..layout.inlines import skip_first_whitespace
 
 
 # Maps values of the ``display`` CSS property to box types.
@@ -69,6 +71,7 @@ def build_formatting_structure(element_tree, style_for, get_image_from_uri):
     box = inline_in_block(box)
     box = block_in_inline(box)
     box = set_viewport_overflow(box)
+    insert_first_letter(box, style_for)
     return box
 
 
@@ -148,8 +151,9 @@ def element_to_box(element, style_for, get_image_from_uri, state=None):
     # names will be in this new list
     counter_scopes.append(set())
 
-    children.extend(pseudo_to_box(
-        element, 'before', state, style_for, get_image_from_uri))
+    before = before_after_to_box(
+        element, 'before', state, style_for, get_image_from_uri)
+    children.extend(before)
     text = element.text
     if text:
         children.append(boxes.TextBox.anonymous_from(box, text))
@@ -164,8 +168,9 @@ def element_to_box(element, style_for, get_image_from_uri, state=None):
                 children[-1].text += text_box.text
             else:
                 children.append(text_box)
-    children.extend(pseudo_to_box(
-        element, 'after', state, style_for, get_image_from_uri))
+    after = before_after_to_box(
+        element, 'after', state, style_for, get_image_from_uri)
+    children.extend(after)
 
     # Scopes created by this element’s children stop here.
     for name in counter_scopes.pop():
@@ -174,13 +179,15 @@ def element_to_box(element, style_for, get_image_from_uri, state=None):
             counter_values.pop(name)
 
     box.children = children
+    box.first_letter_style = style_for(element, 'first-letter')
     replace_content_lists(element, box, style, counter_values)
 
     # Specific handling for the element. (eg. replaced element)
     return html.handle_element(element, box, get_image_from_uri)
 
 
-def pseudo_to_box(element, pseudo_type, state, style_for, get_image_from_uri):
+def before_after_to_box(element, pseudo_type, state, style_for,
+                        get_image_from_uri):
     """Yield the box for a :before or :after pseudo-element if there is one."""
     style = style_for(element, pseudo_type)
     if pseudo_type and style is None:
@@ -1127,6 +1134,49 @@ def set_viewport_overflow(root_box):
     chosen_box.style = chosen_box.style.copy()
     chosen_box.style.update({'overflow': 'visible'})
     return root_box
+
+
+def insert_first_letter(box, style_for, letter_style=None, skip_stack=None):
+    """Insert a box representing the :first-letter pseudo-element in box."""
+    if not isinstance(box, boxes.ParentBox):
+        return
+    for child in box.children:
+        insert_first_letter(child, style_for)
+
+    letter_style = letter_style or getattr(box, 'first_letter_style', None)
+    if letter_style:
+        first_letter = ''
+        if box.children:
+            child = box.children[0]
+            if isinstance(child, boxes.TextBox):
+                skip_stack = skip_first_whitespace(child, None)
+                if child.element_tag.endswith(':first-letter'):
+                    letter_box = boxes.InlineBox(
+                        '%s:first-letter' % box.element_tag,
+                        box.sourceline, letter_style.inherit_from(), [child])
+                    box.children = (letter_box,) + tuple(box.children[1:])
+                    return
+                if child.text:
+                    character_found = False
+                    if skip_stack:
+                        child.text = child.text[skip_stack[0]:]
+                    while child.text:
+                        next_letter = child.text[0]
+                        category = unicodedata.category(next_letter)
+                        if not category.startswith('P'):
+                            if character_found:
+                                break
+                            character_found = True
+                        first_letter += next_letter
+                        child.text = child.text[1:]
+                    letter_box = boxes.TextBox(
+                        '%s:first-letter' % box.element_tag, box.sourceline,
+                        letter_style.inherit_from(), first_letter)
+                    box.children = (letter_box,) + tuple(box.children)
+                    return
+            elif isinstance(child, boxes.ParentBox) and not isinstance(
+                    child, (boxes.InlineBlockBox, boxes.TableCellBox)):
+                insert_first_letter(child, style_for, letter_style, skip_stack)
 
 
 def box_text(box):
