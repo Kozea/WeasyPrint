@@ -1136,7 +1136,7 @@ def set_viewport_overflow(root_box):
     return root_box
 
 
-def insert_first_letter(box, style_for, letter_style=None, skip_stack=None):
+def insert_first_letter(box, style_for, letter_style=None):
     """Insert a box representing the :first-letter pseudo-element in box."""
     if not isinstance(box, boxes.ParentBox):
         return
@@ -1176,7 +1176,7 @@ def insert_first_letter(box, style_for, letter_style=None, skip_stack=None):
                     return
             elif isinstance(child, boxes.ParentBox) and not isinstance(
                     child, (boxes.InlineBlockBox, boxes.TableCellBox)):
-                insert_first_letter(child, style_for, letter_style, skip_stack)
+                insert_first_letter(child, style_for, letter_style)
 
 
 def box_text(box):
