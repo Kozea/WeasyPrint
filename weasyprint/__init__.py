@@ -175,8 +175,10 @@ class HTML(object):
             :obj:`target`.)
 
         """
-        return self.render(stylesheets, presentational_hints).write_pdf(
-            target, zoom, attachments)
+        return self.render(
+            stylesheets, enable_hinting=False,
+            presentational_hints=presentational_hints).write_pdf(
+                target, zoom, attachments)
 
     def write_image_surface(self, stylesheets=None, resolution=96,
                             presentational_hints=False):
