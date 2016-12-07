@@ -37,7 +37,7 @@ REQUIREMENTS = [
 ]
 
 if sys.version_info < (3,):
-    REQUIREMENTS.append('CairoSVG >= 1.0.20, < 2')
+    REQUIREMENTS.append('CairoSVG >= 1.0.20, < 2.0.0')
 else:
     REQUIREMENTS.append('CairoSVG >= 1.0.20')
 
