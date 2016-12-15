@@ -141,16 +141,16 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
             width = max(
                 0, available_width - (count - 1) * style.column_gap) / count
         elif style.column_width != 'auto' and style.column_count == 'auto':
-            count = max(1, floor(
+            count = max(1, int(floor(
                 (available_width + style.column_gap) /
-                (style.column_width + style.column_gap)))
+                (style.column_width + style.column_gap))))
             width = (
                 (available_width + style.column_gap) / count -
                 style.column_gap)
         else:
-            count = min(style.column_count, floor(
+            count = min(style.column_count, int(floor(
                 (available_width + style.column_gap) /
-                (style.column_width + style.column_gap)))
+                (style.column_width + style.column_gap))))
             width = (
                 (available_width + style.column_gap) / count -
                 style.column_gap)
