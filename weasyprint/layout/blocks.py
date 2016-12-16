@@ -121,6 +121,8 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
         # New containing block, use a new absolute list
         absolute_boxes = []
 
+    box = box.copy_with_children(box.children)
+
     # TODO: the available width can be unknown if the containing block needs
     # the size of this block to know its own size.
     block_level_width(box, containing_block)
@@ -191,7 +193,7 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
     # Find the total height of the content
     original_max_position_y = max_position_y
     column_box = create_column_box()
-    new_child, new_skip_stack, _, _, _ = block_box_layout(
+    new_child, _, _, _, _ = block_box_layout(
         context, column_box, float('inf'), skip_stack, containing_block,
         device_size, page_is_empty, [], [], [])
     height = new_child.margin_height()
@@ -254,7 +256,7 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
         for absolute_box in absolute_boxes:
             absolute_layout(context, absolute_box, box, fixed_boxes)
 
-    return box, new_skip_stack, next_page, [0], False
+    return box, skip_stack, next_page, [0], False
 
 
 @handle_min_max_width
