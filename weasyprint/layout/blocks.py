@@ -22,7 +22,6 @@ from .markers import list_marker_layout
 from .min_max import handle_min_max_width
 from .tables import table_layout, table_wrapper_width
 from .percentages import resolve_percentages, resolve_position_percentages
-from .preferred import shrink_to_fit
 from ..formatting_structure import boxes
 from ..compat import xrange, izip
 
@@ -121,36 +120,28 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
         # New containing block, use a new absolute list
         absolute_boxes = []
 
+    box = box.copy_with_children(box.children)
+
     # TODO: the available width can be unknown if the containing block needs
     # the size of this block to know its own size.
     block_level_width(box, containing_block)
     available_width = box.width
-    if available_width == 'auto':
-        if style.column_count == 'auto':
-            count = 1
-            width = box.width
-        elif style.column_width != 'auto':
-            count = style.column_count
-            width = style.column_width
-        else:
-            # TODO: replace with real shrink-to-fit
-            available_width = shrink_to_fit(context, box, float('inf'))
     if count is None:
         if style.column_width == 'auto' and style.column_count != 'auto':
             count = style.column_count
             width = max(
                 0, available_width - (count - 1) * style.column_gap) / count
         elif style.column_width != 'auto' and style.column_count == 'auto':
-            count = max(1, floor(
+            count = max(1, int(floor(
                 (available_width + style.column_gap) /
-                (style.column_width + style.column_gap)))
+                (style.column_width + style.column_gap))))
             width = (
                 (available_width + style.column_gap) / count -
                 style.column_gap)
         else:
-            count = min(style.column_count, floor(
+            count = min(style.column_count, int(floor(
                 (available_width + style.column_gap) /
-                (style.column_width + style.column_gap)))
+                (style.column_width + style.column_gap))))
             width = (
                 (available_width + style.column_gap) / count -
                 style.column_gap)
@@ -191,7 +182,7 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
     # Find the total height of the content
     original_max_position_y = max_position_y
     column_box = create_column_box()
-    new_child, new_skip_stack, _, _, _ = block_box_layout(
+    new_child, _, _, _, _ = block_box_layout(
         context, column_box, float('inf'), skip_stack, containing_block,
         device_size, page_is_empty, [], [], [])
     height = new_child.margin_height()
@@ -221,19 +212,24 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
 
     # Replace the current box children with columns
     children = []
-    for i in range(count):
-        if i == count - 1:
-            max_position_y = original_max_position_y
-        column_box = create_column_box()
-        column_box.position_x += i * (width + style.column_gap)
-        new_child, skip_stack, next_page, _, _ = block_box_layout(
-            context, column_box, max_position_y, skip_stack, containing_block,
-            device_size, page_is_empty, absolute_boxes, fixed_boxes, None)
-        if new_child is None:
-            break
-        children.append(new_child)
-        if skip_stack is None:
-            break
+    if box.children:
+        for i in range(count):
+            if i == count - 1:
+                max_position_y = original_max_position_y
+            column_box = create_column_box()
+            column_box.position_x += i * (width + style.column_gap)
+            new_child, skip_stack, next_page, _, _ = block_box_layout(
+                context, column_box, max_position_y, skip_stack,
+                containing_block, device_size, page_is_empty, absolute_boxes,
+                fixed_boxes, None)
+            if new_child is None:
+                break
+            children.append(new_child)
+            if skip_stack is None:
+                break
+    else:
+        next_page = 'any'
+        skip_stack = None
 
     # Set the height of box and the columns
     box.children = children
@@ -254,7 +250,7 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
         for absolute_box in absolute_boxes:
             absolute_layout(context, absolute_box, box, fixed_boxes)
 
-    return box, new_skip_stack, next_page, [0], False
+    return box, skip_stack, next_page, [0], False
 
 
 @handle_min_max_width

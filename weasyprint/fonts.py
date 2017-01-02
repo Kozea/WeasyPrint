@@ -225,9 +225,9 @@ else:
                             **font_features).items():
                         features_string += '<string>%s %s</string>' % (
                             key, value)
-                    _, filename = tempfile.mkstemp()
-                    with open(filename, 'wb') as fd:
-                        fd.write(font)
+                    fd, filename = tempfile.mkstemp()
+                    os.write(fd, font)
+                    os.close(fd)
                     self._filenames.append(filename)
                     xml = '''<?xml version="1.0"?>
                     <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
@@ -266,10 +266,10 @@ else:
                       FONTCONFIG_STRETCH_CONSTANTS[
                           rule_descriptors.get('font_stretch', 'normal')],
                       filename, features_string)
-                    _, conf_filename = tempfile.mkstemp()
-                    with open(conf_filename, 'wb') as fd:
-                        # TODO: coding is OK for <test> but what about <edit>?
-                        fd.write(xml.encode(FILESYSTEM_ENCODING))
+                    fd, conf_filename = tempfile.mkstemp()
+                    # TODO: coding is OK for <test> but what about <edit>?
+                    os.write(fd, xml.encode(FILESYSTEM_ENCODING))
+                    os.close(fd)
                     self._filenames.append(conf_filename)
                     fontconfig.FcConfigParseAndLoad(
                         config, conf_filename.encode(FILESYSTEM_ENCODING),

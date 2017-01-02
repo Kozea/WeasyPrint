@@ -2883,3 +2883,53 @@ def test_radial_gradients():
         assert (pixel(3, 9) not in (B, r)) ^ thin
         assert (pixel(7, 5) not in (B, r)) ^ thin
         assert (pixel(7, 9) not in (B, r)) ^ thin
+
+
+def test_column_rule():
+    """Test standard cases for column-rule-*."""
+    # JPG is lossy...
+    b = as_pixel(b'\x00\x00\xfe\xff')
+
+    assert_pixels('solid', 5, 3, [
+        b+_+r+_+b,
+        b+_+r+_+b,
+        _+_+_+_+_,
+    ], '''
+        <style>
+            img { display: inline-block; width: 1px; height: 1px }
+            div { columns: 2; column-rule-style: solid;
+                  column-rule-width: 1px; column-gap: 3px;
+                  column-rule-color: red }
+            body { margin: 0; font-size: 0; background: white}
+            @page { margin: 0; size: 5px 3px }
+        </style>
+        <div>
+            <img src=blue.jpg>
+            <img src=blue.jpg>
+            <img src=blue.jpg>
+            <img src=blue.jpg>
+        </div>
+    ''')
+
+    assert_pixels('dotted', 5, 3, [
+        b+_+r+_+b,
+        b+_+_+_+b,
+        b+_+r+_+b,
+    ], '''
+        <style>
+            img { display: inline-block; width: 1px; height: 1px }
+            div { columns: 2; column-rule-style: dotted;
+                  column-rule-width: 1px; column-gap: 3px;
+                  column-rule-color: red }
+            body { margin: 0; font-size: 0; background: white}
+            @page { margin: 0; size: 5px 3px }
+        </style>
+        <div>
+            <img src=blue.jpg>
+            <img src=blue.jpg>
+            <img src=blue.jpg>
+            <img src=blue.jpg>
+            <img src=blue.jpg>
+            <img src=blue.jpg>
+        </div>
+    ''')

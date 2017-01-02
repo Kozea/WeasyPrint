@@ -19,7 +19,7 @@ import contextlib  # noqa
 import html5lib  # noqa
 
 
-VERSION = '0.33'
+VERSION = '0.34'
 __version__ = VERSION
 
 # Used for 'User-Agent' in HTTP and 'Creator' in PDF
@@ -175,8 +175,10 @@ class HTML(object):
             :obj:`target`.)
 
         """
-        return self.render(stylesheets, presentational_hints).write_pdf(
-            target, zoom, attachments)
+        return self.render(
+            stylesheets, enable_hinting=False,
+            presentational_hints=presentational_hints).write_pdf(
+                target, zoom, attachments)
 
     def write_image_surface(self, stylesheets=None, resolution=96,
                             presentational_hints=False):
