@@ -418,8 +418,10 @@ def block_container_layout(context, box, max_position_y, skip_stack,
 
     if is_start:
         skip = 0
+        first_letter_style = box.first_letter_style
     else:
         skip, skip_stack = skip_stack
+        first_letter_style = None
     for index, child in box.enumerate_skip(skip):
         child.position_x = position_x
         # XXX does not count margins in adjoining_margins:
@@ -473,7 +475,8 @@ def block_container_layout(context, box, max_position_y, skip_stack,
             new_containing_block = box
             lines_iterator = iter_line_boxes(
                 context, child, position_y, skip_stack,
-                new_containing_block, device_size, absolute_boxes, fixed_boxes)
+                new_containing_block, device_size, absolute_boxes, fixed_boxes,
+                first_letter_style)
             is_page_break = False
             for line, resume_at in lines_iterator:
                 line.resume_at = resume_at
@@ -590,6 +593,8 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                 position_y += collapsed_margin
                 adjoining_margins = []
 
+            if not getattr(child, 'first_letter_style', None):
+                child.first_letter_style = first_letter_style
             (new_child, resume_at, next_page, next_adjoining_margins,
                 collapsing_through) = block_level_layout(
                     context, child, max_position_y, skip_stack,
