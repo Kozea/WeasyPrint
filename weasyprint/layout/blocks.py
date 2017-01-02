@@ -418,7 +418,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
 
     if is_start:
         skip = 0
-        first_letter_style = box.first_letter_style
+        first_letter_style = getattr(box, 'first_letter_style', None)
     else:
         skip, skip_stack = skip_stack
         first_letter_style = None
