@@ -1112,11 +1112,14 @@ def split_first_line(text, style, context, max_width, line_width):
         temp_second_line_index = (
             len(text.encode('utf-8')) if temp_second_line is None
             else temp_second_line.start_index)
-        resume_at = temp_second_line_index
         first_line_text = utf8_slice(text, slice(temp_second_line_index))
         layout.set_text(first_line_text)
         lines = layout.iter_lines()
         first_line = next(lines, None)
+        second_line = next(lines, None)
+        resume_at = (
+            first_line.length if second_line is None
+            else second_line.start_index)
 
     return first_line_metrics(
         first_line, text, layout, resume_at, space_collapse, style, hyphenated,
