@@ -944,6 +944,8 @@ def split_first_line(text, style, context, max_width, line_width):
             first_line, text, layout, resume_at, space_collapse, style)
 
     # Step #3: Try to put the first word of the second line on the first line
+    # https://mail.gnome.org/archives/gtk-i18n-list/2013-September/msg00006
+    # is a good thread related to this problem.
     if first_line_width <= max_width:
         # The first line may have been cut too early by Pango
         second_line_index = second_line.start_index
@@ -1105,13 +1107,19 @@ def split_first_line(text, style, context, max_width, line_width):
         layout.set_text(text)
         pango.pango_layout_set_width(
             layout.layout, units_from_double(max_width))
-        layout.set_wrap(PANGO_WRAP_MODE['WRAP_WORD_CHAR'])
+        layout.set_wrap(PANGO_WRAP_MODE['WRAP_CHAR'])
         temp_lines = layout.iter_lines()
         next(temp_lines, None)
         temp_second_line = next(temp_lines, None)
         temp_second_line_index = (
             len(text.encode('utf-8')) if temp_second_line is None
             else temp_second_line.start_index)
+        # TODO: WRAP_CHAR is said to "wrap lines at character boundaries", but
+        # it doesn't. Looks like it tries to split at word boundaries and then
+        # at character boundaries if there's no enough space for a full word,
+        # just as WRAP_WORD_CHAR does. That's why we have to split this text
+        # twice. Find why. It may be related to the problem described in the
+        # link given in step #3.
         first_line_text = utf8_slice(text, slice(temp_second_line_index))
         layout.set_text(first_line_text)
         lines = layout.iter_lines()
