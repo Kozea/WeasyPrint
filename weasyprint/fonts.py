@@ -23,6 +23,9 @@ from .text import (
     cairo, dlopen, ffi, get_font_features, gobject, pango, pangocairo)
 from .urls import fetch
 
+if cairo.cairo_version() <= 11400:
+    LOGGER.warning('There are known rendering problems with Cairo <= 1.14.0')
+
 
 class FontConfiguration:
     """Font configuration"""
