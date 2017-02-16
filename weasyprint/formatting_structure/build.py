@@ -148,7 +148,10 @@ def element_to_box(element, style_for, get_image_from_uri, state=None):
     # names will be in this new list
     counter_scopes.append(set())
 
-    children.extend(pseudo_to_box(
+    box.first_letter_style = style_for(element, 'first-letter')
+    box.first_line_style = style_for(element, 'first-line')
+
+    children.extend(before_after_to_box(
         element, 'before', state, style_for, get_image_from_uri))
     text = element.text
     if text:
@@ -164,7 +167,7 @@ def element_to_box(element, style_for, get_image_from_uri, state=None):
                 children[-1].text += text_box.text
             else:
                 children.append(text_box)
-    children.extend(pseudo_to_box(
+    children.extend(before_after_to_box(
         element, 'after', state, style_for, get_image_from_uri))
 
     # Scopes created by this element’s children stop here.
@@ -174,14 +177,16 @@ def element_to_box(element, style_for, get_image_from_uri, state=None):
             counter_values.pop(name)
 
     box.children = children
+    box.first_letter_style = style_for(element, 'first-letter')
     replace_content_lists(element, box, style, counter_values)
 
     # Specific handling for the element. (eg. replaced element)
     return html.handle_element(element, box, get_image_from_uri)
 
 
-def pseudo_to_box(element, pseudo_type, state, style_for, get_image_from_uri):
-    """Yield the box for a :before or :after pseudo-element if there is one."""
+def before_after_to_box(element, pseudo_type, state, style_for,
+                        get_image_from_uri):
+    """Yield the box for ::before or ::after pseudo-element if there is one."""
     style = style_for(element, pseudo_type)
     if pseudo_type and style is None:
         # Pseudo-elements with no style at all do not get a StyleDict
@@ -196,7 +201,7 @@ def pseudo_to_box(element, pseudo_type, state, style_for, get_image_from_uri):
         return
 
     box = make_box(
-        '%s:%s' % (element.tag, pseudo_type), element.sourceline, style, [],
+        '%s::%s' % (element.tag, pseudo_type), element.sourceline, style, [],
         get_image_from_uri)
 
     quote_depth, counter_values, _counter_scopes = state
@@ -1135,8 +1140,8 @@ def box_text(box):
     elif isinstance(box, boxes.ParentBox):
         return ''.join(
             child.text for child in box.descendants()
-            if not child.element_tag.endswith(':before') and
-            not child.element_tag.endswith(':after') and
+            if not child.element_tag.endswith('::before') and
+            not child.element_tag.endswith('::after') and
             isinstance(child, boxes.TextBox))
     else:
         return ''
@@ -1146,7 +1151,7 @@ def box_text_before(box):
     if isinstance(box, boxes.ParentBox):
         return ''.join(
             box_text(child) for child in box.descendants()
-            if child.element_tag.endswith(':before') and
+            if child.element_tag.endswith('::before') and
             not isinstance(child, boxes.ParentBox))
     else:
         return ''
@@ -1156,7 +1161,7 @@ def box_text_after(box):
     if isinstance(box, boxes.ParentBox):
         return ''.join(
             box_text(child) for child in box.descendants()
-            if child.element_tag.endswith(':after') and
+            if child.element_tag.endswith('::after') and
             not isinstance(child, boxes.ParentBox))
     else:
         return ''
