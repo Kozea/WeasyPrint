@@ -19,7 +19,7 @@ import contextlib  # noqa
 import html5lib  # noqa
 
 
-VERSION = '0.35'
+VERSION = '0.36'
 __version__ = VERSION
 
 # Used for 'User-Agent' in HTTP and 'Creator' in PDF
