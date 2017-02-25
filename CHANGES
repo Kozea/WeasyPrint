@@ -2,6 +2,26 @@ WeasyPrint changelog
 ====================
 
 
+Version 0.35
+------------
+
+Released on 2017-02-25.
+
+New features:
+
+* `#407 <https://github.com/Kozea/WeasyPrint/pull/407>`_:
+  Handle ::first-letter.
+* `#423 <https://github.com/Kozea/WeasyPrint/pull/423>`_:
+  Warn user about broken cairo versions.
+
+Bug fixes:
+
+* `#410 <https://github.com/Kozea/WeasyPrint/pull/410>`_:
+  Fix AssertionError in split_text_box.
+* `#411 <https://github.com/Kozea/WeasyPrint/pull/411>`_:
+  Typos fixed in command-line help.
+
+
 Version 0.34
 ------------
 
