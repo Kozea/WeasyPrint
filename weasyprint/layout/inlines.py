@@ -12,6 +12,8 @@
 
 from __future__ import division, unicode_literals
 
+import unicodedata
+
 from .absolute import absolute_layout, AbsolutePlaceholder
 from .float import avoid_collisions, float_layout
 from .replaced import image_marker_layout
@@ -26,7 +28,8 @@ from ..css.computed_values import strut_layout, ex_ratio
 
 
 def iter_line_boxes(context, box, position_y, skip_stack, containing_block,
-                    device_size, absolute_boxes, fixed_boxes):
+                    device_size, absolute_boxes, fixed_boxes,
+                    first_letter_style):
     """Return an iterator of ``(line, resume_at)``.
 
     ``line`` is a laid-out LineBox with as much content as possible that
@@ -45,7 +48,7 @@ def iter_line_boxes(context, box, position_y, skip_stack, containing_block,
     while 1:
         line, resume_at = get_next_linebox(
             context, box, position_y, skip_stack, containing_block,
-            device_size, absolute_boxes, fixed_boxes)
+            device_size, absolute_boxes, fixed_boxes, first_letter_style)
         if line:
             position_y = line.position_y + line.height
         if line is None:
@@ -54,11 +57,12 @@ def iter_line_boxes(context, box, position_y, skip_stack, containing_block,
         if resume_at is None:
             return
         skip_stack = resume_at
+        first_letter_style = None
 
 
 def get_next_linebox(context, linebox, position_y, skip_stack,
                      containing_block, device_size, absolute_boxes,
-                     fixed_boxes):
+                     fixed_boxes, first_letter_style):
     """Return ``(line, resume_at)``."""
     resolve_percentages(linebox, containing_block)
     if skip_stack is None:
@@ -67,10 +71,13 @@ def get_next_linebox(context, linebox, position_y, skip_stack,
         resolve_one_percentage(linebox, 'text_indent', containing_block.width)
     else:
         linebox.text_indent = 0
+        first_letter_style = None
 
     skip_stack = skip_first_whitespace(linebox, skip_stack)
     if skip_stack == 'continue':
         return None, None
+
+    skip_stack = first_letter_to_box(linebox, skip_stack, first_letter_style)
 
     linebox.width = inline_min_content_width(
         context, linebox, skip_stack=skip_stack, first_line=True)
@@ -240,6 +247,81 @@ def remove_last_whitespace(context, box):
 
     # TODO: If spaces (U+0020) or tabs (U+0009) at the end of a line have
     # 'white-space' set to 'pre-wrap', UAs may visually collapse them.
+
+
+def first_letter_to_box(box, skip_stack, first_letter_style):
+    """Create a box for the ::first-letter selector."""
+    if first_letter_style and box.children:
+        first_letter = ''
+        child = box.children[0]
+        if isinstance(child, boxes.TextBox):
+            if child.element_tag.endswith('::first-letter'):
+                letter_box = boxes.Inbox(
+                    '%s::first-letter' % box.element_tag,
+                    box.sourceline, first_letter_style.inherit_from(),
+                    [child])
+                box.children = (
+                    (letter_box,) + tuple(box.children[1:]))
+            elif child.text:
+                character_found = False
+                if skip_stack:
+                    child_skip_stack = skip_stack[1]
+                    if child_skip_stack:
+                        index = child_skip_stack[0]
+                        child.text = child.text[index:]
+                        skip_stack = None
+                while child.text:
+                    next_letter = child.text[0]
+                    category = unicodedata.category(next_letter)
+                    if category not in ('Ps', 'Pe', 'Pi', 'Pf', 'Po'):
+                        if character_found:
+                            break
+                        character_found = True
+                    first_letter += next_letter
+                    child.text = child.text[1:]
+                if first_letter.lstrip('\n'):
+                    # "This type of initial letter is similar to an
+                    # inline-level element if its 'float' property is 'none',
+                    # otherwise it is similar to a floated element."
+                    if first_letter_style['float'] == 'none':
+                        letter_box = boxes.InlineBox(
+                            '%s::first-letter' % box.element_tag,
+                            box.sourceline, first_letter_style, [])
+                        text_box = boxes.TextBox(
+                            '%s::first-letter' % box.element_tag,
+                            box.sourceline, letter_box.style.inherit_from(),
+                            first_letter)
+                        letter_box.children = (text_box,)
+                        box.children = (letter_box,) + tuple(box.children)
+                    else:
+                        letter_box = boxes.BlockBox(
+                            '%s::first-letter' % box.element_tag,
+                            box.sourceline, first_letter_style, [])
+                        letter_box.first_letter_style = None
+                        line_box = boxes.LineBox(
+                            '%s::first-letter' % box.element_tag,
+                            box.sourceline, letter_box.style.inherit_from(),
+                            [])
+                        letter_box.children = (line_box,)
+                        text_box = boxes.TextBox(
+                            '%s::first-letter' % box.element_tag,
+                            box.sourceline, letter_box.style.inherit_from(),
+                            first_letter)
+                        line_box.children = (text_box,)
+                        box.children = (letter_box,) + tuple(box.children)
+                    if skip_stack and child_skip_stack:
+                        skip_stack = (skip_stack[0], (
+                            child_skip_stack[0] + 1, child_skip_stack[1]))
+        elif isinstance(child, boxes.ParentBox):
+            if skip_stack:
+                child_skip_stack = skip_stack[1]
+            else:
+                child_skip_stack = None
+            child_skip_stack = first_letter_to_box(
+                child, child_skip_stack, first_letter_style)
+            if skip_stack:
+                skip_stack = (skip_stack[0], child_skip_stack)
+    return skip_stack
 
 
 @handle_min_max_width

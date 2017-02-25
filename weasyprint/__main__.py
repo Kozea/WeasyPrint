@@ -87,7 +87,7 @@ def main(argv=None, stdout=None, stdin=None):
     parser.add_argument('-e', '--encoding',
                         help='Character encoding of the input')
     parser.add_argument('-f', '--format', choices=['pdf', 'png'],
-                        help='Output format. Can be ommited if `output` '
+                        help='Output format. Can be omitted if `output` '
                              'ends with a .pdf or .png extension.')
     parser.add_argument('-s', '--stylesheet', action='append',
                         help='URL or filename for a user CSS stylesheet. '
@@ -121,7 +121,7 @@ def main(argv=None, stdout=None, stdin=None):
             format_ = 'png'
         else:
             parser.error(
-                'Either sepecify a format with -f or choose an '
+                'Either specify a format with -f or choose an '
                 'output filename that ends in .pdf or .png')
     else:
         format_ = args.format.lower()
