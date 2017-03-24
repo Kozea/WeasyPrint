@@ -15,8 +15,9 @@
 
 import sys
 import argparse
+import logging
 
-from . import VERSION, HTML
+from . import VERSION, HTML, LOGGER
 
 
 def main(argv=None, stdout=None, stdin=None):
@@ -158,6 +159,12 @@ def main(argv=None, stdout=None, stdin=None):
             kwargs['attachments'] = args.attachment
         else:
             parser.error('--attachment only applies for the PDF format.')
+
+    # Default to logging to stderr.
+    LOGGER.setLevel(logging.INFO)
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
+    LOGGER.addHandler(handler)
 
     html = HTML(source, base_url=args.base_url, encoding=args.encoding,
                 media_type=args.media_type)

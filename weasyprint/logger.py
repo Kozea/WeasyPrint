@@ -19,13 +19,4 @@ import logging
 
 
 LOGGER = logging.getLogger('weasyprint')
-
-# Default to logging to stderr.
-if not LOGGER.handlers:
-    handler = logging.StreamHandler()
-    formatter = logging.Formatter('%(levelname)s: %(message)s')
-    handler.setFormatter(formatter)
-    LOGGER.addHandler(handler)
-
-if LOGGER.level == logging.NOTSET:
-    LOGGER.setLevel(logging.INFO)
+LOGGER.addHandler(logging.NullHandler())

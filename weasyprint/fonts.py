@@ -23,9 +23,6 @@ from .text import (
     cairo, dlopen, ffi, get_font_features, gobject, pango, pangocairo)
 from .urls import fetch
 
-if cairo.cairo_version() <= 11400:
-    LOGGER.warning('There are known rendering problems with Cairo <= 1.14.0')
-
 
 class FontConfiguration:
     """Font configuration"""
@@ -42,9 +39,15 @@ class FontConfiguration:
 
 
 if sys.platform.startswith('win'):
-    LOGGER.warning('@font-face is currently not supported on Windows')
+    class FontConfiguration(FontConfiguration):
+        def __init__(self):
+            LOGGER.warning('@font-face is currently not supported on Windows')
+            super(FontConfiguration, self).__init__()
 elif pango.pango_version() < 13800:
-    LOGGER.warning('@font-face support needs Pango >= 1.38')
+    class FontConfiguration(FontConfiguration):
+        def __init__(self):
+            LOGGER.warning('@font-face support needs Pango >= 1.38')
+            super(FontConfiguration, self).__init__()
 else:
     ffi.cdef('''
         // FontConfig

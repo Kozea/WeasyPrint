@@ -34,6 +34,7 @@ from .urls import (fetch, default_url_fetcher, path2url, ensure_url,
                    url_is_absolute)  # noqa
 from .compat import unicode  # noqa
 from .logger import LOGGER  # noqa
+from .text import cairo  # noqa
 # Some imports are at the end of the file (after the CSS class)
 # to work around circular imports.
 
@@ -139,6 +140,10 @@ class HTML(object):
         :returns: A :class:`~document.Document` object.
 
         """
+        if cairo.cairo_version() <= 11400:
+            LOGGER.warning(
+                'There are known rendering problems with Cairo <= 1.14.0')
+
         return Document._render(
             self, stylesheets, enable_hinting, presentational_hints)
 
