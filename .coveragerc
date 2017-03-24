@@ -9,4 +9,5 @@ exclude_lines =
 omit =
     weasyprint/tests/test_web/*
     weasyprint/tests/w3_test_suite/*
+    */virtualenv/*
     .*
