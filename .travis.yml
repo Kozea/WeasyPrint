@@ -11,6 +11,8 @@ matrix:
       python: 3.4
     - os: linux
       python: 3.5
+    - os: linux
+      python: 3.6
     - os: osx
       language: generic
       env: PYTHON_VERSION=3
@@ -32,9 +34,7 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install python3 cairo pango gdk-pixbuf libxml2 libxslt libffi; fi
 
 install:
-  - pip$PYTHON_VERSION install --upgrade setuptools pytest flake8
-  - pip$PYTHON_VERSION install -e .
+  - pip$PYTHON_VERSION install --upgrade -e.[test]
 
 script:
-  - python$PYTHON_VERSION -m pytest -s
-  - python$PYTHON_VERSION -m flake8 weasyprint
+  - python$PYTHON_VERSION setup.py test

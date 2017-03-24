@@ -1,4 +1,6 @@
+#!/usr/bin/env python
 # coding: utf-8
+
 """
     WeasyPrint
     ==========
@@ -41,6 +43,10 @@ if sys.version_info < (3,):
 else:
     REQUIREMENTS.append('CairoSVG >= 1.0.20')
 
+
+needs_pytest = {'pytest', 'test', 'ptr'}.intersection(sys.argv)
+pytest_runner = ['pytest-runner'] if needs_pytest else []
+
 setup(
     name='WeasyPrint',
     version=VERSION,
@@ -60,6 +66,7 @@ setup(
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
         'Topic :: Internet :: WWW/HTTP',
         'Topic :: Text Processing :: Markup :: HTML',
         'Topic :: Multimedia :: Graphics :: Graphics Conversion',
@@ -67,12 +74,16 @@ setup(
     ],
     packages=find_packages(),
     package_data={
-        'weasyprint.hyphenation': ['*.dic'],
         'weasyprint.tests': ['resources/*.*', 'resources/*/*'],
         'weasyprint.css': ['*.css']},
     zip_safe=False,
     install_requires=REQUIREMENTS,
+    setup_requires=pytest_runner,
     test_suite='weasyprint.tests',
+    tests_require=[
+        "pytest-runner", "pytest-cov", "pytest-flake8", "pytest-isort"],
+    extras_require={"test": [
+        "pytest-runner", "pytest-cov", "pytest-flake8", "pytest-isort"]},
     entry_points={
         'console_scripts': [
             'weasyprint = weasyprint.__main__:main',
