@@ -15,7 +15,6 @@ import operator
 from .formatting_structure import boxes
 from .layout.absolute import AbsolutePlaceholder
 
-
 _Z_INDEX_GETTER = operator.attrgetter('z_index')
 
 

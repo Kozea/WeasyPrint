@@ -12,8 +12,8 @@
 
 from __future__ import division, unicode_literals
 
-from .testing_utils import assert_no_logs, capture_logs
 from ..css import PARSER, preprocess_descriptors, preprocess_stylesheet
+from .testing_utils import assert_no_logs, capture_logs
 
 
 @assert_no_logs

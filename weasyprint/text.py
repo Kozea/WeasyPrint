@@ -11,16 +11,17 @@
 """
 
 from __future__ import division
-# XXX No unicode_literals, cffi likes native strings
 
 import re
 
-import pyphen
-import cffi
 import cairocffi as cairo
+import cffi
+import pyphen
 
 from .compat import basestring
 from .logger import LOGGER
+
+# XXX No unicode_literals, cffi likes native strings
 
 
 PANGO_ATTR_FONT_FEATURES_CACHE = {}

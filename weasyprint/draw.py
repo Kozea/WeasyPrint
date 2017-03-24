@@ -18,11 +18,10 @@ import operator
 
 import cairocffi as cairo
 
+from .compat import xrange
 from .formatting_structure import boxes
 from .stacking import StackingContext
 from .text import show_first_line
-from .compat import xrange
-
 
 SIDES = ('top', 'right', 'bottom', 'left')
 

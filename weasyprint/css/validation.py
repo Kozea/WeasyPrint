@@ -17,16 +17,16 @@ import functools
 import math
 
 from tinycss.color3 import parse_color
-from tinycss.parsing import split_on_comma, remove_whitespace
+from tinycss.parsing import remove_whitespace, split_on_comma
 
-from ..logger import LOGGER
-from ..formatting_structure import counters
-from ..compat import urljoin, unquote
-from ..urls import url_is_absolute, iri_to_uri
-from ..images import LinearGradient, RadialGradient
-from .properties import (INITIAL_VALUES, KNOWN_PROPERTIES, NOT_PRINT_MEDIA,
-                         Dimension)
 from . import computed_values
+from ..compat import unquote, urljoin
+from ..formatting_structure import counters
+from ..images import LinearGradient, RadialGradient
+from ..logger import LOGGER
+from ..urls import iri_to_uri, url_is_absolute
+from .properties import (
+    INITIAL_VALUES, KNOWN_PROPERTIES, NOT_PRINT_MEDIA, Dimension)
 
 # TODO: unit-test these validators
 

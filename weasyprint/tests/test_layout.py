@@ -17,9 +17,9 @@ import math
 
 import pytest
 
-from .testing_utils import FONTS, assert_no_logs, capture_logs, almost_equal
 from ..formatting_structure import boxes
 from .test_boxes import render_pages as parse
+from .testing_utils import FONTS, almost_equal, assert_no_logs, capture_logs
 
 
 def body_children(page):

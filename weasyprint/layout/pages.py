@@ -14,10 +14,10 @@ from __future__ import division, unicode_literals
 
 from ..formatting_structure import boxes, build
 from .absolute import absolute_layout
-from .blocks import block_level_layout, block_container_layout
+from .blocks import block_container_layout, block_level_layout
+from .min_max import handle_min_max_height, handle_min_max_width
 from .percentages import resolve_percentages
-from .preferred import min_content_width, max_content_width
-from .min_max import handle_min_max_width, handle_min_max_height
+from .preferred import max_content_width, min_content_width
 
 
 class OrientedBox(object):

@@ -13,10 +13,9 @@
 
 from __future__ import division, unicode_literals
 
-from .properties import INITIAL_VALUES, Dimension
-from ..urls import get_link_attribute
 from .. import text
-
+from ..urls import get_link_attribute
+from .properties import INITIAL_VALUES, Dimension
 
 ZERO_PIXELS = Dimension(0, 'px')
 

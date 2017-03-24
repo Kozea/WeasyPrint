@@ -17,6 +17,5 @@ from __future__ import division, unicode_literals
 
 import logging
 
-
 LOGGER = logging.getLogger('weasyprint')
 LOGGER.addHandler(logging.NullHandler())

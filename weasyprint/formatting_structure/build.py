@@ -22,10 +22,9 @@ from tinycss.color3 import COLOR_KEYWORDS
 
 from . import boxes, counters
 from .. import html
+from ..compat import basestring, xrange
 from ..css import properties
 from ..css.computed_values import ZERO_PIXELS
-from ..compat import basestring, xrange
-
 
 # Maps values of the ``display`` CSS property to box types.
 BOX_TYPE_FROM_DISPLAY = {

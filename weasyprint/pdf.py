@@ -43,10 +43,10 @@ import zlib
 import cairocffi as cairo
 
 from . import VERSION_STRING, Attachment
-from .compat import xrange, iteritems, izip, unquote
-from .urls import iri_to_uri, urlsplit, URLFetchingError
+from .compat import iteritems, izip, unquote, xrange
 from .html import W3C_DATE_RE
 from .logger import LOGGER
+from .urls import URLFetchingError, iri_to_uri, urlsplit
 
 
 def pdf_escape(value):

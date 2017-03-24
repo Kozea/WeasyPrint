@@ -13,11 +13,11 @@
 # No __future__.unicode_literals here.
 # Native strings are fine with argparse, unicode makes --help crash on 2.6.
 
-import sys
 import argparse
 import logging
+import sys
 
-from . import VERSION, HTML, LOGGER
+from . import HTML, LOGGER, VERSION
 
 
 def main(argv=None, stdout=None, stdin=None):

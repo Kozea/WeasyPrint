@@ -11,7 +11,6 @@
 """
 
 from __future__ import division
-# XXX No unicode_literals, cffi likes native strings
 
 import os
 import sys
@@ -22,6 +21,8 @@ from .logger import LOGGER
 from .text import (
     cairo, dlopen, ffi, get_font_features, gobject, pango, pangocairo)
 from .urls import fetch
+
+# XXX No unicode_literals, cffi likes native strings
 
 
 class FontConfiguration:

@@ -14,13 +14,12 @@ from __future__ import division, unicode_literals
 
 from pytest import raises
 
-from .testing_utils import (
-    resource_filename, assert_no_logs, capture_logs, FakeHTML)
-from .. import css
+from .. import CSS, css, default_url_fetcher
 from ..css import get_all_computed_styles
 from ..css.computed_values import strut_layout
 from ..urls import open_data_url, path2url
-from .. import CSS, default_url_fetcher
+from .testing_utils import (
+    FakeHTML, assert_no_logs, capture_logs, resource_filename)
 
 
 @assert_no_logs

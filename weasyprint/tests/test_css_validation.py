@@ -14,10 +14,10 @@ from __future__ import division, unicode_literals
 
 import math
 
-from .testing_utils import assert_no_logs, capture_logs, almost_equal
 from ..css import PARSER, preprocess_declarations
 from ..css.properties import INITIAL_VALUES
 from ..images import LinearGradient, RadialGradient
+from .testing_utils import almost_equal, assert_no_logs, capture_logs
 
 
 def expand_to_dict(css, expected_error=None):

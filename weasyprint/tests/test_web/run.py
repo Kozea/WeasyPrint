@@ -15,7 +15,8 @@
 from __future__ import division, unicode_literals
 
 import os.path
-from flask import Flask, request, render_template, send_file
+
+from flask import Flask, render_template, request, send_file
 from weasyprint import HTML
 
 app = Flask(__name__)

@@ -13,11 +13,11 @@
 from __future__ import division, unicode_literals
 
 from ..compat import xrange
-from ..logger import LOGGER
-from ..formatting_structure import boxes
 from ..css.properties import Dimension
-from .percentages import resolve_percentages, resolve_one_percentage
-from .preferred import table_and_columns_preferred_widths, max_content_width
+from ..formatting_structure import boxes
+from ..logger import LOGGER
+from .percentages import resolve_one_percentage, resolve_percentages
+from .preferred import max_content_width, table_and_columns_preferred_widths
 
 
 def table_layout(context, table, max_position_y, skip_stack,

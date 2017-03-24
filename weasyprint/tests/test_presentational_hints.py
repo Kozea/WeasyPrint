@@ -12,8 +12,9 @@
 
 from __future__ import division, unicode_literals
 
+from .. import CSS, HTML
 from .testing_utils import assert_no_logs
-from .. import HTML, CSS
+
 
 PH_TESTING_CSS = CSS(string='''
 @page {margin: 0; size: 1000px 1000px}

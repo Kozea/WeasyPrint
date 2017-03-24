@@ -12,16 +12,15 @@
 
 from __future__ import division, unicode_literals
 
+import difflib
 import functools
 import pprint
-import difflib
 
-from .testing_utils import (
-    resource_filename, FakeHTML, assert_no_logs, capture_logs)
-from ..css import get_all_computed_styles
 from .. import images
+from ..css import get_all_computed_styles
 from ..formatting_structure import boxes, build, counters
-
+from .testing_utils import (
+    FakeHTML, assert_no_logs, capture_logs, resource_filename)
 
 PROPER_CHILDREN = dict((key, tuple(map(tuple, value))) for key, value in {
     # Children can be of *any* type in *one* of the lists.

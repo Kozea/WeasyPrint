@@ -15,9 +15,8 @@ from __future__ import division, unicode_literals
 from ..css import StyleDict
 from ..css.properties import INITIAL_VALUES
 from ..text import split_first_line
-from .test_layout import parse, body_children
+from .test_layout import body_children, parse
 from .testing_utils import FONTS, assert_no_logs
-
 
 FONTS = FONTS.split(', ')
 

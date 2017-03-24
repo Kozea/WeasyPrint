@@ -14,17 +14,17 @@ from __future__ import division, unicode_literals
 
 import unicodedata
 
-from .absolute import absolute_layout, AbsolutePlaceholder
-from .float import avoid_collisions, float_layout
-from .replaced import image_marker_layout
-from .min_max import handle_min_max_width, handle_min_max_height
-from .percentages import resolve_percentages, resolve_one_percentage
-from .preferred import (shrink_to_fit, inline_min_content_width,
-                        trailing_whitespace_size)
-from .tables import find_in_flow_baseline, table_wrapper_width
-from ..text import split_first_line
+from ..css.computed_values import ex_ratio, strut_layout
 from ..formatting_structure import boxes
-from ..css.computed_values import strut_layout, ex_ratio
+from ..text import split_first_line
+from .absolute import AbsolutePlaceholder, absolute_layout
+from .float import avoid_collisions, float_layout
+from .min_max import handle_min_max_height, handle_min_max_width
+from .percentages import resolve_one_percentage, resolve_percentages
+from .preferred import (
+    inline_min_content_width, shrink_to_fit, trailing_whitespace_size)
+from .replaced import image_marker_layout
+from .tables import find_in_flow_baseline, table_wrapper_width
 
 
 def iter_line_boxes(context, box, position_y, skip_stack, containing_block,

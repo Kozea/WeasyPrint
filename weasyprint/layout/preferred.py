@@ -19,8 +19,8 @@ from __future__ import division, unicode_literals
 import sys
 import weakref
 
-from ..formatting_structure import boxes
 from .. import text
+from ..formatting_structure import boxes
 from .replaced import default_image_sizing
 
 

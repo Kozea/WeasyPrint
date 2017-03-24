@@ -17,14 +17,14 @@ import io
 import os
 
 import cairocffi
+
 import pytest
 
-from .. import CSS, Attachment
-from .. import pdf
+from .. import CSS, Attachment, pdf
 from ..images import CAIRO_HAS_MIME_DATA
 from ..urls import path2url
 from .testing_utils import (
-    assert_no_logs, resource_filename, FakeHTML, capture_logs, temp_directory)
+    FakeHTML, assert_no_logs, capture_logs, resource_filename, temp_directory)
 
 
 @assert_no_logs

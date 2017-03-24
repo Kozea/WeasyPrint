@@ -12,32 +12,30 @@
 
 from __future__ import division, unicode_literals
 
-import os
-import io
-import sys
-import math
 import contextlib
-import threading
 import gzip
+import io
+import math
+import os
+import sys
+import threading
 import unicodedata
 import zlib
 
-import lxml.html
-import lxml.etree
 import cairocffi as cairo
+import lxml.etree
+import lxml.html
+
 import pytest
 
-from .testing_utils import (
-    resource_filename, assert_no_logs, capture_logs, FakeHTML,
-    http_server, temp_directory)
-from .test_draw import image_to_pixels
-from ..compat import urljoin, urlencode, urlparse_uses_relative, iteritems
-from ..urls import path2url
-from .. import HTML, CSS, default_url_fetcher
-from .. import __main__
-from .. import navigator
+from .. import CSS, HTML, __main__, default_url_fetcher, navigator
+from ..compat import iteritems, urlencode, urljoin, urlparse_uses_relative
 from ..document import _TaggedTuple
-
+from ..urls import path2url
+from .test_draw import image_to_pixels
+from .testing_utils import (
+    FakeHTML, assert_no_logs, capture_logs, http_server, resource_filename,
+    temp_directory)
 
 CHDIR_LOCK = threading.Lock()
 

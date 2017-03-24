@@ -12,21 +12,20 @@
 
 from __future__ import division, unicode_literals
 
-import sys
-import os.path
-import tempfile
-import shutil
 import itertools
+import os.path
+import shutil
+import sys
+import tempfile
 
 import cairocffi as cairo
 
-from ..compat import xrange, izip, ints_from_bytes
-from ..urls import ensure_url
-from ..html import HTML_HANDLERS
 from .. import HTML
+from ..compat import ints_from_bytes, izip, xrange
+from ..html import HTML_HANDLERS
+from ..urls import ensure_url
 from .testing_utils import (
-    resource_filename, FakeHTML, FONTS, assert_no_logs, capture_logs, requires)
-
+    FONTS, FakeHTML, assert_no_logs, capture_logs, requires, resource_filename)
 
 # RGBA to native-endian ARGB
 as_pixel = (

@@ -10,23 +10,22 @@
 
 """
 
-from __future__ import division, unicode_literals, print_function
+from __future__ import division, print_function, unicode_literals
 
-import sys
-import os.path
-import logging
 import contextlib
 import functools
-import wsgiref.simple_server
-import threading
+import logging
+import os.path
 import shutil
+import sys
 import tempfile
+import threading
+import wsgiref.simple_server
 
 import pytest
 
-from .. import HTML, CSS, text
+from .. import CSS, HTML, text
 from ..logger import LOGGER
-
 
 # TODO: find a way to not depend on a specific font
 FONTS = 'Liberation Sans, Arial'

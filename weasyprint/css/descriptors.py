@@ -22,7 +22,6 @@ from .validation import (
     font_feature_settings, get_keyword, safe_urljoin, single_keyword,
     single_token, validate_non_shorthand)
 
-
 DESCRIPTORS = {}
 
 

@@ -12,24 +12,23 @@
 
 from __future__ import division, unicode_literals
 
-import io
-import re
-import sys
-import os.path
-import mimetypes
 import contextlib
 import gzip
-import zlib
+import io
+import mimetypes
+import os.path
+import re
+import sys
 import traceback
+import zlib
 
 from . import VERSION_STRING
-from .logger import LOGGER
 from .compat import (
-    urljoin, urlsplit, quote, unquote, unquote_to_bytes, urlopen,
-    urllib_get_content_type, urllib_get_charset, urllib_get_filename, Request,
-    parse_email, pathname2url, unicode, base64_decode, StreamingGzipFile,
-    FILESYSTEM_ENCODING)
-
+    FILESYSTEM_ENCODING, Request, StreamingGzipFile, base64_decode,
+    parse_email, pathname2url, quote, unicode, unquote, unquote_to_bytes,
+    urljoin, urllib_get_charset, urllib_get_content_type, urllib_get_filename,
+    urlopen, urlsplit)
+from .logger import LOGGER
 
 # Unlinke HTML, CSS and PNG, the SVG MIME type is not always builtin
 # in some Python version and therefore not reliable.

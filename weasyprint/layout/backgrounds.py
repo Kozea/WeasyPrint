@@ -13,10 +13,9 @@ from __future__ import division, unicode_literals
 from collections import namedtuple
 from itertools import cycle
 
-from ..formatting_structure import boxes
 from . import replaced
+from ..formatting_structure import boxes
 from .percentages import resolve_radii_percentages
-
 
 Background = namedtuple('Background', 'color, layers, image_rendering')
 BackgroundLayer = namedtuple(

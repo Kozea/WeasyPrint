@@ -11,10 +11,10 @@
 """
 
 from __future__ import division, unicode_literals
+
 import collections
 
 from tinycss.color3 import COLOR_KEYWORDS
-
 
 Dimension = collections.namedtuple('Dimension', ['value', 'unit'])
 

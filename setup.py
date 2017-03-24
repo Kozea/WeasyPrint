@@ -12,11 +12,12 @@
 
 """
 
+import codecs
 import re
 import sys
-import codecs
 from os import path
-from setuptools import setup, find_packages
+
+from setuptools import find_packages, setup
 
 VERSION = re.search("VERSION = '([^']+)'", codecs.open(
     path.join(path.dirname(__file__), 'weasyprint', '__init__.py'),

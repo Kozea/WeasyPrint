@@ -13,9 +13,8 @@
 from __future__ import division, unicode_literals
 
 import codecs
-import sys
 import email
-
+import sys
 
 __all__ = ['Request', 'base64_decode', 'base64_encode', 'basestring',
            'ints_from_bytes', 'iteritems', 'izip', 'parse_email', 'parse_qs',

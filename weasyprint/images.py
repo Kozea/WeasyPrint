@@ -12,17 +12,17 @@
 
 from __future__ import division, unicode_literals
 
+import math
 from io import BytesIO
 from xml.etree import ElementTree
-import math
 
 import cairocffi
 import cairosvg.parser
 import cairosvg.surface
 
-from .urls import fetch, URLFetchingError
-from .logger import LOGGER
 from .compat import xrange
+from .logger import LOGGER
+from .urls import URLFetchingError, fetch
 
 try:
     from cairocffi import pixbuf

@@ -16,18 +16,18 @@
 """
 
 from __future__ import division, unicode_literals
-import os.path
-import logging
-import sys
-import re
 
+import logging
+import os.path
+import re
+import sys
+
+from . import CSS
+from .compat import urljoin, xrange
 from .css import get_child_text
 from .formatting_structure import boxes
-from .urls import get_url_attribute
-from .compat import xrange, urljoin
 from .logger import LOGGER
-from . import CSS
-
+from .urls import get_url_attribute
 
 # XXX temporarily disable logging for user-agent stylesheet
 level = LOGGER.level

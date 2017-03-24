@@ -14,16 +14,17 @@ from __future__ import division, unicode_literals
 
 from math import floor
 
-from .absolute import absolute_layout, AbsolutePlaceholder
-from .float import float_layout, get_clearance, avoid_collisions
-from .inlines import (iter_line_boxes, replaced_box_width, replaced_box_height,
-                      min_max_auto_replaced)
+from ..compat import izip, xrange
+from ..formatting_structure import boxes
+from .absolute import AbsolutePlaceholder, absolute_layout
+from .float import avoid_collisions, float_layout, get_clearance
+from .inlines import (
+    iter_line_boxes, min_max_auto_replaced, replaced_box_height,
+    replaced_box_width)
 from .markers import list_marker_layout
 from .min_max import handle_min_max_width
-from .tables import table_layout, table_wrapper_width
 from .percentages import resolve_percentages, resolve_position_percentages
-from ..formatting_structure import boxes
-from ..compat import xrange, izip
+from .tables import table_layout, table_wrapper_width
 
 
 def block_level_layout(context, box, max_position_y, skip_stack,
