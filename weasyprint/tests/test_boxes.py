@@ -51,7 +51,7 @@ def serialize(box_list):
          (box.text if isinstance(box, boxes.TextBox)
           else '<replaced>' if isinstance(box, boxes.ReplacedBox)
           else serialize(
-            getattr(box, 'column_groups', ()) + tuple(box.children))))
+              getattr(box, 'column_groups', ()) + tuple(box.children))))
         for box in box_list]
 
 
@@ -711,21 +711,21 @@ def test_colspan_rowspan():
     assert [[c.grid_x for c in row.children] for row in group.children] == [
         [0, 1, 2],
         [0, 1],
-        [0,      3],
+        [0, 3],
         [0],
         [0, 1],
     ]
     assert [[c.colspan for c in row.children] for row in group.children] == [
         [1, 1, 1],
         [1, 2],
-        [2,      1],
+        [2, 1],
         [1],
         [1, 1],
     ]
     assert [[c.rowspan for c in row.children] for row in group.children] == [
         [1, 1, 1],
         [1, 2],
-        [1,      3],
+        [1, 3],
         [1],
         [1, 1],
     ]
@@ -1079,8 +1079,12 @@ def test_counter_styles():
     # Same test as above, but short-circuit HTML and boxes
 
     assert [counters.format(value, 'decimal-leading-zero') for value in [
-        -1986, -1985,  -11, -10, -9, -8,  -1, 0, 1, 2,  9, 10, 11,
-        99, 100, 101,  4135, 4136
+        -1986, -1985,
+        -11, -10, -9, -8,
+        -1, 0, 1, 2,
+        9, 10, 11,
+        99, 100, 101,
+        4135, 4136
     ]] == '''
         -1986 -1985  -11 -10 -09 -08  -01 00 01 02  09 10 11
         99 100 101  4135 4136
@@ -1090,8 +1094,12 @@ def test_counter_styles():
 
 # http://test.csswg.org/suites/css2.1/20110323/html4/content-counter-007.htm
     assert [counters.format(value, 'lower-roman') for value in [
-        -1986, -1985,  -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
-        49, 50,  389, 390,  3489, 3490, 3491, 4999, 5000, 5001
+        -1986, -1985,
+        -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
+        49, 50,
+        389, 390,
+        3489, 3490, 3491,
+        4999, 5000, 5001
     ]] == '''
         -1986 -1985  -1 0 i ii iii iv v vi vii viii ix x xi xii
         xlix l  ccclxxxix cccxc  mmmcdlxxxix mmmcdxc mmmcdxci
@@ -1100,8 +1108,12 @@ def test_counter_styles():
 
 # http://test.csswg.org/suites/css2.1/20110323/html4/content-counter-008.htm
     assert [counters.format(value, 'upper-roman') for value in [
-        -1986, -1985,  -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
-        49, 50,  389, 390,  3489, 3490, 3491, 4999, 5000, 5001
+        -1986, -1985,
+        -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
+        49, 50,
+        389, 390,
+        3489, 3490, 3491,
+        4999, 5000, 5001
     ]] == '''
         -1986 -1985  -1 0 I II III IV V VI VII VIII IX X XI XII
         XLIX L  CCCLXXXIX CCCXC  MMMCDLXXXIX MMMCDXC MMMCDXCI
@@ -1109,33 +1121,45 @@ def test_counter_styles():
     '''.split()
 
     assert [counters.format(value, 'lower-alpha') for value in [
-        -1986, -1985,  -1, 0, 1, 2, 3, 4,  25, 26, 27, 28, 29,  2002, 2003
+        -1986, -1985,
+        -1, 0, 1, 2, 3, 4,
+        25, 26, 27, 28, 29,
+        2002, 2003
     ]] == '''
         -1986 -1985  -1 0 a b c d  y z aa ab ac bxz bya
     '''.split()
 
     assert [counters.format(value, 'upper-alpha') for value in [
-        -1986, -1985,  -1, 0, 1, 2, 3, 4,  25, 26, 27, 28, 29,  2002, 2003
+        -1986, -1985,
+        -1, 0, 1, 2, 3, 4,
+        25, 26, 27, 28, 29,
+        2002, 2003
     ]] == '''
         -1986 -1985  -1 0 A B C D  Y Z AA AB AC BXZ BYA
     '''.split()
 
     assert [counters.format(value, 'lower-latin') for value in [
-        -1986, -1985,  -1, 0, 1, 2, 3, 4,  25, 26, 27, 28, 29,  2002, 2003
+        -1986, -1985,
+        -1, 0, 1, 2, 3, 4,
+        25, 26, 27, 28, 29,
+        2002, 2003
     ]] == '''
         -1986 -1985  -1 0 a b c d  y z aa ab ac bxz bya
     '''.split()
 
     assert [counters.format(value, 'upper-latin') for value in [
-        -1986, -1985,  -1, 0, 1, 2, 3, 4,  25, 26, 27, 28, 29,  2002, 2003
+        -1986, -1985,
+        -1, 0, 1, 2, 3, 4,
+        25, 26, 27, 28, 29,
+        2002, 2003
     ]] == '''
         -1986 -1985  -1 0 A B C D  Y Z AA AB AC BXZ BYA
     '''.split()
 
 # http://test.csswg.org/suites/css2.1/20110323/html4/content-counter-009.htm
     assert [counters.format(value, 'georgian') for value in [
-        -1986, -1985,  -1, 0, 1,
-        2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
+        -1986, -1985,
+        -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
         20, 30, 40, 50, 60, 70, 80, 90, 100,
         200, 300, 400, 500, 600, 700, 800, 900, 1000,
         2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000,
@@ -1151,8 +1175,8 @@ def test_counter_styles():
 
 # http://test.csswg.org/suites/css2.1/20110323/html4/content-counter-010.htm
     assert [counters.format(value, 'armenian') for value in [
-        -1986, -1985,  -1, 0, 1,
-        2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
+        -1986, -1985,
+        -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
         20, 30, 40, 50, 60, 70, 80, 90, 100,
         200, 300, 400, 500, 600, 700, 800, 900, 1000,
         2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000,

@@ -262,16 +262,16 @@ else:
                         <edit name="fontfeatures"
                               mode="assign_replace">%s</edit>
                       </match>
-                  </fontconfig>''' % (
-                      filename,
-                      rule_descriptors['font_family'],
-                      FONTCONFIG_STYLE_CONSTANTS[
-                          rule_descriptors.get('font_style', 'normal')],
-                      FONTCONFIG_WEIGHT_CONSTANTS[
-                          rule_descriptors.get('font_weight', 'normal')],
-                      FONTCONFIG_STRETCH_CONSTANTS[
-                          rule_descriptors.get('font_stretch', 'normal')],
-                      filename, features_string)
+                    </fontconfig>''' % (
+                        filename,
+                        rule_descriptors['font_family'],
+                        FONTCONFIG_STYLE_CONSTANTS[
+                            rule_descriptors.get('font_style', 'normal')],
+                        FONTCONFIG_WEIGHT_CONSTANTS[
+                            rule_descriptors.get('font_weight', 'normal')],
+                        FONTCONFIG_STRETCH_CONSTANTS[
+                            rule_descriptors.get('font_stretch', 'normal')],
+                        filename, features_string)
                     fd, conf_filename = tempfile.mkstemp()
                     # TODO: coding is OK for <test> but what about <edit>?
                     os.write(fd, xml.encode(FILESYSTEM_ENCODING))

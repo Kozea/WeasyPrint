@@ -454,9 +454,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                             last_in_flow_child = previous_child
                             break
                     if new_children and block_level_page_break(
-                            last_in_flow_child,
-                            child
-                            ) == 'avoid':
+                            last_in_flow_child, child) == 'avoid':
                         result = find_earlier_page_break(
                             new_children, absolute_boxes, fixed_boxes)
                         if result:

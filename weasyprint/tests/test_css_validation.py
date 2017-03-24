@@ -518,21 +518,20 @@ def test_font_variant():
         'font_variant_alternates': 'historical-forms',
         'font_variant_caps': 'petite-caps',
     }
-    assert expand_to_dict('font-variant: lining-nums '
-                          'contextual small-caps common-ligatures') == {
-            'font_variant_ligatures': ['contextual', 'common-ligatures'],
-            'font_variant_numeric': ['lining-nums'],
-            'font_variant_caps': 'small-caps',
-        }
     assert expand_to_dict(
-        'font-variant: jis78 ruby proportional-width') == {
-            'font_variant_east_asian': ['jis78', 'ruby', 'proportional-width'],
-        }
+        'font-variant: lining-nums contextual small-caps common-ligatures'
+    ) == {
+        'font_variant_ligatures': ['contextual', 'common-ligatures'],
+        'font_variant_numeric': ['lining-nums'],
+        'font_variant_caps': 'small-caps',
+    }
+    assert expand_to_dict('font-variant: jis78 ruby proportional-width') == {
+        'font_variant_east_asian': ['jis78', 'ruby', 'proportional-width'],
+    }
     # CSS2-style font-variant
-    assert expand_to_dict(
-        'font-variant: small-caps') == {
-            'font_variant_caps': 'small-caps',
-        }
+    assert expand_to_dict('font-variant: small-caps') == {
+        'font_variant_caps': 'small-caps',
+    }
     assert_invalid('font-variant: normal normal')
     assert_invalid('font-variant: 2')
     assert_invalid('font-variant: ""')

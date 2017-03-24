@@ -765,11 +765,12 @@ def collapse_table_borders(table, grid_width, grid_height):
 
     def max_vertical_width(x, y, h):
         return max(
-            width for grid_row in vertical_borders[y:y+h]
+            width for grid_row in vertical_borders[y:y + h]
             for _, (_, width, _) in [grid_row[x]])
 
     def max_horizontal_width(x, y, w):
-        return max(width for _, (_, width, _) in horizontal_borders[y][x:x+w])
+        return max(
+            width for _, (_, width, _) in horizontal_borders[y][x:x + w])
 
     grid_y = 0
     for row_group in table.children:

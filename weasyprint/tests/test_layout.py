@@ -3326,7 +3326,7 @@ def test_linear_gradient():
     layout('repeating-linear-gradient(blue, lime 20px)',
            init=(200, 0, 200, 20))
     layout('repeating-linear-gradient(blue, lime 20px)',
-           'solid', (0, .5, .5, 1), [], [], scale=(1/20, 1/20))
+           'solid', (0, .5, .5, 1), [], [], scale=(1 / 20, 1 / 20))
 
     layout('linear-gradient(to bottom, blue, lime)', init=(200, 0, 200, 300))
     layout('linear-gradient(to top, blue, lime)', init=(200, 300, 200, 0))
@@ -3399,15 +3399,15 @@ def test_radial_gradient():
     layout('radial-gradient(0 1px, blue, lime)',
            init=(200, 150, 0, 1e-7), scale_y=1e14)
     layout('repeating-radial-gradient(20px 40px, blue, lime)',
-           init=(200, 150, 0, 20), scale_y=40/20)
+           init=(200, 150, 0, 20), scale_y=(40 / 20))
     layout('repeating-radial-gradient(20px 40px, blue, lime)',
-           init=(200, 150, 0, 20), scale_y=40/20, ctm_scale=(1/9, 1))
+           init=(200, 150, 0, 20), scale_y=(40 / 20), ctm_scale=(1 / 9, 1))
     layout('repeating-radial-gradient(20px 40px, blue, lime)',
-           init=(200, 150, 0, 20), scale_y=40/20, ctm_scale=(1, 1/19))
+           init=(200, 150, 0, 20), scale_y=(40 / 20), ctm_scale=(1, 1 / 19))
     layout('repeating-radial-gradient(20px 40px, blue, lime)',
-           'solid', (0, .5, .5, 1), [], [], ctm_scale=(1/11, 1))
+           'solid', (0, .5, .5, 1), [], [], ctm_scale=((1 / 11), 1))
     layout('repeating-radial-gradient(20px 40px, blue, lime)',
-           'solid', (0, .5, .5, 1), [], [], ctm_scale=(1, 1/21))
+           'solid', (0, .5, .5, 1), [], [], ctm_scale=(1, (1 / 21)))
     layout('repeating-radial-gradient(42px, blue -20px, lime 10px)',
            init=(200, 150, 10, 40))
     layout('repeating-radial-gradient(42px, blue -140px, lime -110px)',
@@ -3420,9 +3420,9 @@ def test_radial_gradient():
            init=(200, 150, 0, 20), colors=[(0, .5, .5, 1), lime])
 
     layout('radial-gradient(100px 120px, blue, lime)',
-           init=(200, 150, 0, 100), scale_y=120/100)
+           init=(200, 150, 0, 100), scale_y=(120 / 100))
     layout('radial-gradient(25% 40%, blue, lime)',
-           init=(200, 150, 0, 100), scale_y=120/100)
+           init=(200, 150, 0, 100), scale_y=(120 / 100))
 
     layout('radial-gradient(circle closest-side, blue, lime)',
            init=(200, 150, 0, 150))
@@ -3436,11 +3436,11 @@ def test_radial_gradient():
            init=(420, 281, 0, 19))
 
     layout('radial-gradient(closest-side, blue 20%, lime)',
-           init=(200, 150, 40, 200), scale_y=150/200)
+           init=(200, 150, 40, 200), scale_y=(150 / 200))
     layout('radial-gradient(closest-side at 300px 20%, blue, lime)',
-           init=(300, 60, 0, 100), scale_y=60/100)
+           init=(300, 60, 0, 100), scale_y=(60 / 100))
     layout('radial-gradient(closest-side at 10% 230px, blue, lime)',
-           init=(40, 230, 0, 40), scale_y=70/40)
+           init=(40, 230, 0, 40), scale_y=(70 / 40))
 
     layout('radial-gradient(circle farthest-side, blue, lime)',
            init=(200, 150, 0, 200))
@@ -3454,11 +3454,11 @@ def test_radial_gradient():
            init=(220, 310, 0, 310))
 
     layout('radial-gradient(farthest-side, blue, lime)',
-           init=(200, 150, 0, 200), scale_y=150/200)
+           init=(200, 150, 0, 200), scale_y=(150 / 200))
     layout('radial-gradient(farthest-side at 300px 20%, blue, lime)',
-           init=(300, 60, 0, 300), scale_y=240/300)
+           init=(300, 60, 0, 300), scale_y=(240 / 300))
     layout('radial-gradient(farthest-side at 10% 230px, blue, lime)',
-           init=(40, 230, 0, 360), scale_y=230/360)
+           init=(40, 230, 0, 360), scale_y=(230 / 360))
 
     layout('radial-gradient(circle closest-corner, blue, lime)',
            init=(200, 150, 0, 250))
@@ -3469,11 +3469,11 @@ def test_radial_gradient():
 
     sqrt2 = math.sqrt(2)
     layout('radial-gradient(closest-corner, blue, lime)',
-           init=(200, 150, 0, 200 * sqrt2), scale_y=150/200)
+           init=(200, 150, 0, 200 * sqrt2), scale_y=(150 / 200))
     layout('radial-gradient(closest-corner at 450px 100px, blue, lime)',
-           init=(450, 100, 0, 50 * sqrt2), scale_y=100/50)
+           init=(450, 100, 0, 50 * sqrt2), scale_y=(100 / 50))
     layout('radial-gradient(closest-corner at 40px 210px, blue, lime)',
-           init=(40, 210, 0, 40 * sqrt2), scale_y=90/40)
+           init=(40, 210, 0, 40 * sqrt2), scale_y=(90 / 40))
 
     layout('radial-gradient(circle farthest-corner, blue, lime)',
            init=(200, 150, 0, 250))
@@ -3484,11 +3484,11 @@ def test_radial_gradient():
            init=(400, 0, 0, 500))
 
     layout('radial-gradient(farthest-corner, blue, lime)',
-           init=(200, 150, 0, 200 * sqrt2), scale_y=150/200)
+           init=(200, 150, 0, 200 * sqrt2), scale_y=(150 / 200))
     layout('radial-gradient(farthest-corner at 450px 100px, blue, lime)',
-           init=(450, 100, 0, 450 * sqrt2), scale_y=200/450)
+           init=(450, 100, 0, 450 * sqrt2), scale_y=(200 / 450))
     layout('radial-gradient(farthest-corner at 40px 210px, blue, lime)',
-           init=(40, 210, 0, 360 * sqrt2), scale_y=210/360)
+           init=(40, 210, 0, 360 * sqrt2), scale_y=(210 / 360))
 
 
 @assert_no_logs

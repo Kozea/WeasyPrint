@@ -58,7 +58,7 @@ def layout_document(enable_hinting, style_for, get_image_from_uri, root_box,
         root, = page.children
         root_children.extend(layout_fixed_boxes(context, pages[:i]))
         root_children.extend(root.children)
-        root_children.extend(layout_fixed_boxes(context, pages[i+1:]))
+        root_children.extend(layout_fixed_boxes(context, pages[i + 1:]))
         root.children = root_children
         context.current_page = page_counter[0]
         page.children = (root,) + tuple(
