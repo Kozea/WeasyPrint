@@ -15,6 +15,7 @@ from __future__ import division
 import os
 import sys
 import tempfile
+import warnings
 
 from .compat import FILESYSTEM_ENCODING
 from .logger import LOGGER
@@ -40,15 +41,9 @@ class FontConfiguration:
 
 
 if sys.platform.startswith('win'):
-    class FontConfiguration(FontConfiguration):
-        def __init__(self):
-            LOGGER.warning('@font-face is currently not supported on Windows')
-            super(FontConfiguration, self).__init__()
+    warnings.warn('@font-face is currently not supported on Windows')
 elif pango.pango_version() < 13800:
-    class FontConfiguration(FontConfiguration):
-        def __init__(self):
-            LOGGER.warning('@font-face support needs Pango >= 1.38')
-            super(FontConfiguration, self).__init__()
+    warnings.warn('@font-face support needs Pango >= 1.38')
 else:
     ffi.cdef('''
         // FontConfig

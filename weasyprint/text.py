@@ -13,6 +13,7 @@
 from __future__ import division
 
 import re
+import warnings
 
 import cairocffi as cairo
 import cffi
@@ -22,6 +23,10 @@ from .compat import basestring
 from .logger import LOGGER
 
 # XXX No unicode_literals, cffi likes native strings
+
+
+if cairo.cairo_version() <= 11400:
+    warnings.warn('There are known rendering problems with Cairo <= 1.14.0')
 
 
 PANGO_ATTR_FONT_FEATURES_CACHE = {}
