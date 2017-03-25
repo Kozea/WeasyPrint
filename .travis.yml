@@ -1,6 +1,9 @@
 language: python
 sudo: false
 
+git:
+  submodules: false
+
 matrix:
   include:
     - os: linux
