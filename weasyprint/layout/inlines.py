@@ -378,19 +378,19 @@ def replaced_box_height(box, device_size):
     intrinsic_ratio = box.replacement.intrinsic_ratio
 
     # Test 'auto' on the computed width, not the used width
-    if box.style.height == 'auto' and box.style.width == 'auto':
+    if box.height == 'auto' and box.width == 'auto':
         box.height = intrinsic_height
-    elif box.style.height == 'auto' and intrinsic_ratio:
+    elif box.height == 'auto' and intrinsic_ratio:
         box.height = box.width / intrinsic_ratio
 
-    if (box.style.height == 'auto' and box.style.width == 'auto' and
+    if (box.height == 'auto' and box.width == 'auto' and
             intrinsic_height is not None):
         box.height = intrinsic_height
-    elif intrinsic_ratio is not None and box.style.height == 'auto':
+    elif intrinsic_ratio is not None and box.height == 'auto':
         box.height = box.width / intrinsic_ratio
-    elif box.style.height == 'auto' and intrinsic_height is not None:
+    elif box.height == 'auto' and intrinsic_height is not None:
         box.height = intrinsic_height
-    elif box.style.height == 'auto':
+    elif box.height == 'auto':
         device_width, _device_height = device_size
         box.height = min(150, device_width / 2)
 
