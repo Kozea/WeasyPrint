@@ -181,8 +181,8 @@ Really carefully. Don't cheat.
 on your own, don't even try to report an issue, kittens will die because of
 you.**
 
-- Install `Python 3.5.x <https://www.python.org/downloads/release/python>`_
-  **with "Add Python 3.5 to PATH" checked**:
+- Install `Python 3.6.x <https://www.python.org/downloads/release/python>`_
+  **with "Add Python 3.6 to PATH" checked**:
 
   - "Windows x86 executable installer" on Windows 32 bit,
   - "Windows x86-64 executable installer" on Windows 64 bit,
@@ -201,8 +201,8 @@ you.**
   in `Python's wiki <https://wiki.python.org/moin/WindowsCompilers>`_,
 - download `lxml for Windows <http://www.lfd.uci.edu/~gohlke/pythonlibs/#lxml>`_:
 
-  - "lxml-x.x.x-cp35-cp35m-win32.whl" on Windows 32 bit,
-  - "lxml-x.x.x-cp35-cp35m-win_amd64.whl" on Windows 64 bit,
+  - "lxml-x.x.x-cp36-cp36m-win32.whl" on Windows 32 bit,
+  - "lxml-x.x.x-cp36-cp36m-win_amd64.whl" on Windows 64 bit,
 
 - install lxml with ``python -m pip install path/to/lxml-xxx.whl``
 - install WeasyPrint with ``python -m pip install weasyprint``,
