@@ -96,11 +96,19 @@ lxml needs *libxml2* and *libxslt*, CFFI needs *libffi*.
 On Debian, the package names with development files are
 ``libxml2-dev``, ``libxslt1-dev`` and ``libffi-dev``.
 
+You should use Python 3 instead of Python 2. Seriously.
+
 If your favorite system is not listed here but you know the package names,
 `tell us <http://weasyprint.org/community/>`_ so we can add it here.
 
 Debian / Ubuntu
 ~~~~~~~~~~~~~~~
+
+Ubuntu 16.04 Xenial or newer:
+
+.. code-block:: sh
+
+    sudo apt-get install python3-dev python3-pip python3-lxml python3-cffi libcairo2 libpango1.0-0 libgdk-pixbuf2.0-0 shared-mime-info
 
 Debian 8.0 Jessie or newer, Ubuntu 14.04 Trusty or newer:
 
