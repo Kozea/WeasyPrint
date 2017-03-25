@@ -256,15 +256,13 @@ def test_links():
 
 @assert_no_logs
 def test_relative_links():
-    # Relative URI reference without a base URI: not allowed
-    with capture_logs() as logs:
-        links = get_links(
-            '<a href="../lipsum" style="display: block">',
-            base_url=None)
-    assert links == [[]]
-    assert len(logs) == 1
-    assert 'WARNING: Relative URI reference without a base URI' in logs[0]
+    # Relative URI reference without a base URI: allowed for anchors
+    links = get_links(
+        '<a href="../lipsum" style="display: block">',
+        base_url=None)
+    assert links == [[('external', '../lipsum', (50, 950, 450, 950))]]
 
+    # Relative URI reference without a base URI: not supported for -weasy-link
     with capture_logs() as logs:
         links = get_links(
             '<div style="-weasy-link: url(../lipsum)">',

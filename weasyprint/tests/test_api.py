@@ -759,16 +759,23 @@ def test_links():
                  (5, 10, 190, 0))]],
         base_url='http://weasyprint.org/foo/bar/')
 
-    # Relative URI reference without a base URI: not allowed
+    # Relative URI reference without a base URI: allowed for links
     assert_links(
-        '<a href="../lipsum">',
-        [[]], [{}], [[]], base_url=None, warnings=[
-            'WARNING: Relative URI reference without a base URI'])
+        '''
+            <body style="width: 200px">
+            <a href="../lipsum" style="display: block; margin: 10px 5px">
+        ''', [[('external', '../lipsum', (5, 10, 190, 0))]], [{}],
+        [[('external', '../lipsum', (5, 10, 190, 0))]], base_url=None)
+
+    # Relative URI reference without a base URI: not supported for -weasy-link
     assert_links(
-        '<div style="-weasy-link: url(../lipsum)">',
-        [[]], [{}], [[]], base_url=None, warnings=[
-            "WARNING: Ignored `-weasy-link: url(../lipsum)` at 1:1, "
-            "Relative URI reference without a base URI: '../lipsum'."])
+        '''
+            <body style="width: 200px">
+            <div style="-weasy-link: url(../lipsum);
+                        display: block; margin: 10px 5px">
+        ''', [[]], [{}], [[]], base_url=None, warnings=[
+            'WARNING: Ignored `-weasy-link: url(../lipsum)` at 1:1, '
+            'Relative URI reference without a base URI'])
 
     # Internal or absolute URI reference without a base URI: OK
     assert_links(

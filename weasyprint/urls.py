@@ -97,36 +97,37 @@ def element_base_url(element):
     return element.getroottree().docinfo.URL
 
 
-def get_url_attribute(element, attr_name):
+def get_url_attribute(element, attr_name, allow_relative=False):
     """Get the URI corresponding to the ``attr_name`` attribute.
 
     Return ``None`` if:
 
     * the attribute is empty or missing or,
-    * the value is a relative URI but the document has no base URI.
+    * the value is a relative URI but the document has no base URI and
+      ``allow_relative`` is ``False``.
 
-    Otherwise, return an absolute URI.
+    Otherwise return an URI, absolute if possible.
 
     """
     value = element.get(attr_name, '').strip()
     if value:
-        return url_join(element_base_url(element), value,
-                        '<%s %s="%s"> at line %s', element.tag, attr_name,
-                        value, element.sourceline)
+        return url_join(
+            element_base_url(element), value, allow_relative,
+            '<%s %s="%s"> at line %s',
+            (element.tag, attr_name, value, element.sourceline))
 
 
-def url_join(base_url, url, context, *args):
-    """Like urllib.urljoin, but issue a warning and return None if base_url
-    is required but missing.
-
-    """
+def url_join(base_url, url, allow_relative, context, context_args):
+    """Like urllib.urljoin, but warn if base_url is required but missing."""
     if url_is_absolute(url):
         return iri_to_uri(url)
     elif base_url:
         return iri_to_uri(urljoin(base_url, url))
+    elif allow_relative:
+        return iri_to_uri(url)
     else:
         LOGGER.warning('Relative URI reference without a base URI: ' + context,
-                       *args)
+                       *context_args)
         return None
 
 
@@ -139,7 +140,7 @@ def get_link_attribute(element, attr_name):
     if attr_value.startswith('#') and len(attr_value) > 1:
         # Do not require a base_url when the value is just a fragment.
         return 'internal', unquote(attr_value[1:])
-    uri = get_url_attribute(element, attr_name)
+    uri = get_url_attribute(element, attr_name, allow_relative=True)
     if uri:
         document_url = element_base_url(element)
         if document_url:

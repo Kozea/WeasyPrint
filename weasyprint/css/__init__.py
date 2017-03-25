@@ -628,8 +628,10 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
         elif rule.at_keyword == '@import':
             if not evaluate_media_query(rule.media, device_media_type):
                 continue
-            url = url_join(base_url, rule.uri, '@import at %s:%s',
-                           rule.line, rule.column)
+            url = url_join(
+                base_url, rule.uri, allow_relative=False,
+                context='@import at %s:%s',
+                context_args=(rule.line, rule.column))
             if url is not None:
                 try:
                     stylesheet = CSS(
