@@ -14,6 +14,7 @@
 from __future__ import division
 
 import os.path
+from wsgiref.simple_server import make_server
 
 from weasyprint import CSS, HTML
 from weasyprint.compat import base64_encode, iteritems, parse_qs
@@ -151,16 +152,6 @@ def app(environ, start_response):
 
 def run(port=5000):
     host = '127.0.0.1'
-    try:
-        from werkzeug.serving import run_simple
-    except ImportError:
-        pass
-    else:
-        run_simple(host, port, app, use_reloader=True, use_debugger=True)
-        return
-    print('Could not import Werkzeug, running without the reloader '
-          'or debugger.')
-    from wsgiref.simple_server import make_server
     server = make_server(host, port, app)
     print('Listening on http://%s:%s/ ...' % (host, port))
     server.serve_forever()
