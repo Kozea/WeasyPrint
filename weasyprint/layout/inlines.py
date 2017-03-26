@@ -1017,8 +1017,9 @@ def add_word_spacing(context, box, extra_word_spacing, x_advance):
         box.position_x += x_advance
         previous_x_advance = x_advance
         for child in box.children:
-            x_advance = add_word_spacing(
-                context, child, extra_word_spacing, x_advance)
+            if child.is_in_normal_flow():
+                x_advance = add_word_spacing(
+                    context, child, extra_word_spacing, x_advance)
         box.width += x_advance - previous_x_advance
     else:
         # Atomic inline-level box
