@@ -661,13 +661,13 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                     if not old_child.is_in_normal_flow():
                         continue
                     if child.style.float == 'left':  # and direction is ltr
-                        old_child.translate(dx=child.margin_width())
+                        old_child.translate(dx=max(child.margin_width(), 0))
                     # elif child.style.float == 'right' and direction is rtl:
                     #    old_child.translate(dx=-child.margin_width())
                 if child.style.float == 'left':
-                    position_x += child.margin_width()
+                    position_x += max(child.margin_width(), 0)
                 elif child.style.float == 'right':
-                    max_x -= child.margin_width()
+                    max_x -= max(child.margin_width(), 0)
             continue
 
         new_child, resume_at, preserved = split_inline_level(
