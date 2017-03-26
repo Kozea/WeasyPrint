@@ -86,7 +86,7 @@ def float_layout(context, box, containing_block, device_size, absolute_boxes,
 
 def find_float_position(context, box, containing_block):
     """Get the right position of the float ``box``."""
-    # See http://www.w3.org/TR/CSS2/visuren.html#dis-pos-flo
+    # See http://www.w3.org/TR/CSS2/visuren.html#float-position
 
     # Point 4 is already handled as box.position_y is set according to the
     # containing box top position, with collapsing margins handled
