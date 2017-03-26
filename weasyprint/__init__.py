@@ -17,6 +17,7 @@ from __future__ import division, unicode_literals
 
 import contextlib  # noqa
 import html5lib  # noqa
+import tinycss2
 
 
 VERSION = '0.36'
@@ -226,7 +227,7 @@ class HTML(object):
 
 
 class CSS(object):
-    """Represents a CSS stylesheet parsed by tinycss.
+    """Represents a CSS stylesheet parsed by tinycss2.
 
     An instance is created in the same way as :class:`HTML`, except that
     the ``tree`` parameter is not available. All other parameters are the same.
@@ -247,22 +248,20 @@ class CSS(object):
         with result as (source_type, source, base_url, protocol_encoding):
             if source_type == 'string' and not isinstance(source, bytes):
                 # unicode, no encoding
-                stylesheet = PARSER.parse_stylesheet(source)
+                stylesheet = tinycss2.parse_stylesheet(source)
             else:
                 if source_type == 'file_obj':
                     source = source.read()
-                stylesheet = PARSER.parse_stylesheet_bytes(
-                    source, linking_encoding=encoding,
+                stylesheet, encoding = tinycss2.parse_stylesheet_bytes(
+                    source, environment_encoding=encoding,
                     protocol_encoding=protocol_encoding)
         self.base_url = base_url
         self.rules = []
         # TODO: fonts are stored here and should be cleaned after rendering
         self.fonts = []
         preprocess_stylesheet(
-            media_type, base_url, stylesheet.rules, url_fetcher, self.rules,
+            media_type, base_url, stylesheet, url_fetcher, self.rules,
             self.fonts, font_config)
-        for error in stylesheet.errors:
-            LOGGER.warning(error)
 
 
 class Attachment(object):
@@ -358,7 +357,7 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
         ))
 
 # Work around circular imports.
-from .css import PARSER, preprocess_stylesheet  # noqa
+from .css import preprocess_stylesheet  # noqa
 from .html import (
     find_base_url, HTML5_UA_STYLESHEET, HTML5_PH_STYLESHEET,
     get_html_metadata)  # noqa

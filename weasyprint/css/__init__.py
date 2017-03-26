@@ -22,22 +22,20 @@ from __future__ import division, unicode_literals
 
 import re
 
-import tinycss
+import tinycss2
 import cssselect
 import lxml.etree
 
 from . import properties
 from . import computed_values
 from .descriptors import preprocess_descriptors
-from .validation import preprocess_declarations
+from .validation import (preprocess_declarations, remove_whitespace,
+                         split_on_comma)
 from ..urls import (element_base_url, get_url_attribute, url_join,
                     URLFetchingError)
 from ..logger import LOGGER
 from ..compat import iteritems
 from .. import CSS
-
-
-PARSER = tinycss.make_parser('page3', 'fonts3')
 
 
 # Reject anything not in here:
@@ -165,10 +163,8 @@ def find_stylesheets(element_tree, device_media_type, url_fetcher,
                                    href, exc)
 
 
-def check_style_attribute(parser, element, style_attribute):
-    declarations, errors = parser.parse_style_attr(style_attribute)
-    for error in errors:
-        LOGGER.warning(error)
+def check_style_attribute(_parser, element, style_attribute):
+    declarations = tinycss2.parse_declaration_list(style_attribute)
     return element, declarations, element_base_url(element)
 
 
@@ -182,7 +178,7 @@ def find_style_attributes(element_tree, presentational_hints=False):
     are returned with specificity ``(0, 0, 0, 0)``.
 
     """
-    parser = PARSER
+    parser = None  # FIXME remove this
     for element in element_tree.iter():
         specificity = (1, 0, 0, 0)
         style_attribute = element.get('style')
@@ -594,11 +590,11 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
     """
     selector_to_xpath = cssselect.HTMLTranslator().selector_to_xpath
     for rule in stylesheet_rules:
-        if not rule.at_keyword:
+        if rule.type == 'qualified-rule':
             declarations = list(preprocess_declarations(
-                base_url, rule.declarations))
+                base_url, tinycss2.parse_declaration_list(rule.content)))
             if declarations:
-                selector_string = rule.selector.as_css()
+                selector_string = tinycss2.serialize(rule.prelude)
                 try:
                     selector_list = []
                     for selector in cssselect.parse(selector_string):
@@ -625,13 +621,24 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                     continue
                 rules.append((rule, selector_list, declarations))
 
-        elif rule.at_keyword == '@import':
-            if not evaluate_media_query(rule.media, device_media_type):
+        elif rule.type == 'at-rule' and rule.at_keyword == 'import':
+            tokens = remove_whitespace(rule.prelude)
+            if tokens and tokens[0].type in ('url', 'string'):
+                url = tokens[0].value
+            else:
+                continue
+            media = parse_media_query(tokens[1:])
+            if media is None:
+                LOGGER.warning('Invalid media type "%s" '
+                               'the whole @import rule was ignored at %s:%s.',
+                               tinycss2.serialize(rule.prelude),
+                               rule.source_line, rule.source_column)
+            if not evaluate_media_query(media, device_media_type):
                 continue
             url = url_join(
-                base_url, rule.uri, allow_relative=False,
+                base_url, url, allow_relative=False,
                 context='@import at %s:%s',
-                context_args=(rule.line, rule.column))
+                context_args=(rule.source_line, rule.source_column))
             if url is not None:
                 try:
                     stylesheet = CSS(
@@ -644,49 +651,81 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                     for result in stylesheet.rules:
                         rules.append(result)
 
-        elif rule.at_keyword == '@media':
-            if not evaluate_media_query(rule.media, device_media_type):
+        elif rule.type == 'at-rule' and rule.at_keyword == 'media':
+            media = parse_media_query(rule.prelude)
+            if media is None:
+                LOGGER.warning('Invalid media type "%s" '
+                               'the whole @media rule was ignored at %s:%s.',
+                               tinycss2.serialize(rule.prelude),
+                               rule.source_line, rule.source_column)
                 continue
+            if not evaluate_media_query(media, device_media_type):
+                continue
+            content_rules = tinycss2.parse_rule_list(rule.content)
             preprocess_stylesheet(
-                device_media_type, base_url, rule.rules, url_fetcher, rules,
+                device_media_type, base_url, content_rules, url_fetcher, rules,
                 fonts, font_config)
 
-        elif rule.at_keyword == '@page':
-            page_name, pseudo_class = rule.selector
+        elif rule.type == 'at-rule' and rule.at_keyword == 'page':
+            tokens = remove_whitespace(rule.prelude)
             # TODO: support named pages (see CSS3 Paged Media)
-            if page_name is not None:
-                LOGGER.warning('Named pages are not supported yet, the whole '
-                               '@page %s rule was ignored.', page_name + (
-                                   ':' + pseudo_class if pseudo_class else ''))
+            if not tokens:
+                pseudo_class = None
+                specificity = (0, 0)
+            elif (len(tokens) == 2 and
+                    tokens[0].type == 'literal' and
+                    tokens[0].value == ':' and
+                    tokens[1].type == 'ident'):
+                pseudo_class = tokens[1].lower_value
+                specificity = {
+                    'first': (1, 0), 'blank': (1, 0),
+                    'left': (0, 1), 'right': (0, 1),
+                }.get(pseudo_class)
+                if not specificity:
+                    LOGGER.warning('Unknown @page pseudo-class "%s", '
+                                   'the whole @page rule was ignored '
+                                   'at %s:%s.',
+                                   pseudo_class,
+                                   rule.source_line, rule.source_column)
+                    continue
+            else:
+                LOGGER.warning('Unsupported @page selector "%s", '
+                               'the whole @page rule was ignored at %s:%s.',
+                               tinycss2.serialize(rule.prelude),
+                               rule.source_line, rule.source_column)
                 continue
-            declarations = list(preprocess_declarations(
-                base_url, rule.declarations))
+            content = tinycss2.parse_declaration_list(rule.content)
+            declarations = list(preprocess_declarations(base_url, content))
 
             # Use a double lambda to have a closure that holds page_types
             match = (lambda page_types: lambda _document: page_types)(
                 PAGE_PSEUDOCLASS_TARGETS[pseudo_class])
-            specificity = rule.specificity
 
             if declarations:
                 selector_list = [Selector(specificity, None, match)]
                 rules.append((rule, selector_list, declarations))
 
-            for margin_rule in rule.at_rules:
+            for margin_rule in content:
+                if margin_rule.type != 'at-rule':
+                    continue
                 declarations = list(preprocess_declarations(
-                    base_url, margin_rule.declarations))
+                    base_url,
+                    tinycss2.parse_declaration_list(margin_rule.content)))
                 if declarations:
                     selector_list = [Selector(
-                        specificity, margin_rule.at_keyword, match)]
+                        specificity, '@' + margin_rule.at_keyword, match)]
                     rules.append((margin_rule, selector_list, declarations))
 
-        elif rule.at_keyword == '@font-face':
-            rule_descriptors = dict(list(preprocess_descriptors(
-                base_url, rule.declarations)))
+        elif rule.type == 'at-rule' and rule.at_keyword == 'font-face':
+            content = tinycss2.parse_declaration_list(rule.content)
+            rule_descriptors = dict(preprocess_descriptors(
+                base_url, content))
             for key in ('src', 'font_family'):
                 if key not in rule_descriptors:
                     LOGGER.warning(
                         "Missing %s descriptor in '@font-face' rule at %s:%s",
-                        key.replace('_', '-'), rule.line, rule.column)
+                        key.replace('_', '-'),
+                        rule.source_line, rule.source_column)
                     break
             else:
                 if font_config is not None:
@@ -694,6 +733,23 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                         rule_descriptors, url_fetcher)
                     if font_filename:
                         fonts.append(font_filename)
+
+
+def parse_media_query(tokens):
+    tokens = remove_whitespace(tokens)
+    if not tokens:
+        return ['all']
+    else:
+        media = []
+        for part in split_on_comma(tokens):
+            types = [token.type for token in part]
+            if types == ['ident']:
+                media.append(part[0].lower_value)
+            else:
+                LOGGER.warning('Expected a media type, got ' +
+                               tinycss2.serialize(part))
+                return
+        return media
 
 
 def get_all_computed_styles(html, user_stylesheets=None,

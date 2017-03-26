@@ -13,14 +13,15 @@
 
 from __future__ import division, unicode_literals
 
-from tinycss.parsing import remove_whitespace
+import tinycss2
 
 from ..compat import unquote
 from ..logger import LOGGER
-from .validation import (
-    InvalidValues, comma_separated_list, expand_font_variant,
-    font_feature_settings, get_keyword, safe_urljoin, single_keyword,
-    single_token, validate_non_shorthand)
+from .validation import (InvalidValues, comma_separated_list,
+                         expand_font_variant, font_feature_settings,
+                         get_keyword, remove_whitespace, safe_urljoin,
+                         single_keyword, single_token, validate_non_shorthand)
+
 
 DESCRIPTORS = {}
 
@@ -54,14 +55,14 @@ def descriptor(descriptor_name=None, wants_base_url=False):
 @descriptor()
 def font_family(tokens, allow_spaces=False):
     """``font-family`` descriptor validation."""
-    allowed_types = ['IDENT']
+    allowed_types = ['ident']
     if allow_spaces:
         allowed_types.append('S')
-    if len(tokens) == 1 and tokens[0].type == 'STRING':
+    if len(tokens) == 1 and tokens[0].type == 'string':
         return tokens[0].value
     if tokens and all(token.type in allowed_types for token in tokens):
         return ' '.join(
-            token.value for token in tokens if token.type == 'IDENT')
+            token.value for token in tokens if token.type == 'ident')
 
 
 @descriptor(wants_base_url=True)
@@ -70,11 +71,11 @@ def src(tokens, base_url):
     """``src`` descriptor validation."""
     if len(tokens) <= 2:
         token = tokens.pop()
-        if token.type == 'FUNCTION' and token.function_name == 'format':
+        if token.type == 'function' and token.lower_name == 'format':
             token = tokens.pop()
-        if token.type == 'FUNCTION' and token.function_name == 'local':
+        if token.type == 'function' and token.lower_name == 'local':
             return 'local', font_family(token.content, allow_spaces=True)
-        if token.type == 'URI':
+        if token.type == 'url':
             if token.value.startswith('#'):
                 return 'internal', unquote(token.value[1:])
             else:
@@ -95,9 +96,9 @@ def font_weight(token):
     keyword = get_keyword(token)
     if keyword in ('normal', 'bold'):
         return keyword
-    if token.type == 'INTEGER':
-        if token.value in [100, 200, 300, 400, 500, 600, 700, 800, 900]:
-            return token.value
+    if token.type == 'number' and token.int_value is not None:
+        if token.int_value in [100, 200, 300, 400, 500, 600, 700, 800, 900]:
+            return token.int_value
 
 
 @descriptor()
@@ -157,15 +158,17 @@ def preprocess_descriptors(base_url, descriptors):
 
     """
     for descriptor in descriptors:
+        if descriptor.type != 'declaration' or descriptor.important:
+            continue
         tokens = remove_whitespace(descriptor.value)
         try:
             # Use list() to consume generators now and catch any error.
             result = list(validate(base_url, descriptor.name, tokens))
         except InvalidValues as exc:
             LOGGER.warning(
-                'Ignored `%s: %s` at %i:%i, %s.',
-                descriptor.name, descriptor.value.as_css(),
-                descriptor.line, descriptor.column,
+                'Ignored `%s:%s` at %i:%i, %s.',
+                descriptor.name, tinycss2.serialize(descriptor.value),
+                descriptor.source_line, descriptor.source_column,
                 exc.args[0] if exc.args and exc.args[0] else 'invalid value')
             continue
 

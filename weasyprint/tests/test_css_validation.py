@@ -14,7 +14,9 @@ from __future__ import division, unicode_literals
 
 import math
 
-from ..css import PARSER, preprocess_declarations
+import tinycss2
+
+from ..css import preprocess_declarations
 from ..css.properties import INITIAL_VALUES
 from ..images import LinearGradient, RadialGradient
 from .testing_utils import almost_equal, assert_no_logs, capture_logs
@@ -22,8 +24,7 @@ from .testing_utils import almost_equal, assert_no_logs, capture_logs
 
 def expand_to_dict(css, expected_error=None):
     """Helper to test shorthand properties expander functions."""
-    declarations, errors = PARSER.parse_style_attr(css)
-    assert not errors
+    declarations = tinycss2.parse_declaration_list(css)
 
     with capture_logs() as logs:
         base_url = 'http://weasyprint.org/foo/'

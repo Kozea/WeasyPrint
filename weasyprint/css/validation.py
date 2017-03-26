@@ -16,8 +16,8 @@ from __future__ import division, unicode_literals
 import functools
 import math
 
-from tinycss.color3 import parse_color
-from tinycss.parsing import remove_whitespace, split_on_comma
+import tinycss2
+from tinycss2.color3 import parse_color
 
 from . import computed_values
 from ..compat import unquote, urljoin
@@ -125,8 +125,8 @@ def get_keyword(token):
     Otherwise return ``None``.
 
     """
-    if token.type == 'IDENT':
-        return token.value.lower()
+    if token.type == 'ident':
+        return token.lower_value
 
 
 def get_single_keyword(tokens):
@@ -137,8 +137,8 @@ def get_single_keyword(tokens):
     """
     if len(tokens) == 1:
         token = tokens[0]
-        if token.type == 'IDENT':
-            return token.value.lower()
+        if token.type == 'ident':
+            return token.lower_value
 
 
 def single_keyword(function):
@@ -179,11 +179,14 @@ def comma_separated_list(function):
 
 
 def get_length(token, negative=True, percentage=False):
-    if (token.unit in LENGTH_UNITS or
-            (percentage and token.unit == '%') or
-            (token.type in ('INTEGER', 'NUMBER') and token.value == 0)):
+    if percentage and token.type == 'percentage':
+        if negative or token.value >= 0:
+            return Dimension(token.value, '%')
+    if token.type == 'dimension' and token.unit in LENGTH_UNITS:
         if negative or token.value >= 0:
             return Dimension(token.value, token.unit)
+    if token.type == 'number' and token.value == 0:
+        return Dimension(0, None)
 
 
 # http://dev.w3.org/csswg/css3-values/#angles
@@ -198,9 +201,10 @@ ANGLE_TO_RADIANS = {
 
 def get_angle(token):
     """Return the value in radians of an <angle> token, or None."""
-    factor = ANGLE_TO_RADIANS.get(token.unit)
-    if factor is not None:
-        return token.value * factor
+    if token.type == 'dimension':
+        factor = ANGLE_TO_RADIANS.get(token.unit)
+        if factor is not None:
+            return token.value * factor
 
 
 # http://dev.w3.org/csswg/css-values/#resolution
@@ -284,10 +288,10 @@ def color(token):
 @comma_separated_list
 @single_token
 def background_image(token, base_url):
-    if token.type != 'FUNCTION':
+    if token.type != 'function':
         return image_url([token], base_url)
-    arguments = split_on_comma(t for t in token.content if t.type != 'S')
-    name = token.function_name.lower()
+    arguments = split_on_comma(remove_whitespace(token.arguments))
+    name = token.lower_name
     if name in ('linear-gradient', 'repeating-linear-gradient'):
         direction, color_stops = parse_linear_gradient_parameters(arguments)
         if color_stops:
@@ -402,13 +406,13 @@ def image_url(token, base_url):
     """``*-image`` properties validation."""
     if get_keyword(token) == 'none':
         return 'none', None
-    if token.type == 'URI':
+    if token.type == 'url':
         return 'url', safe_urljoin(base_url, token.value)
 
 
 class CenterKeywordFakeToken(object):
-    type = 'IDENT'
-    value = 'center'
+    type = 'ident'
+    lower_value = 'center'
     unit = None
 
 
@@ -715,28 +719,28 @@ def validate_content_token(base_url, token):
         return ('QUOTE', quote_type)
 
     type_ = token.type
-    if type_ == 'STRING':
+    if type_ == 'string':
         return ('STRING', token.value)
-    if type_ == 'URI':
+    if type_ == 'url':
         return ('URI', safe_urljoin(base_url, token.value))
     function = parse_function(token)
     if function:
         name, args = function
         prototype = (name, [a.type for a in args])
         args = [getattr(a, 'value', a) for a in args]
-        if prototype == ('attr', ['IDENT']):
+        if prototype == ('attr', ['ident']):
             return (name, args[0])
-        elif prototype in (('counter', ['IDENT']),
-                           ('counters', ['IDENT', 'STRING'])):
+        elif prototype in (('counter', ['ident']),
+                           ('counters', ['ident', 'string'])):
             args.append('decimal')
             return (name, args)
-        elif prototype in (('counter', ['IDENT', 'IDENT']),
-                           ('counters', ['IDENT', 'STRING', 'IDENT'])):
+        elif prototype in (('counter', ['ident', 'ident']),
+                           ('counters', ['ident', 'string', 'ident'])):
             style = args[-1]
             if style in ('none', 'decimal') or style in counters.STYLES:
                 return (name, args)
-        elif prototype in (('string', ['IDENT']),
-                           ('string', ['IDENT', 'IDENT'])):
+        elif prototype in (('string', ['ident']),
+                           ('string', ['ident', 'ident'])):
             if len(args) > 1:
                 args[1] = args[1].lower()
                 if args[1] not in ('first', 'start', 'last', 'first-except'):
@@ -749,14 +753,14 @@ def parse_function(function_token):
     with comma-separated arguments, or None.
     .
     """
-    if function_token.type == 'FUNCTION':
-        content = [t for t in function_token.content if t.type != 'S']
+    if function_token.type == 'function':
+        content = remove_whitespace(function_token.arguments)
         if not content or len(content) % 2:
             for token in content[1::2]:
-                if token.type != 'DELIM' or token.value != ',':
+                if token.type != 'literal' or token.value != ',':
                     break
             else:
-                return function_token.function_name.lower(), content[::2]
+                return function_token.lower_name, content[::2]
 
 
 @validator()
@@ -780,15 +784,16 @@ def counter(tokens, default_integer):
     assert token, 'got an empty token list'
     results = []
     while token is not None:
-        if token.type != 'IDENT':
+        if token.type != 'ident':
             return  # expected a keyword here
         counter_name = token.value
         if counter_name in ('none', 'initial', 'inherit'):
             raise InvalidValues('Invalid counter name: ' + counter_name)
         token = next(tokens, None)
-        if token is not None and token.type == 'INTEGER':
+        if token is not None and (
+                token.type == 'number' and token.int_value is not None):
             # Found an integer. Use it and get the next token
-            integer = token.value
+            integer = token.int_value
             token = next(tokens, None)
         else:
             # Not an integer. Might be the next counter name.
@@ -876,9 +881,9 @@ def float_(keyword):  # XXX do not hide the "float" builtin
 @comma_separated_list
 def font_family(tokens):
     """``font-family`` property validation."""
-    if len(tokens) == 1 and tokens[0].type == 'STRING':
+    if len(tokens) == 1 and tokens[0].type == 'string':
         return tokens[0].value
-    elif tokens and all(token.type == 'IDENT' for token in tokens):
+    elif tokens and all(token.type == 'ident' for token in tokens):
         return ' '.join(token.value for token in tokens)
 
 
@@ -894,7 +899,7 @@ def font_language_override(token):
     keyword = get_keyword(token)
     if keyword == 'normal':
         return keyword
-    elif token.type == 'STRING':
+    elif token.type == 'string':
         return token.value
 
 
@@ -914,7 +919,7 @@ def font_variant_ligatures(tokens):
     for couple in couples:
         all_values.extend(couple)
     for token in tokens:
-        if token.type != 'IDENT':
+        if token.type != 'ident':
             return None
         if token.value in all_values:
             concurrent_values = [
@@ -959,7 +964,7 @@ def font_variant_numeric(tokens):
     for couple in couples:
         all_values.extend(couple)
     for token in tokens:
-        if token.type != 'IDENT':
+        if token.type != 'ident':
             return None
         if token.value in all_values:
             concurrent_values = [
@@ -986,16 +991,17 @@ def font_feature_settings(tokens):
 
         if len(tokens) == 2:
             token = tokens.pop()
-            if token.type == 'IDENT':
+            if token.type == 'ident':
                 value = {'on': 1, 'off': 0}.get(token.value)
-            elif token.type == 'INTEGER' and token.value >= 0:
-                value = token.value
+            elif (token.type == 'number' and
+                    token.int_value is not None and token.int_value >= 0):
+                value = token.int_value
         elif len(tokens) == 1:
             value = 1
 
         if len(tokens) == 1:
             token = tokens.pop()
-            if token.type == 'STRING' and len(token.value) == 4:
+            if token.type == 'string' and len(token.value) == 4:
                 if all(0x20 <= ord(letter) <= 0x7f for letter in token.value):
                     feature = token.value
 
@@ -1028,7 +1034,7 @@ def font_variant_east_asian(tokens):
     for couple in couples:
         all_values.extend(couple)
     for token in tokens:
-        if token.type != 'IDENT':
+        if token.type != 'ident':
             return None
         if token.value in all_values:
             concurrent_values = [
@@ -1082,9 +1088,9 @@ def font_weight(token):
     keyword = get_keyword(token)
     if keyword in ('normal', 'bold', 'bolder', 'lighter'):
         return keyword
-    if token.type == 'INTEGER':
-        if token.value in [100, 200, 300, 400, 500, 600, 700, 800, 900]:
-            return token.value
+    if token.type == 'number' and token.int_value is not None:
+        if token.int_value in [100, 200, 300, 400, 500, 600, 700, 800, 900]:
+            return token.int_value
 
 
 @validator()
@@ -1112,9 +1118,11 @@ def line_height(token):
     """``line-height`` property validation."""
     if get_keyword(token) == 'normal':
         return 'normal'
-    if token.type in ('NUMBER', 'INTEGER', 'PERCENTAGE') and token.value >= 0:
-        return Dimension(token.value, token.unit)
-    elif token.type == 'DIMENSION' and token.value >= 0:
+    if token.type == 'number' and token.value >= 0:
+        return Dimension(token.value, None)
+    if token.type == 'percentage' and token.value >= 0:
+        return Dimension(token.value, '%')
+    elif token.type == 'dimension' and token.value >= 0:
         return get_length(token)
 
 
@@ -1162,7 +1170,7 @@ def max_width_height(token):
 @single_token
 def opacity(token):
     """Validation for the ``opacity`` property."""
-    if token.type in ('NUMBER', 'INTEGER'):
+    if token.type == 'number':
         return min(1, max(0, token.value))
 
 
@@ -1172,8 +1180,8 @@ def z_index(token):
     """Validation for the ``z-index`` property."""
     if get_keyword(token) == 'auto':
         return 'auto'
-    if token.type == 'INTEGER':
-        return token.value
+    if token.type == 'number' and token.int_value is not None:
+        return token.int_value
 
 
 @validator('orphans')
@@ -1181,8 +1189,8 @@ def z_index(token):
 @single_token
 def orphans_widows(token):
     """Validation for the ``orphans`` and ``widows`` properties."""
-    if token.type == 'INTEGER':
-        value = token.value
+    if token.type == 'number' and token.int_value is not None:
+        value = token.int_value
         if value >= 1:
             return value
 
@@ -1191,8 +1199,8 @@ def orphans_widows(token):
 @single_token
 def column_count(token):
     """Validation for the ``column-count`` property."""
-    if token.type == 'INTEGER':
-        value = token.value
+    if token.type == 'number' and token.int_value is not None:
+        value = token.int_value
         if value >= 1:
             return value
     if get_keyword(token) == 'auto':
@@ -1217,7 +1225,7 @@ def position(keyword):
 def quotes(tokens):
     """``quotes`` property validation."""
     if (tokens and len(tokens) % 2 == 0 and
-            all(v.type == 'STRING' for v in tokens)):
+            all(v.type == 'string' for v in tokens)):
         strings = [token.value for token in tokens]
         # Separate open and close quotes.
         # eg.  ['«', '»', '“', '”']  -> (['«', '“'], ['»', '”'])
@@ -1364,7 +1372,7 @@ def anchor(token):
         name, args = function
         prototype = (name, [a.type for a in args])
         args = [getattr(a, 'value', a) for a in args]
-        if prototype == ('attr', ['IDENT']):
+        if prototype == ('attr', ['ident']):
             return (name, args[0])
 
 
@@ -1374,7 +1382,7 @@ def link(token, base_url):
     """Validation for ``link``."""
     if get_keyword(token) == 'none':
         return 'none'
-    elif token.type == 'URI':
+    elif token.type == 'url':
         if token.value.startswith('#'):
             return 'internal', unquote(token.value[1:])
         else:
@@ -1384,7 +1392,7 @@ def link(token, base_url):
         name, args = function
         prototype = (name, [a.type for a in args])
         args = [getattr(a, 'value', a) for a in args]
-        if prototype == ('attr', ['IDENT']):
+        if prototype == ('attr', ['ident']):
             return (name, args[0])
 
 
@@ -1396,8 +1404,8 @@ def tab_size(token):
     See https://www.w3.org/TR/css-text-3/#tab-size
 
     """
-    if token.type == 'INTEGER':
-        value = token.value
+    if token.type == 'number' and token.int_value is not None:
+        value = token.int_value
         if value >= 0:
             return value
     return get_length(token, negative=False)
@@ -1419,7 +1427,7 @@ def hyphenate_character(token):
     keyword = get_keyword(token)
     if keyword == 'auto':
         return '‐'
-    elif token.type == 'STRING':
+    elif token.type == 'string':
         return token.value
 
 
@@ -1438,32 +1446,35 @@ def hyphenate_limit_chars(tokens):
         keyword = get_keyword(token)
         if keyword == 'auto':
             return (5, 2, 2)
-        elif token.type == 'INTEGER':
-            return (token.value, 2, 2)
+        elif token.type == 'number' and token.int_value is not None:
+            return (token.int_value, 2, 2)
     elif len(tokens) == 2:
         total, left = tokens
         total_keyword = get_keyword(total)
         left_keyword = get_keyword(left)
-        if total.type == 'INTEGER':
-            if left.type == 'INTEGER':
-                return (total.value, left.value, left.value)
+        if total.type == 'number' and total.int_value is not None:
+            if left.type == 'number' and left.int_value is not None:
+                return (total.int_value, left.int_value, left.int_value)
             elif left_keyword == 'auto':
                 return (total.value, 2, 2)
         elif total_keyword == 'auto':
-            if left.type == 'INTEGER':
-                return (5, left.value, left.value)
+            if left.type == 'number' and left.int_value is not None:
+                return (5, left.int_value, left.int_value)
             elif left_keyword == 'auto':
                 return (5, 2, 2)
     elif len(tokens) == 3:
         total, left, right = tokens
         if (
-            (get_keyword(total) == 'auto' or total.type == 'INTEGER') and
-            (get_keyword(left) == 'auto' or left.type == 'INTEGER') and
-            (get_keyword(right) == 'auto' or right.type == 'INTEGER')
+            (get_keyword(total) == 'auto' or
+                (total.type == 'number' and total.int_value is not None)) and
+            (get_keyword(left) == 'auto' or
+                (left.type == 'number' and left.int_value is not None)) and
+            (get_keyword(right) == 'auto' or
+                (right.type == 'number' and right.int_value is not None))
         ):
-            total = total.value if total.type == 'INTEGER' else 5
-            left = left.value if left.type == 'INTEGER' else 2
-            right = right.value if right.type == 'INTEGER' else 2
+            total = total.int_value if total.type == 'number' else 5
+            left = left.int_value if left.type == 'number' else 2
+            right = right.int_value if right.type == 'number' else 2
             return (total, left, right)
 
 
@@ -1478,9 +1489,9 @@ def lang(token):
         name, args = function
         prototype = (name, [a.type for a in args])
         args = [getattr(a, 'value', a) for a in args]
-        if prototype == ('attr', ['IDENT']):
+        if prototype == ('attr', ['ident']):
             return (name, args[0])
-    elif token.type == 'STRING':
+    elif token.type == 'string':
         return ('string', token.value)
 
 
@@ -1496,8 +1507,8 @@ def bookmark_label(tokens):
 @single_token
 def bookmark_level(token):
     """Validation for ``bookmark-level``."""
-    if token.type == 'INTEGER':
-        value = token.value
+    if token.type == 'number' and token.int_value is not None:
+        value = token.int_value
         if value >= 1:
             return value
     elif get_keyword(token) == 'none':
@@ -1524,27 +1535,27 @@ def validate_content_list_token(token):
 
     """
     type_ = token.type
-    if type_ == 'STRING':
+    if type_ == 'string':
         return ('STRING', token.value)
     function = parse_function(token)
     if function:
         name, args = function
         prototype = (name, [a.type for a in args])
         args = [getattr(a, 'value', a) for a in args]
-        if prototype == ('attr', ['IDENT']):
+        if prototype == ('attr', ['ident']):
             return (name, args[0])
-        elif prototype in (('content', []), ('content', ['IDENT'])):
+        elif prototype in (('content', []), ('content', ['ident'])):
             if not args:
                 return (name, 'text')
             elif args[0] in ('text', 'after', 'before'):
                 # TODO: first-letter should be allowed here too
                 return (name, args[0])
-        elif prototype in (('counter', ['IDENT']),
-                           ('counters', ['IDENT', 'STRING'])):
+        elif prototype in (('counter', ['ident']),
+                           ('counters', ['ident', 'string'])):
             args.append('decimal')
             return (name, args)
-        elif prototype in (('counter', ['IDENT', 'IDENT']),
-                           ('counters', ['IDENT', 'STRING', 'IDENT'])):
+        elif prototype in (('counter', ['ident', 'ident']),
+                           ('counters', ['ident', 'string', 'ident'])):
             style = args[-1]
             if style in ('none', 'decimal') or style in counters.STYLES:
                 return (name, args)
@@ -1573,21 +1584,20 @@ def transform_function(token):
             return 'translate', (length, computed_values.ZERO_PIXELS)
         elif name == 'translatey' and length:
             return 'translate', (computed_values.ZERO_PIXELS, length)
-        elif name == 'scalex' and args[0].type in ('NUMBER', 'INTEGER'):
+        elif name == 'scalex' and args[0].type == 'number':
             return 'scale', (args[0].value, 1)
-        elif name == 'scaley' and args[0].type in ('NUMBER', 'INTEGER'):
+        elif name == 'scaley' and args[0].type == 'number':
             return 'scale', (1, args[0].value)
-        elif name == 'scale' and args[0].type in ('NUMBER', 'INTEGER'):
+        elif name == 'scale' and args[0].type == 'number':
             return 'scale', (args[0].value,) * 2
     elif len(args) == 2:
-        if name == 'scale' and all(a.type in ('NUMBER', 'INTEGER')
-                                   for a in args):
+        if name == 'scale' and all(a.type == 'number' for a in args):
             return name, [arg.value for arg in args]
         lengths = tuple(get_length(token, percentage=True) for token in args)
         if name == 'translate' and all(lengths):
             return name, lengths
     elif len(args) == 6 and name == 'matrix' and all(
-            a.type in ('NUMBER', 'INTEGER') for a in args):
+            a.type == 'number' for a in args):
         return name, [arg.value for arg in args]
     raise InvalidValues
 
@@ -1646,7 +1656,7 @@ def border_radius(base_url, name, tokens):
     current = horizontal = []
     vertical = []
     for token in tokens:
-        if token.type == 'DELIM' and token.value == '/':
+        if token.type == 'literal' and token.value == '/':
             if current is horizontal:
                 if token == tokens[-1]:
                     raise InvalidValues('Expected value after "/" separator')
@@ -1872,7 +1882,7 @@ def expand_background(base_url, name, tokens):
                 if position is not None:
                     assert add('position', position)
                     del tokens[-n:]
-                    if (tokens and tokens[-1].type == 'DELIM' and
+                    if (tokens and tokens[-1].type == 'literal' and
                             tokens[-1].value == '/'):
                         for n in (3, 2)[-len(tokens):]:
                             # n includes the '/' delimiter.
@@ -1960,13 +1970,13 @@ def expand_columns(name, tokens):
 
 
 class NoneFakeToken(object):
-    type = 'IDENT'
-    value = 'none'
+    type = 'ident'
+    lower_value = 'none'
 
 
 class NormalFakeToken(object):
-    type = 'IDENT'
-    value = 'normal'
+    type = 'ident'
+    lower_value = 'normal'
 
 
 @expander('font-variant')
@@ -2066,7 +2076,7 @@ def expand_font(name, tokens):
         raise InvalidValues
 
     token = tokens.pop()
-    if token.type == 'DELIM' and token.value == '/':
+    if token.type == 'literal' and token.value == '/':
         token = tokens.pop()
         if line_height([token]) is None:
             raise InvalidValues
@@ -2128,17 +2138,26 @@ def preprocess_declarations(base_url, declarations):
 
     Log a warning for every ignored declaration.
 
-    Return a iterable of ``(name, value, priority)`` tuples.
+    Return a iterable of ``(name, value, important)`` tuples.
 
     """
     for declaration in declarations:
-        def validation_error(level, reason):
-            getattr(LOGGER, level)(
-                'Ignored `%s: %s` at %i:%i, %s.',
-                declaration.name, declaration.value.as_css(),
-                declaration.line, declaration.column, reason)
+        if declaration.type == 'error':
+            LOGGER.warning(
+                'Error: %s at %i:%i.',
+                declaration.message,
+                declaration.source_line, declaration.source_column)
+
+        if declaration.type != 'declaration':
+            continue
 
         name = declaration.name
+
+        def validation_error(level, reason):
+            getattr(LOGGER, level)(
+                'Ignored `%s:%s` at %i:%i, %s.',
+                declaration.name, tinycss2.serialize(declaration.value),
+                declaration.source_line, declaration.source_column, reason)
 
         if name in PREFIXED and not name.startswith(PREFIX):
             validation_error(
@@ -2173,6 +2192,31 @@ def preprocess_declarations(base_url, declarations):
                 exc.args[0] if exc.args and exc.args[0] else 'invalid value')
             continue
 
-        priority = declaration.priority
+        important = declaration.important
         for long_name, value in result:
-            yield long_name.replace('-', '_'), value, priority
+            yield long_name.replace('-', '_'), value, important
+
+
+def remove_whitespace(tokens):
+    """Remove any top-level whitespace in a token list."""
+    return [token for token in tokens
+            if token.type not in ('whitespace', 'comment')]
+
+
+def split_on_comma(tokens):
+    """Split a list of tokens on commas, ie ``LiteralToken(',')``.
+
+    Only "top-level" comma tokens are splitting points, not commas inside a
+    function or blocks.
+
+    """
+    parts = []
+    this_part = []
+    for token in tokens:
+        if token.type == 'literal' and token.value == ',':
+            parts.append(this_part)
+            this_part = []
+        else:
+            this_part.append(token)
+    parts.append(this_part)
+    return parts

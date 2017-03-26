@@ -10,7 +10,7 @@ WeasyPrint |version| depends on:
 * lxml_ ≥ 3.0
 * html5lib_ ≥ 0.999999999
 * cairocffi_ ≥ 0.5
-* tinycss_ ≥ 0.4
+* tinycss2_ ≥ 0.5
 * cssselect_ ≥ 0.6
 * CairoSVG_ ≥ 1.0.20
 * Pyphen_ ≥ 0.8
@@ -23,7 +23,7 @@ WeasyPrint |version| depends on:
 .. _html5lib: http://html5lib.readthedocs.org/
 .. _cairocffi: http://pythonhosted.org/cairocffi/
 .. _lxml: http://lxml.de/
-.. _tinycss: http://packages.python.org/tinycss/
+.. _tinycss2: http://packages.python.org/tinycss2/
 .. _cssselect: http://packages.python.org/cssselect/
 .. _CairoSVG: http://cairosvg.org/
 .. _Pyphen: https://github.com/Kozea/Pyphen

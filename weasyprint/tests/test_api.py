@@ -27,9 +27,11 @@ import lxml.etree
 import lxml.html
 
 import pytest
+import tinycss2
 
 from .. import CSS, HTML, __main__, default_url_fetcher, navigator
 from ..compat import iteritems, urlencode, urljoin, urlparse_uses_relative
+from ..css.validation import remove_whitespace
 from ..document import _TaggedTuple
 from ..urls import path2url
 from .test_draw import image_to_pixels
@@ -133,16 +135,17 @@ def test_css_parsing():
         """Check that a parsed stylsheet looks like resources/utf8-test.css"""
         # Using 'encoding' adds a CSSCharsetRule
         rule = css.rules[-1][0]
-        assert rule.selector.as_css() == 'h1::before'
-        content, background = rule.declarations
+        assert tinycss2.serialize(rule.prelude) == 'h1::before '
+        content, background = tinycss2.parse_declaration_list(
+            rule.content, skip_whitespace=True)
 
         assert content.name == 'content'
-        string, = content.value
+        string, = remove_whitespace(content.value)
         assert string.value == 'I løvë Unicode'
 
         assert background.name == 'background-image'
-        url_value, = background.value
-        assert url_value.type == 'URI'
+        url_value, = remove_whitespace(background.value)
+        assert url_value.type == 'url'
         url = urljoin(css.base_url, url_value.value)
         assert url.startswith('file:')
         assert url.endswith('weasyprint/tests/resources/pattern.png')
@@ -774,7 +777,7 @@ def test_links():
             <div style="-weasy-link: url(../lipsum);
                         display: block; margin: 10px 5px">
         ''', [[]], [{}], [[]], base_url=None, warnings=[
-            'WARNING: Ignored `-weasy-link: url(../lipsum)` at 1:1, '
+            'WARNING: Ignored `-weasy-link: url("../lipsum")` at 1:1, '
             'Relative URI reference without a base URI'])
 
     # Internal or absolute URI reference without a base URI: OK

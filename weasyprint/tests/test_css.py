@@ -12,6 +12,7 @@
 
 from __future__ import division, unicode_literals
 
+import tinycss2
 from pytest import raises
 
 from .. import CSS, css, default_url_fetcher
@@ -84,11 +85,11 @@ def test_find_stylesheets():
     assert len(rules) == 10
     # Also test appearance order
     assert [
-        rule.selector if rule.at_keyword else rule.selector.as_css()
+        tinycss2.serialize(rule.prelude)
         for rule, _selector_list, _declarations in rules
     ] == [
-        'a', 'li', 'p', 'ul', 'li', 'a:after', (None, 'first'), 'ul',
-        'body > h1:first-child', 'h1 ~ p ~ ul a:after'
+        'a', 'li ', 'p ', 'ul ', 'li', 'a:after ', ' :first ', 'ul ',
+        'body > h1:first-child ', 'h1 ~ p ~ ul a:after '
     ]
 
 
@@ -96,13 +97,16 @@ def test_find_stylesheets():
 def test_expand_shorthands():
     """Test the expand shorthands."""
     sheet = CSS(resource_filename('sheet2.css'))
-    assert sheet.rules[0][0].selector.as_css() == 'li'
+    assert tinycss2.serialize(sheet.rules[0][0].prelude) == 'li '
 
-    style = dict((d.name, d.value.as_css())
-                 for d in sheet.rules[0][0].declarations)
-    assert style['margin'] == '2em 0'
-    assert style['margin-bottom'] == '3em'
-    assert style['margin-left'] == '4em'
+    style = dict((d.name, tinycss2.serialize(d.value))
+                 for d in tinycss2.parse_declaration_list(
+                     sheet.rules[0][0].content,
+                     skip_whitespace=True,
+                     skip_comments=True))
+    assert style['margin'] == ' 2em 0'
+    assert style['margin-bottom'] == ' 3em'
+    assert style['margin-left'] == ' 4em'
     assert 'margin-top' not in style
 
     style = dict(
@@ -281,7 +285,7 @@ def test_warnings():
         ('::lipsum { margin: 2cm',
             ['WARNING: Invalid or unsupported selector']),
         ('@page foo { margin: 2cm',
-            ['WARNING: Named pages are not supported yet']),
+            ['WARNING: Unsupported @page selector " foo "']),
         ('foo { margin-color: red',
             ['WARNING: Ignored', 'unknown property']),
         ('foo { margin-top: red',
@@ -293,7 +297,7 @@ def test_warnings():
     ]:
         with capture_logs() as logs:
             CSS(string=source)
-        assert len(logs) == 1
+        assert len(logs) == 1, source
         for message in messages:
             assert message in logs[0]
 
