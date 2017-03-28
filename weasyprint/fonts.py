@@ -285,7 +285,7 @@ else:
                     else:
                         LOGGER.warning('Failed to load font at "%s"', url)
             LOGGER.warning(
-                'Font-face "%s" cannot be loaded' %
+                'Font-face "%s" cannot be loaded',
                 rule_descriptors['font_family'])
 
         def clean(self):

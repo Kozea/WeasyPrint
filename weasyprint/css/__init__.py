@@ -248,7 +248,7 @@ def find_style_attributes(element_tree, presentational_hints=False):
                 try:
                     size = int(size)
                 except ValueError:
-                    LOGGER.warning('Invalid value for size: %s' % size)
+                    LOGGER.warning('Invalid value for size: %s', size)
                 else:
                     font_sizes = {
                         1: 'x-small',
@@ -379,7 +379,7 @@ def find_style_attributes(element_tree, presentational_hints=False):
                 try:
                     size = int(element.get('size'))
                 except ValueError:
-                    LOGGER.warning('Invalid value for size: %s' % size)
+                    LOGGER.warning('Invalid value for size: %s', size)
             if (element.get('color'), element.get('noshade')) != (None, None):
                 if size >= 1:
                     yield specificity, check_style_attribute(
