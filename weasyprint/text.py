@@ -688,7 +688,7 @@ class Layout(object):
             width, _ = get_size(line, style)
             width = int(round(width))
         else:
-            width = style.tab_size.value
+            width = int(style.tab_size.value)
         # TODO: 0 is not handled correctly by Pango
         array = ffi.gc(
             pango.pango_tab_array_new_with_positions(

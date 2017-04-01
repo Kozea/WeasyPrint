@@ -5,7 +5,7 @@
     <link rel=stylesheet href="data:text/css;charset=ASCII,a%7Bcolor%3AcurrentColor%7D">
     <style media=print>
         @import url(sub_directory/sheet1.css);
-        @import "data:text/css;charset=utf-16-le;base64,\
+        @import "data:text/css;charset=utf-16le;base64,\
                     bABpAHsAYwBvAGwAbwByADoAcgBlAGQAfQA=";
         @import "data:,ul {border-width: 1000px !important}" screen;
         a:after {
@@ -41,7 +41,7 @@
 <body style="font-size: 20px">
     <h1 style="font-size: 2em">WeasyPrint test document (with Ünicōde)</h1>
     <p style="color: blue; font-size: x-large;
-              -weasy-link: attr(foo-link)  /* but such attribute */">Hello</p>
+              -weasy-link: attr(foo-link)  /* no such attribute */">Hello</p>
     <ul style="font-family: ahem; font-size: 1.25ex">
         <li style="font-size: 6pt; font-weight: bold">
             <a href=home.html

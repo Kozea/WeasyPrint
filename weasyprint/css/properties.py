@@ -14,7 +14,7 @@ from __future__ import division, unicode_literals
 
 import collections
 
-from tinycss.color3 import COLOR_KEYWORDS
+from tinycss2.color3 import parse_color
 
 Dimension = collections.namedtuple('Dimension', ['value', 'unit'])
 
@@ -25,7 +25,7 @@ INITIAL_VALUES = {
     'caption_side': 'top',
     'clear': 'none',
     'clip': (),  # computed value for 'auto'
-    'color': COLOR_KEYWORDS['black'],  # chosen by the user agent
+    'color': parse_color('black'),  # chosen by the user agent
     'content': 'normal',
     # Means 'none', but allow `display: list-item` to increment the
     # list-item counter. If we ever have a way for authors to query
@@ -71,7 +71,7 @@ INITIAL_VALUES = {
     # Backgrounds and Borders 3: https://www.w3.org/TR/css3-background/
     'background_attachment': ['scroll'],
     'background_clip': ['border-box'],
-    'background_color': COLOR_KEYWORDS['transparent'],
+    'background_color': parse_color('transparent'),
     'background_image': [('none', None)],
     'background_origin': ['padding-box'],
     'background_position': [('left', Dimension(0, '%'),

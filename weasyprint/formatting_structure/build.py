@@ -18,7 +18,7 @@ from __future__ import division, unicode_literals
 
 import re
 
-from tinycss.color3 import COLOR_KEYWORDS
+import tinycss2.color3
 
 from . import boxes, counters
 from .. import html
@@ -656,6 +656,9 @@ def wrap_table(box, children):
     return wrapper
 
 
+TRANSPARENT = tinycss2.color3.parse_color('transparent')
+
+
 def collapse_table_borders(table, grid_width, grid_height):
     """Resolve border conflicts for a table in the collapsing border model.
 
@@ -672,7 +675,7 @@ def collapse_table_borders(table, grid_width, grid_height):
         'hidden', 'double', 'solid', 'dashed', 'dotted', 'ridge',
         'outset', 'groove', 'inset', 'none'])))
     style_map = {'inset': 'ridge', 'outset': 'groove'}
-    transparent = COLOR_KEYWORDS['transparent']
+    transparent = TRANSPARENT
     weak_null_border = (
         (0, 0, style_scores['none']), ('none', 0, transparent))
     vertical_borders = [[weak_null_border for x in xrange(grid_width + 1)]
