@@ -269,7 +269,7 @@ def test_relative_links():
             base_url=None)
     assert links == [[]]
     assert len(logs) == 1
-    assert 'WARNING: Ignored `-weasy-link: url(../lipsum)`' in logs[0]
+    assert 'WARNING: Ignored `-weasy-link: url("../lipsum")`' in logs[0]
     assert 'Relative URI reference without a base URI' in logs[0]
 
     # Internal URI reference without a base URI: OK

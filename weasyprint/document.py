@@ -408,7 +408,7 @@ class Document(object):
                     if target is None:
                         LOGGER.warning(
                             'No anchor #%s for internal URI reference '
-                            'at line %s' % (anchor_name, link.sourceline))
+                            'at line %s', anchor_name, link.sourceline)
                     else:
                         page_links.append((link_type, target, rectangle))
                 else:

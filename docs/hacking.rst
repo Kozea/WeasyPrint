@@ -87,13 +87,13 @@ CSS
 ...
 
 As with HTML, CSS stylesheets are parsed in the :class:`weasyprint.CSS` class
-with an external library, tinycss_.
+with an external library, tinycss2_.
 After the In addition to the actual parsing, the :mod:`weasyprint.css` and
 :mod:`weasyprint.css.validation` modules do some pre-processing:
 
 * Unknown and unsupported declarations are ignored with warnings.
   Remaining property values are parsed in a property-specific way
-  from raw tinycss tokens into a higher-level form.
+  from raw tinycss2 tokens into a higher-level form.
 * Shorthand properties are expanded. For example, ``margin`` becomes
   ``margin-top``, ``margin-right``, ``margin-bottom`` and ``margin-left``.
 * Hyphens in property names are replaced by underscores (``margin-top``
@@ -102,7 +102,7 @@ After the In addition to the actual parsing, the :mod:`weasyprint.css` and
   properties have an underscore character.
 * Selectors are pre-compiled with cssselect_.
 
-.. _tinycss: http://packages.python.org/tinycss/
+.. _tinycss2: http://packages.python.org/tinycss2/
 .. _cssselect: http://packages.python.org/cssselect/
 
 
