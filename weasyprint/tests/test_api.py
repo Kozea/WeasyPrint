@@ -25,9 +25,9 @@ import zlib
 import cairocffi as cairo
 import lxml.etree
 import lxml.html
+import tinycss2
 
 import pytest
-import tinycss2
 
 from .. import CSS, HTML, __main__, default_url_fetcher, navigator
 from ..compat import iteritems, urlencode, urljoin, urlparse_uses_relative
