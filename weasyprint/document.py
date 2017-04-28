@@ -167,8 +167,8 @@ class Page(object):
 
         #: A list of ``(bookmark_level, bookmark_label, target)`` tuples.
         #: :obj:`bookmark_level` and :obj:`bookmark_label` are respectively
-        #: an integer and an Unicode string, based on the CSS properties
-        #: of the same names. :obj:`target` is a ``(x, y)`` point
+        #: an integer and a Unicode string, based on the CSS properties
+        #: of the same names. :obj:`target` is an ``(x, y)`` point
         #: in CSS pixels from the top-left of the page.
         self.bookmarks = bookmarks = []
 
@@ -186,8 +186,8 @@ class Page(object):
         #:   to a resource to attach to the document.
         self.links = links = []
 
-        #: A dict mapping anchor names to their target, ``(x, y)`` points
-        #: in CSS pixels form the top-left of the page.)
+        #: A dict mapping each anchor name to its target, an ``(x, y)`` point
+        #: in CSS pixels from the top-left of the page.
         self.anchors = anchors = {}
 
         _gather_links_and_bookmarks(
@@ -203,10 +203,8 @@ class Page(object):
 
             .. note::
 
-                In case you get a :class:`cairo.Context` object
-                (eg. form PyGTK),
-                it is possible to :ref:`convert it to cairocffi
-                <converting_pycairo>`.
+                In case you get a :class:`cairo.Context` object (e.g. from PyGTK),
+                it is possible to :ref:`convert it to cairocffi <converting_pycairo>`.
         :param left_x:
             X coordinate of the left of the page, in cairo user units.
         :param top_y:
@@ -251,9 +249,9 @@ class Page(object):
 
 class DocumentMetadata(object):
     """Contains meta-information about a :class:`Document`
-    that do not belong to specific pages but to the whole document.
+    that belongs to the whole document rather than specific pages.
 
-    New attributes may be added in future versions of WeasyPrint.
+   New attributes may be added in future versions of WeasyPrint.
 
     .. _W3C’s profile of ISO 8601: http://www.w3.org/TR/NOTE-datetime
 
@@ -309,7 +307,7 @@ class Document(object):
     Typically obtained from :meth:`HTML.render() <weasyprint.HTML.render>`,
     but can also be instantiated directly
     with a list of :class:`pages <Page>`,
-    a set of :class:`metadata <DocumentMetadata>` and a ``url_fetcher``.
+    a set of :class:`metadata <DocumentMetadata>`, and a ``url_fetcher``.
 
     """
     @classmethod
@@ -391,8 +389,8 @@ class Document(object):
             A generator yielding lists (one per page) like :attr:`Page.links`,
             except that :obj:`target` for internal hyperlinks is
             ``(page_number, x, y)`` instead of an anchor name.
-            The page number is an index (0-based) in the :attr:`pages` list,
-            ``x, y`` are in CSS pixels from the top-left of the page.
+            The page number is a 0-based index into the :attr:`pages` list,
+            and ``x, y`` are in CSS pixels from the top-left of the page.
 
         """
         anchors = {}
@@ -422,14 +420,14 @@ class Document(object):
         :return: a list of bookmark subtrees.
             A subtree is ``(label, target, children)``. :obj:`label` is
             a string, :obj:`target` is ``(page_number, x, y)`` like in
-            :meth:`resolve_links`, and :obj:`children` is itself a (recursive)
-            list of subtrees.
+            :meth:`resolve_links`, and :obj:`children` is a
+            list of child subtrees.
 
         """
         root = []
         # At one point in the document, for each "output" depth, how much
         # to add to get the source level (CSS values of bookmark-level).
-        # Eg. with <h1> then <h3>, level_shifts == [0, 1]
+        # E.g. with <h1> then <h3>, level_shifts == [0, 1]
         # 1 means that <h3> has depth 3 - 1 = 2 in the output.
         skipped_levels = []
         last_by_depth = [root]
@@ -471,18 +469,16 @@ class Document(object):
             A filename, file-like object, or :obj:`None`.
         :type zoom: float
         :param zoom:
-            The zoom factor in PDF units per CSS units.
-            **Warning**: All CSS units (even physical, like ``cm``)
-            are affected.
-            For values other than 1, physical CSS units will thus be “wrong”.
-            Page size declarations are affected too, even with keyword values
-            like ``@page { size: A3 landscape; }``
+            The zoom factor in PDF units per CSS units.  **Warning**:
+            All CSS units are affected, including physical units like
+            ``cm`` and named sizes like ``A4``.  For values other than
+            1, the physical CSS units will thus be “wrong”.
         :param attachments: A list of additional file attachments for the
             generated PDF document or :obj:`None`. The list's elements are
-            :class:`Attachment` objects, filenames, URLs or file-like objects.
+            :class:`Attachment` objects, filenames, URLs, or file-like objects.
         :returns:
             The PDF as byte string if :obj:`target` is :obj:`None`, otherwise
-            :obj:`None` (the PDF is written to :obj:`target`.)
+            :obj:`None` (the PDF is written to :obj:`target`).
 
         """
         # 0.75 = 72 PDF point (cairo units) per inch / 96 CSS pixel per inch
@@ -553,7 +549,7 @@ class Document(object):
         :returns:
             A ``(png_bytes, png_width, png_height)`` tuple. :obj:`png_bytes`
             is a byte string if :obj:`target` is :obj:`None`, otherwise
-            :obj:`None` (the image is written to :obj:`target`.)
+            :obj:`None` (the image is written to :obj:`target`).
             :obj:`png_width` and :obj:`png_height` are the size of the
             final image, in PNG pixels.
 

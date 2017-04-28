@@ -3,8 +3,8 @@
 User agent stylsheet for HTML.
 
 Contributed by Peter Moulder.
-Based on suggested styles in the HTML5 specification and what various
-web browsers use.
+Based on suggested styles in the HTML5 specification, CSS 2.1, and
+what various web browsers use.
 
 */
 
@@ -515,7 +515,7 @@ video { object-fit: contain; }
 xmp { display: block; font-family: monospace; margin-bottom: 1em; margin-top: 1em; unicode-bidi: isolate; white-space: pre; }
 
 @page {
-    /* `size: auto` (the inital) is A4 portrait */
+    /* `size: auto` (the initial) is A4 portrait */
     margin: 75px;
     @top-left-corner     { text-align: right;  vertical-align:  middle }
     @top-left            { text-align: left;   vertical-align:  middle }

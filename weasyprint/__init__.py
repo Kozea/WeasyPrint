@@ -49,22 +49,23 @@ class HTML(object):
 
     Alternatively, use **one** named argument so that no guessing is involved:
 
-    :param filename: A filename, relative to the current directory or absolute.
+    :param filename: A filename, relative to the current directory, or absolute.
     :param url: An absolute, fully qualified URL.
-    :param file_obj: a file-like: any object with a :meth:`~file.read` method.
-    :param string: a string of HTML source. (This argument must be named.)
-    :param tree: a parsed lxml tree. (This argument must be named.)
+    :param file_obj: A file-like: any object with a :meth:`~file.read` method.
+    :param string: A string of HTML source. (This argument must be named.)
+    :param tree: A parsed lxml tree. (This argument must be named.)
 
-    Specifying multiple inputs is an error: ``HTML(filename=foo, url=bar)``
-    will raise.
+    Specifying multiple inputs is an error:
+    ``HTML(filename="foo.html", url="localhost://bar.html")``
+    will raise a TypeError.
 
     You can also pass optional named arguments:
 
     :param encoding: Force the source character encoding.
     :param base_url: The base used to resolve relative URLs
-        (eg. in ``<img src="../foo.png">``). If not provided, try to use
+        (e.g. in ``<img src="../foo.png">``). If not provided, try to use
         the input filename, URL, or ``name`` attribute of file-like objects.
-    :param url_fetcher: a function or other callable
+    :param url_fetcher: A function or other callable
         with the same signature as :func:`default_url_fetcher` called to
         fetch external resources such as stylesheets and images.
         (See :ref:`url-fetchers`.)
@@ -126,14 +127,14 @@ class HTML(object):
         .. versionadded:: 0.15
 
         :param stylesheets:
-            An optional list of user stylesheets. (See
-            :ref:`stylesheet-origins`\.) List elements are :class:`CSS`
-            objects, filenames, URLs, or file-like objects.
+            An optional list of user stylesheets. List elements are
+            :class:`CSS` objects, filenames, URLs, or file-like
+            objects. (See :ref:`stylesheet-origins`.)
         :type enable_hinting: bool
         :param enable_hinting:
             Whether text, borders and background should be *hinted* to fall
             at device pixel boundaries. Should be enabled for pixel-based
-            output (like PNG) but not vector based output (like PDF).
+            output (like PNG) but not for vector-based output (like PDF).
         :type presentational_hints: bool
         :param presentational_hints: Whether HTML presentational hints are
             followed.
@@ -153,17 +154,15 @@ class HTML(object):
         :param target:
             A filename, file-like object, or :obj:`None`.
         :param stylesheets:
-            An optional list of user stylesheets. (See
-            :ref:`stylesheet-origins`\.) The list’s elements are
-            :class:`CSS` objects, filenames, URLs, or file-like objects.
+            An optional list of user stylesheets. The list’s elements
+            are :class:`CSS` objects, filenames, URLs, or file-like
+            objects.  (See :ref:`stylesheet-origins`.)
         :type zoom: float
         :param zoom:
-            The zoom factor in PDF units per CSS units.
-            **Warning**: All CSS units (even physical, like ``cm``)
-            are affected.
-            For values other than 1, physical CSS units will thus be “wrong”.
-            Page size declarations are affected too, even with keyword values
-            like ``@page { size: A3 landscape; }``
+            The zoom factor in PDF units per CSS units.  **Warning**:
+            All CSS units are affected, including physical units like
+            ``cm`` and named sizes like ``A4``.  For values other than
+            1, the physical CSS units will thus be “wrong”.
         :param attachments: A list of additional file attachments for the
             generated PDF document or :obj:`None`. The list's elements are
             :class:`Attachment` objects, filenames, URLs or file-like objects.
@@ -173,7 +172,7 @@ class HTML(object):
         :returns:
             The PDF as byte string if :obj:`target` is not provided or
             :obj:`None`, otherwise :obj:`None` (the PDF is written to
-            :obj:`target`.)
+            :obj:`target`).
 
         """
         return self.render(
@@ -203,9 +202,9 @@ class HTML(object):
         :param target:
             A filename, file-like object, or :obj:`None`.
         :param stylesheets:
-            An optional list of user stylesheets. (See
-            :ref:`stylesheet-origins`\.) The list’s elements are
-            :class:`CSS` objects, filenames, URLs, or file-like objects.
+            An optional list of user stylesheets.  The list’s elements
+            are :class:`CSS` objects, filenames, URLs, or file-like
+            objects. (See :ref:`stylesheet-origins`.)
         :type resolution: float
         :param resolution:
             The output resolution in PNG pixels per CSS inch. At 96 dpi
@@ -230,7 +229,7 @@ class CSS(object):
     """Represents a CSS stylesheet parsed by tinycss2.
 
     An instance is created in the same way as :class:`HTML`, except that
-    the ``tree`` parameter is not available. All other parameters are the same.
+    the ``tree`` argument is not available. All other arguments are the same.
 
     ``CSS`` objects have no public attribute or method. They are only meant to
     be used in the :meth:`~HTML.write_pdf`, :meth:`~HTML.write_png` and
@@ -268,8 +267,8 @@ class Attachment(object):
     """Represents a file attachment for a PDF document.
 
     An instance is created in the same way as :class:`HTML`, except that
-    the HTML specific parameters are not supported. An optional description can
-    be provided with the ``description`` parameter.
+    the HTML specific arguments are not supported. An optional description can
+    be provided with the ``description`` argument.
 
     :param description: A description of the attachment to be included in the
         PDF document. May be :obj:`None`
