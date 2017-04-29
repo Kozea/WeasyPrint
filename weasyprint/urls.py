@@ -235,26 +235,24 @@ def default_url_fetcher(url):
     (See :ref:`url-fetchers`.)
 
     :type url: Unicode string
-    :param url: The URL of the resource to fetch
-    :raises: any exception to indicate failure. Failures are logged
-        as warnings, with the string representation of the exception
-        in the message.
-    :returns: In case of success, a dict with the following keys:
+    :param url: The URL of the resource to fetch.
+    :raises: An exception indicating failure, e.g. ``ValueError`` on syntactically invalid URL.
+    :returns: A dict with the following keys:
 
         * One of ``string`` (a byte string) or ``file_obj``
           (a file-like object)
-        * Optionally: ``mime_type``, a MIME type extracted eg. from a
+        * Optionally: ``mime_type``, a MIME type extracted e.g. from a
           *Content-Type* header. If not provided, the type is guessed from the
           file extension in the URL.
-        * Optionally: ``encoding``, a character encoding extracted eg. from a
+        * Optionally: ``encoding``, a character encoding extracted e.g. from a
           *charset* parameter in a *Content-Type* header
         * Optionally: ``redirected_url``, the actual URL of the resource
-          in case there were eg. HTTP redirects.
+          if there were e.g. HTTP redirects.
         * Optionally: ``filename``, the filename of the resource. Usually
           derived from the *filename* parameter in a *Content-Disposition*
           header
 
-        If a ``file_obj`` key is given, it is the caller’s responsability
+        If a ``file_obj`` key is given, it is the caller’s responsibility
         to call ``file_obj.close()``.
 
     """

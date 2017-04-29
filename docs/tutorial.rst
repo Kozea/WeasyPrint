@@ -174,7 +174,7 @@ See the :ref:`python-api` for details. A few random example:
 URL fetchers
 ............
 
-WeasyPrint goes through an *URL fetcher* to fetch external resources such as
+WeasyPrint goes through a *URL fetcher* to fetch external resources such as
 images or CSS stylesheets. The default fetcher can natively open file and
 HTTP URLs, but the HTTP client does not support advanced features like cookies
 or authentication. This can be worked-around by passing a custom
