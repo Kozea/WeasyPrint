@@ -200,11 +200,6 @@ class Page(object):
 
         :param cairo_context:
             Any :class:`cairocffi.Context` object.
-
-            .. note::
-
-                In case you get a :class:`cairo.Context` object (e.g. from PyGTK),
-                it is possible to :ref:`convert it to cairocffi <converting_pycairo>`.
         :param left_x:
             X coordinate of the left of the page, in cairo user units.
         :param top_y:

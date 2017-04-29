@@ -236,7 +236,8 @@ def default_url_fetcher(url):
 
     :type url: Unicode string
     :param url: The URL of the resource to fetch.
-    :raises: An exception indicating failure, e.g. ``ValueError`` on syntactically invalid URL.
+    :raises: An exception indicating failure, e.g. ``ValueError`` on
+        syntactically invalid URL.
     :returns: A dict with the following keys:
 
         * One of ``string`` (a byte string) or ``file_obj``

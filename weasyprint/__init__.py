@@ -49,7 +49,8 @@ class HTML(object):
 
     Alternatively, use **one** named argument so that no guessing is involved:
 
-    :param filename: A filename, relative to the current directory, or absolute.
+    :param filename: A filename, relative to the current directory, or
+        absolute.
     :param url: An absolute, fully qualified URL.
     :param file_obj: A file-like: any object with a :meth:`~file.read` method.
     :param string: A string of HTML source. (This argument must be named.)
