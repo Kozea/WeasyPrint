@@ -173,9 +173,9 @@ def compute_fixed_dimension(context, box, outer, vertical, top_or_left):
         box.margin_a = box.margin_b = (
             outer - box.padding_plus_border - box.inner) / 2
 
-    assert 'auto' not in [box.margin_a, box.margin_b, box.inner]
-    # This should also be true, but may not be exact due to
-    # floating point errors:
+    values = box.margin_a, box.margin_b, box.inner
+    assert 'auto' not in values, str(values)
+    # Not always exact due to floating point semantics:
     assert _close(box.inner + box.padding_plus_border +
                   box.margin_a + box.margin_b, outer), str(
                       (box.inner, box.padding_plus_border,
@@ -414,8 +414,7 @@ def margin_box_content_layout(context, page, box):
         first_child = box.children[0]
         last_child = box.children[-1]
         top = first_child.position_y
-        # Not always exact because floating point errors
-        # assert top == box.content_box_y()
+        # Not always exact due to floating point semantics
         assert _close(top, box.content_box_y()), str((top, box.content_box_y()))
         bottom = last_child.position_y + last_child.margin_height()
         content_height = bottom - top
