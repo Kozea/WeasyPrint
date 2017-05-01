@@ -235,7 +235,7 @@ def compute_variable_dimension(context, side_boxes, vertical, outer_sum):
                     # which case the sum can not be both <= and > outer_sum
                     # Therefore, one of the last two 'if' statements would not
                     # have lead us here.
-                    assert weight_sum > 0
+                    assert weight_sum > 0, str(weight_sum)
                     box_b.inner += available * weight_b / weight_sum
         if box_a.inner == 'auto':
             box_a.shrink_to_fit((outer_sum - box_b.outer) / 2 - box_a.sugar)
@@ -243,7 +243,7 @@ def compute_variable_dimension(context, side_boxes, vertical, outer_sum):
             box_c.shrink_to_fit((outer_sum - box_b.outer) / 2 - box_c.sugar)
     else:
         # Non-generated boxes get zero for every box-model property
-        assert box_b.inner == 0
+        assert box_b.inner == 0, str(box_b.inner)
         if box_a.inner == box_c.inner == 'auto':
             if outer_sum >= (
                     box_a.outer_max_content_size +
@@ -266,7 +266,7 @@ def compute_variable_dimension(context, side_boxes, vertical, outer_sum):
                     # which case the sum can not be both <= and > outer_sum
                     # Therefore, one of the last two 'if' statements would not
                     # have lead us here.
-                    assert weight_sum > 0
+                    assert weight_sum > 0, str(weight_sum)
                     box_a.inner += available * weight_a / weight_sum
                     box_c.inner += available * weight_c / weight_sum
         elif box_a.inner == 'auto':
@@ -275,7 +275,8 @@ def compute_variable_dimension(context, side_boxes, vertical, outer_sum):
             box_c.shrink_to_fit(outer_sum - box_a.outer - box_c.sugar)
 
     # And, we’re done!
-    assert 'auto' not in [box.inner for box in side_boxes]
+    values = [box.inner for box in side_boxes]
+    assert 'auto' not in values, str(values)
     # Set the actual attributes back.
     for box in side_boxes:
         box.restore_box_attributes()
@@ -405,7 +406,7 @@ def margin_box_content_layout(context, page, box):
         max_position_y=float('inf'), skip_stack=None,
         device_size=page.style.size, page_is_empty=True,
         absolute_boxes=[], fixed_boxes=[])
-    assert resume_at is None
+    assert resume_at is None, str(resume_at) # could be a large string!
 
     vertical_align = box.style.vertical_align
     # Every other value is read as 'top', ie. no change.
@@ -415,6 +416,7 @@ def margin_box_content_layout(context, page, box):
         top = first_child.position_y
         # Not always exact because floating point errors
         # assert top == box.content_box_y()
+        assert _close(top, box.content_box_y()), str((top, box.content_box_y()))
         bottom = last_child.position_y + last_child.margin_height()
         content_height = bottom - top
         offset = box.height - content_height
@@ -505,7 +507,7 @@ def make_page(context, root_box, page_type, resume_at, content_empty,
 
     # TODO: handle cases where the root element is something else.
     # See http://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
-    assert isinstance(root_box, boxes.BlockBox)
+    assert isinstance(root_box, boxes.BlockBox), str(type(root_box))
     context.create_block_formatting_context()
     page_is_empty = True
     adjoining_margins = []
@@ -514,7 +516,7 @@ def make_page(context, root_box, page_type, resume_at, content_empty,
         context, root_box, page_content_bottom, resume_at,
         initial_containing_block, device_size, page_is_empty,
         positioned_boxes, positioned_boxes, adjoining_margins)
-    assert root_box
+    assert root_box, str(root_box)
 
     page.fixed_boxes = [
         placeholder._box for placeholder in positioned_boxes
@@ -568,7 +570,7 @@ def make_all_pages(context, root_box):
         page, resume_at, next_page = make_page(
             context, root_box, page_type, resume_at, content_empty,
             page_number)
-        assert next_page
+        assert next_page, str(next_page)
         yield page
         if resume_at is None:
             return
@@ -576,7 +578,8 @@ def make_all_pages(context, root_box):
         right_page = not right_page
 
 
-# Similar to Numpy allclose(), but symetric
+# Similar to Numpy allclose(), but symetric: True if the numbers are "close"
+# with respect to the relative and absolute tolerances.
 # https://docs.scipy.org/doc/numpy/reference/generated/numpy.allclose.html
 def _close(a, b, rtol=1e-05, atol=1e-08):
-    return abs(a - b) <= (atol + rtol * (abs(a) + abs(b)) * 0.5)
+    return abs(a - b) <= (rtol * (abs(a) + abs(b)) * 0.5 + atol)

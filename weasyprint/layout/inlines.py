@@ -180,7 +180,7 @@ def skip_first_whitespace(box, skip_stack):
         index, next_skip_stack = skip_stack
 
     if isinstance(box, boxes.TextBox):
-        assert next_skip_stack is None
+        assert next_skip_stack is None, str((box, next_skip_stack))
         white_space = box.style.white_space
         length = len(box.text)
         if index == length:
@@ -202,7 +202,7 @@ def skip_first_whitespace(box, skip_stack):
             result = skip_first_whitespace(box.children[index], None)
         return (index, result) if (index or result) else None
 
-    assert skip_stack is None, 'unexpected skip inside %s' % box
+    assert skip_stack is None, str((box, skip_stack))
     return None
 
 
@@ -227,8 +227,8 @@ def remove_last_whitespace(context, box):
             return
         box.text = new_text
         new_box, resume, _ = split_text_box(context, box, None, None, 0)
-        assert new_box is not None
-        assert resume is None
+        assert new_box is not None, str(box)
+        assert resume is None, str((box, resume))
         space_width = box.width - new_box.width
         box.width = new_box.width
     else:
@@ -567,7 +567,7 @@ def split_inline_level(context, box, position_x, max_x, skip_stack,
         else:
             skip, skip_stack = skip_stack
             skip = skip or 0
-            assert skip_stack is None
+            assert skip_stack is None, str((box, skip_stack))
 
         new_box, skip, preserved_line_break = split_text_box(
             context, box, max_x - position_x, max_x, skip)
@@ -602,7 +602,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
     """Same behavior as split_inline_level."""
     is_start = skip_stack is None
     initial_position_x = position_x
-    assert isinstance(box, (boxes.LineBox, boxes.InlineBox))
+    assert isinstance(box, (boxes.LineBox, boxes.InlineBox)), str(type(box))
     left_spacing = (box.padding_left + box.margin_left +
                     box.border_left_width)
 #    right_spacing = (box.padding_right + box.margin_right +
@@ -687,7 +687,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
 
         if new_child is None:
             # may be None where we would have an empty TextBox
-            assert isinstance(child, boxes.TextBox)
+            assert isinstance(child, boxes.TextBox), str(type(child))
         else:
             margin_width = new_child.margin_width()
             new_position_x = position_x + margin_width
@@ -745,7 +745,7 @@ def split_text_box(context, box, available_width, line_width, skip):
     Also break an preserved whitespace.
 
     """
-    assert isinstance(box, boxes.TextBox)
+    assert isinstance(box, boxes.TextBox), str(type(box))
     font_size = box.style.font_size
     text = box.text[skip:]
     if font_size == 0 or not text:
@@ -843,7 +843,8 @@ def line_box_verticality(box):
         elif subtree.style.vertical_align == 'top':
             dy = min_y - sub_min_y
         else:
-            assert subtree.style.vertical_align == 'bottom'
+            assert subtree.style.vertical_align == 'bottom', str((
+                box, subtree.style.vertical_align))
             dy = max_y - sub_max_y
         translate_subtree(subtree, dy)
     return max_y, min_y
@@ -977,7 +978,7 @@ def text_align(context, line, available_width, last):
     if align == 'center':
         offset /= 2.
     else:
-        assert align == 'right'
+        assert align == 'right', str(align)
     return offset
 
 
@@ -1008,7 +1009,7 @@ def add_word_spacing(context, box, extra_word_spacing, x_advance):
         if nb_spaces > 0:
             layout, _, resume_at, width, _, _ = split_first_line(
                 box.text, style, context, float('inf'), None)
-            assert resume_at is None
+            assert resume_at is None, str((box, resume_at))
             # XXX new_box.width - box.width is always 0???
             # x_advance +=  new_box.width - box.width
             x_advance += extra_word_spacing * nb_spaces
