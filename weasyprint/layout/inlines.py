@@ -256,7 +256,7 @@ def first_letter_to_box(box, skip_stack, first_letter_style):
         child = box.children[0]
         if isinstance(child, boxes.TextBox):
             if child.element_tag.endswith('::first-letter'):
-                letter_box = boxes.Inbox(
+                letter_box = boxes.InlineBox(
                     '%s::first-letter' % box.element_tag,
                     box.sourceline, first_letter_style.inherit_from(),
                     [child])
