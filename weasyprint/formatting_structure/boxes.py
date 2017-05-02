@@ -644,11 +644,11 @@ class PageBox(ParentBox):
 
 class MarginBox(BlockContainerBox):
     """Box in page margins, as defined in CSS3 Paged Media"""
-    def __init__(self, at_keyword, style, children=[]):
+    def __init__(self, at_keyword, style):
         self.at_keyword = at_keyword
         # Margin boxes are not linked to any element.
         super(MarginBox, self).__init__(
-            element_tag=None, sourceline=None, style=style, children=children)
+            element_tag=None, sourceline=None, style=style, children=[])
 
     def __repr__(self):
         return '<%s %s>' % (type(self).__name__, self.at_keyword)

@@ -176,8 +176,11 @@ def compute_fixed_dimension(context, box, outer, vertical, top_or_left):
     assert 'auto' not in [box.margin_a, box.margin_b, box.inner]
     # This should also be true, but may not be exact due to
     # floating point errors:
-    # assert (box.inner + box.padding_plus_border +
-    #         box.margin_a + box.margin_b) == outer
+    assert _close(box.inner + box.padding_plus_border +
+                  box.margin_a + box.margin_b, outer), str(
+                      (box.inner, box.padding_plus_border,
+                       box.margin_a, box.margin_b, outer))
+
     box.restore_box_attributes()
 
 
@@ -571,3 +574,9 @@ def make_all_pages(context, root_box):
             return
         prefix = ''
         right_page = not right_page
+
+
+# Similar to Numpy allclose(), but symetric
+# https://docs.scipy.org/doc/numpy/reference/generated/numpy.allclose.html
+def _close(a, b, rtol=1e-05, atol=1e-08):
+    return abs(a - b) <= (atol + rtol * (abs(a) + abs(b)) * 0.5)
