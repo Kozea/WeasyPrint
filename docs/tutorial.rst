@@ -60,6 +60,8 @@ Alternatively, use a named argument so that no guessing is involved:
 
 .. code-block:: python
 
+    from weasyprint import HTML
+
     HTML('../foo.html')  # Same as …
     HTML(filename='../foo.html')
 
@@ -74,6 +76,8 @@ you can also pass that, although the argument must be named:
 
 .. code-block:: python
 
+    from weasyprint import HTML
+
     # HTML('<h1>foo') would be filename
     HTML(string='''
         <h1>The title</h1>
@@ -83,6 +87,23 @@ you can also pass that, although the argument must be named:
 
     # Use a different lxml parser:
     HTML(tree=lxml.html.html5parser.parse('../foo.html'))
+
+If you have ``@font-face`` rules in your CSS, you have to create a
+``FontConfiguration`` object:
+
+.. code-block:: python
+
+    from weasyprint import HTML, CSS
+    from weasyprint.fonts import FontConfiguration
+
+    font_config = FontConfiguration()
+    HTML(string='<h1>The title</h1>')
+    CSS(string='''
+        @font-face {
+            font-family: Gentium;
+            src: url(http://example.com/fonts/Gentium.otf);
+        }
+        h1 { font-family: Gentium }''', font_config=font_config)
 
 
 Rendering to a single file
