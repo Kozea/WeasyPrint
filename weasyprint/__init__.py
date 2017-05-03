@@ -232,6 +232,10 @@ class CSS(object):
     An instance is created in the same way as :class:`HTML`, except that
     the ``tree`` argument is not available. All other arguments are the same.
 
+    An additional argument called ``font_config`` must be provided to handle
+    ``@font-config`` rules. The same ``fonts.FontConfiguration`` object must be
+    used for different ``CSS`` objects applied to the same document.
+
     ``CSS`` objects have no public attribute or method. They are only meant to
     be used in the :meth:`~HTML.write_pdf`, :meth:`~HTML.write_png` and
     :meth:`~HTML.render` methods of :class:`HTML` objects.
