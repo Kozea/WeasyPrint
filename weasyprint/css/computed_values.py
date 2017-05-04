@@ -58,7 +58,8 @@ BORDER_WIDTH_KEYWORDS = {
     'medium': 3,
     'thick': 5,
 }
-assert INITIAL_VALUES['border_top_width'] == BORDER_WIDTH_KEYWORDS['medium']
+assert INITIAL_VALUES['border_top_width'] == BORDER_WIDTH_KEYWORDS['medium'], str((
+    INITIAL_VALUES['border_top_width'], BORDER_WIDTH_KEYWORDS['medium']))
 
 # http://www.w3.org/TR/CSS21/fonts.html#propdef-font-weight
 FONT_WEIGHT_RELATIVE = dict(
@@ -124,7 +125,7 @@ PAGE_SIZES = dict(
 )
 # In "portrait" orientation.
 for w, h in PAGE_SIZES.values():
-    assert w.value < h.value
+    assert w.value < h.value, str((w.value, h.value))
 
 INITIAL_PAGE_SIZE = PAGE_SIZES['a4']
 INITIAL_VALUES['size'] = tuple(
