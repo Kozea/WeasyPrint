@@ -600,6 +600,15 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                      containing_block, device_size, absolute_boxes,
                      fixed_boxes, line_placeholders, waiting_floats):
     """Same behavior as split_inline_level."""
+
+    # In some cases (shrink-to-fit result being the preferred width)
+    # max_x is coming from Pango itself,
+    # but floating point errors have accumulated:
+    #   width2 = (width + X) - X   # in some cases, width2 < width
+    # Increase the value a bit to compensate and not introduce
+    # an unexpected line break. The 1e-9 value comes from PEP 485.
+    max_x *= 1 + 1e-9
+
     is_start = skip_stack is None
     initial_position_x = position_x
     assert isinstance(box, (boxes.LineBox, boxes.InlineBox))
