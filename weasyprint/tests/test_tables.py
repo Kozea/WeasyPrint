@@ -1581,7 +1581,7 @@ def test_table_vertical_align():
           </td>
 
           <!-- Test padding-top, auto height -->
-          <td style="vertical-align: top; padding-top: 0.5em !important">
+          <td style="vertical-align: top; padding-top: 1em !important">
             o o
           </td>
         </tr>
