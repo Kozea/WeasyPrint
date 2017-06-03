@@ -67,6 +67,7 @@ from ..css.computed_values import ZERO_PIXELS
 # The *Box classes have many attributes and methods, but that's the way it is
 # pylint: disable=R0904,R0902
 
+
 class Box(object):
     """Abstract base class for all boxes."""
     # Definitions for the rules generating anonymous table boxes
