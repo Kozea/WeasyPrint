@@ -586,6 +586,9 @@ def first_line_metrics(first_line, text, layout, resume_at, space_collapse,
     if hyphenated:
         length -= len(hyphenation_character.encode('utf8'))
     elif resume_at:
+        # Set an infinite width as we don't want to break lines when drawing,
+        # the lines have already been split and the size may differ.
+        pango.pango_layout_set_width(layout.layout, -1)
         # Create layout with final text
         first_line_text = utf8_slice(text, slice(length))
         # Remove trailing spaces if spaces collapse
