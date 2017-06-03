@@ -17,10 +17,10 @@ import tinycss2
 
 from ..compat import unquote
 from ..logger import LOGGER
-from .validation import (InvalidValues, comma_separated_list,
-                         expand_font_variant, font_feature_settings,
-                         get_keyword, remove_whitespace, safe_urljoin,
-                         single_keyword, single_token, validate_non_shorthand)
+from .validation import (
+    InvalidValues, comma_separated_list, expand_font_variant,
+    font_feature_settings, get_keyword, remove_whitespace, safe_urljoin,
+    single_keyword, single_token, validate_non_shorthand)
 
 
 DESCRIPTORS = {}

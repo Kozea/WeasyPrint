@@ -64,7 +64,6 @@ import itertools
 from ..compat import unichr, xrange
 from ..css.computed_values import ZERO_PIXELS
 
-
 # The *Box classes have many attributes and methods, but that's the way it is
 # pylint: disable=R0904,R0902
 

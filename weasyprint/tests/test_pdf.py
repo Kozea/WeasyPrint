@@ -17,7 +17,6 @@ import io
 import os
 
 import cairocffi
-
 import pytest
 
 from .. import CSS, Attachment, pdf
