@@ -106,12 +106,13 @@ class FakeSurface(object):
 
 
 class SVGImage(object):
-    def __init__(self, svg_data, base_url):
+    def __init__(self, svg_data, base_url, url_fetcher):
         # Don’t pass data URIs to CairoSVG.
         # They are useless for relative URIs anyway.
         self._base_url = (
             base_url if not base_url.lower().startswith('data:') else None)
         self._svg_data = svg_data
+        self._url_fetcher = url_fetcher
 
         try:
             self._tree = ElementTree.fromstring(self._svg_data)
@@ -153,7 +154,8 @@ class SVGImage(object):
         try:
             svg = ScaledSVGSurface(
                 cairosvg.parser.Tree(
-                    bytestring=self._svg_data, url=self._base_url),
+                    bytestring=self._svg_data, url=self._base_url,
+                    url_fetcher=self._url_fetcher),
                 output=None, dpi=96, parent_width=concrete_width,
                 parent_height=concrete_height)
             if svg.width and svg.height:
@@ -183,7 +185,7 @@ def get_image_from_uri(cache, url_fetcher, url, forced_mime_type=None):
             if mime_type == 'image/svg+xml':
                 # No fallback for XML-based mimetypes as defined by MIME
                 # Sniffing Standard, see https://mimesniff.spec.whatwg.org/
-                image = SVGImage(string, url)
+                image = SVGImage(string, url, url_fetcher)
             else:
                 # Try to rely on given mimetype
                 try:
@@ -207,7 +209,7 @@ def get_image_from_uri(cache, url_fetcher, url, forced_mime_type=None):
                             'Could not load GDK-Pixbuf. PNG and SVG are '
                             'the only image formats available.')
                     try:
-                        image = SVGImage(string, url)
+                        image = SVGImage(string, url, url_fetcher)
                     except:
                         try:
                             surface, format_name = (
