@@ -21,11 +21,11 @@ Bug fixes:
 * `#417 <https://github.com/Kozea/WeasyPrint/issues/417>`_,
   `#472 <https://github.com/Kozea/WeasyPrint/issues/472>`_:
   Don't crash on some line breaks.
-* `#327 <https://github.com/Kozea/WeasyPrint/issues/327>`_,
+* `#327 <https://github.com/Kozea/WeasyPrint/issues/327>`_:
   Don't crash with replaced elements with height set in percentages.
-* `#467 <https://github.com/Kozea/WeasyPrint/issues/467>`_,
+* `#467 <https://github.com/Kozea/WeasyPrint/issues/467>`_:
   Remove incorrect line breaks.
-* `#446 <https://github.com/Kozea/WeasyPrint/pull/446>`_,
+* `#446 <https://github.com/Kozea/WeasyPrint/pull/446>`_:
   Let the logging module do the string interpolation.
 
 
