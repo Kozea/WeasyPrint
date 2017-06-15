@@ -20,7 +20,7 @@ import html5lib  # noqa
 import tinycss2
 
 
-VERSION = '0.36'
+VERSION = '0.37'
 __version__ = VERSION
 
 # Used for 'User-Agent' in HTTP and 'Creator' in PDF

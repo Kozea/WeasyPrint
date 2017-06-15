@@ -2,6 +2,33 @@ WeasyPrint changelog
 ====================
 
 
+Version 0.37
+------------
+
+Released on 2017-06-15.
+
+WeasyPrint now depends on tinycss2 instead of tinycss.
+
+New features:
+
+* `#437 <https://github.com/Kozea/WeasyPrint/issues/437>`_:
+  Support local links in generated PDFs.
+
+Bug fixes:
+
+* `#412 <https://github.com/Kozea/WeasyPrint/issues/412>`_:
+  Use a NullHandler log handler when WeasyPrint is used as a library.
+* `#417 <https://github.com/Kozea/WeasyPrint/issues/417>`_,
+  `#472 <https://github.com/Kozea/WeasyPrint/issues/472>`_:
+  Don't crash on some line breaks.
+* `#327 <https://github.com/Kozea/WeasyPrint/issues/327>`_,
+  Don't crash with replaced elements with height set in percentages.
+* `#467 <https://github.com/Kozea/WeasyPrint/issues/467>`_,
+  Remove incorrect line breaks.
+* `#446 <https://github.com/Kozea/WeasyPrint/pull/446>`_,
+  Let the logging module do the string interpolation.
+
+
 Version 0.36
 ------------
 
