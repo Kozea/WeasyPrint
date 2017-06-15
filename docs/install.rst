@@ -108,13 +108,13 @@ Ubuntu 16.04 Xenial or newer:
 
 .. code-block:: sh
 
-    sudo apt-get install python3-dev python3-pip python3-lxml python3-cffi libcairo2 libpango1.0-0 libgdk-pixbuf2.0-0 shared-mime-info
+    sudo apt-get install python3-dev python3-pip python3-lxml python3-cffi libcairo2 libpango1.0-0 libgdk-pixbuf2.0-0 libffi-dev shared-mime-info
 
 Debian 8.0 Jessie or newer, Ubuntu 14.04 Trusty or newer:
 
 .. code-block:: sh
 
-    sudo apt-get install python-dev python-pip python-lxml python-cffi libcairo2 libpango1.0-0 libgdk-pixbuf2.0-0 shared-mime-info
+    sudo apt-get install python-dev python-pip python-lxml python-cffi libcairo2 libpango1.0-0 libgdk-pixbuf2.0-0 libffi-dev shared-mime-info
 
 Debian 7.0 Wheezy or newer, Ubuntu 12.04 Precise or newer:
 
