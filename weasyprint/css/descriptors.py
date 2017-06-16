@@ -73,7 +73,7 @@ def src(tokens, base_url):
         if token.type == 'function' and token.lower_name == 'format':
             token = tokens.pop()
         if token.type == 'function' and token.lower_name == 'local':
-            return 'local', font_family(token.content, allow_spaces=True)
+            return 'local', font_family(token.arguments, allow_spaces=True)
         if token.type == 'url':
             if token.value.startswith('#'):
                 return 'internal', unquote(token.value[1:])
