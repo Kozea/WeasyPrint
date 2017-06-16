@@ -2,6 +2,17 @@ WeasyPrint changelog
 ====================
 
 
+Version 0.38
+------------
+
+Released on 2017-06-16.
+
+Bug fixes:
+
+* `#477 <https://github.com/Kozea/WeasyPrint/issues/477>`_:
+  Don't crash on font-face's src attributes with local functions.
+
+
 Version 0.37
 ------------
 
