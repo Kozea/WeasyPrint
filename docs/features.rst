@@ -253,11 +253,12 @@ but that should not be a problem for common use.
 
 The shorthand ``font`` and ``font-variant`` properties are supported.
 
-WeasyPrint does **not** support the ``@font-face`` rule, the fonts need to be
-installed on the system.
+WeasyPrint supports the ``@font-face`` rule on Linux and MacOS, but does
+**not** support it on Windows.
 
 WeasyPrint does **not** support the ``@font-feature-values`` rule and the
-values of ``font-variant-alternates`` other than ``historical-forms``.
+values of ``font-variant-alternates`` other than ``normal`` and
+``historical-forms``.
 
 The ``font-variant-caps`` property is supported but needs the small-caps variant of
 the font to be installed. WeasyPrint does **not** simulate missing small-caps
