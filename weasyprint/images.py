@@ -119,6 +119,10 @@ class SVGImage(object):
         except Exception as e:
             raise ImageLoadingError.from_exception(e)
 
+    def _cairosvg_url_fetcher(self, src, mimetype):
+        data = self._url_fetcher(src)
+        return data.get('string', data['file_obj'].read())
+
     def get_intrinsic_size(self, _image_resolution, font_size):
         # Vector images may be affected by the font size.
         fake_surface = FakeSurface()
@@ -155,7 +159,7 @@ class SVGImage(object):
             svg = ScaledSVGSurface(
                 cairosvg.parser.Tree(
                     bytestring=self._svg_data, url=self._base_url,
-                    url_fetcher=self._url_fetcher),
+                    url_fetcher=self._cairosvg_url_fetcher),
                 output=None, dpi=96, parent_width=concrete_width,
                 parent_height=concrete_height)
             if svg.width and svg.height:
