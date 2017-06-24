@@ -2,6 +2,16 @@ WeasyPrint changelog
 ====================
 
 
+Version 0.39
+------------
+
+Released on 2017-06-24.
+
+Bug fixes:
+
+* Fix the use of WeasyPrint's URL fetcher with CairoSVG.
+
+
 Version 0.38
 ------------
 
