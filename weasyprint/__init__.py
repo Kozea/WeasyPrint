@@ -82,18 +82,15 @@ class HTML(cssselect2.ElementWrapper):
         result = _select_source(
             guess, filename, url, file_obj, string, base_url, url_fetcher)
         with result as (source_type, source, base_url, protocol_encoding):
-            if source_type == 'tree':
-                result = source
+            if isinstance(source, unicode):
+                result = html5lib.parse(
+                    source, namespaceHTMLElements=False)
             else:
-                if isinstance(source, unicode):
-                    result = html5lib.parse(
-                        source, namespaceHTMLElements=False)
-                else:
-                    result = html5lib.parse(
-                        source, override_encoding=encoding,
-                        transport_encoding=protocol_encoding,
-                        namespaceHTMLElements=False)
-                assert result
+                result = html5lib.parse(
+                    source, override_encoding=encoding,
+                    transport_encoding=protocol_encoding,
+                    namespaceHTMLElements=False)
+            assert result
         base_url = find_base_url(result, base_url)
         super(HTML, self).__init__(
             result, parent=None, index=0, previous=None, in_html_document=True,
