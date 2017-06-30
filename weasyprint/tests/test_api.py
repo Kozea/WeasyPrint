@@ -23,8 +23,6 @@ import unicodedata
 import zlib
 
 import cairocffi as cairo
-import lxml.etree
-import lxml.html
 import pytest
 
 from .. import CSS, HTML, __main__, default_url_fetcher, navigator
@@ -97,9 +95,9 @@ def test_html_parsing():
     """Test the constructor for the HTML class."""
     def check_doc1(html, has_base_url=True):
         """Check that a parsed HTML document looks like resources/doc1.html"""
-        assert html.root_element.tag == 'html'
-        assert [child.tag for child in html.root_element] == ['head', 'body']
-        _head, body = html.root_element
+        assert html.tag == 'html'
+        assert [child.tag for child in html] == ['head', 'body']
+        _head, body = html
         assert [child.tag for child in body] == ['h1', 'p', 'ul', 'div']
         h1, p, ul, div = body
         assert h1.text == 'WeasyPrint test document (with Ünicōde)'
@@ -116,13 +114,13 @@ def test_html_parsing():
 
     with chdir(os.path.dirname(__file__)):
         filename = os.path.join('resources', 'doc1.html')
-        tree = lxml.html.parse(filename)
-        check_doc1(FakeHTML(tree=tree, base_url=filename))
-        check_doc1(FakeHTML(tree=tree), has_base_url=False)
-        head, _body = tree.getroot()
-        assert head.tag == 'head'
-        lxml.etree.SubElement(head, 'base', href='resources/')
-        check_doc1(FakeHTML(tree=tree, base_url='.'))
+        with open(filename) as fd:
+            string = fd.read()
+        check_doc1(FakeHTML(string=string, base_url=filename))
+        check_doc1(FakeHTML(string=string), has_base_url=False)
+        string_with_meta = string.replace(
+            '<meta', '<base href="resources/"><meta')
+        check_doc1(FakeHTML(string=string_with_meta, base_url='.'))
 
 
 @assert_no_logs
@@ -1015,6 +1013,6 @@ def test_http():
             (b'<html test=accept-encoding-header-fail>', [])
         ),
     }) as root_url:
-        assert HTML(root_url + '/gzip').root_element.get('test') == 'ok'
-        assert HTML(root_url + '/deflate').root_element.get('test') == 'ok'
-        assert HTML(root_url + '/raw-deflate').root_element.get('test') == 'ok'
+        assert HTML(root_url + '/gzip').get('test') == 'ok'
+        assert HTML(root_url + '/deflate').get('test') == 'ok'
+        assert HTML(root_url + '/raw-deflate').get('test') == 'ok'

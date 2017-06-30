@@ -116,8 +116,8 @@ def get_child_text(element):
     return ''.join(content)
 
 
-def find_stylesheets(element_tree, device_media_type, url_fetcher,
-                     font_config, page_rules):
+def find_stylesheets(html, device_media_type, url_fetcher, font_config,
+                     page_rules):
     """Yield the stylesheets in ``element_tree``.
 
     The output order is the same as the source order.
@@ -125,7 +125,7 @@ def find_stylesheets(element_tree, device_media_type, url_fetcher,
     """
     from ..html import element_has_link_type  # Work around circular imports.
 
-    for element in element_tree.query_all('style', 'link'):
+    for element in html.query_all('style', 'link'):
         mime_type = element.get('type', 'text/css').split(';', 1)[0].strip()
         # Only keep 'type/subtype' from 'type/subtype ; param1; param2'.
         if mime_type != 'text/css':
@@ -166,7 +166,7 @@ def check_style_attribute(_parser, element, style_attribute):
     return element, declarations, element.base_url
 
 
-def find_style_attributes(element_tree, presentational_hints=False):
+def find_style_attributes(html, presentational_hints=False):
     """Yield ``specificity, (element, declaration, base_url)`` rules.
 
     Rules from "style" attribute are returned with specificity
@@ -177,7 +177,7 @@ def find_style_attributes(element_tree, presentational_hints=False):
 
     """
     parser = None  # FIXME remove this
-    for element in element_tree.iter_subtree():
+    for element in html.iter_subtree():
         specificity = (1, 0, 0)
         style_attribute = element.get('style')
         if style_attribute:
@@ -739,12 +739,11 @@ def get_all_computed_styles(html, user_stylesheets=None,
     pseudo-element type, and return a StyleDict object.
 
     """
-    element_tree = html.root_element
     device_media_type = html.media_type
     url_fetcher = html.url_fetcher
     ua_stylesheets = html._ua_stylesheets()
     author_stylesheets = list(find_stylesheets(
-        element_tree, device_media_type, url_fetcher, font_config, page_rules))
+        html, device_media_type, url_fetcher, font_config, page_rules))
     if presentational_hints:
         ph_stylesheets = html._ph_stylesheets()
     else:
@@ -763,7 +762,7 @@ def get_all_computed_styles(html, user_stylesheets=None,
     cascaded_styles = {}
 
     for specificity, attributes in find_style_attributes(
-            element_tree, presentational_hints):
+            html, presentational_hints):
         element, declarations, base_url = attributes
         for name, values, importance in preprocess_declarations(
                 base_url, declarations):
@@ -783,7 +782,7 @@ def get_all_computed_styles(html, user_stylesheets=None,
     for sheets, origin, sheet_specificity in sheet_groups:
         for sheet in sheets:
             # Add declarations for matched elements
-            for element in element_tree.iter_subtree():
+            for element in html.iter_subtree():
                 for selector in sheet.matcher.match(element):
                     specificity, order, pseudo_type, declarations = selector
                     specificity = sheet_specificity or specificity
@@ -799,7 +798,7 @@ def get_all_computed_styles(html, user_stylesheets=None,
                 for selector in selector_list:
                     specificity, pseudo_type, match = selector
                     specificity = sheet_specificity or specificity
-                    for element in match(element_tree):
+                    for element in match(html):
                         for name, values, importance in declarations:
                             precedence = declaration_precedence(
                                 origin, importance)
@@ -819,9 +818,9 @@ def get_all_computed_styles(html, user_stylesheets=None,
     # their children, for inheritance.
 
     # Iterate on all elements, even if there is no cascaded style for them.
-    for element in element_tree.iter_subtree():
+    for element in html.iter_subtree():
         set_computed_styles(cascaded_styles, computed_styles, element,
-                            root=element_tree, parent=element.parent)
+                            root=html, parent=element.parent)
 
     # Then computed styles for @page.
 
@@ -832,7 +831,7 @@ def get_all_computed_styles(html, user_stylesheets=None,
             cascaded_styles, computed_styles, page_type,
             # @page inherits from the root element:
             # http://lists.w3.org/Archives/Public/www-style/2012Jan/1164.html
-            root=element_tree, parent=element_tree)
+            root=html, parent=html)
 
     # Then computed styles for pseudo elements, in any order.
     # Pseudo-elements inherit from their associated element so they come
@@ -847,7 +846,7 @@ def get_all_computed_styles(html, user_stylesheets=None,
             set_computed_styles(cascaded_styles, computed_styles,
                                 element, pseudo_type=pseudo_type,
                                 # The pseudo-element inherits from the element.
-                                root=element_tree, parent=element)
+                                root=html, parent=element)
 
     # This is mostly useful to make pseudo_type optional.
     def style_for(element, pseudo_type=None, __get=computed_styles.get):

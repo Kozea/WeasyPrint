@@ -85,7 +85,7 @@ def _parse_base(
     style_for = get_all_computed_styles(document)
     get_image_from_uri = functools.partial(
         images.get_image_from_uri, {}, document.url_fetcher)
-    return document.root_element, style_for, get_image_from_uri
+    return document, style_for, get_image_from_uri
 
 
 def parse(html_content):

@@ -40,7 +40,7 @@ from .logger import LOGGER  # noqa
 # to work around circular imports.
 
 
-class HTML(object):
+class HTML(cssselect2.ElementWrapper):
     """Represents an HTML document parsed by `lxml <http://lxml.de/>`_.
 
     You can just create an instance with a positional argument:
@@ -78,11 +78,10 @@ class HTML(object):
 
     """
     def __init__(self, guess=None, filename=None, url=None, file_obj=None,
-                 string=None, tree=None, encoding=None, base_url=None,
+                 string=None, encoding=None, base_url=None,
                  url_fetcher=default_url_fetcher, media_type='print'):
         result = _select_source(
-            guess, filename, url, file_obj, string, tree, base_url,
-            url_fetcher)
+            guess, filename, url, file_obj, string, base_url, url_fetcher)
         with result as (source_type, source, base_url, protocol_encoding):
             if source_type == 'tree':
                 result = source
@@ -97,9 +96,9 @@ class HTML(object):
                         namespaceHTMLElements=False)
                 assert result
         base_url = find_base_url(result, base_url)
-        self.root_element = cssselect2.ElementWrapper.from_html_root(
-            result, base_url=base_url)
-        self.base_url = base_url
+        super(HTML, self).__init__(
+            result, parent=None, index=0, previous=None, in_html_document=True,
+            content_language=None, base_url=base_url)
         self.url_fetcher = url_fetcher
         self.media_type = media_type
 
@@ -110,7 +109,15 @@ class HTML(object):
         return [HTML5_PH_STYLESHEET]
 
     def _get_metadata(self):
-        return get_html_metadata(self.root_element)
+        return get_html_metadata(self)
+
+    def iter_children(self):
+        child = None
+        for i, etree_child in enumerate(self.etree_children):
+            child = cssselect2.ElementWrapper(
+                etree_child, parent=self, index=i, previous=child,
+                in_html_document=True)
+            yield child
 
     def render(self, stylesheets=None, enable_hinting=False,
                presentational_hints=False):
@@ -243,7 +250,7 @@ class CSS(object):
                  media_type='print', font_config=None, matcher=None,
                  page_rules=None):
         result = _select_source(
-            guess, filename, url, file_obj, string, tree=None,
+            guess, filename, url, file_obj, string,
             base_url=base_url, url_fetcher=url_fetcher,
             check_css_mime_type=_check_mime_type)
         with result as (source_type, source, base_url, protocol_encoding):
@@ -281,15 +288,15 @@ class Attachment(object):
                  string=None, base_url=None, url_fetcher=default_url_fetcher,
                  description=None):
         self.source = _select_source(
-            guess, filename, url, file_obj, string, tree=None,
+            guess, filename, url, file_obj, string,
             base_url=base_url, url_fetcher=url_fetcher)
         self.description = description
 
 
 @contextlib.contextmanager
 def _select_source(guess=None, filename=None, url=None, file_obj=None,
-                   string=None, tree=None, base_url=None,
-                   url_fetcher=default_url_fetcher, check_css_mime_type=False):
+                   string=None, base_url=None, url_fetcher=default_url_fetcher,
+                   check_css_mime_type=False):
     """
     Check that only one input is not None, and return it with the
     normalized ``base_url``.
@@ -298,9 +305,9 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
     if base_url is not None:
         base_url = ensure_url(base_url)
 
-    nones = [guess is None, filename is None, url is None,
-             file_obj is None, string is None, tree is None]
-    if nones == [False, True, True, True, True, True]:
+    nones = [
+        param is None for param in (guess, filename, url, file_obj, string)]
+    if nones == [False, True, True, True, True]:
         if hasattr(guess, 'read'):
             type_ = 'file_obj'
         elif url_is_absolute(guess):
@@ -315,12 +322,12 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
             **{str(type_): guess})
         with result as result:
             yield result
-    elif nones == [True, False, True, True, True, True]:
+    elif nones == [True, False, True, True, True]:
         if base_url is None:
             base_url = path2url(filename)
         with open(filename, 'rb') as file_obj:
             yield 'file_obj', file_obj, base_url, None
-    elif nones == [True, True, False, True, True, True]:
+    elif nones == [True, True, False, True, True]:
         with fetch(url_fetcher, url) as result:
             if check_css_mime_type and result['mime_type'] != 'text/css':
                 LOGGER.warning(
@@ -337,7 +344,7 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
                     yield (
                         'file_obj', result['file_obj'], base_url,
                         proto_encoding)
-    elif nones == [True, True, True, False, True, True]:
+    elif nones == [True, True, True, False, True]:
         if base_url is None:
             # filesystem file-like objects have a 'name' attribute.
             name = getattr(file_obj, 'name', None)
@@ -345,15 +352,13 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
             if name and not name.startswith('<'):
                 base_url = ensure_url(name)
         yield 'file_obj', file_obj, base_url, None
-    elif nones == [True, True, True, True, False, True]:
+    elif nones == [True, True, True, True, False]:
         yield 'string', string, base_url, None
-    elif nones == [True, True, True, True, True, False]:
-        yield 'tree', tree, base_url, None
     else:
         raise TypeError('Expected exactly one source, got ' + (
             ', '.join(
                 name for i, name in enumerate(
-                    'guess filename url file_obj string tree'.split())
+                    ('guess', 'filename', 'url', 'file_obj', 'string'))
                 if not nones[i]
             ) or 'nothing'
         ))

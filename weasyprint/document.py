@@ -320,8 +320,7 @@ class Document(object):
             images.get_image_from_uri, {}, html.url_fetcher)
         page_boxes = layout_document(
             enable_hinting, style_for, get_image_from_uri,
-            build_formatting_structure(
-                html.root_element, style_for, get_image_from_uri),
+            build_formatting_structure(html, style_for, get_image_from_uri),
             font_config)
         rendering = cls(
             [Page(p, enable_hinting) for p in page_boxes],
