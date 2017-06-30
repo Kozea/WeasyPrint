@@ -138,8 +138,8 @@ def find_stylesheets(html, device_media_type, url_fetcher, font_config,
             # Content is text that is directly in the <style> element, not its
             # descendants
             content = get_child_text(element)
-            # lxml should give us either unicode or ASCII-only bytestrings, so
-            # we don't need `encoding` here.
+            # ElementTree should give us either unicode or ASCII-only
+            # bytestrings, so we don't need `encoding` here.
             css = CSS(
                 string=content, base_url=element.base_url,
                 url_fetcher=url_fetcher, media_type=device_media_type,
@@ -750,7 +750,7 @@ def get_all_computed_styles(html, user_stylesheets=None,
         ph_stylesheets = []
 
     # keys: (element, pseudo_element_type)
-    #    element: a lxml element object or the '@page' string for @page styles
+    #    element: an ElementWrapper or the '@page' string for @page styles
     #    pseudo_element_type: a string such as 'first' (for @page) or 'after',
     #        or None for normal elements
     # values: dicts of

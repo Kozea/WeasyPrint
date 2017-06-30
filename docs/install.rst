@@ -7,11 +7,10 @@ WeasyPrint |version| depends on:
 * cairo_ [#]_
 * Pango_
 * CFFI_ ≥ 0.6
-* lxml_ ≥ 3.0
 * html5lib_ ≥ 0.999999999
 * cairocffi_ ≥ 0.5
 * tinycss2_ ≥ 0.5
-* cssselect_ ≥ 0.6
+* cssselect2_ ≥ 0.1
 * CairoSVG_ ≥ 1.0.20
 * Pyphen_ ≥ 0.8
 * Optional: GDK-PixBuf_ [#]_
@@ -19,14 +18,13 @@ WeasyPrint |version| depends on:
 .. _CPython: http://www.python.org/
 .. _cairo: http://cairographics.org/
 .. _Pango: http://www.pango.org/
-.. _CFFI: https://cffi.readthedocs.org/
-.. _html5lib: http://html5lib.readthedocs.org/
-.. _cairocffi: http://pythonhosted.org/cairocffi/
-.. _lxml: http://lxml.de/
-.. _tinycss2: http://packages.python.org/tinycss2/
-.. _cssselect: http://packages.python.org/cssselect/
+.. _CFFI: https://cffi.readthedocs.io/
+.. _html5lib: https://html5lib.readthedocs.io/
+.. _cairocffi: https://cairocffi.readthedocs.io/
+.. _tinycss2: https://tinycss2.readthedocs.io/
+.. _cssselect2: https://cssselect2.readthedocs.io/
 .. _CairoSVG: http://cairosvg.org/
-.. _Pyphen: https://github.com/Kozea/Pyphen
+.. _Pyphen: http://pyphen.org/
 .. _GDK-PixBuf: https://live.gnome.org/GdkPixbuf
 
 
@@ -34,12 +32,9 @@ Python, cairo, Pango and GDK-PixBuf need to be installed separately. See
 platform-specific instructions for :ref:`Linux <linux>`, :ref:`OS X <os-x>` and
 :ref:`Windows <windows>` below.
 
-lxml can be installed by pip automatically if your system has a C compiler and
-the recursive dependencies, but using a system package might be easier.
-
 Install WeasyPrint with pip_.
 This will automatically install most of dependencies.
-You probably need either virtualenv_ [#]_ (recommended) or using ``sudo``.
+You probably need either virtualenv_ (recommended) or using ``sudo``.
 
 .. _virtualenv: http://www.virtualenv.org/
 .. _pip: http://pip-installer.org/
@@ -79,22 +74,17 @@ WeasyPrint! Otherwise, please copy the full error message and
 .. [#] Without it, PNG and SVG are the only supported image format:
        JPEG, GIF and others are not available.
 
-.. [#] Passing the ``--system-site-packages`` option to virtualenv
-       allows the environment to use the system packages for lxml,
-       but this is not necessary if you install them with pip.
-
 
 Linux
 -----
 
 Pango, GdkPixbuf, and cairo can not be installed
 with pip and need to be installed from your platform’s packages.
-lxml and CFFI can, but you’d still need their own dependencies.
-This section lists system packages for lxml and CFFI when available,
+CFFI can, but you’d still need their own dependencies.
+This section lists system packages for CFFI when available,
 the dependencies otherwise.
-lxml needs *libxml2* and *libxslt*, CFFI needs *libffi*.
-On Debian, the package names with development files are
-``libxml2-dev``, ``libxslt1-dev`` and ``libffi-dev``.
+CFFI needs *libffi* with development files. On Debian, the package is called
+``libffi-dev``.
 
 You should use Python 3 instead of Python 2. Seriously.
 
@@ -108,19 +98,19 @@ Ubuntu 16.04 Xenial or newer:
 
 .. code-block:: sh
 
-    sudo apt-get install python3-dev python3-pip python3-lxml python3-cffi libcairo2 libpango1.0-0 libgdk-pixbuf2.0-0 libffi-dev shared-mime-info
+    sudo apt-get install python3-dev python3-pip python3-cffi libcairo2 libpango1.0-0 libgdk-pixbuf2.0-0 libffi-dev shared-mime-info
 
 Debian 8.0 Jessie or newer, Ubuntu 14.04 Trusty or newer:
 
 .. code-block:: sh
 
-    sudo apt-get install python-dev python-pip python-lxml python-cffi libcairo2 libpango1.0-0 libgdk-pixbuf2.0-0 libffi-dev shared-mime-info
+    sudo apt-get install python-dev python-pip python-cffi libcairo2 libpango1.0-0 libgdk-pixbuf2.0-0 libffi-dev shared-mime-info
 
 Debian 7.0 Wheezy or newer, Ubuntu 12.04 Precise or newer:
 
 .. code-block:: sh
 
-    sudo apt-get install python-dev python-pip python-lxml libcairo2 libpango1.0-0 libgdk-pixbuf2.0-0 libffi-dev shared-mime-info
+    sudo apt-get install python-dev python-pip libcairo2 libpango1.0-0 libgdk-pixbuf2.0-0 libffi-dev shared-mime-info
 
 Fedora
 ~~~~~~
@@ -131,7 +121,7 @@ with pip after installing the following packages:
 
 .. code-block:: sh
 
-    sudo yum install redhat-rpm-config python-devel python-pip python-lxml python-cffi libffi-devel cairo pango gdk-pixbuf2
+    sudo yum install redhat-rpm-config python-devel python-pip python-cffi libffi-devel cairo pango gdk-pixbuf2
 
 Archlinux
 ~~~~~~~~~
@@ -142,7 +132,7 @@ it with pip after installing the following packages:
 
 .. code-block:: sh
 
-    sudo pacman -S python-pip python-lxml cairo pango gdk-pixbuf2 libffi pkg-config
+    sudo pacman -S python-pip cairo pango gdk-pixbuf2 libffi pkg-config
 
 Gentoo
 ~~~~~~
@@ -153,7 +143,7 @@ install it with pip after installing the following packages:
 
 .. code-block:: sh
 
-    emerge pip cairo pango gdk-pixbuf cffi lxml
+    emerge pip cairo pango gdk-pixbuf cffi
 
 
 OS X
@@ -164,7 +154,7 @@ official installation method relies on Homebrew:
 
 .. code-block:: sh
 
-    brew install python3 cairo pango gdk-pixbuf libxml2 libxslt libffi
+    brew install python3 cairo pango gdk-pixbuf libffi
 
 Don't forget to use the `pip3` command to install WeasyPrint, as `pip` may be
 using the version of Python installed with MacOS.
@@ -175,7 +165,7 @@ end up crying blood with sad dolphins for eternity"**):
 
 .. code-block:: sh
 
-    sudo port install py-pip py-lxml cairo pango gdk-pixbuf2 libffi
+    sudo port install py-pip cairo pango gdk-pixbuf2 libffi
 
 
 Windows
@@ -185,9 +175,8 @@ Dear Windows user, please follow these steps carefully.
 
 Really carefully. Don't cheat.
 
-**If you decide to install Python, GTK or lxml 32 bit on Windows 64 bit, you're
-on your own, don't even try to report an issue, kittens will die because of
-you.**
+**If you decide to install Python or GTK 32 bit on Windows 64 bit, you're on
+your own, don't even try to report an issue, kittens will die because of you.**
 
 - Install `Python 3.6.x <https://www.python.org/downloads/release/python>`_
   **with "Add Python 3.6 to PATH" checked**:
@@ -207,11 +196,5 @@ you.**
 - install `Visual C++ Build Tools
   <https://landinghub.visualstudio.com/visual-cpp-build-tools>`_ as explained
   in `Python's wiki <https://wiki.python.org/moin/WindowsCompilers>`_,
-- download `lxml for Windows <http://www.lfd.uci.edu/~gohlke/pythonlibs/#lxml>`_:
-
-  - "lxml-x.x.x-cp36-cp36m-win32.whl" on Windows 32 bit,
-  - "lxml-x.x.x-cp36-cp36m-win_amd64.whl" on Windows 64 bit,
-
-- install lxml with ``python -m pip install path/to/lxml-xxx.whl``
 - install WeasyPrint with ``python -m pip install weasyprint``,
 - test with ``python -m weasyprint http://weasyprint.org weasyprint.pdf``.

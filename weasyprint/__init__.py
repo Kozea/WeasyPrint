@@ -41,7 +41,7 @@ from .logger import LOGGER  # noqa
 
 
 class HTML(cssselect2.ElementWrapper):
-    """Represents an HTML document parsed by `lxml <http://lxml.de/>`_.
+    """Represents an HTML document parsed by html5lib.
 
     You can just create an instance with a positional argument:
     ``doc = HTML(something)``
@@ -55,7 +55,6 @@ class HTML(cssselect2.ElementWrapper):
     :param url: An absolute, fully qualified URL.
     :param file_obj: A file-like: any object with a :meth:`~file.read` method.
     :param string: A string of HTML source. (This argument must be named.)
-    :param tree: A parsed lxml tree. (This argument must be named.)
 
     Specifying multiple inputs is an error:
     ``HTML(filename="foo.html", url="localhost://bar.html")``
