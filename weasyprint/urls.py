@@ -87,16 +87,6 @@ def url_is_absolute(url):
         .match(url))
 
 
-def element_base_url(element):
-    """Return the URL associated with a lxml document.
-
-    This is the same as the HtmlElement.base_url property, but dont’t want
-    to require HtmlElement.
-
-    """
-    return element.getroottree().docinfo.URL
-
-
 def get_url_attribute(element, attr_name, allow_relative=False):
     """Get the URI corresponding to the ``attr_name`` attribute.
 
@@ -112,8 +102,7 @@ def get_url_attribute(element, attr_name, allow_relative=False):
     value = element.get(attr_name, '').strip()
     if value:
         return url_join(
-            element_base_url(element), value, allow_relative,
-            '<%s %s="%s"> at line %s',
+            element.base_url, value, allow_relative, '<%s %s="%s"> at line %s',
             (element.tag, attr_name, value, element.sourceline))
 
 
@@ -142,7 +131,7 @@ def get_link_attribute(element, attr_name):
         return 'internal', unquote(attr_value[1:])
     uri = get_url_attribute(element, attr_name, allow_relative=True)
     if uri:
-        document_url = element_base_url(element)
+        document_url = element.base_url
         if document_url:
             parsed = urlsplit(uri)
             # Compare with fragments removed

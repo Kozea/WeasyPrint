@@ -26,11 +26,9 @@ import cairocffi as cairo
 import lxml.etree
 import lxml.html
 import pytest
-import tinycss2
 
 from .. import CSS, HTML, __main__, default_url_fetcher, navigator
 from ..compat import iteritems, urlencode, urljoin, urlparse_uses_relative
-from ..css.validation import remove_whitespace
 from ..document import _TaggedTuple
 from ..urls import path2url
 from .test_draw import image_to_pixels
@@ -103,7 +101,7 @@ def test_html_parsing():
         assert [child.tag for child in html.root_element] == ['head', 'body']
         _head, body = html.root_element
         assert [child.tag for child in body] == ['h1', 'p', 'ul', 'div']
-        h1 = body[0]
+        h1, p, ul, div = body
         assert h1.text == 'WeasyPrint test document (with Ünicōde)'
         if has_base_url:
             url = urljoin(html.base_url, 'pattern.png')
@@ -133,21 +131,15 @@ def test_css_parsing():
     def check_css(css):
         """Check that a parsed stylsheet looks like resources/utf8-test.css"""
         # Using 'encoding' adds a CSSCharsetRule
-        rule = css.rules[-1][0]
-        assert tinycss2.serialize(rule.prelude) == 'h1::before '
-        content, background = tinycss2.parse_declaration_list(
-            rule.content, skip_whitespace=True)
-
-        assert content.name == 'content'
-        string, = remove_whitespace(content.value)
-        assert string.value == 'I løvë Unicode'
-
-        assert background.name == 'background-image'
-        url_value, = remove_whitespace(background.value)
-        assert url_value.type == 'url'
-        url = urljoin(css.base_url, url_value.value)
-        assert url.startswith('file:')
-        assert url.endswith('weasyprint/tests/resources/pattern.png')
+        h1_rule, = css.matcher.lower_local_name_selectors['h1']
+        assert h1_rule[3] == 'before'
+        assert h1_rule[4][0][0] == 'content'
+        assert h1_rule[4][0][1][0][1] == 'I løvë Unicode'
+        assert h1_rule[4][1][0] == 'background_image'
+        assert h1_rule[4][1][1][0][0] == 'url'
+        assert h1_rule[4][1][1][0][1].startswith('file:')
+        assert h1_rule[4][1][1][0][1].endswith(
+            'weasyprint/tests/resources/pattern.png')
 
     _test_resource(CSS, 'utf8-test.css', check_css)
     _test_resource(CSS, 'latin1-test.css', check_css, encoding='latin1')

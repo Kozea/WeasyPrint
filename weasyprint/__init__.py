@@ -15,8 +15,9 @@
 
 from __future__ import division, unicode_literals
 
-import contextlib  # noqa
-import html5lib  # noqa
+import contextlib
+import html5lib
+import cssselect2
 import tinycss2
 
 
@@ -88,21 +89,16 @@ class HTML(object):
             else:
                 if isinstance(source, unicode):
                     result = html5lib.parse(
-                        source, treebuilder='lxml',
-                        namespaceHTMLElements=False)
+                        source, namespaceHTMLElements=False)
                 else:
                     result = html5lib.parse(
-                        source, treebuilder='lxml', override_encoding=encoding,
+                        source, override_encoding=encoding,
                         transport_encoding=protocol_encoding,
                         namespaceHTMLElements=False)
                 assert result
         base_url = find_base_url(result, base_url)
-        if hasattr(result, 'getroot'):
-            result.docinfo.URL = base_url
-            result = result.getroot()
-        else:
-            result.getroottree().docinfo.URL = base_url
-        self.root_element = result
+        self.root_element = cssselect2.ElementWrapper.from_html_root(
+            result, base_url=base_url)
         self.base_url = base_url
         self.url_fetcher = url_fetcher
         self.media_type = media_type
@@ -244,7 +240,8 @@ class CSS(object):
     def __init__(self, guess=None, filename=None, url=None, file_obj=None,
                  string=None, encoding=None, base_url=None,
                  url_fetcher=default_url_fetcher, _check_mime_type=False,
-                 media_type='print', font_config=None):
+                 media_type='print', font_config=None, matcher=None,
+                 page_rules=None):
         result = _select_source(
             guess, filename, url, file_obj, string, tree=None,
             base_url=base_url, url_fetcher=url_fetcher,
@@ -260,12 +257,13 @@ class CSS(object):
                     source, environment_encoding=encoding,
                     protocol_encoding=protocol_encoding)
         self.base_url = base_url
-        self.rules = []
+        self.matcher = matcher or cssselect2.Matcher()
+        self.page_rules = page_rules or []
         # TODO: fonts are stored here and should be cleaned after rendering
         self.fonts = []
         preprocess_stylesheet(
-            media_type, base_url, stylesheet, url_fetcher, self.rules,
-            self.fonts, font_config)
+            media_type, base_url, stylesheet, url_fetcher, self.matcher,
+            self.page_rules, self.fonts, font_config)
 
 
 class Attachment(object):

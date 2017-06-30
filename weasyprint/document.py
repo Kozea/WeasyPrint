@@ -309,12 +309,13 @@ class Document(object):
     def _render(cls, html, stylesheets, enable_hinting,
                 presentational_hints=False):
         font_config = FontConfiguration()
+        page_rules = []
         style_for = get_all_computed_styles(
             html, presentational_hints=presentational_hints, user_stylesheets=[
-                css if hasattr(css, 'rules')
+                css if hasattr(css, 'matcher')
                 else CSS(guess=css, media_type=html.media_type)
                 for css in stylesheets or []],
-            font_config=font_config)
+            font_config=font_config, page_rules=page_rules)
         get_image_from_uri = functools.partial(
             images.get_image_from_uri, {}, html.url_fetcher)
         page_boxes = layout_document(

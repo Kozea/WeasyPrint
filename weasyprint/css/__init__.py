@@ -22,17 +22,15 @@ from __future__ import division, unicode_literals
 
 import re
 
+import cssselect2
 import tinycss2
-import cssselect
-import lxml.etree
 
 from . import properties
 from . import computed_values
 from .descriptors import preprocess_descriptors
 from .validation import (preprocess_declarations, remove_whitespace,
                          split_on_comma)
-from ..urls import (element_base_url, get_url_attribute, url_join,
-                    URLFetchingError)
+from ..urls import get_url_attribute, url_join, URLFetchingError
 from ..logger import LOGGER
 from ..compat import iteritems
 from .. import CSS
@@ -119,7 +117,7 @@ def get_child_text(element):
 
 
 def find_stylesheets(element_tree, device_media_type, url_fetcher,
-                     font_config):
+                     font_config, page_rules):
     """Yield the stylesheets in ``element_tree``.
 
     The output order is the same as the source order.
@@ -127,7 +125,7 @@ def find_stylesheets(element_tree, device_media_type, url_fetcher,
     """
     from ..html import element_has_link_type  # Work around circular imports.
 
-    for element in element_tree.iter('style', 'link'):
+    for element in element_tree.query_all('style', 'link'):
         mime_type = element.get('type', 'text/css').split(';', 1)[0].strip()
         # Only keep 'type/subtype' from 'type/subtype ; param1; param2'.
         if mime_type != 'text/css':
@@ -143,9 +141,9 @@ def find_stylesheets(element_tree, device_media_type, url_fetcher,
             # lxml should give us either unicode or ASCII-only bytestrings, so
             # we don't need `encoding` here.
             css = CSS(
-                string=content, base_url=element_base_url(element),
+                string=content, base_url=element.base_url,
                 url_fetcher=url_fetcher, media_type=device_media_type,
-                font_config=font_config)
+                font_config=font_config, page_rules=page_rules)
             yield css
         elif element.tag == 'link' and element.get('href'):
             if not element_has_link_type(element, 'stylesheet') or \
@@ -157,7 +155,7 @@ def find_stylesheets(element_tree, device_media_type, url_fetcher,
                     yield CSS(
                         url=href, url_fetcher=url_fetcher,
                         _check_mime_type=True, media_type=device_media_type,
-                        font_config=font_config)
+                        font_config=font_config, page_rules=page_rules)
                 except URLFetchingError as exc:
                     LOGGER.warning('Failed to load stylesheet at %s : %s',
                                    href, exc)
@@ -165,29 +163,29 @@ def find_stylesheets(element_tree, device_media_type, url_fetcher,
 
 def check_style_attribute(_parser, element, style_attribute):
     declarations = tinycss2.parse_declaration_list(style_attribute)
-    return element, declarations, element_base_url(element)
+    return element, declarations, element.base_url
 
 
 def find_style_attributes(element_tree, presentational_hints=False):
     """Yield ``specificity, (element, declaration, base_url)`` rules.
 
     Rules from "style" attribute are returned with specificity
-    ``(1, 0, 0, 0)``.
+    ``(1, 0, 0)``.
 
     If ``presentational_hints`` is ``True``, rules from presentational hints
-    are returned with specificity ``(0, 0, 0, 0)``.
+    are returned with specificity ``(0, 0, 0)``.
 
     """
     parser = None  # FIXME remove this
-    for element in element_tree.iter():
-        specificity = (1, 0, 0, 0)
+    for element in element_tree.iter_subtree():
+        specificity = (1, 0, 0)
         style_attribute = element.get('style')
         if style_attribute:
             yield specificity, check_style_attribute(
                 parser, element, style_attribute)
         if not presentational_hints:
             continue
-        specificity = (0, 0, 0, 0)
+        specificity = (0, 0, 0)
         if element.tag == 'body':
             # TODO: we should check the container frame element
             for part, position in (
@@ -575,51 +573,30 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
     )
 
 
-class Selector(object):
-    def __init__(self, specificity, pseudo_element, match):
-        self.specificity = specificity
-        self.pseudo_element = pseudo_element
-        self.match = match
-
-
 def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
-                          url_fetcher, rules, fonts, font_config):
+                          url_fetcher, matcher, page_rules, fonts,
+                          font_config):
     """Do the work that can be done early on stylesheet, before they are
     in a document.
 
     """
-    selector_to_xpath = cssselect.HTMLTranslator().selector_to_xpath
     for rule in stylesheet_rules:
         if rule.type == 'qualified-rule':
             declarations = list(preprocess_declarations(
                 base_url, tinycss2.parse_declaration_list(rule.content)))
             if declarations:
-                selector_string = tinycss2.serialize(rule.prelude)
                 try:
-                    selector_list = []
-                    for selector in cssselect.parse(selector_string):
-                        xpath = selector_to_xpath(selector)
-                        try:
-                            lxml_xpath = lxml.etree.XPath(xpath)
-                        except ValueError as exc:
-                            # TODO: Some characters are not supported by lxml's
-                            # XPath implementation (including control
-                            # characters), but these characters are valid in
-                            # the CSS2.1 specification.
-                            raise cssselect.SelectorError(str(exc))
-                        selector_list.append(Selector(
-                            (0,) + selector.specificity(),
-                            selector.pseudo_element, lxml_xpath))
-                    for selector in selector_list:
+                    selectors = cssselect2.compile_selector_list(rule.prelude)
+                    for selector in selectors:
+                        matcher.add_selector(selector, declarations)
                         if selector.pseudo_element not in PSEUDO_ELEMENTS:
-                            raise cssselect.ExpressionError(
+                            raise cssselect2.SelectorError(
                                 'Unknown pseudo-element: %s'
                                 % selector.pseudo_element)
-                except cssselect.SelectorError as exc:
+                except cssselect2.SelectorError as exc:
                     LOGGER.warning("Invalid or unsupported selector '%s', %s",
-                                   selector_string, exc)
+                                   tinycss2.serialize(rule.prelude), exc)
                     continue
-                rules.append((rule, selector_list, declarations))
 
         elif rule.type == 'at-rule' and rule.at_keyword == 'import':
             tokens = remove_whitespace(rule.prelude)
@@ -641,15 +618,13 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                 context_args=(rule.source_line, rule.source_column))
             if url is not None:
                 try:
-                    stylesheet = CSS(
+                    CSS(
                         url=url, url_fetcher=url_fetcher,
-                        media_type=device_media_type, font_config=font_config)
+                        media_type=device_media_type, font_config=font_config,
+                        matcher=matcher, page_rules=page_rules)
                 except URLFetchingError as exc:
                     LOGGER.warning('Failed to load stylesheet at %s : %s',
                                    url, exc)
-                else:
-                    for result in stylesheet.rules:
-                        rules.append(result)
 
         elif rule.type == 'at-rule' and rule.at_keyword == 'media':
             media = parse_media_query(rule.prelude)
@@ -663,8 +638,8 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                 continue
             content_rules = tinycss2.parse_rule_list(rule.content)
             preprocess_stylesheet(
-                device_media_type, base_url, content_rules, url_fetcher, rules,
-                fonts, font_config)
+                device_media_type, base_url, content_rules, url_fetcher,
+                matcher, page_rules, fonts, font_config)
 
         elif rule.type == 'at-rule' and rule.at_keyword == 'page':
             tokens = remove_whitespace(rule.prelude)
@@ -702,8 +677,8 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                 PAGE_PSEUDOCLASS_TARGETS[pseudo_class])
 
             if declarations:
-                selector_list = [Selector(specificity, None, match)]
-                rules.append((rule, selector_list, declarations))
+                selector_list = [(specificity, None, match)]
+                page_rules.append((rule, selector_list, declarations))
 
             for margin_rule in content:
                 if margin_rule.type != 'at-rule':
@@ -712,9 +687,10 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                     base_url,
                     tinycss2.parse_declaration_list(margin_rule.content)))
                 if declarations:
-                    selector_list = [Selector(
-                        specificity, '@' + margin_rule.at_keyword, match)]
-                    rules.append((margin_rule, selector_list, declarations))
+                    selector_list = [
+                        (specificity, '@' + margin_rule.at_keyword, match)]
+                    page_rules.append(
+                        (margin_rule, selector_list, declarations))
 
         elif rule.type == 'at-rule' and rule.at_keyword == 'font-face':
             content = tinycss2.parse_declaration_list(rule.content)
@@ -753,7 +729,8 @@ def parse_media_query(tokens):
 
 
 def get_all_computed_styles(html, user_stylesheets=None,
-                            presentational_hints=False, font_config=None):
+                            presentational_hints=False, font_config=None,
+                            page_rules=None):
     """Compute all the computed styles of all elements in ``html`` document.
 
     Do everything from finding author stylesheets to parsing and applying them.
@@ -767,7 +744,7 @@ def get_all_computed_styles(html, user_stylesheets=None,
     url_fetcher = html.url_fetcher
     ua_stylesheets = html._ua_stylesheets()
     author_stylesheets = list(find_stylesheets(
-        element_tree, device_media_type, url_fetcher, font_config))
+        element_tree, device_media_type, url_fetcher, font_config, page_rules))
     if presentational_hints:
         ph_stylesheets = html._ph_stylesheets()
     else:
@@ -794,20 +771,35 @@ def get_all_computed_styles(html, user_stylesheets=None,
             weight = (precedence, specificity)
             add_declaration(cascaded_styles, name, values, weight, element)
 
-    for sheets, origin, sheet_specificity in (
+    sheet_groups = (
         # Order here is not important ('origin' is).
         # Use this order for a regression test
         (ua_stylesheets or [], 'user agent', None),
-        (ph_stylesheets, 'author', (0, 0, 0, 0)),
+        (ph_stylesheets, 'author', (0, 0, 0)),
         (author_stylesheets, 'author', None),
         (user_stylesheets or [], 'user', None),
-    ):
+    )
+
+    for sheets, origin, sheet_specificity in sheet_groups:
         for sheet in sheets:
-            for _rule, selector_list, declarations in sheet.rules:
+            # Add declarations for matched elements
+            for element in element_tree.iter_subtree():
+                for selector in sheet.matcher.match(element):
+                    specificity, order, pseudo_type, declarations = selector
+                    specificity = sheet_specificity or specificity
+                    for name, values, importance in declarations:
+                        precedence = declaration_precedence(origin, importance)
+                        weight = (precedence, specificity)
+                        add_declaration(
+                            cascaded_styles, name, values, weight, element,
+                            pseudo_type)
+
+            # Add declarations for page elements
+            for _rule, selector_list, declarations in sheet.page_rules:
                 for selector in selector_list:
-                    specificity = sheet_specificity or selector.specificity
-                    pseudo_type = selector.pseudo_element
-                    for element in selector.match(element_tree):
+                    specificity, pseudo_type, match = selector
+                    specificity = sheet_specificity or specificity
+                    for element in match(element_tree):
                         for name, values, importance in declarations:
                             precedence = declaration_precedence(
                                 origin, importance)
@@ -827,9 +819,9 @@ def get_all_computed_styles(html, user_stylesheets=None,
     # their children, for inheritance.
 
     # Iterate on all elements, even if there is no cascaded style for them.
-    for element in element_tree.iter():
+    for element in element_tree.iter_subtree():
         set_computed_styles(cascaded_styles, computed_styles, element,
-                            root=element_tree, parent=element.getparent())
+                            root=element_tree, parent=element.parent)
 
     # Then computed styles for @page.
 

@@ -406,7 +406,7 @@ def display(computer, name, value):
     float_ = computer.specified.float
     position = computer.specified.position
     if position in ('absolute', 'fixed') or float_ != 'none' or \
-            getattr(computer.element, 'getparent', lambda: None)() is None:
+            getattr(computer.element, 'parent', None) is None:
         if value == 'inline-table':
             return'table'
         elif value in ('inline', 'table-row-group', 'table-column',

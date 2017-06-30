@@ -286,7 +286,7 @@ def get_html_metadata(html_document):
     created = None
     modified = None
     attachments = []
-    for element in html_document.iter('title', 'meta', 'link'):
+    for element in html_document.query_all('title', 'meta', 'link'):
         if element.tag == 'title' and title is None:
             title = get_child_text(element)
         elif element.tag == 'meta':

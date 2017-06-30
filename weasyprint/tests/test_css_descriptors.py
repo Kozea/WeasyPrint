@@ -86,9 +86,9 @@ def test_bad_font_face():
 
     stylesheet = tinycss2.parse_stylesheet('@font-face{}')
     with capture_logs() as logs:
-        rules, descriptors = [], []
+        descriptors = []
         preprocess_stylesheet(
-            'print', 'http://wp.org/foo/', stylesheet, None, rules,
+            'print', 'http://wp.org/foo/', stylesheet, None, None, None,
             descriptors, None)
         assert not descriptors
     assert logs == [
@@ -96,9 +96,9 @@ def test_bad_font_face():
 
     stylesheet = tinycss2.parse_stylesheet('@font-face{src: url(test.woff)}')
     with capture_logs() as logs:
-        rules, descriptors = [], []
+        descriptors = []
         preprocess_stylesheet(
-            'print', 'http://wp.org/foo/', stylesheet, None, rules,
+            'print', 'http://wp.org/foo/', stylesheet, None, None, None,
             descriptors, None)
         assert not descriptors
     assert logs == [
@@ -106,9 +106,9 @@ def test_bad_font_face():
 
     stylesheet = tinycss2.parse_stylesheet('@font-face{font-family: test}')
     with capture_logs() as logs:
-        rules, descriptors = [], []
+        descriptors = []
         preprocess_stylesheet(
-            'print', 'http://wp.org/foo/', stylesheet, None, rules,
+            'print', 'http://wp.org/foo/', stylesheet, None, None, None,
             descriptors, None)
         assert not descriptors
     assert logs == [
@@ -117,9 +117,9 @@ def test_bad_font_face():
     stylesheet = tinycss2.parse_stylesheet(
         '@font-face { font-family: test; src: wrong }')
     with capture_logs() as logs:
-        rules, descriptors = [], []
+        descriptors = []
         preprocess_stylesheet(
-            'print', 'http://wp.org/foo/', stylesheet, None, rules,
+            'print', 'http://wp.org/foo/', stylesheet, None, None, None,
             descriptors, None)
         assert not descriptors
     assert logs == [
@@ -129,9 +129,9 @@ def test_bad_font_face():
     stylesheet = tinycss2.parse_stylesheet(
         '@font-face { font-family: good, bad; src: url(test.woff) }')
     with capture_logs() as logs:
-        rules, descriptors = [], []
+        descriptors = []
         preprocess_stylesheet(
-            'print', 'http://wp.org/foo/', stylesheet, None, rules,
+            'print', 'http://wp.org/foo/', stylesheet, None, None, None,
             descriptors, None)
         assert not descriptors
     assert logs == [
@@ -141,9 +141,9 @@ def test_bad_font_face():
     stylesheet = tinycss2.parse_stylesheet(
         '@font-face { font-family: good, bad; src: really bad }')
     with capture_logs() as logs:
-        rules, descriptors = [], []
+        descriptors = []
         preprocess_stylesheet(
-            'print', 'http://wp.org/foo/', stylesheet, None, rules,
+            'print', 'http://wp.org/foo/', stylesheet, None, None, None,
             descriptors, None)
         assert not descriptors
     assert logs == [

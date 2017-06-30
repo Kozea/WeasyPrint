@@ -1645,9 +1645,10 @@ def test_table_page_breaks():
                     rows_in_this_page += 1
                     rows_position_y.append(row.position_y)
                     cell, = row.children
-                    line, = cell.children
-                    text, = line.children
-                    assert text.text == 'row %i' % len(rows_position_y)
+                    if cell.children:  # skip cells with no line
+                        line, = cell.children
+                        text, = line.children
+                        assert text.text == 'row %i' % len(rows_position_y)
             rows_per_page.append(rows_in_this_page)
         return rows_per_page, rows_position_y
 
