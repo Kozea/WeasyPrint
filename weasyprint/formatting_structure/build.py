@@ -71,7 +71,7 @@ def build_formatting_structure(element_tree, style_for, get_image_from_uri):
     return box
 
 
-def make_box(element_tag, sourceline, style, content, get_image_from_uri):
+def make_box(element_tag, style, content, get_image_from_uri):
     if (style.display in ('table', 'inline-table') and
             style.border_collapse == 'collapse'):
         # Padding do not apply
@@ -82,8 +82,8 @@ def make_box(element_tag, sourceline, style, content, get_image_from_uri):
         for side in ['top', 'bottom', 'left', 'right']:
             style['margin_' + side] = ZERO_PIXELS
 
-    return BOX_TYPE_FROM_DISPLAY[style.display](element_tag, sourceline,
-                                                style, content)
+    return BOX_TYPE_FROM_DISPLAY[style.display](
+        element_tag, style, content)
 
 
 def element_to_box(element, style_for, get_image_from_uri, state=None):
@@ -123,8 +123,7 @@ def element_to_box(element, style_for, get_image_from_uri, state=None):
     if display == 'none':
         return []
 
-    box = make_box(element.tag, element.sourceline, style, [],
-                   get_image_from_uri)
+    box = make_box(element.tag, style, [], get_image_from_uri)
 
     if state is None:
         # use a list to have a shared mutable object
@@ -200,8 +199,7 @@ def before_after_to_box(element, pseudo_type, state, style_for,
         return
 
     box = make_box(
-        '%s::%s' % (element.tag, pseudo_type), element.sourceline, style, [],
-        get_image_from_uri)
+        '%s::%s' % (element.tag, pseudo_type), style, [], get_image_from_uri)
 
     quote_depth, counter_values, _counter_scopes = state
     update_counters(state, style)

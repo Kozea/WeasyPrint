@@ -119,7 +119,7 @@ def make_replaced_box(element, box, image):
     else:
         # TODO: support images with 'display: table-cell'?
         type_ = boxes.InlineReplacedBox
-    return type_(element.tag, element.sourceline, box.style, image)
+    return type_(element.tag, box.style, image)
 
 
 @handler('img')
@@ -303,9 +303,9 @@ def get_html_metadata(html_document):
             elif name == 'generator' and generator is None:
                 generator = content
             elif name == 'dcterms.created' and created is None:
-                created = parse_w3c_date(name, element.sourceline, content)
+                created = parse_w3c_date(name, content)
             elif name == 'dcterms.modified' and modified is None:
-                modified = parse_w3c_date(name, element.sourceline, content)
+                modified = parse_w3c_date(name, content)
         elif element.tag == 'link' and element_has_link_type(
                 element, 'attachment'):
             url = get_url_attribute(element, 'href')
@@ -366,10 +366,10 @@ W3C_DATE_RE = re.compile('''
 ''', re.VERBOSE)
 
 
-def parse_w3c_date(meta_name, source_line, string):
+def parse_w3c_date(meta_name, string):
     """http://www.w3.org/TR/NOTE-datetime"""
     if W3C_DATE_RE.match(string):
         return string
     else:
-        LOGGER.warning('Invalid date in <meta name="%s"> line %i: %r',
-                       meta_name, source_line, string)
+        LOGGER.warning(
+            'Invalid date in <meta name="%s"> %r', meta_name, string)

@@ -102,8 +102,8 @@ def get_url_attribute(element, attr_name, allow_relative=False):
     value = element.get(attr_name, '').strip()
     if value:
         return url_join(
-            element.base_url, value, allow_relative, '<%s %s="%s"> at line %s',
-            (element.tag, attr_name, value, element.sourceline))
+            element.base_url, value, allow_relative, '<%s %s="%s">',
+            (element.tag, attr_name, value))
 
 
 def url_join(base_url, url, allow_relative, context, context_args):

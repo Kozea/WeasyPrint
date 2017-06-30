@@ -27,7 +27,6 @@ import pytest
 
 from .. import CSS, HTML, __main__, default_url_fetcher, navigator
 from ..compat import iteritems, urlencode, urljoin, urlparse_uses_relative
-from ..document import _TaggedTuple
 from ..urls import path2url
 from .test_draw import image_to_pixels
 from .testing_utils import (
@@ -530,12 +529,10 @@ def round_meta(pages):
             anchors[anchor_name] = round(pos_x, 6), round(pos_y, 6)
         links = page.links
         for i, link in enumerate(links):
-            sourceline = link.sourceline
             link_type, target, (pos_x, pos_y, width, height) = link
-            link = _TaggedTuple((
+            link = (
                 link_type, target, (round(pos_x, 6), round(pos_y, 6),
-                                    round(width, 6), round(height, 6))))
-            link.sourceline = sourceline
+                                    round(width, 6), round(height, 6)))
             links[i] = link
         bookmarks = page.bookmarks
         for i, (level, label, (pos_x, pos_y)) in enumerate(bookmarks):

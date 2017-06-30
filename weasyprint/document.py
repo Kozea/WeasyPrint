@@ -90,13 +90,6 @@ def rectangle_aabb(matrix, pos_x, pos_y, width, height):
     return box_x1, box_y1, box_x2 - box_x1, box_y2 - box_y1
 
 
-class _TaggedTuple(tuple):
-    """A tuple with a :attr:`sourceline` attribute,
-    The line number in the HTML source for whatever the tuple represents.
-
-    """
-
-
 def _gather_links_and_bookmarks(box, bookmarks, links, anchors, matrix):
     transform = _get_matrix(box)
     if transform:
@@ -130,13 +123,11 @@ def _gather_links_and_bookmarks(box, bookmarks, links, anchors, matrix):
             if link_type == 'external' and is_attachment:
                 link_type = 'attachment'
             if matrix:
-                link = _TaggedTuple(
-                    (link_type, target, rectangle_aabb(
-                        matrix, pos_x, pos_y, width, height)))
+                link = (
+                    link_type, target, rectangle_aabb(
+                        matrix, pos_x, pos_y, width, height))
             else:
-                link = _TaggedTuple(
-                    (link_type, target, (pos_x, pos_y, width, height)))
-            link.sourceline = box.sourceline
+                link = (link_type, target, (pos_x, pos_y, width, height))
             links.append(link)
         if matrix and (has_bookmark or has_anchor):
             pos_x, pos_y = matrix.transform_point(pos_x, pos_y)
@@ -400,8 +391,8 @@ class Document(object):
                     target = anchors.get(anchor_name)
                     if target is None:
                         LOGGER.warning(
-                            'No anchor #%s for internal URI reference '
-                            'at line %s', anchor_name, link.sourceline)
+                            'No anchor #%s for internal URI reference',
+                            anchor_name)
                     else:
                         page_links.append((link_type, target, rectangle))
                 else:
