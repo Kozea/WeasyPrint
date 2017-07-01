@@ -1067,7 +1067,7 @@ def test_auto_layout_table():
                 <tr>
                   <td style="width: 100%;"></td>
                   <td style="width: 48px;">
-                    <img src="http://weasyprint.org/samples/acid2-small.png">
+                    <img src="icon.png">
                   </td>
                 </tr>
               </table>
