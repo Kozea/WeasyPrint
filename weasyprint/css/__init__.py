@@ -694,8 +694,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
 
         elif rule.type == 'at-rule' and rule.at_keyword == 'font-face':
             content = tinycss2.parse_declaration_list(rule.content)
-            rule_descriptors = dict(preprocess_descriptors(
-                base_url, content))
+            rule_descriptors = dict(preprocess_descriptors(base_url, content))
             for key in ('src', 'font_family'):
                 if key not in rule_descriptors:
                     LOGGER.warning(
@@ -781,18 +780,6 @@ def get_all_computed_styles(html, user_stylesheets=None,
 
     for sheets, origin, sheet_specificity in sheet_groups:
         for sheet in sheets:
-            # Add declarations for matched elements
-            for element in html.iter_subtree():
-                for selector in sheet.matcher.match(element):
-                    specificity, order, pseudo_type, declarations = selector
-                    specificity = sheet_specificity or specificity
-                    for name, values, importance in declarations:
-                        precedence = declaration_precedence(origin, importance)
-                        weight = (precedence, specificity)
-                        add_declaration(
-                            cascaded_styles, name, values, weight, element,
-                            pseudo_type)
-
             # Add declarations for page elements
             for _rule, selector_list, declarations in sheet.page_rules:
                 for selector in selector_list:
@@ -813,12 +800,24 @@ def get_all_computed_styles(html, user_stylesheets=None,
     #     values: a PropertyValue-like object
     computed_styles = {}
 
-    # First, computed styles for "real" elements *in tree order*
-    # Tree order is important so that parents have computed styles before
-    # their children, for inheritance.
+    # First, add declarations and set computed styles for "real" elements *in
+    # tree order*. Tree order is important so that parents have computed
+    # styles before their children, for inheritance.
 
     # Iterate on all elements, even if there is no cascaded style for them.
     for element in html.iter_subtree():
+        for sheets, origin, sheet_specificity in sheet_groups:
+            for sheet in sheets:
+                # Add declarations for matched elements
+                for selector in sheet.matcher.match(element):
+                    specificity, order, pseudo_type, declarations = selector
+                    specificity = sheet_specificity or specificity
+                    for name, values, importance in declarations:
+                        precedence = declaration_precedence(origin, importance)
+                        weight = (precedence, specificity)
+                        add_declaration(
+                            cascaded_styles, name, values, weight, element,
+                            pseudo_type)
         set_computed_styles(cascaded_styles, computed_styles, element,
                             root=html, parent=element.parent)
 
