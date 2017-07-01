@@ -738,15 +738,19 @@ def get_all_computed_styles(html, user_stylesheets=None,
     pseudo-element type, and return a StyleDict object.
 
     """
-    device_media_type = html.media_type
-    url_fetcher = html.url_fetcher
-    ua_stylesheets = html._ua_stylesheets()
-    author_stylesheets = list(find_stylesheets(
-        html, device_media_type, url_fetcher, font_config, page_rules))
+
+    # List stylesheets. Order here is not important ('origin' is).
+    sheets = []
+    for sheet in (html._ua_stylesheets() or []):
+        sheets.append((sheet, 'user agent', None))
     if presentational_hints:
-        ph_stylesheets = html._ph_stylesheets()
-    else:
-        ph_stylesheets = []
+        for sheet in (html._ph_stylesheets() or []):
+            sheets.append((sheet, 'author', (0, 0, 0)))
+    for sheet in find_stylesheets(
+            html, html.media_type, html.url_fetcher, font_config, page_rules):
+        sheets.append((sheet, 'author', None))
+    for sheet in (user_stylesheets or []):
+        sheets.append((sheet, 'user', None))
 
     # keys: (element, pseudo_element_type)
     #    element: an ElementWrapper or the '@page' string for @page styles
@@ -769,30 +773,19 @@ def get_all_computed_styles(html, user_stylesheets=None,
             weight = (precedence, specificity)
             add_declaration(cascaded_styles, name, values, weight, element)
 
-    sheet_groups = (
-        # Order here is not important ('origin' is).
-        # Use this order for a regression test
-        (ua_stylesheets or [], 'user agent', None),
-        (ph_stylesheets, 'author', (0, 0, 0)),
-        (author_stylesheets, 'author', None),
-        (user_stylesheets or [], 'user', None),
-    )
-
-    for sheets, origin, sheet_specificity in sheet_groups:
-        for sheet in sheets:
-            # Add declarations for page elements
-            for _rule, selector_list, declarations in sheet.page_rules:
-                for selector in selector_list:
-                    specificity, pseudo_type, match = selector
-                    specificity = sheet_specificity or specificity
-                    for element in match(html):
-                        for name, values, importance in declarations:
-                            precedence = declaration_precedence(
-                                origin, importance)
-                            weight = (precedence, specificity)
-                            add_declaration(
-                                cascaded_styles, name, values, weight,
-                                element, pseudo_type)
+    for sheet, origin, sheet_specificity in sheets:
+        # Add declarations for page elements
+        for _rule, selector_list, declarations in sheet.page_rules:
+            for selector in selector_list:
+                specificity, pseudo_type, match = selector
+                specificity = sheet_specificity or specificity
+                for element in match(html):
+                    for name, values, importance in declarations:
+                        precedence = declaration_precedence(origin, importance)
+                        weight = (precedence, specificity)
+                        add_declaration(
+                            cascaded_styles, name, values, weight, element,
+                            pseudo_type)
 
     # keys: (element, pseudo_element_type), like cascaded_styles
     # values: StyleDict objects:
@@ -806,20 +799,20 @@ def get_all_computed_styles(html, user_stylesheets=None,
 
     # Iterate on all elements, even if there is no cascaded style for them.
     for element in html.iter_subtree():
-        for sheets, origin, sheet_specificity in sheet_groups:
-            for sheet in sheets:
-                # Add declarations for matched elements
-                for selector in sheet.matcher.match(element):
-                    specificity, order, pseudo_type, declarations = selector
-                    specificity = sheet_specificity or specificity
-                    for name, values, importance in declarations:
-                        precedence = declaration_precedence(origin, importance)
-                        weight = (precedence, specificity)
-                        add_declaration(
-                            cascaded_styles, name, values, weight, element,
-                            pseudo_type)
-        set_computed_styles(cascaded_styles, computed_styles, element,
-                            root=html, parent=element.parent)
+        for sheet, origin, sheet_specificity in sheets:
+            # Add declarations for matched elements
+            for selector in sheet.matcher.match(element):
+                specificity, order, pseudo_type, declarations = selector
+                specificity = sheet_specificity or specificity
+                for name, values, importance in declarations:
+                    precedence = declaration_precedence(origin, importance)
+                    weight = (precedence, specificity)
+                    add_declaration(
+                        cascaded_styles, name, values, weight, element,
+                        pseudo_type)
+        set_computed_styles(
+            cascaded_styles, computed_styles, element, root=html,
+            parent=element.parent)
 
     # Then computed styles for @page.
 
