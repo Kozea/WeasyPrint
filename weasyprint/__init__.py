@@ -40,7 +40,7 @@ from .logger import LOGGER  # noqa
 # to work around circular imports.
 
 
-class HTML(cssselect2.ElementWrapper):
+class HTML(object):
     """Represents an HTML document parsed by html5lib.
 
     You can just create an instance with a positional argument:
@@ -83,20 +83,19 @@ class HTML(cssselect2.ElementWrapper):
             guess, filename, url, file_obj, string, base_url, url_fetcher)
         with result as (source_type, source, base_url, protocol_encoding):
             if isinstance(source, unicode):
-                result = html5lib.parse(
-                    source, namespaceHTMLElements=False)
+                result = html5lib.parse(source, namespaceHTMLElements=False)
             else:
                 result = html5lib.parse(
                     source, override_encoding=encoding,
                     transport_encoding=protocol_encoding,
                     namespaceHTMLElements=False)
             assert result
-        base_url = find_base_url(result, base_url)
-        super(HTML, self).__init__(
-            result, parent=None, index=0, previous=None, in_html_document=True,
-            content_language=None, base_url=base_url)
+        self.base_url = find_base_url(result, base_url)
         self.url_fetcher = url_fetcher
         self.media_type = media_type
+        self.wrapper_element = cssselect2.ElementWrapper.from_html_root(
+            result, content_language=None, base_url=self.base_url)
+        self.etree_element = self.wrapper_element.etree_element
 
     def _ua_stylesheets(self):
         return [HTML5_UA_STYLESHEET]
@@ -105,15 +104,7 @@ class HTML(cssselect2.ElementWrapper):
         return [HTML5_PH_STYLESHEET]
 
     def _get_metadata(self):
-        return get_html_metadata(self)
-
-    def iter_children(self):
-        child = None
-        for i, etree_child in enumerate(self.etree_children):
-            child = cssselect2.ElementWrapper(
-                etree_child, parent=self, index=i, previous=child,
-                in_html_document=True)
-            yield child
+        return get_html_metadata(self.wrapper_element)
 
     def render(self, stylesheets=None, enable_hinting=False,
                presentational_hints=False):

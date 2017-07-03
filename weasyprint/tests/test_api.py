@@ -94,9 +94,10 @@ def test_html_parsing():
     """Test the constructor for the HTML class."""
     def check_doc1(html, has_base_url=True):
         """Check that a parsed HTML document looks like resources/doc1.html"""
-        assert html.tag == 'html'
-        assert [child.tag for child in html] == ['head', 'body']
-        _head, body = html
+        root = html.etree_element
+        assert root.tag == 'html'
+        assert [child.tag for child in root] == ['head', 'body']
+        _head, body = root
         assert [child.tag for child in body] == ['h1', 'p', 'ul', 'div']
         h1, p, ul, div = body
         assert h1.text == 'WeasyPrint test document (with Ünicōde)'
@@ -1010,6 +1011,7 @@ def test_http():
             (b'<html test=accept-encoding-header-fail>', [])
         ),
     }) as root_url:
-        assert HTML(root_url + '/gzip').get('test') == 'ok'
-        assert HTML(root_url + '/deflate').get('test') == 'ok'
-        assert HTML(root_url + '/raw-deflate').get('test') == 'ok'
+        assert HTML(root_url + '/gzip').etree_element.get('test') == 'ok'
+        assert HTML(root_url + '/deflate').etree_element.get('test') == 'ok'
+        assert HTML(
+            root_url + '/raw-deflate').etree_element.get('test') == 'ok'

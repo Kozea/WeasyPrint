@@ -87,7 +87,7 @@ def url_is_absolute(url):
         .match(url))
 
 
-def get_url_attribute(element, attr_name, allow_relative=False):
+def get_url_attribute(element, attr_name, base_url, allow_relative=False):
     """Get the URI corresponding to the ``attr_name`` attribute.
 
     Return ``None`` if:
@@ -102,7 +102,7 @@ def get_url_attribute(element, attr_name, allow_relative=False):
     value = element.get(attr_name, '').strip()
     if value:
         return url_join(
-            element.base_url, value, allow_relative, '<%s %s="%s">',
+            base_url or '', value, allow_relative, '<%s %s="%s">',
             (element.tag, attr_name, value))
 
 
@@ -120,7 +120,7 @@ def url_join(base_url, url, allow_relative, context, context_args):
         return None
 
 
-def get_link_attribute(element, attr_name):
+def get_link_attribute(element, attr_name, base_url):
     """Return ('external', absolute_uri) or
     ('internal', unquoted_fragment_id) or None.
 
@@ -129,13 +129,12 @@ def get_link_attribute(element, attr_name):
     if attr_value.startswith('#') and len(attr_value) > 1:
         # Do not require a base_url when the value is just a fragment.
         return 'internal', unquote(attr_value[1:])
-    uri = get_url_attribute(element, attr_name, allow_relative=True)
+    uri = get_url_attribute(element, attr_name, base_url, allow_relative=True)
     if uri:
-        document_url = element.base_url
-        if document_url:
+        if base_url:
             parsed = urlsplit(uri)
             # Compare with fragments removed
-            if parsed[:-1] == urlsplit(document_url)[:-1]:
+            if parsed[:-1] == urlsplit(base_url)[:-1]:
                 return 'internal', unquote(parsed.fragment)
         return 'external', uri
 

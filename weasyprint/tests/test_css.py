@@ -71,10 +71,10 @@ def test_style_dict():
 @assert_no_logs
 def test_find_stylesheets():
     """Test if the stylesheets are found in a HTML document."""
-    document = FakeHTML(resource_filename('doc1.html'))
+    html = FakeHTML(resource_filename('doc1.html'))
 
     sheets = list(css.find_stylesheets(
-        document, 'print', default_url_fetcher, font_config=None,
+        html.wrapper_element, 'print', default_url_fetcher, font_config=None,
         page_rules=None))
     assert len(sheets) == 2
     # Also test that stylesheets are in tree order
@@ -127,7 +127,7 @@ def test_annotate_document():
         document, user_stylesheets=[CSS(resource_filename('user.css'))])
 
     # Element objects behave a lists of their children
-    _head, body = document
+    _head, body = document.etree_element
     h1, p, ul, div = body
     li_0, _li_1 = ul
     a, = li_0

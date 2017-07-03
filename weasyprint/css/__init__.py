@@ -116,8 +116,8 @@ def get_child_text(element):
     return ''.join(content)
 
 
-def find_stylesheets(html, device_media_type, url_fetcher, font_config,
-                     page_rules):
+def find_stylesheets(wrapper_element, device_media_type, url_fetcher,
+                     font_config, page_rules):
     """Yield the stylesheets in ``element_tree``.
 
     The output order is the same as the source order.
@@ -125,7 +125,8 @@ def find_stylesheets(html, device_media_type, url_fetcher, font_config,
     """
     from ..html import element_has_link_type  # Work around circular imports.
 
-    for element in html.query_all('style', 'link'):
+    for wrapper in wrapper_element.query_all('style', 'link'):
+        element = wrapper.etree_element
         mime_type = element.get('type', 'text/css').split(';', 1)[0].strip()
         # Only keep 'type/subtype' from 'type/subtype ; param1; param2'.
         if mime_type != 'text/css':
@@ -141,7 +142,7 @@ def find_stylesheets(html, device_media_type, url_fetcher, font_config,
             # ElementTree should give us either unicode or ASCII-only
             # bytestrings, so we don't need `encoding` here.
             css = CSS(
-                string=content, base_url=element.base_url,
+                string=content, base_url=wrapper.base_url,
                 url_fetcher=url_fetcher, media_type=device_media_type,
                 font_config=font_config, page_rules=page_rules)
             yield css
@@ -149,7 +150,7 @@ def find_stylesheets(html, device_media_type, url_fetcher, font_config,
             if not element_has_link_type(element, 'stylesheet') or \
                     element_has_link_type(element, 'alternate'):
                 continue
-            href = get_url_attribute(element, 'href')
+            href = get_url_attribute(element, 'href', wrapper.base_url)
             if href is not None:
                 try:
                     yield CSS(
@@ -161,12 +162,7 @@ def find_stylesheets(html, device_media_type, url_fetcher, font_config,
                                    href, exc)
 
 
-def check_style_attribute(_parser, element, style_attribute):
-    declarations = tinycss2.parse_declaration_list(style_attribute)
-    return element, declarations, element.base_url
-
-
-def find_style_attributes(html, presentational_hints=False):
+def find_style_attributes(tree, presentational_hints=False, base_url=None):
     """Yield ``specificity, (element, declaration, base_url)`` rules.
 
     Rules from "style" attribute are returned with specificity
@@ -176,13 +172,15 @@ def find_style_attributes(html, presentational_hints=False):
     are returned with specificity ``(0, 0, 0)``.
 
     """
-    parser = None  # FIXME remove this
-    for element in html.iter_subtree():
+    def check_style_attribute(element, style_attribute):
+        declarations = tinycss2.parse_declaration_list(style_attribute)
+        return element, declarations, base_url
+
+    for element in tree.iter():
         specificity = (1, 0, 0)
         style_attribute = element.get('style')
         if style_attribute:
-            yield specificity, check_style_attribute(
-                parser, element, style_attribute)
+            yield specificity, check_style_attribute(element, style_attribute)
         if not presentational_hints:
             continue
         specificity = (0, 0, 0)
@@ -199,40 +197,40 @@ def find_style_attributes(html, presentational_hints=False):
                         break
                 if style_attribute:
                     yield specificity, check_style_attribute(
-                        parser, element, style_attribute)
+                        element, style_attribute)
             if element.get('background'):
                 style_attribute = 'background-image:url(%s)' % (
                     element.get('background'))
                 yield specificity, check_style_attribute(
-                    parser, element, style_attribute)
+                    element, style_attribute)
             if element.get('bgcolor'):
                 style_attribute = 'background-color:%s' % (
                     element.get('bgcolor'))
                 yield specificity, check_style_attribute(
-                    parser, element, style_attribute)
+                    element, style_attribute)
             if element.get('text'):
                 style_attribute = 'color:%s' % element.get('text')
                 yield specificity, check_style_attribute(
-                    parser, element, style_attribute)
+                    element, style_attribute)
             # TODO: we should support link, vlink, alink
         elif element.tag == 'center':
             yield specificity, check_style_attribute(
-                parser, element, 'text-align:center')
+                element, 'text-align:center')
         elif element.tag == 'div':
             align = element.get('align', '').lower()
             if align == 'middle':
                 yield specificity, check_style_attribute(
-                    parser, element, 'text-align:center')
+                    element, 'text-align:center')
             elif align in ('center', 'left', 'right', 'justify'):
                 yield specificity, check_style_attribute(
-                    parser, element, 'text-align:%s' % align)
+                    element, 'text-align:%s' % align)
         elif element.tag == 'font':
             if element.get('color'):
                 yield specificity, check_style_attribute(
-                    parser, element, 'color:%s' % element.get('color'))
+                    element, 'color:%s' % element.get('color'))
             if element.get('face'):
                 yield specificity, check_style_attribute(
-                    parser, element, 'font-family:%s' % element.get('face'))
+                    element, 'font-family:%s' % element.get('face'))
             if element.get('size'):
                 size = element.get('size').strip()
                 relative_plus = size.startswith('+')
@@ -259,12 +257,12 @@ def find_style_attributes(html, presentational_hints=False):
                         size -= 3
                     size = max(1, min(7, size))
                     yield specificity, check_style_attribute(
-                        parser, element, 'font-size:%s' % font_sizes[size])
+                        element, 'font-size:%s' % font_sizes[size])
         elif element.tag == 'table':
             # TODO: we should support cellpadding
             if element.get('cellspacing'):
                 yield specificity, check_style_attribute(
-                    parser, element,
+                    element,
                     'border-spacing:%spx' % element.get('cellspacing'))
             if element.get('cellpadding'):
                 cellpadding = element.get('cellpadding')
@@ -274,7 +272,7 @@ def find_style_attributes(html, presentational_hints=False):
                 for subelement in element.iter():
                     if subelement.tag in ('td', 'th'):
                         yield specificity, check_style_attribute(
-                            parser, subelement,
+                            subelement,
                             'padding-left:%s;padding-right:%s;'
                             'padding-top:%s;padding-bottom:%s;' % (
                                 4 * (cellpadding,)))
@@ -283,90 +281,90 @@ def find_style_attributes(html, presentational_hints=False):
                 if hspace.isdigit():
                     hspace += 'px'
                 yield specificity, check_style_attribute(
-                    parser, element,
+                    element,
                     'margin-left:%s;margin-right:%s' % (hspace, hspace))
             if element.get('vspace'):
                 vspace = element.get('vspace')
                 if vspace.isdigit():
                     vspace += 'px'
                 yield specificity, check_style_attribute(
-                    parser, element,
+                    element,
                     'margin-top:%s;margin-bottom:%s' % (vspace, vspace))
             if element.get('width'):
                 style_attribute = 'width:%s' % element.get('width')
                 if element.get('width').isdigit():
                     style_attribute += 'px'
                 yield specificity, check_style_attribute(
-                    parser, element, style_attribute)
+                    element, style_attribute)
             if element.get('height'):
                 style_attribute = 'height:%s' % element.get('height')
                 if element.get('height').isdigit():
                     style_attribute += 'px'
                 yield specificity, check_style_attribute(
-                    parser, element, style_attribute)
+                    element, style_attribute)
             if element.get('background'):
                 style_attribute = 'background-image:url(%s)' % (
                     element.get('background'))
                 yield specificity, check_style_attribute(
-                    parser, element, style_attribute)
+                    element, style_attribute)
             if element.get('bgcolor'):
                 style_attribute = 'background-color:%s' % (
                     element.get('bgcolor'))
                 yield specificity, check_style_attribute(
-                    parser, element, style_attribute)
+                    element, style_attribute)
             if element.get('bordercolor'):
                 style_attribute = 'border-color:%s' % (
                     element.get('bordercolor'))
                 yield specificity, check_style_attribute(
-                    parser, element, style_attribute)
+                    element, style_attribute)
             if element.get('border'):
                 style_attribute = 'border-width:%spx' % (
                     element.get('border'))
                 yield specificity, check_style_attribute(
-                    parser, element, style_attribute)
+                    element, style_attribute)
         elif element.tag in ('tr', 'td', 'th', 'thead', 'tbody', 'tfoot'):
             align = element.get('align', '').lower()
             if align in ('left', 'right', 'justify'):
                 # TODO: we should align descendants too
                 yield specificity, check_style_attribute(
-                    parser, element, 'text-align:%s' % align)
+                    element, 'text-align:%s' % align)
             if element.get('background'):
                 style_attribute = 'background-image:url(%s)' % (
                     element.get('background'))
                 yield specificity, check_style_attribute(
-                    parser, element, style_attribute)
+                    element, style_attribute)
             if element.get('bgcolor'):
                 style_attribute = 'background-color:%s' % (
                     element.get('bgcolor'))
                 yield specificity, check_style_attribute(
-                    parser, element, style_attribute)
+                    element, style_attribute)
             if element.tag in ('tr', 'td', 'th'):
                 if element.get('height'):
                     style_attribute = 'height:%s' % element.get('height')
                     if element.get('height').isdigit():
                         style_attribute += 'px'
                     yield specificity, check_style_attribute(
-                        parser, element, style_attribute)
+                        element, style_attribute)
                 if element.tag in ('td', 'th'):
                     if element.get('width'):
                         style_attribute = 'width:%s' % element.get('width')
                         if element.get('width').isdigit():
                             style_attribute += 'px'
                         yield specificity, check_style_attribute(
-                            parser, element, style_attribute)
+                            element, style_attribute)
         elif element.tag == 'caption':
             align = element.get('align', '').lower()
             # TODO: we should align descendants too
             if align in ('left', 'right', 'justify'):
                 yield specificity, check_style_attribute(
-                    parser, element, 'text-align:%s' % align)
+                    element, 'text-align:%s' % align)
         elif element.tag == 'col':
             if element.get('width'):
                 style_attribute = 'width:%s' % element.get('width')
                 if element.get('width').isdigit():
                     style_attribute += 'px'
                 yield specificity, check_style_attribute(
-                    parser, element, style_attribute)
+                    element, style_attribute)
         elif element.tag == 'hr':
             size = 0
             if element.get('size'):
@@ -377,22 +375,22 @@ def find_style_attributes(html, presentational_hints=False):
             if (element.get('color'), element.get('noshade')) != (None, None):
                 if size >= 1:
                     yield specificity, check_style_attribute(
-                        parser, element, 'border-width:%spx' % (size / 2))
+                        element, 'border-width:%spx' % (size / 2))
             elif size == 1:
                 yield specificity, check_style_attribute(
-                    parser, element, 'border-bottom-width:0')
+                    element, 'border-bottom-width:0')
             elif size > 1:
                 yield specificity, check_style_attribute(
-                    parser, element, 'height:%spx' % (size - 2))
+                    element, 'height:%spx' % (size - 2))
             if element.get('width'):
                 style_attribute = 'width:%s' % element.get('width')
                 if element.get('width').isdigit():
                     style_attribute += 'px'
                 yield specificity, check_style_attribute(
-                    parser, element, style_attribute)
+                    element, style_attribute)
             if element.get('color'):
                 yield specificity, check_style_attribute(
-                    parser, element, 'color:%s' % element.get('color'))
+                    element, 'color:%s' % element.get('color'))
         elif element.tag in (
                 'iframe', 'applet', 'embed', 'img', 'input', 'object'):
             if (element.tag != 'input' or
@@ -401,20 +399,20 @@ def find_style_attributes(html, presentational_hints=False):
                 if align in ('middle', 'center'):
                     # TODO: middle and center values are wrong
                     yield specificity, check_style_attribute(
-                        parser, element, 'vertical-align:middle')
+                        element, 'vertical-align:middle')
                 if element.get('hspace'):
                     hspace = element.get('hspace')
                     if hspace.isdigit():
                         hspace += 'px'
                     yield specificity, check_style_attribute(
-                        parser, element,
+                        element,
                         'margin-left:%s;margin-right:%s' % (hspace, hspace))
                 if element.get('vspace'):
                     vspace = element.get('vspace')
                     if vspace.isdigit():
                         vspace += 'px'
                     yield specificity, check_style_attribute(
-                        parser, element,
+                        element,
                         'margin-top:%s;margin-bottom:%s' % (vspace, vspace))
                 # TODO: img seems to be excluded for width and height, but a
                 # lot of W3C tests rely on this attribute being applied to img
@@ -423,31 +421,31 @@ def find_style_attributes(html, presentational_hints=False):
                     if element.get('width').isdigit():
                         style_attribute += 'px'
                     yield specificity, check_style_attribute(
-                        parser, element, style_attribute)
+                        element, style_attribute)
                 if element.get('height'):
                     style_attribute = 'height:%s' % element.get('height')
                     if element.get('height').isdigit():
                         style_attribute += 'px'
                     yield specificity, check_style_attribute(
-                        parser, element, style_attribute)
+                        element, style_attribute)
                 if element.tag in ('img', 'object', 'input'):
                     if element.get('border'):
                         yield specificity, check_style_attribute(
-                            parser, element,
+                            element,
                             'border-width:%spx;border-style:solid' %
                             element.get('border'))
         elif element.tag == 'ol':
             # From https://www.w3.org/TR/css-lists-3/
             if element.get('start'):
                 yield specificity, check_style_attribute(
-                    parser, element,
+                    element,
                     'counter-reset:list-item %s;'
                     'counter-increment:list-item -1' % element.get('start'))
         elif element.tag == 'ul':
             # From https://www.w3.org/TR/css-lists-3/
             if element.get('value'):
                 yield specificity, check_style_attribute(
-                    parser, element,
+                    element,
                     'counter-reset:list-item %s;'
                     'counter-increment:none' % element.get('value'))
 
@@ -496,12 +494,14 @@ def add_declaration(cascaded_styles, prop_name, prop_values, weight, element,
     """
     style = cascaded_styles.setdefault((element, pseudo_type), {})
     _values, previous_weight = style.get(prop_name, (None, None))
+    if getattr(element, 'tag', None) == 'a' and prop_name == 'display':
+        print(element, prop_name, prop_values)
     if previous_weight is None or previous_weight <= weight:
         style[prop_name] = prop_values, weight
 
 
 def set_computed_styles(cascaded_styles, computed_styles, element, parent,
-                        root=None, pseudo_type=None):
+                        root=None, pseudo_type=None, base_url=None):
     """Set the computed values of styles to ``element``.
 
     Take the properties left by ``apply_style_rule`` on an element or
@@ -518,12 +518,11 @@ def set_computed_styles(cascaded_styles, computed_styles, element, parent,
     cascaded = cascaded_styles.get((element, pseudo_type), {})
 
     computed_styles[element, pseudo_type] = computed_from_cascaded(
-        element, cascaded, parent_style, pseudo_type, root_style
-    )
+        element, cascaded, parent_style, pseudo_type, root_style, base_url)
 
 
 def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
-                           root_style=None):
+                           root_style=None, base_url=None):
     """Get a dict of computed style mixed from parent and cascaded styles."""
     if not cascaded and parent_style is not None:
         # Fast path for anonymous boxes:
@@ -569,8 +568,8 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
         specified[name] = value
 
     return computed_values.compute(
-        element, pseudo_type, specified, computed, parent_style, root_style
-    )
+        element, pseudo_type, specified, computed, parent_style, root_style,
+        base_url)
 
 
 def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
@@ -747,7 +746,8 @@ def get_all_computed_styles(html, user_stylesheets=None,
         for sheet in (html._ph_stylesheets() or []):
             sheets.append((sheet, 'author', (0, 0, 0)))
     for sheet in find_stylesheets(
-            html, html.media_type, html.url_fetcher, font_config, page_rules):
+            html.wrapper_element, html.media_type, html.url_fetcher,
+            font_config, page_rules):
         sheets.append((sheet, 'author', None))
     for sheet in (user_stylesheets or []):
         sheets.append((sheet, 'user', None))
@@ -765,7 +765,7 @@ def get_all_computed_styles(html, user_stylesheets=None,
     cascaded_styles = {}
 
     for specificity, attributes in find_style_attributes(
-            html, presentational_hints):
+            html.etree_element, presentational_hints, html.base_url):
         element, declarations, base_url = attributes
         for name, values, importance in preprocess_declarations(
                 base_url, declarations):
@@ -798,7 +798,7 @@ def get_all_computed_styles(html, user_stylesheets=None,
     # styles before their children, for inheritance.
 
     # Iterate on all elements, even if there is no cascaded style for them.
-    for element in html.iter_subtree():
+    for element in html.wrapper_element.iter_subtree():
         for sheet, origin, sheet_specificity in sheets:
             # Add declarations for matched elements
             for selector in sheet.matcher.match(element):
@@ -808,11 +808,13 @@ def get_all_computed_styles(html, user_stylesheets=None,
                     precedence = declaration_precedence(origin, importance)
                     weight = (precedence, specificity)
                     add_declaration(
-                        cascaded_styles, name, values, weight, element,
-                        pseudo_type)
+                        cascaded_styles, name, values, weight,
+                        element.etree_element, pseudo_type)
         set_computed_styles(
-            cascaded_styles, computed_styles, element, root=html,
-            parent=element.parent)
+            cascaded_styles, computed_styles, element.etree_element,
+            root=html.etree_element,
+            parent=(element.parent.etree_element if element.parent else None),
+            base_url=html.base_url)
 
     # Then computed styles for @page.
 
@@ -823,7 +825,8 @@ def get_all_computed_styles(html, user_stylesheets=None,
             cascaded_styles, computed_styles, page_type,
             # @page inherits from the root element:
             # http://lists.w3.org/Archives/Public/www-style/2012Jan/1164.html
-            root=html, parent=html)
+            root=html.etree_element, parent=html.etree_element,
+            base_url=html.base_url)
 
     # Then computed styles for pseudo elements, in any order.
     # Pseudo-elements inherit from their associated element so they come
@@ -835,10 +838,12 @@ def get_all_computed_styles(html, user_stylesheets=None,
     # might as well not exist.)
     for element, pseudo_type in cascaded_styles:
         if pseudo_type:
-            set_computed_styles(cascaded_styles, computed_styles,
-                                element, pseudo_type=pseudo_type,
-                                # The pseudo-element inherits from the element.
-                                root=html, parent=element)
+            set_computed_styles(
+                cascaded_styles, computed_styles, element,
+                pseudo_type=pseudo_type,
+                # The pseudo-element inherits from the element.
+                root=html.etree_element, parent=element,
+                base_url=html.base_url)
 
     # This is mostly useful to make pseudo_type optional.
     def style_for(element, pseudo_type=None, __get=computed_styles.get):
