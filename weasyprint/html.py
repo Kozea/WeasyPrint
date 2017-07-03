@@ -288,6 +288,7 @@ def get_html_metadata(wrapper_element):
     modified = None
     attachments = []
     for element in wrapper_element.query_all('title', 'meta', 'link'):
+        element = element.etree_element
         if element.tag == 'title' and title is None:
             title = get_child_text(element)
         elif element.tag == 'meta':
