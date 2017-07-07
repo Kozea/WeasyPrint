@@ -370,7 +370,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                            device_size, page_is_empty, absolute_boxes,
                            fixed_boxes, adjoining_margins=None):
     """Set the ``box`` height."""
-    assert isinstance(box, boxes.BlockContainerBox)
+    assert isinstance(box, boxes.BlockContainerBox), str(type(box))
 
     # TODO: this should make a difference, but that is currently neglected.
     # See http://www.w3.org/TR/CSS21/visudet.html#normal-block
@@ -466,8 +466,8 @@ def block_container_layout(context, box, max_position_y, skip_stack,
             continue
 
         if isinstance(child, boxes.LineBox):
-            assert len(box.children) == 1, (
-                'line box with siblings before layout')
+            assert len(box.children) == 1, str((
+                'line box with siblings before layout:', len(box.children)))
             if adjoining_margins:
                 position_y += collapse_margin(adjoining_margins)
                 adjoining_margins = []

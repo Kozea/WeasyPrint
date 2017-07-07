@@ -66,7 +66,7 @@ def _get_matrix(box):
                 elif name == 'skewy':
                     args = (1, math.tan(args), 0, 1, 0, 0)
                 else:
-                    assert name == 'matrix'
+                    assert name == 'matrix', str((name, box))
                 matrix = cairo.Matrix(*args) * matrix
         matrix.translate(-origin_x, -origin_y)
         box.transformation_matrix = matrix
@@ -444,8 +444,8 @@ class Document(object):
 
                 previous_level = level
                 depth = level - sum(skipped_levels)
-                assert depth == len(skipped_levels)
-                assert depth >= 1
+                assert 1 <= depth == len(skipped_levels), str((
+                    depth, len(skipped_levels), level, label))
 
                 children = []
                 subtree = label, (page_number, point_x, point_y), children

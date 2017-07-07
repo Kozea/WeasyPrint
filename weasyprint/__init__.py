@@ -95,7 +95,7 @@ class HTML(object):
                         source, treebuilder='lxml', override_encoding=encoding,
                         transport_encoding=protocol_encoding,
                         namespaceHTMLElements=False)
-                assert result
+                assert result, str((source_type, type(source)))
         base_url = find_base_url(result, base_url)
         if hasattr(result, 'getroot'):
             result.docinfo.URL = base_url

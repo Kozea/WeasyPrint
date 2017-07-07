@@ -485,7 +485,8 @@ def declaration_precedence(origin, importance):
     elif origin == 'author':  # and importance
         return 4
     else:
-        assert origin == 'user'  # and importance
+        # and importance
+        assert origin == 'user', str((origin, importance))
         return 5
 
 
