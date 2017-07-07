@@ -94,7 +94,7 @@ class HTML(object):
         self.url_fetcher = url_fetcher
         self.media_type = media_type
         self.wrapper_element = cssselect2.ElementWrapper.from_html_root(
-            result, content_language=None, base_url=self.base_url)
+            result, content_language=None)
         self.etree_element = self.wrapper_element.etree_element
 
     def _ua_stylesheets(self):
@@ -104,7 +104,7 @@ class HTML(object):
         return [HTML5_PH_STYLESHEET]
 
     def _get_metadata(self):
-        return get_html_metadata(self.wrapper_element)
+        return get_html_metadata(self.wrapper_element, self.base_url)
 
     def render(self, stylesheets=None, enable_hinting=False,
                presentational_hints=False):

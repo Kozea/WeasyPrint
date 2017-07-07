@@ -116,7 +116,7 @@ def get_child_text(element):
     return ''.join(content)
 
 
-def find_stylesheets(wrapper_element, device_media_type, url_fetcher,
+def find_stylesheets(wrapper_element, device_media_type, url_fetcher, base_url,
                      font_config, page_rules):
     """Yield the stylesheets in ``element_tree``.
 
@@ -142,7 +142,7 @@ def find_stylesheets(wrapper_element, device_media_type, url_fetcher,
             # ElementTree should give us either unicode or ASCII-only
             # bytestrings, so we don't need `encoding` here.
             css = CSS(
-                string=content, base_url=wrapper.base_url,
+                string=content, base_url=base_url,
                 url_fetcher=url_fetcher, media_type=device_media_type,
                 font_config=font_config, page_rules=page_rules)
             yield css
@@ -150,7 +150,7 @@ def find_stylesheets(wrapper_element, device_media_type, url_fetcher,
             if not element_has_link_type(element, 'stylesheet') or \
                     element_has_link_type(element, 'alternate'):
                 continue
-            href = get_url_attribute(element, 'href', wrapper.base_url)
+            href = get_url_attribute(element, 'href', base_url)
             if href is not None:
                 try:
                     yield CSS(
@@ -747,13 +747,13 @@ def get_all_computed_styles(html, user_stylesheets=None,
             sheets.append((sheet, 'author', (0, 0, 0)))
     for sheet in find_stylesheets(
             html.wrapper_element, html.media_type, html.url_fetcher,
-            font_config, page_rules):
+            html.base_url, font_config, page_rules):
         sheets.append((sheet, 'author', None))
     for sheet in (user_stylesheets or []):
         sheets.append((sheet, 'user', None))
 
     # keys: (element, pseudo_element_type)
-    #    element: an ElementWrapper or the '@page' string for @page styles
+    #    element: an ElementTree Element or the '@page' string for @page styles
     #    pseudo_element_type: a string such as 'first' (for @page) or 'after',
     #        or None for normal elements
     # values: dicts of

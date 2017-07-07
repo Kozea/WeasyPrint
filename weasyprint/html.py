@@ -269,7 +269,7 @@ def find_base_url(html_document, fallback_base_url):
     return fallback_base_url
 
 
-def get_html_metadata(wrapper_element):
+def get_html_metadata(wrapper_element, base_url):
     """
     Relevant specs:
 
@@ -310,7 +310,7 @@ def get_html_metadata(wrapper_element):
                 modified = parse_w3c_date(name, content)
         elif element.tag == 'link' and element_has_link_type(
                 element, 'attachment'):
-            url = get_url_attribute(element, 'href', wrapper_element.base_url)
+            url = get_url_attribute(element, 'href', base_url)
             title = element.get('title', None)
             if url is None:
                 LOGGER.warning('Missing href in <link rel="attachment">')
