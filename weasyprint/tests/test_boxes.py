@@ -18,8 +18,8 @@ import pprint
 
 from .. import images
 from ..css import get_all_computed_styles
-from ..urls import path2url
 from ..formatting_structure import boxes, build, counters
+from ..urls import path2url
 from .testing_utils import (
     FakeHTML, assert_no_logs, capture_logs, resource_filename)
 
