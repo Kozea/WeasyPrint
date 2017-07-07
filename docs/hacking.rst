@@ -75,12 +75,9 @@ the rendering of a document in WeasyPrint goes like this:
 HTML
 ....
 
-Not much to see here. The :class:`weasyprint.HTML` class is a thin wrapper
-around cssselect2.ElementWrapper_ which handles step 1 and gives a tree of HTML
-*elements*. Although the actual API is different, this tree is conceptually the
-same as what web browsers call *the DOM*.
-
-.. _cssselect2.ElementWrapper: https://github.com/Kozea/cssselect2
+Not much to see here. The :class:`weasyprint.HTML` class handles step 1 and
+gives a tree of HTML *elements*. Although the actual API is different, this
+tree is conceptually the same as what web browsers call *the DOM*.
 
 
 CSS
@@ -131,7 +128,7 @@ an absolute length or a percentage.
 The final result of the :func:`~weasyprint.css.get_all_computed_styles`
 function is a big dict where keys are ``(element, pseudo_element_type)``
 tuples, and keys are :class:`StyleDict` objects. Elements are
-cssselect2.ElementWrapper objects, while the type of pseudo-element is a string
+ElementTree elements, while the type of pseudo-element is a string
 for eg. ``::first-line`` selectors, or :obj:`None` for “normal”
 elements. :class:`StyleDict` objects are dicts with attribute read-only access
 mapping property names to the computed values.  (The return value is not the
