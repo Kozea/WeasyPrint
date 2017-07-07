@@ -177,13 +177,14 @@ def inline_min_content_width(context, box, outer=True, skip_stack=None,
     calculated.
 
     """
-    widths = list(inline_line_widths(
+    widths = inline_line_widths(
         context, box, outer, is_line_start, minimum=True,
-        skip_stack=skip_stack))
+        skip_stack=skip_stack)
 
-    if first_line and len(widths) > 1:
-        del widths[1:]
+    if first_line:
+        widths = [next(widths)]
     else:
+        widths = list(widths)
         widths[-1] -= trailing_whitespace_size(context, box)
     return adjust(box, outer, max(widths))
 
