@@ -833,8 +833,8 @@ def create_layout(text, style, context, max_width):
         or ``None`` for unlimited width.
 
     """
-    text_wrap = style.white_space in ('pre', 'nowrap')
-    if text_wrap:
+    text_wrap = style.white_space in ('normal', 'pre-wrap', 'pre-line')
+    if not text_wrap:
         max_width = None
 
     layout = Layout(context, style.font_size, style)
@@ -922,10 +922,11 @@ def split_first_line(text, style, context, max_width, line_width):
     ``baseline``: baseline in pixels of the first line
 
     """
-    text_wrap = style.white_space in ('pre', 'nowrap')
+    # See https://www.w3.org/TR/css-text-3/#white-space-property
+    text_wrap = style.white_space in ('normal', 'pre-wrap', 'pre-line')
     space_collapse = style.white_space in ('normal', 'nowrap', 'pre-line')
 
-    if text_wrap:
+    if not text_wrap:
         max_width = None
 
     # Step #1: Get a draft layout with the first line
