@@ -31,7 +31,7 @@ REQUIREMENTS = [
     # XXX: Keep this in sync with docs/install.rst
     'html5lib>=0.999999999',
     'tinycss2>=0.5',
-    'cssselect2>=0.1a0',
+    'cssselect2>=0.1',
     'cffi>=0.6',
     'cairocffi>=0.5',
     'Pyphen>=0.8'
