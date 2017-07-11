@@ -12,7 +12,6 @@
 
 from __future__ import division, unicode_literals
 
-import tinycss2
 from pytest import raises
 
 from .. import CSS, css, default_url_fetcher
@@ -72,55 +71,49 @@ def test_style_dict():
 @assert_no_logs
 def test_find_stylesheets():
     """Test if the stylesheets are found in a HTML document."""
-    document = FakeHTML(resource_filename('doc1.html'))
+    html = FakeHTML(resource_filename('doc1.html'))
 
     sheets = list(css.find_stylesheets(
-        document.root_element, 'print', default_url_fetcher, None))
+        html.wrapper_element, 'print', default_url_fetcher, html.base_url,
+        font_config=None, page_rules=None))
     assert len(sheets) == 2
     # Also test that stylesheets are in tree order
     assert [s.base_url.rsplit('/', 1)[-1].rsplit(',', 1)[-1] for s in sheets] \
         == ['a%7Bcolor%3AcurrentColor%7D', 'doc1.html']
 
-    rules = [rule for sheet in sheets for rule in sheet.rules]
+    rules = []
+    for sheet in sheets:
+        for sheet_rules in sheet.matcher.lower_local_name_selectors.values():
+            for rule in sheet_rules:
+                rules.append(rule)
+        for rule in sheet.page_rules:
+            rules.append(rule)
     assert len(rules) == 10
-    # Also test appearance order
-    assert [
-        tinycss2.serialize(rule.prelude)
-        for rule, _selector_list, _declarations in rules
-    ] == [
-        'a', 'li ', 'p ', 'ul ', 'li', 'a:after ', ' :first ', 'ul ',
-        'body > h1:first-child ', 'h1 ~ p ~ ul a:after '
-    ]
+
+    # TODO: test that the values are correct too
 
 
 @assert_no_logs
 def test_expand_shorthands():
     """Test the expand shorthands."""
     sheet = CSS(resource_filename('sheet2.css'))
-    assert tinycss2.serialize(sheet.rules[0][0].prelude) == 'li '
+    assert list(sheet.matcher.lower_local_name_selectors) == ['li']
 
-    style = dict((d.name, tinycss2.serialize(d.value))
-                 for d in tinycss2.parse_declaration_list(
-                     sheet.rules[0][0].content,
-                     skip_whitespace=True,
-                     skip_comments=True))
-    assert style['margin'] == ' 2em 0'
-    assert style['margin-bottom'] == ' 3em'
-    assert style['margin-left'] == ' 4em'
-    assert 'margin-top' not in style
+    rules = sheet.matcher.lower_local_name_selectors['li'][0][4]
+    assert rules[0][0] == 'margin_bottom'
+    assert rules[0][1] == (3, 'em')
+    assert rules[1][0] == 'margin_top'
+    assert rules[1][1] == (2, 'em')
+    assert rules[2][0] == 'margin_right'
+    assert rules[2][1] == (0, None)
+    assert rules[3][0] == 'margin_bottom'
+    assert rules[3][1] == (2, 'em')
+    assert rules[4][0] == 'margin_left'
+    assert rules[4][1] == (0, None)
+    assert rules[5][0] == 'margin_left'
+    assert rules[5][1] == (4, 'em')
 
-    style = dict(
-        (name, value)
-        for _rule, _selectors, declarations in sheet.rules
-        for name, value, _priority in declarations)
-
-    assert 'margin' not in style
-    assert style['margin_top'] == (2, 'em')
-    assert style['margin_right'] == (0, None)
-    assert style['margin_bottom'] == (2, 'em'), \
-        '3em was before the shorthand, should be masked'
-    assert style['margin_left'] == (4, 'em'), \
-        '4em was after the shorthand, should not be masked'
+    # TODO: test that the values are correct too
 
 
 @assert_no_logs
@@ -134,7 +127,7 @@ def test_annotate_document():
         document, user_stylesheets=[CSS(resource_filename('user.css'))])
 
     # Element objects behave a lists of their children
-    _head, body = document.root_element
+    _head, body = document.etree_element
     h1, p, ul, div = body
     li_0, _li_1 = ul
     a, = li_0

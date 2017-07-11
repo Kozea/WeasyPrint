@@ -45,9 +45,11 @@ BOX_TYPE_FROM_DISPLAY = {
 }
 
 
-def build_formatting_structure(element_tree, style_for, get_image_from_uri):
+def build_formatting_structure(element_tree, style_for, get_image_from_uri,
+                               base_url):
     """Build a formatting structure (box tree) from an element tree."""
-    box_list = element_to_box(element_tree, style_for, get_image_from_uri)
+    box_list = element_to_box(
+        element_tree, style_for, get_image_from_uri, base_url)
     if box_list:
         box, = box_list
     else:
@@ -55,12 +57,13 @@ def build_formatting_structure(element_tree, style_for, get_image_from_uri):
         def root_style_for(element, pseudo_type=None):
             style = style_for(element, pseudo_type)
             if style:
-                if element.getparent() is None:
+                if element.parent is None:
                     style.display = 'block'
                 else:
                     style.display = 'none'
             return style
-        box, = element_to_box(element_tree, root_style_for, get_image_from_uri)
+        box, = element_to_box(
+            element_tree, root_style_for, get_image_from_uri, base_url)
     box.is_for_root_element = True
     # If this is changed, maybe update weasy.layout.pages.make_margin_boxes()
     process_whitespace(box)
@@ -71,7 +74,7 @@ def build_formatting_structure(element_tree, style_for, get_image_from_uri):
     return box
 
 
-def make_box(element_tag, sourceline, style, content, get_image_from_uri):
+def make_box(element_tag, style, content, get_image_from_uri):
     if (style.display in ('table', 'inline-table') and
             style.border_collapse == 'collapse'):
         # Padding do not apply
@@ -82,11 +85,12 @@ def make_box(element_tag, sourceline, style, content, get_image_from_uri):
         for side in ['top', 'bottom', 'left', 'right']:
             style['margin_' + side] = ZERO_PIXELS
 
-    return BOX_TYPE_FROM_DISPLAY[style.display](element_tag, sourceline,
-                                                style, content)
+    return BOX_TYPE_FROM_DISPLAY[style.display](
+        element_tag, style, content)
 
 
-def element_to_box(element, style_for, get_image_from_uri, state=None):
+def element_to_box(element, style_for, get_image_from_uri, base_url,
+                   state=None):
     """Convert an element and its children into a box with children.
 
     Return a list of boxes. Most of the time the list will have one item but
@@ -123,8 +127,7 @@ def element_to_box(element, style_for, get_image_from_uri, state=None):
     if display == 'none':
         return []
 
-    box = make_box(element.tag, element.sourceline, style, [],
-                   get_image_from_uri)
+    box = make_box(element.tag, style, [], get_image_from_uri)
 
     if state is None:
         # use a list to have a shared mutable object
@@ -158,7 +161,7 @@ def element_to_box(element, style_for, get_image_from_uri, state=None):
 
     for child_element in element:
         children.extend(element_to_box(
-            child_element, style_for, get_image_from_uri, state))
+            child_element, style_for, get_image_from_uri, base_url, state))
         text = child_element.tail
         if text:
             text_box = boxes.TextBox.anonymous_from(box, text)
@@ -180,7 +183,7 @@ def element_to_box(element, style_for, get_image_from_uri, state=None):
     replace_content_lists(element, box, style, counter_values)
 
     # Specific handling for the element. (eg. replaced element)
-    return html.handle_element(element, box, get_image_from_uri)
+    return html.handle_element(element, box, get_image_from_uri, base_url)
 
 
 def before_after_to_box(element, pseudo_type, state, style_for,
@@ -200,8 +203,7 @@ def before_after_to_box(element, pseudo_type, state, style_for,
         return
 
     box = make_box(
-        '%s::%s' % (element.tag, pseudo_type), element.sourceline, style, [],
-        get_image_from_uri)
+        '%s::%s' % (element.tag, pseudo_type), style, [], get_image_from_uri)
 
     quote_depth, counter_values, _counter_scopes = state
     update_counters(state, style)

@@ -160,7 +160,7 @@ def register_computer(name):
 
 
 def compute(element, pseudo_type, specified, computed, parent_style,
-            root_style):
+            root_style, base_url):
     """
     Return a StyleDict of computed values.
 
@@ -174,12 +174,13 @@ def compute(element, pseudo_type, specified, computed, parent_style,
                           element (should contain values for all properties),
                           or ``None`` if ``element`` is the root element.
     """
-    if parent_style is None:
-        parent_style = INITIAL_VALUES
-
     def computer():
         """Dummy object that holds attributes."""
         return 0
+
+    computer.is_root_element = parent_style is None
+    if parent_style is None:
+        parent_style = INITIAL_VALUES
 
     computer.element = element
     computer.pseudo_type = pseudo_type
@@ -187,6 +188,7 @@ def compute(element, pseudo_type, specified, computed, parent_style,
     computer.computed = computed
     computer.parent_style = parent_style
     computer.root_style = root_style
+    computer.base_url = base_url
 
     getter = COMPUTER_FUNCTIONS.get
 
@@ -406,7 +408,7 @@ def display(computer, name, value):
     float_ = computer.specified.float
     position = computer.specified.position
     if position in ('absolute', 'fixed') or float_ != 'none' or \
-            getattr(computer.element, 'getparent', lambda: None)() is None:
+            computer.is_root_element:
         if value == 'inline-table':
             return'table'
         elif value in ('inline', 'table-row-group', 'table-column',
@@ -493,7 +495,8 @@ def link(computer, name, values):
     else:
         type_, value = values
         if type_ == 'attr':
-            return get_link_attribute(computer.element, value)
+            return get_link_attribute(
+                computer.element, value, computer.base_url)
         else:
             return values
 

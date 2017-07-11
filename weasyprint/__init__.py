@@ -15,8 +15,9 @@
 
 from __future__ import division, unicode_literals
 
-import contextlib  # noqa
-import html5lib  # noqa
+import contextlib
+import html5lib
+import cssselect2
 import tinycss2
 
 
@@ -40,7 +41,7 @@ from .logger import LOGGER  # noqa
 
 
 class HTML(object):
-    """Represents an HTML document parsed by `lxml <http://lxml.de/>`_.
+    """Represents an HTML document parsed by html5lib.
 
     You can just create an instance with a positional argument:
     ``doc = HTML(something)``
@@ -54,7 +55,6 @@ class HTML(object):
     :param url: An absolute, fully qualified URL.
     :param file_obj: A file-like: any object with a :meth:`~file.read` method.
     :param string: A string of HTML source. (This argument must be named.)
-    :param tree: A parsed lxml tree. (This argument must be named.)
 
     Specifying multiple inputs is an error:
     ``HTML(filename="foo.html", url="localhost://bar.html")``
@@ -77,35 +77,25 @@ class HTML(object):
 
     """
     def __init__(self, guess=None, filename=None, url=None, file_obj=None,
-                 string=None, tree=None, encoding=None, base_url=None,
+                 string=None, encoding=None, base_url=None,
                  url_fetcher=default_url_fetcher, media_type='print'):
         result = _select_source(
-            guess, filename, url, file_obj, string, tree, base_url,
-            url_fetcher)
+            guess, filename, url, file_obj, string, base_url, url_fetcher)
         with result as (source_type, source, base_url, protocol_encoding):
-            if source_type == 'tree':
-                result = source
+            if isinstance(source, unicode):
+                result = html5lib.parse(source, namespaceHTMLElements=False)
             else:
-                if isinstance(source, unicode):
-                    result = html5lib.parse(
-                        source, treebuilder='lxml',
-                        namespaceHTMLElements=False)
-                else:
-                    result = html5lib.parse(
-                        source, treebuilder='lxml', override_encoding=encoding,
-                        transport_encoding=protocol_encoding,
-                        namespaceHTMLElements=False)
-                assert result
-        base_url = find_base_url(result, base_url)
-        if hasattr(result, 'getroot'):
-            result.docinfo.URL = base_url
-            result = result.getroot()
-        else:
-            result.getroottree().docinfo.URL = base_url
-        self.root_element = result
-        self.base_url = base_url
+                result = html5lib.parse(
+                    source, override_encoding=encoding,
+                    transport_encoding=protocol_encoding,
+                    namespaceHTMLElements=False)
+            assert result
+        self.base_url = find_base_url(result, base_url)
         self.url_fetcher = url_fetcher
         self.media_type = media_type
+        self.wrapper_element = cssselect2.ElementWrapper.from_html_root(
+            result, content_language=None)
+        self.etree_element = self.wrapper_element.etree_element
 
     def _ua_stylesheets(self):
         return [HTML5_UA_STYLESHEET]
@@ -114,7 +104,7 @@ class HTML(object):
         return [HTML5_PH_STYLESHEET]
 
     def _get_metadata(self):
-        return get_html_metadata(self.root_element)
+        return get_html_metadata(self.wrapper_element, self.base_url)
 
     def render(self, stylesheets=None, enable_hinting=False,
                presentational_hints=False):
@@ -244,9 +234,10 @@ class CSS(object):
     def __init__(self, guess=None, filename=None, url=None, file_obj=None,
                  string=None, encoding=None, base_url=None,
                  url_fetcher=default_url_fetcher, _check_mime_type=False,
-                 media_type='print', font_config=None):
+                 media_type='print', font_config=None, matcher=None,
+                 page_rules=None):
         result = _select_source(
-            guess, filename, url, file_obj, string, tree=None,
+            guess, filename, url, file_obj, string,
             base_url=base_url, url_fetcher=url_fetcher,
             check_css_mime_type=_check_mime_type)
         with result as (source_type, source, base_url, protocol_encoding):
@@ -260,12 +251,13 @@ class CSS(object):
                     source, environment_encoding=encoding,
                     protocol_encoding=protocol_encoding)
         self.base_url = base_url
-        self.rules = []
+        self.matcher = matcher or cssselect2.Matcher()
+        self.page_rules = page_rules or []
         # TODO: fonts are stored here and should be cleaned after rendering
         self.fonts = []
         preprocess_stylesheet(
-            media_type, base_url, stylesheet, url_fetcher, self.rules,
-            self.fonts, font_config)
+            media_type, base_url, stylesheet, url_fetcher, self.matcher,
+            self.page_rules, self.fonts, font_config)
 
 
 class Attachment(object):
@@ -283,15 +275,15 @@ class Attachment(object):
                  string=None, base_url=None, url_fetcher=default_url_fetcher,
                  description=None):
         self.source = _select_source(
-            guess, filename, url, file_obj, string, tree=None,
+            guess, filename, url, file_obj, string,
             base_url=base_url, url_fetcher=url_fetcher)
         self.description = description
 
 
 @contextlib.contextmanager
 def _select_source(guess=None, filename=None, url=None, file_obj=None,
-                   string=None, tree=None, base_url=None,
-                   url_fetcher=default_url_fetcher, check_css_mime_type=False):
+                   string=None, base_url=None, url_fetcher=default_url_fetcher,
+                   check_css_mime_type=False):
     """
     Check that only one input is not None, and return it with the
     normalized ``base_url``.
@@ -300,9 +292,9 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
     if base_url is not None:
         base_url = ensure_url(base_url)
 
-    nones = [guess is None, filename is None, url is None,
-             file_obj is None, string is None, tree is None]
-    if nones == [False, True, True, True, True, True]:
+    nones = [
+        param is None for param in (guess, filename, url, file_obj, string)]
+    if nones == [False, True, True, True, True]:
         if hasattr(guess, 'read'):
             type_ = 'file_obj'
         elif url_is_absolute(guess):
@@ -317,12 +309,12 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
             **{str(type_): guess})
         with result as result:
             yield result
-    elif nones == [True, False, True, True, True, True]:
+    elif nones == [True, False, True, True, True]:
         if base_url is None:
             base_url = path2url(filename)
         with open(filename, 'rb') as file_obj:
             yield 'file_obj', file_obj, base_url, None
-    elif nones == [True, True, False, True, True, True]:
+    elif nones == [True, True, False, True, True]:
         with fetch(url_fetcher, url) as result:
             if check_css_mime_type and result['mime_type'] != 'text/css':
                 LOGGER.warning(
@@ -339,7 +331,7 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
                     yield (
                         'file_obj', result['file_obj'], base_url,
                         proto_encoding)
-    elif nones == [True, True, True, False, True, True]:
+    elif nones == [True, True, True, False, True]:
         if base_url is None:
             # filesystem file-like objects have a 'name' attribute.
             name = getattr(file_obj, 'name', None)
@@ -347,15 +339,13 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
             if name and not name.startswith('<'):
                 base_url = ensure_url(name)
         yield 'file_obj', file_obj, base_url, None
-    elif nones == [True, True, True, True, False, True]:
+    elif nones == [True, True, True, True, False]:
         yield 'string', string, base_url, None
-    elif nones == [True, True, True, True, True, False]:
-        yield 'tree', tree, base_url, None
     else:
         raise TypeError('Expected exactly one source, got ' + (
             ', '.join(
                 name for i, name in enumerate(
-                    'guess filename url file_obj string tree'.split())
+                    ('guess', 'filename', 'url', 'file_obj', 'string'))
                 if not nones[i]
             ) or 'nothing'
         ))

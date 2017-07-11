@@ -23,15 +23,10 @@ import unicodedata
 import zlib
 
 import cairocffi as cairo
-import lxml.etree
-import lxml.html
 import pytest
-import tinycss2
 
 from .. import CSS, HTML, __main__, default_url_fetcher, navigator
 from ..compat import iteritems, urlencode, urljoin, urlparse_uses_relative
-from ..css.validation import remove_whitespace
-from ..document import _TaggedTuple
 from ..urls import path2url
 from .test_draw import image_to_pixels
 from .testing_utils import (
@@ -99,11 +94,12 @@ def test_html_parsing():
     """Test the constructor for the HTML class."""
     def check_doc1(html, has_base_url=True):
         """Check that a parsed HTML document looks like resources/doc1.html"""
-        assert html.root_element.tag == 'html'
-        assert [child.tag for child in html.root_element] == ['head', 'body']
-        _head, body = html.root_element
+        root = html.etree_element
+        assert root.tag == 'html'
+        assert [child.tag for child in root] == ['head', 'body']
+        _head, body = root
         assert [child.tag for child in body] == ['h1', 'p', 'ul', 'div']
-        h1 = body[0]
+        h1, p, ul, div = body
         assert h1.text == 'WeasyPrint test document (with Ünicōde)'
         if has_base_url:
             url = urljoin(html.base_url, 'pattern.png')
@@ -118,13 +114,13 @@ def test_html_parsing():
 
     with chdir(os.path.dirname(__file__)):
         filename = os.path.join('resources', 'doc1.html')
-        tree = lxml.html.parse(filename)
-        check_doc1(FakeHTML(tree=tree, base_url=filename))
-        check_doc1(FakeHTML(tree=tree), has_base_url=False)
-        head, _body = tree.getroot()
-        assert head.tag == 'head'
-        lxml.etree.SubElement(head, 'base', href='resources/')
-        check_doc1(FakeHTML(tree=tree, base_url='.'))
+        with open(filename) as fd:
+            string = fd.read()
+        check_doc1(FakeHTML(string=string, base_url=filename))
+        check_doc1(FakeHTML(string=string), has_base_url=False)
+        string_with_meta = string.replace(
+            '<meta', '<base href="resources/"><meta')
+        check_doc1(FakeHTML(string=string_with_meta, base_url='.'))
 
 
 @assert_no_logs
@@ -133,21 +129,15 @@ def test_css_parsing():
     def check_css(css):
         """Check that a parsed stylsheet looks like resources/utf8-test.css"""
         # Using 'encoding' adds a CSSCharsetRule
-        rule = css.rules[-1][0]
-        assert tinycss2.serialize(rule.prelude) == 'h1::before '
-        content, background = tinycss2.parse_declaration_list(
-            rule.content, skip_whitespace=True)
-
-        assert content.name == 'content'
-        string, = remove_whitespace(content.value)
-        assert string.value == 'I løvë Unicode'
-
-        assert background.name == 'background-image'
-        url_value, = remove_whitespace(background.value)
-        assert url_value.type == 'url'
-        url = urljoin(css.base_url, url_value.value)
-        assert url.startswith('file:')
-        assert url.endswith('weasyprint/tests/resources/pattern.png')
+        h1_rule, = css.matcher.lower_local_name_selectors['h1']
+        assert h1_rule[3] == 'before'
+        assert h1_rule[4][0][0] == 'content'
+        assert h1_rule[4][0][1][0][1] == 'I løvë Unicode'
+        assert h1_rule[4][1][0] == 'background_image'
+        assert h1_rule[4][1][1][0][0] == 'url'
+        assert h1_rule[4][1][1][0][1].startswith('file:')
+        assert h1_rule[4][1][1][0][1].endswith(
+            'weasyprint/tests/resources/pattern.png')
 
     _test_resource(CSS, 'utf8-test.css', check_css)
     _test_resource(CSS, 'latin1-test.css', check_css, encoding='latin1')
@@ -540,12 +530,10 @@ def round_meta(pages):
             anchors[anchor_name] = round(pos_x, 6), round(pos_y, 6)
         links = page.links
         for i, link in enumerate(links):
-            sourceline = link.sourceline
             link_type, target, (pos_x, pos_y, width, height) = link
-            link = _TaggedTuple((
+            link = (
                 link_type, target, (round(pos_x, 6), round(pos_y, 6),
-                                    round(width, 6), round(height, 6))))
-            link.sourceline = sourceline
+                                    round(width, 6), round(height, 6)))
             links[i] = link
         bookmarks = page.bookmarks
         for i, (level, label, (pos_x, pos_y)) in enumerate(bookmarks):
@@ -1023,6 +1011,7 @@ def test_http():
             (b'<html test=accept-encoding-header-fail>', [])
         ),
     }) as root_url:
-        assert HTML(root_url + '/gzip').root_element.get('test') == 'ok'
-        assert HTML(root_url + '/deflate').root_element.get('test') == 'ok'
-        assert HTML(root_url + '/raw-deflate').root_element.get('test') == 'ok'
+        assert HTML(root_url + '/gzip').etree_element.get('test') == 'ok'
+        assert HTML(root_url + '/deflate').etree_element.get('test') == 'ok'
+        assert HTML(
+            root_url + '/raw-deflate').etree_element.get('test') == 'ok'

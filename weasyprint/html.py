@@ -87,13 +87,14 @@ def element_has_link_type(element, link_type):
 HTML_HANDLERS = {}
 
 
-def handle_element(element, box, get_image_from_uri):
+def handle_element(element, box, get_image_from_uri, base_url):
     """Handle HTML elements that need special care.
 
     :returns: a (possibly empty) list of boxes.
     """
     if box.element_tag in HTML_HANDLERS:
-        return HTML_HANDLERS[element.tag](element, box, get_image_from_uri)
+        return HTML_HANDLERS[element.tag](
+            element, box, get_image_from_uri, base_url)
     else:
         return [box]
 
@@ -119,17 +120,17 @@ def make_replaced_box(element, box, image):
     else:
         # TODO: support images with 'display: table-cell'?
         type_ = boxes.InlineReplacedBox
-    return type_(element.tag, element.sourceline, box.style, image)
+    return type_(element.tag, box.style, image)
 
 
 @handler('img')
-def handle_img(element, box, get_image_from_uri):
+def handle_img(element, box, get_image_from_uri, base_url):
     """Handle ``<img>`` elements, return either an image or the alt-text.
 
     See: http://www.w3.org/TR/html5/embedded-content-1.html#the-img-element
 
     """
-    src = get_url_attribute(element, 'src')
+    src = get_url_attribute(element, 'src', base_url)
     alt = element.get('alt')
     if src:
         image = get_image_from_uri(src)
@@ -157,13 +158,13 @@ def handle_img(element, box, get_image_from_uri):
 
 
 @handler('embed')
-def handle_embed(element, box, get_image_from_uri):
+def handle_embed(element, box, get_image_from_uri, base_url):
     """Handle ``<embed>`` elements, return either an image or nothing.
 
     See: https://www.w3.org/TR/html5/embedded-content-0.html#the-embed-element
 
     """
-    src = get_url_attribute(element, 'src')
+    src = get_url_attribute(element, 'src', base_url)
     type_ = element.get('type', '').strip()
     if src:
         image = get_image_from_uri(src, type_)
@@ -174,14 +175,14 @@ def handle_embed(element, box, get_image_from_uri):
 
 
 @handler('object')
-def handle_object(element, box, get_image_from_uri):
+def handle_object(element, box, get_image_from_uri, base_url):
     """Handle ``<object>`` elements, return either an image or the fallback
     content.
 
     See: https://www.w3.org/TR/html5/embedded-content-0.html#the-object-element
 
     """
-    data = get_url_attribute(element, 'data')
+    data = get_url_attribute(element, 'data', base_url)
     type_ = element.get('type', '').strip()
     if data:
         image = get_image_from_uri(data, type_)
@@ -207,7 +208,7 @@ def integer_attribute(element, box, name, minimum=1):
 
 
 @handler('colgroup')
-def handle_colgroup(element, box, _get_image_from_uri):
+def handle_colgroup(element, box, _get_image_from_uri, _base_url):
     """Handle the ``span`` attribute."""
     if isinstance(box, boxes.TableColumnGroupBox):
         if any(child.tag == 'col' for child in element):
@@ -221,7 +222,7 @@ def handle_colgroup(element, box, _get_image_from_uri):
 
 
 @handler('col')
-def handle_col(element, box, _get_image_from_uri):
+def handle_col(element, box, _get_image_from_uri, _base_url):
     """Handle the ``span`` attribute."""
     if isinstance(box, boxes.TableColumnBox):
         integer_attribute(element, box, 'span')
@@ -234,7 +235,7 @@ def handle_col(element, box, _get_image_from_uri):
 
 @handler('th')
 @handler('td')
-def handle_td(element, box, _get_image_from_uri):
+def handle_td(element, box, _get_image_from_uri, _base_url):
     """Handle the ``colspan``, ``rowspan`` attributes."""
     if isinstance(box, boxes.TableCellBox):
         # HTML 4.01 gives special meaning to colspan=0
@@ -248,7 +249,7 @@ def handle_td(element, box, _get_image_from_uri):
 
 
 @handler('a')
-def handle_a(element, box, _get_image_from_uri):
+def handle_a(element, box, _get_image_from_uri, base_url):
     """Handle the ``rel`` attribute."""
     box.is_attachment = element_has_link_type(element, 'attachment')
     return [box]
@@ -268,7 +269,7 @@ def find_base_url(html_document, fallback_base_url):
     return fallback_base_url
 
 
-def get_html_metadata(html_document):
+def get_html_metadata(wrapper_element, base_url):
     """
     Relevant specs:
 
@@ -286,7 +287,8 @@ def get_html_metadata(html_document):
     created = None
     modified = None
     attachments = []
-    for element in html_document.iter('title', 'meta', 'link'):
+    for element in wrapper_element.query_all('title', 'meta', 'link'):
+        element = element.etree_element
         if element.tag == 'title' and title is None:
             title = get_child_text(element)
         elif element.tag == 'meta':
@@ -303,12 +305,12 @@ def get_html_metadata(html_document):
             elif name == 'generator' and generator is None:
                 generator = content
             elif name == 'dcterms.created' and created is None:
-                created = parse_w3c_date(name, element.sourceline, content)
+                created = parse_w3c_date(name, content)
             elif name == 'dcterms.modified' and modified is None:
-                modified = parse_w3c_date(name, element.sourceline, content)
+                modified = parse_w3c_date(name, content)
         elif element.tag == 'link' and element_has_link_type(
                 element, 'attachment'):
-            url = get_url_attribute(element, 'href')
+            url = get_url_attribute(element, 'href', base_url)
             title = element.get('title', None)
             if url is None:
                 LOGGER.warning('Missing href in <link rel="attachment">')
@@ -366,10 +368,10 @@ W3C_DATE_RE = re.compile('''
 ''', re.VERBOSE)
 
 
-def parse_w3c_date(meta_name, source_line, string):
+def parse_w3c_date(meta_name, string):
     """http://www.w3.org/TR/NOTE-datetime"""
     if W3C_DATE_RE.match(string):
         return string
     else:
-        LOGGER.warning('Invalid date in <meta name="%s"> line %i: %r',
-                       meta_name, source_line, string)
+        LOGGER.warning(
+            'Invalid date in <meta name="%s"> %r', meta_name, string)

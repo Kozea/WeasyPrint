@@ -71,8 +71,8 @@ Alternatively, use a named argument so that no guessing is involved:
     HTML(sys.stdin)  # Same as …
     HTML(file_obj=sys.stdin)
 
-If you have a byte string, Unicode string, or lxml tree already in memory
-you can also pass that, although the argument must be named:
+If you have a byte string or Unicode string already in memory you can also pass
+that, although the argument must be named:
 
 .. code-block:: python
 
@@ -84,9 +84,6 @@ you can also pass that, although the argument must be named:
         <p>Content goes here
     ''')
     CSS(string='@page { size: A3; margin: 1cm }')
-
-    # Use a different lxml parser:
-    HTML(tree=lxml.html.html5parser.parse('../foo.html'))
 
 If you have ``@font-face`` rules in your CSS, you have to create a
 ``FontConfiguration`` object:

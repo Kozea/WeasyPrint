@@ -75,12 +75,9 @@ the rendering of a document in WeasyPrint goes like this:
 HTML
 ....
 
-Not much to see here. The :class:`weasyprint.HTML` class is a thin wrapper
-around lxml.html_ which handles step 1 and gives a tree of HTML *elements*.
-Although the actual API is different, this tree is conceptually the same
-as what web browsers call *the DOM*.
-
-.. _lxml.html: http://lxml.de/lxmlhtml.html
+Not much to see here. The :class:`weasyprint.HTML` class handles step 1 and
+gives a tree of HTML *elements*. Although the actual API is different, this
+tree is conceptually the same as what web browsers call *the DOM*.
 
 
 CSS
@@ -130,22 +127,22 @@ an absolute length or a percentage.
 
 The final result of the :func:`~weasyprint.css.get_all_computed_styles`
 function is a big dict where keys are ``(element, pseudo_element_type)``
-tuples, and keys are :class:`StyleDict` objects. Elements are lxml objects, while
-the type of pseudo-element is a string for eg. ``::first-line`` selectors, or
-:obj:`None` for “normal” elements. :class:`StyleDict` objects are dicts with
-attribute read-only access mapping property names to the computed values.  (The
-return value is not the dict itself, but a convenience :func:`style_for`
-function for accessing it.)
+tuples, and keys are :class:`StyleDict` objects. Elements are
+ElementTree elements, while the type of pseudo-element is a string
+for eg. ``::first-line`` selectors, or :obj:`None` for “normal”
+elements. :class:`StyleDict` objects are dicts with attribute read-only access
+mapping property names to the computed values.  (The return value is not the
+dict itself, but a convenience :func:`style_for` function for accessing it.)
 
 
 Formatting structure
 ....................
 
-The `visual formatting model`_ explains how *elements* (from the lxml tree)
-generate *boxes* (in the formatting structure). This is step 4 above.
-Boxes may have children and thus form a tree, much like elements. This tree
-is generally close but not identical to the lxml tree: some elements generate
-more than one box or none.
+The `visual formatting model`_ explains how *elements* (from the ElementTree
+tree) generate *boxes* (in the formatting structure). This is step 4 above.
+Boxes may have children and thus form a tree, much like elements. This tree is
+generally close but not identical to the ElementTree tree: some elements
+generate more than one box or none.
 
 .. _visual formatting model: http://www.w3.org/TR/CSS21/visuren.html
 
@@ -155,11 +152,11 @@ The :mod:`weasyprint.formatting_structure.boxes` module has a whole hierarchy
 of classes to represent all these boxes. We won’t go into the details here,
 see the module and class docstrings.
 
-The :mod:`weasyprint.formatting_structure.build` module takes an lxml tree with
-associated computed styles, and builds a formatting structure. It generates
-the right boxes for each element and ensures they conform to the models rules.
-(Eg. an inline box can not contain a block.) Each box has a :attr:`.style`
-attribute containing the :class:`StyleDict` of computed values.
+The :mod:`weasyprint.formatting_structure.build` module takes an ElementTree
+tree with associated computed styles, and builds a formatting structure. It
+generates the right boxes for each element and ensures they conform to the
+models rules.  (Eg. an inline box can not contain a block.) Each box has a
+:attr:`.style` attribute containing the :class:`StyleDict` of computed values.
 
 The main logic is based on the ``display`` property, but it can be overridden
 for some elements by adding a handler in the ``weasyprint.html`` module.

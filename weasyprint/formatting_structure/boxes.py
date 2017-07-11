@@ -85,21 +85,18 @@ class Box(object):
     def all_children(self):
         return ()
 
-    def __init__(self, element_tag, sourceline, style):
+    def __init__(self, element_tag, style):
         self.element_tag = element_tag
-        self.sourceline = sourceline  # for debugging only
         self.style = style
 
     def __repr__(self):
-        return '<%s %s %s>' % (
-            type(self).__name__, self.element_tag, self.sourceline)
+        return '<%s %s>' % (type(self).__name__, self.element_tag)
 
     @classmethod
     def anonymous_from(cls, parent, *args, **kwargs):
         """Return an anonymous box that inherits from ``parent``."""
-        return cls(parent.element_tag, parent.sourceline,
-                   parent.style.inherit_from(),
-                   *args, **kwargs)
+        return cls(
+            parent.element_tag, parent.style.inherit_from(), *args, **kwargs)
 
     def copy(self, copy_style=True):
         """Return shallow copy of the box."""
@@ -280,8 +277,8 @@ class Box(object):
 
 class ParentBox(Box):
     """A box that has children."""
-    def __init__(self, element_tag, sourceline, style, children):
-        super(ParentBox, self).__init__(element_tag, sourceline, style)
+    def __init__(self, element_tag, style, children):
+        super(ParentBox, self).__init__(element_tag, style)
         self.children = tuple(children)
 
     def all_children(self):
@@ -388,9 +385,9 @@ class LineBox(ParentBox):
     be split into multiple line boxes, one for each actual line.
 
     """
-    def __init__(self, element_tag, sourceline, style, children):
+    def __init__(self, element_tag, style, children):
         assert style.anonymous
-        super(LineBox, self).__init__(element_tag, sourceline, style, children)
+        super(LineBox, self).__init__(element_tag, style, children)
 
 
 class InlineLevelBox(Box):
@@ -439,10 +436,10 @@ class TextBox(InlineLevelBox):
     ascii_to_wide = dict((i, unichr(i + 0xfee0)) for i in range(0x21, 0x7f))
     ascii_to_wide.update({0x20: '\u3000', 0x2D: '\u2212'})
 
-    def __init__(self, element_tag, sourceline, style, text):
+    def __init__(self, element_tag, style, text):
         assert style.anonymous
         assert text
-        super(TextBox, self).__init__(element_tag, sourceline, style)
+        super(TextBox, self).__init__(element_tag, style)
         text_transform = style.text_transform
         if text_transform != 'none':
             text = {
@@ -490,8 +487,8 @@ class ReplacedBox(Box):
     and is opaque from CSS’s point of view.
 
     """
-    def __init__(self, element_tag, sourceline, style, replacement):
-        super(ReplacedBox, self).__init__(element_tag, sourceline, style)
+    def __init__(self, element_tag, style, replacement):
+        super(ReplacedBox, self).__init__(element_tag, style)
         self.replacement = replacement
 
 
@@ -636,7 +633,7 @@ class PageBox(ParentBox):
         self.page_type = page_type
         # Page boxes are not linked to any element.
         super(PageBox, self).__init__(
-            element_tag=None, sourceline=None, style=style, children=[])
+            element_tag=None, style=style, children=[])
 
     def __repr__(self):
         return '<%s %s>' % (type(self).__name__, self.page_type)
@@ -648,7 +645,7 @@ class MarginBox(BlockContainerBox):
         self.at_keyword = at_keyword
         # Margin boxes are not linked to any element.
         super(MarginBox, self).__init__(
-            element_tag=None, sourceline=None, style=style, children=[])
+            element_tag=None, style=style, children=[])
 
     def __repr__(self):
         return '<%s %s>' % (type(self).__name__, self.at_keyword)

@@ -19,6 +19,7 @@ import pprint
 from .. import images
 from ..css import get_all_computed_styles
 from ..formatting_structure import boxes, build, counters
+from ..urls import path2url
 from .testing_utils import (
     FakeHTML, assert_no_logs, capture_logs, resource_filename)
 
@@ -37,6 +38,9 @@ PROPER_CHILDREN = dict((key, tuple(map(tuple, value))) for key, value in {
     boxes.TableRowGroupBox: [[boxes.TableRowBox]],
     boxes.TableRowBox: [[boxes.TableCellBox]],
 }.items())
+
+# Dummy filename, but in the right directory.
+BASE_URL = path2url(resource_filename('<test>'))
 
 
 def serialize(box_list):
@@ -77,15 +81,12 @@ def to_lists(box_tree):
     return serialize(unwrap_html_body(box_tree))
 
 
-def _parse_base(
-        html_content,
-        # Dummy filename, but in the right directory.
-        base_url=resource_filename('<test>')):
+def _parse_base(html_content, base_url=BASE_URL):
     document = FakeHTML(string=html_content, base_url=base_url)
     style_for = get_all_computed_styles(document)
     get_image_from_uri = functools.partial(
         images.get_image_from_uri, {}, document.url_fetcher)
-    return document.root_element, style_for, get_image_from_uri
+    return document.etree_element, style_for, get_image_from_uri, base_url
 
 
 def parse(html_content):
@@ -94,7 +95,7 @@ def parse(html_content):
     return box
 
 
-def parse_all(html_content, base_url=resource_filename('<test>')):
+def parse_all(html_content, base_url=BASE_URL):
     """Like parse() but also run all corrections on boxes."""
     box = build.build_formatting_structure(*_parse_base(
         html_content, base_url))
@@ -105,7 +106,7 @@ def parse_all(html_content, base_url=resource_filename('<test>')):
 def render_pages(html_content):
     """Lay out a document and return a list of PageBox objects."""
     return [p._page_box for p in FakeHTML(
-            string=html_content, base_url=resource_filename('<test>')
+            string=html_content, base_url=BASE_URL
             ).render(enable_hinting=True).pages]
 
 
