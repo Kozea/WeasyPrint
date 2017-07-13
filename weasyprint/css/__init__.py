@@ -494,8 +494,6 @@ def add_declaration(cascaded_styles, prop_name, prop_values, weight, element,
     """
     style = cascaded_styles.setdefault((element, pseudo_type), {})
     _values, previous_weight = style.get(prop_name, (None, None))
-    if getattr(element, 'tag', None) == 'a' and prop_name == 'display':
-        print(element, prop_name, prop_values)
     if previous_weight is None or previous_weight <= weight:
         style[prop_name] = prop_values, weight
 
