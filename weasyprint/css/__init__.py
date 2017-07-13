@@ -30,9 +30,9 @@ from . import computed_values
 from .descriptors import preprocess_descriptors
 from .validation import (preprocess_declarations, remove_whitespace,
                          split_on_comma)
-from ..urls import get_url_attribute, url_join, URLFetchingError
-from ..logger import LOGGER
 from ..compat import iteritems
+from ..logger import LOGGER
+from ..urls import get_url_attribute, url_join, URLFetchingError
 from .. import CSS
 
 
