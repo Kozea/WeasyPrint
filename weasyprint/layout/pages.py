@@ -12,6 +12,8 @@
 
 from __future__ import division, unicode_literals
 
+from collections import namedtuple
+
 from ..formatting_structure import boxes, build
 from .absolute import absolute_layout
 from .blocks import block_container_layout, block_level_layout
@@ -105,6 +107,9 @@ class HorizontalBox(OrientedBox):
             self._max_content_size = max_content_width(
                 self.context, self.box, outer=False)
         return self._max_content_size
+
+
+PageType = namedtuple('PageType', ['side', 'blank', 'first', 'name'])
 
 
 def compute_fixed_dimension(context, box, outer, vertical, top_or_left):
@@ -466,8 +471,7 @@ def page_height(box, context, containing_block_height):
     page_width_or_height(VerticalBox(context, box), containing_block_height)
 
 
-def make_page(context, root_box, page_type, resume_at, content_empty,
-              page_number=None):
+def make_page(context, root_box, page_type, resume_at, page_number=None):
     """Take just enough content from the beginning to fill one page.
 
     Return ``(page, finished)``. ``page`` is a laid out PageBox object
@@ -480,6 +484,7 @@ def make_page(context, root_box, page_type, resume_at, content_empty,
 
     """
     style = context.style_for(page_type)
+
     # Propagated from the root or <body>.
     style['overflow'] = root_box.viewport_overflow
     page = boxes.PageBox(page_type, style)
@@ -499,7 +504,7 @@ def make_page(context, root_box, page_type, resume_at, content_empty,
     page_content_bottom = root_box.position_y + page.height
     initial_containing_block = page
 
-    if content_empty:
+    if page_type.blank:
         previous_resume_at = resume_at
         root_box = root_box.copy_with_children([])
 
@@ -531,14 +536,14 @@ def make_page(context, root_box, page_type, resume_at, content_empty,
             for string_set in string_sets:
                 string_name, text = string_set
                 context.string_set[string_name][page_number].append(text)
-    if content_empty:
+    if page_type.blank:
         resume_at = previous_resume_at
     return page, resume_at, next_page
 
 
-def make_all_pages(context, root_box):
+def make_all_pages(context, root_box, html, cascaded_styles, computed_styles):
     """Return a list of laid out pages without margin boxes."""
-    prefix = 'first_'
+    first = True
 
     # Special case the root box
     page_break = root_box.style.break_before
@@ -560,19 +565,18 @@ def make_all_pages(context, root_box):
     page_number = 0
     while True:
         page_number += 1
-        content_empty = ((next_page == 'left' and right_page) or
-                         (next_page == 'right' and not right_page))
-        if content_empty:
-            prefix += 'blank_'
-        page_type = prefix + ('right_page' if right_page else 'left_page')
+        blank = ((next_page == 'left' and right_page) or
+                 (next_page == 'right' and not right_page))
+        side = 'right' if right_page else 'left'
+        page_type = PageType(side, blank, first, name=None)
+        # TODO: compute / get the page style here
         page, resume_at, next_page = make_page(
-            context, root_box, page_type, resume_at, content_empty,
-            page_number)
+            context, root_box, page_type, resume_at, page_number)
         assert next_page
+        first = False
         yield page
         if resume_at is None:
             return
-        prefix = ''
         right_page = not right_page
 
 

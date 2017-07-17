@@ -19,6 +19,7 @@ import pprint
 from .. import images
 from ..css import get_all_computed_styles
 from ..formatting_structure import boxes, build, counters
+from ..layout.pages import PageType
 from ..urls import path2url
 from .testing_utils import (
     FakeHTML, assert_no_logs, capture_logs, resource_filename)
@@ -83,7 +84,7 @@ def to_lists(box_tree):
 
 def _parse_base(html_content, base_url=BASE_URL):
     document = FakeHTML(string=html_content, base_url=base_url)
-    style_for = get_all_computed_styles(document)
+    style_for, _, _ = get_all_computed_styles(document)
     get_image_from_uri = functools.partial(
         images.get_image_from_uri, {}, document.url_fetcher)
     return document.etree_element, style_for, get_image_from_uri, base_url
@@ -400,7 +401,7 @@ def test_whitespace():
 @assert_no_logs
 def test_page_style():
     """Test the management of page styles."""
-    style_for = get_all_computed_styles(FakeHTML(string='''
+    style_for, _, _ = get_all_computed_styles(FakeHTML(string='''
         <style>
             @page { margin: 3px }
             @page :first { margin-top: 20px }
@@ -416,11 +417,18 @@ def test_page_style():
         assert style.margin_right == (right, 'px')
         assert style.margin_bottom == (bottom, 'px')
         assert style.margin_left == (left, 'px')
-
-    assert_page_margins('first_left_page', top=20, right=3, bottom=3, left=10)
-    assert_page_margins('first_right_page', top=20, right=10, bottom=3, left=3)
-    assert_page_margins('left_page', top=10, right=3, bottom=3, left=10)
-    assert_page_margins('right_page', top=10, right=10, bottom=3, left=3)
+    assert_page_margins(
+        PageType(side='left', first=True, blank=False, name=None),
+        top=20, right=3, bottom=3, left=10)
+    assert_page_margins(
+        PageType(side='right', first=True, blank=False, name=None),
+        top=20, right=10, bottom=3, left=3)
+    assert_page_margins(
+        PageType(side='left', first=False, blank=False, name=None),
+        top=10, right=3, bottom=3, left=10)
+    assert_page_margins(
+        PageType(side='right', first=False, blank=False, name=None),
+        top=10, right=10, bottom=3, left=3)
 
 
 @assert_no_logs

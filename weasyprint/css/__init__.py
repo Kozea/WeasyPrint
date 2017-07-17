@@ -39,28 +39,6 @@ from .. import CSS
 # Reject anything not in here:
 PSEUDO_ELEMENTS = (None, 'before', 'after', 'first-line', 'first-letter')
 
-# Selectors for @page rules can have a pseudo-class, one of :first, :left,
-# :right or :blank. This maps pseudo-classes to lists of "page types" selected.
-PAGE_PSEUDOCLASS_TARGETS = {
-    'first': [
-        'first_left_page', 'first_right_page',
-        'first_blank_left_page', 'first_blank_right_page'],
-    'left': [
-        'left_page', 'first_left_page',
-        'blank_left_page', 'first_blank_left_page'],
-    'right': [
-        'right_page', 'first_right_page',
-        'blank_right_page', 'first_blank_right_page'],
-    'blank': [
-        'blank_left_page', 'first_blank_left_page',
-        'blank_right_page', 'first_blank_right_page'],
-    # no pseudo-class: all pages
-    None: [
-        'left_page', 'right_page', 'first_left_page', 'first_right_page',
-        'blank_left_page', 'blank_right_page',
-        'first_blank_left_page', 'first_blank_right_page'],
-}
-
 # A test function that returns True if the given property name has an
 # initial value that is not always the same when computed.
 RE_INITIAL_NOT_COMPUTED = re.compile(
@@ -450,6 +428,22 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
                     'counter-increment:none' % element.get('value'))
 
 
+def matching_page_types(page_type, all_names):
+    from ..layout import pages  # Work around circular imports.
+
+    sides = ['left', 'right', None] if page_type.side is None else [
+        page_type.side]
+    blanks = [True, False] if page_type.blank is False else [True]
+    firsts = [True, False] if page_type.first is False else [True]
+    names = all_names + [None] if page_type.name is None else [page_type.name]
+    for side in sides:
+        for blank in blanks:
+            for first in firsts:
+                for name in names:
+                    yield pages.PageType(
+                        side=side, blank=blank, first=first, name=name)
+
+
 def evaluate_media_query(query_list, device_media_type):
     """Return the boolean evaluation of `query_list` for the given
     `device_media_type`.
@@ -577,6 +571,8 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
     in a document.
 
     """
+    from ..layout import pages  # Work around circular imports.
+
     for rule in stylesheet_rules:
         if rule.type == 'qualified-rule':
             declarations = list(preprocess_declarations(
@@ -641,37 +637,43 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
         elif rule.type == 'at-rule' and rule.at_keyword == 'page':
             tokens = remove_whitespace(rule.prelude)
             # TODO: support named pages (see CSS3 Paged Media)
+            types = {
+                'side': None, 'blank': False, 'first': False, 'name': None}
             if not tokens:
-                pseudo_class = None
                 specificity = (0, 0)
             elif (len(tokens) == 2 and
                     tokens[0].type == 'literal' and
                     tokens[0].value == ':' and
                     tokens[1].type == 'ident'):
                 pseudo_class = tokens[1].lower_value
-                specificity = {
-                    'first': (1, 0), 'blank': (1, 0),
-                    'left': (0, 1), 'right': (0, 1),
-                }.get(pseudo_class)
-                if not specificity:
+                if pseudo_class in ('left', 'right'):
+                    types['side'] = pseudo_class
+                    specificity = (0, 1)
+                elif pseudo_class in ('blank', 'first'):
+                    types[pseudo_class] = True
+                    specificity = (1, 0)
+                else:
                     LOGGER.warning('Unknown @page pseudo-class "%s", '
                                    'the whole @page rule was ignored '
                                    'at %s:%s.',
                                    pseudo_class,
                                    rule.source_line, rule.source_column)
                     continue
+            elif len(tokens) == 1 and tokens[0].type == 'ident':
+                # TODO: Handle named pages here
+                continue
             else:
                 LOGGER.warning('Unsupported @page selector "%s", '
                                'the whole @page rule was ignored at %s:%s.',
                                tinycss2.serialize(rule.prelude),
                                rule.source_line, rule.source_column)
                 continue
+            page_type = pages.PageType(**types)
+            # Use a double lambda to have a closure that holds page_types
+            match = (lambda page_types: lambda: page_types)(
+                list(matching_page_types(page_type, all_names=[])))
             content = tinycss2.parse_declaration_list(rule.content)
             declarations = list(preprocess_declarations(base_url, content))
-
-            # Use a double lambda to have a closure that holds page_types
-            match = (lambda page_types: lambda _document: page_types)(
-                PAGE_PSEUDOCLASS_TARGETS[pseudo_class])
 
             if declarations:
                 selector_list = [(specificity, None, match)]
@@ -735,6 +737,7 @@ def get_all_computed_styles(html, user_stylesheets=None,
     pseudo-element type, and return a StyleDict object.
 
     """
+    from ..layout import pages  # Work around circular imports.
 
     # List stylesheets. Order here is not important ('origin' is).
     sheets = []
@@ -777,12 +780,12 @@ def get_all_computed_styles(html, user_stylesheets=None,
             for selector in selector_list:
                 specificity, pseudo_type, match = selector
                 specificity = sheet_specificity or specificity
-                for element in match(html):
+                for page_type in match():
                     for name, values, importance in declarations:
                         precedence = declaration_precedence(origin, importance)
                         weight = (precedence, specificity)
                         add_declaration(
-                            cascaded_styles, name, values, weight, element,
+                            cascaded_styles, name, values, weight, page_type,
                             pseudo_type)
 
     # keys: (element, pseudo_element_type), like cascaded_styles
@@ -818,7 +821,9 @@ def get_all_computed_styles(html, user_stylesheets=None,
 
     # Iterate on all possible page types, even if there is no cascaded style
     # for them.
-    for page_type in PAGE_PSEUDOCLASS_TARGETS[None]:
+    standard_page_type = pages.PageType(
+        side=None, blank=False, first=False, name=None)
+    for page_type in matching_page_types(standard_page_type, all_names=[]):
         set_computed_styles(
             cascaded_styles, computed_styles, page_type,
             # @page inherits from the root element:
@@ -850,4 +855,4 @@ def get_all_computed_styles(html, user_stylesheets=None,
         """
         return __get((element, pseudo_type))
 
-    return style_for
+    return style_for, cascaded_styles, computed_styles
