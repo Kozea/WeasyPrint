@@ -17,9 +17,9 @@ import functools
 import pprint
 
 from .. import images
-from ..css import get_all_computed_styles
+from ..css import PageType, get_all_computed_styles
 from ..formatting_structure import boxes, build, counters
-from ..layout.pages import PageType
+from ..layout.pages import set_page_type_computed_styles
 from ..urls import path2url
 from .testing_utils import (
     FakeHTML, assert_no_logs, capture_logs, resource_filename)
@@ -401,14 +401,16 @@ def test_whitespace():
 @assert_no_logs
 def test_page_style():
     """Test the management of page styles."""
-    style_for, _, _ = get_all_computed_styles(FakeHTML(string='''
+    document = FakeHTML(string='''
         <style>
             @page { margin: 3px }
             @page :first { margin-top: 20px }
             @page :right { margin-right: 10px; margin-top: 10px }
             @page :left { margin-left: 10px; margin-top: 10px }
         </style>
-    '''))
+    ''')
+    style_for, cascaded_styles, computed_styles = get_all_computed_styles(
+        document)
 
     def assert_page_margins(page_type, top, right, bottom, left):
         """Check the page margin values."""
@@ -417,6 +419,14 @@ def test_page_style():
         assert style.margin_right == (right, 'px')
         assert style.margin_bottom == (bottom, 'px')
         assert style.margin_left == (left, 'px')
+
+    # Force the generation of the style for all possible page types as it's
+    # generally only done during the rendering for needed page types.
+    standard_page_type = PageType(
+        side=None, blank=False, first=False, name=None)
+    set_page_type_computed_styles(
+        standard_page_type, cascaded_styles, computed_styles, document)
+
     assert_page_margins(
         PageType(side='left', first=True, blank=False, name=None),
         top=20, right=3, bottom=3, left=10)

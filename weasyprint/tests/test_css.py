@@ -15,9 +15,9 @@ from __future__ import division, unicode_literals
 from pytest import raises
 
 from .. import CSS, css, default_url_fetcher
-from ..css import get_all_computed_styles
+from ..css import PageType, get_all_computed_styles
 from ..css.computed_values import strut_layout
-from ..layout.pages import PageType
+from ..layout.pages import set_page_type_computed_styles
 from ..urls import open_data_url, path2url
 from .testing_utils import (
     FakeHTML, assert_no_logs, capture_logs, resource_filename)
@@ -214,7 +214,7 @@ def test_annotate_document():
 def test_page():
     """Test the ``@page`` properties."""
     document = FakeHTML(resource_filename('doc1.html'))
-    style_for, _, _ = get_all_computed_styles(
+    style_for, cascaded_styles, computed_styles = get_all_computed_styles(
         document, user_stylesheets=[CSS(string='''
             html {
                 color: red;
@@ -234,6 +234,14 @@ def test_page():
                 }
             }
         ''')])
+
+    # Force the generation of the style for all possible page types and
+    # pseudo-types, as it's generally only done during the rendering for needed
+    # page types.
+    standard_page_type = PageType(
+        side=None, blank=False, first=False, name=None)
+    set_page_type_computed_styles(
+        standard_page_type, cascaded_styles, computed_styles, document)
 
     style = style_for(
         PageType(side='left', first=True, blank=False, name=None))

@@ -12,8 +12,7 @@
 
 from __future__ import division, unicode_literals
 
-from collections import namedtuple
-
+from ..css import PageType, matching_page_types, set_computed_styles
 from ..formatting_structure import boxes, build
 from .absolute import absolute_layout
 from .blocks import block_container_layout, block_level_layout
@@ -107,9 +106,6 @@ class HorizontalBox(OrientedBox):
             self._max_content_size = max_content_width(
                 self.context, self.box, outer=False)
         return self._max_content_size
-
-
-PageType = namedtuple('PageType', ['side', 'blank', 'first', 'name'])
 
 
 def compute_fixed_dimension(context, box, outer, vertical, top_or_left):
@@ -541,6 +537,28 @@ def make_page(context, root_box, page_type, resume_at, page_number=None):
     return page, resume_at, next_page
 
 
+def set_page_type_computed_styles(page_type, cascaded_styles, computed_styles,
+                                  html):
+    """Set style for page types and pseudo-types matching page_type."""
+    for matching_page_type in matching_page_types(page_type, all_names=[]):
+        if matching_page_type in computed_styles:
+            continue
+        set_computed_styles(
+            cascaded_styles, computed_styles, matching_page_type,
+            # @page inherits from the root element:
+            # http://lists.w3.org/Archives/Public/www-style/2012Jan/1164.html
+            root=html.etree_element, parent=html.etree_element,
+            base_url=html.base_url)
+        for element, pseudo_type in cascaded_styles:
+            if pseudo_type and element == matching_page_type:
+                set_computed_styles(
+                    cascaded_styles, computed_styles, element,
+                    pseudo_type=pseudo_type,
+                    # The pseudo-element inherits from the element.
+                    root=html.etree_element, parent=element,
+                    base_url=html.base_url)
+
+
 def make_all_pages(context, root_box, html, cascaded_styles, computed_styles):
     """Return a list of laid out pages without margin boxes."""
     first = True
@@ -569,7 +587,8 @@ def make_all_pages(context, root_box, html, cascaded_styles, computed_styles):
                  (next_page == 'right' and not right_page))
         side = 'right' if right_page else 'left'
         page_type = PageType(side, blank, first, name=None)
-        # TODO: compute / get the page style here
+        set_page_type_computed_styles(
+            page_type, cascaded_styles, computed_styles, html)
         page, resume_at, next_page = make_page(
             context, root_box, page_type, resume_at, page_number)
         assert next_page

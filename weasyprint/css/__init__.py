@@ -21,6 +21,7 @@
 from __future__ import division, unicode_literals
 
 import re
+from collections import namedtuple
 
 import cssselect2
 import tinycss2
@@ -83,6 +84,9 @@ class StyleDict(dict):
 
     # Default values, may be overriden on instances
     anonymous = False
+
+
+PageType = namedtuple('PageType', ['side', 'blank', 'first', 'name'])
 
 
 def get_child_text(element):
@@ -429,8 +433,6 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
 
 
 def matching_page_types(page_type, all_names):
-    from ..layout import pages  # Work around circular imports.
-
     sides = ['left', 'right', None] if page_type.side is None else [
         page_type.side]
     blanks = [True, False] if page_type.blank is False else [True]
@@ -440,7 +442,7 @@ def matching_page_types(page_type, all_names):
         for blank in blanks:
             for first in firsts:
                 for name in names:
-                    yield pages.PageType(
+                    yield PageType(
                         side=side, blank=blank, first=first, name=name)
 
 
@@ -571,8 +573,6 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
     in a document.
 
     """
-    from ..layout import pages  # Work around circular imports.
-
     for rule in stylesheet_rules:
         if rule.type == 'qualified-rule':
             declarations = list(preprocess_declarations(
@@ -668,7 +668,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                                tinycss2.serialize(rule.prelude),
                                rule.source_line, rule.source_column)
                 continue
-            page_type = pages.PageType(**types)
+            page_type = PageType(**types)
             # Use a double lambda to have a closure that holds page_types
             match = (lambda page_types: lambda: page_types)(
                 list(matching_page_types(page_type, all_names=[])))
@@ -737,8 +737,6 @@ def get_all_computed_styles(html, user_stylesheets=None,
     pseudo-element type, and return a StyleDict object.
 
     """
-    from ..layout import pages  # Work around circular imports.
-
     # List stylesheets. Order here is not important ('origin' is).
     sheets = []
     for sheet in (html._ua_stylesheets() or []):
@@ -817,20 +815,6 @@ def get_all_computed_styles(html, user_stylesheets=None,
             parent=(element.parent.etree_element if element.parent else None),
             base_url=html.base_url)
 
-    # Then computed styles for @page.
-
-    # Iterate on all possible page types, even if there is no cascaded style
-    # for them.
-    standard_page_type = pages.PageType(
-        side=None, blank=False, first=False, name=None)
-    for page_type in matching_page_types(standard_page_type, all_names=[]):
-        set_computed_styles(
-            cascaded_styles, computed_styles, page_type,
-            # @page inherits from the root element:
-            # http://lists.w3.org/Archives/Public/www-style/2012Jan/1164.html
-            root=html.etree_element, parent=html.etree_element,
-            base_url=html.base_url)
-
     # Then computed styles for pseudo elements, in any order.
     # Pseudo-elements inherit from their associated element so they come
     # last. Do them in a second pass as there is no easy way to iterate
@@ -840,7 +824,7 @@ def get_all_computed_styles(html, user_stylesheets=None,
     # Only iterate on pseudo-elements that have cascaded styles. (Others
     # might as well not exist.)
     for element, pseudo_type in cascaded_styles:
-        if pseudo_type:
+        if pseudo_type and not isinstance(element, PageType):
             set_computed_styles(
                 cascaded_styles, computed_styles, element,
                 pseudo_type=pseudo_type,
