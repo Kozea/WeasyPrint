@@ -170,9 +170,9 @@ def compute(element, pseudo_type, specified, computed, parent_style,
                       values for all properties.
     :param computed: a :class:`StyleDict` of already known computed values.
                      Only contains some properties (or none).
-    :param parent_values: a :class:`StyleDict` of computed values of the parent
-                          element (should contain values for all properties),
-                          or ``None`` if ``element`` is the root element.
+    :param parent_style: a :class:`StyleDict` of computed values of the parent
+                         element (should contain values for all properties),
+                         or ``None`` if ``element`` is the root element.
     """
     def computer():
         """Dummy object that holds attributes."""
