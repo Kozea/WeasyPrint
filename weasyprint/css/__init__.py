@@ -503,14 +503,20 @@ def set_computed_styles(cascaded_styles, computed_styles, element, parent,
     declaration priority (ie. ``!important``) and selector specificity.
 
     """
-    parent_style = computed_styles[parent, None] \
-        if parent is not None else None
-    # When specified on the font-size property of the root element, the rem
-    # units refer to the property’s initial value.
-    root_style = {'font_size': properties.INITIAL_VALUES['font_size']} \
-        if element is root else computed_styles[root, None]
-    cascaded = cascaded_styles.get((element, pseudo_type), {})
+    if element == root:
+        assert parent is None
+        parent_style = None
+        root_style = {
+            # When specified on the font-size property of the root element, the
+            # rem units refer to the property’s initial value.
+            'font_size': properties.INITIAL_VALUES['font_size'],
+        }
+    else:
+        assert parent is not None
+        parent_style = computed_styles[parent, None]
+        root_style = computed_styles[root, None]
 
+    cascaded = cascaded_styles.get((element, pseudo_type), {})
     computed_styles[element, pseudo_type] = computed_from_cascaded(
         element, cascaded, parent_style, pseudo_type, root_style, base_url)
 
@@ -524,6 +530,8 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
         computed = StyleDict(properties.INITIAL_VALUES)
         for name in properties.INHERITED:
             computed[name] = parent_style[name]
+        # page is not inherited but taken from the ancestor if 'auto'
+        computed['page'] = parent_style['page']
         # border-*-style is none, so border-width computes to zero.
         # Other than that, properties that would need computing are
         # border-*-color, but they do not apply.
@@ -560,6 +568,14 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
             computed[name] = value
 
         specified[name] = value
+
+    if specified['page'] == 'auto':
+        # The page property does not inherit. However, if the page value on
+        # an element is auto, then its used value is the value specified on
+        # its nearest ancestor with a non-auto value. When specified on the
+        # root element, the used value for auto is the empty string.
+        specified['page'] = (
+            '' if parent_style is None else parent_style['page'])
 
     return computed_values.compute(
         element, pseudo_type, specified, computed, parent_style, root_style,

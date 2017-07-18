@@ -609,6 +609,14 @@ def break_inside(keyword):
     return keyword in ('auto', 'avoid', 'avoid-page', 'avoid-column')
 
 
+@validator()
+@single_token
+def page(token):
+    """``page`` property validation."""
+    if token.type == 'ident':
+        return 'auto' if token.lower_value == 'auto' else token.value
+
+
 @validator('outline-style')
 @single_keyword
 def outline_style(keyword):

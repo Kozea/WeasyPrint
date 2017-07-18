@@ -402,6 +402,29 @@ def test_important():
 
 
 @assert_no_logs
+def test_named_pages():
+    document = FakeHTML(string='''
+        <style>
+            @page NARRow { size: landscape }
+            div { page: AUTO }
+            p { page: NARRow }
+        </style>
+        <div><p><span>a</span></p></div>
+    ''')
+    page, = document.render().pages
+    html, = page._page_box.children
+    body, = html.children
+    div, = body.children
+    p, = div.children
+    span, = p.children
+    assert html.style.page == ''
+    assert body.style.page == ''
+    assert div.style.page == ''
+    assert p.style.page == 'NARRow'
+    assert span.style.page == 'NARRow'
+
+
+@assert_no_logs
 def test_units():
     document = FakeHTML(string='''
         <p style="margin-left: 96px"></p>
