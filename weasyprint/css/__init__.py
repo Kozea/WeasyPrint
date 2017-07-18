@@ -574,7 +574,7 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
         # an element is auto, then its used value is the value specified on
         # its nearest ancestor with a non-auto value. When specified on the
         # root element, the used value for auto is the empty string.
-        specified['page'] = (
+        computed['page'] = specified['page'] = (
             '' if parent_style is None else parent_style['page'])
 
     return computed_values.compute(
