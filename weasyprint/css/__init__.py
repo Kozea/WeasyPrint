@@ -432,18 +432,16 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
                     'counter-increment:none' % element.get('value'))
 
 
-def matching_page_types(page_type, all_names):
+def matching_page_types(page_type):
     sides = ['left', 'right', None] if page_type.side is None else [
         page_type.side]
     blanks = [True, False] if page_type.blank is False else [True]
     firsts = [True, False] if page_type.first is False else [True]
-    names = all_names + [None] if page_type.name is None else [page_type.name]
     for side in sides:
         for blank in blanks:
             for first in firsts:
-                for name in names:
-                    yield PageType(
-                        side=side, blank=blank, first=first, name=name)
+                yield PageType(
+                    side=side, blank=blank, first=first, name=page_type.name)
 
 
 def evaluate_media_query(query_list, device_media_type):
@@ -687,7 +685,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
             page_type = PageType(**types)
             # Use a double lambda to have a closure that holds page_types
             match = (lambda page_types: lambda: page_types)(
-                list(matching_page_types(page_type, all_names=[])))
+                list(matching_page_types(page_type)))
             content = tinycss2.parse_declaration_list(rule.content)
             declarations = list(preprocess_declarations(base_url, content))
 

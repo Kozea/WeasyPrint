@@ -540,7 +540,7 @@ def make_page(context, root_box, page_type, resume_at, page_number=None):
 def set_page_type_computed_styles(page_type, cascaded_styles, computed_styles,
                                   html):
     """Set style for page types and pseudo-types matching page_type."""
-    for matching_page_type in matching_page_types(page_type, all_names=[]):
+    for matching_page_type in matching_page_types(page_type):
         if matching_page_type in computed_styles:
             continue
         set_computed_styles(
