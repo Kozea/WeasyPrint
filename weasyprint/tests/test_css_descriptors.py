@@ -56,6 +56,33 @@ def test_font_face():
     assert font_weight == ('font_weight', 200)
     assert font_stretch == ('font_stretch', 'condensed')
 
+    stylesheet = tinycss2.parse_stylesheet(
+        '@font-face {'
+        '  font-family: Gentium Hard;'
+        '  src: local();'
+        '}')
+    at_rule, = stylesheet
+    assert at_rule.at_keyword == 'font-face'
+    font_family, src = list(preprocess_descriptors(
+        'http://weasyprint.org/foo/',
+        tinycss2.parse_declaration_list(at_rule.content)))
+    assert font_family == ('font_family', 'Gentium Hard')
+    assert src == ('src', [('local', None)])
+
+    # See bug #487
+    stylesheet = tinycss2.parse_stylesheet(
+        '@font-face {'
+        '  font-family: Gentium Hard;'
+        '  src: local(Gentium Hard);'
+        '}')
+    at_rule, = stylesheet
+    assert at_rule.at_keyword == 'font-face'
+    font_family, src = list(preprocess_descriptors(
+        'http://weasyprint.org/foo/',
+        tinycss2.parse_declaration_list(at_rule.content)))
+    assert font_family == ('font_family', 'Gentium Hard')
+    assert src == ('src', [('local', 'Gentium Hard')])
+
 
 def test_bad_font_face():
     """Test bad ``font-face`` rules."""

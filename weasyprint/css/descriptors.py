@@ -56,7 +56,7 @@ def font_family(tokens, allow_spaces=False):
     """``font-family`` descriptor validation."""
     allowed_types = ['ident']
     if allow_spaces:
-        allowed_types.append('S')
+        allowed_types.append('whitespace')
     if len(tokens) == 1 and tokens[0].type == 'string':
         return tokens[0].value
     if tokens and all(token.type in allowed_types for token in tokens):
