@@ -165,6 +165,8 @@ else:
 
         def add_font_face(self, rule_descriptors, url_fetcher):
             for font_type, url in rule_descriptors['src']:
+                if url is None:
+                    continue
                 if font_type in ('external', 'local'):
                     config = self._fontconfig_config
                     if font_type == 'local':
