@@ -526,7 +526,7 @@ def make_page(context, root_box, page_type, resume_at, content_empty,
     page.children = [root_box]
     descendants = page.descendants()
     for child in descendants:
-        string_sets = child.style.string_set
+        string_sets = child.string_set
         if string_sets and string_sets != 'none':
             for string_set in string_sets:
                 string_name, text = string_set

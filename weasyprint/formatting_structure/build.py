@@ -180,7 +180,7 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
 
     box.children = children
     box.first_letter_style = style_for(element, 'first-letter')
-    replace_content_lists(element, box, style, counter_values)
+    set_content_lists(element, box, style, counter_values)
 
     # Specific handling for the element. (eg. replaced element)
     return html.handle_element(element, box, get_image_from_uri, base_url)
@@ -289,25 +289,25 @@ def compute_content_list_string(element, box, counter_values, content_list):
     return string
 
 
-def replace_content_lists(element, box, style, counter_values):
-    """Replace the content-lists by strings.
+def set_content_lists(element, box, style, counter_values):
+    """Set the content-lists by strings.
 
     These content-lists are used in GCPM properties like ``string-set`` and
     ``bookmark-label``.
 
     """
     string_set = []
-    if style.string_set != 'none':
-        for i, (string_name, string_values) in enumerate(style.string_set):
+    if style['string_set'] != 'none':
+        for i, (string_name, string_values) in enumerate(style['string_set']):
             string_set.append((string_name, compute_content_list_string(
                 element, box, counter_values, string_values)))
-    box.style['string_set'] = string_set
+    box.string_set = string_set
 
-    if style.bookmark_label == 'none':
-        box.style['bookmark_label'] = ''
+    if style['bookmark_label'] == 'none':
+        box.bookmark_label = ''
     else:
-        box.style['bookmark_label'] = compute_content_list_string(
-            element, box, counter_values, style.bookmark_label)
+        box.bookmark_label = compute_content_list_string(
+            element, box, counter_values, style['bookmark_label'])
 
 
 def update_counters(state, style):
