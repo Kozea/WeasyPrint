@@ -930,10 +930,25 @@ def split_first_line(text, style, context, max_width, line_width):
         max_width = None
 
     # Step #1: Get a draft layout with the first line
-    layout = create_layout(text, style, context, max_width)
-    lines = layout.iter_lines()
-    first_line = next(lines, None)
-    second_line = next(lines, None)
+    layout = None
+    if max_width is not None:
+        expected_length = int(max_width / style.font_size * 2.5)
+        if expected_length < len(text):
+            # Try to use a small amount of text instead of the whole text
+            layout = create_layout(
+                text[:expected_length], style, context, max_width)
+            lines = layout.iter_lines()
+            first_line = next(lines, None)
+            second_line = next(lines, None)
+            if second_line is None:
+                # The small amount of text fits in one line, give up and use
+                # the whole text
+                layout = None
+    if layout is None:
+        layout = create_layout(text, style, context, max_width)
+        lines = layout.iter_lines()
+        first_line = next(lines, None)
+        second_line = next(lines, None)
     resume_at = None if second_line is None else second_line.start_index
 
     # Step #2: Don't hyphenize when it's not needed
