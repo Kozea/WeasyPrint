@@ -931,7 +931,7 @@ def split_first_line(text, style, context, max_width, line_width):
 
     # Step #1: Get a draft layout with the first line
     layout = None
-    if max_width is not None:
+    if max_width is not None and max_width != float('inf'):
         expected_length = int(max_width / style.font_size * 2.5)
         if expected_length < len(text):
             # Try to use a small amount of text instead of the whole text
