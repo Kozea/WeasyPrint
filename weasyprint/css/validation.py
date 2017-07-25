@@ -2168,7 +2168,7 @@ def preprocess_declarations(base_url, declarations):
 
         if name in NOT_PRINT_MEDIA:
             validation_error(
-                'info', 'the property does not apply for the print media')
+                'warning', 'the property does not apply for the print media')
             continue
 
         if name.startswith(PREFIX):

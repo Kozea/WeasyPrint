@@ -555,7 +555,7 @@ def _write_pdf_attachment(pdf, attachment, url_fetcher):
                 source = io.BytesIO(source)
             file_stream_id = _write_compressed_file_object(pdf, source)
     except URLFetchingError as exc:
-        LOGGER.warning('Failed to load attachment: %s', exc)
+        LOGGER.error('Failed to load attachment: %s', exc)
         return None
 
     # TODO: Use the result object from a URL fetch operation to provide more

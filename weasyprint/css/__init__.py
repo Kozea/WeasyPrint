@@ -158,8 +158,8 @@ def find_stylesheets(wrapper_element, device_media_type, url_fetcher, base_url,
                         _check_mime_type=True, media_type=device_media_type,
                         font_config=font_config, page_rules=page_rules)
                 except URLFetchingError as exc:
-                    LOGGER.warning('Failed to load stylesheet at %s : %s',
-                                   href, exc)
+                    LOGGER.error(
+                        'Failed to load stylesheet at %s : %s', href, exc)
 
 
 def find_style_attributes(tree, presentational_hints=False, base_url=None):
@@ -620,8 +620,8 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                         media_type=device_media_type, font_config=font_config,
                         matcher=matcher, page_rules=page_rules)
                 except URLFetchingError as exc:
-                    LOGGER.warning('Failed to load stylesheet at %s : %s',
-                                   url, exc)
+                    LOGGER.error(
+                        'Failed to load stylesheet at %s : %s', url, exc)
 
         elif rule.type == 'at-rule' and rule.at_keyword == 'media':
             media = parse_media_query(rule.prelude)
@@ -718,8 +718,8 @@ def parse_media_query(tokens):
             if types == ['ident']:
                 media.append(part[0].lower_value)
             else:
-                LOGGER.warning('Expected a media type, got ' +
-                               tinycss2.serialize(part))
+                LOGGER.warning(
+                    'Expected a media type, got %s', tinycss2.serialize(part))
                 return
         return media
 

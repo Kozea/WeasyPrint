@@ -284,9 +284,9 @@ def test_warnings():
         ('foo { margin-top: red',
             ['WARNING: Ignored', 'invalid value']),
         ('@import "relative-uri.css',
-            ['WARNING: Relative URI reference without a base URI']),
+            ['ERROR: Relative URI reference without a base URI']),
         ('@import "invalid-protocol://absolute-URL',
-            ['WARNING: Failed to load stylesheet at']),
+            ['ERROR: Failed to load stylesheet at']),
     ]:
         with capture_logs() as logs:
             CSS(string=source)
@@ -298,7 +298,7 @@ def test_warnings():
     with capture_logs() as logs:
         FakeHTML(string=html).render()
     assert len(logs) == 1
-    assert 'WARNING: Failed to load stylesheet at' in logs[0]
+    assert 'ERROR: Failed to load stylesheet at' in logs[0]
 
 
 @assert_no_logs

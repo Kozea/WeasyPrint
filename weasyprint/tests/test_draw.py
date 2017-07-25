@@ -1276,7 +1276,7 @@ def test_images():
             <div><img src="inexistent1.png" alt=""></div>
         ''')
     assert len(logs) == 1
-    assert 'WARNING: Failed to load image' in logs[0]
+    assert 'ERROR: Failed to load image' in logs[0]
     assert 'inexistent1.png' in logs[0]
     assert_pixels('image_no_src', 8, 8, no_image, '''
         <style>
@@ -1307,7 +1307,7 @@ def test_images():
             ]
         ])
     assert len(logs) == 1
-    assert 'WARNING: Failed to load image' in logs[0]
+    assert 'ERROR: Failed to load image' in logs[0]
     assert 'inexistent2.png' in logs[0]
 
     assert_pixels('image_0x1', 8, 8, no_image, '''

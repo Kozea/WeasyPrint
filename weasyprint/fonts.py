@@ -215,7 +215,7 @@ else:
                             else:
                                 font = result['file_obj'].read()
                     except Exception as exc:
-                        LOGGER.warning(
+                        LOGGER.error(
                             'Failed to load font at "%s" (%s)', url, exc)
                         continue
                     font_features = {
@@ -285,7 +285,7 @@ else:
                         # too as explained in Behdad's blog entry
                         return filename
                     else:
-                        LOGGER.warning('Failed to load font at "%s"', url)
+                        LOGGER.error('Failed to load font at "%s"', url)
             LOGGER.warning(
                 'Font-face "%s" cannot be loaded',
                 rule_descriptors['font_family'])

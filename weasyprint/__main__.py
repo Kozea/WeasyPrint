@@ -162,7 +162,8 @@ def main(argv=None, stdout=None, stdin=None):
             parser.error('--attachment only applies for the PDF format.')
 
     # Default to logging to stderr.
-    LOGGER.setLevel(logging.INFO)
+    if args.verbose:
+        LOGGER.setLevel(logging.DEBUG)
     handler = logging.StreamHandler()
     handler.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
     LOGGER.addHandler(handler)

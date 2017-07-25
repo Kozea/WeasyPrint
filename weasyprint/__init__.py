@@ -324,7 +324,7 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
     elif nones == [True, True, False, True, True]:
         with fetch(url_fetcher, url) as result:
             if check_css_mime_type and result['mime_type'] != 'text/css':
-                LOGGER.warning(
+                LOGGER.error(
                     'Unsupported stylesheet type %s for %s',
                     result['mime_type'], result['redirected_url'])
                 yield 'string', '', base_url, None

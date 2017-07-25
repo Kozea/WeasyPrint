@@ -433,7 +433,7 @@ def test_images():
                 /><img src=inexistent.jpg alt="Inexistent src" /></p>
         ''')
     assert len(logs) == 1
-    assert 'WARNING: Failed to load image' in logs[0]
+    assert 'ERROR: Failed to load image' in logs[0]
     assert 'inexistent.jpg' in logs[0]
     assert_tree(result, [
         ('p', 'Block', [
@@ -448,7 +448,7 @@ def test_images():
         result = parse_all('<p><img src=pattern.png alt="No base_url">',
                            base_url=None)
     assert len(logs) == 1
-    assert 'WARNING: Relative URI reference without a base URI' in logs[0]
+    assert 'ERROR: Relative URI reference without a base URI' in logs[0]
     assert_tree(result, [
         ('p', 'Block', [
             ('p', 'Line', [
