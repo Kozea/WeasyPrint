@@ -309,6 +309,7 @@ class Document(object):
             font_config=font_config, page_rules=page_rules)
         get_image_from_uri = functools.partial(
             images.get_image_from_uri, {}, html.url_fetcher)
+        LOGGER.info('Step 4 - Creating formatting structure')
         page_boxes = layout_document(
             enable_hinting, style_for, get_image_from_uri,
             build_formatting_structure(
@@ -477,6 +478,7 @@ class Document(object):
         # (1, 1) is overridden by .set_size() below.
         surface = cairo.PDFSurface(file_obj, 1, 1)
         context = cairo.Context(surface)
+        LOGGER.info('Step 6 - Drawing')
         for page in self.pages:
             surface.set_size(
                 math.floor(page.width * scale),
@@ -485,6 +487,7 @@ class Document(object):
             surface.show_page()
         surface.finish()
 
+        LOGGER.info('Step 7 - Adding PDF metadata')
         write_pdf_metadata(self, file_obj, scale, self.metadata, attachments,
                            self.url_fetcher)
 
@@ -515,6 +518,7 @@ class Document(object):
             cairo.FORMAT_ARGB32, max_width, sum_heights)
         context = cairo.Context(surface)
         pos_y = 0
+        LOGGER.info('Step 6 - Drawing')
         for page, width, height in izip(self.pages, widths, heights):
             pos_x = (max_width - width) / 2
             page.paint(context, pos_x, pos_y, scale=dppx, clip=True)

@@ -13,6 +13,7 @@
 from __future__ import division, unicode_literals
 
 from ..formatting_structure import boxes, build
+from ..logger import LOGGER
 from .absolute import absolute_layout
 from .blocks import block_container_layout, block_level_layout
 from .min_max import handle_min_max_height, handle_min_max_width
@@ -560,6 +561,7 @@ def make_all_pages(context, root_box):
     page_number = 0
     while True:
         page_number += 1
+        LOGGER.info('Step 5 - Creating layout - Page %i', page_number)
         content_empty = ((next_page == 'left' and right_page) or
                          (next_page == 'right' and not right_page))
         if content_empty:

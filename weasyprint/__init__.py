@@ -79,6 +79,10 @@ class HTML(object):
     def __init__(self, guess=None, filename=None, url=None, file_obj=None,
                  string=None, encoding=None, base_url=None,
                  url_fetcher=default_url_fetcher, media_type='print'):
+        LOGGER.info(
+            'Step 1 - Fetching and parsing HTML - %s',
+            guess or filename or url or
+            getattr(file_obj, 'name', 'HTML string'))
         result = _select_source(
             guess, filename, url, file_obj, string, base_url, url_fetcher)
         with result as (source_type, source, base_url, protocol_encoding):
@@ -236,6 +240,9 @@ class CSS(object):
                  url_fetcher=default_url_fetcher, _check_mime_type=False,
                  media_type='print', font_config=None, matcher=None,
                  page_rules=None):
+        LOGGER.info(
+            'Step 2 - Fetching and parsing CSS - %s',
+            filename or url or getattr(file_obj, 'name', 'CSS string'))
         result = _select_source(
             guess, filename, url, file_obj, string,
             base_url=base_url, url_fetcher=url_fetcher,
