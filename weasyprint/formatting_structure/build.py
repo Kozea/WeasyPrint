@@ -1149,8 +1149,9 @@ def set_viewport_overflow(root_box):
                 break
 
     root_box.viewport_overflow = chosen_box.style.overflow
-    chosen_box.style = chosen_box.style.copy()
-    chosen_box.style.update({'overflow': 'visible'})
+    style = dict(chosen_box.style)
+    style['overflow'] = 'visible'
+    chosen_box.style = StyleDict(style)
     return root_box
 
 

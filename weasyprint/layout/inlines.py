@@ -14,6 +14,7 @@ from __future__ import division, unicode_literals
 
 import unicodedata
 
+from ..css import StyleDict
 from ..css.computed_values import ex_ratio, strut_layout
 from ..formatting_structure import boxes
 from ..text import split_first_line
@@ -1007,12 +1008,12 @@ def count_spaces(box):
 def add_word_spacing(context, box, extra_word_spacing, x_advance):
     if isinstance(box, boxes.TextBox):
         box.position_x += x_advance
-        style = box.style.copy()
-        style.word_spacing += extra_word_spacing
+        style = dict(box.style)
+        style['word_spacing'] += extra_word_spacing
         nb_spaces = count_spaces(box)
         if nb_spaces > 0:
             layout, _, resume_at, width, _, _ = split_first_line(
-                box.text, style, context, float('inf'), None)
+                box.text, StyleDict(style), context, float('inf'), None)
             assert resume_at is None
             # XXX new_box.width - box.width is always 0???
             # x_advance +=  new_box.width - box.width
