@@ -41,7 +41,7 @@ You probably need either virtualenv_ (recommended) or using ``sudo``.
 
 .. code-block:: sh
 
-    virtualenv --system-site-packages ./venv
+    virtualenv ./venv
     . ./venv/bin/activate
     pip install WeasyPrint
 
@@ -94,7 +94,7 @@ If your favorite system is not listed here but you know the package names,
 Debian / Ubuntu
 ~~~~~~~~~~~~~~~
 
-Ubuntu 16.04 Xenial or newer:
+Debian 9.0 Stretch or newer, Ubuntu 16.04 Xenial or newer:
 
 .. code-block:: sh
 
