@@ -85,6 +85,14 @@ class StyleDict(dict):
         value = self[key]
         return value if value != 'currentColor' else self['color']
 
+    def copy(self, update=None):
+        """Copy the ``StyleDict``."""
+        style = type(self)(self)
+        style.anonymous = self.anonymous
+        if update:
+            style.update(update)
+        return style
+
     def inherit_from(self):
         """Return a new StyleDict with inherited properties from this one.
 
@@ -562,11 +570,9 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
 
         specified[name] = value
 
-    specified = StyleDict(specified)
-
-    return computed_values.compute(
+    return StyleDict(computed_values.compute(
         element, pseudo_type, specified, computed, parent_style, root_style,
-        base_url)
+        base_url))
 
 
 def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,

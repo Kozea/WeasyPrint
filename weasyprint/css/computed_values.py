@@ -162,19 +162,20 @@ def register_computer(name):
 def compute(element, pseudo_type, specified, computed, parent_style,
             root_style, base_url):
     """
-    Return a StyleDict of computed values.
+    Return a dict of computed values.
 
     :param element: The HTML element these style apply to
     :param pseudo_type: The type of pseudo-element, eg 'before', None
-    :param specified: a :class:`StyleDict` of specified values. Should contain
+    :param specified: a dict of specified values. Should contain
                       values for all properties.
-    :param computed: a :class:`StyleDict` of already known computed values.
+    :param computed: a dict of already known computed values.
                      Only contains some properties (or none).
-    :param parent_values: a :class:`StyleDict` of computed values of the parent
-                          element (should contain values for all properties),
-                          or ``None`` if ``element`` is the root element.
+    :param parent_style: a dict of computed values of the parent
+                         element (should contain values for all properties),
+                         or ``None`` if ``element`` is the root element.
+    :param base_url: The base URL used to resolve relative URLs.
+
     """
-    from . import StyleDict
 
     def computer():
         """Dummy object that holds attributes."""
@@ -207,9 +208,8 @@ def compute(element, pseudo_type, specified, computed, parent_style,
 
         computed[name] = value
 
-    computed['_weasy_specified_display'] = specified.display
-    computer.computed = StyleDict(computed)
-    return computer.computed
+    computed['_weasy_specified_display'] = specified['display']
+    return computed
 
 
 # Let's be consistent, always use ``name`` as an argument even when
@@ -411,8 +411,8 @@ def display(computer, name, value):
     See http://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
 
     """
-    float_ = computer.specified.float
-    position = computer.specified.position
+    float_ = computer.specified['float']
+    position = computer.specified['position']
     if position in ('absolute', 'fixed') or float_ != 'none' or \
             computer.is_root_element:
         if value == 'inline-table':
@@ -432,7 +432,7 @@ def compute_float(computer, name, value):
     See http://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
 
     """
-    if computer.specified.position in ('absolute', 'fixed'):
+    if computer.specified['position'] in ('absolute', 'fixed'):
         return 'none'
     else:
         return value
