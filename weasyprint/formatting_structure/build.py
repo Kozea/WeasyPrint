@@ -23,7 +23,7 @@ import tinycss2.color3
 from . import boxes, counters
 from .. import html
 from ..compat import basestring, xrange
-from ..css import properties
+from ..css import StyleDict, properties
 from ..css.computed_values import ZERO_PIXELS
 
 # Maps values of the ``display`` CSS property to box types.
@@ -75,15 +75,19 @@ def build_formatting_structure(element_tree, style_for, get_image_from_uri,
 
 
 def make_box(element_tag, style, content, get_image_from_uri):
-    if (style.display in ('table', 'inline-table') and
-            style.border_collapse == 'collapse'):
-        # Padding do not apply
-        for side in ['top', 'bottom', 'left', 'right']:
-            style['padding_' + side] = ZERO_PIXELS
-    if style.display.startswith('table-') and style.display != 'table-caption':
-        # Margins do not apply
-        for side in ['top', 'bottom', 'left', 'right']:
-            style['margin_' + side] = ZERO_PIXELS
+    if 'table' in style['display']:
+        style = dict(style)
+        if (style['display'] in ('table', 'inline-table') and
+                style['border_collapse'] == 'collapse'):
+            # Padding do not apply
+            for side in ['top', 'bottom', 'left', 'right']:
+                style['padding_' + side] = ZERO_PIXELS
+        if (style['display'].startswith('table-') and
+                style['display'] != 'table-caption'):
+            # Margins do not apply
+            for side in ['top', 'bottom', 'left', 'right']:
+                style['margin_' + side] = ZERO_PIXELS
+        style = StyleDict(style)
 
     return BOX_TYPE_FROM_DISPLAY[style.display](
         element_tag, style, content)
@@ -377,9 +381,13 @@ def add_box_marker(box, counter_values, get_image_from_uri):
 
     position = style.list_style_position
     if position == 'inside':
+        # TODO: should we keep that?
         side = 'right' if style.direction == 'ltr' else 'left'
         margin = style.font_size * 0.5
-        marker_box.style['margin_' + side] = properties.Dimension(margin, 'px')
+        marker_box_style = dict(marker_box.style)
+        marker_box_style['margin_' + side] = properties.Dimension(
+            margin, 'px')
+        marker_box.style = StyleDict(marker_box_style)
         yield marker_box
     elif position == 'outside':
         box.outside_list_marker = marker_box
@@ -650,9 +658,18 @@ def wrap_table(box, children):
     if not table.style.anonymous:
         # Non-inherited properties of the table element apply to one
         # of the wrapper and the table. The other get the initial value.
+        # TODO: put this in a method of the table object
+        wrapper_style = dict(wrapper.style)
+        wrapper_style_anonymous = wrapper.style.anonymous
+        table_style = dict(table.style)
+        table_style_anonymous = table.style.anonymous
         for name in properties.TABLE_WRAPPER_BOX_PROPERTIES:
-            wrapper.style[name] = table.style[name]
-            table.style[name] = properties.INITIAL_VALUES[name]
+            wrapper_style[name] = table.style[name]
+            table_style[name] = properties.INITIAL_VALUES[name]
+        wrapper.style = StyleDict(wrapper_style)
+        wrapper.style.anonymous = wrapper_style_anonymous
+        table.style = StyleDict(table_style)
+        table.style.anonymous = table_style_anonymous
     # else: non-inherited properties already have their initial values
 
     return wrapper
@@ -756,10 +773,11 @@ def collapse_table_borders(table, grid_width, grid_height):
     # the correct widths on each box. The actual border grid will be
     # painted separately.
     def set_transparent_border(box, side, twice_width):
-        style = box.style
+        style = dict(box.style)
         style['border_%s_style' % side] = 'solid'
         style['border_%s_width' % side] = twice_width / 2
         style['border_%s_color' % side] = transparent
+        box.style = StyleDict(style)
 
     def remove_borders(box):
         set_transparent_border(box, 'top', 0)

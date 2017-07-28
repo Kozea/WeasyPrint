@@ -69,11 +69,13 @@ RE_INITIAL_NOT_COMPUTED = re.compile(
 
 
 class StyleDict(dict):
-    """A mapping (dict-like) that allows attribute access to values.
+    """A frozen dict that allows attribute access to values.
 
     Allow eg. ``style.font_size`` instead of ``style['font-size']``.
 
     """
+
+    __setitem__ = None
 
     # TODO: We should remove that. Some attributes (eg. "clear") exist as
     # dict methods and can only be accessed with getitem.
@@ -96,12 +98,13 @@ class StyleDict(dict):
         This is the method used for an anonymous box.
 
         """
-        style = computed_from_cascaded(
-            cascaded={}, parent_style=self,
-            # Only used by non-inherited properties. eg `content: attr(href)`
-            element=None)
-        style.anonymous = True
-        return style
+        if '_inherited_style' not in self.__dict__:
+            self._inherited_style = computed_from_cascaded(
+                cascaded={}, parent_style=self,
+                # Only by non-inherited properties, eg `content: attr(href)`
+                element=None)
+            self._inherited_style.anonymous = True
+        return self._inherited_style
 
     # Default values, may be overriden on instances
     anonymous = False
@@ -525,7 +528,7 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
     if not cascaded and parent_style is not None:
         # Fast path for anonymous boxes:
         # no cascaded style, only implicitly initial or inherited values.
-        computed = StyleDict(properties.INITIAL_VALUES)
+        computed = dict(properties.INITIAL_VALUES)
         for name in properties.INHERITED:
             computed[name] = parent_style[name]
         # border-*-style is none, so border-width computes to zero.
@@ -534,11 +537,11 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
         for side in ('top', 'bottom', 'left', 'right'):
             computed['border_%s_width' % side] = 0
         computed['outline_width'] = 0
-        return computed
+        return StyleDict(computed)
 
     # Handle inheritance and initial values
-    specified = StyleDict()
-    computed = StyleDict()
+    specified = {}
+    computed = {}
     for name, initial in iteritems(properties.INITIAL_VALUES):
         if name in cascaded:
             value, _precedence = cascaded[name]
@@ -564,6 +567,8 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
             computed[name] = value
 
         specified[name] = value
+
+    specified = StyleDict(specified)
 
     return computed_values.compute(
         element, pseudo_type, specified, computed, parent_style, root_style,

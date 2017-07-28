@@ -569,8 +569,8 @@ def get_size(line, style):
     pango.pango_layout_line_get_extents(line, ffi.NULL, logical_extents)
     width, height = (units_to_double(logical_extents.width),
                      units_to_double(logical_extents.height))
-    if style.letter_spacing != 'normal':
-        width += style.letter_spacing
+    if style['letter_spacing'] != 'normal':
+        width += style['letter_spacing']
     return width, height
 
 
@@ -635,12 +635,12 @@ class Layout(object):
         self.font = ffi.gc(
             pango.pango_font_description_new(),
             pango.pango_font_description_free)
-        if style.font_language_override != 'normal':
+        if style['font_language_override'] != 'normal':
             lang_p, lang = unicode_to_char_p(LST_TO_ISO.get(
-                style.font_language_override.lower(),
-                style.font_language_override))
-        elif style.lang:
-            lang_p, lang = unicode_to_char_p(style.lang)
+                style['font_language_override'].lower(),
+                style['font_language_override']))
+        elif style['lang']:
+            lang_p, lang = unicode_to_char_p(style['lang'])
         else:
             lang = None
             self.language = pango.pango_language_get_default()
@@ -648,15 +648,16 @@ class Layout(object):
             self.language = pango.pango_language_from_string(lang_p)
             pango.pango_context_set_language(pango_context, self.language)
 
-        assert not isinstance(style.font_family, basestring), (
+        assert not isinstance(style['font_family'], basestring), (
             'font_family should be a list')
-        family_p, family = unicode_to_char_p(','.join(style.font_family))
+        family_p, family = unicode_to_char_p(','.join(style['font_family']))
         pango.pango_font_description_set_family(self.font, family_p)
         pango.pango_font_description_set_style(
-            self.font, PANGO_STYLE[style.font_style])
+            self.font, PANGO_STYLE[style['font_style']])
         pango.pango_font_description_set_stretch(
-            self.font, PANGO_STRETCH[style.font_stretch])
-        pango.pango_font_description_set_weight(self.font, style.font_weight)
+            self.font, PANGO_STRETCH[style['font_stretch']])
+        pango.pango_font_description_set_weight(
+            self.font, style['font_weight'])
         pango.pango_font_description_set_absolute_size(
             self.font, units_from_double(font_size))
         pango.pango_layout_set_font_description(self.layout, self.font)

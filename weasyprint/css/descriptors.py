@@ -69,9 +69,9 @@ def font_family(tokens, allow_spaces=False):
 def src(tokens, base_url):
     """``src`` descriptor validation."""
     if len(tokens) <= 2:
-        token = tokens.pop()
+        tokens, token = tokens[:-1], tokens[-1]
         if token.type == 'function' and token.lower_name == 'format':
-            token = tokens.pop()
+            tokens, token = tokens[:-1], tokens[-1]
         if token.type == 'function' and token.lower_name == 'local':
             return 'local', font_family(token.arguments, allow_spaces=True)
         if token.type == 'url':

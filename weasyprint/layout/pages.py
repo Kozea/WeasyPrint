@@ -12,6 +12,7 @@
 
 from __future__ import division, unicode_literals
 
+from ..css import StyleDict
 from ..formatting_structure import boxes, build
 from ..logger import LOGGER
 from .absolute import absolute_layout
@@ -480,10 +481,10 @@ def make_page(context, root_box, page_type, resume_at, content_empty,
                       or ``None`` for the first page.
 
     """
-    style = context.style_for(page_type)
+    style = dict(context.style_for(page_type))
     # Propagated from the root or <body>.
     style['overflow'] = root_box.viewport_overflow
-    page = boxes.PageBox(page_type, style)
+    page = boxes.PageBox(page_type, StyleDict(style))
 
     device_size = page.style.size
 

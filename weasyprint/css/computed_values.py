@@ -40,7 +40,7 @@ LENGTHS_TO_PIXELS = {
 FONT_SIZE_KEYWORDS = dict(
     # medium is 16px, others are a ratio of medium
     (name, INITIAL_VALUES['font_size'] * a / b)
-    for name, a, b in [
+    for name, a, b in (
         ('xx-small', 3, 5),
         ('x-small', 3, 4),
         ('small', 8, 9),
@@ -48,7 +48,7 @@ FONT_SIZE_KEYWORDS = dict(
         ('large', 6, 5),
         ('x-large', 3, 2),
         ('xx-large', 2, 1),
-    ]
+    )
 )
 
 # These are unspecified, other than 'thin' <='medium' <= 'thick'.
@@ -174,6 +174,8 @@ def compute(element, pseudo_type, specified, computed, parent_style,
                           element (should contain values for all properties),
                           or ``None`` if ``element`` is the root element.
     """
+    from . import StyleDict
+
     def computer():
         """Dummy object that holds attributes."""
         return 0
@@ -206,7 +208,8 @@ def compute(element, pseudo_type, specified, computed, parent_style,
         computed[name] = value
 
     computed['_weasy_specified_display'] = specified.display
-    return computed
+    computer.computed = StyleDict(computed)
+    return computer.computed
 
 
 # Let's be consistent, always use ``name`` as an argument even when
@@ -219,11 +222,12 @@ def background_image(computer, name, values):
     """Compute lenghts in gradient background-image."""
     for type_, value in values:
         if type_ in ('linear-gradient', 'radial-gradient'):
-            value.stop_positions = [
+            value.stop_positions = tuple(
                 length(computer, name, pos) if pos is not None else None
-                for pos in value.stop_positions]
+                for pos in value.stop_positions)
         if type_ == 'radial-gradient':
-            value.center, = background_position(computer, name, [value.center])
+            value.center, = background_position(
+                computer, name, (value.center,))
             if value.size_type == 'explicit':
                 value.size = length_or_percentage_tuple(
                     computer, name, value.size)
@@ -233,10 +237,10 @@ def background_image(computer, name, values):
 @register_computer('background-position')
 def background_position(computer, name, values):
     """Compute lengths in background-position."""
-    return [
+    return tuple(
         (origin_x, length(computer, name, pos_x),
          origin_y, length(computer, name, pos_y))
-        for origin_x, pos_x, origin_y, pos_y in values]
+        for origin_x, pos_x, origin_y, pos_y in values)
 
 
 @register_computer('transform-origin')
@@ -301,7 +305,7 @@ def length(computer, name, value, font_size=None, pixels_only=False):
         result = value.value * LENGTHS_TO_PIXELS[unit]
     elif unit in ('em', 'ex', 'ch', 'rem'):
         if font_size is None:
-            font_size = computer.computed.font_size
+            font_size = computer.computed['font_size']
         if unit == 'ex':
             # TODO: cache
             result = value.value * font_size * ex_ratio(computer.computed)
@@ -336,9 +340,10 @@ def pixel_length(computer, name, value):
 @register_computer('background-size')
 def background_size(computer, name, values):
     """Compute the ``background-size`` properties."""
-    return [value if value in ('contain', 'cover') else
-            length_or_percentage_tuple(computer, name, value)
-            for value in values]
+    return tuple(
+        value if value in ('contain', 'cover') else
+        length_or_percentage_tuple(computer, name, value)
+        for value in values)
 
 
 @register_computer('border-top-width')
@@ -376,7 +381,7 @@ def column_width(computer, name, value):
 @register_computer('border-bottom-right-radius')
 def border_radius(computer, name, values):
     """Compute the ``border-*-radius`` properties."""
-    return [length(computer, name, value) for value in values]
+    return tuple(length(computer, name, value) for value in values)
 
 
 @register_computer('column-gap')
@@ -393,9 +398,10 @@ def content(computer, name, values):
     if values in ('normal', 'none'):
         return values
     else:
-        return [('STRING', computer.element.get(value, ''))
-                if type_ == 'attr' else (type_, value)
-                for type_, value in values]
+        return tuple(
+            ('STRING', computer.element.get(value, ''))
+            if type_ == 'attr' else (type_, value)
+            for type_, value in values)
 
 
 @register_computer('display')
@@ -472,7 +478,7 @@ def line_height(computer, name, value):
         return ('NUMBER', value.value)
     elif value.unit == '%':
         factor = value.value / 100.
-        font_size_value = computer.computed.font_size
+        font_size_value = computer.computed['font_size']
         pixels = factor * font_size_value
     else:
         pixels = length(computer, name, value, pixels_only=True)
@@ -531,7 +537,7 @@ def transform(computer, name, value):
         if function == 'translate':
             args = length_or_percentage_tuple(computer, name, args)
         result.append((function, args))
-    return result
+    return tuple(result)
 
 
 @register_computer('vertical-align')
@@ -543,9 +549,9 @@ def vertical_align(computer, name, value):
                  'top', 'bottom'):
         return value
     elif value == 'super':
-        return computer.computed.font_size * 0.5
+        return computer.computed['font_size'] * 0.5
     elif value == 'sub':
-        return computer.computed.font_size * -0.5
+        return computer.computed['font_size'] * -0.5
     elif value.unit == '%':
         height, _ = strut_layout(computer.computed)
         return height * value.value / 100.
@@ -570,7 +576,7 @@ def strut_layout(style, context=None):
     """
     # TODO: always get the real value for `context`? (if we really care…)
 
-    if style.font_size == 0:
+    if style['font_size'] == 0:
         return 0, 0
 
     if context:
@@ -582,7 +588,7 @@ def strut_layout(style, context=None):
             return context.strut_layouts[key]
 
     layout = text.Layout(
-        context=context, font_size=style.font_size, style=style)
+        context=context, font_size=style['font_size'], style=style)
     line, = layout.iter_lines()
     _, _, _, _, text_height, baseline = text.first_line_metrics(
         line, '', layout, resume_at=None, space_collapse=False, style=style)
