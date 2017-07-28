@@ -660,16 +660,13 @@ def wrap_table(box, children):
         # of the wrapper and the table. The other get the initial value.
         # TODO: put this in a method of the table object
         wrapper_style = dict(wrapper.style)
-        wrapper_style_anonymous = wrapper.style.anonymous
         table_style = dict(table.style)
-        table_style_anonymous = table.style.anonymous
         for name in properties.TABLE_WRAPPER_BOX_PROPERTIES:
             wrapper_style[name] = table.style[name]
             table_style[name] = properties.INITIAL_VALUES[name]
         wrapper.style = StyleDict(wrapper_style)
-        wrapper.style.anonymous = wrapper_style_anonymous
+        wrapper.style.anonymous = True
         table.style = StyleDict(table_style)
-        table.style.anonymous = table_style_anonymous
     # else: non-inherited properties already have their initial values
 
     return wrapper
