@@ -1,5 +1,6 @@
 [run]
 branch = True
+include = weasyprint/*
 
 [report]
 exclude_lines =
@@ -11,6 +12,4 @@ omit =
     weasyprint/tests/w3_test_suite/*
     */virtualenv/*
     */.virtualenvs/*
-    /usr/*
-    /home/*
     .*
