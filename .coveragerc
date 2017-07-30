@@ -12,4 +12,5 @@ omit =
     */virtualenv/*
     */.virtualenvs/*
     /usr/*
+    /home/*
     .*
