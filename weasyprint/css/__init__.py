@@ -85,12 +85,11 @@ class StyleDict(dict):
         value = self[key]
         return value if value != 'currentColor' else self['color']
 
-    def copy(self, update=None):
-        """Copy the ``StyleDict``."""
+    def copy(self, update):
+        """Copy the ``StyleDict`` with updated values."""
         style = type(self)(self)
+        style.update(update)
         style.anonymous = self.anonymous
-        if update:
-            style.update(update)
         return style
 
     def inherit_from(self):
