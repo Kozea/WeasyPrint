@@ -24,7 +24,6 @@ from . import boxes, counters
 from .. import html
 from ..compat import basestring, xrange
 from ..css import properties
-from ..css.computed_values import ZERO_PIXELS
 
 # Maps values of the ``display`` CSS property to box types.
 BOX_TYPE_FROM_DISPLAY = {
@@ -75,20 +74,6 @@ def build_formatting_structure(element_tree, style_for, get_image_from_uri,
 
 
 def make_box(element_tag, style, content, get_image_from_uri):
-    if 'table' in style['display']:
-        new_style = {}
-        if (style['display'] in ('table', 'inline-table') and
-                style['border_collapse'] == 'collapse'):
-            # Padding do not apply
-            for side in ['top', 'bottom', 'left', 'right']:
-                new_style['padding_' + side] = ZERO_PIXELS
-        if (style['display'].startswith('table-') and
-                style['display'] != 'table-caption'):
-            # Margins do not apply
-            for side in ['top', 'bottom', 'left', 'right']:
-                new_style['margin_' + side] = ZERO_PIXELS
-        style = style.copy(new_style)
-
     return BOX_TYPE_FROM_DISPLAY[style.display](
         element_tag, style, content)
 

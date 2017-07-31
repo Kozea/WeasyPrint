@@ -107,10 +107,10 @@ class StyleDict(dict):
 
         """
         if '_inherited_style' not in self.__dict__:
-            self._inherited_style = computed_from_cascaded(
+            self._inherited_style = type(self)(computed_from_cascaded(
                 cascaded={}, parent_style=self,
                 # Only by non-inherited properties, eg `content: attr(href)`
-                element=None)
+                element=None))
             self._inherited_style.anonymous = True
         return self._inherited_style
 
@@ -545,7 +545,7 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
         for side in ('top', 'bottom', 'left', 'right'):
             computed['border_%s_width' % side] = 0
         computed['outline_width'] = 0
-        return StyleDict(computed)
+        return computed
 
     # Handle inheritance and initial values
     specified = {}
@@ -576,9 +576,9 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
 
         specified[name] = value
 
-    return StyleDict(computed_values.compute(
+    return computed_values.compute(
         element, pseudo_type, specified, computed, parent_style, root_style,
-        base_url))
+        base_url)
 
 
 def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
@@ -860,6 +860,20 @@ def get_all_computed_styles(html, user_stylesheets=None,
         """
         Convenience function to get the computed styles for an element.
         """
-        return __get((element, pseudo_type))
+        style = __get((element, pseudo_type))
+
+        if style and 'table' in style['display']:
+            if (style['display'] in ('table', 'inline-table') and
+                    style['border_collapse'] == 'collapse'):
+                # Padding do not apply
+                for side in ['top', 'bottom', 'left', 'right']:
+                    style['padding_' + side] = computed_values.ZERO_PIXELS
+            if (style['display'].startswith('table-') and
+                    style['display'] != 'table-caption'):
+                # Margins do not apply
+                for side in ['top', 'bottom', 'left', 'right']:
+                    style['margin_' + side] = computed_values.ZERO_PIXELS
+
+        return style and StyleDict(style)
 
     return style_for
