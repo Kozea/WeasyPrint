@@ -549,8 +549,6 @@ def test_lists():
     line, = list_item.children
     marker, content = line.children
     assert marker.text == '◦'
-    assert marker.margin_left == 0
-    assert marker.margin_right == 8
     assert content.text == 'abc'
 
     page, = parse('''
@@ -565,8 +563,6 @@ def test_lists():
     unordered_list, = body_children(page)
     list_item, = unordered_list.children
     marker = list_item.outside_list_marker
-    font_size = marker.style.font_size
-    assert marker.margin_right == 0.5 * font_size  # 0.5em
     assert marker.position_x == (
         list_item.padding_box_x() - marker.width - marker.margin_right)
     assert marker.position_y == list_item.position_y

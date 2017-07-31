@@ -381,11 +381,6 @@ def add_box_marker(box, counter_values, get_image_from_uri):
 
     position = style.list_style_position
     if position == 'inside':
-        # TODO: should we keep that?
-        side = 'right' if style.direction == 'ltr' else 'left'
-        margin = style.font_size * 0.5
-        marker_box.style = marker_box.style.copy(
-            {'margin_' + side: properties.Dimension(margin, 'px')})
         yield marker_box
     elif position == 'outside':
         box.outside_list_marker = marker_box
