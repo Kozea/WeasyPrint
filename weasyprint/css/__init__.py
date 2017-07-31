@@ -87,6 +87,13 @@ class StyleDict(dict):
 
     def copy(self, update):
         """Copy the ``StyleDict`` with updated values."""
+        # Don't copy when the updated values are already set
+        for key, value in update.items():
+            if self[key] != value:
+                break
+        else:
+            return self
+
         style = type(self)(self)
         style.update(update)
         style.anonymous = self.anonymous
