@@ -858,23 +858,29 @@ def get_all_computed_styles(html, user_stylesheets=None,
                 base_url=html.base_url)
 
     # This is mostly useful to make pseudo_type optional.
-    def style_for(element, pseudo_type=None, __get=computed_styles.get):
+    def style_for(element, pseudo_type=None, update=None,
+                  __get=computed_styles.get):
         """
         Convenience function to get the computed styles for an element.
         """
         style = __get((element, pseudo_type))
 
-        if style and 'table' in style['display']:
-            if (style['display'] in ('table', 'inline-table') and
-                    style['border_collapse'] == 'collapse'):
-                # Padding do not apply
-                for side in ['top', 'bottom', 'left', 'right']:
-                    style['padding_' + side] = computed_values.ZERO_PIXELS
-            if (style['display'].startswith('table-') and
-                    style['display'] != 'table-caption'):
-                # Margins do not apply
-                for side in ['top', 'bottom', 'left', 'right']:
-                    style['margin_' + side] = computed_values.ZERO_PIXELS
+        if style:
+            if 'table' in style['display']:
+                if (style['display'] in ('table', 'inline-table') and
+                        style['border_collapse'] == 'collapse'):
+                    # Padding do not apply
+                    for side in ['top', 'bottom', 'left', 'right']:
+                        style['padding_' + side] = computed_values.ZERO_PIXELS
+                if (style['display'].startswith('table-') and
+                        style['display'] != 'table-caption'):
+                    # Margins do not apply
+                    for side in ['top', 'bottom', 'left', 'right']:
+                        style['margin_' + side] = computed_values.ZERO_PIXELS
+            if update:
+                style.update(update)
+        elif update:
+            style = dict(update)
 
         return style and StyleDict(style)
 
