@@ -248,7 +248,8 @@ def inline_line_widths(context, box, outer, is_line_start, minimum,
             else:
                 lines = text.line_widths(
                     child_text, child.style, context,
-                    width=0 if minimum else None)
+                    width=0 if minimum else None,
+                    justification_spacing=child.justification_spacing)
                 if first_line:
                     lines = [next(lines)]
                 else:
@@ -633,5 +634,6 @@ def trailing_whitespace_size(context, box):
         return old_box.width - stripped_box.width
     else:
         _, _, _, width, _, _ = split_first_line(
-            box.text, box.style, context, None, None)
+            box.text, box.style, context, None, None,
+            box.justification_spacing)
         return width

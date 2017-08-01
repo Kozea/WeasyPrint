@@ -756,7 +756,8 @@ def split_text_box(context, box, available_width, line_width, skip):
     if font_size == 0 or not text:
         return None, None, False
     layout, length, resume_at, width, height, baseline = split_first_line(
-        text, box.style, context, available_width, line_width)
+        text, box.style, context, available_width, line_width,
+        box.justification_spacing)
     assert resume_at != 0
 
     # Convert ``length`` and ``resume_at`` from UTF-8 indexes in text
@@ -987,9 +988,10 @@ def text_align(context, line, available_width, last):
 
 
 def justify_line(context, line, extra_width):
+    # TODO: We should use a better alorithm here, see
+    # https://www.w3.org/TR/css-text-3/#justify-algos
     nb_spaces = count_spaces(line)
     if nb_spaces == 0:
-        # TODO: what should we do with single-word lines?
         return
     add_word_spacing(context, line, extra_width / nb_spaces, 0)
 
@@ -1004,20 +1006,19 @@ def count_spaces(box):
         return 0
 
 
-def add_word_spacing(context, box, extra_word_spacing, x_advance):
+def add_word_spacing(context, box, justification_spacing, x_advance):
     if isinstance(box, boxes.TextBox):
+        box.justification_spacing = justification_spacing
         box.position_x += x_advance
-        if extra_word_spacing:
-            word_spacing = box.style['word_spacing'] + extra_word_spacing
-            box.style = box.style.copy({'word_spacing': word_spacing})
         nb_spaces = count_spaces(box)
         if nb_spaces > 0:
             layout, _, resume_at, width, _, _ = split_first_line(
-                box.text, box.style, context, float('inf'), None)
+                box.text, box.style, context, float('inf'), None,
+                box.justification_spacing)
             assert resume_at is None
             # XXX new_box.width - box.width is always 0???
             # x_advance +=  new_box.width - box.width
-            x_advance += extra_word_spacing * nb_spaces
+            x_advance += justification_spacing * nb_spaces
             box.width = width
             box.pango_layout = layout
     elif isinstance(box, (boxes.LineBox, boxes.InlineBox)):
@@ -1026,7 +1027,7 @@ def add_word_spacing(context, box, extra_word_spacing, x_advance):
         for child in box.children:
             if child.is_in_normal_flow():
                 x_advance = add_word_spacing(
-                    context, child, extra_word_spacing, x_advance)
+                    context, child, justification_spacing, x_advance)
         box.width += x_advance - previous_x_advance
     else:
         # Atomic inline-level box

@@ -823,7 +823,7 @@ def get_font_features(
     return features
 
 
-def create_layout(text, style, context, max_width):
+def create_layout(text, style, context, max_width, justification_spacing):
     """Return an opaque Pango layout with default Pango line-breaks.
 
     :param text: Unicode
@@ -850,7 +850,7 @@ def create_layout(text, style, context, max_width):
     text_bytes = layout.text_bytes
 
     # Word and letter spacings
-    word_spacing = style.word_spacing
+    word_spacing = style.word_spacing + justification_spacing
     letter_spacing = style.letter_spacing
     if letter_spacing == 'normal':
         letter_spacing = 0
@@ -907,7 +907,8 @@ def create_layout(text, style, context, max_width):
     return layout
 
 
-def split_first_line(text, style, context, max_width, line_width):
+def split_first_line(text, style, context, max_width, line_width,
+                     justification_spacing):
     """Fit as much as possible in the available width for one line of text.
 
     Return ``(layout, length, resume_at, width, height, baseline)``.
@@ -937,7 +938,8 @@ def split_first_line(text, style, context, max_width, line_width):
         if expected_length < len(text):
             # Try to use a small amount of text instead of the whole text
             layout = create_layout(
-                text[:expected_length], style, context, max_width)
+                text[:expected_length], style, context, max_width,
+                justification_spacing)
             lines = layout.iter_lines()
             first_line = next(lines, None)
             second_line = next(lines, None)
@@ -946,7 +948,8 @@ def split_first_line(text, style, context, max_width, line_width):
                 # the whole text
                 layout = None
     if layout is None:
-        layout = create_layout(text, style, context, max_width)
+        layout = create_layout(
+            text, style, context, max_width, justification_spacing)
         lines = layout.iter_lines()
         first_line = next(lines, None)
         second_line = next(lines, None)
@@ -1064,7 +1067,8 @@ def split_first_line(text, style, context, max_width, line_width):
                     hyphenated_first_line_text = (
                         new_first_line_text + style.hyphenate_character)
                     new_layout = create_layout(
-                        hyphenated_first_line_text, style, context, max_width)
+                        hyphenated_first_line_text, style, context, max_width,
+                        justification_spacing)
                     new_lines = new_layout.iter_lines()
                     new_first_line = next(new_lines, None)
                     new_second_line = next(new_lines, None)
@@ -1154,9 +1158,9 @@ def split_first_line(text, style, context, max_width, line_width):
         style.hyphenate_character)
 
 
-def line_widths(text, style, context, width):
+def line_widths(text, style, context, width, justification_spacing):
     """Return the width for each line."""
-    layout = create_layout(text, style, context, width)
+    layout = create_layout(text, style, context, width, justification_spacing)
     for line in layout.iter_lines():
         width, _height = get_size(line, style)
         yield width

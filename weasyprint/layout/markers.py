@@ -33,7 +33,8 @@ def list_marker_layout(context, box):
             (marker.pango_layout, _, _, marker.width, marker.height,
                 marker.baseline) = split_first_line(
                     marker.text, marker.style, context, max_width=None,
-                    line_width=None)
+                    line_width=None,
+                    justification_spacing=marker.justification_spacing)
             baseline = find_in_flow_baseline(box)
         else:
             # Image marker

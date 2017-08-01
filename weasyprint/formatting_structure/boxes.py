@@ -426,6 +426,8 @@ class TextBox(InlineLevelBox):
     inline boxes" are also text boxes.
 
     """
+    justification_spacing = 0
+
     # http://stackoverflow.com/questions/16317534/
     ascii_to_wide = dict((i, unichr(i + 0xfee0)) for i in range(0x21, 0x7f))
     ascii_to_wide.update({0x20: '\u3000', 0x2D: '\u2212'})
