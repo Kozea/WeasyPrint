@@ -75,7 +75,8 @@ class StyleDict(dict):
 
     """
 
-    __setitem__ = None
+    # Hide modification
+    __setitem__ = update = None
 
     # TODO: We should remove that. Some attributes (eg. "clear") exist as
     # dict methods and can only be accessed with getitem.
@@ -94,8 +95,9 @@ class StyleDict(dict):
         else:
             return self
 
-        style = type(self)(self)
+        style = dict(self)
         style.update(update)
+        style = type(self)(style)
         style.anonymous = self.anonymous
         return style
 
