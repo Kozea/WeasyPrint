@@ -48,11 +48,18 @@ RE_INITIAL_NOT_COMPUTED = re.compile(
 
 
 class StyleDict(dict):
-    """A mapping (dict-like) that allows attribute access to values.
+    """A dict allowing attribute access to values.
 
     Allow eg. ``style.font_size`` instead of ``style['font-size']``.
 
     """
+
+    # TODO: this dict should be frozen, but modification is currently
+    # authorized for some corner cases when building the structure:
+    # - wrapping tables,
+    # - removing paddings and margins from tables,
+    # - modifying borders for table cells with collapsing borders, and
+    # - setting viewports and pages overflow.
 
     # TODO: We should remove that. Some attributes (eg. "clear") exist as
     # dict methods and can only be accessed with getitem.
@@ -62,12 +69,6 @@ class StyleDict(dict):
         value = self[key]
         return value if value != 'currentColor' else self['color']
 
-    def copy(self):
-        """Copy the ``StyleDict``."""
-        style = type(self)(self)
-        style.anonymous = self.anonymous
-        return style
-
     def inherit_from(self):
         """Return a new StyleDict with inherited properties from this one.
 
@@ -75,12 +76,13 @@ class StyleDict(dict):
         This is the method used for an anonymous box.
 
         """
-        style = computed_from_cascaded(
-            cascaded={}, parent_style=self,
-            # Only used by non-inherited properties. eg `content: attr(href)`
-            element=None)
-        style.anonymous = True
-        return style
+        if '_inherited_style' not in self.__dict__:
+            self._inherited_style = computed_from_cascaded(
+                cascaded={}, parent_style=self,
+                # Only by non-inherited properties, eg `content: attr(href)`
+                element=None)
+            self._inherited_style.anonymous = True
+        return self._inherited_style
 
     # Default values, may be overriden on instances
     anonymous = False
@@ -140,8 +142,8 @@ def find_stylesheets(wrapper_element, device_media_type, url_fetcher, base_url,
                         _check_mime_type=True, media_type=device_media_type,
                         font_config=font_config, page_rules=page_rules)
                 except URLFetchingError as exc:
-                    LOGGER.warning('Failed to load stylesheet at %s : %s',
-                                   href, exc)
+                    LOGGER.error(
+                        'Failed to load stylesheet at %s : %s', href, exc)
 
 
 def find_style_attributes(tree, presentational_hints=False, base_url=None):
@@ -525,7 +527,7 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
     if not cascaded and parent_style is not None:
         # Fast path for anonymous boxes:
         # no cascaded style, only implicitly initial or inherited values.
-        computed = StyleDict(properties.INITIAL_VALUES)
+        computed = dict(properties.INITIAL_VALUES)
         for name in properties.INHERITED:
             computed[name] = parent_style[name]
         # page is not inherited but taken from the ancestor if 'auto'
@@ -536,11 +538,11 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
         for side in ('top', 'bottom', 'left', 'right'):
             computed['border_%s_width' % side] = 0
         computed['outline_width'] = 0
-        return computed
+        return StyleDict(computed)
 
     # Handle inheritance and initial values
-    specified = StyleDict()
-    computed = StyleDict()
+    specified = {}
+    computed = {}
     for name, initial in iteritems(properties.INITIAL_VALUES):
         if name in cascaded:
             value, _precedence = cascaded[name]
@@ -575,9 +577,9 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
         computed['page'] = specified['page'] = (
             '' if parent_style is None else parent_style['page'])
 
-    return computed_values.compute(
+    return StyleDict(computed_values.compute(
         element, pseudo_type, specified, computed, parent_style, root_style,
-        base_url)
+        base_url))
 
 
 def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
@@ -630,8 +632,8 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                         media_type=device_media_type, font_config=font_config,
                         matcher=matcher, page_rules=page_rules)
                 except URLFetchingError as exc:
-                    LOGGER.warning('Failed to load stylesheet at %s : %s',
-                                   url, exc)
+                    LOGGER.error(
+                        'Failed to load stylesheet at %s : %s', url, exc)
 
         elif rule.type == 'at-rule' and rule.at_keyword == 'media':
             media = parse_media_query(rule.prelude)
@@ -734,8 +736,8 @@ def parse_media_query(tokens):
             if types == ['ident']:
                 media.append(part[0].lower_value)
             else:
-                LOGGER.warning('Expected a media type, got ' +
-                               tinycss2.serialize(part))
+                LOGGER.warning(
+                    'Expected a media type, got %s', tinycss2.serialize(part))
                 return
         return media
 
@@ -777,6 +779,7 @@ def get_all_computed_styles(html, user_stylesheets=None,
     #             http://www.w3.org/TR/CSS21/cascade.html#cascading-order
     cascaded_styles = {}
 
+    LOGGER.info('Step 3 - Applying CSS')
     for specificity, attributes in find_style_attributes(
             html.etree_element, presentational_hints, html.base_url):
         element, declarations, base_url = attributes
@@ -851,6 +854,21 @@ def get_all_computed_styles(html, user_stylesheets=None,
         """
         Convenience function to get the computed styles for an element.
         """
-        return __get((element, pseudo_type))
+        style = __get((element, pseudo_type))
+
+        if style:
+            if 'table' in style['display']:
+                if (style['display'] in ('table', 'inline-table') and
+                        style['border_collapse'] == 'collapse'):
+                    # Padding do not apply
+                    for side in ['top', 'bottom', 'left', 'right']:
+                        style['padding_' + side] = computed_values.ZERO_PIXELS
+                if (style['display'].startswith('table-') and
+                        style['display'] != 'table-caption'):
+                    # Margins do not apply
+                    for side in ['top', 'bottom', 'left', 'right']:
+                        style['margin_' + side] = computed_values.ZERO_PIXELS
+
+        return style
 
     return style_for, cascaded_styles, computed_styles

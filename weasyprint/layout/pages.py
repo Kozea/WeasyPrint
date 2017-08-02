@@ -14,6 +14,7 @@ from __future__ import division, unicode_literals
 
 from ..css import PageType, matching_page_types, set_computed_styles
 from ..formatting_structure import boxes, build
+from ..logger import LOGGER
 from .absolute import absolute_layout
 from .blocks import block_container_layout, block_level_layout
 from .min_max import handle_min_max_height, handle_min_max_width
@@ -479,6 +480,8 @@ def make_page(context, root_box, page_type, resume_at, page_number=None):
                       or ``None`` for the first page.
 
     """
+
+    # Overflow value propagated from the root or <body>.
     style = context.style_for(page_type)
 
     # Propagated from the root or <body>.
@@ -527,7 +530,7 @@ def make_page(context, root_box, page_type, resume_at, page_number=None):
     page.children = [root_box]
     descendants = page.descendants()
     for child in descendants:
-        string_sets = child.style.string_set
+        string_sets = child.string_set
         if string_sets and string_sets != 'none':
             for string_set in string_sets:
                 string_name, text = string_set
@@ -583,6 +586,7 @@ def make_all_pages(context, root_box, html, cascaded_styles, computed_styles):
     page_number = 0
     while True:
         page_number += 1
+        LOGGER.info('Step 5 - Creating layout - Page %i', page_number)
         blank = ((next_page == 'left' and right_page) or
                  (next_page == 'right' and not right_page))
         side = 'right' if right_page else 'left'

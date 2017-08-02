@@ -23,12 +23,13 @@ FONTS = FONTS.split(', ')
 
 def make_text(text, width=None, **style):
     """Wrapper for split_first_line() creating a StyleDict."""
-    new_style = StyleDict(INITIAL_VALUES)
+    new_style = dict(INITIAL_VALUES)
     new_style['font_family'] = [
         'Nimbus Mono L', 'Liberation Mono', 'FreeMono', 'monospace']
     new_style.update(style)
     return split_first_line(
-        text, new_style, context=None, max_width=width, line_width=None)
+        text, StyleDict(new_style), context=None, max_width=width,
+        line_width=None, justification_spacing=0)
 
 
 @assert_no_logs

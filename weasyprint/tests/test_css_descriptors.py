@@ -33,7 +33,7 @@ def test_font_face():
         tinycss2.parse_declaration_list(at_rule.content)))
     assert font_family == ('font_family', 'Gentium Hard')
     assert src == (
-        'src', [('external', 'http://example.com/fonts/Gentium.woff')])
+        'src', (('external', 'http://example.com/fonts/Gentium.woff'),))
 
     stylesheet = tinycss2.parse_stylesheet(
         '@font-face {'
@@ -51,10 +51,37 @@ def test_font_face():
             tinycss2.parse_declaration_list(at_rule.content)))
     assert font_family == ('font_family', 'Fonty Smiley')
     assert src == (
-        'src', [('external', 'http://weasyprint.org/foo/Fonty-Smiley.woff')])
+        'src', (('external', 'http://weasyprint.org/foo/Fonty-Smiley.woff'),))
     assert font_style == ('font_style', 'italic')
     assert font_weight == ('font_weight', 200)
     assert font_stretch == ('font_stretch', 'condensed')
+
+    stylesheet = tinycss2.parse_stylesheet(
+        '@font-face {'
+        '  font-family: Gentium Hard;'
+        '  src: local();'
+        '}')
+    at_rule, = stylesheet
+    assert at_rule.at_keyword == 'font-face'
+    font_family, src = list(preprocess_descriptors(
+        'http://weasyprint.org/foo/',
+        tinycss2.parse_declaration_list(at_rule.content)))
+    assert font_family == ('font_family', 'Gentium Hard')
+    assert src == ('src', (('local', None),))
+
+    # See bug #487
+    stylesheet = tinycss2.parse_stylesheet(
+        '@font-face {'
+        '  font-family: Gentium Hard;'
+        '  src: local(Gentium Hard);'
+        '}')
+    at_rule, = stylesheet
+    assert at_rule.at_keyword == 'font-face'
+    font_family, src = list(preprocess_descriptors(
+        'http://weasyprint.org/foo/',
+        tinycss2.parse_declaration_list(at_rule.content)))
+    assert font_family == ('font_family', 'Gentium Hard')
+    assert src == ('src', (('local', 'Gentium Hard'),))
 
 
 def test_bad_font_face():
@@ -77,7 +104,7 @@ def test_bad_font_face():
                 tinycss2.parse_declaration_list(at_rule.content)))
     assert font_family == ('font_family', 'Bad Font')
     assert src == (
-        'src', [('external', 'http://weasyprint.org/foo/BadFont.woff')])
+        'src', (('external', 'http://weasyprint.org/foo/BadFont.woff'),))
     assert font_stretch == ('font_stretch', 'expanded')
     assert logs == [
         'WARNING: Ignored `font-style: wrong` at 1:91, invalid value.',

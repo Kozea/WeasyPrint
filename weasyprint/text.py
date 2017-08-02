@@ -569,8 +569,8 @@ def get_size(line, style):
     pango.pango_layout_line_get_extents(line, ffi.NULL, logical_extents)
     width, height = (units_to_double(logical_extents.width),
                      units_to_double(logical_extents.height))
-    if style.letter_spacing != 'normal':
-        width += style.letter_spacing
+    if style['letter_spacing'] != 'normal':
+        width += style['letter_spacing']
     return width, height
 
 
@@ -635,12 +635,12 @@ class Layout(object):
         self.font = ffi.gc(
             pango.pango_font_description_new(),
             pango.pango_font_description_free)
-        if style.font_language_override != 'normal':
+        if style['font_language_override'] != 'normal':
             lang_p, lang = unicode_to_char_p(LST_TO_ISO.get(
-                style.font_language_override.lower(),
-                style.font_language_override))
-        elif style.lang:
-            lang_p, lang = unicode_to_char_p(style.lang)
+                style['font_language_override'].lower(),
+                style['font_language_override']))
+        elif style['lang']:
+            lang_p, lang = unicode_to_char_p(style['lang'])
         else:
             lang = None
             self.language = pango.pango_language_get_default()
@@ -648,15 +648,16 @@ class Layout(object):
             self.language = pango.pango_language_from_string(lang_p)
             pango.pango_context_set_language(pango_context, self.language)
 
-        assert not isinstance(style.font_family, basestring), (
+        assert not isinstance(style['font_family'], basestring), (
             'font_family should be a list')
-        family_p, family = unicode_to_char_p(','.join(style.font_family))
+        family_p, family = unicode_to_char_p(','.join(style['font_family']))
         pango.pango_font_description_set_family(self.font, family_p)
         pango.pango_font_description_set_style(
-            self.font, PANGO_STYLE[style.font_style])
+            self.font, PANGO_STYLE[style['font_style']])
         pango.pango_font_description_set_stretch(
-            self.font, PANGO_STRETCH[style.font_stretch])
-        pango.pango_font_description_set_weight(self.font, style.font_weight)
+            self.font, PANGO_STRETCH[style['font_stretch']])
+        pango.pango_font_description_set_weight(
+            self.font, style['font_weight'])
         pango.pango_font_description_set_absolute_size(
             self.font, units_from_double(font_size))
         pango.pango_layout_set_font_description(self.layout, self.font)
@@ -822,7 +823,7 @@ def get_font_features(
     return features
 
 
-def create_layout(text, style, context, max_width):
+def create_layout(text, style, context, max_width, justification_spacing):
     """Return an opaque Pango layout with default Pango line-breaks.
 
     :param text: Unicode
@@ -849,7 +850,7 @@ def create_layout(text, style, context, max_width):
     text_bytes = layout.text_bytes
 
     # Word and letter spacings
-    word_spacing = style.word_spacing
+    word_spacing = style.word_spacing + justification_spacing
     letter_spacing = style.letter_spacing
     if letter_spacing == 'normal':
         letter_spacing = 0
@@ -890,7 +891,7 @@ def create_layout(text, style, context, max_width):
                 attr = pango.pango_attr_font_features_new(
                     features.encode('ascii'))
             except AttributeError:
-                LOGGER.warning(
+                LOGGER.error(
                     'OpenType features are not available with Pango < 1.38')
             else:
                 PANGO_ATTR_FONT_FEATURES_CACHE[features] = attr
@@ -906,7 +907,8 @@ def create_layout(text, style, context, max_width):
     return layout
 
 
-def split_first_line(text, style, context, max_width, line_width):
+def split_first_line(text, style, context, max_width, line_width,
+                     justification_spacing):
     """Fit as much as possible in the available width for one line of text.
 
     Return ``(layout, length, resume_at, width, height, baseline)``.
@@ -930,10 +932,27 @@ def split_first_line(text, style, context, max_width, line_width):
         max_width = None
 
     # Step #1: Get a draft layout with the first line
-    layout = create_layout(text, style, context, max_width)
-    lines = layout.iter_lines()
-    first_line = next(lines, None)
-    second_line = next(lines, None)
+    layout = None
+    if max_width is not None and max_width != float('inf'):
+        expected_length = int(max_width / style.font_size * 2.5)
+        if expected_length < len(text):
+            # Try to use a small amount of text instead of the whole text
+            layout = create_layout(
+                text[:expected_length], style, context, max_width,
+                justification_spacing)
+            lines = layout.iter_lines()
+            first_line = next(lines, None)
+            second_line = next(lines, None)
+            if second_line is None:
+                # The small amount of text fits in one line, give up and use
+                # the whole text
+                layout = None
+    if layout is None:
+        layout = create_layout(
+            text, style, context, max_width, justification_spacing)
+        lines = layout.iter_lines()
+        first_line = next(lines, None)
+        second_line = next(lines, None)
     resume_at = None if second_line is None else second_line.start_index
 
     # Step #2: Don't hyphenize when it's not needed
@@ -1048,7 +1067,8 @@ def split_first_line(text, style, context, max_width, line_width):
                     hyphenated_first_line_text = (
                         new_first_line_text + style.hyphenate_character)
                     new_layout = create_layout(
-                        hyphenated_first_line_text, style, context, max_width)
+                        hyphenated_first_line_text, style, context, max_width,
+                        justification_spacing)
                     new_lines = new_layout.iter_lines()
                     new_first_line = next(new_lines, None)
                     new_second_line = next(new_lines, None)
@@ -1138,9 +1158,9 @@ def split_first_line(text, style, context, max_width, line_width):
         style.hyphenate_character)
 
 
-def line_widths(text, style, context, width):
+def line_widths(text, style, context, width, justification_spacing):
     """Return the width for each line."""
-    layout = create_layout(text, style, context, width)
+    layout = create_layout(text, style, context, width, justification_spacing)
     for line in layout.iter_lines():
         width, _height = get_size(line, style)
         yield width

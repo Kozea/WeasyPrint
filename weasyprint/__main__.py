@@ -108,6 +108,8 @@ def main(argv=None, stdout=None, stdin=None):
                              'to attach to the PDF document')
     parser.add_argument('-p', '--presentational-hints', action='store_true',
                         help='Follow HTML presentational hints.')
+    parser.add_argument('-v', '--verbose', action='store_true',
+                        help='Show various debugging information.')
     parser.add_argument(
         'input', help='URL or filename of the HTML input, or - for stdin')
     parser.add_argument(
@@ -162,7 +164,8 @@ def main(argv=None, stdout=None, stdin=None):
             parser.error('--attachment only applies for the PDF format.')
 
     # Default to logging to stderr.
-    LOGGER.setLevel(logging.INFO)
+    if args.verbose:
+        LOGGER.setLevel(logging.DEBUG)
     handler = logging.StreamHandler()
     handler.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
     LOGGER.addHandler(handler)

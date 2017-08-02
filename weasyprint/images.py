@@ -168,7 +168,7 @@ class SVGImage(object):
                 context.set_source_surface(svg.cairo)
                 context.paint()
         except Exception as e:
-            LOGGER.warning(
+            LOGGER.error(
                 'Failed to draw an SVG image at %s : %s', self._base_url, e)
 
 
@@ -224,7 +224,7 @@ def get_image_from_uri(cache, url_fetcher, url, forced_mime_type=None):
                             surface.set_mime_data('image/jpeg', string)
                         image = RasterImage(surface)
     except (URLFetchingError, ImageLoadingError) as exc:
-        LOGGER.warning('Failed to load image at "%s" (%s)', url, exc)
+        LOGGER.error('Failed to load image at "%s" (%s)', url, exc)
         image = None
     cache[url] = image
     return image

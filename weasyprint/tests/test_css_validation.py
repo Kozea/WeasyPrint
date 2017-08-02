@@ -54,7 +54,7 @@ def test_not_print():
 @assert_no_logs
 def test_function():
     assert expand_to_dict('clip: rect(1px, 3em, auto, auto)') == {
-        'clip': [(1, 'px'), (3, 'em'), 'auto', 'auto']}
+        'clip': ((1, 'px'), (3, 'em'), 'auto', 'auto')}
     assert_invalid('clip: square(1px, 3em, auto, auto)')
     assert_invalid('clip: rect(1px, 3em, auto auto)', 'invalid')
     assert_invalid('clip: rect(1px, 3em, auto)')
@@ -64,17 +64,17 @@ def test_function():
 @assert_no_logs
 def test_counters():
     assert expand_to_dict('counter-reset: foo bar 2 baz') == {
-        'counter_reset': [('foo', 0), ('bar', 2), ('baz', 0)]}
+        'counter_reset': (('foo', 0), ('bar', 2), ('baz', 0))}
     assert expand_to_dict('counter-increment: foo bar 2 baz') == {
-        'counter_increment': [('foo', 1), ('bar', 2), ('baz', 1)]}
+        'counter_increment': (('foo', 1), ('bar', 2), ('baz', 1))}
     assert expand_to_dict('counter-reset: foo') == {
-        'counter_reset': [('foo', 0)]}
+        'counter_reset': (('foo', 0),)}
     assert expand_to_dict('counter-reset: FoO') == {
-        'counter_reset': [('FoO', 0)]}
+        'counter_reset': (('FoO', 0),)}
     assert expand_to_dict('counter-increment: foo bAr 2 Bar') == {
-        'counter_increment': [('foo', 1), ('bAr', 2), ('Bar', 1)]}
+        'counter_increment': (('foo', 1), ('bAr', 2), ('Bar', 1))}
     assert expand_to_dict('counter-reset: none') == {
-        'counter_reset': []}
+        'counter_reset': ()}
     assert expand_to_dict(
         'counter-reset: foo none', 'Invalid counter name') == {}
     assert expand_to_dict(
@@ -141,20 +141,20 @@ def test_size():
 @assert_no_logs
 def test_transforms():
     assert expand_to_dict('transform: none') == {
-        'transform': []}
+        'transform': ()}
     assert expand_to_dict(
         'transform: translate(6px) rotate(90deg)'
-    ) == {'transform': [('translate', ((6, 'px'), (0, 'px'))),
-                        ('rotate', math.pi / 2)]}
+    ) == {'transform': (('translate', ((6, 'px'), (0, 'px'))),
+                        ('rotate', math.pi / 2))}
     assert expand_to_dict(
         'transform: translate(-4px, 0)'
-    ) == {'transform': [('translate', ((-4, 'px'), (0, None)))]}
+    ) == {'transform': (('translate', ((-4, 'px'), (0, None))),)}
     assert expand_to_dict(
         'transform: translate(6px, 20%)'
-    ) == {'transform': [('translate', ((6, 'px'), (20, '%')))]}
+    ) == {'transform': (('translate', ((6, 'px'), (20, '%'))),)}
     assert expand_to_dict(
         'transform: scale(2)'
-    ) == {'transform': [('scale', (2, 2))]}
+    ) == {'transform': (('scale', (2, 2)),)}
     assert_invalid('transform: translate(6px 20%)')  # missing comma
     assert_invalid('transform: lipsumize(6px)')
     assert_invalid('transform: foo')
@@ -295,6 +295,10 @@ def assert_background(css, **expected):
     for name, value in expected.items():
         assert expanded.pop(name) == value
     for name, value in expanded.items():
+        if isinstance(value, list):
+            # TinyCSS returns lists where StyleDict stores tuples for hashing
+            # purpose
+            value = tuple(value)
         assert value == INITIAL_VALUES[name] * nb_layers
 
 
@@ -462,19 +466,19 @@ def test_font():
     """Test the ``font`` property."""
     assert expand_to_dict('font: 12px My Fancy Font, serif') == {
         'font_size': (12, 'px'),
-        'font_family': ['My Fancy Font', 'serif'],
+        'font_family': ('My Fancy Font', 'serif'),
     }
     assert expand_to_dict('font: small/1.2 "Some Font", serif') == {
         'font_size': 'small',
         'line_height': (1.2, None),
-        'font_family': ['Some Font', 'serif'],
+        'font_family': ('Some Font', 'serif'),
     }
     assert expand_to_dict('font: small-caps italic 700 large serif') == {
         'font_style': 'italic',
         'font_variant_caps': 'small-caps',
         'font_weight': 700,
         'font_size': 'large',
-        'font_family': ['serif'],
+        'font_family': ('serif',),
     }
     assert expand_to_dict(
         'font: small-caps condensed normal 700 large serif'
@@ -484,7 +488,7 @@ def test_font():
         'font_variant_caps': 'small-caps',
         'font_weight': 700,
         'font_size': 'large',
-        'font_family': ['serif'],
+        'font_family': ('serif',),
     }
     assert_invalid('font-family: "My" Font, serif')
     assert_invalid('font-family: "My" "Font", serif')
@@ -522,12 +526,12 @@ def test_font_variant():
     assert expand_to_dict(
         'font-variant: lining-nums contextual small-caps common-ligatures'
     ) == {
-        'font_variant_ligatures': ['contextual', 'common-ligatures'],
-        'font_variant_numeric': ['lining-nums'],
+        'font_variant_ligatures': ('contextual', 'common-ligatures'),
+        'font_variant_numeric': ('lining-nums',),
         'font_variant_caps': 'small-caps',
     }
     assert expand_to_dict('font-variant: jis78 ruby proportional-width') == {
-        'font_variant_east_asian': ['jis78', 'ruby', 'proportional-width'],
+        'font_variant_east_asian': ('jis78', 'ruby', 'proportional-width'),
     }
     # CSS2-style font-variant
     assert expand_to_dict('font-variant: small-caps') == {
@@ -567,36 +571,37 @@ def test_line_height():
 def test_string_set():
     """Test the ``string-set`` property."""
     assert expand_to_dict('-weasy-string-set: test content(text)') == {
-        'string_set': [('test', [('content', 'text')])]}
+        'string_set': (('test', (('content', 'text'),)),)}
     assert expand_to_dict('-weasy-string-set: test content(before)') == {
-        'string_set': [('test', [('content', 'before')])]}
+        'string_set': (('test', (('content', 'before'),)),)}
     assert expand_to_dict('-weasy-string-set: test "string"') == {
-        'string_set': [('test', [('STRING', 'string')])]}
+        'string_set': (('test', (('STRING', 'string'),)),)}
     assert expand_to_dict(
         '-weasy-string-set: test1 "string", test2 "string"') == {
-            'string_set': [
-                ('test1', [('STRING', 'string')]),
-                ('test2', [('STRING', 'string')])]}
+            'string_set': (
+                ('test1', (('STRING', 'string'),)),
+                ('test2', (('STRING', 'string'),)))}
     assert expand_to_dict('-weasy-string-set: test attr(class)') == {
-        'string_set': [('test', [('attr', 'class')])]}
+        'string_set': (('test', (('attr', 'class'),)),)}
     assert expand_to_dict('-weasy-string-set: test counter(count)') == {
-        'string_set': [('test', [('counter', ['count', 'decimal'])])]}
+        'string_set': (('test', (('counter', ('count', 'decimal')),)),)}
     assert expand_to_dict(
         '-weasy-string-set: test counter(count, upper-roman)') == {
-            'string_set': [('test', [('counter', ['count', 'upper-roman'])])]}
+            'string_set': (
+                ('test', (('counter', ('count', 'upper-roman')),)),)}
     assert expand_to_dict('-weasy-string-set: test counters(count, ".")') == {
-        'string_set': [('test', [('counters', ['count', '.', 'decimal'])])]}
+        'string_set': (('test', (('counters', ('count', '.', 'decimal')),)),)}
     assert expand_to_dict(
         '-weasy-string-set: test counters(count, ".", upper-roman)') == {
-            'string_set': [
-                ('test', [('counters', ['count', '.', 'upper-roman'])])]}
+            'string_set': (
+                ('test', (('counters', ('count', '.', 'upper-roman')),)),)}
     assert expand_to_dict(
         '-weasy-string-set: test content(text) "string" '
         'attr(title) attr(title) counter(count)') == {
-            'string_set': [('test', [
+            'string_set': (('test', (
                 ('content', 'text'), ('STRING', 'string'),
                 ('attr', 'title'), ('attr', 'title'),
-                ('counter', ['count', 'decimal'])])]}
+                ('counter', ('count', 'decimal')),)),)}
 
     assert_invalid('-weasy-string-set: test')
     assert_invalid('-weasy-string-set: test test1')

@@ -13,7 +13,6 @@
 from __future__ import division, unicode_literals
 
 from ..compat import xrange
-from ..css.properties import Dimension
 from ..formatting_structure import boxes
 from ..logger import LOGGER
 from .percentages import resolve_one_percentage, resolve_percentages
@@ -58,7 +57,7 @@ def table_layout(context, table, max_position_y, skip_stack,
             skipped_rows = 0
         _, horizontal_borders = table.collapsed_border_grid
         if horizontal_borders:
-            table.style['border_top_width'] = table.border_top_width = max(
+            table.border_top_width = max(
                 width for _, (_, width, _)
                 in horizontal_borders[skipped_rows]) / 2
 
@@ -740,7 +739,6 @@ def table_wrapper_width(context, wrapper, containing_block):
         auto_table_layout(context, wrapper, containing_block)
 
     wrapper.width = table.border_width()
-    wrapper.style['width'] = Dimension(wrapper.width, 'px')
 
 
 def cell_baseline(cell):

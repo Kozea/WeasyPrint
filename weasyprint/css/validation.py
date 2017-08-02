@@ -173,7 +173,7 @@ def comma_separated_list(function):
             if result is None:
                 return None
             results.append(result)
-        return results
+        return tuple(results)
     wrapper.single_value = function
     return wrapper
 
@@ -700,9 +700,9 @@ def clip(token):
                     if length:
                         values.append(length)
             if len(values) == 4:
-                return values
+                return tuple(values)
     if get_keyword(token) == 'auto':
-        return []
+        return ()
 
 
 @validator(wants_base_url=True)
@@ -786,7 +786,7 @@ def counter_reset(tokens):
 def counter(tokens, default_integer):
     """``counter-increment`` and ``counter-reset`` properties validation."""
     if get_single_keyword(tokens) == 'none':
-        return []
+        return ()
     tokens = iter(tokens)
     token = next(tokens, None)
     assert token, 'got an empty token list'
@@ -808,7 +808,7 @@ def counter(tokens, default_integer):
             # Keep `token` for the next loop iteration.
             integer = default_integer
         results.append((counter_name, integer))
-    return results
+    return tuple(results)
 
 
 @validator('top')
@@ -939,7 +939,7 @@ def font_variant_ligatures(tokens):
         else:
             return None
     if values:
-        return values
+        return tuple(values)
 
 
 @validator()
@@ -984,7 +984,7 @@ def font_variant_numeric(tokens):
         else:
             return None
     if values:
-        return values
+        return tuple(values)
 
 
 @validator()
@@ -998,7 +998,7 @@ def font_feature_settings(tokens):
         feature, value = None, None
 
         if len(tokens) == 2:
-            token = tokens.pop()
+            tokens, token = tokens[:-1], tokens[-1]
             if token.type == 'ident':
                 value = {'on': 1, 'off': 0}.get(token.value)
             elif (token.type == 'number' and
@@ -1008,7 +1008,7 @@ def font_feature_settings(tokens):
             value = 1
 
         if len(tokens) == 1:
-            token = tokens.pop()
+            token, = tokens
             if token.type == 'string' and len(token.value) == 4:
                 if all(0x20 <= ord(letter) <= 0x7f for letter in token.value):
                     feature = token.value
@@ -1054,7 +1054,7 @@ def font_variant_east_asian(tokens):
         else:
             return None
     if values:
-        return values
+        return tuple(values)
 
 
 @validator()
@@ -1097,7 +1097,7 @@ def font_weight(token):
     if keyword in ('normal', 'bold', 'bolder', 'lighter'):
         return keyword
     if token.type == 'number' and token.int_value is not None:
-        if token.int_value in [100, 200, 300, 400, 500, 600, 700, 800, 900]:
+        if token.int_value in (100, 200, 300, 400, 500, 600, 700, 800, 900):
             return token.int_value
 
 
@@ -1234,9 +1234,9 @@ def quotes(tokens):
     """``quotes`` property validation."""
     if (tokens and len(tokens) % 2 == 0 and
             all(v.type == 'string' for v in tokens)):
-        strings = [token.value for token in tokens]
+        strings = tuple(token.value for token in tokens)
         # Separate open and close quotes.
-        # eg.  ['«', '»', '“', '”']  -> (['«', '“'], ['»', '”'])
+        # eg.  ('«', '»', '“', '”')  -> (('«', '“'), ('»', '”'))
         return strings[::2], strings[1::2]
 
 
@@ -1506,7 +1506,7 @@ def lang(token):
 @validator(prefixed=True)  # CSS3 GCPM, experimental
 def bookmark_label(tokens):
     """Validation for ``bookmark-label``."""
-    parsed_tokens = [validate_content_list_token(v) for v in tokens]
+    parsed_tokens = tuple(validate_content_list_token(v) for v in tokens)
     if None not in parsed_tokens:
         return parsed_tokens
 
@@ -1529,7 +1529,8 @@ def string_set(tokens):
     """Validation for ``string-set``."""
     if len(tokens) >= 2:
         var_name = get_keyword(tokens[0])
-        parsed_tokens = [validate_content_list_token(v) for v in tokens[1:]]
+        parsed_tokens = tuple(
+            validate_content_list_token(v) for v in tokens[1:])
         if None not in parsed_tokens:
             return (var_name, parsed_tokens)
     elif tokens and tokens[0].value == 'none':
@@ -1548,22 +1549,22 @@ def validate_content_list_token(token):
     function = parse_function(token)
     if function:
         name, args = function
-        prototype = (name, [a.type for a in args])
-        args = [getattr(a, 'value', a) for a in args]
-        if prototype == ('attr', ['ident']):
+        prototype = (name, tuple(a.type for a in args))
+        args = tuple(getattr(a, 'value', a) for a in args)
+        if prototype == ('attr', ('ident',)):
             return (name, args[0])
-        elif prototype in (('content', []), ('content', ['ident'])):
+        elif prototype in (('content', ()), ('content', ('ident',))):
             if not args:
                 return (name, 'text')
             elif args[0] in ('text', 'after', 'before'):
                 # TODO: first-letter should be allowed here too
                 return (name, args[0])
-        elif prototype in (('counter', ['ident']),
-                           ('counters', ['ident', 'string'])):
-            args.append('decimal')
+        elif prototype in (('counter', ('ident',)),
+                           ('counters', ('ident', 'string'))):
+            args += ('decimal',)
             return (name, args)
-        elif prototype in (('counter', ['ident', 'ident']),
-                           ('counters', ['ident', 'string', 'ident'])):
+        elif prototype in (('counter', ('ident', 'ident')),
+                           ('counters', ('ident', 'string', 'ident'))):
             style = args[-1]
             if style in ('none', 'decimal') or style in counters.STYLES:
                 return (name, args)
@@ -1572,9 +1573,9 @@ def validate_content_list_token(token):
 @validator(unprefixed=True)
 def transform(tokens):
     if get_single_keyword(tokens) == 'none':
-        return []
+        return ()
     else:
-        return [transform_function(v) for v in tokens]
+        return tuple(transform_function(v) for v in tokens)
 
 
 def transform_function(token):
@@ -1600,13 +1601,13 @@ def transform_function(token):
             return 'scale', (args[0].value,) * 2
     elif len(args) == 2:
         if name == 'scale' and all(a.type == 'number' for a in args):
-            return name, [arg.value for arg in args]
+            return name, tuple(arg.value for arg in args)
         lengths = tuple(get_length(token, percentage=True) for token in args)
         if name == 'translate' and all(lengths):
             return name, lengths
     elif len(args) == 6 and name == 'matrix' and all(
             a.type == 'number' for a in args):
-        return name, [arg.value for arg in args]
+        return name, tuple(arg.value for arg in args)
     raise InvalidValues
 
 
@@ -1639,7 +1640,7 @@ def expand_four_sides(base_url, name, tokens):
     elif len(tokens) == 2:
         tokens *= 2  # (bottom, left) defaults to (top, right)
     elif len(tokens) == 3:
-        tokens.append(tokens[1])  # left defaults to right
+        tokens += (tokens[1],)  # left defaults to right
     elif len(tokens) != 4:
         raise InvalidValues(
             'Expected 1 to 4 token components got %i' % len(tokens))
@@ -1651,7 +1652,7 @@ def expand_four_sides(base_url, name, tokens):
             # eg. border-color becomes border-*-color, not border-color-*
             new_name = name[:i] + suffix + name[i:]
 
-        # validate_non_shorthand returns [(name, value)], we want
+        # validate_non_shorthand returns ((name, value),), we want
         # to yield (name, value)
         result, = validate_non_shorthand(
             base_url, new_name, [token], required=True)
@@ -1744,7 +1745,7 @@ def generic_expander(*expanded_names, **kwargs):
                 if new_name in results:
                     value = results[new_name]
                     if not skip_validation:
-                        # validate_non_shorthand returns [(name, value)]
+                        # validate_non_shorthand returns ((name, value),)
                         (actual_new_name, value), = validate_non_shorthand(
                             base_url, actual_new_name, value, required=True)
                 else:
@@ -2137,7 +2138,7 @@ def validate_non_shorthand(base_url, name, tokens, required=False):
             value = function(tokens)
         if value is None:
             raise InvalidValues
-    return [(name, value)]
+    return ((name, value),)
 
 
 def preprocess_declarations(base_url, declarations):
@@ -2176,7 +2177,7 @@ def preprocess_declarations(base_url, declarations):
 
         if name in NOT_PRINT_MEDIA:
             validation_error(
-                'info', 'the property does not apply for the print media')
+                'warning', 'the property does not apply for the print media')
             continue
 
         if name.startswith(PREFIX):
@@ -2207,8 +2208,9 @@ def preprocess_declarations(base_url, declarations):
 
 def remove_whitespace(tokens):
     """Remove any top-level whitespace in a token list."""
-    return [token for token in tokens
-            if token.type not in ('whitespace', 'comment')]
+    return tuple(
+        token for token in tokens
+        if token.type not in ('whitespace', 'comment'))
 
 
 def split_on_comma(tokens):
@@ -2227,4 +2229,4 @@ def split_on_comma(tokens):
         else:
             this_part.append(token)
     parts.append(this_part)
-    return parts
+    return tuple(parts)

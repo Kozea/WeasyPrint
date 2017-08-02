@@ -108,7 +108,7 @@ def test_ph_phrasing():
     assert br3.style['clear'] == 'both'
     assert br4.style['clear'] == 'both'
     assert font1.style.color == (1, 0, 0, 1)
-    assert font1.style.font_family == ['ahem']
+    assert font1.style.font_family == ('ahem',)
     assert font1.style.font_size == 1.5 * 2 * 16
     assert font2.style.font_size == 6 / 5 * 16
     assert font3.style.font_size == 1.5 * 2 * 16

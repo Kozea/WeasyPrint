@@ -165,6 +165,8 @@ else:
 
         def add_font_face(self, rule_descriptors, url_fetcher):
             for font_type, url in rule_descriptors['src']:
+                if url is None:
+                    continue
                 if font_type in ('external', 'local'):
                     config = self._fontconfig_config
                     if font_type == 'local':
@@ -213,7 +215,7 @@ else:
                             else:
                                 font = result['file_obj'].read()
                     except Exception as exc:
-                        LOGGER.warning(
+                        LOGGER.error(
                             'Failed to load font at "%s" (%s)', url, exc)
                         continue
                     font_features = {
@@ -283,7 +285,7 @@ else:
                         # too as explained in Behdad's blog entry
                         return filename
                     else:
-                        LOGGER.warning('Failed to load font at "%s"', url)
+                        LOGGER.error('Failed to load font at "%s"', url)
             LOGGER.warning(
                 'Font-face "%s" cannot be loaded',
                 rule_descriptors['font_family'])

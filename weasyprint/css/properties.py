@@ -31,8 +31,8 @@ INITIAL_VALUES = {
     # list-item counter. If we ever have a way for authors to query
     # computed values (JavaScript?), this value should serialize to 'none'.
     'counter_increment': 'auto',
-    'counter_reset': [],  # parsed value for 'none'
-    # 'counter_set': [],  # parsed value for 'none'
+    'counter_reset': (),  # parsed value for 'none'
+    # 'counter_set': (),  # parsed value for 'none'
     'direction': 'ltr',
     'display': 'inline',
     'empty_cells': 'show',
@@ -69,15 +69,15 @@ INITIAL_VALUES = {
     'z_index': 'auto',
 
     # Backgrounds and Borders 3: https://www.w3.org/TR/css3-background/
-    'background_attachment': ['scroll'],
-    'background_clip': ['border-box'],
+    'background_attachment': ('scroll',),
+    'background_clip': ('border-box',),
     'background_color': parse_color('transparent'),
-    'background_image': [('none', None)],
-    'background_origin': ['padding-box'],
-    'background_position': [('left', Dimension(0, '%'),
-                             'top', Dimension(0, '%'))],
-    'background_repeat': [('repeat', 'repeat')],
-    'background_size': [('auto', 'auto')],
+    'background_image': (('none', None),),
+    'background_origin': ('padding-box',),
+    'background_position': (('left', Dimension(0, '%'),
+                             'top', Dimension(0, '%')),),
+    'background_repeat': (('repeat', 'repeat'),),
+    'background_size': (('auto', 'auto'),),
     'border_bottom_color': 'currentColor',
     'border_bottom_left_radius': (Dimension(0, 'px'), Dimension(0, 'px')),
     'border_bottom_right_radius': (Dimension(0, 'px'), Dimension(0, 'px')),
@@ -111,7 +111,7 @@ INITIAL_VALUES = {
     'column_span': 'none',
 
     # Fonts 3: https://www.w3.org/TR/css-fonts-3/
-    'font_family': ['serif'],  # depends on user agent
+    'font_family': ('serif',),  # depends on user agent
     'font_feature_settings': 'normal',
     'font_kerning': 'auto',
     'font_language_override': 'normal',
@@ -135,7 +135,7 @@ INITIAL_VALUES = {
     'widows': 2,
 
     # Generated Content for Paged Media: https://www.w3.org/TR/css-gcpm-3/
-    'bookmark_label': [('content', 'text')],
+    'bookmark_label': (('content', 'text'),),
     'bookmark_level': 'none',
     'string_set': 'none',
 
@@ -184,7 +184,7 @@ INITIAL_VALUES = {
 KNOWN_PROPERTIES = set(name.replace('_', '-') for name in INITIAL_VALUES)
 
 # Not applicable to the print media
-NOT_PRINT_MEDIA = set([
+NOT_PRINT_MEDIA = set((
     # Aural media:
     'azimuth',
     'cue',
@@ -209,7 +209,7 @@ NOT_PRINT_MEDIA = set([
     'volume',
 
     # outlines are not just for interactive but any visual media in css3-ui
-])
+))
 
 
 # Do not list shorthand properties here as we handle them before inheritance.

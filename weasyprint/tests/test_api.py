@@ -392,7 +392,7 @@ def test_command_line_render():
             with capture_logs() as logs:
                 stdout = run('--format png - -', stdin=combined)
             assert len(logs) == 1
-            assert logs[0].startswith('WARNING: Failed to load image')
+            assert logs[0].startswith('ERROR: Failed to load image')
             assert stdout == empty_png_bytes
 
             stdout = run('--format png --base-url .. - -', stdin=combined)
@@ -805,7 +805,7 @@ def test_links():
         [[('internal', (0, 0, 15), (0, 0, 200, 15))]],
         base_url=None,
         warnings=[
-            'WARNING: No anchor #missing for internal URI reference'])
+            'ERROR: No anchor #missing for internal URI reference'])
 
     assert_links(
         '''
@@ -921,7 +921,7 @@ def test_url_fetcher():
         test('<body><img src="custom:foo/bar">', blank=True)
     assert len(logs) == 1
     assert logs[0].startswith(
-        'WARNING: Failed to load image at "custom:foo/bar"')
+        'ERROR: Failed to load image at "custom:foo/bar"')
 
     def fetcher_2(url):
         assert url == 'weasyprint-custom:%C3%A9_%e9.css'

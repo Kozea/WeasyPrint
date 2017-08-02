@@ -67,9 +67,12 @@ the rendering of a document in WeasyPrint goes like this:
 3. The stylesheets are applied to the DOM tree
 4. The DOM tree with styles is transformed into a *formatting structure* made of rectangular boxes.
 5. These boxes are *laid-out* with fixed dimensions and position onto pages.
-6. The boxes are re-ordered to observe stacking rules.
-7. The pages are drawn in a PDF file through a cairo surface.
-8. Cairo’s PDF is modified to add metadata such as bookmarks and hyperlinks.
+6. For each page, the boxes:
+
+  - are re-ordered to observe stacking rules, and
+  - are drawn on a PDF page.
+
+7. Cairo’s PDF is modified to add metadata such as bookmarks and hyperlinks.
 
 
 HTML

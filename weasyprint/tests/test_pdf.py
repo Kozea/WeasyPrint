@@ -294,7 +294,7 @@ def test_missing_links():
         ''', base_url=None)
     assert links == [[('internal', (0, 50, 935), (50, 950, 450, 935))]]
     assert len(logs) == 1
-    assert 'WARNING: No anchor #missing for internal URI reference' in logs[0]
+    assert 'ERROR: No anchor #missing for internal URI reference' in logs[0]
 
 
 @assert_no_logs

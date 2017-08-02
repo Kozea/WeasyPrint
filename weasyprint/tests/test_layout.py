@@ -549,8 +549,6 @@ def test_lists():
     line, = list_item.children
     marker, content = line.children
     assert marker.text == '◦'
-    assert marker.margin_left == 0
-    assert marker.margin_right == 8
     assert content.text == 'abc'
 
     page, = parse('''
@@ -565,8 +563,6 @@ def test_lists():
     unordered_list, = body_children(page)
     list_item, = unordered_list.children
     marker = list_item.outside_list_marker
-    font_size = marker.style.font_size
-    assert marker.margin_right == 0.5 * font_size  # 0.5em
     assert marker.position_x == (
         list_item.padding_box_x() - marker.width - marker.margin_right)
     assert marker.position_y == list_item.position_y
@@ -1270,7 +1266,7 @@ def test_images():
         with capture_logs() as logs:
             body, img = get_img("<img src='%s' alt='invalid image'>" % url)
         assert len(logs) == 1
-        assert 'WARNING: Failed to load image' in logs[0]
+        assert 'ERROR: Failed to load image' in logs[0]
         assert isinstance(img, boxes.InlineBox)  # not a replaced box
         text, = img.children
         assert text.text == 'invalid image', url
@@ -1297,9 +1293,9 @@ def test_images():
 
     with capture_logs() as logs:
         parse('<img src=nonexistent.png><img src=nonexistent.png>')
-    # Failures are cached too: only one warning
+    # Failures are cached too: only one error
     assert len(logs) == 1
-    assert 'WARNING: Failed to load image' in logs[0]
+    assert 'ERROR: Failed to load image' in logs[0]
 
     # Layout rules try to preserve the ratio, so the height should be 40px too:
     body, img = get_img('''<body style="font-size: 0">

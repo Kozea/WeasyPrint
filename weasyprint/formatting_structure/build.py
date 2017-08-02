@@ -24,7 +24,6 @@ from . import boxes, counters
 from .. import html
 from ..compat import basestring, xrange
 from ..css import properties
-from ..css.computed_values import ZERO_PIXELS
 
 # Maps values of the ``display`` CSS property to box types.
 BOX_TYPE_FROM_DISPLAY = {
@@ -75,16 +74,6 @@ def build_formatting_structure(element_tree, style_for, get_image_from_uri,
 
 
 def make_box(element_tag, style, content, get_image_from_uri):
-    if (style.display in ('table', 'inline-table') and
-            style.border_collapse == 'collapse'):
-        # Padding do not apply
-        for side in ['top', 'bottom', 'left', 'right']:
-            style['padding_' + side] = ZERO_PIXELS
-    if style.display.startswith('table-') and style.display != 'table-caption':
-        # Margins do not apply
-        for side in ['top', 'bottom', 'left', 'right']:
-            style['margin_' + side] = ZERO_PIXELS
-
     return BOX_TYPE_FROM_DISPLAY[style.display](
         element_tag, style, content)
 
@@ -179,8 +168,7 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
             counter_values.pop(name)
 
     box.children = children
-    box.first_letter_style = style_for(element, 'first-letter')
-    replace_content_lists(element, box, style, counter_values)
+    set_content_lists(element, box, style, counter_values)
 
     # Specific handling for the element. (eg. replaced element)
     return html.handle_element(element, box, get_image_from_uri, base_url)
@@ -289,25 +277,25 @@ def compute_content_list_string(element, box, counter_values, content_list):
     return string
 
 
-def replace_content_lists(element, box, style, counter_values):
-    """Replace the content-lists by strings.
+def set_content_lists(element, box, style, counter_values):
+    """Set the content-lists by strings.
 
     These content-lists are used in GCPM properties like ``string-set`` and
     ``bookmark-label``.
 
     """
     string_set = []
-    if style.string_set != 'none':
-        for i, (string_name, string_values) in enumerate(style.string_set):
+    if style['string_set'] != 'none':
+        for i, (string_name, string_values) in enumerate(style['string_set']):
             string_set.append((string_name, compute_content_list_string(
                 element, box, counter_values, string_values)))
-    box.style['string_set'] = string_set
+    box.string_set = string_set
 
-    if style.bookmark_label == 'none':
-        box.style['bookmark_label'] = ''
+    if style['bookmark_label'] == 'none':
+        box.bookmark_label = ''
     else:
-        box.style['bookmark_label'] = compute_content_list_string(
-            element, box, counter_values, style.bookmark_label)
+        box.bookmark_label = compute_content_list_string(
+            element, box, counter_values, style['bookmark_label'])
 
 
 def update_counters(state, style):
@@ -377,9 +365,6 @@ def add_box_marker(box, counter_values, get_image_from_uri):
 
     position = style.list_style_position
     if position == 'inside':
-        side = 'right' if style.direction == 'ltr' else 'left'
-        margin = style.font_size * 0.5
-        marker_box.style['margin_' + side] = properties.Dimension(margin, 'px')
         yield marker_box
     elif position == 'outside':
         box.outside_list_marker = marker_box
@@ -650,6 +635,7 @@ def wrap_table(box, children):
     if not table.style.anonymous:
         # Non-inherited properties of the table element apply to one
         # of the wrapper and the table. The other get the initial value.
+        # TODO: put this in a method of the table object
         for name in properties.TABLE_WRAPPER_BOX_PROPERTIES:
             wrapper.style[name] = table.style[name]
             table.style[name] = properties.INITIAL_VALUES[name]
@@ -756,10 +742,9 @@ def collapse_table_borders(table, grid_width, grid_height):
     # the correct widths on each box. The actual border grid will be
     # painted separately.
     def set_transparent_border(box, side, twice_width):
-        style = box.style
-        style['border_%s_style' % side] = 'solid'
-        style['border_%s_width' % side] = twice_width / 2
-        style['border_%s_color' % side] = transparent
+        box.style['border_%s_style' % side] = 'solid',
+        box.style['border_%s_width' % side] = twice_width / 2
+        box.style['border_%s_color' % side] = transparent
 
     def remove_borders(box):
         set_transparent_border(box, 'top', 0)
@@ -1134,8 +1119,7 @@ def set_viewport_overflow(root_box):
                 break
 
     root_box.viewport_overflow = chosen_box.style.overflow
-    chosen_box.style = chosen_box.style.copy()
-    chosen_box.style.update({'overflow': 'visible'})
+    chosen_box.style['overflow'] = 'visible'
     return root_box
 
 

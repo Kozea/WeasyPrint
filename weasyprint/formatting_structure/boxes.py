@@ -62,7 +62,6 @@ from __future__ import division, unicode_literals
 import itertools
 
 from ..compat import unichr, xrange
-from ..css.computed_values import ZERO_PIXELS
 
 # The *Box classes have many attributes and methods, but that's the way it is
 # pylint: disable=R0904,R0902
@@ -80,6 +79,8 @@ class Box(object):
     is_table_wrapper = False
     is_for_root_element = False
     transformation_matrix = None
+    bookmark_label = None
+    string_set = None
 
     # Default, overriden on some subclasses
     def all_children(self):
@@ -98,7 +99,7 @@ class Box(object):
         return cls(
             parent.element_tag, parent.style.inherit_from(), *args, **kwargs)
 
-    def copy(self, copy_style=True):
+    def copy(self):
         """Return shallow copy of the box."""
         cls = type(self)
         # Create a new instance without calling __init__: initializing
@@ -106,10 +107,7 @@ class Box(object):
         new_box = cls.__new__(cls)
         # Copy attributes
         new_box.__dict__.update(self.__dict__)
-        if copy_style:
-            new_box.style = self.style.copy()
-        else:
-            new_box.style = self.style
+        new_box.style = self.style
         return new_box
 
     def translate(self, dx=0, dy=0):
@@ -299,10 +297,6 @@ class ParentBox(Box):
         setattr(self, 'padding_%s' % side, 0)
         setattr(self, 'border_%s_width' % side, 0)
 
-        self.style['margin_%s' % side] = ZERO_PIXELS
-        self.style['padding_%s' % side] = ZERO_PIXELS
-        self.style['border_%s_width' % side] = 0
-
     def _remove_decoration(self, start, end):
         if start:
             self._reset_spacing('top')
@@ -432,6 +426,8 @@ class TextBox(InlineLevelBox):
     inline boxes" are also text boxes.
 
     """
+    justification_spacing = 0
+
     # http://stackoverflow.com/questions/16317534/
     ascii_to_wide = dict((i, unichr(i + 0xfee0)) for i in range(0x21, 0x7f))
     ascii_to_wide.update({0x20: '\u3000', 0x2D: '\u2212'})
@@ -456,7 +452,7 @@ class TextBox(InlineLevelBox):
     def copy_with_text(self, text):
         """Return a new TextBox identical to this one except for the text."""
         assert text
-        new_box = self.copy(copy_style=False)
+        new_box = self.copy()
         new_box.text = text
         return new_box
 

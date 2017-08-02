@@ -115,8 +115,8 @@ def url_join(base_url, url, allow_relative, context, context_args):
     elif allow_relative:
         return iri_to_uri(url)
     else:
-        LOGGER.warning('Relative URI reference without a base URI: ' + context,
-                       *context_args)
+        LOGGER.error('Relative URI reference without a base URI: ' + context,
+                     *context_args)
         return None
 
 

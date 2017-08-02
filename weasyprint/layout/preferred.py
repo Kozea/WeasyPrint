@@ -179,7 +179,7 @@ def inline_min_content_width(context, box, outer=True, skip_stack=None,
     """
     widths = inline_line_widths(
         context, box, outer, is_line_start, minimum=True,
-        skip_stack=skip_stack)
+        skip_stack=skip_stack, first_line=first_line)
 
     if first_line:
         widths = [next(widths)]
@@ -210,7 +210,7 @@ def column_group_content_width(context, box):
 
 
 def inline_line_widths(context, box, outer, is_line_start, minimum,
-                       skip_stack=None):
+                       skip_stack=None, first_line=False):
     current_line = 0
     if skip_stack is None:
         skip = 0
@@ -221,8 +221,12 @@ def inline_line_widths(context, box, outer, is_line_start, minimum,
             continue  # Skip
 
         if isinstance(child, boxes.InlineBox):
-            lines = list(inline_line_widths(
-                context, child, outer, is_line_start, minimum, skip_stack))
+            lines = inline_line_widths(
+                context, child, outer, is_line_start, minimum, skip_stack)
+            if first_line:
+                lines = [next(lines)]
+            else:
+                lines = list(lines)
             if len(lines) == 1:
                 lines[0] = adjust(child, outer, lines[0])
             else:
@@ -242,9 +246,14 @@ def inline_line_widths(context, box, outer, is_line_start, minimum,
             if minimum and child_text == ' ':
                 lines = [0, 0]
             else:
-                lines = list(text.line_widths(
+                lines = text.line_widths(
                     child_text, child.style, context,
-                    width=0 if minimum else None))
+                    width=0 if minimum else None,
+                    justification_spacing=child.justification_spacing)
+                if first_line:
+                    lines = [next(lines)]
+                else:
+                    lines = list(lines)
         else:
             # http://www.w3.org/TR/css3-text/#line-break-details
             # "The line breaking behavior of a replaced element
@@ -625,5 +634,6 @@ def trailing_whitespace_size(context, box):
         return old_box.width - stripped_box.width
     else:
         _, _, _, width, _, _ = split_first_line(
-            box.text, box.style, context, None, None)
+            box.text, box.style, context, None, None,
+            box.justification_spacing)
         return width

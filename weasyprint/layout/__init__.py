@@ -20,11 +20,11 @@
 """
 from __future__ import division, unicode_literals
 from collections import defaultdict
-from ..compat import xrange
 
 from .absolute import absolute_box_layout
 from .pages import make_all_pages, make_margin_boxes
 from .backgrounds import layout_backgrounds
+from ..compat import xrange
 
 
 def layout_fixed_boxes(context, pages):

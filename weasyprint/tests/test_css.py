@@ -145,8 +145,8 @@ def test_annotate_document():
     span1 = style_for(span1)
     span2 = style_for(span2)
 
-    assert h1.background_image == [
-        ('url', path2url(resource_filename('logo_small.png')))]
+    assert h1.background_image == (
+        ('url', path2url(resource_filename('logo_small.png'))),)
 
     assert h1.font_weight == 700
     assert h1.font_size == 40  # 2em
@@ -198,8 +198,8 @@ def test_annotate_document():
     assert span2.font_size == 32
 
     # The href attr should be as in the source, not made absolute.
-    assert after.content == [
-        ('STRING', ' ['), ('STRING', 'home.html'), ('STRING', ']')]
+    assert after.content == (
+        ('STRING', ' ['), ('STRING', 'home.html'), ('STRING', ']'))
     assert after.background_color == (1, 0, 0, 1)
     assert after.border_top_width == 42
     assert after.border_bottom_width == 3
@@ -301,9 +301,9 @@ def test_warnings():
         ('foo { margin-top: red',
             ['WARNING: Ignored', 'invalid value']),
         ('@import "relative-uri.css',
-            ['WARNING: Relative URI reference without a base URI']),
+            ['ERROR: Relative URI reference without a base URI']),
         ('@import "invalid-protocol://absolute-URL',
-            ['WARNING: Failed to load stylesheet at']),
+            ['ERROR: Failed to load stylesheet at']),
     ]:
         with capture_logs() as logs:
             CSS(string=source)
@@ -315,7 +315,7 @@ def test_warnings():
     with capture_logs() as logs:
         FakeHTML(string=html).render()
     assert len(logs) == 1
-    assert 'WARNING: Failed to load stylesheet at' in logs[0]
+    assert 'ERROR: Failed to load stylesheet at' in logs[0]
 
 
 @assert_no_logs
