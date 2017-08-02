@@ -636,14 +636,9 @@ def wrap_table(box, children):
         # Non-inherited properties of the table element apply to one
         # of the wrapper and the table. The other get the initial value.
         # TODO: put this in a method of the table object
-        wrapper_style = {
-            name: table.style[name]
-            for name in properties.TABLE_WRAPPER_BOX_PROPERTIES}
-        table_style = {
-            name: properties.INITIAL_VALUES[name]
-            for name in properties.TABLE_WRAPPER_BOX_PROPERTIES}
-        wrapper.style = wrapper.style.copy(wrapper_style)
-        table.style = table.style.copy(table_style)
+        for name in properties.TABLE_WRAPPER_BOX_PROPERTIES:
+            wrapper.style[name] = table.style[name]
+            table.style[name] = properties.INITIAL_VALUES[name]
     # else: non-inherited properties already have their initial values
 
     return wrapper
@@ -747,10 +742,9 @@ def collapse_table_borders(table, grid_width, grid_height):
     # the correct widths on each box. The actual border grid will be
     # painted separately.
     def set_transparent_border(box, side, twice_width):
-        box.style = box.style.copy({
-            'border_%s_style' % side: 'solid',
-            'border_%s_width' % side: twice_width / 2,
-            'border_%s_color' % side: transparent})
+        box.style['border_%s_style' % side] = 'solid',
+        box.style['border_%s_width' % side] = twice_width / 2
+        box.style['border_%s_color' % side] = transparent
 
     def remove_borders(box):
         set_transparent_border(box, 'top', 0)
@@ -1125,7 +1119,7 @@ def set_viewport_overflow(root_box):
                 break
 
     root_box.viewport_overflow = chosen_box.style.overflow
-    chosen_box.style = chosen_box.style.copy({'overflow': 'visible'})
+    chosen_box.style['overflow'] = 'visible'
     return root_box
 
 

@@ -282,13 +282,14 @@ def first_letter_to_box(box, skip_stack, first_letter_style):
                     # "This type of initial letter is similar to an
                     # inline-level element if its 'float' property is 'none',
                     # otherwise it is similar to a floated element."
+                    letter_box_inherit = letter_box.style.inherit_from()
                     if first_letter_style['float'] == 'none':
                         letter_box = boxes.InlineBox(
                             '%s::first-letter' % box.element_tag,
                             first_letter_style, [])
                         text_box = boxes.TextBox(
                             '%s::first-letter' % box.element_tag,
-                            letter_box.style.inherit_from(), first_letter)
+                            letter_box_inherit, first_letter)
                         letter_box.children = (text_box,)
                         box.children = (letter_box,) + tuple(box.children)
                     else:
@@ -298,11 +299,11 @@ def first_letter_to_box(box, skip_stack, first_letter_style):
                         letter_box.first_letter_style = None
                         line_box = boxes.LineBox(
                             '%s::first-letter' % box.element_tag,
-                            letter_box.style.inherit_from(), [])
+                            letter_box_inherit, [])
                         letter_box.children = (line_box,)
                         text_box = boxes.TextBox(
                             '%s::first-letter' % box.element_tag,
-                            letter_box.style.inherit_from(), first_letter)
+                            letter_box_inherit, first_letter)
                         line_box.children = (text_box,)
                         box.children = (letter_box,) + tuple(box.children)
                     if skip_stack and child_skip_stack:

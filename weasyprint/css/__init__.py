@@ -69,14 +69,17 @@ RE_INITIAL_NOT_COMPUTED = re.compile(
 
 
 class StyleDict(dict):
-    """A frozen dict that allows attribute access to values.
+    """A dict allowing attribute access to values.
 
     Allow eg. ``style.font_size`` instead of ``style['font-size']``.
 
     """
 
-    # Hide modification
-    __setitem__ = update = None
+    # TODO: this dict should be frozen, but modification is currently
+    # authorized for some corner cases when building the structure:
+    # - table wrapping,
+    # - border modification for tables with collapsing borders, and
+    # - viewport overflow.
 
     # TODO: We should remove that. Some attributes (eg. "clear") exist as
     # dict methods and can only be accessed with getitem.
@@ -85,21 +88,6 @@ class StyleDict(dict):
     def get_color(self, key):
         value = self[key]
         return value if value != 'currentColor' else self['color']
-
-    def copy(self, update):
-        """Copy the ``StyleDict`` with updated values."""
-        # Don't copy when the updated values are already set
-        for key, value in update.items():
-            if self[key] != value:
-                break
-        else:
-            return self
-
-        style = dict(self)
-        style.update(update)
-        style = type(self)(style)
-        style.anonymous = self.anonymous
-        return style
 
     def inherit_from(self):
         """Return a new StyleDict with inherited properties from this one.
