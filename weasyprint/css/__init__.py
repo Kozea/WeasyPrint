@@ -77,9 +77,10 @@ class StyleDict(dict):
 
     # TODO: this dict should be frozen, but modification is currently
     # authorized for some corner cases when building the structure:
-    # - table wrapping,
-    # - border modification for tables with collapsing borders, and
-    # - viewport overflow.
+    # - wrapping tables,
+    # - removing paddings and margins from tables,
+    # - modifying borders for table cells with collapsing borders, and
+    # - setting viewports and pages overflow.
 
     # TODO: We should remove that. Some attributes (eg. "clear") exist as
     # dict methods and can only be accessed with getitem.
@@ -97,10 +98,10 @@ class StyleDict(dict):
 
         """
         if '_inherited_style' not in self.__dict__:
-            self._inherited_style = type(self)(computed_from_cascaded(
+            self._inherited_style = computed_from_cascaded(
                 cascaded={}, parent_style=self,
                 # Only by non-inherited properties, eg `content: attr(href)`
-                element=None))
+                element=None)
             self._inherited_style.anonymous = True
         return self._inherited_style
 
@@ -535,7 +536,7 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
         for side in ('top', 'bottom', 'left', 'right'):
             computed['border_%s_width' % side] = 0
         computed['outline_width'] = 0
-        return computed
+        return StyleDict(computed)
 
     # Handle inheritance and initial values
     specified = {}
@@ -566,9 +567,9 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
 
         specified[name] = value
 
-    return computed_values.compute(
+    return StyleDict(computed_values.compute(
         element, pseudo_type, specified, computed, parent_style, root_style,
-        base_url)
+        base_url))
 
 
 def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
@@ -846,8 +847,7 @@ def get_all_computed_styles(html, user_stylesheets=None,
                 base_url=html.base_url)
 
     # This is mostly useful to make pseudo_type optional.
-    def style_for(element, pseudo_type=None, update=None,
-                  __get=computed_styles.get):
+    def style_for(element, pseudo_type=None, __get=computed_styles.get):
         """
         Convenience function to get the computed styles for an element.
         """
@@ -865,11 +865,7 @@ def get_all_computed_styles(html, user_stylesheets=None,
                     # Margins do not apply
                     for side in ['top', 'bottom', 'left', 'right']:
                         style['margin_' + side] = computed_values.ZERO_PIXELS
-            if update:
-                style.update(update)
-        elif update:
-            style = dict(update)
 
-        return style and StyleDict(style)
+        return style
 
     return style_for

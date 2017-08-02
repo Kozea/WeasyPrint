@@ -482,8 +482,8 @@ def make_page(context, root_box, page_type, resume_at, content_empty,
     """
 
     # Overflow value propagated from the root or <body>.
-    style = context.style_for(page_type, update={
-        'overflow': root_box.viewport_overflow})
+    style = context.style_for(page_type)
+    style['overflow'] = root_box.viewport_overflow
     page = boxes.PageBox(page_type, style)
 
     device_size = page.style.size
