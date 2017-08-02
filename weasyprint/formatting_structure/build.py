@@ -168,7 +168,6 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
             counter_values.pop(name)
 
     box.children = children
-    box.first_letter_style = style_for(element, 'first-letter')
     set_content_lists(element, box, style, counter_values)
 
     # Specific handling for the element. (eg. replaced element)
