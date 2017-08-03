@@ -152,13 +152,7 @@ PDF is generally not interactive. The ``:hover``, ``:active``, ``:focus``,
 ``:target`` and ``:visited`` pseudo-classes are accepted as valid but
 never match anything.
 
-Due to a limitation in cssselect_, ``*:first-of-type``, ``*:last-of-type``,
-``*:nth-of-type``, ``*:nth-last-of-type`` and ``*:only-of-type`` are
-not supported. They work when you specify an element type but parse
-as invalid with ``*``.
-
 .. _Selectors Level 3: http://www.w3.org/TR/css3-selectors/
-.. _cssselect: http://packages.python.org/cssselect/
 
 
 CSS Text Module Level 3 / 4

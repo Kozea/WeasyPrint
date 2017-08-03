@@ -100,10 +100,10 @@ After the In addition to the actual parsing, the :mod:`weasyprint.css` and
   becomes ``margin_top``) so that they can be used as Python attribute names
   later on. This transformation is safe since none for the know (not ignored)
   properties have an underscore character.
-* Selectors are pre-compiled with cssselect_.
+* Selectors are pre-compiled with cssselect2_.
 
-.. _tinycss2: http://packages.python.org/tinycss2/
-.. _cssselect: http://packages.python.org/cssselect/
+.. _tinycss2: https://pypi.python.org/pypi/tinycss2
+.. _cssselect2: https://pypi.python.org/pypi/cssselect2
 
 
 The cascade
