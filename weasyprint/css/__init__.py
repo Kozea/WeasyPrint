@@ -652,11 +652,11 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
 
         elif rule.type == 'at-rule' and rule.at_keyword == 'page':
             tokens = remove_whitespace(rule.prelude)
-            # TODO: support named pages (see CSS3 Paged Media)
             types = {
                 'side': None, 'blank': False, 'first': False, 'name': None}
+            # TODO: Specificity is probably wrong, should clean and test that.
             if not tokens:
-                specificity = (0, 0)
+                specificity = (0, 0, 0)
             elif (len(tokens) == 2 and
                     tokens[0].type == 'literal' and
                     tokens[0].value == ':' and
@@ -664,10 +664,10 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                 pseudo_class = tokens[1].lower_value
                 if pseudo_class in ('left', 'right'):
                     types['side'] = pseudo_class
-                    specificity = (0, 1)
+                    specificity = (0, 0, 1)
                 elif pseudo_class in ('blank', 'first'):
                     types[pseudo_class] = True
-                    specificity = (1, 0)
+                    specificity = (0, 1, 0)
                 else:
                     LOGGER.warning('Unknown @page pseudo-class "%s", '
                                    'the whole @page rule was ignored '
@@ -676,8 +676,8 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                                    rule.source_line, rule.source_column)
                     continue
             elif len(tokens) == 1 and tokens[0].type == 'ident':
-                # TODO: Handle named pages here
-                continue
+                types['name'] = tokens[0].value
+                specificity = (1, 0, 0)
             else:
                 LOGGER.warning('Unsupported @page selector "%s", '
                                'the whole @page rule was ignored at %s:%s.',
