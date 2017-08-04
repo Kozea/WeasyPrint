@@ -285,7 +285,8 @@ other features are available, including:
   selectors;
 - the page margin boxes;
 - the page-based counters (with known bugs `#91`_, `#93`_, `#289`_);
-- the page ``size`` property.
+- the page ``size`` property, but **not** the ``bleed`` and ``marks``
+  properties.
 
 .. _CSS Paged Media Module Level 3: http://dev.w3.org/csswg/css3-page/
 .. _named pages: http://dev.w3.org/csswg/css3-page/#using-named-pages
