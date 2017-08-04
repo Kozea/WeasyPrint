@@ -454,8 +454,9 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                         if previous_child.is_in_normal_flow():
                             last_in_flow_child = previous_child
                             break
-                    if new_children and block_level_page_break(
-                            last_in_flow_child, child) == 'avoid':
+                    page_break = block_level_page_break(
+                        last_in_flow_child, child)
+                    if new_children and page_break['break'] == 'avoid':
                         result = find_earlier_page_break(
                             new_children, absolute_boxes, fixed_boxes)
                         if result:
@@ -534,13 +535,14 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                 last_in_flow_child = None
             if last_in_flow_child is not None:
                 # Between in-flow siblings
-                page_break = block_level_page_break(last_in_flow_child, child)
-                # TODO: take care of text direction and writing mode
-                # https://www.w3.org/TR/css3-page/#progression
+                page_break = (
+                    block_level_page_break(last_in_flow_child, child)['break'])
                 if page_break == 'recto':
-                    page_break = 'right'
+                    page_break = (
+                        'right' if box.style.direction == 'ltr' else 'left')
                 elif page_break == 'verso':
-                    page_break = 'left'
+                    page_break = (
+                        'left' if box.style.direction == 'ltr' else 'right')
                 if page_break in ('page', 'left', 'right'):
                     if page_break in ('left', 'right'):
                         next_page = page_break
@@ -811,7 +813,14 @@ def block_level_page_break(sibling_before, sibling_after):
                 ('page', 'avoid-page'),
                 ('avoid-page', 'auto')):
             result = value
-    return result
+
+    before_page = sibling_before.page_values()[1] if sibling_before else None
+    after_page = sibling_after.page_values()[0] if sibling_after else None
+    page = None
+    if before_page and after_page and before_page != after_page:
+        page = after_page
+
+    return {'break': result, 'page': page}
 
 
 def find_earlier_page_break(children, absolute_boxes, fixed_boxes):
@@ -856,7 +865,7 @@ def find_earlier_page_break(children, absolute_boxes, fixed_boxes):
                 pass  # TODO: find an earlier break between table rows.
         if child.is_in_normal_flow():
             if previous_in_flow is not None and (
-                    block_level_page_break(child, previous_in_flow) !=
+                    block_level_page_break(child, previous_in_flow)['break'] !=
                     'avoid'):
                 index += 1  # break after child
                 new_children = children[:index]

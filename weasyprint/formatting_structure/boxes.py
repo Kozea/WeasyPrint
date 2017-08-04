@@ -272,6 +272,12 @@ class Box(object):
         """Return whether this box is in normal flow."""
         return not (self.is_floated() or self.is_absolutely_positioned())
 
+    # Start and end page values for named pages
+
+    def page_values(self):
+        """Return start and end page values."""
+        return (self.style['page'], self.style['page'])
+
 
 class ParentBox(Box):
     """A box that has children."""
@@ -330,6 +336,14 @@ class ParentBox(Box):
                     return child
             else:  # pragma: no cover
                 raise ValueError('Table wrapper without a table')
+
+    def page_values(self):
+        start_value, end_value = super(ParentBox, self).page_values()
+        if self.children:
+            start_box, end_box = self.children[0], self.children[-1]
+            start_value = start_box.page_values()[0] or start_value
+            end_value = end_box.page_values()[1] or end_value
+        return start_value, end_value
 
 
 class BlockLevelBox(Box):
@@ -520,6 +534,9 @@ class TableBox(BlockLevelBox, ParentBox):
         self.column_positions = [
             position + dx for position in self.column_positions]
         return super(TableBox, self).translate(dx, dy)
+
+    def page_values(self):
+        return (self.style['page'], self.style['page'])
 
 
 class InlineTableBox(TableBox):
