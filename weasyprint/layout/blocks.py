@@ -75,7 +75,7 @@ def block_level_layout(context, box, max_position_y, skip_stack,
         box.position_x, box.position_y, _ = avoid_collisions(
             context, box, containing_block, outer=False)
         resume_at = None
-        next_page = 'any'
+        next_page = {'break': 'any', 'page': box.style['page']}
         adjoining_margins = []
         collapsing_through = False
         return box, resume_at, next_page, adjoining_margins, collapsing_through
@@ -229,7 +229,7 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
             if skip_stack is None:
                 break
     else:
-        next_page = 'any'
+        next_page = {'break': 'any', 'page': box.style['page']}
         skip_stack = None
 
     # Set the height of box and the columns
@@ -413,7 +413,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
         absolute_boxes = []
 
     new_children = []
-    next_page = 'any'
+    next_page = {'break': 'any', 'page': box.style['page']}
 
     last_in_flow_child = None
 
@@ -490,7 +490,10 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                     if over_orphans < 0 and not page_is_empty:
                         # Reached the bottom of the page before we had
                         # enough lines for orphans, cancel the whole box.
-                        return None, None, 'any', [], False
+                        return (
+                            None, None,
+                            {'break': 'any', 'page': box.style['page']},
+                            [], False)
                     # How many lines we need on the next page to satisfy widows
                     # -1 for the current line.
                     needed = box.style.widows - 1
@@ -501,7 +504,10 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                                 break
                     if needed > over_orphans and not page_is_empty:
                         # Total number of lines < orphans + widows
-                        return None, None, 'any', [], False
+                        return (
+                            None, None,
+                            {'break': 'any', 'page': box.style['page']},
+                            [], False)
                     if needed and needed <= over_orphans:
                         # Remove lines to keep them for the next page
                         del new_children[-needed:]
@@ -535,23 +541,21 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                 last_in_flow_child = None
             if last_in_flow_child is not None:
                 # Between in-flow siblings
-                page_break = (
-                    block_level_page_break(last_in_flow_child, child)['break'])
-                if page_break == 'recto':
-                    page_break = (
+                page_break = block_level_page_break(last_in_flow_child, child)
+                if page_break['break'] == 'recto':
+                    page_break['break'] = (
                         'right' if box.style.direction == 'ltr' else 'left')
-                elif page_break == 'verso':
-                    page_break = (
+                elif page_break['break'] == 'verso':
+                    page_break['break'] = (
                         'left' if box.style.direction == 'ltr' else 'right')
-                if page_break in ('page', 'left', 'right'):
-                    if page_break in ('left', 'right'):
-                        next_page = page_break
-                    else:
-                        next_page = 'any'
+                if page_break['break'] in ('page', 'left', 'right'):
+                    if page_break['break'] not in ('left', 'right'):
+                        page_break['break'] = 'any'
+                    next_page = page_break
                     resume_at = (index, None)
                     break
             else:
-                page_break = 'auto'
+                page_break = {'break': 'auto', 'page': child.page_values()[1]}
 
             new_containing_block = box
 
@@ -648,7 +652,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
 
             if new_child is None:
                 # Nothing fits in the remaining space of this page: break
-                if page_break in ('avoid', 'avoid-page'):
+                if page_break['break'] in ('avoid', 'avoid-page'):
                     result = find_earlier_page_break(
                         new_children, absolute_boxes, fixed_boxes)
                     if result:
@@ -660,7 +664,10 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                             # The page has content *before* this block:
                             # cancel the block and try to find a break
                             # in the parent.
-                            return None, None, 'any', [], False
+                            return (
+                                None, None,
+                                {'break': 'any', 'page': box.style['page']},
+                                [], False)
                         # else:
                         # ignore this 'avoid' and break anyway.
 
@@ -670,7 +677,10 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                 else:
                     # This was the first child of this box, cancel the box
                     # completly
-                    return None, None, 'any', [], False
+                    return (
+                        None, None,
+                        {'break': 'any', 'page': box.style['page']},
+                        [], False)
 
             # Bottom borders may overflow here
             # TODO: back-track somehow when all lines fit but not borders
@@ -684,7 +694,8 @@ def block_container_layout(context, box, max_position_y, skip_stack,
     if (resume_at is not None and
             box.style.break_inside in ('avoid', 'avoid-page') and
             not page_is_empty):
-        return None, None, 'any', [], False
+        return (
+            None, None, {'break': 'any', 'page': box.style['page']}, [], False)
 
     if collapsing_with_children:
         box.position_y += (

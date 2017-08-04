@@ -582,13 +582,13 @@ def make_all_pages(context, root_box, html, cascaded_styles, computed_styles):
         right_page = root_box.style.direction == 'ltr'
 
     resume_at = None
-    next_page = 'any'
+    next_page = {'break': 'any', 'page': None}
     page_number = 0
     while True:
         page_number += 1
         LOGGER.info('Step 5 - Creating layout - Page %i', page_number)
-        blank = ((next_page == 'left' and right_page) or
-                 (next_page == 'right' and not right_page))
+        blank = ((next_page['break'] == 'left' and right_page) or
+                 (next_page['break'] == 'right' and not right_page))
         side = 'right' if right_page else 'left'
         page_type = PageType(side, blank, first, name=None)
         set_page_type_computed_styles(
