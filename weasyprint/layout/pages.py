@@ -582,7 +582,7 @@ def make_all_pages(context, root_box, html, cascaded_styles, computed_styles):
         right_page = root_box.style.direction == 'ltr'
 
     resume_at = None
-    next_page = {'break': 'any', 'page': None}
+    next_page = {'break': 'any', 'page': root_box.page_values()[0]}
     page_number = 0
     while True:
         page_number += 1
@@ -590,7 +590,8 @@ def make_all_pages(context, root_box, html, cascaded_styles, computed_styles):
         blank = ((next_page['break'] == 'left' and right_page) or
                  (next_page['break'] == 'right' and not right_page))
         side = 'right' if right_page else 'left'
-        page_type = PageType(side, blank, first, name=None)
+        page_type = PageType(
+            side, blank, first, name=(next_page['page'] or None))
         set_page_type_computed_styles(
             page_type, cascaded_styles, computed_styles, html)
         page, resume_at, next_page = make_page(
