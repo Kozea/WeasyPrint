@@ -815,12 +815,11 @@ def block_level_page_break(sibling_before, sibling_after):
             result = value
 
     before_page = sibling_before.page_values()[1] if sibling_before else None
-    after_page = sibling_after.page_values()[0] if sibling_after else None
-    page = None
-    if before_page and after_page and before_page != after_page:
-        page = after_page
+    after_page = sibling_after.page_values()[0]
+    if before_page and before_page != after_page:
+        result = 'page'
 
-    return {'break': result, 'page': page}
+    return {'break': result, 'page': after_page}
 
 
 def find_earlier_page_break(children, absolute_boxes, fixed_boxes):
