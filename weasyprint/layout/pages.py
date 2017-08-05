@@ -589,6 +589,9 @@ def make_all_pages(context, root_box, html, cascaded_styles, computed_styles):
         LOGGER.info('Step 5 - Creating layout - Page %i', page_number)
         blank = ((next_page['break'] == 'left' and right_page) or
                  (next_page['break'] == 'right' and not right_page))
+        if blank:
+            next_blank_page_type = next_page['page']
+            next_page['page'] = None
         side = 'right' if right_page else 'left'
         page_type = PageType(
             side, blank, first, name=(next_page['page'] or None))
@@ -599,6 +602,8 @@ def make_all_pages(context, root_box, html, cascaded_styles, computed_styles):
         assert next_page
         first = False
         yield page
+        if blank:
+            next_page['page'] = next_blank_page_type
         if resume_at is None:
             return
         right_page = not right_page

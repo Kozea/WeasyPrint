@@ -1188,6 +1188,37 @@ def test_page_names():
     section2, = body.children
     line, = section2.children
 
+    pages = parse('''
+        <style>
+            @page { size: 200px 200px; margin: 0 }
+            @page small { size: 100px 100px }
+            p { page: small; break-before: right }
+        </style>
+        <section>normal</section>
+        <section>normal</section>
+        <p>small</p>
+        <section>small</section>
+    ''')
+    page1, page2, page3 = pages
+
+    assert (page1.width, page1.height) == (200, 200)
+    html, = page1.children
+    body, = html.children
+    section1, section2 = body.children
+    assert section1.element_tag == section2.element_tag == 'section'
+
+    assert (page2.width, page2.height) == (200, 200)
+    html, = page2.children
+    assert not html.children
+
+    assert (page3.width, page3.height) == (100, 100)
+    html, = page3.children
+    body, = html.children
+    p, section = body.children
+    assert p.element_tag == 'p'
+    assert section.element_tag == 'section'
+
+
 
 @assert_no_logs
 def test_orphans_widows_avoid():
