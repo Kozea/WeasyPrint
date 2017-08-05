@@ -456,7 +456,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                             break
                     page_break = block_level_page_break(
                         last_in_flow_child, child)
-                    if new_children and page_break == 'avoid':
+                    if new_children and page_break in ('avoid', 'avoid-page'):
                         result = find_earlier_page_break(
                             new_children, absolute_boxes, fixed_boxes)
                         if result:
@@ -872,8 +872,8 @@ def find_earlier_page_break(children, absolute_boxes, fixed_boxes):
                 pass  # TODO: find an earlier break between table rows.
         if child.is_in_normal_flow():
             if previous_in_flow is not None and (
-                    block_level_page_break(child, previous_in_flow) !=
-                    'avoid'):
+                    block_level_page_break(child, previous_in_flow) not in
+                    ('avoid', 'avoid-page')):
                 index += 1  # break after child
                 new_children = children[:index]
                 # Get the index in the original parent
