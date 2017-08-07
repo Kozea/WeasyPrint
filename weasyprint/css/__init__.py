@@ -434,16 +434,20 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
                     'counter-increment:none' % element.get('value'))
 
 
-def matching_page_types(page_type):
+def matching_page_types(page_type, names=()):
     sides = ['left', 'right', None] if page_type.side is None else [
         page_type.side]
-    blanks = [True, False] if page_type.blank is False else [True]
-    firsts = [True, False] if page_type.first is False else [True]
+    blanks = (True, False) if page_type.blank is False else (True,)
+    firsts = (True, False) if page_type.first is False else (True,)
+    names = (
+        tuple(names) + (None,) if page_type.name is None
+        else (page_type.name,))
     for side in sides:
         for blank in blanks:
             for first in firsts:
-                yield PageType(
-                    side=side, blank=blank, first=first, name=page_type.name)
+                for name in names:
+                    yield PageType(
+                        side=side, blank=blank, first=first, name=name)
 
 
 def evaluate_media_query(query_list, device_media_type):
@@ -686,8 +690,8 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                 continue
             page_type = PageType(**types)
             # Use a double lambda to have a closure that holds page_types
-            match = (lambda page_types: lambda: page_types)(
-                list(matching_page_types(page_type)))
+            match = (lambda page_type: lambda page_names: list(
+                matching_page_types(page_type, names=page_names)))(page_type)
             content = tinycss2.parse_declaration_list(rule.content)
             declarations = list(preprocess_declarations(base_url, content))
 
@@ -789,20 +793,6 @@ def get_all_computed_styles(html, user_stylesheets=None,
             weight = (precedence, specificity)
             add_declaration(cascaded_styles, name, values, weight, element)
 
-    for sheet, origin, sheet_specificity in sheets:
-        # Add declarations for page elements
-        for _rule, selector_list, declarations in sheet.page_rules:
-            for selector in selector_list:
-                specificity, pseudo_type, match = selector
-                specificity = sheet_specificity or specificity
-                for page_type in match():
-                    for name, values, importance in declarations:
-                        precedence = declaration_precedence(origin, importance)
-                        weight = (precedence, specificity)
-                        add_declaration(
-                            cascaded_styles, name, values, weight, page_type,
-                            pseudo_type)
-
     # keys: (element, pseudo_element_type), like cascaded_styles
     # values: StyleDict objects:
     #     keys: property name as a string
@@ -831,6 +821,22 @@ def get_all_computed_styles(html, user_stylesheets=None,
             root=html.etree_element,
             parent=(element.parent.etree_element if element.parent else None),
             base_url=html.base_url)
+
+    page_names = set(style['page'] for style in computed_styles.values())
+
+    for sheet, origin, sheet_specificity in sheets:
+        # Add declarations for page elements
+        for _rule, selector_list, declarations in sheet.page_rules:
+            for selector in selector_list:
+                specificity, pseudo_type, match = selector
+                specificity = sheet_specificity or specificity
+                for page_type in match(page_names):
+                    for name, values, importance in declarations:
+                        precedence = declaration_precedence(origin, importance)
+                        weight = (precedence, specificity)
+                        add_declaration(
+                            cascaded_styles, name, values, weight, page_type,
+                            pseudo_type)
 
     # Then computed styles for pseudo elements, in any order.
     # Pseudo-elements inherit from their associated element so they come

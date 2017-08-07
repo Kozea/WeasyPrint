@@ -1076,6 +1076,31 @@ def test_page_names():
     """Test the page names."""
     pages = parse('''
         <style>
+            @page { size: 100px 100px }
+            section { page: small }
+        </style>
+        <div>
+            <section>large</section>
+        </div>
+    ''')
+    page1, = pages
+    assert (page1.width, page1.height) == (100, 100)
+
+    pages = parse('''
+        <style>
+            @page { size: 100px 100px }
+            @page narrow { margin: 1px }
+            section { page: small }
+        </style>
+        <div>
+            <section>large</section>
+        </div>
+    ''')
+    page1, = pages
+    assert (page1.width, page1.height) == (100, 100)
+
+    pages = parse('''
+        <style>
             @page { margin: 0 }
             @page narrow { size: 100px 200px }
             @page large { size: 200px 100px }
@@ -1217,7 +1242,6 @@ def test_page_names():
     p, section = body.children
     assert p.element_tag == 'p'
     assert section.element_tag == 'section'
-
 
 
 @assert_no_logs
