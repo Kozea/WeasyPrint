@@ -15,8 +15,9 @@ from __future__ import division, unicode_literals
 from pytest import raises
 
 from .. import CSS, css, default_url_fetcher
-from ..css import get_all_computed_styles
+from ..css import PageType, get_all_computed_styles
 from ..css.computed_values import strut_layout
+from ..layout.pages import set_page_type_computed_styles
 from ..urls import open_data_url, path2url
 from .testing_utils import (
     FakeHTML, assert_no_logs, capture_logs, resource_filename)
@@ -123,7 +124,7 @@ def test_annotate_document():
     # pylint: disable=C0103
     document = FakeHTML(resource_filename('doc1.html'))
     document._ua_stylesheets = lambda: [CSS(resource_filename('mini_ua.css'))]
-    style_for = get_all_computed_styles(
+    style_for, _, _ = get_all_computed_styles(
         document, user_stylesheets=[CSS(resource_filename('user.css'))])
 
     # Element objects behave a lists of their children
@@ -213,7 +214,7 @@ def test_annotate_document():
 def test_page():
     """Test the ``@page`` properties."""
     document = FakeHTML(resource_filename('doc1.html'))
-    style_for = get_all_computed_styles(
+    style_for, cascaded_styles, computed_styles = get_all_computed_styles(
         document, user_stylesheets=[CSS(string='''
             html {
                 color: red;
@@ -234,38 +235,56 @@ def test_page():
             }
         ''')])
 
-    style = style_for('first_left_page')
+    # Force the generation of the style for all possible page types and
+    # pseudo-types, as it's generally only done during the rendering for needed
+    # page types.
+    standard_page_type = PageType(
+        side=None, blank=False, first=False, name=None)
+    set_page_type_computed_styles(
+        standard_page_type, cascaded_styles, computed_styles, document)
+
+    style = style_for(
+        PageType(side='left', first=True, blank=False, name=None))
     assert style.margin_top == (5, 'px')
     assert style.margin_left == (10, 'px')
     assert style.margin_bottom == (10, 'px')
     assert style.color == (1, 0, 0, 1)  # red, inherited from html
 
-    style = style_for('first_right_page')
+    style = style_for(
+        PageType(side='right', first=True, blank=False, name=None))
     assert style.margin_top == (5, 'px')
     assert style.margin_left == (10, 'px')
     assert style.margin_bottom == (16, 'px')
     assert style.color == (0, 0, 1, 1)  # blue
 
-    style = style_for('left_page')
+    style = style_for(
+        PageType(side='left', first=False, blank=False, name=None))
     assert style.margin_top == (10, 'px')
     assert style.margin_left == (10, 'px')
     assert style.margin_bottom == (10, 'px')
     assert style.color == (1, 0, 0, 1)  # red, inherited from html
 
-    style = style_for('right_page')
+    style = style_for(
+        PageType(side='right', first=False, blank=False, name=None))
     assert style.margin_top == (10, 'px')
     assert style.margin_left == (10, 'px')
     assert style.margin_bottom == (16, 'px')
     assert style.color == (0, 0, 1, 1)  # blue
 
-    style = style_for('first_left_page', '@top-left')
+    style = style_for(
+        PageType(side='left', first=True, blank=False, name=None),
+        '@top-left')
     assert style is None
 
-    style = style_for('first_right_page', '@top-left')
+    style = style_for(
+        PageType(side='right', first=True, blank=False, name=None),
+        '@top-left')
     assert style.font_size == 20  # inherited from @page
     assert style.width == (200, 'px')
 
-    style = style_for('first_right_page', '@top-right')
+    style = style_for(
+        PageType(side='right', first=True, blank=False, name=None),
+        '@top-right')
     assert style.font_size == 10
 
 
@@ -277,8 +296,6 @@ def test_warnings():
             ['WARNING: Invalid or unsupported selector']),
         ('::lipsum { margin: 2cm',
             ['WARNING: Invalid or unsupported selector']),
-        ('@page foo { margin: 2cm',
-            ['WARNING: Unsupported @page selector " foo "']),
         ('foo { margin-color: red',
             ['WARNING: Ignored', 'unknown property']),
         ('foo { margin-top: red',
@@ -382,6 +399,29 @@ def test_important():
     body, = html.children
     for paragraph in body.children:
         assert paragraph.style.color == (0, 1, 0, 1)  # lime (light green)
+
+
+@assert_no_logs
+def test_named_pages():
+    document = FakeHTML(string='''
+        <style>
+            @page NARRow { size: landscape }
+            div { page: AUTO }
+            p { page: NARRow }
+        </style>
+        <div><p><span>a</span></p></div>
+    ''')
+    page, = document.render().pages
+    html, = page._page_box.children
+    body, = html.children
+    div, = body.children
+    p, = div.children
+    span, = p.children
+    assert html.style.page == ''
+    assert body.style.page == ''
+    assert div.style.page == ''
+    assert p.style.page == 'NARRow'
+    assert span.style.page == 'NARRow'
 
 
 @assert_no_logs

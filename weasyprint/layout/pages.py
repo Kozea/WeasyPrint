@@ -12,6 +12,7 @@
 
 from __future__ import division, unicode_literals
 
+from ..css import PageType, matching_page_types, set_computed_styles
 from ..formatting_structure import boxes, build
 from ..logger import LOGGER
 from .absolute import absolute_layout
@@ -467,8 +468,7 @@ def page_height(box, context, containing_block_height):
     page_width_or_height(VerticalBox(context, box), containing_block_height)
 
 
-def make_page(context, root_box, page_type, resume_at, content_empty,
-              page_number=None):
+def make_page(context, root_box, page_type, resume_at, page_number=None):
     """Take just enough content from the beginning to fill one page.
 
     Return ``(page, finished)``. ``page`` is a laid out PageBox object
@@ -483,6 +483,8 @@ def make_page(context, root_box, page_type, resume_at, content_empty,
 
     # Overflow value propagated from the root or <body>.
     style = context.style_for(page_type)
+
+    # Propagated from the root or <body>.
     style['overflow'] = root_box.viewport_overflow
     page = boxes.PageBox(page_type, style)
 
@@ -501,7 +503,7 @@ def make_page(context, root_box, page_type, resume_at, content_empty,
     page_content_bottom = root_box.position_y + page.height
     initial_containing_block = page
 
-    if content_empty:
+    if page_type.blank:
         previous_resume_at = resume_at
         root_box = root_box.copy_with_children([])
 
@@ -533,14 +535,36 @@ def make_page(context, root_box, page_type, resume_at, content_empty,
             for string_set in string_sets:
                 string_name, text = string_set
                 context.string_set[string_name][page_number].append(text)
-    if content_empty:
+    if page_type.blank:
         resume_at = previous_resume_at
     return page, resume_at, next_page
 
 
-def make_all_pages(context, root_box):
+def set_page_type_computed_styles(page_type, cascaded_styles, computed_styles,
+                                  html):
+    """Set style for page types and pseudo-types matching page_type."""
+    for matching_page_type in matching_page_types(page_type):
+        if matching_page_type in computed_styles:
+            continue
+        set_computed_styles(
+            cascaded_styles, computed_styles, matching_page_type,
+            # @page inherits from the root element:
+            # http://lists.w3.org/Archives/Public/www-style/2012Jan/1164.html
+            root=html.etree_element, parent=html.etree_element,
+            base_url=html.base_url)
+        for element, pseudo_type in cascaded_styles:
+            if pseudo_type and element == matching_page_type:
+                set_computed_styles(
+                    cascaded_styles, computed_styles, element,
+                    pseudo_type=pseudo_type,
+                    # The pseudo-element inherits from the element.
+                    root=html.etree_element, parent=element,
+                    base_url=html.base_url)
+
+
+def make_all_pages(context, root_box, html, cascaded_styles, computed_styles):
     """Return a list of laid out pages without margin boxes."""
-    prefix = 'first_'
+    first = True
 
     # Special case the root box
     page_break = root_box.style.break_before
@@ -558,24 +582,30 @@ def make_all_pages(context, root_box):
         right_page = root_box.style.direction == 'ltr'
 
     resume_at = None
-    next_page = 'any'
+    next_page = {'break': 'any', 'page': root_box.page_values()[0]}
     page_number = 0
     while True:
         page_number += 1
         LOGGER.info('Step 5 - Creating layout - Page %i', page_number)
-        content_empty = ((next_page == 'left' and right_page) or
-                         (next_page == 'right' and not right_page))
-        if content_empty:
-            prefix += 'blank_'
-        page_type = prefix + ('right_page' if right_page else 'left_page')
+        blank = ((next_page['break'] == 'left' and right_page) or
+                 (next_page['break'] == 'right' and not right_page))
+        if blank:
+            next_blank_page_type = next_page['page']
+            next_page['page'] = None
+        side = 'right' if right_page else 'left'
+        page_type = PageType(
+            side, blank, first, name=(next_page['page'] or None))
+        set_page_type_computed_styles(
+            page_type, cascaded_styles, computed_styles, html)
         page, resume_at, next_page = make_page(
-            context, root_box, page_type, resume_at, content_empty,
-            page_number)
+            context, root_box, page_type, resume_at, page_number)
         assert next_page
+        first = False
         yield page
+        if blank:
+            next_page['page'] = next_blank_page_type
         if resume_at is None:
             return
-        prefix = ''
         right_page = not right_page
 
 

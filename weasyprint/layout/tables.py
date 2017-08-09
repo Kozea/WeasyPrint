@@ -403,12 +403,12 @@ def table_layout(context, table, max_position_y, skip_stack,
         group.width = last.position_x + last.width - first.position_x
         group.height = columns_height
 
+    next_page = {'break': 'any', 'page': table.style['page']}
     if resume_at and not page_is_empty and (
             table.style.break_inside in ('avoid', 'avoid-page') or
             not new_table_children):
         table = None
         resume_at = None
-    next_page = 'any'
     adjoining_margins = []
     collapsing_through = False
     return table, resume_at, next_page, adjoining_margins, collapsing_through

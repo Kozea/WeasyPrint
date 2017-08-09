@@ -301,7 +301,7 @@ class Document(object):
                 presentational_hints=False):
         font_config = FontConfiguration()
         page_rules = []
-        style_for = get_all_computed_styles(
+        style_for, cascaded_styles, computed_styles = get_all_computed_styles(
             html, presentational_hints=presentational_hints, user_stylesheets=[
                 css if hasattr(css, 'matcher')
                 else CSS(guess=css, media_type=html.media_type)
@@ -315,7 +315,7 @@ class Document(object):
             build_formatting_structure(
                 html.etree_element, style_for, get_image_from_uri,
                 html.base_url),
-            font_config)
+            font_config, html, cascaded_styles, computed_styles)
         rendering = cls(
             [Page(p, enable_hinting) for p in page_boxes],
             DocumentMetadata(**html._get_metadata()), html.url_fetcher)
