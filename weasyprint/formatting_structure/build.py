@@ -631,6 +631,7 @@ def wrap_table(box, children):
 
     wrapper = wrapper_type.anonymous_from(
         box, captions['top'] + [table] + captions['bottom'])
+    wrapper.style = wrapper.style.copy()
     wrapper.is_table_wrapper = True
     if not table.style.anonymous:
         # Non-inherited properties of the table element apply to one

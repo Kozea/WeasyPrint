@@ -84,6 +84,12 @@ class StyleDict(dict):
             self._inherited_style.anonymous = True
         return self._inherited_style
 
+    def copy(self):
+        """Copy the ``StyleDict``."""
+        style = type(self)(self)
+        style.anonymous = self.anonymous
+        return style
+
     # Default values, may be overriden on instances
     anonymous = False
 
