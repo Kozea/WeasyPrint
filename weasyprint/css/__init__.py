@@ -507,7 +507,7 @@ def set_computed_styles(cascaded_styles, computed_styles, element, parent,
     declaration priority (ie. ``!important``) and selector specificity.
 
     """
-    if element == root:
+    if element == root and pseudo_type is None:
         assert parent is None
         parent_style = None
         root_style = {
