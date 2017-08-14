@@ -623,6 +623,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                                'the whole @import rule was ignored at %s:%s.',
                                tinycss2.serialize(rule.prelude),
                                rule.source_line, rule.source_column)
+                continue
             if not evaluate_media_query(media, device_media_type):
                 continue
             url = url_join(
