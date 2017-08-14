@@ -600,6 +600,10 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
 
     """
     for rule in stylesheet_rules:
+        if getattr(rule, 'content', None) is None and (
+                rule.type != 'at-rule' or rule.at_keyword != 'import'):
+            continue
+
         if rule.type == 'qualified-rule':
             declarations = list(preprocess_declarations(
                 base_url, tinycss2.parse_declaration_list(rule.content)))
@@ -707,7 +711,8 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                 page_rules.append((rule, selector_list, declarations))
 
             for margin_rule in content:
-                if margin_rule.type != 'at-rule':
+                if margin_rule.type != 'at-rule' or (
+                        margin_rule.content is None):
                     continue
                 declarations = list(preprocess_declarations(
                     base_url,
