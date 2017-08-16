@@ -56,7 +56,8 @@ def build_formatting_structure(element_tree, style_for, get_image_from_uri,
         def root_style_for(element, pseudo_type=None):
             style = style_for(element, pseudo_type)
             if style:
-                if element.parent is None:
+                # TODO: we should check that the element has a parent instead.
+                if element.tag == 'html':
                     style.display = 'block'
                 else:
                     style.display = 'none'
@@ -631,6 +632,7 @@ def wrap_table(box, children):
 
     wrapper = wrapper_type.anonymous_from(
         box, captions['top'] + [table] + captions['bottom'])
+    wrapper.style = wrapper.style.copy()
     wrapper.is_table_wrapper = True
     if not table.style.anonymous:
         # Non-inherited properties of the table element apply to one

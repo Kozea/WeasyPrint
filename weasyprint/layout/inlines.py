@@ -282,7 +282,7 @@ def first_letter_to_box(box, skip_stack, first_letter_style):
                     # "This type of initial letter is similar to an
                     # inline-level element if its 'float' property is 'none',
                     # otherwise it is similar to a floated element."
-                    letter_box_inherit = letter_box.style.inherit_from()
+                    letter_box_inherit = child.style.inherit_from()
                     if first_letter_style['float'] == 'none':
                         letter_box = boxes.InlineBox(
                             '%s::first-letter' % box.element_tag,
