@@ -594,7 +594,7 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
 
 def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                           url_fetcher, matcher, page_rules, fonts,
-                          font_config):
+                          font_config, ignore_imports=False):
     """Do the work that can be done early on stylesheet, before they are
     in a document.
 
@@ -616,12 +616,22 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                             raise cssselect2.SelectorError(
                                 'Unknown pseudo-element: %s'
                                 % selector.pseudo_element)
+                    ignore_imports = True
                 except cssselect2.SelectorError as exc:
                     LOGGER.warning("Invalid or unsupported selector '%s', %s",
                                    tinycss2.serialize(rule.prelude), exc)
                     continue
+            else:
+                ignore_imports = True
 
         elif rule.type == 'at-rule' and rule.at_keyword == 'import':
+            if ignore_imports:
+                LOGGER.warning('@import rule "%s" not at the beginning of the '
+                               'the whole rule was ignored at %s:%s.',
+                               tinycss2.serialize(rule.prelude),
+                               rule.source_line, rule.source_column)
+                continue
+
             tokens = remove_whitespace(rule.prelude)
             if tokens and tokens[0].type in ('url', 'string'):
                 url = tokens[0].value
@@ -658,12 +668,13 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                                tinycss2.serialize(rule.prelude),
                                rule.source_line, rule.source_column)
                 continue
+            ignore_imports = True
             if not evaluate_media_query(media, device_media_type):
                 continue
             content_rules = tinycss2.parse_rule_list(rule.content)
             preprocess_stylesheet(
                 device_media_type, base_url, content_rules, url_fetcher,
-                matcher, page_rules, fonts, font_config)
+                matcher, page_rules, fonts, font_config, ignore_imports=True)
 
         elif rule.type == 'at-rule' and rule.at_keyword == 'page':
             tokens = remove_whitespace(rule.prelude)
@@ -699,6 +710,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                                tinycss2.serialize(rule.prelude),
                                rule.source_line, rule.source_column)
                 continue
+            ignore_imports = True
             page_type = PageType(**types)
             # Use a double lambda to have a closure that holds page_types
             match = (lambda page_type: lambda page_names: list(
@@ -724,6 +736,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                         (margin_rule, selector_list, declarations))
 
         elif rule.type == 'at-rule' and rule.at_keyword == 'font-face':
+            ignore_imports = True
             content = tinycss2.parse_declaration_list(rule.content)
             rule_descriptors = dict(preprocess_descriptors(base_url, content))
             for key in ('src', 'font_family'):
