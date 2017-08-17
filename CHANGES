@@ -2,6 +2,31 @@ WeasyPrint changelog
 ====================
 
 
+Version 0.40
+------------
+
+Released on 2017-08-17.
+
+WeasyPrint now depends on cssselect2 instead of cssselect and lxml.
+
+New features:
+
+* `#57 <https://github.com/Kozea/WeasyPrint/issues/57>`_:
+  Named pages.
+* Unprefix properties, see
+  `#498 <https://github.com/Kozea/WeasyPrint/issues/498>`_.
+* Add a "verbose" option logging the document generation steps.
+
+Bug fixes:
+
+* `#483 <https://github.com/Kozea/WeasyPrint/issues/483>`_:
+  Fix slow performance with long pre-formatted texts.
+* `#70 <https://github.com/Kozea/WeasyPrint/issues/70>`_:
+  Improve speed and memory usage for long documents.
+* `#487 <https://github.com/Kozea/WeasyPrint/issues/487>`_:
+  Don't crash on local() fonts with a space and no quotes.
+
+
 Version 0.39
 ------------
 
