@@ -69,6 +69,12 @@ class StyleDict(dict):
         value = self[key]
         return value if value != 'currentColor' else self['color']
 
+    def copy(self):
+        """Copy the ``StyleDict``."""
+        style = type(self)(self)
+        style.anonymous = self.anonymous
+        return style
+
     def inherit_from(self):
         """Return a new StyleDict with inherited properties from this one.
 
@@ -83,12 +89,6 @@ class StyleDict(dict):
                 element=None)
             self._inherited_style.anonymous = True
         return self._inherited_style
-
-    def copy(self):
-        """Copy the ``StyleDict``."""
-        style = type(self)(self)
-        style.anonymous = self.anonymous
-        return style
 
     # Default values, may be overriden on instances
     anonymous = False
