@@ -25,9 +25,9 @@ caption, x-caption   { display: table-caption }
 a[href] { -weasy-link: attr(href); }
 a[name] { -weasy-anchor: attr(name); }
 *[id] { -weasy-anchor: attr(id); }
-h1 { -weasy-bookmark-level: 1; -weasy-bookmark-label: content(text); }
-h2 { -weasy-bookmark-level: 2; -weasy-bookmark-label: content(text); }
-h3 { -weasy-bookmark-level: 3; -weasy-bookmark-label: content(text); }
-h4 { -weasy-bookmark-level: 4; -weasy-bookmark-label: content(text); }
-h5 { -weasy-bookmark-level: 5; -weasy-bookmark-label: content(text); }
-h6 { -weasy-bookmark-level: 6; -weasy-bookmark-label: content(text); }
+h1 { bookmark-level: 1; bookmark-label: content(text); }
+h2 { bookmark-level: 2; bookmark-label: content(text); }
+h3 { bookmark-level: 3; bookmark-label: content(text); }
+h4 { bookmark-level: 4; bookmark-label: content(text); }
+h5 { bookmark-level: 5; bookmark-label: content(text); }
+h6 { bookmark-level: 6; bookmark-label: content(text); }

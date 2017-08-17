@@ -98,8 +98,6 @@ def validator(property_name=None, prefixed=False, unprefixed=False,
         parameter.
 
     """
-    assert not (prefixed and unprefixed)
-
     def decorator(function):
         """Add ``function`` to the ``VALIDATORS``."""
         if property_name is None:
@@ -1419,7 +1417,7 @@ def tab_size(token):
     return get_length(token, negative=False)
 
 
-@validator(prefixed=True)  # Non-standard
+@validator(prefixed=True, unprefixed=True)  # CSS3 Text
 @single_token
 def hyphens(token):
     """Validation for ``hyphens``."""
@@ -1428,7 +1426,7 @@ def hyphens(token):
         return keyword
 
 
-@validator(prefixed=True)  # Non-standard
+@validator(prefixed=True, unprefixed=True)  # CSS4 Text
 @single_token
 def hyphenate_character(token):
     """Validation for ``hyphenate-character``."""
@@ -1439,14 +1437,14 @@ def hyphenate_character(token):
         return token.value
 
 
-@validator(prefixed=True)  # Non-standard
+@validator(prefixed=True, unprefixed=True)  # CSS4 Text
 @single_token
 def hyphenate_limit_zone(token):
     """Validation for ``hyphenate-limit-zone``."""
     return get_length(token, negative=False, percentage=True)
 
 
-@validator(prefixed=True)  # Non-standard
+@validator(prefixed=True, unprefixed=True)  # CSS4 Text
 def hyphenate_limit_chars(tokens):
     """Validation for ``hyphenate-limit-chars``."""
     if len(tokens) == 1:
@@ -1503,7 +1501,7 @@ def lang(token):
         return ('string', token.value)
 
 
-@validator(prefixed=True)  # CSS3 GCPM, experimental
+@validator(prefixed=True, unprefixed=True)  # CSS3 GCPM
 def bookmark_label(tokens):
     """Validation for ``bookmark-label``."""
     parsed_tokens = tuple(validate_content_list_token(v) for v in tokens)
@@ -1511,7 +1509,7 @@ def bookmark_label(tokens):
         return parsed_tokens
 
 
-@validator(prefixed=True)  # CSS3 GCPM, experimental
+@validator(prefixed=True, unprefixed=True)  # CSS3 GCPM
 @single_token
 def bookmark_level(token):
     """Validation for ``bookmark-level``."""
@@ -1523,7 +1521,7 @@ def bookmark_level(token):
         return 'none'
 
 
-@validator(prefixed=True)  # CSS3 GCPM, experimental
+@validator(prefixed=True, unprefixed=True)  # CSS3 GCPM
 @comma_separated_list
 def string_set(tokens):
     """Validation for ``string-set``."""
@@ -2168,13 +2166,6 @@ def preprocess_declarations(base_url, declarations):
                 declaration.name, tinycss2.serialize(declaration.value),
                 declaration.source_line, declaration.source_column, reason)
 
-        if name in PREFIXED and not name.startswith(PREFIX):
-            validation_error(
-                'warning',
-                'the property is experimental or non-standard, use %s' %
-                PREFIX + name)
-            continue
-
         if name in NOT_PRINT_MEDIA:
             validation_error(
                 'warning', 'the property does not apply for the print media')
@@ -2185,7 +2176,8 @@ def preprocess_declarations(base_url, declarations):
             if unprefixed_name in UNPREFIXED:
                 validation_error(
                     'warning',
-                    'the property was unprefixed, use ' + unprefixed_name)
+                    'prefixes will be removed in a future version, '
+                    'use ' + unprefixed_name)
                 continue
             if unprefixed_name in PREFIXED:
                 name = unprefixed_name

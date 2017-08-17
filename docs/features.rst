@@ -173,10 +173,10 @@ New properties defined in Level 3 are supported:
 
 Experimental_ properties controling hyphenation_ are supported by WeasyPrint:
 
-- ``-weasy-hyphens``,
-- ``-weasy-hyphenate-character``,
-- ``-weasy-hyphenate-limit-chars``, and
-- ``-weasy-hyphenate-limit-zone``.
+- ``hyphens``,
+- ``hyphenate-character``,
+- ``hyphenate-limit-chars``, and
+- ``hyphenate-limit-zone``.
 
 To get automatic hyphenation, you to set it to ``auto``
 *and* have the ``lang`` HTML attribute set to one of the languages
@@ -188,7 +188,7 @@ To get automatic hyphenation, you to set it to ``auto``
     <!doctype html>
     <html lang=en>
     <style>
-      html { -weasy-hyphens: auto }
+      html { hyphens: auto }
     </style>
     …
 
@@ -196,8 +196,8 @@ Automatic hyphenation can be disabled again with the ``manual`` value:
 
 .. code-block:: css
 
-    html { -weasy-hyphens: auto }
-    a[href]::after { content: ' [' attr(href) ']'; -weasy-hyphens: manual }
+    html { hyphens: auto }
+    a[href]::after { content: ' [' attr(href) ']'; hyphens: manual }
 
 The other features provided by `CSS Text Module Level 3`_ are **not**
 supported:
@@ -299,7 +299,7 @@ defining "new properties and values, so that authors may bring new techniques
 Two features from this module have been implemented in WeasyPrint.
 
 The first feature is `PDF bookmarks`_.  Using the experimental_
-``-weasy-bookmark-level`` and ``-weasy-bookmark-level`` properties, you can add
+``bookmark-level`` and ``bookmark-level`` properties, you can add
 bookmarks that will be available in your PDF reader.
 
 Bookmarks have already been added in the WeasyPrint's `user agent stylesheet`_,
@@ -309,7 +309,7 @@ and do not wish to include it in the bookmarks, add this in your stylesheet:
 
 .. code-block:: css
 
-    h1 { -weasy-bookmark-level: none }
+    h1 { bookmark-level: none }
 
 The second feature is `Named strings`_. You can define strings related to the
 first or last element of a type present on a page, and display these strings in
@@ -322,7 +322,7 @@ attributes.
 .. code-block:: css
 
     @top-center { content: string(chapter); }
-    h2 { -weasy-string-set: chapter "Current chapter: " content() }
+    h2 { string-set: chapter "Current chapter: " content() }
 
 The other features of GCPM are **not** implemented:
 

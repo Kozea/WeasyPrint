@@ -1255,7 +1255,7 @@ def test_margin_box_string_set():
                 @bottom-center { content: string(text_header); }
             }
             p{
-                -weasy-string-set: text_header content();
+                string-set: text_header content();
             }
             .page{
                 page-break-before: always;
@@ -1282,7 +1282,7 @@ def test_margin_box_string_set():
                     @top-center { content: string(text_header); }
                 }
                 p{
-                    -weasy-string-set: text_header content(%(content_val)s);
+                    string-set: text_header content(%(content_val)s);
                 }
                 %(extra_style)s
             </style>
@@ -1312,7 +1312,7 @@ def test_margin_box_string_set():
                 @top-center { content: string(text_header, first); }
             }
             p{
-                -weasy-string-set: text_header content();
+                string-set: text_header content();
             }
         </style>
         <p>first assignment</p>
@@ -1331,7 +1331,7 @@ def test_margin_box_string_set():
                 @top-center { content: string(header_nofirst, first-except); }
             }
             p{
-                -weasy-string-set: header_nofirst content();
+                string-set: header_nofirst content();
             }
             .page{
                 page-break-before: always;
@@ -1355,7 +1355,7 @@ def test_margin_box_string_set():
                 @top-center { content: string(header_last, last); }
             }
             p{
-                -weasy-string-set: header_last content();
+                string-set: header_last content();
             }
         </style>
         <p>String set</p>
@@ -1380,7 +1380,7 @@ def test_margin_box_string_set():
             ul { counter-reset: b }
             li {
               counter-increment: b;
-              -weasy-string-set:
+              string-set:
                 text_header content(before) "-" content() "-" content(after)
                             counter(a, upper-roman) '.' counters(b, '|'),
                 text_footer content(before) '-' attr(class)

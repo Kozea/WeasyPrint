@@ -3458,16 +3458,16 @@ def test_hyphenation():
         '<body lang=fr>hyphénation') == 1
     # `hyphens: auto` only: no hyphenation
     assert line_count(
-        '<body style="-weasy-hyphens: auto">hyphénation') == 1
+        '<body style="hyphens: auto">hyphénation') == 1
     # lang + `hyphens: auto`: hyphenation
     assert line_count(
-        '<body style="-weasy-hyphens: auto" lang=fr>hyphénation') > 1
+        '<body style="hyphens: auto" lang=fr>hyphénation') > 1
 
     # Hyphenation with soft hyphens
     assert line_count('<body>hyp&shy;hénation') == 2
     # … unless disabled
     assert line_count(
-        '<body style="-weasy-hyphens: none">hyp&shy;hénation') == 1
+        '<body style="hyphens: none">hyp&shy;hénation') == 1
 
 
 @assert_no_logs

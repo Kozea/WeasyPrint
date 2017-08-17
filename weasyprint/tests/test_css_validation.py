@@ -160,8 +160,6 @@ def test_transforms():
     assert_invalid('transform: foo')
     assert_invalid('transform: scale(2) foo')
     assert_invalid('transform: 6px')
-    assert_invalid('-weasy-transform: none',
-                   'the property was unprefixed, use transform')
 
 
 @assert_no_logs
@@ -570,44 +568,44 @@ def test_line_height():
 @assert_no_logs
 def test_string_set():
     """Test the ``string-set`` property."""
-    assert expand_to_dict('-weasy-string-set: test content(text)') == {
+    assert expand_to_dict('string-set: test content(text)') == {
         'string_set': (('test', (('content', 'text'),)),)}
-    assert expand_to_dict('-weasy-string-set: test content(before)') == {
+    assert expand_to_dict('string-set: test content(before)') == {
         'string_set': (('test', (('content', 'before'),)),)}
-    assert expand_to_dict('-weasy-string-set: test "string"') == {
+    assert expand_to_dict('string-set: test "string"') == {
         'string_set': (('test', (('STRING', 'string'),)),)}
     assert expand_to_dict(
-        '-weasy-string-set: test1 "string", test2 "string"') == {
+        'string-set: test1 "string", test2 "string"') == {
             'string_set': (
                 ('test1', (('STRING', 'string'),)),
                 ('test2', (('STRING', 'string'),)))}
-    assert expand_to_dict('-weasy-string-set: test attr(class)') == {
+    assert expand_to_dict('string-set: test attr(class)') == {
         'string_set': (('test', (('attr', 'class'),)),)}
-    assert expand_to_dict('-weasy-string-set: test counter(count)') == {
+    assert expand_to_dict('string-set: test counter(count)') == {
         'string_set': (('test', (('counter', ('count', 'decimal')),)),)}
     assert expand_to_dict(
-        '-weasy-string-set: test counter(count, upper-roman)') == {
+        'string-set: test counter(count, upper-roman)') == {
             'string_set': (
                 ('test', (('counter', ('count', 'upper-roman')),)),)}
-    assert expand_to_dict('-weasy-string-set: test counters(count, ".")') == {
+    assert expand_to_dict('string-set: test counters(count, ".")') == {
         'string_set': (('test', (('counters', ('count', '.', 'decimal')),)),)}
     assert expand_to_dict(
-        '-weasy-string-set: test counters(count, ".", upper-roman)') == {
+        'string-set: test counters(count, ".", upper-roman)') == {
             'string_set': (
                 ('test', (('counters', ('count', '.', 'upper-roman')),)),)}
     assert expand_to_dict(
-        '-weasy-string-set: test content(text) "string" '
+        'string-set: test content(text) "string" '
         'attr(title) attr(title) counter(count)') == {
             'string_set': (('test', (
                 ('content', 'text'), ('STRING', 'string'),
                 ('attr', 'title'), ('attr', 'title'),
                 ('counter', ('count', 'decimal')),)),)}
 
-    assert_invalid('-weasy-string-set: test')
-    assert_invalid('-weasy-string-set: test test1')
-    assert_invalid('-weasy-string-set: test content(test)')
-    assert_invalid('-weasy-string-set: test unknown()')
-    assert_invalid('-weasy-string-set: test attr(id, class)')
+    assert_invalid('string-set: test')
+    assert_invalid('string-set: test test1')
+    assert_invalid('string-set: test content(test)')
+    assert_invalid('string-set: test unknown()')
+    assert_invalid('string-set: test attr(id, class)')
 
 
 @assert_no_logs
