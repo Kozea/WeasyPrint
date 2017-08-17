@@ -62,6 +62,7 @@ from __future__ import division, unicode_literals
 import itertools
 
 from ..compat import unichr, xrange
+from ..css.properties import Dimension
 
 # The *Box classes have many attributes and methods, but that's the way it is
 # pylint: disable=R0904,R0902
@@ -299,11 +300,16 @@ class ParentBox(Box):
 
     def _reset_spacing(self, side):
         """Set to 0 the margin, padding and border of ``side``."""
+        self.style['margin_%s' % side] = Dimension(0, 'px')
+        self.style['padding_%s' % side] = Dimension(0, 'px')
+        self.style['border_%s_width' % side] = 0
         setattr(self, 'margin_%s' % side, 0)
         setattr(self, 'padding_%s' % side, 0)
         setattr(self, 'border_%s_width' % side, 0)
 
     def _remove_decoration(self, start, end):
+        if start or end:
+            self.style = self.style.copy()
         if start:
             self._reset_spacing('top')
         if end:
@@ -409,6 +415,8 @@ class InlineLevelBox(Box):
 
     """
     def _remove_decoration(self, start, end):
+        if start or end:
+            self.style = self.style.copy()
         ltr = self.style.direction == 'ltr'
         if start:
             self._reset_spacing('left' if ltr else 'right')
