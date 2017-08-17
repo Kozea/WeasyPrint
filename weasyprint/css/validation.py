@@ -92,7 +92,7 @@ def validator(property_name=None, prefixed=False, unprefixed=False,
         See http://wiki.csswg.org/spec/vendor-prefixes
     :param unprefixed:
         Mark properties that used to be prefixed. When used with the prefix,
-        they will be ignored be give a specific warning.
+        they will be marked as deprecated and be given a specific warning.
     :param wants_base_url:
         The function takes the stylesheet’s base URL as an additional
         parameter.
@@ -2174,10 +2174,13 @@ def preprocess_declarations(base_url, declarations):
         if name.startswith(PREFIX):
             unprefixed_name = name[len(PREFIX):]
             if unprefixed_name in UNPREFIXED:
-                validation_error(
-                    'warning',
-                    'prefixes will be removed in a future version, '
-                    'use ' + unprefixed_name)
+                LOGGER.warning(
+                    'Deprecated `%s:%s` at %i:%i, '
+                    'prefixes on standard attributes will be removed '
+                    'in a future version, use `%s`.',
+                    declaration.name, tinycss2.serialize(declaration.value),
+                    declaration.source_line, declaration.source_column,
+                    unprefixed_name)
                 continue
             if unprefixed_name in PREFIXED:
                 name = unprefixed_name
