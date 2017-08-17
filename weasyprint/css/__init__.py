@@ -601,7 +601,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
     """
     for rule in stylesheet_rules:
         if getattr(rule, 'content', None) is None and (
-                rule.type != 'at-rule' or rule.at_keyword != 'import'):
+                rule.type != 'at-rule' or rule.lower_at_keyword != 'import'):
             continue
 
         if rule.type == 'qualified-rule':
@@ -624,7 +624,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
             else:
                 ignore_imports = True
 
-        elif rule.type == 'at-rule' and rule.at_keyword == 'import':
+        elif rule.type == 'at-rule' and rule.lower_at_keyword == 'import':
             if ignore_imports:
                 LOGGER.warning('@import rule "%s" not at the beginning of the '
                                'the whole rule was ignored at %s:%s.',
@@ -660,7 +660,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                     LOGGER.error(
                         'Failed to load stylesheet at %s : %s', url, exc)
 
-        elif rule.type == 'at-rule' and rule.at_keyword == 'media':
+        elif rule.type == 'at-rule' and rule.lower_at_keyword == 'media':
             media = parse_media_query(rule.prelude)
             if media is None:
                 LOGGER.warning('Invalid media type "%s" '
@@ -676,7 +676,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                 device_media_type, base_url, content_rules, url_fetcher,
                 matcher, page_rules, fonts, font_config, ignore_imports=True)
 
-        elif rule.type == 'at-rule' and rule.at_keyword == 'page':
+        elif rule.type == 'at-rule' and rule.lower_at_keyword == 'page':
             tokens = remove_whitespace(rule.prelude)
             types = {
                 'side': None, 'blank': False, 'first': False, 'name': None}
@@ -730,12 +730,13 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                     base_url,
                     tinycss2.parse_declaration_list(margin_rule.content)))
                 if declarations:
-                    selector_list = [
-                        (specificity, '@' + margin_rule.at_keyword, match)]
+                    selector_list = [(
+                        specificity, '@' + margin_rule.lower_at_keyword,
+                        match)]
                     page_rules.append(
                         (margin_rule, selector_list, declarations))
 
-        elif rule.type == 'at-rule' and rule.at_keyword == 'font-face':
+        elif rule.type == 'at-rule' and rule.lower_at_keyword == 'font-face':
             ignore_imports = True
             content = tinycss2.parse_declaration_list(rule.content)
             rule_descriptors = dict(preprocess_descriptors(base_url, content))
