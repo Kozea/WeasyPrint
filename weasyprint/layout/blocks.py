@@ -855,6 +855,16 @@ def find_earlier_page_break(children, absolute_boxes, fixed_boxes):
 
     previous_in_flow = None
     for index, child in reversed_enumerate(children):
+        if child.is_in_normal_flow():
+            if previous_in_flow is not None and (
+                    block_level_page_break(child, previous_in_flow) not in
+                    ('avoid', 'avoid-page')):
+                index += 1  # break after child
+                new_children = children[:index]
+                # Get the index in the original parent
+                resume_at = (children[index].index, None)
+                break
+            previous_in_flow = child
         if child.is_in_normal_flow() and (
                 child.style.break_inside not in ('avoid', 'avoid-page')):
             if isinstance(child, boxes.BlockBox):
@@ -870,16 +880,6 @@ def find_earlier_page_break(children, absolute_boxes, fixed_boxes):
                     break
             elif isinstance(child, boxes.TableBox):
                 pass  # TODO: find an earlier break between table rows.
-        if child.is_in_normal_flow():
-            if previous_in_flow is not None and (
-                    block_level_page_break(child, previous_in_flow) not in
-                    ('avoid', 'avoid-page')):
-                index += 1  # break after child
-                new_children = children[:index]
-                # Get the index in the original parent
-                resume_at = (children[index].index, None)
-                break
-            previous_in_flow = child
     else:
         return None
 
