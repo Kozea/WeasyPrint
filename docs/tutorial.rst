@@ -231,10 +231,10 @@ Logging
 Most errors (unsupported CSS property, missing image, ...)
 are not fatal and will not prevent a document from being rendered.
 
-WeasyPrint uses the :mod:`logging` module from the Python standard library
-to log these errors and let you know about them.
-Logged messaged will go to *stderr* by default. You can change that by
-configuring the ``weasyprint`` logger object:
+WeasyPrint uses the :mod:`logging` module from the Python standard library to
+log these errors and let you know about them. When WeasyPrint is launched in a
+terminal, logged messaged will go to *stderr* by default. You can change that
+by configuring the ``weasyprint`` logger object:
 
 .. code-block:: python
 
@@ -242,6 +242,24 @@ configuring the ``weasyprint`` logger object:
     logger = logging.getLogger('weasyprint')
     logger.handlers = []  # Remove the default stderr handler
     logger.addHandler(logging.FileHandler('/path/to/weasyprint.log'))
+
+The ``INFO`` level is used to report the rendering progress. It is useful to
+get feedback when WeasyPrint is launched in a terminal (using the ``--verbose``
+option), or to give this feedback to end users when used as a library. To catch
+these logs, you can for example use a filter:
+
+.. code-block:: python
+
+    import logging
+
+    class LoggerFilter(logging.Filter):
+        def filter(self, record):
+            if record.level == logging.INFO:
+                print(record.getMessage())
+                return False
+
+    logger = logging.getLogger('weasyprint')
+    logger.addFilter(LoggerFilter())
 
 See the documentation of the :mod:`logging` module for details.
 
