@@ -272,18 +272,17 @@ paged media "describing how:
 - content such as page counters are placed in the headers and footers; and
 - orphans and widows can be controlled."
 
-One feature from this document is **not** implemented: `named pages`. All the
-other features are available, including:
+The ``bleed`` and ``marks`` properties from this document are **not**
+implemented. All the other features are available, including:
 
 - the ``@page`` rule and the ``:left``, ``:right``, ``:first`` and ``:blank``
   selectors;
 - the page margin boxes;
 - the page-based counters (with known bugs `#91`_, `#93`_, `#289`_);
-- the page ``size`` property, but **not** the ``bleed`` and ``marks``
-  properties.
+- the page ``size`` property;
+- the named pages.
 
 .. _CSS Paged Media Module Level 3: http://dev.w3.org/csswg/css3-page/
-.. _named pages: http://dev.w3.org/csswg/css3-page/#using-named-pages
 .. _#91: https://github.com/Kozea/WeasyPrint/issues/91
 .. _#93: https://github.com/Kozea/WeasyPrint/issues/93
 .. _#289: https://github.com/Kozea/WeasyPrint/issues/289
