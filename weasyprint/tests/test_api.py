@@ -24,6 +24,7 @@ import zlib
 
 import cairocffi as cairo
 import pytest
+from pdfrw import PdfReader
 
 from .. import CSS, HTML, __main__, default_url_fetcher, navigator
 from ..compat import iteritems, urlencode, urljoin, urlparse_uses_relative
@@ -874,12 +875,12 @@ def test_navigator():
         status, headers, body = wsgi_client('/pdf/' + url)
         assert status == '200 OK'
         assert headers['Content-Type'] == 'application/pdf'
-        assert body.startswith(b'%PDF')
-        assert (b'/A << /Type /Action /S /URI /URI '
-                b'(http://weasyprint.org) >>') in body
-        lipsum = '\ufeffLorem ipsum'.encode('utf-16-be')
-        assert (b'<< /Title (' + lipsum +
-                b')\n/A << /Type /Action /S /GoTo') in body
+        pdf = PdfReader(fdata=body)
+        assert pdf.Root.Pages.Kids[0].Annots[0].A == {
+            '/Type': '/Action', '/URI': '(http://weasyprint.org)',
+            '/S': '/URI'}
+        assert pdf.Root.Outlines.First.Title == '(Lorem ipsum)'
+        assert pdf.Root.Outlines.Last.Title == '(Lorem ipsum)'
 
 
 # Make relative URL references work with our custom URL scheme.

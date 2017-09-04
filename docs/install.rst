@@ -13,6 +13,7 @@ WeasyPrint |version| depends on:
 * cssselect2_ ≥ 0.1
 * CairoSVG_ ≥ 1.0.20
 * Pyphen_ ≥ 0.8
+* pdfrw_ ≥ 0.4
 * Optional: GDK-PixBuf_ [#]_
 
 .. _CPython: http://www.python.org/
@@ -25,6 +26,7 @@ WeasyPrint |version| depends on:
 .. _cssselect2: https://pypi.python.org/pypi/cssselect2
 .. _CairoSVG: http://cairosvg.org/
 .. _Pyphen: http://pyphen.org/
+.. _pdfrw: https://github.com/pmaupin/pdfrw/
 .. _GDK-PixBuf: https://live.gnome.org/GdkPixbuf
 
 
