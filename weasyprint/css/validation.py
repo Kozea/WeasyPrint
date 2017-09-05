@@ -66,8 +66,8 @@ VALIDATORS = {}
 
 EXPANDERS = {}
 
-PREFIXED = set()
-UNPREFIXED = set()
+PROPRIETARY = set()
+UNSTABLE = set()
 PREFIX = '-weasy-'
 
 
@@ -77,7 +77,7 @@ class InvalidValues(ValueError):
 
 # Validators
 
-def validator(property_name=None, prefixed=False, unprefixed=False,
+def validator(property_name=None, proprietary=False, unstable=False,
               wants_base_url=False):
     """Decorator adding a function to the ``VALIDATORS``.
 
@@ -85,14 +85,15 @@ def validator(property_name=None, prefixed=False, unprefixed=False,
     ``property_name`` if given, or is inferred from the function name
     (replacing underscores by hyphens).
 
-    :param prefixed:
-        Vendor-specific (non-standard) and experimental properties are
-        prefixed: stylesheets need to use eg. ``-weasy-bookmark-level: 2``
-        instead of ``bookmark-level: 2``.
-        See http://wiki.csswg.org/spec/vendor-prefixes
-    :param unprefixed:
-        Mark properties that used to be prefixed. When used with the prefix,
-        they will be marked as deprecated and be given a specific warning.
+    :param proprietary:
+        Proprietary (vendor-specific, non-standard) are prefixed: anchors can
+        for example be set using ``-weasy-anchor: attr(id)``.
+        See https://www.w3.org/TR/CSS/#proprietary
+    :param unstable:
+        Mark properties that are defined in specifications that didn't reach
+        the Candidate Recommandation stage. They can be used both
+        vendor-prefixed or unprefixed.
+        See https://www.w3.org/TR/CSS/#unstable-syntax
     :param wants_base_url:
         The function takes the stylesheet’s base URL as an additional
         parameter.
@@ -109,10 +110,10 @@ def validator(property_name=None, prefixed=False, unprefixed=False,
 
         function.wants_base_url = wants_base_url
         VALIDATORS[name] = function
-        if prefixed:
-            PREFIXED.add(name)
-        if unprefixed:
-            UNPREFIXED.add(name)
+        if proprietary:
+            PROPRIETARY.add(name)
+        if unstable:
+            UNSTABLE.add(name)
         return function
     return decorator
 
@@ -414,7 +415,7 @@ class CenterKeywordFakeToken(object):
     unit = None
 
 
-@validator(unprefixed=True)
+@validator(unstable=True)
 def transform_origin(tokens):
     # TODO: parse (and ignore) a third value for Z.
     return simple_2d_position(tokens)
@@ -607,7 +608,7 @@ def break_inside(keyword):
     return keyword in ('auto', 'avoid', 'avoid-page', 'avoid-column')
 
 
-@validator()
+@validator(unstable=True)
 @single_token
 def page(token):
     """``page`` property validation."""
@@ -1099,7 +1100,7 @@ def font_weight(token):
             return token.int_value
 
 
-@validator()
+@validator(unstable=True)
 @single_token
 def image_resolution(token):
     # TODO: support 'snap' and 'from-image'
@@ -1320,14 +1321,14 @@ def overflow_wrap(keyword):
     return keyword in ('normal', 'break-word')
 
 
-@validator(unprefixed=True)
+@validator(unstable=True)
 @single_keyword
 def image_rendering(keyword):
     """Validation for ``image-rendering``."""
     return keyword in ('auto', 'crisp-edges', 'pixelated')
 
 
-@validator(unprefixed=True)
+@validator(unstable=True)
 def size(tokens):
     """``size`` property validation.
 
@@ -1367,7 +1368,7 @@ def size(tokens):
                 return width, height
 
 
-@validator(prefixed=True)  # Non-standard
+@validator(proprietary=True)
 @single_token
 def anchor(token):
     """Validation for ``anchor``."""
@@ -1382,7 +1383,7 @@ def anchor(token):
             return (name, args[0])
 
 
-@validator(prefixed=True, wants_base_url=True)  # Non-standard
+@validator(proprietary=True, wants_base_url=True)
 @single_token
 def link(token, base_url):
     """Validation for ``link``."""
@@ -1417,7 +1418,7 @@ def tab_size(token):
     return get_length(token, negative=False)
 
 
-@validator(prefixed=True, unprefixed=True)  # CSS3 Text
+@validator(unstable=True)
 @single_token
 def hyphens(token):
     """Validation for ``hyphens``."""
@@ -1426,7 +1427,7 @@ def hyphens(token):
         return keyword
 
 
-@validator(prefixed=True, unprefixed=True)  # CSS4 Text
+@validator(unstable=True)
 @single_token
 def hyphenate_character(token):
     """Validation for ``hyphenate-character``."""
@@ -1437,14 +1438,14 @@ def hyphenate_character(token):
         return token.value
 
 
-@validator(prefixed=True, unprefixed=True)  # CSS4 Text
+@validator(unstable=True)
 @single_token
 def hyphenate_limit_zone(token):
     """Validation for ``hyphenate-limit-zone``."""
     return get_length(token, negative=False, percentage=True)
 
 
-@validator(prefixed=True, unprefixed=True)  # CSS4 Text
+@validator(unstable=True)
 def hyphenate_limit_chars(tokens):
     """Validation for ``hyphenate-limit-chars``."""
     if len(tokens) == 1:
@@ -1484,7 +1485,7 @@ def hyphenate_limit_chars(tokens):
             return (total, left, right)
 
 
-@validator(prefixed=True)  # Non-standard
+@validator(proprietary=True)
 @single_token
 def lang(token):
     """Validation for ``lang``."""
@@ -1501,7 +1502,7 @@ def lang(token):
         return ('string', token.value)
 
 
-@validator(prefixed=True, unprefixed=True)  # CSS3 GCPM
+@validator(unstable=True)
 def bookmark_label(tokens):
     """Validation for ``bookmark-label``."""
     parsed_tokens = tuple(validate_content_list_token(v) for v in tokens)
@@ -1509,7 +1510,7 @@ def bookmark_label(tokens):
         return parsed_tokens
 
 
-@validator(prefixed=True, unprefixed=True)  # CSS3 GCPM
+@validator(unstable=True)
 @single_token
 def bookmark_level(token):
     """Validation for ``bookmark-level``."""
@@ -1521,7 +1522,7 @@ def bookmark_level(token):
         return 'none'
 
 
-@validator(prefixed=True, unprefixed=True)  # CSS3 GCPM
+@validator(unstable=True)
 @comma_separated_list
 def string_set(tokens):
     """Validation for ``string-set``."""
@@ -1568,7 +1569,7 @@ def validate_content_list_token(token):
                 return (name, args)
 
 
-@validator(unprefixed=True)
+@validator(unstable=True)
 def transform(tokens):
     if get_single_keyword(tokens) == 'none':
         return ()
@@ -2173,17 +2174,26 @@ def preprocess_declarations(base_url, declarations):
 
         if name.startswith(PREFIX):
             unprefixed_name = name[len(PREFIX):]
-            if unprefixed_name in UNPREFIXED:
+            if unprefixed_name in PROPRIETARY:
+                name = unprefixed_name
+            elif unprefixed_name in UNSTABLE:
                 LOGGER.warning(
                     'Deprecated `%s:%s` at %i:%i, '
-                    'prefixes on standard attributes will be removed '
-                    'in a future version, use `%s`.',
+                    'prefixes on unstable attributes are deprecated, '
+                    'use `%s` instead.',
+                    declaration.name, tinycss2.serialize(declaration.value),
+                    declaration.source_line, declaration.source_column,
+                    unprefixed_name)
+                name = unprefixed_name
+            else:
+                LOGGER.warning(
+                    'Ignored `%s:%s` at %i:%i, '
+                    'prefix on this attribute is not supported, '
+                    'use `%s` instead.',
                     declaration.name, tinycss2.serialize(declaration.value),
                     declaration.source_line, declaration.source_column,
                     unprefixed_name)
                 continue
-            if unprefixed_name in PREFIXED:
-                name = unprefixed_name
 
         expander_ = EXPANDERS.get(name, validate_non_shorthand)
         tokens = remove_whitespace(declaration.value)
