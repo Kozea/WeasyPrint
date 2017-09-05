@@ -486,9 +486,10 @@ class Document(object):
             surface.set_size(
                 math.floor((page.width + 2 * page.bleed) * scale),
                 math.floor((page.height + 2 * page.bleed) * scale))
-            context.translate(page.bleed * scale, page.bleed * scale)
-            page.paint(context, scale=scale)
-            surface.show_page()
+            with stacked(context):
+                context.translate(page.bleed * scale, page.bleed * scale)
+                page.paint(context, scale=scale)
+                surface.show_page()
         surface.finish()
 
         LOGGER.info('Step 7 - Adding PDF metadata')
