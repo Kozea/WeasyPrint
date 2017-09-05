@@ -68,7 +68,7 @@ INITIAL_VALUES = {
     'width': 'auto',
     'z_index': 'auto',
 
-    # Backgrounds and Borders 3: https://www.w3.org/TR/css3-background/
+    # Backgrounds and Borders 3 (CR): https://www.w3.org/TR/css3-background/
     'background_attachment': ('scroll',),
     'background_clip': ('border-box',),
     'background_color': parse_color('transparent'),
@@ -97,10 +97,10 @@ INITIAL_VALUES = {
     'border_top_style': 'none',
     'border_top_width': 3,  # computed value for 'medium'
 
-    # Color 3: https://www.w3.org/TR/css3-color/
+    # Color 3 (REC): https://www.w3.org/TR/css3-color/
     'opacity': 1,
 
-    # Multi-column Layout: https://www.w3.org/TR/css3-multicol/
+    # Multi-column Layout (CR): https://www.w3.org/TR/css3-multicol/
     'column_width': 'auto',
     'column_count': 'auto',
     'column_gap': Dimension(1, 'em'),
@@ -110,7 +110,7 @@ INITIAL_VALUES = {
     'column_fill': 'balance',
     'column_span': 'none',
 
-    # Fonts 3: https://www.w3.org/TR/css-fonts-3/
+    # Fonts 3 (CR): https://www.w3.org/TR/css-fonts-3/
     'font_family': ('serif',),  # depends on user agent
     'font_feature_settings': 'normal',
     'font_kerning': 'auto',
@@ -127,27 +127,27 @@ INITIAL_VALUES = {
     'font_variant_position': 'normal',
     'font_weight': 400,
 
-    # Fragmentation 3: https://www.w3.org/TR/css-break-3/
+    # Fragmentation 3 (CR): https://www.w3.org/TR/css-break-3/
     'break_after': 'auto',
     'break_before': 'auto',
     'break_inside': 'auto',
     'orphans': 2,
     'widows': 2,
 
-    # Generated Content for Paged Media: https://www.w3.org/TR/css-gcpm-3/
+    # Generated Content for Paged Media (WD): https://www.w3.org/TR/css-gcpm-3/
     'bookmark_label': (('content', 'text'),),
     'bookmark_level': 'none',
     'string_set': 'none',
 
-    # Images 3/4: https://www.w3.org/TR/css4-images/
+    # Images 3/4 (CR/WD): https://www.w3.org/TR/css4-images/
     'image_resolution': 1,  # dppx
     'image_rendering': 'auto',
 
-    # Paged Media 3: https://www.w3.org/TR/css3-page/
+    # Paged Media 3 (WD): https://www.w3.org/TR/css3-page/
     'size': None,  # set to A4 in computed_values
     'page': 'auto',
 
-    # Text 3/4: https://www.w3.org/TR/css-text-4/
+    # Text 3/4 (WD/WD): https://www.w3.org/TR/css-text-4/
     'hyphenate_character': '‐',  # computed value chosen by the user agent
     'hyphenate_limit_chars': (5, 2, 2),
     'hyphenate_limit_zone': Dimension(0, 'px'),
@@ -160,11 +160,11 @@ INITIAL_VALUES = {
     'white_space': 'normal',
     'word_spacing': 0,  # computed value for 'normal'
 
-    # Transforms 1: https://www.w3.org/TR/css-transforms-1/
+    # Transforms 1 (WD): https://www.w3.org/TR/css-transforms-1/
     'transform_origin': (Dimension(50, '%'), Dimension(50, '%')),
     'transform': (),  # computed value for 'none'
 
-    # User Interface 3: https://www.w3.org/TR/css-ui-3/
+    # User Interface 3 (CR): https://www.w3.org/TR/css-ui-3/
     'box_sizing': 'content-box',
     'outline_color': 'currentColor',  # invert is not supported
     'outline_style': 'none',
