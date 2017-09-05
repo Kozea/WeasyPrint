@@ -272,7 +272,7 @@ def write_pdf_metadata(document, fileobj, scale, metadata, attachments,
     # It would be better to use /AP for all links and coalesce link shapes that
     # originate from the same HTML link. This would give a feeling similiar to
     # what browsers do with links that span multiple lines.
-    for page, page_links in zip(trailer.Root.Pages.Kids, links):
+    for page, page_links in zip(pages, links):
         annotations = PdfArray()
         for link_type, target, rectangle in page_links:
             if link_type != 'attachment' or annot_files[target] is None:
@@ -320,6 +320,14 @@ def write_pdf_metadata(document, fileobj, scale, metadata, attachments,
         value = w3c_date_to_pdf(getattr(metadata, attr), attr)
         if value is not None:
             setattr(trailer.Info, key, value)
+
+    for page, document_page in zip(pages, document.pages):
+        x, y, width, height = (float(value) for value in page.MediaBox)
+        bleed = document_page.bleed * 0.75  # Pixels into points
+        page.BleedBox = PdfArray((
+            x + bleed / 2, y + bleed / 2, width + bleed, height + bleed))
+        page.TrimBox = PdfArray((
+            x + bleed, y + bleed, width + 2 * bleed, height + 2 * bleed))
 
     fileobj.seek(0)
     PdfWriter().write(fileobj, trailer=trailer)

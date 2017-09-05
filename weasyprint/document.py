@@ -156,6 +156,9 @@ class Page(object):
         #: The page height, including margins, in CSS pixels.
         self.height = page_box.margin_height()
 
+        #: The page bleed width, in CSS pixels.
+        self.bleed = page_box.style['bleed'].value
+
         #: A list of ``(bookmark_level, bookmark_label, target)`` tuples.
         #: :obj:`bookmark_level` and :obj:`bookmark_label` are respectively
         #: an integer and a Unicode string, based on the CSS properties
@@ -481,8 +484,9 @@ class Document(object):
         LOGGER.info('Step 6 - Drawing')
         for page in self.pages:
             surface.set_size(
-                math.floor(page.width * scale),
-                math.floor(page.height * scale))
+                math.floor((page.width + 2 * page.bleed) * scale),
+                math.floor((page.height + 2 * page.bleed) * scale))
+            context.translate(page.bleed * scale, page.bleed * scale)
             page.paint(context, scale=scale)
             surface.show_page()
         surface.finish()

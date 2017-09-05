@@ -272,14 +272,13 @@ paged media "describing how:
 - content such as page counters are placed in the headers and footers; and
 - orphans and widows can be controlled."
 
-The ``bleed`` and ``marks`` properties from this document are **not**
-implemented. All the other features are available, including:
+All the features of this draft are available, including:
 
 - the ``@page`` rule and the ``:left``, ``:right``, ``:first`` and ``:blank``
   selectors;
 - the page margin boxes;
 - the page-based counters (with known bugs `#91`_, `#93`_, `#289`_);
-- the page ``size`` property;
+- the page ``size``, ``bleed`` and ``marks`` properties;
 - the named pages.
 
 .. _CSS Paged Media Module Level 3: http://dev.w3.org/csswg/css3-page/

@@ -615,6 +615,32 @@ def page(token):
         return 'auto' if token.lower_value == 'auto' else token.value
 
 
+@validator()
+@single_token
+def bleed(token):
+    """``bleed`` property validation."""
+    keyword = get_keyword(token)
+    if keyword == 'auto':
+        return 'auto'
+    else:
+        return get_length(token)
+
+
+@validator()
+def marks(tokens):
+    """``marks`` property validation."""
+    if len(tokens) == 2:
+        keywords = [get_keyword(token) for token in tokens]
+        if 'crop' in keywords and 'cross' in keywords:
+            return keywords
+    elif len(tokens) == 1:
+        keyword = get_keyword(tokens[0])
+        if keyword in ('crop', 'cross'):
+            return [keyword]
+        elif keyword == 'none':
+            return 'none'
+
+
 @validator('outline-style')
 @single_keyword
 def outline_style(keyword):
