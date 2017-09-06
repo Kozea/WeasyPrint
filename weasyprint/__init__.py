@@ -354,14 +354,11 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
     elif string is not None:
         yield 'string', string, base_url, None
     else:
-        sources = locals()
-        raise TypeError('Expected exactly one source, got ' + (
-            ', '.join(
-                name for name in (
-                    'guess', 'filename', 'url', 'file_obj', 'string')
-                if locals()[name] is not None)
-            ) or 'nothing'
-        )
+        sources = dict(locals())
+        sources_names = ', '.join(
+            name for name in ('guess', 'filename', 'url', 'file_obj', 'string')
+            if sources[name] is not None) or 'nothing'
+        raise TypeError('Expected exactly one source, got ' + sources_names)
 
 # Work around circular imports.
 from .css import preprocess_stylesheet  # noqa
