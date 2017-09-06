@@ -2884,6 +2884,7 @@ def test_radial_gradients():
         assert (pixel(7, 9) not in (B, r)) ^ thin
 
 
+@requires('cairo', '1.14')
 def test_column_rule():
     """Test standard cases for column-rule-*."""
     # JPG is lossy...
