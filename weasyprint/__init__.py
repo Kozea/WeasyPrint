@@ -299,9 +299,14 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
     if base_url is not None:
         base_url = ensure_url(base_url)
 
-    nones = [
-        param is None for param in (guess, filename, url, file_obj, string)]
-    if nones == [False, True, True, True, True]:
+    selected_params = [
+        param for param in (guess, filename, url, file_obj, string) if
+        param is not None]
+    if len(selected_params) != 1:
+        raise TypeError('Expected exactly one source, got ' + (
+            ', '.join(selected_params) or 'nothing'
+        ))
+    elif guess:
         if hasattr(guess, 'read'):
             type_ = 'file_obj'
         elif url_is_absolute(guess):
@@ -316,12 +321,12 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
             **{str(type_): guess})
         with result as result:
             yield result
-    elif nones == [True, False, True, True, True]:
+    elif filename:
         if base_url is None:
             base_url = path2url(filename)
         with open(filename, 'rb') as file_obj:
             yield 'file_obj', file_obj, base_url, None
-    elif nones == [True, True, False, True, True]:
+    elif url:
         with fetch(url_fetcher, url) as result:
             if check_css_mime_type and result['mime_type'] != 'text/css':
                 LOGGER.error(
@@ -338,7 +343,7 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
                     yield (
                         'file_obj', result['file_obj'], base_url,
                         proto_encoding)
-    elif nones == [True, True, True, False, True]:
+    elif file_obj:
         if base_url is None:
             # filesystem file-like objects have a 'name' attribute.
             name = getattr(file_obj, 'name', None)
@@ -346,16 +351,8 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
             if name and not name.startswith('<'):
                 base_url = ensure_url(name)
         yield 'file_obj', file_obj, base_url, None
-    elif nones == [True, True, True, True, False]:
+    elif string:
         yield 'string', string, base_url, None
-    else:
-        raise TypeError('Expected exactly one source, got ' + (
-            ', '.join(
-                name for i, name in enumerate(
-                    ('guess', 'filename', 'url', 'file_obj', 'string'))
-                if not nones[i]
-            ) or 'nothing'
-        ))
 
 # Work around circular imports.
 from .css import preprocess_stylesheet  # noqa
