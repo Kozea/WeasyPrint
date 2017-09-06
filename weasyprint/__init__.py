@@ -306,7 +306,7 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
         raise TypeError('Expected exactly one source, got ' + (
             ', '.join(selected_params) or 'nothing'
         ))
-    elif guess:
+    elif guess is not None:
         if hasattr(guess, 'read'):
             type_ = 'file_obj'
         elif url_is_absolute(guess):
@@ -321,12 +321,12 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
             **{str(type_): guess})
         with result as result:
             yield result
-    elif filename:
+    elif filename is not None:
         if base_url is None:
             base_url = path2url(filename)
         with open(filename, 'rb') as file_obj:
             yield 'file_obj', file_obj, base_url, None
-    elif url:
+    elif url is not None:
         with fetch(url_fetcher, url) as result:
             if check_css_mime_type and result['mime_type'] != 'text/css':
                 LOGGER.error(
@@ -343,7 +343,7 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
                     yield (
                         'file_obj', result['file_obj'], base_url,
                         proto_encoding)
-    elif file_obj:
+    elif file_obj is not None:
         if base_url is None:
             # filesystem file-like objects have a 'name' attribute.
             name = getattr(file_obj, 'name', None)
@@ -351,8 +351,17 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
             if name and not name.startswith('<'):
                 base_url = ensure_url(name)
         yield 'file_obj', file_obj, base_url, None
-    elif string:
+    elif string is not None:
         yield 'string', string, base_url, None
+    else:
+        sources = locals()
+        raise TypeError('Expected exactly one source, got ' + (
+            ', '.join(
+                name for name in (
+                    'guess', 'filename', 'url', 'file_obj', 'string')
+                if locals()[name] is not None)
+            ) or 'nothing'
+        )
 
 # Work around circular imports.
 from .css import preprocess_stylesheet  # noqa
