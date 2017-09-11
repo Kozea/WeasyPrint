@@ -490,8 +490,9 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                     if over_orphans < 0 and not page_is_empty:
                         # Reached the bottom of the page before we had
                         # enough lines for orphans, cancel the whole box.
+                        page = child.page_values()[0]
                         return (
-                            None, None, {'break': 'any', 'page': None}, [],
+                            None, None, {'break': 'any', 'page': page}, [],
                             False)
                     # How many lines we need on the next page to satisfy widows
                     # -1 for the current line.
@@ -503,8 +504,9 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                                 break
                     if needed > over_orphans and not page_is_empty:
                         # Total number of lines < orphans + widows
+                        page = child.page_values()[0]
                         return (
-                            None, None, {'break': 'any', 'page': None}, [],
+                            None, None, {'break': 'any', 'page': page}, [],
                             False)
                     if needed and needed <= over_orphans:
                         # Remove lines to keep them for the next page
@@ -548,6 +550,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                     elif page_break not in ('left', 'right', 'recto', 'verso'):
                         assert page_name
                         page_break = 'any'
+                    page_name = child.page_values()[0]
                     next_page = {'break': page_break, 'page': page_name}
                     resume_at = (index, None)
                     break
@@ -661,8 +664,9 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                             # The page has content *before* this block:
                             # cancel the block and try to find a break
                             # in the parent.
+                            page = child.page_values()[0]
                             return (
-                                None, None, {'break': 'any', 'page': None}, [],
+                                None, None, {'break': 'any', 'page': page}, [],
                                 False)
                         # else:
                         # ignore this 'avoid' and break anyway.
@@ -673,8 +677,9 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                 else:
                     # This was the first child of this box, cancel the box
                     # completly
+                    page = child.page_values()[0]
                     return (
-                        None, None, {'break': 'any', 'page': None}, [], False)
+                        None, None, {'break': 'any', 'page': page}, [], False)
 
             # Bottom borders may overflow here
             # TODO: back-track somehow when all lines fit but not borders

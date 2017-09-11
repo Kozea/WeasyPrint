@@ -1243,6 +1243,65 @@ def test_page_names():
     assert p.element_tag == 'p'
     assert section.element_tag == 'section'
 
+    pages = parse('''
+        <style>
+            @page small { size: 100px 100px }
+            section { page: small }
+            p { line-height: 80px }
+        </style>
+        <section>
+          <p>small</p>
+          <p>small</p>
+        </section>
+    ''')
+    page1, page2 = pages
+
+    assert (page1.width, page1.height) == (100, 100)
+    html, = page1.children
+    body, = html.children
+    section, = body.children
+    p, = section.children
+    assert section.element_tag == 'section'
+    assert p.element_tag == 'p'
+
+    assert (page2.width, page2.height) == (100, 100)
+    html, = page2.children
+    body, = html.children
+    section, = body.children
+    p, = section.children
+    assert section.element_tag == 'section'
+    assert p.element_tag == 'p'
+
+    pages = parse('''
+        <style>
+            @page { size: 200px 200px }
+            @page small { size: 100px 100px }
+            section { break-after: page; page: small }
+            article { page: small }
+        </style>
+        <section>
+          <div>big</div>
+          <div>big</div>
+        </section>
+        <article>
+          <div>small</div>
+          <div>small</div>
+        </article>
+    ''')
+    page1, page2, = pages
+
+    assert (page1.width, page1.height) == (100, 100)
+    html, = page1.children
+    body, = html.children
+    section, = body.children
+    assert section.element_tag == 'section'
+
+    assert (page2.width, page2.height) == (100, 100)
+    html, = page2.children
+    body, = html.children
+    article, = body.children
+    assert article.element_tag == 'article'
+
 
 @assert_no_logs
 def test_orphans_widows_avoid():
