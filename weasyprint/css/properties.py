@@ -146,7 +146,10 @@ INITIAL_VALUES = {
     # Paged Media 3: https://www.w3.org/TR/css3-page/
     'size': None,  # set to A4 in computed_values
     'page': 'auto',
-    'bleed': 'auto',
+    'bleed_left': 'auto',
+    'bleed_right': 'auto',
+    'bleed_top': 'auto',
+    'bleed_bottom': 'auto',
     'marks': 'none',
 
     # Text 3/4: https://www.w3.org/TR/css-text-4/

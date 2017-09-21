@@ -615,9 +615,12 @@ def page(token):
         return 'auto' if token.lower_value == 'auto' else token.value
 
 
-@validator()
+@validator("bleed-left")
+@validator("bleed-right")
+@validator("bleed-top")
+@validator("bleed-bottom")
 @single_token
-def bleed(token):
+def length_or_auto(token):
     """``bleed`` property validation."""
     keyword = get_keyword(token)
     if keyword == 'auto':
@@ -1656,6 +1659,7 @@ def expander(property_name):
 @expander('border-width')
 @expander('margin')
 @expander('padding')
+@expander('bleed')
 def expand_four_sides(base_url, name, tokens):
     """Expand properties setting a token for the four sides of a box."""
     # Make sure we have 4 tokens
