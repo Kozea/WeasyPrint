@@ -91,5 +91,5 @@ texinfo_documents = [(
 intersphinx_mapping = {
     'python': ('http://docs.python.org/', None),
     'pycairo': ('http://www.cairographics.org/documentation/pycairo/2/', None),
-    'cairocffi': ('http://pythonhosted.org/cairocffi/', None),
+    'cairocffi': ('http://cairocffi.readthedocs.io/', None),
 }
