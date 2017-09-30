@@ -49,9 +49,6 @@ pygments_style = 'sphinx'
 # a list of builtin themes.
 html_theme = 'sphinx_rtd_theme'
 
-# Add any paths that contain custom themes here, relative to this directory.
-html_theme_path = ['_themes']
-
 html_context = {
     'extra_css_files': ['_static/custom.css']
 }
