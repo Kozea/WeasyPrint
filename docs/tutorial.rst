@@ -94,13 +94,16 @@ If you have ``@font-face`` rules in your CSS, you have to create a
     from weasyprint.fonts import FontConfiguration
 
     font_config = FontConfiguration()
-    HTML(string='<h1>The title</h1>')
-    CSS(string='''
+    html = HTML(string='<h1>The title</h1>')
+    css = CSS(string='''
         @font-face {
             font-family: Gentium;
             src: url(http://example.com/fonts/Gentium.otf);
         }
         h1 { font-family: Gentium }''', font_config=font_config)
+    html.write_pdf(
+        '/tmp/example.pdf', stylesheets=[stylesheet],
+        font_config=font_config)
 
 
 Rendering to a single file

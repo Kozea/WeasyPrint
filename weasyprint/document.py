@@ -298,8 +298,9 @@ class Document(object):
     """
     @classmethod
     def _render(cls, html, stylesheets, enable_hinting,
-                presentational_hints=False):
-        font_config = FontConfiguration()
+                presentational_hints=False, font_config=None):
+        if font_config is None:
+            font_config = FontConfiguration()
         page_rules = []
         style_for, cascaded_styles, computed_styles = get_all_computed_styles(
             html, presentational_hints=presentational_hints, user_stylesheets=[

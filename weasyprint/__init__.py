@@ -111,7 +111,7 @@ class HTML(object):
         return get_html_metadata(self.wrapper_element, self.base_url)
 
     def render(self, stylesheets=None, enable_hinting=False,
-               presentational_hints=False):
+               presentational_hints=False, font_config=None):
         """Lay out and paginate the document, but do not (yet) export it
         to PDF or another format.
 
@@ -133,14 +133,18 @@ class HTML(object):
         :type presentational_hints: bool
         :param presentational_hints: Whether HTML presentational hints are
             followed.
+        :type font_config: :class:`~fonts.FontConfiguration`
+        :param font_config: A font configuration handling @font-face rules.
         :returns: A :class:`~document.Document` object.
 
         """
         return Document._render(
-            self, stylesheets, enable_hinting, presentational_hints)
+            self, stylesheets, enable_hinting, presentational_hints,
+            font_config)
 
     def write_pdf(self, target=None, stylesheets=None, zoom=1,
-                  attachments=None, presentational_hints=False):
+                  attachments=None, presentational_hints=False,
+                  font_config=None):
         """Render the document to a PDF file.
 
         This is a shortcut for calling :meth:`render`, then
@@ -164,6 +168,8 @@ class HTML(object):
         :type presentational_hints: bool
         :param presentational_hints: Whether HTML presentational hints are
             followed.
+        :type font_config: :class:`~fonts.FontConfiguration`
+        :param font_config: A font configuration handling @font-face rules.
         :returns:
             The PDF as byte string if :obj:`target` is not provided or
             :obj:`None`, otherwise :obj:`None` (the PDF is written to
@@ -172,19 +178,21 @@ class HTML(object):
         """
         return self.render(
             stylesheets, enable_hinting=False,
-            presentational_hints=presentational_hints).write_pdf(
+            presentational_hints=presentational_hints,
+            font_config=font_config).write_pdf(
                 target, zoom, attachments)
 
     def write_image_surface(self, stylesheets=None, resolution=96,
-                            presentational_hints=False):
+                            presentational_hints=False, font_config=None):
         surface, _width, _height = (
             self.render(stylesheets, enable_hinting=True,
-                        presentational_hints=presentational_hints)
+                        presentational_hints=presentational_hints,
+                        font_config=font_config)
             .write_image_surface(resolution))
         return surface
 
     def write_png(self, target=None, stylesheets=None, resolution=96,
-                  presentational_hints=False):
+                  presentational_hints=False, font_config=None):
         """Paint the pages vertically to a single PNG image.
 
         There is no decoration around pages other than those specified in CSS
@@ -207,6 +215,8 @@ class HTML(object):
         :type presentational_hints: bool
         :param presentational_hints: Whether HTML presentational hints are
             followed.
+        :type font_config: :class:`~fonts.FontConfiguration`
+        :param font_config: A font configuration handling @font-face rules.
         :returns:
             The image as byte string if :obj:`target` is not provided or
             :obj:`None`, otherwise :obj:`None` (the image is written to
@@ -215,7 +225,8 @@ class HTML(object):
         """
         png_bytes, _width, _height = (
             self.render(stylesheets, enable_hinting=True,
-                        presentational_hints=presentational_hints)
+                        presentational_hints=presentational_hints,
+                        font_config=font_config)
             .write_png(target, resolution))
         return png_bytes
 
