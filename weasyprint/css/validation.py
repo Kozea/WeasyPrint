@@ -216,9 +216,10 @@ RESOLUTION_TO_DPPX = {
 
 def get_resolution(token):
     """Return the value in dppx of a <resolution> token, or None."""
-    factor = RESOLUTION_TO_DPPX.get(token.unit)
-    if factor is not None:
-        return token.value * factor
+    if token.type == 'dimension':
+        factor = RESOLUTION_TO_DPPX.get(token.unit)
+        if factor is not None:
+            return token.value * factor
 
 
 def safe_urljoin(base_url, url):
