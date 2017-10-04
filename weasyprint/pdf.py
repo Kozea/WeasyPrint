@@ -89,14 +89,13 @@ def _create_compressed_file_object(source):
 
     pdf_file_object = PdfDict(
         Type=PdfName('EmbeddedFile'), Filter=PdfName('FlateDecode'))
-    pdf_file_object.stream = ''
+    pdf_file_object.stream = b''
     size = 0
     for data in iter(lambda: source.read(4096), b''):
         size += len(data)
         md5.update(data)
-        # TODO: Remove ".decode('latin1')" as soon as "stream" allows bytes
-        pdf_file_object.stream += compress.compress(data).decode('latin1')
-    pdf_file_object.stream += compress.flush(zlib.Z_FINISH).decode('latin1')
+        pdf_file_object.stream += compress.compress(data)
+    pdf_file_object.stream += compress.flush(zlib.Z_FINISH)
     pdf_file_object.Params = PdfDict(
         CheckSum=PdfString('<{}>'.format(md5.hexdigest())), Size=size)
     return pdf_file_object
@@ -186,6 +185,7 @@ def _create_pdf_attachment(attachment, url_fetcher):
             if isinstance(source, bytes):
                 source = io.BytesIO(source)
             pdf_file_object = _create_compressed_file_object(source)
+            print(pdf_file_object)
     except URLFetchingError as exc:
         LOGGER.error('Failed to load attachment: %s', exc)
         return None
