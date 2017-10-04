@@ -21,8 +21,8 @@ WeasyPrint |version| depends on:
 .. _CFFI: https://cffi.readthedocs.io/
 .. _html5lib: https://html5lib.readthedocs.io/
 .. _cairocffi: https://cairocffi.readthedocs.io/
-.. _tinycss2: https://pypi.python.org/pypi/tinycss2
-.. _cssselect2: https://pypi.python.org/pypi/cssselect2
+.. _tinycss2: https://tinycss2.readthedocs.io/
+.. _cssselect2: https://cssselect2.readthedocs.io/
 .. _CairoSVG: http://cairosvg.org/
 .. _Pyphen: http://pyphen.org/
 .. _GDK-PixBuf: https://live.gnome.org/GdkPixbuf
