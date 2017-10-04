@@ -320,7 +320,6 @@ class Document(object):
         rendering = cls(
             [Page(p, enable_hinting) for p in page_boxes],
             DocumentMetadata(**html._get_metadata()), html.url_fetcher)
-        font_config.clean()
         return rendering
 
     def __init__(self, pages, metadata, url_fetcher):

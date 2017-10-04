@@ -36,9 +36,6 @@ class FontConfiguration:
     def add_font_face(self, rule_descriptors, url_fetcher):
         """Add a font into the application."""
 
-    def clean(self):
-        """Clean a font configuration after rendering a document."""
-
 
 if sys.platform.startswith('win'):
     warnings.warn('@font-face is currently not supported on Windows')
@@ -290,7 +287,8 @@ else:
                 'Font-face "%s" cannot be loaded',
                 rule_descriptors['font_family'])
 
-        def clean(self):
+        def __del__(self):
             """Clean a font configuration for a document."""
             for filename in self._filenames:
                 os.remove(filename)
+            return super(FontConfiguration, self).__del__()
