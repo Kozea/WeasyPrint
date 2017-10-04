@@ -291,4 +291,3 @@ else:
             """Clean a font configuration for a document."""
             for filename in self._filenames:
                 os.remove(filename)
-            return super(FontConfiguration, self).__del__()
