@@ -19,8 +19,8 @@ import operator
 import cairocffi as cairo
 
 from .compat import xrange
-from .images import SVGImage
 from .formatting_structure import boxes
+from .images import SVGImage
 from .layout.backgrounds import BackgroundLayer
 from .stacking import StackingContext
 from .text import show_first_line
