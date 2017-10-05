@@ -620,7 +620,7 @@ def page(token):
 @validator("bleed-top")
 @validator("bleed-bottom")
 @single_token
-def length_or_auto(token):
+def bleed(token):
     """``bleed`` property validation."""
     keyword = get_keyword(token)
     if keyword == 'auto':
