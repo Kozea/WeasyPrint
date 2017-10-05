@@ -18,12 +18,18 @@ import os
 
 import cairocffi
 import pytest
+from pdfrw import PdfReader
 
-from .. import CSS, Attachment, pdf
+from .. import Attachment
 from ..images import CAIRO_HAS_MIME_DATA
 from ..urls import path2url
 from .testing_utils import (
     FakeHTML, assert_no_logs, capture_logs, resource_filename, temp_directory)
+
+# Top of the page is 297mm ~= 842pt
+TOP = 842
+# Right of the page is 210mm ~= 595pt
+RIGHT = 595
 
 
 @assert_no_logs
@@ -39,81 +45,60 @@ def test_pdf_parser():
         surface.show_page()
     surface.finish()
 
-    sizes = [page.get_value('MediaBox', '\[(.+?)\]').strip()
-             for page in pdf.PDFFile(fileobj).pages]
-    assert sizes == [b'0 0 100 100', b'0 0 200 10', b'0 0 3.14 987654321']
+    fileobj.seek(0)
+    sizes = [page.MediaBox for page in PdfReader(fileobj).Root.Pages.Kids]
+    assert sizes == [
+        ['0', '0', '100', '100'],
+        ['0', '0', '200', '10'],
+        ['0', '0', '3.14', '987654321']
+    ]
 
 
 @assert_no_logs
 def test_page_size():
     pdf_bytes = FakeHTML(string='<style>@page{size:3in 4in').write_pdf()
-    assert b'/MediaBox [ 0 0 216 288 ]' in pdf_bytes
+    pdf = PdfReader(fdata=pdf_bytes)
+    assert pdf.Root.Pages.Kids[0].MediaBox == ['0', '0', '216', '288']
 
     pdf_bytes = FakeHTML(string='<style>@page{size:3in 4in').write_pdf(
         zoom=1.5)
-    assert b'/MediaBox [ 0 0 324 432 ]' in pdf_bytes
-
-
-def get_metadata(html, base_url=resource_filename('<inline HTML>'), zoom=1):
-    return pdf.prepare_metadata(
-        FakeHTML(string=html, base_url=base_url).render(stylesheets=[
-            CSS(string='@page { size: 500pt 1000pt; margin: 50pt }')]),
-        bookmark_root_id=0, scale=zoom * 0.75)
-
-
-def get_bookmarks(html, structure_only=False, **kwargs):
-    root, bookmarks, _links = get_metadata(html, **kwargs)
-    for bookmark in bookmarks:
-        if structure_only:
-            bookmark.pop('target')
-            bookmark.pop('label')
-        else:
-            # Eliminate errors of floating point arithmetic
-            # (eg. 499.99999999999994 instead of 500)
-            p, x, y = bookmark['target']
-            bookmark['target'] = p, round(x, 6), round(y, 6)
-    return root, bookmarks
-
-
-def get_links(html, **kwargs):
-    _root, _bookmarks, links = get_metadata(html, **kwargs)
-    for page_links in links:
-        for i, (link_type, target, rectangle) in enumerate(page_links):
-            if link_type == 'internal':
-                page, x, y = target
-                target = page, round(x, 6), round(y, 6)
-            rectangle = tuple(round(v, 6) for v in rectangle)
-            page_links[i] = link_type, target, rectangle
-    return links
+    pdf = PdfReader(fdata=pdf_bytes)
+    assert pdf.Root.Pages.Kids[0].MediaBox == ['0', '0', '324', '432']
 
 
 @assert_no_logs
 def test_bookmarks():
-    """Test the structure of the document bookmarks.
-
-    Warning: the PDF output of this structure is not tested.
-
-    """
-    root, bookmarks = get_bookmarks('''
+    """Test the structure of the document bookmarks."""
+    pdf_bytes = FakeHTML(string='''
         <h1>a</h1>  #
         <h4>b</h4>  ####
         <h3>c</h3>  ###
         <h2>d</h2>  ##
         <h1>e</h1>  #
-    ''', structure_only=True)
-    assert root == dict(Count=5, First=1, Last=5)
-    assert bookmarks == [
-        dict(Count=3, First=2, Last=4, Next=5, Parent=0, Prev=None),
-        dict(Count=0, First=None, Last=None, Next=3, Parent=1, Prev=None),
-        dict(Count=0, First=None, Last=None, Next=4, Parent=1, Prev=2),
-        dict(Count=0, First=None, Last=None, Next=None, Parent=1, Prev=3),
-        dict(Count=0, First=None, Last=None, Next=None, Parent=0, Prev=1)]
+    ''').write_pdf()
+    outlines = PdfReader(fdata=pdf_bytes).Root.Outlines
+    # a
+    # |_ b
+    # |_ c
+    # L_ d
+    # e
+    assert outlines.Count == '5'
+    assert outlines.First.Title == '(a)'
+    assert outlines.First.First.Title == '(b)'
+    assert outlines.First.First.Next.Title == '(c)'
+    assert outlines.First.First.Next.Next.Title == '(d)'
+    assert outlines.First.Last.Title == '(d)'
+    assert outlines.First.Next.Title == '(e)'
+    assert outlines.Last.Title == '(e)'
 
-    root, bookmarks = get_bookmarks('<body>')
-    assert root == dict(Count=0)
-    assert bookmarks == []
+    pdf_bytes = FakeHTML(string='<body>').write_pdf()
+    assert PdfReader(fdata=pdf_bytes).Root.Outlines is None
 
-    root, bookmarks = get_bookmarks('''
+    pdf_bytes = FakeHTML(string='<h1>a nbsp…</h1>').write_pdf()
+    outlines = PdfReader(fdata=pdf_bytes).Root.Outlines
+    assert outlines.First.Title.decode() == 'a nbsp…'
+
+    pdf_bytes = FakeHTML(string='''
         <style>
             * { height: 90pt; margin: 0 0 10pt 0 }
         </style>
@@ -129,48 +114,64 @@ def test_bookmarks():
         <h3>Title 9</h3>
         <h1>Title 10</h1>
         <h2>Title 11</h2>
-    ''')
-    assert root == dict(Count=11, First=1, Last=10)
-    assert bookmarks == [
-        dict(Count=0, First=None, Last=None, Next=2, Parent=0, Prev=None,
-             label='Title 1', target=(0, 50, 950)),
-        dict(Count=4, First=3, Last=6, Next=7, Parent=0, Prev=1,
-             label='Title 2', target=(0, 50, 850)),
-        dict(Count=0, First=None, Last=None, Next=4, Parent=2, Prev=None,
-             label='Title 3', target=(0, 70, 750)),
-        dict(Count=1, First=5, Last=5, Next=6, Parent=2, Prev=3,
-             label='Title 4', target=(0, 50, 650)),
-        dict(Count=0, First=None, Last=None, Next=None, Parent=4, Prev=None,
-             label='Title 5', target=(0, 50, 550)),
-        dict(Count=0, First=None, Last=None, Next=None, Parent=2, Prev=4,
-             label='Title 6', target=(1, 50, 850)),
-        dict(Count=2, First=8, Last=8, Next=10, Parent=0, Prev=2,
-             label='Title 7', target=(1, 50, 750)),
-        dict(Count=1, First=9, Last=9, Next=None, Parent=7, Prev=None,
-             label='Title 8', target=(1, 50, 650)),
-        dict(Count=0, First=None, Last=None, Next=None, Parent=8, Prev=None,
-             label='Title 9', target=(1, 50, 550)),
-        dict(Count=1, First=11, Last=11, Next=None, Parent=0, Prev=7,
-             label='Title 10', target=(1, 50, 450)),
-        dict(Count=0, First=None, Last=None, Next=None, Parent=10, Prev=None,
-             label='Title 11', target=(1, 50, 350))]
+    ''').write_pdf()
+    outlines = PdfReader(fdata=pdf_bytes).Root.Outlines
+    # 1
+    # 2
+    # |_ 3
+    # |_ 4
+    # |  L_ 5
+    # L_ 6
+    # 7
+    # L_ 8
+    #    L_ 9
+    # 10
+    # L_ 11
+    assert outlines.Count == '11'
+    assert outlines.First.Title == '(Title 1)'
+    assert outlines.First.Next.Title == '(Title 2)'
+    assert outlines.First.Next.Count == '5'
+    assert outlines.First.Next.First.Title == '(Title 3)'
+    assert outlines.First.Next.First.Parent.Title == '(Title 2)'
+    assert outlines.First.Next.First.Next.Title == '(Title 4)'
+    assert outlines.First.Next.First.Next.Count == '2'
+    assert outlines.First.Next.First.Next.First.Title == '(Title 5)'
+    assert outlines.First.Next.First.Next.Last.Title == '(Title 5)'
+    assert outlines.First.Next.First.Next.Next.Title == '(Title 6)'
+    assert outlines.First.Next.Last.Title == '(Title 6)'
+    assert outlines.First.Next.Next.Title == '(Title 7)'
+    assert outlines.First.Next.Next.Count == '3'
+    assert outlines.First.Next.Next.First.Title == '(Title 8)'
+    assert outlines.First.Next.Next.Last.Title == '(Title 8)'
+    assert outlines.First.Next.Next.Last.Count == '2'
+    assert outlines.First.Next.Next.First.First.Title == '(Title 9)'
+    assert outlines.First.Next.Next.First.Last.Title == '(Title 9)'
+    assert outlines.First.Next.Next.Next.Title == '(Title 10)'
+    assert outlines.Last.Title == '(Title 10)'
+    assert outlines.Last.First.Title == '(Title 11)'
+    assert outlines.Last.Last.Title == '(Title 11)'
 
-    root, bookmarks = get_bookmarks('''
+    pdf_bytes = FakeHTML(string='''
         <h2>1</h2> level 1
         <h4>2</h4> level 2
         <h2>3</h2> level 1
         <h3>4</h3> level 2
         <h4>5</h4> level 3
-    ''', structure_only=True)
-    assert root == dict(Count=5, First=1, Last=3)
-    assert bookmarks == [
-        dict(Count=1, First=2, Last=2, Next=3, Parent=0, Prev=None),
-        dict(Count=0, First=None, Last=None, Next=None, Parent=1, Prev=None),
-        dict(Count=2, First=4, Last=4, Next=None, Parent=0, Prev=1),
-        dict(Count=1, First=5, Last=5, Next=None, Parent=3, Prev=None),
-        dict(Count=0, First=None, Last=None, Next=None, Parent=4, Prev=None)]
+    ''').write_pdf()
+    outlines = PdfReader(fdata=pdf_bytes).Root.Outlines
+    # 1
+    # L_ 2
+    # 3
+    # L_ 4
+    #    L_ 5
+    assert outlines.Count == '5'
+    assert outlines.First.Title == '(1)'
+    assert outlines.First.First.Title == '(2)'
+    assert outlines.Last.Title == '(3)'
+    assert outlines.Last.First.Title == '(4)'
+    assert outlines.Last.First.First.Title == '(5)'
 
-    root, bookmarks = get_bookmarks('''
+    pdf_bytes = FakeHTML(string='''
         <h2>1</h2> h2 level 1
         <h4>2</h4> h4 level 2
         <h3>3</h3> h3 level 2
@@ -180,39 +181,46 @@ def test_bookmarks():
         <h2>7</h2> h2 level 2
         <h4>8</h4> h4 level 3
         <h1>9</h1> h1 level 1
-    ''', structure_only=True)
-    assert root == dict(Count=9, First=1, Last=9)
-    assert bookmarks == [
-        dict(Count=3, First=2, Last=3, Next=5, Parent=0, Prev=None),
-        dict(Count=0, First=None, Last=None, Next=3, Parent=1, Prev=None),
-        dict(Count=1, First=4, Last=4, Next=None, Parent=1, Prev=2),
-        dict(Count=0, First=None, Last=None, Next=None, Parent=3, Prev=None),
-        dict(Count=3, First=6, Last=7, Next=9, Parent=0, Prev=1),
-        dict(Count=0, First=None, Last=None, Next=7, Parent=5, Prev=None),
-        dict(Count=1, First=8, Last=8, Next=None, Parent=5, Prev=6),
-        dict(Count=0, First=None, Last=None, Next=None, Parent=7, Prev=None),
-        dict(Count=0, First=None, Last=None, Next=None, Parent=0, Prev=5)]
+    ''').write_pdf()
+    # 1
+    # |_ 2
+    # L_ 3
+    #    L_ 4
+    # 5
+    # |_ 6
+    # L_ 7
+    #    L_ 8
+    # 9
+    outlines = PdfReader(fdata=pdf_bytes).Root.Outlines
+    assert outlines.Count == '9'
+    assert outlines.First.Title == '(1)'
+    assert outlines.First.First.Title == '(2)'
+    assert outlines.First.First.Next.Title == '(3)'
+    assert outlines.First.First.Next.First.Title == '(4)'
+    assert outlines.First.Next.Title == '(5)'
+    assert outlines.First.Next.First.Title == '(6)'
+    assert outlines.First.Next.First.Next.Title == '(7)'
+    assert outlines.First.Next.First.Next.First.Title == '(8)'
+    assert outlines.Last.Title == '(9)'
 
     # Reference for the next test. zoom=1
-    root, bookmarks = get_bookmarks('<h2>a</h2>')
-    assert root == dict(Count=1, First=1, Last=1)
-    assert bookmarks == [
-        dict(Count=0, First=None, Last=None, Next=None, Parent=0, Prev=None,
-             label='a', target=(0, 50, 950))]
+    pdf_bytes = FakeHTML(string='<h2>a</h2>').write_pdf()
+    outlines = PdfReader(fdata=pdf_bytes).Root.Outlines
+    assert outlines.First.Title == '(a)'
+    y = float(outlines.First.A.D[3])
 
-    root, bookmarks = get_bookmarks('<h2>a</h2>', zoom=1.5)
-    assert root == dict(Count=1, First=1, Last=1)
-    assert bookmarks == [
-        dict(Count=0, First=None, Last=None, Next=None, Parent=0, Prev=None,
-             label='a', target=(0, 75, 1425))]
+    pdf_bytes = FakeHTML(string='<h2>a</h2>').write_pdf(zoom=1.5)
+    outlines = PdfReader(fdata=pdf_bytes).Root.Outlines
+    assert outlines.First.Title == '(a)'
+    assert round(float(outlines.First.A.D[3])) == round(y * 1.5)
 
 
 @assert_no_logs
 def test_links():
-    links = get_links('<body>')
-    assert links == [[]]
+    pdf_bytes = FakeHTML(string='<body>').write_pdf()
+    assert PdfReader(fdata=pdf_bytes).Root.Pages.Kids[0].Annots is None
 
-    links = get_links('''
+    pdf_bytes = FakeHTML(string='''
         <style>
             body { margin: 0; font-size: 10pt; line-height: 2 }
             p { display: block; height: 90pt; margin: 0 0 10pt 0 }
@@ -227,72 +235,118 @@ def test_links():
             <a style="display: block; page-break-before: always; height: 30pt"
                href="#hel%6Co"></a>
         </p>
-    ''')
-    assert links == [
-        [
-            # 30pt wide (like the image), 20pt high (like line-height)
-            ('external', 'http://weasyprint.org', (50, 950, 80, 930)),
-            # The image itself: 30*30pt
-            ('external', 'http://weasyprint.org', (50, 950, 80, 920)),
+    ''', base_url=resource_filename('<inline HTML>')).write_pdf()
+    links = [
+        annot for page in PdfReader(fdata=pdf_bytes).Root.Pages.Kids
+        for annot in page.Annots]
 
-            # 32pt wide (image + 2 * 1pt of border), 20pt high
-            ('internal', (1, 50, 950), (60, 850, 92, 830)),
-            # The image itself: 32*32pt
-            ('internal', (1, 50, 950), (60, 850, 92, 818)),
-        ], [
-            # 400pt wide (block), 30pt high
-            ('internal', (0, 50, 750), (50, 950, 450, 920)),
-        ]
-    ]
+    # 30pt wide (like the image), 20pt high (like line-height)
+    assert links[0].A == {
+        '/URI': '(http://weasyprint.org)', '/S': '/URI', '/Type': '/Action'}
+    assert [round(float(value)) for value in links[0].Rect] == [
+        0, TOP, 30, TOP - 20]
+    # The image itself: 30*30pt
+    assert links[1].A == {
+        '/URI': '(http://weasyprint.org)', '/S': '/URI', '/Type': '/Action'}
+    assert [round(float(value)) for value in links[1].Rect] == [
+        0, TOP, 30, TOP - 30]
 
-    links = get_links(
-        '<a href="../lipsum" style="display: block">',
-        base_url='http://weasyprint.org/foo/bar/')
-    assert links == [[('external',
-                       'http://weasyprint.org/foo/lipsum',
-                       (50, 950, 450, 950))]]
+    # 32pt wide (image + 2 * 1pt of border), 20pt high
+    assert links[2].A.S == '/GoTo'
+    assert links[2].A.Type == '/Action'
+    assert links[2].A.D[1] == '/XYZ'
+    assert round(float(links[2].A.D[3])) == TOP
+    assert [round(float(value)) for value in links[2].Rect] == [
+        10, TOP - 100, 10 + 32, TOP - 100 - 20]
+    # The image itself: 32*32pt
+    assert links[3].A.S == '/GoTo'
+    assert links[3].A.Type == '/Action'
+    assert links[3].A.D[1] == '/XYZ'
+    assert round(float(links[3].A.D[3])) == TOP
+    assert [round(float(value)) for value in links[3].Rect] == [
+        10, TOP - 100, 10 + 32, TOP - 100 - 32]
+
+    # 100% wide (block), 30pt high
+    assert links[4].A.S == '/GoTo'
+    assert links[4].A.Type == '/Action'
+    assert links[4].A.D[1] == '/XYZ'
+    assert round(float(links[4].A.D[3])) == TOP - 200
+    assert [round(float(value)) for value in links[4].Rect] == [
+        0, TOP, RIGHT, TOP - 30]
+
+    # 100% wide (block), 0pt high
+    pdf_bytes = FakeHTML(
+        string='<a href="../lipsum" style="display: block">',
+        base_url='http://weasyprint.org/foo/bar/').write_pdf()
+    link, = [
+        annot for page in PdfReader(fdata=pdf_bytes).Root.Pages.Kids
+        for annot in page.Annots]
+    assert link.A == {
+        '/URI': '(http://weasyprint.org/foo/lipsum)',
+        '/S': '/URI',
+        '/Type': '/Action',
+    }
+    assert [round(float(value)) for value in link.Rect] == [0, TOP, RIGHT, TOP]
 
 
 @assert_no_logs
 def test_relative_links():
     # Relative URI reference without a base URI: allowed for anchors
-    links = get_links(
-        '<a href="../lipsum" style="display: block">',
-        base_url=None)
-    assert links == [[('external', '../lipsum', (50, 950, 450, 950))]]
+    pdf_bytes = FakeHTML(
+        string='<a href="../lipsum" style="display: block">',
+        base_url=None).write_pdf()
+    link, = PdfReader(fdata=pdf_bytes).Root.Pages.Kids[0].Annots
+    assert link.A == {'/URI': '(../lipsum)', '/S': '/URI', '/Type': '/Action'}
+    assert [round(float(value)) for value in link.Rect] == [0, TOP, RIGHT, TOP]
 
     # Relative URI reference without a base URI: not supported for -weasy-link
     with capture_logs() as logs:
-        links = get_links(
-            '<div style="-weasy-link: url(../lipsum)">',
-            base_url=None)
-    assert links == [[]]
+        pdf_bytes = FakeHTML(
+            string='<div style="-weasy-link: url(../lipsum)">',
+            base_url=None).write_pdf()
+    assert PdfReader(fdata=pdf_bytes).Root.Pages.Kids[0].Annots is None
     assert len(logs) == 1
     assert 'WARNING: Ignored `-weasy-link: url("../lipsum")`' in logs[0]
     assert 'Relative URI reference without a base URI' in logs[0]
 
     # Internal URI reference without a base URI: OK
-    links = get_links(
-        '<a href="#lipsum" id="lipsum" style="display: block">',
-        base_url=None)
-    assert links == [[('internal', (0, 50, 950), (50, 950, 450, 950))]]
+    pdf_bytes = FakeHTML(
+        string='<a href="#lipsum" id="lipsum" style="display: block">',
+        base_url=None).write_pdf()
+    link, = PdfReader(fdata=pdf_bytes).Root.Pages.Kids[0].Annots
+    assert link.A.S == '/GoTo'
+    assert link.A.Type == '/Action'
+    assert link.A.D[1] == '/XYZ'
+    assert round(float(link.A.D[3])) == TOP
+    assert [round(float(value)) for value in link.Rect] == [0, TOP, RIGHT, TOP]
 
-    links = get_links(
-        '<div style="-weasy-link: url(#lipsum)" id="lipsum">',
-        base_url=None)
-    assert links == [[('internal', (0, 50, 950), (50, 950, 450, 950))]]
+    pdf_bytes = FakeHTML(
+        string='<div style="-weasy-link: url(#lipsum)" id="lipsum">',
+        base_url=None).write_pdf()
+    link, = PdfReader(fdata=pdf_bytes).Root.Pages.Kids[0].Annots
+    assert link.A.S == '/GoTo'
+    assert link.A.Type == '/Action'
+    assert link.A.D[1] == '/XYZ'
+    assert round(float(link.A.D[3])) == TOP
+    assert [round(float(value)) for value in link.Rect] == [0, TOP, RIGHT, TOP]
 
 
 @assert_no_logs
 def test_missing_links():
     with capture_logs() as logs:
-        links = get_links('''
+        pdf_bytes = FakeHTML(string='''
             <style> a { display: block; height: 15pt; } </style>
             <body>
                 <a href="#lipsum"></a>
                 <a href="#missing" id="lipsum"></a>
-        ''', base_url=None)
-    assert links == [[('internal', (0, 50, 935), (50, 950, 450, 935))]]
+        ''', base_url=None).write_pdf()
+    link, = PdfReader(fdata=pdf_bytes).Root.Pages.Kids[0].Annots
+    assert link.A.S == '/GoTo'
+    assert link.A.Type == '/Action'
+    assert link.A.D[1] == '/XYZ'
+    assert round(float(link.A.D[3])) == TOP - 15
+    assert [round(float(value)) for value in link.Rect] == [
+        0, TOP, RIGHT, TOP - 15]
     assert len(logs) == 1
     assert 'ERROR: No anchor #missing for internal URI reference' in logs[0]
 
@@ -323,17 +377,14 @@ def test_document_info():
         <meta name=dcterms.created content=2011-04>
         <meta name=dcterms.modified content=2013-07-21T23:46+01:00>
     ''').write_pdf()
-    assert (b'/Author (\xfe\xff\x00I\x00 \x00M\x00e\x00 \x00&\x00 \x00'
-            b'M\x00y\x00s\x00e\x00l\x00f)' in pdf_bytes)
-    assert (b'/Title (\xfe\xff\x00T\x00e\x00s\x00t\x00 \x00d\x00o\x00c'
-            b'\x00u\x00m\x00e\x00n\x00t)' in pdf_bytes)
-    assert (b'/Creator (\xfe\xff\x00H\x00u\x00m\x00a\x00n\x00\xa0\x00a'
-            b'\x00f\x00t\x00e\x00r\x00\xa0\x00a\x00l\x00l)' in pdf_bytes)
-    assert (b'/Keywords (\xfe\xff\x00h\x00t\x00m\x00l\x00,\x00 '
-            b'\x00c\x00s\x00s\x00,\x00 \x00p\x00d\x00f)' in pdf_bytes)
-    assert b'/Subject (\xfe\xff\x00B\x00l\x00a\x00h &\x00 )' in pdf_bytes
-    assert b'/CreationDate (D:201104)' in pdf_bytes
-    assert b"/ModDate (D:20130721234600+01'00')" in pdf_bytes
+    info = PdfReader(fdata=pdf_bytes).Info
+    assert info.Author.decode() == 'I Me & Myself'
+    assert info.Title.decode() == 'Test document'
+    assert info.Creator.decode() == 'Human after all'
+    assert info.Keywords.decode() == 'html, css, pdf'
+    assert info.Subject.decode() == 'Blah… '
+    assert info.CreationDate.decode() == '201104'
+    assert info.ModDate.decode() == "20130721234600+01'00'"
 
 
 @assert_no_logs
@@ -373,34 +424,32 @@ def test_embedded_files():
                     io.BytesIO(b'file like obj')
                 ]
             )
+    pdf = PdfReader(fdata=pdf_bytes)
+    embedded = pdf.Root.Names.EmbeddedFiles.Names
 
-    assert ((b'<' + hashlib.md5(b'hi there').hexdigest().encode('ascii') +
-             b'>') in pdf_bytes)
-    assert (b'/F ()' in pdf_bytes)
-    assert (b'/UF (\xfe\xff\x00a\x00t\x00t\x00a\x00c\x00h\x00m\x00e\x00n'
-            b'\x00t\x00.\x00b\x00i\x00n)' in pdf_bytes)
-    assert (b'/Desc (\xfe\xff\x00s\x00o\x00m\x00e\x00 \x00f\x00i\x00l\x00e'
-            b'\x00 \x00a\x00t\x00t\x00a\x00c\x00h\x00m\x00e\x00n\x00t\x00 '
-            b'\x00\xe4\x00\xf6\x00\xfc)' in pdf_bytes)
+    assert embedded[1].EF.F.Params.CheckSum == (
+        '<{}>'.format(hashlib.md5(b'hi there').hexdigest()))
+    assert embedded[1].F.decode() == ''
+    assert embedded[1].UF.decode() == 'attachment.bin'
+    assert embedded[1].Desc.decode() == 'some file attachment äöü'
 
-    assert hashlib.md5(adata).hexdigest().encode('ascii') in pdf_bytes
-    assert (os.path.basename(absolute_tmp_file).encode('utf-16-be')
-            in pdf_bytes)
+    assert embedded[3].EF.F.Params.CheckSum == (
+        '<{}>'.format(hashlib.md5(adata).hexdigest()))
+    assert embedded[3].UF.decode() == os.path.basename(absolute_tmp_file)
 
-    assert hashlib.md5(rdata).hexdigest().encode('ascii') in pdf_bytes
-    assert (os.path.basename(relative_tmp_file).encode('utf-16-be')
-            in pdf_bytes)
+    assert embedded[5].EF.F.Params.CheckSum == (
+        '<{}>'.format(hashlib.md5(rdata).hexdigest()))
+    assert embedded[5].UF.decode() == os.path.basename(relative_tmp_file)
 
-    assert (hashlib.md5(b'oob attachment').hexdigest().encode('ascii')
-            in pdf_bytes)
-    assert b'/Desc (\xfe\xff\x00H\x00e\x00l\x00l\x00o)' in pdf_bytes
-    assert (hashlib.md5(b'raw URL').hexdigest().encode('ascii')
-            in pdf_bytes)
-    assert (hashlib.md5(b'file like obj').hexdigest().encode('ascii')
-            in pdf_bytes)
+    assert embedded[7].EF.F.Params.CheckSum == (
+        '<{}>'.format(hashlib.md5(b'oob attachment').hexdigest()))
+    assert embedded[7].Desc.decode() == 'Hello'
 
-    assert b'/EmbeddedFiles' in pdf_bytes
-    assert b'/Outlines' in pdf_bytes
+    assert embedded[9].EF.F.Params.CheckSum == (
+        '<{}>'.format(hashlib.md5(b'raw URL').hexdigest()))
+
+    assert embedded[11].EF.F.Params.CheckSum == (
+        '<{}>'.format(hashlib.md5(b'file like obj').hexdigest()))
 
     pdf_bytes = FakeHTML(string='''
         <title>Test document 2</title>
@@ -409,27 +458,28 @@ def test_embedded_files():
             rel="attachment"
             href="data:,some data">
     ''').write_pdf()
+    pdf = PdfReader(fdata=pdf_bytes)
+    embedded = pdf.Root.Names.EmbeddedFiles.Names
 
-    assert hashlib.md5(b'some data').hexdigest().encode('ascii') in pdf_bytes
-    assert b'/EmbeddedFiles' in pdf_bytes
-    assert b'/Outlines' not in pdf_bytes
+    assert embedded[1].EF.F.Params.CheckSum == (
+        '<{}>'.format(hashlib.md5(b'some data').hexdigest()))
 
     pdf_bytes = FakeHTML(string='''
         <title>Test document 3</title>
         <meta charset="utf-8">
         <h1>Heading</h1>
     ''').write_pdf()
-
-    assert b'/EmbeddedFiles' not in pdf_bytes
-    assert b'/Outlines' in pdf_bytes
+    pdf = PdfReader(fdata=pdf_bytes)
+    assert pdf.Root.Names is None
+    assert pdf.Root.Outlines is not None
 
     pdf_bytes = FakeHTML(string='''
         <title>Test document 4</title>
         <meta charset="utf-8">
     ''').write_pdf()
-
-    assert b'/EmbeddedFiles' not in pdf_bytes
-    assert b'/Outlines' not in pdf_bytes
+    pdf = PdfReader(fdata=pdf_bytes)
+    assert pdf.Root.Names is None
+    assert pdf.Root.Outlines is None
 
 
 @assert_no_logs
@@ -446,3 +496,32 @@ def test_annotation_files():
     assert hashlib.md5(b'some data').hexdigest().encode('ascii') in pdf_bytes
     assert b'/FileAttachment' in pdf_bytes
     assert b'/EmbeddedFiles' not in pdf_bytes
+
+
+@assert_no_logs
+def test_bleed():
+    pdf_bytes = FakeHTML(string='''
+        <title>Test document</title>
+        <style>
+            @page { bleed: 30pt; size: 10pt }
+        </style>
+        <body>test
+    ''').write_pdf()
+
+    pdf = PdfReader(fdata=pdf_bytes)
+    assert pdf.Root.Pages.Kids[0].MediaBox == ['0', '0', '70', '70']
+    assert pdf.Root.Pages.Kids[0].BleedBox == ['20', '20', '50', '50']
+    assert pdf.Root.Pages.Kids[0].TrimBox == ['30', '30', '40', '40']
+
+    pdf_bytes = FakeHTML(string='''
+        <title>Test document</title>
+        <style>
+            @page { bleed: 15pt 3pt 6pt 18pt; size: 12pt 15pt }
+        </style>
+        <body>test
+    ''').write_pdf()
+
+    pdf = PdfReader(fdata=pdf_bytes)
+    assert pdf.Root.Pages.Kids[0].MediaBox == ['0', '0', '33', '36']
+    assert pdf.Root.Pages.Kids[0].BleedBox == ['8', '5', '33', '36']
+    assert pdf.Root.Pages.Kids[0].TrimBox == ['18', '15', '30', '30']

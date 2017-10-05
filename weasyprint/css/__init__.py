@@ -43,7 +43,7 @@ PSEUDO_ELEMENTS = (None, 'before', 'after', 'first-line', 'first-letter')
 # A test function that returns True if the given property name has an
 # initial value that is not always the same when computed.
 RE_INITIAL_NOT_COMPUTED = re.compile(
-    '^(display|column_gap|'
+    '^(display|column_gap|(bleed_(left|right|top|bottom))|'
     '(border_[a-z]+|outline|column_rule)_(width|color))$').match
 
 

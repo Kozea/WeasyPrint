@@ -24,6 +24,7 @@ import zlib
 
 import cairocffi as cairo
 import pytest
+from pdfrw import PdfReader
 
 from .. import CSS, HTML, __main__, default_url_fetcher, navigator
 from ..compat import iteritems, urlencode, urljoin, urlparse_uses_relative
@@ -87,6 +88,22 @@ def _test_resource(class_, basename, check, **kwargs):
                      base_url=relative_filename, **kwargs))
     with pytest.raises(TypeError):
         class_(filename='foo', url='bar')
+
+
+def _assert_equivalent_pdf(pdf_bytes1, pdf_bytes2):
+    """Assert that 2 pdf bytestrings are equivalent.
+
+    We have to compare various PDF objects to compare PDF files as pdfrw
+    doesn't produce the same PDF files from the same input.
+
+    """
+    pdf1, pdf2 = PdfReader(fdata=pdf_bytes1), PdfReader(fdata=pdf_bytes2)
+    assert pdf1.Size == pdf2.Size
+    assert len(pdf1.Root.Pages.Kids) == len(pdf2.Root.Pages.Kids)
+    for page1, page2 in zip(pdf1.Root.Pages.Kids, pdf2.Root.Pages.Kids):
+        assert page1.MediaBox == page2.MediaBox
+        assert page1.TrimBox == page2.TrimBox
+        assert page1.BleedBox == page2.BleedBox
 
 
 @assert_no_logs
@@ -244,7 +261,7 @@ def test_python_render():
     assert png_file.getvalue() == png_bytes
     pdf_file = fake_file()
     html.write_pdf(pdf_file, stylesheets=[css])
-    assert pdf_file.getvalue() == pdf_bytes
+    _assert_equivalent_pdf(pdf_file.getvalue(), pdf_bytes)
 
     with temp_directory() as temp:
         png_filename = os.path.join(temp, '1.png')
@@ -252,7 +269,7 @@ def test_python_render():
         html.write_png(png_filename, stylesheets=[css])
         html.write_pdf(pdf_filename, stylesheets=[css])
         assert read_file(png_filename) == png_bytes
-        assert read_file(pdf_filename) == pdf_bytes
+        _assert_equivalent_pdf(read_file(pdf_filename), pdf_bytes)
 
         png_filename = os.path.join(temp, '2.png')
         pdf_filename = os.path.join(temp, '2.pdf')
@@ -261,7 +278,7 @@ def test_python_render():
         with open(pdf_filename, 'wb') as pdf_file:
             html.write_pdf(pdf_file, stylesheets=[css])
         assert read_file(png_filename) == png_bytes
-        assert read_file(pdf_filename) == pdf_bytes
+        _assert_equivalent_pdf(read_file(pdf_filename), pdf_bytes)
 
     x2_png_bytes = html.write_png(stylesheets=[css], resolution=192)
     check_png_pattern(x2_png_bytes, x2=True)
@@ -331,7 +348,7 @@ def test_command_line_render():
             run('combined.html out1.png')
             run('combined.html out2.pdf')
             assert read_file('out1.png') == png_bytes
-            assert read_file('out2.pdf') == pdf_bytes
+            _assert_equivalent_pdf(read_file('out2.pdf'), pdf_bytes)
 
             run('combined-UTF-16BE.html out3.png --encoding UTF-16BE')
             assert read_file('out3.png') == png_bytes
@@ -350,7 +367,7 @@ def test_command_line_render():
             run('combined.html out7 -f png')
             run('combined.html out8 --format pdf')
             assert read_file('out7') == png_bytes
-            assert read_file('out8') == pdf_bytes
+            _assert_equivalent_pdf(read_file('out8'), pdf_bytes)
 
             run('no_css.html out9.png')
             run('no_css.html out10.png -s style.css')
@@ -453,7 +470,7 @@ def test_low_level_api():
     ''')
     pdf_bytes = html.write_pdf(stylesheets=[css])
     assert pdf_bytes.startswith(b'%PDF')
-    assert html.render([css]).write_pdf() == pdf_bytes
+    _assert_equivalent_pdf(html.render([css]).write_pdf(), pdf_bytes)
 
     png_bytes = html.write_png(stylesheets=[css])
     document = html.render([css], enable_hinting=True)
@@ -874,12 +891,12 @@ def test_navigator():
         status, headers, body = wsgi_client('/pdf/' + url)
         assert status == '200 OK'
         assert headers['Content-Type'] == 'application/pdf'
-        assert body.startswith(b'%PDF')
-        assert (b'/A << /Type /Action /S /URI /URI '
-                b'(http://weasyprint.org) >>') in body
-        lipsum = '\ufeffLorem ipsum'.encode('utf-16-be')
-        assert (b'<< /Title (' + lipsum +
-                b')\n/A << /Type /Action /S /GoTo') in body
+        pdf = PdfReader(fdata=body)
+        assert pdf.Root.Pages.Kids[0].Annots[0].A == {
+            '/Type': '/Action', '/URI': '(http://weasyprint.org)',
+            '/S': '/URI'}
+        assert pdf.Root.Outlines.First.Title == '(Lorem ipsum)'
+        assert pdf.Root.Outlines.Last.Title == '(Lorem ipsum)'
 
 
 # Make relative URL references work with our custom URL scheme.

@@ -20,10 +20,67 @@ import cairocffi as cairo
 
 from .compat import xrange
 from .formatting_structure import boxes
+from .images import SVGImage
+from .layout.backgrounds import BackgroundLayer
 from .stacking import StackingContext
 from .text import show_first_line
 
 SIDES = ('top', 'right', 'bottom', 'left')
+CROP = '''
+  <!-- horizontal top left -->
+  <path d="M0,{bleed_top} h{half_bleed_left}" />
+  <!-- horizontal top right -->
+  <path d="M0,{bleed_top} h{half_bleed_right}"
+        transform="translate({width},0) scale(-1,1)" />
+  <!-- horizontal bottom right -->
+  <path d="M0,{bleed_bottom} h{half_bleed_right}"
+        transform="translate({width},{height}) scale(-1,-1)" />
+  <!-- horizontal bottom left -->
+  <path d="M0,{bleed_bottom} h{half_bleed_left}"
+        transform="translate(0,{height}) scale(1,-1)" />
+  <!-- vertical top left -->
+  <path d="M{bleed_left},0 v{half_bleed_top}" />
+  <!-- vertical bottom right -->
+  <path d="M{bleed_right},0 v{half_bleed_bottom}"
+        transform="translate({width},{height}) scale(-1,-1)" />
+  <!-- vertical bottom left -->
+  <path d="M{bleed_left},0 v{half_bleed_bottom}"
+        transform="translate(0,{height}) scale(1,-1)" />
+  <!-- vertical top right -->
+  <path d="M{bleed_right},0 v{half_bleed_top}"
+        transform="translate({width},0) scale(-1,1)" />
+'''
+CROSS = '''
+  <!-- top -->
+  <circle r="{half_bleed_top}"
+          transform="scale(0.5)
+                     translate({width},{half_bleed_top}) scale(0.5)" />
+  <path d="M-{half_bleed_top},{half_bleed_top} h{bleed_top}
+           M0,0 v{bleed_top}"
+        transform="scale(0.5) translate({width},0)" />
+  <!-- bottom -->
+  <circle r="{half_bleed_bottom}"
+          transform="translate(0,{height}) scale(0.5)
+                     translate({width},-{half_bleed_bottom}) scale(0.5)" />
+  <path d="M-{half_bleed_bottom},-{half_bleed_bottom} h{bleed_bottom}
+           M0,0 v-{bleed_bottom}"
+        transform="translate(0,{height}) scale(0.5) translate({width},0)" />
+  <!-- left -->
+  <circle r="{half_bleed_left}"
+          transform="scale(0.5)
+                     translate({half_bleed_left},{height}) scale(0.5)" />
+  <path d="M{half_bleed_left},-{half_bleed_left} v{bleed_left}
+           M0,0 h{bleed_left}"
+        transform="scale(0.5) translate(0,{height})" />
+  <!-- right -->
+  <circle r="{half_bleed_right}"
+          transform="translate({width},0) scale(0.5)
+                     translate(-{half_bleed_right},{height}) scale(0.5)" />
+  <path d="M-{half_bleed_right},-{half_bleed_right} v{bleed_right}
+           M0,0 h-{bleed_right}"
+        transform="translate({width},0)
+                   scale(0.5) translate(0,{height})" />
+'''
 
 
 @contextlib.contextmanager
@@ -91,10 +148,14 @@ def lighten(color):
 
 def draw_page(page, context, enable_hinting):
     """Draw the given PageBox."""
+    bleed = {
+        side: page.style['bleed_%s' % side].value
+        for side in ('top', 'right', 'bottom', 'left')}
+    marks = page.style['marks']
     stacking_context = StackingContext.from_page(page)
     draw_background(
         context, stacking_context.box.background, enable_hinting,
-        clip_box=False)
+        clip_box=False, bleed=bleed, marks=marks)
     draw_background(
         context, page.canvas_background, enable_hinting, clip_box=False)
     draw_border(context, page, enable_hinting)
@@ -261,7 +322,8 @@ def rounded_box_path(context, radii):
         context.restore()
 
 
-def draw_background(context, bg, enable_hinting, clip_box=True):
+def draw_background(context, bg, enable_hinting, clip_box=True, bleed=None,
+                    marks=()):
     """Draw the background color and image to a ``cairo.Context``.
 
     If ``clip_box`` is set to ``False``, the background is not clipped to the
@@ -286,11 +348,57 @@ def draw_background(context, bg, enable_hinting, clip_box=True):
             with stacked(context):
                 painting_area = bg.layers[-1].painting_area
                 if painting_area:
+                    if bleed:
+                        # Painting area is the PDF BleedBox
+                        x, y, width, height = painting_area
+                        painting_area = (
+                            x - bleed['left'], y - bleed['top'],
+                            width + bleed['left'] + bleed['right'],
+                            height + bleed['top'] + bleed['bottom'])
                     context.rectangle(*painting_area)
                     context.clip()
                 context.set_source_rgba(*bg.color)
                 context.paint()
 
+        if bleed and marks:
+            x, y, width, height = bg.layers[-1].painting_area
+            x -= bleed['left']
+            y -= bleed['top']
+            width += bleed['left'] + bleed['right']
+            height += bleed['top'] + bleed['bottom']
+            svg = '''
+              <svg height="{height}" width="{width}"
+                   fill="transparent" stroke="black" stroke-width="1"
+                   xmlns="http://www.w3.org/2000/svg"
+                   xmlns:xlink="http://www.w3.org/1999/xlink">
+            '''
+            if 'crop' in marks:
+                svg += CROP
+            if 'cross' in marks:
+                svg += CROSS
+            svg += '</svg>'
+            half_bleed = {key: value * 0.5 for key, value in bleed.items()}
+            image = SVGImage(svg.format(
+                height=height, width=width,
+                bleed_left=bleed['left'], bleed_right=bleed['right'],
+                bleed_top=bleed['top'], bleed_bottom=bleed['bottom'],
+                half_bleed_left=half_bleed['left'],
+                half_bleed_right=half_bleed['right'],
+                half_bleed_top=half_bleed['top'],
+                half_bleed_bottom=half_bleed['bottom'],
+            ), '', None)
+            # Painting area is the PDF media box
+            size = (width, height)
+            position = (x, y)
+            repeat = ('no-repeat', 'no-repeat')
+            unbounded = True
+            painting_area = position + size
+            positioning_area = (0, 0, width, height)
+            clipped_boxes = []
+            layer = BackgroundLayer(
+                image, size, position, repeat, unbounded, painting_area,
+                positioning_area, clipped_boxes)
+            bg.layers.insert(0, layer)
         # Paint in reversed order: first layer is "closest" to the viewer.
         for layer in reversed(bg.layers):
             draw_background_image(context, layer, bg.image_rendering)

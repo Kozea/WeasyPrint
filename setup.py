@@ -34,7 +34,8 @@ REQUIREMENTS = [
     'cssselect2>=0.1',
     'cffi>=0.6',
     'cairocffi>=0.5',
-    'Pyphen>=0.8'
+    'Pyphen>=0.8',
+    'pdfrw>=0.4',
     # C dependencies: Gdk-Pixbuf (optional), Pango, cairo.
 ]
 

@@ -135,7 +135,7 @@ def _computing_order():
     """Some computed values are required by others, so order matters."""
     first = [
         'font_stretch', 'font_weight', 'font_family', 'font_variant',
-        'font_style', 'font_size', 'line_height']
+        'font_style', 'font_size', 'line_height', 'marks']
     order = sorted(INITIAL_VALUES)
     for name in first:
         order.remove(name)
@@ -327,6 +327,20 @@ def length(computer, name, value, font_size=None, pixels_only=False):
         return value
 
     return result if pixels_only else Dimension(result, 'px')
+
+
+@register_computer('bleed-left')
+@register_computer('bleed-right')
+@register_computer('bleed-top')
+@register_computer('bleed-bottom')
+def bleed(computer, name, value):
+    if value == 'auto':
+        if 'crop' in computer.computed['marks']:
+            return Dimension(8, 'px')  # 6pt
+        else:
+            return Dimension(0, 'px')
+    else:
+        return length(computer, name, value)
 
 
 @register_computer('letter-spacing')
