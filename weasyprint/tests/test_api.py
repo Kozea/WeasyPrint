@@ -298,6 +298,10 @@ def test_command_line_render():
         # Reference
         html_obj = FakeHTML(string=combined, base_url='dummy.html')
         pdf_bytes = html_obj.write_pdf()
+        # Use the number of PDF objects to compare PDF files as pdfrw doesn't
+        # produce the same PDF files from the same input, because of Python's
+        # unordered dicts. Comparing pdf bytes thus works with Python 3.6+.
+        pdf_objects_size = PdfReader(fdata=pdf_bytes).Size
         png_bytes = html_obj.write_png()
         x2_png_bytes = html_obj.write_png(resolution=192)
         rotated_png_bytes = FakeHTML(string=combined, base_url='dummy.html',
@@ -332,7 +336,8 @@ def test_command_line_render():
             run('combined.html out1.png')
             run('combined.html out2.pdf')
             assert read_file('out1.png') == png_bytes
-            assert read_file('out2.pdf') == pdf_bytes
+            assert PdfReader(fdata=read_file('out2.pdf')).Size == (
+                pdf_objects_size)
 
             run('combined-UTF-16BE.html out3.png --encoding UTF-16BE')
             assert read_file('out3.png') == png_bytes
@@ -351,7 +356,7 @@ def test_command_line_render():
             run('combined.html out7 -f png')
             run('combined.html out8 --format pdf')
             assert read_file('out7') == png_bytes
-            assert read_file('out8') == pdf_bytes
+            assert PdfReader(fdata=read_file('out8')).Size == pdf_objects_size
 
             run('no_css.html out9.png')
             run('no_css.html out10.png -s style.css')
