@@ -496,3 +496,32 @@ def test_annotation_files():
     assert hashlib.md5(b'some data').hexdigest().encode('ascii') in pdf_bytes
     assert b'/FileAttachment' in pdf_bytes
     assert b'/EmbeddedFiles' not in pdf_bytes
+
+
+@assert_no_logs
+def test_bleed():
+    pdf_bytes = FakeHTML(string='''
+        <title>Test document</title>
+        <style>
+            @page { bleed: 30pt; size: 10pt }
+        </style>
+        <body>test
+    ''').write_pdf()
+
+    pdf = PdfReader(fdata=pdf_bytes)
+    assert pdf.Root.Pages.Kids[0].MediaBox == ['0', '0', '70', '70']
+    assert pdf.Root.Pages.Kids[0].BleedBox == ['20', '20', '50', '50']
+    assert pdf.Root.Pages.Kids[0].TrimBox == ['30', '30', '40', '40']
+
+    pdf_bytes = FakeHTML(string='''
+        <title>Test document</title>
+        <style>
+            @page { bleed: 15pt 3pt 6pt 18pt; size: 12pt 15pt }
+        </style>
+        <body>test
+    ''').write_pdf()
+
+    pdf = PdfReader(fdata=pdf_bytes)
+    assert pdf.Root.Pages.Kids[0].MediaBox == ['0', '0', '33', '36']
+    assert pdf.Root.Pages.Kids[0].BleedBox == ['8', '5', '33', '36']
+    assert pdf.Root.Pages.Kids[0].TrimBox == ['18', '15', '30', '30']
