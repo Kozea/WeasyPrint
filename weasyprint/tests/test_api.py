@@ -94,15 +94,9 @@ def _assert_equivalent_pdf(pdf_bytes1, pdf_bytes2):
     """Assert that 2 pdf bytestrings are equivalent.
 
     We have to compare various PDF objects to compare PDF files as pdfrw
-    doesn't produce the same PDF files from the same input. That's caused by
-    Python's unordered dicts. Comparing pdf bytes thus works with Python 3.6+
-    where dicts are ordered.
+    doesn't produce the same PDF files from the same input.
 
     """
-    if sys.version_info[:2] >= (3, 6):
-        assert pdf_bytes1 == pdf_bytes2
-        return
-
     pdf1, pdf2 = PdfReader(fdata=pdf_bytes1), PdfReader(fdata=pdf_bytes2)
     assert pdf1.Size == pdf2.Size
     assert len(pdf1.Root.Pages.Kids) == len(pdf2.Root.Pages.Kids)
