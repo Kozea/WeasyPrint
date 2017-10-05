@@ -323,11 +323,16 @@ def write_pdf_metadata(document, fileobj, scale, metadata, attachments,
 
     for page, document_page in zip(pages, document.pages):
         x, y, width, height = (float(value) for value in page.MediaBox)
-        bleed = document_page.bleed * 0.75  # Pixels into points
+        bleed = document_page.bleed.get_scaled(0.75)  # Pixels into points
+        # TODO please add comment why thre are dividing by 2.
         page.BleedBox = PdfArray((
-            x + bleed / 2, y + bleed / 2, width + bleed, height + bleed))
+            x + bleed.left / 2, y + bleed.top / 2,
+            width + bleed.left + bleed.right, height + bleed.top + bleed.bottom
+        ))
         page.TrimBox = PdfArray((
-            x + bleed, y + bleed, width + 2 * bleed, height + 2 * bleed))
+            x + bleed.left, y + bleed.top,
+            width + bleed.left + bleed.right, height + bleed.top + bleed.bottom
+        ))
 
     fileobj.seek(0)
     PdfWriter().write(fileobj, trailer=trailer)

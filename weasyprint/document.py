@@ -23,6 +23,7 @@ from .css import get_all_computed_styles
 from .draw import draw_page, stacked
 from .fonts import FontConfiguration
 from .formatting_structure import boxes
+from .formatting_structure.rect import BleedRect
 from .formatting_structure.build import build_formatting_structure
 from .layout import layout_document
 from .layout.backgrounds import percentage
@@ -157,7 +158,7 @@ class Page(object):
         self.height = page_box.margin_height()
 
         #: The page bleed width, in CSS pixels.
-        self.bleed = page_box.style['bleed'].value
+        self.bleed = BleedRect.from_style(page_box.style)
 
         #: A list of ``(bookmark_level, bookmark_label, target)`` tuples.
         #: :obj:`bookmark_level` and :obj:`bookmark_label` are respectively
@@ -484,10 +485,17 @@ class Document(object):
         LOGGER.info('Step 6 - Drawing')
         for page in self.pages:
             surface.set_size(
-                math.floor((page.width + 2 * page.bleed) * scale),
-                math.floor((page.height + 2 * page.bleed) * scale))
+                math.floor(
+                    (page.width + page.bleed.left + page.bleed.right) * scale
+                ),
+                math.floor(
+                    (page.height + page.bleed.top + page.bleed.bottom) * scale
+                )
+            )
             with stacked(context):
-                context.translate(page.bleed * scale, page.bleed * scale)
+                context.translate(
+                    page.bleed.left * scale, page.bleed.top * scale
+                )
                 page.paint(context, scale=scale)
                 surface.show_page()
         surface.finish()

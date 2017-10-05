@@ -329,8 +329,11 @@ def length(computer, name, value, font_size=None, pixels_only=False):
     return result if pixels_only else Dimension(result, 'px')
 
 
-@register_computer('bleed')
-def bleed(computer, name, value):
+@register_computer('bleed-left')
+@register_computer('bleed-right')
+@register_computer('bleed-top')
+@register_computer('bleed-bottom')
+def bleed_computer(computer, name, value):
     if value == 'auto':
         if 'crop' in computer.computed['marks']:
             return Dimension(8, 'px')  # 6pt

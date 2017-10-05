@@ -24,43 +24,57 @@ from .images import SVGImage
 from .layout.backgrounds import BackgroundLayer
 from .stacking import StackingContext
 from .text import show_first_line
+from .formatting_structure.rect import BleedRect
 
 SIDES = ('top', 'right', 'bottom', 'left')
 CROP = '''
-  <path d="M0,{bleed} h{half_bleed}" />
-  <path d="M0,{bleed} h{half_bleed}"
+  <!-- horizontal top left -->
+  <path d="M0,{bleed_t} h{half_bleed_l}" />
+  <!-- horizontal top right -->
+  <path d="M0,{bleed_t} h{half_bleed_r}"
         transform="translate({width},0) scale(-1,1)" />
-  <path d="M0,{bleed} h{half_bleed}"
+  <!-- horizontal bottom right -->
+  <path d="M0,{bleed_b} h{half_bleed_r}"
         transform="translate({width},{height}) scale(-1,-1)" />
-  <path d="M0,{bleed} h{half_bleed}"
+  <!-- horizontal bottom left -->
+  <path d="M0,{bleed_b} h{half_bleed_l}"
         transform="translate(0,{height}) scale(1,-1)" />
-  <path d="M{bleed},0 v{half_bleed}" />
-  <path d="M{bleed},0 v{half_bleed}"
-        transform="translate(0,{height}) scale(1,-1)" />
-  <path d="M{bleed},0 v{half_bleed}"
+  <!-- vertical top left -->
+  <path d="M{bleed_l},0 v{half_bleed_t}" />
+  <!-- vertical bottom right -->
+  <path d="M{bleed_r},0 v{half_bleed_b}"
         transform="translate({width},{height}) scale(-1,-1)" />
-  <path d="M{bleed},0 v{half_bleed}"
+  <!-- vertical bottom left -->
+  <path d="M{bleed_l},0 v{half_bleed_b}"
+        transform="translate(0,{height}) scale(1,-1)" />
+  <!-- vertical top right -->
+  <path d="M{bleed_r},0 v{half_bleed_t}"
         transform="translate({width},0) scale(-1,1)" />
 '''
 CROSS = '''
-  <circle r="{half_bleed}"
-          transform="scale(0.5) translate({width},{half_bleed}) scale(0.5)" />
-  <path d="M-{half_bleed},{half_bleed} h{bleed} M0,0 v{bleed}"
-        transform="scale(0.5) translate({width},0)" />
-  <circle r="{half_bleed}"
-          transform="translate(0,{height}) scale(0.5)
-                     translate({width},-{half_bleed}) scale(0.5)" />
-  <path d="M-{half_bleed},-{half_bleed} h{bleed} M0,0 v-{bleed}"
-        transform="translate(0,{height}) scale(0.5) translate({width},0)" />
-  <circle r="{half_bleed}"
+  <!-- top -->
+  <circle r="{half_bleed_t}"
           transform="scale(0.5)
-                     translate({half_bleed},{height}) scale(0.5)" />
-  <path d="M{half_bleed},-{half_bleed} v{bleed} M0,0 h{bleed}"
+                     translate({width},{half_bleed_t}) scale(0.5)" />
+  <path d="M-{half_bleed_t},{half_bleed_t} h{bleed_t} M0,0 v{bleed_t}"
+        transform="scale(0.5) translate({width},0)" />
+  <!-- bottom -->
+  <circle r="{half_bleed_b}"
+          transform="translate(0,{height}) scale(0.5)
+                     translate({width},-{half_bleed_b}) scale(0.5)" />
+  <path d="M-{half_bleed_b},-{half_bleed_b} h{bleed_b} M0,0 v-{bleed_b}"
+        transform="translate(0,{height}) scale(0.5) translate({width},0)" />
+  <!-- left -->
+  <circle r="{half_bleed_l}"
+          transform="scale(0.5)
+                     translate({half_bleed_l},{height}) scale(0.5)" />
+  <path d="M{half_bleed_l},-{half_bleed_l} v{bleed_l} M0,0 h{bleed_l}"
         transform="scale(0.5) translate(0,{height})" />
-  <circle r="{half_bleed}"
+  <!-- right -->
+  <circle r="{half_bleed_r}"
           transform="translate({width},0) scale(0.5)
-                     translate(-{half_bleed},{height}) scale(0.5)" />
-  <path d="M-{half_bleed},-{half_bleed} v{bleed} M0,0 h-{bleed}"
+                     translate(-{half_bleed_r},{height}) scale(0.5)" />
+  <path d="M-{half_bleed_r},-{half_bleed_r} v{bleed_r} M0,0 h-{bleed_r}"
         transform="translate({width},0)
                    scale(0.5) translate(0,{height})" />
 '''
@@ -131,7 +145,7 @@ def lighten(color):
 
 def draw_page(page, context, enable_hinting):
     """Draw the given PageBox."""
-    bleed = page.style['bleed'].value
+    bleed = BleedRect.from_style(page.style)
     marks = page.style['marks']
     stacking_context = StackingContext.from_page(page)
     draw_background(
@@ -303,7 +317,7 @@ def rounded_box_path(context, radii):
         context.restore()
 
 
-def draw_background(context, bg, enable_hinting, clip_box=True, bleed=0,
+def draw_background(context, bg, enable_hinting, clip_box=True, bleed=None,
                     marks=()):
     """Draw the background color and image to a ``cairo.Context``.
 
@@ -333,8 +347,9 @@ def draw_background(context, bg, enable_hinting, clip_box=True, bleed=0,
                         # Painting area is the PDF BleedBox
                         x, y, width, height = painting_area
                         painting_area = (
-                            x - bleed / 2, y - bleed / 2,
-                            width + bleed, height + bleed)
+                            x - bleed.left, y - bleed.top,
+                            width + bleed.left + bleed.right,
+                            height + bleed.top + bleed.bottom)
                     context.rectangle(*painting_area)
                     context.clip()
                 context.set_source_rgba(*bg.color)
@@ -342,10 +357,10 @@ def draw_background(context, bg, enable_hinting, clip_box=True, bleed=0,
 
         if bleed and marks:
             x, y, width, height = bg.layers[-1].painting_area
-            x -= bleed
-            y -= bleed
-            width += 2 * bleed
-            height += 2 * bleed
+            x -= bleed.left
+            y -= bleed.top
+            width += bleed.left + bleed.right
+            height += bleed.top + bleed.bottom
             svg = '''
               <svg height="{height}" width="{width}"
                    fill="transparent" stroke="black" stroke-width="1"
@@ -357,9 +372,16 @@ def draw_background(context, bg, enable_hinting, clip_box=True, bleed=0,
             if 'cross' in marks:
                 svg += CROSS
             svg += '</svg>'
+            half_bleed = bleed.get_scaled(0.5)
             image = SVGImage(svg.format(
                 height=height, width=width,
-                bleed=bleed, half_bleed=bleed / 2), '', None)
+                bleed_l=bleed.left, bleed_r=bleed.right,
+                bleed_t=bleed.top, bleed_b=bleed.bottom,
+                half_bleed_l=half_bleed.left,
+                half_bleed_r=half_bleed.right,
+                half_bleed_t=half_bleed.top,
+                half_bleed_b=half_bleed.bottom,
+            ), '', None)
             # Painting area is the PDF media box
             size = (width, height)
             position = (x, y)
