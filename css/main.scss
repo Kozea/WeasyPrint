@@ -212,6 +212,13 @@ footer {
     font-family: serif;
   }
 
+  body:before {
+    background: url(img/logo.png) 50% 0 / 100mm no-repeat;
+    content: '';
+    display: block;
+    height: 40mm;
+  }
+
   nav, footer {
     display: none;
   }
