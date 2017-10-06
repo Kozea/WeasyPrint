@@ -270,7 +270,7 @@ class CSS(object):
                     protocol_encoding=protocol_encoding)
         self.base_url = base_url
         self.matcher = matcher or cssselect2.Matcher()
-        self.page_rules = page_rules or []
+        self.page_rules = [] if page_rules is None else page_rules
         # TODO: fonts are stored here and should be cleaned after rendering
         self.fonts = []
         preprocess_stylesheet(
