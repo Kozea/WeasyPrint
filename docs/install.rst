@@ -73,7 +73,7 @@ WeasyPrint! Otherwise, please copy the full error message and
        The test suite passes on cairo 1.8 and 1.10 with some tests marked as
        “expected failures” due to behavior changes or bugs in cairo.
 
-.. [#] Without it, PNG and SVG are the only supported image format:
+.. [#] Without it, PNG and SVG are the only supported image formats.
        JPEG, GIF and others are not available.
 
 
