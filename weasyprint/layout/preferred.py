@@ -590,19 +590,26 @@ def table_and_columns_preferred_widths(context, box, outer=True):
 def replaced_min_content_width(box, outer=True):
     """Return the min-content width for an ``InlineReplacedBox``."""
     width = box.style.width
-    if width == 'auto' or width.unit == '%':
+    if width == 'auto':
         height = box.style.height
         if height == 'auto' or height.unit == '%':
             height = 'auto'
         else:
             assert height.unit == 'px'
             height = height.value
-        image = box.replacement
-        iwidth, iheight = image.get_intrinsic_size(
-            box.style.image_resolution, box.style.font_size)
-        width, _ = default_image_sizing(
-            iwidth, iheight, image.intrinsic_ratio, 'auto', height,
-            default_width=300, default_height=150)
+        if box.style.max_width != 'auto' and box.style.max_width.unit == '%':
+            # See https://drafts.csswg.org/css-sizing/#intrinsic-contribution
+            width = 0
+        else:
+            image = box.replacement
+            iwidth, iheight = image.get_intrinsic_size(
+                box.style.image_resolution, box.style.font_size)
+            width, _ = default_image_sizing(
+                iwidth, iheight, image.intrinsic_ratio, 'auto', height,
+                default_width=300, default_height=150)
+    elif box.style.width.unit == '%':
+        # See https://drafts.csswg.org/css-sizing/#intrinsic-contribution
+        width = 0
     else:
         assert width.unit == 'px'
         width = width.value
