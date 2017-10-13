@@ -20,10 +20,11 @@
         transform: rotate(-90deg);
     }
 }
-html, body { font: 12pt/1.25 Fontin, serif !important; -weasy-hyphens: auto }
+html, body { font: 12pt/1.25 Fontin, serif !important; -weasy-hyphens: auto
+             hyphens: auto; }
 body { text-align: justify; padding: 0 !important;
        background: none !important; }
 hr.navbar { display: none }
 h1 { page-break-before: auto !important; -weasy-bookmark-level: none;
-     margin-top: 0 !important; }
+     bookmark-level: none; margin-top: 0 !important; }
 h1, h2, h3, h4 { font-family: inherit !important }
