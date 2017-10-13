@@ -20,7 +20,6 @@
 
 from __future__ import division, unicode_literals
 
-import re
 from collections import namedtuple
 
 import cssselect2
@@ -29,6 +28,7 @@ import tinycss2
 from . import properties
 from . import computed_values
 from .descriptors import preprocess_descriptors
+from .properties import INITIAL_NOT_COMPUTED
 from .validation import (preprocess_declarations, remove_whitespace,
                          split_on_comma)
 from ..compat import iteritems
@@ -39,12 +39,6 @@ from .. import CSS
 
 # Reject anything not in here:
 PSEUDO_ELEMENTS = (None, 'before', 'after', 'first-line', 'first-letter')
-
-# A test function that returns True if the given property name has an
-# initial value that is not always the same when computed.
-RE_INITIAL_NOT_COMPUTED = re.compile(
-    '^(display|column_gap|(bleed_(left|right|top|bottom))|'
-    '(border_[a-z]+|outline|column_rule)_(width|color))$').match
 
 
 class StyleDict(dict):
@@ -569,7 +563,7 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
 
         if keyword == 'initial':
             value = initial
-            if not RE_INITIAL_NOT_COMPUTED(name):
+            if name not in INITIAL_NOT_COMPUTED:
                 # The value is the same as when computed
                 computed[name] = value
         elif keyword == 'inherit':

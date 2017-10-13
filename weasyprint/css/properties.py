@@ -316,3 +316,27 @@ TABLE_WRAPPER_BOX_PROPERTIES = set('''
     vertical_align
     z_index
 '''.split())
+
+
+# Properties that have an initial value that is not always the same when
+# computed.
+INITIAL_NOT_COMPUTED = set('''
+    display
+    column_gap
+    bleed_top
+    bleed_left
+    bleed_bottom
+    bleed_right
+    outline_width
+    outline_color
+    column_rule_width
+    column_rule_color
+    border_top_width
+    border_left_width
+    border_bottom_width
+    border_right_width
+    border_top_color
+    border_left_color
+    border_bottom_color
+    border_right_color
+'''.split())
