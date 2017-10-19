@@ -39,12 +39,6 @@ REQUIREMENTS = [
     # C dependencies: Gdk-Pixbuf (optional), Pango, cairo.
 ]
 
-if sys.version_info < (3,):
-    REQUIREMENTS.append('CairoSVG >= 1.0.20, < 2.0.0')
-else:
-    REQUIREMENTS.append('CairoSVG >= 1.0.20')
-
-
 needs_pytest = {'pytest', 'test', 'ptr'}.intersection(sys.argv)
 pytest_runner = ['pytest-runner'] if needs_pytest else []
 
@@ -82,9 +76,12 @@ setup(
     setup_requires=pytest_runner,
     test_suite='weasyprint.tests',
     tests_require=[
-        "pytest-runner", "pytest-cov", "pytest-flake8", "pytest-isort"],
-    extras_require={"test": [
-        "pytest-runner", "pytest-cov", "pytest-flake8", "pytest-isort"]},
+        'pytest-runner', 'pytest-cov', 'pytest-flake8', 'pytest-isort'],
+    extras_require={
+        'test': [
+            'pytest-runner', 'pytest-cov', 'pytest-flake8', 'pytest-isort'],
+        ':python_version < "3.0"': ['CairoSVG >= 1.0.20, < 2.0.0'],
+        ':python_version >= "3.0"': ['CairoSVG >= 1.0.20']},
     entry_points={
         'console_scripts': [
             'weasyprint = weasyprint.__main__:main',
