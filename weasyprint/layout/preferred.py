@@ -246,14 +246,18 @@ def inline_line_widths(context, box, outer, is_line_start, minimum,
             if minimum and child_text == ' ':
                 lines = [0, 0]
             else:
-                lines = text.line_widths(
-                    child_text, child.style, context,
-                    width=0 if minimum else None,
-                    justification_spacing=child.justification_spacing)
-                if first_line:
-                    lines = [next(lines)]
-                else:
-                    lines = list(lines)
+                max_width = 0 if minimum else None
+                lines = []
+                resume_at = new_resume_at = 0
+                while new_resume_at is not None:
+                    resume_at += new_resume_at
+                    _, _, new_resume_at, width, _, _ = (
+                        text.split_first_line(
+                            child_text[resume_at:], child.style, context,
+                            max_width, child.justification_spacing))
+                    lines.append(width)
+                    if first_line:
+                        break
         else:
             # http://www.w3.org/TR/css3-text/#line-break-details
             # "The line breaking behavior of a replaced element
@@ -631,16 +635,15 @@ def trailing_whitespace_size(context, box):
     if box.style.font_size == 0 or len(stripped_text) == len(box.text):
         return 0
     if stripped_text:
-        old_box, _, _ = split_text_box(context, box, None, None, 0)
+        old_box, _, _ = split_text_box(context, box, None, 0)
         assert old_box
         stripped_box = box.copy_with_text(stripped_text)
         stripped_box, resume, _ = split_text_box(
-            context, stripped_box, None, None, 0)
+            context, stripped_box, None, 0)
         assert stripped_box is not None
         assert resume is None
         return old_box.width - stripped_box.width
     else:
         _, _, _, width, _, _ = split_first_line(
-            box.text, box.style, context, None, None,
-            box.justification_spacing)
+            box.text, box.style, context, None, box.justification_spacing)
         return width

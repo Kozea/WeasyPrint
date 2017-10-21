@@ -907,8 +907,7 @@ def create_layout(text, style, context, max_width, justification_spacing):
     return layout
 
 
-def split_first_line(text, style, context, max_width, line_width,
-                     justification_spacing):
+def split_first_line(text, style, context, max_width, justification_spacing):
     """Fit as much as possible in the available width for one line of text.
 
     Return ``(layout, length, resume_at, width, height, baseline)``.
@@ -933,7 +932,7 @@ def split_first_line(text, style, context, max_width, line_width,
 
     # Step #1: Get a draft layout with the first line
     layout = None
-    if max_width is not None and max_width != float('inf'):
+    if max_width is not None and max_width != float('inf') and style.font_size:
         expected_length = int(max_width / style.font_size * 2.5)
         if expected_length < len(text):
             # Try to use a small amount of text instead of the whole text
@@ -1156,14 +1155,6 @@ def split_first_line(text, style, context, max_width, line_width,
     return first_line_metrics(
         first_line, text, layout, resume_at, space_collapse, style, hyphenated,
         style.hyphenate_character)
-
-
-def line_widths(text, style, context, width, justification_spacing):
-    """Return the width for each line."""
-    layout = create_layout(text, style, context, width, justification_spacing)
-    for line in layout.iter_lines():
-        width, _height = get_size(line, style)
-        yield width
 
 
 def show_first_line(context, pango_layout, hinting):

@@ -29,7 +29,7 @@ def make_text(text, width=None, **style):
     new_style.update(style)
     return split_first_line(
         text, StyleDict(new_style), context=None, max_width=width,
-        line_width=None, justification_spacing=0)
+        justification_spacing=0)
 
 
 @assert_no_logs

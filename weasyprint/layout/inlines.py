@@ -226,7 +226,7 @@ def remove_last_whitespace(context, box):
         if len(new_text) == len(box.text):
             return
         box.text = new_text
-        new_box, resume, _ = split_text_box(context, box, None, None, 0)
+        new_box, resume, _ = split_text_box(context, box, None, 0)
         assert new_box is not None
         assert resume is None
         space_width = box.width - new_box.width
@@ -566,7 +566,7 @@ def split_inline_level(context, box, position_x, max_x, skip_stack,
             assert skip_stack is None
 
         new_box, skip, preserved_line_break = split_text_box(
-            context, box, max_x - position_x, max_x, skip)
+            context, box, max_x - position_x, skip)
 
         if skip is None:
             resume_at = None
@@ -739,15 +739,15 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
     return new_box, resume_at, preserved_line_break
 
 
-def split_text_box(context, box, available_width, line_width, skip):
+def split_text_box(context, box, available_width, skip):
     """Keep as much text as possible from a TextBox in a limitied width.
     Try not to overflow but always have some text in ``new_box``
 
-    Return ``(new_box, skip)``. ``skip`` is the number of UTF-8 bytes
-    to skip form the start of the TextBox for the next line, or ``None``
-    if all of the text fits.
+    Return ``(new_box, skip, preserved_line_break)``. ``skip`` is the number of
+    UTF-8 bytes to skip form the start of the TextBox for the next line, or
+    ``None`` if all of the text fits.
 
-    Also break an preserved whitespace.
+    Also break on preserved whitespace.
 
     """
     assert isinstance(box, boxes.TextBox)
@@ -756,8 +756,7 @@ def split_text_box(context, box, available_width, line_width, skip):
     if font_size == 0 or not text:
         return None, None, False
     layout, length, resume_at, width, height, baseline = split_first_line(
-        text, box.style, context, available_width, line_width,
-        box.justification_spacing)
+        text, box.style, context, available_width, box.justification_spacing)
     assert resume_at != 0
 
     # Convert ``length`` and ``resume_at`` from UTF-8 indexes in text
@@ -1013,7 +1012,7 @@ def add_word_spacing(context, box, justification_spacing, x_advance):
         nb_spaces = count_spaces(box)
         if nb_spaces > 0:
             layout, _, resume_at, width, _, _ = split_first_line(
-                box.text, box.style, context, float('inf'), None,
+                box.text, box.style, context, float('inf'),
                 box.justification_spacing)
             assert resume_at is None
             # XXX new_box.width - box.width is always 0???
