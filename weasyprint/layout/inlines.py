@@ -740,14 +740,15 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
 
 
 def split_text_box(context, box, available_width, skip):
-    """Keep as much text as possible from a TextBox in a limitied width.
+    """Keep as much text as possible from a TextBox in a limited width.
+
     Try not to overflow but always have some text in ``new_box``
 
     Return ``(new_box, skip, preserved_line_break)``. ``skip`` is the number of
     UTF-8 bytes to skip form the start of the TextBox for the next line, or
     ``None`` if all of the text fits.
 
-    Also break on preserved whitespace.
+    Also break on preserved line breaks.
 
     """
     assert isinstance(box, boxes.TextBox)
@@ -800,8 +801,9 @@ def split_text_box(context, box, available_width, skip):
         preserved_line_break = (length != resume_at) and between.strip(' ')
         if preserved_line_break:
             # See http://unicode.org/reports/tr14/
-            # TODO: are there others? Find Pango docs on this
-            assert between in ('\n', '\u2029'), (
+            # \r is already handled by process_whitespace
+            line_breaks = ('\n', '\t', '\f', '\u0085', '\u2028', '\u2029')
+            assert between in line_breaks, (
                 'Got %r between two lines. '
                 'Expected nothing or a preserved line break' % (between,))
         resume_at += skip
