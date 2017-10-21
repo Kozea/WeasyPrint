@@ -954,7 +954,7 @@ def split_first_line(text, style, context, max_width, justification_spacing):
         second_line = next(lines, None)
     resume_at = None if second_line is None else second_line.start_index
 
-    # Step #2: Don't hyphenize when it's not needed
+    # Step #2: Don't split lines when it's not needed
     if max_width is None:
         # The first line can take all the place needed
         return first_line_metrics(
@@ -1126,7 +1126,7 @@ def split_first_line(text, style, context, max_width, justification_spacing):
         # The way new lines are processed in this function (one by one with no
         # memory of the last) prevents shaping characters (arabic, for
         # instance) from keeping their shape when wrapped on the next line with
-        # pango layout.  Maybe insert Unicode shaping characters in text ?
+        # pango layout. Maybe insert Unicode shaping characters in text?
         layout.set_text(text)
         pango.pango_layout_set_width(
             layout.layout, units_from_double(max_width))
