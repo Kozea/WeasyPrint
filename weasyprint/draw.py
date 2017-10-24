@@ -309,6 +309,7 @@ def rounded_box_path(context, radii):
         return
 
     context.move_to(x, y)
+    context.new_sub_path()
     for i, (w, h, (rx, ry)) in enumerate((
             (0, 0, tl), (w, 0, tr), (w, h, br), (0, h, bl))):
         context.save()
