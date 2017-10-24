@@ -214,7 +214,7 @@ def get_image_from_uri(cache, url_fetcher, url, forced_mime_type=None):
                             'the only image formats available.')
                     try:
                         image = SVGImage(string, url, url_fetcher)
-                    except:
+                    except BaseException:
                         try:
                             surface, format_name = (
                                 pixbuf.decode_to_image_surface(string))
