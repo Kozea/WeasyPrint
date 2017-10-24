@@ -126,6 +126,11 @@ ffi.cdef('''
         int height;
     } PangoRectangle;
 
+    typedef struct {
+        guint is_line_break: 1;
+        /* ... */
+    } PangoLogAttr;
+
     int pango_version (void);
 
     double pango_units_to_double (int i);
@@ -209,6 +214,10 @@ ffi.cdef('''
         PangoRectangle *ink_rect, PangoRectangle *logical_rect);
 
     PangoContext * pango_layout_get_context (PangoLayout *layout);
+
+    void pango_get_log_attrs (
+        const char *text, int length, int level, PangoLanguage *language,
+        PangoLogAttr *log_attrs, int attrs_len);
 
 
     // PangoCairo
@@ -1168,3 +1177,21 @@ def show_first_line(context, pango_layout, hinting):
     pango.pango_layout_set_width(pango_layout.layout, -1)
     pangocairo.pango_cairo_show_layout_line(
         context, next(pango_layout.iter_lines()))
+
+
+def can_break_text(text, lang):
+    if not text or len(text) < 2:
+        return False
+    if lang:
+        lang_p, lang = unicode_to_char_p(lang)
+    else:
+        lang = None
+        language = pango.pango_language_get_default()
+    if lang:
+        language = pango.pango_language_from_string(lang_p)
+    text_p, bytestring = unicode_to_char_p(text)
+    length = len(bytestring) + 1
+    log_attrs = ffi.new('PangoLogAttr[]', length)
+    pango.pango_get_log_attrs(
+        text_p, len(bytestring), -1, language, log_attrs, length)
+    return any(attr.is_line_break for attr in log_attrs[1:length - 1])

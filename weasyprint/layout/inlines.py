@@ -14,11 +14,9 @@ from __future__ import division, unicode_literals
 
 import unicodedata
 
-import uniseg.linebreak
-
 from ..css.computed_values import ex_ratio, strut_layout
 from ..formatting_structure import boxes
-from ..text import split_first_line
+from ..text import can_break_text, split_first_line
 from .absolute import AbsolutePlaceholder, absolute_layout
 from .float import avoid_collisions, float_layout
 from .min_max import handle_min_max_height, handle_min_max_width
@@ -703,8 +701,8 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
         if None in (last_letter, first):
             can_break = True
         else:
-            can_break = bool(list(uniseg.linebreak.line_break_breakables(
-                last_letter + first))[1])
+            can_break = can_break_text(
+                last_letter + first, child.style['lang'])
 
         if can_break:
             children.extend(waiting_children)
@@ -1118,9 +1116,7 @@ def can_break_inside(box):
     if isinstance(box, boxes.AtomicInlineLevelBox):
         return False
     elif isinstance(box, boxes.TextBox):
-        if box.text:
-            return any(uniseg.linebreak.line_break_breakables(box.text[1:]))
+        return can_break_text(box.text, box.style['lang'])
     elif isinstance(box, boxes.ParentBox):
         return any(can_break_inside(child) for child in box.children)
-    else:
-        return False
+    return False
