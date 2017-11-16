@@ -162,8 +162,9 @@ The `CSS Text Module Level 3`_ and `CSS Text Module Level 4`_ are working
 drafts defining "properties for text manipulation" and covering "line breaking,
 justification and alignment, white space handling, and text transformation".
 
-Among their features, some are already included in CSS 2.1 (``line-break``,
-``word-break``).
+Among their features, some are already included in CSS 2.1, sometimes with
+missing or different values (``text-indent``, ``text-align``,
+``letter-spacing``, ``word-spacing``, ``text-transform``, ``white-space``).
 
 New properties defined in Level 3 are supported:
 
