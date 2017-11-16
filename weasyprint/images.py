@@ -121,7 +121,9 @@ class SVGImage(object):
 
     def _cairosvg_url_fetcher(self, src, mimetype):
         data = self._url_fetcher(src)
-        return data.get('string', data['file_obj'].read())
+        if 'string' in data:
+            return data['string']
+        return data['file_obj'].read()
 
     def get_intrinsic_size(self, _image_resolution, font_size):
         # Vector images may be affected by the font size.
