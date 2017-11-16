@@ -337,7 +337,7 @@ def strip_whitespace(string):
     http://www.whatwg.org/html#space-character
 
     """
-    return string.strip(' \t\n\f\r')
+    return string.strip(HTML_WHITESPACE)
 
 
 # YYYY (eg 1997)

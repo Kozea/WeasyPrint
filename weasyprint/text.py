@@ -126,6 +126,11 @@ ffi.cdef('''
         int height;
     } PangoRectangle;
 
+    typedef struct {
+        guint is_line_break: 1;
+        /* ... */
+    } PangoLogAttr;
+
     int pango_version (void);
 
     double pango_units_to_double (int i);
@@ -209,6 +214,10 @@ ffi.cdef('''
         PangoRectangle *ink_rect, PangoRectangle *logical_rect);
 
     PangoContext * pango_layout_get_context (PangoLayout *layout);
+
+    void pango_get_log_attrs (
+        const char *text, int length, int level, PangoLanguage *language,
+        PangoLogAttr *log_attrs, int attrs_len);
 
 
     // PangoCairo
@@ -907,8 +916,7 @@ def create_layout(text, style, context, max_width, justification_spacing):
     return layout
 
 
-def split_first_line(text, style, context, max_width, line_width,
-                     justification_spacing):
+def split_first_line(text, style, context, max_width, justification_spacing):
     """Fit as much as possible in the available width for one line of text.
 
     Return ``(layout, length, resume_at, width, height, baseline)``.
@@ -933,7 +941,7 @@ def split_first_line(text, style, context, max_width, line_width,
 
     # Step #1: Get a draft layout with the first line
     layout = None
-    if max_width is not None and max_width != float('inf'):
+    if max_width is not None and max_width != float('inf') and style.font_size:
         expected_length = int(max_width / style.font_size * 2.5)
         if expected_length < len(text):
             # Try to use a small amount of text instead of the whole text
@@ -955,7 +963,7 @@ def split_first_line(text, style, context, max_width, line_width,
         second_line = next(lines, None)
     resume_at = None if second_line is None else second_line.start_index
 
-    # Step #2: Don't hyphenize when it's not needed
+    # Step #2: Don't split lines when it's not needed
     if max_width is None:
         # The first line can take all the place needed
         return first_line_metrics(
@@ -1127,7 +1135,7 @@ def split_first_line(text, style, context, max_width, line_width,
         # The way new lines are processed in this function (one by one with no
         # memory of the last) prevents shaping characters (arabic, for
         # instance) from keeping their shape when wrapped on the next line with
-        # pango layout.  Maybe insert Unicode shaping characters in text ?
+        # pango layout. Maybe insert Unicode shaping characters in text?
         layout.set_text(text)
         pango.pango_layout_set_width(
             layout.layout, units_from_double(max_width))
@@ -1158,14 +1166,6 @@ def split_first_line(text, style, context, max_width, line_width,
         style.hyphenate_character)
 
 
-def line_widths(text, style, context, width, justification_spacing):
-    """Return the width for each line."""
-    layout = create_layout(text, style, context, width, justification_spacing)
-    for line in layout.iter_lines():
-        width, _height = get_size(line, style)
-        yield width
-
-
 def show_first_line(context, pango_layout, hinting):
     """Draw the given ``line`` to the Cairo ``context``."""
     context = ffi.cast('cairo_t *', context._pointer)
@@ -1177,3 +1177,21 @@ def show_first_line(context, pango_layout, hinting):
     pango.pango_layout_set_width(pango_layout.layout, -1)
     pangocairo.pango_cairo_show_layout_line(
         context, next(pango_layout.iter_lines()))
+
+
+def can_break_text(text, lang):
+    if not text or len(text) < 2:
+        return False
+    if lang:
+        lang_p, lang = unicode_to_char_p(lang)
+    else:
+        lang = None
+        language = pango.pango_language_get_default()
+    if lang:
+        language = pango.pango_language_from_string(lang_p)
+    text_p, bytestring = unicode_to_char_p(text)
+    length = len(bytestring) + 1
+    log_attrs = ffi.new('PangoLogAttr[]', length)
+    pango.pango_get_log_attrs(
+        text_p, len(bytestring), -1, language, log_attrs, length)
+    return any(attr.is_line_break for attr in log_attrs[1:length - 1])
