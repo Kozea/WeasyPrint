@@ -135,8 +135,10 @@ def main(argv=None, stdout=None, stdin=None):
             stdin = sys.stdin
         # stdin.buffer on Py3, stdin on Py2
         source = getattr(stdin, 'buffer', stdin)
-        if not args.base_url:
+        if args.base_url is None:
             args.base_url = '.'  # current directory
+        elif args.base_url == '':
+            args.base_url = None  # no base URL
     else:
         source = args.input
 
