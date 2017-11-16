@@ -570,18 +570,22 @@ def auto_table_layout(context, box, containing_block):
             min_content_specified_guess[i] = column_min_content_widths[i]
 
     if assignable_width <= sum(max_content_guess):
+        # We have to work around floating point rounding errors here.
+        # The 1e-9 value comes from PEP 485.
         for guess in guesses:
-            if sum(guess) <= assignable_width:
+            if sum(guess) <= assignable_width * (1 + 1e-9):
                 lower_guess = guess
             else:
                 break
         for guess in guesses[::-1]:
-            if sum(guess) >= assignable_width:
+            if sum(guess) >= assignable_width * (1 - 1e-9):
                 upper_guess = guess
             else:
                 break
         if upper_guess == lower_guess:
-            assert assignable_width == sum(upper_guess)
+            # Equivalent to "assert assignable_width == sum(upper_guess)"
+            assert abs(assignable_width - sum(upper_guess)) < (
+                assignable_width * 1e-9)
             table.column_widths = upper_guess
         else:
             added_widths = [
