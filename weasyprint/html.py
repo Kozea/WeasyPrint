@@ -34,7 +34,11 @@ level = LOGGER.level
 LOGGER.setLevel(logging.ERROR)
 
 if hasattr(sys, "frozen"):
-    root = os.path.dirname(sys.executable)
+    if hasattr(sys, "_MEIPASS"):
+        # Frozen with PyInstaller
+        root = sys._MEIPASS
+    else:
+        root = os.path.dirname(sys.executable)
 else:
     root = os.path.dirname(__file__)
 HTML5_UA_STYLESHEET = CSS(filename=os.path.join(root, 'css', 'html5_ua.css'))
