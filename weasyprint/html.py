@@ -33,11 +33,14 @@ from .urls import get_url_attribute
 level = LOGGER.level
 LOGGER.setLevel(logging.ERROR)
 
-if hasattr(sys, "frozen"):
-    if hasattr(sys, "_MEIPASS"):
+if hasattr(sys, 'frozen'):
+    if hasattr(sys, '_MEIPASS'):
         # Frozen with PyInstaller
+        # See https://github.com/Kozea/WeasyPrint/pull/540
         root = sys._MEIPASS
     else:
+        # Frozen with something else (py2exe, etc.)
+        # See https://github.com/Kozea/WeasyPrint/pull/269
         root = os.path.dirname(sys.executable)
 else:
     root = os.path.dirname(__file__)
