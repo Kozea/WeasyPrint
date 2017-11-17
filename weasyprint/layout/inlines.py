@@ -662,7 +662,8 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
             # To retrieve the real available space for floats, we must remove
             # the trailing whitespaces from the line
             non_floating_children = [
-                child_ for _, child_ in children if not child_.is_floated()]
+                child_ for _, child_ in (children + waiting_children)
+                if not child_.is_floated()]
             if non_floating_children:
                 float_width -= trailing_whitespace_size(
                     context, non_floating_children[-1])
@@ -677,7 +678,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                     absolute_boxes, fixed_boxes)
                 waiting_children.append((index, child))
                 # TODO: use the main text direction of the line
-                for _, old_child in children[:index]:
+                for _, old_child in (children + waiting_children)[:index]:
                     if not old_child.is_in_normal_flow():
                         continue
                     if child.style.float == 'left':  # and direction is ltr
