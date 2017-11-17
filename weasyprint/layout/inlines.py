@@ -683,14 +683,15 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                     context, child, containing_block, device_size,
                     absolute_boxes, fixed_boxes)
                 waiting_children.append((index, child))
-                # TODO: use the main text direction of the line
                 for _, old_child in (children + waiting_children)[:index]:
                     if not old_child.is_in_normal_flow():
                         continue
-                    if child.style.float == 'left':  # and direction is ltr
+                    if (child.style.float == 'left' and
+                            box.style.direction == 'ltr'):
                         old_child.translate(dx=max(child.margin_width(), 0))
-                    # elif child.style.float == 'right' and direction is rtl:
-                    #    old_child.translate(dx=-child.margin_width())
+                    elif (child.style.float == 'right' and
+                            box.style.direction == 'rtl'):
+                        old_child.translate(dx=min(-child.margin_width(), 0))
                 if child.style.float == 'left':
                     position_x += max(child.margin_width(), 0)
                 elif child.style.float == 'right':
