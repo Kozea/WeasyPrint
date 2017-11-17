@@ -113,6 +113,14 @@ def get_next_linebox(context, linebox, position_y, skip_stack,
 
         remove_last_whitespace(context, line)
 
+        new_position_x, _, new_available_width = avoid_collisions(
+            context, linebox, containing_block, outer=False)
+        alignment_available_width = (
+            new_available_width + new_position_x - position_x)
+        offset_x = text_align(
+            context, line, alignment_available_width,
+            last=(resume_at is None or preserved_line_break))
+
         bottom, top = line_box_verticality(line)
         assert top is not None
         assert bottom is not None
@@ -123,8 +131,6 @@ def get_next_linebox(context, linebox, position_y, skip_stack,
         line.margin_top = 0
         line.margin_bottom = 0
 
-        offset_x = text_align(context, line, available_width,
-                              last=resume_at is None or preserved_line_break)
         if offset_x != 0 or offset_y != 0:
             line.translate(offset_x, offset_y)
 
