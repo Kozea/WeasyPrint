@@ -103,9 +103,9 @@ def get_next_linebox(context, linebox, position_y, skip_stack,
 
         (line, resume_at, preserved_line_break, first_letter,
          last_letter) = split_inline_box(
-            context, linebox, position_x, max_x, skip_stack,
-            containing_block, device_size, line_absolutes,
-            line_fixed, line_placeholders, waiting_floats)
+             context, linebox, position_x, max_x, skip_stack, containing_block,
+             device_size, line_absolutes, line_fixed, line_placeholders,
+             waiting_floats, line_children=[])
 
         if is_phantom_linebox(line) and not preserved_line_break:
             line.height = 0
@@ -550,7 +550,8 @@ def inline_block_width(box, context, containing_block):
 
 def split_inline_level(context, box, position_x, max_x, skip_stack,
                        containing_block, device_size, absolute_boxes,
-                       fixed_boxes, line_placeholders, waiting_floats):
+                       fixed_boxes, line_placeholders, waiting_floats,
+                       line_children):
     """Fit as much content as possible from an inline-level box in a width.
 
     Return ``(new_box, resume_at, preserved_line_break, first_letter,
@@ -594,7 +595,7 @@ def split_inline_level(context, box, position_x, max_x, skip_stack,
          last_letter) = split_inline_box(
             context, box, position_x, max_x, skip_stack, containing_block,
             device_size, absolute_boxes, fixed_boxes, line_placeholders,
-            waiting_floats)
+            waiting_floats, line_children)
     elif isinstance(box, boxes.AtomicInlineLevelBox):
         new_box = atomic_box(
             context, box, position_x, skip_stack, containing_block,
@@ -612,7 +613,8 @@ def split_inline_level(context, box, position_x, max_x, skip_stack,
 
 def split_inline_box(context, box, position_x, max_x, skip_stack,
                      containing_block, device_size, absolute_boxes,
-                     fixed_boxes, line_placeholders, waiting_floats):
+                     fixed_boxes, line_placeholders, waiting_floats,
+                     line_children):
     """Same behavior as split_inline_level."""
 
     # In some cases (shrink-to-fit result being the preferred width)
@@ -683,7 +685,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                     context, child, containing_block, device_size,
                     absolute_boxes, fixed_boxes)
                 waiting_children.append((index, child))
-                for _, old_child in (children + waiting_children)[:index]:
+                for _, old_child in line_children:
                     if not old_child.is_in_normal_flow():
                         continue
                     if (child.style.float == 'left' and
@@ -701,7 +703,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
         new_child, resume_at, preserved, first, last = split_inline_level(
             context, child, position_x, max_x, skip_stack, containing_block,
             device_size, absolute_boxes, fixed_boxes, line_placeholders,
-            waiting_floats)
+            waiting_floats, line_children)
         skip_stack = None
         if preserved:
             preserved_line_break = True
@@ -731,6 +733,8 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
             # may be None where we would have an empty TextBox
             assert isinstance(child, boxes.TextBox)
         else:
+            line_children.append((index, new_child))
+
             margin_width = new_child.margin_width()
             new_position_x = position_x + margin_width
 
@@ -757,7 +761,8 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                                 child.position_x + child.margin_width() - 1,
                                 initial_skip_stack, containing_block,
                                 device_size, absolute_boxes, fixed_boxes,
-                                line_placeholders, waiting_floats)
+                                line_placeholders, waiting_floats,
+                                line_children)
                             children = (
                                 waiting_children[:index] +
                                 [(index, answer[0])])
