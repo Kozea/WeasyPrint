@@ -1126,10 +1126,18 @@ def is_phantom_linebox(linebox):
 
 
 def can_break_inside(box):
+    # See https://www.w3.org/TR/css-text-3/#white-space-property
+    text_wrap = box.style['white_space'] in ('normal', 'pre-wrap', 'pre-line')
     if isinstance(box, boxes.AtomicInlineLevelBox):
         return False
     elif isinstance(box, boxes.TextBox):
-        return can_break_text(box.text, box.style['lang'])
+        if text_wrap:
+            return can_break_text(box.text, box.style['lang'])
+        else:
+            return False
     elif isinstance(box, boxes.ParentBox):
-        return any(can_break_inside(child) for child in box.children)
+        if text_wrap:
+            return any(can_break_inside(child) for child in box.children)
+        else:
+            return False
     return False
