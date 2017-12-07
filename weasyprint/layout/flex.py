@@ -10,7 +10,7 @@
 
 """
 
-from .preferred import min_max
+from .preferred import min_max, max_content_width
 
 
 def flex_layout(context, box, max_position_y, skip_stack, containing_block,
@@ -43,7 +43,10 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
             # TODO Step B
             # TODO Step C
             # TODO Step D
-            # TODO
+            if flex_basis == 'auto':
+                flex_basis = 'content'
+            if flex_basis == 'content':
+                flex_basis = max_content_width(context, child)
             # Step E
             main_size = flex_basis
             flex_base_size = main_size
