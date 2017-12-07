@@ -904,7 +904,8 @@ def display(keyword):
         'inline', 'block', 'inline-block', 'list-item', 'none',
         'table', 'inline-table', 'table-caption',
         'table-row-group', 'table-header-group', 'table-footer-group',
-        'table-row', 'table-column-group', 'table-column', 'table-cell')
+        'table-row', 'table-column-group', 'table-column', 'table-cell',
+        'flex', 'inline-flex')
 
 
 @validator('float')
