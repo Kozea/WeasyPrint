@@ -79,6 +79,10 @@ def block_level_layout(context, box, max_position_y, skip_stack,
         adjoining_margins = []
         collapsing_through = False
         return box, resume_at, next_page, adjoining_margins, collapsing_through
+    elif isinstance(box, boxes.FlexBox):
+        return flex_layout(
+            context, box, max_position_y, skip_stack, containing_block,
+            device_size, page_is_empty, absolute_boxes, fixed_boxes)
     else:  # pragma: no cover
         raise TypeError('Layout for %s not handled yet' % type(box).__name__)
 

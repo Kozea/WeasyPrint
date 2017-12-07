@@ -41,6 +41,8 @@ BOX_TYPE_FROM_DISPLAY = {
     'table-column-group': boxes.TableColumnGroupBox,
     'table-cell': boxes.TableCellBox,
     'table-caption': boxes.TableCaptionBox,
+    'flex': boxes.FlexBox,
+    'inline-flex': boxes.InlineFlexBox,
 }
 
 
@@ -70,6 +72,7 @@ def build_formatting_structure(element_tree, style_for, get_image_from_uri,
     box = anonymous_table_boxes(box)
     box = inline_in_block(box)
     box = block_in_inline(box)
+    box = flex_boxes(box)
     box = set_viewport_overflow(box)
     return box
 
@@ -798,6 +801,30 @@ def collapse_table_borders(table, grid_width, grid_height):
         x=grid_width, y=0, h=1))
 
     return vertical_borders, horizontal_borders
+
+
+def flex_boxes(box):
+    """Remove and add boxes according to the flex model.
+
+    Take and return a ``Box`` object.
+
+    See http://www.w3.org/TR/css-flexbox-1/#flex-items
+
+    """
+    if not isinstance(box, boxes.ParentBox):
+        return box
+
+    # Do recursion.
+    children = [flex_boxes(child) for child in box.children]
+    return flex_children(box, children)
+
+
+def flex_children(box, children):
+    if isinstance(box, boxes.FlexContainerBox):
+        for child in children:
+            if child.is_in_normal_flow():
+                child.is_flex_item = True
+    return children
 
 
 def process_whitespace(box, following_collapsible_space=False):

@@ -78,6 +78,7 @@ class Box(object):
 
     # Default, may be overriden on instances.
     is_table_wrapper = False
+    is_flex_item = False
     is_for_root_element = False
     transformation_matrix = None
     bookmark_label = None
@@ -670,3 +671,23 @@ class MarginBox(BlockContainerBox):
 
     def __repr__(self):
         return '<%s %s>' % (type(self).__name__, self.at_keyword)
+
+
+class FlexContainerBox(ParentBox):
+    """A box that contains only flex-items."""
+
+
+class FlexBox(FlexContainerBox, BlockLevelBox):
+    """A box that is both block-level and a flex container.
+
+    It behaves as block on the outside and as a flex container on the inside.
+
+    """
+
+
+class InlineFlexBox(FlexContainerBox, InlineLevelBox):
+    """A box that is both inline-level and a flex container.
+
+    It behaves as inline on the outside and as a flex container on the inside.
+
+    """
