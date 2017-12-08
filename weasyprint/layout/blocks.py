@@ -17,6 +17,7 @@ from math import floor
 from ..compat import izip, xrange
 from ..formatting_structure import boxes
 from .absolute import AbsolutePlaceholder, absolute_layout
+from .flex import flex_layout
 from .float import avoid_collisions, float_layout, get_clearance
 from .inlines import (
     iter_line_boxes, min_max_auto_replaced, replaced_box_height,
