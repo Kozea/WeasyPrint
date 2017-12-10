@@ -631,8 +631,8 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
     assert isinstance(box, (boxes.LineBox, boxes.InlineBox))
     left_spacing = (box.padding_left + box.margin_left +
                     box.border_left_width)
-#    right_spacing = (box.padding_right + box.margin_right +
-#                     box.border_right_width)
+    right_spacing = (box.padding_right + box.margin_right +
+                     box.border_right_width)
     if is_start:
         position_x += left_spacing
     content_box_left = position_x
@@ -650,7 +650,8 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
     else:
         skip, skip_stack = skip_stack
 
-    for index, child in box.enumerate_skip(skip):
+    box_children = list(box.enumerate_skip(skip))
+    for i, (index, child) in enumerate(box_children):
         child.position_y = box.position_y
         if child.is_absolutely_positioned():
             child.position_x = position_x
@@ -700,10 +701,14 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                     max_x -= max(child.margin_width(), 0)
             continue
 
+        last_child = (i == len(box_children) - 1)
+        available_width = max_x
+        if last_child:
+            available_width -= right_spacing
         new_child, resume_at, preserved, first, last = split_inline_level(
-            context, child, position_x, max_x, skip_stack, containing_block,
-            device_size, absolute_boxes, fixed_boxes, line_placeholders,
-            waiting_floats, line_children)
+            context, child, position_x, available_width, skip_stack,
+            containing_block, device_size, absolute_boxes, fixed_boxes,
+            line_placeholders, waiting_floats, line_children)
         skip_stack = None
         if preserved:
             preserved_line_break = True
@@ -722,55 +727,57 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
             first_letter = first
         last_letter = last
 
-        # TODO: this is non-optimal when last_child is True and
-        #   width <= remaining_width < width + right_spacing
-        # with
-        #   width = part1.margin_width()
-
-        # TODO: on the last child, take care of right_spacing
-
         if new_child is None:
             # may be None where we would have an empty TextBox
             assert isinstance(child, boxes.TextBox)
         else:
             line_children.append((index, new_child))
+            # TODO: we should try to find a better condition here.
+            trailing_whitespace = (
+                isinstance(new_child, boxes.TextBox) and
+                not new_child.text.strip())
 
             margin_width = new_child.margin_width()
             new_position_x = position_x + margin_width
 
-            if new_position_x > max_x:
-                if children:
-                    # too wide, and the inline is non-empty:
-                    # put child entirely on the next line.
-                    resume_at = (children[-1][0] + 1, None)
-                    break
-                elif waiting_children:
-                    # too wide, the inline is empty, we tried to add children
-                    # but can't split the line between them: split the last
-                    # child that can be split inside.
+            if new_position_x > max_x and not trailing_whitespace:
+                if waiting_children:
+                    # Too wide, let's try to cut inside waiting children,
+                    # starting from the end.
                     # TODO: we should take care of children added into
                     # absolute_boxes, fixed_boxes and other lists.
-                    for index, child in reversed(waiting_children):
+                    waiting_children_copy = waiting_children.copy()
+                    break_found = False
+                    while waiting_children_copy:
+                        child_index, child = waiting_children_copy.pop()
                         # TODO: what about relative children?
                         if (child.is_in_normal_flow() and
                                 can_break_inside(child)):
+                            break_found = True
+                            max_x = child.position_x + child.margin_width()
                             # TODO: replace -1, we use it to cut the last word
                             # of the line.
+                            max_x -= 1
+                            child_skip = None
+                            if initial_skip_stack and initial_skip_stack[1]:
+                                child_skip = initial_skip_stack[1][1]
                             answer = split_inline_box(
-                                context, box, initial_position_x,
-                                child.position_x + child.margin_width() - 1,
-                                initial_skip_stack, containing_block,
-                                device_size, absolute_boxes, fixed_boxes,
-                                line_placeholders, waiting_floats,
+                                context, child, child.position_x, max_x,
+                                child_skip, box, device_size, absolute_boxes,
+                                fixed_boxes, line_placeholders, waiting_floats,
                                 line_children)
                             children = (
-                                waiting_children[:index] +
-                                [(index, answer[0])])
-                            resume_at = answer[1]
+                                children +
+                                waiting_children_copy +
+                                [(child_index, answer[0])])
+                            resume_at = (child_index, answer[1])
                             break
-                    else:
-                        children = [waiting_children[0]]
-                        resume_at = (waiting_children[0][0] + 1, None)
+                    if break_found:
+                        break
+                if children:
+                    # too wide, can't break waiting children and the inline is
+                    # non-empty: put child entirely on the next line.
+                    resume_at = (children[-1][0] + 1, None)
                     break
 
             position_x = new_position_x

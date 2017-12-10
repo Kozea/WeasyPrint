@@ -1009,7 +1009,10 @@ def split_first_line(text, style, context, max_width, justification_spacing):
                 # Text may have been split elsewhere by Pango earlier
                 resume_at = second_line.start_index
             else:
-                resume_at = first_line.length + 1
+                # Second line is none
+                resume_at = first_line.length
+            if resume_at == len(text.encode('utf-8')):
+                resume_at = None
     elif first_line_text:
         # We found something on the first line but we did not find a word on
         # the next line, no need to hyphenate, we can keep the current layout
@@ -1189,6 +1192,9 @@ def can_break_text(text, lang):
         language = pango.pango_language_get_default()
     if lang:
         language = pango.pango_language_from_string(lang_p)
+    # TODO: this should be removed when bidi is supported
+    for char in ('\u202a', '\u202b', '\u202c', '\u202d', '\u202e'):
+        text = text.replace(char, '')
     text_p, bytestring = unicode_to_char_p(text)
     length = len(bytestring) + 1
     log_attrs = ffi.new('PangoLogAttr[]', length)

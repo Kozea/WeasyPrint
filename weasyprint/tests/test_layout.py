@@ -633,6 +633,82 @@ def test_breaking_linebox():
         texts.append(text_box.text)
     assert texts == ['a', 'b', 'c', 'd', 'e']
 
+    html_sample = '''
+        <p style="width: %i.5em; font-family: ahem">ab
+        <span style="padding-right: 1em; margin-right: 1em">c def</span>g
+        hi</p>'''
+    for i in range(15):
+        page, = parse(html_sample % i)
+        html, = page.children
+        body, = html.children
+        p, = body.children
+        lines = p.children
+        print(i, lines)
+
+        if i in (0, 1, 2, 3):
+            line_1, line_2, line_3, line_4 = lines
+
+            textbox_1, = line_1.children
+            assert textbox_1.text == 'ab'
+
+            span_1, = line_2.children
+            textbox_1, = span_1.children
+            assert textbox_1.text == 'c'
+
+            span_1, textbox_2 = line_3.children
+            textbox_1, = span_1.children
+            assert textbox_1.text == 'def'
+            assert textbox_2.text == 'g'
+
+            textbox_1, = line_4.children
+            assert textbox_1.text == 'hi'
+        elif i in (4, 5, 6, 7, 8):
+            line_1, line_2, line_3 = lines
+
+            textbox_1, span_1 = line_1.children
+            assert textbox_1.text == 'ab '
+            textbox_2, = span_1.children
+            assert textbox_2.text == 'c'
+
+            span_1, textbox_2 = line_2.children
+            textbox_1, = span_1.children
+            assert textbox_1.text == 'def'
+            assert textbox_2.text == 'g'
+
+            textbox_1, = line_3.children
+            assert textbox_1.text == 'hi'
+        elif i in (9, 10):
+            line_1, line_2 = lines
+
+            textbox_1, span_1 = line_1.children
+            assert textbox_1.text == 'ab '
+            textbox_2, = span_1.children
+            assert textbox_2.text == 'c'
+
+            span_1, textbox_2 = line_2.children
+            textbox_1, = span_1.children
+            assert textbox_1.text == 'def'
+            assert textbox_2.text == 'g hi'
+        elif i in (11, 12, 13):
+            line_1, line_2 = lines
+
+            textbox_1, span_1, textbox_3 = line_1.children
+            assert textbox_1.text == 'ab '
+            textbox_2, = span_1.children
+            assert textbox_2.text == 'c def'
+            assert textbox_3.text == 'g'
+
+            textbox_1, = line_2.children
+            assert textbox_1.text == 'hi'
+        elif i in (14, 15):
+            line_1, = lines
+
+            textbox_1, span_1, textbox_3 = line_1.children
+            assert textbox_1.text == 'ab '
+            textbox_2, = span_1.children
+            assert textbox_2.text == 'c def'
+            assert textbox_3.text == 'g hi'
+
 
 @assert_no_logs
 def test_linebox_text():
