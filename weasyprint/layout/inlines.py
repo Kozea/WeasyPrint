@@ -582,8 +582,11 @@ def split_inline_level(context, box, position_x, max_x, skip_stack,
         else:
             resume_at = (skip, None)
         if new_box and new_box.text:
-            first_letter = new_box.text[0]
-            last_letter = new_box.text[-1]
+            first_letter = box.text[0]
+            if skip is None:
+                last_letter = box.text[-1]
+            else:
+                last_letter = box.text[skip - 1]
         else:
             first_letter = last_letter = None
     elif isinstance(box, boxes.InlineBox):

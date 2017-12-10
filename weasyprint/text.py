@@ -988,7 +988,7 @@ def split_first_line(text, style, context, max_width, justification_spacing):
         second_line_text = text
 
     next_word = second_line_text.split(' ', 1)[0]
-    if next_word:
+    if next_word and ' ' in second_line_text:
         if space_collapse:
             # next_word might fit without a space afterwards
             # only try when space collapsing is allowed
@@ -1010,8 +1010,8 @@ def split_first_line(text, style, context, max_width, justification_spacing):
                 resume_at = second_line.start_index
             else:
                 # Second line is none
-                resume_at = first_line.length
-            if resume_at == len(text.encode('utf-8')):
+                resume_at = first_line.length + 1
+            if resume_at >= len(text.encode('utf-8')):
                 resume_at = None
     elif first_line_text:
         # We found something on the first line but we did not find a word on
