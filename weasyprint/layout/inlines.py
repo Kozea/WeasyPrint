@@ -581,7 +581,7 @@ def split_inline_level(context, box, position_x, max_x, skip_stack,
             resume_at = None
         else:
             resume_at = (skip, None)
-        if new_box and new_box.text:
+        if box.text:
             first_letter = box.text[0]
             if skip is None:
                 last_letter = box.text[-1]
@@ -717,7 +717,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
             preserved_line_break = True
 
         if None in (last_letter, first):
-            can_break = True
+            can_break = False
         else:
             can_break = can_break_text(
                 last_letter + first, child.style['lang'])
@@ -731,7 +731,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
         last_letter = last
 
         if new_child is None:
-            # may be None where we would have an empty TextBox
+            # may be None where we have an empty TextBox
             assert isinstance(child, boxes.TextBox)
         else:
             line_children.append((index, new_child))
@@ -764,16 +764,20 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                             child_skip = None
                             if initial_skip_stack and initial_skip_stack[1]:
                                 child_skip = initial_skip_stack[1][1]
-                            answer = split_inline_box(
-                                context, child, child.position_x, max_x,
-                                child_skip, box, device_size, absolute_boxes,
-                                fixed_boxes, line_placeholders, waiting_floats,
-                                line_children)
-                            children = (
-                                children +
-                                waiting_children_copy +
-                                [(child_index, answer[0])])
-                            resume_at = (child_index, answer[1])
+                            child_new_child, child_resume_at, _, _, _ = (
+                                split_inline_level(
+                                    context, child, child.position_x, max_x,
+                                    child_skip, box, device_size,
+                                    absolute_boxes, fixed_boxes,
+                                    line_placeholders, waiting_floats,
+                                    line_children))
+                            children = children + waiting_children_copy
+                            if child_new_child is None:
+                                # may be None where we have an empty TextBox
+                                assert isinstance(child, boxes.TextBox)
+                            else:
+                                children += [(child_index, child_new_child)]
+                            resume_at = (child_index, child_resume_at)
                             break
                     if break_found:
                         break
