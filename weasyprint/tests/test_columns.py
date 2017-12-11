@@ -203,19 +203,21 @@ def test_columns_relative():
             body { margin: 0; font-family: "ahem"; line-height: 1px }
             @page { margin: 0; size: 4px 50px; font-size: 1px }
         </style>
-        <div>a b c<article>d</article></div>
+        <div>a b c d<article>e</article></div>
     ''')
 
     html, = page.children
     body, = html.children
     div, = body.children
     assert div.width == 4
-    column1, column2, column3, absolute_column = div.children
-    columns = column1, column2, column3
-    assert [column.width for column in columns] == [1, 1, 1]
-    assert [column.position_x for column in columns] == [2, 3, 4]
-    assert [column.position_y for column in columns] == [1, 1, 1]
-    absolute_line, = absolute_column.children
+    columns = div.children
+    assert [column.width for column in columns] == [1, 1, 1, 1]
+    assert [column.position_x for column in columns] == [2, 3, 4, 5]
+    assert [column.position_y for column in columns] == [1, 1, 1, 1]
+    column4 = columns[-1]
+    column_line, = column4.children
+    _, absolute_article = column_line.children
+    absolute_line, = absolute_article.children
     span, = absolute_line.children
     assert span.position_x == 5  # Default position of the 4th column
     assert span.position_y == 4  # div's 1px + span's 3px
