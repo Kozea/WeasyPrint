@@ -12,9 +12,7 @@
 
 from __future__ import division, unicode_literals
 
-import difflib
 import functools
-import pprint
 
 from .. import images
 from ..css import PageType, get_all_computed_styles
