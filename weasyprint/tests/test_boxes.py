@@ -122,9 +122,6 @@ def assert_tree(box, expected):
     """
     lists = to_lists(box)
     if lists != expected:
-        print(''.join(difflib.unified_diff(
-            *[pprint.pformat(v).splitlines(True) for v in [lists, expected]],
-            n=9999)))
         assert lists == expected
 
 

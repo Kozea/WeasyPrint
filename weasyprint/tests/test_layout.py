@@ -643,7 +643,6 @@ def test_breaking_linebox():
         body, = html.children
         p, = body.children
         lines = p.children
-        print(i, lines)
 
         if i in (0, 1, 2, 3):
             line_1, line_2, line_3, line_4 = lines
