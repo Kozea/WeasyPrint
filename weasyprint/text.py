@@ -988,7 +988,7 @@ def split_first_line(text, style, context, max_width, justification_spacing):
         second_line_text = text
 
     next_word = second_line_text.split(' ', 1)[0]
-    if next_word and ' ' in second_line_text:
+    if next_word:
         if space_collapse:
             # next_word might fit without a space afterwards
             # only try when space collapsing is allowed
