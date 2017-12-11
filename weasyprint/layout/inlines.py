@@ -749,7 +749,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                     # starting from the end.
                     # TODO: we should take care of children added into
                     # absolute_boxes, fixed_boxes and other lists.
-                    waiting_children_copy = waiting_children.copy()
+                    waiting_children_copy = waiting_children[:]
                     break_found = False
                     while waiting_children_copy:
                         child_index, child = waiting_children_copy.pop()
@@ -795,7 +795,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
         resume_at = None
 
     new_box = box.copy_with_children(
-        [child for index, child in children],
+        [box_child for index, box_child in children],
         is_start=is_start, is_end=resume_at is None)
     if isinstance(box, boxes.LineBox):
         # Line boxes already have a position_x which may not be the same
