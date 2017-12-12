@@ -643,6 +643,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
     waiting_children = []
     preserved_line_break = False
     first_letter = last_letter = None
+    float_translate = 0
 
     if box.style.position == 'relative':
         absolute_boxes = []
@@ -688,19 +689,32 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                     context, child, containing_block, device_size,
                     absolute_boxes, fixed_boxes)
                 waiting_children.append((index, child))
+
+                # Translate previous line children
+                if child.style.float == 'left':
+                    dx = max(child.margin_width(), 0)
+                    if isinstance(box, boxes.LineBox):
+                        # The parent is the line, update the current position
+                        # for the next child. When the parent is not the line
+                        # (it is an inline block), the current position of the
+                        # line is updated by the block itself (see next
+                        # split_inline_level call).
+                        position_x += dx
+                elif child.style.float == 'right':
+                    dx = min(-child.margin_width(), 0)
+                    # Update the maximum x position for the next children
+                    max_x += dx
+                # The float_translate variable will be used to translate the
+                # current box if it's an inline block that has floats inside.
+                float_translate += dx
                 for _, old_child in line_children:
                     if not old_child.is_in_normal_flow():
                         continue
-                    if (child.style.float == 'left' and
-                            box.style.direction == 'ltr'):
-                        old_child.translate(dx=max(child.margin_width(), 0))
-                    elif (child.style.float == 'right' and
-                            box.style.direction == 'rtl'):
-                        old_child.translate(dx=min(-child.margin_width(), 0))
-                if child.style.float == 'left':
-                    position_x += max(child.margin_width(), 0)
-                elif child.style.float == 'right':
-                    max_x -= max(child.margin_width(), 0)
+                    if ((child.style.float == 'left' and
+                            box.style.direction == 'ltr') or
+                        (child.style.float == 'right' and
+                            box.style.direction == 'rtl')):
+                        old_child.translate(dx=dx)
             continue
 
         last_child = (i == len(box_children) - 1)
@@ -711,6 +725,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
             context, child, position_x, available_width, skip_stack,
             containing_block, device_size, absolute_boxes, fixed_boxes,
             line_placeholders, waiting_floats, line_children)
+
         skip_stack = None
         if preserved:
             preserved_line_break = True
@@ -733,14 +748,15 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
             # may be None where we have an empty TextBox
             assert isinstance(child, boxes.TextBox)
         else:
-            line_children.append((index, new_child))
+            if isinstance(box, boxes.LineBox):
+                line_children.append((index, new_child))
             # TODO: we should try to find a better condition here.
             trailing_whitespace = (
                 isinstance(new_child, boxes.TextBox) and
                 not new_child.text.strip())
 
             margin_width = new_child.margin_width()
-            new_position_x = position_x + margin_width
+            new_position_x = new_child.position_x + margin_width
 
             if new_position_x > max_x and not trailing_whitespace:
                 if waiting_children:
@@ -808,6 +824,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
     else:
         new_box.position_x = initial_position_x
         new_box.width = position_x - content_box_left
+        new_box.translate(dx=float_translate, ignore_floats=True)
 
     line_height, new_box.baseline = strut_layout(box.style, context)
     new_box.height = box.style.font_size
