@@ -30,11 +30,11 @@ class AbsolutePlaceholder(object):
         object.__setattr__(self, '_box', new_box)
         object.__setattr__(self, '_layout_done', True)
 
-    def translate(self, dx=0, dy=0):
+    def translate(self, dx=0, dy=0, ignore_floats=False):
         if dx == 0 and dy == 0:
             return
         if self._layout_done:
-            self._box.translate(dx, dy)
+            self._box.translate(dx, dy, ignore_floats)
         else:
             # Descendants do not have a position yet.
             self._box.position_x += dx
