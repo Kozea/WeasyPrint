@@ -118,6 +118,8 @@ class Box(object):
 
         """
         # Overridden in ParentBox to also translate children, if any.
+        if dx == 0 and dy == 0:
+            return
         self.position_x += dx
         self.position_y += dy
         for child in self.all_children():
@@ -539,6 +541,8 @@ class TableBox(BlockLevelBox, ParentBox):
         return itertools.chain(self.children, self.column_groups)
 
     def translate(self, dx=0, dy=0):
+        if dx == 0 and dy == 0:
+            return
         self.column_positions = [
             position + dx for position in self.column_positions]
         return super(TableBox, self).translate(dx, dy)

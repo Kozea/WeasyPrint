@@ -131,8 +131,7 @@ def get_next_linebox(context, linebox, position_y, skip_stack,
         line.margin_top = 0
         line.margin_bottom = 0
 
-        if offset_x != 0 or offset_y != 0:
-            line.translate(offset_x, offset_y)
+        line.translate(offset_x, offset_y)
 
         if line.height <= candidate_height:
             break
