@@ -10,6 +10,8 @@
 
 """
 
+from math import log10
+
 from .percentages import resolve_percentages
 from .preferred import max_content_width, min_content_width
 
@@ -86,23 +88,24 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
             if not child.is_flex_item])
 
     # Step 6
-    flex_grow = 0
-    flex_shrink = 1
 
     for line in flex_lines:
+        for child in line:
+            child.grow = 0
+            child.shrink = 1
         # Part 1
         hypothetical_main_size = sum(
             child.hypothetical_main_size for child in line)
         if hypothetical_main_size < available_main_space:
-            flex_factor = flex_grow
             flex_factor_type = 'grow'
         else:
-            flex_factor = flex_shrink
             flex_factor_type = 'shrink'
 
         # Part 2
         for child in line:
-            if (flex_factor == 0 or
+            child.flex_factor = (
+                child.grow if flex_factor_type == 'grow' else child.shrink)
+            if (child.flex_factor == 0 or
                     (flex_factor_type == 'grow' and
                         child.flex_base_size > child.hypothetical_main_size) or
                     (flex_factor_type == 'shrink' and
@@ -122,4 +125,34 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
 
         # Part 4
         while not all(child.frozen for child in line):
-            pass
+            unfrozen_factor_sum = 0
+            remaining_free_space = available_main_space
+            for child in line:
+                if child.frozen:
+                    remaining_free_space -= child.target_main_size
+                else:
+                    remaining_free_space -= child.flex_base_size
+                    unfrozen_factor_sum += child.flex_factor
+            if unfrozen_factor_sum < 1:
+                initial_free_space *= unfrozen_factor_sum
+            if (int(log10(initial_free_space)) <
+                    int(log10(remaining_free_space))):
+                remaining_free_space = initial_free_space
+            if remaining_free_space == 0:
+                pass
+            elif flex_factor_type == 'grow':
+                for child in line:
+                    if not child.frozen:
+                        ratio = child.grow / unfrozen_factor_sum
+                        child.target_main_size = (
+                            child.flex_base_size +
+                            remaining_free_space * ratio)
+            elif flex_factor_type == 'shrink':
+                for child in line:
+                    if not child.frozen:
+                        scaled_flex_shrink_factor = (
+                            child.flex_base_size * child.shrink)
+                        ratio = scaled_flex_shrink_factor / unfrozen_factor_sum
+                        child.target_main_size = (
+                            child.flex_base_size - remaining_free_space * ratio
+                        )
