@@ -816,15 +816,22 @@ def flex_boxes(box):
 
     # Do recursion.
     children = [flex_boxes(child) for child in box.children]
-    return flex_children(box, children)
+    box.children = flex_children(box, children)
+    return box
 
 
 def flex_children(box, children):
     if isinstance(box, boxes.FlexContainerBox):
+        flex_children = []
         for child in children:
             if child.is_in_normal_flow():
                 child.is_flex_item = True
-    return children
+            if isinstance(child, boxes.TextBox) and not child.text.strip():
+                continue
+            flex_children.append(child)
+        return flex_children
+    else:
+        return children
 
 
 def process_whitespace(box, following_collapsible_space=False):

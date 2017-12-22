@@ -46,7 +46,8 @@ def min_content_width(context, box, outer=True):
     This is the width by breaking at every line-break opportunity.
 
     """
-    if isinstance(box, (boxes.BlockContainerBox, boxes.TableColumnBox)):
+    if isinstance(box, (
+            boxes.BlockContainerBox, boxes.TableColumnBox, boxes.FlexBox)):
         if box.is_table_wrapper:
             return table_and_columns_preferred_widths(context, box, outer)[0]
         else:
@@ -70,7 +71,8 @@ def max_content_width(context, box, outer=True):
     This is the width by only breaking at forced line breaks.
 
     """
-    if isinstance(box, (boxes.BlockContainerBox, boxes.TableColumnBox)):
+    if isinstance(box, (
+            boxes.BlockContainerBox, boxes.TableColumnBox, boxes.FlexBox)):
         if box.is_table_wrapper:
             return table_and_columns_preferred_widths(context, box, outer)[1]
         else:
