@@ -19,7 +19,8 @@ import pytest
 
 from ..formatting_structure import boxes
 from .test_boxes import render_pages as parse
-from .testing_utils import FONTS, almost_equal, assert_no_logs, capture_logs
+from .testing_utils import (
+    FONTS, almost_equal, assert_no_logs, capture_logs, requires)
 
 
 def body_children(page):
@@ -1505,7 +1506,11 @@ def test_whitespace_processing():
         assert text.text == 'a', 'source was %r' % (source,)
 
 
+# TODO: this test is broken with 1.15.10 and 1.14.12 because of commit b092b63
+# now reverted on master and 1.14 branches. Remove the @requires decorator when
+# 1.15.12 is released.
 @assert_no_logs
+@requires('1.15.12')
 def test_images():
     """Test that width, height and ratio of images are respected."""
     def get_img(html):
