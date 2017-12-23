@@ -644,6 +644,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
     preserved_line_break = False
     first_letter = last_letter = None
     float_translate = 0
+    float_resume_at = 0
 
     if box.style.position == 'relative':
         absolute_boxes = []
@@ -715,6 +716,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                         (child.style.float == 'right' and
                             box.style.direction == 'rtl')):
                         old_child.translate(dx=dx)
+            float_resume_at = index + 1
             continue
 
         last_child = (i == len(box_children) - 1)
@@ -841,6 +843,11 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
     if new_box.style.position == 'relative':
         for absolute_box in absolute_boxes:
             absolute_layout(context, absolute_box, new_box, fixed_boxes)
+
+    if resume_at is not None:
+        if resume_at[0] < float_resume_at:
+            resume_at = (float_resume_at, None)
+
     return new_box, resume_at, preserved_line_break, first_letter, last_letter
 
 
