@@ -721,12 +721,18 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
 
         last_child = (i == len(box_children) - 1)
         available_width = max_x
-        if last_child:
-            available_width -= right_spacing
         new_child, resume_at, preserved, first, last = split_inline_level(
             context, child, position_x, available_width, skip_stack,
             containing_block, device_size, absolute_boxes, fixed_boxes,
             line_placeholders, waiting_floats, line_children)
+        if last_child and right_spacing and resume_at is None:
+            # TODO: we should take care of children added into absolute_boxes,
+            # fixed_boxes and other lists.
+            available_width -= right_spacing
+            new_child, resume_at, preserved, first, last = split_inline_level(
+                context, child, position_x, available_width, skip_stack,
+                containing_block, device_size, absolute_boxes, fixed_boxes,
+                line_placeholders, waiting_floats, line_children)
 
         skip_stack = None
         if preserved:
