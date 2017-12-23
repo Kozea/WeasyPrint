@@ -730,7 +730,9 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
         if preserved:
             preserved_line_break = True
 
-        if None in (last_letter, first):
+        if box.style['white_space'] in ('pre', 'nowrap'):
+            can_break = False
+        elif None in (last_letter, first):
             can_break = False
         else:
             can_break = can_break_text(
