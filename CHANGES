@@ -30,7 +30,7 @@ Bug fixes:
   Don't crash when rendering some tables.
 * `#39 <https://github.com/Kozea/WeasyPrint/issues/39>`_:
   Fix rendering of floats in inlines.
-* `301# <https://github.com/Kozea/WeasyPrint/issues/301>`_:
+* `#301 <https://github.com/Kozea/WeasyPrint/issues/301>`_:
   Split lines carefully.
 * `#530 <https://github.com/Kozea/WeasyPrint/issues/530>`_:
   Fix root when frozen with Pyinstaller.
