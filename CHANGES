@@ -1,6 +1,51 @@
 WeasyPrint changelog
 ====================
 
+Version 0.42
+------------
+
+Released on 2017-12-26.
+
+WeasyPrint is not tested with (end-of-life) Python 3.3 anymore.
+
+**This release is probably the last version of the 0.x series.**
+
+Next version may include big changes:
+
+- end of Python 2.7 support,
+- initial support of bidirectional text,
+- initial support of flexbox,
+- improvements for speed and memory usage.
+
+New features:
+
+* `#532 <https://github.com/Kozea/WeasyPrint/issues/532>`_:
+  Support relative file URIs when using CLI.
+
+Bug fixes:
+
+* `#553 <https://github.com/Kozea/WeasyPrint/issues/553>`_:
+  Fix slow performance for pre-formatted boxes with a lot of children.
+* `#409 <https://github.com/Kozea/WeasyPrint/issues/409>`_:
+  Don't crash when rendering some tables.
+* `#39 <https://github.com/Kozea/WeasyPrint/issues/39>`_:
+  Fix rendering of floats in inlines.
+* `301# <https://github.com/Kozea/WeasyPrint/issues/301>`_:
+  Split lines carefully.
+* `#530 <https://github.com/Kozea/WeasyPrint/issues/530>`_:
+  Fix root when frozen with Pyinstaller.
+* `#534 <https://github.com/Kozea/WeasyPrint/issues/534>`_:
+  Handle SVGs containing images embedded as data URIs.
+* `#360 <https://github.com/Kozea/WeasyPrint/issues/360>`_:
+  Fix border-radius rendering problem with some PDF readers.
+* `#525 <https://github.com/Kozea/WeasyPrint/issues/525>`_:
+  Fix pipenv support.
+* `#227 <https://github.com/Kozea/WeasyPrint/issues/227>`_:
+  Smartly handle replaced boxes with percentage width in auto-width parents.
+* `#520 <https://github.com/Kozea/WeasyPrint/issues/520>`_:
+  Don't ignore CSS @page rules that are imported by an @import rule.
+
+
 Version 0.41
 ------------
 
