@@ -76,6 +76,10 @@ class Box(object):
     internal_table_or_caption = False
     tabular_container = False
 
+    # Keep track of removed collapsing spaces for wrap opportunities.
+    leading_collapsible_space = False
+    trailing_collapsible_space = False
+
     # Default, may be overriden on instances.
     is_table_wrapper = False
     is_for_root_element = False

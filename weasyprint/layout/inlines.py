@@ -738,21 +738,34 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
         if preserved:
             preserved_line_break = True
 
-        if box.style['white_space'] in ('pre', 'nowrap'):
+        can_break = None
+        if True in (last_letter, first):
+            if last_letter is True:
+                last_letter = ' '
+            if first is True:
+                first = ' '
+        elif box.style['white_space'] in ('pre', 'nowrap'):
             can_break = False
-        elif None in (last_letter, first):
-            can_break = False
-        else:
-            can_break = can_break_text(
-                last_letter + first, child.style['lang'])
+        if can_break is None:
+            if None in (last_letter, first):
+                can_break = False
+            else:
+                can_break = can_break_text(
+                    last_letter + first, child.style['lang'])
 
         if can_break:
             children.extend(waiting_children)
             waiting_children = []
 
         if first_letter is None:
-            first_letter = first
-        last_letter = last
+            if child.leading_collapsible_space:
+                first_letter = True
+            else:
+                first_letter = first
+        if child.trailing_collapsible_space:
+            last_letter = True
+        else:
+            last_letter = last
 
         if new_child is None:
             # may be None where we have an empty TextBox

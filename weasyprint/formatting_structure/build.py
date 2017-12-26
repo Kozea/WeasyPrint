@@ -836,6 +836,7 @@ def process_whitespace(box, following_collapsible_space=False):
             previous_text = text
             if following_collapsible_space and text.startswith(' '):
                 text = text[1:]
+                box.leading_collapsible_space = True
             following_collapsible_space = previous_text.endswith(' ')
         else:
             following_collapsible_space = False
@@ -897,10 +898,30 @@ def inline_in_block(box):
     if not isinstance(box, boxes.ParentBox):
         return box
 
-    children = [inline_in_block(child) for child in box.children
-                # Remove empty text boxes.
-                # (They may have been emptied by process_whitespace().)
-                if not (isinstance(child, boxes.TextBox) and not child.text)]
+    box_children = list(box.children)
+
+    if box_children and box.leading_collapsible_space is False:
+        box.leading_collapsible_space = (
+            box_children[0].leading_collapsible_space)
+
+    children = []
+    trailing_collapsible_space = False
+    for child in box_children:
+        # Keep track of removed collapsing spaces for wrap opportunities, and
+        # remove empty text boxes.
+        # (They may have been emptied by process_whitespace().)
+
+        if trailing_collapsible_space:
+            child.leading_collapsible_space = True
+
+        if isinstance(child, boxes.TextBox) and not child.text:
+            trailing_collapsible_space = child.leading_collapsible_space
+        else:
+            trailing_collapsible_space = False
+            children.append(inline_in_block(child))
+
+    if box.trailing_collapsible_space is False:
+        box.trailing_collapsible_space = trailing_collapsible_space
 
     if not isinstance(box, boxes.BlockContainerBox):
         box.children = children
