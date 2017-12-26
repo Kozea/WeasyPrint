@@ -739,11 +739,8 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
             preserved_line_break = True
 
         can_break = None
-        if True in (last_letter, first):
-            if last_letter is True:
-                last_letter = ' '
-            if first is True:
-                first = ' '
+        if last_letter is True:
+            last_letter = ' '
         elif box.style['white_space'] in ('pre', 'nowrap'):
             can_break = False
         if can_break is None:
@@ -758,10 +755,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
             waiting_children = []
 
         if first_letter is None:
-            if child.leading_collapsible_space:
-                first_letter = True
-            else:
-                first_letter = first
+            first_letter = first
         if child.trailing_collapsible_space:
             last_letter = True
         else:
