@@ -81,14 +81,17 @@ Fonts
 WeasyPrint can use any font that Pango can find installed on the system. Fonts
 are automatically embedded in PDF files.
 
-On Windows and MacOS X, Pango uses the native font-managing libraries. You can
-use the tools provided by your OS to know which fonts are available.
+On Windows and macOS, Pango uses the native font-managing libraries. You can
+use the tools provided by your OS to know which fonts are available. WeasyPrint
+should support any font format that's supported by the operating system.
 
 On Linux, Pango uses fontconfig to access fonts. You can list the available
 fonts thanks to the ``fc-list`` command, and know which font is matched by a
 given pattern thanks to ``fc-match``. Copying a font file into the
 ``~/.local/share/fonts`` or ``~/.fonts`` directory is generally enough to
-install a new font.
+install a new font. WeasyPrint should support `any font format handled by
+FreeType <https://en.wikipedia.org/wiki/FreeType#File_formats>`_ (any format
+widely used except WOFF2).
 
 
 CSS
@@ -248,7 +251,7 @@ but that should not be a problem for common use.
 
 The shorthand ``font`` and ``font-variant`` properties are supported.
 
-WeasyPrint supports the ``@font-face`` rule on Linux and MacOS, but does
+WeasyPrint supports the ``@font-face`` rule on Linux and macOS, but does
 **not** support it on Windows.
 
 WeasyPrint does **not** support the ``@font-feature-values`` rule and the

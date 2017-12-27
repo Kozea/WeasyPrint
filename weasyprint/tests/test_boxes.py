@@ -12,9 +12,7 @@
 
 from __future__ import division, unicode_literals
 
-import difflib
 import functools
-import pprint
 
 from .. import images
 from ..css import PageType, get_all_computed_styles
@@ -122,9 +120,6 @@ def assert_tree(box, expected):
     """
     lists = to_lists(box)
     if lists != expected:
-        print(''.join(difflib.unified_diff(
-            *[pprint.pformat(v).splitlines(True) for v in [lists, expected]],
-            n=9999)))
         assert lists == expected
 
 

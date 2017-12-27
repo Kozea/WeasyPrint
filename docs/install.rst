@@ -3,7 +3,7 @@ Installing
 
 WeasyPrint |version| depends on:
 
-* CPython_ 2.7 or ≥ 3.3
+* CPython_ 2.7 or ≥ 3.4
 * cairo_ [#]_
 * Pango_
 * CFFI_ ≥ 0.6
@@ -151,7 +151,7 @@ install it with pip after installing the following packages:
 OS X
 ----
 
-WeasyPrint is automatically installed and tested on virtual MacOS machines. The
+WeasyPrint is automatically installed and tested on virtual macOS machines. The
 official installation method relies on Homebrew:
 
 .. code-block:: sh
@@ -159,7 +159,7 @@ official installation method relies on Homebrew:
     brew install python3 cairo pango gdk-pixbuf libffi
 
 Don't forget to use the `pip3` command to install WeasyPrint, as `pip` may be
-using the version of Python installed with MacOS.
+using the version of Python installed with macOS.
 
 You can also try with Macports, but please notice that this solution is not
 tested and thus not recommended (**also known as "you're on your own and may

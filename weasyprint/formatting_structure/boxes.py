@@ -76,6 +76,10 @@ class Box(object):
     internal_table_or_caption = False
     tabular_container = False
 
+    # Keep track of removed collapsing spaces for wrap opportunities.
+    leading_collapsible_space = False
+    trailing_collapsible_space = False
+
     # Default, may be overriden on instances.
     is_table_wrapper = False
     is_flex_item = False
@@ -112,17 +116,20 @@ class Box(object):
         new_box.style = self.style
         return new_box
 
-    def translate(self, dx=0, dy=0):
+    def translate(self, dx=0, dy=0, ignore_floats=False):
         """Change the box’s position.
 
         Also update the children’s positions accordingly.
 
         """
         # Overridden in ParentBox to also translate children, if any.
+        if dx == 0 and dy == 0:
+            return
         self.position_x += dx
         self.position_y += dy
         for child in self.all_children():
-            child.translate(dx, dy)
+            if not (ignore_floats and child.is_floated()):
+                child.translate(dx, dy, ignore_floats)
 
     # Heights and widths
 
@@ -539,10 +546,12 @@ class TableBox(BlockLevelBox, ParentBox):
     def all_children(self):
         return itertools.chain(self.children, self.column_groups)
 
-    def translate(self, dx=0, dy=0):
+    def translate(self, dx=0, dy=0, ignore_floats=False):
+        if dx == 0 and dy == 0:
+            return
         self.column_positions = [
             position + dx for position in self.column_positions]
-        return super(TableBox, self).translate(dx, dy)
+        return super(TableBox, self).translate(dx, dy, ignore_floats)
 
     def page_values(self):
         return (self.style['page'], self.style['page'])

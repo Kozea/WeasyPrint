@@ -185,7 +185,6 @@ def _create_pdf_attachment(attachment, url_fetcher):
             if isinstance(source, bytes):
                 source = io.BytesIO(source)
             pdf_file_object = _create_compressed_file_object(source)
-            print(pdf_file_object)
     except URLFetchingError as exc:
         LOGGER.error('Failed to load attachment: %s', exc)
         return None

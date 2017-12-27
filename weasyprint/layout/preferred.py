@@ -260,6 +260,9 @@ def inline_line_widths(context, box, outer, is_line_start, minimum,
                     lines.append(width)
                     if first_line:
                         break
+                if first_line and new_resume_at:
+                    current_line += lines[0]
+                    break
         else:
             # http://www.w3.org/TR/css3-text/#line-break-details
             # "The line breaking behavior of a replaced element
