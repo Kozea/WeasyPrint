@@ -70,9 +70,9 @@ def build_formatting_structure(element_tree, style_for, get_image_from_uri,
     # If this is changed, maybe update weasy.layout.pages.make_margin_boxes()
     process_whitespace(box)
     box = anonymous_table_boxes(box)
+    box = flex_boxes(box)
     box = inline_in_block(box)
     box = block_in_inline(box)
-    box = flex_boxes(box)
     box = set_viewport_overflow(box)
     return box
 

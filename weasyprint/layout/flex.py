@@ -17,6 +17,7 @@ from math import log10
 from . import blocks
 from .percentages import resolve_percentages
 from .preferred import max_content_width, min_content_width
+from .tables import find_in_flow_baseline
 
 
 class FlexLine(list):
@@ -89,7 +90,8 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
             child.flex_base_size = child.style.width.value
             child.hypothetical_main_size = child.style.width.value
 
-    # TODO: Step 4
+    # Step 4
+    blocks.block_level_width(box, containing_block)
 
     # Step 5
     flex_lines = []
@@ -125,6 +127,8 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                 child.target_main_size = child.hypothetical_main_size
                 child.frozen = True
             else:
+                # TODO: do we need to set target main size here?
+                child.target_main_size = child.hypothetical_main_size
                 child.frozen = False
 
         # Step 6.3
@@ -140,7 +144,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
             unfrozen_factor_sum = 0
             remaining_free_space = available_main_space
 
-            # Step 6.4.B
+            # Step 6.4.b
             for child in line:
                 if child.frozen:
                     remaining_free_space -= child.target_main_size
@@ -150,11 +154,17 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
 
             if unfrozen_factor_sum < 1:
                 initial_free_space *= unfrozen_factor_sum
-            if (int(log10(initial_free_space)) <
-                    int(log10(remaining_free_space))):
+
+            initial_magnitude = (
+                int(log10(initial_free_space)) if initial_free_space > 0
+                else -float('inf'))
+            remaining_magnitude = (
+                int(log10(remaining_free_space)) if initial_free_space > 0
+                else -float('inf'))
+            if initial_magnitude < remaining_magnitude:
                 remaining_free_space = initial_free_space
 
-            # Step 6.4.C
+            # Step 6.4.c
             if remaining_free_space == 0:
                 pass
             elif flex_factor_type == 'grow':
@@ -174,15 +184,15 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                             child.flex_base_size - remaining_free_space * ratio
                         )
 
-            # Step 6.4.D
-            # TODO: First part of th step is useless until 3.E is correct
+            # Step 6.4.d
+            # TODO: First part of this step is useless until 3.E is correct
             for child in line:
                 child.adjustment = 0
                 if not child.frozen and child.target_main_size < 0:
                     child.adjustment = -child.target_main_size
                     child.target_main_size = 0
 
-            # Step 6.4.E
+            # Step 6.4.e
             adjustments = sum(child.adjustment for child in line)
             for child in line:
                 if adjustments == 0:
@@ -191,6 +201,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                     child.frozen = True
                 elif adjustments < 0 and child.adjustment < 0:
                     child.frozen = True
+                # Step 6.5
                 child.width = child.target_main_size
 
     # Step 7
@@ -206,11 +217,36 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
         for child in line) for line in flex_lines]
 
     # Step 8
+    flex_direction = 'row'
     if len(flex_lines) == 1 and box.height != 'auto':
         flex_lines[0].height = box.height
     else:
-        # TODO: handle align-self: baseline
-        flex_lines[0].height = None
+        for line in flex_lines:
+            collected_items = []
+            not_collected_items = []
+            for child in line:
+                align_self = 'baseline'
+                if (flex_direction == 'row' and
+                        align_self == 'baseline' and
+                        child.margin_top != 'auto' and
+                        child.margin_bottom != 'auto'):
+                    collected_items.append(child)
+                else:
+                    not_collected_items.append(child)
+            cross_start_distance = 0
+            cross_end_distance = 0
+            for child in collected_items:
+                baseline = find_in_flow_baseline(child) or 0
+                cross_start_distance = max(cross_start_distance, baseline)
+                cross_end_distance = max(
+                    cross_end_distance, child.margin_height() - baseline)
+            collected_height = cross_start_distance + cross_end_distance
+            non_collected_height = 0
+            if not_collected_items:
+                non_collected_height = max(
+                    child.margin_height() for child in not_collected_items)
+            line.height = max(collected_height, non_collected_height)
+        # TODO: handle min/max height for single-line containers
 
     # TODO: Step 9
     # TODO: Step 10
