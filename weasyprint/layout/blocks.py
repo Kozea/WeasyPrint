@@ -59,10 +59,23 @@ def block_level_layout(context, box, max_position_y, skip_stack,
     if isinstance(box, boxes.BlockBox):
         style = box.style
         if style.column_width != 'auto' or style.column_count != 'auto':
-            return columns_layout(
+            result = columns_layout(
                 context, box, max_position_y, skip_stack, containing_block,
                 device_size, page_is_empty, absolute_boxes, fixed_boxes,
                 adjoining_margins)
+            resume_at = result[1]
+            if resume_at is None:
+                new_box = result[0]
+                bottom_spacing = (
+                    new_box.margin_bottom + new_box.padding_bottom +
+                    new_box.border_bottom_width)
+                if bottom_spacing:
+                    max_position_y -= bottom_spacing
+                    result = columns_layout(
+                        context, box, max_position_y, skip_stack,
+                        containing_block, device_size, page_is_empty,
+                        absolute_boxes, fixed_boxes, adjoining_margins)
+            return result
         else:
             return block_box_layout(
                 context, box, max_position_y, skip_stack, containing_block,
