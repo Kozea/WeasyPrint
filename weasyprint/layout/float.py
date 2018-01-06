@@ -65,7 +65,7 @@ def float_layout(context, box, containing_block, device_size, absolute_boxes,
     if box.is_table_wrapper:
         table_wrapper_width(context, box, (cb_width, cb_height))
 
-    if isinstance(box, boxes.BlockBox):
+    if isinstance(box, boxes.BlockContainerBox):
         context.create_block_formatting_context()
         box, _, _, _, _ = block_container_layout(
             context, box, max_position_y=float('inf'),
