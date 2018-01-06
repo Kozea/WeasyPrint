@@ -136,6 +136,15 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
 
     box = box.copy_with_children(box.children)
 
+    height = box.style.height
+    if height != 'auto' and height.unit != '%':
+        assert height.unit == 'px'
+        known_height = True
+        max_position_y = min(
+            max_position_y, box.content_box_y() + height.value)
+    else:
+        known_height = False
+
     # TODO: the available width can be unknown if the containing block needs
     # the size of this block to know its own size.
     block_level_width(box, containing_block)
@@ -227,7 +236,8 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
     # Replace the current box children with columns
     children = []
     if box.children:
-        for i in range(count):
+        i = 0
+        while True:
             if i == count - 1:
                 max_position_y = original_max_position_y
             column_box = create_column_box()
@@ -240,6 +250,12 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
                 break
             children.append(new_child)
             if skip_stack is None:
+                break
+            i += 1
+            if i == count and not known_height:
+                # [If] a declaration that constrains the column height (e.g.,
+                # using height or max-height). In this case, additional column
+                # boxes are created in the inline direction.
                 break
     else:
         next_page = {'break': 'any', 'page': None}
