@@ -1359,6 +1359,13 @@ def flex_wrap(keyword):
     return keyword in ('nowrap', 'wrap', 'wrap-reverse')
 
 
+@validator()
+@single_keyword
+def flex_direction(keyword):
+    """``flex-direction`` property validation."""
+    return keyword in ('row', 'row-reverse', 'column', 'column-reverse')
+
+
 @validator(unstable=True)
 @single_keyword
 def image_rendering(keyword):
@@ -2151,6 +2158,33 @@ def expand_word_wrap(base_url, name, tokens):
         raise InvalidValues
 
     yield 'overflow-wrap', keyword
+
+
+@expander('flex-flow')
+def expand_flex_flow(base_url, name, tokens):
+    """Expand the ``flex-flow`` property."""
+    if len(tokens) == 2:
+        for sorted_tokens in tokens, tokens[::1]:
+            direction = flex_direction([tokens[0]])
+            wrap = flex_wrap([tokens[1]])
+            if direction and wrap:
+                yield 'flex-direction', direction
+                yield 'flex-wrap', wrap
+                break
+        else:
+            raise InvalidValues
+    elif len(tokens) == 1:
+        direction = flex_direction([tokens[0]])
+        if direction:
+            yield 'flex-direction', direction
+        else:
+            wrap = flex_wrap([tokens[0]])
+            if wrap:
+                yield 'flex-wrap', wrap
+            else:
+                raise InvalidValues
+    else:
+        raise InvalidValues
 
 
 def validate_non_shorthand(base_url, name, tokens, required=False):

@@ -103,7 +103,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
         if not child.is_flex_item:
             continue
         line_width += child.hypothetical_main_size
-        if box.style['flex_wrap'] == 'nowrap' or line_width > box.width:
+        if box.style['flex_wrap'] == 'wrap' and line_width > box.width:
             if line:
                 flex_lines.append(FlexLine(line))
                 line = [child]
@@ -232,7 +232,6 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
         for child in line) for line in flex_lines]
 
     # Step 8
-    flex_direction = 'row'
     if len(flex_lines) == 1 and box.height != 'auto':
         flex_lines[0].height = box.height
     else:
@@ -241,7 +240,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
             not_collected_items = []
             for child in line:
                 align_self = 'baseline'
-                if (flex_direction == 'row' and
+                if (box.style['flex_direction'] == 'row' and
                         align_self == 'baseline' and
                         child.margin_top != 'auto' and
                         child.margin_bottom != 'auto'):
@@ -251,7 +250,11 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
             cross_start_distance = 0
             cross_end_distance = 0
             for child in collected_items:
-                baseline = find_in_flow_baseline(child) or 0
+                baseline = find_in_flow_baseline(child)
+                if baseline is None:
+                    baseline = 0
+                else:
+                    baseline -= child.position_y
                 cross_start_distance = max(cross_start_distance, baseline)
                 cross_end_distance = max(
                     cross_end_distance, child.margin_height() - baseline)
