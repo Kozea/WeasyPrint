@@ -17,6 +17,7 @@ from math import log10
 from .percentages import resolve_percentages
 from .preferred import max_content_width, min_content_width
 from .tables import find_in_flow_baseline
+from ..css.properties import Dimension
 
 
 class FlexLine(list):
@@ -56,40 +57,48 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
         child.sytle = child.style.copy()
         resolve_percentages(box, containing_block)
 
-        flex_basis = 'auto'
+        flex_basis = child.style['flex_basis']
 
         # "If a value would resolve to auto for width, it instead resolves
         # to content for flex-basis."
         # See https://www.w3.org/TR/css-flexbox-1/#propdef-flex-basis
         if flex_basis == 'auto':
-            flex_basis = 'content'
+            if child.style['width'] == 'auto':
+                flex_basis = 'content'
+            else:
+                flex_basis = child.style['width']
 
-        # TODO: Step 3.A
+        # Step 3.A
+        # TODO: handle percentages
+        if flex_basis != 'content':
+            assert flex_basis.unit == 'px'
+            child.flex_base_size = flex_basis.value
+
         # TODO: Step 3.B
         # TODO: Step 3.C
 
         # Step 3.D is useless, as we never have infinite sizes on paged media
 
         # Step 3.E
-        if flex_basis == 'content':
-            child.style.width = 'max-content'
         else:
-            child.style.width = flex_basis
+            if flex_basis == 'content':
+                child.style['width'] = 'max-content'
+            else:
+                child.style['width'] = flex_basis
+
+            # TODO: don't set style width, support *-content values instead
+            if child.style['width'] == 'max-content':
+                child.style['width'] = 'auto'
+                child.flex_base_size = max_content_width(context, child)
+            elif child.style['width'] == 'min-content':
+                child.style['width'] = 'auto'
+                child.flex_base_size = min_content_width(context, child)
+            else:
+                assert child.style['width'].unit == 'px'
+                child.flex_base_size = child.style['width'].value
 
         # TODO: the flex base size shouldn't take care of min and max sizes
-        # TODO: don't set style width to auto, support *-content values instead
-        if child.style.width == 'max-content':
-            child.style.width = 'auto'
-            child.flex_base_size = max_content_width(context, child)
-            child.hypothetical_main_size = max_content_width(context, child)
-        elif child.style.width == 'min-content':
-            child.style.width = 'auto'
-            child.flex_base_size = min_content_width(context, child)
-            child.hypothetical_main_size = min_content_width(context, child)
-        else:
-            assert child.style.width.unit == 'px'
-            child.flex_base_size = child.style.width.value
-            child.hypothetical_main_size = child.style.width.value
+        child.hypothetical_main_size = child.flex_base_size
 
     # Step 4
     blocks.block_level_width(box, containing_block)
@@ -103,7 +112,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
         if not child.is_flex_item:
             continue
         line_width += child.hypothetical_main_size
-        if box.style['flex_wrap'] == 'wrap' and line_width > box.width:
+        if box.style['flex_wrap'] != 'nowrap' and line_width > box.width:
             if line:
                 flex_lines.append(FlexLine(line))
                 line = [child]
@@ -111,17 +120,22 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                 line.append(child)
                 flex_lines.append(FlexLine(line))
                 line = []
+            line_width = 0
         else:
             line.append(child)
     if line:
         flex_lines.append(FlexLine(line))
 
-    # Step 6
-    for line in flex_lines:
-        for child in line:
-            child.grow = 0
-            child.shrink = 1
+    # TODO: handle *-reverse using the terminology from the specification
+    if box.style['flex_wrap'] == 'wrap-reverse':
+        flex_lines.reverse()
+    if box.style['flex_direction'].endswith('-reverse'):
+        for line in flex_lines:
+            line.reverse()
 
+    # Step 6
+    # See https://www.w3.org/TR/css-flexbox-1/#resolve-flexible-lengths
+    for line in flex_lines:
         # Step 6.1
         hypothetical_main_size = sum(
             child.hypothetical_main_size for child in line)
@@ -132,8 +146,10 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
 
         # Step 6.2
         for child in line:
-            child.flex_factor = (
-                child.grow if flex_factor_type == 'grow' else child.shrink)
+            if flex_factor_type == 'grow':
+                child.flex_factor = child.style['flex_grow']
+            else:
+                child.flex_factor = child.style['flex_shrink']
             if (child.flex_factor == 0 or
                     (flex_factor_type == 'grow' and
                         child.flex_base_size > child.hypothetical_main_size) or
@@ -185,19 +201,26 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
             elif flex_factor_type == 'grow':
                 for child in line:
                     if not child.frozen:
-                        ratio = child.grow / unfrozen_factor_sum
+                        ratio = child.style['flex_grow'] / unfrozen_factor_sum
                         child.target_main_size = (
                             child.flex_base_size +
                             remaining_free_space * ratio)
             elif flex_factor_type == 'shrink':
+                scaled_flex_shrink_factors_sum = 0
                 for child in line:
                     if not child.frozen:
-                        scaled_flex_shrink_factor = (
-                            child.flex_base_size * child.shrink)
-                        ratio = scaled_flex_shrink_factor / unfrozen_factor_sum
+                        child.scaled_flex_shrink_factor = (
+                            child.flex_base_size * child.style['flex_shrink'])
+                        scaled_flex_shrink_factors_sum += (
+                            child.scaled_flex_shrink_factor)
+                for child in line:
+                    if not child.frozen:
+                        ratio = (
+                            child.scaled_flex_shrink_factor /
+                            scaled_flex_shrink_factors_sum)
                         child.target_main_size = (
-                            child.flex_base_size - remaining_free_space * ratio
-                        )
+                            child.flex_base_size + remaining_free_space *
+                            ratio)
 
             # Step 6.4.d
             # TODO: First part of this step is useless until 3.E is correct
@@ -217,7 +240,10 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                 elif adjustments < 0 and child.adjustment < 0:
                     child.frozen = True
                 # Step 6.5
-                child.width = child.target_main_size
+                # TODO: don't set style width, find a way to avoid width
+                # re-calculation in Step 7
+                child.style['width'] = Dimension(
+                    child.target_main_size, 'px')
 
     # Step 7
     for line in flex_lines:

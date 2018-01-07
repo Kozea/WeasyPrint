@@ -1353,10 +1353,14 @@ def overflow_wrap(keyword):
 
 
 @validator()
-@single_keyword
-def flex_wrap(keyword):
-    """``flex-wrap`` property validation."""
-    return keyword in ('nowrap', 'wrap', 'wrap-reverse')
+@single_token
+def flex_basis(token):
+    """``flex-basis`` property validation."""
+    basis = width_height([token])
+    if basis is not None:
+        return basis
+    if get_keyword(token) == 'content':
+        return 'content'
 
 
 @validator()
@@ -1364,6 +1368,21 @@ def flex_wrap(keyword):
 def flex_direction(keyword):
     """``flex-direction`` property validation."""
     return keyword in ('row', 'row-reverse', 'column', 'column-reverse')
+
+
+@validator('flex-grow')
+@validator('flex-shrink')
+@single_token
+def flex_grow_shrink(token):
+    if token.type == 'number' and token.int_value is not None:
+        return token.int_value
+
+
+@validator()
+@single_keyword
+def flex_wrap(keyword):
+    """``flex-wrap`` property validation."""
+    return keyword in ('nowrap', 'wrap', 'wrap-reverse')
 
 
 @validator(unstable=True)
