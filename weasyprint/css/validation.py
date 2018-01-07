@@ -1352,6 +1352,13 @@ def overflow_wrap(keyword):
     return keyword in ('normal', 'break-word')
 
 
+@validator()
+@single_keyword
+def flex_wrap(keyword):
+    """``flex-wrap`` property validation."""
+    return keyword in ('nowrap', 'wrap', 'wrap-reverse')
+
+
 @validator(unstable=True)
 @single_keyword
 def image_rendering(keyword):

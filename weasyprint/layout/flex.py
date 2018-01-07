@@ -95,11 +95,25 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
 
     # Step 5
     flex_lines = []
-    flex_wrap = 'nowrap'
 
-    if flex_wrap == 'nowrap':
-        flex_lines.append(FlexLine(
-            child for child in box.children if child.is_flex_item))
+    line = []
+    line_width = 0
+    for child in box.children:
+        if not child.is_flex_item:
+            continue
+        line_width += child.hypothetical_main_size
+        if box.style['flex_wrap'] == 'nowrap' or line_width > box.width:
+            if line:
+                flex_lines.append(FlexLine(line))
+                line = [child]
+            else:
+                line.append(child)
+                flex_lines.append(FlexLine(line))
+                line = []
+        else:
+            line.append(child)
+    if line:
+        flex_lines.append(FlexLine(line))
 
     # Step 6
     for line in flex_lines:
@@ -327,8 +341,8 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
 
     # TODO: Step 16
 
+    position_y = box.position_y
     for line in flex_lines:
-        position_y = box.position_y
         for child in line:
             child.position_y = position_y
         position_y += line.height

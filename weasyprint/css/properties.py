@@ -176,6 +176,9 @@ INITIAL_VALUES = {
     'outline_width': 3,  # computed value for 'medium'
     'overflow_wrap': 'normal',
 
+    # Flexible Box Layout Module 1 (CR): https://www.w3.org/TR/css-flexbox-1/
+    'flex_wrap': 'nowrap',
+
     # Proprietary
     'anchor': None,  # computed value of 'none'
     'link': None,  # computed value of 'none'
