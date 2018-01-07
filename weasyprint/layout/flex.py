@@ -14,7 +14,6 @@ from __future__ import division, unicode_literals
 
 from math import log10
 
-from . import blocks
 from .percentages import resolve_percentages
 from .preferred import max_content_width, min_content_width
 from .tables import find_in_flow_baseline
@@ -26,6 +25,8 @@ class FlexLine(list):
 
 def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                 device_size, page_is_empty, absolute_boxes, fixed_boxes):
+    # Avoid a circular import
+    from . import blocks
 
     # Step 1 is done in formatting_structure.boxes
 

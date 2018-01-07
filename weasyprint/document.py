@@ -17,13 +17,14 @@ import shutil
 
 import cairocffi as cairo
 
-from . import CSS, images
+from . import CSS
 from .compat import FILESYSTEM_ENCODING, iteritems, izip
 from .css import get_all_computed_styles
 from .draw import draw_page, stacked
 from .fonts import FontConfiguration
 from .formatting_structure import boxes
 from .formatting_structure.build import build_formatting_structure
+from .images import get_image_from_uri as original_get_image_from_uri
 from .layout import layout_document
 from .layout.backgrounds import percentage
 from .logger import LOGGER
@@ -314,7 +315,7 @@ class Document(object):
                 for css in stylesheets or []],
             font_config=font_config, page_rules=page_rules)
         get_image_from_uri = functools.partial(
-            images.get_image_from_uri, {}, html.url_fetcher)
+            original_get_image_from_uri, {}, html.url_fetcher)
         LOGGER.info('Step 4 - Creating formatting structure')
         page_boxes = layout_document(
             enable_hinting, style_for, get_image_from_uri,
