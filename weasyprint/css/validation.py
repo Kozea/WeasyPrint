@@ -2179,6 +2179,47 @@ def expand_word_wrap(base_url, name, tokens):
     yield 'overflow-wrap', keyword
 
 
+@expander('flex')
+def expand_flex(base_url, name, tokens):
+    """Expand the ``flex`` property."""
+    keyword = get_single_keyword(tokens)
+    if keyword == 'none':
+        yield 'flex-grow', 0
+        yield 'flex-shrink', 0
+        yield 'flex-basis', 'auto'
+    else:
+        grow, shrink, basis = 0, 1, 'auto'
+        grow_found, shrink_found, basis_found = False, False, False
+        for token in tokens:
+            if not basis_found:
+                new_basis = flex_basis([token])
+                if new_basis is not None:
+                    basis = new_basis
+                    basis_found = True
+                    continue
+            if not grow_found:
+                new_grow = flex_grow_shrink([token])
+                if new_grow is None:
+                    raise InvalidValues
+                else:
+                    grow = new_grow
+                    grow_found = True
+                    continue
+            elif not shrink_found:
+                new_shrink = flex_grow_shrink([token])
+                if new_shrink is None:
+                    raise InvalidValues
+                else:
+                    shrink = new_shrink
+                    shrink_found = True
+                    continue
+            else:
+                raise InvalidValues
+        yield 'flex-grow', grow
+        yield 'flex-shrink', shrink
+        yield 'flex-basis', basis
+
+
 @expander('flex-flow')
 def expand_flex_flow(base_url, name, tokens):
     """Expand the ``flex-flow`` property."""
