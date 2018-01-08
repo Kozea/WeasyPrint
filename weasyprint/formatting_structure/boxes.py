@@ -682,7 +682,7 @@ class MarginBox(BlockContainerBox):
         return '<%s %s>' % (type(self).__name__, self.at_keyword)
 
 
-class FlexContainerBox(BlockContainerBox):
+class FlexContainerBox(ParentBox):
     """A box that contains only flex-items."""
 
 
