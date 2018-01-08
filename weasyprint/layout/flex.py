@@ -196,16 +196,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                 remaining_free_space = initial_free_space
 
             # Step 6.4.c
-            if remaining_free_space == 0:
-                pass
-            elif flex_factor_type == 'grow':
-                for child in line:
-                    if not child.frozen:
-                        ratio = child.style['flex_grow'] / unfrozen_factor_sum
-                        child.target_main_size = (
-                            child.flex_base_size +
-                            remaining_free_space * ratio)
-            elif flex_factor_type == 'shrink':
+            if remaining_free_space != 0:
                 scaled_flex_shrink_factors_sum = 0
                 for child in line:
                     if not child.frozen:
@@ -215,12 +206,20 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                             child.scaled_flex_shrink_factor)
                 for child in line:
                     if not child.frozen:
-                        ratio = (
-                            child.scaled_flex_shrink_factor /
-                            scaled_flex_shrink_factors_sum)
-                        child.target_main_size = (
-                            child.flex_base_size + remaining_free_space *
-                            ratio)
+                        if flex_factor_type == 'grow':
+                            ratio = (
+                                child.style['flex_grow'] /
+                                scaled_flex_shrink_factors_sum)
+                            child.target_main_size = (
+                                child.flex_base_size +
+                                remaining_free_space * ratio)
+                        elif flex_factor_type == 'shrink':
+                            ratio = (
+                                child.scaled_flex_shrink_factor /
+                                scaled_flex_shrink_factors_sum)
+                            child.target_main_size = (
+                                child.flex_base_size + remaining_free_space *
+                                ratio)
 
             # Step 6.4.d
             # TODO: First part of this step is useless until 3.E is correct
