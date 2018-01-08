@@ -247,8 +247,8 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
     # Step 7
     for line in flex_lines:
         for child in line:
-            child.position_x = box.position_x
-            child.position_y = box.position_y
+            child.position_x = box.content_box_x()
+            child.position_y = box.content_box_y()
     flex_lines = [FlexLine(
         blocks.block_level_layout(
             context, child, max_position_y, skip_stack, box, device_size,
@@ -333,7 +333,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
             free_space = 0
 
     for line in flex_lines:
-        position_x = box.position_x
+        position_x = box.content_box_x()
         for child in line:
             if child.margin_left == 'auto':
                 child.margin_left = free_space
@@ -375,7 +375,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
 
     # TODO: Step 16
 
-    position_y = box.position_y
+    position_y = box.content_box_y()
     for line in flex_lines:
         for child in line:
             child.position_y = position_y
