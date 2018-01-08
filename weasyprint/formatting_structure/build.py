@@ -824,11 +824,16 @@ def flex_children(box, children):
     if isinstance(box, boxes.FlexContainerBox):
         flex_children = []
         for child in children:
-            if child.is_in_normal_flow():
+            if not child.is_absolutely_positioned():
                 child.is_flex_item = True
             if isinstance(child, boxes.TextBox) and not child.text.strip():
                 continue
-            flex_children.append(child)
+            if isinstance(child, boxes.InlineLevelBox):
+                anonymous = boxes.BlockBox.anonymous_from(box, [child])
+                anonymous.is_flex_item = True
+                flex_children.append(anonymous)
+            else:
+                flex_children.append(child)
         return flex_children
     else:
         return children
