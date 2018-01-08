@@ -256,6 +256,11 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
             page_is_empty, absolute_boxes, fixed_boxes,
             adjoining_margins=[])[0]
         for child in line) for line in flex_lines]
+    # TODO: Handle breaks, skip_stack and resume_at instead of excluding Nones
+    flex_lines = [
+        FlexLine([child for child in line if child is not None])
+        for line in flex_lines]
+    flex_lines = [line for line in flex_lines if line]
 
     # Step 8
     if len(flex_lines) == 1 and box.height != 'auto':
