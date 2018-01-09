@@ -239,11 +239,12 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                     child.frozen = True
                 elif adjustments < 0 and child.adjustment < 0:
                     child.frozen = True
-                # Step 6.5
-                # TODO: don't set style width, find a way to avoid width
-                # re-calculation in Step 7
-                child.style['width'] = Dimension(
-                    child.target_main_size, 'px')
+
+        # Step 6.5
+        # TODO: don't set style width, find a way to avoid width
+        # re-calculation in Step 7
+        for child in line:
+            child.style['width'] = Dimension(child.target_main_size, 'px')
 
     # Step 7
     for line in flex_lines:
