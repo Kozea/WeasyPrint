@@ -182,6 +182,7 @@ INITIAL_VALUES = {
     'flex_grow': 0,
     'flex_shrink': 1,
     'flex_wrap': 'nowrap',
+    'order': 0,
 
     # Proprietary
     'anchor': None,  # computed value of 'none'

@@ -129,8 +129,9 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
     # TODO: handle *-reverse using the terminology from the specification
     if box.style['flex_wrap'] == 'wrap-reverse':
         flex_lines.reverse()
-    if box.style['flex_direction'].endswith('-reverse'):
-        for line in flex_lines:
+    for line in flex_lines:
+        line.sort(key=lambda item: item.style['order'])
+        if box.style['flex_direction'].endswith('-reverse'):
             line.reverse()
 
     # Step 6

@@ -1374,6 +1374,13 @@ def flex_direction(keyword):
 @validator('flex-shrink')
 @single_token
 def flex_grow_shrink(token):
+    if token.type == 'number':
+        return token.value
+
+
+@validator()
+@single_token
+def order(token):
     if token.type == 'number' and token.int_value is not None:
         return token.int_value
 
