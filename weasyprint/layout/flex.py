@@ -301,7 +301,6 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
     # TODO: Step 10
 
     # Step 11
-
     for line in flex_lines:
         line.align_items = 'stretch'
         for child in line:
@@ -316,7 +315,6 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
             # else: Cross size has been set by step 7
 
     # Step 12
-
     free_space = available_main_space - sum(
         child.width for line in flex_lines for child in line)
 
@@ -346,7 +344,6 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
     # TODO: align according to justify-content
 
     # Step 13
-
     for line in flex_lines:
         for child in line:
             auto_margins = sum([
@@ -369,7 +366,6 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
     # TODO: Step 14
 
     # Step 15
-
     if box.style.height == 'auto':
         # TODO: handle min-max
         box.height = sum(line.height for line in flex_lines)
