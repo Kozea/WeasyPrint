@@ -216,7 +216,8 @@ def draw_stacking_context(context, stacking_context, enable_hinting):
 
         # Point 2
         if isinstance(box, (boxes.BlockBox, boxes.MarginBox,
-                            boxes.InlineBlockBox, boxes.TableCellBox)):
+                            boxes.InlineBlockBox, boxes.TableCellBox,
+                            boxes.FlexContainerBox)):
             # The canvas background was removed by set_canvas_background
             draw_box_background_and_border(
                 context, stacking_context.page, box, enable_hinting)
