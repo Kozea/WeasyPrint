@@ -1162,7 +1162,7 @@ def split_first_line(text, style, context, max_width, justification_spacing):
             first_line.length if second_line is None
             else second_line.start_index)
 
-    if resume_at >= len(text.encode('utf-8')):
+    if resume_at is not None and resume_at >= len(text.encode('utf-8')):
         resume_at = None
     return first_line_metrics(
         first_line, text, layout, resume_at, space_collapse, style, hyphenated,
