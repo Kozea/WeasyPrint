@@ -108,7 +108,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
 
     line = []
     line_width = 0
-    for child in box.children:
+    for child in sorted(box.children, key=lambda item: item.style['order']):
         if not child.is_flex_item:
             continue
         line_width += child.hypothetical_main_size
@@ -129,9 +129,8 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
     # TODO: handle *-reverse using the terminology from the specification
     if box.style['flex_wrap'] == 'wrap-reverse':
         flex_lines.reverse()
-    for line in flex_lines:
-        line.sort(key=lambda item: item.style['order'])
-        if box.style['flex_direction'].endswith('-reverse'):
+    if box.style['flex_direction'].endswith('-reverse'):
+        for line in flex_lines:
             line.reverse()
 
     # Step 6
