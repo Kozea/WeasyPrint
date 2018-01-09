@@ -2198,7 +2198,12 @@ def expand_flex(base_url, name, tokens):
         grow, shrink, basis = 0, 1, 'auto'
         grow_found, shrink_found, basis_found = False, False, False
         for token in tokens:
-            if not basis_found:
+            # "A unitless zero that is not already preceded by two flex factors
+            # must be interpreted as a flex factor."
+            forced_flex_factor = (
+                token.type == 'number' and token.int_value == 0 and
+                not all((grow_found, shrink_found)))
+            if not basis_found and not forced_flex_factor:
                 new_basis = flex_basis([token])
                 if new_basis is not None:
                     basis = new_basis
