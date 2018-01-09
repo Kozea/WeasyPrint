@@ -31,6 +31,7 @@ def float_layout(context, box, containing_block, device_size, absolute_boxes,
     """Set the width and position of floating ``box``."""
     # avoid a circular imports
     from .blocks import block_container_layout
+    from .flex import flex_layout
     from .inlines import inline_replaced_box_width_height
 
     cb_width, cb_height = (containing_block.width, containing_block.height)
@@ -74,6 +75,12 @@ def float_layout(context, box, containing_block, device_size, absolute_boxes,
             adjoining_margins=None)
         list_marker_layout(context, box)
         context.finish_block_formatting_context(box)
+    elif isinstance(box, boxes.FlexContainerBox):
+        box, _, _, _, _ = flex_layout(
+            context, box, max_position_y=float('inf'),
+            skip_stack=None, containing_block=containing_block,
+            device_size=device_size, page_is_empty=False,
+            absolute_boxes=absolute_boxes, fixed_boxes=fixed_boxes)
     else:
         assert isinstance(box, boxes.BlockReplacedBox)
 

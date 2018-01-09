@@ -379,9 +379,10 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
         position_y += line.height
 
     box.children = [
-        blocks.block_container_layout(
-            context, child, max_position_y, skip_stack, device_size,
-            page_is_empty, absolute_boxes, fixed_boxes)[0]
+        blocks.block_level_layout(
+            context, child, max_position_y, skip_stack, box, device_size,
+            page_is_empty, absolute_boxes, fixed_boxes,
+            adjoining_margins=[])[0]
         for line in flex_lines for child in line if child.is_flex_item]
 
     # TODO: check these returned values
