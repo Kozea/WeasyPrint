@@ -14,10 +14,10 @@ from __future__ import division, unicode_literals
 
 from math import log10
 
+from ..css.properties import Dimension
 from .percentages import resolve_percentages
 from .preferred import max_content_width, min_content_width
 from .tables import find_in_flow_baseline
-from ..css.properties import Dimension
 
 
 class FlexLine(list):
