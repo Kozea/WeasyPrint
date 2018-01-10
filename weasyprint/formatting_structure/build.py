@@ -826,7 +826,10 @@ def flex_children(box, children):
         for child in children:
             if not child.is_absolutely_positioned():
                 child.is_flex_item = True
-            if isinstance(child, boxes.TextBox) and not child.text.strip():
+            if isinstance(child, boxes.TextBox) and not child.text.strip(' '):
+                # TODO: ignore texts only containing "characters that can be
+                # affected by the white-space property"
+                # https://www.w3.org/TR/css-flexbox-1/#flex-items
                 continue
             if isinstance(child, boxes.InlineLevelBox):
                 anonymous = boxes.BlockBox.anonymous_from(box, [child])
