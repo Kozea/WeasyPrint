@@ -301,7 +301,14 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
             line.height = max(collected_height, non_collected_height)
         # TODO: handle min/max height for single-line containers
 
-    # TODO: Step 9
+    # Step 9
+    if box.style['height'] != 'auto':
+        if box.style['align_content'] == 'stretch':
+            extra_height = box.height - sum(line.height for line in flex_lines)
+            if extra_height:
+                for line in flex_lines:
+                    line.height += extra_height / len(flex_lines)
+
     # TODO: Step 10
 
     # Step 11
@@ -438,7 +445,6 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                     y_translate += extra_height / (len(flex_lines) - 1)
                 elif box.style['align_content'] == 'space-around':
                     y_translate += extra_height / len(flex_lines)
-                # TODO: what about stretch?
 
     # TODO: don't use block_level_layout, see TODOs in Step 14 and
     # build.flex_children.
