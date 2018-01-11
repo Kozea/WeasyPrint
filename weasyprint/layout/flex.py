@@ -335,6 +335,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                         child.margin_left = free_space
                     if child.margin_right == 'auto':
                         child.margin_right = free_space
+            free_space = 0
 
     for line in flex_lines:
         # TODO: handle rtl
