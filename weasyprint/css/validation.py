@@ -1392,6 +1392,14 @@ def flex_wrap(keyword):
     return keyword in ('nowrap', 'wrap', 'wrap-reverse')
 
 
+@validator()
+@single_keyword
+def justify_content(keyword):
+    """``justify_content`` property validation."""
+    return keyword in (
+        'flex-start', 'flex-end', 'center', 'space-between', 'space-around')
+
+
 @validator(unstable=True)
 @single_keyword
 def image_rendering(keyword):

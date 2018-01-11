@@ -182,6 +182,7 @@ INITIAL_VALUES = {
     'flex_grow': 0,
     'flex_shrink': 1,
     'flex_wrap': 'nowrap',
+    'justify_content': 'flex-start',
     'order': 0,
 
     # Proprietary

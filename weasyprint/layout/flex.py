@@ -316,7 +316,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
 
     # Step 12
     free_space = available_main_space - sum(
-        child.width for line in flex_lines for child in line)
+        child.margin_width() for line in flex_lines for child in line)
 
     if free_space:
         margins = 0
@@ -326,20 +326,33 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                     margins += 1
                 if child.margin_right == 'auto':
                     margins += 1
+
         if margins:
             free_space /= margins
-        else:
-            free_space = 0
+            for line in flex_lines:
+                for child in line:
+                    if child.margin_left == 'auto':
+                        child.margin_left = free_space
+                    if child.margin_right == 'auto':
+                        child.margin_right = free_space
 
     for line in flex_lines:
+        # TODO: handle rtl
         position_x = box.content_box_x()
+        if box.style['justify_content'] == 'flex-end':
+            position_x += free_space
+        elif box.style['justify_content'] == 'center':
+            position_x += free_space / 2
+        elif box.style['justify_content'] == 'space-around':
+            position_x += free_space / len(line) / 2
         for child in line:
-            if child.margin_left == 'auto':
-                child.margin_left = free_space
-            if child.margin_right == 'auto':
-                child.margin_right = free_space
             child.position_x = position_x
             position_x += child.margin_width()
+            if box.style['justify_content'] == 'space-around':
+                position_x += free_space / len(line)
+            elif box.style['justify_content'] == 'space-between':
+                if len(line) > 1:
+                    position_x += free_space / (len(line) - 1)
 
     # TODO: align according to justify-content
 
