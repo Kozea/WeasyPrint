@@ -1416,6 +1416,15 @@ def align_self(keyword):
         'auto', 'flex-start', 'flex-end', 'center', 'baseline', 'stretch')
 
 
+@validator()
+@single_keyword
+def align_content(keyword):
+    """``align-content`` property validation."""
+    return keyword in (
+        'flex-start', 'flex-end', 'center', 'space-between', 'space-around',
+        'stretch')
+
+
 @validator(unstable=True)
 @single_keyword
 def image_rendering(keyword):

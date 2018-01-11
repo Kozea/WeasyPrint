@@ -117,11 +117,12 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
             if line:
                 flex_lines.append(FlexLine(line))
                 line = [child]
+                line_width = child.hypothetical_main_size
             else:
                 line.append(child)
                 flex_lines.append(FlexLine(line))
                 line = []
-            line_width = 0
+                line_width = 0
         else:
             line.append(child)
     if line:
@@ -417,7 +418,27 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
         # TODO: handle min-max
         box.height = sum(line.height for line in flex_lines)
 
-    # TODO: Step 16
+    # Step 16
+    elif len(flex_lines) > 1:
+        extra_height = box.height - sum(line.height for line in flex_lines)
+        if extra_height > 0:
+            y_translate = 0
+            for line in flex_lines:
+                for child in line:
+                    if child.is_flex_item:
+                        child.translate(dy=y_translate)
+                        if box.style['align_content'] == 'flex-end':
+                            child.translate(dy=extra_height)
+                        elif box.style['align_content'] == 'center':
+                            child.translate(dy=extra_height / 2)
+                        elif box.style['align_content'] == 'space-around':
+                            child.translate(
+                                dy=extra_height / len(flex_lines) / 2)
+                if box.style['align_content'] == 'space-between':
+                    y_translate += extra_height / (len(flex_lines) - 1)
+                elif box.style['align_content'] == 'space-around':
+                    y_translate += extra_height / len(flex_lines)
+                # TODO: what about stretch?
 
     # TODO: don't use block_level_layout, see TODOs in Step 14 and
     # build.flex_children.
