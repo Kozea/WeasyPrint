@@ -832,6 +832,10 @@ def flex_children(box, children):
                 # https://www.w3.org/TR/css-flexbox-1/#flex-items
                 continue
             if isinstance(child, boxes.InlineLevelBox):
+                # TODO: Only create block boxes for text runs, not for other
+                # inline level boxes. This is false but currently needed
+                # because block_level_width and block_level_layout are called
+                # in layout.flex.
                 anonymous = boxes.BlockBox.anonymous_from(box, [child])
                 anonymous.is_flex_item = True
                 flex_children.append(anonymous)

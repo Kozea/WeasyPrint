@@ -1395,9 +1395,25 @@ def flex_wrap(keyword):
 @validator()
 @single_keyword
 def justify_content(keyword):
-    """``justify_content`` property validation."""
+    """``justify-content`` property validation."""
     return keyword in (
         'flex-start', 'flex-end', 'center', 'space-between', 'space-around')
+
+
+@validator()
+@single_keyword
+def align_items(keyword):
+    """``align-items`` property validation."""
+    return keyword in (
+        'flex-start', 'flex-end', 'center', 'baseline', 'stretch')
+
+
+@validator()
+@single_keyword
+def align_self(keyword):
+    """``align-self`` property validation."""
+    return keyword in (
+        'auto', 'flex-start', 'flex-end', 'center', 'baseline', 'stretch')
 
 
 @validator(unstable=True)

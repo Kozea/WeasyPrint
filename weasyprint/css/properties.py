@@ -177,6 +177,8 @@ INITIAL_VALUES = {
     'overflow_wrap': 'normal',
 
     # Flexible Box Layout Module 1 (CR): https://www.w3.org/TR/css-flexbox-1/
+    'align_items': 'stretch',
+    'align_self': 'auto',
     'flex_basis': 'auto',
     'flex_direction': 'row',
     'flex_grow': 0,

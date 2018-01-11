@@ -101,6 +101,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
         child.hypothetical_main_size = child.flex_base_size
 
     # Step 4
+    # TODO: don't use block_level_width, see TODO in build.flex_children.
     blocks.block_level_width(box, containing_block)
 
     # Step 5
@@ -250,6 +251,8 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
         for child in line:
             child.position_x = box.content_box_x()
             child.position_y = box.content_box_y()
+    # TODO: don't use block_level_layout, see TODOs in Step 6.5 and
+    # build.flex_children.
     flex_lines = [FlexLine(
         blocks.block_level_layout(
             context, child, max_position_y, skip_stack, box, device_size,
@@ -302,13 +305,11 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
 
     # Step 11
     for line in flex_lines:
-        line.align_items = 'stretch'
         for child in line:
-            child.align_self = 'auto'
-            if child.align_self == 'auto':
-                child.align_self = 'stretch'
-
-            if child.align_self == 'stretch' and child.style.height == 'auto':
+            align_self = child.style['align_self']
+            if align_self == 'auto':
+                align_self = box.style['align_items']
+            if align_self == 'stretch' and child.style['height'] == 'auto':
                 if 'auto' not in (child.margin_top, child.margin_bottom):
                     child.height = line.height
                     # TODO: redo layout
@@ -355,10 +356,25 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                 if len(line) > 1:
                     position_x += free_space / (len(line) - 1)
 
-    # TODO: align according to justify-content
-
     # Step 13
+    position_y = box.content_box_y()
     for line in flex_lines:
+        lower_baseline = 0
+        # TODO: don't duplicate this loop
+        for child in line:
+            align_self = child.style['align_self']
+            if align_self == 'auto':
+                align_self = box.style['align_items']
+            if align_self == 'baseline':
+                baseline = find_in_flow_baseline(child)
+                if baseline is None:
+                    # TODO: "If the item does not have a baseline in the
+                    # necessary axis, then one is synthesized from the flex
+                    # item’s border box."
+                    child.baseline = 0
+                else:
+                    child.baseline = baseline - position_y
+                lower_baseline = max(lower_baseline, child.baseline)
         for child in line:
             auto_margins = sum([
                 margin == 'auto' for margin in (
@@ -376,22 +392,35 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                     if child.margin_top == 'auto':
                         child.margin_top = 0
                     child.margin_bottom = extra_height
-
-    # TODO: Step 14
+            else:
+                # Step 14
+                align_self = child.style['align_self']
+                if align_self == 'auto':
+                    align_self = box.style['align_items']
+                child.position_y = position_y
+                if align_self == 'flex-end':
+                    child.position_y += line.height - child.margin_height()
+                elif align_self == 'center':
+                    child.position_y += (
+                        line.height - child.margin_height()) / 2
+                elif align_self == 'baseline':
+                    child.position_y += lower_baseline - child.baseline
+                elif align_self == 'stretch':
+                    # TODO: don't set style width, find a way to avoid width
+                    # re-calculation after Step 16
+                    # TODO: take care of margins, borders and padding
+                    child.style['height'] = Dimension(line.height, 'px')
+        position_y += line.height
 
     # Step 15
-    if box.style.height == 'auto':
+    if box.style['height'] == 'auto':
         # TODO: handle min-max
         box.height = sum(line.height for line in flex_lines)
 
     # TODO: Step 16
 
-    position_y = box.content_box_y()
-    for line in flex_lines:
-        for child in line:
-            child.position_y = position_y
-        position_y += line.height
-
+    # TODO: don't use block_level_layout, see TODOs in Step 14 and
+    # build.flex_children.
     box.children = [
         blocks.block_level_layout(
             context, child, max_position_y, skip_stack, box, device_size,
