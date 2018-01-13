@@ -63,10 +63,10 @@ def test_style_dict():
     style = css.StyleDict({
         'margin_left': 12,
         'display': 'block'})
-    assert style.display == 'block'
-    assert style.margin_left == 12
+    assert style['display'] == 'block'
+    assert style['margin_left'] == 12
     with raises(KeyError):
-        style.position  # pylint: disable=W0104
+        style['position']  # pylint: disable=W0104
 
 
 @assert_no_logs
@@ -145,64 +145,64 @@ def test_annotate_document():
     span1 = style_for(span1)
     span2 = style_for(span2)
 
-    assert h1.background_image == (
+    assert h1['background_image'] == (
         ('url', path2url(resource_filename('logo_small.png'))),)
 
-    assert h1.font_weight == 700
-    assert h1.font_size == 40  # 2em
+    assert h1['font_weight'] == 700
+    assert h1['font_size'] == 40  # 2em
 
     # x-large * initial = 3/2 * 16 = 24
-    assert p.margin_top == (24, 'px')
-    assert p.margin_right == (0, 'px')
-    assert p.margin_bottom == (24, 'px')
-    assert p.margin_left == (0, 'px')
-    assert p.background_color == 'currentColor'  # resolved at use-value time.
+    assert p['margin_top'] == (24, 'px')
+    assert p['margin_right'] == (0, 'px')
+    assert p['margin_bottom'] == (24, 'px')
+    assert p['margin_left'] == (0, 'px')
+    assert p['background_color'] == 'currentColor'  # resolved at use-value time.
 
     # 2em * 1.25ex = 2 * 20 * 1.25 * 0.8 = 40
     # 2.5ex * 1.25ex = 2.5 * 0.8 * 20 * 1.25 * 0.8 = 40
-    assert ul.margin_top == (40, 'px')
-    assert ul.margin_right == (40, 'px')
-    assert ul.margin_bottom == (40, 'px')
-    assert ul.margin_left == (40, 'px')
+    assert ul['margin_top'] == (40, 'px')
+    assert ul['margin_right'] == (40, 'px')
+    assert ul['margin_bottom'] == (40, 'px')
+    assert ul['margin_left'] == (40, 'px')
 
-    assert ul.font_weight == 400
+    assert ul['font_weight'] == 400
     # thick = 5px, 0.25 inches = 96*.25 = 24px
-    assert ul.border_top_width == 0
-    assert ul.border_right_width == 5
-    assert ul.border_bottom_width == 0
-    assert ul.border_left_width == 24
+    assert ul['border_top_width'] == 0
+    assert ul['border_right_width'] == 5
+    assert ul['border_bottom_width'] == 0
+    assert ul['border_left_width'] == 24
 
-    assert li_0.font_weight == 700
-    assert li_0.font_size == 8  # 6pt
-    assert li_0.margin_top == (16, 'px')  # 2em
-    assert li_0.margin_right == (0, 'px')
-    assert li_0.margin_bottom == (16, 'px')
-    assert li_0.margin_left == (32, 'px')  # 4em
+    assert li_0['font_weight'] == 700
+    assert li_0['font_size'] == 8  # 6pt
+    assert li_0['margin_top'] == (16, 'px')  # 2em
+    assert li_0['margin_right'] == (0, 'px')
+    assert li_0['margin_bottom'] == (16, 'px')
+    assert li_0['margin_left'] == (32, 'px')  # 4em
 
-    assert a.text_decoration == frozenset(['underline'])
-    assert a.font_weight == 900
-    assert a.font_size == 24  # 300% of 8px
-    assert a.padding_top == (1, 'px')
-    assert a.padding_right == (2, 'px')
-    assert a.padding_bottom == (3, 'px')
-    assert a.padding_left == (4, 'px')
-    assert a.border_top_width == 42
-    assert a.border_bottom_width == 42
+    assert a['text_decoration'] == frozenset(['underline'])
+    assert a['font_weight'] == 900
+    assert a['font_size'] == 24  # 300% of 8px
+    assert a['padding_top'] == (1, 'px')
+    assert a['padding_right'] == (2, 'px')
+    assert a['padding_bottom'] == (3, 'px')
+    assert a['padding_left'] == (4, 'px')
+    assert a['border_top_width'] == 42
+    assert a['border_bottom_width'] == 42
 
-    assert a.color == (1, 0, 0, 1)
-    assert a.border_top_color == 'currentColor'
+    assert a['color'] == (1, 0, 0, 1)
+    assert a['border_top_color'] == 'currentColor'
 
-    assert div.font_size == 40  # 2 * 20px
-    assert span1.width == (160, 'px')  # 10 * 16px (root default is 16px)
-    assert span1.height == (400, 'px')  # 10 * (2 * 20px)
-    assert span2.font_size == 32
+    assert div['font_size'] == 40  # 2 * 20px
+    assert span1['width'] == (160, 'px')  # 10 * 16px (root default is 16px)
+    assert span1['height'] == (400, 'px')  # 10 * (2 * 20px)
+    assert span2['font_size'] == 32
 
     # The href attr should be as in the source, not made absolute.
-    assert after.content == (
+    assert after['content'] == (
         ('STRING', ' ['), ('STRING', 'home.html'), ('STRING', ']'))
-    assert after.background_color == (1, 0, 0, 1)
-    assert after.border_top_width == 42
-    assert after.border_bottom_width == 3
+    assert after['background_color'] == (1, 0, 0, 1)
+    assert after['border_top_width'] == 42
+    assert after['border_bottom_width'] == 3
 
     # TODO much more tests here: test that origin and selector precedence
     # and inheritance are correct, ...
@@ -245,31 +245,31 @@ def test_page():
 
     style = style_for(
         PageType(side='left', first=True, blank=False, name=None))
-    assert style.margin_top == (5, 'px')
-    assert style.margin_left == (10, 'px')
-    assert style.margin_bottom == (10, 'px')
-    assert style.color == (1, 0, 0, 1)  # red, inherited from html
+    assert style['margin_top'] == (5, 'px')
+    assert style['margin_left'] == (10, 'px')
+    assert style['margin_bottom'] == (10, 'px')
+    assert style['color'] == (1, 0, 0, 1)  # red, inherited from html
 
     style = style_for(
         PageType(side='right', first=True, blank=False, name=None))
-    assert style.margin_top == (5, 'px')
-    assert style.margin_left == (10, 'px')
-    assert style.margin_bottom == (16, 'px')
-    assert style.color == (0, 0, 1, 1)  # blue
+    assert style['margin_top'] == (5, 'px')
+    assert style['margin_left'] == (10, 'px')
+    assert style['margin_bottom'] == (16, 'px')
+    assert style['color'] == (0, 0, 1, 1)  # blue
 
     style = style_for(
         PageType(side='left', first=False, blank=False, name=None))
-    assert style.margin_top == (10, 'px')
-    assert style.margin_left == (10, 'px')
-    assert style.margin_bottom == (10, 'px')
-    assert style.color == (1, 0, 0, 1)  # red, inherited from html
+    assert style['margin_top'] == (10, 'px')
+    assert style['margin_left'] == (10, 'px')
+    assert style['margin_bottom'] == (10, 'px')
+    assert style['color'] == (1, 0, 0, 1)  # red, inherited from html
 
     style = style_for(
         PageType(side='right', first=False, blank=False, name=None))
-    assert style.margin_top == (10, 'px')
-    assert style.margin_left == (10, 'px')
-    assert style.margin_bottom == (16, 'px')
-    assert style.color == (0, 0, 1, 1)  # blue
+    assert style['margin_top'] == (10, 'px')
+    assert style['margin_left'] == (10, 'px')
+    assert style['margin_bottom'] == (16, 'px')
+    assert style['color'] == (0, 0, 1, 1)  # blue
 
     style = style_for(
         PageType(side='left', first=True, blank=False, name=None),
@@ -279,13 +279,13 @@ def test_page():
     style = style_for(
         PageType(side='right', first=True, blank=False, name=None),
         '@top-left')
-    assert style.font_size == 20  # inherited from @page
-    assert style.width == (200, 'px')
+    assert style['font_size'] == 20  # inherited from @page
+    assert style['width'] == (200, 'px')
 
     style = style_for(
         PageType(side='right', first=True, blank=False, name=None),
         '@top-right')
-    assert style.font_size == 10
+    assert style['font_size'] == 10
 
 
 @assert_no_logs
@@ -326,14 +326,14 @@ def test_error_recovery():
         ''')
         page, = document.render().pages
         html, = page._page_box.children
-        assert html.style.color == (0, 0, 1, 1)  # blue
+        assert html.style['color'] == (0, 0, 1, 1)  # blue
 
         document = FakeHTML(string='''
             <html style="color; color: blue; color red">
         ''')
         page, = document.render().pages
         html, = page._page_box.children
-        assert html.style.color == (0, 0, 1, 1)  # blue
+        assert html.style['color'] == (0, 0, 1, 1)  # blue
     assert len(logs) == 4
 
 
@@ -353,16 +353,16 @@ def test_line_height_inheritance():
     div, = body.children
     section, = div.children
     paragraph, = section.children
-    assert html.style.font_size == 10
-    assert div.style.font_size == 20
+    assert html.style['font_size'] == 10
+    assert div.style['font_size'] == 20
     # 140% of 10px = 14px is inherited from html
     assert strut_layout(div.style)[0] == 14
-    assert div.style.vertical_align == 7  # 50 % of 14px
+    assert div.style['vertical_align'] == 7  # 50 % of 14px
 
-    assert paragraph.style.font_size == 20
+    assert paragraph.style['font_size'] == 20
     # 1.4 is inherited from p, 1.4 * 20px on em = 28px
     assert strut_layout(paragraph.style)[0] == 28
-    assert paragraph.style.vertical_align == 14  # 50% of 28px
+    assert paragraph.style['vertical_align'] == 14  # 50% of 28px
 
 
 @assert_no_logs
@@ -398,7 +398,7 @@ def test_important():
     html, = page._page_box.children
     body, = html.children
     for paragraph in body.children:
-        assert paragraph.style.color == (0, 1, 0, 1)  # lime (light green)
+        assert paragraph.style['color'] == (0, 1, 0, 1)  # lime (light green)
 
 
 @assert_no_logs
@@ -417,11 +417,11 @@ def test_named_pages():
     div, = body.children
     p, = div.children
     span, = p.children
-    assert html.style.page == ''
-    assert body.style.page == ''
-    assert div.style.page == ''
-    assert p.style.page == 'NARRow'
-    assert span.style.page == 'NARRow'
+    assert html.style['page'] == ''
+    assert body.style['page'] == ''
+    assert div.style['page'] == ''
+    assert p.style['page'] == 'NARRow'
+    assert span.style['page'] == 'NARRow'
 
 
 @assert_no_logs

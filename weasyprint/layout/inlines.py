@@ -150,7 +150,7 @@ def get_next_linebox(context, linebox, position_y, skip_stack,
     fixed_boxes.extend(line_fixed)
 
     for placeholder in line_placeholders:
-        if placeholder.style._weasy_specified_display.startswith('inline'):
+        if placeholder.style['_weasy_specified_display'].startswith('inline'):
             # Inline-level static position:
             placeholder.translate(0, position_y - placeholder.position_y)
         else:
@@ -187,7 +187,7 @@ def skip_first_whitespace(box, skip_stack):
 
     if isinstance(box, boxes.TextBox):
         assert next_skip_stack is None
-        white_space = box.style.white_space
+        white_space = box.style['white_space']
         length = len(box.text)
         if index == length:
             # Starting a the end of the TextBox, no text to see: Continue
@@ -225,7 +225,7 @@ def remove_last_whitespace(context, box):
             return
         box = box.children[-1]
     if not (isinstance(box, boxes.TextBox) and
-            box.style.white_space in ('normal', 'nowrap', 'pre-line')):
+            box.style['white_space'] in ('normal', 'nowrap', 'pre-line')):
         return
     new_text = box.text.rstrip(' ')
     if new_text:
@@ -332,7 +332,7 @@ def replaced_box_width(box, device_size):
     Compute and set the used width for replaced boxes (inline- or block-level)
     """
     intrinsic_width, intrinsic_height = box.replacement.get_intrinsic_size(
-        box.style.image_resolution, box.style.font_size)
+        box.style['image_resolution'], box.style['font_size'])
 
     # This algorithm simply follows the different points of the specification:
     # http://www.w3.org/TR/CSS21/visudet.html#inline-replaced-width
@@ -354,7 +354,7 @@ def replaced_box_width(box, device_size):
                 # Whaaaaat? Let's not do this and use a value that may work
                 # well at least with inline blocks.
                 box.width = (
-                    box.style.font_size * box.replacement.intrinsic_ratio)
+                    box.style['font_size'] * box.replacement.intrinsic_ratio)
 
     if box.width == 'auto':
         if box.replacement.intrinsic_ratio is not None:
@@ -376,7 +376,7 @@ def replaced_box_height(box, device_size):
     """
     # http://www.w3.org/TR/CSS21/visudet.html#inline-replaced-height
     intrinsic_width, intrinsic_height = box.replacement.get_intrinsic_size(
-        box.style.image_resolution, box.style.font_size)
+        box.style['image_resolution'], box.style['font_size'])
     intrinsic_ratio = box.replacement.intrinsic_ratio
 
     # Test 'auto' on the computed width, not the used width
@@ -406,7 +406,7 @@ def inline_replaced_box_layout(box, device_size):
 
 
 def inline_replaced_box_width_height(box, device_size):
-    if box.style.width == 'auto' and box.style.height == 'auto':
+    if box.style['width'] == 'auto' and box.style['height'] == 'auto':
         replaced_box_width.without_min_max(box, device_size)
         replaced_box_height.without_min_max(box, device_size)
         min_max_auto_replaced(box)
@@ -534,7 +534,7 @@ def inline_block_baseline(box):
     http://www.w3.org/TR/CSS21/visudet.html#propdef-vertical-align
 
     """
-    if box.style.overflow == 'visible':
+    if box.style['overflow'] == 'visible':
         result = find_in_flow_baseline(box, last=True)
         if result:
             return result
@@ -646,7 +646,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
     float_translate = 0
     float_resume_at = 0
 
-    if box.style.position == 'relative':
+    if box.style['position'] == 'relative':
         absolute_boxes = []
 
     if is_start:
@@ -662,7 +662,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
             placeholder = AbsolutePlaceholder(child)
             line_placeholders.append(placeholder)
             waiting_children.append((index, placeholder))
-            if child.style.position == 'absolute':
+            if child.style['position'] == 'absolute':
                 absolute_boxes.append(placeholder)
             else:
                 fixed_boxes.append(placeholder)
@@ -692,7 +692,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                 waiting_children.append((index, child))
 
                 # Translate previous line children
-                if child.style.float == 'left':
+                if child.style['float'] == 'left':
                     dx = max(child.margin_width(), 0)
                     if isinstance(box, boxes.LineBox):
                         # The parent is the line, update the current position
@@ -701,7 +701,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                         # line is updated by the block itself (see next
                         # split_inline_level call).
                         position_x += dx
-                elif child.style.float == 'right':
+                elif child.style['float'] == 'right':
                     dx = min(-child.margin_width(), 0)
                     # Update the maximum x position for the next children
                     max_x += dx
@@ -711,10 +711,10 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                 for _, old_child in line_children:
                     if not old_child.is_in_normal_flow():
                         continue
-                    if ((child.style.float == 'left' and
-                            box.style.direction == 'ltr') or
-                        (child.style.float == 'right' and
-                            box.style.direction == 'rtl')):
+                    if ((child.style['float'] == 'left' and
+                            box.style['direction'] == 'ltr') or
+                        (child.style['float'] == 'right' and
+                            box.style['direction'] == 'rtl')):
                         old_child.translate(dx=dx)
             float_resume_at = index + 1
             continue
@@ -844,7 +844,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
         new_box.translate(dx=float_translate, ignore_floats=True)
 
     line_height, new_box.baseline = strut_layout(box.style, context)
-    new_box.height = box.style.font_size
+    new_box.height = box.style['font_size']
     half_leading = (line_height - new_box.height) / 2.
     # Set margins to the half leading but also compensate for borders and
     # paddings. We want margin_height() == line_height
@@ -853,7 +853,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
     new_box.margin_bottom = (half_leading - new_box.border_bottom_width -
                              new_box.padding_bottom)
 
-    if new_box.style.position == 'relative':
+    if new_box.style['position'] == 'relative':
         for absolute_box in absolute_boxes:
             absolute_layout(context, absolute_box, new_box, fixed_boxes)
 
@@ -877,7 +877,7 @@ def split_text_box(context, box, available_width, skip):
 
     """
     assert isinstance(box, boxes.TextBox)
-    font_size = box.style.font_size
+    font_size = box.style['font_size']
     text = box.text[skip:]
     if font_size == 0 or not text:
         return None, None, False
@@ -972,10 +972,10 @@ def line_box_verticality(box):
     for subtree, sub_max_y, sub_min_y in subtrees_with_min_max:
         if subtree.is_floated():
             dy = min_y - subtree.position_y
-        elif subtree.style.vertical_align == 'top':
+        elif subtree.style['vertical_align'] == 'top':
             dy = min_y - sub_min_y
         else:
-            assert subtree.style.vertical_align == 'bottom'
+            assert subtree.style['vertical_align'] == 'bottom'
             dy = max_y - sub_max_y
         translate_subtree(subtree, dy)
     return max_y, min_y
@@ -984,7 +984,7 @@ def line_box_verticality(box):
 def translate_subtree(box, dy):
     if isinstance(box, boxes.InlineBox):
         box.position_y += dy
-        if box.style.vertical_align in ('top', 'bottom'):
+        if box.style['vertical_align'] in ('top', 'bottom'):
             for child in box.children:
                 translate_subtree(child, dy)
     else:
@@ -1025,11 +1025,11 @@ def inline_box_verticality(box, top_bottom_subtrees, baseline_y):
             if child.is_floated():
                 top_bottom_subtrees.append(child)
             continue
-        vertical_align = child.style.vertical_align
+        vertical_align = child.style['vertical_align']
         if vertical_align == 'baseline':
             child_baseline_y = baseline_y
         elif vertical_align == 'middle':
-            one_ex = box.style.font_size * ex_ratio(box.style)
+            one_ex = box.style['font_size'] * ex_ratio(box.style)
             top = baseline_y - (one_ex + child.margin_height()) / 2.
             child_baseline_y = top + child.baseline
         # TODO: actually implement vertical-align: top and bottom
@@ -1087,15 +1087,16 @@ def text_align(context, line, available_width, last):
     the `text-align` property.
 
     """
-    align = line.style.text_align
-    space_collapse = line.style.white_space in ('normal', 'nowrap', 'pre-line')
+    align = line.style['text_align']
+    space_collapse = line.style['white_space'] in (
+        'normal', 'nowrap', 'pre-line')
     if align in ('-weasy-start', '-weasy-end'):
-        if (align == '-weasy-start') ^ (line.style.direction == 'rtl'):
+        if (align == '-weasy-start') ^ (line.style['direction'] == 'rtl'):
             align = 'left'
         else:
             align = 'right'
     if align == 'justify' and last:
-        align = 'right' if line.style.direction == 'rtl' else 'left'
+        align = 'right' if line.style['direction'] == 'rtl' else 'left'
     if align == 'left':
         return 0
     offset = available_width - line.width

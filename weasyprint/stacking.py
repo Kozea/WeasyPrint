@@ -48,7 +48,7 @@ class StackingContext(object):
         # sort() is stable, so the lists are now storted
         # by z-index, then tree order.
 
-        self.z_index = box.style.z_index
+        self.z_index = box.style['z_index']
         if self.z_index == 'auto':
             self.z_index = 0
 
@@ -80,18 +80,20 @@ class StackingContext(object):
             if isinstance(box, AbsolutePlaceholder):
                 box = box._box
             style = box.style
-            if ((style.position != 'static' and style.z_index != 'auto') or
-                    style.opacity < 1 or
+            absolute_and_z_index = (
+                style['position'] != 'static' and style['z_index'] != 'auto')
+            if (absolute_and_z_index or
+                    style['opacity'] < 1 or
                     # 'transform: none' gives a "falsy" empty list here
-                    style.transform or
-                    style.overflow != 'visible'):
+                    style['transform'] or
+                    style['overflow'] != 'visible'):
                 # This box defines a new stacking context, remove it
                 # from the "normal" children list.
                 child_contexts.append(
                     StackingContext.from_box(box, page))
             else:
-                if style.position != 'static':
-                    assert style.z_index == 'auto'
+                if style['position'] != 'static':
+                    assert style['z_index'] == 'auto'
                     # "Fake" context: sub-contexts will go in this
                     # `child_contexts` list.
                     # Insert at the position before creating the sub-context.

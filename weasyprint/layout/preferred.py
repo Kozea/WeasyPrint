@@ -89,7 +89,7 @@ def max_content_width(context, box, outer=True):
 
 def _block_content_width(context, box, function, outer):
     """Helper to create ``block_*_content_width.``"""
-    width = box.style.width
+    width = box.style['width']
     if width == 'auto' or width.unit == '%':
         # "percentages on the following properties are treated instead as
         # though they were the following: width: auto"
@@ -107,8 +107,8 @@ def _block_content_width(context, box, function, outer):
 
 def min_max(box, width):
     """Get box width from given width and box min- and max-widths."""
-    min_width = box.style.min_width
-    max_width = box.style.max_width
+    min_width = box.style['min_width']
+    max_width = box.style['max_width']
     min_width = min_width.value if min_width.unit != '%' else 0
     max_width = max_width.value if max_width.unit != '%' else float('inf')
     return max(min_width, min(width, max_width))
@@ -131,9 +131,9 @@ def margin_width(box, width, left=True, right=True):
                 percentages += style_value.value
 
     if left:
-        width += box.style.border_left_width
+        width += box.style['border_left_width']
     if right:
-        width += box.style.border_right_width
+        width += box.style['border_right_width']
 
     if percentages < 100:
         return width / (1 - percentages / 100.)
@@ -199,7 +199,7 @@ def inline_max_content_width(context, box, outer=True, is_line_start=False):
 
 def column_group_content_width(context, box):
     """Return the *-content width for an ``TableColumnGroupBox``."""
-    width = box.style.width
+    width = box.style['width']
     if width == 'auto' or width.unit == '%':
         width = 0
     else:
@@ -233,7 +233,7 @@ def inline_line_widths(context, box, outer, is_line_start, minimum,
                 lines[0] = adjust(child, outer, lines[0], right=False)
                 lines[-1] = adjust(child, outer, lines[-1], left=False)
         elif isinstance(child, boxes.TextBox):
-            space_collapse = child.style.white_space in (
+            space_collapse = child.style['white_space'] in (
                 'normal', 'nowrap', 'pre-line')
             if skip_stack is None:
                 skip = 0
@@ -297,14 +297,14 @@ def _percentage_contribution(box):
 
     """
     min_width = (
-        box.style.min_width.value if box.style.min_width != 'auto' and
-        box.style.min_width.unit == '%' else 0)
+        box.style['min_width'].value if box.style['min_width'] != 'auto' and
+        box.style['min_width'].unit == '%' else 0)
     max_width = (
-        box.style.max_width.value if box.style.max_width != 'auto' and
-        box.style.max_width.unit == '%' else float('inf'))
+        box.style['max_width'].value if box.style['max_width'] != 'auto' and
+        box.style['max_width'].unit == '%' else float('inf'))
     width = (
-        box.style.width.value if box.style.width != 'auto' and
-        box.style.width.unit == '%' else 0)
+        box.style['width'].value if box.style['width'] != 'auto' and
+        box.style['width'].unit == '%' else 0)
     return max(min_width, min(width, max_width))
 
 
@@ -345,9 +345,9 @@ def table_and_columns_preferred_widths(context, box, outer=True):
     zipped_grid = list(zip(*grid))
 
     # Define the total horizontal border spacing
-    if table.style.border_collapse == 'separate' and grid_width > 0:
+    if table.style['border_collapse'] == 'separate' and grid_width > 0:
         total_horizontal_border_spacing = (
-            table.style.border_spacing[0] *
+            table.style['border_spacing'][0] *
             (1 + len([column for column in zipped_grid if any(column)])))
     else:
         total_horizontal_border_spacing = 0
@@ -431,7 +431,7 @@ def table_and_columns_preferred_widths(context, box, outer=True):
                 cell_slice = slice(origin, origin + origin_cell.colspan)
                 baseline_border_spacing = (
                     (origin_cell.colspan - 1) *
-                    table.style.border_spacing[0])
+                    table.style['border_spacing'][0])
                 baseline_min_content = sum(min_content_widths[cell_slice])
                 baseline_max_content = sum(max_content_widths[cell_slice])
                 baseline_percentage = sum(
@@ -548,25 +548,26 @@ def table_and_columns_preferred_widths(context, box, outer=True):
     # Define constrainedness
     constrainedness = [False for i in range(grid_width)]
     for i in range(grid_width):
-        if (column_groups[i] and column_groups[i].style.width != 'auto' and
-                column_groups[i].style.width.unit != '%'):
+        if (column_groups[i] and column_groups[i].style['width'] != 'auto' and
+                column_groups[i].style['width'].unit != '%'):
             constrainedness[i] = True
             continue
-        if (columns[i] and columns[i].style.width != 'auto' and
-                columns[i].style.width.unit != '%'):
+        if (columns[i] and columns[i].style['width'] != 'auto' and
+                columns[i].style['width'].unit != '%'):
             constrainedness[i] = True
             continue
         for cell in zipped_grid[i]:
-            if (cell and cell.colspan == 1 and cell.style.width != 'auto' and
-                    cell.style.width.unit != '%'):
+            if (cell and cell.colspan == 1 and
+                    cell.style['width'] != 'auto' and
+                    cell.style['width'].unit != '%'):
                 constrainedness[i] = True
                 break
 
-    if table.style.width != 'auto' and table.style.width.unit == 'px':
+    if table.style['width'] != 'auto' and table.style['width'].unit == 'px':
         # "percentages on the following properties are treated instead as
         # though they were the following: width: auto"
         # http://dbaron.org/css/intrinsic/#outer-intrinsic
-        table_min_width = table_max_width = table.style.width.value
+        table_min_width = table_max_width = table.style['width'].value
     else:
         table_min_width = table_min_content_width
         table_max_width = table_max_content_width
@@ -596,25 +597,26 @@ def table_and_columns_preferred_widths(context, box, outer=True):
 
 def replaced_min_content_width(box, outer=True):
     """Return the min-content width for an ``InlineReplacedBox``."""
-    width = box.style.width
+    width = box.style['width']
     if width == 'auto':
-        height = box.style.height
+        height = box.style['height']
         if height == 'auto' or height.unit == '%':
             height = 'auto'
         else:
             assert height.unit == 'px'
             height = height.value
-        if box.style.max_width != 'auto' and box.style.max_width.unit == '%':
+        if (box.style['max_width'] != 'auto' and
+                box.style['max_width'].unit == '%'):
             # See https://drafts.csswg.org/css-sizing/#intrinsic-contribution
             width = 0
         else:
             image = box.replacement
             iwidth, iheight = image.get_intrinsic_size(
-                box.style.image_resolution, box.style.font_size)
+                box.style['image_resolution'], box.style['font_size'])
             width, _ = default_image_sizing(
                 iwidth, iheight, image.intrinsic_ratio, 'auto', height,
                 default_width=300, default_height=150)
-    elif box.style.width.unit == '%':
+    elif box.style['width'].unit == '%':
         # See https://drafts.csswg.org/css-sizing/#intrinsic-contribution
         width = 0
     else:
@@ -632,10 +634,10 @@ def trailing_whitespace_size(context, box):
             return 0
         box = box.children[-1]
     if not (isinstance(box, boxes.TextBox) and box.text and
-            box.style.white_space in ('normal', 'nowrap', 'pre-line')):
+            box.style['white_space'] in ('normal', 'nowrap', 'pre-line')):
         return 0
     stripped_text = box.text.rstrip(' ')
-    if box.style.font_size == 0 or len(stripped_text) == len(box.text):
+    if box.style['font_size'] == 0 or len(stripped_text) == len(box.text):
         return 0
     if stripped_text:
         old_box, _, _ = split_text_box(context, box, None, 0)

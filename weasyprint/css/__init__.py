@@ -42,11 +42,7 @@ PSEUDO_ELEMENTS = (None, 'before', 'after', 'first-line', 'first-letter')
 
 
 class StyleDict(dict):
-    """A dict allowing attribute access to values.
-
-    Allow eg. ``style.font_size`` instead of ``style['font-size']``.
-
-    """
+    """A dict storing CSS attributes and values."""
 
     # TODO: this dict should be frozen, but modification is currently
     # authorized for some corner cases when building the structure:
@@ -55,18 +51,13 @@ class StyleDict(dict):
     # - modifying borders for table cells with collapsing borders, and
     # - setting viewports and pages overflow.
 
-    # TODO: We should remove that. Some attributes (eg. "clear") exist as
-    # dict methods and can only be accessed with getitem.
-    __getattr__ = dict.__getitem__
-
     def get_color(self, key):
         value = self[key]
         return value if value != 'currentColor' else self['color']
 
     def copy(self):
         """Copy the ``StyleDict``."""
-        style = type(self)(self)
-        return style
+        return type(self)(self)
 
     def inherit_from(self):
         """Return a new StyleDict with inherited properties from this one.

@@ -122,7 +122,7 @@ def make_replaced_box(element, box, image):
     element should be.
 
     """
-    if box.style.display in ('block', 'list-item', 'table'):
+    if box.style['display'] in ('block', 'list-item', 'table'):
         type_ = boxes.BlockReplacedBox
     else:
         # TODO: support images with 'display: table-cell'?

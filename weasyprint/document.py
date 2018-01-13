@@ -40,16 +40,16 @@ def _get_matrix(box):
     #  but do not apply to elements which may be split into
     #  multiple inline-level boxes."
     # http://www.w3.org/TR/css3-2d-transforms/#introduction
-    if box.style.transform and not isinstance(box, boxes.InlineBox):
+    if box.style['transform'] and not isinstance(box, boxes.InlineBox):
         border_width = box.border_width()
         border_height = box.border_height()
-        origin_x, origin_y = box.style.transform_origin
+        origin_x, origin_y = box.style['transform_origin']
         origin_x = box.border_box_x() + percentage(origin_x, border_width)
         origin_y = box.border_box_y() + percentage(origin_y, border_height)
 
         matrix = cairo.Matrix()
         matrix.translate(origin_x, origin_y)
-        for name, args in box.style.transform:
+        for name, args in box.style['transform']:
             if name == 'scale':
                 matrix.scale(*args)
             elif name == 'rotate':
@@ -100,8 +100,8 @@ def _gather_links_and_bookmarks(box, bookmarks, links, anchors, matrix):
         bookmark_level = None
     else:
         bookmark_level = box.style['bookmark_level']
-    link = box.style.link
-    anchor_name = box.style.anchor
+    link = box.style['link']
+    anchor_name = box.style['anchor']
     has_bookmark = bookmark_label and bookmark_level
     # 'link' is inherited but redundant on text boxes
     has_link = link and not isinstance(box, boxes.TextBox)

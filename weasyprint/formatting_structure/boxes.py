@@ -270,11 +270,11 @@ class Box(object):
 
     def is_floated(self):
         """Return whether this box is floated."""
-        return self.style.float != 'none'
+        return self.style['float'] != 'none'
 
     def is_absolutely_positioned(self):
         """Return whether this box is in the absolute positioning scheme."""
-        return self.style.position in ('absolute', 'fixed')
+        return self.style['position'] in ('absolute', 'fixed')
 
     def is_in_normal_flow(self):
         """Return whether this box is in normal flow."""
@@ -421,7 +421,7 @@ class InlineLevelBox(Box):
     def _remove_decoration(self, start, end):
         if start or end:
             self.style = self.style.copy()
-        ltr = self.style.direction == 'ltr'
+        ltr = self.style['direction'] == 'ltr'
         if start:
             self._reset_spacing('left' if ltr else 'right')
         if end:
@@ -461,7 +461,7 @@ class TextBox(InlineLevelBox):
     def __init__(self, element_tag, style, text):
         assert text
         super(TextBox, self).__init__(element_tag, style)
-        text_transform = style.text_transform
+        text_transform = style['text_transform']
         if text_transform != 'none':
             text = {
                 'uppercase': lambda t: t.upper(),
@@ -470,7 +470,7 @@ class TextBox(InlineLevelBox):
                 'capitalize': lambda t: t.title(),
                 'full-width': lambda t: t.translate(self.ascii_to_wide),
             }[text_transform](text)
-        if style.hyphens == 'none':
+        if style['hyphens'] == 'none':
             text = text.replace('\u00AD', '')  # U+00AD SOFT HYPHEN (SHY)
         self.text = text
 

@@ -52,8 +52,8 @@ def list_marker_layout(context, box):
         # (Swap left and right for right-to-left text.)
         marker.position_x = box.border_box_x()
 
-        half_em = 0.5 * box.style.font_size
-        direction = box.style.direction
+        half_em = 0.5 * box.style['font_size']
+        direction = box.style['direction']
         if direction == 'ltr':
             marker.margin_right = half_em
             marker.position_x -= marker.margin_width()
