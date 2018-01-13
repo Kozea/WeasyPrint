@@ -66,7 +66,6 @@ class StyleDict(dict):
     def copy(self):
         """Copy the ``StyleDict``."""
         style = type(self)(self)
-        style.anonymous = self.anonymous
         return style
 
     def inherit_from(self):
@@ -81,11 +80,7 @@ class StyleDict(dict):
                 cascaded={}, parent_style=self,
                 # Only by non-inherited properties, eg `content: attr(href)`
                 element=None)
-            self._inherited_style.anonymous = True
         return self._inherited_style
-
-    # Default values, may be overriden on instances
-    anonymous = False
 
 
 PageType = namedtuple('PageType', ['side', 'blank', 'first', 'name'])

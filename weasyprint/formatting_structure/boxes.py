@@ -406,9 +406,6 @@ class LineBox(ParentBox):
     be split into multiple line boxes, one for each actual line.
 
     """
-    def __init__(self, element_tag, style, children):
-        assert style.anonymous
-        super(LineBox, self).__init__(element_tag, style, children)
 
 
 class InlineLevelBox(Box):
@@ -462,7 +459,6 @@ class TextBox(InlineLevelBox):
     ascii_to_wide.update({0x20: '\u3000', 0x2D: '\u2212'})
 
     def __init__(self, element_tag, style, text):
-        assert style.anonymous
         assert text
         super(TextBox, self).__init__(element_tag, style)
         text_transform = style.text_transform

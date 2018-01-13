@@ -44,17 +44,15 @@ BASE_URL = path2url(resource_filename('<test>'))
 
 def serialize(box_list):
     """Transform a box list into a structure easier to compare for testing."""
-    return [
-        (box.element_tag,
-         ('Anon' if (box.style.anonymous and
-                     type(box) not in (boxes.TextBox, boxes.LineBox))
-          else '') + type(box).__name__[:-3],
-         # All concrete boxes are either text, replaced, column or parent.
-         (box.text if isinstance(box, boxes.TextBox)
-          else '<replaced>' if isinstance(box, boxes.ReplacedBox)
-          else serialize(
-              getattr(box, 'column_groups', ()) + tuple(box.children))))
-        for box in box_list]
+    return [(
+        box.element_tag,
+        type(box).__name__[:-3],
+        # All concrete boxes are either text, replaced, column or parent.
+        (box.text if isinstance(box, boxes.TextBox)
+            else '<replaced>' if isinstance(box, boxes.ReplacedBox)
+            else serialize(
+                getattr(box, 'column_groups', ()) + tuple(box.children))))
+            for box in box_list]
 
 
 def unwrap_html_body(box):
@@ -188,7 +186,7 @@ def test_inline_in_block():
     source = '<div>Hello, <em>World</em>!\n<p>Lipsum.</p></div>'
     expected = [
         ('div', 'Block', [
-            ('div', 'AnonBlock', [
+            ('div', 'Block', [
                 ('div', 'Line', [
                     ('div', 'Text', 'Hello, '),
                     ('em', 'Inline', [
@@ -207,7 +205,7 @@ def test_inline_in_block():
             ('p', 'Block', [
                 ('p', 'Line', [
                     ('p', 'Text', 'Lipsum.')])]),
-            ('div', 'AnonBlock', [
+            ('div', 'Block', [
                 ('div', 'Line', [
                     ('div', 'Text', 'Hello, '),
                     ('em', 'Inline', [
@@ -287,7 +285,7 @@ def test_block_in_inline():
     assert_tree(box, [
         ('body', 'Line', [
             ('p', 'InlineBlock', [
-                ('p', 'AnonBlock', [
+                ('p', 'Block', [
                     ('p', 'Line', [
                         ('p', 'Text', 'Lorem '),
                         ('em', 'Inline', [
@@ -297,7 +295,7 @@ def test_block_in_inline():
                 ('span', 'Block', [
                     ('span', 'Line', [
                         ('span', 'Text', 'sit')])]),
-                ('p', 'AnonBlock', [
+                ('p', 'Block', [
                     ('p', 'Line', [
                         ('em', 'Inline', [
                             ('strong', 'Inline', [
@@ -307,20 +305,20 @@ def test_block_in_inline():
                     ('span', 'Line', [
                         ('span', 'Text', 'amet,')])]),
 
-                ('p', 'AnonBlock', [
+                ('p', 'Block', [
                     ('p', 'Line', [
                         ('em', 'Inline', [
                             ('strong', 'Inline', [])])])]),
                 ('span', 'Block', [
-                    ('span', 'AnonBlock', [
+                    ('span', 'Block', [
                         ('span', 'Line', [
                             ('em', 'Inline', [
                                 ('em', 'Text', 'conse')])])]),
                     ('i', 'Block', []),
-                    ('span', 'AnonBlock', [
+                    ('span', 'Block', [
                         ('span', 'Line', [
                             ('em', 'Inline', [])])])]),
-                ('p', 'AnonBlock', [
+                ('p', 'Block', [
                     ('p', 'Line', [
                         ('em', 'Inline', [])])])])])])
 
@@ -347,10 +345,7 @@ def test_styles():
         # All boxes inherit the color
         assert child.style.color == (0, 0, 1, 1)  # blue
         # Only non-anonymous boxes have margins
-        if child.style.anonymous:
-            assert child.style.margin_top == (0, 'px')
-        else:
-            assert child.style.margin_top == (42, 'px')
+        assert child.style.margin_top in ((0, 'px'), (42, 'px'))
 
 
 @assert_no_logs
@@ -491,17 +486,17 @@ def test_tables():
             </x-tr>
         </x-table>
     '''), [
-        ('x-table', 'AnonBlock', [
+        ('x-table', 'Block', [
             ('x-caption', 'TableCaption', [
                 ('x-caption', 'Line', [
                     ('x-caption', 'Text', 'top caption')])]),
             ('x-table', 'Table', [
-                ('x-table', 'AnonTableColumnGroup', [
+                ('x-table', 'TableColumnGroup', [
                     ('x-col', 'TableColumn', [])]),
                 ('x-thead', 'TableRowGroup', [
-                    ('x-thead', 'AnonTableRow', [
+                    ('x-thead', 'TableRow', [
                         ('x-th', 'TableCell', [])])]),
-                ('x-table', 'AnonTableRowGroup', [
+                ('x-table', 'TableRowGroup', [
                     ('x-tr', 'TableRow', [
                         ('x-th', 'TableCell', [
                             ('x-th', 'Line', [
@@ -510,7 +505,7 @@ def test_tables():
                             ('x-th', 'Line', [
                                 ('x-th', 'Text', 'bar')])])])]),
                 ('x-thead', 'TableRowGroup', []),
-                ('x-table', 'AnonTableRowGroup', [
+                ('x-table', 'TableRowGroup', [
                     ('x-tr', 'TableRow', [
                         ('x-td', 'TableCell', [
                             ('x-td', 'Line', [
@@ -523,10 +518,10 @@ def test_tables():
         <span style="display: table-cell">foo</span>
         <span style="display: table-cell">bar</span>
     '''), [
-        ('body', 'AnonBlock', [
-            ('body', 'AnonTable', [
-                ('body', 'AnonTableRowGroup', [
-                    ('body', 'AnonTableRow', [
+        ('body', 'Block', [
+            ('body', 'Table', [
+                ('body', 'TableRowGroup', [
+                    ('body', 'TableRow', [
                         ('span', 'TableCell', [
                             ('span', 'Line', [
                                 ('span', 'Text', 'foo')])]),
@@ -548,21 +543,21 @@ def test_tables():
         </span>
         <ins style="display: table-column-group"></ins>
     '''), [
-        ('body', 'AnonBlock', [
-            ('body', 'AnonTable', [
+        ('body', 'Block', [
+            ('body', 'Table', [
                 ('span', 'TableColumnGroup', [
                     ('em', 'TableColumn', [])]),
                 ('ins', 'TableColumnGroup', [
-                    ('ins', 'AnonTableColumn', [])])])])])
+                    ('ins', 'TableColumn', [])])])])])
 
     # Rules 2.1 then 2.3
     assert_tree(parse_all('<x-table>foo <div></div></x-table>'), [
-        ('x-table', 'AnonBlock', [
+        ('x-table', 'Block', [
             ('x-table', 'Table', [
-                ('x-table', 'AnonTableRowGroup', [
-                    ('x-table', 'AnonTableRow', [
-                        ('x-table', 'AnonTableCell', [
-                            ('x-table', 'AnonBlock', [
+                ('x-table', 'TableRowGroup', [
+                    ('x-table', 'TableRow', [
+                        ('x-table', 'TableCell', [
+                            ('x-table', 'Block', [
                                 ('x-table', 'Line', [
                                     ('x-table', 'Text', 'foo ')])]),
                             ('div', 'Block', [])])])])])])])
@@ -570,11 +565,11 @@ def test_tables():
     # Rule 2.2
     assert_tree(parse_all('<x-thead style="display: table-header-group">'
                           '<div></div><x-td></x-td></x-thead>'), [
-        ('body', 'AnonBlock', [
-            ('body', 'AnonTable', [
+        ('body', 'Block', [
+            ('body', 'Table', [
                 ('x-thead', 'TableRowGroup', [
-                    ('x-thead', 'AnonTableRow', [
-                        ('x-thead', 'AnonTableCell', [
+                    ('x-thead', 'TableRow', [
+                        ('x-thead', 'TableCell', [
                             ('div', 'Block', [])]),
                         ('x-td', 'TableCell', [])])])])])])
 
@@ -583,9 +578,9 @@ def test_tables():
     assert_tree(parse_all('<span><x-tr></x-tr></span>'), [
         ('body', 'Line', [
             ('span', 'Inline', [
-                ('span', 'AnonInlineBlock', [
-                    ('span', 'AnonInlineTable', [
-                        ('span', 'AnonTableRowGroup', [
+                ('span', 'InlineBlock', [
+                    ('span', 'InlineTable', [
+                        ('span', 'TableRowGroup', [
                             ('x-tr', 'TableRow', [])])])])])])])
 
     # Rule 3.1
@@ -601,29 +596,29 @@ def test_tables():
                 # Whitespace is preserved in table handling, then collapsed
                 # into a single space.
                 ('span', 'Text', ' '),
-                ('span', 'AnonInlineBlock', [
-                    ('span', 'AnonInlineTable', [
-                        ('span', 'AnonTableRowGroup', [
-                            ('span', 'AnonTableRow', [
+                ('span', 'InlineBlock', [
+                    ('span', 'InlineTable', [
+                        ('span', 'TableRowGroup', [
+                            ('span', 'TableRow', [
                                 ('em', 'TableCell', []),
                                 ('em', 'TableCell', [])])])])]),
                 ('span', 'Text', ' ')])])])
 
     # Rule 3.2
     assert_tree(parse_all('<x-tr></x-tr>\t<x-tr></x-tr>'), [
-        ('body', 'AnonBlock', [
-            ('body', 'AnonTable', [
-                ('body', 'AnonTableRowGroup', [
+        ('body', 'Block', [
+            ('body', 'Table', [
+                ('body', 'TableRowGroup', [
                     ('x-tr', 'TableRow', []),
                     ('x-tr', 'TableRow', [])])])])])
 
     assert_tree(parse_all('<x-col></x-col>\n<x-colgroup></x-colgroup>'), [
-        ('body', 'AnonBlock', [
-            ('body', 'AnonTable', [
-                ('body', 'AnonTableColumnGroup', [
+        ('body', 'Block', [
+            ('body', 'Table', [
+                ('body', 'TableColumnGroup', [
                     ('x-col', 'TableColumn', [])]),
                 ('x-colgroup', 'TableColumnGroup', [
-                    ('x-colgroup', 'AnonTableColumn', [])])])])])
+                    ('x-colgroup', 'TableColumn', [])])])])])
 
 
 @assert_no_logs
@@ -861,7 +856,7 @@ def test_before_after():
                 ('p', 'Line', [
                     ('p::before', 'Inline', [
                         ('p::before', 'Text', 'a'),
-                        ('p::before', 'AnonInlineReplaced', '<replaced>'),
+                        ('p::before', 'InlineReplaced', '<replaced>'),
                         ('p::before', 'Text', 'b')]),
                     ('p', 'Text', 'c')])])])
     assert len(logs) == 1
@@ -920,7 +915,7 @@ def test_counters():
                 ('li', 'Line', [
                     ('li::marker', 'Text', '3.')])]),
             ('li', 'Block', [
-                ('li', 'AnonBlock', [
+                ('li', 'Block', [
                     ('li', 'Line', [
                         ('li::marker', 'Text', '4.')])]),
                 ('ol', 'Block', [
@@ -976,7 +971,7 @@ def test_counters():
             </section>
         </body>'''), [
         ('section', 'Block', [
-            ('section', 'AnonBlock', [
+            ('section', 'Block', [
                 ('section', 'Line', [
                     ('section::before', 'Inline', [])])]),
             ('h1', 'Block', [
@@ -988,7 +983,7 @@ def test_counters():
                     ('h1::before', 'Inline', [
                         ('h1::before', 'Text', '2')])])]),
             ('section', 'Block', [
-                ('section', 'AnonBlock', [
+                ('section', 'Block', [
                     ('section', 'Line', [
                         ('section::before', 'Inline', [])])]),
                 ('h1', 'Block', [

@@ -634,14 +634,12 @@ def wrap_table(box, children):
         box, captions['top'] + [table] + captions['bottom'])
     wrapper.style = wrapper.style.copy()
     wrapper.is_table_wrapper = True
-    if not table.style.anonymous:
-        # Non-inherited properties of the table element apply to one
-        # of the wrapper and the table. The other get the initial value.
-        # TODO: put this in a method of the table object
-        for name in properties.TABLE_WRAPPER_BOX_PROPERTIES:
-            wrapper.style[name] = table.style[name]
-            table.style[name] = properties.INITIAL_VALUES[name]
-    # else: non-inherited properties already have their initial values
+    # Non-inherited properties of the table element apply to one
+    # of the wrapper and the table. The other get the initial value.
+    # TODO: put this in a method of the table object
+    for name in properties.TABLE_WRAPPER_BOX_PROPERTIES:
+        wrapper.style[name] = table.style[name]
+        table.style[name] = properties.INITIAL_VALUES[name]
 
     return wrapper
 
