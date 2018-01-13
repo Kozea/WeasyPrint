@@ -12,7 +12,8 @@
 
 from __future__ import division, unicode_literals
 
-from ..css import PageType, matching_page_types, set_computed_styles
+from ..css import (
+    PageType, computed_from_cascaded, matching_page_types, set_computed_styles)
 from ..formatting_structure import boxes, build
 from ..logger import LOGGER
 from .absolute import absolute_layout
@@ -300,7 +301,8 @@ def make_margin_boxes(context, page, counter_values):
 
         style = context.style_for(page.page_type, at_keyword)
         if style is None:
-            style = page.style.inherit_from()
+            style = computed_from_cascaded(
+                cascaded={}, parent_style=page.style, element=None)
         box = boxes.MarginBox(at_keyword, style)
         # Empty boxes should not be generated, but they may be needed for
         # the layout of their neighbors.

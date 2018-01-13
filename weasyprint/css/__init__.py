@@ -41,39 +41,6 @@ from .. import CSS
 PSEUDO_ELEMENTS = (None, 'before', 'after', 'first-line', 'first-letter')
 
 
-class StyleDict(dict):
-    """A dict storing CSS attributes and values."""
-
-    # TODO: this dict should be frozen, but modification is currently
-    # authorized for some corner cases when building the structure:
-    # - wrapping tables,
-    # - removing paddings and margins from tables,
-    # - modifying borders for table cells with collapsing borders, and
-    # - setting viewports and pages overflow.
-
-    def get_color(self, key):
-        value = self[key]
-        return value if value != 'currentColor' else self['color']
-
-    def copy(self):
-        """Copy the ``StyleDict``."""
-        return type(self)(self)
-
-    def inherit_from(self):
-        """Return a new StyleDict with inherited properties from this one.
-
-        Non-inherited properties get their initial values.
-        This is the method used for an anonymous box.
-
-        """
-        if '_inherited_style' not in self.__dict__:
-            self._inherited_style = computed_from_cascaded(
-                cascaded={}, parent_style=self,
-                # Only by non-inherited properties, eg `content: attr(href)`
-                element=None)
-        return self._inherited_style
-
-
 PageType = namedtuple('PageType', ['side', 'blank', 'first', 'name'])
 
 
@@ -528,7 +495,7 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
         for side in ('top', 'bottom', 'left', 'right'):
             computed['border_%s_width' % side] = 0
         computed['outline_width'] = 0
-        return StyleDict(computed)
+        return computed
 
     # Handle inheritance and initial values
     specified = {}
@@ -567,9 +534,9 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
         computed['page'] = specified['page'] = (
             '' if parent_style is None else parent_style['page'])
 
-    return StyleDict(computed_values.compute(
+    return computed_values.compute(
         element, pseudo_type, specified, computed, parent_style, root_style,
-        base_url))
+        base_url)
 
 
 def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
@@ -760,7 +727,7 @@ def get_all_computed_styles(html, user_stylesheets=None,
     Do everything from finding author stylesheets to parsing and applying them.
 
     Return a ``style_for`` function that takes an element and an optional
-    pseudo-element type, and return a StyleDict object.
+    pseudo-element type, and return a style dict object.
 
     """
     # List stylesheets. Order here is not important ('origin' is).
@@ -800,7 +767,7 @@ def get_all_computed_styles(html, user_stylesheets=None,
             add_declaration(cascaded_styles, name, values, weight, element)
 
     # keys: (element, pseudo_element_type), like cascaded_styles
-    # values: StyleDict objects:
+    # values: style dict objects:
     #     keys: property name as a string
     #     values: a PropertyValue-like object
     computed_styles = {}

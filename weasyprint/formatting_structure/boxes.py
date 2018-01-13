@@ -62,6 +62,7 @@ from __future__ import division, unicode_literals
 import itertools
 
 from ..compat import unichr, xrange
+from ..css import computed_from_cascaded
 from ..css.properties import Dimension
 
 # The *Box classes have many attributes and methods, but that's the way it is
@@ -101,8 +102,9 @@ class Box(object):
     @classmethod
     def anonymous_from(cls, parent, *args, **kwargs):
         """Return an anonymous box that inherits from ``parent``."""
-        return cls(
-            parent.element_tag, parent.style.inherit_from(), *args, **kwargs)
+        style = computed_from_cascaded(
+            cascaded={}, parent_style=parent.style, element=None)
+        return cls(parent.element_tag, style, *args, **kwargs)
 
     def copy(self):
         """Return shallow copy of the box."""

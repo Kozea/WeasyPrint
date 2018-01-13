@@ -836,7 +836,7 @@ def create_layout(text, style, context, max_width, justification_spacing):
     """Return an opaque Pango layout with default Pango line-breaks.
 
     :param text: Unicode
-    :param style: a :class:`StyleDict` of computed values
+    :param style: a style dict of computed values
     :param hinting: whether to enable text hinting or not
     :param max_width:
         The maximum available width in the same unit as ``style['font_size']``,

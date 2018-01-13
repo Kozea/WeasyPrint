@@ -476,8 +476,6 @@ def font_weight(computer, name, value):
         return 700
     elif value in ('bolder', 'lighter'):
         parent_value = computer.parent_style['font_weight']
-        # Use a string here as StyleDict.__setattr__ turns integers into pixel
-        # lengths. This is a number without unit.
         return FONT_WEIGHT_RELATIVE[value][parent_value]
     else:
         return value

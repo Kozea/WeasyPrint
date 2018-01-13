@@ -180,7 +180,7 @@ def before_after_to_box(element, pseudo_type, state, style_for,
     """Yield the box for ::before or ::after pseudo-element if there is one."""
     style = style_for(element, pseudo_type)
     if pseudo_type and style is None:
-        # Pseudo-elements with no style at all do not get a StyleDict
+        # Pseudo-elements with no style at all do not get a style dict.
         # Their initial content property computes to 'none'.
         return
 
@@ -672,9 +672,11 @@ def collapse_table_borders(table, grid_width, grid_height):
                           for y in xrange(grid_height + 1)]
 
     def set_one_border(border_grid, box_style, side, grid_x, grid_y):
+        from ..draw import get_color
+
         style = box_style['border_%s_style' % side]
         width = box_style['border_%s_width' % side]
-        color = box_style.get_color('border_%s_color' % side)
+        color = get_color(box_style, 'border_%s_color' % side)
 
         # http://www.w3.org/TR/CSS21/tables.html#border-conflict-resolution
         score = ((1 if style == 'hidden' else 0), width, style_scores[style])

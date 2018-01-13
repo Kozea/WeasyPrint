@@ -14,8 +14,8 @@ from collections import namedtuple
 from itertools import cycle
 
 from . import replaced
-from ..formatting_structure import boxes
 from .percentages import resolve_radii_percentages
+from ..formatting_structure import boxes
 
 Background = namedtuple('Background', 'color, layers, image_rendering')
 BackgroundLayer = namedtuple(
@@ -51,6 +51,8 @@ def box_rectangle(box, which_rectangle):
 
 def layout_box_backgrounds(page, box, get_image_from_uri):
     """Fetch and position background images."""
+    from ..draw import get_color
+
     # Resolve percentages in border-radius properties
     resolve_radii_percentages(box)
 
@@ -65,7 +67,7 @@ def layout_box_backgrounds(page, box, get_image_from_uri):
 
     images = [get_image_from_uri(value) if type_ == 'url' else value
               for type_, value in style['background_image']]
-    color = style.get_color('background_color')
+    color = get_color(style, 'background_color')
     if color.alpha == 0 and not any(images):
         box.background = None
         if page != box:  # Pages need a background for bleed box

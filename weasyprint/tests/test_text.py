@@ -12,7 +12,6 @@
 
 from __future__ import division, unicode_literals
 
-from ..css import StyleDict
 from ..css.properties import INITIAL_VALUES
 from ..text import split_first_line
 from .test_layout import body_children, parse
@@ -22,13 +21,13 @@ FONTS = FONTS.split(', ')
 
 
 def make_text(text, width=None, **style):
-    """Wrapper for split_first_line() creating a StyleDict."""
+    """Wrapper for split_first_line() creating a style dict."""
     new_style = dict(INITIAL_VALUES)
     new_style['font_family'] = [
         'Nimbus Mono L', 'Liberation Mono', 'FreeMono', 'monospace']
     new_style.update(style)
     return split_first_line(
-        text, StyleDict(new_style), context=None, max_width=width,
+        text, new_style, context=None, max_width=width,
         justification_spacing=0)
 
 

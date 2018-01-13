@@ -129,6 +129,11 @@ def rgb2hsv(red, green, blue):
     return hue, saturation, cmax
 
 
+def get_color(style, key):
+    value = style[key]
+    return value if value != 'currentColor' else style['color']
+
+
 def darken(color):
     """Return a darker color."""
     hue, saturation, value = rgb2hsv(color.red, color.green, color.blue)
@@ -530,7 +535,7 @@ def draw_border(context, box, enable_hinting):
                         context, border_box, border_widths,
                         box.style['column_rule_style'], styled_color(
                             box.style['column_rule_style'],
-                            box.style.get_color('column_rule_color'), 'left'))
+                            get_color(box.style, 'column_rule_color'), 'left'))
 
     # The box is hidden, easy.
     if box.style['visibility'] != 'visible':
@@ -544,7 +549,7 @@ def draw_border(context, box, enable_hinting):
         draw_column_border()
         return
 
-    colors = [box.style.get_color('border_%s_color' % side) for side in SIDES]
+    colors = [get_color(box.style, 'border_%s_color' % side) for side in SIDES]
     styles = [
         colors[i].alpha and box.style['border_%s_style' % side]
         for (i, side) in enumerate(SIDES)]
@@ -824,7 +829,7 @@ def draw_rect_border(context, box, widths, style, color):
 
 def draw_outlines(context, box, enable_hinting):
     width = box.style['outline_width']
-    color = box.style.get_color('outline_color')
+    color = get_color(box.style, 'outline_color')
     style = box.style['outline_style']
     if box.style['visibility'] == 'visible' and width and color.alpha:
         outline_box = (

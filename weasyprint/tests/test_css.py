@@ -60,9 +60,7 @@ def test_data_url():
 @assert_no_logs
 def test_style_dict():
     """Test a style in a ``dict``."""
-    style = css.StyleDict({
-        'margin_left': 12,
-        'display': 'block'})
+    style = {'margin_left': 12, 'display': 'block'}
     assert style['display'] == 'block'
     assert style['margin_left'] == 12
     with raises(KeyError):
