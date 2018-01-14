@@ -10,6 +10,7 @@
 
 """
 
+
 def image_marker_layout(box):
     """Layout the :class:`boxes.ImageMarkerBox` ``box``.
 

@@ -18,15 +18,15 @@ import sys
 import threading
 import unicodedata
 import zlib
+from urllib.parse import urlencode, urljoin, uses_relative
 
 import cairocffi as cairo
 import pytest
 from pdfrw import PdfReader
-from urllib.parse import urlencode, urljoin, uses_relative
 
 from .. import CSS, HTML, __main__, default_url_fetcher, navigator
 from ..urls import path2url
-from .test_draw import image_to_pixels
+from .test_draw import B, _, assert_pixels_equal, image_to_pixels, r
 from .testing_utils import (
     FakeHTML, assert_no_logs, capture_logs, http_server, resource_filename,
     temp_directory)
@@ -158,7 +158,6 @@ def test_css_parsing():
 
 
 def check_png_pattern(png_bytes, x2=False, blank=False, rotated=False):
-    from .test_draw import _, r, B, assert_pixels_equal
     if blank:
         expected_pixels = [
             _ + _ + _ + _ + _ + _ + _ + _,

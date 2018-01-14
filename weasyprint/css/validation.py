@@ -12,10 +12,10 @@
 
 import functools
 import math
+from urllib.parse import unquote, urljoin
 
 import tinycss2
 from tinycss2.color3 import parse_color
-from urllib.parse import unquote, urljoin
 
 from . import computed_values
 from ..formatting_structure import counters

@@ -115,7 +115,7 @@ def test_annotate_document():
     assert p['margin_right'] == (0, 'px')
     assert p['margin_bottom'] == (24, 'px')
     assert p['margin_left'] == (0, 'px')
-    assert p['background_color'] == 'currentColor'  # resolved at use-value time.
+    assert p['background_color'] == 'currentColor'
 
     # 2em * 1.25ex = 2 * 20 * 1.25 * 0.8 = 40
     # 2.5ex * 1.25ex = 2.5 * 0.8 * 20 * 1.25 * 0.8 = 40

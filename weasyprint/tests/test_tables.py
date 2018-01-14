@@ -10,7 +10,7 @@
 """
 
 from .test_boxes import render_pages as parse
-from .test_draw import assert_pixels
+from .test_draw import B, _, assert_pixels, r
 from .testing_utils import assert_no_logs, capture_logs, requires
 
 
@@ -1523,7 +1523,6 @@ def test_table_row_height():
 @assert_no_logs
 @requires('cairo', '1.12')
 def test_table_vertical_align():
-    from .test_draw import _, r, B
     assert_pixels('table_vertical_align', 28, 10, [
         r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r,  # noqa
         r+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+r,  # noqa

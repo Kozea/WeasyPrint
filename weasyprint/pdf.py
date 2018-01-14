@@ -13,7 +13,6 @@
 import hashlib
 import io
 import mimetypes
-import sys
 import zlib
 from urllib.parse import unquote
 

@@ -21,8 +21,8 @@ import traceback
 import zlib
 from base64 import decodebytes
 from gzip import GzipFile
-from urllib.parse import urljoin, urlsplit, quote, unquote, unquote_to_bytes
-from urllib.request import urlopen, Request, pathname2url
+from urllib.parse import quote, unquote, urljoin, urlsplit
+from urllib.request import Request, pathname2url, urlopen
 
 from . import VERSION_STRING
 from .logger import LOGGER
