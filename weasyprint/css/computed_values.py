@@ -209,11 +209,6 @@ def compute(element, pseudo_type, specified, computed, parent_style,
     return computed
 
 
-# Let's be consistent, always use ``name`` as an argument even when
-# it is useless.
-# pylint: disable=W0613
-
-
 @register_computer('background-image')
 def background_image(computer, name, values):
     """Compute lenghts in gradient background-image."""

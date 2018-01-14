@@ -30,7 +30,6 @@ as_pixel = (
     lambda x: x[-1:] + x[:-1])
 
 # Short variable names are OK here
-# pylint: disable=C0103
 
 _ = as_pixel(b'\xff\xff\xff\xff')  # white
 r = as_pixel(b'\xff\x00\x00\xff')  # red

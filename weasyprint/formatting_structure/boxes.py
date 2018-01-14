@@ -61,9 +61,6 @@ import itertools
 from ..css import computed_from_cascaded
 from ..css.properties import Dimension
 
-# The *Box classes have many attributes and methods, but that's the way it is
-# pylint: disable=R0904,R0902
-
 
 class Box(object):
     """Abstract base class for all boxes."""

@@ -1639,10 +1639,6 @@ def transform_function(token):
 
 # Expanders
 
-# Let's be consistent, always use ``name`` as an argument even
-# when it is useless.
-# pylint: disable=W0613
-
 def expander(property_name):
     """Decorator adding a function to the ``EXPANDERS``."""
     def expander_decorator(function):

@@ -27,7 +27,7 @@ def test_style_dict():
     assert style['display'] == 'block'
     assert style['margin_left'] == 12
     with raises(KeyError):
-        style['position']  # pylint: disable=W0104
+        style['position']
 
 
 @assert_no_logs
@@ -81,8 +81,6 @@ def test_expand_shorthands():
 @assert_no_logs
 def test_annotate_document():
     """Test a document with inline style."""
-    # Short names for variables are OK here
-    # pylint: disable=C0103
     document = FakeHTML(resource_filename('doc1.html'))
     document._ua_stylesheets = lambda: [CSS(resource_filename('mini_ua.css'))]
     style_for, _, _ = get_all_computed_styles(
@@ -167,8 +165,6 @@ def test_annotate_document():
 
     # TODO much more tests here: test that origin and selector precedence
     # and inheritance are correct, ...
-
-    # pylint: enable=C0103
 
 
 @assert_no_logs
