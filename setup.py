@@ -19,7 +19,7 @@ from setuptools import find_packages, setup
 
 VERSION = re.search(b"VERSION = '([^']+)'", open(
     path.join(path.dirname(__file__), 'weasyprint', '__init__.py'), 'rb',
-).read().strip()).group(1)
+).read().strip()).group(1).decode('ascii')
 
 LONG_DESCRIPTION = open(path.join(path.dirname(__file__), 'README.rst')).read()
 
