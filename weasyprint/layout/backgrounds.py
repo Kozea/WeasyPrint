@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.backgrounds
     ----------------------
@@ -7,8 +6,6 @@
     :license: BSD, see LICENSE for details.
 
 """
-
-from __future__ import division, unicode_literals
 
 from collections import namedtuple
 from itertools import cycle

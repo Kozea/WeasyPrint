@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.html
     ---------------
@@ -15,15 +14,13 @@
 
 """
 
-from __future__ import division, unicode_literals
-
 import logging
 import os.path
 import re
 import sys
+from urllib.parse import urljoin
 
 from . import CSS
-from .compat import urljoin, xrange
 from .css import get_child_text
 from .formatting_structure import boxes
 from .logger import LOGGER
@@ -224,7 +221,7 @@ def handle_colgroup(element, box, _get_image_from_uri, _base_url):
             integer_attribute(element, box, 'span')
             box.children = (
                 boxes.TableColumnBox.anonymous_from(box, [])
-                for _i in xrange(box.span))
+                for _i in range(box.span))
     return [box]
 
 
@@ -236,7 +233,7 @@ def handle_col(element, box, _get_image_from_uri, _base_url):
         if box.span > 1:
             # Generate multiple boxes
             # http://lists.w3.org/Archives/Public/www-style/2011Nov/0293.html
-            return [box.copy() for _i in xrange(box.span)]
+            return [box.copy() for _i in range(box.span)]
     return [box]
 
 

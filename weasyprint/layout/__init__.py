@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.layout
     -----------------
@@ -18,13 +17,12 @@
     :license: BSD, see LICENSE for details.
 
 """
-from __future__ import division, unicode_literals
+
 from collections import defaultdict
 
 from .absolute import absolute_box_layout
 from .pages import make_all_pages, make_margin_boxes
 from .backgrounds import layout_backgrounds
-from ..compat import xrange
 
 
 def layout_fixed_boxes(context, pages):
@@ -131,7 +129,7 @@ class LayoutContext(object):
             return self.string_set[name][self.current_page][0]
         else:
             # search backwards through previous pages
-            for previous_page in xrange(self.current_page, 0, -1):
+            for previous_page in range(self.current_page, 0, -1):
                 if previous_page in self.string_set[name]:
                     return self.string_set[name][previous_page][-1]
         return ""

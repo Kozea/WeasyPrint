@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.navigator
     --------------------
@@ -10,14 +9,12 @@
 
 """
 
-# Do NOT import unicode_literals here. Raw WSGI requires native strings.
-from __future__ import division
-
 import os.path
+from base64 import encodebytes
+from urllib.parse import parse_qs
 from wsgiref.simple_server import make_server
 
 from weasyprint import CSS, HTML
-from weasyprint.compat import base64_encode, iteritems, parse_qs
 from weasyprint.urls import url_is_absolute
 
 FAVICON = os.path.join(os.path.dirname(__file__),
@@ -33,7 +30,7 @@ def get_pages(html):
     for page in document.pages:
         png_bytes, width, height = document.copy([page]).write_png()
         data_url = 'data:image/png;base64,' + (
-            base64_encode(png_bytes).decode('ascii').replace('\n', ''))
+            encodebytes(png_bytes).decode('ascii').replace('\n', ''))
         yield width, height, data_url, page.links, page.anchors
 
 
@@ -81,7 +78,7 @@ def render_template(url):
                 write('  <a style="left: {0}px; top: {1}px; '
                       'width: {2}px; height: {3}px" href="{4}"></a>\n'
                       .format(pos_x, pos_y, width, height, href))
-            for anchor_name, (pos_x, pos_y) in iteritems(anchors):
+            for anchor_name, (pos_x, pos_y) in anchors.items():
                 # Remove 60px to pos_y so that the real pos is below
                 # the address bar.
                 write('  <a style="left: {0}px; top: {1}px;" name="{2}"></a>\n'

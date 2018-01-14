@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.layout.pages
     -----------------------
@@ -9,8 +8,6 @@
     :license: BSD, see LICENSE for details.
 
 """
-
-from __future__ import division, unicode_literals
 
 from ..css import (
     PageType, computed_from_cascaded, matching_page_types, set_computed_styles)

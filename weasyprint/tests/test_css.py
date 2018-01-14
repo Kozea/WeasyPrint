@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.tests.test_css
     -------------------------
@@ -10,51 +9,15 @@
 
 """
 
-from __future__ import division, unicode_literals
-
 from pytest import raises
 
 from .. import CSS, css, default_url_fetcher
 from ..css import PageType, get_all_computed_styles
 from ..css.computed_values import strut_layout
 from ..layout.pages import set_page_type_computed_styles
-from ..urls import open_data_url, path2url
+from ..urls import path2url
 from .testing_utils import (
     FakeHTML, assert_no_logs, capture_logs, resource_filename)
-
-
-@assert_no_logs
-def test_data_url():
-    """Test URLs with the "data:" scheme."""
-    def parse(url, expected_content, expected_mime_type, expected_charset):
-        assert open_data_url(url) == dict(
-            string=expected_content,
-            mime_type=expected_mime_type,
-            encoding=expected_charset,
-            redirected_url=url)
-    parse('data:,foo', b'foo', 'text/plain', 'US-ASCII')
-    parse('data:,foo%22bar', b'foo"bar', 'text/plain', 'US-ASCII')
-    parse('data:text/plain,foo', b'foo', 'text/plain', None)
-    parse('data:text/html;charset=utf8,<body>', b'<body>', 'text/html', 'utf8')
-    parse('data:text/plain;base64,Zm9v', b'foo', 'text/plain', None)
-    parse('data:text/plain;base64,Zm9vbw==', b'fooo', 'text/plain', None)
-    parse('data:text/plain;base64,Zm9vb28=', b'foooo', 'text/plain', None)
-    parse('data:text/plain;base64,Zm9vb29v', b'fooooo', 'text/plain', None)
-    parse('data:text/plain;base64,Zm9vbw%3D%3D', b'fooo', 'text/plain', None)
-    parse('data:text/plain;base64,Zm9vb28%3D', b'foooo', 'text/plain', None)
-
-    # "From a theoretical point of view, the padding character is not needed,
-    #  since the number of missing bytes can be calculated from the number
-    #  of Base64 digits."
-    # https://en.wikipedia.org/wiki/Base64#Padding
-
-    # The Acid 2 test uses base64 URLs without padding.
-    # http://acid2.acidtests.org/
-    parse('data:text/plain;base64,Zm9vbw', b'fooo', 'text/plain', None)
-    parse('data:text/plain;base64,Zm9vb28', b'foooo', 'text/plain', None)
-
-    with raises(IOError):
-        open_data_url('data:foo')
 
 
 @assert_no_logs

@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.draw
     ---------------
@@ -10,15 +9,12 @@
 
 """
 
-from __future__ import division, unicode_literals
-
 import contextlib
 import math
 import operator
 
 import cairocffi as cairo
 
-from .compat import xrange
 from .formatting_structure import boxes
 from .images import SVGImage
 from .layout.backgrounds import BackgroundLayer
@@ -942,11 +938,11 @@ def draw_collapsed_borders(context, table, enable_hinting):
             score, style, width, color, 'top',
             (pos_x1, pos_y - width / 2, pos_x2 - pos_x1, 0)))
 
-    for x in xrange(grid_width):
+    for x in range(grid_width):
         add_horizontal(x, 0)
-    for y in xrange(grid_height):
+    for y in range(grid_height):
         add_vertical(0, y)
-        for x in xrange(grid_width):
+        for x in range(grid_width):
             add_vertical(x + 1, y)
             add_horizontal(x, y + 1)
 

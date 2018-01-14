@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.document
     -------------------
@@ -8,8 +7,6 @@
 
 """
 
-from __future__ import division, unicode_literals
-
 import functools
 import io
 import math
@@ -18,7 +15,6 @@ import shutil
 import cairocffi as cairo
 
 from . import CSS, images
-from .compat import FILESYSTEM_ENCODING, iteritems, izip
 from .css import get_all_computed_styles
 from .draw import draw_page, stacked
 from .fonts import FontConfiguration
@@ -113,13 +109,7 @@ def _gather_links_and_bookmarks(box, bookmarks, links, anchors, matrix):
         pos_x, pos_y, width, height = box.hit_area()
         if has_link:
             link_type, target = link
-            if isinstance(target, bytes):
-                # Links are filesystem_encoding/utf-8 bytestrings in Python 2
-                # and ASCII unicode in Python 3. See ``iri_to_uri`` and
-                # standard library's ``quote`` source.
-                target = target.decode(
-                    FILESYSTEM_ENCODING if target.startswith('file:')
-                    else 'utf-8')
+            assert isinstance(target, str)
             if link_type == 'external' and is_attachment:
                 link_type = 'attachment'
             if matrix:
@@ -389,7 +379,7 @@ class Document(object):
         """
         anchors = {}
         for i, page in enumerate(self.pages):
-            for anchor_name, (point_x, point_y) in iteritems(page.anchors):
+            for anchor_name, (point_x, point_y) in page.anchors.items():
                 anchors.setdefault(anchor_name, (i, point_x, point_y))
         for page in self.pages:
             page_links = []
@@ -529,7 +519,7 @@ class Document(object):
         context = cairo.Context(surface)
         pos_y = 0
         LOGGER.info('Step 6 - Drawing')
-        for page, width, height in izip(self.pages, widths, heights):
+        for page, width, height in zip(self.pages, widths, heights):
             pos_x = (max_width - width) / 2
             page.paint(context, pos_x, pos_y, scale=dppx, clip=True)
             pos_y += height

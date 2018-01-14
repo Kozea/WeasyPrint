@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     WeasyPrint
     ==========
@@ -12,8 +11,6 @@
     :license: BSD, see LICENSE for details.
 
 """
-
-from __future__ import division, unicode_literals
 
 import contextlib
 import html5lib
@@ -34,7 +31,6 @@ __all__ = ['HTML', 'CSS', 'Attachment', 'Document', 'Page',
 # Import after setting the version, as the version is used in other modules
 from .urls import (fetch, default_url_fetcher, path2url, ensure_url,
                    url_is_absolute)  # noqa
-from .compat import unicode  # noqa
 from .logger import LOGGER  # noqa
 # Some imports are at the end of the file (after the CSS class)
 # to work around circular imports.
@@ -86,7 +82,7 @@ class HTML(object):
         result = _select_source(
             guess, filename, url, file_obj, string, base_url, url_fetcher)
         with result as (source_type, source, base_url, protocol_encoding):
-            if isinstance(source, unicode):
+            if isinstance(source, str):
                 result = html5lib.parse(source, namespaceHTMLElements=False)
             else:
                 result = html5lib.parse(
@@ -327,9 +323,7 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
         result = _select_source(
             base_url=base_url, url_fetcher=url_fetcher,
             check_css_mime_type=check_css_mime_type,
-            # Use str() to work around http://bugs.python.org/issue4978
-            # See https://github.com/Kozea/WeasyPrint/issues/97
-            **{str(type_): guess})
+            **{type_: guess})
         with result as result:
             yield result
     elif filename is not None:

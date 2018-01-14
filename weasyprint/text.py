@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.text
     ---------------
@@ -10,8 +9,6 @@
 
 """
 
-from __future__ import division
-
 import re
 import warnings
 
@@ -19,7 +16,6 @@ import cairocffi as cairo
 import cffi
 import pyphen
 
-from .compat import basestring
 from .logger import LOGGER
 
 # XXX No unicode_literals, cffi likes native strings
@@ -657,7 +653,7 @@ class Layout(object):
             self.language = pango.pango_language_from_string(lang_p)
             pango.pango_context_set_language(pango_context, self.language)
 
-        assert not isinstance(style['font_family'], basestring), (
+        assert not isinstance(style['font_family'], str), (
             'font_family should be a list')
         family_p, family = unicode_to_char_p(','.join(style['font_family']))
         pango.pango_font_description_set_family(self.font, family_p)

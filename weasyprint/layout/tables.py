@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.layout.tables
     ------------------------
@@ -10,9 +9,6 @@
 
 """
 
-from __future__ import division, unicode_literals
-
-from ..compat import xrange
 from ..formatting_structure import boxes
 from ..logger import LOGGER
 from .percentages import resolve_one_percentage, resolve_percentages
@@ -467,7 +463,7 @@ def fixed_table_layout(box):
             # colspan) some of which already have a width. Subtract these
             # known widths and divide among remaining columns.
             columns_without_width = []  # and occupied by this cell
-            for j in xrange(i, i + cell.colspan):
+            for j in range(i, i + cell.colspan):
                 if column_widths[j] is None:
                     columns_without_width.append(j)
                 else:

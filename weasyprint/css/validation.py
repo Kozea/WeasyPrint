@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.css.validation
     -------------------------
@@ -11,16 +10,14 @@
 
 """
 
-from __future__ import division, unicode_literals
-
 import functools
 import math
 
 import tinycss2
 from tinycss2.color3 import parse_color
+from urllib.parse import unquote, urljoin
 
 from . import computed_values
-from ..compat import unquote, urljoin
 from ..formatting_structure import counters
 from ..images import LinearGradient, RadialGradient
 from ..logger import LOGGER

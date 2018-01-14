@@ -3,7 +3,7 @@ Installing
 
 WeasyPrint |version| depends on:
 
-* CPython_ 2.7 or ≥ 3.4
+* CPython_ ≥ 3.4
 * cairo_ [#]_
 * Pango_
 * CFFI_ ≥ 0.6
@@ -88,8 +88,6 @@ the dependencies otherwise.
 CFFI needs *libffi* with development files. On Debian, the package is called
 ``libffi-dev``.
 
-You should use Python 3 instead of Python 2. Seriously.
-
 If your favorite system is not listed here but you know the package names,
 `tell us <http://weasyprint.org/community/>`_ so we can add it here.
 
@@ -101,18 +99,6 @@ Debian 9.0 Stretch or newer, Ubuntu 16.04 Xenial or newer:
 .. code-block:: sh
 
     sudo apt-get install build-essential python3-dev python3-pip python3-cffi libcairo2 libpango-1.0-0 libpangocairo-1.0.0 libgdk-pixbuf2.0-0 libffi-dev shared-mime-info
-
-Debian 8.0 Jessie or newer, Ubuntu 14.04 Trusty or newer (with Python 2, but Python 3 may work):
-
-.. code-block:: sh
-
-    sudo apt-get install build-essential python-dev python-pip python-cffi libcairo2 libpango1.0-0 libpangocairo-1.0.0 libgdk-pixbuf2.0-0 libffi-dev shared-mime-info
-
-Debian 7.0 Wheezy or newer, Ubuntu 12.04 Precise or newer (with Python 2, but Python 3 may work):
-
-.. code-block:: sh
-
-    sudo apt-get install build-essential python-dev python-pip libcairo2 libpango1.0-0 libpangocairo-1.0.0 libgdk-pixbuf2.0-0 libffi-dev shared-mime-info
 
 Fedora
 ~~~~~~

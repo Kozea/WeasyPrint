@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.layout.replaced
     --------------------------
@@ -10,9 +9,6 @@
     :license: BSD, see LICENSE for details.
 
 """
-
-from __future__ import division, unicode_literals
-
 
 def image_marker_layout(box):
     """Layout the :class:`boxes.ImageMarkerBox` ``box``.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# coding: utf-8
+
 """
     weasyprint.tests.test_web.run
     -----------------------------
@@ -11,8 +11,6 @@
     :license: BSD, see LICENSE for details.
 
 """
-
-from __future__ import division, unicode_literals
 
 import os.path
 

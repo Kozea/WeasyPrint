@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.layout.blocks
     ------------------------
@@ -10,11 +9,8 @@
 
 """
 
-from __future__ import division, unicode_literals
-
 from math import floor
 
-from ..compat import izip, xrange
 from ..formatting_structure import boxes
 from .absolute import AbsolutePlaceholder, absolute_layout
 from .float import avoid_collisions, float_layout, get_clearance
@@ -924,7 +920,7 @@ def find_earlier_page_break(children, absolute_boxes, fixed_boxes):
 
 def reversed_enumerate(seq):
     """Like reversed(list(enumerate(seq))) without copying the whole seq."""
-    return izip(reversed(xrange(len(seq))), reversed(seq))
+    return zip(reversed(range(len(seq))), reversed(seq))
 
 
 def remove_placeholders(box_list, absolute_boxes, fixed_boxes):

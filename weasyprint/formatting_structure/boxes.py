@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.formatting_structure.boxes
     -------------------------------------
@@ -57,11 +56,8 @@
 
 """
 
-from __future__ import division, unicode_literals
-
 import itertools
 
-from ..compat import unichr, xrange
 from ..css import computed_from_cascaded
 from ..css.properties import Dimension
 
@@ -304,7 +300,7 @@ class ParentBox(Box):
         ``skip_num`` children are skipped before iterating over them.
 
         """
-        for index in xrange(skip_num, len(self.children)):
+        for index in range(skip_num, len(self.children)):
             yield index, self.children[index]
 
     def _reset_spacing(self, side):
@@ -457,7 +453,7 @@ class TextBox(InlineLevelBox):
     justification_spacing = 0
 
     # http://stackoverflow.com/questions/16317534/
-    ascii_to_wide = dict((i, unichr(i + 0xfee0)) for i in range(0x21, 0x7f))
+    ascii_to_wide = dict((i, chr(i + 0xfee0)) for i in range(0x21, 0x7f))
     ascii_to_wide.update({0x20: '\u3000', 0x2D: '\u2212'})
 
     def __init__(self, element_tag, style, text):

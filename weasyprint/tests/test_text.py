@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.tests.test_text
     --------------------------
@@ -9,8 +8,6 @@
     :license: BSD, see LICENSE for details.
 
 """
-
-from __future__ import division, unicode_literals
 
 from ..css.properties import INITIAL_VALUES
 from ..text import split_first_line

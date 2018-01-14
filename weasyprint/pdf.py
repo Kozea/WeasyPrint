@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.pdf
     --------------
@@ -11,19 +10,17 @@
 
 """
 
-from __future__ import division, unicode_literals
-
 import hashlib
 import io
 import mimetypes
 import sys
 import zlib
+from urllib.parse import unquote
 
 import cairocffi as cairo
 from pdfrw import PdfArray, PdfDict, PdfName, PdfReader, PdfString, PdfWriter
 
 from . import VERSION_STRING, Attachment
-from .compat import izip, unquote
 from .html import W3C_DATE_RE
 from .logger import LOGGER
 from .urls import URLFetchingError, iri_to_uri, urlsplit
@@ -55,7 +52,7 @@ def prepare_metadata(document, scale, pages):
     matrices = [cairo.Matrix(xx=scale, yy=-scale, y0=page.height * scale)
                 for page in document.pages]
     links = []
-    for page_links, matrix in izip(document.resolve_links(), matrices):
+    for page_links, matrix in zip(document.resolve_links(), matrices):
         new_page_links = []
         for link_type, target, rectangle in page_links:
             if link_type == 'internal':
@@ -147,18 +144,7 @@ def _get_filename_from_result(url, result):
 
         filename = 'attachment' + extension
     else:
-        if sys.version_info[0] < 3:
-            # Python 3 unquotes with UTF-8 per default, here we have to do it
-            # manually
-            # TODO: this assumes that the filename has been quoted as UTF-8.
-            # I'm not sure if this assumption holds, as there is some magic
-            # involved with filesystem encoding in other parts of the code
-            filename = unquote(filename)
-            if not isinstance(filename, bytes):
-                filename = filename.encode('latin1')
-            filename = filename.decode('utf-8')
-        else:
-            filename = unquote(filename)
+        filename = unquote(filename)
 
     return filename
 

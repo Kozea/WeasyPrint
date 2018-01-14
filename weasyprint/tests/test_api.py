@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.tests.test_api
     -------------------------
@@ -9,8 +8,6 @@
     :license: BSD, see LICENSE for details.
 
 """
-
-from __future__ import division, unicode_literals
 
 import contextlib
 import gzip
@@ -25,9 +22,9 @@ import zlib
 import cairocffi as cairo
 import pytest
 from pdfrw import PdfReader
+from urllib.parse import urlencode, urljoin, uses_relative
 
 from .. import CSS, HTML, __main__, default_url_fetcher, navigator
-from ..compat import iteritems, urlencode, urljoin, urlparse_uses_relative
 from ..urls import path2url
 from .test_draw import image_to_pixels
 from .testing_utils import (
@@ -430,7 +427,6 @@ def test_unicode_filenames():
     '''
     png_bytes = FakeHTML(string=html).write_png()
     check_png_pattern(png_bytes)
-    # Remember we have __future__.unicode_literals
     unicode_filename = 'Unicödé'
     if sys.platform.startswith('darwin'):
         unicode_filename = unicodedata.normalize('NFD', unicode_filename)
@@ -449,15 +445,6 @@ def test_unicode_filenames():
 
             FakeHTML(string=html).write_png(unicode_filename)
             assert read_file(bytes_filename) == png_bytes
-
-            # Surface.write_to_png does not accept bytes filenames
-            # on Python 3
-            if sys.version_info[0] < 3:
-                os.remove(unicode_filename)
-                assert os.listdir('.') == []
-
-                FakeHTML(string=html).write_png(bytes_filename)
-                assert read_file(unicode_filename) == png_bytes
 
 
 @assert_no_logs
@@ -543,7 +530,7 @@ def round_meta(pages):
     """
     for page in pages:
         anchors = page.anchors
-        for anchor_name, (pos_x, pos_y) in iteritems(anchors):
+        for anchor_name, (pos_x, pos_y) in anchors.items():
             anchors[anchor_name] = round(pos_x, 6), round(pos_y, 6)
         links = page.links
         for i, link in enumerate(links):
@@ -900,7 +887,7 @@ def test_navigator():
 
 
 # Make relative URL references work with our custom URL scheme.
-urlparse_uses_relative.append('weasyprint-custom')
+uses_relative.append('weasyprint-custom')
 
 
 @assert_no_logs

@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.tests
     ----------------
@@ -10,4 +9,3 @@
 
 """
 
-from __future__ import division, unicode_literals

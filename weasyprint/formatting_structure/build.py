@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.formatting_structure.build
     -------------------------------------
@@ -14,15 +13,12 @@
 
 """
 
-from __future__ import division, unicode_literals
-
 import re
 
 import tinycss2.color3
 
 from . import boxes, counters
 from .. import html
-from ..compat import basestring, xrange
 from ..css import properties
 
 # Maps values of the ``display`` CSS property to box types.
@@ -104,9 +100,8 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
     See http://www.w3.org/TR/CSS21/visuren.html#anonymous
 
     """
-    if not isinstance(element.tag, basestring):
-        # lxml.html already converts HTML entities to text.
-        # Here we ignore comments and XML processing instructions.
+    if not isinstance(element.tag, str):
+        # We ignore comments and XML processing instructions.
         return []
 
     style = style_for(element)
@@ -438,7 +433,7 @@ def table_boxes_children(box, children):
         # one column child.
         if not children:
             children = [boxes.TableColumnBox.anonymous_from(box, [])
-                        for _i in xrange(box.span)]
+                        for _i in range(box.span)]
 
     # rule 1.3
     if box.tabular_container and len(children) >= 2:
@@ -666,10 +661,10 @@ def collapse_table_borders(table, grid_width, grid_height):
     transparent = TRANSPARENT
     weak_null_border = (
         (0, 0, style_scores['none']), ('none', 0, transparent))
-    vertical_borders = [[weak_null_border for x in xrange(grid_width + 1)]
-                        for y in xrange(grid_height)]
-    horizontal_borders = [[weak_null_border for x in xrange(grid_width)]
-                          for y in xrange(grid_height + 1)]
+    vertical_borders = [[weak_null_border for x in range(grid_width + 1)]
+                        for y in range(grid_height)]
+    horizontal_borders = [[weak_null_border for x in range(grid_width)]
+                          for y in range(grid_height + 1)]
 
     def set_one_border(border_grid, box_style, side, grid_x, grid_y):
         from ..draw import get_color
@@ -689,10 +684,10 @@ def collapse_table_borders(table, grid_width, grid_height):
 
     def set_borders(box, x, y, w, h):
         style = box.style
-        for yy in xrange(y, y + h):
+        for yy in range(y, y + h):
             set_one_border(vertical_borders, style, 'left', x, yy)
             set_one_border(vertical_borders, style, 'right', x + w, yy)
-        for xx in xrange(x, x + w):
+        for xx in range(x, x + w):
             set_one_border(horizontal_borders, style, 'top', xx, y)
             set_one_border(horizontal_borders, style, 'bottom', xx, y + h)
 
@@ -707,11 +702,11 @@ def collapse_table_borders(table, grid_width, grid_height):
         for row in row_group.children:
             for cell in row.children:
                 # No border inside of a cell with rowspan or colspan
-                for xx in xrange(cell.grid_x + 1, cell.grid_x + cell.colspan):
-                    for yy in xrange(grid_y, grid_y + cell.rowspan):
+                for xx in range(cell.grid_x + 1, cell.grid_x + cell.colspan):
+                    for yy in range(grid_y, grid_y + cell.rowspan):
                         vertical_borders[yy][xx] = strong_null_border
-                for xx in xrange(cell.grid_x, cell.grid_x + cell.colspan):
-                    for yy in xrange(grid_y + 1, grid_y + cell.rowspan):
+                for xx in range(cell.grid_x, cell.grid_x + cell.colspan):
+                    for yy in range(grid_y + 1, grid_y + cell.rowspan):
                         horizontal_borders[yy][xx] = strong_null_border
                 # The cell’s own borders
                 set_borders(cell, x=cell.grid_x, y=grid_y,

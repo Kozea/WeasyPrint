@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.tests.columns
     ------------------------
@@ -9,8 +8,6 @@
     :license: BSD, see LICENSE for details.
 
 """
-
-from __future__ import division, unicode_literals
 
 from .test_boxes import render_pages as parse
 from .testing_utils import assert_no_logs

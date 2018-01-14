@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.layout.preferred
     ---------------------------
@@ -13,8 +12,6 @@
     :license: BSD, see LICENSE for details.
 
 """
-
-from __future__ import division, unicode_literals
 
 import sys
 import weakref

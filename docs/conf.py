@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 # WeasyPrint documentation build configuration file.
 
 import codecs

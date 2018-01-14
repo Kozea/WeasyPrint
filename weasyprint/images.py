@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.images
     -----------------
@@ -10,8 +9,6 @@
 
 """
 
-from __future__ import division, unicode_literals
-
 import math
 from io import BytesIO
 from xml.etree import ElementTree
@@ -20,7 +17,6 @@ import cairocffi
 import cairosvg.parser
 import cairosvg.surface
 
-from .compat import xrange
 from .logger import LOGGER
 from .urls import URLFetchingError, fetch
 
@@ -277,7 +273,7 @@ def process_color_stops(gradient_line_size, positions):
         if position is not None:
             base = positions[previous_i]
             increment = (position - base) / (i - previous_i)
-            for j in xrange(previous_i + 1, i):
+            for j in range(previous_i + 1, i):
                 positions[j] = base + j * increment
             previous_i = i
     return positions

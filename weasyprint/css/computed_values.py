@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.css.computed_values
     ------------------------------
@@ -10,8 +9,6 @@
     :license: BSD, see LICENSE for details.
 
 """
-
-from __future__ import division, unicode_literals
 
 from .. import text
 from ..urls import get_link_attribute

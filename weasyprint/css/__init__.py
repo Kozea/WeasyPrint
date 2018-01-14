@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.css
     --------------
@@ -18,8 +17,6 @@
 
 """
 
-from __future__ import division, unicode_literals
-
 from collections import namedtuple
 
 import cssselect2
@@ -31,7 +28,6 @@ from .descriptors import preprocess_descriptors
 from .properties import INITIAL_NOT_COMPUTED
 from .validation import (preprocess_declarations, remove_whitespace,
                          split_on_comma)
-from ..compat import iteritems
 from ..logger import LOGGER
 from ..urls import get_url_attribute, url_join, URLFetchingError
 from .. import CSS
@@ -500,7 +496,7 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
     # Handle inheritance and initial values
     specified = {}
     computed = {}
-    for name, initial in iteritems(properties.INITIAL_VALUES):
+    for name, initial in properties.INITIAL_VALUES.items():
         if name in cascaded:
             value, _precedence = cascaded[name]
             keyword = value

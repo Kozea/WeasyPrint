@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.utils
     ----------------
@@ -10,40 +9,56 @@
 
 """
 
-from __future__ import division, unicode_literals
-
+import codecs
 import contextlib
+import email
 import gzip
 import io
-import mimetypes
 import os.path
 import re
 import sys
 import traceback
 import zlib
+from base64 import decodebytes
+from gzip import GzipFile
+from urllib.parse import urljoin, urlsplit, quote, unquote, unquote_to_bytes
+from urllib.request import urlopen, Request, pathname2url
 
 from . import VERSION_STRING
-from .compat import (
-    FILESYSTEM_ENCODING, Request, StreamingGzipFile, base64_decode,
-    parse_email, pathname2url, quote, unicode, unquote, unquote_to_bytes,
-    urljoin, urllib_get_charset, urllib_get_content_type, urllib_get_filename,
-    urlopen, urlsplit)
 from .logger import LOGGER
-
-# Unlinke HTML, CSS and PNG, the SVG MIME type is not always builtin
-# in some Python version and therefore not reliable.
-if sys.version_info[0] >= 3:
-    mimetypes.add_type('image/svg+xml', '.svg')
-else:
-    # Native strings required.
-    mimetypes.add_type(b'image/svg+xml', b'.svg')
-
 
 # See http://stackoverflow.com/a/11687993/1162888
 # Both are needed in Python 3 as the re module does not like to mix
 # http://tools.ietf.org/html/rfc3986#section-3.1
 UNICODE_SCHEME_RE = re.compile('^([a-zA-Z][a-zA-Z0-9.+-]+):')
 BYTES_SCHEME_RE = re.compile(b'^([a-zA-Z][a-zA-Z0-9.+-]+):')
+
+# getfilesystemencoding() on Linux is sometimes stupid...
+FILESYSTEM_ENCODING = sys.getfilesystemencoding()
+try:
+    if codecs.lookup(FILESYSTEM_ENCODING).name == 'ascii':
+        FILESYSTEM_ENCODING = 'utf-8'
+except LookupError:
+    FILESYSTEM_ENCODING = 'utf-8'
+
+
+class StreamingGzipFile(GzipFile):
+    def __init__(self, fileobj):
+        GzipFile.__init__(self, fileobj=fileobj)
+        self.fileobj_to_close = fileobj
+
+    def close(self):
+        GzipFile.close(self)
+        self.fileobj_to_close.close()
+
+    # Inform html5lib to not rely on these:
+    seek = tell = None
+
+
+def parse_email(data):
+    if isinstance(data, bytes):
+        data = data.decode('utf8')
+    return email.message_from_string(data)
 
 
 def iri_to_uri(url):
@@ -83,7 +98,7 @@ def path2url(path):
 
 def url_is_absolute(url):
     return bool(
-        (UNICODE_SCHEME_RE if isinstance(url, unicode) else BYTES_SCHEME_RE)
+        (UNICODE_SCHEME_RE if isinstance(url, str) else BYTES_SCHEME_RE)
         .match(url))
 
 
@@ -149,7 +164,7 @@ def ensure_url(string):
     return string if url_is_absolute(string) else path2url(string)
 
 
-def safe_base64_decode(data):
+def safe_decodebytes(data):
     """Decode base64, padding being optional.
 
     "From a theoretical point of view, the padding character is not needed,
@@ -165,48 +180,7 @@ def safe_base64_decode(data):
     missing_padding = 4 - len(data) % 4
     if missing_padding:
         data += b'=' * missing_padding
-    return base64_decode(data)
-
-
-def open_data_url(url):
-    """Decode URLs with the 'data' scheme. urllib can handle them
-    in Python 2, but that is broken in Python 3.
-
-    Inspired from Python 2.7.2’s urllib.py.
-
-    """
-    # syntax of data URLs:
-    # dataurl   := "data:" [ mediatype ] [ ";base64" ] "," data
-    # mediatype := [ type "/" subtype ] *( ";" parameter )
-    # data      := *urlchar
-    # parameter := attribute "=" value
-    try:
-        header, data = url.split(',', 1)
-    except ValueError:
-        raise IOError('bad data URL')
-    header = header[5:]  # len('data:') == 5
-    if header:
-        semi = header.rfind(';')
-        if semi >= 0 and '=' not in header[semi:]:
-            content_type = header[:semi]
-            encoding = header[semi + 1:]
-        else:
-            content_type = header
-            encoding = ''
-        message = parse_email('Content-type: ' + content_type)
-        mime_type = message.get_content_type()
-        charset = message.get_content_charset()
-    else:
-        mime_type = 'text/plain'
-        charset = 'US-ASCII'
-        encoding = ''
-
-    data = unquote_to_bytes(data)
-    if encoding == 'base64':
-        data = safe_base64_decode(data)
-
-    return dict(string=data, mime_type=mime_type, encoding=charset,
-                redirected_url=url)
+    return decodebytes(data)
 
 
 HTTP_HEADERS = {
@@ -245,16 +219,15 @@ def default_url_fetcher(url):
         to call ``file_obj.close()``.
 
     """
-    if url.lower().startswith('data:'):
-        return open_data_url(url)
-    elif UNICODE_SCHEME_RE.match(url):
+    if UNICODE_SCHEME_RE.match(url):
         url = iri_to_uri(url)
         response = urlopen(Request(url, headers=HTTP_HEADERS))
+        response_info = response.info()
         result = dict(redirected_url=response.geturl(),
-                      mime_type=urllib_get_content_type(response),
-                      encoding=urllib_get_charset(response),
-                      filename=urllib_get_filename(response))
-        content_encoding = response.info().get('Content-Encoding')
+                      mime_type=response_info.get_content_type(),
+                      encoding=response_info.get_param('charset'),
+                      filename=response_info.get_filename())
+        content_encoding = response_info.get('Content-Encoding')
         if content_encoding == 'gzip':
             if StreamingGzipFile is None:
                 result['string'] = gzip.GzipFile(
