@@ -416,8 +416,13 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                 elif align_self == 'stretch':
                     # TODO: don't set style width, find a way to avoid width
                     # re-calculation after Step 16
-                    # TODO: take care of margins, borders and padding
-                    child.style['height'] = Dimension(line.height, 'px')
+                    # TODO: take care of box-sizing
+                    margins = (
+                        child.margin_top + child.margin_bottom +
+                        child.border_top_width + child.border_bottom_width +
+                        child.padding_top + child.padding_bottom)
+                    child.style['height'] = Dimension(
+                        line.height - margins, 'px')
         position_y += line.height
 
     # Step 15
