@@ -404,7 +404,9 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                            device_size, page_is_empty, absolute_boxes,
                            fixed_boxes, adjoining_margins=None):
     """Set the ``box`` height."""
-    assert isinstance(box, boxes.BlockContainerBox)
+    # TODO: boxes.FlexBox is allowed here because flex_layout calls
+    # block_container_layout, there's probably a better solution.
+    assert isinstance(box, (boxes.BlockContainerBox, boxes.FlexBox))
 
     # TODO: this should make a difference, but that is currently neglected.
     # See http://www.w3.org/TR/CSS21/visudet.html#normal-block
