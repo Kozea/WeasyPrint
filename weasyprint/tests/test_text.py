@@ -266,6 +266,43 @@ def test_text_align_justify():
     text, = line_1.children
     assert text.position_x == 0
 
+    # text-indent
+    page, = parse('''
+        <style>
+            @page { size: 300px 1000px }
+            body { text-align: justify }
+            p { text-indent: 3px }
+        </style>
+        <p><img src="pattern.png" style="width: 40px">
+            <strong>
+                <img src="pattern.png" style="width: 60px">
+                <img src="pattern.png" style="width: 10px">
+                <img src="pattern.png" style="width: 100px"
+            ></strong><img src="pattern.png" style="width: 290px"
+            ><!-- Last image will be on its own line. -->''')
+    html, = page.children
+    body, = html.children
+    paragraph, = body.children
+    line_1, line_2 = paragraph.children
+    image_1, space_1, strong = line_1.children
+    image_2, space_2, image_3, space_3, image_4 = strong.children
+    image_5, = line_2.children
+    assert space_1.text == ' '
+    assert space_2.text == ' '
+    assert space_3.text == ' '
+
+    assert image_1.position_x == 3
+    assert space_1.position_x == 43
+    assert strong.position_x == 72
+    assert image_2.position_x == 72
+    assert space_2.position_x == 132
+    assert image_3.position_x == 161
+    assert space_3.position_x == 171
+    assert image_4.position_x == 200
+    assert strong.width == 228
+
+    assert image_5.position_x == 0
+
 
 @assert_no_logs
 def test_word_spacing():

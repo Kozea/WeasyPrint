@@ -116,7 +116,7 @@ def get_next_linebox(context, linebox, position_y, skip_stack,
         new_position_x, _, new_available_width = avoid_collisions(
             context, linebox, containing_block, outer=False)
         alignment_available_width = (
-            new_available_width + new_position_x - position_x)
+            new_available_width + new_position_x - linebox.position_x)
         offset_x = text_align(
             context, line, alignment_available_width,
             last=(resume_at is None or preserved_line_break))
