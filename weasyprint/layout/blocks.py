@@ -784,6 +784,9 @@ def block_container_layout(context, box, max_position_y, skip_stack,
         min(new_box.height, new_box.max_height),
         new_box.min_height)
 
+    if next_page['page'] is None:
+        next_page['page'] = new_box.page_values()[1]
+
     return new_box, resume_at, next_page, adjoining_margins, collapsing_through
 
 
