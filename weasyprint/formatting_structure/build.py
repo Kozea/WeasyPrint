@@ -1159,6 +1159,11 @@ def box_text(box):
         return ''
 
 
+def box_text_first_letter(box):
+    text = box_text(box)
+    return text[0] if text else ''
+
+
 def box_text_before(box):
     if isinstance(box, boxes.ParentBox):
         return ''.join(
@@ -1182,4 +1187,5 @@ def box_text_after(box):
 TEXT_CONTENT_EXTRACTORS = {
     'text': box_text,
     'before': box_text_before,
-    'after': box_text_after}
+    'after': box_text_after,
+    'first-letter': box_text_first_letter}

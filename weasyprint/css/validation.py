@@ -1585,8 +1585,7 @@ def validate_content_list_token(token):
         elif prototype in (('content', ()), ('content', ('ident',))):
             if not args:
                 return (name, 'text')
-            elif args[0] in ('text', 'after', 'before'):
-                # TODO: first-letter should be allowed here too
+            elif args[0] in ('text', 'after', 'before', 'first-letter'):
                 return (name, args[0])
         elif prototype in (('counter', ('ident',)),
                            ('counters', ('ident', 'string'))):
