@@ -17,6 +17,7 @@
 from __future__ import division, unicode_literals
 
 import re
+import unicodedata
 
 import tinycss2.color3
 
@@ -1160,8 +1161,20 @@ def box_text(box):
 
 
 def box_text_first_letter(box):
+    # TODO: use the same code as in inlines.first_letter_to_box
+    character_found = False
+    first_letter = ''
     text = box_text(box)
-    return text[0] if text else ''
+    while text:
+        next_letter = text[0]
+        category = unicodedata.category(next_letter)
+        if category not in ('Ps', 'Pe', 'Pi', 'Pf', 'Po'):
+            if character_found:
+                break
+            character_found = True
+        first_letter += next_letter
+        text = text[1:]
+    return first_letter
 
 
 def box_text_before(box):
