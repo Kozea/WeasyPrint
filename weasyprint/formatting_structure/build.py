@@ -204,7 +204,7 @@ def before_after_to_box(element, pseudo_type, state, style_for,
 
 
 def content_to_boxes(style, parent_box, quote_depth, counter_values,
-                     get_image_from_uri, context=None):
+                     get_image_from_uri, context=None, page=None):
     """Takes the value of a ``content`` property and yield boxes."""
     texts = []
     for type_, value in style['content']:
@@ -228,8 +228,8 @@ def content_to_boxes(style, parent_box, quote_depth, counter_values,
                 counters.format(counter_value, counter_style)
                 for counter_value in counter_values.get(counter_name, [0])
             ))
-        elif type_ == 'string' and context is not None:
-            text = context.get_string_set_for(*value)
+        elif type_ == 'string' and context is not None and page is not None:
+            text = context.get_string_set_for(page, *value)
             texts.append(text)
         else:
             assert type_ == 'QUOTE'
