@@ -310,7 +310,7 @@ def make_margin_boxes(context, page, counter_values):
             quote_depth = [0]
             box.children = build.content_to_boxes(
                 box.style, box, quote_depth, counter_values,
-                context.get_image_from_uri, context)
+                context.get_image_from_uri, context, page)
             # content_to_boxes() only produces inline-level boxes, no need to
             # run other post-processors from build.build_formatting_structure()
             box = build.inline_in_block(box)

@@ -25,6 +25,7 @@ from .absolute import absolute_box_layout
 from .pages import make_all_pages, make_margin_boxes
 from .backgrounds import layout_backgrounds
 from ..compat import xrange
+from ..formatting_structure import boxes
 
 
 def layout_fixed_boxes(context, pages):
@@ -100,7 +101,7 @@ class LayoutContext(object):
         else:
             self.excluded_shapes = None
 
-    def get_string_set_for(self, name, keyword=None):
+    def get_string_set_for(self, page, name, keyword='first'):
         """Resolve value of string function (as set by string set).
 
         We'll have something like this that represents all assignments on a
@@ -119,19 +120,28 @@ class LayoutContext(object):
         :returns: text
 
         """
-        last = keyword == "last"
         if self.current_page in self.string_set[name]:
-            # a value was assigned on this page
-            if keyword == 'first-except':
-                # 'first-except' excludes the page it was assinged on
-                return ""
-            elif last:
-                # use the most recent assignment
-                return self.string_set[name][self.current_page][-1]
-            return self.string_set[name][self.current_page][0]
-        else:
-            # search backwards through previous pages
-            for previous_page in xrange(self.current_page, 0, -1):
-                if previous_page in self.string_set[name]:
-                    return self.string_set[name][previous_page][-1]
-        return ""
+            # A value was assigned on this page
+            first_string = self.string_set[name][self.current_page][0]
+            last_string = self.string_set[name][self.current_page][-1]
+            if keyword == 'first':
+                return first_string
+            elif keyword == 'start':
+                element = page
+                while element:
+                    if element.style['string_set'] != 'none':
+                        for (string_name, _) in element.style['string_set']:
+                            if string_name == name:
+                                return first_string
+                    if isinstance(element, boxes.ParentBox):
+                        if element.children:
+                            element = element.children[0]
+                            continue
+                    break
+            elif keyword == 'last':
+                return last_string
+        # Search backwards through previous pages
+        for previous_page in xrange(self.current_page - 1, 0, -1):
+            if previous_page in self.string_set[name]:
+                return self.string_set[name][previous_page][-1]
+        return ''
