@@ -12,11 +12,18 @@
 
 """
 
+import sys
+
 import contextlib
 import html5lib
 import cssselect2
 import tinycss2
 
+
+if sys.version_info.major < 3:
+    raise RuntimeError(
+        'WeasyPrint does not support Python 2.x anymore. '
+        'Please use Python 3 or install an older version of WeasyPrint.')
 
 VERSION = '0.42'
 __version__ = VERSION
@@ -149,7 +156,7 @@ class HTML(object):
         :param target:
             A filename, file-like object, or :obj:`None`.
         :param stylesheets:
-            An optional list of user stylesheets. The list’s elements
+            An optional list of user stylesheets. The list's elements
             are :class:`CSS` objects, filenames, URLs, or file-like
             objects.  (See :ref:`stylesheet-origins`.)
         :type zoom: float
@@ -157,7 +164,7 @@ class HTML(object):
             The zoom factor in PDF units per CSS units.  **Warning**:
             All CSS units are affected, including physical units like
             ``cm`` and named sizes like ``A4``.  For values other than
-            1, the physical CSS units will thus be “wrong”.
+            1, the physical CSS units will thus be "wrong".
         :param attachments: A list of additional file attachments for the
             generated PDF document or :obj:`None`. The list's elements are
             :class:`Attachment` objects, filenames, URLs or file-like objects.
@@ -201,7 +208,7 @@ class HTML(object):
         :param target:
             A filename, file-like object, or :obj:`None`.
         :param stylesheets:
-            An optional list of user stylesheets.  The list’s elements
+            An optional list of user stylesheets.  The list's elements
             are :class:`CSS` objects, filenames, URLs, or file-like
             objects. (See :ref:`stylesheet-origins`.)
         :type resolution: float

@@ -17,6 +17,11 @@ from os import path
 
 from setuptools import find_packages, setup
 
+if sys.version_info.major < 3:
+    raise RuntimeError(
+        'WeasyPrint does not support Python 2.x anymore. '
+        'Please use Python 3 or install an older version of WeasyPrint.')
+
 VERSION = re.search(b"VERSION = '([^']+)'", open(
     path.join(path.dirname(__file__), 'weasyprint', '__init__.py'), 'rb',
 ).read().strip()).group(1).decode('ascii')
