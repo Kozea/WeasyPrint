@@ -12,13 +12,13 @@ install the `development version`_ of WeasyPrint:
     cd WeasyPrint
     virtualenv --system-site-packages env
     . env/bin/activate
-    pip install pytest Sphinx -e .
+    pip install Sphinx -e .[test]
     weasyprint --help
 
 This will install WeasyPrint in “editable” mode
 (which means that you don’t need to re-install it
 every time you make a change in the source code)
-as well as `py.test <http://pytest.org/>`_
+as well as `pytest <http://pytest.org/>`_
 and `Sphinx <http://sphinx.pocoo.org/>`_.
 
 Lastly, in order to pass unit tests, your system must have two particular fonts:
@@ -43,7 +43,7 @@ The website version is updated automatically when we push to master on GitHub.
 Code changes
 ------------
 
-Use the ``py.test`` command from the ``WeasyPrint`` directory to run the
+Use the ``pytest`` command from the ``WeasyPrint`` directory to run the
 test suite.
 
 Please report any bugs/feature requests and submit patches/pull requests
