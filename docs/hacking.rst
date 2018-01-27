@@ -12,7 +12,7 @@ install the `development version`_ of WeasyPrint:
     cd WeasyPrint
     virtualenv --system-site-packages env
     . env/bin/activate
-    pip install pytest Sphinx -e .
+    pip install pytest pytest-cov pytest-flake8 pytest-isort Sphinx -e .
     weasyprint --help
 
 This will install WeasyPrint in “editable” mode
