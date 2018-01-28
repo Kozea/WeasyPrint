@@ -232,7 +232,7 @@ class DocumentMetadata(object):
     """Contains meta-information about a :class:`Document`
     that belongs to the whole document rather than specific pages.
 
-   New attributes may be added in future versions of WeasyPrint.
+    New attributes may be added in future versions of WeasyPrint.
 
     .. _W3C’s profile of ISO 8601: http://www.w3.org/TR/NOTE-datetime
 
