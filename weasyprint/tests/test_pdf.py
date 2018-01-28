@@ -15,6 +15,7 @@ from __future__ import division, unicode_literals
 import hashlib
 import io
 import os
+import zlib
 
 import cairocffi
 import pytest
@@ -427,27 +428,39 @@ def test_embedded_files():
     pdf = PdfReader(fdata=pdf_bytes)
     embedded = pdf.Root.Names.EmbeddedFiles.Names
 
+    assert zlib.decompress(
+        embedded[1].EF.F.stream.encode('latin-1')) == b'hi there'
     assert embedded[1].EF.F.Params.CheckSum == (
         '<{}>'.format(hashlib.md5(b'hi there').hexdigest()))
     assert embedded[1].F.decode() == ''
     assert embedded[1].UF.decode() == 'attachment.bin'
     assert embedded[1].Desc.decode() == 'some file attachment äöü'
 
+    assert zlib.decompress(
+        embedded[3].EF.F.stream.encode('latin-1')) == b'12345678'
     assert embedded[3].EF.F.Params.CheckSum == (
         '<{}>'.format(hashlib.md5(adata).hexdigest()))
     assert embedded[3].UF.decode() == os.path.basename(absolute_tmp_file)
 
+    assert zlib.decompress(
+        embedded[5].EF.F.stream.encode('latin-1')) == b'abcdefgh'
     assert embedded[5].EF.F.Params.CheckSum == (
         '<{}>'.format(hashlib.md5(rdata).hexdigest()))
     assert embedded[5].UF.decode() == os.path.basename(relative_tmp_file)
 
+    assert zlib.decompress(
+        embedded[7].EF.F.stream.encode('latin-1')) == b'oob attachment'
     assert embedded[7].EF.F.Params.CheckSum == (
         '<{}>'.format(hashlib.md5(b'oob attachment').hexdigest()))
     assert embedded[7].Desc.decode() == 'Hello'
 
+    assert zlib.decompress(
+        embedded[9].EF.F.stream.encode('latin-1')) == b'raw URL'
     assert embedded[9].EF.F.Params.CheckSum == (
         '<{}>'.format(hashlib.md5(b'raw URL').hexdigest()))
 
+    assert zlib.decompress(
+        embedded[11].EF.F.stream.encode('latin-1')) == b'file like obj'
     assert embedded[11].EF.F.Params.CheckSum == (
         '<{}>'.format(hashlib.md5(b'file like obj').hexdigest()))
 
