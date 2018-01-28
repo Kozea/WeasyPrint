@@ -535,6 +535,82 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
         base_url)
 
 
+def parse_page_selectors(rule):
+    """Parse a page selector rule.
+
+    Return a list of page data if the rule is correctly parsed. Page data are a
+    dict containing:
+
+    - 'side' ('left', 'right' or None),
+    - 'blank' (True or False),
+    - 'first' (True or False),
+    - 'name' (page name string or None), and
+    - 'spacificity' (list of numbers).
+
+    Return ``None` if something went wrong while parsing the rule.
+
+    """
+    # See https://drafts.csswg.org/css-page-3/#syntax-page-selector
+
+    tokens = list(remove_whitespace(rule.prelude))
+    page_data = []
+
+    # TODO: Specificity is probably wrong, should clean and test that.
+    if not tokens:
+        page_data.append({
+            'side': None, 'blank': False, 'first': False, 'name': None,
+            'specificity': [0, 0, 0]})
+        return page_data
+
+    while tokens:
+        types = {
+            'side': None, 'blank': False, 'first': False, 'name': None,
+            'specificity': [0, 0, 0]}
+
+        if tokens[0].type == 'ident':
+            token = tokens.pop(0)
+            types['name'] = token.value
+            types['specificity'][0] = 1
+
+        if len(tokens) == 1:
+            return None
+        elif not tokens:
+            page_data.append(types)
+            return page_data
+
+        while tokens:
+            literal = tokens.pop(0)
+            if literal.type != 'literal':
+                return None
+
+            if literal.value == ':':
+                if not tokens or tokens[0].type != 'ident':
+                    return None
+                ident = tokens.pop(0)
+                pseudo_class = ident.lower_value
+                if pseudo_class in ('left', 'right'):
+                    if types['side']:
+                        return None
+                    types['side'] = pseudo_class
+                    types['specificity'][2] += 1
+                elif pseudo_class in ('blank', 'first'):
+                    if types[pseudo_class]:
+                        return None
+                    types[pseudo_class] = True
+                    types['specificity'][1] += 1
+                else:
+                    return None
+            elif literal.value == ',':
+                if tokens and any(types['specificity']):
+                    break
+                else:
+                    return None
+
+        page_data.append(types)
+
+    return page_data
+
+
 def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                           url_fetcher, matcher, page_rules, fonts,
                           font_config, ignore_imports=False):
@@ -620,64 +696,44 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                 matcher, page_rules, fonts, font_config, ignore_imports=True)
 
         elif rule.type == 'at-rule' and rule.lower_at_keyword == 'page':
-            tokens = remove_whitespace(rule.prelude)
-            types = {
-                'side': None, 'blank': False, 'first': False, 'name': None}
-            # TODO: Specificity is probably wrong, should clean and test that.
-            if not tokens:
-                specificity = (0, 0, 0)
-            elif (len(tokens) == 2 and
-                    tokens[0].type == 'literal' and
-                    tokens[0].value == ':' and
-                    tokens[1].type == 'ident'):
-                pseudo_class = tokens[1].lower_value
-                if pseudo_class in ('left', 'right'):
-                    types['side'] = pseudo_class
-                    specificity = (0, 0, 1)
-                elif pseudo_class in ('blank', 'first'):
-                    types[pseudo_class] = True
-                    specificity = (0, 1, 0)
-                else:
-                    LOGGER.warning('Unknown @page pseudo-class "%s", '
-                                   'the whole @page rule was ignored '
-                                   'at %s:%s.',
-                                   pseudo_class,
-                                   rule.source_line, rule.source_column)
-                    continue
-            elif len(tokens) == 1 and tokens[0].type == 'ident':
-                types['name'] = tokens[0].value
-                specificity = (1, 0, 0)
-            else:
-                LOGGER.warning('Unsupported @page selector "%s", '
-                               'the whole @page rule was ignored at %s:%s.',
-                               tinycss2.serialize(rule.prelude),
-                               rule.source_line, rule.source_column)
+            data = parse_page_selectors(rule)
+
+            if data is None:
+                LOGGER.warning(
+                    'Unsupported @page selector "%s", '
+                    'the whole @page rule was ignored at %s:%s.',
+                    tinycss2.serialize(rule.prelude),
+                    rule.source_line, rule.source_column)
                 continue
+
             ignore_imports = True
-            page_type = PageType(**types)
-            # Use a double lambda to have a closure that holds page_types
-            match = (lambda page_type: lambda page_names: list(
-                matching_page_types(page_type, names=page_names)))(page_type)
-            content = tinycss2.parse_declaration_list(rule.content)
-            declarations = list(preprocess_declarations(base_url, content))
+            for page_type in data:
+                specificity = page_type.pop('specificity')
+                page_type = PageType(**page_type)
+                # Use a double lambda to have a closure that holds page_types
+                match = (lambda page_type: lambda page_names: list(
+                    matching_page_types(page_type, names=page_names)))(
+                        page_type)
+                content = tinycss2.parse_declaration_list(rule.content)
+                declarations = list(preprocess_declarations(base_url, content))
 
-            if declarations:
-                selector_list = [(specificity, None, match)]
-                page_rules.append((rule, selector_list, declarations))
-
-            for margin_rule in content:
-                if margin_rule.type != 'at-rule' or (
-                        margin_rule.content is None):
-                    continue
-                declarations = list(preprocess_declarations(
-                    base_url,
-                    tinycss2.parse_declaration_list(margin_rule.content)))
                 if declarations:
-                    selector_list = [(
-                        specificity, '@' + margin_rule.lower_at_keyword,
-                        match)]
-                    page_rules.append(
-                        (margin_rule, selector_list, declarations))
+                    selector_list = [(specificity, None, match)]
+                    page_rules.append((rule, selector_list, declarations))
+
+                for margin_rule in content:
+                    if margin_rule.type != 'at-rule' or (
+                            margin_rule.content is None):
+                        continue
+                    declarations = list(preprocess_declarations(
+                        base_url,
+                        tinycss2.parse_declaration_list(margin_rule.content)))
+                    if declarations:
+                        selector_list = [(
+                            specificity, '@' + margin_rule.lower_at_keyword,
+                            match)]
+                        page_rules.append(
+                            (margin_rule, selector_list, declarations))
 
         elif rule.type == 'at-rule' and rule.lower_at_keyword == 'font-face':
             ignore_imports = True

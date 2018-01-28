@@ -9,10 +9,11 @@
 
 """
 
+import tinycss2
 from pytest import raises
 
 from .. import CSS, css, default_url_fetcher
-from ..css import PageType, get_all_computed_styles
+from ..css import PageType, get_all_computed_styles, parse_page_selectors
 from ..css.computed_values import strut_layout
 from ..layout.pages import set_page_type_computed_styles
 from ..urls import path2url
@@ -243,6 +244,71 @@ def test_page():
         PageType(side='right', first=True, blank=False, name=None),
         '@top-right')
     assert style['font_size'] == 10
+
+
+@assert_no_logs
+def test_page_selectors():
+    """Test the ``@page`` selectors parsing."""
+    at_rule, = tinycss2.parse_stylesheet('@page {}')
+    assert parse_page_selectors(at_rule) == [
+        {'side': None, 'blank': False, 'first': False, 'name': None,
+         'specificity': [0, 0, 0]}]
+
+    at_rule, = tinycss2.parse_stylesheet('@page :left {}')
+    assert parse_page_selectors(at_rule) == [
+        {'side': 'left', 'blank': False, 'first': False, 'name': None,
+         'specificity': [0, 0, 1]}]
+
+    at_rule, = tinycss2.parse_stylesheet('@page:first:left {}')
+    assert parse_page_selectors(at_rule) == [
+        {'side': 'left', 'blank': False, 'first': True, 'name': None,
+         'specificity': [0, 1, 1]}]
+
+    at_rule, = tinycss2.parse_stylesheet('@page pagename {}')
+    assert parse_page_selectors(at_rule) == [
+        {'side': None, 'blank': False, 'first': False, 'name': 'pagename',
+         'specificity': [1, 0, 0]}]
+
+    at_rule, = tinycss2.parse_stylesheet('@page pagename:first:right:blank {}')
+    assert parse_page_selectors(at_rule) == [
+        {'side': 'right', 'blank': True, 'first': True, 'name': 'pagename',
+         'specificity': [1, 2, 1]}]
+
+    at_rule, = tinycss2.parse_stylesheet('@page pagename, :first {}')
+    assert parse_page_selectors(at_rule) == [
+        {'side': None, 'blank': False, 'first': False, 'name': 'pagename',
+         'specificity': [1, 0, 0]},
+        {'side': None, 'blank': False, 'first': True, 'name': None,
+         'specificity': [0, 1, 0]}]
+
+    at_rule, = tinycss2.parse_stylesheet('@page page page {}')
+    assert parse_page_selectors(at_rule) is None
+
+    at_rule, = tinycss2.parse_stylesheet('@page :left page {}')
+    assert parse_page_selectors(at_rule) is None
+
+    at_rule, = tinycss2.parse_stylesheet('@page :left, {}')
+    assert parse_page_selectors(at_rule) is None
+
+    at_rule, = tinycss2.parse_stylesheet('@page , {}')
+    assert parse_page_selectors(at_rule) is None
+
+    at_rule, = tinycss2.parse_stylesheet('@page :left, test, {}')
+    assert parse_page_selectors(at_rule) is None
+
+    at_rule, = tinycss2.parse_stylesheet('@page :wrong {}')
+    assert parse_page_selectors(at_rule) is None
+
+    at_rule, = tinycss2.parse_stylesheet('@page :left:wrong {}')
+    assert parse_page_selectors(at_rule) is None
+
+    # TODO: The rules following this line should probably be correct and
+    # ignored, but they are currently rejected.
+    at_rule, = tinycss2.parse_stylesheet('@page :first:first {}')
+    assert parse_page_selectors(at_rule) is None
+
+    at_rule, = tinycss2.parse_stylesheet('@page :left:right {}')
+    assert parse_page_selectors(at_rule) is None
 
 
 @assert_no_logs
