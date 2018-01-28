@@ -314,10 +314,11 @@ class Document(object):
             font_config, html, cascaded_styles, computed_styles)
         rendering = cls(
             [Page(p, enable_hinting) for p in page_boxes],
-            DocumentMetadata(**html._get_metadata()), html.url_fetcher)
+            DocumentMetadata(**html._get_metadata()),
+            html.url_fetcher, font_config)
         return rendering
 
-    def __init__(self, pages, metadata, url_fetcher):
+    def __init__(self, pages, metadata, url_fetcher, font_config):
         #: A list of :class:`Page` objects.
         self.pages = pages
         #: A :class:`DocumentMetadata` object.
@@ -327,6 +328,10 @@ class Document(object):
         #: A ``url_fetcher`` for resources that have to be read when writing
         #: the output.
         self.url_fetcher = url_fetcher
+        # Keep a reference to font_config to avoid its garbage collection until
+        # rendering is destroyed. This is needed as font_config.__del__ removes
+        # fonts that may be used when rendering
+        self._font_config = font_config
 
     def copy(self, pages='all'):
         """Take a subset of the pages.
@@ -361,7 +366,8 @@ class Document(object):
             pages = self.pages
         elif not isinstance(pages, list):
             pages = list(pages)
-        return type(self)(pages, self.metadata, self.url_fetcher)
+        return type(self)(
+            pages, self.metadata, self.url_fetcher, self._font_config)
 
     def resolve_links(self):
         """Resolve internal hyperlinks.
