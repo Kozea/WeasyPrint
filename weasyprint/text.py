@@ -18,7 +18,6 @@ import pyphen
 
 from .logger import LOGGER
 
-
 if cairo.cairo_version() <= 11400:
     warnings.warn('There are known rendering problems with Cairo <= 1.14.0')
 
