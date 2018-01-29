@@ -24,7 +24,6 @@ from .logger import LOGGER
 
 # XXX No unicode_literals, cffi likes native strings
 
-
 if cairo.cairo_version() <= 11400:
     warnings.warn('There are known rendering problems with Cairo <= 1.14.0')
 
