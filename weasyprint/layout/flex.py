@@ -30,8 +30,9 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
     # Avoid a circular import
     from . import blocks
 
-    # Step 1 is done in formatting_structure.boxes
+    resume_at = None
 
+    # Step 1 is done in formatting_structure.boxes
     # Step 2
     if box.style['flex_direction'].startswith('row'):
         axis, cross = 'width', 'height'
@@ -48,7 +49,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                 box.padding_left - box.padding_right -
                 box.border_left_width - box.border_right_width)
         else:
-            main_space = max_position_y - box.content_box_y()
+            main_space = max_position_y - box.position_y
             if containing_block.height != 'auto':
                 assert containing_block.height.unit == 'px'
                 main_space = min(main_space, containing_block.height.value)
@@ -79,7 +80,11 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                 box.border_left_width - box.border_right_width)
 
     # Step 3
-    for child in box.children:
+    children = box.children
+    if skip_stack is not None:
+        assert skip_stack[1] is None
+        children = children[skip_stack[0]:]
+    for child in children:
         if not child.is_flex_item:
             continue
 
@@ -87,7 +92,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
         child.position_x = box.content_box_x()
         child.position_y = box.content_box_y()
 
-        child.sytle = child.style.copy()
+        child.style = child.style.copy()
         resolve_percentages(box, containing_block)
 
         flex_basis = child.style['flex_basis']
@@ -159,15 +164,20 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
             box.height = box.style['height'].value
         else:
             box.height = 0
-            for child in box.children:
-                box.height += (
+            for i, child in enumerate(children):
+                child_height = (
                     child.hypothetical_main_size +
                     child.border_top_width + child.border_bottom_width +
                     child.padding_top + child.padding_bottom)
                 if child.margin_top != 'auto':
-                    box.height += child.margin_top
+                    child_height += child.margin_top
                 if child.margin_bottom != 'auto':
-                    box.height += child.margin_bottom
+                    child_height += child.margin_bottom
+                if child_height + box.height > main_space:
+                    resume_at = (i, None)
+                    children = children[:i]
+                    break
+                box.height += child_height
 
     # Step 5
     flex_lines = []
@@ -175,7 +185,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
     line = []
     line_size = 0
     axis_size = getattr(box, axis)
-    for child in sorted(box.children, key=lambda item: item.style['order']):
+    for child in sorted(children, key=lambda item: item.style['order']):
         if not child.is_flex_item:
             continue
         line_size += child.hypothetical_main_size
@@ -624,6 +634,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
 
     # TODO: don't use block_level_layout, see TODOs in Step 14 and
     # build.flex_children.
+    box = box.copy()
     box.children = []
     for line in flex_lines:
         for child in line:
@@ -635,4 +646,4 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                     box.children.append(new_child)
 
     # TODO: check these returned values
-    return box, None, {'break': 'any', 'page': None}, [], False
+    return box, resume_at, {'break': 'any', 'page': None}, [], False
