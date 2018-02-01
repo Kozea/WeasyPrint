@@ -21,7 +21,7 @@ import cssselect2
 import tinycss2
 
 
-VERSION = '0.42'
+VERSION = '0.42.1'
 __version__ = VERSION
 
 # Used for 'User-Agent' in HTTP and 'Creator' in PDF

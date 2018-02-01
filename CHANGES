@@ -1,6 +1,38 @@
 WeasyPrint changelog
 ====================
 
+
+Versions 0.42.x will only get simple bug fixes backported from the master
+branch. New features, opitimizations and complex bug fixes will only be added
+to the 43+ versions that don't support Python 2 anymore.
+
+Do not rely on future versions, development on the 0.x branch may be stopped at
+any moment.
+
+
+Version 0.42.1
+--------------
+
+Released on 2018-02-01.
+
+Bug fixes:
+
+* `#566 <https://github.com/Kozea/WeasyPrint/issues/566>`_:
+  Don't crash when using @font-config.
+* `#567 <https://github.com/Kozea/WeasyPrint/issues/567>`_:
+  Fix text-indent with text-align: justify.
+* `#465 <https://github.com/Kozea/WeasyPrint/issues/465>`_:
+  Fix string(*, start).
+* `#562 <https://github.com/Kozea/WeasyPrint/issues/562>`_:
+  Handle named pages with pseudo-class.
+* `#507 <https://github.com/Kozea/WeasyPrint/issues/507>`_:
+  Fix running headers.
+* `#557 <https://github.com/Kozea/WeasyPrint/issues/557>`_:
+  Avoid infinite loops in inline_line_width.
+* `#555 <https://github.com/Kozea/WeasyPrint/issues/555>`_:
+  Fix margins, borders and padding in column layouts.
+
+
 Version 0.42
 ------------
 
