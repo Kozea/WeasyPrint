@@ -371,7 +371,7 @@ def test_document_info():
         <title>Test document</title>
         <h1>Another title</h1>
         <meta name=generator content="Human after all">
-        <meta name=keywords content="html ,	css,
+        <meta name=keywords content="html ,\tcss,
                                      pdf,css">
         <meta name=description content="Blah… ">
         <meta name=dcterms.created content=2011-04>
