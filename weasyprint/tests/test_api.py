@@ -958,7 +958,7 @@ def test_html_meta():
             <meta name=dummy>
             <meta content=ignored>
             <meta>
-            <meta name=keywords content="html ,	css,
+            <meta name=keywords content="html ,\tcss,
                                          pdf,css">
             <meta name=dcterms.created content=2011-04>
             <meta name=dcterms.created content=2011-05>
