@@ -788,14 +788,18 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                         # TODO: what about relative children?
                         if (child.is_in_normal_flow() and
                                 can_break_inside(child)):
+                            broken_child = (
+                                not waiting_children_copy and
+                                initial_skip_stack and initial_skip_stack[1])
                             break_found = True
                             max_x = child.position_x + child.margin_width()
                             # TODO: replace -1, we use it to cut the last word
                             # of the line.
                             max_x -= 1
                             child_skip = None
-                            if initial_skip_stack and initial_skip_stack[1]:
-                                child_skip = initial_skip_stack[1][1]
+                            if broken_child:
+                                current_skip, child_skip = (
+                                    initial_skip_stack[1])
                             child_new_child, child_resume_at, _, _, _ = (
                                 split_inline_level(
                                     context, child, child.position_x, max_x,
@@ -809,6 +813,10 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                                 assert isinstance(child, boxes.TextBox)
                             else:
                                 children += [(child_index, child_new_child)]
+                            if broken_child:
+                                child_resume_at = (
+                                    child_resume_at[0] + current_skip,
+                                    child_resume_at[1])
                             resume_at = (child_index, child_resume_at)
                             break
                     if break_found:
