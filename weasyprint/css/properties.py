@@ -186,7 +186,7 @@ INITIAL_VALUES = {
 KNOWN_PROPERTIES = set(name.replace('_', '-') for name in INITIAL_VALUES)
 
 # Not applicable to the print media
-NOT_PRINT_MEDIA = set((
+NOT_PRINT_MEDIA = {
     # Aural media:
     'azimuth',
     'cue',
@@ -209,9 +209,7 @@ NOT_PRINT_MEDIA = set((
     'stress',
     'voice-family',
     'volume',
-
-    # outlines are not just for interactive but any visual media in css3-ui
-))
+}
 
 
 # Do not list shorthand properties here as we handle them before inheritance.
@@ -221,54 +219,54 @@ NOT_PRINT_MEDIA = set((
 #
 # link: click events normally bubble up to link ancestors
 #   See http://lists.w3.org/Archives/Public/www-style/2012Jun/0315.html
-INHERITED = set("""
-    border_collapse
-    border_spacing
-    caption_side
-    color
-    direction
-    empty_cells
-    font_family
-    font_feature_settings
-    font_kerning
-    font_language_override
-    font_size
-    font_style
-    font_stretch
-    font_variant
-    font_variant_alternates
-    font_variant_caps
-    font_variant_east_asian
-    font_variant_ligatures
-    font_variant_numeric
-    font_variant_position
-    font_weight
-    hyphens
-    hyphenate_character
-    hyphenate_limit_chars
-    hyphenate_limit_zone
-    image_rendering
-    image_resolution
-    lang
-    letter_spacing
-    line_height
-    link
-    list_style_image
-    list_style_position
-    list_style_type
-    orphans
-    overflow_wrap
-    quotes
-    tab_size
-    text_align
-    text_decoration
-    text_indent
-    text_transform
-    visibility
-    white_space
-    widows
-    word_spacing
-""".split())
+INHERITED = {
+    'border_collapse',
+    'border_spacing',
+    'caption_side',
+    'color',
+    'direction',
+    'empty_cells',
+    'font_family',
+    'font_feature_settings',
+    'font_kerning',
+    'font_language_override',
+    'font_size',
+    'font_style',
+    'font_stretch',
+    'font_variant',
+    'font_variant_alternates',
+    'font_variant_caps',
+    'font_variant_east_asian',
+    'font_variant_ligatures',
+    'font_variant_numeric',
+    'font_variant_position',
+    'font_weight',
+    'hyphens',
+    'hyphenate_character',
+    'hyphenate_limit_chars',
+    'hyphenate_limit_zone',
+    'image_rendering',
+    'image_resolution',
+    'lang',
+    'letter_spacing',
+    'line_height',
+    'link',
+    'list_style_image',
+    'list_style_position',
+    'list_style_type',
+    'orphans',
+    'overflow_wrap',
+    'quotes',
+    'tab_size',
+    'text_align',
+    'text_decoration',
+    'text_indent',
+    'text_transform',
+    'visibility',
+    'white_space',
+    'widows',
+    'word_spacing',
+}
 
 # Inherited but not applicable to print:
 #    azimuth
@@ -290,50 +288,50 @@ INHERITED = set("""
 # http://www.w3.org/TR/CSS21/tables.html#model
 # See also http://lists.w3.org/Archives/Public/www-style/2012Jun/0066.html
 # Only non-inherited properties need to be included here.
-TABLE_WRAPPER_BOX_PROPERTIES = set('''
-    bottom
-    break_after
-    break_before
-    break_inside
-    clear
-    counter_increment
-    counter_reset
-    float
-    left
-    margin_top
-    margin_bottom
-    margin_left
-    margin_right
-    opacity
-    position
-    right
-    top
-    transform
-    transform_origin
-    vertical_align
-    z_index
-'''.split())
+TABLE_WRAPPER_BOX_PROPERTIES = {
+    'bottom',
+    'break_after',
+    'break_before',
+    'break_inside',
+    'clear',
+    'counter_increment',
+    'counter_reset',
+    'float',
+    'left',
+    'margin_top',
+    'margin_bottom',
+    'margin_left',
+    'margin_right',
+    'opacity',
+    'position',
+    'right',
+    'top',
+    'transform',
+    'transform_origin',
+    'vertical_align',
+    'z_index',
+}
 
 
 # Properties that have an initial value that is not always the same when
 # computed.
-INITIAL_NOT_COMPUTED = set('''
-    display
-    column_gap
-    bleed_top
-    bleed_left
-    bleed_bottom
-    bleed_right
-    outline_width
-    outline_color
-    column_rule_width
-    column_rule_color
-    border_top_width
-    border_left_width
-    border_bottom_width
-    border_right_width
-    border_top_color
-    border_left_color
-    border_bottom_color
-    border_right_color
-'''.split())
+INITIAL_NOT_COMPUTED = {
+    'display',
+    'column_gap',
+    'bleed_top',
+    'bleed_left',
+    'bleed_bottom',
+    'bleed_right',
+    'outline_width',
+    'outline_color',
+    'column_rule_width',
+    'column_rule_color',
+    'border_top_width',
+    'border_left_width',
+    'border_bottom_width',
+    'border_right_width',
+    'border_top_color',
+    'border_left_color',
+    'border_bottom_color',
+    'border_right_color',
+}
