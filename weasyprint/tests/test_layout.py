@@ -706,6 +706,21 @@ def test_breaking_linebox():
             assert textbox_2.text == 'c def'
             assert textbox_3.text == 'g hi'
 
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/560
+    page, = parse(
+        '<div style="width: 5.5em; font-family: ahem">'
+        'aaaa aaaa a [<span>aaa</span>]')
+    html, = page.children
+    body, = html.children
+    pre, = body.children
+    line1, line2, line3, line4 = pre.children
+    assert line1.children[0].text == line2.children[0].text == 'aaaa'
+    assert line3.children[0].text == 'a'
+    text1, span, text2 = line4.children
+    assert text1.text == '['
+    assert text2.text == ']'
+    assert span.children[0].text == 'aaa'
+
 
 @assert_no_logs
 def test_linebox_text():
