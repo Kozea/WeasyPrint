@@ -762,7 +762,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
             last_letter = last
 
         if new_child is None:
-            # may be None where we have an empty TextBox
+            # May be None where we have an empty TextBox.
             assert isinstance(child, boxes.TextBox)
         else:
             if isinstance(box, boxes.LineBox):
@@ -785,21 +785,37 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                     break_found = False
                     while waiting_children_copy:
                         child_index, child = waiting_children_copy.pop()
-                        # TODO: what about relative children?
+                        # TODO: should we also accept relative children?
                         if (child.is_in_normal_flow() and
                                 can_break_inside(child)):
-                            broken_child = (
-                                not waiting_children_copy and
-                                initial_skip_stack and initial_skip_stack[1])
+                            # This waiting child is in flow and can be broken,
+                            # let's break it!
                             break_found = True
-                            max_x = child.position_x + child.margin_width()
-                            # TODO: replace -1, we use it to cut the last word
-                            # of the line.
-                            max_x -= 1
-                            child_skip = None
+
+                            # We have to check whether the child we're breaking
+                            # is the one broken by the initial skip stack.
+                            broken_child = bool(
+                                initial_skip_stack and
+                                initial_skip_stack[0] == child_index and
+                                initial_skip_stack[1])
                             if broken_child:
+                                # This child is already broken by the original
+                                # skip stack, let's skip the already rendered
+                                # part before rendering the waiting child
+                                # again.
                                 current_skip, child_skip = (
                                     initial_skip_stack[1])
+                            else:
+                                # This child has to be rendered from its start.
+                                child_skip = None
+
+                            # We break the waiting child at its last possible
+                            # breaking point.
+                            # TODO: The dirty solution chosen here is to
+                            # decrease the actual size by 1 and render the
+                            # waiting child again with this constraint. We may
+                            # find a better way.
+                            max_x = child.position_x + child.margin_width() - 1
                             child_new_child, child_resume_at, _, _, _ = (
                                 split_inline_level(
                                     context, child, child.position_x, max_x,
@@ -809,20 +825,26 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                                     line_children))
                             children = children + waiting_children_copy
                             if child_new_child is None:
-                                # may be None where we have an empty TextBox
+                                # May be None where we have an empty TextBox.
                                 assert isinstance(child, boxes.TextBox)
                             else:
                                 children += [(child_index, child_new_child)]
+
                             if broken_child:
+                                # As this child has already been broken
+                                # following the original skip stack, we have to
+                                # add the original skip stack to the partial
+                                # skip stack we get after the new rendering.
                                 child_resume_at = (
                                     child_resume_at[0] + current_skip,
                                     child_resume_at[1])
+
                             resume_at = (child_index, child_resume_at)
                             break
                     if break_found:
                         break
                 if children:
-                    # too wide, can't break waiting children and the inline is
+                    # Too wide, can't break waiting children and the inline is
                     # non-empty: put child entirely on the next line.
                     resume_at = (children[-1][0] + 1, None)
                     break

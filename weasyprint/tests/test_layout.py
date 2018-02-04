@@ -709,7 +709,7 @@ def test_breaking_linebox():
             assert textbox_2.text == 'c def'
             assert textbox_3.text == 'g hi'
 
-    # Regression test for https://github.com/Kozea/WeasyPrint/issues/560
+    # Regression test #1 for https://github.com/Kozea/WeasyPrint/issues/560
     page, = parse(
         '<div style="width: 5.5em; font-family: ahem">'
         'aaaa aaaa a [<span>aaa</span>]')
@@ -723,6 +723,20 @@ def test_breaking_linebox():
     assert text1.text == '['
     assert text2.text == ']'
     assert span.children[0].text == 'aaa'
+
+    # Regression test #2 for https://github.com/Kozea/WeasyPrint/issues/560
+    page, = parse(
+        '<div style="width: 5.5em; font-family: ahem">'
+        'aaaa a <span>b c</span>d')
+    html, = page.children
+    body, = html.children
+    pre, = body.children
+    line1, line2, line3 = pre.children
+    assert line1.children[0].text == 'aaaa'
+    assert line2.children[0].text == 'a '
+    assert line2.children[1].children[0].text == 'b'
+    assert line3.children[0].children[0].text == 'c'
+    assert line3.children[1].text == 'd'
 
 
 @assert_no_logs
