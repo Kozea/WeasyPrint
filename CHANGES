@@ -10,6 +10,17 @@ Do not rely on future versions, development on the 0.x branch may be stopped at
 any moment.
 
 
+Version 0.42.2
+--------------
+
+Released on 2018-02-04.
+
+Bug fixes:
+
+* `#560 <https://github.com/Kozea/WeasyPrint/issues/560>`_:
+  Fix a couple of crashes and endless loops when breaking lines.
+
+
 Version 0.42.1
 --------------
 
