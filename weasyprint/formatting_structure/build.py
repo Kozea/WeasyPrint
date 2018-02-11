@@ -21,6 +21,8 @@ import tinycss2.color3
 from . import boxes, counters
 from .. import html
 from ..css import properties
+from ..css.targets import TARGET_COLLECTOR, TARGET_STATE
+from ..logger import LOGGER
 
 # Maps values of the ``display`` CSS property to box types.
 BOX_TYPE_FROM_DISPLAY = {
@@ -44,6 +46,13 @@ BOX_TYPE_FROM_DISPLAY = {
 def build_formatting_structure(element_tree, style_for, get_image_from_uri,
                                base_url):
     """Build a formatting structure (box tree) from an element tree."""
+
+    LOGGER.info('Step 4.1 - Verifying collected targets')
+    # BTW: this step is *not* required. Dont't think it speeds up things a lot
+    # by tagging UNDEFINED targets in advance
+    TARGET_COLLECTOR.verify_collection()
+    LOGGER.info('Step 4.2 - Building basic boxes')
+
     box_list = element_to_box(
         element_tree, style_for, get_image_from_uri, base_url)
     if box_list:
@@ -61,6 +70,10 @@ def build_formatting_structure(element_tree, style_for, get_image_from_uri,
             return style
         box, = element_to_box(
             element_tree, root_style_for, get_image_from_uri, base_url)
+
+    TARGET_COLLECTOR.check_peding_targets()
+    # state now: no more pending targeds in pseudo-element's content boxes
+
     box.is_for_root_element = True
     # If this is changed, maybe update weasy.layout.pages.make_margin_boxes()
     process_whitespace(box)
@@ -141,6 +154,13 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
 
     children.extend(before_after_to_box(
         element, 'before', state, style_for, get_image_from_uri))
+
+    # collect anchor's counter_values, maybe it's a target.
+    # to get the spec-conform counter_valuse we must do it here,
+    # after the ::before is parsed and befor the ::after is
+    if style['anchor']:
+        TARGET_COLLECTOR.store_target(style['anchor'], counter_values, box)
+
     text = element.text
     if text:
         children.append(boxes.TextBox.anonymous_from(box, text))
@@ -192,12 +212,20 @@ def before_after_to_box(element, pseudo_type, state, style_for,
 
     quote_depth, counter_values, _counter_scopes = state
     update_counters(state, style)
+
+    # pseudo-elements can't be anchors, no need to call
+    # TARGET_COLLECTOR.store_target(...)
+
     children = []
     if display == 'list-item':
         children.extend(add_box_marker(
             box, counter_values, get_image_from_uri))
     children.extend(content_to_boxes(
         style, box, quote_depth, counter_values, get_image_from_uri))
+
+    # content_to_boxes detected an UNDEFINED target, discard the box
+    if style['content'] == 'none':
+        return
 
     box.children = children
     yield box
@@ -206,6 +234,29 @@ def before_after_to_box(element, pseudo_type, state, style_for,
 def content_to_boxes(style, parent_box, quote_depth, counter_values,
                      get_image_from_uri, context=None, page=None):
     """Takes the value of a ``content`` property and yield boxes."""
+    # TODO: Remove duplicate code! Gimmi a function to call!
+    # - parse_again() almost identical to code in before_after_to_box()
+    # - compute_content_list_string() does almost the same things
+
+    def parse_again():
+        """
+        closure to parse the parent_box all again
+        when TARGET_COLLECTOR.lookup_target() detected a TARGET_STATE.PENDING,
+        Thx to closure no need to explicitly copy.deepcopy the whole stuff,
+
+        build_formatting_structure calls TARGET_COLLECTOR.check_pending_targets()
+        after the first pass to do required repasing
+        """
+        local_children = []
+        if style['display'] == 'list-item':
+            local_children.extend(add_box_marker(
+                parent_box, counter_values, get_image_from_uri))
+        local_children.extend(content_to_boxes(
+            style, parent_box,
+            quote_depth, counter_values,
+            get_image_from_uri))
+        parent_box.children = local_children
+
     texts = []
     for type_, value in style['content']:
         if type_ == 'STRING':
@@ -231,6 +282,39 @@ def content_to_boxes(style, parent_box, quote_depth, counter_values,
         elif type_ == 'string' and context is not None and page is not None:
             text = context.get_string_set_for(page, *value)
             texts.append(text)
+        elif type_ == 'target-counter':
+            target_name, counter_name, counter_style = value;
+            lookup_target = TARGET_COLLECTOR.lookup_target(target_name, parent_box, parse_again)
+            if lookup_target.state == TARGET_STATE.UPTODATE:
+                counter_value = lookup_target.target_counter_values.get(counter_name, [0])[-1]
+                texts.append(counters.format(counter_value, counter_style))
+            else:
+                texts = []
+                break
+        elif type_ == 'target-counters':
+            target_name, counter_name, separator, counter_style = value
+            lookup_target = TARGET_COLLECTOR.lookup_target(target_name, parent_box, parse_again)
+            if lookup_target.state == TARGET_STATE.UPTODATE:
+                target_counter_values = lookup_target.target_counter_values
+                texts.append(separator.join(
+                    counters.format(counter_value, counter_style)
+                    for counter_value in target_counter_values.get(counter_name, [0])
+                ))
+            else:
+                texts = []
+                break
+        elif type_ ==  'target-text':
+            target_name, text_style = value
+            lookup_target = TARGET_COLLECTOR.lookup_target(target_name, parent_box, parse_again)
+            if lookup_target.state == TARGET_STATE.UPTODATE:
+                target_box = lookup_target.target_box
+                text = TEXT_CONTENT_EXTRACTORS[text_style](target_box)
+                # Simulate the step of white space processing
+                # (normally done during the layout)
+                texts.append(text.strip())
+            else:
+                texts = []
+                break
         else:
             assert type_ == 'QUOTE'
             is_open, insert = value
@@ -249,6 +333,7 @@ def content_to_boxes(style, parent_box, quote_depth, counter_values,
 
 def compute_content_list_string(element, box, counter_values, content_list):
     """Compute the string corresponding to the content-list."""
+    # TODO: What about target-*
     string = ''
     for type_, value in content_list:
         if type_ == 'STRING':

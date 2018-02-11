@@ -9,10 +9,13 @@
     :license: BSD, see LICENSE for details.
 
 """
+from urllib.parse import unquote
 
 from .. import text
 from ..urls import get_link_attribute
 from .properties import INITIAL_VALUES, Dimension
+from .targets import TARGET_COLLECTOR
+from ..logger import LOGGER
 
 ZERO_PIXELS = Dimension(0, 'px')
 
@@ -401,13 +404,96 @@ def column_gap(computer, name, value):
 @register_computer('content')
 def content(computer, name, values):
     """Compute the ``content`` property."""
+
+    class ComputedContentError(ValueError):
+        """Invalid or unsupported values for a known CSS property."""
+
+    def _toSelector(el, pseudo_type):
+        """convenience function for """
+        elname = type(el).__name__
+        if elname == 'PageType':
+           return ('@page%s %s%s%s %s    ' % (
+                ' ' + el.name if el.name else '',
+                ':' + el.side if el.side else '',
+                ':blank' if el.blank else '',
+                ':first' if el.first else '',
+                pseudo_type if pseudo_type else ''
+                )).rstrip()
+        elif elname == 'Element':
+           return '%s%s' % (
+               el.tag,
+               '::' + pseudo_type if pseudo_type else ''
+               )
+        else:
+            return '<%s>' % (
+                ('%s %s' % (elname, pseudo_type)).rstrip()
+                )
+
+    def computed_content_error(level, reason):
+        getattr(LOGGER, level)(
+            'content discarded: %s in selector `%s`.',
+            reason ,
+            _toSelector(computer.element, computer.pseudo_type)
+            )
+
+    def parse_target_type(type_, values):
+        if type(computer.element).__name__ != 'Element':
+            raise ComputedContentError('\'%s\' not (yet) supported' % (type_,))
+        # values = ['STRING', <anchorname>, ...]
+        #     or   ['attr', <attrname>, ...  ]
+        if values[0] == 'attr':
+            attrname = values[1]
+            href = computer.element.get(attrname, '')
+        else:
+            href = values[1]
+        # [spec](https://www.w3.org/TR/css-content-3/#target-counter)
+        # says;
+        # > If there’s no fragment, if the ID referenced isn’t there, or if the URL points
+        # > to an outside document, the user agent must treat that as an error.
+        if href == '' or href == '#':
+            raise ComputedContentError('Empty anchor name in %s' % (type_,))
+        if not href.startswith('#'):
+            raise ComputedContentError('No %s for external URI reference "%s"' % (type_, href))
+        href = unquote(href[1:])
+        TARGET_COLLECTOR.collect_computed_target(href)
+        return [href] + values[2:]
+
     if values in ('normal', 'none'):
         return values
-    else:
+
+    if not computer.pseudo_type:
+        # [CSS3 spec](https://www.w3.org/TR/css-content-3/#content-property)
+        # says:
+        # > 'content' applies to:
+        # > ::before, ::after, ::marker, and page margin boxes.
+        # > Image and url values can apply to all elements.
+        computed_content_error(
+            'debug',
+            'Not a pseudo-element')
+        return 'none'
+    target_checks = ['target-counter', 'target-counters', 'target-text']
+    try:
+        # TODO: catch `string()` in pseudo-elements! Kills script in
+        # build.content_to_boxes()
         return tuple(
-            ('STRING', computer.element.get(value, ''))
-            if type_ == 'attr' else (type_, value)
-            for type_, value in values)
+          ('STRING', computer.element.get(value, '')) if type_ == 'attr' else (
+          (type_ , parse_target_type(type_, value) ) if type_ in target_checks else
+          (type_, value)
+        )
+        for type_, value in values
+        )
+    except ComputedContentError as exc:
+        computed_content_error(
+            'warning',
+            exc.args[0] if exc.args and exc.args[0] else 'invalid content')
+        return 'none'
+    except AttributeError as exc:
+        # attr() in @page-'element'
+        # e.g.: 'PageType' object has no attribute 'get'
+        computed_content_error(
+            'warning',
+            exc.args[0] if exc.args and exc.args[0] else 'invalid content')
+        return 'none'
 
 
 @register_computer('display')
@@ -494,7 +580,9 @@ def anchor(computer, name, values):
     """Compute the ``anchor`` property."""
     if values != 'none':
         _, key = values
-        return computer.element.get(key) or None
+        anchor_name = computer.element.get(key) or None
+        TARGET_COLLECTOR.collect_anchor(anchor_name)
+        return anchor_name
 
 
 @register_computer('link')

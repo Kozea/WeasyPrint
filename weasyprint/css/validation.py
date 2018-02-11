@@ -748,6 +748,31 @@ def validate_content_token(base_url, token):
     Return (type, content) or False for invalid tokens.
 
     """
+    # TODO: evaluate `content` according to CSS3 spec
+    #       @formatting_structure.build: don't ignore 'content' in real html elements.
+
+    def validate_target_token(token):
+        """ validate first parameter of ``target-*()``-token
+            returns ['attr', '<attrname>' ]
+                 or ['STRING', '<anchorname>'] when valid
+            evaluation of the anchorname is job of compute()
+        """
+        # TODO: what about ``attr(href url)`` ?
+        if isinstance(token, str):
+            # url() or "string" given
+            # verify #anchor is done in compute()
+            # if token.value.startswith('#'):
+            return ['STRING', token]
+        # parse_function takes token.type for granted!
+        if not hasattr(token, 'type'): return
+        function = parse_function(token)
+        if function:
+            name, args = function
+            params = [a.type for a in args]
+            values = [getattr(a, 'value', a) for a in args]
+            if name == 'attr' and params == ['ident']:
+                return [name, values[0]]
+
     quote_type = CONTENT_QUOTE_KEYWORDS.get(get_keyword(token))
     if quote_type is not None:
         return ('QUOTE', quote_type)
@@ -758,11 +783,37 @@ def validate_content_token(base_url, token):
     if type_ == 'url':
         return ('URI', safe_urljoin(base_url, token.value))
     function = parse_function(token)
+    if not function:
+        raise InvalidValues('invalid/unsopported token \'%s\'' % (token,))
     if function:
         name, args = function
         prototype = (name, [a.type for a in args])
+        # known functions in 'content'
+        # TODO: would be nice if we knew here whether the token belongs to
+        #       a pseudo-element or a @page selector. But that's impossible,
+        #       and element-specific error handling is the job of computed_values.content()
+        # - attr()     -- not in @page context!
+        # - string()   -- only in @page context
+        # - counter(), counters()  --  !in @page only page and pages reliable
+        # - target-counter(), target-counters(), target-text()  -"-
+        # - leader()   -- not yet implemented
+        valid_functions = ['attr', 'string',
+                           'counter', 'counters',
+                           'target-counter', 'target-counters', 'target-text',
+                           'leader']
+        unsupported_functions = ['target-counters', 'target-text',
+                           'leader']
+        unsupported_functions = ['leader']
+        if name in unsupported_functions:
+            # suppress -- not (yet) implemented, no error
+            LOGGER.warn('\'%s()\' not (yet) supported', name)
+            return ('STRING', '')
+        if not name in valid_functions:
+            raise InvalidValues('invalid function \'%s()\'' % (name))
+
         args = [getattr(a, 'value', a) for a in args]
         if prototype == ('attr', ['ident']):
+            # TODO: what about ``attr(href url)`` ?
             return (name, args[0])
         elif prototype in (('counter', ['ident']),
                            ('counters', ['ident', 'string'])):
@@ -780,6 +831,71 @@ def validate_content_token(base_url, token):
                 if args[1] not in ('first', 'start', 'last', 'first-except'):
                     raise InvalidValues()
             return (name, args)
+        # target-counter() = target-counter( [ <string> | <url> ] , <custom-ident> , <counter-style>? )
+        elif name == 'target-counter':
+            if prototype in (
+              (name, ['url', 'ident']),
+              (name, ['url', 'ident', 'ident']),
+              (name, ['string', 'ident']),
+              (name, ['string', 'ident', 'ident']),
+              (name, ['function', 'ident']),
+              (name, ['function', 'ident', 'ident'])):
+                # default style
+                if len(args) == 2:
+                    args.append('decimal')
+                # accept "#anchorname" and attr(x)
+                retval = validate_target_token(args.pop(0))
+                if retval is None:
+                    raise InvalidValues() # 'brauchich href')
+                style = args[-1]
+                if style in ('none', 'decimal') or style in counters.STYLES:
+                    return (name, retval + args)
+        # target-counters() = target-counters( [ <string> | <url> ] , <custom-ident> , <string> , <counter-style>? )
+        elif name == 'target-counters':
+            if prototype in (
+              (name, ['url', 'ident', 'string']),
+              (name, ['url', 'ident', 'string', 'ident']),
+              (name, ['string', 'ident', 'string']),
+              (name, ['string', 'ident', 'string', 'ident']),
+              (name, ['function', 'ident', 'string']),
+              (name, ['function', 'ident', 'string', 'ident'])):
+                # default style
+                if len(args) == 3:
+                    args.append('decimal')
+                # accept "#anchorname" and attr(x)
+                retval = validate_target_token(args.pop(0))
+                if retval is None:
+                    raise InvalidValues() # 'brauchich href')
+                style = args[-1]
+                if style in ('none', 'decimal') or style in counters.STYLES:
+                    return (name, retval + args)
+        # target-text() = target-text( [ <string> | <url> ] , [ content | before | after | first-letter ]? )
+        elif name == 'target-text':
+            if prototype in (
+              (name, ['url']),
+              (name, ['url', 'ident']),
+              (name, ['string']),
+              (name, ['string', 'ident']),
+              (name, ['function']),
+              (name, ['function', 'ident'])):
+                if len(args) == 1:
+                    args.append('content')
+                # accept "#anchorname" and attr(x)
+                retval = validate_target_token(args.pop(0))
+                if retval is None:
+                    raise InvalidValues() # 'brauchich href')
+                style = args[-1]
+                # hint: in Prince the equivalent function is called 'target-content', no second parameter
+                # hint: the syntax isn't stable yet!
+                #       {ISSUE 15}(https://www.w3.org/TR/css-content-3/#issue-a82075c9)
+                #       A simpler syntax has been proposed by fantasai:
+                #       http://lists.w3.org/Archives/Public/www-style/2012Feb/0745.html
+                if style in ('content', 'after', 'before', 'first-letter'):
+                    # build.TEXT_CONTENT_EXTRACTORS needs 'text'
+                    # TODO: should we define TEXT_CONTENT_EXTRACTORS['content'] == box_text ?
+                    if style == 'content':
+                        args[-1] = 'text'
+                    return (name, retval + args)
 
 
 def parse_function(function_token):
