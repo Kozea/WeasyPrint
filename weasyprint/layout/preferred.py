@@ -219,7 +219,8 @@ def inline_line_widths(context, box, outer, is_line_start, minimum,
 
         if isinstance(child, boxes.InlineBox):
             lines = inline_line_widths(
-                context, child, outer, is_line_start, minimum, skip_stack)
+                context, child, outer, is_line_start, minimum, skip_stack,
+                first_line)
             if first_line:
                 lines = [next(lines)]
             else:
