@@ -241,7 +241,11 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
             if i == count - 1:
                 max_position_y = original_max_position_y
             column_box = create_column_box()
-            column_box.position_x += i * (width + style.column_gap)
+            if style['direction'] == 'rtl':
+                column_box.position_x += (
+                    box.width - (i + 1) * width - i * style['column_gap'])
+            else:
+                column_box.position_x += i * (width + style['column_gap'])
             new_child, skip_stack, next_page, _, _ = block_box_layout(
                 context, column_box, max_position_y, skip_stack,
                 containing_block, device_size, page_is_empty, absolute_boxes,
