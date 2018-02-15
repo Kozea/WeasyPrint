@@ -78,7 +78,7 @@ def max_content_width(context, box, outer=True):
         return inline_max_content_width(
             context, box, outer, is_line_start=True)
     elif isinstance(box, boxes.ReplacedBox):
-        return replaced_min_content_width(box, outer)
+        return replaced_max_content_width(box, outer)
     else:
         raise TypeError(
             'max-content width for %s not handled yet' % type(box).__name__)
@@ -617,6 +617,28 @@ def replaced_min_content_width(box, outer=True):
     elif box.style['width'].unit == '%':
         # See https://drafts.csswg.org/css-sizing/#intrinsic-contribution
         width = 0
+    else:
+        assert width.unit == 'px'
+        width = width.value
+    return adjust(box, outer, width)
+
+
+def replaced_max_content_width(box, outer=True):
+    """Return the max-content width for an ``InlineReplacedBox``."""
+    width = box.style['width']
+    if width == 'auto':
+        height = box.style['height']
+        if height == 'auto' or height.unit == '%':
+            height = 'auto'
+        else:
+            assert height.unit == 'px'
+            height = height.value
+        image = box.replacement
+        iwidth, iheight = image.get_intrinsic_size(
+            box.style['image_resolution'], box.style['font_size'])
+        width, _ = default_image_sizing(
+            iwidth, iheight, image.intrinsic_ratio, 'auto', height,
+            default_width=300, default_height=150)
     else:
         assert width.unit == 'px'
         width = width.value
