@@ -412,7 +412,7 @@ def content(computer, name, values):
         """convenience function for """
         elname = type(el).__name__
         if elname == 'PageType':
-           return ('@page%s %s%s%s %s    ' % (
+            return ('@page%s %s%s%s %s    ' % (
                 ' ' + el.name if el.name else '',
                 ':' + el.side if el.side else '',
                 ':blank' if el.blank else '',
@@ -420,7 +420,7 @@ def content(computer, name, values):
                 pseudo_type if pseudo_type else ''
                 )).rstrip()
         elif elname == 'Element':
-           return '%s%s' % (
+            return '%s%s' % (
                 el.tag,
                 '::' + pseudo_type if pseudo_type else ''
                 )
@@ -454,8 +454,8 @@ def content(computer, name, values):
         if href == '' or href == '#':
             raise ComputedContentError('Empty anchor name in %s' % (type_,))
         if not href.startswith('#'):
-            raise ComputedContentError('No %s for external URI reference "%s"'
-                % (type_, href))
+            raise ComputedContentError(
+                'No %s for external URI reference "%s"' % (type_, href))
         href = unquote(href[1:])
         TARGET_COLLECTOR.collect_computed_target(href)
         return [href] + values[2:]
@@ -480,7 +480,7 @@ def content(computer, name, values):
         return tuple(
             ('STRING', computer.element.get(value, ''))
             if type_ == 'attr' else (
-                (type_ , parse_target_type(type_, value))
+                (type_, parse_target_type(type_, value))
                 if type_ in target_checks else (type_, value)
             )
             for type_, value in values)

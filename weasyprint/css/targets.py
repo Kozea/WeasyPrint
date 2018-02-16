@@ -109,10 +109,11 @@ class _TargetCollector(object):
         if already filled by a previous anchor-element: UPDTODATE
         else: PENDING, we must parse the whole thing again
         """
-        item = self.items.get(anchor_name,
+        item = self.items.get(
+            anchor_name,
             TargetLookupItem(TARGET_STATE.UNDEFINED))
-        LOGGER.debug('lookup_target',
-            anchor_name, TARGET_STATE.name(item.state))
+        LOGGER.debug(
+            'lookup_target', anchor_name, TARGET_STATE.name(item.state))
         if item.state == TARGET_STATE.PENDING:
             if anchor_name not in self.existing_anchors:
                 item.state = TARGET_STATE.UNDEFINED
@@ -138,8 +139,8 @@ class _TargetCollector(object):
         """
         item = self.items.get(anchor_name, None)
         if item:
-            LOGGER.debug('store_target?',
-                anchor_name, TARGET_STATE.name(item.state))
+            LOGGER.debug(
+                'store_target?', anchor_name, TARGET_STATE.name(item.state))
             if item.state == TARGET_STATE.PENDING:
                 LOGGER.debug('   -> update:', target_counter_values)
                 # need A REAL DUPLICATE UNCONNECTED SEPARATE COPY!!
@@ -148,8 +149,8 @@ class _TargetCollector(object):
                     target_counter_values)
                 item.target_box = target_box
             else:
-                LOGGER.debug('   -> duplicate anchor definition: %s'
-                    % anchor_name)
+                LOGGER.debug(
+                    '   -> duplicate anchor definition: %s' % anchor_name)
         else:
             LOGGER.debug('    -> achor %s not targetted' % anchor_name)
 

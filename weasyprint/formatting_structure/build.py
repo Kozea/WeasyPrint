@@ -307,7 +307,7 @@ def content_to_boxes(style, parent_box, quote_depth, counter_values,
             else:
                 texts = []
                 break
-        elif type_ ==  'target-text':
+        elif type_ == 'target-text':
             target_name, text_style = value
             lookup_target = TARGET_COLLECTOR.lookup_target(
                 target_name, parent_box, parse_again)
