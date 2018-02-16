@@ -244,8 +244,8 @@ def content_to_boxes(style, parent_box, quote_depth, counter_values,
         when TARGET_COLLECTOR.lookup_target() detected a TARGET_STATE.PENDING,
         Thx to closure no need to explicitly copy.deepcopy the whole stuff,
 
-        build_formatting_structure calls TARGET_COLLECTOR.check_pending_targets()
-        after the first pass to do required repasing
+        build_formatting_structure calls TARGET_COLLECTOR.check_pending_targets
+        after the first pass to do required reparsing
         """
         local_children = []
         if style['display'] == 'list-item':
@@ -283,29 +283,34 @@ def content_to_boxes(style, parent_box, quote_depth, counter_values,
             text = context.get_string_set_for(page, *value)
             texts.append(text)
         elif type_ == 'target-counter':
-            target_name, counter_name, counter_style = value;
-            lookup_target = TARGET_COLLECTOR.lookup_target(target_name, parent_box, parse_again)
+            target_name, counter_name, counter_style = value
+            lookup_target = TARGET_COLLECTOR.lookup_target(
+                target_name, parent_box, parse_again)
             if lookup_target.state == TARGET_STATE.UPTODATE:
-                counter_value = lookup_target.target_counter_values.get(counter_name, [0])[-1]
+                counter_value = lookup_target.target_counter_values.get(
+                    counter_name, [0])[-1]
                 texts.append(counters.format(counter_value, counter_style))
             else:
                 texts = []
                 break
         elif type_ == 'target-counters':
             target_name, counter_name, separator, counter_style = value
-            lookup_target = TARGET_COLLECTOR.lookup_target(target_name, parent_box, parse_again)
+            lookup_target = TARGET_COLLECTOR.lookup_target(
+                target_name, parent_box, parse_again)
             if lookup_target.state == TARGET_STATE.UPTODATE:
                 target_counter_values = lookup_target.target_counter_values
                 texts.append(separator.join(
                     counters.format(counter_value, counter_style)
-                    for counter_value in target_counter_values.get(counter_name, [0])
+                    for counter_value in target_counter_values.get(
+                        counter_name, [0])
                 ))
             else:
                 texts = []
                 break
         elif type_ ==  'target-text':
             target_name, text_style = value
-            lookup_target = TARGET_COLLECTOR.lookup_target(target_name, parent_box, parse_again)
+            lookup_target = TARGET_COLLECTOR.lookup_target(
+                target_name, parent_box, parse_again)
             if lookup_target.state == TARGET_STATE.UPTODATE:
                 target_box = lookup_target.target_box
                 text = TEXT_CONTENT_EXTRACTORS[text_style](target_box)

@@ -12,10 +12,10 @@
 from urllib.parse import unquote
 
 from .. import text
+from ..logger import LOGGER
 from ..urls import get_link_attribute
 from .properties import INITIAL_VALUES, Dimension
 from .targets import TARGET_COLLECTOR
-from ..logger import LOGGER
 
 ZERO_PIXELS = Dimension(0, 'px')
 
@@ -421,9 +421,9 @@ def content(computer, name, values):
                 )).rstrip()
         elif elname == 'Element':
            return '%s%s' % (
-               el.tag,
-               '::' + pseudo_type if pseudo_type else ''
-               )
+                el.tag,
+                '::' + pseudo_type if pseudo_type else ''
+                )
         else:
             return '<%s>' % (
                 ('%s %s' % (elname, pseudo_type)).rstrip()
@@ -432,7 +432,7 @@ def content(computer, name, values):
     def computed_content_error(level, reason):
         getattr(LOGGER, level)(
             'content discarded: %s in selector `%s`.',
-            reason ,
+            reason,
             _toSelector(computer.element, computer.pseudo_type)
             )
 
@@ -447,13 +447,15 @@ def content(computer, name, values):
         else:
             href = values[1]
         # [spec](https://www.w3.org/TR/css-content-3/#target-counter)
-        # says;
-        # > If there’s no fragment, if the ID referenced isn’t there, or if the URL points
-        # > to an outside document, the user agent must treat that as an error.
+        # says:
+        # > If there’s no fragment, if the ID referenced isn’t there,
+        # > or if the URL points to an outside document,
+        # > the user agent must treat that as an error.
         if href == '' or href == '#':
             raise ComputedContentError('Empty anchor name in %s' % (type_,))
         if not href.startswith('#'):
-            raise ComputedContentError('No %s for external URI reference "%s"' % (type_, href))
+            raise ComputedContentError('No %s for external URI reference "%s"'
+                % (type_, href))
         href = unquote(href[1:])
         TARGET_COLLECTOR.collect_computed_target(href)
         return [href] + values[2:]
@@ -476,12 +478,12 @@ def content(computer, name, values):
         # TODO: catch `string()` in pseudo-elements! Kills script in
         # build.content_to_boxes()
         return tuple(
-          ('STRING', computer.element.get(value, '')) if type_ == 'attr' else (
-          (type_ , parse_target_type(type_, value) ) if type_ in target_checks else
-          (type_, value)
-        )
-        for type_, value in values
-        )
+            ('STRING', computer.element.get(value, ''))
+            if type_ == 'attr' else (
+                (type_ , parse_target_type(type_, value))
+                if type_ in target_checks else (type_, value)
+            )
+            for type_, value in values)
     except ComputedContentError as exc:
         computed_content_error(
             'warning',

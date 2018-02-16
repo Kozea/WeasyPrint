@@ -749,7 +749,8 @@ def validate_content_token(base_url, token):
 
     """
     # TODO: evaluate `content` according to CSS3 spec
-    #       @formatting_structure.build: don't ignore 'content' in real html elements.
+    #       @formatting_structure.build: don't ignore 'content'
+    #       in real html elements.
 
     def validate_target_token(token):
         """ validate first parameter of ``target-*()``-token
@@ -764,7 +765,8 @@ def validate_content_token(base_url, token):
             # if token.value.startswith('#'):
             return ['STRING', token]
         # parse_function takes token.type for granted!
-        if not hasattr(token, 'type'): return
+        if not hasattr(token, 'type'):
+            return
         function = parse_function(token)
         if function:
             name, args = function
@@ -784,32 +786,35 @@ def validate_content_token(base_url, token):
         return ('URI', safe_urljoin(base_url, token.value))
     function = parse_function(token)
     if not function:
-        raise InvalidValues('invalid/unsopported token \'%s\'' % (token,))
+        # to pass unit test `test_boxes.test_before_after`
+        # the log string must contain "invalid value"
+        raise InvalidValues('invalid value/unsupported token ´%s\´' % (token,))
     if function:
         name, args = function
         prototype = (name, [a.type for a in args])
-        # known functions in 'content'
         # TODO: would be nice if we knew here whether the token belongs to
         #       a pseudo-element or a @page selector. But that's impossible,
-        #       and element-specific error handling is the job of computed_values.content()
+        #       and element-specific error handling is the job of
+        #       computed_values.content()
         # - attr()     -- not in @page context!
         # - string()   -- only in @page context
         # - counter(), counters()  --  !in @page only page and pages reliable
         # - target-counter(), target-counters(), target-text()  -"-
         # - leader()   -- not yet implemented
+        # known functions in 'content':
         valid_functions = ['attr', 'string',
                            'counter', 'counters',
                            'target-counter', 'target-counters', 'target-text',
-                           'leader']
-        unsupported_functions = ['target-counters', 'target-text',
                            'leader']
         unsupported_functions = ['leader']
         if name in unsupported_functions:
             # suppress -- not (yet) implemented, no error
             LOGGER.warn('\'%s()\' not (yet) supported', name)
             return ('STRING', '')
-        if not name in valid_functions:
-            raise InvalidValues('invalid function \'%s()\'' % (name))
+        if name not in valid_functions:
+            # to pass unit test `test_boxes.test_before_after`
+            # the log string must contain "invalid value"
+            raise InvalidValues('invalid value: function `%s()`' % (name))
 
         args = [getattr(a, 'value', a) for a in args]
         if prototype == ('attr', ['ident']):
@@ -831,7 +836,9 @@ def validate_content_token(base_url, token):
                 if args[1] not in ('first', 'start', 'last', 'first-except'):
                     raise InvalidValues()
             return (name, args)
-        # target-counter() = target-counter( [ <string> | <url> ] , <custom-ident> , <counter-style>? )
+        # target-counter() = target-counter(
+        #    [ <string> | <url> ] , <custom-ident> ,
+        #    <counter-style>? )
         elif name == 'target-counter':
             if prototype in (
               (name, ['url', 'ident']),
@@ -846,11 +853,13 @@ def validate_content_token(base_url, token):
                 # accept "#anchorname" and attr(x)
                 retval = validate_target_token(args.pop(0))
                 if retval is None:
-                    raise InvalidValues() # 'brauchich href')
+                    raise InvalidValues()
                 style = args[-1]
                 if style in ('none', 'decimal') or style in counters.STYLES:
                     return (name, retval + args)
-        # target-counters() = target-counters( [ <string> | <url> ] , <custom-ident> , <string> , <counter-style>? )
+        # target-counters() = target-counters(
+        #    [ <string> | <url> ] , <custom-ident> , <string> ,
+        #    <counter-style>? )
         elif name == 'target-counters':
             if prototype in (
               (name, ['url', 'ident', 'string']),
@@ -865,11 +874,13 @@ def validate_content_token(base_url, token):
                 # accept "#anchorname" and attr(x)
                 retval = validate_target_token(args.pop(0))
                 if retval is None:
-                    raise InvalidValues() # 'brauchich href')
+                    raise InvalidValues()
                 style = args[-1]
                 if style in ('none', 'decimal') or style in counters.STYLES:
                     return (name, retval + args)
-        # target-text() = target-text( [ <string> | <url> ] , [ content | before | after | first-letter ]? )
+        # target-text() = target-text(
+        #    [ <string> | <url> ] ,
+        #    [ content | before | after | first-letter ]? )
         elif name == 'target-text':
             if prototype in (
               (name, ['url']),
@@ -883,16 +894,13 @@ def validate_content_token(base_url, token):
                 # accept "#anchorname" and attr(x)
                 retval = validate_target_token(args.pop(0))
                 if retval is None:
-                    raise InvalidValues() # 'brauchich href')
+                    raise InvalidValues()
                 style = args[-1]
-                # hint: in Prince the equivalent function is called 'target-content', no second parameter
                 # hint: the syntax isn't stable yet!
-                #       {ISSUE 15}(https://www.w3.org/TR/css-content-3/#issue-a82075c9)
-                #       A simpler syntax has been proposed by fantasai:
-                #       http://lists.w3.org/Archives/Public/www-style/2012Feb/0745.html
                 if style in ('content', 'after', 'before', 'first-letter'):
                     # build.TEXT_CONTENT_EXTRACTORS needs 'text'
-                    # TODO: should we define TEXT_CONTENT_EXTRACTORS['content'] == box_text ?
+                    # TODO: should we define
+                    # TEXT_CONTENT_EXTRACTORS['content'] == box_text ?
                     if style == 'content':
                         args[-1] = 'text'
                     return (name, retval + args)
