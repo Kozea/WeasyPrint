@@ -99,7 +99,7 @@ class _TargetCollector(object):
             # mark target names not in existing_anchors as UNDEFINED
             if key not in self.existing_anchors:
                 item.state = TARGET_STATE.UNDEFINED
-            LOGGER.debug(key, TARGET_STATE.name(item.state))
+            LOGGER.debug('%s %s', key, TARGET_STATE.name(item.state))
         LOGGER.debug('------- existing anchors -------------')
         LOGGER.debug(self.existing_anchors)
 
@@ -113,7 +113,7 @@ class _TargetCollector(object):
             anchor_name,
             TargetLookupItem(TARGET_STATE.UNDEFINED))
         LOGGER.debug(
-            'lookup_target', anchor_name, TARGET_STATE.name(item.state))
+            'lookup_target %s %s', anchor_name, TARGET_STATE.name(item.state))
         if item.state == TARGET_STATE.PENDING:
             if anchor_name not in self.existing_anchors:
                 item.state = TARGET_STATE.UNDEFINED
@@ -140,9 +140,9 @@ class _TargetCollector(object):
         item = self.items.get(anchor_name, None)
         if item:
             LOGGER.debug(
-                'store_target?', anchor_name, TARGET_STATE.name(item.state))
+                'store_target? %s %s', anchor_name, TARGET_STATE.name(item.state))
             if item.state == TARGET_STATE.PENDING:
-                LOGGER.debug('   -> update:', target_counter_values)
+                LOGGER.debug('   -> update: %s', target_counter_values)
                 # need A REAL DUPLICATE UNCONNECTED SEPARATE COPY!!
                 item.state = TARGET_STATE.UPTODATE
                 item.target_counter_values = copy.deepcopy(
