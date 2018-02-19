@@ -5,7 +5,7 @@
 
     Layout for flex containers and flex-items.
 
-    :copyright: Copyright 2017 Lucien Deleu and contributors, see AUTHORS.
+    :copyright: Copyright 2017-2018 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
