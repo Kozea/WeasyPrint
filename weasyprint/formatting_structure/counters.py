@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.formatting_structure.counters
     ----------------------------------------
@@ -12,8 +11,6 @@
     :license: BSD, see LICENSE for details.
 
 """
-
-from __future__ import division, unicode_literals
 
 import functools
 

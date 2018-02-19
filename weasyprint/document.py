@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.document
     -------------------
@@ -8,8 +7,6 @@
 
 """
 
-from __future__ import division, unicode_literals
-
 import functools
 import io
 import math
@@ -18,7 +15,6 @@ import shutil
 import cairocffi as cairo
 
 from . import CSS
-from .compat import FILESYSTEM_ENCODING, iteritems, izip
 from .css import get_all_computed_styles
 from .draw import draw_page, stacked
 from .fonts import FontConfiguration
@@ -41,16 +37,16 @@ def _get_matrix(box):
     #  but do not apply to elements which may be split into
     #  multiple inline-level boxes."
     # http://www.w3.org/TR/css3-2d-transforms/#introduction
-    if box.style.transform and not isinstance(box, boxes.InlineBox):
+    if box.style['transform'] and not isinstance(box, boxes.InlineBox):
         border_width = box.border_width()
         border_height = box.border_height()
-        origin_x, origin_y = box.style.transform_origin
+        origin_x, origin_y = box.style['transform_origin']
         origin_x = box.border_box_x() + percentage(origin_x, border_width)
         origin_y = box.border_box_y() + percentage(origin_y, border_height)
 
         matrix = cairo.Matrix()
         matrix.translate(origin_x, origin_y)
-        for name, args in box.style.transform:
+        for name, args in box.style['transform']:
             if name == 'scale':
                 matrix.scale(*args)
             elif name == 'rotate':
@@ -101,8 +97,8 @@ def _gather_links_and_bookmarks(box, bookmarks, links, anchors, matrix):
         bookmark_level = None
     else:
         bookmark_level = box.style['bookmark_level']
-    link = box.style.link
-    anchor_name = box.style.anchor
+    link = box.style['link']
+    anchor_name = box.style['anchor']
     has_bookmark = bookmark_label and bookmark_level
     # 'link' is inherited but redundant on text boxes
     has_link = link and not isinstance(box, boxes.TextBox)
@@ -114,13 +110,7 @@ def _gather_links_and_bookmarks(box, bookmarks, links, anchors, matrix):
         pos_x, pos_y, width, height = box.hit_area()
         if has_link:
             link_type, target = link
-            if isinstance(target, bytes):
-                # Links are filesystem_encoding/utf-8 bytestrings in Python 2
-                # and ASCII unicode in Python 3. See ``iri_to_uri`` and
-                # standard library's ``quote`` source.
-                target = target.decode(
-                    FILESYSTEM_ENCODING if target.startswith('file:')
-                    else 'utf-8')
+            assert isinstance(target, str)
             if link_type == 'external' and is_attachment:
                 link_type = 'attachment'
             if matrix:
@@ -243,7 +233,7 @@ class DocumentMetadata(object):
     """Contains meta-information about a :class:`Document`
     that belongs to the whole document rather than specific pages.
 
-   New attributes may be added in future versions of WeasyPrint.
+    New attributes may be added in future versions of WeasyPrint.
 
     .. _W3C’s profile of ISO 8601: http://www.w3.org/TR/NOTE-datetime
 
@@ -325,10 +315,11 @@ class Document(object):
             font_config, html, cascaded_styles, computed_styles)
         rendering = cls(
             [Page(p, enable_hinting) for p in page_boxes],
-            DocumentMetadata(**html._get_metadata()), html.url_fetcher)
+            DocumentMetadata(**html._get_metadata()),
+            html.url_fetcher, font_config)
         return rendering
 
-    def __init__(self, pages, metadata, url_fetcher):
+    def __init__(self, pages, metadata, url_fetcher, font_config):
         #: A list of :class:`Page` objects.
         self.pages = pages
         #: A :class:`DocumentMetadata` object.
@@ -338,6 +329,10 @@ class Document(object):
         #: A ``url_fetcher`` for resources that have to be read when writing
         #: the output.
         self.url_fetcher = url_fetcher
+        # Keep a reference to font_config to avoid its garbage collection until
+        # rendering is destroyed. This is needed as font_config.__del__ removes
+        # fonts that may be used when rendering
+        self._font_config = font_config
 
     def copy(self, pages='all'):
         """Take a subset of the pages.
@@ -372,7 +367,8 @@ class Document(object):
             pages = self.pages
         elif not isinstance(pages, list):
             pages = list(pages)
-        return type(self)(pages, self.metadata, self.url_fetcher)
+        return type(self)(
+            pages, self.metadata, self.url_fetcher, self._font_config)
 
     def resolve_links(self):
         """Resolve internal hyperlinks.
@@ -390,7 +386,7 @@ class Document(object):
         """
         anchors = {}
         for i, page in enumerate(self.pages):
-            for anchor_name, (point_x, point_y) in iteritems(page.anchors):
+            for anchor_name, (point_x, point_y) in page.anchors.items():
                 anchors.setdefault(anchor_name, (i, point_x, point_y))
         for page in self.pages:
             page_links = []
@@ -530,7 +526,7 @@ class Document(object):
         context = cairo.Context(surface)
         pos_y = 0
         LOGGER.info('Step 6 - Drawing')
-        for page, width, height in izip(self.pages, widths, heights):
+        for page, width, height in zip(self.pages, widths, heights):
             pos_x = (max_width - width) / 2
             page.paint(context, pos_x, pos_y, scale=dppx, clip=True)
             pos_y += height

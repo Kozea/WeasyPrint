@@ -12,13 +12,13 @@ install the `development version`_ of WeasyPrint:
     cd WeasyPrint
     virtualenv --system-site-packages env
     . env/bin/activate
-    pip install pytest Sphinx -e .
+    pip install Sphinx -e .[test]
     weasyprint --help
 
 This will install WeasyPrint in “editable” mode
 (which means that you don’t need to re-install it
 every time you make a change in the source code)
-as well as `py.test <http://pytest.org/>`_
+as well as `pytest <http://pytest.org/>`_
 and `Sphinx <http://sphinx.pocoo.org/>`_.
 
 Lastly, in order to pass unit tests, your system must have two particular fonts:
@@ -43,7 +43,7 @@ The website version is updated automatically when we push to master on GitHub.
 Code changes
 ------------
 
-Use the ``py.test`` command from the ``WeasyPrint`` directory to run the
+Use the ``pytest`` command from the ``WeasyPrint`` directory to run the
 test suite.
 
 Please report any bugs/feature requests and submit patches/pull requests
@@ -130,10 +130,10 @@ an absolute length or a percentage.
 
 The final result of the :func:`~weasyprint.css.get_all_computed_styles`
 function is a big dict where keys are ``(element, pseudo_element_type)``
-tuples, and keys are :class:`StyleDict` objects. Elements are
+tuples, and keys are style dict objects. Elements are
 ElementTree elements, while the type of pseudo-element is a string
 for eg. ``::first-line`` selectors, or :obj:`None` for “normal”
-elements. :class:`StyleDict` objects are dicts with attribute read-only access
+elements. Style dict objects are dicts with attribute read-only access
 mapping property names to the computed values.  (The return value is not the
 dict itself, but a convenience :func:`style_for` function for accessing it.)
 
@@ -159,7 +159,7 @@ The :mod:`weasyprint.formatting_structure.build` module takes an ElementTree
 tree with associated computed styles, and builds a formatting structure. It
 generates the right boxes for each element and ensures they conform to the
 models rules.  (Eg. an inline box can not contain a block.) Each box has a
-:attr:`.style` attribute containing the :class:`StyleDict` of computed values.
+:attr:`.style` attribute containing the style dict of computed values.
 
 The main logic is based on the ``display`` property, but it can be overridden
 for some elements by adding a handler in the ``weasyprint.html`` module.

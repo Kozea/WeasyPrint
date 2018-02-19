@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding: utf-8
 
 """
     WeasyPrint
@@ -12,17 +11,20 @@
 
 """
 
-import codecs
 import re
 import sys
 from os import path
 
 from setuptools import find_packages, setup
 
-VERSION = re.search("VERSION = '([^']+)'", codecs.open(
-    path.join(path.dirname(__file__), 'weasyprint', '__init__.py'),
-    encoding="utf-8",
-).read().strip()).group(1)
+if sys.version_info.major < 3:
+    raise RuntimeError(
+        'WeasyPrint does not support Python 2.x anymore. '
+        'Please use Python 3 or install an older version of WeasyPrint.')
+
+VERSION = re.search(b"VERSION = '([^']+)'", open(
+    path.join(path.dirname(__file__), 'weasyprint', '__init__.py'), 'rb',
+).read().strip()).group(1).decode('ascii')
 
 LONG_DESCRIPTION = open(path.join(path.dirname(__file__), 'README.rst')).read()
 
@@ -36,6 +38,7 @@ REQUIREMENTS = [
     'cairocffi>=0.5',
     'Pyphen>=0.8',
     'pdfrw>=0.4',
+    'CairoSVG>=1.0.20',
     # C dependencies: Gdk-Pixbuf (optional), Pango, cairo.
 ]
 
@@ -55,8 +58,6 @@ setup(
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
@@ -78,9 +79,7 @@ setup(
         'pytest-runner', 'pytest-cov', 'pytest-flake8', 'pytest-isort'],
     extras_require={
         'test': [
-            'pytest-runner', 'pytest-cov', 'pytest-flake8', 'pytest-isort'],
-        ':python_version < "3.0"': ['CairoSVG >= 1.0.20, < 2.0.0'],
-        ':python_version >= "3.0"': ['CairoSVG >= 1.0.20']},
+            'pytest-runner', 'pytest-cov', 'pytest-flake8', 'pytest-isort']},
     entry_points={
         'console_scripts': [
             'weasyprint = weasyprint.__main__:main',

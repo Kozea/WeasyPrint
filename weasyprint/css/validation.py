@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.css.validation
     -------------------------
@@ -11,16 +10,14 @@
 
 """
 
-from __future__ import division, unicode_literals
-
 import functools
 import math
+from urllib.parse import unquote, urljoin
 
 import tinycss2
 from tinycss2.color3 import parse_color
 
 from . import computed_values
-from ..compat import unquote, urljoin
 from ..formatting_structure import counters
 from ..images import LinearGradient, RadialGradient
 from ..logger import LOGGER
@@ -1659,8 +1656,7 @@ def validate_content_list_token(token):
         elif prototype in (('content', ()), ('content', ('ident',))):
             if not args:
                 return (name, 'text')
-            elif args[0] in ('text', 'after', 'before'):
-                # TODO: first-letter should be allowed here too
+            elif args[0] in ('text', 'after', 'before', 'first-letter'):
                 return (name, args[0])
         elif prototype in (('counter', ('ident',)),
                            ('counters', ('ident', 'string'))):
@@ -1715,10 +1711,6 @@ def transform_function(token):
 
 
 # Expanders
-
-# Let's be consistent, always use ``name`` as an argument even
-# when it is useless.
-# pylint: disable=W0613
 
 def expander(property_name):
     """Decorator adding a function to the ``EXPANDERS``."""

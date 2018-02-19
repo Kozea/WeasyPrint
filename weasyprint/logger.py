@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.logging
     ------------------
@@ -20,8 +19,6 @@
     :license: BSD, see LICENSE for details.
 
 """
-
-from __future__ import division, unicode_literals
 
 import logging
 

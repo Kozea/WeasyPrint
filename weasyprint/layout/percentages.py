@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.layout.percentages
     -----------------------------
@@ -9,8 +8,6 @@
     :license: BSD, see LICENSE for details.
 
 """
-
-from __future__ import division, unicode_literals
 
 from ..formatting_structure import boxes
 
@@ -82,7 +79,7 @@ def resolve_percentages(box, containing_block):
     if cb_height == 'auto':
         # Special handling when the height of the containing block
         # depends on its content.
-        height = box.style.height
+        height = box.style['height']
         if height == 'auto' or height.unit == '%':
             box.height = 'auto'
         else:
@@ -100,20 +97,20 @@ def resolve_percentages(box, containing_block):
         prop = 'border_{0}_width'.format(side)
         setattr(box, prop, box.style[prop])
 
-    if box.style.box_sizing == 'border-box':
+    if box.style['box_sizing'] == 'border-box':
         if box.width != 'auto':
             box.width -= (box.padding_left + box.padding_right +
                           box.border_left_width + box.border_right_width)
         if box.height != 'auto':
             box.height -= (box.padding_top + box.padding_bottom +
                            box.border_top_width + box.border_bottom_width)
-    elif box.style.box_sizing == 'padding-box':
+    elif box.style['box_sizing'] == 'padding-box':
         if box.width != 'auto':
             box.width -= box.padding_left + box.padding_right
         if box.height != 'auto':
             box.height -= box.padding_top + box.padding_bottom
     else:
-        assert box.style.box_sizing == 'content-box'
+        assert box.style['box_sizing'] == 'content-box'
 
 
 def resolve_radii_percentages(box):

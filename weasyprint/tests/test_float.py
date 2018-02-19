@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.tests.layout
     -----------------------
@@ -9,9 +8,6 @@
     :license: BSD, see LICENSE for details.
 
 """
-
-
-from __future__ import division, unicode_literals
 
 from ..formatting_structure import boxes
 from .test_boxes import render_pages as parse

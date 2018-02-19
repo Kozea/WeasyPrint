@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.css.descriptors
     --------------------------
@@ -11,11 +10,10 @@
 
 """
 
-from __future__ import division, unicode_literals
+from urllib.parse import unquote
 
 import tinycss2
 
-from ..compat import unquote
 from ..logger import LOGGER
 from .validation import (
     InvalidValues, comma_separated_list, expand_font_variant,

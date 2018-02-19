@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.tests.layout
     -----------------------
@@ -10,8 +9,6 @@
     :license: BSD, see LICENSE for details.
 
 """
-
-from __future__ import division, unicode_literals
 
 import math
 
@@ -612,15 +609,15 @@ def test_breaking_linebox():
 
     lines = paragraph.children
     for line in lines:
-        assert line.style.font_size == 13
+        assert line.style['font_size'] == 13
         assert line.element_tag == 'p'
         for child in line.children:
             assert child.element_tag in ('em', 'p')
-            assert child.style.font_size == 13
+            assert child.style['font_size'] == 13
             if isinstance(child, boxes.ParentBox):
                 for child_child in child.children:
                     assert child.element_tag in ('em', 'strong', 'span')
-                    assert child.style.font_size == 13
+                    assert child.style['font_size'] == 13
 
     # See http://unicode.org/reports/tr14/
     page, = parse('<pre>a\nb\rc\r\nd\u2029e</pre>')
@@ -708,6 +705,35 @@ def test_breaking_linebox():
             textbox_2, = span_1.children
             assert textbox_2.text == 'c def'
             assert textbox_3.text == 'g hi'
+
+    # Regression test #1 for https://github.com/Kozea/WeasyPrint/issues/560
+    page, = parse(
+        '<div style="width: 5.5em; font-family: ahem">'
+        'aaaa aaaa a [<span>aaa</span>]')
+    html, = page.children
+    body, = html.children
+    pre, = body.children
+    line1, line2, line3, line4 = pre.children
+    assert line1.children[0].text == line2.children[0].text == 'aaaa'
+    assert line3.children[0].text == 'a'
+    text1, span, text2 = line4.children
+    assert text1.text == '['
+    assert text2.text == ']'
+    assert span.children[0].text == 'aaa'
+
+    # Regression test #2 for https://github.com/Kozea/WeasyPrint/issues/560
+    page, = parse(
+        '<div style="width: 5.5em; font-family: ahem">'
+        'aaaa a <span>b c</span>d')
+    html, = page.children
+    body, = html.children
+    pre, = body.children
+    line1, line2, line3 = pre.children
+    assert line1.children[0].text == 'aaaa'
+    assert line2.children[0].text == 'a '
+    assert line2.children[1].children[0].text == 'b'
+    assert line3.children[0].children[0].text == 'c'
+    assert line3.children[1].text == 'd'
 
 
 @assert_no_logs
@@ -2095,7 +2121,7 @@ def test_box_sizing():
     body, = html.children
     div_1, div_2, div_3, div_4 = body.children
     for div in div_1, div_2:
-        assert div.style.box_sizing == 'content-box'
+        assert div.style['box_sizing'] == 'content-box'
         assert div.width == 1000
         assert div.height == 1000
         assert div.padding_width() == 1020
@@ -2106,7 +2132,7 @@ def test_box_sizing():
         # margin_width() is the width of the containing block
 
     # padding-box
-    assert div_3.style.box_sizing == 'padding-box'
+    assert div_3.style['box_sizing'] == 'padding-box'
     assert div_3.width == 980  # 1000 - 20
     assert div_3.height == 980
     assert div_3.padding_width() == 1000
@@ -2116,7 +2142,7 @@ def test_box_sizing():
     assert div_3.margin_height() == 1202
 
     # border-box
-    assert div_4.style.box_sizing == 'border-box'
+    assert div_4.style['box_sizing'] == 'border-box'
     assert div_4.width == 978  # 1000 - 20 - 2
     assert div_4.height == 978
     assert div_4.padding_width() == 998

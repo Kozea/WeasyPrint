@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.absolute
     -------------------
@@ -7,8 +6,6 @@
     :license: BSD, see LICENSE for details.
 
 """
-
-from __future__ import division, unicode_literals
 
 from ..formatting_structure import boxes
 from .markers import list_marker_layout
@@ -276,7 +273,7 @@ def absolute_replaced(context, box, containing_block):
     inline_replaced_box_width_height(box, device_size=None)
 
     cb_x, cb_y, cb_width, cb_height = containing_block
-    ltr = box.style.direction == 'ltr'
+    ltr = box.style['direction'] == 'ltr'
 
     # http://www.w3.org/TR/CSS21/visudet.html#abs-replaced-width
     if box.left == box.right == 'auto':

@@ -7,8 +7,6 @@ git:
 matrix:
   include:
     - os: linux
-      python: 2.7
-    - os: linux
       python: 3.4
     - os: linux
       python: 3.5
@@ -36,7 +34,7 @@ before_install:
 
 install:
   # First line needed because of https://github.com/pypa/setuptools/pull/1089
-  # Can be removed as soon as setuptools-36.2.0 is not the default version anymore on Travis with Python 3.6
+  # Can be removed as soon as setuptools-36.2.0 is not the default version anymore on Travis with Python 3.4
   - pip$PYTHON_VERSION install --upgrade setuptools
   - pip$PYTHON_VERSION install --upgrade -e.[test]
 

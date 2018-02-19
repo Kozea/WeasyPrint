@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.tests.test_draw
     --------------------------
@@ -10,8 +9,6 @@
 
 """
 
-from __future__ import division, unicode_literals
-
 import itertools
 import os.path
 import shutil
@@ -21,7 +18,6 @@ import tempfile
 import cairocffi as cairo
 
 from .. import HTML
-from ..compat import ints_from_bytes, izip, xrange
 from ..html import HTML_HANDLERS
 from ..urls import ensure_url
 from .testing_utils import (
@@ -34,7 +30,6 @@ as_pixel = (
     lambda x: x[-1:] + x[:-1])
 
 # Short variable names are OK here
-# pylint: disable=C0103
 
 _ = as_pixel(b'\xff\xff\xff\xff')  # white
 r = as_pixel(b'\xff\x00\x00\xff')  # red
@@ -146,7 +141,7 @@ def image_to_pixels(surface, width, height):
     if stride != row_bytes:
         assert stride > row_bytes
         pixels = b''.join(pixels[i:i + row_bytes]
-                          for i in xrange(0, height * stride, stride))
+                          for i in range(0, height * stride, stride))
     assert len(pixels) == width * height * 4
     return pixels
 
@@ -157,9 +152,8 @@ def assert_pixels_equal(name, width, height, raw, expected_raw, tolerance=0):
     are the same.
     """
     if raw != expected_raw:  # pragma: no cover
-        for i, (value, expected) in enumerate(izip(
-            ints_from_bytes(raw),
-            ints_from_bytes(expected_raw)
+        for i, (value, expected) in enumerate(zip(
+            list(raw), list(expected_raw)
         )):
             if abs(value - expected) > tolerance:
                 write_png(name, raw, width, height)
@@ -169,8 +163,8 @@ def assert_pixels_equal(name, width, height, raw, expected_raw, tolerance=0):
                 x = pixel_n // width
                 y = pixel_n % width
                 i % 4
-                pixel = tuple(ints_from_bytes(raw[i:i + 4]))
-                expected_pixel = tuple(ints_from_bytes(
+                pixel = tuple(list(raw[i:i + 4]))
+                expected_pixel = tuple(list(
                     expected_raw[i:i + 4]))
                 assert 0, (
                     'Pixel (%i, %i) in %s: expected rgba%s, got rgba%s'
@@ -2066,13 +2060,13 @@ def test_borders(margin='10px', prop='border'):
     height = 110
     margin = 10
     border = 10
-    solid_pixels = [[_] * width for y in xrange(height)]
-    for x in xrange(margin, width - margin):
+    solid_pixels = [[_] * width for y in range(height)]
+    for x in range(margin, width - margin):
         for y in itertools.chain(
                 range(margin, margin + border),
                 range(height - margin - border, height - margin)):
             solid_pixels[y][x] = B
-    for y in xrange(margin, height - margin):
+    for y in range(margin, height - margin):
         for x in itertools.chain(
                 range(margin, margin + border),
                 range(width - margin - border, width - margin)):

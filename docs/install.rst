@@ -3,9 +3,9 @@ Installing
 
 WeasyPrint |version| depends on:
 
-* CPython_ 2.7 or ≥ 3.4
-* cairo_ [#]_
-* Pango_
+* CPython_ ≥ 3.4
+* cairo_ ≥ 1.15.0 [#]_
+* Pango_ ≥ 1.29.3
 * CFFI_ ≥ 0.6
 * html5lib_ ≥ 0.999999999
 * cairocffi_ ≥ 0.5
@@ -14,7 +14,7 @@ WeasyPrint |version| depends on:
 * CairoSVG_ ≥ 1.0.20
 * Pyphen_ ≥ 0.8
 * pdfrw_ ≥ 0.4
-* Optional: GDK-PixBuf_ [#]_
+* Optional: GDK-PixBuf_ ≥ 2.25.0 [#]_
 
 .. _CPython: http://www.python.org/
 .. _cairo: http://cairographics.org/
@@ -69,9 +69,11 @@ If everything goes well, you’re ready to :doc:`start using </tutorial>`
 WeasyPrint! Otherwise, please copy the full error message and
 `report the problem <http://weasyprint.org/community/>`_.
 
-.. [#] cairo ≥ 1.12 is best but older versions should work too.
-       The test suite passes on cairo 1.8 and 1.10 with some tests marked as
-       “expected failures” due to behavior changes or bugs in cairo.
+.. [#] cairo ≥ 1.15 is best but older versions may work too. The test suite
+       passes on cairo 1.12 and 1.14, and passes with some tests marked as
+       “expected failures” on 1.8 and 1.10 due to behavior changes or bugs in
+       cairo. With cairo 1.14, WeasyPrint sometimes creates PDF files that may
+       not be correctly interpreted by GhostScript or CUPS.
 
 .. [#] Without it, PNG and SVG are the only supported image formats.
        JPEG, GIF and others are not available.
@@ -88,8 +90,6 @@ the dependencies otherwise.
 CFFI needs *libffi* with development files. On Debian, the package is called
 ``libffi-dev``.
 
-You should use Python 3 instead of Python 2. Seriously.
-
 If your favorite system is not listed here but you know the package names,
 `tell us <http://weasyprint.org/community/>`_ so we can add it here.
 
@@ -100,19 +100,7 @@ Debian 9.0 Stretch or newer, Ubuntu 16.04 Xenial or newer:
 
 .. code-block:: sh
 
-    sudo apt-get install build-essential python3-dev python3-pip python3-cffi libcairo2 libpango-1.0-0 libpangocairo-1.0.0 libgdk-pixbuf2.0-0 libffi-dev shared-mime-info
-
-Debian 8.0 Jessie or newer, Ubuntu 14.04 Trusty or newer (with Python 2, but Python 3 may work):
-
-.. code-block:: sh
-
-    sudo apt-get install build-essential python-dev python-pip python-cffi libcairo2 libpango1.0-0 libpangocairo-1.0.0 libgdk-pixbuf2.0-0 libffi-dev shared-mime-info
-
-Debian 7.0 Wheezy or newer, Ubuntu 12.04 Precise or newer (with Python 2, but Python 3 may work):
-
-.. code-block:: sh
-
-    sudo apt-get install build-essential python-dev python-pip libcairo2 libpango1.0-0 libpangocairo-1.0.0 libgdk-pixbuf2.0-0 libffi-dev shared-mime-info
+    sudo apt-get install build-essential python3-dev python3-pip python3-cffi libcairo2 libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf2.0-0 libffi-dev shared-mime-info
 
 Fedora
 ~~~~~~

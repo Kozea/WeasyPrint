@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.css
     --------------
@@ -18,8 +17,6 @@
 
 """
 
-from __future__ import division, unicode_literals
-
 from collections import namedtuple
 
 import cssselect2
@@ -31,7 +28,6 @@ from .descriptors import preprocess_descriptors
 from .properties import INITIAL_NOT_COMPUTED
 from .validation import (preprocess_declarations, remove_whitespace,
                          split_on_comma)
-from ..compat import iteritems
 from ..logger import LOGGER
 from ..urls import get_url_attribute, url_join, URLFetchingError
 from .. import CSS
@@ -39,53 +35,6 @@ from .. import CSS
 
 # Reject anything not in here:
 PSEUDO_ELEMENTS = (None, 'before', 'after', 'first-line', 'first-letter')
-
-
-class StyleDict(dict):
-    """A dict allowing attribute access to values.
-
-    Allow eg. ``style.font_size`` instead of ``style['font-size']``.
-
-    """
-
-    # TODO: this dict should be frozen, but modification is currently
-    # authorized for some corner cases when building the structure:
-    # - wrapping tables,
-    # - removing paddings and margins from tables,
-    # - modifying borders for table cells with collapsing borders, and
-    # - setting viewports and pages overflow.
-
-    # TODO: We should remove that. Some attributes (eg. "clear") exist as
-    # dict methods and can only be accessed with getitem.
-    __getattr__ = dict.__getitem__
-
-    def get_color(self, key):
-        value = self[key]
-        return value if value != 'currentColor' else self['color']
-
-    def copy(self):
-        """Copy the ``StyleDict``."""
-        style = type(self)(self)
-        style.anonymous = self.anonymous
-        return style
-
-    def inherit_from(self):
-        """Return a new StyleDict with inherited properties from this one.
-
-        Non-inherited properties get their initial values.
-        This is the method used for an anonymous box.
-
-        """
-        if '_inherited_style' not in self.__dict__:
-            self._inherited_style = computed_from_cascaded(
-                cascaded={}, parent_style=self,
-                # Only by non-inherited properties, eg `content: attr(href)`
-                element=None)
-            self._inherited_style.anonymous = True
-        return self._inherited_style
-
-    # Default values, may be overriden on instances
-    anonymous = False
 
 
 PageType = namedtuple('PageType', ['side', 'blank', 'first', 'name'])
@@ -542,12 +491,12 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
         for side in ('top', 'bottom', 'left', 'right'):
             computed['border_%s_width' % side] = 0
         computed['outline_width'] = 0
-        return StyleDict(computed)
+        return computed
 
     # Handle inheritance and initial values
     specified = {}
     computed = {}
-    for name, initial in iteritems(properties.INITIAL_VALUES):
+    for name, initial in properties.INITIAL_VALUES.items():
         if name in cascaded:
             value, _precedence = cascaded[name]
             keyword = value
@@ -581,9 +530,85 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
         computed['page'] = specified['page'] = (
             '' if parent_style is None else parent_style['page'])
 
-    return StyleDict(computed_values.compute(
+    return computed_values.compute(
         element, pseudo_type, specified, computed, parent_style, root_style,
-        base_url))
+        base_url)
+
+
+def parse_page_selectors(rule):
+    """Parse a page selector rule.
+
+    Return a list of page data if the rule is correctly parsed. Page data are a
+    dict containing:
+
+    - 'side' ('left', 'right' or None),
+    - 'blank' (True or False),
+    - 'first' (True or False),
+    - 'name' (page name string or None), and
+    - 'spacificity' (list of numbers).
+
+    Return ``None` if something went wrong while parsing the rule.
+
+    """
+    # See https://drafts.csswg.org/css-page-3/#syntax-page-selector
+
+    tokens = list(remove_whitespace(rule.prelude))
+    page_data = []
+
+    # TODO: Specificity is probably wrong, should clean and test that.
+    if not tokens:
+        page_data.append({
+            'side': None, 'blank': False, 'first': False, 'name': None,
+            'specificity': [0, 0, 0]})
+        return page_data
+
+    while tokens:
+        types = {
+            'side': None, 'blank': False, 'first': False, 'name': None,
+            'specificity': [0, 0, 0]}
+
+        if tokens[0].type == 'ident':
+            token = tokens.pop(0)
+            types['name'] = token.value
+            types['specificity'][0] = 1
+
+        if len(tokens) == 1:
+            return None
+        elif not tokens:
+            page_data.append(types)
+            return page_data
+
+        while tokens:
+            literal = tokens.pop(0)
+            if literal.type != 'literal':
+                return None
+
+            if literal.value == ':':
+                if not tokens or tokens[0].type != 'ident':
+                    return None
+                ident = tokens.pop(0)
+                pseudo_class = ident.lower_value
+                if pseudo_class in ('left', 'right'):
+                    if types['side']:
+                        return None
+                    types['side'] = pseudo_class
+                    types['specificity'][2] += 1
+                elif pseudo_class in ('blank', 'first'):
+                    if types[pseudo_class]:
+                        return None
+                    types[pseudo_class] = True
+                    types['specificity'][1] += 1
+                else:
+                    return None
+            elif literal.value == ',':
+                if tokens and any(types['specificity']):
+                    break
+                else:
+                    return None
+
+        page_data.append(types)
+
+    return page_data
 
 
 def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
@@ -671,64 +696,44 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                 matcher, page_rules, fonts, font_config, ignore_imports=True)
 
         elif rule.type == 'at-rule' and rule.lower_at_keyword == 'page':
-            tokens = remove_whitespace(rule.prelude)
-            types = {
-                'side': None, 'blank': False, 'first': False, 'name': None}
-            # TODO: Specificity is probably wrong, should clean and test that.
-            if not tokens:
-                specificity = (0, 0, 0)
-            elif (len(tokens) == 2 and
-                    tokens[0].type == 'literal' and
-                    tokens[0].value == ':' and
-                    tokens[1].type == 'ident'):
-                pseudo_class = tokens[1].lower_value
-                if pseudo_class in ('left', 'right'):
-                    types['side'] = pseudo_class
-                    specificity = (0, 0, 1)
-                elif pseudo_class in ('blank', 'first'):
-                    types[pseudo_class] = True
-                    specificity = (0, 1, 0)
-                else:
-                    LOGGER.warning('Unknown @page pseudo-class "%s", '
-                                   'the whole @page rule was ignored '
-                                   'at %s:%s.',
-                                   pseudo_class,
-                                   rule.source_line, rule.source_column)
-                    continue
-            elif len(tokens) == 1 and tokens[0].type == 'ident':
-                types['name'] = tokens[0].value
-                specificity = (1, 0, 0)
-            else:
-                LOGGER.warning('Unsupported @page selector "%s", '
-                               'the whole @page rule was ignored at %s:%s.',
-                               tinycss2.serialize(rule.prelude),
-                               rule.source_line, rule.source_column)
+            data = parse_page_selectors(rule)
+
+            if data is None:
+                LOGGER.warning(
+                    'Unsupported @page selector "%s", '
+                    'the whole @page rule was ignored at %s:%s.',
+                    tinycss2.serialize(rule.prelude),
+                    rule.source_line, rule.source_column)
                 continue
+
             ignore_imports = True
-            page_type = PageType(**types)
-            # Use a double lambda to have a closure that holds page_types
-            match = (lambda page_type: lambda page_names: list(
-                matching_page_types(page_type, names=page_names)))(page_type)
-            content = tinycss2.parse_declaration_list(rule.content)
-            declarations = list(preprocess_declarations(base_url, content))
+            for page_type in data:
+                specificity = page_type.pop('specificity')
+                page_type = PageType(**page_type)
+                # Use a double lambda to have a closure that holds page_types
+                match = (lambda page_type: lambda page_names: list(
+                    matching_page_types(page_type, names=page_names)))(
+                        page_type)
+                content = tinycss2.parse_declaration_list(rule.content)
+                declarations = list(preprocess_declarations(base_url, content))
 
-            if declarations:
-                selector_list = [(specificity, None, match)]
-                page_rules.append((rule, selector_list, declarations))
-
-            for margin_rule in content:
-                if margin_rule.type != 'at-rule' or (
-                        margin_rule.content is None):
-                    continue
-                declarations = list(preprocess_declarations(
-                    base_url,
-                    tinycss2.parse_declaration_list(margin_rule.content)))
                 if declarations:
-                    selector_list = [(
-                        specificity, '@' + margin_rule.lower_at_keyword,
-                        match)]
-                    page_rules.append(
-                        (margin_rule, selector_list, declarations))
+                    selector_list = [(specificity, None, match)]
+                    page_rules.append((rule, selector_list, declarations))
+
+                for margin_rule in content:
+                    if margin_rule.type != 'at-rule' or (
+                            margin_rule.content is None):
+                        continue
+                    declarations = list(preprocess_declarations(
+                        base_url,
+                        tinycss2.parse_declaration_list(margin_rule.content)))
+                    if declarations:
+                        selector_list = [(
+                            specificity, '@' + margin_rule.lower_at_keyword,
+                            match)]
+                        page_rules.append(
+                            (margin_rule, selector_list, declarations))
 
         elif rule.type == 'at-rule' and rule.lower_at_keyword == 'font-face':
             ignore_imports = True
@@ -774,7 +779,7 @@ def get_all_computed_styles(html, user_stylesheets=None,
     Do everything from finding author stylesheets to parsing and applying them.
 
     Return a ``style_for`` function that takes an element and an optional
-    pseudo-element type, and return a StyleDict object.
+    pseudo-element type, and return a style dict object.
 
     """
     # List stylesheets. Order here is not important ('origin' is).
@@ -814,7 +819,7 @@ def get_all_computed_styles(html, user_stylesheets=None,
             add_declaration(cascaded_styles, name, values, weight, element)
 
     # keys: (element, pseudo_element_type), like cascaded_styles
-    # values: StyleDict objects:
+    # values: style dict objects:
     #     keys: property name as a string
     #     values: a PropertyValue-like object
     computed_styles = {}

@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.layout.tables
     ------------------------
@@ -10,9 +9,6 @@
 
 """
 
-from __future__ import division, unicode_literals
-
-from ..compat import xrange
 from ..formatting_structure import boxes
 from ..logger import LOGGER
 from .percentages import resolve_one_percentage, resolve_percentages
@@ -28,8 +24,8 @@ def table_layout(context, table, max_position_y, skip_stack,
 
     column_widths = table.column_widths
 
-    if table.style.border_collapse == 'separate':
-        border_spacing_x, border_spacing_y = table.style.border_spacing
+    if table.style['border_collapse'] == 'separate':
+        border_spacing_x, border_spacing_y = table.style['border_spacing']
     else:
         border_spacing_x = 0
         border_spacing_y = 0
@@ -44,7 +40,7 @@ def table_layout(context, table, max_position_y, skip_stack,
         position_x += width
     rows_width = position_x - rows_x
 
-    if table.style.border_collapse == 'collapse':
+    if table.style['border_collapse'] == 'collapse':
         if skip_stack:
             skipped_groups, group_skip_stack = skip_stack
             if group_skip_stack:
@@ -142,7 +138,7 @@ def table_layout(context, table, max_position_y, skip_stack,
             # cells with vertical-align: baseline
             baseline_cells = []
             for cell in row.children:
-                vertical_align = cell.style.vertical_align
+                vertical_align = cell.style['vertical_align']
                 if vertical_align in ('top', 'middle', 'bottom'):
                     cell.vertical_align = vertical_align
                 else:
@@ -217,7 +213,7 @@ def table_layout(context, table, max_position_y, skip_stack,
         # Do not keep the row group if we made a page break
         # before any of its rows or with 'avoid'
         if resume_at and (
-                group.style.break_inside in ('avoid', 'avoid-page') or
+                group.style['break_inside'] in ('avoid', 'avoid-page') or
                 not new_group_children):
             return None, None
 
@@ -366,7 +362,7 @@ def table_layout(context, table, max_position_y, skip_stack,
         new_table_children +
         ([footer] if footer is not None else []),
         is_start=skip_stack is None, is_end=resume_at is None)
-    if table.style.border_collapse == 'collapse':
+    if table.style['border_collapse'] == 'collapse':
         table.skipped_rows = skipped_rows
 
     # If the height property has a bigger value, just add blank space
@@ -405,7 +401,7 @@ def table_layout(context, table, max_position_y, skip_stack,
 
     next_page = {'break': 'any', 'page': table.style['page']}
     if resume_at and not page_is_empty and (
-            table.style.break_inside in ('avoid', 'avoid-page') or
+            table.style['break_inside'] in ('avoid', 'avoid-page') or
             not new_table_children):
         table = None
         resume_at = None
@@ -451,8 +447,8 @@ def fixed_table_layout(box):
         if column.width != 'auto':
             column_widths[i] = column.width
 
-    if table.style.border_collapse == 'separate':
-        border_spacing_x, _ = table.style.border_spacing
+    if table.style['border_collapse'] == 'separate':
+        border_spacing_x, _ = table.style['border_spacing']
     else:
         border_spacing_x = 0
 
@@ -467,7 +463,7 @@ def fixed_table_layout(box):
             # colspan) some of which already have a width. Subtract these
             # known widths and divide among remaining columns.
             columns_without_width = []  # and occupied by this cell
-            for j in xrange(i, i + cell.colspan):
+            for j in range(i, i + cell.colspan):
                 if column_widths[j] is None:
                     columns_without_width.append(j)
                 else:
@@ -737,7 +733,7 @@ def table_wrapper_width(context, wrapper, containing_block):
     table = wrapper.get_wrapped_table()
     resolve_percentages(table, containing_block)
 
-    if table.style.table_layout == 'fixed' and table.width != 'auto':
+    if table.style['table_layout'] == 'fixed' and table.width != 'auto':
         fixed_table_layout(wrapper)
     else:
         auto_table_layout(context, wrapper, containing_block)

@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.layout.blocks
     ------------------------
@@ -10,11 +9,8 @@
 
 """
 
-from __future__ import division, unicode_literals
-
 from math import floor
 
-from ..compat import izip, xrange
 from ..formatting_structure import boxes
 from .absolute import AbsolutePlaceholder, absolute_layout
 from .flex import flex_layout
@@ -59,7 +55,7 @@ def block_level_layout(context, box, max_position_y, skip_stack,
 
     if isinstance(box, boxes.BlockBox):
         style = box.style
-        if style.column_width != 'auto' or style.column_count != 'auto':
+        if style['column_width'] != 'auto' or style['column_count'] != 'auto':
             result = columns_layout(
                 context, box, max_position_y, skip_stack, containing_block,
                 device_size, page_is_empty, absolute_boxes, fixed_boxes,
@@ -135,13 +131,13 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
     width = None
     style = box.style
 
-    if box.style.position == 'relative':
+    if box.style['position'] == 'relative':
         # New containing block, use a new absolute list
         absolute_boxes = []
 
     box = box.copy_with_children(box.children)
 
-    height = box.style.height
+    height = box.style['height']
     if height != 'auto' and height.unit != '%':
         assert height.unit == 'px'
         known_height = True
@@ -155,24 +151,25 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
     block_level_width(box, containing_block)
     available_width = box.width
     if count is None:
-        if style.column_width == 'auto' and style.column_count != 'auto':
-            count = style.column_count
+        if style['column_width'] == 'auto' and style['column_count'] != 'auto':
+            count = style['column_count']
             width = max(
-                0, available_width - (count - 1) * style.column_gap) / count
-        elif style.column_width != 'auto' and style.column_count == 'auto':
+                0, available_width - (count - 1) * style['column_gap']) / count
+        elif (style['column_width'] != 'auto' and
+              style['column_count'] == 'auto'):
             count = max(1, int(floor(
-                (available_width + style.column_gap) /
-                (style.column_width + style.column_gap))))
+                (available_width + style['column_gap']) /
+                (style['column_width'] + style['column_gap']))))
             width = (
-                (available_width + style.column_gap) / count -
-                style.column_gap)
+                (available_width + style['column_gap']) / count -
+                style['column_gap'])
         else:
-            count = min(style.column_count, int(floor(
-                (available_width + style.column_gap) /
-                (style.column_width + style.column_gap))))
+            count = min(style['column_count'], int(floor(
+                (available_width + style['column_gap']) /
+                (style['column_width'] + style['column_gap']))))
             width = (
-                (available_width + style.column_gap) / count -
-                style.column_gap)
+                (available_width + style['column_gap']) / count -
+                style['column_gap'])
 
     def create_column_box():
         column_box = box.anonymous_from(box, children=[
@@ -214,7 +211,7 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
         context, column_box, float('inf'), skip_stack, containing_block,
         device_size, page_is_empty, [], [], [])
     height = new_child.margin_height()
-    if style.column_fill == 'balance':
+    if style['column_fill'] == 'balance':
         height /= count
     box_column_descendants = list(column_descendants(new_child))
     # Increase the column height step by step.
@@ -235,7 +232,7 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
         else:
             break
         height += min(lost_spaces)
-    # TODO: check box.style.max-height
+    # TODO: check box.style['max']-height
     max_position_y = min(max_position_y, box.content_box_y() + height)
 
     # Replace the current box children with columns
@@ -246,7 +243,11 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
             if i == count - 1:
                 max_position_y = original_max_position_y
             column_box = create_column_box()
-            column_box.position_x += i * (width + style.column_gap)
+            if style['direction'] == 'rtl':
+                column_box.position_x += (
+                    box.width - (i + 1) * width - i * style['column_gap'])
+            else:
+                column_box.position_x += i * (width + style['column_gap'])
             new_child, skip_stack, next_page, _, _ = block_box_layout(
                 context, column_box, max_position_y, skip_stack,
                 containing_block, device_size, page_is_empty, absolute_boxes,
@@ -280,7 +281,7 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
     else:
         box.height = 0
 
-    if box.style.position == 'relative':
+    if box.style['position'] == 'relative':
         # New containing block, resolve the layout of the absolute descendants
         for absolute_box in absolute_boxes:
             absolute_layout(context, absolute_box, box, fixed_boxes)
@@ -297,7 +298,7 @@ def block_replaced_width(box, containing_block, device_size):
 
 def block_replaced_box_layout(box, containing_block, device_size):
     """Lay out the block :class:`boxes.ReplacedBox` ``box``."""
-    if box.style.width == 'auto' and box.style.height == 'auto':
+    if box.style['width'] == 'auto' and box.style['height'] == 'auto':
         computed_margins = box.margin_left, box.margin_right
         block_replaced_width.without_min_max(
             box, containing_block, device_size)
@@ -348,7 +349,7 @@ def block_level_width(box, containing_block):
                 margin_r = box.margin_right = 0
     if width != 'auto' and margin_l != 'auto' and margin_r != 'auto':
         # The equation is over-constrained.
-        if containing_block.style.direction == 'rtl':
+        if containing_block.style['direction'] == 'rtl':
             box.position_x += (
                 cb_width - paddings_plus_borders - width - margin_r - margin_l)
         # Do nothing in ltr.
@@ -371,11 +372,11 @@ def block_level_width(box, containing_block):
 
 def relative_positioning(box, containing_block):
     """Translate the ``box`` if it is relatively positioned."""
-    if box.style.position == 'relative':
+    if box.style['position'] == 'relative':
         resolve_position_percentages(box, containing_block)
 
         if box.left != 'auto' and box.right != 'auto':
-            if box.style.direction == 'ltr':
+            if box.style['direction'] == 'ltr':
                 translate_x = box.left
             else:
                 translate_x = -box.right
@@ -388,7 +389,7 @@ def relative_positioning(box, containing_block):
 
         if box.top != 'auto':
             translate_y = box.top
-        elif box.style.bottom != 'auto':
+        elif box.style['bottom'] != 'auto':
             translate_y = -box.bottom
         else:
             translate_y = 0
@@ -412,7 +413,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
     # See http://www.w3.org/TR/CSS21/visudet.html#normal-block
     #     http://www.w3.org/TR/CSS21/visudet.html#root-height
 
-    # if box.style.overflow != 'visible':
+    # if box.style['overflow'] != 'visible':
     #     ...
 
     # See http://www.w3.org/TR/CSS21/visuren.html#block-formatting
@@ -444,7 +445,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
 
     position_x = box.content_box_x()
 
-    if box.style.position == 'relative':
+    if box.style['position'] == 'relative':
         # New containing block, use a new absolute list
         absolute_boxes = []
 
@@ -470,7 +471,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                 placeholder = AbsolutePlaceholder(child)
                 placeholder.index = index
                 new_children.append(placeholder)
-                if child.style.position == 'absolute':
+                if child.style['position'] == 'absolute':
                     absolute_boxes.append(placeholder)
                 else:
                     fixed_boxes.append(placeholder)
@@ -522,7 +523,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                 # page and can advance in the context.
                 if new_position_y > max_position_y and (
                         new_children or not page_is_empty):
-                    over_orphans = len(new_children) - box.style.orphans
+                    over_orphans = len(new_children) - box.style['orphans']
                     if over_orphans < 0 and not page_is_empty:
                         # Reached the bottom of the page before we had
                         # enough lines for orphans, cancel the whole box.
@@ -532,7 +533,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                             False)
                     # How many lines we need on the next page to satisfy widows
                     # -1 for the current line.
-                    needed = box.style.widows - 1
+                    needed = box.style['widows'] - 1
                     if needed:
                         for _ in lines_iterator:
                             needed -= 1
@@ -727,7 +728,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
         resume_at = None
 
     if (resume_at is not None and
-            box.style.break_inside in ('avoid', 'avoid-page') and
+            box.style['break_inside'] in ('avoid', 'avoid-page') and
             not page_is_empty):
         return (
             None, None, {'break': 'any', 'page': None}, [], False)
@@ -775,7 +776,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
     if new_box.height == 'auto':
         new_box.height = position_y - new_box.content_box_y()
 
-    if new_box.style.position == 'relative':
+    if new_box.style['position'] == 'relative':
         # New containing block, resolve the layout of the absolute descendants
         for absolute_box in absolute_boxes:
             absolute_layout(context, absolute_box, new_box, fixed_boxes)
@@ -790,6 +791,9 @@ def block_container_layout(context, box, max_position_y, skip_stack,
     new_box.height = max(
         min(new_box.height, new_box.max_height),
         new_box.min_height)
+
+    if next_page['page'] is None:
+        next_page['page'] = new_box.page_values()[1]
 
     return new_box, resume_at, next_page, adjoining_margins, collapsing_through
 
@@ -815,7 +819,7 @@ def establishes_formatting_context(box):
         isinstance(box, boxes.BlockContainerBox) and
         not isinstance(box, boxes.BlockBox)
     ) or (
-        isinstance(box, boxes.BlockBox) and box.style.overflow != 'visible'
+        isinstance(box, boxes.BlockBox) and box.style['overflow'] != 'visible'
     )
 
 
@@ -837,7 +841,7 @@ def block_level_page_break(sibling_before, sibling_after):
     values = []
     box = sibling_before
     while isinstance(box, boxes.BlockLevelBox):
-        values.append(box.style.break_after)
+        values.append(box.style['break_after'])
         if not (isinstance(box, boxes.ParentBox) and box.children):
             break
         box = box.children[-1]
@@ -845,7 +849,7 @@ def block_level_page_break(sibling_before, sibling_after):
 
     box = sibling_after
     while isinstance(box, boxes.BlockLevelBox):
-        values.append(box.style.break_before)
+        values.append(box.style['break_before'])
         if not (isinstance(box, boxes.ParentBox) and box.children):
             break
         box = box.children[0]
@@ -884,8 +888,8 @@ def find_earlier_page_break(children, absolute_boxes, fixed_boxes):
     if children and isinstance(children[0], boxes.LineBox):
         # Normally `orphans` and `widows` apply to the block container, but
         # line boxes inherit them.
-        orphans = children[0].style.orphans
-        widows = children[0].style.widows
+        orphans = children[0].style['orphans']
+        widows = children[0].style['widows']
         index = len(children) - widows  # how many lines we keep
         if index < orphans:
             return None
@@ -907,7 +911,7 @@ def find_earlier_page_break(children, absolute_boxes, fixed_boxes):
                 break
             previous_in_flow = child
         if child.is_in_normal_flow() and (
-                child.style.break_inside not in ('avoid', 'avoid-page')):
+                child.style['break_inside'] not in ('avoid', 'avoid-page')):
             if isinstance(child, boxes.BlockBox):
                 result = find_earlier_page_break(
                     child.children, absolute_boxes, fixed_boxes)
@@ -930,7 +934,7 @@ def find_earlier_page_break(children, absolute_boxes, fixed_boxes):
 
 def reversed_enumerate(seq):
     """Like reversed(list(enumerate(seq))) without copying the whole seq."""
-    return izip(reversed(xrange(len(seq))), reversed(seq))
+    return zip(reversed(range(len(seq))), reversed(seq))
 
 
 def remove_placeholders(box_list, absolute_boxes, fixed_boxes):
@@ -941,8 +945,8 @@ def remove_placeholders(box_list, absolute_boxes, fixed_boxes):
     for box in box_list:
         if isinstance(box, boxes.ParentBox):
             remove_placeholders(box.children, absolute_boxes, fixed_boxes)
-        if box.style.position == 'absolute' and box in absolute_boxes:
+        if box.style['position'] == 'absolute' and box in absolute_boxes:
             # box is not in absolute_boxes if its parent has position: relative
             absolute_boxes.remove(box)
-        elif box.style.position == 'fixed':
+        elif box.style['position'] == 'fixed':
             fixed_boxes.remove(box)

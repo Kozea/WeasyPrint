@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.fonts
     ----------------
@@ -10,14 +9,11 @@
 
 """
 
-from __future__ import division
-
 import os
 import sys
 import tempfile
 import warnings
 
-from .compat import FILESYSTEM_ENCODING
 from .logger import LOGGER
 from .text import (
     cairo, dlopen, ffi, get_font_features, gobject, pango, pangocairo)
@@ -268,15 +264,14 @@ else:
                             rule_descriptors.get('font_stretch', 'normal')],
                         filename, features_string)
                     fd, conf_filename = tempfile.mkstemp()
-                    # TODO: coding is OK for <test> but what about <edit>?
-                    os.write(fd, xml.encode(FILESYSTEM_ENCODING))
+                    # TODO: is this encoding OK?
+                    os.write(fd, xml.encode('utf-8'))
                     os.close(fd)
                     self._filenames.append(conf_filename)
                     fontconfig.FcConfigParseAndLoad(
-                        config, conf_filename.encode(FILESYSTEM_ENCODING),
-                        True)
+                        config, conf_filename.encode('ascii'), True)
                     font_added = fontconfig.FcConfigAppFontAddFile(
-                        config, filename.encode(FILESYSTEM_ENCODING))
+                        config, filename.encode('ascii'))
                     if font_added:
                         # TODO: we should mask local fonts with the same name
                         # too as explained in Behdad's blog entry

@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.layout.pages
     -----------------------
@@ -10,9 +9,8 @@
 
 """
 
-from __future__ import division, unicode_literals
-
-from ..css import PageType, matching_page_types, set_computed_styles
+from ..css import (
+    PageType, computed_from_cascaded, matching_page_types, set_computed_styles)
 from ..formatting_structure import boxes, build
 from ..logger import LOGGER
 from .absolute import absolute_layout
@@ -300,17 +298,18 @@ def make_margin_boxes(context, page, counter_values):
 
         style = context.style_for(page.page_type, at_keyword)
         if style is None:
-            style = page.style.inherit_from()
+            style = computed_from_cascaded(
+                cascaded={}, parent_style=page.style, element=None)
         box = boxes.MarginBox(at_keyword, style)
         # Empty boxes should not be generated, but they may be needed for
         # the layout of their neighbors.
-        box.is_generated = style.content not in ('normal', 'none')
+        box.is_generated = style['content'] not in ('normal', 'none')
         # TODO: get actual counter values at the time of the last page break
         if box.is_generated:
             quote_depth = [0]
             box.children = build.content_to_boxes(
                 box.style, box, quote_depth, counter_values,
-                context.get_image_from_uri, context)
+                context.get_image_from_uri, context, page)
             # content_to_boxes() only produces inline-level boxes, no need to
             # run other post-processors from build.build_formatting_structure()
             box = build.inline_in_block(box)
@@ -405,11 +404,11 @@ def margin_box_content_layout(context, page, box):
     box, resume_at, next_page, _, _ = block_container_layout(
         context, box,
         max_position_y=float('inf'), skip_stack=None,
-        device_size=page.style.size, page_is_empty=True,
+        device_size=page.style['size'], page_is_empty=True,
         absolute_boxes=[], fixed_boxes=[])
     assert resume_at is None
 
-    vertical_align = box.style.vertical_align
+    vertical_align = box.style['vertical_align']
     # Every other value is read as 'top', ie. no change.
     if vertical_align in ('middle', 'bottom') and box.children:
         first_child = box.children[0]
@@ -488,7 +487,7 @@ def make_page(context, root_box, page_type, resume_at, page_number=None):
     style['overflow'] = root_box.viewport_overflow
     page = boxes.PageBox(page_type, style)
 
-    device_size = page.style.size
+    device_size = page.style['size']
 
     resolve_percentages(page, device_size)
 
@@ -522,7 +521,7 @@ def make_page(context, root_box, page_type, resume_at, page_number=None):
 
     page.fixed_boxes = [
         placeholder._box for placeholder in positioned_boxes
-        if placeholder._box.style.position == 'fixed']
+        if placeholder._box.style['position'] == 'fixed']
     for absolute_box in positioned_boxes:
         absolute_layout(context, absolute_box, page, positioned_boxes)
     context.finish_block_formatting_context(root_box)
@@ -567,7 +566,7 @@ def make_all_pages(context, root_box, html, cascaded_styles, computed_styles):
     first = True
 
     # Special case the root box
-    page_break = root_box.style.break_before
+    page_break = root_box.style['break_before']
     # TODO: take care of text direction and writing mode
     # https://www.w3.org/TR/css3-page/#progression
     if page_break in 'right':
@@ -575,11 +574,11 @@ def make_all_pages(context, root_box, html, cascaded_styles, computed_styles):
     elif page_break == 'left':
         right_page = False
     elif page_break in 'recto':
-        right_page = root_box.style.direction == 'ltr'
+        right_page = root_box.style['direction'] == 'ltr'
     elif page_break == 'verso':
-        right_page = root_box.style.direction == 'rtl'
+        right_page = root_box.style['direction'] == 'rtl'
     else:
-        right_page = root_box.style.direction == 'ltr'
+        right_page = root_box.style['direction'] == 'ltr'
 
     resume_at = None
     next_page = {'break': 'any', 'page': root_box.page_values()[0]}

@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.tests.test_api
     -------------------------
@@ -10,8 +9,6 @@
 
 """
 
-from __future__ import division, unicode_literals
-
 import contextlib
 import gzip
 import io
@@ -21,15 +18,15 @@ import sys
 import threading
 import unicodedata
 import zlib
+from urllib.parse import urlencode, urljoin, uses_relative
 
 import cairocffi as cairo
 import pytest
 from pdfrw import PdfReader
 
 from .. import CSS, HTML, __main__, default_url_fetcher, navigator
-from ..compat import iteritems, urlencode, urljoin, urlparse_uses_relative
 from ..urls import path2url
-from .test_draw import image_to_pixels
+from .test_draw import B, _, assert_pixels_equal, image_to_pixels, r
 from .testing_utils import (
     FakeHTML, assert_no_logs, capture_logs, http_server, resource_filename,
     temp_directory)
@@ -161,7 +158,6 @@ def test_css_parsing():
 
 
 def check_png_pattern(png_bytes, x2=False, blank=False, rotated=False):
-    from .test_draw import _, r, B, assert_pixels_equal
     if blank:
         expected_pixels = [
             _ + _ + _ + _ + _ + _ + _ + _,
@@ -430,7 +426,6 @@ def test_unicode_filenames():
     '''
     png_bytes = FakeHTML(string=html).write_png()
     check_png_pattern(png_bytes)
-    # Remember we have __future__.unicode_literals
     unicode_filename = 'Unicödé'
     if sys.platform.startswith('darwin'):
         unicode_filename = unicodedata.normalize('NFD', unicode_filename)
@@ -449,15 +444,6 @@ def test_unicode_filenames():
 
             FakeHTML(string=html).write_png(unicode_filename)
             assert read_file(bytes_filename) == png_bytes
-
-            # Surface.write_to_png does not accept bytes filenames
-            # on Python 3
-            if sys.version_info[0] < 3:
-                os.remove(unicode_filename)
-                assert os.listdir('.') == []
-
-                FakeHTML(string=html).write_png(bytes_filename)
-                assert read_file(unicode_filename) == png_bytes
 
 
 @assert_no_logs
@@ -543,7 +529,7 @@ def round_meta(pages):
     """
     for page in pages:
         anchors = page.anchors
-        for anchor_name, (pos_x, pos_y) in iteritems(anchors):
+        for anchor_name, (pos_x, pos_y) in anchors.items():
             anchors[anchor_name] = round(pos_x, 6), round(pos_y, 6)
         links = page.links
         for i, link in enumerate(links):
@@ -900,7 +886,7 @@ def test_navigator():
 
 
 # Make relative URL references work with our custom URL scheme.
-urlparse_uses_relative.append('weasyprint-custom')
+uses_relative.append('weasyprint-custom')
 
 
 @assert_no_logs
@@ -972,7 +958,7 @@ def test_html_meta():
             <meta name=dummy>
             <meta content=ignored>
             <meta>
-            <meta name=keywords content="html ,	css,
+            <meta name=keywords content="html ,\tcss,
                                          pdf,css">
             <meta name=dcterms.created content=2011-04>
             <meta name=dcterms.created content=2011-05>

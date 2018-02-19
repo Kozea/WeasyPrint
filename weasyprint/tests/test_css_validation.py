@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.tests.test_css_properties
     ------------------------------------
@@ -9,8 +8,6 @@
     :license: BSD, see LICENSE for details.
 
 """
-
-from __future__ import division, unicode_literals
 
 import math
 
@@ -294,7 +291,7 @@ def assert_background(css, **expected):
         assert expanded.pop(name) == value
     for name, value in expanded.items():
         if isinstance(value, list):
-            # TinyCSS returns lists where StyleDict stores tuples for hashing
+            # TinyCSS returns lists where style dicts store tuples for hashing
             # purpose
             value = tuple(value)
         assert value == INITIAL_VALUES[name] * nb_layers

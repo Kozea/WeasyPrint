@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.css.computed_values
     ------------------------------
@@ -10,8 +9,6 @@
     :license: BSD, see LICENSE for details.
 
 """
-
-from __future__ import division, unicode_literals
 
 from .. import text
 from ..urls import get_link_attribute
@@ -210,11 +207,6 @@ def compute(element, pseudo_type, specified, computed, parent_style,
 
     computed['_weasy_specified_display'] = specified['display']
     return computed
-
-
-# Let's be consistent, always use ``name`` as an argument even when
-# it is useless.
-# pylint: disable=W0613
 
 
 @register_computer('background-image')
@@ -476,8 +468,6 @@ def font_weight(computer, name, value):
         return 700
     elif value in ('bolder', 'lighter'):
         parent_value = computer.parent_style['font_weight']
-        # Use a string here as StyleDict.__setattr__ turns integers into pixel
-        # lengths. This is a number without unit.
         return FONT_WEIGHT_RELATIVE[value][parent_value]
     else:
         return value

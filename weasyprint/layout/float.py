@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.float
     ----------------
@@ -7,8 +6,6 @@
     :license: BSD, see LICENSE for details.
 
 """
-
-from __future__ import division, unicode_literals
 
 from ..formatting_structure import boxes
 from .markers import list_marker_layout
@@ -111,7 +108,7 @@ def find_float_position(context, box, containing_block):
     # Point 9
     # position_y is set now, let's define position_x
     # for float: left elements, it's already done!
-    if box.style.float == 'right':
+    if box.style['float'] == 'right':
         position_x += available_width - box.margin_width()
 
     box.translate(position_x - box.position_x, position_y - box.position_y)
@@ -125,7 +122,7 @@ def get_clearance(context, box, collapsed_margin=0):
     hypothetical_position = box.position_y + collapsed_margin
     # Hypothetical position is the position of the top border edge
     for excluded_shape in context.excluded_shapes:
-        if box.style['clear'] in (excluded_shape.style.float, 'both'):
+        if box.style['clear'] in (excluded_shape.style['float'], 'both'):
             y, h = excluded_shape.position_y, excluded_shape.margin_height()
             if hypothetical_position < y + h:
                 clearance = max(
@@ -157,11 +154,11 @@ def avoid_collisions(context, box, containing_block, outer=True):
         left_bounds = [
             shape.position_x + shape.margin_width()
             for shape in colliding_shapes
-            if shape.style.float == 'left']
+            if shape.style['float'] == 'left']
         right_bounds = [
             shape.position_x
             for shape in colliding_shapes
-            if shape.style.float == 'right']
+            if shape.style['float'] == 'right']
 
         # Set the default maximum bounds
         max_left_bound = containing_block.content_box_x()

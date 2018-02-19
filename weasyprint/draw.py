@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.draw
     ---------------
@@ -10,15 +9,12 @@
 
 """
 
-from __future__ import division, unicode_literals
-
 import contextlib
 import math
 import operator
 
 import cairocffi as cairo
 
-from .compat import xrange
 from .formatting_structure import boxes
 from .images import SVGImage
 from .layout.backgrounds import BackgroundLayer
@@ -129,6 +125,11 @@ def rgb2hsv(red, green, blue):
     return hue, saturation, cmax
 
 
+def get_color(style, key):
+    value = style[key]
+    return value if value != 'currentColor' else style['color']
+
+
 def darken(color):
     """Return a darker color."""
     hue, saturation, value = rgb2hsv(color.red, color.green, color.blue)
@@ -166,12 +167,13 @@ def draw_box_background_and_border(context, page, box, enable_hinting):
     draw_background(context, box.background, enable_hinting)
     if isinstance(box, boxes.TableBox):
         draw_table_backgrounds(context, page, box, enable_hinting)
-        if box.style.border_collapse == 'separate':
+        if box.style['border_collapse'] == 'separate':
             draw_border(context, box, enable_hinting)
             for row_group in box.children:
                 for row in row_group.children:
                     for cell in row.children:
-                        if cell.style.empty_cells == 'show' or not cell.empty:
+                        if (cell.style['empty_cells'] == 'show' or
+                                not cell.empty):
                             draw_border(context, cell, enable_hinting)
         else:
             draw_collapsed_borders(context, box, enable_hinting)
@@ -184,8 +186,8 @@ def draw_stacking_context(context, stacking_context, enable_hinting):
     # See http://www.w3.org/TR/CSS2/zindex.html
     with stacked(context):
         box = stacking_context.box
-        if box.is_absolutely_positioned() and box.style.clip:
-            top, right, bottom, left = box.style.clip
+        if box.is_absolutely_positioned() and box.style['clip']:
+            top, right, bottom, left = box.style['clip']
             if top == 'auto':
                 top = 0
             if right == 'auto':
@@ -201,7 +203,7 @@ def draw_stacking_context(context, stacking_context, enable_hinting):
                 bottom - top)
             context.clip()
 
-        if box.style.opacity < 1:
+        if box.style['opacity'] < 1:
             context.push_group()
 
         if box.transformation_matrix:
@@ -223,7 +225,7 @@ def draw_stacking_context(context, stacking_context, enable_hinting):
                 context, stacking_context.page, box, enable_hinting)
 
         with stacked(context):
-            if box.style.overflow != 'visible':
+            if box.style['overflow'] != 'visible':
                 # Only clip the content and the children:
                 # - the background is already clipped
                 # - the border must *not* be clipped
@@ -277,9 +279,9 @@ def draw_stacking_context(context, stacking_context, enable_hinting):
         # Point 10
         draw_outlines(context, box, enable_hinting)
 
-        if box.style.opacity < 1:
+        if box.style['opacity'] < 1:
             context.pop_group_to_source()
-            context.paint_with_alpha(box.style.opacity)
+            context.paint_with_alpha(box.style['opacity'])
 
 
 def rounded_box_path(context, radii):
@@ -417,8 +419,9 @@ def draw_table_backgrounds(context, page, table, enable_hinting):
         for row in row_group.children:
             draw_background(context, row.background, enable_hinting)
             for cell in row.children:
-                if table.style.border_collapse == 'collapse' or (
-                        cell.style.empty_cells == 'show' or not cell.empty):
+                if (table.style['border_collapse'] == 'collapse' or
+                        cell.style['empty_cells'] == 'show' or
+                        not cell.empty):
                     draw_background(context, cell.background, enable_hinting)
 
 
@@ -508,30 +511,31 @@ def draw_border(context, box, enable_hinting):
     def draw_column_border():
         """Draw column borders."""
         columns = (
-            box.style.column_width != 'auto' or
-            box.style.column_count != 'auto')
-        if columns and box.style.column_rule_width:
-            border_widths = (0, 0, 0, box.style.column_rule_width)
+            box.style['column_width'] != 'auto' or
+            box.style['column_count'] != 'auto')
+        if columns and box.style['column_rule_width']:
+            border_widths = (0, 0, 0, box.style['column_rule_width'])
             for child in box.children[1:]:
                 with stacked(context):
                     position_x = (child.position_x - (
-                        box.style.column_rule_width +
-                        box.style.column_gap) / 2)
+                        box.style['column_rule_width'] +
+                        box.style['column_gap']) / 2)
                     border_box = (
                         position_x, child.position_y,
-                        box.style.column_rule_width, box.height)
+                        box.style['column_rule_width'], box.height)
                     clip_border_segment(
-                        context, enable_hinting, box.style.column_rule_style,
-                        box.style.column_rule_width, 'left', border_box,
+                        context, enable_hinting,
+                        box.style['column_rule_style'],
+                        box.style['column_rule_width'], 'left', border_box,
                         border_widths)
                     draw_rect_border(
                         context, border_box, border_widths,
-                        box.style.column_rule_style, styled_color(
-                            box.style.column_rule_style,
-                            box.style.get_color('column_rule_color'), 'left'))
+                        box.style['column_rule_style'], styled_color(
+                            box.style['column_rule_style'],
+                            get_color(box.style, 'column_rule_color'), 'left'))
 
     # The box is hidden, easy.
-    if box.style.visibility != 'visible':
+    if box.style['visibility'] != 'visible':
         draw_column_border()
         return
 
@@ -542,7 +546,7 @@ def draw_border(context, box, enable_hinting):
         draw_column_border()
         return
 
-    colors = [box.style.get_color('border_%s_color' % side) for side in SIDES]
+    colors = [get_color(box.style, 'border_%s_color' % side) for side in SIDES]
     styles = [
         colors[i].alpha and box.style['border_%s_style' % side]
         for (i, side) in enumerate(SIDES)]
@@ -821,10 +825,10 @@ def draw_rect_border(context, box, widths, style, color):
 
 
 def draw_outlines(context, box, enable_hinting):
-    width = box.style.outline_width
-    color = box.style.get_color('outline_color')
-    style = box.style.outline_style
-    if box.style.visibility == 'visible' and width != 0 and color.alpha != 0:
+    width = box.style['outline_width']
+    color = get_color(box.style, 'outline_color')
+    style = box.style['outline_style']
+    if box.style['visibility'] == 'visible' and width and color.alpha:
         outline_box = (
             box.border_box_x() - width, box.border_box_y() - width,
             box.border_width() + 2 * width, box.border_height() + 2 * width)
@@ -935,11 +939,11 @@ def draw_collapsed_borders(context, table, enable_hinting):
             score, style, width, color, 'top',
             (pos_x1, pos_y - width / 2, pos_x2 - pos_x1, 0)))
 
-    for x in xrange(grid_width):
+    for x in range(grid_width):
         add_horizontal(x, 0)
-    for y in xrange(grid_height):
+    for y in range(grid_height):
         add_vertical(0, y)
-        for x in xrange(grid_width):
+        for x in range(grid_width):
             add_vertical(x + 1, y)
             add_horizontal(x, y + 1)
 
@@ -966,7 +970,7 @@ def draw_collapsed_borders(context, table, enable_hinting):
 
 def draw_replacedbox(context, box):
     """Draw the given :class:`boxes.ReplacedBox` to a ``cairo.context``."""
-    if box.style.visibility != 'visible' or box.width == 0 or box.height == 0:
+    if box.style['visibility'] != 'visible' or not box.width or not box.height:
         return
 
     with stacked(context):
@@ -974,7 +978,7 @@ def draw_replacedbox(context, box):
         context.clip()
         context.translate(box.content_box_x(), box.content_box_y())
         box.replacement.draw(
-            context, box.width, box.height, box.style.image_rendering)
+            context, box.width, box.height, box.style['image_rendering'])
 
 
 def draw_inline_level(context, page, box, enable_hinting):
@@ -1002,17 +1006,17 @@ def draw_inline_level(context, page, box, enable_hinting):
 def draw_text(context, textbox, enable_hinting):
     """Draw ``textbox`` to a ``cairo.Context`` from ``PangoCairo.Context``."""
     # Pango crashes with font-size: 0
-    assert textbox.style.font_size
+    assert textbox.style['font_size']
 
-    if textbox.style.visibility != 'visible':
+    if textbox.style['visibility'] != 'visible':
         return
 
     context.move_to(textbox.position_x, textbox.position_y + textbox.baseline)
-    context.set_source_rgba(*textbox.style.color)
+    context.set_source_rgba(*textbox.style['color'])
     show_first_line(context, textbox.pango_layout, enable_hinting)
-    values = textbox.style.text_decoration
+    values = textbox.style['text_decoration']
 
-    thickness = textbox.style.font_size / 18  # That's what other browsers do
+    thickness = textbox.style['font_size'] / 18  # Like other browsers do
     if enable_hinting and thickness < 1:
         thickness = 1
 
@@ -1043,7 +1047,7 @@ def draw_text_decoration(context, textbox, offset_y, thickness,
     with stacked(context):
         if enable_hinting:
             context.set_antialias(cairo.ANTIALIAS_NONE)
-        context.set_source_rgba(*textbox.style.color)
+        context.set_source_rgba(*textbox.style['color'])
         context.set_line_width(thickness)
         context.move_to(textbox.position_x, textbox.position_y + offset_y)
         context.rel_line_to(textbox.width, 0)

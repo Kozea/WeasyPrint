@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.__main__
     -------------------
@@ -9,9 +8,6 @@
     :license: BSD, see LICENSE for details.
 
 """
-
-# No __future__.unicode_literals here.
-# Native strings are fine with argparse, unicode makes --help crash on 2.6.
 
 import argparse
 import logging
