@@ -78,6 +78,7 @@ class Box(object):
     is_table_wrapper = False
     is_flex_item = False
     is_for_root_element = False
+    is_column = False
     transformation_matrix = None
     bookmark_label = None
     string_set = None
