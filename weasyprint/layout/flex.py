@@ -1,4 +1,3 @@
-# coding: utf-8
 """
     weasyprint.layout.flex
     ------------------------
@@ -9,8 +8,6 @@
     :license: BSD, see LICENSE for details.
 
 """
-
-from __future__ import division, unicode_literals
 
 from math import log10
 
