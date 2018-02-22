@@ -640,6 +640,9 @@ def replaced_max_content_width(box, outer=True):
         width, _ = default_image_sizing(
             iwidth, iheight, image.intrinsic_ratio, 'auto', height,
             default_width=300, default_height=150)
+    elif box.style['width'].unit == '%':
+        # See https://drafts.csswg.org/css-sizing/#intrinsic-contribution
+        width = 0
     else:
         assert width.unit == 'px'
         width = width.value
