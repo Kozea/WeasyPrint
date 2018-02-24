@@ -336,7 +336,24 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
 
         # Step 6.5
         for child in line:
-            setattr(child, axis, child.target_main_size)
+            if axis == 'width':
+                child.width = (
+                    child.target_main_size -
+                    child.padding_left - child.padding_right -
+                    child.border_left_width - child.border_right_width)
+                if child.margin_left != 'auto':
+                    child.width -= child.margin_left
+                if child.margin_right != 'auto':
+                    child.width -= child.margin_right
+            else:
+                child.height = (
+                    child.target_main_size -
+                    child.padding_top - child.padding_bottom -
+                    child.border_top_width - child.border_bottom_width)
+                if child.margin_top != 'auto':
+                    child.height -= child.margin_top
+                if child.margin_bottom != 'auto':
+                    child.height -= child.margin_bottom
 
     # Step 7
     # TODO: fix TODO in build.flex_children
