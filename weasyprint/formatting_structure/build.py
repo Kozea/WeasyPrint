@@ -399,7 +399,14 @@ def wrap_improper(box, children, wrapper_type, test=None):
             # Whitespace either fail the test or were removed earlier,
             # so there is no need to take special care with the definition
             # of "consecutive".
-            improper.append(child)
+            if isinstance(box, boxes.FlexContainerBox):
+                # The display value of a flex item must be "blockified", see
+                # https://www.w3.org/TR/css-flexbox-1/#flex-items
+                # TODO: These blocks are currently ignored, we should
+                # "blockify" them and their children.
+                pass
+            else:
+                improper.append(child)
     if improper:
         wrapper = wrapper_type.anonymous_from(box, children=[])
         # Apply the rules again on the new wrapper

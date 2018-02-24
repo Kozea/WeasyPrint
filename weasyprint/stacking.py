@@ -101,7 +101,8 @@ class StackingContext(object):
                 elif box.is_floated():
                     floats.append(StackingContext.from_box(
                         box, page, child_contexts))
-                elif isinstance(box, boxes.InlineBlockBox):
+                elif isinstance(
+                        box, (boxes.InlineBlockBox, boxes.InlineFlexBox)):
                     # Have this fake stacking context be part of the "normal"
                     # box tree, because we need its position in the middle
                     # of a tree of inline boxes.

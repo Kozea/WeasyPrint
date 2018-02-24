@@ -282,9 +282,10 @@ def break_before_after(computer, name, value):
 @register_computer('padding-left')
 @register_computer('text-indent')
 @register_computer('hyphenate-limit-zone')
+@register_computer('flex-basis')
 def length(computer, name, value, font_size=None, pixels_only=False):
     """Compute a length ``value``."""
-    if value == 'auto':
+    if value in ('auto', 'content'):
         return value
     if value.value == 0:
         return 0 if pixels_only else ZERO_PIXELS

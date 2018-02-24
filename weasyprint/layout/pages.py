@@ -508,7 +508,7 @@ def make_page(context, root_box, page_type, resume_at, page_number=None):
 
     # TODO: handle cases where the root element is something else.
     # See http://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
-    assert isinstance(root_box, boxes.BlockBox)
+    assert isinstance(root_box, (boxes.BlockBox, boxes.FlexContainerBox))
     context.create_block_formatting_context()
     page_is_empty = True
     adjoining_margins = []
