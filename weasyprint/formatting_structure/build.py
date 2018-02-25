@@ -839,7 +839,12 @@ def flex_children(box, children):
                 # inline level boxes. This is false but currently needed
                 # because block_level_width and block_level_layout are called
                 # in layout.flex.
-                anonymous = boxes.BlockBox.anonymous_from(box, [child])
+                if isinstance(child, boxes.ParentBox):
+                    anonymous = boxes.BlockBox.anonymous_from(
+                        box, child.children)
+                    anonymous.style = child.style
+                else:
+                    anonymous = boxes.BlockBox.anonymous_from(box, [child])
                 anonymous.is_flex_item = True
                 flex_children.append(anonymous)
             else:
