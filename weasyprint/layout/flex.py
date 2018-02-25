@@ -112,7 +112,18 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                 flex_basis = 'content'
             else:
                 resolve_one_percentage(child, axis, available_main_space)
-                flex_basis = getattr(child, axis)
+                if axis == 'width':
+                    flex_basis = child.border_width()
+                    if child.margin_left != 'auto':
+                        flex_basis += child.margin_left
+                    if child.margin_right != 'auto':
+                        flex_basis += child.margin_right
+                else:
+                    flex_basis = child.border_height()
+                    if child.margin_top != 'auto':
+                        flex_basis += child.margin_top
+                    if child.margin_bottom != 'auto':
+                        flex_basis += child.margin_bottom
 
         # Step 3.A
         if flex_basis != 'content':
@@ -142,7 +153,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                         context, new_child, float('inf'), skip_stack,
                         box, device_size, page_is_empty, absolute_boxes,
                         fixed_boxes, adjoining_margins=[])[0]
-                    child.flex_base_size = new_child.height
+                    child.flex_base_size = new_child.margin_height()
             elif child.style[axis] == 'min-content':
                 child.style[axis] = 'auto'
                 if axis == 'width':
@@ -154,9 +165,10 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                         context, new_child, float('inf'), skip_stack,
                         box, device_size, page_is_empty, absolute_boxes,
                         fixed_boxes, adjoining_margins=[])[0]
-                    child.flex_base_size = new_child.height
+                    child.flex_base_size = new_child.margin_height()
             else:
                 assert child.style[axis].unit == 'px'
+                # TODO: should we add padding, borders and margins?
                 child.flex_base_size = child.style[axis].value
 
         # TODO: the flex base size shouldn't take care of min and max sizes
@@ -175,10 +187,6 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                     child.hypothetical_main_size +
                     child.border_top_width + child.border_bottom_width +
                     child.padding_top + child.padding_bottom)
-                if child.margin_top != 'auto':
-                    child_height += child.margin_top
-                if child.margin_bottom != 'auto':
-                    child_height += child.margin_bottom
                 if child_height + box.height > main_space:
                     resume_at = (i, None)
                     children = children[:i]
@@ -348,12 +356,12 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
             else:
                 child.height = (
                     child.target_main_size -
-                    child.padding_top - child.padding_bottom -
-                    child.border_top_width - child.border_bottom_width)
-                if child.margin_top != 'auto':
-                    child.height -= child.margin_top
-                if child.margin_bottom != 'auto':
-                    child.height -= child.margin_bottom
+                    child.padding_left - child.padding_right -
+                    child.border_left_width - child.border_right_width)
+                if child.margin_left != 'auto':
+                    child.height -= child.margin_left
+                if child.margin_right != 'auto':
+                    child.height -= child.margin_right
 
     # Step 7
     # TODO: fix TODO in build.flex_children
