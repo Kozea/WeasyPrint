@@ -364,13 +364,13 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                     child.height -= child.margin_right
 
     # Step 7
-    # TODO: fix TODO in build.flex_children
-    # TODO: Handle breaks, skip_stack and resume_at instead of excluding Nones
+    # TODO: Fix TODO in build.flex_children
+    # TODO: Handle breaks
     new_flex_lines = []
     for line in flex_lines:
         new_flex_line = FlexLine()
         for child in line:
-            # TODO: Find another way than calling block_container_layout to get
+            # TODO: Find another way than calling block_level_layout to get
             # baseline and child.height
             child_copy = child.copy_with_children(child.children)
             if child_copy.margin_top == 'auto':
@@ -712,7 +712,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                 elif box.style['align_content'] == 'space-around':
                     cross_translate += extra_cross_size / len(flex_lines)
 
-    # TODO: don't use block_level_layout, see TODOs in Step 14 and
+    # TODO: don't use block_container_layout, see TODOs in Step 14 and
     # build.flex_children.
     box = box.copy()
     box.children = []
