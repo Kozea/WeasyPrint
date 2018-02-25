@@ -243,7 +243,6 @@ by configuring the ``weasyprint`` logger object:
 
     import logging
     logger = logging.getLogger('weasyprint')
-    logger.handlers = []  # Remove the default stderr handler
     logger.addHandler(logging.FileHandler('/path/to/weasyprint.log'))
 
 The ``INFO`` level is used to report the rendering progress. It is useful to

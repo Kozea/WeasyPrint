@@ -77,6 +77,7 @@ class Box(object):
     # Default, may be overriden on instances.
     is_table_wrapper = False
     is_for_root_element = False
+    is_column = False
     transformation_matrix = None
     bookmark_label = None
     string_set = None

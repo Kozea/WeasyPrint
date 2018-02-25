@@ -170,6 +170,7 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
         column_box = box.anonymous_from(box, children=[
             child.copy() for child in box.children])
         resolve_percentages(column_box, containing_block)
+        column_box.is_column = True
         column_box.width = width
         column_box.position_x = box.content_box_x()
         column_box.position_y = box.content_box_y()
@@ -238,7 +239,11 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
             if i == count - 1:
                 max_position_y = original_max_position_y
             column_box = create_column_box()
-            column_box.position_x += i * (width + style['column_gap'])
+            if style['direction'] == 'rtl':
+                column_box.position_x += (
+                    box.width - (i + 1) * width - i * style['column_gap'])
+            else:
+                column_box.position_x += i * (width + style['column_gap'])
             new_child, skip_stack, next_page, _, _ = block_box_layout(
                 context, column_box, max_position_y, skip_stack,
                 containing_block, device_size, page_is_empty, absolute_boxes,
@@ -340,7 +345,7 @@ def block_level_width(box, containing_block):
                 margin_r = box.margin_right = 0
     if width != 'auto' and margin_l != 'auto' and margin_r != 'auto':
         # The equation is over-constrained.
-        if containing_block.style['direction'] == 'rtl':
+        if containing_block.style['direction'] == 'rtl' and not box.is_column:
             box.position_x += (
                 cb_width - paddings_plus_borders - width - margin_r - margin_l)
         # Do nothing in ltr.
