@@ -27,7 +27,7 @@ class FlexLine(list):
 def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                 device_size, page_is_empty, absolute_boxes, fixed_boxes):
     # Avoid a circular import
-    from . import blocks
+    from . import blocks, preferred
 
     resume_at = None
 
@@ -86,7 +86,10 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
 
     # Step 3
     resolve_percentages(box, containing_block)
-    blocks.block_level_width(box, containing_block)
+    if isinstance(box, boxes.FlexBox):
+        blocks.block_level_width(box, containing_block)
+    else:
+        box.width = preferred.flex_max_content_width(context, box)
     children = box.children
     if skip_stack is not None:
         assert skip_stack[1] is None
@@ -585,7 +588,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
         box.content_box_y() if cross == 'height'
         else box.content_box_x())
     for line in flex_lines:
-        lower_baseline = 0
+        line.lower_baseline = 0
         # TODO: don't duplicate this loop
         for child in line:
             align_self = child.style['align_self']
@@ -594,7 +597,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
             if align_self == 'baseline' and axis == 'width':
                 # TODO: handle vertical text
                 child.baseline = child._baseline - position_cross
-                lower_baseline = max(lower_baseline, child.baseline)
+                line.lower_baseline = max(line.lower_baseline, child.baseline)
         for child in line:
             cross_margins = (
                 (child.margin_top, child.margin_bottom) if cross == 'height'
@@ -658,7 +661,8 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                             line.cross_size - child.margin_width()) / 2
                 elif align_self == 'baseline':
                     if cross == 'height':
-                        child.position_y += lower_baseline - child.baseline
+                        child.position_y += (
+                            line.lower_baseline - child.baseline)
                     else:
                         # Handle vertical text
                         pass
@@ -728,11 +732,22 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                     list_marker_layout(context, new_child)
                     box.children.append(new_child)
 
+    # Set box height
     if axis == 'width' and box.height == 'auto':
         if flex_lines:
             box.height = sum(line.cross_size for line in flex_lines)
         else:
             box.height = 0
+
+    # Set baseline
+    # See https://www.w3.org/TR/css-flexbox-1/#flex-baselines
+    # TODO: use the real algorithm
+    if isinstance(box, boxes.InlineFlexBox):
+        if axis == 'width':  # and main text direction is horizontal
+            box.baseline = flex_lines[0].lower_baseline if flex_lines else 0
+        else:
+            box.baseline = (
+                find_in_flow_baseline(box.children[0]) if box.children else 0)
 
     # TODO: check these returned values
     return box, resume_at, {'break': 'any', 'page': None}, [], False

@@ -613,7 +613,6 @@ def split_inline_level(context, box, position_x, max_x, skip_stack,
     elif isinstance(box, boxes.InlineFlexBox):
         box.position_x = position_x
         box.position_y = 0
-        box.baseline = 0
         for side in ['top', 'right', 'bottom', 'left']:
             if getattr(box, 'margin_' + side) == 'auto':
                 setattr(box, 'margin_' + side, 0)
@@ -1101,7 +1100,7 @@ def inline_box_verticality(box, top_bottom_subtrees, baseline_y):
 
         # the child’s `top` is `child.baseline` above (lower y) its baseline.
         top = child_baseline_y - child.baseline
-        if isinstance(child, boxes.InlineBlockBox):
+        if isinstance(child, (boxes.InlineBlockBox, boxes.InlineFlexBox)):
             # This also includes table wrappers for inline tables.
             child.translate(dy=top - child.position_y)
         else:
