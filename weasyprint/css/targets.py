@@ -140,7 +140,7 @@ class _TargetCollector(object):
         item = self.items.get(anchor_name, None)
         if item:
             LOGGER.debug(
-                'store_target? %s %s', anchor_name, 
+                'store_target? %s %s', anchor_name,
                 TARGET_STATE.name(item.state))
             if item.state == TARGET_STATE.PENDING:
                 LOGGER.debug('   -> update: %s', target_counter_values)
