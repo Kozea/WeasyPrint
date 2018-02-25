@@ -91,6 +91,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
     if skip_stack is not None:
         assert skip_stack[1] is None
         children = children[skip_stack[0]:]
+    skip_stack = None
     for child in children:
         if not child.is_flex_item:
             continue
