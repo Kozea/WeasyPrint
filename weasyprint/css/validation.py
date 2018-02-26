@@ -1618,7 +1618,6 @@ def validate_content_list_token(base_url, token, for_content_box):
         raise InvalidValues('invalid value/unsupported token ´%s\´' % (token,))
 
     name, args = function
-    prototype = (name, [a.type for a in args])
     # known functions in 'content', 'string-set' and 'bookmark-label':
     valid_functions = ['attr',
                        'counter', 'counters',
@@ -1626,7 +1625,7 @@ def validate_content_list_token(base_url, token, for_content_box):
     # 'content'
     if for_content_box:
         valid_functions += ['string',
-                           'leader']
+                            'leader']
     else:
         valid_functions += ['content']
     unsupported_functions = ['leader']
@@ -1639,11 +1638,12 @@ def validate_content_list_token(base_url, token, for_content_box):
         LOGGER.warn('\'%s()\' not (yet) supported', name)
         return ('STRING', '')
 
+    prototype = (name, [a.type for a in args])
     args = [getattr(a, 'value', a) for a in args]
     if prototype == ('attr', ['ident']):
         # TODO: what about ``attr(href url)`` ?
         return (name, args[0])
-    elif prototype in (('content', ()), ('content', ('ident',))):
+    elif prototype in (('content', []), ('content', ['ident',])):
         if not args:
             return (name, 'text')
         elif args[0] in ('text', 'after', 'before', 'first-letter'):
