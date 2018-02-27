@@ -712,8 +712,8 @@ def test_breaking_linebox():
         'aaaa aaaa a [<span>aaa</span>]')
     html, = page.children
     body, = html.children
-    pre, = body.children
-    line1, line2, line3, line4 = pre.children
+    div, = body.children
+    line1, line2, line3, line4 = div.children
     assert line1.children[0].text == line2.children[0].text == 'aaaa'
     assert line3.children[0].text == 'a'
     text1, span, text2 = line4.children
@@ -727,13 +727,27 @@ def test_breaking_linebox():
         'aaaa a <span>b c</span>d')
     html, = page.children
     body, = html.children
-    pre, = body.children
-    line1, line2, line3 = pre.children
+    div, = body.children
+    line1, line2, line3 = div.children
     assert line1.children[0].text == 'aaaa'
     assert line2.children[0].text == 'a '
     assert line2.children[1].children[0].text == 'b'
     assert line3.children[0].children[0].text == 'c'
     assert line3.children[1].text == 'd'
+
+    # Regression test #1 for https://github.com/Kozea/WeasyPrint/issues/580
+    page, = parse(
+        '<div style="width: 5.5em; font-family: ahem">'
+        '<span>aaaa aaaa a a a</span><span>bc</span>')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    line1, line2, line3, line4 = div.children
+    assert line1.children[0].children[0].text == 'aaaa'
+    assert line2.children[0].children[0].text == 'aaaa'
+    assert line3.children[0].children[0].text == 'a a'
+    assert line4.children[0].children[0].text == 'a'
+    assert line4.children[1].children[0].text == 'bc'
 
 
 @assert_no_logs
