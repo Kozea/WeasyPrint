@@ -2261,9 +2261,9 @@ def expand_flex(base_url, name, tokens):
 def expand_flex_flow(base_url, name, tokens):
     """Expand the ``flex-flow`` property."""
     if len(tokens) == 2:
-        for sorted_tokens in tokens, tokens[::1]:
-            direction = flex_direction([tokens[0]])
-            wrap = flex_wrap([tokens[1]])
+        for sorted_tokens in tokens, tokens[::-1]:
+            direction = flex_direction([sorted_tokens[0]])
+            wrap = flex_wrap([sorted_tokens[1]])
             if direction and wrap:
                 yield 'flex-direction', direction
                 yield 'flex-wrap', wrap
