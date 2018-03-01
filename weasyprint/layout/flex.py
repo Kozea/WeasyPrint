@@ -604,7 +604,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                 else (child.margin_left, child.margin_right))
             auto_margins = sum([margin == 'auto' for margin in cross_margins])
             if auto_margins:
-                extra_cross = available_cross_space
+                extra_cross = line.cross_size
                 if cross == 'height':
                     extra_cross -= child.border_height()
                     if child.margin_top != 'auto':
