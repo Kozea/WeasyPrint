@@ -29,6 +29,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
     # Avoid a circular import
     from . import blocks, preferred
 
+    context.create_block_formatting_context()
     resume_at = None
 
     # Step 1 is done in formatting_structure.boxes
@@ -748,6 +749,8 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
         else:
             box.baseline = (
                 find_in_flow_baseline(box.children[0]) if box.children else 0)
+
+    context.finish_block_formatting_context(box)
 
     # TODO: check these returned values
     return box, resume_at, {'break': 'any', 'page': None}, [], False
