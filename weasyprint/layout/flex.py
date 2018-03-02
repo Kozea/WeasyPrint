@@ -39,8 +39,8 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
     else:
         axis, cross = 'height', 'width'
 
-    if box.style[axis] != 'auto':
-        available_main_space = box.style[axis].value
+    if getattr(box, axis) != 'auto':
+        available_main_space = getattr(box, axis)
     else:
         if axis == 'width':
             available_main_space = (
@@ -62,8 +62,8 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                 box.padding_top - box.padding_bottom -
                 box.border_top_width - box.border_bottom_width)
 
-    if box.style[cross] != 'auto':
-        available_cross_space = box.style[cross].value
+    if getattr(box, cross) != 'auto':
+        available_cross_space = getattr(box, cross)
     else:
         if cross == 'height':
             main_space = max_position_y - box.content_box_y()
