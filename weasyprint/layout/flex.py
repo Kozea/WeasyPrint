@@ -233,7 +233,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
     # Step 6
     # See https://www.w3.org/TR/css-flexbox-1/#resolve-flexible-lengths
     for line in flex_lines:
-        # Step 6.1
+        # Step 6 - 9.7.1
         hypothetical_main_size = sum(
             child.hypothetical_main_size for child in line)
         if hypothetical_main_size < available_main_space:
@@ -241,7 +241,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
         else:
             flex_factor_type = 'shrink'
 
-        # Step 6.2
+        # Step 6 - 9.7.2
         for child in line:
             if flex_factor_type == 'grow':
                 child.flex_factor = child.style['flex_grow']
@@ -257,7 +257,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
             else:
                 child.frozen = False
 
-        # Step 6.3
+        # Step 6 - 9.7.3
         initial_free_space = available_main_space
         for child in line:
             if child.frozen:
@@ -265,12 +265,12 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
             else:
                 initial_free_space -= child.flex_base_size
 
-        # Step 6.4
+        # Step 6 - 9.7.4
         while not all(child.frozen for child in line):
             unfrozen_factor_sum = 0
             remaining_free_space = available_main_space
 
-            # Step 6.4.b
+            # Step 6 - 9.7.4.b
             for child in line:
                 if child.frozen:
                     remaining_free_space -= child.target_main_size
@@ -295,7 +295,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
             if initial_magnitude < remaining_magnitude:
                 remaining_free_space = initial_free_space
 
-            # Step 6.4.c
+            # Step 6 - 9.7.4.c
             if remaining_free_space == 0:
                 # "Do nothing", but we at least set the flex_base_size as
                 # target_main_size for next step.
@@ -332,7 +332,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                                     child.flex_base_size +
                                     remaining_free_space * ratio)
 
-            # Step 6.4.d
+            # Step 6 - 9.7.4.d
             # TODO: First part of this step is useless until 3.E is correct
             for child in line:
                 child.adjustment = 0
@@ -340,7 +340,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                     child.adjustment = -child.target_main_size
                     child.target_main_size = 0
 
-            # Step 6.4.e
+            # Step 6 - 9.7.4.e
             adjustments = sum(child.adjustment for child in line)
             for child in line:
                 if adjustments == 0:
@@ -350,7 +350,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                 elif adjustments < 0 and child.adjustment < 0:
                     child.frozen = True
 
-        # Step 6.5
+        # Step 6 - 9.7.5
         for child in line:
             if axis == 'width':
                 child.width = (
