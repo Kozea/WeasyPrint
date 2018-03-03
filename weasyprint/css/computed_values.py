@@ -401,37 +401,58 @@ def column_gap(computer, name, value):
     return length(computer, name, value, pixels_only=True)
 
 
+def _toSelector(el, pseudo_type):
+    """convenience function"""
+    elname = type(el).__name__
+    if elname == 'PageType':
+        return ('@page%s %s%s%s %s    ' % (
+            ' ' + el.name if el.name else '',
+            ':' + el.side if el.side else '',
+            ':blank' if el.blank else '',
+            ':first' if el.first else '',
+            pseudo_type if pseudo_type else ''
+            )).rstrip()
+    elif elname == 'Element':
+        return '%s%s' % (
+            el.tag,
+            '::' + pseudo_type if pseudo_type else ''
+            )
+    else:
+        return '<%s>' % (
+            ('%s %s' % (elname, pseudo_type)).rstrip())
+
+
+@register_computer('string-set')
+def string_set(computer, name, values):
+    """Compute the <content-lists> of the ``string-set`` property."""
+    # never happens, but...prudence is the better part of valor
+    if values in ('normal', 'none'):
+        return values
+    if type(computer.element).__name__ != 'Element' or computer.pseudo_type:
+        LOGGER.debug(
+            'property `%s` discarded: %s in selector `%s`.',
+            name,
+            'Not a real element',
+            _toSelector(computer.element, computer.pseudo_type))
+        return 'none'
+    return tuple(
+        (string_name, content(computer, name, string_values))
+        for i, (string_name, string_values) in enumerate(values))
+
+
+@register_computer('bookmark-label')
 @register_computer('content')
 def content(computer, name, values):
-    """Compute the ``content`` property."""
+    """Compute the <content-list>s of ``content``,
+    ``bookmark-label`` and ``string-set`` property."""
 
     class ComputedContentError(ValueError):
         """Invalid or unsupported values for a known CSS property."""
 
-    def _toSelector(el, pseudo_type):
-        """convenience function for """
-        elname = type(el).__name__
-        if elname == 'PageType':
-            return ('@page%s %s%s%s %s    ' % (
-                ' ' + el.name if el.name else '',
-                ':' + el.side if el.side else '',
-                ':blank' if el.blank else '',
-                ':first' if el.first else '',
-                pseudo_type if pseudo_type else ''
-                )).rstrip()
-        elif elname == 'Element':
-            return '%s%s' % (
-                el.tag,
-                '::' + pseudo_type if pseudo_type else ''
-                )
-        else:
-            return '<%s>' % (
-                ('%s %s' % (elname, pseudo_type)).rstrip()
-                )
-
     def computed_content_error(level, reason):
         getattr(LOGGER, level)(
-            'content discarded: %s in selector `%s`.',
+            'property `%s` discarded: %s in selector `%s`.',
+            name,
             reason,
             _toSelector(computer.element, computer.pseudo_type)
             )
@@ -463,20 +484,29 @@ def content(computer, name, values):
     if values in ('normal', 'none'):
         return values
 
-    if not computer.pseudo_type:
+    if name == 'content':
         # [CSS3 spec](https://www.w3.org/TR/css-content-3/#content-property)
         # says:
         # > 'content' applies to:
         # > ::before, ::after, ::marker, and page margin boxes.
         # > Image and url values can apply to all elements.
-        computed_content_error(
-            'debug',
-            'Not a pseudo-element')
-        return 'none'
+        if not computer.pseudo_type:
+            computed_content_error(
+                'debug',
+                'Not a pseudo-element')
+            return 'none'
+    else:
+        # ignore string-set, bookmark-label unless in a *real* element
+        if type(computer.element).__name__ != 'Element' \
+           or computer.pseudo_type:
+            computed_content_error(
+                'debug',
+                'Not a real element')
+            return 'none'
+
     target_checks = ['target-counter', 'target-counters', 'target-text']
     try:
-        # TODO: catch `string()` in pseudo-elements! Kills script in
-        # build.content_to_boxes()
+        # TODO: catch `string()` when not in @page-margin
         return tuple(
             ('STRING', computer.element.get(value, ''))
             if type_ == 'attr' else (

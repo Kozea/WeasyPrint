@@ -1643,7 +1643,7 @@ def validate_content_list_token(base_url, token, for_content_box):
     if prototype == ('attr', ['ident']):
         # TODO: what about ``attr(href url)`` ?
         return (name, args[0])
-    elif prototype in (('content', []), ('content', ['ident',])):
+    elif prototype in (('content', []), ('content', ['ident', ])):
         if not args:
             return (name, 'text')
         elif args[0] in ('text', 'after', 'before', 'first-letter'):
