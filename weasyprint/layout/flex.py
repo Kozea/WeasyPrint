@@ -456,7 +456,17 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                         child_cross_size, non_collected_cross_size)
             line.cross_size = max(
                 collected_cross_size, non_collected_cross_size)
-        # TODO: handle min/max height for single-line containers
+
+    if len(flex_lines) == 1:
+        line, = flex_lines
+        min_cross_size = getattr(box, 'min_%s' % cross)
+        if min_cross_size == 'auto':
+            min_cross_size = float('-inf')
+        max_cross_size = getattr(box, 'max_%s' % cross)
+        if max_cross_size == 'auto':
+            max_cross_size = float('inf')
+        line.cross_size = max(
+            min_cross_size, min(line.cross_size, max_cross_size))
 
     # Step 9
     if box.style['align_content'] == 'stretch':
