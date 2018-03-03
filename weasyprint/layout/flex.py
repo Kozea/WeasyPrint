@@ -314,9 +314,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                         flex_grow_factors_sum += child.style['flex_grow']
                 for child in line:
                     if not child.frozen:
-                        if scaled_flex_shrink_factors_sum == 0:
-                            child.target_main_size = child.flex_base_size
-                        elif flex_factor_type == 'grow':
+                        if flex_factor_type == 'grow':
                             ratio = (
                                 child.style['flex_grow'] /
                                 flex_grow_factors_sum)
@@ -324,12 +322,15 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                                 child.flex_base_size +
                                 remaining_free_space * ratio)
                         elif flex_factor_type == 'shrink':
-                            ratio = (
-                                child.scaled_flex_shrink_factor /
-                                scaled_flex_shrink_factors_sum)
-                            child.target_main_size = (
-                                child.flex_base_size + remaining_free_space *
-                                ratio)
+                            if scaled_flex_shrink_factors_sum == 0:
+                                child.target_main_size = child.flex_base_size
+                            else:
+                                ratio = (
+                                    child.scaled_flex_shrink_factor /
+                                    scaled_flex_shrink_factors_sum)
+                                child.target_main_size = (
+                                    child.flex_base_size +
+                                    remaining_free_space * ratio)
 
             # Step 6.4.d
             # TODO: First part of this step is useless until 3.E is correct
