@@ -141,10 +141,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
 
         # Step 3.E
         else:
-            if flex_basis == 'content':
-                child.style[axis] = 'max-content'
-            else:
-                child.style[axis] = Dimension(flex_basis, 'px')
+            child.style[axis] = 'max-content'
 
             # TODO: don't set style value, support *-content values instead
             if child.style[axis] == 'max-content':
