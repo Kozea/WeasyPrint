@@ -308,6 +308,7 @@ TABLE_WRAPPER_BOX_PROPERTIES = set('''
     margin_left
     margin_right
     opacity
+    overflow
     position
     right
     top
