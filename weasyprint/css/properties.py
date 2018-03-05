@@ -315,6 +315,7 @@ TABLE_WRAPPER_BOX_PROPERTIES = {
     'margin_left',
     'margin_right',
     'opacity',
+    'overflow',
     'position',
     'right',
     'top',

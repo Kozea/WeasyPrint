@@ -808,23 +808,6 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                             # let's break it!
                             break_found = True
 
-                            # We have to check whether the child we're breaking
-                            # is the one broken by the initial skip stack.
-                            broken_child = bool(
-                                initial_skip_stack and
-                                initial_skip_stack[0] == child_index and
-                                initial_skip_stack[1])
-                            if broken_child:
-                                # This child is already broken by the original
-                                # skip stack, let's skip the already rendered
-                                # part before rendering the waiting child
-                                # again.
-                                current_skip, child_skip = (
-                                    initial_skip_stack[1])
-                            else:
-                                # This child has to be rendered from its start.
-                                child_skip = None
-
                             # We break the waiting child at its last possible
                             # breaking point.
                             # TODO: The dirty solution chosen here is to
@@ -835,7 +818,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                             child_new_child, child_resume_at, _, _, _ = (
                                 split_inline_level(
                                     context, child, child.position_x, max_x,
-                                    child_skip, box, device_size,
+                                    None, box, device_size,
                                     absolute_boxes, fixed_boxes,
                                     line_placeholders, waiting_floats,
                                     line_children))
@@ -846,14 +829,37 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                             else:
                                 children += [(child_index, child_new_child)]
 
+                            # We have to check whether the child we're breaking
+                            # is the one broken by the initial skip stack.
+                            broken_child = bool(
+                                initial_skip_stack and
+                                initial_skip_stack[0] == child_index and
+                                initial_skip_stack[1])
                             if broken_child:
                                 # As this child has already been broken
                                 # following the original skip stack, we have to
                                 # add the original skip stack to the partial
                                 # skip stack we get after the new rendering.
+
+                                # We have to do:
+                                # child_resume_at += initial_skip_stack[1]
+                                # but adding skip stacks is a bit complicated
+                                current_skip, grandchild_skip = (
+                                    initial_skip_stack[1])
+                                current_resume_at, grandchild_resume_at = (
+                                    child_resume_at)
+                                if grandchild_skip is None:
+                                    grandchild_resume_at = child_resume_at[1]
+                                elif grandchild_resume_at is None:
+                                    grandchild_resume_at = grandchild_skip
+                                else:
+                                    grandchild_resume_at = (
+                                        grandchild_skip[0] +
+                                        grandchild_resume_at[0],
+                                        None)
                                 child_resume_at = (
-                                    child_resume_at[0] + current_skip,
-                                    child_resume_at[1])
+                                    current_resume_at + current_skip,
+                                    grandchild_resume_at)
 
                             resume_at = (child_index, child_resume_at)
                             break

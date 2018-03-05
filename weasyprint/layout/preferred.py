@@ -258,7 +258,8 @@ def inline_line_widths(context, box, outer, is_line_start, minimum,
                     _, _, new_resume_at, width, _, _ = (
                         text.split_first_line(
                             child_text[resume_at:], child.style, context,
-                            max_width, child.justification_spacing))
+                            max_width, child.justification_spacing,
+                            minimum=True))
                     lines.append(width)
                     if first_line:
                         break
