@@ -532,6 +532,10 @@ def auto_table_layout(context, box, containing_block):
     cb_width, _ = containing_block
     available_width = cb_width - margins - paddings
 
+    if table.style['border_collapse'] == 'collapse':
+        available_width -= (
+            table.border_left_width + table.border_right_width)
+
     if table.width == 'auto':
         if available_width <= table_min_content_width:
             table.width = table_min_content_width
