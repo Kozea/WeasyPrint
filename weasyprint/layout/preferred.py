@@ -112,8 +112,14 @@ def min_max(box, width):
     """Get box width from given width and box min- and max-widths."""
     min_width = box.style['min_width']
     max_width = box.style['max_width']
-    min_width = min_width.value if min_width.unit != '%' else 0
-    max_width = max_width.value if max_width.unit != '%' else float('inf')
+    if min_width == 'auto' or min_width.unit != '%':
+        min_width = 0
+    else:
+        min_width = min_width.value
+    if max_width == 'auto' or max_width.unit != '%':
+        max_width = float('inf')
+    else:
+        max_width = max_width.value
     return max(min_width, min(width, max_width))
 
 

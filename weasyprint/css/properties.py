@@ -46,8 +46,6 @@ INITIAL_VALUES = {
     'margin_left': Dimension(0, 'px'),
     'max_height': Dimension(float('inf'), 'px'),  # parsed value for 'none'
     'max_width': Dimension(float('inf'), 'px'),
-    'min_height': Dimension(0, 'px'),
-    'min_width': Dimension(0, 'px'),
     'overflow': 'visible',
     'padding_top': Dimension(0, 'px'),
     'padding_right': Dimension(0, 'px'),
@@ -183,6 +181,8 @@ INITIAL_VALUES = {
     'flex_shrink': 1,
     'flex_wrap': 'nowrap',
     'justify_content': 'flex-start',
+    'min_height': 'auto',
+    'min_width': 'auto',
     'order': 0,
 
     # Proprietary

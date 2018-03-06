@@ -29,7 +29,8 @@ def _percentage(value, refer_to):
     return result
 
 
-def resolve_one_percentage(box, property_name, refer_to):
+def resolve_one_percentage(box, property_name, refer_to,
+                           main_flex_direction=None):
     """Set a used length value from a computed length value.
 
     ``refer_to`` is the length for 100%. If ``refer_to`` is not a number, it
@@ -39,7 +40,12 @@ def resolve_one_percentage(box, property_name, refer_to):
     # box.style has computed values
     value = box.style[property_name]
     # box attributes are used values
-    setattr(box, property_name, _percentage(value, refer_to))
+    percentage = _percentage(value, refer_to)
+    setattr(box, property_name, percentage)
+    if property_name in ('min_width', 'min_height') and percentage == 'auto':
+        if (main_flex_direction is None or
+                property_name != ('min_%s' % main_flex_direction)):
+            setattr(box, property_name, 0)
 
 
 def resolve_position_percentages(box, containing_block):
@@ -50,7 +56,7 @@ def resolve_position_percentages(box, containing_block):
     resolve_one_percentage(box, 'bottom', cb_height)
 
 
-def resolve_percentages(box, containing_block):
+def resolve_percentages(box, containing_block, main_flex_direction=None):
     """Set used values as attributes of the box object."""
     if isinstance(containing_block, boxes.Box):
         # cb is short for containing block
@@ -71,8 +77,8 @@ def resolve_percentages(box, containing_block):
     resolve_one_percentage(box, 'padding_top', maybe_height)
     resolve_one_percentage(box, 'padding_bottom', maybe_height)
     resolve_one_percentage(box, 'width', cb_width)
-    resolve_one_percentage(box, 'min_width', cb_width)
-    resolve_one_percentage(box, 'max_width', cb_width)
+    resolve_one_percentage(box, 'min_width', cb_width, main_flex_direction)
+    resolve_one_percentage(box, 'max_width', cb_width, main_flex_direction)
 
     # XXX later: top, bottom, left and right on positioned elements
 

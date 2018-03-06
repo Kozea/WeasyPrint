@@ -100,9 +100,39 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
         if not child.is_flex_item:
             continue
 
-        resolve_percentages(child, (0, 0))
+        # See https://www.w3.org/TR/css-flexbox-1/#min-size-auto
+        if child.style['overflow'] == 'visible':
+            main_flex_direction = axis
+        else:
+            main_flex_direction = None
+        resolve_percentages(child, (0, 0), main_flex_direction)
         child.position_x = box.content_box_x()
         child.position_y = box.content_box_y()
+        if child.min_width == 'auto':
+            specified_size = (
+                child.width if child.width != 'auto' else float('inf'))
+            new_child = child.copy_with_children(child.children)
+            new_child.style = child.style.copy()
+            new_child.style['width'] = 'auto'
+            new_child.style['min_width'] = Dimension(0, 'px')
+            new_child.style['max_width'] = Dimension(float('inf'), 'px')
+            content_size = min_content_width(context, new_child, outer=False)
+            child.min_width = min(specified_size, content_size)
+        elif child.min_height == 'auto':
+            # TODO: find a way to get min-content-height
+            specified_size = (
+                child.height if child.height != 'auto' else float('inf'))
+            new_child = child.copy_with_children(child.children)
+            new_child.style = child.style.copy()
+            new_child.style['height'] = 'auto'
+            new_child.style['min_height'] = Dimension(0, 'px')
+            new_child.style['max_height'] = Dimension(float('inf'), 'px')
+            new_child = blocks.block_level_layout(
+                context, new_child, float('inf'), skip_stack,
+                box, device_size, page_is_empty, absolute_boxes,
+                fixed_boxes, adjoining_margins=[])[0]
+            content_size = new_child.height
+            child.min_height = min(specified_size, content_size)
 
         child.style = child.style.copy()
 
@@ -112,11 +142,11 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
         # "If a value would resolve to auto for width, it instead resolves
         # to content for flex-basis." Let's do this for height too.
         # See https://www.w3.org/TR/css-flexbox-1/#propdef-flex-basis
+        resolve_one_percentage(child, axis, available_main_space)
         if flex_basis == 'auto':
             if child.style[axis] == 'auto':
                 flex_basis = 'content'
             else:
-                resolve_one_percentage(child, axis, available_main_space)
                 if axis == 'width':
                     flex_basis = child.border_width()
                     if child.margin_left != 'auto':
@@ -173,8 +203,9 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                 # TODO: should we add padding, borders and margins?
                 child.flex_base_size = child.style[axis].value
 
-        # TODO: the flex base size shouldn't take care of min and max sizes
-        child.hypothetical_main_size = child.flex_base_size
+        child.hypothetical_main_size = max(
+            getattr(child, 'min_%s' % axis), min(
+                child.flex_base_size, getattr(child, 'max_%s' % axis)))
 
     # Step 4
     if axis == 'width':
