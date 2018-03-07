@@ -218,7 +218,8 @@ def draw_stacking_context(context, stacking_context, enable_hinting):
 
         # Point 2
         if isinstance(box, (boxes.BlockBox, boxes.MarginBox,
-                            boxes.InlineBlockBox, boxes.TableCellBox)):
+                            boxes.InlineBlockBox, boxes.TableCellBox,
+                            boxes.FlexContainerBox)):
             # The canvas background was removed by set_canvas_background
             draw_box_background_and_border(
                 context, stacking_context.page, box, enable_hinting)
@@ -510,8 +511,9 @@ def draw_border(context, box, enable_hinting):
     def draw_column_border():
         """Draw column borders."""
         columns = (
-            box.style['column_width'] != 'auto' or
-            box.style['column_count'] != 'auto')
+            isinstance(box, boxes.BlockContainerBox) and (
+                box.style['column_width'] != 'auto' or
+                box.style['column_count'] != 'auto'))
         if columns and box.style['column_rule_width']:
             border_widths = (0, 0, 0, box.style['column_rule_width'])
             for child in box.children[1:]:
@@ -983,7 +985,8 @@ def draw_replacedbox(context, box):
 def draw_inline_level(context, page, box, enable_hinting):
     if isinstance(box, StackingContext):
         stacking_context = box
-        assert isinstance(stacking_context.box, boxes.InlineBlockBox)
+        assert isinstance(
+            stacking_context.box, (boxes.InlineBlockBox, boxes.InlineFlexBox))
         draw_stacking_context(context, stacking_context, enable_hinting)
     else:
         draw_background(context, box.background, enable_hinting)

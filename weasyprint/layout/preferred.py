@@ -43,7 +43,8 @@ def min_content_width(context, box, outer=True):
     This is the width by breaking at every line-break opportunity.
 
     """
-    if isinstance(box, (boxes.BlockContainerBox, boxes.TableColumnBox)):
+    if isinstance(box, (
+            boxes.BlockContainerBox, boxes.TableColumnBox, boxes.FlexBox)):
         if box.is_table_wrapper:
             return table_and_columns_preferred_widths(context, box, outer)[0]
         else:
@@ -55,6 +56,8 @@ def min_content_width(context, box, outer=True):
             context, box, outer, is_line_start=True)
     elif isinstance(box, boxes.ReplacedBox):
         return replaced_min_content_width(box, outer)
+    elif isinstance(box, boxes.FlexContainerBox):
+        return flex_min_content_width(context, box, outer)
     else:
         raise TypeError(
             'min-content width for %s not handled yet' %
@@ -67,7 +70,8 @@ def max_content_width(context, box, outer=True):
     This is the width by only breaking at forced line breaks.
 
     """
-    if isinstance(box, (boxes.BlockContainerBox, boxes.TableColumnBox)):
+    if isinstance(box, (
+            boxes.BlockContainerBox, boxes.TableColumnBox, boxes.FlexBox)):
         if box.is_table_wrapper:
             return table_and_columns_preferred_widths(context, box, outer)[1]
         else:
@@ -79,6 +83,8 @@ def max_content_width(context, box, outer=True):
             context, box, outer, is_line_start=True)
     elif isinstance(box, boxes.ReplacedBox):
         return replaced_max_content_width(box, outer)
+    elif isinstance(box, boxes.FlexContainerBox):
+        return flex_max_content_width(context, box, outer)
     else:
         raise TypeError(
             'max-content width for %s not handled yet' % type(box).__name__)
@@ -106,8 +112,14 @@ def min_max(box, width):
     """Get box width from given width and box min- and max-widths."""
     min_width = box.style['min_width']
     max_width = box.style['max_width']
-    min_width = min_width.value if min_width.unit != '%' else 0
-    max_width = max_width.value if max_width.unit != '%' else float('inf')
+    if min_width == 'auto' or min_width.unit == '%':
+        min_width = 0
+    else:
+        min_width = min_width.value
+    if max_width == 'auto' or max_width.unit == '%':
+        max_width = float('inf')
+    else:
+        max_width = max_width.value
     return max(min_width, min(width, max_width))
 
 
@@ -647,6 +659,39 @@ def replaced_max_content_width(box, outer=True):
         assert width.unit == 'px'
         width = width.value
     return adjust(box, outer, width)
+
+
+def flex_min_content_width(context, box, outer=True):
+    """Return the min-content width for an ``FlexContainerBox``."""
+    # TODO: take care of outer
+    # TODO: use real values, see
+    # https://www.w3.org/TR/css-flexbox-1/#intrinsic-sizes
+    min_contents = [
+        min_content_width(context, child, outer=True)
+        for child in box.children if child.is_flex_item]
+    if not min_contents:
+        return 0
+    if (box.style['flex_direction'].startswith('row') and
+            box.style['flex_wrap'] == 'nowrap'):
+        return sum(min_contents)
+    else:
+        return max(min_contents)
+
+
+def flex_max_content_width(context, box, outer=True):
+    """Return the max-content width for an ``FlexContainerBox``."""
+    # TODO: take care of outer
+    # TODO: use real values, see
+    # https://www.w3.org/TR/css-flexbox-1/#intrinsic-sizes
+    max_contents = [
+        max_content_width(context, child, outer=True)
+        for child in box.children if child.is_flex_item]
+    if not max_contents:
+        return 0
+    if box.style['flex_direction'].startswith('row'):
+        return sum(max_contents)
+    else:
+        return max(max_contents)
 
 
 def trailing_whitespace_size(context, box):

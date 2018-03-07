@@ -38,6 +38,8 @@ BOX_TYPE_FROM_DISPLAY = {
     'table-column-group': boxes.TableColumnGroupBox,
     'table-cell': boxes.TableCellBox,
     'table-caption': boxes.TableCaptionBox,
+    'flex': boxes.FlexBox,
+    'inline-flex': boxes.InlineFlexBox,
 }
 
 
@@ -65,6 +67,7 @@ def build_formatting_structure(element_tree, style_for, get_image_from_uri,
     # If this is changed, maybe update weasy.layout.pages.make_margin_boxes()
     process_whitespace(box)
     box = anonymous_table_boxes(box)
+    box = flex_boxes(box)
     box = inline_in_block(box)
     box = block_in_inline(box)
     box = set_viewport_overflow(box)
@@ -396,7 +399,14 @@ def wrap_improper(box, children, wrapper_type, test=None):
             # Whitespace either fail the test or were removed earlier,
             # so there is no need to take special care with the definition
             # of "consecutive".
-            improper.append(child)
+            if isinstance(box, boxes.FlexContainerBox):
+                # The display value of a flex item must be "blockified", see
+                # https://www.w3.org/TR/css-flexbox-1/#flex-items
+                # TODO: These blocks are currently ignored, we should
+                # "blockify" them and their children.
+                pass
+            else:
+                improper.append(child)
     if improper:
         wrapper = wrapper_type.anonymous_from(box, children=[])
         # Apply the rules again on the new wrapper
@@ -794,6 +804,54 @@ def collapse_table_borders(table, grid_width, grid_height):
         x=grid_width, y=0, h=1))
 
     return vertical_borders, horizontal_borders
+
+
+def flex_boxes(box):
+    """Remove and add boxes according to the flex model.
+
+    Take and return a ``Box`` object.
+
+    See http://www.w3.org/TR/css-flexbox-1/#flex-items
+
+    """
+    if not isinstance(box, boxes.ParentBox):
+        return box
+
+    # Do recursion.
+    children = [flex_boxes(child) for child in box.children]
+    box.children = flex_children(box, children)
+    return box
+
+
+def flex_children(box, children):
+    if isinstance(box, boxes.FlexContainerBox):
+        flex_children = []
+        for child in children:
+            if not child.is_absolutely_positioned():
+                child.is_flex_item = True
+            if isinstance(child, boxes.TextBox) and not child.text.strip(' '):
+                # TODO: ignore texts only containing "characters that can be
+                # affected by the white-space property"
+                # https://www.w3.org/TR/css-flexbox-1/#flex-items
+                continue
+            if isinstance(child, boxes.InlineLevelBox):
+                # TODO: Only create block boxes for text runs, not for other
+                # inline level boxes. This is false but currently needed
+                # because block_level_width and block_level_layout are called
+                # in layout.flex.
+                if isinstance(child, boxes.ParentBox):
+                    anonymous = boxes.BlockBox.anonymous_from(
+                        box, child.children)
+                    anonymous.style = child.style
+                else:
+                    anonymous = boxes.BlockBox.anonymous_from(box, [child])
+                anonymous.is_flex_item = True
+                flex_children.append(anonymous)
+            else:
+                flex_children.append(child)
+        return flex_children
+    else:
+        return children
 
 
 def process_whitespace(box, following_collapsible_space=False):
