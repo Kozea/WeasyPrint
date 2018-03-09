@@ -1001,8 +1001,6 @@ def split_first_line(text, style, context, max_width, justification_spacing,
             if second_line is None and first_line_text:
                 # The next word fits in the first line, keep the layout
                 resume_at = len(new_first_line_text.encode('utf-8')) + 1
-                if resume_at == len(text.encode('utf-8')):
-                    resume_at = None
                 return first_line_metrics(
                     first_line, text, layout, resume_at, space_collapse, style)
             elif second_line:
