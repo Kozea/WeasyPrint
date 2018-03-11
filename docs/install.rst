@@ -31,8 +31,8 @@ WeasyPrint |version| depends on:
 
 
 Python, cairo, Pango and GDK-PixBuf need to be installed separately. See
-platform-specific instructions for :ref:`Linux <linux>`, :ref:`OS X <os-x>` and
-:ref:`Windows <windows>` below.
+platform-specific instructions for :ref:`Linux <linux>`, :ref:`macOS <macos>`
+and :ref:`Windows <windows>` below.
 
 Install WeasyPrint with pip_.
 This will automatically install most of dependencies.
@@ -136,8 +136,8 @@ install it with pip after installing the following packages:
     emerge pip cairo pango gdk-pixbuf cffi
 
 
-OS X
-----
+macOS
+-----
 
 WeasyPrint is automatically installed and tested on virtual macOS machines. The
 official installation method relies on Homebrew:
