@@ -50,6 +50,18 @@ class CallbackHandler(logging.Handler):
         self.emit = callback
 
 
+def read_file(filename):
+    """Shortcut for reading a file."""
+    with open(filename, 'rb') as fd:
+        return fd.read()
+
+
+def write_file(filename, content):
+    """Shortcut for reading a file."""
+    with open(filename, 'wb') as fd:
+        fd.write(content)
+
+
 @contextlib.contextmanager
 def capture_logs():
     """Return a context manager that captures all logged messages."""

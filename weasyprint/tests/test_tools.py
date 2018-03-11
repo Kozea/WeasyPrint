@@ -1,0 +1,111 @@
+"""
+    weasyprint.tests.test_tools
+    ---------------------------
+
+    Test WeasyPrint Web tools.
+
+    :copyright: Copyright 2018 Simon Sapin and contributors, see AUTHORS.
+    :license: BSD, see LICENSE for details.
+
+"""
+
+import io
+import os
+from urllib.parse import urlencode
+
+from pdfrw import PdfReader
+
+from ..tools import navigator, renderer
+from ..urls import path2url
+from .testing_utils import assert_no_logs, temp_directory, write_file
+
+
+def wsgi_client(module, path_info, qs_args=None, method='GET'):
+    start_response_calls = []
+
+    def start_response(status, headers):
+        start_response_calls.append((status, headers))
+    environ = {'REQUEST_METHOD': method, 'PATH_INFO': path_info}
+    qs = urlencode(qs_args or {})
+    if method == 'POST':
+        environ['wsgi.input'] = io.BytesIO(qs.encode('utf-8'))
+        environ['CONTENT_LENGTH'] = len(qs.encode('utf-8'))
+    else:
+        environ['QUERY_STRING'] = qs
+    response = b''.join(module.app(environ, start_response))
+    assert len(start_response_calls) == 1
+    status, headers = start_response_calls[0]
+    return status, dict(headers), response
+
+
+@assert_no_logs
+def test_navigator():
+    with temp_directory() as temp:
+        status, headers, body = wsgi_client(navigator, '/lipsum')
+        assert status == '404 Not Found'
+
+        status, headers, body = wsgi_client(navigator, '/')
+        body = body.decode('utf8')
+        assert status == '200 OK'
+        assert headers['Content-Type'].startswith('text/html;')
+        assert '<title>WeasyPrint Navigator</title>' in body
+        assert '<img' not in body
+        assert '></a>' not in body
+
+        filename = os.path.join(temp, 'test.html')
+        write_file(filename, b'''
+            <h1 id=foo><a href="http://weasyprint.org">Lorem ipsum</a></h1>
+            <h2><a href="#foo">bar</a></h2>
+        ''')
+
+        url = path2url(filename)
+        for status, headers, body in [
+            wsgi_client(navigator, '/view/' + url),
+            wsgi_client(navigator, '/', {'url': url}),
+        ]:
+            body = body.decode('utf8')
+            assert status == '200 OK'
+            assert headers['Content-Type'].startswith('text/html;')
+            assert '<title>WeasyPrint Navigator</title>' in body
+            assert '<img src="data:image/png;base64,' in body
+            assert ' name="foo"></a>' in body
+            assert ' href="#foo"></a>' in body
+            assert ' href="/view/http://weasyprint.org"></a>' in body
+
+        status, headers, body = wsgi_client(navigator, '/pdf/' + url)
+        assert status == '200 OK'
+        assert headers['Content-Type'] == 'application/pdf'
+        pdf = PdfReader(fdata=body)
+        assert pdf.Root.Pages.Kids[0].Annots[0].A == {
+            '/Type': '/Action', '/URI': '(http://weasyprint.org)',
+            '/S': '/URI'}
+        assert pdf.Root.Outlines.First.Title == '(Lorem ipsum)'
+        assert pdf.Root.Outlines.Last.Title == '(Lorem ipsum)'
+
+
+@assert_no_logs
+def test_renderer():
+    status, headers, body = wsgi_client(renderer, '/lipsum')
+    assert status == '404 Not Found'
+
+    status, headers, body_1 = wsgi_client(renderer, '/')
+    assert b'data:image/png;base64,iVBO' in body_1
+
+    status, headers, body_2 = wsgi_client(
+        renderer, '/', {'content': renderer.DEFAULT_CONTENT}, method='POST')
+    assert body_1 == body_2
+
+    status, headers, body_3 = wsgi_client(
+        renderer, '/', {'content': 'abc'}, method='POST')
+    assert b'data:image/png;base64,iVBO' in body_3
+    assert body_1 != body_3
+
+    status, headers, body_4 = wsgi_client(
+        renderer, '/render', {'content': 'abc'}, method='POST')
+    assert body_4.startswith(b'iVBO')
+    assert body_4 in body_3
+
+    status, headers, body_5 = wsgi_client(
+        renderer, '/render', {'content': 'def'}, method='POST')
+    assert body_5.startswith(b'iVBO')
+    assert body_5 not in body_3

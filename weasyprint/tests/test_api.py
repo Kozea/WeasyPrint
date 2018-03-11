@@ -4,7 +4,7 @@
 
     Test the public API.
 
-    :copyright: Copyright 2011-2014 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -18,18 +18,18 @@ import sys
 import threading
 import unicodedata
 import zlib
-from urllib.parse import urlencode, urljoin, uses_relative
+from urllib.parse import urljoin, uses_relative
 
 import cairocffi as cairo
 import pytest
 from pdfrw import PdfReader
 
-from .. import CSS, HTML, __main__, default_url_fetcher, navigator
+from .. import CSS, HTML, __main__, default_url_fetcher
 from ..urls import path2url
 from .test_draw import B, _, assert_pixels_equal, image_to_pixels, r
 from .testing_utils import (
-    FakeHTML, assert_no_logs, capture_logs, http_server, resource_filename,
-    temp_directory)
+    FakeHTML, assert_no_logs, capture_logs, http_server, read_file,
+    resource_filename, temp_directory, write_file)
 
 CHDIR_LOCK = threading.Lock()
 
@@ -44,18 +44,6 @@ def chdir(path):
             yield
         finally:
             os.chdir(old_dir)
-
-
-def read_file(filename):
-    """Shortcut for reading a file."""
-    with open(filename, 'rb') as fd:
-        return fd.read()
-
-
-def write_file(filename, content):
-    """Shortcut for reading a file."""
-    with open(filename, 'wb') as fd:
-        fd.write(content)
 
 
 def _test_resource(class_, basename, check, **kwargs):
@@ -820,69 +808,6 @@ def test_links():
         [{'lipsum': (70, 10)}],
         [[('internal', (0, 70, 10), (30, 10, 40, 200))]],
         round=True)
-
-
-def wsgi_client(path_info, qs_args=None):
-    start_response_calls = []
-
-    def start_response(status, headers):
-        start_response_calls.append((status, headers))
-    environ = {'PATH_INFO': path_info,
-               'QUERY_STRING': urlencode(qs_args or {})}
-    response = b''.join(navigator.app(environ, start_response))
-    assert len(start_response_calls) == 1
-    status, headers = start_response_calls[0]
-    return status, dict(headers), response
-
-
-@assert_no_logs
-def test_navigator():
-    with temp_directory() as temp:
-        status, headers, body = wsgi_client('/favicon.ico')
-        assert status == '200 OK'
-        assert headers['Content-Type'] == 'image/x-icon'
-        assert body == read_file(navigator.FAVICON)
-
-        status, headers, body = wsgi_client('/lipsum')
-        assert status == '404 Not Found'
-
-        status, headers, body = wsgi_client('/')
-        body = body.decode('utf8')
-        assert status == '200 OK'
-        assert headers['Content-Type'].startswith('text/html;')
-        assert '<title>WeasyPrint Navigator</title>' in body
-        assert '<img' not in body
-        assert '></a>' not in body
-
-        filename = os.path.join(temp, 'test.html')
-        write_file(filename, b'''
-            <h1 id=foo><a href="http://weasyprint.org">Lorem ipsum</a></h1>
-            <h2><a href="#foo">bar</a></h2>
-        ''')
-
-        url = path2url(filename)
-        for status, headers, body in [
-            wsgi_client('/view/' + url),
-            wsgi_client('/', {'url': url}),
-        ]:
-            body = body.decode('utf8')
-            assert status == '200 OK'
-            assert headers['Content-Type'].startswith('text/html;')
-            assert '<title>WeasyPrint Navigator</title>' in body
-            assert '<img src="data:image/png;base64,' in body
-            assert ' name="foo"></a>' in body
-            assert ' href="#foo"></a>' in body
-            assert ' href="/view/http://weasyprint.org"></a>' in body
-
-        status, headers, body = wsgi_client('/pdf/' + url)
-        assert status == '200 OK'
-        assert headers['Content-Type'] == 'application/pdf'
-        pdf = PdfReader(fdata=body)
-        assert pdf.Root.Pages.Kids[0].Annots[0].A == {
-            '/Type': '/Action', '/URI': '(http://weasyprint.org)',
-            '/S': '/URI'}
-        assert pdf.Root.Outlines.First.Title == '(Lorem ipsum)'
-        assert pdf.Root.Outlines.Last.Title == '(Lorem ipsum)'
 
 
 # Make relative URL references work with our custom URL scheme.

@@ -1,6 +1,6 @@
 """
-    weasyprint.navigator
-    --------------------
+    weasyprint.tools.navigator
+    --------------------------
 
     A WeasyPrint-based web browser. In your web browser.
 
@@ -9,16 +9,12 @@
 
 """
 
-import os.path
 from base64 import encodebytes
 from urllib.parse import parse_qs
 from wsgiref.simple_server import make_server
 
 from weasyprint import CSS, HTML
 from weasyprint.urls import url_is_absolute
-
-FAVICON = os.path.join(os.path.dirname(__file__),
-                       'tests', 'resources', 'icon.png')
 
 STYLESHEET = CSS(string='''
    :root { font-size: 10pt }
@@ -122,11 +118,7 @@ def app(environ, start_response):
 
     path = environ['PATH_INFO']
 
-    if path == '/favicon.ico':
-        with open(FAVICON, 'rb') as fd:
-            return make_response(fd.read(), content_type='image/x-icon')
-
-    elif path.startswith('/pdf/') and len(path) > 5:  # len('/pdf/') == 5
+    if path.startswith('/pdf/') and len(path) > 5:  # len('/pdf/') == 5
         url = normalize_url(path[5:], environ.get('QUERY_STRING'))
         body = HTML(url=url).write_pdf(stylesheets=[STYLESHEET])
         filename = url.rstrip('/').rsplit('/', 1)[-1] or 'out'
