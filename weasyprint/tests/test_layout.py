@@ -16,8 +16,7 @@ import pytest
 
 from ..formatting_structure import boxes
 from .test_boxes import render_pages as parse
-from .testing_utils import (
-    FONTS, almost_equal, assert_no_logs, capture_logs, requires)
+from .testing_utils import FONTS, assert_no_logs, capture_logs, requires
 
 
 def body_children(page):
@@ -3235,8 +3234,11 @@ def test_linear_gradient():
         scale_x, scale_y = scale
         result = layer.image.layout(
             400, 300, lambda dx, dy: (dx * scale_x, dy * scale_y))
-        expected = 1, type_, init, positions, colors
-        assert almost_equal(result, expected), (result, expected)
+        assert result[0] == 1
+        assert result[1] == type_
+        assert result[2] == pytest.approx(init)
+        assert result[3] == pytest.approx(positions)
+        assert result[4] == colors
 
     layout('linear-gradient(blue)', 'solid', blue, [], [])
     layout('repeating-linear-gradient(blue)', 'solid', blue, [], [])
@@ -3303,8 +3305,11 @@ def test_radial_gradient():
         ctm_scale_x, ctm_scale_y = ctm_scale
         result = layer.image.layout(
             400, 300, lambda dx, dy: (dx * ctm_scale_x, dy * ctm_scale_y))
-        expected = scale_y, type_, init, positions, colors
-        assert almost_equal(result, expected), (result, expected)
+        assert result[0] == scale_y
+        assert result[1] == type_
+        assert result[2] == pytest.approx(init)
+        assert result[3] == pytest.approx(positions)
+        assert result[4] == colors
 
     layout('radial-gradient(blue)', 'solid', blue, [], [])
     layout('repeating-radial-gradient(blue)', 'solid', blue, [], [])

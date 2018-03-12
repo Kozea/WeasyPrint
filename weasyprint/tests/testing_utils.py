@@ -88,16 +88,6 @@ def assert_no_logs(function):
     return wrapper
 
 
-def almost_equal(a, b):
-    if (isinstance(a, list) and isinstance(b, list) or
-            isinstance(a, tuple) and isinstance(b, tuple)):
-        return len(a) == len(b) and all(
-            almost_equal(aa, bb) for aa, bb in zip(a, b))
-    if isinstance(a, float) or isinstance(b, float):
-        return round(abs(a - b), 6) == 0
-    return a == b
-
-
 @contextlib.contextmanager
 def http_server(handlers):
     def wsgi_app(environ, start_response):

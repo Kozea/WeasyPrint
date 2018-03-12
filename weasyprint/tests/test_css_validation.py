@@ -11,12 +11,13 @@
 
 import math
 
+import pytest
 import tinycss2
 
 from ..css import preprocess_declarations
 from ..css.properties import INITIAL_VALUES
 from ..images import LinearGradient, RadialGradient
-from .testing_utils import almost_equal, assert_no_logs, capture_logs
+from .testing_utils import assert_no_logs, capture_logs
 
 
 def expand_to_dict(css, expected_error=None):
@@ -620,10 +621,10 @@ def test_linear_gradient():
             assert type_ == 'linear-gradient'
             assert isinstance(image, LinearGradient)
             assert image.repeating == repeating
-            assert almost_equal((image.direction_type, image.direction),
-                                direction)
-            assert almost_equal(image.colors, colors)
-            assert almost_equal(image.stop_positions, stop_positions)
+            assert image.direction_type == direction[0]
+            assert image.direction == pytest.approx(direction[1])
+            assert image.colors == colors
+            assert image.stop_positions == stop_positions
 
     def invalid(css):
         assert_invalid('background-image: linear-gradient(%s)' % css)
@@ -708,10 +709,11 @@ def test_radial_gradient():
             assert isinstance(image, RadialGradient)
             assert image.repeating == repeating
             assert image.shape == shape
-            assert almost_equal((image.size_type, image.size), size)
-            assert almost_equal(image.center, center)
-            assert almost_equal(image.colors, colors)
-            assert almost_equal(image.stop_positions, stop_positions)
+            assert image.size_type == size[0]
+            assert image.size == size[1]
+            assert image.center == center
+            assert image.colors == colors
+            assert image.stop_positions == stop_positions
 
     def invalid(css):
         assert_invalid('background-image: radial-gradient(%s)' % css)
