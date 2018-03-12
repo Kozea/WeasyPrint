@@ -36,14 +36,6 @@ r = as_pixel(b'\xff\x00\x00\xff')  # red
 B = as_pixel(b'\x00\x00\xff\xff')  # blue
 
 
-def save_pixels_to_png(pixels, width, height, filename):
-    """Save raw pixels to a PNG file."""
-    cairo.ImageSurface(
-        cairo.FORMAT_ARGB32, width, height,
-        data=bytearray(pixels), stride=width * 4
-    ).write_to_png(filename)
-
-
 def assert_pixels(name, expected_width, expected_height, expected_pixels,
                   html):
     """Helper testing the size of the image and the pixels values."""
@@ -101,11 +93,14 @@ def assert_different_renderings(expected_width, expected_height, documents):
 
 def write_png(basename, pixels, width, height):  # pragma: no cover
     """Take a pixel matrix and write a PNG file."""
-    directory = os.path.join(os.path.dirname(__file__), 'test_results')
+    directory = os.path.join(os.path.dirname(__file__), 'results')
     if not os.path.isdir(directory):
         os.mkdir(directory)
     filename = os.path.join(directory, basename + '.png')
-    save_pixels_to_png(pixels, width, height, filename)
+    cairo.ImageSurface(
+        cairo.FORMAT_ARGB32, width, height,
+        data=bytearray(pixels), stride=width * 4
+    ).write_to_png(filename)
 
 
 def html_to_pixels(name, expected_width, expected_height, html):
