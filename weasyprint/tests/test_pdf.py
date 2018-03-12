@@ -15,11 +15,9 @@ import os
 import zlib
 
 import cairocffi
-import pytest
 from pdfrw import PdfReader
 
 from .. import Attachment
-from ..images import CAIRO_HAS_MIME_DATA
 from ..urls import path2url
 from .testing_utils import (
     FakeHTML, assert_no_logs, capture_logs, resource_filename)
@@ -351,9 +349,6 @@ def test_missing_links():
 
 @assert_no_logs
 def test_jpeg():
-    if not CAIRO_HAS_MIME_DATA:
-        pytest.xfail()
-
     def render(html):
         return FakeHTML(base_url=resource_filename('dummy.html'),
                         string=html).write_pdf()

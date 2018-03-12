@@ -113,9 +113,7 @@ def assert_tree(box, expected):
     expected: a list of serialized <body> children as returned by to_lists().
 
     """
-    lists = to_lists(box)
-    if lists != expected:
-        assert lists == expected
+    assert to_lists(box) == expected
 
 
 def sanity_checks(box):

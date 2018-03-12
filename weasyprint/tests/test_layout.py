@@ -580,8 +580,7 @@ def test_empty_linebox():
     ''')
     paragraph, = body_children(page)
     # TODO: The second line should be removed
-    pytest.xfail()
-    assert len(paragraph.children) == 1
+    # assert len(paragraph.children) == 1
 
 
 @assert_no_logs
@@ -634,7 +633,7 @@ def test_breaking_linebox():
         <p style="width: %i.5em; font-family: ahem">ab
         <span style="padding-right: 1em; margin-right: 1em">c def</span>g
         hi</p>'''
-    for i in range(15):
+    for i in range(16):
         page, = parse(html_sample % i)
         html, = page.children
         body, = html.children
@@ -696,7 +695,7 @@ def test_breaking_linebox():
 
             textbox_1, = line_2.children
             assert textbox_1.text == 'hi'
-        elif i in (14, 15):
+        else:
             line_1, = lines
 
             textbox_1, span_1, textbox_3 = line_1.children

@@ -136,12 +136,6 @@ def image_to_pixels(surface, width, height):
     # RGB24 is actually the same as ARGB32, with A unused.
     assert surface.get_format() in (cairo.FORMAT_ARGB32, cairo.FORMAT_RGB24)
     pixels = surface.get_data()[:]
-    stride = surface.get_stride()
-    row_bytes = width * 4
-    if stride != row_bytes:
-        assert stride > row_bytes
-        pixels = b''.join(pixels[i:i + row_bytes]
-                          for i in range(0, height * stride, stride))
     assert len(pixels) == width * height * 4
     return pixels
 

@@ -291,11 +291,7 @@ def assert_background(css, **expected):
     for name, value in expected.items():
         assert expanded.pop(name) == value
     for name, value in expanded.items():
-        if isinstance(value, list):
-            # TinyCSS returns lists where style dicts store tuples for hashing
-            # purpose
-            value = tuple(value)
-        assert value == INITIAL_VALUES[name] * nb_layers
+        assert tuple(value) == INITIAL_VALUES[name] * nb_layers
 
 
 @assert_no_logs
