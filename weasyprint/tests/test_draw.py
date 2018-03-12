@@ -1489,7 +1489,7 @@ def test_visibility():
 
 
 @assert_no_logs
-@requires('cairo', '1.12')
+@requires('cairo', (1, 12, 0))
 def test_tables():
     # TODO: refactor colspan/rowspan into CSS:
     # td, th { column-span: attr(colspan integer) }
@@ -2280,7 +2280,7 @@ def test_overflow():
 
 
 @assert_no_logs
-@requires('cairo', '1.12')
+@requires('cairo', (1, 12, 0))
 def test_clip():
     """Test the clip property."""
     num = [0]
@@ -2722,7 +2722,7 @@ def test_2d_transform():
 
 
 @assert_no_logs
-@requires('cairo', '1.12')
+@requires('cairo', (1, 12, 0))
 def test_acid2():
     """A local version of http://acid2.acidtests.org/"""
     def render(filename):
@@ -2747,7 +2747,7 @@ def test_acid2():
 
 
 @assert_no_logs
-@requires('cairo', '1.14')
+@requires('cairo', (1, 14, 0))
 def test_linear_gradients():
     assert_pixels('linear_gradient', 5, 9, [
         _ + _ + _ + _ + _,
@@ -2878,7 +2878,7 @@ def test_radial_gradients():
         assert (pixel(7, 9) not in (B, r)) ^ thin
 
 
-@requires('cairo', '1.14')
+@requires('cairo', (1, 14, 0))
 def test_column_rule():
     """Test standard cases for column-rule-*."""
     # JPG is lossy...

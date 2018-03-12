@@ -1560,7 +1560,7 @@ def test_whitespace_processing():
 # now reverted on master and 1.14 branches. Remove the @requires decorator when
 # 1.15.12 is released.
 @assert_no_logs
-@requires('cairo', '1.15.12')
+@requires('cairo', (1, 15, 12))
 def test_images():
     """Test that width, height and ratio of images are respected."""
     def get_img(html):

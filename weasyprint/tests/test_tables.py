@@ -1521,7 +1521,7 @@ def test_table_row_height():
 
 
 @assert_no_logs
-@requires('cairo', '1.12')
+@requires('cairo', (1, 12, 0))
 def test_table_vertical_align():
     assert_pixels('table_vertical_align', 28, 10, [
         r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r,  # noqa

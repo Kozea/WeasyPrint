@@ -116,28 +116,13 @@ def http_server(handlers):
         thread.join()
 
 
-def requires(library_name, version):
-    tuple_version = [0, 0, 0]
-    for i, number in enumerate(version.split('.')):
-        tuple_version[i] = int(number)
-    version_number = int(''.join('%02i' % number for number in tuple_version))
-
-    def require_version(test):
-        @functools.wraps(test)
-        def decorated_test():
-            library = getattr(text, library_name)
-            library_version = getattr(library, '%s_version' % library_name)()
-            if library_version < version_number:
-                library_version = '%06i' % library_version
-                library_version_string = '.'.join(
-                    str(int(i)) for i in (
-                        library_version[:2],
-                        library_version[2:4],
-                        library_version[4:]))
-                print('Running %s %s but this test requires %s+' % (
-                    library_name, library_version_string, version))
-                pytest.xfail()
-            test()
-        return decorated_test
-
-    return require_version
+def requires(library_name, expected_tuple):
+    library = getattr(text, library_name)
+    library_version = '%06i' % getattr(library, '%s_version' % library_name)()
+    library_tuple = tuple(int(i) for i in (
+        library_version[:2], library_version[2:4], library_version[4:]))
+    return pytest.mark.skipif(
+        library_tuple < expected_tuple,
+        reason='Running %s %s but this test requires %s+' % (
+            library_name, '%i.%i.%i' % library_tuple,
+            '%i.%i.%i' % expected_tuple))
