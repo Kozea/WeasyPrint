@@ -13,9 +13,7 @@ import contextlib
 import functools
 import logging
 import os.path
-import shutil
 import sys
-import tempfile
 import threading
 import wsgiref.simple_server
 
@@ -48,18 +46,6 @@ class CallbackHandler(logging.Handler):
     def __init__(self, callback):
         logging.Handler.__init__(self)
         self.emit = callback
-
-
-def read_file(filename):
-    """Shortcut for reading a file."""
-    with open(filename, 'rb') as fd:
-        return fd.read()
-
-
-def write_file(filename, content):
-    """Shortcut for reading a file."""
-    with open(filename, 'wb') as fd:
-        fd.write(content)
 
 
 @contextlib.contextmanager
@@ -95,7 +81,7 @@ def assert_no_logs(function):
                         print(message, file=sys.stderr)
                 raise
             else:
-                if logs:
+                if logs:  # pragma: no cover
                     for message in logs:
                         print(message, file=sys.stderr)
                     raise AssertionError('%i errors logged' % len(logs))
@@ -120,7 +106,7 @@ def http_server(handlers):
             status = str('200 OK')
             response, headers = handler(environ)
             headers = [(str(name), str(value)) for name, value in headers]
-        else:
+        else:  # pragma: no cover
             status = str('404 Not Found')
             response = b''
             headers = []
@@ -138,20 +124,6 @@ def http_server(handlers):
     finally:
         server.shutdown()
         thread.join()
-
-
-@contextlib.contextmanager
-def temp_directory():
-    """Context manager that gives the path to a new temporary directory.
-
-    Remove everything on exiting the context.
-
-    """
-    directory = tempfile.mkdtemp()
-    try:
-        yield directory
-    finally:
-        shutil.rmtree(directory)
 
 
 def requires(library_name, version):

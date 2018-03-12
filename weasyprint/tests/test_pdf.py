@@ -22,7 +22,7 @@ from .. import Attachment
 from ..images import CAIRO_HAS_MIME_DATA
 from ..urls import path2url
 from .testing_utils import (
-    FakeHTML, assert_no_logs, capture_logs, resource_filename, temp_directory)
+    FakeHTML, assert_no_logs, capture_logs, resource_filename)
 
 # Top of the page is 297mm ~= 842pt
 TOP = 842
@@ -386,42 +386,40 @@ def test_document_info():
 
 
 @assert_no_logs
-def test_embedded_files():
-    with temp_directory() as absolute_tmp_dir:
-        absolute_tmp_file = os.path.join(absolute_tmp_dir, 'some_file.txt')
-        adata = b'12345678'
-        with open(absolute_tmp_file, 'wb') as afile:
-            afile.write(adata)
-        absolute_url = path2url(absolute_tmp_file)
-        assert absolute_url.startswith('file://')
+def test_embedded_files(tmpdir):
+    absolute_tmp_file = tmpdir.join('some_file.txt')
+    adata = b'12345678'
+    with open(absolute_tmp_file, 'wb') as afile:
+        afile.write(adata)
+    absolute_url = path2url(absolute_tmp_file)
+    assert absolute_url.startswith('file://')
 
-        with temp_directory() as relative_tmp_dir:
-            relative_tmp_file = os.path.join(relative_tmp_dir, 'äöü.txt')
-            rdata = b'abcdefgh'
-            with open(relative_tmp_file, 'wb') as rfile:
-                rfile.write(rdata)
+    relative_tmp_file = tmpdir.join('äöü.txt')
+    rdata = b'abcdefgh'
+    with open(relative_tmp_file, 'wb') as rfile:
+        rfile.write(rdata)
 
-            pdf_bytes = FakeHTML(
-                string='''
-                    <title>Test document</title>
-                    <meta charset="utf-8">
-                    <link
-                        rel="attachment"
-                        title="some file attachment äöü"
-                        href="data:,hi%20there">
-                    <link rel="attachment" href="{0}">
-                    <link rel="attachment" href="{1}">
-                    <h1>Heading 1</h1>
-                    <h2>Heading 2</h2>
-                '''.format(absolute_url, os.path.basename(relative_tmp_file)),
-                base_url=relative_tmp_dir,
-            ).write_pdf(
-                attachments=[
-                    Attachment('data:,oob attachment', description='Hello'),
-                    'data:,raw URL',
-                    io.BytesIO(b'file like obj')
-                ]
-            )
+    pdf_bytes = FakeHTML(
+        string='''
+            <title>Test document</title>
+            <meta charset="utf-8">
+            <link
+                rel="attachment"
+                title="some file attachment äöü"
+                href="data:,hi%20there">
+            <link rel="attachment" href="{0}">
+            <link rel="attachment" href="{1}">
+            <h1>Heading 1</h1>
+            <h2>Heading 2</h2>
+        '''.format(absolute_url, os.path.basename(relative_tmp_file)),
+        base_url=tmpdir.strpath,
+    ).write_pdf(
+        attachments=[
+            Attachment('data:,oob attachment', description='Hello'),
+            'data:,raw URL',
+            io.BytesIO(b'file like obj')
+        ]
+    )
     pdf = PdfReader(fdata=pdf_bytes)
     embedded = pdf.Root.Names.EmbeddedFiles.Names
 

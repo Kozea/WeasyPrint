@@ -10,14 +10,13 @@
 """
 
 import io
-import os
 from urllib.parse import urlencode
 
 from pdfrw import PdfReader
 
 from ..tools import navigator, renderer
 from ..urls import path2url
-from .testing_utils import assert_no_logs, temp_directory, write_file
+from .testing_utils import assert_no_logs
 
 
 def wsgi_client(module, path_info, qs_args=None, method='GET'):
@@ -39,48 +38,47 @@ def wsgi_client(module, path_info, qs_args=None, method='GET'):
 
 
 @assert_no_logs
-def test_navigator():
-    with temp_directory() as temp:
-        status, headers, body = wsgi_client(navigator, '/lipsum')
-        assert status == '404 Not Found'
+def test_navigator(tmpdir):
+    status, headers, body = wsgi_client(navigator, '/lipsum')
+    assert status == '404 Not Found'
 
-        status, headers, body = wsgi_client(navigator, '/')
+    status, headers, body = wsgi_client(navigator, '/')
+    body = body.decode('utf8')
+    assert status == '200 OK'
+    assert headers['Content-Type'].startswith('text/html;')
+    assert '<title>WeasyPrint Navigator</title>' in body
+    assert '<img' not in body
+    assert '></a>' not in body
+
+    test_file = tmpdir.join('test.html')
+    test_file.write(b'''
+        <h1 id=foo><a href="http://weasyprint.org">Lorem ipsum</a></h1>
+        <h2><a href="#foo">bar</a></h2>
+    ''')
+
+    url = path2url(test_file.strpath)
+    for status, headers, body in [
+        wsgi_client(navigator, '/view/' + url),
+        wsgi_client(navigator, '/', {'url': url}),
+    ]:
         body = body.decode('utf8')
         assert status == '200 OK'
         assert headers['Content-Type'].startswith('text/html;')
         assert '<title>WeasyPrint Navigator</title>' in body
-        assert '<img' not in body
-        assert '></a>' not in body
+        assert '<img src="data:image/png;base64,' in body
+        assert ' name="foo"></a>' in body
+        assert ' href="#foo"></a>' in body
+        assert ' href="/view/http://weasyprint.org"></a>' in body
 
-        filename = os.path.join(temp, 'test.html')
-        write_file(filename, b'''
-            <h1 id=foo><a href="http://weasyprint.org">Lorem ipsum</a></h1>
-            <h2><a href="#foo">bar</a></h2>
-        ''')
-
-        url = path2url(filename)
-        for status, headers, body in [
-            wsgi_client(navigator, '/view/' + url),
-            wsgi_client(navigator, '/', {'url': url}),
-        ]:
-            body = body.decode('utf8')
-            assert status == '200 OK'
-            assert headers['Content-Type'].startswith('text/html;')
-            assert '<title>WeasyPrint Navigator</title>' in body
-            assert '<img src="data:image/png;base64,' in body
-            assert ' name="foo"></a>' in body
-            assert ' href="#foo"></a>' in body
-            assert ' href="/view/http://weasyprint.org"></a>' in body
-
-        status, headers, body = wsgi_client(navigator, '/pdf/' + url)
-        assert status == '200 OK'
-        assert headers['Content-Type'] == 'application/pdf'
-        pdf = PdfReader(fdata=body)
-        assert pdf.Root.Pages.Kids[0].Annots[0].A == {
-            '/Type': '/Action', '/URI': '(http://weasyprint.org)',
-            '/S': '/URI'}
-        assert pdf.Root.Outlines.First.Title == '(Lorem ipsum)'
-        assert pdf.Root.Outlines.Last.Title == '(Lorem ipsum)'
+    status, headers, body = wsgi_client(navigator, '/pdf/' + url)
+    assert status == '200 OK'
+    assert headers['Content-Type'] == 'application/pdf'
+    pdf = PdfReader(fdata=body)
+    assert pdf.Root.Pages.Kids[0].Annots[0].A == {
+        '/Type': '/Action', '/URI': '(http://weasyprint.org)',
+        '/S': '/URI'}
+    assert pdf.Root.Outlines.First.Title == '(Lorem ipsum)'
+    assert pdf.Root.Outlines.Last.Title == '(Lorem ipsum)'
 
 
 @assert_no_logs
