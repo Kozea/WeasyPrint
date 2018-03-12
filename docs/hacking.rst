@@ -43,8 +43,8 @@ The website version is updated automatically when we push to master on GitHub.
 Code changes
 ------------
 
-Use the ``pytest`` command from the ``WeasyPrint`` directory to run the
-test suite.
+Use the ``python setup.py test`` command from the ``WeasyPrint`` directory to
+run the test suite.
 
 Please report any bugs/feature requests and submit patches/pull requests
 `on Github <https://github.com/Kozea/WeasyPrint>`_.
