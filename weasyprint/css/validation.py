@@ -874,7 +874,8 @@ def display(keyword):
         'inline', 'block', 'inline-block', 'list-item', 'none',
         'table', 'inline-table', 'table-caption',
         'table-row-group', 'table-header-group', 'table-footer-group',
-        'table-row', 'table-column-group', 'table-column', 'table-cell')
+        'table-row', 'table-column-group', 'table-column', 'table-cell',
+        'flex', 'inline-flex')
 
 
 @validator('float')
@@ -1147,12 +1148,23 @@ def list_style_type(keyword):
     return keyword in ('none', 'decimal') or keyword in counters.STYLES
 
 
+@validator('min-width')
+@validator('min-height')
+@single_token
+def min_width_height(token):
+    """``min-width`` and ``min-height`` properties validation."""
+    # See https://www.w3.org/TR/css-flexbox-1/#min-size-auto
+    keyword = get_keyword(token)
+    if keyword == 'auto':
+        return keyword
+    else:
+        return length_or_precentage([token])
+
+
 @validator('padding-top')
 @validator('padding-right')
 @validator('padding-bottom')
 @validator('padding-left')
-@validator('min-width')
-@validator('min-height')
 @single_token
 def length_or_precentage(token):
     """``padding-*`` properties validation."""
@@ -1319,6 +1331,79 @@ def white_space(keyword):
 def overflow_wrap(keyword):
     """``overflow-wrap`` property validation."""
     return keyword in ('normal', 'break-word')
+
+
+@validator()
+@single_token
+def flex_basis(token):
+    """``flex-basis`` property validation."""
+    basis = width_height([token])
+    if basis is not None:
+        return basis
+    if get_keyword(token) == 'content':
+        return 'content'
+
+
+@validator()
+@single_keyword
+def flex_direction(keyword):
+    """``flex-direction`` property validation."""
+    return keyword in ('row', 'row-reverse', 'column', 'column-reverse')
+
+
+@validator('flex-grow')
+@validator('flex-shrink')
+@single_token
+def flex_grow_shrink(token):
+    if token.type == 'number':
+        return token.value
+
+
+@validator()
+@single_token
+def order(token):
+    if token.type == 'number' and token.int_value is not None:
+        return token.int_value
+
+
+@validator()
+@single_keyword
+def flex_wrap(keyword):
+    """``flex-wrap`` property validation."""
+    return keyword in ('nowrap', 'wrap', 'wrap-reverse')
+
+
+@validator()
+@single_keyword
+def justify_content(keyword):
+    """``justify-content`` property validation."""
+    return keyword in (
+        'flex-start', 'flex-end', 'center', 'space-between', 'space-around')
+
+
+@validator()
+@single_keyword
+def align_items(keyword):
+    """``align-items`` property validation."""
+    return keyword in (
+        'flex-start', 'flex-end', 'center', 'baseline', 'stretch')
+
+
+@validator()
+@single_keyword
+def align_self(keyword):
+    """``align-self`` property validation."""
+    return keyword in (
+        'auto', 'flex-start', 'flex-end', 'center', 'baseline', 'stretch')
+
+
+@validator()
+@single_keyword
+def align_content(keyword):
+    """``align-content`` property validation."""
+    return keyword in (
+        'flex-start', 'flex-end', 'center', 'space-between', 'space-around',
+        'stretch')
 
 
 @validator(unstable=True)
@@ -2271,6 +2356,79 @@ def expand_word_wrap(base_url, name, tokens):
         raise InvalidValues
 
     yield 'overflow-wrap', keyword
+
+
+@expander('flex')
+def expand_flex(base_url, name, tokens):
+    """Expand the ``flex`` property."""
+    keyword = get_single_keyword(tokens)
+    if keyword == 'none':
+        yield 'flex-grow', 0
+        yield 'flex-shrink', 0
+        yield 'flex-basis', 'auto'
+    else:
+        grow, shrink, basis = 0, 1, Dimension(0, 'px')
+        grow_found, shrink_found, basis_found = False, False, False
+        for token in tokens:
+            # "A unitless zero that is not already preceded by two flex factors
+            # must be interpreted as a flex factor."
+            forced_flex_factor = (
+                token.type == 'number' and token.int_value == 0 and
+                not all((grow_found, shrink_found)))
+            if not basis_found and not forced_flex_factor:
+                new_basis = flex_basis([token])
+                if new_basis is not None:
+                    basis = new_basis
+                    basis_found = True
+                    continue
+            if not grow_found:
+                new_grow = flex_grow_shrink([token])
+                if new_grow is None:
+                    raise InvalidValues
+                else:
+                    grow = new_grow
+                    grow_found = True
+                    continue
+            elif not shrink_found:
+                new_shrink = flex_grow_shrink([token])
+                if new_shrink is None:
+                    raise InvalidValues
+                else:
+                    shrink = new_shrink
+                    shrink_found = True
+                    continue
+            else:
+                raise InvalidValues
+        yield 'flex-grow', grow
+        yield 'flex-shrink', shrink
+        yield 'flex-basis', basis
+
+
+@expander('flex-flow')
+def expand_flex_flow(base_url, name, tokens):
+    """Expand the ``flex-flow`` property."""
+    if len(tokens) == 2:
+        for sorted_tokens in tokens, tokens[::-1]:
+            direction = flex_direction([sorted_tokens[0]])
+            wrap = flex_wrap([sorted_tokens[1]])
+            if direction and wrap:
+                yield 'flex-direction', direction
+                yield 'flex-wrap', wrap
+                break
+        else:
+            raise InvalidValues
+    elif len(tokens) == 1:
+        direction = flex_direction([tokens[0]])
+        if direction:
+            yield 'flex-direction', direction
+        else:
+            wrap = flex_wrap([tokens[0]])
+            if wrap:
+                yield 'flex-wrap', wrap
+            else:
+                raise InvalidValues
+    else:
+        raise InvalidValues
 
 
 def validate_non_shorthand(base_url, name, tokens, required=False):

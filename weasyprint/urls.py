@@ -189,7 +189,7 @@ HTTP_HEADERS = {
 }
 
 
-def default_url_fetcher(url):
+def default_url_fetcher(url, timeout=10):
     """Fetch an external resource such as an image or stylesheet.
 
     Another callable with the same signature can be given as the
@@ -221,7 +221,7 @@ def default_url_fetcher(url):
     """
     if UNICODE_SCHEME_RE.match(url):
         url = iri_to_uri(url)
-        response = urlopen(Request(url, headers=HTTP_HEADERS))
+        response = urlopen(Request(url, headers=HTTP_HEADERS), timeout=timeout)
         response_info = response.info()
         result = dict(redirected_url=response.geturl(),
                       mime_type=response_info.get_content_type(),

@@ -16,6 +16,7 @@ from ..css.computed_values import ex_ratio, strut_layout
 from ..formatting_structure import boxes
 from ..text import can_break_text, split_first_line
 from .absolute import AbsolutePlaceholder, absolute_layout
+from .flex import flex_layout
 from .float import avoid_collisions, float_layout
 from .min_max import handle_min_max_height, handle_min_max_width
 from .percentages import resolve_one_percentage, resolve_percentages
@@ -609,7 +610,20 @@ def split_inline_level(context, box, position_x, max_x, skip_stack,
         # Atomic inlines behave like ideographic characters.
         first_letter = '\u2e80'
         last_letter = '\u2e80'
-    # else: unexpected box type here
+    elif isinstance(box, boxes.InlineFlexBox):
+        box.position_x = position_x
+        box.position_y = 0
+        for side in ['top', 'right', 'bottom', 'left']:
+            if getattr(box, 'margin_' + side) == 'auto':
+                setattr(box, 'margin_' + side, 0)
+        new_box, resume_at, _, _, _ = flex_layout(
+            context, box, float('inf'), skip_stack, containing_block,
+            device_size, False, absolute_boxes, fixed_boxes)
+        preserved_line_break = False
+        first_letter = '\u2e80'
+        last_letter = '\u2e80'
+    else:  # pragma: no cover
+        raise TypeError('Layout for %s not handled yet' % type(box).__name__)
     return new_box, resume_at, preserved_line_break, first_letter, last_letter
 
 
@@ -741,6 +755,8 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
         can_break = None
         if last_letter is True:
             last_letter = ' '
+        elif last_letter is False:
+            last_letter = ' '  # no-break space
         elif box.style['white_space'] in ('pre', 'nowrap'):
             can_break = False
         if can_break is None:
@@ -792,23 +808,6 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                             # let's break it!
                             break_found = True
 
-                            # We have to check whether the child we're breaking
-                            # is the one broken by the initial skip stack.
-                            broken_child = bool(
-                                initial_skip_stack and
-                                initial_skip_stack[0] == child_index and
-                                initial_skip_stack[1])
-                            if broken_child:
-                                # This child is already broken by the original
-                                # skip stack, let's skip the already rendered
-                                # part before rendering the waiting child
-                                # again.
-                                current_skip, child_skip = (
-                                    initial_skip_stack[1])
-                            else:
-                                # This child has to be rendered from its start.
-                                child_skip = None
-
                             # We break the waiting child at its last possible
                             # breaking point.
                             # TODO: The dirty solution chosen here is to
@@ -819,7 +818,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                             child_new_child, child_resume_at, _, _, _ = (
                                 split_inline_level(
                                     context, child, child.position_x, max_x,
-                                    child_skip, box, device_size,
+                                    None, box, device_size,
                                     absolute_boxes, fixed_boxes,
                                     line_placeholders, waiting_floats,
                                     line_children))
@@ -830,14 +829,37 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                             else:
                                 children += [(child_index, child_new_child)]
 
+                            # We have to check whether the child we're breaking
+                            # is the one broken by the initial skip stack.
+                            broken_child = bool(
+                                initial_skip_stack and
+                                initial_skip_stack[0] == child_index and
+                                initial_skip_stack[1])
                             if broken_child:
                                 # As this child has already been broken
                                 # following the original skip stack, we have to
                                 # add the original skip stack to the partial
                                 # skip stack we get after the new rendering.
+
+                                # We have to do:
+                                # child_resume_at += initial_skip_stack[1]
+                                # but adding skip stacks is a bit complicated
+                                current_skip, grandchild_skip = (
+                                    initial_skip_stack[1])
+                                current_resume_at, grandchild_resume_at = (
+                                    child_resume_at)
+                                if grandchild_skip is None:
+                                    grandchild_resume_at = child_resume_at[1]
+                                elif grandchild_resume_at is None:
+                                    grandchild_resume_at = grandchild_skip
+                                else:
+                                    grandchild_resume_at = (
+                                        grandchild_skip[0] +
+                                        grandchild_resume_at[0],
+                                        None)
                                 child_resume_at = (
-                                    child_resume_at[0] + current_skip,
-                                    child_resume_at[1])
+                                    current_resume_at + current_skip,
+                                    grandchild_resume_at)
 
                             resume_at = (child_index, child_resume_at)
                             break
@@ -1084,7 +1106,7 @@ def inline_box_verticality(box, top_bottom_subtrees, baseline_y):
 
         # the child’s `top` is `child.baseline` above (lower y) its baseline.
         top = child_baseline_y - child.baseline
-        if isinstance(child, boxes.InlineBlockBox):
+        if isinstance(child, (boxes.InlineBlockBox, boxes.InlineFlexBox)):
             # This also includes table wrappers for inline tables.
             child.translate(dy=top - child.position_y)
         else:

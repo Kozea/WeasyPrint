@@ -13,6 +13,7 @@ from math import floor
 
 from ..formatting_structure import boxes
 from .absolute import AbsolutePlaceholder, absolute_layout
+from .flex import flex_layout
 from .float import avoid_collisions, float_layout, get_clearance
 from .inlines import (
     iter_line_boxes, min_max_auto_replaced, replaced_box_height,
@@ -53,30 +54,10 @@ def block_level_layout(context, box, max_position_y, skip_stack,
         adjoining_margins = []
 
     if isinstance(box, boxes.BlockBox):
-        style = box.style
-        if style['column_width'] != 'auto' or style['column_count'] != 'auto':
-            result = columns_layout(
-                context, box, max_position_y, skip_stack, containing_block,
-                device_size, page_is_empty, absolute_boxes, fixed_boxes,
-                adjoining_margins)
-            resume_at = result[1]
-            if resume_at is None:
-                new_box = result[0]
-                bottom_spacing = (
-                    new_box.margin_bottom + new_box.padding_bottom +
-                    new_box.border_bottom_width)
-                if bottom_spacing:
-                    max_position_y -= bottom_spacing
-                    result = columns_layout(
-                        context, box, max_position_y, skip_stack,
-                        containing_block, device_size, page_is_empty,
-                        absolute_boxes, fixed_boxes, adjoining_margins)
-            return result
-        else:
-            return block_box_layout(
-                context, box, max_position_y, skip_stack, containing_block,
-                device_size, page_is_empty, absolute_boxes, fixed_boxes,
-                adjoining_margins)
+        return block_box_layout(
+            context, box, max_position_y, skip_stack, containing_block,
+            device_size, page_is_empty, absolute_boxes, fixed_boxes,
+            adjoining_margins)
     elif isinstance(box, boxes.BlockReplacedBox):
         box = block_replaced_box_layout(box, containing_block, device_size)
         # Don't collide with floats
@@ -88,6 +69,10 @@ def block_level_layout(context, box, max_position_y, skip_stack,
         adjoining_margins = []
         collapsing_through = False
         return box, resume_at, next_page, adjoining_margins, collapsing_through
+    elif isinstance(box, boxes.FlexBox):
+        return flex_layout(
+            context, box, max_position_y, skip_stack, containing_block,
+            device_size, page_is_empty, absolute_boxes, fixed_boxes)
     else:  # pragma: no cover
         raise TypeError('Layout for %s not handled yet' % type(box).__name__)
 
@@ -96,7 +81,26 @@ def block_box_layout(context, box, max_position_y, skip_stack,
                      containing_block, device_size, page_is_empty,
                      absolute_boxes, fixed_boxes, adjoining_margins):
     """Lay out the block ``box``."""
-    if box.is_table_wrapper:
+    if (box.style['column_width'] != 'auto' or
+            box.style['column_count'] != 'auto'):
+        result = columns_layout(
+            context, box, max_position_y, skip_stack, containing_block,
+            device_size, page_is_empty, absolute_boxes, fixed_boxes,
+            adjoining_margins)
+        resume_at = result[1]
+        if resume_at is None:
+            new_box = result[0]
+            bottom_spacing = (
+                new_box.margin_bottom + new_box.padding_bottom +
+                new_box.border_bottom_width)
+            if bottom_spacing:
+                max_position_y -= bottom_spacing
+                result = columns_layout(
+                    context, box, max_position_y, skip_stack,
+                    containing_block, device_size, page_is_empty,
+                    absolute_boxes, fixed_boxes, adjoining_margins)
+        return result
+    elif box.is_table_wrapper:
         table_wrapper_width(
             context, box, (containing_block.width, containing_block.height))
     block_level_width(box, containing_block)
@@ -401,7 +405,9 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                            device_size, page_is_empty, absolute_boxes,
                            fixed_boxes, adjoining_margins=None):
     """Set the ``box`` height."""
-    assert isinstance(box, boxes.BlockContainerBox)
+    # TODO: boxes.FlexBox is allowed here because flex_layout calls
+    # block_container_layout, there's probably a better solution.
+    assert isinstance(box, (boxes.BlockContainerBox, boxes.FlexBox))
 
     # TODO: this should make a difference, but that is currently neglected.
     # See http://www.w3.org/TR/CSS21/visudet.html#normal-block

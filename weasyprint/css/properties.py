@@ -46,8 +46,6 @@ INITIAL_VALUES = {
     'margin_left': Dimension(0, 'px'),
     'max_height': Dimension(float('inf'), 'px'),  # parsed value for 'none'
     'max_width': Dimension(float('inf'), 'px'),
-    'min_height': Dimension(0, 'px'),
-    'min_width': Dimension(0, 'px'),
     'overflow': 'visible',
     'padding_top': Dimension(0, 'px'),
     'padding_right': Dimension(0, 'px'),
@@ -172,6 +170,20 @@ INITIAL_VALUES = {
     'outline_style': 'none',
     'outline_width': 3,  # computed value for 'medium'
     'overflow_wrap': 'normal',
+
+    # Flexible Box Layout Module 1 (CR): https://www.w3.org/TR/css-flexbox-1/
+    'align_content': 'stretch',
+    'align_items': 'stretch',
+    'align_self': 'auto',
+    'flex_basis': 'auto',
+    'flex_direction': 'row',
+    'flex_grow': 0,
+    'flex_shrink': 1,
+    'flex_wrap': 'nowrap',
+    'justify_content': 'flex-start',
+    'min_height': 'auto',
+    'min_width': 'auto',
+    'order': 0,
 
     # Proprietary
     'anchor': None,  # computed value of 'none'
@@ -303,6 +315,7 @@ TABLE_WRAPPER_BOX_PROPERTIES = {
     'margin_left',
     'margin_right',
     'opacity',
+    'overflow',
     'position',
     'right',
     'top',

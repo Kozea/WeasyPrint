@@ -229,6 +229,49 @@ def absolute_block(context, box, containing_block, fixed_boxes):
     return new_box
 
 
+def absolute_flex(context, box, containing_block_sizes, fixed_boxes,
+                  containing_block):
+    # Avoid a circular import
+    from .flex import flex_layout
+
+    # TODO: this function is really close to absolute_block, we should have
+    # only one function.
+    # TODO: having containing_block_sizes and containing_block is stupid.
+    cb_x, cb_y, cb_width, cb_height = containing_block_sizes
+
+    translate_box_width, translate_x = absolute_width(
+        box, context, containing_block_sizes)
+    translate_box_height, translate_y = absolute_height(
+        box, context, containing_block_sizes)
+
+    # This box is the containing block for absolute descendants.
+    absolute_boxes = []
+
+    if box.is_table_wrapper:
+        table_wrapper_width(context, box, (cb_width, cb_height))
+
+    # TODO: remove device_size everywhere else
+    new_box, _, _, _, _ = flex_layout(
+        context, box, max_position_y=float('inf'), skip_stack=None,
+        containing_block=containing_block, device_size=None,
+        page_is_empty=False, absolute_boxes=absolute_boxes,
+        fixed_boxes=fixed_boxes)
+
+    list_marker_layout(context, new_box)
+
+    for child_placeholder in absolute_boxes:
+        absolute_layout(context, child_placeholder, new_box, fixed_boxes)
+
+    if translate_box_width:
+        translate_x -= new_box.width
+    if translate_box_height:
+        translate_y -= new_box.height
+
+    new_box.translate(translate_x, translate_y)
+
+    return new_box
+
+
 def absolute_layout(context, placeholder, containing_block, fixed_boxes):
     """Set the width of absolute positioned ``box``."""
     assert not placeholder._layout_done
@@ -260,6 +303,9 @@ def absolute_box_layout(context, box, containing_block, fixed_boxes):
     # Absolute tables are wrapped into block boxes
     if isinstance(box, boxes.BlockBox):
         new_box = absolute_block(context, box, containing_block, fixed_boxes)
+    elif isinstance(box, boxes.FlexContainerBox):
+        new_box = absolute_flex(
+            context, box, containing_block, fixed_boxes, cb)
     else:
         assert isinstance(box, boxes.BlockReplacedBox)
         new_box = absolute_replaced(context, box, containing_block)
