@@ -9,15 +9,15 @@
 
 """
 
+from .test_boxes import render_pages
 from .test_draw import requires
-from .test_layout import parse
 from .testing_utils import assert_no_logs
 
 
 @assert_no_logs
 @requires('pango', (1, 38, 0))
 def test_font_face():
-    page, = parse('''
+    page, = render_pages('''
         <style>
             @font-face { src: url(weasyprint.otf); font-family: weasyprint }
             body { font-family: weasyprint }
@@ -33,7 +33,7 @@ def test_font_face():
 @requires('pango', (1, 38, 0))
 def test_default():
     # Kerning and ligatures are on by default
-    page, = parse('''
+    page, = render_pages('''
         <style>
             @font-face { src: url(weasyprint.otf); font-family: weasyprint }
             body { font-family: weasyprint }
@@ -47,7 +47,7 @@ def test_default():
     assert span2.width == 1.5 * 16
 
     # Deactivate kerning
-    page, = parse('''
+    page, = render_pages('''
         <style>
             @font-face {
               src: url(weasyprint.otf);
@@ -70,7 +70,7 @@ def test_default():
     assert span2.width == 2 * 16
 
     # Deactivate kerning and ligatures
-    page, = parse('''
+    page, = render_pages('''
         <style>
             @font-face {
               src: url(weasyprint.otf);
@@ -97,7 +97,7 @@ def test_default():
 @assert_no_logs
 @requires('pango', (1, 38, 0))
 def test_font_face_descriptors():
-    page, = parse(
+    page, = render_pages(
         '''
         <style>
             @font-face {

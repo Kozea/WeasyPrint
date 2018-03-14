@@ -10,7 +10,7 @@
 """
 
 from ..formatting_structure import boxes
-from .test_boxes import render_pages as parse
+from .test_boxes import render_pages
 from .testing_utils import assert_no_logs
 
 
@@ -23,7 +23,7 @@ def outer_area(box):
 @assert_no_logs
 def test_floats():
     # adjacent-floats-001
-    page, = parse('''
+    page, = render_pages('''
         <style>
             div { float: left }
             img { width: 100px; vertical-align: top }
@@ -37,7 +37,7 @@ def test_floats():
     assert outer_area(div_2) == (100, 0, 100, 100)
 
     # c414-flt-fit-000
-    page, = parse('''
+    page, = render_pages('''
         <style>
             body { width: 290px }
             div { float: left; width: 100px;  }
@@ -62,7 +62,7 @@ def test_floats():
     assert outer_area(img_5) == (100, 60, 60, 60)
 
     # c414-flt-fit-002
-    page, = parse('''
+    page, = render_pages('''
         <style type="text/css">
             body { width: 200px }
             p { width: 70px; height: 20px }
@@ -89,7 +89,7 @@ def test_floats():
         (130, 60), (0, 60), (0, 80), (70, 80), ]
 
     # c414-flt-wrap-000 ... more or less
-    page, = parse('''
+    page, = render_pages('''
         <style>
             body { width: 100px }
             p { float: left; height: 100px }
@@ -108,7 +108,7 @@ def test_floats():
     assert (line_2.position_x, line_2.position_y) == (0, 200)
 
     # c414-flt-wrap-000 with text ... more or less
-    page, = parse('''
+    page, = render_pages('''
         <style>
             body { width: 100px; font: 60px Ahem; }
             p { float: left; height: 100px }
@@ -127,7 +127,7 @@ def test_floats():
     assert (line_2.position_x, line_2.position_y) == (0, 200)
 
     # floats-placement-vertical-001b
-    page, = parse('''
+    page, = render_pages('''
         <style>
             body { width: 90px; font-size: 0 }
             img { vertical-align: top }
@@ -151,7 +151,7 @@ def test_floats():
     assert outer_area(img_3) == (0, 50, 30, 30)
 
     # Variant of the above: no <span>
-    page, = parse('''
+    page, = render_pages('''
         <style>
             body { width: 90px; font-size: 0 }
             img { vertical-align: top }
@@ -171,7 +171,7 @@ def test_floats():
     assert outer_area(img_3) == (0, 50, 30, 30)
 
     # Floats do no affect other pages
-    page_1, page_2 = parse('''
+    page_1, page_2 = render_pages('''
         <style>
             body { width: 90px; font-size: 0 }
             img { vertical-align: top }
@@ -198,7 +198,7 @@ def test_floats():
 
     # Regression test
     # https://github.com/Kozea/WeasyPrint/issues/263
-    page, = parse('''<div style="top:100%; float:left">''')
+    page, = render_pages('''<div style="top:100%; float:left">''')
 
 
 @assert_no_logs
@@ -207,7 +207,7 @@ def test_floats_page_breaks():
     do not fit the page."""
 
     # Tests floated images shorter than the page
-    pages = parse('''
+    pages = render_pages('''
         <style>
             @page { size: 100px; margin: 10px }
             img { height: 45px; width:70px; float: left;}
@@ -232,7 +232,7 @@ def test_floats_page_breaks():
     assert positions_y == [[10], [10]]
 
     # Tests floated images taller than the page
-    pages = parse('''
+    pages = render_pages('''
         <style>
             @page { size: 100px; margin: 10px }
             img { height: 81px; width:70px; float: left;}
@@ -257,7 +257,7 @@ def test_floats_page_breaks():
     assert positions_y == [[10], [10]]
 
     # Tests floated images shorter than the page
-    pages = parse('''
+    pages = render_pages('''
         <style>
             @page { size: 100px; margin: 10px }
             img { height: 30px; width:70px; float: left;}
@@ -286,7 +286,7 @@ def test_floats_page_breaks():
     assert positions_y == [[10, 40], [10, 40], [10]]
 
     # last float does not fit, pushed to next page
-    pages = parse('''
+    pages = render_pages('''
         <style>
             @page{
                 size: 110px;
@@ -321,7 +321,7 @@ def test_floats_page_breaks():
 
     # last float does not fit, pushed to next page
     # center div must not
-    pages = parse('''
+    pages = render_pages('''
         <style>
             @page{
                 size: 110px;
@@ -357,7 +357,7 @@ def test_floats_page_breaks():
 
     # center div must be the last element,
     # but float won't fit and will get pushed anyway
-    pages = parse('''
+    pages = render_pages('''
         <style>
             @page{
                 size: 110px;
@@ -396,7 +396,7 @@ def test_floats_page_breaks():
 def test_preferred_widths():
     """Unit tests for preferred widths."""
     def get_float_width(body_width):
-        page, = parse('''
+        page, = render_pages('''
             <body style="width: %spx; font-family: ahem">
             <p style="white-space: pre-line; float: left">
                 Lorem ipsum dolor sit amet,
@@ -416,7 +416,7 @@ def test_preferred_widths():
     # Non-regression test:
     # Incorrect whitespace handling in preferred width used to cause
     # unnecessary line break.
-    page, = parse('''
+    page, = render_pages('''
         <p style="float: left">Lorem <em>ipsum</em> dolor.</p>
     ''')
     html, = page.children
@@ -425,7 +425,7 @@ def test_preferred_widths():
     assert len(paragraph.children) == 1
     assert isinstance(paragraph.children[0], boxes.LineBox)
 
-    page, = parse('''
+    page, = render_pages('''
         <style>img { width: 20px }</style>
         <p style="float: left">
             <img src=pattern.png><img src=pattern.png><br>
@@ -436,16 +436,18 @@ def test_preferred_widths():
     paragraph, = body.children
     assert paragraph.width == 40
 
-    page, = parse('''<style>p { font: 20px Ahem }</style>
-                     <p style="float: left">XX<br>XX<br>X</p>''')
+    page, = render_pages(
+        '<style>p { font: 20px Ahem }</style>'
+        '<p style="float: left">XX<br>XX<br>X</p>')
     html, = page.children
     body, = html.children
     paragraph, = body.children
     assert paragraph.width == 40
 
     # The space is the start of the line is collapsed.
-    page, = parse('''<style>p { font: 20px Ahem }</style>
-                     <p style="float: left">XX<br> XX<br>X</p>''')
+    page, = render_pages(
+        '<style>p { font: 20px Ahem }</style>'
+        '<p style="float: left">XX<br> XX<br>X</p>''')
     html, = page.children
     body, = html.children
     paragraph, = body.children

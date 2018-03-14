@@ -19,5 +19,4 @@
 
 # Tests
 /weasyprint/tests/.cache
-/weasyprint/tests/test_results
-/weasyprint/tests/w3_test_suite/test_results
+/weasyprint/tests/results

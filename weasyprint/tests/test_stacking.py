@@ -8,8 +8,7 @@
 """
 
 from ..stacking import StackingContext
-from .test_boxes import serialize
-from .test_layout import parse
+from .test_boxes import render_pages, serialize
 from .testing_utils import assert_no_logs
 
 
@@ -28,7 +27,7 @@ def serialize_stacking(context):
 
 @assert_no_logs
 def test_nested():
-    page, = parse('''\
+    page, = render_pages('''\
         <p id=lorem></p>
         <div style="position: relative">
             <p id=lipsum></p>
@@ -42,7 +41,7 @@ def test_nested():
             ['p'],
             [])])
 
-    page, = parse('''\
+    page, = render_pages('''\
         <div style="position: relative">
             <p style="position: relative"></p>
         </div>
@@ -56,7 +55,7 @@ def test_nested():
 
 @assert_no_logs
 def test_image_contexts():
-    page, = parse('''
+    page, = render_pages('''
         <body>Some text: <img style="position: relative" src=pattern.png>''')
     html, = page.children
     context = StackingContext.from_box(html, page)

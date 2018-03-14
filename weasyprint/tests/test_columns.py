@@ -9,7 +9,7 @@
 
 """
 
-from .test_boxes import render_pages as parse
+from .test_boxes import render_pages
 from .testing_utils import assert_no_logs
 
 
@@ -23,7 +23,7 @@ def test_columns():
             'columns: 100px 4',
             'column-width: 100px',
             'column-count: 4'):
-        page, = parse('''
+        page, = render_pages('''
             <style>
                 div { %s; column-gap: 0 }
                 body { margin: 0; font-family: "ahem" }
@@ -56,7 +56,7 @@ def test_column_gap():
             '40%': 16,  # percentages are not allowed
             '-1em': 16,  # negative values are not allowed
     }.items():
-        page, = parse('''
+        page, = render_pages('''
             <style>
                 div { columns: 3; column-gap: %s }
                 body { margin: 0; font-family: "ahem" }
@@ -85,7 +85,7 @@ def test_column_gap():
 @assert_no_logs
 def test_columns_multipage():
     """Test columns split among multiple pages."""
-    page1, page2 = parse('''
+    page1, page2 = render_pages('''
         <style>
             div { columns: 2; column-gap: 1px }
             body { margin: 0; font-family: "ahem";
@@ -122,7 +122,7 @@ def test_columns_multipage():
 @assert_no_logs
 def test_columns_not_enough_content():
     """Test when there are too many columns."""
-    page, = parse('''
+    page, = render_pages('''
         <style>
             div { columns: 5; column-gap: 0 }
             body { margin: 0; font-family: "ahem" }
@@ -145,7 +145,7 @@ def test_columns_not_enough_content():
 @assert_no_logs
 def test_columns_empty():
     """Test when there's no content in columns."""
-    page, = parse('''
+    page, = render_pages('''
         <style>
             div { columns: 3 }
             body { margin: 0; font-family: "ahem" }
@@ -168,7 +168,7 @@ def test_columns_fixed_height():
     """Test columns with fixed height."""
     # TODO: we should test when the height is too small
     for prop in ('height', 'min-height'):
-        page, = parse('''
+        page, = render_pages('''
             <style>
                 div { columns: 4; column-gap: 0; %s: 10px }
                 body { margin: 0; font-family: "ahem"; line-height: 1px }
@@ -192,7 +192,7 @@ def test_columns_fixed_height():
 @assert_no_logs
 def test_columns_relative():
     """Test columns with position: relative."""
-    page, = parse('''
+    page, = render_pages('''
         <style>
             article { position: absolute; top: 3px }
             div { columns: 4; column-gap: 0; position: relative;
