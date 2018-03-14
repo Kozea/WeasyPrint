@@ -9,8 +9,8 @@
 
 """
 
-from .test_boxes import render_pages
-from .testing_utils import assert_no_logs
+from ..test_boxes import render_pages
+from ..testing_utils import assert_no_logs
 
 
 @assert_no_logs
