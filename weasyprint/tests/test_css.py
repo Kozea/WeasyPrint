@@ -9,8 +9,8 @@
 
 """
 
+import pytest
 import tinycss2
-from pytest import raises
 
 from .. import CSS, css, default_url_fetcher
 from ..css import PageType, get_all_computed_styles, parse_page_selectors
@@ -23,17 +23,15 @@ from .testing_utils import (
 
 @assert_no_logs
 def test_style_dict():
-    """Test a style in a ``dict``."""
     style = {'margin_left': 12, 'display': 'block'}
     assert style['display'] == 'block'
     assert style['margin_left'] == 12
-    with raises(KeyError):
+    with pytest.raises(KeyError):
         style['position']
 
 
 @assert_no_logs
 def test_find_stylesheets():
-    """Test if the stylesheets are found in a HTML document."""
     html = FakeHTML(resource_filename('doc1.html'))
 
     sheets = list(css.find_stylesheets(
@@ -58,7 +56,6 @@ def test_find_stylesheets():
 
 @assert_no_logs
 def test_expand_shorthands():
-    """Test the expand shorthands."""
     sheet = CSS(resource_filename('sheet2.css'))
     assert list(sheet.matcher.lower_local_name_selectors) == ['li']
 
@@ -81,7 +78,6 @@ def test_expand_shorthands():
 
 @assert_no_logs
 def test_annotate_document():
-    """Test a document with inline style."""
     document = FakeHTML(resource_filename('doc1.html'))
     document._ua_stylesheets = lambda: [CSS(resource_filename('mini_ua.css'))]
     style_for, _, _ = get_all_computed_styles(
@@ -170,27 +166,18 @@ def test_annotate_document():
 
 @assert_no_logs
 def test_page():
-    """Test the ``@page`` properties."""
     document = FakeHTML(resource_filename('doc1.html'))
     style_for, cascaded_styles, computed_styles = get_all_computed_styles(
         document, user_stylesheets=[CSS(string='''
-            html {
-                color: red;
-            }
-            @page {
-                margin: 10px;
-            }
-            @page :right {
-                color: blue;
-                margin-bottom: 12pt;
-                font-size: 20px;
-                @top-left {
-                    width: 10em;
-                }
-                @top-right {
-                    font-size: 10px;
-                }
-            }
+          html { color: red }
+          @page { margin: 10px }
+          @page :right {
+            color: blue;
+            margin-bottom: 12pt;
+            font-size: 20px;
+            @top-left { width: 10em }
+            @top-right { font-size: 10px}
+          }
         ''')])
 
     # Force the generation of the style for all possible page types and
@@ -247,93 +234,64 @@ def test_page():
 
 
 @assert_no_logs
-def test_page_selectors():
-    """Test the ``@page`` selectors parsing."""
-    at_rule, = tinycss2.parse_stylesheet('@page {}')
-    assert parse_page_selectors(at_rule) == [
-        {'side': None, 'blank': False, 'first': False, 'name': None,
-         'specificity': [0, 0, 0]}]
-
-    at_rule, = tinycss2.parse_stylesheet('@page :left {}')
-    assert parse_page_selectors(at_rule) == [
-        {'side': 'left', 'blank': False, 'first': False, 'name': None,
-         'specificity': [0, 0, 1]}]
-
-    at_rule, = tinycss2.parse_stylesheet('@page:first:left {}')
-    assert parse_page_selectors(at_rule) == [
-        {'side': 'left', 'blank': False, 'first': True, 'name': None,
-         'specificity': [0, 1, 1]}]
-
-    at_rule, = tinycss2.parse_stylesheet('@page pagename {}')
-    assert parse_page_selectors(at_rule) == [
-        {'side': None, 'blank': False, 'first': False, 'name': 'pagename',
-         'specificity': [1, 0, 0]}]
-
-    at_rule, = tinycss2.parse_stylesheet('@page pagename:first:right:blank {}')
-    assert parse_page_selectors(at_rule) == [
-        {'side': 'right', 'blank': True, 'first': True, 'name': 'pagename',
-         'specificity': [1, 2, 1]}]
-
-    at_rule, = tinycss2.parse_stylesheet('@page pagename, :first {}')
-    assert parse_page_selectors(at_rule) == [
+@pytest.mark.parametrize('style, selectors', (
+    ('@page {}', [{
+        'side': None, 'blank': False, 'first': False, 'name': None,
+        'specificity': [0, 0, 0]}]),
+    ('@page :left {}', [{
+        'side': 'left', 'blank': False, 'first': False, 'name': None,
+        'specificity': [0, 0, 1]}]),
+    ('@page:first:left {}', [{
+        'side': 'left', 'blank': False, 'first': True, 'name': None,
+        'specificity': [0, 1, 1]}]),
+    ('@page pagename {}', [{
+        'side': None, 'blank': False, 'first': False, 'name': 'pagename',
+        'specificity': [1, 0, 0]}]),
+    ('@page pagename:first:right:blank {}', [{
+        'side': 'right', 'blank': True, 'first': True, 'name': 'pagename',
+        'specificity': [1, 2, 1]}]),
+    ('@page pagename, :first {}', [
         {'side': None, 'blank': False, 'first': False, 'name': 'pagename',
          'specificity': [1, 0, 0]},
         {'side': None, 'blank': False, 'first': True, 'name': None,
-         'specificity': [0, 1, 0]}]
-
-    at_rule, = tinycss2.parse_stylesheet('@page page page {}')
-    assert parse_page_selectors(at_rule) is None
-
-    at_rule, = tinycss2.parse_stylesheet('@page :left page {}')
-    assert parse_page_selectors(at_rule) is None
-
-    at_rule, = tinycss2.parse_stylesheet('@page :left, {}')
-    assert parse_page_selectors(at_rule) is None
-
-    at_rule, = tinycss2.parse_stylesheet('@page , {}')
-    assert parse_page_selectors(at_rule) is None
-
-    at_rule, = tinycss2.parse_stylesheet('@page :left, test, {}')
-    assert parse_page_selectors(at_rule) is None
-
-    at_rule, = tinycss2.parse_stylesheet('@page :wrong {}')
-    assert parse_page_selectors(at_rule) is None
-
-    at_rule, = tinycss2.parse_stylesheet('@page :left:wrong {}')
-    assert parse_page_selectors(at_rule) is None
-
-    # TODO: The rules following this line should probably be correct and
-    # ignored, but they are currently rejected.
-    at_rule, = tinycss2.parse_stylesheet('@page :first:first {}')
-    assert parse_page_selectors(at_rule) is None
-
-    at_rule, = tinycss2.parse_stylesheet('@page :left:right {}')
-    assert parse_page_selectors(at_rule) is None
+         'specificity': [0, 1, 0]}]),
+    ('@page page page {}', None),
+    ('@page :left page {}', None),
+    ('@page :left, {}', None),
+    ('@page , {}', None),
+    ('@page :left, test, {}', None),
+    ('@page :wrong {}', None),
+    ('@page :left:wrong {}', None),
+    ('@page :first:first {}', None),
+    ('@page :left:right {}', None),
+))
+def test_page_selectors(style, selectors):
+    at_rule, = tinycss2.parse_stylesheet(style)
+    assert parse_page_selectors(at_rule) == selectors
 
 
 @assert_no_logs
-def test_warnings():
+@pytest.mark.parametrize('source, messages', (
+    (':lipsum { margin: 2cm', ['WARNING: Invalid or unsupported selector']),
+    ('::lipsum { margin: 2cm', ['WARNING: Invalid or unsupported selector']),
+    ('foo { margin-color: red', ['WARNING: Ignored', 'unknown property']),
+    ('foo { margin-top: red', ['WARNING: Ignored', 'invalid value']),
+    ('@import "relative-uri.css',
+     ['ERROR: Relative URI reference without a base URI']),
+    ('@import "invalid-protocol://absolute-URL',
+     ['ERROR: Failed to load stylesheet at']),
+))
+def test_warnings(source, messages):
     """Check that appropriate warnings are logged."""
-    for source, messages in [
-        (':lipsum { margin: 2cm',
-            ['WARNING: Invalid or unsupported selector']),
-        ('::lipsum { margin: 2cm',
-            ['WARNING: Invalid or unsupported selector']),
-        ('foo { margin-color: red',
-            ['WARNING: Ignored', 'unknown property']),
-        ('foo { margin-top: red',
-            ['WARNING: Ignored', 'invalid value']),
-        ('@import "relative-uri.css',
-            ['ERROR: Relative URI reference without a base URI']),
-        ('@import "invalid-protocol://absolute-URL',
-            ['ERROR: Failed to load stylesheet at']),
-    ]:
-        with capture_logs() as logs:
-            CSS(string=source)
-        assert len(logs) == 1, source
-        for message in messages:
-            assert message in logs[0]
+    with capture_logs() as logs:
+        CSS(string=source)
+    assert len(logs) == 1, source
+    for message in messages:
+        assert message in logs[0]
 
+
+@assert_no_logs
+def test_warnings_stylesheet():
     html = '<link rel=stylesheet href=invalid-protocol://absolute>'
     with capture_logs() as logs:
         FakeHTML(string=html).render()
@@ -342,33 +300,28 @@ def test_warnings():
 
 
 @assert_no_logs
-def test_error_recovery():
+@pytest.mark.parametrize('style', (
+    '<style> html { color red; color: blue; color',
+    '<html style="color; color: blue; color red">',
+))
+def test_error_recovery(style):
     with capture_logs() as logs:
-        document = FakeHTML(string='''
-            <style> html { color red; color: blue; color
-        ''')
+        document = FakeHTML(string=style)
         page, = document.render().pages
         html, = page._page_box.children
         assert html.style['color'] == (0, 0, 1, 1)  # blue
-
-        document = FakeHTML(string='''
-            <html style="color; color: blue; color red">
-        ''')
-        page, = document.render().pages
-        html, = page._page_box.children
-        assert html.style['color'] == (0, 0, 1, 1)  # blue
-    assert len(logs) == 4
+    assert len(logs) == 2
 
 
 @assert_no_logs
 def test_line_height_inheritance():
     document = FakeHTML(string='''
-        <style>
-            html { font-size: 10px; line-height: 140% }
-            section { font-size: 10px; line-height: 1.4 }
-            div, p { font-size: 20px; vertical-align: 50% }
-        </style>
-        <body><div><section><p></p></section></div></body>
+      <style>
+        html { font-size: 10px; line-height: 140% }
+        section { font-size: 10px; line-height: 1.4 }
+        div, p { font-size: 20px; vertical-align: 50% }
+      </style>
+      <body><div><section><p></p></section></div></body>
     ''')
     page, = document.render().pages
     html, = page._page_box.children
@@ -391,32 +344,32 @@ def test_line_height_inheritance():
 @assert_no_logs
 def test_important():
     document = FakeHTML(string='''
-        <style>
-            p:nth-child(1) { color: lime }
-            body p:nth-child(2) { color: red }
+      <style>
+        p:nth-child(1) { color: lime }
+        body p:nth-child(2) { color: red }
 
-            p:nth-child(3) { color: lime !important }
-            body p:nth-child(3) { color: red }
+        p:nth-child(3) { color: lime !important }
+        body p:nth-child(3) { color: red }
 
-            body p:nth-child(5) { color: lime }
-            p:nth-child(5) { color: red }
+        body p:nth-child(5) { color: lime }
+        p:nth-child(5) { color: red }
 
-            p:nth-child(6) { color: red }
-            p:nth-child(6) { color: lime }
-        </style>
-        <p></p>
-        <p></p>
-        <p></p>
-        <p></p>
-        <p></p>
-        <p></p>
+        p:nth-child(6) { color: red }
+        p:nth-child(6) { color: lime }
+      </style>
+      <p></p>
+      <p></p>
+      <p></p>
+      <p></p>
+      <p></p>
+      <p></p>
     ''')
     page, = document.render(stylesheets=[CSS(string='''
-        body p:nth-child(1) { color: red }
-        p:nth-child(2) { color: lime !important }
+      body p:nth-child(1) { color: red }
+      p:nth-child(2) { color: lime !important }
 
-        p:nth-child(4) { color: lime !important }
-        body p:nth-child(4) { color: red }
+      p:nth-child(4) { color: lime !important }
+      body p:nth-child(4) { color: red }
     ''')]).pages
     html, = page._page_box.children
     body, = html.children
@@ -427,12 +380,12 @@ def test_important():
 @assert_no_logs
 def test_named_pages():
     document = FakeHTML(string='''
-        <style>
-            @page NARRow { size: landscape }
-            div { page: AUTO }
-            p { page: NARRow }
-        </style>
-        <div><p><span>a</span></p></div>
+      <style>
+        @page NARRow { size: landscape }
+        div { page: AUTO }
+        p { page: NARRow }
+      </style>
+      <div><p><span>a</span></p></div>
     ''')
     page, = document.render().pages
     html, = page._page_box.children
@@ -448,26 +401,23 @@ def test_named_pages():
 
 
 @assert_no_logs
-def test_units():
-    document = FakeHTML(string='''
-        <p style="margin-left: 96px"></p>
-        <p style="margin-left: 1in"></p>
-        <p style="margin-left: 72pt"></p>
-        <p style="margin-left: 6pc"></p>
-        <p style="margin-left: 2.54cm"></p>
-        <p style="margin-left: 25.4mm"></p>
-        <p style="margin-left: 101.6q"></p>
-        <p style="margin-left: 1.1em"></p>
-        <p style="margin-left: 1.1rem"></p>
-        <p style="margin-left: 1.1ch; font: 14px Ahem"></p>
-        <p style="margin-left: 1.5ex; font: 10px Ahem"></p>
-        <p style="margin-left: 1.1ch"></p>
-    ''')
+@pytest.mark.parametrize('value, width', (
+    ('96px', 96),
+    ('1in', 96),
+    ('72pt', 96),
+    ('6pc', 96),
+    ('2.54cm', 96),
+    ('25.4mm', 96),
+    ('101.6q', 96),
+    ('1.1em', 17.6),
+    ('1.1rem', 17.6),
+    ('1.1ch; font: 14px Ahem', pytest.approx(15.4)),
+    ('1.5ex; font: 10px Ahem', 12),
+))
+def test_units(value, width):
+    document = FakeHTML(string='<p style="margin-left: %s"></p>' % value)
     page, = document.render().pages
     html, = page._page_box.children
     body, = html.children
-    margins = [round(p.margin_left, 6) for p in body.children]
-    default_font_ch = margins.pop()
-    # Ahem: 1ex is 0.8em, 1ch is 1em
-    assert margins == [96, 96, 96, 96, 96, 96, 96, 17.6, 17.6, 15.4, 12]
-    assert 4 < default_font_ch < 12  # for 1em = 16px
+    p, = body.children
+    assert p.margin_left == width
