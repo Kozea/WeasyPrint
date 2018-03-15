@@ -1,6 +1,6 @@
 """
-    weasyprint.tests.tables
-    -----------------------
+    weasyprint.tests.layout.table
+    -----------------------------
 
     Tests for layout of tables.
 

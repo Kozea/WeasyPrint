@@ -1,6 +1,6 @@
 """
-    weasyprint.tests.columns
-    ------------------------
+    weasyprint.tests.layout.column
+    ------------------------------
 
     Tests for multicolumn layout.
 
