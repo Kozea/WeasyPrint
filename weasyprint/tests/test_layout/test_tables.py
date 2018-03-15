@@ -4,28 +4,28 @@
 
     Tests for layout of tables.
 
-    :copyright: Copyright 2011-2016 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
 
-from .test_boxes import render_pages
-from .test_draw import B, _, assert_pixels, r
-from .testing_utils import assert_no_logs, capture_logs, requires
+import pytest
+
+from ..test_boxes import render_pages
+from ..test_draw import B, _, assert_pixels, r
+from ..testing_utils import assert_no_logs, capture_logs, requires
 
 
 @assert_no_logs
 def test_inline_table():
-    """Test the inline-table elements sizes."""
     page, = render_pages('''
-        <table style="display: inline-table; border-spacing: 10px;
-                      margin: 5px">
-            <tr>
-                <td><img src=pattern.png style="width: 20px"></td>
-                <td><img src=pattern.png style="width: 30px"></td>
-            </tr>
-        </table>
-        foo
+      <table style="display: inline-table; border-spacing: 10px; margin: 5px">
+        <tr>
+          <td><img src=pattern.png style="width: 20px"></td>
+          <td><img src=pattern.png style="width: 30px"></td>
+        </tr>
+      </table>
+      foo
     ''')
     html, = page.children
     body, = html.children
@@ -47,34 +47,17 @@ def test_inline_table():
 
 
 @assert_no_logs
-def test_implicit_width_table():
-    """Test table with implicit width."""
+def test_implicit_width_table_col_percent():
     # See https://github.com/Kozea/WeasyPrint/issues/169
     page, = render_pages('''
-        <table>
-            <col style="width:25%"></col>
-            <col></col>
-            <tr>
-                <td></td>
-                <td></td>
-            </tr>
-        </table>
-    ''')
-    html, = page.children
-    body, = html.children
-    table_wrapper, = body.children
-    table, = table_wrapper.children
-    row_group, = table.children
-    row, = row_group.children
-    td_1, td_2 = row.children
-
-    page, = render_pages('''
-        <table>
-            <tr>
-                <td style="width:25%"></td>
-                <td></td>
-            </tr>
-        </table>
+      <table>
+        <col style="width:25%"></col>
+        <col></col>
+        <tr>
+          <td></td>
+          <td></td>
+        </tr>
+      </table>
     ''')
     html, = page.children
     body, = html.children
@@ -86,19 +69,36 @@ def test_implicit_width_table():
 
 
 @assert_no_logs
-def test_fixed_layout_table():
-    """Test the fixed layout table elements sizes."""
+def test_implicit_width_table_td_percent():
     page, = render_pages('''
-        <table style="table-layout: fixed; border-spacing: 10px;
-                      margin: 5px">
-            <colgroup>
-              <col style="width: 20px" />
-            </colgroup>
-            <tr>
-                <td></td>
-                <td style="width: 40px">a</td>
-            </tr>
-        </table>
+      <table>
+        <tr>
+          <td style="width:25%"></td>
+          <td></td>
+        </tr>
+      </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2 = row.children
+
+
+@assert_no_logs
+def test_layout_table_fixed_1():
+    page, = render_pages('''
+      <table style="table-layout: fixed; border-spacing: 10px; margin: 5px">
+        <colgroup>
+          <col style="width: 20px" />
+        </colgroup>
+        <tr>
+          <td></td>
+          <td style="width: 40px">a</td>
+        </tr>
+      </table>
     ''')
     html, = page.children
     body, = html.children
@@ -115,14 +115,17 @@ def test_fixed_layout_table():
     assert td_2.width == 40
     assert table.width == 90  # 20 + 40 + 3 * border-spacing
 
+
+@assert_no_logs
+def test_layout_table_fixed_2():
     page, = render_pages('''
-        <table style="table-layout: fixed; border-spacing: 10px;
-                      width: 200px; margin: 5px">
-            <tr>
-                <td style="width: 20px">a</td>
-                <td style="width: 40px"></td>
-            </tr>
-        </table>
+      <table style="table-layout: fixed; border-spacing: 10px; width: 200px;
+                    margin: 5px">
+        <tr>
+          <td style="width: 20px">a</td>
+          <td style="width: 40px"></td>
+        </tr>
+      </table>
     ''')
     html, = page.children
     body, = html.children
@@ -139,18 +142,21 @@ def test_fixed_layout_table():
     assert td_2.width == 95  # 40 + ((200 - 20 - 40 - 3 * border-spacing) / 2)
     assert table.width == 200
 
+
+@assert_no_logs
+def test_layout_table_fixed_3():
     page, = render_pages('''
-        <table style="table-layout: fixed; border-spacing: 10px;
-                      width: 110px; margin: 5px">
-            <tr>
-                <td style="width: 40px">a</td>
-                <td>b</td>
-            </tr>
-            <tr>
-                <td style="width: 50px">a</td>
-                <td style="width: 30px">b</td>
-            </tr>
-        </table>
+      <table style="table-layout: fixed; border-spacing: 10px;
+                    width: 110px; margin: 5px">
+        <tr>
+          <td style="width: 40px">a</td>
+          <td>b</td>
+        </tr>
+        <tr>
+          <td style="width: 50px">a</td>
+          <td style="width: 30px">b</td>
+        </tr>
+      </table>
     ''')
     html, = page.children
     body, = html.children
@@ -172,18 +178,21 @@ def test_fixed_layout_table():
     assert td_4.width == 40
     assert table.width == 110  # 20 + 40 + 3 * border-spacing
 
+
+@assert_no_logs
+def test_layout_table_fixed_4():
     page, = render_pages('''
-        <table style="table-layout: fixed; border-spacing: 0;
-                      width: 100px; margin: 10px">
-            <colgroup>
-              <col />
-              <col style="width: 20px" />
-            </colgroup>
-            <tr>
-                <td></td>
-                <td style="width: 40px">a</td>
-            </tr>
-        </table>
+      <table style="table-layout: fixed; border-spacing: 0;
+                    width: 100px; margin: 10px">
+        <colgroup>
+          <col />
+          <col style="width: 20px" />
+        </colgroup>
+        <tr>
+          <td></td>
+          <td style="width: 40px">a</td>
+        </tr>
+      </table>
     ''')
     html, = page.children
     body, = html.children
@@ -200,26 +209,29 @@ def test_fixed_layout_table():
     assert td_2.width == 20
     assert table.width == 100
 
+
+@assert_no_logs
+def test_layout_table_fixed_5():
     # With border-collapse
     page, = render_pages('''
-        <style>
-          /* Do not apply: */
-          colgroup, col, tbody, tr, td { margin: 1000px }
-        </style>
-        <table style="table-layout: fixed;
-                      border-collapse: collapse; border: 10px solid;
-                      /* ignored with collapsed borders: */
-                      border-spacing: 10000px; padding: 1000px">
-            <colgroup>
-              <col style="width: 30px" />
-            </colgroup>
-            <tbody>
-              <tr>
-                <td style="padding: 2px"></td>
-                <td style="width: 34px; padding: 10px; border: 2px solid"></td>
-              </tr>
-            </tbody>
-        </table>
+      <style>
+        /* Do not apply: */
+        colgroup, col, tbody, tr, td { margin: 1000px }
+      </style>
+      <table style="table-layout: fixed;
+                    border-collapse: collapse; border: 10px solid;
+                    /* ignored with collapsed borders: */
+                    border-spacing: 10000px; padding: 1000px">
+        <colgroup>
+          <col style="width: 30px" />
+        </colgroup>
+        <tbody>
+          <tr>
+            <td style="padding: 2px"></td>
+            <td style="width: 34px; padding: 10px; border: 2px solid"></td>
+          </tr>
+        </tbody>
+      </table>
     ''')
     html, = page.children
     body, = html.children
@@ -242,16 +254,15 @@ def test_fixed_layout_table():
 
 
 @assert_no_logs
-def test_auto_layout_table():
-    """Test the auto layout table elements sizes."""
+def test_layout_table_auto_1():
     page, = render_pages('''
-        <body style="width: 100px">
-        <table style="border-spacing: 10px; margin: auto">
-            <tr>
-                <td><img src=pattern.png></td>
-                <td><img src=pattern.png></td>
-            </tr>
-        </table>
+      <body style="width: 100px">
+      <table style="border-spacing: 10px; margin: auto">
+        <tr>
+          <td><img src=pattern.png></td>
+          <td><img src=pattern.png></td>
+        </tr>
+      </table>
     ''')
     html, = page.children
     body, = html.children
@@ -271,16 +282,19 @@ def test_auto_layout_table():
     assert td_2.width == 4
     assert table.width == 38  # 3 * spacing + 2 * 4
 
+
+@assert_no_logs
+def test_layout_table_auto_2():
     page, = render_pages('''
-        <body style="width: 50px">
-        <table style="border-spacing: 1px; margin: 10%">
-            <tr>
-                <td style="border: 3px solid black"><img src=pattern.png></td>
-                <td style="border: 3px solid black">
-                    <img src=pattern.png><img src=pattern.png>
-                </td>
-            </tr>
-        </table>
+      <body style="width: 50px">
+      <table style="border-spacing: 1px; margin: 10%">
+        <tr>
+          <td style="border: 3px solid black"><img src=pattern.png></td>
+          <td style="border: 3px solid black">
+            <img src=pattern.png><img src=pattern.png>
+          </td>
+        </tr>
+      </table>
     ''')
     html, = page.children
     body, = html.children
@@ -297,21 +311,24 @@ def test_auto_layout_table():
     assert td_2.width == 8
     assert table.width == 27  # 3 * spacing + 4 + 8 + 4 * border
 
+
+@assert_no_logs
+def test_layout_table_auto_3():
     page, = render_pages('''
-        <table style="border-spacing: 1px; margin: 5px; font-size: 0">
-            <tr>
-                <td></td>
-                <td><img src=pattern.png><img src=pattern.png></td>
-            </tr>
-            <tr>
-                <td>
-                    <img src=pattern.png>
-                    <img src=pattern.png>
-                    <img src=pattern.png>
-                </td>
-                <td><img src=pattern.png></td>
-            </tr>
-        </table>
+      <table style="border-spacing: 1px; margin: 5px; font-size: 0">
+        <tr>
+          <td></td>
+          <td><img src=pattern.png><img src=pattern.png></td>
+        </tr>
+        <tr>
+          <td>
+            <img src=pattern.png>
+            <img src=pattern.png>
+            <img src=pattern.png>
+          </td>
+          <td><img src=pattern.png></td>
+        </tr>
+      </table>
     ''')
     html, = page.children
     body, = html.children
@@ -329,19 +346,22 @@ def test_auto_layout_table():
     assert td_12.width == td_22.width == 8
     assert table.width == 23  # 3 * spacing + 12 + 8
 
+
+@assert_no_logs
+def test_layout_table_auto_4():
     page, = render_pages('''
-        <table style="border-spacing: 1px; margin: 5px">
-            <tr>
-                <td style="border: 1px solid black"><img src=pattern.png></td>
-                <td style="border: 2px solid black; padding: 1px">
-                    <img src=pattern.png>
-                </td>
-            </tr>
-            <tr>
-                <td style="border: 5px solid black"><img src=pattern.png></td>
-                <td><img src=pattern.png></td>
-            </tr>
-        </table>
+      <table style="border-spacing: 1px; margin: 5px">
+        <tr>
+          <td style="border: 1px solid black"><img src=pattern.png></td>
+          <td style="border: 2px solid black; padding: 1px">
+            <img src=pattern.png>
+          </td>
+        </tr>
+        <tr>
+          <td style="border: 5px solid black"><img src=pattern.png></td>
+          <td><img src=pattern.png></td>
+        </tr>
+      </table>
     ''')
     html, = page.children
     body, = html.children
@@ -361,25 +381,28 @@ def test_auto_layout_table():
     assert td_22.width == 10  # 4 + 2 * 3
     assert table.width == 27  # 3 * spacing + 4 + 4 + 2 * b1 + 2 * b2
 
+
+@assert_no_logs
+def test_layout_table_auto_6():
     page, = render_pages('''
-        <style>
-            @page { size: 100px 1000px; }
-        </style>
-        <table style="border-spacing: 1px; margin-right: 79px; font-size: 0">
-            <tr>
-                <td><img src=pattern.png></td>
-                <td>
-                    <img src=pattern.png> <img src=pattern.png>
-                    <img src=pattern.png> <img src=pattern.png>
-                    <img src=pattern.png> <img src=pattern.png>
-                    <img src=pattern.png> <img src=pattern.png>
-                    <img src=pattern.png>
-                </td>
-            </tr>
-            <tr>
-                <td></td>
-            </tr>
-        </table>
+      <style>
+        @page { size: 100px 1000px; }
+      </style>
+      <table style="border-spacing: 1px; margin-right: 79px; font-size: 0">
+        <tr>
+          <td><img src=pattern.png></td>
+          <td>
+            <img src=pattern.png> <img src=pattern.png>
+            <img src=pattern.png> <img src=pattern.png>
+            <img src=pattern.png> <img src=pattern.png>
+            <img src=pattern.png> <img src=pattern.png>
+            <img src=pattern.png>
+          </td>
+        </tr>
+        <tr>
+          <td></td>
+        </tr>
+      </table>
     ''')
     # Preferred minimum width is 2 * 4 + 3 * 1 = 11
     html, = page.children
@@ -398,16 +421,19 @@ def test_auto_layout_table():
     assert td_12.width == 14  # available width
     assert table.width == 21
 
+
+@assert_no_logs
+def test_layout_table_auto_7():
     page, = render_pages('''
-        <table style="border-spacing: 10px; margin: 5px">
-            <colgroup>
-              <col style="width: 20px" />
-            </colgroup>
-            <tr>
-                <td></td>
-                <td style="width: 40px">a</td>
-            </tr>
-        </table>
+      <table style="border-spacing: 10px; margin: 5px">
+        <colgroup>
+          <col style="width: 20px" />
+        </colgroup>
+        <tr>
+          <td></td>
+          <td style="width: 40px">a</td>
+        </tr>
+      </table>
     ''')
     html, = page.children
     body, = html.children
@@ -424,14 +450,17 @@ def test_auto_layout_table():
     assert td_2.width == 40
     assert table.width == 90  # 20 + 40 + 3 * border-spacing
 
+
+@assert_no_logs
+def test_layout_table_auto_8():
     page, = render_pages('''
-        <table style="border-spacing: 10px; width: 120px; margin: 5px;
-                      font-size: 0">
-            <tr>
-                <td style="width: 20px"><img src=pattern.png></td>
-                <td><img src=pattern.png style="width: 40px"></td>
-            </tr>
-        </table>
+      <table style="border-spacing: 10px; width: 120px; margin: 5px;
+                    font-size: 0">
+        <tr>
+          <td style="width: 20px"><img src=pattern.png></td>
+          <td><img src=pattern.png style="width: 40px"></td>
+        </tr>
+      </table>
     ''')
     html, = page.children
     body, = html.children
@@ -448,17 +477,20 @@ def test_auto_layout_table():
     assert td_2.width == 70  # 120 - 3 * border-spacing - 20
     assert table.width == 120
 
+
+@assert_no_logs
+def test_layout_table_auto_9():
     page, = render_pages('''
-        <table style="border-spacing: 10px; width: 110px; margin: 5px">
-            <tr>
-                <td style="width: 60px"></td>
-                <td></td>
-            </tr>
-            <tr>
-                <td style="width: 50px"></td>
-                <td style="width: 30px"></td>
-            </tr>
-        </table>
+      <table style="border-spacing: 10px; width: 110px; margin: 5px">
+        <tr>
+          <td style="width: 60px"></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td style="width: 50px"></td>
+          <td style="width: 30px"></td>
+        </tr>
+      </table>
     ''')
     html, = page.children
     body, = html.children
@@ -480,17 +512,20 @@ def test_auto_layout_table():
     assert td_4.width == 30
     assert table.width == 120  # 60 + 30 + 3 * border-spacing
 
+
+@assert_no_logs
+def test_layout_table_auto_10():
     page, = render_pages('''
-        <table style="border-spacing: 0; width: 14px; margin: 10px">
-            <colgroup>
-              <col />
-              <col style="width: 6px" />
-            </colgroup>
-            <tr>
-                <td><img src=pattern.png><img src=pattern.png></td>
-                <td style="width: 8px"></td>
-            </tr>
-        </table>
+      <table style="border-spacing: 0; width: 14px; margin: 10px">
+        <colgroup>
+          <col />
+          <col style="width: 6px" />
+        </colgroup>
+        <tr>
+          <td><img src=pattern.png><img src=pattern.png></td>
+          <td style="width: 8px"></td>
+        </tr>
+      </table>
     ''')
     html, = page.children
     body, = html.children
@@ -507,23 +542,26 @@ def test_auto_layout_table():
     assert td_2.width == 8  # maximum of the minimum widths for the column
     assert table.width == 14
 
+
+@assert_no_logs
+def test_layout_table_auto_11():
     page, = render_pages('''
-        <table style="border-spacing: 0">
-            <tr>
-                <td style="width: 10px"></td>
-                <td colspan="3"></td>
-            </tr>
-            <tr>
-                <td colspan="2" style="width: 22px"></td>
-                <td style="width: 8px"></td>
-                <td style="width: 8px"></td>
-            </tr>
-            <tr>
-                <td></td>
-                <td></td>
-                <td colspan="2"></td>
-            </tr>
-        </table>
+      <table style="border-spacing: 0">
+        <tr>
+          <td style="width: 10px"></td>
+          <td colspan="3"></td>
+        </tr>
+        <tr>
+          <td colspan="2" style="width: 22px"></td>
+          <td style="width: 8px"></td>
+          <td style="width: 8px"></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td colspan="2"></td>
+        </tr>
+      </table>
     ''')
     html, = page.children
     body, = html.children
@@ -546,23 +584,26 @@ def test_auto_layout_table():
     assert td_33.width == 16  # 8 + 8 from second line
     assert table.width == 38
 
+
+@assert_no_logs
+def test_layout_table_auto_12():
     page, = render_pages('''
-        <table style="border-spacing: 10px">
-            <tr>
-                <td style="width: 10px"></td>
-                <td colspan="3"></td>
-            </tr>
-            <tr>
-                <td colspan="2" style="width: 32px"></td>
-                <td style="width: 8px"></td>
-                <td style="width: 8px"></td>
-            </tr>
-            <tr>
-                <td></td>
-                <td></td>
-                <td colspan="2"></td>
-            </tr>
-        </table>
+      <table style="border-spacing: 10px">
+        <tr>
+          <td style="width: 10px"></td>
+          <td colspan="3"></td>
+        </tr>
+        <tr>
+          <td colspan="2" style="width: 32px"></td>
+          <td style="width: 8px"></td>
+          <td style="width: 8px"></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td colspan="2"></td>
+        </tr>
+      </table>
     ''')
     html, = page.children
     body, = html.children
@@ -585,14 +626,17 @@ def test_auto_layout_table():
     assert td_33.width == 26  # 2 * 8 + sp
     assert table.width == 88
 
+
+@assert_no_logs
+def test_layout_table_auto_13():
     # Regression tests: these used to crash
     page, = render_pages('''
-        <table style="width: 30px">
-            <tr>
-                <td colspan=2></td>
-                <td></td>
-            </tr>
-        </table>
+      <table style="width: 30px">
+        <tr>
+          <td colspan=2></td>
+          <td></td>
+        </tr>
+      </table>
     ''')
     html, = page.children
     body, = html.children
@@ -605,14 +649,17 @@ def test_auto_layout_table():
     assert td_2.width == 10  # 1 / 3 * 30
     assert table.width == 30
 
+
+@assert_no_logs
+def test_layout_table_auto_14():
     page, = render_pages('''
-        <table style="width: 20px">
-            <col />
-            <col />
-            <tr>
-                <td></td>
-            </tr>
-        </table>
+      <table style="width: 20px">
+        <col />
+        <col />
+        <tr>
+          <td></td>
+        </tr>
+      </table>
     ''')
     html, = page.children
     body, = html.children
@@ -624,11 +671,14 @@ def test_auto_layout_table():
     assert td_1.width == 20
     assert table.width == 20
 
+
+@assert_no_logs
+def test_layout_table_auto_15():
     page, = render_pages('''
-        <table style="width: 20px">
-            <col />
-            <col />
-        </table>
+      <table style="width: 20px">
+        <col />
+        <col />
+      </table>
     ''')
     html, = page.children
     body, = html.children
@@ -639,14 +689,17 @@ def test_auto_layout_table():
     assert column_1.width == 0
     assert column_2.width == 0
 
+
+@assert_no_logs
+def test_layout_table_auto_16():
     # Absolute table
     page, = render_pages('''
-        <table style="width: 30px; position: absolute">
-            <tr>
-                <td colspan=2></td>
-                <td></td>
-            </tr>
-        </table>
+      <table style="width: 30px; position: absolute">
+        <tr>
+          <td colspan=2></td>
+          <td></td>
+        </tr>
+      </table>
     ''')
     html, = page.children
     body, = html.children
@@ -659,25 +712,28 @@ def test_auto_layout_table():
     assert td_2.width == 10  # 1 / 3 * 30
     assert table.width == 30
 
+
+@assert_no_logs
+def test_layout_table_auto_17():
     # With border-collapse
     page, = render_pages('''
-        <style>
-          /* Do not apply: */
-          colgroup, col, tbody, tr, td { margin: 1000px }
-        </style>
-        <table style="border-collapse: collapse; border: 10px solid;
-                      /* ignored with collapsed borders: */
-                      border-spacing: 10000px; padding: 1000px">
-            <colgroup>
-              <col style="width: 30px" />
-            </colgroup>
-            <tbody>
-              <tr>
-                <td style="padding: 2px"></td>
-                <td style="width: 34px; padding: 10px; border: 2px solid"></td>
-              </tr>
-            </tbody>
-        </table>
+      <style>
+        /* Do not apply: */
+        colgroup, col, tbody, tr, td { margin: 1000px }
+      </style>
+      <table style="border-collapse: collapse; border: 10px solid;
+                    /* ignored with collapsed borders: */
+                    border-spacing: 10000px; padding: 1000px">
+        <colgroup>
+          <col style="width: 30px" />
+        </colgroup>
+        <tbody>
+          <tr>
+            <td style="padding: 2px"></td>
+            <td style="width: 34px; padding: 10px; border: 2px solid"></td>
+          </tr>
+        </tbody>
+      </table>
     ''')
     html, = page.children
     body, = html.children
@@ -698,20 +754,23 @@ def test_auto_layout_table():
     assert table.width == 90  # 30 + 60
     assert table.margin_width() == 100  # 90 + 2*5 (border)
 
+
+@assert_no_logs
+def test_layout_table_auto_18():
     # Column widths as percentage
     page, = render_pages('''
-        <table style="width: 200px">
-            <colgroup>
-              <col style="width: 70%" />
-              <col style="width: 30%" />
-            </colgroup>
-            <tbody>
-              <tr>
-                <td>a</td>
-                <td>abc</td>
-              </tr>
-            </tbody>
-        </table>
+      <table style="width: 200px">
+        <colgroup>
+          <col style="width: 70%" />
+          <col style="width: 30%" />
+        </colgroup>
+        <tbody>
+          <tr>
+            <td>a</td>
+            <td>abc</td>
+          </tr>
+        </tbody>
+      </table>
     ''')
     html, = page.children
     body, = html.children
@@ -724,22 +783,25 @@ def test_auto_layout_table():
     assert td_2.width == 60
     assert table.width == 200
 
+
+@assert_no_logs
+def test_layout_table_auto_19():
     # Column group width
     page, = render_pages('''
-        <table style="width: 200px">
-            <colgroup style="width: 100px">
-              <col />
-              <col />
-            </colgroup>
-            <col style="width: 100px" />
-            <tbody>
-              <tr>
-                <td>a</td>
-                <td>a</td>
-                <td>abc</td>
-              </tr>
-            </tbody>
-        </table>
+      <table style="width: 200px">
+        <colgroup style="width: 100px">
+          <col />
+          <col />
+        </colgroup>
+        <col style="width: 100px" />
+        <tbody>
+          <tr>
+            <td>a</td>
+            <td>a</td>
+            <td>abc</td>
+          </tr>
+        </tbody>
+      </table>
     ''')
     html, = page.children
     body, = html.children
@@ -753,22 +815,25 @@ def test_auto_layout_table():
     assert td_3.width == 100
     assert table.width == 300
 
+
+@assert_no_logs
+def test_layout_table_auto_20():
     # Multiple column width
     page, = render_pages('''
-        <table style="width: 200px">
-            <colgroup>
-              <col style="width: 50px" />
-              <col style="width: 30px" />
-              <col />
-            </colgroup>
-            <tbody>
-              <tr>
-                <td>a</td>
-                <td>a</td>
-                <td>abc</td>
-              </tr>
-            </tbody>
-        </table>
+      <table style="width: 200px">
+        <colgroup>
+          <col style="width: 50px" />
+          <col style="width: 30px" />
+          <col />
+        </colgroup>
+        <tbody>
+          <tr>
+            <td>a</td>
+            <td>a</td>
+            <td>abc</td>
+          </tr>
+        </tbody>
+      </table>
     ''')
     html, = page.children
     body, = html.children
@@ -782,26 +847,29 @@ def test_auto_layout_table():
     assert td_3.width == 120
     assert table.width == 200
 
+
+@assert_no_logs
+def test_layout_table_auto_21():
     # Fixed-width table with column group with widths as percentages and pixels
     page, = render_pages('''
-        <table style="width: 500px">
-            <colgroup style="width: 100px">
-              <col />
-              <col />
-            </colgroup>
-            <colgroup style="width: 30%">
-              <col />
-              <col />
-            </colgroup>
-            <tbody>
-              <tr>
-                <td>a</td>
-                <td>a</td>
-                <td>abc</td>
-                <td>abc</td>
-              </tr>
-            </tbody>
-        </table>
+      <table style="width: 500px">
+        <colgroup style="width: 100px">
+          <col />
+          <col />
+        </colgroup>
+        <colgroup style="width: 30%">
+          <col />
+          <col />
+        </colgroup>
+        <tbody>
+          <tr>
+            <td>a</td>
+            <td>a</td>
+            <td>abc</td>
+            <td>abc</td>
+          </tr>
+        </tbody>
+      </table>
     ''')
     html, = page.children
     body, = html.children
@@ -816,26 +884,29 @@ def test_auto_layout_table():
     assert td_4.width == 150
     assert table.width == 500
 
+
+@assert_no_logs
+def test_layout_table_auto_22():
     # Auto-width table with column group with widths as percentages and pixels
     page, = render_pages('''
-        <table>
-            <colgroup style="width: 10%">
-              <col />
-              <col />
-            </colgroup>
-            <colgroup style="width: 200px">
-              <col />
-              <col />
-            </colgroup>
-            <tbody>
-              <tr>
-                <td>a a</td>
-                <td>a b</td>
-                <td>a c</td>
-                <td>a d</td>
-              </tr>
-            </tbody>
-        </table>
+      <table>
+        <colgroup style="width: 10%">
+          <col />
+          <col />
+        </colgroup>
+        <colgroup style="width: 200px">
+          <col />
+          <col />
+        </colgroup>
+        <tbody>
+          <tr>
+            <td>a a</td>
+            <td>a b</td>
+            <td>a c</td>
+            <td>a d</td>
+          </tr>
+        </tbody>
+      </table>
     ''')
     html, = page.children
     body, = html.children
@@ -850,20 +921,23 @@ def test_auto_layout_table():
     assert td_4.width == 200
     assert table.width == 500
 
+
+@assert_no_logs
+def test_layout_table_auto_23():
     # Wrong column group width
     page, = render_pages('''
-        <table style="width: 200px">
-            <colgroup style="width: 20%">
-              <col />
-              <col />
-            </colgroup>
-            <tbody>
-              <tr>
-                <td>a</td>
-                <td>a</td>
-              </tr>
-            </tbody>
-        </table>
+      <table style="width: 200px">
+        <colgroup style="width: 20%">
+          <col />
+          <col />
+        </colgroup>
+        <tbody>
+          <tr>
+            <td>a</td>
+            <td>a</td>
+          </tr>
+        </tbody>
+      </table>
     ''')
     html, = page.children
     body, = html.children
@@ -876,20 +950,23 @@ def test_auto_layout_table():
     assert td_2.width == 100
     assert table.width == 200
 
+
+@assert_no_logs
+def test_layout_table_auto_24():
     # Column width as percentage and cell width in pixels
     page, = render_pages('''
-        <table style="width: 200px">
-            <colgroup>
-              <col style="width: 70%" />
-              <col />
-            </colgroup>
-            <tbody>
-              <tr>
-                <td>a</td>
-                <td style="width: 60px">abc</td>
-              </tr>
-            </tbody>
-        </table>
+      <table style="width: 200px">
+        <colgroup>
+          <col style="width: 70%" />
+          <col />
+        </colgroup>
+        <tbody>
+          <tr>
+            <td>a</td>
+            <td style="width: 60px">abc</td>
+          </tr>
+        </tbody>
+      </table>
     ''')
     html, = page.children
     body, = html.children
@@ -902,22 +979,25 @@ def test_auto_layout_table():
     assert td_2.width == 60
     assert table.width == 200
 
+
+@assert_no_logs
+def test_layout_table_auto_25():
     # Column width and cell width as percentage
     page, = render_pages('''
-        <div style="width: 400px">
-            <table style="width: 50%">
-                <colgroup>
-                    <col style="width: 70%" />
-                    <col />
-                </colgroup>
-                <tbody>
-                    <tr>
-                        <td>a</td>
-                        <td style="width: 30%">abc</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+      <div style="width: 400px">
+        <table style="width: 50%">
+          <colgroup>
+            <col style="width: 70%" />
+            <col />
+          </colgroup>
+          <tbody>
+            <tr>
+              <td>a</td>
+              <td style="width: 30%">abc</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     ''')
     html, = page.children
     body, = html.children
@@ -931,69 +1011,93 @@ def test_auto_layout_table():
     assert td_2.width == 60
     assert table.width == 200
 
+
+@assert_no_logs
+def test_layout_table_auto_26():
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/307
     # Table with a cell larger than the table's max-width
     page, = render_pages('''
-        <table style="max-width: 300px">
-            <td style="width: 400px"></td>
-        </table>
+      <table style="max-width: 300px">
+        <td style="width: 400px"></td>
+      </table>
     ''')
 
+
+@assert_no_logs
+def test_layout_table_auto_27():
     # Table with a cell larger than the table's width
     page, = render_pages('''
-        <table style="width: 300px">
-            <td style="width: 400px"></td>
-        </table>
+      <table style="width: 300px">
+        <td style="width: 400px"></td>
+      </table>
     ''')
 
+
+@assert_no_logs
+def test_layout_table_auto_28():
     # Table with a cell larger than the table's width and max-width
     page, = render_pages('''
-        <table style="width: 300px; max-width: 350px">
-            <td style="width: 400px"></td>
-        </table>
+      <table style="width: 300px; max-width: 350px">
+        <td style="width: 400px"></td>
+      </table>
     ''')
 
+
+@assert_no_logs
+def test_layout_table_auto_29():
     # Table with a cell larger than the table's width and max-width
     page, = render_pages('''
-        <table style="width: 300px; max-width: 350px">
-            <td style="padding: 50px">
-                <div style="width: 300px"></div>
-            </td>
-        </table>
+      <table style="width: 300px; max-width: 350px">
+        <td style="padding: 50px">
+          <div style="width: 300px"></div>
+        </td>
+      </table>
     ''')
 
+
+@assert_no_logs
+def test_layout_table_auto_30():
     # Table with a cell larger than the table's max-width
     page, = render_pages('''
-        <table style="max-width: 300px; margin: 100px">
-            <td style="width: 400px"></td>
-        </table>
+      <table style="max-width: 300px; margin: 100px">
+        <td style="width: 400px"></td>
+      </table>
     ''')
 
+
+@assert_no_logs
+def test_layout_table_auto_31():
     # Test a table with column widths < table width < column width + spacing
     page, = render_pages('''
-        <table style="width: 300px; border-spacing: 2px">
-            <td style="width: 299px"></td>
-        </table>
+      <table style="width: 300px; border-spacing: 2px">
+        <td style="width: 299px"></td>
+      </table>
     ''')
 
+
+@assert_no_logs
+def test_layout_table_auto_32():
     # Table with a cell larger than the table's width
     page, = render_pages('''
-        <table style="width: 300px; margin: 100px">
-            <td style="width: 400px"></td>
-        </table>
+      <table style="width: 300px; margin: 100px">
+        <td style="width: 400px"></td>
+      </table>
     ''')
     html, = page.children
     body, = html.children
     table_wrapper, = body.children
     assert table_wrapper.margin_width() == 600  # 400 + 2 * 100
 
+
+@assert_no_logs
+def test_layout_table_auto_33():
     # Div with auto width containing a table with a min-width
     page, = render_pages('''
-        <div style="float: left">
-            <table style="min-width: 400px; margin: 100px">
-                <td></td>
-            </table>
-        </div>
+      <div style="float: left">
+        <table style="min-width: 400px; margin: 100px">
+          <td></td>
+        </table>
+      </div>
     ''')
     html, = page.children
     body, = html.children
@@ -1002,11 +1106,14 @@ def test_auto_layout_table():
     assert div.margin_width() == 600  # 400 + 2 * 100
     assert table_wrapper.margin_width() == 600  # 400 + 2 * 100
 
+
+@assert_no_logs
+def test_layout_table_auto_34():
     # Div with auto width containing an empty table with a min-width
     page, = render_pages('''
-        <div style="float: left">
-            <table style="min-width: 400px; margin: 100px"></table>
-        </div>
+      <div style="float: left">
+        <table style="min-width: 400px; margin: 100px"></table>
+      </div>
     ''')
     html, = page.children
     body, = html.children
@@ -1015,14 +1122,17 @@ def test_auto_layout_table():
     assert div.margin_width() == 600  # 400 + 2 * 100
     assert table_wrapper.margin_width() == 600  # 400 + 2 * 100
 
+
+@assert_no_logs
+def test_layout_table_auto_35():
     # Div with auto width containing a table with a cell larger than the
     # table's max-width
     page, = render_pages('''
-        <div style="float: left">
-            <table style="max-width: 300px; margin: 100px">
-                <td style="width: 400px"></td>
-            </table>
-        </div>
+      <div style="float: left">
+        <table style="max-width: 300px; margin: 100px">
+          <td style="width: 400px"></td>
+        </table>
+      </div>
     ''')
     html, = page.children
     body, = html.children
@@ -1031,69 +1141,85 @@ def test_auto_layout_table():
     assert div.margin_width() == 600  # 400 + 2 * 100
     assert table_wrapper.margin_width() == 600  # 400 + 2 * 100
 
+
+@assert_no_logs
+def test_layout_table_auto_36():
     # Test regression on a crash: https://github.com/Kozea/WeasyPrint/pull/152
     page, = render_pages('''
-        <table>
-            <td style="width: 50%">
-        </table>
+      <table>
+        <td style="width: 50%">
+      </table>
     ''')
 
+
+@assert_no_logs
+def test_layout_table_auto_37():
     # Other crashes: https://github.com/Kozea/WeasyPrint/issues/305
     page, = render_pages('''
-        <table>
-          <tr>
-            <td>
-              <table>
-                <tr>
-                  <th>Test</th>
-                </tr>
-                <tr>
-                  <td style="min-width: 100%;"></td>
-                  <td style="width: 48px;"></td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </table>
-    ''')
-    page, = render_pages('''
-        <table>
-          <tr>
-            <td>
-              <table>
-                <tr>
-                  <td style="width: 100%;"></td>
-                  <td style="width: 48px;">
-                    <img src="icon.png">
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </table>
-    ''')
-    page, = render_pages('''
-        <table>
-          <tr>
-            <td>
-              <table style="display: inline-table">
-                <tr>
-                  <td style="width: 100%;"></td>
-                  <td></td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </table>
+      <table>
+        <tr>
+          <td>
+            <table>
+              <tr>
+                <th>Test</th>
+              </tr>
+              <tr>
+                <td style="min-width: 100%;"></td>
+                <td style="width: 48px;"></td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
     ''')
 
+
+@assert_no_logs
+def test_layout_table_auto_38():
+    page, = render_pages('''
+      <table>
+        <tr>
+          <td>
+            <table>
+              <tr>
+                <td style="width: 100%;"></td>
+                <td style="width: 48px;">
+                  <img src="icon.png">
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    ''')
+
+
+@assert_no_logs
+def test_layout_table_auto_39():
+    page, = render_pages('''
+      <table>
+        <tr>
+          <td>
+            <table style="display: inline-table">
+              <tr>
+                <td style="width: 100%;"></td>
+                <td></td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    ''')
+
+
+@assert_no_logs
+def test_layout_table_auto_40():
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/368
     # Check that white-space is used for the shrink-to-fit algorithm
     page, = render_pages('''
-        <table style="width: 0">
-            <td style="font-family: ahem;
-                       white-space: nowrap">a a</td>
-        </table>
+      <table style="width: 0">
+        <td style="font-family: ahem; white-space: nowrap">a a</td>
+      </table>
     ''')
     html, = page.children
     body, = html.children
@@ -1102,18 +1228,21 @@ def test_auto_layout_table():
     table, = table_wrapper.children
     assert table.width == 16 * 3
 
+
+@assert_no_logs
+def test_layout_table_auto_41():
     # Cell width as percentage in auto-width table
     page, = render_pages('''
-        <div style="width: 100px">
-            <table>
-                <tbody>
-                    <tr>
-                        <td>a a a a a a a a</td>
-                        <td style="width: 30%">a a a a a a a a</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+      <div style="width: 100px">
+        <table>
+          <tbody>
+            <tr>
+              <td>a a a a a a a a</td>
+              <td style="width: 30%">a a a a a a a a</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     ''')
     html, = page.children
     body, = html.children
@@ -1127,16 +1256,19 @@ def test_auto_layout_table():
     assert td_2.width == 30
     assert table.width == 100
 
+
+@assert_no_logs
+def test_layout_table_auto_42():
     # Cell width as percentage in auto-width table
     page, = render_pages('''
-        <table>
-            <tbody>
-                <tr>
-                    <td style="width: 70px">a a a a a a a a</td>
-                    <td style="width: 30%">a a a a a a a a</td>
-                </tr>
-            </tbody>
-        </table>
+      <table>
+        <tbody>
+            <tr>
+              <td style="width: 70px">a a a a a a a a</td>
+              <td style="width: 30%">a a a a a a a a</td>
+            </tr>
+        </tbody>
+      </table>
     ''')
     html, = page.children
     body, = html.children
@@ -1149,19 +1281,22 @@ def test_auto_layout_table():
     assert td_2.width == 30
     assert table.width == 100
 
+
+@assert_no_logs
+def test_layout_table_auto_43():
     # Cell width as percentage on colspan cell in auto-width table
     page, = render_pages('''
-        <div style="width: 100px">
-            <table>
-                <tbody>
-                    <tr>
-                        <td>a a a a a a a a</td>
-                        <td style="width: 30%" colspan=2>a a a a a a a a</td>
-                        <td>a a a a a a a a</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+      <div style="width: 100px">
+        <table>
+          <tbody>
+            <tr>
+              <td>a a a a a a a a</td>
+              <td style="width: 30%" colspan=2>a a a a a a a a</td>
+              <td>a a a a a a a a</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     ''')
     html, = page.children
     body, = html.children
@@ -1176,21 +1311,24 @@ def test_auto_layout_table():
     assert td_3.width == 35
     assert table.width == 100
 
+
+@assert_no_logs
+def test_layout_table_auto_44():
     # Cells widths as percentages on normal and colspan cells
     page, = render_pages('''
-        <div style="width: 100px">
-            <table>
-                <tbody>
-                    <tr>
-                        <td>a a a a a a a a</td>
-                        <td style="width: 30%" colspan=2>a a a a a a a a</td>
-                        <td>a a a a a a a a</td>
-                        <td style="width: 40%">a a a a a a a a</td>
-                        <td>a a a a a a a a</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+      <div style="width: 100px">
+        <table>
+          <tbody>
+            <tr>
+              <td>a a a a a a a a</td>
+              <td style="width: 30%" colspan=2>a a a a a a a a</td>
+              <td>a a a a a a a a</td>
+              <td style="width: 40%">a a a a a a a a</td>
+              <td>a a a a a a a a</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     ''')
     html, = page.children
     body, = html.children
@@ -1207,26 +1345,29 @@ def test_auto_layout_table():
     assert td_5.width == 10
     assert table.width == 100
 
+
+@assert_no_logs
+def test_layout_table_auto_45():
     # Cells widths as percentage on multiple lines
     page, = render_pages('''
-        <div style="width: 1000px">
-            <table>
-                <tbody>
-                    <tr>
-                        <td>a a a a a a a a</td>
-                        <td style="width: 30%">a a a a a a a a</td>
-                        <td>a a a a a a a a</td>
-                        <td style="width: 40%">a a a a a a a a</td>
-                        <td>a a a a a a a a</td>
-                    </tr>
-                    <tr>
-                        <td style="width: 31%" colspan=2>a a a a a a a a</td>
-                        <td>a a a a a a a a</td>
-                        <td style="width: 42%" colspan=2>a a a a a a a a</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+      <div style="width: 1000px">
+        <table>
+          <tbody>
+            <tr>
+              <td>a a a a a a a a</td>
+              <td style="width: 30%">a a a a a a a a</td>
+              <td>a a a a a a a a</td>
+              <td style="width: 40%">a a a a a a a a</td>
+              <td>a a a a a a a a</td>
+            </tr>
+            <tr>
+              <td style="width: 31%" colspan=2>a a a a a a a a</td>
+              <td>a a a a a a a a</td>
+              <td style="width: 42%" colspan=2>a a a a a a a a</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     ''')
     html, = page.children
     body, = html.children
@@ -1247,16 +1388,19 @@ def test_auto_layout_table():
     assert td_23.width == 420  # 42%
     assert table.width == 1000
 
+
+@assert_no_logs
+def test_layout_table_auto_46():
     # Test regression:
     # http://test.weasyprint.org/suite-css21/chapter8/section2/test56/
     page, = render_pages('''
-        <div style="position: absolute">
-            <table style="margin: 50px; border: 20px solid black">
-                <tr>
-                    <td style="width: 200px; height: 200px"></td>
-                </tr>
-            </table>
-        </div>
+      <div style="position: absolute">
+        <table style="margin: 50px; border: 20px solid black">
+          <tr>
+            <td style="width: 200px; height: 200px"></td>
+          </tr>
+        </table>
+      </div>
     ''')
     html, = page.children
     body, = html.children
@@ -1272,34 +1416,34 @@ def test_auto_layout_table():
 
 
 @assert_no_logs
-def test_table_column_width():
+def test_table_column_width_1():
     source = '''
-        <style>
-            body { width: 20000px; margin: 0 }
-            table {
-              width: 10000px; margin: 0 auto; border-spacing: 100px 0;
-              table-layout: fixed
-            }
-            td { border: 10px solid; padding: 1px }
-        </style>
-        <table>
-            <col style="width: 10%">
-            <tr>
-                <td style="width: 30%" colspan=3>
-                <td>
-            </tr>
-            <tr>
-                <td>
-                <td>
-                <td>
-                <td>
-            </tr>
-            <tr>
-                <td>
-                <td colspan=12>This cell will be truncated to grid width
-                <td>This cell will be removed as it is beyond the grid width
-            </tr>
-        </table>
+      <style>
+        body { width: 20000px; margin: 0 }
+        table {
+          width: 10000px; margin: 0 auto; border-spacing: 100px 0;
+          table-layout: fixed
+        }
+        td { border: 10px solid; padding: 1px }
+      </style>
+      <table>
+        <col style="width: 10%">
+        <tr>
+          <td style="width: 30%" colspan=3>
+          <td>
+        </tr>
+        <tr>
+          <td>
+          <td>
+          <td>
+          <td>
+        </tr>
+        <tr>
+          <td>
+          <td colspan=12>This cell will be truncated to grid width
+          <td>This cell will be removed as it is beyond the grid width
+        </tr>
+      </table>
     '''
     with capture_logs() as logs:
         page, = render_pages(source)
@@ -1369,17 +1513,20 @@ def test_table_column_width():
     assert cells[2][1].width == 8678  # 8700 - borders - padding
     assert cells[2][1].colspan == 3  # truncated to grid width
 
+
+@assert_no_logs
+def test_table_column_width_2():
     page, = render_pages('''
-        <style>
-            table { width: 1000px; border-spacing: 100px; table-layout: fixed }
-        </style>
-        <table>
-            <tr>
-                <td style="width: 50%">
-                <td style="width: 60%">
-                <td>
-            </tr>
-        </table>
+      <style>
+        table { width: 1000px; border-spacing: 100px; table-layout: fixed }
+      </style>
+      <table>
+        <tr>
+          <td style="width: 50%">
+          <td style="width: 60%">
+          <td>
+        </tr>
+      </table>
     ''')
     html, = page.children
     body, = html.children
@@ -1392,19 +1539,22 @@ def test_table_column_width():
     assert row.children[2].width == 0
     assert table.width == 1500  # 500 + 600 + 4 * border-spacing
 
+
+@assert_no_logs
+def test_table_column_width_3():
     # Sum of columns width larger that the table width:
     # increase the table width
     page, = render_pages('''
-        <style>
-            table { width: 1000px; border-spacing: 100px; table-layout: fixed }
-            td { width: 60% }
-        </style>
-        <table>
-            <tr>
-                <td>
-                <td>
-            </tr>
-        </table>
+      <style>
+        table { width: 1000px; border-spacing: 100px; table-layout: fixed }
+        td { width: 60% }
+      </style>
+      <table>
+        <tr>
+          <td>
+          <td>
+        </tr>
+      </table>
     ''')
     html, = page.children
     body, = html.children
@@ -1420,30 +1570,30 @@ def test_table_column_width():
 
 
 @assert_no_logs
-def test_table_row_height():
+def test_table_row_height_1():
     page, = render_pages('''
-        <table style="width: 1000px; border-spacing: 0 100px;
-                      font: 20px/1em serif; margin: 3px; table-layout: fixed">
-            <tr>
-                <td rowspan=0 style="height: 420px; vertical-align: top"></td>
-                <td>X<br>X<br>X</td>
-                <td><table style="margin-top: 20px; border-spacing: 0">
-                    <tr><td>X</td></tr></table></td>
-                <td style="vertical-align: top">X</td>
-                <td style="vertical-align: middle">X</td>
-                <td style="vertical-align: bottom">X</td>
-            </tr>
-            <tr>
-                <!-- cells with no text (no line boxes) is a corner case
-                     in cell baselines -->
-                <td style="padding: 15px"></td>
-                <td><div style="height: 10px"></div></td>
-            </tr>
-            <tr></tr>
-            <tr>
-                <td style="vertical-align: bottom"></td>
-            </tr>
-        </table>
+      <table style="width: 1000px; border-spacing: 0 100px;
+                    font: 20px/1em serif; margin: 3px; table-layout: fixed">
+        <tr>
+          <td rowspan=0 style="height: 420px; vertical-align: top"></td>
+          <td>X<br>X<br>X</td>
+          <td><table style="margin-top: 20px; border-spacing: 0">
+            <tr><td>X</td></tr></table></td>
+          <td style="vertical-align: top">X</td>
+          <td style="vertical-align: middle">X</td>
+          <td style="vertical-align: bottom">X</td>
+        </tr>
+        <tr>
+          <!-- cells with no text (no line boxes) is a corner case
+               in cell baselines -->
+          <td style="padding: 15px"></td>
+          <td><div style="height: 10px"></div></td>
+        </tr>
+        <tr></tr>
+        <tr>
+            <td style="vertical-align: bottom"></td>
+        </tr>
+      </table>
     ''')
     html, = page.children
     body, = html.children
@@ -1501,6 +1651,9 @@ def test_table_row_height():
         [513]
     ]
 
+
+@assert_no_logs
+def test_table_row_height_2():
     # A cell box cannot extend beyond the last row box of a table.
     page, = render_pages('''
         <table style="border-spacing: 0">
@@ -1588,12 +1741,12 @@ def test_table_vertical_align():
 @assert_no_logs
 def test_table_wrapper():
     page, = render_pages('''
-        <style>
-            @page { size: 1000px }
-            table { width: 600px; height: 500px; table-layout: fixed;
-                    padding: 1px; border: 10px solid; margin: 100px; }
-        </style>
-        <table></table>
+      <style>
+        @page { size: 1000px }
+        table { width: 600px; height: 500px; table-layout: fixed;
+                  padding: 1px; border: 10px solid; margin: 100px; }
+      </style>
+      <table></table>
     ''')
     html, = page.children
     body, = html.children
@@ -1611,148 +1764,151 @@ def test_table_wrapper():
     assert wrapper.height == 500
     assert wrapper.margin_height() == 700  # 500 + 2*100
 
+
+@assert_no_logs
+def test_table_html_tag():
     # Non-regression test: this used to cause an exception
     page, = render_pages('<html style="display: table">')
 
 
 @assert_no_logs
-def test_table_page_breaks():
-    """Test the page breaks inside tables."""
-    def run(html):
-        pages = render_pages(html)
-        rows_per_page = []
-        rows_position_y = []
-        for i, page in enumerate(pages):
-            html, = page.children
-            body, = html.children
-            if i == 0:
-                body_children = body.children[1:]  # skip h1
-            else:
-                body_children = body.children
-            if not body_children:
-                rows_per_page.append(0)
-                continue
-            table_wrapper, = body_children
-            table, = table_wrapper.children
-            rows_in_this_page = 0
-            for group in table.children:
-                assert group.children, 'found an empty table group'
-                for row in group.children:
-                    rows_in_this_page += 1
-                    rows_position_y.append(row.position_y)
-                    cell, = row.children
-            rows_per_page.append(rows_in_this_page)
-        return rows_per_page, rows_position_y
+@pytest.mark.parametrize('html, rows, positions', (
+    ('''
+      <style>
+        @page { size: 120px }
+        table { table-layout: fixed; width: 100% }
+        h1 { height: 30px }
+        td { height: 40px }
+      </style>
+      <h1>Dummy title</h1>
+      <table>
+        <tr><td>row 1</td></tr>
+        <tr><td>row 2</td></tr>
 
-    rows_per_page, rows_position_y = run('''
-        <style>
-            @page { size: 120px }
-            table { table-layout: fixed; width: 100% }
-            h1 { height: 30px }
-            td { height: 40px }
-        </style>
-        <h1>Dummy title</h1>
-        <table>
-            <tr><td>row 1</td></tr>
-            <tr><td>row 2</td></tr>
+        <tr><td>row 3</td></tr>
+        <tr><td>row 4</td></tr>
+        <tr><td>row 5</td></tr>
 
-            <tr><td>row 3</td></tr>
-            <tr><td>row 4</td></tr>
-            <tr><td>row 5</td></tr>
+        <tr><td style="height: 300px"> <!-- overflow the page -->
+          row 6</td></tr>
+        <tr><td>row 7</td></tr>
+        <tr><td>row 8</td></tr>
+      </table>
+     ''',
+     [2, 3, 1, 2],
+     [30, 70, 0, 40, 80, 0, 0, 40]),
+    ('''
+      <style>
+        @page { size: 120px }
+        h1 { height: 30px}
+        td { height: 40px }
+        table { table-layout: fixed; width: 100%;
+                page-break-inside: avoid }
+      </style>
+      <h1>Dummy title</h1>
+      <table>
+        <tr><td>row 1</td></tr>
+        <tr><td>row 2</td></tr>
+        <tr><td>row 3</td></tr>
+        <tr><td>row 4</td></tr>
+     </table>
+     ''',
+     [0, 3, 1],
+     [0, 40, 80, 0]),
+    ('''
+      <style>
+        @page { size: 120px }
+        h1 { height: 30px}
+        td { height: 40px }
+        table { table-layout: fixed; width: 100%;
+                page-break-inside: avoid }
+      </style>
+      <h1>Dummy title</h1>
+      <table>
+        <tbody>
+          <tr><td>row 1</td></tr>
+          <tr><td>row 2</td></tr>
+          <tr><td>row 3</td></tr>
+        </tbody>
 
-            <tr><td style="height: 300px"> <!-- overflow the page -->
-                row 6</td></tr>
-            <tr><td>row 7</td></tr>
-            <tr><td>row 8</td></tr>
-        </table>
-    ''')
-    assert rows_per_page == [2, 3, 1, 2]
-    assert rows_position_y == [30, 70, 0, 40, 80, 0, 0, 40]
+        <tr><td>row 4</td></tr>
+      </table>
+     ''',
+     [0, 3, 1],
+     [0, 40, 80, 0]),
+    ('''
+      <style>
+        @page { size: 120px }
+        h1 { height: 30px}
+        td { height: 40px }
+        table { table-layout: fixed; width: 100% }
+      </style>
+      <h1>Dummy title</h1>
+      <table>
+        <tr><td>row 1</td></tr>
 
-    rows_per_page, rows_position_y = run('''
-        <style>
-            @page { size: 120px }
-            h1 { height: 30px}
-            td { height: 40px }
-            table { table-layout: fixed; width: 100%;
-                    page-break-inside: avoid }
-        </style>
-        <h1>Dummy title</h1>
-        <table>
-            <tr><td>row 1</td></tr>
-            <tr><td>row 2</td></tr>
-            <tr><td>row 3</td></tr>
+        <tbody style="page-break-inside: avoid">
+          <tr><td>row 2</td></tr>
+          <tr><td>row 3</td></tr>
+        </tbody>
+      </table>
+     ''',
+     [1, 2],
+     [30, 0, 40]),
+))
+def test_table_page_breaks(html, rows, positions):
+    pages = render_pages(html)
+    rows_per_page = []
+    rows_position_y = []
+    for i, page in enumerate(pages):
+        html, = page.children
+        body, = html.children
+        if i == 0:
+            body_children = body.children[1:]  # skip h1
+        else:
+            body_children = body.children
+        if not body_children:
+            rows_per_page.append(0)
+            continue
+        table_wrapper, = body_children
+        table, = table_wrapper.children
+        rows_in_this_page = 0
+        for group in table.children:
+            assert group.children, 'found an empty table group'
+            for row in group.children:
+                rows_in_this_page += 1
+                rows_position_y.append(row.position_y)
+                cell, = row.children
+        rows_per_page.append(rows_in_this_page)
 
-            <tr><td>row 4</td></tr>
-        </table>
-    ''')
-    assert rows_per_page == [0, 3, 1]
-    assert rows_position_y == [0, 40, 80, 0]
+    assert rows_per_page == rows
+    assert rows_position_y == positions
 
-    rows_per_page, rows_position_y = run('''
-        <style>
-            @page { size: 120px }
-            h1 { height: 30px}
-            td { height: 40px }
-            table { table-layout: fixed; width: 100%;
-                    page-break-inside: avoid }
-        </style>
-        <h1>Dummy title</h1>
-        <table>
-            <tbody>
-                <tr><td>row 1</td></tr>
-                <tr><td>row 2</td></tr>
-                <tr><td>row 3</td></tr>
-            </tbody>
 
-            <tr><td>row 4</td></tr>
-        </table>
-    ''')
-    assert rows_per_page == [0, 3, 1]
-    assert rows_position_y == [0, 40, 80, 0]
-
-    rows_per_page, rows_position_y = run('''
-        <style>
-            @page { size: 120px }
-            h1 { height: 30px}
-            td { height: 40px }
-            table { table-layout: fixed; width: 100% }
-        </style>
-        <h1>Dummy title</h1>
-        <table>
-            <tr><td>row 1</td></tr>
-
-            <tbody style="page-break-inside: avoid">
-                <tr><td>row 2</td></tr>
-                <tr><td>row 3</td></tr>
-            </tbody>
-        </table>
-    ''')
-    assert rows_per_page == [1, 2]
-    assert rows_position_y == [30, 0, 40]
-
+@assert_no_logs
+def test_table_page_breaks_complex():
     pages = render_pages('''
-        <style>
-            @page { size: 100px }
-        </style>
-        <h1 style="margin: 0; height: 30px">Lipsum</h1>
-        <!-- Leave 70px on the first page: enough for the header or row1
-             but not both.  -->
-        <table style="border-spacing: 0; font-size: 5px">
-            <thead>
-                <tr><td style="height: 20px">Header</td></tr>
-            </thead>
-            <tbody>
-                <tr><td style="height: 60px">Row 1</td></tr>
-                <tr><td style="height: 10px">Row 2</td></tr>
-                <tr><td style="height: 50px">Row 3</td></tr>
-                <tr><td style="height: 61px">Row 4</td></tr>
-                <tr><td style="height: 90px">Row 5</td></tr>
-            </tbody>
-            <tfoot>
-                <tr><td style="height: 20px">Footer</td></tr>
-            </tfoot>
-        </table>
+      <style>
+        @page { size: 100px }
+      </style>
+      <h1 style="margin: 0; height: 30px">Lipsum</h1>
+      <!-- Leave 70px on the first page: enough for the header or row1
+           but not both.  -->
+      <table style="border-spacing: 0; font-size: 5px">
+        <thead>
+          <tr><td style="height: 20px">Header</td></tr>
+        </thead>
+        <tbody>
+          <tr><td style="height: 60px">Row 1</td></tr>
+          <tr><td style="height: 10px">Row 2</td></tr>
+          <tr><td style="height: 50px">Row 3</td></tr>
+          <tr><td style="height: 61px">Row 4</td></tr>
+          <tr><td style="height: 90px">Row 5</td></tr>
+        </tbody>
+        <tfoot>
+          <tr><td style="height: 20px">Footer</td></tr>
+        </tfoot>
+      </table>
     ''')
     rows_per_page = []
     for i, page in enumerate(pages):
