@@ -46,9 +46,13 @@ else:
         pangoft2 = dlopen(ffi, 'pangoft2-1.0', 'libpangoft2-1.0-0',
                           'libpangoft2-1.0.so', 'libpangoft2-1.0.dylib')
     except Exception as err:
-        warnings.warn("'@font-face not supported: {0}".format(err))
-        fontconfig = None
-        pangoft2 = None
+        # dont alter behavior on other platforms!
+        if not sys.platform.startswith('win'):
+            raise err
+        else:
+            warnings.warn("'@font-face not supported: {0}".format(err))
+            fontconfig = None
+            pangoft2 = None
 
 
 # if both libraries are present: Use them
