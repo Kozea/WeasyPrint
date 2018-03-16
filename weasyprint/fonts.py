@@ -132,12 +132,6 @@ if fontconfig and pangoft2:
             cairo_font_type_t fonttype);
     ''')
 
-    fontconfig = dlopen(ffi, 'fontconfig', 'libfontconfig',
-                        'libfontconfig-1.dll',
-                        'libfontconfig.so.1', 'libfontconfig-1.dylib')
-    pangoft2 = dlopen(ffi, 'pangoft2-1.0', 'libpangoft2-1.0-0',
-                      'libpangoft2-1.0.so', 'libpangoft2-1.0.dylib')
-
     FONTCONFIG_WEIGHT_CONSTANTS = {
         'normal': 'normal',
         'bold': 'bold',
@@ -169,6 +163,15 @@ if fontconfig and pangoft2:
         'extra-expanded': 'extraexpanded',
         'ultra-expanded': 'ultraexpanded',
     }
+
+    _warned_once = False
+
+    def _warn_once(msg):
+        """don't annoy with warnings, one is enough"""
+        global _warned_once
+        if not _warned_once:
+            warnings.warn(msg)
+            _warned_once = True
 
     def _checkfontconfiguration(font_config):
         """
@@ -203,10 +206,10 @@ if fontconfig and pangoft2:
         configfiles = fontconfig.FcConfigGetConfigFiles(font_config)
         file = fontconfig.FcStrListNext(configfiles)
         if file == ffi.NULL:
-            warnings.warn(
+            _warn_once(
                 '@font-face not supported: Cannot load default config file')
         else:
-            warnings.warn('@font-face not supported: no fonts configured')
+            _warn_once('@font-face not supported: no fonts configured')
         # fall back to defaul @font-face-less behaviour
         return False
         # on Windows we could try to add the system fonts like that:
