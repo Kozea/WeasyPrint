@@ -9,40 +9,26 @@
 
 """
 
-import contextlib
 import gzip
 import io
 import math
 import os
 import sys
-import threading
 import unicodedata
 import zlib
 from urllib.parse import urljoin, uses_relative
 
 import cairocffi as cairo
+import py
 import pytest
 from pdfrw import PdfReader
 
 from .. import CSS, HTML, __main__, default_url_fetcher
 from ..urls import path2url
-from .test_draw import B, _, assert_pixels_equal, image_to_pixels, r
+from .test_draw import assert_pixels_equal, image_to_pixels
+from .test_draw.test_draw import B, _, r
 from .testing_utils import (
     FakeHTML, assert_no_logs, capture_logs, http_server, resource_filename)
-
-CHDIR_LOCK = threading.Lock()
-
-
-@contextlib.contextmanager
-def chdir(path):
-    """Change the current directory in a context manager."""
-    with CHDIR_LOCK:
-        old_dir = os.getcwd()
-        try:
-            os.chdir(path)
-            yield
-        finally:
-            os.chdir(old_dir)
 
 
 def _test_resource(class_, basename, check, **kwargs):
@@ -63,13 +49,13 @@ def _test_resource(class_, basename, check, **kwargs):
         check(class_(file_obj=fd, **kwargs))
     with open(absolute_filename, 'rb') as fd:
         content = fd.read()
-    with chdir(os.path.dirname(__file__)):
-        relative_filename = os.path.join('resources', basename)
-        check(class_(relative_filename, **kwargs))
-        check(class_(string=content, base_url=relative_filename, **kwargs))
-        encoding = kwargs.get('encoding') or 'utf8'
-        check(class_(string=content.decode(encoding),  # unicode
-                     base_url=relative_filename, **kwargs))
+    py.path.local(os.path.dirname(__file__)).chdir()
+    relative_filename = os.path.join('resources', basename)
+    check(class_(relative_filename, **kwargs))
+    check(class_(string=content, base_url=relative_filename, **kwargs))
+    encoding = kwargs.get('encoding') or 'utf8'
+    check(class_(string=content.decode(encoding),  # unicode
+                 base_url=relative_filename, **kwargs))
     with pytest.raises(TypeError):
         class_(filename='foo', url='bar')
 
@@ -90,38 +76,89 @@ def _assert_equivalent_pdf(pdf_bytes1, pdf_bytes2):
         assert page1.BleedBox == page2.BleedBox
 
 
+def _check_doc1(html, has_base_url=True):
+    """Check that a parsed HTML document looks like resources/doc1.html"""
+    root = html.etree_element
+    assert root.tag == 'html'
+    assert [child.tag for child in root] == ['head', 'body']
+    _head, body = root
+    assert [child.tag for child in body] == ['h1', 'p', 'ul', 'div']
+    h1, p, ul, div = body
+    assert h1.text == 'WeasyPrint test document (with Ünicōde)'
+    if has_base_url:
+        url = urljoin(html.base_url, 'pattern.png')
+        assert url.startswith('file:')
+        assert url.endswith('weasyprint/tests/resources/pattern.png')
+    else:
+        assert html.base_url is None
+
+
+def _run(args, stdin=b''):
+    stdin = io.BytesIO(stdin)
+    stdout = io.BytesIO()
+    try:
+        __main__.HTML = FakeHTML
+        __main__.main(args.split(), stdin=stdin, stdout=stdout)
+    finally:
+        __main__.HTML = HTML
+    return stdout.getvalue()
+
+
+class _fake_file(object):
+    def __init__(self):
+        self.chunks = []
+
+    def write(self, data):
+        self.chunks.append(bytes(data[:]))
+
+    def getvalue(self):
+        return b''.join(self.chunks)
+
+
+def _png_size(result):
+    png_bytes, width, height = result
+    surface = cairo.ImageSurface.create_from_png(io.BytesIO(png_bytes))
+    assert (surface.get_width(), surface.get_height()) == (width, height)
+    return width, height
+
+
+def _round_meta(pages):
+    """Eliminate errors of floating point arithmetic for metadata.
+    (eg. 49.99999999999994 instead of 50)
+
+    """
+    for page in pages:
+        anchors = page.anchors
+        for anchor_name, (pos_x, pos_y) in anchors.items():
+            anchors[anchor_name] = round(pos_x, 6), round(pos_y, 6)
+        links = page.links
+        for i, link in enumerate(links):
+            link_type, target, (pos_x, pos_y, width, height) = link
+            link = (
+                link_type, target, (round(pos_x, 6), round(pos_y, 6),
+                                    round(width, 6), round(height, 6)))
+            links[i] = link
+        bookmarks = page.bookmarks
+        for i, (level, label, (pos_x, pos_y)) in enumerate(bookmarks):
+            bookmarks[i] = level, label, (round(pos_x, 6), round(pos_y, 6))
+
+
 @assert_no_logs
 def test_html_parsing():
     """Test the constructor for the HTML class."""
-    def check_doc1(html, has_base_url=True):
-        """Check that a parsed HTML document looks like resources/doc1.html"""
-        root = html.etree_element
-        assert root.tag == 'html'
-        assert [child.tag for child in root] == ['head', 'body']
-        _head, body = root
-        assert [child.tag for child in body] == ['h1', 'p', 'ul', 'div']
-        h1, p, ul, div = body
-        assert h1.text == 'WeasyPrint test document (with Ünicōde)'
-        if has_base_url:
-            url = urljoin(html.base_url, 'pattern.png')
-            assert url.startswith('file:')
-            assert url.endswith('weasyprint/tests/resources/pattern.png')
-        else:
-            assert html.base_url is None
-
-    _test_resource(FakeHTML, 'doc1.html', check_doc1)
-    _test_resource(FakeHTML, 'doc1_UTF-16BE.html', check_doc1,
+    _test_resource(FakeHTML, 'doc1.html', _check_doc1)
+    _test_resource(FakeHTML, 'doc1_UTF-16BE.html', _check_doc1,
                    encoding='UTF-16BE')
 
-    with chdir(os.path.dirname(__file__)):
-        filename = os.path.join('resources', 'doc1.html')
-        with open(filename) as fd:
-            string = fd.read()
-        check_doc1(FakeHTML(string=string, base_url=filename))
-        check_doc1(FakeHTML(string=string), has_base_url=False)
-        string_with_meta = string.replace(
-            '<meta', '<base href="resources/"><meta')
-        check_doc1(FakeHTML(string=string_with_meta, base_url='.'))
+    py.path.local(os.path.dirname(__file__)).chdir()
+    filename = os.path.join('resources', 'doc1.html')
+    with open(filename) as fd:
+        string = fd.read()
+    _check_doc1(FakeHTML(string=string, base_url=filename))
+    _check_doc1(FakeHTML(string=string), has_base_url=False)
+    string_with_meta = string.replace(
+        '<meta', '<base href="resources/"><meta')
+    _check_doc1(FakeHTML(string=string_with_meta, base_url='.'))
 
 
 @assert_no_logs
@@ -226,23 +263,13 @@ def test_python_render(tmpdir):
     pdf_bytes = html.write_pdf(stylesheets=[css])
     assert png_bytes.startswith(b'\211PNG\r\n\032\n')
     assert pdf_bytes.startswith(b'%PDF')
-
     check_png_pattern(png_bytes)
     # TODO: check PDF content? How?
 
-    class fake_file(object):
-        def __init__(self):
-            self.chunks = []
-
-        def write(self, data):
-            self.chunks.append(bytes(data[:]))
-
-        def getvalue(self):
-            return b''.join(self.chunks)
-    png_file = fake_file()
+    png_file = _fake_file()
     html.write_png(png_file, stylesheets=[css])
     assert png_file.getvalue() == png_bytes
-    pdf_file = fake_file()
+    pdf_file = _fake_file()
     html.write_pdf(pdf_file, stylesheets=[css])
     _assert_equivalent_pdf(pdf_file.getvalue(), pdf_bytes)
 
@@ -282,7 +309,6 @@ def test_python_render(tmpdir):
 
 @assert_no_logs
 def test_command_line_render(tmpdir):
-    """Test rendering with the command-line API."""
     css = b'''
         @page { margin: 2px; size: 8px; background: #fff }
         @media screen { img { transform: rotate(-90deg) } }
@@ -292,29 +318,19 @@ def test_command_line_render(tmpdir):
     combined = b'<style>' + css + b'</style>' + html
     linked = b'<link rel=stylesheet href=style.css>' + html
 
-    with chdir(resource_filename('')):
-        # Reference
-        html_obj = FakeHTML(string=combined, base_url='dummy.html')
-        pdf_bytes = html_obj.write_pdf()
-        png_bytes = html_obj.write_png()
-        x2_png_bytes = html_obj.write_png(resolution=192)
-        rotated_png_bytes = FakeHTML(string=combined, base_url='dummy.html',
-                                     media_type='screen').write_png()
-        empty_png_bytes = FakeHTML(
-            string=b'<style>' + css + b'</style>').write_png()
+    py.path.local(resource_filename('')).chdir()
+    # Reference
+    html_obj = FakeHTML(string=combined, base_url='dummy.html')
+    pdf_bytes = html_obj.write_pdf()
+    png_bytes = html_obj.write_png()
+    x2_png_bytes = html_obj.write_png(resolution=192)
+    rotated_png_bytes = FakeHTML(string=combined, base_url='dummy.html',
+                                 media_type='screen').write_png()
+    empty_png_bytes = FakeHTML(
+        string=b'<style>' + css + b'</style>').write_png()
     check_png_pattern(png_bytes)
     check_png_pattern(rotated_png_bytes, rotated=True)
     check_png_pattern(empty_png_bytes, blank=True)
-
-    def run(args, stdin=b''):
-        stdin = io.BytesIO(stdin)
-        stdout = io.BytesIO()
-        try:
-            __main__.HTML = FakeHTML
-            __main__.main(args.split(), stdin=stdin, stdout=stdout)
-        finally:
-            __main__.HTML = HTML
-        return stdout.getvalue()
 
     tmpdir.chdir()
     with open(resource_filename('pattern.png'), 'rb') as pattern_fd:
@@ -327,72 +343,72 @@ def test_command_line_render(tmpdir):
     tmpdir.join('linked.html').write_binary(linked)
     tmpdir.join('style.css').write_binary(css)
 
-    run('combined.html out1.png')
-    run('combined.html out2.pdf')
+    _run('combined.html out1.png')
+    _run('combined.html out2.pdf')
     assert tmpdir.join('out1.png').read_binary() == png_bytes
     _assert_equivalent_pdf(tmpdir.join('out2.pdf').read_binary(), pdf_bytes)
 
-    run('combined-UTF-16BE.html out3.png --encoding UTF-16BE')
+    _run('combined-UTF-16BE.html out3.png --encoding UTF-16BE')
     assert tmpdir.join('out3.png').read_binary() == png_bytes
 
-    run(tmpdir.join('combined.html').strpath + ' out4.png')
+    _run(tmpdir.join('combined.html').strpath + ' out4.png')
     assert tmpdir.join('out4.png').read_binary() == png_bytes
 
-    run(path2url(tmpdir.join('combined.html')) + ' out5.png')
+    _run(path2url(tmpdir.join('combined.html')) + ' out5.png')
     assert tmpdir.join('out5.png').read_binary() == png_bytes
 
-    run('linked.html out6.png')  # test relative URLs
+    _run('linked.html out6.png')  # test relative URLs
     assert tmpdir.join('out6.png').read_binary() == png_bytes
 
-    run('combined.html out7 -f png')
-    run('combined.html out8 --format pdf')
+    _run('combined.html out7 -f png')
+    _run('combined.html out8 --format pdf')
     assert tmpdir.join('out7').read_binary() == png_bytes
     _assert_equivalent_pdf(tmpdir.join('out8').read_binary(), pdf_bytes)
 
-    run('no_css.html out9.png')
-    run('no_css.html out10.png -s style.css')
+    _run('no_css.html out9.png')
+    _run('no_css.html out10.png -s style.css')
     assert tmpdir.join('out9.png').read_binary() != png_bytes
     assert tmpdir.join('out10.png').read_binary() == png_bytes
 
-    stdout = run('--format png combined.html -')
+    stdout = _run('--format png combined.html -')
     assert stdout == png_bytes
 
-    run('- out11.png', stdin=combined)
+    _run('- out11.png', stdin=combined)
     check_png_pattern(tmpdir.join('out11.png').read_binary())
     assert tmpdir.join('out11.png').read_binary() == png_bytes
 
-    stdout = run('--format png - -', stdin=combined)
+    stdout = _run('--format png - -', stdin=combined)
     assert stdout == png_bytes
 
-    run('combined.html out13.png --media-type screen')
-    run('combined.html out12.png -m screen')
-    run('linked.html out14.png -m screen')
+    _run('combined.html out13.png --media-type screen')
+    _run('combined.html out12.png -m screen')
+    _run('linked.html out14.png -m screen')
     assert tmpdir.join('out12.png').read_binary() == rotated_png_bytes
     assert tmpdir.join('out13.png').read_binary() == rotated_png_bytes
     assert tmpdir.join('out14.png').read_binary() == rotated_png_bytes
 
-    stdout = run('-f pdf combined.html -')
+    stdout = _run('-f pdf combined.html -')
     assert stdout.count(b'attachment') == 0
-    stdout = run('-f pdf -a pattern.png combined.html -')
+    stdout = _run('-f pdf -a pattern.png combined.html -')
     assert stdout.count(b'attachment') == 1
-    stdout = run('-f pdf -a style.css -a pattern.png combined.html -')
+    stdout = _run('-f pdf -a style.css -a pattern.png combined.html -')
     assert stdout.count(b'attachment') == 2
 
-    stdout = run('-f png -r 192 linked.html -')
+    stdout = _run('-f png -r 192 linked.html -')
     assert stdout == x2_png_bytes
-    stdout = run('-f png --resolution 192 linked.html -')
-    assert run('linked.html - -f png --resolution 192') == x2_png_bytes
+    stdout = _run('-f png --resolution 192 linked.html -')
+    assert _run('linked.html - -f png --resolution 192') == x2_png_bytes
     assert stdout == x2_png_bytes
 
     os.mkdir('subdirectory')
-    os.chdir('subdirectory')
+    py.path.local('subdirectory').chdir()
     with capture_logs() as logs:
-        stdout = run('--format png - -', stdin=combined)
+        stdout = _run('--format png - -', stdin=combined)
     assert len(logs) == 1
     assert logs[0].startswith('ERROR: Failed to load image')
     assert stdout == empty_png_bytes
 
-    stdout = run('--format png --base-url .. - -', stdin=combined)
+    stdout = _run('--format png --base-url .. - -', stdin=combined)
     assert stdout == png_bytes
 
 
@@ -473,17 +489,11 @@ def test_low_level_api():
     assert (width, height) == (16, 16)
     check_png_pattern(png_bytes, x2=True)
 
-    def png_size(result):
-        png_bytes, width, height = result
-        surface = cairo.ImageSurface.create_from_png(io.BytesIO(png_bytes))
-        assert (surface.get_width(), surface.get_height()) == (width, height)
-        return width, height
-
     document = html.render([css], enable_hinting=True)
     page, = document.pages
     assert (page.width, page.height) == (8, 8)
     # A resolution that is not multiple of 96:
-    assert png_size(document.write_png(resolution=145.2)) == (13, 13)
+    assert _png_size(document.write_png(resolution=145.2)) == (13, 13)
 
     document = FakeHTML(string='''
         <style>
@@ -499,31 +509,10 @@ def test_low_level_api():
 
     result = document.write_png()
     # (Max of both widths, Sum of both heights)
-    assert png_size(result) == (6, 14)
+    assert _png_size(result) == (6, 14)
     assert document.copy([page_1, page_2]).write_png() == result
-    assert png_size(document.copy([page_1]).write_png()) == (5, 10)
-    assert png_size(document.copy([page_2]).write_png()) == (6, 4)
-
-
-def round_meta(pages):
-    """Eliminate errors of floating point arithmetic for metadata.
-    (eg. 49.99999999999994 instead of 50)
-
-    """
-    for page in pages:
-        anchors = page.anchors
-        for anchor_name, (pos_x, pos_y) in anchors.items():
-            anchors[anchor_name] = round(pos_x, 6), round(pos_y, 6)
-        links = page.links
-        for i, link in enumerate(links):
-            link_type, target, (pos_x, pos_y, width, height) = link
-            link = (
-                link_type, target, (round(pos_x, 6), round(pos_y, 6),
-                                    round(width, 6), round(height, 6)))
-            links[i] = link
-        bookmarks = page.bookmarks
-        for i, (level, label, (pos_x, pos_y)) in enumerate(bookmarks):
-            bookmarks[i] = level, label, (round(pos_x, 6), round(pos_y, 6))
+    assert _png_size(document.copy([page_1]).write_png()) == (5, 10)
+    assert _png_size(document.copy([page_2]).write_png()) == (6, 4)
 
 
 @assert_no_logs
@@ -531,7 +520,7 @@ def test_bookmarks():
     def assert_bookmarks(html, expected_by_page, expected_tree, round=False):
         document = FakeHTML(string=html).render()
         if round:
-            round_meta(document.pages)
+            _round_meta(document.pages)
         assert [p.bookmarks for p in document.pages] == expected_by_page
         assert document.make_bookmark_tree() == expected_tree
     assert_bookmarks('''
@@ -670,7 +659,7 @@ def test_links():
         with capture_logs() as logs:
             document = FakeHTML(string=html, base_url=base_url).render()
             if round:
-                round_meta(document.pages)
+                _round_meta(document.pages)
             resolved_links = list(document.resolve_links())
         assert len(logs) == len(warnings)
         for message, expected in zip(logs, warnings):

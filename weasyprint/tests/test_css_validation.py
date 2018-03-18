@@ -53,182 +53,224 @@ def test_not_print():
 def test_function():
     assert expand_to_dict('clip: rect(1px, 3em, auto, auto)') == {
         'clip': ((1, 'px'), (3, 'em'), 'auto', 'auto')}
-    assert_invalid('clip: square(1px, 3em, auto, auto)')
-    assert_invalid('clip: rect(1px, 3em, auto auto)', 'invalid')
-    assert_invalid('clip: rect(1px, 3em, auto)')
-    assert_invalid('clip: rect(1px, 3em / auto)')
 
 
 @assert_no_logs
-def test_counters():
-    assert expand_to_dict('counter-reset: foo bar 2 baz') == {
-        'counter_reset': (('foo', 0), ('bar', 2), ('baz', 0))}
-    assert expand_to_dict('counter-increment: foo bar 2 baz') == {
-        'counter_increment': (('foo', 1), ('bar', 2), ('baz', 1))}
-    assert expand_to_dict('counter-reset: foo') == {
-        'counter_reset': (('foo', 0),)}
-    assert expand_to_dict('counter-reset: FoO') == {
-        'counter_reset': (('FoO', 0),)}
-    assert expand_to_dict('counter-increment: foo bAr 2 Bar') == {
-        'counter_increment': (('foo', 1), ('bAr', 2), ('Bar', 1))}
-    assert expand_to_dict('counter-reset: none') == {
-        'counter_reset': ()}
-    assert expand_to_dict(
-        'counter-reset: foo none', 'Invalid counter name') == {}
-    assert expand_to_dict(
-        'counter-reset: foo initial', 'Invalid counter name') == {}
-    assert_invalid('counter-reset: foo 3px')
-    assert_invalid('counter-reset: 3')
+@pytest.mark.parametrize('rule', (
+    'clip: square(1px, 3em, auto, auto)',
+    'clip: rect(1px, 3em, auto auto)',
+    'clip: rect(1px, 3em, auto)',
+    'clip: rect(1px, 3em / auto)',
+))
+def test_function_invalid(rule):
+    assert_invalid(rule)
 
 
 @assert_no_logs
-def test_spacing():
-    assert expand_to_dict('letter-spacing: normal') == {
-        'letter_spacing': 'normal'}
-    assert expand_to_dict('letter-spacing: 3px') == {
-        'letter_spacing': (3, 'px')}
-    assert_invalid('letter-spacing: 3')
-    assert expand_to_dict(
-        'letter_spacing: normal', 'did you mean letter-spacing') == {}
+@pytest.mark.parametrize('rule, result', (
+    ('counter-reset: foo bar 2 baz', {
+        'counter_reset': (('foo', 0), ('bar', 2), ('baz', 0))}),
+    ('counter-increment: foo bar 2 baz', {
+        'counter_increment': (('foo', 1), ('bar', 2), ('baz', 1))}),
+    ('counter-reset: foo', {'counter_reset': (('foo', 0),)}),
+    ('counter-reset: FoO', {'counter_reset': (('FoO', 0),)}),
+    ('counter-increment: foo bAr 2 Bar', {
+        'counter_increment': (('foo', 1), ('bAr', 2), ('Bar', 1))}),
+    ('counter-reset: none', {'counter_reset': ()}),
+))
+def test_counters(rule, result):
+    assert expand_to_dict(rule) == result
 
-    assert expand_to_dict('word-spacing: normal') == {
-        'word_spacing': 'normal'}
-    assert expand_to_dict('word-spacing: 3px') == {
-        'word_spacing': (3, 'px')}
-    assert_invalid('word-spacing: 3')
 
-
-@assert_no_logs
-def test_decoration():
-    assert expand_to_dict('text-decoration: none') == {
-        'text_decoration': 'none'}
-    assert expand_to_dict('text-decoration: overline') == {
-        'text_decoration': frozenset(['overline'])}
-    # blink is accepted but ignored
-    assert expand_to_dict('text-decoration: overline blink line-through') == {
-        'text_decoration': frozenset(['line-through', 'overline'])}
+@pytest.mark.parametrize('rule, warning, result', (
+    ('counter-reset: foo initial', 'Invalid counter name: initial.', {}),
+    ('counter-reset: foo none', 'Invalid counter name: none.', {}),
+))
+def test_counters_warning(rule, warning, result):
+    assert expand_to_dict(rule, warning) == result
 
 
 @assert_no_logs
-def test_size():
-    assert expand_to_dict('size: 200px') == {
-        'size': ((200, 'px'), (200, 'px'))}
-    assert expand_to_dict('size: 200px 300pt') == {
-        'size': ((200, 'px'), (300, 'pt'))}
-    assert expand_to_dict('size: auto') == {
-        'size': ((210, 'mm'), (297, 'mm'))}
-    assert expand_to_dict('size: portrait') == {
-        'size': ((210, 'mm'), (297, 'mm'))}
-    assert expand_to_dict('size: landscape') == {
-        'size': ((297, 'mm'), (210, 'mm'))}
-    assert expand_to_dict('size: A3 portrait') == {
-        'size': ((297, 'mm'), (420, 'mm'))}
-    assert expand_to_dict('size: A3 landscape') == {
-        'size': ((420, 'mm'), (297, 'mm'))}
-    assert expand_to_dict('size: portrait A3') == {
-        'size': ((297, 'mm'), (420, 'mm'))}
-    assert expand_to_dict('size: landscape A3') == {
-        'size': ((420, 'mm'), (297, 'mm'))}
-    assert_invalid('size: A3 landscape A3')
-    assert_invalid('size: A9')
-    assert_invalid('size: foo')
-    assert_invalid('size: foo bar')
-    assert_invalid('size: 20%')
+@pytest.mark.parametrize('rule', (
+    'counter-reset: foo 3px',
+    'counter-reset: 3',
+))
+def test_counters_invalid(rule):
+    assert_invalid(rule)
 
 
 @assert_no_logs
-def test_transforms():
-    assert expand_to_dict('transform: none') == {
-        'transform': ()}
-    assert expand_to_dict(
-        'transform: translate(6px) rotate(90deg)'
-    ) == {'transform': (('translate', ((6, 'px'), (0, 'px'))),
-                        ('rotate', math.pi / 2))}
-    assert expand_to_dict(
-        'transform: translate(-4px, 0)'
-    ) == {'transform': (('translate', ((-4, 'px'), (0, None))),)}
-    assert expand_to_dict(
-        'transform: translate(6px, 20%)'
-    ) == {'transform': (('translate', ((6, 'px'), (20, '%'))),)}
-    assert expand_to_dict(
-        'transform: scale(2)'
-    ) == {'transform': (('scale', (2, 2)),)}
-    assert_invalid('transform: translate(6px 20%)')  # missing comma
-    assert_invalid('transform: lipsumize(6px)')
-    assert_invalid('transform: foo')
-    assert_invalid('transform: scale(2) foo')
-    assert_invalid('transform: 6px')
+@pytest.mark.parametrize('rule, result', (
+    ('letter-spacing: normal', {'letter_spacing': 'normal'}),
+    ('letter-spacing: 3px', {'letter_spacing': (3, 'px')}),
+    ('word-spacing: normal', {'word_spacing': 'normal'}),
+    ('word-spacing: 3px', {'word_spacing': (3, 'px')}),
+))
+def test_spacing(rule, result):
+    assert expand_to_dict(rule) == result
 
 
 @assert_no_logs
-def test_expand_four_sides():
-    """Test the 4-value properties."""
-    assert expand_to_dict('margin: inherit') == {
+def test_spacing_warning():
+    assert expand_to_dict(
+        'letter_spacing: normal', 'did you mean letter-spacing?') == {}
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'letter-spacing: 3',
+    'word-spacing: 3',
+))
+def test_spacing_invalid(rule):
+    assert_invalid(rule)
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, result', (
+    ('text-decoration: none', {'text_decoration': 'none'}),
+    ('text-decoration: overline', {
+        'text_decoration': frozenset(['overline'])}),
+    ('text-decoration: overline blink line-through', {
+        'text_decoration': frozenset(['line-through', 'overline'])}),
+))
+def test_decoration(rule, result):
+    assert expand_to_dict(rule) == result
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, result', (
+    ('size: 200px', {'size': ((200, 'px'), (200, 'px'))}),
+    ('size: 200px 300pt', {'size': ((200, 'px'), (300, 'pt'))}),
+    ('size: auto', {'size': ((210, 'mm'), (297, 'mm'))}),
+    ('size: portrait', {'size': ((210, 'mm'), (297, 'mm'))}),
+    ('size: landscape', {'size': ((297, 'mm'), (210, 'mm'))}),
+    ('size: A3 portrait', {'size': ((297, 'mm'), (420, 'mm'))}),
+    ('size: A3 landscape', {'size': ((420, 'mm'), (297, 'mm'))}),
+    ('size: portrait A3', {'size': ((297, 'mm'), (420, 'mm'))}),
+    ('size: landscape A3', {'size': ((420, 'mm'), (297, 'mm'))}),
+))
+def test_size(rule, result):
+    assert expand_to_dict(rule) == result
+
+
+@pytest.mark.parametrize('rule', (
+    'size: A3 landscape A3',
+    'size: A9',
+    'size: foo',
+    'size: foo bar',
+    'size: 20%',
+))
+def test_size_invalid(rule):
+    assert_invalid(rule)
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, result', (
+    ('transform: none', {'transform': ()}),
+    ('transform: translate(6px) rotate(90deg)', {
+        'transform': (
+            ('translate', ((6, 'px'), (0, 'px'))),
+            ('rotate', math.pi / 2))}),
+    ('transform: translate(-4px, 0)', {
+        'transform': (('translate', ((-4, 'px'), (0, None))),)}),
+    ('transform: translate(6px, 20%)', {
+        'transform': (('translate', ((6, 'px'), (20, '%'))),)}),
+    ('transform: scale(2)', {'transform': (('scale', (2, 2)),)}),
+))
+def test_transforms(rule, result):
+    assert expand_to_dict(rule) == result
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'transform: translate(6px 20%)',  # missing comma
+    'transform: lipsumize(6px)',
+    'transform: foo',
+    'transform: scale(2) foo',
+    'transform: 6px',
+))
+def test_transforms_invalid(rule):
+    assert_invalid(rule)
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, result', (
+    ('margin: inherit', {
         'margin_top': 'inherit',
         'margin_right': 'inherit',
         'margin_bottom': 'inherit',
         'margin_left': 'inherit',
-    }
-    assert expand_to_dict('margin: 1em') == {
+    }),
+    ('margin: 1em', {
         'margin_top': (1, 'em'),
         'margin_right': (1, 'em'),
         'margin_bottom': (1, 'em'),
         'margin_left': (1, 'em'),
-    }
-    assert expand_to_dict('margin: -1em auto 20%') == {
+    }),
+    ('margin: -1em auto 20%', {
         'margin_top': (-1, 'em'),
         'margin_right': 'auto',
         'margin_bottom': (20, '%'),
         'margin_left': 'auto',
-    }
-    assert expand_to_dict('padding: 1em 0') == {
+    }),
+    ('padding: 1em 0', {
         'padding_top': (1, 'em'),
         'padding_right': (0, None),
         'padding_bottom': (1, 'em'),
         'padding_left': (0, None),
-    }
-    assert expand_to_dict('padding: 1em 0 2%') == {
+    }),
+    ('padding: 1em 0 2%', {
         'padding_top': (1, 'em'),
         'padding_right': (0, None),
         'padding_bottom': (2, '%'),
         'padding_left': (0, None),
-    }
-    assert expand_to_dict('padding: 1em 0 2em 5px') == {
+    }),
+    ('padding: 1em 0 2em 5px', {
         'padding_top': (1, 'em'),
         'padding_right': (0, None),
         'padding_bottom': (2, 'em'),
         'padding_left': (5, 'px'),
-    }
-    assert expand_to_dict(
-        'padding: 1 2 3 4 5',
-        'Expected 1 to 4 token components got 5') == {}
-    assert_invalid('margin: rgb(0, 0, 0)')
-    assert_invalid('padding: auto')
-    assert_invalid('padding: -12px')
-    assert_invalid('border-width: -3em')
-    assert_invalid('border-width: 12%')
+    }),
+))
+def test_expand_four_sides(rule, result):
+    assert expand_to_dict(rule) == result
 
 
 @assert_no_logs
-def test_expand_borders():
-    """Test the ``border`` property."""
-    assert expand_to_dict('border-top: 3px dotted red') == {
+def test_expand_four_sides_warning():
+    assert expand_to_dict(
+        'padding: 1 2 3 4 5', 'Expected 1 to 4 token components got 5') == {}
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'margin: rgb(0, 0, 0)',
+    'padding: auto',
+    'padding: -12px',
+    'border-width: -3em',
+    'border-width: 12%',
+))
+def test_expand_four_sides_invalid(rule):
+    assert_invalid(rule)
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, result', (
+    ('border-top: 3px dotted red', {
         'border_top_width': (3, 'px'),
         'border_top_style': 'dotted',
         'border_top_color': (1, 0, 0, 1),  # red
-    }
-    assert expand_to_dict('border-top: 3px dotted') == {
+    }),
+    ('border-top: 3px dotted', {
         'border_top_width': (3, 'px'),
         'border_top_style': 'dotted',
-    }
-    assert expand_to_dict('border-top: 3px red') == {
+    }),
+    ('border-top: 3px red', {
         'border_top_width': (3, 'px'),
         'border_top_color': (1, 0, 0, 1),  # red
-    }
-    assert expand_to_dict('border-top: solid') == {
-        'border_top_style': 'solid',
-    }
-    assert expand_to_dict('border: 6px dashed lime') == {
+    }),
+    ('border-top: solid', {'border_top_style': 'solid'}),
+    ('border: 6px dashed lime', {
         'border_top_width': (6, 'px'),
         'border_top_style': 'dashed',
         'border_top_color': (0, 1, 0, 1),  # lime
@@ -244,42 +286,63 @@ def test_expand_borders():
         'border_right_width': (6, 'px'),
         'border_right_style': 'dashed',
         'border_right_color': (0, 1, 0, 1),  # lime
-    }
+    }),
+))
+def test_expand_borders(rule, result):
+    assert expand_to_dict(rule) == result
+
+
+@assert_no_logs
+def test_expand_borders_invalid():
     assert_invalid('border: 6px dashed left')
 
 
 @assert_no_logs
-def test_expand_list_style():
-    """Test the ``list_style`` property."""
-    assert expand_to_dict('list-style: inherit') == {
+@pytest.mark.parametrize('rule, result', (
+    ('list-style: inherit', {
         'list_style_position': 'inherit',
         'list_style_image': 'inherit',
         'list_style_type': 'inherit',
-    }
-    assert expand_to_dict('list-style: url(../bar/lipsum.png)') == {
+    }),
+    ('list-style: url(../bar/lipsum.png)', {
         'list_style_image': ('url', 'http://weasyprint.org/bar/lipsum.png'),
-    }
-    assert expand_to_dict('list-style: square') == {
+    }),
+    ('list-style: square', {
         'list_style_type': 'square',
-    }
-    assert expand_to_dict('list-style: circle inside') == {
+    }),
+    ('list-style: circle inside', {
         'list_style_position': 'inside',
         'list_style_type': 'circle',
-    }
-    assert expand_to_dict('list-style: none circle inside') == {
+    }),
+    ('list-style: none circle inside', {
         'list_style_position': 'inside',
         'list_style_image': ('none', None),
         'list_style_type': 'circle',
-    }
-    assert expand_to_dict('list-style: none inside none') == {
+    }),
+    ('list-style: none inside none', {
         'list_style_position': 'inside',
         'list_style_image': ('none', None),
         'list_style_type': 'none',
-    }
-    assert_invalid('list-style: none inside none none')
-    assert_invalid('list-style: red')
-    assert_invalid('list-style: circle disc',
-                   'got multiple type values in a list-style shorthand')
+    }),
+))
+def test_expand_list_style(rule, result):
+    assert expand_to_dict(rule) == result
+
+
+@assert_no_logs
+def test_expand_list_style_warning():
+    assert_invalid(
+        'list-style: circle disc',
+        'got multiple type values in a list-style shorthand')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'list-style: none inside none none',
+    'list-style: red',
+))
+def test_expand_list_style_invalid(rule):
+    assert_invalid(rule)
 
 
 def assert_background(css, **expected):
@@ -296,7 +359,6 @@ def assert_background(css, **expected):
 
 @assert_no_logs
 def test_expand_background():
-    """Test the ``background`` property."""
     assert_background('red', background_color=(1, 0, 0, 1))
     assert_background(
         'url(lipsum.png)',

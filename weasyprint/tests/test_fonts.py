@@ -10,7 +10,7 @@
 """
 
 from .test_boxes import render_pages
-from .test_draw import requires
+from .test_draw.test_draw import requires
 from .testing_utils import assert_no_logs
 
 

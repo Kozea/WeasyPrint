@@ -12,7 +12,8 @@
 import pytest
 
 from ..test_boxes import render_pages
-from ..test_draw import B, _, assert_pixels, r
+from ..test_draw import assert_pixels
+from ..test_draw.test_draw import B, _, r
 from ..testing_utils import assert_no_logs, capture_logs, requires
 
 

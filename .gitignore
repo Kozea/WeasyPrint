@@ -19,4 +19,4 @@
 
 # Tests
 /weasyprint/tests/.cache
-/weasyprint/tests/results
+/weasyprint/tests/test_draw/results
