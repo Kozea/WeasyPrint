@@ -353,7 +353,7 @@ def test_command_line_render(tmpdir):
     _run(tmpdir.join('combined.html').strpath + ' out4.png')
     assert tmpdir.join('out4.png').read_binary() == png_bytes
 
-    _run(path2url(tmpdir.join('combined.html')) + ' out5.png')
+    _run(path2url(tmpdir.join('combined.html').strpath) + ' out5.png')
     assert tmpdir.join('out5.png').read_binary() == png_bytes
 
     _run('linked.html out6.png')  # test relative URLs

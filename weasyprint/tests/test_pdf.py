@@ -407,14 +407,14 @@ def test_document_info():
 
 @assert_no_logs
 def test_embedded_files_attachments(tmpdir):
-    absolute_tmp_file = tmpdir.join('some_file.txt')
+    absolute_tmp_file = tmpdir.join('some_file.txt').strpath
     adata = b'12345678'
     with open(absolute_tmp_file, 'wb') as afile:
         afile.write(adata)
     absolute_url = path2url(absolute_tmp_file)
     assert absolute_url.startswith('file://')
 
-    relative_tmp_file = tmpdir.join('äöü.txt')
+    relative_tmp_file = tmpdir.join('äöü.txt').strpath
     rdata = b'abcdefgh'
     with open(relative_tmp_file, 'wb') as rfile:
         rfile.write(rdata)
