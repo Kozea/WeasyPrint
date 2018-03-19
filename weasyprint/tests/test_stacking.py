@@ -44,7 +44,7 @@ def test_nested(source, contexts):
 @assert_no_logs
 def test_image_contexts():
     page, = render_pages('''
-        <body>Some text: <img style="position: relative" src=pattern.png>''')
+      <body>Some text: <img style="position: relative" src=pattern.png>''')
     html, = page.children
     context = StackingContext.from_box(html, page)
     # The image is *not* in this context:

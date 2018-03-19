@@ -21,33 +21,36 @@ def outer_area(box):
 
 
 @assert_no_logs
-def test_floats():
+def test_floats_1():
     # adjacent-floats-001
     page, = render_pages('''
-        <style>
-            div { float: left }
-            img { width: 100px; vertical-align: top }
-        </style>
-        <div><img src=pattern.png /></div>
-        <div><img src=pattern.png /></div>''')
+      <style>
+        div { float: left }
+        img { width: 100px; vertical-align: top }
+      </style>
+      <div><img src=pattern.png /></div>
+      <div><img src=pattern.png /></div>''')
     html, = page.children
     body, = html.children
     div_1, div_2 = body.children
     assert outer_area(div_1) == (0, 0, 100, 100)
     assert outer_area(div_2) == (100, 0, 100, 100)
 
+
+@assert_no_logs
+def test_floats_2():
     # c414-flt-fit-000
     page, = render_pages('''
-        <style>
-            body { width: 290px }
-            div { float: left; width: 100px;  }
-            img { width: 60px; vertical-align: top }
-        </style>
-        <div><img src=pattern.png /><!-- 1 --></div>
-        <div><img src=pattern.png /><!-- 2 --></div>
-        <div><img src=pattern.png /><!-- 4 --></div>
-        <img src=pattern.png /><!-- 3
-        --><img src=pattern.png /><!-- 5 -->''')
+      <style>
+        body { width: 290px }
+        div { float: left; width: 100px;  }
+        img { width: 60px; vertical-align: top }
+      </style>
+      <div><img src=pattern.png /><!-- 1 --></div>
+      <div><img src=pattern.png /><!-- 2 --></div>
+      <div><img src=pattern.png /><!-- 4 --></div>
+      <img src=pattern.png /><!-- 3
+      --><img src=pattern.png /><!-- 5 -->''')
     html, = page.children
     body, = html.children
     div_1, div_2, div_4, anon_block = body.children
@@ -61,24 +64,27 @@ def test_floats():
     assert outer_area(div_4) == (0, 60, 100, 60)
     assert outer_area(img_5) == (100, 60, 60, 60)
 
+
+@assert_no_logs
+def test_floats_3():
     # c414-flt-fit-002
     page, = render_pages('''
-        <style type="text/css">
-            body { width: 200px }
-            p { width: 70px; height: 20px }
-            .left { float: left }
-            .right { float: right }
-        </style>
-        <p class="left"> ⇦ A 1 </p>
-        <p class="left"> ⇦ B 2 </p>
-        <p class="left"> ⇦ A 3 </p>
-        <p class="right"> B 4 ⇨ </p>
-        <p class="left"> ⇦ A 5 </p>
-        <p class="right"> B 6 ⇨ </p>
-        <p class="right"> B 8 ⇨ </p>
-        <p class="left"> ⇦ A 7 </p>
-        <p class="left"> ⇦ A 9 </p>
-        <p class="left"> ⇦ B 10 </p>
+      <style type="text/css">
+        body { width: 200px }
+        p { width: 70px; height: 20px }
+        .left { float: left }
+        .right { float: right }
+      </style>
+      <p class="left"> ⇦ A 1 </p>
+      <p class="left"> ⇦ B 2 </p>
+      <p class="left"> ⇦ A 3 </p>
+      <p class="right"> B 4 ⇨ </p>
+      <p class="left"> ⇦ A 5 </p>
+      <p class="right"> B 6 ⇨ </p>
+      <p class="right"> B 8 ⇨ </p>
+      <p class="left"> ⇦ A 7 </p>
+      <p class="left"> ⇦ A 9 </p>
+      <p class="left"> ⇦ B 10 </p>
     ''')
     html, = page.children
     body, = html.children
@@ -88,16 +94,19 @@ def test_floats():
         (0, 0), (70, 0), (0, 20), (130, 20), (0, 40), (130, 40),
         (130, 60), (0, 60), (0, 80), (70, 80), ]
 
+
+@assert_no_logs
+def test_floats_4():
     # c414-flt-wrap-000 ... more or less
     page, = render_pages('''
-        <style>
-            body { width: 100px }
-            p { float: left; height: 100px }
-            img { width: 60px; vertical-align: top }
-        </style>
-        <p style="width: 20px"></p>
-        <p style="width: 100%"></p>
-        <img src=pattern.png /><img src=pattern.png />
+      <style>
+        body { width: 100px }
+        p { float: left; height: 100px }
+        img { width: 60px; vertical-align: top }
+      </style>
+      <p style="width: 20px"></p>
+      <p style="width: 100%"></p>
+      <img src=pattern.png /><img src=pattern.png />
     ''')
     html, = page.children
     body, = html.children
@@ -107,16 +116,19 @@ def test_floats():
     assert (line_1.position_x, line_1.position_y) == (20, 0)
     assert (line_2.position_x, line_2.position_y) == (0, 200)
 
+
+@assert_no_logs
+def test_floats_5():
     # c414-flt-wrap-000 with text ... more or less
     page, = render_pages('''
-        <style>
-            body { width: 100px; font: 60px Ahem; }
-            p { float: left; height: 100px }
-            img { width: 60px; vertical-align: top }
-        </style>
-        <p style="width: 20px"></p>
-        <p style="width: 100%"></p>
-        A B
+      <style>
+        body { width: 100px; font: 60px Ahem; }
+        p { float: left; height: 100px }
+        img { width: 60px; vertical-align: top }
+      </style>
+      <p style="width: 20px"></p>
+      <p style="width: 100%"></p>
+      A B
     ''')
     html, = page.children
     body, = html.children
@@ -126,18 +138,21 @@ def test_floats():
     assert (line_1.position_x, line_1.position_y) == (20, 0)
     assert (line_2.position_x, line_2.position_y) == (0, 200)
 
+
+@assert_no_logs
+def test_floats_6():
     # floats-placement-vertical-001b
     page, = render_pages('''
-        <style>
-            body { width: 90px; font-size: 0 }
-            img { vertical-align: top }
-        </style>
-        <body>
-        <span>
-            <img src=pattern.png style="width: 50px" />
-            <img src=pattern.png style="width: 50px" />
-            <img src=pattern.png style="float: left; width: 30px" />
-        </span>
+      <style>
+        body { width: 90px; font-size: 0 }
+        img { vertical-align: top }
+      </style>
+      <body>
+      <span>
+        <img src=pattern.png style="width: 50px" />
+        <img src=pattern.png style="width: 50px" />
+        <img src=pattern.png style="float: left; width: 30px" />
+      </span>
     ''')
     html, = page.children
     body, = html.children
@@ -150,16 +165,19 @@ def test_floats():
     assert outer_area(img_2) == (30, 50, 50, 50)
     assert outer_area(img_3) == (0, 50, 30, 30)
 
+
+@assert_no_logs
+def test_floats_7():
     # Variant of the above: no <span>
     page, = render_pages('''
-        <style>
-            body { width: 90px; font-size: 0 }
-            img { vertical-align: top }
-        </style>
-        <body>
-        <img src=pattern.png style="width: 50px" />
-        <img src=pattern.png style="width: 50px" />
-        <img src=pattern.png style="float: left; width: 30px" />
+      <style>
+        body { width: 90px; font-size: 0 }
+        img { vertical-align: top }
+      </style>
+      <body>
+      <img src=pattern.png style="width: 50px" />
+      <img src=pattern.png style="width: 50px" />
+      <img src=pattern.png style="float: left; width: 30px" />
     ''')
     html, = page.children
     body, = html.children
@@ -170,17 +188,20 @@ def test_floats():
     assert outer_area(img_2) == (30, 50, 50, 50)
     assert outer_area(img_3) == (0, 50, 30, 30)
 
+
+@assert_no_logs
+def test_floats_8():
     # Floats do no affect other pages
     page_1, page_2 = render_pages('''
-        <style>
-            body { width: 90px; font-size: 0 }
-            img { vertical-align: top }
-        </style>
-        <body>
-        <img src=pattern.png style="float: left; width: 30px" />
-        <img src=pattern.png style="width: 50px" />
-        <div style="page-break-before: always"></div>
-        <img src=pattern.png style="width: 50px" />
+      <style>
+        body { width: 90px; font-size: 0 }
+        img { vertical-align: top }
+      </style>
+      <body>
+      <img src=pattern.png style="float: left; width: 30px" />
+      <img src=pattern.png style="width: 50px" />
+      <div style="page-break-before: always"></div>
+      <img src=pattern.png style="width: 50px" />
     ''')
     html, = page_1.children
     body, = html.children
@@ -196,26 +217,26 @@ def test_floats():
     line, = anon_block.children
     img_2, = line.children
 
+
+@assert_no_logs
+def test_floats_9():
     # Regression test
     # https://github.com/Kozea/WeasyPrint/issues/263
     page, = render_pages('''<div style="top:100%; float:left">''')
 
 
 @assert_no_logs
-def test_floats_page_breaks():
-    """Tests the page breaks when floated boxes
-    do not fit the page."""
-
+def test_floats_page_breaks_1():
     # Tests floated images shorter than the page
     pages = render_pages('''
-        <style>
-            @page { size: 100px; margin: 10px }
-            img { height: 45px; width:70px; float: left;}
-        </style>
-        <body>
-            <img src=pattern.png>
-                    <!-- page break should be here !!! -->
-            <img src=pattern.png>
+      <style>
+        @page { size: 100px; margin: 10px }
+        img { height: 45px; width:70px; float: left;}
+      </style>
+      <body>
+        <img src=pattern.png>
+          <!-- page break should be here !!! -->
+        <img src=pattern.png>
     ''')
 
     assert len(pages) == 2
@@ -231,16 +252,19 @@ def test_floats_page_breaks():
                    for images in page_images]
     assert positions_y == [[10], [10]]
 
+
+@assert_no_logs
+def test_floats_page_breaks_2():
     # Tests floated images taller than the page
     pages = render_pages('''
-        <style>
-            @page { size: 100px; margin: 10px }
-            img { height: 81px; width:70px; float: left;}
-        </style>
-        <body>
-            <img src=pattern.png>
-                    <!-- page break should be here !!! -->
-            <img src=pattern.png>
+      <style>
+        @page { size: 100px; margin: 10px }
+        img { height: 81px; width:70px; float: left;}
+      </style>
+      <body>
+        <img src=pattern.png>
+          <!-- page break should be here !!! -->
+        <img src=pattern.png>
     ''')
 
     assert len(pages) == 2
@@ -256,20 +280,23 @@ def test_floats_page_breaks():
                    for images in page_images]
     assert positions_y == [[10], [10]]
 
+
+@assert_no_logs
+def test_floats_page_breaks_3():
     # Tests floated images shorter than the page
     pages = render_pages('''
-        <style>
-            @page { size: 100px; margin: 10px }
-            img { height: 30px; width:70px; float: left;}
-        </style>
-        <body>
-            <img src=pattern.png>
-            <img src=pattern.png>
-                    <!-- page break should be here !!! -->
-            <img src=pattern.png>
-            <img src=pattern.png>
-                    <!-- page break should be here !!! -->
-            <img src=pattern.png>
+      <style>
+        @page { size: 100px; margin: 10px }
+        img { height: 30px; width:70px; float: left;}
+      </style>
+      <body>
+        <img src=pattern.png>
+        <img src=pattern.png>
+          <!-- page break should be here !!! -->
+        <img src=pattern.png>
+        <img src=pattern.png>
+          <!-- page break should be here !!! -->
+        <img src=pattern.png>
     ''')
 
     assert len(pages) == 3
@@ -285,27 +312,30 @@ def test_floats_page_breaks():
                    for images in page_images]
     assert positions_y == [[10, 40], [10, 40], [10]]
 
+
+@assert_no_logs
+def test_floats_page_breaks_4():
     # last float does not fit, pushed to next page
     pages = render_pages('''
-        <style>
-            @page{
-                size: 110px;
-                margin: 10px;
-                padding: 0;
-            }
-            .large {
-                width: 10px;
-                height: 60px;
-            }
-            .small {
-                width: 10px;
-                height: 20px;
-            }
-        </style>
-        <body>
-            <div class="large"></div>
-            <div class="small"></div>
-            <div class="large"></div>
+      <style>
+        @page{
+          size: 110px;
+          margin: 10px;
+          padding: 0;
+        }
+        .large {
+          width: 10px;
+          height: 60px;
+        }
+        .small {
+          width: 10px;
+          height: 20px;
+        }
+      </style>
+      <body>
+        <div class="large"></div>
+        <div class="small"></div>
+        <div class="large"></div>
     ''')
 
     assert len(pages) == 2
@@ -319,29 +349,32 @@ def test_floats_page_breaks():
     positions_y = [[div.position_y for div in divs] for divs in page_divs]
     assert positions_y == [[10, 70], [10]]
 
+
+@assert_no_logs
+def test_floats_page_breaks_5():
     # last float does not fit, pushed to next page
     # center div must not
     pages = render_pages('''
-        <style>
-            @page{
-                size: 110px;
-                margin: 10px;
-                padding: 0;
-            }
-            .large {
-                width: 10px;
-                height: 60px;
-            }
-            .small {
-                width: 10px;
-                height: 20px;
-                page-break-after: avoid;
-            }
-        </style>
-        <body>
-            <div class="large"></div>
-            <div class="small"></div>
-            <div class="large"></div>
+      <style>
+        @page{
+          size: 110px;
+          margin: 10px;
+          padding: 0;
+        }
+        .large {
+          width: 10px;
+          height: 60px;
+        }
+        .small {
+          width: 10px;
+          height: 20px;
+          page-break-after: avoid;
+        }
+      </style>
+      <body>
+        <div class="large"></div>
+        <div class="small"></div>
+        <div class="large"></div>
     ''')
 
     assert len(pages) == 2
@@ -355,29 +388,32 @@ def test_floats_page_breaks():
     positions_y = [[div.position_y for div in divs] for divs in page_divs]
     assert positions_y == [[10], [10, 30]]
 
+
+@assert_no_logs
+def test_floats_page_breaks_6():
     # center div must be the last element,
     # but float won't fit and will get pushed anyway
     pages = render_pages('''
-        <style>
-            @page{
-                size: 110px;
-                margin: 10px;
-                padding: 0;
-            }
-            .large {
-                width: 10px;
-                height: 80px;
-            }
-            .small {
-                width: 10px;
-                height: 20px;
-                page-break-after: avoid;
-            }
-        </style>
-        <body>
-            <div class="large"></div>
-            <div class="small"></div>
-            <div class="large"></div>
+      <style>
+        @page{
+          size: 110px;
+          margin: 10px;
+          padding: 0;
+        }
+        .large {
+          width: 10px;
+          height: 80px;
+        }
+        .small {
+          width: 10px;
+          height: 20px;
+          page-break-after: avoid;
+        }
+      </style>
+      <body>
+        <div class="large"></div>
+        <div class="small"></div>
+        <div class="large"></div>
     ''')
 
     assert len(pages) == 3
@@ -393,16 +429,15 @@ def test_floats_page_breaks():
 
 
 @assert_no_logs
-def test_preferred_widths():
-    """Unit tests for preferred widths."""
+def test_preferred_widths_1():
     def get_float_width(body_width):
         page, = render_pages('''
-            <body style="width: %spx; font-family: ahem">
-            <p style="white-space: pre-line; float: left">
-                Lorem ipsum dolor sit amet,
-                  consectetur elit
-            </p>
-                       <!--  ^  No-break space here  -->
+          <body style="width: %spx; font-family: ahem">
+          <p style="white-space: pre-line; float: left">
+            Lorem ipsum dolor sit amet,
+              consectetur elit
+          </p>
+                   <!--  ^  No-break space here  -->
         ''' % body_width)
         html, = page.children
         body, = html.children
@@ -413,11 +448,14 @@ def test_preferred_widths():
     # Preferred width:
     assert get_float_width(1000000) == len('Lorem ipsum dolor sit amet,') * 16
 
+
+@assert_no_logs
+def test_preferred_widths_2():
     # Non-regression test:
     # Incorrect whitespace handling in preferred width used to cause
     # unnecessary line break.
     page, = render_pages('''
-        <p style="float: left">Lorem <em>ipsum</em> dolor.</p>
+      <p style="float: left">Lorem <em>ipsum</em> dolor.</p>
     ''')
     html, = page.children
     body, = html.children
@@ -425,17 +463,23 @@ def test_preferred_widths():
     assert len(paragraph.children) == 1
     assert isinstance(paragraph.children[0], boxes.LineBox)
 
+
+@assert_no_logs
+def test_preferred_widths_3():
     page, = render_pages('''
-        <style>img { width: 20px }</style>
-        <p style="float: left">
-            <img src=pattern.png><img src=pattern.png><br>
-            <img src=pattern.png></p>
+      <style>img { width: 20px }</style>
+      <p style="float: left">
+        <img src=pattern.png><img src=pattern.png><br>
+        <img src=pattern.png></p>
     ''')
     html, = page.children
     body, = html.children
     paragraph, = body.children
     assert paragraph.width == 40
 
+
+@assert_no_logs
+def test_preferred_widths_4():
     page, = render_pages(
         '<style>p { font: 20px Ahem }</style>'
         '<p style="float: left">XX<br>XX<br>X</p>')
@@ -444,6 +488,9 @@ def test_preferred_widths():
     paragraph, = body.children
     assert paragraph.width == 40
 
+
+@assert_no_logs
+def test_preferred_widths_5():
     # The space is the start of the line is collapsed.
     page, = render_pages(
         '<style>p { font: 20px Ahem }</style>'
