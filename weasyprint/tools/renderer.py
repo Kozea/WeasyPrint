@@ -29,7 +29,7 @@ div { border: 10px solid; background: #ddd }
 <div><ul><li>Hello, world!
 '''
 
-TEMPLATE = b'''
+TEMPLATE = '''
 <style>
 * { box-sizing: border-box }
 body { display: flex; margin: 0 }
@@ -87,15 +87,15 @@ def app(environ, start_response):
         png = BytesIO()
         html.write_png(png)
         png.seek(0)
-        return content.encode('utf-8'), b64encode(png.read())
+        return content, b64encode(png.read()).decode('ascii')
 
     path = environ['PATH_INFO']
     request_body_size = int(environ.get('CONTENT_LENGTH') or 0)
 
     if path == '/':
-        return make_response(TEMPLATE % get_data())
+        return make_response((TEMPLATE % get_data()).encode('utf-8'))
     elif path == '/render':
-        return make_response(get_data()[1])
+        return make_response(get_data()[1].encode('utf-8'))
 
     return make_response(b'<h1>Not Found</h1>', status='404 Not Found')
 
