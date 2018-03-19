@@ -2,9 +2,9 @@
     weasyprint.tests.test_draw.test_tables
     --------------------------------------
 
-    Test the drawn tables.
+    Test how tables are drawn.
 
-    :copyright: Copyright 2011-2014 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """

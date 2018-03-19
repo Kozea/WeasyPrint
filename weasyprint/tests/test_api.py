@@ -25,8 +25,7 @@ from pdfrw import PdfReader
 
 from .. import CSS, HTML, __main__, default_url_fetcher
 from ..urls import path2url
-from .test_draw import assert_pixels_equal, image_to_pixels
-from .test_draw.test_draw import B, _, r
+from .test_draw import B, _, assert_pixels_equal, image_to_pixels, r
 from .testing_utils import (
     FakeHTML, assert_no_logs, capture_logs, http_server, resource_filename)
 
