@@ -81,13 +81,24 @@ def iri_to_uri(url):
 
 
 def path2url(path):
-    """Return file URL of `path`"""
+    """Return file URL of `path`.
+    Accepts 'str' or 'bytes', returns 'str'
+    """
+    # Ensure 'str'
+    if isinstance(path, bytes):
+        path = path.decode(sys.getfilesystemencoding())
+    # if a trailing path.sep is given -- keep it
+    wants_trailing_slash = path.endswith(os.path.sep) or path.endswith('/')
     path = os.path.abspath(path)
-    if os.path.isdir(path):
+    if wants_trailing_slash or os.path.isdir(path):
         # Make sure directory names have a trailing slash.
         # Otherwise relative URIs are resolved from the parent directory.
         path += os.path.sep
+        wants_trailing_slash = True
     path = pathname2url(path)
+    # on Windows pathname2url cuts off trailing slash
+    if wants_trailing_slash and not path.endswith('/'):
+        path += '/'
     if path.startswith('///'):
         # On Windows pathname2url(r'C:\foo') is apparently '///C:/foo'
         # That enough slashes already.
