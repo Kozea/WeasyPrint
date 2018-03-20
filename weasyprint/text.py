@@ -22,6 +22,11 @@ if cairo.cairo_version() <= 11400:
     warnings.warn('There are known rendering problems with Cairo <= 1.14.0')
 
 
+CAIRO_DUMMY_CONTEXT = {
+    True: cairo.Context(cairo.ImageSurface(cairo.FORMAT_ARGB32, 1, 1)),
+    False: cairo.Context(cairo.PDFSurface(None, 1, 1))}
+
+
 PANGO_ATTR_FONT_FEATURES_CACHE = {}
 
 
@@ -623,12 +628,9 @@ class Layout(object):
     def __init__(self, context, font_size, style):
         self.context = context
         hinting = context.enable_hinting if context else False
-        cairo_dummy_context = (
-            cairo.Context(cairo.ImageSurface(cairo.FORMAT_ARGB32, 1, 1))
-            if hinting else cairo.Context(cairo.PDFSurface(None, 1, 1)))
         self.layout = ffi.gc(
             pangocairo.pango_cairo_create_layout(ffi.cast(
-                'cairo_t *', cairo_dummy_context._pointer)),
+                'cairo_t *', CAIRO_DUMMY_CONTEXT[hinting]._pointer)),
             gobject.g_object_unref)
         pango_context = pango.pango_layout_get_context(self.layout)
         if context and context.font_config.font_map:

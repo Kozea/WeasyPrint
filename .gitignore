@@ -18,5 +18,6 @@
 /.cache
 
 # Tests
+/.pytest_cache
 /weasyprint/tests/.cache
 /weasyprint/tests/test_draw/results
