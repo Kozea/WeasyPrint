@@ -9,20 +9,19 @@
 
 """
 
-from .test_draw import requires
-from .test_layout import parse
-from .testing_utils import assert_no_logs
+from .test_boxes import render_pages
+from .testing_utils import assert_no_logs, requires
 
 
 @assert_no_logs
-@requires('pango', '1.38')
+@requires('pango', (1, 38, 0))
 def test_font_face():
-    page, = parse('''
-        <style>
-            @font-face { src: url(weasyprint.otf); font-family: weasyprint }
-            body { font-family: weasyprint }
-        </style>
-        <span>abc</span>''')
+    page, = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        body { font-family: weasyprint }
+      </style>
+      <span>abc</span>''')
     html, = page.children
     body, = html.children
     line, = body.children
@@ -30,15 +29,15 @@ def test_font_face():
 
 
 @assert_no_logs
-@requires('pango', '1.38')
-def test_default():
+@requires('pango', (1, 38, 0))
+def test_kerning_default():
     # Kerning and ligatures are on by default
-    page, = parse('''
-        <style>
-            @font-face { src: url(weasyprint.otf); font-family: weasyprint }
-            body { font-family: weasyprint }
-        </style>
-        <span>kk</span><span>liga</span>''')
+    page, = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        body { font-family: weasyprint }
+      </style>
+      <span>kk</span><span>liga</span>''')
     html, = page.children
     body, = html.children
     line, = body.children
@@ -46,22 +45,26 @@ def test_default():
     assert span1.width == 1.5 * 16
     assert span2.width == 1.5 * 16
 
+
+@assert_no_logs
+@requires('pango', (1, 38, 0))
+def test_kerning_deactivate():
     # Deactivate kerning
-    page, = parse('''
-        <style>
-            @font-face {
-              src: url(weasyprint.otf);
-              font-family: no-kern;
-              font-feature-settings: 'kern' off;
-            }
-            @font-face {
-              src: url(weasyprint.otf);
-              font-family: kern;
-            }
-            span:nth-child(1) { font-family: kern }
-            span:nth-child(2) { font-family: no-kern }
-        </style>
-        <span>kk</span><span>kk</span>''')
+    page, = render_pages('''
+      <style>
+        @font-face {
+          src: url(weasyprint.otf);
+          font-family: no-kern;
+          font-feature-settings: 'kern' off;
+        }
+        @font-face {
+          src: url(weasyprint.otf);
+          font-family: kern;
+        }
+        span:nth-child(1) { font-family: kern }
+        span:nth-child(2) { font-family: no-kern }
+      </style>
+      <span>kk</span><span>kk</span>''')
     html, = page.children
     body, = html.children
     line, = body.children
@@ -69,23 +72,27 @@ def test_default():
     assert span1.width == 1.5 * 16
     assert span2.width == 2 * 16
 
+
+@assert_no_logs
+@requires('pango', (1, 38, 0))
+def test_kerning_ligature_deactivate():
     # Deactivate kerning and ligatures
-    page, = parse('''
-        <style>
-            @font-face {
-              src: url(weasyprint.otf);
-              font-family: no-kern-liga;
-              font-feature-settings: 'kern' off;
-              font-variant: no-common-ligatures;
-            }
-            @font-face {
-              src: url(weasyprint.otf);
-              font-family: kern-liga;
-            }
-            span:nth-child(1) { font-family: kern-liga }
-            span:nth-child(2) { font-family: no-kern-liga }
-        </style>
-        <span>kk liga</span><span>kk liga</span>''')
+    page, = render_pages('''
+      <style>
+        @font-face {
+          src: url(weasyprint.otf);
+          font-family: no-kern-liga;
+          font-feature-settings: 'kern' off;
+          font-variant: no-common-ligatures;
+        }
+        @font-face {
+          src: url(weasyprint.otf);
+          font-family: kern-liga;
+        }
+        span:nth-child(1) { font-family: kern-liga }
+        span:nth-child(2) { font-family: no-kern-liga }
+      </style>
+      <span>kk liga</span><span>kk liga</span>''')
     html, = page.children
     body, = html.children
     line, = body.children
@@ -95,20 +102,20 @@ def test_default():
 
 
 @assert_no_logs
-@requires('pango', '1.38')
+@requires('pango', (1, 38, 0))
 def test_font_face_descriptors():
-    page, = parse(
+    page, = render_pages(
         '''
         <style>
-            @font-face {
-              src: url(weasyprint.otf);
-              font-family: weasyprint;
-              font-variant: sub
-                            discretionary-ligatures
-                            oldstyle-nums
-                            slashed-zero;
-            }
-            span { font-family: weasyprint }
+          @font-face {
+            src: url(weasyprint.otf);
+            font-family: weasyprint;
+            font-variant: sub
+                          discretionary-ligatures
+                          oldstyle-nums
+                          slashed-zero;
+          }
+          span { font-family: weasyprint }
         </style>'''
         '<span>kk</span>'
         '<span>subs</span>'

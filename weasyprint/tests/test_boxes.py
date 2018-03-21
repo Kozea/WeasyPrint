@@ -11,6 +11,8 @@
 
 import functools
 
+import pytest
+
 from .. import images
 from ..css import PageType, get_all_computed_styles
 from ..formatting_structure import boxes, build, counters
@@ -52,29 +54,6 @@ def serialize(box_list):
             for box in box_list]
 
 
-def unwrap_html_body(box):
-    """Test that the box tree starts with a ``<html>`` and a ``<body>`` blocks.
-
-    Remove them to simplify further tests. These are always at the root
-    of HTML documents.
-
-    """
-    assert box.element_tag == 'html'
-    assert isinstance(box, boxes.BlockBox)
-    assert len(box.children) == 1
-
-    box = box.children[0]
-    assert isinstance(box, boxes.BlockBox)
-    assert box.element_tag == 'body'
-
-    return box.children
-
-
-def to_lists(box_tree):
-    """Serialize and unwrap ``<html>`` and ``<body>``."""
-    return serialize(unwrap_html_body(box_tree))
-
-
 def _parse_base(html_content, base_url=BASE_URL):
     document = FakeHTML(string=html_content, base_url=base_url)
     style_for, _, _ = get_all_computed_styles(document)
@@ -93,7 +72,7 @@ def parse_all(html_content, base_url=BASE_URL):
     """Like parse() but also run all corrections on boxes."""
     box = build.build_formatting_structure(*_parse_base(
         html_content, base_url))
-    sanity_checks(box)
+    _sanity_checks(box)
     return box
 
 
@@ -113,12 +92,18 @@ def assert_tree(box, expected):
     expected: a list of serialized <body> children as returned by to_lists().
 
     """
-    lists = to_lists(box)
-    if lists != expected:
-        assert lists == expected
+    assert box.element_tag == 'html'
+    assert isinstance(box, boxes.BlockBox)
+    assert len(box.children) == 1
+
+    box = box.children[0]
+    assert isinstance(box, boxes.BlockBox)
+    assert box.element_tag == 'body'
+
+    assert serialize(box.children) == expected
 
 
-def sanity_checks(box):
+def _sanity_checks(box):
     """Check that the rules regarding boxes are met.
 
     This is not required and only helps debugging.
@@ -145,20 +130,30 @@ def sanity_checks(box):
     ), (box, box.children)
 
     for child in box.children:
-        sanity_checks(child)
+        _sanity_checks(child)
+
+
+def _get_grid(html):
+    html = parse_all(html)
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    return tuple(
+        [[(style, width, color) if width else None
+          for _score, (style, width, color) in column]
+         for column in grid]
+        for grid in table.collapsed_border_grid)
 
 
 @assert_no_logs
 def test_box_tree():
-    """Test the creation of trees from HTML strings."""
     assert_tree(parse('<p>'), [('p', 'Block', [])])
-    assert_tree(parse(
-        '''
-        <style>
-            span { display: inline-block }
-        </style>
-        <p>Hello <em>World <img src="pattern.png"><span>L</span></em>!</p>'''),
-        [('p', 'Block', [
+    assert_tree(parse('''
+      <style>
+        span { display: inline-block }
+      </style>
+      <p>Hello <em>World <img src="pattern.png"><span>L</span></em>!</p>'''), [
+          ('p', 'Block', [
             ('p', 'Text', 'Hello '),
             ('em', 'Inline', [
                 ('em', 'Text', 'World '),
@@ -170,7 +165,6 @@ def test_box_tree():
 
 @assert_no_logs
 def test_html_entities():
-    """Test the management of HTML entities."""
     for quote in ['"', '&quot;', '&#x22;', '&#34;']:
         assert_tree(parse('<p>{0}abc{1}'.format(quote, quote)), [
             ('p', 'Block', [
@@ -178,8 +172,7 @@ def test_html_entities():
 
 
 @assert_no_logs
-def test_inline_in_block():
-    """Test the management of inline boxes in block boxes."""
+def test_inline_in_block_1():
     source = '<div>Hello, <em>World</em>!\n<p>Lipsum.</p></div>'
     expected = [
         ('div', 'Block', [
@@ -196,6 +189,9 @@ def test_inline_in_block():
     box = build.inline_in_block(box)
     assert_tree(box, expected)
 
+
+@assert_no_logs
+def test_inline_in_block_2():
     source = '<div><p>Lipsum.</p>Hello, <em>World</em>!\n</div>'
     expected = [
         ('div', 'Block', [
@@ -212,6 +208,9 @@ def test_inline_in_block():
     box = build.inline_in_block(box)
     assert_tree(box, expected)
 
+
+@assert_no_logs
+def test_inline_in_block_3():
     # Absolutes are left in the lines to get their static position later.
     source = '''<p>Hello <em style="position:absolute;
                                     display: block">World</em>!</p>'''
@@ -229,6 +228,9 @@ def test_inline_in_block():
     box = build.block_in_inline(box)
     assert_tree(box, expected)
 
+
+@assert_no_logs
+def test_inline_in_block_4():
     # Floats are pull to the top of their containing blocks
     source = '<p>Hello <em style="float: left">World</em>!</p>'
     box = parse(source)
@@ -246,14 +248,13 @@ def test_inline_in_block():
 
 @assert_no_logs
 def test_block_in_inline():
-    """Test the management of block boxes in inline boxes."""
     box = parse('''
-<style>
-    p { display: inline-block; }
-    span, i { display: block; }
-</style>
-<p>Lorem <em>ipsum <strong>dolor <span>sit</span>
-    <span>amet,</span></strong><span><em>conse<i></i></em></span></em></p>''')
+      <style>
+        p { display: inline-block; }
+        span, i { display: block; }
+      </style>
+      <p>Lorem <em>ipsum <strong>dolor <span>sit</span>
+      <span>amet,</span></strong><span><em>conse<i>''')
     box = build.inline_in_block(box)
     assert_tree(box, [
         ('body', 'Line', [
@@ -268,7 +269,7 @@ def test_block_in_inline():
                                 ('span', 'Line', [
                                     ('span', 'Text', 'sit')])]),
                             # No whitespace processing here.
-                            ('strong', 'Text', '\n    '),
+                            ('strong', 'Text', '\n      '),
                             ('span', 'Block', [  # This block is "pulled up"
                                 ('span', 'Line', [
                                     ('span', 'Text', 'amet,')])])]),
@@ -297,7 +298,7 @@ def test_block_in_inline():
                         ('em', 'Inline', [
                             ('strong', 'Inline', [
                                 # Whitespace processing not done yet.
-                                ('strong', 'Text', '\n    ')])])])]),
+                                ('strong', 'Text', '\n      ')])])])]),
                 ('span', 'Block', [
                     ('span', 'Line', [
                         ('span', 'Text', 'amet,')])]),
@@ -322,15 +323,14 @@ def test_block_in_inline():
 
 @assert_no_logs
 def test_styles():
-    """Test the application of CSS to HTML."""
     box = parse('''
-        <style>
-            span { display: block; }
-            * { margin: 42px }
-            html { color: blue }
-        </style>
-        <p>Lorem <em>ipsum <strong>dolor <span>sit</span>
-            <span>amet,</span></strong><span>consectetur</span></em></p>''')
+      <style>
+        span { display: block; }
+        * { margin: 42px }
+        html { color: blue }
+      </style>
+      <p>Lorem <em>ipsum <strong>dolor <span>sit</span>
+        <span>amet,</span></strong><span>consectetur</span></em></p>''')
     box = build.inline_in_block(box)
     box = build.block_in_inline(box)
 
@@ -347,17 +347,16 @@ def test_styles():
 
 @assert_no_logs
 def test_whitespace():
-    """Test the management of white spaces."""
     # TODO: test more cases
     # http://www.w3.org/TR/CSS21/text.html#white-space-model
     assert_tree(parse_all('''
-        <p>Lorem \t\r\n  ipsum\t<strong>  dolor
-            <img src=pattern.png> sit
-            <span style="position: absolute"></span> <em> amet </em>
-            consectetur</strong>.</p>
-        <pre>\t  foo\n</pre>
-        <pre style="white-space: pre-wrap">\t  foo\n</pre>
-        <pre style="white-space: pre-line">\t  foo\n</pre>
+      <p>Lorem \t\r\n  ipsum\t<strong>  dolor
+        <img src=pattern.png> sit
+        <span style="position: absolute"></span> <em> amet </em>
+        consectetur</strong>.</p>
+      <pre>\t  foo\n</pre>
+      <pre style="white-space: pre-wrap">\t  foo\n</pre>
+      <pre style="white-space: pre-line">\t  foo\n</pre>
     '''), [
         ('p', 'Block', [
             ('p', 'Line', [
@@ -386,26 +385,24 @@ def test_whitespace():
 
 
 @assert_no_logs
-def test_page_style():
-    """Test the management of page styles."""
+@pytest.mark.parametrize('page_type, top, right, bottom, left', (
+    (PageType(side='left', first=True, blank=False, name=None), 20, 3, 3, 10),
+    (PageType(side='right', first=True, blank=False, name=None), 20, 10, 3, 3),
+    (PageType(side='left', first=False, blank=False, name=None), 10, 3, 3, 10),
+    (PageType(side='right', first=False, blank=False, name=None),
+     10, 10, 3, 3),
+))
+def test_page_style(page_type, top, right, bottom, left):
     document = FakeHTML(string='''
-        <style>
-            @page { margin: 3px }
-            @page :first { margin-top: 20px }
-            @page :right { margin-right: 10px; margin-top: 10px }
-            @page :left { margin-left: 10px; margin-top: 10px }
-        </style>
+      <style>
+        @page { margin: 3px }
+        @page :first { margin-top: 20px }
+        @page :right { margin-right: 10px; margin-top: 10px }
+        @page :left { margin-left: 10px; margin-top: 10px }
+      </style>
     ''')
     style_for, cascaded_styles, computed_styles = get_all_computed_styles(
         document)
-
-    def assert_page_margins(page_type, top, right, bottom, left):
-        """Check the page margin values."""
-        style = style_for(page_type)
-        assert style['margin_top'] == (top, 'px')
-        assert style['margin_right'] == (right, 'px')
-        assert style['margin_bottom'] == (bottom, 'px')
-        assert style['margin_left'] == (left, 'px')
 
     # Force the generation of the style for all possible page types as it's
     # generally only done during the rendering for needed page types.
@@ -414,28 +411,20 @@ def test_page_style():
     set_page_type_computed_styles(
         standard_page_type, cascaded_styles, computed_styles, document)
 
-    assert_page_margins(
-        PageType(side='left', first=True, blank=False, name=None),
-        top=20, right=3, bottom=3, left=10)
-    assert_page_margins(
-        PageType(side='right', first=True, blank=False, name=None),
-        top=20, right=10, bottom=3, left=3)
-    assert_page_margins(
-        PageType(side='left', first=False, blank=False, name=None),
-        top=10, right=3, bottom=3, left=10)
-    assert_page_margins(
-        PageType(side='right', first=False, blank=False, name=None),
-        top=10, right=10, bottom=3, left=3)
+    style = style_for(page_type)
+    assert style['margin_top'] == (top, 'px')
+    assert style['margin_right'] == (right, 'px')
+    assert style['margin_bottom'] == (bottom, 'px')
+    assert style['margin_left'] == (left, 'px')
 
 
 @assert_no_logs
-def test_images():
-    """Test images that may or may not be available."""
+def test_images_1():
     with capture_logs() as logs:
         result = parse_all('''
-            <p><img src=pattern.png
-                /><img alt="No src"
-                /><img src=inexistent.jpg alt="Inexistent src" /></p>
+          <p><img src=pattern.png
+            /><img alt="No src"
+            /><img src=inexistent.jpg alt="Inexistent src" /></p>
         ''')
     assert len(logs) == 1
     assert 'ERROR: Failed to load image' in logs[0]
@@ -449,6 +438,9 @@ def test_images():
                 ('img', 'Inline', [
                     ('img', 'Text', 'Inexistent src')])])])])
 
+
+@assert_no_logs
+def test_images_2():
     with capture_logs() as logs:
         result = parse_all('<p><img src=pattern.png alt="No base_url">',
                            base_url=None)
@@ -462,26 +454,27 @@ def test_images():
 
 
 @assert_no_logs
-def test_tables():
+def test_tables_1():
     # Rules in http://www.w3.org/TR/CSS21/tables.html#anonymous-boxes
+
     # Rule 1.3
     # Also table model: http://www.w3.org/TR/CSS21/tables.html#model
     assert_tree(parse_all('''
-        <x-table>
-            <x-tr>
-                <x-th>foo</x-th>
-                <x-th>bar</x-th>
-            </x-tr>
-            <x-tfoot></x-tfoot>
-            <x-thead><x-th></x-th></x-thead>
-            <x-caption style="caption-side: bottom"></x-caption>
-            <x-thead></x-thead>
-            <x-col></x-col>
-            <x-caption>top caption</x-caption>
-            <x-tr>
-                <x-td>baz</x-td>
-            </x-tr>
-        </x-table>
+      <x-table>
+        <x-tr>
+          <x-th>foo</x-th>
+          <x-th>bar</x-th>
+        </x-tr>
+        <x-tfoot></x-tfoot>
+        <x-thead><x-th></x-th></x-thead>
+        <x-caption style="caption-side: bottom"></x-caption>
+        <x-thead></x-thead>
+        <x-col></x-col>
+        <x-caption>top caption</x-caption>
+        <x-tr>
+          <x-td>baz</x-td>
+        </x-tr>
+      </x-table>
     '''), [
         ('x-table', 'Block', [
             ('x-caption', 'TableCaption', [
@@ -510,10 +503,13 @@ def test_tables():
                 ('x-tfoot', 'TableRowGroup', [])]),
             ('x-caption', 'TableCaption', [])])])
 
+
+@assert_no_logs
+def test_tables_2():
     # Rules 1.4 and 3.1
     assert_tree(parse_all('''
-        <span style="display: table-cell">foo</span>
-        <span style="display: table-cell">bar</span>
+      <span style="display: table-cell">foo</span>
+      <span style="display: table-cell">bar</span>
     '''), [
         ('body', 'Block', [
             ('body', 'Table', [
@@ -526,19 +522,22 @@ def test_tables():
                             ('span', 'Line', [
                                 ('span', 'Text', 'bar')])])])])])])])
 
+
+@assert_no_logs
+def test_tables_3():
     # http://www.w3.org/TR/CSS21/tables.html#anonymous-boxes
     # Rules 1.1 and 1.2
     # Rule XXX (not in the spec): column groups have at least one column child
     assert_tree(parse_all('''
-        <span style="display: table-column-group">
-            1
-            <em style="display: table-column">
-                2
-                <strong>3</strong>
-            </em>
-            <strong>4</strong>
-        </span>
-        <ins style="display: table-column-group"></ins>
+      <span style="display: table-column-group">
+        1
+        <em style="display: table-column">
+          2
+          <strong>3</strong>
+        </em>
+        <strong>4</strong>
+      </span>
+      <ins style="display: table-column-group"></ins>
     '''), [
         ('body', 'Block', [
             ('body', 'Table', [
@@ -547,6 +546,9 @@ def test_tables():
                 ('ins', 'TableColumnGroup', [
                     ('ins', 'TableColumn', [])])])])])
 
+
+@assert_no_logs
+def test_tables_4():
     # Rules 2.1 then 2.3
     assert_tree(parse_all('<x-table>foo <div></div></x-table>'), [
         ('x-table', 'Block', [
@@ -559,6 +561,9 @@ def test_tables():
                                     ('x-table', 'Text', 'foo ')])]),
                             ('div', 'Block', [])])])])])])])
 
+
+@assert_no_logs
+def test_tables_5():
     # Rule 2.2
     assert_tree(parse_all('<x-thead style="display: table-header-group">'
                           '<div></div><x-td></x-td></x-thead>'), [
@@ -570,6 +575,9 @@ def test_tables():
                             ('div', 'Block', [])]),
                         ('x-td', 'TableCell', [])])])])])])
 
+
+@assert_no_logs
+def test_tables_6():
     # TODO: re-enable this once we support inline-table
     # Rule 3.2
     assert_tree(parse_all('<span><x-tr></x-tr></span>'), [
@@ -580,13 +588,16 @@ def test_tables():
                         ('span', 'TableRowGroup', [
                             ('x-tr', 'TableRow', [])])])])])])])
 
+
+@assert_no_logs
+def test_tables_7():
     # Rule 3.1
     # Also, rule 1.3 does not apply: whitespace before and after is preserved
     assert_tree(parse_all('''
-        <span>
-            <em style="display: table-cell"></em>
-            <em style="display: table-cell"></em>
-        </span>
+      <span>
+        <em style="display: table-cell"></em>
+        <em style="display: table-cell"></em>
+      </span>
     '''), [
         ('body', 'Line', [
             ('span', 'Inline', [
@@ -601,6 +612,9 @@ def test_tables():
                                 ('em', 'TableCell', [])])])])]),
                 ('span', 'Text', ' ')])])])
 
+
+@assert_no_logs
+def test_tables_8():
     # Rule 3.2
     assert_tree(parse_all('<x-tr></x-tr>\t<x-tr></x-tr>'), [
         ('body', 'Block', [
@@ -609,6 +623,9 @@ def test_tables():
                     ('x-tr', 'TableRow', []),
                     ('x-tr', 'TableRow', [])])])])])
 
+
+@assert_no_logs
+def test_tables_9():
     assert_tree(parse_all('<x-col></x-col>\n<x-colgroup></x-colgroup>'), [
         ('body', 'Block', [
             ('body', 'Table', [
@@ -635,10 +652,10 @@ def test_table_style():
 @assert_no_logs
 def test_column_style():
     html = parse_all('''
-        <table>
-            <col span=3 style="width: 10px"></col>
-            <col span=2></col>
-        </table>
+      <table>
+        <col span=3 style="width: 10px"></col>
+        <col span=2></col>
+      </table>
     ''')
     body, = html.children
     wrapper, = body.children
@@ -654,15 +671,15 @@ def test_column_style():
 @assert_no_logs
 def test_nested_grid_x():
     html = parse_all('''
-        <table>
-            <col span=2></col>
-            <colgroup span=2></colgroup>
-            <colgroup>
-                <col></col>
-                <col span=2></col>
-            </colgroup>
-            <col></col>
-        </table>
+      <table>
+        <col span=2></col>
+        <colgroup span=2></colgroup>
+        <colgroup>
+          <col></col>
+          <col span=2></col>
+        </colgroup>
+        <col></col>
+      </table>
     ''')
     body, = html.children
     wrapper, = body.children
@@ -673,41 +690,38 @@ def test_nested_grid_x():
 
 
 @assert_no_logs
-def test_colspan_rowspan():
-    """
-    +---+---+---+
-    | A | B | C | #
-    +---+---+---+
-    | D |     E | #
-    +---+---+   +---+
-    |  F ...|   |   |   <-- overlap
-    +---+---+---+   +
-    | H | #   # | G |
-    +---+---+   +   +
-    | I | J | # |   |
-    +---+---+   +---+
+def test_colspan_rowspan_1():
+    # +---+---+---+
+    # | A | B | C | X
+    # +---+---+---+
+    # | D |     E | X
+    # +---+---+   +---+
+    # |  F ...|   |   |   <-- overlap
+    # +---+---+---+   +
+    # | H | X   X | G |
+    # +---+---+   +   +
+    # | I | J | X |   |
+    # +---+---+   +---+
 
-    # empty cells
-
-    """
+    # X: empty cells
     html = parse_all('''
-        <table>
-            <tr>
-                <td>A <td>B <td>C
-            </tr>
-            <tr>
-                <td>D <td colspan=2 rowspan=2>E
-            </tr>
-            <tr>
-                <td colspan=2>F <td rowspan=0>G
-            </tr>
-            <tr>
-                <td>H
-            </tr>
-            <tr>
-                <td>I <td>J
-            </tr>
-        </table>
+      <table>
+        <tr>
+          <td>A <td>B <td>C
+        </tr>
+        <tr>
+          <td>D <td colspan=2 rowspan=2>E
+        </tr>
+        <tr>
+          <td colspan=2>F <td rowspan=0>G
+        </tr>
+        <tr>
+          <td>H
+        </tr>
+        <tr>
+          <td>I <td>J
+        </tr>
+      </table>
     ''')
     body, = html.children
     wrapper, = body.children
@@ -735,6 +749,9 @@ def test_colspan_rowspan():
         [1, 1],
     ]
 
+
+@assert_no_logs
+def test_colspan_rowspan_2():
     # A cell box cannot extend beyond the last row box of a table.
     html = parse_all('''
         <table>
@@ -766,31 +783,31 @@ def test_colspan_rowspan():
 
 
 @assert_no_logs
-def test_before_after():
-    """Test the ::before and ::after pseudo-elements."""
+def test_before_after_1():
     assert_tree(parse_all('''
-        <style>
-            p:before { content: normal }
-            div:before { content: none }
-            section::before { color: black }
-        </style>
-        <p></p>
-        <div></div>
-        <section></section>
+      <style>
+        p:before { content: normal }
+        div:before { content: none }
+        section::before { color: black }
+      </style>
+      <p></p>
+      <div></div>
+      <section></section>
     '''), [
         # No content in pseudo-element, no box generated
         ('p', 'Block', []),
         ('div', 'Block', []),
         ('section', 'Block', [])])
 
+
+@assert_no_logs
+def test_before_after_2():
     assert_tree(parse_all('''
-        <style>
-            p:before { content: 'a' 'b' }
-            p::after { content: 'd' 'e' }
-        </style>
-        <p>
-            c
-        </p>
+      <style>
+        p:before { content: 'a' 'b' }
+        p::after { content: 'd' 'e' }
+      </style>
+      <p> c </p>
     '''), [
         ('p', 'Block', [
             ('p', 'Line', [
@@ -800,11 +817,14 @@ def test_before_after():
                 ('p::after', 'Inline', [
                     ('p::after', 'Text', 'de')])])])])
 
+
+@assert_no_logs
+def test_before_after_3():
     assert_tree(parse_all('''
-        <style>
-            a[href]:before { content: '[' attr(href) '] ' }
-        </style>
-        <p><a href="some url">some text</a></p>
+      <style>
+        a[href]:before { content: '[' attr(href) '] ' }
+      </style>
+      <p><a href="some url">some text</a></p>
     '''), [
         ('p', 'Block', [
             ('p', 'Line', [
@@ -813,13 +833,16 @@ def test_before_after():
                         ('a::before', 'Text', '[some url] ')]),
                     ('a', 'Text', 'some text')])])])])
 
+
+@assert_no_logs
+def test_before_after_4():
     assert_tree(parse_all('''
-        <style>
-            body { quotes: '«' '»' '“' '”' }
-            q:before { content: open-quote ' '}
-            q:after { content: ' ' close-quote }
-        </style>
-        <p><q>Lorem ipsum <q>dolor</q> sit amet</q></p>
+      <style>
+        body { quotes: '«' '»' '“' '”' }
+        q:before { content: open-quote ' '}
+        q:after { content: ' ' close-quote }
+      </style>
+      <p><q>Lorem ipsum <q>dolor</q> sit amet</q></p>
     '''), [
         ('p', 'Block', [
             ('p', 'Line', [
@@ -836,18 +859,22 @@ def test_before_after():
                     ('q', 'Text', ' sit amet'),
                     ('q::after', 'Inline', [
                         ('q::after', 'Text', ' »')])])])])])
+
+
+@assert_no_logs
+def test_before_after_5():
     with capture_logs() as logs:
         assert_tree(parse_all('''
-            <style>
-                p:before {
-                    content: 'a' url(pattern.png) 'b';
+          <style>
+            p:before {
+              content: 'a' url(pattern.png) 'b';
 
-                    /* Invalid, ignored in favor of the one above.
-                       Regression test: this used to crash: */
-                    content: some-function(nested-function(something));
-                }
-            </style>
-            <p>c</p>
+              /* Invalid, ignored in favor of the one above.
+                 Regression test: this used to crash: */
+              content: some-function(nested-function(something));
+            }
+          </style>
+          <p>c</p>
         '''), [
             ('p', 'Block', [
                 ('p', 'Line', [
@@ -862,45 +889,47 @@ def test_before_after():
 
 
 @assert_no_logs
-def test_counters():
-    """Test counter-reset, counter-increment, content: counter() counters()"""
+def test_counters_1():
     assert_tree(parse_all('''
-        <style>
-            p { counter-increment: p 2 }
-            p:before { content: counter(p); }
-            p:nth-child(1) { counter-increment: none; }
-            p:nth-child(2) { counter-increment: p; }
-        </style>
-        <p></p>
-        <p></p>
-        <p></p>
-        <p style="counter-reset: p 117 p"></p>
-        <p></p>
-        <p></p>
-        <p style="counter-reset: p -13"></p>
-        <p></p>
-        <p></p>
-        <p style="counter-reset: p 42"></p>
-        <p></p>
-        <p></p>'''), [
+      <style>
+        p { counter-increment: p 2 }
+        p:before { content: counter(p); }
+        p:nth-child(1) { counter-increment: none; }
+        p:nth-child(2) { counter-increment: p; }
+      </style>
+      <p></p>
+      <p></p>
+      <p></p>
+      <p style="counter-reset: p 117 p"></p>
+      <p></p>
+      <p></p>
+      <p style="counter-reset: p -13"></p>
+      <p></p>
+      <p></p>
+      <p style="counter-reset: p 42"></p>
+      <p></p>
+      <p></p>'''), [
         ('p', 'Block', [
             ('p', 'Line', [
                 ('p::before', 'Inline', [
                     ('p::before', 'Text', counter)])])])
         for counter in '0 1 3  2 4 6  -11 -9 -7  44 46 48'.split()])
 
+
+@assert_no_logs
+def test_counters_2():
     assert_tree(parse_all('''
-        <ol style="list-style-position: inside">
-            <li></li>
-            <li></li>
-            <li></li>
-            <li><ol>
-                <li></li>
-                <li style="counter-increment: none"></li>
-                <li></li>
-            </ol></li>
-            <li></li>
-        </ol>'''), [
+      <ol style="list-style-position: inside">
+        <li></li>
+        <li></li>
+        <li></li>
+        <li><ol>
+          <li></li>
+          <li style="counter-increment: none"></li>
+          <li></li>
+        </ol></li>
+        <li></li>
+      </ol>'''), [
         ('ol', 'Block', [
             ('li', 'Block', [
                 ('li', 'Line', [
@@ -929,16 +958,19 @@ def test_counters():
                 ('li', 'Line', [
                     ('li::marker', 'Text', '5.')])])])])
 
+
+@assert_no_logs
+def test_counters_3():
     assert_tree(parse_all('''
-        <style>
-            p { display: list-item; list-style: inside decimal }
-        </style>
-        <div>
-            <p></p>
-            <p></p>
-            <p style="counter-reset: list-item 7 list-item -56"></p>
-        </div>
-        <p></p>'''), [
+      <style>
+        p { display: list-item; list-style: inside decimal }
+      </style>
+      <div>
+        <p></p>
+        <p></p>
+        <p style="counter-reset: list-item 7 list-item -56"></p>
+      </div>
+      <p></p>'''), [
         ('div', 'Block', [
             ('p', 'Block', [
                 ('p', 'Line', [
@@ -953,20 +985,23 @@ def test_counters():
             ('p', 'Line', [
                 ('p::marker', 'Text', '1.')])])])
 
+
+@assert_no_logs
+def test_counters_4():
     assert_tree(parse_all('''
-        <style>
-            section:before { counter-reset: h; content: '' }
-            h1:before { counter-increment: h; content: counters(h, '.') }
-        </style>
-        <body>
-            <section><h1></h1>
-                <h1></h1>
-                <section><h1></h1>
-                    <h1></h1>
-                </section>
-                <h1></h1>
-            </section>
-        </body>'''), [
+      <style>
+        section:before { counter-reset: h; content: '' }
+        h1:before { counter-increment: h; content: counters(h, '.') }
+      </style>
+      <body>
+        <section><h1></h1>
+          <h1></h1>
+          <section><h1></h1>
+            <h1></h1>
+          </section>
+          <h1></h1>
+        </section>
+      </body>'''), [
         ('section', 'Block', [
             ('section', 'Block', [
                 ('section', 'Line', [
@@ -996,16 +1031,19 @@ def test_counters():
                     ('h1::before', 'Inline', [
                         ('h1::before', 'Text', '3')])])])])])
 
+
+@assert_no_logs
+def test_counters_5():
     assert_tree(parse_all('''
-        <style>
-            p:before { content: counter(c) }
-        </style>
-        <div>
-            <span style="counter-reset: c">
-                Scope created now, deleted after the div
-            </span>
-        </div>
-        <p></p>'''), [
+      <style>
+        p:before { content: counter(c) }
+      </style>
+      <div>
+        <span style="counter-reset: c">
+          Scope created now, deleted after the div
+        </span>
+      </div>
+      <p></p>'''), [
         ('div', 'Block', [
             ('div', 'Line', [
                 ('span', 'Inline', [
@@ -1016,33 +1054,35 @@ def test_counters():
                 ('p::before', 'Inline', [
                     ('p::before', 'Text', '0')])])])])
 
+
+@assert_no_logs
+def test_counters_6():
     # counter-increment may interfere with display: list-item
     assert_tree(parse_all('''
-        <p style="counter-increment: c;
-                  display: list-item; list-style: inside decimal">'''), [
+      <p style="counter-increment: c;
+                display: list-item; list-style: inside decimal">'''), [
         ('p', 'Block', [
             ('p', 'Line', [
                 ('p::marker', 'Text', '0.')])])])
 
 
 @assert_no_logs
-def test_counter_styles():
-    """Test the various counter styles."""
+def test_counter_styles_1():
     assert_tree(parse_all('''
-        <style>
-            body { counter-reset: p -12 }
-            p { counter-increment: p }
-            p:nth-child(1):before { content: '-' counter(p, none) '-'; }
-            p:nth-child(2):before { content: counter(p, disc); }
-            p:nth-child(3):before { content: counter(p, circle); }
-            p:nth-child(4):before { content: counter(p, square); }
-            p:nth-child(5):before { content: counter(p); }
-        </style>
-        <p></p>
-        <p></p>
-        <p></p>
-        <p></p>
-        <p></p>
+      <style>
+        body { counter-reset: p -12 }
+        p { counter-increment: p }
+        p:nth-child(1):before { content: '-' counter(p, none) '-'; }
+        p:nth-child(2):before { content: counter(p, disc); }
+        p:nth-child(3):before { content: counter(p, circle); }
+        p:nth-child(4):before { content: counter(p, square); }
+        p:nth-child(5):before { content: counter(p); }
+      </style>
+      <p></p>
+      <p></p>
+      <p></p>
+      <p></p>
+      <p></p>
     '''), [
         ('p', 'Block', [
             ('p', 'Line', [
@@ -1050,29 +1090,32 @@ def test_counter_styles():
                     ('p::before', 'Text', counter)])])])
         for counter in '--  •  ◦  ▪  -7'.split()])
 
+
+@assert_no_logs
+def test_counter_styles_2():
     assert_tree(parse_all('''
-        <style>
-            p { counter-increment: p }
-            p::before { content: counter(p, decimal-leading-zero); }
-        </style>
-        <p style="counter-reset: p -1987"></p>
-        <p></p>
-        <p style="counter-reset: p -12"></p>
-        <p></p>
-        <p></p>
-        <p></p>
-        <p style="counter-reset: p -2"></p>
-        <p></p>
-        <p></p>
-        <p></p>
-        <p style="counter-reset: p 8"></p>
-        <p></p>
-        <p></p>
-        <p style="counter-reset: p 98"></p>
-        <p></p>
-        <p></p>
-        <p style="counter-reset: p 4134"></p>
-        <p></p>
+      <style>
+        p { counter-increment: p }
+        p::before { content: counter(p, decimal-leading-zero); }
+      </style>
+      <p style="counter-reset: p -1987"></p>
+      <p></p>
+      <p style="counter-reset: p -12"></p>
+      <p></p>
+      <p></p>
+      <p></p>
+      <p style="counter-reset: p -2"></p>
+      <p></p>
+      <p></p>
+      <p></p>
+      <p style="counter-reset: p 8"></p>
+      <p></p>
+      <p></p>
+      <p style="counter-reset: p 98"></p>
+      <p></p>
+      <p></p>
+      <p style="counter-reset: p 4134"></p>
+      <p></p>
     '''), [
         ('p', 'Block', [
             ('p', 'Line', [
@@ -1081,8 +1124,10 @@ def test_counter_styles():
         for counter in '''-1986 -1985  -11 -10 -09 -08  -01 00 01 02  09 10 11
                             99 100 101  4135 4136'''.split()])
 
-    # Same test as above, but short-circuit HTML and boxes
 
+@assert_no_logs
+def test_counter_styles_3():
+    # Same test as above, but short-circuit HTML and boxes
     assert [counters.format(value, 'decimal-leading-zero') for value in [
         -1986, -1985,
         -11, -10, -9, -8,
@@ -1095,9 +1140,12 @@ def test_counter_styles():
         99 100 101  4135 4136
     '''.split()
 
+
+@assert_no_logs
+def test_counter_styles_4():
     # Now that we’re confident that they do the same, use the shorter form.
 
-# http://test.csswg.org/suites/css2.1/20110323/html4/content-counter-007.htm
+    # http://test.csswg.org/suites/css2.1/20110323/html4/content-counter-007.htm
     assert [counters.format(value, 'lower-roman') for value in [
         -1986, -1985,
         -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
@@ -1111,7 +1159,10 @@ def test_counter_styles():
         mmmmcmxcix  5000 5001
     '''.split()
 
-# http://test.csswg.org/suites/css2.1/20110323/html4/content-counter-008.htm
+
+@assert_no_logs
+def test_counter_styles_5():
+    # http://test.csswg.org/suites/css2.1/20110323/html4/content-counter-008.htm
     assert [counters.format(value, 'upper-roman') for value in [
         -1986, -1985,
         -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
@@ -1125,6 +1176,9 @@ def test_counter_styles():
         MMMMCMXCIX 5000 5001
     '''.split()
 
+
+@assert_no_logs
+def test_counter_styles_6():
     assert [counters.format(value, 'lower-alpha') for value in [
         -1986, -1985,
         -1, 0, 1, 2, 3, 4,
@@ -1134,6 +1188,9 @@ def test_counter_styles():
         -1986 -1985  -1 0 a b c d  y z aa ab ac bxz bya
     '''.split()
 
+
+@assert_no_logs
+def test_counter_styles_7():
     assert [counters.format(value, 'upper-alpha') for value in [
         -1986, -1985,
         -1, 0, 1, 2, 3, 4,
@@ -1143,6 +1200,9 @@ def test_counter_styles():
         -1986 -1985  -1 0 A B C D  Y Z AA AB AC BXZ BYA
     '''.split()
 
+
+@assert_no_logs
+def test_counter_styles_8():
     assert [counters.format(value, 'lower-latin') for value in [
         -1986, -1985,
         -1, 0, 1, 2, 3, 4,
@@ -1152,6 +1212,9 @@ def test_counter_styles():
         -1986 -1985  -1 0 a b c d  y z aa ab ac bxz bya
     '''.split()
 
+
+@assert_no_logs
+def test_counter_styles_9():
     assert [counters.format(value, 'upper-latin') for value in [
         -1986, -1985,
         -1, 0, 1, 2, 3, 4,
@@ -1161,7 +1224,10 @@ def test_counter_styles():
         -1986 -1985  -1 0 A B C D  Y Z AA AB AC BXZ BYA
     '''.split()
 
-# http://test.csswg.org/suites/css2.1/20110323/html4/content-counter-009.htm
+
+@assert_no_logs
+def test_counter_styles_10():
+    # http://test.csswg.org/suites/css2.1/20110323/html4/content-counter-009.htm
     assert [counters.format(value, 'georgian') for value in [
         -1986, -1985,
         -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
@@ -1178,7 +1244,10 @@ def test_counter_styles():
         ჵჰშჟთ 20000 20001
     '''.split()
 
-# http://test.csswg.org/suites/css2.1/20110323/html4/content-counter-010.htm
+
+@assert_no_logs
+def test_counter_styles_11():
+    # http://test.csswg.org/suites/css2.1/20110323/html4/content-counter-010.htm
     assert [counters.format(value, 'armenian') for value in [
         -1986, -1985,
         -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
@@ -1198,24 +1267,21 @@ def test_counter_styles():
 
 @assert_no_logs
 def test_margin_boxes():
-    """
-    Test that the correct margin boxes are created.
-    """
     page_1, page_2 = render_pages('''
-        <style>
-            @page {
-                /* Make the page content area only 10px high and wide,
-                   so every word in <p> end up on a page of its own. */
-                size: 30px;
-                margin: 10px;
-                @top-center { content: "Title" }
-            }
-            @page :first {
-                @bottom-left { content: "foo" }
-                @bottom-left-corner { content: "baz" }
-            }
-        </style>
-        <p>lorem ipsum
+      <style>
+        @page {
+          /* Make the page content area only 10px high and wide,
+             so every word in <p> end up on a page of its own. */
+          size: 30px;
+          margin: 10px;
+          @top-center { content: "Title" }
+        }
+        @page :first {
+          @bottom-left { content: "foo" }
+          @bottom-left-corner { content: "baz" }
+        }
+      </style>
+      <p>lorem ipsum
     ''')
     assert page_1.children[0].element_tag == 'html'
     assert page_2.children[0].element_tag == 'html'
@@ -1233,23 +1299,22 @@ def test_margin_boxes():
 
 
 @assert_no_logs
-def test_margin_box_string_set():
-    """Test string-set / string() in margin boxes."""
+def test_margin_box_string_set_1():
     # Test that both pages get string in the `bottom-center` margin box
     page_1, page_2 = render_pages('''
-        <style>
-            @page {
-                @bottom-center { content: string(text_header); }
-            }
-            p{
-                string-set: text_header content();
-            }
-            .page{
-                page-break-before: always;
-            }
-        </style>
-        <p>first assignment</p>
-        <div class="page"></div>
+      <style>
+        @page {
+          @bottom-center { content: string(text_header) }
+        }
+        p {
+          string-set: text_header content();
+        }
+        .page {
+          page-break-before: always;
+        }
+      </style>
+      <p>first assignment</p>
+      <div class="page"></div>
     ''')
 
     html, bottom_center = page_2.children
@@ -1262,18 +1327,21 @@ def test_margin_box_string_set():
     text_box, = line_box.children
     assert text_box.text == 'first assignment'
 
+
+@assert_no_logs
+def test_margin_box_string_set_2():
     def simple_string_set_test(content_val, extra_style=""):
         page_1, = render_pages('''
-            <style>
-                @page {
-                    @top-center { content: string(text_header); }
-                }
-                p{
-                    string-set: text_header content(%(content_val)s);
-                }
-                %(extra_style)s
-            </style>
-            <p>first assignment</p>
+          <style>
+            @page {
+              @top-center { content: string(text_header) }
+            }
+            p {
+              string-set: text_header content(%(content_val)s);
+            }
+            %(extra_style)s
+          </style>
+          <p>first assignment</p>
         ''' % dict(content_val=content_val, extra_style=extra_style))
 
         html, top_center = page_1.children
@@ -1292,18 +1360,21 @@ def test_margin_box_string_set():
         else:
             simple_string_set_test(value)
 
+
+@assert_no_logs
+def test_margin_box_string_set_3():
     # Test `first` (default value) ie. use the first assignment on the page
     page_1, = render_pages('''
-        <style>
-            @page {
-                @top-center { content: string(text_header, first); }
-            }
-            p{
-                string-set: text_header content();
-            }
-        </style>
-        <p>first assignment</p>
-        <p>Second assignment</p>
+      <style>
+        @page {
+          @top-center { content: string(text_header, first) }
+        }
+        p {
+          string-set: text_header content();
+        }
+      </style>
+      <p>first assignment</p>
+      <p>Second assignment</p>
     ''')
 
     html, top_center = page_1.children
@@ -1311,21 +1382,24 @@ def test_margin_box_string_set():
     text_box, = line_box.children
     assert text_box.text == 'first assignment'
 
+
+@assert_no_logs
+def test_margin_box_string_set_4():
     # test `first-except` ie. exclude from page on which value is assigned
     page_1, page_2 = render_pages('''
-        <style>
-            @page {
-                @top-center { content: string(header_nofirst, first-except); }
-            }
-            p{
-                string-set: header_nofirst content();
-            }
-            .page{
-                page-break-before: always;
-            }
-        </style>
-        <p>first_excepted</p>
-        <div class="page"></div>
+      <style>
+        @page {
+          @top-center { content: string(header_nofirst, first-except) }
+        }
+        p{
+          string-set: header_nofirst content();
+        }
+        .page{
+          page-break-before: always;
+        }
+      </style>
+      <p>first_excepted</p>
+      <div class="page"></div>
     ''')
     html, top_center = page_1.children
     assert len(top_center.children) == 0
@@ -1335,18 +1409,21 @@ def test_margin_box_string_set():
     text_box, = line_box.children
     assert text_box.text == 'first_excepted'
 
+
+@assert_no_logs
+def test_margin_box_string_set_5():
     # Test `last` ie. use the most-recent assignment
     page_1, = render_pages('''
-        <style>
-            @page {
-                @top-center { content: string(header_last, last); }
-            }
-            p{
-                string-set: header_last content();
-            }
-        </style>
-        <p>String set</p>
-        <p>Second assignment</p>
+      <style>
+        @page {
+          @top-center { content: string(header_last, last) }
+        }
+        p {
+          string-set: header_last content();
+        }
+      </style>
+      <p>String set</p>
+      <p>Second assignment</p>
     ''')
 
     html, top_center = page_1.children[:2]
@@ -1355,34 +1432,37 @@ def test_margin_box_string_set():
     text_box, = line_box.children
     assert text_box.text == 'Second assignment'
 
+
+@assert_no_logs
+def test_margin_box_string_set_6():
     # Test multiple complex string-set values
     page_1, = render_pages('''
-        <style>
-            @page {
-              @top-center { content: string(text_header, first); }
-              @bottom-center { content: string(text_footer, last); }
-            }
-            html { counter-reset: a }
-            body { counter-increment: a }
-            ul { counter-reset: b }
-            li {
-              counter-increment: b;
-              string-set:
-                text_header content(before) "-" content() "-" content(after)
-                            counter(a, upper-roman) '.' counters(b, '|'),
-                text_footer content(before) '-' attr(class)
-                            counters(b, '|') "/" counter(a, upper-roman);
-            }
-            li:before { content: 'before!' }
-            li:after { content: 'after!' }
-            li:last-child:before { content: 'before!last' }
-            li:last-child:after { content: 'after!last' }
-        </style>
-        <ul>
-          <li class="firstclass">first
-          <li>
-            <ul>
-              <li class="secondclass">second
+      <style>
+        @page {
+          @top-center { content: string(text_header, first) }
+          @bottom-center { content: string(text_footer, last) }
+        }
+        html { counter-reset: a }
+        body { counter-increment: a }
+        ul { counter-reset: b }
+        li {
+          counter-increment: b;
+          string-set:
+            text_header content(before) "-" content() "-" content(after)
+                        counter(a, upper-roman) '.' counters(b, '|'),
+            text_footer content(before) '-' attr(class)
+                        counters(b, '|') "/" counter(a, upper-roman);
+        }
+        li:before { content: 'before!' }
+        li:after { content: 'after!' }
+        li:last-child:before { content: 'before!last' }
+        li:last-child:after { content: 'after!last' }
+      </style>
+      <ul>
+        <li class="firstclass">first
+        <li>
+          <ul>
+            <li class="secondclass">second
     ''')
 
     html, top_center, bottom_center = page_1.children
@@ -1398,18 +1478,18 @@ def test_margin_box_string_set():
 def test_page_counters():
     """Test page-based counters."""
     pages = render_pages('''
-        <style>
-            @page {
-                /* Make the page content area only 10px high and wide,
-                   so every word in <p> end up on a page of its own. */
-                size: 30px;
-                margin: 10px;
-                @bottom-center {
-                    content: "Page " counter(page) " of " counter(pages) ".";
-                }
-            }
-        </style>
-        <p>lorem ipsum dolor
+      <style>
+        @page {
+          /* Make the page content area only 10px high and wide,
+             so every word in <p> end up on a page of its own. */
+          size: 30px;
+          margin: 10px;
+          @bottom-center {
+            content: "Page " counter(page) " of " counter(pages) ".";
+          }
+        }
+      </style>
+      <p>lorem ipsum dolor
     ''')
     for page_number, page in enumerate(pages, 1):
         html, bottom_center = page.children
@@ -1418,8 +1498,20 @@ def test_page_counters():
         assert text_box.text == 'Page {0} of 3.'.format(page_number)
 
 
+black = (0, 0, 0, 1)
+red = (1, 0, 0, 1)
+green = (0, 1, 0, 1)  # lime in CSS
+blue = (0, 0, 1, 1)
+yellow = (1, 1, 0, 1)
+black_3 = ('solid', 3, black)
+red_1 = ('solid', 1, red)
+yellow_5 = ('solid', 5, yellow)
+green_5 = ('solid', 5, green)
+dashed_blue_5 = ('dashed', 5, blue)
+
+
 @assert_no_logs
-def test_border_collapse():
+def test_border_collapse_1():
     html = parse_all('<table></table>')
     body, = html.children
     table_wrapper, = body.children
@@ -1427,35 +1519,19 @@ def test_border_collapse():
     assert isinstance(table, boxes.TableBox)
     assert not hasattr(table, 'collapsed_border_grid')
 
-    def get_grid(html):
-        html = parse_all(html)
-        body, = html.children
-        table_wrapper, = body.children
-        table, = table_wrapper.children
-        return tuple(
-            [[(style, width, color) if width else None
-              for _score, (style, width, color) in column]
-             for column in grid]
-            for grid in table.collapsed_border_grid)
-
-    grid = get_grid('<table style="border-collapse: collapse"></table>')
+    grid = _get_grid('<table style="border-collapse: collapse"></table>')
     assert grid == ([], [])
 
-    black = (0, 0, 0, 1)
-    red = (1, 0, 0, 1)
-    green = (0, 1, 0, 1)  # lime in CSS
-    blue = (0, 0, 1, 1)
-    yellow = (1, 1, 0, 1)
 
-    vertical_borders, horizontal_borders = get_grid('''
-        <style>td { border: 1px solid red }</style>
-        <table style="border-collapse: collapse; border: 3px solid black">
-            <tr> <td>A</td> <td>B</td> </tr>
-            <tr> <td>C</td> <td>D</td> </tr>
-        </table>
+@assert_no_logs
+def test_border_collapse_2():
+    vertical_borders, horizontal_borders = _get_grid('''
+      <style>td { border: 1px solid red }</style>
+      <table style="border-collapse: collapse; border: 3px solid black">
+        <tr> <td>A</td> <td>B</td> </tr>
+        <tr> <td>C</td> <td>D</td> </tr>
+      </table>
     ''')
-    black_3 = ('solid', 3, black)
-    red_1 = ('solid', 1, red)
     assert vertical_borders == [
         [black_3, red_1, black_3],
         [black_3, red_1, black_3],
@@ -1466,13 +1542,16 @@ def test_border_collapse():
         [black_3, black_3],
     ]
 
+
+@assert_no_logs
+def test_border_collapse_3():
     # hidden vs. none
-    vertical_borders, horizontal_borders = get_grid('''
-        <style>table, td { border: 3px solid }</style>
-        <table style="border-collapse: collapse">
-            <tr> <td>A</td> <td style="border-style: hidden">B</td> </tr>
-            <tr> <td>C</td> <td style="border-style: none">D</td> </tr>
-        </table>
+    vertical_borders, horizontal_borders = _get_grid('''
+      <style>table, td { border: 3px solid }</style>
+      <table style="border-collapse: collapse">
+        <tr> <td>A</td> <td style="border-style: hidden">B</td> </tr>
+        <tr> <td>C</td> <td style="border-style: none">D</td> </tr>
+      </table>
     ''')
     assert vertical_borders == [
         [black_3, None, None],
@@ -1484,19 +1563,19 @@ def test_border_collapse():
         [black_3, black_3],
     ]
 
-    yellow_5 = ('solid', 5, yellow)
-    green_5 = ('solid', 5, green)
-    dashed_blue_5 = ('dashed', 5, blue)
-    vertical_borders, horizontal_borders = get_grid('''
-        <style>td { border: 1px solid red }</style>
-        <table style="border-collapse: collapse; border: 5px solid yellow">
-            <col style="border: 3px solid black" />
-            <tr> <td></td> <td></td> <td></td> </tr>
-            <tr> <td></td> <td style="border: 5px dashed blue"></td>
-                 <td style="border: 5px solid lime"></td> </tr>
-            <tr> <td></td> <td></td> <td></td> </tr>
-            <tr> <td></td> <td></td> <td></td> </tr>
-        </table>
+
+@assert_no_logs
+def test_border_collapse_4():
+    vertical_borders, horizontal_borders = _get_grid('''
+      <style>td { border: 1px solid red }</style>
+      <table style="border-collapse: collapse; border: 5px solid yellow">
+        <col style="border: 3px solid black" />
+        <tr> <td></td> <td></td> <td></td> </tr>
+        <tr> <td></td> <td style="border: 5px dashed blue"></td>
+          <td style="border: 5px solid lime"></td> </tr>
+        <tr> <td></td> <td></td> <td></td> </tr>
+        <tr> <td></td> <td></td> <td></td> </tr>
+      </table>
     ''')
     assert vertical_borders == [
         [yellow_5, black_3, red_1, yellow_5],
@@ -1512,8 +1591,11 @@ def test_border_collapse():
         [yellow_5, yellow_5, yellow_5],
     ]
 
+
+@assert_no_logs
+def test_border_collapse_5():
     # rowspan and colspan
-    vertical_borders, horizontal_borders = get_grid('''
+    vertical_borders, horizontal_borders = _get_grid('''
         <style>col, tr { border: 3px solid }</style>
         <table style="border-collapse: collapse">
             <col /><col /><col />

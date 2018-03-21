@@ -16,8 +16,7 @@ from .testing_utils import assert_no_logs, capture_logs
 
 
 @assert_no_logs
-def test_font_face():
-    """Test the ``font-face`` rule."""
+def test_font_face_1():
     stylesheet = tinycss2.parse_stylesheet(
         '@font-face {'
         '  font-family: Gentium Hard;'
@@ -32,6 +31,9 @@ def test_font_face():
     assert src == (
         'src', (('external', 'http://example.com/fonts/Gentium.woff'),))
 
+
+@assert_no_logs
+def test_font_face_2():
     stylesheet = tinycss2.parse_stylesheet(
         '@font-face {'
         '  font-family: "Fonty Smiley";'
@@ -53,6 +55,9 @@ def test_font_face():
     assert font_weight == ('font_weight', 200)
     assert font_stretch == ('font_stretch', 'condensed')
 
+
+@assert_no_logs
+def test_font_face_3():
     stylesheet = tinycss2.parse_stylesheet(
         '@font-face {'
         '  font-family: Gentium Hard;'
@@ -66,6 +71,9 @@ def test_font_face():
     assert font_family == ('font_family', 'Gentium Hard')
     assert src == ('src', (('local', None),))
 
+
+@assert_no_logs
+def test_font_face_4():
     # See bug #487
     stylesheet = tinycss2.parse_stylesheet(
         '@font-face {'
@@ -81,8 +89,7 @@ def test_font_face():
     assert src == ('src', (('local', 'Gentium Hard'),))
 
 
-def test_bad_font_face():
-    """Test bad ``font-face`` rules."""
+def test_font_face_bad_1():
     stylesheet = tinycss2.parse_stylesheet(
         '@font-face {'
         '  font-family: "Bad Font";'
@@ -108,6 +115,8 @@ def test_bad_font_face():
         'WARNING: Ignored `font-weight: bolder` at 1:111, invalid value.',
         'WARNING: Ignored `font-stretch: wrong` at 1:133, invalid value.']
 
+
+def test_font_face_bad_2():
     stylesheet = tinycss2.parse_stylesheet('@font-face{}')
     with capture_logs() as logs:
         descriptors = []
@@ -118,6 +127,8 @@ def test_bad_font_face():
     assert logs == [
         "WARNING: Missing src descriptor in '@font-face' rule at 1:1"]
 
+
+def test_font_face_bad_3():
     stylesheet = tinycss2.parse_stylesheet('@font-face{src: url(test.woff)}')
     with capture_logs() as logs:
         descriptors = []
@@ -128,6 +139,8 @@ def test_bad_font_face():
     assert logs == [
         "WARNING: Missing font-family descriptor in '@font-face' rule at 1:1"]
 
+
+def test_font_face_bad_4():
     stylesheet = tinycss2.parse_stylesheet('@font-face{font-family: test}')
     with capture_logs() as logs:
         descriptors = []
@@ -138,6 +151,8 @@ def test_bad_font_face():
     assert logs == [
         "WARNING: Missing src descriptor in '@font-face' rule at 1:1"]
 
+
+def test_font_face_bad_5():
     stylesheet = tinycss2.parse_stylesheet(
         '@font-face { font-family: test; src: wrong }')
     with capture_logs() as logs:
@@ -150,6 +165,8 @@ def test_bad_font_face():
         'WARNING: Ignored `src: wrong ` at 1:33, invalid value.',
         "WARNING: Missing src descriptor in '@font-face' rule at 1:1"]
 
+
+def test_font_face_bad_6():
     stylesheet = tinycss2.parse_stylesheet(
         '@font-face { font-family: good, bad; src: url(test.woff) }')
     with capture_logs() as logs:
@@ -162,6 +179,8 @@ def test_bad_font_face():
         'WARNING: Ignored `font-family: good, bad` at 1:14, invalid value.',
         "WARNING: Missing font-family descriptor in '@font-face' rule at 1:1"]
 
+
+def test_font_face_bad_7():
     stylesheet = tinycss2.parse_stylesheet(
         '@font-face { font-family: good, bad; src: really bad }')
     with capture_logs() as logs:

@@ -266,17 +266,26 @@ these logs, you can for example use a filter:
 See the documentation of the :mod:`logging` module for details.
 
 
+WeasyPrint Tools
+----------------
+
+WeasyPrint provides two very limited tools, helping users to play with
+WeasyPrint, test it, and understand how to use it as a library.
+
+These tools are just "toys" and are not intended to be significantly improved
+in the future.
+
 .. _navigator:
 
 WeasyPrint Navigator
---------------------
+....................
 
-*WeasyPrint Navigator* is a very limited web browser, running
-in your web browser. Start it with:
+*WeasyPrint Navigator* is a web browser running in your web browser. Start it
+with:
 
 .. code-block:: sh
 
-    python -m weasyprint.navigator
+    python -m weasyprint.tools.navigator
 
 … and open your browser at http://127.0.0.1:5000/.
 
@@ -285,6 +294,21 @@ in your web browser. Start it with:
 It does not support cookies, forms, or many other things that you would
 expect from a “real” browser. It only shows the PNG output from WeasyPrint
 with overlaid clickable hyperlinks. It is mostly useful for playing and testing.
+
+.. _renderer:
+
+WeasyPrint Renderer
+...................
+
+*WeasyPrint Renderer* is a web app providing on the same web page a textarea
+where you can type an HTML/CSS document, and this document rendered by
+WeasyPrint as a PNG image. Start it with:
+
+.. code-block:: sh
+
+    python -m weasyprint.tools.renderer
+
+… and open your browser at http://127.0.0.1:5000/.
 
 
 Errors

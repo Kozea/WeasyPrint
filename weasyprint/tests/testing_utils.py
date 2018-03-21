@@ -13,9 +13,7 @@ import contextlib
 import functools
 import logging
 import os.path
-import shutil
 import sys
-import tempfile
 import threading
 import wsgiref.simple_server
 
@@ -83,21 +81,11 @@ def assert_no_logs(function):
                         print(message, file=sys.stderr)
                 raise
             else:
-                if logs:
+                if logs:  # pragma: no cover
                     for message in logs:
                         print(message, file=sys.stderr)
                     raise AssertionError('%i errors logged' % len(logs))
     return wrapper
-
-
-def almost_equal(a, b):
-    if (isinstance(a, list) and isinstance(b, list) or
-            isinstance(a, tuple) and isinstance(b, tuple)):
-        return len(a) == len(b) and all(
-            almost_equal(aa, bb) for aa, bb in zip(a, b))
-    if isinstance(a, float) or isinstance(b, float):
-        return round(abs(a - b), 6) == 0
-    return a == b
 
 
 @contextlib.contextmanager
@@ -108,7 +96,7 @@ def http_server(handlers):
             status = str('200 OK')
             response, headers = handler(environ)
             headers = [(str(name), str(value)) for name, value in headers]
-        else:
+        else:  # pragma: no cover
             status = str('404 Not Found')
             response = b''
             headers = []
@@ -128,42 +116,13 @@ def http_server(handlers):
         thread.join()
 
 
-@contextlib.contextmanager
-def temp_directory():
-    """Context manager that gives the path to a new temporary directory.
-
-    Remove everything on exiting the context.
-
-    """
-    directory = tempfile.mkdtemp()
-    try:
-        yield directory
-    finally:
-        shutil.rmtree(directory)
-
-
-def requires(library_name, version):
-    tuple_version = [0, 0, 0]
-    for i, number in enumerate(version.split('.')):
-        tuple_version[i] = int(number)
-    version_number = int(''.join('%02i' % number for number in tuple_version))
-
-    def require_version(test):
-        @functools.wraps(test)
-        def decorated_test():
-            library = getattr(text, library_name)
-            library_version = getattr(library, '%s_version' % library_name)()
-            if library_version < version_number:
-                library_version = '%06i' % library_version
-                library_version_string = '.'.join(
-                    str(int(i)) for i in (
-                        library_version[:2],
-                        library_version[2:4],
-                        library_version[4:]))
-                print('Running %s %s but this test requires %s+' % (
-                    library_name, library_version_string, version))
-                pytest.xfail()
-            test()
-        return decorated_test
-
-    return require_version
+def requires(library_name, expected_tuple):
+    library = getattr(text, library_name)
+    library_version = '%06i' % getattr(library, '%s_version' % library_name)()
+    library_tuple = tuple(int(i) for i in (
+        library_version[:2], library_version[2:4], library_version[4:]))
+    return pytest.mark.skipif(
+        library_tuple < expected_tuple,
+        reason='Running %s %s but this test requires %s+' % (
+            library_name, '%i.%i.%i' % library_tuple,
+            '%i.%i.%i' % expected_tuple))

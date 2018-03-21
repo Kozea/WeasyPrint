@@ -30,8 +30,6 @@ assert cairosvg.surface.cairo is cairocffi, (
     'Make sure it is not imported before WeasyPrint.')
 
 
-CAIRO_HAS_MIME_DATA = cairocffi.cairo_version() >= 11000
-
 # Map values of the image-rendering property to cairo FILTER values:
 # Values are normalized to lower case.
 IMAGE_RENDERING_TO_FILTER = {
@@ -218,7 +216,7 @@ def get_image_from_uri(cache, url_fetcher, url, forced_mime_type=None):
                                 pixbuf.decode_to_image_surface(string))
                         except pixbuf.ImageLoadingError as exception:
                             raise ImageLoadingError(str(exception))
-                        if format_name == 'jpeg' and CAIRO_HAS_MIME_DATA:
+                        if format_name == 'jpeg':
                             surface.set_mime_data('image/jpeg', string)
                         image = RasterImage(surface)
     except (URLFetchingError, ImageLoadingError) as exc:

@@ -4,14 +4,16 @@
 
     Test the text layout.
 
-    :copyright: Copyright 2011-2014 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
 
+import pytest
+
 from ..css.properties import INITIAL_VALUES
 from ..text import split_first_line
-from .test_layout import body_children, parse
+from .test_boxes import render_pages
 from .testing_utils import FONTS, assert_no_logs
 
 FONTS = FONTS.split(', ')
@@ -30,7 +32,6 @@ def make_text(text, width=None, **style):
 
 @assert_no_logs
 def test_line_content():
-    """Test the line break for various fixed-width lines."""
     for width, remaining in [(100, 'text for test'),
                              (45, 'is a text for test')]:
         text = 'This is a text for test'
@@ -42,7 +43,6 @@ def test_line_content():
 
 @assert_no_logs
 def test_line_with_any_width():
-    """Test the auto-fit width of lines."""
     _, _, _, width_1, _, _ = make_text('some text')
     _, _, _, width_2, _, _ = make_text('some text some text')
     assert width_1 < width_2
@@ -50,7 +50,6 @@ def test_line_with_any_width():
 
 @assert_no_logs
 def test_line_breaking():
-    """Test the line breaking."""
     string = 'This is a text for test'
 
     # These two tests do not really rely on installed fonts
@@ -67,7 +66,6 @@ def test_line_breaking():
 
 @assert_no_logs
 def test_text_dimension():
-    """Test the font size impact on the text dimension."""
     string = 'This is a text for test. This is a test for text.py'
     _, _, _, width_1, height_1, _ = make_text(string, 200, font_size=12)
 
@@ -77,14 +75,15 @@ def test_text_dimension():
 
 @assert_no_logs
 def test_text_font_size_zero():
-    """Test a text with a font size set to 0."""
-    page, = parse('''
-        <style>
-            p { font-size: 0; }
-        </style>
-        <p>test font size zero</p>
+    page, = render_pages('''
+      <style>
+        p { font-size: 0; }
+      </style>
+      <p>test font size zero</p>
     ''')
-    paragraph, = body_children(page)
+    html, = page.children
+    body, = html.children
+    paragraph, = body.children
     line, = paragraph.children
     # zero-sized text boxes are removed
     assert not line.children
@@ -94,11 +93,12 @@ def test_text_font_size_zero():
 
 @assert_no_logs
 def test_text_spaced_inlines():
-    """Test a text with inlines separated by a space."""
-    page, = parse('''
-        <p>start <i><b>bi1</b> <b>bi2</b></i> <b>b1</b> end</p>
+    page, = render_pages('''
+      <p>start <i><b>bi1</b> <b>bi2</b></i> <b>b1</b> end</p>
     ''')
-    paragraph, = body_children(page)
+    html, = page.children
+    body, = html.children
+    paragraph, = body.children
     line, = paragraph.children
     start, i, space, b, end = line.children
     assert start.text == 'start '
@@ -120,25 +120,21 @@ def test_text_spaced_inlines():
 
 @assert_no_logs
 def test_text_align_left():
-    """Test the left text alignment."""
+    # <-------------------->  page, body
+    #     +-----+
+    # +---+     |
+    # |   |     |
+    # +---+-----+
 
-    """
-        <-------------------->  page, body
-            +-----+
-        +---+     |
-        |   |     |
-        +---+-----+
-
-        ^   ^     ^          ^
-        x=0 x=40  x=100      x=200
-    """
-    page, = parse('''
-        <style>
-            @page { size: 200px }
-        </style>
-        <body>
-            <img src="pattern.png" style="width: 40px"
-            ><img src="pattern.png" style="width: 60px">''')
+    # ^   ^     ^          ^
+    # x=0 x=40  x=100      x=200
+    page, = render_pages('''
+      <style>
+        @page { size: 200px }
+      </style>
+      <body>
+        <img src="pattern.png" style="width: 40px"
+        ><img src="pattern.png" style="width: 60px">''')
     html, = page.children
     body, = html.children
     line, = body.children
@@ -150,27 +146,23 @@ def test_text_align_left():
 
 @assert_no_logs
 def test_text_align_right():
-    """Test the right text alignment."""
+    # <-------------------->  page, body
+    #                +-----+
+    #            +---+     |
+    #            |   |     |
+    #            +---+-----+
 
-    """
-        <-------------------->  page, body
-                       +-----+
-                   +---+     |
-                   |   |     |
-                   +---+-----+
-
-        ^          ^   ^     ^
-        x=0        x=100     x=200
-                       x=140
-    """
-    page, = parse('''
-        <style>
-            @page { size: 200px }
-            body { text-align: right }
-        </style>
-        <body>
-            <img src="pattern.png" style="width: 40px"
-            ><img src="pattern.png" style="width: 60px">''')
+    # ^          ^   ^     ^
+    # x=0        x=100     x=200
+    #                x=140
+    page, = render_pages('''
+      <style>
+        @page { size: 200px }
+        body { text-align: right }
+      </style>
+      <body>
+        <img src="pattern.png" style="width: 40px"
+        ><img src="pattern.png" style="width: 60px">''')
     html, = page.children
     body, = html.children
     line, = body.children
@@ -181,27 +173,23 @@ def test_text_align_right():
 
 @assert_no_logs
 def test_text_align_center():
-    """Test the center text alignment."""
+    # <-------------------->  page, body
+    #           +-----+
+    #       +---+     |
+    #       |   |     |
+    #       +---+-----+
 
-    """
-        <-------------------->  page, body
-                  +-----+
-              +---+     |
-              |   |     |
-              +---+-----+
-
-        ^     ^   ^     ^
-        x=    x=50     x=150
-                  x=90
-    """
-    page, = parse('''
-        <style>
-            @page { size: 200px }
-            body { text-align: center }
-        </style>
-        <body>
-            <img src="pattern.png" style="width: 40px"
-            ><img src="pattern.png" style="width: 60px">''')
+    # ^     ^   ^     ^
+    # x=    x=50     x=150
+    #           x=90
+    page, = render_pages('''
+      <style>
+        @page { size: 200px }
+        body { text-align: center }
+      </style>
+      <body>
+        <img src="pattern.png" style="width: 40px"
+        ><img src="pattern.png" style="width: 60px">''')
     html, = page.children
     body, = html.children
     line, = body.children
@@ -212,19 +200,18 @@ def test_text_align_center():
 
 @assert_no_logs
 def test_text_align_justify():
-    """Test justified text."""
-    page, = parse('''
-        <style>
-            @page { size: 300px 1000px }
-            body { text-align: justify }
-        </style>
-        <p><img src="pattern.png" style="width: 40px">
-            <strong>
-                <img src="pattern.png" style="width: 60px">
-                <img src="pattern.png" style="width: 10px">
-                <img src="pattern.png" style="width: 100px"
-            ></strong><img src="pattern.png" style="width: 290px"
-            ><!-- Last image will be on its own line. -->''')
+    page, = render_pages('''
+      <style>
+        @page { size: 300px 1000px }
+        body { text-align: justify }
+      </style>
+      <p><img src="pattern.png" style="width: 40px">
+        <strong>
+          <img src="pattern.png" style="width: 60px">
+          <img src="pattern.png" style="width: 10px">
+          <img src="pattern.png" style="width: 100px"
+        ></strong><img src="pattern.png" style="width: 290px"
+        ><!-- Last image will be on its own line. -->''')
     html, = page.children
     body, = html.children
     paragraph, = body.children
@@ -248,12 +235,15 @@ def test_text_align_justify():
 
     assert image_5.position_x == 0
 
+
+@assert_no_logs
+def test_text_align_justify_no_space():
     # single-word line (zero spaces)
-    page, = parse('''
-        <style>
-            body { text-align: justify; width: 50px }
-        </style>
-        <p>Supercalifragilisticexpialidocious bar</p>
+    page, = render_pages('''
+      <style>
+        body { text-align: justify; width: 50px }
+      </style>
+      <p>Supercalifragilisticexpialidocious bar</p>
     ''')
     html, = page.children
     body, = html.children
@@ -262,20 +252,23 @@ def test_text_align_justify():
     text, = line_1.children
     assert text.position_x == 0
 
+
+@assert_no_logs
+def test_text_align_justify_text_indent():
     # text-indent
-    page, = parse('''
-        <style>
-            @page { size: 300px 1000px }
-            body { text-align: justify }
-            p { text-indent: 3px }
-        </style>
-        <p><img src="pattern.png" style="width: 40px">
-            <strong>
-                <img src="pattern.png" style="width: 60px">
-                <img src="pattern.png" style="width: 10px">
-                <img src="pattern.png" style="width: 100px"
-            ></strong><img src="pattern.png" style="width: 290px"
-            ><!-- Last image will be on its own line. -->''')
+    page, = render_pages('''
+      <style>
+        @page { size: 300px 1000px }
+        body { text-align: justify }
+        p { text-indent: 3px }
+      </style>
+      <p><img src="pattern.png" style="width: 40px">
+        <strong>
+          <img src="pattern.png" style="width: 60px">
+          <img src="pattern.png" style="width: 10px">
+          <img src="pattern.png" style="width: 100px"
+        ></strong><img src="pattern.png" style="width: 290px"
+        ><!-- Last image will be on its own line. -->''')
     html, = page.children
     body, = html.children
     paragraph, = body.children
@@ -302,12 +295,11 @@ def test_text_align_justify():
 
 @assert_no_logs
 def test_word_spacing():
-    """Test word-spacing."""
     # keep the empty <style> as a regression test: element.text is None
     # (Not a string.)
-    page, = parse('''
-        <style></style>
-        <body><strong>Lorem ipsum dolor<em>sit amet</em></strong>''')
+    page, = render_pages('''
+      <style></style>
+      <body><strong>Lorem ipsum dolor<em>sit amet</em></strong>''')
     html, = page.children
     body, = html.children
     line, = body.children
@@ -315,9 +307,9 @@ def test_word_spacing():
 
     # TODO: Pango gives only half of word-spacing to a space at the end
     # of a TextBox. Is this what we want?
-    page, = parse('''
-        <style>strong { word-spacing: 11px }</style>
-        <body><strong>Lorem ipsum dolor<em>sit amet</em></strong>''')
+    page, = render_pages('''
+      <style>strong { word-spacing: 11px }</style>
+      <body><strong>Lorem ipsum dolor<em>sit amet</em></strong>''')
     html, = page.children
     body, = html.children
     line, = body.children
@@ -326,16 +318,15 @@ def test_word_spacing():
 
 
 @assert_no_logs
-def test_letter_spacing():
-    """Test letter-spacing."""
-    page, = parse('''
+def test_letter_spacing_1():
+    page, = render_pages('''
         <body><strong>Supercalifragilisticexpialidocious</strong>''')
     html, = page.children
     body, = html.children
     line, = body.children
     strong_1, = line.children
 
-    page, = parse('''
+    page, = render_pages('''
         <style>strong { letter-spacing: 11px }</style>
         <body><strong>Supercalifragilisticexpialidocious</strong>''')
     html, = page.children
@@ -345,10 +336,10 @@ def test_letter_spacing():
     assert strong_2.width - strong_1.width == 34 * 11
 
     # an embedded tag should not affect the single-line letter spacing
-    page, = parse('''
-        <style>strong { letter-spacing: 11px }</style>
-        <body><strong>Supercali<span>fragilistic</span>expialidocious''' +
-                  '</strong>')
+    page, = render_pages(
+        '<style>strong { letter-spacing: 11px }</style>'
+        '<body><strong>Supercali<span>fragilistic</span>expialidocious'
+        '</strong>')
     html, = page.children
     body, = html.children
     line, = body.children
@@ -358,13 +349,18 @@ def test_letter_spacing():
     # duplicate wrapped lines should also have same overall width
     # Note work-around for word-wrap bug (issue #163) by marking word
     # as an inline-block
-    page, = parse('''
-        <style>strong { letter-spacing: 11px; max-width: %dpx }
-               span { display: inline-block }</style>
-        <body><strong>%s %s</strong>''' %
-                  ((strong_3.width * 1.5),
-                   '<span>Supercali<i>fragilistic</i>expialidocious</span>',
-                   '<span>Supercali<i>fragilistic</i>expialidocious</span>'))
+    page, = render_pages(
+        '<style>'
+        '  strong {'
+        '    letter-spacing: 11px;'
+        '    max-width: ' + str(strong_3.width * 1.5) + 'px'
+        '}'
+        '  span { display: inline-block }'
+        '</style>'
+        '<body><strong>'
+        '  <span>Supercali<i>fragilistic</i>expialidocious</span> '
+        '  <span>Supercali<i>fragilistic</i>expialidocious</span>'
+        '</strong>')
     html, = page.children
     body, = html.children
     line1, line2 = body.children
@@ -374,9 +370,8 @@ def test_letter_spacing():
 
 @assert_no_logs
 def test_text_indent():
-    """Test the text-indent property."""
     for indent in ['12px', '6%']:  # 6% of 200px is 12px
-        page, = parse('''
+        page, = render_pages('''
             <style>
                 @page { size: 220px }
                 body { margin: 10px; text-indent: %(indent)s }
@@ -397,8 +392,8 @@ def test_text_indent():
 
 
 @assert_no_logs
-def test_hyphenate_character():
-    page, = parse(
+def test_hyphenate_character_1():
+    page, = render_pages(
         '<html style="width: 5em; font-family: ahem">'
         '<body style="hyphens: auto;'
         'hyphenate-character: \'!\'" lang=fr>'
@@ -411,7 +406,10 @@ def test_hyphenate_character():
     full_text = ''.join(line.children[0].text for line in lines)
     assert full_text.replace('!', '') == 'hyphénation'
 
-    page, = parse(
+
+@assert_no_logs
+def test_hyphenate_character_2():
+    page, = render_pages(
         '<html style="width: 5em; font-family: ahem">'
         '<body style="hyphens: auto;'
         'hyphenate-character: \'à\'" lang=fr>'
@@ -424,7 +422,10 @@ def test_hyphenate_character():
     full_text = ''.join(line.children[0].text for line in lines)
     assert full_text.replace('à', '') == 'hyphénation'
 
-    page, = parse(
+
+@assert_no_logs
+def test_hyphenate_character_3():
+    page, = render_pages(
         '<html style="width: 5em; font-family: ahem">'
         '<body style="hyphens: auto;'
         'hyphenate-character: \'ù ù\'" lang=fr>'
@@ -437,7 +438,10 @@ def test_hyphenate_character():
     full_text = ''.join(line.children[0].text for line in lines)
     assert full_text.replace(' ', '').replace('ù', '') == 'hyphénation'
 
-    page, = parse(
+
+@assert_no_logs
+def test_hyphenate_character_4():
+    page, = render_pages(
         '<html style="width: 5em; font-family: ahem">'
         '<body style="hyphens: auto;'
         'hyphenate-character: \'\'" lang=fr>'
@@ -449,7 +453,10 @@ def test_hyphenate_character():
     full_text = ''.join(line.children[0].text for line in lines)
     assert full_text == 'hyphénation'
 
-    page, = parse(
+
+@assert_no_logs
+def test_hyphenate_character_5():
+    page, = render_pages(
         '<html style="width: 5em; font-family: ahem">'
         '<body style="hyphens: auto;'
         'hyphenate-character: \'———\'" lang=fr>'
@@ -464,11 +471,11 @@ def test_hyphenate_character():
 
 
 @assert_no_logs
-def test_manual_hyphenation():
+def test_hyphenate_manual_1():
     for i in range(1, len('hyphénation')):
         for hyphenate_character in ('!', 'ù ù'):
             word = 'hyphénation'[:i] + '\u00ad' + 'hyphénation'[i:]
-            page, = parse(
+            page, = render_pages(
                 '<html style="width: 5em; font-family: ahem">'
                 '<body style="hyphens: manual;'
                 'hyphenate-character: \'%s\'"'
@@ -482,10 +489,13 @@ def test_manual_hyphenation():
                 child.text for line in lines for child in line.children)
             assert full_text.replace(hyphenate_character, '') == word
 
+
+@assert_no_logs
+def test_hyphenate_manual_2():
     for i in range(1, len('hy phénation')):
         for hyphenate_character in ('!', 'ù ù'):
             word = 'hy phénation'[:i] + '\u00ad' + 'hy phénation'[i:]
-            page, = parse(
+            page, = render_pages(
                 '<html style="width: 5em; font-family: ahem">'
                 '<body style="hyphens: manual;'
                 'hyphenate-character: \'%s\'"'
@@ -507,8 +517,8 @@ def test_manual_hyphenation():
 
 
 @assert_no_logs
-def test_hyphenate_limit_zone():
-    page, = parse(
+def test_hyphenate_limit_zone_1():
+    page, = render_pages(
         '<html style="width: 12em; font-family: ahem">'
         '<body style="hyphens: auto;'
         'hyphenate-limit-zone: 0" lang=fr>'
@@ -521,7 +531,10 @@ def test_hyphenate_limit_zone():
     full_text = ''.join(line.children[0].text for line in lines)
     assert full_text.replace('‐', '') == 'mmmmm hyphénation'
 
-    page, = parse(
+
+@assert_no_logs
+def test_hyphenate_limit_zone_2():
+    page, = render_pages(
         '<html style="width: 12em; font-family: ahem">'
         '<body style="hyphens: auto;'
         'hyphenate-limit-zone: 9em" lang=fr>'
@@ -534,7 +547,10 @@ def test_hyphenate_limit_zone():
     full_text = ''.join(line.children[0].text for line in lines)
     assert full_text == 'mmmmmhyphénation'
 
-    page, = parse(
+
+@assert_no_logs
+def test_hyphenate_limit_zone_3():
+    page, = render_pages(
         '<html style="width: 12em; font-family: ahem">'
         '<body style="hyphens: auto;'
         'hyphenate-limit-zone: 5%" lang=fr>'
@@ -547,7 +563,10 @@ def test_hyphenate_limit_zone():
     full_text = ''.join(line.children[0].text for line in lines)
     assert full_text.replace('‐', '') == 'mmmmm hyphénation'
 
-    page, = parse(
+
+@assert_no_logs
+def test_hyphenate_limit_zone_4():
+    page, = render_pages(
         '<html style="width: 12em; font-family: ahem">'
         '<body style="hyphens: auto;'
         'hyphenate-limit-zone: 95%" lang=fr>'
@@ -562,94 +581,78 @@ def test_hyphenate_limit_zone():
 
 
 @assert_no_logs
-def test_hyphenate_limit_chars():
-    def line_count(limit_chars):
-        page, = parse((
-            '<html style="width: 1em; font-family: ahem">'
-            '<body style="hyphens: auto;'
-            'hyphenate-limit-chars: %s" lang=en>'
-            'hyphen') % limit_chars)
-        html, = page.children
-        body, = html.children
-        lines = body.children
-        return len(lines)
-
-    assert line_count('auto') == 2
-    assert line_count('auto auto 0') == 2
-    assert line_count('0 0 0') == 2
-    assert line_count('4 4 auto') == 1
-    assert line_count('6 2 4') == 2
-    assert line_count('auto 1 auto') == 2
-    assert line_count('7 auto auto') == 1
-    assert line_count('6 auto auto') == 2
-    assert line_count('5 2') == 2
-    assert line_count('3') == 2
-    assert line_count('2 4 6') == 1
-    assert line_count('auto 4') == 1
-    assert line_count('auto 2') == 2
-
-
-@assert_no_logs
-def test_overflow_wrap():
-    def get_lines(wrap, text):
-        page, = parse('''
-            <style>
-                body {width: 80px; overflow: hidden; font-family: ahem; }
-                span {overflow-wrap: %s; white-space: normal; }
-            </style>
-            <body style="hyphens: auto;" lang="en">
-                <span>%s
-        ''' % (wrap, text))
-        html, = page.children
-        body, = html.children
-        body_lines = []
-        for line in body.children:
-            box, = line.children
-            textBox, = box.children
-            body_lines.append(textBox.text)
-        return body_lines
-
-    # break-word
-    lines = get_lines('break-word', 'aaaaaaaa')
-    assert len(lines) > 1
-    full_text = ''.join(line for line in lines)
-    assert full_text == 'aaaaaaaa'
-
-    # normal
-    lines = get_lines('normal', 'aaaaaaaa')
-    assert len(lines) == 1
-    full_text = ''.join(line for line in lines)
-    assert full_text == 'aaaaaaaa'
-
-    # break-word after hyphenation
-    lines = get_lines('break-word', 'hyphenations')
-    assert len(lines) > 3
-    full_text = ''.join(line for line in lines)
-    assert full_text == "hy\u2010phen\u2010ations"
-
-    # break word after normal white-space wrap and hyphenation
-    lines = get_lines(
-        'break-word', "A splitted word.  An hyphenated word.")
-    assert len(lines) > 8
-    full_text = ''.join(line for line in lines)
-    assert full_text == "Asplittedword.Anhy\u2010phen\u2010atedword."
+@pytest.mark.parametrize('css, result', (
+    ('auto', 2),
+    ('auto auto 0', 2),
+    ('0 0 0', 2),
+    ('4 4 auto', 1),
+    ('6 2 4', 2),
+    ('auto 1 auto', 2),
+    ('7 auto auto', 1),
+    ('6 auto auto', 2),
+    ('5 2', 2),
+    ('3', 2),
+    ('2 4 6', 1),
+    ('auto 4', 1),
+    ('auto 2', 2),
+))
+def test_hyphenate_limit_chars(css, result):
+    page, = render_pages((
+        '<html style="width: 1em; font-family: ahem">'
+        '<body style="hyphens: auto;'
+        'hyphenate-limit-chars: %s" lang=en>'
+        'hyphen') % css)
+    html, = page.children
+    body, = html.children
+    lines = body.children
+    assert len(lines) == result
 
 
 @assert_no_logs
-def test_white_space():
-    """Test the white-space property."""
-    def lines(width, space):
-        page, = parse('''
-            <style>
-              body { font-size: 100px; width: %ipx }
-              span { white-space: %s }
-            </style>
-            <body><span>This +    \n    is text''' % (width, space))
-        html, = page.children
-        body, = html.children
-        return body.children
+@pytest.mark.parametrize('wrap, text, test, full_text', (
+    ('break-word', 'aaaaaaaa', lambda a: a > 1, 'aaaaaaaa'),
+    ('normal', 'aaaaaaaa', lambda a: a == 1, 'aaaaaaaa'),
+    ('break-word', 'hyphenations', lambda a: a > 3,
+     'hy\u2010phen\u2010ations'),
+    ('break-word', "A splitted word.  An hyphenated word.",
+     lambda a: a > 8, "Asplittedword.Anhy\u2010phen\u2010atedword."),
+))
+def test_overflow_wrap(wrap, text, test, full_text):
+    page, = render_pages('''
+      <style>
+        body {width: 80px; overflow: hidden; font-family: ahem; }
+        span {overflow-wrap: %s; white-space: normal; }
+      </style>
+      <body style="hyphens: auto;" lang="en">
+        <span>%s
+    ''' % (wrap, text))
+    html, = page.children
+    body, = html.children
+    lines = []
+    for line in body.children:
+        box, = line.children
+        textBox, = box.children
+        lines.append(textBox.text)
+    lines_full_text = ''.join(line for line in lines)
+    assert test(len(lines))
+    assert full_text == lines_full_text
 
-    line1, line2, line3, line4 = lines(1, 'normal')
+
+def white_space_lines(width, space):
+    page, = render_pages('''
+      <style>
+        body { font-size: 100px; width: %ipx }
+        span { white-space: %s }
+      </style>
+      <body><span>This +    \n    is text''' % (width, space))
+    html, = page.children
+    body, = html.children
+    return body.children
+
+
+@assert_no_logs
+def test_white_space_1():
+    line1, line2, line3, line4 = white_space_lines(1, 'normal')
     box1, = line1.children
     text1, = box1.children
     assert text1.text == 'This'
@@ -663,7 +666,10 @@ def test_white_space():
     text4, = box4.children
     assert text4.text == 'text'
 
-    line1, line2 = lines(1, 'pre')
+
+@assert_no_logs
+def test_white_space_2():
+    line1, line2 = white_space_lines(1, 'pre')
     box1, = line1.children
     text1, = box1.children
     assert text1.text == 'This +    '
@@ -671,12 +677,18 @@ def test_white_space():
     text2, = box2.children
     assert text2.text == '    is text'
 
-    line1, = lines(1, 'nowrap')
+
+@assert_no_logs
+def test_white_space_3():
+    line1, = white_space_lines(1, 'nowrap')
     box1, = line1.children
     text1, = box1.children
     assert text1.text == 'This + is text'
 
-    line1, line2, line3, line4, line5 = lines(1, 'pre-wrap')
+
+@assert_no_logs
+def test_white_space_4():
+    line1, line2, line3, line4, line5 = white_space_lines(1, 'pre-wrap')
     box1, = line1.children
     text1, = box1.children
     assert text1.text == 'This '
@@ -693,7 +705,10 @@ def test_white_space():
     text5, = box5.children
     assert text5.text == 'text'
 
-    line1, line2, line3, line4 = lines(1, 'pre-line')
+
+@assert_no_logs
+def test_white_space_5():
+    line1, line2, line3, line4 = white_space_lines(1, 'pre-line')
     box1, = line1.children
     text1, = box1.children
     assert text1.text == 'This'
@@ -707,12 +722,18 @@ def test_white_space():
     text4, = box4.children
     assert text4.text == 'text'
 
-    line1, = lines(1000000, 'normal')
+
+@assert_no_logs
+def test_white_space_6():
+    line1, = white_space_lines(1000000, 'normal')
     box1, = line1.children
     text1, = box1.children
     assert text1.text == 'This + is text'
 
-    line1, line2 = lines(1000000, 'pre')
+
+@assert_no_logs
+def test_white_space_7():
+    line1, line2 = white_space_lines(1000000, 'pre')
     box1, = line1.children
     text1, = box1.children
     assert text1.text == 'This +    '
@@ -720,12 +741,18 @@ def test_white_space():
     text2, = box2.children
     assert text2.text == '    is text'
 
-    line1, = lines(1000000, 'nowrap')
+
+@assert_no_logs
+def test_white_space_8():
+    line1, = white_space_lines(1000000, 'nowrap')
     box1, = line1.children
     text1, = box1.children
     assert text1.text == 'This + is text'
 
-    line1, line2 = lines(1000000, 'pre-wrap')
+
+@assert_no_logs
+def test_white_space_9():
+    line1, line2 = white_space_lines(1000000, 'pre-wrap')
     box1, = line1.children
     text1, = box1.children
     assert text1.text == 'This +    '
@@ -733,7 +760,10 @@ def test_white_space():
     text2, = box2.children
     assert text2.text == '    is text'
 
-    line1, line2 = lines(1000000, 'pre-line')
+
+@assert_no_logs
+def test_white_space_10():
+    line1, line2 = white_space_lines(1000000, 'pre-line')
     box1, = line1.children
     text1, = box1.children
     assert text1.text == 'This +'
@@ -743,41 +773,42 @@ def test_white_space():
 
 
 @assert_no_logs
-def test_tab_size():
-    """Test the ``tab-size`` property."""
-    values = (
-        (8, 144),  # (2 + (8 - 1)) * 16
-        (4, 80),  # (2 + (4 - 1)) * 16
-        ('3em', 64),  # (2 + (3 - 1)) * 16
-        ('25px', 41),  # 2 * 16 + 25 - 1 * 16
-        # (0, 32),  # See Layout.set_tabs
-    )
-    for value, width in values:
-        page, = parse('''
-            <style>
-                pre { tab-size: %s; font-family: ahem }
-            </style>
-            <pre>a&#9;a</pre>
-        ''' % value)
-        paragraph, = body_children(page)
-        line, = paragraph.children
-        assert line.width == width
+@pytest.mark.parametrize('value, width', (
+    (8, 144),  # (2 + (8 - 1)) * 16
+    (4, 80),  # (2 + (4 - 1)) * 16
+    ('3em', 64),  # (2 + (3 - 1)) * 16
+    ('25px', 41),  # 2 * 16 + 25 - 1 * 16
+    # (0, 32),  # See Layout.set_tabs
+))
+def test_tab_size(value, width):
+    page, = render_pages('''
+      <style>
+        pre { tab-size: %s; font-family: ahem }
+      </style>
+      <pre>a&#9;a</pre>
+    ''' % value)
+    html, = page.children
+    body, = html.children
+    paragraph, = body.children
+    line, = paragraph.children
+    assert line.width == width
 
 
 @assert_no_logs
 def test_text_transform():
-    """Test the text-transform property."""
-    page, = parse('''
-        <style>
-            p { text-transform: capitalize }
-            p+p { text-transform: uppercase }
-            p+p+p { text-transform: lowercase }
-            p+p+p+p { text-transform: full-width }
-            p+p+p+p+p { text-transform: none }
-        </style>
+    page, = render_pages('''
+      <style>
+        p { text-transform: capitalize }
+        p+p { text-transform: uppercase }
+        p+p+p { text-transform: lowercase }
+        p+p+p+p { text-transform: full-width }
+        p+p+p+p+p { text-transform: none }
+      </style>
 <p>hé lO1</p><p>hé lO1</p><p>hé lO1</p><p>hé lO1</p><p>hé lO1</p>
     ''')
-    p1, p2, p3, p4, p5 = body_children(page)
+    html, = page.children
+    body, = html.children
+    p1, p2, p3, p4, p5 = body.children
     line1, = p1.children
     text1, = line1.children
     assert text1.text == 'Hé Lo1'

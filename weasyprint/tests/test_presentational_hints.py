@@ -4,7 +4,7 @@
 
     Test the HTML presentational hints.
 
-    :copyright: Copyright 2016 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2016-2018 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -20,11 +20,10 @@ body {margin: 0}
 
 @assert_no_logs
 def test_no_ph():
-    """Check that presentational hints are not applied when not requested."""
     # Test both CSS and non-CSS rules
     document = HTML(string='''
-        <hr size=100 />
-        <table align=right width=100><td>0</td></table>
+      <hr size=100 />
+      <table align=right width=100><td>0</td></table>
     ''').render(stylesheets=[PH_TESTING_CSS])
     page, = document.pages
     html, = page._page_box.children
@@ -36,10 +35,9 @@ def test_no_ph():
 
 @assert_no_logs
 def test_ph_page():
-    """Check presentational hints on the page."""
     document = HTML(string='''
-        <body marginheight=2 topmargin=3 leftmargin=5
-              bgcolor=red text=blue />
+      <body marginheight=2 topmargin=3 leftmargin=5
+            bgcolor=red text=blue />
     ''').render(stylesheets=[PH_TESTING_CSS], presentational_hints=True)
     page, = document.pages
     html, = page._page_box.children
@@ -54,15 +52,14 @@ def test_ph_page():
 
 @assert_no_logs
 def test_ph_flow():
-    """Check presentational hints on the flow content."""
     document = HTML(string='''
-        <pre wrap></pre>
-        <center></center>
-        <div align=center></div>
-        <div align=middle></div>
-        <div align=left></div>
-        <div align=right></div>
-        <div align=justify></div>
+      <pre wrap></pre>
+      <center></center>
+      <div align=center></div>
+      <div align=middle></div>
+      <div align=left></div>
+      <div align=right></div>
+      <div align=justify></div>
     ''').render(stylesheets=[PH_TESTING_CSS], presentational_hints=True)
     page, = document.pages
     html, = page._page_box.children
@@ -79,16 +76,15 @@ def test_ph_flow():
 
 @assert_no_logs
 def test_ph_phrasing():
-    """Check presentational hints on the phrasing content."""
     document = HTML(string='''
-        <br clear=left>
-        <br clear=right />
-        <br clear=both />
-        <br clear=all />
-        <font color=red face=ahem size=7></font>
-        <Font size=4></Font>
-        <font size=+5 ></font>
-        <font size=-5 ></font>
+      <br clear=left>
+      <br clear=right />
+      <br clear=both />
+      <br clear=all />
+      <font color=red face=ahem size=7></font>
+      <Font size=4></Font>
+      <font size=+5 ></font>
+      <font size=-5 ></font>
     ''').render(stylesheets=[PH_TESTING_CSS], presentational_hints=True)
     page, = document.pages
     html, = page._page_box.children
@@ -113,20 +109,19 @@ def test_ph_phrasing():
 
 @assert_no_logs
 def test_ph_lists():
-    """Check presentational hints on lists."""
     document = HTML(string='''
-        <ol>
-          <li type=A></li>
-          <li type=1></li>
-          <li type=a></li>
-          <li type=i></li>
-          <li type=I></li>
-        </ol>
-        <ul>
-          <li type=circle></li>
-          <li type=disc></li>
-          <li type=square></li>
-        </ul>
+      <ol>
+        <li type=A></li>
+        <li type=1></li>
+        <li type=a></li>
+        <li type=i></li>
+        <li type=I></li>
+      </ol>
+      <ul>
+        <li type=circle></li>
+        <li type=disc></li>
+        <li type=square></li>
+      </ul>
     ''').render(stylesheets=[PH_TESTING_CSS], presentational_hints=True)
     page, = document.pages
     html, = page._page_box.children
@@ -143,15 +138,18 @@ def test_ph_lists():
     assert uli2.style['list_style_type'] == 'disc'
     assert uli3.style['list_style_type'] == 'square'
 
+
+@assert_no_logs
+def test_ph_lists_types():
     document = HTML(string='''
-        <ol type=A></ol>
-        <ol type=1></ol>
-        <ol type=a></ol>
-        <ol type=i></ol>
-        <ol type=I></ol>
-        <ul type=circle></ul>
-        <ul type=disc></ul>
-        <ul type=square></ul>
+      <ol type=A></ol>
+      <ol type=1></ol>
+      <ol type=a></ol>
+      <ol type=i></ol>
+      <ol type=I></ol>
+      <ul type=circle></ul>
+      <ul type=disc></ul>
+      <ul type=square></ul>
     ''').render(stylesheets=[PH_TESTING_CSS], presentational_hints=True)
     page, = document.pages
     html, = page._page_box.children
@@ -169,28 +167,27 @@ def test_ph_lists():
 
 @assert_no_logs
 def test_ph_tables():
-    """Check presentational hints on tables."""
     document = HTML(string='''
-        <table align=left rules=none></table>
-        <table align=right rules=groups></table>
-        <table align=center rules=rows></table>
-        <table border=10 cellspacing=3 bordercolor=green>
-          <thead>
-            <tr>
-              <th valign=top></th>
-            </tr>
-          </thead>
+      <table align=left rules=none></table>
+      <table align=right rules=groups></table>
+      <table align=center rules=rows></table>
+      <table border=10 cellspacing=3 bordercolor=green>
+        <thead>
           <tr>
-            <td nowrap><h1 align=right></h1><p align=center></p></td>
+            <th valign=top></th>
           </tr>
+        </thead>
+        <tr>
+          <td nowrap><h1 align=right></h1><p align=center></p></td>
+        </tr>
+        <tr>
+        </tr>
+        <tfoot align=justify>
           <tr>
+            <td></td>
           </tr>
-          <tfoot align=justify>
-            <tr>
-              <td></td>
-            </tr>
-          </tfoot>
-        </table>
+        </tfoot>
+      </table>
     ''').render(stylesheets=[PH_TESTING_CSS], presentational_hints=True)
     page, = document.pages
     html, = page._page_box.children
@@ -232,13 +229,12 @@ def test_ph_tables():
 
 @assert_no_logs
 def test_ph_hr():
-    """Check presentational hints on horizontal rules."""
     document = HTML(string='''
-        <hr align=left>
-        <hr align=right />
-        <hr align=both color=red />
-        <hr align=center noshade size=10 />
-        <hr align=all size=8 width=100 />
+      <hr align=left>
+      <hr align=right />
+      <hr align=both color=red />
+      <hr align=center noshade size=10 />
+      <hr align=all size=8 width=100 />
     ''').render(stylesheets=[PH_TESTING_CSS], presentational_hints=True)
     page, = document.pages
     html, = page._page_box.children
@@ -263,13 +259,12 @@ def test_ph_hr():
 
 @assert_no_logs
 def test_ph_embedded():
-    """Check presentational hints on embedded contents."""
     document = HTML(string='''
-        <object data="data:image/svg+xml,<svg></svg>"
-                align=top hspace=10 vspace=20></object>
-        <img src="data:image/svg+xml,<svg></svg>" alt=text
+      <object data="data:image/svg+xml,<svg></svg>"
+              align=top hspace=10 vspace=20></object>
+      <img src="data:image/svg+xml,<svg></svg>" alt=text
               align=right width=10 height=20 />
-        <embed src="data:image/svg+xml,<svg></svg>" align=texttop />
+      <embed src="data:image/svg+xml,<svg></svg>" align=texttop />
     ''').render(stylesheets=[PH_TESTING_CSS], presentational_hints=True)
     page, = document.pages
     html, = page._page_box.children

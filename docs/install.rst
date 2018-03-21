@@ -31,8 +31,8 @@ WeasyPrint |version| depends on:
 
 
 Python, cairo, Pango and GDK-PixBuf need to be installed separately. See
-platform-specific instructions for :ref:`Linux <linux>`, :ref:`OS X <os-x>` and
-:ref:`Windows <windows>` below.
+platform-specific instructions for :ref:`Linux <linux>`, :ref:`macOS <macos>`
+and :ref:`Windows <windows>` below.
 
 Install WeasyPrint with pip_.
 This will automatically install most of dependencies.
@@ -57,13 +57,19 @@ Now let’s try it:
 You should see warnings about unsupported CSS 3 stuff; this is expected.
 In the PDF you should see the WeasyPrint logo on the first page.
 
-You can also play with :ref:`navigator`. Start it with
+You can also play with :ref:`navigator` or :ref:`renderer`. Start it with
 
 .. code-block:: sh
 
-    python -m weasyprint.navigator
+    python -m weasyprint.tools.navigator
 
-and open your browser at http://127.0.0.1:5000/. Read more :ref:`in the tutorial <navigator>`.
+or
+
+.. code-block:: sh
+
+    python -m weasyprint.tools.renderer
+
+and open your browser at http://127.0.0.1:5000/.
 
 If everything goes well, you’re ready to :doc:`start using </tutorial>`
 WeasyPrint! Otherwise, please copy the full error message and
@@ -136,8 +142,8 @@ install it with pip after installing the following packages:
     emerge pip cairo pango gdk-pixbuf cffi
 
 
-OS X
-----
+macOS
+-----
 
 WeasyPrint is automatically installed and tested on virtual macOS machines. The
 official installation method relies on Homebrew:
