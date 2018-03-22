@@ -194,3 +194,10 @@ your own, don't even try to report an issue, kittens will die because of you.**
   in `Python's wiki <https://wiki.python.org/moin/WindowsCompilers>`_,
 - install WeasyPrint with ``python -m pip install weasyprint``,
 - test with ``python -m weasyprint http://weasyprint.org weasyprint.pdf``.
+
+If you get an error like ``OSError: dlopen() failed to load a library: cairo /
+cairo-2`` it's because Cairo (or the library given in your error) is not
+available in one of the folders listed in your ``PATH`` environment
+variable. Reinstalling GTK (and carefully reading the warnings above) will
+probably solve your problem. You can also find extra help in `this bug report
+<https://github.com/Kozea/WeasyPrint/issues/589>`_.
