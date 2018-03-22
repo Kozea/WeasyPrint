@@ -131,6 +131,10 @@ def get_next_linebox(context, linebox, position_y, skip_stack,
         line.margin_bottom = 0
 
         line.translate(offset_x, offset_y)
+        # Avoid floating point errors, as position_y - top + top != position_y
+        # Removing this line breaks the position == linebox.position test below
+        # See https://github.com/Kozea/WeasyPrint/issues/583
+        line.position_y = position_y
 
         if line.height <= candidate_height:
             break
