@@ -93,9 +93,10 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
         box.width = preferred.flex_max_content_width(context, box)
     children = box.children
     if skip_stack is not None:
-        assert skip_stack[1] is None
         children = children[skip_stack[0]:]
-    skip_stack = None
+        skip_stack = skip_stack[1]
+    else:
+        skip_stack = None
     for child in children:
         if not child.is_flex_item:
             continue
@@ -222,7 +223,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                     child.padding_top + child.padding_bottom)
                 if child_height + box.height > main_space:
                     resume_at = (i, None)
-                    children = children[:i]
+                    children = children[:i + 1]
                     break
                 box.height += child_height
 
@@ -766,13 +767,18 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
     for line in flex_lines:
         for child in line:
             if child.is_flex_item:
-                new_child = blocks.block_box_layout(
+                new_child, child_resume_at = blocks.block_box_layout(
                     context, child, max_position_y, skip_stack, box,
                     device_size, page_is_empty, absolute_boxes, fixed_boxes,
-                    adjoining_margins=[])[0]
-                if new_child is not None:
+                    adjoining_margins=[])[:2]
+                if new_child is None:
+                    if resume_at and resume_at[0]:
+                        resume_at = (resume_at[0] - 1, None)
+                else:
                     list_marker_layout(context, new_child)
                     box.children.append(new_child)
+                    if child_resume_at is not None:
+                        resume_at = (resume_at[0], child_resume_at)
 
     # Set box height
     if axis == 'width' and box.height == 'auto':
