@@ -778,7 +778,10 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                     list_marker_layout(context, new_child)
                     box.children.append(new_child)
                     if child_resume_at is not None:
-                        resume_at = (resume_at[0], child_resume_at)
+                        if resume_at:
+                            resume_at = (resume_at[0], child_resume_at)
+                        else:
+                            resume_at = (0, child_resume_at)
 
     # Set box height
     if axis == 'width' and box.height == 'auto':
