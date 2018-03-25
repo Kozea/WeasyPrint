@@ -48,13 +48,7 @@ BOX_TYPE_FROM_DISPLAY = {
 def build_formatting_structure(element_tree, style_for, get_image_from_uri,
                                base_url):
     """Build a formatting structure (box tree) from an element tree."""
-
-    LOGGER.info('Step 4.1 - Verifying collected targets')
-    # BTW: this step is *not* required. Dont't think it speeds up things a lot
-    # by tagging UNDEFINED targets in advance
-    TARGET_COLLECTOR.verify_collection()
-    LOGGER.info('Step 4.2 - Building basic boxes')
-
+    LOGGER.info('Step 4.1 - Building basic boxes')
     box_list = element_to_box(
         element_tree, style_for, get_image_from_uri, base_url)
     if box_list:
@@ -73,9 +67,10 @@ def build_formatting_structure(element_tree, style_for, get_image_from_uri,
         box, = element_to_box(
             element_tree, root_style_for, get_image_from_uri, base_url)
 
-    TARGET_COLLECTOR.check_peding_targets()
-    # state now: no more pending targeds in pseudo-element's content boxes
+    LOGGER.info('Step 4.2 - Checking pending targets')
+    TARGET_COLLECTOR.check_pending_targets()
 
+    LOGGER.info('Step 4.3 - Creating anonymous boxes')
     box.is_for_root_element = True
     # If this is changed, maybe update weasy.layout.pages.make_margin_boxes()
     process_whitespace(box)

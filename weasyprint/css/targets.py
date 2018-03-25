@@ -63,7 +63,7 @@ class _TargetCollector(object):
         self.reset()
 
     def reset(self):
-        self.had_peding_targets = False
+        self.had_pending_targets = False
         self.existing_anchors = []
         self.items = {}
 
@@ -77,10 +77,9 @@ class _TargetCollector(object):
         """
         if anchor_name and isinstance(anchor_name, str):
             if anchor_name in self.existing_anchors:
-                LOGGER.warning('  ! anchor redefined: %s', anchor_name)
+                LOGGER.warning('Anchor defined twice: %s', anchor_name)
             else:
                 self.existing_anchors.append(anchor_name)
-                LOGGER.debug('  + anchor added: "%s" ', anchor_name)
 
     def collect_computed_target(self, anchor_name):
         """
@@ -92,17 +91,6 @@ class _TargetCollector(object):
         if anchor_name and isinstance(anchor_name, str):
             self._addtarget(anchor_name)
 
-    def verify_collection(self):
-        """obsolete function, only needed for testing"""
-        LOGGER.debug('------- collected targets -------------')
-        for key, item in self.items.items():
-            # mark target names not in existing_anchors as UNDEFINED
-            if key not in self.existing_anchors:
-                item.state = TARGET_STATE.UNDEFINED
-            LOGGER.debug('%s %s', key, TARGET_STATE.name(item.state))
-        LOGGER.debug('------- existing anchors -------------')
-        LOGGER.debug(self.existing_anchors)
-
     def lookup_target(self, anchor_name, source_box, parse_again_function):
         """ called in content_to_boxes() when the source_box needs a target-*
         returns a TargetLookupItem
@@ -112,14 +100,11 @@ class _TargetCollector(object):
         item = self.items.get(
             anchor_name,
             TargetLookupItem(TARGET_STATE.UNDEFINED))
-        LOGGER.debug(
-            'lookup_target %s %s', anchor_name, TARGET_STATE.name(item.state))
         if item.state == TARGET_STATE.PENDING:
             if anchor_name not in self.existing_anchors:
                 item.state = TARGET_STATE.UNDEFINED
             else:
-                self.had_peding_targets = True
-                LOGGER.debug('   -> still pending. Keep infos.')
+                self.had_pending_targets = True
                 item.pending_boxes.setdefault(source_box, parse_again_function)
 
         if item.state == TARGET_STATE.UNDEFINED:
@@ -138,33 +123,18 @@ class _TargetCollector(object):
         only previously collected anchor_names are stored
         """
         item = self.items.get(anchor_name, None)
-        if item:
-            LOGGER.debug(
-                'store_target? %s %s', anchor_name,
-                TARGET_STATE.name(item.state))
-            if item.state == TARGET_STATE.PENDING:
-                LOGGER.debug('   -> update: %s', target_counter_values)
-                # need A REAL DUPLICATE UNCONNECTED SEPARATE COPY!!
-                item.state = TARGET_STATE.UPTODATE
-                item.target_counter_values = copy.deepcopy(
-                    target_counter_values)
-                item.target_box = target_box
-            else:
-                LOGGER.debug(
-                    '   -> duplicate anchor definition: %s' % anchor_name)
-        else:
-            LOGGER.debug('    -> achor %s not targetted' % anchor_name)
+        if item and item.state == TARGET_STATE.PENDING:
+            item.state = TARGET_STATE.UPTODATE
+            item.target_counter_values = copy.deepcopy(target_counter_values)
+            item.target_box = target_box
 
-    def check_peding_targets(self):
-        if not self.had_peding_targets:
+    def check_pending_targets(self):
+        if not self.had_pending_targets:
             return
-        LOGGER.info('Step 4.3 Reparsing pending targets')
-        self.had_peding_targets = False
+        self.had_pending_targets = False
         for key, item in self.items.items():
-            # create the pending content boxes NOW
-            # UNDEFINED items never hava a `parse_again` function
-            for abox, func in item.pending_boxes.items():
-                func()
+            for _, function in item.pending_boxes.items():
+                function()
 
 
 TARGET_COLLECTOR = _TargetCollector()
