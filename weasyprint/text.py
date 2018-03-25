@@ -246,8 +246,6 @@ gobject.g_type_init()
 units_to_double = pango.pango_units_to_double
 units_from_double = pango.pango_units_from_double
 
-PYPHEN_DICTIONARY_CACHE = {}
-
 
 PANGO_STYLE = {
     'normal': pango.PANGO_STYLE_NORMAL,
@@ -1052,11 +1050,11 @@ def split_first_line(text, style, context, max_width, justification_spacing,
             elif hyphens == 'auto' and lang:
                 # The next word does not fit, try hyphenation
                 dictionary_key = (lang, left, right, total)
-                dictionary = PYPHEN_DICTIONARY_CACHE.get(dictionary_key)
+                dictionary = context.dictionaries.get(dictionary_key)
                 if dictionary is None:
                     dictionary = pyphen.Pyphen(
                         lang=lang, left=left, right=right)
-                    PYPHEN_DICTIONARY_CACHE[dictionary_key] = dictionary
+                    context.dictionaries[dictionary_key] = dictionary
                 dictionary_iterations = [
                     start for start, end in dictionary.iterate(next_word)]
             else:

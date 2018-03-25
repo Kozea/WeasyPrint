@@ -84,6 +84,7 @@ class LayoutContext(object):
         self.strut_layouts = {}
         self.font_features = {}
         self.tables = {}
+        self.dictionaries = {}
 
     def create_block_formatting_context(self):
         self.excluded_shapes = []
