@@ -32,6 +32,11 @@ As a Python library
 -------------------
 .. currentmodule:: weasyprint
 
+.. attention::
+
+    Using WeasyPrint with untrusted HTML or untrusted CSS may lead to various
+    :ref:`security problems <security>`.
+
 Quickstart
 ..........
 
@@ -309,6 +314,134 @@ WeasyPrint as a PNG image. Start it with:
     python -m weasyprint.tools.renderer
 
 … and open your browser at http://127.0.0.1:5000/.
+
+
+.. _security:
+
+Security
+--------
+
+When used with untrusted HTMl or untrusted CSS, WeasyPrint can meet security
+problems. You will need extra configuration in your Python application to avoid
+high memory use, endless renderings or local files leaks.
+
+.. _long-renderings:
+
+Long renderings
+...............
+
+WeasyPrint is pretty slow and can take a long time to render long documents or
+specially crafted HTML pages.
+
+When WeasyPrint used on a server with HTML or CSS files from untrusted sources,
+this problem can lead to very long time renderings, with processes with high
+CPU and memory use. Even small documents may lead to really long rendering
+times, restricting HTML document size is not enough.
+
+If you use WeasyPrint on a server with HTML or CSS samples coming from
+untrusted users, you should:
+
+- limit rendering time and memory use of your process, for example using
+  ``evil-reload-on-as`` and ``harakiri`` options if you use uWSGI.
+
+Infinite requests
+.................
+
+WeasyPrint can reach files on the network, for example using ``http://``
+URIs. For various reasons, HTTP requests may take a long time and lead to
+problems similar to :ref:`long-renderings`.
+
+WeasyPrint has a default timeout of 10 seconds for HTTP, HTTPS and FTP
+resources. This timeout has no effect with other protocols, including access to
+``file://`` URIs.
+
+If you use WeasyPrint on a server with HTML or CSS samples coming from
+untrusted users, or need to reach network resources, you should:
+
+- use a custom `URL fetcher <url-fetchers>`_,
+- follow solutions listed in :ref:`long-renderings`.
+
+Infinite loops
+..............
+
+WeasyPrint has been hit by a large number of bugs, including infinite
+loops. Specially crafted HTML and CSS files can quite easily lead to infinite
+loops and infinite rendering times.
+
+If you use WeasyPrint on a server with HTML or CSS samples coming from
+untrusted users, you should:
+
+- follow solutions listed in :ref:`long-renderings`.
+
+Huge values
+...........
+
+WeasyPrint doesn't restrict integer and float values used in CSS. Using huge
+values for some properties (page sizes, font sizes, block sizes) can lead to
+various problems, including infinite rendering times, huge PDF files, high
+memory use and crashes.
+
+This problem is really hard to avoid. Even parsing CSS stylesheets and
+searching for huge values is not enough, as it is quite easy to trick CSS
+pre-processors using relative units (``em`` and ``%`` for example).
+
+If you use WeasyPrint on a server with HTML or CSS samples coming from
+untrusted users, you should:
+
+- follow solutions listed in :ref:`long-renderings`.
+
+Access to local files
+.....................
+
+As any web renderer, WeasyPrint can reach files on the local filesystem using
+``file://`` URIs. These files can be shown in ``img`` or ``embed`` tags for
+example.
+
+When WeasyPrint used on a server with HTML or CSS files from untrusted sources,
+this feature may be used to know if files are present on the server filesystem,
+and to embed them in generated documents.
+
+Unix-like systems also have special local files with infinite size, like
+``/dev/urandom``. Referencing these files in HTML or CSS files obviously lead
+to infinite time renderings.
+
+If you use WeasyPrint on a server with HTML or CSS samples coming from
+untrusted users, you should:
+
+- restrict your process access to trusted files using sandboxing solutions,
+- use a custom `URL fetcher <url-fetchers>`_ that doesn't allow ``file://``
+  URLs or filters access depending on given paths.
+- follow solutions listed in :ref:`long-renderings`.
+
+System information leaks
+........................
+
+WeasyPrint relies on many libraries that can leak hardware and software
+information. Even when this information looks useless, it can be used by
+attackers to exploit other security breaches.
+
+Leaks can include (but are not restricted to):
+
+- locally installed fonts (using ``font-family`` and ``@font-face``),
+- network configuration (IPv4 and IPv6 support, IP addressing, firewall
+  configuration, using ``http://`` URIs and tracking time used to render
+  documents),
+- hardware and software used for graphical rendering (as Cairo renderings
+  can change with CPU and GPU features),
+- Python, Cairo, Pango and other libraries versions (implementation details
+  lead to different renderings).
+
+SVG images
+..........
+
+WeasyPrint relies on `CairoSVG <http://cairosvg.org/>`_ to render SVG
+files. CairoSVG more or less suffers from the same problems as the ones listed
+here for WeasyPrint.
+
+Security advices apply for untrusted SVG files as they apply for untrusted HTML
+and CSS documents.
+
+Note that WeasyPrint gives CairoSVG its URL fetcher.
 
 
 Errors
