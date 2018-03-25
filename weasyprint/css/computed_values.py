@@ -401,19 +401,6 @@ def column_gap(computer, name, value):
     return length(computer, name, value, pixels_only=True)
 
 
-@register_computer('string-set')
-def string_set(computer, name, values):
-    """Compute the <content-lists> of the ``string-set`` property."""
-    # never happens, but...prudence is the better part of valor
-    if values in ('normal', 'none'):
-        return values
-    if type(computer.element).__name__ != 'Element' or computer.pseudo_type:
-        return 'none'
-    return tuple(
-        (string_name, content(computer, name, string_values))
-        for i, (string_name, string_values) in enumerate(values))
-
-
 @register_computer('bookmark-label')
 @register_computer('content')
 def content(computer, name, values):

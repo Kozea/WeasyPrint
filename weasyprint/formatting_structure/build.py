@@ -232,7 +232,8 @@ def before_after_to_box(element, pseudo_type, state, style_for,
 
 def compute_content_list(content_list, parent_box, counter_values, parse_again,
                          get_image_from_uri=None, quote_depth=None,
-                         quote_style=None, context=None, page=None):
+                         quote_style=None, context=None, page=None,
+                         element=None):
     """Compute and return the boxes corresponding to the content_list.
 
     parse_again is called to compute the content_list again when
@@ -271,12 +272,12 @@ def compute_content_list(content_list, parent_box, counter_values, parse_again,
             counter_name, separator, counter_style = value
             texts.append(separator.join(
                 counters.format(counter_value, counter_style)
-                for counter_value in counter_values.get(counter_name, [0])
-            ))
+                for counter_value in counter_values.get(counter_name, [0])))
         elif type_ == 'string' and context is not None and page is not None:
             # string() is only valid in @page context
-            text = context.get_string_set_for(page, *value)
-            texts.append(text)
+            texts.append(context.get_string_set_for(page, *value))
+        elif type_ == 'attr' and element is not None:
+            texts.append(element.get(value, ''))
         elif type_ == 'target-counter':
             target_name, counter_name, counter_style = value
             lookup_target = TARGET_COLLECTOR.lookup_target(
@@ -297,8 +298,7 @@ def compute_content_list(content_list, parent_box, counter_values, parse_again,
                 texts.append(separator.join(
                     counters.format(counter_value, counter_style)
                     for counter_value in target_counter_values.get(
-                        counter_name, [0])
-                ))
+                        counter_name, [0])))
             else:
                 texts = []
                 break
@@ -360,29 +360,29 @@ def content_to_boxes(style, parent_box, quote_depth, counter_values,
         get_image_from_uri, quote_depth, style['quotes'], context, page)
 
 
-def compute_string_set_string(box, string_name, content_list, counter_values):
+def compute_string_set(element, box, string_name, content_list,
+                       counter_values):
     """Parse the content-list value of ``string_name`` for ``string-set``."""
     def parse_again():
         """Closure to parse the string-set-string value all again."""
-        compute_string_set_string(
-            box, string_name, content_list, counter_values)
+        compute_string_set(
+            element, box, string_name, content_list, counter_values)
 
     box_list = compute_content_list(
-        content_list, box, counter_values, parse_again)
+        content_list, box, counter_values, parse_again, element=element)
     if box_list:
         string = ''.join(
             box.text for box in box_list if isinstance(box, boxes.TextBox))
         box.string_set.append((string_name, string))
 
 
-def compute_bookmark_label(box, content_list, counter_values):
+def compute_bookmark_label(element, box, content_list, counter_values):
     """Parses the content-list value for ``bookmark-label``."""
     def parse_again():
-        compute_bookmark_label(box, content_list, counter_values)
+        compute_bookmark_label(element, box, content_list, counter_values)
 
     box_list = compute_content_list(
-        content_list, box, counter_values,
-        parse_again)
+        content_list, box, counter_values, parse_again, element=element)
     box.bookmark_label = ''.join(
         box.text for box in box_list if isinstance(box, boxes.TextBox))
 
@@ -397,13 +397,13 @@ def set_content_lists(element, box, style, counter_values):
     box.string_set = []
     if style['string_set'] != 'none':
         for i, (string_name, string_values) in enumerate(style['string_set']):
-            compute_string_set_string(
-                box, string_name, string_values, counter_values)
+            compute_string_set(
+                element, box, string_name, string_values, counter_values)
     if style['bookmark_label'] == 'none':
         box.bookmark_label = ''
     else:
         compute_bookmark_label(
-            box, style['bookmark_label'], counter_values)
+            element, box, style['bookmark_label'], counter_values)
 
 
 def update_counters(state, style):
