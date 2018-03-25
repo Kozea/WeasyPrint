@@ -342,7 +342,13 @@ If you use WeasyPrint on a server with HTML or CSS samples coming from
 untrusted users, you should:
 
 - limit rendering time and memory use of your process, for example using
-  ``evil-reload-on-as`` and ``harakiri`` options if you use uWSGI.
+  ``evil-reload-on-as`` and ``harakiri`` options if you use uWSGI,
+- limit memory use at the OS level, for example with ``ulimit`` on Linux,
+- automatically kill the process when it uses too much memory or when the
+  rendering time is too high, by regularly launching a script to do so if no
+  better option is available,
+- truncate and sanitize HTML and CSS input to avoid very long documents and
+  access to external URLs.
 
 Infinite requests
 .................
