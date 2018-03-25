@@ -733,7 +733,10 @@ def clip(token):
 
 @validator(wants_base_url=True)
 def content(tokens, base_url):
-    """``content`` property validation."""
+    """``content`` property validation.
+    TODO: should become a @comma_separated_list to validate
+          CSS3 <content-replacement>
+    """
     keyword = get_single_keyword(tokens)
     if keyword in ('normal', 'none'):
         return keyword
@@ -748,38 +751,8 @@ def validate_content_token(base_url, token):
     Return (type, content) or False for invalid tokens.
 
     """
-    quote_type = CONTENT_QUOTE_KEYWORDS.get(get_keyword(token))
-    if quote_type is not None:
-        return ('QUOTE', quote_type)
-
-    type_ = token.type
-    if type_ == 'string':
-        return ('STRING', token.value)
-    if type_ == 'url':
-        return ('URI', safe_urljoin(base_url, token.value))
-    function = parse_function(token)
-    if function:
-        name, args = function
-        prototype = (name, [a.type for a in args])
-        args = [getattr(a, 'value', a) for a in args]
-        if prototype == ('attr', ['ident']):
-            return (name, args[0])
-        elif prototype in (('counter', ['ident']),
-                           ('counters', ['ident', 'string'])):
-            args.append('decimal')
-            return (name, args)
-        elif prototype in (('counter', ['ident', 'ident']),
-                           ('counters', ['ident', 'string', 'ident'])):
-            style = args[-1]
-            if style in ('none', 'decimal') or style in counters.STYLES:
-                return (name, args)
-        elif prototype in (('string', ['ident']),
-                           ('string', ['ident', 'ident'])):
-            if len(args) > 1:
-                args[1] = args[1].lower()
-                if args[1] not in ('first', 'start', 'last', 'first-except'):
-                    raise InvalidValues()
-            return (name, args)
+    return validate_content_list_token(
+        base_url, token, for_content_box=True)
 
 
 def parse_function(function_token):
@@ -1614,10 +1587,11 @@ def lang(token):
         return ('string', token.value)
 
 
-@validator(unstable=True)
-def bookmark_label(tokens):
+@validator(unstable=True, wants_base_url=True)
+def bookmark_label(tokens, base_url):
     """Validation for ``bookmark-label``."""
-    parsed_tokens = tuple(validate_content_list_token(v) for v in tokens)
+    parsed_tokens = tuple(validate_content_list_token(
+        base_url, v, for_content_box=False) for v in tokens)
     if None not in parsed_tokens:
         return parsed_tokens
 
@@ -1634,50 +1608,212 @@ def bookmark_level(token):
         return 'none'
 
 
-@validator(unstable=True)
+@validator(unstable=True, wants_base_url=True)
 @comma_separated_list
-def string_set(tokens):
+def string_set(tokens, base_url):
     """Validation for ``string-set``."""
     if len(tokens) >= 2:
         var_name = get_keyword(tokens[0])
         parsed_tokens = tuple(
-            validate_content_list_token(v) for v in tokens[1:])
+            validate_content_list_token(
+                base_url, v, for_content_box=False) for v in tokens[1:])
         if None not in parsed_tokens:
             return (var_name, parsed_tokens)
     elif tokens and tokens[0].value == 'none':
         return 'none'
 
 
-def validate_content_list_token(token):
+def validate_content_list_token(base_url, token, for_content_box):
     """Validation for a single token of <content-list> used in GCPM.
+    Not really.
+    GCPM <content-list> =
+        [ <string> | contents | <image> | <quote> | <target> | <leader()> ]+
+    (Draft, 24 January 2018. Really a DRAFT. Not an RFC. Not a SPEC.
+    BTW: The current Draft GCPM ``string-set`` value =
+        none | [ <custom-ident> <string>+ ]#
+
+    So. This is the validation for tokens that make sense in
+    css properties ``string-set``, ``bookmark-label`` and  ``content``:
+
+    <modified-content-list> = [
+      <string> | attr() | <counter> | <target> |
+      <content> |
+      url() | <quote> | string() | leader()
+    ]+
+
+    :param for_content_box: controls which tokens are valid
+
+    Valid tokens when ``for_content_box`` ==
+
+    - True (called from/for css property 'content':
+
+      <string> | attr() | <counter> | <target> |
+      url() | <quote> | string() | leader()
+
+      The final decision whether a token is valid is the job of
+      computed_values.content()
+
+    - False (called from/for css properties 'string-set', 'bookmark-label':
+      <string> | attr() | <counter> | <target> |
+      <content>
 
     Return (type, content) or False for invalid tokens.
-
     """
+
+    def validate_target_token(token):
+        """ validate first parameter of ``target-*()``-token
+            returns ['attr', '<attrname>' ]
+                 or ['STRING', '<anchorname>'] when valid
+            evaluation of the anchorname is job of compute()
+        """
+        # TODO: what about ``attr(href url)`` ?
+        if isinstance(token, str):
+            # url() or "string" given
+            # verify #anchor is done in compute()
+            # if token.value.startswith('#'):
+            return ['STRING', token]
+        # parse_function takes token.type for granted!
+        if not hasattr(token, 'type'):
+            return
+        function = parse_function(token)
+        if function:
+            name, args = function
+            params = [a.type for a in args]
+            values = [getattr(a, 'value', a) for a in args]
+            if name == 'attr' and params == ['ident']:
+                return [name, values[0]]
+
+    if for_content_box:
+        quote_type = CONTENT_QUOTE_KEYWORDS.get(get_keyword(token))
+        if quote_type is not None:
+            return ('QUOTE', quote_type)
+    else:
+        if get_keyword(token) == 'contents':
+            return ('content', 'text')
     type_ = token.type
     if type_ == 'string':
         return ('STRING', token.value)
+    if for_content_box:
+        if type_ == 'url':
+            return ('URI', safe_urljoin(base_url, token.value))
     function = parse_function(token)
-    if function:
-        name, args = function
-        prototype = (name, tuple(a.type for a in args))
-        args = tuple(getattr(a, 'value', a) for a in args)
-        if prototype == ('attr', ('ident',)):
+    if not function:
+        # to pass unit test `test_boxes.test_before_after`
+        # the log string must contain "invalid value"
+        raise InvalidValues('invalid value/unsupported token ´%s\´' % (token,))
+
+    name, args = function
+    # known functions in 'content', 'string-set' and 'bookmark-label':
+    valid_functions = ['attr',
+                       'counter', 'counters',
+                       'target-counter', 'target-counters', 'target-text']
+    # 'content'
+    if for_content_box:
+        valid_functions += ['string',
+                            'leader']
+    else:
+        valid_functions += ['content']
+    unsupported_functions = ['leader']
+    if name not in valid_functions:
+        # to pass unit test `test_boxes.test_before_after`
+        # the log string must contain "invalid value"
+        raise InvalidValues('invalid value: function `%s()`' % (name))
+    if name in unsupported_functions:
+        # suppress -- not (yet) implemented, no error
+        LOGGER.warn('\'%s()\' not (yet) supported', name)
+        return ('STRING', '')
+
+    prototype = (name, [a.type for a in args])
+    args = [getattr(a, 'value', a) for a in args]
+    if prototype == ('attr', ['ident']):
+        # TODO: what about ``attr(href url)`` ?
+        return (name, args[0])
+    elif prototype in (('content', []), ('content', ['ident', ])):
+        if not args:
+            return (name, 'text')
+        elif args[0] in ('text', 'after', 'before', 'first-letter'):
             return (name, args[0])
-        elif prototype in (('content', ()), ('content', ('ident',))):
-            if not args:
-                return (name, 'text')
-            elif args[0] in ('text', 'after', 'before', 'first-letter'):
-                return (name, args[0])
-        elif prototype in (('counter', ('ident',)),
-                           ('counters', ('ident', 'string'))):
-            args += ('decimal',)
+    elif prototype in (('counter', ['ident']),
+                       ('counters', ['ident', 'string'])):
+        args.append('decimal')
+        return (name, args)
+    elif prototype in (('counter', ['ident', 'ident']),
+                       ('counters', ['ident', 'string', 'ident'])):
+        style = args[-1]
+        if style in ('none', 'decimal') or style in counters.STYLES:
             return (name, args)
-        elif prototype in (('counter', ('ident', 'ident')),
-                           ('counters', ('ident', 'string', 'ident'))):
+    elif prototype in (('string', ['ident']),
+                       ('string', ['ident', 'ident'])):
+        if len(args) > 1:
+            args[1] = args[1].lower()
+            if args[1] not in ('first', 'start', 'last', 'first-except'):
+                raise InvalidValues()
+        return (name, args)
+    # target-counter() = target-counter(
+    #    [ <string> | <url> ] , <custom-ident> ,
+    #    <counter-style>? )
+    elif name == 'target-counter':
+        if prototype in ((name, ['url', 'ident']),
+                         (name, ['url', 'ident', 'ident']),
+                         (name, ['string', 'ident']),
+                         (name, ['string', 'ident', 'ident']),
+                         (name, ['function', 'ident']),
+                         (name, ['function', 'ident', 'ident'])):
+            # default style
+            if len(args) == 2:
+                args.append('decimal')
+            # accept "#anchorname" and attr(x)
+            retval = validate_target_token(args.pop(0))
+            if retval is None:
+                raise InvalidValues()
             style = args[-1]
             if style in ('none', 'decimal') or style in counters.STYLES:
-                return (name, args)
+                return (name, retval + args)
+    # target-counters() = target-counters(
+    #    [ <string> | <url> ] , <custom-ident> , <string> ,
+    #    <counter-style>? )
+    elif name == 'target-counters':
+        if prototype in ((name, ['url', 'ident', 'string']),
+                         (name, ['url', 'ident', 'string', 'ident']),
+                         (name, ['string', 'ident', 'string']),
+                         (name, ['string', 'ident', 'string', 'ident']),
+                         (name, ['function', 'ident', 'string']),
+                         (name, ['function', 'ident', 'string', 'ident'])):
+            # default style
+            if len(args) == 3:
+                args.append('decimal')
+            # accept "#anchorname" and attr(x)
+            retval = validate_target_token(args.pop(0))
+            if retval is None:
+                raise InvalidValues()
+            style = args[-1]
+            if style in ('none', 'decimal') or style in counters.STYLES:
+                return (name, retval + args)
+    # target-text() = target-text(
+    #    [ <string> | <url> ] ,
+    #    [ content | before | after | first-letter ]? )
+    elif name == 'target-text':
+        if prototype in ((name, ['url']),
+                         (name, ['url', 'ident']),
+                         (name, ['string']),
+                         (name, ['string', 'ident']),
+                         (name, ['function']),
+                         (name, ['function', 'ident'])):
+            if len(args) == 1:
+                args.append('content')
+            # accept "#anchorname" and attr(x)
+            retval = validate_target_token(args.pop(0))
+            if retval is None:
+                raise InvalidValues()
+            style = args[-1]
+            # hint: the syntax isn't stable yet!
+            if style in ('content', 'after', 'before', 'first-letter'):
+                # build.TEXT_CONTENT_EXTRACTORS needs 'text'
+                # TODO: should we define
+                # TEXT_CONTENT_EXTRACTORS['content'] == box_text ?
+                if style == 'content':
+                    args[-1] = 'text'
+                return (name, retval + args)
 
 
 @validator(unstable=True)

@@ -16,6 +16,7 @@ import cairocffi as cairo
 
 from . import CSS
 from .css import get_all_computed_styles
+from .css.targets import TARGET_COLLECTOR
 from .draw import draw_page, stacked
 from .fonts import FontConfiguration
 from .formatting_structure import boxes
@@ -295,6 +296,15 @@ class Document(object):
     @classmethod
     def _render(cls, html, stylesheets, enable_hinting,
                 presentational_hints=False, font_config=None):
+        # new Document needs fresh Target-Collection
+        # reset the TARGET_COLLECTOR before the Document's styles are parsed
+        # TODO: call reset at the end of this function to cleanup?
+        # - reset_target_collector Yes/No could be a useful option for users
+        #   who want to combine several documents...
+        # - in the future each Document should create its own TargetCollector
+        #   and hand it down to formatting_structure / pages / maybe css
+        TARGET_COLLECTOR.reset()
+
         if font_config is None:
             font_config = FontConfiguration()
         page_rules = []
