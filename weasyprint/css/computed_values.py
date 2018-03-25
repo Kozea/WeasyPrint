@@ -12,7 +12,6 @@
 from urllib.parse import unquote
 
 from .. import text
-from ..logger import LOGGER
 from ..urls import get_link_attribute
 from .properties import INITIAL_VALUES, Dimension
 from .targets import TARGET_COLLECTOR
@@ -402,27 +401,6 @@ def column_gap(computer, name, value):
     return length(computer, name, value, pixels_only=True)
 
 
-def _toSelector(el, pseudo_type):
-    """convenience function"""
-    elname = type(el).__name__
-    if elname == 'PageType':
-        return ('@page%s %s%s%s %s    ' % (
-            ' ' + el.name if el.name else '',
-            ':' + el.side if el.side else '',
-            ':blank' if el.blank else '',
-            ':first' if el.first else '',
-            pseudo_type if pseudo_type else ''
-            )).rstrip()
-    elif elname == 'Element':
-        return '%s%s' % (
-            el.tag,
-            '::' + pseudo_type if pseudo_type else ''
-            )
-    else:
-        return '<%s>' % (
-            ('%s %s' % (elname, pseudo_type)).rstrip())
-
-
 @register_computer('string-set')
 def string_set(computer, name, values):
     """Compute the <content-lists> of the ``string-set`` property."""
@@ -430,11 +408,6 @@ def string_set(computer, name, values):
     if values in ('normal', 'none'):
         return values
     if type(computer.element).__name__ != 'Element' or computer.pseudo_type:
-        LOGGER.debug(
-            'property `%s` discarded: %s in selector `%s`.',
-            name,
-            'Not a real element',
-            _toSelector(computer.element, computer.pseudo_type))
         return 'none'
     return tuple(
         (string_name, content(computer, name, string_values))
@@ -444,23 +417,15 @@ def string_set(computer, name, values):
 @register_computer('bookmark-label')
 @register_computer('content')
 def content(computer, name, values):
-    """Compute the <content-list>s of ``content``,
-    ``bookmark-label`` and ``string-set`` property."""
+    """Compute the ``content`` and ``bookmark-label`` properties."""
 
     class ComputedContentError(ValueError):
         """Invalid or unsupported values for a known CSS property."""
 
     def computed_content_error(level, reason):
-        getattr(LOGGER, level)(
-            'property `%s` discarded: %s in selector `%s`.',
-            name,
-            reason,
-            _toSelector(computer.element, computer.pseudo_type)
-            )
+        pass
 
     def parse_target_type(type_, values):
-        if type(computer.element).__name__ != 'Element':
-            raise ComputedContentError('\'%s\' not (yet) supported' % (type_,))
         # values = ['STRING', <anchorname>, ...]
         #     or   ['attr', <attrname>, ...  ]
         if values[0] == 'attr':
@@ -486,11 +451,9 @@ def content(computer, name, values):
         return values
 
     if name == 'content':
-        # [CSS3 spec](https://www.w3.org/TR/css-content-3/#content-property)
-        # says:
-        # > 'content' applies to:
-        # > ::before, ::after, ::marker, and page margin boxes.
-        # > Image and url values can apply to all elements.
+        # 'content' applies to ::before, ::after, ::marker, and page margin
+        # boxes.
+        # See https://www.w3.org/TR/css-content-3/#content-property
         if not computer.pseudo_type:
             computed_content_error(
                 'debug',
