@@ -235,34 +235,24 @@ def before_after_to_box(element, pseudo_type, state, style_for,
     yield box
 
 
-def compute_content_list(return_a_string,
-                         content_list, parent_box, counter_values,
-                         parse_again_func,
-                         get_image_from_uri=None,
-                         quote_depth=None, quote_style=None,
-                         context=None, page=None):
-    """
-    Compute and return the string or the boxes corresponding
-    to the content_list.
+def compute_content_list(content_list, parent_box, counter_values, parse_again,
+                         get_image_from_uri=None, quote_depth=None,
+                         quote_style=None, context=None, page=None):
+    """Compute and return the boxes corresponding to the content_list.
 
-    :param return_a_string:
-        True for string-set-string and bookmark-label,
-        otherwise (content) a list of anonymous InlineBox(es) is returned
-    :param parse_again_func:
-        fnction to compute the content_list again
-        when TARGET_COLLECTOR.lookup_target() detected a TARGET_STATE.PENDING
+    parse_again is called to compute the content_list again when
+    TARGET_COLLECTOR.lookup_target() detected a TARGET_STATE.PENDING.
 
-        build_formatting_structure calls
-        TARGET_COLLECTOR.check_pending_targets
-        after the first pass to do required reparsing
+    build_formatting_structure calls TARGET_COLLECTOR.check_pending_targets
+    after the first pass to do required reparsing.
+
     """
     boxlist = []
     texts = []
     for type_, value in content_list:
         if type_ == 'STRING':
             texts.append(value)
-        elif type_ == 'URI' and not return_a_string and \
-                get_image_from_uri is not None:
+        elif type_ == 'URI' and get_image_from_uri is not None:
             image = get_image_from_uri(value)
             if image is not None:
                 text = ''.join(texts)
@@ -272,7 +262,7 @@ def compute_content_list(return_a_string,
                 texts = []
                 boxlist.append(
                     boxes.InlineReplacedBox.anonymous_from(parent_box, image))
-        elif type_ == 'content' and return_a_string:
+        elif type_ == 'content':
             added_text = TEXT_CONTENT_EXTRACTORS[value](parent_box)
             # Simulate the step of white space processing
             # (normally done during the layout)
@@ -295,7 +285,7 @@ def compute_content_list(return_a_string,
         elif type_ == 'target-counter':
             target_name, counter_name, counter_style = value
             lookup_target = TARGET_COLLECTOR.lookup_target(
-                target_name, parent_box, parse_again_func)
+                target_name, parent_box, parse_again)
             if lookup_target.state == TARGET_STATE.UPTODATE:
                 counter_value = lookup_target.target_counter_values.get(
                     counter_name, [0])[-1]
@@ -306,7 +296,7 @@ def compute_content_list(return_a_string,
         elif type_ == 'target-counters':
             target_name, counter_name, separator, counter_style = value
             lookup_target = TARGET_COLLECTOR.lookup_target(
-                target_name, parent_box, parse_again_func)
+                target_name, parent_box, parse_again)
             if lookup_target.state == TARGET_STATE.UPTODATE:
                 target_counter_values = lookup_target.target_counter_values
                 texts.append(separator.join(
@@ -320,7 +310,7 @@ def compute_content_list(return_a_string,
         elif type_ == 'target-text':
             target_name, text_style = value
             lookup_target = TARGET_COLLECTOR.lookup_target(
-                target_name, parent_box, parse_again_func)
+                target_name, parent_box, parse_again)
             if lookup_target.state == TARGET_STATE.UPTODATE:
                 target_box = lookup_target.target_box
                 text = TEXT_CONTENT_EXTRACTORS[text_style](target_box)
@@ -330,8 +320,9 @@ def compute_content_list(return_a_string,
             else:
                 texts = []
                 break
-        elif type_ == 'QUOTE' and not return_a_string and \
-                quote_depth is not None and quote_style is not None:
+        elif (type_ == 'QUOTE' and
+                quote_depth is not None and
+                quote_style is not None):
             is_open, insert = value
             if not is_open:
                 quote_depth[0] = max(0, quote_depth[0] - 1)
@@ -345,8 +336,6 @@ def compute_content_list(return_a_string,
             # TODO: in previous versions an AssertionError was raised!
             pass
     text = ''.join(texts)
-    if return_a_string:
-        return text
     if text:
         boxlist.append(boxes.TextBox.anonymous_from(parent_box, text))
     return boxlist
@@ -374,7 +363,6 @@ def content_to_boxes(style, parent_box, quote_depth, counter_values,
     # Can't use `yield`! Must `return` the boxes otherwise set_content_lists,
     # calling compute_content_list for `contents()`, will fail
     return compute_content_list(
-        False,
         style['content'],
         parent_box, counter_values,
         parse_again,
@@ -395,13 +383,12 @@ def compute_string_set_string(box, string_name, content_list, counter_values):
         compute_string_set_string(
             box, string_name, content_list, counter_values)
 
-    s = compute_content_list(
-        True,
-        content_list, box,
-        counter_values,
-        parse_again)
-    if s:
-        box.string_set.append((string_name, s))
+    box_list = compute_content_list(
+        content_list, box, counter_values, parse_again)
+    if box_list:
+        string = ''.join(
+            box.text for box in box_list if isinstance(box, boxes.TextBox))
+        box.string_set.append((string_name, string))
 
 
 def compute_bookmark_label(box, content_list, counter_values):
@@ -412,10 +399,11 @@ def compute_bookmark_label(box, content_list, counter_values):
         compute_bookmark_label(
             box, content_list, counter_values)
 
-    box.bookmark_label = compute_content_list(
-        True,
+    box_list = compute_content_list(
         content_list, box, counter_values,
         parse_again)
+    box.bookmark_label = ''.join(
+        box.text for box in box_list if isinstance(box, boxes.TextBox))
 
 
 def set_content_lists(element, box, style, counter_values):
