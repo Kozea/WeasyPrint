@@ -343,12 +343,12 @@ def compute_content_list(content_list, parent_box, counter_values, parse_again,
 
 def content_to_boxes(style, parent_box, quote_depth, counter_values,
                      get_image_from_uri, context=None, page=None):
-    """Takes the value of a ``content`` property and returns boxes."""
+    """Take the value of a ``content`` property and return boxes."""
     def parse_again():
-        """
-        closure to parse the parent_boxes children all again
-        when TARGET_COLLECTOR.lookup_target() detected a TARGET_STATE.PENDING,
-        Thx to closure no need to explicitly copy.deepcopy the whole stuff,
+        """Closure to parse the parent_boxes children all again.
+
+        Thanks to closure, no need to explicitly deepcopy the whole stuff.
+
         """
         local_children = []
         if style['display'] == 'list-item':
@@ -360,26 +360,15 @@ def content_to_boxes(style, parent_box, quote_depth, counter_values,
             get_image_from_uri))
         parent_box.children = local_children
 
-    # Can't use `yield`! Must `return` the boxes otherwise set_content_lists,
-    # calling compute_content_list for `contents()`, will fail
     return compute_content_list(
-        style['content'],
-        parent_box, counter_values,
-        parse_again,
-        get_image_from_uri, quote_depth, style['quotes'],
-        context, page)
+        style['content'], parent_box, counter_values, parse_again,
+        get_image_from_uri, quote_depth, style['quotes'], context, page)
 
 
 def compute_string_set_string(box, string_name, content_list, counter_values):
-    """For ``string-set`` property:
-    Parses the content-list value of the string named `string_name`
-    and append the resulting string to the boxes string_set
-    """
+    """Parse the content-list value of ``string_name`` for ``string-set``."""
     def parse_again():
-        """
-        closure to parse the string-set-string value all again
-        when TARGET_COLLECTOR.lookup_target() detected a TARGET_STATE.PENDING
-        """
+        """Closure to parse the string-set-string value all again."""
         compute_string_set_string(
             box, string_name, content_list, counter_values)
 
@@ -392,12 +381,9 @@ def compute_string_set_string(box, string_name, content_list, counter_values):
 
 
 def compute_bookmark_label(box, content_list, counter_values):
-    """For ``bookmark-label`` property:
-    Parses the content-list value and put it in the boxes .bookmark_label
-    """
+    """Parses the content-list value for ``bookmark-label``."""
     def parse_again():
-        compute_bookmark_label(
-            box, content_list, counter_values)
+        compute_bookmark_label(box, content_list, counter_values)
 
     box_list = compute_content_list(
         content_list, box, counter_values,
@@ -407,10 +393,11 @@ def compute_bookmark_label(box, content_list, counter_values):
 
 
 def set_content_lists(element, box, style, counter_values):
-    """Set the content-lists by strings.
+    """Set the content-lists values.
 
     These content-lists are used in GCPM properties like ``string-set`` and
     ``bookmark-label``.
+
     """
     box.string_set = []
     if style['string_set'] != 'none':
