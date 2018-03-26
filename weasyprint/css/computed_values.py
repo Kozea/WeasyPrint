@@ -304,6 +304,7 @@ def length(computer, name, value, font_size=None, pixels_only=False):
             result = value.value * font_size * ex_ratio(computer.computed)
         elif unit == 'ch':
             # TODO: cache
+            # TODO: use context to use @font-face fonts
             layout = text.Layout(
                 context=None, font_size=font_size,
                 style=computer.computed)
@@ -614,6 +615,7 @@ def strut_layout(style, context=None):
 def ex_ratio(style):
     """Return the ratio 1ex/font_size, according to given style."""
     font_size = 1000  # big value
+    # TODO: use context to use @font-face fonts
     layout = text.Layout(context=None, font_size=font_size, style=style)
     layout.set_text('x')
     line, = layout.iter_lines()

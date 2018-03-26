@@ -21,6 +21,7 @@ import pytest
 
 from .. import CSS, HTML, text
 from ..logger import LOGGER
+from ..urls import path2url
 
 # TODO: find a way to not depend on a specific font
 FONTS = 'Liberation Sans, Arial'
@@ -39,6 +40,10 @@ class FakeHTML(HTML):
 def resource_filename(basename):
     """Return the absolute path of the resource called ``basename``."""
     return os.path.join(os.path.dirname(__file__), 'resources', basename)
+
+
+# Dummy filename, but in the right directory.
+BASE_URL = path2url(resource_filename('<test>'))
 
 
 class CallbackHandler(logging.Handler):

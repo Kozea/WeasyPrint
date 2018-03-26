@@ -17,9 +17,7 @@ from .. import images
 from ..css import PageType, get_all_computed_styles
 from ..formatting_structure import boxes, build, counters
 from ..layout.pages import set_page_type_computed_styles
-from ..urls import path2url
-from .testing_utils import (
-    FakeHTML, assert_no_logs, capture_logs, resource_filename)
+from .testing_utils import BASE_URL, FakeHTML, assert_no_logs, capture_logs
 
 PROPER_CHILDREN = dict((key, tuple(map(tuple, value))) for key, value in {
     # Children can be of *any* type in *one* of the lists.
@@ -36,9 +34,6 @@ PROPER_CHILDREN = dict((key, tuple(map(tuple, value))) for key, value in {
     boxes.TableRowGroupBox: [[boxes.TableRowBox]],
     boxes.TableRowBox: [[boxes.TableCellBox]],
 }.items())
-
-# Dummy filename, but in the right directory.
-BASE_URL = path2url(resource_filename('<test>'))
 
 
 def serialize(box_list):
