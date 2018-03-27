@@ -638,24 +638,24 @@ def test_string_set():
     assert expand_to_dict('string-set: test attr(class)') == {
         'string_set': (('test', (('attr', 'class'),)),)}
     assert expand_to_dict('string-set: test counter(count)') == {
-        'string_set': (('test', (('counter', ('count', 'decimal')),)),)}
+        'string_set': (('test', (('counter', ['count', 'decimal']),)),)}
     assert expand_to_dict(
         'string-set: test counter(count, upper-roman)') == {
             'string_set': (
-                ('test', (('counter', ('count', 'upper-roman')),)),)}
+                ('test', (('counter', ['count', 'upper-roman']),)),)}
     assert expand_to_dict('string-set: test counters(count, ".")') == {
-        'string_set': (('test', (('counters', ('count', '.', 'decimal')),)),)}
+        'string_set': (('test', (('counters', ['count', '.', 'decimal']),)),)}
     assert expand_to_dict(
         'string-set: test counters(count, ".", upper-roman)') == {
             'string_set': (
-                ('test', (('counters', ('count', '.', 'upper-roman')),)),)}
+                ('test', (('counters', ['count', '.', 'upper-roman']),)),)}
     assert expand_to_dict(
         'string-set: test content(text) "string" '
         'attr(title) attr(title) counter(count)') == {
             'string_set': (('test', (
                 ('content', 'text'), ('STRING', 'string'),
                 ('attr', 'title'), ('attr', 'title'),
-                ('counter', ('count', 'decimal')),)),)}
+                ('counter', ['count', 'decimal']))),)}
 
     assert_invalid('string-set: test')
     assert_invalid('string-set: test test1')
