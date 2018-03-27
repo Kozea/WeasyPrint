@@ -5,7 +5,7 @@
     Handle target-counter, target-counters and target-text.
 
     The TARGET_COLLECTOR is a structure providing required targets'
-    counter_values and stuff needed to build PENDING targets later,
+    counter_values and stuff needed to build pending targets later,
     when the layout of all targetted anchors has been done.
 
     :copyright: Copyright 2018 Simon Sapin and contributors, see AUTHORS.
@@ -18,41 +18,16 @@ import copy
 from ..logger import LOGGER
 
 
-# not shure what's the Python way  to create consts, maybe a namedtuple?
-# thx [Jon Betts](https://stackoverflow.com/a/23274028)
-class _STATE(object):
-    """constants for target states"""
-    PENDING = 0
-    UPTODATE = 1
-    UNDEFINED = 2
-    __stateToName = {
-        PENDING: 'PENDING',
-        UPTODATE: 'UPTODATE',
-        UNDEFINED: 'UNDEFINED',
-    }
-
-    def __setattr__(self, *_):
-        """prohibit changes"""
-        pass
-
-    def name(self, state):
-        """ return human readable state-name"""
-        return self.__stateToName.get(state, 'Invalid state')
-
-
-TARGET_STATE = _STATE()
-
-
 class TargetLookupItem(object):
     """item collected by the TargetColector"""
 
-    def __init__(self, state=TARGET_STATE.PENDING):
+    def __init__(self, state='pending'):
         self.state = state
         # required by target-counter and target-counters
         self.target_counter_values = {}
-        # neede for target-text via TEXT_CONTENT_EXTRACTORS
+        # needed for target-text via TEXT_CONTENT_EXTRACTORS
         self.target_box = None
-        # stuff for PENDING targets
+        # stuff for pending targets
         self.pending_boxes = {}
 
 
@@ -94,20 +69,20 @@ class _TargetCollector(object):
     def lookup_target(self, anchor_name, source_box, parse_again_function):
         """ called in content_to_boxes() when the source_box needs a target-*
         returns a TargetLookupItem
-        if already filled by a previous anchor-element: UPDTODATE
-        else: PENDING, we must parse the whole thing again
+        if already filled by a previous anchor-element: up-to-date
+        else: pending, we must parse the whole thing again
         """
         item = self.items.get(
             anchor_name,
-            TargetLookupItem(TARGET_STATE.UNDEFINED))
-        if item.state == TARGET_STATE.PENDING:
+            TargetLookupItem('undefined'))
+        if item.state == 'pending':
             if anchor_name not in self.existing_anchors:
-                item.state = TARGET_STATE.UNDEFINED
+                item.state = 'undefined'
             else:
                 self.had_pending_targets = True
                 item.pending_boxes.setdefault(source_box, parse_again_function)
 
-        if item.state == TARGET_STATE.UNDEFINED:
+        if item.state == 'undefined':
             LOGGER.error(
                 'content discarded: target points to undefined anchor "%s"',
                 anchor_name)
@@ -119,12 +94,12 @@ class _TargetCollector(object):
     def store_target(self, anchor_name, target_counter_values, target_box):
         """
         called by every anchor-element in build.element_to_box
-        if there is a PENDING TargetLookupItem, it is updated
+        if there is a pending TargetLookupItem, it is updated
         only previously collected anchor_names are stored
         """
         item = self.items.get(anchor_name, None)
-        if item and item.state == TARGET_STATE.PENDING:
-            item.state = TARGET_STATE.UPTODATE
+        if item and item.state == 'pending':
+            item.state = 'up-to-date'
             item.target_counter_values = copy.deepcopy(target_counter_values)
             item.target_box = target_box
 

@@ -21,8 +21,7 @@ import tinycss2.color3
 from . import boxes, counters
 from .. import html
 from ..css import properties
-from ..css.targets import TARGET_COLLECTOR, TARGET_STATE
-from ..logger import LOGGER
+from ..css.targets import TARGET_COLLECTOR
 
 # Maps values of the ``display`` CSS property to box types.
 BOX_TYPE_FROM_DISPLAY = {
@@ -234,7 +233,7 @@ def compute_content_list(content_list, parent_box, counter_values, parse_again,
     """Compute and return the boxes corresponding to the content_list.
 
     parse_again is called to compute the content_list again when
-    TARGET_COLLECTOR.lookup_target() detected a TARGET_STATE.PENDING.
+    TARGET_COLLECTOR.lookup_target() detected a pending target.
 
     build_formatting_structure calls TARGET_COLLECTOR.check_pending_targets
     after the first pass to do required reparsing.
@@ -279,7 +278,7 @@ def compute_content_list(content_list, parent_box, counter_values, parse_again,
             target_name, counter_name, counter_style = value
             lookup_target = TARGET_COLLECTOR.lookup_target(
                 target_name, parent_box, parse_again)
-            if lookup_target.state == TARGET_STATE.UPTODATE:
+            if lookup_target.state == 'up-to-date':
                 counter_value = lookup_target.target_counter_values.get(
                     counter_name, [0])[-1]
                 texts.append(counters.format(counter_value, counter_style))
@@ -290,7 +289,7 @@ def compute_content_list(content_list, parent_box, counter_values, parse_again,
             target_name, counter_name, separator, counter_style = value
             lookup_target = TARGET_COLLECTOR.lookup_target(
                 target_name, parent_box, parse_again)
-            if lookup_target.state == TARGET_STATE.UPTODATE:
+            if lookup_target.state == 'up-to-date':
                 target_counter_values = lookup_target.target_counter_values
                 texts.append(separator.join(
                     counters.format(counter_value, counter_style)
@@ -303,7 +302,7 @@ def compute_content_list(content_list, parent_box, counter_values, parse_again,
             target_name, text_style = value
             lookup_target = TARGET_COLLECTOR.lookup_target(
                 target_name, parent_box, parse_again)
-            if lookup_target.state == TARGET_STATE.UPTODATE:
+            if lookup_target.state == 'up-to-date':
                 target_box = lookup_target.target_box
                 text = TEXT_CONTENT_EXTRACTORS[text_style](target_box)
                 # Simulate the step of white space processing
