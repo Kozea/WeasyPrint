@@ -4,7 +4,7 @@
 
     Handle target-counter, target-counters and target-text.
 
-    The TARGET_COLLECTOR is a structure providing required targets'
+    The TargetCollector is a structure providing required targets'
     counter_values and stuff needed to build pending targets later,
     when the layout of all targetted anchors has been done.
 
@@ -19,7 +19,7 @@ from ..logger import LOGGER
 
 
 class TargetLookupItem(object):
-    """item collected by the TargetColector"""
+    """Item collected by the TargetColector."""
 
     def __init__(self, state='pending'):
         self.state = state
@@ -31,8 +31,8 @@ class TargetLookupItem(object):
         self.pending_boxes = {}
 
 
-class _TargetCollector(object):
-    """collect and provide stuff for css content with `target-*`"""
+class TargetCollector(object):
+    """Collector of HTML targets used by CSS content with ``target-*``."""
 
     def __init__(self):
         self.reset()
@@ -110,6 +110,3 @@ class _TargetCollector(object):
         for key, item in self.items.items():
             for _, function in item.pending_boxes.items():
                 function()
-
-
-TARGET_COLLECTOR = _TargetCollector()

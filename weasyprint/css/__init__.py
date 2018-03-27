@@ -448,7 +448,8 @@ def add_declaration(cascaded_styles, prop_name, prop_values, weight, element,
 
 
 def set_computed_styles(cascaded_styles, computed_styles, element, parent,
-                        root=None, pseudo_type=None, base_url=None):
+                        root=None, pseudo_type=None, base_url=None,
+                        target_collector=None):
     """Set the computed values of styles to ``element``.
 
     Take the properties left by ``apply_style_rule`` on an element or
@@ -471,11 +472,13 @@ def set_computed_styles(cascaded_styles, computed_styles, element, parent,
 
     cascaded = cascaded_styles.get((element, pseudo_type), {})
     computed_styles[element, pseudo_type] = computed_from_cascaded(
-        element, cascaded, parent_style, pseudo_type, root_style, base_url)
+        element, cascaded, parent_style, pseudo_type, root_style, base_url,
+        target_collector)
 
 
 def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
-                           root_style=None, base_url=None):
+                           root_style=None, base_url=None,
+                           target_collector=None):
     """Get a dict of computed style mixed from parent and cascaded styles."""
     if not cascaded and parent_style is not None:
         # Fast path for anonymous boxes:
@@ -532,7 +535,7 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
 
     return computed_values.compute(
         element, pseudo_type, specified, computed, parent_style, root_style,
-        base_url)
+        base_url, target_collector)
 
 
 def parse_page_selectors(rule):
@@ -773,7 +776,7 @@ def parse_media_query(tokens):
 
 def get_all_computed_styles(html, user_stylesheets=None,
                             presentational_hints=False, font_config=None,
-                            page_rules=None):
+                            page_rules=None, target_collector=None):
     """Compute all the computed styles of all elements in ``html`` document.
 
     Do everything from finding author stylesheets to parsing and applying them.
@@ -845,7 +848,7 @@ def get_all_computed_styles(html, user_stylesheets=None,
             cascaded_styles, computed_styles, element.etree_element,
             root=html.etree_element,
             parent=(element.parent.etree_element if element.parent else None),
-            base_url=html.base_url)
+            base_url=html.base_url, target_collector=target_collector)
 
     page_names = set(style['page'] for style in computed_styles.values())
 
@@ -878,7 +881,7 @@ def get_all_computed_styles(html, user_stylesheets=None,
                 pseudo_type=pseudo_type,
                 # The pseudo-element inherits from the element.
                 root=html.etree_element, parent=element,
-                base_url=html.base_url)
+                base_url=html.base_url, target_collector=target_collector)
 
     # This is mostly useful to make pseudo_type optional.
     def style_for(element, pseudo_type=None, __get=computed_styles.get):

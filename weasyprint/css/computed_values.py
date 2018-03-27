@@ -14,7 +14,6 @@ from urllib.parse import unquote
 from .. import text
 from ..urls import get_link_attribute
 from .properties import INITIAL_VALUES, Dimension
-from .targets import TARGET_COLLECTOR
 
 ZERO_PIXELS = Dimension(0, 'px')
 
@@ -159,20 +158,20 @@ def register_computer(name):
 
 
 def compute(element, pseudo_type, specified, computed, parent_style,
-            root_style, base_url):
-    """
-    Return a dict of computed values.
+            root_style, base_url, target_collector):
+    """Create a dict of computed values.
 
     :param element: The HTML element these style apply to
     :param pseudo_type: The type of pseudo-element, eg 'before', None
-    :param specified: a dict of specified values. Should contain
+    :param specified: A dict of specified values. Should contain
                       values for all properties.
-    :param computed: a dict of already known computed values.
+    :param computed: A dict of already known computed values.
                      Only contains some properties (or none).
-    :param parent_style: a dict of computed values of the parent
+    :param parent_style: A dict of computed values of the parent
                          element (should contain values for all properties),
                          or ``None`` if ``element`` is the root element.
     :param base_url: The base URL used to resolve relative URLs.
+    :param target_collector: A target collector used to get computed targets.
 
     """
 
@@ -191,6 +190,7 @@ def compute(element, pseudo_type, specified, computed, parent_style,
     computer.parent_style = parent_style
     computer.root_style = root_style
     computer.base_url = base_url
+    computer.target_collector = target_collector
 
     getter = COMPUTER_FUNCTIONS.get
 
@@ -432,7 +432,7 @@ def content(computer, name, values):
             raise ComputedContentError(
                 'No %s for external URI reference "%s"' % (type_, href))
         href = unquote(href[1:])
-        TARGET_COLLECTOR.collect_computed_target(href)
+        computer.target_collector.collect_computed_target(href)
         return [href] + values[2:]
 
     if values in ('normal', 'none'):
@@ -565,7 +565,7 @@ def anchor(computer, name, values):
     if values != 'none':
         _, key = values
         anchor_name = computer.element.get(key) or None
-        TARGET_COLLECTOR.collect_anchor(anchor_name)
+        computer.target_collector.collect_anchor(anchor_name)
         return anchor_name
 
 

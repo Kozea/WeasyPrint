@@ -16,7 +16,7 @@ import cairocffi as cairo
 
 from . import CSS
 from .css import get_all_computed_styles
-from .css.targets import TARGET_COLLECTOR
+from .css.targets import TargetCollector
 from .draw import draw_page, stacked
 from .fonts import FontConfiguration
 from .formatting_structure import boxes
@@ -296,17 +296,9 @@ class Document(object):
     @classmethod
     def _render(cls, html, stylesheets, enable_hinting,
                 presentational_hints=False, font_config=None):
-        # new Document needs fresh Target-Collection
-        # reset the TARGET_COLLECTOR before the Document's styles are parsed
-        # TODO: call reset at the end of this function to cleanup?
-        # - reset_target_collector Yes/No could be a useful option for users
-        #   who want to combine several documents...
-        # - in the future each Document should create its own TargetCollector
-        #   and hand it down to formatting_structure / pages / maybe css
-        TARGET_COLLECTOR.reset()
-
         if font_config is None:
             font_config = FontConfiguration()
+        target_collector = TargetCollector()
         page_rules = []
         user_stylesheets = []
         for css in stylesheets or []:
@@ -317,7 +309,7 @@ class Document(object):
             user_stylesheets.append(css)
         style_for, cascaded_styles, computed_styles = get_all_computed_styles(
             html, user_stylesheets, presentational_hints, font_config,
-            page_rules)
+            page_rules, target_collector)
         get_image_from_uri = functools.partial(
             original_get_image_from_uri, {}, html.url_fetcher)
         LOGGER.info('Step 4 - Creating formatting structure')
@@ -325,8 +317,9 @@ class Document(object):
             enable_hinting, style_for, get_image_from_uri,
             build_formatting_structure(
                 html.etree_element, style_for, get_image_from_uri,
-                html.base_url),
-            font_config, html, cascaded_styles, computed_styles)
+                html.base_url, target_collector),
+            font_config, html, cascaded_styles, computed_styles,
+            target_collector)
         rendering = cls(
             [Page(p, enable_hinting) for p in page_boxes],
             DocumentMetadata(**html._get_metadata()),

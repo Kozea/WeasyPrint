@@ -15,6 +15,7 @@ import pytest
 
 from .. import images
 from ..css import PageType, get_all_computed_styles
+from ..css.targets import TargetCollector
 from ..formatting_structure import boxes, build, counters
 from ..layout.pages import set_page_type_computed_styles
 from .testing_utils import BASE_URL, FakeHTML, assert_no_logs, capture_logs
@@ -54,7 +55,10 @@ def _parse_base(html_content, base_url=BASE_URL):
     style_for, _, _ = get_all_computed_styles(document)
     get_image_from_uri = functools.partial(
         images.get_image_from_uri, {}, document.url_fetcher)
-    return document.etree_element, style_for, get_image_from_uri, base_url
+    target_collector = TargetCollector()
+    return (
+        document.etree_element, style_for, get_image_from_uri, base_url,
+        target_collector)
 
 
 def parse(html_content):
