@@ -33,8 +33,8 @@ elif sys.platform.startswith('darwin'):
     SANS_FONTS = 'Arial'
     MONO_FONTS = 'Courier New'
 else:
-    SANS_FONTS = 'Liberation Sans, DejaVu Sans, sans'
-    MONO_FONTS = 'Liberation Sans Mono, DejaVu Sans Mono, monospace'
+    SANS_FONTS = 'DejaVu Sans, sans'
+    MONO_FONTS = 'DejaVu Sans Mono, monospace'
 
 TEST_UA_STYLESHEET = CSS(filename=os.path.join(
     os.path.dirname(__file__), '..', 'css', 'tests_ua.css'
