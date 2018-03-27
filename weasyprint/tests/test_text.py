@@ -14,16 +14,13 @@ import pytest
 from ..css.properties import INITIAL_VALUES
 from ..text import split_first_line
 from .test_boxes import render_pages
-from .testing_utils import FONTS, assert_no_logs
-
-FONTS = FONTS.split(', ')
+from .testing_utils import MONO_FONTS, SANS_FONTS, assert_no_logs
 
 
 def make_text(text, width=None, **style):
     """Wrapper for split_first_line() creating a style dict."""
     new_style = dict(INITIAL_VALUES)
-    new_style['font_family'] = [
-        'Nimbus Mono L', 'Liberation Mono', 'FreeMono', 'monospace']
+    new_style['font_family'] = MONO_FONTS.split(',')
     new_style.update(style)
     return split_first_line(
         text, new_style, context=None, max_width=width,
@@ -36,7 +33,7 @@ def test_line_content():
                              (45, 'is a text for test')]:
         text = 'This is a text for test'
         _, length, resume_at, _, _, _ = make_text(
-            text, width, font_family=FONTS, font_size=19)
+            text, width, font_family=SANS_FONTS.split(','), font_size=19)
         assert text[resume_at:] == remaining
         assert length + 1 == resume_at  # +1 is for the removed trailing space
 
@@ -59,8 +56,8 @@ def test_line_breaking():
     _, _, resume_at, _, _, _ = make_text(string, 90, font_size=100)
     assert string[resume_at:] == 'is a text for test'
 
-    _, _, resume_at, _, _, _ = make_text(string, 100, font_family=FONTS,
-                                         font_size=19)
+    _, _, resume_at, _, _, _ = make_text(
+        string, 100, font_family=SANS_FONTS.split(','), font_size=19)
     assert string[resume_at:] == 'text for test'
 
 

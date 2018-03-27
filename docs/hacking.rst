@@ -21,14 +21,6 @@ every time you make a change in the source code)
 as well as `pytest <http://pytest.org/>`_
 and `Sphinx <http://sphinx.pocoo.org/>`_.
 
-Lastly, in order to pass unit tests, your system must have two particular fonts:
-
-1. `Ahem <https://www.w3.org/Style/CSS/Test/Fonts/Ahem/>`_ (this is a font commonly used in W3C tests)
-	a) Download "ahem.ttf" from the link above.
-	b) Copy it into ~/.fonts/
-	c) Run "fc-cache" to update your system fonts
-2. Any font with a condensed variant (i.e. DejaVu) - typically installable via your distro's packaging system, otherwise use the same method as with Ahem.
-
 
 Documentation changes
 ---------------------
