@@ -1,19 +1,19 @@
 """
     weasyprint.formatting_structure.targets
-    -------------------------------------
+    ---------------------------------------
 
-    An attempt to implement target-counter, target-counters and target-text
+    Handle target-counter, target-counters and target-text.
 
     The TARGET_COLLECTOR is a structure providing required targets'
     counter_values and stuff needed to build PENDING targets later,
-    when all targetted anchors have been 'layouted'
+    when the layout of all targetted anchors has been done.
 
     :copyright: Copyright 2018 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
 
-import copy  # deepcopy needed!
+import copy
 
 from ..logger import LOGGER
 
