@@ -22,10 +22,10 @@ addons:
     - ttf-dejavu
 
 before_install:
+  # Pango 1.38+ is needed to make @font-face work, remove these two lines when it's available on Travis
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then mkdir -p ~/.fonts; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget "https://github.com/Kozea/Ahem/blob/master/Ahem.ttf?raw=true" -O ~/.fonts/Ahem.ttf; fi
 
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then wget "https://github.com/Kozea/Ahem/blob/master/Ahem.ttf?raw=true" -O /Library/Fonts/Ahem.ttf; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then wget "http://sourceforge.net/projects/dejavu/files/dejavu/2.37/dejavu-fonts-ttf-2.37.tar.bz2" -O /tmp/dejavu.tar.bz2; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then tar xf /tmp/dejavu.tar.bz2 -C /tmp; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cp /tmp/dejavu*/ttf/*.ttf /Library/Fonts; fi

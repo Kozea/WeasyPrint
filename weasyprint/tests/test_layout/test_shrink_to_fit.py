@@ -21,12 +21,13 @@ from ..testing_utils import assert_no_logs
 def test_shrink_to_fit_floating_point_error_1(margin_left, font_size):
     # See bugs #325 and #288, see commit fac5ee9.
     page, = parse('''
-        <style>
-            @page { size: 100000px 100px }
-            p { float: left; margin-left: 0.%iin; font-size: 0.%iem;
-                font-family: "ahem" }
-        </style>
-        <p>this parrot is dead</p>
+      <style>
+        @font-face { src: url(AHEM____.TTF); font-family: ahem }
+        @page { size: 100000px 100px }
+        p { float: left; margin-left: 0.%iin; font-size: 0.%iem;
+            font-family: "ahem" }
+      </style>
+      <p>this parrot is dead</p>
     ''' % (margin_left, font_size))
     html, = page.children
     body, = html.children
@@ -34,16 +35,18 @@ def test_shrink_to_fit_floating_point_error_1(margin_left, font_size):
     assert len(p.children) == 1
 
 
+@assert_no_logs
 @pytest.mark.parametrize('font_size', (1, 5, 10, 50, 100, 1000, 10000))
 def test_shrink_to_fit_floating_point_error_2(font_size):
     letters = 1
     while True:
         page, = parse('''
-            <style>
-                @page { size: %i0pt %i0px }
-                p { font-size: %ipt; font-family: "ahem" }
-            </style>
-            <p>mmm <b>%s a</b></p>
+          <style>
+            @font-face { src: url(AHEM____.TTF); font-family: ahem }
+            @page { size: %i0pt %i0px }
+            p { font-size: %ipt; font-family: "ahem" }
+          </style>
+          <p>mmm <b>%s a</b></p>
         ''' % (font_size, font_size, font_size, 'i' * letters))
         html, = page.children
         body, = html.children
