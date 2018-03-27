@@ -10,6 +10,29 @@ Do not rely on future versions, development on the 0.x branch may be stopped at
 any moment.
 
 
+Version 0.42.3
+--------------
+
+Released on 2018-03-27.
+
+Bug fixes:
+
+* `#583 <https://github.com/Kozea/WeasyPrint/issues/583>`_:
+  Fix floating-point number error to fix floating box layout
+* `#586 <https://github.com/Kozea/WeasyPrint/issues/586>`_:
+  Don't optimize resume_at when splitting lines with trailing spaces
+* `#582 <https://github.com/Kozea/WeasyPrint/issues/582>`_:
+  Fix table layout with no overflow
+* `#580 <https://github.com/Kozea/WeasyPrint/issues/580>`_:
+  Fix inline box breaking function
+* `#576 <https://github.com/Kozea/WeasyPrint/issues/576>`_:
+  Split replaced_min_content_width and replaced_max_content_width
+* `#574 <https://github.com/Kozea/WeasyPrint/issues/574>`_:
+  Respect text direction and don't translate rtl columns twice
+* `#569 <https://github.com/Kozea/WeasyPrint/issues/569>`_:
+  Get only first line's width of inline children to get linebox width
+
+
 Version 0.42.2
 --------------
 
