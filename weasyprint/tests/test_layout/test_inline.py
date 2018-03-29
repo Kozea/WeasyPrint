@@ -13,7 +13,7 @@ import pytest
 
 from ...formatting_structure import boxes
 from ..test_boxes import render_pages as parse
-from ..testing_utils import FONTS, assert_no_logs
+from ..testing_utils import SANS_FONTS, assert_no_logs
 
 
 @assert_no_logs
@@ -59,7 +59,7 @@ def test_breaking_linebox():
       <p><em>Lorem<strong> Ipsum <span>is very</span>simply</strong><em>
       dummy</em>text of the printing and. naaaa </em> naaaa naaaa naaaa
       naaaa naaaa naaaa naaaa naaaa</p>
-    ''' % {'fonts': FONTS})
+    ''' % {'fonts': SANS_FONTS})
     html, = page.children
     body, = html.children
     paragraph, = body.children
@@ -251,7 +251,7 @@ def test_linebox_text():
         p { width: 165px; font-family:%(fonts)s;}
       </style>
       <p><em>Lorem Ipsum</em>is very <strong>coool</strong></p>
-    ''' % {'fonts': FONTS})
+    ''' % {'fonts': SANS_FONTS})
     html, = page.children
     body, = html.children
     paragraph, = body.children
@@ -274,7 +274,7 @@ def test_linebox_positions():
                 line-height: 20px }
           </style>
           <p>this is test for <strong>Weasyprint</strong></p>'''
-        page, = parse(page % {'fonts': FONTS, 'width': width})
+        page, = parse(page % {'fonts': SANS_FONTS, 'width': width})
         html, = page.children
         body, = html.children
         paragraph, = body.children
@@ -349,7 +349,7 @@ def test_inlinebox_splitting():
           <style>p { font-family:%(fonts)s; width: %(width)spx; }</style>
           <p><strong>WeasyPrint is a frée softwäre ./ visual rendèring enginè
                      for HTML !!! and CSS.</strong></p>
-        ''' % {'fonts': FONTS, 'width': width})
+        ''' % {'fonts': SANS_FONTS, 'width': width})
         html, = page.children
         body, = html.children
         paragraph, = body.children
@@ -432,11 +432,11 @@ def test_empty_inline_auto_margins():
 def test_font_stretch():
     page, = parse('''
       <style>
-        p { float: left; font-family: DejaVu Sans }
+        p { float: left; font-family: %s }
       </style>
       <p>Hello, world!</p>
       <p style="font-stretch: condensed">Hello, world!</p>
-    ''')
+    ''' % SANS_FONTS)
     html, = page.children
     body, = html.children
     p_1, p_2 = body.children
