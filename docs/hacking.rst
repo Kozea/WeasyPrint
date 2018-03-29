@@ -15,11 +15,13 @@ install the `development version`_ of WeasyPrint:
     pip install Sphinx -e .[test]
     weasyprint --help
 
-This will install WeasyPrint in “editable” mode
-(which means that you don’t need to re-install it
-every time you make a change in the source code)
-as well as `pytest <http://pytest.org/>`_
-and `Sphinx <http://sphinx.pocoo.org/>`_.
+This will install WeasyPrint in “editable” mode (which means that you don’t
+need to re-install it every time you make a change in the source code) as well
+as `pytest <http://pytest.org/>`_ and `Sphinx <http://sphinx.pocoo.org/>`_.
+
+Lastly, in order to pass unit tests, your system must have as default font any
+font with a condensed variant (i.e. DejaVu) - typically installable via your
+distro's packaging system.
 
 
 Documentation changes

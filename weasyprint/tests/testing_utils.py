@@ -30,7 +30,7 @@ if sys.platform.startswith('win'):
 elif sys.platform.startswith('darwin'):
     # Pango on macOS doesn't handle multiple fonts
     # See https://github.com/Kozea/WeasyPrint/issues/158
-    SANS_FONTS = 'Arial'
+    SANS_FONTS = 'DejaVu Sans'
     MONO_FONTS = 'Courier New'
 else:
     SANS_FONTS = 'DejaVu Sans, sans'
