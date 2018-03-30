@@ -50,15 +50,18 @@ def test_not_print():
 
 
 @assert_no_logs
-def test_function():
-    assert expand_to_dict('clip: rect(1px, 3em, auto, auto)') == {
-        'clip': ((1, 'px'), (3, 'em'), 'auto', 'auto')}
+@pytest.mark.parametrize('rule, values', (
+    ('1px, 3em, auto, auto', ((1, 'px'), (3, 'em'), 'auto', 'auto')),
+    ('1px, 3em, auto auto', ((1, 'px'), (3, 'em'), 'auto', 'auto')),
+    ('1px 3em auto 1px', ((1, 'px'), (3, 'em'), 'auto', (1, 'px'))),
+))
+def test_function(rule, values):
+    assert expand_to_dict('clip: rect(%s)' % rule) == {'clip': values}
 
 
 @assert_no_logs
 @pytest.mark.parametrize('rule', (
     'clip: square(1px, 3em, auto, auto)',
-    'clip: rect(1px, 3em, auto auto)',
     'clip: rect(1px, 3em, auto)',
     'clip: rect(1px, 3em / auto)',
 ))
@@ -176,6 +179,8 @@ def test_size_invalid(rule):
     ('transform: translate(6px, 20%)', {
         'transform': (('translate', ((6, 'px'), (20, '%'))),)}),
     ('transform: scale(2)', {'transform': (('scale', (2, 2)),)}),
+    ('transform: translate(6px 20%)', {
+        'transform': (('translate', ((6, 'px'), (20, '%'))),)}),
 ))
 def test_transforms(rule, result):
     assert expand_to_dict(rule) == result
@@ -183,7 +188,6 @@ def test_transforms(rule, result):
 
 @assert_no_logs
 @pytest.mark.parametrize('rule', (
-    'transform: translate(6px 20%)',  # missing comma
     'transform: lipsumize(6px)',
     'transform: foo',
     'transform: scale(2) foo',

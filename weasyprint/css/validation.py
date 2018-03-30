@@ -756,18 +756,32 @@ def validate_content_token(base_url, token):
 
 
 def parse_function(function_token):
-    """Return ``(name, args)`` if the given token is a function
-    with comma-separated arguments, or None.
-    .
+    """Parse functional notation.
+
+    Return ``(name, args)`` if the given token is a function with comma- or
+    space-separated arguments. Return ``None`` otherwise.
+
     """
-    if function_token.type == 'function':
-        content = remove_whitespace(function_token.arguments)
-        if not content or len(content) % 2:
-            for token in content[1::2]:
-                if token.type != 'literal' or token.value != ',':
-                    break
+    # See https://drafts.csswg.org/css-values-3/#functional-notation
+    if getattr(function_token, 'type', None) == 'function':
+        content = list(remove_whitespace(function_token.arguments))
+        arguments = []
+        last_is_comma = False
+        while content:
+            token = content.pop(0)
+            is_comma = token.type == 'literal' and token.value == ','
+            if last_is_comma and is_comma:
+                return
+            if is_comma:
+                last_is_comma = True
             else:
-                return function_token.lower_name, content[::2]
+                last_is_comma = False
+                if token.type == 'function':
+                    argument_function = parse_function(token)
+                    if argument_function is None:
+                        return
+                arguments.append(token)
+        return function_token.lower_name, arguments
 
 
 @validator()
@@ -1672,9 +1686,6 @@ def validate_content_list_token(base_url, token, for_content_box):
             # verify #anchor is done in compute()
             # if token.value.startswith('#'):
             return ['STRING', token]
-        # parse_function takes token.type for granted!
-        if not hasattr(token, 'type'):
-            return
         function = parse_function(token)
         if function:
             name, args = function
