@@ -11,60 +11,30 @@
 """
 
 
-import math
 from urllib.parse import unquote
 
 from tinycss2.color3 import parse_color
 
 from .. import computed_values
 from ...formatting_structure import counters
-from ...images import LinearGradient, RadialGradient
 from ...logger import LOGGER
 from ..properties import KNOWN_PROPERTIES, Dimension
 from .functions import parse_function
 from .utils import (
-    InvalidValues, comma_separated_list, get_angle,
-    get_keyword, get_length, get_resolution, get_single_keyword,
-    remove_whitespace, safe_urljoin, single_keyword, single_token,
-    split_on_comma)
+    InvalidValues, comma_separated_list, get_angle, get_image, get_keyword,
+    get_length, get_resolution, get_single_keyword, parse_2d_position,
+    parse_background_position, safe_urljoin, single_keyword, single_token)
 
 
 PREFIX = '-weasy-'
 PROPRIETARY = set()
 UNSTABLE = set()
 
-ZERO_PERCENT = Dimension(0, '%')
-FIFTY_PERCENT = Dimension(50, '%')
-HUNDRED_PERCENT = Dimension(100, '%')
-BACKGROUND_POSITION_PERCENTAGES = {
-    'top': ZERO_PERCENT,
-    'left': ZERO_PERCENT,
-    'center': FIFTY_PERCENT,
-    'bottom': HUNDRED_PERCENT,
-    'right': HUNDRED_PERCENT,
-}
-
 CONTENT_QUOTE_KEYWORDS = {
     'open-quote': (True, True),
     'close-quote': (False, True),
     'no-open-quote': (True, False),
     'no-close-quote': (False, False),
-}
-DIRECTION_KEYWORDS = {
-    # ('angle', radians)  0 upwards, then clockwise
-    ('to', 'top'): ('angle', 0),
-    ('to', 'right'): ('angle', math.pi / 2),
-    ('to', 'bottom'): ('angle', math.pi),
-    ('to', 'left'): ('angle', math.pi * 3 / 2),
-    # ('corner', keyword)
-    ('to', 'top', 'left'): ('corner', 'top_left'),
-    ('to', 'left', 'top'): ('corner', 'top_left'),
-    ('to', 'top', 'right'): ('corner', 'top_right'),
-    ('to', 'right', 'top'): ('corner', 'top_right'),
-    ('to', 'bottom', 'left'): ('corner', 'bottom_left'),
-    ('to', 'left', 'bottom'): ('corner', 'bottom_left'),
-    ('to', 'bottom', 'right'): ('corner', 'bottom_right'),
-    ('to', 'right', 'bottom'): ('corner', 'bottom_right'),
 }
 
 
@@ -397,198 +367,27 @@ def color(token):
 @comma_separated_list
 @single_token
 def background_image(token, base_url):
-    if token.type != 'function':
-        return image_url([token], base_url)
-    arguments = split_on_comma(remove_whitespace(token.arguments))
-    name = token.lower_name
-    if name in ('linear-gradient', 'repeating-linear-gradient'):
-        direction, color_stops = parse_linear_gradient_parameters(arguments)
-        if color_stops:
-            return 'linear-gradient', LinearGradient(
-                [parse_color_stop(stop) for stop in color_stops],
-                direction, 'repeating' in name)
-    elif name in ('radial-gradient', 'repeating-radial-gradient'):
-        result = parse_radial_gradient_parameters(arguments)
-        if result is not None:
-            shape, size, position, color_stops = result
-        else:
-            shape = 'ellipse'
-            size = 'keyword', 'farthest-corner'
-            position = 'left', FIFTY_PERCENT, 'top', FIFTY_PERCENT
-            color_stops = arguments
-        if color_stops:
-            return 'radial-gradient', RadialGradient(
-                [parse_color_stop(stop) for stop in color_stops],
-                shape, size, position, 'repeating' in name)
-
-
-def parse_linear_gradient_parameters(arguments):
-    first_arg = arguments[0]
-    if len(first_arg) == 1:
-        angle = get_angle(first_arg[0])
-        if angle is not None:
-            return ('angle', angle), arguments[1:]
-    else:
-        result = DIRECTION_KEYWORDS.get(tuple(map(get_keyword, first_arg)))
-        if result is not None:
-            return result, arguments[1:]
-    return ('angle', math.pi), arguments  # Default direction is 'to bottom'
-
-
-def parse_radial_gradient_parameters(arguments):
-    shape = None
-    position = None
-    size = None
-    size_shape = None
-    stack = arguments[0][::-1]
-    while stack:
-        token = stack.pop()
-        keyword = get_keyword(token)
-        if keyword == 'at':
-            position = background_position.single_value(stack[::-1])
-            if position is None:
-                return
-            break
-        elif keyword in ('circle', 'ellipse') and shape is None:
-            shape = keyword
-        elif keyword in ('closest-corner', 'farthest-corner',
-                         'closest-side', 'farthest-side') and size is None:
-            size = 'keyword', keyword
-        else:
-            if stack and size is None:
-                length_1 = get_length(token, percentage=True)
-                length_2 = get_length(stack[-1], percentage=True)
-                if None not in (length_1, length_2):
-                    size = 'explicit', (length_1, length_2)
-                    size_shape = 'ellipse'
-                    stack.pop()
-            if size is None:
-                length_1 = get_length(token)
-                if length_1 is not None:
-                    size = 'explicit', (length_1, length_1)
-                    size_shape = 'circle'
-            if size is None:
-                return
-    if (shape, size_shape) in (('circle', 'ellipse'), ('circle', 'ellipse')):
-        return
-    return (
-        shape or size_shape or 'ellipse',
-        size or ('keyword', 'farthest-corner'),
-        position or ('left', FIFTY_PERCENT, 'top', FIFTY_PERCENT),
-        arguments[1:])
-
-
-def parse_color_stop(tokens):
-    if len(tokens) == 1:
-        color = parse_color(tokens[0])
-        if color is not None:
-            return color, None
-    elif len(tokens) == 2:
-        color = parse_color(tokens[0])
-        position = get_length(tokens[1], negative=True, percentage=True)
-        if color is not None and position is not None:
-            return color, position
-    raise InvalidValues
+    return get_image(token, base_url)
 
 
 @property('list-style-image', wants_base_url=True)
 @single_token
 def image_url(token, base_url):
     """``*-image`` properties validation."""
-    if get_keyword(token) == 'none':
-        return 'none', None
-    if token.type == 'url':
-        return 'url', safe_urljoin(base_url, token.value)
-
-
-class CenterKeywordFakeToken(object):
-    type = 'ident'
-    lower_value = 'center'
-    unit = None
+    return get_image(token, base_url)
 
 
 @property(unstable=True)
 def transform_origin(tokens):
     # TODO: parse (and ignore) a third value for Z.
-    return simple_2d_position(tokens)
+    return parse_2d_position(tokens)
 
 
 @property()
 @comma_separated_list
 def background_position(tokens):
-    """``background-position`` property validation.
-
-    See http://dev.w3.org/csswg/css3-background/#the-background-position
-
-    """
-    result = simple_2d_position(tokens)
-    if result is not None:
-        pos_x, pos_y = result
-        return 'left', pos_x, 'top', pos_y
-
-    if len(tokens) == 4:
-        keyword_1 = get_keyword(tokens[0])
-        keyword_2 = get_keyword(tokens[2])
-        length_1 = get_length(tokens[1], percentage=True)
-        length_2 = get_length(tokens[3], percentage=True)
-        if length_1 and length_2:
-            if (keyword_1 in ('left', 'right') and
-                    keyword_2 in ('top', 'bottom')):
-                return keyword_1, length_1, keyword_2, length_2
-            if (keyword_2 in ('left', 'right') and
-                    keyword_1 in ('top', 'bottom')):
-                return keyword_2, length_2, keyword_1, length_1
-
-    if len(tokens) == 3:
-        length = get_length(tokens[2], percentage=True)
-        if length is not None:
-            keyword = get_keyword(tokens[1])
-            other_keyword = get_keyword(tokens[0])
-        else:
-            length = get_length(tokens[1], percentage=True)
-            other_keyword = get_keyword(tokens[2])
-            keyword = get_keyword(tokens[0])
-
-        if length is not None:
-            if other_keyword == 'center':
-                if keyword in ('top', 'bottom'):
-                    return 'left', FIFTY_PERCENT, keyword, length
-                if keyword in ('left', 'right'):
-                    return keyword, length, 'top', FIFTY_PERCENT
-            elif (keyword in ('left', 'right') and
-                    other_keyword in ('top', 'bottom')):
-                return keyword, length, other_keyword, ZERO_PERCENT
-            elif (keyword in ('top', 'bottom') and
-                    other_keyword in ('left', 'right')):
-                return other_keyword, ZERO_PERCENT, keyword, length
-
-
-def simple_2d_position(tokens):
-    """Common syntax of background-position and transform-origin."""
-    if len(tokens) == 1:
-        tokens = [tokens[0], CenterKeywordFakeToken]
-    elif len(tokens) != 2:
-        return None
-
-    token_1, token_2 = tokens
-    length_1 = get_length(token_1, percentage=True)
-    length_2 = get_length(token_2, percentage=True)
-    if length_1 and length_2:
-        return length_1, length_2
-    keyword_1, keyword_2 = map(get_keyword, tokens)
-    if length_1 and keyword_2 in ('top', 'center', 'bottom'):
-        return length_1, BACKGROUND_POSITION_PERCENTAGES[keyword_2]
-    elif length_2 and keyword_1 in ('left', 'center', 'right'):
-            return BACKGROUND_POSITION_PERCENTAGES[keyword_1], length_2
-    elif (keyword_1 in ('left', 'center', 'right') and
-          keyword_2 in ('top', 'center', 'bottom')):
-        return (BACKGROUND_POSITION_PERCENTAGES[keyword_1],
-                BACKGROUND_POSITION_PERCENTAGES[keyword_2])
-    elif (keyword_1 in ('top', 'center', 'bottom') and
-          keyword_2 in ('left', 'center', 'right')):
-        # Swap tokens. They need to be in (horizontal, vertical) order.
-        return (BACKGROUND_POSITION_PERCENTAGES[keyword_2],
-                BACKGROUND_POSITION_PERCENTAGES[keyword_1])
+    """``background-position`` property validation."""
+    return parse_background_position(tokens)
 
 
 @property()
@@ -827,10 +626,8 @@ def clip(token):
 
 @property(wants_base_url=True)
 def content(tokens, base_url):
-    """``content`` property validation.
-    TODO: should become a @comma_separated_list to validate
-          CSS3 <content-replacement>
-    """
+    """``content`` property validation."""
+    # See https://drafts.csswg.org/css-content/#content-property
     keyword = get_single_keyword(tokens)
     if keyword in ('normal', 'none'):
         return keyword

@@ -23,7 +23,6 @@ INITIAL_VALUES = {
     'clear': 'none',
     'clip': (),  # computed value for 'auto'
     'color': parse_color('black'),  # chosen by the user agent
-    'content': 'normal',
     # Means 'none', but allow `display: list-item` to increment the
     # list-item counter. If we ever have a way for authors to query
     # computed values (JavaScript?), this value should serialize to 'none'.
@@ -51,7 +50,6 @@ INITIAL_VALUES = {
     'padding_right': Dimension(0, 'px'),
     'padding_bottom': Dimension(0, 'px'),
     'padding_left': Dimension(0, 'px'),
-    'quotes': list('“”‘’'),  # chosen by the user agent
     'position': 'static',
     'right': 'auto',
     'table_layout': 'auto',
@@ -129,9 +127,11 @@ INITIAL_VALUES = {
     'orphans': 2,
     'widows': 2,
 
-    # Generated Content for Paged Media (WD): https://www.w3.org/TR/css-gcpm-3/
+    # Generated Content 3 (WD): https://www.w3.org/TR/css-content-3/
     'bookmark_label': (('content', 'text'),),
     'bookmark_level': 'none',
+    'content': 'normal',
+    'quotes': list('“”‘’'),  # chosen by the user agent
     'string_set': 'none',
 
     # Images 3/4 (CR/WD): https://www.w3.org/TR/css4-images/
