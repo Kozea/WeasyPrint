@@ -21,6 +21,12 @@ from .urls import fetch
 
 # XXX No unicode_literals, cffi likes native strings
 
+# Cairo crashes with font-size: 0 when using Win32 API
+# See https://github.com/Kozea/WeasyPrint/pull/599
+# Set to True on startup when fontconfig is inoperable
+# Used by text/Layout() to mask font-size:0 with a font_size of 1
+ZERO_FONTSIZE_CRASHES_CAIRO = False
+
 
 class FontConfiguration:
     """Font configuration"""
@@ -419,3 +425,16 @@ if fontconfig and pangoft2:
                     os.remove(filename)
                 except OSError:
                     continue
+
+    def _zero_font_crashes_cairo():
+        _fontconfig_config = ffi.gc(
+            fontconfig.FcInitLoadConfigAndFonts(),
+            fontconfig.FcConfigDestroy)
+        if _checkfontconfiguration(_fontconfig_config):
+            # wont crash
+            return False
+        warnings.warn('expect ugly output with font-size: 0')
+        return True
+
+    # check for usable fontconfig on startup
+    ZERO_FONTSIZE_CRASHES_CAIRO = _zero_font_crashes_cairo()

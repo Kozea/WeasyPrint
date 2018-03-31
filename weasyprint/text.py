@@ -618,9 +618,19 @@ def first_line_metrics(first_line, text, layout, resume_at, space_collapse,
     return layout, length, resume_at, width, height, baseline
 
 
+def _zero_font_crashes_cairo():
+    # circular dependency!
+    from .fonts import ZERO_FONTSIZE_CRASHES_CAIRO
+    return ZERO_FONTSIZE_CRASHES_CAIRO
+
+
 class Layout(object):
     """Object holding PangoLayout-related cdata pointers."""
     def __init__(self, context, font_size, style):
+        # Cairo crashes with font-size: 0 when using Win32 API
+        # See https://github.com/Kozea/WeasyPrint/pull/599
+        if font_size == 0 and _zero_font_crashes_cairo():
+            font_size = 1
         self.context = context
         hinting = context.enable_hinting if context else False
         self.layout = ffi.gc(
