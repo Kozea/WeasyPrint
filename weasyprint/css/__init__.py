@@ -24,10 +24,10 @@ import tinycss2
 
 from . import properties
 from . import computed_values
-from .descriptors import preprocess_descriptors
 from .properties import INITIAL_NOT_COMPUTED
-from .validation import (preprocess_declarations, remove_whitespace,
-                         split_on_comma)
+from .validation import preprocess_declarations
+from .validation.descriptors import preprocess_descriptors
+from .validation.utils import remove_whitespace, split_on_comma
 from ..logger import LOGGER
 from ..urls import get_url_attribute, url_join, URLFetchingError
 from .. import CSS

@@ -197,33 +197,6 @@ INITIAL_VALUES = {
 
 KNOWN_PROPERTIES = set(name.replace('_', '-') for name in INITIAL_VALUES)
 
-# Not applicable to the print media
-NOT_PRINT_MEDIA = {
-    # Aural media:
-    'azimuth',
-    'cue',
-    'cue-after',
-    'cue-before',
-    'cursor',
-    'elevation',
-    'pause',
-    'pause-after',
-    'pause-before',
-    'pitch-range',
-    'pitch',
-    'play-during',
-    'richness',
-    'speak-header',
-    'speak-numeral',
-    'speak-punctuation',
-    'speak',
-    'speech-rate',
-    'stress',
-    'voice-family',
-    'volume',
-}
-
-
 # Do not list shorthand properties here as we handle them before inheritance.
 #
 # text_decoration is not a really inherited, see
