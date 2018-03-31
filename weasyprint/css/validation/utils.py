@@ -12,12 +12,14 @@
 
 import functools
 import math
-from urllib.parse import urljoin
+from urllib.parse import unquote, urljoin
 
 from tinycss2.color3 import parse_color
 
 from .. import computed_values
+from ...formatting_structure import counters
 from ...images import LinearGradient, RadialGradient
+from ...logger import LOGGER
 from ...urls import iri_to_uri, url_is_absolute
 from ..properties import Dimension
 
@@ -70,6 +72,14 @@ DIRECTION_KEYWORDS = {
     ('to', 'left', 'bottom'): ('corner', 'bottom_left'),
     ('to', 'bottom', 'right'): ('corner', 'bottom_right'),
     ('to', 'right', 'bottom'): ('corner', 'bottom_right'),
+}
+
+# Keywords for quotes in 'content' property
+CONTENT_QUOTE_KEYWORDS = {
+    'open-quote': (True, True),
+    'close-quote': (False, True),
+    'no-open-quote': (True, False),
+    'no-close-quote': (False, False),
 }
 
 
@@ -323,6 +333,36 @@ def parse_color_stop(tokens):
     raise InvalidValues
 
 
+def parse_function(function_token):
+    """Parse functional notation.
+
+    Return ``(name, args)`` if the given token is a function with comma- or
+    space-separated arguments. Return ``None`` otherwise.
+
+    """
+    if not getattr(function_token, 'type', None) == 'function':
+        return
+
+    content = list(remove_whitespace(function_token.arguments))
+    arguments = []
+    last_is_comma = False
+    while content:
+        token = content.pop(0)
+        is_comma = token.type == 'literal' and token.value == ','
+        if last_is_comma and is_comma:
+            return
+        if is_comma:
+            last_is_comma = True
+        else:
+            last_is_comma = False
+            if token.type == 'function':
+                argument_function = parse_function(token)
+                if argument_function is None:
+                    return
+            arguments.append(token)
+    return function_token.lower_name, arguments
+
+
 def get_length(token, negative=True, percentage=False):
     """Parse a <length> token."""
     if percentage and token.type == 'percentage':
@@ -356,8 +396,9 @@ def get_image(token, base_url):
     if token.type != 'function':
         if get_keyword(token) == 'none':
             return 'none', None
-        if token.type == 'url':
-            return 'url', safe_urljoin(base_url, token.value)
+        parsed_url = get_url(token, base_url)
+        if parsed_url and parsed_url[0] == 'external':
+            return 'url', parsed_url[1]
         return
     arguments = split_on_comma(remove_whitespace(token.arguments))
     name = token.lower_name
@@ -380,3 +421,169 @@ def get_image(token, base_url):
             return 'radial-gradient', RadialGradient(
                 [parse_color_stop(stop) for stop in color_stops],
                 shape, size, position, 'repeating' in name)
+
+
+def get_url(token, base_url):
+    """Parse an <url> token."""
+    if token.type == 'url':
+        if token.value.startswith('#'):
+            return 'internal', unquote(token.value[1:])
+        else:
+            return 'external', safe_urljoin(base_url, token.value)
+
+
+def get_content_list(tokens, base_url):
+    """Parse <content-list> tokens."""
+    parsed_tokens = [
+        get_content_list_token(token, base_url) for token in tokens]
+    if None not in parsed_tokens:
+        return parsed_tokens
+
+
+def get_content_list_token(token, base_url):
+    """Parse one of the <content-list> tokens."""
+
+    def validate_target_token(token):
+        """ validate first parameter of ``target-*()``-token
+            returns ['attr', '<attrname>' ]
+                 or ['STRING', '<anchorname>'] when valid
+            evaluation of the anchorname is job of compute()
+        """
+        # TODO: what about ``attr(href url)`` ?
+        if isinstance(token, str):
+            # url() or "string" given
+            # verify #anchor is done in compute()
+            # if token.value.startswith('#'):
+            return ['STRING', token]
+        function = parse_function(token)
+        if function:
+            name, args = function
+            params = [a.type for a in args]
+            values = [getattr(a, 'value', a) for a in args]
+            if name == 'attr' and params == ['ident']:
+                return [name, values[0]]
+
+    quote_type = CONTENT_QUOTE_KEYWORDS.get(get_keyword(token))
+    if quote_type is not None:
+        return ('QUOTE', quote_type)
+    if get_keyword(token) == 'contents':
+        return ('content', 'text')
+    type_ = token.type
+    if type_ == 'string':
+        return ('STRING', token.value)
+    if type_ == 'url':
+        return ('URI', safe_urljoin(base_url, token.value))
+    function = parse_function(token)
+    if not function:
+        # to pass unit test `test_boxes.test_before_after`
+        # the log string must contain "invalid value"
+        raise InvalidValues('invalid value/unsupported token ´%s\´' % (token,))
+
+    name, args = function
+    # known functions in 'content', 'string-set' and 'bookmark-label':
+    valid_functions = [
+        'attr', 'counter', 'counters', 'target-counter', 'target-counters',
+        'target-text']
+    # 'content'
+    valid_functions += ['string', 'leader', 'content']
+    unsupported_functions = ['leader']
+    if name not in valid_functions:
+        # to pass unit test `test_boxes.test_before_after`
+        # the log string must contain "invalid value"
+        raise InvalidValues('invalid value: function `%s()`' % (name))
+    if name in unsupported_functions:
+        # suppress -- not (yet) implemented, no error
+        LOGGER.warn('\'%s()\' not (yet) supported', name)
+        return ('STRING', '')
+
+    prototype = (name, [a.type for a in args])
+    args = [getattr(a, 'value', a) for a in args]
+    if prototype == ('attr', ['ident']):
+        # TODO: what about ``attr(href url)`` ?
+        return (name, args[0])
+    elif prototype in (('content', []), ('content', ['ident', ])):
+        if not args:
+            return (name, 'text')
+        elif args[0] in ('text', 'after', 'before', 'first-letter'):
+            return (name, args[0])
+    elif prototype in (('counter', ['ident']),
+                       ('counters', ['ident', 'string'])):
+        args.append('decimal')
+        return (name, args)
+    elif prototype in (('counter', ['ident', 'ident']),
+                       ('counters', ['ident', 'string', 'ident'])):
+        style = args[-1]
+        if style in ('none', 'decimal') or style in counters.STYLES:
+            return (name, args)
+    elif prototype in (('string', ['ident']),
+                       ('string', ['ident', 'ident'])):
+        if len(args) > 1:
+            args[1] = args[1].lower()
+            if args[1] not in ('first', 'start', 'last', 'first-except'):
+                raise InvalidValues()
+        return (name, args)
+    # target-counter() = target-counter(
+    #    [ <string> | <url> ] , <custom-ident> ,
+    #    <counter-style>? )
+    elif name == 'target-counter':
+        if prototype in ((name, ['url', 'ident']),
+                         (name, ['url', 'ident', 'ident']),
+                         (name, ['string', 'ident']),
+                         (name, ['string', 'ident', 'ident']),
+                         (name, ['function', 'ident']),
+                         (name, ['function', 'ident', 'ident'])):
+            # default style
+            if len(args) == 2:
+                args.append('decimal')
+            # accept "#anchorname" and attr(x)
+            retval = validate_target_token(args.pop(0))
+            if retval is None:
+                raise InvalidValues()
+            style = args[-1]
+            if style in ('none', 'decimal') or style in counters.STYLES:
+                return (name, retval + args)
+    # target-counters() = target-counters(
+    #    [ <string> | <url> ] , <custom-ident> , <string> ,
+    #    <counter-style>? )
+    elif name == 'target-counters':
+        if prototype in ((name, ['url', 'ident', 'string']),
+                         (name, ['url', 'ident', 'string', 'ident']),
+                         (name, ['string', 'ident', 'string']),
+                         (name, ['string', 'ident', 'string', 'ident']),
+                         (name, ['function', 'ident', 'string']),
+                         (name, ['function', 'ident', 'string', 'ident'])):
+            # default style
+            if len(args) == 3:
+                args.append('decimal')
+            # accept "#anchorname" and attr(x)
+            retval = validate_target_token(args.pop(0))
+            if retval is None:
+                raise InvalidValues()
+            style = args[-1]
+            if style in ('none', 'decimal') or style in counters.STYLES:
+                return (name, retval + args)
+    # target-text() = target-text(
+    #    [ <string> | <url> ] ,
+    #    [ content | before | after | first-letter ]? )
+    elif name == 'target-text':
+        if prototype in ((name, ['url']),
+                         (name, ['url', 'ident']),
+                         (name, ['string']),
+                         (name, ['string', 'ident']),
+                         (name, ['function']),
+                         (name, ['function', 'ident'])):
+            if len(args) == 1:
+                args.append('content')
+            # accept "#anchorname" and attr(x)
+            retval = validate_target_token(args.pop(0))
+            if retval is None:
+                raise InvalidValues()
+            style = args[-1]
+            # hint: the syntax isn't stable yet!
+            if style in ('content', 'after', 'before', 'first-letter'):
+                # build.TEXT_CONTENT_EXTRACTORS needs 'text'
+                # TODO: should we define
+                # TEXT_CONTENT_EXTRACTORS['content'] == box_text ?
+                if style == 'content':
+                    args[-1] = 'text'
+                return (name, retval + args)

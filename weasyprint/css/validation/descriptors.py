@@ -10,15 +10,13 @@
 
 """
 
-from urllib.parse import unquote
-
 import tinycss2
 
 from . import properties
 from ...logger import LOGGER
 from .utils import (
     InvalidValues, comma_separated_list, get_keyword, get_single_keyword,
-    remove_whitespace, safe_urljoin, single_keyword, single_token)
+    get_url, remove_whitespace, single_keyword, single_token)
 
 DESCRIPTORS = {}
 
@@ -153,11 +151,7 @@ def src(tokens, base_url):
             tokens, token = tokens[:-1], tokens[-1]
         if token.type == 'function' and token.lower_name == 'local':
             return 'local', font_family(token.arguments, allow_spaces=True)
-        if token.type == 'url':
-            if token.value.startswith('#'):
-                return 'internal', unquote(token.value[1:])
-            else:
-                return 'external', safe_urljoin(base_url, token.value)
+        return get_url(token, base_url)
 
 
 @descriptor()
