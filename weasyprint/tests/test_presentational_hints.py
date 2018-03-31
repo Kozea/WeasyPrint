@@ -10,7 +10,7 @@
 """
 
 from .. import CSS, HTML
-from .testing_utils import assert_no_logs
+from .testing_utils import BASE_URL, assert_no_logs
 
 PH_TESTING_CSS = CSS(string='''
 @page {margin: 0; size: 1000px 1000px}
@@ -77,6 +77,7 @@ def test_ph_flow():
 @assert_no_logs
 def test_ph_phrasing():
     document = HTML(string='''
+      <style>@font-face { src: url(AHEM____.TTF); font-family: ahem }</style>
       <br clear=left>
       <br clear=right />
       <br clear=both />
@@ -85,7 +86,8 @@ def test_ph_phrasing():
       <Font size=4></Font>
       <font size=+5 ></font>
       <font size=-5 ></font>
-    ''').render(stylesheets=[PH_TESTING_CSS], presentational_hints=True)
+    ''', base_url=BASE_URL).render(
+        stylesheets=[PH_TESTING_CSS], presentational_hints=True)
     page, = document.pages
     html, = page._page_box.children
     body, = html.children

@@ -21,9 +21,20 @@ import pytest
 
 from .. import CSS, HTML, text
 from ..logger import LOGGER
+from ..urls import path2url
 
-# TODO: find a way to not depend on a specific font
-FONTS = 'Liberation Sans, Arial'
+# Lists of fonts with many variants (including condensed)
+if sys.platform.startswith('win'):
+    SANS_FONTS = 'Arial Nova, Arial, sans'
+    MONO_FONTS = 'Courier New, Courier, monospace'
+elif sys.platform.startswith('darwin'):
+    # Pango on macOS doesn't handle multiple fonts
+    # See https://github.com/Kozea/WeasyPrint/issues/158
+    SANS_FONTS = 'Arial'
+    MONO_FONTS = 'Courier New'
+else:
+    SANS_FONTS = 'DejaVu Sans, sans'
+    MONO_FONTS = 'DejaVu Sans Mono, monospace'
 
 TEST_UA_STYLESHEET = CSS(filename=os.path.join(
     os.path.dirname(__file__), '..', 'css', 'tests_ua.css'
@@ -39,6 +50,10 @@ class FakeHTML(HTML):
 def resource_filename(basename):
     """Return the absolute path of the resource called ``basename``."""
     return os.path.join(os.path.dirname(__file__), 'resources', basename)
+
+
+# Dummy filename, but in the right directory.
+BASE_URL = path2url(resource_filename('<test>'))
 
 
 class CallbackHandler(logging.Handler):

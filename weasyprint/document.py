@@ -298,12 +298,16 @@ class Document(object):
         if font_config is None:
             font_config = FontConfiguration()
         page_rules = []
+        user_stylesheets = []
+        for css in stylesheets or []:
+            if not hasattr(css, 'matcher'):
+                css = CSS(
+                    guess=css, media_type=html.media_type,
+                    font_config=font_config)
+            user_stylesheets.append(css)
         style_for, cascaded_styles, computed_styles = get_all_computed_styles(
-            html, presentational_hints=presentational_hints, user_stylesheets=[
-                css if hasattr(css, 'matcher')
-                else CSS(guess=css, media_type=html.media_type)
-                for css in stylesheets or []],
-            font_config=font_config, page_rules=page_rules)
+            html, user_stylesheets, presentational_hints, font_config,
+            page_rules)
         get_image_from_uri = functools.partial(
             original_get_image_from_uri, {}, html.url_fetcher)
         LOGGER.info('Step 4 - Creating formatting structure')

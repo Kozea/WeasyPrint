@@ -106,7 +106,7 @@ Debian 9.0 Stretch or newer, Ubuntu 16.04 Xenial or newer:
 
 .. code-block:: sh
 
-    sudo apt-get install build-essential python3-dev python3-pip python3-cffi libcairo2 libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf2.0-0 libffi-dev shared-mime-info
+    sudo apt-get install build-essential python3-dev python3-pip python3-setuptools python3-wheel python3-cffi libcairo2 libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf2.0-0 libffi-dev shared-mime-info
 
 Fedora
 ~~~~~~
@@ -117,7 +117,7 @@ with pip after installing the following packages:
 
 .. code-block:: sh
 
-    sudo yum install redhat-rpm-config python-devel python-pip python-cffi libffi-devel cairo pango gdk-pixbuf2
+    sudo yum install redhat-rpm-config python-devel python-pip python-setuptools python-wheel python-cffi libffi-devel cairo pango gdk-pixbuf2
 
 Archlinux
 ~~~~~~~~~
@@ -128,7 +128,7 @@ it with pip after installing the following packages:
 
 .. code-block:: sh
 
-    sudo pacman -S python-pip cairo pango gdk-pixbuf2 libffi pkg-config
+    sudo pacman -S python-pip python-setuptools python-wheel cairo pango gdk-pixbuf2 libffi pkg-config
 
 Gentoo
 ~~~~~~
@@ -139,7 +139,7 @@ install it with pip after installing the following packages:
 
 .. code-block:: sh
 
-    emerge pip cairo pango gdk-pixbuf cffi
+    emerge pip setuptools wheel cairo pango gdk-pixbuf cffi
 
 
 macOS
@@ -194,3 +194,10 @@ your own, don't even try to report an issue, kittens will die because of you.**
   in `Python's wiki <https://wiki.python.org/moin/WindowsCompilers>`_,
 - install WeasyPrint with ``python -m pip install weasyprint``,
 - test with ``python -m weasyprint http://weasyprint.org weasyprint.pdf``.
+
+If you get an error like ``OSError: dlopen() failed to load a library: cairo /
+cairo-2`` it's because Cairo (or the library given in your error) is not
+available in one of the folders listed in your ``PATH`` environment
+variable. Reinstalling GTK (and carefully reading the warnings above) will
+probably solve your problem. You can also find extra help in `this bug report
+<https://github.com/Kozea/WeasyPrint/issues/589>`_.

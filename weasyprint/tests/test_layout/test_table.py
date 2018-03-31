@@ -1217,6 +1217,7 @@ def test_layout_table_auto_40():
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/368
     # Check that white-space is used for the shrink-to-fit algorithm
     page, = render_pages('''
+      <style>@font-face { src: url(AHEM____.TTF); font-family: ahem }</style>
       <table style="width: 0">
         <td style="font-family: ahem; white-space: nowrap">a a</td>
       </table>
@@ -1689,6 +1690,7 @@ def test_table_vertical_align():
         r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r,  # noqa
     ], '''
       <style>
+        @font-face { src: url(AHEM____.TTF); font-family: ahem }
         @page { size: 28px 10px }
         html { background: #fff; font-size: 1px; color: red }
         body { margin: 0; width: 28px; height: 10px }

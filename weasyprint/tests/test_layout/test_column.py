@@ -27,6 +27,7 @@ from ..testing_utils import assert_no_logs
 def test_columns(css):
     page, = render_pages('''
       <style>
+        @font-face { src: url(AHEM____.TTF); font-family: ahem }
         div { %s; column-gap: 0 }
         body { margin: 0; font-family: "ahem" }
         @page { margin: 0; size: 400px 1000px }
@@ -58,6 +59,7 @@ def test_columns(css):
 def test_column_gap(value, width):
     page, = render_pages('''
       <style>
+        @font-face { src: url(AHEM____.TTF); font-family: ahem }
         div { columns: 3; column-gap: %s }
         body { margin: 0; font-family: "ahem" }
         @page { margin: 0; size: 300px 1000px }
@@ -85,6 +87,7 @@ def test_column_gap(value, width):
 def test_columns_multipage():
     page1, page2 = render_pages('''
       <style>
+        @font-face { src: url(AHEM____.TTF); font-family: ahem }
         div { columns: 2; column-gap: 1px }
         body { margin: 0; font-family: "ahem";
                font-size: 1px; line-height: 1px }
@@ -120,6 +123,7 @@ def test_columns_multipage():
 def test_columns_not_enough_content():
     page, = render_pages('''
       <style>
+        @font-face { src: url(AHEM____.TTF); font-family: ahem }
         div { columns: 5; column-gap: 0 }
         body { margin: 0; font-family: "ahem" }
         @page { margin: 0; size: 5px; font-size: 1px }
@@ -141,6 +145,7 @@ def test_columns_not_enough_content():
 def test_columns_empty():
     page, = render_pages('''
       <style>
+        @font-face { src: url(AHEM____.TTF); font-family: ahem }
         div { columns: 3 }
         body { margin: 0; font-family: "ahem" }
         @page { margin: 0; size: 3px; font-size: 1px }
@@ -162,6 +167,7 @@ def test_columns_fixed_height(prop):
     # TODO: we should test when the height is too small
     page, = render_pages('''
       <style>
+        @font-face { src: url(AHEM____.TTF); font-family: ahem }
         div { columns: 4; column-gap: 0; %s: 10px }
         body { margin: 0; font-family: "ahem"; line-height: 1px }
         @page { margin: 0; size: 4px 50px; font-size: 1px }
@@ -184,6 +190,7 @@ def test_columns_fixed_height(prop):
 def test_columns_relative():
     page, = render_pages('''
       <style>
+        @font-face { src: url(AHEM____.TTF); font-family: ahem }
         article { position: absolute; top: 3px }
         div { columns: 4; column-gap: 0; position: relative;
               top: 1px; left: 2px }

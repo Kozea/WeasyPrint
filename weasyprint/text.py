@@ -27,9 +27,6 @@ CAIRO_DUMMY_CONTEXT = {
     False: cairo.Context(cairo.PDFSurface(None, 1, 1))}
 
 
-PANGO_ATTR_FONT_FEATURES_CACHE = {}
-
-
 ffi = cffi.FFI()
 ffi.cdef('''
     // Cairo
@@ -248,8 +245,6 @@ gobject.g_type_init()
 
 units_to_double = pango.pango_units_to_double
 units_from_double = pango.pango_units_from_double
-
-PYPHEN_DICTIONARY_CACHE = {}
 
 
 PANGO_STYLE = {
@@ -889,7 +884,7 @@ def create_layout(text, style, context, max_width, justification_spacing):
 
         # TODO: attributes should be freed.
         # In the meantime, keep a cache to avoid leaking too many of them.
-        attr = PANGO_ATTR_FONT_FEATURES_CACHE.get(features)
+        attr = context.font_features.get(features)
         if attr is None:
             try:
                 attr = pango.pango_attr_font_features_new(
@@ -898,7 +893,7 @@ def create_layout(text, style, context, max_width, justification_spacing):
                 LOGGER.error(
                     'OpenType features are not available with Pango < 1.38')
             else:
-                PANGO_ATTR_FONT_FEATURES_CACHE[features] = attr
+                context.font_features[features] = attr
         if attr is not None:
             attr_list = pango.pango_attr_list_new()
             pango.pango_attr_list_insert(attr_list, attr)
@@ -1055,11 +1050,11 @@ def split_first_line(text, style, context, max_width, justification_spacing,
             elif hyphens == 'auto' and lang:
                 # The next word does not fit, try hyphenation
                 dictionary_key = (lang, left, right, total)
-                dictionary = PYPHEN_DICTIONARY_CACHE.get(dictionary_key)
+                dictionary = context.dictionaries.get(dictionary_key)
                 if dictionary is None:
                     dictionary = pyphen.Pyphen(
                         lang=lang, left=left, right=right)
-                    PYPHEN_DICTIONARY_CACHE[dictionary_key] = dictionary
+                    context.dictionaries[dictionary_key] = dictionary
                 dictionary_iterations = [
                     start for start, end in dictionary.iterate(next_word)]
             else:

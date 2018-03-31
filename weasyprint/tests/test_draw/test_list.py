@@ -12,7 +12,7 @@
 import pytest
 
 from . import B, _, assert_pixels, r
-from ..testing_utils import FONTS, assert_no_logs
+from ..testing_utils import SANS_FONTS, assert_no_logs
 
 
 @assert_no_logs
@@ -59,7 +59,7 @@ def test_list_style_image(position, pixels):
         ul { margin: 2px 2px 0 7px; list-style: url(pattern.png) %s;
              font-size: 2px }
       </style>
-      <ul><li></li></ul>''' % (FONTS, position))
+      <ul><li></li></ul>''' % (SANS_FONTS, position))
 
 
 @assert_no_logs
@@ -81,4 +81,4 @@ def test_list_style_image_none():
         body { margin: 0; background: white; font-family: %s }
         ul { margin: 0 0 0 5px; list-style: none; font-size: 2px; }
       </style>
-      <ul><li>''' % (FONTS,))
+      <ul><li>''' % (SANS_FONTS,))

@@ -14,7 +14,6 @@
 """
 
 import sys
-import weakref
 
 from .. import text
 from ..formatting_structure import boxes
@@ -298,9 +297,6 @@ def inline_line_widths(context, box, outer, is_line_start, minimum,
     yield current_line
 
 
-TABLE_CACHE = weakref.WeakKeyDictionary()
-
-
 def _percentage_contribution(box):
     """Return the percentage contribution of a cell, column or column group.
 
@@ -332,7 +328,7 @@ def table_and_columns_preferred_widths(context, box, outer=True):
 
     """
     table = box.get_wrapped_table()
-    result = TABLE_CACHE.get(table)
+    result = context.tables.get(table)
     if result:
         return result[outer]
 
@@ -374,7 +370,7 @@ def table_and_columns_preferred_widths(context, box, outer=True):
             box, outer=True, width=block_max_content_width(
                 context, table, outer=True))
         result = ([], [], [], [], total_horizontal_border_spacing, [])
-        TABLE_CACHE[table] = result = {
+        context.tables[table] = result = {
             False: (min_width, max_width) + result,
             True: (outer_min_width, outer_max_width) + result,
         }
@@ -597,7 +593,7 @@ def table_and_columns_preferred_widths(context, box, outer=True):
     result = (
         min_content_widths, max_content_widths, intrinsic_percentages,
         constrainedness, total_horizontal_border_spacing, zipped_grid)
-    TABLE_CACHE[table] = result = {
+    context.tables[table] = result = {
         False: (table_min_content_width, table_max_content_width) + result,
         True: (
             (table_outer_min_content_width, table_outer_max_content_width) +

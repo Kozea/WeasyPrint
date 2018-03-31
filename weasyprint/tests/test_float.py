@@ -122,7 +122,7 @@ def test_floats_5():
     # c414-flt-wrap-000 with text ... more or less
     page, = render_pages('''
       <style>
-        body { width: 100px; font: 60px Ahem; }
+        body { width: 100px; font: 60px ahem; }
         p { float: left; height: 100px }
         img { width: 60px; vertical-align: top }
       </style>
@@ -432,6 +432,9 @@ def test_floats_page_breaks_6():
 def test_preferred_widths_1():
     def get_float_width(body_width):
         page, = render_pages('''
+          <style>
+            @font-face { src: url(AHEM____.TTF); font-family: ahem }
+          </style>
           <body style="width: %spx; font-family: ahem">
           <p style="white-space: pre-line; float: left">
             Lorem ipsum dolor sit amet,
@@ -481,7 +484,10 @@ def test_preferred_widths_3():
 @assert_no_logs
 def test_preferred_widths_4():
     page, = render_pages(
-        '<style>p { font: 20px Ahem }</style>'
+        '<style>'
+        '  @font-face { src: url(AHEM____.TTF); font-family: ahem }'
+        '  p { font: 20px ahem }'
+        '</style>'
         '<p style="float: left">XX<br>XX<br>X</p>')
     html, = page.children
     body, = html.children
@@ -493,7 +499,10 @@ def test_preferred_widths_4():
 def test_preferred_widths_5():
     # The space is the start of the line is collapsed.
     page, = render_pages(
-        '<style>p { font: 20px Ahem }</style>'
+        '<style>'
+        '  @font-face { src: url(AHEM____.TTF); font-family: ahem }'
+        '  p { font: 20px ahem }'
+        '</style>'
         '<p style="float: left">XX<br> XX<br>X</p>''')
     html, = page.children
     body, = html.children
