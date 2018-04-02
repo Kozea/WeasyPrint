@@ -240,10 +240,14 @@ def compute_content_list(content_list, parent_box, counter_values, parse_again,
     boxlist = []
     texts = []
     for type_, value in content_list:
-        if type_ == 'STRING':
+        if type_ == 'string':
             texts.append(value)
-        elif type_ == 'URI' and get_image_from_uri is not None:
-            image = get_image_from_uri(value)
+        elif type_ == 'uri' and get_image_from_uri is not None:
+            origin, uri = value
+            if origin != 'external':
+                # Embedding internal references is impossible
+                continue
+            image = get_image_from_uri(uri)
             if image is not None:
                 text = ''.join(texts)
                 if text:
@@ -267,11 +271,14 @@ def compute_content_list(content_list, parent_box, counter_values, parse_again,
             texts.append(separator.join(
                 counters.format(counter_value, counter_style)
                 for counter_value in counter_values.get(counter_name, [0])))
-        elif type_ == 'string' and context is not None and page is not None:
+        elif type_ == 'string-set' and (
+                context is not None and page is not None):
             # string() is only valid in @page context
             texts.append(context.get_string_set_for(page, *value))
         elif type_ == 'attr' and element is not None:
-            texts.append(element.get(value, ''))
+            attr_name, type_or_unit, fallback = value
+            assert type_or_unit == 'string'
+            texts.append(element.get(attr_name, fallback))
         elif type_ == 'target-counter':
             target_name, counter_name, counter_style = value
             lookup_target = target_collector.lookup_target(
@@ -309,10 +316,11 @@ def compute_content_list(content_list, parent_box, counter_values, parse_again,
             else:
                 texts = []
                 break
-        elif (type_ == 'QUOTE' and
+        elif (type_ == 'quote' and
                 quote_depth is not None and
                 quote_style is not None):
-            is_open, insert = value
+            is_open = 'open' in value
+            insert = not value.startswith('no-')
             if not is_open:
                 quote_depth[0] = max(0, quote_depth[0] - 1)
             if insert:

@@ -19,7 +19,6 @@ from tinycss2.color3 import parse_color
 from .. import computed_values
 from ...formatting_structure import counters
 from ...images import LinearGradient, RadialGradient
-from ...logger import LOGGER
 from ...urls import iri_to_uri, url_is_absolute
 from ..properties import Dimension
 
@@ -74,12 +73,18 @@ DIRECTION_KEYWORDS = {
     ('to', 'right', 'bottom'): ('corner', 'bottom_right'),
 }
 
-# Keywords for quotes in 'content' property
-CONTENT_QUOTE_KEYWORDS = {
-    'open-quote': (True, True),
-    'close-quote': (False, True),
-    'no-open-quote': (True, False),
-    'no-close-quote': (False, False),
+# Default fallback values used in attr() functions
+ATTR_FALLBACKS = {
+    'string': ('string', ''),
+    'color': ('ident', 'currentcolor'),
+    'url': ('external', 'about:invalid'),
+    'integer': ('number', '0'),
+    'number': ('number', '0'),
+    'length': ('length', Dimension('0', 'px')),
+    'angle': ('angle', Dimension('0', 'rad')),
+    'time': ('time', Dimension('0', 's')),
+    'frequency': ('frequency', Dimension('0', 'hz')),
+    '%': ('number', '0'),
 }
 
 
@@ -110,6 +115,19 @@ def split_on_comma(tokens):
             this_part.append(token)
     parts.append(this_part)
     return tuple(parts)
+
+
+def split_on_optional_comma(tokens):
+    """Split a list of tokens on optional commas, ie ``LiteralToken(',')``."""
+    parts = []
+    for split_part in split_on_comma(tokens):
+        if not split_part:
+            # Happens when there's a comma at the beginning, at the end, or
+            # when two commas are next to each other.
+            return
+        for part in split_part:
+            parts.append(part)
+    return parts
 
 
 def remove_whitespace(tokens):
@@ -340,7 +358,7 @@ def parse_function(function_token):
     space-separated arguments. Return ``None`` otherwise.
 
     """
-    if not getattr(function_token, 'type', None) == 'function':
+    if not function_token.type == 'function':
         return
 
     content = list(remove_whitespace(function_token.arguments))
@@ -361,6 +379,113 @@ def parse_function(function_token):
                     return
             arguments.append(token)
     return function_token.lower_name, arguments
+
+
+def check_attr_function(token, allowed_type=None):
+    function = parse_function(token)
+    if function is None:
+        return
+    name, args = function
+    if name == 'attr' and len(args) in (1, 2, 3):
+        if args[0].type != 'ident':
+            return
+        attr_name = args[0].value
+        if len(args) == 1:
+            type_or_unit = 'string'
+            fallback = ''
+        else:
+            type_or_unit = get_string(args[1])
+            if type_or_unit not in ATTR_FALLBACKS:
+                return
+            if len(args) == 2:
+                fallback = ATTR_FALLBACKS[type_or_unit]
+            else:
+                pass
+        if allowed_type in (None, type_or_unit):
+            return ('attr', (attr_name, type_or_unit, fallback))
+
+
+def check_counter_function(token, allowed_type=None):
+    function = parse_function(token)
+    if function is None:
+        return
+    name, args = function
+    arguments = []
+    if (name == 'counter' and len(args) in (1, 2)) or (
+            name == 'counters' and len(args) in (2, 3)):
+        ident = args.pop(0)
+        if ident.type != 'ident':
+            return
+        arguments.append(ident.lower_value)
+
+        if name == 'counters':
+            string = args.pop(0)
+            if string.type != 'string':
+                return
+            arguments.append(string.value)
+
+        if args:
+            counter_style = get_keyword(args.pop(0))
+            if counter_style not in ['none'] + list(counters.STYLES):
+                return
+            arguments.append(counter_style)
+        else:
+            arguments.append('decimal')
+
+        return (name, tuple(arguments))
+
+
+def check_content_function(token):
+    function = parse_function(token)
+    if function is None:
+        return
+    name, args = function
+    if name == 'content':
+        if len(args) == 0:
+            return ('content', 'text')
+        elif len(args) == 1:
+            ident = args.pop(0)
+            if ident.type == 'ident' and ident.lower_value in (
+                    'text', 'before', 'after', 'first-letter', 'marker'):
+                return ('content', ident.lower_value)
+
+
+def check_string_function(token):
+    function = parse_function(token)
+    if function is None:
+        return
+    name, args = function
+    if name == 'string' and len(args) in (1, 2):
+        custom_ident = args.pop(0)
+        if custom_ident.type != 'ident':
+            return
+        custom_ident = custom_ident.value
+
+        if args:
+            ident = args.pop(0)
+            if ident.type != 'ident' or ident.lower_value not in (
+                    'first', 'start', 'last', 'first-except'):
+                return
+            ident = ident.lower_value
+        else:
+            ident = 'first'
+
+        return ('string-set', (custom_ident, ident))
+
+
+def get_string(token):
+    """Parse a <string> token."""
+    if token.type == 'string':
+        return ('string', token.value)
+    if token.type == 'function':
+        if token.name == 'attr':
+            return check_attr_function(token, 'string')
+        elif token.name in ('counter', 'counters'):
+            return check_counter_function(token)
+        elif token.name == 'content':
+            return check_content_function(token)
+        elif token.name == 'string':
+            return check_string_function(token)
 
 
 def get_length(token, negative=True, percentage=False):
@@ -432,8 +557,85 @@ def get_url(token, base_url):
             return 'external', safe_urljoin(base_url, token.value)
 
 
+def get_quote(token):
+    """Parse a <quote> token."""
+    keyword = get_keyword(token)
+    if keyword in (
+            'open-quote', 'close-quote',
+            'no-open-quote', 'no-close-quote'):
+        return keyword
+
+
+def get_target(token):
+    """Parse a <target> token."""
+    function = parse_function(token)
+    if function is None:
+        return
+    name, args = function
+    if len(args) < 2:
+        return
+    args = split_on_optional_comma(args)
+    if args is None:
+        return
+
+    if name == 'target-counter':
+        if len(args) not in (2, 3):
+            return
+    elif name == 'target-counters':
+        if len(args) not in (3, 4):
+            return
+    elif name == 'target-text':
+        if len(args) not in (1, 2):
+            return
+    else:
+        return
+
+    values = []
+
+    link = args.pop(0)
+    string_link = get_string(link)
+    if string_link is not None:
+        values.append(string_link)
+    else:
+        url = get_url(token)
+        if url is None:
+            return
+        values.append(('uri', url))
+
+    if name.startswith('target-counter'):
+        ident = args.pop(0)
+        if ident.type != 'ident':
+            return
+        values.append(ident.lower_value)
+
+        if name == 'target-counters':
+            string = get_string(args.pop(0))
+            if string is None:
+                return
+            values.append(string.value)
+
+        if args:
+            counter_style = get_keyword(args.pop(0))
+            if counter_style not in counters.STYLES:
+                return
+        else:
+            counter_style = 'decimal'
+        values.append(counter_style)
+    else:
+        if args:
+            content = get_keyword(args.pop(0))
+            if content not in ('content', 'before', 'after', 'first-letter'):
+                return
+        else:
+            content = 'content'
+        values.append(content)
+
+    return (name, tuple(values))
+
+
 def get_content_list(tokens, base_url):
     """Parse <content-list> tokens."""
+    # See https://www.w3.org/TR/css-content-3/#typedef-content-list
     parsed_tokens = [
         get_content_list_token(token, base_url) for token in tokens]
     if None not in parsed_tokens:
@@ -442,148 +644,50 @@ def get_content_list(tokens, base_url):
 
 def get_content_list_token(token, base_url):
     """Parse one of the <content-list> tokens."""
+    # See https://www.w3.org/TR/css-content-3/#typedef-content-list
 
-    def validate_target_token(token):
-        """ validate first parameter of ``target-*()``-token
-            returns ['attr', '<attrname>' ]
-                 or ['STRING', '<anchorname>'] when valid
-            evaluation of the anchorname is job of compute()
-        """
-        # TODO: what about ``attr(href url)`` ?
-        if isinstance(token, str):
-            # url() or "string" given
-            # verify #anchor is done in compute()
-            # if token.value.startswith('#'):
-            return ['STRING', token]
-        function = parse_function(token)
-        if function:
-            name, args = function
-            params = [a.type for a in args]
-            values = [getattr(a, 'value', a) for a in args]
-            if name == 'attr' and params == ['ident']:
-                return [name, values[0]]
+    # <string>
+    string = get_string(token)
+    if string is not None:
+        return string
 
-    quote_type = CONTENT_QUOTE_KEYWORDS.get(get_keyword(token))
-    if quote_type is not None:
-        return ('QUOTE', quote_type)
+    # contents
     if get_keyword(token) == 'contents':
         return ('content', 'text')
-    type_ = token.type
-    if type_ == 'string':
-        return ('STRING', token.value)
-    if type_ == 'url':
-        return ('URI', safe_urljoin(base_url, token.value))
+
+    # <uri>
+    url = get_url(token, base_url)
+    if url is not None:
+        return ('uri', url)
+
+    # <quote>
+    quote = get_quote(token)
+    if quote is not None:
+        return ('quote', quote)
+
+    # <target>
+    target = get_target(token)
+    if target is not None:
+        return target
+
+    # <leader>
     function = parse_function(token)
-    if not function:
-        # to pass unit test `test_boxes.test_before_after`
-        # the log string must contain "invalid value"
-        raise InvalidValues('invalid value/unsupported token ´%s\´' % (token,))
-
+    if function is None:
+        return
     name, args = function
-    # known functions in 'content', 'string-set' and 'bookmark-label':
-    valid_functions = [
-        'attr', 'counter', 'counters', 'target-counter', 'target-counters',
-        'target-text']
-    # 'content'
-    valid_functions += ['string', 'leader', 'content']
-    unsupported_functions = ['leader']
-    if name not in valid_functions:
-        # to pass unit test `test_boxes.test_before_after`
-        # the log string must contain "invalid value"
-        raise InvalidValues('invalid value: function `%s()`' % (name))
-    if name in unsupported_functions:
-        # suppress -- not (yet) implemented, no error
-        LOGGER.warn('\'%s()\' not (yet) supported', name)
-        return ('STRING', '')
-
-    prototype = (name, [a.type for a in args])
-    args = [getattr(a, 'value', a) for a in args]
-    if prototype == ('attr', ['ident']):
-        # TODO: what about ``attr(href url)`` ?
-        return (name, args[0])
-    elif prototype in (('content', []), ('content', ['ident', ])):
-        if not args:
-            return (name, 'text')
-        elif args[0] in ('text', 'after', 'before', 'first-letter'):
-            return (name, args[0])
-    elif prototype in (('counter', ['ident']),
-                       ('counters', ['ident', 'string'])):
-        args.append('decimal')
-        return (name, args)
-    elif prototype in (('counter', ['ident', 'ident']),
-                       ('counters', ['ident', 'string', 'ident'])):
-        style = args[-1]
-        if style in ('none', 'decimal') or style in counters.STYLES:
-            return (name, args)
-    elif prototype in (('string', ['ident']),
-                       ('string', ['ident', 'ident'])):
-        if len(args) > 1:
-            args[1] = args[1].lower()
-            if args[1] not in ('first', 'start', 'last', 'first-except'):
-                raise InvalidValues()
-        return (name, args)
-    # target-counter() = target-counter(
-    #    [ <string> | <url> ] , <custom-ident> ,
-    #    <counter-style>? )
-    elif name == 'target-counter':
-        if prototype in ((name, ['url', 'ident']),
-                         (name, ['url', 'ident', 'ident']),
-                         (name, ['string', 'ident']),
-                         (name, ['string', 'ident', 'ident']),
-                         (name, ['function', 'ident']),
-                         (name, ['function', 'ident', 'ident'])):
-            # default style
-            if len(args) == 2:
-                args.append('decimal')
-            # accept "#anchorname" and attr(x)
-            retval = validate_target_token(args.pop(0))
-            if retval is None:
-                raise InvalidValues()
-            style = args[-1]
-            if style in ('none', 'decimal') or style in counters.STYLES:
-                return (name, retval + args)
-    # target-counters() = target-counters(
-    #    [ <string> | <url> ] , <custom-ident> , <string> ,
-    #    <counter-style>? )
-    elif name == 'target-counters':
-        if prototype in ((name, ['url', 'ident', 'string']),
-                         (name, ['url', 'ident', 'string', 'ident']),
-                         (name, ['string', 'ident', 'string']),
-                         (name, ['string', 'ident', 'string', 'ident']),
-                         (name, ['function', 'ident', 'string']),
-                         (name, ['function', 'ident', 'string', 'ident'])):
-            # default style
-            if len(args) == 3:
-                args.append('decimal')
-            # accept "#anchorname" and attr(x)
-            retval = validate_target_token(args.pop(0))
-            if retval is None:
-                raise InvalidValues()
-            style = args[-1]
-            if style in ('none', 'decimal') or style in counters.STYLES:
-                return (name, retval + args)
-    # target-text() = target-text(
-    #    [ <string> | <url> ] ,
-    #    [ content | before | after | first-letter ]? )
-    elif name == 'target-text':
-        if prototype in ((name, ['url']),
-                         (name, ['url', 'ident']),
-                         (name, ['string']),
-                         (name, ['string', 'ident']),
-                         (name, ['function']),
-                         (name, ['function', 'ident'])):
-            if len(args) == 1:
-                args.append('content')
-            # accept "#anchorname" and attr(x)
-            retval = validate_target_token(args.pop(0))
-            if retval is None:
-                raise InvalidValues()
-            style = args[-1]
-            # hint: the syntax isn't stable yet!
-            if style in ('content', 'after', 'before', 'first-letter'):
-                # build.TEXT_CONTENT_EXTRACTORS needs 'text'
-                # TODO: should we define
-                # TEXT_CONTENT_EXTRACTORS['content'] == box_text ?
-                if style == 'content':
-                    args[-1] = 'text'
-                return (name, retval + args)
+    if name == 'leader':
+        if len(args) != 1:
+            return
+        arg, = args
+        if arg.type == 'ident':
+            if arg.value == 'dotted':
+                string = '.'
+            elif arg.value == 'solid':
+                string = '_'
+            elif arg.value == 'space':
+                string = ' '
+            else:
+                return
+        elif arg.type == 'string':
+            string = arg.value
+        return ('leader', ('string', string))

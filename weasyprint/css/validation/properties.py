@@ -823,7 +823,7 @@ def list_style_position(keyword):
 @single_keyword
 def list_style_type(keyword):
     """``list-style-type`` property validation."""
-    return keyword in ('none', 'decimal') or keyword in counters.STYLES
+    return keyword == 'none' or keyword in counters.STYLES
 
 
 @property('min-width')

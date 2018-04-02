@@ -156,7 +156,7 @@ def test_annotate_document():
 
     # The href attr should be as in the source, not made absolute.
     assert after['content'] == (
-        ('STRING', ' ['), ('STRING', 'home.html'), ('STRING', ']'))
+        ('string', ' ['), ('string', 'home.html'), ('string', ']'))
     assert after['background_color'] == (1, 0, 0, 1)
     assert after['border_top_width'] == 42
     assert after['border_bottom_width'] == 3

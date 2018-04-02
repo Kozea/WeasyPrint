@@ -9,6 +9,7 @@
     :license: BSD, see LICENSE for details.
 
 """
+
 from urllib.parse import unquote
 
 from .. import text
@@ -410,14 +411,11 @@ def content(computer, name, values):
     class ComputedContentError(ValueError):
         """Invalid or unsupported values for a known CSS property."""
 
-    def computed_content_error(level, reason):
-        pass
-
     def parse_target_type(type_, values):
-        # values = ['STRING', <anchorname>, ...]
+        # values = ['string', <anchorname>, ...]
         #     or   ['attr', <attrname>, ...  ]
         if values[0] == 'attr':
-            attrname = values[1]
+            attrname = values[1][0]
             href = computer.element.get(attrname, '')
         else:
             href = values[1]
@@ -435,49 +433,27 @@ def content(computer, name, values):
         computer.target_collector.collect_computed_target(href)
         return [href] + values[2:]
 
+    if name == 'content' and not computer.pseudo_type:
+        return 'none'
+
     if values in ('normal', 'none'):
         return values
 
-    if name == 'content':
-        # 'content' applies to ::before, ::after, ::marker, and page margin
-        # boxes.
-        # See https://www.w3.org/TR/css-content-3/#content-property
-        if not computer.pseudo_type:
-            computed_content_error(
-                'debug',
-                'Not a pseudo-element')
-            return 'none'
-    else:
-        # ignore string-set, bookmark-label unless in a *real* element
-        if type(computer.element).__name__ != 'Element' \
-           or computer.pseudo_type:
-            computed_content_error(
-                'debug',
-                'Not a real element')
-            return 'none'
-
-    target_checks = ['target-counter', 'target-counters', 'target-text']
-    try:
-        # TODO: catch `string()` when not in @page-margin
-        return tuple(
-            ('STRING', computer.element.get(value, ''))
-            if type_ == 'attr' else (
-                (type_, parse_target_type(type_, value))
-                if type_ in target_checks else (type_, value)
-            )
-            for type_, value in values)
-    except ComputedContentError as exc:
-        computed_content_error(
-            'warning',
-            exc.args[0] if exc.args and exc.args[0] else 'invalid content')
-        return 'none'
-    except AttributeError as exc:
-        # attr() in @page-'element'
-        # e.g.: 'PageType' object has no attribute 'get'
-        computed_content_error(
-            'warning',
-            exc.args[0] if exc.args and exc.args[0] else 'invalid content')
-        return 'none'
+    result = []
+    for type_, value in values:
+        if type_ == 'attr':
+            attr_name, type_or_unit, fallback = value
+            if type_or_unit != 'string':
+                # TODO: could be attr()
+                return
+            attr_value = computer.element.get(attr_name)
+            result.append((
+                type_or_unit, fallback if attr_value is None else attr_value))
+        elif type_ in ('target-counter', 'target-counters', 'target-text'):
+            result.append(parse_target_type(type_, value))
+        else:
+            result.append((type_, value))
+    return tuple(result)
 
 
 @register_computer('display')
