@@ -80,11 +80,12 @@ ATTR_FALLBACKS = {
     'url': ('external', 'about:invalid'),
     'integer': ('number', '0'),
     'number': ('number', '0'),
-    'length': ('length', Dimension('0', 'px')),
-    'angle': ('angle', Dimension('0', 'rad')),
-    'time': ('time', Dimension('0', 's')),
     'frequency': ('frequency', Dimension('0', 'hz')),
     '%': ('number', '0'),
+} + {
+    unit: ('length', Dimension('0', unit)) for unit in LENGTH_UNITS
+} + {
+    unit: ('angle', Dimension('0', unit)) for unit in ANGLE_TO_RADIANS
 }
 
 
