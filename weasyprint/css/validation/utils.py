@@ -82,11 +82,11 @@ ATTR_FALLBACKS = {
     'number': ('number', '0'),
     'frequency': ('frequency', Dimension('0', 'hz')),
     '%': ('number', '0'),
-} + {
-    unit: ('length', Dimension('0', unit)) for unit in LENGTH_UNITS
-} + {
-    unit: ('angle', Dimension('0', unit)) for unit in ANGLE_TO_RADIANS
 }
+for unit in LENGTH_UNITS:
+    ATTR_FALLBACKS[unit] = ('length', Dimension('0', unit))
+for unit in ANGLE_TO_RADIANS:
+    ATTR_FALLBACKS[unit] = ('angle', Dimension('0', unit))
 
 
 class InvalidValues(ValueError):
