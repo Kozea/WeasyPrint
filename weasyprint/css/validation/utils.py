@@ -631,7 +631,7 @@ def get_target(token):
             content = 'content'
         values.append(content)
 
-    return (name, tuple(values))
+    return ('%s()' % name, tuple(values))
 
 
 def get_content_list(tokens, base_url):

@@ -279,7 +279,7 @@ def compute_content_list(content_list, parent_box, counter_values, parse_again,
             attr_name, type_or_unit, fallback = value
             assert type_or_unit == 'string'
             texts.append(element.get(attr_name, fallback))
-        elif type_ == 'target-counter':
+        elif type_ == 'target-counter()':
             target_name, counter_name, counter_style = value
             lookup_target = target_collector.lookup_target(
                 target_name, parent_box, parse_again)
@@ -290,7 +290,7 @@ def compute_content_list(content_list, parent_box, counter_values, parse_again,
             else:
                 texts = []
                 break
-        elif type_ == 'target-counters':
+        elif type_ == 'target-counters()':
             target_name, counter_name, separator, counter_style = value
             lookup_target = target_collector.lookup_target(
                 target_name, parent_box, parse_again)
@@ -303,7 +303,7 @@ def compute_content_list(content_list, parent_box, counter_values, parse_again,
             else:
                 texts = []
                 break
-        elif type_ == 'target-text':
+        elif type_ == 'target-text()':
             target_name, text_style = value
             lookup_target = target_collector.lookup_target(
                 target_name, parent_box, parse_again)

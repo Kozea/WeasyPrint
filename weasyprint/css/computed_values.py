@@ -449,7 +449,8 @@ def content(computer, name, values):
             attr_value = computer.element.get(attr_name)
             result.append((
                 type_or_unit, fallback if attr_value is None else attr_value))
-        elif type_ in ('target-counter', 'target-counters', 'target-text'):
+        elif type_ in (
+                'target-counter()', 'target-counters()', 'target-text()'):
             result.append(parse_target_type(type_, value))
         else:
             result.append((type_, value))
