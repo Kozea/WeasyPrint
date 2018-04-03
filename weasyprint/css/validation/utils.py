@@ -400,7 +400,7 @@ def check_attr_function(token, allowed_type=None):
             if len(args) == 2:
                 fallback = ATTR_FALLBACKS[type_or_unit]
             else:
-                pass
+                fallback = args[2]
         if allowed_type in (None, type_or_unit):
             return ('attr()', (attr_name, type_or_unit, fallback))
 
