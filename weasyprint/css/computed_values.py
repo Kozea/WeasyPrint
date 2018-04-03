@@ -413,8 +413,8 @@ def content(computer, name, values):
 
     def parse_target_type(type_, values):
         # values = ['string', <anchorname>, ...]
-        #     or   ['attr', <attrname>, ...  ]
-        if values[0] == 'attr':
+        #     or   ['attr()', <attrname>, ...  ]
+        if values[0] == 'attr()':
             attrname = values[1][0]
             href = computer.element.get(attrname, '')
         else:
@@ -441,7 +441,7 @@ def content(computer, name, values):
 
     result = []
     for type_, value in values:
-        if type_ == 'attr':
+        if type_ == 'attr()':
             attr_name, type_or_unit, fallback = value
             if type_or_unit != 'string':
                 # TODO: could be attr()
@@ -552,7 +552,7 @@ def link(computer, name, values):
         return None
     else:
         type_, value = values
-        if type_ == 'attr':
+        if type_ == 'attr()':
             return get_link_attribute(
                 computer.element, value, computer.base_url)
         else:
@@ -566,7 +566,7 @@ def lang(computer, name, values):
         return None
     else:
         type_, key = values
-        if type_ == 'attr':
+        if type_ == 'attr()':
             return computer.element.get(key) or None
         elif type_ == 'string':
             return key

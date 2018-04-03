@@ -256,26 +256,26 @@ def compute_content_list(content_list, parent_box, counter_values, parse_again,
                 texts = []
                 boxlist.append(
                     boxes.InlineReplacedBox.anonymous_from(parent_box, image))
-        elif type_ == 'content':
+        elif type_ == 'content()':
             added_text = TEXT_CONTENT_EXTRACTORS[value](parent_box)
             # Simulate the step of white space processing
             # (normally done during the layout)
             added_text = added_text.strip()
             texts.append(added_text)
-        elif type_ == 'counter':
+        elif type_ == 'counter()':
             counter_name, counter_style = value
             counter_value = counter_values.get(counter_name, [0])[-1]
             texts.append(counters.format(counter_value, counter_style))
-        elif type_ == 'counters':
+        elif type_ == 'counters()':
             counter_name, separator, counter_style = value
             texts.append(separator.join(
                 counters.format(counter_value, counter_style)
                 for counter_value in counter_values.get(counter_name, [0])))
-        elif type_ == 'string-set' and (
+        elif type_ == 'string()' and (
                 context is not None and page is not None):
             # string() is only valid in @page context
             texts.append(context.get_string_set_for(page, *value))
-        elif type_ == 'attr' and element is not None:
+        elif type_ == 'attr()' and element is not None:
             attr_name, type_or_unit, fallback = value
             assert type_or_unit == 'string'
             texts.append(element.get(attr_name, fallback))

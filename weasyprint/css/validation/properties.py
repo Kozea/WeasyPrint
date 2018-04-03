@@ -1143,7 +1143,7 @@ def anchor(token):
         prototype = (name, [a.type for a in args])
         args = [getattr(a, 'value', a) for a in args]
         if prototype == ('attr', ['ident']):
-            return (name, args[0])
+            return ('attr()', args[0])
 
 
 @property(proprietary=True, wants_base_url=True)
@@ -1161,7 +1161,7 @@ def link(token, base_url):
         prototype = (name, [a.type for a in args])
         args = [getattr(a, 'value', a) for a in args]
         if prototype == ('attr', ['ident']):
-            return (name, args[0])
+            return ('attr()', args[0])
 
 
 @property()
@@ -1258,7 +1258,7 @@ def lang(token):
         prototype = (name, [a.type for a in args])
         args = [getattr(a, 'value', a) for a in args]
         if prototype == ('attr', ['ident']):
-            return (name, args[0])
+            return ('attr()', args[0])
     elif token.type == 'string':
         return ('string', token.value)
 

@@ -402,7 +402,7 @@ def check_attr_function(token, allowed_type=None):
             else:
                 pass
         if allowed_type in (None, type_or_unit):
-            return ('attr', (attr_name, type_or_unit, fallback))
+            return ('attr()', (attr_name, type_or_unit, fallback))
 
 
 def check_counter_function(token, allowed_type=None):
@@ -432,7 +432,7 @@ def check_counter_function(token, allowed_type=None):
         else:
             arguments.append('decimal')
 
-        return (name, tuple(arguments))
+        return ('%s()' % name, tuple(arguments))
 
 
 def check_content_function(token):
@@ -442,12 +442,12 @@ def check_content_function(token):
     name, args = function
     if name == 'content':
         if len(args) == 0:
-            return ('content', 'text')
+            return ('content()', 'text')
         elif len(args) == 1:
             ident = args.pop(0)
             if ident.type == 'ident' and ident.lower_value in (
                     'text', 'before', 'after', 'first-letter', 'marker'):
-                return ('content', ident.lower_value)
+                return ('content()', ident.lower_value)
 
 
 def check_string_function(token):
@@ -470,7 +470,7 @@ def check_string_function(token):
         else:
             ident = 'first'
 
-        return ('string-set', (custom_ident, ident))
+        return ('string()', (custom_ident, ident))
 
 
 def get_string(token):
