@@ -21,7 +21,6 @@ from .utils import (
     get_single_keyword, get_url, parse_2d_position, parse_background_position,
     parse_function, single_keyword, single_token)
 
-
 PREFIX = '-weasy-'
 PROPRIETARY = set()
 UNSTABLE = set()

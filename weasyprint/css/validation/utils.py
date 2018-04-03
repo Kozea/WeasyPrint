@@ -22,7 +22,6 @@ from ...images import LinearGradient, RadialGradient
 from ...urls import iri_to_uri, url_is_absolute
 from ..properties import Dimension
 
-
 # http://dev.w3.org/csswg/css3-values/#angles
 # 1<unit> is this many radians.
 ANGLE_TO_RADIANS = {

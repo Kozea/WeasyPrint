@@ -16,15 +16,14 @@ from tinycss2.color3 import parse_color
 from ..properties import INITIAL_VALUES, Dimension
 from .descriptors import expand_font_variant
 from .properties import (
-    background_attachment, background_image,
-    background_position, background_repeat, background_size, border_style,
-    border_width, box, column_count, column_width, flex_basis, flex_direction,
-    flex_grow_shrink, flex_wrap, font_family, font_size, font_stretch,
-    font_style, font_weight, image_url, line_height, list_style_position,
-    list_style_type, other_colors, overflow_wrap, validate_non_shorthand)
+    background_attachment, background_image, background_position,
+    background_repeat, background_size, border_style, border_width, box,
+    column_count, column_width, flex_basis, flex_direction, flex_grow_shrink,
+    flex_wrap, font_family, font_size, font_stretch, font_style, font_weight,
+    image_url, line_height, list_style_position, list_style_type, other_colors,
+    overflow_wrap, validate_non_shorthand)
 from .utils import (
     InvalidValues, get_keyword, get_single_keyword, split_on_comma)
-
 
 EXPANDERS = {}
 
