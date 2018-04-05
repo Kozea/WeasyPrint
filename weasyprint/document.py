@@ -487,10 +487,10 @@ class Document(object):
         LOGGER.info('Step 6 - Drawing')
         for page in self.pages:
             surface.set_size(
-                math.floor(scale * (
-                    page.width + page.bleed['left'] + page.bleed['right'])),
-                math.floor(scale * (
-                    page.height + page.bleed['top'] + page.bleed['bottom'])))
+                int(round(scale * (
+                    page.width + page.bleed['left'] + page.bleed['right']))),
+                int(round(scale * (
+                    page.height + page.bleed['top'] + page.bleed['bottom']))))
             with stacked(context):
                 context.translate(
                     page.bleed['left'] * scale, page.bleed['top'] * scale)
