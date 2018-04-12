@@ -52,7 +52,7 @@ Here is an extract of [CSS21-print.css](/samples/CSS21-print.css):
         transform-origin: 100% 0;
         transform: rotate(-90deg) }}
 body { text-align: justify }
-h1 { -weasy-bookmark-level: none }
+h1 { bookmark-level: none }
 ```
 
 
