@@ -17,7 +17,6 @@ import pyphen
 
 from .logger import LOGGER
 
-
 CAIRO_DUMMY_CONTEXT = {
     True: cairo.Context(cairo.ImageSurface(cairo.FORMAT_ARGB32, 1, 1)),
     False: cairo.Context(cairo.PDFSurface(None, 1, 1))}

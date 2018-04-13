@@ -27,7 +27,6 @@ from .layout.backgrounds import percentage
 from .logger import LOGGER
 from .pdf import write_pdf_metadata
 
-
 if cairo.cairo_version() < 11504:
     warnings.warn(
         'There are known rendering problems with cairo < 1.15.4. WeasyPrint '
