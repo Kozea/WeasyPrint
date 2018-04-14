@@ -303,7 +303,9 @@ def make_margin_boxes(context, page, counter_values, target_collector):
         box = boxes.MarginBox(at_keyword, style)
         # Empty boxes should not be generated, but they may be needed for
         # the layout of their neighbors.
-        box.is_generated = style['content'] not in ('normal', 'none')
+        # TODO: should be the computed value.
+        box.is_generated = style['content'] not in (
+            'normal', 'inhibit', 'none')
         # TODO: get actual counter values at the time of the last page break
         if box.is_generated:
             quote_depth = [0]

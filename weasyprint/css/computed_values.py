@@ -5,31 +5,18 @@
     Convert *specified* property values (the result of the cascade and
     inhertance) into *computed* values (that are inherited).
 
-    :copyright: Copyright 2011-2014 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
 
-from urllib.parse import unquote
-
 from .. import text
+from ..logger import LOGGER
 from ..urls import get_link_attribute
 from .properties import INITIAL_VALUES, Dimension
+from .validation.utils import LENGTHS_TO_PIXELS, compute_attr_function
 
 ZERO_PIXELS = Dimension(0, 'px')
-
-
-# How many CSS pixels is one <unit>?
-# http://www.w3.org/TR/CSS21/syndata.html#length-units
-LENGTHS_TO_PIXELS = {
-    'px': 1,
-    'pt': 1. / 0.75,
-    'pc': 16.,  # LENGTHS_TO_PIXELS['pt'] * 12
-    'in': 96.,  # LENGTHS_TO_PIXELS['pt'] * 72
-    'cm': 96. / 2.54,  # LENGTHS_TO_PIXELS['in'] / 2.54
-    'mm': 96. / 25.4,  # LENGTHS_TO_PIXELS['in'] / 25.4
-    'q': 96. / 25.4 / 4.,  # LENGTHS_TO_PIXELS['mm'] / 4
-}
 
 
 # Value in pixels of font-size for <absolute-size> keywords: 12pt (16px) for
@@ -403,58 +390,55 @@ def column_gap(computer, name, value):
     return length(computer, name, value, pixels_only=True)
 
 
+def _content_list(computer, values):
+    computed_values = []
+    for value in values:
+        if value[0] in ('string', 'content', 'uri', 'quote', 'leader()'):
+            computed_value = value
+        elif value[0] == 'attr()':
+            assert value[1][1] == 'string'
+            computed_value = compute_attr_function(computer, value)
+        elif value[0] in (
+                'counter()', 'counters()', 'content()', 'string()',
+                'target-counter()', 'target-counters()', 'target-text()'):
+            # Other values need layout context, their computed value cannot be
+            # better than their specified value yet.
+            # See build.compute_content_list.
+            computed_value = value
+        if computed_value is None:
+            LOGGER.warning('Unable to compute %s\'s value for content: %s' % (
+                computer.element, ', '.join(str(item) for item in value)))
+        else:
+            computed_values.append(computed_value)
+
+    return tuple(computed_values)
+
+
 @register_computer('bookmark-label')
+def bookmark_label(computer, name, values):
+    """Compute the ``bookmark-label`` property."""
+    return _content_list(computer, values)
+
+
+@register_computer('string-set')
+def string_set(computer, name, values):
+    """Compute the ``string-set`` property."""
+    # Spec asks for strings after custom keywords, but we allow content-lists
+    return tuple(
+        (string_set[0], _content_list(computer, string_set[1]))
+        for string_set in values)
+
+
 @register_computer('content')
 def content(computer, name, values):
-    """Compute the ``content`` and ``bookmark-label`` properties."""
-
-    class ComputedContentError(ValueError):
-        """Invalid or unsupported values for a known CSS property."""
-
-    def parse_target_type(type_, values):
-        # values = ['string', <anchorname>, ...]
-        #     or   ['attr()', <attrname>, ...  ]
-        if values[0] == 'attr()':
-            attrname = values[1][0]
-            href = computer.element.get(attrname, '')
-        else:
-            href = values[1]
-        # [spec](https://www.w3.org/TR/css-content-3/#target-counter)
-        # says:
-        # > If there’s no fragment, if the ID referenced isn’t there,
-        # > or if the URL points to an outside document,
-        # > the user agent must treat that as an error.
-        if href == '' or href == '#':
-            raise ComputedContentError('Empty anchor name in %s' % (type_,))
-        if not href.startswith('#'):
-            raise ComputedContentError(
-                'No %s for external URI reference "%s"' % (type_, href))
-        href = unquote(href[1:])
-        computer.target_collector.collect_computed_target(href)
-        return [href] + values[2:]
-
-    if name == 'content' and not computer.pseudo_type:
-        return 'none'
-
-    if values in ('normal', 'none'):
-        return values
-
-    result = []
-    for type_, value in values:
-        if type_ == 'attr()':
-            attr_name, type_or_unit, fallback = value
-            if type_or_unit != 'string':
-                # TODO: could be attr()
-                return
-            attr_value = computer.element.get(attr_name)
-            result.append((
-                type_or_unit, fallback if attr_value is None else attr_value))
-        elif type_ in (
-                'target-counter()', 'target-counters()', 'target-text()'):
-            result.append(parse_target_type(type_, value))
-        else:
-            result.append((type_, value))
-    return tuple(result)
+    """Compute the ``content`` property."""
+    if len(values) == 1:
+        value, = values
+        if value == 'normal':
+            return 'inhibit' if computer.pseudo_type else 'contents'
+        elif value == 'none':
+            return 'inhibit'
+    return _content_list(computer, values)
 
 
 @register_computer('display')

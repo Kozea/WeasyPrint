@@ -20,8 +20,8 @@ from .properties import (
     background_repeat, background_size, border_style, border_width, box,
     column_count, column_width, flex_basis, flex_direction, flex_grow_shrink,
     flex_wrap, font_family, font_size, font_stretch, font_style, font_weight,
-    image_url, line_height, list_style_position, list_style_type, other_colors,
-    overflow_wrap, validate_non_shorthand)
+    line_height, list_style_image, list_style_position, list_style_type,
+    other_colors, overflow_wrap, validate_non_shorthand)
 from .utils import (
     InvalidValues, get_keyword, get_single_keyword, split_on_comma)
 
@@ -191,7 +191,7 @@ def expand_list_style(name, tokens, base_url):
             type_specified = True
         elif list_style_position([token]) is not None:
             suffix = '-position'
-        elif image_url([token], base_url) is not None:
+        elif list_style_image([token], base_url) is not None:
             suffix = '-image'
             image_specified = True
         else:

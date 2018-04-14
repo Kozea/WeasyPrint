@@ -16,7 +16,6 @@ from urllib.parse import unquote, urljoin
 
 from tinycss2.color3 import parse_color
 
-from .. import computed_values
 from ...formatting_structure import counters
 from ...images import LinearGradient, RadialGradient
 from ...urls import iri_to_uri, url_is_absolute
@@ -31,16 +30,27 @@ ANGLE_TO_RADIANS = {
     'grad': math.pi / 200,
 }
 
+# How many CSS pixels is one <unit>?
+# http://www.w3.org/TR/CSS21/syndata.html#length-units
+LENGTHS_TO_PIXELS = {
+    'px': 1,
+    'pt': 1. / 0.75,
+    'pc': 16.,  # LENGTHS_TO_PIXELS['pt'] * 12
+    'in': 96.,  # LENGTHS_TO_PIXELS['pt'] * 72
+    'cm': 96. / 2.54,  # LENGTHS_TO_PIXELS['in'] / 2.54
+    'mm': 96. / 25.4,  # LENGTHS_TO_PIXELS['in'] / 25.4
+    'q': 96. / 25.4 / 4.,  # LENGTHS_TO_PIXELS['mm'] / 4
+}
+
 # http://dev.w3.org/csswg/css-values/#resolution
 RESOLUTION_TO_DPPX = {
     'dppx': 1,
-    'dpi': 1 / computed_values.LENGTHS_TO_PIXELS['in'],
-    'dpcm': 1 / computed_values.LENGTHS_TO_PIXELS['cm'],
+    'dpi': 1 / LENGTHS_TO_PIXELS['in'],
+    'dpcm': 1 / LENGTHS_TO_PIXELS['cm'],
 }
 
 # Sets of possible length units
-LENGTH_UNITS = (
-    set(computed_values.LENGTHS_TO_PIXELS) | set(['ex', 'em', 'ch', 'rem']))
+LENGTH_UNITS = set(LENGTHS_TO_PIXELS) | set(['ex', 'em', 'ch', 'rem'])
 
 # Constants about background positions
 ZERO_PERCENT = Dimension(0, '%')
@@ -77,10 +87,9 @@ ATTR_FALLBACKS = {
     'string': ('string', ''),
     'color': ('ident', 'currentcolor'),
     'url': ('external', 'about:invalid'),
-    'integer': ('number', '0'),
-    'number': ('number', '0'),
-    'frequency': ('frequency', Dimension('0', 'hz')),
-    '%': ('number', '0'),
+    'integer': ('number', 0),
+    'number': ('number', 0),
+    '%': ('number', 0),
 }
 for unit in LENGTH_UNITS:
     ATTR_FALLBACKS[unit] = ('length', Dimension('0', unit))
@@ -394,15 +403,52 @@ def check_attr_function(token, allowed_type=None):
             type_or_unit = 'string'
             fallback = ''
         else:
-            type_or_unit = get_string(args[1])
+            string = get_string(args[1])
+            if string is None:
+                return
+            type_or_unit = string[1]
             if type_or_unit not in ATTR_FALLBACKS:
                 return
             if len(args) == 2:
                 fallback = ATTR_FALLBACKS[type_or_unit]
             else:
-                fallback = args[2]
+                fallback_type = args[2].type
+                if fallback_type == 'string':
+                    fallback = args[2].value
+                else:
+                    # TODO: handle other fallback types
+                    return
         if allowed_type in (None, type_or_unit):
             return ('attr()', (attr_name, type_or_unit, fallback))
+
+
+def compute_attr_function(computer, values):
+    # TODO: use real token parsing instead of casting with Python types
+    func_name, value = values
+    assert func_name == 'attr()'
+    attr_name, type_or_unit, fallback = value
+    attr_value = computer.element.get(attr_name, fallback)
+    try:
+        if type_or_unit in ('string', 'url'):
+            pass  # Keep the string
+        elif type_or_unit == 'color':
+            attr_value = parse_color(attr_value.strip())
+        elif type_or_unit == 'integer':
+            attr_value = int(attr_value.strip())
+        elif type_or_unit == 'number':
+            attr_value = float(attr_value.strip())
+        elif type_or_unit == '%':
+            attr_value = Dimension(float(attr_value.strip()), '%')
+            type_or_unit = 'length'
+        elif type_or_unit in LENGTH_UNITS:
+            attr_value = Dimension(float(attr_value.strip()), type_or_unit)
+            type_or_unit = 'length'
+        elif type_or_unit in ANGLE_TO_RADIANS:
+            attr_value = Dimension(float(attr_value.strip()), type_or_unit)
+            type_or_unit = 'angle'
+    except Exception:
+        return
+    return (type_or_unit, attr_value)
 
 
 def check_counter_function(token, allowed_type=None):
@@ -519,8 +565,6 @@ def get_resolution(token):
 def get_image(token, base_url):
     """Parse an <image> token."""
     if token.type != 'function':
-        if get_keyword(token) == 'none':
-            return 'none', None
         parsed_url = get_url(token, base_url)
         if parsed_url and parsed_url[0] == 'external':
             return 'url', parsed_url[1]
@@ -690,4 +734,4 @@ def get_content_list_token(token, base_url):
                 return
         elif arg.type == 'string':
             string = arg.value
-        return ('leader', ('string', string))
+        return ('leader()', ('string', string))

@@ -160,14 +160,22 @@ def color(token):
 @comma_separated_list
 @single_token
 def background_image(token, base_url):
+    if token.type != 'function':
+        if get_keyword(token) == 'none':
+            return 'none', None
     return get_image(token, base_url)
 
 
 @property('list-style-image', wants_base_url=True)
 @single_token
-def image_url(token, base_url):
-    """``*-image`` properties validation."""
-    return get_image(token, base_url)
+def list_style_image(token, base_url):
+    """``list-style-image`` property validation."""
+    if token.type != 'function':
+        if get_keyword(token) == 'none':
+            return 'none', None
+        parsed_url = get_url(token, base_url)
+        if parsed_url and parsed_url[0] == 'external':
+            return 'url', parsed_url[1]
 
 
 @property(unstable=True)
@@ -443,7 +451,7 @@ def content(tokens, base_url):
         tokens = tokens[:-2]
     keyword = get_single_keyword(tokens)
     if keyword in ('normal', 'none'):
-        return keyword
+        return (keyword,)
     return get_content_list(tokens, base_url)
 
 
@@ -1287,6 +1295,7 @@ def bookmark_level(token):
 @comma_separated_list
 def string_set(tokens, base_url):
     """Validation for ``string-set``."""
+    # Spec asks for strings after custom keywords, but we allow content-lists
     if len(tokens) >= 2:
         var_name = get_keyword(tokens[0])
         parsed_tokens = tuple(

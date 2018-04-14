@@ -22,8 +22,8 @@ from collections import namedtuple
 import cssselect2
 import tinycss2
 
-from . import properties
 from . import computed_values
+from . import properties
 from .properties import INITIAL_NOT_COMPUTED
 from .validation import preprocess_declarations
 from .validation.descriptors import preprocess_descriptors

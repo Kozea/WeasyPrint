@@ -199,11 +199,12 @@ def before_after_to_box(element, pseudo_type, state, style_for,
         # Their initial content property computes to 'none'.
         return
 
-    # TODO: should be the used value. When does the used value for `display`
-    # differ from the computer value?
+    # TODO: should be the computed value. When does the used value for
+    # `display` differ from the computer value? It's at least wrong for
+    # `content` where 'normal' computes as 'inhibit' for pseudo elements.
     display = style['display']
     content = style['content']
-    if 'none' in (display, content) or content == 'normal':
+    if 'none' in (display, content) or content in ('normal', 'inhibit'):
         return
 
     box = make_box(
@@ -237,6 +238,10 @@ def compute_content_list(content_list, parent_box, counter_values, parse_again,
     after the first pass to do required reparsing.
 
     """
+    # TODO: Some computation done here may be done in computed_values
+    # instead. We currently miss at least style_for, counters and quotes
+    # context in computer. Some work will still need to be done here though,
+    # like box creation for URIs.
     boxlist = []
     texts = []
     for type_, value in content_list:
@@ -275,10 +280,6 @@ def compute_content_list(content_list, parent_box, counter_values, parse_again,
                 context is not None and page is not None):
             # string() is only valid in @page context
             texts.append(context.get_string_set_for(page, *value))
-        elif type_ == 'attr()' and element is not None:
-            attr_name, type_or_unit, fallback = value
-            assert type_or_unit == 'string'
-            texts.append(element.get(attr_name, fallback))
         elif type_ == 'target-counter()':
             target_name, counter_name, counter_style = value
             lookup_target = target_collector.lookup_target(
@@ -329,9 +330,6 @@ def compute_content_list(content_list, parent_box, counter_values, parse_again,
                 texts.append(quotes[min(quote_depth[0], len(quotes) - 1)])
             if is_open:
                 quote_depth[0] += 1
-        else:
-            # TODO: in previous versions an AssertionError was raised!
-            pass
     text = ''.join(texts)
     if text:
         boxlist.append(boxes.TextBox.anonymous_from(parent_box, text))
@@ -356,6 +354,9 @@ def content_to_boxes(style, parent_box, quote_depth, counter_values,
             style, parent_box, quote_depth, counter_values,
             get_image_from_uri, target_collector))
         parent_box.children = local_children
+
+    if style['content'] == 'inhibit':
+        return []
 
     return compute_content_list(
         style['content'], parent_box, counter_values, parse_again,
