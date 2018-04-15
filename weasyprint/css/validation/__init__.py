@@ -14,7 +14,7 @@ from tinycss2 import serialize
 
 from .expanders import EXPANDERS
 from .properties import PREFIX, PROPRIETARY, UNSTABLE, validate_non_shorthand
-from .utils import InvalidValues, remove_whitespace
+from ..utils import InvalidValues, remove_whitespace
 from ... import LOGGER
 
 

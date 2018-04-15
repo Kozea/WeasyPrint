@@ -25,9 +25,9 @@ import tinycss2
 from . import computed_values
 from . import properties
 from .properties import INITIAL_NOT_COMPUTED
+from .utils import remove_whitespace, split_on_comma
 from .validation import preprocess_declarations
 from .validation.descriptors import preprocess_descriptors
-from .validation.utils import remove_whitespace, split_on_comma
 from ..logger import LOGGER
 from ..urls import get_url_attribute, url_join, URLFetchingError
 from .. import CSS

@@ -15,7 +15,7 @@ from tinycss2.color3 import parse_color
 from .. import computed_values
 from ...formatting_structure import counters
 from ..properties import KNOWN_PROPERTIES, Dimension
-from .utils import (
+from ..utils import (
     InvalidValues, comma_separated_list, get_angle, get_content_list,
     get_content_list_token, get_image, get_keyword, get_length, get_resolution,
     get_single_keyword, get_url, parse_2d_position, parse_background_position,

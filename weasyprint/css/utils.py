@@ -1,8 +1,8 @@
 """
-    weasyprint.css.validation.utils
-    -------------------------------
+    weasyprint.css.utils
+    --------------------
 
-    Utils for property validation.
+    Utils for CSS properties.
     See http://www.w3.org/TR/CSS21/propidx.html and various CSS3 modules.
 
     :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
@@ -16,10 +16,10 @@ from urllib.parse import unquote, urljoin
 
 from tinycss2.color3 import parse_color
 
-from ...formatting_structure import counters
-from ...images import LinearGradient, RadialGradient
-from ...urls import iri_to_uri, url_is_absolute
-from ..properties import Dimension
+from ..formatting_structure import counters
+from ..images import LinearGradient, RadialGradient
+from ..urls import iri_to_uri, url_is_absolute
+from .properties import Dimension
 
 # http://dev.w3.org/csswg/css3-values/#angles
 # 1<unit> is this many radians.
@@ -420,35 +420,6 @@ def check_attr_function(token, allowed_type=None):
                     return
         if allowed_type in (None, type_or_unit):
             return ('attr()', (attr_name, type_or_unit, fallback))
-
-
-def compute_attr_function(computer, values):
-    # TODO: use real token parsing instead of casting with Python types
-    func_name, value = values
-    assert func_name == 'attr()'
-    attr_name, type_or_unit, fallback = value
-    attr_value = computer.element.get(attr_name, fallback)
-    try:
-        if type_or_unit in ('string', 'url'):
-            pass  # Keep the string
-        elif type_or_unit == 'color':
-            attr_value = parse_color(attr_value.strip())
-        elif type_or_unit == 'integer':
-            attr_value = int(attr_value.strip())
-        elif type_or_unit == 'number':
-            attr_value = float(attr_value.strip())
-        elif type_or_unit == '%':
-            attr_value = Dimension(float(attr_value.strip()), '%')
-            type_or_unit = 'length'
-        elif type_or_unit in LENGTH_UNITS:
-            attr_value = Dimension(float(attr_value.strip()), type_or_unit)
-            type_or_unit = 'length'
-        elif type_or_unit in ANGLE_TO_RADIANS:
-            attr_value = Dimension(float(attr_value.strip()), type_or_unit)
-            type_or_unit = 'angle'
-    except Exception:
-        return
-    return (type_or_unit, attr_value)
 
 
 def check_counter_function(token, allowed_type=None):

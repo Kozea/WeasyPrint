@@ -10,11 +10,13 @@
 
 """
 
+from tinycss2.color3 import parse_color
+
 from .. import text
 from ..logger import LOGGER
 from ..urls import get_link_attribute
 from .properties import INITIAL_VALUES, Dimension
-from .validation.utils import LENGTHS_TO_PIXELS, compute_attr_function
+from .utils import ANGLE_TO_RADIANS, LENGTH_UNITS, LENGTHS_TO_PIXELS
 
 ZERO_PIXELS = Dimension(0, 'px')
 
@@ -388,6 +390,35 @@ def column_gap(computer, name, value):
     if value == 'normal':
         value = Dimension(1, 'em')
     return length(computer, name, value, pixels_only=True)
+
+
+def compute_attr_function(computer, values):
+    # TODO: use real token parsing instead of casting with Python types
+    func_name, value = values
+    assert func_name == 'attr()'
+    attr_name, type_or_unit, fallback = value
+    attr_value = computer.element.get(attr_name, fallback)
+    try:
+        if type_or_unit in ('string', 'url'):
+            pass  # Keep the string
+        elif type_or_unit == 'color':
+            attr_value = parse_color(attr_value.strip())
+        elif type_or_unit == 'integer':
+            attr_value = int(attr_value.strip())
+        elif type_or_unit == 'number':
+            attr_value = float(attr_value.strip())
+        elif type_or_unit == '%':
+            attr_value = Dimension(float(attr_value.strip()), '%')
+            type_or_unit = 'length'
+        elif type_or_unit in LENGTH_UNITS:
+            attr_value = Dimension(float(attr_value.strip()), type_or_unit)
+            type_or_unit = 'length'
+        elif type_or_unit in ANGLE_TO_RADIANS:
+            attr_value = Dimension(float(attr_value.strip()), type_or_unit)
+            type_or_unit = 'angle'
+    except Exception:
+        return
+    return (type_or_unit, attr_value)
 
 
 def _content_list(computer, values):
