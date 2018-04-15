@@ -429,13 +429,15 @@ def _content_list(computer, values):
         elif value[0] == 'attr()':
             assert value[1][1] == 'string'
             computed_value = compute_attr_function(computer, value)
-        elif value[0] in (
-                'counter()', 'counters()', 'content()', 'string()',
-                'target-counter()', 'target-counters()', 'target-text()'):
+        elif value[0] in ('counter()', 'counters()', 'content()', 'string()'):
             # Other values need layout context, their computed value cannot be
             # better than their specified value yet.
             # See build.compute_content_list.
             computed_value = value
+        elif value[0] in (
+                'target-counter()', 'target-counters()', 'target-text()'):
+            computed_value = value
+            computer.target_collector.collect_computed_target(value[1][0])
         if computed_value is None:
             LOGGER.warning('Unable to compute %s\'s value for content: %s' % (
                 computer.element, ', '.join(str(item) for item in value)))

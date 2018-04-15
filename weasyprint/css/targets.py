@@ -39,6 +39,13 @@ class TargetCollector(object):
         self.existing_anchors = []
         self.items = {}
 
+    def _anchor_name_from_token(self, anchor_token):
+        """Get anchor name from string or uri token."""
+        if anchor_token[0] == 'string' and anchor_token[1].startswith('#'):
+            return anchor_token[1][1:]
+        elif anchor_token[0] == 'uri' and anchor_token[1][0] == 'internal':
+            return anchor_token[1][1]
+
     def collect_anchor(self, anchor_name):
         """Store ``anchor_name`` in ``existing_anchors``."""
         if anchor_name and isinstance(anchor_name, str):
@@ -47,13 +54,14 @@ class TargetCollector(object):
             else:
                 self.existing_anchors.append(anchor_name)
 
-    def collect_computed_target(self, anchor_name):
+    def collect_computed_target(self, anchor_token):
         """Store a computed internal target's ``anchor_name``.
 
         ``anchor_name`` must not start with '#' and be already unquoted.
 
         """
-        if anchor_name and isinstance(anchor_name, str):
+        anchor_name = self._anchor_name_from_token(anchor_token)
+        if anchor_name:
             self.items.setdefault(anchor_name, TargetLookupItem())
 
     def lookup_target(self, anchor_token, source_box, parse_again_function):
@@ -64,12 +72,7 @@ class TargetCollector(object):
         tree again.
 
         """
-        if anchor_token[0] == 'string' and anchor_token[1].startswith('#'):
-            anchor_name = anchor_token[1][1:]
-        elif anchor_token[0] == 'uri' and anchor_token[1][0] == 'internal':
-            anchor_name = anchor_token[1][1]
-        else:
-            anchor_name = None
+        anchor_name = self._anchor_name_from_token(anchor_token)
         item = self.items.get(anchor_name, TargetLookupItem('undefined'))
 
         if item.state == 'pending':
