@@ -403,10 +403,9 @@ def check_attr_function(token, allowed_type=None):
             type_or_unit = 'string'
             fallback = ''
         else:
-            string = get_string(args[1])
-            if string is None:
+            if args[1].type != 'ident':
                 return
-            type_or_unit = string[1]
+            type_or_unit = args[1].value
             if type_or_unit not in ATTR_FALLBACKS:
                 return
             if len(args) == 2:
