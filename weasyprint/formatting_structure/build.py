@@ -247,7 +247,7 @@ def compute_content_list(content_list, parent_box, counter_values, parse_again,
     for type_, value in content_list:
         if type_ == 'string':
             texts.append(value)
-        elif type_ == 'uri' and get_image_from_uri is not None:
+        elif type_ == 'url' and get_image_from_uri is not None:
             origin, uri = value
             if origin != 'external':
                 # Embedding internal references is impossible

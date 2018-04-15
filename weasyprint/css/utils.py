@@ -569,6 +569,9 @@ def get_url(token, base_url):
             return 'internal', unquote(token.value[1:])
         else:
             return 'external', safe_urljoin(base_url, token.value)
+    elif token.type == 'function':
+        if token.name == 'attr':
+            return check_attr_function(token, 'url')
 
 
 def get_quote(token):
@@ -612,7 +615,7 @@ def get_target(token, base_url):
         url = get_url(link, base_url)
         if url is None:
             return
-        values.append(('uri', url))
+        values.append(url)
     else:
         values.append(string_link)
 
@@ -672,7 +675,7 @@ def get_content_list_token(token, base_url):
     # <uri>
     url = get_url(token, base_url)
     if url is not None:
-        return ('uri', url)
+        return ('url', url)
 
     # <quote>
     quote = get_quote(token)

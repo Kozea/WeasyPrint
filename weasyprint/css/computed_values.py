@@ -433,7 +433,7 @@ def compute_attr_function(computer, values):
 def _content_list(computer, values):
     computed_values = []
     for value in values:
-        if value[0] in ('string', 'content', 'uri', 'quote', 'leader()'):
+        if value[0] in ('string', 'content', 'url', 'quote', 'leader()'):
             computed_value = value
         elif value[0] == 'attr()':
             assert value[1][1] == 'string'
@@ -445,8 +445,15 @@ def _content_list(computer, values):
             computed_value = value
         elif value[0] in (
                 'target-counter()', 'target-counters()', 'target-text()'):
-            computed_value = value
-            computer.target_collector.collect_computed_target(value[1][0])
+            anchor_token = value[1][0]
+            if anchor_token[0] == 'attr()':
+                computed_value = (value[0], (
+                    (compute_attr_function(computer, anchor_token),) +
+                    value[1][1:]))
+            else:
+                computed_value = value
+            computer.target_collector.collect_computed_target(
+                computed_value[1][0])
         if computed_value is None:
             LOGGER.warning('Unable to compute %s\'s value for content: %s' % (
                 computer.element, ', '.join(str(item) for item in value)))

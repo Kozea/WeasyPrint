@@ -43,7 +43,7 @@ class TargetCollector(object):
         """Get anchor name from string or uri token."""
         if anchor_token[0] == 'string' and anchor_token[1].startswith('#'):
             return anchor_token[1][1:]
-        elif anchor_token[0] == 'uri' and anchor_token[1][0] == 'internal':
+        elif anchor_token[0] == 'url' and anchor_token[1][0] == 'internal':
             return anchor_token[1][1]
 
     def collect_anchor(self, anchor_name):
