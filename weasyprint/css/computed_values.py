@@ -10,13 +10,16 @@
 
 """
 
+from urllib.parse import unquote
+
 from tinycss2.color3 import parse_color
 
 from .. import text
 from ..logger import LOGGER
 from ..urls import get_link_attribute
 from .properties import INITIAL_VALUES, Dimension
-from .utils import ANGLE_TO_RADIANS, LENGTH_UNITS, LENGTHS_TO_PIXELS
+from .utils import (
+    ANGLE_TO_RADIANS, LENGTH_UNITS, LENGTHS_TO_PIXELS, safe_urljoin)
 
 ZERO_PIXELS = Dimension(0, 'px')
 
@@ -399,8 +402,14 @@ def compute_attr_function(computer, values):
     attr_name, type_or_unit, fallback = value
     attr_value = computer.element.get(attr_name, fallback)
     try:
-        if type_or_unit in ('string', 'url'):
+        if type_or_unit == 'string':
             pass  # Keep the string
+        elif type_or_unit == 'url':
+            if attr_value.startswith('#'):
+                attr_value = ('internal', unquote(attr_value[1:]))
+            else:
+                attr_value = (
+                    'external', safe_urljoin(computer.base_url, attr_value))
         elif type_or_unit == 'color':
             attr_value = parse_color(attr_value.strip())
         elif type_or_unit == 'integer':
