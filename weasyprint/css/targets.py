@@ -56,7 +56,7 @@ class TargetCollector(object):
         if anchor_name and isinstance(anchor_name, str):
             self.items.setdefault(anchor_name, TargetLookupItem())
 
-    def lookup_target(self, anchor_name, source_box, parse_again_function):
+    def lookup_target(self, anchor_token, source_box, parse_again_function):
         """Get a TargetLookupItem corresponding to ``anchor_name``.
 
         If it is already filled by a previous anchor-element, the status is
@@ -64,6 +64,12 @@ class TargetCollector(object):
         tree again.
 
         """
+        if anchor_token[0] == 'string' and anchor_token[1].startswith('#'):
+            anchor_name = anchor_token[1][1:]
+        elif anchor_token[0] == 'uri' and anchor_token[1][0] == 'internal':
+            anchor_name = anchor_token[1][1]
+        else:
+            anchor_name = None
         item = self.items.get(anchor_name, TargetLookupItem('undefined'))
 
         if item.state == 'pending':
@@ -76,7 +82,7 @@ class TargetCollector(object):
         if item.state == 'undefined':
             LOGGER.error(
                 'Content discarded: target points to undefined anchor "%s"',
-                anchor_name)
+                anchor_token)
 
         return item
 

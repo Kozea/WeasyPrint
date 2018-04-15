@@ -581,7 +581,7 @@ def get_quote(token):
         return keyword
 
 
-def get_target(token):
+def get_target(token, base_url):
     """Parse a <target> token."""
     function = parse_function(token)
     if function is None:
@@ -609,13 +609,13 @@ def get_target(token):
 
     link = args.pop(0)
     string_link = get_string(link)
-    if string_link is not None:
-        values.append(string_link)
-    else:
-        url = get_url(token)
+    if string_link is None:
+        url = get_url(link, base_url)
         if url is None:
             return
         values.append(('uri', url))
+    else:
+        values.append(string_link)
 
     if name.startswith('target-counter'):
         ident = args.pop(0)
@@ -681,7 +681,7 @@ def get_content_list_token(token, base_url):
         return ('quote', quote)
 
     # <target>
-    target = get_target(token)
+    target = get_target(token, base_url)
     if target is not None:
         return target
 
