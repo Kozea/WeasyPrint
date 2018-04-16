@@ -110,6 +110,8 @@ def _gather_links_and_bookmarks(box, bookmarks, links, anchors, matrix):
     if has_bookmark or has_link or has_anchor:
         pos_x, pos_y, width, height = box.hit_area()
         if has_link:
+            token_type, link = link
+            assert token_type == 'url'
             link_type, target = link
             assert isinstance(target, str)
             if link_type == 'external' and is_attachment:

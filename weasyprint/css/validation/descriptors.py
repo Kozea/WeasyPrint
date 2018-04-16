@@ -151,7 +151,9 @@ def src(tokens, base_url):
             tokens, token = tokens[:-1], tokens[-1]
         if token.type == 'function' and token.lower_name == 'local':
             return 'local', font_family(token.arguments, allow_spaces=True)
-        return get_url(token, base_url)
+        url = get_url(token, base_url)
+        if url is not None and url[0] == 'url':
+            return url[1]
 
 
 @descriptor()

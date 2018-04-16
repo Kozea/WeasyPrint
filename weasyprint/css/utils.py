@@ -536,8 +536,10 @@ def get_image(token, base_url):
     """Parse an <image> token."""
     if token.type != 'function':
         parsed_url = get_url(token, base_url)
-        if parsed_url and parsed_url[0] == 'external':
-            return 'url', parsed_url[1]
+        if parsed_url:
+            assert parsed_url[0] == 'url'
+            if parsed_url[1][0] == 'external':
+                return 'url', parsed_url[1][1]
         return
     arguments = split_on_comma(remove_whitespace(token.arguments))
     name = token.lower_name
@@ -566,9 +568,9 @@ def get_url(token, base_url):
     """Parse an <url> token."""
     if token.type == 'url':
         if token.value.startswith('#'):
-            return 'internal', unquote(token.value[1:])
+            return ('url', ('internal', unquote(token.value[1:])))
         else:
-            return 'external', safe_urljoin(base_url, token.value)
+            return ('url', ('external', safe_urljoin(base_url, token.value)))
     elif token.type == 'function':
         if token.name == 'attr':
             return check_attr_function(token, 'url')
@@ -675,7 +677,7 @@ def get_content_list_token(token, base_url):
     # <uri>
     url = get_url(token, base_url)
     if url is not None:
-        return ('url', url)
+        return url
 
     # <quote>
     quote = get_quote(token)

@@ -174,8 +174,9 @@ def list_style_image(token, base_url):
         if get_keyword(token) == 'none':
             return 'none', None
         parsed_url = get_url(token, base_url)
-        if parsed_url and parsed_url[0] == 'external':
-            return 'url', parsed_url[1]
+        if parsed_url:
+            if parsed_url[0] == 'url' and parsed_url[1][0] == 'external':
+                return 'url', parsed_url[1][1]
 
 
 @property(unstable=True)
