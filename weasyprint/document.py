@@ -29,10 +29,10 @@ from .pdf import write_pdf_metadata
 
 if cairo.cairo_version() < 11504:
     warnings.warn(
-        'There are known rendering problems with cairo < 1.15.4. WeasyPrint '
-        'may work with older versions, but please read the note about the '
-        'needed cairo version on the "Install" page of the documentation '
-        'before reporting bugs.')
+        'There are known rendering problems with cairo < 1.15.4. '
+        'WeasyPrint may work with older versions, but please read the note '
+        'about the needed cairo version on the "Install" page of the '
+        'documentation before reporting bugs.')
 
 
 def _get_matrix(box):
