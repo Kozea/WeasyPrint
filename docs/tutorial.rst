@@ -326,7 +326,7 @@ problems. You will need extra configuration in your Python application to avoid
 high memory use, endless renderings or local files leaks.
 
 *This section has been added thanks to the very useful reports and advice from
-Raziel Xeush.*
+Raz Becker.*
 
 .. _long-renderings:
 
