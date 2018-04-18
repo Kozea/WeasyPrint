@@ -81,16 +81,19 @@ def test_target_counters():
         div:first-child { counter-reset: div }
         div { counter-increment: div }
         #id1-2::before { content: target-counters('#id4-2', div, '.') }
-        #id2-1::before { content: target-counters('#id3', div, '++') }
+        #id2-1::before { content: target-counters(url(#id3), div, '++') }
         #id3::before {
           content: target-counters('#id2-1', div, '.', lower-alpha) }
-        #id4-2::before { content: target-counters('#id1-2', div, '') }
+        #id4-2::before {
+          content: target-counters(attr(data-count, url), div, '') }
       </style>
       <body>
         <div id="id1"><div></div><div id="id1-2"></div></div>
         <div id="id2"><div id="id2-1"></div><div></div></div>
         <div id="id3"></div>
-        <div id="id4"><div></div><div id="id4-2"></div></div>
+        <div id="id4">
+          <div></div><div id="id4-2" data-count="#id1-2"></div>
+        </div>
     ''')
     page, = document.render().pages
     html, = page._page_box.children
