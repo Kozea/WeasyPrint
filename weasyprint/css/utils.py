@@ -631,7 +631,7 @@ def get_target(token, base_url):
             string = get_string(args.pop(0))
             if string is None:
                 return
-            values.append(string.value)
+            values.append(string)
 
         if args:
             counter_style = get_keyword(args.pop(0))

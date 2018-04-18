@@ -296,8 +296,11 @@ def compute_content_list(content_list, parent_box, counter_values, parse_again,
             lookup_target = target_collector.lookup_target(
                 target_name, parent_box, parse_again)
             if lookup_target.state == 'up-to-date':
+                if separator[0] != 'string':
+                    break
+                separator_string = separator[1]
                 target_counter_values = lookup_target.target_counter_values
-                texts.append(separator.join(
+                texts.append(separator_string.join(
                     counters.format(counter_value, counter_style)
                     for counter_value in target_counter_values.get(
                         counter_name, [0])))

@@ -72,3 +72,35 @@ def test_target_counter_attr():
     assert before.text == '2'
     before = div4.children[0].children[0].children[0]
     assert before.text == 'c'
+
+
+@assert_no_logs
+def test_target_counters():
+    document = FakeHTML(string='''
+      <style>
+        div:first-child { counter-reset: div }
+        div { counter-increment: div }
+        #id1-2::before { content: target-counters('#id4-2', div, '.') }
+        #id2-1::before { content: target-counters('#id3', div, '++') }
+        #id3::before {
+          content: target-counters('#id2-1', div, '.', lower-alpha) }
+        #id4-2::before { content: target-counters('#id1-2', div, '') }
+      </style>
+      <body>
+        <div id="id1"><div></div><div id="id1-2"></div></div>
+        <div id="id2"><div id="id2-1"></div><div></div></div>
+        <div id="id3"></div>
+        <div id="id4"><div></div><div id="id4-2"></div></div>
+    ''')
+    page, = document.render().pages
+    html, = page._page_box.children
+    body, = html.children
+    div1, div2, div3, div4 = body.children
+    before = div1.children[1].children[0].children[0].children[0]
+    assert before.text == '4.2'
+    before = div2.children[0].children[0].children[0].children[0]
+    assert before.text == '3'
+    before = div3.children[0].children[0].children[0]
+    assert before.text == 'b.a'
+    before = div4.children[1].children[0].children[0].children[0]
+    assert before.text == '12'
