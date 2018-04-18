@@ -107,3 +107,39 @@ def test_target_counters():
     assert before.text == 'b.a'
     before = div4.children[1].children[0].children[0].children[0]
     assert before.text == '12'
+
+
+@assert_no_logs
+def test_target_text():
+    document = FakeHTML(string='''
+      <style>
+        a { display: block; color: red }
+        div:first-child { counter-reset: div }
+        div { counter-increment: div }
+        #id2::before { content: 'wow' }
+        #link1::before { content: 'test ' target-text('#id4') }
+        #link2::before { content: target-text(attr(data-count, url), before) }
+        #link3::before { content: target-text('#id3', after) }
+        #link4::before { content: target-text(url(#id1), first-letter) }
+      </style>
+      <body>
+        <a id="link1"></a>
+        <div id="id1">1 Chapter 1</div>
+        <a id="link2" data-count="#id2"></a>
+        <div id="id2">2 Chapter 2</div>
+        <div id="id3">3 Chapter 3</div>
+        <a id="link3"></a>
+        <div id="id4">4 Chapter 4</div>
+        <a id="link4"></a>
+    ''')
+    page, = document.render().pages
+    html, = page._page_box.children
+    body, = html.children
+    a1, div1, a2, div2, div3, a3, div4, a4 = body.children
+    before = a1.children[0].children[0].children[0]
+    assert before.text == 'test 4 Chapter 4'
+    before = a2.children[0].children[0].children[0]
+    assert before.text == 'wow'
+    assert len(a3.children[0].children[0].children) == 0
+    before = a4.children[0].children[0].children[0]
+    assert before.text == '1'

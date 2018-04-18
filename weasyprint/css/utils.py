@@ -591,10 +591,8 @@ def get_target(token, base_url):
     if function is None:
         return
     name, args = function
-    if len(args) < 2:
-        return
     args = split_on_optional_comma(args)
-    if args is None:
+    if not args:
         return
 
     if name == 'target-counter':
@@ -622,6 +620,9 @@ def get_target(token, base_url):
         values.append(string_link)
 
     if name.startswith('target-counter'):
+        if not args:
+            return
+
         ident = args.pop(0)
         if ident.type != 'ident':
             return
