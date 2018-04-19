@@ -107,7 +107,7 @@ If you have ``@font-face`` rules in your CSS, you have to create a
         }
         h1 { font-family: Gentium }''', font_config=font_config)
     html.write_pdf(
-        '/tmp/example.pdf', stylesheets=[stylesheet],
+        '/tmp/example.pdf', stylesheets=[css],
         font_config=font_config)
 
 
