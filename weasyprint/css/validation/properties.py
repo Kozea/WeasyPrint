@@ -446,7 +446,7 @@ def content(tokens, base_url):
             break
     if len(tokens) == 0:
         return
-    if len(tokens) >= 3 and tokens[-2].type == 'string' and (
+    if len(tokens) >= 3 and tokens[-1].type == 'string' and (
             tokens[-2].type == 'literal' and tokens[-2].value == '/'):
         # Ignore text for speech
         tokens = tokens[:-2]
