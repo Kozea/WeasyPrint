@@ -400,8 +400,11 @@ def compute_attr_function(computer, values):
     func_name, value = values
     assert func_name == 'attr()'
     attr_name, type_or_unit, fallback = value
-    attr_value = computer.element.get(attr_name, fallback)
+    # computer.element sometimes is None
+    # computer.element sometimes is a 'PageType' object without .get()
+    # so wrapt the .get() into try and return None instead of crashing
     try:
+        attr_value = computer.element.get(attr_name, fallback)
         if type_or_unit == 'string':
             pass  # Keep the string
         elif type_or_unit == 'url':
@@ -447,13 +450,19 @@ def _content_list(computer, values):
                 'target-counter()', 'target-counters()', 'target-text()'):
             anchor_token = value[1][0]
             if anchor_token[0] == 'attr()':
-                computed_value = (value[0], (
-                    (compute_attr_function(computer, anchor_token),) +
-                    value[1][1:]))
+                attr = compute_attr_function(computer, anchor_token)
+                # no element? not an Element?
+                if attr is None:
+                    computed_value = None
+                else:
+                    computed_value = (value[0], (
+                        (attr,) + value[1][1:]))
             else:
                 computed_value = value
-            computer.target_collector.collect_computed_target(
-                computed_value[1][0])
+            # don't crash!
+            if computer.target_collector and computed_value:
+                computer.target_collector.collect_computed_target(
+                    computed_value[1][0])
         if computed_value is None:
             LOGGER.warning('Unable to compute %s\'s value for content: %s' % (
                 computer.element, ', '.join(str(item) for item in value)))
