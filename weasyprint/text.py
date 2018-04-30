@@ -10,17 +10,12 @@
 """
 
 import re
-import warnings
 
 import cairocffi as cairo
 import cffi
 import pyphen
 
 from .logger import LOGGER
-
-if cairo.cairo_version() <= 11400:
-    warnings.warn('There are known rendering problems with Cairo <= 1.14.0')
-
 
 CAIRO_DUMMY_CONTEXT = {
     True: cairo.Context(cairo.ImageSurface(cairo.FORMAT_ARGB32, 1, 1)),
@@ -621,6 +616,12 @@ def first_line_metrics(first_line, text, layout, resume_at, space_collapse,
 class Layout(object):
     """Object holding PangoLayout-related cdata pointers."""
     def __init__(self, context, font_size, style):
+        from .fonts import ZERO_FONTSIZE_CRASHES_CAIRO
+
+        # Cairo crashes with font-size: 0 when using Win32 API
+        # See https://github.com/Kozea/WeasyPrint/pull/599
+        if font_size == 0 and ZERO_FONTSIZE_CRASHES_CAIRO:
+            font_size = 1
         self.context = context
         hinting = context.enable_hinting if context else False
         self.layout = ffi.gc(

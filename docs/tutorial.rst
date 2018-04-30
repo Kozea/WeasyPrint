@@ -107,7 +107,7 @@ If you have ``@font-face`` rules in your CSS, you have to create a
         }
         h1 { font-family: Gentium }''', font_config=font_config)
     html.write_pdf(
-        '/tmp/example.pdf', stylesheets=[stylesheet],
+        '/tmp/example.pdf', stylesheets=[css],
         font_config=font_config)
 
 
@@ -324,6 +324,9 @@ Security
 When used with untrusted HTMl or untrusted CSS, WeasyPrint can meet security
 problems. You will need extra configuration in your Python application to avoid
 high memory use, endless renderings or local files leaks.
+
+*This section has been added thanks to the very useful reports and advice from
+Raz Becker.*
 
 .. _long-renderings:
 

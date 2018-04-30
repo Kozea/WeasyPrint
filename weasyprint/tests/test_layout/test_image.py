@@ -59,9 +59,6 @@ def test_images_2():
     assert img.height == 48
 
 
-# TODO: these tests are broken with 1.15.10 and 1.14.12 because of commit
-# b092b63 now reverted on master and 1.14 branches.
-# Remove the @requires decorator when 1.15.12 is released.
 @requires('cairo', (1, 15, 12))
 @assert_no_logs
 def test_images_3():

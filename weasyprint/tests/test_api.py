@@ -151,7 +151,7 @@ def test_html_parsing():
 
     py.path.local(os.path.dirname(__file__)).chdir()
     filename = os.path.join('resources', 'doc1.html')
-    with open(filename) as fd:
+    with open(filename, encoding='utf-8') as fd:
         string = fd.read()
     _check_doc1(FakeHTML(string=string, base_url=filename))
     _check_doc1(FakeHTML(string=string), has_base_url=False)

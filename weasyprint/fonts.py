@@ -19,7 +19,11 @@ from .text import (
     cairo, dlopen, ffi, get_font_features, gobject, pango, pangocairo)
 from .urls import fetch
 
-# XXX No unicode_literals, cffi likes native strings
+# Cairo crashes with font-size: 0 when using Win32 API
+# See https://github.com/Kozea/WeasyPrint/pull/599
+# Set to True on startup when fontconfig is inoperable.
+# Used by text/Layout() to mask font-size: 0 with a font_size of 1.
+ZERO_FONTSIZE_CRASHES_CAIRO = False
 
 
 class FontConfiguration:
@@ -45,17 +49,12 @@ else:
                             'libfontconfig.so.1', 'libfontconfig-1.dylib')
         pangoft2 = dlopen(ffi, 'pangoft2-1.0', 'libpangoft2-1.0-0',
                           'libpangoft2-1.0.so', 'libpangoft2-1.0.dylib')
-    except Exception as err:
-        # dont alter behavior on other platforms!
-        if not sys.platform.startswith('win'):
-            raise err
-        else:
-            warnings.warn("'@font-face not supported: {0}".format(err))
-            fontconfig = None
-            pangoft2 = None
+    except Exception as exception:
+        warnings.warn('@font-face not supported: {0}'.format(exception))
+        fontconfig = None
+        pangoft2 = None
 
 
-# if both libraries are present: Use them
 if fontconfig and pangoft2:
     ffi.cdef('''
         // FontConfig
@@ -164,26 +163,11 @@ if fontconfig and pangoft2:
         'ultra-expanded': 'ultraexpanded',
     }
 
-    _warned_once = False
+    def _check_font_configuration(font_config, warn=False):
+        """Check whether the given font_config has fonts.
 
-    def _warn_once(msg):
-        """don't annoy with warnings, one is enough"""
-        global _warned_once
-        if not _warned_once:
-            warnings.warn(msg)
-            _warned_once = True
-
-    def _checkfontconfiguration(font_config):
-        """
-        Check whether the given font_config has fonts.
-
-        Maybe that never happens on Nix, but the GTK3 Runtime for Windows,
-        https://github.com/tschoonj/
-                GTK-for-Windows-Runtime-Environment-Installer
-        which is recommended at
-        http://weasyprint.readthedocs.io/en/latest/install.html#windows
-        comes without fonts.conf in etc/fonts, giving
-        "Fontconfig error: Cannot load default config file"
+        The default fontconfig configuration file may be missing, particularly
+        on Windows, giving "Fontconfig error: Cannot load default config file".
 
         No default config == No fonts.
         No fonts == expect ugly output.
@@ -191,10 +175,9 @@ if fontconfig and pangoft2:
         letters turn into rectangles.
         If you happen to have an html with at least one valid @font-face
         all text is styled with that font.
+
         """
-        # Nobody ever complained about such a situation on Nix...
-        # Since I cannot test this on Linux, and dont know whta happens
-        # without FontConfig, I leave it as it was before an return True
+        # Nobody ever complained about such a situation on Unix-like OSes.
         if not sys.platform.startswith('win'):
             return True
 
@@ -202,22 +185,26 @@ if fontconfig and pangoft2:
             font_config, fontconfig.FcSetSystem)
         if fonts.nfont > 0:
             return True
-        # Is the reason a missing default config file?
-        configfiles = fontconfig.FcConfigGetConfigFiles(font_config)
-        file = fontconfig.FcStrListNext(configfiles)
-        if file == ffi.NULL:
-            _warn_once(
-                '@font-face not supported: Cannot load default config file')
-        else:
-            _warn_once('@font-face not supported: no fonts configured')
-        # fall back to defaul @font-face-less behaviour
-        return False
-        # on Windows we could try to add the system fonts like that:
+
+        if warn:
+            config_files = fontconfig.FcConfigGetConfigFiles(font_config)
+            config_file = fontconfig.FcStrListNext(config_files)
+            if config_file == ffi.NULL:
+                warnings.warn(
+                    '@font-face not supported: '
+                    'Cannot load default config file')
+            else:
+                warnings.warn('@font-face not supported: no fonts configured')
+
+        # TODO: on Windows we could try to add the system fonts like that:
         # fontdir = os.path.join(os.environ['WINDIR'], 'Fonts')
         # fontconfig.FcConfigAppFontAddDir(
         #     font_config,
         #     # not shure which encoding fontconfig expects
         #     fontdir.encode('mbcs'))
+
+        # Fall back to default @font-face-less behaviour.
+        return False
 
     class FontConfiguration(FontConfiguration):
         def __init__(self):
@@ -228,14 +215,11 @@ if fontconfig and pangoft2:
                     how-to-use-custom-application-fonts.html
 
             """
-            # load the master config file and the fonts
+            # Load the master config file and the fonts.
             self._fontconfig_config = ffi.gc(
                 fontconfig.FcInitLoadConfigAndFonts(),
                 fontconfig.FcConfigDestroy)
-            # usable config?
-            if not _checkfontconfiguration(self._fontconfig_config):
-                self.font_map = None
-            else:
+            if _check_font_configuration(self._fontconfig_config):
                 self.font_map = ffi.gc(
                     pangocairo.pango_cairo_font_map_new_for_font_type(
                         cairo.FONT_TYPE_FT),
@@ -245,7 +229,9 @@ if fontconfig and pangoft2:
                     self._fontconfig_config)
                 # pango_fc_font_map_set_config keeps a reference to config
                 fontconfig.FcConfigDestroy(self._fontconfig_config)
-            # On Windows the font tempfiles cannot be deleted
+            else:
+                self.font_map = None
+            # On Windows the font tempfiles cannot be deleted,
             # putting them in a subfolder made my life easier.
             self._tempdir = None
             if sys.platform.startswith('win'):
@@ -256,7 +242,7 @@ if fontconfig and pangoft2:
                 except FileExistsError:
                     pass
                 except Exception:
-                    # back to default
+                    # Back to default.
                     self._tempdir = None
             self._filenames = []
 
@@ -268,7 +254,6 @@ if fontconfig and pangoft2:
                     continue
                 if font_type in ('external', 'local'):
                     config = self._fontconfig_config
-                    # default: use `url_fetcher` to fetch the font
                     fetch_as_url = True
                     if font_type == 'local':
                         font_name = url.encode('utf-8')
@@ -301,17 +286,16 @@ if fontconfig and pangoft2:
                                 config, pattern, result)
                             fontconfig.FcPatternGetString(
                                 matching_pattern, b'file', 0, filename)
-                            # cant use urlopen('file://..') on Windows.
+                            # Can't use urlopen('file://...') on Windows.
                             # Fails with
-                            # URLError: <urlopen error file ot on local host>
+                            # URLError: <urlopen error file on local host>
                             if sys.platform.startswith('win'):
                                 fetch_as_url = False
-                                url = (
-                                    ffi.string(filename[0]).decode(
-                                        sys.getfilesystemencoding()))
+                                url = ffi.string(filename[0]).decode(
+                                    sys.getfilesystemencoding())
                             else:
                                 url = (
-                                    u'file://' +
+                                    'file://' +
                                     ffi.string(filename[0]).decode('utf-8'))
                         else:
                             LOGGER.warning(
@@ -394,9 +378,9 @@ if fontconfig and pangoft2:
                     font_added = fontconfig.FcConfigAppFontAddFile(
                         config, filename.encode('ascii'))
                     if font_added:
-                        # TODO: we should mask local fonts with the same name
-                        # too as explained in Behdad's blog entry
-                        # What about pango_fc_font_map_config_changed()
+                        # TODO: We should mask local fonts with the same name
+                        # too as explained in Behdad's blog entry.
+                        # TODO: What about pango_fc_font_map_config_changed()
                         # as suggested in Behdad's blog entry?
                         # Though it seems to work without...
                         return filename
@@ -408,14 +392,19 @@ if fontconfig and pangoft2:
 
         def __del__(self):
             """Clean a font configuration for a document."""
-            # Can't cleanup the temporary font files on Windows,
-            # library has still open file handles.
-            # On Unix `os.remove()` a file that is in use works fine,
-            # on Windows a PermissionError is raised.
-            # FcConfigAppFontClear()  doesn't help
-            # pango_fc_font_map_shutdown() doesn't help
+            # Can't cleanup the temporary font files on Windows, library has
+            # still open file handles. On Unix `os.remove()` a file that is in
+            # use works fine, on Windows a PermissionError is raised.
+            # FcConfigAppFontClear and pango_fc_font_map_shutdown don't help.
             for filename in self._filenames:
                 try:
                     os.remove(filename)
                 except OSError:
                     continue
+
+    _fontconfig_config = ffi.gc(
+        fontconfig.FcInitLoadConfigAndFonts(),
+        fontconfig.FcConfigDestroy)
+    if not _check_font_configuration(_fontconfig_config, warn=True):
+        warnings.warn('Expect ugly output with font-size: 0')
+        ZERO_FONTSIZE_CRASHES_CAIRO = True
