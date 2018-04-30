@@ -808,10 +808,6 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                         # TODO: should we also accept relative children?
                         if (child.is_in_normal_flow() and
                                 can_break_inside(child)):
-                            # This waiting child is in flow and can be broken,
-                            # let's break it!
-                            break_found = True
-
                             # We break the waiting child at its last possible
                             # breaking point.
                             # TODO: The dirty solution chosen here is to
@@ -826,6 +822,18 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                                     absolute_boxes, fixed_boxes,
                                     line_placeholders, waiting_floats,
                                     line_children))
+
+                            # As PangoLayout and PangoLogAttr don't always
+                            # agree, we have to rely on the actual split to
+                            # know whether the child was broken.
+                            # https://github.com/Kozea/WeasyPrint/issues/614
+                            break_found = child_resume_at is not None
+                            if child_resume_at is None:
+                                # PangoLayout decided not to break the child
+                                child_resume_at = (0, None)
+                            # TODO: use this when Pango is always 1.40.13+:
+                            # break_found = True
+
                             children = children + waiting_children_copy
                             if child_new_child is None:
                                 # May be None where we have an empty TextBox.
