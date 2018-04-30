@@ -451,7 +451,6 @@ def _content_list(computer, values):
             anchor_token = value[1][0]
             if anchor_token[0] == 'attr()':
                 attr = compute_attr_function(computer, anchor_token)
-                # no element? not an Element?
                 if attr is None:
                     computed_value = None
                 else:
@@ -459,7 +458,6 @@ def _content_list(computer, values):
                         (attr,) + value[1][1:]))
             else:
                 computed_value = value
-            # don't crash!
             if computer.target_collector and computed_value:
                 computer.target_collector.collect_computed_target(
                     computed_value[1][0])
