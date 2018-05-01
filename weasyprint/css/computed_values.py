@@ -5,29 +5,23 @@
     Convert *specified* property values (the result of the cascade and
     inhertance) into *computed* values (that are inherited).
 
-    :copyright: Copyright 2011-2014 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
 
+from urllib.parse import unquote
+
+from tinycss2.color3 import parse_color
+
 from .. import text
+from ..logger import LOGGER
 from ..urls import get_link_attribute
 from .properties import INITIAL_VALUES, Dimension
+from .utils import (
+    ANGLE_TO_RADIANS, LENGTH_UNITS, LENGTHS_TO_PIXELS, safe_urljoin)
 
 ZERO_PIXELS = Dimension(0, 'px')
-
-
-# How many CSS pixels is one <unit>?
-# http://www.w3.org/TR/CSS21/syndata.html#length-units
-LENGTHS_TO_PIXELS = {
-    'px': 1,
-    'pt': 1. / 0.75,
-    'pc': 16.,  # LENGTHS_TO_PIXELS['pt'] * 12
-    'in': 96.,  # LENGTHS_TO_PIXELS['pt'] * 72
-    'cm': 96. / 2.54,  # LENGTHS_TO_PIXELS['in'] / 2.54
-    'mm': 96. / 25.4,  # LENGTHS_TO_PIXELS['in'] / 25.4
-    'q': 96. / 25.4 / 4.,  # LENGTHS_TO_PIXELS['mm'] / 4
-}
 
 
 # Value in pixels of font-size for <absolute-size> keywords: 12pt (16px) for
@@ -157,20 +151,20 @@ def register_computer(name):
 
 
 def compute(element, pseudo_type, specified, computed, parent_style,
-            root_style, base_url):
-    """
-    Return a dict of computed values.
+            root_style, base_url, target_collector):
+    """Create a dict of computed values.
 
     :param element: The HTML element these style apply to
     :param pseudo_type: The type of pseudo-element, eg 'before', None
-    :param specified: a dict of specified values. Should contain
+    :param specified: A dict of specified values. Should contain
                       values for all properties.
-    :param computed: a dict of already known computed values.
+    :param computed: A dict of already known computed values.
                      Only contains some properties (or none).
-    :param parent_style: a dict of computed values of the parent
+    :param parent_style: A dict of computed values of the parent
                          element (should contain values for all properties),
                          or ``None`` if ``element`` is the root element.
     :param base_url: The base URL used to resolve relative URLs.
+    :param target_collector: A target collector used to get computed targets.
 
     """
 
@@ -189,6 +183,7 @@ def compute(element, pseudo_type, specified, computed, parent_style,
     computer.parent_style = parent_style
     computer.root_style = root_style
     computer.base_url = base_url
+    computer.target_collector = target_collector
 
     getter = COMPUTER_FUNCTIONS.get
 
@@ -400,16 +395,106 @@ def column_gap(computer, name, value):
     return length(computer, name, value, pixels_only=True)
 
 
+def compute_attr_function(computer, values):
+    # TODO: use real token parsing instead of casting with Python types
+    func_name, value = values
+    assert func_name == 'attr()'
+    attr_name, type_or_unit, fallback = value
+    # computer.element sometimes is None
+    # computer.element sometimes is a 'PageType' object without .get()
+    # so wrapt the .get() into try and return None instead of crashing
+    try:
+        attr_value = computer.element.get(attr_name, fallback)
+        if type_or_unit == 'string':
+            pass  # Keep the string
+        elif type_or_unit == 'url':
+            if attr_value.startswith('#'):
+                attr_value = ('internal', unquote(attr_value[1:]))
+            else:
+                attr_value = (
+                    'external', safe_urljoin(computer.base_url, attr_value))
+        elif type_or_unit == 'color':
+            attr_value = parse_color(attr_value.strip())
+        elif type_or_unit == 'integer':
+            attr_value = int(attr_value.strip())
+        elif type_or_unit == 'number':
+            attr_value = float(attr_value.strip())
+        elif type_or_unit == '%':
+            attr_value = Dimension(float(attr_value.strip()), '%')
+            type_or_unit = 'length'
+        elif type_or_unit in LENGTH_UNITS:
+            attr_value = Dimension(float(attr_value.strip()), type_or_unit)
+            type_or_unit = 'length'
+        elif type_or_unit in ANGLE_TO_RADIANS:
+            attr_value = Dimension(float(attr_value.strip()), type_or_unit)
+            type_or_unit = 'angle'
+    except Exception:
+        return
+    return (type_or_unit, attr_value)
+
+
+def _content_list(computer, values):
+    computed_values = []
+    for value in values:
+        if value[0] in ('string', 'content', 'url', 'quote', 'leader()'):
+            computed_value = value
+        elif value[0] == 'attr()':
+            assert value[1][1] == 'string'
+            computed_value = compute_attr_function(computer, value)
+        elif value[0] in ('counter()', 'counters()', 'content()', 'string()'):
+            # Other values need layout context, their computed value cannot be
+            # better than their specified value yet.
+            # See build.compute_content_list.
+            computed_value = value
+        elif value[0] in (
+                'target-counter()', 'target-counters()', 'target-text()'):
+            anchor_token = value[1][0]
+            if anchor_token[0] == 'attr()':
+                attr = compute_attr_function(computer, anchor_token)
+                if attr is None:
+                    computed_value = None
+                else:
+                    computed_value = (value[0], (
+                        (attr,) + value[1][1:]))
+            else:
+                computed_value = value
+            if computer.target_collector and computed_value:
+                computer.target_collector.collect_computed_target(
+                    computed_value[1][0])
+        if computed_value is None:
+            LOGGER.warning('Unable to compute %s\'s value for content: %s' % (
+                computer.element, ', '.join(str(item) for item in value)))
+        else:
+            computed_values.append(computed_value)
+
+    return tuple(computed_values)
+
+
+@register_computer('bookmark-label')
+def bookmark_label(computer, name, values):
+    """Compute the ``bookmark-label`` property."""
+    return _content_list(computer, values)
+
+
+@register_computer('string-set')
+def string_set(computer, name, values):
+    """Compute the ``string-set`` property."""
+    # Spec asks for strings after custom keywords, but we allow content-lists
+    return tuple(
+        (string_set[0], _content_list(computer, string_set[1]))
+        for string_set in values)
+
+
 @register_computer('content')
 def content(computer, name, values):
     """Compute the ``content`` property."""
-    if values in ('normal', 'none'):
-        return values
-    else:
-        return tuple(
-            ('STRING', computer.element.get(value, ''))
-            if type_ == 'attr' else (type_, value)
-            for type_, value in values)
+    if len(values) == 1:
+        value, = values
+        if value == 'normal':
+            return 'inhibit' if computer.pseudo_type else 'contents'
+        elif value == 'none':
+            return 'inhibit'
+    return _content_list(computer, values)
 
 
 @register_computer('display')
@@ -496,7 +581,9 @@ def anchor(computer, name, values):
     """Compute the ``anchor`` property."""
     if values != 'none':
         _, key = values
-        return computer.element.get(key) or None
+        anchor_name = computer.element.get(key) or None
+        computer.target_collector.collect_anchor(anchor_name)
+        return anchor_name
 
 
 @register_computer('link')
@@ -506,7 +593,7 @@ def link(computer, name, values):
         return None
     else:
         type_, value = values
-        if type_ == 'attr':
+        if type_ == 'attr()':
             return get_link_attribute(
                 computer.element, value, computer.base_url)
         else:
@@ -520,7 +607,7 @@ def lang(computer, name, values):
         return None
     else:
         type_, key = values
-        if type_ == 'attr':
+        if type_ == 'attr()':
             return computer.element.get(key) or None
         elif type_ == 'string':
             return key

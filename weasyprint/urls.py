@@ -154,15 +154,15 @@ def get_link_attribute(element, attr_name, base_url):
     attr_value = element.get(attr_name, '').strip()
     if attr_value.startswith('#') and len(attr_value) > 1:
         # Do not require a base_url when the value is just a fragment.
-        return 'internal', unquote(attr_value[1:])
+        return ('url', ('internal', unquote(attr_value[1:])))
     uri = get_url_attribute(element, attr_name, base_url, allow_relative=True)
     if uri:
         if base_url:
             parsed = urlsplit(uri)
             # Compare with fragments removed
             if parsed[:-1] == urlsplit(base_url)[:-1]:
-                return 'internal', unquote(parsed.fragment)
-        return 'external', uri
+                return ('url', ('internal', unquote(parsed.fragment)))
+        return ('url', ('external', uri))
 
 
 def ensure_url(string):

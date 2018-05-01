@@ -50,15 +50,18 @@ def test_not_print():
 
 
 @assert_no_logs
-def test_function():
-    assert expand_to_dict('clip: rect(1px, 3em, auto, auto)') == {
-        'clip': ((1, 'px'), (3, 'em'), 'auto', 'auto')}
+@pytest.mark.parametrize('rule, values', (
+    ('1px, 3em, auto, auto', ((1, 'px'), (3, 'em'), 'auto', 'auto')),
+    ('1px, 3em, auto auto', ((1, 'px'), (3, 'em'), 'auto', 'auto')),
+    ('1px 3em auto 1px', ((1, 'px'), (3, 'em'), 'auto', (1, 'px'))),
+))
+def test_function(rule, values):
+    assert expand_to_dict('clip: rect(%s)' % rule) == {'clip': values}
 
 
 @assert_no_logs
 @pytest.mark.parametrize('rule', (
     'clip: square(1px, 3em, auto, auto)',
-    'clip: rect(1px, 3em, auto auto)',
     'clip: rect(1px, 3em, auto)',
     'clip: rect(1px, 3em / auto)',
 ))
@@ -176,6 +179,8 @@ def test_size_invalid(rule):
     ('transform: translate(6px, 20%)', {
         'transform': (('translate', ((6, 'px'), (20, '%'))),)}),
     ('transform: scale(2)', {'transform': (('scale', (2, 2)),)}),
+    ('transform: translate(6px 20%)', {
+        'transform': (('translate', ((6, 'px'), (20, '%'))),)}),
 ))
 def test_transforms(rule, result):
     assert expand_to_dict(rule) == result
@@ -183,7 +188,6 @@ def test_transforms(rule, result):
 
 @assert_no_logs
 @pytest.mark.parametrize('rule', (
-    'transform: translate(6px 20%)',  # missing comma
     'transform: lipsumize(6px)',
     'transform: foo',
     'transform: scale(2) foo',
@@ -625,37 +629,39 @@ def test_line_height():
 def test_string_set():
     """Test the ``string-set`` property."""
     assert expand_to_dict('string-set: test content(text)') == {
-        'string_set': (('test', (('content', 'text'),)),)}
+        'string_set': (('test', (('content()', 'text'),)),)}
     assert expand_to_dict('string-set: test content(before)') == {
-        'string_set': (('test', (('content', 'before'),)),)}
+        'string_set': (('test', (('content()', 'before'),)),)}
     assert expand_to_dict('string-set: test "string"') == {
-        'string_set': (('test', (('STRING', 'string'),)),)}
+        'string_set': (('test', (('string', 'string'),)),)}
     assert expand_to_dict(
         'string-set: test1 "string", test2 "string"') == {
             'string_set': (
-                ('test1', (('STRING', 'string'),)),
-                ('test2', (('STRING', 'string'),)))}
+                ('test1', (('string', 'string'),)),
+                ('test2', (('string', 'string'),)))}
     assert expand_to_dict('string-set: test attr(class)') == {
-        'string_set': (('test', (('attr', 'class'),)),)}
+        'string_set': (('test', (('attr()', ('class', 'string', '')),)),)}
     assert expand_to_dict('string-set: test counter(count)') == {
-        'string_set': (('test', (('counter', ('count', 'decimal')),)),)}
+        'string_set': (('test', (('counter()', ('count', 'decimal')),)),)}
     assert expand_to_dict(
         'string-set: test counter(count, upper-roman)') == {
             'string_set': (
-                ('test', (('counter', ('count', 'upper-roman')),)),)}
+                ('test', (('counter()', ('count', 'upper-roman')),)),)}
     assert expand_to_dict('string-set: test counters(count, ".")') == {
-        'string_set': (('test', (('counters', ('count', '.', 'decimal')),)),)}
+        'string_set': (
+            ('test', (('counters()', ('count', '.', 'decimal')),)),)}
     assert expand_to_dict(
         'string-set: test counters(count, ".", upper-roman)') == {
             'string_set': (
-                ('test', (('counters', ('count', '.', 'upper-roman')),)),)}
+                ('test', (('counters()', ('count', '.', 'upper-roman')),)),)}
     assert expand_to_dict(
         'string-set: test content(text) "string" '
         'attr(title) attr(title) counter(count)') == {
             'string_set': (('test', (
-                ('content', 'text'), ('STRING', 'string'),
-                ('attr', 'title'), ('attr', 'title'),
-                ('counter', ('count', 'decimal')),)),)}
+                ('content()', 'text'), ('string', 'string'),
+                ('attr()', ('title', 'string', '')),
+                ('attr()', ('title', 'string', '')),
+                ('counter()', ('count', 'decimal')))),)}
 
     assert_invalid('string-set: test')
     assert_invalid('string-set: test test1')

@@ -281,7 +281,7 @@ def compute_variable_dimension(context, side_boxes, vertical, outer_sum):
         box.restore_box_attributes()
 
 
-def make_margin_boxes(context, page, counter_values):
+def make_margin_boxes(context, page, counter_values, target_collector):
     """Yield laid-out margin boxes for this page."""
     # This is a closure only to make calls shorter
     def make_box(at_keyword, containing_block):
@@ -299,17 +299,19 @@ def make_margin_boxes(context, page, counter_values):
         style = context.style_for(page.page_type, at_keyword)
         if style is None:
             style = computed_from_cascaded(
-                cascaded={}, parent_style=page.style, element=None)
+                element=None, cascaded={}, parent_style=page.style)
         box = boxes.MarginBox(at_keyword, style)
         # Empty boxes should not be generated, but they may be needed for
         # the layout of their neighbors.
-        box.is_generated = style['content'] not in ('normal', 'none')
+        # TODO: should be the computed value.
+        box.is_generated = style['content'] not in (
+            'normal', 'inhibit', 'none')
         # TODO: get actual counter values at the time of the last page break
         if box.is_generated:
             quote_depth = [0]
             box.children = build.content_to_boxes(
                 box.style, box, quote_depth, counter_values,
-                context.get_image_from_uri, context, page)
+                context.get_image_from_uri, target_collector, context, page)
             # content_to_boxes() only produces inline-level boxes, no need to
             # run other post-processors from build.build_formatting_structure()
             box = build.inline_in_block(box)

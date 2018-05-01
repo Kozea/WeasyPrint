@@ -37,7 +37,8 @@ def layout_fixed_boxes(context, pages):
 
 
 def layout_document(enable_hinting, style_for, get_image_from_uri, root_box,
-                    font_config, html, cascaded_styles, computed_styles):
+                    font_config, html, cascaded_styles, computed_styles,
+                    target_collector):
     """Lay out the whole document.
 
     This includes line breaks, page breaks, absolute size and position for all
@@ -48,7 +49,8 @@ def layout_document(enable_hinting, style_for, get_image_from_uri, root_box,
 
     """
     context = LayoutContext(
-        enable_hinting, style_for, get_image_from_uri, font_config)
+        enable_hinting, style_for, get_image_from_uri, font_config,
+        target_collector)
     pages = list(make_all_pages(
         context, root_box, html, cascaded_styles, computed_styles))
     page_counter = [1]
@@ -62,7 +64,7 @@ def layout_document(enable_hinting, style_for, get_image_from_uri, root_box,
         root.children = root_children
         context.current_page = page_counter[0]
         page.children = (root,) + tuple(
-            make_margin_boxes(context, page, counter_values))
+            make_margin_boxes(context, page, counter_values, target_collector))
         layout_backgrounds(page, get_image_from_uri)
         yield page
         page_counter[0] += 1
@@ -70,11 +72,12 @@ def layout_document(enable_hinting, style_for, get_image_from_uri, root_box,
 
 class LayoutContext(object):
     def __init__(self, enable_hinting, style_for, get_image_from_uri,
-                 font_config):
+                 font_config, target_collector):
         self.enable_hinting = enable_hinting
         self.style_for = style_for
         self.get_image_from_uri = get_image_from_uri
         self.font_config = font_config
+        self.target_collector = target_collector
         self._excluded_shapes_lists = []
         self.excluded_shapes = None  # Not initialized yet
         self.string_set = defaultdict(lambda: defaultdict(lambda: list()))

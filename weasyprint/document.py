@@ -17,6 +17,7 @@ import cairocffi as cairo
 
 from . import CSS
 from .css import get_all_computed_styles
+from .css.targets import TargetCollector
 from .draw import draw_page, stacked
 from .fonts import FontConfiguration
 from .formatting_structure import boxes
@@ -117,6 +118,8 @@ def _gather_links_and_bookmarks(box, bookmarks, links, anchors, matrix):
     if has_bookmark or has_link or has_anchor:
         pos_x, pos_y, width, height = box.hit_area()
         if has_link:
+            token_type, link = link
+            assert token_type == 'url'
             link_type, target = link
             assert isinstance(target, str)
             if link_type == 'external' and is_attachment:
@@ -305,6 +308,7 @@ class Document(object):
                 presentational_hints=False, font_config=None):
         if font_config is None:
             font_config = FontConfiguration()
+        target_collector = TargetCollector()
         page_rules = []
         user_stylesheets = []
         for css in stylesheets or []:
@@ -315,7 +319,7 @@ class Document(object):
             user_stylesheets.append(css)
         style_for, cascaded_styles, computed_styles = get_all_computed_styles(
             html, user_stylesheets, presentational_hints, font_config,
-            page_rules)
+            page_rules, target_collector)
         get_image_from_uri = functools.partial(
             original_get_image_from_uri, {}, html.url_fetcher)
         LOGGER.info('Step 4 - Creating formatting structure')
@@ -323,8 +327,9 @@ class Document(object):
             enable_hinting, style_for, get_image_from_uri,
             build_formatting_structure(
                 html.etree_element, style_for, get_image_from_uri,
-                html.base_url),
-            font_config, html, cascaded_styles, computed_styles)
+                html.base_url, target_collector),
+            font_config, html, cascaded_styles, computed_styles,
+            target_collector)
         rendering = cls(
             [Page(p, enable_hinting) for p in page_boxes],
             DocumentMetadata(**html._get_metadata()),

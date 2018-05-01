@@ -2,25 +2,70 @@
     weasyprint.css.descriptors
     --------------------------
 
-    Validate descriptors, currently used for @font-face rules.
+    Validate descriptors used for @font-face rules.
     See https://www.w3.org/TR/css-fonts-3/#font-resources.
 
-    :copyright: Copyright 2011-2016 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
 
-from urllib.parse import unquote
-
 import tinycss2
 
-from ..logger import LOGGER
-from .validation import (
-    InvalidValues, comma_separated_list, expand_font_variant,
-    font_feature_settings, get_keyword, remove_whitespace, safe_urljoin,
-    single_keyword, single_token, validate_non_shorthand)
+from . import properties
+from ...logger import LOGGER
+from ..utils import (
+    InvalidValues, comma_separated_list, get_keyword, get_single_keyword,
+    get_url, remove_whitespace, single_keyword, single_token)
 
 DESCRIPTORS = {}
+
+
+class NoneFakeToken(object):
+    type = 'ident'
+    lower_value = 'none'
+
+
+class NormalFakeToken(object):
+    type = 'ident'
+    lower_value = 'normal'
+
+
+def preprocess_descriptors(base_url, descriptors):
+    """Filter unsupported names and values for descriptors.
+
+    Log a warning for every ignored descriptor.
+
+    Return a iterable of ``(name, value)`` tuples.
+
+    """
+    for descriptor in descriptors:
+        if descriptor.type != 'declaration' or descriptor.important:
+            continue
+        tokens = remove_whitespace(descriptor.value)
+        try:
+            # Use list() to consume generators now and catch any error.
+            if descriptor.name not in DESCRIPTORS:
+                raise InvalidValues('descriptor not supported')
+
+            function = DESCRIPTORS[descriptor.name]
+            if function.wants_base_url:
+                value = function(tokens, base_url)
+            else:
+                value = function(tokens)
+            if value is None:
+                raise InvalidValues
+            result = ((descriptor.name, value),)
+        except InvalidValues as exc:
+            LOGGER.warning(
+                'Ignored `%s:%s` at %i:%i, %s.',
+                descriptor.name, tinycss2.serialize(descriptor.value),
+                descriptor.source_line, descriptor.source_column,
+                exc.args[0] if exc.args and exc.args[0] else 'invalid value')
+            continue
+
+        for long_name, value in result:
+            yield long_name.replace('-', '_'), value
 
 
 def descriptor(descriptor_name=None, wants_base_url=False):
@@ -49,6 +94,40 @@ def descriptor(descriptor_name=None, wants_base_url=False):
     return decorator
 
 
+def expand_font_variant(tokens):
+    keyword = get_single_keyword(tokens)
+    if keyword in ('normal', 'none'):
+        for suffix in (
+                '-alternates', '-caps', '-east-asian', '-numeric',
+                '-position'):
+            yield suffix, [NormalFakeToken]
+        token = NormalFakeToken if keyword == 'normal' else NoneFakeToken
+        yield '-ligatures', [token]
+    else:
+        features = {
+            'alternates': [],
+            'caps': [],
+            'east-asian': [],
+            'ligatures': [],
+            'numeric': [],
+            'position': []}
+        for token in tokens:
+            keyword = get_keyword(token)
+            if keyword == 'normal':
+                # We don't allow 'normal', only the specific values
+                raise InvalidValues
+            for feature in features:
+                function_name = 'font_variant_%s' % feature.replace('-', '_')
+                if getattr(properties, function_name)([token]):
+                    features[feature].append(token)
+                    break
+            else:
+                raise InvalidValues
+        for feature, tokens in features.items():
+            if tokens:
+                yield '-%s' % feature, tokens
+
+
 @descriptor()
 def font_family(tokens, allow_spaces=False):
     """``font-family`` descriptor validation."""
@@ -72,11 +151,9 @@ def src(tokens, base_url):
             tokens, token = tokens[:-1], tokens[-1]
         if token.type == 'function' and token.lower_name == 'local':
             return 'local', font_family(token.arguments, allow_spaces=True)
-        if token.type == 'url':
-            if token.value.startswith('#'):
-                return 'internal', unquote(token.value[1:])
-            else:
-                return 'external', safe_urljoin(base_url, token.value)
+        url = get_url(token, base_url)
+        if url is not None and url[0] == 'url':
+            return url[1]
 
 
 @descriptor()
@@ -111,7 +188,7 @@ def font_stretch(keyword):
 @descriptor('font-feature-settings')
 def font_feature_settings_descriptor(tokens):
     """``font-feature-settings`` descriptor validation."""
-    return font_feature_settings(tokens)
+    return properties.font_feature_settings(tokens)
 
 
 @descriptor()
@@ -124,50 +201,8 @@ def font_variant(tokens):
     values = []
     for name, sub_tokens in expand_font_variant(tokens):
         try:
-            values.append(validate_non_shorthand(
+            values.append(properties.validate_non_shorthand(
                 None, 'font-variant' + name, sub_tokens, required=True))
         except InvalidValues:
             return None
     return values
-
-
-def validate(base_url, name, tokens):
-    """Default validator for descriptors."""
-    if name not in DESCRIPTORS:
-        raise InvalidValues('descriptor not supported')
-
-    function = DESCRIPTORS[name]
-    if function.wants_base_url:
-        value = function(tokens, base_url)
-    else:
-        value = function(tokens)
-    if value is None:
-        raise InvalidValues
-    return [(name, value)]
-
-
-def preprocess_descriptors(base_url, descriptors):
-    """Filter unsupported names and values for descriptors.
-
-    Log a warning for every ignored descriptor.
-
-    Return a iterable of ``(name, value)`` tuples.
-
-    """
-    for descriptor in descriptors:
-        if descriptor.type != 'declaration' or descriptor.important:
-            continue
-        tokens = remove_whitespace(descriptor.value)
-        try:
-            # Use list() to consume generators now and catch any error.
-            result = list(validate(base_url, descriptor.name, tokens))
-        except InvalidValues as exc:
-            LOGGER.warning(
-                'Ignored `%s:%s` at %i:%i, %s.',
-                descriptor.name, tinycss2.serialize(descriptor.value),
-                descriptor.source_line, descriptor.source_column,
-                exc.args[0] if exc.args and exc.args[0] else 'invalid value')
-            continue
-
-        for long_name, value in result:
-            yield long_name.replace('-', '_'), value
