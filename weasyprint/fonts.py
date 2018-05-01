@@ -37,25 +37,20 @@ class FontConfiguration:
         """Add a font into the application."""
 
 
-fontconfig = None
-pangoft2 = None
-
 if pango.pango_version() < 13800:
     warnings.warn('@font-face support needs Pango >= 1.38')
 else:
-    try:
-        fontconfig = dlopen(ffi, 'fontconfig', 'libfontconfig',
-                            'libfontconfig-1.dll',
-                            'libfontconfig.so.1', 'libfontconfig-1.dylib')
-        pangoft2 = dlopen(ffi, 'pangoft2-1.0', 'libpangoft2-1.0-0',
-                          'libpangoft2-1.0.so', 'libpangoft2-1.0.dylib')
-    except Exception as exception:
-        warnings.warn('@font-face not supported: {0}'.format(exception))
-        fontconfig = None
-        pangoft2 = None
+    # No need to try...catch:
+    # If there's no fontconfig library, cairocffi already crashed the script
+    # with OSError: dlopen() failed to load a library: cairo / cairo-2
+    # So let's hope we find the same file as cairo already did ;)
+    # Same applies to pangocairo requiring pangoft2
+    fontconfig = dlopen(ffi, 'fontconfig', 'libfontconfig',
+                        'libfontconfig-1.dll',
+                        'libfontconfig.so.1', 'libfontconfig-1.dylib')
+    pangoft2 = dlopen(ffi, 'pangoft2-1.0', 'libpangoft2-1.0-0',
+                      'libpangoft2-1.0.so', 'libpangoft2-1.0.dylib')
 
-
-if fontconfig and pangoft2:
     ffi.cdef('''
         // FontConfig
 
