@@ -478,7 +478,7 @@ def add_box_marker(box, counter_values, get_image_from_uri):
         if type_ == 'none':
             return
         counter_value = counter_values.get('list-item', [0])[-1]
-        # TODO: rtl numbered list has the dot on the left!
+        # TODO: rtl numbered list has the dot on the left
         marker_text = counters.format_list_marker(counter_value, type_)
         marker_box = boxes.TextBox.anonymous_from(box, marker_text)
     else:
@@ -488,17 +488,18 @@ def add_box_marker(box, counter_values, get_image_from_uri):
 
     position = style['list_style_position']
     direction = box.style['direction']
-    # apply a margin of 0.5em
-    # the margin to use depends on list-style-position and direction
+    # Apply a margin of 0.5em. The margin to use depends on list-style-position
+    # and direction.
     half_em = 0.5 * box.style['font_size']
     propvalue = properties.Dimension(half_em, 'px')
+    marker_box.style = marker_box.style.copy()
     if position == 'inside' or direction == 'ltr':
         marker_box.style['margin_right'] = propvalue
     else:
         marker_box.style['margin_left'] = propvalue
 
     if position == 'inside':
-        # TODO: rtl - marker must be the last/rightmost box of the first line!
+        # TODO: rtl markers must be the rightmost box of the first line
         yield marker_box
     elif position == 'outside':
         box.outside_list_marker = marker_box
