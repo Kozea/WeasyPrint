@@ -49,11 +49,14 @@ def list_marker_layout(context, box):
         # (Swap left and right for right-to-left text.)
         marker.position_x = box.border_box_x()
 
-        half_em = 0.5 * box.style['font_size']
+        # appropriate margin already set in
+        # formatting_structure.build.add_box_marker()
         direction = box.style['direction']
         if direction == 'ltr':
-            marker.margin_right = half_em
             marker.position_x -= marker.margin_width()
         else:
-            marker.margin_left = half_em
+            # move to the right margin
             marker.position_x += box.border_width()
+            if isinstance(marker, boxes.TextBox):
+                # take margin/padding into account!
+                marker.position_x += marker.margin_width() - (marker.width)
