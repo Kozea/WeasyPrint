@@ -13,6 +13,7 @@
 
 """
 
+import copy
 import re
 import unicodedata
 
@@ -344,23 +345,21 @@ def content_to_boxes(style, parent_box, quote_depth, counter_values,
                      page=None):
     """Take the value of a ``content`` property and return boxes."""
     def parse_again():
-        """Closure to parse the parent_boxes children all again.
-
-        Thanks to closure, no need to explicitly deepcopy the whole stuff.
-
-        """
+        """Closure to parse the parent_boxes children all again."""
         local_children = []
         if style['display'] == 'list-item':
             local_children.extend(add_box_marker(
-                parent_box, counter_values, get_image_from_uri))
+                parent_box, orig_counter_values, get_image_from_uri))
         local_children.extend(content_to_boxes(
-            style, parent_box, quote_depth, counter_values,
+            style, parent_box, orig_quote_depth, orig_counter_values,
             get_image_from_uri, target_collector))
         parent_box.children = local_children
 
     if style['content'] == 'inhibit':
         return []
 
+    orig_quote_depth = quote_depth[:]
+    orig_counter_values = copy.deepcopy(counter_values)
     return compute_content_list(
         style['content'], parent_box, counter_values, parse_again,
         target_collector, get_image_from_uri, quote_depth, style['quotes'],
@@ -373,9 +372,10 @@ def compute_string_set(element, box, string_name, content_list,
     def parse_again():
         """Closure to parse the string-set-string value all again."""
         compute_string_set(
-            element, box, string_name, content_list, counter_values,
+            element, box, string_name, content_list, orig_counter_values,
             target_collector)
 
+    orig_counter_values = copy.deepcopy(counter_values)
     box_list = compute_content_list(
         content_list, box, counter_values, parse_again, target_collector,
         element=element)
@@ -390,8 +390,9 @@ def compute_bookmark_label(element, box, content_list, counter_values,
     """Parses the content-list value for ``bookmark-label``."""
     def parse_again():
         compute_bookmark_label(
-            element, box, content_list, counter_values, target_collector)
+            element, box, content_list, orig_counter_values, target_collector)
 
+    orig_counter_values = copy.deepcopy(counter_values)
     box_list = compute_content_list(
         content_list, box, counter_values, parse_again, target_collector,
         element=element)
