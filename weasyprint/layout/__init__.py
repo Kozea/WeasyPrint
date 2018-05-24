@@ -53,8 +53,17 @@ def layout_document(enable_hinting, style_for, get_image_from_uri, root_box,
         target_collector)
     pages = list(make_all_pages(
         context, root_box, html, cascaded_styles, computed_styles))
-    page_counter = [1]
-    counter_values = {'page': page_counter, 'pages': [len(pages)]}
+
+    # although neither a variable quote_depth nor counter_scopes are needed
+    # in page-boxes -- reusing `formatting_structure.build.update_counters()`
+    # to avoid redundant code requires a full `state`
+    state = (
+        # Shared mutable objects:
+        [0],  # quote_depth: single integer
+        # initialize with the fixed `pages` counter
+        {'pages': [len(pages)]},   # counter_values
+        [{'pages'}]  # counter_scopes
+    )
     for i, page in enumerate(pages):
         root_children = []
         root, = page.children
@@ -62,12 +71,11 @@ def layout_document(enable_hinting, style_for, get_image_from_uri, root_box,
         root_children.extend(root.children)
         root_children.extend(layout_fixed_boxes(context, pages[i + 1:]))
         root.children = root_children
-        context.current_page = page_counter[0]
+        context.current_page = i+1  # page_number starts at 1
         page.children = (root,) + tuple(
-            make_margin_boxes(context, page, counter_values, target_collector))
+            make_margin_boxes(context, page, state, target_collector))
         layout_backgrounds(page, get_image_from_uri)
         yield page
-        page_counter[0] += 1
 
 
 class LayoutContext(object):

@@ -9,6 +9,8 @@
 
 """
 
+import copy
+
 from ..css import (
     PageType, computed_from_cascaded, matching_page_types, set_computed_styles)
 from ..formatting_structure import boxes, build
@@ -281,7 +283,33 @@ def compute_variable_dimension(context, side_boxes, vertical, outer_sum):
         box.restore_box_attributes()
 
 
-def make_margin_boxes(context, page, counter_values, target_collector):
+def _standardize_page_based_counters(style, pseudo_type):
+    """
+    drop 'pages' counter from style in @page and @margin context
+    ensure `counter-increment: page` for @page context if not otherwise
+    manipulated by the style
+    """
+    page_counter_touched = False
+    # XXX 'counter-set` not yet supported
+    for propname in ['counter_reset', 'counter_increment']:
+        # counter_increment could be 'auto'
+        if not isinstance(style[propname], tuple):
+            style[propname] = ()
+            continue
+        justified_values = []
+        for name, value in style[propname]:
+            if name == 'page':
+                page_counter_touched = True
+            if name != 'pages':
+                justified_values.append((name, value))
+        style[propname] = tuple(justified_values)
+
+    if pseudo_type is None and not page_counter_touched:
+        style['counter_increment'] = (
+            ('page', 1),) + style['counter_increment']
+
+
+def make_margin_boxes(context, page, state, target_collector):
     """Yield laid-out margin boxes for this page."""
     # This is a closure only to make calls shorter
     def make_box(at_keyword, containing_block):
@@ -298,8 +326,10 @@ def make_margin_boxes(context, page, counter_values, target_collector):
 
         style = context.style_for(page.page_type, at_keyword)
         if style is None:
+            # doesn't affect counters
             style = computed_from_cascaded(
                 element=None, cascaded={}, parent_style=page.style)
+        _standardize_page_based_counters(style, at_keyword)
         box = boxes.MarginBox(at_keyword, style)
         # Empty boxes should not be generated, but they may be needed for
         # the layout of their neighbors.
@@ -308,7 +338,12 @@ def make_margin_boxes(context, page, counter_values, target_collector):
             'normal', 'inhibit', 'none')
         # TODO: get actual counter values at the time of the last page break
         if box.is_generated:
-            quote_depth = [0]
+            # @margins mustn't manipulate page-context counters
+            margin_state = copy.deepcopy(state)
+            quote_depth, counter_values, counter_scopes = margin_state
+            # not 100% shure about this
+            counter_scopes.append(set())
+            build.update_counters(margin_state, box.style)
             box.children = build.content_to_boxes(
                 box.style, box, quote_depth, counter_values,
                 context.get_image_from_uri, target_collector, context, page)
@@ -322,6 +357,11 @@ def make_margin_boxes(context, page, counter_values, target_collector):
             for side in ('top', 'right', 'bottom', 'left'):
                 box._reset_spacing(side)
         return box
+
+    style = page.style
+    _standardize_page_based_counters(style, None)
+    # apply counter-* styles
+    build.update_counters(state, style)
 
     margin_top = page.margin_top
     margin_bottom = page.margin_bottom
@@ -469,7 +509,7 @@ def page_height(box, context, containing_block_height):
     page_width_or_height(VerticalBox(context, box), containing_block_height)
 
 
-def make_page(context, root_box, page_type, resume_at, page_number=None):
+def make_page(context, root_box, page_type, resume_at, page_number):
     """Take just enough content from the beginning to fill one page.
 
     Return ``(page, finished)``. ``page`` is a laid out PageBox object
