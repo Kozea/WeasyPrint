@@ -284,16 +284,16 @@ def compute_variable_dimension(context, side_boxes, vertical, outer_sum):
 
 
 def _standardize_page_based_counters(style, pseudo_type):
-    """
-    drop 'pages' counter from style in @page and @margin context
-    ensure `counter-increment: page` for @page context if not otherwise
-    manipulated by the style
+    """Drop 'pages' counter from style in @page and @margin context.
+
+    Ensure `counter-increment: page` for @page context if not otherwise
+    manipulated by the style.
+
     """
     page_counter_touched = False
     # XXX 'counter-set` not yet supported
-    for propname in ['counter_reset', 'counter_increment']:
-        # counter_increment could be 'auto'
-        if not isinstance(style[propname], tuple):
+    for propname in ('counter_reset', 'counter_increment'):
+        if style[propname] == 'auto':
             style[propname] = ()
             continue
         justified_values = []
@@ -341,7 +341,7 @@ def make_margin_boxes(context, page, state, target_collector):
             # @margins mustn't manipulate page-context counters
             margin_state = copy.deepcopy(state)
             quote_depth, counter_values, counter_scopes = margin_state
-            # not 100% shure about this
+            # TODO: check this, probably useless
             counter_scopes.append(set())
             build.update_counters(margin_state, box.style)
             box.children = build.content_to_boxes(
@@ -360,7 +360,6 @@ def make_margin_boxes(context, page, state, target_collector):
 
     style = page.style
     _standardize_page_based_counters(style, None)
-    # apply counter-* styles
     build.update_counters(state, style)
 
     margin_top = page.margin_top
