@@ -21,7 +21,7 @@ Bug fixes:
 * [#500](https://github.com/Kozea/WeasyPrint/pull/500):
   Improve readability of _select_source function.
 * [#498](https://github.com/Kozea/WeasyPrint/issues/498):
-  Use CSS prefixes as recommanded by the CSSWG.
+  Use CSS prefixes as recommended by the CSSWG.
 * [#441](https://github.com/Kozea/WeasyPrint/issues/441):
   Fix rendering problems and crashes when using @font-face.
 * [bb3a4db](https://github.com/Kozea/WeasyPrint/commit/bb3a4db):
