@@ -6,7 +6,7 @@ title: WeasyPrint 0.42.3
 WeasyPrint 0.42.3 has been released.
 
 Versions 0.42.x will only get simple bug fixes backported from the master
-branch. New features, opitimizations and complex bug fixes will only be added
+branch. New features, optimizations and complex bug fixes will only be added
 to the 43+ versions that don't support Python 2 anymore.
 
 Do not rely on future versions, development on the 0.x branch may be stopped at
