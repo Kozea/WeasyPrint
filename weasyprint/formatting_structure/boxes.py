@@ -95,6 +95,7 @@ class Box(object):
     def __init__(self, element_tag, style):
         self.element_tag = element_tag
         self.style = style
+        self._cached_margin_height = None
 
     def __repr__(self):
         return '<%s %s>' % (type(self).__name__, self.element_tag)
@@ -157,7 +158,11 @@ class Box(object):
 
     def margin_height(self):
         """Height of the margin box (aka. outer box)."""
-        return self.border_height() + self.margin_top + self.margin_bottom
+        if self._cached_margin_height is None:
+            self._cached_margin_height = \
+                self.border_height() + self.margin_top + self.margin_bottom
+
+        return self._cached_margin_height
 
     # Corners positions
 
