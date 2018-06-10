@@ -130,6 +130,20 @@ def get_clearance(context, box, collapsed_margin=0):
     return clearance
 
 
+def get_colliding_shapes(excluded_shapes, position_y, box_height):
+    colliding_shapes = []
+    for shape in excluded_shapes:
+        # Assign locals to avoid slow attribute lookups.
+        s_py = shape.position_y
+        s_mh = shape.margin_height()
+        if (s_py < position_y < s_py + s_mh) or \
+        (s_py < position_y + box_height < s_py + s_mh) or \
+        (s_py >= position_y and s_py + s_mh <= position_y + box_height):
+            colliding_shapes.append(shape)
+
+    return colliding_shapes
+
+
 def avoid_collisions(context, box, containing_block, outer=True):
     excluded_shapes = context.excluded_shapes
     position_y = box.position_y if outer else box.border_box_y()
@@ -141,16 +155,8 @@ def avoid_collisions(context, box, containing_block, outer=True):
         return 0, 0, containing_block.width
 
     while True:
-        colliding_shapes = [
-            shape for shape in excluded_shapes
-            if (shape.position_y < position_y <
-                shape.position_y + shape.margin_height()) or
-            (shape.position_y < position_y + box_height <
-                shape.position_y + shape.margin_height()) or
-            (shape.position_y >= position_y and
-                shape.position_y + shape.margin_height() <=
-                position_y + box_height)
-        ]
+        colliding_shapes = \
+            get_colliding_shapes(excluded_shapes, position_y, box_height)
         left_bounds = [
             shape.position_x + shape.margin_width()
             for shape in colliding_shapes
