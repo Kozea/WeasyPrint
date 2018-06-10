@@ -124,7 +124,7 @@ def get_clearance(context, box, collapsed_margin=0):
         if hypothetical_position >= y:
             continue
         h = excluded_shape.margin_height()
-        if box.style['clear'] in (excluded_shape.style.float, 'both'):
+        if box.style['clear'] in (excluded_shape.style['float'], 'both'):
             if hypothetical_position < y + h:
                 clearance = max(
                     (clearance or 0), y + h - hypothetical_position)
