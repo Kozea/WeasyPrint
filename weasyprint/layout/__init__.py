@@ -26,14 +26,16 @@ from .backgrounds import layout_backgrounds
 from ..formatting_structure import boxes
 
 
-def layout_fixed_boxes(context, pages):
-    """Lay out and yield the fixed boxes of ``pages``."""
+def layout_fixed_boxes(context, pages, containing_page):
+    """Lay out and yield the fixed boxes of ``pages`` on the
+    ``containing_page``.
+    """
     for page in pages:
         for box in page.fixed_boxes:
             # Use an empty list as last argument because the fixed boxes in the
             # fixed box has already been added to page.fixed_boxes, we don't
             # want to get them again
-            yield absolute_box_layout(context, box, page, [])
+            yield absolute_box_layout(context, box, containing_page, [])
 
 
 def layout_document(enable_hinting, style_for, get_image_from_uri, root_box,
@@ -67,9 +69,9 @@ def layout_document(enable_hinting, style_for, get_image_from_uri, root_box,
     for i, page in enumerate(pages):
         root_children = []
         root, = page.children
-        root_children.extend(layout_fixed_boxes(context, pages[:i]))
+        root_children.extend(layout_fixed_boxes(context, pages[:i], page))
         root_children.extend(root.children)
-        root_children.extend(layout_fixed_boxes(context, pages[i + 1:]))
+        root_children.extend(layout_fixed_boxes(context, pages[i + 1:], page))
         root.children = root_children
         context.current_page = i+1  # page_number starts at 1
         page.children = (root,) + tuple(
