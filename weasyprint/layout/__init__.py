@@ -73,7 +73,7 @@ def layout_document(enable_hinting, style_for, get_image_from_uri, root_box,
         root_children.extend(root.children)
         root_children.extend(layout_fixed_boxes(context, pages[i + 1:], page))
         root.children = root_children
-        context.current_page = i+1  # page_number starts at 1
+        context.current_page = i + 1  # page_number starts at 1
         page.children = (root,) + tuple(
             make_margin_boxes(context, page, state, target_collector))
         layout_backgrounds(page, get_image_from_uri)
