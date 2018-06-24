@@ -1299,6 +1299,8 @@ def string_set(tokens, base_url):
     # Spec asks for strings after custom keywords, but we allow content-lists
     if len(tokens) >= 2:
         var_name = get_keyword(tokens[0])
+        if var_name is None:
+            return
         parsed_tokens = tuple(
             get_content_list_token(token, base_url) for token in tokens[1:])
         if None not in parsed_tokens:
