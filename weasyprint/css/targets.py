@@ -64,7 +64,8 @@ class TargetCollector(object):
         if anchor_name:
             self.items.setdefault(anchor_name, TargetLookupItem())
 
-    def lookup_target(self, anchor_token, source_box, parse_again_function):
+    def lookup_target(self, anchor_token, source_box, css_token,
+                      parse_again_function):
         """Get a TargetLookupItem corresponding to ``anchor_name``.
 
         If it is already filled by a previous anchor-element, the status is
@@ -78,7 +79,8 @@ class TargetCollector(object):
         if item.state == 'pending':
             if anchor_name in self.existing_anchors:
                 self.had_pending_targets = True
-                item.pending_boxes.setdefault(source_box, parse_again_function)
+                item.pending_boxes.setdefault(
+                    (source_box, css_token), parse_again_function)
             else:
                 item.state = 'undefined'
 
