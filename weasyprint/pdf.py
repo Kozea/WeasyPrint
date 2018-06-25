@@ -94,6 +94,8 @@ def _create_compressed_file_object(source):
         md5.update(data)
         pdf_file_object.stream += compress.compress(data).decode('latin-1')
     pdf_file_object.stream += compress.flush(zlib.Z_FINISH).decode('latin-1')
+    if isinstance(pdf_file_object.stream, bytes):
+        pdf_file_object.stream = str(pdf_file_object.stream)
     pdf_file_object.Params = PdfDict(
         CheckSum=PdfString('<{}>'.format(md5.hexdigest())), Size=size)
     return pdf_file_object
