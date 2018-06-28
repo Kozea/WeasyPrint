@@ -584,7 +584,7 @@ def set_page_type_computed_styles(page_type, cascaded_styles, computed_styles,
                                   html):
     """Set style for page types and pseudo-types matching page_type."""
     for matching_page_type in matching_page_types(page_type):
-        if matching_page_type in computed_styles:
+        if computed_styles.get((matching_page_type, None), None):
             continue
         set_computed_styles(
             cascaded_styles, computed_styles, matching_page_type,
