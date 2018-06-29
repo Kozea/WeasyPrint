@@ -5,7 +5,7 @@ WeasyPrint |version| depends on:
 
 * CPython_ ≥ 3.4
 * cairo_ ≥ 1.15.4 [#]_
-* Pango_ ≥ 1.29.3
+* Pango_ ≥ 1.38.0 [#]_
 * CFFI_ ≥ 0.6
 * html5lib_ ≥ 0.999999999
 * cairocffi_ ≥ 0.5
@@ -14,7 +14,7 @@ WeasyPrint |version| depends on:
 * CairoSVG_ ≥ 1.0.20
 * Pyphen_ ≥ 0.8
 * pdfrw_ ≥ 0.4
-* Optional: GDK-PixBuf_ ≥ 2.25.0 [#]_
+* GDK-PixBuf_ ≥ 2.25.0 [#]_
 
 .. _CPython: http://www.python.org/
 .. _cairo: http://cairographics.org/
@@ -82,6 +82,9 @@ WeasyPrint! Otherwise, please copy the full error message and
        <https://github.com/Kozea/WeasyPrint/issues/339>`_. If you get invalid
        PDF files, please read `#565
        <https://github.com/Kozea/WeasyPrint/issues/565>`.
+
+.. [#] pango ≥ 1.29.3 is required, but 1.38.0 is needed to handle `@font-face`
+       CSS rules.
 
 .. [#] Without it, PNG and SVG are the only supported image formats.
        JPEG, GIF and others are not available.
