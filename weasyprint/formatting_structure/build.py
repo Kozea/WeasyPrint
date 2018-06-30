@@ -292,7 +292,8 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
             lookup_target = target_collector.lookup_target(
                 target_name, parent_box, css_token, parse_again)
             if lookup_target.state == 'up-to-date':
-                target_counter_values = lookup_target.target_box.cached_counter_values
+                target_counter_values = \
+                    lookup_target.target_box.cached_counter_values
                 counter_value = target_counter_values.get(
                     counter_name, [0])[-1]
                 texts.append(counters.format(counter_value, counter_style))
@@ -307,7 +308,8 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
                 if separator[0] != 'string':
                     break
                 separator_string = separator[1]
-                target_counter_values = lookup_target.target_box.cached_counter_values
+                target_counter_values = \
+                    lookup_target.target_box.cached_counter_values
                 texts.append(separator_string.join(
                     counters.format(counter_value, counter_style)
                     for counter_value in target_counter_values.get(
@@ -351,16 +353,19 @@ def content_to_boxes(style, parent_box, quote_depth, counter_values,
                      get_image_from_uri, target_collector, context=None,
                      page=None):
     """Take the value of a ``content`` property and return boxes."""
-    def parse_again():
+    def parse_again(mixin_pagebased_counters={}):
         """Closure to parse the parent_boxes children all again."""
         local_children = []
         # first call of compute_content_list created the cached_counter_values
-        orig_counter_values = parent_box.cached_counter_values
+        # neither alter the mixed-in nor the cached counter values!
+        # no need to deepcopy here
+        local_counters = mixin_pagebased_counters.copy()
+        local_counters.update(parent_box.cached_counter_values)
         if style['display'] == 'list-item':
             local_children.extend(add_box_marker(
-                parent_box, orig_counter_values, get_image_from_uri))
+                parent_box, local_counters, get_image_from_uri))
         local_children.extend(content_to_boxes(
-            style, parent_box, orig_quote_depth, orig_counter_values,
+            style, parent_box, orig_quote_depth, local_counters,
             get_image_from_uri, target_collector))
         parent_box.children = local_children
 
@@ -378,15 +383,16 @@ def content_to_boxes(style, parent_box, quote_depth, counter_values,
 def compute_string_set(element, box, string_name, content_list,
                        counter_values, target_collector):
     """Parse the content-list value of ``string_name`` for ``string-set``."""
-    def parse_again():
+    def parse_again(mixin_pagebased_counters={}):
         """Closure to parse the string-set-string value all again."""
         # first call of compute_content_list created the cached_counter_values
-        orig_counter_values = box.cached_counter_values
+        # neither alter the mixed-in nor the cached counter values!
+        # no need to deepcopy here
+        local_counters = mixin_pagebased_counters.copy()
+        local_counters.update(box.cached_counter_values)
         compute_string_set(
-            element, box, string_name, content_list, orig_counter_values,
+            element, box, string_name, content_list, local_counters,
             target_collector)
-    # Hups!?
-    # orig_counter_values = copy.deepcopy(counter_values)
     css_token = 'string-set::%s' % string_name
     box_list = compute_content_list(
         content_list, box, counter_values, css_token, parse_again,
@@ -400,11 +406,15 @@ def compute_string_set(element, box, string_name, content_list,
 def compute_bookmark_label(element, box, content_list, counter_values,
                            target_collector):
     """Parses the content-list value for ``bookmark-label``."""
-    def parse_again():
-        # first call of compute_content_list ensured the .cached_counter_values
-        orig_counter_values = box.cached_counter_values
+    def parse_again(mixin_pagebased_counters={}):
+        """Closure to parse the bookmark-label all again."""
+        # first call of compute_content_list created the cached_counter_values
+        # neither alter the mixed-in nor the cached counter values!
+        # no need to deepcopy here
+        local_counters = mixin_pagebased_counters.copy()
+        local_counters.update(box.cached_counter_values)
         compute_bookmark_label(
-            element, box, content_list, orig_counter_values, target_collector)
+            element, box, content_list, local_counters, target_collector)
 
     css_token = 'bookmark-label'
     box_list = compute_content_list(

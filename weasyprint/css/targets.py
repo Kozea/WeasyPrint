@@ -105,7 +105,8 @@ class TargetCollector(object):
             # Store the counter_values in the target_box like
             # compute_content_list does.
             if not hasattr(target_box, 'cached_counter_values'):
-                target_box.cached_counter_values = copy.deepcopy(target_counter_values)
+                target_box.cached_counter_values = \
+                    copy.deepcopy(target_counter_values)
 
     def check_pending_targets(self):
         """Check pending targets if needed."""
