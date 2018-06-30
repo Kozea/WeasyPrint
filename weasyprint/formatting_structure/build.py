@@ -246,6 +246,18 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
     # like box creation for URIs.
     boxlist = []
     texts = []
+    missing_counters = []
+    in_page_context = context is not None and page is not None
+
+    def _collect_missing_counter(counter_name, missing_counters):
+        """collect missing counters. Not appropriate for target-counters!"""
+        # no need to collect missing counters in MarginBoxes
+        if in_page_context:
+            return
+        if counter_values.get(counter_name, None) is None:
+            if counter_name not in missing_counters:
+                missing_counters += [counter_name]
+
     if not hasattr(parent_box, 'cached_counter_values'):
         # Store the counter_values in the parent_box to make them accessible
         # in @page context.
@@ -276,10 +288,12 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
             texts.append(added_text)
         elif type_ == 'counter()':
             counter_name, counter_style = value
+            _collect_missing_counter(counter_name, missing_counters)
             counter_value = counter_values.get(counter_name, [0])[-1]
             texts.append(counters.format(counter_value, counter_style))
         elif type_ == 'counters()':
             counter_name, separator, counter_style = value
+            _collect_missing_counter(counter_name, missing_counters)
             texts.append(separator.join(
                 counters.format(counter_value, counter_style)
                 for counter_value in counter_values.get(counter_name, [0])))
@@ -294,6 +308,7 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
             if lookup_target.state == 'up-to-date':
                 target_counter_values = \
                     lookup_target.target_box.cached_counter_values
+                # TODO: algorithm to collect missing target counters
                 counter_value = target_counter_values.get(
                     counter_name, [0])[-1]
                 texts.append(counters.format(counter_value, counter_style))
@@ -310,6 +325,7 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
                 separator_string = separator[1]
                 target_counter_values = \
                     lookup_target.target_box.cached_counter_values
+                # TODO: algorithm to collect missing target counters
                 texts.append(separator_string.join(
                     counters.format(counter_value, counter_style)
                     for counter_value in target_counter_values.get(
@@ -346,6 +362,17 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
     text = ''.join(texts)
     if text:
         boxlist.append(boxes.TextBox.anonymous_from(parent_box, text))
+
+    # only add missing_items if the content_list actually produced something
+    if boxlist and missing_counters:
+        if not hasattr(parent_box, 'missing_items'):
+            parent_box.missing_items = {}
+        # only add when computed the first time (i.e. not during pagination)
+        missing_item = (
+            parse_again,  # required to re-compute the css_token
+            missing_counters
+        )
+        parent_box.missing_items.setdefault(css_token, missing_item)
     return boxlist
 
 
