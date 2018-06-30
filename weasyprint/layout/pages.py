@@ -508,7 +508,8 @@ def page_height(box, context, containing_block_height):
     page_width_or_height(VerticalBox(context, box), containing_block_height)
 
 
-def make_page(context, root_box, page_type, resume_at, page_number):
+def make_page(context, root_box, page_type, resume_at, page_number,
+              page_state):
     """Take just enough content from the beginning to fill one page.
 
     Return ``(page, finished)``. ``page`` is a laid out PageBox object
@@ -569,7 +570,28 @@ def make_page(context, root_box, page_type, resume_at, page_number):
 
     page.children = [root_box]
     descendants = page.descendants()
+
+    # update page counter values
+    _standardize_page_based_counters(style, None)
+    build.update_counters(page_state, style)
+    _, page_counter_values, _ = page_state
+    # if we fill in page based counters into content / TextBoxes
+    # make_page must be called a second time
+    needs_second_call = False
     for child in descendants:
+        # resolve missing (page based) counters
+        if hasattr(child, 'missing_items'):
+            # there is max. one 'content' - item per box
+            for css_token, (func, missing) in child.missing_items.items():
+                for counter_name in missing:
+                    counter_value = page_counter_values.get(counter_name, None)
+                    if counter_value is not None:
+                        # only `content` requires another call to make_page
+                        if css_token == 'content':
+                            needs_second_call = True
+                        func(page_counter_values)
+
+        # TODO: could be optimized depending on `needs_second_call`
         string_sets = child.string_set
         if string_sets and string_sets != 'none':
             for string_set in string_sets:
@@ -577,7 +599,7 @@ def make_page(context, root_box, page_type, resume_at, page_number):
                 context.string_set[string_name][page_number].append(text)
     if page_type.blank:
         resume_at = previous_resume_at
-    return page, resume_at, next_page
+    return page, resume_at, next_page, needs_second_call
 
 
 def set_page_type_computed_styles(page_type, cascaded_styles, computed_styles,
@@ -602,6 +624,23 @@ def set_page_type_computed_styles(page_type, cascaded_styles, computed_styles,
                     base_url=html.base_url)
 
 
+def really_make_page(context, root_box, page_type, resume_at, page_number,
+                     page_state):
+    """call make_page twice if required"""
+    # TODO: page_state via context!
+    keep_page_state = copy.deepcopy(page_state)
+    page, first_resume_at, next_page, make_again = make_page(
+        context, root_box, page_type, resume_at, page_number, page_state)
+    if not make_again:
+        assert next_page
+        return page, first_resume_at, next_page
+
+    page_state = copy.deepcopy(keep_page_state)
+    page, resume_at, next_page, make_again = make_page(
+        context, root_box, page_type, resume_at, page_number, page_state)
+    return page, resume_at, next_page
+
+
 def make_all_pages(context, root_box, html, cascaded_styles, computed_styles):
     """Return a list of laid out pages without margin boxes."""
     first = True
@@ -624,6 +663,19 @@ def make_all_pages(context, root_box, html, cascaded_styles, computed_styles):
     resume_at = None
     next_page = {'break': 'any', 'page': root_box.page_values()[0]}
     page_number = 0
+
+    # page_state is prerequisite for filling in missing page based counters
+    # although neither a variable quote_depth nor counter_scopes are needed
+    # in page-boxes -- reusing `formatting_structure.build.update_counters()`
+    # to avoid redundant code requires a full `state`
+    # The value of **pages**, of course, is unknown until we return
+    # So we start with an empty state
+    page_state = (
+        # Shared mutable objects:
+        [0],  # quote_depth: single integer
+        {},  # counter_values: name -> stacked/scoped values
+        [set()]  # counter_scopes: element tree depths -> counter names
+    )
     while True:
         page_number += 1
         LOGGER.info('Step 5 - Creating layout - Page %i', page_number)
@@ -637,8 +689,9 @@ def make_all_pages(context, root_box, html, cascaded_styles, computed_styles):
             side, blank, first, name=(next_page['page'] or None))
         set_page_type_computed_styles(
             page_type, cascaded_styles, computed_styles, html)
-        page, resume_at, next_page = make_page(
-            context, root_box, page_type, resume_at, page_number)
+        # TODO: Think about providing the page_state as a context attribute
+        page, resume_at, next_page = really_make_page(
+            context, root_box, page_type, resume_at, page_number, page_state)
         assert next_page
         first = False
         yield page
