@@ -23,9 +23,9 @@ class TargetLookupItem(object):
 
     def __init__(self, state='pending'):
         self.state = state
-        # required by target-counter and target-counters
-        self.target_counter_values = {}
-        # needed for target-text via TEXT_CONTENT_EXTRACTORS
+        # Required by target-counter and target-counters to access the
+        # target's .cached_counter_values.
+        # Needed for target-text via TEXT_CONTENT_EXTRACTORS
         self.target_box = None
         # stuff for pending targets
         self.pending_boxes = {}
@@ -101,8 +101,11 @@ class TargetCollector(object):
         item = self.items.get(anchor_name)
         if item and item.state == 'pending':
             item.state = 'up-to-date'
-            item.target_counter_values = copy.deepcopy(target_counter_values)
             item.target_box = target_box
+            # Store the counter_values in the target_box like
+            # compute_content_list does.
+            if not hasattr(target_box, 'cached_counter_values'):
+                target_box.cached_counter_values = copy.deepcopy(target_counter_values)
 
     def check_pending_targets(self):
         """Check pending targets if needed."""
