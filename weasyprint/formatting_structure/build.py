@@ -427,6 +427,12 @@ def compute_string_set(element, box, string_name, content_list,
     if box_list:
         string = ''.join(
             box.text for box in box_list if isinstance(box, boxes.TextBox))
+        # no duplicates! care for parse_again/missing_items
+        # dont change the pointer!
+        for tuple in box.string_set:
+            if tuple[0] == string_name:
+                box.string_set.remove(tuple)
+                break
         box.string_set.append((string_name, string))
 
 
