@@ -591,12 +591,6 @@ def make_page(context, root_box, page_type, resume_at, page_number,
                             needs_second_call = True
                         func(page_counter_values)
 
-        # TODO: could be optimized depending on `needs_second_call`
-        string_sets = child.string_set
-        if string_sets and string_sets != 'none':
-            for string_set in string_sets:
-                string_name, text = string_set
-                context.string_set[string_name][page_number].append(text)
     if page_type.blank:
         resume_at = previous_resume_at
     return page, resume_at, next_page, needs_second_call

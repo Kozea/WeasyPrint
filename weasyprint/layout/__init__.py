@@ -65,6 +65,16 @@ def layout_document(enable_hinting, style_for, get_image_from_uri, root_box,
         [{'pages'}]  # counter_scopes
     )
     for i, page in enumerate(pages):
+        # collect the string_sets when pagination is finished,
+        # no need to collect them (maybe multiple times) in each `make_page()`
+        # BTW: I dunno how to clear/reset those `defaultdict`s
+        descendants = page.descendants()
+        for child in descendants:
+            string_sets = child.string_set
+            if string_sets and string_sets != 'none':
+                for string_set in string_sets:
+                    string_name, text = string_set
+                    context.string_set[string_name][i+1].append(text)
         root_children = []
         root, = page.children
         root_children.extend(layout_fixed_boxes(context, pages[:i]))
