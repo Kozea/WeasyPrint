@@ -19,7 +19,10 @@ from ..logger import LOGGER
 
 
 class TargetLookupItem(object):
-    """Item collected by the TargetColector."""
+    """
+    Item to control pending targets and page based target counters.
+    Collected in the TargetColector's ``items``
+    """
 
     def __init__(self, state='pending'):
         self.state = state
@@ -29,6 +32,24 @@ class TargetLookupItem(object):
         self.target_box = None
         # stuff for pending targets
         self.pending_boxes = {}
+        # stuff for page based counters
+        # the target_box's page_counters during pagination
+        self.cached_page_counter_values = {}
+
+
+class CounterLookupItem(object):
+    """
+    Item to control page based counters.
+    Collected in the TargetColector's ``counter_lookup_items``
+    """
+
+    def __init__(self, parse_again_func, missing_counters,
+                 missing_target_counters):
+        self.parse_again = parse_again_func
+        self.missing_counters = missing_counters
+        self.missing_target_counters = missing_target_counters
+        # the targeting box's page_counters during pagination
+        self.cached_page_counter_values = {}
 
 
 class TargetCollector(object):
@@ -38,6 +59,12 @@ class TargetCollector(object):
         self.had_pending_targets = False
         self.existing_anchors = []
         self.items = {}
+        # when collecting == True, compute_content_list() collects missing
+        # page counters (CounterLookupItems) otherwise it mixes in the
+        # TargetLookupItem's cached_page_counter_values.
+        # Is switched to False in check_pending_targets()
+        self.collecting = True
+        self.counter_lookup_items = {}
 
     def _anchor_name_from_token(self, anchor_token):
         """Get anchor name from string or uri token."""
@@ -66,7 +93,7 @@ class TargetCollector(object):
 
     def lookup_target(self, anchor_token, source_box, css_token,
                       parse_again_function):
-        """Get a TargetLookupItem corresponding to ``anchor_name``.
+        """Get a TargetLookupItem corresponding to ``anchor_token``.
 
         If it is already filled by a previous anchor-element, the status is
         'up-to-date'. Otherwise, it is 'pending', we must parse the whole
@@ -108,11 +135,36 @@ class TargetCollector(object):
                 target_box.cached_counter_values = \
                     copy.deepcopy(target_counter_values)
 
+    def collect_missing_counters(self, parent_box, css_token,
+                                 parse_again_function, missing_counters,
+                                 missing_target_counters):
+        """
+        Collect missing, probably page based, counters during formatting.
+        The MissingCounterItems are re-used during pagination.
+        The ``missing_link`` attribute added to the parent_box is required
+        to connect the paginated box(es) to their originating parent_box
+        resp. their counter_lookup_items.
+        """
+        # no counter collection during pagination
+        if not self.collecting:
+            return
+        # no need to add empty miss-lists
+        if missing_counters or missing_target_counters:
+            # trick 17: ensure connection!
+            if not hasattr(parent_box, 'missing_link'):
+                parent_box.missing_link = parent_box
+            self.counter_lookup_items.setdefault(
+                (parent_box, css_token),
+                CounterLookupItem(parse_again_function,
+                                  missing_counters,
+                                  missing_target_counters))
+
     def check_pending_targets(self):
         """Check pending targets if needed."""
-        if not self.had_pending_targets:
-            return
-        for key, item in self.items.items():
-            for _, function in item.pending_boxes.items():
-                function()
-        self.had_pending_targets = False
+        if self.had_pending_targets:
+            for key, item in self.items.items():
+                for (box, _css_token), function in item.pending_boxes.items():
+                    function()
+            self.had_pending_targets = False
+        # ready for pagination, info@compute_content_list
+        self.collecting = False

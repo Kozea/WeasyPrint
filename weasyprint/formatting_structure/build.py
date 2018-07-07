@@ -247,21 +247,35 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
     boxlist = []
     texts = []
     missing_counters = []
+    missing_target_counters = {}
     in_page_context = context is not None and page is not None
+    # collect missing counters during build_formatting_structure
+    # pointless to collect missing target counters in MarginBoxes
+    _do_collect_missing = target_collector.collecting and not in_page_context
 
     def _collect_missing_counter(counter_name, missing_counters):
         """collect missing counters. Not appropriate for target-counters!"""
-        # no need to collect missing counters in MarginBoxes
-        if in_page_context:
-            return
         if counter_values.get(counter_name, None) is None:
             if counter_name not in missing_counters:
-                missing_counters += [counter_name]
+                missing_counters.append(counter_name)
+
+    def _collect_missing_target_counter(counter_name, lookup_counter_values,
+                                        anchor_name, missing_target_counters):
+        """collect missing target counters.
+        The corresponding TargetLookupItem caches the target's page based
+        counter values during pagination.
+        """
+        if lookup_counter_values.get(counter_name, None) is None:
+            missing_counters = missing_target_counters.setdefault(
+                anchor_name, [])
+            if counter_name not in missing_counters:
+                missing_counters.append(counter_name)
 
     if not hasattr(parent_box, 'cached_counter_values'):
         # Store the counter_values in the parent_box to make them accessible
         # in @page context.
         # Obsoletes the parse_again function's deepcopy.
+        # TODO: Is propbably superfluous in_page_context
         parent_box.cached_counter_values = copy.deepcopy(counter_values)
     for type_, value in content_list:
         if type_ == 'string':
@@ -288,57 +302,76 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
             texts.append(added_text)
         elif type_ == 'counter()':
             counter_name, counter_style = value
-            _collect_missing_counter(counter_name, missing_counters)
+            if _do_collect_missing:
+                _collect_missing_counter(counter_name, missing_counters)
             counter_value = counter_values.get(counter_name, [0])[-1]
             texts.append(counters.format(counter_value, counter_style))
         elif type_ == 'counters()':
             counter_name, separator, counter_style = value
-            _collect_missing_counter(counter_name, missing_counters)
+            if _do_collect_missing:
+                _collect_missing_counter(counter_name, missing_counters)
             texts.append(separator.join(
                 counters.format(counter_value, counter_style)
                 for counter_value in counter_values.get(counter_name, [0])))
-        elif type_ == 'string()' and (
-                context is not None and page is not None):
+        elif type_ == 'string()' and in_page_context:
             # string() is only valid in @page context
             texts.append(context.get_string_set_for(page, *value))
         elif type_ == 'target-counter()':
-            target_name, counter_name, counter_style = value
+            anchor_token, counter_name, counter_style = value
             lookup_target = target_collector.lookup_target(
-                target_name, parent_box, css_token, parse_again)
+                anchor_token, parent_box, css_token, parse_again)
             if lookup_target.state == 'up-to-date':
-                target_counter_values = \
-                    lookup_target.target_box.cached_counter_values
-                # TODO: algorithm to collect missing target counters
-                counter_value = target_counter_values.get(
+                target_values = lookup_target.target_box.cached_counter_values
+                if _do_collect_missing:
+                    _collect_missing_target_counter(
+                        counter_name, target_values,
+                        target_collector._anchor_name_from_token(anchor_token),
+                        missing_target_counters)
+                # mixin target's cached page counters
+                # the cached_page_counter_values are empty during layout
+                local_counters = \
+                    lookup_target.cached_page_counter_values.copy()
+                local_counters.update(target_values)
+                counter_value = local_counters.get(
                     counter_name, [0])[-1]
                 texts.append(counters.format(counter_value, counter_style))
             else:
                 texts = []
                 break
         elif type_ == 'target-counters()':
-            target_name, counter_name, separator, counter_style = value
+            anchor_token, counter_name, separator, counter_style = value
             lookup_target = target_collector.lookup_target(
-                target_name, parent_box, css_token, parse_again)
+                anchor_token, parent_box, css_token, parse_again)
             if lookup_target.state == 'up-to-date':
                 if separator[0] != 'string':
                     break
                 separator_string = separator[1]
-                target_counter_values = \
-                    lookup_target.target_box.cached_counter_values
-                # TODO: algorithm to collect missing target counters
+                target_values = lookup_target.target_box.cached_counter_values
+                if _do_collect_missing:
+                    _collect_missing_target_counter(
+                        counter_name, target_values,
+                        target_collector._anchor_name_from_token(anchor_token),
+                        missing_target_counters)
+                # mixin target's cached page counters
+                # the cached_page_counter_values are empty during layout
+                local_counters = \
+                    lookup_target.cached_page_counter_values.copy()
+                local_counters.update(target_values)
                 texts.append(separator_string.join(
                     counters.format(counter_value, counter_style)
-                    for counter_value in target_counter_values.get(
+                    for counter_value in local_counters.get(
                         counter_name, [0])))
             else:
                 texts = []
                 break
         elif type_ == 'target-text()':
-            target_name, text_style = value
+            anchor_token, text_style = value
             lookup_target = target_collector.lookup_target(
-                target_name, parent_box, css_token, parse_again)
+                anchor_token, parent_box, css_token, parse_again)
             if lookup_target.state == 'up-to-date':
                 target_box = lookup_target.target_box
+                # TODO: 'before'- and 'after'- content referring missing
+                # counters isnt properly set.
                 text = TEXT_CONTENT_EXTRACTORS[text_style](target_box)
                 # Simulate the step of white space processing
                 # (normally done during the layout)
@@ -362,17 +395,10 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
     text = ''.join(texts)
     if text:
         boxlist.append(boxes.TextBox.anonymous_from(parent_box, text))
-
-    # only add missing_items if the content_list actually produced something
-    if boxlist and missing_counters:
-        if not hasattr(parent_box, 'missing_items'):
-            parent_box.missing_items = {}
-        # only add when computed the first time (i.e. not during pagination)
-        missing_item = (
-            parse_again,  # required to re-compute the css_token
-            missing_counters
-        )
-        parent_box.missing_items.setdefault(css_token, missing_item)
+        # only add CounterLookupItem if the content_list actually produced text
+        target_collector.collect_missing_counters(
+            parent_box, css_token, parse_again, missing_counters,
+            missing_target_counters)
     return boxlist
 
 
@@ -382,12 +408,11 @@ def content_to_boxes(style, parent_box, quote_depth, counter_values,
     """Take the value of a ``content`` property and return boxes."""
     def parse_again(mixin_pagebased_counters={}):
         """Closure to parse the parent_boxes children all again."""
-        local_children = []
-        # first call of compute_content_list created the cached_counter_values
         # neither alter the mixed-in nor the cached counter values!
         # no need to deepcopy here
         local_counters = mixin_pagebased_counters.copy()
         local_counters.update(parent_box.cached_counter_values)
+        local_children = []
         if style['display'] == 'list-item':
             local_children.extend(add_box_marker(
                 parent_box, local_counters, get_image_from_uri))
@@ -420,6 +445,7 @@ def compute_string_set(element, box, string_name, content_list,
         compute_string_set(
             element, box, string_name, content_list, local_counters,
             target_collector)
+
     css_token = 'string-set::%s' % string_name
     box_list = compute_content_list(
         content_list, box, counter_values, css_token, parse_again,
@@ -427,7 +453,7 @@ def compute_string_set(element, box, string_name, content_list,
     if box_list:
         string = ''.join(
             box.text for box in box_list if isinstance(box, boxes.TextBox))
-        # no duplicates! care for parse_again/missing_items
+        # no duplicates! care for parse_again/missing counters
         # dont change the pointer!
         for tuple in box.string_set:
             if tuple[0] == string_name:
