@@ -33,6 +33,8 @@ class TargetLookupItem(object):
         # stuff for pending targets
         self.pending_boxes = {}
         # stuff for page based counters
+        # the anchor's position during pagination == page_number-1
+        self.page_maker_index = -1
         # the target_box's page_counters during pagination
         self.cached_page_counter_values = {}
 
@@ -48,6 +50,8 @@ class CounterLookupItem(object):
         self.parse_again = parse_again_func
         self.missing_counters = missing_counters
         self.missing_target_counters = missing_target_counters
+        # the box's position during pagination == page_number-1
+        self.page_maker_index = -1
         # the targeting box's page_counters during pagination
         self.cached_page_counter_values = {}
 
@@ -168,3 +172,65 @@ class TargetCollector(object):
             self.had_pending_targets = False
         # ready for pagination, info@compute_content_list
         self.collecting = False
+
+    def lookup_counter(self, source_box, css_token):
+        """Get the corresponding CounterLookupItem
+        ``source_box`` is the parent_box, stored/copied as
+        .missing_link in collect_missing_counters()
+        """
+        item = self.counter_lookup_items.get((source_box, css_token), None)
+        return item
+
+    def cache_target_page_counters(self, anchor_name, page_counter_values,
+                                   page_maker_index, page_maker):
+        """
+        Store / update the target's current page_maker_index and page counter
+        values, eventually update associated targeting boxes
+        """
+        # only store page counters when paginating
+        if self.collecting:
+            return
+        item = self.items.get(anchor_name)
+        if item and item.state == 'up-to-date':
+            if item.cached_page_counter_values != page_counter_values:
+                item.cached_page_counter_values = \
+                    copy.deepcopy(page_counter_values)
+                # spread the news
+                self.inform_the_counter_lookups(
+                    anchor_name, page_counter_values, item.page_maker_index,
+                    page_maker)
+
+    def inform_the_counter_lookups(self, anchor_name,
+                                   page_counter_values_of_anchor,
+                                   page_maker_index_of_anchor, page_maker):
+        """
+        Update boxes affected by a change in the anchor's page counter
+        values.
+        """
+        # TODO: I'm sure there's a more pythonic way to filter the affected
+        # items
+        for (box, css_token), item in self.counter_lookup_items.items():
+            if css_token != 'content':
+                continue
+            if item.page_maker_index < 0:
+                continue
+            if item.page_maker_index >= len(page_maker):
+                continue
+            missing_counters = item.missing_target_counters.get(
+                anchor_name, None)
+            if missing_counters is None:
+                continue
+            # Is the item at all interested in the new
+            # page_counter_values_of_anchor?
+            # TODO: It probably is and this check is a brake
+            for counter_name in missing_counters:
+                counter_value = page_counter_values_of_anchor.get(
+                    counter_name, None)
+                if counter_value is not None:
+                    (_, _, _, _, remake_state) = \
+                        page_maker[item.page_maker_index]
+                    remake_state['content_changed'] = True
+                    item.parse_again(page_counter_values_of_anchor)
+                    break
+            # Hint: the box's own cached page counters trigger a separate
+            # 'content_changed'
