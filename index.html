@@ -1,0 +1,91 @@
+---
+layout: page
+title: Home Page
+permalink: /
+---
+
+<section>
+  <h2 id="factory">The Awesome Document Factory</h2>
+
+  <p>
+    WeasyPrint is a smart solution helping web developers to create PDF
+    documents. It turns simple HTML pages into gorgeous:
+  </p>
+
+  <ul>
+    <li>Statistical reports</li>
+    <li>Invoices</li>
+    <li>Tickets</li>
+    <li>Books</li>
+    <li>Posters</li>
+    <li>And more!</li>
+  </ul>
+
+  <p>
+    WeasyPrint is free and open source software that can be easily plugged to
+    your applications and websites.
+  </p>
+</section>
+
+<section>
+  <h2 id="news">News</h2>
+
+  <ul>
+    {% assign posts = site.posts | slice: 0, 3 %}
+    {% for post in posts %}
+    <li>{{ post.date | date: "%B %-d, %Y" }}: {{ post.title }}</li>
+    {% endfor %}
+  </ul>
+
+  <p>
+    <a href="{{ site.baseurl }}/news/">Read latest news…</a>
+  </p>
+</section>
+
+<section>
+  <h2 id="involved">Get Involved</h2>
+
+  <h3>Use WeasyPrint</h3>
+
+  <p>
+    You are a web designer or a developer interested in trying WeasyPrint? Just
+    follow the few steps given in the <a href="/start/">How to Start</a>
+    section.
+  </p>
+
+  <h3>Report Bugs</h3>
+  <p>
+    We are trying our best to provide stable and reliable versions of
+    WeasyPrint. If you find a problem in the latest version, please
+    <a href="https://github.com/Kozea/WeasyPrint/issues/new">open a new
+    issue on GitHub</a> … if nobody already did!
+  </p>
+
+  <h3>Improve Code & Documentation</h3>
+  <p>
+    WeasyPrint is free and open source software, meaning that you can improve
+    it for yourself and for the others.
+    <a href="https://github.com/Kozea/WeasyPrint">Get the source</a>!
+    And even if you have no programming skills, you can help us improving
+    <a href="https://weasyprint.readthedocs.io/">the documentation</a>.
+  </p>
+
+  <h3>Donate</h3>
+  <p>
+    If you want to see Weasyprint grow and become even better,
+    <a href="/donate/">support us by providing a financial help</a>. Let us
+    drive the development of the features and improvements that matter to you!
+  </p>
+
+  <h3>Tell Us About You</h3>
+  <p>
+    Meeting our wonderful users is the best way to discover the real needs of
+    companies, developers and final customers. Happy? Unhappy? Please
+    <a href="/about/">let us know</a> how we could provide you a better
+    experience, or how useful WeasyPrint is in your daily life.
+  </p>
+</section>
+
+<section>
+  <h2 id="testimonials">Testimonials</h2>
+</section>
