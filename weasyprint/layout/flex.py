@@ -710,20 +710,22 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                         # Handle vertical text
                         pass
                 elif align_self == 'stretch':
-                    # TODO: take care of box-sizing
                     if child.style[cross] == 'auto':
                         if cross == 'height':
-                            margins = (
-                                child.margin_top + child.margin_bottom +
-                                child.border_top_width +
-                                child.border_bottom_width +
-                                child.padding_top + child.padding_bottom)
+                            margins = child.margin_top + child.margin_bottom
                         else:
-                            margins = (
-                                child.margin_left + child.margin_right +
-                                child.border_left_width +
-                                child.border_right_width +
-                                child.padding_left + child.padding_right)
+                            margins = child.margin_left + child.margin_right
+                        if child.style['box_sizing'] == 'content-box':
+                            if cross == 'height':
+                                margins += (
+                                    child.border_top_width +
+                                    child.border_bottom_width +
+                                    child.padding_top + child.padding_bottom)
+                            else:
+                                margins += (
+                                    child.border_left_width +
+                                    child.border_right_width +
+                                    child.padding_left + child.padding_right)
                         # TODO: don't set style width, find a way to avoid
                         # width re-calculation after Step 16
                         child.style[cross] = Dimension(
