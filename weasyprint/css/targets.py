@@ -21,7 +21,7 @@ from ..logger import LOGGER
 class TargetLookupItem(object):
     """
     Item to control pending targets and page based target counters.
-    Collected in the TargetColector's ``items``
+    Collected in the TargetCollector's ``items``
     """
 
     def __init__(self, state='pending'):
@@ -42,7 +42,7 @@ class TargetLookupItem(object):
 class CounterLookupItem(object):
     """
     Item to control page based counters.
-    Collected in the TargetColector's ``counter_lookup_items``
+    Collected in the TargetCollector's ``counter_lookup_items``
     """
 
     def __init__(self, parse_again_func, missing_counters,
@@ -52,6 +52,8 @@ class CounterLookupItem(object):
         self.missing_target_counters = missing_target_counters
         # the box's position during pagination == page_number-1
         self.page_maker_index = -1
+        # marker for remake_page
+        self.pending = False
         # the targeting box's page_counters during pagination
         self.cached_page_counter_values = {}
 
@@ -192,6 +194,7 @@ class TargetCollector(object):
             return
         item = self.items.get(anchor_name)
         if item and item.state == 'up-to-date':
+            item.page_maker_index = page_maker_index
             if item.cached_page_counter_values != page_counter_values:
                 item.cached_page_counter_values = \
                     copy.deepcopy(page_counter_values)
@@ -212,13 +215,14 @@ class TargetCollector(object):
         for (box, css_token), item in self.counter_lookup_items.items():
             if css_token != 'content':
                 continue
-            if item.page_maker_index < 0:
-                continue
-            if item.page_maker_index >= len(page_maker):
-                continue
             missing_counters = item.missing_target_counters.get(
                 anchor_name, None)
             if missing_counters is None:
+                continue
+            # pending-marker for remake_page
+            if (item.page_maker_index < 0
+                    or item.page_maker_index >= len(page_maker)):
+                item.pending = True
                 continue
             # Is the item at all interested in the new
             # page_counter_values_of_anchor?
@@ -230,7 +234,7 @@ class TargetCollector(object):
                     (_, _, _, _, remake_state) = \
                         page_maker[item.page_maker_index]
                     remake_state['content_changed'] = True
-                    item.parse_again(page_counter_values_of_anchor)
+                    item.parse_again(item.cached_page_counter_values)
                     break
             # Hint: the box's own cached page counters trigger a separate
             # 'content_changed'
