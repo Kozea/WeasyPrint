@@ -194,7 +194,7 @@ include resolving percentages and especially ``auto`` values into absolute,
 pixel lengths. Once the layout done, each box has used values for
 margins, border width, padding of each four sides, as well as the
 :attr:`width` and :attr:`height` of the content area. They also have
-:attr:`position_x`` and :attr:`position_y``, the absolute coordinates of the
+:attr:`position_x` and :attr:`position_y`, the absolute coordinates of the
 top-left corner of the margin box (**not** the content box) from the top-left
 corner of the page.\ [#]_
 
