@@ -248,12 +248,15 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
                     box.width - (i + 1) * width - i * style['column_gap'])
             else:
                 column_box.position_x += i * (width + style['column_gap'])
-            new_child, skip_stack, next_page, _, _ = block_box_layout(
-                context, column_box, max_position_y, skip_stack,
-                containing_block, device_size, page_is_empty, absolute_boxes,
-                fixed_boxes, None)
+            new_child, column_skip_stack, column_next_page, _, _ = (
+                block_box_layout(
+                    context, column_box, max_position_y, skip_stack,
+                    containing_block, device_size, page_is_empty,
+                    absolute_boxes, fixed_boxes, None))
             if new_child is None:
                 break
+            next_page = column_next_page
+            skip_stack = column_skip_stack
             children.append(new_child)
             if skip_stack is None:
                 break
