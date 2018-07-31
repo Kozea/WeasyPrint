@@ -267,6 +267,10 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
         next_page = {'break': 'any', 'page': None}
         skip_stack = None
 
+    if box.children and not children:
+        # The box has children but none can be drawn, let's skip the whole box
+        return None, (0, None), {'break': 'any', 'page': None}, [0], False
+
     # Set the height of box and the columns
     box.children = children
     if box.children:
