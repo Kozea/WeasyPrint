@@ -214,24 +214,50 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
     if style['column_fill'] == 'balance':
         height /= count
     box_column_descendants = list(column_descendants(new_child))
+
     # Increase the column height step by step.
     while True:
-        i = 0
+        # For each step, we try to find the empty height needed to make the top
+        # element of column i+1 fit at the end of column i. We put this needed
+        # space in lost_spaces.
         lost_spaces = []
+        column_number = 0
+        column_first_child = True
         column_top = new_child.content_box_y()
         for child in box_column_descendants:
             child_height = child.margin_height()
             child_bottom = child.position_y + child_height - column_top
             if child_bottom > height:
-                if i < count - 1:
+                # The child goes lower than the column height.
+                if column_number < count - 1:
+                    # We're not in the last column.
+                    if column_first_child:
+                        # It's the first child of the column and we're already
+                        # below the bottom of the column. The column's height
+                        # has to be at least the size of the child. Let's put
+                        # the height difference into lost_spaces and continue
+                        # the while loop.
+                        lost_spaces = [child_bottom - height]
+                        break
+                    # Put the child at the top of the next column and put the
+                    # extra empty space that would have allowed this child to
+                    # fit into lost_spaces.
                     lost_spaces.append(child_bottom - height)
-                    i += 1
+                    column_number += 1
+                    column_first_child = True
                     column_top = child.position_y
                 else:
+                    # We're in the last column, there's no place left to put
+                    # that child. We need to go for another round of the while
+                    # loop.
                     break
+            column_first_child = False
         else:
+            # We've seen all the children and they all fit in their
+            # columns. Balanced height has been found, quit the while loop.
             break
         height += min(lost_spaces)
+
     # TODO: check box.style['max']-height
     max_position_y = min(max_position_y, box.content_box_y() + height)
 
