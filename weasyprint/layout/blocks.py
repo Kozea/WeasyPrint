@@ -822,7 +822,15 @@ def establishes_formatting_context(box):
     See http://www.w3.org/TR/CSS2/visuren.html#block-formatting
 
     """
-    return box.is_floated() or box.is_absolutely_positioned() or (
+    return (
+        box.is_floated()
+    ) or (
+        box.is_absolutely_positioned()
+    ) or (
+        # TODO: columns shouldn't be block boxes, this condition would then be
+        # useless when this is fixed
+        box.is_column
+    ) or (
         isinstance(box, boxes.BlockContainerBox) and
         not isinstance(box, boxes.BlockBox)
     ) or (
