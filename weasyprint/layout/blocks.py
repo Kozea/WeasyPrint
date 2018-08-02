@@ -87,7 +87,9 @@ def block_box_layout(context, box, max_position_y, skip_stack,
             context, box, max_position_y, skip_stack, containing_block,
             device_size, page_is_empty, absolute_boxes, fixed_boxes,
             adjoining_margins)
+
         resume_at = result[1]
+        # TODO: this condition and the whole relayout are probably wrong
         if resume_at is None:
             new_box = result[0]
             bottom_spacing = (
@@ -99,6 +101,7 @@ def block_box_layout(context, box, max_position_y, skip_stack,
                     context, box, max_position_y, skip_stack,
                     containing_block, device_size, page_is_empty,
                     absolute_boxes, fixed_boxes, adjoining_margins)
+
         return result
     elif box.is_table_wrapper:
         table_wrapper_width(
