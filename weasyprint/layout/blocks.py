@@ -189,8 +189,10 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
             yield box
         if hasattr(box, 'descendants') and box.is_in_normal_flow():
             for child in box.children:
-                for grand_child in column_descendants(child):
-                    yield grand_child
+                if child.is_in_normal_flow():
+                    yield child
+                    for grand_child in column_descendants(child):
+                        yield grand_child
 
     # Balance.
     #
