@@ -90,6 +90,8 @@ WeasyPrint! Otherwise, please copy the full error message and
        JPEG, GIF and others are not available.
 
 
+.. _linux:
+
 Linux
 -----
 
@@ -147,6 +149,8 @@ install it with pip after installing the following packages:
     emerge pip setuptools wheel cairo pango gdk-pixbuf cffi
 
 
+.. _macos:
+
 macOS
 -----
 
@@ -168,6 +172,8 @@ end up crying blood with sad dolphins for eternity"**):
 
     sudo port install py-pip cairo pango gdk-pixbuf2 libffi
 
+
+.. _windows:
 
 Windows
 -------
