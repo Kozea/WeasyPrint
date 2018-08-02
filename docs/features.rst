@@ -66,7 +66,7 @@ point to http://weasyprint.org/news/ in PDF files.
 PDF bookmarks are also called outlines and are generally shown in a
 sidebar. Clicking on an entry scrolls the matching part of the document
 into view. By default all ``<h1>`` to ``<h6>`` titles generate bookmarks,
-but this can be controlled with CSS (see :ref:`bookmarks`.)
+but this can be controlled with CSS (see :ref:`Bookmarks <bookmarks>`.)
 
 Attachments are related files, embedded in the PDF itself. They can be
 specified through ``<link rel=attachment>`` elements to add resources globally
@@ -299,6 +299,8 @@ defining "new properties and values, so that authors may bring new techniques
 (running headers and footers, footnotes, leaders, bookmarks) to paged media".
 
 Two features from this module have been implemented in WeasyPrint.
+
+.. _bookmarks:
 
 The first feature is `PDF bookmarks`_.  Using the experimental_
 ``bookmark-level`` and ``bookmark-level`` properties, you can add
