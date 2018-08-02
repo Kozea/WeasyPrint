@@ -214,3 +214,118 @@ def test_columns_relative():
     span, = absolute_line.children
     assert span.position_x == 5  # Default position of the 4th column
     assert span.position_y == 4  # div's 1px + span's 3px
+
+
+@assert_no_logs
+def test_columns_regression_1():
+    # Regression test #1 for https://github.com/Kozea/WeasyPrint/issues/659
+    page1, page2, page3 = render_pages('''
+      <style>
+        @page {margin: 0; width: 100px; height: 100px}
+        body {margin: 0; font-size: 1px}
+      </style>
+      <div style="height:95px">A</div>
+      <div style="column-count:2">
+        <div style="height:20px">B1</div>
+        <div style="height:20px">B2</div>
+        <div style="height:20px">B3</div>
+      </div>
+      <div style="height:95px">C</div>
+    ''')
+
+    html, = page1.children
+    body, = html.children
+    div, = body.children
+    assert div.position_y == 0
+    assert div.children[0].children[0].text == 'A'
+
+    html, = page2.children
+    body, = html.children
+    div, = body.children
+    assert div.position_y == 0
+    column1, column2 = div.children
+    assert column1.position_y == column2.position_y == 0
+    div1, div2 = column1.children
+    div3, = column2.children
+    assert div1.position_y == div3.position_y == 0
+    assert div2.position_y == 20
+    assert div1.children[0].children[0].text == 'B1'
+    assert div2.children[0].children[0].text == 'B2'
+    assert div3.children[0].children[0].text == 'B3'
+
+    html, = page3.children
+    body, = html.children
+    div, = body.children
+    assert div.position_y == 0
+    assert div.children[0].children[0].text == 'C'
+
+
+@assert_no_logs
+def test_columns_regression_2():
+    # Regression test #2 for https://github.com/Kozea/WeasyPrint/issues/659
+    page1, page2 = render_pages('''
+      <style>
+        @page {margin: 0; width: 100px; height: 100px}
+        body {margin: 0; font-size: 1px}
+      </style>
+      <div style="column-count:2">
+        <div style="height:20px">B1</div>
+        <div style="height:60px">B2</div>
+        <div style="height:60px">B3</div>
+        <div style="height:60px">B4</div>
+      </div>
+    ''')
+
+    html, = page1.children
+    body, = html.children
+    div, = body.children
+    assert div.position_y == 0
+    column1, column2 = div.children
+    assert column1.position_y == column2.position_y == 0
+    div1, div2 = column1.children
+    div3, = column2.children
+    assert div1.position_y == div3.position_y == 0
+    assert div2.position_y == 20
+    assert div1.children[0].children[0].text == 'B1'
+    assert div2.children[0].children[0].text == 'B2'
+    assert div3.children[0].children[0].text == 'B3'
+
+    html, = page2.children
+    body, = html.children
+    div, = body.children
+    assert div.position_y == 0
+    column1, = div.children
+    assert column1.position_y == 0
+    div1, = column1.children
+    assert div1.position_y == div3.position_y == 0
+    assert div1.children[0].children[0].text == 'B4'
+
+
+@assert_no_logs
+def test_columns_regression_3():
+    # Regression test #3 for https://github.com/Kozea/WeasyPrint/issues/659
+    page, = render_pages('''
+      <style>
+        @page {margin: 0; width: 100px; height: 100px}
+        body {margin: 0; font-size: 10px}
+      </style>
+      <div style="column-count:2">
+        <div style="height:20px; margin:5px">B1</div>
+        <div style="height:60px">B2</div>
+        <div style="height:60px">B3</div>
+      </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    assert div.position_y == 0
+    column1, column2 = div.children
+    assert column1.position_y == column2.position_y == 0
+    div1, div2 = column1.children
+    div3, = column2.children
+    assert div1.position_y == div3.position_y == 0
+    assert div2.position_y == 30
+    assert div.height == 5 + 20 + 5 + 60
+    assert div1.children[0].children[0].text == 'B1'
+    assert div2.children[0].children[0].text == 'B2'
+    assert div3.children[0].children[0].text == 'B3'
