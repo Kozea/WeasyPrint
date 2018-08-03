@@ -317,3 +317,39 @@ def test_fixed_positioning():
     assert [c.element_tag for c in div.children] == ['p']
     html, = page_3.children
     assert [c.element_tag for c in html.children] == ['p', 'body']
+
+
+@assert_no_logs
+def test_fixed_positioning_regression_1():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/641
+    page_1, page_2 = parse('''
+      <style>
+        @page:first { size: 100px 200px }
+        @page { size: 200px 100px; margin: 0 }
+        article { break-after: page }
+        .fixed { position: fixed; top: 10px; width: 20px }
+        ul {  }
+      </style>
+      <ul class="fixed" style="right: 0"><li>a</li></ul>
+      <img class="fixed" style="right: 20px" src="pattern.png" />
+      <div class="fixed" style="right: 40px">b</div>
+      <article>page1</article>
+      <article>page2</article>
+    ''')
+
+    html, = page_1.children
+    body, = html.children
+    ul, img, div, article = body.children
+    assert (ul.position_x, ul.position_y) == (80, 10)
+    assert (img.position_x, img.position_y) == (60, 10)
+    assert (div.position_x, div.position_y) == (40, 10)
+    assert (article.position_x, article.position_y) == (0, 0)
+    assert 60 < ul.children[0].outside_list_marker.position_x < 70
+
+    html, = page_2.children
+    ul, img, div, body = html.children
+    assert (ul.position_x, ul.position_y) == (180, 10)
+    assert (img.position_x, img.position_y) == (160, 10)
+    assert (div.position_x, div.position_y) == (140, 10)
+    assert (article.position_x, article.position_y) == (0, 0)
+    assert 160 < ul.children[0].outside_list_marker.position_x < 170
