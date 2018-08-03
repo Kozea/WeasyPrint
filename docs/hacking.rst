@@ -194,7 +194,7 @@ include resolving percentages and especially ``auto`` values into absolute,
 pixel lengths. Once the layout done, each box has used values for
 margins, border width, padding of each four sides, as well as the
 :attr:`width` and :attr:`height` of the content area. They also have
-:attr:`position_x`` and :attr:`position_y``, the absolute coordinates of the
+:attr:`position_x` and :attr:`position_y`, the absolute coordinates of the
 top-left corner of the margin box (**not** the content box) from the top-left
 corner of the page.\ [#]_
 
@@ -211,26 +211,21 @@ The final result of the layout is a list of :class:`PageBox` objects.
 .. _CSS transform: http://www.w3.org/TR/css3-transforms/
 
 
-Stacking
-........
+Stacking & Drawing
+..................
 
 In step 6, the boxes are reorder by the :mod:`weasyprint.stacking` module
 to observe `stacking rules`_ such as the ``z-index`` property.
 The result is a tree of *stacking contexts*.
 
-.. _stacking rules: http://www.w3.org/TR/CSS21/zindex.html
-
-
-Drawing
-.......
-
-Next, in step 7, each laid-out page is *drawn* onto a cairo_ surface.
-Since each box has absolute coordinates on the page from the layout step,
-the logic here should be minimal. If you find yourself adding a lot of logic
-here, maybe it should go in the layout or stacking instead.
+Next, each laid-out page is *drawn* onto a cairo_ surface. Since each box has
+absolute coordinates on the page from the layout step, the logic here should be
+minimal. If you find yourself adding a lot of logic here, maybe it should go in
+the layout or stacking instead.
 
 The code lives in the :mod:`weasyprint.draw` module.
 
+.. _stacking rules: http://www.w3.org/TR/CSS21/zindex.html
 .. _cairo: http://cairographics.org/pycairo/
 
 

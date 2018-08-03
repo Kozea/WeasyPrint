@@ -25,6 +25,12 @@ def list_marker_layout(context, box):
     # see CSS3 lists.
     marker = getattr(box, 'outside_list_marker', None)
     if marker:
+        # Make a copy to ensure unique markers when the marker's layout has
+        # already been done.
+        # TODO: this should be done in layout_fixed_boxes
+        if hasattr(marker, 'position_x'):
+            marker = box.outside_list_marker = marker.copy()
+
         resolve_percentages(marker, containing_block=box)
         if isinstance(marker, boxes.TextBox):
             (marker.pango_layout, _, _, marker.width, marker.height,

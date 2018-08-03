@@ -87,7 +87,9 @@ def block_box_layout(context, box, max_position_y, skip_stack,
             context, box, max_position_y, skip_stack, containing_block,
             device_size, page_is_empty, absolute_boxes, fixed_boxes,
             adjoining_margins)
+
         resume_at = result[1]
+        # TODO: this condition and the whole relayout are probably wrong
         if resume_at is None:
             new_box = result[0]
             bottom_spacing = (
@@ -99,6 +101,7 @@ def block_box_layout(context, box, max_position_y, skip_stack,
                     context, box, max_position_y, skip_stack,
                     containing_block, device_size, page_is_empty,
                     absolute_boxes, fixed_boxes, adjoining_margins)
+
         return result
     elif box.is_table_wrapper:
         table_wrapper_width(
@@ -186,8 +189,10 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
             yield box
         if hasattr(box, 'descendants') and box.is_in_normal_flow():
             for child in box.children:
-                for grand_child in column_descendants(child):
-                    yield grand_child
+                if child.is_in_normal_flow():
+                    yield child
+                    for grand_child in column_descendants(child):
+                        yield grand_child
 
     # Balance.
     #
@@ -214,24 +219,50 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
     if style['column_fill'] == 'balance':
         height /= count
     box_column_descendants = list(column_descendants(new_child))
+
     # Increase the column height step by step.
     while True:
-        i = 0
+        # For each step, we try to find the empty height needed to make the top
+        # element of column i+1 fit at the end of column i. We put this needed
+        # space in lost_spaces.
         lost_spaces = []
+        column_number = 0
+        column_first_child = True
         column_top = new_child.content_box_y()
         for child in box_column_descendants:
             child_height = child.margin_height()
             child_bottom = child.position_y + child_height - column_top
             if child_bottom > height:
-                if i < count - 1:
+                # The child goes lower than the column height.
+                if column_number < count - 1:
+                    # We're not in the last column.
+                    if column_first_child:
+                        # It's the first child of the column and we're already
+                        # below the bottom of the column. The column's height
+                        # has to be at least the size of the child. Let's put
+                        # the height difference into lost_spaces and continue
+                        # the while loop.
+                        lost_spaces = [child_bottom - height]
+                        break
+                    # Put the child at the top of the next column and put the
+                    # extra empty space that would have allowed this child to
+                    # fit into lost_spaces.
                     lost_spaces.append(child_bottom - height)
-                    i += 1
+                    column_number += 1
+                    column_first_child = True
                     column_top = child.position_y
                 else:
+                    # We're in the last column, there's no place left to put
+                    # that child. We need to go for another round of the while
+                    # loop.
                     break
+            column_first_child = False
         else:
+            # We've seen all the children and they all fit in their
+            # columns. Balanced height has been found, quit the while loop.
             break
         height += min(lost_spaces)
+
     # TODO: check box.style['max']-height
     max_position_y = min(max_position_y, box.content_box_y() + height)
 
@@ -248,12 +279,15 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
                     box.width - (i + 1) * width - i * style['column_gap'])
             else:
                 column_box.position_x += i * (width + style['column_gap'])
-            new_child, skip_stack, next_page, _, _ = block_box_layout(
-                context, column_box, max_position_y, skip_stack,
-                containing_block, device_size, page_is_empty, absolute_boxes,
-                fixed_boxes, None)
+            new_child, column_skip_stack, column_next_page, _, _ = (
+                block_box_layout(
+                    context, column_box, max_position_y, skip_stack,
+                    containing_block, device_size, page_is_empty,
+                    absolute_boxes, fixed_boxes, None))
             if new_child is None:
                 break
+            next_page = column_next_page
+            skip_stack = column_skip_stack
             children.append(new_child)
             if skip_stack is None:
                 break
@@ -266,6 +300,10 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
     else:
         next_page = {'break': 'any', 'page': None}
         skip_stack = None
+
+    if box.children and not children:
+        # The box has children but none can be drawn, let's skip the whole box
+        return None, (0, None), {'break': 'any', 'page': None}, [0], False
 
     # Set the height of box and the columns
     box.children = children
@@ -671,11 +709,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                         new_child.border_box_y() + new_child.border_height())
 
                     if (new_position_y > max_position_y and
-                            (new_children or not page_is_empty) and
-                            not (isinstance(child, boxes.TableBox) or (
-                                # For blocks with children do this per child.
-                                isinstance(child, boxes.BlockBox) and
-                                child.children))):
+                            (new_children or not page_is_empty)):
                         # The child overflows the page area, put it on the
                         # next page. (But don’t delay whole blocks if eg.
                         # only the bottom border overflows.)
@@ -815,7 +849,15 @@ def establishes_formatting_context(box):
     See http://www.w3.org/TR/CSS2/visuren.html#block-formatting
 
     """
-    return box.is_floated() or box.is_absolutely_positioned() or (
+    return (
+        box.is_floated()
+    ) or (
+        box.is_absolutely_positioned()
+    ) or (
+        # TODO: columns shouldn't be block boxes, this condition would then be
+        # useless when this is fixed
+        box.is_column
+    ) or (
         isinstance(box, boxes.BlockContainerBox) and
         not isinstance(box, boxes.BlockBox)
     ) or (
