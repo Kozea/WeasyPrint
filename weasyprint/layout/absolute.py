@@ -308,6 +308,11 @@ def absolute_box_layout(context, box, containing_block, fixed_boxes):
             context, box, containing_block, fixed_boxes, cb)
     else:
         assert isinstance(box, boxes.BlockReplacedBox)
+        # Make a copy to ensure a unique box in "position:fixed".
+        # At the moment BlockReplacedBox is used for img, embed, object
+        # TODO: Does this work for embed and object, too?
+        if isinstance(cb, boxes.PageBox):
+            box = box.copy()
         new_box = absolute_replaced(context, box, containing_block)
     context.finish_block_formatting_context(new_box)
     return new_box
