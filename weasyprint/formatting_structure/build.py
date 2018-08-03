@@ -226,10 +226,11 @@ def before_after_to_box(element, pseudo_type, state, style_for,
     yield box
 
 
-def compute_content_list(content_list, parent_box, counter_values, parse_again,
-                         target_collector, get_image_from_uri=None,
-                         quote_depth=None, quote_style=None, context=None,
-                         page=None, element=None):
+def compute_content_list(content_list, parent_box, counter_values, css_token,
+                         parse_again, target_collector,
+                         get_image_from_uri=None, quote_depth=None,
+                         quote_style=None, context=None, page=None,
+                         element=None):
     """Compute and return the boxes corresponding to the content_list.
 
     parse_again is called to compute the content_list again when
@@ -284,7 +285,7 @@ def compute_content_list(content_list, parent_box, counter_values, parse_again,
         elif type_ == 'target-counter()':
             target_name, counter_name, counter_style = value
             lookup_target = target_collector.lookup_target(
-                target_name, parent_box, parse_again)
+                target_name, parent_box, css_token, parse_again)
             if lookup_target.state == 'up-to-date':
                 counter_value = lookup_target.target_counter_values.get(
                     counter_name, [0])[-1]
@@ -295,7 +296,7 @@ def compute_content_list(content_list, parent_box, counter_values, parse_again,
         elif type_ == 'target-counters()':
             target_name, counter_name, separator, counter_style = value
             lookup_target = target_collector.lookup_target(
-                target_name, parent_box, parse_again)
+                target_name, parent_box, css_token, parse_again)
             if lookup_target.state == 'up-to-date':
                 if separator[0] != 'string':
                     break
@@ -311,7 +312,7 @@ def compute_content_list(content_list, parent_box, counter_values, parse_again,
         elif type_ == 'target-text()':
             target_name, text_style = value
             lookup_target = target_collector.lookup_target(
-                target_name, parent_box, parse_again)
+                target_name, parent_box, css_token, parse_again)
             if lookup_target.state == 'up-to-date':
                 target_box = lookup_target.target_box
                 text = TEXT_CONTENT_EXTRACTORS[text_style](target_box)
@@ -360,8 +361,9 @@ def content_to_boxes(style, parent_box, quote_depth, counter_values,
 
     orig_quote_depth = quote_depth[:]
     orig_counter_values = copy.deepcopy(counter_values)
+    css_token = 'content'
     return compute_content_list(
-        style['content'], parent_box, counter_values, parse_again,
+        style['content'], parent_box, counter_values, css_token, parse_again,
         target_collector, get_image_from_uri, quote_depth, style['quotes'],
         context, page)
 
@@ -376,9 +378,10 @@ def compute_string_set(element, box, string_name, content_list,
             target_collector)
 
     orig_counter_values = copy.deepcopy(counter_values)
+    css_token = 'string-set::%s' % string_name
     box_list = compute_content_list(
-        content_list, box, counter_values, parse_again, target_collector,
-        element=element)
+        content_list, box, counter_values, css_token, parse_again,
+        target_collector, element=element)
     if box_list:
         string = ''.join(
             box.text for box in box_list if isinstance(box, boxes.TextBox))
@@ -393,9 +396,10 @@ def compute_bookmark_label(element, box, content_list, counter_values,
             element, box, content_list, orig_counter_values, target_collector)
 
     orig_counter_values = copy.deepcopy(counter_values)
+    css_token = 'bookmark-label'
     box_list = compute_content_list(
-        content_list, box, counter_values, parse_again, target_collector,
-        element=element)
+        content_list, box, counter_values, css_token, parse_again,
+        target_collector, element=element)
     box.bookmark_label = ''.join(
         box.text for box in box_list if isinstance(box, boxes.TextBox))
 
