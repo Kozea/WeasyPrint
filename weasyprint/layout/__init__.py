@@ -27,11 +27,14 @@ from ..formatting_structure import boxes
 
 
 def layout_fixed_boxes(context, pages, containing_page):
-    """Lay out and yield the fixed boxes of ``pages`` on the
-    ``containing_page``.
-    """
+    """Lay out and yield fixed boxes of ``pages`` on ``containing_page``."""
     for page in pages:
         for box in page.fixed_boxes:
+            # As replaced boxes are never copied during layout, ensure that we
+            # have different boxes (with a possibly different layout) for
+            # each pages
+            if isinstance(box, boxes.ReplacedBox):
+                box = box.copy()
             # Use an empty list as last argument because the fixed boxes in the
             # fixed box has already been added to page.fixed_boxes, we don't
             # want to get them again
