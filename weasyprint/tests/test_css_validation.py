@@ -686,7 +686,10 @@ def test_linear_gradient():
             assert isinstance(image, LinearGradient)
             assert image.repeating == repeating
             assert image.direction_type == direction[0]
-            assert image.direction == pytest.approx(direction[1])
+            if isinstance(image.direction, str):
+                image.direction == direction[1]
+            else:
+                assert image.direction == pytest.approx(direction[1])
             assert image.colors == colors
             assert image.stop_positions == stop_positions
 
