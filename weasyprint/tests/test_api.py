@@ -262,7 +262,8 @@ def test_python_render(tmpdir):
     html.write_png(png_file.strpath, stylesheets=[css])
     html.write_pdf(pdf_file.strpath, stylesheets=[css])
     assert png_file.read_binary() == png_bytes
-    assert pdf_file.read_binary() == pdf_bytes
+    if cairo.cairo_version() >= 11504:
+        assert pdf_file.read_binary() == pdf_bytes
 
     png_file = tmpdir.join('2.png')
     pdf_file = tmpdir.join('2.pdf')
@@ -443,7 +444,8 @@ def test_low_level_api():
     ''')
     pdf_bytes = html.write_pdf(stylesheets=[css])
     assert pdf_bytes.startswith(b'%PDF')
-    assert html.render([css]).write_pdf() == pdf_bytes
+    if cairo.cairo_version() >= 11504:
+        assert html.render([css]).write_pdf() == pdf_bytes
 
     png_bytes = html.write_png(stylesheets=[css])
     document = html.render([css], enable_hinting=True)
