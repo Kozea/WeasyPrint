@@ -303,7 +303,7 @@ def test_command_line_render(tmpdir):
     py.path.local(resource_filename('')).chdir()
     # Reference
     html_obj = FakeHTML(string=combined, base_url='dummy.html')
-    pdf_bytes = html_obj.write_pdf()
+    # pdf_bytes = html_obj.write_pdf()
     png_bytes = html_obj.write_png()
     x2_png_bytes = html_obj.write_png(resolution=192)
     rotated_png_bytes = FakeHTML(string=combined, base_url='dummy.html',
