@@ -12,8 +12,6 @@ matrix:
       python: 3.5
     - os: linux
       python: 3.6
-    - os: linux
-      python: pypy3.5
     - os: osx
       language: generic
       env: PYTHON_VERSION=3
