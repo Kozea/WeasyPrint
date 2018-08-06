@@ -12,8 +12,6 @@
 import io
 from urllib.parse import urlencode
 
-from pdfrw import PdfReader
-
 from ..tools import navigator, renderer
 from ..urls import path2url
 from .testing_utils import assert_no_logs
@@ -73,12 +71,9 @@ def test_navigator(tmpdir):
     status, headers, body = wsgi_client(navigator, '/pdf/' + url)
     assert status == '200 OK'
     assert headers['Content-Type'] == 'application/pdf'
-    pdf = PdfReader(fdata=body)
-    assert pdf.Root.Pages.Kids[0].Annots[0].A == {
-        '/Type': '/Action', '/URI': '(http://weasyprint.org)',
-        '/S': '/URI'}
-    assert pdf.Root.Outlines.First.Title == '(Lorem ipsum)'
-    assert pdf.Root.Outlines.Last.Title == '(Lorem ipsum)'
+    assert body.startswith(b'%PDF')
+    assert b'/URI (http://weasyprint.org)' in body
+    assert b'/Title (Lorem ipsum)' in body
 
 
 @assert_no_logs
