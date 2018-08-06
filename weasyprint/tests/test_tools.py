@@ -12,6 +12,8 @@
 import io
 from urllib.parse import urlencode
 
+import cairocffi as cairo
+
 from ..tools import navigator, renderer
 from ..urls import path2url
 from .testing_utils import assert_no_logs
@@ -72,8 +74,9 @@ def test_navigator(tmpdir):
     assert status == '200 OK'
     assert headers['Content-Type'] == 'application/pdf'
     assert body.startswith(b'%PDF')
-    assert b'/URI (http://weasyprint.org)' in body
-    assert b'/Title (Lorem ipsum)' in body
+    if cairo.cairo_version() >= 11504:
+        assert b'/URI (http://weasyprint.org)' in body
+        assert b'/Title (Lorem ipsum)' in body
 
 
 @assert_no_logs
