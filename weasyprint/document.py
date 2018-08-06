@@ -506,14 +506,14 @@ class Document(object):
             link_type, link_target, rectangle = link
             if link_type == 'external':
                 attributes = "rect=[{} {} {} {}] uri='{}'".format(
-                    *[i * scale for i in rectangle], link_target)
+                    *([i * scale for i in rectangle] + [link_target]))
             elif link_type == 'internal':
                 page, x, y = link_target
                 attributes = (
                     'rect=[{} {} {} {}] page={} '
-                    'pos=[{} {}]'.format(
-                        *[i * scale for i in rectangle],
-                        page + 1, x * scale, y * scale))
+                    'pos=[{} {}]'.format(*(
+                        [i * scale for i in rectangle] +
+                        [page + 1, x * scale, y * scale])))
             elif link_type == 'attachment':
                 # Attachments are handled in write_pdf_metadata
                 continue
