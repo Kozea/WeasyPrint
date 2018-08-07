@@ -176,12 +176,6 @@ def compute_fixed_dimension(context, box, outer, vertical, top_or_left):
             outer - box.padding_plus_border - box.inner) / 2
 
     assert 'auto' not in [box.margin_a, box.margin_b, box.inner]
-    # This should also be true, but may not be exact due to
-    # floating point errors:
-    assert _close(box.inner + box.padding_plus_border +
-                  box.margin_a + box.margin_b, outer), str(
-                      (box.inner, box.padding_plus_border,
-                       box.margin_a, box.margin_b, outer))
 
     box.restore_box_attributes()
 
@@ -309,13 +303,18 @@ def _standardize_page_based_counters(style, pseudo_type):
             ('page', 1),) + style['counter_increment']
 
 
-def make_margin_boxes(context, page, state, target_collector):
-    """Yield laid-out margin boxes for this page."""
+def make_margin_boxes(context, page, state):
+    """Yield laid-out margin boxes for this page.
+
+    ``state`` is the actual, up-to-date page-state from
+    ``context.page_maker[context.current_page]``.
+
+    """
     # This is a closure only to make calls shorter
     def make_box(at_keyword, containing_block):
-        """
-        Return a margin box with resolved percentages, but that may still
-        have 'auto' values.
+        """Return a margin box with resolved percentages.
+
+        The margin box may still have 'auto' values.
 
         Return ``None`` if this margin box should not be generated.
 
@@ -323,7 +322,6 @@ def make_margin_boxes(context, page, state, target_collector):
         :param containing_block: as expected by :func:`resolve_percentages`.
 
         """
-
         style = context.style_for(page.page_type, at_keyword)
         if style is None:
             # doesn't affect counters
@@ -346,7 +344,8 @@ def make_margin_boxes(context, page, state, target_collector):
             build.update_counters(margin_state, box.style)
             box.children = build.content_to_boxes(
                 box.style, box, quote_depth, counter_values,
-                context.get_image_from_uri, target_collector, context, page)
+                context.get_image_from_uri, context.target_collector, context,
+                page)
             # content_to_boxes() only produces inline-level boxes, no need to
             # run other post-processors from build.build_formatting_structure()
             box = build.inline_in_block(box)
@@ -357,10 +356,6 @@ def make_margin_boxes(context, page, state, target_collector):
             for side in ('top', 'right', 'bottom', 'left'):
                 box._reset_spacing(side)
         return box
-
-    style = page.style
-    _standardize_page_based_counters(style, None)
-    build.update_counters(state, style)
 
     margin_top = page.margin_top
     margin_bottom = page.margin_bottom
@@ -508,7 +503,8 @@ def page_height(box, context, containing_block_height):
     page_width_or_height(VerticalBox(context, box), containing_block_height)
 
 
-def make_page(context, root_box, page_type, resume_at, page_number):
+def make_page(context, root_box, page_type, resume_at, page_number,
+              page_state):
     """Take just enough content from the beginning to fill one page.
 
     Return ``(page, finished)``. ``page`` is a laid out PageBox object
@@ -520,8 +516,6 @@ def make_page(context, root_box, page_type, resume_at, page_number):
                       or ``None`` for the first page.
 
     """
-
-    # Overflow value propagated from the root or <body>.
     style = context.style_for(page_type)
 
     # Propagated from the root or <body>.
@@ -569,14 +563,99 @@ def make_page(context, root_box, page_type, resume_at, page_number):
 
     page.children = [root_box]
     descendants = page.descendants()
+
+    # Update page counter values
+    _standardize_page_based_counters(style, None)
+    build.update_counters(page_state, style)
+    page_counter_values = page_state[1]
+    # page_counter_values will be cached in the page_maker
+
+    target_collector = context.target_collector
+    page_maker = context.page_maker
+
+    # remake_state tells the make_all_pages-loop in layout_document()
+    # whether and what to re-make.
+    remake_state = page_maker[page_number - 1][-1]
+
+    # Evaluate and cache page values only once (for the first LineBox)
+    # otherwise we suffer endless loops when the target/pseudo-element
+    # spans across multiple pages
+    cached_anchors = []
+    cached_lookups = []
+    for (_, _, _, _, x_remake_state) in page_maker[:page_number-1]:
+        cached_anchors.extend(x_remake_state.get('anchors', []))
+        cached_lookups.extend(x_remake_state.get('content_lookups', []))
+
     for child in descendants:
-        string_sets = child.string_set
-        if string_sets and string_sets != 'none':
-            for string_set in string_sets:
-                string_name, text = string_set
-                context.string_set[string_name][page_number].append(text)
+        # Cache target's page counters
+        anchor = child.style['anchor']
+        if anchor and anchor not in cached_anchors:
+            remake_state['anchors'].append(anchor)
+            cached_anchors.append(anchor)
+            # Re-make of affected targeting boxes is inclusive
+            target_collector.cache_target_page_counters(
+                anchor, page_counter_values, page_number - 1, page_maker)
+
+        # string-set and bookmark-labels don't create boxes, only `content`
+        # requires another call to make_page. There is maximum one 'content'
+        # item per box.
+        # TODO: remove attribute or set a default value in Box class
+        if hasattr(child, 'missing_link'):
+            # A CounterLookupItem exists for the css-token 'content'
+            counter_lookup = target_collector.counter_lookup_items.get(
+                (child.missing_link, 'content'))
+        else:
+            counter_lookup = None
+
+        # Resolve missing (page based) counters
+        if counter_lookup is not None:
+            call_parse_again = False
+
+            # Prevent endless loops
+            counter_lookup_id = id(counter_lookup)
+            refresh_missing_counters = counter_lookup_id not in cached_lookups
+            if refresh_missing_counters:
+                remake_state['content_lookups'].append(counter_lookup_id)
+                cached_lookups.append(counter_lookup_id)
+                counter_lookup.page_maker_index = page_number - 1
+
+            # Step 1: local counters
+            # If the box mixed-in page counters changed, update the content
+            # and cache the new values.
+            missing_counters = counter_lookup.missing_counters
+            if missing_counters:
+                if 'pages' in missing_counters:
+                    remake_state['pages_wanted'] = True
+                if refresh_missing_counters and page_counter_values != \
+                        counter_lookup.cached_page_counter_values:
+                    counter_lookup.cached_page_counter_values = \
+                        copy.deepcopy(page_counter_values)
+                    for counter_name in missing_counters:
+                        counter_value = page_counter_values.get(
+                            counter_name, None)
+                        if counter_value is not None:
+                            call_parse_again = True
+
+            # Step 2: targeted counters
+            target_missing = counter_lookup.missing_target_counters
+            for anchor_name, missed_counters in target_missing.items():
+                if 'pages' not in missed_counters:
+                    continue
+                # Adjust 'pages_wanted'
+                item = target_collector.items.get(anchor_name, None)
+                page_maker_index = item.page_maker_index
+                if page_maker_index >= 0 and anchor_name in cached_anchors:
+                    page_maker[page_maker_index][-1]['pages_wanted'] = True
+                # 'content_changed' is triggered in
+                # targets.cache_target_page_counters()
+
+            if call_parse_again:
+                remake_state['content_changed'] = True
+                counter_lookup.parse_again(page_counter_values)
+
     if page_type.blank:
         resume_at = previous_resume_at
+
     return page, resume_at, next_page
 
 
@@ -602,54 +681,118 @@ def set_page_type_computed_styles(page_type, cascaded_styles, computed_styles,
                     base_url=html.base_url)
 
 
-def make_all_pages(context, root_box, html, cascaded_styles, computed_styles):
-    """Return a list of laid out pages without margin boxes."""
-    first = True
+def remake_page(idx, context, root_box, html, cascaded_styles,
+                computed_styles):
+    """Return one laid out page without margin boxes.
 
-    # Special case the root box
-    page_break = root_box.style['break_before']
-    # TODO: take care of text direction and writing mode
-    # https://www.w3.org/TR/css3-page/#progression
-    if page_break in 'right':
-        right_page = True
-    elif page_break == 'left':
-        right_page = False
-    elif page_break in 'recto':
-        right_page = root_box.style['direction'] == 'ltr'
-    elif page_break == 'verso':
-        right_page = root_box.style['direction'] == 'rtl'
+    Start with the initial values from context.page_maker[idx].
+    The resulting values / initial values for the next page are stored in
+    the page_maker.
+
+    As the function's name suggests: The plan is not to make all pages
+    repeatedly when a missing counter was resolved, but rather re-make the
+    single page where the 'content_changed' happened.
+    """
+
+    page_maker = context.page_maker
+    (initial_resume_at, initial_next_page, right_page, initial_page_state,
+     remake_state) = page_maker[idx]
+
+    # PageType for current page, values for page_maker[idx+1]
+    # dont modify actual page_maker[idx] values!
+    # TODO: should we store (and reuse) page_type in the page_maker?
+    page_state = copy.deepcopy(initial_page_state)
+    next_page_name = initial_next_page['page']
+    first = idx == 0
+    blank = ((initial_next_page['break'] == 'left' and right_page) or
+             (initial_next_page['break'] == 'right' and not right_page))
+    if blank:
+        next_page_name = None
+    side = 'right' if right_page else 'left'
+    page_type = PageType(
+        side, blank, first, name=(next_page_name or None))
+    set_page_type_computed_styles(
+        page_type, cascaded_styles, computed_styles, html)
+
+    # make_page wants a page_number of idx+1
+    page_number = idx+1
+    page, resume_at, next_page = make_page(
+        context, root_box, page_type, initial_resume_at,
+        page_number, page_state)
+    assert next_page
+    if blank:
+        next_page['page'] = initial_next_page['page']
+    right_page = not right_page
+
+    # append/update the next page_maker item?
+    nextidx = idx+1
+    if nextidx >= len(page_maker):
+        pm_next_changed = True
     else:
-        right_page = root_box.style['direction'] == 'ltr'
+        # did sth change?
+        # TODO: not shure what to compare. All?
+        # definitely NOT the remake_state
+        # if resuma_at didnt change, the remaining props shouldnt
+        # have changed, too
+        # since Python short-circuits...
+        (next_resume_at, next_next_page, next_right_page,
+         next_page_state, _remake_state) = page_maker[nextidx]
+        pm_next_changed = (next_resume_at != resume_at
+                           or next_next_page != next_page
+                           or next_right_page != right_page
+                           or next_page_state != page_state)
 
-    resume_at = None
-    next_page = {'break': 'any', 'page': root_box.page_values()[0]}
-    page_number = 0
+    if pm_next_changed:
+        # reset remake_state
+        remake_state = {
+            'content_changed': False,
+            'pages_wanted': False,
+            'anchors': [],
+            'content_lookups': []
+        }
+        # page_state is already a deepcopy
+        item = (resume_at, next_page, right_page, page_state, remake_state)
+        if nextidx >= len(page_maker):
+            # content_changed MUST be False otherwise: enldess loop
+            page_maker.append(item)
+        else:
+            # content_changed MUST be True otherwise: no remake
+            remake_state['content_changed'] = True
+            page_maker[nextidx] = item
+
+    return page, resume_at
+
+
+def make_all_pages(context, root_box, html, cascaded_styles, computed_styles,
+                   pages):
+    """Return a list of laid out pages without margin boxes.
+
+    Re-make pages only if necessary.
+
+    """
+    i = 0
     while True:
-        page_number += 1
-        LOGGER.info('Step 5 - Creating layout - Page %i', page_number)
-        blank = ((next_page['break'] == 'left' and right_page) or
-                 (next_page['break'] == 'right' and not right_page))
-        if blank:
-            next_blank_page_type = next_page['page']
-            next_page['page'] = None
-        side = 'right' if right_page else 'left'
-        page_type = PageType(
-            side, blank, first, name=(next_page['page'] or None))
-        set_page_type_computed_styles(
-            page_type, cascaded_styles, computed_styles, html)
-        page, resume_at, next_page = make_page(
-            context, root_box, page_type, resume_at, page_number)
-        assert next_page
-        first = False
-        yield page
-        if blank:
-            next_page['page'] = next_blank_page_type
+        remake_state = context.page_maker[i][-1]
+        if (len(pages) == 0 or
+                remake_state['content_changed'] or
+                remake_state['pages_wanted']):
+            LOGGER.info('Step 5 - Creating layout - Page %i', i + 1)
+            # Reset remake_state
+            remake_state['content_changed'] = False
+            remake_state['pages_wanted'] = False
+            remake_state['anchors'] = []
+            remake_state['content_lookups'] = []
+            page, resume_at = remake_page(
+                i, context, root_box, html, cascaded_styles, computed_styles)
+            yield page
+        else:
+            LOGGER.info(
+                'Step 5 - Creating layout - Page %i (up-to-date)', i + 1)
+            resume_at = context.page_maker[i + 1][0]
+            yield pages[i]
+
+        i += 1
         if resume_at is None:
+            # Throw away obsolete pages
+            context.page_maker = context.page_maker[:i + 1]
             return
-        right_page = not right_page
-
-
-# Similar to Numpy allclose(), but symetric
-# https://docs.scipy.org/doc/numpy/reference/generated/numpy.allclose.html
-def _close(a, b, rtol=1e-05, atol=1e-08):
-    return abs(a - b) <= (atol + rtol * (abs(a) + abs(b)) * 0.5)
