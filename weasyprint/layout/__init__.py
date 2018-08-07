@@ -24,6 +24,55 @@ from .absolute import absolute_box_layout
 from .pages import make_all_pages, make_margin_boxes
 from .backgrounds import layout_backgrounds
 from ..formatting_structure import boxes
+from ..logger import LOGGER
+
+
+def initialize_page_maker(context, root_box):
+    """initialize context.page_maker
+    It collects the pagination's states required for page based counters
+    """
+    context.page_maker = []
+    # Special case the root box
+    page_break = root_box.style['break_before']
+    # TODO: take care of text direction and writing mode
+    # https://www.w3.org/TR/css3-page/#progression
+    if page_break in 'right':
+        right_page = True
+    elif page_break == 'left':
+        right_page = False
+    elif page_break in 'recto':
+        right_page = root_box.style['direction'] == 'ltr'
+    elif page_break == 'verso':
+        right_page = root_box.style['direction'] == 'rtl'
+    else:
+        right_page = root_box.style['direction'] == 'ltr'
+    resume_at = None
+    next_page = {'break': 'any', 'page': root_box.page_values()[0]}
+
+    # page_state is prerequisite for filling in missing page based counters
+    # although neither a variable quote_depth nor counter_scopes are needed
+    # in page-boxes -- reusing
+    # `formatting_structure.build.update_counters()` to avoid redundant
+    # code requires a full `state`.
+    # The value of **pages**, of course, is unknown until we return and
+    # might change when 'content_changed' triggers re-pagination...
+    # So we start with an empty state
+    page_state = (
+        # Shared mutable objects:
+        [0],  # quote_depth: single integer
+        {'pages': [0]},
+        [{'pages'}]  # counter_scopes
+    )
+
+    # starting values
+    remake_state = {
+        'content_changed': False,
+        'pages_wanted': False,
+        'anchors': [],  # first occurrence of anchor
+        'content_lookups': []  # first occurr. of content-CounterLookupItem
+    }
+    context.page_maker.append((
+        resume_at, next_page, right_page, page_state, remake_state))
 
 
 def layout_fixed_boxes(context, pages, containing_page):
@@ -48,27 +97,80 @@ def layout_document(enable_hinting, style_for, get_image_from_uri, root_box,
 
     This includes line breaks, page breaks, absolute size and position for all
     boxes.
+    Page based counters might require multiple passes
 
-    :param context: a LayoutContext object.
+    :param root_box: root of the box tree (formatting structure of the html)
+                     the pages' boxes are created from that tree, i.e. this
+                     structure is not lost during pagination
     :returns: a list of laid out Page objects.
 
     """
     context = LayoutContext(
         enable_hinting, style_for, get_image_from_uri, font_config,
         target_collector)
-    pages = list(make_all_pages(
-        context, root_box, html, cascaded_styles, computed_styles))
+    # initialize context.page_maker
+    initialize_page_maker(context, root_box)
+    pages = []
+    actual_total_pages = 0
 
-    # although neither a variable quote_depth nor counter_scopes are needed
-    # in page-boxes -- reusing `formatting_structure.build.update_counters()`
-    # to avoid redundant code requires a full `state`
-    state = (
-        # Shared mutable objects:
-        [0],  # quote_depth: single integer
-        # initialize with the fixed `pages` counter
-        {'pages': [len(pages)]},   # counter_values
-        [{'pages'}]  # counter_scopes
-    )
+    # not sure whether endless-loops are impossible.
+    # not sure how many loops a user can await if the document is long and
+    # need a lot of re-make. I remember that LaTex did one pagination at a
+    # time, caches the results and required me to manually repeat the
+    # pagination until it was stable...
+    loopin = 0
+    maxloopin = 8
+    while True:
+        loopin += 1
+        if loopin > maxloopin:
+            break
+        if loopin > 1:
+            LOGGER.info('Step 5 - Creating layout - Repagination #%i' % loopin)
+
+        initial_total_pages = actual_total_pages
+        pages = list(make_all_pages(
+            context, root_box, html, cascaded_styles, computed_styles, pages))
+        actual_total_pages = len(pages)
+
+        # another roundrip required?
+        reloop_content = False
+        reloop_pages = False
+        for idx, (_, _, _, page_state, remake_state) \
+                in enumerate(context.page_maker):
+            # update `pages`
+            _, page_counter_values, _ = page_state
+            page_counter_values['pages'] = [actual_total_pages]
+            if remake_state['content_changed']:
+                reloop_content = True
+            if remake_state['pages_wanted']:
+                reloop_pages = initial_total_pages != actual_total_pages
+        if not (reloop_content or reloop_pages):
+            break
+
+    # calculate string-sets and bookmark-label containing page based counters
+    # when pagination is finished.
+    # No need to do that (maybe multiple times) in `make_page()` because they
+    # dont create boxes, only appear in MarginBoxes and in the final PDF.
+    for i, page in enumerate(pages):
+        # we need the updated page_counter_values => i+1
+        pm = context.page_maker[i+1]
+        resume_at, next_page, right_page, page_state, remake_state = pm
+        _, page_counter_values, _ = page_state
+        descendants = page.descendants()
+        for child in descendants:
+            if hasattr(child, 'missing_link'):
+                li = context.target_collector.counter_lookup_items
+                for (box, css_token), item in li.items():
+                    if child.missing_link == box and css_token != 'content':
+                        item.parse_again(page_counter_values)
+            # collect the string_sets in the LayoutContext
+            string_sets = child.string_set
+            if string_sets and string_sets != 'none':
+                for string_set in string_sets:
+                    string_name, text = string_set
+                    context.string_set[string_name][i+1].append(text)
+
+    # add the margin boxes
     for i, page in enumerate(pages):
         root_children = []
         root, = page.children
@@ -77,6 +179,9 @@ def layout_document(enable_hinting, style_for, get_image_from_uri, root_box,
         root_children.extend(layout_fixed_boxes(context, pages[i + 1:], page))
         root.children = root_children
         context.current_page = i + 1  # page_number starts at 1
+
+        # page_maker's page_state is ready for the MarginBoxes
+        (_, _, _, state, _) = context.page_maker[context.current_page]
         page.children = (root,) + tuple(
             make_margin_boxes(context, page, state, target_collector))
         layout_backgrounds(page, get_image_from_uri)

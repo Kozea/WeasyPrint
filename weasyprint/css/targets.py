@@ -19,16 +19,43 @@ from ..logger import LOGGER
 
 
 class TargetLookupItem(object):
-    """Item collected by the TargetColector."""
+    """
+    Item to control pending targets and page based target counters.
+    Collected in the TargetCollector's ``items``
+    """
 
     def __init__(self, state='pending'):
         self.state = state
-        # required by target-counter and target-counters
-        self.target_counter_values = {}
-        # needed for target-text via TEXT_CONTENT_EXTRACTORS
+        # Required by target-counter and target-counters to access the
+        # target's .cached_counter_values.
+        # Needed for target-text via TEXT_CONTENT_EXTRACTORS
         self.target_box = None
         # stuff for pending targets
         self.pending_boxes = {}
+        # stuff for page based counters
+        # the anchor's position during pagination == page_number-1
+        self.page_maker_index = -1
+        # the target_box's page_counters during pagination
+        self.cached_page_counter_values = {}
+
+
+class CounterLookupItem(object):
+    """
+    Item to control page based counters.
+    Collected in the TargetCollector's ``counter_lookup_items``
+    """
+
+    def __init__(self, parse_again_func, missing_counters,
+                 missing_target_counters):
+        self.parse_again = parse_again_func
+        self.missing_counters = missing_counters
+        self.missing_target_counters = missing_target_counters
+        # the box's position during pagination == page_number-1
+        self.page_maker_index = -1
+        # marker for remake_page
+        self.pending = False
+        # the targeting box's page_counters during pagination
+        self.cached_page_counter_values = {}
 
 
 class TargetCollector(object):
@@ -38,6 +65,12 @@ class TargetCollector(object):
         self.had_pending_targets = False
         self.existing_anchors = []
         self.items = {}
+        # when collecting == True, compute_content_list() collects missing
+        # page counters (CounterLookupItems) otherwise it mixes in the
+        # TargetLookupItem's cached_page_counter_values.
+        # Is switched to False in check_pending_targets()
+        self.collecting = True
+        self.counter_lookup_items = {}
 
     def _anchor_name_from_token(self, anchor_token):
         """Get anchor name from string or uri token."""
@@ -66,7 +99,7 @@ class TargetCollector(object):
 
     def lookup_target(self, anchor_token, source_box, css_token,
                       parse_again_function):
-        """Get a TargetLookupItem corresponding to ``anchor_name``.
+        """Get a TargetLookupItem corresponding to ``anchor_token``.
 
         If it is already filled by a previous anchor-element, the status is
         'up-to-date'. Otherwise, it is 'pending', we must parse the whole
@@ -101,14 +134,107 @@ class TargetCollector(object):
         item = self.items.get(anchor_name)
         if item and item.state == 'pending':
             item.state = 'up-to-date'
-            item.target_counter_values = copy.deepcopy(target_counter_values)
             item.target_box = target_box
+            # Store the counter_values in the target_box like
+            # compute_content_list does.
+            if not hasattr(target_box, 'cached_counter_values'):
+                target_box.cached_counter_values = \
+                    copy.deepcopy(target_counter_values)
+
+    def collect_missing_counters(self, parent_box, css_token,
+                                 parse_again_function, missing_counters,
+                                 missing_target_counters):
+        """
+        Collect missing, probably page based, counters during formatting.
+        The MissingCounterItems are re-used during pagination.
+        The ``missing_link`` attribute added to the parent_box is required
+        to connect the paginated box(es) to their originating parent_box
+        resp. their counter_lookup_items.
+        """
+        # no counter collection during pagination
+        if not self.collecting:
+            return
+        # no need to add empty miss-lists
+        if missing_counters or missing_target_counters:
+            # trick 17: ensure connection!
+            if not hasattr(parent_box, 'missing_link'):
+                parent_box.missing_link = parent_box
+            self.counter_lookup_items.setdefault(
+                (parent_box, css_token),
+                CounterLookupItem(parse_again_function,
+                                  missing_counters,
+                                  missing_target_counters))
 
     def check_pending_targets(self):
         """Check pending targets if needed."""
-        if not self.had_pending_targets:
+        if self.had_pending_targets:
+            for key, item in self.items.items():
+                for (box, _css_token), function in item.pending_boxes.items():
+                    function()
+            self.had_pending_targets = False
+        # ready for pagination, info@compute_content_list
+        self.collecting = False
+
+    def lookup_counter(self, source_box, css_token):
+        """Get the corresponding CounterLookupItem
+        ``source_box`` is the parent_box, stored/copied as
+        .missing_link in collect_missing_counters()
+        """
+        item = self.counter_lookup_items.get((source_box, css_token), None)
+        return item
+
+    def cache_target_page_counters(self, anchor_name, page_counter_values,
+                                   page_maker_index, page_maker):
+        """
+        Store / update the target's current page_maker_index and page counter
+        values, eventually update associated targeting boxes
+        """
+        # only store page counters when paginating
+        if self.collecting:
             return
-        for key, item in self.items.items():
-            for _, function in item.pending_boxes.items():
-                function()
-        self.had_pending_targets = False
+        item = self.items.get(anchor_name)
+        if item and item.state == 'up-to-date':
+            item.page_maker_index = page_maker_index
+            if item.cached_page_counter_values != page_counter_values:
+                item.cached_page_counter_values = \
+                    copy.deepcopy(page_counter_values)
+                # spread the news
+                self.inform_the_counter_lookups(
+                    anchor_name, page_counter_values, item.page_maker_index,
+                    page_maker)
+
+    def inform_the_counter_lookups(self, anchor_name,
+                                   page_counter_values_of_anchor,
+                                   page_maker_index_of_anchor, page_maker):
+        """
+        Update boxes affected by a change in the anchor's page counter
+        values.
+        """
+        # TODO: I'm sure there's a more pythonic way to filter the affected
+        # items
+        for (box, css_token), item in self.counter_lookup_items.items():
+            if css_token != 'content':
+                continue
+            missing_counters = item.missing_target_counters.get(
+                anchor_name, None)
+            if missing_counters is None:
+                continue
+            # pending-marker for remake_page
+            if (item.page_maker_index < 0
+                    or item.page_maker_index >= len(page_maker)):
+                item.pending = True
+                continue
+            # Is the item at all interested in the new
+            # page_counter_values_of_anchor?
+            # TODO: It probably is and this check is a brake
+            for counter_name in missing_counters:
+                counter_value = page_counter_values_of_anchor.get(
+                    counter_name, None)
+                if counter_value is not None:
+                    (_, _, _, _, remake_state) = \
+                        page_maker[item.page_maker_index]
+                    remake_state['content_changed'] = True
+                    item.parse_again(item.cached_page_counter_values)
+                    break
+            # Hint: the box's own cached page counters trigger a separate
+            # 'content_changed'
