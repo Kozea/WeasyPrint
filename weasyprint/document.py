@@ -323,11 +323,11 @@ class Document(object):
         get_image_from_uri = functools.partial(
             original_get_image_from_uri, {}, html.url_fetcher)
         LOGGER.info('Step 4 - Creating formatting structure')
+        root_box = build_formatting_structure(
+            html.etree_element, style_for, get_image_from_uri,
+            html.base_url, target_collector)
         page_boxes = layout_document(
-            enable_hinting, style_for, get_image_from_uri,
-            build_formatting_structure(
-                html.etree_element, style_for, get_image_from_uri,
-                html.base_url, target_collector),
+            enable_hinting, style_for, get_image_from_uri, root_box,
             font_config, html, cascaded_styles, computed_styles,
             target_collector)
         rendering = cls(
