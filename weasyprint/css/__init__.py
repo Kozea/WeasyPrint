@@ -885,9 +885,7 @@ def get_all_computed_styles(html, user_stylesheets=None,
 
     # This is mostly useful to make pseudo_type optional.
     def style_for(element, pseudo_type=None, __get=computed_styles.get):
-        """
-        Convenience function to get the computed styles for an element.
-        """
+        """Convenience function to get the computed styles for an element."""
         style = __get((element, pseudo_type))
 
         if style:

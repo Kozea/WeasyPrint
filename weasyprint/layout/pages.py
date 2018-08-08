@@ -661,16 +661,21 @@ def make_page(context, root_box, page_type, resume_at, page_number,
 
 def set_page_type_computed_styles(page_type, cascaded_styles, computed_styles,
                                   html):
-    """Set style for page types and pseudo-types matching page_type."""
+    """Set style for page types and pseudo-types matching ``page_type``."""
     for matching_page_type in matching_page_types(page_type):
+        # No style for matching page type, loop
         if computed_styles.get((matching_page_type, None), None):
             continue
+
+        # Apply style for page
         set_computed_styles(
             cascaded_styles, computed_styles, matching_page_type,
             # @page inherits from the root element:
             # http://lists.w3.org/Archives/Public/www-style/2012Jan/1164.html
             root=html.etree_element, parent=html.etree_element,
             base_url=html.base_url)
+
+        # Apply style for page pseudo-elements (margin boxes)
         for element, pseudo_type in cascaded_styles:
             if pseudo_type and element == matching_page_type:
                 set_computed_styles(
@@ -681,29 +686,29 @@ def set_page_type_computed_styles(page_type, cascaded_styles, computed_styles,
                     base_url=html.base_url)
 
 
-def remake_page(idx, context, root_box, html, cascaded_styles,
+def remake_page(index, context, root_box, html, cascaded_styles,
                 computed_styles):
     """Return one laid out page without margin boxes.
 
-    Start with the initial values from context.page_maker[idx].
+    Start with the initial values from ``context.page_maker[index]``.
     The resulting values / initial values for the next page are stored in
-    the page_maker.
+    the ``page_maker``.
 
-    As the function's name suggests: The plan is not to make all pages
+    As the function's name suggests: the plan is not to make all pages
     repeatedly when a missing counter was resolved, but rather re-make the
-    single page where the 'content_changed' happened.
-    """
+    single page where the ``content_changed`` happened.
 
+    """
     page_maker = context.page_maker
     (initial_resume_at, initial_next_page, right_page, initial_page_state,
-     remake_state) = page_maker[idx]
+     remake_state) = page_maker[index]
 
-    # PageType for current page, values for page_maker[idx+1]
-    # dont modify actual page_maker[idx] values!
+    # PageType for current page, values for page_maker[index + 1].
+    # Don't modify actual page_maker[index] values!
     # TODO: should we store (and reuse) page_type in the page_maker?
     page_state = copy.deepcopy(initial_page_state)
     next_page_name = initial_next_page['page']
-    first = idx == 0
+    first = index == 0
     blank = ((initial_next_page['break'] == 'left' and right_page) or
              (initial_next_page['break'] == 'right' and not right_page))
     if blank:
@@ -714,8 +719,8 @@ def remake_page(idx, context, root_box, html, cascaded_styles,
     set_page_type_computed_styles(
         page_type, cascaded_styles, computed_styles, html)
 
-    # make_page wants a page_number of idx+1
-    page_number = idx+1
+    # make_page wants a page_number of index + 1
+    page_number = index + 1
     page, resume_at, next_page = make_page(
         context, root_box, page_type, initial_resume_at,
         page_number, page_state)
@@ -724,41 +729,38 @@ def remake_page(idx, context, root_box, html, cascaded_styles,
         next_page['page'] = initial_next_page['page']
     right_page = not right_page
 
-    # append/update the next page_maker item?
-    nextidx = idx+1
-    if nextidx >= len(page_maker):
-        pm_next_changed = True
+    # Check whether we need to append or update the next page_maker item
+    if index + 1 >= len(page_maker):
+        # New page
+        page_maker_next_changed = True
     else:
-        # did sth change?
-        # TODO: not shure what to compare. All?
-        # definitely NOT the remake_state
-        # if resuma_at didnt change, the remaining props shouldnt
-        # have changed, too
-        # since Python short-circuits...
+        # Check whether something changed
+        # TODO: Find what we need to compare. Is resume_at enough?
         (next_resume_at, next_next_page, next_right_page,
-         next_page_state, _remake_state) = page_maker[nextidx]
-        pm_next_changed = (next_resume_at != resume_at
-                           or next_next_page != next_page
-                           or next_right_page != right_page
-                           or next_page_state != page_state)
+         next_page_state, _) = page_maker[index + 1]
+        page_maker_next_changed = (
+            next_resume_at != resume_at or
+            next_next_page != next_page or
+            next_right_page != right_page or
+            next_page_state != page_state)
 
-    if pm_next_changed:
-        # reset remake_state
+    if page_maker_next_changed:
+        # Reset remake_state
         remake_state = {
             'content_changed': False,
             'pages_wanted': False,
             'anchors': [],
-            'content_lookups': []
+            'content_lookups': [],
         }
         # page_state is already a deepcopy
-        item = (resume_at, next_page, right_page, page_state, remake_state)
-        if nextidx >= len(page_maker):
-            # content_changed MUST be False otherwise: enldess loop
+        item = resume_at, next_page, right_page, page_state, remake_state
+        if index + 1 >= len(page_maker):
+            # content_changed must be False otherwise: enldess loop
             page_maker.append(item)
         else:
-            # content_changed MUST be True otherwise: no remake
+            # content_changed must be True otherwise: no remake
             remake_state['content_changed'] = True
-            page_maker[nextidx] = item
+            page_maker[index + 1] = item
 
     return page, resume_at
 
