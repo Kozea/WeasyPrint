@@ -476,7 +476,7 @@ def _write_pdf_attachment(pdf, attachment, url_fetcher):
         attachment.description or ''))
 
 
-def write_pdf_medatada(fileobj, scale, url_fetcher, attachments,
+def write_pdf_metadata(fileobj, scale, url_fetcher, attachments,
                        attachment_links, pages):
     """Add PDF metadata that are not handled by cairo.
 
