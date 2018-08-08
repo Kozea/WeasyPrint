@@ -27,7 +27,7 @@ from .images import get_image_from_uri as original_get_image_from_uri
 from .layout import layout_document
 from .layout.backgrounds import percentage
 from .logger import LOGGER
-from .pdf import write_pdf_attachments
+from .pdf import write_pdf_metadata
 
 if cairo.cairo_version() < 11504:
     warnings.warn(
@@ -621,7 +621,7 @@ class Document(object):
             any(attachment_links) or
             any(any(page.bleed.values()) for page in self.pages))
         if condition:
-            write_pdf_attachments(
+            write_pdf_metadata(
                 file_obj, scale, self.url_fetcher,
                 self.metadata.attachments + (attachments or []),
                 attachment_links, self.pages)

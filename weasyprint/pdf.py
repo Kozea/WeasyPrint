@@ -2,9 +2,8 @@
     weasyprint.pdf
     --------------
 
-    Post-process the PDF files created by cairo and add attachments and
-    embedded files.
-
+    Post-process the PDF files created by cairo and extra metadata (including
+    attachments, embedded files, trim & bleed boxes).
 
     Rather than trying to parse any valid PDF, we make some assumptions
     that hold for cairo in order to simplify the code:
@@ -477,9 +476,17 @@ def _write_pdf_attachment(pdf, attachment, url_fetcher):
         attachment.description or ''))
 
 
-def write_pdf_attachments(fileobj, scale, url_fetcher, attachments,
-                          attachment_links, pages):
-    """Append to a seekable file-like object to add PDF attachments."""
+def write_pdf_medatada(fileobj, scale, url_fetcher, attachments,
+                       attachment_links, pages):
+    """Add PDF metadata that are not handled by cairo.
+
+    Includes:
+    - attachments
+    - embedded files
+    - trim box
+    - bleed box
+
+    """
     pdf = PDFFile(fileobj)
 
     # Add embedded files
