@@ -444,7 +444,7 @@ def table_and_columns_preferred_widths(context, box, outer=True):
                 baseline_percentage = sum(
                     intrinsic_percentages[cell_slice])
 
-                # Cell contributiion to min- and max-content widths
+                # Cell contribution to min- and max-content widths
                 content_width_diff = (
                     max_content_widths[i] - min_content_widths[i])
                 baseline_diff = baseline_max_content - baseline_min_content
@@ -482,7 +482,7 @@ def table_and_columns_preferred_widths(context, box, outer=True):
                     max_contribution,
                     max_content_widths[i] + (1 - ratio) * cell_max_width)
 
-                # Cell contributiion to intrinsic percentage width
+                # Cell contribution to intrinsic percentage width
                 if intrinsic_percentages[i] == 0:
                     diff = max(
                         0,
