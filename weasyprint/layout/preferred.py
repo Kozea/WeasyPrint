@@ -501,7 +501,9 @@ def table_and_columns_preferred_widths(context, box, outer=True):
                         ratio = (
                             max_content_widths[i] /
                             other_columns_contributions_sum)
-                    percentage_contribution = diff * ratio
+                    percentage_contribution = max(
+                        percentage_contribution,
+                        diff * ratio)
 
             min_contributions.append(min_contribution)
             max_contributions.append(max_contribution)
