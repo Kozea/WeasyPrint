@@ -196,6 +196,7 @@ def safe_decodebytes(data):
 
 HTTP_HEADERS = {
     'User-Agent': VERSION_STRING,
+    'Accept': '*/*',
     'Accept-Encoding': 'gzip, deflate',
 }
 
