@@ -436,6 +436,8 @@ def table_and_columns_preferred_widths(context, box, outer=True):
                 if origin_cell.colspan - 1 != span:
                     continue
                 cell_slice = slice(origin, origin + origin_cell.colspan)
+                # TODO: it's wrong when two columns have no space between them
+                # because all their cells span between the two columns
                 baseline_border_spacing = (
                     (origin_cell.colspan - 1) *
                     table.style['border_spacing'][0])
@@ -455,14 +457,12 @@ def table_and_columns_preferred_widths(context, box, outer=True):
 
                 cell_min_width = max(
                     0,
-                    min_content_width(context, grid[j][origin]) -
+                    min_content_width(context, origin_cell) -
                     baseline_max_content - baseline_border_spacing)
-
                 cell_max_width = max(
                     0,
-                    max_content_width(context, grid[j][origin]) -
+                    max_content_width(context, origin_cell) -
                     baseline_max_content - baseline_border_spacing)
-
                 clamped_cell_width = min(
                     cell_min_width,
                     baseline_max_content - baseline_min_content)
@@ -517,8 +517,7 @@ def table_and_columns_preferred_widths(context, box, outer=True):
 
     # Calculate the max- and min-content widths of table and columns
     small_percentage_contributions = [
-        max_content_widths[i] /
-        (intrinsic_percentages[i] / 100. or float('inf'))
+        max_content_widths[i] / (intrinsic_percentages[i] / 100.)
         for i in range(grid_width)
         if intrinsic_percentages[i]]
     large_percentage_contribution_numerator = sum(

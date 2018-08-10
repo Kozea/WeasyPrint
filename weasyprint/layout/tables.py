@@ -87,7 +87,7 @@ def table_layout(context, table, max_position_y, skip_stack,
                 spanned_widths = column_widths[cell.grid_x:][:cell.colspan]
                 # In the fixed layout the grid width is set by cells in
                 # the first row and column elements.
-                # This may be less than the previous value  of cell.colspan
+                # This may be less than the previous value of cell.colspan
                 # if that would bring the cell beyond the grid width.
                 cell.colspan = len(spanned_widths)
                 if cell.colspan == 0:
@@ -562,7 +562,7 @@ def auto_table_layout(context, box, containing_block):
     for i in range(len(grid)):
         if column_intrinsic_percentages[i]:
             min_content_percentage_guess[i] = max(
-                column_intrinsic_percentages[i] * assignable_width / 100.,
+                column_intrinsic_percentages[i] / 100 * assignable_width,
                 column_min_content_widths[i])
             min_content_specified_guess[i] = min_content_percentage_guess[i]
             max_content_guess[i] = min_content_percentage_guess[i]
