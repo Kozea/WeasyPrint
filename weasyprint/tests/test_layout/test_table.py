@@ -1417,6 +1417,28 @@ def test_layout_table_auto_46():
 
 
 @assert_no_logs
+def test_layout_table_auto_47():
+    # Test regression:
+    # https://github.com/Kozea/WeasyPrint/issues/666
+    page, = render_pages('''
+      <style>@font-face { src: url(AHEM____.TTF); font-family: ahem }</style>
+      <table style="font-family: ahem">
+        <tr>
+          <td colspan=5>aaa</td>
+        </tr>
+      </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td, = row.children
+    assert td.width == 48  # 3 * font-size
+
+
+@assert_no_logs
 def test_table_column_width_1():
     source = '''
       <style>

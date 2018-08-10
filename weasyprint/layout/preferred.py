@@ -14,6 +14,7 @@
 """
 
 import sys
+from itertools import zip_longest
 
 from .. import text
 from ..formatting_structure import boxes
@@ -441,8 +442,16 @@ def table_and_columns_preferred_widths(context, box, outer=True):
                 baseline_border_spacing = (
                     (origin_cell.colspan - 1) *
                     table.style['border_spacing'][0])
-                baseline_min_content = sum(min_content_widths[cell_slice])
-                baseline_max_content = sum(max_content_widths[cell_slice])
+                baseline_min_content = sum(
+                    max(a, b) for a, b in zip_longest(
+                        min_contributions[cell_slice],
+                        min_content_widths[cell_slice],
+                        fillvalue=0))
+                baseline_max_content = sum(
+                    max(a, b) for a, b in zip_longest(
+                        max_contributions[cell_slice],
+                        max_content_widths[cell_slice],
+                        fillvalue=0))
                 baseline_percentage = sum(
                     intrinsic_percentages[cell_slice])
 
