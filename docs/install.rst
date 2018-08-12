@@ -81,7 +81,7 @@ WeasyPrint! Otherwise, please copy the full error message and
        you get incomplete SVG renderings, please read `#339
        <https://github.com/Kozea/WeasyPrint/issues/339>`_. If you get invalid
        PDF files, please read `#565
-       <https://github.com/Kozea/WeasyPrint/issues/565>`.
+       <https://github.com/Kozea/WeasyPrint/issues/565>`_.
 
 .. [#] pango ≥ 1.29.3 is required, but 1.38.0 is needed to handle `@font-face`
        CSS rules.
