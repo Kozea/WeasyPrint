@@ -3,17 +3,16 @@ Installing
 
 WeasyPrint |version| depends on:
 
-* CPython_ ≥ 3.4
+* CPython_ ≥ 3.4.0
 * cairo_ ≥ 1.15.4 [#]_
 * Pango_ ≥ 1.38.0 [#]_
 * CFFI_ ≥ 0.6
 * html5lib_ ≥ 0.999999999
-* cairocffi_ ≥ 0.5
+* cairocffi_ ≥ 0.9.0
 * tinycss2_ ≥ 0.5
 * cssselect2_ ≥ 0.1
 * CairoSVG_ ≥ 1.0.20
 * Pyphen_ ≥ 0.8
-* pdfrw_ ≥ 0.4
 * GDK-PixBuf_ ≥ 2.25.0 [#]_
 
 .. _CPython: http://www.python.org/
@@ -26,7 +25,6 @@ WeasyPrint |version| depends on:
 .. _cssselect2: https://cssselect2.readthedocs.io/
 .. _CairoSVG: http://cairosvg.org/
 .. _Pyphen: http://pyphen.org/
-.. _pdfrw: https://github.com/pmaupin/pdfrw/
 .. _GDK-PixBuf: https://live.gnome.org/GdkPixbuf
 
 
@@ -81,7 +79,8 @@ WeasyPrint! Otherwise, please copy the full error message and
        you get incomplete SVG renderings, please read `#339
        <https://github.com/Kozea/WeasyPrint/issues/339>`_. If you get invalid
        PDF files, please read `#565
-       <https://github.com/Kozea/WeasyPrint/issues/565>`_.
+       <https://github.com/Kozea/WeasyPrint/issues/565>`_. Some PDF metadata
+       including PDF information, hyperlinks and bookmarks require 1.15.4.
 
 .. [#] pango ≥ 1.29.3 is required, but 1.38.0 is needed to handle `@font-face`
        CSS rules.
