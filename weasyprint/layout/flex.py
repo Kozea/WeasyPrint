@@ -421,22 +421,13 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                 child_copy.margin_bottom = 0
             blocks.block_level_width(child_copy, box)
             new_child = blocks.block_level_layout_switch(
-                context, child_copy,
-                available_cross_space + box.content_box_y(),
+                context, child_copy, float('inf'),
                 child_skip_stack, box, device_size, page_is_empty,
                 absolute_boxes, fixed_boxes, adjoining_margins=[])[0]
 
-            if new_child is None:
-                # TODO: "If the item does not have a baseline in the
-                # necessary axis, then one is synthesized from the flex
-                # item’s border box."
-                child._baseline = 0
-            else:
-                child._baseline = find_in_flow_baseline(new_child)
-
+            child._baseline = find_in_flow_baseline(new_child)
             if cross == 'height':
-                # TODO: check that
-                child.height = 0 if new_child is None else new_child.height
+                child.height = new_child.height
             else:
                 child.width = min_content_width(context, child, outer=False)
 
