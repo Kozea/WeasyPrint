@@ -52,7 +52,7 @@ def serialize(box_list):
 
 def _parse_base(html_content, base_url=BASE_URL):
     document = FakeHTML(string=html_content, base_url=base_url)
-    style_for, _, _ = get_all_computed_styles(document)
+    style_for = get_all_computed_styles(document)
     get_image_from_uri = functools.partial(
         images.get_image_from_uri, {}, document.url_fetcher)
     target_collector = TargetCollector()
@@ -400,15 +400,13 @@ def test_page_style(page_type, top, right, bottom, left):
         @page :left { margin-left: 10px; margin-top: 10px }
       </style>
     ''')
-    style_for, cascaded_styles, computed_styles = get_all_computed_styles(
-        document)
+    style_for = get_all_computed_styles(document)
 
     # Force the generation of the style for all possible page types as it's
     # generally only done during the rendering for needed page types.
     standard_page_type = PageType(
         side=None, blank=False, first=False, name=None)
-    set_page_type_computed_styles(
-        standard_page_type, cascaded_styles, computed_styles, document)
+    set_page_type_computed_styles(standard_page_type, document, style_for)
 
     style = style_for(page_type)
     assert style['margin_top'] == (top, 'px')

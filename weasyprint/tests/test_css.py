@@ -80,7 +80,7 @@ def test_expand_shorthands():
 def test_annotate_document():
     document = FakeHTML(resource_filename('doc1.html'))
     document._ua_stylesheets = lambda: [CSS(resource_filename('mini_ua.css'))]
-    style_for, _, _ = get_all_computed_styles(
+    style_for = get_all_computed_styles(
         document, user_stylesheets=[CSS(resource_filename('user.css'))])
 
     # Element objects behave a lists of their children
@@ -168,7 +168,7 @@ def test_annotate_document():
 @assert_no_logs
 def test_page():
     document = FakeHTML(resource_filename('doc1.html'))
-    style_for, cascaded_styles, computed_styles = get_all_computed_styles(
+    style_for = get_all_computed_styles(
         document, user_stylesheets=[CSS(string='''
           html { color: red }
           @page { margin: 10px }
@@ -186,8 +186,7 @@ def test_page():
     # page types.
     standard_page_type = PageType(
         side=None, blank=False, first=False, name=None)
-    set_page_type_computed_styles(
-        standard_page_type, cascaded_styles, computed_styles, document)
+    set_page_type_computed_styles(standard_page_type, document, style_for)
 
     style = style_for(
         PageType(side='left', first=True, blank=False, name=None))

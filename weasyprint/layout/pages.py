@@ -659,35 +659,32 @@ def make_page(context, root_box, page_type, resume_at, page_number,
     return page, resume_at, next_page
 
 
-def set_page_type_computed_styles(page_type, cascaded_styles, computed_styles,
-                                  html):
+def set_page_type_computed_styles(page_type, html, style_for):
     """Set style for page types and pseudo-types matching ``page_type``."""
     for matching_page_type in matching_page_types(page_type):
         # No style for matching page type, loop
-        if computed_styles.get((matching_page_type, None), None):
+        if style_for((matching_page_type, None), None):
             continue
 
         # Apply style for page
         set_computed_styles(
-            cascaded_styles, computed_styles, matching_page_type,
+            style_for, matching_page_type,
             # @page inherits from the root element:
             # http://lists.w3.org/Archives/Public/www-style/2012Jan/1164.html
             root=html.etree_element, parent=html.etree_element,
             base_url=html.base_url)
 
         # Apply style for page pseudo-elements (margin boxes)
-        for element, pseudo_type in cascaded_styles:
+        for element, pseudo_type in style_for.get_cascaded_styles():
             if pseudo_type and element == matching_page_type:
                 set_computed_styles(
-                    cascaded_styles, computed_styles, element,
-                    pseudo_type=pseudo_type,
+                    style_for, element, pseudo_type=pseudo_type,
                     # The pseudo-element inherits from the element.
                     root=html.etree_element, parent=element,
                     base_url=html.base_url)
 
 
-def remake_page(index, context, root_box, html, cascaded_styles,
-                computed_styles):
+def remake_page(index, context, root_box, html, style_for):
     """Return one laid out page without margin boxes.
 
     Start with the initial values from ``context.page_maker[index]``.
@@ -716,8 +713,7 @@ def remake_page(index, context, root_box, html, cascaded_styles,
     side = 'right' if right_page else 'left'
     page_type = PageType(
         side, blank, first, name=(next_page_name or None))
-    set_page_type_computed_styles(
-        page_type, cascaded_styles, computed_styles, html)
+    set_page_type_computed_styles(page_type, html, style_for)
 
     # make_page wants a page_number of index + 1
     page_number = index + 1
@@ -765,8 +761,7 @@ def remake_page(index, context, root_box, html, cascaded_styles,
     return page, resume_at
 
 
-def make_all_pages(context, root_box, html, cascaded_styles, computed_styles,
-                   pages):
+def make_all_pages(context, root_box, html, pages, style_for):
     """Return a list of laid out pages without margin boxes.
 
     Re-make pages only if necessary.
@@ -785,7 +780,7 @@ def make_all_pages(context, root_box, html, cascaded_styles, computed_styles,
             remake_state['anchors'] = []
             remake_state['content_lookups'] = []
             page, resume_at = remake_page(
-                i, context, root_box, html, cascaded_styles, computed_styles)
+                i, context, root_box, html, style_for)
             yield page
         else:
             LOGGER.info(
