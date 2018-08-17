@@ -805,6 +805,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
             break
 
     # Set box height
+    # TODO: this is probably useless because of step #15
     if axis == 'width' and box.height == 'auto':
         if flex_lines:
             box.height = sum(line.cross_size for line in flex_lines)
