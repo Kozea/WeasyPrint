@@ -412,19 +412,19 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
     for line in flex_lines:
         new_flex_line = FlexLine()
         for child in line:
-            # TODO: Find another way than calling block_level_layout to get
-            # baseline and child.height
+            # TODO: Find another way than calling block_level_layout_switch to
+            # get baseline and child.height
             child_copy = child.copy_with_children(child.children)
             if child_copy.margin_top == 'auto':
                 child_copy.margin_top = 0
             if child_copy.margin_bottom == 'auto':
                 child_copy.margin_bottom = 0
             blocks.block_level_width(child_copy, box)
-            new_child = blocks.block_level_layout(
+            new_child = blocks.block_level_layout_switch(
                 context, child_copy,
-                available_cross_space + box.content_box_y(), child_skip_stack,
-                box, device_size, page_is_empty, absolute_boxes,
-                fixed_boxes, adjoining_margins=[])[0]
+                available_cross_space + box.content_box_y(),
+                child_skip_stack, box, device_size, page_is_empty,
+                absolute_boxes, fixed_boxes, adjoining_margins=[])[0]
 
             if new_child is None:
                 # TODO: "If the item does not have a baseline in the

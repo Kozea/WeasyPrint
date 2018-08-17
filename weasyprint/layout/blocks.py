@@ -34,26 +34,38 @@ def block_level_layout(context, box, max_position_y, skip_stack,
                            content box of the current page area.
 
     """
+    if not isinstance(box, boxes.TableBox):
+        resolve_percentages(box, containing_block)
+
+        if box.margin_top == 'auto':
+            box.margin_top = 0
+        if box.margin_bottom == 'auto':
+            box.margin_bottom = 0
+
+        collapsed_margin = collapse_margin(
+            adjoining_margins + [box.margin_top])
+        box.clearance = get_clearance(context, box, collapsed_margin)
+        if box.clearance is not None:
+            top_border_edge = box.position_y + collapsed_margin + box.clearance
+            box.position_y = top_border_edge - box.margin_top
+            adjoining_margins = []
+
+    return block_level_layout_switch(
+        context, box, max_position_y, skip_stack, containing_block,
+        device_size, page_is_empty, absolute_boxes, fixed_boxes,
+        adjoining_margins)
+
+
+def block_level_layout_switch(context, box, max_position_y, skip_stack,
+                              containing_block, device_size, page_is_empty,
+                              absolute_boxes, fixed_boxes,
+                              adjoining_margins):
+    """Call the layout function corresponding to the ``box`` type."""
     if isinstance(box, boxes.TableBox):
         return table_layout(
             context, box, max_position_y, skip_stack, containing_block,
             device_size, page_is_empty, absolute_boxes, fixed_boxes)
-
-    resolve_percentages(box, containing_block)
-
-    if box.margin_top == 'auto':
-        box.margin_top = 0
-    if box.margin_bottom == 'auto':
-        box.margin_bottom = 0
-
-    collapsed_margin = collapse_margin(adjoining_margins + [box.margin_top])
-    box.clearance = get_clearance(context, box, collapsed_margin)
-    if box.clearance is not None:
-        top_border_edge = box.position_y + collapsed_margin + box.clearance
-        box.position_y = top_border_edge - box.margin_top
-        adjoining_margins = []
-
-    if isinstance(box, boxes.BlockBox):
+    elif isinstance(box, boxes.BlockBox):
         return block_box_layout(
             context, box, max_position_y, skip_stack, containing_block,
             device_size, page_is_empty, absolute_boxes, fixed_boxes,
