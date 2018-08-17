@@ -31,14 +31,13 @@ LONG_DESCRIPTION = open(path.join(path.dirname(__file__), 'README.rst')).read()
 
 REQUIREMENTS = [
     # XXX: Keep this in sync with docs/install.rst
+    'cffi>=0.6',
     'html5lib>=0.999999999',
+    'cairocffi>=0.9.0',
     'tinycss2>=0.5',
     'cssselect2>=0.1',
-    'cffi>=0.6',
-    'cairocffi>=0.5',
-    'Pyphen>=0.8',
-    'pdfrw>=0.4',
     'CairoSVG>=1.0.20',
+    'Pyphen>=0.8',
     # C dependencies: Gdk-Pixbuf (optional), Pango, cairo.
 ]
 
