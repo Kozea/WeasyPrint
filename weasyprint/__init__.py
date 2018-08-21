@@ -13,6 +13,7 @@
 """
 
 import sys
+from pathlib import Path
 
 import contextlib
 import html5lib
@@ -323,6 +324,8 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
     elif guess is not None:
         if hasattr(guess, 'read'):
             type_ = 'file_obj'
+        elif isinstance(guess, Path):
+            type_ = 'filename'
         elif url_is_absolute(guess):
             type_ = 'url'
         else:
@@ -334,6 +337,8 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
         with result as result:
             yield result
     elif filename is not None:
+        if isinstance(filename, Path):
+            filename = str(filename)
         if base_url is None:
             base_url = path2url(filename)
         with open(filename, 'rb') as file_obj:

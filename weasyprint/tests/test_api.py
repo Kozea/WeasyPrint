@@ -16,6 +16,7 @@ import os
 import sys
 import unicodedata
 import zlib
+from pathlib import Path
 from urllib.parse import urljoin, uses_relative
 
 import cairocffi as cairo
@@ -32,10 +33,14 @@ from .testing_utils import (
 def _test_resource(class_, basename, check, **kwargs):
     """Common code for testing the HTML and CSS classes."""
     absolute_filename = resource_filename(basename)
+    absolute_path = Path(absolute_filename)
     url = path2url(absolute_filename)
     check(class_(absolute_filename, **kwargs))
+    check(class_(absolute_path, **kwargs))
     check(class_(guess=absolute_filename, **kwargs))
+    check(class_(guess=absolute_path, **kwargs))
     check(class_(filename=absolute_filename, **kwargs))
+    check(class_(filename=absolute_path, **kwargs))
     check(class_(url, **kwargs))
     check(class_(guess=url, **kwargs))
     check(class_(url=url, **kwargs))
@@ -49,7 +54,9 @@ def _test_resource(class_, basename, check, **kwargs):
         content = fd.read()
     py.path.local(os.path.dirname(__file__)).chdir()
     relative_filename = os.path.join('resources', basename)
+    relative_path = Path(relative_filename)
     check(class_(relative_filename, **kwargs))
+    check(class_(relative_path, **kwargs))
     check(class_(string=content, base_url=relative_filename, **kwargs))
     encoding = kwargs.get('encoding') or 'utf8'
     check(class_(string=content.decode(encoding),  # unicode
