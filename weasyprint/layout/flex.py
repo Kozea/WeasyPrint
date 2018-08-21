@@ -420,14 +420,20 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
             if child_copy.margin_bottom == 'auto':
                 child_copy.margin_bottom = 0
             blocks.block_level_width(child_copy, box)
-            new_child = blocks.block_level_layout_switch(
-                context, child_copy, float('inf'),
-                child_skip_stack, box, device_size, page_is_empty,
-                absolute_boxes, fixed_boxes, adjoining_margins=[])[0]
+            new_child, _, _, adjoining_margins, _ = (
+                blocks.block_level_layout_switch(
+                    context, child_copy, float('inf'),
+                    child_skip_stack, box, device_size, page_is_empty,
+                    absolute_boxes, fixed_boxes, adjoining_margins=[]))
 
             child._baseline = find_in_flow_baseline(new_child)
             if cross == 'height':
                 child.height = new_child.height
+                # As flex items margins never collapse (with other flex items
+                # or with the flex container), we can add the adjoining margins
+                # to the child bottom margin.
+                child.margin_bottom += blocks.collapse_margin(
+                    adjoining_margins)
             else:
                 child.width = min_content_width(context, child, outer=False)
 

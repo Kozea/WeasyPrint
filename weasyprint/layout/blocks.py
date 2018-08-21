@@ -482,7 +482,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
     this_box_adjoining_margins = adjoining_margins
 
     collapsing_with_children = not (
-        box.border_top_width or box.padding_top or
+        box.border_top_width or box.padding_top or box.is_flex_item or
         establishes_formatting_context(box) or box.is_for_root_element)
     if collapsing_with_children:
         # XXX not counting margins in adjoining_margins, if any
