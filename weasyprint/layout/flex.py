@@ -86,12 +86,14 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                 box.border_left_width - box.border_right_width)
 
     # Step 3
-    resolve_percentages(box, containing_block)
-    if isinstance(box, boxes.FlexBox):
-        blocks.block_level_width(box, containing_block)
-    else:
-        box.width = preferred.flex_max_content_width(context, box)
     children = box.children
+    parent_box = box.copy_with_children(children)
+    resolve_percentages(parent_box, containing_block)
+    if isinstance(parent_box, boxes.FlexBox):
+        blocks.block_level_width(parent_box, containing_block)
+    else:
+        parent_box.width = preferred.flex_max_content_width(
+            context, parent_box)
     if skip_stack is not None:
         children = children[skip_stack[0]:]
         skip_stack = skip_stack[1]
@@ -108,8 +110,8 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
         else:
             main_flex_direction = None
         resolve_percentages(child, (0, 0), main_flex_direction)
-        child.position_x = box.content_box_x()
-        child.position_y = box.content_box_y()
+        child.position_x = parent_box.content_box_x()
+        child.position_y = parent_box.content_box_y()
         if child.min_width == 'auto':
             specified_size = (
                 child.width if child.width != 'auto' else float('inf'))
@@ -131,8 +133,8 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
             new_child.style['max_height'] = Dimension(float('inf'), 'px')
             new_child = blocks.block_level_layout(
                 context, new_child, float('inf'), child_skip_stack,
-                box, device_size, page_is_empty, absolute_boxes,
-                fixed_boxes, adjoining_margins=[])[0]
+                parent_box, device_size, page_is_empty, absolute_boxes=[],
+                fixed_boxes=[], adjoining_margins=[])[0]
             content_size = new_child.height
             child.min_height = min(specified_size, content_size)
 
