@@ -1,0 +1,83 @@
+#donate
+  section:nth-of-type(2)
+    h2
+      &:nth-of-type(1)
+        margin-left: column(1,12)
+        margin-bottom: 0
+
+      &:nth-of-type(2)
+        margin-left: column(4,12)
+
+    p
+      &:nth-of-type(1)
+        margin: .5em 0 0 column(1,12)
+
+      &:nth-of-type(2)
+        +full-bg($primary)
+        color: $light
+        padding: 4em column(1,12)
+        margin: 3em column(2,12) 0 0
+
+        &::before
+          left: auto
+          right: 0
+          transform: none
+
+      &:nth-of-type(3), &:nth-of-type(4)
+        margin: 0 column(1,12) 0 column(4,12)
+        max-width: 25em
+
+      &:nth-of-type(4)
+        margin-top: 3em
+
+        a
+          align-items: center
+          background-color: $action
+          border-radius: .35rem
+          color: $primary
+          display: flex
+          justify-content: space-between
+          padding: 1.25em
+
+          &::before
+            display: none
+
+          &::after
+            content: url('img/arrow-right.svg')
+            margin-left: 2em
+            min-width: 16px
+
+    ul
+      align-items: flex-start
+      color: $grey
+      display: flex
+      font-size: $font-xl
+      padding: 1em column(2,12)
+
+      li
+        flex: 1
+        position: relative
+        width: column(3,10)
+
+        &:first-of-type
+          margin-right: column(1,8)
+
+        &::before, &::after
+          content: ''
+          position: absolute
+
+        &::before
+          border-right: solid 1px $light-grey
+          bottom: .15em
+          left: -.8em
+          top: .85em
+          width: 1px
+
+        &::after
+          border: solid 1px $light-grey
+          border-radius: 100%
+          height: .35em
+          left: calc(-.8em + 1px)
+          top: .45em
+          transform: translateX(-50%)
+          width: .35em

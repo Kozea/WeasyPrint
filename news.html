@@ -2,19 +2,24 @@
 layout: page
 title: News
 permalink: /news/
+id: news
 ---
 
-{% assign releases = site.github.releases | where:"draft",false | sort:"created_at" | reverse %}
-<p>
-  Latest version of {{ site.title }} is {{ releases[0].tag_name }},
-  released on {{ releases[0].created_at | date: "%B %-d, %Y" }}
-  (<a href="https://github.com/Kozea/{{ site.title }}/blob/master/CHANGES">changelog</a>).
-</p>
+<section>
+  <p>
+    {% assign releases = site.github.releases | where:"draft",false | sort:"created_at" | reverse %}
+    Latest version of {{ site.title }} is {{ releases[0].tag_name }},
+    released on {{ releases[0].created_at | date: "%B %-d, %Y" }}
+    (<a href="https://github.com/Kozea/{{ site.title }}/blob/master/CHANGES">changelog</a>).
+  </p>
+</section>
 
-{% for post in site.posts %}
-<article>
-  <h2>{{ post.title }}</h2>
-  <aside>{{ post.date | date: "%B %-d, %Y" }}</aside>
-  {{ post.content }}
-</article>
-{% endfor %}
+<section>
+  {% for post in site.posts %}
+  <article>
+    <h2>{{ post.title }}</h2>
+    <aside>{{ post.date | date: "%B %-d, %Y" }}</aside>
+    {{ post.content }}
+  </article>
+  {% endfor %}
+</section>

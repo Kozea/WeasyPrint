@@ -2,59 +2,61 @@
 layout: page
 title: How to Start
 permalink: /start/
+id: start
 ---
 
-<p>
-  WeasyPrint is visual rendering engine for HTML and CSS that can export to
-  PDF. It aims to support web standards for printing.
-</p>
+<section>
+  <p>
+    WeasyPrint is visual rendering engine for HTML and CSS that can export to
+    PDF. It aims to support web standards for printing. Major facts:
+  </p>
 
-<p>
-  Major facts:
-</p>
+  <ul>
+    <li>Free and Open Source Software: BSD licensed</li>
+    <li>Designed for Python 3.4+</li>
+    <li>
+      <a href="https://github.com/Kozea/WeasyPrint">Source code</a>
+      and <a href="https://github.com/Kozea/WeasyPrint/issues">issue tracker</a>
+      on GitHub
+    </li>
+    <li>
+      <a href="http://weasyprint.readthedocs.io/en/latest/">Documentation</a>
+      on ReadTheDocs
+    </li>
+    <li>Works on Linux, macOS and Windows</li>
+  </ul>
+</section>
 
-<ul>
-  <li>Free and Open Source Software: BSD licensed</li>
-  <li>Designed for Python 3.4+</li>
-  <li>
-    <a href="https://github.com/Kozea/WeasyPrint">Source code</a>
-    and <a href="https://github.com/Kozea/WeasyPrint/issues">issue tracker</a>
-    on GitHub
-  </li>
-  <li>
-    <a href="http://weasyprint.readthedocs.io/en/latest/">Documentation</a>
-    on ReadTheDocs
-  </li>
-  <li>Works on Linux, macOS and Windows</li>
-</ul>
+<section>
+  <p>
+    It is based on various libraries but not on a full rendering engine like
+    Blink, Gecko or WebKit. The CSS layout engine is written in Python,
+    designed for pagination, and meant to be easy to hack on. You can find the
+    <a href="http://weasyprint.readthedocs.org/en/latest/features.html">list of supported features</a>
+    on the dedicated chapter of the documentation.
+  </p>
 
-<p>
-  It is based on various libraries but not on a full rendering engine like
-  Blink, Gecko or WebKit. The CSS layout engine is written in Python,
-  designed for pagination, and meant to be easy to hack on. You can find the
-  <a href="http://weasyprint.readthedocs.org/en/latest/features.html">list of supported features</a>
-  on the dedicated chapter of the documentation.
-</p>
+  <p>
+    On Linux, installing can be as easy as:
+  </p>
 
-<p>
-  On Linux, installing can be as easy as:
-</p>
+  <pre>
+    <code>
+|> pip install weasyprint
+|> weasyprint https://weasyprint.org/ weasyprint.pdf</code>
+  </pre>
 
-<code>
-  <pre>|> pip install weasyprint
-|> weasyprint https://weasyprint.org/ weasyprint.pdf</pre>
-</code>
+  <p>
+    WeasyPrint is also available as a library in a Python application,
+    embedding in a website or an application is often straightforward. You can
+    even use extra libraries dedicated to some famous Python web frameworks,
+    such as <a href="https://pythonhosted.org/Flask-WeasyPrint/">Flask-WeasyPrint</a>
+    or <a href="https://github.com/fdemmer/django-weasyprint">Django-WeasyPrint</a>.
+  </p>
 
-<p>
-  WeasyPrint is also available as a library in a Python application,
-  embedding in a website or an application is often straightforward. You can
-  even use extra libraries dedicated to some famous Python web frameworks,
-  such as <a href="https://pythonhosted.org/Flask-WeasyPrint/">Flask-WeasyPrint</a>
-  or <a href="https://github.com/fdemmer/django-weasyprint">Django-WeasyPrint</a>.
-</p>
-
-<p>
-  Please check the
-  <a href="http://weasyprint.readthedocs.io/en/latest/install.html">installation
-  guide</a> in the documentation for further information.
-</p>
+  <p>
+    Please check the
+    <a href="http://weasyprint.readthedocs.io/en/latest/install.html">installation
+    guide</a> in the documentation for further information.
+  </p>
+</section>

@@ -1,0 +1,44 @@
+#start
+  @extend %header-font-large
+
+  section:nth-of-type(1)
+    p
+      margin: 2em column(2,12)
+
+    ul
+      align-items: stretch
+      display: flex
+      flex-wrap: wrap
+      font-size: $font-xl
+      margin-top: 3em
+      padding-left: 0
+
+      li
+        align-items: center
+        border: solid 1px $grey
+        box-sizing: border-box
+        display: flex
+        flex-wrap: wrap
+        justify-content: center
+        padding: 1.5em 2em
+        vertical-align: center
+        width: 50%
+
+        a
+          @extend %link
+          background-clip: content-box
+          border-left: solid .5em transparent
+          border-right: solid .5em transparent
+
+  section:nth-of-type(2)
+    margin-top: 5em
+    padding: 0 column(2,12)
+
+    pre
+      background-color: $light
+      font-size: $font-normal
+      margin: 2em 0 4em
+      padding: 0 2em
+
+      code
+        @extend %font-mononoki

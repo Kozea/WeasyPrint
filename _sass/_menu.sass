@@ -1,0 +1,24 @@
+nav
+  +full-bg($primary)
+  color: $light
+
+  ul
+    align-items: center
+    display: flex
+    height: 50px
+    margin: 0
+    padding: 0
+
+    li
+      display: inline-block
+      font-size: $font-normal
+      margin-right: 1em
+
+      &.active
+        a
+          @extend %link
+          padding: 0 .25em
+
+
+aside + aside
+  display: none

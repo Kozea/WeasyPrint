@@ -1,0 +1,21 @@
+#about
+  @extend %header-font-large
+
+  &::after
+    content: url('img/logotype-picto.svg')
+    display: block
+    margin: 8em auto 0
+    width: 70px
+
+  ul
+    @extend %list-item
+    margin: 0
+
+    li
+      color: $light
+      display: inline-block
+      margin: 1em 1em 0 0
+
+      a
+        color: inherit
+        font: inherit

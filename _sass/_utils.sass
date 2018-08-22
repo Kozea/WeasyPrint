@@ -1,0 +1,73 @@
+// functions
+@function column($c-number, $c-total)
+  @return $c-number / $c-total * 100%
+
+
+// extends
+%link
+  background-color: rgba($grey, .3)
+
+  &::before, &::after
+    content: ''
+    display: inline-block
+    height: 100%
+    width: .25em
+n
+%full-bg
+  position: relative
+
+  &::before
+    content: ''
+    left: 50%
+    height: 100%
+    position: absolute
+    top: 0
+    transform: translateX(-50%)
+    width: 100vw
+    z-index: -1
+
+%list-item
+  margin-left: -1.25em
+  padding-left: 0
+
+  li
+    border: solid 1px $light-grey
+    border-radius: .35rem
+    color: $primary
+    font-size: $font-large
+    margin-bottom: .5em
+    padding: 1em 1em 1em 2em
+    position: relative
+
+    &::before
+      border: solid 1px $light-grey
+      border-radius: 100%
+      content: ''
+      height: .5em
+      left: .75em
+      position: absolute
+      top: 50%
+      transform: translateY(-50%)
+      width: .5em
+
+    a
+      @extend %link
+      font-family: 'mononokiRegular', monospace
+
+%font-mononoki
+  font-family: 'mononokiRegular', monospace
+  font-weight: 400
+  letter-spacing: -.05em
+
+%header-font-large
+  section:nth-of-type(1)
+    p
+      font-size: $font-large
+
+
+// mixins
+=full-bg($bg-color)
+  @extend %full-bg
+
+  &::before
+    background-color: $bg-color

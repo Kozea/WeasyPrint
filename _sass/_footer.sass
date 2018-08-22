@@ -1,0 +1,70 @@
+footer
+  +full-bg($light-grey)
+  border: solid 1px transparent
+  color: $grey
+  font-size: $font-small
+  margin: 8em auto -2px
+
+  &::before
+    max-width: calc(100% + #{$bleed-space} * 2 + 2px)
+    width: $page-max-width + $bleed-space * 2
+
+  ul
+    li
+      padding: .25em 0
+
+  > ul
+    margin: 3.5em 0
+
+    &:nth-of-type(1)
+      columns: 2
+      column-gap: 0
+      padding-left: column(5,12)
+
+      > li
+        width: column(4,7)
+
+        &:first-child
+          a::before
+            content: url('img/logotype-black.svg')
+            position: absolute
+            left: column(1,12)
+            width: column(2,12)
+
+        ul
+          break-inside: avoid
+          padding: 0
+          page-break-inside: avoid
+          -webkit-column-break-inside: avoid
+
+          li
+            align-items: flex-start
+            display: flex
+
+            &::before
+              border-bottom: solid 1px
+              border-left: solid 1px
+              content: ''
+              height: .5em
+              margin: .25em .25em 0 0
+              min-width: .5em
+
+    &:nth-of-type(2)
+      margin-bottom: 1em
+      text-align: center
+
+      li
+        display: inline-block
+        margin: 0 1.5em 0 0
+
+        a
+          align-items: center
+          display: flex
+
+          $list: freenode github mail twitter website
+          @each $name in $list
+            &##{$name}::before
+              content: url('img/about/picto-#{$name}.svg')
+              height: 1.5em
+              margin-right: .5em
+              width: 1.5em
