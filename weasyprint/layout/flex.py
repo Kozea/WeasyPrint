@@ -781,7 +781,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
     for line in flex_lines:
         for child in line:
             if child.is_flex_item:
-                new_child, child_resume_at = blocks.block_box_layout(
+                new_child, child_resume_at = blocks.block_level_layout_switch(
                     context, child, max_position_y, child_skip_stack, box,
                     device_size, page_is_empty, absolute_boxes, fixed_boxes,
                     adjoining_margins=[])[:2]
