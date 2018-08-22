@@ -15,7 +15,8 @@ import pytest
 import tinycss2
 
 from ..css import preprocess_declarations
-from ..css.properties import INITIAL_VALUES
+from ..css.computed_values import ZERO_PIXELS
+from ..css.properties import INITIAL_VALUES, Dimension
 from ..images import LinearGradient, RadialGradient
 from .testing_utils import assert_no_logs, capture_logs
 
@@ -841,3 +842,46 @@ def test_radial_gradient():
     gradient('closest-side circle at right 5em, blue',
              shape='circle', size=('keyword', 'closest-side'),
              center=('left', (100, '%'), 'top', (5, 'em')))
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, result', (
+    ('flex: auto', {
+        'flex_grow': 1,
+        'flex_shrink': 1,
+        'flex_basis': 'auto',
+    }),
+    ('flex: none', {
+        'flex_grow': 0,
+        'flex_shrink': 0,
+        'flex_basis': 'auto',
+    }),
+    ('flex: 10', {
+        'flex_grow': 10,
+        'flex_shrink': 1,
+        'flex_basis': ZERO_PIXELS,
+    }),
+    ('flex: 2 2', {
+        'flex_grow': 2,
+        'flex_shrink': 2,
+        'flex_basis': ZERO_PIXELS,
+    }),
+    ('flex: 2 2 1px', {
+        'flex_grow': 2,
+        'flex_shrink': 2,
+        'flex_basis': Dimension(1, 'px'),
+    }),
+    ('flex: 2 2 auto', {
+        'flex_grow': 2,
+        'flex_shrink': 2,
+        'flex_basis': 'auto',
+    }),
+    ('flex: 2 auto', {
+        'flex_grow': 2,
+        'flex_shrink': 1,
+        'flex_basis': 'auto',
+    }),
+))
+def test_flex(rule, result):
+    """Test the ``flex`` property."""
+    assert expand_to_dict(rule) == result
