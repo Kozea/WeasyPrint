@@ -215,8 +215,10 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
         child_skip_stack = None
 
     # Step 4
+    # TODO: the whole step has to be fixed
     if axis == 'width':
-        blocks.block_level_width(box, containing_block)
+        if box.width == 'auto':
+            blocks.block_level_width(box, containing_block)
     else:
         if box.style['height'] != 'auto':
             box.height = box.style['height'].value
