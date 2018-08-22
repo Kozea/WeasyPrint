@@ -621,10 +621,14 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
             position_axis += free_space / 2
         elif justify_content == 'space-around':
             position_axis += free_space / len(line) / 2
+        elif justify_content == 'space-evenly':
+            position_axis += free_space / (len(line) + 1)
 
         for child in line:
             if axis == 'width':
                 child.position_x = position_axis
+                if justify_content == 'stretch':
+                    child.width += free_space / len(line)
             else:
                 child.position_y = position_axis
             position_axis += (
@@ -635,6 +639,8 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
             elif justify_content == 'space-between':
                 if len(line) > 1:
                     position_axis += free_space / (len(line) - 1)
+            elif justify_content == 'space-evenly':
+                position_axis += free_space / (len(line) + 1)
 
     # Step 13
     position_cross = (
@@ -767,10 +773,16 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                             child.translate(**{
                                 direction: extra_cross_size /
                                 len(flex_lines) / 2})
+                        elif box.style['align_content'] == 'space-evenly':
+                            child.translate(**{
+                                direction: extra_cross_size /
+                                (len(flex_lines) + 1)})
                 if box.style['align_content'] == 'space-between':
                     cross_translate += extra_cross_size / (len(flex_lines) - 1)
                 elif box.style['align_content'] == 'space-around':
                     cross_translate += extra_cross_size / len(flex_lines)
+                elif box.style['align_content'] == 'space-evenly':
+                    cross_translate += extra_cross_size / (len(flex_lines) + 1)
 
     # TODO: don't use block_box_layout, see TODOs in Step 14 and
     # build.flex_children.
