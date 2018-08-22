@@ -669,35 +669,33 @@ def replaced_max_content_width(box, outer=True):
 
 def flex_min_content_width(context, box, outer=True):
     """Return the min-content width for an ``FlexContainerBox``."""
-    # TODO: take care of outer
     # TODO: use real values, see
     # https://www.w3.org/TR/css-flexbox-1/#intrinsic-sizes
     min_contents = [
         min_content_width(context, child, outer=True)
         for child in box.children if child.is_flex_item]
     if not min_contents:
-        return 0
+        return adjust(box, outer, 0)
     if (box.style['flex_direction'].startswith('row') and
             box.style['flex_wrap'] == 'nowrap'):
-        return sum(min_contents)
+        return adjust(box, outer, sum(min_contents))
     else:
-        return max(min_contents)
+        return adjust(box, outer, max(min_contents))
 
 
 def flex_max_content_width(context, box, outer=True):
     """Return the max-content width for an ``FlexContainerBox``."""
-    # TODO: take care of outer
     # TODO: use real values, see
     # https://www.w3.org/TR/css-flexbox-1/#intrinsic-sizes
     max_contents = [
         max_content_width(context, child, outer=True)
         for child in box.children if child.is_flex_item]
     if not max_contents:
-        return 0
+        return adjust(box, outer, 0)
     if box.style['flex_direction'].startswith('row'):
-        return sum(max_contents)
+        return adjust(box, outer, sum(max_contents))
     else:
-        return max(max_contents)
+        return adjust(box, outer, max(max_contents))
 
 
 def trailing_whitespace_size(context, box):
