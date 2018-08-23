@@ -12,6 +12,7 @@
 
 """
 
+import os
 import sys
 from pathlib import Path
 
@@ -26,8 +27,19 @@ if sys.version_info.major < 3:
         'WeasyPrint does not support Python 2.x anymore. '
         'Please use Python 3 or install an older version of WeasyPrint.')
 
-VERSION = '0.42'
-__version__ = VERSION
+if hasattr(sys, 'frozen'):
+    if hasattr(sys, '_MEIPASS'):
+        # Frozen with PyInstaller
+        # See https://github.com/Kozea/WeasyPrint/pull/540
+        ROOT = sys._MEIPASS
+    else:
+        # Frozen with something else (py2exe, etc.)
+        # See https://github.com/Kozea/WeasyPrint/pull/269
+        ROOT = os.path.dirname(sys.executable)
+else:
+    ROOT = os.path.dirname(__file__)
+
+VERSION = __version__ = open(os.path.join(ROOT, 'VERSION')).read().strip()
 
 # Used for 'User-Agent' in HTTP and 'Creator' in PDF
 VERSION_STRING = 'WeasyPrint %s (http://weasyprint.org/)' % VERSION

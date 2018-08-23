@@ -1,20 +1,6 @@
 WeasyPrint
 ##########
 
-.. image:: https://img.shields.io/pypi/l/WeasyPrint.svg?style=flat-square
-    :target: https://pypi.python.org/pypi/WeasyPrint/
-    :alt: License
-
-.. image:: http://img.shields.io/pypi/v/WeasyPrint.svg?style=flat-square
-    :target: https://pypi.python.org/pypi/WeasyPrint/
-    :alt: Latest Version
-
-.. image:: http://img.shields.io/travis/Kozea/WeasyPrint.svg?style=flat-square
-    :target: http://travis-ci.org/Kozea/WeasyPrint
-    :alt: Build status
-
-|
-
 WeasyPrint is a visual rendering engine for HTML and CSS that can export
 to PDF. It aims to support web standards for printing.
 WeasyPrint is free software made available under a BSD license.
@@ -25,6 +11,7 @@ pagination, and meant to be easy to hack on.
 
 * Free software: BSD licensed
 * Python 3.4+
-* Website: http://weasyprint.org/
-* Latest documentation: http://weasyprint.org/docs/
+* Website: https://weasyprint.org/
+* Documentation: https://weasyprint.readthedocs.io/
 * Source code and issue tracker: https://github.com/Kozea/WeasyPrint
+* Tests: https://travis-ci.org/Kozea/WeasyPrint

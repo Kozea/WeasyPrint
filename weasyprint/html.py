@@ -17,10 +17,9 @@
 import logging
 import os.path
 import re
-import sys
 from urllib.parse import urljoin
 
-from . import CSS
+from . import CSS, ROOT
 from .css import get_child_text
 from .formatting_structure import boxes
 from .logger import LOGGER
@@ -30,19 +29,8 @@ from .urls import get_url_attribute
 level = LOGGER.level
 LOGGER.setLevel(logging.ERROR)
 
-if hasattr(sys, 'frozen'):
-    if hasattr(sys, '_MEIPASS'):
-        # Frozen with PyInstaller
-        # See https://github.com/Kozea/WeasyPrint/pull/540
-        root = sys._MEIPASS
-    else:
-        # Frozen with something else (py2exe, etc.)
-        # See https://github.com/Kozea/WeasyPrint/pull/269
-        root = os.path.dirname(sys.executable)
-else:
-    root = os.path.dirname(__file__)
-HTML5_UA_STYLESHEET = CSS(filename=os.path.join(root, 'css', 'html5_ua.css'))
-HTML5_PH_STYLESHEET = CSS(filename=os.path.join(root, 'css', 'html5_ph.css'))
+HTML5_UA_STYLESHEET = CSS(filename=os.path.join(ROOT, 'css', 'html5_ua.css'))
+HTML5_PH_STYLESHEET = CSS(filename=os.path.join(ROOT, 'css', 'html5_ph.css'))
 
 LOGGER.setLevel(level)
 

@@ -6,6 +6,7 @@ WeasyPrint |version| depends on:
 * CPython_ ≥ 3.4.0
 * cairo_ ≥ 1.15.4 [#]_
 * Pango_ ≥ 1.38.0 [#]_
+* setuptools_ ≥ 30.3.0
 * CFFI_ ≥ 0.6
 * html5lib_ ≥ 0.999999999
 * cairocffi_ ≥ 0.9.0
@@ -18,6 +19,7 @@ WeasyPrint |version| depends on:
 .. _CPython: http://www.python.org/
 .. _cairo: http://cairographics.org/
 .. _Pango: http://www.pango.org/
+.. _setuptools: https://pypi.org/project/setuptools/
 .. _CFFI: https://cffi.readthedocs.io/
 .. _html5lib: https://html5lib.readthedocs.io/
 .. _cairocffi: https://cairocffi.readthedocs.io/
