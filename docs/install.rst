@@ -400,7 +400,7 @@ Lets find out. Enter the following command:
 This should respond with
 *path\\to\\recently\\installed\\gtk\\binaries\\libcairo-2.dll*, for example:
 
-.. code-block:: bat
+.. code-block:: console
 
     C:\msys2\mingw64\bin\libcairo-2.dll
 
