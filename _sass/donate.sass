@@ -28,24 +28,28 @@
         max-width: 25em
 
       &:nth-of-type(4)
-        margin-top: 3em
-
         a
           align-items: center
           background-color: $action
+          background-image: none
           border-radius: .35rem
+          box-shadow: 0 0 0 .01em $action
+          box-sizing: border-box
           color: $primary
           display: flex
           justify-content: space-between
-          padding: 1.25em
-
-          &::before
-            display: none
+          margin-top: 3em
+          padding: 1em
+          transition: background-color .3s cubic-bezier(.56, .09, .37, 2), box-shadow .3s cubic-bezier(.56, .09, .37, 2)
 
           &::after
             content: url('img/arrow-right.svg')
             margin-left: 2em
             min-width: 16px
+
+          &:hover
+            background-color: darken($action, 4)
+            box-shadow: 0 0 0 .65em darken($action, 4)
 
     ul
       align-items: flex-start
