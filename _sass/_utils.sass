@@ -5,14 +5,19 @@
 
 // extends
 %link
-  background-color: rgba($grey, .3)
+  background-image: linear-gradient(90deg, rgba($grey, .3) 0%, rgba($grey, .3) 50%, $action 50%, $action 100%)
+  background-size: 200% 100%
+  background-position: 0 50%
+  transition: background-position .2s ease-out, color .2s ease-in-out
+  transition-delay: .05s, .1s
 
   &::before, &::after
-    content: ''
-    display: inline-block
-    height: 100%
-    width: .25em
-n
+    content: ' '
+
+  &:hover
+    background-position: -100% 0
+    color: $primary
+
 %full-bg
   position: relative
 
