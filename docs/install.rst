@@ -215,7 +215,7 @@ Step 2 - Update pip and setuptools packages
 Python is bundled with modules that may have been updated since the release.
 Please open a *Command Prompt* and execute the following command:
 
-.. code-block:: bat
+.. code-block:: console
 
     python -m pip install --upgrade pip setuptools
 
@@ -225,7 +225,7 @@ Step 3 - Install WeasyPrint
 In the console window execute the following command to install the WeasyPrint
 package:
 
-.. code-block:: bat
+.. code-block:: console
 
     python -m pip install WeasyPrint
 
@@ -242,7 +242,7 @@ If you mismatch the bitness, the warning about kittens dying applies.
 In case you forgot which Python you installed, ask Python (in the console
 window):
 
-.. code-block:: bat
+.. code-block:: console
 
     python --version --version
 
@@ -296,7 +296,7 @@ Ok, let's install GTK3+.
 
 * Update the MSYS2 shell with
 
-  .. code-block:: bat
+  .. code-block:: console
 
       pacman -Syuu
 
@@ -304,7 +304,7 @@ Ok, let's install GTK3+.
 
 * Restart the MSYS2 shell. Repeat the command
 
-  .. code-block:: bat
+  .. code-block:: console
 
       pacman -Su
 
@@ -314,13 +314,13 @@ Ok, let's install GTK3+.
 
   To install the 32 bit (**i686**) GTK run the following command:
 
-  .. code-block:: bat
+  .. code-block:: console
 
       pacman -S mingw-w64-i686-gtk3
 
   The command for the 64 bit (**x86_64**) version is:
 
-  .. code-block:: bat
+  .. code-block:: console
 
       pacman -S mingw-w64-x86_64-gtk3
 
@@ -328,7 +328,7 @@ Ok, let's install GTK3+.
 
 * Close the shell:
 
-  .. code-block:: bat
+  .. code-block:: console
 
       exit
 
@@ -379,7 +379,7 @@ Now that everything is in place you can test WeasyPrint.
 
 Open a fresh *Command Prompt* and execute
 
-.. code-block:: bat
+.. code-block:: console
 
     python -m weasyprint http://weasyprint.org weasyprint.pdf
 
@@ -393,14 +393,14 @@ complete set of GTK libraries **must** be present and the error is an error.
 
 Lets find out. Enter the following command:
 
-.. code-block:: bat
+.. code-block:: console
 
     WHERE libcairo-2.dll
 
 This should respond with
 *path\\to\\recently\\installed\\gtk\\binaries\\libcairo-2.dll*, for example:
 
-.. code-block:: bat
+.. code-block:: console
 
     C:\msys2\mingw64\bin\libcairo-2.dll
 
@@ -419,7 +419,7 @@ something along the lines of:
 Determine the correct folder and execute the following commands, replace
 ``<path-to-recently-installed-gtk>`` accordingly:
 
-.. code-block:: bat
+.. code-block:: console
 
     SET PROPER_GTK_FOLDER=<path-to-recently-installed-gtk>
     SET PATH=%PROPER_GTK_FOLDER%;%PATH%
@@ -429,7 +429,7 @@ it's files are the first found when WeasyPrint requires them.
 
 Call WeasyPrint again:
 
-.. code-block:: bat
+.. code-block:: console
 
     python -m weasyprint http://weasyprint.org weasyprint.pdf.
 
