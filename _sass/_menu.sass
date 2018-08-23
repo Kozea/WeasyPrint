@@ -16,8 +16,10 @@ nav
 
       &.active
         a
-          @extend %link
-          padding: 0 .25em
+          +link(rgba($grey, .5), rgba($grey, .8))
+
+      a
+        +link(transparent, $action)
 
 
 aside + aside
