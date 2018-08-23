@@ -14,6 +14,7 @@
       padding-left: 0
 
       li
+        align-content: center
         align-items: center
         border: solid 1px $grey
         box-sizing: border-box
@@ -25,10 +26,10 @@
         width: 50%
 
         a
-          @extend %link
+          +link(rgba($grey, .3), $action)
           background-clip: content-box
-          border-left: solid .5em transparent
-          border-right: solid .5em transparent
+          border-left: solid .35em transparent
+          border-right: solid .35em transparent
 
   section:nth-of-type(2)
     margin-top: 5em

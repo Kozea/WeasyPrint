@@ -13,6 +13,13 @@ footer
     li
       padding: .25em 0
 
+      &.active
+        a
+          box-shadow: 0 1px 0
+
+      a
+        +link(transparent, rgba($grey, .15))
+
   > ul
     margin: 3.5em 0
 

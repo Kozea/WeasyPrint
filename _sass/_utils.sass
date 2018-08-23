@@ -3,9 +3,8 @@
   @return $c-number / $c-total * 100%
 
 
-// extends
+// extends & mixins
 %link
-  background-image: linear-gradient(90deg, rgba($grey, .3) 0%, rgba($grey, .3) 50%, $action 50%, $action 100%)
   background-size: 200% 100%
   background-position: 0 50%
   transition: background-position .2s ease-out, color .2s ease-in-out
@@ -17,6 +16,11 @@
   &:hover
     background-position: -100% 0
     color: $primary
+
+=link($normal-color, $hover-color)
+  @extend %link
+  background-image: linear-gradient(90deg, $normal-color 0%, $normal-color 50%, $hover-color 50%, $hover-color 100%)
+
 
 %full-bg
   position: relative
@@ -30,6 +34,13 @@
     transform: translateX(-50%)
     width: 100vw
     z-index: -1
+
+=full-bg($bg-color)
+  @extend %full-bg
+
+  &::before
+    background-color: $bg-color
+
 
 %list-item
   margin-left: -1.25em
@@ -56,23 +67,17 @@
       width: .5em
 
     a
-      @extend %link
+      +link(rgba($grey, .3), $action)
       font-family: 'mononokiRegular', monospace
+
 
 %font-mononoki
   font-family: 'mononokiRegular', monospace
   font-weight: 400
   letter-spacing: -.05em
 
+
 %header-font-large
   section:nth-of-type(1)
     p
       font-size: $font-large
-
-
-// mixins
-=full-bg($bg-color)
-  @extend %full-bg
-
-  &::before
-    background-color: $bg-color
