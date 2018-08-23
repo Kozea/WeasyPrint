@@ -181,35 +181,256 @@ Windows
 
 Dear Windows user, please follow these steps carefully.
 
-Really carefully. Don't cheat.
+Really carefully. Don’t cheat.
 
-**If you decide to install Python or GTK 32 bit on Windows 64 bit, you're on
-your own, don't even try to report an issue, kittens will die because of you.**
+Besides a proper Python installation and a few Python packages, WeasyPrint needs the Pango, Cairo and GDK-PixBuf libraries. They are required for the graphical stuff: Text and image rendering.
+These libraries aren't Python packages. They are part of `GTK+
+<https://en.wikipedia.org/wiki/GTK+>`_ 
+(formerly known as GIMP Toolkit), and must be installed separately.
 
-- Install `Python 3.6.x <https://www.python.org/downloads/release/python>`_
-  **with "Add Python 3.6 to PATH" checked**:
+The following installation instructions for the GTK+ libraries don't work on Windows XP. That means: Windows Vista or later is required.
 
-  - "Windows x86 executable installer" on Windows 32 bit,
-  - "Windows x86-64 executable installer" on Windows 64 bit,
+Of course you can decide to install ancient WeasyPrint versions with an erstwhile Python, 
+combine it with outdated GTK+ libraries on any Windows version you like, but if you decide to do that
+**you’re on your own, don’t even try to report an issue, kittens will die because of you.**
 
-- install GTK **with "Set up PATH environment variable to include GTK+"
-  checked**:
 
-  - on Windows 32 bit: `gtk2-runtime-x.x.x-x-x-x-ash.exe
-    <http://gtk-win.sourceforge.net/home/index.php/Main/Downloads>`_,
-  - on Windows 64 bit: `gtk3-runtime-x.x.x-x-x-x-ts-win64.exe
-    <https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer>`_,
+Step 1 - Install Python
+~~~~~~~~~~~~~~~~~~~~~~~
 
-- reboot,
-- install `Visual C++ Build Tools
-  <https://landinghub.visualstudio.com/visual-cpp-build-tools>`_ as explained
-  in `Python's wiki <https://wiki.python.org/moin/WindowsCompilers>`_,
-- install WeasyPrint with ``python -m pip install weasyprint``,
-- test with ``python -m weasyprint http://weasyprint.org weasyprint.pdf``.
+Install the `latest Python 3.x <https://www.python.org/downloads/windows/>`_
 
-If you get an error like ``OSError: dlopen() failed to load a library: cairo /
-cairo-2`` it's because Cairo (or the library given in your error) is not
-available in one of the folders listed in your ``PATH`` environment
-variable. Reinstalling GTK (and carefully reading the warnings above) will
-probably solve your problem. You can also find extra help in `this bug report
-<https://github.com/Kozea/WeasyPrint/issues/589>`_.
+- On Windows 32 bit download the "Windows **x86** executable installer"
+- On Windows 64 bit download the "Windows **x86-64** executable installer"
+
+Follow the `instructions <https://docs.python.org/3/using/windows.html>`_. 
+You may customize your installation as you like, but we suggest that you 
+"Add Python 3.x to PATH" for convenience and let the installer "install pip".
+
+Step 2 - Update pip and setuptools packages
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Dont know why, but the initially installed package manager is 
+never up-to-date. 
+Please open a *Command Prompt* and execute the following command:
+
+.. code-block:: sh
+
+    python -m pip install --upgrade pip setuptools
+    
+  
+Step 3 - Install WeasyPrint
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In the console window execute the following command to install the WeasyPrint package:
+
+.. code-block:: sh
+
+    python -m pip install WeasyPrint
+
+    
+Step 4 - Install the GTK+ libraries
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+There's one thing you **must** observe:
+
+- If your Python is 32 bit you must use the 32 bit versions of those libraries.
+- If your Python is 64 bit you must use the 64 bit versions of those libraries.
+  
+If you mismatch the bitness, the warning about kittens dying applies.
+
+In case you forgot which Python you installed, ask Python (in the console window):
+
+.. code-block:: sh
+
+    python --version --version
+
+Having installed Python 64 bit you can either use the :ref:`GTK+ 64 Bit Installer <gtk64installer>` or install the 64-bit :ref:`GTK+ via MSYS2 <msys2_gtk>`.
+
+On Windows 32 bit or if you decided to install Python 32 bit on your Windows 64 bit machine 
+you'll have to install the 32-bit :ref:`GTK+ via MSYS2 <msys2_gtk>`.
+
+*BTW:* Installing those libraries doesn't mean something extraordinary, it only means: The files must be on your computer and WeasyPrint must be able to find them which is achieved by putting 
+the path-to-the-libs into your Windows ``PATH``.
+
+.. _msys2_gtk:
+
+
+Install GTK+ with the aid of MSYS2
+""""""""""""""""""""""""""""""""""
+
+Sadly the `GTK+ Runtime for 32 bit Windows 
+<https://gtk-win.sourceforge.io/home/index.php/Main/Home>`_
+was discontinued in April 2017. 
+Since then developers are advised to either bundle GTK+ with their software (which is beyond the capacities of the WeasyPrint maintainers) or install it through the 
+`MSYS2 project <https://msys2.github.io/>`_.
+
+With the help of MSYS2, both the 32 bit as well as the 64 bit GTK+ can be installed.
+If you installed the 64 bit Python and don't want to bother with MSYS2, then go ahead and use the 
+:ref:`GTK+ 64 Bit Installer <gtk64installer>`.
+
+MSYS2 is a development environment. 
+We (somehow) mis-use it to only supply the up-to-date 
+GTK+ runtime library files in a subfolder we can inject into our ``PATH``.
+But maybe you get interested in the full powers of MSYS2. It's the perfect tool for experimenting with 
+`MinGW <https://en.wikipedia.org/wiki/MinGW>`_ and cross-platform development -- look at its `wiki
+<https://github.com/msys2/msys2/wiki>`_.
+
+Ok, let's install GTK3+.
+
+* Download and run the `MSYS2 installer <http://www.msys2.org/>`_
+  
+  - On 32 bit Windows: "msys2-**i686**-xxxxxxxx.exe"
+  - On 64 bit Windows: "msys2-**x86_64**-xxxxxxxx.exe"
+  
+  You alternatively may download a zipped archive, unpack it and run 
+  ``msys2_shell.cmd`` as described in the `MSYS2 wiki <https://github.com/msys2/msys2/wiki/MSYS2-installation>`_.
+  
+* Update the MSYS2 shell with
+
+  .. code-block:: sh
+      
+      pacman -Syuu
+   
+  Close the shell by clicking the close button in the upper right corner of the window.
+  
+* Restart the MSYS2 shell. Repeat the command
+
+  .. code-block:: sh
+ 
+      pacman -Su
+
+  until it says that there are no more packages to update.
+
+* Install the GTK+ package and its dependencies.
+
+  To install the 32 bit (**i686**) GTK run the following command:
+  
+  .. code-block:: sh
+
+      pacman -S mingw-w64-i686-gtk3
+      
+  The command for the 64 bit (**x86_64**) version is:
+      
+  .. code-block:: sh
+
+      pacman -S mingw-w64-x86_64-gtk3
+      
+  The **x86_64** package cannot be installed in the 32 bit MSYS2!
+
+* Close the shell:
+      
+  .. code-block:: sh
+
+      exit
+  
+* Now that all the GTK files needed by WeasyPrint are in the ``.\mingw32``
+  respectively in the ``.\mingw64`` subfolder of your MSYS2 installation directory,
+  we can (and must) make them accessible by injecting the appropriate folder into the
+  ``PATH``.
+  
+  Let's assume you installed MSYS2 in ``C:\msys2``. Then the folder to inject is:
+
+    * ``C:\msys2\mingw32\bin`` for the 32 bit GTK+ 
+    * ``C:\msys2\mingw64\bin`` for the 64 bit GTK+ 
+
+  You can either persist it through *Advanced System Settings* 
+  -- if you dont know how to do that, 
+  read `How to set the path and environment variables in Windows
+  <https://www.computerhope.com/issues/ch000549.htm>`_ -- 
+  or temporarily inject the folder before you run WeasyPrint.
+
+    
+  
+.. _gtk64installer:
+
+GTK+ 64 Bit Installer
+""""""""""""""""""""""
+   
+If your Python is 64 bit you can use an installer extracted from MSYS2
+and provided by Tom Schoonjans.
+
+* Download and run the latest `gtk3-runtime-x.x.x-x-x-x-ts-win64.exe
+  <https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer>`_
+
+* If you prefer to manage your ``PATH`` environment varaiable yourself you 
+  should uncheck "Set up PATH environment variable to include GTK+" and
+  supply it later -- either persist it through *Advanced System Settings* or 
+  temporarily inject it before you run WeasyPrint.
+
+  *FYI:* Checking the option doesn't insert the GTK-path at the beginning of
+  your system ``PATH``, but rather **appends** it. If there is alread another 
+  (outdated) GTK on your ``PATH`` this will lead to unpleasant problems.
+  
+In any case: When executing WeasyPrint the GTK libraries must be on its ``PATH``.
+
+
+Step 5 - Run WeasyPrint
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Now that everything is in place you can test WeasyPrint.
+
+Open a fresh *Command Prompt* and execute
+
+.. code-block:: sh
+
+    python -m weasyprint http://weasyprint.org weasyprint.pdf
+
+If you get an error like 
+``OSError: dlopen() failed to load a library: cairo / cairo-2`` 
+it’s probably because Cairo (or another GTK+ library mentioned in the error message) is not 
+properly available in the folders listed in your ``PATH`` environment variable. 
+
+Since you didn't cheat and followed the instructions the up-to-date and 
+complete set of GTK libraries **must** be present and the error is an error.
+
+Lets find out. Enter the following command:
+
+.. code-block:: sh
+
+    WHERE libcairo-2.dll
+
+This should respond with *path\\to\\recently\\installed\\gtk\\binaries\\libcairo-2.dll*, 
+for example:
+
+.. code-block:: sh
+
+    C:\msys2\mingw64\bin\libcairo-2.dll
+
+If your system answers with *nothing found* or returns a filename not related to your
+recently-installed-gtk or lists more than one location
+and the first file in the list isn't actually in a subfolder of your recently-installed-gtk,
+then we have caught the culprit.
+
+Depending on the GTK installation route you took, the proper folder name is 
+something along the lines of:
+
+* ``C:\msys2\mingw32\bin``
+* ``C:\msys2\mingw34\bin``
+* ``C:\Program Files\GTK3-Runtime Win64\bin``
+
+Determine the correct folder and execute the following commands, replace
+``<path-to-recently-installed-gtk>`` accordingly:
+
+.. code-block:: sh
+   
+    SET PROPER_GTK_FOLDER=<path-to-recently-installed-gtk>
+    SET PATH=%PROPER_GTK_FOLDER%;%PATH%
+
+This puts the appropriate GTK at the beginning of your ``PATH`` and
+it's files are the first found when WeasyPrint requires them.
+
+Call WeasyPrint again:
+
+.. code-block:: sh
+
+    python -m weasyprint http://weasyprint.org weasyprint.pdf.
+
+If the error is gone you should either fix your ``PATH`` permanently
+(via *Advanced System Settings*) or execute the above ``SET PATH`` 
+command by default (once!) before you start using WeasyPrint.
+
+If the error still occurs and if you really didn't cheat then you are
+allowed to open a `new issue <https://github.com/Kozea/WeasyPrint/issues/new>`_. 
+You can also find extra help in this `bug report <https://github.com/Kozea/WeasyPrint/issues/589>`_.
+If you cheated, then, you know: Kittens already died.
