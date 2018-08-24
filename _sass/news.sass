@@ -12,7 +12,13 @@
         top: 4.25em
 
       ul
-        @extend %list-item
+        +list-style($grey, list-item)
+
+        li
+          a
+            +link(rgba($grey, .3), $action)
+            font-family: 'mononokiRegular', monospace
+
 
       & + article
         h2

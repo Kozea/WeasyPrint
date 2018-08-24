@@ -77,7 +77,10 @@
       padding-top: 3em
 
     ul
-      @extend %list-item
+      +list-style($action, link-list-item)
+
+      li
+        @extend %full-link
 
     p
       font-size: $font-small
