@@ -90,7 +90,8 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
     parent_box = box.copy_with_children(children)
     resolve_percentages(parent_box, containing_block)
     if isinstance(parent_box, boxes.FlexBox):
-        blocks.block_level_width(parent_box, containing_block)
+        if parent_box.width == 'auto':
+            blocks.block_level_width(parent_box, containing_block)
     else:
         parent_box.width = preferred.flex_max_content_width(
             context, parent_box)
@@ -187,7 +188,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                     new_child.width = float('inf')
                     new_child = blocks.block_level_layout(
                         context, new_child, float('inf'), child_skip_stack,
-                        box, device_size, page_is_empty, absolute_boxes,
+                        parent_box, device_size, page_is_empty, absolute_boxes,
                         fixed_boxes, adjoining_margins=[])[0]
                     child.flex_base_size = new_child.margin_height()
             elif child.style[axis] == 'min-content':
@@ -199,7 +200,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                     new_child.width = 0
                     new_child = blocks.block_level_layout(
                         context, new_child, float('inf'), child_skip_stack,
-                        box, device_size, page_is_empty, absolute_boxes,
+                        parent_box, device_size, page_is_empty, absolute_boxes,
                         fixed_boxes, adjoining_margins=[])[0]
                     child.flex_base_size = new_child.margin_height()
             else:
@@ -423,12 +424,12 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                 child_copy.margin_top = 0
             if child_copy.margin_bottom == 'auto':
                 child_copy.margin_bottom = 0
-            blocks.block_level_width(child_copy, box)
+            blocks.block_level_width(child_copy, parent_box)
             new_child, _, _, adjoining_margins, _ = (
                 blocks.block_level_layout_switch(
-                    context, child_copy, float('inf'),
-                    child_skip_stack, box, device_size, page_is_empty,
-                    absolute_boxes, fixed_boxes, adjoining_margins=[]))
+                    context, child_copy, float('inf'), child_skip_stack,
+                    parent_box, device_size, page_is_empty, absolute_boxes,
+                    fixed_boxes, adjoining_margins=[]))
 
             child._baseline = find_in_flow_baseline(new_child)
             if cross == 'height':
