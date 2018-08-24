@@ -7,11 +7,9 @@
 %link
   background-size: 200% 100%
   background-position: 0 50%
+  padding: 0 .3em
   transition: background-position .2s ease-out, color .2s ease-in-out
   transition-delay: .05s, .1s
-
-  &::before, &::after
-    content: ' '
 
   &:hover
     background-position: -100% 0
@@ -54,21 +52,30 @@
     margin-bottom: .5em
     padding: 1em 1em 1em 2em
     position: relative
+    transition: border-color .3s ease-in-out
 
     &::before
-      border: solid 1px $light-grey
+      background-clip: content-box
+      border: inherit
       border-radius: 100%
+      box-sizing: border-box
       content: ''
-      height: .5em
+      height: 10px
       left: .75em
+      margin-top: -5px
+      padding: 2px
       position: absolute
       top: 50%
-      transform: translateY(-50%)
-      width: .5em
+      width: 10px
 
-    a
-      +link(rgba($grey, .3), $action)
-      font-family: 'mononokiRegular', monospace
+=list-style($border-color-hover, $animation-name)
+  @extend %list-item
+
+  li:hover
+    border-color: $border-color-hover
+
+    &::before
+      animation: $animation-name .75s both
 
 
 %font-mononoki
@@ -81,3 +88,14 @@
   section:nth-of-type(1)
     p
       font-size: $font-large
+
+%full-link
+  position: relative
+
+  a::before
+    content: ''
+    height: 100%
+    left: 0
+    position: absolute
+    top: 0
+    width: 100%

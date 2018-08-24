@@ -16,7 +16,7 @@ id: news
 
 <section>
   {% for post in site.posts %}
-  <article>
+  <article id="post-{{ forloop.index }}">
     <h2>{{ post.title }}</h2>
     <aside>{{ post.date | date: "%B %-d, %Y" }}</aside>
     {{ post.content }}
