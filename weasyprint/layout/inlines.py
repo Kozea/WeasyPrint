@@ -653,8 +653,6 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                     box.border_left_width)
     right_spacing = (box.padding_right + box.margin_right +
                      box.border_right_width)
-    if is_start:
-        position_x += left_spacing
     content_box_left = position_x
 
     children = []
@@ -746,7 +744,10 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
         if last_child and right_spacing and resume_at is None:
             # TODO: we should take care of children added into absolute_boxes,
             # fixed_boxes and other lists.
-            available_width -= right_spacing
+            if box.style['direction'] == 'rtl':
+                available_width -= left_spacing
+            else:
+                available_width -= right_spacing
             new_child, resume_at, preserved, first, last = split_inline_level(
                 context, child, position_x, available_width, skip_stack,
                 containing_block, device_size, absolute_boxes, fixed_boxes,
@@ -892,9 +893,10 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
         children.extend(waiting_children)
         resume_at = None
 
+    is_end = resume_at is None
     new_box = box.copy_with_children(
         [box_child for index, box_child in children],
-        is_start=is_start, is_end=resume_at is None)
+        is_start=is_start, is_end=is_end)
     if isinstance(box, boxes.LineBox):
         # Line boxes already have a position_x which may not be the same
         # as content_box_left when text-indent is non-zero.
@@ -902,6 +904,10 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
         new_box.width = position_x - new_box.position_x
     else:
         new_box.position_x = initial_position_x
+        if (is_start and box.style['direction'] == 'ltr') or (
+                is_end and box.style['direction'] == 'rtl'):
+            for child in new_box.children:
+                child.translate(dx=left_spacing)
         new_box.width = position_x - content_box_left
         new_box.translate(dx=float_translate, ignore_floats=True)
 
