@@ -81,10 +81,6 @@ Fonts
 WeasyPrint can use any font that Pango can find installed on the system. Fonts
 are automatically embedded in PDF files.
 
-On Windows and macOS, Pango uses the native font-managing libraries. You can
-use the tools provided by your OS to know which fonts are available. WeasyPrint
-should support any font format that's supported by the operating system.
-
 On Linux, Pango uses fontconfig to access fonts. You can list the available
 fonts thanks to the ``fc-list`` command, and know which font is matched by a
 given pattern thanks to ``fc-match``. Copying a font file into the
@@ -92,6 +88,15 @@ given pattern thanks to ``fc-match``. Copying a font file into the
 install a new font. WeasyPrint should support `any font format handled by
 FreeType <https://en.wikipedia.org/wiki/FreeType#File_formats>`_ (any format
 widely used except WOFF2).
+
+On Windows and macOS, **Pango >= 1.38** is required to use fontconfig and 
+FreeType like it does on Linux. 
+Both, ``fc-list`` and ``fc-match`` probably will be present, too. 
+Installing new fonts on your system as usual should make them available to Pango.
+
+Otherwise (Pango < 1.38) on Windows and macOS, the native font-managing libraries are used. 
+You must then use the tools provided by your OS to know which fonts are available.
+WeasyPrint should support any font format that’s supported by the operating system.
 
 
 CSS
@@ -251,8 +256,7 @@ but that should not be a problem for common use.
 
 The shorthand ``font`` and ``font-variant`` properties are supported.
 
-WeasyPrint supports the ``@font-face`` rule on Linux and macOS, but does
-**not** support it on Windows.
+WeasyPrint supports the ``@font-face`` rule, provided that Pango >= 1.38 is installed.
 
 WeasyPrint does **not** support the ``@font-feature-values`` rule and the
 values of ``font-variant-alternates`` other than ``normal`` and
@@ -281,14 +285,12 @@ All the features of this draft are available, including:
 - the ``@page`` rule and the ``:left``, ``:right``, ``:first`` and ``:blank``
   selectors;
 - the page margin boxes;
-- the page-based counters (with known bugs `#91`_, `#93`_, `#289`_);
+- the page-based counters (with known limitations  `#93`_);
 - the page ``size``, ``bleed`` and ``marks`` properties;
 - the named pages.
 
 .. _CSS Paged Media Module Level 3: http://dev.w3.org/csswg/css3-page/
-.. _#91: https://github.com/Kozea/WeasyPrint/issues/91
 .. _#93: https://github.com/Kozea/WeasyPrint/issues/93
-.. _#289: https://github.com/Kozea/WeasyPrint/issues/289
 
 
 CSS Generated Content for Paged Media Module
@@ -298,7 +300,7 @@ The `CSS Generated Content for Paged Media Module`_ (GCPM) is a working draft
 defining "new properties and values, so that authors may bring new techniques
 (running headers and footers, footnotes, leaders, bookmarks) to paged media".
 
-Two features from this module have been implemented in WeasyPrint.
+Three features from this module have been implemented in WeasyPrint.
 
 .. _bookmarks:
 
@@ -320,14 +322,32 @@ first or last element of a type present on a page, and display these strings in
 page borders. This feature is really useful to add the title of the current
 chapter at the top of the pages of a book for example.
 
-The named strings can embed static strings, counters, tag contents and tag
-attributes.
+The named strings can embed static strings, counters, cross-references, tag contents 
+and tag attributes.
 
 .. code-block:: css
 
     @top-center { content: string(chapter); }
     h2 { string-set: chapter "Current chapter: " content() }
 
+    
+The third feature is internal `Cross-references`_,
+which makes it possible to retrieve counter or content values from 
+targets (anchors or ids) in the current document:
+
+.. code-block:: css
+
+    a::after { 
+      content: ", on page " target-counter(attr(href), page);
+    }
+    a::after { 
+      content: ", see " target-text(attr(href)); 
+    }
+
+In particular, ``target-counter()`` and ``target-text()`` are useful when 
+it comes to tables of contents,
+see `an example <https://github.com/Kozea/WeasyPrint/pull/652#issuecomment-403276559>`_.
+    
 The other features of GCPM are **not** implemented:
 
 - running elements (``running()`` and ``element()``);
@@ -336,13 +356,12 @@ The other features of GCPM are **not** implemented:
   ``footnote-policy``);
 - page selectors and page groups (``:nth()`` pseudo-class);
 - leaders (``content: leader()``);
-- cross-references (``target-counter()``, ``target-counters()`` and
-  ``target-text()``);
 - bookmark states (``bookmark-state``).
 
 .. _CSS Generated Content for Paged Media Module: http://www.w3.org/TR/css-gcpm-3/
 .. _PDF bookmarks: http://www.w3.org/TR/css-gcpm-3/#bookmarks
 .. _Named strings: http://www.w3.org/TR/css-gcpm-3/#named-strings
+.. _Cross-references: https://www.w3.org/TR/css-gcpm-3/#cross-references
 .. _experimental: http://www.w3.org/TR/css-2010/#experimental
 .. _user agent stylesheet: https://github.com/Kozea/WeasyPrint/blob/master/weasyprint/css/html5_ua.css
 
