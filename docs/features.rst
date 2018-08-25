@@ -350,14 +350,14 @@ The other features of GCPM are **not** implemented:
 CSS Color Module Level 3
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-The `CSS Color Module Level 3`_ is a recommandation defining "CSS properties
+The `CSS Color Module Level 3`_ is a recommendation defining "CSS properties
 which allow authors to specify the foreground color and opacity of an
 element". Its main goal is to specify how colors are defined, including color
 keywords and the ``#rgb``, ``#rrggbb``, ``rgb()``, ``rgba()``, ``hsl()``,
 ``hsla()`` syntaxes. Opacity and alpha compositing are also defined in this
 document.
 
-This recommandation is fully implemented in WeasyPrint, except the deprecated
+This recommendation is fully implemented in WeasyPrint, except the deprecated
 System Colors.
 
 .. _CSS Color Module Level 3: http://www.w3.org/TR/css3-color/
@@ -386,7 +386,7 @@ transformations (``matrix3d``, ``rotate(3d|X|Y|Z)``, ``translate(3d|Z)``,
 CSS Backgrounds and Borders Module Level 3
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The `CSS Backgrounds and Borders Module Level 3`_ is a candidate recommandation
+The `CSS Backgrounds and Borders Module Level 3`_ is a candidate recommendation
 defining properties dealing "with the decoration of the border area and with
 the background of the content, padding and border areas".
 
@@ -425,7 +425,7 @@ CSS Image Values and Replaced Content Module Level 3 / 4
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The `Image Values and Replaced Content Module Level 3`_ is a candidate
-recommandation introducing "additional ways of representing 2D images, for
+recommendation introducing "additional ways of representing 2D images, for
 example as a list of URIs denoting fallbacks, or as a gradient", defining
 "several properties for manipulating raster images and for sizing or
 positioning replaced elements" and "generic sizing algorithm for replaced
@@ -456,7 +456,7 @@ CSS Basic User Interface Module Level 3
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The `CSS Basic User Interface Module Level 3`_ also known as CSS3 UI is a
-candidate recommandation describing "CSS properties which enable authors to
+candidate recommendation describing "CSS properties which enable authors to
 style user interface related properties and values."
 
 Only one new property defined in this document is implemented in WeasyPrint:
