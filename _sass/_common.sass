@@ -18,8 +18,8 @@ body
   width: $page-max-width
 
   &::before
-    height: $bleed-space + $page-margin
-    top: - $page-margin
+    height: $bleed-space + $page-margin + 1px
+    top: - $page-margin - 1px
 
   > aside:nth-of-type(1)
     @extend %font-mononoki
