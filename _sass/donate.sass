@@ -70,7 +70,6 @@
     ul
       @extend %font-xl
       align-items: flex-start
-      color: $grey
       display: flex
       flex-wrap: wrap
       max-width: 100%
@@ -82,7 +81,9 @@
         padding: 1em 0 1em column(1,12)
 
       li
+        color: $grey
         flex: 1 8em
+        transition: color .75s
         position: relative
         width: 50%
 
@@ -94,9 +95,12 @@
           position: absolute
 
         &::before
-          border-right: solid 1px $light-grey
+          background-image: linear-gradient($light-grey 0%, $light-grey 50%, $grey 50%, $grey 100%)
+          background-size: 100% 200%
+          background-position-y: 0
           bottom: .15em
           left: -.8em
+          transition: background-position .75s ease
           top: .85em
           width: 1px
 
@@ -104,7 +108,15 @@
           border: solid 1px $light-grey
           border-radius: 100%
           height: .35em
-          left: calc(-.8em + 1px)
+          left: calc(-.8em - .35em / 2)
           top: .45em
-          transform: translateX(-50%)
           width: .35em
+
+        &:hover
+          color: $primary
+
+          &::before
+            background-position-y: 100%
+
+          &::after
+            animation: list-item .75s both
