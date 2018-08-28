@@ -29,9 +29,30 @@
         flex: 1 10em
         flex-wrap: wrap
         justify-content: center
+        min-width: 50%
+        transition: border-color .2s
         padding: 1.5em 2em
+        position: relative
         vertical-align: center
-        width: 50%
+
+        @for $i from 1 through 6
+          &:nth-of-type(#{$i})
+            &::before
+              animation-delay: $i * 50ms + 1s
+
+        &:hover
+          border-color: $light
+
+        &::before
+          animation: start-list-fade-in 1s ease both
+          background-image: linear-gradient(transparent 0%, transparent 33.33%, $light 33.33%, $light 66.66%, $primary 66.66%, $primary 100%)
+          background-position-y: 100%
+          background-size: 100% 300%
+          content: ''
+          height: 100%
+          left: 0
+          position: absolute
+          width: 100%
 
         a
           +link(rgba($grey, .3), $action)
