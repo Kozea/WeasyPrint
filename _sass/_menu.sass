@@ -94,30 +94,35 @@ nav
             animation: .25s fade-in both
             animation-delay: $i * 75ms + 1s
 
-      & + #menu-close
+    &:hover ~ main
+      &::before, &::after
         opacity: 1
-        transition: opacity .2s ease 1s
+        right: 0
+        transition: opacity .2s ease 1.2s, right .2s ease 1.2s
 
-    #menu-close
-      font-size: $font-small
+  main
+    &::before, &::after
       opacity: 0
-      padding: 0 2em
+      right: -3rem
       position: fixed
-      right: 2em
-      top: -2em
-      transform: rotate(-90deg)
-      transform-origin: right
-      transition: opacity .2s ease
+      transition: opacity .2s ease, right .2s ease
       z-index: 15
 
-      &::after
-        content: '×'
-        display: inline-block
-        font-family: 'Rosario', sans
-        font-size: $font-xl
-        margin-left: .25em
-        padding-bottom: .24em
-        vertical-align: middle
+    &::before
+      content: '×'
+      font-family: 'Rosario', sans
+      font-size: $font-xl * .8
+      line-height: 0
+      padding: 0 1rem
+      top: 1rem
+
+    &::after
+      content: 'close'
+      font-size: $font-small * .8
+      padding: .5rem 2rem 1rem .5rem
+      transform: rotate(-90deg)
+      transform-origin: bottom right
+      bottom: 100%
 
 
 aside + aside
