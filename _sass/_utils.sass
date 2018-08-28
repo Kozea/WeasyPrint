@@ -3,7 +3,43 @@
   @return $c-number / $c-total * 100%
 
 
-// extends & mixins
+// extends
+%font-small
+  @media screen and (min-width: $mobile-breakpoint + 1px)
+    font-size: $font-small
+
+  @media screen and (max-width: $mobile-breakpoint)
+    font-size: $font-small * .8
+
+%font-normal
+  @media screen and (min-width: $mobile-breakpoint + 1px)
+    font-size: $font-normal
+
+  @media screen and (max-width: $mobile-breakpoint)
+    font-size: $font-normal * .8
+
+%font-large
+  @media screen and (min-width: $mobile-breakpoint + 1px)
+    font-size: $font-large
+
+  @media screen and (max-width: $mobile-breakpoint)
+    font-size: $font-large * .8
+
+%font-xl
+  @media screen and (min-width: $mobile-breakpoint + 1px)
+    font-size: $font-xl
+
+  @media screen and (max-width: $mobile-breakpoint)
+    font-size: $font-xl * .8
+
+%font-title
+  @media screen and (min-width: $mobile-breakpoint + 1px)
+    font-size: $font-title
+
+  @media screen and (max-width: $mobile-breakpoint)
+    font-size: $font-title * .8
+
+
 %link
   background-size: 200% 100%
   background-position: 0 50%
@@ -54,6 +90,9 @@
     position: relative
     transition: border-color .3s ease-in-out
 
+    @media screen and (max-width: $mobile-breakpoint)
+      font-size: $font-large * .8
+
     &::before
       background-clip: content-box
       border: inherit
@@ -67,6 +106,7 @@
       position: absolute
       top: 50%
       width: 10px
+
 
 =list-style($border-color-hover, $animation-name)
   @extend %list-item
@@ -88,6 +128,9 @@
   section:nth-of-type(1)
     p
       font-size: $font-large
+
+      @media screen and (max-width: $mobile-breakpoint)
+        font-size: $font-large * .8
 
 %full-link
   position: relative

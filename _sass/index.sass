@@ -12,7 +12,8 @@
       &::before
         content: url('img/logotype-white.svg')
         display: block
-        margin: 1em auto
+        margin: 0 auto 2em
+        min-width: 10rem
         width: column(4,12)
 
     p
@@ -22,12 +23,12 @@
         margin: auto .25em
 
     ul
+      @extend %font-normal
       @extend %font-mononoki
       background-color: $light
       border-radius: .35rem
       color: $primary
       display: flex
-      font-size: $font-normal
       margin-bottom: 0
       padding: 0
       transform: translateY(50%)
@@ -57,21 +58,29 @@
 
       &::before
         max-width: calc(120% + #{$bleed-space} * 2 + 2px)
-        width: $page-max-width + $bleed-space * 2
+
+        @media screen and (min-width: $mobile-breakpoint + 1px)
+          width: $page-max-width + $bleed-space * 2
 
   section:nth-of-type(2)
     display: inline-block
-    margin: 2em column(1,12)
+    padding: 2em 0
     vertical-align: top
-    width: column(5,12)
+    width: 100%
+
+    @media screen and (min-width: $mobile-breakpoint + 1px)
+      padding: 2em column(1,12)
+      width: column(5,12)
 
     p
+      @extend %font-xl
       color: $primary
-      font-size: $font-xl
 
   section:nth-of-type(3)
     display: inline-block
-    width: column(4,12)
+
+    @media screen and (min-width: $mobile-breakpoint + 1px)
+      width: column(4,12)
 
     h2
       padding-top: 3em
@@ -83,13 +92,17 @@
         @extend %full-link
 
     p
-      font-size: $font-small
+      @extend %font-small
       text-align: right
 
   section:nth-of-type(4)
     +full-bg($light)
     margin-top: 6em
-    padding: 0 column(2,12) 3em
+    padding: 1px column(2,12) 3em
+    // 1px is for avoid margin-collapsing with h2
+
+    @media screen and (max-width: $mobile-breakpoint)
+      padding: 1px 0 3em
 
     h2
       margin-bottom: 0

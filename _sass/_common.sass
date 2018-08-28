@@ -17,33 +17,46 @@ body
   padding: $bleed-space $bleed-space 0
   width: $page-max-width
 
+  @media screen and (max-width: $mobile-breakpoint)
+    margin: 0
+
+
   &::before
     height: $bleed-space + $page-margin + 1px
     top: - $page-margin - 1px
 
   > aside:nth-of-type(1)
     @extend %font-mononoki
+    @extend %font-small
+    align-items: center
+    display: flex
+    box-sizing: border-box
     color: $action
-    font-size: $font-small
-    left: 0
+    height: $bleed-space
+    justify-content: center
+    left: $bleed-space
+    padding: 0 2em
     position: absolute
+    right: $bleed-space
     text-align: center
-    top: .75em
-    width: 100%
+    top: 0
 
   main
     section:nth-of-type(1)
+      @extend %font-xl
       +full-bg($primary)
       align-content: center
       align-items: center
       color: $light
       display: flex
-      font-size: $font-xl
       flex-wrap: wrap
       justify-content: center
       min-height: 40vh
       padding: 3em column(1,12)
       text-align: center
+
+      @media screen and (max-width: $mobile-breakpoint)
+        padding: 2em 0
 
       p
         font-size: inherit
@@ -68,14 +81,14 @@ body
     display: none
 
   h2
-    font-size: $font-title
+    @extend %font-title
     font-style: italic
     font-weight: 400
     line-height: 1
 
   h3
+    @extend %font-xl
     color: $primary
-    font-size: $font-xl
     font-weight: 400
     margin-bottom: 0
 
@@ -87,7 +100,19 @@ body
     text-decoration: none
 
   p
-    font-size: $font-large
+    @extend %font-large
 
     a
       +link(rgba($grey, .3), $action)
+
+  pre
+    @extend %font-normal
+    box-sizing: border-box
+    background-color: $light
+    margin: 2em 0 4em
+    overflow: auto
+    padding: 2em
+    width: 100%
+
+    code
+      @extend %font-mononoki

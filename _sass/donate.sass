@@ -2,21 +2,33 @@
   section:nth-of-type(2)
     h2
       &:nth-of-type(1)
-        margin-left: column(1,12)
         margin-bottom: 0
+
+        @media screen and (min-width: $mobile-breakpoint + 1px)
+          margin-left: column(1,12)
+
 
       &:nth-of-type(2)
         margin-left: column(4,12)
 
+        @media screen and (max-width: $mobile-breakpoint)
+          margin-left: column(1,12)
+
     p
       &:nth-of-type(1)
-        margin: .5em 0 0 column(1,12)
+        margin: .5em 0 0
+
+        @media screen and (min-width: $mobile-breakpoint + 1px)
+          margin-left: column(1,12)
 
       &:nth-of-type(2)
         +full-bg($primary)
         color: $light
         padding: 4em column(1,12)
         margin: 3em column(2,12) 0 0
+
+        @media screen and (max-width: $mobile-breakpoint)
+          margin: 3em 0 0
 
         &::before
           left: auto
@@ -26,6 +38,10 @@
       &:nth-of-type(3), &:nth-of-type(4)
         margin: 0 column(1,12) 0 column(4,12)
         max-width: 25em
+
+        @media screen and (max-width: $mobile-breakpoint)
+          margin-left: column(1,12)
+
 
       &:nth-of-type(4)
         a
@@ -44,7 +60,7 @@
 
           &::after
             content: url('img/arrow-right.svg')
-            margin-left: 2em
+            margin-left: 1.5em
             min-width: 16px
 
           &:hover
@@ -52,19 +68,26 @@
             box-shadow: 0 0 0 .65em darken($action, 4)
 
     ul
+      @extend %font-xl
       align-items: flex-start
       color: $grey
       display: flex
-      font-size: $font-xl
-      padding: 1em column(2,12)
+      flex-wrap: wrap
+      max-width: 100%
+
+      @media screen and (min-width: $mobile-breakpoint + 1px)
+        padding: 1em column(2,12)
+
+      @media screen and (max-width: $mobile-breakpoint)
+        padding: 1em 0 1em column(1,12)
 
       li
-        flex: 1
+        flex: 1 8em
         position: relative
-        width: column(3,10)
+        width: 50%
 
         &:first-of-type
-          margin-right: column(1,8)
+          margin: 0 column(1,8) 1em 0
 
         &::before, &::after
           content: ''

@@ -15,8 +15,16 @@
       @extend %full-link
       color: $light
       display: inline-block
-      margin: 1em 1em 0 0
+      margin: .5em 0
+      text-align: left
       transition: color .3s
 
       &:hover
         color: $action
+
+
+@media screen and (min-width: $mobile-breakpoint + 1px)
+  #about
+    ul
+      li
+        margin: .5em
