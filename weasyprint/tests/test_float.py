@@ -508,3 +508,48 @@ def test_preferred_widths_5():
     body, = html.children
     paragraph, = body.children
     assert paragraph.width == 40
+
+
+@assert_no_logs
+def test_float_in_inline():
+    page, = render_pages('''
+      <style>
+        @font-face { src: url(AHEM____.TTF); font-family: ahem }
+        body {
+          font-family: ahem;
+          font-size: 20px;
+        }
+        p {
+          width: 14em;
+          text-align: justify;
+        }
+        span {
+          float: right;
+        }
+      </style>
+      <p>
+        aa bb <a><span>cc</span> ddd</a> ee ff
+      </p>
+    ''')
+    html, = page.children
+    body, = html.children
+    paragraph, = body.children
+    line1, line2 = paragraph.children
+
+    p1, a, p2 = line1.children
+    assert p1.width == 6 * 20
+    assert p1.text == 'aa bb '
+    assert p1.position_x == 0 * 20
+    assert p2.width == 3 * 20
+    assert p2.text == ' ee'
+    assert p2.position_x == 9 * 20
+    span, a_text = a.children
+    assert a_text.width == 3 * 20  # leading space collapse
+    assert a_text.text == 'ddd'
+    assert a_text.position_x == 6 * 20
+    assert span.width == 2 * 20
+    assert span.children[0].children[0].text == 'cc'
+    assert span.position_x == 12 * 20
+
+    p3, = line2.children
+    assert p3.width == 2 * 20
