@@ -9,6 +9,8 @@
 
 """
 
+import pytest
+
 from ..formatting_structure import boxes
 from .test_boxes import render_pages
 from .testing_utils import assert_no_logs
@@ -586,3 +588,156 @@ def test_float_next_line():
     assert a_text.position_x == a.position_x == 5 * 20
     assert a_text.width == a.width == 2 * 20
     assert p.position_x == 7 * 20
+
+
+@assert_no_logs
+def test_float_text_indent_1():
+    page, = render_pages('''
+      <style>
+        @font-face { src: url(AHEM____.TTF); font-family: ahem }
+        body {
+          font-family: ahem;
+          font-size: 20px;
+        }
+        p {
+          text-align: justify;
+          text-indent: 1em;
+          width: 14em;
+        }
+        span {
+          float: left;
+        }
+      </style>
+      <p><a>aa <span>float</span> aa</a></p>''')
+    html, = page.children
+    body, = html.children
+    paragraph, = body.children
+    line1, = paragraph.children
+    a, = line1.children
+    a1, span, a2 = a.children
+    span_text, = span.children
+    assert span.position_x == span_text.position_x == 0
+    assert span.width == span_text.width == (
+        (1 + 5) * 20)  # text-indent + span text
+    assert a1.width == 3 * 20
+    assert a1.position_x == (1 + 5 + 1) * 20  # span + a1 text-indent
+    assert a2.width == 2 * 20  # leading space collapse
+    assert a2.position_x == (1 + 5 + 1 + 3) * 20  # span + a1 t-i + a1
+
+
+@assert_no_logs
+def test_float_text_indent_2():
+    page, = render_pages('''
+      <style>
+        @font-face { src: url(AHEM____.TTF); font-family: ahem }
+        body {
+          font-family: ahem;
+          font-size: 20px;
+        }
+        p {
+          text-align: justify;
+          text-indent: 1em;
+          width: 14em;
+        }
+        span {
+          float: left;
+        }
+      </style>
+      <p>
+        oooooooooooo
+        <a>aa <span>float</span> aa</a></p>''')
+    html, = page.children
+    body, = html.children
+    paragraph, = body.children
+    line1, line2 = paragraph.children
+
+    p1, = line1.children
+    assert p1.position_x == 1 * 20  # text-indent
+    assert p1.width == 12 * 20  # p text
+
+    a, = line2.children
+    a1, span, a2 = a.children
+    span_text, = span.children
+    assert span.position_x == span_text.position_x == 0
+    assert span.width == span_text.width == (
+        (1 + 5) * 20)  # text-indent + span text
+    assert a1.width == 3 * 20
+    assert a1.position_x == (1 + 5) * 20  # span
+    assert a2.width == 2 * 20  # leading space collapse
+    assert a2.position_x == (1 + 5 + 3) * 20  # span + a1
+
+
+@assert_no_logs
+def test_float_text_indent_3():
+    page, = render_pages('''
+      <style>
+        @font-face { src: url(AHEM____.TTF); font-family: ahem }
+        body {
+          font-family: ahem;
+          font-size: 20px;
+        }
+        p {
+          text-align: justify;
+          text-indent: 1em;
+          width: 14em;
+        }
+        span {
+          float: right;
+        }
+      </style>
+      <p>
+        oooooooooooo
+        <a>aa <span>float</span> aa</a>
+        oooooooooooo
+      </p>''')
+    html, = page.children
+    body, = html.children
+    paragraph, = body.children
+    line1, line2, line3 = paragraph.children
+
+    p1, = line1.children
+    assert p1.position_x == 1 * 20  # text-indent
+    assert p1.width == 12 * 20  # p text
+
+    a, = line2.children
+    a1, span, a2 = a.children
+    span_text, = span.children
+    assert span.position_x == span_text.position_x == (14 - 5 - 1) * 20
+    assert span.width == span_text.width == (
+        (1 + 5) * 20)  # text-indent + span text
+    assert a1.position_x == 0  # span
+    assert a2.width == 2 * 20  # leading space collapse
+    assert a2.position_x == (14 - 5 - 1 - 2) * 20
+
+    p2, = line3.children
+    assert p2.position_x == 0
+    assert p2.width == 12 * 20  # p text
+
+
+@pytest.mark.xfail
+@assert_no_logs
+def test_float_fail():
+    page, = render_pages('''
+      <style>
+        @font-face { src: url(AHEM____.TTF); font-family: ahem }
+        body {
+          font-family: ahem;
+          font-size: 20px;
+        }
+        p {
+          text-align: justify;
+          width: 12em;
+        }
+        span {
+          float: left;
+          background: red;
+        }
+        a {
+          background: yellow;
+        }
+      </style>
+      <p>bb bb pp bb pp pb <a><span>pp pp</span> apa</a> bb bb</p>''')
+    html, = page.children
+    body, = html.children
+    paragraph, = body.children
+    line1, line2, line3 = paragraph.children
