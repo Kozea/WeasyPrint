@@ -34,7 +34,7 @@ def iter_line_boxes(context, box, position_y, skip_stack, containing_block,
     ``line`` is a laid-out LineBox with as much content as possible that
     fits in the available width.
 
-    :param linebox: a non-laid-out :class:`LineBox`
+    :param box: a non-laid-out :class:`LineBox`
     :param position_y: vertical top position of the line box on the page
     :param skip_stack: ``None`` to start at the beginning of ``linebox``,
                        or a ``resume_at`` value to continue just after an
