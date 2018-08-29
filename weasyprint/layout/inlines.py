@@ -734,11 +734,12 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
 
         last_child = (i == len(box_children) - 1)
         available_width = max_x
+        child_waiting_floats = []
         new_child, resume_at, preserved, first, last, new_float_widths = (
             split_inline_level(
                 context, child, position_x, available_width, skip_stack,
                 containing_block, device_size, absolute_boxes, fixed_boxes,
-                line_placeholders, waiting_floats, line_children))
+                line_placeholders, child_waiting_floats, line_children))
         if last_child and right_spacing and resume_at is None:
             # TODO: we should take care of children added into absolute_boxes,
             # fixed_boxes and other lists.
@@ -750,7 +751,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                 split_inline_level(
                     context, child, position_x, available_width, skip_stack,
                     containing_block, device_size, absolute_boxes, fixed_boxes,
-                    line_placeholders, waiting_floats, line_children))
+                    line_placeholders, child_waiting_floats, line_children))
 
         if box.style['direction'] == 'rtl':
             max_x -= new_float_widths['left']
@@ -884,11 +885,13 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                     # Too wide, can't break waiting children and the inline is
                     # non-empty: put child entirely on the next line.
                     resume_at = (children[-1][0] + 1, None)
+                    child_waiting_floats = []
                     break
 
             position_x = new_position_x
             waiting_children.append((index, new_child))
 
+        waiting_floats.extend(child_waiting_floats)
         if resume_at is not None:
             children.extend(waiting_children)
             resume_at = (index, resume_at)

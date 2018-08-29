@@ -553,3 +553,36 @@ def test_float_in_inline():
 
     p3, = line2.children
     assert p3.width == 2 * 20
+
+
+@assert_no_logs
+def test_float_next_line():
+    page, = render_pages('''
+      <style>
+        @font-face { src: url(AHEM____.TTF); font-family: ahem }
+        body {
+          font-family: ahem;
+          font-size: 20px;
+        }
+        p {
+          text-align: justify;
+          width: 13em;
+        }
+        span {
+          float: left;
+        }
+      </style>
+      <p>pp pp pp pp <a><span>ppppp</span> aa</a> pp pp pp pp pp</p>''')
+    html, = page.children
+    body, = html.children
+    paragraph, = body.children
+    line1, line2, line3 = paragraph.children
+    assert len(line1.children) == 1
+    assert len(line3.children) == 1
+    a, p = line2.children
+    span, a_text = a.children
+    assert span.position_x == 0
+    assert span.width == 5 * 20
+    assert a_text.position_x == a.position_x == 5 * 20
+    assert a_text.width == a.width == 2 * 20
+    assert p.position_x == 7 * 20
