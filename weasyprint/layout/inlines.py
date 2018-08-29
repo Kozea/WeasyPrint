@@ -44,6 +44,9 @@ def iter_line_boxes(context, box, position_y, skip_stack, containing_block,
     :param device_size: ``(width, height)`` of the current page.
 
     """
+    resolve_percentages(box, containing_block)
+    # TODO: that's wrong, see https://github.com/Kozea/WeasyPrint/issues/679
+    resolve_one_percentage(box, 'text_indent', containing_block.width)
     while 1:
         line, resume_at = get_next_linebox(
             context, box, position_y, skip_stack, containing_block,
@@ -56,6 +59,7 @@ def iter_line_boxes(context, box, position_y, skip_stack, containing_block,
         if resume_at is None:
             return
         skip_stack = resume_at
+        box.text_indent = 0
         first_letter_style = None
 
 
@@ -63,15 +67,6 @@ def get_next_linebox(context, linebox, position_y, skip_stack,
                      containing_block, device_size, absolute_boxes,
                      fixed_boxes, first_letter_style):
     """Return ``(line, resume_at)``."""
-    resolve_percentages(linebox, containing_block)
-    if skip_stack is None:
-        # text-indent only at the start of the first line
-        # Other percentages (margins, width, ...) do not apply.
-        resolve_one_percentage(linebox, 'text_indent', containing_block.width)
-    else:
-        linebox.text_indent = 0
-        first_letter_style = None
-
     skip_stack = skip_first_whitespace(linebox, skip_stack)
     if skip_stack == 'continue':
         return None, None
