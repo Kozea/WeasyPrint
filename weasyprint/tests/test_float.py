@@ -503,7 +503,7 @@ def test_preferred_widths_5():
         '  @font-face { src: url(AHEM____.TTF); font-family: ahem }'
         '  p { font: 20px ahem }'
         '</style>'
-        '<p style="float: left">XX<br> XX<br>X</p>''')
+        '<p style="float: left">XX<br> XX<br>X</p>')
     html, = page.children
     body, = html.children
     paragraph, = body.children
