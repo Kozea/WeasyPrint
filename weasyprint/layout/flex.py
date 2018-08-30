@@ -87,11 +87,14 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
 
     # Step 3
     children = box.children
+    resolve_percentages(box, containing_block)
+    if box.margin_top == 'auto':
+        box.margin_top = 0
+    if box.margin_bottom == 'auto':
+        box.margin_bottom = 0
     parent_box = box.copy_with_children(children)
-    resolve_percentages(parent_box, containing_block)
     if isinstance(parent_box, boxes.FlexBox):
-        if parent_box.width == 'auto':
-            blocks.block_level_width(parent_box, containing_block)
+        blocks.block_level_width(parent_box, containing_block)
     else:
         parent_box.width = preferred.flex_max_content_width(
             context, parent_box)
@@ -141,8 +144,11 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
 
         child.style = child.style.copy()
 
-        resolve_one_percentage(child, 'flex_basis', available_main_space)
-        flex_basis = child.flex_basis
+        if child.style['flex_basis'] == 'content':
+            flex_basis = child.flex_basis = 'content'
+        else:
+            resolve_one_percentage(child, 'flex_basis', available_main_space)
+            flex_basis = child.flex_basis
 
         # "If a value would resolve to auto for width, it instead resolves
         # to content for flex-basis." Let's do this for height too.
@@ -218,8 +224,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
     # Step 4
     # TODO: the whole step has to be fixed
     if axis == 'width':
-        if box.width == 'auto':
-            blocks.block_level_width(box, containing_block)
+        blocks.block_level_width(box, containing_block)
     else:
         if box.style['height'] != 'auto':
             box.height = box.style['height'].value
@@ -230,7 +235,8 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                     child.hypothetical_main_size +
                     child.border_top_width + child.border_bottom_width +
                     child.padding_top + child.padding_bottom)
-                if child_height + box.height > main_space:
+                if getattr(box, axis) == 'auto' and (
+                        child_height + box.height > available_main_space):
                     resume_at = (i, None)
                     children = children[:i + 1]
                     break
@@ -419,11 +425,11 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
         for child in line:
             # TODO: Find another way than calling block_level_layout_switch to
             # get baseline and child.height
+            if child.margin_top == 'auto':
+                child.margin_top = 0
+            if child.margin_bottom == 'auto':
+                child.margin_bottom = 0
             child_copy = child.copy_with_children(child.children)
-            if child_copy.margin_top == 'auto':
-                child_copy.margin_top = 0
-            if child_copy.margin_bottom == 'auto':
-                child_copy.margin_bottom = 0
             blocks.block_level_width(child_copy, parent_box)
             new_child, _, _, adjoining_margins, _ = (
                 blocks.block_level_layout_switch(
