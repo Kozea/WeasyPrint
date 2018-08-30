@@ -267,6 +267,13 @@ else:
                         result = ffi.new('FcResult *')
                         matching_pattern = fontconfig.FcFontMatch(
                             config, pattern, result)
+                        # prevent RuntimeError, see issue #677
+                        if matching_pattern == ffi.NULL:
+                            LOGGER.warning(
+                                'Failed to get matching local font for "%s"',
+                                font_name.decode('utf-8'))
+                            continue
+
                         # TODO: do many fonts have multiple family values?
                         fontconfig.FcPatternGetString(
                             matching_pattern, b'fullname', 0, family)
