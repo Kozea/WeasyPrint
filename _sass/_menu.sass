@@ -17,7 +17,87 @@ nav
     @extend %font-mononoki
 
 
-@media screen and (min-width: 700px + 1px)
+aside + aside
+  align-items: center
+  border: solid 1px $light
+  border-radius: .35rem
+  color: $light
+  display: flex
+  font-size: $font-small
+  height: 50px
+  position: absolute
+  right: $bleed-space
+  top: $bleed-space
+  transition: border .2s ease
+
+  &:hover
+    border-color: #f4900c
+
+    a::before
+      margin-top: 0
+
+    progress
+      &::-moz-progress-bar
+        background-color: #f4900c
+
+      &::-webkit-progress-value
+        background-color: #f4900c
+
+  a
+    height: 50px
+    line-height: 50px
+    margin-left: 1em
+    overflow: hidden
+
+    &::before
+      background: url('img/sun.png') center left / 50% no-repeat
+      content: ''
+      display: block
+      font-size: 2em
+      height: 50px
+      margin-top: -50px
+      transition: margin-top .25s ease
+      width: 50px
+
+    &::after
+      bottom: 0
+      content: ''
+      left: 0
+      position: absolute
+      right: 0
+      top: 0
+      z-index: 2
+
+  label
+    @extend %font-mononoki
+    color: $primary
+    font-size: .8em
+    position: absolute
+    right: 1.5em
+
+  progress
+    background-color: rgba($light, .3)
+    border: 0
+    border-radius: .15rem
+    margin: 0 1em
+    width: 7em
+
+    &::-webkit-progress-bar
+      background-color: rgba($light, .3)
+      border-radius: .15rem
+
+    &::-moz-progress-bar
+      background-color: $light
+      border-radius: .15rem
+      transition: background-color .25s ease
+
+    &::-webkit-progress-value
+      background-color: $light
+      border-radius: .15rem
+      transition: background-color .25s ease
+
+
+@media screen and (min-width: 830px + 1px)
   nav
     color: $light
 
@@ -35,7 +115,7 @@ nav
       display: none
 
 
-@media screen and (max-width: 700px)
+@media screen and (max-width: 830px)
   nav
     width: 0
 
@@ -123,7 +203,3 @@ nav
       transform: rotate(-90deg)
       transform-origin: bottom right
       bottom: 100%
-
-
-aside + aside
-  display: none
