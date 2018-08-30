@@ -32,6 +32,8 @@
       margin-bottom: 0
       padding: 0
       transform: translateY(50%)
+      position: relative
+      z-index: 1
 
       &::after
         align-items: center
@@ -50,17 +52,151 @@
         & + li
           display: none
 
-    div
-      +full-bg(black)
+    input
+      border: 0
+      bottom: 0
+      cursor: pointer
+      height: 6rem
+      left: 0
+      margin: 0
+      opacity: 0
+      position: absolute
+      width: 17rem
+      z-index: 5
+
+      &:not(:checked)
+        ~ dl dt
+          display: block
+
+      &:checked
+        ~ dl
+          dt
+            background-position: 90% 0
+            opacity: 0
+
+          dd
+            img
+              opacity: 1
+              top: 50%
+
+        ~ label
+          &:nth-of-type(1)
+            color: $grey !important
+
+            &::after
+              background-color: $primary
+              left: 8.5rem
+              padding: .25rem
+              right: 5rem
+              transition: background-color .25s ease, left .25s ease .05s, padding .25s ease, right .25s ease, transform .2s ease
+
+          &:nth-of-type(2)
+            color: $primary
+
+
+      &:hover ~ label
+        &:nth-of-type(1)
+          &::before, &::after
+            transform: scale(1.1)
+
+          &::before
+            box-shadow: 0 5px 5px 0 rgba($grey, .3)
+
+    label
+      align-items: center
+      bottom: 0
+      box-shadow: 0 0 0 0 $light-grey
+      box-sizing: border-box
+      display: flex
+      font-size: $font-normal
+      height: 6rem
+      left: 0
+      padding: 1rem
+      position: absolute
+      transition: box-shadow .2s ease
+
+      &:nth-of-type(1)
+        @extend %font-mononoki
+        animation: switch-fade-in 1s ease 1s both, color-fade-in .25s ease 2.25s both
+        background-image: linear-gradient(90deg, transparent 0%, transparent 33.33%, $light-grey 33.33%, $light-grey 66.66%, $action  66.66%, $action 100%)
+        background-size: 300% 100%
+        background-position-x: 0
+        color: $primary
+        justify-content: flex-end
+        padding-right: 12rem
+        width: 17rem
+        z-index: 1
+
+        &::before, &::after
+          animation: opacity-fade-in 1s ease 1.6s both
+          border-radius: 3.5rem
+          content: ''
+          height: 3.5rem
+          left: 6rem
+          position: absolute
+          top: 1.25rem
+
+        &::before
+          animation: opacity-fade-in .25s ease-in-out 1.85s both
+          background-color: $light
+          box-shadow: 0 5px 5px 0 rgba($grey, .1)
+          transition: box-shadow .2s, transform .2s ease
+          width: 6rem
+
+        &::after
+          animation: opacity-fade-in .25s ease-in-out 2s both
+          background-clip: content-box
+          background-color: $action
+          box-sizing: border-box
+          padding: .5rem
+          right: 7.5rem
+          transition: background-color .25s ease, left .25s ease, padding .25s ease, right .25s ease .05s, transform .2s ease
+          z-index: 1
+
+      &:nth-of-type(2)
+        animation: opacity-fade-in .25s ease 2.25s both
+        color: $grey
+        font-style: italic
+        justify-content: flex-start
+        left: 12rem
+        width: 5rem
+        z-index: 2
+
+    dl
+      animation: start-list-fade-in 1s ease 1s both, color-fade-in .25s ease 2.25s both
+      background-image: linear-gradient(transparent 0%, transparent 33.33%, $light-grey 33.33%, $light-grey 66.66%, $primary 66.66%, $primary  83.33%, #fff 83.33%, #fff 100%)
+      background-size: 100% 300%
+      background-position-x: 0
       height: 370px
-      margin-bottom: -185px
+      margin: 0 0 -185px
+      overflow: hidden
+      position: relative
       width: 100%
 
-      &::before
-        max-width: calc(120% + #{$bleed-space} * 2 + 2px)
+      *
+        z-index: -1
 
-        @media screen and (min-width: $mobile-breakpoint + 1px)
-          width: $page-max-width + $bleed-space * 2
+      dt
+        background: url('img/documents/html.jpg') center / cover no-repeat
+        height: 100%
+        left: 0
+        opacity: 1
+        position: absolute
+        top: 0
+        transition: background-position .5s ease, opacity .5s ease
+        width: 100%
+
+      dd
+        font-size: 0
+
+      img
+        left: 50%
+        max-width: 100%
+        opacity: 0
+        position: absolute
+        top: 0
+        transform: translate(-50%, -50%)
+        transition: opacity .5s ease, top .5s ease
 
   section:nth-of-type(2)
     display: inline-block
