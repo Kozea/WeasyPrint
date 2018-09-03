@@ -220,6 +220,12 @@ def column_group_content_width(context, box):
 
 def inline_line_widths(context, box, outer, is_line_start, minimum,
                        skip_stack=None, first_line=False):
+    if box.style['text_indent'].unit == '%':
+        # TODO: this is wrong, text-indent percentages should be resolved
+        # before calling this function.
+        text_indent = 0
+    else:
+        text_indent = box.style['text_indent'].value
     current_line = 0
     if skip_stack is None:
         skip = 0
@@ -288,14 +294,15 @@ def inline_line_widths(context, box, outer, is_line_start, minimum,
         current_line += lines[0]
         if len(lines) > 1:
             # Forced line break
-            yield current_line
+            yield current_line + text_indent
+            text_indent = 0
             if len(lines) > 2:
                 for line in lines[1:-1]:
                     yield line
             current_line = lines[-1]
         is_line_start = lines[-1] == 0
         skip_stack = None
-    yield current_line
+    yield current_line + text_indent
 
 
 def _percentage_contribution(box):
