@@ -28,6 +28,28 @@ If you have many documents to convert you may prefer using the Python API
 in long-lived processes to avoid paying the start-up costs every time.
 
 
+Adjusting Document Dimensions
+.............................
+
+Currently, WeasyPrint does not provide support for adjusting page size
+or document margins via command-line flags. This is best accomplished
+with the CSS ``@page`` at-rule. Consider the following example:
+
+.. code-block:: css
+  
+  @page {
+    size: Letter; /* Change from the default size of A4 */
+    margin-left: 2.5cm; /* Set margin on each page */
+  }
+
+There is much more which can be achieved with the ``@page`` at-rule, 
+such as page numbers, headers, etc. Read more about the page_ at-rule,
+and find an example here_.
+
+.. _page: https://developer.mozilla.org/en-US/docs/Web/CSS/@page
+.. _here: https://weasyprint.org
+
+
 As a Python library
 -------------------
 .. currentmodule:: weasyprint
