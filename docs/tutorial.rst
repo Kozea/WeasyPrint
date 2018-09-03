@@ -39,7 +39,7 @@ with the CSS ``@page`` at-rule. Consider the following example:
   
   @page {
     size: Letter; /* Change from the default size of A4 */
-    margin-left: 2.5cm; /* Set margin on each page */
+    margin: 2.5cm; /* Set margin on each page */
   }
 
 There is much more which can be achieved with the ``@page`` at-rule, 
