@@ -13,7 +13,7 @@
         content: url('img/logotype-white.svg')
         display: block
         margin: 0 auto 2em
-        min-width: 10rem
+        min-width: 15rem
         width: column(4,12)
 
     p
@@ -31,9 +31,11 @@
       display: flex
       margin-bottom: 0
       padding: 0
-      transform: translateY(50%)
       position: relative
       z-index: 1
+
+      @media screen and (min-width: $mobile-breakpoint + 1px)
+        transform: translateY(50%)
 
       &::after
         align-items: center
@@ -166,11 +168,18 @@
       background-image: linear-gradient(transparent 0%, transparent 33.33%, $light-grey 33.33%, $light-grey 66.66%, $primary 66.66%, $primary  83.33%, #fff 83.33%, #fff 100%)
       background-size: 100% 300%
       background-position-x: 0
-      height: 370px
-      margin: 0 0 -185px
       overflow: hidden
       position: relative
       width: 100%
+
+      @media screen and (min-width: $mobile-breakpoint + 1px)
+        height: 370px
+        margin: 0 0 -185px
+
+      @media screen and (max-width: $mobile-breakpoint)
+        height: 300px
+        margin: 1em (-$bleed-space) -185px
+        width: calc(100% + #{$bleed-space} * 2)
 
       *
         z-index: -1
@@ -189,12 +198,14 @@
 
       img
         left: 50%
-        max-width: 100%
         opacity: 0
         position: absolute
         top: 0
         transform: translate(-50%, -50%)
         transition: opacity .5s ease, top .5s ease
+
+        @media screen and (min-width: $mobile-breakpoint + 1px)
+          max-width: 100%
 
   section:nth-of-type(2)
     display: inline-block
