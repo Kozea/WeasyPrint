@@ -83,19 +83,18 @@
   li
     border: solid 1px $light-grey
     border-radius: .35rem
-    color: $primary
     font-size: $font-large
     margin-bottom: .5em
     padding: 1em 1em 1em 2em
     position: relative
-    transition: border-color .3s ease-in-out
+    transition: border-color .3s ease-in-out, color .3s ease-in-out
 
     @media screen and (max-width: $mobile-breakpoint)
       font-size: $font-large * .8
 
     &::before
       background-clip: content-box
-      border: inherit
+      border: solid 1px
       border-radius: 100%
       box-sizing: border-box
       content: ''
@@ -105,17 +104,26 @@
       padding: 2px
       position: absolute
       top: 50%
+      transition: background-color .3s ease, border-bottom-color .15s ease, border-left-color .15s ease .15s, border-right-color .15s ease .45s, border-top-color .15s ease .3s, transform .6s ease
       width: 10px
 
-
-=list-style($border-color-hover, $animation-name)
+=list-style($color, $color-hover, $border-color, $border-color-hover, $bg-color-hover)
   @extend %list-item
 
-  li:hover
-    border-color: $border-color-hover
+  li
+    color: $color
 
     &::before
-      animation: $animation-name .75s both
+      border-color: $border-color
+
+    &:hover
+      border-color: $border-color-hover
+      color: $border-color-hover
+
+      &::before
+        background-color: $bg-color-hover
+        border-color: $border-color-hover
+        transform: rotate(360deg)
 
 
 %font-mononoki
@@ -131,6 +139,7 @@
 
       @media screen and (max-width: $mobile-breakpoint)
         font-size: $font-large * .8
+
 
 %full-link
   position: relative

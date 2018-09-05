@@ -7,58 +7,82 @@
 <link href="/css/main.css" rel="stylesheet">
 <link href="/feed.xml" type="application/rss+xml" rel="alternate" title="RSS feed">
 
-
 <title>{% if page.title %}{{ page.title }} - {% endif %}{{ site.title }}</title>
 <meta name="description" content="{{ site.description }}">
 
-<nav onclick="/* iOS hack */">
-  <ul>
-    <li {% if page.id == 'index' %}class="active"{% endif %}><a href="/">WeasyPrint</a></h1>
-    <li {% if page.id == 'donate' %}class="active"{% endif %}><a href="/donate/">Why Donate?</a>
-    <li {% if page.id == 'news' %}class="active"{% endif %}><a href="/news/">News</a>
-    <li {% if page.id == 'about' %}class="active"{% endif %}><a href="/about/">About</a>
-    <li {% if page.id == 'start' %}class="active"{% endif %}><a href="/start/">How to Start</a>
-    <li {% if page.id == 'samples' %}class="active"{% endif %}><a href="/samples/">Samples</a>
-  </ul>
-</nav>
+<div id="main">
+  <nav onclick="/* iOS hack */">
+    <ul>
+      <li {% if page.id == 'index' %}class="active"{% endif %}><a href="/">WeasyPrint</a></h1>
+      <li {% if page.id == 'donate' %}class="active"{% endif %}><a href="/donate/">Why Donate?</a>
+      <li {% if page.id == 'news' %}class="active"{% endif %}><a href="/news/">News</a>
+      <li {% if page.id == 'about' %}class="active"{% endif %}><a href="/about/">About</a>
+      <li {% if page.id == 'start' %}class="active"{% endif %}><a href="/start/">How to Start</a>
+      <li {% if page.id == 'samples' %}class="active"{% endif %}><a href="/samples/">Samples</a>
+    </ul>
+  </nav>
 
-<aside>
-  {% assign releases = site.github.releases | where:"draft",false | sort:"created_at" | reverse %}
-  <a href="https://github.com/Kozea/{{ site.title }}/blob/master/CHANGES">{{ site.title }} {{ releases[0].tag_name }} (Latest version)</a>
-</aside>
+  <aside>
+    {% assign releases = site.github.releases | where:"draft",false | sort:"created_at" | reverse %}
+    <a href="https://github.com/Kozea/{{ site.title }}/blob/master/CHANGES">{{ site.title }} {{ releases[0].tag_name }} (Latest version)</a>
+  </aside>
 
-<aside>
-  <a href="https://www.patreon.com/kozea">
-    Donate
-  </a>
-  <label for="total">3000 €</label>
-  <progress title="21%" name="total" value="21" max="100">
-</aside>
+  <aside>
+    <a href="https://www.patreon.com/kozea">
+      Donate
+    </a>
+    <label for="total">3000 €</label>
+    <progress title="21%" name="total" value="21" max="100">
+  </aside>
 
-{{ content }}
+  {{ content }}
 
-<footer>
-  <ul>
-    <li {% if page.id == 'index' %}class="active"{% endif %}><a href="/">WeasyPrint</a></h1>
-    <li>
-      <ul>
-        <li><a href="/#factory">The Awesome Document Factory</a></li>
-        <li><a href="/#news">News</a></li>
-        <li><a href="/#involved">Get Involved</a></li>
-        <li><a href="/#testimonials">Testimonials</a></li>
-      </ul>
-    </li>
-    <li {% if page.id == 'donate' %}class="active"{% endif %}><a href="/donate/">Why Donate?</a>
-    <li {% if page.id == 'news' %}class="active"{% endif %}><a href="/news/">News</a>
-    <li {% if page.id == 'about' %}class="active"{% endif %}><a href="/about/">About</a>
-    <li {% if page.id == 'start' %}class="active"{% endif %}><a href="/start/">How to Start</a>
-    <li {% if page.id == 'samples' %}class="active"{% endif %}><a href="/samples/">Samples</a>
-  </ul>
-  <ul>
-    <li><a id="website" href="#">Kozea community</a></li>
-    <li><a id="mail" href="#">community@kozea.fr</a></li>
-    <li><a id="freenode" href="#">##kozea on freenode</a></li>
-    <li><a id="twitter" href="#">@kozeacommunity</a></li>
-    <li><a id="github" href="{{ site.github.repository_url }}">github/kozea/weasyprint</a></li>
-  </ul>
-</footer>
+  <footer>
+    <ul>
+      <li {% if page.id == 'index' %}class="active"{% endif %}><a href="/">WeasyPrint</a></h1>
+      <li>
+        <ul>
+          <li><a href="/#factory">The Awesome Document Factory</a></li>
+          <li><a href="/#news">News</a></li>
+          <li><a href="/#involved">Get Involved</a></li>
+          <li><a href="/#testimonials">Testimonials</a></li>
+        </ul>
+      </li>
+      <li {% if page.id == 'donate' %}class="active"{% endif %}><a href="/donate/">Why Donate?</a>
+      <li {% if page.id == 'news' %}class="active"{% endif %}><a href="/news/">News</a>
+      <li {% if page.id == 'about' %}class="active"{% endif %}><a href="/about/">About</a>
+      <li {% if page.id == 'start' %}class="active"{% endif %}><a href="/start/">How to Start</a>
+      <li {% if page.id == 'samples' %}class="active"{% endif %}><a href="/samples/">Samples</a>
+    </ul>
+    <ul>
+      <li><a id="website" href="#">Kozea community</a></li>
+      <li><a id="mail" href="#">community@kozea.fr</a></li>
+      <li><a id="freenode" href="#">##kozea on freenode</a></li>
+      <li><a id="twitter" href="#">@kozeacommunity</a></li>
+      <li><a id="github" href="{{ site.github.repository_url }}">github/kozea/weasyprint</a></li>
+    </ul>
+  </footer>
+</div>
+
+<script type="text/javascript" src="http://www.unpasdecote.coach/wp-content/themes/unpasdecote_theme/stylesheets/js/jquery.min.js"></script>
+<script type="text/javascript" src="http://www.unpasdecote.coach/wp-content/themes/unpasdecote_theme/stylesheets/js/jquery.smoothState.min.js"></script>
+<script type="text/javascript">
+;(function ($) {
+  $('#main').smoothState({
+      onBefore: function($currentTarget, $container) {
+        $('html, body').animate({ 'scrollTop': 0 });
+      },
+      onStart: {
+          duration: 1000,
+          render: function($container) {
+              $container.addClass('onStart');
+              $container.removeClass('onAfter');
+          }
+      },
+      onAfter: function ($container, $newContent) {
+          $container.addClass('onAfter');
+          $container.removeClass('onStart');
+      }
+  }).data('smoothState');
+})(jQuery);
+</script>

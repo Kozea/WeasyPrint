@@ -8,16 +8,14 @@
     width: 70px
 
   ul
-    +list-style($action, link-list-item)
+    +list-style($light, $action, $light, $action, $action)
     margin: 0
 
     li
       @extend %full-link
-      color: $light
       display: inline-block
       margin: .5em 0
       text-align: left
-      transition: color .3s
 
       &:hover
         color: $action

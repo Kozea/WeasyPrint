@@ -1,9 +1,25 @@
-@keyframes color-fade-in
+@keyframes color-fade-to-primary
   from
     color: transparent
 
   to
     color: $primary
+
+
+@keyframes color-fade-to-grey
+  from
+    color: transparent
+
+  to
+    color: $grey
+
+
+@keyframes color-fade-to-light
+  from
+    color: transparent
+
+  to
+    color: $light
 
 
 @keyframes switch-fade-in
@@ -32,53 +48,31 @@
     transform: translateY(0)
 
 
-@keyframes link-list-item
-  0%
-    border-color: $light-grey
-    border-bottom-color: $light-grey
-    transform: rotate(0deg)
-
-  25%
-    border-color: $light-grey
-    border-bottom-color: $action
-
-  50%
-    background-color: transparent
-    border-left-color: $action
-
-  75%
-    border-top-color: $action
-
-  100%
-    background-color: $action
-    border-color: $action
-    transform: rotate(360deg)
-
-
-@keyframes list-item
-  0%
-    border-color: $light-grey
-    border-bottom-color: $light-grey
-    transform: rotate(0deg)
-
-  25%
-    border-color: $light-grey
-    border-bottom-color: $grey
-
-  50%
-    border-left-color: $grey
-
-  75%
-    border-top-color: $grey
-
-  100%
-    border-color: $grey
-    transform: rotate(360deg)
-
-
 @keyframes start-list-fade-in
-  from
+  0%
     background-position-y: 100%
+    color: transparent
+
+  75%
+    background-position-y: 0
+    color: transparent
+
+  100%
+    background-position-y: 0
+    color: $light
+
+
+@keyframes typing
+  from
+    width: 0
 
   to
-    background-position-y: 0
+    width: 100%
+
+
+@keyframes cursor
+  from, to
+    border-color: transparent
+
+  50%
+    border-color: currentColor

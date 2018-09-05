@@ -1,0 +1,35 @@
+// page transition
+#main.onStart
+  main section:nth-of-type(1)
+    &::before
+      height: 100vh
+
+  ul li, aside, main > * > *, footer
+    opacity: 0 !important
+
+
+#main, #main.onAfter
+  main section:nth-of-type(1)
+    &::before
+      height: 100%
+      transition: height 500ms 500ms
+
+  ul li, aside, main > * > *, footer
+    opacity: 1
+    transition: opacity 500ms 500ms
+
+  #start ul li
+    animation-duration: 1s
+    animation-fill-mode: both
+    animation-name: start-list-fade-in
+    animation-timing-function: ease
+
+  > aside:nth-of-type(1) a
+    animation: typing 2000ms steps(35, end) 500ms both, cursor 2000ms step-end infinite 3000ms
+
+  @media screen and (min-width: 830px + 1px)
+    ul li
+      @for $i from 1 through 6
+        &:nth-of-type(#{$i})
+          transition-delay: $i * 75ms + .25s
+          animation-delay: $i * 75ms + .25s

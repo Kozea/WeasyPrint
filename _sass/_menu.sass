@@ -1,6 +1,4 @@
 nav
-  +full-bg($primary)
-
   ul
     display: flex
     padding: 0
@@ -18,17 +16,21 @@ nav
 
 
 aside + aside
+  align-self: flex-end
   align-items: center
   border: solid 1px $light
   border-radius: .35rem
   color: $light
   display: flex
   font-size: $font-small
-  height: 50px
+  height: $menu-desktop-height
   position: absolute
-  right: $bleed-space
-  top: $bleed-space
+  // right: $bleed-space + $page-margin
+  top: $bleed-space + $page-margin
   transition: border .2s ease
+
+  // @media screen and (min-width: $page-max-width)
+    right: $bleed-space + $page-margin
 
   &:hover
     border-color: #f4900c
@@ -44,8 +46,8 @@ aside + aside
         background-color: #f4900c
 
   a
-    height: 50px
-    line-height: 50px
+    height: $menu-desktop-height
+    line-height: $menu-desktop-height
     margin-left: 1em
     overflow: hidden
 
@@ -54,10 +56,10 @@ aside + aside
       content: ''
       display: block
       font-size: 2em
-      height: 50px
-      margin-top: -50px
+      height: $menu-desktop-height
+      margin-top: -$menu-desktop-height
       transition: margin-top .25s ease
-      width: 50px
+      width: $menu-desktop-height
 
     &::after
       bottom: 0
@@ -100,10 +102,11 @@ aside + aside
 @media screen and (min-width: 830px + 1px)
   nav
     color: $light
+    position: relative
 
     ul
       align-items: center
-      height: 50px
+      height: $menu-desktop-height
       margin: 0
 
       li
@@ -118,9 +121,6 @@ aside + aside
 @media screen and (max-width: 830px)
   nav
     width: 0
-
-    &::before
-      display: none
 
     ul
       background-color: $action

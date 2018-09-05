@@ -91,7 +91,7 @@
               transition: background-color .25s ease, left .25s ease .05s, padding .25s ease, right .25s ease, transform .2s ease
 
           &:nth-of-type(2)
-            color: $primary
+            color: $primary !important
 
 
       &:hover ~ label
@@ -113,11 +113,11 @@
       left: 0
       padding: 1rem
       position: absolute
-      transition: box-shadow .2s ease
+      transition: box-shadow .2s ease, opacity .2s ease
 
       &:nth-of-type(1)
         @extend %font-mononoki
-        animation: switch-fade-in 1s ease 1s both, color-fade-in .25s ease 2.25s both
+        animation: switch-fade-in 1s ease 1s both, color-fade-to-primary .25s ease 2.25s both
         background-image: linear-gradient(90deg, transparent 0%, transparent 33.33%, $light-grey 33.33%, $light-grey 66.66%, $action  66.66%, $action 100%)
         background-size: 300% 100%
         background-position-x: 0
@@ -154,7 +154,7 @@
           z-index: 1
 
       &:nth-of-type(2)
-        animation: opacity-fade-in .25s ease 2.25s both
+        animation: color-fade-to-grey .25s ease 2.25s both
         color: $grey
         font-style: italic
         justify-content: flex-start
@@ -163,7 +163,6 @@
         z-index: 2
 
     dl
-      animation: start-list-fade-in 1s ease 1s both, color-fade-in .25s ease 2.25s both
       background-image: linear-gradient(transparent 0%, transparent 33.33%, $light-grey 33.33%, $light-grey 66.66%, $primary 66.66%, $primary  83.33%, #fff 83.33%, #fff 100%)
       background-size: 100% 300%
       background-position-x: 0
@@ -178,6 +177,8 @@
 
       dt
         background: url('img/documents/html.jpg') center / cover no-repeat
+        color: transparent
+        font-size: 0
         height: 100%
         left: 0
         opacity: 1
@@ -185,9 +186,6 @@
         top: 0
         transition: background-position .5s ease, opacity .5s ease
         width: 100%
-
-      dd
-        font-size: 0
 
       img
         left: 50%
@@ -222,7 +220,7 @@
       padding-top: 3em
 
     ul
-      +list-style($action, link-list-item)
+      +list-style($primary, $action, $light-grey, $action, $action)
 
       li
         @extend %full-link
@@ -248,3 +246,22 @@
 
   section:nth-of-type(5)
     padding: 0 column(1,12)
+
+
+// home introduction
+#main:not(.onAfter):not(.onStart) #index
+  section:nth-of-type(1)
+    h2
+      animation: color-fade-to-light .5s ease both 1.25s
+
+      &::before
+        animation: opacity-fade-in .5s ease both .5s
+
+    p
+      animation: opacity-fade-in .5s ease both 1.5s
+
+    ul
+      animation: opacity-fade-in .5s ease both 1.75s
+
+    dl
+      animation: start-list-fade-in 1s ease 2s both
