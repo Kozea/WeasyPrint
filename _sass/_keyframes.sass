@@ -76,3 +76,35 @@
 
   50%
     border-color: currentColor
+
+
+// home introduction
+@keyframes header-height-fade-in
+  from
+    min-height: calc(100vh - #{$menu-desktop-height} - #{$page-margin} - #{$bleed-space})
+
+  to
+    min-height: 60vh
+
+
+@keyframes page-border-fade-in
+  0%
+    border: 1px solid transparent
+    height: 0
+    width: 0
+
+  33%
+    border-color: $action
+    border-bottom: transparent
+    height: 0
+    width: 100%
+
+  66%
+    border-color: $action
+    border-bottom: transparent
+    height: 100%
+
+  100%
+    border-color: $action
+    height: 100%
+    width: 100%

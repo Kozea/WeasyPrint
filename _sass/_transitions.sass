@@ -14,7 +14,7 @@
       height: 100%
       transition: height 500ms 500ms
 
-  ul li, aside, main > * > *, footer
+  ul li, aside, main > * > *:not(input), footer
     opacity: 1
     transition: opacity 500ms 500ms
 
@@ -32,4 +32,4 @@
       @for $i from 1 through 6
         &:nth-of-type(#{$i})
           transition-delay: $i * 75ms + .25s
-          animation-delay: $i * 75ms + .25s
+          animation-delay: $i * 75ms + .25s !important

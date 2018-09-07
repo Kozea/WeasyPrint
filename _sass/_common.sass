@@ -8,7 +8,6 @@ body
 
   #main
     background: url('img/print/bleed-top-left.svg') top left / $bleed-space no-repeat, url('img/print/bleed-top-right.svg') top right / $bleed-space no-repeat, url('img/print/bleed-bottom-left.svg') bottom left / $bleed-space no-repeat, url('img/print/bleed-bottom-right.svg') bottom right / $bleed-space no-repeat, transparent
-    border: solid 1px $action
     color: $grey
     display: flex
     flex-direction: column
@@ -18,7 +17,21 @@ body
     margin: $page-margin
     max-width: 100%
     padding: $bleed-space $bleed-space 0
+    position: relative
+    transition: color .25s
     width: $page-max-width
+
+    &::before
+      border: 1px solid $action
+      box-sizing: border-box
+      content: ''
+      height: 100%
+      left: 50%
+      position: absolute
+      top: 0
+      transform: translateX(-50%)
+      // transition: border-bottom-color .1s ease 1.5s, height 1s ease .5s, width .5s ease
+      width: 100%
 
     @media screen and (max-width: $mobile-breakpoint)
       margin: 0
@@ -56,6 +69,7 @@ body
       +full-bg($primary)
       align-content: center
       align-items: center
+      box-sizing: border-box
       color: $light
       display: flex
       flex-wrap: wrap

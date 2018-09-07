@@ -11,23 +11,23 @@
 <meta name="description" content="{{ site.description }}">
 
 <div id="main">
-  <nav onclick="/* iOS hack */">
+  <nav onclick="/* iOS hack */" class="{{ page.id }}">
     <ul>
       <li {% if page.id == 'index' %}class="active"{% endif %}><a href="/">WeasyPrint</a></h1>
-      <li {% if page.id == 'donate' %}class="active"{% endif %}><a href="/donate/">Why Donate?</a>
       <li {% if page.id == 'news' %}class="active"{% endif %}><a href="/news/">News</a>
       <li {% if page.id == 'about' %}class="active"{% endif %}><a href="/about/">About</a>
       <li {% if page.id == 'start' %}class="active"{% endif %}><a href="/start/">How to Start</a>
       <li {% if page.id == 'samples' %}class="active"{% endif %}><a href="/samples/">Samples</a>
+      <li {% if page.id == 'donate' %}class="active"{% endif %}><a href="/donate/">Why Donate?</a>
     </ul>
   </nav>
 
-  <aside>
+  <aside class="{{ page.id }}">
     {% assign releases = site.github.releases | where:"draft",false | sort:"created_at" | reverse %}
     <a href="https://github.com/Kozea/{{ site.title }}/blob/master/CHANGES">{{ site.title }} {{ releases[0].tag_name }} (Latest version)</a>
   </aside>
 
-  <aside>
+  <aside class="{{ page.id }}">
     <a href="https://www.patreon.com/kozea">
       Donate
     </a>
@@ -37,7 +37,7 @@
 
   {{ content }}
 
-  <footer>
+  <footer class="{{ page.id }}">
     <ul>
       <li {% if page.id == 'index' %}class="active"{% endif %}><a href="/">WeasyPrint</a></h1>
       <li>
@@ -48,11 +48,11 @@
           <li><a href="/#testimonials">Testimonials</a></li>
         </ul>
       </li>
-      <li {% if page.id == 'donate' %}class="active"{% endif %}><a href="/donate/">Why Donate?</a>
       <li {% if page.id == 'news' %}class="active"{% endif %}><a href="/news/">News</a>
       <li {% if page.id == 'about' %}class="active"{% endif %}><a href="/about/">About</a>
       <li {% if page.id == 'start' %}class="active"{% endif %}><a href="/start/">How to Start</a>
       <li {% if page.id == 'samples' %}class="active"{% endif %}><a href="/samples/">Samples</a>
+      <li {% if page.id == 'donate' %}class="active"{% endif %}><a href="/donate/">Why Donate?</a>
     </ul>
     <ul>
       <li><a id="website" href="#">Kozea community</a></li>

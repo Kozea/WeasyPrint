@@ -1,7 +1,8 @@
-#index
+main.index
   @extend %header-font-large
 
   section:nth-of-type(1)
+    align-content: flex-start
     margin-bottom: 185px
     padding-bottom: 0
 
@@ -10,8 +11,8 @@
       width: 100%
 
       &::before
-        content: url('img/logotype-white.svg')
-        display: block
+        content: url('img/logotype-white.gif')
+        display: flex
         margin: 0 auto 2em
         min-width: 15rem
         width: column(4,12)
@@ -165,7 +166,7 @@
         z-index: 2
 
     dl
-      background-image: linear-gradient(transparent 0%, transparent 33.33%, $light-grey 33.33%, $light-grey 66.66%, $primary 66.66%, $primary  83.33%, #fff 83.33%, #fff 100%)
+      background-image: linear-gradient(transparent 0%, transparent 33.33%, $light-grey 33.33%, $light-grey 66.66%, transparent 66.66%, transparent 100%)
       background-size: 100% 300%
       background-position-x: 0
       overflow: hidden
@@ -260,19 +261,41 @@
 
 
 // home introduction
-#main:not(.onAfter):not(.onStart) #index
-  section:nth-of-type(1)
-    h2
-      animation: color-fade-to-light .5s ease both 1.25s
+#main:not(.onAfter):not(.onStart)
+  &::before
+    animation: page-border-fade-in 2s ease both 1s
 
-      &::before
-        animation: opacity-fade-in .5s ease both .5s
-
-    p
-      animation: opacity-fade-in .5s ease both 1.5s
-
+  nav.index
     ul
-      animation: opacity-fade-in .5s ease both 1.75s
+      li
+        animation: opacity-fade-in .5s ease both
+        @for $i from 1 through 6
+          &:nth-of-type(#{$i})
+            animation-delay: $i * 75ms + 3s !important
 
-    dl
-      animation: start-list-fade-in 1s ease 2s both
+  > aside.index
+    animation: opacity-fade-in .5s ease both 3.5s
+
+    &:nth-of-type(1)
+      a
+        animation-delay: 3s, 6s
+
+  main.index
+    section:nth-of-type(1)
+      animation: header-height-fade-in .5s ease both 3s
+
+      h2
+        animation: color-fade-to-light .5s ease both 3s
+
+      p, ul, dt
+        animation: opacity-fade-in .5s ease both 4s
+
+      dl
+        animation: start-list-fade-in 1s ease both 3s
+
+      label
+        animation-delay: 4.25s
+
+        &:nth-of-type(1)
+          &::before, &::after
+            animation-delay: 4.75s
