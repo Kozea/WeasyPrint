@@ -57,15 +57,20 @@ main.index
         & + li
           display: none
 
-    input
-      border: 0
+    input, label
       bottom: 0
-      cursor: pointer
       height: 6rem
       left: 0
+      position: absolute
+
+      @media screen and (max-width: $mobile-breakpoint)
+        transform: translateX(-$page-margin)
+
+    input
+      border: 0
+      cursor: pointer
       margin: 0
       opacity: 0
-      position: absolute
       width: 17rem
       z-index: 5
 
@@ -109,15 +114,11 @@ main.index
 
     label
       align-items: center
-      bottom: 0
       box-shadow: 0 0 0 0 $light-grey
       box-sizing: border-box
       display: flex
       font-size: $font-normal
-      height: 6rem
-      left: 0
       padding: 1rem
-      position: absolute
       transition: box-shadow .2s ease, opacity .2s ease
 
       &:nth-of-type(1)
