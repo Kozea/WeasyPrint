@@ -8,6 +8,7 @@ body
 
   #main
     background: url('img/print/bleed-top-left.svg') top left / $bleed-space no-repeat, url('img/print/bleed-top-right.svg') top right / $bleed-space no-repeat, url('img/print/bleed-bottom-left.svg') bottom left / $bleed-space no-repeat, url('img/print/bleed-bottom-right.svg') bottom right / $bleed-space no-repeat, transparent
+    box-sizing: border-box
     color: $grey
     display: flex
     flex-direction: column
@@ -30,7 +31,6 @@ body
       position: absolute
       top: 0
       transform: translateX(-50%)
-      // transition: border-bottom-color .1s ease 1.5s, height 1s ease .5s, width .5s ease
       width: 100%
 
     @media screen and (max-width: $mobile-breakpoint)
@@ -41,21 +41,18 @@ body
       @extend %font-small
       align-items: center
       display: flex
-      box-sizing: border-box
       color: $action
       height: $bleed-space
-      left: $bleed-space
+      left: 0
       margin: 0 auto
-      padding: 0 2em
+      max-width: 100%
+      padding: 0 $bleed-space
       position: absolute
-      right: $bleed-space
-      top: $page-margin
+      right: 0
+      top: 0
       width: -moz-min-content
       width: -webkit-min-content
       width: min-content
-
-      @media screen and (max-width: $mobile-breakpoint)
-        top: 0
 
       a
         border-right: solid 9px
@@ -64,6 +61,10 @@ body
         white-space: nowrap
 
   main
+    &:not(.index)
+      section:nth-of-type(1)
+        min-height: 60vh
+
     section:nth-of-type(1)
       @extend %font-xl
       +full-bg($primary)
@@ -74,9 +75,9 @@ body
       display: flex
       flex-wrap: wrap
       justify-content: center
-      min-height: 40vh
       padding: 3em column(1,12)
       text-align: center
+
 
       &::before
         border-top: solid $menu-desktop-height + $bleed-space + $page-margin + 1px $primary

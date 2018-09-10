@@ -11,9 +11,11 @@ main.index
       width: 100%
 
       &::before
-        content: url('img/logotype-white.gif')
-        display: flex
+        background: url('img/logotype-white.gif') top center / contain no-repeat
+        content: url('img/fake-logo.svg')
+        display: block
         margin: 0 auto 2em
+        max-width: 100%
         min-width: 15rem
         width: column(4,12)
 
@@ -263,39 +265,55 @@ main.index
 // home introduction
 #main:not(.onAfter):not(.onStart)
   &::before
-    animation: page-border-fade-in 2s ease both 1s
+    animation: page-border-fade-in 3s ease both 2s
 
   nav.index
     ul
       li
-        animation: opacity-fade-in .5s ease both
+        animation: color-fade-to-light .5s ease both
+
         @for $i from 1 through 6
           &:nth-of-type(#{$i})
-            animation-delay: $i * 75ms + 3s !important
+            animation-delay: $i * 75ms + 2.5s
 
   > aside.index
-    animation: opacity-fade-in .5s ease both 3.5s
-
     &:nth-of-type(1)
+      animation: color-fade-to-action .5s ease both 4.5s
+
       a
-        animation-delay: 3s, 6s
+        animation-delay: 4.5s, 6.5s
+
+    &:nth-of-type(2)
+      animation: color-fade-to-light .5s ease both 2.5s
+
+      progress
+        animation: opacity-fade-in .75s ease both 2.5s
 
   main.index
     section:nth-of-type(1)
-      animation: header-height-fade-in .5s ease both 3s
+      animation: header-height-fade-in .5s ease-in both 3s
 
       h2
         animation: color-fade-to-light .5s ease both 3s
 
-      p, ul, dt
-        animation: opacity-fade-in .5s ease both 4s
+        &::before
+          animation: opacity-fade-in .75s ease both .25s
+
+      p
+        animation: color-fade-to-light .5s ease both 3s
+
+        strong
+          animation: color-fade-to-action .5s ease both 3s
+
+      ul, dt
+        animation: opacity-fade-in .5s ease both 3.2s
 
       dl
         animation: start-list-fade-in 1s ease both 3s
 
       label
-        animation-delay: 4.25s
+        animation-delay: 4.5s
 
         &:nth-of-type(1)
           &::before, &::after
-            animation-delay: 4.75s
+            animation-delay: 5s

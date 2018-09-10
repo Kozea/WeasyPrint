@@ -18,7 +18,7 @@ nav
 aside + aside
   align-self: flex-end
   align-items: center
-  border: solid 1px $light
+  border: solid 1px
   border-radius: .35rem
   color: $light
   display: flex
@@ -72,6 +72,7 @@ aside + aside
     font-size: .8em
     position: absolute
     right: 1.5em
+    z-index: 1
 
   progress
     background-color: rgba($light, .3)
@@ -115,91 +116,92 @@ aside + aside
 
 
 @media screen and (max-width: 830px)
-  nav
-    width: 0
+  #main, #main:not(.onAfter):not(.onStart)
+    nav, nav.index
+      width: 0
 
-    ul
-      background-color: $action
-      background-clip: content-box
-      border-radius: 100%
-      bottom: 0
-      flex-direction: column
-      height: 3em
-      justify-content: center
-      left: 0
-      margin: 1em
-      position: fixed
-      transition: border-radius .5s ease-in .7s, height .4s ease, margin .4s ease .3s, transform .5s ease-in .7s, width .3s ease .4s
-      width: 3em
-      z-index: 10
+      ul
+        background-color: $action
+        background-clip: content-box
+        border-radius: 100%
+        bottom: 0
+        flex-direction: column
+        height: 3em
+        justify-content: center
+        left: 0
+        margin: 1em
+        position: fixed
+        transition: border-radius .5s ease-in .7s, height .4s ease, margin .4s ease .3s, transform .5s ease-in .7s, width .3s ease .4s
+        width: 3em
+        z-index: 10
 
-      &::before
-        content: url('img/menu-picto.svg')
-        transition: opacity .2s ease 1.2s, height .2s ease 1.2s, width .2s ease 1.2s
+        &::before
+          content: url('img/menu-picto.svg')
+          transition: opacity .2s ease 1.2s, height .2s ease 1.2s, width .2s ease 1.2s
 
-      li
-        font-size: 0
-        margin: .5em .5em .5em 2em
+        li
+          font-size: 0
+          margin: .5em .5em .5em 2em
+          width: 100%
+
+          a
+            color: $primary
+            font-size: inherit
+
+      // menu open state
+      ul:hover
+        border-radius: 0
+        height: 100%
+        margin: 0
+        transform: rotate(360deg)
+        transition: border-radius .5s ease, height .4s ease .8s, margin .4s ease .5s, transform .5s ease, width .3s ease .5s
         width: 100%
 
-        a
-          color: $primary
-          font-size: inherit
+        &::before
+          opacity: 0
+          height: 0
+          transition: opacity .2s ease, height .2s ease .2s, width .2s ease .2s
+          width: 0
 
-    // menu open state
-    ul:hover
-      border-radius: 0
-      height: 100%
-      margin: 0
-      transform: rotate(360deg)
-      transition: border-radius .5s ease, height .4s ease .8s, margin .4s ease .5s, transform .5s ease, width .3s ease .5s
-      width: 100%
+        li
+          font-size: $font-large
+          transition: font-size .1s ease 1s
+
+          @for $i from 1 through 6
+            &:nth-of-type(#{$i})
+              animation: .25s fade-in-from-left both
+              animation-delay: $i * 75ms + 1s
+
+      &:hover ~ main
+        &::before, &::after
+          opacity: 1
+          right: 0
+          transition: opacity .2s ease 1.2s, right .2s ease 1.2s
+
+    main
+      &::before, &::after
+        opacity: 0
+        right: -3rem
+        position: fixed
+        transition: opacity .2s ease, right .2s ease
+        z-index: 15
 
       &::before
-        opacity: 0
-        height: 0
-        transition: opacity .2s ease, height .2s ease .2s, width .2s ease .2s
-        width: 0
+        content: '×'
+        font-family: 'Rosario', sans
+        font-size: $font-xl * .8
+        line-height: 0
+        padding: 0 1rem
+        top: 1rem
 
-      li
-        font-size: $font-large
-        transition: font-size .1s ease 1s
+      &::after
+        content: 'close'
+        font-size: $font-small * .8
+        padding: .5rem 2rem 1rem .5rem
+        transform: rotate(-90deg)
+        transform-origin: bottom right
+        bottom: 100%
 
-        @for $i from 1 through 6
-          &:nth-of-type(#{$i})
-            animation: .25s fade-in-from-left both
-            animation-delay: $i * 75ms + 1s
-
-    &:hover ~ main
-      &::before, &::after
-        opacity: 1
-        right: 0
-        transition: opacity .2s ease 1.2s, right .2s ease 1.2s
-
-  main
-    &::before, &::after
-      opacity: 0
-      right: -3rem
-      position: fixed
-      transition: opacity .2s ease, right .2s ease
-      z-index: 15
-
-    &::before
-      content: '×'
-      font-family: 'Rosario', sans
-      font-size: $font-xl * .8
-      line-height: 0
-      padding: 0 1rem
-      top: 1rem
-
-    &::after
-      content: 'close'
-      font-size: $font-small * .8
-      padding: .5rem 2rem 1rem .5rem
-      transform: rotate(-90deg)
-      transform-origin: bottom right
-      bottom: 100%
-
-  aside + aside
-    right: 50%
-    transform: translate(50%, 1em)
+    aside + aside
+      right: 50%
+      transform: translate(50%, 1em)
