@@ -265,8 +265,8 @@ main.index
 
 // home introduction
 #main:not(.onAfter):not(.onStart)
-  &::before
-    animation: page-border-fade-in 3s ease both 2s
+  &::before, &::after
+    animation: vertical-page-border-fade-in 1.5s ease both 2s
 
   nav.index
     ul
@@ -291,6 +291,9 @@ main.index
         animation: opacity-fade-in .75s ease both 2.5s
 
   main.index
+    &::before, &::after
+      animation: horizontal-page-border-fade-in 1s ease both 1s
+
     section:nth-of-type(1)
       animation: header-height-fade-in .5s ease-in both 3s
 

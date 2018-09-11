@@ -22,16 +22,19 @@ body
     transition: color .25s
     width: $page-max-width
 
-    &::before
-      border: 1px solid $action
-      box-sizing: border-box
+    &::before, &::after
+      background-color: $action
       content: ''
       height: 100%
-      left: 50%
       position: absolute
       top: 0
-      transform: translateX(-50%)
-      width: 100%
+      width: 1px
+
+    &::before
+      left: 0
+
+    &::after
+      right: 0
 
     @media screen and (max-width: $mobile-breakpoint)
       margin: 0
@@ -61,6 +64,16 @@ body
         white-space: nowrap
 
   main
+    &::before, &::after
+      background-color: $action
+      content: ''
+      height: 1px
+      left: 50%
+      position: absolute
+      transform: translateX(-50%)
+      top: 0
+      width: 100%
+
     &:not(.index)
       section:nth-of-type(1)
         min-height: 60vh

@@ -95,24 +95,17 @@
     min-height: 1px
 
 
-@keyframes page-border-fade-in
-  0%
-    border: 1px solid transparent
+@keyframes vertical-page-border-fade-in
+  from
     height: 0
+
+  to
+    height: 100%
+
+
+@keyframes horizontal-page-border-fade-in
+  from
     width: 0
 
-  33%
-    border-color: $action
-    border-bottom: transparent
-    height: 0
-    width: 100%
-
-  66%
-    border-color: $action
-    border-bottom: transparent
-    height: 100%
-
-  100%
-    border-color: $action
-    height: 100%
+  to
     width: 100%
