@@ -71,8 +71,13 @@ body
       left: 50%
       position: absolute
       transform: translateX(-50%)
-      top: 0
       width: 100%
+
+    &::before
+      top: 0
+
+    &::after
+      bottom: 0
 
     &:not(.index)
       section:nth-of-type(1)
