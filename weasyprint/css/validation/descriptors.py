@@ -12,6 +12,8 @@
 
 import tinycss2
 
+from urllib.parse import urlparse
+
 from . import properties
 from ...logger import LOGGER
 from ..utils import (
@@ -39,10 +41,20 @@ def preprocess_descriptors(base_url, descriptors):
     Return a iterable of ``(name, value)`` tuples.
 
     """
+    parse_result = urlparse(base_url)
     for descriptor in descriptors:
         if descriptor.type != 'declaration' or descriptor.important:
             continue
+        if parse_result.scheme == 'file' and descriptor.name == 'src':
+            for index in range(len(descriptor.value)):
+                if not hasattr(descriptor.value[index], 'value'):
+                    continue
+                descriptor.value[index].value = (
+                    descriptor.value[index].value.split('?')[0]
+                )
+
         tokens = remove_whitespace(descriptor.value)
+
         try:
             # Use list() to consume generators now and catch any error.
             if descriptor.name not in DESCRIPTORS:
