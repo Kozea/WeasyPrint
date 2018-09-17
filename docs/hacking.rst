@@ -205,7 +205,7 @@ parts of the code.
 The final result of the layout is a list of :class:`PageBox` objects.
 
 .. [#] These are the coordinates *if* no `CSS transform`_ applies.
-       Transforms change the actual location of boxes, but they are applies
+       Transforms change the actual location of boxes, but they are applied
        later during drawing and do not affect layout.
 .. _used values: http://www.w3.org/TR/CSS21/cascade.html#used-value
 .. _CSS transform: http://www.w3.org/TR/css3-transforms/
@@ -232,6 +232,6 @@ The code lives in the :mod:`weasyprint.draw` module.
 Metadata
 ........
 
-Finally (step 8), the :mod:`weasyprint.pdf` module parses the PDF file
+Finally (step 7), the :mod:`weasyprint.pdf` module parses the PDF file
 produced by cairo and makes appends to it to add meta-data:
 internal and external hyperlinks, as well as outlines / bookmarks.
