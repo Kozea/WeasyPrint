@@ -446,9 +446,12 @@ def table_and_columns_preferred_widths(context, box, outer=True):
                 cell_slice = slice(origin, origin + origin_cell.colspan)
                 # TODO: it's wrong when two columns have no space between them
                 # because all their cells span between the two columns
-                baseline_border_spacing = (
-                    (origin_cell.colspan - 1) *
-                    table.style['border_spacing'][0])
+                if table.style['border_collapse'] == 'separate':
+                    baseline_border_spacing = (
+                        (origin_cell.colspan - 1) *
+                        table.style['border_spacing'][0])
+                else:
+                    baseline_border_spacing = 0
                 baseline_min_content = sum(
                     max(a, b) for a, b in zip_longest(
                         min_contributions[cell_slice],
