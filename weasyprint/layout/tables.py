@@ -58,7 +58,7 @@ def table_layout(context, table, max_position_y, skip_stack,
                 in horizontal_borders[skipped_rows]) / 2
 
     # Make this a sub-function so that many local variables like rows_x
-    # need not be passed as parameters.
+    # don't need to be passed as parameters.
     def group_layout(group, position_y, max_position_y,
                      page_is_empty, skip_stack):
         resume_at = None
