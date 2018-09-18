@@ -1439,6 +1439,54 @@ def test_layout_table_auto_47():
 
 
 @assert_no_logs
+def test_layout_table_auto_48():
+    # Related to:
+    # https://github.com/Kozea/WeasyPrint/issues/685
+    page, = render_pages('''
+      <style>@font-face { src: url(AHEM____.TTF); font-family: ahem }</style>
+      <table style="font-family: ahem; border-spacing: 100px;
+                    border-collapse: collapse">
+        <tr>
+          <td colspan=5>aaa</td>
+        </tr>
+      </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td, = row.children
+    assert td.width == 48  # 3 * font-size
+
+
+@pytest.mark.xfail
+@assert_no_logs
+def test_layout_table_auto_49():
+    # Related to:
+    # https://github.com/Kozea/WeasyPrint/issues/685
+    # See TODO in table_and_columns_preferred_widths
+    page, = render_pages('''
+      <style>@font-face { src: url(AHEM____.TTF); font-family: ahem }</style>
+      <table style="font-family: ahem; border-spacing: 100px">
+        <tr>
+          <td colspan=5>aaa</td>
+        </tr>
+      </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td, = row.children
+    assert td.width == 48  # 3 * font-size
+
+
+
+@assert_no_logs
 def test_table_column_width_1():
     source = '''
       <style>

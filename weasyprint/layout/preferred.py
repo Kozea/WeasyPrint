@@ -445,7 +445,8 @@ def table_and_columns_preferred_widths(context, box, outer=True):
                     continue
                 cell_slice = slice(origin, origin + origin_cell.colspan)
                 # TODO: it's wrong when two columns have no space between them
-                # because all their cells span between the two columns
+                # because all their cells span between the two columns.  See
+                # test_layout_table_auto_49.
                 if table.style['border_collapse'] == 'separate':
                     baseline_border_spacing = (
                         (origin_cell.colspan - 1) *
