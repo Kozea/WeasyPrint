@@ -445,7 +445,7 @@ def table_and_columns_preferred_widths(context, box, outer=True):
                     continue
                 cell_slice = slice(origin, origin + origin_cell.colspan)
                 # TODO: it's wrong when two columns have no space between them
-                # because all their cells span between the two columns.  See
+                # because all their cells span between the two columns. See
                 # test_layout_table_auto_49.
                 if table.style['border_collapse'] == 'separate':
                     baseline_border_spacing = (
@@ -453,22 +453,12 @@ def table_and_columns_preferred_widths(context, box, outer=True):
                         table.style['border_spacing'][0])
                 else:
                     baseline_border_spacing = 0
-                baseline_min_content = sum(
-                    max(a, b) for a, b in zip_longest(
-                        min_contributions[cell_slice],
-                        min_content_widths[cell_slice],
-                        fillvalue=0))
-                baseline_max_content = sum(
-                    max(a, b) for a, b in zip_longest(
-                        max_contributions[cell_slice],
-                        max_content_widths[cell_slice],
-                        fillvalue=0))
-                baseline_percentage = sum(
-                    intrinsic_percentages[cell_slice])
+                baseline_min_content = sum(min_content_widths[cell_slice])
+                baseline_max_content = sum(max_content_widths[cell_slice])
+                baseline_percentage = sum(intrinsic_percentages[cell_slice])
 
                 # Cell contribution to min- and max-content widths
-                content_width_diff = (
-                    max_content_widths[i] - min_content_widths[i])
+                content_width_diff = max_contribution - min_contribution
                 baseline_diff = baseline_max_content - baseline_min_content
                 if baseline_diff:
                     diff_ratio = content_width_diff / baseline_diff
@@ -488,19 +478,19 @@ def table_and_columns_preferred_widths(context, box, outer=True):
                     baseline_max_content - baseline_min_content)
 
                 if baseline_max_content:
-                    ratio = max_content_widths[i] / baseline_max_content
+                    ratio = max_contribution / baseline_max_content
                 else:
                     ratio = 0
 
                 min_contribution = max(
                     min_contribution,
-                    min_content_widths[i] +
+                    min_contribution +
                     diff_ratio * clamped_cell_width +
-                    (1 - ratio) * cell_min_width)
+                    ratio * cell_min_width)
 
                 max_contribution = max(
                     max_contribution,
-                    max_content_widths[i] + (1 - ratio) * cell_max_width)
+                    max_contribution + ratio * cell_max_width)
 
                 # Cell contribution to intrinsic percentage width
                 if intrinsic_percentages[i] == 0:
