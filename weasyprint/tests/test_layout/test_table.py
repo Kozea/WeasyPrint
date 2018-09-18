@@ -1485,7 +1485,6 @@ def test_layout_table_auto_49():
     assert td.width == 48  # 3 * font-size
 
 
-
 @assert_no_logs
 def test_table_column_width_1():
     source = '''
