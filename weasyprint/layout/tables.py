@@ -107,6 +107,9 @@ def table_layout(context, table, max_position_y, skip_stack,
                 cell.margin_left = 0
                 cell.width = 0
                 borders_plus_padding = cell.border_width()  # with width==0
+                # TODO: we should remove the number of columns with no
+                # originating cells to cell.colspan, see
+                # test_layout_table_auto_49
                 cell.width = (
                     sum(spanned_widths) +
                     border_spacing_x * (cell.colspan - 1) -
@@ -596,140 +599,21 @@ def auto_table_layout(context, box, containing_block):
                 lower_guess[i] + added_widths[i] * available_ratio
                 for i in range(len(grid))]
     else:
-        # Distribute available width to columns
-        # http://dbaron.org/css/intrinsic/#distributetocols
         table.column_widths = max_content_guess
         excess_width = assignable_width - sum(max_content_guess)
-
-        # First group
-        columns = [
-            (i, column) for i, column in enumerate(grid)
-            if not constrainedness[i] and
-            column_intrinsic_percentages[i] == 0 and
-            any(max_content_width(context, cell) for cell in column if cell)]
-        if columns:
-            widths = [
-                max(max_content_width(context, cell)
-                    for cell in column if cell)
-                for i, column in columns]
-            current_widths = [
-                table.column_widths[i] for i, column in columns]
-            differences = [
-                max(0, width[0] - width[1])
-                for width in zip(widths, current_widths)]
-            if sum(differences) > excess_width:
-                differences = [
-                    difference / sum(differences) * excess_width
-                    for difference in differences]
-            excess_width -= sum(differences)
-            for i, difference in enumerate(differences):
-                table.column_widths[columns[i][0]] += difference
-        if excess_width <= 0:
-            return
-
-        # Second group
-        columns = [
-            i for i, column in enumerate(grid)
-            if not constrainedness[i] and
-            column_intrinsic_percentages[i] == 0]
-        if columns:
-            for i in columns:
-                table.column_widths[i] += excess_width / len(columns)
-            return
-
-        # Third group
-        columns = [
-            (i, column) for i, column in enumerate(grid)
-            if constrainedness[i] and
-            column_intrinsic_percentages[i] == 0 and
-            any(max_content_width(context, cell) for cell in column if cell)]
-        if columns:
-            widths = [
-                max(max_content_width(context, cell)
-                    for cell in column if cell)
-                for i, column in columns]
-            current_widths = [
-                table.column_widths[i] for i, column in columns]
-            differences = [
-                max(0, width[0] - width[1])
-                for width in zip(widths, current_widths)]
-            if sum(differences) > excess_width:
-                differences = [
-                    difference / sum(differences) * excess_width
-                    for difference in differences]
-            excess_width -= sum(differences)
-            for i, difference in enumerate(differences):
-                table.column_widths[columns[i][0]] += difference
-        if excess_width <= 0:
-            return
-
-        # Fourth group
-        columns = [
-            (i, column) for i, column in enumerate(grid)
-            if column_intrinsic_percentages[i] > 0]
-        if columns:
-            fixed_width = sum(
-                table.column_widths[j] for j in range(len(grid))
-                if j not in [i for i, column in columns])
-            percentage_width = sum(
-                column_intrinsic_percentages[i]
-                for i, column in columns)
-            if fixed_width and percentage_width >= 100:
-                # Sum of the percentages are greater than 100%
-                ratio = excess_width
-            elif fixed_width == 0:
-                # No fixed width, let's take the whole excess width
-                ratio = excess_width
+        excess_width = distribute_excess_width(
+            context, grid, excess_width, table.column_widths, constrainedness,
+            column_intrinsic_percentages)
+        if excess_width:
+            if table_min_content_width < table.width - excess_width:
+                # Reduce the width of the size from the excess width that has
+                # not been distributed.
+                table.width -= excess_width
             else:
-                ratio = fixed_width / (100 - percentage_width)
-
-            widths = [
-                column_intrinsic_percentages[i] * ratio
-                for i, column in columns]
-            current_widths = [
-                table.column_widths[i] for i, column in columns]
-            # Allow to reduce the size of the columns to respect the percentage
-            differences = [
-                width[0] - width[1]
-                for width in zip(widths, current_widths)]
-            if sum(differences) > excess_width:
-                differences = [
-                    difference / sum(differences) * excess_width
-                    for difference in differences]
-            excess_width -= sum(differences)
-            for i, difference in enumerate(differences):
-                table.column_widths[columns[i][0]] += difference
-        if excess_width <= 0:
-            return
-
-        # Bonus: we've tried our best to distribute the extra size, but we
-        # failed. Instead of blindly distributing the size among all the colums
-        # and breaking all the rules (as said in the draft), let's try to
-        # change the columns with no constraint at all, then resize the table,
-        # and at least break the rules to make the columns fill the table.
-
-        # Fifth group, part 1
-        columns = [
-            i for i, column in enumerate(grid)
-            if any(column) and
-            column_intrinsic_percentages[i] == 0 and
-            not any(
-                max_content_width(context, cell)
-                for cell in column if cell)]
-        if columns:
-            for i in columns:
-                table.column_widths[i] += excess_width / len(columns)
-            return
-
-        if table_min_content_width < table.width - excess_width:
-            # Reduce the width of the size from the excess width that has not
-            # been distributed.
-            table.width -= excess_width
-        else:
-            # Fifth group, part 2, aka desperately break the rules
-            columns = [i for i, column in enumerate(grid) if any(column)]
-            for i in columns:
-                table.column_widths[i] += excess_width / len(columns)
+                # Break rules
+                columns = [i for i, column in enumerate(grid) if any(column)]
+                for i in columns:
+                    table.column_widths[i] += excess_width / len(columns)
 
 
 def table_wrapper_width(context, wrapper, containing_block):
@@ -776,3 +660,138 @@ def find_in_flow_baseline(box, last=False, baseline_types=(boxes.LineBox,)):
                 result = find_in_flow_baseline(child, last, baseline_types)
                 if result is not None:
                     return result
+
+
+def distribute_excess_width(context, grid, excess_width, column_widths,
+                            constrainedness, column_intrinsic_percentages,
+                            column_slice=slice(0, None)):
+    """Distribute available width to columns.
+
+    Return excess width left when it's impossible without breaking rules.
+
+    See http://dbaron.org/css/intrinsic/#distributetocols
+
+    """
+    # First group
+    columns = [
+        (i + column_slice.start, column)
+        for i, column in enumerate(grid[column_slice])
+        if not constrainedness[i + column_slice.start] and
+        column_intrinsic_percentages[i + column_slice.start] == 0 and
+        any(max_content_width(context, cell) for cell in column
+            if cell and cell.colspan == 1)]
+    if columns:
+        widths = [
+            max(max_content_width(context, cell) for cell in column
+                if cell and cell.colspan == 1)
+            for i, column in columns]
+        current_widths = [column_widths[i] for i, column in columns]
+        differences = [
+            max(0, width[0] - width[1])
+            for width in zip(widths, current_widths)]
+        if sum(differences) > excess_width:
+            differences = [
+                difference / sum(differences) * excess_width
+                for difference in differences]
+        excess_width -= sum(differences)
+        for i, difference in enumerate(differences):
+            column_widths[columns[i][0]] += difference
+    if excess_width <= 0:
+        return
+
+    # Second group
+    columns = [
+        i + column_slice.start for i, column in enumerate(grid[column_slice])
+        if not constrainedness[i + column_slice.start] and
+        column_intrinsic_percentages[i + column_slice.start] == 0]
+    if columns:
+        for i in columns:
+            column_widths[i] += excess_width / len(columns)
+        return
+
+    # Third group
+    columns = [
+        (i + column_slice.start, column)
+        for i, column in enumerate(grid[column_slice])
+        if constrainedness[i + column_slice.start] and
+        column_intrinsic_percentages[i + column_slice.start] == 0 and
+        any(max_content_width(context, cell) for cell in column
+            if cell and cell.colspan == 1)]
+    if columns:
+        widths = [
+            max(max_content_width(context, cell) for cell in column
+                if cell and cell.colspan == 1)
+            for i, column in columns]
+        current_widths = [column_widths[i] for i, column in columns]
+        differences = [
+            max(0, width[0] - width[1])
+            for width in zip(widths, current_widths)]
+        if sum(differences) > excess_width:
+            differences = [
+                difference / sum(differences) * excess_width
+                for difference in differences]
+        excess_width -= sum(differences)
+        for i, difference in enumerate(differences):
+            column_widths[columns[i][0]] += difference
+    if excess_width <= 0:
+        return
+
+    # Fourth group
+    columns = [
+        (i + column_slice.start, column)
+        for i, column in enumerate(grid[column_slice])
+        if column_intrinsic_percentages[i + column_slice.start] > 0]
+    if columns:
+        fixed_width = sum(
+            column_widths[j] for j in range(len(grid))
+            if j not in [i for i, column in columns])
+        percentage_width = sum(
+            column_intrinsic_percentages[i]
+            for i, column in columns)
+        if fixed_width and percentage_width >= 100:
+            # Sum of the percentages are greater than 100%
+            ratio = excess_width
+        elif fixed_width == 0:
+            # No fixed width, let's take the whole excess width
+            ratio = excess_width
+        else:
+            ratio = fixed_width / (100 - percentage_width)
+
+        widths = [
+            column_intrinsic_percentages[i] * ratio for i, column in columns]
+        current_widths = [column_widths[i] for i, column in columns]
+        # Allow to reduce the size of the columns to respect the percentage
+        differences = [
+            width[0] - width[1]
+            for width in zip(widths, current_widths)]
+        if sum(differences) > excess_width:
+            differences = [
+                difference / sum(differences) * excess_width
+                for difference in differences]
+        excess_width -= sum(differences)
+        for i, difference in enumerate(differences):
+            column_widths[columns[i][0]] += difference
+    if excess_width <= 0:
+        return
+
+    # Bonus: we've tried our best to distribute the extra size, but we
+    # failed. Instead of blindly distributing the size among all the colums
+    # and breaking all the rules (as said in the draft), let's try to
+    # change the columns with no constraint at all, then resize the table,
+    # and at least break the rules to make the columns fill the table.
+
+    # Fifth group, part 1
+    columns = [
+        i + column_slice.start for i, column in enumerate(grid[column_slice])
+        if any(column) and
+        column_intrinsic_percentages[i + column_slice.start] == 0 and
+        not any(
+            max_content_width(context, cell)
+            for cell in column if cell)]
+    if columns:
+        for i in columns:
+            column_widths[i] += excess_width / len(columns)
+        return
+
+    # Fifth group, part 2, aka abort
+    return excess_width

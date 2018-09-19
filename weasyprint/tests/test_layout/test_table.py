@@ -1466,7 +1466,7 @@ def test_layout_table_auto_48():
 def test_layout_table_auto_49():
     # Related to:
     # https://github.com/Kozea/WeasyPrint/issues/685
-    # See TODO in table_and_columns_preferred_widths
+    # See TODO in table_layout.group_layout
     page, = render_pages('''
       <style>@font-face { src: url(AHEM____.TTF); font-family: ahem }</style>
       <table style="font-family: ahem; border-spacing: 100px">
@@ -1483,6 +1483,31 @@ def test_layout_table_auto_49():
     row, = row_group.children
     td, = row.children
     assert td.width == 48  # 3 * font-size
+
+
+@assert_no_logs
+def test_layout_table_auto_50():
+    # Test regression:
+    # https://github.com/Kozea/WeasyPrint/issues/685
+    page, = render_pages('''
+      <style>@font-face { src: url(AHEM____.TTF); font-family: ahem }</style>
+      <table style="font-family: ahem; border-spacing: 5px">
+       <tr><td>a</td><td>a</td><td>a</td><td>a</td><td>a</td></tr>
+       <tr>
+         <td colspan='5'>aaa aaa aaa aaa</td>
+       </tr>
+      </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row_1, row_2 = row_group.children
+    for td in row_1.children:
+        assert td.width == 44  # (15 * font_size - 4 * sp) / 5
+    td_21, = row_2.children
+    assert td_21.width == 240  # 15 * font_size
 
 
 @assert_no_logs
