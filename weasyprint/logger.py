@@ -15,7 +15,7 @@
       fonts and various non-fatal problems;
     - infos are used to advertise rendering steps.
 
-    :copyright: Copyright 2011-2014 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """

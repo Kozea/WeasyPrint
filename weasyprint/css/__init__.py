@@ -12,7 +12,7 @@
     :func:`get_all_computed_styles` function does everything, but it is itsef
     based on other functions in this module.
 
-    :copyright: Copyright 2011-2014 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """

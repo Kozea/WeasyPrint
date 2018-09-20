@@ -8,7 +8,7 @@
     Terms used (max-content width, min-content width) are defined in David
     Baron's unofficial draft (http://dbaron.org/css/intrinsic/).
 
-    :copyright: Copyright 2011-2016 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """

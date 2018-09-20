@@ -7,7 +7,7 @@
     These are defined in the same terms as CSS 3 Lists:
     http://dev.w3.org/csswg/css3-lists/#predefined-counters
 
-    :copyright: Copyright 2011-2014 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
