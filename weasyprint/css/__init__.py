@@ -257,8 +257,11 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
                     element, style_attribute)
         elif element.tag in ('tr', 'td', 'th', 'thead', 'tbody', 'tfoot'):
             align = element.get('align', '').lower()
-            if align in ('left', 'right', 'justify'):
-                # TODO: we should align descendants too
+            # TODO: we should align descendants too
+            if align == 'middle':
+                yield specificity, check_style_attribute(
+                    element, 'text-align:center')
+            elif align in ('center', 'left', 'right', 'justify'):
                 yield specificity, check_style_attribute(
                     element, 'text-align:%s' % align)
             if element.get('background'):
@@ -288,7 +291,10 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
         elif element.tag == 'caption':
             align = element.get('align', '').lower()
             # TODO: we should align descendants too
-            if align in ('left', 'right', 'justify'):
+            if align == 'middle':
+                yield specificity, check_style_attribute(
+                    element, 'text-align:center')
+            elif align in ('center', 'left', 'right', 'justify'):
                 yield specificity, check_style_attribute(
                     element, 'text-align:%s' % align)
         elif element.tag == 'col':
