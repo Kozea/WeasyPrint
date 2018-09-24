@@ -12,6 +12,7 @@
 import hashlib
 import io
 import os
+import re
 
 import cairocffi
 import pytest
@@ -351,9 +352,15 @@ def test_links():
     # 100% wide (block), 30pt high
     assert links[4].get_value('Subtype', '(.*)') == b'/Link'
     dest = links[4].get_value('Dest', '(.*)').strip(b'[]').split()
-    assert dest[-4] == b'/XYZ'
-    assert [round(float(value)) for value in dest[-3:]] == [
-        0, TOP - 200, 0]
+    assert dest == [b'(hello)']
+    names = (
+        pdf_file.catalog
+        .get_indirect_dict('Names', pdf_file)
+        .get_indirect_dict('Dests', pdf_file)
+        .byte_string).decode('ascii')
+    assert re.search(
+        '\\(hello\\) \\[\d+ \d+ R /XYZ {} {} {}]'.format(0, TOP - 200, 0),
+        names)
     assert links[4].get_value('Rect', '(.*)') == '[ {} {} {} {} ]'.format(
         0, TOP - 30, RIGHT, TOP).encode('ascii')
 
@@ -415,9 +422,15 @@ def test_relative_links_internal():
         base_url=None).write_pdf(target=fileobj)
     pdf_file = pdf.PDFFile(fileobj)
     annots = pdf_file.pages[0].get_indirect_dict_array('Annots', pdf_file)[0]
-    dest = annots.get_value('Dest', '(.*)').strip(b'[]').split()
-    assert dest[-4] == b'/XYZ'
-    assert round(float(dest[-2])) == TOP
+    dest = annots.get_value('Dest', '(.*)')
+    assert dest == b'(lipsum)'
+    names = (
+        pdf_file.catalog
+        .get_indirect_dict('Names', pdf_file)
+        .get_indirect_dict('Dests', pdf_file)
+        .byte_string).decode('ascii')
+    assert re.search(
+        '\\(lipsum\\) \\[\d+ \d+ R /XYZ {} {} {}]'.format(0, TOP, 0), names)
     rect = annots.get_value('Rect', '(.*)').strip(b'[]').split()
     assert [round(float(value)) for value in rect] == [0, TOP, RIGHT, TOP]
 
@@ -431,9 +444,15 @@ def test_relative_links_anchors():
         base_url=None).write_pdf(target=fileobj)
     pdf_file = pdf.PDFFile(fileobj)
     annots = pdf_file.pages[0].get_indirect_dict_array('Annots', pdf_file)[0]
-    dest = annots.get_value('Dest', '(.*)').strip(b'[]').split()
-    assert dest[-4] == b'/XYZ'
-    assert round(float(dest[-2])) == TOP
+    dest = annots.get_value('Dest', '(.*)')
+    assert dest == b'(lipsum)'
+    names = (
+        pdf_file.catalog
+        .get_indirect_dict('Names', pdf_file)
+        .get_indirect_dict('Dests', pdf_file)
+        .byte_string).decode('ascii')
+    assert re.search(
+        '\\(lipsum\\) \\[\d+ \d+ R /XYZ {} {} {}]'.format(0, TOP, 0), names)
     rect = annots.get_value('Rect', '(.*)').strip(b'[]').split()
     assert [round(float(value)) for value in rect] == [0, TOP, RIGHT, TOP]
 
@@ -450,9 +469,16 @@ def test_missing_links():
         ''', base_url=None).write_pdf(target=fileobj)
     pdf_file = pdf.PDFFile(fileobj)
     annots = pdf_file.pages[0].get_indirect_dict_array('Annots', pdf_file)[0]
-    dest = annots.get_value('Dest', '(.*)').strip(b'[]').split()
-    assert dest[-4] == b'/XYZ'
-    assert round(float(dest[-2])) == TOP - 15
+    dest = annots.get_value('Dest', '(.*)')
+    assert dest == b'(lipsum)'
+    names = (
+        pdf_file.catalog
+        .get_indirect_dict('Names', pdf_file)
+        .get_indirect_dict('Dests', pdf_file)
+        .byte_string).decode('ascii')
+    assert re.search(
+        '\\(lipsum\\) \\[\d+ \d+ R /XYZ {} {} {}]'.format(0, TOP - 15, 0),
+        names)
     rect = annots.get_value('Rect', '(.*)').strip(b'[]').split()
     assert [round(float(value)) for value in rect] == [0, TOP - 15, RIGHT, TOP]
     assert len(logs) == 1

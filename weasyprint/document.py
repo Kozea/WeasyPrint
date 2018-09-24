@@ -418,7 +418,8 @@ class Document(object):
         """Resolve internal hyperlinks.
 
         Links to a missing anchor are removed with a warning.
-        If multiple anchors have the same name, the first is used.
+
+        If multiple anchors have the same name, the first one is used.
 
         :returns:
             A generator yielding lists (one per page) like :attr:`Page.links`,
@@ -428,26 +429,29 @@ class Document(object):
             and ``x, y`` are in CSS pixels from the top-left of the page.
 
         """
-        anchors = {}
+        anchors = set()
+        paged_anchors = []
         for i, page in enumerate(self.pages):
+            paged_anchors.append([])
             for anchor_name, (point_x, point_y) in page.anchors.items():
-                anchors.setdefault(anchor_name, (i, point_x, point_y))
+                if anchor_name not in anchors:
+                    paged_anchors[-1].append((anchor_name, point_x, point_y))
+                    anchors.add(anchor_name)
         for page in self.pages:
             page_links = []
             for link in page.links:
                 link_type, anchor_name, rectangle = link
                 if link_type == 'internal':
-                    target = anchors.get(anchor_name)
-                    if target is None:
+                    if anchor_name not in anchors:
                         LOGGER.error(
                             'No anchor #%s for internal URI reference',
                             anchor_name)
                     else:
-                        page_links.append((link_type, target, rectangle))
+                        page_links.append((link_type, anchor_name, rectangle))
                 else:
                     # External link
                     page_links.append(link)
-            yield page_links
+            yield page_links, paged_anchors.pop(0)
 
     def make_bookmark_tree(self):
         """Make a tree of all bookmarks in the document.
@@ -494,7 +498,7 @@ class Document(object):
                 last_by_depth.append(children)
         return root
 
-    def add_hyperlinks(self, links, context, scale):
+    def add_hyperlinks(self, links, anchors, context, scale):
         """Include hyperlinks in current page."""
         if cairo.cairo_version() < 11504:
             return
@@ -508,16 +512,20 @@ class Document(object):
                 attributes = "rect=[{} {} {} {}] uri='{}'".format(
                     *([i * scale for i in rectangle] + [link_target]))
             elif link_type == 'internal':
-                page, x, y = link_target
-                attributes = (
-                    'rect=[{} {} {} {}] page={} '
-                    'pos=[{} {}]'.format(*(
-                        [i * scale for i in rectangle] +
-                        [page + 1, x * scale, y * scale])))
+                attributes = "rect=[{} {} {} {}] dest='{}'".format(
+                    *([i * scale for i in rectangle] + [link_target]))
             elif link_type == 'attachment':
                 # Attachments are handled in write_pdf_metadata
                 continue
             context.tag_begin(cairo.TAG_LINK, attributes)
+            context.tag_end(cairo.TAG_LINK)
+
+        for anchor in anchors:
+            anchor_name, x, y = anchor
+            attributes = "name='{}' x={} y={}".format(
+                anchor_name, x * scale, y * scale)
+            context.tag_begin(cairo.TAG_DEST, attributes)
+            context.tag_end(cairo.TAG_DEST)
 
     def write_pdf(self, target=None, zoom=1, attachments=None):
         """Paint the pages in a PDF file, with meta-data.
@@ -552,8 +560,10 @@ class Document(object):
 
         LOGGER.info('Step 6 - Drawing')
 
-        paged_links = list(self.resolve_links())
-        for page, links in zip(self.pages, paged_links):
+        paged_links_and_anchors = list(self.resolve_links())
+        for page, links_and_anchors in zip(
+                self.pages, paged_links_and_anchors):
+            links, anchors = links_and_anchors
             surface.set_size(
                 math.floor(scale * (
                     page.width + page.bleed['left'] + page.bleed['right'])),
@@ -563,7 +573,7 @@ class Document(object):
                 context.translate(
                     page.bleed['left'] * scale, page.bleed['top'] * scale)
                 page.paint(context, scale=scale)
-                self.add_hyperlinks(links, context, scale)
+                self.add_hyperlinks(links, anchors, context, scale)
                 surface.show_page()
 
         LOGGER.info('Step 7 - Adding PDF metadata')
@@ -609,7 +619,7 @@ class Document(object):
         # Add extra PDF metadata: attachments, embedded files
         attachment_links = [
             [link for link in page_links if link[0] == 'attachment']
-            for page_links in paged_links]
+            for page_links, page_anchors in paged_links_and_anchors]
         # Write extra PDF metadata only when there is a least one from:
         # - attachments in metadata
         # - attachments as function parameters
