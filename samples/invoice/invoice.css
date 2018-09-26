@@ -1,0 +1,70 @@
+@charset "UTF-8";
+@import url("https://fonts.googleapis.com/css?family=Rosario:400,700");
+@page {
+  margin: 3cm;
+  @bottom-left {
+    color: #1ee494;
+    content: "♥ Thank you!"; }
+  @bottom-right {
+    content: "contact@weasyprint.com | +33 04 78 84 19 28 | weasyprint.com";
+    font-size: 9pt; } }
+html {
+  color: #14213d;
+  font-family: "Rosario", sans-serif;
+  font-size: 11pt; }
+  html body {
+    margin: 0; }
+    html body h1 {
+      color: #1ee494;
+      font-weight: bold;
+      margin-bottom: 1cm;
+      text-transform: uppercase; }
+  html address {
+    line-height: 0.65cm;
+    margin-bottom: 1.5cm;
+    white-space: pre-line; }
+    html address#from {
+      float: left; }
+    html address#to {
+      float: right; }
+  html dl dd, html dl dt {
+    display: inline-block; }
+  html dl dd {
+    font-weight: bold;
+    margin-left: 0; }
+  html dl dt::after {
+    content: ":"; }
+  html dl#informations {
+    clear: both;
+    padding-top: 0.5cm; }
+  html table {
+    border-collapse: collapse;
+    margin-top: 1cm;
+    width: 100%; }
+    html table thead {
+      border-bottom: 0.02cm solid #abb2bf;
+      color: #abb2bf;
+      text-transform: uppercase; }
+      html table thead th {
+        font-size: 10pt;
+        padding-bottom: 0.25cm; }
+    html table tbody tr td {
+      padding: 0.5cm 0; }
+      html table tbody tr td:first-of-type {
+        font-weight: bold; }
+      html table tbody tr td:last-of-type {
+        color: #1ee494;
+        font-weight: bold; }
+    html table#total {
+      background: #f6f6f6;
+      border: 3cm solid #f6f6f6;
+      bottom: 0;
+      margin: 0 -3cm;
+      position: absolute;
+      width: 19cm; }
+      html table#total dl {
+        font-weight: normal; }
+      html table#total tbody tr td:not(:first-of-type) {
+        font-size: 20pt; }
+
+/*# sourceMappingURL=test.css.map */

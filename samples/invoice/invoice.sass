@@ -1,0 +1,93 @@
+@import url('https://fonts.googleapis.com/css?family=Rosario:400,700')
+
+@page
+  margin: 3cm
+
+  @bottom-left
+    color: #1ee494
+    content: '♥ Thank you!'
+
+  @bottom-right
+    content: 'contact@weasyprint.com | +33 04 78 84 19 28 | weasyprint.com'
+    font-size: 9pt
+
+html
+  color: #14213d
+  font-family: 'Rosario', sans-serif
+  font-size: 11pt
+
+  body
+    margin: 0
+
+    h1
+      color: #1ee494
+      font-weight: bold
+      margin-bottom: 1cm
+      text-transform: uppercase
+
+  address
+    line-height: .65cm
+    margin-bottom: 1.5cm
+    white-space: pre-line
+
+    &#from
+      float: left
+
+    &#to
+      float: right
+
+  dl
+    dd, dt
+      display: inline-block
+
+    dd
+      font-weight: bold
+      margin-left: 0
+
+    dt
+      &::after
+        content: ':'
+
+    &#informations
+      clear: both
+      padding-top: .5cm
+
+  table
+    border-collapse: collapse
+    margin-top: 1cm
+    width: 100%
+
+    thead
+      border-bottom: .02cm solid #abb2bf
+      color: #abb2bf
+      text-transform: uppercase
+
+      th
+        font-size: 10pt
+        padding-bottom: .25cm
+
+    tbody
+      tr td
+        padding: .5cm 0
+
+        &:first-of-type
+          font-weight: bold
+
+        &:last-of-type
+          color: #1ee494
+          font-weight: bold
+
+    &#total
+      background: #f6f6f6
+      border: 3cm solid #f6f6f6
+      bottom: 0
+      margin: 0 -3cm
+      position: absolute
+      width: 19cm
+
+      dl
+        font-weight: normal
+
+      tbody
+        tr td:not(:first-of-type)
+          font-size: 20pt

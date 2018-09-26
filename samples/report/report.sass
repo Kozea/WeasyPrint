@@ -1,0 +1,204 @@
+@import url('https://fonts.googleapis.com/css?family=Fira+Sans:300,400,500')
+$primary: #fbc847
+
+@page
+  @top-left
+    background: $primary
+    content: counter(page)
+    height: 1cm
+    text-align: center
+    width: 1cm
+
+  @top-center
+    background: $primary
+    content: ''
+    display: block
+    height: .05cm
+    opacity: .5
+    width: 100%
+
+  @top-right
+    content: 'Chapter name'
+    font-size: 9pt
+    height: 1cm
+    vertical-align: middle
+    width: 100%
+
+@page:blank
+  @top-left
+    background: none
+    content: ''
+
+  @top-center
+    content: none
+
+  @top-right
+    content: none
+
+@page no-chapter
+  @top-left
+    background: none
+    content: none
+
+  @top-center
+    content: none
+
+  @top-right
+    content: none
+
+html
+  color: #393939
+  font-family: 'Fira Sans', sans-serif
+  font-size: 11pt
+  font-weight: 300
+  line-height: 1.5
+
+  body
+    h1
+      color: $primary
+      font-size: 35pt
+      font-weight: 300
+      page: no-chapter
+
+    h2, h3, h4
+      color: black
+
+    /* à remettre plus tard dans la section article */
+    h2
+      break-before: always
+      font-size: 28pt
+
+    h3
+      font-weight: 300
+      font-size: 15pt
+
+    h4
+      font-size: 13pt
+
+    article
+      &#contents
+        break-before: right
+        break-after: left
+        page: no-chapter
+
+        h2
+          font-size: 20pt
+          font-weight: 400
+          margin-bottom: 3cm
+
+        h3
+          font-weight: 500
+
+          &::before
+            background: $primary
+            content: ''
+            display: block
+            height: .08cm
+            margin-bottom: .25cm
+            width: 2cm
+
+        ul
+          list-style: none
+          padding-left: 0
+
+          li
+            border-top: .25pt solid #c1c1c1
+            margin: .25cm 0
+            padding-top: .25cm
+
+            &::before
+              background: $primary
+              border-radius: 100%
+              content: ''
+              display: inline-block
+              height: .15cm
+              margin-right: .2cm
+              vertical-align: middle
+              width: .15cm
+
+            &::after
+              color: $primary
+              content: 'page number'
+              float: right
+              font-size: 9pt
+              font-weight: 700
+
+      &#columns
+        section
+          columns: 2
+          column-gap: 1cm
+          padding-top: 1cm
+
+          p
+            text-align: justify
+
+            &:first-of-type
+              font-weight: 700
+
+      &#competences
+        h3
+          background: $primary
+          margin: 0 -3cm 1cm
+          padding: 1cm 1cm 1cm 3cm
+          width: 21cm
+
+        section
+          padding: .5cm 0
+
+          @each $name in table-content, heading, multi-columns, internal-links, style
+            &##{($name)}::before
+              background: url(#{$name}.svg) no-repeat center $primary
+              background-size: 50%
+              content: ''
+              display: inline-block
+              float: left
+              height: 2cm
+              margin-right: .5cm
+              vertical-align: middle
+              width: 2cm
+
+          h4
+            margin: 0
+
+          p
+            margin-top: 0
+
+      &#offers
+        display: flex
+        flex-wrap: wrap
+        justify-content: space-between
+        width: 100%
+
+        h2
+          flex: 1 100%
+
+        section
+          align-content: flex-start
+          display: flex
+          flex-wrap: wrap
+          justify-content: center
+          margin: 0 .25cm
+          width: 30%
+
+          h4
+            margin-bottom: 0
+
+          ul
+            list-style: none
+            margin: 0
+            padding-left: 0
+
+            li:not(:last-of-type)
+              margin: .5cm 0
+
+          p
+            background: $primary
+            display: block
+            font-size: 15pt
+            font-weight: 700
+            margin-bottom: 0
+            padding: .25cm 0
+            text-align: center
+            width: 100%
+
+      &#chapter
