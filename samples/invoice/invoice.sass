@@ -1,93 +1,105 @@
-@import url('https://fonts.googleapis.com/css?family=Rosario:400,700')
+@import url('https://fonts.googleapis.com/css?family=Pacifico|Source+Sans+Pro:400,700')
 
 @page
   margin: 3cm
 
   @bottom-left
     color: #1ee494
+    font-family: Pacifico
     content: '♥ Thank you!'
 
   @bottom-right
-    content: 'contact@weasyprint.com | +33 04 78 84 19 28 | weasyprint.com'
+    color: #a9a
+    content: 'community@kozea.fr | +33 4 78 84 19 28 | community.kozea.fr'
+    font-family: Pacifico
     font-size: 9pt
 
 html
   color: #14213d
-  font-family: 'Rosario', sans-serif
+  font-family: Source Sans Pro
   font-size: 11pt
+  line-height: 1.6
 
   body
     margin: 0
 
-    h1
-      color: #1ee494
-      font-weight: bold
-      margin-bottom: 1cm
-      text-transform: uppercase
+  h1
+    color: #1ee494
+    font-family: Pacifico
+    font-size: 40pt
+    margin: 0
 
-  address
-    line-height: .65cm
-    margin-bottom: 1.5cm
-    white-space: pre-line
+  aside
+    display: flex
+    margin: 2em 0 4em
 
-    &#from
-      float: left
+    address
+      font-style: normal
+      white-space: pre-line
 
-    &#to
-      float: right
+      &#from
+        color: #a9a
+        flex: 1
+
+      &#to
+        text-align: right
 
   dl
-    dd, dt
-      display: inline-block
+    text-align: right
+    position: absolute
+    right: 0
+    top: 0
 
-    dd
-      font-weight: bold
-      margin-left: 0
+    dt, dd
+      display: inline
+      margin: 0
 
     dt
+      color: #a9a
+
+      &::before
+        content: ''
+        display: block
+
       &::after
         content: ':'
 
-    &#informations
-      clear: both
-      padding-top: .5cm
-
   table
     border-collapse: collapse
-    margin-top: 1cm
     width: 100%
 
-    thead
-      border-bottom: .02cm solid #abb2bf
-      color: #abb2bf
+    th
+      border-bottom: .2mm solid #a9a
+      color: #a9a
+      font-size: 10pt
+      font-weight: 400
+      padding-bottom: .25cm
       text-transform: uppercase
 
-      th
-        font-size: 10pt
-        padding-bottom: .25cm
+    td
+      padding-top: 7mm
 
-    tbody
-      tr td
-        padding: .5cm 0
+      &:last-of-type
+        color: #1ee494
+        font-weight: bold
+        text-align: right
 
-        &:first-of-type
-          font-weight: bold
+    th, td
+      text-align: center
 
-        &:last-of-type
-          color: #1ee494
-          font-weight: bold
+      &:first-of-type
+        text-align: left
+
+      &:last-of-type
+        text-align: right
 
     &#total
       background: #f6f6f6
-      border: 3cm solid #f6f6f6
+      border-color: #f6f6f6
+      border-style: solid
+      border-width: 2cm 3cm
       bottom: 0
+      font-size: 20pt
       margin: 0 -3cm
       position: absolute
-      width: 19cm
-
-      dl
-        font-weight: normal
-
-      tbody
-        tr td:not(:first-of-type)
-          font-size: 20pt
+      width: 18cm
