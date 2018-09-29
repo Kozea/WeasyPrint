@@ -431,7 +431,15 @@ def content_to_boxes(style, parent_box, quote_depth, counter_values,
         local_children.extend(content_to_boxes(
             style, parent_box, orig_quote_depth, local_counters,
             get_image_from_uri, target_collector))
-        parent_box.children = local_children
+
+        # TODO: redo the formatting structure of the parent instead of hacking
+        # the already formatted structure. Find why inline_in_blocks has
+        # sometimes already been called, and sometimes not.
+        if (len(parent_box.children) == 1 and
+                isinstance(parent_box.children[0], boxes.LineBox)):
+            parent_box.children[0].children = local_children
+        else:
+            parent_box.children = local_children
 
     if style['content'] == 'inhibit':
         return []
