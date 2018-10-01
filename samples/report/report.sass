@@ -51,6 +51,19 @@ $primary: #fbc847
   background-size: cover
   margin: 0
 
+@page chapter
+  background: $primary
+  margin: 0
+
+  @top-left
+    content: none
+
+  @top-center
+    content: none
+
+  @top-right
+    content: none
+
 html
   color: #393939
   font-family: 'Fira Sans', sans-serif
@@ -221,3 +234,8 @@ html
             text-align: center
 
       &#chapter
+        align-items: center
+        display: flex
+        height: 297mm
+        justify-content: center
+        page: chapter

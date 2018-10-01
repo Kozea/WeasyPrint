@@ -40,6 +40,15 @@
   background: url(report-cover.jpg) no-repeat center;
   background-size: cover;
   margin: 0; }
+@page chapter {
+  background: #fbc847;
+  margin: 0;
+  @top-left {
+    content: none; }
+  @top-center {
+    content: none; }
+  @top-right {
+    content: none; } }
 html {
   color: #393939;
   font-family: "Fira Sans", sans-serif;
@@ -211,5 +220,11 @@ html {
           margin-bottom: 0;
           padding: 0.25cm 0;
           text-align: center; }
+    html body article#chapter {
+      align-items: center;
+      display: flex;
+      height: 297mm;
+      justify-content: center;
+      page: chapter; }
 
 /*# sourceMappingURL=report.css.map */
