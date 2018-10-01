@@ -9,25 +9,27 @@
     width: 1cm; }
   @top-center {
     background: #fbc847;
-    content: "";
+    content: '';
     display: block;
-    height: 0.05cm;
-    opacity: 0.5;
+    height: .05cm;
+    opacity: .5;
     width: 100%; }
   @top-right {
-    content: "Chapter name";
+    content: string(heading);
     font-size: 9pt;
     height: 1cm;
     vertical-align: middle;
     width: 100%; } }
-@page:blank {
+
+@page :blank {
   @top-left {
     background: none;
-    content: ""; }
+    content: ''; }
   @top-center {
     content: none; }
   @top-right {
     content: none; } }
+
 @page no-chapter {
   @top-left {
     background: none;
@@ -36,9 +38,10 @@
     content: none; }
   @top-right {
     content: none; } }
+
 html {
   color: #393939;
-  font-family: "Fira Sans", sans-serif;
+  font-family: 'Fira Sans', sans-serif;
   font-size: 11pt;
   font-weight: 300;
   line-height: 1.5; }
@@ -48,12 +51,14 @@ html {
       color: #fbc847;
       font-size: 35pt;
       font-weight: 300;
+      margin: 5em 0;
       page: no-chapter; }
     html body h2, html body h3, html body h4 {
       color: black; }
     html body h2 {
       break-before: always;
-      font-size: 28pt; }
+      font-size: 28pt;
+      string-set: heading content(); }
     html body h3 {
       font-weight: 300;
       font-size: 15pt; }
@@ -68,36 +73,37 @@ html {
         font-weight: 400;
         margin-bottom: 3cm; }
       html body article#contents h3 {
-        font-weight: 500; }
+        font-weight: 500;
+        margin: 3em 0 1em; }
         html body article#contents h3::before {
           background: #fbc847;
-          content: "";
+          content: '';
           display: block;
-          height: 0.08cm;
-          margin-bottom: 0.25cm;
+          height: .08cm;
+          margin-bottom: .25cm;
           width: 2cm; }
       html body article#contents ul {
         list-style: none;
         padding-left: 0; }
         html body article#contents ul li {
-          border-top: 0.25pt solid #c1c1c1;
-          margin: 0.25cm 0;
-          padding-top: 0.25cm; }
+          border-top: .25pt solid #c1c1c1;
+          margin: .25cm 0;
+          padding-top: .25cm; }
           html body article#contents ul li::before {
-            background: #fbc847;
-            border-radius: 100%;
-            content: "";
-            display: inline-block;
-            height: 0.15cm;
-            margin-right: 0.2cm;
-            vertical-align: middle;
-            width: 0.15cm; }
-          html body article#contents ul li::after {
             color: #fbc847;
-            content: "page number";
-            float: right;
-            font-size: 9pt;
-            font-weight: 700; }
+            content: '• ';
+            font-size: 40pt;
+            line-height: 16pt;
+            vertical-align: bottom; }
+          html body article#contents ul li a {
+            color: inherit;
+            text-decoration: inherit; }
+            html body article#contents ul li a::before {
+              content: target-text(attr(href)); }
+            html body article#contents ul li a::after {
+              color: #fbc847;
+              content: target-counter(attr(href), page);
+              float: right; }
     html body article#columns section {
       columns: 2;
       column-gap: 1cm;
@@ -112,55 +118,55 @@ html {
       padding: 1cm 1cm 1cm 3cm;
       width: 21cm; }
     html body article#competences section {
-      padding: 0.5cm 0; }
+      padding: .5cm 0; }
       html body article#competences section#table-content::before {
         background: url(table-content.svg) no-repeat center #fbc847;
         background-size: 50%;
-        content: "";
+        content: '';
         display: inline-block;
         float: left;
         height: 2cm;
-        margin-right: 0.5cm;
+        margin-right: .5cm;
         vertical-align: middle;
         width: 2cm; }
       html body article#competences section#heading::before {
         background: url(heading.svg) no-repeat center #fbc847;
         background-size: 50%;
-        content: "";
+        content: '';
         display: inline-block;
         float: left;
         height: 2cm;
-        margin-right: 0.5cm;
+        margin-right: .5cm;
         vertical-align: middle;
         width: 2cm; }
       html body article#competences section#multi-columns::before {
         background: url(multi-columns.svg) no-repeat center #fbc847;
         background-size: 50%;
-        content: "";
+        content: '';
         display: inline-block;
         float: left;
         height: 2cm;
-        margin-right: 0.5cm;
+        margin-right: .5cm;
         vertical-align: middle;
         width: 2cm; }
       html body article#competences section#internal-links::before {
         background: url(internal-links.svg) no-repeat center #fbc847;
         background-size: 50%;
-        content: "";
+        content: '';
         display: inline-block;
         float: left;
         height: 2cm;
-        margin-right: 0.5cm;
+        margin-right: .5cm;
         vertical-align: middle;
         width: 2cm; }
       html body article#competences section#style::before {
         background: url(style.svg) no-repeat center #fbc847;
         background-size: 50%;
-        content: "";
+        content: '';
         display: inline-block;
         float: left;
         height: 2cm;
-        margin-right: 0.5cm;
+        margin-right: .5cm;
         vertical-align: middle;
         width: 2cm; }
       html body article#competences section h4 {
@@ -170,16 +176,10 @@ html {
     html body article#offers {
       display: flex;
       flex-wrap: wrap;
-      justify-content: space-between;
-      width: 100%; }
-      html body article#offers h2 {
-        flex: 1 100%; }
+      justify-content: space-between; }
+      html body article#offers h2, html body article#offers h3 {
+        width: 100%; }
       html body article#offers section {
-        align-content: flex-start;
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        margin: 0 0.25cm;
         width: 30%; }
         html body article#offers section h4 {
           margin-bottom: 0; }
@@ -188,15 +188,12 @@ html {
           margin: 0;
           padding-left: 0; }
           html body article#offers section ul li:not(:last-of-type) {
-            margin: 0.5cm 0; }
+            margin: .5cm 0; }
         html body article#offers section p {
           background: #fbc847;
           display: block;
           font-size: 15pt;
           font-weight: 700;
           margin-bottom: 0;
-          padding: 0.25cm 0;
-          text-align: center;
-          width: 100%; }
-
-/*# sourceMappingURL=report.css.map */
+          padding: .25cm 0;
+          text-align: center; }

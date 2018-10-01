@@ -18,7 +18,7 @@ $primary: #fbc847
     width: 100%
 
   @top-right
-    content: 'Chapter name'
+    content: string(heading)
     font-size: 9pt
     height: 1cm
     vertical-align: middle
@@ -58,6 +58,7 @@ html
       color: $primary
       font-size: 35pt
       font-weight: 300
+      margin: 5em 0
       page: no-chapter
 
     h2, h3, h4
@@ -67,6 +68,7 @@ html
     h2
       break-before: always
       font-size: 28pt
+      string-set: heading content()
 
     h3
       font-weight: 300
@@ -88,6 +90,7 @@ html
 
         h3
           font-weight: 500
+          margin: 3em 0 1em
 
           &::before
             background: $primary
@@ -107,21 +110,23 @@ html
             padding-top: .25cm
 
             &::before
-              background: $primary
-              border-radius: 100%
-              content: ''
-              display: inline-block
-              height: .15cm
-              margin-right: .2cm
-              vertical-align: middle
-              width: .15cm
-
-            &::after
               color: $primary
-              content: 'page number'
-              float: right
-              font-size: 9pt
-              font-weight: 700
+              content: '• '
+              font-size: 40pt
+              line-height: 16pt
+              vertical-align: bottom
+
+            a
+              color: inherit
+              text-decoration: inherit
+
+              &::before
+                content: target-text(attr(href))
+
+              &::after
+                color: $primary
+                content: target-counter(attr(href), page)
+                float: right
 
       &#columns
         section
@@ -167,17 +172,11 @@ html
         display: flex
         flex-wrap: wrap
         justify-content: space-between
-        width: 100%
 
-        h2
-          flex: 1 100%
+        h2, h3
+          width: 100%
 
         section
-          align-content: flex-start
-          display: flex
-          flex-wrap: wrap
-          justify-content: center
-          margin: 0 .25cm
           width: 30%
 
           h4
@@ -199,6 +198,5 @@ html
             margin-bottom: 0
             padding: .25cm 0
             text-align: center
-            width: 100%
 
       &#chapter
