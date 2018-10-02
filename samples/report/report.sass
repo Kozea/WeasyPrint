@@ -46,6 +46,24 @@ $primary: #fbc847
   @top-right
     content: none
 
+@page:first
+  background: url(report-cover.jpg) no-repeat center
+  background-size: cover
+  margin: 0
+
+@page chapter
+  background: $primary
+  margin: 0
+
+  @top-left
+    content: none
+
+  @top-center
+    content: none
+
+  @top-right
+    content: none
+
 html
   color: #393939
   font-family: 'Fira Sans', sans-serif
@@ -56,10 +74,10 @@ html
   body
     h1
       color: $primary
-      font-size: 35pt
-      font-weight: 300
-      margin: 5em 0
+      font-size: 38pt
+      margin:  5cm 2cm 0 2cm
       page: no-chapter
+      width: 100%
 
     h2, h3, h4
       color: black
@@ -78,6 +96,22 @@ html
       font-size: 13pt
 
     article
+      &#cover
+        align-content: space-between
+        display: flex
+        flex-wrap: wrap
+        height: 297mm
+
+        address
+          background: $primary
+          flex: 1 50%
+          margin: 0 -2cm
+          padding: 1cm 0
+          white-space: pre-wrap
+
+          &:first-of-type
+            padding-left: 3cm
+
       &#contents
         break-before: right
         break-after: left
@@ -200,3 +234,8 @@ html
             text-align: center
 
       &#chapter
+        align-items: center
+        display: flex
+        height: 297mm
+        justify-content: center
+        page: chapter
