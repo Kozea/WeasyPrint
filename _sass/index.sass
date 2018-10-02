@@ -31,33 +31,64 @@ main.index
       background-color: $light
       border-radius: .35rem
       color: $primary
-      margin-bottom: 0
+      margin: 0
       padding: 0
       position: absolute
+      text-align: left
+      width: 16em
       z-index: 1
 
       @media screen and (min-width: $mobile-breakpoint + 1px)
-        transform: translateY(50%)
+        top: calc(100% - 370px / 2 - 1.125em)
+
+      @media screen and (max-width: $mobile-breakpoint)
+        top: calc(100% - 300px / 2)
 
       &::after
         align-items: center
-        background-color: $light-grey
+        background: url('img/arrow-bottom.svg') center / 1em no-repeat
         border-bottom-right-radius: .35rem
         border-top-right-radius: .35rem
-        content: url('img/arrow-bottom.svg')
+        content: ''
+        cursor: pointer
         display: flex
-        margin-left: 1em
-        padding: 1.25em
-        width: 1em
+        height: 1.5em
+        padding: 1em
+        position: absolute
+        right: 0
+        transition: opacity .4s
+        top: 0
+        width: .5em
 
       li
+        border-radius: .35rem
+        color: transparent
         cursor: pointer
         height: 0
         overflow: hidden
+        transition: color .2s ease .2s, height .25s ease, padding .25s ease
+
+        &::before
+          color: transparent
+          content: '–'
+          margin: 0 .5em
+
+        &:hover
+          background-color: $light-grey
+
+        &.active
+          &::before
+            color: inherit
 
       li.active, &:hover li
-        height: auto
-        padding: 1.25em
+        color: $primary
+        height: 1em
+        padding: 1.25em .5em
+
+      &:hover
+        &::after
+          opacity: 0
+
 
     input, label
       bottom: 0
@@ -82,14 +113,14 @@ main.index
 
       &:checked
         ~ dl
-          dt
+          dt.active
             background-position: 90% 0
             opacity: 0
 
-          dd
-            img
-              opacity: 1
-              top: 50%
+            & + dd
+              img
+                opacity: 1
+                top: 50%
 
         ~ label
           &:nth-of-type(1)
@@ -180,7 +211,7 @@ main.index
 
       @media screen and (min-width: $mobile-breakpoint + 1px)
         height: 370px
-        margin: 0 0 -185px
+        margin: 1em 0 -185px
 
       @media screen and (max-width: $mobile-breakpoint)
         height: 300px
@@ -191,7 +222,7 @@ main.index
         z-index: -1
 
       dt
-        background: url('img/documents/html.jpg') center / cover no-repeat
+        background: transparent
         color: transparent
         font-size: 0
         height: 100%
@@ -201,6 +232,14 @@ main.index
         top: 0
         transition: background-position .5s ease, opacity .5s ease
         width: 100%
+
+        &.active
+          &:nth-of-type(1)
+            background: url('img/documents/html.jpg') center / cover no-repeat
+
+          &:nth-of-type(2)
+            background-color: red
+
 
       img
         left: 50%
