@@ -86,3 +86,26 @@
   }).data('smoothState');
 })(jQuery);
 </script>
+<script type="text/javascript">
+  window.onload = function () {
+    var samples = document.querySelectorAll("li[data-sample]");
+    var images = document.querySelectorAll("dt[data-sample]");
+    for (var i = 0; i < samples.length; i++) {
+      var sample = samples[i];
+      sample.onclick = function () {
+        for (var i = 0; i < samples.length; i++) {
+          var removed_sample = samples[i];
+          removed_sample.classList.remove("active");
+        }
+        this.classList.add("active");
+        for (var i = 0; i < images.length; i++) {
+          var removed_image = images[i];
+          removed_image.classList.remove("active");
+        }
+        var attribute = this.getAttribute("data-sample");
+        var image = document.querySelectorAll("dt[data-sample='" + attribute + "']")[0];
+        image.classList.add("active");
+      };
+    }
+  }
+</script>

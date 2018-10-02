@@ -31,10 +31,9 @@ main.index
       background-color: $light
       border-radius: .35rem
       color: $primary
-      display: flex
       margin-bottom: 0
       padding: 0
-      position: relative
+      position: absolute
       z-index: 1
 
       @media screen and (min-width: $mobile-breakpoint + 1px)
@@ -52,10 +51,13 @@ main.index
         width: 1em
 
       li
-        margin: 1.25em
+        cursor: pointer
+        height: 0
+        overflow: hidden
 
-        & + li
-          display: none
+      li.active, &:hover li
+        height: auto
+        padding: 1.25em
 
     input, label
       bottom: 0
