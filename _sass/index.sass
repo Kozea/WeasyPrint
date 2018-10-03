@@ -3,8 +3,14 @@ main.index
 
   section:nth-of-type(1)
     align-content: flex-start
-    margin-bottom: 185px
     padding-bottom: 0
+
+    @media screen and (min-width: $mobile-breakpoint + 1px)
+      margin-bottom: (370px / 2)
+
+    @media screen and (max-width: $mobile-breakpoint)
+      margin-bottom: (300px / 2)
+
 
     h2
       margin-bottom: 0
@@ -36,13 +42,13 @@ main.index
       position: absolute
       text-align: left
       width: 16em
-      z-index: 1
+      z-index: 6
 
       @media screen and (min-width: $mobile-breakpoint + 1px)
         top: calc(100% - 370px / 2 - 1.125em)
 
       @media screen and (max-width: $mobile-breakpoint)
-        top: calc(100% - 300px / 2)
+        top: calc(100% - 300px / 2 - 1.125em)
 
       &::after
         align-items: center
@@ -215,7 +221,7 @@ main.index
 
       @media screen and (max-width: $mobile-breakpoint)
         height: 300px
-        margin: 1em (-$bleed-space) -185px
+        margin: 1em (-$bleed-space) -150px
         width: calc(100% + #{$bleed-space} * 2)
 
       *
