@@ -37,9 +37,11 @@ main.index
       background-color: $light
       border-radius: .35rem
       color: $primary
+      left: 50%
       margin: 0
       padding: 0
       position: absolute
+      transform: translateX(-50%)
       text-align: left
       width: 16em
       z-index: 6
@@ -104,6 +106,7 @@ main.index
 
       @media screen and (max-width: $mobile-breakpoint)
         transform: translateX(-$page-margin)
+        bottom: -(300px / 2)
 
     input
       border: 0
