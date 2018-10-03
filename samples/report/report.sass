@@ -1,4 +1,18 @@
 @import url('https://fonts.googleapis.com/css?family=Fira+Sans:300,400,500')
+
+@font-face
+  font-family: 'Fira Regular'
+  font-style: normal
+  font-weight: 400
+  src: url('FiraSans-Regular.ttf'), url(https://fonts.gstatic.com/s/firasans/v8/va9E4kDNxMZdWfMOD5VvmojLeTY.woff2) format('woff2')
+
+@font-face
+  font-family: 'Fira Light'
+  font-style: normal
+  font-weight: 300
+  src: url('FiraSans-Light.ttf'), url(https://fonts.gstatic.com/s/firasans/v8/va9E4kDNxMZdWfMOD5VvmojLeTY.woff2) format('woff2')
+
+
 $primary: #fbc847
 
 @page
@@ -239,3 +253,56 @@ html
         height: 297mm
         justify-content: center
         page: chapter
+
+      &#typography
+        font-family: 'Fira Light'
+
+        section
+          display: flex
+          flex-wrap: wrap
+          margin: 1cm 0
+
+          h4
+            border-top: 1pt solid
+            flex: 1 25%
+            margin: 0
+
+          p
+            flex: 1 75%
+            margin: 0
+            padding-left: .5cm
+            text-align: justify
+
+          ul
+            flex: 1 75%
+            line-height: 2
+            list-style: none
+            margin: 0
+            padding-left: .5cm
+
+          &#uppercase
+            text-transform: uppercase
+
+          &#small-caps
+            font-variant: small-caps
+
+          &#maths
+            ul
+              li
+                &:nth-of-type(2)
+                  font-variant-numeric: diagonal-fractions
+
+                &:nth-of-type(3)
+                  font-feature-settings: 'dnom'
+
+                &:nth-of-type(4)
+                  font-feature-settings: 'numr'
+
+          &#numeric-spacing
+            ul
+              columns: 2
+
+              li:nth-of-type(4),
+              li:nth-of-type(5),
+              li:nth-of-type(6)
+                font-variant-numeric: tabular-nums
