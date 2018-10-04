@@ -47,10 +47,10 @@ main.index
       z-index: 6
 
       @media screen and (min-width: $mobile-breakpoint + 1px)
-        top: calc(100% - 370px / 2 - 1.125em)
+        top: calc(100% - 370px / 2 - 1.75em)
 
       @media screen and (max-width: $mobile-breakpoint)
-        top: calc(100% - 300px / 2 - 1.125em)
+        top: calc(100% - 300px / 2 - 1.75em)
 
       &::after
         align-items: center
@@ -123,8 +123,9 @@ main.index
       &:checked
         ~ dl
           dt.active
-            background-position: 90% 0
-            opacity: 0
+            &::before
+              background-position: 90% 0
+              opacity: 0
 
             & + dd
               img
@@ -220,30 +221,44 @@ main.index
 
       @media screen and (min-width: $mobile-breakpoint + 1px)
         height: 370px
-        margin: 1em 0 -185px
+        margin: 2em 0 -185px
 
       @media screen and (max-width: $mobile-breakpoint)
         height: 300px
-        margin: 1em (-$bleed-space) -150px
+        margin: 2em (-$bleed-space) -150px
         width: calc(100% + #{$bleed-space} * 2)
 
       *
         z-index: -1
 
       dt
-        background: transparent
         color: transparent
         font-size: 0
-        height: 100%
-        left: 0
-        opacity: 1
-        position: absolute
-        top: 0
-        transition: background-position .5s ease, opacity .5s ease
-        width: 100%
 
-        &.active
-          background: url('img/documents/html.jpg') center / cover no-repeat
+        &, &::before
+          height: 100%
+          left: 0
+          position: absolute
+          top: 0
+          width: 100%
+
+        &::before
+          content: ''
+          opacity: 1
+          transition: background-position .25s ease, opacity .25s ease
+
+        &:nth-of-type(1)
+          &::before
+            background: url('img/documents/reports-html.png') center / cover no-repeat
+
+        &:nth-of-type(2)
+          &::before
+            background: url('img/documents/invoices-html.png') center / cover no-repeat
+
+        &:not(.active)
+          &::before
+            background-position: 90% 0
+            opacity: 0
 
       img
         left: 50%
@@ -251,7 +266,7 @@ main.index
         position: absolute
         top: 0
         transform: translate(-50%, -50%)
-        transition: opacity .5s ease, top .5s ease
+        transition: opacity .25s ease, top .25s ease
 
         @media screen and (min-width: $mobile-breakpoint + 1px)
           max-width: 100%

@@ -4,7 +4,10 @@ main.samples
 
     article
       border-bottom: solid 1px $light-grey
-      min-height: 25em
+      display: flex
+      flex-direction: column
+      justify-content: center
+      min-height: 20em
       position: relative
 
       @media screen and (min-width: $mobile-breakpoint + 1px)
@@ -21,7 +24,7 @@ main.samples
 
         @media screen and (min-width: $mobile-breakpoint + 1px)
           max-height: 100%
-          max-width: column(3,12)
+          max-width: column(5,12)
           position: absolute
           right: column(6,12)
           top: 50%
