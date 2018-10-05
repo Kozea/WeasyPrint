@@ -1,0 +1,308 @@
+@import url('https://fonts.googleapis.com/css?family=Fira+Sans:300,400,500')
+
+@font-face
+  font-family: 'Fira Regular'
+  font-style: normal
+  font-weight: 400
+  src: url('FiraSans-Regular.ttf'), url(https://fonts.gstatic.com/s/firasans/v8/va9E4kDNxMZdWfMOD5VvmojLeTY.woff2) format('woff2')
+
+@font-face
+  font-family: 'Fira Light'
+  font-style: normal
+  font-weight: 300
+  src: url('FiraSans-Light.ttf'), url(https://fonts.gstatic.com/s/firasans/v8/va9E4kDNxMZdWfMOD5VvmojLeTY.woff2) format('woff2')
+
+
+$primary: #fbc847
+
+@page
+  @top-left
+    background: $primary
+    content: counter(page)
+    height: 1cm
+    text-align: center
+    width: 1cm
+
+  @top-center
+    background: $primary
+    content: ''
+    display: block
+    height: .05cm
+    opacity: .5
+    width: 100%
+
+  @top-right
+    content: string(heading)
+    font-size: 9pt
+    height: 1cm
+    vertical-align: middle
+    width: 100%
+
+@page:blank
+  @top-left
+    background: none
+    content: ''
+
+  @top-center
+    content: none
+
+  @top-right
+    content: none
+
+@page no-chapter
+  @top-left
+    background: none
+    content: none
+
+  @top-center
+    content: none
+
+  @top-right
+    content: none
+
+@page:first
+  background: url(report-cover.jpg) no-repeat center
+  background-size: cover
+  margin: 0
+
+@page chapter
+  background: $primary
+  margin: 0
+
+  @top-left
+    content: none
+
+  @top-center
+    content: none
+
+  @top-right
+    content: none
+
+html
+  color: #393939
+  font-family: 'Fira Sans', sans-serif
+  font-size: 11pt
+  font-weight: 300
+  line-height: 1.5
+
+  body
+    h1
+      color: $primary
+      font-size: 38pt
+      margin:  5cm 2cm 0 2cm
+      page: no-chapter
+      width: 100%
+
+    h2, h3, h4
+      color: black
+
+    /* à remettre plus tard dans la section article */
+    h2
+      break-before: always
+      font-size: 28pt
+      string-set: heading content()
+
+    h3
+      font-weight: 300
+      font-size: 15pt
+
+    h4
+      font-size: 13pt
+
+    article
+      &#cover
+        align-content: space-between
+        display: flex
+        flex-wrap: wrap
+        height: 297mm
+
+        address
+          background: $primary
+          flex: 1 50%
+          margin: 0 -2cm
+          padding: 1cm 0
+          white-space: pre-wrap
+
+          &:first-of-type
+            padding-left: 3cm
+
+      &#contents
+        break-before: right
+        break-after: left
+        page: no-chapter
+
+        h2
+          font-size: 20pt
+          font-weight: 400
+          margin-bottom: 3cm
+
+        h3
+          font-weight: 500
+          margin: 3em 0 1em
+
+          &::before
+            background: $primary
+            content: ''
+            display: block
+            height: .08cm
+            margin-bottom: .25cm
+            width: 2cm
+
+        ul
+          list-style: none
+          padding-left: 0
+
+          li
+            border-top: .25pt solid #c1c1c1
+            margin: .25cm 0
+            padding-top: .25cm
+
+            &::before
+              color: $primary
+              content: '• '
+              font-size: 40pt
+              line-height: 16pt
+              vertical-align: bottom
+
+            a
+              color: inherit
+              text-decoration: inherit
+
+              &::before
+                content: target-text(attr(href))
+
+              &::after
+                color: $primary
+                content: target-counter(attr(href), page)
+                float: right
+
+      &#columns
+        section
+          columns: 2
+          column-gap: 1cm
+          padding-top: 1cm
+
+          p
+            text-align: justify
+
+            &:first-of-type
+              font-weight: 700
+
+      &#competences
+        h3
+          background: $primary
+          margin: 0 -3cm 1cm
+          padding: 1cm 1cm 1cm 3cm
+          width: 21cm
+
+        section
+          padding: .5cm 0
+
+          @each $name in table-content, heading, multi-columns, internal-links, style
+            &##{($name)}::before
+              background: url(#{$name}.svg) no-repeat center $primary
+              background-size: 50%
+              content: ''
+              display: inline-block
+              float: left
+              height: 2cm
+              margin-right: .5cm
+              vertical-align: middle
+              width: 2cm
+
+          h4
+            margin: 0
+
+          p
+            margin-top: 0
+
+      &#offers
+        display: flex
+        flex-wrap: wrap
+        justify-content: space-between
+
+        h2, h3
+          width: 100%
+
+        section
+          width: 30%
+
+          h4
+            margin-bottom: 0
+
+          ul
+            list-style: none
+            margin: 0
+            padding-left: 0
+
+            li:not(:last-of-type)
+              margin: .5cm 0
+
+          p
+            background: $primary
+            display: block
+            font-size: 15pt
+            font-weight: 700
+            margin-bottom: 0
+            padding: .25cm 0
+            text-align: center
+
+      &#chapter
+        align-items: center
+        display: flex
+        height: 297mm
+        justify-content: center
+        page: chapter
+
+      &#typography
+        font-family: 'Fira Light'
+
+        section
+          display: flex
+          flex-wrap: wrap
+          margin: 1cm 0
+
+          h4
+            border-top: 1pt solid
+            flex: 1 25%
+            margin: 0
+
+          p
+            flex: 1 75%
+            margin: 0
+            padding-left: .5cm
+            text-align: justify
+
+          ul
+            flex: 1 75%
+            line-height: 2
+            list-style: none
+            margin: 0
+            padding-left: .5cm
+
+          &#uppercase
+            text-transform: uppercase
+
+          &#small-caps
+            font-variant: small-caps
+
+          &#maths
+            ul
+              li
+                &:nth-of-type(2)
+                  font-variant-numeric: diagonal-fractions
+
+                &:nth-of-type(3)
+                  font-feature-settings: 'dnom'
+
+                &:nth-of-type(4)
+                  font-feature-settings: 'numr'
+
+          &#numeric-spacing
+            ul
+              columns: 2
+
+              li:nth-of-type(4),
+              li:nth-of-type(5),
+              li:nth-of-type(6)
+                font-variant-numeric: tabular-nums

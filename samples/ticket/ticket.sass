@@ -1,0 +1,128 @@
+@import url('https://fonts.googleapis.com/css?family=Libre+Barcode+128')
+@import url('https://fonts.googleapis.com/css?family=Barlow+Condensed:300,400,700')
+$primary: #2A3239
+
+@page
+  margin: 0
+  size: landscape
+
+html
+  align-content: center
+  align-items: center
+  background: #eef1f5
+  display: flex
+  font-family: 'Barlow Condensed', sans-serif
+  height: 100%
+  justify-content: center
+
+  body
+    background: #fff
+    box-sizing: border-box
+    color: $primary
+    display: flex
+    flex-wrap: wrap
+    height: 8cm
+    justify-content: space-between
+    margin: 0
+    width: 25cm
+
+    section
+      box-sizing: border-box
+
+      dl
+        columns: 4
+        text-align: center
+
+      dt
+        font-size: 9pt
+        font-weight: 700
+        text-transform: uppercase
+
+      dd
+        margin-left: 0
+
+      ul
+        align-items: center
+        display: flex
+        list-style: none
+        margin: 0
+        padding-left: 0
+
+        li
+          font-weight: 700
+          text-transform: uppercase
+
+      &#informations
+        flex: 1
+        padding: 0
+        position: relative
+
+        h1
+          display: inline-block
+          font-size: 25pt
+          font-weight: 300
+          text-transform: uppercase
+
+          &#name
+            margin-left: 1cm
+
+          &#destination
+            position: absolute
+            right: 1cm
+
+        dl
+          background: $primary
+          color: #fff
+          margin: 0
+          padding: 1cm 0
+
+          dd
+            border-left: 1pt solid #fff
+            font-size: 35pt
+
+            &:first-of-type
+              border-left: 0
+
+        ul
+          margin-left: 1cm
+
+          li
+            font-weight: 300
+            padding: .15cm
+
+            &:first-of-type
+              background: $primary
+              border-radius: 4pt
+              color: #fff
+
+            &:last-of-type
+              font-family: 'Libre Barcode 128', cursive
+              font-size: 25pt
+              margin-left: auto
+              padding-right: 1cm
+              padding-top: .5cm
+
+      &#ticket
+        border-left: 1pt dashed $primary
+        display: flex
+        flex-direction: column
+        height: 8cm
+        justify-content: space-around
+        padding: 0 1cm
+
+        h2
+          font-weight: 300
+          margin: 0
+          text-transform: uppercase
+
+        p
+          font-family: 'Libre Barcode 128', cursive
+          font-size: 25pt
+          margin: 0
+          text-align: center
+
+        dl
+          margin: 0
+
+        ul li
+          margin: 0 .25cm

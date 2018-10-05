@@ -1,0 +1,277 @@
+@charset "UTF-8";
+@import url("https://fonts.googleapis.com/css?family=Fira+Sans:300,400,500");
+@font-face {
+  font-family: "Fira Regular";
+  font-style: normal;
+  font-weight: 400;
+  src: url("FiraSans-Regular.ttf"), url(https://fonts.gstatic.com/s/firasans/v8/va9E4kDNxMZdWfMOD5VvmojLeTY.woff2) format("woff2"); }
+@font-face {
+  font-family: "Fira Light";
+  font-style: normal;
+  font-weight: 300;
+  src: url("FiraSans-Light.ttf"), url(https://fonts.gstatic.com/s/firasans/v8/va9E4kDNxMZdWfMOD5VvmojLeTY.woff2) format("woff2"); }
+@page {
+  @top-left {
+    background: #fbc847;
+    content: counter(page);
+    height: 1cm;
+    text-align: center;
+    width: 1cm; }
+  @top-center {
+    background: #fbc847;
+    content: "";
+    display: block;
+    height: 0.05cm;
+    opacity: 0.5;
+    width: 100%; }
+  @top-right {
+    content: string(heading);
+    font-size: 9pt;
+    height: 1cm;
+    vertical-align: middle;
+    width: 100%; } }
+@page:blank {
+  @top-left {
+    background: none;
+    content: ""; }
+  @top-center {
+    content: none; }
+  @top-right {
+    content: none; } }
+@page no-chapter {
+  @top-left {
+    background: none;
+    content: none; }
+  @top-center {
+    content: none; }
+  @top-right {
+    content: none; } }
+@page:first {
+  background: url(report-cover.jpg) no-repeat center;
+  background-size: cover;
+  margin: 0; }
+@page chapter {
+  background: #fbc847;
+  margin: 0;
+  @top-left {
+    content: none; }
+  @top-center {
+    content: none; }
+  @top-right {
+    content: none; } }
+html {
+  color: #393939;
+  font-family: "Fira Sans", sans-serif;
+  font-size: 11pt;
+  font-weight: 300;
+  line-height: 1.5; }
+  html body {
+    /* à remettre plus tard dans la section article */ }
+    html body h1 {
+      color: #fbc847;
+      font-size: 38pt;
+      margin: 5cm 2cm 0 2cm;
+      page: no-chapter;
+      width: 100%; }
+    html body h2, html body h3, html body h4 {
+      color: black; }
+    html body h2 {
+      break-before: always;
+      font-size: 28pt;
+      string-set: heading content(); }
+    html body h3 {
+      font-weight: 300;
+      font-size: 15pt; }
+    html body h4 {
+      font-size: 13pt; }
+    html body article#cover {
+      align-content: space-between;
+      display: flex;
+      flex-wrap: wrap;
+      height: 297mm; }
+      html body article#cover address {
+        background: #fbc847;
+        flex: 1 50%;
+        margin: 0 -2cm;
+        padding: 1cm 0;
+        white-space: pre-wrap; }
+        html body article#cover address:first-of-type {
+          padding-left: 3cm; }
+    html body article#contents {
+      break-before: right;
+      break-after: left;
+      page: no-chapter; }
+      html body article#contents h2 {
+        font-size: 20pt;
+        font-weight: 400;
+        margin-bottom: 3cm; }
+      html body article#contents h3 {
+        font-weight: 500;
+        margin: 3em 0 1em; }
+        html body article#contents h3::before {
+          background: #fbc847;
+          content: "";
+          display: block;
+          height: 0.08cm;
+          margin-bottom: 0.25cm;
+          width: 2cm; }
+      html body article#contents ul {
+        list-style: none;
+        padding-left: 0; }
+        html body article#contents ul li {
+          border-top: 0.25pt solid #c1c1c1;
+          margin: 0.25cm 0;
+          padding-top: 0.25cm; }
+          html body article#contents ul li::before {
+            color: #fbc847;
+            content: "• ";
+            font-size: 40pt;
+            line-height: 16pt;
+            vertical-align: bottom; }
+          html body article#contents ul li a {
+            color: inherit;
+            text-decoration: inherit; }
+            html body article#contents ul li a::before {
+              content: target-text(attr(href)); }
+            html body article#contents ul li a::after {
+              color: #fbc847;
+              content: target-counter(attr(href), page);
+              float: right; }
+    html body article#columns section {
+      columns: 2;
+      column-gap: 1cm;
+      padding-top: 1cm; }
+      html body article#columns section p {
+        text-align: justify; }
+        html body article#columns section p:first-of-type {
+          font-weight: 700; }
+    html body article#competences h3 {
+      background: #fbc847;
+      margin: 0 -3cm 1cm;
+      padding: 1cm 1cm 1cm 3cm;
+      width: 21cm; }
+    html body article#competences section {
+      padding: 0.5cm 0; }
+      html body article#competences section#table-content::before {
+        background: url(table-content.svg) no-repeat center #fbc847;
+        background-size: 50%;
+        content: "";
+        display: inline-block;
+        float: left;
+        height: 2cm;
+        margin-right: 0.5cm;
+        vertical-align: middle;
+        width: 2cm; }
+      html body article#competences section#heading::before {
+        background: url(heading.svg) no-repeat center #fbc847;
+        background-size: 50%;
+        content: "";
+        display: inline-block;
+        float: left;
+        height: 2cm;
+        margin-right: 0.5cm;
+        vertical-align: middle;
+        width: 2cm; }
+      html body article#competences section#multi-columns::before {
+        background: url(multi-columns.svg) no-repeat center #fbc847;
+        background-size: 50%;
+        content: "";
+        display: inline-block;
+        float: left;
+        height: 2cm;
+        margin-right: 0.5cm;
+        vertical-align: middle;
+        width: 2cm; }
+      html body article#competences section#internal-links::before {
+        background: url(internal-links.svg) no-repeat center #fbc847;
+        background-size: 50%;
+        content: "";
+        display: inline-block;
+        float: left;
+        height: 2cm;
+        margin-right: 0.5cm;
+        vertical-align: middle;
+        width: 2cm; }
+      html body article#competences section#style::before {
+        background: url(style.svg) no-repeat center #fbc847;
+        background-size: 50%;
+        content: "";
+        display: inline-block;
+        float: left;
+        height: 2cm;
+        margin-right: 0.5cm;
+        vertical-align: middle;
+        width: 2cm; }
+      html body article#competences section h4 {
+        margin: 0; }
+      html body article#competences section p {
+        margin-top: 0; }
+    html body article#offers {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between; }
+      html body article#offers h2, html body article#offers h3 {
+        width: 100%; }
+      html body article#offers section {
+        width: 30%; }
+        html body article#offers section h4 {
+          margin-bottom: 0; }
+        html body article#offers section ul {
+          list-style: none;
+          margin: 0;
+          padding-left: 0; }
+          html body article#offers section ul li:not(:last-of-type) {
+            margin: 0.5cm 0; }
+        html body article#offers section p {
+          background: #fbc847;
+          display: block;
+          font-size: 15pt;
+          font-weight: 700;
+          margin-bottom: 0;
+          padding: 0.25cm 0;
+          text-align: center; }
+    html body article#chapter {
+      align-items: center;
+      display: flex;
+      height: 297mm;
+      justify-content: center;
+      page: chapter; }
+    html body article#typography {
+      font-family: "Fira Light"; }
+      html body article#typography section {
+        display: flex;
+        flex-wrap: wrap;
+        margin: 1cm 0; }
+        html body article#typography section h4 {
+          border-top: 1pt solid;
+          flex: 1 25%;
+          margin: 0; }
+        html body article#typography section p {
+          flex: 1 75%;
+          margin: 0;
+          padding-left: 0.5cm;
+          text-align: justify; }
+        html body article#typography section ul {
+          flex: 1 75%;
+          line-height: 2;
+          list-style: none;
+          margin: 0;
+          padding-left: 0.5cm; }
+        html body article#typography section#uppercase {
+          text-transform: uppercase; }
+        html body article#typography section#small-caps {
+          font-variant: small-caps; }
+        html body article#typography section#maths ul li:nth-of-type(2) {
+          font-variant-numeric: diagonal-fractions; }
+        html body article#typography section#maths ul li:nth-of-type(3) {
+          font-feature-settings: "dnom"; }
+        html body article#typography section#maths ul li:nth-of-type(4) {
+          font-feature-settings: "numr"; }
+        html body article#typography section#numeric-spacing ul {
+          columns: 2; }
+          html body article#typography section#numeric-spacing ul li:nth-of-type(4),
+          html body article#typography section#numeric-spacing ul li:nth-of-type(5),
+          html body article#typography section#numeric-spacing ul li:nth-of-type(6) {
+            font-variant-numeric: tabular-nums; }
+
+/*# sourceMappingURL=report.css.map */

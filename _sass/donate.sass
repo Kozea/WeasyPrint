@@ -1,0 +1,124 @@
+main.donate
+  section:nth-of-type(2)
+    h2
+      &:nth-of-type(1)
+        margin-bottom: 0
+
+        @media screen and (min-width: $mobile-breakpoint + 1px)
+          margin-left: column(1,12)
+
+
+      &:nth-of-type(2)
+        margin-left: column(4,12)
+
+        @media screen and (max-width: $mobile-breakpoint)
+          margin-left: column(1,12)
+
+    p
+      &:nth-of-type(1)
+        margin: .5em 0 0
+
+        @media screen and (min-width: $mobile-breakpoint + 1px)
+          margin-left: column(1,12)
+
+      &:nth-of-type(2)
+        +full-bg($primary)
+        color: $light
+        padding: 4em column(1,12)
+        margin: 3em column(2,12) 0 0
+
+        @media screen and (max-width: $mobile-breakpoint)
+          margin: 3em 0 0
+
+        &::before
+          left: auto
+          right: 0
+          transform: none
+
+      &:nth-of-type(3), &:nth-of-type(4)
+        margin: 0 column(1,12) 0 column(4,12)
+        max-width: 25em
+
+        @media screen and (max-width: $mobile-breakpoint)
+          margin-left: column(1,12)
+
+
+      &:nth-of-type(4)
+        a
+          align-items: center
+          background-color: $action
+          background-image: none
+          border-radius: .35rem
+          box-shadow: 0 0 0 .01em $action
+          box-sizing: border-box
+          color: $primary
+          display: flex
+          justify-content: space-between
+          margin-top: 3em
+          padding: 1em
+          transition: background-color .3s cubic-bezier(.56, .09, .37, 2), box-shadow .3s cubic-bezier(.56, .09, .37, 2)
+
+          &::after
+            content: url('img/arrow-right.svg')
+            margin-left: 1.5em
+            min-width: 16px
+
+          &:hover
+            background-color: darken($action, 4)
+            box-shadow: 0 0 0 .65em darken($action, 4)
+
+    ul
+      @extend %font-xl
+      align-items: flex-start
+      display: flex
+      flex-wrap: wrap
+      max-width: 100%
+
+      @media screen and (min-width: $mobile-breakpoint + 1px)
+        padding: 1em column(2,12)
+
+      @media screen and (max-width: $mobile-breakpoint)
+        padding: 1em 0 1em column(1,12)
+
+      li
+        color: $grey
+        flex: 1 8em
+        transition: color .75s
+        position: relative
+        width: 50%
+
+        &:first-of-type
+          margin: 0 column(1,8) 1em 0
+
+        &::before, &::after
+          content: ''
+          position: absolute
+
+        &::before
+          background-image: linear-gradient($light-grey 0%, $light-grey 50%, $grey 50%, $grey 100%)
+          background-size: 100% 200%
+          background-position-y: 0
+          bottom: .15em
+          left: -.8em
+          transition: background-position .75s ease
+          top: .85em
+          width: 1px
+
+        &::after
+          border: solid 1px $light-grey
+          border-radius: 100%
+          height: .35em
+          left: calc(-.8em - .35em / 2)
+          transition: border-bottom-color .15s ease, border-left-color .15s ease .15s, border-right-color .15s ease .45s, border-top-color .15s ease .3s, transform .6s ease
+          top: .45em
+          width: .35em
+
+        &:hover
+          color: $primary
+
+          &::before
+            background-position-y: 100%
+
+          &::after
+            border-color: $primary
+            transform: rotate(360deg)

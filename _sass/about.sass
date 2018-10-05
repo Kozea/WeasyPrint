@@ -1,0 +1,33 @@
+main.about
+  @extend %header-font-large
+
+  > section
+    margin-bottom: 8em
+
+    &::after
+      bottom: -7em
+      content: url('img/logotype-picto.svg')
+      display: block
+      margin: 0 auto
+      position: absolute
+      width: 70px
+
+  ul
+    +list-style($light, $action, $light, $action, $action)
+    margin: 0
+
+    li
+      @extend %full-link
+      display: inline-block
+      margin: .5em 0
+      text-align: left
+
+      &:hover
+        color: $action
+
+
+@media screen and (min-width: $mobile-breakpoint + 1px)
+  main.about
+    ul
+      li
+        margin: .5em

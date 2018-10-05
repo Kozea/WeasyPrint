@@ -1,0 +1,105 @@
+@import url('https://fonts.googleapis.com/css?family=Pacifico|Source+Sans+Pro:400,700')
+
+@page
+  margin: 3cm
+
+  @bottom-left
+    color: #1ee494
+    font-family: Pacifico
+    content: '♥ Thank you!'
+
+  @bottom-right
+    color: #a9a
+    content: 'community@kozea.fr | +33 4 78 84 19 28 | community.kozea.fr'
+    font-family: Pacifico
+    font-size: 9pt
+
+html
+  color: #14213d
+  font-family: Source Sans Pro
+  font-size: 11pt
+  line-height: 1.6
+
+  body
+    margin: 0
+
+  h1
+    color: #1ee494
+    font-family: Pacifico
+    font-size: 40pt
+    margin: 0
+
+  aside
+    display: flex
+    margin: 2em 0 4em
+
+    address
+      font-style: normal
+      white-space: pre-line
+
+      &#from
+        color: #a9a
+        flex: 1
+
+      &#to
+        text-align: right
+
+  dl
+    text-align: right
+    position: absolute
+    right: 0
+    top: 0
+
+    dt, dd
+      display: inline
+      margin: 0
+
+    dt
+      color: #a9a
+
+      &::before
+        content: ''
+        display: block
+
+      &::after
+        content: ':'
+
+  table
+    border-collapse: collapse
+    width: 100%
+
+    th
+      border-bottom: .2mm solid #a9a
+      color: #a9a
+      font-size: 10pt
+      font-weight: 400
+      padding-bottom: .25cm
+      text-transform: uppercase
+
+    td
+      padding-top: 7mm
+
+      &:last-of-type
+        color: #1ee494
+        font-weight: bold
+        text-align: right
+
+    th, td
+      text-align: center
+
+      &:first-of-type
+        text-align: left
+
+      &:last-of-type
+        text-align: right
+
+    &#total
+      background: #f6f6f6
+      border-color: #f6f6f6
+      border-style: solid
+      border-width: 2cm 3cm
+      bottom: 0
+      font-size: 20pt
+      margin: 0 -3cm
+      position: absolute
+      width: 18cm

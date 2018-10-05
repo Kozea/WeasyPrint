@@ -3,28 +3,109 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width initial-scale=1">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<link href="/css/img/icon.png" type="image/png" rel="shortcut icon">
+<link href="/css/img/logotype-picto.svg" type="image/svg" rel="shortcut icon">
 <link href="/css/main.css" rel="stylesheet">
 <link href="/feed.xml" type="application/rss+xml" rel="alternate" title="RSS feed">
 
 <title>{% if page.title %}{{ page.title }} - {% endif %}{{ site.title }}</title>
 <meta name="description" content="{{ site.description }}">
 
-<nav>
-  <ul>
-    <li><a href="/">Overview</a></h1>
-    <li><a href="/news/">News</a>
-    <li><a href="http://weasyprint.readthedocs.org/en/latest/">Documentation</a>
-    <li><a href="http://weasyprint.readthedocs.org/en/latest/install.html">Install</a>
-    <li><a href="/community/">Community</a>
-  </ul>
-</nav>
+<div id="main">
+  <nav onclick="/* iOS hack */" class="{{ page.id }}">
+    <ul>
+      <li {% if page.id == 'index' %}class="active"{% endif %}><a href="/">WeasyPrint</a></h1>
+      <li {% if page.id == 'news' %}class="active"{% endif %}><a href="/news/">News</a>
+      <li {% if page.id == 'about' %}class="active"{% endif %}><a href="/about/">About</a>
+      <li {% if page.id == 'start' %}class="active"{% endif %}><a href="/start/">How to Start</a>
+      <li {% if page.id == 'samples' %}class="active"{% endif %}><a href="/samples/">Samples</a>
+      <li {% if page.id == 'donate' %}class="active"{% endif %}><a href="/donate/">Why Donate?</a>
+    </ul>
+  </nav>
 
-{{ content }}
+  <aside class="{{ page.id }}">
+    {% assign releases = site.github.releases | where:"draft",false | sort:"created_at" | reverse %}
+    <a href="https://github.com/Kozea/{{ site.title }}/blob/master/CHANGES">{{ site.title }} {{ releases[0].tag_name }} (Latest version)</a>
+  </aside>
 
-<footer>
-  <ul>
-    <li><a href="https://community.kozea.fr">A Kozea Community Project</a></li>
-    <li><a href="{{ site.github.repository_url }}">Fork me on GitHub</a></li>
-  </ul>
-</footer>
+  <aside class="{{ page.id }}">
+    <a href="https://www.patreon.com/kozea">
+      Donate
+    </a>
+    <label for="total">$5</label>
+    <progress title="$5" name="total" value="5" max="150">
+  </aside>
+
+  {{ content }}
+
+  <footer class="{{ page.id }}">
+    <ul>
+      <li {% if page.id == 'index' %}class="active"{% endif %}><a href="/">WeasyPrint</a></h1>
+      <li>
+        <ul>
+          <li><a href="/#factory">The Awesome Document Factory</a></li>
+          <li><a href="/#news">News</a></li>
+          <li><a href="/#involved">Get Involved</a></li>
+          <li><a href="/#testimonials">Testimonials</a></li>
+        </ul>
+      </li>
+      <li {% if page.id == 'news' %}class="active"{% endif %}><a href="/news/">News</a>
+      <li {% if page.id == 'about' %}class="active"{% endif %}><a href="/about/">About</a>
+      <li {% if page.id == 'start' %}class="active"{% endif %}><a href="/start/">How to Start</a>
+      <li {% if page.id == 'samples' %}class="active"{% endif %}><a href="/samples/">Samples</a>
+      <li {% if page.id == 'donate' %}class="active"{% endif %}><a href="/donate/">Why Donate?</a>
+    </ul>
+    <ul>
+      <li><a id="website" href="#">Kozea community</a></li>
+      <li><a id="mail" href="#">community@kozea.fr</a></li>
+      <li><a id="freenode" href="#">##kozea on freenode</a></li>
+      <li><a id="twitter" href="#">@kozeacommunity</a></li>
+      <li><a id="github" href="{{ site.github.repository_url }}">github/kozea/weasyprint</a></li>
+    </ul>
+  </footer>
+</div>
+
+<script type="text/javascript" src="http://code.jquery.com/jquery-3.3.1.min.js"></script>
+<script type="text/javascript" src="jquery.smoothState.min.js"></script>
+<script type="text/javascript">
+;(function ($) {
+  $('#main').smoothState({
+      onBefore: function($currentTarget, $container) {
+        $('html, body').animate({ 'scrollTop': 0 });
+      },
+      onStart: {
+          duration: 1000,
+          render: function($container) {
+              $container.addClass('onStart');
+              $container.removeClass('onAfter');
+          }
+      },
+      onAfter: function ($container, $newContent) {
+          $container.addClass('onAfter');
+          $container.removeClass('onStart');
+      }
+  }).data('smoothState');
+})(jQuery);
+</script>
+<script type="text/javascript">
+  window.onload = function () {
+    var samples = document.querySelectorAll("li[data-sample]");
+    var images = document.querySelectorAll("dt[data-sample]");
+    for (var i = 0; i < samples.length; i++) {
+      var sample = samples[i];
+      sample.onclick = function () {
+        for (var i = 0; i < samples.length; i++) {
+          var removed_sample = samples[i];
+          removed_sample.classList.remove("active");
+        }
+        this.classList.add("active");
+        for (var i = 0; i < images.length; i++) {
+          var removed_image = images[i];
+          removed_image.classList.remove("active");
+        }
+        var attribute = this.getAttribute("data-sample");
+        var image = document.querySelectorAll("dt[data-sample='" + attribute + "']")[0];
+        image.classList.add("active");
+      };
+    }
+  }
+</script>
