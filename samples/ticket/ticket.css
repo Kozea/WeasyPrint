@@ -1,0 +1,104 @@
+@import url("https://fonts.googleapis.com/css?family=Libre+Barcode+128");
+@import url("https://fonts.googleapis.com/css?family=Barlow+Condensed:300,400,700");
+@page {
+  margin: 0;
+  size: landscape; }
+html {
+  align-content: center;
+  align-items: center;
+  background: #eef1f5;
+  display: flex;
+  font-family: "Barlow Condensed", sans-serif;
+  height: 100%;
+  justify-content: center; }
+  html body {
+    background: #fff;
+    box-sizing: border-box;
+    color: #2A3239;
+    display: flex;
+    flex-wrap: wrap;
+    height: 8cm;
+    justify-content: space-between;
+    margin: 0;
+    width: 25cm; }
+    html body section {
+      box-sizing: border-box; }
+      html body section dl {
+        columns: 4;
+        text-align: center; }
+      html body section dt {
+        font-size: 9pt;
+        font-weight: 700;
+        text-transform: uppercase; }
+      html body section dd {
+        margin-left: 0; }
+      html body section ul {
+        align-items: center;
+        display: flex;
+        list-style: none;
+        margin: 0;
+        padding-left: 0; }
+        html body section ul li {
+          font-weight: 700;
+          text-transform: uppercase; }
+      html body section#informations {
+        flex: 1;
+        padding: 0;
+        position: relative; }
+        html body section#informations h1 {
+          display: inline-block;
+          font-size: 25pt;
+          font-weight: 300;
+          text-transform: uppercase; }
+          html body section#informations h1#name {
+            margin-left: 1cm; }
+          html body section#informations h1#destination {
+            position: absolute;
+            right: 1cm; }
+        html body section#informations dl {
+          background: #2A3239;
+          color: #fff;
+          margin: 0;
+          padding: 1cm 0; }
+          html body section#informations dl dd {
+            border-left: 1pt solid #fff;
+            font-size: 35pt; }
+            html body section#informations dl dd:first-of-type {
+              border-left: 0; }
+        html body section#informations ul {
+          margin-left: 1cm; }
+          html body section#informations ul li {
+            font-weight: 300;
+            padding: 0.15cm; }
+            html body section#informations ul li:first-of-type {
+              background: #2A3239;
+              border-radius: 4pt;
+              color: #fff; }
+            html body section#informations ul li:last-of-type {
+              font-family: "Libre Barcode 128", cursive;
+              font-size: 25pt;
+              margin-left: auto;
+              padding-right: 1cm;
+              padding-top: 0.5cm; }
+      html body section#ticket {
+        border-left: 1pt dashed #2A3239;
+        display: flex;
+        flex-direction: column;
+        height: 8cm;
+        justify-content: space-around;
+        padding: 0 1cm; }
+        html body section#ticket h2 {
+          font-weight: 300;
+          margin: 0;
+          text-transform: uppercase; }
+        html body section#ticket p {
+          font-family: "Libre Barcode 128", cursive;
+          font-size: 25pt;
+          margin: 0;
+          text-align: center; }
+        html body section#ticket dl {
+          margin: 0; }
+        html body section#ticket ul li {
+          margin: 0 0.25cm; }
+
+/*# sourceMappingURL=ticket.css.map */
