@@ -1,16 +1,29 @@
-@import url('https://fonts.googleapis.com/css?family=Fira+Sans:300,400,500')
-
 @font-face
-  font-family: 'Fira Regular'
-  font-style: normal
+  font-family: Fira Sans
   font-weight: 400
-  src: url('FiraSans-Regular.ttf'), url(https://fonts.gstatic.com/s/firasans/v8/va9E4kDNxMZdWfMOD5VvmojLeTY.woff2) format('woff2')
+  src: url(FiraSans-Regular.otf)
 
 @font-face
-  font-family: 'Fira Light'
-  font-style: normal
+  font-family: Fira Sans
+  font-style: italic
+  font-weight: 400
+  src: url(FiraSans-Italic.otf)
+
+@font-face
+  font-family: Fira Sans
   font-weight: 300
-  src: url('FiraSans-Light.ttf'), url(https://fonts.gstatic.com/s/firasans/v8/va9E4kDNxMZdWfMOD5VvmojLeTY.woff2) format('woff2')
+  src: url(FiraSans-Light.otf)
+
+@font-face
+  font-family: Fira Sans
+  font-style: italic
+  font-weight: 300
+  src: url(FiraSans-LightItalic.otf)
+
+@font-face
+  font-family: Fira Sans
+  font-weight: bold
+  src: url(FiraSans-Bold.otf)
 
 
 $primary: #fbc847
@@ -80,7 +93,7 @@ $primary: #fbc847
 
 html
   color: #393939
-  font-family: 'Fira Sans', sans-serif
+  font-family: Fira Sans
   font-size: 11pt
   font-weight: 300
   line-height: 1.5
@@ -95,8 +108,8 @@ html
 
     h2, h3, h4
       color: black
+      font-weight: 400
 
-    /* à remettre plus tard dans la section article */
     h2
       break-before: always
       font-size: 28pt
@@ -255,8 +268,6 @@ html
         page: chapter
 
       &#typography
-        font-family: 'Fira Light'
-
         section
           display: flex
           flex-wrap: wrap
@@ -267,42 +278,97 @@ html
             flex: 1 25%
             margin: 0
 
-          p
+          h4 + *
             flex: 1 75%
             margin: 0
             padding-left: .5cm
+
+          p
             text-align: justify
 
           ul
-            flex: 1 75%
             line-height: 2
             list-style: none
-            margin: 0
-            padding-left: .5cm
-
-          &#uppercase
-            text-transform: uppercase
 
           &#small-caps
-            font-variant: small-caps
+            p
+              font-variant: small-caps
 
-          &#maths
-            ul
-              li
-                &:nth-of-type(2)
-                  font-variant-numeric: diagonal-fractions
+          &#ligatures
+            dl
+              display: flex
+              flex-wrap: wrap
 
-                &:nth-of-type(3)
-                  font-feature-settings: 'dnom'
+              dt
+                font-weight: 400
+                width: 30%
 
-                &:nth-of-type(4)
-                  font-feature-settings: 'numr'
+              dd
+                flex: 1 100%
+                margin: 0
+                padding: 0
 
-          &#numeric-spacing
-            ul
-              columns: 2
+            .none
+              font-variant-ligatures: none
 
-              li:nth-of-type(4),
-              li:nth-of-type(5),
-              li:nth-of-type(6)
-                font-variant-numeric: tabular-nums
+            .common
+              font-variant-ligatures: common-ligatures
+
+            .discretionary
+              font-variant-ligatures: discretionary-ligatures
+
+            .contextual
+              font-variant-ligatures: contextual-ligatures
+
+          &#numbers
+            dl
+              display: flex
+              flex-wrap: wrap
+
+              dt
+                font-weight: 400
+                width: 30%
+
+              dd
+                flex: 1 100%
+                margin: 0
+                padding: 0
+
+            #fractions
+              font-variant-numeric: diagonal-fractions
+
+            #ordinals
+              font-variant-numeric: ordinal
+
+            #slashed
+              font-variant-numeric: slashed-zero
+
+            #super
+              font-variant-position: super
+
+            #sub
+              font-variant-position: sub
+
+          &#figures
+            dl
+              columns: 4
+
+              dt
+                font-weight: 400
+
+              dd
+                display: flex
+                margin: 0
+                padding: 0
+
+                ul
+                  padding: 0 1em 0 0
+
+            #oldstyle
+              font-variant-numeric: oldstyle-nums
+
+            #tabular
+              font-variant-numeric: tabular-nums
+
+            #old-tabular
+              font-variant-numeric: oldstyle-nums tabular-nums

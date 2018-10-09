@@ -11,15 +11,15 @@
     <article id="cover">
       <h1>Report example</h1>
       <address>
-        Weasyprint Compagny
+        WeasyPrint Company
         Boulevard Stalingrad
         Villeurbanne City France
       </address>
       <address>
         community@kozea.fr
         +33 4 78 84 19 28
-        community@kozea.fr
-    </address>
+        https://community.kozea.fr
+      </address>
     </article>
 
     <article id="contents">
@@ -41,7 +41,7 @@
     <article id="columns">
       <h2 id="columns-title">Big title on left page, with text on columns</h2>
 
-      <h3>This is a little subtitle, here to explain what we are talking about.</h3>
+      <h3>This is a little subtitle, here to explain what we are talking about</h3>
 
       <section>
         <p>
@@ -171,61 +171,90 @@
     </article>
 
     <article id="chapter">
-      <h2 id="chapter-title">This is a chapter of new section</h2>
+      <h2 id="chapter-title">This is a chapter of a new section</h2>
     </article>
 
     <article id="typography">
-      <h2 id="typography-title">And this is the page about the typography features</h2>
+      <h2 id="typography-title">About some typography features</h2>
 
       <section>
-        <h4>Regular text</h4>
-        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-        Ut pulvinar dolor ac orci finibus elementum.
-        Praesent sit amet ligula turpis.</p>
-      </section>
-
-      <section id="uppercase">
-        <h4>Uppercase text</h4>
-        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-        Ut pulvinar dolor ac orci finibus elementum.
-        Praesent sit amet ligula turpis.</p>
+        <h4>Italic and Bold Text</h4>
+        <p>
+          Lorem ipsum dolor <em>sit amet, consectetur adipiscing elit.</em> Ut
+          pulvinar dolor <strong>ac orci finibus elementum. Praesent</strong>
+          sit amet ligula turpis.
+        </p>
       </section>
 
       <section id="small-caps">
         <h4>Small caps text</h4>
         <p>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-          Ut pulvinar dolor ac orci finibus elementum.
-          Praesent sit amet ligula turpis.
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut pulvinar
+          dolor ac orci finibus elementum.
         </p>
-        </section>
-
-      <section>
-        <h4>Ligatures</h4>
-        <p>fi&emsp;fl</p>
       </section>
 
-      <section id="maths">
-        <h4>Maths</h4>
-        <ul>
-          <li>Classical presentation of fraction : 1/2&emsp;3/4&emsp;421/42</li>
-          <li>Diagonal fractions : 1/2&emsp;3/4&emsp;421/42</li>
-          <li>Denominator style : 1/2&emsp;3/4&emsp;421/42</li>
-          <li>Numerator style : 1/2&emsp;3/4&emsp;421/42</li>
-        </ul>
-        </section>
+      <section id="ligatures">
+        <h4>Ligatures</h4>
+        <dl>
+          <dt>Classical</dt>
+          <dd><span class="none">Offer</span> → <span class="common">Offer</span></dd>
+          <dt>Discretionary</dt>
+          <dd><span class="none">Often</span> → <span class="discretionary">Often</span></dd>
+          <dt>Contextual</dt>
+          <dd><span class="none">#&amp;</span> → <span class="contextual">#&amp;</span></dd>
+        </dl>
+      </section>
 
-        <section id="numeric-spacing">
-          <h4>Numeric spacing</h4>
-          <ul>
-            <li>409,280</li>
-            <li>367,112</li>
-            <li>155,068</li>
-            <li>409,280</li>
-            <li>367,112</li>
-            <li>155,068</li>
-          </ul>
-        </section>
+      <section id="numbers">
+        <h4>Numbers</h4>
+        <dl>
+          <dt>Fractions</dt>
+          <dd>421/42 → <span id="fractions">421/42</span></dd>
+          <dt>Ordinals</dt>
+          <dd>2a 3o → <span id="ordinals">2a 3o</span></dd>
+          <dt>Slashed zero</dt>
+          <dd>1000 → <span id="slashed">1000</span></dd>
+          <dt>Superscript</dt>
+          <dd>a2 → <span id="super">a2</span></dd>
+          <dt>Subscript</dt>
+          <dd>C8H10N4O2 → <span id="sub">C8H10N4O2</span></dd>
+        </ul>
+      </section>
+
+      <section id="figures">
+        <h4>Figures</h4>
+        <dl>
+          <dt>Lining</dt>
+          <dd>
+            <ul>
+              <li>409,280</li>
+              <li>367,112</li>
+            </ul>
+          </dd>
+          <dt>Old-Style</dt>
+          <dd>
+            <ul id="oldstyle">
+              <li>409,280</li>
+              <li>367,112</li>
+            </ul>
+          </dd>
+          <dt>Tabular</dt>
+          <dd>
+            <ul id="tabular">
+              <li>409,280</li>
+              <li>367,112</li>
+            </ul>
+          </dd>
+          <dt>Old &amp; Tab.</dt>
+          <dd>
+            <ul id="old-tabular">
+              <li>409,280</li>
+              <li>367,112</li>
+            </ul>
+          </dd>
+        </dl>
+      </section>
     </article>
   </body>
 </html>
