@@ -292,7 +292,7 @@ html {
     html body article#typography section#ligatures .discretionary {
       font-variant-ligatures: discretionary-ligatures; }
     html body article#typography section#ligatures .contextual {
-      font-variant-ligatures: contextual-ligatures; }
+      font-variant-ligatures: contextual; }
     html body article#typography section#numbers dl {
       display: flex;
       flex-wrap: wrap; }
