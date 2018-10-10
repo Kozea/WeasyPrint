@@ -231,6 +231,8 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
         else:
             box.height = 0
             for i, child in enumerate(children):
+                if not child.is_flex_item:
+                    continue
                 child_height = (
                     child.hypothetical_main_size +
                     child.border_top_width + child.border_bottom_width +
