@@ -480,13 +480,17 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                 position_y += collapsed_margin
                 adjoining_margins = []
 
+            page_is_empty_with_no_children = page_is_empty and not any(
+                child for child in new_children
+                if not isinstance(child, AbsolutePlaceholder))
+
             if not getattr(child, 'first_letter_style', None):
                 child.first_letter_style = first_letter_style
             (new_child, resume_at, next_page, next_adjoining_margins,
                 collapsing_through) = block_level_layout(
                     context, child, max_position_y, skip_stack,
                     new_containing_block, device_size,
-                    page_is_empty and not new_children,
+                    page_is_empty_with_no_children,
                     absolute_boxes, fixed_boxes,
                     adjoining_margins)
             skip_stack = None
@@ -516,7 +520,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                         new_child.border_box_y() + new_child.border_height())
 
                     if (new_position_y > max_position_y and
-                            (new_children or not page_is_empty)):
+                            not page_is_empty_with_no_children):
                         # The child overflows the page area, put it on the
                         # next page. (But don’t delay whole blocks if eg.
                         # only the bottom border overflows.)
