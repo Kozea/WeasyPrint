@@ -582,7 +582,7 @@ def make_page(context, root_box, page_type, resume_at, page_number,
     # spans across multiple pages
     cached_anchors = []
     cached_lookups = []
-    for (_, _, _, _, x_remake_state) in page_maker[:page_number-1]:
+    for (_, _, _, _, x_remake_state) in page_maker[:page_number - 1]:
         cached_anchors.extend(x_remake_state.get('anchors', []))
         cached_lookups.extend(x_remake_state.get('content_lookups', []))
 
