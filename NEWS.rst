@@ -3,6 +3,121 @@
 ======
 
 
+Version 43 beta 1
+-----------------
+
+Released on 2018-10-11.
+
+**This version is experimental, don't use it in production. If you find bugs,
+please report them!**
+
+Dependencies:
+
+* Python 3.4+ is now needed, Python 2.x is not supported anymore
+* Cairo 1.15.4+ is now needed, but 1.10+ should work with missing features
+  (such as links, outlines and metadata)
+* Pdfrw is not needed anymore
+
+New features:
+
+* `Beautiful website <https://weasyprint.org>`_
+* `#579 <https://github.com/Kozea/WeasyPrint/issues/579>`_:
+  Initial support of flexbox
+* `#592 <https://github.com/Kozea/WeasyPrint/pull/592>`_:
+  Support @font-face on Windows
+* `#306 <https://github.com/Kozea/WeasyPrint/issue/306>`_:
+  Add a timeout parameter to the URL fetcher functions
+* `#594 <https://github.com/Kozea/WeasyPrint/pull/594>`_:
+  Split tests using modern pytest features
+* `#599 <https://github.com/Kozea/WeasyPrint/pull/599>`_:
+  Make tests pass on Windows
+* `#604 <https://github.com/Kozea/WeasyPrint/pull/604>`_:
+  Handle target counters and target texts
+* `#631 <https://github.com/Kozea/WeasyPrint/pull/631>`_:
+  Enable counter-increment and counter-reset in page context
+* `#622 <https://github.com/Kozea/WeasyPrint/issue/622>`_:
+  Allow pathlib.Path objects for HTML, CSS and Attachment classes
+* `#674 <https://github.com/Kozea/WeasyPrint/issue/674>`_:
+  Add extensive installation instructions for Windows
+
+Bug fixes:
+
+* `#558 <https://github.com/Kozea/WeasyPrint/issues/558>`_:
+  Fix attachments
+* `#565 <https://github.com/Kozea/WeasyPrint/issues/565>`_,
+  `#596 <https://github.com/Kozea/WeasyPrint/issues/596>`_,
+  `#539 <https://github.com/Kozea/WeasyPrint/issues/539>`_:
+  Fix many PDF rendering, printing and compatibility problems
+* `#614 <https://github.com/Kozea/WeasyPrint/issues/614>`_:
+  Avoid crashes and endless loops caused by a Pango bug
+* `#662 <https://github.com/Kozea/WeasyPrint/pull/662>`_:
+  Fix warnings and errors when generating documentation
+* `#666 <https://github.com/Kozea/WeasyPrint/issues/666>`_,
+  `#685 <https://github.com/Kozea/WeasyPrint/issues/685>`_:
+  Fix many table layout rendering problems
+* `#680 <https://github.com/Kozea/WeasyPrint/pull/680>`_:
+  Don't crash when there's no font available
+* `#662 <https://github.com/Kozea/WeasyPrint/pull/662>`_:
+  Fix support of some align values in tables
+
+
+Version 0.42.3
+--------------
+
+Released on 2018-03-27.
+
+Bug fixes:
+
+* `#583 <https://github.com/Kozea/WeasyPrint/issues/583>`_:
+  Fix floating-point number error to fix floating box layout
+* `#586 <https://github.com/Kozea/WeasyPrint/issues/586>`_:
+  Don't optimize resume_at when splitting lines with trailing spaces
+* `#582 <https://github.com/Kozea/WeasyPrint/issues/582>`_:
+  Fix table layout with no overflow
+* `#580 <https://github.com/Kozea/WeasyPrint/issues/580>`_:
+  Fix inline box breaking function
+* `#576 <https://github.com/Kozea/WeasyPrint/issues/576>`_:
+  Split replaced_min_content_width and replaced_max_content_width
+* `#574 <https://github.com/Kozea/WeasyPrint/issues/574>`_:
+  Respect text direction and don't translate rtl columns twice
+* `#569 <https://github.com/Kozea/WeasyPrint/issues/569>`_:
+  Get only first line's width of inline children to get linebox width
+
+
+Version 0.42.2
+--------------
+
+Released on 2018-02-04.
+
+Bug fixes:
+
+* `#560 <https://github.com/Kozea/WeasyPrint/issues/560>`_:
+  Fix a couple of crashes and endless loops when breaking lines.
+
+
+Version 0.42.1
+--------------
+
+Released on 2018-02-01.
+
+Bug fixes:
+
+* `#566 <https://github.com/Kozea/WeasyPrint/issues/566>`_:
+  Don't crash when using @font-config.
+* `#567 <https://github.com/Kozea/WeasyPrint/issues/567>`_:
+  Fix text-indent with text-align: justify.
+* `#465 <https://github.com/Kozea/WeasyPrint/issues/465>`_:
+  Fix string(*, start).
+* `#562 <https://github.com/Kozea/WeasyPrint/issues/562>`_:
+  Handle named pages with pseudo-class.
+* `#507 <https://github.com/Kozea/WeasyPrint/issues/507>`_:
+  Fix running headers.
+* `#557 <https://github.com/Kozea/WeasyPrint/issues/557>`_:
+  Avoid infinite loops in inline_line_width.
+* `#555 <https://github.com/Kozea/WeasyPrint/issues/555>`_:
+  Fix margins, borders and padding in column layouts.
+
+
 Version 0.42
 ------------
 
