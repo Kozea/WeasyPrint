@@ -34,16 +34,15 @@ Python, cairo, Pango and GDK-PixBuf need to be installed separately. See
 platform-specific instructions for :ref:`Linux <linux>`, :ref:`macOS <macos>`
 and :ref:`Windows <windows>` below.
 
-Install WeasyPrint with pip_.
-This will automatically install most of dependencies.
-You probably need either virtualenv_ (recommended) or using ``sudo``.
+Install WeasyPrint with pip_. This will automatically install most of
+dependencies. You probably need either a virtual environment (venv,
+recommended) or using ``sudo``.
 
-.. _virtualenv: http://www.virtualenv.org/
 .. _pip: http://pip-installer.org/
 
 .. code-block:: sh
 
-    virtualenv ./venv
+    python3 -m venv ./venv
     . ./venv/bin/activate
     pip install WeasyPrint
 
@@ -148,6 +147,16 @@ install it with pip after installing the following packages:
 .. code-block:: sh
 
     emerge pip setuptools wheel cairo pango gdk-pixbuf cffi
+
+
+Alpine
+~~~~~~
+
+For Alpine Linux 3.6 or newer:
+
+.. code-block:: sh
+
+    apk --update --upgrade add gcc musl-dev jpeg-dev zlib-dev libffi-dev cairo-dev pango-dev gdk-pixbuf
 
 
 .. _macos:
