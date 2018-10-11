@@ -1,5 +1,7 @@
-WeasyPrint changelog
-====================
+======
+ News
+======
+
 
 Version 0.42
 ------------

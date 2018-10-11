@@ -1,8 +1,0 @@
-recursive-include weasyprint/tests/resources *
-include weasyprint/css/*.css
-include CHANGES
-include LICENSE
-include pytest.ini
-include tox.ini
-recursive-include docs *
-prune docs/_build

@@ -1,5 +1,6 @@
+==========
 WeasyPrint
-##########
+==========
 
 WeasyPrint is a visual rendering engine for HTML and CSS that can export
 to PDF. It aims to support web standards for printing.
@@ -15,3 +16,4 @@ pagination, and meant to be easy to hack on.
 * Documentation: https://weasyprint.readthedocs.io/
 * Source code and issue tracker: https://github.com/Kozea/WeasyPrint
 * Tests: https://travis-ci.org/Kozea/WeasyPrint
+* Support: https://www.patreon.com/kozea
