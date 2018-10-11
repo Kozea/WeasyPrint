@@ -10,14 +10,14 @@ install the `development version`_ of WeasyPrint:
 
     git clone git://github.com/Kozea/WeasyPrint.git
     cd WeasyPrint
-    virtualenv --system-site-packages env
+    python3 -m venv env
     . env/bin/activate
-    pip install Sphinx -e .[test]
+    pip install -e .[doc,test]
     weasyprint --help
 
 This will install WeasyPrint in “editable” mode (which means that you don’t
 need to re-install it every time you make a change in the source code) as well
-as `pytest <http://pytest.org/>`_ and `Sphinx <http://sphinx.pocoo.org/>`_.
+as `pytest <http://pytest.org/>`_ and `Sphinx <http://www.sphinx-doc.org/>`_.
 
 Lastly, in order to pass unit tests, your system must have as default font any
 font with a condensed variant (i.e. DejaVu) - typically installable via your
@@ -55,17 +55,15 @@ Much like `in web browsers
 <http://www.html5rocks.com/en/tutorials/internals/howbrowserswork/#The_main_flow>`_,
 the rendering of a document in WeasyPrint goes like this:
 
-1. The HTML document is fetched and parsed into a tree of elements (like DOM)
+1. The HTML document is fetched and parsed into a tree of elements (like DOM).
 2. CSS stylesheets (either found in the HTML or supplied by the user) are
-   fetched and parsed
-3. The stylesheets are applied to the DOM tree
-4. The DOM tree with styles is transformed into a *formatting structure* made of rectangular boxes.
+   fetched and parsed.
+3. The stylesheets are applied to the DOM-like tree.
+4. The DOM-like tree with styles is transformed into a *formatting structure*
+   made of rectangular boxes.
 5. These boxes are *laid-out* with fixed dimensions and position onto pages.
-6. For each page, the boxes:
-
-  - are re-ordered to observe stacking rules, and
-  - are drawn on a PDF page.
-
+6. For each page, the boxes are re-ordered to observe stacking rules, and are
+   drawn on a PDF page.
 7. Cairo’s PDF is modified to add metadata such as bookmarks and hyperlinks.
 
 
@@ -82,6 +80,7 @@ CSS
 
 As with HTML, CSS stylesheets are parsed in the :class:`weasyprint.CSS` class
 with an external library, tinycss2_.
+
 After the In addition to the actual parsing, the :mod:`weasyprint.css` and
 :mod:`weasyprint.css.validation` modules do some pre-processing:
 
@@ -90,10 +89,9 @@ After the In addition to the actual parsing, the :mod:`weasyprint.css` and
   from raw tinycss2 tokens into a higher-level form.
 * Shorthand properties are expanded. For example, ``margin`` becomes
   ``margin-top``, ``margin-right``, ``margin-bottom`` and ``margin-left``.
-* Hyphens in property names are replaced by underscores (``margin-top``
-  becomes ``margin_top``) so that they can be used as Python attribute names
-  later on. This transformation is safe since none for the know (not ignored)
-  properties have an underscore character.
+* Hyphens in property names are replaced by underscores (``margin-top`` becomes
+  ``margin_top``). This transformation is safe since none for the know (not
+  ignored) properties have an underscore character.
 * Selectors are pre-compiled with cssselect2_.
 
 .. _tinycss2: https://pypi.python.org/pypi/tinycss2
@@ -124,11 +122,10 @@ an absolute length or a percentage.
 
 The final result of the :func:`~weasyprint.css.get_all_computed_styles`
 function is a big dict where keys are ``(element, pseudo_element_type)``
-tuples, and keys are style dict objects. Elements are
-ElementTree elements, while the type of pseudo-element is a string
-for eg. ``::first-line`` selectors, or :obj:`None` for “normal”
-elements. Style dict objects are dicts with attribute read-only access
-mapping property names to the computed values.  (The return value is not the
+tuples, and keys are style dict objects. Elements are ElementTree elements,
+while the type of pseudo-element is a string for eg. ``::first-line``
+selectors, or :obj:`None` for “normal” elements. Style dict objects are dicts
+mapping property names to the computed values. (The return value is not the
 dict itself, but a convenience :func:`style_for` function for accessing it.)
 
 
@@ -152,13 +149,14 @@ see the module and class docstrings.
 The :mod:`weasyprint.formatting_structure.build` module takes an ElementTree
 tree with associated computed styles, and builds a formatting structure. It
 generates the right boxes for each element and ensures they conform to the
-models rules.  (Eg. an inline box can not contain a block.) Each box has a
+models rules (eg. an inline box can not contain a block). Each box has a
 :attr:`.style` attribute containing the style dict of computed values.
 
 The main logic is based on the ``display`` property, but it can be overridden
 for some elements by adding a handler in the ``weasyprint.html`` module.
 This is how ``<img>`` and ``<td colspan=3>`` are currently implemented,
 for example.
+
 This module is rather short as most of HTML is defined in CSS rather than
 in Python, in the `user agent stylesheet`_.
 
@@ -232,6 +230,6 @@ The code lives in the :mod:`weasyprint.draw` module.
 Metadata
 ........
 
-Finally (step 7), the :mod:`weasyprint.pdf` module parses the PDF file
-produced by cairo and makes appends to it to add meta-data:
-internal and external hyperlinks, as well as outlines / bookmarks.
+Finally (step 7), the :mod:`weasyprint.pdf` module parses (if needed) the PDF
+file produced by cairo and adds metadata that cannot be added by cairo:
+attachments, embedded files, trim box and bleed box.
