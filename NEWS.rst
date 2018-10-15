@@ -3,10 +3,10 @@
 ======
 
 
-Version 43 beta 1
------------------
+Version 43rc1
+-------------
 
-Released on 2018-10-11.
+Released on 2018-10-15.
 
 **This version is experimental, don't use it in production. If you find bugs,
 please report them!**
