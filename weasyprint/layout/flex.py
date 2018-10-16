@@ -98,6 +98,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
     else:
         parent_box.width = preferred.flex_max_content_width(
             context, parent_box)
+    original_skip_stack = skip_stack
     if skip_stack is not None:
         children = children[skip_stack[0]:]
         skip_stack = skip_stack[1]
@@ -813,10 +814,13 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                     list_marker_layout(context, new_child)
                     box.children.append(new_child)
                     if child_resume_at is not None:
-                        if resume_at:
-                            resume_at = (resume_at[0] + i, child_resume_at)
+                        if original_skip_stack:
+                            first_level_skip = original_skip_stack[0]
                         else:
-                            resume_at = (i, child_resume_at)
+                            first_level_skip = 0
+                        if resume_at:
+                            first_level_skip += resume_at[0]
+                        resume_at = (first_level_skip + i, child_resume_at)
                 if resume_at:
                     break
 
