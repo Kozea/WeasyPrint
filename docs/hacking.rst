@@ -49,7 +49,7 @@ Dive into the source
 
 The rest of this document is a high-level overview of WeasyPrint’s source
 code. For more details, see the various docstrings or even the code itself.
-When in doubt, feel free to `ask <http://weasyprint.org/community>`_!
+When in doubt, feel free to `ask <http://weasyprint.org/about/>`_!
 
 Much like `in web browsers
 <http://www.html5rocks.com/en/tutorials/internals/howbrowserswork/#The_main_flow>`_,

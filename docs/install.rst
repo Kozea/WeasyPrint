@@ -72,7 +72,7 @@ and open your browser at http://127.0.0.1:5000/.
 
 If everything goes well, you’re ready to :doc:`start using </tutorial>`
 WeasyPrint! Otherwise, please copy the full error message and
-`report the problem <http://weasyprint.org/community/>`_.
+`report the problem <https://github.com/Kozea/WeasyPrint/issues/>`_.
 
 .. [#] cairo ≥ 1.15.4 is best but older versions may work too. The test suite
        passes on cairo 1.14, and passes with some tests marked as “expected
@@ -104,7 +104,7 @@ CFFI needs *libffi* with development files. On Debian, the package is called
 ``libffi-dev``.
 
 If your favorite system is not listed here but you know the package names,
-`tell us <http://weasyprint.org/community/>`_ so we can add it here.
+`tell us <http://weasyprint.org/about/>`_ so we can add it here.
 
 Debian / Ubuntu
 ~~~~~~~~~~~~~~~

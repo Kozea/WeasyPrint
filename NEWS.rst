@@ -795,7 +795,7 @@ Released on 2013-02-27.
   - Correctly trim whitespace at the end of lines.
   - Fix some cases with floats within inline content.
 
-.. _text hyphenation: http://weasyprint.org/docs/features/#hyphenation
+.. _text hyphenation: https://weasyprint.readthedocs.io/en/latest/features.html#css-text-module-level-3-4
 
 
 Version 0.16
@@ -988,8 +988,9 @@ Version 0.6
 
 Released on 2012-02-29.
 
-* *Backward incompatible*: completely change the Python API.
-  See the documentation: http://weasyprint.org/using/#as-a-python-library
+* *Backward incompatible*: completely change the Python API. See the
+  documentation:
+  https://weasyprint.readthedocs.io/en/latest/tutorial.html#as-a-python-library
 * *Backward incompatible*: Proper margin collapsing.
   This changes how blocks are rendered: adjoining margins "collapse"
   (their maximum is used) instead of accumulating.
