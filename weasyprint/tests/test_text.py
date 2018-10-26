@@ -388,6 +388,35 @@ def test_text_indent(indent):
     assert text_3.position_x == 10  # No indent
 
 
+@pytest.mark.parametrize('indent', ('12px', '6%'))
+@assert_no_logs
+def test_text_indent_multipage(indent):
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/706
+    pages = render_pages('''
+        <style>
+            @page { size: 220px 1.5em; margin: 0 }
+            body { margin: 10px; text-indent: %(indent)s }
+        </style>
+        <p>Some text that is long enough that it take at least three line,
+           but maybe more.
+    ''' % {'indent': indent})
+    page = pages.pop(0)
+    html, = page.children
+    body, = html.children
+    paragraph, = body.children
+    line, = paragraph.children
+    text, = line.children
+    assert text.position_x == 22  # 10px margin-left + 12px indent
+
+    page = pages.pop(0)
+    html, = page.children
+    body, = html.children
+    paragraph, = body.children
+    line, = paragraph.children
+    text, = line.children
+    assert text.position_x == 10  # No indent
+
+
 @assert_no_logs
 def test_hyphenate_character_1():
     page, = render_pages(

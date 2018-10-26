@@ -45,8 +45,11 @@ def iter_line_boxes(context, box, position_y, skip_stack, containing_block,
 
     """
     resolve_percentages(box, containing_block)
-    # TODO: that's wrong, see https://github.com/Kozea/WeasyPrint/issues/679
-    resolve_one_percentage(box, 'text_indent', containing_block.width)
+    if skip_stack is None:
+        # TODO: wrong, see https://github.com/Kozea/WeasyPrint/issues/679
+        resolve_one_percentage(box, 'text_indent', containing_block.width)
+    else:
+        box.text_indent = 0
     while 1:
         line, resume_at = get_next_linebox(
             context, box, position_y, skip_stack, containing_block,
