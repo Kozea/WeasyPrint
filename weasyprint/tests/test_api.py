@@ -799,7 +799,8 @@ uses_relative.append('weasyprint-custom')
 
 @assert_no_logs
 def test_url_fetcher():
-    with open(resource_filename('pattern.png'), 'rb') as pattern_fd:
+    filename = resource_filename('pattern.png')
+    with open(filename, 'rb') as pattern_fd:
         pattern_png = pattern_fd.read()
 
     def fetcher(url):
@@ -822,6 +823,8 @@ def test_url_fetcher():
         check_png_pattern(html.write_png(stylesheets=[css]), blank=blank)
 
     test('<body><img src="pattern.png">')  # Test a "normal" URL
+    test('<body><img src="%s">' % Path(filename).as_uri())
+    test('<body><img src="%s?ignored">' % Path(filename).as_uri())
     test('<body><img src="weasyprint-custom:foo/é_%e9_pattern">')
     test('<body style="background: url(weasyprint-custom:foo/é_%e9_pattern)">')
     test('<body><li style="list-style: inside '

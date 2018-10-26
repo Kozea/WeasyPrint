@@ -232,6 +232,10 @@ def default_url_fetcher(url, timeout=10):
 
     """
     if UNICODE_SCHEME_RE.match(url):
+        # See https://bugs.python.org/issue34702
+        if url.startswith('file://'):
+            url = url.split('?')[0]
+
         url = iri_to_uri(url)
         response = urlopen(Request(url, headers=HTTP_HEADERS), timeout=timeout)
         response_info = response.info()
