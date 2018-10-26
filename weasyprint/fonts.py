@@ -10,6 +10,7 @@
 """
 
 import os
+import pathlib
 import sys
 import tempfile
 import warnings
@@ -325,17 +326,9 @@ else:
                                 config, pattern, result)
                             fontconfig.FcPatternGetString(
                                 matching_pattern, b'file', 0, filename)
-                            # Can't use urlopen('file://...') on Windows.
-                            # Fails with
-                            # URLError: <urlopen error file on local host>
-                            if sys.platform.startswith('win'):
-                                fetch_as_url = False
-                                url = ffi.string(filename[0]).decode(
-                                    sys.getfilesystemencoding())
-                            else:
-                                url = (
-                                    'file://' +
-                                    ffi.string(filename[0]).decode('utf-8'))
+                            path = ffi.string(filename[0]).decode(
+                                sys.getfilesystemencoding())
+                            url = pathlib.Path(path).as_uri()
                         else:
                             LOGGER.warning(
                                 'Failed to load local font "%s"',
