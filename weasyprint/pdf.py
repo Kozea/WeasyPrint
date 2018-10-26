@@ -107,7 +107,7 @@ class PDFDictionary(object):
 
         """
         # No end delimiter, + defaults to greedy
-        return self.get_value('Type', '/(\w+)').decode('ascii')
+        return self.get_value('Type', '/(\\w+)').decode('ascii')
 
     def get_indirect_dict(self, key, pdf_file):
         """Read the value for `key` and follow the reference.
@@ -117,7 +117,7 @@ class PDFDictionary(object):
         :return: a new PDFDictionary instance.
 
         """
-        object_number = int(self.get_value(key, '(\d+) 0 R'))
+        object_number = int(self.get_value(key, '(\\d+) 0 R'))
         return type(self)(object_number, pdf_file.read_object(object_number))
 
     def get_indirect_dict_array(self, key, pdf_file):
@@ -128,7 +128,7 @@ class PDFDictionary(object):
         :return: a list of new PDFDictionary instance.
 
         """
-        parts = self.get_value(key, '\[(.+?)\]').split(b' 0 R')
+        parts = self.get_value(key, '\\[(.+?)\\]').split(b' 0 R')
         # The array looks like this: ' <a> 0 R <b> 0 R <c> 0 R '
         # so `parts` ends up like this [' <a>', ' <b>', ' <c>', ' ']
         # With the trailing white space in the list.
@@ -141,7 +141,7 @@ class PDFDictionary(object):
 
 class PDFFile(object):
     trailer_re = re.compile(
-        b'\ntrailer\n(.+)\nstartxref\n(\d+)\n%%EOF\n$', re.DOTALL)
+        b'\ntrailer\n(.+)\nstartxref\n(\\d+)\n%%EOF\n$', re.DOTALL)
 
     def __init__(self, fileobj):
         # cairo’s trailer only has Size, Root and Info.
@@ -521,7 +521,7 @@ def write_pdf_metadata(fileobj, scale, url_fetcher, attachments,
         # Add bleed box
 
         media_box = pdf_page.get_value(
-            'MediaBox', '\[(.+?)\]').decode('ascii').strip()
+            'MediaBox', '\\[(.+?)\\]').decode('ascii').strip()
         left, top, right, bottom = (
             float(value) for value in media_box.split(' '))
         # Convert pixels into points

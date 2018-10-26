@@ -616,7 +616,7 @@ def add_box_marker(box, counter_values, get_image_from_uri):
         box.outside_list_marker = marker_box
 
 
-def is_whitespace(box, _has_non_whitespace=re.compile('\S').search):
+def is_whitespace(box, _has_non_whitespace=re.compile('\\S').search):
     """Return True if ``box`` is a TextBox with only whitespace."""
     return isinstance(box, boxes.TextBox) and not _has_non_whitespace(box.text)
 

@@ -45,7 +45,7 @@ def test_pdf_parser(width, height):
     surface.show_page()
     surface.finish()
 
-    sizes = [page.get_value('MediaBox', '\[(.+?)\]').strip()
+    sizes = [page.get_value('MediaBox', '\\[(.+?)\\]').strip()
              for page in pdf.PDFFile(fileobj).pages]
     assert sizes == ['0 0 {} {}'.format(width, height).encode('ascii')]
 
@@ -269,7 +269,7 @@ def test_bookmarks_7():
     assert outlines.get_type() == 'Outlines'
     o1 = outlines.get_indirect_dict('First', pdf_file)
     assert o1.get_value('Title', '(.*)') == b'(a)'
-    y = float(o1.get_value('Dest', '\[(.+?)\]').strip().split()[-2])
+    y = float(o1.get_value('Dest', '\\[(.+?)\\]').strip().split()[-2])
 
     fileobj = io.BytesIO()
     FakeHTML(string='<h2>a</h2>').write_pdf(zoom=1.5, target=fileobj)
@@ -280,7 +280,7 @@ def test_bookmarks_7():
     o1 = outlines.get_indirect_dict('First', pdf_file)
     assert o1.get_value('Title', '(.*)') == b'(a)'
     assert (
-        float(o1.get_value('Dest', '\[(.+?)\]').strip().split()[-2]) ==
+        float(o1.get_value('Dest', '\\[(.+?)\\]').strip().split()[-2]) ==
         round(y * 1.5))
 
 
@@ -359,7 +359,7 @@ def test_links():
         .get_indirect_dict('Dests', pdf_file)
         .byte_string).decode('ascii')
     assert re.search(
-        '\\(hello\\) \\[\d+ \d+ R /XYZ {} {} {}]'.format(0, TOP - 200, 0),
+        '\\(hello\\) \\[\\d+ \\d+ R /XYZ {} {} {}]'.format(0, TOP - 200, 0),
         names)
     assert links[4].get_value('Rect', '(.*)') == '[ {} {} {} {} ]'.format(
         0, TOP - 30, RIGHT, TOP).encode('ascii')
@@ -430,7 +430,7 @@ def test_relative_links_internal():
         .get_indirect_dict('Dests', pdf_file)
         .byte_string).decode('ascii')
     assert re.search(
-        '\\(lipsum\\) \\[\d+ \d+ R /XYZ {} {} {}]'.format(0, TOP, 0), names)
+        '\\(lipsum\\) \\[\\d+ \\d+ R /XYZ {} {} {}]'.format(0, TOP, 0), names)
     rect = annots.get_value('Rect', '(.*)').strip(b'[]').split()
     assert [round(float(value)) for value in rect] == [0, TOP, RIGHT, TOP]
 
@@ -452,7 +452,7 @@ def test_relative_links_anchors():
         .get_indirect_dict('Dests', pdf_file)
         .byte_string).decode('ascii')
     assert re.search(
-        '\\(lipsum\\) \\[\d+ \d+ R /XYZ {} {} {}]'.format(0, TOP, 0), names)
+        '\\(lipsum\\) \\[\\d+ \\d+ R /XYZ {} {} {}]'.format(0, TOP, 0), names)
     rect = annots.get_value('Rect', '(.*)').strip(b'[]').split()
     assert [round(float(value)) for value in rect] == [0, TOP, RIGHT, TOP]
 
@@ -477,7 +477,7 @@ def test_missing_links():
         .get_indirect_dict('Dests', pdf_file)
         .byte_string).decode('ascii')
     assert re.search(
-        '\\(lipsum\\) \\[\d+ \d+ R /XYZ {} {} {}]'.format(0, TOP - 15, 0),
+        '\\(lipsum\\) \\[\\d+ \\d+ R /XYZ {} {} {}]'.format(0, TOP - 15, 0),
         names)
     rect = annots.get_value('Rect', '(.*)').strip(b'[]').split()
     assert [round(float(value)) for value in rect] == [0, TOP - 15, RIGHT, TOP]
