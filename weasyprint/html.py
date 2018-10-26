@@ -335,22 +335,22 @@ def strip_whitespace(string):
 W3C_DATE_RE = re.compile('''
     ^
     [ \t\n\f\r]*
-    (?P<year>\d\d\d\d)
+    (?P<year>\\d\\d\\d\\d)
     (?:
-        -(?P<month>0\d|1[012])
+        -(?P<month>0\\d|1[012])
         (?:
-            -(?P<day>[012]\d|3[01])
+            -(?P<day>[012]\\d|3[01])
             (?:
-                T(?P<hour>[01]\d|2[0-3])
-                :(?P<minute>[0-5]\d)
+                T(?P<hour>[01]\\d|2[0-3])
+                :(?P<minute>[0-5]\\d)
                 (?:
-                    :(?P<second>[0-5]\d)
-                    (?:\.\d+)?  # Second fraction, ignored
+                    :(?P<second>[0-5]\\d)
+                    (?:\\.\\d+)?  # Second fraction, ignored
                 )?
                 (?:
                     Z |  # UTC
-                    (?P<tz_hour>[+-](?:[01]\d|2[0-3]))
-                    :(?P<tz_minute>[0-5]\d)
+                    (?P<tz_hour>[+-](?:[01]\\d|2[0-3]))
+                    :(?P<tz_minute>[0-5]\\d)
                 )
             )?
         )?
