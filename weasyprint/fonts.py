@@ -18,7 +18,7 @@ import warnings
 from .logger import LOGGER
 from .text import (
     cairo, dlopen, ffi, get_font_features, gobject, pango, pangocairo)
-from .urls import fetch
+from .urls import FILESYSTEM_ENCODING, fetch
 
 # Cairo crashes with font-size: 0 when using Win32 API
 # See https://github.com/Kozea/WeasyPrint/pull/599
@@ -327,7 +327,7 @@ else:
                             fontconfig.FcPatternGetString(
                                 matching_pattern, b'file', 0, filename)
                             path = ffi.string(filename[0]).decode(
-                                sys.getfilesystemencoding())
+                                FILESYSTEM_ENCODING)
                             url = pathlib.Path(path).as_uri()
                         else:
                             LOGGER.warning(
