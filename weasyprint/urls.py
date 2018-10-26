@@ -271,9 +271,7 @@ def fetch(url_fetcher, url):
     try:
         result = url_fetcher(url)
     except Exception as exc:
-        name = type(exc).__name__
-        value = str(exc)
-        raise URLFetchingError('%s: %s' % (name, value) if value else name)
+        raise URLFetchingError('%s: %s' % (type(exc).__name__, str(exc)))
     result.setdefault('redirected_url', url)
     result.setdefault('mime_type', None)
     if 'file_obj' in result:
