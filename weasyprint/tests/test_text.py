@@ -365,27 +365,27 @@ def test_letter_spacing_1():
     assert line1.children[0].width == strong_2.width
 
 
+@pytest.mark.parametrize('indent', ('12px', '6%'))
 @assert_no_logs
-def test_text_indent():
-    for indent in ['12px', '6%']:  # 6% of 200px is 12px
-        page, = render_pages('''
-            <style>
-                @page { size: 220px }
-                body { margin: 10px; text-indent: %(indent)s }
-            </style>
-            <p>Some text that is long enough that it take at least three line,
-               but maybe more.
-        ''' % {'indent': indent})
-        html, = page.children
-        body, = html.children
-        paragraph, = body.children
-        lines = paragraph.children
-        text_1, = lines[0].children
-        text_2, = lines[1].children
-        text_3, = lines[2].children
-        assert text_1.position_x == 22  # 10px margin-left + 12px indent
-        assert text_2.position_x == 10  # No indent
-        assert text_3.position_x == 10  # No indent
+def test_text_indent(indent):
+    page, = render_pages('''
+        <style>
+            @page { size: 220px }
+            body { margin: 10px; text-indent: %(indent)s }
+        </style>
+        <p>Some text that is long enough that it take at least three line,
+           but maybe more.
+    ''' % {'indent': indent})
+    html, = page.children
+    body, = html.children
+    paragraph, = body.children
+    lines = paragraph.children
+    text_1, = lines[0].children
+    text_2, = lines[1].children
+    text_3, = lines[2].children
+    assert text_1.position_x == 22  # 10px margin-left + 12px indent
+    assert text_2.position_x == 10  # No indent
+    assert text_3.position_x == 10  # No indent
 
 
 @assert_no_logs
