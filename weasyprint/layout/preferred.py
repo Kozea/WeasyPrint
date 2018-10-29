@@ -521,13 +521,15 @@ def table_and_columns_preferred_widths(context, box, outer=True):
             excess_width = min_content - (columns_min_content + spacing)
             distribute_excess_width(
                 context, zipped_grid, excess_width, min_content_widths,
-                constrainedness, intrinsic_percentages, column_slice)
+                constrainedness, intrinsic_percentages, max_content_widths,
+                column_slice)
 
         if max_content > columns_max_content + spacing:
             excess_width = max_content - (columns_max_content + spacing)
             distribute_excess_width(
                 context, zipped_grid, excess_width, max_content_widths,
-                constrainedness, intrinsic_percentages, column_slice)
+                constrainedness, intrinsic_percentages, max_content_widths,
+                column_slice)
 
     # Calculate the max- and min-content widths of table and columns
     small_percentage_contributions = [

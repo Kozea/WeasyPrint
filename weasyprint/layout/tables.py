@@ -603,7 +603,7 @@ def auto_table_layout(context, box, containing_block):
         excess_width = assignable_width - sum(max_content_guess)
         excess_width = distribute_excess_width(
             context, grid, excess_width, table.column_widths, constrainedness,
-            column_intrinsic_percentages)
+            column_intrinsic_percentages, column_max_content_widths)
         if excess_width:
             if table_min_content_width < table.width - excess_width:
                 # Reduce the width of the size from the excess width that has
@@ -664,6 +664,7 @@ def find_in_flow_baseline(box, last=False, baseline_types=(boxes.LineBox,)):
 
 def distribute_excess_width(context, grid, excess_width, column_widths,
                             constrainedness, column_intrinsic_percentages,
+                            column_max_content_widths,
                             column_slice=slice(0, None)):
     """Distribute available width to columns.
 
@@ -678,17 +679,12 @@ def distribute_excess_width(context, grid, excess_width, column_widths,
         for i, column in enumerate(grid[column_slice])
         if not constrainedness[i + column_slice.start] and
         column_intrinsic_percentages[i + column_slice.start] == 0 and
-        any(max_content_width(context, cell) for cell in column
-            if cell and cell.colspan == 1)]
+        column_max_content_widths[i + column_slice.start] > 0]
     if columns:
-        widths = [
-            max(max_content_width(context, cell) for cell in column
-                if cell and cell.colspan == 1)
-            for i, column in columns]
         current_widths = [column_widths[i] for i, column in columns]
         differences = [
             max(0, width[0] - width[1])
-            for width in zip(widths, current_widths)]
+            for width in zip(column_max_content_widths, current_widths)]
         if sum(differences) > excess_width:
             differences = [
                 difference / sum(differences) * excess_width
@@ -715,17 +711,12 @@ def distribute_excess_width(context, grid, excess_width, column_widths,
         for i, column in enumerate(grid[column_slice])
         if constrainedness[i + column_slice.start] and
         column_intrinsic_percentages[i + column_slice.start] == 0 and
-        any(max_content_width(context, cell) for cell in column
-            if cell and cell.colspan == 1)]
+        column_max_content_widths[i + column_slice.start] > 0]
     if columns:
-        widths = [
-            max(max_content_width(context, cell) for cell in column
-                if cell and cell.colspan == 1)
-            for i, column in columns]
         current_widths = [column_widths[i] for i, column in columns]
         differences = [
             max(0, width[0] - width[1])
-            for width in zip(widths, current_widths)]
+            for width in zip(column_max_content_widths, current_widths)]
         if sum(differences) > excess_width:
             differences = [
                 difference / sum(differences) * excess_width
