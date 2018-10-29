@@ -935,7 +935,16 @@ def split_first_line(text, style, context, max_width, justification_spacing,
     layout = None
     if (max_width is not None and max_width != float('inf') and
             style['font_size']):
-        expected_length = int(max_width / style['font_size'] * 2.5)
+        if max_width == 0:
+            # Trying to find minimum size, let's naively split on spaces and
+            # keep one word + one letter
+            space_index = text.find(' ')
+            if space_index == -1:
+                expected_length = len(text)
+            else:
+                expected_length = space_index + 2  # index + space + one letter
+        else:
+            expected_length = int(max_width / style['font_size'] * 2.5)
         if expected_length < len(text):
             # Try to use a small amount of text instead of the whole text
             layout = create_layout(
