@@ -413,7 +413,8 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
         target_collector.collect_missing_counters(
             parent_box, css_token, parse_again, missing_counters,
             missing_target_counters)
-    return boxlist
+
+    return boxlist if (texts or boxlist) else None
 
 
 def content_to_boxes(style, parent_box, quote_depth, counter_values,
@@ -453,10 +454,11 @@ def content_to_boxes(style, parent_box, quote_depth, counter_values,
 
     orig_quote_depth = quote_depth[:]
     css_token = 'content'
-    return compute_content_list(
+    box_list = compute_content_list(
         style['content'], parent_box, counter_values, css_token, parse_again,
         target_collector, get_image_from_uri, quote_depth, style['quotes'],
         context, page)
+    return box_list or []
 
 
 def compute_string_set(element, box, string_name, content_list,
@@ -481,7 +483,7 @@ def compute_string_set(element, box, string_name, content_list,
     box_list = compute_content_list(
         content_list, box, counter_values, css_token, parse_again,
         target_collector, element=element)
-    if box_list:
+    if box_list is not None:
         string = ''.join(
             box.text for box in box_list if isinstance(box, boxes.TextBox))
         # Avoid duplicates, care for parse_again and missing counters, don't
@@ -513,8 +515,12 @@ def compute_bookmark_label(element, box, content_list, counter_values,
     box_list = compute_content_list(
         content_list, box, counter_values, css_token, parse_again,
         target_collector, element=element)
-    box.bookmark_label = ''.join(
-        box.text for box in box_list if isinstance(box, boxes.TextBox))
+
+    if box_list is None:
+        box.bookmark_label = ''
+    else:
+        box.bookmark_label = ''.join(
+            box.text for box in box_list if isinstance(box, boxes.TextBox))
 
 
 def set_content_lists(element, box, style, counter_values, target_collector):

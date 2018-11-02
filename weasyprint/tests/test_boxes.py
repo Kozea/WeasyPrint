@@ -1495,6 +1495,37 @@ def test_margin_box_string_set_7():
     assert right_text_box.text == '{Cake}'
 
 
+def test_margin_box_string_set_8():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/726
+    page_1, page_2, page_3 = render_pages('''
+      <style>
+        @page { @top-left  { content: '[' string(left) ']' } }
+        p { page-break-before: always }
+        .initial { -weasy-string-set: left 'initial' }
+        .empty   { -weasy-string-set: left ''        }
+        .space   { -weasy-string-set: left ' '       }
+      </style>
+
+      <p class="initial">Initial</p>
+      <p class="empty">Empty</p>
+      <p class="space">Space</p>
+    ''')
+    html, top_left = page_1.children
+    left_line_box, = top_left.children
+    left_text_box, = left_line_box.children
+    assert left_text_box.text == '[initial]'
+
+    html, top_left = page_2.children
+    left_line_box, = top_left.children
+    left_text_box, = left_line_box.children
+    assert left_text_box.text == '[]'
+
+    html, top_left = page_3.children
+    left_line_box, = top_left.children
+    left_text_box, = left_line_box.children
+    assert left_text_box.text == '[ ]'
+
+
 @assert_no_logs
 def test_page_counters():
     """Test page-based counters."""
