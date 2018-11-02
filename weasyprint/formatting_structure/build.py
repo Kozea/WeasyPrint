@@ -22,6 +22,7 @@ import tinycss2.color3
 from . import boxes, counters
 from .. import html
 from ..css import properties
+from ..logger import LOGGER
 
 # Maps values of the ``display`` CSS property to box types.
 BOX_TYPE_FROM_DISPLAY = {
@@ -321,9 +322,15 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
             texts.append(separator.join(
                 counters.format(counter_value, counter_style)
                 for counter_value in counter_values.get(counter_name, [0])))
-        elif type_ == 'string()' and in_page_context:
-            # string() is only valid in @page context
-            texts.append(context.get_string_set_for(page, *value))
+        elif type_ == 'string()':
+            if in_page_context:
+                texts.append(context.get_string_set_for(page, *value))
+            else:
+                # string() is currently only valid in @page context
+                # See https://github.com/Kozea/WeasyPrint/issues/723
+                LOGGER.warn(
+                    '"string(%s)" is only allowed in page margins' %
+                    (' '.join(value)))
         elif type_ == 'target-counter()':
             anchor_token, counter_name, counter_style = value
             lookup_target = target_collector.lookup_target(
