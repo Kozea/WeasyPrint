@@ -506,15 +506,8 @@ def test_low_level_api():
     assert _png_size(document.copy([page_2]).write_png()) == (6, 4)
 
 
-@assert_no_logs
-def test_bookmarks():
-    def assert_bookmarks(html, expected_by_page, expected_tree, round=False):
-        document = FakeHTML(string=html).render()
-        if round:
-            _round_meta(document.pages)
-        assert [p.bookmarks for p in document.pages] == expected_by_page
-        assert document.make_bookmark_tree() == expected_tree
-    assert_bookmarks('''
+@pytest.mark.parametrize('html, expected_by_page, expected_tree, round', (
+    ('''
         <style>* { height: 10px }</style>
         <h1>a</h1>
         <h4 style="page-break-after: always">b</h4>
@@ -530,8 +523,8 @@ def test_bookmarks():
             ('c', (1, 3, 2), []),
             ('d', (1, 0, 10), [])]),
         ('e', (1, 0, 20), []),
-    ])
-    assert_bookmarks('''
+    ], False),
+    ('''
         <style>
             * { height: 90px; margin: 0 0 10px 0 }
         </style>
@@ -574,8 +567,8 @@ def test_bookmarks():
                 ('Title 9', (1, 0, 400), [])])]),
         ('Title 10', (1, 0, 500), [
             ('Title 11', (1, 0, 600), [])]),
-    ])
-    assert_bookmarks('''
+    ], False),
+    ('''
         <style>* { height: 10px }</style>
         <h2>A</h2> <p>depth 1</p>
         <h4>B</h4> <p>depth 2</p>
@@ -594,8 +587,8 @@ def test_bookmarks():
         ('C', (0, 0, 40), [
             ('D', (0, 0, 60), [
                 ('E', (0, 0, 80), [])])]),
-    ])
-    assert_bookmarks('''
+    ], False),
+    ('''
         <style>* { height: 10px; font-size: 0 }</style>
         <h2>A</h2> <p>h2 depth 1</p>
         <h4>B</h4> <p>h4 depth 2</p>
@@ -626,19 +619,34 @@ def test_bookmarks():
             ('G', (0, 0, 110), [
                 ('H', (0, 0, 130), [])])]),
         ('I', (0, 0, 150), []),
-    ])
-    assert_bookmarks('<h1>é', [[(1, 'é', (0, 0))]], [('é', (0, 0, 0), [])])
-    assert_bookmarks('''
+    ], False),
+    ('<h1>é', [[(1, 'é', (0, 0))]], [('é', (0, 0, 0), [])], False),
+    ('''
         <h1 style="transform: translateX(50px)">!
-    ''', [[(1, '!', (50, 0))]], [('!', (0, 50, 0), [])])
-    assert_bookmarks('''
+    ''', [[(1, '!', (50, 0))]], [('!', (0, 50, 0), [])], False),
+    ('''
+        <style>
+          img { display: block; bookmark-label: attr(alt); bookmark-level: 1 }
+        </style>
+        <img src="file://%s" alt="Chocolate" />
+    ''' % resource_filename('pattern.png'),
+     [[(1, 'Chocolate', (0, 0))]], [('Chocolate', (0, 0, 0), [])], False),
+    ('''
         <h1 style="transform-origin: 0 0;
                    transform: rotate(90deg) translateX(50px)">!
-    ''', [[(1, '!', (0, 50))]], [('!', (0, 0, 50), [])], round=True)
-    assert_bookmarks('''
+    ''', [[(1, '!', (0, 50))]], [('!', (0, 0, 50), [])], True),
+    ('''
         <body style="transform-origin: 0 0; transform: rotate(90deg)">
         <h1 style="transform: translateX(50px)">!
-    ''', [[(1, '!', (0, 50))]], [('!', (0, 0, 50), [])], round=True)
+    ''', [[(1, '!', (0, 50))]], [('!', (0, 0, 50), [])], True),
+))
+@assert_no_logs
+def test_assert_bookmarks(html, expected_by_page, expected_tree, round):
+    document = FakeHTML(string=html).render()
+    if round:
+        _round_meta(document.pages)
+    assert [p.bookmarks for p in document.pages] == expected_by_page
+    assert document.make_bookmark_tree() == expected_tree
 
 
 @assert_no_logs

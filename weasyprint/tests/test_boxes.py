@@ -1473,6 +1473,28 @@ def test_margin_box_string_set_6():
     assert bottom_text_box.text == 'before!last-secondclass2|1/I'
 
 
+def test_margin_box_string_set_7():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/722
+    page_1, = render_pages('''
+      <style>
+        img { string-set: left  attr(alt) }
+        img + img { string-set: right attr(alt) }
+        @page { @top-left  { content: '[' string(left)  ']' }
+                @top-right { content: '{' string(right) '}' } }
+      </style>
+      <img src=pattern.png alt="Chocolate">
+      <img src=no_such_file.png alt="Cake">
+    ''')
+
+    html, top_left, top_right = page_1.children
+    left_line_box, = top_left.children
+    left_text_box, = left_line_box.children
+    assert left_text_box.text == '[Chocolate]'
+    right_line_box, = top_right.children
+    right_text_box, = right_line_box.children
+    assert right_text_box.text == '{Cake}'
+
+
 @assert_no_logs
 def test_page_counters():
     """Test page-based counters."""
