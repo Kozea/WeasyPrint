@@ -3,6 +3,21 @@
 ======
 
 
+Version 43
+----------
+
+Released on 2018-11-09.
+
+Bug fixes:
+
+* `#726 <https://github.com/Kozea/WeasyPrint/issues/726>`_:
+  Make empty strings clear previous values of named strings
+* `#729 <https://github.com/Kozea/WeasyPrint/issues/729>`_:
+  Include tools in packaging
+
+This version also includes the changes from unstable rc1 and rc2 versions
+listed below.
+
 Version 43rc2
 -------------
 
