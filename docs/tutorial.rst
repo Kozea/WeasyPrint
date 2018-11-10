@@ -103,7 +103,7 @@ that, although the argument must be named:
 
 .. code-block:: python
 
-    from weasyprint import HTML
+    from weasyprint import HTML, CSS
 
     # HTML('<h1>foo') would be filename
     HTML(string='''
