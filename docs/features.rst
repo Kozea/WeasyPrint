@@ -178,7 +178,7 @@ New properties defined in Level 3 are supported:
 
 - the ``overflow-wrap`` property replacing ``word-wrap``;
 - the ``full-width`` value of the ``text-transform`` property; and
-- the ``tab-space`` property.
+- the ``tab-size`` property.
 
 Experimental_ properties controling hyphenation_ are supported by WeasyPrint:
 
