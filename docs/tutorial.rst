@@ -103,7 +103,7 @@ that, although the argument must be named:
 
 .. code-block:: python
 
-    from weasyprint import HTML
+    from weasyprint import HTML, CSS
 
     # HTML('<h1>foo') would be filename
     HTML(string='''
@@ -343,7 +343,7 @@ WeasyPrint as a PNG image. Start it with:
 Security
 --------
 
-When used with untrusted HTMl or untrusted CSS, WeasyPrint can meet security
+When used with untrusted HTML or untrusted CSS, WeasyPrint can meet security
 problems. You will need extra configuration in your Python application to avoid
 high memory use, endless renderings or local files leaks.
 
