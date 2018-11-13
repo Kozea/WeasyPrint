@@ -66,7 +66,7 @@ New features:
   Initial support of flexbox
 * `#592 <https://github.com/Kozea/WeasyPrint/pull/592>`_:
   Support @font-face on Windows
-* `#306 <https://github.com/Kozea/WeasyPrint/issue/306>`_:
+* `#306 <https://github.com/Kozea/WeasyPrint/issues/306>`_:
   Add a timeout parameter to the URL fetcher functions
 * `#594 <https://github.com/Kozea/WeasyPrint/pull/594>`_:
   Split tests using modern pytest features
@@ -76,9 +76,9 @@ New features:
   Handle target counters and target texts
 * `#631 <https://github.com/Kozea/WeasyPrint/pull/631>`_:
   Enable counter-increment and counter-reset in page context
-* `#622 <https://github.com/Kozea/WeasyPrint/issue/622>`_:
+* `#622 <https://github.com/Kozea/WeasyPrint/issues/622>`_:
   Allow pathlib.Path objects for HTML, CSS and Attachment classes
-* `#674 <https://github.com/Kozea/WeasyPrint/issue/674>`_:
+* `#674 <https://github.com/Kozea/WeasyPrint/issues/674>`_:
   Add extensive installation instructions for Windows
 
 Bug fixes:
