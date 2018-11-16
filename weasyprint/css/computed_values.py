@@ -304,7 +304,7 @@ def length(computer, name, value, font_size=None, pixels_only=False):
                 context=None, font_size=font_size,
                 style=computer.computed)
             layout.set_text('0')
-            line, _ = layout.iter_lines()
+            line, _ = layout.get_first_line()
             logical_width, _ = text.get_size(line, computer.computed)
             result = value.value * logical_width
         elif unit == 'em':
@@ -682,7 +682,7 @@ def strut_layout(style, context=None):
 
     layout = text.Layout(
         context=context, font_size=style['font_size'], style=style)
-    line, _ = layout.iter_lines()
+    line, _ = layout.get_first_line()
     _, _, _, _, text_height, baseline = text.first_line_metrics(
         line, '', layout, resume_at=None, space_collapse=False, style=style)
     if style['line_height'] == 'normal':
@@ -705,7 +705,7 @@ def ex_ratio(style):
     # TODO: use context to use @font-face fonts
     layout = text.Layout(context=None, font_size=font_size, style=style)
     layout.set_text('x')
-    line, _ = layout.iter_lines()
+    line, _ = layout.get_first_line()
     _, ink_height_above_baseline = text.get_ink_position(line)
     # Zero means some kind of failure, fallback is 0.5.
     # We round to try keeping exact values that were altered by Pango.

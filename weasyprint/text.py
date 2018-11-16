@@ -146,6 +146,7 @@ ffi.cdef('''
     PangoLayoutLine * pango_layout_iter_get_line_readonly (
         PangoLayoutIter *iter);
     int pango_layout_iter_get_baseline (PangoLayoutIter *iter);
+    int pango_layout_iter_get_index (PangoLayoutIter *iter);
 
     PangoFontDescription * pango_font_description_new (void);
     void pango_font_description_free (PangoFontDescription *desc);
@@ -593,7 +594,7 @@ def first_line_metrics(first_line, text, layout, resume_at, space_collapse,
             first_line_text = first_line_text.rstrip(u' ')
         # Remove soft hyphens
         layout.set_text(first_line_text.replace(u'\u00ad', u''))
-        first_line, _ = layout.iter_lines()
+        first_line, _ = layout.get_first_line()
         length = first_line.length if first_line is not None else 0
         soft_hyphens = 0
         if u'\u00ad' in first_line_text:
@@ -662,16 +663,15 @@ class Layout(object):
             self.font, units_from_double(font_size))
         pango.pango_layout_set_font_description(self.layout, self.font)
 
-    def iter_lines(self):
+    def get_first_line(self):
         layout_iter = pango.pango_layout_get_iter(self.layout)
         first_line = pango.pango_layout_iter_get_line_readonly(layout_iter)
         if pango.pango_layout_iter_next_line(layout_iter):
-            second_line = pango.pango_layout_iter_get_line_readonly(
-                layout_iter)
+            index = pango.pango_layout_iter_get_index(layout_iter)
         else:
-            second_line = None
+            index = None
         pango.pango_layout_iter_free(layout_iter)
-        return first_line, second_line
+        return first_line, index
 
     def set_text(self, text):
         # Keep only the first two lines, we don't need the other ones
@@ -694,7 +694,7 @@ class Layout(object):
                 context=self.context, font_size=style['font_size'],
                 style=style)
             layout.set_text(' ' * style['tab_size'])
-            line, _ = layout.iter_lines()
+            line, _ = layout.get_first_line()
             width, _ = get_size(line, style)
             width = int(round(width))
         else:
@@ -954,16 +954,16 @@ def split_first_line(text, style, context, max_width, justification_spacing,
             layout = create_layout(
                 text[:expected_length], style, context, max_width,
                 justification_spacing)
-            first_line, second_line = layout.iter_lines()
-            if second_line is None:
+            first_line, index = layout.get_first_line()
+            if index is None:
                 # The small amount of text fits in one line, give up and use
                 # the whole text
                 layout = None
     if layout is None:
         layout = create_layout(
             text, style, context, max_width, justification_spacing)
-        first_line, second_line = layout.iter_lines()
-    resume_at = None if second_line is None else second_line.start_index
+        first_line, index = layout.get_first_line()
+    resume_at = index
 
     # Step #2: Don't split lines when it's not needed
     if max_width is None:
@@ -971,7 +971,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
         return first_line_metrics(
             first_line, text, layout, resume_at, space_collapse, style)
     first_line_width, _ = get_size(first_line, style)
-    if second_line is None and first_line_width <= max_width:
+    if index is None and first_line_width <= max_width:
         # The first line fits in the available width
         return first_line_metrics(
             first_line, text, layout, resume_at, space_collapse, style)
@@ -981,9 +981,8 @@ def split_first_line(text, style, context, max_width, justification_spacing,
     # is a good thread related to this problem.
     if first_line_width <= max_width:
         # The first line may have been cut too early by Pango
-        second_line_index = second_line.start_index
-        first_line_text = utf8_slice(text, slice(second_line_index))
-        second_line_text = utf8_slice(text, slice(second_line_index, None))
+        first_line_text = utf8_slice(text, slice(index))
+        second_line_text = utf8_slice(text, slice(index, None))
     else:
         # The first word is longer than the line, try to hyphenize it
         first_line_text = ''
@@ -996,16 +995,16 @@ def split_first_line(text, style, context, max_width, justification_spacing,
             # only try when space collapsing is allowed
             new_first_line_text = first_line_text + next_word
             layout.set_text(new_first_line_text)
-            first_line, second_line = layout.iter_lines()
+            first_line, index = layout.get_first_line()
             first_line_width, _ = get_size(first_line, style)
-            if second_line is None and first_line_text:
+            if index is None and first_line_text:
                 # The next word fits in the first line, keep the layout
                 resume_at = len(new_first_line_text.encode('utf-8')) + 1
                 return first_line_metrics(
                     first_line, text, layout, resume_at, space_collapse, style)
-            elif second_line:
+            elif index:
                 # Text may have been split elsewhere by Pango earlier
-                resume_at = second_line.start_index
+                resume_at = index
             else:
                 # Second line is none
                 resume_at = first_line.length + 1
@@ -1042,7 +1041,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
                             first_line_text.rsplit(u' ', 1))
                         next_word = u' ' + next_word
                         layout.set_text(first_line_text)
-                        first_line, second_line = layout.iter_lines()
+                        first_line, index = layout.get_first_line()
                         resume_at = len(
                             (first_line_text + u' ').encode('utf8'))
                     else:
@@ -1074,16 +1073,16 @@ def split_first_line(text, style, context, max_width, justification_spacing,
                     new_layout = create_layout(
                         hyphenated_first_line_text, style, context, max_width,
                         justification_spacing)
-                    new_first_line, new_second_line = new_layout.iter_lines()
+                    new_first_line, new_index = new_layout.get_first_line()
                     new_first_line_width, _ = get_size(new_first_line, style)
                     new_space = max_width - new_first_line_width
-                    if new_second_line is None and (
+                    if new_index is None and (
                             new_space >= 0 or
                             first_word_part == dictionary_iterations[-1]):
                         hyphenated = True
                         layout = new_layout
                         first_line = new_first_line
-                        second_line = new_second_line
+                        index = new_index
                         resume_at = len(new_first_line_text.encode('utf8'))
                         if text[len(new_first_line_text)] == soft_hyphen:
                             resume_at += len(soft_hyphen.encode('utf8'))
@@ -1096,7 +1095,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
                     layout.set_text(hyphenated_first_line_text)
                     pango.pango_layout_set_width(
                         layout.layout, units_from_double(-1))
-                    first_line, second_line = layout.iter_lines()
+                    first_line, index = layout.get_first_line()
                     resume_at = len(new_first_line_text.encode('utf8'))
                     if text[len(first_line_text)] == soft_hyphen:
                         resume_at += len(soft_hyphen.encode('utf8'))
@@ -1110,7 +1109,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
         layout.set_text(hyphenated_first_line_text)
         pango.pango_layout_set_width(
             layout.layout, units_from_double(-1))
-        first_line, second_line = layout.iter_lines()
+        first_line, index = layout.get_first_line()
         resume_at = len(first_line_text.encode('utf8'))
 
     # Step 5: Try to break word if it's too long for the line
@@ -1131,22 +1130,18 @@ def split_first_line(text, style, context, max_width, justification_spacing,
         pango.pango_layout_set_width(
             layout.layout, units_from_double(max_width))
         layout.set_wrap(PANGO_WRAP_MODE['WRAP_CHAR'])
-        _, temp_second_line = layout.iter_lines()
-        temp_second_line_index = (
-            len(text.encode('utf-8')) if temp_second_line is None
-            else temp_second_line.start_index)
+        _, temp_index = layout.get_first_line()
+        temp_index = temp_index or len(text.encode('utf-8'))
         # TODO: WRAP_CHAR is said to "wrap lines at character boundaries", but
         # it doesn't. Looks like it tries to split at word boundaries and then
         # at character boundaries if there's no enough space for a full word,
         # just as WRAP_WORD_CHAR does. That's why we have to split this text
         # twice. Find why. It may be related to the problem described in the
         # link given in step #3.
-        first_line_text = utf8_slice(text, slice(temp_second_line_index))
+        first_line_text = utf8_slice(text, slice(temp_index))
         layout.set_text(first_line_text)
-        first_line, second_line = layout.iter_lines()
-        resume_at = (
-            first_line.length if second_line is None
-            else second_line.start_index)
+        first_line, index = layout.get_first_line()
+        resume_at = index or first_line.length
 
     if resume_at is not None and resume_at >= len(text.encode('utf-8')):
         resume_at = None
@@ -1165,7 +1160,7 @@ def show_first_line(context, pango_layout, hinting):
     # of hinting.
     pango.pango_layout_set_width(pango_layout.layout, -1)
     pangocairo.pango_cairo_show_layout_line(
-        context, pango_layout.iter_lines()[0])
+        context, pango_layout.get_first_line()[0])
 
 
 def can_break_text(text, lang):
