@@ -672,7 +672,9 @@ class Layout(object):
                 return
 
     def set_text(self, text):
-        text, bytestring = unicode_to_char_p(text)
+        # Keep only the first two lines, we don't need the other ones
+        text, bytestring = unicode_to_char_p(
+            '\n'.join(text.split('\n', 3)[:2]))
         self.text = text
         self.text_bytes = bytestring
         pango.pango_layout_set_text(self.layout, text, -1)
