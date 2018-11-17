@@ -139,13 +139,13 @@ ffi.cdef('''
         PangoLayout *layout, const PangoFontDescription *desc);
     void pango_layout_set_wrap (
         PangoLayout *layout, PangoWrapMode wrap);
+    int pango_layout_get_baseline (PangoLayout *layout);
 
     PangoLayoutIter * pango_layout_get_iter (PangoLayout *layout);
     void pango_layout_iter_free (PangoLayoutIter *iter);
     gboolean pango_layout_iter_next_line (PangoLayoutIter *iter);
     PangoLayoutLine * pango_layout_iter_get_line_readonly (
         PangoLayoutIter *iter);
-    int pango_layout_iter_get_baseline (PangoLayoutIter *iter);
     int pango_layout_iter_get_index (PangoLayoutIter *iter);
 
     PangoFontDescription * pango_font_description_new (void);
@@ -608,9 +608,7 @@ def first_line_metrics(first_line, text, layout, resume_at, space_collapse,
                         break
         length += soft_hyphens * 2  # len(u'\u00ad'.encode('utf8'))
     width, height = get_size(first_line, style)
-    baseline = units_to_double(pango.pango_layout_iter_get_baseline(ffi.gc(
-        pango.pango_layout_get_iter(layout.layout),
-        pango.pango_layout_iter_free)))
+    baseline = units_to_double(pango.pango_layout_get_baseline(layout.layout))
     return layout, length, resume_at, width, height, baseline
 
 
