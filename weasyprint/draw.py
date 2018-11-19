@@ -1015,7 +1015,7 @@ def draw_text(context, textbox, enable_hinting):
 
     context.move_to(textbox.position_x, textbox.position_y + textbox.baseline)
     context.set_source_rgba(*textbox.style['color'])
-    show_first_line(context, textbox.pango_layout, enable_hinting)
+    show_first_line(context, textbox.pango_layout)
     values = textbox.style['text_decoration']
 
     thickness = textbox.style['font_size'] / 18  # Like other browsers do

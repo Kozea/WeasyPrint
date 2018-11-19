@@ -1149,11 +1149,9 @@ def split_first_line(text, style, context, max_width, justification_spacing,
         style['hyphenate_character'])
 
 
-def show_first_line(context, pango_layout, hinting):
+def show_first_line(context, pango_layout):
     """Draw the given ``line`` to the Cairo ``context``."""
     context = ffi.cast('cairo_t *', context._pointer)
-    if hinting:
-        pangocairo.pango_cairo_update_layout(context, pango_layout.layout)
     # Set an infinite width as we don't want to break lines when drawing, the
     # lines have already been split and the size may differ for example because
     # of hinting.
