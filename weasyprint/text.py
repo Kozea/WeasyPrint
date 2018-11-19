@@ -662,13 +662,14 @@ class Layout(object):
         pango.pango_layout_set_font_description(self.layout, self.font)
 
     def get_first_line(self):
-        layout_iter = pango.pango_layout_get_iter(self.layout)
+        layout_iter = ffi.gc(
+            pango.pango_layout_get_iter(self.layout),
+            pango.pango_layout_iter_free)
         first_line = pango.pango_layout_iter_get_line_readonly(layout_iter)
         if pango.pango_layout_iter_next_line(layout_iter):
             index = pango.pango_layout_iter_get_index(layout_iter)
         else:
             index = None
-        pango.pango_layout_iter_free(layout_iter)
         return first_line, index
 
     def set_text(self, text):
