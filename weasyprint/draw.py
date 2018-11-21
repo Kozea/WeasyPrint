@@ -1015,7 +1015,10 @@ def draw_text(context, textbox, enable_hinting):
 
     context.move_to(textbox.position_x, textbox.position_y + textbox.baseline)
     context.set_source_rgba(*textbox.style['color'])
+
+    textbox.pango_layout.reactivate(textbox.style)
     show_first_line(context, textbox)
+
     values = textbox.style['text_decoration']
 
     thickness = textbox.style['font_size'] / 18  # Like other browsers do
@@ -1041,6 +1044,8 @@ def draw_text(context, textbox, enable_hinting):
             context, textbox,
             textbox.baseline - metrics.strikethrough_position,
             thickness, enable_hinting)
+
+    textbox.pango_layout.deactivate()
 
 
 def draw_text_decoration(context, textbox, offset_y, thickness,
