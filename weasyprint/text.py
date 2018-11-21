@@ -139,6 +139,8 @@ ffi.cdef('''
         PangoLayout *layout, const PangoFontDescription *desc);
     void pango_layout_set_wrap (
         PangoLayout *layout, PangoWrapMode wrap);
+    void pango_layout_set_single_paragraph_mode (
+        PangoLayout *layout, gboolean setting);
     int pango_layout_get_baseline (PangoLayout *layout);
 
     PangoLayoutIter * pango_layout_get_iter (PangoLayout *layout);
@@ -600,7 +602,7 @@ def first_line_metrics(first_line, text, layout, resume_at, space_collapse,
         if u'\u00ad' in first_line_text:
             if first_line_text[0] == u'\u00ad':
                 length += 2  # len(u'\u00ad'.encode('utf8'))
-            for i in range(len(layout.text_bytes.decode('utf8'))):
+            for i in range(len(layout.text)):
                 while i + soft_hyphens + 1 < len(first_line_text):
                     if first_line_text[i + soft_hyphens + 1] == u'\u00ad':
                         soft_hyphens += 1
@@ -609,12 +611,16 @@ def first_line_metrics(first_line, text, layout, resume_at, space_collapse,
         length += soft_hyphens * 2  # len(u'\u00ad'.encode('utf8'))
     width, height = get_size(first_line, style)
     baseline = units_to_double(pango.pango_layout_get_baseline(layout.layout))
+    layout.deactivate()
     return layout, length, resume_at, width, height, baseline
 
 
 class Layout(object):
     """Object holding PangoLayout-related cdata pointers."""
     def __init__(self, context, font_size, style):
+        self.setup(context, font_size, style)
+
+    def setup(self, context, font_size, style):
         from .fonts import ZERO_FONTSIZE_CRASHES_CAIRO
 
         # Cairo crashes with font-size: 0 when using Win32 API
@@ -676,8 +682,7 @@ class Layout(object):
         # Keep only the first two lines, we don't need the other ones
         text, bytestring = unicode_to_char_p(
             '\n'.join(text.split('\n', 3)[:2]))
-        self.text = text
-        self.text_bytes = bytestring
+        self.text = bytestring.decode('utf-8')
         pango.pango_layout_set_text(self.layout, text, -1)
 
     def get_font_metrics(self):
@@ -704,6 +709,15 @@ class Layout(object):
                 1, True, pango.PANGO_TAB_LEFT, width or 1),
             pango.pango_tab_array_free)
         pango.pango_layout_set_tabs(self.layout, array)
+
+    def deactivate(self):
+        del self.layout
+        del self.font
+        del self.language
+
+    def reactivate(self, style):
+        self.setup(self.context, style['font_size'], style)
+        self.set_text(self.text)
 
 
 class FontMetrics(object):
@@ -850,7 +864,7 @@ def create_layout(text, style, context, max_width, justification_spacing):
         pango.pango_layout_set_width(
             layout.layout, units_from_double(max_width))
 
-    text_bytes = layout.text_bytes
+    text_bytes = layout.text.encode('utf-8')
 
     # Word and letter spacings
     word_spacing = style['word_spacing'] + justification_spacing
@@ -1149,15 +1163,14 @@ def split_first_line(text, style, context, max_width, justification_spacing,
         style['hyphenate_character'])
 
 
-def show_first_line(context, pango_layout):
-    """Draw the given ``line`` to the Cairo ``context``."""
+def show_first_line(context, textbox):
+    """Draw the given ``textbox`` line to the Cairo ``context``."""
+    textbox.pango_layout.reactivate(textbox.style)
+    pango.pango_layout_set_single_paragraph_mode(
+        textbox.pango_layout.layout, True)
+    first_line, _ = textbox.pango_layout.get_first_line()
     context = ffi.cast('cairo_t *', context._pointer)
-    # Set an infinite width as we don't want to break lines when drawing, the
-    # lines have already been split and the size may differ for example because
-    # of hinting.
-    pango.pango_layout_set_width(pango_layout.layout, -1)
-    pangocairo.pango_cairo_show_layout_line(
-        context, pango_layout.get_first_line()[0])
+    pangocairo.pango_cairo_show_layout_line(context, first_line)
 
 
 def can_break_text(text, lang):

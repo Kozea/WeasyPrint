@@ -970,7 +970,7 @@ def split_text_box(context, box, available_width, skip):
     # No need to encode what’s after resume_at (if set) or length (if
     # resume_at is not set). One code point is one or more byte, so
     # UTF-8 indexes are always bigger or equal to Unicode indexes.
-    new_text = layout.text_bytes.decode('utf8')
+    new_text = layout.text
     encoded = text.encode('utf8')
     if resume_at is not None:
         between = encoded[length:resume_at].decode('utf8')
