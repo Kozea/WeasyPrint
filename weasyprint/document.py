@@ -90,7 +90,7 @@ def _locale_float(number):
     https://bugs.python.org/issue33954
 
     """
-    return locale.format('%f', number)
+    return locale.format_string('%f', number)
 
 
 def rectangle_aabb(matrix, pos_x, pos_y, width, height):
