@@ -680,8 +680,7 @@ def strut_layout(style, context=None):
         if key in context.strut_layouts:
             return context.strut_layouts[key]
 
-    layout = text.Layout(
-        context=context, font_size=style['font_size'], style=style)
+    layout = text.Layout(context, style['font_size'], style)
     line, _ = layout.get_first_line()
     _, _, _, _, text_height, baseline = text.first_line_metrics(
         line, '', layout, resume_at=None, space_collapse=False, style=style)

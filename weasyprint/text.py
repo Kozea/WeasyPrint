@@ -617,17 +617,20 @@ def first_line_metrics(first_line, text, layout, resume_at, space_collapse,
 
 class Layout(object):
     """Object holding PangoLayout-related cdata pointers."""
-    def __init__(self, context, font_size, style):
+    def __init__(self, context, font_size, style, justification_spacing=0):
+        self.justification_spacing = justification_spacing
         self.setup(context, font_size, style)
 
     def setup(self, context, font_size, style):
         from .fonts import ZERO_FONTSIZE_CRASHES_CAIRO
 
+        self.context = context
+        self.style = style
+
         # Cairo crashes with font-size: 0 when using Win32 API
         # See https://github.com/Kozea/WeasyPrint/pull/599
         if font_size == 0 and ZERO_FONTSIZE_CRASHES_CAIRO:
             font_size = 1
-        self.context = context
         hinting = context.enable_hinting if context else False
         self.layout = ffi.gc(
             pangocairo.pango_cairo_create_layout(ffi.cast(
@@ -667,6 +670,37 @@ class Layout(object):
             self.font, units_from_double(font_size))
         pango.pango_layout_set_font_description(self.layout, self.font)
 
+        features = get_font_features(
+            style['font_kerning'], style['font_variant_ligatures'],
+            style['font_variant_position'], style['font_variant_caps'],
+            style['font_variant_numeric'], style['font_variant_alternates'],
+            style['font_variant_east_asian'], style['font_feature_settings'])
+        if features:
+            features = ','.join(
+                ('%s %i' % (key, value)) for key, value in features.items())
+
+            # TODO: attributes should be freed.
+            # In the meantime, keep a cache to avoid leaking too many of them.
+            attr = context.font_features.get(features)
+            if attr is None:
+                try:
+                    attr = pango.pango_attr_font_features_new(
+                        features.encode('ascii'))
+                except AttributeError:
+                    LOGGER.error(
+                        'OpenType features are not available '
+                        'with Pango < 1.38')
+                else:
+                    context.font_features[features] = attr
+            if attr is not None:
+                attr_list = pango.pango_attr_list_new()
+                pango.pango_attr_list_insert(attr_list, attr)
+                pango.pango_layout_set_attributes(self.layout, attr_list)
+
+        # Tabs width
+        if style['tab_size'] != 8:  # Default Pango value is 8
+            self.set_tabs()
+
     def get_first_line(self):
         layout_iter = ffi.gc(
             pango.pango_layout_get_iter(self.layout),
@@ -678,12 +712,43 @@ class Layout(object):
             index = None
         return first_line, index
 
-    def set_text(self, text):
+    def set_text(self, text, justify=False):
         # Keep only the first two lines, we don't need the other ones
         text, bytestring = unicode_to_char_p(
             '\n'.join(text.split('\n', 3)[:2]))
         self.text = bytestring.decode('utf-8')
         pango.pango_layout_set_text(self.layout, text, -1)
+
+        word_spacing = self.style['word_spacing']
+        if justify:
+            # Justification is needed when drawing text but is useless during
+            # layout. Ignore it before layout is reactivated before the drawing
+            # step.
+            word_spacing += self.justification_spacing
+
+        letter_spacing = self.style['letter_spacing']
+        if letter_spacing == 'normal':
+            letter_spacing = 0
+
+        if text and (word_spacing != 0 or letter_spacing != 0):
+            letter_spacing = units_from_double(letter_spacing)
+            space_spacing = units_from_double(word_spacing) + letter_spacing
+            attr_list = pango.pango_attr_list_new()
+
+            def add_attr(start, end, spacing):
+                # TODO: attributes should be freed
+                attr = pango.pango_attr_letter_spacing_new(spacing)
+                attr.start_index, attr.end_index = start, end
+                pango.pango_attr_list_insert(attr_list, attr)
+
+            add_attr(0, len(bytestring) + 1, letter_spacing)
+            position = bytestring.find(b' ')
+            while position != -1:
+                add_attr(position, position + 1, space_spacing)
+                position = bytestring.find(b' ', position + 1)
+
+            pango.pango_layout_set_attributes(self.layout, attr_list)
+            pango.pango_attr_list_unref(attr_list)
 
     def get_font_metrics(self):
         context = pango.pango_layout_get_context(self.layout)
@@ -692,17 +757,19 @@ class Layout(object):
     def set_wrap(self, wrap_mode):
         pango.pango_layout_set_wrap(self.layout, wrap_mode)
 
-    def set_tabs(self, style):
-        if isinstance(style['tab_size'], int):
+    def set_tabs(self):
+        if isinstance(self.style['tab_size'], int):
+            style = self.style.copy()
+            style['tab_size'] = 8
             layout = Layout(
-                context=self.context, font_size=style['font_size'],
-                style=style)
-            layout.set_text(' ' * style['tab_size'])
+                self.context, style['font_size'], style,
+                self.justification_spacing)
+            layout.set_text(' ' * self.style['tab_size'])
             line, _ = layout.get_first_line()
             width, _ = get_size(line, style)
             width = int(round(width))
         else:
-            width = int(style['tab_size'].value)
+            width = int(self.style['tab_size'].value)
         # TODO: 0 is not handled correctly by Pango
         array = ffi.gc(
             pango.pango_tab_array_new_with_positions(
@@ -714,10 +781,11 @@ class Layout(object):
         del self.layout
         del self.font
         del self.language
+        del self.style
 
     def reactivate(self, style):
         self.setup(self.context, style['font_size'], style)
-        self.set_text(self.text)
+        self.set_text(self.text, justify=True)
 
 
 class FontMetrics(object):
@@ -855,8 +923,7 @@ def create_layout(text, style, context, max_width, justification_spacing):
     if not text_wrap:
         max_width = None
 
-    layout = Layout(context, style['font_size'], style)
-    layout.set_text(text)
+    layout = Layout(context, style['font_size'], style, justification_spacing)
 
     # Make sure that max_width * Pango.SCALE == max_width * 1024 fits in a
     # signed integer. Treat bigger values same as None: unconstrained width.
@@ -864,63 +931,7 @@ def create_layout(text, style, context, max_width, justification_spacing):
         pango.pango_layout_set_width(
             layout.layout, units_from_double(max_width))
 
-    text_bytes = layout.text.encode('utf-8')
-
-    # Word and letter spacings
-    word_spacing = style['word_spacing'] + justification_spacing
-    letter_spacing = style['letter_spacing']
-    if letter_spacing == 'normal':
-        letter_spacing = 0
-    if text and (word_spacing != 0 or letter_spacing != 0):
-        letter_spacing = units_from_double(letter_spacing)
-        space_spacing = units_from_double(word_spacing) + letter_spacing
-        attr_list = pango.pango_attr_list_new()
-
-        def add_attr(start, end, spacing):
-            # TODO: attributes should be freed
-            attr = pango.pango_attr_letter_spacing_new(spacing)
-            attr.start_index, attr.end_index = start, end
-            pango.pango_attr_list_insert(attr_list, attr)
-
-        add_attr(0, len(text_bytes) + 1, letter_spacing)
-        position = text_bytes.find(b' ')
-        while position != -1:
-            add_attr(position, position + 1, space_spacing)
-            position = text_bytes.find(b' ', position + 1)
-
-        pango.pango_layout_set_attributes(layout.layout, attr_list)
-        pango.pango_attr_list_unref(attr_list)
-
-    features = get_font_features(
-        style['font_kerning'], style['font_variant_ligatures'],
-        style['font_variant_position'], style['font_variant_caps'],
-        style['font_variant_numeric'], style['font_variant_alternates'],
-        style['font_variant_east_asian'], style['font_feature_settings'])
-    if features:
-        features = ','.join(
-            ('%s %i' % (key, value)) for key, value in features.items())
-
-        # TODO: attributes should be freed.
-        # In the meantime, keep a cache to avoid leaking too many of them.
-        attr = context.font_features.get(features)
-        if attr is None:
-            try:
-                attr = pango.pango_attr_font_features_new(
-                    features.encode('ascii'))
-            except AttributeError:
-                LOGGER.error(
-                    'OpenType features are not available with Pango < 1.38')
-            else:
-                context.font_features[features] = attr
-        if attr is not None:
-            attr_list = pango.pango_attr_list_new()
-            pango.pango_attr_list_insert(attr_list, attr)
-            pango.pango_layout_set_attributes(layout.layout, attr_list)
-
-    # Tabs width
-    if style['tab_size'] != 8:  # Default Pango value is 8
-        layout.set_tabs(style)
-
+    layout.set_text(text)
     return layout
 
 
