@@ -148,7 +148,7 @@ Bug fixes:
 * `#567 <https://github.com/Kozea/WeasyPrint/issues/567>`_:
   Fix text-indent with text-align: justify.
 * `#465 <https://github.com/Kozea/WeasyPrint/issues/465>`_:
-  Fix string(*, start).
+  Fix string(\*, start).
 * `#562 <https://github.com/Kozea/WeasyPrint/issues/562>`_:
   Handle named pages with pseudo-class.
 * `#507 <https://github.com/Kozea/WeasyPrint/issues/507>`_:
@@ -844,8 +844,8 @@ Version 0.16
 
 Released on 2012-12-13.
 
-* Add the :obj:`zoom` parameter to :meth:`HTML.write_pdf` and
-  :meth:`Document.write_pdf() <weasyprint.document.Document.write_pdf>`
+* Add the ``zoom`` parameter to ``HTML.write_pdf`` and
+  ``Document.write_pdf() <weasyprint.document.Document.write_pdf>``
 * Fix compatibility with old (and buggy) pycairo versions.
   WeasyPrint is now tested on 1.8.8 in addition to the latest.
 * Fix layout bugs related to line trailing spaces.
@@ -858,7 +858,7 @@ Released on 2012-10-09.
 
 * Add a low-level API that enables painting pages individually on any
   cairo surface.
-* **Backward-incompatible change**: remove the :meth:`HTML.get_png_pages`
+* **Backward-incompatible change**: remove the ``HTML.get_png_pages``
   method. The new low-level API covers this functionality and more.
 * Add support for the ``font-stretch`` property.
 * Add support for ``@page:blank`` to select blank pages.
