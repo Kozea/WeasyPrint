@@ -422,7 +422,7 @@ Depending on the GTK installation route you took, the proper folder name is
 something along the lines of:
 
 * ``C:\msys2\mingw32\bin``
-* ``C:\msys2\mingw34\bin``
+* ``C:\msys2\mingw64\bin``
 * ``C:\Program Files\GTK3-Runtime Win64\bin``
 
 Determine the correct folder and execute the following commands, replace
@@ -440,7 +440,7 @@ Call WeasyPrint again:
 
 .. code-block:: console
 
-    python -m weasyprint http://weasyprint.org weasyprint.pdf.
+    python -m weasyprint http://weasyprint.org weasyprint.pdf
 
 If the error is gone you should either fix your ``PATH`` permanently (via
 *Advanced System Settings*) or execute the above ``SET PATH`` command by

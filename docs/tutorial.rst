@@ -36,13 +36,13 @@ or document margins via command-line flags. This is best accomplished
 with the CSS ``@page`` at-rule. Consider the following example:
 
 .. code-block:: css
-  
+
   @page {
     size: Letter; /* Change from the default size of A4 */
     margin: 2.5cm; /* Set margin on each page */
   }
 
-There is much more which can be achieved with the ``@page`` at-rule, 
+There is much more which can be achieved with the ``@page`` at-rule,
 such as page numbers, headers, etc. Read more about the page_ at-rule,
 and find an example here_.
 
