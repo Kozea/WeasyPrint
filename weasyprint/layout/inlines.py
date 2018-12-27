@@ -1188,10 +1188,10 @@ def text_align(context, line, available_width, last):
             justify_line(context, line, offset)
         return 0
     if align == 'center':
-        offset /= 2.
+        return offset / 2
     else:
         assert align == 'right'
-    return offset
+        return offset
 
 
 def justify_line(context, line, extra_width):
