@@ -39,7 +39,8 @@ if hasattr(sys, 'frozen'):
 else:
     ROOT = os.path.dirname(__file__)
 
-VERSION = __version__ = open(os.path.join(ROOT, 'VERSION')).read().strip()
+with open(os.path.join(ROOT, 'VERSION')) as fp:
+    VERSION = __version__ = fp.read().strip()
 
 # Used for 'User-Agent' in HTTP and 'Creator' in PDF
 VERSION_STRING = 'WeasyPrint %s (http://weasyprint.org/)' % VERSION
