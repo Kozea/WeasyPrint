@@ -27,9 +27,18 @@ TOP = 842
 # Right of the page is 210mm ~= 595pt
 RIGHT = 595
 
-# TODO: Why do we need these -1 and +1?
-TOP -= 1
-RIGHT += 1
+
+def assert_rect_almost_equal(rect, values):
+    """Test that PDF rect string equals given values.
+
+    We avoid rounding errors by allowing a delta of 1, as both WeasyPrint and
+    Cairo round coordinates in unpredictable ways.
+
+    """
+    if isinstance(rect, bytes):
+        rect = rect.decode('ascii')
+    for a, b in zip(rect.strip(' []').split(), values):
+        assert abs(int(a) - b) <= 1
 
 
 @assert_no_logs
@@ -321,24 +330,24 @@ def test_links():
     # 30pt wide (like the image), 20pt high (like line-height)
     assert links[0].get_value('URI', '(.*)') == b'(http://weasyprint.org)'
     assert links[0].get_value('S', '(.*)') == b'/URI'
-    assert links[0].get_value('Rect', '(.*)') == '[ {} {} {} {} ]'.format(
-        0, TOP - 20, 30, TOP).encode('ascii')
+    assert_rect_almost_equal(
+        links[0].get_value('Rect', '(.*)'), (0, TOP - 20, 30, TOP))
 
     # The image itself: 30*30pt
     assert links[1].get_value('URI', '(.*)') == b'(http://weasyprint.org)'
     assert links[1].get_value('S', '(.*)') == b'/URI'
-    assert links[1].get_value('Rect', '(.*)') == '[ {} {} {} {} ]'.format(
-        0, TOP - 30, 30, TOP).encode('ascii')
+    assert_rect_almost_equal(
+        links[1].get_value('Rect', '(.*)'), (0, TOP - 30, 30, TOP))
 
     # 32pt wide (image + 2 * 1pt of border), 20pt high
-    # TODO: destination seems to be currently broken in cairo, see
-    # https://lists.cairographics.org/archives/cairo/2018-August/028694.html
+    # TODO: replace these commented tests now that we use named destinations
     # assert links[2].get_value('Subtype', '(.*)') == b'/Link'
     # dest = links[2].get_value('Dest', '(.*)').strip(b'[]').split()
     # assert dest[-4] == b'/XYZ'
     # assert [round(float(value)) for value in dest[-3:]] == […]
-    assert links[2].get_value('Rect', '(.*)') == '[ {} {} {} {} ]'.format(
-        10, TOP - 100 - 20, 10 + 32, TOP - 100).encode('ascii')
+    assert_rect_almost_equal(
+        links[2].get_value('Rect', '(.*)'),
+        (10, TOP - 100 - 20, 10 + 32, TOP - 100))
 
     # The image itself: 32*32pt
     # TODO: same as above
@@ -346,8 +355,9 @@ def test_links():
     # dest = links[3].get_value('Dest', '(.*)').strip(b'[]').split()
     # assert dest[-4] == b'/XYZ'
     # assert [round(float(value)) for value in dest[-3:]] == […]
-    assert links[3].get_value('Rect', '(.*)') == '[ {} {} {} {} ]'.format(
-        10, TOP - 100 - 32, 10 + 32, TOP - 100).encode('ascii')
+    assert_rect_almost_equal(
+        links[3].get_value('Rect', '(.*)'),
+        (10, TOP - 100 - 32, 10 + 32, TOP - 100))
 
     # 100% wide (block), 30pt high
     assert links[4].get_value('Subtype', '(.*)') == b'/Link'
@@ -358,11 +368,13 @@ def test_links():
         .get_indirect_dict('Names', pdf_file)
         .get_indirect_dict('Dests', pdf_file)
         .byte_string).decode('ascii')
-    assert re.search(
-        '\\(hello\\) \\[\\d+ \\d+ R /XYZ {} {} {}]'.format(0, TOP - 200, 0),
-        names)
-    assert links[4].get_value('Rect', '(.*)') == '[ {} {} {} {} ]'.format(
-        0, TOP - 30, RIGHT, TOP).encode('ascii')
+    assert_rect_almost_equal(
+        re.search(
+            '\\(hello\\) \\[\\d+ \\d+ R /XYZ (\\d+ \\d+ \\d+)]', names
+        ).group(1),
+        (0, TOP - 200, 0))
+    assert_rect_almost_equal(
+        links[4].get_value('Rect', '(.*)'), (0, TOP - 30, RIGHT, TOP))
 
     # 100% wide (block), 0pt high
     fileobj = io.BytesIO()
@@ -376,8 +388,8 @@ def test_links():
     assert (
         link.get_value('URI', '(.*)') == b'(http://weasyprint.org/foo/lipsum)')
     assert link.get_value('S', '(.*)') == b'/URI'
-    assert link.get_value('Rect', '(.*)') == '[ {} {} {} {} ]'.format(
-        0, TOP, RIGHT, TOP).encode('ascii')
+    assert_rect_almost_equal(
+        link.get_value('Rect', '(.*)'), (0, TOP, RIGHT, TOP))
 
 
 @assert_no_logs
@@ -392,8 +404,8 @@ def test_relative_links():
     annots = pdf_file.pages[0].get_indirect_dict_array('Annots', pdf_file)[0]
     assert annots.get_value('URI', '(.*)') == b'(../lipsum)'
     assert annots.get_value('S', '(.*)') == b'/URI'
-    assert annots.get_value('Rect', '(.*)') == '[ {} {} {} {} ]'.format(
-        0, TOP, RIGHT, TOP).encode('ascii')
+    assert_rect_almost_equal(
+        annots.get_value('Rect', '(.*)'), (0, TOP, RIGHT, TOP))
 
 
 @assert_no_logs
@@ -429,10 +441,13 @@ def test_relative_links_internal():
         .get_indirect_dict('Names', pdf_file)
         .get_indirect_dict('Dests', pdf_file)
         .byte_string).decode('ascii')
-    assert re.search(
-        '\\(lipsum\\) \\[\\d+ \\d+ R /XYZ {} {} {}]'.format(0, TOP, 0), names)
-    rect = annots.get_value('Rect', '(.*)').strip(b'[]').split()
-    assert [round(float(value)) for value in rect] == [0, TOP, RIGHT, TOP]
+    assert_rect_almost_equal(
+        re.search(
+            '\\(lipsum\\) \\[\\d+ \\d+ R /XYZ (\\d+ \\d+ \\d+)]', names
+        ).group(1),
+        (0, TOP, 0))
+    assert_rect_almost_equal(
+        annots.get_value('Rect', '(.*)'), (0, TOP, RIGHT, TOP))
 
 
 @assert_no_logs
@@ -451,10 +466,13 @@ def test_relative_links_anchors():
         .get_indirect_dict('Names', pdf_file)
         .get_indirect_dict('Dests', pdf_file)
         .byte_string).decode('ascii')
-    assert re.search(
-        '\\(lipsum\\) \\[\\d+ \\d+ R /XYZ {} {} {}]'.format(0, TOP, 0), names)
-    rect = annots.get_value('Rect', '(.*)').strip(b'[]').split()
-    assert [round(float(value)) for value in rect] == [0, TOP, RIGHT, TOP]
+    assert_rect_almost_equal(
+        re.search(
+            '\\(lipsum\\) \\[\\d+ \\d+ R /XYZ (\\d+ \\d+ \\d+)]', names
+        ).group(1),
+        (0, TOP, 0))
+    assert_rect_almost_equal(
+        annots.get_value('Rect', '(.*)'), (0, TOP, RIGHT, TOP))
 
 
 @assert_no_logs
@@ -476,11 +494,13 @@ def test_missing_links():
         .get_indirect_dict('Names', pdf_file)
         .get_indirect_dict('Dests', pdf_file)
         .byte_string).decode('ascii')
-    assert re.search(
-        '\\(lipsum\\) \\[\\d+ \\d+ R /XYZ {} {} {}]'.format(0, TOP - 15, 0),
-        names)
-    rect = annots.get_value('Rect', '(.*)').strip(b'[]').split()
-    assert [round(float(value)) for value in rect] == [0, TOP - 15, RIGHT, TOP]
+    assert_rect_almost_equal(
+        re.search(
+            '\\(lipsum\\) \\[\\d+ \\d+ R /XYZ (\\d+ \\d+ \\d+)]', names
+        ).group(1),
+        (0, TOP - 15, 0))
+    assert_rect_almost_equal(
+        annots.get_value('Rect', '(.*)'), (0, TOP - 15, RIGHT, TOP))
     assert len(logs) == 1
     assert 'ERROR: No anchor #missing for internal URI reference' in logs[0]
 
