@@ -503,6 +503,9 @@ class Document(object):
         if cairo.cairo_version() < 11504:
             return
 
+        # We round floats to avoid locale problems, see
+        # https://github.com/Kozea/WeasyPrint/issues/742
+
         # TODO: Instead of using rects, we could use the drawing rectangles
         # defined by cairo when drawing targets. This would give a feeling
         # similiar to what browsers do with links that span multiple lines.
@@ -610,9 +613,13 @@ class Document(object):
             while bookmarks:
                 title, destination, children = bookmarks.pop(0)
                 page, x, y = destination
+
+                # We round floats to avoid locale problems, see
+                # https://github.com/Kozea/WeasyPrint/issues/742
                 link_attribs = 'page={} pos=[{} {}]'.format(
                     page + 1, int(round(x * scale)),
                     int(round(y * scale)))
+
                 outline = surface.add_outline(
                     levels.pop(), title, link_attribs, 0)
                 levels.extend([outline] * len(children))
