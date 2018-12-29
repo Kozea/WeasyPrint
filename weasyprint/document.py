@@ -9,7 +9,6 @@
 
 import functools
 import io
-import locale
 import math
 import shutil
 import warnings
@@ -80,17 +79,6 @@ def _get_matrix(box):
         matrix.translate(-origin_x, -origin_y)
         box.transformation_matrix = matrix
         return matrix
-
-
-def _locale_float(number):
-    """Format ``number`` according to current locale.
-
-    Same as `'{:n}'.format(number)`, but without Python's bug 33954.
-
-    https://bugs.python.org/issue33954
-
-    """
-    return locale.format_string('%f', number)
 
 
 def rectangle_aabb(matrix, pos_x, pos_y, width, height):
@@ -522,11 +510,11 @@ class Document(object):
             link_type, link_target, rectangle = link
             if link_type == 'external':
                 attributes = "rect=[{} {} {} {}] uri='{}'".format(*(
-                    [_locale_float(i * scale) for i in rectangle] +
+                    [int(round(i * scale)) for i in rectangle] +
                     [link_target]))
             elif link_type == 'internal':
                 attributes = "rect=[{} {} {} {}] dest='{}'".format(*(
-                    [_locale_float(i * scale) for i in rectangle] +
+                    [int(round(i * scale)) for i in rectangle] +
                     [link_target]))
             elif link_type == 'attachment':
                 # Attachments are handled in write_pdf_metadata
@@ -537,8 +525,8 @@ class Document(object):
         for anchor in anchors:
             anchor_name, x, y = anchor
             attributes = "name='{}' x={} y={}".format(
-                anchor_name, _locale_float(x * scale),
-                _locale_float(y * scale))
+                anchor_name, int(round(x * scale)),
+                int(round(y * scale)))
             context.tag_begin(cairo.TAG_DEST, attributes)
             context.tag_end(cairo.TAG_DEST)
 
@@ -623,8 +611,8 @@ class Document(object):
                 title, destination, children = bookmarks.pop(0)
                 page, x, y = destination
                 link_attribs = 'page={} pos=[{} {}]'.format(
-                    page + 1, _locale_float(x * scale),
-                    _locale_float(y * scale))
+                    page + 1, int(round(x * scale)),
+                    int(round(y * scale)))
                 outline = surface.add_outline(
                     levels.pop(), title, link_attribs, 0)
                 levels.extend([outline] * len(children))
