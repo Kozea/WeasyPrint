@@ -3,6 +3,27 @@
 ======
 
 
+Version 44
+----------
+
+Released on 2018-12-29.
+
+Bug fixes:
+
+* `#742 <https://github.com/Kozea/WeasyPrint/issues/742>`_:
+  Don't crash during PDF generation when locale uses commas as decimal separator
+* `#746 <https://github.com/Kozea/WeasyPrint/issues/746>`_:
+  Close file when reading VERSION
+* Improve speed and memory usage for long texts.
+
+Documentation:
+
+* `#733 <https://github.com/Kozea/WeasyPrint/pull/733>`_:
+  Small documentation fixes
+* `#735 <https://github.com/Kozea/WeasyPrint/pull/735>`_:
+  Fix broken links in NEWS.rst
+
+
 Version 43
 ----------
 
