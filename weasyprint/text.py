@@ -593,22 +593,22 @@ def first_line_metrics(first_line, text, layout, resume_at, space_collapse,
         first_line_text = utf8_slice(text, slice(length))
         # Remove trailing spaces if spaces collapse
         if space_collapse:
-            first_line_text = first_line_text.rstrip(u' ')
+            first_line_text = first_line_text.rstrip(' ')
         # Remove soft hyphens
-        layout.set_text(first_line_text.replace(u'\u00ad', u''))
+        layout.set_text(first_line_text.replace('\u00ad', ''))
         first_line, _ = layout.get_first_line()
         length = first_line.length if first_line is not None else 0
         soft_hyphens = 0
-        if u'\u00ad' in first_line_text:
-            if first_line_text[0] == u'\u00ad':
-                length += 2  # len(u'\u00ad'.encode('utf8'))
+        if '\u00ad' in first_line_text:
+            if first_line_text[0] == '\u00ad':
+                length += 2  # len('\u00ad'.encode('utf8'))
             for i in range(len(layout.text)):
                 while i + soft_hyphens + 1 < len(first_line_text):
-                    if first_line_text[i + soft_hyphens + 1] == u'\u00ad':
+                    if first_line_text[i + soft_hyphens + 1] == '\u00ad':
                         soft_hyphens += 1
                     else:
                         break
-        length += soft_hyphens * 2  # len(u'\u00ad'.encode('utf8'))
+        length += soft_hyphens * 2  # len('\u00ad'.encode('utf8'))
     width, height = get_size(first_line, style)
     baseline = units_to_double(pango.pango_layout_get_baseline(layout.layout))
     layout.deactivate()
@@ -1043,7 +1043,6 @@ def split_first_line(text, style, context, max_width, justification_spacing,
     lang = style['lang'] and pyphen.language_fallback(style['lang'])
     total, left, right = style['hyphenate_limit_chars']
     hyphenated = False
-    soft_hyphen = u'\u00ad'
 
     # Automatic hyphenation possible and next word is long enough
     if hyphens != 'none' and len(next_word) >= total:
@@ -1051,6 +1050,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
         space = max_width - first_line_width
         if style['hyphenate_limit_zone'].unit == '%':
             limit_zone = max_width * style['hyphenate_limit_zone'].value / 100.
+    soft_hyphen = '\u00ad'
         else:
             limit_zone = style['hyphenate_limit_zone'].value
 
