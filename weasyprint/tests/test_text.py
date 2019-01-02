@@ -552,6 +552,23 @@ def test_hyphenate_manual_2():
 
 
 @assert_no_logs
+def test_hyphenate_manual_3():
+    # Automatic hyphenation opportunities within a word must be ignored if the
+    # word contains a conditional hyphen, in favor of the conditional
+    # hyphen(s).
+    page, = render_pages(
+        '<html style="width: 0.1em" lang="en">'
+        '<body style="hyphens: auto">in&shy;lighten&shy;lighten&shy;in')
+    html, = page.children
+    body, = html.children
+    line_1, line_2, line_3, line_4 = body.children
+    assert line_1.children[0].text == 'in\xad‐'
+    assert line_2.children[0].text == 'lighten\xad‐'
+    assert line_3.children[0].text == 'lighten\xad‐'
+    assert line_4.children[0].text == 'in'
+
+
+@assert_no_logs
 def test_hyphenate_limit_zone_1():
     page, = render_pages(
         '<html style="width: 12em; font-family: ahem">'
@@ -646,6 +663,27 @@ def test_hyphenate_limit_chars(css, result):
     body, = html.children
     lines = body.children
     assert len(lines) == result
+
+
+@assert_no_logs
+@pytest.mark.parametrize('css', (
+    # light·en
+    '3 3 3',  # 'en' is shorter than 3
+    '3 6 2',  # 'light' is shorter than 6
+    '8',  # 'lighten' is shorter than 8
+))
+def test_hyphenate_limit_chars_punctuation(css):
+    # See https://github.com/Kozea/WeasyPrint/issues/109
+    page, = render_pages(
+        '<html style="width: 1em; font-family: ahem">'
+        '<style>@font-face {src: url(AHEM____.TTF); font-family: ahem}</style>'
+        '<body style="hyphens: auto;'
+        'hyphenate-limit-chars: %s" lang=en>'
+        '..lighten..' % css)
+    html, = page.children
+    body, = html.children
+    lines = body.children
+    assert len(lines) == 1
 
 
 @assert_no_logs
