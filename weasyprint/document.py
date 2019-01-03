@@ -26,7 +26,7 @@ from .html import W3C_DATE_RE
 from .images import get_image_from_uri as original_get_image_from_uri
 from .layout import layout_document
 from .layout.backgrounds import percentage
-from .logger import LOGGER
+from .logger import LOGGER, PROGRESS_LOGGER
 from .pdf import write_pdf_metadata
 
 if cairo.cairo_version() < 11504:
@@ -349,7 +349,7 @@ class Document(object):
             page_rules, target_collector)
         get_image_from_uri = functools.partial(
             original_get_image_from_uri, {}, html.url_fetcher)
-        LOGGER.info('Step 4 - Creating formatting structure')
+        PROGRESS_LOGGER.info('Step 4 - Creating formatting structure')
         root_box = build_formatting_structure(
             html.etree_element, style_for, get_image_from_uri,
             html.base_url, target_collector)
@@ -564,7 +564,7 @@ class Document(object):
         surface = cairo.PDFSurface(file_obj, 1, 1)
         context = cairo.Context(surface)
 
-        LOGGER.info('Step 6 - Drawing')
+        PROGRESS_LOGGER.info('Step 6 - Drawing')
 
         paged_links_and_anchors = list(self.resolve_links())
         for page, links_and_anchors in zip(
@@ -582,7 +582,7 @@ class Document(object):
                 self.add_hyperlinks(links, anchors, context, scale)
                 surface.show_page()
 
-        LOGGER.info('Step 7 - Adding PDF metadata')
+        PROGRESS_LOGGER.info('Step 7 - Adding PDF metadata')
 
         # TODO: overwrite producer when possible in cairo
         if cairo.cairo_version() >= 11504:
@@ -674,7 +674,7 @@ class Document(object):
             cairo.FORMAT_ARGB32, max_width, sum_heights)
         context = cairo.Context(surface)
         pos_y = 0
-        LOGGER.info('Step 6 - Drawing')
+        PROGRESS_LOGGER.info('Step 6 - Drawing')
         for page, width, height in zip(self.pages, widths, heights):
             pos_x = (max_width - width) / 2
             page.paint(context, pos_x, pos_y, scale=dppx, clip=True)

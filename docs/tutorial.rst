@@ -272,23 +272,10 @@ by configuring the ``weasyprint`` logger object:
     logger = logging.getLogger('weasyprint')
     logger.addHandler(logging.FileHandler('/path/to/weasyprint.log'))
 
-The ``INFO`` level is used to report the rendering progress. It is useful to
-get feedback when WeasyPrint is launched in a terminal (using the ``--verbose``
-option), or to give this feedback to end users when used as a library. To catch
-these logs, you can for example use a filter:
-
-.. code-block:: python
-
-    import logging
-
-    class LoggerFilter(logging.Filter):
-        def filter(self, record):
-            if record.level == logging.INFO:
-                print(record.getMessage())
-                return False
-
-    logger = logging.getLogger('weasyprint')
-    logger.addFilter(LoggerFilter())
+The ``weasyprint.progress`` logger is used to report the rendering progress. It
+is useful to get feedback when WeasyPrint is launched in a terminal (using the
+``--verbose`` option), or to give this feedback to end users when used as a
+library.
 
 See the documentation of the :mod:`logging` module for details.
 

@@ -14,7 +14,7 @@ import copy
 from ..css import (
     PageType, computed_from_cascaded, matching_page_types, set_computed_styles)
 from ..formatting_structure import boxes, build
-from ..logger import LOGGER
+from ..logger import PROGRESS_LOGGER
 from .absolute import absolute_layout
 from .blocks import block_container_layout, block_level_layout
 from .min_max import handle_min_max_height, handle_min_max_width
@@ -778,7 +778,7 @@ def make_all_pages(context, root_box, html, cascaded_styles, computed_styles,
         if (len(pages) == 0 or
                 remake_state['content_changed'] or
                 remake_state['pages_wanted']):
-            LOGGER.info('Step 5 - Creating layout - Page %i', i + 1)
+            PROGRESS_LOGGER.info('Step 5 - Creating layout - Page %i', i + 1)
             # Reset remake_state
             remake_state['content_changed'] = False
             remake_state['pages_wanted'] = False
@@ -788,7 +788,7 @@ def make_all_pages(context, root_box, html, cascaded_styles, computed_styles,
                 i, context, root_box, html, cascaded_styles, computed_styles)
             yield page
         else:
-            LOGGER.info(
+            PROGRESS_LOGGER.info(
                 'Step 5 - Creating layout - Page %i (up-to-date)', i + 1)
             resume_at = context.page_maker[i + 1][0]
             yield pages[i]

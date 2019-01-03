@@ -28,7 +28,7 @@ from .properties import INITIAL_NOT_COMPUTED
 from .utils import remove_whitespace, split_on_comma
 from .validation import preprocess_declarations
 from .validation.descriptors import preprocess_descriptors
-from ..logger import LOGGER
+from ..logger import LOGGER, PROGRESS_LOGGER
 from ..urls import get_url_attribute, url_join, URLFetchingError
 from .. import CSS
 
@@ -817,7 +817,7 @@ def get_all_computed_styles(html, user_stylesheets=None,
     #             http://www.w3.org/TR/CSS21/cascade.html#cascading-order
     cascaded_styles = {}
 
-    LOGGER.info('Step 3 - Applying CSS')
+    PROGRESS_LOGGER.info('Step 3 - Applying CSS')
     for specificity, attributes in find_style_attributes(
             html.etree_element, presentational_hints, html.base_url):
         element, declarations, base_url = attributes

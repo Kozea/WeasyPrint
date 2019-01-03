@@ -25,3 +25,5 @@ import logging
 LOGGER = logging.getLogger('weasyprint')
 LOGGER.setLevel(logging.WARNING)
 LOGGER.addHandler(logging.NullHandler())
+
+PROGRESS_LOGGER = logging.getLogger('weasyprint.progress')

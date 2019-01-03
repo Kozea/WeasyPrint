@@ -52,7 +52,7 @@ __all__ = ['HTML', 'CSS', 'Attachment', 'Document', 'Page',
 # Import after setting the version, as the version is used in other modules
 from .urls import (fetch, default_url_fetcher, path2url, ensure_url,
                    url_is_absolute)  # noqa
-from .logger import LOGGER  # noqa
+from .logger import LOGGER, PROGRESS_LOGGER  # noqa
 # Some imports are at the end of the file (after the CSS class)
 # to work around circular imports.
 
@@ -96,7 +96,7 @@ class HTML(object):
     def __init__(self, guess=None, filename=None, url=None, file_obj=None,
                  string=None, encoding=None, base_url=None,
                  url_fetcher=default_url_fetcher, media_type='print'):
-        LOGGER.info(
+        PROGRESS_LOGGER.info(
             'Step 1 - Fetching and parsing HTML - %s',
             guess or filename or url or
             getattr(file_obj, 'name', 'HTML string'))
@@ -268,7 +268,7 @@ class CSS(object):
                  url_fetcher=default_url_fetcher, _check_mime_type=False,
                  media_type='print', font_config=None, matcher=None,
                  page_rules=None):
-        LOGGER.info(
+        PROGRESS_LOGGER.info(
             'Step 2 - Fetching and parsing CSS - %s',
             filename or url or getattr(file_obj, 'name', 'CSS string'))
         result = _select_source(

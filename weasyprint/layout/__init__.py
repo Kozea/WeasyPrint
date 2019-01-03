@@ -24,7 +24,7 @@ from .absolute import absolute_box_layout
 from .pages import make_all_pages, make_margin_boxes
 from .backgrounds import layout_backgrounds
 from ..formatting_structure import boxes
-from ..logger import LOGGER
+from ..logger import PROGRESS_LOGGER
 
 
 def initialize_page_maker(context, root_box):
@@ -119,7 +119,8 @@ def layout_document(enable_hinting, style_for, get_image_from_uri, root_box,
 
     for loop in range(max_loops):
         if loop > 0:
-            LOGGER.info('Step 5 - Creating layout - Repagination #%i' % loop)
+            PROGRESS_LOGGER.info(
+                'Step 5 - Creating layout - Repagination #%i' % loop)
 
         initial_total_pages = actual_total_pages
         pages = list(make_all_pages(
