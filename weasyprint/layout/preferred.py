@@ -470,7 +470,10 @@ def table_and_columns_preferred_widths(context, box, outer=True):
                     other_columns_contributions_sum = sum(
                         other_columns_contributions)
                     if other_columns_contributions_sum == 0:
-                        ratio = 1 / len(other_columns_contributions)
+                        if other_columns_contributions:
+                            ratio = 1 / len(other_columns_contributions)
+                        else:
+                            ratio = 1
                     else:
                         ratio = (
                             max_content_widths[i] /
