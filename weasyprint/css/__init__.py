@@ -18,6 +18,7 @@
 """
 
 from collections import namedtuple
+from logging import DEBUG, WARNING
 
 import cssselect2
 import tinycss2
@@ -636,18 +637,27 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
             declarations = list(preprocess_declarations(
                 base_url, tinycss2.parse_declaration_list(rule.content)))
             if declarations:
+                logger_level = WARNING
                 try:
                     selectors = cssselect2.compile_selector_list(rule.prelude)
                     for selector in selectors:
                         matcher.add_selector(selector, declarations)
                         if selector.pseudo_element not in PSEUDO_ELEMENTS:
-                            raise cssselect2.SelectorError(
-                                'Unknown pseudo-element: %s'
-                                % selector.pseudo_element)
+                            if selector.pseudo_element.startswith('-'):
+                                logger_level = DEBUG
+                                raise cssselect2.SelectorError(
+                                    'ignored prefixed pseudo-element: %s'
+                                    % selector.pseudo_element)
+                            else:
+                                raise cssselect2.SelectorError(
+                                    'unknown pseudo-element: %s'
+                                    % selector.pseudo_element)
                     ignore_imports = True
                 except cssselect2.SelectorError as exc:
-                    LOGGER.warning("Invalid or unsupported selector '%s', %s",
-                                   tinycss2.serialize(rule.prelude), exc)
+                    LOGGER.log(
+                        logger_level,
+                        "Invalid or unsupported selector '%s', %s",
+                        tinycss2.serialize(rule.prelude), exc)
                     continue
             else:
                 ignore_imports = True

@@ -274,8 +274,8 @@ by configuring the ``weasyprint`` logger object:
 
 The ``weasyprint.progress`` logger is used to report the rendering progress. It
 is useful to get feedback when WeasyPrint is launched in a terminal (using the
-``--verbose`` option), or to give this feedback to end users when used as a
-library.
+``--verbose`` or ``--debug`` option), or to give this feedback to end users
+when used as a library.
 
 See the documentation of the :mod:`logging` module for details.
 

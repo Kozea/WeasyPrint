@@ -307,7 +307,7 @@ else:
                             config, pattern, result)
                         # prevent RuntimeError, see issue #677
                         if matching_pattern == ffi.NULL:
-                            LOGGER.warning(
+                            LOGGER.debug(
                                 'Failed to get matching local font for "%s"',
                                 font_name.decode('utf-8'))
                             continue
@@ -330,7 +330,7 @@ else:
                                 FILESYSTEM_ENCODING)
                             url = pathlib.Path(path).as_uri()
                         else:
-                            LOGGER.warning(
+                            LOGGER.debug(
                                 'Failed to load local font "%s"',
                                 font_name.decode('utf-8'))
                             continue
@@ -345,7 +345,7 @@ else:
                             with open(url, 'rb') as fd:
                                 font = fd.read()
                     except Exception as exc:
-                        LOGGER.error(
+                        LOGGER.debug(
                             'Failed to load font at "%s" (%s)', url, exc)
                         continue
                     font_features = {
@@ -417,7 +417,7 @@ else:
                         # Though it seems to work without...
                         return filename
                     else:
-                        LOGGER.error('Failed to load font at "%s"', url)
+                        LOGGER.debug('Failed to load font at "%s"', url)
             LOGGER.warning(
                 'Font-face "%s" cannot be loaded',
                 rule_descriptors['font_family'])

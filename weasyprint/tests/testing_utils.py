@@ -70,16 +70,21 @@ def capture_logs():
     messages = []
 
     def emit(record):
+        if record.name == 'weasyprint.progress':
+            return
         message = '%s: %s' % (record.levelname.upper(), record.getMessage())
         messages.append(message)
 
     previous_handlers = logger.handlers
+    previous_level = logger.level
     logger.handlers = []
     logger.addHandler(CallbackHandler(emit))
+    logger.setLevel(logging.DEBUG)
     try:
         yield messages
     finally:
         logger.handlers = previous_handlers
+        logger.level = previous_level
 
 
 def assert_no_logs(function):
