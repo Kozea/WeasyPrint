@@ -6,7 +6,7 @@ WeasyPrint |version| depends on:
 * CPython_ ≥ 3.4.0
 * cairo_ ≥ 1.15.4 [#]_
 * Pango_ ≥ 1.38.0 [#]_
-* setuptools_ ≥ 30.3.0
+* setuptools_ ≥ 30.3.0 [#]_
 * CFFI_ ≥ 0.6
 * html5lib_ ≥ 0.999999999
 * cairocffi_ ≥ 0.9.0
@@ -85,6 +85,9 @@ WeasyPrint! Otherwise, please copy the full error message and
 
 .. [#] pango ≥ 1.29.3 is required, but 1.38.0 is needed to handle `@font-face`
        CSS rules.
+
+.. [#] setuptools ≥ 30.3.0 is required to install WeasyPrint, but 39.2.0 is
+       required to build the package.
 
 .. [#] Without it, PNG and SVG are the only supported image formats.
        JPEG, GIF and others are not available.
