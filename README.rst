@@ -17,3 +17,5 @@ pagination, and meant to be easy to hack on.
 * Source code and issue tracker: https://github.com/Kozea/WeasyPrint
 * Tests: https://travis-ci.org/Kozea/WeasyPrint
 * Support: https://www.patreon.com/kozea
+
+Minimum setuptools version required is 39.2.0
