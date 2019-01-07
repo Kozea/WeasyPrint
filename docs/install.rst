@@ -159,7 +159,7 @@ For Alpine Linux 3.6 or newer:
 
 .. code-block:: sh
 
-    apk --update --upgrade add gcc musl-dev jpeg-dev zlib-dev libffi-dev cairo-dev pango-dev gdk-pixbuf
+    apk --update --upgrade add gcc musl-dev jpeg-dev zlib-dev libffi-dev cairo-dev pango-dev gdk-pixbuf-dev
 
 
 .. _macos:
