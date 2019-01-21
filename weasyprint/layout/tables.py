@@ -573,6 +573,11 @@ def auto_table_layout(context, box, containing_block):
             min_content_specified_guess[i] = column_min_content_widths[i]
 
     if assignable_width <= sum(max_content_guess):
+        # Default values shouldn't be used, but we never know.
+        # See https://github.com/Kozea/WeasyPrint/issues/770
+        lower_guess = guesses[0]
+        upper_guess = guesses[-1]
+
         # We have to work around floating point rounding errors here.
         # The 1e-9 value comes from PEP 485.
         for guess in guesses:
