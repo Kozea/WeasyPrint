@@ -291,6 +291,39 @@ def test_text_align_justify_text_indent():
 
 
 @assert_no_logs
+def test_text_align_justify_no_break_between_children():
+    # Test justification when line break happens between two inline children
+    # that must stay together.
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/637
+    page, = render_pages('''
+      <style>
+        @font-face {src: url(AHEM____.TTF); font-family: ahem}
+        p { text-align: justify; font-family: ahem; width: 7em }
+      </style>
+      <p>
+        <span>a</span>
+        <span>b</span>
+        <span>bla</span><span>,</span>
+        <span>b</span>
+      </p>
+    ''')
+    html, = page.children
+    body, = html.children
+    paragraph, = body.children
+    line_1, line_2 = paragraph.children
+
+    span_1, space_1, span_2, space_2 = line_1.children
+    assert span_1.position_x == 0
+    assert span_2.position_x == 6 * 16  # 1 character + 5 spaces
+    assert line_1.width == 7 * 16  # 7em
+
+    span_1, span_2, space_1, span_3, space_2 = line_2.children
+    assert span_1.position_x == 0
+    assert span_2.position_x == 3 * 16  # 3 characters
+    assert span_3.position_x == 5 * 16  # (3 + 1) characters + 1 space
+
+
+@assert_no_logs
 def test_word_spacing():
     # keep the empty <style> as a regression test: element.text is None
     # (Not a string.)

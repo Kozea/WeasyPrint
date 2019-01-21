@@ -908,10 +908,17 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
         [box_child for index, box_child in children],
         is_start=is_start, is_end=is_end)
     if isinstance(box, boxes.LineBox):
-        # Line boxes already have a position_x which may not be the same
-        # as content_box_left when text-indent is non-zero.
-        # This is important for justified text.
-        new_box.width = position_x - new_box.position_x
+        # We must reset line box width according to its new children
+        in_flow_children = [
+            box_child for box_child in new_box.children
+            if box_child.is_in_normal_flow()]
+        if in_flow_children:
+            new_box.width = (
+                in_flow_children[-1].position_x +
+                in_flow_children[-1].margin_width() -
+                new_box.position_x)
+        else:
+            new_box.width = 0
     else:
         new_box.position_x = initial_position_x
         if (is_start and box.style['direction'] == 'ltr') or (
