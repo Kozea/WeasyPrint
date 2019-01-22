@@ -90,7 +90,7 @@ After the In addition to the actual parsing, the :mod:`weasyprint.css` and
 * Shorthand properties are expanded. For example, ``margin`` becomes
   ``margin-top``, ``margin-right``, ``margin-bottom`` and ``margin-left``.
 * Hyphens in property names are replaced by underscores (``margin-top`` becomes
-  ``margin_top``). This transformation is safe since none for the know (not
+  ``margin_top``). This transformation is safe since none of the known (not
   ignored) properties have an underscore character.
 * Selectors are pre-compiled with cssselect2_.
 
