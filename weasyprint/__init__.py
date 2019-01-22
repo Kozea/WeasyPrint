@@ -71,7 +71,7 @@ class HTML(object):
         absolute.
     :param url: An absolute, fully qualified URL.
     :param file_obj: A file-like: any object with a :meth:`~file.read` method.
-    :param string: A string of HTML source. (This argument must be named.)
+    :param string: A string of HTML source.
 
     Specifying multiple inputs is an error:
     ``HTML(filename="foo.html", url="localhost://bar.html")``
@@ -251,8 +251,8 @@ class HTML(object):
 class CSS(object):
     """Represents a CSS stylesheet parsed by tinycss2.
 
-    An instance is created in the same way as :class:`HTML`, except that
-    the ``tree`` argument is not available. All other arguments are the same.
+    An instance is created in the same way as :class:`HTML`, with the same
+    arguments.
 
     An additional argument called ``font_config`` must be provided to handle
     ``@font-config`` rules. The same ``fonts.FontConfiguration`` object must be
