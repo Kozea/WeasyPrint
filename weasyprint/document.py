@@ -514,11 +514,11 @@ class Document(object):
             if link_type == 'external':
                 attributes = "rect=[{} {} {} {}] uri='{}'".format(*(
                     [int(round(i * scale)) for i in rectangle] +
-                    [link_target]))
+                    [link_target.replace("'", '%27')]))
             elif link_type == 'internal':
                 attributes = "rect=[{} {} {} {}] dest='{}'".format(*(
                     [int(round(i * scale)) for i in rectangle] +
-                    [link_target]))
+                    [link_target.replace("'", '%27')]))
             elif link_type == 'attachment':
                 # Attachments are handled in write_pdf_metadata
                 continue
@@ -528,7 +528,7 @@ class Document(object):
         for anchor in anchors:
             anchor_name, x, y = anchor
             attributes = "name='{}' x={} y={}".format(
-                anchor_name, int(round(x * scale)),
+                anchor_name.replace("'", '%27'), int(round(x * scale)),
                 int(round(y * scale)))
             context.tag_begin(cairo.TAG_DEST, attributes)
             context.tag_end(cairo.TAG_DEST)
